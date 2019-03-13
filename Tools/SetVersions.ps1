@@ -1,0 +1,1 @@
+tools SetVersion --Project ConsoleTemplate --Major 0 --Minor 0 --Patch 5
