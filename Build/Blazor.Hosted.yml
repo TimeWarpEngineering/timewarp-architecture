@@ -1,0 +1,52 @@
+﻿# Primary output is a new Nuget Package for Timewarp-Blazor Template
+name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+trigger:
+ branches:
+  include:
+  - master
+ paths:
+  include:
+  - Source/Blazor.Hosted/*
+
+queue:
+  name: TimeWarpEnterprises
+
+variables:
+ Major: '0'
+ Minor: '0'
+ Patch: '5'
+ Version: "$(Major).$(Minor).$(Patch)"
+ Configuration: debug
+
+steps:
+- script: echo Version $(Version)
+
+- task: DotNetCoreCLI@2
+  displayName: Build Template projects
+  inputs:
+    command: build
+    projects: 'source/Blazor.Hosted/**/*.csproj'
+    configuration: $(Configuration)
+
+- task: DotNetCoreCLI@2
+  displayName: Test
+  inputs:
+    command: test
+    projects: "source/Blazor.Hosted/**/*Tests/*.csproj"
+    configurationToPack: $(Configuration)
+
+- task: NuGetCommand@2
+  displayName: 'NuGet pack Template'
+  inputs:
+    command: pack
+    packagesToPack: $(Build.SourcesDirectory)/source/Blazor.Hosted/TimeWarp.AspNetCore.Blazor.Templates.nuspec
+    configurationToPack: $(Configuration)
+    versioningScheme: byEnvVar
+    versionEnvVar: Version
+
+- task: PublishBuildArtifacts@1
+  displayName: Publish Artifact
+  inputs:
+    PathtoPublish: '$(build.artifactstagingdirectory)'
+    ArtifactName: drop
+    publishLocation: Container

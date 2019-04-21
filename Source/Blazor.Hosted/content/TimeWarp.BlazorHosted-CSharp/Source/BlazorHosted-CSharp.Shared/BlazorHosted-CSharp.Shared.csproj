@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Blazor Hosted Shared Library</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="$(MediatrVersion)" />
+  </ItemGroup>
+
+</Project>
