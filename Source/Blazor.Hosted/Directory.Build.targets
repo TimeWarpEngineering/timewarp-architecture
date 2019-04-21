@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <IncludeSource>false</IncludeSource>
+    <IncludeSymbols>false</IncludeSymbols>
+  </PropertyGroup>
+</Project>
