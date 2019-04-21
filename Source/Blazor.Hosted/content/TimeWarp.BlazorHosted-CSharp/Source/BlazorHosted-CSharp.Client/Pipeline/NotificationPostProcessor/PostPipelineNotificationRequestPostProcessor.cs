@@ -1,9 +1,9 @@
 ﻿namespace BlazorHosted_CSharp.Client.Pipeline.NotificationPostProcessor
 {
-  using System;
   using System.Threading.Tasks;
   using MediatR;
   using MediatR.Pipeline;
+  using Microsoft.Extensions.Logging;
 
   internal class PostPipelineNotificationRequestPostProcessor<TRequest, TResponse> : IRequestPostProcessor<TRequest, TResponse>
   {
