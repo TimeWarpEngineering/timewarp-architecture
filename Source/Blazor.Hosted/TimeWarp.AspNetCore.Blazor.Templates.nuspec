@@ -5,7 +5,7 @@
     <authors>Steven T. Cramer</authors>
     <version>$version$</version>
     <description>TimeWarp Templates for ASP.NET Core Blazor</description>
-    <iconUrl>https://raw.githubusercontent.com/TimeWarpEngineering/blazor-state/master/assets/Logo.png</iconUrl>
+    <iconUrl>https://raw.githubusercontent.com/TimeWarpEngineering/blazor-state/master/Assets/Logo.png</iconUrl>
     <language>en-US</language>
     <projectUrl>https://github.com/TimeWarpEngineering/timewarp-templates</projectUrl>
     <licenseUrl>https://github.com/TimeWarpEngineering/timewarp-templates/blob/master/LICENSE</licenseUrl>

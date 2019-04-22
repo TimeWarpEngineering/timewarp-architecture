@@ -19,6 +19,7 @@ variables:
  Configuration: debug
 
 steps:
+- script: dotnet --version
 - script: echo Version $(Version)
 
 - task: DotNetCoreCLI@2
