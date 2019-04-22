@@ -13,8 +13,8 @@ queue:
 
 variables:
  Major: '0'
- Minor: '0'
- Patch: '6'
+ Minor: '5'
+ Patch: '0'
  Version: "$(Major).$(Minor).$(Patch)"
  Configuration: debug
 
