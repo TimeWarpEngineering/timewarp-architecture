@@ -25,13 +25,13 @@
     };
 
     public async Task<GetWeatherForecastsResponse> Handle(
-      GetWeatherForecastsRequest aRequest,
+      GetWeatherForecastsRequest aGetWeatherForecastsRequest,
       CancellationToken aCancellationToken)
     {
-      var response = new GetWeatherForecastsResponse(aRequest.Id);
+      var response = new GetWeatherForecastsResponse(aGetWeatherForecastsRequest.Id);
       var random = new Random();
       var weatherForecasts = new List<WeatherForecastDto>();
-      Enumerable.Range(1, 5).ToList().ForEach(aIndex => response.WeatherForecasts.Add(
+      Enumerable.Range(1, aGetWeatherForecastsRequest.Days).ToList().ForEach(aIndex => response.WeatherForecasts.Add(
         new WeatherForecastDto
         {
           Date = DateTime.Now.AddDays(aIndex),
