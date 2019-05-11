@@ -74,7 +74,7 @@
         "--environment", Environment.ToString(),
       });
 
-      //hostBuilder.ConfigureServices(ConfigureServices);
+      hostBuilder.ConfigureServices(ConfigureServices);
 
       IHost host = hostBuilder.Build();
 
@@ -101,7 +101,7 @@
     private void ConfigureServices(IServiceCollection aServiceCollection)
     {
       //
-      aServiceCollection.Replace(ServiceDescriptor.Singleton<IClientLoaderConfiguration, ClientLoaderTestConfiguration>());
+      aServiceCollection.Replace(ServiceDescriptor.Scoped<IClientLoaderConfiguration, TestClientLoaderConfiguration>());
     }
 
   }
