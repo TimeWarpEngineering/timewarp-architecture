@@ -4,6 +4,7 @@
   using BlazorHosted_CSharp.Client.Features.Application;
   using BlazorHosted_CSharp.Client.Features.Counter;
   using BlazorHosted_CSharp.Client.Features.WeatherForecast;
+  using BlazorHosted_CSharp.Client.Features.EventStream;
 
   /// <summary>
   /// Makes access to the State a little easier and by inheriting from
@@ -16,8 +17,9 @@
   /// </remarks>
   public class BaseComponent : BlazorStateDevToolsComponent
   {
-    public ApplicationState ApplicationState => GetState<ApplicationState>();
-    public CounterState CounterState => GetState<CounterState>();
-    public WeatherForecastsState WeatherForecastsState => GetState<WeatherForecastsState>();
+    internal ApplicationState ApplicationState => GetState<ApplicationState>();
+    internal CounterState CounterState => GetState<CounterState>();
+    internal EventStreamState EventStreamState => GetState<EventStreamState>();
+    internal WeatherForecastsState WeatherForecastsState => GetState<WeatherForecastsState>();
   }
 }

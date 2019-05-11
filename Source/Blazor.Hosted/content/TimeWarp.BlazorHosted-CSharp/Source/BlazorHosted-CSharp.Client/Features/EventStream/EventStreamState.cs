@@ -1,9 +1,16 @@
 ﻿namespace BlazorHosted_CSharp.Client.Features.EventStream
 {
+  using BlazorState;
   using System.Collections.Generic;
 
-  internal partial class EventStreamState
+  internal partial class EventStreamState : State<EventStreamState>
   {
-    internal List<string> Events { get; set; }
+    public List<string> _Events { get; set; }
+    public IReadOnlyList<string> Events => _Events.AsReadOnly();
+    public EventStreamState()
+    {
+      _Events = new List<string>();
+    }
+    protected override void Initialize() { }
   }
 }

@@ -17,7 +17,7 @@
         AddEventAction aAddEventAction,
         CancellationToken aCancellationToken)
       {
-        EventStreamState.Events.Add(aAddEventAction.Message);
+        EventStreamState._Events.Add(aAddEventAction.Message);
         return Task.FromResult(EventStreamState);
       }
     }
