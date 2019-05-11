@@ -6,6 +6,7 @@
   using Microsoft.AspNetCore.Components.Builder;
   using Microsoft.Extensions.DependencyInjection;
   using BlazorHosted_CSharp.Client.Features.EventStream;
+  using BlazorState.Features.ClientLoader;
 
   public class Startup
   {
@@ -23,6 +24,7 @@
       };
       aServiceCollection.AddBlazorState();
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
+      aServiceCollection.AddScoped<ClientLoader>();
     }
   }
 }
