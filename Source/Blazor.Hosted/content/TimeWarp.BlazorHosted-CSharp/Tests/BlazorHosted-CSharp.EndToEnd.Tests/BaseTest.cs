@@ -38,5 +38,13 @@ namespace BlazorHosted_CSharp.EndToEnd.Tests
           JavaScriptExecutor.ExecuteScript("return window.jsonRequestHandler;") != null
           );
     }
+
+    protected void WaitUntilClientCached()
+    {
+      new WebDriverWait(WebDriver, Timeout)
+        .Until(aWebDriver =>
+          JavaScriptExecutor.ExecuteScript("return window.localStorage.getItem('clientApplication');") != null
+          );
+    }
   }
 }
