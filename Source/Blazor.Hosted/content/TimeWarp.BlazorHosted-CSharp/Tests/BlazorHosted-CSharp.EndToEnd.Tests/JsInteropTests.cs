@@ -22,10 +22,10 @@
       aServerFixture.CreateHostBuilderDelegate = Server.Program.CreateHostBuilder;
 
       Navigate("/", aReload: true);
-      WaitUntilLoaded();
+      WaitUntilClientCached();
 
       object clientApplication = JavaScriptExecutor.ExecuteScript("return window.localStorage.getItem('clientApplication');");
-      clientApplication.ShouldBe("BlazorHosted_CSharp.Client.0.0.1"); // Confirm we are running the right app
+      clientApplication.ShouldBe("BlazorHosted_CSharp.Client.0.0.1");
     }
 
     public void InitalizationWorkedClientSide()
@@ -66,14 +66,15 @@
       jsonRequestHandler.ShouldNotBeNull();
     }
 
-    public void CanCallCsharpFromJs()
-    {
+    //public void CanCallCsharpFromJs()
+    //{
+    //  // Redux Dev tool use this ability.
+    //  // TODO set up a handler to be launched from JS 
+    //}
 
-    }
-
-    public void CanCallJsFromCsharp()
-    {
-      // If Initialization of jsonRequestHandler worked then this worked becuase it calls js from CS.
-    }
+    //public void CanCallJsFromCsharp()
+    //{
+    //  // If Initialization of jsonRequestHandler worked then this worked becuase it calls js from CS.
+    //}
   }
 }
