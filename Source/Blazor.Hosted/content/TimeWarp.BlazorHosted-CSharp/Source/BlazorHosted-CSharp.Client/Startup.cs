@@ -4,7 +4,6 @@
   using BlazorHosted_CSharp.Client.Features.EventStream;
   using BlazorHostedCSharp.Client.Features.ClientLoader;
   using BlazorState;
-  using BlazorState.Features.ClientLoader;
   using BlazorState.Services;
   using MediatR;
   using Microsoft.AspNetCore.Components.Builder;

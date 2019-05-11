@@ -5,8 +5,8 @@
   using BlazorState.Features.JavaScriptInterop;
   using BlazorState.Features.Routing;
   using Microsoft.AspNetCore.Components;
-  using BlazorState.Features.ClientLoader;
   using System;
+  using BlazorHostedCSharp.Client.Features.ClientLoader;
 
   public class AppModel : ComponentBase
   {
@@ -24,7 +24,7 @@
     {
       await ReduxDevToolsInterop.InitAsync();
       await JsonRequestHandler.InitAsync();
-      await ClientLoader.InitAsync(DelayTimeSpan);
+      await ClientLoader.InitAsync();
     }
   }
 }
