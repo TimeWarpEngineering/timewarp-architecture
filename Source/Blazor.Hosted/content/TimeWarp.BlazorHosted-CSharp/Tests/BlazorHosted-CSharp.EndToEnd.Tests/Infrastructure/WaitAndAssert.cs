@@ -12,7 +12,7 @@ namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
   public class WaitAndAssert
   {
     public static IWebDriver WebDriver;
-    private static readonly TimeSpan s_DefaultTimeout = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan s_DefaultTimeout = TimeSpan.FromSeconds(10);
 
     //public static void Collection<T>(Func<IEnumerable<T>> actualValues, params Action<T>[] elementInspectors)
     //    => WaitAssertCore(() => Assert.Collection(actualValues(), elementInspectors));
