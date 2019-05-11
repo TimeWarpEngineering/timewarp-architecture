@@ -4,6 +4,7 @@
   using System.Reflection;
   using BlazorHosted_CSharp.Client;
   using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
+  using BlazorHostedCSharp.Client.Features.ClientLoader;
   using BlazorState;
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +42,7 @@
       aServiceCollection.AddSingleton(BlazorStateTestServer.CreateClient());
       aServiceCollection.AddBlazorState(aOptions => aOptions.Assemblies =
         new Assembly[] { typeof(Startup).GetTypeInfo().Assembly });
+      aServiceCollection.AddSingleton<IClientLoaderConfiguration, ClientLoaderTestConfiguration>();
     }
   }
 }
