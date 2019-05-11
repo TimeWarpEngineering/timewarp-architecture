@@ -10,7 +10,8 @@
     applicationVersion,
     clientApplicationKey,
     clientLoaded,
-    executionSideKey
+    executionSideKey,
+    loadClient
   };
   if (executionSideValue === null) {
     localStorage.setItem(window.TimeWarp.executionSideKey, "To force a side set this to client/server");
@@ -33,7 +34,6 @@
   var blazorScript = document.createElement('script');
   blazorScript.setAttribute('src', source);
   document.body.appendChild(blazorScript);
-  window.onload = loadClient;
 }
 
 function loadClient() {

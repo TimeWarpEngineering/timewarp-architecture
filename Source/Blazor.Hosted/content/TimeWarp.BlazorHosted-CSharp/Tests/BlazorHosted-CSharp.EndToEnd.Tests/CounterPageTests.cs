@@ -29,6 +29,7 @@
     {
       // Navigate to "Counter"
       WebDriver.FindElement(By.LinkText("Counter")).Click();
+      
       WaitAndAssertEqual
       (
         aExpected: "Counter Page",

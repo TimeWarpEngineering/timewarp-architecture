@@ -17,21 +17,24 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <TestProjectTargetFramework>netstandard2.1</TestProjectTargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <TestProjectTargetFramework>netstandard2.0</TestProjectTargetFramework>
   </PropertyGroup>
 
   <!--Versions of packages used across the solution-->
   <PropertyGroup Label="Package Versions">
-    <BlazorStateVersion>1.0.0-preview4-19216-03-20190420-075917</BlazorStateVersion>
-    <MicrosoftAspNetCoreVersion>3.0.0-preview4-19216-03</MicrosoftAspNetCoreVersion>
+    <BlazorPreviewVersion>preview5-19227-01</BlazorPreviewVersion>
+    <MicrosoftAspNetCoreVersion>3.0.0-preview5-19227-01</MicrosoftAspNetCoreVersion>
     <MicrosoftAspNetCoreBlazorVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorVersion>
     <MicrosoftAspNetCoreComponentsBrowserVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreComponentsBrowserVersion>
     <MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>
     <MicrosoftAspNetCoreTestHostVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreTestHostVersion>
-    <MicrosoftExtensionsFileProvidersEmbeddedVersion>3.0.0-preview4.19216.2</MicrosoftExtensionsFileProvidersEmbeddedVersion>
-    <MicrosoftExtensionsLoggingAbstractionsVersion>3.0.0-preview4.19216.2</MicrosoftExtensionsLoggingAbstractionsVersion>
+    <MicrosoftExtensionsFileProvidersEmbeddedVersion>3.0.0-preview5.19227.9</MicrosoftExtensionsFileProvidersEmbeddedVersion>
+    <MicrosoftExtensionsLoggingAbstractionsVersion>3.0.0-preview5.19227.9</MicrosoftExtensionsLoggingAbstractionsVersion>
+    <MicrosoftSourceLinkGitHubVersion>1.0.0-beta2-18618-05</MicrosoftSourceLinkGitHubVersion>
 
+    <BlazorStateVersion>1.0.0-preview5-19227-01-20190509-100700</BlazorStateVersion>
+    <BlazorExtensionsLoggingVersion>0.1.11</BlazorExtensionsLoggingVersion>
     <FixieVersion>2.0.4</FixieVersion>
     <FixieConsoleVersion>2.0.4</FixieConsoleVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>6.0.1</MediatrExtensionsMicrosoftDependencyInjectionVersion>

@@ -4,10 +4,12 @@
   using System.IO;
   using System.Linq;
   using System.Threading;
+  using BlazorHostedCSharp.Client.Features.ClientLoader;
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Hosting.Server;
   using Microsoft.AspNetCore.Hosting.Server.Features;
   using Microsoft.Extensions.DependencyInjection;
+  using Microsoft.Extensions.DependencyInjection.Extensions;
   using Microsoft.Extensions.Hosting;
 
   public class ServerFixture
@@ -20,7 +22,7 @@
         new Uri(StartAndGetRootUri()));
     }
 
-    public delegate IHostBuilder CreateHostBuilder(string[] args);
+    public delegate IHostBuilder CreateHostBuilder(string[] aArgumentArray);
 
     public CreateHostBuilder CreateHostBuilderDelegate { get; set; }
     public AspNetEnvironment Environment { get; set; } = AspNetEnvironment.Production;
@@ -72,12 +74,17 @@
         "--environment", Environment.ToString(),
       });
 
-      return hostBuilder.Build();
+      hostBuilder.ConfigureServices(ConfigureServices);
+
+      IHost host = hostBuilder.Build();
+
+      return host;
     }
 
     protected string StartAndGetRootUri()
     {
       Host = CreateWebHost();
+      // Configure services here to override any
       RunInBackgroundThread(Host.Start);
       return Host
         .Services
@@ -85,6 +92,16 @@
         .Features
         .Get<IServerAddressesFeature>()
         .Addresses.Single();
+    }
+
+    /// <summary>
+    /// Special configuration for Testing with the Test Server
+    /// </summary>
+    /// <param name="aServiceCollection"></param>
+    private void ConfigureServices(IServiceCollection aServiceCollection)
+    {
+      //
+      aServiceCollection.Replace(ServiceDescriptor.Scoped<IClientLoaderConfiguration, TestClientLoaderConfiguration>());
     }
 
   }

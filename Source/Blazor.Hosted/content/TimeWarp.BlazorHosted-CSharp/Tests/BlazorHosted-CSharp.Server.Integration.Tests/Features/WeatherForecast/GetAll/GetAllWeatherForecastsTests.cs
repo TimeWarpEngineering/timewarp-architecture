@@ -21,15 +21,12 @@
 
     public async Task ShouldGetAllWeatherForecasts()
     {
-      // Arrange
-      var getWeatherForecastsRequest = new GetWeatherForecastsRequest();
+      var getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
 
-      //Act
       GetWeatherForecastsResponse getWeatherForecastsResponse =
         await Mediator.Send(getWeatherForecastsRequest);
 
-      //Assert
-      getWeatherForecastsResponse.WeatherForecasts.Count.ShouldBe(5);
+      getWeatherForecastsResponse.WeatherForecasts.Count.ShouldBe(10);
 
     }
   }

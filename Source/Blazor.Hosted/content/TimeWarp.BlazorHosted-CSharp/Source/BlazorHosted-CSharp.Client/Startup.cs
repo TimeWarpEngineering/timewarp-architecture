@@ -1,11 +1,14 @@
 ﻿namespace BlazorHosted_CSharp.Client
 {
+  using Blazor.Extensions.Logging;
+  using BlazorHosted_CSharp.Client.Features.EventStream;
+  using BlazorHostedCSharp.Client.Features.ClientLoader;
   using BlazorState;
   using BlazorState.Services;
   using MediatR;
   using Microsoft.AspNetCore.Components.Builder;
   using Microsoft.Extensions.DependencyInjection;
-  using BlazorHosted_CSharp.Client.Features.EventStream;
+  using Microsoft.Extensions.Logging;
 
   public class Startup
   {
@@ -16,13 +19,14 @@
     {
       if (new BlazorHostingLocation().IsClientSide)
       {
-        // TODO add this back once Blazor.Extentions.Logging is updated to 0.8.0
-        //aServiceCollection.AddLogging(aLoggingBuilder => aLoggingBuilder
-        //    .AddBrowserConsole()
-        //    .SetMinimumLevel(LogLevel.Trace));
+        aServiceCollection.AddLogging(aLoggingBuilder => aLoggingBuilder
+            .AddBrowserConsole()
+            .SetMinimumLevel(LogLevel.Trace));
       };
       aServiceCollection.AddBlazorState();
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
+      aServiceCollection.AddScoped<ClientLoader>();
+      aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
     }
   }
 }

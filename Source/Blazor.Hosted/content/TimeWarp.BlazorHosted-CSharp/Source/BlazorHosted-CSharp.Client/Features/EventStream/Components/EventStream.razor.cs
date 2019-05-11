@@ -5,7 +5,7 @@
 
   public class EventStreamModel : BaseComponent
   {
-    public List<string> Events => GetState<EventStreamState>().Events;
+    public IReadOnlyList<string> Events => EventStreamState.Events;
 
   }
 }

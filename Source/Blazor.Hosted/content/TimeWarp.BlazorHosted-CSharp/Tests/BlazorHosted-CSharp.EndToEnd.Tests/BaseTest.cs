@@ -8,7 +8,7 @@ namespace BlazorHosted_CSharp.EndToEnd.Tests
   public abstract class BaseTest
   {
     protected IJavaScriptExecutor JavaScriptExecutor { get; }
-    protected TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(1);
+    protected TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
     protected IWebDriver WebDriver { get; }
 
     private ServerFixture ServerFixture { get; }
@@ -36,6 +36,14 @@ namespace BlazorHosted_CSharp.EndToEnd.Tests
       new WebDriverWait(WebDriver, Timeout)
         .Until(aWebDriver =>
           JavaScriptExecutor.ExecuteScript("return window.jsonRequestHandler;") != null
+          );
+    }
+
+    protected void WaitUntilClientCached()
+    {
+      new WebDriverWait(WebDriver, Timeout)
+        .Until(aWebDriver =>
+          JavaScriptExecutor.ExecuteScript("return window.localStorage.getItem('clientApplication');") != null
           );
     }
   }

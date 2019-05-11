@@ -18,8 +18,8 @@ namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
           UseShellExecute = true
         }
       };
-      Process.Start();
-      WaitForSelenium().Wait();
+      //Process.Start();
+      //WaitForSelenium().Wait();
     }
 
     internal async System.Threading.Tasks.Task WaitForSelenium()
@@ -31,6 +31,6 @@ namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
 
     public Process Process { get; }
 
-    public void Dispose() => Process.CloseMainWindow();
+    public void Dispose() => Process?.Close();
   }
 }
