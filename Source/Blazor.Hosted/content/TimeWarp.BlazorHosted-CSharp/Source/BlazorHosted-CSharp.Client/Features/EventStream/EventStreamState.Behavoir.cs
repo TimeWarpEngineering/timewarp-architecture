@@ -15,7 +15,7 @@
       Events = new List<string>(aEventStreamState.Events);
     }
 
-    public override object Clone() => new EventStreamState(this);
+    //public override object Clone() => new EventStreamState(this);
 
     /// <summary>
     /// Set the Initial State

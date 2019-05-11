@@ -13,7 +13,7 @@
       }
     }
 
-    public override object Clone() => new WeatherForecastsState(this);
+    //public override object Clone() => new WeatherForecastsState(this);
 
     protected override void Initialize() { }
   }

@@ -16,7 +16,7 @@
       Count = aState.Count;
     }
 
-    public override object Clone() => new CounterState(this);
+    //public override object Clone() => new CounterState(this);
 
     /// <summary>
     /// Set the Initial State

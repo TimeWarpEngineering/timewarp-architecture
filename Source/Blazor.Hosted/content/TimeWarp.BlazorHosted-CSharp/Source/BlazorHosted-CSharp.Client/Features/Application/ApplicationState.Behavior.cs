@@ -11,7 +11,7 @@
       Name = aState.Name;
     }
 
-    public override object Clone() => new ApplicationState(this);
+    //public override object Clone() => new ApplicationState(this);
 
     protected override void Initialize() => Name = "BlazorHosted_CSharp";
   }
