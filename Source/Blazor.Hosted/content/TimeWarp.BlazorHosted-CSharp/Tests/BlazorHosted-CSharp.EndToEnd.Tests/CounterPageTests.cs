@@ -29,6 +29,8 @@
     {
       // Navigate to "Counter"
       WebDriver.FindElement(By.LinkText("Counter")).Click();
+      //WebDriver.FindElement(By.CssSelector("[data-qa='NavMenuCounter']")).Click();
+      
       WaitAndAssertEqual
       (
         aExpected: "Counter Page",
