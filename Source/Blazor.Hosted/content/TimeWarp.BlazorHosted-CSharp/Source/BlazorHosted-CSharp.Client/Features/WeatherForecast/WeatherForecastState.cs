@@ -4,7 +4,7 @@
   using BlazorHosted_CSharp.Shared.Features.WeatherForecast;
   using BlazorState;
 
-  public partial class WeatherForecastsState : State<WeatherForecastsState>
+  internal partial class WeatherForecastsState : State<WeatherForecastsState>
   {
     private List<WeatherForecastDto> _WeatherForecasts;
 
@@ -14,5 +14,6 @@
     {
       _WeatherForecasts = new List<WeatherForecastDto>();
     }
+    protected override void Initialize() { }
   }
 }

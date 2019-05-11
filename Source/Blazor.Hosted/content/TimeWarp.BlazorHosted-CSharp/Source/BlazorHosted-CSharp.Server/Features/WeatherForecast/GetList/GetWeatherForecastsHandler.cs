@@ -10,7 +10,7 @@
 
   public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
   {
-    private string[] Summaries { get; }  = new[]
+    private readonly string[] Summaries = new[]
     {
       "Freezing",
       "Bracing",

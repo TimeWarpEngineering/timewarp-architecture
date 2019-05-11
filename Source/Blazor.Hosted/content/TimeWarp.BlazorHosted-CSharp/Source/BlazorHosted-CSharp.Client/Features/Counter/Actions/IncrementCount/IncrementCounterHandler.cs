@@ -5,7 +5,7 @@
   using BlazorState;
   using BlazorHosted_CSharp.Client.Features.Base;
 
-  public partial class CounterState
+  internal partial class CounterState
   {
     internal class IncrementCounterHandler : BaseHandler<IncrementCounterAction, CounterState>
     {

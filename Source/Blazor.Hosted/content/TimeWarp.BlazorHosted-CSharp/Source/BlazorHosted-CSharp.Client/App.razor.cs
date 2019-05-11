@@ -5,8 +5,9 @@
   using BlazorState.Features.JavaScriptInterop;
   using BlazorState.Features.Routing;
   using Microsoft.AspNetCore.Components;
-  using BlazorState.Features.ClientLoader;
+  
   using System;
+  using BlazorHostedCSharp.Client.Features.ClientLoader;
 
   public class AppModel : ComponentBase
   {
@@ -17,13 +18,13 @@
     [Inject] private RouteManager RouteManager { get; set; }
 
     [Inject] private ClientLoader ClientLoader { get; set; }
-    const TimeSpan DelayTimeSpan = TimeSpan.FromSeconds(10);
+    private readonly TimeSpan DelayTimeSpan = TimeSpan.FromSeconds(10);
 
     protected override async Task OnAfterRenderAsync()
     {
       await ReduxDevToolsInterop.InitAsync();
       await JsonRequestHandler.InitAsync();
-      await ClientLoader.InitAsync(DelayTimeSpan);
+      await ClientLoader.InitAsync();
     }
   }
 }

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <Description>Blazor Hosted Server</Description>
+    <Description>BlazorHosted-CSharp Server</Description>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <RestoreAdditionalProjectSources>
       https://dotnet.myget.org/F/aspnetcore-dev/api/v3/index.json;
