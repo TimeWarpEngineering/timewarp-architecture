@@ -26,6 +26,7 @@
       aServiceCollection.AddBlazorState();
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
       aServiceCollection.AddScoped<ClientLoader>();
+      aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
     }
   }
 }
