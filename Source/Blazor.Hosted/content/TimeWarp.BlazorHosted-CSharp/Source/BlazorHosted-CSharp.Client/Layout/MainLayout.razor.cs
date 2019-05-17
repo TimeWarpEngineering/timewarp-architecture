@@ -7,5 +7,6 @@
   public class MainLayoutModel : LayoutComponentBase
   {
     [Inject] public BlazorHostingLocation BlazorHostingLocation { get; set; }
+    protected const string HeadingHeight = "52px";
   }
 }

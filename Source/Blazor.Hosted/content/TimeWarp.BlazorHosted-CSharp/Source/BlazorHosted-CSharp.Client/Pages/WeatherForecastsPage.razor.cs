@@ -5,7 +5,9 @@
 
   public class WeatherForecastsPageModel : BaseComponent
   {
+    public const string Route = "/weatherforecasts";
+
     protected override async Task OnInitAsync() =>
-      await Mediator.Send(new Features.WeatherForecast.FetchWeatherForecastsRequest());
+      await Mediator.Send(new Features.WeatherForecast.FetchWeatherForecastsAction());
   }
 }
