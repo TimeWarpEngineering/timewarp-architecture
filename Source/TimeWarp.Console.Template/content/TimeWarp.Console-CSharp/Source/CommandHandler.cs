@@ -25,8 +25,8 @@
         var request = (IRequest)Activator.CreateInstance(Type);
         foreach (SymbolResult symbolResult in aInvocationContext.ParseResult.CommandResult.Children)
         {
-          var result = (SuccessfulArgumentParseResult<object>)symbolResult.Result;
-          Type.GetProperty(symbolResult.Name).SetValue(request, result.Value);
+          var result = (SuccessfulArgumentResult<object>)symbolResult.ArgumentResult;
+          Type.GetProperty(symbolResult.Name).SetValue(request, result.Value); // "Haa",9,7,"Ha"
         }
 
         await Mediator.Send(request);
