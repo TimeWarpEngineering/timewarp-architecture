@@ -44,8 +44,8 @@
            aOptions.SerializerSettings.ContractResolver =
               new DefaultContractResolver());
 
-      aServiceCollection.AddResponseCompression(opts => opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-                  new[] { "application/octet-stream" }));
+      aServiceCollection.AddResponseCompression(aResponseCompressionOptions =>
+        aResponseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/octet-stream" }));
 
       aServiceCollection.AddBlazorState((a) => a.Assemblies =
        new Assembly[] {

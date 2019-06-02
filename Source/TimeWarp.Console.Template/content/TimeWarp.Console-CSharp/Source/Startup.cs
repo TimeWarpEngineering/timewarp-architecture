@@ -13,7 +13,8 @@
   {
     public void Configure(TimeWarpCommandLineBuilder aTimeWarpCommandLineBuilder)
     {
-      aTimeWarpCommandLineBuilder.AddVersionOption()
+      aTimeWarpCommandLineBuilder
+        .UseVersionOption()
         // middleware
         .UseHelp()
         .UseParseDirective()
