@@ -2,8 +2,12 @@
 {
   using System;
   using System.Reflection;
+  using System.Text.Json.Serialization;
   using BlazorHosted_CSharp.Client;
-  using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
+  using BlazorHosted_CSharp.Client.Features.Application;
+  using BlazorHosted_CSharp.Client.Features.Counter;
+  using BlazorHosted_CSharp.Client.Features.EventStream;
+  using BlazorHosted_CSharp.Client.Features.WeatherForecast;
   using BlazorHostedCSharp.Client.Features.ClientLoader;
   using BlazorState;
   using Microsoft.AspNetCore.Blazor.Hosting;
@@ -18,18 +22,16 @@
     public TestFixture(BlazorStateTestServer aBlazorStateTestServer)
     {
       BlazorStateTestServer = aBlazorStateTestServer;
-      IWebAssemblyHostBuilder webAssemblyHostBuilder =
-        BlazorWebAssemblyHost.CreateDefaultBuilder()
-          //.UseBlazorStartup<Startup>()
+      WebAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
           .ConfigureServices(ConfigureServices);
 
-      ServiceProvider = webAssemblyHostBuilder.Build().Services;
     }
 
+    public IWebAssemblyHostBuilder WebAssemblyHostBuilder { get; }
     /// <summary>
     /// This is the ServiceProvider that will be used by the Client
     /// </summary>
-    public IServiceProvider ServiceProvider { get; set; }
+    public IServiceProvider ServiceProvider => WebAssemblyHostBuilder.Build().Services;
 
     private BlazorStateTestServer BlazorStateTestServer { get; }
 
@@ -40,9 +42,25 @@
     private void ConfigureServices(IServiceCollection aServiceCollection)
     {
       aServiceCollection.AddSingleton(BlazorStateTestServer.CreateClient());
-      aServiceCollection.AddBlazorState(aOptions => aOptions.Assemblies =
-        new Assembly[] { typeof(Startup).GetTypeInfo().Assembly });
+      aServiceCollection.AddBlazorState
+      (
+        aOptions => aOptions.Assemblies =
+        new Assembly[] { typeof(Startup).GetTypeInfo().Assembly }
+      );
+
+      aServiceCollection.AddSingleton
+      (
+        new JsonSerializerOptions
+        {
+          PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        }
+      );
+
       aServiceCollection.AddSingleton<IClientLoaderConfiguration, ClientLoaderTestConfiguration>();
+      aServiceCollection.AddTransient<ApplicationState>();
+      aServiceCollection.AddTransient<CounterState>();
+      aServiceCollection.AddTransient<EventStreamState>();
+      aServiceCollection.AddTransient<WeatherForecastsState>();
     }
   }
 }

@@ -2,6 +2,7 @@
 {
   using System.Collections.Generic;
   using System.Reflection;
+  using System.Text.Json.Serialization;
   using BlazorHosted_CSharp.Shared.Features.WeatherForecast;
   using BlazorState;
   using Microsoft.JSInterop;
@@ -10,11 +11,11 @@
   {
     public override WeatherForecastsState Hydrate(IDictionary<string, object> aKeyValuePairs)
     {
-      var newWeatherForecastsState = new WeatherForecastsState
+      string json = aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(WeatherForecasts))].ToString();
+      var newWeatherForecastsState = new WeatherForecastsState()
       {
-        _WeatherForecasts = Json.Deserialize<List<WeatherForecastDto>>(
-          aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(WeatherForecasts))].ToString()),
-        Guid = new System.Guid((string)aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))]),
+        _WeatherForecasts = JsonSerializer.Parse<List<WeatherForecastDto>>(json, new JsonSerializerOptions {PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
+        Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
       };
 
       return newWeatherForecastsState;

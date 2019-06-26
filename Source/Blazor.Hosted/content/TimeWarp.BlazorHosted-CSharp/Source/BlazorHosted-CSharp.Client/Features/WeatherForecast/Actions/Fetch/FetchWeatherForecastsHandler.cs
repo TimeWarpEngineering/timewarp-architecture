@@ -7,14 +7,20 @@
   using BlazorState;
   using BlazorHosted_CSharp.Shared.Features.WeatherForecast;
   using Microsoft.AspNetCore.Components;
+  using System.Text.Json.Serialization;
 
   internal partial class WeatherForecastsState
   {
     public class FetchWeatherForecastsHandler : RequestHandler<FetchWeatherForecastsAction, WeatherForecastsState>
     {
-      public FetchWeatherForecastsHandler(IStore aStore, HttpClient aHttpClient) : base(aStore)
+      private readonly JsonSerializerOptions JsonSerializerOptions;
+      public FetchWeatherForecastsHandler(
+        IStore aStore, 
+        HttpClient aHttpClient,
+        JsonSerializerOptions aJsonSerializerOptions) : base(aStore)
       {
         HttpClient = aHttpClient;
+        JsonSerializerOptions = aJsonSerializerOptions;
       }
 
       private HttpClient HttpClient { get; }
@@ -26,10 +32,15 @@
       {
         var getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
 
-        //TODO when timewarp-extentions is published to nuget we can use it here to convert object to querystring.
+        using HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync
+        (
+          $"{GetWeatherForecastsRequest.Route}?days={getWeatherForecastsRequest.Days}"
+        );
+
+        string content = await httpResponseMessage.Content.ReadAsStringAsync();
+
         GetWeatherForecastsResponse getWeatherForecastsResponse =
-          await HttpClient.GetJsonAsync<GetWeatherForecastsResponse>
-          ($"{GetWeatherForecastsRequest.Route}?days={getWeatherForecastsRequest.Days}");
+          JsonSerializer.Parse<GetWeatherForecastsResponse>(content, JsonSerializerOptions);
 
         List<WeatherForecastDto> weatherForecasts = getWeatherForecastsResponse.WeatherForecasts;
         WeatherForecastsState._WeatherForecasts = weatherForecasts;

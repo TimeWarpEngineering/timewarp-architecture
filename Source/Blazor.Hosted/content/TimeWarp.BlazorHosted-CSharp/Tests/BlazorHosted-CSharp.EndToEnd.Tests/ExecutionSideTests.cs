@@ -46,7 +46,6 @@
       JavaScriptExecutor.ExecuteScript("window.localStorage.setItem('executionSide','client');");
 
       Navigate("/", aReload: true);
-      //await Task.Delay(TimeSpan.FromSeconds(10));
       WaitUntilClientCached();
 
       WaitAndAssertEqual(

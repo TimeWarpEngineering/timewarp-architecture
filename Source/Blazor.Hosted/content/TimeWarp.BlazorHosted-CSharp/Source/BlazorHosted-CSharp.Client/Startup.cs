@@ -1,14 +1,16 @@
 ﻿namespace BlazorHosted_CSharp.Client
 {
-  using Blazor.Extensions.Logging;
+  using BlazorHosted_CSharp.Client.Features.Application;
+  using BlazorHosted_CSharp.Client.Features.Counter;
   using BlazorHosted_CSharp.Client.Features.EventStream;
+  using BlazorHosted_CSharp.Client.Features.WeatherForecast;
   using BlazorHostedCSharp.Client.Features.ClientLoader;
   using BlazorState;
-  using BlazorState.Services;
   using MediatR;
   using Microsoft.AspNetCore.Components.Builder;
   using Microsoft.Extensions.DependencyInjection;
-  using Microsoft.Extensions.Logging;
+  using System.Reflection;
+  using System.Text.Json.Serialization;
 
   public class Startup
   {
@@ -17,16 +19,31 @@
 
     public void ConfigureServices(IServiceCollection aServiceCollection)
     {
-      if (new BlazorHostingLocation().IsClientSide)
-      {
-        aServiceCollection.AddLogging(aLoggingBuilder => aLoggingBuilder
-            .AddBrowserConsole()
-            .SetMinimumLevel(LogLevel.Trace));
-      };
-      aServiceCollection.AddBlazorState();
+      aServiceCollection.AddBlazorState
+      (
+        (aOptions) => aOptions.Assemblies =
+          new Assembly[] 
+          {
+            typeof(Startup).GetTypeInfo().Assembly,
+          }
+      );
+
+      aServiceCollection.AddSingleton
+      (
+        new JsonSerializerOptions
+        {
+          PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        }
+      );
+
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
       aServiceCollection.AddScoped<ClientLoader>();
       aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
+      
+      aServiceCollection.AddTransient<ApplicationState>();
+      aServiceCollection.AddTransient<CounterState>();
+      aServiceCollection.AddTransient<EventStreamState>();
+      aServiceCollection.AddTransient<WeatherForecastsState>();
     }
   }
 }
