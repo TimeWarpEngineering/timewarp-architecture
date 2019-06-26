@@ -23,22 +23,22 @@
 
   <!--Versions of packages used across the solution-->
   <PropertyGroup Label="Package Versions">
-    <BlazorPreviewVersion>preview5-19227-01</BlazorPreviewVersion>
-    <MicrosoftAspNetCoreVersion>3.0.0-preview5-19227-01</MicrosoftAspNetCoreVersion>
+    <BlazorPreviewVersion>preview6.19307.2</BlazorPreviewVersion>
+    <MicrosoftAspNetCoreVersion>3.0.0-preview6.19307.2</MicrosoftAspNetCoreVersion>
     <MicrosoftAspNetCoreBlazorVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorVersion>
     <MicrosoftAspNetCoreComponentsBrowserVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreComponentsBrowserVersion>
     <MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>
     <MicrosoftAspNetCoreTestHostVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreTestHostVersion>
-    <MicrosoftExtensionsFileProvidersEmbeddedVersion>3.0.0-preview5.19227.9</MicrosoftExtensionsFileProvidersEmbeddedVersion>
-    <MicrosoftExtensionsLoggingAbstractionsVersion>3.0.0-preview5.19227.9</MicrosoftExtensionsLoggingAbstractionsVersion>
-    <MicrosoftSourceLinkGitHubVersion>1.0.0-beta2-18618-05</MicrosoftSourceLinkGitHubVersion>
+    <MicrosoftExtensionsFileProvidersEmbeddedVersion>3.0.0-preview6.19304.6</MicrosoftExtensionsFileProvidersEmbeddedVersion>
+    <MicrosoftExtensionsLoggingAbstractionsVersion>3.0.0-preview6.19304.6</MicrosoftExtensionsLoggingAbstractionsVersion>
+    <MicrosoftSourceLinkGitHubVersion>1.0.0-beta2-19324-01</MicrosoftSourceLinkGitHubVersion>
 
-    <BlazorStateVersion>1.0.0-preview5-19227-01-20190509-100700</BlazorStateVersion>
+    <BlazorStateVersion>1.0.0-preview6.19307.2-20190625-215823</BlazorStateVersion>
     <BlazorExtensionsLoggingVersion>0.1.11</BlazorExtensionsLoggingVersion>
     <FixieVersion>2.0.4</FixieVersion>
     <FixieConsoleVersion>2.0.4</FixieConsoleVersion>
-    <MediatrExtensionsMicrosoftDependencyInjectionVersion>6.0.1</MediatrExtensionsMicrosoftDependencyInjectionVersion>
-    <MediatrVersion>6.0.0</MediatrVersion>
+    <MediatrExtensionsMicrosoftDependencyInjectionVersion>7.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
+    <MediatrVersion>7.0.0</MediatrVersion>
     <MoqVersion>4.10.1</MoqVersion>
     <ScrutorVersion>3.0.2</ScrutorVersion>
     <SeleniumSupportVersion>3.141.0</SeleniumSupportVersion>

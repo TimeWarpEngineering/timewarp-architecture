@@ -1,6 +1,7 @@
 ﻿namespace BlazorHosted_CSharp.Client.Features.Application
 {
   using System.Collections.Generic;
+  using System.Reflection;
   using BlazorState;
   using Microsoft.JSInterop;
 
@@ -10,9 +11,16 @@
     {
       return new ApplicationState
       {
-        Guid = new System.Guid((string)aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))]),
-        Name = (string)aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Name))],
+        Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
+        Name = aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Name))].ToString(),
       };
+    }
+    internal void Initialize(string aName, string aLogo, bool aIsMenuExpanded)
+    {
+      ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
+      Name = aName;
+      Logo = aLogo;
+      IsMenuExpanded = aIsMenuExpanded;
     }
   }
 }

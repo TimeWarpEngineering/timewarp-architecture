@@ -1,10 +1,10 @@
-using System;
-using System.Diagnostics;
-using System.Net.Http;
-using System.Threading;
-
 namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
 {
+  using System;
+  using System.Diagnostics;
+  using System.Net.Http;
+  using System.Threading;
+
   public class SeleniumStandAlone : IDisposable
   {
     public SeleniumStandAlone()
@@ -18,19 +18,19 @@ namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
           UseShellExecute = true
         }
       };
-      //Process.Start();
-      //WaitForSelenium().Wait();
+      Process.Start();
+      WaitForSelenium().Wait();
     }
 
     internal async System.Threading.Tasks.Task WaitForSelenium()
     {
-      var httpClient = new HttpClient();
-      HttpResponseMessage response = await httpClient.GetAsync("http://localhost:4444/wd/hub");
+      using var httpClient = new HttpClient();
+      using HttpResponseMessage response = await httpClient.GetAsync("http://localhost:4444/wd/hub");
       response.EnsureSuccessStatusCode();
     }
 
     public Process Process { get; }
 
-    public void Dispose() => Process?.Close();
+    public void Dispose() => Process?.CloseMainWindow();
   }
 }

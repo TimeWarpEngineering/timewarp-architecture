@@ -1,6 +1,4 @@
-﻿# Primary output is a new Nuget Package for Timewarp-Blazor Template
-name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
-trigger:
+﻿trigger:
  branches:
   include:
   - master

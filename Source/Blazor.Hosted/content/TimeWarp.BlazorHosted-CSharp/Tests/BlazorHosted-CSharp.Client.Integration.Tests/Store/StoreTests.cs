@@ -25,10 +25,11 @@
 
     public void ShouldLoadStatesFromJson()
     {
+      //Arrange
       string jsonString = File.ReadAllText("./Store/Store.json");
-
+      //Act
       ReduxDevToolsStore.LoadStatesFromJson(jsonString);
-
+      // Assert
       ApplicationState applicationState = Store.GetState<ApplicationState>();
       applicationState.Name.ShouldBe("Blazor State Demo Application");
       applicationState.Guid.ToString().ShouldBe("5a2efcec-6297-4254-a2dc-30e4e567e549");
