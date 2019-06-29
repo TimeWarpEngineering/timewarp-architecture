@@ -16,8 +16,10 @@
     private IStore Store { get; }
     private WeatherForecastsState WeatherForecastsState { get; set; }
 
-    public FetchWeatherForecastTests(
-                      TestFixture aTestFixture)
+    public FetchWeatherForecastTests
+    (
+      TestFixture aTestFixture
+    )
     {
       ServiceProvider = aTestFixture.ServiceProvider;
       Mediator = ServiceProvider.GetService<IMediator>();
