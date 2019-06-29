@@ -28,7 +28,7 @@
       };
 
       Logger.LogDebug("PostPipelineNotificationRequestPostProcessor");
-      await Mediator.Publish(notification);
+      await Mediator.Publish(notification, aCancellationToken);
     }
   }
 }

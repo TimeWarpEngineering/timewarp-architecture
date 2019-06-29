@@ -24,20 +24,27 @@
       "Scorching"
     };
 
-    public async Task<GetWeatherForecastsResponse> Handle(
+    public async Task<GetWeatherForecastsResponse> Handle
+    (
       GetWeatherForecastsRequest aGetWeatherForecastsRequest,
-      CancellationToken aCancellationToken)
+      CancellationToken aCancellationToken
+    )
     {
       var response = new GetWeatherForecastsResponse(aGetWeatherForecastsRequest.Id);
       var random = new Random();
       var weatherForecasts = new List<WeatherForecastDto>();
-      Enumerable.Range(1, aGetWeatherForecastsRequest.Days).ToList().ForEach(aIndex => response.WeatherForecasts.Add(
-        new WeatherForecastDto
-        {
-          Date = DateTime.Now.AddDays(aIndex),
-          TemperatureC = random.Next(-20, 55),
-          Summary = Summaries[random.Next(Summaries.Length)]
-        }));
+      Enumerable.Range(1, aGetWeatherForecastsRequest.Days).ToList().ForEach
+      (
+        aIndex => response.WeatherForecasts.Add
+	    (
+          new WeatherForecastDto
+          (
+            aDate: DateTime.Now.AddDays(aIndex),
+            aSummary: Summaries[random.Next(Summaries.Length)],
+            aTemperatureC: random.Next(-20, 55)
+          )
+        )
+      );
 
       return await Task.Run(() => response);
     }

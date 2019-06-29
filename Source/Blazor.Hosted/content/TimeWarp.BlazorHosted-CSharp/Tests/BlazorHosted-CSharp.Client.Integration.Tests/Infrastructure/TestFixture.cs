@@ -1,8 +1,5 @@
 ﻿namespace BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure
 {
-  using System;
-  using System.Reflection;
-  using System.Text.Json.Serialization;
   using BlazorHosted_CSharp.Client;
   using BlazorHosted_CSharp.Client.Features.Application;
   using BlazorHosted_CSharp.Client.Features.Counter;
@@ -12,6 +9,9 @@
   using BlazorState;
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.Extensions.DependencyInjection;
+  using System;
+  using System.Reflection;
+  using System.Text.Json.Serialization;
 
   /// <summary>
   /// A known starting state(baseline) for all tests.
@@ -19,21 +19,21 @@
   /// </summary>
   public class TestFixture//: IMediatorFixture, IStoreFixture, IServiceProviderFixture
   {
-    public TestFixture(BlazorStateTestServer aBlazorStateTestServer)
-    {
-      BlazorStateTestServer = aBlazorStateTestServer;
-      WebAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
-          .ConfigureServices(ConfigureServices);
-
-    }
-
-    public IWebAssemblyHostBuilder WebAssemblyHostBuilder { get; }
     /// <summary>
     /// This is the ServiceProvider that will be used by the Client
     /// </summary>
     public IServiceProvider ServiceProvider => WebAssemblyHostBuilder.Build().Services;
 
+    public IWebAssemblyHostBuilder WebAssemblyHostBuilder { get; }
+
     private BlazorStateTestServer BlazorStateTestServer { get; }
+
+    public TestFixture(BlazorStateTestServer aBlazorStateTestServer)
+    {
+      BlazorStateTestServer = aBlazorStateTestServer;
+      WebAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
+          .ConfigureServices(ConfigureServices);
+    }
 
     /// <summary>
     /// Special configuration for Testing with the Test Server

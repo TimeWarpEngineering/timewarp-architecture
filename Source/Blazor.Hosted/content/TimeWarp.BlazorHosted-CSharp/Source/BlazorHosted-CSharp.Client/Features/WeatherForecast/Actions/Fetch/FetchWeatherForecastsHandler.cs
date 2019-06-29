@@ -14,10 +14,12 @@
     public class FetchWeatherForecastsHandler : RequestHandler<FetchWeatherForecastsAction, WeatherForecastsState>
     {
       private readonly JsonSerializerOptions JsonSerializerOptions;
-      public FetchWeatherForecastsHandler(
+      public FetchWeatherForecastsHandler
+      (
         IStore aStore, 
         HttpClient aHttpClient,
-        JsonSerializerOptions aJsonSerializerOptions) : base(aStore)
+        JsonSerializerOptions aJsonSerializerOptions
+      ) : base(aStore)
       {
         HttpClient = aHttpClient;
         JsonSerializerOptions = aJsonSerializerOptions;
@@ -26,9 +28,11 @@
       private HttpClient HttpClient { get; }
       private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
-      public override async Task<WeatherForecastsState> Handle(
+      public override async Task<WeatherForecastsState> Handle
+      (
         FetchWeatherForecastsAction aFetchWeatherForecastsRequest,
-        CancellationToken aCancellationToken)
+        CancellationToken aCancellationToken
+      )
       {
         var getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
 
