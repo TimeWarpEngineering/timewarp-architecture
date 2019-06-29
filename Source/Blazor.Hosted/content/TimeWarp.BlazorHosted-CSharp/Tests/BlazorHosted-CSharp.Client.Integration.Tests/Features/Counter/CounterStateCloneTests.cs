@@ -1,23 +1,23 @@
 ﻿namespace BlazorHosted_CSharp.Client.Integration.Tests.Features.Counter
 {
   using AnyClone;
+  using BlazorHosted_CSharp.Client.Features.Counter;
+  using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
   using BlazorState;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
   using System;
-  using BlazorHosted_CSharp.Client.Features.Counter;
-  using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
 
   internal class CounterStateCloneTests
   {
+    private CounterState CounterState { get; set; }
+
     public CounterStateCloneTests(TestFixture aTestFixture)
     {
       IServiceProvider serviceProvider = aTestFixture.ServiceProvider;
       IStore store = serviceProvider.GetService<IStore>();
       CounterState = store.GetState<CounterState>();
     }
-
-    private CounterState CounterState { get; set; }
 
     public void ShouldClone()
     {
@@ -32,6 +32,5 @@
       CounterState.Count.ShouldBe(clone.Count);
       CounterState.Guid.ShouldNotBe(clone.Guid);
     }
-
   }
 }

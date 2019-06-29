@@ -1,11 +1,11 @@
 ﻿namespace BlazorHosted_CSharp.Client.Features.WeatherForecast
 {
-  using System.Collections.Generic;
-  using System.Reflection;
-  using System.Text.Json.Serialization;
   using BlazorHosted_CSharp.Shared.Features.WeatherForecast;
   using BlazorState;
   using Microsoft.JSInterop;
+  using System.Collections.Generic;
+  using System.Reflection;
+  using System.Text.Json.Serialization;
 
   internal partial class WeatherForecastsState : State<WeatherForecastsState>
   {
@@ -14,7 +14,7 @@
       string json = aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(WeatherForecasts))].ToString();
       var newWeatherForecastsState = new WeatherForecastsState()
       {
-        _WeatherForecasts = JsonSerializer.Parse<List<WeatherForecastDto>>(json, new JsonSerializerOptions {PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
+        _WeatherForecasts = JsonSerializer.Parse<List<WeatherForecastDto>>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
         Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
       };
 

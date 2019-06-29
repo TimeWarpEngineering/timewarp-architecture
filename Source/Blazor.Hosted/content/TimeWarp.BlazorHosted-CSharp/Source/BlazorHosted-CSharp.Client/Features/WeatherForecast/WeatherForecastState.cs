@@ -14,6 +14,8 @@
     {
       _WeatherForecasts = new List<WeatherForecastDto>();
     }
+    
     protected override void Initialize() { }
+    
   }
 }

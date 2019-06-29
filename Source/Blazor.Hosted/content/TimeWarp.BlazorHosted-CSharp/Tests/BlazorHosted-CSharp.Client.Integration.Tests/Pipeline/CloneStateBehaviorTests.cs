@@ -1,16 +1,21 @@
 ﻿namespace BlazorHosted_CSharp.Client.Integration.Tests.Pipeline
 {
-  using System;
-  using System.Threading.Tasks;
+  using BlazorHosted_CSharp.Client.Features.Counter;
+  using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
   using BlazorState;
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
-  using BlazorHosted_CSharp.Client.Features.Counter;
-  using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
+  using System;
+  using System.Threading.Tasks;
 
   internal class CloneStateBehaviorTests
   {
+    private CounterState CounterState { get; set; }
+    private IMediator Mediator { get; }
+    private IServiceProvider ServiceProvider { get; }
+    private IStore Store { get; }
+
     public CloneStateBehaviorTests(TestFixture aTestFixture)
     {
       ServiceProvider = aTestFixture.ServiceProvider;
@@ -18,11 +23,6 @@
       Store = ServiceProvider.GetService<IStore>();
       CounterState = Store.GetState<CounterState>();
     }
-
-    private CounterState CounterState { get; set; }
-    private IMediator Mediator { get; }
-    private IServiceProvider ServiceProvider { get; }
-    private IStore Store { get; }
 
     public async Task ShouldCloneState()
     {
@@ -36,7 +36,6 @@
         Amount = -2
       };
       //Act
-      // Send Request
       CounterState = await Mediator.Send(incrementCounterRequest);
 
       //Assert
@@ -46,7 +45,6 @@
     public async Task ShouldRollBackStateAndThrow()
     {
       // Arrange
-      // Setup know state.
       CounterState.Initialize(aCount: 22);
       Guid preActionGuid = CounterState.Guid;
 

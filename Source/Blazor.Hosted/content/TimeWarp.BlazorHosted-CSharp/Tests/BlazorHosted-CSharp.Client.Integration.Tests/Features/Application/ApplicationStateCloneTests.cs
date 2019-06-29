@@ -1,15 +1,17 @@
 ﻿namespace BlazorHosted_CSharp.Client.Integration.Tests.Features.Application
 {
   using AnyClone;
+  using BlazorHosted_CSharp.Client.Features.Application;
+  using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
   using BlazorState;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
   using System;
-  using BlazorHosted_CSharp.Client.Features.Application;
-  using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
 
   internal class ApplicationStateCloneTests
   {
+    private ApplicationState ApplicationState { get; set; }
+
     public ApplicationStateCloneTests(TestFixture aTestFixture)
     {
       IServiceProvider serviceProvider = aTestFixture.ServiceProvider;
@@ -17,12 +19,10 @@
       ApplicationState = store.GetState<ApplicationState>();
     }
 
-    private ApplicationState ApplicationState { get; set; }
-
     public void ShouldClone()
     {
       //Arrange
-      ApplicationState.Initialize(aName:"TestName", aLogo:"SomeUrl", aIsMenuExpanded:false);
+      ApplicationState.Initialize(aName: "TestName", aLogo: "SomeUrl", aIsMenuExpanded: false);
 
       //Act
       ApplicationState clone = ApplicationState.Clone();
@@ -34,6 +34,5 @@
       ApplicationState.IsMenuExpanded.ShouldBe(clone.IsMenuExpanded);
       ApplicationState.Guid.ShouldNotBe(clone.Guid);
     }
-
   }
 }
