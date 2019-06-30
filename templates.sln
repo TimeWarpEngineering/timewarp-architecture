@@ -22,6 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{7565AEE0
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.EndToEnd.Tests", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Tests\BlazorHosted-CSharp.EndToEnd.Tests\BlazorHosted-CSharp.EndToEnd.Tests.csproj", "{28802DBF-22DE-40DF-98AA-52E21EA56C77}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Server.Integration.Tests", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Tests\BlazorHosted-CSharp.Server.Integration.Tests\BlazorHosted-CSharp.Server.Integration.Tests.csproj", "{BCF1E778-E3CB-4791-9BB6-0083D3570C57}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{28802DBF-22DE-40DF-98AA-52E21EA56C77}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{28802DBF-22DE-40DF-98AA-52E21EA56C77}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{28802DBF-22DE-40DF-98AA-52E21EA56C77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCF1E778-E3CB-4791-9BB6-0083D3570C57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCF1E778-E3CB-4791-9BB6-0083D3570C57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCF1E778-E3CB-4791-9BB6-0083D3570C57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCF1E778-E3CB-4791-9BB6-0083D3570C57}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -43,6 +49,7 @@ Global
 		{86F1402B-57B7-4469-9E7F-F0BE4ED7F1A9} = {82CB67A3-F807-4963-AE6F-27AA99AB3552}
 		{7565AEE0-6406-47A5-A8ED-564EF796D53F} = {86F1402B-57B7-4469-9E7F-F0BE4ED7F1A9}
 		{28802DBF-22DE-40DF-98AA-52E21EA56C77} = {7565AEE0-6406-47A5-A8ED-564EF796D53F}
+		{BCF1E778-E3CB-4791-9BB6-0083D3570C57} = {7565AEE0-6406-47A5-A8ED-564EF796D53F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {45975B52-2924-43D1-921B-79161479954E}
