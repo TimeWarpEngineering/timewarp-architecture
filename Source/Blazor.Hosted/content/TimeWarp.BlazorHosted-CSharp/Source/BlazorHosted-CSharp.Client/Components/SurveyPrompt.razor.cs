@@ -4,7 +4,6 @@
 
   public class SurveyPromptModel : ComponentBase
   {
-    [Parameter]
-    protected string Title { get; set; } // Demonstrates how a parent component can supply parameters
+    [Parameter] protected string Title { get; set; } // Demonstrates how a parent component can supply parameters
   }
 }

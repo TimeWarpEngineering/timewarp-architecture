@@ -34,7 +34,8 @@
       Navigate("/", aReload: true);
       WaitUntilLoaded();
 
-      WaitAndAssertEqual(
+      WaitAndAssertEqual
+      (
         aExpected: "Server Side",
         aActual: () => WebDriver.FindElement(By.CssSelector("[data-qa='BlazorLocation']")).Text
       );
@@ -48,7 +49,8 @@
       Navigate("/", aReload: true);
       WaitUntilClientCached();
 
-      WaitAndAssertEqual(
+      WaitAndAssertEqual
+      (
         aExpected: "Client Side",
         aActual: () => WebDriver.FindElement(By.CssSelector("[data-qa='BlazorLocation']")).Text
       );

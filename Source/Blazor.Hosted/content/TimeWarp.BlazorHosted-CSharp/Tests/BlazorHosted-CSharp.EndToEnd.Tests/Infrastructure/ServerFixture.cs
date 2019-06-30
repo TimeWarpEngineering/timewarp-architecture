@@ -60,19 +60,23 @@
     {
       if (CreateHostBuilderDelegate == null)
       {
-        throw new InvalidOperationException(
-            $"No value was provided for {nameof(CreateHostBuilderDelegate)}");
+        throw new InvalidOperationException
+        (
+            $"No value was provided for {nameof(CreateHostBuilderDelegate)}"
+        );
       }
 
-      string sitePath = FindSitePath(
-                CreateHostBuilderDelegate.Method.DeclaringType.Assembly.GetName().Name);
+      string sitePath = FindSitePath(CreateHostBuilderDelegate.Method.DeclaringType.Assembly.GetName().Name);
 
-      IHostBuilder hostBuilder = CreateHostBuilderDelegate(new[]
-      {
-        "--urls", "http://127.0.0.1:0",
-        "--contentroot", sitePath,
-        "--environment", Environment.ToString(),
-      });
+      IHostBuilder hostBuilder = CreateHostBuilderDelegate
+      (
+        new[]
+        {
+          "--urls", "http://127.0.0.1:0",
+          "--contentroot", sitePath,
+          "--environment", Environment.ToString(),
+        }
+      );
 
       hostBuilder.ConfigureServices(ConfigureServices);
 
