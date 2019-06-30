@@ -16,6 +16,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hosted", "Hosted", "{86F1402B-57B7-4469-9E7F-F0BE4ED7F1A9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{7565AEE0-6406-47A5-A8ED-564EF796D53F}"
+	ProjectSection(SolutionItems) = preProject
+		Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Tests\BlazorHosted-CSharp.Client.Integration.Tests\BlazorHosted-CSharp.Client.Integration.Tests.csproj = Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Tests\BlazorHosted-CSharp.Client.Integration.Tests\BlazorHosted-CSharp.Client.Integration.Tests.csproj
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
