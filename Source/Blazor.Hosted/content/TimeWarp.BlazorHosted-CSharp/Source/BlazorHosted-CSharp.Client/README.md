@@ -55,5 +55,5 @@ The BaseComponent would not be required to inherit from a Blazor-State component
 but is added here for simplicity.
 
 # Extending the Pipeline 
-There is a sample `MyBehavoir` to show how one can add their own behaviors (middle-ware) into the pipeline.
+There is a sample `MyBehavior` to show how one can add their own behaviors (middle-ware) into the pipeline.
 
