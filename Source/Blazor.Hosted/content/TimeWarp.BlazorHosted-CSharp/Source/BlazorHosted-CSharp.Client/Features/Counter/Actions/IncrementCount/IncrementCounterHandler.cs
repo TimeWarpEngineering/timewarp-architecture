@@ -13,11 +13,11 @@
 
       public override Task<CounterState> Handle
       (
-        IncrementCounterAction aIncrementCounterRequest,
+        IncrementCounterAction aIncrementCounterAction,
         CancellationToken aCancellationToken
       )
       {
-        CounterState.Count += aIncrementCounterRequest.Amount;
+        CounterState.Count += aIncrementCounterAction.Amount;
         return Task.FromResult(CounterState);
       }
     }
