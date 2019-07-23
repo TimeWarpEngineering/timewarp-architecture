@@ -2,10 +2,11 @@
 {
   using BlazorHosted_CSharp.Client.Features.Base.Components;
   using BlazorHosted_CSharp.Client.Features.Counter;
+  using System.Threading.Tasks;
 
   public class CounterModel : BaseComponent
   {
-    internal void ButtonClick() =>
-      Mediator.Send(new IncrementCounterAction { Amount = 5 });
+    internal async Task ButtonClick() =>
+      _ = await Mediator.Send(new IncrementCounterAction { Amount = 5 });
   }
 }
