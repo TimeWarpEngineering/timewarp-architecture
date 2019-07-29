@@ -8,9 +8,11 @@
 
   internal class PrePipelineNotificationRequestPreProcessor<TRequest> : IRequestPreProcessor<TRequest>
   {
-    public PrePipelineNotificationRequestPreProcessor(
+    public PrePipelineNotificationRequestPreProcessor
+    (
       ILogger<PrePipelineNotificationRequestPreProcessor<TRequest>> aLogger,
-      IMediator aMediator)
+      IMediator aMediator
+    )
     {
       Logger = aLogger;
       Mediator = aMediator;

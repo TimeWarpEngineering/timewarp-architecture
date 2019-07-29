@@ -67,11 +67,13 @@
       // Add command Options from properties
       foreach (PropertyInfo propertyInfo in aType.GetProperties())
       {
-        var option = new Option(
+        var option = new Option
+        (
           alias: $"--{propertyInfo.Name}",
           description: XmlDocReader.GetDescriptionForPropertyInfo(propertyInfo),
           argument: CreateGenericArgument(propertyInfo.PropertyType),
-          isHidden: false);
+          isHidden: false
+        );
         command.AddOption(option);
       }
 

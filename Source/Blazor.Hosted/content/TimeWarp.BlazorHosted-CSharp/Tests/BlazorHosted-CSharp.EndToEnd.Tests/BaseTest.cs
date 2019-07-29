@@ -1,10 +1,10 @@
-﻿using System;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
-using BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure;
-
-namespace BlazorHosted_CSharp.EndToEnd.Tests
+﻿namespace BlazorHosted_CSharp.EndToEnd.Tests
 {
+  using BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure;
+  using OpenQA.Selenium;
+  using OpenQA.Selenium.Support.UI;
+  using System;
+
   public abstract class BaseTest
   {
     protected IJavaScriptExecutor JavaScriptExecutor { get; }
@@ -31,19 +31,19 @@ namespace BlazorHosted_CSharp.EndToEnd.Tests
       WebDriver.Navigate().GoToUrl(absoluteUrl);
     }
 
-    protected void WaitUntilLoaded()
-    {
-      new WebDriverWait(WebDriver, Timeout)
-        .Until(aWebDriver =>
-          JavaScriptExecutor.ExecuteScript("return window.jsonRequestHandler;") != null
-          );
-    }
-
     protected void WaitUntilClientCached()
     {
       new WebDriverWait(WebDriver, Timeout)
         .Until(aWebDriver =>
           JavaScriptExecutor.ExecuteScript("return window.localStorage.getItem('clientApplication');") != null
+          );
+    }
+
+    protected void WaitUntilLoaded()
+    {
+      new WebDriverWait(WebDriver, Timeout)
+        .Until(aWebDriver =>
+          JavaScriptExecutor.ExecuteScript("return window.jsonRequestHandler;") != null
           );
     }
   }

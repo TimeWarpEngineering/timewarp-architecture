@@ -7,22 +7,18 @@
   using BlazorState;
   using BlazorHosted_CSharp.Shared.Features.WeatherForecast;
   using Microsoft.AspNetCore.Components;
-  using System.Text.Json.Serialization;
 
   internal partial class WeatherForecastsState
   {
     public class FetchWeatherForecastsHandler : RequestHandler<FetchWeatherForecastsAction, WeatherForecastsState>
     {
-      private readonly JsonSerializerOptions JsonSerializerOptions;
       public FetchWeatherForecastsHandler
       (
         IStore aStore, 
-        HttpClient aHttpClient,
-        JsonSerializerOptions aJsonSerializerOptions
+        HttpClient aHttpClient
       ) : base(aStore)
       {
         HttpClient = aHttpClient;
-        JsonSerializerOptions = aJsonSerializerOptions;
       }
 
       private HttpClient HttpClient { get; }
@@ -35,16 +31,8 @@
       )
       {
         var getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
-
-        using HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync
-        (
-          $"{GetWeatherForecastsRequest.Route}?days={getWeatherForecastsRequest.Days}"
-        );
-
-        string content = await httpResponseMessage.Content.ReadAsStringAsync();
-
         GetWeatherForecastsResponse getWeatherForecastsResponse =
-          JsonSerializer.Parse<GetWeatherForecastsResponse>(content, JsonSerializerOptions);
+          await HttpClient.GetJsonAsync<GetWeatherForecastsResponse>(getWeatherForecastsRequest.RouteWithQueryString);
 
         List<WeatherForecastDto> weatherForecasts = getWeatherForecastsResponse.WeatherForecasts;
         WeatherForecastsState._WeatherForecasts = weatherForecasts;
