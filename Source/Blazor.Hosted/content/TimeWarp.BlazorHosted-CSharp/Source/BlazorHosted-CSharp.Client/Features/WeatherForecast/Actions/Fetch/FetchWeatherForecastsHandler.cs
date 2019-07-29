@@ -36,7 +36,7 @@
       {
         var getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
         GetWeatherForecastsResponse getWeatherForecastsResponse =
-          await HttpClient.GetJsonAsync<GetWeatherForecastsResponse>(getWeatherForecastsRequest.RouteFactory);
+          await HttpClient.GetJsonAsync<GetWeatherForecastsResponse>(getWeatherForecastsRequest.RouteWithQueryString);
 
         List<WeatherForecastDto> weatherForecasts = getWeatherForecastsResponse.WeatherForecasts;
         WeatherForecastsState._WeatherForecasts = weatherForecasts;
