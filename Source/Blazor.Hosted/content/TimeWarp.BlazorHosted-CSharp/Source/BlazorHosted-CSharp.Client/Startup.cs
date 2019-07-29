@@ -10,7 +10,7 @@
   using Microsoft.AspNetCore.Components.Builder;
   using Microsoft.Extensions.DependencyInjection;
   using System.Reflection;
-  using System.Text.Json.Serialization;
+  using System.Text.Json;
 
   public class Startup
   {

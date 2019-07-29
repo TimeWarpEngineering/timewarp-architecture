@@ -3,7 +3,7 @@
   using System;
   using Shouldly;
   using BlazorHosted_CSharp.Shared.Features.WeatherForecast;
-  using System.Text.Json.Serialization;
+  using System.Text.Json;
 
   internal class WeatherForecastStateSerializationTests
   {
@@ -19,8 +19,8 @@
     {
       var jsonSerializerOptions = new JsonSerializerOptions();
       var person = new Person { FirstName = "Steve", LastName = "Cramer", BirthDay = new DateTime(1967, 09, 27) };
-      string json = JsonSerializer.ToString(person, jsonSerializerOptions);
-      Person parsed = JsonSerializer.Parse<Person>(json, jsonSerializerOptions);
+      string json = JsonSerializer.Serialize(person, jsonSerializerOptions);
+      Person parsed = JsonSerializer.Deserialize<Person>(json, jsonSerializerOptions);
       parsed.BirthDay.ShouldBe(person.BirthDay);
       parsed.FirstName.ShouldBe(person.FirstName);
       parsed.LastName.ShouldBe(person.LastName);
@@ -37,10 +37,10 @@
         aTemperatureC: 24
       );
 
-      string json = JsonSerializer.ToString(weatherForecastDto, jsonSerializerOptions);
+      string json = JsonSerializer.Serialize(weatherForecastDto, jsonSerializerOptions);
 
       //Act
-      WeatherForecastDto parsed = JsonSerializer.Parse<WeatherForecastDto>(json, jsonSerializerOptions);
+      WeatherForecastDto parsed = JsonSerializer.Deserialize<WeatherForecastDto>(json, jsonSerializerOptions);
 
       //Assert
       weatherForecastDto.TemperatureC.ShouldBe(parsed.TemperatureC);

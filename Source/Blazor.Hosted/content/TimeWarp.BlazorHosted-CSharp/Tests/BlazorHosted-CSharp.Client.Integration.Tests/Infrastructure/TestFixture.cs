@@ -11,7 +11,7 @@
   using Microsoft.Extensions.DependencyInjection;
   using System;
   using System.Reflection;
-  using System.Text.Json.Serialization;
+  using System.Text.Json;
 
   /// <summary>
   /// A known starting state(baseline) for all tests.

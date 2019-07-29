@@ -5,7 +5,7 @@
   using Microsoft.JSInterop;
   using System.Collections.Generic;
   using System.Reflection;
-  using System.Text.Json.Serialization;
+  using System.Text.Json;
 
   internal partial class WeatherForecastsState : State<WeatherForecastsState>
   {
@@ -14,7 +14,7 @@
       string json = aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(WeatherForecasts))].ToString();
       var newWeatherForecastsState = new WeatherForecastsState()
       {
-        _WeatherForecasts = JsonSerializer.Parse<List<WeatherForecastDto>>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
+        _WeatherForecasts = JsonSerializer.Deserialize<List<WeatherForecastDto>>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
         Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
       };
 
