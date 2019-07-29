@@ -3,7 +3,7 @@
   using System.Threading.Tasks;
   using BlazorHosted_CSharp.Client.Features.Base.Components;
 
-  public class WeatherForecastsPageModel : BaseComponent
+  public class WeatherForecastsPageBase : BaseComponent
   {
     public const string Route = "/weatherforecasts";
 

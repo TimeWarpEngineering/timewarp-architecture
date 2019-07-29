@@ -2,7 +2,7 @@
 {
   using BlazorHosted_CSharp.Client.Features.Base.Components;
 
-  public class SideBarModel: BaseComponent
+  public class SideBarBase: BaseComponent
   {
     protected string NavMenuCssClass => ApplicationState.IsMenuExpanded ? null : "collapse";
   }
