@@ -2,7 +2,7 @@
 {
   using BlazorHosted_CSharp.Client.Features.Base.Components;
 
-  public class FooterModel: BaseComponent
+  public class FooterBase: BaseComponent
   {
     protected string Version => ApplicationState.Version;
   }
