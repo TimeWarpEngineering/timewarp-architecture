@@ -7,22 +7,18 @@
   using BlazorState;
   using BlazorHosted_CSharp.Shared.Features.WeatherForecast;
   using Microsoft.AspNetCore.Components;
-  using System.Text.Json;
 
   internal partial class WeatherForecastsState
   {
     public class FetchWeatherForecastsHandler : RequestHandler<FetchWeatherForecastsAction, WeatherForecastsState>
     {
-      private readonly JsonSerializerOptions JsonSerializerOptions;
       public FetchWeatherForecastsHandler
       (
         IStore aStore, 
-        HttpClient aHttpClient,
-        JsonSerializerOptions aJsonSerializerOptions
+        HttpClient aHttpClient
       ) : base(aStore)
       {
         HttpClient = aHttpClient;
-        JsonSerializerOptions = aJsonSerializerOptions;
       }
 
       private HttpClient HttpClient { get; }
