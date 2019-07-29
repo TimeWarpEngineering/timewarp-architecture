@@ -36,8 +36,6 @@ In this Folder you can have
 
 ## JavaScript Interop
 
-
-
 # Logging
 If no Logger is provided BlazorState would default to the "Null Logger".
 Logging is done with Blazor Logging Extension
@@ -56,4 +54,3 @@ but is added here for simplicity.
 
 # Extending the Pipeline 
 There is a sample `MyBehavior` to show how one can add their own behaviors (middle-ware) into the pipeline.
-
