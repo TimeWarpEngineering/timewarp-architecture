@@ -6,14 +6,21 @@ trigger:
   include:
   - Source/Blazor.Hosted/*
 
-queue:
+pr:
+ branches:
+   include:
+     - master
+
+pool:
   name: TimeWarpEnterprises
 
 variables:
- Major: '0'
- Minor: '8'
- Patch: '3'
- Version: "$(Major).$(Minor).$(Patch)"
+ Major: '1'
+ Minor: '0'
+ Patch: '0'
+ AspNetCoreVersion: 3.0.0-preview7.19365.7
+ PreviewNumber: $[counter(variables['AspNetCoreVersion'],0)]
+ Version: "$(Major).$(Minor).$(Patch)-$(AspNetCoreVersion)-$(PreviewNumber)"
  Configuration: debug
 
 steps:
