@@ -18,7 +18,7 @@ variables:
  Major: '1'
  Minor: '0'
  Patch: '0'
- AspNetCoreVersion: 3.0.0-preview7.19365.7
+ AspNetCoreVersion: 3.0.0-preview8.19405.7
  PreviewNumber: $[counter(variables['AspNetCoreVersion'],0)]
  Version: "$(Major).$(Minor).$(Patch)-$(AspNetCoreVersion)-$(PreviewNumber)"
  Configuration: debug
