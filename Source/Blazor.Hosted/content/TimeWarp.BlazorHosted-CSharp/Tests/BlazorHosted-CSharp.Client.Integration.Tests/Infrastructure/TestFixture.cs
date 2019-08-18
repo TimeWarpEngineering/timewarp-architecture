@@ -26,9 +26,9 @@
 
     public IWebAssemblyHostBuilder WebAssemblyHostBuilder { get; }
 
-    private BlazorStateTestServer BlazorStateTestServer { get; }
+    private TestServer BlazorStateTestServer { get; }
 
-    public TestFixture(BlazorStateTestServer aBlazorStateTestServer)
+    public TestFixture(TestServer aBlazorStateTestServer)
     {
       BlazorStateTestServer = aBlazorStateTestServer;
       WebAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()

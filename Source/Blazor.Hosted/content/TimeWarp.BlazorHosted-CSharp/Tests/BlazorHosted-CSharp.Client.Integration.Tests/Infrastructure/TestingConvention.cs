@@ -39,7 +39,7 @@
 
     private void ConfigureTestServices(ServiceCollection aServiceCollection)
     {
-      aServiceCollection.AddSingleton<BlazorStateTestServer>();
+      aServiceCollection.AddSingleton<TestServer>();
       aServiceCollection.Scan
       (
         aTypeSourceSelector => aTypeSourceSelector

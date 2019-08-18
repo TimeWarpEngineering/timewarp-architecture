@@ -2,15 +2,14 @@
 {
   using Microsoft.AspNetCore;
   using Microsoft.AspNetCore.Hosting;
-  using Microsoft.AspNetCore.TestHost;
-
-  public class BlazorStateTestServer : TestServer
+  
+  public class TestServer : Microsoft.AspNetCore.TestHost.TestServer
   {
-    public BlazorStateTestServer() : base(WebHostBuilder()) { }
+    public TestServer() : base(WebHostBuilder()) { }
 
     private static IWebHostBuilder WebHostBuilder() =>
       WebHost.CreateDefaultBuilder()
-      .UseStartup<Startup>()
+      .UseStartup<Server.Startup>()
       .UseEnvironment("Local");
   }
 }

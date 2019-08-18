@@ -2,8 +2,7 @@
 {
   using BlazorState.Services;
   using Microsoft.AspNetCore.Components;
-  using Microsoft.AspNetCore.Components.Layouts;
-
+  
   public class MainLayoutBase : LayoutComponentBase
   {
     [Inject] public BlazorHostingLocation BlazorHostingLocation { get; set; }
