@@ -7,7 +7,7 @@
   {
     public const string Route = "/weatherforecasts";
 
-    protected override async Task OnInitAsync() =>
+    protected override async Task OnInitializedAsync() =>
       await Mediator.Send(new Features.WeatherForecast.FetchWeatherForecastsAction());
   }
 }
