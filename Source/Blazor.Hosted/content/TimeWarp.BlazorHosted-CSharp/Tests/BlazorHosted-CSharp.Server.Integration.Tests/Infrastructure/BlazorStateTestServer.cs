@@ -10,7 +10,7 @@
 
     private static IWebHostBuilder WebHostBuilder() =>
       WebHost.CreateDefaultBuilder()
-      .UseStartup<Startup>()
+      .UseStartup<Server.Startup>()
       .UseEnvironment("Local");
   }
 }
