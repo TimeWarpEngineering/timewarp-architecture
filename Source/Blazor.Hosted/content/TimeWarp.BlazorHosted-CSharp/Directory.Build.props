@@ -23,18 +23,19 @@
 
   <!--Versions of packages used across the solution-->
   <PropertyGroup Label="Package Versions">
-    <BlazorPreviewVersion>preview7.19365.7</BlazorPreviewVersion>
-    <MicrosoftAspNetCoreVersion>3.0.0-preview7.19365.7</MicrosoftAspNetCoreVersion>
+    <MicrosoftAspNetCoreVersion>3.0.0-preview8.19405.7</MicrosoftAspNetCoreVersion>
     <MicrosoftAspNetCoreBlazorVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorVersion>
+    <MicrosoftAspNetCoreBlazorBuildVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorBuildVersion>
+    <MicrosoftAspNetCoreBlazorServerVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorServerVersion>
     <MicrosoftAspNetCoreComponentsBrowserVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreComponentsBrowserVersion>
-    <MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>
+    <MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>
     <MicrosoftAspNetCoreTestHostVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreTestHostVersion>
-    <MicrosoftExtensionsFileProvidersEmbeddedVersion>3.0.0-preview7.19362.4</MicrosoftExtensionsFileProvidersEmbeddedVersion>
-    <MicrosoftExtensionsLoggingAbstractionsVersion>3.0.0-preview7.19362.4</MicrosoftExtensionsLoggingAbstractionsVersion>
-    <MicrosoftSourceLinkGitHubVersion>1.0.0-beta2-19367-01</MicrosoftSourceLinkGitHubVersion>
-    
-    <BlazorStateVersion>1.0.0-preview7.19365.7-20190731-164341</BlazorStateVersion>
-    <BlazorExtensionsLoggingVersion>0.1.11</BlazorExtensionsLoggingVersion>
+    <MicrosoftExtensionsFileProvidersEmbeddedVersion>3.0.0-preview8.19405.4</MicrosoftExtensionsFileProvidersEmbeddedVersion>
+    <MicrosoftExtensionsLoggingAbstractionsVersion>3.0.0-preview8.19405.4</MicrosoftExtensionsLoggingAbstractionsVersion>
+    <MicrosoftSourceLinkGitHubVersion>1.0.0-beta2-19414-01</MicrosoftSourceLinkGitHubVersion>
+
+    <BlazorStateVersion>1.0.0-preview8.19405.7-20190817-213328</BlazorStateVersion>
+    <BlazorExtensionsLoggingVersion>0.3.0</BlazorExtensionsLoggingVersion>
     <FixieVersion>2.1.1</FixieVersion>
     <FixieConsoleVersion>2.1.1</FixieConsoleVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>7.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
