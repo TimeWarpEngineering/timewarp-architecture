@@ -26,6 +26,7 @@
     <MicrosoftAspNetCoreVersion>3.0.0-preview8.19405.7</MicrosoftAspNetCoreVersion>
     <MicrosoftAspNetCoreBlazorVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorVersion>
     <MicrosoftAspNetCoreBlazorBuildVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorBuildVersion>
+    <MicrosoftAspNetCoreBlazorHttpClientVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorHttpClientVersion>
     <MicrosoftAspNetCoreBlazorServerVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorServerVersion>
     <MicrosoftAspNetCoreComponentsBrowserVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreComponentsBrowserVersion>
     <MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>

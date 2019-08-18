@@ -14,6 +14,8 @@
     <PackageReference Include="Blazor-State" Version="$(BlazorStateVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="$(MicrosoftAspNetCoreBlazorVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="$(MicrosoftAspNetCoreBlazorBuildVersion)" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.HttpClient" Version="$(MicrosoftAspNetCoreBlazorHttpClientVersion)" PrivateAssets="all" />
+    
   </ItemGroup>
 
   <ItemGroup>
