@@ -34,12 +34,12 @@ steps:
     projects: 'source/Blazor.Hosted/**/*.csproj'
     configuration: $(Configuration)
 
-- task: DotNetCoreCLI@2
-  displayName: Test
-  inputs:
-    command: test
-    projects: "source/Blazor.Hosted/**/*Tests/*.csproj"
-    configurationToPack: $(Configuration)
+#- task: DotNetCoreCLI@2
+#  displayName: Test
+#  inputs:
+#    command: test
+#    projects: "source/Blazor.Hosted/**/*Tests/*.csproj"
+#    configurationToPack: $(Configuration)
 
 - task: NuGetCommand@2
   displayName: 'NuGet pack Template'
