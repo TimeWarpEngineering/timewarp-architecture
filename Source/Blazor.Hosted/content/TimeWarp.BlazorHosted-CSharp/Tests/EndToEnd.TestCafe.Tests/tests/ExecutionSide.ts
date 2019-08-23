@@ -1,5 +1,4 @@
-import { Selector } from "testcafe";
-import { ClientFunction } from "testcafe";
+import { ClientFunction, Selector } from "testcafe";
 
 import { getLocalStorage, setLocalStorage } from "../util/LocalStorage";
 
@@ -27,7 +26,7 @@ test("Should Load Server Side", async t => {
 
   await t.expect(blazorLocation.textContent).eql("Server Side");
 
-  await ValidateInitalization(t);
+  await ValidateInitialization(t);
 });
 
 test("Should Load Client Side", async t => {
@@ -45,24 +44,40 @@ test("Should Load Client Side", async t => {
 
   const blazorLocation = Selector('[data-qa="BlazorLocation"]');
 
+  const timeToLetClientSideLoad = 5000; // will originally render server side.  5 sec should be enough to switch.
   await t
-    .wait(5000) // will originally render server side
+    .wait(timeToLetClientSideLoad)
     .expect(blazorLocation.textContent)
     .eql("Client Side");
 
-  await ValidateInitalization(t);
+  await ValidateInitialization(t);
 });
 
-async function ValidateInitalization(t: TestController) {
-  const hasBlazorState = ClientFunction(() => window.hasOwnProperty("BlazorState"));
-  const hasInitializeJavaScriptInterop = ClientFunction(() => window.hasOwnProperty("InitializeJavaScriptInterop"));
-  const hasReduxDevToolsFactory = ClientFunction(() => window.hasOwnProperty("ReduxDevToolsFactory"));
-  const hasReduxDevTools = ClientFunction(() => window.hasOwnProperty("reduxDevTools"));
-  const hasJsonRequestHandler = ClientFunction(() => window.hasOwnProperty("jsonRequestHandler"));
+const ValidateInitialization = async(t: TestController): Promise<void> => {
+  const hasBlazorState = ClientFunction(() =>
+    window.hasOwnProperty("BlazorState")
+  );
+  const hasInitializeJavaScriptInterop = ClientFunction(() =>
+    window.hasOwnProperty("InitializeJavaScriptInterop")
+  );
+  const hasReduxDevToolsFactory = ClientFunction(() =>
+    window.hasOwnProperty("ReduxDevToolsFactory")
+  );
+  const hasReduxDevTools = ClientFunction(() =>
+    window.hasOwnProperty("reduxDevTools")
+  );
+  const hasJsonRequestHandler = ClientFunction(() =>
+    window.hasOwnProperty("jsonRequestHandler")
+  );
   await t
-    .expect(hasBlazorState()).ok()
-    .expect(hasInitializeJavaScriptInterop()).ok()
-    .expect(hasReduxDevToolsFactory()).ok()
-    .expect(hasReduxDevTools()).ok()
-    .expect(hasJsonRequestHandler()).ok();
+    .expect(hasBlazorState())
+    .ok()
+    .expect(hasInitializeJavaScriptInterop())
+    .ok()
+    .expect(hasReduxDevToolsFactory())
+    .ok()
+    .expect(hasReduxDevTools())
+    .ok()
+    .expect(hasJsonRequestHandler())
+    .ok();
 }

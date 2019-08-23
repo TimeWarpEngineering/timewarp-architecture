@@ -1,13 +1,12 @@
 # TestApp.EndToEnd.TestCafe.Tests
 
-
 End to End tests using TestCafe
 
-# Install
+## Install
 
 Run `npm install` from the test project directory, the same directory this README.md is in.
 
-# Execute
+## Execute
 
 Run `npm test` from the test project directory, same directory this README.md is in.
 
