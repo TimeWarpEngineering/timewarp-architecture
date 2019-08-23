@@ -6,6 +6,8 @@ namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
 
   public class SeleniumStandAlone : IDisposable
   {
+    private const string SeleniumRequestUri = "http://localhost:4444/wd/hub";
+
     public SeleniumStandAlone()
     {
       Process = new Process()
@@ -24,12 +26,22 @@ namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
     internal async System.Threading.Tasks.Task WaitForSelenium()
     {
       using var httpClient = new HttpClient();
-      using HttpResponseMessage response = await httpClient.GetAsync("http://localhost:4444/wd/hub");
-      response.EnsureSuccessStatusCode();
+
+      try
+      {
+        HttpResponseMessage response = await httpClient.GetAsync(SeleniumRequestUri);
+        response.EnsureSuccessStatusCode();
+      }
+      catch (Exception)
+      {
+        Console.WriteLine("First connect attempt failed.");
+        HttpResponseMessage secondResponse = await httpClient.GetAsync(SeleniumRequestUri);
+        secondResponse.EnsureSuccessStatusCode();
+      }
     }
 
     public Process Process { get; }
 
-    public void Dispose() => Process?.CloseMainWindow();
+    public void Dispose() => Process?.Close();
   }
 }

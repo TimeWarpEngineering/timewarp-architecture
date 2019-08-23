@@ -8,7 +8,7 @@
   public abstract class BaseTest
   {
     protected IJavaScriptExecutor JavaScriptExecutor { get; }
-    protected TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
+    protected TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(15);
     protected IWebDriver WebDriver { get; }
 
     private ServerFixture ServerFixture { get; }

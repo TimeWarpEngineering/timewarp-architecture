@@ -3,7 +3,6 @@
   using BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure;
   using OpenQA.Selenium;
   using Shouldly;
-  using static Infrastructure.WaitAndAssert;
 
   public class JsInteropTests : BaseTest
   {
@@ -72,9 +71,5 @@
     //  // TODO set up a handler to be launched from JS 
     //}
 
-    //public void CanCallJsFromCsharp()
-    //{
-    //  // If Initialization of jsonRequestHandler worked then this worked becuase it calls js from CS.
-    //}
   }
 }
