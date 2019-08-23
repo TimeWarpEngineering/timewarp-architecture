@@ -38,7 +38,7 @@ steps:
   displayName: Test
   inputs:
     command: test
-    projects: "source/Blazor.Hosted/**/*Tests/*.csproj"
+    projects: "source/Blazor.Hosted/**/*Integration.Tests/*.csproj"
     configurationToPack: $(Configuration)
 
 - task: NuGetCommand@2
