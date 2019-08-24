@@ -11,13 +11,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Server"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Client", "Source\Client\BlazorHosted-CSharp.Client.csproj", "{545E3103-354C-4058-8D8F-60D70DCC115B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Client.Integration.Tests", "Tests\BlazorHosted-CSharp.Client.Integration.Tests\BlazorHosted-CSharp.Client.Integration.Tests.csproj", "{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Client.Integration.Tests", "Tests\Client.Integration.Tests\BlazorHosted-CSharp.Client.Integration.Tests.csproj", "{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.EndToEnd.Tests", "Tests\BlazorHosted-CSharp.EndToEnd.Tests\BlazorHosted-CSharp.EndToEnd.Tests.csproj", "{B82C7C95-4892-443C-AA6B-B6086B03DD30}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.EndToEnd.Tests", "Tests\EndToEnd.Selenium.Tests\BlazorHosted-CSharp.EndToEnd.Selenium.Tests.csproj", "{B82C7C95-4892-443C-AA6B-B6086B03DD30}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Server.Integration.Tests", "Tests\BlazorHosted-CSharp.Server.Integration.Tests\BlazorHosted-CSharp.Server.Integration.Tests.csproj", "{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Server.Integration.Tests", "Tests\Server.Integration.Tests\BlazorHosted-CSharp.Server.Integration.Tests.csproj", "{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.TestCafe.Tests", "Tests\EndToEnd.TestCafe.Tests\EndToEnd.TestCafe.Tests.csproj", "{607246B4-BE03-4E76-99F5-71EE1E90B22C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.TestCafe.Tests", "Tests\EndToEnd.TestCafe.Tests\BlazorHosted-CSharp.EndToEnd.TestCafe.Tests.csproj", "{607246B4-BE03-4E76-99F5-71EE1E90B22C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
