@@ -1,1 +1,0 @@
-dotnet run --project .\Source\BlazorHosted-CSharp.Server\
