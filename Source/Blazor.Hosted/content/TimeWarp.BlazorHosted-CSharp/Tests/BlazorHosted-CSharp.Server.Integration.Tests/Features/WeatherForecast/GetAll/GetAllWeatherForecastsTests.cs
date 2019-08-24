@@ -3,7 +3,7 @@
   using System;
   using System.Threading.Tasks;
   using BlazorHosted_CSharp.Server.Integration.Tests.Infrastructure;
-  using BlazorHosted_CSharp.Shared.Features.WeatherForecast;
+  using BlazorHosted_CSharp.Api.Features.WeatherForecast;
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;

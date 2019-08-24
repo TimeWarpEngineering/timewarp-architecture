@@ -37,9 +37,7 @@
     protected static string FindSitePath(string aProjectName)
     {
       DirectoryInfo gitRootDirectory = new DirectoryService().FindSolutionRoot();
-      string serverProjectName = "BlazorHosted_CSharp.Server";
-      serverProjectName = serverProjectName.Replace("_", "-");
-      string path = Path.Combine(gitRootDirectory.FullName, "Source", serverProjectName);
+      string path = Path.Combine(gitRootDirectory.FullName, "Source", "Server");
       return path;
     }
 

@@ -21,11 +21,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hosted", "Hosted", "{5B629F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A39D4427-6B71-4D90-BC3B-92D082B41800}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Client", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Source\BlazorHosted-CSharp.Client\BlazorHosted-CSharp.Client.csproj", "{93325D91-948B-49EA-BE9D-395B6240F6E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Client", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Source\Client\BlazorHosted-CSharp.Client.csproj", "{93325D91-948B-49EA-BE9D-395B6240F6E9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Server", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Source\BlazorHosted-CSharp.Server\BlazorHosted-CSharp.Server.csproj", "{41567891-9F4E-4436-A4A9-D5F3367AFD15}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Server", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Source\Server\BlazorHosted-CSharp.Server.csproj", "{41567891-9F4E-4436-A4A9-D5F3367AFD15}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Shared", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Source\BlazorHosted-CSharp.Shared\BlazorHosted-CSharp.Shared.csproj", "{6D16A7DE-4E47-4C19-BB47-5195F5FEB182}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Api", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Source\Api\BlazorHosted-CSharp.Api.csproj", "{6D16A7DE-4E47-4C19-BB47-5195F5FEB182}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorHosted-CSharp.Client.Integration.Tests", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Tests\BlazorHosted-CSharp.Client.Integration.Tests\BlazorHosted-CSharp.Client.Integration.Tests.csproj", "{FDF3517F-A3CE-4DC7-A16C-AA2D453249A5}"
 EndProject

@@ -2,7 +2,7 @@
 {
   using System;
   using Shouldly;
-  using BlazorHosted_CSharp.Shared.Features.WeatherForecast;
+  using BlazorHosted_CSharp.Api.Features.WeatherForecast;
   using System.Text.Json;
 
   internal class WeatherForecastStateSerializationTests

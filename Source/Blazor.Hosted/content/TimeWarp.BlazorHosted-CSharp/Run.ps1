@@ -1,1 +1,1 @@
-dotnet run --project .\Source\BlazorHosted-CSharp.Server\
+dotnet run --project .\Source\Server\

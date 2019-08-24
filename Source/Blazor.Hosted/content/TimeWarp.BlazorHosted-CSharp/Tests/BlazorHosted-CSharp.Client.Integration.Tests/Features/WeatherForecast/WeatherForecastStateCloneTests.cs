@@ -3,7 +3,7 @@
   using AnyClone;
   using BlazorHosted_CSharp.Client.Features.WeatherForecast;
   using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
-  using BlazorHosted_CSharp.Shared.Features.WeatherForecast;
+  using BlazorHosted_CSharp.Api.Features.WeatherForecast;
   using BlazorState;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
