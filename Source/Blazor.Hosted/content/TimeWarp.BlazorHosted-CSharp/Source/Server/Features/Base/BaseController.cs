@@ -6,8 +6,9 @@
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.Extensions.DependencyInjection;
 
-  public class BaseController<TRequest, TResponse> : Controller
-    where TRequest : IRequest<TResponse>
+  [ApiController]
+  public class BaseController<TRequest, TResponse> : ControllerBase
+      where TRequest : IRequest<TResponse>
     where TResponse : BaseResponse
   {
     private IMediator _mediator;
