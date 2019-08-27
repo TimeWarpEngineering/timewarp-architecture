@@ -1,10 +1,10 @@
 ﻿namespace BlazorHosted_CSharp.Server.Features.Base
 {
-  using System.Threading.Tasks;
   using BlazorHosted_CSharp.Api.Features.Base;
   using MediatR;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.Extensions.DependencyInjection;
+  using System.Threading.Tasks;
 
   [ApiController]
   public class BaseController<TRequest, TResponse> : ControllerBase
