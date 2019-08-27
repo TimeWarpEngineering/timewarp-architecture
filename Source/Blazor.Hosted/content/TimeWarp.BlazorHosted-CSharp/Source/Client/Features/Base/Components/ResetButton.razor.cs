@@ -4,6 +4,6 @@
 
   public class ResetButtonBase : BaseComponent
   {
-    internal void ButtonClick() => Mediator.Send(new ResetStoreAction());
+    protected void ButtonClick() => Mediator.Send(new ResetStoreAction());
   }
 }
