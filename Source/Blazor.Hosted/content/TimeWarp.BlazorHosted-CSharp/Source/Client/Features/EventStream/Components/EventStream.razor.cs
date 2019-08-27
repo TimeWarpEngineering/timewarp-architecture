@@ -6,6 +6,5 @@
   public class EventStreamBase : BaseComponent
   {
     public IReadOnlyList<string> Events => EventStreamState.Events;
-
   }
 }

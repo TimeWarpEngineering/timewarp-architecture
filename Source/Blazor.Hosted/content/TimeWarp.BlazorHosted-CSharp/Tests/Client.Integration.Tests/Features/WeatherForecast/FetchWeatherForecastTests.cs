@@ -16,10 +16,7 @@
     private IStore Store { get; }
     private WeatherForecastsState WeatherForecastsState { get; set; }
 
-    public FetchWeatherForecastTests
-    (
-      TestFixture aTestFixture
-    )
+    public FetchWeatherForecastTests(TestFixture aTestFixture)
     {
       ServiceProvider = aTestFixture.ServiceProvider;
       Mediator = ServiceProvider.GetService<IMediator>();
@@ -29,7 +26,6 @@
 
     public async Task Should_Fetch_WeatherForecasts()
     {
-      // Default WeatherForecastsState is an empty list. So no need to initialize it.
       var fetchWeatherForecastsRequest = new FetchWeatherForecastsAction();
 
       WeatherForecastsState = await Mediator.Send(fetchWeatherForecastsRequest);
