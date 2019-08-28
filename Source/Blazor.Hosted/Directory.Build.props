@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>
-    <Product>BlazorHosted-CSharp</Product>
+    <Product>TimeWarp.Blazor</Product>
     <PackageIconUrl>https://raw.githubusercontent.com/TimeWarpEngineering/blazor-state/master/Assets/Logo.png</PackageIconUrl>
     <PackageProjectUrl>https://timewarpengineering.github.io/blazor-state/</PackageProjectUrl>
     <PackageTags>Microsoft ASP.NET Core Blazor State Blazor-State MediatR Mediator Pipeline Redux</PackageTags>

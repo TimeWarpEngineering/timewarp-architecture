@@ -14,7 +14,7 @@
     /// <returns>DirectoryInfo of the directory that contains the target directory or returns null if not in a git repository</returns>
     public DirectoryInfo FindSolutionRoot()
     {
-      const string SolutionFileName = "BlazorHosted-CSharp.sln";
+      const string SolutionFileName = "TimeWarp.Blazor.sln";
       var directory = new DirectoryInfo(Environment.CurrentDirectory);
       bool found = directory.GetFiles(SolutionFileName).Length > 0;
       while (!found && directory.Parent != null)
