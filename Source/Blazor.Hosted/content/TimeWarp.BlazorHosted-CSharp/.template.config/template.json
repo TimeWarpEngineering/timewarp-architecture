@@ -14,25 +14,26 @@
     "545E3103-354C-4058-8D8F-60D70DCC115B",
     "7A297947-B1E9-4BC6-9F84-22E5EDB389B8",
     "B82C7C95-4892-443C-AA6B-B6086B03DD30",
-    "86DAE2F4-34F2-4002-AE80-308D8A7FADE0"
+    "86DAE2F4-34F2-4002-AE80-308D8A7FADE0",
+    "607246B4-BE03-4E76-99F5-71EE1E90B22C"
   ],
   "identity": "TimeWarp.Blazor.CSharp",
   "name": "TimeWarp Blazor",
   "preferNameDirectory": true,
   "shortName": "timewarp-blazor",
-  "sourceName": "BlazorHosted-CSharp",
+  "sourceName": "TimeWarp.Blazor",
   "sources": [{
     "modifiers": [{
-      "condition": "(ExcludeTimeWarpProcess)",
+      "condition": "(!IncludeTimeWarpProcess)",
       "exclude": [
         "Documentation/Process/**/*"
       ]
     }]
   }],
   "symbols": {
-    "ExcludeTimeWarpProcess": {
+    "IncludeTimeWarpProcess": {
       "type": "parameter",
-      "description": "Use this flag to exclude the TimeWarp Process Documents, a editable minimalist process based in markdown documents",
+      "description": "Use this flag to include the TimeWarp Process Documents, an editable minimalist process based in markdown documents",
       "datatype": "bool",
       "defaultValue": "false"
     }

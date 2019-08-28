@@ -1,8 +1,8 @@
-﻿namespace BlazorHosted_CSharp.Client.Integration.Tests.Features.Application
+﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Application
 {
   using AnyClone;
-  using BlazorHosted_CSharp.Client.Features.Application;
-  using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Client.Features.Application;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using BlazorState;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;

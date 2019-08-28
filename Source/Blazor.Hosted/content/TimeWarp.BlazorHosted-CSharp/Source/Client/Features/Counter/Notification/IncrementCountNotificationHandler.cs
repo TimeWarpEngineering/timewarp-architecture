@@ -1,6 +1,6 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.Counter
+﻿namespace TimeWarp.Blazor.Client.Features.Counter
 {
-  using BlazorHosted_CSharp.Client.Pipeline.NotificationPostProcessor;
+  using TimeWarp.Blazor.Client.Pipeline.NotificationPostProcessor;
   using MediatR;
   using Microsoft.Extensions.Logging;
   using System.Threading;

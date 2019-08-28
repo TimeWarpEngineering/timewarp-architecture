@@ -1,7 +1,7 @@
-﻿namespace BlazorHosted_CSharp.EndToEnd.Tests
+﻿namespace TimeWarp.Blazor.EndToEnd.Tests
 {
   using System;
-  using BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure;
+  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using Fixie;
   using Microsoft.Extensions.DependencyInjection;
 

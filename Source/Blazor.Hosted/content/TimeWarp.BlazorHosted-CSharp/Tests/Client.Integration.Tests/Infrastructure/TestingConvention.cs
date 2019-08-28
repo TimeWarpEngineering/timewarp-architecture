@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure
+﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
   using Fixie;
   using Microsoft.Extensions.DependencyInjection;

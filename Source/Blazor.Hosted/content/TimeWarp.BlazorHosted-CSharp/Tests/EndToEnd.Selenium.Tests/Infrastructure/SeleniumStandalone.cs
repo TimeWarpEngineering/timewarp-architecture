@@ -1,4 +1,4 @@
-namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
+namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
 {
   using System;
   using System.Diagnostics;

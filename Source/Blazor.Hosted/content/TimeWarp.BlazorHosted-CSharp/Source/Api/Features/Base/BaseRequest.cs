@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Api.Features.Base
+﻿namespace TimeWarp.Blazor.Api.Features.Base
 {
   using System;
 

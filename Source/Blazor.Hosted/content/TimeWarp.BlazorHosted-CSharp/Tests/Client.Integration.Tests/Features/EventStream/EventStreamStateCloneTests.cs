@@ -1,8 +1,8 @@
-﻿namespace BlazorHosted_CSharp.Client.Integration.Tests.Features.EventStream
+﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.EventStream
 {
   using AnyClone;
-  using BlazorHosted_CSharp.Client.Features.EventStream;
-  using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Client.Features.EventStream;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using BlazorState;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;

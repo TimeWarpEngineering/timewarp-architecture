@@ -1,7 +1,7 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.Counter
+﻿namespace TimeWarp.Blazor.Client.Features.Counter
 {
   using MediatR;
-  using BlazorHosted_CSharp.Api.Features.Base;
+  using TimeWarp.Blazor.Api.Features.Base;
 
   public class IncrementCounterAction : BaseRequest, IRequest<CounterState>
   {

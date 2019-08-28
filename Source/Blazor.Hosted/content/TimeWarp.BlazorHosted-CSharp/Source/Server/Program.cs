@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Server
+﻿namespace TimeWarp.Blazor.Server
 {
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.Extensions.Hosting;

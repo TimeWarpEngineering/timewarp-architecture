@@ -1,10 +1,10 @@
-﻿namespace BlazorHosted_CSharp.Client
+﻿namespace TimeWarp.Blazor.Client
 {
-  using BlazorHosted_CSharp.Client.Features.Application;
-  using BlazorHosted_CSharp.Client.Features.Counter;
-  using BlazorHosted_CSharp.Client.Features.EventStream;
-  using BlazorHosted_CSharp.Client.Features.WeatherForecast;
-  using BlazorHosted_CSharp.Client.Features.ClientLoaderFeature;
+  using TimeWarp.Blazor.Client.Features.Application;
+  using TimeWarp.Blazor.Client.Features.Counter;
+  using TimeWarp.Blazor.Client.Features.EventStream;
+  using TimeWarp.Blazor.Client.Features.WeatherForecast;
+  using TimeWarp.Blazor.Client.Features.ClientLoaderFeature;
   using BlazorState;
   using MediatR;
   using Microsoft.AspNetCore.Components.Builder;

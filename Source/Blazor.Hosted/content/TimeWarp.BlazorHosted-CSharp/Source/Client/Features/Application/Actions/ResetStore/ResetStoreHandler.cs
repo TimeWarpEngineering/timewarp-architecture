@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.Application
+﻿namespace TimeWarp.Blazor.Client.Features.Application
 {
   using System.Threading;
   using System.Threading.Tasks;

@@ -1,7 +1,7 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.WeatherForecast
+﻿namespace TimeWarp.Blazor.Client.Features.WeatherForecast
 {
   using System.Collections.Generic;
-  using BlazorHosted_CSharp.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Api.Features.WeatherForecast;
   using BlazorState;
 
   internal partial class WeatherForecastsState : State<WeatherForecastsState>

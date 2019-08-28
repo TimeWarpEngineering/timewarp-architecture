@@ -1,11 +1,11 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.WeatherForecast
+﻿namespace TimeWarp.Blazor.Client.Features.WeatherForecast
 {
   using System.Collections.Generic;
   using System.Net.Http;
   using System.Threading;
   using System.Threading.Tasks;
   using BlazorState;
-  using BlazorHosted_CSharp.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Api.Features.WeatherForecast;
   using Microsoft.AspNetCore.Components;
 
   internal partial class WeatherForecastsState

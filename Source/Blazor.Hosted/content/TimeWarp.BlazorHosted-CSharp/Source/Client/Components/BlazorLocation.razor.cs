@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Client.Components
+﻿namespace TimeWarp.Blazor.Client.Components
 {
   using BlazorState;
   using BlazorState.Services;

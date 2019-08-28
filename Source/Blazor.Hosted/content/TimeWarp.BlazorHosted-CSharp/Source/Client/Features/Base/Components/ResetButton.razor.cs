@@ -1,6 +1,6 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.Base.Components
+﻿namespace TimeWarp.Blazor.Client.Features.Base.Components
 {
-  using BlazorHosted_CSharp.Client.Features.Application;
+  using TimeWarp.Blazor.Client.Features.Application;
 
   public class ResetButtonBase : BaseComponent
   {

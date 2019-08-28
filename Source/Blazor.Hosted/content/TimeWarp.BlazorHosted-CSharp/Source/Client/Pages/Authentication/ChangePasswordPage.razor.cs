@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Client.Pages.Authentication
+﻿namespace TimeWarp.Blazor.Client.Pages.Authentication
 {
   using Microsoft.AspNetCore.Components;
 

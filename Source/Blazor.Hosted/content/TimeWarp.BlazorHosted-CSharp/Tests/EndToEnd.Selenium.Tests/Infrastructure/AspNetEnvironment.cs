@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
+﻿namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
 {
   public enum AspNetEnvironment
   {

@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Client.Pipeline.NotificationPreProcessor
+﻿namespace TimeWarp.Blazor.Client.Pipeline.NotificationPreProcessor
 {
   using System.Threading;
   using System.Threading.Tasks;

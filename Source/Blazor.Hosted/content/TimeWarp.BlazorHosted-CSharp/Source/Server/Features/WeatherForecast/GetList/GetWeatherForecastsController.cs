@@ -1,8 +1,8 @@
-﻿namespace BlazorHosted_CSharp.Server.Features.WeatherForecast
+﻿namespace TimeWarp.Blazor.Server.Features.WeatherForecast
 {
   using System.Threading.Tasks;
-  using BlazorHosted_CSharp.Server.Features.Base;
-  using BlazorHosted_CSharp.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Server.Features.Base;
+  using TimeWarp.Blazor.Api.Features.WeatherForecast;
   using Microsoft.AspNetCore.Mvc;
 
   [Route(GetWeatherForecastsRequest.Route)]

@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.Application
+﻿namespace TimeWarp.Blazor.Client.Features.Application
 {
   using BlazorState;
 
@@ -16,7 +16,7 @@
     protected override void Initialize()
     {
       IsMenuExpanded = true;
-      Name = "BlazorHosted_CSharp";
+      Name = "TimeWarp.Blazor";
       Logo = "/images/logo.png";
     }
 

@@ -1,8 +1,8 @@
-﻿namespace BlazorHosted_CSharp.Api.Features.WeatherForecast
+﻿namespace TimeWarp.Blazor.Api.Features.WeatherForecast
 {
   using System;
   using System.Collections.Generic;
-  using BlazorHosted_CSharp.Api.Features.Base;
+  using TimeWarp.Blazor.Api.Features.Base;
 
   public class GetWeatherForecastsResponse : BaseResponse
   {

@@ -1,6 +1,6 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.EventStream
+﻿namespace TimeWarp.Blazor.Client.Features.EventStream
 {
-  using BlazorHosted_CSharp.Api.Features.Base;
+  using TimeWarp.Blazor.Api.Features.Base;
   using MediatR;
   using Microsoft.Extensions.Logging;
   using System;

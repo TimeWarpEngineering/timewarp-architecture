@@ -1,6 +1,6 @@
-﻿namespace BlazorHosted_CSharp.EndToEnd.Tests
+﻿namespace TimeWarp.Blazor.EndToEnd.Tests
 {
-  using BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure;
+  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using OpenQA.Selenium;
   using OpenQA.Selenium.Support.UI;
   using System;

@@ -1,10 +1,10 @@
-﻿namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
+﻿namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
 {
   using System;
   using System.IO;
   using System.Linq;
   using System.Threading;
-  using BlazorHosted_CSharp.Client.Features.ClientLoaderFeature;
+  using TimeWarp.Blazor.Client.Features.ClientLoaderFeature;
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Hosting.Server;
   using Microsoft.AspNetCore.Hosting.Server.Features;

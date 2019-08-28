@@ -1,6 +1,6 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.Application.Components
+﻿namespace TimeWarp.Blazor.Client.Features.Application.Components
 {
-  using BlazorHosted_CSharp.Client.Features.Base.Components;
+  using TimeWarp.Blazor.Client.Features.Base.Components;
 
   public class SideBarBase: BaseComponent
   {

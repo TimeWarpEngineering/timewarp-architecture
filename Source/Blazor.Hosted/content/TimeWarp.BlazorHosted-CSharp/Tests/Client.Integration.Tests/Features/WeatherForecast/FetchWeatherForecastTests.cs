@@ -1,7 +1,7 @@
-﻿namespace BlazorHosted_CSharp.Client.Integration.Tests.Features.WeatherForecast
+﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
 {
-  using BlazorHosted_CSharp.Client.Features.WeatherForecast;
-  using BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Client.Features.WeatherForecast;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using BlazorState;
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;

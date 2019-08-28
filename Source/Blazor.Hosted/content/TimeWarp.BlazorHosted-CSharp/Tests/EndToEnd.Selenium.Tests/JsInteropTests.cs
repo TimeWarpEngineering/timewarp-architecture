@@ -1,6 +1,6 @@
-﻿namespace BlazorHosted_CSharp.EndToEnd.Tests
+﻿namespace TimeWarp.Blazor.EndToEnd.Tests
 {
-  using BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure;
+  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using OpenQA.Selenium;
   using Shouldly;
 
@@ -24,7 +24,7 @@
       WaitUntilClientCached();
 
       object clientApplication = JavaScriptExecutor.ExecuteScript("return window.localStorage.getItem('clientApplication');");
-      clientApplication.ShouldBe("BlazorHosted_CSharp.Client.0.0.1");
+      clientApplication.ShouldBe("TimeWarp.Blazor.Client.0.0.1");
     }
 
     public void InitalizationWorkedClientSide()

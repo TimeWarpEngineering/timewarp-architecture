@@ -1,10 +1,10 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.EventStream
+﻿namespace TimeWarp.Blazor.Client.Features.EventStream
 {
   using System;
   using System.Threading;
   using System.Threading.Tasks;
   using BlazorState;
-  using BlazorHosted_CSharp.Client.Features.Base;
+  using TimeWarp.Blazor.Client.Features.Base;
 
 
   internal partial class EventStreamState

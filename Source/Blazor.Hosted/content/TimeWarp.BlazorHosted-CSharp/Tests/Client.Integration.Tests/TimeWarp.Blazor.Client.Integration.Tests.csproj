@@ -16,8 +16,8 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\Client\BlazorHosted-CSharp.Client.csproj" />
-    <ProjectReference Include="..\..\Source\Server\BlazorHosted-CSharp.Server.csproj" />
+    <ProjectReference Include="..\..\Source\Client\TimeWarp.Blazor.Client.csproj" />
+    <ProjectReference Include="..\..\Source\Server\TimeWarp.Blazor.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>

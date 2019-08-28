@@ -1,11 +1,11 @@
-﻿namespace BlazorHosted_CSharp.Server.Features.WeatherForecast
+﻿namespace TimeWarp.Blazor.Server.Features.WeatherForecast
 {
   using System;
   using System.Collections.Generic;
   using System.Linq;
   using System.Threading;
   using System.Threading.Tasks;
-  using BlazorHosted_CSharp.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Api.Features.WeatherForecast;
   using MediatR;
 
   public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsRequest, GetWeatherForecastsResponse>

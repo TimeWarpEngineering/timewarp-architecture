@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Server.Features.Base
+﻿namespace TimeWarp.Blazor.Server.Features.Base
 {
   public class BaseError
   {

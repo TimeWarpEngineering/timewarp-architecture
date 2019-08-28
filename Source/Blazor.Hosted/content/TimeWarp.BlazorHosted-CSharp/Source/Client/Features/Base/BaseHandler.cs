@@ -1,9 +1,9 @@
-﻿namespace BlazorHosted_CSharp.Client.Features.Base
+﻿namespace TimeWarp.Blazor.Client.Features.Base
 {
-  using BlazorHosted_CSharp.Client.Features.Application;
-  using BlazorHosted_CSharp.Client.Features.Counter;
-  using BlazorHosted_CSharp.Client.Features.WeatherForecast;
-  using BlazorHosted_CSharp.Client.Features.EventStream;
+  using TimeWarp.Blazor.Client.Features.Application;
+  using TimeWarp.Blazor.Client.Features.Counter;
+  using TimeWarp.Blazor.Client.Features.WeatherForecast;
+  using TimeWarp.Blazor.Client.Features.EventStream;
   using BlazorState;
   using MediatR;
 

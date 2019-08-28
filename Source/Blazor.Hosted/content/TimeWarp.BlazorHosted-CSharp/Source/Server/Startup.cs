@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Server
+﻿namespace TimeWarp.Blazor.Server
 {
   using MediatR;
   using Microsoft.AspNetCore.Builder;

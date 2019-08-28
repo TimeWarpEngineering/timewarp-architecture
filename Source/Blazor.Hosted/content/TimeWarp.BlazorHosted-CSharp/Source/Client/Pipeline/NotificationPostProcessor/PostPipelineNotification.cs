@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Client.Pipeline.NotificationPostProcessor
+﻿namespace TimeWarp.Blazor.Client.Pipeline.NotificationPostProcessor
 {
   using MediatR;
 

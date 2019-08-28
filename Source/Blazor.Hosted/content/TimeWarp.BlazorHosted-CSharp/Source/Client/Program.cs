@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Client
+﻿namespace TimeWarp.Blazor.Client
 {
   using Microsoft.AspNetCore.Blazor.Hosting;
 

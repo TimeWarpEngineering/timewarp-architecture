@@ -1,7 +1,7 @@
-﻿namespace BlazorHosted_CSharp.Server.Integration.Tests.Features.WeatherForecast.GetAll
+﻿namespace TimeWarp.Blazor.Server.Integration.Tests.Features.WeatherForecast.GetAll
 {
-  using BlazorHosted_CSharp.Api.Features.WeatherForecast;
-  using BlazorHosted_CSharp.Server.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;

@@ -1,7 +1,7 @@
-﻿namespace BlazorHosted_CSharp.Client.Pages
+﻿namespace TimeWarp.Blazor.Client.Pages
 {
   using System.Threading.Tasks;
-  using BlazorHosted_CSharp.Client.Features.Base.Components;
+  using TimeWarp.Blazor.Client.Features.Base.Components;
 
   public class WeatherForecastsPageBase : BaseComponent
   {

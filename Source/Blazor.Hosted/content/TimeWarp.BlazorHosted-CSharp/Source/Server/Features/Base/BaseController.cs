@@ -1,6 +1,6 @@
-﻿namespace BlazorHosted_CSharp.Server.Features.Base
+﻿namespace TimeWarp.Blazor.Server.Features.Base
 {
-  using BlazorHosted_CSharp.Api.Features.Base;
+  using TimeWarp.Blazor.Api.Features.Base;
   using MediatR;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.Extensions.DependencyInjection;

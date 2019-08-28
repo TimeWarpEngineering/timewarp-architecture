@@ -1,11 +1,11 @@
-﻿namespace BlazorHosted_CSharp.Client.Integration.Tests.Infrastructure
+﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
-  using BlazorHosted_CSharp.Client;
-  using BlazorHosted_CSharp.Client.Features.Application;
-  using BlazorHosted_CSharp.Client.Features.Counter;
-  using BlazorHosted_CSharp.Client.Features.EventStream;
-  using BlazorHosted_CSharp.Client.Features.WeatherForecast;
-  using BlazorHosted_CSharp.Client.Features.ClientLoaderFeature;
+  using TimeWarp.Blazor.Client;
+  using TimeWarp.Blazor.Client.Features.Application;
+  using TimeWarp.Blazor.Client.Features.Counter;
+  using TimeWarp.Blazor.Client.Features.EventStream;
+  using TimeWarp.Blazor.Client.Features.WeatherForecast;
+  using TimeWarp.Blazor.Client.Features.ClientLoaderFeature;
   using BlazorState;
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.Extensions.DependencyInjection;

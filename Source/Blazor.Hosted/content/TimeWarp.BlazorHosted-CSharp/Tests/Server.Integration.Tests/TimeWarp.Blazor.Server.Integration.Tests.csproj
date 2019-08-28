@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\Server\BlazorHosted-CSharp.Server.csproj" />
-    <ProjectReference Include="..\..\Source\Api\BlazorHosted-CSharp.Api.csproj" />
+    <ProjectReference Include="..\..\Source\Server\TimeWarp.Blazor.Server.csproj" />
+    <ProjectReference Include="..\..\Source\Api\TimeWarp.Blazor.Api.csproj" />
   </ItemGroup>
 
 </Project>

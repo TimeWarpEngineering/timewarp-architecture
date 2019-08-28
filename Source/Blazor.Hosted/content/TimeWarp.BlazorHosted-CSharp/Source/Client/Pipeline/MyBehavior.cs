@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted_CSharp.Client.Pipeline
+﻿namespace TimeWarp.Blazor.Client.Pipeline
 {
   using System;
   using System.Threading;
