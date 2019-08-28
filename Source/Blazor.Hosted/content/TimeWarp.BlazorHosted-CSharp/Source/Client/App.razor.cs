@@ -1,24 +1,22 @@
 ﻿namespace BlazorHosted_CSharp.Client
 {
-  using System.Threading.Tasks;
-  using BlazorState.Pipeline.ReduxDevTools;
+  using BlazorHosted_CSharp.Client.Features.ClientLoaderFeature;
   using BlazorState.Features.JavaScriptInterop;
   using BlazorState.Features.Routing;
+  using BlazorState.Pipeline.ReduxDevTools;
   using Microsoft.AspNetCore.Components;
-  using System;
-  using BlazorHostedCSharp.Client.Features.ClientLoader;
+  using System.Threading.Tasks;
 
   public class AppBase : ComponentBase
   {
+    [Inject] private ClientLoader ClientLoader { get; set; }
     [Inject] private JsonRequestHandler JsonRequestHandler { get; set; }
     [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; }
 
-    // Injected so it is created by the container. Even though the ide says it is not used it is.
+    /// <remarks>
+    /// Injected so it is created by the container. Even though the IDE says it is not used it is.
+    /// </remarks>
     [Inject] private RouteManager RouteManager { get; set; }
-
-    [Inject] private ClientLoader ClientLoader { get; set; }
-
-    readonly TimeSpan DelayTimeSpan = TimeSpan.FromSeconds(10);
 
     protected override async Task OnAfterRenderAsync()
     {

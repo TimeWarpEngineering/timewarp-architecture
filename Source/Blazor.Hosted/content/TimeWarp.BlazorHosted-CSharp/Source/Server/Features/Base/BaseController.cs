@@ -1,13 +1,14 @@
 ﻿namespace BlazorHosted_CSharp.Server.Features.Base
 {
-  using System.Threading.Tasks;
   using BlazorHosted_CSharp.Api.Features.Base;
   using MediatR;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.Extensions.DependencyInjection;
+  using System.Threading.Tasks;
 
-  public class BaseController<TRequest, TResponse> : Controller
-    where TRequest : IRequest<TResponse>
+  [ApiController]
+  public class BaseController<TRequest, TResponse> : ControllerBase
+      where TRequest : IRequest<TResponse>
     where TResponse : BaseResponse
   {
     private IMediator _mediator;

@@ -1,24 +1,23 @@
 ﻿namespace BlazorHosted_CSharp.Server.Integration.Tests.Features.WeatherForecast.GetAll
 {
-  using System;
-  using System.Threading.Tasks;
-  using BlazorHosted_CSharp.Server.Integration.Tests.Infrastructure;
   using BlazorHosted_CSharp.Api.Features.WeatherForecast;
+  using BlazorHosted_CSharp.Server.Integration.Tests.Infrastructure;
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
+  using System;
+  using System.Threading.Tasks;
 
-  class GetAllWeatherForecastsTests
+  internal class GetAllWeatherForecastsTests
   {
+    private readonly IMediator Mediator;
+    private readonly IServiceProvider ServiceProvider;
 
     public GetAllWeatherForecastsTests(TestFixture aTestFixture)
     {
       ServiceProvider = aTestFixture.ServiceProvider;
       Mediator = ServiceProvider.GetService<IMediator>();
     }
-
-    private IServiceProvider ServiceProvider { get; }
-    private IMediator Mediator { get; }
 
     public async Task ShouldGetAllWeatherForecasts()
     {
@@ -31,7 +30,6 @@
 
       //Assert
       getWeatherForecastsResponse.WeatherForecasts.Count.ShouldBe(10);
-
     }
   }
 }

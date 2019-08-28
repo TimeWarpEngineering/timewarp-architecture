@@ -34,6 +34,11 @@
       RequestHandlerDelegate<TResponse> aNext
     )
     {
+      if (aNext is null)
+      {
+        throw new ArgumentNullException(nameof(aNext));
+      }
+
       Logger.LogDebug($"{GetType().Name}: Start");
 
       Logger.LogDebug($"{GetType().Name}: Call next");

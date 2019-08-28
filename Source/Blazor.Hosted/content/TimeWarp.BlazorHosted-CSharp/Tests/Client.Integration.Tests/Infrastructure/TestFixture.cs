@@ -5,7 +5,7 @@
   using BlazorHosted_CSharp.Client.Features.Counter;
   using BlazorHosted_CSharp.Client.Features.EventStream;
   using BlazorHosted_CSharp.Client.Features.WeatherForecast;
-  using BlazorHostedCSharp.Client.Features.ClientLoader;
+  using BlazorHosted_CSharp.Client.Features.ClientLoaderFeature;
   using BlazorState;
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.Extensions.DependencyInjection;

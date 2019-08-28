@@ -1,6 +1,5 @@
 ﻿namespace BlazorHosted_CSharp.Server
 {
-  using BlazorState;
   using MediatR;
   using Microsoft.AspNetCore.Builder;
   using Microsoft.AspNetCore.Hosting;
@@ -8,6 +7,7 @@
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
   using System.Linq;
+  using System.Net.Mime;
   using System.Reflection;
 
   public class Startup
@@ -43,7 +43,6 @@
     {
       aServiceCollection.AddRazorPages();
       aServiceCollection.AddServerSideBlazor();
-
       aServiceCollection.AddMvc();
 
       aServiceCollection.AddResponseCompression
@@ -51,17 +50,8 @@
         aResponseCompressionOptions =>
           aResponseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat
           (
-            new[] { "application/octet-stream" }
+            new[] { MediaTypeNames.Application.Octet }
           )
-      );
-
-      aServiceCollection.AddBlazorState
-      (
-        (aOptions) => aOptions.Assemblies =
-          new Assembly[]
-          {
-            typeof(Client.Startup).GetTypeInfo().Assembly
-          }
       );
 
       new Client.Startup().ConfigureServices(aServiceCollection);

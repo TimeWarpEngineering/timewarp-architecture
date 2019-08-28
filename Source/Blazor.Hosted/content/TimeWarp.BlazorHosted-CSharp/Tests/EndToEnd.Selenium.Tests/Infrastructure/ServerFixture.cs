@@ -4,7 +4,7 @@
   using System.IO;
   using System.Linq;
   using System.Threading;
-  using BlazorHostedCSharp.Client.Features.ClientLoader;
+  using BlazorHosted_CSharp.Client.Features.ClientLoaderFeature;
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Hosting.Server;
   using Microsoft.AspNetCore.Hosting.Server.Features;

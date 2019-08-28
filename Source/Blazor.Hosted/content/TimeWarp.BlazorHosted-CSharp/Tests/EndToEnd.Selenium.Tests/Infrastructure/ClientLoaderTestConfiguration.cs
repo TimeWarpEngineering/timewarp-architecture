@@ -1,6 +1,6 @@
 ﻿namespace BlazorHosted_CSharp.EndToEnd.Tests.Infrastructure
 {
-  using BlazorHostedCSharp.Client.Features.ClientLoader;
+  using BlazorHosted_CSharp.Client.Features.ClientLoaderFeature;
   using System;
 
   public class TestClientLoaderConfiguration : IClientLoaderConfiguration

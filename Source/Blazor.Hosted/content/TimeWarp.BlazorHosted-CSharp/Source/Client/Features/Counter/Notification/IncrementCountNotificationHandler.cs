@@ -9,7 +9,7 @@
   internal class IncrementCountNotificationHandler
     : INotificationHandler<PostPipelineNotification<IncrementCounterAction, CounterState>>
   {
-    private ILogger Logger { get; }
+    private readonly ILogger Logger;
 
     public IncrementCountNotificationHandler(ILogger<IncrementCountNotificationHandler> aLogger)
     {
@@ -18,11 +18,11 @@
 
     public Task Handle
     (
-      PostPipelineNotification<IncrementCounterAction, CounterState> aNotification,
+      PostPipelineNotification<IncrementCounterAction, CounterState> aPostPipelineNotification, 
       CancellationToken aCancellationToken
     )
     {
-      Logger.LogDebug(aNotification.Request.GetType().Name);
+      Logger.LogDebug(aPostPipelineNotification.Request.GetType().Name);
       Logger.LogDebug($"{nameof(IncrementCountNotificationHandler)} handled");
       return Task.CompletedTask;
     }

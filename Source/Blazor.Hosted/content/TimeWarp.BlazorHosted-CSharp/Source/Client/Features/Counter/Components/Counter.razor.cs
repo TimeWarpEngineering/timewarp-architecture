@@ -6,7 +6,7 @@
 
   public class CounterBase : BaseComponent
   {
-    internal async Task ButtonClick() =>
+    protected async Task ButtonClick() =>
       _ = await Mediator.Send(new IncrementCounterAction { Amount = 5 });
   }
 }

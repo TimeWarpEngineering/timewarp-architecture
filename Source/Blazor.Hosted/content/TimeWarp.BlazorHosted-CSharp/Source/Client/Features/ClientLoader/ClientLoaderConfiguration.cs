@@ -1,4 +1,4 @@
-﻿namespace BlazorHostedCSharp.Client.Features.ClientLoader
+﻿namespace BlazorHosted_CSharp.Client.Features.ClientLoaderFeature
 {
   using System;
 

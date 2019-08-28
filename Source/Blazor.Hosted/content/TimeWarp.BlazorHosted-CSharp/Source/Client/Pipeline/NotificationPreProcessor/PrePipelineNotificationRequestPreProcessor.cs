@@ -29,7 +29,7 @@
       };
 
       Logger.LogDebug("PrePipelineNotificationRequestPreProcessor");
-      await Mediator.Publish(notification);
+      await Mediator.Publish(notification, aCancellationToken);
     }
   }
 }
