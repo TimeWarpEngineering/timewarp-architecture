@@ -21,19 +21,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hosted", "Hosted", "{5B629F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A39D4427-6B71-4D90-BC3B-92D082B41800}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Client", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Source\Client\TimeWarp.Blazor.Client.csproj", "{93325D91-948B-49EA-BE9D-395B6240F6E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Client", "Source\TimeWarp.Blazor.Template\content\TimeWarp.Blazor\Source\Client\TimeWarp.Blazor.Client.csproj", "{93325D91-948B-49EA-BE9D-395B6240F6E9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Server", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Source\Server\TimeWarp.Blazor.Server.csproj", "{41567891-9F4E-4436-A4A9-D5F3367AFD15}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Server", "Source\TimeWarp.Blazor.Template\content\TimeWarp.Blazor\Source\Server\TimeWarp.Blazor.Server.csproj", "{41567891-9F4E-4436-A4A9-D5F3367AFD15}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Api", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Source\Api\TimeWarp.Blazor.Api.csproj", "{6D16A7DE-4E47-4C19-BB47-5195F5FEB182}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Api", "Source\TimeWarp.Blazor.Template\content\TimeWarp.Blazor\Source\Api\TimeWarp.Blazor.Api.csproj", "{6D16A7DE-4E47-4C19-BB47-5195F5FEB182}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Client.Integration.Tests", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Tests\Client.Integration.Tests\TimeWarp.Blazor.Client.Integration.Tests.csproj", "{FDF3517F-A3CE-4DC7-A16C-AA2D453249A5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Client.Integration.Tests", "Source\TimeWarp.Blazor.Template\content\TimeWarp.Blazor\Tests\Client.Integration.Tests\TimeWarp.Blazor.Client.Integration.Tests.csproj", "{FDF3517F-A3CE-4DC7-A16C-AA2D453249A5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.EndToEnd.Tests", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Tests\EndToEnd.Selenium.Tests\TimeWarp.Blazor.EndToEnd.Selenium.Tests.csproj", "{881E132D-75FE-44B6-8695-EA3A3A5029B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.EndToEnd.Tests", "Source\TimeWarp.Blazor.Template\content\TimeWarp.Blazor\Tests\EndToEnd.Selenium.Tests\TimeWarp.Blazor.EndToEnd.Selenium.Tests.csproj", "{881E132D-75FE-44B6-8695-EA3A3A5029B6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Server.Integration.Tests", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Tests\Server.Integration.Tests\TimeWarp.Blazor.Server.Integration.Tests.csproj", "{8C7F75D4-45E1-45AD-8DAA-430D2B6286FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Server.Integration.Tests", "Source\TimeWarp.Blazor.Template\content\TimeWarp.Blazor\Tests\Server.Integration.Tests\TimeWarp.Blazor.Server.Integration.Tests.csproj", "{8C7F75D4-45E1-45AD-8DAA-430D2B6286FC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.TestCafe.Tests", "Source\Blazor.Hosted\content\TimeWarp.BlazorHosted-CSharp\Tests\EndToEnd.TestCafe.Tests\TimeWarp.Blazor.EndToEnd.TestCafe.Tests.csproj", "{FC51A9E7-8E02-46AC-AECB-037A6125EFE2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.TestCafe.Tests", "Source\TimeWarp.Blazor.Template\content\TimeWarp.Blazor\Tests\EndToEnd.TestCafe.Tests\TimeWarp.Blazor.EndToEnd.TestCafe.Tests.csproj", "{FC51A9E7-8E02-46AC-AECB-037A6125EFE2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
