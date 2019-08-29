@@ -18,10 +18,9 @@ variables:
  Major: '1'
  Minor: '0'
  Patch: '0'
- AspNetCoreVersion: 3.0.0-preview8.19405.7
- PreviewNumber: $[counter(variables['AspNetCoreVersion'],0)]
- FormattedPreviewNumber: $[format('{0:D3}', variables.PreviewNumber)]
- Version: "$(Major).$(Minor).$(Patch)-$(AspNetCoreVersion)-$(FormattedPreviewNumber)"
+ DotNetSdkVersion: 3.0.100-preview8-013656
+ PreviewNumber: $[counter(variables.DotNetSdkVersion,100)]
+ Version: "$(Major).$(Minor).$(Patch)-$(DotNetSdkVersion)-$(PreviewNumber)"
  Configuration: debug
 
 steps:
