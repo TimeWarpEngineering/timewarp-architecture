@@ -18,7 +18,7 @@
     /// </remarks>
     [Inject] private RouteManager RouteManager { get; set; }
 
-    protected override async Task OnAfterRenderAsync()
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
     {
       await ReduxDevToolsInterop.InitAsync();
       await JsonRequestHandler.InitAsync();

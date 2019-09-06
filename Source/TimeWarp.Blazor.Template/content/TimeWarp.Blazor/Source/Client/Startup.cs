@@ -28,14 +28,6 @@
           }
       );
 
-      aServiceCollection.AddSingleton
-      (
-        new JsonSerializerOptions
-        {
-          PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        }
-      );
-
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
       aServiceCollection.AddScoped<ClientLoader>();
       aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();

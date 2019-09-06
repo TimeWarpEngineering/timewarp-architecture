@@ -24,7 +24,7 @@
 
   <!--Versions of packages used across the solution-->
   <PropertyGroup Label="Package Versions">
-    <MicrosoftAspNetCoreVersion>3.0.0-preview8.19405.7</MicrosoftAspNetCoreVersion>
+    <MicrosoftAspNetCoreVersion>3.0.0-preview9.19424.4</MicrosoftAspNetCoreVersion>
     <MicrosoftAspNetCoreBlazorVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorVersion>
     <MicrosoftAspNetCoreBlazorBuildVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorBuildVersion>
     <MicrosoftAspNetCoreBlazorHttpClientVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorHttpClientVersion>
@@ -33,17 +33,17 @@
     <MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>
     <MicrosoftAspNetCoreTestHostVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreTestHostVersion>
     <MicrosoftCodeAnalysisFxCopAnalyzersVersion>2.9.4</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
-    <MicrosoftExtensionsFileProvidersEmbeddedVersion>3.0.0-preview8.19405.4</MicrosoftExtensionsFileProvidersEmbeddedVersion>
-    <MicrosoftExtensionsLoggingAbstractionsVersion>3.0.0-preview8.19405.4</MicrosoftExtensionsLoggingAbstractionsVersion>
-    <MicrosoftSourceLinkGitHubVersion>1.0.0-beta2-19414-01</MicrosoftSourceLinkGitHubVersion>
-
-    <BlazorStateVersion>1.0.0-preview8.19405.7-20190817-213328</BlazorStateVersion>
+    <MicrosoftExtensionsFileProvidersEmbeddedVersion>3.0.0-preview9.19423.4</MicrosoftExtensionsFileProvidersEmbeddedVersion>
+    <MicrosoftExtensionsLoggingAbstractionsVersion>3.0.0-preview9.19423.4</MicrosoftExtensionsLoggingAbstractionsVersion>
+    <MicrosoftSourceLinkGitHubVersion>1.0.0-beta2-19454-01</MicrosoftSourceLinkGitHubVersion>
+    
+    <BlazorStateVersion>1.0.0-3.0.100-preview9-014004-100</BlazorStateVersion>
     <BlazorExtensionsLoggingVersion>0.3.0</BlazorExtensionsLoggingVersion>
     <FixieVersion>2.1.1</FixieVersion>
     <FixieConsoleVersion>2.1.1</FixieConsoleVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>7.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
     <MediatrVersion>7.0.0</MediatrVersion>
-    <MoqVersion>4.12.0</MoqVersion>
+    <MoqVersion>4.13.0</MoqVersion>
     <ScrutorVersion>3.1.0</ScrutorVersion>
     <SeleniumSupportVersion>3.141.0</SeleniumSupportVersion>
     <SeleniumWebDriverVersion>3.141.0</SeleniumWebDriverVersion>
