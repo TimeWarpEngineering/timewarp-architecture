@@ -5,16 +5,13 @@
   using TimeWarp.Blazor.Client.Features.WeatherForecast;
   using TimeWarp.Blazor.Client.Features.EventStream;
   using BlazorState;
-  using MediatR;
 
   /// <summary>
   /// Base Handler that makes it easy to access state
   /// </summary>
   /// <typeparam name="TRequest"></typeparam>
-  /// <typeparam name="TState"></typeparam>
-  internal abstract class BaseHandler<TRequest, TState> : BlazorState.RequestHandler<TRequest, TState>
-    where TRequest : IRequest<TState>
-    where TState : IState
+  internal abstract class BaseHandler<TRequest> : ActionHandler<TRequest>
+    where TRequest : IAction
   {
     public BaseHandler(IStore aStore) : base(aStore) { }
 
