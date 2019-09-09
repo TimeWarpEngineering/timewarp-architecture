@@ -1,30 +1,29 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.Application
 {
+  using BlazorState;
+  using MediatR;
   using System.Threading;
   using System.Threading.Tasks;
-  using BlazorState;
-  using BlazorState.Features.Routing;
-  using MediatR;
+  using static BlazorState.Features.Routing.RouteState;
+  using static TimeWarp.Blazor.Client.Features.Application.ApplicationState;
 
   internal class ResetStoreHandler : IRequestHandler<ResetStoreAction>
   {
+    private readonly IMediator Mediator;
+
+    private readonly IStore Store;
+
     public ResetStoreHandler(IStore aStore, IMediator aMediator)
     {
       Mediator = aMediator;
       Store = aStore;
     }
 
-    private IMediator Mediator { get; }
-    private IStore Store { get; }
-
-    public Task<Unit> Handle(ResetStoreAction aResetStoreAction, CancellationToken aCancellationToken)
+    public async Task<Unit> Handle(ResetStoreAction aResetStoreAction, CancellationToken aCancellationToken)
     {
       Store.Reset();
-      Mediator.Send(new ChangeRouteAction
-      {
-        NewRoute = "/"
-      });
-      return Unit.Task;
+      _ = await Mediator.Send(new ChangeRouteAction { NewRoute = "/" });
+      return Unit.Value;
     }
   }
 }

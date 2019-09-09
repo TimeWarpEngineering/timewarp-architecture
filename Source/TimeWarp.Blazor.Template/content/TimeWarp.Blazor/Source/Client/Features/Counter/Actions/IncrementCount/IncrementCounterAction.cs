@@ -1,10 +1,12 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.Counter
 {
-  using MediatR;
-  using TimeWarp.Blazor.Api.Features.Base;
+  using TimeWarp.Blazor.Client.Features.Base;
 
-  public class IncrementCounterAction : BaseRequest, IRequest<CounterState>
+  internal partial class CounterState
   {
-    public int Amount { get; set; }
+    public class IncrementCounterAction : BaseAction
+    {
+      public int Amount { get; set; }
+    }
   }
 }

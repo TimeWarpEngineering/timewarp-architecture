@@ -1,6 +1,9 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.Application
 {
-  using MediatR;
+  using TimeWarp.Blazor.Client.Features.Base;
 
-  public class ResetStoreAction : IRequest { }
+  internal partial class ApplicationState
+  {
+    public class ResetStoreAction : BaseAction { }
+  }
 }

@@ -1,9 +1,9 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.Base.Components
 {
-  using TimeWarp.Blazor.Client.Features.Application;
+  using static TimeWarp.Blazor.Client.Features.Application.ApplicationState;
 
   public class ResetButtonBase : BaseComponent
   {
-    protected void ButtonClick() => Mediator.Send(new ResetStoreAction());
+    internal void ButtonClick() => Mediator.Send(new ResetStoreAction());
   }
 }

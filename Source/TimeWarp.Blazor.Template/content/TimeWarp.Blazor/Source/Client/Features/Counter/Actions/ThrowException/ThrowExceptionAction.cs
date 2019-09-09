@@ -1,9 +1,12 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.Counter
 {
-  using MediatR;
+  using TimeWarp.Blazor.Client.Features.Base;
 
-  public class ThrowExceptionAction : IRequest<CounterState>
+  internal partial class CounterState
   {
-    public string Message { get; set; }
+    public class ThrowExceptionAction : BaseAction
+    {
+      public string Message { get; set; }
+    }
   }
 }

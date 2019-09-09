@@ -1,13 +1,14 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.Counter
 {
-  using TimeWarp.Blazor.Client.Pipeline.NotificationPostProcessor;
   using MediatR;
   using Microsoft.Extensions.Logging;
   using System.Threading;
   using System.Threading.Tasks;
+  using TimeWarp.Blazor.Client.Pipeline.NotificationPostProcessor;
+  using static TimeWarp.Blazor.Client.Features.Counter.CounterState;
 
   internal class IncrementCountNotificationHandler
-    : INotificationHandler<PostPipelineNotification<IncrementCounterAction, CounterState>>
+    : INotificationHandler<PostPipelineNotification<IncrementCounterAction, Unit>>
   {
     private readonly ILogger Logger;
 
@@ -18,13 +19,13 @@
 
     public Task Handle
     (
-      PostPipelineNotification<IncrementCounterAction, CounterState> aPostPipelineNotification, 
+      PostPipelineNotification<IncrementCounterAction, Unit> aPostPipelineNotification,
       CancellationToken aCancellationToken
     )
     {
       Logger.LogDebug(aPostPipelineNotification.Request.GetType().Name);
       Logger.LogDebug($"{nameof(IncrementCountNotificationHandler)} handled");
-      return Task.CompletedTask;
+      return Unit.Task;
     }
   }
 }

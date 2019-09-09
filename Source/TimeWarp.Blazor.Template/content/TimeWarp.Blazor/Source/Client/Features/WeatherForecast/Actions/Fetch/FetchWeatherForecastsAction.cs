@@ -1,6 +1,9 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.WeatherForecast
 {
-  using MediatR;
+  using TimeWarp.Blazor.Client.Features.Base;
 
-  public class FetchWeatherForecastsAction : IRequest<WeatherForecastsState> { }
+  internal partial class WeatherForecastsState
+  {
+    public class FetchWeatherForecastsAction : BaseAction { }
+  }
 }
