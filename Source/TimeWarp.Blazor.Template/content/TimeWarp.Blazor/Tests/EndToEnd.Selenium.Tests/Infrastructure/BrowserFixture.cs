@@ -1,12 +1,16 @@
 ﻿namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
 {
-  using System;
   using OpenQA.Selenium;
   using OpenQA.Selenium.Chrome;
   using OpenQA.Selenium.Remote;
+  using System;
 
   public class BrowserFixture : IDisposable
   {
+    public ILogs Logs { get; }
+
+    public IWebDriver WebDriver { get; }
+
     public BrowserFixture()
     {
       var chromeOptions = new ChromeOptions();
@@ -42,9 +46,6 @@
         throw new InvalidOperationException(message, ex);
       }
     }
-
-    public ILogs Logs { get; }
-    public IWebDriver WebDriver { get; }
 
     public void Dispose() => WebDriver.Dispose();
   }

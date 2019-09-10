@@ -1,27 +1,29 @@
 ﻿namespace TimeWarp.Blazor.Client.Integration.Tests
 {
+  using BlazorState;
+  using Microsoft.Extensions.DependencyInjection;
+  using Shouldly;
   using System;
   using System.IO;
   using TimeWarp.Blazor.Client.Features.Application;
   using TimeWarp.Blazor.Client.Features.Counter;
   using TimeWarp.Blazor.Client.Features.WeatherForecast;
-  using BlazorState;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using Microsoft.Extensions.DependencyInjection;
-  using Shouldly;
 
-  class StoreTests
+  internal class StoreTests
   {
+    private readonly IReduxDevToolsStore ReduxDevToolsStore;
+
+    private readonly IServiceProvider ServiceProvider;
+
+    private readonly IStore Store;
+
     public StoreTests(TestFixture aTestFixture)
     {
       ServiceProvider = aTestFixture.ServiceProvider;
       Store = ServiceProvider.GetService<IStore>();
       ReduxDevToolsStore = ServiceProvider.GetService<IReduxDevToolsStore>();
     }
-
-    private IServiceProvider ServiceProvider { get; }
-    private IStore Store { get; }
-    private IReduxDevToolsStore ReduxDevToolsStore { get; }
 
     public void ShouldLoadStatesFromJson()
     {

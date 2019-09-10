@@ -1,16 +1,18 @@
-# Directory Structure
-* Artifacts - Build outputs go here. Doing a build.cmd/build.sh generates artifacts here (nupkgs, dlls, pdbs, etc.)
-* Assets - Image Logos etc.
-* Build - Build customizations (custom msbuild files/psake/fake/albacore/etc) scripts
-* Documentation - DocFx folder
-* Lib - Things that can NEVER exist in a nuget package
-* Packages - NuGet packages
-* Samples (optional) - Sample projects
-* Source - Main projects (the product code)
-* Tests - Test projects
-* .gitignore - started with VisualStudio one from Github update as needed.
-* build.ps - (optional) Powershell script to Bootstrap the build
-* global.json - (optional) specify required SDK
-* Nuget.config - specify Nuget sources
-* README.md
-* UNLICENSE.md
+# TimeWarp.Blazor
+
+[![Join the chat at https://gitter.im/Microsoft/ChakraCore](https://badges.gitter.im/Microsoft/ChakraCore.svg)](https://gitter.im/Microsoft/ChakraCore?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Licensed under the MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/Microsoft/ChakraCore/blob/master/LICENSE.txt)
+[![PR's Welcome](https://img.shields.io/badge/PRs%20-welcome-brightgreen.svg)](#contribute)
+
+TODO: Give a short introduction of your project. Ideally we want readers to go to the documentation site from this Readme.
+
+## Documentation
+* Please see [TimeWarp.Blazor documentation](https://todo/your-docs) for more complete documentation.
+
+## Run
+
+To run your site, execute the `run.ps1` script from powershell.
+
+## License
+
+Code licensed under the [TODO: License](Link).

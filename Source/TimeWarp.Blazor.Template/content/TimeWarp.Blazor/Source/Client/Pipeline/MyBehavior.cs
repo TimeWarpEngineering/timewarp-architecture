@@ -1,11 +1,11 @@
 ﻿namespace TimeWarp.Blazor.Client.Pipeline
 {
-  using System;
-  using System.Threading;
-  using System.Threading.Tasks;
   using BlazorState;
   using MediatR;
   using Microsoft.Extensions.Logging;
+  using System;
+  using System.Threading;
+  using System.Threading.Tasks;
 
   /// <summary>
   /// Sample Pipeline Behavior AKA Middle-ware
@@ -15,6 +15,10 @@
   /// <remarks>see MediatR for more examples</remarks>
   public class MyBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
   {
+    private readonly ILogger Logger;
+
+    public Guid Guid { get; } = Guid.NewGuid();
+
     public MyBehavior
     (
       ILogger<MyBehavior<TRequest, TResponse>> aLogger
@@ -23,9 +27,6 @@
       Logger = aLogger;
       Logger.LogDebug($"{GetType().Name}: Constructor");
     }
-
-    public Guid Guid { get; } = Guid.NewGuid();
-    private ILogger Logger { get; }
 
     public async Task<TResponse> Handle
     (

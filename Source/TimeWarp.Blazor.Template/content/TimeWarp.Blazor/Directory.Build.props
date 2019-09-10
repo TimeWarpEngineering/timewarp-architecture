@@ -37,7 +37,7 @@
     <MicrosoftExtensionsLoggingAbstractionsVersion>3.0.0-preview9.19423.4</MicrosoftExtensionsLoggingAbstractionsVersion>
     <MicrosoftSourceLinkGitHubVersion>1.0.0-beta2-19454-01</MicrosoftSourceLinkGitHubVersion>
 
-    <BlazorStateVersion>1.0.0-3.0.100-preview9-014004-102</BlazorStateVersion>
+    <BlazorStateVersion>1.0.0-3.0.100-preview9-014004-105</BlazorStateVersion>
     <BlazorExtensionsLoggingVersion>0.3.0</BlazorExtensionsLoggingVersion>
     <FixieVersion>2.1.1</FixieVersion>
     <FixieConsoleVersion>2.1.1</FixieConsoleVersion>

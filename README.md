@@ -1,6 +1,10 @@
-# Timewarp-Templates 
+# Timewarp-Templates
 
-## timeWarp-blazor
+## timewarp-blazor
+
+[![NuGet](https://img.shields.io/nuget/v/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
+[![NuGet](https://img.shields.io/nuget/dt/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
+[![Build Status](https://timewarpenterprises.visualstudio.com/timewarp-templates/_apis/build/status/TimeWarp.Blazor.Template?branchName=master)](https://timewarpenterprises.visualstudio.com/timewarp-templates/_build/latest?definitionId=20&branchName=master)
 
 ### Installation
 
@@ -14,15 +18,22 @@ dotnet new --install TimeWarp.AspNetCore.Blazor.Templates
 dotnet new timewarp-blazor -n MyBlazorApp
 ```
 
+## Content
+
+The template creates 3 projects which will be deployed and 4 test projects.
+
 ### Projects
-MyBlazorApp.Client<br/>
-MyBlazorApp.Server<br/>
-MyBlazorApp.Shared
+
+MyBlazorApp.Client - This is the user interface project . The "Single Page Application (SPA)"
+MyBlazorApp.Server - This is the server project that serves up the SPA and is also the web api.
+MyBlazorApp.Shared - This is a library of common code shared between the Client and Server Projects.
 
 ### Test Projects
-MyBlazorApp.Client.Integration.Tests<br/>
-MyBlazorApp.Server.Integration.Tests<br/>
-MyBlazorApp.EndToEnd.Tests
+
+Client.Integration.Tests - contains integration tests for the SPA
+Server.Integration.Tests - contains integration tests for the web api
+EndToEnd.Selenium.Tests - contains Selenium based end-to-end tests.
+EndToEnd.TestCafe.Tests - contains TestCafe based end-to-end tests.
 
 ## timewarp-console
 

@@ -1,25 +1,24 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.WeatherForecast
 {
-  using System.Collections.Generic;
+  using BlazorState;
+  using MediatR;
+  using Microsoft.AspNetCore.Components;
   using System.Net.Http;
   using System.Threading;
   using System.Threading.Tasks;
-  using BlazorState;
   using TimeWarp.Blazor.Api.Features.WeatherForecast;
-  using Microsoft.AspNetCore.Components;
   using TimeWarp.Blazor.Client.Features.Base;
-  using MediatR;
 
   internal partial class WeatherForecastsState
   {
     public class FetchWeatherForecastsHandler : BaseHandler<FetchWeatherForecastsAction>
     {
+      private readonly HttpClient HttpClient;
+
       public FetchWeatherForecastsHandler(IStore aStore, HttpClient aHttpClient) : base(aStore)
       {
         HttpClient = aHttpClient;
       }
-
-      private HttpClient HttpClient { get; }
 
       public override async Task<Unit> Handle
       (

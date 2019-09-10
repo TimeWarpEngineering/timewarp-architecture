@@ -1,17 +1,17 @@
 ﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
-  using TimeWarp.Blazor.Client;
-  using TimeWarp.Blazor.Client.Features.Application;
-  using TimeWarp.Blazor.Client.Features.Counter;
-  using TimeWarp.Blazor.Client.Features.EventStream;
-  using TimeWarp.Blazor.Client.Features.WeatherForecast;
-  using TimeWarp.Blazor.Client.Features.ClientLoaderFeature;
   using BlazorState;
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.Extensions.DependencyInjection;
   using System;
   using System.Reflection;
   using System.Text.Json;
+  using TimeWarp.Blazor.Client;
+  using TimeWarp.Blazor.Client.Features.Application;
+  using TimeWarp.Blazor.Client.Features.ClientLoaderFeature;
+  using TimeWarp.Blazor.Client.Features.Counter;
+  using TimeWarp.Blazor.Client.Features.EventStream;
+  using TimeWarp.Blazor.Client.Features.WeatherForecast;
 
   /// <summary>
   /// A known starting state(baseline) for all tests.
@@ -19,14 +19,14 @@
   /// </summary>
   public class TestFixture//: IMediatorFixture, IStoreFixture, IServiceProviderFixture
   {
+    private readonly TestServer BlazorStateTestServer;
+
     /// <summary>
     /// This is the ServiceProvider that will be used by the Client
     /// </summary>
     public IServiceProvider ServiceProvider => WebAssemblyHostBuilder.Build().Services;
 
     public IWebAssemblyHostBuilder WebAssemblyHostBuilder { get; }
-
-    private TestServer BlazorStateTestServer { get; }
 
     public TestFixture(TestServer aBlazorStateTestServer)
     {

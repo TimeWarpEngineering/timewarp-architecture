@@ -5,7 +5,7 @@
 
   public class TestingConvention : Discovery, Execution
   {
-    private IServiceScopeFactory ServiceScopeFactory { get; }
+    private readonly IServiceScopeFactory ServiceScopeFactory;
 
     public TestingConvention()
     {

@@ -2,16 +2,15 @@
 {
   using Microsoft.Extensions.Logging;
   using Microsoft.JSInterop;
-  using System;
   using System.Threading.Tasks;
 
   public class ClientLoader
   {
-    private IClientLoaderConfiguration ClientLoaderConfiguration { get; }
+    private readonly IClientLoaderConfiguration ClientLoaderConfiguration;
 
-    private IJSRuntime JSRuntime { get; }
+    private readonly IJSRuntime JSRuntime;
 
-    private ILogger Logger { get; }
+    private readonly ILogger Logger;
 
     public ClientLoader
     (
@@ -28,9 +27,8 @@
 
     public async Task InitAsync()
     {
-      
-      await Task.Delay(TimeSpan.FromSeconds(10));
-      //await Task.Delay(ClientLoaderConfiguration.DelayTimeSpan);
+      //await Task.Delay(TimeSpan.FromSeconds(10));
+      await Task.Delay(ClientLoaderConfiguration.DelayTimeSpan);
       await LoadClient();
     }
 
