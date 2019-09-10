@@ -51,11 +51,11 @@
     },
     {
       "type": "Conceptual",
-      "source_relative_path": "TimeWarp.Blazor.Template/Overview.md",
+      "source_relative_path": "TimeWarpBlazorTemplate/Overview.md",
       "output": {
         ".html": {
-          "relative_path": "TimeWarp.Blazor.Template/Overview.html",
-          "hash": "XAKdJ5YpMOngdQ9Y5hFnzw=="
+          "relative_path": "TimeWarpBlazorTemplate/Overview.html",
+          "hash": "f71jd/J0+t1/FuA3ytxBAA=="
         }
       },
       "is_incremental": false,
@@ -63,11 +63,11 @@
     },
     {
       "type": "Conceptual",
-      "source_relative_path": "TimeWarp.Console.Template/Overview.md",
+      "source_relative_path": "TimeWarpConsoleTemplate/Overview.md",
       "output": {
         ".html": {
-          "relative_path": "TimeWarp.Console.Template/Overview.html",
-          "hash": "JiMTQSSDGa/KCvLECrMIpw=="
+          "relative_path": "TimeWarpConsoleTemplate/Overview.html",
+          "hash": "MeLngePdSwHPPaR1pmo+VA=="
         }
       },
       "is_incremental": false,
@@ -79,22 +79,19 @@
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "d+sJ+Ly6nYF4eVM56NjptQ=="
+          "hash": "1W7kwPhd0Ee0WKSetAZa/Q=="
         }
       },
       "is_incremental": false,
       "version": ""
     },
     {
-      "log_codes": [
-        "UidNotFound"
-      ],
       "type": "Toc",
       "source_relative_path": "toc.yml",
       "output": {
         ".html": {
           "relative_path": "toc.html",
-          "hash": "YIV3mSJHpDa9YHw2Ep/Gcw=="
+          "hash": "fJkXS1QRPH1aZzBwG9L8Kw=="
         }
       },
       "is_incremental": false,
@@ -104,12 +101,10 @@
   "incremental_info": [
     {
       "status": {
-        "can_incremental": false,
-        "details": "Cannot build incrementally because last build info is missing.",
+        "can_incremental": true,
         "incrementalPhase": "build",
         "total_file_count": 0,
-        "skipped_file_count": 0,
-        "full_build_reason_code": "NoAvailableBuildCache"
+        "skipped_file_count": 0
       },
       "processors": {
         "TocDocumentProcessor": {
@@ -119,25 +114,25 @@
           "total_file_count": 0,
           "skipped_file_count": 0
         },
-        "ConceptualDocumentProcessor": {
-          "can_incremental": false,
-          "incrementalPhase": "build",
-          "total_file_count": 5,
-          "skipped_file_count": 0
-        },
         "ResourceDocumentProcessor": {
           "can_incremental": false,
           "details": "Processor ResourceDocumentProcessor cannot support incremental build because the processor doesn't implement ISupportIncrementalDocumentProcessor interface.",
           "incrementalPhase": "build",
           "total_file_count": 0,
           "skipped_file_count": 0
+        },
+        "ConceptualDocumentProcessor": {
+          "can_incremental": true,
+          "incrementalPhase": "build",
+          "total_file_count": 5,
+          "skipped_file_count": 2
         }
       }
     },
     {
       "status": {
-        "can_incremental": false,
-        "details": "Cannot support incremental post processing, the reason is: last post processor info is null.",
+        "can_incremental": true,
+        "details": "Can support incremental post processing.",
         "incrementalPhase": "postProcessing",
         "total_file_count": 0,
         "skipped_file_count": 0
