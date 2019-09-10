@@ -1,0 +1,32 @@
+trigger:
+ branches:
+  include:
+  - master
+
+# no PR builds
+pr: none
+
+queue:
+  name: TimeWarpEnterprises
+
+steps:
+- script: echo Build TimeWarp-Templates Docs
+
+- task: CmdLine@2
+  inputs:
+    script: 'docfx Documentation/docfx.json' 
+    #workingDirectory: # Optional
+    #failOnStderr: false # Optional
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: ReleaseScript'
+  inputs:
+    PathtoPublish: 'Build\PublishToGitHubPages.ps1'
+    ArtifactName: ReleaseScript
+    publishLocation: Container  
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: documentationSite'
+  inputs:
+    PathtoPublish: 'Documentation/_site'
+    ArtifactName: _site
