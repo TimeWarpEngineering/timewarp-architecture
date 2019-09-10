@@ -1,8 +1,8 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.Counter.Components
 {
-  using TimeWarp.Blazor.Client.Features.Base.Components;
-  using TimeWarp.Blazor.Client.Features.Counter;
   using System.Threading.Tasks;
+  using TimeWarp.Blazor.Client.Features.Base.Components;
+  using static TimeWarp.Blazor.Client.Features.Counter.CounterState;
 
   public class CounterBase : BaseComponent
   {

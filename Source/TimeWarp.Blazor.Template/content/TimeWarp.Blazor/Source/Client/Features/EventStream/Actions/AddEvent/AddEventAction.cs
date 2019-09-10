@@ -1,9 +1,12 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.EventStream
 {
-  using MediatR;
+  using TimeWarp.Blazor.Client.Features.Base;
 
-  public class AddEventAction : IRequest<EventStreamState>
+  internal partial class EventStreamState
   {
-    public string Message { get; set; }
+    public class AddEventAction : BaseAction
+    {
+      public string Message { get; set; }
+    }
   }
 }

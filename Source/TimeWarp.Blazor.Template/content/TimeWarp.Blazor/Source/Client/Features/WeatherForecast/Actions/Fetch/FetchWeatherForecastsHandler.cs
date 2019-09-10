@@ -1,28 +1,28 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.WeatherForecast
 {
-  using System.Collections.Generic;
+  using BlazorState;
+  using MediatR;
+  using Microsoft.AspNetCore.Components;
   using System.Net.Http;
   using System.Threading;
   using System.Threading.Tasks;
-  using BlazorState;
   using TimeWarp.Blazor.Api.Features.WeatherForecast;
-  using Microsoft.AspNetCore.Components;
+  using TimeWarp.Blazor.Client.Features.Base;
 
   internal partial class WeatherForecastsState
   {
-    public class FetchWeatherForecastsHandler : RequestHandler<FetchWeatherForecastsAction, WeatherForecastsState>
+    public class FetchWeatherForecastsHandler : BaseHandler<FetchWeatherForecastsAction>
     {
+      private readonly HttpClient HttpClient;
+
       public FetchWeatherForecastsHandler(IStore aStore, HttpClient aHttpClient) : base(aStore)
       {
         HttpClient = aHttpClient;
       }
 
-      private HttpClient HttpClient { get; }
-      private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
-
-      public override async Task<WeatherForecastsState> Handle
+      public override async Task<Unit> Handle
       (
-        FetchWeatherForecastsAction aFetchWeatherForecastsRequest,
+        FetchWeatherForecastsAction aFetchWeatherForecastsAction,
         CancellationToken aCancellationToken
       )
       {
@@ -30,7 +30,7 @@
         GetWeatherForecastsResponse getWeatherForecastsResponse =
           await HttpClient.PostJsonAsync<GetWeatherForecastsResponse>(GetWeatherForecastsRequest.Route, getWeatherForecastsRequest);
         WeatherForecastsState._WeatherForecasts = getWeatherForecastsResponse.WeatherForecasts;
-        return WeatherForecastsState;
+        return Unit.Value;
       }
     }
   }

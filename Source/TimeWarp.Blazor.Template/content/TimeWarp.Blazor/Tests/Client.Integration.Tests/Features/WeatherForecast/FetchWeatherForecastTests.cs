@@ -8,27 +8,27 @@
   using Shouldly;
   using System;
   using System.Threading.Tasks;
+  using static TimeWarp.Blazor.Client.Features.WeatherForecast.WeatherForecastsState;
 
   internal class FetchWeatherForecastTests
   {
-    private IMediator Mediator { get; }
-    private IServiceProvider ServiceProvider { get; }
-    private IStore Store { get; }
-    private WeatherForecastsState WeatherForecastsState { get; set; }
+    private readonly IMediator Mediator;
+    private readonly IServiceProvider ServiceProvider;
+    private readonly IStore Store;
+    private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
     public FetchWeatherForecastTests(TestFixture aTestFixture)
     {
       ServiceProvider = aTestFixture.ServiceProvider;
       Mediator = ServiceProvider.GetService<IMediator>();
       Store = ServiceProvider.GetService<IStore>();
-      WeatherForecastsState = Store.GetState<WeatherForecastsState>();
     }
 
     public async Task Should_Fetch_WeatherForecasts()
     {
       var fetchWeatherForecastsRequest = new FetchWeatherForecastsAction();
 
-      WeatherForecastsState = await Mediator.Send(fetchWeatherForecastsRequest);
+      _ = await Mediator.Send(fetchWeatherForecastsRequest);
 
       WeatherForecastsState.WeatherForecasts.Count.ShouldBeGreaterThan(0);
     }

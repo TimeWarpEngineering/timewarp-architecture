@@ -1,17 +1,16 @@
 ﻿namespace TimeWarp.Blazor.EndToEnd.Tests
 {
-  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using OpenQA.Selenium;
   using OpenQA.Selenium.Support.UI;
   using System;
+  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
 
   public abstract class BaseTest
   {
-    protected IJavaScriptExecutor JavaScriptExecutor { get; }
+    private readonly ServerFixture ServerFixture;
+    protected readonly IJavaScriptExecutor JavaScriptExecutor;
     protected TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(15);
     protected IWebDriver WebDriver { get; }
-
-    private ServerFixture ServerFixture { get; }
 
     public BaseTest(IWebDriver aWebDriver, ServerFixture aServerFixture)
     {

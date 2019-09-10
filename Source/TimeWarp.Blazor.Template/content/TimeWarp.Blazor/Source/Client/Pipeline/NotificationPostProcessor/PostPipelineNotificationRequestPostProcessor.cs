@@ -1,25 +1,26 @@
 ﻿namespace TimeWarp.Blazor.Client.Pipeline.NotificationPostProcessor
 {
-  using System.Threading;
-  using System.Threading.Tasks;
   using MediatR;
   using MediatR.Pipeline;
   using Microsoft.Extensions.Logging;
+  using System.Threading;
+  using System.Threading.Tasks;
 
   internal class PostPipelineNotificationRequestPostProcessor<TRequest, TResponse> : IRequestPostProcessor<TRequest, TResponse>
   {
+    private readonly ILogger Logger;
+
+    private readonly IMediator Mediator;
+
     public PostPipelineNotificationRequestPostProcessor
-    (
-      ILogger<PostPipelineNotificationRequestPostProcessor<TRequest,TResponse>> aLogger,
+            (
+      ILogger<PostPipelineNotificationRequestPostProcessor<TRequest, TResponse>> aLogger,
       IMediator aMediator
     )
     {
       Logger = aLogger;
       Mediator = aMediator;
     }
-
-    private IMediator Mediator { get; }
-    private ILogger Logger { get; }
 
     public async Task Process(TRequest aRequest, TResponse aResponse, CancellationToken aCancellationToken)
     {
