@@ -1,0 +1,9 @@
+### YamlMime:XRefMap
+sorted: true
+references:
+- uid: TimeWarp.Blazor.Template:Overview
+  name: TimeWarp Blazor Template Overview
+  href: TimeWarp.Blazor.Template/Overview.html
+- uid: TimeWarp.Console.Template:Overview
+  name: TimeWarp Console Template Overview
+  href: TimeWarp.Console.Template/Overview.html
