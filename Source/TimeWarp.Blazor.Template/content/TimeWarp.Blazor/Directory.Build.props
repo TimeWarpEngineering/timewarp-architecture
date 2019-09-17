@@ -24,21 +24,17 @@
 
   <!--Versions of packages used across the solution-->
   <PropertyGroup Label="Package Versions">
-    <MicrosoftAspNetCoreVersion>3.0.0-preview9.19424.4</MicrosoftAspNetCoreVersion>
-    <MicrosoftAspNetCoreBlazorVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorVersion>
-    <MicrosoftAspNetCoreBlazorBuildVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorBuildVersion>
-    <MicrosoftAspNetCoreBlazorHttpClientVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorHttpClientVersion>
-    <MicrosoftAspNetCoreBlazorServerVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorServerVersion>
-    <MicrosoftAspNetCoreComponentsBrowserVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreComponentsBrowserVersion>
+    <MicrosoftAspNetCoreVersion>3.0.0-rc1.19457.4</MicrosoftAspNetCoreVersion>
+    <MicrosoftAspNetCoreBlazorVersion>3.0.0-preview9.19457.4</MicrosoftAspNetCoreBlazorVersion>
+    <MicrosoftAspNetCoreBlazorBuildVersion>3.0.0-preview9.19457.4</MicrosoftAspNetCoreBlazorBuildVersion>
+    <MicrosoftAspNetCoreBlazorHttpClientVersion>3.0.0-preview9.19457.4</MicrosoftAspNetCoreBlazorHttpClientVersion>
+    <MicrosoftAspNetCoreBlazorServerVersion>3.0.0-preview9.19457.4</MicrosoftAspNetCoreBlazorServerVersion>
     <MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>
     <MicrosoftAspNetCoreTestHostVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreTestHostVersion>
     <MicrosoftCodeAnalysisFxCopAnalyzersVersion>2.9.4</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
-    <MicrosoftExtensionsFileProvidersEmbeddedVersion>3.0.0-preview9.19423.4</MicrosoftExtensionsFileProvidersEmbeddedVersion>
-    <MicrosoftExtensionsLoggingAbstractionsVersion>3.0.0-preview9.19423.4</MicrosoftExtensionsLoggingAbstractionsVersion>
-    <MicrosoftSourceLinkGitHubVersion>1.0.0-beta2-19454-01</MicrosoftSourceLinkGitHubVersion>
 
-    <BlazorStateVersion>1.0.0-3.0.100-preview9-014004-105</BlazorStateVersion>
-    <BlazorExtensionsLoggingVersion>0.3.0</BlazorExtensionsLoggingVersion>
+    <BlazorStateVersion>1.0.0-3.0.100-rc1-014190-100</BlazorStateVersion>
+    <BlazorExtensionsLoggingVersion>0.4.0</BlazorExtensionsLoggingVersion>
     <FixieVersion>2.1.1</FixieVersion>
     <FixieConsoleVersion>2.1.1</FixieConsoleVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>7.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
