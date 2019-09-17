@@ -58,7 +58,7 @@
           "hash": "RyhWYW/1eFIgFxiuZeWbXw=="
         }
       },
-      "is_incremental": false,
+      "is_incremental": true,
       "version": ""
     },
     {
@@ -82,7 +82,7 @@
           "hash": "wRGKtMpF+6RF/osc7Ap1YA=="
         }
       },
-      "is_incremental": false,
+      "is_incremental": true,
       "version": ""
     },
     {
@@ -125,7 +125,7 @@
           "can_incremental": true,
           "incrementalPhase": "build",
           "total_file_count": 5,
-          "skipped_file_count": 3
+          "skipped_file_count": 5
         }
       }
     },
