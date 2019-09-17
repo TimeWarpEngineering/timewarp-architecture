@@ -6,6 +6,10 @@
 [![NuGet](https://img.shields.io/nuget/dt/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
 [![Build Status](https://timewarpenterprises.visualstudio.com/timewarp-templates/_apis/build/status/TimeWarp.Blazor.Template?branchName=master)](https://timewarpenterprises.visualstudio.com/timewarp-templates/_build/latest?definitionId=20&branchName=master)
 
+### Documentation
+
+https://timewarpengineering.github.io/timewarp-templates/TimeWarpBlazorTemplate/Overview.html
+
 ### Installation
 
 ```console
@@ -42,3 +46,7 @@ EndToEnd.TestCafe.Tests - contains TestCafe based end-to-end tests.
 [![Build Status](https://timewarpenterprises.visualstudio.com/timewarp-console/_apis/build/status/TimeWarpEngineering.timewarp-console?branchName=master)](https://timewarpenterprises.visualstudio.com/timewarp-console/_build/latest?definitionId=19&branchName=master)
 
 Console template for dotnet core applications utilizing MediatR 
+
+### Documentation
+
+https://timewarpengineering.github.io/timewarp-templates/TimeWarpConsoleTemplate/Overview.html
