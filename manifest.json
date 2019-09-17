@@ -31,10 +31,10 @@
       "output": {
         ".html": {
           "relative_path": "README.html",
-          "hash": "elzxO6mRFs0keJOPTwHfgQ=="
+          "hash": "tYtNHge37dL1IbLPX6Jfkw=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -55,10 +55,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Overview.html",
-          "hash": "RyhWYW/1eFIgFxiuZeWbXw=="
+          "hash": "RZrYW2R2NIZ5fomYZNep/Q=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -79,10 +79,10 @@
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "wRGKtMpF+6RF/osc7Ap1YA=="
+          "hash": "9pUEASt9VF3ANizplEHbTw=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -107,16 +107,16 @@
         "skipped_file_count": 0
       },
       "processors": {
-        "TocDocumentProcessor": {
+        "ResourceDocumentProcessor": {
           "can_incremental": false,
-          "details": "Processor TocDocumentProcessor cannot support incremental build because the processor doesn't implement ISupportIncrementalDocumentProcessor interface.",
+          "details": "Processor ResourceDocumentProcessor cannot support incremental build because the processor doesn't implement ISupportIncrementalDocumentProcessor interface.",
           "incrementalPhase": "build",
           "total_file_count": 0,
           "skipped_file_count": 0
         },
-        "ResourceDocumentProcessor": {
+        "TocDocumentProcessor": {
           "can_incremental": false,
-          "details": "Processor ResourceDocumentProcessor cannot support incremental build because the processor doesn't implement ISupportIncrementalDocumentProcessor interface.",
+          "details": "Processor TocDocumentProcessor cannot support incremental build because the processor doesn't implement ISupportIncrementalDocumentProcessor interface.",
           "incrementalPhase": "build",
           "total_file_count": 0,
           "skipped_file_count": 0
@@ -125,7 +125,7 @@
           "can_incremental": true,
           "incrementalPhase": "build",
           "total_file_count": 5,
-          "skipped_file_count": 5
+          "skipped_file_count": 2
         }
       }
     },
