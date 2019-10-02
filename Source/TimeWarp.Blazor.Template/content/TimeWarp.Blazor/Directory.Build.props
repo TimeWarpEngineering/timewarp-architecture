@@ -32,7 +32,7 @@
     <MicrosoftAspNetCoreTestHostVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreTestHostVersion>
     <MicrosoftCodeAnalysisFxCopAnalyzersVersion>2.9.4</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
 
-    <BlazorStateVersion>1.0.0</BlazorStateVersion>
+    <BlazorStateVersion>1.1.4</BlazorStateVersion>
     <BlazorExtensionsLoggingVersion>0.4.0</BlazorExtensionsLoggingVersion>
     <FixieVersion>2.1.1</FixieVersion>
     <FixieConsoleVersion>2.1.1</FixieConsoleVersion>
