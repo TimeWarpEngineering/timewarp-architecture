@@ -12,7 +12,7 @@ title: TimeWarp Blazor Template Overview
 ## Installation
 
 ```console
-dotnet new --install TimeWarp.AspNetCore.Blazor.Templates::1.0.0-3.0.100-rc1-014190-100
+dotnet new --install TimeWarp.AspNetCore.Blazor.Templates
 ```
 
 ## Usage
