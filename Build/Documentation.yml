@@ -30,3 +30,14 @@ steps:
   inputs:
     PathtoPublish: 'Documentation/_site'
     ArtifactName: _site
+
+- task: DeleteFiles@1
+  displayName: 'Delete files from '
+  inputs:
+    Contents: ghpages
+
+- task: PowerShell@2
+  displayName: 'Deploy to Github pages'
+  inputs:
+    targetType: filePath
+    filePath: './$(System.DefaultWorkingDirectory)/_Documentation/ReleaseScript/PublishToGitHubPages.ps1'
