@@ -10,6 +10,10 @@ pr:
  branches:
    include:
      - master
+ paths:
+  include:
+  - Source/TimeWarp.Blazor.Template/*
+
 
 pool:
   name: TimeWarpEnterprises
