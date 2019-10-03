@@ -39,7 +39,7 @@ steps:
 - task: GitHubPagesPublish@1
   displayName: 'Deploy to Github pages'
   inputs:
-    docPath: '$(System.DefaultWorkingDirectory)\Documentation\site\*'
+    docPath: '$(System.DefaultWorkingDirectory)\Documentation\_site\*'
     githubusername: 'TimeWarpEngineering'
     githubemail: 'Steven.Cramer@TimeWarp.Enterprises'
     githubaccesstoken: $(GitHubPersonalAccessToken)
