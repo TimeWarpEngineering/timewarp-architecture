@@ -30,11 +30,11 @@
     <MicrosoftAspNetCoreBlazorServerVersion>3.0.0-preview9.19465.2</MicrosoftAspNetCoreBlazorServerVersion>
     <MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>
     <MicrosoftAspNetCoreTestHostVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreTestHostVersion>
-    <MicrosoftCodeAnalysisFxCopAnalyzersVersion>2.9.4</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
+    <MicrosoftCodeAnalysisFxCopAnalyzersVersion>2.9.6</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
 
-    <BlazorStateVersion>1.1.4</BlazorStateVersion>
+    <BlazorStateVersion>1.1.5</BlazorStateVersion>
     <BlazorExtensionsLoggingVersion>0.4.0</BlazorExtensionsLoggingVersion>
-    <FixieVersion>2.1.1</FixieVersion>
+    <FixieVersion>2.2.0</FixieVersion>
     <FixieConsoleVersion>2.1.1</FixieConsoleVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>7.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
     <MediatrVersion>7.0.0</MediatrVersion>
