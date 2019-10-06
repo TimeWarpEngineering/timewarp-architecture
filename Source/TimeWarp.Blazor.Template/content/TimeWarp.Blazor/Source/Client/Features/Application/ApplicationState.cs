@@ -13,7 +13,7 @@
     
     public ApplicationState() { }
 
-    protected override void Initialize()
+    public override void Initialize()
     {
       IsMenuExpanded = true;
       Name = "TimeWarp.Blazor";
