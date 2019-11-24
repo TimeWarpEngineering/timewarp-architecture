@@ -2,7 +2,7 @@
 {
   using Microsoft.AspNetCore;
   using Microsoft.AspNetCore.Hosting;
-  
+
   public class TestServer : Microsoft.AspNetCore.TestHost.TestServer
   {
     public TestServer() : base(WebHostBuilder()) { }

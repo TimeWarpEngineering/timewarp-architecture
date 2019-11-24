@@ -1,12 +1,12 @@
 ﻿namespace TimeWarp.Blazor.Server.Integration.Tests.Features.WeatherForecast.GetAll
 {
-  using TimeWarp.Blazor.Api.Features.WeatherForecast;
-  using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
   using System;
   using System.Threading.Tasks;
+  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
 
   internal class GetAllWeatherForecastsTests
   {

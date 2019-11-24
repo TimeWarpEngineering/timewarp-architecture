@@ -1,9 +1,9 @@
 ﻿namespace TimeWarp.Blazor.Client.ApplicationFeature
 {
-  using System.Threading;
-  using System.Threading.Tasks;
   using BlazorState;
   using MediatR;
+  using System.Threading;
+  using System.Threading.Tasks;
   using TimeWarp.Blazor.Client.BaseFeature;
 
   internal partial class ApplicationState

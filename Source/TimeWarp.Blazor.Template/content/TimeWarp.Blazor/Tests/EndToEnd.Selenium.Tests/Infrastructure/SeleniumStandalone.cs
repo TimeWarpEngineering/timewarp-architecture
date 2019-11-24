@@ -8,6 +8,8 @@ namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
   {
     private const string SeleniumRequestUri = "http://localhost:4444/wd/hub";
 
+    public Process Process { get; }
+
     public SeleniumStandAlone()
     {
       Process = new Process()
@@ -22,6 +24,8 @@ namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
       Process.Start();
       WaitForSelenium().Wait();
     }
+
+    public void Dispose() => Process?.Close();
 
     internal async System.Threading.Tasks.Task WaitForSelenium()
     {
@@ -39,9 +43,5 @@ namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
         secondResponse.EnsureSuccessStatusCode();
       }
     }
-
-    public Process Process { get; }
-
-    public void Dispose() => Process?.Close();
   }
 }

@@ -22,7 +22,6 @@
       (
         (aOptions) =>
         {
-
 #if ReduxDevToolsEnabled
           aOptions.UseReduxDevToolsBehavior = true;
 #endif

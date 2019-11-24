@@ -6,6 +6,8 @@
 
   public class GetWeatherForecastsResponse : BaseResponse
   {
+    public List<WeatherForecastDto> WeatherForecasts { get; set; }
+
     /// <summary>
     /// a default constructor is required for deserialization
     /// </summary>
@@ -16,7 +18,5 @@
       WeatherForecasts = new List<WeatherForecastDto>();
       RequestId = aRequestId;
     }
-
-    public List<WeatherForecastDto> WeatherForecasts { get; set; }
   }
 }

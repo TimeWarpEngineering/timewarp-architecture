@@ -1,7 +1,7 @@
 ﻿namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
 {
-  using TimeWarp.Blazor.Client.ClientLoaderFeature;
   using System;
+  using TimeWarp.Blazor.Client.ClientLoaderFeature;
 
   public class TestClientLoaderConfiguration : IClientLoaderConfiguration
   {

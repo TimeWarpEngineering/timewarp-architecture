@@ -1,13 +1,13 @@
 ﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
 {
-  using TimeWarp.Blazor.Client.WeatherForecastFeature;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using BlazorState;
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
   using System;
   using System.Threading.Tasks;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Client.WeatherForecastFeature;
   using static TimeWarp.Blazor.Client.WeatherForecastFeature.WeatherForecastsState;
 
   internal class FetchWeatherForecastTests

@@ -1,8 +1,8 @@
 ﻿namespace TimeWarp.Blazor.EndToEnd.Tests
 {
-  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using OpenQA.Selenium;
   using Shouldly;
+  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
 
   public class JsInteropTests : BaseTest
   {
@@ -38,7 +38,6 @@
 
     public void InitalizationWorkedServerSide()
     {
-
       JavaScriptExecutor.ExecuteScript("window.localStorage.setItem('executionSide','server');");
 
       Navigate("/", aReload: true);
@@ -48,7 +47,6 @@
 
     private void InitalizationWorked()
     {
-
       object blazorState = JavaScriptExecutor.ExecuteScript("return window.BlazorState;");
       blazorState.ShouldNotBeNull();
 
@@ -68,8 +66,7 @@
     //public void CanCallCsharpFromJs()
     //{
     //  // Redux Dev tool use this ability.
-    //  // TODO set up a handler to be launched from JS 
+    //  // TODO set up a handler to be launched from JS
     //}
-
   }
 }

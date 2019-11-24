@@ -1,14 +1,14 @@
 ﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
 {
   using AnyClone;
-  using TimeWarp.Blazor.Client.WeatherForecastFeature;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Blazor.Api.Features.WeatherForecast;
   using BlazorState;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
   using System;
   using System.Collections.Generic;
+  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Client.WeatherForecastFeature;
 
   internal class WeatherForecastStateCloneTests
   {

@@ -1,9 +1,9 @@
 ﻿namespace TimeWarp.Blazor.Client.ApplicationFeature
 {
-  using System.Collections.Generic;
-  using System.Reflection;
   using BlazorState;
   using Microsoft.JSInterop;
+  using System.Collections.Generic;
+  using System.Reflection;
 
   internal partial class ApplicationState : State<ApplicationState>
   {
@@ -15,6 +15,7 @@
         Name = aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Name))].ToString(),
       };
     }
+
     internal void Initialize(string aName, string aLogo, bool aIsMenuExpanded)
     {
       ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
