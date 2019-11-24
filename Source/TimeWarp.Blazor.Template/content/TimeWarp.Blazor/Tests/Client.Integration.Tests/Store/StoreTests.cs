@@ -6,8 +6,8 @@
   using System;
   using System.IO;
   using TimeWarp.Blazor.Client.ApplicationFeature;
-  using TimeWarp.Blazor.Client.Features.Counter;
-  using TimeWarp.Blazor.Client.Features.WeatherForecast;
+  using TimeWarp.Blazor.Client.CounterFeature;
+  using TimeWarp.Blazor.Client.WeatherForecastFeature;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
 
   internal class StoreTests

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.Features.Counter
+﻿namespace TimeWarp.Blazor.Client.CounterFeature
 {
   using System;
   using System.Collections.Generic;

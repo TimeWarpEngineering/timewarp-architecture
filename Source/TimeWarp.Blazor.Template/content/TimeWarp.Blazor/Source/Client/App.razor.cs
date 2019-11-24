@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Blazor.Client
 {
-  using TimeWarp.Blazor.Client.Features.ClientLoaderFeature;
+  using TimeWarp.Blazor.Client.ClientLoaderFeature;
   using BlazorState.Features.JavaScriptInterop;
   using BlazorState.Features.Routing;
   using BlazorState.Pipeline.ReduxDevTools;

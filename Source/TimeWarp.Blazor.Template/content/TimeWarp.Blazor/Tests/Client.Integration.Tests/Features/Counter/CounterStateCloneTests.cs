@@ -1,7 +1,7 @@
 ﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Counter
 {
   using AnyClone;
-  using TimeWarp.Blazor.Client.Features.Counter;
+  using TimeWarp.Blazor.Client.CounterFeature;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using BlazorState;
   using Microsoft.Extensions.DependencyInjection;

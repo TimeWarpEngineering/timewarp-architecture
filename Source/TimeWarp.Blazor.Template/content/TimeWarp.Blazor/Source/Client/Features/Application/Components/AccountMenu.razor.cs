@@ -1,7 +1,5 @@
 ﻿namespace TimeWarp.Blazor.Client.ApplicationFeature
 {
-  using TimeWarp.Blazor.Client.Features.Base.Components;
-
   public partial class AccountMenu
   {
     protected void ButtonClick() => Show = !Show;

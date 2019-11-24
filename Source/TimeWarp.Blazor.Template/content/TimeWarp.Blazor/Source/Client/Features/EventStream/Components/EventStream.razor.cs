@@ -1,9 +1,9 @@
-﻿namespace TimeWarp.Blazor.Client.Features.EventStream.Components
+﻿namespace TimeWarp.Blazor.Client.EventStreamFeature
 {
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Client.Features.Base.Components;
+  using TimeWarp.Blazor.Client.BaseFeature;
 
-  public class EventStreamBase : BaseComponent
+  public partial class EventStream
   {
     public IReadOnlyList<string> Events => EventStreamState.Events;
   }

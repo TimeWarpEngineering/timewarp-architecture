@@ -1,7 +1,7 @@
 ﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
 {
   using AnyClone;
-  using TimeWarp.Blazor.Client.Features.WeatherForecast;
+  using TimeWarp.Blazor.Client.WeatherForecastFeature;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using TimeWarp.Blazor.Api.Features.WeatherForecast;
   using BlazorState;

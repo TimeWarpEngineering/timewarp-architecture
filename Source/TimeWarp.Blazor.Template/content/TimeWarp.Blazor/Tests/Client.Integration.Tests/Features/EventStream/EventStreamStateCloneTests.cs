@@ -1,7 +1,7 @@
 ﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.EventStream
 {
   using AnyClone;
-  using TimeWarp.Blazor.Client.Features.EventStream;
+  using TimeWarp.Blazor.Client.EventStreamFeature;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using BlazorState;
   using Microsoft.Extensions.DependencyInjection;

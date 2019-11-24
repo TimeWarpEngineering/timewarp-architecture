@@ -4,7 +4,7 @@
   using System.Threading.Tasks;
   using BlazorState;
   using MediatR;
-  using TimeWarp.Blazor.Client.Features.Base;
+  using TimeWarp.Blazor.Client.BaseFeature;
 
   internal partial class ApplicationState
   {

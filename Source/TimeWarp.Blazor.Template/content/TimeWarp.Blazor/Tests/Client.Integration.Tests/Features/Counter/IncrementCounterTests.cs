@@ -6,9 +6,9 @@
   using Shouldly;
   using System;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Client.Features.Counter;
+  using TimeWarp.Blazor.Client.CounterFeature;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using static TimeWarp.Blazor.Client.Features.Counter.CounterState;
+  using static TimeWarp.Blazor.Client.CounterFeature.CounterState;
 
   internal class IncrementCounterTests
   {
