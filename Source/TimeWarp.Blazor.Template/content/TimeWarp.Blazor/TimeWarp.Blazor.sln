@@ -13,11 +13,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Client", "S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Client.Integration.Tests", "Tests\Client.Integration.Tests\TimeWarp.Blazor.Client.Integration.Tests.csproj", "{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.EndToEnd.Tests", "Tests\EndToEnd.Selenium.Tests\TimeWarp.Blazor.EndToEnd.Selenium.Tests.csproj", "{B82C7C95-4892-443C-AA6B-B6086B03DD30}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.EndToEnd.Selenium.Tests", "Tests\EndToEnd.Selenium.Tests\TimeWarp.Blazor.EndToEnd.Selenium.Tests.csproj", "{B82C7C95-4892-443C-AA6B-B6086B03DD30}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Server.Integration.Tests", "Tests\Server.Integration.Tests\TimeWarp.Blazor.Server.Integration.Tests.csproj", "{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.TestCafe.Tests", "Tests\EndToEnd.TestCafe.Tests\TimeWarp.Blazor.EndToEnd.TestCafe.Tests.csproj", "{607246B4-BE03-4E76-99F5-71EE1E90B22C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.EndToEnd.TestCafe.Tests", "Tests\EndToEnd.TestCafe.Tests\TimeWarp.Blazor.EndToEnd.TestCafe.Tests.csproj", "{607246B4-BE03-4E76-99F5-71EE1E90B22C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6B623CDC-91E7-47FD-A039-A40427FB7FE8}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

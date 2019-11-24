@@ -8,10 +8,12 @@
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <CodeAnalysisRuleSet>../../TimeWarp.ruleset</CodeAnalysisRuleSet>
+    <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
   </PropertyGroup>
   
   <ItemGroup>
     <PackageReference Include="Blazor-State" Version="$(BlazorStateVersion)" />
+    <PackageReference Include="Dawn.Guard" Version="$(DawnGuardVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="$(MicrosoftAspNetCoreBlazorVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="$(MicrosoftAspNetCoreBlazorBuildVersion)" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.HttpClient" Version="$(MicrosoftAspNetCoreBlazorHttpClientVersion)" PrivateAssets="all" />
