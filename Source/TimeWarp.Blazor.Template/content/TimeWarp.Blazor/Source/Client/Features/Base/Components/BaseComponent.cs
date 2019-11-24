@@ -1,7 +1,7 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.Base.Components
 {
   using BlazorState.Pipeline.ReduxDevTools;
-  using TimeWarp.Blazor.Client.Features.Application;
+  using TimeWarp.Blazor.Client.ApplicationFeature;
   using TimeWarp.Blazor.Client.Features.Counter;
   using TimeWarp.Blazor.Client.Features.WeatherForecast;
   using TimeWarp.Blazor.Client.Features.EventStream;

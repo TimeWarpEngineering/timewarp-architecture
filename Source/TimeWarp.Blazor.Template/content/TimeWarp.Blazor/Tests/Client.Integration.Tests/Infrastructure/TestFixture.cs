@@ -7,7 +7,7 @@
   using System.Reflection;
   using System.Text.Json;
   using TimeWarp.Blazor.Client;
-  using TimeWarp.Blazor.Client.Features.Application;
+  using TimeWarp.Blazor.Client.ApplicationFeature;
   using TimeWarp.Blazor.Client.Features.ClientLoaderFeature;
   using TimeWarp.Blazor.Client.Features.Counter;
   using TimeWarp.Blazor.Client.Features.EventStream;

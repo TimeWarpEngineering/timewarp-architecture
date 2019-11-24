@@ -1,5 +1,5 @@
 {
-  "TimeWarp.Blazor.Client.Features.Application.ApplicationState": {
+  "TimeWarp.Blazor.Client.ApplicationFeature.ApplicationState": {
     "name": "Blazor State Demo Application",
     "guid": "5a2efcec-6297-4254-a2dc-30e4e567e549"
   },

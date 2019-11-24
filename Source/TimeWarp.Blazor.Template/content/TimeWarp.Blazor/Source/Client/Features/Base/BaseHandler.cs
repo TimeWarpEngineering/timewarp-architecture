@@ -1,7 +1,7 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.Base
 {
   using BlazorState;
-  using TimeWarp.Blazor.Client.Features.Application;
+  using TimeWarp.Blazor.Client.ApplicationFeature;
   using TimeWarp.Blazor.Client.Features.Counter;
   using TimeWarp.Blazor.Client.Features.EventStream;
   using TimeWarp.Blazor.Client.Features.WeatherForecast;

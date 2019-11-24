@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.Features.Application
+﻿namespace TimeWarp.Blazor.Client.ApplicationFeature
 {
   using TimeWarp.Blazor.Client.Features.Base;
 

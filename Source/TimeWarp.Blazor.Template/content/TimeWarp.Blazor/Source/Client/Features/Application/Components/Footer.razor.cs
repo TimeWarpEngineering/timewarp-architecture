@@ -1,8 +1,8 @@
-﻿namespace TimeWarp.Blazor.Client.Features.Application.Components
+﻿namespace TimeWarp.Blazor.Client.ApplicationFeature
 {
   using TimeWarp.Blazor.Client.Features.Base.Components;
 
-  public class FooterBase: BaseComponent
+  public partial class Footer
   {
     protected string Version => ApplicationState.Version;
   }

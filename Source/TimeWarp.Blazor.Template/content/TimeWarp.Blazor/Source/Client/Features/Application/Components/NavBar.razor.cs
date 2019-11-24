@@ -1,9 +1,9 @@
-﻿namespace TimeWarp.Blazor.Client.Features.Application.Components
+﻿namespace TimeWarp.Blazor.Client.ApplicationFeature
 {
   using TimeWarp.Blazor.Client.Features.Base.Components;
-  using static TimeWarp.Blazor.Client.Features.Application.ApplicationState;
+  using static TimeWarp.Blazor.Client.ApplicationFeature.ApplicationState;
 
-  public class NavBarBase : BaseComponent
+  public partial class NavBar
   {
     protected string NavMenuCssClass => ApplicationState.IsMenuExpanded ? null : "collapse";
 

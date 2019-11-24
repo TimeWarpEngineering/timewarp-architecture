@@ -5,7 +5,7 @@
   using Shouldly;
   using System;
   using System.IO;
-  using TimeWarp.Blazor.Client.Features.Application;
+  using TimeWarp.Blazor.Client.ApplicationFeature;
   using TimeWarp.Blazor.Client.Features.Counter;
   using TimeWarp.Blazor.Client.Features.WeatherForecast;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
