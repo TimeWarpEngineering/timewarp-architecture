@@ -1,5 +1,6 @@
 ﻿namespace TimeWarp.Blazor.Client.Features.EventStream
 {
+  using Dawn;
   using MediatR;
   using Microsoft.Extensions.Logging;
   using System;
@@ -38,10 +39,7 @@
       RequestHandlerDelegate<TResponse> aNext
     )
     {
-      if (aNext is null)
-      {
-        throw new ArgumentNullException(nameof(aNext));
-      }
+      Guard.Argument(aNext, nameof(aNext)).NotNull();
 
       await AddEventToStream(aRequest, "Start");
       TResponse newState = await aNext();

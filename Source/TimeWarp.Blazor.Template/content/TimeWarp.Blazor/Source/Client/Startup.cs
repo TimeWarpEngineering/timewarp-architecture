@@ -20,11 +20,18 @@
     {
       aServiceCollection.AddBlazorState
       (
-        (aOptions) => aOptions.Assemblies =
-          new Assembly[]
-          {
-            typeof(Startup).GetTypeInfo().Assembly,
-          }
+        (aOptions) =>
+        {
+
+#if ReduxDevToolsEnabled
+          aOptions.UseReduxDevToolsBehavior = true;
+#endif
+          aOptions.Assemblies =
+            new Assembly[]
+            {
+                typeof(Startup).GetTypeInfo().Assembly,
+            };
+        }
       );
 
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));

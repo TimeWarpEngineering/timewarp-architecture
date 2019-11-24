@@ -6,6 +6,7 @@
   using System.Collections.Generic;
   using System.Reflection;
   using System.Text.Json;
+  using Dawn;
 
   internal partial class WeatherForecastsState : State<WeatherForecastsState>
   {
@@ -25,8 +26,7 @@
     internal void Initialize(List<WeatherForecastDto> aWeatherForecastList)
     {
       ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
-      _WeatherForecasts = aWeatherForecastList ??
-        throw new System.ArgumentNullException(nameof(aWeatherForecastList));
+      _WeatherForecasts = Guard.Argument(aWeatherForecastList, nameof(aWeatherForecastList)).NotNull();
     }
   }
 }

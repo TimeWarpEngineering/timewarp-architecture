@@ -34,6 +34,7 @@
 
     <BlazorStateVersion>2.0.6</BlazorStateVersion>
     <BlazorExtensionsLoggingVersion>0.4.0</BlazorExtensionsLoggingVersion>
+    <DawnGuardVersion>1.9.0</DawnGuardVersion>
     <FixieVersion>2.2.0</FixieVersion>
     <FixieConsoleVersion>2.1.1</FixieConsoleVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>7.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>

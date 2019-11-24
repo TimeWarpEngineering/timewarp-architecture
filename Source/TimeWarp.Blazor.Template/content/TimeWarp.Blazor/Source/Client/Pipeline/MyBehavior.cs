@@ -1,6 +1,7 @@
 ﻿namespace TimeWarp.Blazor.Client.Pipeline
 {
   using BlazorState;
+  using Dawn;
   using MediatR;
   using Microsoft.Extensions.Logging;
   using System;
@@ -35,10 +36,8 @@
       RequestHandlerDelegate<TResponse> aNext
     )
     {
-      if (aNext is null)
-      {
-        throw new ArgumentNullException(nameof(aNext));
-      }
+      Guard.Argument(aNext, nameof(aNext)).NotNull();
+
 
       Logger.LogDebug($"{GetType().Name}: Start");
 
