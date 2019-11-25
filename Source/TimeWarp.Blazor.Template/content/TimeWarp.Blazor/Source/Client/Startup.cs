@@ -5,11 +5,11 @@
   using Microsoft.AspNetCore.Components.Builder;
   using Microsoft.Extensions.DependencyInjection;
   using System.Reflection;
-  using TimeWarp.Blazor.Client.Features.Application;
-  using TimeWarp.Blazor.Client.Features.ClientLoaderFeature;
-  using TimeWarp.Blazor.Client.Features.Counter;
-  using TimeWarp.Blazor.Client.Features.EventStream;
-  using TimeWarp.Blazor.Client.Features.WeatherForecast;
+  using TimeWarp.Blazor.Client.ApplicationFeature;
+  using TimeWarp.Blazor.Client.ClientLoaderFeature;
+  using TimeWarp.Blazor.Client.CounterFeature;
+  using TimeWarp.Blazor.Client.EventStreamFeature;
+  using TimeWarp.Blazor.Client.WeatherForecastFeature;
 
   public class Startup
   {
@@ -22,7 +22,6 @@
       (
         (aOptions) =>
         {
-
 #if ReduxDevToolsEnabled
           aOptions.UseReduxDevToolsBehavior = true;
 #endif

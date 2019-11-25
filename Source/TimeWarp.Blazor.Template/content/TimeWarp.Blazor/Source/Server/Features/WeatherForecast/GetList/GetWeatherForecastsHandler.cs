@@ -1,12 +1,12 @@
 ﻿namespace TimeWarp.Blazor.Server.Features.WeatherForecast
 {
+  using MediatR;
   using System;
   using System.Collections.Generic;
   using System.Linq;
   using System.Threading;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Api.Features.WeatherForecast;
-  using MediatR;
 
   public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
   {
@@ -36,7 +36,7 @@
       Enumerable.Range(1, aGetWeatherForecastsRequest.Days).ToList().ForEach
       (
         aIndex => response.WeatherForecasts.Add
-	    (
+        (
           new WeatherForecastDto
           (
             aDate: DateTime.Now.AddDays(aIndex),

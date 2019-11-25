@@ -1,12 +1,11 @@
-﻿namespace TimeWarp.Blazor.Client.Features.EventStream
+﻿namespace TimeWarp.Blazor.Client.EventStreamFeature
 {
+  using BlazorState;
   using System.Collections.Generic;
   using System.Reflection;
-  using BlazorState;
 
   internal partial class EventStreamState : State<EventStreamState>
   {
-
     /// <summary>
     /// Use in Tests ONLY, to initialize the State
     /// </summary>

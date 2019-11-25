@@ -1,7 +1,7 @@
 ﻿namespace TimeWarp.Blazor.EndToEnd.Tests
 {
-  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using OpenQA.Selenium;
+  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using static Infrastructure.WaitAndAssert;
 
   public class FetchDataPageTests : BaseTest

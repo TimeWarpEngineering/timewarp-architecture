@@ -1,10 +1,10 @@
-﻿namespace TimeWarp.Blazor.Client.Features.Application
+﻿namespace TimeWarp.Blazor.Client.ApplicationFeature
 {
-  using System.Threading;
-  using System.Threading.Tasks;
   using BlazorState;
   using MediatR;
-  using TimeWarp.Blazor.Client.Features.Base;
+  using System.Threading;
+  using System.Threading.Tasks;
+  using TimeWarp.Blazor.Client.BaseFeature;
 
   internal partial class ApplicationState
   {

@@ -1,20 +1,22 @@
 ﻿namespace TimeWarp.Blazor.EndToEnd.Tests
 {
-  using System;
-  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using Fixie;
   using Microsoft.Extensions.DependencyInjection;
+  using System;
+  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
 
   public class TestingConvention : Discovery, Execution, IDisposable
   {
+    private BrowserFixture BrowserFixture { get; set; }
+
+    private SeleniumStandAlone SeleniumStandAlone { get; set; }
+
+    private IServiceScopeFactory ServiceScopeFactory { get; set; }
+
     public TestingConvention()
     {
       Methods.Where(aMethodExpression => aMethodExpression.Name != nameof(Setup));
     }
-
-    private BrowserFixture BrowserFixture { get; set; }
-    private IServiceScopeFactory ServiceScopeFactory { get; set; }
-    private SeleniumStandAlone SeleniumStandAlone { get; set; }
 
     public void Dispose()
     {

@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Blazor.Client.Pages
 {
-  using TimeWarp.Blazor.Client.Features.Base.Components;
+  using TimeWarp.Blazor.Client.BaseFeature;
 
   public class CounterPageBase : BaseComponent
   {

@@ -1,10 +1,7 @@
 ﻿namespace TimeWarp.Blazor.EndToEnd.Tests
 {
-  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using OpenQA.Selenium;
-  using Shouldly;
-  using System;
-  using System.Threading.Tasks;
+  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using static Infrastructure.WaitAndAssert;
 
   public class ExecutionSideTests : BaseTest
@@ -27,20 +24,6 @@
       WaitUntilLoaded();
     }
 
-    public void LoadsServerSide()
-    {
-      JavaScriptExecutor.ExecuteScript("window.localStorage.setItem('executionSide','server');");
-
-      Navigate("/", aReload: true);
-      WaitUntilLoaded();
-
-      WaitAndAssertEqual
-      (
-        aExpected: "Server Side",
-        aActual: () => WebDriver.FindElement(By.CssSelector("[data-qa='BlazorLocation']")).Text
-      );
-    }
-
     public void LoadsClientSide()
     {
       WaitUntilClientCached();
@@ -52,6 +35,20 @@
       WaitAndAssertEqual
       (
         aExpected: "Client Side",
+        aActual: () => WebDriver.FindElement(By.CssSelector("[data-qa='BlazorLocation']")).Text
+      );
+    }
+
+    public void LoadsServerSide()
+    {
+      JavaScriptExecutor.ExecuteScript("window.localStorage.setItem('executionSide','server');");
+
+      Navigate("/", aReload: true);
+      WaitUntilLoaded();
+
+      WaitAndAssertEqual
+      (
+        aExpected: "Server Side",
         aActual: () => WebDriver.FindElement(By.CssSelector("[data-qa='BlazorLocation']")).Text
       );
     }

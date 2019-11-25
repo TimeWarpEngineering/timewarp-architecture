@@ -38,7 +38,6 @@
     {
       Guard.Argument(aNext, nameof(aNext)).NotNull();
 
-
       Logger.LogDebug($"{GetType().Name}: Start");
 
       Logger.LogDebug($"{GetType().Name}: Call next");

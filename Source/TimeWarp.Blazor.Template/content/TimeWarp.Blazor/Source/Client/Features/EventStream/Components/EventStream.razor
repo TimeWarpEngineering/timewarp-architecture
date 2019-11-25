@@ -1,8 +1,9 @@
-﻿@inherits EventStreamBase
+﻿@namespace TimeWarp.Blazor.Client.EventStreamFeature
+@inherits BaseComponent
 <h6>Event Stream</h6>
 <ul>
-  @foreach(var item in Events)
+  @foreach (var item in Events)
   {
-   <li>@item</li>
+    <li>@item</li>
   }
 </ul>

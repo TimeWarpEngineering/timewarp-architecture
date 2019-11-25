@@ -1,6 +1,6 @@
-﻿namespace TimeWarp.Blazor.Client.Features.Counter
+﻿namespace TimeWarp.Blazor.Client.CounterFeature
 {
-  using TimeWarp.Blazor.Client.Features.Base;
+  using TimeWarp.Blazor.Client.BaseFeature;
 
   internal partial class CounterState
   {

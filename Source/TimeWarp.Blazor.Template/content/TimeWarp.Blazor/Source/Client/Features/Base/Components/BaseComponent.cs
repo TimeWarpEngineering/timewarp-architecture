@@ -1,10 +1,10 @@
-﻿namespace TimeWarp.Blazor.Client.Features.Base.Components
+﻿namespace TimeWarp.Blazor.Client.BaseFeature
 {
   using BlazorState.Pipeline.ReduxDevTools;
-  using TimeWarp.Blazor.Client.Features.Application;
-  using TimeWarp.Blazor.Client.Features.Counter;
-  using TimeWarp.Blazor.Client.Features.WeatherForecast;
-  using TimeWarp.Blazor.Client.Features.EventStream;
+  using TimeWarp.Blazor.Client.ApplicationFeature;
+  using TimeWarp.Blazor.Client.CounterFeature;
+  using TimeWarp.Blazor.Client.EventStreamFeature;
+  using TimeWarp.Blazor.Client.WeatherForecastFeature;
 
   /// <summary>
   /// Makes access to the State a little easier and by inheriting from

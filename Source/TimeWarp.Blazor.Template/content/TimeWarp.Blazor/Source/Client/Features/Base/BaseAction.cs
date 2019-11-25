@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.Features.Base
+﻿namespace TimeWarp.Blazor.Client.BaseFeature
 {
   using BlazorState;
   using TimeWarp.Blazor.Api.Features.Base;

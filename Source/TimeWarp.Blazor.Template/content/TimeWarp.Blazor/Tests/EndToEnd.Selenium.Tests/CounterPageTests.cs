@@ -1,8 +1,8 @@
 ﻿namespace TimeWarp.Blazor.EndToEnd.Tests
 {
-  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using OpenQA.Selenium;
   using Shouldly;
+  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
   using static Infrastructure.WaitAndAssert;
 
   public class CounterPageTests : BaseTest
@@ -29,7 +29,7 @@
     {
       // Navigate to "Counter"
       WebDriver.FindElement(By.LinkText("Counter")).Click();
-      
+
       WaitAndAssertEqual
       (
         aExpected: "Counter Page",

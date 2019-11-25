@@ -1,10 +1,10 @@
-﻿namespace TimeWarp.Blazor.Client.Features.Counter
+﻿namespace TimeWarp.Blazor.Client.CounterFeature
 {
+  using BlazorState;
+  using Microsoft.JSInterop;
   using System;
   using System.Collections.Generic;
   using System.Reflection;
-  using BlazorState;
-  using Microsoft.JSInterop;
 
   internal partial class CounterState : State<CounterState>
   {

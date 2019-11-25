@@ -1,20 +1,28 @@
 ﻿namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
 {
-  using System;
-  using System.IO;
-  using System.Linq;
-  using System.Threading;
-  using TimeWarp.Blazor.Client.Features.ClientLoaderFeature;
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Hosting.Server;
   using Microsoft.AspNetCore.Hosting.Server.Features;
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.DependencyInjection.Extensions;
   using Microsoft.Extensions.Hosting;
+  using System;
+  using System.IO;
+  using System.Linq;
+  using System.Threading;
+  using TimeWarp.Blazor.Client.ClientLoaderFeature;
 
   public class ServerFixture
   {
     private readonly Lazy<Uri> LazyUri;
+
+    public CreateHostBuilder CreateHostBuilderDelegate { get; set; }
+
+    public AspNetEnvironment Environment { get; set; } = AspNetEnvironment.Production;
+
+    public Uri RootUri => LazyUri.Value;
+
+    private IHost Host { get; set; }
 
     public ServerFixture()
     {
@@ -23,11 +31,6 @@
     }
 
     public delegate IHostBuilder CreateHostBuilder(string[] aArgumentArray);
-
-    public CreateHostBuilder CreateHostBuilderDelegate { get; set; }
-    public AspNetEnvironment Environment { get; set; } = AspNetEnvironment.Production;
-    public Uri RootUri => LazyUri.Value;
-    private IHost Host { get; set; }
 
     /// <summary>
     /// Find the path to the server that you are testing.
@@ -105,6 +108,5 @@
       //
       aServiceCollection.Replace(ServiceDescriptor.Scoped<IClientLoaderConfiguration, TestClientLoaderConfiguration>());
     }
-
   }
 }

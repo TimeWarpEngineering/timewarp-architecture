@@ -1,12 +1,12 @@
 ﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Application
 {
   using AnyClone;
-  using TimeWarp.Blazor.Client.Features.Application;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using BlazorState;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
   using System;
+  using TimeWarp.Blazor.Client.ApplicationFeature;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
 
   internal class ApplicationStateCloneTests
   {
