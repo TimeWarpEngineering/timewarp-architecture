@@ -13,18 +13,16 @@
   internal class StoreTests
   {
     private readonly IReduxDevToolsStore ReduxDevToolsStore;
-
-    private readonly IServiceProvider ServiceProvider;
-
     private readonly IStore Store;
 
     public StoreTests(TestFixture aTestFixture)
     {
-      ServiceProvider = aTestFixture.ServiceProvider;
-      Store = ServiceProvider.GetService<IStore>();
-      ReduxDevToolsStore = ServiceProvider.GetService<IReduxDevToolsStore>();
+      IServiceProvider serviceProvider = aTestFixture.ServiceProvider;
+      Store = serviceProvider.GetService<IStore>();
+      ReduxDevToolsStore = serviceProvider.GetService<IReduxDevToolsStore>();
     }
 
+#if ReduxDevToolsEnabled
     public void ShouldLoadStatesFromJson()
     {
       //Arrange
@@ -51,6 +49,16 @@
       weatherForecastsState.WeatherForecasts[0].Date.Hour.ShouldBe(9);
       weatherForecastsState.WeatherForecasts[0].Date.Minute.ShouldBe(29);
       weatherForecastsState.WeatherForecasts[0].Date.Second.ShouldBe(54);
+    }
+#endif
+
+    /// <summary>
+    /// WeatherForecatesState will throw an exception if items initialized in the constructor are null.
+    /// </summary>
+    public void ShouldInitializeStateAfterConstruction()
+    {
+      WeatherForecastsState state = Store.GetState<WeatherForecastsState>();
+      state.ShouldNotBeNull();
     }
   }
 }
