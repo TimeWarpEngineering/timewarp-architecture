@@ -1,6 +1,6 @@
 {
   "homepages": [],
-  "source_base_path": "C:/agent/_work/5/s/Documentation",
+  "source_base_path": "C:/agent/_work/4/s/Documentation",
   "xrefmap": "xrefmap.yml",
   "files": [
     {
@@ -31,10 +31,10 @@
       "output": {
         ".html": {
           "relative_path": "README.html",
-          "hash": "nJJpmHIZV5amvI2GievkHQ=="
+          "hash": "gJSe3apSczlv/3Kzhe9xIQ=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -43,10 +43,10 @@
       "output": {
         ".html": {
           "relative_path": "Backlog/Todo.html",
-          "hash": "wbXchOpVlJLrPs/mpaxAlg=="
+          "hash": "ZFIohrE+VGiq4eWfxgoYjw=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -55,10 +55,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Features.html",
-          "hash": "IlWW8LvX36/0Bj3DPmsNcg=="
+          "hash": "RpUCtj/23P3EzggCQnqMMg=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -67,10 +67,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Overview.html",
-          "hash": "7fBPyjKmmOaQ8pZBVqDhsg=="
+          "hash": "Lip9SZHLVr7Gz4nthMpGCQ=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -79,10 +79,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpConsoleTemplate/Overview.html",
-          "hash": "4kB2X0URqMnbKGObV4dIMA=="
+          "hash": "vkRnDboeo5TzIKptwO/eOQ=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -91,10 +91,10 @@
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "5ilREiMeR+YYGhkHQGNYGg=="
+          "hash": "4F2QA4tLuhW6xXgbncCPlQ=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -103,7 +103,7 @@
       "output": {
         ".html": {
           "relative_path": "toc.html",
-          "hash": "fJkXS1QRPH1aZzBwG9L8Kw=="
+          "hash": "6iXEOx76WC9Ee9GjNuNV0Q=="
         }
       },
       "is_incremental": false,
@@ -113,10 +113,12 @@
   "incremental_info": [
     {
       "status": {
-        "can_incremental": true,
+        "can_incremental": false,
+        "details": "Cannot build incrementally because last build info is missing.",
         "incrementalPhase": "build",
         "total_file_count": 0,
-        "skipped_file_count": 0
+        "skipped_file_count": 0,
+        "full_build_reason_code": "NoAvailableBuildCache"
       },
       "processors": {
         "TocDocumentProcessor": {
@@ -134,17 +136,17 @@
           "skipped_file_count": 0
         },
         "ConceptualDocumentProcessor": {
-          "can_incremental": true,
+          "can_incremental": false,
           "incrementalPhase": "build",
           "total_file_count": 6,
-          "skipped_file_count": 6
+          "skipped_file_count": 0
         }
       }
     },
     {
       "status": {
-        "can_incremental": true,
-        "details": "Can support incremental post processing.",
+        "can_incremental": false,
+        "details": "Cannot support incremental post processing, the reason is: last post processor info is null.",
         "incrementalPhase": "postProcessing",
         "total_file_count": 0,
         "skipped_file_count": 0
