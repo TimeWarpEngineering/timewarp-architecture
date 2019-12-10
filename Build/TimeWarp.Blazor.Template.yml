@@ -23,7 +23,7 @@ variables:
  Minor: '0'
  MajorAndMinor: "$(Major).$(Minor)"
  Patch: $[counter(variables.MajorAndMinor,0)]
- DotNetSdkVersion: 3.0.100
+ DotNetSdkVersion: 3.1.100
  Version: "$(Major).$(Minor).$(Patch)+$(DotNetSdkVersion)"
  Configuration: debug
 

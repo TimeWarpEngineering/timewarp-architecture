@@ -34,7 +34,7 @@
     <MicrosoftAspNetCoreTestHostVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreTestHostVersion>
     <MicrosoftCodeAnalysisFxCopAnalyzersVersion>2.9.8</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
 
-    <BlazorStateVersion>3.0.0</BlazorStateVersion>
+    <BlazorStateVersion>3.0.1</BlazorStateVersion>
     <BlazorExtensionsLoggingVersion>0.4.0</BlazorExtensionsLoggingVersion>
     <DawnGuardVersion>1.10.0</DawnGuardVersion>
     <FixieVersion>2.2.0</FixieVersion>
