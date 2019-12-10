@@ -17,24 +17,26 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <TestProjectTargetFramework>netstandard2.0</TestProjectTargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <TestProjectTargetFramework>netstandard2.1</TestProjectTargetFramework>
   </PropertyGroup>
 
   <!--Versions of packages used across the solution-->
   <PropertyGroup Label="Package Versions">
-    <MicrosoftAspNetCoreVersion>3.1.0-preview3.19555.2</MicrosoftAspNetCoreVersion>
-    <MicrosoftAspNetCoreBlazorVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorVersion>
-    <MicrosoftAspNetCoreBlazorBuildVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorBuildVersion>
-    <MicrosoftAspNetCoreBlazorHttpClientVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorHttpClientVersion>
-    <MicrosoftAspNetCoreBlazorServerVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreBlazorServerVersion>
+    <MicrosoftAspNetCoreBlazorVersion>3.1.0-preview4.19579.2</MicrosoftAspNetCoreBlazorVersion>
+    <MicrosoftAspNetCoreBlazorVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreBlazorVersion>
+    <MicrosoftAspNetCoreBlazorBuildVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreBlazorBuildVersion>
+    <MicrosoftAspNetCoreBlazorHttpClientVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreBlazorHttpClientVersion>
+    <MicrosoftAspNetCoreBlazorServerVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreBlazorServerVersion>
+    
+    <MicrosoftAspNetCoreVersion>3.1.0</MicrosoftAspNetCoreVersion>
     <MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>
     <MicrosoftAspNetCoreTestHostVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreTestHostVersion>
-    <MicrosoftCodeAnalysisFxCopAnalyzersVersion>2.9.7</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
+    <MicrosoftCodeAnalysisFxCopAnalyzersVersion>2.9.8</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
 
-    <BlazorStateVersion>2.0.6</BlazorStateVersion>
+    <BlazorStateVersion>3.0.1</BlazorStateVersion>
     <BlazorExtensionsLoggingVersion>0.4.0</BlazorExtensionsLoggingVersion>
-    <DawnGuardVersion>1.9.0</DawnGuardVersion>
+    <DawnGuardVersion>1.10.0</DawnGuardVersion>
     <FixieVersion>2.2.0</FixieVersion>
     <FixieConsoleVersion>2.1.1</FixieConsoleVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>7.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
