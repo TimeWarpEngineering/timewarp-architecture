@@ -36,6 +36,7 @@
           aEndpointRouteBuilder.MapFallbackToPage("/_Host");
         }
       );
+      aApplicationBuilder.UseStaticFiles();
       aApplicationBuilder.UseClientSideBlazorFiles<Client.Startup>();
     }
 
