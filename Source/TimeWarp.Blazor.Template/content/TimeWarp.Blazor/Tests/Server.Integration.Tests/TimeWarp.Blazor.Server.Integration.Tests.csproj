@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Fixie" Version="$(FixieVersion)" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="3.1.0" />
     <PackageReference Include="Shouldly" Version="$(ShouldlyVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="$(MicrosoftAspNetCoreTestHostVersion)" />
     <DotNetCliToolReference Include="Fixie.Console" Version="$(FixieConsoleVersion)" />
