@@ -6,7 +6,6 @@
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Api.Features.Base;
 
-  [ApiController]
   public class BaseController<TRequest, TResponse> : ControllerBase
       where TRequest : IRequest<TResponse>
     where TResponse : BaseResponse

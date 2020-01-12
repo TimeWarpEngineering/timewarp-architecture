@@ -1,6 +1,7 @@
-﻿namespace TimeWarp.Blazor.Api.Features.WeatherForecast
+namespace TimeWarp.Blazor.Api.Features.WeatherForecast
 {
   using MediatR;
+  using System.Text.Json.Serialization;
   using TimeWarp.Blazor.Api.Features.Base;
 
   public class GetWeatherForecastsRequest : BaseRequest, IRequest<GetWeatherForecastsResponse>
@@ -11,5 +12,7 @@
     /// The Number of days of forecasts to get
     /// </summary>
     public int Days { get; set; }
+    [JsonIgnore]
+    public string RouteFactory => $"{Route}?{nameof(Days)}={Days}&{nameof(Id)}={Id}";
   }
 }
