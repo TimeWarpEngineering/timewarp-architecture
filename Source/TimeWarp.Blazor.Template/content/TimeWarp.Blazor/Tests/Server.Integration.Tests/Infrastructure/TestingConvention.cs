@@ -1,10 +1,13 @@
 ﻿namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
 {
   using Fixie;
+  using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
+  using System.Text.Json;
 
   public class TestingConvention : Discovery, Execution
   {
+    const string TestPostfix = "Tests";
     private readonly IServiceScopeFactory ServiceScopeFactory;
 
     public TestingConvention()
@@ -36,11 +39,12 @@
 
     private void ConfigureTestServices(ServiceCollection aServiceCollection)
     {
-      aServiceCollection.AddSingleton<TestServer>();
+      aServiceCollection.AddSingleton(new WebApplicationFactory<Startup>());
+      aServiceCollection.AddSingleton(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
       aServiceCollection.Scan(aTypeSourceSelector => aTypeSourceSelector
         // Start with all non abstract types in this assembly
         .FromAssemblyOf<TestingConvention>()
-        .AddClasses(action: (aClasses) => aClasses.TypeName().EndsWith("Tests"))
+        .AddClasses(action: (aClasses) => aClasses.TypeName().EndsWith(TestPostfix))
         .AsSelf()
         .WithScopedLifetime());
     }
