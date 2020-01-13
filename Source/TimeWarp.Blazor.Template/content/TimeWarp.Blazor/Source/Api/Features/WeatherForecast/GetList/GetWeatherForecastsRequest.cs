@@ -12,6 +12,7 @@ namespace TimeWarp.Blazor.Api.Features.WeatherForecast
     /// The Number of days of forecasts to get
     /// </summary>
     public int Days { get; set; }
+
     [JsonIgnore]
     public string RouteFactory => $"{Route}?{nameof(Days)}={Days}&{nameof(Id)}={Id}";
   }

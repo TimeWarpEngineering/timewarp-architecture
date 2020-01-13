@@ -1,4 +1,4 @@
-* Blazor-State State Managment
+* Blazor-State State Management
 * Dynamic Duel Mode
 * Clean Bootstrap with minimal custom css
 * Integration Tests (Fixie)
@@ -11,4 +11,4 @@
 
 * Entity Framework
 * AD-B2C integration
-* 
+* Mongo DB
