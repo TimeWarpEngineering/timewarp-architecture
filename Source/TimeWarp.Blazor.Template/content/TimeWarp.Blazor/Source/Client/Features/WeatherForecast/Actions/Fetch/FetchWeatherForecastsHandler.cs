@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.WeatherForecastFeature
+namespace TimeWarp.Blazor.Client.WeatherForecastFeature
 {
   using BlazorState;
   using MediatR;
@@ -28,7 +28,7 @@
       {
         var getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
         GetWeatherForecastsResponse getWeatherForecastsResponse =
-          await HttpClient.PostJsonAsync<GetWeatherForecastsResponse>(GetWeatherForecastsRequest.Route, getWeatherForecastsRequest);
+          await HttpClient.GetJsonAsync<GetWeatherForecastsResponse>(getWeatherForecastsRequest.RouteFactory);
         WeatherForecastsState._WeatherForecasts = getWeatherForecastsResponse.WeatherForecasts;
         return Unit.Value;
       }
