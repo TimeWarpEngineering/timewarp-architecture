@@ -1,8 +1,9 @@
-﻿namespace TimeWarp.Blazor.Server
+namespace TimeWarp.Blazor.Server
 {
   using MediatR;
   using Microsoft.AspNetCore.Builder;
   using Microsoft.AspNetCore.Hosting;
+  using Microsoft.AspNetCore.Mvc;
   using Microsoft.AspNetCore.ResponseCompression;
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
@@ -31,7 +32,7 @@
       (
         aEndpointRouteBuilder =>
         {
-          aEndpointRouteBuilder.MapControllers(); // We use explicit attribute routing so dont need MapDefaultControllerRoute
+          aEndpointRouteBuilder.MapControllers();
           aEndpointRouteBuilder.MapBlazorHub();
           aEndpointRouteBuilder.MapFallbackToPage("/_Host");
         }
@@ -42,9 +43,17 @@
 
     public void ConfigureServices(IServiceCollection aServiceCollection)
     {
+
       aServiceCollection.AddRazorPages();
       aServiceCollection.AddServerSideBlazor();
       aServiceCollection.AddMvc();
+      aServiceCollection.Configure<ApiBehaviorOptions>
+      (
+        aApiBehaviorOptions =>
+        {
+          aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true;
+        }
+      );
 
       aServiceCollection.AddResponseCompression
       (
