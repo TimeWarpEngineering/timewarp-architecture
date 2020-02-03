@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
+namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
   using BlazorState;
   using Microsoft.AspNetCore.Blazor.Hosting;
@@ -19,7 +19,7 @@
   /// </summary>
   public class TestFixture//: IMediatorFixture, IStoreFixture, IServiceProviderFixture
   {
-    private readonly TestServer BlazorStateTestServer;
+    private readonly TestServer TestServer;
 
     /// <summary>
     /// This is the ServiceProvider that will be used by the Client
@@ -28,9 +28,9 @@
 
     public IWebAssemblyHostBuilder WebAssemblyHostBuilder { get; }
 
-    public TestFixture(TestServer aBlazorStateTestServer)
+    public TestFixture(TestServer aTestServer)
     {
-      BlazorStateTestServer = aBlazorStateTestServer;
+      TestServer = aTestServer;
       WebAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
           .ConfigureServices(ConfigureServices);
     }
@@ -41,7 +41,7 @@
     /// <param name="aServiceCollection"></param>
     private void ConfigureServices(IServiceCollection aServiceCollection)
     {
-      aServiceCollection.AddSingleton(BlazorStateTestServer.CreateClient());
+      aServiceCollection.AddSingleton(TestServer.CreateClient());
       aServiceCollection.AddBlazorState
       (
         aOptions => aOptions.Assemblies =
