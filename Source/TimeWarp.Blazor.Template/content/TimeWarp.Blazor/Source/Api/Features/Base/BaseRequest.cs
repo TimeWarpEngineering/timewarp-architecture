@@ -1,10 +1,10 @@
-﻿namespace TimeWarp.Blazor.Api.Features.Base
+namespace TimeWarp.Blazor.Api.Features.Base
 {
   using System;
 
   public abstract class BaseRequest
   {
-    public Guid Id { get; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Every request should have unique Id
