@@ -1,7 +1,8 @@
-﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Counter
+namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Counter
 {
   using BlazorState;
   using MediatR;
+  using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
   using System;
@@ -10,19 +11,11 @@
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using static TimeWarp.Blazor.Client.CounterFeature.CounterState;
 
-  internal class IncrementCounterTests
+  internal class IncrementCounterTests : BaseTest
   {
-    private readonly IMediator Mediator;
-    private readonly IServiceProvider ServiceProvider;
-    private readonly IStore Store;
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public IncrementCounterTests(TestFixture aTestFixture)
-    {
-      ServiceProvider = aTestFixture.ServiceProvider;
-      Mediator = ServiceProvider.GetService<IMediator>();
-      Store = ServiceProvider.GetService<IStore>();
-    }
+    public IncrementCounterTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public async Task Should_Decrement_Counter()
     {
@@ -35,7 +28,7 @@
       };
 
       //Act
-      _ = await Mediator.Send(incrementCounterRequest);
+      await Send(incrementCounterRequest);
 
       //Assert
       CounterState.Count.ShouldBe(13);
@@ -52,7 +45,7 @@
       };
 
       //Act
-      _ = await Mediator.Send(incrementCounterRequest);
+      await Send(incrementCounterRequest);
 
       //Assert
       CounterState.Count.ShouldBe(27);
