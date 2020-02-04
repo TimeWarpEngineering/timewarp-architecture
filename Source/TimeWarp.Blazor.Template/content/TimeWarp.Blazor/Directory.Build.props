@@ -29,9 +29,8 @@
     <MicrosoftAspNetCoreBlazorHttpClientVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreBlazorHttpClientVersion>
     <MicrosoftAspNetCoreBlazorServerVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreBlazorServerVersion>
     
-    <MicrosoftAspNetCoreVersion>3.1.0</MicrosoftAspNetCoreVersion>    
+    <MicrosoftAspNetCoreVersion>3.1.1</MicrosoftAspNetCoreVersion>    
     <MicrosoftAspNetCoreMvcTestingVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreMvcTestingVersion>
-    <MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreMvcNewtonsoftJsonVersion>
     <MicrosoftAspNetCoreTestHostVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreTestHostVersion>
     <MicrosoftCodeAnalysisFxCopAnalyzersVersion>2.9.8</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
 
