@@ -19,11 +19,11 @@ pool:
   name: TimeWarpEnterprises
 
 variables:
- Major: '1'
- Minor: '0'
+ Major: '3'
+ Minor: '1'
  MajorAndMinor: "$(Major).$(Minor)"
  Patch: $[counter(variables.MajorAndMinor,0)]
- DotNetSdkVersion: 3.1.100
+ DotNetSdkVersion: 3.1.101
  Version: "$(Major).$(Minor).$(Patch)+$(DotNetSdkVersion)"
  Configuration: debug
 
