@@ -1,6 +1,5 @@
 namespace TimeWarp.Blazor.Client.Integration.Tests.Pipeline
 {
-  using MediatR;
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
   using System;

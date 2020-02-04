@@ -1,11 +1,7 @@
 namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Counter
 {
-  using BlazorState;
-  using MediatR;
   using Microsoft.AspNetCore.Blazor.Hosting;
-  using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
-  using System;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Client.CounterFeature;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
@@ -19,7 +15,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Counter
 
     public async Task Should_Decrement_Counter()
     {
-      //Arrange
+      //Arrange 
       CounterState.Initialize(aCount: 15);
 
       var incrementCounterRequest = new IncrementCounterAction
