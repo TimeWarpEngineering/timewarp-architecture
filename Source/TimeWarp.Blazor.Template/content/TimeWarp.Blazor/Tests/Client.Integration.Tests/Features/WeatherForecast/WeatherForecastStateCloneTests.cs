@@ -1,8 +1,7 @@
-﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
+namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
 {
   using AnyClone;
-  using BlazorState;
-  using Microsoft.Extensions.DependencyInjection;
+  using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
   using System;
   using System.Collections.Generic;
@@ -10,16 +9,11 @@
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using TimeWarp.Blazor.Client.WeatherForecastFeature;
 
-  internal class WeatherForecastStateCloneTests
+  internal class WeatherForecastStateCloneTests : BaseTest
   {
-    private WeatherForecastsState WeatherForecastsState { get; set; }
+    private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
-    public WeatherForecastStateCloneTests(TestFixture aTestFixture)
-    {
-      IServiceProvider serviceProvider = aTestFixture.ServiceProvider;
-      IStore store = serviceProvider.GetService<IStore>();
-      WeatherForecastsState = store.GetState<WeatherForecastsState>();
-    }
+    public WeatherForecastStateCloneTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public void ShouldClone()
     {
