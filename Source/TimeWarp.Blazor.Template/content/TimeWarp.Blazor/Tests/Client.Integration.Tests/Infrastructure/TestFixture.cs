@@ -27,7 +27,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
     /// </summary>
     public IServiceProvider ServiceProvider => WebAssemblyHostBuilder.Build().Services;
 
-    private readonly IWebAssemblyHostBuilder WebAssemblyHostBuilder;// { get; }
+    private readonly IWebAssemblyHostBuilder WebAssemblyHostBuilder;
 
     public TestFixture(WebApplicationFactory<Server.Startup> aWebApplicationFactory)
     {

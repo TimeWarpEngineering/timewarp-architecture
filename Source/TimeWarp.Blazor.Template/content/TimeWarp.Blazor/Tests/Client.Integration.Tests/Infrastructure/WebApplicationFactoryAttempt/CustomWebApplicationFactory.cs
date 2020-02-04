@@ -2,7 +2,6 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
   using BlazorState;
   using Microsoft.AspNetCore.Blazor.Hosting;
-  using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
@@ -26,14 +25,6 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       HttpClient = aHttpClient;
     }
 
-    //protected override IWebHostBuilder CreateWebHostBuilder()
-    //{
-    //  IWebAssemblyHostBuilder webAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
-    //    .ConfigureServices(ConfigureServices);
-
-    //  return webAssemblyHostBuilder;
-    //}
-
     protected override IHost CreateHost(IHostBuilder builder)
     {
       IWebAssemblyHostBuilder webAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
@@ -41,49 +32,6 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 
       return webAssemblyHostBuilder as IHost;
     }
-
-    //protected override void ConfigureWebHost(IWebHostBuilder aWebHostBuilder)
-    //{
-    //  base.ConfigureWebHost(aWebHostBuilder);
-    //  aWebHostBuilder.ConfigureServices
-    //  (
-    //    aServiceCollection =>
-    //    {
-    //      //aServiceCollection.Clear();
-    //      //HttpClient httpClient = CreateClient();
-    //      //aServiceCollection.AddSingleton(httpClient);
-    //      //ConfigureServices(aServiceCollection);
-    //    }
-    //  );
-    //}
-
-    //public void Configure
-    //(
-    //  IApplicationBuilder aApplicationBuilder,
-    //  IWebHostEnvironment aWebHostEnvironment
-    //)
-    //{
-    //  aApplicationBuilder.UseResponseCompression();
-
-    //  if (aWebHostEnvironment.IsDevelopment())
-    //  {
-    //    aApplicationBuilder.UseDeveloperExceptionPage();
-    //    aApplicationBuilder.UseBlazorDebugging();
-    //  }
-
-    //  aApplicationBuilder.UseRouting();
-    //  aApplicationBuilder.UseEndpoints
-    //  (
-    //    aEndpointRouteBuilder =>
-    //    {
-    //      aEndpointRouteBuilder.MapControllers(); // We use explicit attribute routing so dont need MapDefaultControllerRoute
-    //      aEndpointRouteBuilder.MapBlazorHub();
-    //      aEndpointRouteBuilder.MapFallbackToPage("/_Host");
-    //    }
-    //  );
-    //  aApplicationBuilder.UseStaticFiles();
-    //  aApplicationBuilder.UseClientSideBlazorFiles<Client.Startup>();
-    //}
 
     private void ConfigureServices(IServiceCollection aServiceCollection)
     {
