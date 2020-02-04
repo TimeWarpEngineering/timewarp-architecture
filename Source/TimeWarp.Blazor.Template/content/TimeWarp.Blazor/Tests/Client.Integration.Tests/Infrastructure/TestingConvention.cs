@@ -1,11 +1,25 @@
-﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
+namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
+  using BlazorState;
   using Fixie;
+  using Microsoft.AspNetCore.Blazor.Hosting;
+  using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
+  using System;
+  using System.Net.Http;
+  using System.Reflection;
+  using System.Text.Json;
+  using TimeWarp.Blazor.Client.ApplicationFeature;
+  using TimeWarp.Blazor.Client.ClientLoaderFeature;
+  using TimeWarp.Blazor.Client.CounterFeature;
+  using TimeWarp.Blazor.Client.EventStreamFeature;
+  using TimeWarp.Blazor.Client.WeatherForecastFeature;
 
   public class TestingConvention : Discovery, Execution
   {
+    const string TestPostfix = "Tests";
     private readonly IServiceScopeFactory ServiceScopeFactory;
+    private HttpClient ServerHttpClient;
 
     public TestingConvention()
     {
@@ -39,17 +53,60 @@
 
     private void ConfigureTestServices(ServiceCollection aServiceCollection)
     {
-      aServiceCollection.AddSingleton<TestServer>();
+      var serverWebApplicationFactory = new WebApplicationFactory<Server.Startup>();
+      ServerHttpClient = serverWebApplicationFactory.CreateClient();
+      //aServiceCollection.AddSingleton(serverWebApplicationFactory);
+      ConfigureWebAssemblyHost(aServiceCollection);
+      aServiceCollection.AddSingleton(new CustomWebApplicationFactory<Server.Startup>(ServerHttpClient));
+      aServiceCollection.AddSingleton(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+
       aServiceCollection.Scan
       (
         aTypeSourceSelector => aTypeSourceSelector
           // Start with all non abstract types in this assembly
           .FromAssemblyOf<TestingConvention>()
           // Add all the classes that end in Tests
-          .AddClasses(action: (aClasses) => aClasses.TypeName().EndsWith("Tests"))
+          .AddClasses(action: (aClasses) => aClasses.TypeName().EndsWith(TestPostfix))
           .AsSelf()
           .WithScopedLifetime()
       );
+    }
+
+    private void ConfigureWebAssemblyHost(ServiceCollection aServiceCollection)
+    {
+      IWebAssemblyHostBuilder WebAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
+          .ConfigureServices(ConfigureServices);
+
+
+      IWebAssemblyHost WebAssemblyHost = WebAssemblyHostBuilder.Build();
+      aServiceCollection.AddSingleton<IWebAssemblyHost>(WebAssemblyHost);
+
+    }
+
+    private void ConfigureServices(IServiceCollection aServiceCollection)
+    {
+      // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
+      aServiceCollection.AddSingleton(ServerHttpClient);
+      aServiceCollection.AddBlazorState
+      (
+        aOptions => aOptions.Assemblies =
+        new Assembly[] { typeof(Startup).GetTypeInfo().Assembly }
+      );
+
+      aServiceCollection.AddSingleton
+      (
+        new JsonSerializerOptions
+        {
+          PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        }
+      );
+
+      aServiceCollection.AddSingleton<IClientLoaderConfiguration, ClientLoaderTestConfiguration>();
+      aServiceCollection.AddTransient<ApplicationState>();
+      aServiceCollection.AddTransient<CounterState>();
+      aServiceCollection.AddTransient<EventStreamState>();
+      aServiceCollection.AddTransient<WeatherForecastsState>();
     }
   }
 }

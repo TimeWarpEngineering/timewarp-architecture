@@ -7,19 +7,18 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
   using TimeWarp.Blazor.Client.WeatherForecastFeature;
   using static TimeWarp.Blazor.Client.WeatherForecastFeature.WeatherForecastsState;
 
-  internal class FetchWeatherForecastTests : BaseTest
+  internal class FetchWeatherForecast2Tests : BaseTest
   {
-    private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
+    public FetchWeatherForecast2Tests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
-    public FetchWeatherForecastTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
-
-    public async Task Should_Fetch_WeatherForecasts()
+    public async Task Should_Fetch_WeatherForecastsAsync()
     {
       var fetchWeatherForecastsRequest = new FetchWeatherForecastsAction();
 
       await Send(fetchWeatherForecastsRequest);
+      WeatherForecastsState weatherForecastsState = Store.GetState<WeatherForecastsState>();
 
-      WeatherForecastsState.WeatherForecasts.Count.ShouldBeGreaterThan(0);
+      weatherForecastsState.WeatherForecasts.Count.ShouldBeGreaterThan(0);
     }
   }
 }

@@ -4,45 +4,39 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
-  using System;
+  using Microsoft.Extensions.Hosting;
+  using System.Net.Http;
   using System.Reflection;
   using System.Text.Json;
-  using TimeWarp.Blazor.Client;
   using TimeWarp.Blazor.Client.ApplicationFeature;
   using TimeWarp.Blazor.Client.ClientLoaderFeature;
   using TimeWarp.Blazor.Client.CounterFeature;
   using TimeWarp.Blazor.Client.EventStreamFeature;
   using TimeWarp.Blazor.Client.WeatherForecastFeature;
 
-  /// <summary>
-  /// A known starting state(baseline) for all tests.
-  /// And Common set of functions
-  /// </summary>
-  public class TestFixture//: IMediatorFixture, IStoreFixture, IServiceProviderFixture
+  public class CustomWebApplicationFactory<TStartup>
+    : WebApplicationFactory<TStartup> where TStartup : class
   {
-    private readonly WebApplicationFactory<Server.Startup> WebApplicationFactory;
 
-    /// <summary>
-    /// This is the ServiceProvider that will be used by the Client
-    /// </summary>
-    public IServiceProvider ServiceProvider => WebAssemblyHostBuilder.Build().Services;
+    private readonly HttpClient HttpClient;
 
-    private readonly IWebAssemblyHostBuilder WebAssemblyHostBuilder;
-
-    public TestFixture(WebApplicationFactory<Server.Startup> aWebApplicationFactory)
+    public CustomWebApplicationFactory(HttpClient aHttpClient)
     {
-      WebApplicationFactory = aWebApplicationFactory;
-      WebAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
-          .ConfigureServices(ConfigureServices);
+      HttpClient = aHttpClient;
     }
 
-    /// <summary>
-    /// Special configuration for Testing with the Test Server
-    /// </summary>
-    /// <param name="aServiceCollection"></param>
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+      IWebAssemblyHostBuilder webAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
+        .ConfigureServices(ConfigureServices);
+
+      return webAssemblyHostBuilder as IHost;
+    }
+
     private void ConfigureServices(IServiceCollection aServiceCollection)
     {
-      aServiceCollection.AddSingleton(WebApplicationFactory.CreateClient());
+      // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
+      aServiceCollection.AddSingleton(HttpClient);
       aServiceCollection.AddBlazorState
       (
         aOptions => aOptions.Assemblies =

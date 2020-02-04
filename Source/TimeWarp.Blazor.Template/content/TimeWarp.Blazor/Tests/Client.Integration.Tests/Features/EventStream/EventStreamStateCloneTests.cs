@@ -1,24 +1,17 @@
-﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.EventStream
+namespace TimeWarp.Blazor.Client.Integration.Tests.Features.EventStream
 {
   using AnyClone;
-  using BlazorState;
-  using Microsoft.Extensions.DependencyInjection;
+  using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
-  using System;
   using System.Collections.Generic;
   using TimeWarp.Blazor.Client.EventStreamFeature;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
 
-  internal class EventStreamCloneTests
+  internal class EventStreamCloneTests : BaseTest
   {
-    private EventStreamState EventStreamState { get; set; }
+    private EventStreamState EventStreamState => Store.GetState<EventStreamState>();
 
-    public EventStreamCloneTests(TestFixture aTestFixture)
-    {
-      IServiceProvider serviceProvider = aTestFixture.ServiceProvider;
-      IStore store = serviceProvider.GetService<IStore>();
-      EventStreamState = store.GetState<EventStreamState>();
-    }
+    public EventStreamCloneTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public void ShouldClone()
     {

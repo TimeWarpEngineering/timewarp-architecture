@@ -1,8 +1,6 @@
-﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Pipeline
+namespace TimeWarp.Blazor.Client.Integration.Tests.Pipeline
 {
-  using BlazorState;
-  using MediatR;
-  using Microsoft.Extensions.DependencyInjection;
+  using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
   using System;
   using System.Threading.Tasks;
@@ -10,19 +8,11 @@
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using static TimeWarp.Blazor.Client.CounterFeature.CounterState;
 
-  internal class CloneStateBehaviorTests
+  internal class CloneStateBehaviorTests : BaseTest
   {
-    private readonly IMediator Mediator;
-    private readonly IServiceProvider ServiceProvider;
-    private readonly IStore Store;
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public CloneStateBehaviorTests(TestFixture aTestFixture)
-    {
-      ServiceProvider = aTestFixture.ServiceProvider;
-      Mediator = ServiceProvider.GetService<IMediator>();
-      Store = ServiceProvider.GetService<IStore>();
-    }
+    public CloneStateBehaviorTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public async Task ShouldCloneState()
     {
@@ -36,7 +26,7 @@
         Amount = -2
       };
       //Act
-      _ = await Mediator.Send(incrementCounterRequest);
+      await Send(incrementCounterRequest);
 
       //Assert
       CounterState.Guid.ShouldNotBe(preActionGuid);
@@ -55,7 +45,7 @@
       };
 
       Exception exception = await Should.ThrowAsync<Exception>(async () =>
-      _ = await Mediator.Send(throwExceptionAction));
+      await Send(throwExceptionAction));
 
       // Assert
       exception.Message.ShouldBe(throwExceptionAction.Message);

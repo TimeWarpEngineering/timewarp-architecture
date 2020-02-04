@@ -32,6 +32,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		UNLICENSE.md = UNLICENSE.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{6DDDEA23-D242-4AB1-92E0-967A60941A81}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\Build\TimeWarp.Blazor.Template.yml = ..\..\..\..\Build\TimeWarp.Blazor.Template.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

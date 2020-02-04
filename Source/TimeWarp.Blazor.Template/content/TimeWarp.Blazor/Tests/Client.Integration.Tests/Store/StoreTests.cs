@@ -1,6 +1,7 @@
-﻿namespace TimeWarp.Blazor.Client.Integration.Tests
+namespace TimeWarp.Blazor.Client.Integration.Tests
 {
   using BlazorState;
+  using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.Extensions.DependencyInjection;
   using Shouldly;
   using System;
@@ -10,16 +11,13 @@
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using TimeWarp.Blazor.Client.WeatherForecastFeature;
 
-  internal class StoreTests
+  internal class StoreTests : BaseTest
   {
     private readonly IReduxDevToolsStore ReduxDevToolsStore;
-    private readonly IStore Store;
 
-    public StoreTests(TestFixture aTestFixture)
+    public StoreTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost)
     {
-      IServiceProvider serviceProvider = aTestFixture.ServiceProvider;
-      Store = serviceProvider.GetService<IStore>();
-      ReduxDevToolsStore = serviceProvider.GetService<IReduxDevToolsStore>();
+      ReduxDevToolsStore = aWebAssemblyHost.Services.GetService<IReduxDevToolsStore>();
     }
 
 #if ReduxDevToolsEnabled
