@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Fixie" Version="$(FixieVersion)" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="$(MicrosoftAspNetCoreMvcTestingVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="$(MicrosoftAspNetCoreTestHostVersion)" />
     <PackageReference Include="Moq" Version="$(MoqVersion)" />
     <PackageReference Include="Scrutor" Version="$(ScrutorVersion)" />
