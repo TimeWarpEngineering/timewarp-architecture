@@ -3,6 +3,7 @@
   <PropertyGroup>
     <Description>TimeWarp.Blazor Server</Description>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <DisableImplicitComponentsAnalyzers>true</DisableImplicitComponentsAnalyzers>
   </PropertyGroup>
 
   <ItemGroup>
