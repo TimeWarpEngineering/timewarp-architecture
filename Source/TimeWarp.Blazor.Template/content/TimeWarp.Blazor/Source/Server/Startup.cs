@@ -38,7 +38,7 @@ namespace TimeWarp.Blazor.Server
         }
       );
       aApplicationBuilder.UseStaticFiles();
-      aApplicationBuilder.UseClientSideBlazorFiles<Client.Startup>();
+      aApplicationBuilder.UseClientSideBlazorFiles<Client.Program>();
     }
 
     public void ConfigureServices(IServiceCollection aServiceCollection)
@@ -64,7 +64,7 @@ namespace TimeWarp.Blazor.Server
           )
       );
 
-      new Client.Startup().ConfigureServices(aServiceCollection);
+      Client.Program.ConfigureServices(aServiceCollection);
 
       aServiceCollection.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
 

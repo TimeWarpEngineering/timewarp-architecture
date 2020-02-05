@@ -5,7 +5,6 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
-  using System;
   using System.Net.Http;
   using System.Reflection;
   using System.Text.Json;
@@ -55,9 +54,9 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
     {
       var serverWebApplicationFactory = new WebApplicationFactory<Server.Startup>();
       ServerHttpClient = serverWebApplicationFactory.CreateClient();
-      //aServiceCollection.AddSingleton(serverWebApplicationFactory);
+
       ConfigureWebAssemblyHost(aServiceCollection);
-      aServiceCollection.AddSingleton(new CustomWebApplicationFactory<Server.Startup>(ServerHttpClient));
+
       aServiceCollection.AddSingleton(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
 
@@ -75,12 +74,12 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 
     private void ConfigureWebAssemblyHost(ServiceCollection aServiceCollection)
     {
-      IWebAssemblyHostBuilder WebAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
-          .ConfigureServices(ConfigureServices);
+      WebAssemblyHostBuilder WebAssemblyHostBuilder = WebAssemblyHostBuilder.CreateDefault();
+      ConfigureServices(WebAssemblyHostBuilder.Services);
 
 
-      IWebAssemblyHost WebAssemblyHost = WebAssemblyHostBuilder.Build();
-      aServiceCollection.AddSingleton<IWebAssemblyHost>(WebAssemblyHost);
+      WebAssemblyHost webAssemblyHost = WebAssemblyHostBuilder.Build();
+      aServiceCollection.AddSingleton(webAssemblyHost);
 
     }
 
@@ -91,7 +90,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       aServiceCollection.AddBlazorState
       (
         aOptions => aOptions.Assemblies =
-        new Assembly[] { typeof(Startup).GetTypeInfo().Assembly }
+        new Assembly[] { typeof(Program).GetTypeInfo().Assembly }
       );
 
       aServiceCollection.AddSingleton

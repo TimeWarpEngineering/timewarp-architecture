@@ -12,7 +12,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Pipeline
   {
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public CloneStateBehaviorTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public CloneStateBehaviorTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public async Task ShouldCloneState()
     {

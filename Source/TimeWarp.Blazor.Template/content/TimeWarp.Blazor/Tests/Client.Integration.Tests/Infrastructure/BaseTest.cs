@@ -22,7 +22,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
     protected readonly IStore Store;
     protected readonly HttpClient HttpClient;
 
-    public BaseTest(IWebAssemblyHost aWebAssemblyHost)
+    public BaseTest(WebAssemblyHost aWebAssemblyHost)
     {
       ServiceScopeFactory = aWebAssemblyHost.Services.GetService<IServiceScopeFactory>();
       ServiceScope = ServiceScopeFactory.CreateScope();

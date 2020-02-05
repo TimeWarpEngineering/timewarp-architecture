@@ -27,13 +27,13 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
     /// </summary>
     public IServiceProvider ServiceProvider => WebAssemblyHostBuilder.Build().Services;
 
-    private readonly IWebAssemblyHostBuilder WebAssemblyHostBuilder;
+    private readonly WebAssemblyHostBuilder WebAssemblyHostBuilder;
 
     public TestFixture(WebApplicationFactory<Server.Startup> aWebApplicationFactory)
     {
       WebApplicationFactory = aWebApplicationFactory;
-      WebAssemblyHostBuilder = BlazorWebAssemblyHost.CreateDefaultBuilder()
-          .ConfigureServices(ConfigureServices);
+      WebAssemblyHostBuilder = WebAssemblyHostBuilder.CreateDefault();
+      ConfigureServices(WebAssemblyHostBuilder.Services);
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       aServiceCollection.AddBlazorState
       (
         aOptions => aOptions.Assemblies =
-        new Assembly[] { typeof(Startup).GetTypeInfo().Assembly }
+        new Assembly[] { typeof(Program).GetTypeInfo().Assembly }
       );
 
       aServiceCollection.AddSingleton

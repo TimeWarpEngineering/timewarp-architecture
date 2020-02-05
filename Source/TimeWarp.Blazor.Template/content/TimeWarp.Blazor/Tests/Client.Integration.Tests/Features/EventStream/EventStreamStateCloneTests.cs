@@ -11,7 +11,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Features.EventStream
   {
     private EventStreamState EventStreamState => Store.GetState<EventStreamState>();
 
-    public EventStreamCloneTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public EventStreamCloneTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public void ShouldClone()
     {

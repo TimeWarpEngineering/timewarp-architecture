@@ -10,7 +10,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Counter
   {
     private CounterState CounterState { get; set; }
 
-    public CounterStateCloneTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost)
+    public CounterStateCloneTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost)
     {
       CounterState = Store.GetState<CounterState>();
     }

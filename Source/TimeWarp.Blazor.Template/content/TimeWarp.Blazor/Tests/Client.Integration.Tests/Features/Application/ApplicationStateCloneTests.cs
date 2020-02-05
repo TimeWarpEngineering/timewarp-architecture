@@ -10,7 +10,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Application
   {
     private ApplicationState ApplicationState { get; set; }
 
-    public ApplicationStateCloneTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost)
+    public ApplicationStateCloneTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost)
     {
       ApplicationState = Store.GetState<ApplicationState>();
     }
