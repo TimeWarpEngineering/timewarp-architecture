@@ -11,7 +11,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Counter
   {
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public IncrementCounterTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public IncrementCounterTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public async Task Should_Decrement_Counter()
     {

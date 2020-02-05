@@ -11,7 +11,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
   {
     private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
-    public FetchWeatherForecastTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public FetchWeatherForecastTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public async Task Should_Fetch_WeatherForecasts()
     {

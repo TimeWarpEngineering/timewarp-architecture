@@ -13,7 +13,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
   {
     private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
-    public WeatherForecastStateCloneTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public WeatherForecastStateCloneTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public void ShouldClone()
     {

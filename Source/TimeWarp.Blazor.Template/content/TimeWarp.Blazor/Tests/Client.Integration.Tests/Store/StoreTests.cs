@@ -15,7 +15,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests
   {
     private readonly IReduxDevToolsStore ReduxDevToolsStore;
 
-    public StoreTests(IWebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost)
+    public StoreTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost)
     {
       ReduxDevToolsStore = aWebAssemblyHost.Services.GetService<IReduxDevToolsStore>();
     }
