@@ -104,7 +104,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       aServiceCollection.AddSingleton<IClientLoaderConfiguration, ClientLoaderTestConfiguration>();
     }
 
-    private bool DisposedValue = false;
+    private bool DisposedValue;
 
     protected virtual void Dispose(bool aIsDisposing)
     {
