@@ -5,20 +5,18 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
+  using System;
   using System.Net.Http;
   using System.Reflection;
   using System.Text.Json;
-  using TimeWarp.Blazor.Client.ApplicationFeature;
   using TimeWarp.Blazor.Client.ClientLoaderFeature;
-  using TimeWarp.Blazor.Client.CounterFeature;
-  using TimeWarp.Blazor.Client.EventStreamFeature;
-  using TimeWarp.Blazor.Client.WeatherForecastFeature;
 
-  public class TestingConvention : Discovery, Execution
+  public class TestingConvention : Discovery, Execution, IDisposable
   {
     const string TestPostfix = "Tests";
     private readonly IServiceScopeFactory ServiceScopeFactory;
     private HttpClient ServerHttpClient;
+    private WebApplicationFactory<Server.Startup> ServerWebApplicationFactory;
 
     public TestingConvention()
     {
@@ -27,7 +25,8 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       ServiceProvider serviceProvider = testServices.BuildServiceProvider();
       ServiceScopeFactory = serviceProvider.GetService<IServiceScopeFactory>();
 
-      Methods.Where(aMethodExpression => aMethodExpression.Name != nameof(Setup));
+      Classes.Where(aType => aType.Name.EndsWith(TestPostfix));
+      Methods.Where(aMethodInfo => aMethodInfo.Name != nameof(Setup));
     }
 
     public void Execute(TestClass aTestClass)
@@ -40,20 +39,21 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
           object instance = serviceScope.ServiceProvider.GetService(aTestClass.Type);
           Setup(instance);
           aCase.Execute(instance);
+          instance.Dispose();
         }
        );
     }
 
     private static void Setup(object aInstance)
     {
-      System.Reflection.MethodInfo method = aInstance.GetType().GetMethod(nameof(Setup));
-      method?.Execute(aInstance);
+      MethodInfo methodInfo = aInstance.GetType().GetMethod(nameof(Setup));
+      methodInfo?.Execute(aInstance);
     }
 
     private void ConfigureTestServices(ServiceCollection aServiceCollection)
     {
-      var serverWebApplicationFactory = new WebApplicationFactory<Server.Startup>();
-      ServerHttpClient = serverWebApplicationFactory.CreateClient();
+      ServerWebApplicationFactory = new WebApplicationFactory<Server.Startup>();
+      ServerHttpClient = ServerWebApplicationFactory.CreateClient();
 
       ConfigureWebAssemblyHost(aServiceCollection);
 
@@ -102,10 +102,23 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       );
 
       aServiceCollection.AddSingleton<IClientLoaderConfiguration, ClientLoaderTestConfiguration>();
-      aServiceCollection.AddTransient<ApplicationState>();
-      aServiceCollection.AddTransient<CounterState>();
-      aServiceCollection.AddTransient<EventStreamState>();
-      aServiceCollection.AddTransient<WeatherForecastsState>();
     }
+
+    private bool DisposedValue = false;
+
+    protected virtual void Dispose(bool aIsDisposing)
+    {
+      if (!DisposedValue)
+      {
+        if (aIsDisposing)
+        {
+          ServerWebApplicationFactory.Dispose();
+        }
+
+        DisposedValue = true;
+      }
+    }
+
+    public void Dispose() => Dispose(true);
   }
 }
