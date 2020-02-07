@@ -41,7 +41,7 @@
     <FixieConsoleVersion>2.1.1</FixieConsoleVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>8.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
     <MediatrVersion>8.0.0</MediatrVersion>
-    <MoqVersion>4.13.1</MoqVersion>
+    <MongoDBDriverVersion>2.10.1</MongoDBDriverVersion>
     <ScrutorVersion>3.1.0</ScrutorVersion>
     <SeleniumSupportVersion>3.141.0</SeleniumSupportVersion>
     <SeleniumWebDriverVersion>3.141.0</SeleniumWebDriverVersion>

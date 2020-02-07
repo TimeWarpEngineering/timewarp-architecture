@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Server.Features.WeatherForecast
+namespace TimeWarp.Blazor.Server.Features.WeatherForecast
 {
   using MediatR;
   using System;
@@ -30,12 +30,12 @@
       CancellationToken aCancellationToken
     )
     {
-      var response = new GetWeatherForecastsResponse(aGetWeatherForecastsRequest.Id);
+      var getWeatherForecastsResponse = new GetWeatherForecastsResponse(aGetWeatherForecastsRequest.Id);
       var random = new Random();
       var weatherForecasts = new List<WeatherForecastDto>();
       Enumerable.Range(1, aGetWeatherForecastsRequest.Days).ToList().ForEach
       (
-        aIndex => response.WeatherForecasts.Add
+        aIndex => getWeatherForecastsResponse.WeatherForecasts.Add
         (
           new WeatherForecastDto
           (
@@ -46,7 +46,7 @@
         )
       );
 
-      return await Task.Run(() => response);
+      return await Task.Run(() => getWeatherForecastsResponse);
     }
   }
 }

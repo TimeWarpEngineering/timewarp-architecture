@@ -1,18 +1,30 @@
 namespace TimeWarp.Blazor.Server
 {
+  using BooksApi.Models;
+  using BooksApi.Services;
   using MediatR;
   using Microsoft.AspNetCore.Builder;
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.AspNetCore.ResponseCompression;
+  using Microsoft.Extensions.Configuration;
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
+  using Microsoft.Extensions.Options;
+  using System.Configuration;
   using System.Linq;
   using System.Net.Mime;
   using System.Reflection;
 
   public class Startup
   {
+    public IConfiguration Configuration { get; }
+
+    public Startup(IConfiguration aConfiguration)
+    {
+      Configuration = aConfiguration;
+    }
+
     public void Configure
     (
       IApplicationBuilder aApplicationBuilder,
@@ -43,7 +55,16 @@ namespace TimeWarp.Blazor.Server
 
     public void ConfigureServices(IServiceCollection aServiceCollection)
     {
+#if UseMongo
+      aServiceCollection.Configure<BookstoreDatabaseSettings>(Configuration.GetSection(nameof(BookstoreDatabaseSettings)));
 
+      aServiceCollection.AddSingleton<IBookstoreDatabaseSettings>
+      (
+        aServiceProvider => aServiceProvider.GetRequiredService<IOptions<BookstoreDatabaseSettings>>().Value
+      );
+
+      aServiceCollection.AddSingleton<BookService>();
+#endif
       aServiceCollection.AddRazorPages();
       aServiceCollection.AddServerSideBlazor();
       aServiceCollection.AddMvc();
