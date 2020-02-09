@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Server.Features.WeatherForecast
+namespace TimeWarp.Blazor.Server.Features.WeatherForecast
 {
   using Microsoft.AspNetCore.Mvc;
   using System.Threading.Tasks;
@@ -6,7 +6,7 @@
   using TimeWarp.Blazor.Server.Features.Base;
 
   [Route(GetWeatherForecastsRequest.Route)]
-  public class GetWeatherForecastsController : BaseController<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
+  public class GetWeatherForecastsEndpoint : BaseEndpoint<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
   {
     [HttpGet]
     public async Task<IActionResult> Process(GetWeatherForecastsRequest aRequest) => await Send(aRequest);

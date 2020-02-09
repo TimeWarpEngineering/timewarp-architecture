@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Server.Features.Base
+namespace TimeWarp.Blazor.Server.Features.Base
 {
   using MediatR;
   using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,7 @@
   using TimeWarp.Blazor.Api.Features.Base;
 
   [ApiController]
-  public class BaseController<TRequest, TResponse> : ControllerBase
+  public class BaseEndpoint<TRequest, TResponse> : ControllerBase
       where TRequest : IRequest<TResponse>
     where TResponse : BaseResponse
   {
