@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Server.Features.WeatherForecast
+﻿namespace TimeWarp.Blazor.Features.WeatherForecast
 {
   using MediatR;
   using System;

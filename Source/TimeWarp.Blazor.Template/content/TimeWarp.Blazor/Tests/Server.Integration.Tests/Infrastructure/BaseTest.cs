@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
+namespace TimeWarp.Blazor.Integration.Tests.Infrastructure
 {
   using MediatR;
   using Microsoft.AspNetCore.Mvc.Testing;
@@ -7,6 +7,7 @@ namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
   using System.Net.Http;
   using System.Text.Json;
   using System.Threading.Tasks;
+  using TimeWarp.Blazor.Server;
 
   /// <summary>
   /// 

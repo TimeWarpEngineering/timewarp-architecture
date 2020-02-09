@@ -1,11 +1,12 @@
-namespace TimeWarp.Blazor.Server.Integration.Tests.Features.WeatherForecast
+namespace TimeWarp.Blazor.Integration.Tests.Features.WeatherForecast
 {
   using Shouldly;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Api.Features.WeatherForecast;
-  using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Integration.Tests.Infrastructure;
   using Microsoft.AspNetCore.Mvc.Testing;
   using System.Text.Json;
+  using TimeWarp.Blazor.Server;
 
   internal class GetWeatherForecastsTests : BaseTest
   {

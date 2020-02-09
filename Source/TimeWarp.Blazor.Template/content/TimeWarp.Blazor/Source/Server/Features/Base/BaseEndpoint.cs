@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Server.Features.Base
+namespace TimeWarp.Blazor.Features.Base
 {
   using MediatR;
   using Microsoft.AspNetCore.Mvc;
