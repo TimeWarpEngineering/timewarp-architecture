@@ -6,7 +6,7 @@
   using System.Linq;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Features.WeatherForecast;
 
   public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
   {

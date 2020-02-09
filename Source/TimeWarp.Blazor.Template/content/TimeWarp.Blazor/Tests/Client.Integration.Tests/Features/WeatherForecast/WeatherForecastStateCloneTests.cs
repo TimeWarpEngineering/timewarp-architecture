@@ -5,7 +5,7 @@ namespace TimeWarp.Blazor.Integration.Tests.Features.WeatherForecast
   using Shouldly;
   using System;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Features.WeatherForecast;
   using TimeWarp.Blazor.Integration.Tests.Infrastructure;
   using TimeWarp.Blazor.WeatherForecastFeature;
 

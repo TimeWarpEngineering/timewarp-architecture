@@ -2,7 +2,7 @@
 {
   using BlazorState;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Features.WeatherForecast;
 
   internal partial class WeatherForecastsState : State<WeatherForecastsState>
   {

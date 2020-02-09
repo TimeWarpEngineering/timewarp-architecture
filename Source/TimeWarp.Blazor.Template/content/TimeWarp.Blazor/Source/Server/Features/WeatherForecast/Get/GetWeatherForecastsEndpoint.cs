@@ -2,7 +2,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecast
 {
   using Microsoft.AspNetCore.Mvc;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Features.WeatherForecast;
   using TimeWarp.Blazor.Features.Base;
 
   [Route(GetWeatherForecastsRequest.Route)]

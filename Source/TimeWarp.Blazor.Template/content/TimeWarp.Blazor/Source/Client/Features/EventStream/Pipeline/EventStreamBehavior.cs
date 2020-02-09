@@ -6,7 +6,7 @@
   using System;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Api.Features.Base;
+  using TimeWarp.Blazor.Features.Base;
   using static TimeWarp.Blazor.EventStreamFeature.EventStreamState;
 
   /// <summary>

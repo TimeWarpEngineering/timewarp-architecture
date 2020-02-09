@@ -2,7 +2,7 @@ namespace TimeWarp.Blazor.Integration.Tests.Features.WeatherForecast
 {
   using Shouldly;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Features.WeatherForecast;
   using TimeWarp.Blazor.Integration.Tests.Infrastructure;
   using Microsoft.AspNetCore.Mvc.Testing;
   using System.Text.Json;

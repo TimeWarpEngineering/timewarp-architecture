@@ -4,7 +4,7 @@ namespace TimeWarp.Blazor.Features.Base
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.Extensions.DependencyInjection;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Api.Features.Base;
+  using TimeWarp.Blazor.Features.Base;
 
   [ApiController]
   public class BaseEndpoint<TRequest, TResponse> : ControllerBase

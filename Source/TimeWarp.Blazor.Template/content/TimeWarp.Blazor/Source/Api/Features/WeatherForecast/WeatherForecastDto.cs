@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Api.Features.WeatherForecast
+﻿namespace TimeWarp.Blazor.Features.WeatherForecast
 {
   using System;
 

@@ -6,7 +6,7 @@
   using System.Collections.Generic;
   using System.Reflection;
   using System.Text.Json;
-  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Features.WeatherForecast;
 
   internal partial class WeatherForecastsState : State<WeatherForecastsState>
   {

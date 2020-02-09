@@ -6,7 +6,7 @@ namespace TimeWarp.Blazor.WeatherForecastFeature
   using System.Net.Http;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Features.WeatherForecast;
   using TimeWarp.Blazor.BaseFeature;
 
   internal partial class WeatherForecastsState
