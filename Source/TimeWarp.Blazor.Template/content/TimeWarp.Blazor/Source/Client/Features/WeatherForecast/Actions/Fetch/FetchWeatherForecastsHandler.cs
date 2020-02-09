@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Client.WeatherForecastFeature
+namespace TimeWarp.Blazor.WeatherForecastFeature
 {
   using BlazorState;
   using MediatR;
@@ -7,7 +7,7 @@ namespace TimeWarp.Blazor.Client.WeatherForecastFeature
   using System.Threading;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Api.Features.WeatherForecast;
-  using TimeWarp.Blazor.Client.BaseFeature;
+  using TimeWarp.Blazor.BaseFeature;
 
   internal partial class WeatherForecastsState
   {

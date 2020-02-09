@@ -1,11 +1,11 @@
-﻿//namespace TimeWarp.Blazor.Client.Integration.Tests.Behaviors
+﻿//namespace TimeWarp.Blazor.Integration.Tests.Behaviors
 //{
 //  using System;
 //  using System.Collections.Generic;
 //  using System.Linq;
 //  using System.Text;
 //  using System.Threading.Tasks;
-//  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+//  using TimeWarp.Blazor.Integration.Tests.Infrastructure;
 
 //  internal class NotificationRequestPostProcessorTests
 //  {

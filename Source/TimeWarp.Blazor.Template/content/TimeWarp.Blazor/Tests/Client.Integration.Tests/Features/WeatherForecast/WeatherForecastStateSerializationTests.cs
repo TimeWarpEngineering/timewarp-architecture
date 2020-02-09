@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
+﻿namespace TimeWarp.Blazor.Integration.Tests.Features.WeatherForecast
 {
   using Shouldly;
   using System;

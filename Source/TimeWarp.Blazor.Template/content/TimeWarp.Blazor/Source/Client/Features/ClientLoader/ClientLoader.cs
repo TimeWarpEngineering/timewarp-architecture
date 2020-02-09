@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.ClientLoaderFeature
+﻿namespace TimeWarp.Blazor.ClientLoaderFeature
 {
   using Microsoft.Extensions.Logging;
   using Microsoft.JSInterop;

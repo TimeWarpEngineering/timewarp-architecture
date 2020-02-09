@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.CounterFeature
+﻿namespace TimeWarp.Blazor.CounterFeature
 {
   using BlazorState;
   using Microsoft.JSInterop;

@@ -1,11 +1,11 @@
-﻿namespace TimeWarp.Blazor.Client.CounterFeature
+﻿namespace TimeWarp.Blazor.CounterFeature
 {
   using BlazorState;
   using MediatR;
   using System;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Client.BaseFeature;
+  using TimeWarp.Blazor.BaseFeature;
 
   internal partial class CounterState
   {

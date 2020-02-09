@@ -1,10 +1,10 @@
-﻿namespace TimeWarp.Blazor.Client.BaseFeature
+﻿namespace TimeWarp.Blazor.BaseFeature
 {
   using BlazorState;
-  using TimeWarp.Blazor.Client.ApplicationFeature;
-  using TimeWarp.Blazor.Client.CounterFeature;
-  using TimeWarp.Blazor.Client.EventStreamFeature;
-  using TimeWarp.Blazor.Client.WeatherForecastFeature;
+  using TimeWarp.Blazor.ApplicationFeature;
+  using TimeWarp.Blazor.CounterFeature;
+  using TimeWarp.Blazor.EventStreamFeature;
+  using TimeWarp.Blazor.WeatherForecastFeature;
 
   /// <summary>
   /// Base Handler that makes it easy to access state

@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
+namespace TimeWarp.Blazor.Integration.Tests.Infrastructure
 {
   using BlazorState;
   using Fixie;
@@ -9,7 +9,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
   using System.Net.Http;
   using System.Reflection;
   using System.Text.Json;
-  using TimeWarp.Blazor.Client.ClientLoaderFeature;
+  using TimeWarp.Blazor.ClientLoaderFeature;
 
   public class TestingConvention : Discovery, Execution, IDisposable
   {
@@ -90,7 +90,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       aServiceCollection.AddBlazorState
       (
         aOptions => aOptions.Assemblies =
-        new Assembly[] { typeof(Program).GetTypeInfo().Assembly }
+        new Assembly[] { typeof(Client.Program).GetTypeInfo().Assembly }
       );
 
       aServiceCollection.AddSingleton

@@ -1,12 +1,12 @@
-namespace TimeWarp.Blazor.Client.Integration.Tests.Pipeline
+namespace TimeWarp.Blazor.Integration.Tests.Pipeline
 {
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
   using System;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Client.CounterFeature;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using static TimeWarp.Blazor.Client.CounterFeature.CounterState;
+  using TimeWarp.Blazor.CounterFeature;
+  using TimeWarp.Blazor.Integration.Tests.Infrastructure;
+  using static TimeWarp.Blazor.CounterFeature.CounterState;
 
   internal class CloneStateBehaviorTests : BaseTest
   {

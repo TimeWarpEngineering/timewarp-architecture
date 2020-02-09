@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Client.Integration.Tests
+namespace TimeWarp.Blazor.Integration.Tests
 {
   using BlazorState;
   using Microsoft.AspNetCore.Blazor.Hosting;
@@ -6,10 +6,10 @@ namespace TimeWarp.Blazor.Client.Integration.Tests
   using Shouldly;
   using System;
   using System.IO;
-  using TimeWarp.Blazor.Client.ApplicationFeature;
-  using TimeWarp.Blazor.Client.CounterFeature;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Blazor.Client.WeatherForecastFeature;
+  using TimeWarp.Blazor.ApplicationFeature;
+  using TimeWarp.Blazor.CounterFeature;
+  using TimeWarp.Blazor.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.WeatherForecastFeature;
 
   internal class StoreTests : BaseTest
   {

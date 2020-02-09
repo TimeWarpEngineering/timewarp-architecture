@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.Layout
+﻿namespace TimeWarp.Blazor.Layout
 {
   using Microsoft.AspNetCore.Components;
 

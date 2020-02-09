@@ -1,7 +1,7 @@
-﻿namespace TimeWarp.Blazor.Client.CounterFeature
+﻿namespace TimeWarp.Blazor.CounterFeature
 {
   using System.Threading.Tasks;
-  using static TimeWarp.Blazor.Client.CounterFeature.CounterState;
+  using static TimeWarp.Blazor.CounterFeature.CounterState;
 
   public partial class Counter
   {
