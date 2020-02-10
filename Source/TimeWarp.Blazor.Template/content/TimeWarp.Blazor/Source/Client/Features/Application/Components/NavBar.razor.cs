@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.Applications.Client.Components
+namespace TimeWarp.Blazor.Features.Applications.Components
 {
   using static TimeWarp.Blazor.Features.Applications.Client.ApplicationState;
 

@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Integration.Tests.Pipeline
+namespace TimeWarp.Blazor.Pipeline.Tests
 {
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;

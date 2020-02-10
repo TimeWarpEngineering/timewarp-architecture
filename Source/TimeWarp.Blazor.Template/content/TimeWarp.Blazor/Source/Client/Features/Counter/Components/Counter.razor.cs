@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.Counters.Client.Components
+namespace TimeWarp.Blazor.Features.Counters.Components
 {
   using System.Threading.Tasks;
   using static TimeWarp.Blazor.Features.Counters.Client.CounterState;
