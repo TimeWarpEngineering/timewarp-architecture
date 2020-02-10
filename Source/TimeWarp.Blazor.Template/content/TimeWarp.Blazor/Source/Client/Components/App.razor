@@ -1,5 +1,9 @@
 @namespace TimeWarp.Blazor.Components
+
+@using Microsoft.AspNetCore.Components.Routing
+
 @inherits AppBase
+
 <Router AppAssembly="typeof(Client.Program).Assembly">
   <Found Context="routeData">
     <RouteView RouteData="routeData" DefaultLayout="typeof(TimeWarp.Blazor.Components.MainLayout)" />
