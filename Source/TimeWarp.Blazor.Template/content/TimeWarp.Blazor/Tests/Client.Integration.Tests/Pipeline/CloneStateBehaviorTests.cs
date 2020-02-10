@@ -4,9 +4,9 @@ namespace TimeWarp.Blazor.Integration.Tests.Pipeline
   using Shouldly;
   using System;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Counters;
+  using TimeWarp.Blazor.Features.Counters.Client;
   using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
-  using static TimeWarp.Blazor.Features.Counters.CounterState;
+  using static TimeWarp.Blazor.Features.Counters.Client.CounterState;
 
   internal class CloneStateBehaviorTests : BaseTest
   {

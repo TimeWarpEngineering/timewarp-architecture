@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.WeatherForecasts
+namespace TimeWarp.Blazor.Features.WeatherForecasts.Client
 {
   using TimeWarp.Blazor.Features.Bases;
 

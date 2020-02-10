@@ -1,11 +1,11 @@
-namespace TimeWarp.Blazor.Features.Applications
+namespace TimeWarp.Blazor.Features.Applications.Client
 {
   using BlazorState;
   using MediatR;
   using System.Threading;
   using System.Threading.Tasks;
   using static BlazorState.Features.Routing.RouteState;
-  using static TimeWarp.Blazor.Features.Applications.ApplicationState;
+  using static TimeWarp.Blazor.Features.Applications.Client.ApplicationState;
 
   internal class ResetStoreHandler : IRequestHandler<ResetStoreAction>
   {

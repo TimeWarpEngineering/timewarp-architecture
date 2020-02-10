@@ -5,7 +5,7 @@ namespace TimeWarp.Blazor
   using BlazorState.Pipeline.ReduxDevTools;
   using Microsoft.AspNetCore.Components;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.ClientLoaders;
+  using TimeWarp.Blazor.Features.ClientLoaders.Client;
 
   public class AppBase : ComponentBase
   {

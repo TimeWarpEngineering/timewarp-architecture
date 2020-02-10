@@ -3,7 +3,7 @@
     "name": "Blazor State Demo Application",
     "guid": "5a2efcec-6297-4254-a2dc-30e4e567e549"
   },
-  "TimeWarp.Blazor.Features.Counters.CounterState": {
+  "TimeWarp.Blazor.Features.Counters.Client.CounterState": {
     "count": 18,
     "guid": "a0d74c63-13f4-4a2f-b18b-9a1fdaa397b2"
   },

@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.Applications.Components
+namespace TimeWarp.Blazor.Features.Applications.Client.Components
 {
   public partial class SideBar
   {

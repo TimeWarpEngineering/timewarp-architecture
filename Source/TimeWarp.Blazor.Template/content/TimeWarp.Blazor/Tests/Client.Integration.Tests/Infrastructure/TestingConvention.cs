@@ -9,7 +9,7 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
   using System.Net.Http;
   using System.Reflection;
   using System.Text.Json;
-  using TimeWarp.Blazor.Features.ClientLoaders;
+  using TimeWarp.Blazor.Features.ClientLoaders.Client;
 
   public class TestingConvention : Discovery, Execution, IDisposable
   {

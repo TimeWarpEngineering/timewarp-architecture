@@ -9,7 +9,7 @@ namespace TimeWarp.Blazor.Client
   using BlazorState;
   using System.Reflection;
   using MediatR;
-  using TimeWarp.Blazor.Features.ClientLoaders;
+  using TimeWarp.Blazor.Features.ClientLoaders.Client;
   using TimeWarp.Blazor.Features.EventStreams;
 
   public class Program

@@ -6,7 +6,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Client
   using System;
   using System.Collections.Generic;
   using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
-  using TimeWarp.Blazor.Features.WeatherForecasts;
+  using TimeWarp.Blazor.Features.WeatherForecasts.Client;
 
   internal class WeatherForecastStateCloneTests : BaseTest
   {
