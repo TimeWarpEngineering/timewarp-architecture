@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Integration.Tests.Infrastructure
+namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
 {
   using Fixie;
   using Microsoft.AspNetCore.Mvc.Testing;

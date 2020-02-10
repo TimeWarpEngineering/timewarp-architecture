@@ -1,8 +1,8 @@
-namespace TimeWarp.Blazor.Features.WeatherForecast
+namespace TimeWarp.Blazor.Features.WeatherForecasts.Server.GetWeatherForecasts
 {
   using MediatR;
   using System.Text.Json.Serialization;
-  using TimeWarp.Blazor.Features.Base;
+  using TimeWarp.Blazor.Features.Bases;
 
   public class GetWeatherForecastsRequest : BaseRequest, IRequest<GetWeatherForecastsResponse>
   {

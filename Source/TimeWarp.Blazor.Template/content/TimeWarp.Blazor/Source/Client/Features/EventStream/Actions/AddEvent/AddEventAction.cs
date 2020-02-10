@@ -1,6 +1,6 @@
-﻿namespace TimeWarp.Blazor.EventStreamFeature
+namespace TimeWarp.Blazor.Features.EventStreams
 {
-  using TimeWarp.Blazor.BaseFeature;
+  using TimeWarp.Blazor.Features.Bases;
 
   internal partial class EventStreamState
   {

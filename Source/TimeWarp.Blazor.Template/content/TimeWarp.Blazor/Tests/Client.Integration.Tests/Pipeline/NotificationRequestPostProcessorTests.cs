@@ -5,7 +5,7 @@
 //  using System.Linq;
 //  using System.Text;
 //  using System.Threading.Tasks;
-//  using TimeWarp.Blazor.Integration.Tests.Infrastructure;
+//  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
 
 //  internal class NotificationRequestPostProcessorTests
 //  {

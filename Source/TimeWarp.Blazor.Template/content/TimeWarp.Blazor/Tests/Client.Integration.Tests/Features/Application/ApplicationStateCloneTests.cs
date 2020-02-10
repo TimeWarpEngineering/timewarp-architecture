@@ -1,10 +1,10 @@
-namespace TimeWarp.Blazor.Integration.Tests.Features.Application
+namespace TimeWarp.Blazor.Features.Applications.Tests
 {
   using AnyClone;
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
-  using TimeWarp.Blazor.ApplicationFeature;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Features.Applications;
+  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
 
   internal class ApplicationStateCloneTests : BaseTest
   {

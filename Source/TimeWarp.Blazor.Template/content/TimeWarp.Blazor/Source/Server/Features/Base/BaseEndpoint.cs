@@ -1,10 +1,10 @@
-namespace TimeWarp.Blazor.Features.Base
+namespace TimeWarp.Blazor.Features.Bases
 {
   using MediatR;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.Extensions.DependencyInjection;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Base;
+  using TimeWarp.Blazor.Features.Bases;
 
   [ApiController]
   public class BaseEndpoint<TRequest, TResponse> : ControllerBase

@@ -1,11 +1,11 @@
-﻿namespace TimeWarp.Blazor.CounterFeature
+﻿namespace TimeWarp.Blazor.Features.Counters
 {
   using MediatR;
   using Microsoft.Extensions.Logging;
   using System.Threading;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Pipeline.NotificationPostProcessor;
-  using static TimeWarp.Blazor.CounterFeature.CounterState;
+  using static TimeWarp.Blazor.Features.Counters.CounterState;
 
   internal class IncrementCountNotificationHandler
     : INotificationHandler<PostPipelineNotification<IncrementCounterAction, Unit>>

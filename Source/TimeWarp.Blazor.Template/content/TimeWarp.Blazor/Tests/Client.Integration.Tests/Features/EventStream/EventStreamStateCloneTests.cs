@@ -1,11 +1,11 @@
-namespace TimeWarp.Blazor.Integration.Tests.Features.EventStream
+namespace TimeWarp.Blazor.Features.EventStreams.Tests
 {
   using AnyClone;
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.EventStreamFeature;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Features.EventStreams;
+  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
 
   internal class EventStreamCloneTests : BaseTest
   {

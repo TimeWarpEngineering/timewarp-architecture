@@ -1,6 +1,6 @@
-﻿namespace TimeWarp.Blazor.BaseFeature
+namespace TimeWarp.Blazor.Features.Bases
 {
-  using static TimeWarp.Blazor.ApplicationFeature.ApplicationState;
+  using static TimeWarp.Blazor.Features.Applications.ApplicationState;
 
   public partial class ResetButton
   {

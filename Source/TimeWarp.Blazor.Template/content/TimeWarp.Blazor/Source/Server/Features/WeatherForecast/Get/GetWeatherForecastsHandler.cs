@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Features.WeatherForecast
+namespace TimeWarp.Blazor.Features.WeatherForecasts.Server.GetWeatherForecasts
 {
   using MediatR;
   using System;
@@ -6,8 +6,7 @@
   using System.Linq;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.WeatherForecast;
-
+  
   public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
   {
     private readonly string[] Summaries = new[]

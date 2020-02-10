@@ -6,10 +6,10 @@ namespace TimeWarp.Blazor.Integration.Tests
   using Shouldly;
   using System;
   using System.IO;
-  using TimeWarp.Blazor.ApplicationFeature;
-  using TimeWarp.Blazor.CounterFeature;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure;
-  using TimeWarp.Blazor.WeatherForecastFeature;
+  using TimeWarp.Blazor.Features.Applications;
+  using TimeWarp.Blazor.Features.Counters;
+  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
+  using TimeWarp.Blazor.Features.WeatherForecasts;
 
   internal class StoreTests : BaseTest
   {

@@ -1,6 +1,6 @@
-﻿namespace TimeWarp.Blazor.WeatherForecastFeature
+namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
-  using TimeWarp.Blazor.BaseFeature;
+  using TimeWarp.Blazor.Features.Bases;
 
   internal partial class WeatherForecastsState
   {

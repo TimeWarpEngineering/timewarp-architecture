@@ -10,7 +10,7 @@
   using System.IO;
   using System.Linq;
   using System.Threading;
-  using TimeWarp.Blazor.ClientLoaderFeature;
+  using TimeWarp.Blazor.Features.ClientLoaders;
 
   public class ServerFixture
   {

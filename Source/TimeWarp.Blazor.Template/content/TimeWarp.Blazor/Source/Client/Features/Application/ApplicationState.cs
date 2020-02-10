@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.ApplicationFeature
+namespace TimeWarp.Blazor.Features.Applications
 {
   using BlazorState;
 

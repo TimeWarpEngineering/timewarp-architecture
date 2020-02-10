@@ -1,8 +1,7 @@
-﻿namespace TimeWarp.Blazor.WeatherForecastFeature
+namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   using BlazorState;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Features.WeatherForecast;
 
   internal partial class WeatherForecastsState : State<WeatherForecastsState>
   {
