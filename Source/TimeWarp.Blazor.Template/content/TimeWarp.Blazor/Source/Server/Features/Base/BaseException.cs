@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.Bases
+namespace TimeWarp.Blazor.Features.Bases.Server
 {
   using System;
 
