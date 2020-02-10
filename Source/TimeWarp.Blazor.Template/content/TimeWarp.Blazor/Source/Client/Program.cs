@@ -11,6 +11,7 @@ namespace TimeWarp.Blazor.Client
   using MediatR;
   using TimeWarp.Blazor.Features.ClientLoaders.Client;
   using TimeWarp.Blazor.Features.EventStreams.Client;
+  using TimeWarp.Blazor.Components;
 
   public class Program
   {

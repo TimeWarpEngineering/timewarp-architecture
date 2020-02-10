@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor
+namespace TimeWarp.Blazor.Components
 {
   using BlazorState.Features.JavaScriptInterop;
   using BlazorState.Features.Routing;
