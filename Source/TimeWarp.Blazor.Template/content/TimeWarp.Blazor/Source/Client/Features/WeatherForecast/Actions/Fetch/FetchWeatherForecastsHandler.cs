@@ -6,7 +6,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts.Client
   using System.Net.Http;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Blazor.Features.Bases.Client;
   using TimeWarp.Blazor.Features.WeatherForecasts.Server.GetWeatherForecasts;
 
   internal partial class WeatherForecastsState

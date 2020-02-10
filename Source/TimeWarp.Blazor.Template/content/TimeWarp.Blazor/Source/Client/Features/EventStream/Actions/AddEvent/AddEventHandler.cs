@@ -4,7 +4,7 @@ namespace TimeWarp.Blazor.Features.EventStreams.Client
   using MediatR;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Blazor.Features.Bases.Client;
 
   internal partial class EventStreamState
   {
