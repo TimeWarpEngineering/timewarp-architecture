@@ -24,7 +24,7 @@
       WaitUntilClientCached();
 
       object clientApplication = JavaScriptExecutor.ExecuteScript("return window.localStorage.getItem('clientApplication');");
-      clientApplication.ShouldBe("TimeWarp.Blazor.Client.0.0.1");
+      clientApplication.ShouldBe("TimeWarp.Blazor.0.0.1");
     }
 
     public void InitalizationWorkedClientSide()

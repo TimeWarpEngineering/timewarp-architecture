@@ -1,16 +1,14 @@
 namespace TimeWarp.Blazor.Client
 {
-  using System;
-  using System.Collections.Generic;
   using System.Threading.Tasks;
-  using System.Text;
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Microsoft.Extensions.DependencyInjection;
   using BlazorState;
   using System.Reflection;
   using MediatR;
-  using TimeWarp.Blazor.Client.ClientLoaderFeature;
-  using TimeWarp.Blazor.Client.EventStreamFeature;
+  using TimeWarp.Blazor.Features.ClientLoaders.Client;
+  using TimeWarp.Blazor.Features.EventStreams.Client;
+  using TimeWarp.Blazor.Components;
 
   public class Program
   {

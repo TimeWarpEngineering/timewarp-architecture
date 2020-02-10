@@ -1,11 +1,11 @@
-namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Counter
+namespace TimeWarp.Blazor.Features.Counters.Client.Tests
 {
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Client.CounterFeature;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using static TimeWarp.Blazor.Client.CounterFeature.CounterState;
+  using TimeWarp.Blazor.Features.Counters.Client;
+  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
+  using static TimeWarp.Blazor.Features.Counters.Client.CounterState;
 
   internal class IncrementCounterTests : BaseTest
   {

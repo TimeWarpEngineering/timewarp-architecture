@@ -1,11 +1,11 @@
-﻿namespace TimeWarp.Blazor.Client
+namespace TimeWarp.Blazor.Components
 {
   using BlazorState.Features.JavaScriptInterop;
   using BlazorState.Features.Routing;
   using BlazorState.Pipeline.ReduxDevTools;
   using Microsoft.AspNetCore.Components;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Client.ClientLoaderFeature;
+  using TimeWarp.Blazor.Features.ClientLoaders.Client;
 
   public class AppBase : ComponentBase
   {
