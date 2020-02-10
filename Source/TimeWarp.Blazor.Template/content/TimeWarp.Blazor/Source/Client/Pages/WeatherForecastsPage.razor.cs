@@ -4,7 +4,7 @@ namespace TimeWarp.Blazor.Pages
   using TimeWarp.Blazor.Features.Bases.Client;
   using static TimeWarp.Blazor.Features.WeatherForecasts.Client.WeatherForecastsState;
 
-  public partial class WeatherForecastsPageBase : BaseComponent
+  public partial class WeatherForecastsPage : BaseComponent
   {
     public const string Route = "/weatherforecasts";
 
