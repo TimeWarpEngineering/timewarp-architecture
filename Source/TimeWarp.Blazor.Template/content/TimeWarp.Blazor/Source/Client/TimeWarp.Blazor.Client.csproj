@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <Description>TimeWarp Blazor Client</Description>
+    <Description>Blazor Client</Description>
     <RazorLangVersion>3.0</RazorLangVersion>
   </PropertyGroup>
 

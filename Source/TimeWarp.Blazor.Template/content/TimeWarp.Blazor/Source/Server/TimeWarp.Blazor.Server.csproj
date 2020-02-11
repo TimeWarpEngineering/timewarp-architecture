@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <Description>TimeWarp.Blazor Server</Description>
+    <Description>Blazor Server</Description>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <DisableImplicitComponentsAnalyzers>true</DisableImplicitComponentsAnalyzers>
   </PropertyGroup>
