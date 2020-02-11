@@ -1,6 +1,6 @@
-﻿namespace TimeWarp.Blazor.Client.WeatherForecastFeature
+namespace TimeWarp.Blazor.Features.WeatherForecasts.Client
 {
-  using TimeWarp.Blazor.Client.BaseFeature;
+  using TimeWarp.Blazor.Features.Bases.Client;
 
   internal partial class WeatherForecastsState
   {

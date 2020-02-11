@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.ApplicationFeature
+﻿namespace TimeWarp.Blazor.Features.Applications.Client
 {
   using BlazorState;
   using Microsoft.JSInterop;

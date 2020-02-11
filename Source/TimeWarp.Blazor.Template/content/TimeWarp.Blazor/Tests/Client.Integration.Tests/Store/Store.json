@@ -1,13 +1,13 @@
 {
-  "TimeWarp.Blazor.Client.ApplicationFeature.ApplicationState": {
+  "TimeWarp.Blazor.FeatureApplication.ApplicationState": {
     "name": "Blazor State Demo Application",
     "guid": "5a2efcec-6297-4254-a2dc-30e4e567e549"
   },
-  "TimeWarp.Blazor.Client.CounterFeature.CounterState": {
+  "TimeWarp.Blazor.Features.Counters.Client.CounterState": {
     "count": 18,
     "guid": "a0d74c63-13f4-4a2f-b18b-9a1fdaa397b2"
   },
-  "TimeWarp.Blazor.Client.WeatherForecastFeature.WeatherForecastsState": {
+  "TimeWarp.Blazor.FeatureWeatherForecast.WeatherForecastsState": {
     "weatherForecasts": [
       {
         "date": "2018-08-26T09:29:54.0507889Z",

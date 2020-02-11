@@ -1,10 +1,10 @@
-﻿namespace TimeWarp.Blazor.Client.Pages
+namespace TimeWarp.Blazor.Pages
 {
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Client.BaseFeature;
-  using static TimeWarp.Blazor.Client.WeatherForecastFeature.WeatherForecastsState;
+  using TimeWarp.Blazor.Features.Bases.Client;
+  using static TimeWarp.Blazor.Features.WeatherForecasts.Client.WeatherForecastsState;
 
-  public class WeatherForecastsPageBase : BaseComponent
+  public partial class WeatherForecastsPage : BaseComponent
   {
     public const string Route = "/weatherforecasts";
 

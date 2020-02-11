@@ -1,9 +1,10 @@
-namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
+namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Server
 {
   using Fixie;
   using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
   using System.Text.Json;
+  using TimeWarp.Blazor.Server;
 
   public class TestingConvention : Discovery, Execution
   {

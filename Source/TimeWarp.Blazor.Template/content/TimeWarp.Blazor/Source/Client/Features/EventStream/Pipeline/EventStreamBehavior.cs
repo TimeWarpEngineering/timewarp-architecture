@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.EventStreamFeature
+namespace TimeWarp.Blazor.Features.EventStreams.Client
 {
   using Dawn;
   using MediatR;
@@ -6,8 +6,8 @@
   using System;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Api.Features.Base;
-  using static TimeWarp.Blazor.Client.EventStreamFeature.EventStreamState;
+  using TimeWarp.Blazor.Features.Bases;
+  using static TimeWarp.Blazor.Features.EventStreams.Client.EventStreamState;
 
   /// <summary>
   /// Every event that comes through the pipeline adds an object to the EventStreamState

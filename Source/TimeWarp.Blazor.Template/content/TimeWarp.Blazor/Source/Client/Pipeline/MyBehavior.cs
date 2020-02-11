@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Client.Pipeline
+﻿namespace TimeWarp.Blazor.Pipeline
 {
   using BlazorState;
   using Dawn;

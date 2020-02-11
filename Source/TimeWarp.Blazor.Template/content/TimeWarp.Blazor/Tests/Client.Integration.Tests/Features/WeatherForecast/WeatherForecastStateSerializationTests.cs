@@ -1,9 +1,9 @@
-﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
+namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Client
 {
   using Shouldly;
   using System;
   using System.Text.Json;
-  using TimeWarp.Blazor.Api.Features.WeatherForecast;
+  using TimeWarp.Blazor.Features.WeatherForecasts;
 
   internal class WeatherForecastStateSerializationTests
   {

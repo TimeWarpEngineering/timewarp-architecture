@@ -1,10 +1,10 @@
-namespace TimeWarp.Blazor.Client.Integration.Tests.Features.Counter
+namespace TimeWarp.Blazor.Features.Counters.Client.Tests
 {
   using AnyClone;
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
-  using TimeWarp.Blazor.Client.CounterFeature;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Features.Counters.Client;
+  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
 
   internal class CounterStateCloneTests : BaseTest
   {

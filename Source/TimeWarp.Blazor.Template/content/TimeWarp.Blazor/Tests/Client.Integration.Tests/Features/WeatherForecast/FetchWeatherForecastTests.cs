@@ -1,11 +1,11 @@
-namespace TimeWarp.Blazor.Client.Integration.Tests.Features.WeatherForecast
+namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Client
 {
   using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Blazor.Client.WeatherForecastFeature;
-  using static TimeWarp.Blazor.Client.WeatherForecastFeature.WeatherForecastsState;
+  using TimeWarp.Blazor.Features.WeatherForecasts.Client;
+  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
+  using static TimeWarp.Blazor.Features.WeatherForecasts.Client.WeatherForecastsState;
 
   internal class FetchWeatherForecastTests : BaseTest
   {
