@@ -16,20 +16,23 @@ namespace TimeWarp.Blazor.Server
         (
           aWebHostBuilder =>
           {
-#if UseHttpSys
+            #region UseHttpSys
+            // The default is kestrel
+            #if UseHttpSys 
             aWebHostBuilder.UseHttpSys
             (
-              options =>
+              aHttpSysOptions =>
               {
-                options.AllowSynchronousIO = false;
-                options.Authentication.Schemes = AuthenticationSchemes.None;
-                options.Authentication.AllowAnonymous = true;
-                options.MaxConnections = null;
-                options.MaxRequestBodySize = 30000000;
-                options.UrlPrefixes.Add("http://localhost:5005");
+                aHttpSysOptions.AllowSynchronousIO = false;
+                aHttpSysOptions.Authentication.Schemes = AuthenticationSchemes.None;
+                aHttpSysOptions.Authentication.AllowAnonymous = true;
+                aHttpSysOptions.MaxConnections = null;
+                aHttpSysOptions.MaxRequestBodySize = 30000000;
+                aHttpSysOptions.UrlPrefixes.Add("http://localhost:5005");
               }
             );
-#endif
+            #endif
+            #endregion
             aWebHostBuilder.UseStartup<Startup>();
           }
         );
