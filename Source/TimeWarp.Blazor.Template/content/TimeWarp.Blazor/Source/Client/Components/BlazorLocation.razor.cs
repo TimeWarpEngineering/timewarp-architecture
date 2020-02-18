@@ -1,9 +1,10 @@
-﻿namespace TimeWarp.Blazor.Components
+namespace TimeWarp.Blazor.Components
 {
   using BlazorState.Services;
   using Microsoft.AspNetCore.Components;
+  using TimeWarp.Blazor.Features.Bases.Client;
 
-  public partial class BlazorLocation
+  public partial class BlazorLocation: BaseComponent
   {
     [Inject] public BlazorHostingLocation BlazorHostingLocation { get; set; }
 
