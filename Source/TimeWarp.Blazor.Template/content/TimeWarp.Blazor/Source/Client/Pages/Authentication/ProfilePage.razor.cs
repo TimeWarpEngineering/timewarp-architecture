@@ -1,8 +1,8 @@
-﻿namespace TimeWarp.Blazor.Pages
+namespace TimeWarp.Blazor.Pages
 {
   using Microsoft.AspNetCore.Components;
 
-  public class ProfilePageBase : ComponentBase
+  public partial class ProfilePage : ComponentBase
   {
     public const string Route = "/Profile";
   }
