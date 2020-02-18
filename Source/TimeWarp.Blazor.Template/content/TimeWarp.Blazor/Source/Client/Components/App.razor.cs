@@ -7,7 +7,7 @@ namespace TimeWarp.Blazor.Components
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.ClientLoaders.Client;
 
-  public class AppBase : ComponentBase
+  public partial class App : ComponentBase
   {
     [Inject] private ClientLoader ClientLoader { get; set; }
     [Inject] private JsonRequestHandler JsonRequestHandler { get; set; }
