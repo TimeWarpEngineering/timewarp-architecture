@@ -1,8 +1,8 @@
 namespace TimeWarp.Blazor.Pages
 {
-  using Microsoft.AspNetCore.Components;
+  using TimeWarp.Blazor.Features.Bases.Client;
 
-  public partial class ChangePasswordPage : ComponentBase
+  public partial class ChangePasswordPage : BaseComponent
   {
     public const string Route = "/changePassword";
   }
