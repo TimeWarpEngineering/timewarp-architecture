@@ -90,7 +90,7 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
       aServiceCollection.AddBlazorState
       (
         aOptions => aOptions.Assemblies =
-        new Assembly[] { typeof(Blazor.Client.Program).GetTypeInfo().Assembly }
+        new Assembly[] { typeof(TimeWarp.Blazor.Client.Program).GetTypeInfo().Assembly }
       );
 
       aServiceCollection.AddSingleton
