@@ -1,8 +1,8 @@
-﻿namespace TimeWarp.Blazor.Pages
+namespace TimeWarp.Blazor.Pages
 {
-  using Microsoft.AspNetCore.Components;
+  using TimeWarp.Blazor.Features.Bases.Client;
 
-  public class LogoutPageBase : ComponentBase
+  public partial class LogoutPage : BaseComponent
   {
     public const string Route = "Logout";
   }
