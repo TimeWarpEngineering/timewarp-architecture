@@ -1,8 +1,9 @@
 namespace TimeWarp.Blazor.Features.Applications.Components
 {
   using Microsoft.AspNetCore.Components;
+  using TimeWarp.Blazor.Features.Bases.Client;
 
-  public partial class NavMenu : ComponentBase
+  public partial class NavMenu : BaseComponent
   {
     protected bool CollapseNavMenu { get; set; }
 
