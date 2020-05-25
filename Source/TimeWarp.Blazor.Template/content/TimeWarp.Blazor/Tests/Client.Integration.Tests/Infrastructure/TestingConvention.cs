@@ -2,7 +2,7 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
 {
   using BlazorState;
   using Fixie;
-  using Microsoft.AspNetCore.Blazor.Hosting;
+  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
   using System;

@@ -1,6 +1,6 @@
 namespace TimeWarp.Blazor.Pipeline.Tests
 {
-  using Microsoft.AspNetCore.Blazor.Hosting;
+  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Shouldly;
   using System;
   using System.Threading.Tasks;

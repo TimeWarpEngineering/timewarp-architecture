@@ -1,7 +1,7 @@
 namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Client
 {
   using AnyClone;
-  using Microsoft.AspNetCore.Blazor.Hosting;
+  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Shouldly;
   using System;
   using System.Collections.Generic;

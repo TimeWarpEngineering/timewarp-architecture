@@ -1,7 +1,7 @@
 namespace TimeWarp.Blazor.Client
 {
   using System.Threading.Tasks;
-  using Microsoft.AspNetCore.Blazor.Hosting;
+  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Microsoft.Extensions.DependencyInjection;
   using BlazorState;
   using System.Reflection;
@@ -42,6 +42,7 @@ namespace TimeWarp.Blazor.Client
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
       aServiceCollection.AddScoped<ClientLoader>();
       aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
+      aServiceCollection.AddBaseAddressHttpClient();
     }
   }
 }

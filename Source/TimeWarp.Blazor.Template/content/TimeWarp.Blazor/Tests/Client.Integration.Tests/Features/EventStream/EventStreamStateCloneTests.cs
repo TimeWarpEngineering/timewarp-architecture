@@ -1,7 +1,7 @@
 namespace TimeWarp.Blazor.Features.EventStreams.Client.Tests
 {
   using AnyClone;
-  using Microsoft.AspNetCore.Blazor.Hosting;
+  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Shouldly;
   using System.Collections.Generic;
   using TimeWarp.Blazor.Features.EventStreams.Client;

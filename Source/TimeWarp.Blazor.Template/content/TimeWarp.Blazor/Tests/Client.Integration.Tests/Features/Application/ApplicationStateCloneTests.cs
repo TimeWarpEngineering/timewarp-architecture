@@ -1,7 +1,7 @@
 namespace TimeWarp.Blazor.Features.Applications.Client.Tests
 {
   using AnyClone;
-  using Microsoft.AspNetCore.Blazor.Hosting;
+  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Shouldly;
   using TimeWarp.Blazor.Features.Applications.Client;
   using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;

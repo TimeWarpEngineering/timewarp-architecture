@@ -2,7 +2,7 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
 {
   using BlazorState;
   using MediatR;
-  using Microsoft.AspNetCore.Blazor.Hosting;
+  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Microsoft.Extensions.DependencyInjection;
   using System.Net.Http;
   using System.Threading.Tasks;

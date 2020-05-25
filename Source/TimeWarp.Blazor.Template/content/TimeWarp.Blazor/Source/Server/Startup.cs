@@ -24,7 +24,7 @@ namespace TimeWarp.Blazor.Server
       if (aWebHostEnvironment.IsDevelopment())
       {
         aApplicationBuilder.UseDeveloperExceptionPage();
-        aApplicationBuilder.UseBlazorDebugging();
+        aApplicationBuilder.UseWebAssemblyDebugging();
       }
 
       aApplicationBuilder.UseRouting();
@@ -38,7 +38,7 @@ namespace TimeWarp.Blazor.Server
         }
       );
       aApplicationBuilder.UseStaticFiles();
-      aApplicationBuilder.UseClientSideBlazorFiles<Client.Program>();
+      aApplicationBuilder.UseBlazorFrameworkFiles();
     }
 
     public void ConfigureServices(IServiceCollection aServiceCollection)

@@ -1,6 +1,6 @@
 namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Client
 {
-  using Microsoft.AspNetCore.Blazor.Hosting;
+  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Shouldly;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.WeatherForecasts.Client;
