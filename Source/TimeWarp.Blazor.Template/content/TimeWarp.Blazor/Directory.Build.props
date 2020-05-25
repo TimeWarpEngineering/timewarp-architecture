@@ -40,9 +40,9 @@
     <FixieVersion>2.2.1</FixieVersion>
     <FixieConsoleVersion>2.2.1</FixieConsoleVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>8.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
-    <MediatrVersion>8.0.0</MediatrVersion>
+    <MediatrVersion>8.0.1</MediatrVersion>
     <MoqVersion>4.13.1</MoqVersion>
-    <ScrutorVersion>3.1.0</ScrutorVersion>
+    <ScrutorVersion>3.2.1</ScrutorVersion>
     <SeleniumSupportVersion>3.141.0</SeleniumSupportVersion>
     <SeleniumWebDriverVersion>3.141.0</SeleniumWebDriverVersion>
     <ShouldlyVersion>3.0.2</ShouldlyVersion>
