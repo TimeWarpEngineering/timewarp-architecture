@@ -37,8 +37,8 @@
     <BlazorStateVersion>3.2.0</BlazorStateVersion>
     <BlazorExtensionsLoggingVersion>0.4.0</BlazorExtensionsLoggingVersion>
     <DawnGuardVersion>1.10.0</DawnGuardVersion>
-    <FixieVersion>2.2.0</FixieVersion>
-    <FixieConsoleVersion>2.1.1</FixieConsoleVersion>
+    <FixieVersion>2.2.1</FixieVersion>
+    <FixieConsoleVersion>2.2.1</FixieConsoleVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>8.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
     <MediatrVersion>8.0.0</MediatrVersion>
     <MoqVersion>4.13.1</MoqVersion>
