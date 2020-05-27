@@ -1,13 +1,13 @@
-namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Client
+namespace WeatherForecastDto
 {
   using Shouldly;
   using System;
   using System.Text.Json;
   using TimeWarp.Blazor.Features.WeatherForecasts;
 
-  internal class WeatherForecastStateSerializationTests
+  public class Should
   {
-    public void ShouldSerializeAndParse()
+    public void SerializeAndDeserialize()
     {
       //Arrange
       var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -27,24 +27,6 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Client
       weatherForecastDto.TemperatureC.ShouldBe(parsed.TemperatureC);
       weatherForecastDto.Summary.ShouldBe(parsed.Summary);
       weatherForecastDto.Date.ShouldBe(parsed.Date);
-    }
-
-    public void ShouldSerializeAndParseSample()
-    {
-      var jsonSerializerOptions = new JsonSerializerOptions();
-      var person = new Person { FirstName = "Steve", LastName = "Cramer", BirthDay = new DateTime(1967, 09, 27) };
-      string json = JsonSerializer.Serialize(person, jsonSerializerOptions);
-      Person parsed = JsonSerializer.Deserialize<Person>(json, jsonSerializerOptions);
-      parsed.BirthDay.ShouldBe(person.BirthDay);
-      parsed.FirstName.ShouldBe(person.FirstName);
-      parsed.LastName.ShouldBe(person.LastName);
-    }
-
-    public class Person
-    {
-      public DateTime? BirthDay { get; set; }
-      public string FirstName { get; set; }
-      public string LastName { get; set; }
     }
   }
 }

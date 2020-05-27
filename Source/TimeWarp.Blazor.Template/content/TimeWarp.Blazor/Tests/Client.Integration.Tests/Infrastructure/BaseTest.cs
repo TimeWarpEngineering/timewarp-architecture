@@ -2,7 +2,6 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
 {
   using BlazorState;
   using MediatR;
-  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Microsoft.Extensions.DependencyInjection;
   using System.Net.Http;
   using System.Threading.Tasks;
@@ -22,9 +21,9 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
     protected readonly IStore Store;
     protected readonly HttpClient HttpClient;
 
-    public BaseTest(WebAssemblyHost aWebAssemblyHost)
+    public BaseTest(ClientHost aWebAssemblyHost)
     {
-      ServiceScopeFactory = aWebAssemblyHost.Services.GetService<IServiceScopeFactory>();
+      ServiceScopeFactory = aWebAssemblyHost.ServiceProvider.GetService<IServiceScopeFactory>();
       ServiceScope = ServiceScopeFactory.CreateScope();
       Mediator = ServiceScope.ServiceProvider.GetService<IMediator>();
       Store = ServiceScope.ServiceProvider.GetService<IStore>();

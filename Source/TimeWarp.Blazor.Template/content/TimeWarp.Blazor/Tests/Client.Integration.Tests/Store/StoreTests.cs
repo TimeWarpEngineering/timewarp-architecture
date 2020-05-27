@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Integration.Tests
+namespace Store
 {
   using BlazorState;
   using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -11,17 +11,17 @@ namespace TimeWarp.Blazor.Integration.Tests
   using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
   using TimeWarp.Blazor.Features.WeatherForecasts.Client;
 
-  internal class StoreTests : BaseTest
+  public class ReduxDevTools_Should : BaseTest
   {
     private readonly IReduxDevToolsStore ReduxDevToolsStore;
 
-    public StoreTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost)
+    public ReduxDevTools_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost)
     {
-      ReduxDevToolsStore = aWebAssemblyHost.Services.GetService<IReduxDevToolsStore>();
+      ReduxDevToolsStore = aWebAssemblyHost.ServiceProvider.GetService<IReduxDevToolsStore>();
     }
 
 #if ReduxDevToolsEnabled
-    public void ShouldLoadStatesFromJson()
+    public void LoadStatesFromJson()
     {
       //Arrange
       string jsonString = File.ReadAllText("./Store/Store.json");
@@ -50,13 +50,5 @@ namespace TimeWarp.Blazor.Integration.Tests
     }
 #endif
 
-    /// <summary>
-    /// WeatherForecatesState will throw an exception if items initialized in the constructor are null.
-    /// </summary>
-    public void ShouldInitializeStateAfterConstruction()
-    {
-      WeatherForecastsState state = Store.GetState<WeatherForecastsState>();
-      state.ShouldNotBeNull();
-    }
   }
 }

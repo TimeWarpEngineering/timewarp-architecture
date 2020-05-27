@@ -2,7 +2,6 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
 {
   using BlazorState;
   using Fixie;
-  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
   using System;
@@ -11,9 +10,15 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
   using System.Text.Json;
   using TimeWarp.Blazor.Features.ClientLoaders.Client;
 
+
+  [NotTest]
+  [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+  public class NotTest : Attribute { }
+
+  [NotTest]
   public class TestingConvention : Discovery, Execution, IDisposable
   {
-    const string TestPostfix = "Tests";
+    const string TestPostfix = "_Tests";
     private readonly IServiceScopeFactory ServiceScopeFactory;
     private HttpClient ServerHttpClient;
     private WebApplicationFactory<Server.Startup> ServerWebApplicationFactory;
@@ -25,7 +30,7 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
       ServiceProvider serviceProvider = testServices.BuildServiceProvider();
       ServiceScopeFactory = serviceProvider.GetService<IServiceScopeFactory>();
 
-      Classes.Where(aType => aType.Name.EndsWith(TestPostfix));
+      Classes.Where(aType => aType.IsPublic && !aType.Has<NotTest>());
       Methods.Where(aMethodInfo => aMethodInfo.Name != nameof(Setup));
     }
 
@@ -63,10 +68,8 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
       aServiceCollection.Scan
       (
         aTypeSourceSelector => aTypeSourceSelector
-          // Start with all non abstract types in this assembly
           .FromAssemblyOf<TestingConvention>()
-          // Add all the classes that end in Tests
-          .AddClasses(action: (aClasses) => aClasses.TypeName().EndsWith(TestPostfix))
+          .AddClasses(action: (aClasses) => aClasses.Where(aType => aType.IsPublic && !aType.Has<NotTest>()))
           .AsSelf()
           .WithScopedLifetime()
       );
@@ -74,12 +77,17 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
 
     private void ConfigureWebAssemblyHost(ServiceCollection aServiceCollection)
     {
-      WebAssemblyHostBuilder WebAssemblyHostBuilder = WebAssemblyHostBuilder.CreateDefault();
-      ConfigureServices(WebAssemblyHostBuilder.Services);
+      //var webAssemblyHostBuilder = WebAssemblyHostBuilder.CreateDefault();
+      //ConfigureServices(webAssemblyHostBuilder.Services);
 
+      //WebAssemblyHost webAssemblyHost = webAssemblyHostBuilder.Build();
+      //aServiceCollection.AddSingleton(webAssemblyHost);
 
-      WebAssemblyHost webAssemblyHost = WebAssemblyHostBuilder.Build();
-      aServiceCollection.AddSingleton(webAssemblyHost);
+      var clientHostBuilder = ClientHostBuilder.CreateDefault();
+      ConfigureServices(clientHostBuilder.Services);
+
+      ClientHost clientHost = clientHostBuilder.Build();
+      aServiceCollection.AddSingleton(clientHost);
 
     }
 

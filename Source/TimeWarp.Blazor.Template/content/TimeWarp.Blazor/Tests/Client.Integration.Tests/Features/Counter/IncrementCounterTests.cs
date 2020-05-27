@@ -1,19 +1,18 @@
-namespace TimeWarp.Blazor.Features.Counters.Client.Tests
+namespace CounterState
 {
-  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Shouldly;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.Counters.Client;
   using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
   using static TimeWarp.Blazor.Features.Counters.Client.CounterState;
 
-  internal class IncrementCounterTests : BaseTest
+  public class IncrementCounterAction_Should : BaseTest
   {
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public IncrementCounterTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public IncrementCounterAction_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
-    public async Task Should_Decrement_Counter()
+    public async Task Decrement_Count_Given_NegativeAmount()
     {
       //Arrange 
       CounterState.Initialize(aCount: 15);
@@ -30,7 +29,7 @@ namespace TimeWarp.Blazor.Features.Counters.Client.Tests
       CounterState.Count.ShouldBe(13);
     }
 
-    public async Task Should_Increment_Counter()
+    public async Task Increment_Count()
     {
       //Arrange
       CounterState.Initialize(aCount: 22);

@@ -1,19 +1,18 @@
-namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Client
+namespace WeatherForecastsState
 {
-  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Shouldly;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.WeatherForecasts.Client;
   using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
   using static TimeWarp.Blazor.Features.WeatherForecasts.Client.WeatherForecastsState;
 
-  internal class FetchWeatherForecastTests : BaseTest
+  public class FetchWeatherForecastsAction_Should : BaseTest
   {
     private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
-    public FetchWeatherForecastTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public FetchWeatherForecastsAction_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
-    public async Task Should_Fetch_WeatherForecasts()
+    public async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()
     {
       var fetchWeatherForecastsRequest = new FetchWeatherForecastsAction();
 
