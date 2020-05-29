@@ -1,7 +1,7 @@
-namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
+namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
   using System;
-  using TimeWarp.Blazor.Features.ClientLoaders.Client;
+  using TimeWarp.Blazor.Features.ClientLoaders;
 
   [NotTest]
   public class ClientLoaderTestConfiguration : IClientLoaderConfiguration

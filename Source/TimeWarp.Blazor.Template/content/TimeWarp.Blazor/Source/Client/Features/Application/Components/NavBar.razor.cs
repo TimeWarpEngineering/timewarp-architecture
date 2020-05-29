@@ -1,6 +1,6 @@
 namespace TimeWarp.Blazor.Features.Applications.Components
 {
-  using static TimeWarp.Blazor.Features.Applications.Client.ApplicationState;
+  using static TimeWarp.Blazor.Features.Applications.ApplicationState;
 
   public partial class NavBar
   {

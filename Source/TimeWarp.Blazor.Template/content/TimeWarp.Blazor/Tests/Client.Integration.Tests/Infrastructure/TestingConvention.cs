@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
+namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
   using BlazorState;
   using Fixie;
@@ -8,7 +8,7 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
   using System.Net.Http;
   using System.Reflection;
   using System.Text.Json;
-  using TimeWarp.Blazor.Features.ClientLoaders.Client;
+  using TimeWarp.Blazor.Features.ClientLoaders;
 
 
   [NotTest]
@@ -31,7 +31,7 @@ namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
       ServiceScopeFactory = serviceProvider.GetService<IServiceScopeFactory>();
 
       Classes.Where(aType => aType.IsPublic && !aType.Has<NotTest>());
-      Methods.Where(aMethodInfo => aMethodInfo.Name != nameof(Setup));
+      Methods.Where(aMethodInfo => aMethodInfo.Name != nameof(Setup) && !aMethodInfo.IsSpecialName);
     }
 
     public void Execute(TestClass aTestClass)

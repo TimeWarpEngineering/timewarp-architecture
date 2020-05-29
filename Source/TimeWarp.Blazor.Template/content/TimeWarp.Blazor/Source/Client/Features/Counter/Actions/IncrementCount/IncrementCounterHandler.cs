@@ -1,10 +1,10 @@
-namespace TimeWarp.Blazor.Features.Counters.Client
+namespace TimeWarp.Blazor.Features.Counters
 {
   using BlazorState;
   using MediatR;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases.Client;
+  using TimeWarp.Blazor.Features.Bases;
 
   internal partial class CounterState
   {

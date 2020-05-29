@@ -12,3 +12,4 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Blazor Injected property so it is created by the container ", Scope = "member", Target = "~P:TimeWarp.Blazor.AppBase.RouteManager")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1052:Static holder types should be Static or NotInheritable", Justification = "<Pending>", Scope = "type", Target = "~T:TimeWarp.Blazor.Client.Program")]
 [assembly: SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>", Scope = "member", Target = "~M:TimeWarp.Blazor.Client.Program.Main(System.String[])~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Naming", "CA1720:Identifier contains type name", Justification = "<Pending>", Scope = "member", Target = "~P:TimeWarp.Blazor.Features.EventStreams.EventStreamBehavior`2.Guid")]

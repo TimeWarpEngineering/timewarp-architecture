@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.Counters.Client
+namespace TimeWarp.Blazor.Features.Counters
 {
   using BlazorState;
 

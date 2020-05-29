@@ -1,8 +1,8 @@
 namespace TimeWarp.Blazor.Pages
 {
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases.Client;
-  using static TimeWarp.Blazor.Features.WeatherForecasts.Client.WeatherForecastsState;
+  using TimeWarp.Blazor.Features.Bases;
+  using static TimeWarp.Blazor.Features.WeatherForecasts.WeatherForecastsState;
 
   public partial class WeatherForecastsPage : BaseComponent
   {

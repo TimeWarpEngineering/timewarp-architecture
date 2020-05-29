@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
+﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
   using Microsoft.Extensions.DependencyInjection;
   using System;

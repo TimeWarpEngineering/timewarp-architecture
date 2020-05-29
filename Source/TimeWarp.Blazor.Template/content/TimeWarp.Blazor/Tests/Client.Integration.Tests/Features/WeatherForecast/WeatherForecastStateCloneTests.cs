@@ -1,12 +1,10 @@
 namespace WeatherForecastsState
 {
   using AnyClone;
-  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Shouldly;
   using System;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
-  using TimeWarp.Blazor.Features.WeatherForecasts.Client;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using TimeWarp.Blazor.Features.WeatherForecasts;
 
   public class Clone_Should : BaseTest

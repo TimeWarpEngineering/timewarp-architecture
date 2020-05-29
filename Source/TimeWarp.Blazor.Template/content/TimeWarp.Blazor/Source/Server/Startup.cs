@@ -49,11 +49,7 @@ namespace TimeWarp.Blazor.Server
       aServiceCollection.AddMvc();
       aServiceCollection.Configure<ApiBehaviorOptions>
       (
-        aApiBehaviorOptions =>
-        {
-          aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true;
-        }
-      );
+        aApiBehaviorOptions => aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true);
 
       aServiceCollection.AddResponseCompression
       (

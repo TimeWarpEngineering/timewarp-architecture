@@ -4,8 +4,8 @@
   using System.Threading.Tasks;
   using System.Text.Json;
   using Microsoft.AspNetCore.Mvc.Testing;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Server;
-  using TimeWarp.Blazor.Features.WeatherForecasts.Server.GetWeatherForecasts;
+  using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Features.WeatherForecasts;
   using TimeWarp.Blazor.Server;
   using FluentAssertions;
 

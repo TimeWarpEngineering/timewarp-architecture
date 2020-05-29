@@ -20,10 +20,4 @@
     <ProjectReference Include="..\..\Source\Client\TimeWarp.Blazor.Client.csproj" />
     <ProjectReference Include="..\..\Source\Server\TimeWarp.Blazor.Server.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Store\Store.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>

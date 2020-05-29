@@ -2,8 +2,8 @@ namespace CounterState
 {
   using AnyClone;
   using Shouldly;
-  using TimeWarp.Blazor.Features.Counters.Client;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
+  using TimeWarp.Blazor.Features.Counters;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
 
   public class Clone_Should : BaseTest
   {

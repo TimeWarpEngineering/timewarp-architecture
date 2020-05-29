@@ -2,9 +2,9 @@ namespace CounterState
 {
   using Shouldly;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Counters.Client;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
-  using static TimeWarp.Blazor.Features.Counters.Client.CounterState;
+  using TimeWarp.Blazor.Features.Counters;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+  using static TimeWarp.Blazor.Features.Counters.CounterState;
 
   public class IncrementCounterAction_Should : BaseTest
   {

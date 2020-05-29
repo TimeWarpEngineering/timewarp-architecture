@@ -10,7 +10,7 @@
   using System.IO;
   using System.Linq;
   using System.Threading;
-  using TimeWarp.Blazor.Features.ClientLoaders.Client;
+  using TimeWarp.Blazor.Features.ClientLoaders;
 
   public class ServerFixture
   {
@@ -103,10 +103,8 @@
     /// Special configuration for Testing with the Test Server
     /// </summary>
     /// <param name="aServiceCollection"></param>
-    private void ConfigureServices(IServiceCollection aServiceCollection)
-    {
-      //
-      aServiceCollection.Replace(ServiceDescriptor.Scoped<IClientLoaderConfiguration, TestClientLoaderConfiguration>());
-    }
+    private void ConfigureServices(IServiceCollection aServiceCollection) => 
+      aServiceCollection
+      .Replace(ServiceDescriptor.Scoped<IClientLoaderConfiguration, TestClientLoaderConfiguration>());
   }
 }

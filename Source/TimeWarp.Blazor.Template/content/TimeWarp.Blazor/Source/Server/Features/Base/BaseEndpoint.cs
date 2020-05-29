@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.Bases.Server
+namespace TimeWarp.Blazor.Features.Bases
 {
   using MediatR;
   using Microsoft.AspNetCore.Mvc;
@@ -13,7 +13,7 @@ namespace TimeWarp.Blazor.Features.Bases.Server
   {
     private IMediator _mediator;
 
-    protected IMediator Mediator => _mediator ?? (_mediator = HttpContext.RequestServices.GetService<IMediator>());
+    protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetService<IMediator>();
 
     protected virtual async Task<IActionResult> Send(TRequest aRequest)
     {

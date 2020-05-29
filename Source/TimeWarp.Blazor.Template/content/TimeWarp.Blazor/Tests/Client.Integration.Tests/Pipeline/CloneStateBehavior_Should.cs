@@ -1,12 +1,11 @@
 namespace CloneStateBehavior
 {
-  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Shouldly;
   using System;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Counters.Client;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
-  using static TimeWarp.Blazor.Features.Counters.Client.CounterState;
+  using TimeWarp.Blazor.Features.Counters;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+  using static TimeWarp.Blazor.Features.Counters.CounterState;
 
   public class Should : BaseTest
   {
@@ -32,7 +31,7 @@ namespace CloneStateBehavior
       CounterState.Guid.ShouldNotBe(preActionGuid);
     }
 
-    public async Task RollBackStateChangesAndThrow_Given_ExceptionOccurs()
+    public async Task RollBackStateAndThrow_When_Exception()
     {
       // Arrange
       CounterState.Initialize(aCount: 22);

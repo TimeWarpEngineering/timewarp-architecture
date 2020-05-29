@@ -1,12 +1,12 @@
 ﻿namespace GetWeatherForecastsEndpoint
 {
-  using Shouldly;
-  using System.Threading.Tasks;
   using FluentAssertions;
-  using System.Text.Json;
   using Microsoft.AspNetCore.Mvc.Testing;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Server;
-  using TimeWarp.Blazor.Features.WeatherForecasts.Server.GetWeatherForecasts;
+  using Shouldly;
+  using System.Text.Json;
+  using System.Threading.Tasks;
+  using TimeWarp.Blazor.Features.WeatherForecasts;
+  using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
   using TimeWarp.Blazor.Server;
 
   public class Returns : BaseTest

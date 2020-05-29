@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Integration.Tests.Infrastructure.Client
+﻿namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
   using Microsoft.Extensions.DependencyInjection;
   using System;
@@ -13,7 +13,9 @@
 
     public static ClientHostBuilder CreateDefault(string[] aArgumentArray = default)
     {
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
       aArgumentArray ??= Array.Empty<string>();
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
       var builder = new ClientHostBuilder();
 
       return builder;
@@ -37,7 +39,7 @@
 
     public ClientHostBuilder()
     {
-    
+
       // Private right now because we don't have much reason to expose it. This can be exposed
       // in the future if we want to give people a choice between CreateDefault and something
       // less opinionated.

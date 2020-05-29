@@ -9,8 +9,8 @@ namespace TimeWarp.Blazor.Client
   using System.Threading.Tasks;
   using System;
   using TimeWarp.Blazor.Components;
-  using TimeWarp.Blazor.Features.ClientLoaders.Client;
-  using TimeWarp.Blazor.Features.EventStreams.Client;
+  using TimeWarp.Blazor.Features.ClientLoaders;
+  using TimeWarp.Blazor.Features.EventStreams;
 
   public class Program
   {
