@@ -26,4 +26,8 @@
     <ProjectReference Include="..\Client\TimeWarp.Blazor.Client.csproj" />
     <ProjectReference Include="..\Api\TimeWarp.Blazor.Api.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Entities\X_Aggregate\Requests\" />
+  </ItemGroup>
 </Project>

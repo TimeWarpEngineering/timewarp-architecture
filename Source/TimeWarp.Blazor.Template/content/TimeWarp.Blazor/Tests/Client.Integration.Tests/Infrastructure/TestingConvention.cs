@@ -18,7 +18,6 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
   [NotTest]
   public class TestingConvention : Discovery, Execution, IDisposable
   {
-    const string TestPostfix = "_Tests";
     private readonly IServiceScopeFactory ServiceScopeFactory;
     private HttpClient ServerHttpClient;
     private WebApplicationFactory<Server.Startup> ServerWebApplicationFactory;

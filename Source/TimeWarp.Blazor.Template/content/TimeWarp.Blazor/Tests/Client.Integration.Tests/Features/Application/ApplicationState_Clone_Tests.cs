@@ -1,4 +1,3 @@
-// #test_ApplicationState
 namespace ApplicationState
 {
   using AnyClone;
