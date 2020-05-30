@@ -23,7 +23,7 @@ variables:
  Minor: '1'
  MajorAndMinor: '$(Major).$(Minor)'
  Patch: $[counter(variables.MajorAndMinor,0)]
- DotNetSdkVersion: 3.1.200-preview-014883
+ DotNetSdkVersion: 3.1.300
  Version: '$(Major).$(Minor).$(Patch)+$(DotNetSdkVersion)'
  Configuration: debug
 
@@ -38,27 +38,26 @@ steps:
     projects: 'Source/TimeWarp.Blazor.Template/**/*.csproj'
     configuration: $(Configuration)
 
-# This task hangs eternally so commenting out for now.
-#- task: DotNetCoreCLI@2
-#  displayName: Test
-#  inputs:
-#    command: test
-#    arguments: '-maxcpucount:1'
-#    projects: 'Source/TimeWarp.Blazor.Template/**/*Integration.Tests/*.csproj'
-#    configurationToPack: $(Configuration)
+This task hangs eternally so commenting out for now.
+- task: DotNetCoreCLI@2
+ displayName: Test
+ inputs:
+   command: test
+   projects: 'Source/TimeWarp.Blazor.Template/**/*Integration.Tests/*.csproj'
+   configurationToPack: $(Configuration)
 
-- task: NuGetCommand@2
-  displayName: 'NuGet pack Template'
-  inputs:
-    command: pack
-    packagesToPack: $(Build.SourcesDirectory)/Source/TimeWarp.Blazor.Template/TimeWarp.AspNetCore.Blazor.Templates.nuspec
-    configurationToPack: $(Configuration)
-    versioningScheme: byEnvVar
-    versionEnvVar: Version
+- task: DotNetCoreCLI@2
+ displayName: Pack into Nuget
+ inputs:
+   command: pack
+   packagesToPack: $(Build.SourcesDirectory)/Source/TimeWarp.Blazor.Template/TimeWarp.AspNetCore.Blazor.Templates.csproj
+   configurationToPack: $(Configuration)
+   versioningScheme: byEnvVar
+   versionEnvVar: Version
 
 - task: PublishBuildArtifacts@1
   displayName: Publish Artifact
   inputs:
-    PathtoPublish: '$(build.artifactstagingdirectory)'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: drop
     publishLocation: Container
