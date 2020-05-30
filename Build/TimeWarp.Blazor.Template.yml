@@ -38,12 +38,12 @@ steps:
     projects: 'Source/TimeWarp.Blazor.Template/**/*.csproj'
     configuration: $(Configuration)
 
-- task: DotNetCoreCLI@2
-  displayName: Test
-  inputs:
-   command: test
-   projects: 'Source/TimeWarp.Blazor.Template/**/*Integration.Tests/*.csproj'
-   configurationToPack: $(Configuration)
+# - task: DotNetCoreCLI@2
+#   displayName: Test
+#   inputs:
+#    command: test
+#    projects: 'Source/TimeWarp.Blazor.Template/**/*Integration.Tests/*.csproj'
+#    configurationToPack: $(Configuration)
 
 - task: DotNetCoreCLI@2
   displayName: Pack into Nuget
