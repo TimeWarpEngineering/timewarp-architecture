@@ -12,7 +12,6 @@
     <PackageReference Include="Scrutor" Version="$(ScrutorVersion)" />
     <PackageReference Include="Shouldly" Version="$(ShouldlyVersion)" />
     <DotNetCliToolReference Include="Fixie.Console" Version="$(FixieConsoleVersion)" />
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 
