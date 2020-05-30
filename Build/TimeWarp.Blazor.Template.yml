@@ -38,7 +38,6 @@ steps:
     projects: 'Source/TimeWarp.Blazor.Template/**/*.csproj'
     configuration: $(Configuration)
 
-This task hangs eternally so commenting out for now.
 - task: DotNetCoreCLI@2
  displayName: Test
  inputs:
