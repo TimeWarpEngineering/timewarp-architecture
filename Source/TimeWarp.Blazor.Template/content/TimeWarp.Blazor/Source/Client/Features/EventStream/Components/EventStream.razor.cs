@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.EventStreams.Client
+namespace TimeWarp.Blazor.Features.EventStreams
 {
   using System.Collections.Generic;
 

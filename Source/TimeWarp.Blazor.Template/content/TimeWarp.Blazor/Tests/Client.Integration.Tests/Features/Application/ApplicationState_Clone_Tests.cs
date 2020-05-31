@@ -1,21 +1,20 @@
-namespace TimeWarp.Blazor.Features.Applications.Client.Tests
+namespace ApplicationState
 {
   using AnyClone;
-  using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
-  using TimeWarp.Blazor.Features.Applications.Client;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
+  using TimeWarp.Blazor.Features.Applications;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
 
-  internal class ApplicationStateCloneTests : BaseTest
+  public class Clone_Should : BaseTest
   {
     private ApplicationState ApplicationState { get; set; }
 
-    public ApplicationStateCloneTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost)
+    public Clone_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost)
     {
       ApplicationState = Store.GetState<ApplicationState>();
     }
 
-    public void ShouldClone()
+    public void Clone()
     {
       //Arrange
       ApplicationState.Initialize(aName: "TestName", aLogo: "SomeUrl", aIsMenuExpanded: false);

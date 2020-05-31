@@ -1,20 +1,19 @@
-namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Client
+namespace WeatherForecastsState
 {
   using AnyClone;
-  using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
   using System;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
-  using TimeWarp.Blazor.Features.WeatherForecasts.Client;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Features.WeatherForecasts;
 
-  internal class WeatherForecastStateCloneTests : BaseTest
+  public class Clone_Should : BaseTest
   {
     private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
-    public WeatherForecastStateCloneTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public Clone_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
-    public void ShouldClone()
+    public void Clone()
     {
       //Arrange
       var weatherForecasts = new List<WeatherForecastDto> {

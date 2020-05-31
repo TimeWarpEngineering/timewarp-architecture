@@ -1,20 +1,19 @@
-namespace TimeWarp.Blazor.Pipeline.Tests
+namespace CloneStateBehavior
 {
-  using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
   using System;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Counters.Client;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
-  using static TimeWarp.Blazor.Features.Counters.Client.CounterState;
+  using TimeWarp.Blazor.Features.Counters;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+  using static TimeWarp.Blazor.Features.Counters.CounterState;
 
-  internal class CloneStateBehaviorTests : BaseTest
+  public class Should : BaseTest
   {
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public CloneStateBehaviorTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
-    public async Task ShouldCloneState()
+    public async Task CloneState()
     {
       //Arrange
       CounterState.Initialize(aCount: 15);
@@ -32,7 +31,7 @@ namespace TimeWarp.Blazor.Pipeline.Tests
       CounterState.Guid.ShouldNotBe(preActionGuid);
     }
 
-    public async Task ShouldRollBackStateAndThrow()
+    public async Task RollBackStateAndThrow_When_Exception()
     {
       // Arrange
       CounterState.Initialize(aCount: 22);
@@ -44,7 +43,7 @@ namespace TimeWarp.Blazor.Pipeline.Tests
         Message = "Test Rollback of State"
       };
 
-      Exception exception = await Should.ThrowAsync<Exception>(async () =>
+      Exception exception = await Shouldly.Should.ThrowAsync<Exception>(async () =>
       await Send(throwExceptionAction));
 
       // Assert

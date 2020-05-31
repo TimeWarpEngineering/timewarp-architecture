@@ -31,8 +31,9 @@ namespace TimeWarp.Blazor.Server
                 aHttpSysOptions.UrlPrefixes.Add("http://localhost:5005");
               }
             );
-            #endif
+#endif
             #endregion
+            aWebHostBuilder.UseStaticWebAssets();
             aWebHostBuilder.UseStartup<Startup>();
           }
         );

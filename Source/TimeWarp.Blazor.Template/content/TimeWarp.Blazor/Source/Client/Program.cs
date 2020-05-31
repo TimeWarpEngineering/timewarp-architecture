@@ -1,21 +1,27 @@
 namespace TimeWarp.Blazor.Client
 {
-  using System.Threading.Tasks;
-  using Microsoft.AspNetCore.Blazor.Hosting;
-  using Microsoft.Extensions.DependencyInjection;
   using BlazorState;
-  using System.Reflection;
   using MediatR;
-  using TimeWarp.Blazor.Features.ClientLoaders.Client;
-  using TimeWarp.Blazor.Features.EventStreams.Client;
+  using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+  using Microsoft.Extensions.DependencyInjection;
+  using System.Net.Http;
+  using System.Reflection;
+  using System.Threading.Tasks;
+  using System;
   using TimeWarp.Blazor.Components;
+  using TimeWarp.Blazor.Features.ClientLoaders;
+  using TimeWarp.Blazor.Features.EventStreams;
 
   public class Program
   {
-    public static async Task Main(string[] args)
+    public static async Task Main(string[] aArgumentArray)
     {
-      var builder = WebAssemblyHostBuilder.CreateDefault(args);
+      var builder = WebAssemblyHostBuilder.CreateDefault(aArgumentArray);
       builder.RootComponents.Add<App>("app");
+      builder.Services.AddSingleton
+      (
+        new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) }
+      );
       ConfigureServices(builder.Services);
 
       WebAssemblyHost host = builder.Build();

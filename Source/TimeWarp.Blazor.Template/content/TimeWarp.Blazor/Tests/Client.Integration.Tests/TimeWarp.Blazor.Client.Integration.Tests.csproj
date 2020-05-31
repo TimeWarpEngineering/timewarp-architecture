@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>$(TestProjectTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,18 +12,11 @@
     <PackageReference Include="Scrutor" Version="$(ScrutorVersion)" />
     <PackageReference Include="Shouldly" Version="$(ShouldlyVersion)" />
     <DotNetCliToolReference Include="Fixie.Console" Version="$(FixieConsoleVersion)" />
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Client\TimeWarp.Blazor.Client.csproj" />
     <ProjectReference Include="..\..\Source\Server\TimeWarp.Blazor.Server.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Store\Store.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>

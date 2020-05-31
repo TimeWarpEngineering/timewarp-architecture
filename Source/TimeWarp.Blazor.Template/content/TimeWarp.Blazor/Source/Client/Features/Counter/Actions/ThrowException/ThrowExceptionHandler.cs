@@ -1,11 +1,11 @@
-namespace TimeWarp.Blazor.Features.Counters.Client
+namespace TimeWarp.Blazor.Features.Counters
 {
   using BlazorState;
   using MediatR;
   using System;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases.Client;
+  using TimeWarp.Blazor.Features.Bases;
 
   internal partial class CounterState
   {
@@ -17,11 +17,9 @@ namespace TimeWarp.Blazor.Features.Counters.Client
       (
         ThrowExceptionAction aThrowExceptionAction,
         CancellationToken aCancellationToken
-      )
-      {
+      ) =>
         // Intentionally throw so we can test exception handling.
         throw new Exception(aThrowExceptionAction.Message);
-      }
     }
   }
 }

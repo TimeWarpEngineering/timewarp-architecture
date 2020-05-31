@@ -1,3 +1,4 @@
-nuget pack .\TimeWarp.AspNetCore.Blazor.Templates.nuspec -Version 10.0.0
+$Version = '1.2.3'
+dotnet pack .\TimeWarp.AspNetCore.Blazor.Templates.csproj -o . /p:PackageVersion=$Version
 dotnet new -u TimeWarp.AspNetCore.Blazor.Templates
-dotnet new -i TimeWarp.AspNetCore.Blazor.Templates.10.0.0.nupkg
+dotnet new -i TimeWarp.AspNetCore.Blazor.Templates.$Version.nupkg

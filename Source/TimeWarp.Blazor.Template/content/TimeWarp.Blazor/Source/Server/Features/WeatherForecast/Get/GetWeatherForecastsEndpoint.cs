@@ -1,8 +1,8 @@
-namespace TimeWarp.Blazor.Features.WeatherForecasts.Server.GetWeatherForecasts
+namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   using Microsoft.AspNetCore.Mvc;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases.Server;
+  using TimeWarp.Blazor.Features.Bases;
 
   public class GetWeatherForecastsEndpoint : BaseEndpoint<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
   {

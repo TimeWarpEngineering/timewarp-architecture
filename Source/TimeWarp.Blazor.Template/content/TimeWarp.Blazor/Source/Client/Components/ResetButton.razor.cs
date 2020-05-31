@@ -1,7 +1,7 @@
 namespace TimeWarp.Blazor.Components
 {
-  using TimeWarp.Blazor.Features.Bases.Client;
-  using static TimeWarp.Blazor.Features.Applications.Client.ApplicationState;
+  using TimeWarp.Blazor.Features.Bases;
+  using static TimeWarp.Blazor.Features.Applications.ApplicationState;
 
   public partial class ResetButton:BaseComponent
   {

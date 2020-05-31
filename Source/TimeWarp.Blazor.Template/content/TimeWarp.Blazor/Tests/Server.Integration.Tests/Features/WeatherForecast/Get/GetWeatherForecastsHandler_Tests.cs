@@ -1,37 +1,30 @@
-namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Server
+﻿namespace GetWeatherForecastsHandler
 {
   using Shouldly;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.WeatherForecasts.Server.GetWeatherForecasts;
-  using Microsoft.AspNetCore.Mvc.Testing;
   using System.Text.Json;
+  using Microsoft.AspNetCore.Mvc.Testing;
+  using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Features.WeatherForecasts;
   using TimeWarp.Blazor.Server;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Server;
+  using FluentAssertions;
 
-  internal class GetWeatherForecastsTests : BaseTest
+  public class Handle_Returns : BaseTest
   {
     private readonly GetWeatherForecastsRequest GetWeatherForecastsRequest;
 
-    public GetWeatherForecastsTests
+    public Handle_Returns
     (
       WebApplicationFactory<Startup> aWebApplicationFactory,
       JsonSerializerOptions aJsonSerializerOptions
-    ) : base(aWebApplicationFactory, aJsonSerializerOptions) 
+    ) : base(aWebApplicationFactory, aJsonSerializerOptions)
     {
       GetWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
     }
 
-    public async Task FeatureReturnsGetWeatherForecastsResponse()
+    public async Task _10WeatherForecasts_Given_10DaysRequested()
     {
       GetWeatherForecastsResponse getWeatherForecastsResponse = await Send(GetWeatherForecastsRequest);
-
-      ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
-    }
-
-    public async Task ApiReturnsGetWeatherForecastsResponse()
-    {
-      GetWeatherForecastsResponse getWeatherForecastsResponse =
-        await GetJsonAsync<GetWeatherForecastsResponse>(GetWeatherForecastsRequest.RouteFactory);
 
       ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
     }
@@ -39,8 +32,10 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts.Tests.Server
     private void ValidateGetWeatherForecastsResponse(GetWeatherForecastsResponse aGetWeatherForecastsResponse)
     {
       aGetWeatherForecastsResponse.RequestId.ShouldBe(GetWeatherForecastsRequest.Id);
-      aGetWeatherForecastsResponse.ResponseId.ShouldNotBeNull();
+      aGetWeatherForecastsResponse.RequestId.Should().Be(GetWeatherForecastsRequest.Id);
       aGetWeatherForecastsResponse.WeatherForecasts.Count.ShouldBe(GetWeatherForecastsRequest.Days);
+      aGetWeatherForecastsResponse.WeatherForecasts.Count.Should().Be(GetWeatherForecastsRequest.Days);
     }
+
   }
 }

@@ -1,7 +1,7 @@
 namespace TimeWarp.Blazor.Features.Applications.Components
 {
   using Microsoft.AspNetCore.Components;
-  using TimeWarp.Blazor.Features.Bases.Client;
+  using TimeWarp.Blazor.Features.Bases;
 
   public partial class NavMenu : BaseComponent
   {

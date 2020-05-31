@@ -1,21 +1,20 @@
-namespace TimeWarp.Blazor.Features.Counters.Client.Tests
+namespace CounterState
 {
   using AnyClone;
-  using Microsoft.AspNetCore.Blazor.Hosting;
   using Shouldly;
-  using TimeWarp.Blazor.Features.Counters.Client;
-  using TimeWarp.Blazor.Integration.Tests.Infrastructure.Client;
+  using TimeWarp.Blazor.Features.Counters;
+  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
 
-  internal class CounterStateCloneTests : BaseTest
+  public class Clone_Should : BaseTest
   {
     private CounterState CounterState { get; set; }
 
-    public CounterStateCloneTests(WebAssemblyHost aWebAssemblyHost) : base(aWebAssemblyHost)
+    public Clone_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost)
     {
       CounterState = Store.GetState<CounterState>();
     }
 
-    public void ShouldClone()
+    public void Clone()
     {
       //Arrange
       CounterState.Initialize(aCount: 15);

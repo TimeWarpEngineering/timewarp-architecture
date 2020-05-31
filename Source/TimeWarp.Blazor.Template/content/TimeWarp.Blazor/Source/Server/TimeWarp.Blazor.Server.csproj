@@ -18,12 +18,16 @@
     <PackageReference Include="Dawn.Guard" Version="$(DawnGuardVersion)" />
     <PackageReference Include="MediatR" Version="$(MediatrVersion)" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="$(MediatrExtensionsMicrosoftDependencyInjectionVersion)" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.Server" Version="$(MicrosoftAspNetCoreBlazorServerVersion)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyServerVersion)" />
     <PackageReference Include="Scrutor" Version="$(ScrutorVersion)" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Client\TimeWarp.Blazor.Client.csproj" />
     <ProjectReference Include="..\Api\TimeWarp.Blazor.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Entities\X_Aggregate\Requests\" />
   </ItemGroup>
 </Project>
