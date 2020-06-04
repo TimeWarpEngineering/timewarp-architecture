@@ -21,8 +21,8 @@
 
   <ItemGroup>
     <Content 
-      Include="content\**\*" 
-      Exclude="**\bin\**;**\obj\**;**\launchSettings.json;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;content\Directory.Build.*;**\.template.config.src\**"
+      Include="templates\**\*" 
+      Exclude="**\bin\**;**\obj\**;**\launchSettings.json;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;templates\Directory.Build.*;**\.template.config.src\**"
     />
     <Compile Remove="**\*" />
   </ItemGroup>
