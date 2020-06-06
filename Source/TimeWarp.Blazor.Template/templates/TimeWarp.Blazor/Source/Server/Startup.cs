@@ -95,13 +95,16 @@ namespace TimeWarp.Blazor.Server
       // Register the Swagger generator, defining 1 or more Swagger documents
       aServiceCollection.AddSwaggerGen
         (
-          aSwaggerGenOptions => 
+          aSwaggerGenOptions =>
+          {
             aSwaggerGenOptions
             .SwaggerDoc
             (
-              SwaggerVersion, 
+              SwaggerVersion,
               new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
-            )
+            );
+            aSwaggerGenOptions.EnableAnnotations();
+          }
         );
     }
   }
