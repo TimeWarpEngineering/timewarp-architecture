@@ -7,6 +7,6 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
   public class GetWeatherForecastsEndpoint : BaseEndpoint<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
   {
     [HttpGet(GetWeatherForecastsRequest.Route)]
-    public async Task<IActionResult> Process(GetWeatherForecastsRequest aRequest) => await Send(aRequest);
+    public async Task<IActionResult> Process(GetWeatherForecastsRequest aGetWeatherForecastsRequest) => await Send(aGetWeatherForecastsRequest);
   }
 }
