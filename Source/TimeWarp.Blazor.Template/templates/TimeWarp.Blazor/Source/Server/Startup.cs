@@ -8,6 +8,8 @@ namespace TimeWarp.Blazor.Server
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
   using Microsoft.OpenApi.Models;
+  using System;
+  using System.IO;
   using System.Linq;
   using System.Net.Mime;
   using System.Reflection;
@@ -104,6 +106,11 @@ namespace TimeWarp.Blazor.Server
               new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
             );
             aSwaggerGenOptions.EnableAnnotations();
+
+            // Set the comments path for the Swagger JSON and UI.
+            string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            aSwaggerGenOptions.IncludeXmlComments(xmlPath);
           }
         );
     }
