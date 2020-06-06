@@ -6,7 +6,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
 
   public class GetWeatherForecastsRequest : BaseRequest, IRequest<GetWeatherForecastsResponse>
   {
-    public const string Route = "api/weatherForecast";
+    public const string Route = "api/weatherForecasts";
 
     /// <summary>
     /// The Number of days of forecasts to get
