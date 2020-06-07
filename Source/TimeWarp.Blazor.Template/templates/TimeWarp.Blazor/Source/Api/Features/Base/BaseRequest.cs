@@ -4,11 +4,11 @@ namespace TimeWarp.Blazor.Features.Bases
 
   public abstract class BaseRequest
   {
+    /// <summary>
+    /// Unique Identifier
+    /// </summary>
     public Guid Id { get; set; }
 
-    /// <summary>
-    /// Every request should have unique Id
-    /// </summary>
     public BaseRequest()
     {
       Id = Guid.NewGuid();
