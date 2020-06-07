@@ -52,6 +52,7 @@
     <SeleniumWebDriverVersion>3.141.0</SeleniumWebDriverVersion>
     <ShouldlyVersion>3.0.2</ShouldlyVersion>
     <MicroElementsSwashbuckleFluentValidationVersion>3.1.1</MicroElementsSwashbuckleFluentValidationVersion>
+    <SwashbuckleAspNetCoreFiltersVersion>5.1.1</SwashbuckleAspNetCoreFiltersVersion>
     <SwashbuckleAspNetCoreAnnotationsVersion>5.4.1</SwashbuckleAspNetCoreAnnotationsVersion>
     <SwashbuckleAspNetCoreSwaggerGenVersion>5.4.1</SwashbuckleAspNetCoreSwaggerGenVersion>
     <SwashbuckleAspNetCoreSwaggerUIVersion>5.4.1</SwashbuckleAspNetCoreSwaggerUIVersion>
