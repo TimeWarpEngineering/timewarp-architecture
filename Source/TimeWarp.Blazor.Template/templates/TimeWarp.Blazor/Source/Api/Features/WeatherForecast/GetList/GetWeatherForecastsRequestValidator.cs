@@ -9,7 +9,7 @@
     public GetWeatherForecastsRequestValidator()
     {
       RuleFor(aGetWeatherForecastRequest => aGetWeatherForecastRequest.Days)
-        .GreaterThan(0);
+        .NotEmpty().GreaterThan(0);
     }
   }
 }
