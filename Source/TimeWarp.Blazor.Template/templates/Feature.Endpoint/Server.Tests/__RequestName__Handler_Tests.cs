@@ -18,7 +18,7 @@
       JsonSerializerOptions aJsonSerializerOptions
     ) : base(aWebApplicationFactory, aJsonSerializerOptions)
     {
-      __RequestName__Request = new __RequestName__Request { };
+      __RequestName__Request = new __RequestName__Request { Days = 10 };
     }
 
     public async Task __RequestName__Response()

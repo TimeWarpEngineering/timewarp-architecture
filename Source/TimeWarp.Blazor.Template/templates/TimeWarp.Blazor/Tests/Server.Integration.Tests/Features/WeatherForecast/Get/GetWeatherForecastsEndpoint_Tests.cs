@@ -2,7 +2,6 @@
 {
   using FluentAssertions;
   using Microsoft.AspNetCore.Mvc.Testing;
-  using Shouldly;
   using System.Net;
   using System.Net.Http;
   using System.Text.Json;
@@ -40,7 +39,7 @@
 
       string json = await httpResponseMessage.Content.ReadAsStringAsync();
 
-      httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+      httpResponseMessage.StatusCode.Should().Be(HttpStatusCode.BadRequest);
       json.Should().Contain("errors"); // we are getting errors
       json.Should().Contain(nameof(GetWeatherForecastsRequest.Days));
     }

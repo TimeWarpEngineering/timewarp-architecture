@@ -2,6 +2,8 @@
 {
   using FluentAssertions;
   using Microsoft.AspNetCore.Mvc.Testing;
+  using System.Net;
+  using System.Net.Http;
   using System.Text.Json;
   using System.Threading.Tasks;
   using __RootNamespace__.Features.__FeatureName__s;
@@ -18,7 +20,7 @@
       JsonSerializerOptions aJsonSerializerOptions
     ) : base(aWebApplicationFactory, aJsonSerializerOptions)
     {
-      __RequestName__Request = new __RequestName__Request { };
+      __RequestName__Request = new __RequestName__Request { Days = 10 };
     }
 
     public async Task __RequestName__Response()
