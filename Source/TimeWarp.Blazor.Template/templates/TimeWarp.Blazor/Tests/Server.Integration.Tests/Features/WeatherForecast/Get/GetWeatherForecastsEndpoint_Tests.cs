@@ -1,17 +1,15 @@
 ﻿namespace GetWeatherForecastsEndpoint
 {
   using FluentAssertions;
-  using Microsoft.AspNetCore.Mvc;
   using Microsoft.AspNetCore.Mvc.Testing;
   using Shouldly;
-  using System;
-  using System.Net;
   using System.Net.Http;
+  using System.Net;
   using System.Text.Json;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.WeatherForecasts;
-  using TimeWarp.Blazor.Server;
   using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Server;
 
   public class Returns : BaseTest
   {
@@ -34,7 +32,7 @@
       ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
     }
 
-    public async Task Returns_ValidationErrror()
+    public async Task ValidationError()
     {
       GetWeatherForecastsRequest.Days = -1;
 
@@ -42,14 +40,9 @@
 
       string json = await httpResponseMessage.Content.ReadAsStringAsync();
 
-      //BadRequestObjectResult response = JsonSerializer.Deserialize<ModelState>(json, JsonSerializerOptions);
-
-      Console.WriteLine("=================================");
-      Console.WriteLine(json);
-      Console.WriteLine("=================================");
       httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-      
-
+      json.Should().Contain("errors"); // we are getting errors
+      json.Should().Contain(nameof(GetWeatherForecastsRequest.Days));
     }
 
     private void ValidateGetWeatherForecastsResponse(GetWeatherForecastsResponse aGetWeatherForecastsResponse)
