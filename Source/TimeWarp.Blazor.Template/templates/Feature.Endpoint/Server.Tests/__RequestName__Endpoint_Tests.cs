@@ -40,7 +40,7 @@
 
       string json = await httpResponseMessage.Content.ReadAsStringAsync();
 
-      httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+      httpResponseMessage.StatusCode.Should().Be(HttpStatusCode.BadRequest);
       json.Should().Contain("errors");
       json.Should().Contain(nameof(__RequestName__Request.Days));
     }
