@@ -1,6 +1,5 @@
 ﻿namespace GetWeatherForecastsHandler
 {
-  using Shouldly;
   using System.Threading.Tasks;
   using System.Text.Json;
   using Microsoft.AspNetCore.Mvc.Testing;
@@ -31,9 +30,7 @@
 
     private void ValidateGetWeatherForecastsResponse(GetWeatherForecastsResponse aGetWeatherForecastsResponse)
     {
-      aGetWeatherForecastsResponse.RequestId.ShouldBe(GetWeatherForecastsRequest.Id);
       aGetWeatherForecastsResponse.RequestId.Should().Be(GetWeatherForecastsRequest.Id);
-      aGetWeatherForecastsResponse.WeatherForecasts.Count.ShouldBe(GetWeatherForecastsRequest.Days);
       aGetWeatherForecastsResponse.WeatherForecasts.Count.Should().Be(GetWeatherForecastsRequest.Days);
     }
 

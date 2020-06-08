@@ -1,6 +1,5 @@
 ﻿namespace __RequestName__Handler
 {
-  using Shouldly;
   using System.Threading.Tasks;
   using System.Text.Json;
   using Microsoft.AspNetCore.Mvc.Testing;
@@ -31,9 +30,8 @@
 
     private void Validate__RequestName__Response(__RequestName__Response a__RequestName__Response)
     {
-      Assert.Equal(a__RequestName__Response.RequestId,__RequestName__Request.Id);
-      a__RequestName__Response.RequestId.ShouldBe(__RequestName__Request.Id);
       a__RequestName__Response.RequestId.Should().Be(__RequestName__Request.Id);
+      // check Other properties here
     }
 
   }
