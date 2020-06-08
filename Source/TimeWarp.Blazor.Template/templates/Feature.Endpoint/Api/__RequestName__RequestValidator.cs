@@ -5,16 +5,18 @@
   public class __RequestName__RequestValidator : AbstractValidator<__RequestName__Request>
   {
 
-    // Inject Dependencies via contstructor
     public __RequestName__RequestValidator()
     {
+
       // Declare message as const here. Or could use an injected Language Service
 
       // public const string InsufficentFundsMessage = "You can not send more than your balance";
       // public const string MustBeGreaterThanZeroMessage = "'{PropertyName}' must be greater than zero";
 
-      // https://docs.fluentvalidation.net/
+      RuleFor(a__RequestName__Request => a__RequestName__Request.Days)
+        .NotEmpty().GreaterThan(0);
 
+      // https://docs.fluentvalidation.net/
       // Example Rules
 
       // RuleFor(aSendAction => aSendAction.Fee)

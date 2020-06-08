@@ -32,7 +32,7 @@
     public async Task ValidationError()
     {
       // Set invalid value
-      // __RequestName__Request.Days = -1;
+      __RequestName__Request.Days = -1;
 
       HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync(__RequestName__Request.RouteFactory);
 
@@ -40,7 +40,7 @@
 
       httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
       json.Should().Contain("errors");
-      //json.Should().Contain(nameof(__RequestName__Request.??SomeParam??));
+      json.Should().Contain(nameof(__RequestName__Request.Days));
     }
 
     private void Validate__RequestName__Response(__RequestName__Response a__RequestName__Response)

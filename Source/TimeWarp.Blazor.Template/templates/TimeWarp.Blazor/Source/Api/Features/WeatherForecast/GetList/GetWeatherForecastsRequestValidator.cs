@@ -5,7 +5,6 @@
   public class GetWeatherForecastsRequestValidator : AbstractValidator<GetWeatherForecastsRequest>
   {
 
-    // Inject Dependencies via contstructor
     public GetWeatherForecastsRequestValidator()
     {
       RuleFor(aGetWeatherForecastRequest => aGetWeatherForecastRequest.Days)

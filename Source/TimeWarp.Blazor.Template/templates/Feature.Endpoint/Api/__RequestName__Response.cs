@@ -13,7 +13,6 @@ namespace __RootNamespace__.Features.__FeatureName__s
 
     public __RequestName__Response(Guid aRequestId)
     {
-
       RequestId = aRequestId;
     }
   }
