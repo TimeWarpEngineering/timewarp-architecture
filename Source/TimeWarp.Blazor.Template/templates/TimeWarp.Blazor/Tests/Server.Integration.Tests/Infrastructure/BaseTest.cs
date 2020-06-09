@@ -18,9 +18,9 @@ namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
   /// </remarks>
   public abstract class BaseTest
   {
-    private readonly JsonSerializerOptions JsonSerializerOptions;
+    public readonly JsonSerializerOptions JsonSerializerOptions;
     private readonly IServiceScopeFactory ServiceScopeFactory;
-    protected readonly HttpClient HttpClient;
+    public readonly HttpClient HttpClient;
 
 
     public BaseTest(WebApplicationFactory<Startup> aWebApplicationFactory, JsonSerializerOptions aJsonSerializerOptions)

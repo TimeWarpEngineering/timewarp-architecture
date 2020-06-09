@@ -4,9 +4,9 @@ namespace TimeWarp.Blazor.Features.Bases
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.Extensions.DependencyInjection;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases;
 
   [ApiController]
+  [Produces("application/json")]
   public class BaseEndpoint<TRequest, TResponse> : ControllerBase
       where TRequest : IRequest<TResponse>
     where TResponse : BaseResponse

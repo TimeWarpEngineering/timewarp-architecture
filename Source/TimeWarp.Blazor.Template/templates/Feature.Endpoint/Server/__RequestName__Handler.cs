@@ -12,11 +12,11 @@ namespace __RootNamespace__.Features.__FeatureName__s
 
     public async Task<__RequestName__Response> Handle
     (
-      __RequestName__Request aXXXRequest,
+      __RequestName__Request a__RequestName__Request,
       CancellationToken aCancellationToken
     )
     {
-      var response = new __RequestName__Response(aXXXRequest.Id);
+      var response = new __RequestName__Response(a__RequestName__Request.Id);
 
       return await Task.Run(() => response);
     }

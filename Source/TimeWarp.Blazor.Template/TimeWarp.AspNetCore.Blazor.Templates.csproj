@@ -20,15 +20,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content 
-      Include="templates\**\*" 
-      Exclude="**\bin\**;**\obj\**;**\launchSettings.json;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;templates\Directory.Build.*;**\.template.config.src\**"
-    />
+    <Content Include="templates\**\*" Exclude="**\bin\**;**\obj\**;**\launchSettings.json;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;templates\Directory.Build.*;**\.template.config.src\**" />
     <Compile Remove="**\*" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="images\logo.png" Pack="true" PackagePath="\"/>
+    <None Include="images\logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

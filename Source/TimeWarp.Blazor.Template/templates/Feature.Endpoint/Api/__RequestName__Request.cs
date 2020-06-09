@@ -4,13 +4,16 @@ namespace __RootNamespace__.Features.__FeatureName__s
   using System.Text.Json.Serialization;
   using __RootNamespace__.Features.Bases;
 
-  public class __RequestName__Request : BaseRequest, IRequest<__RequestName__Response>
+  public class __RequestName__Request : BaseApiRequest, IRequest<__RequestName__Response>
   {
     public const string Route = "api/__FeatureName__/__RequestName__";
 
-    [JsonIgnore]
-    public string RouteFactory => $"{Route}?{nameof(Id)}={Id}";
+    /// <summary>
+    /// The Number of days of forecasts to get
+    /// </summary>
+    /// <example>5</example>
+    public int Days { get; set; }
 
-    // Add Specific Request Properties
+    internal override string RouteFactory => $"{Route}?{nameof(Id)}={Id}";
   }
 }
