@@ -9,7 +9,6 @@ namespace TimeWarp.Blazor.Server
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
   using Microsoft.OpenApi.Models;
-  using Swashbuckle.AspNetCore.Filters;
   using Swashbuckle.AspNetCore.Swagger;
   using System;
   using System.IO;
@@ -102,7 +101,6 @@ namespace TimeWarp.Blazor.Server
           .AsSelf()
           .WithScopedLifetime()
       );
-      //aServiceCollection.AddSwaggerExamplesFromAssemblyOf<BaseRequest>();
       ConfigureSwagger(aServiceCollection);
     }
 
@@ -133,7 +131,6 @@ namespace TimeWarp.Blazor.Server
             aSwaggerGenOptions.IncludeXmlComments(xmlPath);
 
             aSwaggerGenOptions.AddFluentValidationRules();
-            //aSwaggerGenOptions.ExampleFilters();
           }
         );
     }
