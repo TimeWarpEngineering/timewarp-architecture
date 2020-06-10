@@ -5,12 +5,14 @@ namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
   using Microsoft.Extensions.DependencyInjection;
   using System;
   using System.Net.Http;
+  using System.Net.Mime;
+  using System.Text;
   using System.Text.Json;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Server;
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <remarks>
   /// Based on Jimmy's SliceFixture
@@ -18,10 +20,9 @@ namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
   /// </remarks>
   public abstract class BaseTest
   {
+    public readonly HttpClient HttpClient;
     public readonly JsonSerializerOptions JsonSerializerOptions;
     private readonly IServiceScopeFactory ServiceScopeFactory;
-    public readonly HttpClient HttpClient;
-
 
     public BaseTest(WebApplicationFactory<Startup> aWebApplicationFactory, JsonSerializerOptions aJsonSerializerOptions)
     {
@@ -36,6 +37,47 @@ namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
       return await aAction(serviceScope.ServiceProvider);
     }
 
+    protected async Task<TResponse> GetJsonAsync<TResponse>(string aUri)
+    {
+      HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync(aUri);
+
+      httpResponseMessage.EnsureSuccessStatusCode();
+
+      string json = await httpResponseMessage.Content.ReadAsStringAsync();
+
+      TResponse response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
+
+      return response;
+    }
+
+    protected async Task<HttpResponseMessage> GetHttpResponseMessageFromPost<TResponse>(string aUri, IRequest<TResponse> aRequest)
+    {
+      string requestAsJson = JsonSerializer.Serialize(aRequest, aRequest.GetType(), JsonSerializerOptions);
+
+      var httpContent =
+        new StringContent
+        (
+          requestAsJson,
+          Encoding.UTF8,
+          MediaTypeNames.Application.Json
+        );
+
+      HttpResponseMessage httpResponseMessage = await HttpClient.PostAsync(aUri, httpContent);
+      return httpResponseMessage;
+    }
+
+    protected async Task<TResponse> Post<TResponse>(string aUri, IRequest<TResponse> aRequest)
+    {
+      HttpResponseMessage httpResponseMessage = await GetHttpResponseMessageFromPost(aUri, aRequest);
+
+      httpResponseMessage.EnsureSuccessStatusCode();
+
+      string json = await httpResponseMessage.Content.ReadAsStringAsync();
+
+      TResponse response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
+
+      return response;
+    }
     protected Task Send(IRequest aRequest)
     {
       return ExecuteInScope
@@ -61,19 +103,5 @@ namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
         }
       );
     }
-
-    protected async Task<TResponse> GetJsonAsync<TResponse>(string aUri)
-    {
-      HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync(aUri);
-
-      httpResponseMessage.EnsureSuccessStatusCode();
-
-      string json = await httpResponseMessage.Content.ReadAsStringAsync();
-
-      TResponse response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
-
-      return response;
-    }
-
   }
 }
