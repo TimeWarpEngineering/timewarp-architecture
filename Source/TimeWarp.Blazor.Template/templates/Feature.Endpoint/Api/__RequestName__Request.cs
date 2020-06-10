@@ -6,7 +6,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
 
   public class __RequestName__Request : BaseApiRequest, IRequest<__RequestName__Response>
   {
-    public const string Route = "api/__FeatureName__/__RequestName__";
+    public const string Route = "api/__FeatureName__s/__RequestName__";
 
     /// <summary>
     /// The Number of days of forecasts to get
