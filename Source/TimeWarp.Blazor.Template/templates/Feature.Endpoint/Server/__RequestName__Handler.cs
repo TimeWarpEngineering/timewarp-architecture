@@ -16,7 +16,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
       CancellationToken aCancellationToken
     )
     {
-      var response = new __RequestName__Response(a__RequestName__Request.Id);
+      var response = new __RequestName__Response(a__RequestName__Request.RequestId);
 
       return await Task.Run(() => response);
     }

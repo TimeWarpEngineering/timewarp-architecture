@@ -6,14 +6,8 @@ namespace __RootNamespace__.Features.__FeatureName__s
 
   public class __RequestName__Response : BaseResponse
   {
-    /// <summary>
-    /// a default constructor is required for deserialization
-    /// </summary>
     public __RequestName__Response() { }
 
-    public __RequestName__Response(Guid aRequestId)
-    {
-      RequestId = aRequestId;
-    }
+    public __RequestName__Response(Guid aRequestId) : base(aRequestId) { }
   }
 }
