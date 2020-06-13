@@ -1,5 +1,6 @@
 namespace TimeWarp.Blazor.Server
 {
+  using AutoMapper;
   using FluentValidation.AspNetCore;
   using MediatR;
   using Microsoft.AspNetCore.Builder;
@@ -16,6 +17,7 @@ namespace TimeWarp.Blazor.Server
   using System.Net.Mime;
   using System.Reflection;
   using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Blazor.Infrastructure;
 
   public class Startup
   {
@@ -63,7 +65,7 @@ namespace TimeWarp.Blazor.Server
 
     public void ConfigureServices(IServiceCollection aServiceCollection)
     {
-
+      aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
       aServiceCollection.AddRazorPages();
       aServiceCollection.AddServerSideBlazor();
       aServiceCollection.AddMvc()
