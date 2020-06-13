@@ -1,7 +1,6 @@
 namespace __RootNamespace__.Features.__FeatureName__s
 {
   using MediatR;
-  using System.Text.Json.Serialization;
   using __RootNamespace__.Features.Bases;
 
   public class __RequestName__Request : BaseApiRequest, IRequest<__RequestName__Response>
