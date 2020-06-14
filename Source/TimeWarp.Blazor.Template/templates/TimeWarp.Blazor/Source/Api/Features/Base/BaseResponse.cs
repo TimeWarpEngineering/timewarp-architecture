@@ -7,21 +7,12 @@ namespace TimeWarp.Blazor.Features.Bases
     /// <summary>
     /// Used to correlate request and response
     /// </summary>
-    public Guid RequestId { get; set; }
+    public Guid CorrelationId { get; set; }
 
-    /// <summary>
-    /// Used to correlate request and response
-    /// </summary>
-    public Guid ResponseId { get; }
-
-    public BaseResponse(Guid aRequestId) : this()
+    public BaseResponse(Guid aCorrelationId) : this()
     {
-      RequestId = aRequestId;
+      CorrelationId = aCorrelationId;
     }
-
-    public BaseResponse()
-    {
-      ResponseId = Guid.NewGuid();
-    }
+    public BaseResponse() { }
   }
 }

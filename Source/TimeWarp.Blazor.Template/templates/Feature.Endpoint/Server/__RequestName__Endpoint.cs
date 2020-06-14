@@ -13,7 +13,6 @@ namespace __RootNamespace__.Features.__FeatureName__s
     /// </summary>
     /// <remarks>
     /// Longer Description
-    /// `<see cref="__RequestName__Request.Days"/>`
     /// </remarks>
     /// <param name="a__RequestName__Request"></param>
     /// <returns><see cref="__RequestName__Response"/></returns>
