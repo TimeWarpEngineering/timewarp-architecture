@@ -8,6 +8,6 @@ namespace __RootNamespace__.Features.__FeatureName__s
   {
     public __RequestName__Response() { }
 
-    public __RequestName__Response(Guid aRequestId) : base(aRequestId) { }
+    public __RequestName__Response(Guid aCorrelationId) : base(aCorrelationId) { }
   }
 }

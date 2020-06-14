@@ -7,11 +7,11 @@ namespace TimeWarp.Blazor.Features.Bases
     /// <summary>
     /// Unique Identifier
     /// </summary>
-    public Guid RequestId { get; set; }
+    public Guid CorrelationId { get; set; }
 
     public BaseRequest()
     {
-      RequestId = Guid.NewGuid();
+      CorrelationId = Guid.NewGuid();
     }
   }
 }

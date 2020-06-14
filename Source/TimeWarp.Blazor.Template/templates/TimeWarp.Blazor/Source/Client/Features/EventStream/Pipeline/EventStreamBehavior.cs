@@ -56,7 +56,7 @@ namespace TimeWarp.Blazor.Features.EventStreams
 
         if (aRequest is BaseRequest request)
         {
-          addEventAction.Message = $"{aTag}:{requestTypeName}:{request.RequestId}";
+          addEventAction.Message = $"{aTag}:{requestTypeName}:{request.CorrelationId}";
         }
         else
         {
