@@ -28,7 +28,7 @@
     <MicrosoftAspNetCoreComponentsWebAssemblyBuildVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreComponentsWebAssemblyBuildVersion>
     <MicrosoftAspNetCoreBlazorHttpClientVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreBlazorHttpClientVersion>
     <MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>
-    <SystemNetHttpJsonVersion>3.2.0</SystemNetHttpJsonVersion>
+    <SystemNetHttpJsonVersion>3.2.1</SystemNetHttpJsonVersion>
     <SystemConfigurationConfigurationManagerVersion>4.7.0</SystemConfigurationConfigurationManagerVersion>
 
     <MicrosoftAspNetCoreVersion>3.1.4</MicrosoftAspNetCoreVersion>    
