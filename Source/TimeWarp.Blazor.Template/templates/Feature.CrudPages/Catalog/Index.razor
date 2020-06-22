@@ -1,0 +1,11 @@
+@namespace eShopOnBlazorWasm.Pages.Catalog
+@using eShopOnBlazorWasm.Features.Bases
+@using eShopOnBlazorWasm.Features.CatalogItems.Components
+
+@inherits BaseComponent
+@page "/Catalog"
+
+<h1>Catalog Items</h1>
+<button class="btn btn-primary" @onclick=@CreateClick>Create</button>
+<br/>
+<CatalogItemList />
