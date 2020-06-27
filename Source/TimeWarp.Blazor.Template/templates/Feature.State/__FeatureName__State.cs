@@ -1,4 +1,4 @@
-﻿namespace BlazorHosted.Features.__FeatureName__
+﻿namespace BlazorHosted.Features.__FeatureName__s
 {
   using BlazorState;
   using System.Collections.Generic;
@@ -7,10 +7,10 @@
   {
     public List<__FeatureName__Dto> ___FeatureName__s { get; set; } = null!;
 
-    public IReadOnlyList<__FeatureName__Dto> __FeatureName__s => ___FeatureName__Records.AsReadOnly();
+    public IReadOnlyList<__FeatureName__Dto> __FeatureName__s => ___FeatureName__Dtos.AsReadOnly();
     public __FeatureName__State() 
     {
-      ___FeatureName__Records = new List<__FeatureName__Dto>();
+      ___FeatureName__Dtos = new List<__FeatureName__Dto>();
     }
 
     public override void Initialize() 

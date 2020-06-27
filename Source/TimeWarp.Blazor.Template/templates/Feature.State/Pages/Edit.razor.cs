@@ -5,7 +5,7 @@ namespace __RootNamespace__.Features.__FeatureName__s.Pages
   using static __RootNamespace__.Features.__FeatureName__s.__FeatureName__State;
   using System.Threading.Tasks;
 
-  public partial class Index: BaseComponent
+  public partial class Edit: BaseComponent
   {
     public const string Route = "/__FeatureName__s";
 

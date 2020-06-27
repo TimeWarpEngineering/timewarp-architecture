@@ -13,8 +13,8 @@
       // public const string InsufficentFundsMessage = "You can not send more than your balance";
       // public const string MustBeGreaterThanZeroMessage = "'{PropertyName}' must be greater than zero";
 
-      RuleFor(a__RequestName__Request => a__RequestName__Request.Days)
-        .NotEmpty().GreaterThan(0);
+      RuleFor(a__RequestName__Request => a__RequestName__Request.SampleProperty)
+        .NotEmpty();
 
       // https://docs.fluentvalidation.net/
       // Example Rules

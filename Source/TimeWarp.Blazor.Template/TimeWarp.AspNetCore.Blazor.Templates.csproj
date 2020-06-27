@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <PackageType>Template</PackageType>
@@ -22,6 +22,10 @@
   <ItemGroup>
     <Content Include="templates\**\*" Exclude="**\bin\**;**\obj\**;**\launchSettings.json;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;templates\Directory.Build.*;**\.template.config.src\**" />
     <Compile Remove="**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="templates\Feature.State\Pages\Edit.razor" />
   </ItemGroup>
 
   <ItemGroup>
