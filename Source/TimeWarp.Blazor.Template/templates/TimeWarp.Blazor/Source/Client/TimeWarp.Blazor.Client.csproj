@@ -25,13 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Application\Pages\" />
-    <Folder Include="Features\Counter\Pages\" />
-    <Folder Include="Features\WeatherForecast\Pages\" />
-    <Folder Include="Properties\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Api\TimeWarp.Blazor.Api.csproj" />
   </ItemGroup>
 </Project>
