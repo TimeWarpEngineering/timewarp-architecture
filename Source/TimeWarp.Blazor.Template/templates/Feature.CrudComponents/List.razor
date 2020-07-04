@@ -1,0 +1,58 @@
+@namespace eShopOnBlazorWasm.Features.CatalogItems.Components
+@inherits BaseComponent
+
+<div data-qa="@TestId">
+  <table class="table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Brand</th>
+        <th>Type</th>
+        <th>Price</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var catalogItem in CatalogItemState.CatalogItems.Values)
+      {
+        <tr>
+          <td>
+            <img class="img-thumbnail" style="max-width: 120px; height: auto;" src="@catalogItem.PictureUri">
+          </td>
+          <td>
+            <p>@catalogItem.Name</p>
+          </td>
+          <td>
+            <p>@catalogItem.Description</p>
+          </td>
+          <td>
+            <p>@CatalogBrandState.CatalogBrands[catalogItem.CatalogBrandId].Brand</p>
+          </td>
+          <td>
+            <p>@CatalogTypeState.CatalogTypes[catalogItem.CatalogTypeId].Type</p>
+          </td>
+          <td>
+            <span class="esh-price">@catalogItem.Price</span>
+          </td>
+          <td>
+            <a href=@Pages.Catalog.Edit.RouteFactory(catalogItem.Id) >
+              Edit
+            </a>
+            |
+            <a href=@Pages.Catalog.Details.RouteFactory(catalogItem.Id) >
+              Details
+            </a>
+            |
+            <a href=@Pages.Catalog.Delete.RouteFactory(catalogItem.Id) >
+              Delete
+            </a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<Pager OnPageChange=@HandlePageChange />

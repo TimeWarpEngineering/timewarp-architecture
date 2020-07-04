@@ -11,12 +11,9 @@ namespace __RootNamespace__.Features.__FeatureName__s
     /// <summary>
     /// Your summary these comments will show in the Open API Docs
     /// </summary>
-    /// <remarks>
-    /// Longer Description
-    /// </remarks>
-    /// <param name="a__RequestName__Request"></param>
+    /// <param name="a__RequestName__Request"><see cref="__RequestName__Request"/></param>
     /// <returns><see cref="__RequestName__Response"/></returns>
-    [HttpGet(__RequestName__Request.Route)]
+    [HttpGet(__RequestName__Request.RouteTemplate)]
     [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
     [ProducesResponseType(typeof(__RequestName__Response), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]

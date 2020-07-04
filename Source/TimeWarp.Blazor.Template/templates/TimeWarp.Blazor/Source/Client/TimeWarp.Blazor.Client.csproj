@@ -16,15 +16,12 @@
     <PackageReference Include="Dawn.Guard" Version="$(DawnGuardVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyBuildVersion)" PrivateAssets="all" />
+    <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" Version="$(PeterLeslieMorrisBlazorFluentValidationVersion)" />
     <PackageReference Include="System.Net.Http.Json" Version="$(SystemNetHttpJsonVersion)" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="$(MicrosoftCodeAnalysisFxCopAnalyzersVersion)">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
 
   <ItemGroup>
