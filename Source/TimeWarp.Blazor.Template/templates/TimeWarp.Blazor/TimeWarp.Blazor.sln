@@ -39,10 +39,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{6DDDEA23
 		..\..\..\..\Build\TimeWarp.Blazor.Template.yml = ..\..\..\..\Build\TimeWarp.Blazor.Template.yml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{1D2D7498-507A-46A4-B6BE-90F534B9A00C}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.AspNetCore.Blazor.Templates", "..\..\TimeWarp.AspNetCore.Blazor.Templates.csproj", "{7B91C1B8-D657-4766-ACED-40A950358A4D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,10 +73,6 @@ Global
 		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7B91C1B8-D657-4766-ACED-40A950358A4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7B91C1B8-D657-4766-ACED-40A950358A4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7B91C1B8-D657-4766-ACED-40A950358A4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7B91C1B8-D657-4766-ACED-40A950358A4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -90,7 +82,6 @@ Global
 		{B82C7C95-4892-443C-AA6B-B6086B03DD30} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{607246B4-BE03-4E76-99F5-71EE1E90B22C} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
-		{7B91C1B8-D657-4766-ACED-40A950358A4D} = {1D2D7498-507A-46A4-B6BE-90F534B9A00C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
