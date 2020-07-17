@@ -8,7 +8,7 @@ namespace TimeWarp.Blazor.Features.Bases
   [ApiController]
   [Produces("application/json")]
   public class BaseEndpoint<TRequest, TResponse> : ControllerBase
-      where TRequest : IRequest<TResponse>
+    where TRequest : IRequest<TResponse>
     where TResponse : BaseResponse
   {
     private IMediator _mediator;

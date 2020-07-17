@@ -7,7 +7,7 @@
 
   public class Validate_Should
   {
-    private __RequestName__RequestValidator __RequestName__RequestValidator { get; set; }
+    private __RequestName__RequestValidator __RequestName__RequestValidator;
 
     public void Be_Valid()
     {

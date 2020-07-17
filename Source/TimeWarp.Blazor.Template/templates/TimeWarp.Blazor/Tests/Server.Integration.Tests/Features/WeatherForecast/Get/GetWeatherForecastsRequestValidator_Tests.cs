@@ -7,7 +7,7 @@
 
   public class Validate_Should
   {
-    private GetWeatherForecastsRequestValidator GetWeatherForecastsRequestValidator { get; set; }
+    private GetWeatherForecastsRequestValidator GetWeatherForecastsRequestValidator;
 
     public void Be_Valid()
     {
