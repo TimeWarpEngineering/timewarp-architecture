@@ -26,5 +26,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Api\TimeWarp.Blazor.Api.csproj" />
+    <ProjectReference Include="..\TypeScript\TimeWarp.Blazor.TypeScript.csproj" />
   </ItemGroup>
 </Project>
