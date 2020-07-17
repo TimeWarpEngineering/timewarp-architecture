@@ -39,6 +39,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{6DDDEA23
 		..\..\..\..\Build\TimeWarp.Blazor.Template.yml = ..\..\..\..\Build\TimeWarp.Blazor.Template.yml
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.TypeScript", "Source\TypeScript\TimeWarp.Blazor.TypeScript.csproj", "{98407295-8769-4164-85E2-E616D6765338}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,6 +75,10 @@ Global
 		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98407295-8769-4164-85E2-E616D6765338}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98407295-8769-4164-85E2-E616D6765338}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98407295-8769-4164-85E2-E616D6765338}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98407295-8769-4164-85E2-E616D6765338}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
