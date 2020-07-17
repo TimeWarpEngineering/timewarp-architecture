@@ -7,12 +7,9 @@ namespace ApplicationState
 
   public class Clone_Should : BaseTest
   {
-    private ApplicationState ApplicationState { get; set; }
+    private ApplicationState ApplicationState => Store.GetState<ApplicationState>();
 
-    public Clone_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost)
-    {
-      ApplicationState = Store.GetState<ApplicationState>();
-    }
+    public Clone_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public void Clone()
     {

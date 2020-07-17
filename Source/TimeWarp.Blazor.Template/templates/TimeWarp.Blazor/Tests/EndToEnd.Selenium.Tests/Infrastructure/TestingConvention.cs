@@ -7,11 +7,11 @@
 
   public class TestingConvention : Discovery, Execution, IDisposable
   {
-    private BrowserFixture BrowserFixture { get; set; }
+    private BrowserFixture BrowserFixture;
 
-    private SeleniumStandAlone SeleniumStandAlone { get; set; }
+    private SeleniumStandAlone SeleniumStandAlone;
 
-    private IServiceScopeFactory ServiceScopeFactory { get; set; }
+    private IServiceScopeFactory ServiceScopeFactory;
 
     public TestingConvention()
     {

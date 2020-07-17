@@ -22,7 +22,7 @@
 
     public Uri RootUri => LazyUri.Value;
 
-    private IHost Host { get; set; }
+    private IHost Host;
 
     public ServerFixture()
     {
