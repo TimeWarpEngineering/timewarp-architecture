@@ -22,7 +22,7 @@ namespace TimeWarp.Blazor.Components
       await ReduxDevToolsInterop.InitAsync();
 #endif
       await JsonRequestHandler.InitAsync();
-      await ClientLoader.InitAsync();
+      await ClientLoader.LoadClient();
     }
   }
 }
