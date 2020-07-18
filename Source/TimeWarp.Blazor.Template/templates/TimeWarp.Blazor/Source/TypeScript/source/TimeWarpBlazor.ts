@@ -19,13 +19,13 @@ export class TimeWarpBlazor {
     BlazorState.DispatchRequest(IncrementCountActionName, { amount: 7 });
   }
 
-  ConfigureBlazor() {
+  async ConfigureBlazor() {
     if (this.executionSideValue === null) {
       localStorage.setItem(this.executionSideKey, "To force a side set this to client/server");
     }
 
-    const clientSideBlazorScript = "_framework/blazor.webassembly.js";
-    const serverSideBlazorScript = "_framework/blazor.server.js";
+    const clientSideBlazorScript = "/_framework/blazor.webassembly.js";
+    const serverSideBlazorScript = "/_framework/blazor.server.js";
     const executionSides = { client: "client", server: "server" };
     let source: string;
 
@@ -36,12 +36,9 @@ export class TimeWarpBlazor {
     } else {
       source = this.clientLoaded ? clientSideBlazorScript : serverSideBlazorScript;
     }
-
     console.log(`Using script: ${source}`);
-
-    var blazorScript = document.createElement("script");
-    blazorScript.setAttribute("src", source);
-    document.body.appendChild(blazorScript);
+    let module = await import(source);
+    window.Blazor.start();
   }
 
   LoadClient() {
