@@ -34,7 +34,7 @@ namespace TimeWarp.Blazor.Features.ClientLoaders
 
     public async Task LoadClient()
     {
-      const string LoadClientInteropName = "TimeWarp.loadClient";
+      const string LoadClientInteropName = "_TimeWarpBlazor_.LoadClient";
       Logger.LogDebug(LoadClientInteropName);
       await JSRuntime.InvokeAsync<object>(LoadClientInteropName);
     }
