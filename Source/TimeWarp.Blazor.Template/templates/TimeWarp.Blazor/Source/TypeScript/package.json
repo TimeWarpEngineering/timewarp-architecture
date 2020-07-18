@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "parcel build ./Source/Initialize.ts --no-minify --out-dir ../Client/wwwroot --out-file TimeWarpBlazor",
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "parcel-bundler": "^1.12.4",
     "typescript": "^3.9.7"
   }
 }

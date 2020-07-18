@@ -11,5 +11,5 @@ export class TimeWarpBlazor {
       "TimeWarp.Blazor.Features.Counters.CounterState+IncrementCounterAction, TimeWarp.Blazor.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
 
     BlazorState.DispatchRequest(IncrementCountActionName, { amount: 7 });
-  }; 
+  }
 }
