@@ -1,5 +1,5 @@
-import { TimeWarpBlazor } from './TimeWarpBlazor.js';
+import { CompositionRoot } from './CompositionRoot.js';
 
-window._TimeWarpBlazor_ = new TimeWarpBlazor();
+window.CompositionRoot = new CompositionRoot();
 
-window._TimeWarpBlazor_.ConfigureBlazor();
+window.CompositionRoot.Initialize();

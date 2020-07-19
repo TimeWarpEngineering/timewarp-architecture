@@ -1,4 +1,4 @@
-import { TimeWarpBlazor } from "./TimeWarpBlazor";
+import { CompositionRoot } from "./CompositionRoot";
 
 declare global {
   declare var BlazorState: BlazorState;
@@ -13,7 +13,7 @@ declare global {
   }
 
   interface Window {
-    _TimeWarpBlazor_: TimeWarpBlazor | undefined
+    CompositionRoot: CompositionRoot | undefined
     BlazorState: BlazorState
     Blazor: Blazor
   }
