@@ -328,3 +328,6 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+/Source/TimeWarp.Blazor.Template/templates/TimeWarp.Blazor/Source/Client/wwwroot/TimeWarpBlazor.js
+/Source/TimeWarp.Blazor.Template/templates/TimeWarp.Blazor/Source/Client/wwwroot/TimeWarpBlazor.js.map
+/Source/TimeWarp.Blazor.Template/templates/TimeWarp.Blazor/Source/Client/wwwroot/js/
