@@ -11,7 +11,7 @@
 
   <Target Name="BuildNpmPackages" AfterTargets="ResolveReferences" DependsOnTargets="EnsureNpmRestored">
     <Message Importance="high" Text="Building npm packages" />
-    <Exec Command="npm run build" />
+    <Exec Command="npx npm-run-all lint build tailwinds" />
   </Target>
 
 </Project>
