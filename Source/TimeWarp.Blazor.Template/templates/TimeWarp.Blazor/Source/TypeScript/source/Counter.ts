@@ -1,4 +1,4 @@
-﻿export class Counter {
+export class Counter {
   private BlazorState: BlazorState;
 
   constructor(aBlazorState: BlazorState) {

@@ -1,14 +1,25 @@
-﻿export class BlazorDualMode {
+export class BlazorDualMode {
   private ApplicationVersion = "TimeWarp.Blazor.0.0.1";
+
   private ClientApplicationKey = "clientApplication";
+
   private ExecutionSideKey = "executionSide";
-  private ClientApplicationValue = localStorage.getItem(this.ClientApplicationKey);
+
+  private ClientApplicationValue = localStorage.getItem(
+    this.ClientApplicationKey
+  );
+
   private ExecutionSideValue = localStorage.getItem(this.ExecutionSideKey);
-  private ClientLoaded = this.ClientApplicationValue === this.ApplicationVersion;
+
+  private ClientLoaded =
+    this.ClientApplicationValue === this.ApplicationVersion;
 
   async ConfigureBlazor() {
     if (this.ExecutionSideValue === null) {
-      localStorage.setItem(this.ExecutionSideKey, "To force a side set this to client/server");
+      localStorage.setItem(
+        this.ExecutionSideKey,
+        "To force a side set this to client/server"
+      );
     }
 
     const clientSideBlazorScript = "/_framework/blazor.webassembly.js";
@@ -21,7 +32,9 @@
     } else if (this.ExecutionSideValue === executionSides.server) {
       source = serverSideBlazorScript;
     } else {
-      source = this.ClientLoaded ? clientSideBlazorScript : serverSideBlazorScript;
+      source = this.ClientLoaded
+        ? clientSideBlazorScript
+        : serverSideBlazorScript;
     }
     console.log(`Using script: ${source}`);
     await import(source);
