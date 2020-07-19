@@ -1,5 +1,5 @@
 ﻿export class BlazorDualMode {
-  private ApplicationVersion = 'TimeWarp.Blazor.0.0.1';
+  private ApplicationVersion = "TimeWarp.Blazor.0.0.1";
   private ClientApplicationKey = "clientApplication";
   private ExecutionSideKey = "executionSide";
   private ClientApplicationValue = localStorage.getItem(this.ClientApplicationKey);

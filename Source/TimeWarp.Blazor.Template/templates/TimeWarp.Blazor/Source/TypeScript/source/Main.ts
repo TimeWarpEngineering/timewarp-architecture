@@ -1,4 +1,4 @@
-import { CompositionRoot } from './CompositionRoot.js';
+import { CompositionRoot } from "./CompositionRoot.js";
 
 window.CompositionRoot = new CompositionRoot();
 
