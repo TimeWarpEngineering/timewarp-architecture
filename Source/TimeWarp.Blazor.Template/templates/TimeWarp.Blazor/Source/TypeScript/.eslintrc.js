@@ -22,32 +22,11 @@ module.exports = {
     "no-console": "off",
     "import/no-default-export": "error",
     "import/prefer-default-export": "off",
-    //"import/extensions": ["error", "always"],
-    "import/extensions": [
-      "error",
-      "ignorePackages",
-      {
-        "js": "never",
-        "jsx": "never",
-        "ts": "never",
-        "tsx": "never"
-      }
+    "import/no-unresolved": "off", 
+    "import/extensions": ["error", "always"],
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error"
     ]
   },
-  settings: {
-    "import/parsers": {
-      "@typescript-eslint/parser": [".js", ".ts", ".tsx"]
-    },
-    "import/resolver": {
-      // use <root>/tsconfig.json
-      "typescript": {
-        "alwaysTryTypes": true // always try to resolve types under `<roo/>@types` directory even it doesn't contain any source code, like `@types/unist`
-      },
-
-      // use <root>/path/to/folder/tsconfig.json
-      "typescript": {
-        "directory": "."
-      },
-    }
-  }
 };
