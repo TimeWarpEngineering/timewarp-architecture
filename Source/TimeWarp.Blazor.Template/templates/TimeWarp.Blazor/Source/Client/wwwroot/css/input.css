@@ -1,0 +1,7 @@
+﻿@import "tailwindcss/base";
+
+@import "tailwindcss/components";
+
+@import "tailwindcss/utilities";
+
+@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
