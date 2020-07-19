@@ -11,15 +11,16 @@ root = true
 # Indentation and spacing
 indent_size = 2
 indent_style = space
-tab_width = 4
+tab_width = 2
 
 # New line preferences
 end_of_line = crlf
-insert_final_newline = false
+insert_final_newline = true
 
 # Development files
-[*.{cs,csx,cshtml,csproj,razor,sln,props,targets,json,md,yml,gitignore,}]
+[*.{cs,csx,cshtml,csproj,razor,sln,props,targets,json,yml,gitignore,}]
 charset = "utf-8"
+trim_trailing_whitespace = true
 
 #### .NET Coding Conventions ####
 [*.cs]
