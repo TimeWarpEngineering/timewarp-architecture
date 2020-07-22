@@ -7,6 +7,7 @@ namespace TimeWarp.Blazor.Server
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.AspNetCore.ResponseCompression;
+  using Microsoft.Extensions.Configuration;
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
   using Microsoft.OpenApi.Models;
@@ -16,14 +17,21 @@ namespace TimeWarp.Blazor.Server
   using System.Linq;
   using System.Net.Mime;
   using System.Reflection;
+  using TimeWarp.Blazor.Configuration;
   using TimeWarp.Blazor.Features.Bases;
   using TimeWarp.Blazor.Infrastructure;
 
   public class Startup
   {
-    const string SwaggerVersion = "v1";
-    string SwaggerApiTitle => $"TimeWarp.Blazor API {SwaggerVersion}";
-    string SwaggerEndPoint => $"/swagger/{SwaggerVersion}/swagger.json";
+    private const string SwaggerVersion = "v1";
+    private readonly IConfiguration Configuration;
+    private string SwaggerApiTitle => $"TimeWarp.Blazor API {SwaggerVersion}";
+    private string SwaggerEndPoint => $"/swagger/{SwaggerVersion}/swagger.json";
+
+    public Startup(IConfiguration aConfiguration)
+    {
+      Configuration = aConfiguration;
+    }
 
     public void Configure
     (
@@ -65,6 +73,7 @@ namespace TimeWarp.Blazor.Server
 
     public void ConfigureServices(IServiceCollection aServiceCollection)
     {
+      ConfigureSettings(aServiceCollection);
       aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
       aServiceCollection.AddRazorPages();
       aServiceCollection.AddServerSideBlazor();
@@ -82,14 +91,14 @@ namespace TimeWarp.Blazor.Server
       (
         aApiBehaviorOptions => aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true);
 
-        aServiceCollection.AddResponseCompression
-        (
-          aResponseCompressionOptions =>
-            aResponseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat
-            (
-              new[] { MediaTypeNames.Application.Octet }
-            )
-      );
+      aServiceCollection.AddResponseCompression
+      (
+        aResponseCompressionOptions =>
+          aResponseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat
+          (
+            new[] { MediaTypeNames.Application.Octet }
+          )
+    );
 
       Client.Program.ConfigureServices(aServiceCollection);
 
@@ -106,6 +115,9 @@ namespace TimeWarp.Blazor.Server
       ConfigureSwagger(aServiceCollection);
     }
 
+    private void ConfigureSettings(IServiceCollection aServiceCollection) =>
+      aServiceCollection.Configure<SampleOptions>(Configuration.GetSection(nameof(SampleOptions)));
+
     private void ConfigureSwagger(IServiceCollection aServiceCollection)
     {
       // Register the Swagger generator, defining 1 or more Swagger documents
@@ -120,7 +132,6 @@ namespace TimeWarp.Blazor.Server
               new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
             );
             aSwaggerGenOptions.EnableAnnotations();
-            
 
             // Set the comments path for the Swagger JSON and UI from Server.
             string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
