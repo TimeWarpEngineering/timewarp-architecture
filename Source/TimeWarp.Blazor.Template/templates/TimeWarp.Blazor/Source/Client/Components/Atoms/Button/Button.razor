@@ -1,0 +1,10 @@
+﻿@namespace TimeWarp.Blazor.Components
+@inherits DisplayComponent
+
+<button class=@CssClass @attributes=Attributes @onclick=@OnClickHandler>
+  @if(DisplayLogo)
+  {
+
+  }
+  <span>@ChildContent</span>
+</button>
