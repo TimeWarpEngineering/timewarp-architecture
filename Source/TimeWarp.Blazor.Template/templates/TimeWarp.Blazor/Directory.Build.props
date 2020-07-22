@@ -38,6 +38,7 @@
 
     <AutoMapperExtensionsMicrosoftDependencyInjectionVersion>8.0.0</AutoMapperExtensionsMicrosoftDependencyInjectionVersion>
     <AutoMapperVersion>10.0.0</AutoMapperVersion>
+    <BlazorComponentUtilitiesVersion>1.6.0</BlazorComponentUtilitiesVersion>
     <BlazorExtensionsLoggingVersion>0.4.0</BlazorExtensionsLoggingVersion>
     <BlazorStateVersion>3.2.2</BlazorStateVersion>
     <DawnGuardVersion>1.12.0</DawnGuardVersion>
