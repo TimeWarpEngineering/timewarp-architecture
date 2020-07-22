@@ -25,9 +25,9 @@
     private readonly string DefaultCss = string.Join
     (
       separator: " ",
-      "bg-primary-300",
-      "border-primary-300",
-      "hover:bg-primary-500",
+      "bg-primary-400",
+      "border-primary-400",
+      "hover:bg-primary-600",
       "text-white"
     );
 
@@ -36,13 +36,14 @@
       separator: " ",
       "bg-transparent",
       "border",
-      "border-primary-300",
+      "border-primary-400",
       "hover:border-2",
-      "text-primary-300"
+      "text-primary-500"
     );
 
     [Parameter] public RenderFragment ChildContent { get; set; }
-    [Parameter] public bool DisplayLogo { get; set; }
+    [Parameter] public RenderFragment ButtonText { get; set; }
+    [Parameter] public RenderFragment SvgIcon { get; set; }
     [Parameter] public EventCallback OnClick { get; set; }
     [Parameter] public ButtonVariant Variant { get; set; } = ButtonVariant.Default;
     private string CssClass { get; set; }

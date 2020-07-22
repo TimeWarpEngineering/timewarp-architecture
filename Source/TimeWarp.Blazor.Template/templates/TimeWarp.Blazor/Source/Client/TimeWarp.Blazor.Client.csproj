@@ -31,6 +31,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Components\Atoms\HeroIcons\Outline\" />
     <Folder Include="wwwroot\js\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Watch Include="**\*.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Watch Remove="Components\Atoms\HeroIcons\Solid\LockClosedIcon.razor" />
   </ItemGroup>
 </Project>

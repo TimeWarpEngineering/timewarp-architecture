@@ -2,9 +2,13 @@
 @inherits DisplayComponent
 
 <button class=@CssClass @attributes=Attributes @onclick=@OnClickHandler>
-  @if(DisplayLogo)
-  {
-
-  }
-  <span>@ChildContent</span>
+   @SvgIcon
+   @if(ButtonText == null)
+   {
+     @ChildContent
+   }
+   else
+   {
+    @ButtonText
+   }
 </button>

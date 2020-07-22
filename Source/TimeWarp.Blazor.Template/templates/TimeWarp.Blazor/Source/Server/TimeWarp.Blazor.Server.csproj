@@ -44,4 +44,8 @@
   <ItemGroup>
     <Folder Include="Entities\X_Aggregate\Requests\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Watch Include="..\**\*.razor" />
+  </ItemGroup>
 </Project>
