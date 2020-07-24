@@ -1,14 +1,14 @@
 ﻿@namespace TimeWarp.Blazor.Components
 @inherits DisplayComponent
 
-<button class=@CssClass @attributes=Attributes @onclick=@OnClickHandler>
-   @SvgIcon
-   @if(ButtonText == null)
-   {
-     @ChildContent
-   }
-   else
-   {
+<button @attributes=Attributes @onclick=@OnClickHandler class=@CssClass>
+  @SvgIcon
+  @if (ButtonText == null)
+  {
+    @ChildContent
+  }
+  else
+  {
     @ButtonText
-   }
+  }
 </button>

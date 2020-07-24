@@ -39,7 +39,4 @@
     <Watch Include="**\*.razor" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Watch Remove="Components\Atoms\HeroIcons\Solid\LockClosedIcon.razor" />
-  </ItemGroup>
 </Project>

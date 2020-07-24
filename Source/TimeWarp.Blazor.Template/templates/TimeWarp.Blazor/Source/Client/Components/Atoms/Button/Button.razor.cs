@@ -2,6 +2,7 @@
 {
   using BlazorComponentUtilities;
   using Microsoft.AspNetCore.Components;
+  using System;
   using System.Threading.Tasks;
 
   public partial class Button : DisplayComponent
@@ -58,6 +59,7 @@
 
     protected override void OnParametersSet()
     {
+      Console.WriteLine("OnParametersSet.1");
       string cssString = Variant == ButtonVariant.Default ? DefaultCss : OutlineCss;
       cssString = BaseCss + " " + cssString;
       CssClass =
@@ -65,6 +67,7 @@
         .AddClassFromAttributes(Attributes)
         .Build();
 
+      Console.WriteLine($"CssClass:{CssClass}");
       base.OnParametersSet();
     }
   }
