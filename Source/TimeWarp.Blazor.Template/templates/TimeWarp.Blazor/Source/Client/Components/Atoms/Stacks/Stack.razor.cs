@@ -19,7 +19,7 @@
 
     [Parameter] public bool Wrap { get; set; }
 
-    private string CssClass { get; set; }
+    protected string CssClass { get; set; }
 
     public enum StackVariant
     {
