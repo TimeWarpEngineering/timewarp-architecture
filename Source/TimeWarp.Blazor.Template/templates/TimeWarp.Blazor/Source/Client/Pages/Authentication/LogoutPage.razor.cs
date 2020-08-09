@@ -4,6 +4,9 @@ namespace TimeWarp.Blazor.Pages
 
   public partial class LogoutPage : BaseComponent
   {
-    public const string Route = "Logout";
+    private const string RouteTemplate = "/Logout";
+
+    public static string GetRoute() => RouteTemplate;
+
   }
 }

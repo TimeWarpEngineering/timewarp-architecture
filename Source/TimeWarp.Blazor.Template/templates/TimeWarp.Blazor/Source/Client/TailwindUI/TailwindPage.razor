@@ -1,0 +1,16 @@
+﻿@namespace Tailwind
+@page "/Tailwind"
+
+<ul class="ml-10">
+  <li>
+    <NavLink class="nav-link" href=@Tailwind.ApplicationUi.Navigation.Navbars.NavbarsDemoPage.GetRoute()>Navbars</NavLink>
+
+  </li>
+</ul>
+
+@code
+{
+  private const string RouteTemplate = "/Tailwind";
+
+  public static string GetRoute() => RouteTemplate;
+}

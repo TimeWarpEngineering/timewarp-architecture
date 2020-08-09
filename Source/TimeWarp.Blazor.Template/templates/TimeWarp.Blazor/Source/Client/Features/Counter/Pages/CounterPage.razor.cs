@@ -6,7 +6,9 @@ namespace TimeWarp.Blazor.Pages
 
   public partial class CounterPage: BaseComponent
   {
-    public const string Route = "/counter";
+    private const string RouteTemplate = "/counter";
+
+    public static string GetRoute() => RouteTemplate;
 
     protected async Task ButtonClick() =>
       _ = await Mediator.Send(new RouteState.ChangeRouteAction { NewRoute = "/" });

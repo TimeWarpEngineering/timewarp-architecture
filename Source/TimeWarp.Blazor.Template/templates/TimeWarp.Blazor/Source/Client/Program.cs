@@ -4,10 +4,11 @@ namespace TimeWarp.Blazor.Client
   using MediatR;
   using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Microsoft.Extensions.DependencyInjection;
+  using System;
   using System.Net.Http;
   using System.Reflection;
   using System.Threading.Tasks;
-  using System;
+  using TimeWarp.Blazor.Analyzer;
   using TimeWarp.Blazor.Components;
   using TimeWarp.Blazor.Features.ClientLoaders;
   using TimeWarp.Blazor.Features.EventStreams;
@@ -48,6 +49,10 @@ namespace TimeWarp.Blazor.Client
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
       aServiceCollection.AddScoped<ClientLoader>();
       aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
+
+#if DEBUG
+      new ProjectAnlayzer().Analyze();
+#endif
     }
   }
 }

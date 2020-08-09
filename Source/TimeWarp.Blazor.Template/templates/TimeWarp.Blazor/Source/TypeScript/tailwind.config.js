@@ -1,9 +1,14 @@
 // tailwind.config.js
 
-const defaultTheme = require('tailwindcss/defaultTheme')
+const defaultTheme = require("tailwindcss/defaultTheme");
 
 module.exports = {
-  purge: [],
+  purge: {
+    content: ["../Client/**/*.razor", "../**/*.html"],
+    options: {
+      whitelist: [""],
+    },
+  },
   theme: {
     extend: {
       colors: {
@@ -15,14 +20,12 @@ module.exports = {
         positive: defaultTheme.colors.green,
       },
       fontFamily: {
-        sans: ['Inter var', ...defaultTheme.fontFamily.sans],
+        sans: ["Inter var", ...defaultTheme.fontFamily.sans],
       },
     },
   },
   variants: {
-    borderWidth: ['hover'],
+    borderWidth: ["hover"],
   },
-  plugins: [
-    require('@tailwindcss/ui'),
-  ],
-}
+  plugins: [require("@tailwindcss/ui")],
+};

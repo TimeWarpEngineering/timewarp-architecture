@@ -1,0 +1,11 @@
+﻿@namespace Tailwind.ApplicationUi.Navigation.Navbars.SimpleDarkWithMenuButtonOnLeft
+
+<div class="hidden sm:block sm:ml-6">
+  <div class="flex">
+    <NavBarLink Href="#">Home</NavBarLink>
+    <NavBarLink Href=@CounterPage.GetRoute()>Counter</NavBarLink>
+    <NavBarLink Href=@WeatherForecastsPage.GetRoute()>Weather Forecasts</NavBarLink>
+    <NavBarLink Href="https://thefreezeteam.com/" Target=NavBarLink.TargetValue._blank>The Freeze Team</NavBarLink>
+    <NavBarLink Href="https://timewarpengineering.github.io">GitHub</NavBarLink>
+  </div>
+</div>

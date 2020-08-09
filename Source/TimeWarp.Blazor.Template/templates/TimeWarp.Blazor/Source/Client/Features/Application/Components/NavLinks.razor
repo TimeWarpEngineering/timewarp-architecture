@@ -2,17 +2,17 @@
 
 <ul class="navbar-nav mr-auto">
   <li class="nav-item">
-    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+    <NavLink class="nav-link" href="" Match=NavLinkMatch.All>
       <span class="oi oi-home" aria-hidden="true"></span> Home
     </NavLink>
   </li>
   <li class="nav-item">
-    <NavLink class="nav-link" href="@CounterPage.Route">
+    <NavLink class="nav-link" href=@CounterPage.GetRoute()>
       <span class="oi oi-plus" aria-hidden="true"></span> Counter
     </NavLink>
   </li>
   <li class="nav-item">
-    <NavLink class="nav-link" href="@WeatherForecastsPage.Route">
+    <NavLink class="nav-link" href=@WeatherForecastsPage.GetRoute()>
       <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
     </NavLink>
   </li>

@@ -2,8 +2,8 @@
 {
   using Microsoft.AspNetCore.Components;
 
-  public partial class Box : DisplayComponent
+  public partial class Box : ParentComponent
   {
-    [Parameter] public RenderFragment ChildContent { get; set; }
+    
   }
 }
