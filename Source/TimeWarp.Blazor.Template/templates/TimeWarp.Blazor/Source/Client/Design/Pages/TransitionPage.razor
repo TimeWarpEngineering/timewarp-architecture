@@ -1,0 +1,46 @@
+﻿@namespace TimeWarp.Blazor.Design
+@page "/Design/Transitions"
+
+<VStack>
+  <Box class="my-4 mx-auto w-10 h-10 bg-red-500 " />
+  <Button OnClick=OnClickHandler>Toggle</Button>
+</VStack>
+
+@code
+{
+  private readonly CssBuilder CssBuilder;
+
+  public TransitionPage()
+  {
+    CssBuilder = new CssBuilder(BaseClasses);
+  }
+  private bool Toggle;
+  private const string RouteTemplate = "/Design/Transitions";
+
+  public static string GetRoute() => RouteTemplate;
+
+  private void OnClickHandler()
+  {
+    Toggle = !Toggle;
+  }
+
+  private string BaseClasses = "mt-4 mx-auto w-10 h-10 bg-red-500";
+  private string FalseClasses = "mt-4 mx-auto w-10 h-10 bg-red-500";
+  private string TrueClasses = "mt-4 mx-auto w-10 h-10 bg-green-500";
+
+  private TransitionState State { get; set; } = TransitionState.Closed;
+
+  private void TransitionEndHandler()
+  {
+    if (State == TransitionState.Entering) State = TransitionState.Open;
+    if (State == TransitionState.Leaving) State = TransitionState.Closed;
+  }
+
+  public enum TransitionState
+  {
+    Entering,
+    Open,
+    Leaving,
+    Closed
+  }
+}

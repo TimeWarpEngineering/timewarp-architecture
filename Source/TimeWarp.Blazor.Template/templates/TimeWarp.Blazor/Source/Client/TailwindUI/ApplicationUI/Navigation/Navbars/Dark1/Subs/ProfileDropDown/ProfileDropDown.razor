@@ -1,20 +1,59 @@
 ﻿@namespace Tailwind.ApplicationUi.Navigation.Navbars.SimpleDarkWithMenuButtonOnLeft
   <!-- Profile dropdown -->
-  <div class="ml-3 relative">
-    <div class="">
-      <ProfileButton />
-    </div>
-    <!--
-      Profile dropdown panel, show/hide based on dropdown state.
-
-      Entering: "transition ease-out duration-100"
-        From: "transform opacity-0 scale-95"
-        To: "transform opacity-100 scale-100"
-      Leaving: "transition ease-in duration-75"
-        From: "transform opacity-100 scale-100"
-        To: "transform opacity-0 scale-95"
-    -->
-    <div class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg">
-      <ProfileMenuPanel />
-    </div>
+<div class="ml-3 relative">
+  <div class="">
+    <ProfileButton />
   </div>
+  <!--
+    Profile dropdown panel, show/hide based on dropdown state.
+
+    Entering: "transition ease-out duration-100"
+      From: "transform opacity-0 scale-95"
+      To: "transform opacity-100 scale-100"
+    Leaving: "transition ease-in duration-75"
+      From: "transform opacity-100 scale-100"
+      To: "transform opacity-0 scale-95"
+  -->
+  <div class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg"
+       @ontransitionend=TransitionEndHandler>
+    <ProfileMenuPanel />
+  </div>
+</div>
+
+@code{
+
+  private readonly CssBuilder CssBuilder;
+
+  public ProfileDropDown()
+  {
+    CssBuilder = new CssBuilder(BaseClasses);
+  }
+  [Parameter] public MenuState State { get; set; } = MenuState.Closed;
+
+
+  private string BaseClasses = "origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg";
+
+
+  @*private string EnterClasses = "transition ease-out duration-100";
+  private string EnterFromClasses = "transition ease-out duration-100";
+  private string EnterToClasses = "transform opacity-100 scale-100";
+  private string LeaveClasses = "transition ease-in duration-75";
+  private string LeaveFromClasses = "transform opacity-100 scale-100";
+  private string LeaveToClasses = "transform opacity-0 scale-95";*@
+
+
+  private void TransitionEndHandler()
+  {
+    if (State == MenuState.Entering) State = MenuState.Open;
+    if (State == MenuState.Leaving) State = MenuState.Closed;
+  }
+
+
+  public enum MenuState
+  {
+    Entering,
+    Open,
+    Leaving,
+    Closed
+  }
+}
