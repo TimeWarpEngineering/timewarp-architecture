@@ -31,10 +31,10 @@
       "output": {
         ".html": {
           "relative_path": "README.html",
-          "hash": "9nnyLfi05ZV4z7ISvnQ3BA=="
+          "hash": "G9nxUqjA6HvKjCSpDJwRHQ=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -43,10 +43,10 @@
       "output": {
         ".html": {
           "relative_path": "Backlog/Todo.html",
-          "hash": "KJLrxqUhWuibg8hUR+GQ0A=="
+          "hash": "7F5/BtCt90slpRNv713u2Q=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -55,10 +55,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Features.html",
-          "hash": "lL0Fl8kZSh8kboV828mtrA=="
+          "hash": "m248yk8nxWcE25EloBUSyA=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -67,10 +67,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Overview.html",
-          "hash": "OmCMSLHgRSnj5dyFhz8yeg=="
+          "hash": "Qtpq0HX14oMtGMaHzyAeqg=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -79,10 +79,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpConsoleTemplate/Overview.html",
-          "hash": "FmWzo40zjbAz5qujMYW2Cw=="
+          "hash": "uxMZdxtnMOV2qbl5cuWkCw=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -91,10 +91,10 @@
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "E/9vJMhCFB4mUYXTXRHLeg=="
+          "hash": "ljzNvLcGZwD5aqEVwuquhA=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -113,17 +113,19 @@
   "incremental_info": [
     {
       "status": {
-        "can_incremental": true,
+        "can_incremental": false,
+        "details": "Cannot build incrementally because docfx version changed from 2.54.0.0 to 2.56.1.0.",
         "incrementalPhase": "build",
         "total_file_count": 0,
-        "skipped_file_count": 0
+        "skipped_file_count": 0,
+        "full_build_reason_code": "DocfxVersionChanged"
       },
       "processors": {
         "ConceptualDocumentProcessor": {
-          "can_incremental": true,
+          "can_incremental": false,
           "incrementalPhase": "build",
           "total_file_count": 6,
-          "skipped_file_count": 6
+          "skipped_file_count": 0
         },
         "ResourceDocumentProcessor": {
           "can_incremental": false,
