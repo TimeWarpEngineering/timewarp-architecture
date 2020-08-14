@@ -29,7 +29,6 @@
 
     protected override void OnParametersSet()
     {
-      Console.WriteLine("OnParametersSet.1");
       string cssString = Variant == StackVariant.Horizontal ? HorizontalCss : VerticalCss;
       cssString = BaseCss + " " + cssString;
       CssClass =

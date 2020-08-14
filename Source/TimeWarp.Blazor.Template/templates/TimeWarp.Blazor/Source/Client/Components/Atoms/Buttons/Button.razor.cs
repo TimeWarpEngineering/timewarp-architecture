@@ -53,7 +53,6 @@
 
     [Parameter] public RenderFragment ButtonText { get; set; }
     [Parameter] public RenderFragment ChildContent { get; set; }
-    //[Parameter] public EventCallback OnClick { get; set; }
     [Parameter] public RenderFragment SvgIcon { get; set; }
     [Parameter] public ButtonVariant Variant { get; set; } = ButtonVariant.Default;
     private string CssClass { get; set; }
@@ -63,8 +62,6 @@
       Default,
       Outline
     }
-
-    //protected async Task OnClickHandler() => await OnClick.InvokeAsync(null);
 
     protected override void OnParametersSet()
     {
