@@ -22,7 +22,7 @@ namespace TimeWarp.Blazor.Features.Applications
     public async Task<Unit> Handle(ResetStoreAction aResetStoreAction, CancellationToken aCancellationToken)
     {
       Store.Reset();
-      _ = await Mediator.Send(new ChangeRouteAction { NewRoute = "/" });
+      _ = await Mediator.Send(new ChangeRouteAction { NewRoute = "/" }, aCancellationToken);
       return Unit.Value;
     }
   }

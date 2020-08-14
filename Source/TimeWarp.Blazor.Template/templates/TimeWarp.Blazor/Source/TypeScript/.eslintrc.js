@@ -9,7 +9,7 @@ module.exports = {
     "plugin:import/warnings",
     "plugin:import/typescript",
     "prettier/@typescript-eslint",
-    "plugin:prettier/recommended"
+    "plugin:prettier/recommended",
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -22,11 +22,9 @@ module.exports = {
     "no-console": "off",
     "import/no-default-export": "error",
     "import/prefer-default-export": "off",
-    "import/no-unresolved": "off", 
+    "import/no-unresolved": "off",
     "import/extensions": ["error", "always"],
     "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": [
-      "error"
-    ]
+    "@typescript-eslint/no-unused-vars": ["error"],
   },
 };

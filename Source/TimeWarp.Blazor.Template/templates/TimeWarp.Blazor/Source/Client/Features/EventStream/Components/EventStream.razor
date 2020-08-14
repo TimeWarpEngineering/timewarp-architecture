@@ -1,8 +1,7 @@
 @namespace TimeWarp.Blazor.Features.EventStreams
-@using TimeWarp.Blazor.Features.Bases
 @inherits BaseComponent
-<h6>Event Stream</h6>
-<ul>
+
+<ul class="mt-2" @attributes=Attributes>
   @foreach (var item in Events)
   {
     <li>@item</li>

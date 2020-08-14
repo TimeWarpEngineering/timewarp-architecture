@@ -3,7 +3,7 @@
   <Rules AnalyzerId="Microsoft.CodeQuality.Analyzers" RuleNamespace="Microsoft.CodeQuality.Analyzers">
     <Rule Id="CA1707" Action="None" />
     <Rule Id="CA1822" Action="None" />
-    <Rule Id="CA2007" Action="None" />
+    <Rule Id="CA2007" Action="Info" />
     <Rule Id="CA2227" Action="None" />
   </Rules>
   <Rules AnalyzerId="Microsoft.CodeQuality.VisualBasic.Analyzers" RuleNamespace="Microsoft.CodeQuality.VisualBasic.Analyzers">

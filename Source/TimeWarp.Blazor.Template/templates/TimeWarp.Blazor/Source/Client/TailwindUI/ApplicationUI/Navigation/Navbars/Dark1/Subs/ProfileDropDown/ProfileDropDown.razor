@@ -1,0 +1,24 @@
+﻿@namespace Tailwind.ApplicationUi.Navigation.Navbars.SimpleDarkWithMenuButtonOnLeft
+@inherits ComponentBase
+
+  <!-- Profile dropdown -->
+<div class="ml-3 relative">
+  <div>
+    <ProfileButton @onclick=@OnClickHandler />
+  </div>
+  <!--
+    TODO:
+    Profile dropdown panel, show/hide based on dropdown state.
+
+    Entering: "transition ease-out duration-100"
+      From: "transform opacity-0 scale-95"
+      To: "transform opacity-100 scale-100"
+    Leaving: "transition ease-in duration-75"
+      From: "transform opacity-100 scale-100"
+      To: "transform opacity-0 scale-95"
+  -->
+  <div class=@CssBuilder>
+    <ProfileMenuPanel />
+  </div>
+</div>
+

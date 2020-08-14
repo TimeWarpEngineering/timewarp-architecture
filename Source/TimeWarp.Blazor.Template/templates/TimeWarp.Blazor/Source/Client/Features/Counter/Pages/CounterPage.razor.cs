@@ -3,12 +3,16 @@ namespace TimeWarp.Blazor.Pages
   using BlazorState.Features.Routing;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.Bases;
+  using static TimeWarp.Blazor.Features.Applications.ApplicationState;
 
-  public partial class CounterPage: BaseComponent
+  public partial class CounterPage : BaseComponent
   {
-    public const string Route = "/counter";
+    private const string RouteTemplate = "/Counter";
 
-    protected async Task ButtonClick() =>
-      _ = await Mediator.Send(new RouteState.ChangeRouteAction { NewRoute = "/" });
+    public static string GetRoute() => RouteTemplate;
+
+    private async Task ButtonClick() => await Send(new RouteState.ChangeRouteAction { NewRoute = "/" });
+
+    private async Task ResetButtonClick() => await Send(new ResetStoreAction());
   }
 }

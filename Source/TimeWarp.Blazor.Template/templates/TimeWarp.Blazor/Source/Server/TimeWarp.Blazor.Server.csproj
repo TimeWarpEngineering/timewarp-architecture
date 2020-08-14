@@ -44,4 +44,5 @@
   <ItemGroup>
     <Folder Include="Entities\X_Aggregate\Requests\" />
   </ItemGroup>
+
 </Project>

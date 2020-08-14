@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -11,7 +11,13 @@
 
   <Target Name="BuildNpmPackages" AfterTargets="ResolveReferences" DependsOnTargets="EnsureNpmRestored">
     <Message Importance="high" Text="Building npm packages" />
-    <Exec Command="npm run build" />
+    <Exec Command="npx npm-run-all prettier lint build tailwinds" />
   </Target>
 
+  <Target Name="CopyFiles" AfterTargets="AfterBuild" DependsOnTargets="BuildNpmPackages">
+    <Copy
+      SourceFiles="../Client/wwwroot/css/site.css"
+      DestinationFolder="../../Prototype/css/"
+    />
+  </Target>
 </Project>

@@ -4,6 +4,8 @@ namespace TimeWarp.Blazor.Pages
 
   public partial class ProfilePage : BaseComponent
   {
-    public const string Route = "/Profile";
+    private const string RouteTemplate = "/Profile";
+
+    public static string GetRoute() => RouteTemplate;
   }
 }
