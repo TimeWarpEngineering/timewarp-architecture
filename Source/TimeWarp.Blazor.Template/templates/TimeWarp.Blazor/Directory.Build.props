@@ -30,9 +30,9 @@
     <MicrosoftAspNetCoreComponentsWebAssemblyBuildVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreComponentsWebAssemblyBuildVersion>
     <MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>
     <MicrosoftAspNetCoreComponentsWebAssemblyVersion>$(MicrosoftAspNetCoreBlazorVersion)</MicrosoftAspNetCoreComponentsWebAssemblyVersion>
-    <MicrosoftAspNetCoreMvcTestingVersion>$(MicrosoftAspNetCoreVersion)</MicrosoftAspNetCoreMvcTestingVersion>
-    <MicrosoftAspNetCoreSignalRClientVersion>3.1.6</MicrosoftAspNetCoreSignalRClientVersion>
-    <MicrosoftCodeAnalysisFxCopAnalyzersVersion>3.0.0</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
+    <MicrosoftAspNetCoreMvcTestingVersion>3.1.7</MicrosoftAspNetCoreMvcTestingVersion>
+    <MicrosoftAspNetCoreSignalRClientVersion>3.1.7</MicrosoftAspNetCoreSignalRClientVersion>
+    <MicrosoftCodeAnalysisFxCopAnalyzersVersion>3.3.0</MicrosoftCodeAnalysisFxCopAnalyzersVersion>
     <SystemConfigurationConfigurationManagerVersion>4.7.0</SystemConfigurationConfigurationManagerVersion>
     <SystemNetHttpJsonVersion>3.2.1</SystemNetHttpJsonVersion>
     <SystemTextJsonVersion>4.7.2</SystemTextJsonVersion>
@@ -48,7 +48,7 @@
     <FluentAssertionsVersion>5.10.3</FluentAssertionsVersion>
     <FluentValidationAspNetCoreVersion>8.6.2</FluentValidationAspNetCoreVersion>
     <FluentValidationVersion>8.6.2</FluentValidationVersion>
-    <LiveSharpVersion>1.5.63</LiveSharpVersion>
+    <LiveSharpVersion>1.5.66</LiveSharpVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>8.1.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
     <MediatrVersion>8.1.0</MediatrVersion>
     <MicroElementsSwashbuckleFluentValidationVersion>3.2.0</MicroElementsSwashbuckleFluentValidationVersion>

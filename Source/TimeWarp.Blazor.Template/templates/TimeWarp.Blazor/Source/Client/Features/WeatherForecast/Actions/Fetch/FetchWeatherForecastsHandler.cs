@@ -7,7 +7,6 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
   using System.Threading;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.Bases;
-  using TimeWarp.Blazor.Features.WeatherForecasts;
 
   internal partial class WeatherForecastsState
   {
@@ -28,7 +27,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
       {
         var getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
         GetWeatherForecastsResponse getWeatherForecastsResponse =
-          await HttpClient.GetFromJsonAsync<GetWeatherForecastsResponse>(getWeatherForecastsRequest.RouteFactory);
+          await HttpClient.GetFromJsonAsync<GetWeatherForecastsResponse>(getWeatherForecastsRequest.GetRoute(), aCancellationToken);
         WeatherForecastsState._WeatherForecasts = getWeatherForecastsResponse.WeatherForecasts;
         return Unit.Value;
       }

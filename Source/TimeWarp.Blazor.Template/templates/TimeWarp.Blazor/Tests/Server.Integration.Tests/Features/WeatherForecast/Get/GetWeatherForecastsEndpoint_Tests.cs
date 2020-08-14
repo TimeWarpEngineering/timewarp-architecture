@@ -26,7 +26,7 @@
     public async Task _10WeatherForecasts_Given_10DaysRequested()
     {
       GetWeatherForecastsResponse getWeatherForecastsResponse =
-        await GetJsonAsync<GetWeatherForecastsResponse>(GetWeatherForecastsRequest.RouteFactory);
+        await GetJsonAsync<GetWeatherForecastsResponse>(GetWeatherForecastsRequest.GetRoute());
 
       ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
     }
@@ -35,7 +35,7 @@
     {
       GetWeatherForecastsRequest.Days = -1;
 
-      HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync(GetWeatherForecastsRequest.RouteFactory);
+      HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync(GetWeatherForecastsRequest.GetRoute());
 
       string json = await httpResponseMessage.Content.ReadAsStringAsync();
 

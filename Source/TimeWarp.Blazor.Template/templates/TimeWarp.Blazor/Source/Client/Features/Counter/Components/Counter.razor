@@ -2,8 +2,8 @@
 @using TimeWarp.Blazor.Features.Bases
 @inherits BaseComponent
 
-<div data-qa="@TestId">
+<div data-qa="@TestId" @attributes=Attributes >
   <p>Current count: @CounterState.Count</p>
 
-  <button class="btn btn-primary" @onclick="ButtonClick">Click me</button>
+  <Button Variant=Button.ButtonVariant.Default @onclick=@ButtonClick>Click me</Button>
 </div>

@@ -1,6 +1,11 @@
 namespace TimeWarp.Blazor.Features.Bases
 {
   using BlazorState.Pipeline.ReduxDevTools;
+  using MediatR;
+  using Microsoft.AspNetCore.Components;
+  using System.Collections.Generic;
+  using System.Threading.Tasks;
+  using TimeWarp.Blazor.Components;
   using TimeWarp.Blazor.Features.Applications;
   using TimeWarp.Blazor.Features.Counters;
   using TimeWarp.Blazor.Features.EventStreams;
@@ -15,11 +20,19 @@ namespace TimeWarp.Blazor.Features.Bases
   /// But would be required to properly implement the required interfaces.
   /// one could conditionally inherit from BaseComponent for production build.
   /// </remarks>
-  public class BaseComponent : BlazorStateDevToolsComponent
+  public class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
   {
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, object> Attributes { get; set; } = new Dictionary<string, object>();
+
     internal ApplicationState ApplicationState => GetState<ApplicationState>();
     internal CounterState CounterState => GetState<CounterState>();
     internal EventStreamState EventStreamState => GetState<EventStreamState>();
     internal WeatherForecastsState WeatherForecastsState => GetState<WeatherForecastsState>();
+
+    protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
+
+    protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest);
   }
 }

@@ -9,16 +9,28 @@
     private readonly string BaseCss = string.Join
     (
       separator: " ",
-      "font-interMedium",
-      "h-10",
       "inline-flex",
-      "justify-center",
       "items-center",
       "px-4",
       "py-2",
-      "rounded",
-      "uppercase"
+      "border",
+      "border-transparent",
+      "text-sm",
+      "leading-5",
+      "font-medium",
+      "rounded-md",
+      "text-white",
+      "bg-indigo-600",
+      "hover:bg-indigo-500",
+      "focus:outline-none",
+      "focus:border-indigo-700",
+      "focus:shadow-outline-indigo",
+      "active:bg-indigo-700",
+      "transition",
+      "ease-in-out",
+      "duration-150"
     );
+
 
     private readonly string DefaultCss = string.Join
     (
@@ -41,7 +53,7 @@
 
     [Parameter] public RenderFragment ButtonText { get; set; }
     [Parameter] public RenderFragment ChildContent { get; set; }
-    [Parameter] public EventCallback OnClick { get; set; }
+    //[Parameter] public EventCallback OnClick { get; set; }
     [Parameter] public RenderFragment SvgIcon { get; set; }
     [Parameter] public ButtonVariant Variant { get; set; } = ButtonVariant.Default;
     private string CssClass { get; set; }
@@ -52,7 +64,7 @@
       Outline
     }
 
-    protected async Task OnClickHandler() => await OnClick.InvokeAsync(null);
+    //protected async Task OnClickHandler() => await OnClick.InvokeAsync(null);
 
     protected override void OnParametersSet()
     {
