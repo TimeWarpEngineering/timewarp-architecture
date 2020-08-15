@@ -4,6 +4,7 @@
   using Microsoft.JSInterop;
   using System;
   using System.Collections.Generic;
+  using System.Globalization;
   using System.Reflection;
 
   internal partial class CounterState : State<CounterState>
@@ -12,7 +13,7 @@
     {
       var counterState = new CounterState()
       {
-        Count = Convert.ToInt32(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Count))].ToString()),
+        Count = Convert.ToInt32(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Count))].ToString(), CultureInfo.InvariantCulture),
         Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
       };
 
