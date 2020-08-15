@@ -1,0 +1,22 @@
+@namespace TimeWarp.Blazor.Pages
+@page "/Login"
+@inherits BaseComponent
+
+  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+      <div>
+        <img class="mx-auto h-24 w-auto" src="@ApplicationState.Logo" alt="Workflow" >
+        <h2 class="mt-6 text-center text-3xl leading-9 font-extrabold text-gray-900">
+          Sign in to your account
+        </h2>
+        <p class="mt-2 text-center text-sm leading-5 text-gray-600">
+          Or
+          <a href="#" class="font-medium text-primary-600 hover:text-primary-500 focus:outline-none focus:underline transition ease-in-out duration-150">
+            start your 14-day free trial
+          </a>
+        </p>
+      </div>
+      <LoginForm/>
+
+    </div>
+  </div>
