@@ -10,7 +10,7 @@
       string.Join
       (
         separator: " ",
-        "font-Medium",
+        "font-medium",
         "h-10",
         "inline-flex",
         "justify-center",

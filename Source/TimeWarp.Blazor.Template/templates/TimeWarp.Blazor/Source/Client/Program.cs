@@ -15,20 +15,6 @@ namespace TimeWarp.Blazor.Client
 
   public class Program
   {
-    public static async Task Main(string[] aArgumentArray)
-    {
-      var builder = WebAssemblyHostBuilder.CreateDefault(aArgumentArray);
-      builder.RootComponents.Add<App>("app");
-      builder.Services.AddSingleton
-      (
-        new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) }
-      );
-      ConfigureServices(builder.Services);
-
-      WebAssemblyHost host = builder.Build();
-      await host.RunAsync();
-    }
-
     public static void ConfigureServices(IServiceCollection aServiceCollection)
     {
       aServiceCollection.AddBlazorState
@@ -53,6 +39,20 @@ namespace TimeWarp.Blazor.Client
 #if DEBUG
       new ProjectAnlayzer().Analyze();
 #endif
+    }
+
+    public static async Task Main(string[] aArgumentArray)
+    {
+      var builder = WebAssemblyHostBuilder.CreateDefault(aArgumentArray);
+      builder.RootComponents.Add<App>("app");
+      builder.Services.AddSingleton
+      (
+        new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) }
+      );
+      ConfigureServices(builder.Services);
+
+      WebAssemblyHost host = builder.Build();
+      await host.RunAsync();
     }
   }
 }
