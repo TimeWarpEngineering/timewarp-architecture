@@ -2,8 +2,6 @@
 {
   using BlazorComponentUtilities;
   using Microsoft.AspNetCore.Components;
-  using System;
-  using System.Collections.Generic;
   using TimeWarp.Blazor.Components;
 
   public partial class ColorBar : DisplayComponent
@@ -12,7 +10,7 @@
       string.Join
       (
         separator: " ",
-        "font-interMedium",
+        "font-Medium",
         "h-10",
         "inline-flex",
         "justify-center",

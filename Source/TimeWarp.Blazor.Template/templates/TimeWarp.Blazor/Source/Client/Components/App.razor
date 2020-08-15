@@ -6,7 +6,7 @@
 
 <Router AppAssembly="typeof(Client.Program).Assembly">
   <Found Context="routeData">
-    <RouteView RouteData="routeData" DefaultLayout="typeof(TimeWarp.Blazor.Components.EmptyLayout)" />
+    <RouteView RouteData=@routeData DefaultLayout=@typeof(TimeWarp.Blazor.Components.EmptyLayout) />
   </Found>
   <NotFound>
     <h1>Page not found</h1>

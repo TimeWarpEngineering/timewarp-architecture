@@ -115,8 +115,11 @@ namespace TimeWarp.Blazor.Server
       ConfigureSwagger(aServiceCollection);
     }
 
-    private void ConfigureSettings(IServiceCollection aServiceCollection) =>
+    private void ConfigureSettings(IServiceCollection aServiceCollection)
+    {
+      aServiceCollection.AddOptions();
       aServiceCollection.Configure<SampleOptions>(Configuration.GetSection(nameof(SampleOptions)));
+    }
 
     private void ConfigureSwagger(IServiceCollection aServiceCollection)
     {

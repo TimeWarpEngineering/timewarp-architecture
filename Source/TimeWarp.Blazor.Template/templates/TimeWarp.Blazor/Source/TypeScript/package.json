@@ -5,8 +5,8 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint source --ext .ts",
-    "tailwinds": "tailwindcss build ./css/input.css -o ../Client/wwwroot/css/site.css",
     "prettier": "prettier --write .",
+    "tailwinds": "tailwindcss build ./css/input.css -o ../Client/wwwroot/css/site.css",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
