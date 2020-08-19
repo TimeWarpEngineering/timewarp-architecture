@@ -1,4 +1,5 @@
-﻿namespace TimeWarp.Blazor.Features.WeatherForecasts
+﻿//#WeatherForecast #GetWeatherForecasts #Validator #Api
+namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   using FluentValidation;
 

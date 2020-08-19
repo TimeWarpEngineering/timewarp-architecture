@@ -1,3 +1,4 @@
+//#WeatherForecast #GetWeatherForecasts #Request #Api
 namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   using MediatR;
