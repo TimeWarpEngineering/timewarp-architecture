@@ -10,7 +10,7 @@
     private MenuState State = MenuState.Closed;
 
     private CssBuilder CssBuilder =>
-          new CssBuilder(BaseClasses)
+      new CssBuilder(BaseClasses)
         .AddClass("hidden", when: IsHidden);
 
     private bool IsHidden => State == MenuState.Closed;
