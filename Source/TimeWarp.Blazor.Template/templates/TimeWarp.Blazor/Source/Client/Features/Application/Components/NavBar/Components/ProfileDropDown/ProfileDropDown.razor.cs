@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Features.Applications.Components
+﻿namespace TimeWarp.Blazor.Features.Applications.Components.NavBars.Dark
 {
   using BlazorComponentUtilities;
   using Microsoft.AspNetCore.Components;
@@ -10,7 +10,7 @@
     private MenuState State = MenuState.Closed;
 
     private CssBuilder CssBuilder =>
-          new CssBuilder(BaseClasses)
+      new CssBuilder(BaseClasses)
         .AddClass("hidden", when: IsHidden);
 
     private bool IsHidden => State == MenuState.Closed;

@@ -2,14 +2,21 @@
 @inherits BaseComponent
 
 <div class="min-h-screen flex flex-col font-sans">
-  <NavBarDark />
-  <header class="bg-white shadow" data-qa="HomeHeader">
-    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <h1 class="text-3xl font-bold leading-tight text-gray-900">
-        @HeaderContent
-      </h1>
-    </div>
-  </header>
+  @if (ShowNavBar)
+  {
+    <DarkNavBar />
+  }
+
+  @if (HeaderContent != null)
+  {
+    <header class="bg-white shadow" data-qa="HomeHeader">
+      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-bold leading-tight text-gray-900">
+          @HeaderContent
+        </h1>
+      </div>
+    </header>
+  }
 
   <main class="flex-grow">
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -25,10 +32,13 @@
       }
     </div>
   </main>
-  <footer class="bg-white">
-    <div class="max-w-screen-xl mx-auto py-4 px-4 sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
-      <BlazorLocation TestId="BlazorLocation" />
-      <span>Version:@Version</span>
-    </div>
-  </footer>
+  @if (ShowFooter)
+  {
+    <footer class="bg-white">
+      <div class="max-w-screen-xl mx-auto py-4 px-4 sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
+        <BlazorLocation TestId="BlazorLocation" />
+        <span>Version:@Version</span>
+      </div>
+    </footer>
+  }
 </div>

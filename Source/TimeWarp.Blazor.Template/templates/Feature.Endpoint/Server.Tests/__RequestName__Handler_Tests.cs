@@ -18,7 +18,7 @@
       JsonSerializerOptions aJsonSerializerOptions
     ) : base(aWebApplicationFactory, aJsonSerializerOptions)
     {
-      __RequestName__Request = new __RequestName__Request { Days = 10 };
+      __RequestName__Request = new __RequestName__Request { SampleProperty = "sample" };
     }
 
     public async Task __RequestName__Response()

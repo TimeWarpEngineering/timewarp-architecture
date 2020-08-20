@@ -20,13 +20,13 @@
       JsonSerializerOptions aJsonSerializerOptions
     ) : base(aWebApplicationFactory, aJsonSerializerOptions)
     {
-      __RequestName__Request = new __RequestName__Request { Days = 10 };
+      __RequestName__Request = new __RequestName__Request { SampleProperty = "sample" };
     }
 
     public async Task __RequestName__Response()
     {
       __RequestName__Response __RequestName__Response =
-        await GetJsonAsync<__RequestName__Response>(__RequestName__Request.RouteFactory);
+        await GetJsonAsync<__RequestName__Response>(__RequestName__Request.GetRoute());
 
       Validate__RequestName__Response(__RequestName__Response);
     }
@@ -34,15 +34,15 @@
     public async Task ValidationError()
     {
       // Set invalid value
-      __RequestName__Request.Days = -1;
+      __RequestName__Request.SampleProperty = string.Empty;
 
-      HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync(__RequestName__Request.RouteFactory);
+      HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync(__RequestName__Request.GetRoute());
 
       string json = await httpResponseMessage.Content.ReadAsStringAsync();
 
       httpResponseMessage.StatusCode.Should().Be(HttpStatusCode.BadRequest);
       json.Should().Contain("errors");
-      json.Should().Contain(nameof(__RequestName__Request.Days));
+      json.Should().Contain(nameof(__RequestName__Request.SampleProperty));
     }
 
     private void Validate__RequestName__Response(__RequestName__Response a__RequestName__Response)

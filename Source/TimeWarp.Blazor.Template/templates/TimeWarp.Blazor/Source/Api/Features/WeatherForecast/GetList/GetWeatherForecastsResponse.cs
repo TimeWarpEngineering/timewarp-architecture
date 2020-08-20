@@ -1,3 +1,4 @@
+//#WeatherForecast #GetWeatherForecasts #Response #Api
 namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   using System;
