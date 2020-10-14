@@ -18,7 +18,7 @@ namespace TimeWarp.Blazor.Server
           {
             #region UseHttpSys
             // The default is kestrel
-            #if UseHttpSys 
+#if UseHttpSys
             aWebHostBuilder.UseHttpSys
             (
               aHttpSysOptions =>

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Features.Applications.Components.NavBars.Dark
+namespace TimeWarp.Blazor.Features.Applications.Components.NavBars.Dark
 {
   using BlazorComponentUtilities;
   using Microsoft.AspNetCore.Components;

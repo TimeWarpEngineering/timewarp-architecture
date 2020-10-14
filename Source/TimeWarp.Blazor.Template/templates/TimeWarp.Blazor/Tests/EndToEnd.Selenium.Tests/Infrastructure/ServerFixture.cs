@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
+namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
 {
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Hosting.Server;
@@ -103,7 +103,7 @@
     /// Special configuration for Testing with the Test Server
     /// </summary>
     /// <param name="aServiceCollection"></param>
-    private void ConfigureServices(IServiceCollection aServiceCollection) => 
+    private void ConfigureServices(IServiceCollection aServiceCollection) =>
       aServiceCollection
       .Replace(ServiceDescriptor.Scoped<IClientLoaderConfiguration, TestClientLoaderConfiguration>());
   }

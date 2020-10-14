@@ -1,12 +1,12 @@
-﻿namespace GetWeatherForecastsHandler
+namespace GetWeatherForecastsHandler
 {
-  using System.Threading.Tasks;
-  using System.Text.Json;
+  using FluentAssertions;
   using Microsoft.AspNetCore.Mvc.Testing;
-  using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
+  using System.Text.Json;
+  using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.WeatherForecasts;
   using TimeWarp.Blazor.Server;
-  using FluentAssertions;
+  using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
 
   public class Handle_Returns : BaseTest
   {

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Infrastructure
+namespace TimeWarp.Blazor.Infrastructure
 {
   using AutoMapper;
   using TimeWarp.Blazor.Features.WeatherForecasts;

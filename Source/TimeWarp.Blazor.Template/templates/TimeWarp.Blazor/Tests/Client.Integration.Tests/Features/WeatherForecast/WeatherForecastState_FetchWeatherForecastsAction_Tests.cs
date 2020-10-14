@@ -2,8 +2,8 @@ namespace WeatherForecastsState
 {
   using Shouldly;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.WeatherForecasts;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Features.WeatherForecasts;
   using static TimeWarp.Blazor.Features.WeatherForecasts.WeatherForecastsState;
 
   public class FetchWeatherForecastsAction_Should : BaseTest

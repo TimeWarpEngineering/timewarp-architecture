@@ -2,8 +2,8 @@ namespace CounterState
 {
   using Shouldly;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Counters;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Features.Counters;
   using static TimeWarp.Blazor.Features.Counters.CounterState;
 
   public class IncrementCounterAction_Should : BaseTest

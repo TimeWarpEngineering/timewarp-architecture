@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Analyzer
+namespace TimeWarp.Blazor.Analyzer
 {
   using Microsoft.AspNetCore.Components;
   using System;
@@ -30,7 +30,7 @@
         pageAnalyzer.Analyze();
       }
 
-      if (ErrorMessages.Count > 0 )
+      if (ErrorMessages.Count > 0)
       {
         throw new Exception(string.Join('\n', ErrorMessages));
       }

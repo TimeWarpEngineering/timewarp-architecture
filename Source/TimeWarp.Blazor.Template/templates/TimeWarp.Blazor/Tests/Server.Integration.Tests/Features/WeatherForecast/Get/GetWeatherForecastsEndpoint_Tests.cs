@@ -1,4 +1,4 @@
-﻿namespace GetWeatherForecastsEndpoint
+namespace GetWeatherForecastsEndpoint
 {
   using FluentAssertions;
   using Microsoft.AspNetCore.Mvc.Testing;

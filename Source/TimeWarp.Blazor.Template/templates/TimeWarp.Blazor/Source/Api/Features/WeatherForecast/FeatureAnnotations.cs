@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Features.WeatherForecasts
+namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   public static class FeatureAnnotations
   {

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Components.Forms
+namespace TimeWarp.Blazor.Components.Forms
 {
   using Microsoft.AspNetCore.Components.Forms;
 

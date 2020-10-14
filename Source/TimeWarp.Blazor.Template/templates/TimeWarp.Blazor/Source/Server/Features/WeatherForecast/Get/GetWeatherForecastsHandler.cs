@@ -7,7 +7,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
   using System.Linq;
   using System.Threading;
   using System.Threading.Tasks;
-  
+
   public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
   {
     private readonly string[] Summaries = new[]

@@ -1,4 +1,4 @@
-﻿namespace Tailwind.ApplicationUi.Navigation.Navbars.SimpleDarkWithMenuButtonOnLeft
+namespace Tailwind.ApplicationUi.Navigation.Navbars.SimpleDarkWithMenuButtonOnLeft
 {
   using BlazorComponentUtilities;
   using Microsoft.AspNetCore.Components;

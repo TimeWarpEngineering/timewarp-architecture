@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Features.ClientLoaders
+namespace TimeWarp.Blazor.Features.ClientLoaders
 {
   using System;
 
