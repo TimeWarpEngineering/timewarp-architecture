@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Design.Components
+namespace TimeWarp.Blazor.Design.Components
 {
   using BlazorComponentUtilities;
   using Microsoft.AspNetCore.Components;

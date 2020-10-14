@@ -1,9 +1,9 @@
-﻿namespace TimeWarp.Blazor.Components
+namespace TimeWarp.Blazor.Components
 {
   using BlazorComponentUtilities;
   using Microsoft.AspNetCore.Components;
   using System;
-  public partial class Stack: ParentComponent
+  public partial class Stack : ParentComponent
   {
     private readonly string BaseCss = "flex";
 

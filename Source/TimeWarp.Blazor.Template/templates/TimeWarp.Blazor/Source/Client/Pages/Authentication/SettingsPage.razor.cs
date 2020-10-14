@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Pages
+namespace TimeWarp.Blazor.Pages
 {
   using TimeWarp.Blazor.Features.Bases;
 

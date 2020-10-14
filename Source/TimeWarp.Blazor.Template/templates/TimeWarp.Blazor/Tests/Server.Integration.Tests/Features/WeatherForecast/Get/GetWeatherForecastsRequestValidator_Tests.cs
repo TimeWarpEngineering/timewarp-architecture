@@ -1,4 +1,4 @@
-﻿namespace GetWeatherForecastRequestValidator_
+namespace GetWeatherForecastRequestValidator_
 {
   using FluentAssertions;
   using FluentValidation.Results;

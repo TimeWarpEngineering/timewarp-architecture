@@ -15,8 +15,8 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
     /// <summary>
     /// a default constructor is required for client side deserialization
     /// </summary>
-    public GetWeatherForecastsResponse() 
-    { 
+    public GetWeatherForecastsResponse()
+    {
       WeatherForecasts = new List<WeatherForecastDto>();
     }
 

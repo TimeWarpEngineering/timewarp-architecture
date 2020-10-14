@@ -20,7 +20,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
     /// <returns><see cref="GetWeatherForecastsResponse"/></returns>
     [HttpGet(GetWeatherForecastsRequest.Route)]
     [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
-    [ProducesResponseType(typeof(GetWeatherForecastsResponse), (int) HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(GetWeatherForecastsResponse), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     public async Task<IActionResult> Process([FromQuery] GetWeatherForecastsRequest aGetWeatherForecastsRequest) => await Send(aGetWeatherForecastsRequest);
   }

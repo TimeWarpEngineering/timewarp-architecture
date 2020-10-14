@@ -2,8 +2,8 @@ namespace ApplicationState
 {
   using AnyClone;
   using Shouldly;
-  using TimeWarp.Blazor.Features.Applications;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Features.Applications;
 
   public class Clone_Should : BaseTest
   {

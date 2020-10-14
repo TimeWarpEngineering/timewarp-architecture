@@ -14,7 +14,7 @@ indent_style = space
 tab_width = 2
 
 # New line preferences
-end_of_line = crlf
+end_of_line = lf
 insert_final_newline = true
 
 # Development files

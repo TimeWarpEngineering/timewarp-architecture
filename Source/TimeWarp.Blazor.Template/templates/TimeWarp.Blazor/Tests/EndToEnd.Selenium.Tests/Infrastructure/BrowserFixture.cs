@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
+namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
 {
   using OpenQA.Selenium;
   using OpenQA.Selenium.Chrome;

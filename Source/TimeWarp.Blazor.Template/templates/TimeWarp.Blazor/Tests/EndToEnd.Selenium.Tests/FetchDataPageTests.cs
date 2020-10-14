@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.EndToEnd.Tests
+namespace TimeWarp.Blazor.EndToEnd.Tests
 {
   using OpenQA.Selenium;
   using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
