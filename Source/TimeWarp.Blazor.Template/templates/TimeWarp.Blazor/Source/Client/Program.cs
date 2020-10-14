@@ -4,6 +4,7 @@ namespace TimeWarp.Blazor.Client
   using MediatR;
   using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Microsoft.Extensions.DependencyInjection;
+  using PeterLeslieMorris.Blazor.Validation;
   using System;
   using System.Net.Http;
   using System.Reflection;
@@ -30,6 +31,11 @@ namespace TimeWarp.Blazor.Client
                 typeof(Program).GetTypeInfo().Assembly,
             };
         }
+      );
+      
+      aServiceCollection.AddFormValidation
+      (
+        aValidationConfiguration => aValidationConfiguration.AddFluentValidation(typeof(Program).Assembly)
       );
 
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
