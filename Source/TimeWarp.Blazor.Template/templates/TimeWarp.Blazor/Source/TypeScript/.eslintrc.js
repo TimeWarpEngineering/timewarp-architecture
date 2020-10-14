@@ -20,6 +20,8 @@ module.exports = {
   rules: {
     "prettier/prettier": "error",
     "no-console": "off",
+    "no-undef": "off",
+    "no-use-before-define": "off",
     "import/no-default-export": "error",
     "import/prefer-default-export": "off",
     "import/no-unresolved": "off",
