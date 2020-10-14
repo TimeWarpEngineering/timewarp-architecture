@@ -33,6 +33,6 @@ namespace TimeWarp.Blazor.Features.Bases
 
     protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
 
-    protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest);
+    protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest).ConfigureAwait(false);
   }
 }

@@ -27,7 +27,6 @@
     <PackageReference Include="MediatR" Version="$(MediatrVersion)" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="$(MediatrExtensionsMicrosoftDependencyInjectionVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyServerVersion)" />
-    <PackageReference Include="Scrutor" Version="$(ScrutorVersion)" />
     <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" Version="$(MicroElementsSwashbuckleFluentValidationVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="$(SwashbuckleAspNetCoreAnnotationsVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="$(SwashbuckleAspNetCoreFiltersVersion)" />

@@ -11,7 +11,9 @@ namespace TimeWarp.Blazor.Analyzer
 
   public class ProjectAnlayzer
   {
-    public List<string> ErrorMessages => PageAnalyzers.SelectMany(p => p.ErrorMessages).ToList();
+    public List<string> ErrorMessages =>
+      PageAnalyzers.SelectMany(aPageAnalyzer => aPageAnalyzer.ErrorMessages).ToList();
+
     public List<PageAnalyzer> PageAnalyzers { get; }
 
     public ProjectAnlayzer()

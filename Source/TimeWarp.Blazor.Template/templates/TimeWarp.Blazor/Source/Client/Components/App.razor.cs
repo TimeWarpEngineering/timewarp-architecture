@@ -19,10 +19,10 @@ namespace TimeWarp.Blazor.Components
     protected override async Task OnAfterRenderAsync(bool aFirstRender)
     {
 #if ReduxDevToolsEnabled
-      await ReduxDevToolsInterop.InitAsync();
+      await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
 #endif
-      await JsonRequestHandler.InitAsync();
-      await ClientLoader.LoadClient();
+      await JsonRequestHandler.InitAsync().ConfigureAwait(false);
+      await ClientLoader.LoadClient().ConfigureAwait(false);
     }
   }
 }

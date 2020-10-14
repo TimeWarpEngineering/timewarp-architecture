@@ -27,10 +27,10 @@ namespace TimeWarp.Blazor.Features.ClientLoaders
 
     public async Task LoadClient()
     {
-      await Task.Delay(ClientLoaderConfiguration.DelayTimeSpan);
+      await Task.Delay(ClientLoaderConfiguration.DelayTimeSpan).ConfigureAwait(false);
       const string LoadClientInteropName = "CompositionRoot.BlazorDualMode.LoadClient";
       Logger.LogDebug(LoadClientInteropName);
-      await JSRuntime.InvokeAsync<object>(LoadClientInteropName);
+      await JSRuntime.InvokeAsync<object>(LoadClientInteropName).ConfigureAwait(false);
     }
   }
 }

@@ -10,19 +10,19 @@ namespace TimeWarp.Blazor.Pipeline.NotificationPreProcessor
   {
     private readonly ILogger Logger;
 
-    private readonly IMediator Mediator;
+    private readonly IPublisher Publisher;
 
     public PrePipelineNotificationRequestPreProcessor
-            (
+    (
       ILogger<PrePipelineNotificationRequestPreProcessor<TRequest>> aLogger,
-      IMediator aMediator
+      IPublisher aPublisher
     )
     {
       Logger = aLogger;
-      Mediator = aMediator;
+      Publisher = aPublisher;
     }
 
-    public async Task Process(TRequest aRequest, CancellationToken aCancellationToken)
+    public Task Process(TRequest aRequest, CancellationToken aCancellationToken)
     {
       var notification = new PrePipelineNotification<TRequest>
       {
@@ -30,7 +30,7 @@ namespace TimeWarp.Blazor.Pipeline.NotificationPreProcessor
       };
 
       Logger.LogDebug("PrePipelineNotificationRequestPreProcessor");
-      await Mediator.Publish(notification, aCancellationToken);
+      return Publisher.Publish(notification, aCancellationToken);
     }
   }
 }
