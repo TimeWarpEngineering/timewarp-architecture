@@ -104,14 +104,6 @@ namespace TimeWarp.Blazor.Server
 
       aServiceCollection.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
 
-      aServiceCollection.Scan
-      (
-        aTypeSourceSelector => aTypeSourceSelector
-          .FromAssemblyOf<Startup>()
-          .AddClasses()
-          .AsSelf()
-          .WithScopedLifetime()
-      );
       ConfigureSwagger(aServiceCollection);
     }
 
