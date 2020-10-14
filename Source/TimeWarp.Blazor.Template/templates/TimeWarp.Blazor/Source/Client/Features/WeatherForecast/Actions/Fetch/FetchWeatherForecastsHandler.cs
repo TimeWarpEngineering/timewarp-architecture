@@ -26,8 +26,14 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
       )
       {
         var getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
+
         GetWeatherForecastsResponse getWeatherForecastsResponse =
-          await HttpClient.GetFromJsonAsync<GetWeatherForecastsResponse>(getWeatherForecastsRequest.GetRoute(), aCancellationToken);
+          await HttpClient.GetFromJsonAsync<GetWeatherForecastsResponse>
+          (
+            getWeatherForecastsRequest.GetRoute(), aCancellationToken
+          )
+          .ConfigureAwait(false);
+
         WeatherForecastsState._WeatherForecasts = getWeatherForecastsResponse.WeatherForecasts;
         return Unit.Value;
       }

@@ -11,8 +11,9 @@ namespace TimeWarp.Blazor.Pages
 
     public static string GetRoute() => RouteTemplate;
 
-    private async Task ButtonClick() => await Send(new RouteState.ChangeRouteAction { NewRoute = "/" });
+    private async Task ButtonClick() =>
+      await Send(new RouteState.ChangeRouteAction { NewRoute = "/" }).ConfigureAwait(false);
 
-    private async Task ResetButtonClick() => await Send(new ResetStoreAction());
+    private async Task ResetButtonClick() => await Send(new ResetStoreAction()).ConfigureAwait(false);
   }
 }

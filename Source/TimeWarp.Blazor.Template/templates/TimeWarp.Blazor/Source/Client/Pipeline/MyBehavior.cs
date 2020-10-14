@@ -41,7 +41,7 @@ namespace TimeWarp.Blazor.Pipeline
       Logger.LogDebug($"{GetType().Name}: Start");
 
       Logger.LogDebug($"{GetType().Name}: Call next");
-      TResponse newState = await aNext();
+      TResponse newState = await aNext().ConfigureAwait(false);
       Logger.LogDebug($"{GetType().Name}: Start Post Processing");
       // Constrain here based on a type or anything you want.
       if (typeof(IState).IsAssignableFrom(typeof(TResponse)))

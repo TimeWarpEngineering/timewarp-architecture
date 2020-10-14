@@ -47,7 +47,7 @@ namespace TimeWarp.Blazor.Client
 #endif
     }
 
-    public static async Task Main(string[] aArgumentArray)
+    public static Task Main(string[] aArgumentArray)
     {
       var builder = WebAssemblyHostBuilder.CreateDefault(aArgumentArray);
       builder.RootComponents.Add<App>("app");
@@ -58,7 +58,7 @@ namespace TimeWarp.Blazor.Client
       ConfigureServices(builder.Services);
 
       WebAssemblyHost host = builder.Build();
-      await host.RunAsync();
+      return host.RunAsync();
     }
   }
 }

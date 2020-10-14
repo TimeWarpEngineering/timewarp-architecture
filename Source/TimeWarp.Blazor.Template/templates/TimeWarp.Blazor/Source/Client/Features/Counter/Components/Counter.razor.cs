@@ -7,6 +7,6 @@ namespace TimeWarp.Blazor.Features.Counters.Components
 
   public partial class Counter : BaseComponent, IAttributeComponent
   {
-    protected async Task ButtonClick() => await Send(new IncrementCounterAction { Amount = 5 });
+    protected async Task ButtonClick() => await Send(new IncrementCounterAction { Amount = 5 }).ConfigureAwait(false);
   }
 }

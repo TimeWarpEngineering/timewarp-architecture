@@ -17,7 +17,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
   {
     private readonly IServiceScopeFactory ServiceScopeFactory;
     private readonly IServiceScope ServiceScope;
-    private readonly IMediator Mediator;
+    private readonly ISender Sender;
     protected readonly IStore Store;
     protected readonly HttpClient HttpClient;
 
@@ -25,13 +25,13 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
     {
       ServiceScopeFactory = aWebAssemblyHost.ServiceProvider.GetService<IServiceScopeFactory>();
       ServiceScope = ServiceScopeFactory.CreateScope();
-      Mediator = ServiceScope.ServiceProvider.GetService<IMediator>();
+      Sender = ServiceScope.ServiceProvider.GetService<ISender>();
       Store = ServiceScope.ServiceProvider.GetService<IStore>();
     }
 
     protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
 
-    protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest);
+    protected async Task Send(IRequest aRequest) => await Sender.Send(aRequest);
 
   }
 }

@@ -18,17 +18,17 @@ namespace TimeWarp.Blazor.Features.EventStreams
   public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
   {
     private readonly ILogger Logger;
-    private readonly IMediator Mediator;
+    private readonly ISender Sender;
     public Guid Guid { get; } = Guid.NewGuid();
 
     public EventStreamBehavior
                 (
       ILogger<EventStreamBehavior<TRequest, TResponse>> aLogger,
-      IMediator aMediator
+      ISender aSender
     )
     {
       Logger = aLogger;
-      Mediator = aMediator;
+      Sender = aSender;
       Logger.LogDebug($"{GetType().Name}: Constructor");
     }
 
@@ -41,9 +41,9 @@ namespace TimeWarp.Blazor.Features.EventStreams
     {
       Guard.Argument(aNext, nameof(aNext)).NotNull();
 
-      await AddEventToStream(aRequest, "Start");
-      TResponse newState = await aNext();
-      await AddEventToStream(aRequest, "Completed");
+      await AddEventToStream(aRequest, "Start").ConfigureAwait(false);
+      TResponse newState = await aNext().ConfigureAwait(false);
+      await AddEventToStream(aRequest, "Completed").ConfigureAwait(false);
       return newState;
     }
 
@@ -62,7 +62,7 @@ namespace TimeWarp.Blazor.Features.EventStreams
         {
           addEventAction.Message = $"{aTag}:{requestTypeName}";
         }
-        await Mediator.Send(addEventAction);
+        await Sender.Send(addEventAction).ConfigureAwait(false);
       }
     }
   }
