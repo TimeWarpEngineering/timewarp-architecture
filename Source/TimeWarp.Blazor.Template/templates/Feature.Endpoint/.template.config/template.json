@@ -27,6 +27,87 @@
       "description": "The last part of the namespace <RootNamespace>.Features.<FeatureName>",
       "datatype": "text",
       "replaces": "__FeatureName__"
+    },
+    "firstLetterToUpperCase": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "upperCaseFirstLetter"
+    },
+    "firstLetterToLowerCase": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "lowerCaseFirstLetter"
+    },
+    "copyOtherChars": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "afterFirstLetter"
+    },
+    "requestNameCC": {
+      "type": "generated",
+      "generator": "join",
+      "replaces": "__RequestName__CC__",
+      "parameters": {
+        "symbols": [
+          {
+            "type": "ref",
+            "value": "firstLetterToLowerCase"
+          },
+          {
+            "type": "ref",
+            "value": "copyOtherChars"
+          }
+        ]
+      }
+    },
+    "requestNamePC": {
+      "type": "generated",
+      "generator": "join",
+      "replaces": "__RequestName__PC__",
+      "parameters": {
+        "symbols": [
+          {
+            "type": "ref",
+            "value": "firstLetterToUpperCase"
+          },
+          {
+            "type": "ref",
+            "value": "copyOtherChars"
+          }
+        ]
+      }
+    }
+  },
+  "forms": {
+    "lowerCaseFirstLetter": {
+      "identifier": "chain",
+      "steps": [
+        "firstLetter",
+        "lowerCase"
+      ]
+    },
+    "upperCaseFirstLetter": {
+      "identifier": "chain",
+      "steps": [
+        "firstLetter",
+        "upperCase"
+      ]
+    },
+    "firstLetter": {
+      "identifier": "replace",
+      "pattern": "^(.)(.*)",
+      "replacement": "$1"
+    },
+    "afterFirstLetter": {
+      "identifier": "replace",
+      "pattern": "^(.)(.*)",
+      "replacement": "$2"
+    },
+    "lowerCase": {
+      "identifier": "lowerCase"
+    },
+    "upperCase": {
+      "identifier": "upperCase"
     }
   },
   "tags": {
