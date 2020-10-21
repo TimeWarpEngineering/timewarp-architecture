@@ -1,4 +1,4 @@
-﻿namespace __RequestName__RequestValidator_
+﻿namespace __RequestName__RequestValidator
 {
   using FluentAssertions;
   using FluentValidation.Results;
@@ -16,14 +16,14 @@
 
     public void Be_Valid()
     {
-      var __RequestName__Request = new __RequestName__Request
+      var __requestName__Request = new __RequestName__Request
       {
         // Set Valid values here
         // #TODO
         SampleProperty = "sample"
       };
 
-      ValidationResult validationResult = __RequestName__RequestValidator.TestValidate(__RequestName__Request);
+      ValidationResult validationResult = __RequestName__RequestValidator.TestValidate(__requestName__Request);
 
       validationResult.IsValid.Should().BeTrue();
     }
