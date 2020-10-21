@@ -31,7 +31,7 @@
     private void Validate__RequestName__Response(__RequestName__Response a__RequestName__Response)
     {
       a__RequestName__Response.CorrelationId.Should().Be(__RequestName__Request.CorrelationId);
-      // check Other properties here
+      ;// #TODO: check Other properties here
     }
 
   }

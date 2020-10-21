@@ -18,7 +18,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
     {
       var response = new __RequestName__Response(a__RequestName__Request.CorrelationId);
 
-      return await Task.Run(() => response);
+      return await Task.FromResult(response);
     }
   }
 }

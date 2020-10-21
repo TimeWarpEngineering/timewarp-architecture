@@ -3,7 +3,6 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   using MediatR;
   using System;
-  using System.Collections.Generic;
   using System.Linq;
   using System.Threading;
   using System.Threading.Tasks;
@@ -32,7 +31,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
     {
       var response = new GetWeatherForecastsResponse(aGetWeatherForecastsRequest.CorrelationId);
       var random = new Random();
-      var weatherForecasts = new List<WeatherForecastDto>();
+
       Enumerable.Range(1, aGetWeatherForecastsRequest.Days).ToList().ForEach
       (
         aIndex => response.WeatherForecasts.Add
