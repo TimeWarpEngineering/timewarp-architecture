@@ -43,10 +43,10 @@
       "valueSource": "name",
       "valueTransform": "afterFirstLetter"
     },
-    "requestNameCC": {
+    "requestNameCamelCase": {
       "type": "generated",
       "generator": "join",
-      "replaces": "__RequestName__CC__",
+      "replaces": "__RequestName__CamelCase__",
       "parameters": {
         "symbols": [
           {
@@ -60,10 +60,10 @@
         ]
       }
     },
-    "requestNamePC": {
+    "requestNamePascalCase": {
       "type": "generated",
       "generator": "join",
-      "replaces": "__RequestName__PC__",
+      "replaces": "__RequestName__PascalCase__",
       "parameters": {
         "symbols": [
           {
