@@ -20,9 +20,10 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
       WeatherForecasts = new List<WeatherForecastDto>();
     }
 
-    public GetWeatherForecastsResponse(Guid aCorrelationId) : this()
+    public GetWeatherForecastsResponse(Guid aCorrelationId) : base(aCorrelationId)
     {
-      CorrelationId = aCorrelationId;
+      WeatherForecasts = new List<WeatherForecastDto>();
     }
+
   }
 }
