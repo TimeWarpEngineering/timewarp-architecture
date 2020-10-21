@@ -46,7 +46,7 @@
     "requestNameCamelCase": {
       "type": "generated",
       "generator": "join",
-      "replaces": "__RequestName__CamelCase__",
+      "replaces": "__requestName__",
       "parameters": {
         "symbols": [
           {
@@ -63,7 +63,7 @@
     "requestNamePascalCase": {
       "type": "generated",
       "generator": "join",
-      "replaces": "__RequestName__PascalCase__",
+      "replaces": "__RequestName__",
       "parameters": {
         "symbols": [
           {
