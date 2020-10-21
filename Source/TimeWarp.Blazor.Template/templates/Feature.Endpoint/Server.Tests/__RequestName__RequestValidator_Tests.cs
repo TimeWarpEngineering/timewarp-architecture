@@ -9,11 +9,17 @@
   {
     private __RequestName__RequestValidator __RequestName__RequestValidator;
 
+    public Validate_Should()
+    {
+      __RequestName__RequestValidator = new __RequestName__RequestValidator();
+    }
+
     public void Be_Valid()
     {
       var __RequestName__Request = new __RequestName__Request
       {
         // Set Valid values here
+        // #TODO
         SampleProperty = "sample"
       };
 
@@ -22,9 +28,9 @@
       validationResult.IsValid.Should().BeTrue();
     }
 
+    // #TODO Rename thie test and add tests for all validation rules
     public void Have_error_when_SampleProperty_is_empty() => __RequestName__RequestValidator
       .ShouldHaveValidationErrorFor(a__RequestName__Request => a__RequestName__Request.SampleProperty, string.Empty);
 
-    public void Setup() => __RequestName__RequestValidator = new __RequestName__RequestValidator();
   }
 }
