@@ -1,4 +1,4 @@
-﻿namespace __RequestName__RequestValidator_
+﻿namespace __RequestName__RequestValidator
 {
   using FluentAssertions;
   using FluentValidation.Results;
