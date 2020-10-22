@@ -37,8 +37,8 @@
     <SystemNetHttpJsonVersion>3.2.1</SystemNetHttpJsonVersion>
     <SystemTextJsonVersion>4.7.2</SystemTextJsonVersion>
 
-    <AutoMapperExtensionsMicrosoftDependencyInjectionVersion>8.0.1</AutoMapperExtensionsMicrosoftDependencyInjectionVersion>
-    <AutoMapperVersion>10.0.0</AutoMapperVersion>
+    <AutoMapperExtensionsMicrosoftDependencyInjectionVersion>8.1.0</AutoMapperExtensionsMicrosoftDependencyInjectionVersion>
+    <AutoMapperVersion>10.1.1</AutoMapperVersion>
     <BlazorComponentUtilitiesVersion>1.6.0</BlazorComponentUtilitiesVersion>
     <BlazorExtensionsLoggingVersion>0.4.0</BlazorExtensionsLoggingVersion>
     <BlazorStateVersion>3.3.0</BlazorStateVersion>
@@ -57,7 +57,7 @@
     <SeleniumWebDriverVersion>3.141.0</SeleniumWebDriverVersion>
     <ShouldlyVersion>3.0.2</ShouldlyVersion>
     <SwashbuckleAspNetCoreAnnotationsVersion>5.6.3</SwashbuckleAspNetCoreAnnotationsVersion>
-    <SwashbuckleAspNetCoreFiltersVersion>6.0.0</SwashbuckleAspNetCoreFiltersVersion>
+    <SwashbuckleAspNetCoreFiltersVersion>6.0.1</SwashbuckleAspNetCoreFiltersVersion>
     <SwashbuckleAspNetCoreSwaggerGenVersion>5.6.3</SwashbuckleAspNetCoreSwaggerGenVersion>
     <SwashbuckleAspNetCoreSwaggerUIVersion>5.6.3</SwashbuckleAspNetCoreSwaggerUIVersion>
     <SwashbuckleAspNetCoreSwaggerVersion>5.6.3</SwashbuckleAspNetCoreSwaggerVersion>   
