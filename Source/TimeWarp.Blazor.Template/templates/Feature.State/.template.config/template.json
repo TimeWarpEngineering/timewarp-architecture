@@ -14,7 +14,7 @@
   "identity": "TimeWarp.Feature.Stage",
   "preferNameDirectory": true,
   "shortName": "timewarp-feature-stage",
-  "sourceName": "_FeatureName_",
+  "sourceName": "__RequestName__",
   "symbols": {
     "RootNamespace": {
       "type": "parameter",
@@ -28,94 +28,6 @@
       "datatype": "text",
       "replaces": "__FeatureName__"
     },
-    "FeatureNameStage": {
-      "type": "parameter",
-      "description": "The last part of the namespace <RootNamespace>.Features.<FeatureName>.<FeatureNameStage>",
-      "datatype": "text",
-      "replaces": "__FeatureName__State"
-    },
-    "firstLetterToUpperCase": {
-      "type": "derived",
-      "valueSource": "name",
-      "valueTransform": "upperCaseFirstLetter"
-    },
-    "firstLetterToLowerCase": {
-      "type": "derived",
-      "valueSource": "name",
-      "valueTransform": "lowerCaseFirstLetter"
-    },
-    "copyOtherChars": {
-      "type": "derived",
-      "valueSource": "name",
-      "valueTransform": "afterFirstLetter"
-    },
-    "requestNameCamelCase": {
-      "type": "generated",
-      "generator": "join",
-      "replaces": "__requestName__",
-      "parameters": {
-        "symbols": [
-          {
-            "type": "ref",
-            "value": "firstLetterToLowerCase"
-          },
-          {
-            "type": "ref",
-            "value": "copyOtherChars"
-          }
-        ]
-      }
-    },
-    "requestNamePascalCase": {
-      "type": "generated",
-      "generator": "join",
-      "replaces": "__RequestName__",
-      "parameters": {
-        "symbols": [
-          {
-            "type": "ref",
-            "value": "firstLetterToUpperCase"
-          },
-          {
-            "type": "ref",
-            "value": "copyOtherChars"
-          }
-        ]
-      }
-    }
-  },
-  "forms": {
-    "lowerCaseFirstLetter": {
-      "identifier": "chain",
-      "steps": [
-        "firstLetter",
-        "lowerCase"
-      ]
-    },
-    "upperCaseFirstLetter": {
-      "identifier": "chain",
-      "steps": [
-        "firstLetter",
-        "upperCase"
-      ]
-    },
-    "firstLetter": {
-      "identifier": "replace",
-      "pattern": "^(.)(.*)",
-      "replacement": "$1"
-    },
-    "afterFirstLetter": {
-      "identifier": "replace",
-      "pattern": "^(.)(.*)",
-      "replacement": "$2"
-    },
-    "lowerCase": {
-      "identifier": "lowerCase"
-    },
-    "upperCase": {
-      "identifier": "upperCase"
-    }
-  },
   "tags": {
     "language": "C#",
     "type": "item"
