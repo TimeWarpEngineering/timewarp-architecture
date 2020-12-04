@@ -332,3 +332,5 @@ ASALocalRun/
 /Source/TimeWarp.Blazor.Template/templates/TimeWarp.Blazor/Source/Client/wwwroot/TimeWarpBlazor.js.map
 /Source/TimeWarp.Blazor.Template/templates/TimeWarp.Blazor/Source/Client/wwwroot/js/
 /Source/TimeWarp.Blazor.Template/templates/TimeWarp.Blazor/Source/Client/wwwroot/css/site.css
+/Source/TimeWarp.Blazor.Template/templates/Feature.CrudComponents/.template.config/icon.png
+/Source/TimeWarp.Blazor.Template/templates/Feature.CrudComponents/.template.config/template.json
