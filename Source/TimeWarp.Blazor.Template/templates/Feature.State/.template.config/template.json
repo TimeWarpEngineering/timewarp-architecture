@@ -27,9 +27,10 @@
       "description": "The last part of the namespace <RootNamespace>.Features.<FeatureName>",
       "datatype": "text",
       "replaces": "__FeatureName__"
-    },
-  "tags": {
-    "language": "C#",
-    "type": "item"
+    }
+  },
+    "tags": {
+      "language": "C#",
+      "type": "item"
+    }
   }
-}
