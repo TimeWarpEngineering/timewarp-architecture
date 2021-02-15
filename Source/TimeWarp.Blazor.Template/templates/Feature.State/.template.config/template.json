@@ -9,11 +9,11 @@
     "Feature",
     "Stage"
   ],
-  "name": "TimeWarp Feature Stage",
-  "groupIdentity": "TimeWarp.Feature.Stage",
-  "identity": "TimeWarp.Feature.Stage",
-  "preferNameDirectory": false,
-  "shortName": "timewarp-feature-stage",
+  "name": "TimeWarp Feature State",
+  "groupIdentity": "TimeWarp.Feature.State",
+  "identity": "TimeWarp.Feature.State",
+  "preferNameDirectory": true,
+  "shortName": "timewarp-feature-state",
   "sourceName": "__FeatureName__",
   "symbols": {
     "RootNamespace": {
