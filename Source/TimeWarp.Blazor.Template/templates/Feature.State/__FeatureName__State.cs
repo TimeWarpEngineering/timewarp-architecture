@@ -4,14 +4,27 @@
 
   public partial class __FeatureName__State : State<__FeatureName__State>
   {
+    public int PageSize { get; private set; }
+    public int PageIndex { get; private set; }
 
-    public int SamepleNumber { get; private set; }
-    public __FeatureName__State() {}
+    private Dictionary<string, __FeatureName__> __FeatureName__s;
 
-    public override void Initialize() 
+    public __FeatureName__ Current__FeatureName__ { get; private set; }
+
+    public IReadOnlyDictionary<string, __FeatureName__> __FeatureName__s => ___FeatureName__s;
+
+    public IReadOnlyList<__FeatureName__> __FeatureName__sAsList => ___FeatureName__s.Values.ToList();
+
+    public __FeatureName__State()
     {
-      SamepleNumber = 10;
+      Initialize();
     }
 
+    public override void Initialize()
+    {
+      PageIndex = 0;
+      PageSize = 20;
+      ___FeatureName__s = new Dictionary<string, __FeatureName__>();
+    }
   }
 }
