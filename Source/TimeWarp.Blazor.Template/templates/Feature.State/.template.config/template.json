@@ -18,6 +18,7 @@
   "symbols": {
     "RootNamespace": {
       "type": "parameter",
+      "isRequired": true,
       "description": "The first portion of the namespace <RootNamespace>.Features.<FeatureName>",
       "datatype": "text",
       "replaces": "__RootNamespace__"

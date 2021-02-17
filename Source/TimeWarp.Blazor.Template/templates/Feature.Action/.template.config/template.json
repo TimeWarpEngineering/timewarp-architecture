@@ -18,12 +18,14 @@
   "symbols": {
     "RootNamespace": {
       "type": "parameter",
+      "isRequired": true,
       "description": "The first part of namespace <RootNamespace>",
       "datatype": "text",
       "replaces": "__RootNamespace__"
     },
     "FeatureName": {
       "type": "parameter",
+      "isRequired": true,
       "description": "The last part of the namespace <RootNamespace>.Features.<FeatureName>",
       "datatype": "text",
       "replaces": "__FeatureName__"
