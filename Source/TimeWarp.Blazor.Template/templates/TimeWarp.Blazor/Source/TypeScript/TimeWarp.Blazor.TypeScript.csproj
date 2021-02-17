@@ -1,16 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
-
   <Target Name="EnsureNpmRestored">
     <Message Importance="high" Text="Restoring dependencies using 'npm'. This may take several minutes..." />
     <Exec Command="npm install" />
   </Target>
 
-  <Target Name="BuildNpmPackages" AfterTargets="ResolveReferences" DependsOnTargets="EnsureNpmRestored">
+  <Target Name="NpmRunPrettier" AfterTargets="ResolveReferences" DependsOnTargets="EnsureNpmRestored">
     <Message Importance="high" Text="Building npm packages" />
-    <Exec Command="npx npm-run-all prettier lint build tailwinds" />
+    <Exec Command="npm run prettier" />
+  </Target>
+
+  <Target Name="NpmRunLint" AfterTargets="ResolveReferences" DependsOnTargets="NpmRunPrettier">
+    <Message Importance="high" Text="Building npm packages" />
+    <Exec Command="npm run lint" />
+  </Target>
+
+  <Target Name="NpmRunBuild" AfterTargets="ResolveReferences" DependsOnTargets="NpmRunLint">
+    <Message Importance="high" Text="Building npm packages" />
+    <Exec Command="npm run build" />
+  </Target>
+
+  <Target Name="NpmRunTailwinds" AfterTargets="ResolveReferences" DependsOnTargets="NpmRunBuild">
+    <Message Importance="high" Text="Building npm packages" />
+    <Exec Command="npm run tailwinds" />
   </Target>
 </Project>
