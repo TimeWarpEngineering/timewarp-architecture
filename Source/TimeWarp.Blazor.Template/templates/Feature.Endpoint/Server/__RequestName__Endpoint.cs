@@ -17,7 +17,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
     [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
     [ProducesResponseType(typeof(__RequestName__Response), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-    public async Task<IActionResult> Process(__RequestName__Request a__RequestName__Request) => 
-      await Send(a__RequestName__Request);
+    public Task<IActionResult> Process(__RequestName__Request a__RequestName__Request) => 
+      Send(a__RequestName__Request);
   }
 }

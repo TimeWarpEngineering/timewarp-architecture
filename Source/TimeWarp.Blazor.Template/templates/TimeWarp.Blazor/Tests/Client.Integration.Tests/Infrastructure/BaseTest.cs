@@ -3,7 +3,6 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
   using BlazorState;
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;
-  using System.Net.Http;
   using System.Threading.Tasks;
 
   /// <summary>
@@ -19,7 +18,6 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
     private readonly IServiceScope ServiceScope;
     private readonly ISender Sender;
     protected readonly IStore Store;
-    protected readonly HttpClient HttpClient;
 
     public BaseTest(ClientHost aWebAssemblyHost)
     {
