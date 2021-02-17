@@ -4,6 +4,8 @@
 
   internal partial class __FeatureName__State
   {
-    public class Fetch__FeatureName__sAction : BaseAction { }
+    public class __ActionName__Action : BaseAction {
+        
+    }
   }
 }

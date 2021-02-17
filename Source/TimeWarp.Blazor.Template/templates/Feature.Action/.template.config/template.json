@@ -12,13 +12,13 @@
   "name": "TimeWarp Feature Action",
   "groupIdentity": "TimeWarp.Feature.Action",
   "identity": "TimeWarp.Feature.Action",
-  "preferNameDirectory": true,
+  "preferNameDirectory": false,
   "shortName": "timewarp-feature-action",
   "sourceName": "__ActionName__",
   "symbols": {
     "RootNamespace": {
       "type": "parameter",
-      "description": "The first portion of the namespace <RootNamespace>.Features.<FeatureName>",
+      "description": "The first part of namespace <RootNamespace>",
       "datatype": "text",
       "replaces": "__RootNamespace__"
     },

@@ -7,7 +7,7 @@
     "Blazor",
     "Hosted",
     "Feature",
-    "Stage"
+    "State"
   ],
   "name": "TimeWarp Feature State",
   "groupIdentity": "TimeWarp.Feature.State",
