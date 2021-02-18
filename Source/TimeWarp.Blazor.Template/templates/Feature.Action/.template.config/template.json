@@ -12,10 +12,19 @@
   "name": "TimeWarp Feature Action",
   "groupIdentity": "TimeWarp.Feature.Action",
   "identity": "TimeWarp.Feature.Action",
-  "preferNameDirectory": false,
+  "preferNameDirectory": true,
+  "sourceName": "FileName",
   "shortName": "timewarp-feature-action",
-  "sourceName": "__ActionName__",
+  "description": "Template for adding actions to timewarp-blazor.",
   "symbols": {
+    "ActionName": {
+      "type": "parameter",
+      "isRequired": true,
+      "datatype": "text",
+      "description": "Specify the name of the action <ActionName>",
+      "FileRename": "__ActionName__",
+      "replaces": "__ActionName__"
+    },
     "RootNamespace": {
       "type": "parameter",
       "isRequired": true,
@@ -28,7 +37,8 @@
       "isRequired": true,
       "description": "The last part of the namespace <RootNamespace>.Features.<FeatureName>",
       "datatype": "text",
-      "replaces": "__FeatureName__"
+      "replaces": "__FeatureName__",
+      "FileRename": "__FeatureName__"
     }
   },
   "tags": {

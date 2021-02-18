@@ -7,17 +7,12 @@ namespace __RootNamespace__.Features.__FeatureName__s
   using __RootNamespace__.Features.Bases;
   using System.Linq;
   using System;
-  using System.Net.Http;
 
   internal partial class __FeatureName__sState
   {
     public class __ActionName__Handler : BaseHandler<__ActionName__Action>
     {
-      private readonly HttpClient HttpClient;
-      public __ActionName__Handler(IStore aStore, HttpClient aHttpClient) : base(aStore)
-      {
-          HttpClient = aHttpClient;
-      }
+      public __ActionName__Handler(IStore aStore) : base(aStore) { }
 
       public override async Task<Unit> Handle
       (
@@ -25,6 +20,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
         CancellationToken aCancellationToken
       )
       {
+        __FeatureName__State.PageIndex = a__ActionName__Action.IncreasePageIndex;
         return Unit.Value;
       }
     }

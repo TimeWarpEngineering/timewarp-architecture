@@ -4,8 +4,10 @@
 
   internal partial class __FeatureName__State
   {
-    public class __ActionName__Action : BaseAction {
-        
-    }
+      public class __ActionName__Action : BaseAction {
+
+          public int IncreasePageIndex { get; set; }
+
+      }
   }
 }

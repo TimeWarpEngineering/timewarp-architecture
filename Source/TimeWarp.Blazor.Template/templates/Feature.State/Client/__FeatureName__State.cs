@@ -7,7 +7,7 @@
     public int PageSize { get; private set; }
     public int PageIndex { get; private set; }
 
-    private Dictionary<string, __FeatureName__> __FeatureName__s;
+    private Dictionary<string, __FeatureName__> ___FeatureName__s;
 
     public __FeatureName__ Current__FeatureName__ { get; private set; }
 

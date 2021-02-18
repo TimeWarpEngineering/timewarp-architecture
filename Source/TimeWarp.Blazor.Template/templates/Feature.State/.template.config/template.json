@@ -13,9 +13,19 @@
   "groupIdentity": "TimeWarp.Feature.State",
   "identity": "TimeWarp.Feature.State",
   "preferNameDirectory": true,
+  "sourceName": "FileName",
   "shortName": "timewarp-feature-state",
-  "sourceName": "__FeatureName__",
+  "defaultName": "GeneratedCode",
+  
   "symbols": {
+    "FeatureName": {
+      "type": "parameter",
+      "isRequired": true,
+      "description": "Specify Feature Name <FeatureName>",
+      "datatype": "text",
+      "replaces": "__FeatureName__",
+      "FileRename": "__FeatureName__"
+    },
     "RootNamespace": {
       "type": "parameter",
       "isRequired": true,
