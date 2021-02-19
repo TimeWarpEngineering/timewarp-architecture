@@ -12,8 +12,7 @@
   "name": "TimeWarp Feature Action",
   "groupIdentity": "TimeWarp.Feature.Action",
   "identity": "TimeWarp.Feature.Action",
-  "preferNameDirectory": true,
-  "sourceName": "FileName",
+  "preferNameDirectory": false,
   "shortName": "timewarp-feature-action",
   "description": "Template for adding actions to timewarp-blazor.",
   "symbols": {

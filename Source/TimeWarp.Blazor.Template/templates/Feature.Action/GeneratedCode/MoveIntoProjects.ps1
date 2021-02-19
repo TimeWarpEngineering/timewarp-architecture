@@ -1,8 +1,8 @@
 ﻿$FeatureName = "__FeatureName__"
-$RootNamespace = "__RootNamespace__"
 
-$ClientFeaturePath = "..\Source\Client\Features\$FeatureName"
-$ClientTestPath = "..\Tests\Client.Integration.Tests\Features"
+
+$ClientFeaturePath = "..\Source\Client\Features\$FeatureName\Actions"
+$ClientTestPath = "..\Tests\Client.Integration.Tests\Features\$FeatureName"
 
 New-Item -ItemType Directory -Force -Path $ClientFeaturePath
 New-Item -ItemType Directory -Force -Path $ClientTestPath

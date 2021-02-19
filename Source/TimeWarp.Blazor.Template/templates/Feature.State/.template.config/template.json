@@ -12,8 +12,7 @@
   "name": "TimeWarp Feature State",
   "groupIdentity": "TimeWarp.Feature.State",
   "identity": "TimeWarp.Feature.State",
-  "preferNameDirectory": true,
-  "sourceName": "FileName",
+  "preferNameDirectory": false,
   "shortName": "timewarp-feature-state",
   "defaultName": "GeneratedCode",
   
