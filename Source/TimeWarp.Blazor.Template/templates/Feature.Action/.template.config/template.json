@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Steven T. Cramer",
+  "classifications": [
+    "TimeWarp",
+    "Web",
+    "Blazor",
+    "Hosted",
+    "Feature",
+    "Action"
+  ],
+  "name": "TimeWarp Feature Action",
+  "groupIdentity": "TimeWarp.Feature.Action",
+  "identity": "TimeWarp.Feature.Action",
+  "preferNameDirectory": false,
+  "shortName": "timewarp-feature-action",
+  "description": "Template for adding actions to timewarp-blazor.",
+  "symbols": {
+    "ActionName": {
+      "type": "parameter",
+      "isRequired": true,
+      "datatype": "text",
+      "description": "Specify the name of the action <ActionName>",
+      "FileRename": "__ActionName__",
+      "replaces": "__ActionName__"
+    },
+    "RootNamespace": {
+      "type": "parameter",
+      "isRequired": true,
+      "description": "The first part of namespace <RootNamespace>",
+      "datatype": "text",
+      "replaces": "__RootNamespace__"
+    },
+    "FeatureName": {
+      "type": "parameter",
+      "isRequired": true,
+      "description": "The last part of the namespace <RootNamespace>.Features.<FeatureName>",
+      "datatype": "text",
+      "replaces": "__FeatureName__",
+      "FileRename": "__FeatureName__"
+    }
+  },
+  "tags": {
+    "language": "C#",
+    "type": "item"
+  }
+}
