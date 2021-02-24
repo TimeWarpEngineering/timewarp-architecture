@@ -15,7 +15,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
     /// <returns><see cref="__FeatureName__CreateResponse"/></returns>
     [HttpPost(__FeatureName__CreateRequest.RouteTemplate)]
     [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
-    [ProducesResponseType(typeof(__FeatureName__CreateResponse), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(__FeatureName__CreateResponse), (int)HttpStatusCode.Created)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     public Task<IActionResult> Process([FromBody]__FeatureName__CreateRequest a__FeatureName__CreateRequest) => 
       Send(a__FeatureName__CreateRequest);
