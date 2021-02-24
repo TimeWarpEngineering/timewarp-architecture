@@ -1,0 +1,28 @@
+@namespace __RootspaceName__.Features.__FeatureName__s.Pages
+@using __RootspaceName__.Features.Bases
+@inherits BaseComponent
+@page "/__FeatureName__/Create"
+
+<h1>New Item</h1>
+<EditForm Model=@CreateCatalogItemRequest OnValidSubmit=@HandleValidSubmit>
+  <Validate />
+  <ValidationSummary />
+  <div class="form-group">
+      <label for="Name">Name</label>
+      <InputText @bind-Value=__FeatureName__CreateRequest.Name class="form-control" id="Name" />
+  </div>
+  <div class="form-group">
+      <label for="Description">Description</label>
+      <InputText @bind-Value=__FeatureName__CreateRequest.Description class="form-control" id="Description" />
+  </div>
+  <div class="form-group">
+      <label for="PictureUri">PictureUri</label>
+      <InputText @bind-Value=__FeatureName__CreateRequest.PictureUri class="form-control" id="PictureUri" />
+  </div>
+  <div class="form-group">
+      <label for="Price">Price</label>
+      <InputNumber @bind-Value=__FeatureName__CreateRequest.Price class="form-control" id="Price" />
+  </div>
+  <input type="submit" class="btn btn-primary" value="Save" />
+  <button class="btn btn-primary" @onclick=@CancelClick>Cancel</button>
+</EditForm>
