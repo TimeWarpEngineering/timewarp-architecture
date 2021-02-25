@@ -1,0 +1,23 @@
+@namespace __RootspaceName__.Pages
+@using __RootspaceName__.Features.Bases
+@using __RootspaceName__.Components
+
+@inherits BaseComponent
+
+@page "/__FeatureName__/Create"
+
+<h1>New __FeatureName__</h1>
+<EditForm Model="__FeatureName__Model" OnValidSubmit="HandleValidSubmit">
+  <Validate />
+  <ValidationSummary />
+  <label class="block">
+    <span class="text-gray-700">Category Name</span>
+    <InputText class="form-input mt-1 block w-full border border-gray-100 border-solid" @bind-Value="Category.CategoryName"></InputText>
+  </label>
+  <label class="block">
+    <span class="text-gray-700">Description</span>
+    <InputText class="form-input mt-1 block w-full border border-gray-100 border-solid" @bind-Value="Category.Description"></InputText>
+  </label>
+
+  <button type="submit" class="bg-green-400 text-white">Save</button>
+</EditForm>

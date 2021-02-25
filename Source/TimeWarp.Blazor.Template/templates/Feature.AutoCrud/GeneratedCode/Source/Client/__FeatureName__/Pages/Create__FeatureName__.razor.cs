@@ -11,19 +11,8 @@ namespace __RootspaceName__.Pages
   {
     private const string RouteTemplate = "/__FeatureName__/Create";
     public static string GetRoute() => RouteTemplate;
-    public __FeatureName__CreateRequest __FeatureName__CreateRequest { get; set; }
+    __FeatureName__CreateRequest __FeatureName__Model = new __FeatureName__CreateRequest();
 
-    protected async Task CancelClick() =>
-    _ = await Mediator.Send(new ChangeRouteAction { NewRoute = Index.Route });
-
-    protected async Task HandleValidSubmit()
-    {
-      _ = await Mediator.Send(new __FeatureName__CreateAction { __FeatureName__CreateRequest = __FeatureName__CreateRequest });
-      _ = await Mediator.Send(new ChangeRouteAction { NewRoute = Index.Route });
-    }
-
-
-
-
+    protected async Task HandleValidSubmit() => await Send(new __FeatureName__CreateAction() { __FeatureName__CreateRequest = __FeatureName__Model });
   }
 }
