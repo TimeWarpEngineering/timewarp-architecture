@@ -2,10 +2,10 @@
 {
   using FluentValidation;
   
-  public class __FeatureName__CreateRequestValidator : AbstractValidator<__FeatureName__CreateResponse>
+  public class __FeatureName__GetRequestValidator : AbstractValidator<__FeatureName__GetRequest>
   {
 
-    public __FeatureName__CreateRequestValidator()
+    public __FeatureName__GetRequestValidator()
     {
 
       // Declare message as const here. Or could use an injected Language Service
@@ -13,10 +13,8 @@
       // public const string InsufficentFundsMessage = "You can not send more than your balance";
       // public const string MustBeGreaterThanZeroMessage = "'{PropertyName}' must be greater than zero";
 
-      RuleFor(a__FeatureName__CreateRequest => a__FeatureName__CreateRequest.Price)
-        .NotEmpty().GreaterThan(0);
-      RuleFor(a__FeatureName__CreateRequest => a__FeatureName__CreateRequest.Name)
-        .NotEmpty().MinimumLength(2);
+      //RuleFor(a__FeatureName__Request => a__FeatureName__Request.PageIndex)
+      //  .NotEmpty();
 
       // https://docs.fluentvalidation.net/
       // Example Rules

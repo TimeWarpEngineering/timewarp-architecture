@@ -3,10 +3,10 @@ namespace __RootNamespace__.Features.__FeatureName__s
   using MediatR;
   using __RootNamespace__.Features.Bases;
 
-  public class __FeatureName__CreateRequest : BaseApiRequest, IRequest<__FeatureName__CreateResponse>
+  public class __FeatureName__UpsertRequest : BaseApiRequest, IRequest<__FeatureName__UpsertResponse>
   {
     public const string RouteTemplate = "api/__FeatureName__s/__FeatureName__CreateRequest";
-
+    public int Id { get; set; }
     /// <summary>
     /// Name of the Item
     /// </summary>
@@ -24,6 +24,12 @@ namespace __RootNamespace__.Features.__FeatureName__s
     /// <example>999.99</example>
     public decimal Price { get; set; }
 
-    internal override string GetRoute() => $"{RouteTemplate}";
+    internal override string GetRoute() => $"{Route}?{nameof(Id)}={Id}"
+      .Replace
+      (
+        $"{{{nameof(Id)}}}",
+        ItemId.ToString(),
+        System.StringComparison.OrdinalIgnoreCase
+      );
   }
 }

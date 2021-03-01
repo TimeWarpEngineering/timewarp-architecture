@@ -13,13 +13,6 @@ namespace __RootNamespace__.Features.__FeatureName__s
     /// <example>TODO</example>
     public string ItemId { get; set; }
 
-    internal override string RouteFactory =>
-      $"{Route}?{nameof(ItemId)}={ItemId}"
-      .Replace
-      (
-        $"{{{nameof(ItemId)}}}",
-        ItemId.ToString(),
-        System.StringComparison.OrdinalIgnoreCase
-      );
+    internal override string GetRoute() => $"{RouteTemplate}?{nameof(ItemId)}={ItemId}&{nameof(CorrelationId)}={CorrelationId}";
   }
 }

@@ -1,4 +1,4 @@
-namespace __RootspaceName__.Data
+namespace __RootNamespace__.Data
 {
   using Microsoft.EntityFrameworkCore;
 

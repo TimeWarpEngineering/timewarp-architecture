@@ -1,4 +1,4 @@
-namespace __RootspaceName__.Models
+namespace __RootNamespace__.Models
 {
   public class __FeatureName__Entity
   {

@@ -1,11 +1,11 @@
-namespace __RootspaceName__.Pages
+namespace __RootNamespace__.Pages
 {
   using BlazorState.Features.Routing;
-  using __RootspaceName__.Features.__FeatureName__s;
-  using __RootspaceName__.Features.Bases;
+  using __RootNamespace__.Features.__FeatureName__s;
+  using __RootNamespace__.Features.Bases;
   using System.Threading.Tasks;
   using static BlazorState.Features.Routing.RouteState;
-  using static __RootspaceName__.Features.__FeatureName__s.__FeatureName__State;
+  using static __RootNamespace__.Features.__FeatureName__s.__FeatureName__State;
 
   public partial class CreateItem : BaseComponent
   {
