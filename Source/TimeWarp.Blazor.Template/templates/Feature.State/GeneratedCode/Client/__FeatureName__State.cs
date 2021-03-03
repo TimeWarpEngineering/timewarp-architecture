@@ -1,7 +1,6 @@
-﻿namespace __RootNamespace__.Features.__FeatureName__s
+namespace __RootNamespace__.Features.__FeatureName__s
 {
   using BlazorState;
-
   public partial class __FeatureName__State : State<__FeatureName__State>
   {
     public int PageSize { get; private set; }
@@ -15,7 +14,7 @@
 
     public IReadOnlyList<__FeatureName__> __FeatureName__sAsList => ___FeatureName__s.Values.ToList();
 
-    public __FeatureName__State()
+    public ProviderKeyState()
     {
       Initialize();
     }
@@ -27,4 +26,5 @@
       ___FeatureName__s = new Dictionary<string, __FeatureName__>();
     }
   }
+}
 }
