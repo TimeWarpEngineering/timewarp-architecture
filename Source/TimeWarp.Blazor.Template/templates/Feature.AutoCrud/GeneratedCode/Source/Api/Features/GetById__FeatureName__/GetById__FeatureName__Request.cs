@@ -12,7 +12,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
     /// Guid ID for individual item.
     /// </summary>
     /// <example>82b85a2c-c5e4-4306-a803-08d8de1257c1</example>
-    public Guid Id { get; private set; }
+    public Guid Id { get; set; }
 
     internal override string GetRoute() => $"{RouteTemplate}?{nameof(Id)}={Id}";
   }

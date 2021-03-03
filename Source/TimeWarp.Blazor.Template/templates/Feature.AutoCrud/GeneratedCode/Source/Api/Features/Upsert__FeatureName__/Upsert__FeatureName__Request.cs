@@ -7,7 +7,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
   public class Upsert__FeatureName__Request : BaseApiRequest, IRequest<Upsert__FeatureName__Response>
   {
     public const string RouteTemplate = "api/__FeatureName__s/Upsert";
-    public Guid Id { get; private set; }
+    public Guid Id { get; set; }
     /// <summary>
     /// Name of the Item
     /// </summary>
