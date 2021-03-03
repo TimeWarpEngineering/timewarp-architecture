@@ -8,7 +8,8 @@ namespace __RootNamespace__.Mapper
   {
     public MappingProfiles()
     {
-      CreateMap<__FeatureName__CreateRequest, __FeatureName__Entity>(); // means you want to map from User to UserDTO
+      //Map from UpsertRequest to Entity
+      CreateMap<Upsert__FeatureName__Request, __FeatureName__Entity>();
       CreateMap<__FeatureName__Entity, __FeatureName__Dto>();
     }
   }

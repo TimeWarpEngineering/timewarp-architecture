@@ -1,20 +1,24 @@
 namespace __RootNamespace__.Features.__FeatureName__s
 {
   using BlazorState;
-  public partial class __FeatureName__State : State<__FeatureName__State>
+  using System.Collections.Generic;
+  using System.Linq;
+  using System;
+
+  internal partial class __FeatureName__State : State<__FeatureName__State>
   {
     public int PageSize { get; private set; }
     public int PageIndex { get; private set; }
 
-    private Dictionary<string, __FeatureName__> ___FeatureName__s;
+    private Dictionary<Guid, __FeatureName__Dto> ___FeatureName__s;
 
-    public __FeatureName__ Current__FeatureName__ { get; private set; }
+    public __FeatureName__Dto Current__FeatureName__ { get; private set; }
 
-    public IReadOnlyDictionary<string, __FeatureName__> __FeatureName__s => ___FeatureName__s;
+    public IReadOnlyDictionary<Guid, __FeatureName__Dto> __FeatureName__s => ___FeatureName__s;
 
-    public IReadOnlyList<__FeatureName__> __FeatureName__sAsList => ___FeatureName__s.Values.ToList();
+    public IReadOnlyList<__FeatureName__Dto> __FeatureName__sAsList => ___FeatureName__s.Values.ToList();
 
-    public ProviderKeyState()
+    public __FeatureName__State()
     {
       Initialize();
     }
@@ -23,8 +27,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
     {
       PageIndex = 0;
       PageSize = 20;
-      ___FeatureName__s = new Dictionary<string, __FeatureName__>();
+      ___FeatureName__s = new Dictionary<Guid, __FeatureName__Dto>();
     }
   }
-}
 }
