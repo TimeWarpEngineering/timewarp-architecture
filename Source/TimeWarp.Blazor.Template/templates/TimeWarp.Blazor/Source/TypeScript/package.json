@@ -10,17 +10,17 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@tailwindcss/ui": "0.6.2",
-    "@typescript-eslint/eslint-plugin": "4.4.1",
-    "@typescript-eslint/parser": "4.4.1",
-    "eslint": "7.11.0",
-    "eslint-config-airbnb-base": "14.2.0",
-    "eslint-config-prettier": "6.12.0",
-    "eslint-plugin-import": "2.22.1",
-    "eslint-plugin-prettier": "3.1.4",
-    "npm-run-all": "4.1.5",
-    "prettier": "2.1.2",
-    "tailwindcss": "1.9.1",
-    "typescript": "4.0.3"
+    "@typescript-eslint/eslint-plugin": "4.26.1",
+    "@typescript-eslint/parser": "4.26.1",
+    "autoprefixer": "10.2.6",
+    "eslint": "7.28.0",
+    "eslint-config-airbnb-base": "14.2.1",
+    "eslint-config-prettier": "8.3.0",
+    "eslint-plugin-import": "2.23.4",
+    "eslint-plugin-prettier": "3.4.0",
+    "postcss": "8.3.3",
+    "prettier": "2.3.1",
+    "tailwindcss": "2.1.4",
+    "typescript": "4.3.2"
   }
 }

@@ -8,7 +8,6 @@ module.exports = {
     "plugin:import/errors",
     "plugin:import/warnings",
     "plugin:import/typescript",
-    "prettier/@typescript-eslint",
     "plugin:prettier/recommended",
   ],
   parser: "@typescript-eslint/parser",

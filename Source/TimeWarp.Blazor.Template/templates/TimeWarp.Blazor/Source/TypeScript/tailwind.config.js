@@ -9,6 +9,7 @@ module.exports = {
       whitelist: [""],
     },
   },
+  darkmode: false,
   theme: {
     extend: {
       colors: {
@@ -28,5 +29,5 @@ module.exports = {
     borderWidth: ["responsive", "hover"],
     textColor: ["responsive", "hover", "focus", "visited"],
   },
-  plugins: [require("@tailwindcss/ui")],
+  plugins: [],
 };
