@@ -1,9 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>$(TestProjectTargetFramework)</TargetFramework>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Fixie" Version="$(FixieVersion)" />
     <PackageReference Include="FluentAssertions" Version="$(FluentAssertionsVersion)" />
@@ -17,5 +12,4 @@
     <ProjectReference Include="..\..\Source\Server\TimeWarp.Blazor.Server.csproj" />
     <ProjectReference Include="..\..\Source\Api\TimeWarp.Blazor.Api.csproj" />
   </ItemGroup>
-
 </Project>

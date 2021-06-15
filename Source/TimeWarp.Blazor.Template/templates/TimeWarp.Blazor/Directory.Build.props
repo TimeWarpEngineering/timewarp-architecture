@@ -17,8 +17,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <TestProjectTargetFramework>netcoreapp3.1</TestProjectTargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
   <!--Versions of packages used across the solution-->

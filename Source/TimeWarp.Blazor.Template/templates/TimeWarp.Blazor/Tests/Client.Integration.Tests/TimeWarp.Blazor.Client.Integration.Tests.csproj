@@ -1,16 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>$(TestProjectTargetFramework)</TargetFramework>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Fixie" Version="$(FixieVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="$(MicrosoftAspNetCoreMvcTestingVersion)" />
     <PackageReference Include="Shouldly" Version="$(ShouldlyVersion)" />
     <DotNetCliToolReference Include="Fixie.Console" Version="$(FixieConsoleVersion)" />
   </ItemGroup>
-
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Client\TimeWarp.Blazor.Client.csproj" />
