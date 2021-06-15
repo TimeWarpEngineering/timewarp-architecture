@@ -3,6 +3,7 @@ namespace TimeWarp.Blazor.Server
   using AutoMapper;
   using FluentValidation.AspNetCore;
   using MediatR;
+  using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
   using Microsoft.AspNetCore.Builder;
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Mvc;
@@ -137,10 +138,10 @@ namespace TimeWarp.Blazor.Server
             xmlFile = $"{typeof(BaseRequest).Assembly.GetName().Name}.xml";
             xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
             aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-
-            aSwaggerGenOptions.AddFluentValidationRules();
           }
         );
+
+      aServiceCollection.AddFluentValidationRulesToSwagger();
     }
   }
 }
