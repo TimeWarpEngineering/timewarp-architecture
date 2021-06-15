@@ -50,11 +50,10 @@ namespace TimeWarp.Blazor.Client
     public static Task Main(string[] aArgumentArray)
     {
       var builder = WebAssemblyHostBuilder.CreateDefault(aArgumentArray);
-      builder.RootComponents.Add<App>("app");
-      builder.Services.AddSingleton
-      (
-        new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) }
-      );
+      builder.RootComponents.Add<App>("#app");
+      builder.Services.AddScoped
+        (_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+
       ConfigureServices(builder.Services);
 
       WebAssemblyHost host = builder.Build();
