@@ -1,10 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <Description>Blazor Client</Description>
-    <RazorLangVersion>3.0</RazorLangVersion>
-    <CodeAnalysisRuleSet>../../TimeWarp.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -27,7 +25,6 @@
     <PackageReference Include="Dawn.Guard" Version="$(DawnGuardVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(MicrosoftAspNetCoreSignalRClientVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyVersion)" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyBuildVersion)" PrivateAssets="all" />
     <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" Version="$(PeterLeslieMorrisBlazorFluentValidationVersion)" />
     <PackageReference Include="System.Net.Http.Json" Version="$(SystemNetHttpJsonVersion)" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="$(MicrosoftCodeAnalysisFxCopAnalyzersVersion)">
