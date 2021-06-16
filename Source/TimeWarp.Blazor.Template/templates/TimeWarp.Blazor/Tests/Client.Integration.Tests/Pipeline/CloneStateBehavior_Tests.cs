@@ -31,7 +31,7 @@ namespace CloneStateBehavior
       CounterState.Guid.ShouldNotBe(preActionGuid);
     }
 
-    public async Task RollBackStateAndThrow_When_Exception()
+    public async Task RollBackState_When_Exception()
     {
       // Arrange
       CounterState.Initialize(aCount: 22);
@@ -42,12 +42,10 @@ namespace CloneStateBehavior
       {
         Message = "Test Rollback of State"
       };
+      
+      await Send(throwExceptionAction);
 
-      Exception exception = await Shouldly.Should.ThrowAsync<Exception>(async () =>
-      await Send(throwExceptionAction));
-
-      // Assert
-      exception.Message.ShouldBe(throwExceptionAction.Message);
+      // Assert State was rolled back and thus Guid didn't change.
       CounterState.Guid.Equals(preActionGuid);
     }
   }
