@@ -2,16 +2,16 @@
 {
   using System.CommandLine;
   using System.CommandLine.Builder;
-  using System.CommandLine.Invocation;
+  using System.CommandLine.Parsing;
   using System.Threading.Tasks;
 
   internal class Program
   {
-    internal static async Task<int> Main(string[] aArgumentArray)
+    internal static Task<int> Main(string[] aArgumentArray)
     {
       Parser parser = new TimeWarpCommandLineBuilder().Build();
 
-      return await parser.InvokeAsync(aArgumentArray);
+      return parser.InvokeAsync(aArgumentArray);
     }
   }
 }

@@ -3,6 +3,8 @@
   using System;
   using System.CommandLine;
   using System.CommandLine.Invocation;
+  using System.CommandLine.Parsing;
+  using System.Reflection;
   using System.Threading.Tasks;
   using MediatR;
 
@@ -25,16 +27,28 @@
         var request = (IRequest)Activator.CreateInstance(Type);
         foreach (SymbolResult symbolResult in aInvocationContext.ParseResult.CommandResult.Children)
         {
-          var result = (SuccessfulArgumentResult<object>)symbolResult.ArgumentResult;
-          Type.GetProperty(symbolResult.Name).SetValue(request, result.Value); // "Haa",9,7,"Ha"
+          Type optionResultType = typeof(OptionResult);
+
+          object theArgumentConversionResult = 
+            optionResultType.GetProperty("ArgumentConversionResult", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?.GetValue(symbolResult);
+
+          Type successfulArgumentConversionResultType =
+            optionResultType.Assembly.GetType("System.CommandLine.Binding.SuccessfulArgumentConversionResult");
+
+          object theValue = 
+            successfulArgumentConversionResultType.GetProperty("Value")?.GetValue(theArgumentConversionResult);
+          
+          Type.GetProperty(symbolResult.Symbol.Name).SetValue(request, theValue); // "Haa",9,7,"Ha"
         }
 
         await Mediator.Send(request);
 
         return 0;
       }
-      catch (Exception)
+      catch (Exception excpetion)
       {
+        Console.Error.WriteLine(excpetion.Message);
         return 1;
       }
     }

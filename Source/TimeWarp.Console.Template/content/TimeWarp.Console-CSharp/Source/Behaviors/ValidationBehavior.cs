@@ -20,7 +20,7 @@
 
     public Task Process(TRequest aRequest, CancellationToken aCancellationToken)
     {
-      var validationContext = new ValidationContext(aRequest);
+      var validationContext = new ValidationContext<TRequest>(aRequest);
       List<ValidationFailure> validationFailures = Validators
         .Select(aValidationResult => aValidationResult.Validate(validationContext))
         .SelectMany(aValidationResult => aValidationResult.Errors)
