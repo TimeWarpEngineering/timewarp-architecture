@@ -60,9 +60,9 @@
       var command = new Command
       (
         name: aType.Name.Replace("Request", ""),
-        description: XmlDocReader.GetDescriptionForType(aType),
-        handler: new MediatorCommandHandler(aType, ServiceProvider.GetService<IMediator>())
+        description: XmlDocReader.GetDescriptionForType(aType)
       );
+      command.Handler = new MediatorCommandHandler(aType, ServiceProvider.GetService<IMediator>());
 
       // Add command Options from properties
       foreach (PropertyInfo propertyInfo in aType.GetProperties())
@@ -71,8 +71,7 @@
         (
           alias: $"--{propertyInfo.Name}",
           description: XmlDocReader.GetDescriptionForPropertyInfo(propertyInfo),
-          argument: CreateGenericArgument(propertyInfo.PropertyType),
-          isHidden: false
+          argumentType: propertyInfo.PropertyType
         );
         command.AddOption(option);
       }
