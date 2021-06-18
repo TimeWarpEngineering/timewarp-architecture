@@ -18,13 +18,6 @@ steps:
     #workingDirectory: # Optional
     #failOnStderr: false # Optional
 
-# - task: PublishBuildArtifacts@1
-#   displayName: 'Publish Artifact: ReleaseScript'
-#   inputs:
-#     PathtoPublish: 'Build\PublishToGitHubPages.ps1'
-#     ArtifactName: ReleaseScript
-#     publishLocation: Container  
-
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: documentationSite'
   inputs:
@@ -46,9 +39,3 @@ steps:
     repositoryname: 'timewarp-templates'
     branchname: 'gh-pages'
     commitmessage: 'Automated Release $(Release.ReleaseId)'
-
-# - task: PowerShell@2
-#   displayName: 'Deploy to Github pages'
-#   inputs:
-#     targetType: filePath
-#     filePath: './$(System.DefaultWorkingDirectory)/_Documentation/ReleaseScript/PublishToGitHubPages.ps1'
