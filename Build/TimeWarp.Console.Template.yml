@@ -8,11 +8,11 @@ trigger:
   include:
   - Source/TimeWarp.Console.Template/*
 
-queue:
+pool:
   name: TimeWarpEnterprises
 
 variables:
- Major: '0'
+ Major: '5'
  Minor: '0'
  MajorAndMinor: '$(Major).$(Minor)'
  Patch: $[counter(variables.MajorAndMinor,0)]
@@ -21,6 +21,7 @@ variables:
  Configuration: debug
 
 steps:
+- script: dotnet --version
 - script: echo Version $(Version)
 
 - task: DotNetCoreCLI@2
@@ -37,8 +38,8 @@ steps:
     projects: "source/TimeWarp.Console.Template/**/*Tests/*.csproj"
     configurationToPack: $(Configuration)
 
-- task: NuGetCommand@2
-  displayName: 'NuGet pack Console Template'
+- task: DotNetCoreCLI@2
+  displayName: Pack into Nuget
   inputs:
     command: pack
     packagesToPack: $(Build.SourcesDirectory)/source/TimeWarp.Console.Template/TimeWarp.Console.Template.nuspec
@@ -52,10 +53,3 @@ steps:
     PathtoPublish: '$(build.artifactstagingdirectory)'
     ArtifactName: drop
     publishLocation: Container
-
-# - task: NuGetCommand@2
-#   displayName: Push Nuget to Nuget
-#   inputs:
-#     command: push
-#     nuGetFeedType: external
-#     publishFeedCredentials: Nuget.org
