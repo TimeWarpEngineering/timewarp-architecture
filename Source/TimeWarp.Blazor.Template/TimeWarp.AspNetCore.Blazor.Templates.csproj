@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <PackageType>Template</PackageType>
-    <PackageVersion>1.0.1</PackageVersion>
     <PackageId>TimeWarp.AspNetCore.Blazor.Templates</PackageId>
     <Title>TimeWarp Blazor Templates</Title>
     <Authors>Steven T. Cramer</Authors>
