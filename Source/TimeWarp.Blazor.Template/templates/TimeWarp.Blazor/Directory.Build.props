@@ -46,6 +46,7 @@
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>9.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
     <MediatrVersion>9.0.0</MediatrVersion>
     <MicroElementsSwashbuckleFluentValidationVersion>5.1.0</MicroElementsSwashbuckleFluentValidationVersion>
+    <protobufnetGrpcAspNetCoreVersion>1.0.152</protobufnetGrpcAspNetCoreVersion>
     <PeterLeslieMorrisBlazorFluentValidationVersion>1.7.0</PeterLeslieMorrisBlazorFluentValidationVersion>
     <SeleniumSupportVersion>3.141.0</SeleniumSupportVersion>
     <SeleniumWebDriverVersion>3.141.0</SeleniumWebDriverVersion>
