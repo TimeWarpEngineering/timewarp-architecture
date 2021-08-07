@@ -21,8 +21,13 @@ namespace GetWeatherForecastRequestValidator_
       validationResult.IsValid.Should().BeTrue();
     }
 
-    public void Have_error_when_Days_are_negative() => GetWeatherForecastsRequestValidator
-     .ShouldHaveValidationErrorFor(aGetWeatherForecastsRequest => aGetWeatherForecastsRequest.Days, -1);
+    public void Have_error_when_Days_are_negative()
+    {
+      TestValidationResult<GetWeatherForecastsRequest> result =
+        GetWeatherForecastsRequestValidator.TestValidate(new GetWeatherForecastsRequest { Days = -1 });
+
+      result.ShouldHaveValidationErrorFor(aGetWeatherForecastsRequest => aGetWeatherForecastsRequest.Days);
+    }
 
     public void Setup() => GetWeatherForecastsRequestValidator = new GetWeatherForecastsRequestValidator();
   }

@@ -11,5 +11,6 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="$(FluentValidationVersion)" />
     <PackageReference Include="MediatR" Version="$(MediatrVersion)" />
+    <PackageReference Include="protobuf-net.Grpc" Version="$(protobufnetGrpcAspNetCoreVersion)" />
   </ItemGroup>
 </Project>

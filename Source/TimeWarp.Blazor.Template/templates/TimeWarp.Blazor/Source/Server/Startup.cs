@@ -12,6 +12,7 @@ namespace TimeWarp.Blazor.Server
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
   using Microsoft.OpenApi.Models;
+  using ProtoBuf.Grpc.Server;
   using Swashbuckle.AspNetCore.Swagger;
   using System;
   using System.IO;
@@ -20,6 +21,7 @@ namespace TimeWarp.Blazor.Server
   using System.Reflection;
   using TimeWarp.Blazor.Configuration;
   using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Blazor.Features.Hellos;
   using TimeWarp.Blazor.Infrastructure;
 
   public class Startup
@@ -59,10 +61,12 @@ namespace TimeWarp.Blazor.Server
       }
 
       aApplicationBuilder.UseRouting();
+      aApplicationBuilder.UseGrpcWeb();
       aApplicationBuilder.UseEndpoints
       (
         aEndpointRouteBuilder =>
         {
+          aEndpointRouteBuilder.MapGrpcService<IHelloService>();
           aEndpointRouteBuilder.MapControllers();
           aEndpointRouteBuilder.MapBlazorHub();
           aEndpointRouteBuilder.MapFallbackToPage("/_Host");
@@ -78,6 +82,7 @@ namespace TimeWarp.Blazor.Server
       aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
       aServiceCollection.AddRazorPages();
       aServiceCollection.AddServerSideBlazor();
+      aServiceCollection.AddCodeFirstGrpc();
       aServiceCollection.AddMvc()
         .AddFluentValidation
         (
@@ -99,7 +104,7 @@ namespace TimeWarp.Blazor.Server
           (
             new[] { MediaTypeNames.Application.Octet }
           )
-    );
+      );
 
       Client.Program.ConfigureServices(aServiceCollection);
 
