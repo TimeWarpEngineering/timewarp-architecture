@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Api\TimeWarp.Blazor.Shared.csproj" />
+    <ProjectReference Include="..\Shared\TimeWarp.Blazor.Shared.csproj" />
     <ProjectReference Include="..\TypeScript\TimeWarp.Blazor.TypeScript.csproj" />
   </ItemGroup>
 

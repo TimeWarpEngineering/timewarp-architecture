@@ -10,6 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Server\TimeWarp.Blazor.Server.csproj" />
-    <ProjectReference Include="..\..\Source\Api\TimeWarp.Blazor.Shared.csproj" />
+    <ProjectReference Include="..\..\Source\Shared\TimeWarp.Blazor.Shared.csproj" />
   </ItemGroup>
 </Project>

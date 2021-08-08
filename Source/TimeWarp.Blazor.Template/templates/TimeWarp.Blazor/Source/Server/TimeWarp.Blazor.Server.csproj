@@ -29,6 +29,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyServerVersion)" />
     <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" Version="$(MicroElementsSwashbuckleFluentValidationVersion)" />
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="$(protobufnetGrpcAspNetCoreVersion)" />
+    <PackageReference Include="protobuf-net.Grpc.Reflection" Version="$(protobufnetGrpcReflectionVersion)" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.1" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="$(SwashbuckleAspNetCoreAnnotationsVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="$(SwashbuckleAspNetCoreFiltersVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="$(SwashbuckleAspNetCoreSwaggerVersion)" />
@@ -38,7 +40,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Client\TimeWarp.Blazor.Client.csproj" />
-    <ProjectReference Include="..\Api\TimeWarp.Blazor.Shared.csproj" />
+    <ProjectReference Include="..\Shared\TimeWarp.Blazor.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
