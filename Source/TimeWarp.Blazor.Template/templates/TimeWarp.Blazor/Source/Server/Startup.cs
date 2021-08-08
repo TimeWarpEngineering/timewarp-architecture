@@ -68,6 +68,7 @@ namespace TimeWarp.Blazor.Server
         aEndpointRouteBuilder =>
         {
           aEndpointRouteBuilder.MapGrpcService<HelloService>();
+          aEndpointRouteBuilder.MapCodeFirstGrpcReflectionService();
           aEndpointRouteBuilder.MapControllers();
           aEndpointRouteBuilder.MapBlazorHub();
           aEndpointRouteBuilder.MapFallbackToPage("/_Host");
@@ -84,6 +85,7 @@ namespace TimeWarp.Blazor.Server
       aServiceCollection.AddRazorPages();
       aServiceCollection.AddServerSideBlazor();
       aServiceCollection.AddCodeFirstGrpc();
+      aServiceCollection.AddCodeFirstGrpcReflection();
       aServiceCollection.AddMvc()
         .AddFluentValidation
         (

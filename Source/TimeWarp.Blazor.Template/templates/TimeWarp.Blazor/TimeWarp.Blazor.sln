@@ -46,8 +46,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analyzers", "Analyzers", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.Playwright.Tests", "Tests\EndToEnd.Playwright.Tests\EndToEnd.Playwright.Tests.csproj", "{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.GrpcServer", "Source\GrpcServer\TimeWarp.Blazor.GrpcServer.csproj", "{D01F4BA2-75EC-426A-B475-0790F14165F0}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -90,10 +88,6 @@ Global
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D01F4BA2-75EC-426A-B475-0790F14165F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D01F4BA2-75EC-426A-B475-0790F14165F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D01F4BA2-75EC-426A-B475-0790F14165F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D01F4BA2-75EC-426A-B475-0790F14165F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

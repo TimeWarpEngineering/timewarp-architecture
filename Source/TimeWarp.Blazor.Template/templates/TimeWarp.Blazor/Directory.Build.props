@@ -1,6 +1,6 @@
 <Project>
   <!-- Set common properties regarding assembly information and nuget packages -->
-  
+
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>
     <Product>TimeWarp.Blazor</Product>
@@ -22,7 +22,6 @@
 
   <!--Versions of packages used across the solution-->
   <PropertyGroup Label="Package Versions">
-
     <MicrosoftAspNetCoreBlazorHttpClientVersion>5.0.7</MicrosoftAspNetCoreBlazorHttpClientVersion>
     <MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>
     <MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>
@@ -32,6 +31,7 @@
     <MicrosoftPlaywrightVersion>1.13.0</MicrosoftPlaywrightVersion>
     <SystemConfigurationConfigurationManagerVersion>5.0.0</SystemConfigurationConfigurationManagerVersion>
     <SystemNetHttpJsonVersion>5.0.0</SystemNetHttpJsonVersion>
+    <SystemServiceModelPrimitivesVersion>4.8.1</SystemServiceModelPrimitivesVersion>
     <SystemTextJsonVersion>5.0.2</SystemTextJsonVersion>
 
     <AutoMapperExtensionsMicrosoftDependencyInjectionVersion>8.1.1</AutoMapperExtensionsMicrosoftDependencyInjectionVersion>
@@ -61,6 +61,6 @@
     <SwashbuckleAspNetCoreFiltersVersion>7.0.2</SwashbuckleAspNetCoreFiltersVersion>
     <SwashbuckleAspNetCoreSwaggerGenVersion>6.1.5</SwashbuckleAspNetCoreSwaggerGenVersion>
     <SwashbuckleAspNetCoreSwaggerUIVersion>6.1.5</SwashbuckleAspNetCoreSwaggerUIVersion>
-    <SwashbuckleAspNetCoreSwaggerVersion>6.1.5</SwashbuckleAspNetCoreSwaggerVersion>   
+    <SwashbuckleAspNetCoreSwaggerVersion>6.1.5</SwashbuckleAspNetCoreSwaggerVersion>
   </PropertyGroup>
 </Project>
