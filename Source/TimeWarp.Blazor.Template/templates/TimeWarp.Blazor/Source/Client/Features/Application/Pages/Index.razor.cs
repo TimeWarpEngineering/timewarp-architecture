@@ -18,7 +18,7 @@ namespace TimeWarp.Blazor.Pages
     public HelloResponse HelloResponse { get; set; }
     public HelloRequest HelloRequest { get; set; } = new HelloRequest { Name = "Yo" };
 
-    //async Task Submit() =>
-    //  HelloResponse = await HelloService.SayHelloAsync(HelloRequest);
+    async Task Submit() =>
+      HelloResponse = await HelloService.SayHelloAsync(HelloRequest);
   }
 }

@@ -30,6 +30,17 @@
         </SimpleAlert>
 
         <img class="w-full" src="/images/TheFreezeTeam/SOLID_Team.png" />
+        <div>
+          <EditForm Model=@HelloRequest OnValidSubmit=@Submit>
+            <InputText @bind-Value=HelloRequest.Name />
+            <input type="submit" value="Submit" />  
+          </EditForm>
+          @if (HelloResponse != null)
+          {
+            @HelloResponse.Message
+            <br />
+          }
+        </div>
       </VStack>
     </div>
   </MainContent>
