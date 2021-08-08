@@ -21,6 +21,7 @@ namespace TimeWarp.Blazor.Server
   using System.Reflection;
   using TimeWarp.Blazor.Configuration;
   using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Blazor.Features.Hello;
   using TimeWarp.Blazor.Features.Hellos;
   using TimeWarp.Blazor.Infrastructure;
 
@@ -61,12 +62,12 @@ namespace TimeWarp.Blazor.Server
       }
 
       aApplicationBuilder.UseRouting();
-      aApplicationBuilder.UseGrpcWeb();
+      aApplicationBuilder.UseGrpcWeb(new GrpcWebOptions() { DefaultEnabled = true });
       aApplicationBuilder.UseEndpoints
       (
         aEndpointRouteBuilder =>
         {
-          aEndpointRouteBuilder.MapGrpcService<IHelloService>();
+          aEndpointRouteBuilder.MapGrpcService<HelloService>();
           aEndpointRouteBuilder.MapControllers();
           aEndpointRouteBuilder.MapBlazorHub();
           aEndpointRouteBuilder.MapFallbackToPage("/_Host");
