@@ -7,20 +7,23 @@
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
-    
+
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="./Source/Client/Design/*" Condition=" '$(Configuration)' == 'Release' " />
     <Compile Remove="./Source/Client/TailwindUi/*" Condition=" '$(Configuration)' == 'Release' " />
   </ItemGroup>
-  
+
   <ItemGroup>
+    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientVersion)" />
+    <PackageReference Include="Grpc.Net.Client.Web" Version="$(GrpcNetClientWebVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion)" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(MicrosoftAspNetCoreSignalRClientVersion)" />
+    <PackageReference Include="protobuf-net.Grpc" Version="$(protobufnetGrpcAspNetCoreVersion)" />
     <PackageReference Include="System.Net.Http.Json" Version="$(SystemNetHttpJsonVersion)" PrivateAssets="all" />
-    
+
     <PackageReference Include="BlazorComponentUtilities" Version="$(BlazorComponentUtilitiesVersion)" />
     <PackageReference Include="Blazor-State" Version="$(BlazorStateVersion)" />
     <PackageReference Include="Dawn.Guard" Version="$(DawnGuardVersion)" />
@@ -28,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Api\TimeWarp.Blazor.Api.csproj" />
+    <ProjectReference Include="..\Shared\TimeWarp.Blazor.Shared.csproj" />
     <ProjectReference Include="..\TypeScript\TimeWarp.Blazor.TypeScript.csproj" />
   </ItemGroup>
 

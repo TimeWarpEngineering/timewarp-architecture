@@ -1,6 +1,6 @@
 <Project>
   <!-- Set common properties regarding assembly information and nuget packages -->
-  
+
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>
     <Product>TimeWarp.Blazor</Product>
@@ -21,39 +21,46 @@
   </PropertyGroup>
 
   <!--Versions of packages used across the solution-->
-  <PropertyGroup Label="Package Versions">   
+  <PropertyGroup Label="Package Versions">
     <MicrosoftAspNetCoreBlazorHttpClientVersion>5.0.7</MicrosoftAspNetCoreBlazorHttpClientVersion>
-    <MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>5.0.7</MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>
-    <MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>5.0.7</MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>
-    <MicrosoftAspNetCoreComponentsWebAssemblyVersion>5.0.7</MicrosoftAspNetCoreComponentsWebAssemblyVersion>
-    <MicrosoftAspNetCoreMvcTestingVersion>5.0.7</MicrosoftAspNetCoreMvcTestingVersion>
-    <MicrosoftAspNetCoreSignalRClientVersion>5.0.7</MicrosoftAspNetCoreSignalRClientVersion>
+    <MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>
+    <MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>
+    <MicrosoftAspNetCoreComponentsWebAssemblyVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyVersion>
+    <MicrosoftAspNetCoreMvcTestingVersion>5.0.8</MicrosoftAspNetCoreMvcTestingVersion>
+    <MicrosoftAspNetCoreSignalRClientVersion>5.0.8</MicrosoftAspNetCoreSignalRClientVersion>
+    <MicrosoftPlaywrightVersion>1.13.0</MicrosoftPlaywrightVersion>
     <SystemConfigurationConfigurationManagerVersion>5.0.0</SystemConfigurationConfigurationManagerVersion>
     <SystemNetHttpJsonVersion>5.0.0</SystemNetHttpJsonVersion>
+    <SystemServiceModelPrimitivesVersion>4.8.1</SystemServiceModelPrimitivesVersion>
     <SystemTextJsonVersion>5.0.2</SystemTextJsonVersion>
 
     <AutoMapperExtensionsMicrosoftDependencyInjectionVersion>8.1.1</AutoMapperExtensionsMicrosoftDependencyInjectionVersion>
     <AutoMapperVersion>10.1.1</AutoMapperVersion>
-    <BlazorComponentUtilitiesVersion>1.7.0</BlazorComponentUtilitiesVersion>
+    <BlazorComponentUtilitiesVersion>1.7.1</BlazorComponentUtilitiesVersion>
     <BlazorExtensionsLoggingVersion>0.4.0</BlazorExtensionsLoggingVersion>
     <BlazorStateVersion>4.0.0</BlazorStateVersion>
     <DawnGuardVersion>1.12.0</DawnGuardVersion>
     <FixieConsoleVersion>2.2.1</FixieConsoleVersion>
     <FixieVersion>2.2.2</FixieVersion>
     <FluentAssertionsVersion>5.10.3</FluentAssertionsVersion>
-    <FluentValidationAspNetCoreVersion>10.2.3</FluentValidationAspNetCoreVersion>
-    <FluentValidationVersion>10.2.3</FluentValidationVersion>
+    <FluentValidationAspNetCoreVersion>10.3.0</FluentValidationAspNetCoreVersion>
+    <FluentValidationVersion>10.3.0</FluentValidationVersion>
+    <GrpcNetClientVersion>2.38.0</GrpcNetClientVersion>
+    <GrpcNetClientWebVersion>2.38.0</GrpcNetClientWebVersion>
+    <GrpcAspNetCoreWebVersion>2.38.0</GrpcAspNetCoreWebVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>9.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
     <MediatrVersion>9.0.0</MediatrVersion>
-    <MicroElementsSwashbuckleFluentValidationVersion>5.1.0</MicroElementsSwashbuckleFluentValidationVersion>
+    <MicroElementsSwashbuckleFluentValidationVersion>5.2.0</MicroElementsSwashbuckleFluentValidationVersion>
+    <protobufnetGrpcAspNetCoreVersion>1.0.152</protobufnetGrpcAspNetCoreVersion>
+    <protobufnetGrpcReflectionVersion>1.0.152</protobufnetGrpcReflectionVersion>
     <PeterLeslieMorrisBlazorFluentValidationVersion>1.7.0</PeterLeslieMorrisBlazorFluentValidationVersion>
     <SeleniumSupportVersion>3.141.0</SeleniumSupportVersion>
     <SeleniumWebDriverVersion>3.141.0</SeleniumWebDriverVersion>
     <ShouldlyVersion>4.0.3</ShouldlyVersion>
-    <SwashbuckleAspNetCoreAnnotationsVersion>6.1.4</SwashbuckleAspNetCoreAnnotationsVersion>
+    <SwashbuckleAspNetCoreAnnotationsVersion>6.1.5</SwashbuckleAspNetCoreAnnotationsVersion>
     <SwashbuckleAspNetCoreFiltersVersion>7.0.2</SwashbuckleAspNetCoreFiltersVersion>
-    <SwashbuckleAspNetCoreSwaggerGenVersion>6.1.4</SwashbuckleAspNetCoreSwaggerGenVersion>
-    <SwashbuckleAspNetCoreSwaggerUIVersion>6.1.4</SwashbuckleAspNetCoreSwaggerUIVersion>
-    <SwashbuckleAspNetCoreSwaggerVersion>6.1.4</SwashbuckleAspNetCoreSwaggerVersion>   
+    <SwashbuckleAspNetCoreSwaggerGenVersion>6.1.5</SwashbuckleAspNetCoreSwaggerGenVersion>
+    <SwashbuckleAspNetCoreSwaggerUIVersion>6.1.5</SwashbuckleAspNetCoreSwaggerUIVersion>
+    <SwashbuckleAspNetCoreSwaggerVersion>6.1.5</SwashbuckleAspNetCoreSwaggerVersion>
   </PropertyGroup>
 </Project>
