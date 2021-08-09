@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Blazor.Features.WeatherForecastsGrpc
 {
-using ProtoBuf;
+  using ProtoBuf;
   using System;
   using System.Collections.Generic;
   using System.Runtime.Serialization;
@@ -22,6 +22,8 @@ using ProtoBuf;
 
       [DataMember(Order = 3)]
       public int TemperatureC { get; set; }
+
+      public WeatherForecastDto() { }
 
       public WeatherForecastDto(DateTime aDate, string aSummary, int aTemperatureC)
       {
