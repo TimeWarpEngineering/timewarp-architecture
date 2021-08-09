@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientVersion)"/>
-    <PackageReference Include="Grpc.Net.Client.Web" Version="$(GrpcNetClientWebVersion)"/>
+    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientVersion)" />
+    <PackageReference Include="Grpc.Net.Client.Web" Version="$(GrpcNetClientWebVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion)" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(MicrosoftAspNetCoreSignalRClientVersion)" />

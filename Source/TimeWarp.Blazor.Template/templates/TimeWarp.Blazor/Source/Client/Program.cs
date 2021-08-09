@@ -19,6 +19,7 @@ namespace TimeWarp.Blazor.Client
   using TimeWarp.Blazor.Features.ClientLoaders;
   using TimeWarp.Blazor.Features.EventStreams;
   using TimeWarp.Blazor.Features.Hellos;
+  using TimeWarp.Blazor.Features.WeatherForecastsGrpc;
 
   public class Program
   {
@@ -103,11 +104,20 @@ namespace TimeWarp.Blazor.Client
       (
         aServiceProvider =>
         {
-          Console.WriteLine("Getting IHelloService");
           GrpcChannel grpcChannel = aServiceProvider.GetRequiredService<GrpcChannel>();
           return grpcChannel.CreateGrpcService<IHelloService>();
         }
       );
+
+      aServiceCollection.AddSingleton<IWeatherForecastService>
+      (
+        aServiceProvider =>
+        {
+          GrpcChannel grpcChannel = aServiceProvider.GetRequiredService<GrpcChannel>();
+          return grpcChannel.CreateGrpcService<IWeatherForecastService>();
+        }
+      );
+
     }
 
     public static Task Main(string[] aArgumentArray)
