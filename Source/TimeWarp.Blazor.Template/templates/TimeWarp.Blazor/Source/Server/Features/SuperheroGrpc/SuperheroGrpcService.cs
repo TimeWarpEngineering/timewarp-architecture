@@ -10,10 +10,42 @@
 
   public class SuperheroGrpcService : ISuperheroService
   {
-    private readonly HttpClient HttpClient;
-    public SuperheroGrpcService(HttpClient aHttpClient)
+    private readonly string[] Powers = new[]
+     {
+      "Super Maggots",
+      "Eat Anything",
+      "Super Learning",
+      "Explosive Farting",
+      "Poison Generation",
+      "Flight",
+      "Invisibility",
+      "Super Strength",
+      "Fire Manipulation",
+      "Super Speed",
+      "Telepathy",
+      "Hard Light Constructs",
+      "Invulnerability",
+      "Telekinesis",
+      "Shapeshifting"
+    };
+
+    public static string GenerateName(int len)
     {
-      HttpClient = aHttpClient;
+      var r = new Random();
+      string[] consonants = { "b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "l", "n", "p", "q", "r", "s", "sh", "zh", "t", "v", "w", "x" };
+      string[] vowels = { "a", "e", "i", "o", "u", "ae", "y" };
+      string Name = "";
+      Name += consonants[r.Next(consonants.Length)].ToUpper();
+      Name += vowels[r.Next(vowels.Length)];
+      int b = 2; //b tells how many times a new letter has been added. It's 2 right now because the first two letters are already in the name.
+      while (b < len)
+      {
+        Name += consonants[r.Next(consonants.Length)];
+        b++;
+        Name += vowels[r.Next(vowels.Length)];
+        b++;
+      }
+      return Name;
     }
     public List<int> SuperheroIds = new List<int>();
     public Task<SuperheroGrpcResponse> GetSuperheroAsync
@@ -22,27 +54,24 @@
       CallContext aCallContext = default
     )
     {
-      var superheroDto = new SuperheroGrpcDto() { Id = "1", Name = "Mike" };
-      var listsup = new List<SuperheroGrpcDto>();
-      listsup.Add(superheroDto);
-      //for (int number = 1; number < aSuperheroGrpcRequest.NumberOfHero; number++)
-      //{
-      //  SuperheroIds.Add(number);
-      //}
+      var heroList = new List<SuperheroGrpcDto>();
+      var randonm = new Random();
+      for (int heroNumber = 1; heroNumber <= aSuperheroGrpcRequest.NumberOfHero; heroNumber++)
+      {
+        int randomAge = randonm.Next(10, 35);
+        heroList.Add(new SuperheroGrpcDto() {
+          Id = heroNumber.ToString(),
+          Name = GenerateName(randonm.Next(3, 6)),
+          Power = Powers[randonm.Next(0, Powers.Length)],
+          Age = randomAge,
+          BirthDate = DateTime.Now.AddYears(randomAge * -1)
+        }
+        );
+      }
       var response = new SuperheroGrpcResponse()
       {
-        SuperherosGrpc = listsup
+        SuperherosGrpc = heroList
       };
-      //foreach (int superheroId in SuperheroIds)
-      //{
-      //  var builder = new UriBuilder($"https://www.superheroapi.com/api.php/2885189161696978/{0}", superheroId.ToString());
-      //  HttpResponseMessage result = HttpClient.GetAsync(builder.Uri).Result;
-      //  var superhero = new SuperheroGrpcDto();
-      //  string content = await result.Content.ReadAsStringAsync();
-      //  Console.WriteLine("SuperheroAsString" + content);
-      //  superhero = JsonConvert.DeserializeObject<SuperheroGrpcDto>(content);
-      //  response.SuperherosGrpc.Add(superhero);
-      //}
       return Task.FromResult(response);
     }
   }

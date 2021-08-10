@@ -1,7 +1,13 @@
 syntax = "proto3";
 package TimeWarp.Blazor.Features.SuperheroGrpc;
+import "google/protobuf/timestamp.proto";
 
 message SuperheroGrpcDto {
+   string Id = 1;
+   string Name = 2;
+   string Power = 3;
+   int32 Age = 4;
+   .google.protobuf.Timestamp BirthDate = 5;
 }
 message SuperheroGrpcRequest {
    int32 NumberOfHero = 1;

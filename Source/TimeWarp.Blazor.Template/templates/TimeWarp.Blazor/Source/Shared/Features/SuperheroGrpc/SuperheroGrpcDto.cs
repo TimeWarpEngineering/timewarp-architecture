@@ -1,29 +1,21 @@
 ﻿namespace TimeWarp.Blazor.Features.SuperheroGrpc
 {
+  using ProtoBuf;
   using System;
-  using System.Collections.Generic;
-  using System.Linq;
-  using System.Text;
-  using System.Threading.Tasks;
 
+  [ProtoContract]
   public class SuperheroGrpcDto
   {
+    [ProtoMember(1)]
     public string Id { get; set; }
+    [ProtoMember(2)]
     public string Name { get; set; }
-    public Powerstats Powerstats { get; set; }
-    public Image Image { get; set; }
+    [ProtoMember(3)]
+    public string Power { get; set; }
+    [ProtoMember(4)]
+    public int Age { get; set; }
+    [ProtoMember(5, DataFormat = DataFormat.WellKnown)]
+    public DateTime BirthDate { get; set; }
 
-  }
-
-  public class Powerstats
-  {
-    public string Intelligence { get; set; }
-    public string Strength { get; set; }
-    public string Speed { get; set; }
-    public string Durability { get; set; }
-  }
-  public class Image
-  {
-    public string Url { get; set; }
   }
 }

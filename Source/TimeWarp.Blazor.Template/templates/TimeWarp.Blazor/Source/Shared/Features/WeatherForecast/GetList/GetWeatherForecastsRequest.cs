@@ -13,7 +13,6 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
     /// </summary>
     /// <example>5</example>
     public int Days { get; set; }
-
     internal override string GetRoute() => $"{Route}?{nameof(Days)}={Days}&{nameof(CorrelationId)}={CorrelationId}";
   }
 }

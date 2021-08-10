@@ -1,12 +1,12 @@
 ﻿//#WeatherForecast #GetWeatherForecasts #Request #Grpc
 namespace TimeWarp.Blazor.Features.SuperheroGrpc
 {
-  using System.Runtime.Serialization;
+  using ProtoBuf;
 
-  [DataContract]
+  [ProtoContract]
   public class SuperheroGrpcRequest
   {
-    [DataMember(Order = 1)]
+    [ProtoMember(1)]
     public int NumberOfHero { get; set; }
   }
 }
