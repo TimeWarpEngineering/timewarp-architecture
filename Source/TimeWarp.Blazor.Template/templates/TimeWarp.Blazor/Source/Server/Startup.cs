@@ -17,13 +17,15 @@ namespace TimeWarp.Blazor.Server
   using System;
   using System.IO;
   using System.Linq;
+  using System.Net.Http;
   using System.Net.Mime;
   using System.Reflection;
   using TimeWarp.Blazor.Configuration;
   using TimeWarp.Blazor.Features.Bases;
   using TimeWarp.Blazor.Features.Hello;
   using TimeWarp.Blazor.Features.Hellos;
-using TimeWarp.Blazor.Features.WeatherForecastGrpc;
+  using TimeWarp.Blazor.Features.SuperheroGrpc;
+  using TimeWarp.Blazor.Features.WeatherForecastGrpc;
   using TimeWarp.Blazor.Infrastructure;
 
   public class Startup
@@ -70,6 +72,7 @@ using TimeWarp.Blazor.Features.WeatherForecastGrpc;
         {
           aEndpointRouteBuilder.MapGrpcService<HelloService>();
           aEndpointRouteBuilder.MapGrpcService<WeatherForecastGrpcService>();
+          aEndpointRouteBuilder.MapGrpcService<SuperheroGrpcService>();
           aEndpointRouteBuilder.MapCodeFirstGrpcReflectionService();
           aEndpointRouteBuilder.MapControllers();
           aEndpointRouteBuilder.MapBlazorHub();

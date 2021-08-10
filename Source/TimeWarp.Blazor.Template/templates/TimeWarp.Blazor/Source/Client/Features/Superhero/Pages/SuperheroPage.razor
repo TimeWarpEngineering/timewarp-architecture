@@ -1,0 +1,11 @@
+﻿@namespace TimeWarp.Blazor.Features.Superheros
+@inherits BaseComponent
+@page "/Superhero"
+
+@if(SuperheroState.Superheros != null) {
+  foreach (var superhero in SuperheroState.Superheros)
+  {
+    <div>@superhero.Name</div>
+  }
+}
+

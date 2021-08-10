@@ -19,6 +19,7 @@ namespace TimeWarp.Blazor.Client
   using TimeWarp.Blazor.Features.ClientLoaders;
   using TimeWarp.Blazor.Features.EventStreams;
   using TimeWarp.Blazor.Features.Hellos;
+  using TimeWarp.Blazor.Features.SuperheroGrpc;
   using TimeWarp.Blazor.Features.WeatherForecastsGrpc;
 
   public class Program
@@ -69,8 +70,8 @@ namespace TimeWarp.Blazor.Client
           // If no address is set then fallback to the current webpage URL
           if (string.IsNullOrEmpty(backendUrl))
           {
-            NavigationManager navigationManager = aServiceProvider.GetRequiredService<NavigationManager>();
-            backendUrl = navigationManager.BaseUri;
+            //NavigationManager navigationManager = aServiceProvider.GetRequiredService<NavigationManager>();
+            backendUrl = "https://localhost:5001";
           }
 
           Console.WriteLine($"backendUrl:{backendUrl}");
@@ -115,6 +116,15 @@ namespace TimeWarp.Blazor.Client
         {
           GrpcChannel grpcChannel = aServiceProvider.GetRequiredService<GrpcChannel>();
           return grpcChannel.CreateGrpcService<IWeatherForecastService>();
+        }
+      );
+
+      aServiceCollection.AddSingleton<ISuperheroService>
+      (
+        aServiceProvider =>
+        {
+          GrpcChannel grpcChannel = aServiceProvider.GetRequiredService<GrpcChannel>();
+          return grpcChannel.CreateGrpcService<ISuperheroService>();
         }
       );
 

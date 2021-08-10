@@ -4,6 +4,7 @@ namespace TimeWarp.Blazor.Features.Bases
   using TimeWarp.Blazor.Features.Applications;
   using TimeWarp.Blazor.Features.Counters;
   using TimeWarp.Blazor.Features.EventStreams;
+  using TimeWarp.Blazor.Features.Superheros;
   using TimeWarp.Blazor.Features.WeatherForecasts;
 
   /// <summary>
@@ -20,7 +21,7 @@ namespace TimeWarp.Blazor.Features.Bases
     protected EventStreamState EventStreamState => Store.GetState<EventStreamState>();
 
     protected WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
-
+    protected SuperheroState SuperheroState => Store.GetState<SuperheroState>();
     public BaseHandler(IStore aStore) : base(aStore) { }
   }
 }

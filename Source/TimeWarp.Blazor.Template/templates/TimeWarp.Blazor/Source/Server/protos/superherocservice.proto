@@ -1,0 +1,14 @@
+syntax = "proto3";
+package TimeWarp.Blazor.Features.SuperheroGrpc;
+
+message SuperheroGrpcDto {
+}
+message SuperheroGrpcRequest {
+   int32 NumberOfHero = 1;
+}
+message SuperheroGrpcResponse {
+   repeated SuperheroGrpcDto SuperherosGrpc = 1;
+}
+service SuperheroService {
+   rpc GetSuperhero (SuperheroGrpcRequest) returns (SuperheroGrpcResponse);
+}
