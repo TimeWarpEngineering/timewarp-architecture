@@ -1,20 +1,20 @@
 syntax = "proto3";
-package TimeWarp.Blazor.Features.SuperheroGrpc;
+package TimeWarp.Blazor.Features.Superheros;
 import "google/protobuf/timestamp.proto";
 
-message SuperheroGrpcDto {
+message SuperheroDto {
    string Id = 1;
    string Name = 2;
    string Power = 3;
    int32 Age = 4;
    .google.protobuf.Timestamp BirthDate = 5;
 }
-message SuperheroGrpcRequest {
+message SuperheroRequest {
    int32 NumberOfHero = 1;
 }
-message SuperheroGrpcResponse {
-   repeated SuperheroGrpcDto SuperherosGrpc = 1;
+message SuperheroResponse {
+   repeated SuperheroDto Superheros = 1;
 }
 service SuperheroService {
-   rpc GetSuperhero (SuperheroGrpcRequest) returns (SuperheroGrpcResponse);
+   rpc GetSuperhero (SuperheroRequest) returns (SuperheroResponse);
 }

@@ -22,9 +22,7 @@ namespace TimeWarp.Blazor.Server
   using System.Reflection;
   using TimeWarp.Blazor.Configuration;
   using TimeWarp.Blazor.Features.Bases;
-  using TimeWarp.Blazor.Features.Hello;
-  using TimeWarp.Blazor.Features.Hellos;
-  using TimeWarp.Blazor.Features.SuperheroGrpc;
+  using TimeWarp.Blazor.Features.Superheros;
   using TimeWarp.Blazor.Features.WeatherForecastGrpc;
   using TimeWarp.Blazor.Infrastructure;
 
@@ -70,9 +68,8 @@ namespace TimeWarp.Blazor.Server
       (
         aEndpointRouteBuilder =>
         {
-          aEndpointRouteBuilder.MapGrpcService<HelloService>();
           aEndpointRouteBuilder.MapGrpcService<WeatherForecastGrpcService>();
-          aEndpointRouteBuilder.MapGrpcService<SuperheroGrpcService>();
+          aEndpointRouteBuilder.MapGrpcService<SuperheroService>();
           aEndpointRouteBuilder.MapCodeFirstGrpcReflectionService();
           aEndpointRouteBuilder.MapControllers();
           aEndpointRouteBuilder.MapBlazorHub();

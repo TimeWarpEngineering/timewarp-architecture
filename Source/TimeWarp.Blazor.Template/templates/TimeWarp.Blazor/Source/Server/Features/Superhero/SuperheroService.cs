@@ -1,14 +1,11 @@
-﻿namespace TimeWarp.Blazor.Features.SuperheroGrpc
+﻿namespace TimeWarp.Blazor.Features.Superheros
 {
-  using Newtonsoft.Json;
   using ProtoBuf.Grpc;
   using System;
   using System.Collections.Generic;
-  using System.Linq;
-  using System.Net.Http;
   using System.Threading.Tasks;
 
-  public class SuperheroGrpcService : ISuperheroService
+  public class SuperheroService : ISuperheroService
   {
     private readonly string[] Powers = new[]
      {
@@ -48,18 +45,18 @@
       return Name;
     }
     public List<int> SuperheroIds = new List<int>();
-    public Task<SuperheroGrpcResponse> GetSuperheroAsync
+    public Task<SuperheroResponse> GetSuperheroAsync
     (
-      SuperheroGrpcRequest aSuperheroGrpcRequest,
+      SuperheroRequest aSuperheroRequest,
       CallContext aCallContext = default
     )
     {
-      var heroList = new List<SuperheroGrpcDto>();
+      var heroList = new List<SuperheroDto>();
       var randonm = new Random();
-      for (int heroNumber = 1; heroNumber <= aSuperheroGrpcRequest.NumberOfHero; heroNumber++)
+      for (int heroNumber = 1; heroNumber <= aSuperheroRequest.NumberOfHero; heroNumber++)
       {
         int randomAge = randonm.Next(10, 35);
-        heroList.Add(new SuperheroGrpcDto() {
+        heroList.Add(new SuperheroDto() {
           Id = heroNumber.ToString(),
           Name = GenerateName(randonm.Next(3, 6)),
           Power = Powers[randonm.Next(0, Powers.Length)],
@@ -68,9 +65,9 @@
         }
         );
       }
-      var response = new SuperheroGrpcResponse()
+      var response = new SuperheroResponse()
       {
-        SuperherosGrpc = heroList
+        Superheros = heroList
       };
       return Task.FromResult(response);
     }

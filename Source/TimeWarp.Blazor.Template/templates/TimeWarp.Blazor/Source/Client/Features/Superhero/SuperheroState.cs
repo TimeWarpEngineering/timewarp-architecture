@@ -2,17 +2,17 @@
 {
   using BlazorState;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Features.SuperheroGrpc;
+  using TimeWarp.Blazor.Features.Superheros;
 
   internal partial class SuperheroState : State<SuperheroState>
   {
-    private List<SuperheroGrpcDto> _Superheros;
+    private List<SuperheroDto> _Superheros;
 
-    public IReadOnlyList<SuperheroGrpcDto> Superheros => _Superheros.AsReadOnly();
+    public IReadOnlyList<SuperheroDto> Superheros => _Superheros.AsReadOnly();
 
     public SuperheroState()
     {
-      _Superheros = new List<SuperheroGrpcDto>();
+      _Superheros = new List<SuperheroDto>();
     }
 
     public override void Initialize() { }

@@ -4,6 +4,6 @@
 
   internal partial class SuperheroState
   {
-    public class FetchSuperheroGrpcAction : BaseAction { }
+    public class FetchSuperheroAction : BaseAction { }
   }
 }

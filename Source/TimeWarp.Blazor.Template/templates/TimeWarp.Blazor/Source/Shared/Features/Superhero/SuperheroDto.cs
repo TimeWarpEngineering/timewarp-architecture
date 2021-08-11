@@ -1,10 +1,10 @@
-﻿namespace TimeWarp.Blazor.Features.SuperheroGrpc
+﻿namespace TimeWarp.Blazor.Features.Superheros
 {
   using ProtoBuf;
   using System;
 
   [ProtoContract]
-  public class SuperheroGrpcDto
+  public class SuperheroDto
   {
     [ProtoMember(1)]
     public string Id { get; set; }

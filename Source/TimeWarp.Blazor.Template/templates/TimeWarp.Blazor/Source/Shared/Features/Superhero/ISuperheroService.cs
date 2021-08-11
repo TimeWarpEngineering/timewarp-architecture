@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Features.SuperheroGrpc
+﻿namespace TimeWarp.Blazor.Features.Superheros
 {
   using ProtoBuf.Grpc;
   using System.ServiceModel;
@@ -8,9 +8,9 @@
   public interface ISuperheroService
   {
     [OperationContract]
-    Task<SuperheroGrpcResponse> GetSuperheroAsync
+    Task<SuperheroResponse> GetSuperheroAsync
     (
-      SuperheroGrpcRequest aSuperheroGrpcRequest,
+      SuperheroRequest aSuperheroRequest,
       CallContext aCallContext = default
     );
   }
