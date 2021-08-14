@@ -8,7 +8,6 @@ namespace TimeWarp.Blazor.Server
 
   using Microsoft.Extensions.Hosting;
   using TimeWarp.Blazor.Features.Superheros;
-  using TimeWarp.Blazor.Features.WeatherForecastsGrpc;
 
   public class Program
   {
@@ -46,11 +45,8 @@ namespace TimeWarp.Blazor.Server
       {
         ProtoSyntax = ProtoBuf.Meta.ProtoSyntax.Proto3
       };
-      string schema = schemaGenerator.GetSchema<IWeatherForecastService>();
-      System.IO.Directory.CreateDirectory("protos");
-      System.IO.File.WriteAllText("protos/weather_forecast_service.proto", schema);
 
-      schema = schemaGenerator.GetSchema<ISuperheroService>();
+      string schema = schemaGenerator.GetSchema<ISuperheroService>();
       System.IO.Directory.CreateDirectory("protos");
       System.IO.File.WriteAllText("protos/superherocservice.proto", schema);
 

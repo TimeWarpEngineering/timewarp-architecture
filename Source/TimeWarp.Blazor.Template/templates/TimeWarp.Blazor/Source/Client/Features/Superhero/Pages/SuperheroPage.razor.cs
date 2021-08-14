@@ -1,9 +1,10 @@
-﻿namespace TimeWarp.Blazor.Features.Superheros
+﻿namespace TimeWarp.Blazor.Pages
 {
   using System.Threading.Tasks;
+  using TimeWarp.Blazor.Features.Bases;
   using static TimeWarp.Blazor.Features.Superheros.SuperheroState;
 
-  public partial class SuperheroPage
+  public partial class SuperheroPage : BaseComponent
   {
     private const string RouteTemplate = "/Superhero";
     public static string GetRoute() => RouteTemplate;
