@@ -1,9 +1,9 @@
 ﻿@namespace TimeWarp.Blazor.Pages
 @inherits BaseComponent
-@page "/Superhero"
+@page "/Superheros"
 
 <Page>
-  <HeaderContent>Superhero</HeaderContent>
+  <HeaderContent>Superheros</HeaderContent>
   <MainContent>
     @if (SuperheroState.Superheros == null)
     {
@@ -11,7 +11,7 @@
     }
     else
     {
-      <table class="mt-4 min-w-full divide-y divide-gray-200" data-qa="WeatherForecastTable">
+      <table class="mt-4 min-w-full divide-y divide-gray-200" data-qa="SuperheroTable">
         <thead>
           <tr>
             <TableHeader>Number</TableHeader>
