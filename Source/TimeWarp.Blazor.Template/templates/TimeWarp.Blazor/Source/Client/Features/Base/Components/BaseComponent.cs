@@ -9,6 +9,7 @@ namespace TimeWarp.Blazor.Features.Bases
   using TimeWarp.Blazor.Features.Applications;
   using TimeWarp.Blazor.Features.Counters;
   using TimeWarp.Blazor.Features.EventStreams;
+  using TimeWarp.Blazor.Features.Superheros;
   using TimeWarp.Blazor.Features.WeatherForecasts;
 
   /// <summary>
@@ -30,7 +31,7 @@ namespace TimeWarp.Blazor.Features.Bases
     internal CounterState CounterState => GetState<CounterState>();
     internal EventStreamState EventStreamState => GetState<EventStreamState>();
     internal WeatherForecastsState WeatherForecastsState => GetState<WeatherForecastsState>();
-
+    internal SuperheroState SuperheroState => GetState<SuperheroState>();
     protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
 
     protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest).ConfigureAwait(false);
