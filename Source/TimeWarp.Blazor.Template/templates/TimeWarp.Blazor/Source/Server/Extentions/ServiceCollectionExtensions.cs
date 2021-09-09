@@ -71,24 +71,9 @@
         Type optionsAccessorType = typeof(IOptions<>).MakeGenericType(new Type[] { optionType });
         object optionsAccessor = serviceProvider.GetService(optionsAccessorType);
         object value = optionsAccessor?.GetType().GetProperty(nameof(IOptions<Object>.Value)).GetValue(optionsAccessor);
-#if DEBUG
-        // If too noisy and you want to skip some add them here
-        var skipList = new List<string>
-        {
-          nameof(CosmosOptions),
-          nameof(SampleOptions),
-        };
-
-        if (skipList.Contains(optionType.Name))
-        {
-          Console.WriteLine($"{optionType.Name}:");
-          value.Dump();
-        }
-#endif
       }
 
       ValidatorOptions.Global.DisplayNameResolver = originalDisplayNameResolver;
     }
-
   }
 }

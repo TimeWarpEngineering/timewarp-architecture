@@ -8,8 +8,9 @@
     {
       RuleFor(aCosmosOptions => aCosmosOptions.EndPoint).NotEmpty();
       RuleFor(aCosmosOptions => aCosmosOptions.AccessKey).NotEmpty();
-      RuleFor(aCosmosOptions => aCosmosOptions.EndPoint).NotEmpty();
-      RuleFor(aCosmosOptions => aCosmosOptions.EndPoint).NotEmpty();
+
+      RuleFor(aCosmosOptions => aCosmosOptions.DocumentToCheck).NotEmpty()
+        .When(aCosmosOptions => aCosmosOptions.EnableMigration);
     }
   }
 }

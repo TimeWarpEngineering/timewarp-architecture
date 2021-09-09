@@ -1,13 +1,47 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TimeWarp.Blazor.HostedServices
+﻿namespace TimeWarp.Blazor.HostedServices
 {
-    public class StartupHostedService
+  using Microsoft.EntityFrameworkCore;
+  using Microsoft.Extensions.DependencyInjection;
+  using Microsoft.Extensions.Hosting;
+  using Microsoft.Extensions.Logging;
+  using System;
+  using System.Collections.Generic;
+  using System.Linq;
+  using System.Text;
+  using System.Threading;
+  using System.Threading.Tasks;
+  using TimeWarp.Blazor.Data;
+
+  public class StartupHostedService : IHostedService
+  {
+    private readonly IServiceProvider ServiceProvider;
+    private readonly ILogger Logger;
+
+    public StartupHostedService
+    (
+      IServiceProvider aServiceProvider,
+      ILogger<StartupHostedService> aLogger
+    )
     {
-        
+      ServiceProvider = aServiceProvider;
+      Logger = aLogger;
     }
+
+    public async Task StartAsync(CancellationToken aCancellationToken)
+    {
+      Logger.LogInformation("Startup initiated");
+      using IServiceScope scope = ServiceProvider.CreateScope();
+      //SqlDbContext sqlDbContext = scope.ServiceProvider.GetRequiredService<SqlDbContext>();
+      //await sqlDbContext.Database.MigrateAsync();
+
+      CosmosDbContext cosmosDbContext = scope.ServiceProvider.GetRequiredService<CosmosDbContext>();
+      await cosmosDbContext.Database.EnsureCreatedAsync(aCancellationToken);
+    }
+
+    public Task StopAsync(CancellationToken aCancellationToken)
+    {
+      Logger.LogInformation("Startup is complete.");
+      return Task.CompletedTask;
+    }
+  }
 }

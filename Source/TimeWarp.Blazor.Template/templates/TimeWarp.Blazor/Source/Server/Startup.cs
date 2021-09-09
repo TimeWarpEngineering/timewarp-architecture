@@ -8,9 +8,11 @@ namespace TimeWarp.Blazor.Server
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.AspNetCore.ResponseCompression;
+  using Microsoft.EntityFrameworkCore;
   using Microsoft.Extensions.Configuration;
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
+  using Microsoft.Extensions.Options;
   using Microsoft.OpenApi.Models;
   using ProtoBuf.Grpc.Server;
   using Swashbuckle.AspNetCore.Swagger;
@@ -21,8 +23,10 @@ namespace TimeWarp.Blazor.Server
   using System.Net.Mime;
   using System.Reflection;
   using TimeWarp.Blazor.Configuration;
+  using TimeWarp.Blazor.Data;
   using TimeWarp.Blazor.Features.Bases;
   using TimeWarp.Blazor.Features.Superheros;
+  using TimeWarp.Blazor.HostedServices;
   using TimeWarp.Blazor.Infrastructure;
 
   public class Startup
@@ -81,6 +85,7 @@ namespace TimeWarp.Blazor.Server
     public void ConfigureServices(IServiceCollection aServiceCollection)
     {
       ConfigureSettings(aServiceCollection);
+      ConfigureInfrastructure(aServiceCollection);
       aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
       aServiceCollection.AddRazorPages();
       aServiceCollection.AddServerSideBlazor();
@@ -116,10 +121,41 @@ namespace TimeWarp.Blazor.Server
       ConfigureSwagger(aServiceCollection);
     }
 
+    private void ConfigureInfrastructure(IServiceCollection aServiceCollection)
+    {
+      ;//ConfigureCosmos(aServiceCollection, Configuration);
+      aServiceCollection.AddHostedService<StartupHostedService>();
+    }
+
+    private static void ConfigureCosmos(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+    {
+      IServiceScope scope = aServiceCollection.BuildServiceProvider().CreateScope();
+      {
+        CosmosOptions cosmosOptions = scope.ServiceProvider.GetRequiredService<IOptions<CosmosOptions>>().Value;
+
+        aServiceCollection.AddDbContext<CosmosDbContext>
+        (
+          aDbContextOptionsBuilder =>
+            aDbContextOptionsBuilder
+            .UseCosmos
+            (
+              accountEndpoint: cosmosOptions.EndPoint,
+              accountKey: cosmosOptions.AccessKey,
+              databaseName: nameof(CosmosDbContext)
+            )
+        );
+      }
+    }
+
     private void ConfigureSettings(IServiceCollection aServiceCollection)
     {
       aServiceCollection.AddOptions();
-      aServiceCollection.Configure<SampleOptions>(Configuration.GetSection(nameof(SampleOptions)));
+
+      aServiceCollection
+        .ConfigureOptions<CosmosOptions, CosmosOptionsValidator>(Configuration)
+        .ConfigureOptions<SampleOptions, SampleOptionsValidator>(Configuration);
+
+      aServiceCollection.ValidateOptions();
     }
 
     private void ConfigureSwagger(IServiceCollection aServiceCollection)
