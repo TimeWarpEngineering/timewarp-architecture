@@ -129,7 +129,7 @@ namespace TimeWarp.Blazor.Server
 
     private static void ConfigureCosmos(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
     {
-      IServiceScope scope = aServiceCollection.BuildServiceProvider().CreateScope();
+      using IServiceScope scope = aServiceCollection.BuildServiceProvider().CreateScope();
       {
         CosmosOptions cosmosOptions = scope.ServiceProvider.GetRequiredService<IOptions<CosmosOptions>>().Value;
 
@@ -152,8 +152,8 @@ namespace TimeWarp.Blazor.Server
       aServiceCollection.AddOptions();
 
       aServiceCollection
-        .ConfigureOptions<CosmosOptions, CosmosOptionsValidator>(Configuration)
-        .ConfigureOptions<SampleOptions, SampleOptionsValidator>(Configuration);
+        .ConfigureOptions<CosmosOptions, CosmosOptionsValidator>(Configuration);
+        //.ConfigureOptions<SampleOptions, SampleOptionsValidator>(Configuration);
 
       aServiceCollection.ValidateOptions();
     }
