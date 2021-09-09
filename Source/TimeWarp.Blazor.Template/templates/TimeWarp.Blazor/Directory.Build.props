@@ -28,6 +28,8 @@
     <MicrosoftAspNetCoreComponentsWebAssemblyVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyVersion>
     <MicrosoftAspNetCoreMvcTestingVersion>5.0.8</MicrosoftAspNetCoreMvcTestingVersion>
     <MicrosoftAspNetCoreSignalRClientVersion>5.0.8</MicrosoftAspNetCoreSignalRClientVersion>
+    <MicrosoftEntityFrameworkCoreCosmosVersion>5.0.9</MicrosoftEntityFrameworkCoreCosmosVersion>
+    <MicrosoftEntityFrameworkCoreSqlServerVersion>5.0.9</MicrosoftEntityFrameworkCoreSqlServerVersion>
     <MicrosoftPlaywrightVersion>1.13.0</MicrosoftPlaywrightVersion>
     <SystemConfigurationConfigurationManagerVersion>5.0.0</SystemConfigurationConfigurationManagerVersion>
     <SystemNetHttpJsonVersion>5.0.0</SystemNetHttpJsonVersion>
