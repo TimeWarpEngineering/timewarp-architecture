@@ -42,6 +42,7 @@ namespace TimeWarp.Blazor.Server
         );
 
     public static Task<int> Main(string[] aArgumentArray) =>
-      CreateHostBuilder(aArgumentArray).RunOaktonCommands(aArgumentArray);
+      CreateHostBuilder(aArgumentArray)
+      .RunOaktonCommands(aArgumentArray);
   }
 }
