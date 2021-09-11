@@ -37,7 +37,7 @@
 
       aServiceCollection.TryAddEnumerable
       (
-        ServiceDescriptor.Singleton<IValidateOptions<TOptions>,
+        ServiceDescriptor.Transient<IValidateOptions<TOptions>,
         OptionsValidation<TOptions, TOptionsValidator>>()
       );
       return aServiceCollection;

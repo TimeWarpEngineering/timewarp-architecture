@@ -24,10 +24,11 @@
   <PropertyGroup Label="Package Versions">
     <MicrosoftAspNetCoreBlazorHttpClientVersion>5.0.7</MicrosoftAspNetCoreBlazorHttpClientVersion>
     <MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>
-    <MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>
+    <MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>5.0.9</MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>
     <MicrosoftAspNetCoreComponentsWebAssemblyVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyVersion>
     <MicrosoftAspNetCoreMvcTestingVersion>5.0.8</MicrosoftAspNetCoreMvcTestingVersion>
     <MicrosoftAspNetCoreSignalRClientVersion>5.0.8</MicrosoftAspNetCoreSignalRClientVersion>
+    <MicrosoftCodeAnalysisVersion>3.11.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftEntityFrameworkCoreCosmosVersion>5.0.9</MicrosoftEntityFrameworkCoreCosmosVersion>
     <MicrosoftEntityFrameworkCoreSqlServerVersion>5.0.9</MicrosoftEntityFrameworkCoreSqlServerVersion>
     <MicrosoftPlaywrightVersion>1.13.0</MicrosoftPlaywrightVersion>
@@ -45,24 +46,26 @@
     <FixieConsoleVersion>2.2.1</FixieConsoleVersion>
     <FixieVersion>2.2.2</FixieVersion>
     <FluentAssertionsVersion>5.10.3</FluentAssertionsVersion>
-    <FluentValidationAspNetCoreVersion>10.3.0</FluentValidationAspNetCoreVersion>
+    <FluentValidationAspNetCoreVersion>10.3.3</FluentValidationAspNetCoreVersion>
     <FluentValidationVersion>10.3.0</FluentValidationVersion>
     <GrpcNetClientVersion>2.38.0</GrpcNetClientVersion>
-    <GrpcNetClientWebVersion>2.38.0</GrpcNetClientWebVersion>
-    <GrpcAspNetCoreWebVersion>2.38.0</GrpcAspNetCoreWebVersion>
+    <GrpcNetClientWebVersion>2.39.0</GrpcNetClientWebVersion>
+    <GrpcAspNetCoreWebVersion>2.39.0</GrpcAspNetCoreWebVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>9.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
     <MediatrVersion>9.0.0</MediatrVersion>
-    <MicroElementsSwashbuckleFluentValidationVersion>5.2.0</MicroElementsSwashbuckleFluentValidationVersion>
+    <MicroElementsSwashbuckleFluentValidationVersion>5.3.0</MicroElementsSwashbuckleFluentValidationVersion>
+    <OaktonVersion>3.2.2</OaktonVersion>
     <protobufnetGrpcAspNetCoreVersion>1.0.152</protobufnetGrpcAspNetCoreVersion>
     <protobufnetGrpcReflectionVersion>1.0.152</protobufnetGrpcReflectionVersion>
+    <protobufnetGrpcAspNetCoreReflectionVersion>1.0.152</protobufnetGrpcAspNetCoreReflectionVersion>
     <PeterLeslieMorrisBlazorFluentValidationVersion>1.7.0</PeterLeslieMorrisBlazorFluentValidationVersion>
     <SeleniumSupportVersion>3.141.0</SeleniumSupportVersion>
     <SeleniumWebDriverVersion>3.141.0</SeleniumWebDriverVersion>
     <ShouldlyVersion>4.0.3</ShouldlyVersion>
-    <SwashbuckleAspNetCoreAnnotationsVersion>6.1.5</SwashbuckleAspNetCoreAnnotationsVersion>
+    <SwashbuckleAspNetCoreAnnotationsVersion>6.2.1</SwashbuckleAspNetCoreAnnotationsVersion>
     <SwashbuckleAspNetCoreFiltersVersion>7.0.2</SwashbuckleAspNetCoreFiltersVersion>
-    <SwashbuckleAspNetCoreSwaggerGenVersion>6.1.5</SwashbuckleAspNetCoreSwaggerGenVersion>
-    <SwashbuckleAspNetCoreSwaggerUIVersion>6.1.5</SwashbuckleAspNetCoreSwaggerUIVersion>
-    <SwashbuckleAspNetCoreSwaggerVersion>6.1.5</SwashbuckleAspNetCoreSwaggerVersion>
+    <SwashbuckleAspNetCoreSwaggerGenVersion>6.2.1</SwashbuckleAspNetCoreSwaggerGenVersion>
+    <SwashbuckleAspNetCoreSwaggerUIVersion>6.2.1</SwashbuckleAspNetCoreSwaggerUIVersion>
+    <SwashbuckleAspNetCoreSwaggerVersion>6.2.1</SwashbuckleAspNetCoreSwaggerVersion>
   </PropertyGroup>
 </Project>
