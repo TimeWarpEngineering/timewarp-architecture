@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Blazor.Configuration
 {
-  public class CosmosOptions
+  public class CosmosDbOptions
   {
     /// <summary>
     /// The Cosmos DB Endpoint.

@@ -2,15 +2,15 @@
 {
   using FluentValidation;
 
-  public class CosmosOptionsValidator : AbstractValidator<CosmosOptions>
+  public class CosmosDbOptionsValidator : AbstractValidator<CosmosDbOptions>
   {
-    public CosmosOptionsValidator()
+    public CosmosDbOptionsValidator()
     {
-      RuleFor(aCosmosOptions => aCosmosOptions.EndPoint).NotEmpty();
-      RuleFor(aCosmosOptions => aCosmosOptions.AccessKey).NotEmpty();
+      RuleFor(aCosmosDbOptions => aCosmosDbOptions.EndPoint).NotEmpty();
+      RuleFor(aCosmosDbOptions => aCosmosDbOptions.AccessKey).NotEmpty();
 
-      RuleFor(aCosmosOptions => aCosmosOptions.DocumentToCheck).NotEmpty()
-        .When(aCosmosOptions => aCosmosOptions.EnableMigration);
+      RuleFor(aCosmosDbOptions => aCosmosDbOptions.DocumentToCheck).NotEmpty()
+        .When(aCosmosDbOptions => aCosmosDbOptions.EnableMigration);
     }
   }
 }
