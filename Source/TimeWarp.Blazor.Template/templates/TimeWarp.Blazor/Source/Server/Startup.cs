@@ -14,6 +14,7 @@ namespace TimeWarp.Blazor.Server
   using Microsoft.Extensions.Hosting;
   using Microsoft.Extensions.Options;
   using Microsoft.OpenApi.Models;
+  using Oakton.Environment;
   using ProtoBuf.Grpc.Server;
   using Swashbuckle.AspNetCore.Swagger;
   using System;
@@ -123,16 +124,33 @@ namespace TimeWarp.Blazor.Server
 
     private void ConfigureInfrastructure(IServiceCollection aServiceCollection)
     {
+      ConfigureEnvironmentChecks(aServiceCollection);
       ConfigureCosmosDb(aServiceCollection, Configuration);
       aServiceCollection.AddHostedService<StartupHostedService>();
       aServiceCollection.AddHostedService<ProtobufGenerationHostedService>();
+    }
+
+    private void ConfigureEnvironmentChecks(IServiceCollection aServiceCollection)
+    {
+      aServiceCollection.AddSingleton<SampleEnvironmentCheck>();
+      //aServiceCollection.AddSingleton<CosmosDbEnvironmentCheck>();
+
+      aServiceCollection.CheckEnvironment<SampleEnvironmentCheck>
+      (
+        SampleEnvironmentCheck.Description, aSampleEnvironmentCheck => aSampleEnvironmentCheck.Check()
+      );
+
+      //aServiceCollection.CheckEnvironment<CosmosDbEnvironmentCheck>
+      //(
+      //  CosmosDbEnvironmentCheck.Description, aCosmosDbEnvironmentCheck => aCosmosDbEnvironmentCheck.Check()
+      //);
     }
 
     private static void ConfigureCosmosDb(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
     {
       using IServiceScope scope = aServiceCollection.BuildServiceProvider().CreateScope();
       {
-        CosmosOptions cosmosOptions = scope.ServiceProvider.GetRequiredService<IOptions<CosmosOptions>>().Value;
+        CosmosDbOptions cosmosOptions = scope.ServiceProvider.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
 
         aServiceCollection.AddDbContext<CosmosDbContext>
         (
@@ -153,7 +171,7 @@ namespace TimeWarp.Blazor.Server
       aServiceCollection.AddOptions();
 
       aServiceCollection
-        .ConfigureOptions<CosmosOptions, CosmosOptionsValidator>(Configuration)
+        .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(Configuration)
         .ConfigureOptions<SampleOptions, SampleOptionsValidator>(Configuration);
 
       aServiceCollection.ValidateOptions();
