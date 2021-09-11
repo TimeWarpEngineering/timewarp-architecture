@@ -29,7 +29,7 @@
 
     public async Task StartAsync(CancellationToken aCancellationToken)
     {
-      Logger.LogInformation("Startup initiated");
+      Logger.LogInformation($"{nameof(StartupHostedService)} has started.");
       using IServiceScope scope = ServiceProvider.CreateScope();
       //SqlDbContext sqlDbContext = scope.ServiceProvider.GetRequiredService<SqlDbContext>();
       //await sqlDbContext.Database.MigrateAsync();
@@ -40,7 +40,7 @@
 
     public Task StopAsync(CancellationToken aCancellationToken)
     {
-      Logger.LogInformation("Startup is complete.");
+      Logger.LogInformation($"{nameof(StartupHostedService)} has stopped.");
       return Task.CompletedTask;
     }
   }

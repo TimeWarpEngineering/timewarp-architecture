@@ -30,7 +30,7 @@
 
     public async Task StartAsync(CancellationToken aCancellationToken)
     {
-      Logger.LogInformation("Generating Protobuf files");
+      Logger.LogInformation($"{nameof(ProtobufGenerationHostedService)} has started.");
 
       // TODO automate the generation of these using Reflection
 
@@ -48,7 +48,7 @@
 
     public Task StopAsync(CancellationToken aCancellationToken)
     {
-      Logger.LogInformation("Protobuf file generation is complete.");
+      Logger.LogInformation($"{nameof(ProtobufGenerationHostedService)} has stopped.");
       return Task.CompletedTask;
     }
   }
