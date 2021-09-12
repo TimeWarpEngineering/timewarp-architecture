@@ -11,7 +11,11 @@
 
   public static partial class ServiceCollectionExtensions
   {
-    public static IServiceCollection ConfigureOptions<TOptions, TOptionsValidator>(this IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+    public static IServiceCollection ConfigureOptions<TOptions, TOptionsValidator>
+    (
+      this IServiceCollection aServiceCollection,
+      IConfiguration aConfiguration
+    )
       where TOptions : class
       where TOptionsValidator : AbstractValidator<TOptions>
     {
@@ -33,13 +37,14 @@
       where TOptions : class
       where TOptionsValidator : AbstractValidator<TOptions>
     {
-      aServiceCollection.TryAddTransient<TOptionsValidator>();
+      aServiceCollection.TryAddSingleton<TOptionsValidator>();
 
       aServiceCollection.TryAddEnumerable
       (
-        ServiceDescriptor.Transient<IValidateOptions<TOptions>,
+        ServiceDescriptor.Singleton<IValidateOptions<TOptions>,
         OptionsValidation<TOptions, TOptionsValidator>>()
       );
+
       return aServiceCollection;
     }
 
@@ -58,12 +63,11 @@
           aServiceDescriptor => aServiceDescriptor.ServiceType.GetGenericArguments()[0]
         ).Distinct();
 
-      Func<Type, System.Reflection.MemberInfo, System.Linq.Expressions.LambdaExpression, string> originalDisplayNameResolver = ValidatorOptions.Global.DisplayNameResolver;
+      var originalDisplayNameResolver = ValidatorOptions.Global.DisplayNameResolver;
 
       ValidatorOptions.Global.DisplayNameResolver =
         (aType, aMemberInfo, aLambdaExpression) =>
           aType != null && aMemberInfo != null ? $"{aType.Name}:{aMemberInfo.Name}" : null;
-
 
       ServiceProvider serviceProvider = aServiceCollection.BuildServiceProvider();
       foreach (Type optionType in optionTypes)

@@ -97,6 +97,8 @@ namespace TimeWarp.Blazor.Server
         (
           aFluentValidationMvcConfiguration =>
           {
+            // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
+            // will NOT register internals. This feature is utilized.
             aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Startup>();
             aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<BaseRequest>();
           }
@@ -133,7 +135,7 @@ namespace TimeWarp.Blazor.Server
     private void ConfigureEnvironmentChecks(IServiceCollection aServiceCollection)
     {
       aServiceCollection.AddSingleton<SampleEnvironmentCheck>();
-      //aServiceCollection.AddSingleton<CosmosDbEnvironmentCheck>();
+      aServiceCollection.AddSingleton<CosmosDbEnvironmentCheck>();
 
       aServiceCollection.CheckEnvironment<SampleEnvironmentCheck>
       (
@@ -168,8 +170,6 @@ namespace TimeWarp.Blazor.Server
 
     private void ConfigureSettings(IServiceCollection aServiceCollection)
     {
-      aServiceCollection.AddOptions();
-
       aServiceCollection
         .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(Configuration)
         .ConfigureOptions<SampleOptions, SampleOptionsValidator>(Configuration);

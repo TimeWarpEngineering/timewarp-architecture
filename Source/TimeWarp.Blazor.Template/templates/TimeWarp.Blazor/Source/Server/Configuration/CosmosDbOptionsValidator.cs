@@ -2,7 +2,11 @@
 {
   using FluentValidation;
 
-  public class CosmosDbOptionsValidator : AbstractValidator<CosmosDbOptions>
+  /// <remarks>
+  /// This class has to be `internal` or it will automatically be registered
+  /// by RegisterValidatorsFromAssemblyContaining as scoped
+  /// </remarks>
+  internal class CosmosDbOptionsValidator : AbstractValidator<CosmosDbOptions>
   {
     public CosmosDbOptionsValidator()
     {

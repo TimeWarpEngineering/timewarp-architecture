@@ -2,7 +2,11 @@
 {
   using FluentValidation;
 
-  public class SampleOptionsValidator : AbstractValidator<SampleOptions>
+  /// <remarks>
+  /// This class has to be `internal` or it will automatically be registered
+  /// by RegisterValidatorsFromAssemblyContaining as scoped
+  /// </remarks>
+  internal class SampleOptionsValidator : AbstractValidator<SampleOptions>
   {
     public SampleOptionsValidator()
     {
