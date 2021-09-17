@@ -15,6 +15,11 @@
     public string AccessKey { get; set; }
 
     /// <summary>
+    /// The Cosmos DB Database Name
+    /// </summary>
+    public string DatabaseName { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether startup should check for migrations.
     /// </summary>
     public bool EnableMigration { get; set; }
