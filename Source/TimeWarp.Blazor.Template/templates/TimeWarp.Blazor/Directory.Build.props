@@ -23,15 +23,16 @@
   <!--Versions of packages used across the solution-->
   <PropertyGroup Label="Package Versions">
     <MicrosoftAspNetCoreBlazorHttpClientVersion>5.0.7</MicrosoftAspNetCoreBlazorHttpClientVersion>
-    <MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>
-    <MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>5.0.9</MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>
-    <MicrosoftAspNetCoreComponentsWebAssemblyVersion>5.0.8</MicrosoftAspNetCoreComponentsWebAssemblyVersion>
-    <MicrosoftAspNetCoreMvcTestingVersion>5.0.8</MicrosoftAspNetCoreMvcTestingVersion>
-    <MicrosoftAspNetCoreSignalRClientVersion>5.0.8</MicrosoftAspNetCoreSignalRClientVersion>
+    <MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>5.0.10</MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion>
+    <MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>5.0.10</MicrosoftAspNetCoreComponentsWebAssemblyServerVersion>
+    <MicrosoftAspNetCoreComponentsWebAssemblyVersion>5.0.10</MicrosoftAspNetCoreComponentsWebAssemblyVersion>
+    <MicrosoftAspNetCoreMvcTestingVersion>5.0.10</MicrosoftAspNetCoreMvcTestingVersion>
+    <MicrosoftAspNetCoreSignalRClientVersion>5.0.10</MicrosoftAspNetCoreSignalRClientVersion>
+    <MicrosoftExtensionsDiagnosticsHealthChecksEntityFrameworkCoreVersion>5.0.10</MicrosoftExtensionsDiagnosticsHealthChecksEntityFrameworkCoreVersion>
     <MicrosoftCodeAnalysisVersion>3.11.0</MicrosoftCodeAnalysisVersion>
-    <MicrosoftEntityFrameworkCoreCosmosVersion>5.0.9</MicrosoftEntityFrameworkCoreCosmosVersion>
-    <MicrosoftEntityFrameworkCoreSqlServerVersion>5.0.9</MicrosoftEntityFrameworkCoreSqlServerVersion>
-    <MicrosoftPlaywrightVersion>1.13.0</MicrosoftPlaywrightVersion>
+    <MicrosoftEntityFrameworkCoreCosmosVersion>5.0.10</MicrosoftEntityFrameworkCoreCosmosVersion>
+    <MicrosoftEntityFrameworkCoreSqlServerVersion>5.0.10</MicrosoftEntityFrameworkCoreSqlServerVersion>
+    <MicrosoftPlaywrightVersion>1.14.1</MicrosoftPlaywrightVersion>
     <SystemConfigurationConfigurationManagerVersion>5.0.0</SystemConfigurationConfigurationManagerVersion>
     <SystemNetHttpJsonVersion>5.0.0</SystemNetHttpJsonVersion>
     <SystemServiceModelPrimitivesVersion>4.8.1</SystemServiceModelPrimitivesVersion>
@@ -47,8 +48,8 @@
     <FixieVersion>2.2.2</FixieVersion>
     <FluentAssertionsVersion>5.10.3</FluentAssertionsVersion>
     <FluentValidationAspNetCoreVersion>10.3.3</FluentValidationAspNetCoreVersion>
-    <FluentValidationVersion>10.3.0</FluentValidationVersion>
-    <GrpcNetClientVersion>2.38.0</GrpcNetClientVersion>
+    <FluentValidationVersion>10.3.3</FluentValidationVersion>
+    <GrpcNetClientVersion>2.39.0</GrpcNetClientVersion>
     <GrpcNetClientWebVersion>2.39.0</GrpcNetClientWebVersion>
     <GrpcAspNetCoreWebVersion>2.39.0</GrpcAspNetCoreWebVersion>
     <MediatrExtensionsMicrosoftDependencyInjectionVersion>9.0.0</MediatrExtensionsMicrosoftDependencyInjectionVersion>
