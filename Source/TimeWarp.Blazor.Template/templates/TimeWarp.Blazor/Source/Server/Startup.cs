@@ -11,6 +11,7 @@ namespace TimeWarp.Blazor.Server
   using Microsoft.EntityFrameworkCore;
   using Microsoft.Extensions.Configuration;
   using Microsoft.Extensions.DependencyInjection;
+  using Microsoft.Extensions.Diagnostics.HealthChecks;
   using Microsoft.Extensions.Hosting;
   using Microsoft.Extensions.Options;
   using Microsoft.OpenApi.Models;
@@ -23,6 +24,8 @@ namespace TimeWarp.Blazor.Server
   using System.Net.Http;
   using System.Net.Mime;
   using System.Reflection;
+  using System.Threading;
+  using System.Threading.Tasks;
   using TimeWarp.Blazor.Configuration;
   using TimeWarp.Blazor.Data;
   using TimeWarp.Blazor.Features.Bases;
@@ -72,6 +75,7 @@ namespace TimeWarp.Blazor.Server
       (
         aEndpointRouteBuilder =>
         {
+          aEndpointRouteBuilder.MapHealthChecks("/api/health");
           aEndpointRouteBuilder.MapGrpcService<SuperheroService>();
           aEndpointRouteBuilder.MapCodeFirstGrpcReflectionService();
           aEndpointRouteBuilder.MapControllers();
@@ -126,11 +130,37 @@ namespace TimeWarp.Blazor.Server
 
     private void ConfigureInfrastructure(IServiceCollection aServiceCollection)
     {
+      aServiceCollection.AddHealthChecks()
+        .AddDbContextCheck<CosmosDbContext>
+        (
+          name: nameof(CosmosDbContext),
+          HealthStatus.Unhealthy,
+          null,
+          PerformCosmosHealthCheck()
+        );
+        //.AddDbContextCheck<SqlDbContext>();
+
       ConfigureEnvironmentChecks(aServiceCollection);
-      ConfigureCosmosDb(aServiceCollection, Configuration);
+      ConfigureCosmosDb(aServiceCollection);
+      //ConfigureSqlDb(aServiceCollection, Configuration);
       aServiceCollection.AddHostedService<StartupHostedService>();
       aServiceCollection.AddHostedService<ProtobufGenerationHostedService>();
     }
+
+    private static Func<CosmosDbContext, CancellationToken, Task<bool>> PerformCosmosHealthCheck() =>
+      async (cosmosDbContext, _) =>
+      {
+        try
+        {
+          await cosmosDbContext.Database.GetCosmosClient().ReadAccountAsync().ConfigureAwait(true);
+        }
+        catch (HttpRequestException)
+        {
+          return false;
+        }
+
+        return true;
+      };
 
     private void ConfigureEnvironmentChecks(IServiceCollection aServiceCollection)
     {
@@ -142,13 +172,14 @@ namespace TimeWarp.Blazor.Server
         SampleEnvironmentCheck.Description, aSampleEnvironmentCheck => aSampleEnvironmentCheck.Check()
       );
 
-      //aServiceCollection.CheckEnvironment<CosmosDbEnvironmentCheck>
-      //(
-      //  CosmosDbEnvironmentCheck.Description, aCosmosDbEnvironmentCheck => aCosmosDbEnvironmentCheck.Check()
-      //);
+      aServiceCollection.CheckEnvironment<CosmosDbEnvironmentCheck>
+      (
+        CosmosDbEnvironmentCheck.Description,
+        async (aCosmosDbEnvironmentCheck) => await aCosmosDbEnvironmentCheck.CheckAsync()
+      );
     }
 
-    private static void ConfigureCosmosDb(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+    private static void ConfigureCosmosDb(IServiceCollection aServiceCollection)
     {
       using IServiceScope scope = aServiceCollection.BuildServiceProvider().CreateScope();
       {
