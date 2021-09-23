@@ -16,18 +16,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientVersion)" />
-    <PackageReference Include="Grpc.Net.Client.Web" Version="$(GrpcNetClientWebVersion)" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyVersion)" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="$(MicrosoftAspNetCoreComponentsWebAssemblyDevServerVersion)" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(MicrosoftAspNetCoreSignalRClientVersion)" />
-    <PackageReference Include="protobuf-net.Grpc" Version="$(protobufnetGrpcAspNetCoreVersion)" />
-    <PackageReference Include="System.Net.Http.Json" Version="$(SystemNetHttpJsonVersion)" PrivateAssets="all" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Grpc.Net.Client.Web"  />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="protobuf-net.Grpc" />
+    <PackageReference Include="System.Net.Http.Json" PrivateAssets="all" />
 
-    <PackageReference Include="BlazorComponentUtilities" Version="$(BlazorComponentUtilitiesVersion)" />
-    <PackageReference Include="Blazor-State" Version="$(BlazorStateVersion)" />
-    <PackageReference Include="Dawn.Guard" Version="$(DawnGuardVersion)" />
-    <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" Version="$(PeterLeslieMorrisBlazorFluentValidationVersion)" />
+    <PackageReference Include="BlazorComponentUtilities" />
+    <PackageReference Include="Blazor-State" />
+    <PackageReference Include="Dawn.Guard" />
+    <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" />
   </ItemGroup>
 
   <ItemGroup>

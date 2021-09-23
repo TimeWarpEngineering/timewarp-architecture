@@ -7,11 +7,11 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
-  
+
   <ItemGroup>
-    <PackageReference Include="FluentValidation" Version="$(FluentValidationVersion)" />
-    <PackageReference Include="MediatR" Version="$(MediatrVersion)" />
-    <PackageReference Include="protobuf-net.Grpc" Version="$(protobufnetGrpcAspNetCoreVersion)" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="$(SystemServiceModelPrimitivesVersion)" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="protobuf-net.Grpc" />
+    <PackageReference Include="System.ServiceModel.Primitives" />
   </ItemGroup>
 </Project>
