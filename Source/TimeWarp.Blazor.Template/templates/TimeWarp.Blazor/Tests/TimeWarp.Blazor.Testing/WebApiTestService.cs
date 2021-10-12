@@ -30,17 +30,17 @@
       string aAttributeName
     )
     {
-      var baseApiRequest = aRequest as BaseApiRequest;
-      HttpVerb httpverb = baseApiRequest.GetHttpVerb();
+      var apiRequest = aRequest as IApiRequest;
+      HttpVerb httpverb = apiRequest.GetHttpVerb();
       HttpResponseMessage httpResponseMessage = null;
 
       switch (httpverb)
       {
         case HttpVerb.Get:
-          httpResponseMessage = await HttpClient.GetAsync(baseApiRequest.GetRoute());
+          httpResponseMessage = await HttpClient.GetAsync(apiRequest.GetRoute());
           break;
         case HttpVerb.Delete:
-          httpResponseMessage = await HttpClient.DeleteAsync(baseApiRequest.GetRoute());
+          httpResponseMessage = await HttpClient.DeleteAsync(apiRequest.GetRoute());
           break;
         case HttpVerb.Post:
         case HttpVerb.Put:
@@ -50,7 +50,7 @@
           break;
         case HttpVerb.Head:
         case HttpVerb.Options:
-          throw new Exception("Update if ever used!");
+          throw new Exception("Update this if ever used!");
       }
 
 
@@ -89,8 +89,8 @@
           MediaTypeNames.Application.Json
         );
 
-      var baseApiRequest = aRequest as BaseApiRequest;
-      HttpVerb httpverb = baseApiRequest.GetHttpVerb();
+      var apiRequest = aRequest as IApiRequest;
+      HttpVerb httpverb = apiRequest.GetHttpVerb();
 
       return httpverb switch
       {
