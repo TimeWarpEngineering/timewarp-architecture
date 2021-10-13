@@ -53,7 +53,7 @@
     {
       var heroList = new List<SuperheroDto>();
       var randonm = new Random();
-      for (int heroNumber = 1; heroNumber <= aSuperheroRequest.NumberOfHero; heroNumber++)
+      for (int heroNumber = 1; heroNumber <= aSuperheroRequest.NumberOfHeros; heroNumber++)
       {
         int randomAge = randonm.Next(10, 35);
         heroList.Add(new SuperheroDto() {

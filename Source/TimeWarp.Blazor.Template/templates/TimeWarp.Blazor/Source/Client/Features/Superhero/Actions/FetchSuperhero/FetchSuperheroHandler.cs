@@ -23,7 +23,7 @@
       )
       {
         SuperheroState._Superheros.Clear();
-        var getSuperheroRequest = new SuperheroRequest { NumberOfHero = 5};
+        var getSuperheroRequest = new SuperheroRequest { NumberOfHeros = 5};
         SuperheroResponse getSuperheroResponse =
           await SuperheroService.GetSuperheroAsync(getSuperheroRequest);
 

@@ -6,6 +6,6 @@
   public class SuperheroRequest
   {
     [ProtoMember(1)]
-    public int NumberOfHero { get; set; }
+    public int NumberOfHeros { get; set; }
   }
 }

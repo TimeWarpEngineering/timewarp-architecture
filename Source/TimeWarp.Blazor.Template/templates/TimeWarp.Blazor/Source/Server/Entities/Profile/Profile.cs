@@ -1,6 +1,6 @@
-﻿namespace TimeWarp.Blazor.Entities.UserPreferences
+﻿namespace TimeWarp.Blazor.Entities
 {
-  public class UserSettings : BaseEntity
+  public class Profile : BaseEntity
   {
     public string DisplayName { get; set; }
     public string Language { get; set; }

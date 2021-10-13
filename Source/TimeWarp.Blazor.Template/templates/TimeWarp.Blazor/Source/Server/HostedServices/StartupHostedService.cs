@@ -31,8 +31,9 @@
     {
       Logger.LogInformation($"{nameof(StartupHostedService)} has started.");
       using IServiceScope scope = ServiceProvider.CreateScope();
+
       //SqlDbContext sqlDbContext = scope.ServiceProvider.GetRequiredService<SqlDbContext>();
-      //await sqlDbContext.Database.MigrateAsync();
+      //await sqlDbContext.Database.MigrateAsync(aCancellationToken);
 
       CosmosDbContext cosmosDbContext = scope.ServiceProvider.GetRequiredService<CosmosDbContext>();
       await cosmosDbContext.Database.EnsureCreatedAsync(aCancellationToken);

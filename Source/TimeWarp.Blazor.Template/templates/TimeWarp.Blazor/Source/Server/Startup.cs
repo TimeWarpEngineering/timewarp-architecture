@@ -148,11 +148,11 @@ namespace TimeWarp.Blazor.Server
     }
 
     private static Func<CosmosDbContext, CancellationToken, Task<bool>> PerformCosmosHealthCheck() =>
-      async (cosmosDbContext, _) =>
+      async (aCosmosDbContext, _) =>
       {
         try
         {
-          await cosmosDbContext.Database.GetCosmosClient().ReadAccountAsync().ConfigureAwait(true);
+          await aCosmosDbContext.Database.GetCosmosClient().ReadAccountAsync().ConfigureAwait(true);
         }
         catch (HttpRequestException)
         {
