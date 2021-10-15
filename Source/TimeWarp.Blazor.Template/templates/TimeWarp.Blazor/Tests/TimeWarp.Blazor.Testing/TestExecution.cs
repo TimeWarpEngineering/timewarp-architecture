@@ -11,9 +11,7 @@
   [NotTest]
   public class TestExecution : IExecution
   {
-    //private readonly IServiceScopeFactory ServiceScopeFactory;
     private readonly ServiceProvider ServiceProvider;
-    //private bool Disposed;
 
     public TestExecution()
     {
@@ -90,26 +88,5 @@
       aServiceCollection.AddSingleton<TimeWarpBlazorServerApplication>();
       ; // Add other applications you want to run here
     }
-
-    //public void Dispose()
-    //{
-    //  Dispose(true);
-    //  GC.SuppressFinalize(this);
-    //}
-
-    //protected virtual void Dispose(bool aIsDisposing)
-    //{
-    //  if (!Disposed)
-    //  {
-    //    if (aIsDisposing)
-    //    {
-    //      Console.WriteLine("==== Disposing ServiceScopeFactory ====");
-    //      //(ServiceScopeFactory as IDisposable)?.Dispose();
-    //      Console.WriteLine("==== ServiceScopeFactory.Disposed ====");
-    //    }
-    //    Disposed = true;
-    //  }
-    //}
-
   }
 }
