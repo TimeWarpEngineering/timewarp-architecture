@@ -133,18 +133,18 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
   public class ClientTestConvention : ITestProject
   {
     public void Configure(TestConfiguration aTestConfiguration, TestEnvironment aTestEnvironment) =>
-      aTestConfiguration.Conventions.Add<TimeWarpDiscovery, TimeWarpExecution>();
+      aTestConfiguration.Conventions.Add<TestDiscovery, TestExecution>();
   }
 
-  [NotTest]
-  public class TimeWarpDiscovery : IDiscovery
-  {
-    public IEnumerable<Type> TestClasses(IEnumerable<Type> aConcreteClasses) =>
-      aConcreteClasses.Where(aType => aType.IsPublic && !aType.Has<NotTest>());
+  //[NotTest]
+  //public class TimeWarpDiscovery : IDiscovery
+  //{
+  //  public IEnumerable<Type> TestClasses(IEnumerable<Type> aConcreteClasses) =>
+  //    aConcreteClasses.Where(aType => aType.IsPublic && !aType.Has<NotTest>());
 
-    public IEnumerable<MethodInfo> TestMethods(IEnumerable<MethodInfo> aPublicMethods) =>
-      aPublicMethods.Where(aMethodInfo => aMethodInfo.Name != "Setup" && !aMethodInfo.IsSpecialName);
-  }
+  //  public IEnumerable<MethodInfo> TestMethods(IEnumerable<MethodInfo> aPublicMethods) =>
+  //    aPublicMethods.Where(aMethodInfo => aMethodInfo.Name != "Setup" && !aMethodInfo.IsSpecialName);
+  //}
 
   [NotTest]
   public class TimeWarpExecution : IExecution
