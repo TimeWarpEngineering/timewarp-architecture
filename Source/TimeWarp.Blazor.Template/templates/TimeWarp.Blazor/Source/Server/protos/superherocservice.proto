@@ -10,7 +10,7 @@ message SuperheroDto {
    .google.protobuf.Timestamp BirthDate = 5;
 }
 message SuperheroRequest {
-   int32 NumberOfHero = 1;
+   int32 NumberOfHeros = 1;
 }
 message SuperheroResponse {
    repeated SuperheroDto Superheros = 1;
