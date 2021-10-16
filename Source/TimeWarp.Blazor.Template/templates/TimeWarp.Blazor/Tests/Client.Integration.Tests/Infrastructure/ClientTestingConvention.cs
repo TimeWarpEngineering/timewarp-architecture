@@ -1,6 +1,7 @@
 namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
   using BlazorState;
+  using Dawn;
   using Fixie;
   using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
@@ -14,181 +15,87 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
   using TimeWarp.Blazor.Features.ClientLoaders;
   using TimeWarp.Blazor.Testing;
 
-
-  //[NotTest]
-  //public class TestingConvention : Discovery, Execution, IDisposable
-  //{
-  //  private readonly IServiceScopeFactory ServiceScopeFactory;
-  //  private HttpClient ServerHttpClient;
-  //  private WebApplicationFactory<Server.Startup> ServerWebApplicationFactory;
-
-  //  public TestingConvention()
-  //  {
-  //    var testServices = new ServiceCollection();
-  //    ConfigureTestServices(testServices);
-  //    ServiceProvider serviceProvider = testServices.BuildServiceProvider();
-  //    ServiceScopeFactory = serviceProvider.GetService<IServiceScopeFactory>();
-
-  //    Classes.Where(aType => aType.IsPublic && !aType.Has<NotTest>());
-  //    Methods.Where(aMethodInfo => aMethodInfo.Name != nameof(Setup) && !aMethodInfo.IsSpecialName);
-  //  }
-
-  //  public void Execute(TestClass aTestClass)
-  //  {
-  //    aTestClass.RunCases
-  //    (
-  //      aCase =>
-  //      {
-  //        using IServiceScope serviceScope = ServiceScopeFactory.CreateScope();
-  //        object instance = serviceScope.ServiceProvider.GetService(aTestClass.Type);
-  //        Setup(instance);
-  //        aCase.Execute(instance);
-  //        instance.Dispose();
-  //      }
-  //     );
-  //  }
-
-  //  private static void Setup(object aInstance)
-  //  {
-  //    MethodInfo methodInfo = aInstance.GetType().GetMethod(nameof(Setup));
-  //    methodInfo?.Execute(aInstance);
-  //  }
-
-  //  private void ConfigureTestServices(ServiceCollection aServiceCollection)
-  //  {
-  //    ServerWebApplicationFactory = new WebApplicationFactory<Server.Startup>();
-  //    ServerHttpClient = ServerWebApplicationFactory.CreateClient();
-
-  //    ConfigureWebAssemblyHost(aServiceCollection);
-
-  //    aServiceCollection.AddSingleton(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-
-
-  //    aServiceCollection.Scan
-  //    (
-  //      aTypeSourceSelector => aTypeSourceSelector
-  //        .FromAssemblyOf<TestingConvention>()
-  //        .AddClasses(action: (aClasses) => aClasses.Where(aType => aType.IsPublic && !aType.Has<NotTest>()))
-  //        .AsSelf()
-  //        .WithScopedLifetime()
-  //    );
-  //  }
-
-  //  private void ConfigureWebAssemblyHost(ServiceCollection aServiceCollection)
-  //  {
-  //    //var webAssemblyHostBuilder = WebAssemblyHostBuilder.CreateDefault();
-  //    //ConfigureServices(webAssemblyHostBuilder.Services);
-
-  //    //WebAssemblyHost webAssemblyHost = webAssemblyHostBuilder.Build();
-  //    //aServiceCollection.AddSingleton(webAssemblyHost);
-
-  //    var clientHostBuilder = ClientHostBuilder.CreateDefault();
-  //    ConfigureServices(clientHostBuilder.Services);
-
-  //    ClientHost clientHost = clientHostBuilder.Build();
-  //    aServiceCollection.AddSingleton(clientHost);
-
-  //  }
-
-  //  private void ConfigureServices(IServiceCollection aServiceCollection)
-  //  {
-  //    // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
-  //    aServiceCollection.AddSingleton(ServerHttpClient);
-  //    aServiceCollection.AddBlazorState
-  //    (
-  //      aOptions => aOptions.Assemblies =
-  //      new Assembly[] { typeof(TimeWarp.Blazor.Client.Program).GetTypeInfo().Assembly }
-  //    );
-
-  //    aServiceCollection.AddSingleton
-  //    (
-  //      new JsonSerializerOptions
-  //      {
-  //        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-  //      }
-  //    );
-
-  //    aServiceCollection.AddSingleton<IClientLoaderConfiguration, ClientLoaderTestConfiguration>();
-  //  }
-
-  //  private bool DisposedValue;
-
-  //  protected virtual void Dispose(bool aIsDisposing)
-  //  {
-  //    if (!DisposedValue)
-  //    {
-  //      if (aIsDisposing)
-  //      {
-  //        ServerWebApplicationFactory.Dispose();
-  //      }
-
-  //      DisposedValue = true;
-  //    }
-  //  }
-
-  //  public void Dispose() => Dispose(true);
-  //}
-
   [NotTest]
   public class ClientTestConvention : ITestProject
   {
     public void Configure(TestConfiguration aTestConfiguration, TestEnvironment aTestEnvironment) =>
-      aTestConfiguration.Conventions.Add<TestDiscovery, TestExecution>();
+      aTestConfiguration.Conventions.Add<TestDiscovery, TimeWarpExecution>();
   }
-
-  //[NotTest]
-  //public class TimeWarpDiscovery : IDiscovery
-  //{
-  //  public IEnumerable<Type> TestClasses(IEnumerable<Type> aConcreteClasses) =>
-  //    aConcreteClasses.Where(aType => aType.IsPublic && !aType.Has<NotTest>());
-
-  //  public IEnumerable<MethodInfo> TestMethods(IEnumerable<MethodInfo> aPublicMethods) =>
-  //    aPublicMethods.Where(aMethodInfo => aMethodInfo.Name != "Setup" && !aMethodInfo.IsSpecialName);
-  //}
 
   [NotTest]
   public class TimeWarpExecution : IExecution
   {
+    private readonly ServiceProvider ServiceProvider;
+
     private readonly IServiceScopeFactory ServiceScopeFactory;
-    private HttpClient ServerHttpClient;
-    private WebApplicationFactory<Server.Startup> ServerWebApplicationFactory;
+    //private HttpClient ServerHttpClient;
+    //private WebApplicationFactory<Server.Startup> ServerWebApplicationFactory;
 
     public TimeWarpExecution()
     {
       var testServices = new ServiceCollection();
       ConfigureTestServices(testServices);
-      ServiceProvider serviceProvider = testServices.BuildServiceProvider();
-      ServiceScopeFactory = serviceProvider.GetService<IServiceScopeFactory>();
+      ServiceProvider = testServices.BuildServiceProvider();
+      ServiceScopeFactory = ServiceProvider.GetService<IServiceScopeFactory>();
     }
 
     public async Task Run(TestSuite aTestSuite)
     {
+      IServiceScopeFactory serviceScopeFactory = ServiceProvider.GetService<IServiceScopeFactory>();
       foreach (TestClass testClass in aTestSuite.TestClasses)
       {
+        Console.WriteLine($"==== Executing Cases for the class {testClass.Type.FullName} ====");
         foreach (Test test in testClass.Tests)
         {
-          using IServiceScope serviceScope = ServiceScopeFactory.CreateScope();
+          if (test.Has<SkipAttribute>(out SkipAttribute skip))
+          {
+            await test.Skip(skip.Reason);
+            continue;
+          }
+          using IServiceScope serviceScope = serviceScopeFactory.CreateScope();
           object instance = serviceScope.ServiceProvider.GetService(testClass.Type);
-          //object instance = testClass.Construct();
 
-          MethodInfo method = testClass.Type.GetMethod("SetUp");
-          if (method != null)
-            await method.Call(instance);
+          Console.WriteLine($"==== Run Setup for test: {test.Name} ====");
+          await Setup(instance, testClass);
 
+          Console.WriteLine($"==== Execute test: {test.Name} ====");
           await test.Run(instance);
+
+          Console.WriteLine($"==== Run CleanUp for test: {test.Name} ====");
+          await Cleanup(instance, testClass);
         }
       }
+      (serviceScopeFactory as IDisposable).Dispose();
+    }
+
+    private async Task Setup(object aInstance, TestClass aTestClass)
+    {
+      Guard.Argument(aInstance, nameof(aInstance)).NotNull();
+
+      MethodInfo methodInfo = aTestClass.Type.GetMethod(nameof(Setup));
+      if (methodInfo != null)
+        await methodInfo.Call(aInstance);
+    }
+    private async Task Cleanup(object aInstance, TestClass aTestClass)
+    {
+      Guard.Argument(aInstance, nameof(aInstance)).NotNull();
+
+      MethodInfo methodInfo = aTestClass.Type.GetMethod(nameof(Cleanup));
+      if (methodInfo != null)
+        await methodInfo.Call(aInstance);
     }
 
     private void ConfigureTestServices(ServiceCollection aServiceCollection)
     {
-      ServerWebApplicationFactory = new WebApplicationFactory<Server.Startup>();
-      ServerHttpClient = ServerWebApplicationFactory.CreateClient();
+      Console.WriteLine($"==== {nameof(ConfigureTestServices)} ====");
+      ConfigurationApplications(aServiceCollection);
 
-      ConfigureWebAssemblyHost(aServiceCollection);
+      //ServerWebApplicationFactory = new WebApplicationFactory<Server.Startup>();
+      //ServerHttpClient = ServerWebApplicationFactory.CreateClient();
+
+      //ConfigureWebAssemblyHost(aServiceCollection);
 
       aServiceCollection.AddSingleton(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-
 
       aServiceCollection.Scan
       (
@@ -200,41 +107,45 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       );
     }
 
-    private void ConfigureWebAssemblyHost(ServiceCollection aServiceCollection)
+    //private void ConfigureWebAssemblyHost(ServiceCollection aServiceCollection)
+    //{
+    //  var clientHostBuilder = ClientHostBuilder.CreateDefault();
+    //  //ConfigureServices(clientHostBuilder.Services);
+
+    //  ClientHost clientHost = clientHostBuilder.Build();
+    //  aServiceCollection.AddSingleton(clientHost);
+    //}
+
+    //private void ConfigureServices(IServiceCollection aServiceCollection)
+    //{
+    //  // Maybe call Program.ConfigureServices
+    //  //Program.ConfigureServices(aServiceCollection);
+
+    //  //// Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
+    //  //aServiceCollection.AddSingleton<HttpClient>();
+    //  aServiceCollection.AddBlazorState
+    //  (
+    //    aOptions => aOptions.Assemblies =
+    //    new Assembly[] { typeof(TimeWarp.Blazor.Client.Program).GetTypeInfo().Assembly }
+    //  );
+
+    //  //aServiceCollection.AddSingleton
+    //  //(
+    //  //  new JsonSerializerOptions
+    //  //  {
+    //  //    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    //  //  }
+    //  //);
+
+    //  aServiceCollection.AddSingleton<IClientLoaderConfiguration, ClientLoaderTestConfiguration>();
+    //}
+
+    private void ConfigurationApplications(ServiceCollection aServiceCollection)
     {
-      //var webAssemblyHostBuilder = WebAssemblyHostBuilder.CreateDefault();
-      //ConfigureServices(webAssemblyHostBuilder.Services);
-
-      //WebAssemblyHost webAssemblyHost = webAssemblyHostBuilder.Build();
-      //aServiceCollection.AddSingleton(webAssemblyHost);
-
-      var clientHostBuilder = ClientHostBuilder.CreateDefault();
-      ConfigureServices(clientHostBuilder.Services);
-
-      ClientHost clientHost = clientHostBuilder.Build();
-      aServiceCollection.AddSingleton(clientHost);
-
-    }
-
-    private void ConfigureServices(IServiceCollection aServiceCollection)
-    {
-      // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
-      aServiceCollection.AddSingleton(ServerHttpClient);
-      aServiceCollection.AddBlazorState
-      (
-        aOptions => aOptions.Assemblies =
-        new Assembly[] { typeof(TimeWarp.Blazor.Client.Program).GetTypeInfo().Assembly }
-      );
-
-      aServiceCollection.AddSingleton
-      (
-        new JsonSerializerOptions
-        {
-          PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        }
-      );
-
-      aServiceCollection.AddSingleton<IClientLoaderConfiguration, ClientLoaderTestConfiguration>();
+      // Maybe we add the ClientHost here and have it set up BlazorState Etc on construction?
+      aServiceCollection.AddSingleton<ClientHost>();
+      aServiceCollection.AddSingleton<TimeWarpBlazorServerApplication>();
+      ; // Add other applications you want to run here
     }
   }
 }

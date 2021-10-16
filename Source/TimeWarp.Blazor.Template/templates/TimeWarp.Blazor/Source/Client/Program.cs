@@ -4,7 +4,6 @@ namespace TimeWarp.Blazor.Client
   using Grpc.Net.Client;
   using Grpc.Net.Client.Web;
   using MediatR;
-  using Microsoft.AspNetCore.Components;
   using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Microsoft.Extensions.Configuration;
   using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +17,6 @@ namespace TimeWarp.Blazor.Client
   using TimeWarp.Blazor.Components;
   using TimeWarp.Blazor.Features.ClientLoaders;
   using TimeWarp.Blazor.Features.EventStreams;
-  using TimeWarp.Blazor.Features.Hellos;
   using TimeWarp.Blazor.Features.Superheros;
 
   public class Program

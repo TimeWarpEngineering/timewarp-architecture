@@ -9,6 +9,16 @@ title: TimeWarp Blazor Template Overview
 [![NuGet](https://img.shields.io/nuget/dt/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
 [![Build Status](https://timewarpenterprises.visualstudio.com/timewarp-templates/_apis/build/status/TimeWarp.Blazor.Template?branchName=master)](https://timewarpenterprises.visualstudio.com/timewarp-templates/_build/latest?definitionId=20&branchName=master)
 
+This is a dotnet net template for creating a Single Page Application(SPA) with Blazor and dotnet 5. The TimeWarp view of clean architecture, much thanks to Jimmy Bogard, Steve Ardalis Smith, Jason Taylor and more.
+
+## Technologies
+Blazor
+MediatR
+Automapper
+FluentValidation
+[Playwright](https://playwright.dev/)
+
+
 ## Installation
 
 ```console
