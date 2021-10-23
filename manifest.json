@@ -26,15 +26,26 @@
       "version": ""
     },
     {
+      "type": "Resource",
+      "source_relative_path": "../Assets/LogoResized.png",
+      "output": {
+        "resource": {
+          "relative_path": "Assets/LogoResized.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
       "type": "Conceptual",
       "source_relative_path": "../README.md",
       "output": {
         ".html": {
           "relative_path": "README.html",
-          "hash": "2L85a9wSoZCamQyQdQ7P+w=="
+          "hash": "PjyTjWkJMhyeI1dnrvicVA=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -43,10 +54,10 @@
       "output": {
         ".html": {
           "relative_path": "Backlog/Todo.html",
-          "hash": "IGmx9QqZTn3ojT2lKAPVOA=="
+          "hash": "zDasaT1GElxLlvHBv9+Zyg=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -55,10 +66,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Features.html",
-          "hash": "VzVQ1j5+KioD/WR3OE007w=="
+          "hash": "YWqAYoU/R5Gj29Y8lptwew=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -67,10 +78,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Overview.html",
-          "hash": "Wn7Y9IIlcgJmhnvqz04qGg=="
+          "hash": "qwtf1razpd504fygbdCjhA=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -79,10 +90,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpConsoleTemplate/Overview.html",
-          "hash": "wiRiaHshJHjEzq8Yri4Slg=="
+          "hash": "ggk+474iE1ZopBTHoh58fQ=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -91,10 +102,10 @@
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "X3DEPIAXHutr9bs4hsd+1Q=="
+          "hash": "z9ccQ1H7Ls5hpovrdBJOvQ=="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -113,17 +124,19 @@
   "incremental_info": [
     {
       "status": {
-        "can_incremental": true,
+        "can_incremental": false,
+        "details": "Cannot build incrementally because config changed.",
         "incrementalPhase": "build",
         "total_file_count": 0,
-        "skipped_file_count": 0
+        "skipped_file_count": 0,
+        "full_build_reason_code": "ConfigChanged"
       },
       "processors": {
         "ConceptualDocumentProcessor": {
-          "can_incremental": true,
+          "can_incremental": false,
           "incrementalPhase": "build",
           "total_file_count": 6,
-          "skipped_file_count": 6
+          "skipped_file_count": 0
         },
         "ResourceDocumentProcessor": {
           "can_incremental": false,
