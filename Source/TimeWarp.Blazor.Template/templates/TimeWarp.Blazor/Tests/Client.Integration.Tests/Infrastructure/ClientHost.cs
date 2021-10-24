@@ -43,7 +43,6 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 
     public ClientHost(TimeWarpBlazorServerApplication aTimeWarpBlazorServerApplication)
     {
-
       // Private right now because we don't have much reason to expose it. This can be exposed
       // in the future if we want to give people a choice between CreateDefault and something
       // less opinionated.
