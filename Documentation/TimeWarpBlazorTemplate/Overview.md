@@ -1,9 +1,9 @@
 ---
 uid: TimeWarp.Blazor.Template:Overview
-title: TimeWarp Blazor Template Overview
+title: TimeWarp Architecture Overview
 ---
 
-# TimeWarp-Blazor Template
+# TimeWarp Architecture
 
 [![NuGet](https://img.shields.io/nuget/v/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
 [![NuGet](https://img.shields.io/nuget/dt/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
@@ -26,9 +26,9 @@ This is a dotnet net template for creating a Single Page Application(SPA) with B
 2. Install the latest [Node.js LTS](https://nodejs.org/en/)
 3. Install the latest [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1)
 4. Install the latest [Cosmos Db Emulator](https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21)
-5. Update your powershell profile to include the following:
+5. Update your powershell profile to include the following <sup><a href="#footnotes">1</a></sup>:
 ```powershell
-$env:PSModulePath += "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
+$env:PSModulePath += ";$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
 Import-Module Microsoft.Azure.CosmosDB.Emulator
 ```
 6. Install TimeWarp Templates
@@ -72,11 +72,11 @@ info: Microsoft.Hosting.Lifetime[0]
       Content root path: C:\git\temp\MyBlazorApp\Source\Server
 ```
 
-Open up your browser to <https://localhost:5001> and confirm you have running site.
+Open up your browser to <https://localhost:5001> and confirm you have a running site.
 
 ## Content
 
-The template creates 4 projects which will be deployed and 3 test projects and 1 test libary.
+The template creates four projects which will be deployed, three test projects and one test libary.
 
 ### Projects
 
