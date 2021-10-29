@@ -58,7 +58,7 @@
     "dest": "_site",
     "globalMetadata": {
       "_appFaviconPath": "Assets/Logo.png",
-      "_appLogoPath":"Assets/Logo.svg"
+      "_appLogoPath":"Assets/LogoResized.png"
     },
     "globalMetadataFiles": [],
     "fileMetadataFiles": [],
