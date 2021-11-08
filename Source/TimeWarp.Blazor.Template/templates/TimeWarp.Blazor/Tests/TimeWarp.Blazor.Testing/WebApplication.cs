@@ -6,8 +6,17 @@
   using System;
   using System.Threading.Tasks;
 
+  /// <summary>
+  /// A wrapper around WebHostBuilder that will launch the application when constructed and
+  /// And properly shut down the host when disposed.
+  /// </summary>
+  /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down.
+  /// 
+  /// </remarks>
+  /// <example><see cref="TimeWarpBlazorServerApplication"/></example>
+  /// <typeparam name="TStartup">The Startup Class to use with HostBuilder</typeparam>
   [NotTest]
-  public class Application<TStartup> : IDisposable, IAsyncDisposable
+  public class WebApplication<TStartup> : IDisposable, IAsyncDisposable
     where TStartup : class
   {
     private bool Disposed;
@@ -17,7 +26,8 @@
 
     public IHost Host { get; }
 
-    public Application
+
+    public WebApplication
     (
       string aEnvironmentName,
       string[] aUrls,
