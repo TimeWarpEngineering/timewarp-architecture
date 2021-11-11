@@ -1,25 +1,24 @@
 namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
-  using BlazorState;
   using Dawn;
   using Fixie;
-  using Microsoft.AspNetCore.Mvc.Testing;
   using Microsoft.Extensions.DependencyInjection;
   using System;
-  using System.Collections.Generic;
-  using System.Linq;
-  using System.Net.Http;
   using System.Reflection;
   using System.Text.Json;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.ClientLoaders;
   using TimeWarp.Blazor.Testing;
 
   [NotTest]
   public class ClientTestConvention : ITestProject
   {
-    public void Configure(TestConfiguration aTestConfiguration, TestEnvironment aTestEnvironment) =>
-      aTestConfiguration.Conventions.Add<TestDiscovery, TimeWarpExecution>();
+    public void Configure(TestConfiguration aTestConfiguration, TestEnvironment aTestEnvironment)
+    {
+      var testDiscovery = new TestDiscovery(aTestEnvironment.CustomArguments);
+      var testExecution = new TimeWarpExecution();
+
+      aTestConfiguration.Conventions.Add(testDiscovery, testExecution);
+    }
   }
 
   [NotTest]
@@ -55,13 +54,11 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
           using IServiceScope serviceScope = serviceScopeFactory.CreateScope();
           object instance = serviceScope.ServiceProvider.GetService(testClass.Type);
 
-          Console.WriteLine($"==== Run Setup for test: {test.Name} ====");
           await Setup(instance, testClass);
 
           Console.WriteLine($"==== Execute test: {test.Name} ====");
           await test.Run(instance);
 
-          Console.WriteLine($"==== Run CleanUp for test: {test.Name} ====");
           await Cleanup(instance, testClass);
         }
       }
@@ -74,7 +71,10 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 
       MethodInfo methodInfo = aTestClass.Type.GetMethod(nameof(Setup));
       if (methodInfo != null)
+      {
+        Console.WriteLine($"==== Run Setup for class: {aTestClass.Type.Name} ====");
         await methodInfo.Call(aInstance);
+      }
     }
     private async Task Cleanup(object aInstance, TestClass aTestClass)
     {
@@ -82,7 +82,10 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 
       MethodInfo methodInfo = aTestClass.Type.GetMethod(nameof(Cleanup));
       if (methodInfo != null)
+      {
+        Console.WriteLine($"==== Run CleanUp for class: {aTestClass.Type.Name} ====");
         await methodInfo.Call(aInstance);
+      }
     }
 
     private void ConfigureTestServices(ServiceCollection aServiceCollection)

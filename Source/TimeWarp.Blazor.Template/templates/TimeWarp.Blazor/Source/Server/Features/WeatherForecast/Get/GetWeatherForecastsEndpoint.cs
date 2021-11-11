@@ -1,4 +1,4 @@
-//#WeatherForecast #GetWeatherForecasts #Endpoint #Server
+// #WeatherForecast #GetWeatherForecasts #Endpoint #Server
 namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   using Microsoft.AspNetCore.Mvc;

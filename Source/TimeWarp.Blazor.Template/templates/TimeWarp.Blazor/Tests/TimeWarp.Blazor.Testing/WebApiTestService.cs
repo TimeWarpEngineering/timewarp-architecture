@@ -11,8 +11,11 @@
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.Bases;
 
+  /// <summary>
+  /// A class that contains a common set of methods used when testing Web APIs
+  /// </summary>
   [NotTest]
-  public class WebApiTestService
+  public class WebApiTestService : IWebApiTestService
   {
     private readonly HttpClient HttpClient;
     private readonly JsonSerializerOptions JsonSerializerOptions;
@@ -23,9 +26,19 @@
       JsonSerializerOptions = aJsonSerializerOptions;
     }
 
+    /// <inheritdoc/>
+    public async Task<TResponse> GetJsonAsync<TResponse>(string aUri)
+    {
+      HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync(aUri).ConfigureAwait(false);
+
+      TResponse response = await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
+
+      return response;
+    }
+
+    /// <inheritdoc/>
     public async Task ConfirmEndpointValidationError<TResponse>
     (
-      string aRoute,
       IRequest<TResponse> aRequest,
       string aAttributeName
     )
@@ -46,7 +59,7 @@
         case HttpVerb.Put:
         case HttpVerb.Patch:
           httpResponseMessage =
-            await GetHttpResponseMessageFromRequest(aRoute, aRequest).ConfigureAwait(false);
+            await GetHttpResponseMessageFromRequest(apiRequest.GetRoute(), aRequest).ConfigureAwait(false);
           break;
         case HttpVerb.Head:
         case HttpVerb.Options:
@@ -57,7 +70,7 @@
       await ConfirmEndpointValidationError(httpResponseMessage, aAttributeName).ConfigureAwait(false);
     }
 
-    internal static async Task ConfirmEndpointValidationError
+    private static async Task ConfirmEndpointValidationError
     (
       HttpResponseMessage aHttpResponseMessage,
       string aAttributeName
@@ -70,14 +83,17 @@
       json.Should().Contain(aAttributeName);
     }
 
-    internal async Task<TResponse> DeleteJsonAsync<TResponse>(string aUri)
+    private async Task<TResponse> DeleteJsonAsync<TResponse>(string aUri)
     {
       HttpResponseMessage httpResponseMessage = await HttpClient.DeleteAsync(aUri).ConfigureAwait(false);
       return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
     }
 
-
-    internal async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest<TResponse>(string aUri, IRequest<TResponse> aRequest)
+    private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest<TResponse>
+    (
+      string aUri,
+      IRequest<TResponse> aRequest
+    )
     {
       string requestAsJson = JsonSerializer.Serialize(aRequest, aRequest.GetType());
 
@@ -101,16 +117,7 @@
       };
     }
 
-    public async Task<TResponse> GetJsonAsync<TResponse>(string aUri)
-    {
-      HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync(aUri).ConfigureAwait(false);
-
-      TResponse response = await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
-
-      return response;
-    }
-
-    internal async Task<TResponse> Post<TResponse>(string aUri, IRequest<TResponse> aRequest)
+    private async Task<TResponse> Post<TResponse>(string aUri, IRequest<TResponse> aRequest)
     {
       HttpResponseMessage httpResponseMessage =
         await GetHttpResponseMessageFromRequest(aUri, aRequest).ConfigureAwait(false);

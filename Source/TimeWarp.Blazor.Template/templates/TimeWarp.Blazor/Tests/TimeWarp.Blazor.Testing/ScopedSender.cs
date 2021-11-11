@@ -3,18 +3,24 @@
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;
   using System;
+  using System.Threading;
   using System.Threading.Tasks;
 
-  public class MediationTestService
+  /// <summary>
+  /// This is an implementation of MediatR's ISender Interface
+  /// that wraps calls to Send in a <see cref="IServiceScope"/>.
+  /// </summary>
+  [NotTest]
+  public class ScopedSender: ISender
   {
     private readonly IServiceScopeFactory ServiceScopeFactory;
 
-    public MediationTestService(IServiceProvider aServiceProvider)
+    public ScopedSender(IServiceProvider aServiceProvider)
     {
       ServiceScopeFactory = aServiceProvider.GetService<IServiceScopeFactory>();
     }
 
-    internal Task Send(IRequest aRequest)
+    public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default)
     {
       return ExecuteInScope
       (
@@ -27,7 +33,7 @@
       );
     }
 
-    internal Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest)
+    public Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest, CancellationToken aCancellationToken = default)
     {
       return ExecuteInScope
       (
@@ -46,5 +52,4 @@
       return await aAction(serviceScope.ServiceProvider).ConfigureAwait(false);
     }
   }
-
 }

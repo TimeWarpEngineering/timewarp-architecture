@@ -1,7 +1,10 @@
-﻿namespace TimeWarp.Blazor.Testing.Constants
+﻿namespace TimeWarp.Blazor.Testing
 {
+  /// <summary>
+  /// Add Shared Constants here
+  /// </summary>
   [NotTest]
-  public static class SomeSharedConstants
+  public static class Constants
   {
     public const string ExampleConst = "Example";
   }

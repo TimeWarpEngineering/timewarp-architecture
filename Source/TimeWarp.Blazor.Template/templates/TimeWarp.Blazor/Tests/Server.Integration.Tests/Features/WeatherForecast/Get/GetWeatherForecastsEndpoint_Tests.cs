@@ -22,7 +22,7 @@ namespace GetWeatherForecastsEndpoint
     public async Task _10WeatherForecasts_Given_10DaysRequested()
     {
       GetWeatherForecastsResponse getWeatherForecastsResponse =
-        await TimeWarpBlazorServerApplication.WebApiTestService.GetJsonAsync<GetWeatherForecastsResponse>(GetWeatherForecastsRequest.GetRoute());
+        await TimeWarpBlazorServerApplication.GetJsonAsync<GetWeatherForecastsResponse>(GetWeatherForecastsRequest.GetRoute());
 
       ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
     }
@@ -31,7 +31,7 @@ namespace GetWeatherForecastsEndpoint
     {
       GetWeatherForecastsRequest.Days = -1;
 
-      await TimeWarpBlazorServerApplication.WebApiTestService.ConfirmEndpointValidationError<GetWeatherForecastsResponse>(GetWeatherForecastsRequest.GetRoute(), GetWeatherForecastsRequest, nameof(GetWeatherForecastsRequest.Days));
+      await TimeWarpBlazorServerApplication.ConfirmEndpointValidationError<GetWeatherForecastsResponse>(GetWeatherForecastsRequest, nameof(GetWeatherForecastsRequest.Days));
     }
 
     private void ValidateGetWeatherForecastsResponse(GetWeatherForecastsResponse aGetWeatherForecastsResponse)

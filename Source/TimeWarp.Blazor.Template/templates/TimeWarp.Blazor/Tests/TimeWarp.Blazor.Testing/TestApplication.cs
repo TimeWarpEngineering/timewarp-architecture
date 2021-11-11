@@ -5,36 +5,46 @@
   using System.Linq;
   using System.Net.Http;
   using System.Text.Json;
+  using System.Threading;
   using System.Threading.Tasks;
 
+  /// <summary>
+  /// An abstract class that adds test functionality for the passed in WebApplication.
+  /// </summary>
+  /// <example><see cref="TimeWarpBlazorServerApplication"/></example>
+  /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down. </remarks>
+  /// <typeparam name="TStartup"></typeparam>
   [NotTest]
-  public class TestApplication<TStartup> : IDisposable, IAsyncDisposable
+  public abstract class TestApplication<TStartup> : IDisposable, IAsyncDisposable, ISender, IWebApiTestService
     where TStartup : class
   {
-    public readonly Application<TStartup> Application;
-    private readonly MediationTestService MediationTestService;
+    public readonly WebApplication<TStartup> WebApplication;
+    private readonly ISender ScopedSender;
+    private IWebApiTestService WebApiTestService { get; }
+
     private bool Disposed;
     public HttpClient HttpClient { get; }
     public IServiceProvider ServiceProvider { get; }
-    public WebApiTestService WebApiTestService { get; }
 
-    public TestApplication(Application<TStartup> aApplication)
+    public TestApplication(WebApplication<TStartup> aWebApplication)
     {
-      Application = aApplication;
-      ServiceProvider = Application.Host.Services;
-      MediationTestService = new MediationTestService(ServiceProvider);
+      WebApplication = aWebApplication;
+      ServiceProvider = WebApplication.Host.Services;
+      ScopedSender = new ScopedSender(ServiceProvider);
       HttpClient = new HttpClient
       {
-        BaseAddress = new Uri(Application.Urls.First())
+        BaseAddress = new Uri(WebApplication.Urls.First())
       };
 
       var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
       WebApiTestService = new WebApiTestService(HttpClient, jsonSerializerOptions);
     }
 
-    public Task Send(IRequest aRequest) => MediationTestService.Send(aRequest);
-    public Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) =>
-      MediationTestService.Send(aRequest);
+    public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) =>
+      ScopedSender.Send(request, cancellationToken);
+
+    public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default) =>
+      ScopedSender.Send(aRequest, aCancellationToken);
 
     public void Dispose()
     {
@@ -56,7 +66,7 @@
 
       if (aIsDisposing)
       {
-        Application?.Dispose();
+        WebApplication?.Dispose();
       }
 
       Disposed = true;
@@ -65,7 +75,11 @@
     protected virtual ValueTask DisposeAsyncCore()
     {
       Console.WriteLine("==== TestApplication.DisposeAsyncCore ====");
-      return Application.DisposeAsync();
+      return WebApplication.DisposeAsync();
     }
+
+    public Task ConfirmEndpointValidationError<TResponse>(IRequest<TResponse> aRequest, string aAttributeName) =>
+      WebApiTestService.ConfirmEndpointValidationError(aRequest, aAttributeName);
+    public Task<TResponse> GetJsonAsync<TResponse>(string aUri) => WebApiTestService.GetJsonAsync<TResponse>(aUri);
   }
 }

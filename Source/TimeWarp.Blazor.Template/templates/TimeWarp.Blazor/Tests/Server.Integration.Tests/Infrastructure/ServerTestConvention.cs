@@ -6,7 +6,12 @@ namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
   [NotTest]
   public class ServerTestConvention : ITestProject
   {
-    public void Configure(TestConfiguration aTestConfiguration, TestEnvironment aTestEnvironment) =>
-      aTestConfiguration.Conventions.Add<TestDiscovery, TestExecution>();
+    public void Configure(TestConfiguration aTestConfiguration, TestEnvironment aTestEnvironment)
+    {
+      var testDiscovery = new TestDiscovery(aTestEnvironment.CustomArguments);
+      var testExecution = new TestExecution(aTestEnvironment.CustomArguments);
+
+      aTestConfiguration.Conventions.Add(testDiscovery, testExecution);
+    }
   }
 }

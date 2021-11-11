@@ -11,7 +11,7 @@
   /// And properly shut down the host when disposed.
   /// </summary>
   /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down.
-  /// 
+  /// Further configuring or overriding Services can be done by passing in delegate to the constructor
   /// </remarks>
   /// <example><see cref="TimeWarpBlazorServerApplication"/></example>
   /// <typeparam name="TStartup">The Startup Class to use with HostBuilder</typeparam>
@@ -27,6 +27,13 @@
     public IHost Host { get; }
 
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="aEnvironmentName"></param>
+    /// <param name="aUrls"></param>
+    /// <param name="aApplicationName"></param>
+    /// <param name="aConfigureServicesDelegate"></param>
     public WebApplication
     (
       string aEnvironmentName,

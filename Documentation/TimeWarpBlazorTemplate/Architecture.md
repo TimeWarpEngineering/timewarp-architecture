@@ -1,6 +1,6 @@
 Everything is subjective:
 
-The primary goal of an architecture is to maximize the effeciency of producing impactful software.
+The primary goal of the TimeWarp architecture is to maximize the effeciency of producing impactful software.
 
 Lets try and break this down:
 
