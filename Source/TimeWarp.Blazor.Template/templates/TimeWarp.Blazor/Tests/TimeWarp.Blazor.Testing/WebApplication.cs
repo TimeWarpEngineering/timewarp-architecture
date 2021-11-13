@@ -26,19 +26,16 @@
 
     public IHost Host { get; }
 
-
     /// <summary>
-    /// 
+    /// Construct a WebApplication
     /// </summary>
     /// <param name="aEnvironmentName"></param>
     /// <param name="aUrls"></param>
-    /// <param name="aApplicationName"></param>
-    /// <param name="aConfigureServicesDelegate"></param>
+    /// <param name="aConfigureServicesDelegate">Allows for adjusting the DI container</param>
     public WebApplication
     (
       string aEnvironmentName,
       string[] aUrls,
-      string aApplicationName,
       Action<HostBuilderContext, IServiceCollection> aConfigureServicesDelegate = null
     )
     {
@@ -99,7 +96,6 @@
       GC.SuppressFinalize(this);
     }
 
-
     protected virtual async ValueTask DisposeAsyncCore()
     {
       Console.WriteLine("==== Application.DisposeAsyncCore ====");
@@ -118,7 +114,9 @@
       Console.WriteLine("==== Application.DisposeAsync ====");
       await DisposeAsyncCore().ConfigureAwait(false);
       Dispose(false);
+#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
       GC.SuppressFinalize(this);
+#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
     }
   }
 }
