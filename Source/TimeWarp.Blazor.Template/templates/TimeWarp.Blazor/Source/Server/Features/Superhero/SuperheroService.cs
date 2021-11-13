@@ -26,25 +26,25 @@
       "Shapeshifting"
     };
 
-    public static string GenerateName(int len)
+    public static string GenerateName(int aLength)
     {
-      var r = new Random();
+      var random = new Random();
       string[] consonants = { "b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "l", "n", "p", "q", "r", "s", "sh", "zh", "t", "v", "w", "x" };
       string[] vowels = { "a", "e", "i", "o", "u", "ae", "y" };
-      string Name = "";
-      Name += consonants[r.Next(consonants.Length)].ToUpper();
-      Name += vowels[r.Next(vowels.Length)];
+      string name = "";
+      name += consonants[random.Next(consonants.Length)].ToUpper();
+      name += vowels[random.Next(vowels.Length)];
       int b = 2; //b tells how many times a new letter has been added. It's 2 right now because the first two letters are already in the name.
-      while (b < len)
+      while (b < aLength)
       {
-        Name += consonants[r.Next(consonants.Length)];
+        name += consonants[random.Next(consonants.Length)];
         b++;
-        Name += vowels[r.Next(vowels.Length)];
+        name += vowels[random.Next(vowels.Length)];
         b++;
       }
-      return Name;
+      return name;
     }
-    public List<int> SuperheroIds = new List<int>();
+    public List<int> SuperheroIds = new();
     public Task<SuperheroResponse> GetSuperheroAsync
     (
       SuperheroRequest aSuperheroRequest,
