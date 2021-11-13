@@ -46,6 +46,7 @@ namespace TimeWarp.Blazor.Client
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
       aServiceCollection.AddScoped<ClientLoader>();
       aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
+      aServiceCollection.AddScoped<WebApiService>();
 
       ConfigureGrpc(aServiceCollection);
 

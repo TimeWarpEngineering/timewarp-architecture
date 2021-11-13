@@ -7,6 +7,7 @@
   using System.Text.Json;
   using System.Threading;
   using System.Threading.Tasks;
+  using TimeWarp.Blazor.Features.Bases;
 
   /// <summary>
   /// An abstract class that adds test functionality for the passed in WebApplication.
@@ -40,8 +41,12 @@
       WebApiTestService = new WebApiTestService(HttpClient, jsonSerializerOptions);
     }
 
-    public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) =>
-      ScopedSender.Send(request, cancellationToken);
+    public Task<TResponse> Send<TResponse>
+    (
+      IRequest<TResponse> aRequest,
+      CancellationToken aCancellationToken = default
+    ) =>
+      ScopedSender.Send(aRequest, aCancellationToken);
 
     public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default) =>
       ScopedSender.Send(aRequest, aCancellationToken);
@@ -57,7 +62,9 @@
       Console.WriteLine("==== TestApplication.DisposeAsync ====");
       await DisposeAsyncCore().ConfigureAwait(false);
       Dispose(false);
+#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
       GC.SuppressFinalize(this);
+#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
     }
 
     protected virtual void Dispose(bool aIsDisposing)
@@ -78,8 +85,9 @@
       return WebApplication.DisposeAsync();
     }
 
-    public Task ConfirmEndpointValidationError<TResponse>(IRequest<TResponse> aRequest, string aAttributeName) =>
-      WebApiTestService.ConfirmEndpointValidationError(aRequest, aAttributeName);
-    public Task<TResponse> GetJsonAsync<TResponse>(string aUri) => WebApiTestService.GetJsonAsync<TResponse>(aUri);
+    public Task ConfirmEndpointValidationError<TResponse>(IApiRequest aRequest, string aAttributeName) =>
+      WebApiTestService.ConfirmEndpointValidationError<TResponse>(aRequest, aAttributeName);
+
+    public Task<TResponse> GetResponse<TResponse>(IApiRequest aRequest) => WebApiTestService.GetResponse<TResponse>(aRequest);
   }
 }

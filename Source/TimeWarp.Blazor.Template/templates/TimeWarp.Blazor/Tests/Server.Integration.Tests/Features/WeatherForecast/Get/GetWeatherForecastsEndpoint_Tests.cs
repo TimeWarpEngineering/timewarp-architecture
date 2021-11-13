@@ -22,7 +22,7 @@ namespace GetWeatherForecastsEndpoint
     public async Task _10WeatherForecasts_Given_10DaysRequested()
     {
       GetWeatherForecastsResponse getWeatherForecastsResponse =
-        await TimeWarpBlazorServerApplication.GetJsonAsync<GetWeatherForecastsResponse>(GetWeatherForecastsRequest.GetRoute());
+        await TimeWarpBlazorServerApplication.GetResponse<GetWeatherForecastsResponse>(GetWeatherForecastsRequest);
 
       ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
     }
