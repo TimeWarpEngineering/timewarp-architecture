@@ -1,6 +1,5 @@
 ﻿namespace TimeWarp.Blazor.Testing
 {
-  using MediatR;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.Bases;
 
@@ -26,6 +25,6 @@
     /// <typeparam name="TResponse"></typeparam>
     /// <param name="aRequest"></param>
     /// <returns></returns>
-    public Task<TResponse> GetResponse<TResponse>(IApiRequest aRequest);
+    public Task<TResponse> GetResponse<TResponse>(IApiRequest aApiRequest);
   }
 }
