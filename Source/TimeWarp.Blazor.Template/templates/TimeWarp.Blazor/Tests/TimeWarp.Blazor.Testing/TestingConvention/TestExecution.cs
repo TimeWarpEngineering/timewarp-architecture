@@ -11,7 +11,7 @@
   using System.Threading.Tasks;
 
   /// <summary>
-  /// Fixie allows for the configuration of a custom test execution process. This is our implementation.
+  /// Fixie allows for the configuration of a custom test execution process. This is our base implementation.
   /// </summary>
   /// <remarks>This convention looks for all classes that are public and do not have the <see cref="NotTest"/> attribute
   /// And all methods within those classes that are not named with the value in <see cref="SetupMethodName"/> are tests
@@ -82,23 +82,11 @@
       (serviceScopeFactory as IDisposable).Dispose();
     }
 
-    private static async Task TryLifecycleMethod(object aInstance, TestClass aTestClass, string aMethodName)
-    {
-      Guard.Argument(aInstance, nameof(aInstance)).NotNull();
-
-      MethodInfo methodInfo = aTestClass.Type.GetMethod(aMethodName);
-      if (methodInfo != null)
-      {
-        Console.WriteLine($"==== Run Lifecycle method: {aMethodName} ====");
-        await methodInfo.Call(aInstance);
-      }
-    }
-
     /// <summary>
     /// Registers all the items in the <see cref="ServiceCollection"/>
     /// </summary>
     /// <param name="aServiceCollection"></param>
-    private void ConfigureTestServices(ServiceCollection aServiceCollection)
+    public virtual void ConfigureTestServices(ServiceCollection aServiceCollection)
     {
       Console.WriteLine($"==== {nameof(ConfigureTestServices)} ====");
       ConfigureApplications(aServiceCollection);
@@ -107,6 +95,17 @@
       aServiceCollection.AddSingleton(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
       RegisterTests(aServiceCollection);
+    }
+
+    /// <summary>
+    /// Add the <see cref="TestApplication{TStartup}">applications</see> to be running as Singletons to the ServiceCollection
+    /// </summary>
+    /// <param name="aServiceCollection"></param>
+    public virtual void ConfigureApplications(ServiceCollection aServiceCollection)
+    {
+      Console.WriteLine($"==== {nameof(ConfigureApplications)} ====");
+      aServiceCollection.AddSingleton<TimeWarpBlazorServerApplication>();
+      ; // Add other applications you want to run here
     }
 
     /// <summary>
@@ -127,15 +126,16 @@
       );
     }
 
-    /// <summary>
-    /// Add the <see cref="TestApplication{TStartup}">applications</see> to be running as Singletons to the ServiceCollection
-    /// </summary>
-    /// <param name="aServiceCollection"></param>
-    private void ConfigureApplications(ServiceCollection aServiceCollection)
+    private static async Task TryLifecycleMethod(object aInstance, TestClass aTestClass, string aMethodName)
     {
-      Console.WriteLine($"==== {nameof(ConfigureApplications)} ====");
-      aServiceCollection.AddSingleton<TimeWarpBlazorServerApplication>();
-      ; // Add other applications you want to run here
+      Guard.Argument(aInstance, nameof(aInstance)).NotNull();
+
+      MethodInfo methodInfo = aTestClass.Type.GetMethod(aMethodName);
+      if (methodInfo != null)
+      {
+        Console.WriteLine($"==== Run Lifecycle method: {aMethodName} ====");
+        await methodInfo.Call(aInstance);
+      }
     }
   }
 }
