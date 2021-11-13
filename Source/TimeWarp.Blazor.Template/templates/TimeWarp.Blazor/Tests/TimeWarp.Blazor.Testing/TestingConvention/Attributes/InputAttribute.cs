@@ -10,9 +10,9 @@
   [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
   public class InputAttribute : Attribute
   {
-    public InputAttribute(params object[] parameters)
+    public InputAttribute(params object[] aParameters)
     {
-      Parameters = parameters;
+      Parameters = aParameters;
     }
 
     public object[] Parameters { get; }

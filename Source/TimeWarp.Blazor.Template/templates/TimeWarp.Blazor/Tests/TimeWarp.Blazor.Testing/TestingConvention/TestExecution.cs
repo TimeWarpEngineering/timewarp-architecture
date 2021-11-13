@@ -82,7 +82,7 @@
       (serviceScopeFactory as IDisposable).Dispose();
     }
 
-    private async Task TryLifecycleMethod(object aInstance, TestClass aTestClass, string aMethodName)
+    private static async Task TryLifecycleMethod(object aInstance, TestClass aTestClass, string aMethodName)
     {
       Guard.Argument(aInstance, nameof(aInstance)).NotNull();
 

@@ -20,7 +20,6 @@
         {
           "http://localhost:5000"
         },
-        aApplicationName: typeof(Startup).Namespace,
         ConfigureServicesDelegate
       )
     )
