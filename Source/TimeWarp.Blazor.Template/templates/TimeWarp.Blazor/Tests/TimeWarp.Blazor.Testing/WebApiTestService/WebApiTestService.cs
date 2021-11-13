@@ -26,40 +26,38 @@
       JsonSerializerOptions = aJsonSerializerOptions;
     }
 
-    /// <inheritdoc/>
-    public async Task<TResponse> GetJsonAsync<TResponse>(string aUri)
+    public async Task<TResponse> GetResponse<TResponse>(IApiRequest aRequest)
     {
-      HttpResponseMessage httpResponseMessage = await HttpClient.GetAsync(aUri).ConfigureAwait(false);
 
-      TResponse response = await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
-
-      return response;
+      HttpResponseMessage httpResponseMessage =
+        await GetHttpResponseMessageFromRequest<TResponse>(aRequest).ConfigureAwait(false);
+      return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
     }
+
 
     /// <inheritdoc/>
     public async Task ConfirmEndpointValidationError<TResponse>
     (
-      IRequest<TResponse> aRequest,
+      IApiRequest aApiRequest,
       string aAttributeName
     )
     {
-      var apiRequest = aRequest as IApiRequest;
-      HttpVerb httpverb = apiRequest.GetHttpVerb();
+      HttpVerb httpverb = aApiRequest.GetHttpVerb();
       HttpResponseMessage httpResponseMessage = null;
 
       switch (httpverb)
       {
         case HttpVerb.Get:
-          httpResponseMessage = await HttpClient.GetAsync(apiRequest.GetRoute());
+          httpResponseMessage = await HttpClient.GetAsync(aApiRequest.GetRoute());
           break;
         case HttpVerb.Delete:
-          httpResponseMessage = await HttpClient.DeleteAsync(apiRequest.GetRoute());
+          httpResponseMessage = await HttpClient.DeleteAsync(aApiRequest.GetRoute());
           break;
         case HttpVerb.Post:
         case HttpVerb.Put:
         case HttpVerb.Patch:
           httpResponseMessage =
-            await GetHttpResponseMessageFromRequest(apiRequest.GetRoute(), aRequest).ConfigureAwait(false);
+            await GetHttpResponseMessageFromRequest<TResponse>(aApiRequest).ConfigureAwait(false);
           break;
         case HttpVerb.Head:
         case HttpVerb.Options:
@@ -83,19 +81,13 @@
       json.Should().Contain(aAttributeName);
     }
 
-    private async Task<TResponse> DeleteJsonAsync<TResponse>(string aUri)
-    {
-      HttpResponseMessage httpResponseMessage = await HttpClient.DeleteAsync(aUri).ConfigureAwait(false);
-      return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
-    }
 
     private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest<TResponse>
     (
-      string aUri,
-      IRequest<TResponse> aRequest
+      IApiRequest aApiRequest
     )
     {
-      string requestAsJson = JsonSerializer.Serialize(aRequest, aRequest.GetType());
+      string requestAsJson = JsonSerializer.Serialize(aApiRequest, aApiRequest.GetType());
 
       var httpContent =
         new StringContent
@@ -105,31 +97,19 @@
           MediaTypeNames.Application.Json
         );
 
-      var apiRequest = aRequest as IApiRequest;
-      HttpVerb httpverb = apiRequest.GetHttpVerb();
+      HttpVerb httpverb = aApiRequest.GetHttpVerb();
 
       return httpverb switch
       {
-        HttpVerb.Post => await HttpClient.PostAsync(aUri, httpContent).ConfigureAwait(false),
-        HttpVerb.Put => await HttpClient.PutAsync(aUri, httpContent).ConfigureAwait(false),
-        HttpVerb.Patch => await HttpClient.PatchAsync(aUri, httpContent).ConfigureAwait(false),
+        HttpVerb.Get => await HttpClient.GetAsync(aApiRequest.GetRoute()).ConfigureAwait(false),
+        HttpVerb.Delete => await HttpClient.DeleteAsync(aApiRequest.GetRoute()).ConfigureAwait(false),
+        HttpVerb.Post => await HttpClient.PostAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
+        HttpVerb.Put => await HttpClient.PutAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
+        HttpVerb.Patch => await HttpClient.PatchAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
         _ => null,
       };
     }
 
-    private async Task<TResponse> Post<TResponse>(string aUri, IRequest<TResponse> aRequest)
-    {
-      HttpResponseMessage httpResponseMessage =
-        await GetHttpResponseMessageFromRequest(aUri, aRequest).ConfigureAwait(false);
-
-      httpResponseMessage.EnsureSuccessStatusCode();
-
-      string json = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-      TResponse response = JsonSerializer.Deserialize<TResponse>(json);
-
-      return response;
-    }
 
     private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage aHttpResponseMessage)
     {

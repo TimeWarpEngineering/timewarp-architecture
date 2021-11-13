@@ -2,6 +2,7 @@
 {
   using MediatR;
   using System.Threading.Tasks;
+  using TimeWarp.Blazor.Features.Bases;
 
   public interface IWebApiTestService
   {
@@ -10,13 +11,12 @@
     /// explicit contain the <paramref name="aAttributeName"/> in the error message
     /// </summary>
     /// <typeparam name="TResponse"></typeparam>
-    /// <param name="aRoute"></param>
-    /// <param name="aRequest"></param>
+    /// <param name="aApiRequest"></param>
     /// <param name="aAttributeName"></param>
     /// <returns></returns>
     public Task ConfirmEndpointValidationError<TResponse>
     (
-      IRequest<TResponse> aRequest,
+      IApiRequest aApiRequest,
       string aAttributeName
     );
 
@@ -24,8 +24,8 @@
     /// Return the Response object by getting it as json and deseralizing it/>
     /// </summary>
     /// <typeparam name="TResponse"></typeparam>
-    /// <param name="aUri"></param>
+    /// <param name="aRequest"></param>
     /// <returns></returns>
-    public Task<TResponse> GetJsonAsync<TResponse>(string aUri);
+    public Task<TResponse> GetResponse<TResponse>(IApiRequest aRequest);
   }
 }
