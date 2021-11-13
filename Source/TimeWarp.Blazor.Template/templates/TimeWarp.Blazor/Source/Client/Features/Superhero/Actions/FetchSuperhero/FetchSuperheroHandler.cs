@@ -24,13 +24,12 @@
       {
         SuperheroState._Superheros.Clear();
         var getSuperheroRequest = new SuperheroRequest { NumberOfHeros = 5};
+
         SuperheroResponse getSuperheroResponse =
           await SuperheroService.GetSuperheroAsync(getSuperheroRequest);
 
-        foreach (SuperheroDto superhero in getSuperheroResponse.Superheros)
-        {
-          SuperheroState._Superheros.Add(superhero);
-        }
+        SuperheroState._Superheros.AddRange(getSuperheroResponse.Superheros);
+        
         return Unit.Value;
       }
     }
