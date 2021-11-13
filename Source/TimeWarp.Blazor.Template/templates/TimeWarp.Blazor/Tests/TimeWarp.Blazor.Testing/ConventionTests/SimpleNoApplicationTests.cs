@@ -9,7 +9,7 @@
     public static void AlwaysPass() => true.Should().BeTrue();
 
     [Skip("Demonstrates skip attribute")]
-    public static void AlwaysFail() => true.Should().BeFalse();
+    public static void SkipExample() => true.Should().BeFalse();
 
     [TestTag(TestTags.Fast)]
     public static void TagExample() => true.Should().BeTrue();
