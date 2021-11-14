@@ -39,7 +39,7 @@
       return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
     }
 
-    private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest<TResponse>
+    public async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest<TResponse>
     (
       IApiRequest aApiRequest
     )
