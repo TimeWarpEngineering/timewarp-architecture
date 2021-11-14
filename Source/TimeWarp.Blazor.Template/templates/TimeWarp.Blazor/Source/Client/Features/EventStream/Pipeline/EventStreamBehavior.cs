@@ -49,7 +49,7 @@ namespace TimeWarp.Blazor.Features.EventStreams
 
     private async Task AddEventToStream(TRequest aRequest, string aTag)
     {
-      if (!(aRequest is AddEventAction)) //Skip to avoid recursion
+      if (aRequest is not AddEventAction) //Skip to avoid recursion
       {
         var addEventAction = new AddEventAction();
         string requestTypeName = aRequest.GetType().Name;
