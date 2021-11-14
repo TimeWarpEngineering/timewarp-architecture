@@ -17,23 +17,12 @@
   [NotTest]
   public class WebApiTestService : IWebApiTestService
   {
-    private readonly HttpClient HttpClient;
-    private readonly JsonSerializerOptions JsonSerializerOptions;
+    private readonly WebApiService WebApiService;
 
-    public WebApiTestService(HttpClient aHttpClient, JsonSerializerOptions aJsonSerializerOptions)
+    public WebApiTestService(WebApiService aWebApiService)
     {
-      HttpClient = aHttpClient;
-      JsonSerializerOptions = aJsonSerializerOptions;
+      WebApiService = aWebApiService;
     }
-
-    public async Task<TResponse> GetResponse<TResponse>(IApiRequest aRequest)
-    {
-
-      HttpResponseMessage httpResponseMessage =
-        await GetHttpResponseMessageFromRequest<TResponse>(aRequest).ConfigureAwait(false);
-      return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
-    }
-
 
     /// <inheritdoc/>
     public async Task ConfirmEndpointValidationError<TResponse>
@@ -42,28 +31,8 @@
       string aAttributeName
     )
     {
-      HttpVerb httpverb = aApiRequest.GetHttpVerb();
-      HttpResponseMessage httpResponseMessage = null;
-
-      switch (httpverb)
-      {
-        case HttpVerb.Get:
-          httpResponseMessage = await HttpClient.GetAsync(aApiRequest.GetRoute());
-          break;
-        case HttpVerb.Delete:
-          httpResponseMessage = await HttpClient.DeleteAsync(aApiRequest.GetRoute());
-          break;
-        case HttpVerb.Post:
-        case HttpVerb.Put:
-        case HttpVerb.Patch:
-          httpResponseMessage =
-            await GetHttpResponseMessageFromRequest<TResponse>(aApiRequest).ConfigureAwait(false);
-          break;
-        case HttpVerb.Head:
-        case HttpVerb.Options:
-          throw new Exception("Update this if ever used!");
-      }
-
+      HttpResponseMessage httpResponseMessage =
+        await WebApiService.GetHttpResponseMessageFromRequest<TResponse>(aApiRequest).ConfigureAwait(false);
 
       await ConfirmEndpointValidationError(httpResponseMessage, aAttributeName).ConfigureAwait(false);
     }
@@ -81,45 +50,7 @@
       json.Should().Contain(aAttributeName);
     }
 
-
-    private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest<TResponse>
-    (
-      IApiRequest aApiRequest
-    )
-    {
-      string requestAsJson = JsonSerializer.Serialize(aApiRequest, aApiRequest.GetType());
-
-      var httpContent =
-        new StringContent
-        (
-          requestAsJson,
-          Encoding.UTF8,
-          MediaTypeNames.Application.Json
-        );
-
-      HttpVerb httpverb = aApiRequest.GetHttpVerb();
-
-      return httpverb switch
-      {
-        HttpVerb.Get => await HttpClient.GetAsync(aApiRequest.GetRoute()).ConfigureAwait(false),
-        HttpVerb.Delete => await HttpClient.DeleteAsync(aApiRequest.GetRoute()).ConfigureAwait(false),
-        HttpVerb.Post => await HttpClient.PostAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
-        HttpVerb.Put => await HttpClient.PutAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
-        HttpVerb.Patch => await HttpClient.PatchAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
-        _ => null,
-      };
-    }
-
-
-    private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage aHttpResponseMessage)
-    {
-      aHttpResponseMessage.EnsureSuccessStatusCode();
-
-      string json = await aHttpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-      TResponse response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
-
-      return response;
-    }
+    public async Task<TResponse> GetResponse<TResponse>(IApiRequest aApiRequest) =>
+      await WebApiService.GetResponse<TResponse>(aApiRequest);
   }
 }
