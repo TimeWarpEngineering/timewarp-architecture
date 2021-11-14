@@ -9,7 +9,10 @@ namespace WeatherForecastsState
 
   public class FetchWeatherForecastsAction_Should : BaseTest
   {
+#pragma warning disable IDE0052 // Remove unread private members It is used simply because injecting it ensures it is constructed.
     private readonly TimeWarpBlazorServerApplication TimeWarpBlazorServerApplication;
+#pragma warning restore IDE0052 // Remove unread private members
+
     private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
     public FetchWeatherForecastsAction_Should
@@ -22,7 +25,6 @@ namespace WeatherForecastsState
       TimeWarpBlazorServerApplication = aTimeWarpBlazorServerApplication;
     }
 
-    //[Skip("Want to see what isn't freeing up")]
     public async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()
     {
       var fetchWeatherForecastsRequest = new FetchWeatherForecastsAction();
