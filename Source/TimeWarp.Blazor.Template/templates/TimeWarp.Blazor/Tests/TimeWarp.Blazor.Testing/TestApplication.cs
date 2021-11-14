@@ -38,7 +38,8 @@
       };
 
       var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-      WebApiTestService = new WebApiTestService(HttpClient, jsonSerializerOptions);
+      var webApiService = new WebApiService(HttpClient, jsonSerializerOptions);
+      WebApiTestService = new WebApiTestService(webApiService);
     }
 
     public Task<TResponse> Send<TResponse>
