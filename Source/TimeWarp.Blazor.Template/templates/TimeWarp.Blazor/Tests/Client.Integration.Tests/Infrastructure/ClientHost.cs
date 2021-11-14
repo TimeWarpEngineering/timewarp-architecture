@@ -1,11 +1,11 @@
 namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 {
-  using BlazorState;
+  using FakeItEasy;
   using Microsoft.Extensions.DependencyInjection;
+  using Microsoft.Extensions.DependencyInjection.Extensions;
   using System;
-  using System.Reflection;
-  using TimeWarp.Blazor.Features.ClientLoaders;
   using TimeWarp.Blazor.Testing;
+  using Microsoft.JSInterop;
 
   [NotTest]
   public class ClientHost
@@ -15,73 +15,31 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
     /// </summary>
     public IServiceProvider ServiceProvider { get; }
 
-//    public static ClientHostBuilder CreateDefault(string[] aArgumentArray = default)
-//    {
-//#pragma warning disable IDE0059 // Unnecessary assignment of a value
-//      aArgumentArray ??= Array.Empty<string>();
-//#pragma warning restore IDE0059 // Unnecessary assignment of a value
-//      var builder = new ClientHostBuilder();
-
-//      return builder;
-//    }
-
-    //public ClientHost Build()
-    //{
-    //  // Intentionally overwrite configuration with the one we're creating.
-    //  //Services.AddSingleton<IConfiguration>(Configuration);
-
-    //  // A Blazor application always runs in a scope. Since we want to make it possible for the user
-    //  // to configure services inside *that scope* inside their startup code, we create *both* the
-    //  // service provider and the scope here.
-    //  //var services = _createServiceProvider();
-    //  //var scope = services.GetRequiredService<IServiceScopeFactory>().CreateScope();
-
-    //  //return new ClientHost(services, scope, Configuration, RootComponents.ToArray());
-    //  ServiceProvider serviceProvider = Services.BuildServiceProvider();
-    //  return new ClientHost(serviceProvider);
-    //}
-
     public ClientHost(TimeWarpBlazorServerApplication aTimeWarpBlazorServerApplication)
     {
-      // Private right now because we don't have much reason to expose it. This can be exposed
-      // in the future if we want to give people a choice between CreateDefault and something
-      // less opinionated.
-      //Configuration = new WebAssemblyHostConfiguration();
-      //RootComponents = new RootComponentMappingCollection();
       var services = new ServiceCollection();
       // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
       services.AddSingleton(aTimeWarpBlazorServerApplication.HttpClient);
       ConfigureServices(services);
-      //Logging = new LoggingBuilder(Services);
 
-      // Retrieve required attributes from JSRuntimeInvoker
-      //InitializeNavigationManager(jsRuntimeInvoker);
-      //InitializeDefaultServices();
-
-      //var hostEnvironment = InitializeEnvironment(jsRuntimeInvoker);
-      //HostEnvironment = hostEnvironment;
-
-      //_createServiceProvider = () =>
-      //{
-      //  return Services.BuildServiceProvider(validateScopes: WebAssemblyHostEnvironmentExtensions.IsDevelopment(hostEnvironment));
-      //};
       ServiceProvider = services.BuildServiceProvider();
     }
 
     private void ConfigureServices(IServiceCollection aServiceCollection)
     {
-      // Maybe call Program.ConfigureServices
-      //Program.ConfigureServices(aServiceCollection);
+      Program.ConfigureServices(aServiceCollection);
 
-      
-      //aServiceCollection.AddSingleton<HttpClient>();
-      aServiceCollection.AddBlazorState
-      (
-        aOptions => aOptions.Assemblies =
-        new Assembly[] { typeof(TimeWarp.Blazor.Client.Program).GetTypeInfo().Assembly }
-      );
+      // Theres is no JSRuntime in testing as we don't have an actual browser
+      IJSRuntime fakeJsRuntime = A.Fake<IJSRuntime>(); 
+      aServiceCollection.Replace(ServiceDescriptor.Scoped(_ => fakeJsRuntime));
 
-      aServiceCollection.AddSingleton<IClientLoaderConfiguration, ClientLoaderTestConfiguration>();
+      // Could replace ICurrentUserService here with a logged in one for tests that need to have logged in user.
+
+      //ICurrentUserService fakeCurrentUserService = A.Fake<ICurrentUserService>();
+      //A.CallTo(() => fakeCurrentUserService.IsAuthenticated).Returns(true);
+      //A.CallTo(() => fakeCurrentUserService.Email).Returns(Constants.UserEmails.TrinsicUser);
+
+      //aServiceCollection.Replace(ServiceDescriptor.Scoped(_ => fakeCurrentUserService));
     }
   }
 }
