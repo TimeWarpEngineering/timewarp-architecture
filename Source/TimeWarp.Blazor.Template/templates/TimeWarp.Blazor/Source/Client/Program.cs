@@ -12,6 +12,7 @@ namespace TimeWarp.Blazor.Client
   using System;
   using System.Net.Http;
   using System.Reflection;
+  using System.Text.Json;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Analyzer;
   using TimeWarp.Blazor.Components;
@@ -46,6 +47,7 @@ namespace TimeWarp.Blazor.Client
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
       aServiceCollection.AddScoped<ClientLoader>();
       aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
+      aServiceCollection.AddSingleton<JsonSerializerOptions>(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
       aServiceCollection.AddScoped<WebApiService>();
 
       ConfigureGrpc(aServiceCollection);
