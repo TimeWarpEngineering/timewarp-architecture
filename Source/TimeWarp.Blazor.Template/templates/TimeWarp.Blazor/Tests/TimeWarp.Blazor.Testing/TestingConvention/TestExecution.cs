@@ -98,7 +98,7 @@
     }
 
     /// <summary>
-    /// Add the <see cref="TestApplication{TStartup}">applications</see> to be running as Singletons to the ServiceCollection
+    /// Add the <see cref="TestServerApplication{TStartup}">applications</see> to be running as Singletons to the ServiceCollection
     /// </summary>
     /// <param name="aServiceCollection"></param>
     public virtual void ConfigureApplications(ServiceCollection aServiceCollection)

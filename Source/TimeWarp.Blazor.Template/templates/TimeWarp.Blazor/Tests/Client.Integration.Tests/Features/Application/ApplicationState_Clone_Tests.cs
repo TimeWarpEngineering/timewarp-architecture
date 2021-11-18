@@ -9,7 +9,7 @@ namespace ApplicationState
   {
     private ApplicationState ApplicationState => Store.GetState<ApplicationState>();
 
-    public Clone_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public void Clone()
     {

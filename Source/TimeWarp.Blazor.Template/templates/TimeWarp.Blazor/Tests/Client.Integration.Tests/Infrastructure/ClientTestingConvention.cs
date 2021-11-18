@@ -23,7 +23,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
 
     public override void ConfigureApplications(ServiceCollection aServiceCollection)
     {
-      aServiceCollection.AddSingleton<ClientHost>();
+      aServiceCollection.AddSingleton<TestClientApplication>();
       base.ConfigureApplications(aServiceCollection);
     }
   }

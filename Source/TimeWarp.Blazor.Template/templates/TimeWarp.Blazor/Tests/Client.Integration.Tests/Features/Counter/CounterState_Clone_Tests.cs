@@ -9,7 +9,7 @@ namespace CounterState
   {
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public Clone_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public void Clone()
     {

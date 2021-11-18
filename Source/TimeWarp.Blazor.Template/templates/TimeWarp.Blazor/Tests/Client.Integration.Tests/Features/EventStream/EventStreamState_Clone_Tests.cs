@@ -10,7 +10,7 @@ namespace EventStreamState
   {
     private EventStreamState EventStreamState => Store.GetState<EventStreamState>();
 
-    public Clone_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public void Clone()
     {

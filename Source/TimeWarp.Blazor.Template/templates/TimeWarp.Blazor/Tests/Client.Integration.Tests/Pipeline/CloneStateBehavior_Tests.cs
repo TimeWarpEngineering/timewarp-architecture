@@ -11,7 +11,7 @@ namespace CloneStateBehavior
   {
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public async Task CloneState()
     {

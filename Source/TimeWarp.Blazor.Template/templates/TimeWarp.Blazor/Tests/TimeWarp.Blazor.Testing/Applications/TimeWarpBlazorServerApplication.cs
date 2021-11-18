@@ -8,7 +8,7 @@
   /// Used to launch the TimeWarp.Blazor.Server application
   /// </summary>
   /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
-  public class TimeWarpBlazorServerApplication : TestApplication<Startup>
+  public class TimeWarpBlazorServerApplication : TestServerApplication<Startup>
   {
     public TimeWarpBlazorServerApplication() :
     base

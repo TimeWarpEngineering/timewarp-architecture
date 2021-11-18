@@ -17,7 +17,7 @@ namespace WeatherForecastsState
 
     public FetchWeatherForecastsAction_Should
     (
-      ClientHost aClientHost,
+      TestClientApplication aClientHost,
       TimeWarpBlazorServerApplication aTimeWarpBlazorServerApplication
     )
       : base(aClientHost)

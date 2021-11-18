@@ -10,7 +10,7 @@ namespace CounterState
   {
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public IncrementCounterAction_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public IncrementCounterAction_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public async Task Decrement_Count_Given_NegativeAmount()
     {
