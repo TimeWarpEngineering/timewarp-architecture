@@ -1,6 +1,6 @@
 namespace CloneStateBehavior
 {
-  using Shouldly;
+  using FluentAssertions;
   using System;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
@@ -28,7 +28,7 @@ namespace CloneStateBehavior
       await Send(incrementCounterRequest);
 
       //Assert
-      CounterState.Guid.ShouldNotBe(preActionGuid);
+      CounterState.Guid.Should().NotBe(preActionGuid);
     }
 
     public async Task RollBackState_When_Exception()
