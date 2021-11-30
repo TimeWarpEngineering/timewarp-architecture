@@ -21,13 +21,15 @@
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.0.152" />
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.0.152" />
     <PackageVersion Include="System.ServiceModel.Primitives" Version="4.8.1" />
-    <PackageVersion Include="MicroElements.Swashbuckle.FluentValidation" Version="5.4.0" />
+    <PackageVersion Include="MicroElements.Swashbuckle.FluentValidation" Version="5.4.0" />       
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="5.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="5.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="5.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="5.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="5.0.10" />
     <PackageVersion Include="Microsoft.CodeAnalysis" Version="3.11.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Cosmos" Version="5.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="5.0.10" />
