@@ -17,4 +17,13 @@
     <!-- We use full (Windows PDBs) until cross platform support for source link will get better -->
     <DebugType>full</DebugType>
   </PropertyGroup>
+
+  <Target Name="EmbedLocal" BeforeTargets="PrepareForBuild">    
+    <!-- Include each file with given extension from None collection to EmbeddedResource-->
+    <ItemGroup>
+      <EmbeddedResource Include="@(None -> WithMetadataValue('Extension', '.scriban'))" />
+      <EmbeddedResource Include="@(None -> WithMetadataValue('Extension', '.cstemplate'))" />
+    </ItemGroup>
+  </Target>
+  
 </Project>
