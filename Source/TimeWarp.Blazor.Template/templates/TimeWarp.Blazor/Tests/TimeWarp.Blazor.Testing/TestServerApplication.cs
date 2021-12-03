@@ -16,18 +16,24 @@
   /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down. </remarks>
   /// <typeparam name="TStartup"></typeparam>
   [NotTest]
-  public abstract class TestServerApplication<TStartup> : TestApplication, IDisposable, IAsyncDisposable, ISender, IWebApiTestService
+  public abstract class TestServerApplication<TStartup> : IDisposable, IAsyncDisposable, ISender, IWebApiTestService
     where TStartup : class
   {
-    public readonly WebApplication<TStartup> WebApplication;
+    //[Delegate]
+    private readonly ISender ScopedSender;
     private IWebApiTestService WebApiTestService { get; }
-
     private bool Disposed;
+
+    public readonly WebApplication<TStartup> WebApplication;
     public HttpClient HttpClient { get; }
 
-    public TestServerApplication(WebApplication<TStartup> aWebApplication): base(aWebApplication.Host.Services)
+    public TestServerApplication(WebApplication<TStartup> aWebApplication): base()
     {
       WebApplication = aWebApplication;
+
+      // ISender Delegate
+      ScopedSender = new ScopedSender(aWebApplication.Host.Services);
+
       HttpClient = new HttpClient
       {
         BaseAddress = new Uri(WebApplication.Urls.First())
@@ -75,6 +81,22 @@
     public Task ConfirmEndpointValidationError<TResponse>(IApiRequest aRequest, string aAttributeName) =>
       WebApiTestService.ConfirmEndpointValidationError<TResponse>(aRequest, aAttributeName);
 
+    #region IWebApiTestService
     public Task<TResponse> GetResponse<TResponse>(IApiRequest aRequest) => WebApiTestService.GetResponse<TResponse>(aRequest);
+    #endregion
+
+    #region ISender
+    public Task<TResponse> Send<TResponse>
+    (
+      IRequest<TResponse> aRequest,
+      CancellationToken aCancellationToken = default
+    ) =>
+      ScopedSender.Send(aRequest, aCancellationToken);
+
+    public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default) =>
+      ScopedSender.Send(aRequest, aCancellationToken);
+
+    #endregion
+
   }
 }

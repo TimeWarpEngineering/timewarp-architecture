@@ -6,6 +6,16 @@
     <PackageReference Include="FluentAssertions" />
   </ItemGroup>
   <ItemGroup>
+    <!--<ProjectReference Include="..\..\Source\SourceCodeGenerators\SourceCodeGenerators.csproj" />-->
     <ProjectReference Include="..\..\Source\Server\TimeWarp.Blazor.Server.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Note that this is not a "normal" ProjectReference.
+         It needs the additional 'OutputItemType' and 'ReferenceOutputAssembly' attributes. -->
+    <ProjectReference
+      Include="..\..\Source\SourceCodeGenerators\SourceCodeGenerators.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>
