@@ -2,9 +2,10 @@
 namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   using MediatR;
+  using System;
   using TimeWarp.Blazor.Features.Bases;
 
-  public class GetWeatherForecastsRequest : BaseApiRequest, IRequest<GetWeatherForecastsResponse>
+  public class GetWeatherForecastsRequest : BaseRequest, IApiRequest, IRequest<GetWeatherForecastsResponse>
   {
     public const string Route = "api/weatherForecasts";
 
@@ -13,6 +14,8 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
     /// </summary>
     /// <example>5</example>
     public int Days { get; set; }
-    internal override string GetRoute() => $"{Route}?{nameof(Days)}={Days}&{nameof(CorrelationId)}={CorrelationId}";
+    public HttpVerb GetHttpVerb() => HttpVerb.Get;
+    public string GetRoute() => $"{Route}?{nameof(Days)}={Days}&{nameof(CorrelationId)}={CorrelationId}";
+
   }
 }

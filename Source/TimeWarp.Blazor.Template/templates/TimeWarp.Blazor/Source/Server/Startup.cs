@@ -8,10 +8,14 @@ namespace TimeWarp.Blazor.Server
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.AspNetCore.ResponseCompression;
+  using Microsoft.EntityFrameworkCore;
   using Microsoft.Extensions.Configuration;
   using Microsoft.Extensions.DependencyInjection;
+  using Microsoft.Extensions.Diagnostics.HealthChecks;
   using Microsoft.Extensions.Hosting;
+  using Microsoft.Extensions.Options;
   using Microsoft.OpenApi.Models;
+  using Oakton.Environment;
   using ProtoBuf.Grpc.Server;
   using Swashbuckle.AspNetCore.Swagger;
   using System;
@@ -20,9 +24,13 @@ namespace TimeWarp.Blazor.Server
   using System.Net.Http;
   using System.Net.Mime;
   using System.Reflection;
+  using System.Threading;
+  using System.Threading.Tasks;
   using TimeWarp.Blazor.Configuration;
+  using TimeWarp.Blazor.Data;
   using TimeWarp.Blazor.Features.Bases;
   using TimeWarp.Blazor.Features.Superheros;
+  using TimeWarp.Blazor.HostedServices;
   using TimeWarp.Blazor.Infrastructure;
 
   public class Startup
@@ -67,6 +75,7 @@ namespace TimeWarp.Blazor.Server
       (
         aEndpointRouteBuilder =>
         {
+          aEndpointRouteBuilder.MapHealthChecks("/api/health");
           aEndpointRouteBuilder.MapGrpcService<SuperheroService>();
           aEndpointRouteBuilder.MapCodeFirstGrpcReflectionService();
           aEndpointRouteBuilder.MapControllers();
@@ -81,6 +90,7 @@ namespace TimeWarp.Blazor.Server
     public void ConfigureServices(IServiceCollection aServiceCollection)
     {
       ConfigureSettings(aServiceCollection);
+      ConfigureInfrastructure(aServiceCollection);
       aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
       aServiceCollection.AddRazorPages();
       aServiceCollection.AddServerSideBlazor();
@@ -91,6 +101,8 @@ namespace TimeWarp.Blazor.Server
         (
           aFluentValidationMvcConfiguration =>
           {
+            // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
+            // will NOT register internals. This feature is utilized.
             aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Startup>();
             aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<BaseRequest>();
           }
@@ -116,10 +128,84 @@ namespace TimeWarp.Blazor.Server
       ConfigureSwagger(aServiceCollection);
     }
 
+    private void ConfigureInfrastructure(IServiceCollection aServiceCollection)
+    {
+      aServiceCollection.AddHealthChecks()
+        .AddDbContextCheck<CosmosDbContext>
+        (
+          name: nameof(CosmosDbContext),
+          HealthStatus.Unhealthy,
+          null,
+          PerformCosmosHealthCheck()
+        );
+        //.AddDbContextCheck<SqlDbContext>();
+
+      ConfigureEnvironmentChecks(aServiceCollection);
+      ConfigureCosmosDb(aServiceCollection);
+      //ConfigureSqlDb(aServiceCollection, Configuration);
+      aServiceCollection.AddHostedService<StartupHostedService>();
+      aServiceCollection.AddHostedService<ProtobufGenerationHostedService>();
+    }
+
+    private static Func<CosmosDbContext, CancellationToken, Task<bool>> PerformCosmosHealthCheck() =>
+      async (aCosmosDbContext, _) =>
+      {
+        try
+        {
+          await aCosmosDbContext.Database.GetCosmosClient().ReadAccountAsync().ConfigureAwait(true);
+        }
+        catch (HttpRequestException)
+        {
+          return false;
+        }
+
+        return true;
+      };
+
+    private void ConfigureEnvironmentChecks(IServiceCollection aServiceCollection)
+    {
+      aServiceCollection.AddSingleton<SampleEnvironmentCheck>();
+      aServiceCollection.AddSingleton<CosmosDbEnvironmentCheck>();
+
+      aServiceCollection.CheckEnvironment<SampleEnvironmentCheck>
+      (
+        SampleEnvironmentCheck.Description, aSampleEnvironmentCheck => aSampleEnvironmentCheck.Check()
+      );
+
+      aServiceCollection.CheckEnvironment<CosmosDbEnvironmentCheck>
+      (
+        CosmosDbEnvironmentCheck.Description,
+        async (aCosmosDbEnvironmentCheck) => await aCosmosDbEnvironmentCheck.CheckAsync()
+      );
+    }
+
+    private static void ConfigureCosmosDb(IServiceCollection aServiceCollection)
+    {
+      using IServiceScope scope = aServiceCollection.BuildServiceProvider().CreateScope();
+      {
+        CosmosDbOptions cosmosOptions = scope.ServiceProvider.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
+
+        aServiceCollection.AddDbContext<CosmosDbContext>
+        (
+          aDbContextOptionsBuilder =>
+            aDbContextOptionsBuilder
+            .UseCosmos
+            (
+              accountEndpoint: cosmosOptions.EndPoint,
+              accountKey: cosmosOptions.AccessKey,
+              databaseName: nameof(CosmosDbContext)
+            )
+        );
+      }
+    }
+
     private void ConfigureSettings(IServiceCollection aServiceCollection)
     {
-      aServiceCollection.AddOptions();
-      aServiceCollection.Configure<SampleOptions>(Configuration.GetSection(nameof(SampleOptions)));
+      aServiceCollection
+        .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(Configuration)
+        .ConfigureOptions<SampleOptions, SampleOptionsValidator>(Configuration);
+
+      aServiceCollection.ValidateOptions();
     }
 
     private void ConfigureSwagger(IServiceCollection aServiceCollection)

@@ -1,4 +1,4 @@
-//#WeatherForecast #GetWeatherForecasts #Handler #Server
+// #WeatherForecast #GetWeatherForecasts #Handler #Server
 namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   using MediatR;

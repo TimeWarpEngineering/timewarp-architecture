@@ -1,10 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="Fixie" Version="$(FixieVersion)" />
-    <PackageReference Include="Selenium.Support" Version="$(SeleniumSupportVersion)" />
-    <PackageReference Include="Selenium.WebDriver" Version="$(SeleniumSupportVersion)" />
-    <PackageReference Include="Shouldly" Version="$(ShouldlyVersion)" />
-    <DotNetCliToolReference Include="Fixie.Console" Version="$(FixieConsoleVersion)" />
+    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="Selenium.Support" />
+    <PackageReference Include="Selenium.WebDriver"/>
+    <PackageReference Include="Shouldly" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 

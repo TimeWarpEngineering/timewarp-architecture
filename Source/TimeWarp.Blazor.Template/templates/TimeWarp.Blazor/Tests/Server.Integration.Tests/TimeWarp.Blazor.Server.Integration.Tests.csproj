@@ -1,15 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="Fixie" Version="$(FixieVersion)" />
-    <PackageReference Include="FluentAssertions" Version="$(FluentAssertionsVersion)" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="$(MicrosoftAspNetCoreMvcTestingVersion)" />
-    <PackageReference Include="Shouldly" Version="$(ShouldlyVersion)" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
-    <DotNetCliToolReference Include="Fixie.Console" Version="$(FixieConsoleVersion)" />
+    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="FluentAssertions" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Server\TimeWarp.Blazor.Server.csproj" />
     <ProjectReference Include="..\..\Source\Shared\TimeWarp.Blazor.Shared.csproj" />
+    <ProjectReference Include="..\TimeWarp.Blazor.Testing\TimeWarp.Blazor.Testing.csproj" />
   </ItemGroup>
 </Project>

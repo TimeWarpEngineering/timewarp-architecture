@@ -19,9 +19,14 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
     private readonly ISender Sender;
     protected readonly IStore Store;
 
-    public BaseTest(ClientHost aWebAssemblyHost)
+    /// <summary>
+    /// Base Class for Client tests.
+    /// </summary>
+    /// <param name="aClientHost"></param>
+    /// <remarks>The response to Client Actions is always 'Unit' because the handler updates the state.</remarks>
+    public BaseTest(TestClientApplication aClientHost)
     {
-      ServiceScopeFactory = aWebAssemblyHost.ServiceProvider.GetService<IServiceScopeFactory>();
+      ServiceScopeFactory = aClientHost.ServiceProvider.GetService<IServiceScopeFactory>();
       ServiceScope = ServiceScopeFactory.CreateScope();
       Sender = ServiceScope.ServiceProvider.GetService<ISender>();
       Store = ServiceScope.ServiceProvider.GetService<IStore>();

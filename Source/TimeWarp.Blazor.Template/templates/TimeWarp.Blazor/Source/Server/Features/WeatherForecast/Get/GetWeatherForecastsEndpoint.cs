@@ -1,4 +1,4 @@
-//#WeatherForecast #GetWeatherForecasts #Endpoint #Server
+// #WeatherForecast #GetWeatherForecasts #Endpoint #Server
 namespace TimeWarp.Blazor.Features.WeatherForecasts
 {
   using Microsoft.AspNetCore.Mvc;
@@ -22,6 +22,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
     [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
     [ProducesResponseType(typeof(GetWeatherForecastsResponse), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-    public async Task<IActionResult> Process([FromQuery] GetWeatherForecastsRequest aGetWeatherForecastsRequest) => await Send(aGetWeatherForecastsRequest);
+    public async Task<IActionResult> Process([FromQuery] GetWeatherForecastsRequest aGetWeatherForecastsRequest) =>
+      await Send(aGetWeatherForecastsRequest);
   }
 }

@@ -1,7 +1,7 @@
 namespace CounterState
 {
   using AnyClone;
-  using Shouldly;
+  using FluentAssertions;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using TimeWarp.Blazor.Features.Counters;
 
@@ -9,7 +9,7 @@ namespace CounterState
   {
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public Clone_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public void Clone()
     {
@@ -20,9 +20,9 @@ namespace CounterState
       var clone = CounterState.Clone() as CounterState;
 
       //Assert
-      CounterState.ShouldNotBeSameAs(clone);
-      CounterState.Count.ShouldBe(clone.Count);
-      CounterState.Guid.ShouldNotBe(clone.Guid);
+      CounterState.Should().NotBeSameAs(clone);
+      CounterState.Count.Should().Be(clone.Count);
+      CounterState.Guid.Should().NotBe(clone.Guid);
     }
   }
 }

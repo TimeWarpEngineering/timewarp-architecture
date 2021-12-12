@@ -1,29 +1,27 @@
 namespace GetWeatherForecastsHandler
 {
   using FluentAssertions;
-  using Microsoft.AspNetCore.Mvc.Testing;
-  using System.Text.Json;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Features.WeatherForecasts;
-  using TimeWarp.Blazor.Server;
-  using TimeWarp.Blazor.Server.Integration.Tests.Infrastructure;
+  using TimeWarp.Blazor.Testing;
 
-  public class Handle_Returns : BaseTest
+  public class Handle_Returns
   {
     private readonly GetWeatherForecastsRequest GetWeatherForecastsRequest;
+    private readonly TimeWarpBlazorServerApplication TimeWarpBlazorServerApplication;
 
     public Handle_Returns
     (
-      WebApplicationFactory<Startup> aWebApplicationFactory,
-      JsonSerializerOptions aJsonSerializerOptions
-    ) : base(aWebApplicationFactory, aJsonSerializerOptions)
+       TimeWarpBlazorServerApplication aTimeWarpBlazorServerApplication
+    )
     {
       GetWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
+      TimeWarpBlazorServerApplication = aTimeWarpBlazorServerApplication;
     }
 
     public async Task _10WeatherForecasts_Given_10DaysRequested()
     {
-      GetWeatherForecastsResponse getWeatherForecastsResponse = await Send(GetWeatherForecastsRequest);
+      GetWeatherForecastsResponse getWeatherForecastsResponse = await TimeWarpBlazorServerApplication.Send(GetWeatherForecastsRequest);
 
       ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
     }

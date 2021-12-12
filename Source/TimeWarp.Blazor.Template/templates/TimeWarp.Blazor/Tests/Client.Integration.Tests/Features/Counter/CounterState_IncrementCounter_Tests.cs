@@ -1,6 +1,6 @@
 namespace CounterState
 {
-  using Shouldly;
+  using FluentAssertions;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
   using TimeWarp.Blazor.Features.Counters;
@@ -10,7 +10,7 @@ namespace CounterState
   {
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public IncrementCounterAction_Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public IncrementCounterAction_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public async Task Decrement_Count_Given_NegativeAmount()
     {
@@ -26,7 +26,7 @@ namespace CounterState
       await Send(incrementCounterRequest);
 
       //Assert
-      CounterState.Count.ShouldBe(13);
+      CounterState.Count.Should().Be(13);
     }
 
     public async Task Increment_Count()
@@ -43,7 +43,7 @@ namespace CounterState
       await Send(incrementCounterRequest);
 
       //Assert
-      CounterState.Count.ShouldBe(27);
+      CounterState.Count.Should().Be(27);
     }
   }
 }

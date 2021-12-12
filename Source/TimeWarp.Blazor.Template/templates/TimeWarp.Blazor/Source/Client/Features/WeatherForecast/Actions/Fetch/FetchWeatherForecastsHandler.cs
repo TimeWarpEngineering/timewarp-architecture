@@ -12,11 +12,11 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
   {
     public class FetchWeatherForecastsHandler : BaseHandler<FetchWeatherForecastsAction>
     {
-      private readonly HttpClient HttpClient;
+      private readonly WebApiService WebApiService;
 
-      public FetchWeatherForecastsHandler(IStore aStore, HttpClient aHttpClient) : base(aStore)
+      public FetchWeatherForecastsHandler(IStore aStore, WebApiService aWebApiService) : base(aStore)
       {
-        HttpClient = aHttpClient;
+        WebApiService = aWebApiService;
       }
 
       public override async Task<Unit> Handle
@@ -28,11 +28,8 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
         var getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
 
         GetWeatherForecastsResponse getWeatherForecastsResponse =
-          await HttpClient.GetFromJsonAsync<GetWeatherForecastsResponse>
-          (
-            getWeatherForecastsRequest.GetRoute(), aCancellationToken
-          )
-          .ConfigureAwait(false);
+          await WebApiService.GetResponse<GetWeatherForecastsResponse>(getWeatherForecastsRequest)
+            .ConfigureAwait(false);
 
         WeatherForecastsState._WeatherForecasts = getWeatherForecastsResponse.WeatherForecasts;
         return Unit.Value;

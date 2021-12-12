@@ -4,7 +4,6 @@ namespace TimeWarp.Blazor.Client
   using Grpc.Net.Client;
   using Grpc.Net.Client.Web;
   using MediatR;
-  using Microsoft.AspNetCore.Components;
   using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
   using Microsoft.Extensions.Configuration;
   using Microsoft.Extensions.DependencyInjection;
@@ -13,12 +12,12 @@ namespace TimeWarp.Blazor.Client
   using System;
   using System.Net.Http;
   using System.Reflection;
+  using System.Text.Json;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Analyzer;
   using TimeWarp.Blazor.Components;
   using TimeWarp.Blazor.Features.ClientLoaders;
   using TimeWarp.Blazor.Features.EventStreams;
-  using TimeWarp.Blazor.Features.Hellos;
   using TimeWarp.Blazor.Features.Superheros;
 
   public class Program
@@ -48,6 +47,8 @@ namespace TimeWarp.Blazor.Client
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
       aServiceCollection.AddScoped<ClientLoader>();
       aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
+      aServiceCollection.AddSingleton<JsonSerializerOptions>(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+      aServiceCollection.AddScoped<WebApiService>();
 
       ConfigureGrpc(aServiceCollection);
 

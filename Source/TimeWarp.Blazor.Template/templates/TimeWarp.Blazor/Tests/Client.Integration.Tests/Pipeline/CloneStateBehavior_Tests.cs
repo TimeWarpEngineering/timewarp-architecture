@@ -1,6 +1,6 @@
 namespace CloneStateBehavior
 {
-  using Shouldly;
+  using FluentAssertions;
   using System;
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
@@ -11,7 +11,7 @@ namespace CloneStateBehavior
   {
     private CounterState CounterState => Store.GetState<CounterState>();
 
-    public Should(ClientHost aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    public Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
 
     public async Task CloneState()
     {
@@ -28,7 +28,7 @@ namespace CloneStateBehavior
       await Send(incrementCounterRequest);
 
       //Assert
-      CounterState.Guid.ShouldNotBe(preActionGuid);
+      CounterState.Guid.Should().NotBe(preActionGuid);
     }
 
     public async Task RollBackState_When_Exception()

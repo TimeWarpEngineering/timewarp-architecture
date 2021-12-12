@@ -261,3 +261,4 @@ dotnet_diagnostic.CA1062.severity = silent
 
 # CA1308: Normalize strings to uppercase
 dotnet_diagnostic.CA1308.severity = none
+csharp_style_namespace_declarations=block_scoped:suggestion

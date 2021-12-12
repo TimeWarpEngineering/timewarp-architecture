@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31515.178
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{2902FDFD-016E-4BF7-8B41-53D674FA53DD}"
 EndProject
@@ -13,8 +13,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Client", "S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Client.Integration.Tests", "Tests\Client.Integration.Tests\TimeWarp.Blazor.Client.Integration.Tests.csproj", "{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.EndToEnd.Selenium.Tests", "Tests\EndToEnd.Selenium.Tests\TimeWarp.Blazor.EndToEnd.Selenium.Tests.csproj", "{B82C7C95-4892-443C-AA6B-B6086B03DD30}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Server.Integration.Tests", "Tests\Server.Integration.Tests\TimeWarp.Blazor.Server.Integration.Tests.csproj", "{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.EndToEnd.TestCafe.Tests", "Tests\EndToEnd.TestCafe.Tests\TimeWarp.Blazor.EndToEnd.TestCafe.Tests.csproj", "{607246B4-BE03-4E76-99F5-71EE1E90B22C}"
@@ -25,6 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitignore = .gitignore
 		CodeMaid.config = CodeMaid.config
 		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
 		global.json = global.json
 		NuGet.config = NuGet.config
 		README.md = README.md
@@ -45,6 +44,14 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analyzers", "Analyzers", "{831BFD66-CAC3-4E90-AE1B-0BA8E5D49FB9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.Playwright.Tests", "Tests\EndToEnd.Playwright.Tests\EndToEnd.Playwright.Tests.csproj", "{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Blazor.Testing", "Tests\TimeWarp.Blazor.Testing\TimeWarp.Blazor.Testing.csproj", "{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SourceCodeGenerators", "SourceCodeGenerators", "{E9A860F3-7FA5-4E5F-B263-609E3EFEEBB0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceCodeGenerators", "Source\SourceCodeGenerators\SourceCodeGenerators.csproj", "{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.SourceCodeGenerators.Tests", "Tests\TimeWarp.SourceCodeGenerators.Tests\TimeWarp.SourceCodeGenerators.Tests.csproj", "{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -68,10 +75,6 @@ Global
 		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B82C7C95-4892-443C-AA6B-B6086B03DD30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B82C7C95-4892-443C-AA6B-B6086B03DD30}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B82C7C95-4892-443C-AA6B-B6086B03DD30}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B82C7C95-4892-443C-AA6B-B6086B03DD30}.Release|Any CPU.Build.0 = Release|Any CPU
 		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -88,16 +91,30 @@ Global
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
-		{B82C7C95-4892-443C-AA6B-B6086B03DD30} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{607246B4-BE03-4E76-99F5-71EE1E90B22C} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4} = {E9A860F3-7FA5-4E5F-B263-609E3EFEEBB0}
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
