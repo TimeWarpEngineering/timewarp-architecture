@@ -42,10 +42,10 @@
       "output": {
         ".html": {
           "relative_path": "README.html",
-          "hash": "PjyTjWkJMhyeI1dnrvicVA=="
+          "hash": "zOFuPZPGj27g4NVhdGIc2TAf7msHwOLDzcttbUzV/WU="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -54,10 +54,46 @@
       "output": {
         ".html": {
           "relative_path": "Backlog/Todo.html",
-          "hash": "zDasaT1GElxLlvHBv9+Zyg=="
+          "hash": "joCsnJU2Xfu89xRadcPcAFJh38r0esnHS8U0rFOBQw4="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "HowToRunDocfx.md",
+      "output": {
+        ".html": {
+          "relative_path": "HowToRunDocfx.html",
+          "hash": "itc2xtnsOT24VEjc1eK49zQCxoqCbboEnFj+r3xPBCU="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "TimeWarpBlazorTemplate/Architecture.md",
+      "output": {
+        ".html": {
+          "relative_path": "TimeWarpBlazorTemplate/Architecture.html",
+          "hash": "8BVZocDCJzByL/ggk2u4sqEgvF3dQL0ARLBYzv7bUL0="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "TimeWarpBlazorTemplate/Documentation.md",
+      "output": {
+        ".html": {
+          "relative_path": "TimeWarpBlazorTemplate/Documentation.html",
+          "hash": "l904uoDgsQu7oRsAgrFl61VG/9+LVBsOXzEIU4BPolk="
+        }
+      },
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -66,10 +102,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Features.html",
-          "hash": "YWqAYoU/R5Gj29Y8lptwew=="
+          "hash": "pPGYqD0ghaIG1ozH97oztFjfY00gKKwJec2ljp7gl5E="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -78,10 +114,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Overview.html",
-          "hash": "qwtf1razpd504fygbdCjhA=="
+          "hash": "l1xV+H2RKHynI01/hpO+r2+4F0TvY524RqcAqiGmO24="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -90,10 +126,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpConsoleTemplate/Overview.html",
-          "hash": "ggk+474iE1ZopBTHoh58fQ=="
+          "hash": "+QF2Af0MSwGddnxf0YzXQk/1eZCa2UBEEFLRjWJJuSs="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -102,10 +138,10 @@
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "z9ccQ1H7Ls5hpovrdBJOvQ=="
+          "hash": "ODUmztAfN+h9psiuShcpGyG6E/VDpeRjx+ILzqAiIuc="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -114,7 +150,7 @@
       "output": {
         ".html": {
           "relative_path": "toc.html",
-          "hash": "6iXEOx76WC9Ee9GjNuNV0Q=="
+          "hash": "xCwoZXPEqdq0hUMdEJ8pdeKHAdk7maRe6YxttVO3Evo="
         }
       },
       "is_incremental": false,
@@ -124,17 +160,19 @@
   "incremental_info": [
     {
       "status": {
-        "can_incremental": true,
+        "can_incremental": false,
+        "details": "Cannot build incrementally because docfx version changed from 2.56.7.0 to 2.58.9.0.",
         "incrementalPhase": "build",
         "total_file_count": 0,
-        "skipped_file_count": 0
+        "skipped_file_count": 0,
+        "full_build_reason_code": "DocfxVersionChanged"
       },
       "processors": {
         "ConceptualDocumentProcessor": {
-          "can_incremental": true,
+          "can_incremental": false,
           "incrementalPhase": "build",
-          "total_file_count": 6,
-          "skipped_file_count": 6
+          "total_file_count": 9,
+          "skipped_file_count": 0
         },
         "ResourceDocumentProcessor": {
           "can_incremental": false,
