@@ -16,6 +16,7 @@ namespace TimeWarp.Blazor.Client
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Analyzer;
   using TimeWarp.Blazor.Components;
+  using TimeWarp.Blazor.Features.Applications;
   using TimeWarp.Blazor.Features.ClientLoaders;
   using TimeWarp.Blazor.Features.EventStreams;
   using TimeWarp.Blazor.Features.Superheros;
@@ -44,6 +45,7 @@ namespace TimeWarp.Blazor.Client
         aValidationConfiguration => aValidationConfiguration.AddFluentValidation(typeof(Program).Assembly)
       );
 
+      aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
       aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
       aServiceCollection.AddScoped<ClientLoader>();
       aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
