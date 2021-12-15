@@ -30,7 +30,10 @@
         </SimpleAlert>
 
         <img class="w-full" src="/images/TheFreezeTeam/SOLID_Team.png" />
-        <Button Variant=Button.ButtonVariant.Default data-qa="FiveSecondButton" @onclick=ButtonClick>Launch Five Second Task</Button>
+        <div>
+          <Button Variant=Button.ButtonVariant.Default data-qa="FiveSecondButton" @onclick=FiveSecondTaskButtonClick>Launch Five Second Task</Button>
+          <Button Variant=Button.ButtonVariant.Default data-qa="TwoSecondButton" @onclick=TwoSecondTaskButtonClick>Launch Two Second Task</Button>
+        </div>
       </VStack>
     </div>
   </MainContent>
