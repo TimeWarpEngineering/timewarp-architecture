@@ -34,6 +34,7 @@ namespace TimeWarp.Blazor.Features.Bases
     internal SuperheroState SuperheroState => GetState<SuperheroState>();
     protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
 
+    protected bool IsProcessingAny(params string[] aActions) => ApplicationState.IsProcessingAny(aActions);
     protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest).ConfigureAwait(false);
   }
 }
