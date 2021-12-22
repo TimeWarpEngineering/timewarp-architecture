@@ -1,7 +1,6 @@
-Title: Clean up your hard drive with WizTree
-Published: 12/11/2021
 Tags: 
-  - dev-tools
+  - Feature
+  - ApplicationState
 Author: Steven T. Cramer
 ---
 
