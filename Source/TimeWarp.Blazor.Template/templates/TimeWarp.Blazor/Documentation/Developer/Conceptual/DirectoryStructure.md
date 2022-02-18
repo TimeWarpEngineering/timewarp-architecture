@@ -4,6 +4,7 @@
 ├───Assets
 ├───Build
 ├───Documentation
+├───DevOps
 ├───Samples
 ├───Source
 ├───Tests
@@ -14,6 +15,7 @@
 * Assets - Images, Logos etc.
 * Build - Build files yaml, cake, scripts, etc.
 * Documentation - Documentation for your solution
+* DevOps - Docker, Pipelines and Pulumi (IaC).
 * Samples (optional) - Sample projects
 * Source - Main projects (the product code)
 * Tests - Test projects
