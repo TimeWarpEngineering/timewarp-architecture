@@ -1,0 +1,16 @@
+# tye application configuration file
+# read all about it at https://github.com/dotnet/tye
+#
+# when you've given us a try, we'd love to know what you think:
+#    https://aka.ms/AA7q20u
+#
+name: timewarp.blazor
+services:
+- name: timewarp-blazor-server
+  project: Source/Server/TimeWarp.Blazor.Server.csproj
+- name: timewarp-blazor-client
+  project: Source/Client/TimeWarp.Blazor.Client.csproj
+- name: endtoend-playwright-tests
+  project: Tests/EndToEnd.Playwright.Tests/EndToEnd.Playwright.Tests.csproj
+- name: proxy
+  project: Source/Proxy/Proxy.csproj

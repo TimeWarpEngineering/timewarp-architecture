@@ -11,6 +11,7 @@
     <PackageVersion Include="FluentAssertions" Version="6.1.0" />
     <PackageVersion Include="FluentValidation" Version="10.3.3" />
     <PackageVersion Include="FluentValidation.AspNetCore" Version="10.3.3" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.40.0" />
     <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.39.0" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.39.0" />
     <PackageVersion Include="Grpc.Net.Client.Web" Version="2.39.0" />
@@ -43,6 +44,7 @@
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.2.2" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
     <PackageVersion Include="System.Net.Http.Json" Version="5.0.0" />
+    <PackageVersion Include="Yarp.ReverseProxy" Version="1.0.0"/>
 
     <PackageVersion Include="Selenium.Support" Version="3.141.0" />
     <PackageVersion Include="Selenium.WebDriver" Version="3.141.0" />
