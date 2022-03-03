@@ -1,1 +1,1 @@
-docker run -it --network=host --rm --name timewarp_sample timewarp:v1.0.1
+docker run -it --network=host --rm --name timewarp_software timewarp:v1.0.1

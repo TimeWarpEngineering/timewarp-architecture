@@ -33,6 +33,12 @@ COPY Source/TypeScript/*.csproj ./Source/TypeScript/
 # restore nugets for alpine
 RUN dotnet restore ./Source/Server -r linux-musl-x64
 
+# do npm install
+WORKDIR /git/Source/TypeScript
+COPY package.json .
+COPY package-lock.json .
+RUN npm install
+
 # copy everything else and build app
 COPY Source/. ./Source/
 WORKDIR /git/Source/Server

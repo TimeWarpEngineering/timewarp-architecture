@@ -8,6 +8,7 @@ namespace TimeWarp.Blazor.Server
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Mvc;
   using Microsoft.AspNetCore.ResponseCompression;
+  using Microsoft.Azure.Cosmos;
   using Microsoft.EntityFrameworkCore;
   using Microsoft.Extensions.Configuration;
   using Microsoft.Extensions.DependencyInjection;
@@ -181,11 +182,12 @@ namespace TimeWarp.Blazor.Server
 
     private static void ConfigureCosmosDb(IServiceCollection aServiceCollection)
     {
+    
       using IServiceScope scope = aServiceCollection.BuildServiceProvider().CreateScope();
       {
         CosmosDbOptions cosmosOptions = scope.ServiceProvider.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
 
-        aServiceCollection.AddDbContext<CosmosDbContext>
+        _ = aServiceCollection.AddDbContext<CosmosDbContext>
         (
           aDbContextOptionsBuilder =>
             aDbContextOptionsBuilder
@@ -193,9 +195,28 @@ namespace TimeWarp.Blazor.Server
             (
               accountEndpoint: cosmosOptions.EndPoint,
               accountKey: cosmosOptions.AccessKey,
-              databaseName: nameof(CosmosDbContext)
+              databaseName: nameof(CosmosDbContext),
+              cosmosOptionsAction: CosmosOptionsAction()
             )
         );
+      }
+
+      static Action<Microsoft.EntityFrameworkCore.Infrastructure.CosmosDbContextOptionsBuilder> CosmosOptionsAction()
+      {
+        return _ => new CosmosClientOptions
+        {
+          HttpClientFactory = () =>
+          {
+            HttpMessageHandler httpMessageHandler = new HttpClientHandler()
+            {
+              ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            return new HttpClient(httpMessageHandler);
+          },
+          ConnectionMode = ConnectionMode.Gateway
+        };
       }
     }
 
