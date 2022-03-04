@@ -31,10 +31,17 @@
     <PackageVersion Include="Microsoft.CodeAnalysis" Version="3.11.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Cosmos" Version="5.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="5.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="5.0.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.15.2" />
+    <PackageVersion Include="Microsoft.Tye.Extensions.Configuration" Version="0.10.0-alpha.21420.1" />
+    
     <PackageVersion Include="Oakton" Version="3.2.2" />
     <PackageVersion Include="PeterLeslieMorris.Blazor.FluentValidation" Version="1.7.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="6.2.2" />
