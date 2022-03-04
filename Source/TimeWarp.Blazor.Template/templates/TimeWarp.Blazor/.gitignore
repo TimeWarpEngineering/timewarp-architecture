@@ -294,3 +294,6 @@ __pycache__/
 
 # TimeWarp architecture templates Generated Code
 GeneratedCode/
+
+# Tye intermediate files
+/.tye/
