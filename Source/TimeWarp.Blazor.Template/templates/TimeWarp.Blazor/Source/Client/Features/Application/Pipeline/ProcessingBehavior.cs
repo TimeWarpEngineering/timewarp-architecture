@@ -21,7 +21,7 @@
       RequestHandlerDelegate<TResponse> aNextHandler
     )
     {
-      if (typeof(TRequest).GetCustomAttributes(typeof(TrackProcessingAttribute), false).FirstOrDefault() != null)
+      if (typeof(TRequest).GetCustomAttributes(typeof(TrackProcessingAttribute), false).Any())
       {
         Guard.Support(aRequest is IAction);
         Guard.Argument(aRequest as object, nameof(aRequest))

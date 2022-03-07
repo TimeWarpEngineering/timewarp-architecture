@@ -2,6 +2,7 @@ namespace TimeWarp.Blazor.Extensions
 {
   using System;
   using System.Collections.Generic;
+  using System.Linq;
   using System.Reflection;
   public static class AssemblyExtensions
   {
@@ -9,7 +10,7 @@ namespace TimeWarp.Blazor.Extensions
     {
       foreach (Type type in aAssembly.GetTypes())
       {
-        if (type.GetCustomAttributes(aAttributeType, false).Length > 0)
+        if (type.GetCustomAttributes(aAttributeType, false).Any())
         {
           yield return type;
         }
