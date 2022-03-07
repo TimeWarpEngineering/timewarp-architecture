@@ -16,22 +16,25 @@ namespace TimeWarp.Blazor.Client
   using System.Threading.Tasks;
   using TimeWarp.Blazor.Analyzer;
   using TimeWarp.Blazor.Components;
+  using TimeWarp.Blazor.Configuration;
   using TimeWarp.Blazor.Features.Applications;
   using TimeWarp.Blazor.Features.ClientLoaders;
   using TimeWarp.Blazor.Features.EventStreams;
   using TimeWarp.Blazor.Features.Superheros;
+  using ServiceCollection = Configuration.ServiceCollection;
 
   public class Program
   {
-    public static void ConfigureServices(IServiceCollection aServiceCollection)
+    public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
     {
+      ConfigureSettings(aServiceCollection, aConfiguration);
       aServiceCollection.AddBlazorState
       (
         (aOptions) =>
         {
-          #if ReduxDevToolsEnabled
+#if ReduxDevToolsEnabled
           aOptions.UseReduxDevToolsBehavior = true;
-          #endif
+#endif
           aOptions.Assemblies =
             new Assembly[]
             {
@@ -59,15 +62,23 @@ namespace TimeWarp.Blazor.Client
 #endif
     }
 
+    private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+    {
+      aServiceCollection
+        .ConfigureOptions<ServiceCollection, ServiceCollectionValidator>(aConfiguration);
+
+      aServiceCollection.ValidateOptions();
+    }
+
     private static void ConfigureGrpc(IServiceCollection aServiceCollection)
     {
       aServiceCollection.AddSingleton
       (
         aServiceProvider =>
         {
-          // Get the service address from appsettings.json 
-          IConfiguration config = aServiceProvider.GetRequiredService<IConfiguration>();
-          string backendUrl = config["BackendUrl"];
+          IConfiguration configuration = aServiceProvider.GetRequiredService<IConfiguration>();
+          const string serviceName = "timewarp-blazor-server";
+          string backendUrl = GetServiceUri(configuration, serviceName);
 
           // If no address is set then fallback to the current webpage URL
           if (string.IsNullOrEmpty(backendUrl))
@@ -114,6 +125,18 @@ namespace TimeWarp.Blazor.Client
 
     }
 
+    private static string GetServiceUri(IConfiguration aConfiguration, string aServiceName)
+    {
+      var uriBuilder = new UriBuilder
+      {
+        Scheme = aConfiguration.GetValue<string>($"service:{aServiceName}:protocol"),
+        Host = aConfiguration.GetValue<string>($"service:{aServiceName}:host"),
+        Port = aConfiguration.GetValue<int>($"service:{aServiceName}:port")
+      };
+
+      return aConfiguration.GetServiceUri(aServiceName)?.AbsoluteUri ?? uriBuilder.ToString();
+    }
+
     public static Task Main(string[] aArgumentArray)
     {
       var builder = WebAssemblyHostBuilder.CreateDefault(aArgumentArray);
@@ -121,7 +144,7 @@ namespace TimeWarp.Blazor.Client
       builder.Services.AddScoped
         (_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-      ConfigureServices(builder.Services);
+      ConfigureServices(builder.Services, builder.Configuration);
 
       WebAssemblyHost host = builder.Build();
       return host.RunAsync();

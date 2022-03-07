@@ -10,6 +10,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
   using MediatR;
   using System.Threading.Tasks;
   using System.Threading;
+  using Microsoft.Extensions.Configuration;
 
   /// <summary>
   /// Creates the ServiceProvider for the Client and configures it on construction
@@ -25,14 +26,15 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       var services = new ServiceCollection();
       // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
       services.AddSingleton(aTimeWarpBlazorServerApplication.HttpClient);
-      ConfigureServices(services);
+
+      ConfigureServices(services, aTimeWarpBlazorServerApplication.WebApplication.Configuration);
       ServiceProvider = services.BuildServiceProvider();
       ScopedSender = new ScopedSender(ServiceProvider);
     }
 
-    private static void ConfigureServices(IServiceCollection aServiceCollection)
+    private static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
     {
-      Program.ConfigureServices(aServiceCollection);
+      Program.ConfigureServices(aServiceCollection, aConfiguration);
 
       // Theres is no JSRuntime in testing as we don't have an actual browser
       IJSRuntime fakeJsRuntime = A.Fake<IJSRuntime>();

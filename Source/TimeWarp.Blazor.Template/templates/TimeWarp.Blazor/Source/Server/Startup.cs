@@ -122,7 +122,7 @@ namespace TimeWarp.Blazor.Server
           )
       );
 
-      Client.Program.ConfigureServices(aServiceCollection);
+      Client.Program.ConfigureServices(aServiceCollection, Configuration);
 
       aServiceCollection.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
 
