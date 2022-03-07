@@ -2,7 +2,6 @@
 {
   using BlazorState;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Features.Superheros;
 
   internal partial class SuperheroState : State<SuperheroState>
   {

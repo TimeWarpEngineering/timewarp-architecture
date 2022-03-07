@@ -1,21 +1,16 @@
+namespace TimeWarp.Architecture.GrpcServer.Services;
+
 using Grpc.Core;
 using TimeWarp.Architecture.GrpcServer;
 
-namespace TimeWarp.Architecture.GrpcServer.Services;
-
 public class GreeterService : Greeter.GreeterBase
 {
-    private readonly ILogger<GreeterService> _logger;
-    public GreeterService(ILogger<GreeterService> logger)
-    {
-        _logger = logger;
-    }
+  private readonly ILogger<GreeterService> Logger;
+  public GreeterService(ILogger<GreeterService> logger)
+  {
+    Logger = logger;
+  }
 
-    public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
-    {
-        return Task.FromResult(new HelloReply
-        {
-            Message = "Hello " + request.Name
-        });
-    }
+  public override Task<HelloReply> SayHello(HelloRequest aHelloRequest, ServerCallContext aServerCallContext) =>
+    Task.FromResult(new HelloReply { Message = "Hello " + aHelloRequest.Name });
 }
