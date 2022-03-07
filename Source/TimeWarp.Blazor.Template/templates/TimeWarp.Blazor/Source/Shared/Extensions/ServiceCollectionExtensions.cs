@@ -19,7 +19,10 @@
       where TOptions : class
       where TOptionsValidator : AbstractValidator<TOptions>
     {
-      IConfigurationSection configurationSection = aConfiguration.GetSection(typeof(TOptions).Name);
+      Type type = typeof(TOptions);
+      var sectionNameAttribute = (SectionNameAttribute)type.GetCustomAttributes(typeof(SectionNameAttribute), false).FirstOrDefault();
+      string sectionName = sectionNameAttribute?.SectionName ?? type.Name;
+      IConfigurationSection configurationSection = aConfiguration.GetSection(sectionName);
 
       aServiceCollection.Configure<TOptions>(configurationSection);
       return RegisterOptionsValidator<TOptions, TOptionsValidator>(aServiceCollection);
