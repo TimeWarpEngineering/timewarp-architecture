@@ -11,7 +11,6 @@ internal class ServiceCollectionValidator : AbstractValidator<ServiceCollection>
 {
   public ServiceCollectionValidator()
   {
-    RuleFor(aServicesOptions => aServicesOptions).NotEmpty();
     RuleFor(aServicesOptions => aServicesOptions)
       .NotEmpty()
       .Must(aServices => aServices.ContainsKey(Constants.GrpcServiceName))

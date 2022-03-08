@@ -83,7 +83,10 @@ public class Validate_Should
 
     var stream = new MemoryStream(System.Text.Encoding.Default.GetBytes(json));
     var configurationBuilder = new ConfigurationBuilder();
-    configurationBuilder.AddJsonStream(stream);
+    configurationBuilder
+      .AddJsonStream(stream)
+      .AddEnvironmentVariables();
+    
     IConfigurationRoot config = configurationBuilder.Build();
 
     ServiceCollection serviceCollection = new();
