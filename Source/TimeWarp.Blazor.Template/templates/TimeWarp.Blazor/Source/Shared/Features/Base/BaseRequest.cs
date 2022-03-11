@@ -1,17 +1,16 @@
-namespace TimeWarp.Blazor.Features.Bases
+namespace TimeWarp.Blazor.Features.Bases;
+
+using System;
+
+public abstract class BaseRequest
 {
-  using System;
+  /// <summary>
+  /// Unique Identifier
+  /// </summary>
+  public Guid CorrelationId { get; set; }
 
-  public abstract class BaseRequest
+  public BaseRequest()
   {
-    /// <summary>
-    /// Unique Identifier
-    /// </summary>
-    public Guid CorrelationId { get; set; }
-
-    public BaseRequest()
-    {
-      CorrelationId = Guid.NewGuid();
-    }
+    CorrelationId = Guid.NewGuid();
   }
 }

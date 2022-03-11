@@ -1,69 +1,68 @@
-namespace TimeWarp.Blazor.Features.EventStreams
+namespace TimeWarp.Blazor.Features.EventStreams;
+
+using Dawn;
+using MediatR;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using TimeWarp.Blazor.Features.Bases;
+using static TimeWarp.Blazor.Features.EventStreams.EventStreamState;
+
+/// <summary>
+/// Every event that comes through the pipeline adds an object to the EventStreamState
+/// </summary>
+/// <typeparam name="TRequest"></typeparam>
+/// <typeparam name="TResponse"></typeparam>
+/// <remarks>To avoid infinite recursion don't add AddEvent to the event stream</remarks>
+public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
 {
-  using Dawn;
-  using MediatR;
-  using Microsoft.Extensions.Logging;
-  using System;
-  using System.Threading;
-  using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases;
-  using static TimeWarp.Blazor.Features.EventStreams.EventStreamState;
+  private readonly ILogger Logger;
+  private readonly ISender Sender;
+  public Guid Guid { get; } = Guid.NewGuid();
 
-  /// <summary>
-  /// Every event that comes through the pipeline adds an object to the EventStreamState
-  /// </summary>
-  /// <typeparam name="TRequest"></typeparam>
-  /// <typeparam name="TResponse"></typeparam>
-  /// <remarks>To avoid infinite recursion don't add AddEvent to the event stream</remarks>
-  public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+  public EventStreamBehavior
+              (
+    ILogger<EventStreamBehavior<TRequest, TResponse>> aLogger,
+    ISender aSender
+  )
   {
-    private readonly ILogger Logger;
-    private readonly ISender Sender;
-    public Guid Guid { get; } = Guid.NewGuid();
+    Logger = aLogger;
+    Sender = aSender;
+    Logger.LogDebug($"{GetType().Name}: Constructor");
+  }
 
-    public EventStreamBehavior
-                (
-      ILogger<EventStreamBehavior<TRequest, TResponse>> aLogger,
-      ISender aSender
-    )
+  public async Task<TResponse> Handle
+  (
+    TRequest aRequest,
+    CancellationToken aCancellationToken,
+    RequestHandlerDelegate<TResponse> aNext
+  )
+  {
+    Guard.Argument(aNext, nameof(aNext)).NotNull();
+
+    await AddEventToStream(aRequest, "Start").ConfigureAwait(false);
+    TResponse newState = await aNext().ConfigureAwait(false);
+    await AddEventToStream(aRequest, "Completed").ConfigureAwait(false);
+    return newState;
+  }
+
+  private async Task AddEventToStream(TRequest aRequest, string aTag)
+  {
+    if (aRequest is not AddEventAction) //Skip to avoid recursion
     {
-      Logger = aLogger;
-      Sender = aSender;
-      Logger.LogDebug($"{GetType().Name}: Constructor");
-    }
+      var addEventAction = new AddEventAction();
+      string requestTypeName = aRequest.GetType().Name;
 
-    public async Task<TResponse> Handle
-    (
-      TRequest aRequest,
-      CancellationToken aCancellationToken,
-      RequestHandlerDelegate<TResponse> aNext
-    )
-    {
-      Guard.Argument(aNext, nameof(aNext)).NotNull();
-
-      await AddEventToStream(aRequest, "Start").ConfigureAwait(false);
-      TResponse newState = await aNext().ConfigureAwait(false);
-      await AddEventToStream(aRequest, "Completed").ConfigureAwait(false);
-      return newState;
-    }
-
-    private async Task AddEventToStream(TRequest aRequest, string aTag)
-    {
-      if (aRequest is not AddEventAction) //Skip to avoid recursion
+      if (aRequest is BaseRequest request)
       {
-        var addEventAction = new AddEventAction();
-        string requestTypeName = aRequest.GetType().Name;
-
-        if (aRequest is BaseRequest request)
-        {
-          addEventAction.Message = $"{aTag}:{requestTypeName}:{request.CorrelationId}";
-        }
-        else
-        {
-          addEventAction.Message = $"{aTag}:{requestTypeName}";
-        }
-        await Sender.Send(addEventAction).ConfigureAwait(false);
+        addEventAction.Message = $"{aTag}:{requestTypeName}:{request.CorrelationId}";
       }
+      else
+      {
+        addEventAction.Message = $"{aTag}:{requestTypeName}";
+      }
+      await Sender.Send(addEventAction).ConfigureAwait(false);
     }
   }
 }
