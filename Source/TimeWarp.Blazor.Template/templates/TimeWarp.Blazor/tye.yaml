@@ -38,9 +38,42 @@ services:
   - port: 5001
     protocol: https
 
+- name: timewarp-blazor-grpcserver
+  project: Source/GrpcServer/TimeWarp.Architecture.GrpcServer.csproj
+  bindings:
+  - name: https-grpc
+    port: 7227
+    protocol: https
+  - name: http-grpc
+    port: 5290
+    protocol: http
+
+- name: timewarp-blazor-apiserver
+  project: Source/ApiServer/TimeWarp.Architecture.ApiServer.csproj
+  bindings:
+  - port: 7255
+    protocol: https
+
+- name: proxy
+  project: Source/Proxy/Proxy.csproj
+  bindings:
+  - port: 8443
+    protocol: https
+
 #- name: timewarp-blazor-client
 #  project: Source/Client/TimeWarp.Blazor.Client.csproj
 #- name: endtoend-playwright-tests
 #  project: Tests/EndToEnd.Playwright.Tests/EndToEnd.Playwright.Tests.csproj
-#- name: proxy
-#  project: Source/Proxy/Proxy.csproj
+
+#ingress:
+#  - name: ingress
+#    bindings:
+#    - port: 443
+#      protocol: https
+#    rules:
+#      - path: /api
+#        service: timewarp-blazor-server
+#      - path: /swagger
+#        preservePath: true
+#        service: timewarp-blazor-server
+#      - service: client
