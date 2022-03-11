@@ -12,6 +12,7 @@
     <PackageVersion Include="FluentValidation" Version="10.3.3" />
     <PackageVersion Include="FluentValidation.AspNetCore" Version="10.3.3" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.40.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.43.0" />
     <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.39.0" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.39.0" />
     <PackageVersion Include="Grpc.Net.Client.Web" Version="2.39.0" />
@@ -22,6 +23,7 @@
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.0.152" />
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.0.152" />
     <PackageVersion Include="System.ServiceModel.Primitives" Version="4.8.1" />
+    
     <PackageVersion Include="MicroElements.Swashbuckle.FluentValidation" Version="5.4.0" />       
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="5.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="5.0.10" />
@@ -42,13 +44,14 @@
     <PackageVersion Include="Microsoft.Playwright" Version="1.15.2" />
     <PackageVersion Include="Microsoft.Tye.Extensions.Configuration" Version="0.10.0-alpha.21420.1" />
     
-    <PackageVersion Include="Oakton" Version="3.2.2" />
+    <PackageVersion Include="Oakton" Version="4.1.0" />
     <PackageVersion Include="PeterLeslieMorris.Blazor.FluentValidation" Version="1.7.0" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="6.2.2" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="6.3.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="7.0.2" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="6.2.2" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.2.2" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.2.2" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="6.3.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.3.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.3.0" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
     <PackageVersion Include="System.Net.Http.Json" Version="5.0.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="1.0.0"/>
