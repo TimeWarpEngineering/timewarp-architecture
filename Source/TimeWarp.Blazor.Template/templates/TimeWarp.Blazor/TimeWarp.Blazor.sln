@@ -31,6 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.template.config\template.json = .template.config\template.json
 		TestCafe.ps1 = TestCafe.ps1
 		TimeWarp.ruleset = TimeWarp.ruleset
+		tye.yaml = tye.yaml
 		UNLICENSE.md = UNLICENSE.md
 	EndProjectSection
 EndProject
@@ -57,11 +58,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Proxy", "Source\Proxy\Proxy
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{038ED012-0F07-4C2A-AC75-1584FA537FDB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GrpcServer", "GrpcServer", "{F549E7AE-C09B-402D-8AEC-43013297EDC3}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Grpc", "Grpc", "{F549E7AE-C09B-402D-8AEC-43013297EDC3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ApiServer", "ApiServer", "{40FA15DA-FF57-49E7-AD29-3C6C12F29237}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "Api", "{40FA15DA-FF57-49E7-AD29-3C6C12F29237}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.GrpcServer", "Source\GrpcServer\TimeWarp.Architecture.GrpcServer.csproj", "{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.GrpcShared", "Source\GrpcShared\TimeWarp.Architecture.GrpcShared.csproj", "{8C377EA5-3EBE-4DDC-B800-85731946DEB7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.ApiServer", "Source\ApiServer\TimeWarp.Architecture.ApiServer.csproj", "{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Api", "Source\Api\TimeWarp.Architecture.Api.csproj", "{FF19203B-D199-459E-8448-06A37D3C7E88}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -121,6 +128,18 @@ Global
 		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF19203B-D199-459E-8448-06A37D3C7E88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF19203B-D199-459E-8448-06A37D3C7E88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF19203B-D199-459E-8448-06A37D3C7E88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF19203B-D199-459E-8448-06A37D3C7E88}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -136,6 +155,9 @@ Global
 		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4} = {E9A860F3-7FA5-4E5F-B263-609E3EFEEBB0}
 		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
+		{FF19203B-D199-459E-8448-06A37D3C7E88} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
