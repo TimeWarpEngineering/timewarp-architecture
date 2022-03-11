@@ -17,7 +17,7 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="protobuf-net.Grpc" />
-    <PackageReference Include="System.ServiceModel.Primitives" />
-    
+    <PackageReference Include="System.ServiceModel.Primitives" />    
   </ItemGroup>
+		
 </Project>
