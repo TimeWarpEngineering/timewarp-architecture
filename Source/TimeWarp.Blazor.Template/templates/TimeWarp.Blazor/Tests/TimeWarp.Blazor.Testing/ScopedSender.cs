@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Testing
+﻿namespace TimeWarp.Architecture.Testing
 {
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;

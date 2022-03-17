@@ -7,9 +7,9 @@ using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using TimeWarp.Blazor;
-using TimeWarp.Blazor.Configuration;
-using TimeWarp.Blazor.Features.WeatherForecasts;
+using TimeWarp.Architecture;
+using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Features.WeatherForecasts;
 
 public class Validate_Should
 {

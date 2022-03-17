@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor
+﻿namespace TimeWarp.Architecture
 {
   using System;
   using System.Collections.Generic;

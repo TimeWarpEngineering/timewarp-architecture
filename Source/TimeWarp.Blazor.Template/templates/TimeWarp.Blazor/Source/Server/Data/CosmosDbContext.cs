@@ -1,8 +1,8 @@
-﻿namespace TimeWarp.Blazor.Data
+﻿namespace TimeWarp.Architecture.Data
 {
   using Microsoft.EntityFrameworkCore;
-  using TimeWarp.Blazor.Data.Configuration;
-  using TimeWarp.Blazor.Entities;
+  using TimeWarp.Architecture.Data.Configuration;
+  using TimeWarp.Architecture.Entities;
 
   public class CosmosDbContext : DbContext
   {

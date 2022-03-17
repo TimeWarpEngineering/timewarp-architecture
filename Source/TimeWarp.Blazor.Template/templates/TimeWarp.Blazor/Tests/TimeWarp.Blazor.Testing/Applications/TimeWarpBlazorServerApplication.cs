@@ -1,8 +1,8 @@
-﻿namespace TimeWarp.Blazor.Testing
+﻿namespace TimeWarp.Architecture.Testing
 {
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
-  using TimeWarp.Blazor.Server;
+  using TimeWarp.Architecture.Server;
 
   /// <summary>
   /// Used to launch the TimeWarp.Blazor.Server application

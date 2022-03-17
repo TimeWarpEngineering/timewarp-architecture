@@ -3,7 +3,7 @@ namespace JsonSerializerOptions
   using FluentAssertions;
   using System;
   using System.Text.Json;
-  using TimeWarp.Blazor.JsonSerializer.Tests;
+  using TimeWarp.Architecture.JsonSerializer.Tests;
 
   public class JsonSerializer_Should
   {

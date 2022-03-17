@@ -1,8 +1,8 @@
-﻿namespace TimeWarp.Blazor.Configuration;
+﻿namespace TimeWarp.Architecture.Configuration;
 
 using System;
 using System.Collections.Generic;
-using static TimeWarp.Blazor.Configuration.ServiceCollection;
+using static TimeWarp.Architecture.Configuration.ServiceCollection;
 
 [SectionName("service")]
 public class ServiceCollection : Dictionary<string, Service>

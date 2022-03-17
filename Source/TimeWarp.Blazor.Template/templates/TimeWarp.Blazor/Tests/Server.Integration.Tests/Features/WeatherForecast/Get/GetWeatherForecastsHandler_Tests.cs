@@ -2,8 +2,8 @@ namespace GetWeatherForecastsHandler
 {
   using FluentAssertions;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.WeatherForecasts;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Features.WeatherForecasts;
+  using TimeWarp.Architecture.Testing;
 
   public class Handle_Returns
   {

@@ -1,9 +1,8 @@
-namespace TimeWarp.Blazor.Features.WeatherForecasts
-{
-  using TimeWarp.Blazor.Features.Bases;
+namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-  internal partial class WeatherForecastsState
-  {
-    public class FetchWeatherForecastsAction : BaseAction { }
-  }
+using TimeWarp.Architecture.Features.Bases;
+
+internal partial class WeatherForecastsState
+{
+  public class FetchWeatherForecastsAction : BaseAction { }
 }

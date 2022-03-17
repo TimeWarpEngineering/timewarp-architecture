@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Server
+namespace TimeWarp.Architecture.Server
 {
   using Microsoft.AspNetCore.Hosting;
 

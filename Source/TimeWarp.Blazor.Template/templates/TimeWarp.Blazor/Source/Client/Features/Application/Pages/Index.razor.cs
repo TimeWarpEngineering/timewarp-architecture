@@ -1,8 +1,8 @@
-namespace TimeWarp.Blazor.Pages
+namespace TimeWarp.Architecture.Pages
 {
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Applications;
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Architecture.Features.Applications;
+  using TimeWarp.Architecture.Features.Bases;
 
   public partial class Index : BaseComponent
   {

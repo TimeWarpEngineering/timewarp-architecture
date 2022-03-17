@@ -1,11 +1,11 @@
-﻿//namespace TimeWarp.Blazor.HostedServices
+﻿//namespace TimeWarp.Architecture.HostedServices
 //{
 //  using Microsoft.Extensions.Hosting;
 //  using Microsoft.Extensions.Logging;
 //  using System;
 //  using System.Threading;
 //  using System.Threading.Tasks;
-//  using TimeWarp.Blazor.Features.Superheros;
+//  using TimeWarp.Architecture.Features.Superheros;
 
 //  public class ProtobufGenerationHostedService : IHostedService
 //  {

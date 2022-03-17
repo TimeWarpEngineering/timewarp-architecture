@@ -4,8 +4,8 @@ namespace WeatherForecastsState
   using FluentAssertions;
   using System;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Blazor.Features.WeatherForecasts;
+  using TimeWarp.Architecture.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Architecture.Features.WeatherForecasts;
 
   public class Clone_Should : BaseTest
   {

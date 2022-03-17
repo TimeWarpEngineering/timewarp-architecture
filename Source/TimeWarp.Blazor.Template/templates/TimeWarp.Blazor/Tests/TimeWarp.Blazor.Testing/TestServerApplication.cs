@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Testing
+﻿namespace TimeWarp.Architecture.Testing
 {
   using MediatR;
   using System;
@@ -8,7 +8,7 @@
   using System.Text.Json;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Architecture.Features;
 
   /// <summary>
   /// An abstract class that adds test functionality for the passed in WebApplication.

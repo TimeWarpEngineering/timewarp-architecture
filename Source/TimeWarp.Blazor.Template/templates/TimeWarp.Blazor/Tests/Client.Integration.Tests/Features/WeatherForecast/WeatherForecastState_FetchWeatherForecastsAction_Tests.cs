@@ -2,10 +2,10 @@ namespace WeatherForecastsState
 {
   using FluentAssertions;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Blazor.Features.WeatherForecasts;
-  using TimeWarp.Blazor.Testing;
-  using static TimeWarp.Blazor.Features.WeatherForecasts.WeatherForecastsState;
+  using TimeWarp.Architecture.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Architecture.Features.WeatherForecasts;
+  using TimeWarp.Architecture.Testing;
+  using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsState;
 
   public class FetchWeatherForecastsAction_Should : BaseTest
   {

@@ -1,7 +1,7 @@
-namespace TimeWarp.Blazor.Components
+namespace TimeWarp.Architecture.Components
 {
   using Microsoft.AspNetCore.Components;
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Architecture.Features.Bases;
 
   public partial class Page : BaseComponent
   {

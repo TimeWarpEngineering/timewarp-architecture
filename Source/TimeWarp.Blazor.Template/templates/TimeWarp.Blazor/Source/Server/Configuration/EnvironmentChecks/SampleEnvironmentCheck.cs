@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Configuration
+﻿namespace TimeWarp.Architecture.Configuration
 {
   using Microsoft.Extensions.Logging;
   using System;

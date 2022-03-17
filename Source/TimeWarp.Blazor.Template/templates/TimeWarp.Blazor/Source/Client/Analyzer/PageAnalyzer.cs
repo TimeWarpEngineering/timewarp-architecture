@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Analyzers
+namespace TimeWarp.Architecture.Analyzers
 {
   using Microsoft.AspNetCore.Components;
   using System;

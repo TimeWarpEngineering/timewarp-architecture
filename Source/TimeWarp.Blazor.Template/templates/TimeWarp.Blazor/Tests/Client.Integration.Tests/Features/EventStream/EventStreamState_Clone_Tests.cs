@@ -3,8 +3,8 @@ namespace EventStreamState
   using AnyClone;
   using FluentAssertions;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Blazor.Features.EventStreams;
+  using TimeWarp.Architecture.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Architecture.Features.EventStreams;
 
   public class Clone_Should : BaseTest
   {

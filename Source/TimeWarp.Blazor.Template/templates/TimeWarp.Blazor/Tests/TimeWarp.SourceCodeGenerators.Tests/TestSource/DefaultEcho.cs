@@ -2,7 +2,7 @@
 {
   using System;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Testing;
   using TimeWarp.SourceCodeGenerators.Tests.TestSource.Echo;
 
   [NotTest]

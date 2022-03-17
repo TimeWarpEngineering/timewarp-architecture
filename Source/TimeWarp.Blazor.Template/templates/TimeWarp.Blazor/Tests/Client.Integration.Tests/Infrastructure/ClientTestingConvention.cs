@@ -1,9 +1,9 @@
-namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
+namespace TimeWarp.Architecture.Client.Integration.Tests.Infrastructure
 {
   using Fixie;
   using Microsoft.Extensions.DependencyInjection;
   using System.Collections.Generic;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Testing;
 
   [NotTest]
   public class ClientTestConvention : ITestProject

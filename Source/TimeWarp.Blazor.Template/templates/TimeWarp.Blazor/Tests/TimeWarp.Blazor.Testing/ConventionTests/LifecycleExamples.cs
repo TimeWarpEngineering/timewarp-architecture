@@ -2,7 +2,7 @@
 {
   using FluentAssertions;
   using System;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Testing;
 
   public class LifecycleExamples
   {

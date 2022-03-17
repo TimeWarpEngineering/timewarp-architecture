@@ -19,5 +19,9 @@
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.ServiceModel.Primitives" />    
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api\TimeWarp.Architecture.Api.csproj" />
+  </ItemGroup>
 		
 </Project>

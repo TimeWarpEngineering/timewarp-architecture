@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Testing
+﻿namespace TimeWarp.Architecture.Testing
 {
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.Extensions.Configuration;

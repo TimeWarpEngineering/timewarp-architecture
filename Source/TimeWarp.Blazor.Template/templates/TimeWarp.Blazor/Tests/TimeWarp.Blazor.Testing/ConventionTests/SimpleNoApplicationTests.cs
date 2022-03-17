@@ -1,7 +1,7 @@
 ﻿namespace ConventionTest_
 {
   using FluentAssertions;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Testing;
 
   [TestTag(TestTags.Fast)]
   public class SimpleNoApplicationTest_Should_

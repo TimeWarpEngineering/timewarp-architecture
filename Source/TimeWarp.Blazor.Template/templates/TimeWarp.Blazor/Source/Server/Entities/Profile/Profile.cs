@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Entities
+﻿namespace TimeWarp.Architecture.Entities
 {
   public class Profile : BaseEntity
   {

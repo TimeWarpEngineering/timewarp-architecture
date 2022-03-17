@@ -1,5 +1,5 @@
 ﻿// #Settings #Configuration #Core
-namespace TimeWarp.Blazor.Configuration
+namespace TimeWarp.Architecture.Configuration
 {
   using FluentValidation;
   using FluentValidation.Results;

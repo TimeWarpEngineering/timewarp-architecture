@@ -1,6 +1,6 @@
-namespace TimeWarp.Blazor.Features.Applications
+namespace TimeWarp.Architecture.Features.Applications
 {
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Architecture.Features.Bases;
 
   internal partial class ApplicationState
   {

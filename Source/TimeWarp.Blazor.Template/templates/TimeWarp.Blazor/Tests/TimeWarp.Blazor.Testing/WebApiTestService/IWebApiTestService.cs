@@ -1,7 +1,7 @@
-﻿namespace TimeWarp.Blazor.Testing
+﻿namespace TimeWarp.Architecture.Testing
 {
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Architecture.Features;
 
   public interface IWebApiTestService
   {

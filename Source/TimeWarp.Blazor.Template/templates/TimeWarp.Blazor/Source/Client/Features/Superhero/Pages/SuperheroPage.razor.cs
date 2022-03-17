@@ -1,7 +1,7 @@
-﻿namespace TimeWarp.Blazor.Pages;
+﻿namespace TimeWarp.Architecture.Pages;
 
 using System.Threading.Tasks;
-using TimeWarp.Blazor.Features.Bases;
+using TimeWarp.Architecture.Features.Bases;
 using static TimeWarp.Architecture.Features.Superheros.SuperheroState;
 
 public partial class SuperheroPage : BaseComponent

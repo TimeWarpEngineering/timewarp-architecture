@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Testing
+﻿namespace TimeWarp.Architecture.Testing
 {
   /// <summary>
   /// List of tags that can be used to group tests.

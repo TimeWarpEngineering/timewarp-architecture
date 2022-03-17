@@ -1,13 +1,13 @@
-namespace TimeWarp.Blazor.Analyzer
+namespace TimeWarp.Architecture.Analyzer
 {
   using Microsoft.AspNetCore.Components;
   using System;
   using System.Collections.Generic;
   using System.Linq;
   using System.Reflection;
-  using TimeWarp.Blazor.Analyzers;
-  using TimeWarp.Blazor.Client;
-  using TimeWarp.Blazor.Extensions;
+  using TimeWarp.Architecture.Analyzers;
+  using TimeWarp.Architecture.Client;
+  using TimeWarp.Architecture.Extensions;
 
   public class ProjectAnlayzer
   {

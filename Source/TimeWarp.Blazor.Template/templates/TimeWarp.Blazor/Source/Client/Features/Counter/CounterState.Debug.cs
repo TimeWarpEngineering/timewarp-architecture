@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.Counters
+namespace TimeWarp.Architecture.Features.Counters
 {
   using BlazorState;
   using Microsoft.JSInterop;

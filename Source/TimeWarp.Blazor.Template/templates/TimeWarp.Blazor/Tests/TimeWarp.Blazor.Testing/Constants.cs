@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Testing
+﻿namespace TimeWarp.Architecture.Testing
 {
   /// <summary>
   /// Add Shared Constants here

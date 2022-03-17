@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Testing
+﻿namespace TimeWarp.Architecture.Testing
 {
   using FluentAssertions;
   using MediatR;
@@ -9,7 +9,7 @@
   using System.Text;
   using System.Text.Json;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Architecture.Features;
 
   /// <summary>
   /// A class that contains a common set of methods used when testing Web APIs

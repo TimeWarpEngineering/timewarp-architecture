@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Configuration
+﻿namespace TimeWarp.Architecture.Configuration
 {
   using Microsoft.EntityFrameworkCore;
   using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +8,7 @@
   using System;
   using System.Net.Http;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Data;
+  using TimeWarp.Architecture.Data;
 
   public class CosmosDbEnvironmentCheck
   {

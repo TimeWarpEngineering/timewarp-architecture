@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>
-    <Product>TimeWarp.Blazor</Product>
+    <Product>TimeWarp Architecture</Product>
   </PropertyGroup>
 
   <!-- Common compile parameters -->

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Data
+﻿namespace TimeWarp.Architecture.Data
 {
   using Microsoft.EntityFrameworkCore;
   using System;

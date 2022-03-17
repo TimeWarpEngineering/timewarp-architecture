@@ -3,7 +3,7 @@ namespace WeatherForecastDto
   using FluentAssertions;
   using System;
   using System.Text.Json;
-  using TimeWarp.Blazor.Features.WeatherForecasts;
+  using TimeWarp.Architecture.Features.WeatherForecasts;
 
   public class Should
   {

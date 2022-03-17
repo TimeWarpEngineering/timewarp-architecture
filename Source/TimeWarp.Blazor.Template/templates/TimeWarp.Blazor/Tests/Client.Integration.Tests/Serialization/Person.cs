@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.JsonSerializer.Tests
+namespace TimeWarp.Architecture.JsonSerializer.Tests
 {
   using System;
   internal class Person

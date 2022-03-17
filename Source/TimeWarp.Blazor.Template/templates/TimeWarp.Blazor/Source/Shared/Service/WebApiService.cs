@@ -1,11 +1,11 @@
-﻿namespace TimeWarp.Blazor
+﻿namespace TimeWarp.Architecture
 {
   using System.Net.Http;
   using System.Net.Mime;
   using System.Text;
   using System.Text.Json;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Architecture.Features;
 
   /// <summary>
   /// Class that abstracts the WebAPI into a simple interface.

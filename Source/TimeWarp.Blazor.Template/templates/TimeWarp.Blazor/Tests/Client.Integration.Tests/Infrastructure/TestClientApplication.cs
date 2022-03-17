@@ -1,12 +1,12 @@
-namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
+namespace TimeWarp.Architecture.Client.Integration.Tests.Infrastructure
 {
   using FakeItEasy;
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.DependencyInjection.Extensions;
   using System;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Testing;
   using Microsoft.JSInterop;
-  using TimeWarp.Blazor.Features.ClientLoaders;
+  using TimeWarp.Architecture.Features.ClientLoaders;
   using MediatR;
   using System.Threading.Tasks;
   using System.Threading;
@@ -27,7 +27,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
       services.AddSingleton(aTimeWarpBlazorServerApplication.HttpClient);
 
-      ConfigureServices(services, aTimeWarpBlazorServerApplication.WebApplication.Host);
+      ConfigureServices(services, aTimeWarpBlazorServerApplication.WebApplication.Configuration);
       ServiceProvider = services.BuildServiceProvider();
       ScopedSender = new ScopedSender(ServiceProvider);
     }

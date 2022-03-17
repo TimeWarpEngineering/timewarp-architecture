@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Server;
+namespace TimeWarp.Architecture.Server;
 
 using FluentValidation.AspNetCore;
 using MediatR;
@@ -25,11 +25,11 @@ using System.Net.Mime;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using TimeWarp.Blazor.Configuration;
-using TimeWarp.Blazor.Data;
-using TimeWarp.Blazor.Features.Bases;
-using TimeWarp.Blazor.HostedServices;
-using TimeWarp.Blazor.Infrastructure;
+using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Data;
+using TimeWarp.Architecture.Features.Bases;
+using TimeWarp.Architecture.HostedServices;
+using TimeWarp.Architecture.Infrastructure;
 
 public class Startup
 {

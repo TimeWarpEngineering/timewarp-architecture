@@ -1,9 +1,9 @@
-namespace TimeWarp.Blazor.Pages
+namespace TimeWarp.Architecture.Pages
 {
   using BlazorState.Features.Routing;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases;
-  using static TimeWarp.Blazor.Features.Applications.ApplicationState;
+  using TimeWarp.Architecture.Features.Bases;
+  using static TimeWarp.Architecture.Features.Applications.ApplicationState;
 
   public partial class CounterPage : BaseComponent
   {

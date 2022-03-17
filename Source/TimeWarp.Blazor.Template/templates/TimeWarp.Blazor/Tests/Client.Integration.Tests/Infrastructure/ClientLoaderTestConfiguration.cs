@@ -1,8 +1,8 @@
-namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
+namespace TimeWarp.Architecture.Client.Integration.Tests.Infrastructure
 {
   using System;
-  using TimeWarp.Blazor.Features.ClientLoaders;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Features.ClientLoaders;
+  using TimeWarp.Architecture.Testing;
 
   /// <summary>
   /// Replaces the default ClientLoaderConfiguration

@@ -7,7 +7,7 @@
   using System.Collections.Generic;
   using System.Collections.Immutable;
   using System.Linq;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Testing;
 
   [NotTest]
   public static class SourceGeneratorTestHelper

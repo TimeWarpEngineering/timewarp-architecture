@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using TimeWarp.Blazor.Testing;
+using TimeWarp.Architecture.Testing;
 
 [NotTest]
 public class TestSender : ISender

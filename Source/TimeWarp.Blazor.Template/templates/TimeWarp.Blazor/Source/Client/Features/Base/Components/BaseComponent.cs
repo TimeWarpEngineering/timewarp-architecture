@@ -1,16 +1,16 @@
-namespace TimeWarp.Blazor.Features.Bases
+namespace TimeWarp.Architecture.Features.Bases
 {
   using BlazorState.Pipeline.ReduxDevTools;
   using MediatR;
   using Microsoft.AspNetCore.Components;
   using System.Collections.Generic;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Components;
-  using TimeWarp.Blazor.Features.Applications;
-  using TimeWarp.Blazor.Features.Counters;
-  using TimeWarp.Blazor.Features.EventStreams;
+  using TimeWarp.Architecture.Components;
+  using TimeWarp.Architecture.Features.Applications;
+  using TimeWarp.Architecture.Features.Counters;
+  using TimeWarp.Architecture.Features.EventStreams;
   using TimeWarp.Architecture.Features.Superheros;
-  using TimeWarp.Blazor.Features.WeatherForecasts;
+  using TimeWarp.Architecture.Features.WeatherForecasts;
 
   /// <summary>
   /// Makes access to the State a little easier and by inheriting from

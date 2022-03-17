@@ -1,8 +1,8 @@
-namespace TimeWarp.Blazor.Design.Components
+namespace TimeWarp.Architecture.Design.Components
 {
   using BlazorComponentUtilities;
   using Microsoft.AspNetCore.Components;
-  using TimeWarp.Blazor.Components;
+  using TimeWarp.Architecture.Components;
 
   public partial class ColorBar : DisplayComponent
   {

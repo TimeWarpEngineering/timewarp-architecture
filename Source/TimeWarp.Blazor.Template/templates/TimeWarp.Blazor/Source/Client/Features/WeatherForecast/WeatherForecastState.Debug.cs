@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.WeatherForecasts
+namespace TimeWarp.Architecture.Features.WeatherForecasts
 {
   using BlazorState;
   using Dawn;

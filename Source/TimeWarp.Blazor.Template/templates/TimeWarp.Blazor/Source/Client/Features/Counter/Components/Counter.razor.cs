@@ -1,9 +1,9 @@
-namespace TimeWarp.Blazor.Features.Counters.Components
+namespace TimeWarp.Architecture.Features.Counters.Components
 {
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Components;
-  using TimeWarp.Blazor.Features.Bases;
-  using static TimeWarp.Blazor.Features.Counters.CounterState;
+  using TimeWarp.Architecture.Components;
+  using TimeWarp.Architecture.Features.Bases;
+  using static TimeWarp.Architecture.Features.Counters.CounterState;
 
   public partial class Counter : BaseComponent, IAttributeComponent
   {

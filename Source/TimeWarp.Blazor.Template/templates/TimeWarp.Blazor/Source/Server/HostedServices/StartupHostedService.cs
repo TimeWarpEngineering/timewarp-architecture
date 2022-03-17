@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.HostedServices
+﻿namespace TimeWarp.Architecture.HostedServices
 {
   using Microsoft.EntityFrameworkCore;
   using Microsoft.Extensions.DependencyInjection;
@@ -10,7 +10,7 @@
   using System.Text;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Data;
+  using TimeWarp.Architecture.Data;
 
   public class StartupHostedService : IHostedService
   {

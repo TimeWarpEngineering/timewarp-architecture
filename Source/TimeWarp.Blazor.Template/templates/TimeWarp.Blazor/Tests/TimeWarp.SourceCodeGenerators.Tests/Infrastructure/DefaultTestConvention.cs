@@ -1,7 +1,7 @@
 namespace TimeWarp.SourceCodeGenerators.Testing
 {
   using Fixie;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Testing;
 
   [NotTest]
   public class DefaultTestConvention : ITestProject

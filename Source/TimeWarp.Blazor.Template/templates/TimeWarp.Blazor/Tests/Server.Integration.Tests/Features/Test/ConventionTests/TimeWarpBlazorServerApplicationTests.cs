@@ -2,7 +2,7 @@
 {
   using Dawn;
   using FluentAssertions;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Testing;
 
   [TestTag("TimeWarpBlazorServerApplication")]
   public class Should

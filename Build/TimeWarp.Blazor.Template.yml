@@ -4,7 +4,7 @@ trigger:
   - master
  paths:
   include:
-  - Source/TimeWarp.Blazor.Template/*
+  - Source/TimeWarp.Architecture.Template/*
 
 pr:
  branches:
@@ -12,7 +12,7 @@ pr:
      - master
  paths:
   include:
-  - Source/TimeWarp.Blazor.Template/*
+  - Source/TimeWarp.Architecture.Template/*
 
 
 pool:
@@ -35,21 +35,21 @@ steps:
   displayName: Build Template projects
   inputs:
     command: build
-    projects: 'Source/TimeWarp.Blazor.Template/**/*.csproj'
+    projects: 'Source/TimeWarp.Architecture.Template/**/*.csproj'
     configuration: $(Configuration)
 
 # - task: DotNetCoreCLI@2
 #   displayName: Test
 #   inputs:
 #    command: test
-#    projects: 'Source/TimeWarp.Blazor.Template/**/*Integration.Tests/*.csproj'
+#    projects: 'Source/TimeWarp.Architecture.Template/**/*Integration.Tests/*.csproj'
 #    configurationToPack: $(Configuration)
 
 - task: DotNetCoreCLI@2
   displayName: Pack into Nuget
   inputs:
    command: pack
-   packagesToPack: $(Build.SourcesDirectory)/Source/TimeWarp.Blazor.Template/TimeWarp.AspNetCore.Blazor.Templates.csproj
+   packagesToPack: $(Build.SourcesDirectory)/Source/TimeWarp.Architecture.Template/TimeWarp.AspNetCore.Blazor.Templates.csproj
    configurationToPack: $(Configuration)
    versioningScheme: byEnvVar
    versionEnvVar: Version

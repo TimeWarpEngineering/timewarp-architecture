@@ -1,7 +1,7 @@
-namespace TimeWarp.Blazor.Infrastructure
+namespace TimeWarp.Architecture.Infrastructure
 {
   using AutoMapper;
-  using TimeWarp.Blazor.Features.WeatherForecasts;
+  using TimeWarp.Architecture.Features.WeatherForecasts;
 
   public class MappingProfile : Profile
   {

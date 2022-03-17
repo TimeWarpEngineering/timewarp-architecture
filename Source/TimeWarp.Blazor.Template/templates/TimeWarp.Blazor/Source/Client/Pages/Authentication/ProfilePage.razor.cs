@@ -1,6 +1,6 @@
-namespace TimeWarp.Blazor.Pages
+namespace TimeWarp.Architecture.Pages
 {
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Architecture.Features.Bases;
 
   public partial class ProfilePage : BaseComponent
   {

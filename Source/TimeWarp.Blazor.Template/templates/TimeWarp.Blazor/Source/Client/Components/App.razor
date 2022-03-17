@@ -1,4 +1,4 @@
-@namespace TimeWarp.Blazor.Components
+@namespace TimeWarp.Architecture.Components
 
 @using Microsoft.AspNetCore.Components.Routing
 
@@ -6,7 +6,7 @@
 
 <Router AppAssembly="typeof(Client.Program).Assembly"  PreferExactMatches=@true>
   <Found Context="routeData">
-    <RouteView RouteData=@routeData DefaultLayout=@typeof(TimeWarp.Blazor.Components.EmptyLayout) />
+    <RouteView RouteData=@routeData DefaultLayout=@typeof(TimeWarp.Architecture.Components.EmptyLayout) />
   </Found>
   <NotFound>
     <h1>Page not found</h1>

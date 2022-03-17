@@ -43,7 +43,6 @@ namespace TimeWarp
           (context) =>
             {
               context.AddSource("DelegateAttribute.g.cs", delegateAttributeSource);
-              context.AddSource("SomeOtherShit.txt", "Hello other shit");
             }
         );
 

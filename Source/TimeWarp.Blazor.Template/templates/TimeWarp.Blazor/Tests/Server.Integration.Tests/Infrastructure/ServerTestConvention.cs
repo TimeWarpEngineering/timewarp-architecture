@@ -1,7 +1,7 @@
-namespace TimeWarp.Blazor.Server.Integration.Tests.Infrastructure
+namespace TimeWarp.Architecture.Server.Integration.Tests.Infrastructure
 {
   using Fixie;
-  using TimeWarp.Blazor.Testing;
+  using TimeWarp.Architecture.Testing;
 
   [NotTest]
   public class ServerTestConvention : ITestProject

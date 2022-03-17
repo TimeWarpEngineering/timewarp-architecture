@@ -7,7 +7,7 @@
   using System;
   using System.Collections.Generic;
   using System.Linq;
-  using TimeWarp.Blazor.Configuration;
+  using TimeWarp.Architecture.Configuration;
 
   public static partial class ServiceCollectionExtensions
   {

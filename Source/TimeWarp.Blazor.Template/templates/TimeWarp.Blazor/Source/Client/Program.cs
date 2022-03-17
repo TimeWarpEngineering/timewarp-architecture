@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Client;
+namespace TimeWarp.Architecture.Client;
 
 using BlazorState;
 using Grpc.Net.Client;
@@ -14,12 +14,12 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
-using TimeWarp.Blazor.Analyzer;
-using TimeWarp.Blazor.Components;
-using TimeWarp.Blazor.Configuration;
-using TimeWarp.Blazor.Features.Applications;
-using TimeWarp.Blazor.Features.ClientLoaders;
-using TimeWarp.Blazor.Features.EventStreams;
+using TimeWarp.Architecture.Analyzer;
+using TimeWarp.Architecture.Components;
+using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Features.Applications;
+using TimeWarp.Architecture.Features.ClientLoaders;
+using TimeWarp.Architecture.Features.EventStreams;
 using TimeWarp.Architecture.Features.Superheros;
 using ServiceCollection = Configuration.ServiceCollection;
 

@@ -3,9 +3,9 @@ namespace CloneStateBehavior
   using FluentAssertions;
   using System;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Blazor.Features.Counters;
-  using static TimeWarp.Blazor.Features.Counters.CounterState;
+  using TimeWarp.Architecture.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Architecture.Features.Counters;
+  using static TimeWarp.Architecture.Features.Counters.CounterState;
 
   public class Should : BaseTest
   {

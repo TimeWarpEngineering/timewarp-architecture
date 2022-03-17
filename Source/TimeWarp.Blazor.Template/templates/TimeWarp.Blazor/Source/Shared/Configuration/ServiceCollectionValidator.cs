@@ -1,7 +1,7 @@
-﻿namespace TimeWarp.Blazor.Configuration;
+﻿namespace TimeWarp.Architecture.Configuration;
 
 using FluentValidation;
-using static TimeWarp.Blazor.Configuration.ServiceCollection;
+using static TimeWarp.Architecture.Configuration.ServiceCollection;
 
 /// <remarks>
 /// This class has to be `internal` or it will automatically be registered

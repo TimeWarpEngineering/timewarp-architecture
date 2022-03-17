@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
+namespace TimeWarp.Architecture.Client.Integration.Tests.Infrastructure
 {
   using BlazorState;
   using MediatR;

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.InterfaceDelegate
+﻿namespace TimeWarp.Architecture.InterfaceDelegate
 {
   public partial class DelegateSourceGenerator
   {

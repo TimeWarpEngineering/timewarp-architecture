@@ -3,7 +3,7 @@ namespace GetWeatherForecastRequestValidator_
   using FluentAssertions;
   using FluentValidation.Results;
   using FluentValidation.TestHelper;
-  using TimeWarp.Blazor.Features.WeatherForecasts;
+  using TimeWarp.Architecture.Features.WeatherForecasts;
 
   public class Validate_Should
   {

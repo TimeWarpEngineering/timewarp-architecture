@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Features.WeatherForecasts
+namespace TimeWarp.Architecture.Features.WeatherForecasts
 {
   using BlazorState;
   using MediatR;
@@ -6,7 +6,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
   using System.Net.Http.Json;
   using System.Threading;
   using System.Threading.Tasks;
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Architecture.Features.Bases;
 
   internal partial class WeatherForecastsState
   {
@@ -25,7 +25,7 @@ namespace TimeWarp.Blazor.Features.WeatherForecasts
         CancellationToken aCancellationToken
       )
       {
-        var getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
+        IApiRequest getWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
 
         GetWeatherForecastsResponse getWeatherForecastsResponse =
           await WebApiService.GetResponse<GetWeatherForecastsResponse>(getWeatherForecastsRequest)

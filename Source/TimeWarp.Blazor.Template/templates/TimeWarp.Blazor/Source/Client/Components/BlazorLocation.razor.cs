@@ -1,8 +1,8 @@
-namespace TimeWarp.Blazor.Components
+namespace TimeWarp.Architecture.Components
 {
   using BlazorState.Services;
   using Microsoft.AspNetCore.Components;
-  using TimeWarp.Blazor.Features.Bases;
+  using TimeWarp.Architecture.Features.Bases;
 
   public partial class BlazorLocation : BaseComponent
   {

@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.Configuration
+namespace TimeWarp.Architecture.Configuration
 {
   public class SampleOptions
   {
