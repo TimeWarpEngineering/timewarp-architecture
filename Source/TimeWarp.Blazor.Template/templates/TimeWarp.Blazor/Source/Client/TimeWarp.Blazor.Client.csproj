@@ -7,7 +7,6 @@
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
-
   </PropertyGroup>
 
   <ItemGroup>

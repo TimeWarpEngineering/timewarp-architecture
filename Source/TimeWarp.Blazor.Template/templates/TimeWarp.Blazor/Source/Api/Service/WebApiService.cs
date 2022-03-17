@@ -9,10 +9,10 @@
 
   /// <summary>
   /// Class that abstracts the WebAPI into a simple interface.
-  /// Given a Request retrun the Response.
+  /// Given a Request return the Response.
   /// </summary>
   /// <remarks>
-  /// You don't care what http verb is used or even what protocoal is used.
+  /// You don't care what http verb is used or even what protocol is used.
   /// </remarks>
   public class WebApiService
   {
@@ -31,7 +31,7 @@
     /// <typeparam name="TResponse"></typeparam>
     /// <param name="aRequest"></param>
     /// <returns></returns>
-    public async Task<TResponse> GetResponse<TResponse>(IApiRequest aRequest)
+    public async Task<TResponse?> GetResponse<TResponse>(IApiRequest aRequest)
     {
       HttpResponseMessage httpResponseMessage =
         await GetHttpResponseMessageFromRequest<TResponse>(aRequest).ConfigureAwait(false);
@@ -45,7 +45,7 @@
     )
     {
       HttpVerb httpverb = aApiRequest.GetHttpVerb();
-      StringContent httpContent = null;
+      StringContent? httpContent = null;
 
       if (httpverb == HttpVerb.Post || httpverb == HttpVerb.Put || httpverb == HttpVerb.Patch)
       {
@@ -68,18 +68,20 @@
         HttpVerb.Post => await HttpClient.PostAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
         HttpVerb.Put => await HttpClient.PutAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
         HttpVerb.Patch => await HttpClient.PatchAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
-        _ => null,
+        HttpVerb.Head => throw new NotImplementedException(),
+        HttpVerb.Options => throw new NotImplementedException(),
+        _ => throw new NotImplementedException()
       };
     }
 
 
-    private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage aHttpResponseMessage)
+    private async Task<TResponse?> ReadFromJson<TResponse>(HttpResponseMessage aHttpResponseMessage)
     {
       aHttpResponseMessage.EnsureSuccessStatusCode();
 
       string json = await aHttpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-      TResponse response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
+      TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
 
       return response;
     }
