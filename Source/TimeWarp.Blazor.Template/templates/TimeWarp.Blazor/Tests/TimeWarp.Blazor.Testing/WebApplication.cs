@@ -1,9 +1,11 @@
 ﻿namespace TimeWarp.Blazor.Testing
 {
   using Microsoft.AspNetCore.Hosting;
+  using Microsoft.Extensions.Configuration;
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.Hosting;
   using System;
+  using System.IO;
   using System.Threading.Tasks;
 
   /// <summary>
@@ -25,6 +27,7 @@
     public readonly string[] Urls;
 
     public IHost Host { get; }
+    public IConfiguration Configuration { get; }
 
     /// <summary>
     /// Construct a WebApplication
@@ -39,6 +42,11 @@
       Action<HostBuilderContext, IServiceCollection> aConfigureServicesDelegate = null
     )
     {
+      Configuration = new ConfigurationBuilder()
+      .SetBasePath(Directory.GetCurrentDirectory())
+      .AddJsonFile("appsettings.json", optional: true)
+      .Build();
+
       Urls = aUrls;
       HostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
         .ConfigureWebHostDefaults
@@ -54,6 +62,7 @@
         );
       // Allow for changes to the configuration
       if (aConfigureServicesDelegate != null) HostBuilder.ConfigureServices(aConfigureServicesDelegate);
+      
       Host = HostBuilder.Build();
       try
       {

@@ -1,263 +1,259 @@
-namespace TimeWarp.Blazor.Server
+namespace TimeWarp.Blazor.Server;
+
+using FluentValidation.AspNetCore;
+using MediatR;
+using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Azure.Cosmos;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
+using Oakton.Environment;
+using ProtoBuf.Grpc.Server;
+using System;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Mime;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using TimeWarp.Blazor.Configuration;
+using TimeWarp.Blazor.Data;
+using TimeWarp.Blazor.Features.Bases;
+using TimeWarp.Blazor.HostedServices;
+using TimeWarp.Blazor.Infrastructure;
+
+public class Startup
 {
-  using AutoMapper;
-  using FluentValidation.AspNetCore;
-  using MediatR;
-  using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
-  using Microsoft.AspNetCore.Builder;
-  using Microsoft.AspNetCore.Hosting;
-  using Microsoft.AspNetCore.Mvc;
-  using Microsoft.AspNetCore.ResponseCompression;
-  using Microsoft.Azure.Cosmos;
-  using Microsoft.EntityFrameworkCore;
-  using Microsoft.Extensions.Configuration;
-  using Microsoft.Extensions.DependencyInjection;
-  using Microsoft.Extensions.Diagnostics.HealthChecks;
-  using Microsoft.Extensions.Hosting;
-  using Microsoft.Extensions.Options;
-  using Microsoft.OpenApi.Models;
-  using Oakton.Environment;
-  using ProtoBuf.Grpc.Server;
-  using Swashbuckle.AspNetCore.Swagger;
-  using System;
-  using System.IO;
-  using System.Linq;
-  using System.Net.Http;
-  using System.Net.Mime;
-  using System.Reflection;
-  using System.Threading;
-  using System.Threading.Tasks;
-  using TimeWarp.Blazor.Configuration;
-  using TimeWarp.Blazor.Data;
-  using TimeWarp.Blazor.Features.Bases;
-  using TimeWarp.Blazor.Features.Superheros;
-  using TimeWarp.Blazor.HostedServices;
-  using TimeWarp.Blazor.Infrastructure;
+  private const string SwaggerVersion = "v1";
+  private readonly IConfiguration Configuration;
+  private string SwaggerApiTitle => $"TimeWarp.Blazor API {SwaggerVersion}";
+  private string SwaggerEndPoint => $"/swagger/{SwaggerVersion}/swagger.json";
 
-  public class Startup
+  public Startup(IConfiguration aConfiguration)
   {
-    private const string SwaggerVersion = "v1";
-    private readonly IConfiguration Configuration;
-    private string SwaggerApiTitle => $"TimeWarp.Blazor API {SwaggerVersion}";
-    private string SwaggerEndPoint => $"/swagger/{SwaggerVersion}/swagger.json";
+    Configuration = aConfiguration;
+  }
 
-    public Startup(IConfiguration aConfiguration)
+  public void Configure
+  (
+    IApplicationBuilder aApplicationBuilder,
+    IWebHostEnvironment aWebHostEnvironment
+  )
+  {
+    // Enable middleware to serve generated Swagger as a JSON endpoint.
+    aApplicationBuilder.UseSwagger();
+
+    // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+    // specifying the Swagger JSON endpoint.
+    aApplicationBuilder.UseSwaggerUI
+    (
+      aSwaggerUIOptions => aSwaggerUIOptions.SwaggerEndpoint(SwaggerEndPoint, SwaggerApiTitle)
+    );
+
+    aApplicationBuilder.UseResponseCompression();
+
+    if (aWebHostEnvironment.IsDevelopment())
     {
-      Configuration = aConfiguration;
+      aApplicationBuilder.UseDeveloperExceptionPage();
+      aApplicationBuilder.UseWebAssemblyDebugging();
     }
 
-    public void Configure
+    aApplicationBuilder.UseRouting();
+    //aApplicationBuilder.UseGrpcWeb(new GrpcWebOptions() { DefaultEnabled = true });
+    aApplicationBuilder.UseEndpoints
     (
-      IApplicationBuilder aApplicationBuilder,
-      IWebHostEnvironment aWebHostEnvironment
-    )
-    {
-      // Enable middleware to serve generated Swagger as a JSON endpoint.
-      aApplicationBuilder.UseSwagger();
-
-      // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
-      // specifying the Swagger JSON endpoint.
-      aApplicationBuilder.UseSwaggerUI
-      (
-        aSwaggerUIOptions => aSwaggerUIOptions.SwaggerEndpoint(SwaggerEndPoint, SwaggerApiTitle)
-      );
-
-      aApplicationBuilder.UseResponseCompression();
-
-      if (aWebHostEnvironment.IsDevelopment())
+      aEndpointRouteBuilder =>
       {
-        aApplicationBuilder.UseDeveloperExceptionPage();
-        aApplicationBuilder.UseWebAssemblyDebugging();
+        aEndpointRouteBuilder.MapHealthChecks("/api/health");
+        //aEndpointRouteBuilder.MapGrpcService<SuperheroService>();
+        //aEndpointRouteBuilder.MapCodeFirstGrpcReflectionService();
+        aEndpointRouteBuilder.MapControllers();
+        aEndpointRouteBuilder.MapBlazorHub();
+        aEndpointRouteBuilder.MapFallbackToPage("/_Host");
       }
+    );
+    aApplicationBuilder.UseStaticFiles();
+    aApplicationBuilder.UseBlazorFrameworkFiles();
+  }
 
-      aApplicationBuilder.UseRouting();
-      aApplicationBuilder.UseGrpcWeb(new GrpcWebOptions() { DefaultEnabled = true });
-      aApplicationBuilder.UseEndpoints
+  public void ConfigureServices(IServiceCollection aServiceCollection)
+  {
+    ConfigureSettings(aServiceCollection);
+    ConfigureInfrastructure(aServiceCollection);
+    aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
+    aServiceCollection.AddRazorPages();
+    aServiceCollection.AddServerSideBlazor();
+    aServiceCollection.AddCodeFirstGrpc();
+    aServiceCollection.AddCodeFirstGrpcReflection();
+    aServiceCollection.AddMvc()
+      .AddFluentValidation
       (
-        aEndpointRouteBuilder =>
+        aFluentValidationMvcConfiguration =>
         {
-          aEndpointRouteBuilder.MapHealthChecks("/api/health");
-          aEndpointRouteBuilder.MapGrpcService<SuperheroService>();
-          aEndpointRouteBuilder.MapCodeFirstGrpcReflectionService();
-          aEndpointRouteBuilder.MapControllers();
-          aEndpointRouteBuilder.MapBlazorHub();
-          aEndpointRouteBuilder.MapFallbackToPage("/_Host");
+          // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
+          // will NOT register internals. This feature is utilized.
+          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Startup>();
+          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<BaseRequest>();
         }
       );
-      aApplicationBuilder.UseStaticFiles();
-      aApplicationBuilder.UseBlazorFrameworkFiles();
-    }
 
-    public void ConfigureServices(IServiceCollection aServiceCollection)
-    {
-      ConfigureSettings(aServiceCollection);
-      ConfigureInfrastructure(aServiceCollection);
-      aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
-      aServiceCollection.AddRazorPages();
-      aServiceCollection.AddServerSideBlazor();
-      aServiceCollection.AddCodeFirstGrpc();
-      aServiceCollection.AddCodeFirstGrpcReflection();
-      aServiceCollection.AddMvc()
-        .AddFluentValidation
+    aServiceCollection.Configure<ApiBehaviorOptions>
+    (
+      aApiBehaviorOptions => aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
+    );
+
+    aServiceCollection.AddResponseCompression
+    (
+      aResponseCompressionOptions =>
+        aResponseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat
         (
-          aFluentValidationMvcConfiguration =>
-          {
-            // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
-            // will NOT register internals. This feature is utilized.
-            aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Startup>();
-            aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<BaseRequest>();
-          }
-        );
+          new[] { MediaTypeNames.Application.Octet }
+        )
+    );
 
-      aServiceCollection.Configure<ApiBehaviorOptions>
+    Client.Program.ConfigureServices(aServiceCollection, Configuration);
+
+    aServiceCollection.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
+
+    ConfigureSwagger(aServiceCollection);
+  }
+
+  private void ConfigureInfrastructure(IServiceCollection aServiceCollection)
+  {
+    aServiceCollection.AddHealthChecks()
+      .AddDbContextCheck<CosmosDbContext>
       (
-        aApiBehaviorOptions => aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
+        name: nameof(CosmosDbContext),
+        HealthStatus.Unhealthy,
+        null,
+        PerformCosmosHealthCheck()
       );
+      //.AddDbContextCheck<SqlDbContext>();
 
-      aServiceCollection.AddResponseCompression
+    ConfigureEnvironmentChecks(aServiceCollection);
+    ConfigureCosmosDb(aServiceCollection);
+    //ConfigureSqlDb(aServiceCollection, Configuration);
+    aServiceCollection.AddHostedService<StartupHostedService>();
+    //aServiceCollection.AddHostedService<ProtobufGenerationHostedService>();
+  }
+
+  private static Func<CosmosDbContext, CancellationToken, Task<bool>> PerformCosmosHealthCheck() =>
+    async (aCosmosDbContext, _) =>
+    {
+      try
+      {
+        await aCosmosDbContext.Database.GetCosmosClient().ReadAccountAsync().ConfigureAwait(true);
+      }
+      catch (HttpRequestException)
+      {
+        return false;
+      }
+
+      return true;
+    };
+
+  private void ConfigureEnvironmentChecks(IServiceCollection aServiceCollection)
+  {
+    aServiceCollection.AddSingleton<SampleEnvironmentCheck>();
+    aServiceCollection.AddSingleton<CosmosDbEnvironmentCheck>();
+
+    aServiceCollection.CheckEnvironment<SampleEnvironmentCheck>
+    (
+      SampleEnvironmentCheck.Description, aSampleEnvironmentCheck => aSampleEnvironmentCheck.Check()
+    );
+
+    aServiceCollection.CheckEnvironment<CosmosDbEnvironmentCheck>
+    (
+      CosmosDbEnvironmentCheck.Description,
+      async (aCosmosDbEnvironmentCheck) => await aCosmosDbEnvironmentCheck.CheckAsync()
+    );
+  }
+
+  private static void ConfigureCosmosDb(IServiceCollection aServiceCollection)
+  {
+  
+    using IServiceScope scope = aServiceCollection.BuildServiceProvider().CreateScope();
+    {
+      CosmosDbOptions cosmosOptions = scope.ServiceProvider.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
+
+      _ = aServiceCollection.AddDbContext<CosmosDbContext>
       (
-        aResponseCompressionOptions =>
-          aResponseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat
+        aDbContextOptionsBuilder =>
+          aDbContextOptionsBuilder
+          .UseCosmos
           (
-            new[] { MediaTypeNames.Application.Octet }
+            accountEndpoint: cosmosOptions.EndPoint,
+            accountKey: cosmosOptions.AccessKey,
+            databaseName: nameof(CosmosDbContext),
+            cosmosOptionsAction: CosmosOptionsAction()
           )
       );
-
-      Client.Program.ConfigureServices(aServiceCollection, Configuration);
-
-      aServiceCollection.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
-
-      ConfigureSwagger(aServiceCollection);
     }
 
-    private void ConfigureInfrastructure(IServiceCollection aServiceCollection)
+    static Action<Microsoft.EntityFrameworkCore.Infrastructure.CosmosDbContextOptionsBuilder> CosmosOptionsAction()
     {
-      aServiceCollection.AddHealthChecks()
-        .AddDbContextCheck<CosmosDbContext>
-        (
-          name: nameof(CosmosDbContext),
-          HealthStatus.Unhealthy,
-          null,
-          PerformCosmosHealthCheck()
-        );
-        //.AddDbContextCheck<SqlDbContext>();
-
-      ConfigureEnvironmentChecks(aServiceCollection);
-      ConfigureCosmosDb(aServiceCollection);
-      //ConfigureSqlDb(aServiceCollection, Configuration);
-      aServiceCollection.AddHostedService<StartupHostedService>();
-      aServiceCollection.AddHostedService<ProtobufGenerationHostedService>();
-    }
-
-    private static Func<CosmosDbContext, CancellationToken, Task<bool>> PerformCosmosHealthCheck() =>
-      async (aCosmosDbContext, _) =>
+      return _ => new CosmosClientOptions
       {
-        try
+        HttpClientFactory = () =>
         {
-          await aCosmosDbContext.Database.GetCosmosClient().ReadAccountAsync().ConfigureAwait(true);
-        }
-        catch (HttpRequestException)
-        {
-          return false;
-        }
+          HttpMessageHandler httpMessageHandler = new HttpClientHandler()
+          {
+            ServerCertificateCustomValidationCallback =
+              HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+          };
 
-        return true;
+          return new HttpClient(httpMessageHandler);
+        },
+        ConnectionMode = ConnectionMode.Gateway
       };
-
-    private void ConfigureEnvironmentChecks(IServiceCollection aServiceCollection)
-    {
-      aServiceCollection.AddSingleton<SampleEnvironmentCheck>();
-      aServiceCollection.AddSingleton<CosmosDbEnvironmentCheck>();
-
-      aServiceCollection.CheckEnvironment<SampleEnvironmentCheck>
-      (
-        SampleEnvironmentCheck.Description, aSampleEnvironmentCheck => aSampleEnvironmentCheck.Check()
-      );
-
-      aServiceCollection.CheckEnvironment<CosmosDbEnvironmentCheck>
-      (
-        CosmosDbEnvironmentCheck.Description,
-        async (aCosmosDbEnvironmentCheck) => await aCosmosDbEnvironmentCheck.CheckAsync()
-      );
     }
+  }
 
-    private static void ConfigureCosmosDb(IServiceCollection aServiceCollection)
-    {
-    
-      using IServiceScope scope = aServiceCollection.BuildServiceProvider().CreateScope();
-      {
-        CosmosDbOptions cosmosOptions = scope.ServiceProvider.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
+  private void ConfigureSettings(IServiceCollection aServiceCollection)
+  {
+    aServiceCollection
+      .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(Configuration)
+      .ConfigureOptions<SampleOptions, SampleOptionsValidator>(Configuration);
 
-        _ = aServiceCollection.AddDbContext<CosmosDbContext>
-        (
-          aDbContextOptionsBuilder =>
-            aDbContextOptionsBuilder
-            .UseCosmos
-            (
-              accountEndpoint: cosmosOptions.EndPoint,
-              accountKey: cosmosOptions.AccessKey,
-              databaseName: nameof(CosmosDbContext),
-              cosmosOptionsAction: CosmosOptionsAction()
-            )
-        );
-      }
+    aServiceCollection.ValidateOptions();
+  }
 
-      static Action<Microsoft.EntityFrameworkCore.Infrastructure.CosmosDbContextOptionsBuilder> CosmosOptionsAction()
-      {
-        return _ => new CosmosClientOptions
+  private void ConfigureSwagger(IServiceCollection aServiceCollection)
+  {
+    // Register the Swagger generator, defining 1 or more Swagger documents
+    aServiceCollection.AddSwaggerGen
+      (
+        aSwaggerGenOptions =>
         {
-          HttpClientFactory = () =>
-          {
-            HttpMessageHandler httpMessageHandler = new HttpClientHandler()
-            {
-              ServerCertificateCustomValidationCallback =
-                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            };
+          aSwaggerGenOptions
+          .SwaggerDoc
+          (
+            SwaggerVersion,
+            new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
+          );
+          aSwaggerGenOptions.EnableAnnotations();
 
-            return new HttpClient(httpMessageHandler);
-          },
-          ConnectionMode = ConnectionMode.Gateway
-        };
-      }
-    }
+          // Set the comments path for the Swagger JSON and UI from Server.
+          string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+          string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
 
-    private void ConfigureSettings(IServiceCollection aServiceCollection)
-    {
-      aServiceCollection
-        .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(Configuration)
-        .ConfigureOptions<SampleOptions, SampleOptionsValidator>(Configuration);
+          // Set the comments path for the Swagger JSON and UI from API.
+          xmlFile = $"{typeof(BaseRequest).Assembly.GetName().Name}.xml";
+          xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+        }
+      );
 
-      aServiceCollection.ValidateOptions();
-    }
-
-    private void ConfigureSwagger(IServiceCollection aServiceCollection)
-    {
-      // Register the Swagger generator, defining 1 or more Swagger documents
-      aServiceCollection.AddSwaggerGen
-        (
-          aSwaggerGenOptions =>
-          {
-            aSwaggerGenOptions
-            .SwaggerDoc
-            (
-              SwaggerVersion,
-              new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
-            );
-            aSwaggerGenOptions.EnableAnnotations();
-
-            // Set the comments path for the Swagger JSON and UI from Server.
-            string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-
-            // Set the comments path for the Swagger JSON and UI from API.
-            xmlFile = $"{typeof(BaseRequest).Assembly.GetName().Name}.xml";
-            xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-          }
-        );
-
-      aServiceCollection.AddFluentValidationRulesToSwagger();
-    }
+    aServiceCollection.AddFluentValidationRulesToSwagger();
   }
 }

@@ -3,6 +3,7 @@
   using MediatR;
   using Microsoft.Extensions.DependencyInjection;
   using System;
+  using System.Collections.Generic;
   using System.Threading;
   using System.Threading.Tasks;
 
@@ -19,6 +20,18 @@
     {
       ServiceScopeFactory = aServiceProvider.GetService<IServiceScopeFactory>();
     }
+
+    public IAsyncEnumerable<TResponse> CreateStream<TResponse>
+    (
+      IStreamRequest<TResponse> aStreamRequest,
+      CancellationToken aCancellationToken = default
+    ) => throw new NotImplementedException();
+
+    public IAsyncEnumerable<object> CreateStream
+    (
+      object aRequest,
+      CancellationToken aCancellationToken = default
+    ) => throw new NotImplementedException();
 
     public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default)
     {

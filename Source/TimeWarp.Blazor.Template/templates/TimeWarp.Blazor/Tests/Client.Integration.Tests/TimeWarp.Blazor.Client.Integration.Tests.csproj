@@ -11,4 +11,8 @@
     <ProjectReference Include="..\..\Source\Server\TimeWarp.Blazor.Server.csproj" />
     <ProjectReference Include="..\TimeWarp.Blazor.Testing\TimeWarp.Blazor.Testing.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Configuration\" />
+  </ItemGroup>
 </Project>

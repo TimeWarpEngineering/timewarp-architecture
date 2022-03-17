@@ -16,6 +16,7 @@ using static TimeWarp.Blazor.Features.EventStreams.EventStreamState;
 /// <typeparam name="TResponse"></typeparam>
 /// <remarks>To avoid infinite recursion don't add AddEvent to the event stream</remarks>
 public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+  where TRequest : IRequest<TResponse>
 {
   private readonly ILogger Logger;
   private readonly ISender Sender;

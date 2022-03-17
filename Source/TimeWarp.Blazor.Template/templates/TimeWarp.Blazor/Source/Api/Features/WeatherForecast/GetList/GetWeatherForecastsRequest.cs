@@ -1,4 +1,3 @@
-//#WeatherForecast #GetWeatherForecasts #Request #Api
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 using MediatR;

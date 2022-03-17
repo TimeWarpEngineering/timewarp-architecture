@@ -9,7 +9,7 @@ namespace TimeWarp.Blazor.Features.Bases
   using TimeWarp.Blazor.Features.Applications;
   using TimeWarp.Blazor.Features.Counters;
   using TimeWarp.Blazor.Features.EventStreams;
-  using TimeWarp.Blazor.Features.Superheros;
+  using TimeWarp.Architecture.Features.Superheros;
   using TimeWarp.Blazor.Features.WeatherForecasts;
 
   /// <summary>

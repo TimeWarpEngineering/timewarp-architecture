@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Blazor.Features.Superheros
+﻿namespace TimeWarp.Architecture.Features.Superheros
 {
   using BlazorState;
   using MediatR;

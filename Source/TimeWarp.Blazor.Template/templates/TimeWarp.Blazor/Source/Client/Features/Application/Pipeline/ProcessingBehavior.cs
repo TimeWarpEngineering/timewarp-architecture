@@ -1,45 +1,44 @@
-﻿namespace TimeWarp.Blazor.Features.Applications
+﻿namespace TimeWarp.Blazor.Features.Applications;
+
+using BlazorState;
+using Dawn;
+using MediatR;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using static TimeWarp.Blazor.Features.Applications.ApplicationState;
+
+public class ProcessingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+  where TRequest : IRequest<TResponse>
 {
-  using BlazorState;
-  using Dawn;
-  using MediatR;
-  using System.Linq;
-  using System.Threading;
-  using System.Threading.Tasks;
-  using static TimeWarp.Blazor.Features.Applications.ApplicationState;
+  private readonly IMediator Mediator;
 
-  public class ProcessingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+  public ProcessingBehavior(IMediator aMediator) { Mediator = aMediator; }
+
+  public async Task<TResponse> Handle
+  (
+    TRequest aRequest,
+    CancellationToken aCancellationToken,
+    RequestHandlerDelegate<TResponse> aNextHandler
+  )
   {
-    private readonly IMediator Mediator;
-
-    public ProcessingBehavior(IMediator aMediator) { Mediator = aMediator; }
-
-    public async Task<TResponse> Handle
-    (
-      TRequest aRequest,
-      CancellationToken aCancellationToken,
-      RequestHandlerDelegate<TResponse> aNextHandler
-    )
+    if (typeof(TRequest).GetCustomAttributes(typeof(TrackProcessingAttribute), false).Any())
     {
-      if (typeof(TRequest).GetCustomAttributes(typeof(TrackProcessingAttribute), false).Any())
-      {
-        Guard.Support(aRequest is IAction);
-        Guard.Argument(aRequest as object, nameof(aRequest))
-          .NotType<StartProcessingAction>()
-          .NotType<CompleteProcessingAction>();
+      Guard.Support(aRequest is IAction);
+      Guard.Argument(aRequest as object, nameof(aRequest))
+        .NotType<StartProcessingAction>()
+        .NotType<CompleteProcessingAction>();
 
-        string actionName = typeof(TRequest).Name;
-        await Mediator.Send(new StartProcessingAction { ActionName = actionName }).ConfigureAwait(false);
-        TResponse response = await aNextHandler().ConfigureAwait(false);
-        await Mediator.Send(new CompleteProcessingAction { ActionName = actionName }).ConfigureAwait(false);
-        return response;
-      }
-      else
-      {
-        TResponse response = await aNextHandler().ConfigureAwait(false);
-        return response;
-      }
+      string actionName = typeof(TRequest).Name;
+      await Mediator.Send(new StartProcessingAction { ActionName = actionName }).ConfigureAwait(false);
+      TResponse response = await aNextHandler().ConfigureAwait(false);
+      await Mediator.Send(new CompleteProcessingAction { ActionName = actionName }).ConfigureAwait(false);
+      return response;
+    }
+    else
+    {
+      TResponse response = await aNextHandler().ConfigureAwait(false);
+      return response;
     }
   }
 }
-

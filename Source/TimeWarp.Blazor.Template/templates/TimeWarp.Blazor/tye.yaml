@@ -38,8 +38,9 @@ services:
   - port: 5001
     protocol: https
 
+
 - name: timewarp-blazor-grpcserver
-  project: Source/GrpcServer/TimeWarp.Architecture.GrpcServer.csproj
+  project: Source/GrpcServer/TimeWarp.Architecture.Grpc.Server.csproj
   bindings:
   - name: https-grpc
     port: 7227

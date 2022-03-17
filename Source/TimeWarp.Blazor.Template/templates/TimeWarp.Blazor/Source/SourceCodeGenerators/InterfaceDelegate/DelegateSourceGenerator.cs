@@ -40,7 +40,11 @@ namespace TimeWarp
       aGeneratorInitializationContext
         .RegisterForPostInitialization
         (
-          (context) => context.AddSource("DelegateAttribute.g.cs", delegateAttributeSource)
+          (context) =>
+            {
+              context.AddSource("DelegateAttribute.g.cs", delegateAttributeSource);
+              context.AddSource("SomeOtherShit.txt", "Hello other shit");
+            }
         );
 
       // Register a syntax receiver that will be created for each generation pass

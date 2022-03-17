@@ -27,7 +27,7 @@ namespace TimeWarp.Blazor.Client.Integration.Tests.Infrastructure
       // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
       services.AddSingleton(aTimeWarpBlazorServerApplication.HttpClient);
 
-      ConfigureServices(services, aTimeWarpBlazorServerApplication.WebApplication.Configuration);
+      ConfigureServices(services, aTimeWarpBlazorServerApplication.WebApplication.Host);
       ServiceProvider = services.BuildServiceProvider();
       ScopedSender = new ScopedSender(ServiceProvider);
     }

@@ -62,9 +62,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Grpc", "Grpc", "{F549E7AE-C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "Api", "{40FA15DA-FF57-49E7-AD29-3C6C12F29237}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.GrpcServer", "Source\GrpcServer\TimeWarp.Architecture.GrpcServer.csproj", "{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Grpc.Server", "Source\GrpcServer\TimeWarp.Architecture.Grpc.Server.csproj", "{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.GrpcShared", "Source\GrpcShared\TimeWarp.Architecture.GrpcShared.csproj", "{8C377EA5-3EBE-4DDC-B800-85731946DEB7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Grpc.Contracts", "Source\GrpcShared\TimeWarp.Architecture.Grpc.Contracts.csproj", "{8C377EA5-3EBE-4DDC-B800-85731946DEB7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.ApiServer", "Source\ApiServer\TimeWarp.Architecture.ApiServer.csproj", "{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}"
 EndProject

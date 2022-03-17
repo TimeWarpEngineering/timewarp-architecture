@@ -2,6 +2,7 @@
 {
   using MediatR;
   using System;
+  using System.Collections.Generic;
   using System.Linq;
   using System.Net.Http;
   using System.Text.Json;
@@ -95,6 +96,18 @@
 
     public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default) =>
       ScopedSender.Send(aRequest, aCancellationToken);
+
+    public IAsyncEnumerable<TResponse> CreateStream<TResponse>
+    (
+      IStreamRequest<TResponse> aStreamRequest,
+      CancellationToken aCancellationToken = default
+    ) => throw new NotImplementedException();
+
+    public IAsyncEnumerable<object> CreateStream
+    (
+      object aRequest,
+      CancellationToken aCancellationToken = default
+    ) => throw new NotImplementedException();
 
     #endregion
 

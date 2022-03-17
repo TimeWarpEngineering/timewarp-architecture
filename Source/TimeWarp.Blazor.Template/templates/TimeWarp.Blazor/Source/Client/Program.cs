@@ -20,7 +20,7 @@ using TimeWarp.Blazor.Configuration;
 using TimeWarp.Blazor.Features.Applications;
 using TimeWarp.Blazor.Features.ClientLoaders;
 using TimeWarp.Blazor.Features.EventStreams;
-using TimeWarp.Blazor.Features.Superheros;
+using TimeWarp.Architecture.Features.Superheros;
 using ServiceCollection = Configuration.ServiceCollection;
 
 public class Program
@@ -77,14 +77,14 @@ public class Program
       aServiceProvider =>
       {
         IConfiguration configuration = aServiceProvider.GetRequiredService<IConfiguration>();
-        const string serviceName = "timewarp-blazor-server";
+        const string serviceName = "timewarp-blazor-grpcserver";
         string backendUrl = GetServiceUri(configuration, serviceName);
 
         // If no address is set then fallback to the current webpage URL
         if (string.IsNullOrEmpty(backendUrl))
         {
           //NavigationManager navigationManager = aServiceProvider.GetRequiredService<NavigationManager>();
-          backendUrl = "https://localhost:5001";
+          backendUrl = "https://localhost:7227";
         }
 
         Console.WriteLine($"backendUrl:{backendUrl}");
@@ -133,8 +133,11 @@ public class Program
       Host = aConfiguration.GetValue<string>($"service:{aServiceName}:host"),
       Port = aConfiguration.GetValue<int>($"service:{aServiceName}:port")
     };
-
-    return aConfiguration.GetServiceUri(aServiceName)?.AbsoluteUri ?? uriBuilder.ToString();
+    Console.WriteLine($"********* {uriBuilder}**********");
+    string serviceUri = uriBuilder.ToString();
+    serviceUri = aConfiguration.GetServiceUri(aServiceName)?.AbsoluteUri ?? uriBuilder.ToString();
+    Console.WriteLine($"********* {serviceUri}**********");
+    return serviceUri;
   }
 
   public static Task Main(string[] aArgumentArray)

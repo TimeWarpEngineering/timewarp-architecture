@@ -1,19 +1,18 @@
-﻿namespace TimeWarp.Blazor.Features.Superheros
+﻿namespace TimeWarp.Architecture.Features.Superheros;
+
+using BlazorState;
+using System.Collections.Generic;
+
+internal partial class SuperheroState : State<SuperheroState>
 {
-  using BlazorState;
-  using System.Collections.Generic;
+  private List<SuperheroDto> _Superheros;
 
-  internal partial class SuperheroState : State<SuperheroState>
+  public IReadOnlyList<SuperheroDto> Superheros => _Superheros.AsReadOnly();
+
+  public SuperheroState()
   {
-    private List<SuperheroDto> _Superheros;
-
-    public IReadOnlyList<SuperheroDto> Superheros => _Superheros.AsReadOnly();
-
-    public SuperheroState()
-    {
-      _Superheros = new List<SuperheroDto>();
-    }
-
-    public override void Initialize() { }
+    _Superheros = new List<SuperheroDto>();
   }
+
+  public override void Initialize() { }
 }
