@@ -4,7 +4,7 @@ using MediatR;
 
 public record GetWeatherForecastsRequest : BaseRequest, IApiRequest, IRequest<GetWeatherForecastsResponse>
 {
-  public const string Route = "weatherForecasts";
+  public const string Route = "api/weatherForecasts";
 
   /// <summary>
   /// The Number of days of forecasts to get
