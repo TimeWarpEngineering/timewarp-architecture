@@ -19,15 +19,15 @@ namespace WeatherForecastsState
       var weatherForecasts = new List<WeatherForecastDto> {
         new WeatherForecastDto
         (
-          aDate: DateTime.MinValue,
-          aSummary: "Summary 1",
-          aTemperatureC: 24
+          date: DateTime.MinValue,
+          summary: "Summary 1",
+          temperatureC: 24
         ),
         new WeatherForecastDto
         (
-          aDate: new DateTime(2019,05,17),
-          aSummary: "Summary 1",
-          aTemperatureC: 24
+          date: new DateTime(2019,05,17),
+          summary: "Summary 1",
+          temperatureC: 24
         )
       };
       WeatherForecastsState.Initialize(weatherForecasts);

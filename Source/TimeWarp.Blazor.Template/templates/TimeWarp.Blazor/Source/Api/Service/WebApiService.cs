@@ -1,5 +1,6 @@
 ﻿namespace TimeWarp.Architecture
 {
+  using Microsoft.Extensions.Options;
   using System.Net.Http;
   using System.Net.Mime;
   using System.Text;
@@ -19,10 +20,10 @@
     private readonly HttpClient HttpClient;
     private readonly JsonSerializerOptions JsonSerializerOptions;
 
-    public WebApiService(HttpClient aHttpClient, JsonSerializerOptions aJsonSerializerOptions)
+    public WebApiService(HttpClient aHttpClient, IOptions<JsonSerializerOptions> aJsonSerializerOptionsAccessor)
     {
       HttpClient = aHttpClient;
-      JsonSerializerOptions = aJsonSerializerOptions;
+      JsonSerializerOptions = aJsonSerializerOptionsAccessor.Value;
     }
 
     /// <summary>
@@ -82,6 +83,7 @@
       string json = await aHttpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
       TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
+      Console.WriteLine(JsonSerializerOptions.ToString());
 
       return response;
     }

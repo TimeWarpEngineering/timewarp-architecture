@@ -18,9 +18,15 @@ public record GetWeatherForecastsResponse : BaseResponse
   //  WeatherForecasts = new List<WeatherForecastDto>();
   //}
 
-  public GetWeatherForecastsResponse(Guid aCorrelationId) : base(aCorrelationId)
+  public GetWeatherForecastsResponse(List<WeatherForecastDto> weatherForecasts, Guid correlationId) :
+    base(correlationId)
   {
-    WeatherForecasts = new List<WeatherForecastDto>();
+    WeatherForecasts = weatherForecasts;
   }
+
+  //public GetWeatherForecastsResponse(Guid aCorrelationId) : base(aCorrelationId)
+  //{
+  //  WeatherForecasts = new List<WeatherForecastDto>();
+  //}
 
 }

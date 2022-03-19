@@ -32,10 +32,10 @@ public record WeatherForecastDto
   /// <example>75</example>
   public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 
-  public WeatherForecastDto(DateTime aDate, string aSummary, int aTemperatureC)
+  public WeatherForecastDto(DateTime date, string summary, int temperatureC)
   {
-    Date = aDate;
-    Summary = aSummary;
-    TemperatureC = aTemperatureC;
+    Date = date;
+    Summary = summary;
+    TemperatureC = temperatureC;
   }
 }

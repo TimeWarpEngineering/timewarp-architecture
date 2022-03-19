@@ -1,6 +1,7 @@
 ﻿namespace TimeWarp.Architecture.Testing
 {
   using MediatR;
+  using Microsoft.Extensions.Options;
   using System;
   using System.Collections.Generic;
   using System.Linq;
@@ -41,7 +42,8 @@
       };
 
       var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-      var webApiService = new WebApiService(HttpClient, jsonSerializerOptions);
+      IOptions<JsonSerializerOptions> jsonSerializerOptionsAccesor = Options.Create(jsonSerializerOptions);
+      var webApiService = new WebApiService(HttpClient, jsonSerializerOptionsAccesor);
       WebApiTestService = new WebApiTestService(webApiService);
     }
 

@@ -13,9 +13,9 @@ namespace WeatherForecastDto
       var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
       var weatherForecastDto = new WeatherForecastDto
       (
-        aDate: DateTime.MinValue.ToUniversalTime(),
-        aSummary: "Summary 1",
-        aTemperatureC: 24
+        date: DateTime.MinValue.ToUniversalTime(),
+        summary: "Summary 1",
+        temperatureC: 24
       );
 
       string json = JsonSerializer.Serialize(weatherForecastDto, jsonSerializerOptions);

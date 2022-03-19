@@ -52,8 +52,17 @@ public class Program
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
     aServiceCollection.AddScoped<ClientLoader>();
     aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
-    aServiceCollection.AddSingleton<JsonSerializerOptions>(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
     aServiceCollection.AddScoped<WebApiService>();
+    // Set the JSON serializer options
+    aServiceCollection.Configure<JsonSerializerOptions>
+    (
+      options =>
+      {
+        //options.PropertyNameCaseInsensitive = false;
+        options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        //options.WriteIndented = true;
+      }
+    );
 
     ConfigureGrpc(aServiceCollection);
 
@@ -78,16 +87,16 @@ public class Program
       {
         IConfiguration configuration = aServiceProvider.GetRequiredService<IConfiguration>();
         const string serviceName = "timewarp-blazor-grpcserver";
-        string backendUrl = GetServiceUri(configuration, serviceName);
+        string grpcUrl = GetServiceUri(configuration, serviceName);
 
         // If no address is set then fallback to the current webpage URL
-        if (string.IsNullOrEmpty(backendUrl))
+        if (string.IsNullOrEmpty(grpcUrl))
         {
           //NavigationManager navigationManager = aServiceProvider.GetRequiredService<NavigationManager>();
-          backendUrl = "https://localhost:7227";
+          grpcUrl = "https://localhost:7227";
         }
 
-        Console.WriteLine($"backendUrl:{backendUrl}");
+        Console.WriteLine($"backendUrl:{grpcUrl}");
 
         // Create a channel with a GrpcWebHandler that is addressed to the backend server.
         //
@@ -97,7 +106,7 @@ public class Program
 
         return GrpcChannel.ForAddress
         (
-          backendUrl,
+          grpcUrl,
           new GrpcChannelOptions
           {
             HttpHandler = httpHandler,

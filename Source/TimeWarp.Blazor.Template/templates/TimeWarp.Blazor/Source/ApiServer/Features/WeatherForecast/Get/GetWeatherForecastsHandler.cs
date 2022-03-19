@@ -28,21 +28,23 @@ public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsReq
     CancellationToken aCancellationToken
   )
   {
-    var response = new GetWeatherForecastsResponse(aGetWeatherForecastsRequest.CorrelationId);
     var random = new Random();
+
+    List<WeatherForecastDto> weatherForecastDtos = new();
 
     Enumerable.Range(1, aGetWeatherForecastsRequest.Days).ToList().ForEach
     (
-      aIndex => response.WeatherForecasts.Add
+      aIndex => weatherForecastDtos.Add
       (
         new WeatherForecastDto
         (
-          aDate: DateTime.Now.AddDays(aIndex),
-          aSummary: Summaries[random.Next(Summaries.Length)],
-          aTemperatureC: random.Next(-20, 55)
+          date: DateTime.Now.AddDays(aIndex),
+          summary: Summaries[random.Next(Summaries.Length)],
+          temperatureC: random.Next(-20, 55)
         )
       )
     );
+    var response = new GetWeatherForecastsResponse(weatherForecastDtos, aGetWeatherForecastsRequest.CorrelationId);
 
     return Task.FromResult(response);
   }

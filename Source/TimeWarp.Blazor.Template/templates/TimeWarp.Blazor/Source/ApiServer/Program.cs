@@ -1,3 +1,4 @@
+using FluentValidation.AspNetCore;
 using Oakton;
 using MediatR;
 using System.Reflection;
@@ -25,7 +26,19 @@ void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { };
 
 void ConfigureServices(IServiceCollection aServiceCollection)
 {
-  aServiceCollection.AddControllers();
+  aServiceCollection
+    .AddControllers()
+    .AddFluentValidation
+      (
+        aFluentValidationMvcConfiguration =>
+        {
+          // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
+          // will NOT register internals. This feature is utilized.
+          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Program>();
+          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<BaseRequest>();
+        }
+      );
+  
   // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
   aServiceCollection.AddEndpointsApiExplorer();
   aServiceCollection.AddSwaggerGen();

@@ -3,11 +3,12 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <Description>Blazor Client</Description>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
   </PropertyGroup>
+
+  <!--<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
+  </PropertyGroup>-->
 
   <ItemGroup>
     <Compile Remove="./Source/Client/Design/*" Condition=" '$(Configuration)' == 'Release' " />
@@ -16,7 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="BlazorComponentUtilities" />
-    <PackageReference Include="Blazor-State" />
+    <!--<PackageReference Include="Blazor-State" />-->
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Dawn.Guard" />
     <PackageReference Include="Grpc.Net.Client.Web" />
@@ -30,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\..\..\blazor-state\Source\BlazorState\BlazorState.csproj" />
     <ProjectReference Include="..\Api\TimeWarp.Architecture.Api.csproj" />
     <ProjectReference Include="..\GrpcShared\TimeWarp.Architecture.Grpc.Contracts.csproj" />    
     <ProjectReference Include="..\Shared\TimeWarp.Blazor.Shared.csproj" />

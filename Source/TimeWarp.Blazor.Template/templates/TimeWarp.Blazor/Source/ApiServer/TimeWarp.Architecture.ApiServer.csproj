@@ -12,6 +12,7 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
     <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" />
     <PackageReference Include="Oakton" />
