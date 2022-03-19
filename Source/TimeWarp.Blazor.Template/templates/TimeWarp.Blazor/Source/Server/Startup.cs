@@ -35,7 +35,7 @@ public class Startup
 {
   private const string SwaggerVersion = "v1";
   private readonly IConfiguration Configuration;
-  private string SwaggerApiTitle => $"TimeWarp.Blazor API {SwaggerVersion}";
+  private string SwaggerApiTitle => $"TimeWarp.Architecture API {SwaggerVersion}";
   private string SwaggerEndPoint => $"/swagger/{SwaggerVersion}/swagger.json";
 
   public Startup(IConfiguration aConfiguration)
@@ -180,7 +180,7 @@ public class Startup
 
   private static void ConfigureCosmosDb(IServiceCollection aServiceCollection)
   {
-  
+
     using IServiceScope scope = aServiceCollection.BuildServiceProvider().CreateScope();
     {
       CosmosDbOptions cosmosOptions = scope.ServiceProvider.GetRequiredService<IOptions<CosmosDbOptions>>().Value;

@@ -1,8 +1,8 @@
-namespace TimeWarp.Blazor.EndToEnd.Tests
+namespace TimeWarp.Architecture.EndToEnd.Tests
 {
   using OpenQA.Selenium;
   using Shouldly;
-  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
+  using TimeWarp.Architecture.EndToEnd.Tests.Infrastructure;
 
   public class JsInteropTests : BaseTest
   {
@@ -24,7 +24,7 @@ namespace TimeWarp.Blazor.EndToEnd.Tests
       WaitUntilClientCached();
 
       object clientApplication = JavaScriptExecutor.ExecuteScript("return window.localStorage.getItem('clientApplication');");
-      clientApplication.ShouldBe("TimeWarp.Blazor.0.0.1");
+      clientApplication.ShouldBe("TimeWarp.Architecture.0.0.1");
     }
 
     public void InitalizationWorkedClientSide()

@@ -6,7 +6,7 @@ Author: Steven T. Cramer
 
 # ApplicationState IsProcessing
 
-In the [`Client`](\Source\Client\TimeWarp.Blazor.Client.csproj) project [`ApplicationState`](\Source\Client\Features\Application\ApplicationState.cs) maintains a list of actions that are currently being processed by the pipeline. If this list contains any items then the `IsProcessing` attribute is set to true.
+In the [`Client`](\Source\Client\TimeWarp.ArchitectureBlazor.Client.csproj) project [`ApplicationState`](\Source\Client\Features\Application\ApplicationState.cs) maintains a list of actions that are currently being processed by the pipeline. If this list contains any items then the `IsProcessing` attribute is set to true.
 
 The primary purpose is to allow the UI to reflect when we are waiting for tasks to complete.  "Loading..."
 

@@ -86,7 +86,7 @@ public class Program
       aServiceProvider =>
       {
         IConfiguration configuration = aServiceProvider.GetRequiredService<IConfiguration>();
-        const string serviceName = "timewarp-blazor-grpcserver";
+        const string serviceName = "grpc-server";
         string grpcUrl = GetServiceUri(configuration, serviceName);
 
         // If no address is set then fallback to the current webpage URL

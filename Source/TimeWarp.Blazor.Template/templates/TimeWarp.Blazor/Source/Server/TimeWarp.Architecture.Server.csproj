@@ -45,8 +45,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Client\TimeWarp.Blazor.Client.csproj" />
-    <ProjectReference Include="..\Shared\TimeWarp.Blazor.Shared.csproj" />
+    <ProjectReference Include="..\Client\TimeWarp.Architecture.Client.csproj" />
+    <ProjectReference Include="..\Shared\TimeWarp.Architecture.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

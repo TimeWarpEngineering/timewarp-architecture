@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 
 
-[assembly: InternalsVisibleTo("TimeWarp.Blazor.Client")]
-[assembly: InternalsVisibleTo("TimeWarp.Blazor.Client.Integration.Tests")]
-[assembly: InternalsVisibleTo("TimeWarp.Blazor.Server")]
-[assembly: InternalsVisibleTo("TimeWarp.Blazor.Server.Integration.Tests")]
+[assembly: InternalsVisibleTo("TimeWarp.Architecture.Client")]
+[assembly: InternalsVisibleTo("TimeWarp.Architecture.Client.Integration.Tests")]
+[assembly: InternalsVisibleTo("TimeWarp.Architecture.Server")]
+[assembly: InternalsVisibleTo("TimeWarp.Architecture.Server.Integration.Tests")]

@@ -13,7 +13,7 @@ steps:
   inputs:
     command: publish
     publishWebProjects: false
-    projects: 'Source/Server/TimeWarp.Blazor.Server.csproj'
+    projects: 'Source/Server/TimeWarp.Architecture.Server.csproj'
     arguments: '--configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)'
   enabled: true
 

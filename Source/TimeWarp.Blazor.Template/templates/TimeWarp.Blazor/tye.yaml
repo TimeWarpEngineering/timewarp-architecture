@@ -4,7 +4,7 @@
 # when you've given us a try, we'd love to know what you think:
 #    https://aka.ms/AA7q20u
 #
-name: timewarp.blazor
+name: timewarp.architecture
 services:
 #- name: cosmosdb
 #  image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator
@@ -32,14 +32,14 @@ services:
 #    name: cosmosdb-10350
 
     
-- name: timewarp-blazor-server
-  project: Source/Server/TimeWarp.Blazor.Server.csproj
+- name: web-server
+  project: Source/Server/TimeWarp.Architecture.Server.csproj
   bindings:
   - port: 5001
     protocol: https
 
 
-- name: timewarp-blazor-grpcserver
+- name: grpc-server
   project: Source/GrpcServer/TimeWarp.Architecture.Grpc.Server.csproj
   bindings:
   - name: https-grpc
@@ -49,7 +49,7 @@ services:
     port: 5290
     protocol: http
 
-- name: timewarp-blazor-apiserver
+- name: api-server
   project: Source/ApiServer/TimeWarp.Architecture.ApiServer.csproj
   bindings:
   - port: 7255
@@ -60,21 +60,3 @@ services:
   bindings:
   - port: 8443
     protocol: https
-
-#- name: timewarp-blazor-client
-#  project: Source/Client/TimeWarp.Blazor.Client.csproj
-#- name: endtoend-playwright-tests
-#  project: Tests/EndToEnd.Playwright.Tests/EndToEnd.Playwright.Tests.csproj
-
-#ingress:
-#  - name: ingress
-#    bindings:
-#    - port: 443
-#      protocol: https
-#    rules:
-#      - path: /api
-#        service: timewarp-blazor-server
-#      - path: /swagger
-#        preservePath: true
-#        service: timewarp-blazor-server
-#      - service: client

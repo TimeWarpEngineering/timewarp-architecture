@@ -27,7 +27,7 @@ namespace TimeWarp.Architecture.Features.Applications
     {
       _ProcessingList = new List<string>();
       IsMenuExpanded = true;
-      Name = "TimeWarp.Blazor";
+      Name = "TimeWarp.Architecture";
       Logo = "/images/logo.png";
     }
   }

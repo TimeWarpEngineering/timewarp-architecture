@@ -62,17 +62,17 @@ public class Validate_Should
     }
   },
   ""service"": {
-    ""timewarp-blazor-server"": {
+    ""web-server"": {
       ""protocol"": ""https"",
       ""host"": ""localhost"",
       ""port"": ""5001""
     },
-    ""timewarp-blazor-api"": {
+    ""api-server"": {
       ""protocol"": ""https"",
       ""host"": ""localhost"",
       ""port"": ""5001""
     },
-    ""timewarp-blazor-grpcserver"": {
+    ""grpc-server"": {
       ""protocol"": ""https"",
       ""host"": ""localhost"",
       ""port"": ""5001""
@@ -86,21 +86,21 @@ public class Validate_Should
     configurationBuilder
       .AddJsonStream(stream)
       .AddEnvironmentVariables();
-    
+
     IConfigurationRoot config = configurationBuilder.Build();
 
     ServiceCollection serviceCollection = new();
     config.GetSection("service").Bind(serviceCollection);
 
     serviceCollection.Count.Should().Be(3);
-    serviceCollection["timewarp-blazor-server"].Host.Should().Be("localhost");
-    serviceCollection["timewarp-blazor-server"].Protocol.Should().Be("https");
-    serviceCollection["timewarp-blazor-server"].Port.Should().Be(5001);
+    serviceCollection["web-server"].Host.Should().Be("localhost");
+    serviceCollection["web-server"].Protocol.Should().Be("https");
+    serviceCollection["web-server"].Port.Should().Be(5001);
 
     TestValidationResult<ServiceCollection> result =
       ServiceCollectionValidator.TestValidate(serviceCollection);
 
-    result.IsValid.Should().BeTrue();      
+    result.IsValid.Should().BeTrue();
   }
 
     public void Setup() => ServiceCollectionValidator = new ServiceCollectionValidator();

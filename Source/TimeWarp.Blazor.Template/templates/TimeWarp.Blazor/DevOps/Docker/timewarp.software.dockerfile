@@ -21,7 +21,7 @@ COPY Directory.Build.props ./
 COPY Directory.Packages.props ./
 COPY global.json ./ 
 COPY NuGet.config ./
-COPY TimeWarp.Blazor.sln ./
+COPY TimeWarp.Architecture.sln ./
 
 # Copy the main source project files
 COPY Source/Server/*.csproj ./Source/Server/
@@ -53,5 +53,5 @@ COPY --from=build /app .
 RUN ls -l /app
 
 ENV ASPNETCORE_ENVIRONMENT Development
-ENTRYPOINT ["./TimeWarp.Blazor.Server"]
+ENTRYPOINT ["./TimeWarp.Architecture.Server"]
 EXPOSE 80 443

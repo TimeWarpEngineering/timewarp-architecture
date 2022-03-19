@@ -1,6 +1,6 @@
 <Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
   <PropertyGroup>
-    <RootNamespace>TimeWarp.Blazor</RootNamespace>
+    <RootNamespace>TimeWarp.Architecture</RootNamespace>
   </PropertyGroup>
 </Project>

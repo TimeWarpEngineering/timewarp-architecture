@@ -1,7 +1,7 @@
-namespace TimeWarp.Blazor.EndToEnd.Tests
+namespace TimeWarp.Architecture.EndToEnd.Tests
 {
   using OpenQA.Selenium;
-  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
+  using TimeWarp.Architecture.EndToEnd.Tests.Infrastructure;
   using static Infrastructure.WaitAndAssert;
 
   public class ExecutionSideTests : BaseTest

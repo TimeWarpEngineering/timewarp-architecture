@@ -1,4 +1,4 @@
 ---
-uid: TimeWarp.Blazor:ReleaseNotes
-title: TimeWarp.Blazor Release Notes
+uid: TimeWarp.Architecture:ReleaseNotes
+title: TimeWarp.Architecture Release Notes
 ---

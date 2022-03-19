@@ -1,1 +1,1 @@
-dotnet run --project .\Source\Server\TimeWarp.Blazor.Server.csproj -- describe
+dotnet run --project .\Source\Server\TimeWarp.Architecture.Server.csproj -- describe

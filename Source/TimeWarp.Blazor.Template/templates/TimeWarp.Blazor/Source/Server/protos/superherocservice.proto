@@ -1,5 +1,5 @@
 syntax = "proto3";
-package TimeWarp.Blazor.Features.Superheros;
+package TimeWarp.Architecture.Features.Superheros;
 import "google/protobuf/timestamp.proto";
 
 message SuperheroDto {

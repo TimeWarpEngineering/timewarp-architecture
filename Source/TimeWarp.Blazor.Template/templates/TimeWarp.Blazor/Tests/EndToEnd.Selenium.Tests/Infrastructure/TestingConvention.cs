@@ -1,9 +1,9 @@
-namespace TimeWarp.Blazor.EndToEnd.Tests
+namespace TimeWarp.Architecture.EndToEnd.Tests
 {
   using Fixie;
   using Microsoft.Extensions.DependencyInjection;
   using System;
-  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
+  using TimeWarp.Architecture.EndToEnd.Tests.Infrastructure;
 
   public class TestingConvention : Discovery, Execution, IDisposable
   {

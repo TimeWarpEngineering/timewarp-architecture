@@ -8,8 +8,8 @@
 
   public static class Constants
   {
-    public const string GrpcServiceName = "timewarp-blazor-grpcserver";
-    public const string ApiServiceName = "timewarp-blazor-api";
-    public const string WebServiceName = "timewarp-blazor-server";
+    public const string GrpcServiceName = "grpc-server";
+    public const string ApiServiceName = "api-server";
+    public const string WebServiceName = "web-server";
   }
 }

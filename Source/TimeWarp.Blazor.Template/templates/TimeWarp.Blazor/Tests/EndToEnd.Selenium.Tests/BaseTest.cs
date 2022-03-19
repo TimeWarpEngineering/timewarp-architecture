@@ -1,9 +1,9 @@
-namespace TimeWarp.Blazor.EndToEnd.Tests
+namespace TimeWarp.Architecture.EndToEnd.Tests
 {
   using OpenQA.Selenium;
   using OpenQA.Selenium.Support.UI;
   using System;
-  using TimeWarp.Blazor.EndToEnd.Tests.Infrastructure;
+  using TimeWarp.Architecture.EndToEnd.Tests.Infrastructure;
 
   public abstract class BaseTest
   {

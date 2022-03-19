@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
+namespace TimeWarp.Architecture.EndToEnd.Tests.Infrastructure
 {
   using Microsoft.AspNetCore.Hosting;
   using Microsoft.AspNetCore.Hosting.Server;
@@ -10,7 +10,7 @@ namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
   using System.IO;
   using System.Linq;
   using System.Threading;
-  using TimeWarp.Blazor.Features.ClientLoaders;
+  using TimeWarp.Architecture.Features.ClientLoaders;
 
   public class ServerFixture
   {

@@ -1,13 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <PackageReference Include="Fixie.TestAdapter" />
-    <PackageReference Include="Selenium.Support" />
-    <PackageReference Include="Selenium.WebDriver"/>
-    <PackageReference Include="Shouldly" />
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="FluentAssertions" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Server\TimeWarp.Architecture.Server.csproj" />
+    <ProjectReference Include="..\..\Source\Shared\TimeWarp.Architecture.Shared.csproj" />
+    <ProjectReference Include="..\TimeWarp.Architecture.Testing\TimeWarp.Architecture.Testing.csproj" />
   </ItemGroup>
 </Project>

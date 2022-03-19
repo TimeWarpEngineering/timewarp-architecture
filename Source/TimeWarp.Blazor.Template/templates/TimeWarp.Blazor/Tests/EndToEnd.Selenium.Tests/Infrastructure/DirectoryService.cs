@@ -1,4 +1,4 @@
-namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
+namespace TimeWarp.Architecture.EndToEnd.Tests.Infrastructure
 {
   using System;
   using System.IO;
@@ -14,7 +14,7 @@ namespace TimeWarp.Blazor.EndToEnd.Tests.Infrastructure
     /// <returns>DirectoryInfo of the directory that contains the target directory or returns null if not in a git repository</returns>
     public DirectoryInfo FindSolutionRoot()
     {
-      const string SolutionFileName = "TimeWarp.Blazor.sln";
+      const string SolutionFileName = "TimeWarp.Architecture.sln";
       var directory = new DirectoryInfo(Environment.CurrentDirectory);
       bool found = directory.GetFiles(SolutionFileName).Length > 0;
       while (!found && directory.Parent != null)

@@ -1,5 +1,5 @@
 export class BlazorDualMode {
-  private ApplicationVersion = "TimeWarp.Blazor.0.0.1";
+  private ApplicationVersion = "TimeWarp.Architecture.0.0.1";
 
   private ClientApplicationKey = "clientApplication";
 

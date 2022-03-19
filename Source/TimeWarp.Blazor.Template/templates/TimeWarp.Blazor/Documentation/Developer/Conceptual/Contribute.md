@@ -1,4 +1,4 @@
 ---
-uid: TimeWarp.Blazor:Contribute
-title: TimeWarp.Blazor Contribute
+uid: TimeWarp.Architecture:Contribute
+title: TimeWarp.Architecture Contribute
 ---

@@ -5,7 +5,7 @@
   using TimeWarp.Architecture.Server;
 
   /// <summary>
-  /// Used to launch the TimeWarp.Blazor.Server application
+  /// Used to launch the TimeWarp.Architecture.Server application
   /// </summary>
   /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
   public class TimeWarpBlazorServerApplication : TestServerApplication<Startup>

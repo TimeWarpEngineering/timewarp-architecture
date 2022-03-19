@@ -9,9 +9,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\SourceCodeGenerators\SourceCodeGenerators.csproj" />
-    <ProjectReference Include="..\TimeWarp.Blazor.Testing\TimeWarp.Blazor.Testing.csproj" />
+    <ProjectReference Include="..\TimeWarp.Architecture.Testing\TimeWarp.Architecture.Testing.csproj" />
   </ItemGroup>
-  
+
   <!--<ItemGroup>
     --><!-- Note that this is not a "normal" ProjectReference.
          It needs the additional 'OutputItemType' and 'ReferenceOutputAssembly' attributes. --><!--
@@ -20,5 +20,5 @@
       OutputItemType="Analyzer"
       ReferenceOutputAssembly="false" />
   </ItemGroup>-->
-  
+
 </Project>
