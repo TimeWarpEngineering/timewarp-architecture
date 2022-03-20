@@ -7,7 +7,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Spa\TimeWarp.Architecture.Client.csproj" />
+    <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Spa\Web.Spa.csproj" />
     <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Server\TimeWarp.Architecture.Server.csproj" />
     <ProjectReference Include="..\TimeWarp.Architecture.Testing\TimeWarp.Architecture.Testing.csproj" />
   </ItemGroup>
