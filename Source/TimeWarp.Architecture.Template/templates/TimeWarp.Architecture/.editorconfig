@@ -115,6 +115,9 @@ csharp_style_unused_value_expression_statement_preference = discard_variable:sil
 # 'using' directive preferences
 csharp_using_directive_placement = inside_namespace:suggestion
 
+# Namespace preferences
+csharp_style_namespace_declarations = file_scoped:warning
+
 #### C# Formatting Rules ####
 
 # New line preferences
@@ -155,7 +158,7 @@ csharp_space_between_method_call_parameter_list_parentheses = false
 csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
 csharp_space_between_method_declaration_name_and_open_parenthesis = false
 csharp_space_between_method_declaration_parameter_list_parentheses = false
-csharp_space_between_parentheses = false 
+csharp_space_between_parentheses = false
 csharp_space_between_square_brackets = false
 
 # Wrapping preferences
@@ -173,11 +176,11 @@ dotnet_naming_rule.interface_should_be_begins_with_i.style = interface_style
 
 dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal
-dotnet_naming_symbols.interface.required_modifiers = 
+dotnet_naming_symbols.interface.required_modifiers =
 
 dotnet_naming_style.interface_style.required_prefix = I
-dotnet_naming_style.interface_style.required_suffix = 
-dotnet_naming_style.interface_style.word_separator = 
+dotnet_naming_style.interface_style.required_suffix =
+dotnet_naming_style.interface_style.word_separator =
 dotnet_naming_style.interface_style.capitalization = pascal_case
 
 # Types should be PascalCase
@@ -187,7 +190,7 @@ dotnet_naming_rule.types_should_be_pascal_case.style = types_style
 
 dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
 dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal
-dotnet_naming_symbols.types.required_modifiers = 
+dotnet_naming_symbols.types.required_modifiers =
 
 dotnet_naming_style.types_style.capitalization = pascal_case
 
@@ -230,7 +233,7 @@ dotnet_naming_rule.camel_case_for_local_variables.style    = local_variables_sty
 
 dotnet_naming_symbols.local_variables.applicable_kinds = local
 
-dotnet_naming_style.local_variables_style.capitalization = camel_case 
+dotnet_naming_style.local_variables_style.capitalization = camel_case
 
 # Parameters should be prefixed with an 'a'
 dotnet_naming_rule.parameters_should_be_prefixed.severity         = suggestion
@@ -261,4 +264,3 @@ dotnet_diagnostic.CA1062.severity = silent
 
 # CA1308: Normalize strings to uppercase
 dotnet_diagnostic.CA1308.severity = none
-csharp_style_namespace_declarations=block_scoped:suggestion
