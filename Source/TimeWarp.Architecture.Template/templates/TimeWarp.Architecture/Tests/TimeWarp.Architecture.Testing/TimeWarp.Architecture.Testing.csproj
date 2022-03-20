@@ -7,7 +7,7 @@
   </ItemGroup>
   <ItemGroup>
     <!--<ProjectReference Include="..\..\Source\SourceCodeGenerators\SourceCodeGenerators.csproj" />-->
-    <ProjectReference Include="..\..\Source\Server\TimeWarp.Architecture.Server.csproj" />
+    <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Server\TimeWarp.Architecture.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>

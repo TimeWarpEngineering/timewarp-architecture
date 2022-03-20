@@ -17,11 +17,11 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="protobuf-net.Grpc" />
-    <PackageReference Include="System.ServiceModel.Primitives" />    
+    <PackageReference Include="System.ServiceModel.Primitives" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Api\TimeWarp.Architecture.Api.csproj" />
+    <ProjectReference Include="..\..\Api\Api.Contracts\TimeWarp.Architecture.Api.Contracts.csproj" />
   </ItemGroup>
-		
+
 </Project>

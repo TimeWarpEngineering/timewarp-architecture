@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GrpcShared\TimeWarp.Architecture.Grpc.Contracts.csproj" />
+    <ProjectReference Include="..\Grpc.Contracts\TimeWarp.Architecture.Grpc.Contracts.csproj" />
   </ItemGroup>
 
 </Project>
