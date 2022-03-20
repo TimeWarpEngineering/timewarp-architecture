@@ -1,0 +1,35 @@
+﻿@namespace TimeWarp.Architecture.Design
+@page "/Design/Buttons"
+  <VStack class="m-4 justify-center items-center">
+    <Heading>Default Button</Heading>
+    <Button>Default</Button>
+
+    <Heading>Outline Button</Heading>
+    <Button Variant=@Button.ButtonVariant.Outline class="mt-2">Outline</Button>
+
+    <Heading>Default Button with Icon</Heading>
+    <Button Variant=@Button.ButtonVariant.Default>
+      <SvgIcon>
+        <LockClosedIcon class="h-4 w-4" />
+      </SvgIcon>
+      <ButtonText>
+        Default
+      </ButtonText>
+    </Button>
+
+    <Heading>Outline Button with Icon</Heading>
+    <Button Variant=@Button.ButtonVariant.Outline>
+      <SvgIcon>
+        <LockClosedIcon class="h-4 w-4" />
+      </SvgIcon>
+      <ButtonText>
+        Outline
+      </ButtonText>
+    </Button>
+  </VStack>
+  @code
+{
+    private const string RouteTemplate = "/Design/Buttons";
+
+    public static string GetRoute() => RouteTemplate;
+  }

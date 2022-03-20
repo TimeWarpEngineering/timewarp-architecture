@@ -1,0 +1,22 @@
+﻿@namespace TimeWarp.Architecture.Design
+@page "/Design/Colors"
+
+<div class="flex flex-col">
+  <h2>Color palette</h2>
+  <div>
+    <ColorBar TailwindColor="primary" />
+    <ColorBar TailwindColor="secondary" />
+    <ColorBar TailwindColor="accent" />
+    <ColorBar TailwindColor="danger" />
+    <ColorBar TailwindColor="warning" />
+    <ColorBar TailwindColor="positive" />
+    <ColorBar TailwindColor="gray" />
+  </div>
+</div>
+
+@code
+{
+  private const string RouteTemplate = "/Design/Colors";
+
+  public static string GetRoute() => RouteTemplate;
+}

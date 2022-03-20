@@ -1,6 +1,6 @@
 # Timewarp-Templates
 
-## timewarp-blazor
+## timewarp-architecture
 
 [![NuGet](https://img.shields.io/nuget/v/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
 [![NuGet](https://img.shields.io/nuget/dt/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
@@ -13,31 +13,38 @@ https://timewarpengineering.github.io/timewarp-templates/TimeWarpBlazorTemplate/
 ### Installation
 
 ```console
-dotnet new --install TimeWarp.AspNetCore.Blazor.Templates
+dotnet new --install TimeWarp.Architecture
 ```
 
 ### Usage
 
 ```console
-dotnet new timewarp-blazor -n MyBlazorApp
+dotnet new timewarp-blazor -n MyTimeWarpApp
 ```
 
 ## Content
 
-The template creates 3 projects which will be deployed and 4 test projects.
+The template creates  projects which will be deployed and 4 test projects.
 
 ### Projects
-
-MyBlazorApp.Client - This is the user interface project . The "Single Page Application (SPA)"
-MyBlazorApp.Server - This is the server project that serves up the SPA and is also the web api.
-MyBlazorApp.Shared - This is a library of common code shared between the Client and Server Projects.
+MyTimeWarpApp.Api.Contracts
+MyTimeWarpApp.Api.Server
+MyTimeWarpApp.Grpc.Contracts
+MyTimeWarpApp.Grpc.Server
+MyTimeWarpApp.Web.Server - This is the server project that serves up the SPA and is also the web api.
+MyTimeWarpApp.Web.Shared - This is a library of common code shared between the Spa and Server Projects.
+MyTimeWarpApp.Yarp
+MyTimeWarpApp.Spa - This is the user interface project . The "Single Page Application (SPA)"
+MyTimeWarpApp.SourceCodeGenerators
 
 ### Test Projects
 
 Client.Integration.Tests - contains integration tests for the SPA
 Server.Integration.Tests - contains integration tests for the web api
-EndToEnd.Selenium.Tests - contains Selenium based end-to-end tests.
+EndToEnd.Playwright.Tests - contains TestCafe based end-to-end tests.
+MyTimeWarpApp.Testing - a shared library amongst all tests
 EndToEnd.TestCafe.Tests - contains TestCafe based end-to-end tests.
+MyTimeWarpApp.SourceCodeGenerators.Tests
 
 ## timewarp-console
 

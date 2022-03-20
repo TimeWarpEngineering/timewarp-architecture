@@ -1,0 +1,20 @@
+# To learn more about .editorconfig see https://aka.ms/editorconfigdocs
+###############################
+# Core EditorConfig Options   #
+###############################
+root = true
+# All files
+[*]
+# Indentation and spacing
+indent_size = 2
+indent_style = space
+tab_width = 2
+
+# New line preferences
+end_of_line = lf
+insert_final_newline = true
+
+# Development files
+[*.{cs,csx,cshtml,csproj,razor,sln,props,targets,json,yml,gitignore,ts,js}]
+charset = "utf-8"
+trim_trailing_whitespace = true

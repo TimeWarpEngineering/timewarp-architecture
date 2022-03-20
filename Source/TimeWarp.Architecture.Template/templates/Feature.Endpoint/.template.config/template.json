@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Steven T. Cramer",
+  "classifications": [
+    "TimeWarp",
+    "Web",
+    "Blazor",
+    "Hosted",
+    "Feature",
+    "Endpoint"
+  ],
+  "name": "TimeWarp Feature Endpoint",
+  "groupIdentity": "TimeWarp.Feature.Endpoint",
+  "identity": "TimeWarp.Feature.Endpoint",
+  "preferNameDirectory": true,
+  "shortName": "timewarp-feature-endpoint",
+  "sourceName": "__RequestName__",
+  "symbols": {
+    "RootNamespace": {
+      "type": "parameter",
+      "description": "The first portion of the namespace <RootNamespace>.Features.<FeatureName>",
+      "datatype": "text",
+      "replaces": "__RootNamespace__"
+    },
+    "FeatureName": {
+      "type": "parameter",
+      "description": "The last part of the namespace <RootNamespace>.Features.<FeatureName>",
+      "datatype": "text",
+      "replaces": "__FeatureName__"
+    },
+    "firstLetterToUpperCase": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "upperCaseFirstLetter"
+    },
+    "firstLetterToLowerCase": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "lowerCaseFirstLetter"
+    },
+    "copyOtherChars": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "afterFirstLetter"
+    },
+    "requestNameCamelCase": {
+      "type": "generated",
+      "generator": "join",
+      "replaces": "__requestName__",
+      "parameters": {
+        "symbols": [
+          {
+            "type": "ref",
+            "value": "firstLetterToLowerCase"
+          },
+          {
+            "type": "ref",
+            "value": "copyOtherChars"
+          }
+        ]
+      }
+    },
+    "requestNamePascalCase": {
+      "type": "generated",
+      "generator": "join",
+      "replaces": "__RequestName__",
+      "parameters": {
+        "symbols": [
+          {
+            "type": "ref",
+            "value": "firstLetterToUpperCase"
+          },
+          {
+            "type": "ref",
+            "value": "copyOtherChars"
+          }
+        ]
+      }
+    }
+  },
+  "forms": {
+    "lowerCaseFirstLetter": {
+      "identifier": "chain",
+      "steps": [
+        "firstLetter",
+        "lowerCase"
+      ]
+    },
+    "upperCaseFirstLetter": {
+      "identifier": "chain",
+      "steps": [
+        "firstLetter",
+        "upperCase"
+      ]
+    },
+    "firstLetter": {
+      "identifier": "replace",
+      "pattern": "^(.)(.*)",
+      "replacement": "$1"
+    },
+    "afterFirstLetter": {
+      "identifier": "replace",
+      "pattern": "^(.)(.*)",
+      "replacement": "$2"
+    },
+    "lowerCase": {
+      "identifier": "lowerCase"
+    },
+    "upperCase": {
+      "identifier": "upperCase"
+    }
+  },
+  "tags": {
+    "language": "C#",
+    "type": "item"
+  }
+}

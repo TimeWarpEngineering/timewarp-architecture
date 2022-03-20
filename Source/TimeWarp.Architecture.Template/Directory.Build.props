@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <Authors>Steven T. Cramer</Authors>
+    <Product>TimeWarp.Blazor</Product>
+    <PackageIconUrl>https://github.com/TimeWarpEngineering/timewarp-templates/raw/master/Assets/Logo.png</PackageIconUrl>
+    <PackageProjectUrl>https://timewarpengineering.github.io/timewarp-templates/TimeWarpBlazorTemplate/Overview.html</PackageProjectUrl>
+    <PackageTags>Microsoft ASP.NET Core Blazor State Blazor-State MediatR Mediator Pipeline Redux</PackageTags>
+    <PackageReleaseNotes>TODO</PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-templates.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

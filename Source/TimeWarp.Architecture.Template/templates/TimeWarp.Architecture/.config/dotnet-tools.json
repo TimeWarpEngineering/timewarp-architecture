@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "dotnet-outdated-tool": {
+      "version": "3.2.1",
+      "commands": [
+        "dotnet-outdated"
+      ]
+    },
+    "fixie.console": {
+      "version": "3.2.0",
+      "commands": [
+        "fixie"
+      ]
+    },
+    "microsoft.tye": {
+      "version": "0.11.0-alpha.22111.1",
+      "commands": [
+        "tye"
+      ]
+    }
+  }
+}

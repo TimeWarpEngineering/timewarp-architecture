@@ -1,0 +1,214 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31717.71
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{2902FDFD-016E-4BF7-8B41-53D674FA53DD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Shared", "Source\Shared\TimeWarp.Architecture.Shared.csproj", "{19B3F119-0F8A-430A-8336-9F6797B990E9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Server", "Source\Server\TimeWarp.Architecture.Server.csproj", "{CFFB80F7-6230-4244-A07F-12F5A295FB21}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Client", "Source\Client\TimeWarp.Architecture.Client.csproj", "{545E3103-354C-4058-8D8F-60D70DCC115B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Client.Integration.Tests", "Tests\Client.Integration.Tests\TimeWarp.Architecture.Client.Integration.Tests.csproj", "{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Server.Integration.Tests", "Tests\Server.Integration.Tests\TimeWarp.Architecture.Server.Integration.Tests.csproj", "{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.EndToEnd.TestCafe.Tests", "Tests\EndToEnd.TestCafe.Tests\TimeWarp.Architecture.EndToEnd.TestCafe.Tests.csproj", "{607246B4-BE03-4E76-99F5-71EE1E90B22C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6B623CDC-91E7-47FD-A039-A40427FB7FE8}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		CodeMaid.config = CodeMaid.config
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		global.json = global.json
+		NuGet.config = NuGet.config
+		README.md = README.md
+		Run.ps1 = Run.ps1
+		.template.config\template.json = .template.config\template.json
+		TestCafe.ps1 = TestCafe.ps1
+		TimeWarp.ruleset = TimeWarp.ruleset
+		tye.yaml = tye.yaml
+		UNLICENSE.md = UNLICENSE.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{6DDDEA23-D242-4AB1-92E0-967A60941A81}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\Build\TimeWarp.Architecture.Template.yml = ..\..\..\..\Build\TimeWarp.Architecture.Template.yml
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.TypeScript", "Source\TypeScript\TimeWarp.Architecture.TypeScript.csproj", "{98407295-8769-4164-85E2-E616D6765338}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analyzers", "Analyzers", "{831BFD66-CAC3-4E90-AE1B-0BA8E5D49FB9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.Playwright.Tests", "Tests\EndToEnd.Playwright.Tests\EndToEnd.Playwright.Tests.csproj", "{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Testing", "Tests\TimeWarp.Architecture.Testing\TimeWarp.Architecture.Testing.csproj", "{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SourceCodeGenerators", "SourceCodeGenerators", "{E9A860F3-7FA5-4E5F-B263-609E3EFEEBB0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceCodeGenerators", "Source\SourceCodeGenerators\SourceCodeGenerators.csproj", "{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.SourceCodeGenerators.Tests", "Tests\TimeWarp.SourceCodeGenerators.Tests\TimeWarp.SourceCodeGenerators.Tests.csproj", "{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Proxy", "Source\Proxy\Proxy.csproj", "{08ED6B59-E051-4B4A-AEEA-351D0720FC46}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{038ED012-0F07-4C2A-AC75-1584FA537FDB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Grpc", "Grpc", "{F549E7AE-C09B-402D-8AEC-43013297EDC3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "Api", "{40FA15DA-FF57-49E7-AD29-3C6C12F29237}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Grpc.Server", "Source\GrpcServer\TimeWarp.Architecture.Grpc.Server.csproj", "{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Grpc.Contracts", "Source\GrpcShared\TimeWarp.Architecture.Grpc.Contracts.csproj", "{8C377EA5-3EBE-4DDC-B800-85731946DEB7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.ApiServer", "Source\ApiServer\TimeWarp.Architecture.ApiServer.csproj", "{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Api", "Source\Api\TimeWarp.Architecture.Api.csproj", "{FF19203B-D199-459E-8448-06A37D3C7E88}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorState", "..\..\..\..\..\blazor-state\Source\BlazorState\BlazorState.csproj", "{11698D1B-75E1-412C-B922-3F62909D9BF3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebServer", "WebServer", "{E68DE0B0-26C5-46B3-8BD6-80BB701DE830}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Yarp", "Yarp", "{45A9CAA5-8BF5-48E9-BBAD-85D5001764AC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		ReduxDevToolsEnabled|Any CPU = ReduxDevToolsEnabled|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{19B3F119-0F8A-430A-8336-9F6797B990E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19B3F119-0F8A-430A-8336-9F6797B990E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19B3F119-0F8A-430A-8336-9F6797B990E9}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{19B3F119-0F8A-430A-8336-9F6797B990E9}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{19B3F119-0F8A-430A-8336-9F6797B990E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19B3F119-0F8A-430A-8336-9F6797B990E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{545E3103-354C-4058-8D8F-60D70DCC115B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{545E3103-354C-4058-8D8F-60D70DCC115B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{545E3103-354C-4058-8D8F-60D70DCC115B}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{545E3103-354C-4058-8D8F-60D70DCC115B}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{545E3103-354C-4058-8D8F-60D70DCC115B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{545E3103-354C-4058-8D8F-60D70DCC115B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98407295-8769-4164-85E2-E616D6765338}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98407295-8769-4164-85E2-E616D6765338}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98407295-8769-4164-85E2-E616D6765338}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{98407295-8769-4164-85E2-E616D6765338}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{98407295-8769-4164-85E2-E616D6765338}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98407295-8769-4164-85E2-E616D6765338}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08ED6B59-E051-4B4A-AEEA-351D0720FC46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08ED6B59-E051-4B4A-AEEA-351D0720FC46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08ED6B59-E051-4B4A-AEEA-351D0720FC46}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{08ED6B59-E051-4B4A-AEEA-351D0720FC46}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{08ED6B59-E051-4B4A-AEEA-351D0720FC46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08ED6B59-E051-4B4A-AEEA-351D0720FC46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF19203B-D199-459E-8448-06A37D3C7E88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF19203B-D199-459E-8448-06A37D3C7E88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF19203B-D199-459E-8448-06A37D3C7E88}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{FF19203B-D199-459E-8448-06A37D3C7E88}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{FF19203B-D199-459E-8448-06A37D3C7E88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF19203B-D199-459E-8448-06A37D3C7E88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11698D1B-75E1-412C-B922-3F62909D9BF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11698D1B-75E1-412C-B922-3F62909D9BF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11698D1B-75E1-412C-B922-3F62909D9BF3}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = ReduxDevToolsEnabled|Any CPU
+		{11698D1B-75E1-412C-B922-3F62909D9BF3}.ReduxDevToolsEnabled|Any CPU.Build.0 = ReduxDevToolsEnabled|Any CPU
+		{11698D1B-75E1-412C-B922-3F62909D9BF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11698D1B-75E1-412C-B922-3F62909D9BF3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{19B3F119-0F8A-430A-8336-9F6797B990E9} = {E68DE0B0-26C5-46B3-8BD6-80BB701DE830}
+		{CFFB80F7-6230-4244-A07F-12F5A295FB21} = {E68DE0B0-26C5-46B3-8BD6-80BB701DE830}
+		{545E3103-354C-4058-8D8F-60D70DCC115B} = {038ED012-0F07-4C2A-AC75-1584FA537FDB}
+		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
+		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
+		{607246B4-BE03-4E76-99F5-71EE1E90B22C} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
+		{98407295-8769-4164-85E2-E616D6765338} = {038ED012-0F07-4C2A-AC75-1584FA537FDB}
+		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
+		{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
+		{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4} = {E9A860F3-7FA5-4E5F-B263-609E3EFEEBB0}
+		{21C35DFB-1CCB-4BEC-9E51-7293796EFB88} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
+		{08ED6B59-E051-4B4A-AEEA-351D0720FC46} = {45A9CAA5-8BF5-48E9-BBAD-85D5001764AC}
+		{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
+		{8C377EA5-3EBE-4DDC-B800-85731946DEB7} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
+		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
+		{FF19203B-D199-459E-8448-06A37D3C7E88} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
+		{11698D1B-75E1-412C-B922-3F62909D9BF3} = {038ED012-0F07-4C2A-AC75-1584FA537FDB}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,9 @@
+@namespace TimeWarp.Architecture.Features.EventStreams
+@inherits BaseComponent
+
+<ul class="mt-2" @attributes=Attributes>
+  @foreach (var item in Events)
+  {
+    <li>@item</li>
+  }
+</ul>
