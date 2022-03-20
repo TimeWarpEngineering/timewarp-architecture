@@ -34,7 +34,7 @@
     <ProjectReference Include="..\..\..\..\..\..\..\..\..\blazor-state\Source\BlazorState\BlazorState.csproj" />
     <ProjectReference Include="..\..\Api\Api.Contracts\TimeWarp.Architecture.Api.Contracts.csproj" />
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\TimeWarp.Architecture.Grpc.Contracts.csproj" />
-    <ProjectReference Include="..\Web.Shared\TimeWarp.Architecture.Shared.csproj" />
+    <ProjectReference Include="..\Web.Shared\Web.Shared.csproj" />
     <ProjectReference Include="..\TypeScript\TimeWarp.Architecture.TypeScript.csproj" />
   </ItemGroup>
 
