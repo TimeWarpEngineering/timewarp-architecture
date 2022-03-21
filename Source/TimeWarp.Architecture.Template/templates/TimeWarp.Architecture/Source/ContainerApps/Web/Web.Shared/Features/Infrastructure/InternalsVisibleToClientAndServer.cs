@@ -2,6 +2,6 @@ using System.Runtime.CompilerServices;
 
 
 [assembly: InternalsVisibleTo("Web.Spa")]
-[assembly: InternalsVisibleTo("TimeWarp.Architecture.Client.Integration.Tests")]
-[assembly: InternalsVisibleTo("TimeWarp.Architecture.Server")]
+[assembly: InternalsVisibleTo("Web.Spa.Integration.Tests")]
+[assembly: InternalsVisibleTo("Web.Server")]
 [assembly: InternalsVisibleTo("TimeWarp.Architecture.Server.Integration.Tests")]

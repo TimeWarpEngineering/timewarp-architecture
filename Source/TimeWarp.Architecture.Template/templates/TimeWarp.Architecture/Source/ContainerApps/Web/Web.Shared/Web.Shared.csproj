@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Api\Api.Contracts\TimeWarp.Architecture.Api.Contracts.csproj" />
+    <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
   </ItemGroup>
 
 </Project>
