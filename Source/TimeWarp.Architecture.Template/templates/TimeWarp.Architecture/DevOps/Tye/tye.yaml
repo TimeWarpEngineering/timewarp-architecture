@@ -33,14 +33,14 @@ services:
 
     
 - name: web-server
-  project: Source/Server/TimeWarp.Architecture.Server.csproj
+  project: ../../Source/ContainerApps/Web/Web.Server/Web.Server.csproj
   bindings:
   - port: 5001
     protocol: https
 
 
 - name: grpc-server
-  project: Source/GrpcServer/TimeWarp.Architecture.Grpc.Server.csproj
+  project: ../../Source/ContainerApps/Grpc/Grpc.Server/Grpc.Server.csproj
   bindings:
   - name: https-grpc
     port: 7227
@@ -50,13 +50,13 @@ services:
     protocol: http
 
 - name: api-server
-  project: Source/ApiServer/TimeWarp.Architecture.ApiServer.csproj
+  project: ../../Source/ContainerApps/Api/Api.Server/Api.Server.csproj
   bindings:
   - port: 7255
     protocol: https
 
 - name: proxy
-  project: Source/Proxy/Proxy.csproj
+  project: ../../Source/ContainerApps/Yarp/Yarp.csproj
   bindings:
   - port: 8443
     protocol: https
