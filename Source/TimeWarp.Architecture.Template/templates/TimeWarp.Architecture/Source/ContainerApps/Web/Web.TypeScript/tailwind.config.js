@@ -4,7 +4,7 @@ const defaultTheme = require("tailwindcss/defaultTheme");
 
 module.exports = {
   purge: {
-    content: ["../Client/**/*.razor", "../**/*.html"],
+    content: ["../Web.Spa/**/*.razor", "../**/*.html"],
     options: {
       whitelist: [""],
     },

@@ -1,0 +1,26 @@
+{
+  "name": "timewarp-blazor-typescript",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint source --ext .ts",
+    "prettier": "prettier --write .",
+    "tailwinds": "tailwindcss build -i ./css/input.css -o ../Web.Spa/wwwroot/css/site.css",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "5.16.0",
+    "@typescript-eslint/parser": "5.16.0",
+    "autoprefixer": "10.4.4",
+    "eslint": "8.11.0",
+    "eslint-config-airbnb-base": "15.0.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-prettier": "4.0.0",
+    "postcss": "8.4.12",
+    "prettier": "2.6.0",
+    "tailwindcss": "2.2.16",
+    "typescript": "4.6.2"
+  }
+}
