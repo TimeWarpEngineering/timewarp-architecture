@@ -1,7 +1,6 @@
 {
-  "name": "timewarp-blazor-typescript",
+  "name": "Web.TypeScript",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
     "build": "tsc",
     "lint": "eslint source --ext .ts",

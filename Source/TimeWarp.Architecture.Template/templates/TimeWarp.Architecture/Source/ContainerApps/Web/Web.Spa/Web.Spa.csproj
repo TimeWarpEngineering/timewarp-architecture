@@ -6,18 +6,13 @@
     <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
   </PropertyGroup>
 
-  <!--<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
-  </PropertyGroup>-->
-
-  <ItemGroup>
-    <Compile Remove="./Source/ContainerApps/Web/Web.Spa/Design/*" Condition=" '$(Configuration)' == 'Release' " />
-    <Compile Remove="./Source/ContainerApps/Web/Web.Spa/TailwindUi/*" Condition=" '$(Configuration)' == 'Release' " />
-  </ItemGroup>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BlazorComponentUtilities" />
-    <!--<PackageReference Include="Blazor-State" />-->
+    <PackageReference Include="Blazor-State" />
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Dawn.Guard" />
     <PackageReference Include="Grpc.Net.Client.Web" />
@@ -31,78 +26,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\..\..\..\blazor-state\Source\BlazorState\BlazorState.csproj" />
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj" />
     <ProjectReference Include="..\Web.Shared\Web.Shared.csproj" />
-    <ProjectReference Include="..\TypeScript\TimeWarp.Architecture.TypeScript.csproj" />
+    <ProjectReference Include="..\Web.TypeScript\Web.TypeScript.esproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Atoms\HeroIcons\Outline\" />
-    <Folder Include="Components\Atoms\Headings\" />
-    <Folder Include="Extensions\" />
-    <Folder Include="TailwindUi\ApplicationUi\ApplicationShells\MultiColumn\" />
-    <Folder Include="TailwindUi\ApplicationUi\ApplicationShells\Sidebar\" />
-    <Folder Include="TailwindUi\ApplicationUi\DataDisplays\DescriptionLists\" />
-    <Folder Include="TailwindUi\ApplicationUi\DataDisplays\Stats\" />
-    <Folder Include="TailwindUi\ApplicationUi\Elements\Avatars\" />
-    <Folder Include="TailwindUi\ApplicationUi\Elements\Dropdowns\" />
-    <Folder Include="TailwindUi\ApplicationUi\Elements\Badges\" />
-    <Folder Include="TailwindUi\ApplicationUi\Elements\Buttons\" />
-    <Folder Include="TailwindUi\ApplicationUi\Elements\ButtonGroups\" />
-    <Folder Include="TailwindUi\ApplicationUi\Feedback\Alerts\" />
-    <Folder Include="TailwindUi\ApplicationUi\Forms\InputGroups\" />
-    <Folder Include="TailwindUi\ApplicationUi\Forms\FormLayouts\" />
-    <Folder Include="TailwindUi\ApplicationUi\Forms\ActionPanels\" />
-    <Folder Include="TailwindUi\ApplicationUi\Forms\RadioGroups\" />
-    <Folder Include="TailwindUi\ApplicationUi\Forms\Toggles\" />
-    <Folder Include="TailwindUi\ApplicationUi\Forms\SignInAndRegistration\" />
-    <Folder Include="TailwindUi\ApplicationUi\Forms\SelectMenus\" />
-    <Folder Include="TailwindUi\ApplicationUi\Headings\CardHeadings\" />
-    <Folder Include="TailwindUi\ApplicationUi\Headings\SectionHeadings\" />
-    <Folder Include="TailwindUi\ApplicationUi\Headings\PageHeadings\" />
-    <Folder Include="TailwindUi\ApplicationUi\Layouts\Containers\" />
-    <Folder Include="TailwindUi\ApplicationUi\Layouts\ListContainers\" />
-    <Folder Include="TailwindUi\ApplicationUi\Layouts\MediaObjects\" />
-    <Folder Include="TailwindUi\ApplicationUi\Layouts\Grids\" />
-    <Folder Include="TailwindUi\ApplicationUi\Layouts\Dividers\" />
-    <Folder Include="TailwindUi\ApplicationUi\Layouts\Panels\" />
-    <Folder Include="TailwindUi\ApplicationUi\Lists\GridList\" />
-    <Folder Include="TailwindUi\ApplicationUi\Lists\StackedLists\" />
-    <Folder Include="TailwindUi\ApplicationUi\Lists\Tables\" />
-    <Folder Include="TailwindUi\ApplicationUi\Navigation\Steps\" />
-    <Folder Include="TailwindUi\ApplicationUi\Navigation\SidebarNavigation\" />
-    <Folder Include="TailwindUi\ApplicationUi\Navigation\VerticalNavigation\" />
-    <Folder Include="TailwindUi\ApplicationUi\Navigation\Tabs\" />
-    <Folder Include="TailwindUi\ApplicationUi\Navigation\Pagination\" />
-    <Folder Include="TailwindUi\ApplicationUi\Alerts\" />
-    <Folder Include="TailwindUi\ApplicationUi\Overlays\Notifications\" />
-    <Folder Include="TailwindUi\ApplicationUi\Overlays\Modals\" />
-    <Folder Include="TailwindUi\ApplicationUi\Overlays\Slide-overs\" />
-    <Folder Include="TailwindUi\ApplicationUi\Pages\HomeScreens\" />
-    <Folder Include="TailwindUi\ApplicationUi\Pages\DetailScreens\" />
-    <Folder Include="TailwindUi\ApplicationUi\Pages\SettingsScreens\" />
-    <Folder Include="TailwindUi\Marketing\Elements\Headers\" />
-    <Folder Include="TailwindUi\Marketing\Elements\FlyoutMenus\" />
-    <Folder Include="TailwindUi\Marketing\Elements\Banners\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\HeroSections\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\FeatureSections\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\CtaSections\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\Faqs\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\BlogSections\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\ContactSections\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\ContentSections\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\Footers\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\LogoClouds\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\TeamSections\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\Testimonials\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\Stats\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\NewsletterSections\" />
-    <Folder Include="TailwindUi\Marketing\PageSections\PricingSections\" />
-    <Folder Include="TailwindUi\Marketing\Pages\LandingPages\" />
-    <Folder Include="TailwindUi\Marketing\Pages\ContactPages\" />
-    <Folder Include="TailwindUi\Marketing\Pages\PricingPages\" />
+    <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
   </ItemGroup>
 </Project>
