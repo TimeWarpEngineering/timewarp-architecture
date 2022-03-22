@@ -1,30 +1,29 @@
-namespace EventStreamState
+namespace EventStreamState;
+
+using AnyClone;
+using FluentAssertions;
+using System.Collections.Generic;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
+using TimeWarp.Architecture.Features.EventStreams;
+
+public class Clone_Should : BaseTest
 {
-  using AnyClone;
-  using FluentAssertions;
-  using System.Collections.Generic;
-  using TimeWarp.Architecture.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Architecture.Features.EventStreams;
+  private EventStreamState EventStreamState => Store.GetState<EventStreamState>();
 
-  public class Clone_Should : BaseTest
+  public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+
+  public void Clone()
   {
-    private EventStreamState EventStreamState => Store.GetState<EventStreamState>();
+    //Arrange
+    var events = new List<string> { "Event 1", "Event 2", "Event 3" };
+    EventStreamState.Initialize(events);
 
-    public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    //Act
+    var clone = EventStreamState.Clone() as EventStreamState;
 
-    public void Clone()
-    {
-      //Arrange
-      var events = new List<string> { "Event 1", "Event 2", "Event 3" };
-      EventStreamState.Initialize(events);
-
-      //Act
-      var clone = EventStreamState.Clone() as EventStreamState;
-
-      //Assert
-      EventStreamState.Events.Count.Should().Be(clone.Events.Count);
-      EventStreamState.Guid.Should().NotBe(clone.Guid);
-      EventStreamState.Events[0].Should().Be(clone.Events[0]);
-    }
+    //Assert
+    EventStreamState.Events.Count.Should().Be(clone.Events.Count);
+    EventStreamState.Guid.Should().NotBe(clone.Guid);
+    EventStreamState.Events[0].Should().Be(clone.Events[0]);
   }
 }

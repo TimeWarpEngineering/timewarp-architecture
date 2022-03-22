@@ -3,7 +3,7 @@ namespace CloneStateBehavior
   using FluentAssertions;
   using System;
   using System.Threading.Tasks;
-  using TimeWarp.Architecture.Client.Integration.Tests.Infrastructure;
+  using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
   using TimeWarp.Architecture.Features.Counters;
   using static TimeWarp.Architecture.Features.Counters.CounterState;
 
@@ -42,7 +42,7 @@ namespace CloneStateBehavior
       {
         Message = "Test Rollback of State"
       };
-      
+
       await Send(throwExceptionAction);
 
       // Assert State was rolled back and thus Guid didn't change.

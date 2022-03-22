@@ -286,14 +286,20 @@ __pycache__/
 *.btm.cs
 *.odx.cs
 *.xsd.cs
+
+/.vscode/
+
+# TimeWarp Architecture
 /BlazorDefault2018-05-02.Client/
 /BlazorDefault2018-05-02.Server/
 /BlazorDefault2018-05-02.Shared/
-/.vscode/
 /source/BlazorState.Js/dist/
 
 # TimeWarp architecture templates Generated Code
 GeneratedCode/
 
+# Web.Spa generated code
+/Source/ContainerApps/Web/Web.Spa/wwwroot/js/
+
 # Tye intermediate files
-/.tye/
+.tye/

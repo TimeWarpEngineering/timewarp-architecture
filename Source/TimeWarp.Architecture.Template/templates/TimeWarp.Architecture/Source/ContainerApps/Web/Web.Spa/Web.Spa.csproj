@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <Description>Blazor Client</Description>
+    <Description>Blazor Spa</Description>
     <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
   </PropertyGroup>
 
@@ -11,8 +11,8 @@
   </PropertyGroup>-->
 
   <ItemGroup>
-    <Compile Remove="./Source/Client/Design/*" Condition=" '$(Configuration)' == 'Release' " />
-    <Compile Remove="./Source/Client/TailwindUi/*" Condition=" '$(Configuration)' == 'Release' " />
+    <Compile Remove="./Source/ContainerApps/Web/Web.Spa/Design/*" Condition=" '$(Configuration)' == 'Release' " />
+    <Compile Remove="./Source/ContainerApps/Web/Web.Spa/TailwindUi/*" Condition=" '$(Configuration)' == 'Release' " />
   </ItemGroup>
 
   <ItemGroup>

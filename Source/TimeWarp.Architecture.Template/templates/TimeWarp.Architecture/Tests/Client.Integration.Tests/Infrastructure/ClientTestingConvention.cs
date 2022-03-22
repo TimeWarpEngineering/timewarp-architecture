@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Client.Integration.Tests.Infrastructure
+namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure
 {
   using Fixie;
   using Microsoft.Extensions.DependencyInjection;

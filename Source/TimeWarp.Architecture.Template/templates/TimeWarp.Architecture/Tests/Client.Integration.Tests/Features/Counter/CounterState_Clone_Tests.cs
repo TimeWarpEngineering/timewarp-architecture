@@ -1,28 +1,27 @@
-namespace CounterState
+namespace CounterState_;
+
+using AnyClone;
+using FluentAssertions;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
+using TimeWarp.Architecture.Features.Counters;
+
+public class Clone_Should : BaseTest
 {
-  using AnyClone;
-  using FluentAssertions;
-  using TimeWarp.Architecture.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Architecture.Features.Counters;
+  private CounterState CounterState => Store.GetState<CounterState>();
 
-  public class Clone_Should : BaseTest
+  public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+
+  public void Clone()
   {
-    private CounterState CounterState => Store.GetState<CounterState>();
+    //Arrange
+    CounterState.Initialize(aCount: 15);
 
-    public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    //Act
+    var clone = CounterState.Clone() as CounterState;
 
-    public void Clone()
-    {
-      //Arrange
-      CounterState.Initialize(aCount: 15);
-
-      //Act
-      var clone = CounterState.Clone() as CounterState;
-
-      //Assert
-      CounterState.Should().NotBeSameAs(clone);
-      CounterState.Count.Should().Be(clone.Count);
-      CounterState.Guid.Should().NotBe(clone.Guid);
-    }
+    //Assert
+    CounterState.Should().NotBeSameAs(clone);
+    CounterState.Count.Should().Be(clone.Count);
+    CounterState.Guid.Should().NotBe(clone.Guid);
   }
 }

@@ -13,7 +13,7 @@ steps:
   inputs:
     command: publish
     publishWebProjects: false
-    projects: 'Source/Server/TimeWarp.Architecture.Server.csproj'
+    projects: 'Source/ContainerApps/Web/Web.Server/Web.Server.csproj'
     arguments: '--configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)'
   enabled: true
 

@@ -24,11 +24,11 @@ COPY NuGet.config ./
 COPY TimeWarp.Architecture.sln ./
 
 # Copy the main source project files
-COPY Source/Server/*.csproj ./Source/Server/
-COPY Source/Client/*.csproj ./Source/Client/
-COPY Source/Shared/*.csproj ./Source/Shared/
+COPY Source/ContainerApps/Web/Web.Server/*.csproj ./Source/Source/ContainerApps/Web/Web.Server/
+COPY Source/ContainerApps/Web/Web.Spa/*.csproj ./Source/ContainerApps/Web/Web.Spa/
+COPY Source/ContainerApps/Web/Web.Shared/*.csproj ./Source/ContainerApps/Web/Web.Shared/
+COPY Source/ContainerApps/Web/TypeScript/*.csproj ./Source/ContainerApps/Web/TypeScript
 COPY Source/SourceCodeGenerators/*.csproj ./Source/SourceCodeGenerators/
-COPY Source/TypeScript/*.csproj ./Source/TypeScript/
 
 # restore nugets for alpine
 RUN dotnet restore ./Source/Server -r linux-musl-x64
@@ -53,5 +53,5 @@ COPY --from=build /app .
 RUN ls -l /app
 
 ENV ASPNETCORE_ENVIRONMENT Development
-ENTRYPOINT ["./TimeWarp.Architecture.Server"]
+ENTRYPOINT ["./Web.Server"]
 EXPOSE 80 443

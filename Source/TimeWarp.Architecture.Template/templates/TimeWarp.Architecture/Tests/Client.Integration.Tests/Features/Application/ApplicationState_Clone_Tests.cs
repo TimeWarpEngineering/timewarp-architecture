@@ -1,30 +1,29 @@
-namespace ApplicationState
+namespace ApplicationState;
+
+using AnyClone;
+using FluentAssertions;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
+using TimeWarp.Architecture.Features.Applications;
+
+public class Clone_Should : BaseTest
 {
-  using AnyClone;
-  using FluentAssertions;
-  using TimeWarp.Architecture.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Architecture.Features.Applications;
+  private ApplicationState ApplicationState => Store.GetState<ApplicationState>();
 
-  public class Clone_Should : BaseTest
+  public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+
+  public void Clone()
   {
-    private ApplicationState ApplicationState => Store.GetState<ApplicationState>();
+    //Arrange
+    ApplicationState.Initialize(aName: "TestName", aLogo: "SomeUrl", aIsMenuExpanded: false);
 
-    public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+    //Act
+    ApplicationState clone = ApplicationState.Clone();
 
-    public void Clone()
-    {
-      //Arrange
-      ApplicationState.Initialize(aName: "TestName", aLogo: "SomeUrl", aIsMenuExpanded: false);
-
-      //Act
-      ApplicationState clone = ApplicationState.Clone();
-
-      //Assert
-      ApplicationState.Should().NotBeSameAs(clone);
-      ApplicationState.Name.Should().Be(clone.Name);
-      ApplicationState.Logo.Should().Be(clone.Logo);
-      ApplicationState.IsMenuExpanded.Should().Be(clone.IsMenuExpanded);
-      ApplicationState.Guid.Should().NotBe(clone.Guid);
-    }
+    //Assert
+    ApplicationState.Should().NotBeSameAs(clone);
+    ApplicationState.Name.Should().Be(clone.Name);
+    ApplicationState.Logo.Should().Be(clone.Logo);
+    ApplicationState.IsMenuExpanded.Should().Be(clone.IsMenuExpanded);
+    ApplicationState.Guid.Should().NotBe(clone.Guid);
   }
 }

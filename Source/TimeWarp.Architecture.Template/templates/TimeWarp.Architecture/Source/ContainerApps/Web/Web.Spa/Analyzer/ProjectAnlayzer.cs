@@ -6,7 +6,7 @@ namespace TimeWarp.Architecture.Analyzer
   using System.Linq;
   using System.Reflection;
   using TimeWarp.Architecture.Analyzers;
-  using TimeWarp.Architecture.Client;
+  using TimeWarp.Architecture.Web.Spa;
   using TimeWarp.Architecture.Extensions;
 
   public class ProjectAnlayzer

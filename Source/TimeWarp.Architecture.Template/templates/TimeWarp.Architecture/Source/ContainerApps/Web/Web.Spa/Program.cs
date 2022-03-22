@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Client;
+namespace TimeWarp.Architecture.Web.Spa;
 
 using BlazorState;
 using Grpc.Net.Client;

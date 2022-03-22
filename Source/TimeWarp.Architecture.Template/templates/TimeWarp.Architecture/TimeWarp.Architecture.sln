@@ -47,7 +47,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceCodeGenerators", "Sou
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceCodeGenerators.Tests", "Tests\TimeWarp.SourceCodeGenerators.Tests\SourceCodeGenerators.Tests.csproj", "{21C35DFB-1CCB-4BEC-9E51-7293796EFB88}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Proxy", "Source\ContainerApps\Yarp\Proxy.csproj", "{08ED6B59-E051-4B4A-AEEA-351D0720FC46}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yarp", "Source\ContainerApps\Yarp\Yarp.csproj", "{08ED6B59-E051-4B4A-AEEA-351D0720FC46}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Grpc", "Grpc", "{F549E7AE-C09B-402D-8AEC-43013297EDC3}"
 EndProject

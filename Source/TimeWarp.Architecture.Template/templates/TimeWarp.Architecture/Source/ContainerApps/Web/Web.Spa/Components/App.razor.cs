@@ -1,28 +1,27 @@
-namespace TimeWarp.Architecture.Components
+namespace TimeWarp.Architecture.Components;
+
+using BlazorState.Features.JavaScriptInterop;
+using BlazorState.Features.Routing;
+using BlazorState.Pipeline.ReduxDevTools;
+using Microsoft.AspNetCore.Components;
+using System.Threading.Tasks;
+using TimeWarp.Architecture.Features.ClientLoaders;
+
+public partial class App : ComponentBase
 {
-  using BlazorState.Features.JavaScriptInterop;
-  using BlazorState.Features.Routing;
-  using BlazorState.Pipeline.ReduxDevTools;
-  using Microsoft.AspNetCore.Components;
-  using System.Threading.Tasks;
-  using TimeWarp.Architecture.Features.ClientLoaders;
+  [Inject] private ClientLoader ClientLoader { get; set; }
+  [Inject] private JsonRequestHandler JsonRequestHandler { get; set; }
+#if ReduxDevToolsEnabled
+  [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; }
+#endif
+  [Inject] private RouteManager RouteManager { get; set; }
 
-  public partial class App : ComponentBase
+  protected override async Task OnAfterRenderAsync(bool aFirstRender)
   {
-    [Inject] private ClientLoader ClientLoader { get; set; }
-    [Inject] private JsonRequestHandler JsonRequestHandler { get; set; }
 #if ReduxDevToolsEnabled
-    [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; }
+    await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
 #endif
-    [Inject] private RouteManager RouteManager { get; set; }
-
-    protected override async Task OnAfterRenderAsync(bool aFirstRender)
-    {
-#if ReduxDevToolsEnabled
-      await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
-#endif
-      await JsonRequestHandler.InitAsync().ConfigureAwait(false);
-      await ClientLoader.LoadClient().ConfigureAwait(false);
-    }
+    await JsonRequestHandler.InitAsync().ConfigureAwait(false);
+    await ClientLoader.LoadClient().ConfigureAwait(false);
   }
 }

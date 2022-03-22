@@ -1,49 +1,48 @@
-namespace CounterState
+namespace CounterState;
+
+using FluentAssertions;
+using System.Threading.Tasks;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
+using TimeWarp.Architecture.Features.Counters;
+using static TimeWarp.Architecture.Features.Counters.CounterState;
+
+public class IncrementCounterAction_Should : BaseTest
 {
-  using FluentAssertions;
-  using System.Threading.Tasks;
-  using TimeWarp.Architecture.Client.Integration.Tests.Infrastructure;
-  using TimeWarp.Architecture.Features.Counters;
-  using static TimeWarp.Architecture.Features.Counters.CounterState;
+  private CounterState CounterState => Store.GetState<CounterState>();
 
-  public class IncrementCounterAction_Should : BaseTest
+  public IncrementCounterAction_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+
+  public async Task Decrement_Count_Given_NegativeAmount()
   {
-    private CounterState CounterState => Store.GetState<CounterState>();
+    //Arrange
+    CounterState.Initialize(aCount: 15);
 
-    public IncrementCounterAction_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
-
-    public async Task Decrement_Count_Given_NegativeAmount()
+    var incrementCounterRequest = new IncrementCounterAction
     {
-      //Arrange 
-      CounterState.Initialize(aCount: 15);
+      Amount = -2
+    };
 
-      var incrementCounterRequest = new IncrementCounterAction
-      {
-        Amount = -2
-      };
+    //Act
+    await Send(incrementCounterRequest);
 
-      //Act
-      await Send(incrementCounterRequest);
+    //Assert
+    CounterState.Count.Should().Be(13);
+  }
 
-      //Assert
-      CounterState.Count.Should().Be(13);
-    }
+  public async Task Increment_Count()
+  {
+    //Arrange
+    CounterState.Initialize(aCount: 22);
 
-    public async Task Increment_Count()
+    var incrementCounterRequest = new IncrementCounterAction
     {
-      //Arrange
-      CounterState.Initialize(aCount: 22);
+      Amount = 5
+    };
 
-      var incrementCounterRequest = new IncrementCounterAction
-      {
-        Amount = 5
-      };
+    //Act
+    await Send(incrementCounterRequest);
 
-      //Act
-      await Send(incrementCounterRequest);
-
-      //Assert
-      CounterState.Count.Should().Be(27);
-    }
+    //Assert
+    CounterState.Count.Should().Be(27);
   }
 }

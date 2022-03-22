@@ -1,12 +1,11 @@
-namespace TimeWarp.Architecture.Features.Counters
-{
-  using TimeWarp.Architecture.Features.Bases;
+namespace TimeWarp.Architecture.Features.Counters;
 
-  internal partial class CounterState
+using TimeWarp.Architecture.Features.Bases;
+
+internal partial class CounterState
+{
+  public class IncrementCounterAction : BaseAction
   {
-    public class IncrementCounterAction : BaseAction
-    {
-      public int Amount { get; set; }
-    }
+    public int Amount { get; set; }
   }
 }

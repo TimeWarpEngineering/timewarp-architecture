@@ -120,7 +120,7 @@ public class Startup
         )
     );
 
-    Client.Program.ConfigureServices(aServiceCollection, Configuration);
+    Web.Spa.Program.ConfigureServices(aServiceCollection, Configuration);
 
     aServiceCollection.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
 
