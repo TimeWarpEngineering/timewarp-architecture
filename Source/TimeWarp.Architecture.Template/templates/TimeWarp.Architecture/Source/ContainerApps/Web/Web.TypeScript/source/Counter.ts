@@ -9,7 +9,7 @@ export class Counter {
     console.log("%cdispatchIncrementCountAction", "color: green");
 
     const IncrementCountActionName =
-      "TimeWarp.Architecture.Features.Counters.CounterState+IncrementCounterAction, TimeWarp.Architecture.Web.Spa, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
+      "TimeWarp.Architecture.Features.Counters.CounterState+IncrementCounterAction, Web.Spa, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
 
     this.BlazorState.DispatchRequest(IncrementCountActionName, { amount: 7 });
   }
