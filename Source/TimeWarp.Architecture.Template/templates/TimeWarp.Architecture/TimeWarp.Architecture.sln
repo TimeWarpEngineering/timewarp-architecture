@@ -83,6 +83,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-DevOps", "00-DevOps", "{
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Web.TypeScript", "Source\ContainerApps\Web\Web.TypeScript\Web.TypeScript.esproj", "{2929D233-BD18-46BD-93C3-A4B69EE91BCC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorState", "..\..\..\..\..\blazor-state\Source\BlazorState\BlazorState.csproj", "{E16BE2BA-6507-4F6F-A510-DF6D33B25501}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -189,6 +191,12 @@ Global
 		{2929D233-BD18-46BD-93C3-A4B69EE91BCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2929D233-BD18-46BD-93C3-A4B69EE91BCC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2929D233-BD18-46BD-93C3-A4B69EE91BCC}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{E16BE2BA-6507-4F6F-A510-DF6D33B25501}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E16BE2BA-6507-4F6F-A510-DF6D33B25501}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E16BE2BA-6507-4F6F-A510-DF6D33B25501}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = ReduxDevToolsEnabled|Any CPU
+		{E16BE2BA-6507-4F6F-A510-DF6D33B25501}.ReduxDevToolsEnabled|Any CPU.Build.0 = ReduxDevToolsEnabled|Any CPU
+		{E16BE2BA-6507-4F6F-A510-DF6D33B25501}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E16BE2BA-6507-4F6F-A510-DF6D33B25501}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -220,6 +228,7 @@ Global
 		{F324E68B-9E03-4D9F-848E-398203410723} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{B3864467-1369-45DE-9CEB-EF227A5D062A} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{2929D233-BD18-46BD-93C3-A4B69EE91BCC} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
+		{E16BE2BA-6507-4F6F-A510-DF6D33B25501} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
