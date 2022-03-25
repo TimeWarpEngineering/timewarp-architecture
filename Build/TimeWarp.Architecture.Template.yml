@@ -14,18 +14,19 @@ pr:
   include:
   - Source/TimeWarp.Architecture.Template/*
 
-
 pool:
   name: TimeWarpEnterprises
 
 variables:
- Major: '5'
- Minor: '0'
- MajorAndMinor: '$(Major).$(Minor)'
- Patch: $[counter(variables.MajorAndMinor,0)]
- DotNetSdkVersion: 5.0.301
- Version: '$(Major).$(Minor).$(Patch)+$(DotNetSdkVersion)'
- Configuration: debug
+  Major: 6
+  Minor: 0
+  Patch: 0
+  Beta: "beta.0" # "-beta.X" or ""
+  DotNetSdkVersion: 6.0.201
+  BuildCounterReset: $(Major).$(Minor).$(Patch)
+  BuildCounter: $[counter(variables.BuildCounterReset, 0)]
+  Version: '$(Major).$(Minor).$(Patch)$(Beta)+$(DotNetSdkVersion)'
+  Configuration: debug
 
 steps:
 - script: dotnet --version
@@ -37,13 +38,6 @@ steps:
     command: build
     projects: 'Source/TimeWarp.Architecture.Template/**/*.csproj'
     configuration: $(Configuration)
-
-# - task: DotNetCoreCLI@2
-#   displayName: Test
-#   inputs:
-#    command: test
-#    projects: 'Source/TimeWarp.Architecture.Template/**/*Integration.Tests/*.csproj'
-#    configurationToPack: $(Configuration)
 
 - task: DotNetCoreCLI@2
   displayName: Pack into Nuget
