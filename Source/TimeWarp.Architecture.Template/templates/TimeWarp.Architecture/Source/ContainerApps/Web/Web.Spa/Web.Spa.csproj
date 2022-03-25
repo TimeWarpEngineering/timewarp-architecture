@@ -29,7 +29,9 @@
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj" />
     <ProjectReference Include="..\Web.Shared\Web.Shared.csproj" />
-    <ProjectReference Include="..\Web.TypeScript\Web.TypeScript.esproj" />
+    <ProjectReference Include="..\Web.TypeScript\Web.TypeScript.esproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
