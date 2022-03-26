@@ -1,0 +1,41 @@
+﻿@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
+@page "/Superheros"
+
+<Page>
+  <HeaderContent>Superheros</HeaderContent>
+  <MainContent>
+    @if (SuperheroState.Superheros == null)
+    {
+      <p><em>Loading...</em></p>
+    }
+    else
+    {
+      <table class="mt-4 min-w-full divide-y divide-gray-200" data-qa="SuperheroTable">
+        <thead>
+          <tr>
+            <TableHeader>Number</TableHeader>
+            <TableHeader>Name</TableHeader>
+            <TableHeader>Age</TableHeader>
+            <TableHeader>BirthDate</TableHeader>
+            <TableHeader>Power</TableHeader>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          @foreach (var hero in SuperheroState.Superheros)
+          {
+            <tr>
+              <Cell>@hero.Id</Cell>
+              <Cell>@hero.Name</Cell>
+              <Cell>@hero.Age</Cell>
+              <Cell>@hero.BirthDate.ToString("MM/dd/yyyy")</Cell>
+              <Cell>@hero.Power</Cell>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+  </MainContent>
+</Page> 
+

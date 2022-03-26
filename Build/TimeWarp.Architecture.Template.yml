@@ -1,0 +1,56 @@
+trigger:
+ branches:
+  include:
+  - master
+ paths:
+  include:
+  - Source/TimeWarp.Architecture.Template/*
+
+pr:
+ branches:
+   include:
+     - master
+ paths:
+  include:
+  - Source/TimeWarp.Architecture.Template/*
+
+pool:
+  name: TimeWarpEnterprises
+
+variables:
+  Major: 6
+  Minor: 0
+  Patch: 0
+  Beta: "beta.0" # "-beta.X" or ""
+  DotNetSdkVersion: 6.0.201
+  BuildCounterReset: $(Major).$(Minor).$(Patch)
+  BuildCounter: $[counter(variables.BuildCounterReset, 0)]
+  Version: '$(Major).$(Minor).$(Patch)$(Beta)+$(DotNetSdkVersion)'
+  Configuration: debug
+
+steps:
+- script: dotnet --version
+- script: echo Version $(Version)
+
+- task: DotNetCoreCLI@2
+  displayName: Build Template projects
+  inputs:
+    command: build
+    projects: 'Source/TimeWarp.Architecture.Template/**/*.csproj'
+    configuration: $(Configuration)
+
+- task: DotNetCoreCLI@2
+  displayName: Pack into Nuget
+  inputs:
+   command: pack
+   packagesToPack: $(Build.SourcesDirectory)/Source/TimeWarp.Architecture.Template/TimeWarp.AspNetCore.Blazor.Templates.csproj
+   configurationToPack: $(Configuration)
+   versioningScheme: byEnvVar
+   versionEnvVar: Version
+
+- task: PublishBuildArtifacts@1
+  displayName: Publish Artifact
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: drop
+    publishLocation: Container

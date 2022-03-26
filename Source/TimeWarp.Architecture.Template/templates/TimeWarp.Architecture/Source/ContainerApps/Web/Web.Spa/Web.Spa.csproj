@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Description>Blazor Spa</Description>
+    <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
+  </PropertyGroup>
+
+  <!--<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
+  </PropertyGroup>-->
+
+  <ItemGroup>
+    <PackageReference Include="BlazorComponentUtilities" />
+    <PackageReference Include="Blazor-State" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Dawn.Guard" />
+    <PackageReference Include="Grpc.Net.Client.Web" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.Tye.Extensions.Configuration" />
+    <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" />
+    <PackageReference Include="protobuf-net.Grpc" />
+    <PackageReference Include="System.Net.Http.Json" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
+    <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj" />
+    <ProjectReference Include="..\Web.Shared\Web.Shared.csproj" />
+    <ProjectReference Include="..\Web.TypeScript\Web.TypeScript.esproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\css\" />
+    <Folder Include="wwwroot\js\" />
+  </ItemGroup>
+</Project>

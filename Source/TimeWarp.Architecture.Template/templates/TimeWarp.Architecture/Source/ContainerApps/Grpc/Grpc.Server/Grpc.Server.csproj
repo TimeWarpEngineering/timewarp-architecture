@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Protobuf Include="Protos\greet.proto" GrpcServices="Server" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" />
+    <PackageReference Include="Grpc.AspNetCore.Server.Reflection" />
+    <PackageReference Include="Grpc.AspNetCore.Web" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore.Reflection" />
+    <PackageReference Include="protobuf-net.Grpc.Reflection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Grpc.Contracts\Grpc.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

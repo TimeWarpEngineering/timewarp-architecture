@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/0.5.16-alpha">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>2929D233-BD18-46BD-93C3-A4B69EE91BCC</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BuildCommand>npm run lint &amp;&amp; npm run prettier &amp;&amp; npm run build &amp;&amp; npm run tailwinds</BuildCommand>
+  </PropertyGroup>
+</Project>

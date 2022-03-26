@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
+    <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" />
+    <PackageReference Include="Oakton" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

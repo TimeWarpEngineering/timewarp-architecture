@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <Description>Web Server</Description>
+    <DisableImplicitComponentsAnalyzers>true</DisableImplicitComponentsAnalyzers>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants></DefineConstants>
+    <!-- <DefineConstants>UseHttpSys</DefineConstants> -->
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants></DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" />
+    <PackageReference Include="Dawn.Guard" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="Grpc.AspNetCore.Web" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" />
+    <PackageReference Include="Microsoft.CodeAnalysis" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Cosmos" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Oakton" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore.Reflection" />
+    <PackageReference Include="protobuf-net.Grpc.Reflection" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Web.Spa\Web.Spa.csproj" />
+    <ProjectReference Include="..\Web.Shared\Web.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Entities\X_Aggregate\Requests\" />
+    <Folder Include="Extensions\" />
+  </ItemGroup>
+
+</Project>

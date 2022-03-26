@@ -1,0 +1,102 @@
+﻿@namespace TimeWarp.Architecture.Design
+@page "/Design/Stacks"
+
+<Heading>HStack</Heading>
+
+<HStack>
+  <Box class="bg-accent-100 w-10 h-10" />
+  <Box class="bg-accent-200 w-10 h-10" />
+  <Box class="bg-accent-300 w-10 h-10" />
+  <Box class="bg-accent-400 w-10 h-10" />
+  <Box class="bg-accent-500 w-10 h-10" />
+</HStack>
+
+<Heading>HStack with a Spacer</Heading>
+<HStack>
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Spacer />
+  <Box class="bg-accent-600 w-10 h-10" />
+</HStack>
+
+<Heading>HStack Spacers (Left Center Right)</Heading>
+
+<HStack>
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Spacer />
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Spacer />
+  <Box class="bg-accent-600 w-10 h-10" />
+</HStack>
+
+<Heading>HStack Wrap</Heading>
+<HStack class="flex-wrap">
+  <Box class="bg-accent-500 w-20 h-10" />
+  <Box class="bg-accent-500 w-20 h-10" />
+  <Box class="bg-accent-600 w-20 h-10" />
+  <Box class="bg-accent-600 w-20 h-10" />
+  <Box class="bg-accent-600 w-20 h-10" />
+  <Box class="bg-accent-600 w-20 h-10" />
+  <Box class="bg-accent-600 w-20 h-10" />
+  <Box class="bg-accent-600 w-20 h-10" />
+  <Box class="bg-accent-600 w-20 h-10" />
+</HStack>
+
+<Heading>HStack with Column Spacing</Heading>
+<HStack>
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-600 w-10 h-10" />
+</HStack>
+
+<Heading>HStack left justify</Heading>
+<HStack class="justify-start">
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-600 w-10 h-10" />
+</HStack>
+
+<Heading>HStack right justify</Heading>
+<HStack class="justify-end">
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-600 w-10 h-10" />
+</HStack>
+
+<Heading>HStack center justify</Heading>
+<HStack class="justify-center">
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-600 w-10 h-10" />
+</HStack>
+
+<Heading>HStack justify between</Heading>
+<HStack class="justify-between">
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-600 w-10 h-10" />
+</HStack>
+
+<Heading>HStack justify around</Heading>
+<HStack class="justify-around">
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-500 w-10 h-10" />
+  <Box class="bg-accent-600 w-10 h-10" />
+</HStack>
+
+<Heading>VStack</Heading>
+
+<VStack>
+  <Box class="bg-accent-100 w-10 h-10" />
+  <Box class="bg-accent-200 w-10 h-10" />
+  <Box class="bg-accent-300 w-10 h-10" />
+  <Box class="bg-accent-400 w-10 h-10" />
+  <Box class="bg-accent-500 w-10 h-10" />
+</VStack>
+
+
+@code
+{
+  private const string RouteTemplate = "/Design/Stacks";
+
+  public static string GetRoute() => RouteTemplate;
+}
