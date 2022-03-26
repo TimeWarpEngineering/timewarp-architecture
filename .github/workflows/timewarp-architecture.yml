@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    types: [closed]
-    branches:
-      - master
 
 jobs:
   Explore-GitHub-Actions:
@@ -39,4 +35,4 @@ jobs:
           cd Source/TimeWarp.Architecture.Template/
           dotnet build -c Release
       - name: Publish
-        run: dotnet nuget push ./bin/Release/*.nupkg --skip-duplicate --no-symbols true
+        run: dotnet nuget push bin/Release/TimeWarp.Architecture.1.0.0.nupkg --skip-duplicate --no-symbols true --api-key ${{secrets.PUBLISH_TO_NUGET_ORG}}
