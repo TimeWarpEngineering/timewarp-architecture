@@ -2,9 +2,8 @@
 
 ## timewarp-architecture
 
-[![NuGet](https://img.shields.io/nuget/v/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
-[![NuGet](https://img.shields.io/nuget/dt/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
-[![Build Status](https://timewarpenterprises.visualstudio.com/timewarp-templates/_apis/build/status/TimeWarp.Blazor.Template?branchName=master)](https://timewarpenterprises.visualstudio.com/timewarp-templates/_build/latest?definitionId=20&branchName=master)
+[![NuGet](https://img.shields.io/nuget/v/TimeWarp.Architecture.svg)](https://www.nuget.org/packages/TimeWarp.Architecture/)
+[![NuGet](https://img.shields.io/nuget/dt/TimeWarp.Architecture.svg)](https://www.nuget.org/packages/TimeWarp.Architecture/)
 
 ### Documentation
 
@@ -37,12 +36,23 @@ MyTimeWarpApp.Yarp
 MyTimeWarpApp.Spa - This is the user interface project . The "Single Page Application (SPA)"
 MyTimeWarpApp.SourceCodeGenerators
 
+* Api.Contracts
+* Api.Server
+* Grpc.Contracts
+* Grpc.Server
+* Web.Server
+* Web.Shared
+* Web.Spa - The Blazor Single Page Application (SPA)
+* Web.TypeScript - Project that contains any needed TypeScript for Web.Spa
+* Yarp
+* SourceCodeGenerators
+
 ### Test Projects
 
-Client.Integration.Tests - contains integration tests for the SPA
+Spa.Integration.Tests - contains integration tests for the SPA
 Server.Integration.Tests - contains integration tests for the web api
 EndToEnd.Playwright.Tests - contains TestCafe based end-to-end tests.
-MyTimeWarpApp.Testing - a shared library amongst all tests
+TimeWarp.Testing - a shared library used for testing.
 EndToEnd.TestCafe.Tests - contains TestCafe based end-to-end tests.
 MyTimeWarpApp.SourceCodeGenerators.Tests
 
