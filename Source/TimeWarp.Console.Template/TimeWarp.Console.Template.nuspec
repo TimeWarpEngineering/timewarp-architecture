@@ -8,8 +8,8 @@
     <iconUrl>https://github.com/TimeWarpEngineering/timewarp-templates/raw/master/Assets/Logo.png</iconUrl>
     <language>en-US</language>
     <projectUrl>https://github.com/TimeWarpEngineering/blazor-state</projectUrl>
-    <licenseUrl>https://github.com/TimeWarpEngineering/blazor-state/blob/master/LICENSE</licenseUrl>
     <tags>template console timewarp</tags>
+    <license type="Unlicense"/>
     <packageTypes>
       <packageType name="Template" />
     </packageTypes>
