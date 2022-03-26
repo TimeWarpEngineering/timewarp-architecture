@@ -8,9 +8,8 @@
     <Description>TimeWarp Architecture Templates</Description>
     <PackageTags>dotnet-new;templates;aspnet;blazor;spa;pwa;timewarp;gRPC;Tye;YARP</PackageTags>
     <PackageIcon>logo.png</PackageIcon>
-
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <TargetFramework>net6.0</TargetFramework>
-
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <ContentTargetFolders>content</ContentTargetFolders>
