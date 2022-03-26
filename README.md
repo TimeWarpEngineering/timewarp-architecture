@@ -2,9 +2,8 @@
 
 ## timewarp-blazor
 
-[![NuGet](https://img.shields.io/nuget/v/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
-[![NuGet](https://img.shields.io/nuget/dt/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
-[![Build Status](https://timewarpenterprises.visualstudio.com/timewarp-templates/_apis/build/status/TimeWarp.Blazor.Template?branchName=master)](https://timewarpenterprises.visualstudio.com/timewarp-templates/_build/latest?definitionId=20&branchName=master)
+[![NuGet](https://img.shields.io/nuget/v/TimeWarp.Architecture.svg)](https://www.nuget.org/packages/TimeWarp.Architecture/)
+[![NuGet](https://img.shields.io/nuget/dt/TimeWarp.Architecture.svg)](https://www.nuget.org/packages/TimeWarp.Architecture/)
 
 ### Documentation
 
@@ -28,15 +27,23 @@ The template creates 3 projects which will be deployed and 4 test projects.
 
 ### Projects
 
-MyBlazorApp.Client - This is the user interface project . The "Single Page Application (SPA)"
-MyBlazorApp.Server - This is the server project that serves up the SPA and is also the web api.
-MyBlazorApp.Shared - This is a library of common code shared between the Client and Server Projects.
+* Api.Contracts
+* Api.Server
+* Grpc.Contracts
+* Grpc.Server
+* Web.Server
+* Web.Shared
+* Web.Spa - The Blazor Single Page Application (SPA)
+* Web.TypeScript - Project that contains any needed TypeScript for Web.Spa
+* Yarp
+* SourceCodeGenerators
 
 ### Test Projects
 
-Client.Integration.Tests - contains integration tests for the SPA
+Spa.Integration.Tests - contains integration tests for the SPA
 Server.Integration.Tests - contains integration tests for the web api
-EndToEnd.Selenium.Tests - contains Selenium based end-to-end tests.
+EndToEnd.Playwright.Tests - contains TestCafe based end-to-end tests.
+TimeWarp.Testing - a shared library used for testing.
 EndToEnd.TestCafe.Tests - contains TestCafe based end-to-end tests.
 
 ## timewarp-console
