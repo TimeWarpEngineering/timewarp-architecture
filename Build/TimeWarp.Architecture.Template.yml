@@ -36,14 +36,14 @@ steps:
   displayName: Build Template projects
   inputs:
     command: build
-    projects: 'Source/TimeWarp.Architecture.Template/**/*.csproj'
+    projects: Source/TimeWarp.Architecture.Template/TimeWarp.Architecture.csproj
     configuration: $(Configuration)
 
 - task: DotNetCoreCLI@2
   displayName: Pack into Nuget
   inputs:
    command: pack
-   packagesToPack: $(Build.SourcesDirectory)/Source/TimeWarp.Architecture.Template/TimeWarp.Architecture.csproj
+   packagesToPack: Source/TimeWarp.Architecture.Template/TimeWarp.Architecture.csproj
    configurationToPack: $(Configuration)
    versioningScheme: byEnvVar
    versionEnvVar: Version
