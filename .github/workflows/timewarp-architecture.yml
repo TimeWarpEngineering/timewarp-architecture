@@ -8,7 +8,7 @@ on:
     types: [closed]
     branches:
       - master
-      
+
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
@@ -37,6 +37,6 @@ jobs:
       - name: Pack
         run: |
           cd Source/TimeWarp.Architecture.Template/
-          dotnet build
+          dotnet build -c Release
       - name: Publish
-        run: dotnet nuget push ./<project>/out/*.nupkg --skip-duplicate --no-symbols true
+        run: dotnet nuget push Source/TimeWarp.Architecture.Template/bin/Release/*.nupkg --skip-duplicate --no-symbols true
