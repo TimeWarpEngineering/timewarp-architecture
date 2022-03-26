@@ -21,7 +21,7 @@ variables:
   Major: 6
   Minor: 0
   Patch: 0
-  Beta: "beta.0" # "-beta.X" or ""
+  Beta: "-beta.0" # "-beta.X" or ""
   DotNetSdkVersion: 6.0.201
   BuildCounterReset: $(Major).$(Minor).$(Patch)
   BuildCounter: $[counter(variables.BuildCounterReset, 0)]
