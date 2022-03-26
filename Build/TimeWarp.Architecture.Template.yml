@@ -43,7 +43,7 @@ steps:
   displayName: Pack into Nuget
   inputs:
    command: pack
-   packagesToPack: $(Build.SourcesDirectory)/Source/TimeWarp.Architecture.Template/TimeWarp.Architecture.Templates.csproj
+   packagesToPack: $(Build.SourcesDirectory)/Source/TimeWarp.Architecture.Template/TimeWarp.Architecture.csproj
    configurationToPack: $(Configuration)
    versioningScheme: byEnvVar
    versionEnvVar: Version
