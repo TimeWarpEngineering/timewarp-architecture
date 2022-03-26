@@ -8,7 +8,7 @@
     <title>Timewarp-Templates </title>
     <meta name="viewport" content="width=device-width">
     <meta name="title" content="Timewarp-Templates ">
-    <meta name="generator" content="docfx 2.58.9.0">
+    <meta name="generator" content="docfx 2.59.0.0">
     
     <link rel="shortcut icon" href="Assets/Logo.png">
     <link rel="stylesheet" href="styles/docfx.vendor.css">
@@ -62,29 +62,37 @@
             <article class="content wrap" id="_content" data-uid="">
 <h1 id="timewarp-templates">Timewarp-Templates</h1>
 
-<h2 id="timewarp-blazor">timewarp-blazor</h2>
+<h2 id="timewarp-architecture">timewarp-architecture</h2>
 <p><a href="https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/"><img src="https://img.shields.io/nuget/v/TimeWarp.AspNetCore.Blazor.Templates.svg" alt="NuGet"></a>
 <a href="https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/"><img src="https://img.shields.io/nuget/dt/TimeWarp.AspNetCore.Blazor.Templates.svg" alt="NuGet"></a>
 <a href="https://timewarpenterprises.visualstudio.com/timewarp-templates/_build/latest?definitionId=20&amp;branchName=master"><img src="https://timewarpenterprises.visualstudio.com/timewarp-templates/_apis/build/status/TimeWarp.Blazor.Template?branchName=master" alt="Build Status"></a></p>
 <h3 id="documentation">Documentation</h3>
 <p><a href="https://timewarpengineering.github.io/timewarp-templates/TimeWarpBlazorTemplate/Overview.html">https://timewarpengineering.github.io/timewarp-templates/TimeWarpBlazorTemplate/Overview.html</a></p>
 <h3 id="installation">Installation</h3>
-<pre><code class="lang-console">dotnet new --install TimeWarp.AspNetCore.Blazor.Templates
+<pre><code class="lang-console">dotnet new --install TimeWarp.Architecture
 </code></pre>
 <h3 id="usage">Usage</h3>
-<pre><code class="lang-console">dotnet new timewarp-blazor -n MyBlazorApp
+<pre><code class="lang-console">dotnet new timewarp-blazor -n MyTimeWarpApp
 </code></pre>
 <h2 id="content">Content</h2>
-<p>The template creates 3 projects which will be deployed and 4 test projects.</p>
+<p>The template creates  projects which will be deployed and 4 test projects.</p>
 <h3 id="projects">Projects</h3>
-<p>MyBlazorApp.Client - This is the user interface project . The &quot;Single Page Application (SPA)&quot;
-MyBlazorApp.Server - This is the server project that serves up the SPA and is also the web api.
-MyBlazorApp.Shared - This is a library of common code shared between the Client and Server Projects.</p>
+<p>MyTimeWarpApp.Api.Contracts
+MyTimeWarpApp.Api.Server
+MyTimeWarpApp.Grpc.Contracts
+MyTimeWarpApp.Grpc.Server
+MyTimeWarpApp.Web.Server - This is the server project that serves up the SPA and is also the web api.
+MyTimeWarpApp.Web.Shared - This is a library of common code shared between the Spa and Server Projects.
+MyTimeWarpApp.Yarp
+MyTimeWarpApp.Spa - This is the user interface project . The &quot;Single Page Application (SPA)&quot;
+MyTimeWarpApp.SourceCodeGenerators</p>
 <h3 id="test-projects">Test Projects</h3>
 <p>Client.Integration.Tests - contains integration tests for the SPA
 Server.Integration.Tests - contains integration tests for the web api
-EndToEnd.Selenium.Tests - contains Selenium based end-to-end tests.
-EndToEnd.TestCafe.Tests - contains TestCafe based end-to-end tests.</p>
+EndToEnd.Playwright.Tests - contains TestCafe based end-to-end tests.
+MyTimeWarpApp.Testing - a shared library amongst all tests
+EndToEnd.TestCafe.Tests - contains TestCafe based end-to-end tests.
+MyTimeWarpApp.SourceCodeGenerators.Tests</p>
 <h2 id="timewarp-console">timewarp-console</h2>
 <p><a href="https://www.nuget.org/packages/TimeWarp.Console.Template"><img src="https://img.shields.io/nuget/v/TimeWarp.Console.Template.svg" alt="NuGet"></a>
 <a href="https://www.nuget.org/packages/TimeWarp.Console.Template"><img src="https://img.shields.io/nuget/dt/TimeWarp.Console.Template.svg" alt="NuGet"></a>
