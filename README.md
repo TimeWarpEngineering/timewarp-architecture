@@ -7,7 +7,7 @@
 
 ### Documentation
 
-https://timewarpengineering.github.io/timewarp-architecture/TimeWarpArchitectureTemplate/Overview.html
+https://timewarpengineering.github.io/timewarp-architecture/
 
 ### Installation
 
