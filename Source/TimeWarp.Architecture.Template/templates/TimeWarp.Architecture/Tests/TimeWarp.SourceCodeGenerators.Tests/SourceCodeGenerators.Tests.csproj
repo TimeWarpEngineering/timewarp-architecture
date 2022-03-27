@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\SourceCodeGenerators\SourceCodeGenerators.csproj" />
-    <ProjectReference Include="..\TimeWarp.Architecture.Testing\Testing.Common.csproj" />
+    <ProjectReference Include="..\TimeWarp.Testing\Testing.Common.csproj" />
   </ItemGroup>
 
   <!--<ItemGroup>
