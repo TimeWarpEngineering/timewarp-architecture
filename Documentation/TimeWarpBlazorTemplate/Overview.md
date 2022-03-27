@@ -1,39 +1,21 @@
 ---
-uid: TimeWarp.Blazor.Template:Overview
-title: TimeWarp Architecture Overview
+uid: TimeWarp.Architecture.Template:Overview
+title: TimeWarp Architecture
 ---
 
 # TimeWarp Architecture
 
-[![NuGet](https://img.shields.io/nuget/v/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
-[![NuGet](https://img.shields.io/nuget/dt/TimeWarp.AspNetCore.Blazor.Templates.svg)](https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/)
-[![Build Status](https://timewarpenterprises.visualstudio.com/timewarp-templates/_apis/build/status/TimeWarp.Blazor.Template?branchName=master)](https://timewarpenterprises.visualstudio.com/timewarp-templates/_build/latest?definitionId=20&branchName=master)
+[![NuGet](https://img.shields.io/nuget/v/TimeWarp.Architecture.svg)](https://www.nuget.org/packages/TimeWarp.Architecture/)
+[![NuGet](https://img.shields.io/nuget/dt/TimeWarp.Architecture.svg)](https://www.nuget.org/packages/TimeWarp.Architecture/)
 
-This is a dotnet net template for creating a Single Page Application(SPA) with Blazor and dotnet 5. The TimeWarp view of clean architecture, much thanks to Jimmy Bogard, Steve Ardalis Smith, Jason Taylor and more.
-
-## Technologies
-* Dotnet 5 and Blazor
-* [Entity Framework Core 5](https://docs.microsoft.com/en-us/ef/core/)
-* [MediatR](https://github.com/jbogard/MediatR)
-* [Automapper](https://automapper.org/)
-* [FluentValidation](https://fluentvalidation.net/)
-* [Fixie](),[Playwright](https://playwright.dev/),[FluentAssertions](https://fluentassertions.com/)
-
-
+TimeWarp Architecture is a dotnet net 6 template for creating a distributed or monolithic application.
 
 ## Installation
-1. Install the latest [.NET 5 SDK](https://dotnet.microsoft.com/download/dotnet/5.0)
-2. Install the latest [Node.js LTS](https://nodejs.org/en/)
-3. Install the latest [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1)
-4. Install the latest [Cosmos Db Emulator](https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21)
-5. Update your powershell profile to include the following <sup><a href="#footnotes">1</a></sup>:
-```powershell
-$env:PSModulePath += ";$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
-Import-Module Microsoft.Azure.CosmosDB.Emulator
-```
-6. Install TimeWarp Templates
+
+* Install TimeWarp Architecture Templates
+  
 ```console
-dotnet new --install TimeWarp.AspNetCore.Blazor.Templates
+dotnet new --install TimeWarp.Architecture
 ```
 
 ## Usage
@@ -41,59 +23,88 @@ dotnet new --install TimeWarp.AspNetCore.Blazor.Templates
 To create new solution enter the following:
 
 ```console
-dotnet new timewarp-blazor -n MyBlazorApp
+dotnet new timewarp-architecture -n MyTimeWarpApp
 ```
 
-To run the new solution change to the newly created directory. 
+To run the new solution change to the newly created directory.
 
 ```console
-cd .\MyBlazorApp\
+cd .\MyTimeWarpApp\
 ```
+
 Execute the `Run.ps1` powershell script
 
 ```console
 Run.ps1
 ```
 
-You should see similar console output to the following:
+You should see the Tye Dashboard opened in your browser.
 
-```console
-λ  .\Run.ps1
-...
-info: Microsoft.Hosting.Lifetime[0]
-      Now listening on: http://localhost:5000
-info: Microsoft.Hosting.Lifetime[0]
-      Now listening on: https://localhost:5001
-info: Microsoft.Hosting.Lifetime[0]
-      Application started. Press Ctrl+C to shut down.
-info: Microsoft.Hosting.Lifetime[0]
-      Hosting environment: Development
-info: Microsoft.Hosting.Lifetime[0]
-      Content root path: C:\git\temp\MyBlazorApp\Source\Server
+## Technologies
+
+* [Dotnet 6](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+* [Blazor](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0)
+* [Tailwind](https://tailwindcss.com/)
+* [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
+* [MediatR](https://github.com/jbogard/MediatR)
+* [Automapper](https://automapper.org/)
+* [FluentValidation](https://fluentvalidation.net/)
+* [Fixie](https://github.com/fixie/fixie/wiki)
+* [FluentAssertions](https://fluentassertions.com/)
+* [Playwright](https://playwright.dev/)
+* [Project Tye](https://github.com/dotnet/tye)
+* [YARP](https://microsoft.github.io/reverse-proxy/)
+* [Cosmos DB](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction)
+
+## Prerequisites
+
+* Install the latest [.NET 6 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
+* Install the latest [Node.js LTS](https://nodejs.org/en/)
+* Install the latest [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell)
+* Install the latest [Cosmos Db Emulator](https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21)
+* Update your powershell profile to include the following [^1] :
+
+```powershell
+$env:PSModulePath += ";$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
+Import-Module Microsoft.Azure.CosmosDB.Emulator
 ```
 
-Open up your browser to <https://localhost:5001> and confirm you have a running site.
+* Install Tye dotnet tool
+
+```console
+dotnet tool install -g Microsoft.Tye --version "0.11.0-alpha.22111.1"
+```
 
 ## Content
 
-The template creates four projects which will be deployed, three test projects and one test libary.
+The template creates the distributed app projects and their corresponding test projects.
 
 ### Projects
 
-MyBlazorApp.Client - This is the user interface project . The "Single Page Application (SPA)"  
-MyBlazorApp.Server - This is the server project that serves up the SPA and is also the web api.  
-MyBlazorApp.Shared - This is a library of common code shared between the Client and Server Projects.  
-TimeWarp.Blazor.TypeScript
+* Api.Contracts
+* Api.Server
+* Grpc.Contracts
+* Grpc.Server
+* Web.Server
+* Web.Shared
+* Web.Spa - The Blazor Single Page Application (SPA)
+* Web.TypeScript - Project that contains any needed TypeScript for Web.Spa
+* Yarp
+* SourceCodeGenerators
 
 ### Test Projects
 
-MyBlazorApp.Client.Integration.Tests - contains integration tests for the SPA  
-MyBlazorApp.Server.Integration.Tests - contains integration tests for the web api  
-MyBlazorApp.EndToEnd.Playwright.Tests - contains Playwright based end-to-end tests.
+* Spa.Integration.Tests - contains integration tests for the SPA
+* Server.Integration.Tests - contains integration tests for the web api
+* EndToEnd.Playwright.Tests - contains TestCafe based end-to-end tests.
+* TimeWarp.Testing - a shared library used for testing.
+* EndToEnd.TestCafe.Tests - contains TestCafe based end-to-end tests.
+* SourceCodeGenerators.Tests
 
 ### Test Library
-MyBlazorApp.Testing - Share testing library.
 
+TimeWarp.Testing - Share testing library.
 
-# Footnotes:
-[1] https://docs.microsoft.com/en-us/azure/cosmos-db/emulator-command-line-parameters#:%7E:text=Install%20the%20latest%20version%20of,Azure.
+#### Footnotes
+
+[^1]: https://docs.microsoft.com/en-us/azure/cosmos-db/emulator-command-line-parameters#:%7E:text=Install%20the%20latest%20version%20of,Azure.

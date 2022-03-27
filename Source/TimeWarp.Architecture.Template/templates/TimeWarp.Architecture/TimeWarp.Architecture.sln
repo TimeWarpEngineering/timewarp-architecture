@@ -11,8 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Server", "Source\Contai
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Spa", "Source\ContainerApps\Web\Web.Spa\Web.Spa.csproj", "{545E3103-354C-4058-8D8F-60D70DCC115B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Spa.Integration.Tests", "Tests\Client.Integration.Tests\Web.Spa.Integration.Tests.csproj", "{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Server.Integration.Tests", "Tests\Server.Integration.Tests\Web.Server.Integration.Tests.csproj", "{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.TestCafe.Tests", "Tests\EndToEnd.TestCafe.Tests\EndToEnd.TestCafe.Tests.csproj", "{607246B4-BE03-4E76-99F5-71EE1E90B22C}"
@@ -38,7 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analyzers", "Analyzers", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.Playwright.Tests", "Tests\EndToEnd.Playwright.Tests\EndToEnd.Playwright.Tests.csproj", "{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing.Common", "Tests\TimeWarp.Architecture.Testing\Testing.Common.csproj", "{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing.Common", "Tests\TimeWarp.Testing\Testing.Common.csproj", "{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceCodeGenerators", "Source\SourceCodeGenerators\SourceCodeGenerators.csproj", "{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}"
 EndProject
@@ -85,6 +83,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-DevOps", "00-DevOps", "{
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Web.TypeScript", "Source\ContainerApps\Web\Web.TypeScript\Web.TypeScript.esproj", "{2929D233-BD18-46BD-93C3-A4B69EE91BCC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Spa.Integration.Tests", "Tests\Web.Spa.Integration.Tests\Web.Spa.Integration.Tests.csproj", "{03E78D0D-A549-4D34-BD55-0AF81B1A203D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -110,12 +110,6 @@ Global
 		{545E3103-354C-4058-8D8F-60D70DCC115B}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{545E3103-354C-4058-8D8F-60D70DCC115B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{545E3103-354C-4058-8D8F-60D70DCC115B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
-		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
-		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
@@ -191,6 +185,12 @@ Global
 		{2929D233-BD18-46BD-93C3-A4B69EE91BCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2929D233-BD18-46BD-93C3-A4B69EE91BCC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2929D233-BD18-46BD-93C3-A4B69EE91BCC}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{03E78D0D-A549-4D34-BD55-0AF81B1A203D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03E78D0D-A549-4D34-BD55-0AF81B1A203D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03E78D0D-A549-4D34-BD55-0AF81B1A203D}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{03E78D0D-A549-4D34-BD55-0AF81B1A203D}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{03E78D0D-A549-4D34-BD55-0AF81B1A203D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03E78D0D-A549-4D34-BD55-0AF81B1A203D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -199,7 +199,6 @@ Global
 		{19B3F119-0F8A-430A-8336-9F6797B990E9} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
 		{CFFB80F7-6230-4244-A07F-12F5A295FB21} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
 		{545E3103-354C-4058-8D8F-60D70DCC115B} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
-		{7A297947-B1E9-4BC6-9F84-22E5EDB389B8} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		{86DAE2F4-34F2-4002-AE80-308D8A7FADE0} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		{607246B4-BE03-4E76-99F5-71EE1E90B22C} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		{831BFD66-CAC3-4E90-AE1B-0BA8E5D49FB9} = {2DB1A6D9-AD51-4D72-9A4C-B08592E7ABA9}
@@ -222,6 +221,7 @@ Global
 		{F324E68B-9E03-4D9F-848E-398203410723} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{B3864467-1369-45DE-9CEB-EF227A5D062A} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{2929D233-BD18-46BD-93C3-A4B69EE91BCC} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
+		{03E78D0D-A549-4D34-BD55-0AF81B1A203D} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}

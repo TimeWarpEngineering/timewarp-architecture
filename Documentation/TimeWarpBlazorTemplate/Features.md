@@ -1,3 +1,4 @@
+
 * Blazor-State State Management
 * Dynamic Duel Mode
 * TailwindCss
@@ -7,8 +8,11 @@
 * EF SQL Server
 * Integration Tests (Fixie)
 * End-to-end Playwright Tests
-
+* Tye
+* YARP
+* Swagger
 
 ## Upcoming
 
-* AD-B2C integration
+* Serilog
+* Did Auth
