@@ -10,7 +10,7 @@ queue:
   name: TimeWarpEnterprises
 
 steps:
-- script: echo Build TimeWarp-Templates Docs
+- script: echo Build TimeWarp-Architecture Docs
 
 - task: CmdLine@2
   inputs:
@@ -36,6 +36,6 @@ steps:
     githubusername: 'TimeWarpEngineering'
     githubemail: 'Steven.Cramer@TimeWarp.Enterprises'
     githubaccesstoken: $(GitHubPersonalAccessToken)
-    repositoryname: 'timewarp-templates'
+    repositoryname: 'timewarp-architecture'
     branchname: 'gh-pages'
     commitmessage: 'Automated Release $(Release.ReleaseId)'
