@@ -35,4 +35,4 @@ jobs:
           cd Source/TimeWarp.Architecture.Template/
           dotnet build -c Release
       - name: Publish
-        run: dotnet nuget push Source/TimeWarp.Architecture.Template/bin/Release/TimeWarp.Architecture.*.nupkg --skip-duplicate --no-symbols true --source https://api.nuget.org/v3/index.json --api-key ${{secrets.PUBLISH_TO_NUGET_ORG}}
+        run: dotnet nuget push Source/TimeWarp.Architecture.Template/bin/Release/TimeWarp.Architecture.*.nupkg --skip-duplicate --no-symbols --source https://api.nuget.org/v3/index.json --api-key ${{secrets.PUBLISH_TO_NUGET_ORG}}
