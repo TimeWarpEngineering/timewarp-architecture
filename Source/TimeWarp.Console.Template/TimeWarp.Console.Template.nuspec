@@ -5,9 +5,9 @@
     <authors>Steven T. Cramer</authors>
     <version>$version$</version>
     <description>TimeWarp Console Template</description>
-    <iconUrl>https://github.com/TimeWarpEngineering/timewarp-templates/raw/master/Assets/Logo.png</iconUrl>
+    <iconUrl>https://github.com/TimeWarpEngineering/timewarp-architecture/raw/master/Assets/Logo.png</iconUrl>
     <language>en-US</language>
-    <projectUrl>https://github.com/TimeWarpEngineering/blazor-state</projectUrl>
+    <projectUrl>https://github.com/TimeWarpEngineering/timewarp-architecture</projectUrl>
     <tags>template console timewarp</tags>
     <license type="Unlicense"/>
     <packageTypes>

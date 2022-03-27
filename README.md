@@ -7,7 +7,7 @@
 
 ### Documentation
 
-https://timewarpengineering.github.io/timewarp-templates/TimeWarpBlazorTemplate/Overview.html
+https://timewarpengineering.github.io/timewarp-architecture/TimeWarpArchitectureTemplate/Overview.html
 
 ### Installation
 
