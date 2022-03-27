@@ -1,8 +1,8 @@
 ### YamlMime:XRefMap
 sorted: true
 references:
-- uid: TimeWarp.Blazor.Template:Overview
-  name: TimeWarp Architecture Overview
+- uid: TimeWarp.Architecture.Template:Overview
+  name: TimeWarp Architecture
   href: TimeWarpBlazorTemplate/Overview.html
 - uid: TimeWarp.Console.Template:Overview
   name: TimeWarp Console Template Overview

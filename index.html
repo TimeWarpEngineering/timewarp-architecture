@@ -62,75 +62,93 @@
             <article class="content wrap" id="_content" data-uid="">
 <h1 id="timewarp-architecture">TimeWarp Architecture</h1>
 
-<p><a href="https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/"><img src="https://img.shields.io/nuget/v/TimeWarp.AspNetCore.Blazor.Templates.svg" alt="NuGet"></a>
-<a href="https://www.nuget.org/packages/TimeWarp.AspNetCore.Blazor.Templates/"><img src="https://img.shields.io/nuget/dt/TimeWarp.AspNetCore.Blazor.Templates.svg" alt="NuGet"></a>
-<a href="https://timewarpenterprises.visualstudio.com/timewarp-templates/_build/latest?definitionId=20&amp;branchName=master"><img src="https://timewarpenterprises.visualstudio.com/timewarp-templates/_apis/build/status/TimeWarp.Blazor.Template?branchName=master" alt="Build Status"></a></p>
-<p>This is a dotnet net template for creating a Single Page Application(SPA) with Blazor and dotnet 5. The TimeWarp view of clean architecture, much thanks to Jimmy Bogard, Steve Ardalis Smith, Jason Taylor and more.</p>
-<h2 id="technologies">Technologies</h2>
-<ul>
-<li>Dotnet 5 and Blazor</li>
-<li><a href="https://docs.microsoft.com/en-us/ef/core/">Entity Framework Core 5</a></li>
-<li><a href="https://github.com/jbogard/MediatR">MediatR</a></li>
-<li><a href="https://automapper.org/">Automapper</a></li>
-<li><a href="https://fluentvalidation.net/">FluentValidation</a></li>
-<li><a href="">Fixie</a>,<a href="https://playwright.dev/">Playwright</a>,<a href="https://fluentassertions.com/">FluentAssertions</a></li>
-</ul>
+<p><a href="https://www.nuget.org/packages/TimeWarp.Architecture/"><img src="https://img.shields.io/nuget/v/TimeWarp.Architecture.svg" alt="NuGet"></a>
+<a href="https://www.nuget.org/packages/TimeWarp.Architecture/"><img src="https://img.shields.io/nuget/dt/TimeWarp.Architecture.svg" alt="NuGet"></a></p>
+<p>TimeWarp Architecture is a dotnet net 6 template for creating a distributed or monolithic application.</p>
 <h2 id="installation">Installation</h2>
-<ol>
-<li>Install the latest <a href="https://dotnet.microsoft.com/download/dotnet/5.0">.NET 5 SDK</a></li>
-<li>Install the latest <a href="https://nodejs.org/en/">Node.js LTS</a></li>
-<li>Install the latest <a href="https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1">Powershell</a></li>
-<li>Install the latest <a href="https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21">Cosmos Db Emulator</a></li>
-<li>Update your powershell profile to include the following <sup><a href="#footnotes">1</a></sup>:</li>
-</ol>
-<pre><code class="lang-powershell">$env:PSModulePath += &quot;;$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules&quot;
-Import-Module Microsoft.Azure.CosmosDB.Emulator
-</code></pre>
-<ol start="6">
-<li>Install TimeWarp Templates</li>
-</ol>
-<pre><code class="lang-console">dotnet new --install TimeWarp.AspNetCore.Blazor.Templates
+<ul>
+<li>Install TimeWarp Architecture Templates</li>
+</ul>
+<pre><code class="lang-console">dotnet new --install TimeWarp.Architecture
 </code></pre>
 <h2 id="usage">Usage</h2>
 <p>To create new solution enter the following:</p>
-<pre><code class="lang-console">dotnet new timewarp-blazor -n MyBlazorApp
+<pre><code class="lang-console">dotnet new timewarp-architecture -n MyTimeWarpApp
 </code></pre>
 <p>To run the new solution change to the newly created directory.</p>
-<pre><code class="lang-console">cd .\MyBlazorApp\
+<pre><code class="lang-console">cd .\MyTimeWarpApp\
 </code></pre>
 <p>Execute the <code>Run.ps1</code> powershell script</p>
 <pre><code class="lang-console">Run.ps1
 </code></pre>
-<p>You should see similar console output to the following:</p>
-<pre><code class="lang-console">λ  .\Run.ps1
-...
-info: Microsoft.Hosting.Lifetime[0]
-      Now listening on: http://localhost:5000
-info: Microsoft.Hosting.Lifetime[0]
-      Now listening on: https://localhost:5001
-info: Microsoft.Hosting.Lifetime[0]
-      Application started. Press Ctrl+C to shut down.
-info: Microsoft.Hosting.Lifetime[0]
-      Hosting environment: Development
-info: Microsoft.Hosting.Lifetime[0]
-      Content root path: C:\git\temp\MyBlazorApp\Source\Server
+<p>You should see the Tye Dashboard opened in your browser.</p>
+<h2 id="technologies">Technologies</h2>
+<ul>
+<li><a href="https://dotnet.microsoft.com/en-us/download/dotnet/6.0">Dotnet 6</a></li>
+<li><a href="https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0">Blazor</a></li>
+<li><a href="https://tailwindcss.com/">Tailwind</a></li>
+<li><a href="https://docs.microsoft.com/en-us/ef/core/">Entity Framework Core</a></li>
+<li><a href="https://github.com/jbogard/MediatR">MediatR</a></li>
+<li><a href="https://automapper.org/">Automapper</a></li>
+<li><a href="https://fluentvalidation.net/">FluentValidation</a></li>
+<li><a href="https://github.com/fixie/fixie/wiki">Fixie</a></li>
+<li><a href="https://fluentassertions.com/">FluentAssertions</a></li>
+<li><a href="https://playwright.dev/">Playwright</a></li>
+<li><a href="https://github.com/dotnet/tye">Project Tye</a></li>
+<li><a href="https://microsoft.github.io/reverse-proxy/">YARP</a></li>
+<li><a href="https://docs.microsoft.com/en-us/azure/cosmos-db/introduction">Cosmos DB</a></li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Install the latest <a href="https://dotnet.microsoft.com/download/dotnet/6.0">.NET 6 SDK</a></li>
+<li>Install the latest <a href="https://nodejs.org/en/">Node.js LTS</a></li>
+<li>Install the latest <a href="https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell">Powershell</a></li>
+<li>Install the latest <a href="https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21">Cosmos Db Emulator</a></li>
+<li>Update your powershell profile to include the following <a id="fnref:1" href="#fn:1" class="footnote-ref"><sup>1</sup></a> :</li>
+</ul>
+<pre><code class="lang-powershell">$env:PSModulePath += &quot;;$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules&quot;
+Import-Module Microsoft.Azure.CosmosDB.Emulator
 </code></pre>
-<p>Open up your browser to <a href="https://localhost:5001">https://localhost:5001</a> and confirm you have a running site.</p>
+<ul>
+<li>Install Tye dotnet tool</li>
+</ul>
+<pre><code class="lang-console">dotnet tool install -g Microsoft.Tye --version &quot;0.11.0-alpha.22111.1&quot;
+</code></pre>
 <h2 id="content">Content</h2>
-<p>The template creates four projects which will be deployed, three test projects and one test libary.</p>
+<p>The template creates the distributed app projects and their corresponding test projects.</p>
 <h3 id="projects">Projects</h3>
-<p>MyBlazorApp.Client - This is the user interface project . The &quot;Single Page Application (SPA)&quot;<br>
-MyBlazorApp.Server - This is the server project that serves up the SPA and is also the web api.<br>
-MyBlazorApp.Shared - This is a library of common code shared between the Client and Server Projects.<br>
-TimeWarp.Blazor.TypeScript</p>
+<ul>
+<li>Api.Contracts</li>
+<li>Api.Server</li>
+<li>Grpc.Contracts</li>
+<li>Grpc.Server</li>
+<li>Web.Server</li>
+<li>Web.Shared</li>
+<li>Web.Spa - The Blazor Single Page Application (SPA)</li>
+<li>Web.TypeScript - Project that contains any needed TypeScript for Web.Spa</li>
+<li>Yarp</li>
+<li>SourceCodeGenerators</li>
+</ul>
 <h3 id="test-projects">Test Projects</h3>
-<p>MyBlazorApp.Client.Integration.Tests - contains integration tests for the SPA<br>
-MyBlazorApp.Server.Integration.Tests - contains integration tests for the web api<br>
-MyBlazorApp.EndToEnd.Playwright.Tests - contains Playwright based end-to-end tests.</p>
+<ul>
+<li>Spa.Integration.Tests - contains integration tests for the SPA</li>
+<li>Server.Integration.Tests - contains integration tests for the web api</li>
+<li>EndToEnd.Playwright.Tests - contains TestCafe based end-to-end tests.</li>
+<li>TimeWarp.Testing - a shared library used for testing.</li>
+<li>EndToEnd.TestCafe.Tests - contains TestCafe based end-to-end tests.</li>
+<li>SourceCodeGenerators.Tests</li>
+</ul>
 <h3 id="test-library">Test Library</h3>
-<p>MyBlazorApp.Testing - Share testing library.</p>
-<h1 id="footnotes">Footnotes:</h1>
-<p>[1] <a href="https://docs.microsoft.com/en-us/azure/cosmos-db/emulator-command-line-parameters#:%7E:text=Install%20the%20latest%20version%20of,Azure">https://docs.microsoft.com/en-us/azure/cosmos-db/emulator-command-line-parameters#:%7E:text=Install%20the%20latest%20version%20of,Azure</a>.</p>
+<p>TimeWarp.Testing - Share testing library.</p>
+<h4 id="footnotes">Footnotes</h4>
+<div class="footnotes">
+<hr>
+<ol>
+<li id="fn:1">
+<p><a href="https://docs.microsoft.com/en-us/azure/cosmos-db/emulator-command-line-parameters#:%7E:text=Install%20the%20latest%20version%20of,Azure">https://docs.microsoft.com/en-us/azure/cosmos-db/emulator-command-line-parameters#:%7E:text=Install%20the%20latest%20version%20of,Azure</a>.<a href="#fnref:1" class="footnote-back-ref">&#8617;</a></p>
+</li>
+</ol>
+</div>
 </article>
           </div>
           

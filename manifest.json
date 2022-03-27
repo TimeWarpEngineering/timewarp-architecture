@@ -42,10 +42,10 @@
       "output": {
         ".html": {
           "relative_path": "README.html",
-          "hash": "+PLGSuw2nlc4wAkS8d/cdiM3EPDakxnVGlD8+2dJutY="
+          "hash": "tWv74fDyuqwLnexJcUxFfxXkOtK5J24IYTWAIHs5/1M="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -57,7 +57,7 @@
           "hash": "mhYWWjvkNwABpkkUbv1lwaTfg1dRFcOtQsncb7PHBsM="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -69,7 +69,7 @@
           "hash": "OMil2IVPPoRn+d/HQA34/IOnTBTh18rln6wQQMeRWfQ="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -78,10 +78,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Architecture.html",
-          "hash": "elY9zSFj+8B/jch+uNwE7g1bVwDwM+03uVE7rO3mdvc="
+          "hash": "HHQ6CapgZWJ5SgpporRf/7zYROisjmdWN2U1ydg1H20="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -90,10 +90,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Documentation.html",
-          "hash": "mr6lBiYeyg/Lxp9ph5bpxRzy1ctsuQzADg3TLUWoSgc="
+          "hash": "bI3d7Gqnj0Xl+XsVh7n+9+3DJWC2LndJB9rsUJSzeCM="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -102,10 +102,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Features.html",
-          "hash": "80nKA+AUWlsF9FYAoazsRFMHQuTddW1q7wEcl/8Y134="
+          "hash": "l0i7xdPgxFK9XRldPT1cSVGdBUL20Vj5Ha0uAhFFeno="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -114,10 +114,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpBlazorTemplate/Overview.html",
-          "hash": "vO8a2Mtt7tzLWkOvsUlO4Cg5ib0DtGPSJYhBBYqEtDE="
+          "hash": "PStx5nw1Oozz7eWjPbhmUJeGbVBcmFxgOXkwisZgGuI="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -129,7 +129,7 @@
           "hash": "XufaWwB+6PxjEYJjRBLSxZkkPG/F4eMytFVfhdHCOHY="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -138,10 +138,10 @@
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "vN41VHdCaQ2e+eTQt9NK3BAgTShB1uofOzdqbouXj+s="
+          "hash": "NlgdMSdVNVRcRye0V3JQyHjiBIsva3gKnvfk0IZh+rc="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -150,7 +150,7 @@
       "output": {
         ".html": {
           "relative_path": "toc.html",
-          "hash": "xCwoZXPEqdq0hUMdEJ8pdeKHAdk7maRe6YxttVO3Evo="
+          "hash": "GfA2gerp+KKFA1NEvzNrYk5h5baFUyzgQqICISfgMpk="
         }
       },
       "is_incremental": false,
@@ -170,7 +170,7 @@
           "can_incremental": true,
           "incrementalPhase": "build",
           "total_file_count": 9,
-          "skipped_file_count": 9
+          "skipped_file_count": 3
         },
         "ResourceDocumentProcessor": {
           "can_incremental": false,
