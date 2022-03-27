@@ -10,6 +10,25 @@ title: TimeWarp Architecture
 
 TimeWarp Architecture is a dotnet net 6 template for creating a distributed or monolithic application.
 
+## Prerequisites
+
+* Install the latest [.NET 6 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
+* Install the latest [Node.js LTS](https://nodejs.org/en/)
+* Install the latest [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell)
+* Install the latest [Cosmos Db Emulator](https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21)
+* Update your powershell profile to include the following [^1] :
+
+```powershell
+$env:PSModulePath += ";$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
+Import-Module Microsoft.Azure.CosmosDB.Emulator
+```
+
+* Install Tye dotnet tool
+
+```console
+dotnet tool install -g Microsoft.Tye --version "0.11.0-alpha.22111.1"
+```
+
 ## Installation
 
 * Install TimeWarp Architecture Templates
@@ -55,25 +74,6 @@ You should see the Tye Dashboard opened in your browser.
 * [Project Tye](https://github.com/dotnet/tye)
 * [YARP](https://microsoft.github.io/reverse-proxy/)
 * [Cosmos DB](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction)
-
-## Prerequisites
-
-* Install the latest [.NET 6 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
-* Install the latest [Node.js LTS](https://nodejs.org/en/)
-* Install the latest [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell)
-* Install the latest [Cosmos Db Emulator](https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21)
-* Update your powershell profile to include the following [^1] :
-
-```powershell
-$env:PSModulePath += ";$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
-Import-Module Microsoft.Azure.CosmosDB.Emulator
-```
-
-* Install Tye dotnet tool
-
-```console
-dotnet tool install -g Microsoft.Tye --version "0.11.0-alpha.22111.1"
-```
 
 ## Content
 
