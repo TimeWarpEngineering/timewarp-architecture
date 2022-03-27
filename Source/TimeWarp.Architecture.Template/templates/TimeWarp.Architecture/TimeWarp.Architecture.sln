@@ -36,7 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analyzers", "Analyzers", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.Playwright.Tests", "Tests\EndToEnd.Playwright.Tests\EndToEnd.Playwright.Tests.csproj", "{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing.Common", "Tests\TimeWarp.Architecture.Testing\Testing.Common.csproj", "{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing.Common", "Tests\TimeWarp.Testing\Testing.Common.csproj", "{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceCodeGenerators", "Source\SourceCodeGenerators\SourceCodeGenerators.csproj", "{4944CA16-DB11-4C09-BFCD-66A62E6ACCF4}"
 EndProject
