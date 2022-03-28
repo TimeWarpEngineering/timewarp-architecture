@@ -2,8 +2,8 @@ namespace ApplicationState;
 
 using AnyClone;
 using FluentAssertions;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 using TimeWarp.Architecture.Features.Applications;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
 public class Clone_Should : BaseTest
 {

@@ -2,9 +2,9 @@ namespace WeatherForecastsState;
 
 using FluentAssertions;
 using System.Threading.Tasks;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 using TimeWarp.Architecture.Features.WeatherForecasts;
 using TimeWarp.Architecture.Testing;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsState;
 
 public class FetchWeatherForecastsAction_Should : BaseTest
