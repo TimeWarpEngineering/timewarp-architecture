@@ -16,7 +16,7 @@ TimeWarp Architecture is a dotnet net 6 template for creating a distributed or m
 * Install the latest [Node.js LTS](https://nodejs.org/en/)
 * Install the latest [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell)
 * Install the latest [Cosmos Db Emulator](https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21)
-* Update your powershell profile to include the following [^1] :
+* Edit your powershell profile (`code $Profile`) to include the following [^1] :
 
 ```powershell
 $env:PSModulePath += ";$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
