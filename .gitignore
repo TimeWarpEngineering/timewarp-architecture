@@ -336,3 +336,4 @@ ASALocalRun/
 /Source/TimeWarp.Blazor.Template/templates/Feature.CrudComponents/.template.config/template.json
 /Source/TimeWarp.Blazor.Template/templates/TimeWarp.Blazor/Documentation/C4/
 /Source/TimeWarp.Architecture.Template/templates/TimeWarp.Architecture/Source/ContainerApps/Web/Web.Spa/wwwroot/css/site.css
+TimeWarp.Architecture.sln.EasyRun.json

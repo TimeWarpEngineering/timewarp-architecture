@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PackageType>Template</PackageType>
     <PackageId>TimeWarp.Architecture</PackageId>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <Title>TimeWarp Architecture</Title>
     <Authors>Steven T. Cramer</Authors>
