@@ -1,41 +1,40 @@
-namespace TimeWarp.Architecture.Design.Components
+namespace TimeWarp.Architecture.Design.Components;
+
+using BlazorComponentUtilities;
+using Microsoft.AspNetCore.Components;
+using TimeWarp.Architecture.Components;
+
+public partial class ColorBar : DisplayComponent
 {
-  using BlazorComponentUtilities;
-  using Microsoft.AspNetCore.Components;
-  using TimeWarp.Architecture.Components;
+  private readonly string BaseCss =
+    string.Join
+    (
+      separator: " ",
+      "font-medium",
+      "h-10",
+      "inline-flex",
+      "justify-center",
+      "items-center",
+      "px-4",
+      "py-2",
+      "rounded",
+      "text-sm",
+      "uppercase",
+      "width-100"
+    );
 
-  public partial class ColorBar : DisplayComponent
+  [Parameter] public string TailwindColor { get; set; }
+
+  private string CssClass { get; set; }
+
+  protected override void OnParametersSet()
   {
-    private readonly string BaseCss =
-      string.Join
-      (
-        separator: " ",
-        "font-medium",
-        "h-10",
-        "inline-flex",
-        "justify-center",
-        "items-center",
-        "px-4",
-        "py-2",
-        "rounded",
-        "text-sm",
-        "uppercase",
-        "width-100"
-      );
+    CssClass =
+      new CssBuilder(BaseCss)
+      .AddClass("")
+      .AddClassFromAttributes(Attributes)
+      .Build();
 
-    [Parameter] public string TailwindColor { get; set; }
-
-    private string CssClass { get; set; }
-
-    protected override void OnParametersSet()
-    {
-      CssClass =
-        new CssBuilder(BaseCss)
-        .AddClass("")
-        .AddClassFromAttributes(Attributes)
-        .Build();
-
-      base.OnParametersSet();
-    }
+    base.OnParametersSet();
   }
 }

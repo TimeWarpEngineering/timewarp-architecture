@@ -1,11 +1,10 @@
-namespace TimeWarp.Architecture.Components
-{
-  using Microsoft.AspNetCore.Components;
-  using System.Collections.Generic;
+namespace TimeWarp.Architecture.Components;
 
-  public interface IAttributeComponent
-  {
-    [Parameter(CaptureUnmatchedValues = true)]
-    public IReadOnlyDictionary<string, object> Attributes { get; set; }
-  }
+using Microsoft.AspNetCore.Components;
+using System.Collections.Generic;
+
+public interface IAttributeComponent
+{
+  [Parameter(CaptureUnmatchedValues = true)]
+  public IReadOnlyDictionary<string, object> Attributes { get; set; }
 }

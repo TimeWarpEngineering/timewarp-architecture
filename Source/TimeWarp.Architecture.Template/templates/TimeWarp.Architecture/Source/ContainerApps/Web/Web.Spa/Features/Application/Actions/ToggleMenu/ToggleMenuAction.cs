@@ -1,9 +1,8 @@
-namespace TimeWarp.Architecture.Features.Applications
-{
-  using TimeWarp.Architecture.Features.Bases;
+namespace TimeWarp.Architecture.Features.Applications;
 
-  internal partial class ApplicationState
-  {
-    public class ToggleMenuAction : BaseAction { }
-  }
+using TimeWarp.Architecture.Features.Bases;
+
+internal partial class ApplicationState
+{
+  public class ToggleMenuAction : BaseAction { }
 }

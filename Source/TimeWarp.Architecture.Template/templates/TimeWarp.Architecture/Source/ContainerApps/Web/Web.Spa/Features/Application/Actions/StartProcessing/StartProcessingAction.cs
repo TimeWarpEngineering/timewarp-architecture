@@ -1,12 +1,11 @@
-﻿namespace TimeWarp.Architecture.Features.Applications
-{
-  using TimeWarp.Architecture.Features.Bases;
+﻿namespace TimeWarp.Architecture.Features.Applications;
 
-  internal partial class ApplicationState
+using TimeWarp.Architecture.Features.Bases;
+
+internal partial class ApplicationState
+{
+  public class StartProcessingAction : BaseAction
   {
-    public class StartProcessingAction : BaseAction
-    {
-      public string ActionName { get; set; }
-    }
+    public string ActionName { get; set; }
   }
 }

@@ -1,9 +1,2 @@
-namespace TimeWarp.Architecture.Components
-{
-  using Microsoft.AspNetCore.Components;
-
-  public partial class Box : ParentComponent
-  {
-
-  }
-}
+namespace TimeWarp.Architecture.Components;
+public partial class Box : ParentComponent { }

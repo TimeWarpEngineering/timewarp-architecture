@@ -1,9 +1,8 @@
-namespace TimeWarp.Architecture.Features.ClientLoaders
-{
-  using System;
+namespace TimeWarp.Architecture.Features.ClientLoaders;
 
-  public class ClientLoaderConfiguration : IClientLoaderConfiguration
-  {
-    public TimeSpan DelayTimeSpan => TimeSpan.FromSeconds(10);
-  }
+using System;
+
+public class ClientLoaderConfiguration : IClientLoaderConfiguration
+{
+  public TimeSpan DelayTimeSpan => TimeSpan.FromSeconds(10);
 }

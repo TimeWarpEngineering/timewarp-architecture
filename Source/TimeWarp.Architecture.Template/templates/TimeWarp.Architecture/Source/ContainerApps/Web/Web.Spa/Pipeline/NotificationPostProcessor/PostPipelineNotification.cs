@@ -1,10 +1,9 @@
-namespace TimeWarp.Architecture.Pipeline.NotificationPostProcessor
-{
-  using MediatR;
+namespace TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
 
-  public class PostPipelineNotification<TRequest, TResponse> : INotification
-  {
-    public TRequest Request { get; set; }
-    public TResponse Response { get; set; }
-  }
+using MediatR;
+
+public class PostPipelineNotification<TRequest, TResponse> : INotification
+{
+  public TRequest Request { get; set; }
+  public TResponse Response { get; set; }
 }

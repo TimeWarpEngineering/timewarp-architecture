@@ -1,16 +1,15 @@
-namespace TimeWarp.Architecture.Pages
+namespace TimeWarp.Architecture.Pages;
+
+using System.Threading.Tasks;
+using TimeWarp.Architecture.Features.Bases;
+using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsState;
+
+public partial class WeatherForecastsPage : BaseComponent
 {
-  using System.Threading.Tasks;
-  using TimeWarp.Architecture.Features.Bases;
-  using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsState;
+  private const string RouteTemplate = "/WeatherForecasts";
 
-  public partial class WeatherForecastsPage : BaseComponent
-  {
-    private const string RouteTemplate = "/WeatherForecasts";
+  public static string GetRoute() => RouteTemplate;
 
-    public static string GetRoute() => RouteTemplate;
-
-    protected override async Task OnInitializedAsync() =>
-      await Send(new FetchWeatherForecastsAction()).ConfigureAwait(false);
-  }
+  protected override async Task OnInitializedAsync() =>
+    await Send(new FetchWeatherForecastsAction()).ConfigureAwait(false);
 }

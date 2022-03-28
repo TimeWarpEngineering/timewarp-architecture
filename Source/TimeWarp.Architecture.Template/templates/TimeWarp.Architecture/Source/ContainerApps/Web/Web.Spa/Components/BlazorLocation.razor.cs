@@ -1,13 +1,12 @@
-namespace TimeWarp.Architecture.Components
+namespace TimeWarp.Architecture.Components;
+
+using BlazorState.Services;
+using Microsoft.AspNetCore.Components;
+using TimeWarp.Architecture.Features.Bases;
+
+public partial class BlazorLocation : BaseComponent
 {
-  using BlazorState.Services;
-  using Microsoft.AspNetCore.Components;
-  using TimeWarp.Architecture.Features.Bases;
+  [Inject] public BlazorHostingLocation BlazorHostingLocation { get; set; }
 
-  public partial class BlazorLocation : BaseComponent
-  {
-    [Inject] public BlazorHostingLocation BlazorHostingLocation { get; set; }
-
-    public string LocationName => BlazorHostingLocation.IsClientSide ? "Client Side" : "Server Side";
-  }
+  public string LocationName => BlazorHostingLocation.IsClientSide ? "Client Side" : "Server Side";
 }

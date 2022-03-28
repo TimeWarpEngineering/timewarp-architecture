@@ -1,17 +1,16 @@
-namespace TimeWarp.Architecture.Components
+namespace TimeWarp.Architecture.Components;
+
+using BlazorComponentUtilities;
+using Microsoft.AspNetCore.Components;
+
+public partial class SimpleAlert : ParentComponent
 {
-  using BlazorComponentUtilities;
-  using Microsoft.AspNetCore.Components;
+  [Parameter] public string Title { get; set; }
 
-  public partial class SimpleAlert : ParentComponent
-  {
-    [Parameter] public string Title { get; set; }
+  private readonly string BaseClasses =
+    "bg-positive-100 border border-positive-400 text-positive-700 px-4 py-3 rounded relative";
 
-    private readonly string BaseClasses =
-      "bg-positive-100 border border-positive-400 text-positive-700 px-4 py-3 rounded relative";
-
-    private CssBuilder CssBuilder =>
-      new CssBuilder(BaseClasses)
-      .AddClassFromAttributes(Attributes);
-  }
+  private CssBuilder CssBuilder =>
+    new CssBuilder(BaseClasses)
+    .AddClassFromAttributes(Attributes);
 }
