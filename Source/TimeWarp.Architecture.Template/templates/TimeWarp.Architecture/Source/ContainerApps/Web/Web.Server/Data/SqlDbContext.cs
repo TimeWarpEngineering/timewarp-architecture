@@ -1,14 +1,5 @@
-﻿namespace TimeWarp.Architecture.Data
-{
-  using Microsoft.EntityFrameworkCore;
-  using System;
-  using System.Collections.Generic;
-  using System.Linq;
-  using System.Text;
-  using System.Threading.Tasks;
+﻿namespace TimeWarp.Architecture.Data;
 
-  public class SqlDbContext: DbContext
-  {
+using Microsoft.EntityFrameworkCore;
 
-  }
-}
+public class SqlDbContext : DbContext { }

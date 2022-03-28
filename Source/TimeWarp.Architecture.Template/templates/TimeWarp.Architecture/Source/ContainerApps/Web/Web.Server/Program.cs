@@ -21,7 +21,7 @@ public class Program
         {
           #region UseHttpSys
           // The default is kestrel
-          #if UseHttpSys
+#if UseHttpSys
           aWebHostBuilder.UseHttpSys
           (
             aHttpSysOptions =>
@@ -34,7 +34,7 @@ public class Program
               aHttpSysOptions.UrlPrefixes.Add("http://localhost:5005");
             }
           );
-          #endif
+#endif
           #endregion
           aWebHostBuilder.UseStaticWebAssets();
           aWebHostBuilder.UseStartup<Startup>();

@@ -1,23 +1,21 @@
-﻿namespace TimeWarp.Architecture.Configuration
+﻿namespace TimeWarp.Architecture.Configuration;
+
+using Microsoft.Extensions.Logging;
+
+public class SampleEnvironmentCheck
 {
-  using Microsoft.Extensions.Logging;
-  using System;
+  private readonly ILogger Logger;
+  public static string Description => "Sample Environment check";
 
-  public class SampleEnvironmentCheck
+  public SampleEnvironmentCheck(ILogger<SampleEnvironmentCheck> aLogger)
   {
-    private readonly ILogger Logger;
-    public static string Description => "Sample Environment check";
+    Logger = aLogger;
+  }
 
-    public SampleEnvironmentCheck(ILogger<SampleEnvironmentCheck> aLogger)
-    {
-      Logger = aLogger;
-    }
-
-    public void Check()
-    {
-      Logger.LogInformation($"Start {nameof(SampleEnvironmentCheck)} ");
-      // Do something here.Throw exception to cause a failure.
-      Logger.LogInformation($"Completed {nameof(SampleEnvironmentCheck)} ");
-    }
+  public void Check()
+  {
+    Logger.LogInformation($"Start {nameof(SampleEnvironmentCheck)} ");
+    // Do something here.Throw exception to cause a failure.
+    Logger.LogInformation($"Completed {nameof(SampleEnvironmentCheck)} ");
   }
 }

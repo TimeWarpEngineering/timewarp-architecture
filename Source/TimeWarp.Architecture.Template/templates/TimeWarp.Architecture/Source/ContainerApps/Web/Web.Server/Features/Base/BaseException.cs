@@ -1,11 +1,10 @@
-namespace TimeWarp.Architecture.Features.Bases
+namespace TimeWarp.Architecture.Features.Bases;
+
+using System;
+
+public class BaseException : Exception
 {
-  using System;
+  public BaseException() { }
 
-  public class BaseException : Exception
-  {
-    public BaseException() { }
-
-    public BaseException(string aMessage) : base(aMessage) { }
-  }
+  public BaseException(string aMessage) : base(aMessage) { }
 }

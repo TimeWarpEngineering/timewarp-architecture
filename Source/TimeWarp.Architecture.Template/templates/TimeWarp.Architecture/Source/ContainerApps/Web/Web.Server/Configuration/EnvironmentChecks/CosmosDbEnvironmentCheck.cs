@@ -1,54 +1,52 @@
-﻿namespace TimeWarp.Architecture.Configuration
+﻿namespace TimeWarp.Architecture.Configuration;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+using TimeWarp.Architecture.Data;
+
+public class CosmosDbEnvironmentCheck
 {
-  using Microsoft.EntityFrameworkCore;
-  using Microsoft.Extensions.DependencyInjection;
-  using Microsoft.Extensions.Logging;
-  using Microsoft.Extensions.Options;
-  using Oakton;
-  using System;
-  using System.Net.Http;
-  using System.Threading.Tasks;
-  using TimeWarp.Architecture.Data;
+  private readonly CosmosDbOptions CosmosDbOptions;
+  private readonly IServiceProvider ServiceProvider;
+  private readonly ILogger Logger;
 
-  public class CosmosDbEnvironmentCheck
+  public CosmosDbEnvironmentCheck
+  (
+    IOptions<CosmosDbOptions> aCosmosDbOptionsAccessor,
+    IServiceProvider aServiceProvider,
+    ILogger<CosmosDbEnvironmentCheck> aLogger
+  )
   {
-    private readonly CosmosDbOptions CosmosDbOptions;
-    private readonly IServiceProvider ServiceProvider;
-    private readonly ILogger Logger;
+    CosmosDbOptions = aCosmosDbOptionsAccessor.Value;
+    ServiceProvider = aServiceProvider;
+    Logger = aLogger;
+  }
 
-    public CosmosDbEnvironmentCheck
-    (
-      IOptions<CosmosDbOptions> aCosmosDbOptionsAccessor,
-      IServiceProvider aServiceProvider,
-      ILogger<CosmosDbEnvironmentCheck> aLogger
-    )
+  public static string Description => "Connecting to Cosmos DB";
+
+  public async Task<bool> CheckAsync()
+  {
+    Logger.LogInformation($"Start {nameof(SampleEnvironmentCheck)} ");
+
+    using IServiceScope scope = ServiceProvider.CreateScope();
+
+    CosmosDbContext cosmosDbContext = scope.ServiceProvider.GetRequiredService<CosmosDbContext>();
+
+    try
     {
-      CosmosDbOptions = aCosmosDbOptionsAccessor.Value;
-      ServiceProvider = aServiceProvider;
-      Logger = aLogger;
+      await cosmosDbContext.Database.GetCosmosClient().ReadAccountAsync().ConfigureAwait(true);
+    }
+    catch (HttpRequestException)
+    {
+      return false;
     }
 
-    public static string Description => "Connecting to Cosmos DB";
-
-    public async Task<bool> CheckAsync()
-    {
-      Logger.LogInformation($"Start {nameof(SampleEnvironmentCheck)} ");
-      
-      using IServiceScope scope = ServiceProvider.CreateScope();
-
-      CosmosDbContext cosmosDbContext = scope.ServiceProvider.GetRequiredService<CosmosDbContext>();
-
-      try
-      {
-        await cosmosDbContext.Database.GetCosmosClient().ReadAccountAsync().ConfigureAwait(true);
-      }
-      catch (HttpRequestException)
-      {
-        return false;
-      }
-
-      Logger.LogInformation($"Completed {nameof(SampleEnvironmentCheck)} ");
-      return true;
-    }
+    Logger.LogInformation($"Completed {nameof(SampleEnvironmentCheck)} ");
+    return true;
   }
 }

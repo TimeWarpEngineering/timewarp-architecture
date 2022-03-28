@@ -1,16 +1,15 @@
-﻿namespace TimeWarp.Architecture.Configuration
-{
-  using FluentValidation;
+﻿namespace TimeWarp.Architecture.Configuration;
 
-  /// <remarks>
-  /// This class has to be `internal` or it will automatically be registered
-  /// by RegisterValidatorsFromAssemblyContaining as scoped
-  /// </remarks>
-  internal class SampleOptionsValidator : AbstractValidator<SampleOptions>
+using FluentValidation;
+
+/// <remarks>
+/// This class has to be `internal` or it will automatically be registered
+/// by RegisterValidatorsFromAssemblyContaining as scoped
+/// </remarks>
+internal class SampleOptionsValidator : AbstractValidator<SampleOptions>
+{
+  public SampleOptionsValidator()
   {
-    public SampleOptionsValidator()
-    {
-      RuleFor(aSampleOptions => aSampleOptions.SampleOption).NotEmpty();
-    }
+    RuleFor(aSampleOptions => aSampleOptions.SampleOption).NotEmpty();
   }
 }

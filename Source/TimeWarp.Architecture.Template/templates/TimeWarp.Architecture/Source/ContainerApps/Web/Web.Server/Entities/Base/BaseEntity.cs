@@ -1,9 +1,8 @@
-﻿namespace TimeWarp.Architecture.Entities
-{
-  using System;
+﻿namespace TimeWarp.Architecture.Entities;
 
-  public class BaseEntity
-  {
-    public Guid Guid { get; set; }
-  }
+using System;
+
+public class BaseEntity
+{
+  public Guid Guid { get; set; }
 }
