@@ -1,9 +1,9 @@
 using FluentValidation.AspNetCore;
-using Oakton;
 using MediatR;
-using System.Reflection;
-using Microsoft.OpenApi.Models;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
+using Microsoft.OpenApi.Models;
+using Oakton;
+using System.Reflection;
 using TimeWarp.Architecture.Features;
 
 string swaggerVersion = "v1";
@@ -38,7 +38,7 @@ void ConfigureServices(IServiceCollection aServiceCollection)
           aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<BaseRequest>();
         }
       );
-  
+
   // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
   aServiceCollection.AddEndpointsApiExplorer();
   aServiceCollection.AddSwaggerGen();
