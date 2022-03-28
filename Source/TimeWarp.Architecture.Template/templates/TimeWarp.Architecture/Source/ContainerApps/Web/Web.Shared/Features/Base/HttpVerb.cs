@@ -1,13 +1,12 @@
-namespace TimeWarp.Architecture.Features.Bases
+namespace TimeWarp.Architecture.Features.Bases;
+
+public enum HttpVerb
 {
-  public enum HttpVerb
-  {
-    Get,
-    Post,
-    Delete,
-    Put,
-    Patch,
-    Head,
-    Options
-  }
+  Get,
+  Post,
+  Delete,
+  Put,
+  Patch,
+  Head,
+  Options
 }

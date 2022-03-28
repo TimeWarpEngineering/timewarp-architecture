@@ -1,18 +1,17 @@
-namespace TimeWarp.Architecture.Features.Bases
+namespace TimeWarp.Architecture.Features.Bases;
+
+using System;
+
+public abstract class BaseResponse
 {
-  using System;
+  /// <summary>
+  /// Used to correlate request and response
+  /// </summary>
+  public Guid CorrelationId { get; set; }
 
-  public abstract class BaseResponse
+  public BaseResponse(Guid aCorrelationId) : this()
   {
-    /// <summary>
-    /// Used to correlate request and response
-    /// </summary>
-    public Guid CorrelationId { get; set; }
-
-    public BaseResponse(Guid aCorrelationId) : this()
-    {
-      CorrelationId = aCorrelationId;
-    }
-    public BaseResponse() { }
+    CorrelationId = aCorrelationId;
   }
+  public BaseResponse() { }
 }
