@@ -1,11 +1,10 @@
-﻿namespace TimeWarp.Architecture.Testing
-{
-  using System;
+﻿namespace TimeWarp.Architecture.Testing;
 
-  /// <summary>
-  /// This is an attribute used to mark classes that are not intended to be test cases
-  /// </summary>
-  [NotTest]
-  [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-  public class NotTest : Attribute { }
-}
+using System;
+
+/// <summary>
+/// This is an attribute used to mark classes that are not intended to be test cases
+/// </summary>
+[NotTest]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public class NotTest : Attribute { }
