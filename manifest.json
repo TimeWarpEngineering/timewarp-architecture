@@ -1,6 +1,6 @@
 {
   "homepages": [],
-  "source_base_path": "C:/agent/_work/4/s/Documentation",
+  "source_base_path": "C:/agent/_work/8/s/Documentation",
   "xrefmap": "xrefmap.yml",
   "files": [
     {
@@ -42,10 +42,10 @@
       "output": {
         ".html": {
           "relative_path": "README.html",
-          "hash": "tWv74fDyuqwLnexJcUxFfxXkOtK5J24IYTWAIHs5/1M="
+          "hash": "dy8jwUzgWkezQOHdtEr3dBsIT5xVhHG6C3QMaz3RQ60="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -54,10 +54,10 @@
       "output": {
         ".html": {
           "relative_path": "Backlog/Todo.html",
-          "hash": "mhYWWjvkNwABpkkUbv1lwaTfg1dRFcOtQsncb7PHBsM="
+          "hash": "Dsx8gQpK1wN0wvbLkCz8UWbCBBlNPqh577Vrj4PkP+Q="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -66,58 +66,58 @@
       "output": {
         ".html": {
           "relative_path": "HowToRunDocfx.html",
-          "hash": "OMil2IVPPoRn+d/HQA34/IOnTBTh18rln6wQQMeRWfQ="
+          "hash": "TPqbC+LMIOM5ll7l//yOAm3JYiN1Pm10p6HFdqBCSXM="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
       "type": "Conceptual",
-      "source_relative_path": "TimeWarpBlazorTemplate/Architecture.md",
+      "source_relative_path": "TimeWarpArchitectureTemplate/Architecture.md",
       "output": {
         ".html": {
-          "relative_path": "TimeWarpBlazorTemplate/Architecture.html",
-          "hash": "HHQ6CapgZWJ5SgpporRf/7zYROisjmdWN2U1ydg1H20="
+          "relative_path": "TimeWarpArchitectureTemplate/Architecture.html",
+          "hash": "7FWsVNX+Ob4/DxbSinVsTgAjIu/kK28TDk8vOAqRItI="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
       "type": "Conceptual",
-      "source_relative_path": "TimeWarpBlazorTemplate/Documentation.md",
+      "source_relative_path": "TimeWarpArchitectureTemplate/Documentation.md",
       "output": {
         ".html": {
-          "relative_path": "TimeWarpBlazorTemplate/Documentation.html",
-          "hash": "bI3d7Gqnj0Xl+XsVh7n+9+3DJWC2LndJB9rsUJSzeCM="
+          "relative_path": "TimeWarpArchitectureTemplate/Documentation.html",
+          "hash": "hD88qtRmrlxPlOrP2OivcGpc2kDJsfzE0u1n3KbMTlo="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
       "type": "Conceptual",
-      "source_relative_path": "TimeWarpBlazorTemplate/Features.md",
+      "source_relative_path": "TimeWarpArchitectureTemplate/Features.md",
       "output": {
         ".html": {
-          "relative_path": "TimeWarpBlazorTemplate/Features.html",
-          "hash": "l0i7xdPgxFK9XRldPT1cSVGdBUL20Vj5Ha0uAhFFeno="
+          "relative_path": "TimeWarpArchitectureTemplate/Features.html",
+          "hash": "Vom6Tegeuo9tU34XDgJH78YA+TsNSKAnpTuTduTEocE="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
       "type": "Conceptual",
-      "source_relative_path": "TimeWarpBlazorTemplate/Overview.md",
+      "source_relative_path": "TimeWarpArchitectureTemplate/Overview.md",
       "output": {
         ".html": {
-          "relative_path": "TimeWarpBlazorTemplate/Overview.html",
-          "hash": "PStx5nw1Oozz7eWjPbhmUJeGbVBcmFxgOXkwisZgGuI="
+          "relative_path": "TimeWarpArchitectureTemplate/Overview.html",
+          "hash": "p13licjPlWbgOrDkSiXiM3XYdGvlbs2eoh2nXnvBWhg="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -126,10 +126,10 @@
       "output": {
         ".html": {
           "relative_path": "TimeWarpConsoleTemplate/Overview.html",
-          "hash": "XufaWwB+6PxjEYJjRBLSxZkkPG/F4eMytFVfhdHCOHY="
+          "hash": "Fo4W//YyJ0Qk7twx5uEx2rMw4fUV8AR90idLjt9FlE4="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -138,10 +138,10 @@
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "NlgdMSdVNVRcRye0V3JQyHjiBIsva3gKnvfk0IZh+rc="
+          "hash": "fSCrCgMJKoeTT/lxo5VqyXqGPW15yCw/0NXjVTmtHb4="
         }
       },
-      "is_incremental": true,
+      "is_incremental": false,
       "version": ""
     },
     {
@@ -150,7 +150,7 @@
       "output": {
         ".html": {
           "relative_path": "toc.html",
-          "hash": "GfA2gerp+KKFA1NEvzNrYk5h5baFUyzgQqICISfgMpk="
+          "hash": "C9/nkn2HgZZU6XrQVweP+MiHx3mm/JiikHYvpE5Mj+o="
         }
       },
       "is_incremental": false,
@@ -160,17 +160,19 @@
   "incremental_info": [
     {
       "status": {
-        "can_incremental": true,
+        "can_incremental": false,
+        "details": "Cannot build incrementally because last build info is missing.",
         "incrementalPhase": "build",
         "total_file_count": 0,
-        "skipped_file_count": 0
+        "skipped_file_count": 0,
+        "full_build_reason_code": "NoAvailableBuildCache"
       },
       "processors": {
         "ConceptualDocumentProcessor": {
-          "can_incremental": true,
+          "can_incremental": false,
           "incrementalPhase": "build",
           "total_file_count": 9,
-          "skipped_file_count": 9
+          "skipped_file_count": 0
         },
         "ResourceDocumentProcessor": {
           "can_incremental": false,
@@ -190,8 +192,8 @@
     },
     {
       "status": {
-        "can_incremental": true,
-        "details": "Can support incremental post processing.",
+        "can_incremental": false,
+        "details": "Cannot support incremental post processing, the reason is: last post processor info is null.",
         "incrementalPhase": "postProcessing",
         "total_file_count": 0,
         "skipped_file_count": 0
