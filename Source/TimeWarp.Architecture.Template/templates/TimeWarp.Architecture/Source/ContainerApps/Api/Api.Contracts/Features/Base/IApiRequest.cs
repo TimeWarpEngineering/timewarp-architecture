@@ -4,7 +4,7 @@ using System;
 
 public interface IApiRequest
 {
-    public Guid CorrelationId { get; init; }
-    string GetRoute();
-    HttpVerb GetHttpVerb();
+  public Guid CorrelationId { get; init; }
+  string GetRoute();
+  HttpVerb GetHttpVerb();
 }
