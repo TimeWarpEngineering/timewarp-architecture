@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="FluentAssertions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Source\ContainerApps\Api\Api.Server\Api.Server.csproj" />
+    <ProjectReference Include="..\..\Source\ContainerApps\Api\Api.Contracts\Api.Contracts.csproj" />
+    <ProjectReference Include="..\TimeWarp.Testing\Testing.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Configuration\" />
+  </ItemGroup>
+</Project>
