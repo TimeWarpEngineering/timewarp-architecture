@@ -56,7 +56,8 @@ public class SuperheroService : ISuperheroService
     for (int heroNumber = 1; heroNumber <= aSuperheroRequest.NumberOfHeros; heroNumber++)
     {
       int randomAge = randonm.Next(10, 35);
-      heroList.Add(new SuperheroDto() {
+      heroList.Add(new SuperheroDto()
+      {
         Id = heroNumber.ToString(),
         Name = GenerateName(randonm.Next(3, 6)),
         Power = Powers[randonm.Next(0, Powers.Length)],
