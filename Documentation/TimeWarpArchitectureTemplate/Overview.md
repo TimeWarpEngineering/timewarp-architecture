@@ -54,7 +54,7 @@ cd .\MyTimeWarpApp\
 Execute the `Run.ps1` powershell script
 
 ```console
-Run.ps1
+./Run.ps1
 ```
 
 You should see the Tye Dashboard opened in your browser.
