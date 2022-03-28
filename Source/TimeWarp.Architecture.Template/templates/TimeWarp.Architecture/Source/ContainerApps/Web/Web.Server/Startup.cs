@@ -137,7 +137,7 @@ public class Startup
         null,
         PerformCosmosHealthCheck()
       );
-      //.AddDbContextCheck<SqlDbContext>();
+    //.AddDbContextCheck<SqlDbContext>();
 
     ConfigureEnvironmentChecks(aServiceCollection);
     ConfigureCosmosDb(aServiceCollection);
