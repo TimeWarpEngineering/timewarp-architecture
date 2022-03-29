@@ -4,12 +4,12 @@ using Dawn;
 using FluentAssertions;
 using TimeWarp.Architecture.Testing;
 
-[TestTag("TimeWarpBlazorServerApplication")]
+[TestTag("WebServerApplication")]
 public class Should
 {
   public Should
   (
-    TimeWarpBlazorServerApplication aTimeWarpBlazorServerApplication
+    WebServerApplication aTimeWarpBlazorServerApplication
   )
   {
     Guard.Argument(aTimeWarpBlazorServerApplication).NotNull();

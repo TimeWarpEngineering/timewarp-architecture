@@ -5,12 +5,12 @@ using Microsoft.Extensions.Hosting;
 using TimeWarp.Architecture.Server;
 
 /// <summary>
-/// Used to launch the TimeWarp.Architecture.Server application
+/// Used to launch the Web.Server application
 /// </summary>
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
-public class TimeWarpBlazorServerApplication : TestServerApplication<Startup>
+public class WebServerApplication : TestServerApplication<Startup>
 {
-  public TimeWarpBlazorServerApplication() :
+  public WebServerApplication() :
   base
   (
     new WebApplication<Startup>
