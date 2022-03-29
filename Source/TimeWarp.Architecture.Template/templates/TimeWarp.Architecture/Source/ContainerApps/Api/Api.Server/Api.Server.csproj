@@ -23,7 +23,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Common.csproj" />
     <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Api.Server.Integration.Tests" />
   </ItemGroup>
 
 </Project>
