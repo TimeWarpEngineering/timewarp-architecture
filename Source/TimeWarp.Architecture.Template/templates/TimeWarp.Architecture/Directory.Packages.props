@@ -22,10 +22,11 @@
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.0.152" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.0.152" />
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.0.152" />
-    <PackageVersion Include="MicroElements.Swashbuckle.FluentValidation" Version="5.4.0" />       
+    <PackageVersion Include="MicroElements.Swashbuckle.FluentValidation" Version="5.4.0" />    
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.3" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.3" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.3" />
+    <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.3" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="6.0.3" />
     <PackageVersion Include="Microsoft.CodeAnalysis" Version="4.1.0" />
