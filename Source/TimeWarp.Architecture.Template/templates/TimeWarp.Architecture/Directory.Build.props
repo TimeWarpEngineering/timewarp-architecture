@@ -9,6 +9,7 @@
   <!-- Common compile parameters -->
   <PropertyGroup>
     <LangVersion>preview</LangVersion>
+    <EnablePreviewFeatures>True</EnablePreviewFeatures>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Nullable>disable</Nullable>
     <TargetFramework>net6.0</TargetFramework>
