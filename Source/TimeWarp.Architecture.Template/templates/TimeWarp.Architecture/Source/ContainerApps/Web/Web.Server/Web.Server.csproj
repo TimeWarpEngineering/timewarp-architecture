@@ -12,7 +12,6 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants></DefineConstants>
-    <!-- <DefineConstants>UseHttpSys</DefineConstants> -->
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -45,6 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Common.csproj" />
     <ProjectReference Include="..\Web.Spa\Web.Spa.csproj" />
     <ProjectReference Include="..\Web.Shared\Web.Shared.csproj" />
   </ItemGroup>
@@ -52,6 +52,10 @@
   <ItemGroup>
     <Folder Include="Entities\X_Aggregate\Requests\" />
     <Folder Include="Extensions\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Web.Server.Integration.Tests" />
   </ItemGroup>
 
 </Project>

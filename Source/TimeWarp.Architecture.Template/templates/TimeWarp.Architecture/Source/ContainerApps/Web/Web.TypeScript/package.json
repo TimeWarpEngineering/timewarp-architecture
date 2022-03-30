@@ -1,9 +1,10 @@
 {
-  "name": "Web.TypeScript",
+  "name": "WebTypeScript",
   "version": "1.0.0",
   "scripts": {
     "build": "tsc",
     "lint": "eslint source --ext .ts",
+    "start": "echo \"nothing to start\" ",
     "prettier": "prettier --write .",
     "tailwinds": "tailwindcss build -i ./css/input.css -o ../Web.Spa/wwwroot/css/site.css",
     "test": "echo \"Error: no test specified\" && exit 1"

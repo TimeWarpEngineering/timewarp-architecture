@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using TimeWarp.Architecture.Configuration;
 
@@ -20,7 +19,7 @@ public static partial class ServiceCollectionExtensions
     where TOptionsValidator : AbstractValidator<TOptions>
   {
     Type type = typeof(TOptions);
-    var sectionNameAttribute = (SectionNameAttribute)type.GetCustomAttributes(typeof(SectionNameAttribute), false).FirstOrDefault();
+    var sectionNameAttribute = (SectionNameAttribute?)type.GetCustomAttributes(typeof(SectionNameAttribute), false).FirstOrDefault();
     string sectionName = sectionNameAttribute?.SectionName ?? type.Name;
     IConfigurationSection configurationSection = aConfiguration.GetSection(sectionName);
 
@@ -49,37 +48,5 @@ public static partial class ServiceCollectionExtensions
     );
 
     return aServiceCollection;
-  }
-
-  public static void ValidateOptions(this IServiceCollection aServiceCollection)
-  {
-    IEnumerable<Type> optionTypes =
-    aServiceCollection
-      .Where
-      (
-        aServiceDescriptor =>
-          aServiceDescriptor.ServiceType.IsGenericType &&
-          aServiceDescriptor.ServiceType.GetGenericTypeDefinition() == typeof(IConfigureOptions<>)
-      )
-      .Select
-      (
-        aServiceDescriptor => aServiceDescriptor.ServiceType.GetGenericArguments()[0]
-      ).Distinct();
-
-    var originalDisplayNameResolver = ValidatorOptions.Global.DisplayNameResolver;
-
-    ValidatorOptions.Global.DisplayNameResolver =
-      (aType, aMemberInfo, aLambdaExpression) =>
-        aType != null && aMemberInfo != null ? $"{aType.Name}:{aMemberInfo.Name}" : null;
-
-    ServiceProvider serviceProvider = aServiceCollection.BuildServiceProvider();
-    foreach (Type optionType in optionTypes)
-    {
-      Type optionsAccessorType = typeof(IOptions<>).MakeGenericType(new Type[] { optionType });
-      object optionsAccessor = serviceProvider.GetService(optionsAccessorType);
-      object value = optionsAccessor?.GetType().GetProperty(nameof(IOptions<Object>.Value)).GetValue(optionsAccessor);
-    }
-
-    ValidatorOptions.Global.DisplayNameResolver = originalDisplayNameResolver;
   }
 }

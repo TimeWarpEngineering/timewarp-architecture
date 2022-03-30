@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Server.Integration.Tests.Infrastructure;
+namespace TimeWarp.Architecture.Web.Server.Integration.Tests.Infrastructure;
 
 using Fixie;
 using TimeWarp.Architecture.Testing;

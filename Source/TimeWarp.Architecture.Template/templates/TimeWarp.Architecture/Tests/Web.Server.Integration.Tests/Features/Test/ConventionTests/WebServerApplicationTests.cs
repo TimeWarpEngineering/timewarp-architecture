@@ -1,4 +1,4 @@
-﻿namespace TimeWarpBlazorServerApplication_;
+﻿namespace WebServerApplication_;
 
 using Dawn;
 using FluentAssertions;
@@ -9,11 +9,14 @@ public class Should
 {
   public Should
   (
-    WebServerApplication aTimeWarpBlazorServerApplication
+    WebServerApplication aWebServerApplication
   )
   {
-    Guard.Argument(aTimeWarpBlazorServerApplication).NotNull();
+    Guard.Argument(aWebServerApplication).NotNull();
   }
 
+  /// <summary>
+  /// This will test that the injected WebServerApplication can be created and disposed.
+  /// </summary>
   public void Start_Without_Exception() => true.Should().BeTrue();
 }

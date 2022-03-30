@@ -8,21 +8,21 @@ using TimeWarp.Architecture.Testing;
 public class Returns
 {
   private readonly GetWeatherForecastsRequest GetWeatherForecastsRequest;
-  private readonly TimeWarpBlazorServerApplication TimeWarpBlazorServerApplication;
+  private readonly ApiServerApplication ApiServerApplication;
 
   public Returns
   (
-    TimeWarpBlazorServerApplication aTimeWarpBlazorServerApplication
+    ApiServerApplication aApiServerApplication
   )
   {
     GetWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
-    TimeWarpBlazorServerApplication = aTimeWarpBlazorServerApplication;
+    ApiServerApplication = aApiServerApplication;
   }
 
   public async Task _10WeatherForecasts_Given_10DaysRequested()
   {
     GetWeatherForecastsResponse getWeatherForecastsResponse =
-      await TimeWarpBlazorServerApplication.GetResponse<GetWeatherForecastsResponse>(GetWeatherForecastsRequest);
+      await ApiServerApplication.GetResponse<GetWeatherForecastsResponse>(GetWeatherForecastsRequest);
 
     ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
   }
@@ -31,7 +31,7 @@ public class Returns
   {
     GetWeatherForecastsRequest.Days = -1;
 
-    await TimeWarpBlazorServerApplication.ConfirmEndpointValidationError<GetWeatherForecastsResponse>(GetWeatherForecastsRequest, nameof(GetWeatherForecastsRequest.Days));
+    await ApiServerApplication.ConfirmEndpointValidationError<GetWeatherForecastsResponse>(GetWeatherForecastsRequest, nameof(GetWeatherForecastsRequest.Days));
   }
 
   private void ValidateGetWeatherForecastsResponse(GetWeatherForecastsResponse aGetWeatherForecastsResponse)

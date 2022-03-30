@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,15 +15,16 @@ using System.Threading.Tasks;
 /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down.
 /// Further configuring or overriding Services can be done by passing in delegate to the constructor
 /// </remarks>
-/// <example><see cref="TimeWarpBlazorServerApplication"/></example>
-/// <typeparam name="TStartup">The Startup Class to use with HostBuilder</typeparam>
+/// <example><see cref="WebServerApplication"/></example>
+/// <typeparam name="TProgram">The Startup Class to use with HostBuilder</typeparam>
 [NotTest]
-public class WebApplication<TStartup> : IDisposable, IAsyncDisposable
-  where TStartup : class
+public class WebApplicationHost<TProgram> : IDisposable, IAsyncDisposable
+  where TProgram : IProgram
 {
   private bool Disposed;
   public bool Started;
-  private readonly IHostBuilder HostBuilder;
+  //private readonly IHostBuilder HostBuilder;
+  private readonly WebApplication WebApplication;
   public readonly string[] Urls;
 
   public IHost Host { get; }
@@ -35,7 +36,7 @@ public class WebApplication<TStartup> : IDisposable, IAsyncDisposable
   /// <param name="aEnvironmentName"></param>
   /// <param name="aUrls"></param>
   /// <param name="aConfigureServicesDelegate">Allows for adjusting the DI container</param>
-  public WebApplication
+  public WebApplicationHost
   (
     string aEnvironmentName,
     string[] aUrls,
@@ -48,22 +49,30 @@ public class WebApplication<TStartup> : IDisposable, IAsyncDisposable
     .Build();
 
     Urls = aUrls;
-    HostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
-      .ConfigureWebHostDefaults
-      (
-        aWebHostBuilder =>
-        {
-          aWebHostBuilder.UseStaticWebAssets();
-          aWebHostBuilder.UseUrls(aUrls);
-          aWebHostBuilder.UseStartup<TStartup>();
-          aWebHostBuilder.UseEnvironment(aEnvironmentName);
-          aWebHostBuilder.UseShutdownTimeout(TimeSpan.FromSeconds(30));
-        }
-      );
-    // Allow for changes to the configuration
-    if (aConfigureServicesDelegate != null) HostBuilder.ConfigureServices(aConfigureServicesDelegate);
+    WebApplicationBuilder builder = WebApplication.CreateBuilder();
+    TProgram.ConfigureServices(builder.Services, builder.Configuration);
 
-    Host = HostBuilder.Build();
+    WebApplication = builder.Build();
+    TProgram.ConfigureMiddleware(WebApplication, WebApplication.Services, WebApplication.Environment);
+    TProgram.ConfigureEndpoints(WebApplication, WebApplication.Services);
+
+    //HostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
+    //  .ConfigureWebHostDefaults
+    //  (
+    //    aWebHostBuilder =>
+    //    {
+    //      aWebHostBuilder.UseStaticWebAssets();
+    //      aWebHostBuilder.UseUrls(aUrls);
+    //      aWebHostBuilder.UseStartup<TProgram>();
+    //      aWebHostBuilder.UseEnvironment(aEnvironmentName);
+    //      aWebHostBuilder.UseShutdownTimeout(TimeSpan.FromSeconds(30));
+    //    }
+    //  );
+    // Allow for changes to the configuration
+    // TODO Allow for changes to the configuration 
+    //if (aConfigureServicesDelegate != null) aConfigureServicesDelegate(builder, builder.Services);
+
+    //Host = HostBuilder.Build();
     try
     {
       Host.StartAsync().GetAwaiter().GetResult();

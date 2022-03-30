@@ -14,31 +14,31 @@ using TimeWarp.Architecture.Features;
 /// <summary>
 /// An abstract class that adds test functionality for the passed in WebApplication.
 /// </summary>
-/// <example><see cref="TimeWarpBlazorServerApplication"/></example>
+/// <example><see cref="WebServerApplication"/></example>
 /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down. </remarks>
-/// <typeparam name="TStartup"></typeparam>
+/// <typeparam name="TProgram"></typeparam>
 [NotTest]
-public abstract class TestServerApplication<TStartup> : IDisposable, IAsyncDisposable, ISender, IWebApiTestService
-  where TStartup : class
+public abstract class TestServerApplication<TProgram> : IDisposable, IAsyncDisposable, ISender, IWebApiTestService
+  where TProgram : IProgram
 {
   //[Delegate]
   private readonly ISender ScopedSender;
   private IWebApiTestService WebApiTestService { get; }
   private bool Disposed;
 
-  public readonly WebApplication<TStartup> WebApplication;
+  public readonly WebApplicationHost<TProgram> WebApplicationHost;
   public HttpClient HttpClient { get; }
 
-  public TestServerApplication(WebApplication<TStartup> aWebApplication) : base()
+  public TestServerApplication(WebApplicationHost<TProgram> aWebApplication) : base()
   {
-    WebApplication = aWebApplication;
+    WebApplicationHost = aWebApplication;
 
     // ISender Delegate
     ScopedSender = new ScopedSender(aWebApplication.Host.Services);
 
     HttpClient = new HttpClient
     {
-      BaseAddress = new Uri(WebApplication.Urls.First())
+      BaseAddress = new Uri(WebApplicationHost.Urls.First())
     };
 
     var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -69,7 +69,7 @@ public abstract class TestServerApplication<TStartup> : IDisposable, IAsyncDispo
 
     if (aIsDisposing)
     {
-      WebApplication?.Dispose();
+      WebApplicationHost?.Dispose();
     }
 
     Disposed = true;
@@ -78,7 +78,7 @@ public abstract class TestServerApplication<TStartup> : IDisposable, IAsyncDispo
   protected virtual ValueTask DisposeAsyncCore()
   {
     Console.WriteLine("==== TestApplication.DisposeAsyncCore ====");
-    return WebApplication.DisposeAsync();
+    return WebApplicationHost.DisposeAsync();
   }
 
   public Task ConfirmEndpointValidationError<TResponse>(IApiRequest aRequest, string aAttributeName) =>

@@ -21,13 +21,13 @@ public class TestClientApplication
   private readonly ISender ScopedSender;
   public IServiceProvider ServiceProvider { get; }
 
-  public TestClientApplication(TimeWarpBlazorServerApplication aTimeWarpBlazorServerApplication)
+  public TestClientApplication(WebServerApplication aTimeWarpBlazorServerApplication)
   {
     var services = new ServiceCollection();
     // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
     services.AddSingleton(aTimeWarpBlazorServerApplication.HttpClient);
 
-    ConfigureServices(services, aTimeWarpBlazorServerApplication.WebApplication.Configuration);
+    ConfigureServices(services, aTimeWarpBlazorServerApplication.WebApplicationHost.Configuration);
     ServiceProvider = services.BuildServiceProvider();
     ScopedSender = new ScopedSender(ServiceProvider);
   }

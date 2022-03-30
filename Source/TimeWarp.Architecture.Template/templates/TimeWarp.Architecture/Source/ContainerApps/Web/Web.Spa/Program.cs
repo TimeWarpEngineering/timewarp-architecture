@@ -76,7 +76,7 @@ public class Program
     aServiceCollection
       .ConfigureOptions<ServiceCollection, ServiceCollectionValidator>(aConfiguration);
 
-    aServiceCollection.ValidateOptions();
+    //aServiceCollection.ValidateOptions();
   }
 
   private static void ConfigureGrpc(IServiceCollection aServiceCollection)

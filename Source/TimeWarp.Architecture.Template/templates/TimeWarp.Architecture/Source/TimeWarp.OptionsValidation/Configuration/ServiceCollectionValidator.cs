@@ -6,7 +6,7 @@ using FluentValidation;
 /// This class has to be `internal` or it will automatically be registered
 /// by RegisterValidatorsFromAssemblyContaining as scoped
 /// </remarks>
-internal class ServiceCollectionValidator : AbstractValidator<ServiceCollection>
+public class ServiceCollectionValidator : AbstractValidator<ServiceCollection>
 {
   public ServiceCollectionValidator()
   {

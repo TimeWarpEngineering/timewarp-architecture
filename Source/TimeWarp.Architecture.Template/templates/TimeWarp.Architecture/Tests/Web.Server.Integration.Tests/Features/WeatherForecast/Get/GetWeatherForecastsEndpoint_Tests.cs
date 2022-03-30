@@ -8,11 +8,11 @@ using TimeWarp.Architecture.Testing;
 public class Returns
 {
   private readonly GetWeatherForecastsRequest GetWeatherForecastsRequest;
-  private readonly TimeWarpBlazorServerApplication TimeWarpBlazorServerApplication;
+  private readonly WebServerApplication TimeWarpBlazorServerApplication;
 
   public Returns
   (
-    TimeWarpBlazorServerApplication aTimeWarpBlazorServerApplication
+    WebServerApplication aTimeWarpBlazorServerApplication
   )
   {
     GetWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };

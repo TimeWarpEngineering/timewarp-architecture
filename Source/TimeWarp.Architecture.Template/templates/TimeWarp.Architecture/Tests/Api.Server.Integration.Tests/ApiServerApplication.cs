@@ -7,12 +7,12 @@ using Microsoft.Extensions.Hosting;
 /// Used to launch the Web.Server application
 /// </summary>
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
-public class WebServerApplication : TestServerApplication<Web.Server.Program>
+public class ApiServerApplication : TestServerApplication<Api.Program>
 {
-  public WebServerApplication() :
+  public ApiServerApplication() :
   base
   (
-    new WebApplicationHost<Web.Server.Program>
+    new WebApplicationHost<Api.Program>
     (
       aEnvironmentName: "Development",
       aUrls: new[]

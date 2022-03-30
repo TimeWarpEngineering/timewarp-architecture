@@ -104,7 +104,7 @@ public class TestExecution : IExecution
   public virtual void ConfigureApplications(ServiceCollection aServiceCollection)
   {
     Console.WriteLine($"==== {nameof(ConfigureApplications)} ====");
-    aServiceCollection.AddSingleton<TimeWarpBlazorServerApplication>();
+    aServiceCollection.AddSingleton<WebServerApplication>();
     ; // Add other applications you want to run here
   }
 

@@ -11,8 +11,8 @@ public class ServiceCollection : Dictionary<string, Service>
 
   public class Service
   {
-    public string Protocol { get; set; }
-    public string Host { get; set; }
+    public string Protocol { get; set; } = null!;
+    public string Host { get; set; } = null!;
     public int Port { get; set; }
   }
 }
