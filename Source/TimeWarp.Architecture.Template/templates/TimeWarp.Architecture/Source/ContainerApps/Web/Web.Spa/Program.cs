@@ -7,6 +7,7 @@ using MediatR;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using PeterLeslieMorris.Blazor.Validation;
 using ProtoBuf.Grpc.Client;
 using System;
@@ -153,6 +154,7 @@ public class Program
   public static Task Main(string[] aArgumentArray)
   {
     var builder = WebAssemblyHostBuilder.CreateDefault(aArgumentArray);
+    builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
     builder.RootComponents.Add<App>("#app");
     builder.Services.AddScoped
       (_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
