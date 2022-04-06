@@ -8,20 +8,20 @@ using TimeWarp.Architecture.Testing;
 public class Handle_Returns
 {
   private readonly GetWeatherForecastsRequest GetWeatherForecastsRequest;
-  private readonly WebServerApplication TimeWarpBlazorServerApplication;
+  private readonly ApiServerApplication ApiServerApplication;
 
   public Handle_Returns
   (
-     WebServerApplication aTimeWarpBlazorServerApplication
+     ApiServerApplication aApiServerApplication
   )
   {
     GetWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
-    TimeWarpBlazorServerApplication = aTimeWarpBlazorServerApplication;
+    ApiServerApplication = aApiServerApplication;
   }
 
   public async Task _10WeatherForecasts_Given_10DaysRequested()
   {
-    GetWeatherForecastsResponse getWeatherForecastsResponse = await TimeWarpBlazorServerApplication.Send(GetWeatherForecastsRequest);
+    GetWeatherForecastsResponse getWeatherForecastsResponse = await ApiServerApplication.Send(GetWeatherForecastsRequest);
 
     ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
   }
