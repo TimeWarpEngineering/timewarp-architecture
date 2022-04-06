@@ -29,7 +29,7 @@ namespace TimeWarp
     {
       public string PropertyName { get; set; }
     }
-  }
+}
 ";
 
   public void Initialize(GeneratorInitializationContext aGeneratorInitializationContext)
@@ -72,7 +72,10 @@ namespace TimeWarp
       ITypeSymbol theInterfaceType = item.Type;
       string namespaceValue = item.ContainingNamespace.ToDisplayString();
       string classAccesibility = item.ContainingType.DeclaredAccessibility.ToString().ToLower();
+      string fileName = item.ContainingType.Name;
       string className = item.ContainingType.Name;
+      string typeArguments = string.Join(",", item.ContainingType.TypeArguments.Select(x => x.Name));
+      if (!string.IsNullOrWhiteSpace(typeArguments)) typeArguments = $"<{typeArguments}>";
 
       List<string> interfaceSources = new();
       ImmutableArray<ISymbol> interfaceMembers = theInterfaceType.GetMembers();
@@ -87,7 +90,7 @@ namespace TimeWarp
 $@"#nullable enable
 namespace {namespaceValue} {{
 
-  {classAccesibility} partial class {className}: {theInterfaceType.ToDisplayString()}
+  {classAccesibility} partial class {className}{typeArguments}: {theInterfaceType.ToDisplayString()}
   {{
     {interfaceSource}
   }}
@@ -100,7 +103,7 @@ namespace {namespaceValue} {{
         .GetText()
         .ToString();
 
-      context.AddSource($"{className}.g.cs", source);
+      context.AddSource($"{fileName}.g.cs", source);
     }
   }
 
