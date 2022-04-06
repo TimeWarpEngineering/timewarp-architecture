@@ -7,7 +7,7 @@ public interface IWebApiTestService
 {
   /// <summary>
   /// Confirm that the endpoint for the request will return a BadRequest Status and
-  /// explicit contain the <paramref name="aAttributeName"/> in the error message
+  /// explicitly contain the <paramref name="aAttributeName"/> in the error message
   /// </summary>
   /// <typeparam name="TResponse"></typeparam>
   /// <param name="aApiRequest"></param>
