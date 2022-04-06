@@ -14,7 +14,7 @@ public class WebServerApplication : TestServerApplication<Web.Server.Program>
   (
     new WebApplicationHost<Web.Server.Program>
     (
-      aEnvironmentName: "Development",
+      aEnvironmentName: Environments.Development,
       aUrls: new[]
       {
         "http://localhost:5000"
