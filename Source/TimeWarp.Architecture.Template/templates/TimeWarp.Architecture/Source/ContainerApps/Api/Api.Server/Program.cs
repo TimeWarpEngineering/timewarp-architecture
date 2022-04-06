@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Api;
+namespace TimeWarp.Architecture.Api.Server;
 
 using FluentValidation.AspNetCore;
 using MediatR;
@@ -40,6 +40,7 @@ public class Program : IProgram
 
     aServiceCollection
       .AddControllers()
+      .TryAddApplicationPart(typeof(Program).Assembly)
       .AddFluentValidation
         (
           aFluentValidationMvcConfiguration =>
