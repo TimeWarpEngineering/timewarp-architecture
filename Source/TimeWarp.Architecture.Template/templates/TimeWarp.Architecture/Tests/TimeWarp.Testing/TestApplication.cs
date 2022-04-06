@@ -8,7 +8,6 @@ using TimeWarp;
 /// An abstract class that adds test functionality for sending Requests in a scope.
 /// </summary>
 /// <example><see cref="TestServerApplication"/></example>
-/// <example><see cref="TimeWarpBlazorClientApplication"/></example>
 [NotTest]
 public abstract partial class TestApplication
 {
@@ -22,14 +21,4 @@ public abstract partial class TestApplication
     ServiceProvider = aServiceProvider;
     ScopedSender = new ScopedSender(aServiceProvider);
   }
-
-  //public Task<TResponse> Send<TResponse>
-  //(
-  //  IRequest<TResponse> aRequest,
-  //  CancellationToken aCancellationToken = default
-  //) =>
-  //  ScopedSender.Send(aRequest, aCancellationToken);
-
-  //public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default) =>
-  //  ScopedSender.Send(aRequest, aCancellationToken);
 }
