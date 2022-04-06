@@ -14,7 +14,7 @@ using Fixie;
 public class TestingConvention : ITestProject
 {
   internal const string SetupLifecycleMethodName = "Setup";
-  internal const string CleanupLIfecycleMethodName = "Cleanup";
+  internal const string CleanupLifecycleMethodName = "Cleanup";
 
   public void Configure(TestConfiguration aTestConfiguration, TestEnvironment aTestEnvironment)
   {

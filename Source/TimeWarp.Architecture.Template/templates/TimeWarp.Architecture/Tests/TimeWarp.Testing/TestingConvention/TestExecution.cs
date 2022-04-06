@@ -67,7 +67,7 @@ public class TestExecution : IExecution
             Console.WriteLine($"==== Executing test: {test.Name} with inputs ====");
             await TryLifecycleMethod(instance, testClass, TestingConvention.SetupLifecycleMethodName);
             await test.Run(instance, parameters);
-            await TryLifecycleMethod(instance, testClass, TestingConvention.CleanupLIfecycleMethodName);
+            await TryLifecycleMethod(instance, testClass, TestingConvention.CleanupLifecycleMethodName);
           }
         }
         else
@@ -75,11 +75,13 @@ public class TestExecution : IExecution
           Console.WriteLine($"==== Executing test: {test.Name} ====");
           await TryLifecycleMethod(instance, testClass, TestingConvention.SetupLifecycleMethodName);
           await test.Run(instance);
-          await TryLifecycleMethod(instance, testClass, TestingConvention.CleanupLIfecycleMethodName);
+          await TryLifecycleMethod(instance, testClass, TestingConvention.CleanupLifecycleMethodName);
         }
       }
     }
-    (serviceScopeFactory as IDisposable).Dispose();
+    //await Task.Delay(TimeSpan.FromMinutes(5));// This will give me time to see if the webApplication responds
+
+    await (serviceScopeFactory as IAsyncDisposable).DisposeAsync();
   }
 
   /// <summary>
@@ -104,7 +106,10 @@ public class TestExecution : IExecution
   public virtual void ConfigureApplications(ServiceCollection aServiceCollection)
   {
     Console.WriteLine($"==== {nameof(ConfigureApplications)} ====");
-    aServiceCollection.AddSingleton<WebServerApplication>();
+    aServiceCollection
+      .AddSingleton<WebServerApplication>()
+      .AddSingleton<ApiServerApplication>();
+
     ; // Add other applications you want to run here
   }
 
