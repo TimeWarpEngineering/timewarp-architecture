@@ -18,7 +18,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Oakton;
 using Oakton.Environment;
-using ProtoBuf.Grpc.Server;
 using System;
 using System.IO;
 using System.Linq;
@@ -38,17 +37,6 @@ public class Program : IProgram
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp Architecture API {SwaggerVersion}";
   const string SwaggerEndPoint = $"/swagger/{SwaggerVersion}/swagger.json";
-  //  public static IHostBuilder CreateHostBuilder(string[] aArgumentArray) =>
-  //    Host
-  //      .CreateDefaultBuilder(aArgumentArray)
-  //      .ConfigureWebHostDefaults
-  //      (
-  //        aWebHostBuilder =>
-  //        {
-  //          aWebHostBuilder.UseStaticWebAssets();
-  //          aWebHostBuilder.UseStartup<Startup>();
-  //        }
-  //      );
 
   public static Task<int> Main(string[] aArgumentArray)
   {
@@ -66,7 +54,6 @@ public class Program : IProgram
 
     return webApplication.RunOaktonCommands(aArgumentArray);
   }
-
   public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { }
 
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
@@ -76,8 +63,6 @@ public class Program : IProgram
     aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
     aServiceCollection.AddRazorPages();
     aServiceCollection.AddServerSideBlazor();
-    aServiceCollection.AddCodeFirstGrpc();
-    aServiceCollection.AddCodeFirstGrpcReflection();
     aServiceCollection.AddMvc()
       .AddFluentValidation
       (
@@ -111,42 +96,41 @@ public class Program : IProgram
     ConfigureSwagger(aServiceCollection);
   }
 
-  public static void ConfigureMiddleware(IApplicationBuilder aApplicationBuilder, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
+  public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
   {
     // Enable middleware to serve generated Swagger as a JSON endpoint.
-    aApplicationBuilder.UseSwagger();
+    aWebApplication.UseSwagger();
 
     // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
     // specifying the Swagger JSON endpoint.
-    aApplicationBuilder.UseSwaggerUI
+    aWebApplication.UseSwaggerUI
     (
       aSwaggerUIOptions => aSwaggerUIOptions.SwaggerEndpoint(SwaggerEndPoint, SwaggerApiTitle)
     );
 
-    aApplicationBuilder.UseResponseCompression();
+    aWebApplication.UseResponseCompression();
 
     if (aHostEnvironment.IsDevelopment())
     {
-      aApplicationBuilder.UseDeveloperExceptionPage();
-      aApplicationBuilder.UseWebAssemblyDebugging();
+      aWebApplication.UseDeveloperExceptionPage();
+      aWebApplication.UseWebAssemblyDebugging();
     }
 
-    aApplicationBuilder.UseRouting();
-    //aApplicationBuilder.UseGrpcWeb(new GrpcWebOptions() { DefaultEnabled = true });
-    aApplicationBuilder.UseEndpoints
+    aWebApplication.UseRouting();
+
+    aWebApplication.UseEndpoints
     (
       aEndpointRouteBuilder =>
       {
         aEndpointRouteBuilder.MapHealthChecks("/api/health");
-        //aEndpointRouteBuilder.MapGrpcService<SuperheroService>();
-        //aEndpointRouteBuilder.MapCodeFirstGrpcReflectionService();
         aEndpointRouteBuilder.MapControllers();
         aEndpointRouteBuilder.MapBlazorHub();
         aEndpointRouteBuilder.MapFallbackToPage("/_Host");
       }
     );
-    aApplicationBuilder.UseStaticFiles();
-    aApplicationBuilder.UseBlazorFrameworkFiles();
+
+    aWebApplication.UseStaticFiles();
+    aWebApplication.UseBlazorFrameworkFiles();
   }
 
   private static void ConfigureSwagger(IServiceCollection aServiceCollection)
@@ -205,7 +189,6 @@ public class Program : IProgram
     ConfigureCosmosDb(aServiceCollection);
     //ConfigureSqlDb(aServiceCollection, Configuration);
     aServiceCollection.AddHostedService<StartupHostedService>();
-    //aServiceCollection.AddHostedService<ProtobufGenerationHostedService>();
   }
 
   private static Func<CosmosDbContext, CancellationToken, Task<bool>> PerformCosmosHealthCheck() =>

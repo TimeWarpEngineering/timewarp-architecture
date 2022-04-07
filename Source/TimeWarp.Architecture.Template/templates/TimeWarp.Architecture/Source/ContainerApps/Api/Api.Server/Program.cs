@@ -59,17 +59,17 @@ public class Program : IProgram
     ConfigureSwagger(aServiceCollection);
   }
 
-  public static void ConfigureMiddleware(IApplicationBuilder aApplicationBuilder, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
+  public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
   {
-    aApplicationBuilder.UseSwagger();
-    aApplicationBuilder.UseSwaggerUI
+    aWebApplication.UseSwagger();
+    aWebApplication.UseSwaggerUI
     (
       aSwaggerUIOptions => aSwaggerUIOptions.SwaggerEndpoint(SwaggerEndPoint, SwaggerApiTitle)
     );
 
-    aApplicationBuilder.UseHttpsRedirection();
+    aWebApplication.UseHttpsRedirection();
 
-    aApplicationBuilder.UseAuthorization();
+    aWebApplication.UseAuthorization();
   }
 
   public static void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection) =>
