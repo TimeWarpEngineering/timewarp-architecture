@@ -57,7 +57,6 @@ namespace TimeWarp
       return;
 
     // If the field type isn't an interface then we should show a Diagnostic Error
-    // If it is an interface then we need to implement it some how.
 
     List<string> log = new();
 
@@ -193,7 +192,7 @@ namespace {namespaceValue} {{
     string generic = methodSymbol.IsGenericMethod ? $"<{string.Join(",", methodSymbol.TypeParameters)}>" : string.Empty;
 
     string template =
-      $"{returnType.ToDisplayString()} {interfaceName}.{methodSymbol.Name}{generic}({parameterDeclarations}) => {fieldName}.{methodSymbol.Name}({parameterList});";
+      $"public {returnType.ToDisplayString()} {methodSymbol.Name}{generic}({parameterDeclarations}) => {fieldName}.{methodSymbol.Name}({parameterList});";
 
     //string template =
     //  $"{returnType.ToDisplayString()} {methodSymbol.OriginalDefinition} => {fieldName}.{methodSymbol.Name}({parameterList});";
@@ -212,14 +211,18 @@ namespace {namespaceValue} {{
 
     return string.Join(", ", result);
   }
-
   private string GenerateParameterDeclarations(IMethodSymbol methodSymbol)
   {
     List<string> result = new();
 
     foreach (IParameterSymbol parameter in methodSymbol.Parameters)
     {
-      result.Add($"{parameter.Type.ToDisplayString()} {parameter.Name}");
+      string parameterDeclaration = $"{parameter.Type.ToDisplayString()} {parameter.Name}";
+      if (parameter.HasExplicitDefaultValue)
+      {
+        parameterDeclaration += $" = {parameter.ExplicitDefaultValue ?? "default"}";
+      }
+      result.Add(parameterDeclaration);
     }
 
     return string.Join(", ", result);
