@@ -10,7 +10,7 @@ services:
 - name: web-server
   project: ../../Source/ContainerApps/Web/Web.Server/Web.Server.csproj
   bindings:
-  - port: 5001
+  - port: 7000
     protocol: https
 
 - name: grpc-server
