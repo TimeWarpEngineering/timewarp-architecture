@@ -1,12 +1,11 @@
-namespace TimeWarp.Architecture.Features.EventStreams
-{
-  using TimeWarp.Architecture.Features.Bases;
+namespace TimeWarp.Architecture.Features.EventStreams;
 
-  internal partial class EventStreamState
+using TimeWarp.Architecture.Features.Bases;
+
+internal partial class EventStreamState
+{
+  public class AddEventAction : BaseAction
   {
-    public class AddEventAction : BaseAction
-    {
-      public string Message { get; set; }
-    }
+    public string Message { get; set; }
   }
 }

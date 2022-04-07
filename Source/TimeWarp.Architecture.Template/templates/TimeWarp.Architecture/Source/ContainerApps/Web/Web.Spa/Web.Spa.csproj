@@ -6,10 +6,6 @@
     <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
   </PropertyGroup>
 
-  <!--<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
-  </PropertyGroup>-->
-
   <ItemGroup>
     <PackageReference Include="BlazorComponentUtilities" />
     <PackageReference Include="Blazor-State" />
@@ -19,6 +15,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
     <PackageReference Include="Microsoft.Tye.Extensions.Configuration" />
     <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" />
     <PackageReference Include="protobuf-net.Grpc" />
@@ -26,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj" />
     <ProjectReference Include="..\Web.Shared\Web.Shared.csproj" />
@@ -34,6 +32,10 @@
     </ProjectReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Web.Spa.Integration.Tests" />
+  </ItemGroup>
+  
   <ItemGroup>
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />

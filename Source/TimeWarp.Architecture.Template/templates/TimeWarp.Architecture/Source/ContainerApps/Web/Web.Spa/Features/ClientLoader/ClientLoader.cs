@@ -1,36 +1,35 @@
-namespace TimeWarp.Architecture.Features.ClientLoaders
+namespace TimeWarp.Architecture.Features.ClientLoaders;
+
+using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
+using System.Threading.Tasks;
+
+public class ClientLoader
 {
-  using Microsoft.Extensions.Logging;
-  using Microsoft.JSInterop;
-  using System.Threading.Tasks;
+  private readonly IClientLoaderConfiguration ClientLoaderConfiguration;
 
-  public class ClientLoader
+  private readonly IJSRuntime JSRuntime;
+
+  private readonly ILogger Logger;
+
+  public ClientLoader
+  (
+    ILogger<ClientLoader> aLogger,
+    IJSRuntime aJSRuntime,
+    IClientLoaderConfiguration aClientLoaderConfiguration
+  )
   {
-    private readonly IClientLoaderConfiguration ClientLoaderConfiguration;
+    Logger = aLogger;
+    Logger.LogDebug($"{GetType().Name}: constructor");
+    JSRuntime = aJSRuntime;
+    ClientLoaderConfiguration = aClientLoaderConfiguration;
+  }
 
-    private readonly IJSRuntime JSRuntime;
-
-    private readonly ILogger Logger;
-
-    public ClientLoader
-    (
-      ILogger<ClientLoader> aLogger,
-      IJSRuntime aJSRuntime,
-      IClientLoaderConfiguration aClientLoaderConfiguration
-    )
-    {
-      Logger = aLogger;
-      Logger.LogDebug($"{GetType().Name}: constructor");
-      JSRuntime = aJSRuntime;
-      ClientLoaderConfiguration = aClientLoaderConfiguration;
-    }
-
-    public async Task LoadClient()
-    {
-      await Task.Delay(ClientLoaderConfiguration.DelayTimeSpan).ConfigureAwait(false);
-      const string LoadClientInteropName = "CompositionRoot.BlazorDualMode.LoadClient";
-      Logger.LogDebug(LoadClientInteropName);
-      await JSRuntime.InvokeAsync<object>(LoadClientInteropName).ConfigureAwait(false);
-    }
+  public async Task LoadClient()
+  {
+    await Task.Delay(ClientLoaderConfiguration.DelayTimeSpan).ConfigureAwait(false);
+    const string LoadClientInteropName = "BlazorDualMode.LoadClient";
+    Logger.LogDebug(LoadClientInteropName);
+    await JSRuntime.InvokeAsync<object>(LoadClientInteropName).ConfigureAwait(false);
   }
 }

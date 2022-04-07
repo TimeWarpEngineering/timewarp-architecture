@@ -1,19 +1,18 @@
-namespace TimeWarp.Architecture.Features.WeatherForecasts
+namespace TimeWarp.Architecture.Features.WeatherForecasts;
+
+using BlazorState;
+using System.Collections.Generic;
+
+internal partial class WeatherForecastsState : State<WeatherForecastsState>
 {
-  using BlazorState;
-  using System.Collections.Generic;
+  private List<WeatherForecastDto> _WeatherForecasts;
 
-  internal partial class WeatherForecastsState : State<WeatherForecastsState>
+  public IReadOnlyList<WeatherForecastDto> WeatherForecasts => _WeatherForecasts.AsReadOnly();
+
+  public WeatherForecastsState()
   {
-    private List<WeatherForecastDto> _WeatherForecasts;
-
-    public IReadOnlyList<WeatherForecastDto> WeatherForecasts => _WeatherForecasts.AsReadOnly();
-
-    public WeatherForecastsState()
-    {
-      _WeatherForecasts = new List<WeatherForecastDto>();
-    }
-
-    public override void Initialize() { }
+    _WeatherForecasts = new List<WeatherForecastDto>();
   }
+
+  public override void Initialize() { }
 }

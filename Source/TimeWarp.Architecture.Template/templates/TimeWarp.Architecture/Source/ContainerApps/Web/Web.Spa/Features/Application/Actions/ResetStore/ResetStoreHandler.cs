@@ -1,29 +1,28 @@
-namespace TimeWarp.Architecture.Features.Applications
+namespace TimeWarp.Architecture.Features.Applications;
+
+using BlazorState;
+using MediatR;
+using System.Threading;
+using System.Threading.Tasks;
+using static BlazorState.Features.Routing.RouteState;
+using static TimeWarp.Architecture.Features.Applications.ApplicationState;
+
+internal class ResetStoreHandler : IRequestHandler<ResetStoreAction>
 {
-  using BlazorState;
-  using MediatR;
-  using System.Threading;
-  using System.Threading.Tasks;
-  using static BlazorState.Features.Routing.RouteState;
-  using static TimeWarp.Architecture.Features.Applications.ApplicationState;
+  private readonly ISender Sender;
 
-  internal class ResetStoreHandler : IRequestHandler<ResetStoreAction>
+  private readonly IStore Store;
+
+  public ResetStoreHandler(IStore aStore, ISender aSender)
   {
-    private readonly ISender Sender;
+    Sender = aSender;
+    Store = aStore;
+  }
 
-    private readonly IStore Store;
-
-    public ResetStoreHandler(IStore aStore, ISender aSender)
-    {
-      Sender = aSender;
-      Store = aStore;
-    }
-
-    public async Task<Unit> Handle(ResetStoreAction aResetStoreAction, CancellationToken aCancellationToken)
-    {
-      Store.Reset();
-      _ = await Sender.Send(new ChangeRouteAction { NewRoute = "/" }, aCancellationToken).ConfigureAwait(false);
-      return Unit.Value;
-    }
+  public async Task<Unit> Handle(ResetStoreAction aResetStoreAction, CancellationToken aCancellationToken)
+  {
+    Store.Reset();
+    _ = await Sender.Send(new ChangeRouteAction { NewRoute = "/" }, aCancellationToken).ConfigureAwait(false);
+    return Unit.Value;
   }
 }

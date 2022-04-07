@@ -1,31 +1,30 @@
-namespace TimeWarp.Architecture.Features.Counters
+namespace TimeWarp.Architecture.Features.Counters;
+
+using MediatR;
+using Microsoft.Extensions.Logging;
+using System.Threading;
+using System.Threading.Tasks;
+using TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
+using static TimeWarp.Architecture.Features.Counters.CounterState;
+
+internal class IncrementCountNotificationHandler
+  : INotificationHandler<PostPipelineNotification<IncrementCounterAction, Unit>>
 {
-  using MediatR;
-  using Microsoft.Extensions.Logging;
-  using System.Threading;
-  using System.Threading.Tasks;
-  using TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
-  using static TimeWarp.Architecture.Features.Counters.CounterState;
+  private readonly ILogger Logger;
 
-  internal class IncrementCountNotificationHandler
-    : INotificationHandler<PostPipelineNotification<IncrementCounterAction, Unit>>
+  public IncrementCountNotificationHandler(ILogger<IncrementCountNotificationHandler> aLogger)
   {
-    private readonly ILogger Logger;
+    Logger = aLogger;
+  }
 
-    public IncrementCountNotificationHandler(ILogger<IncrementCountNotificationHandler> aLogger)
-    {
-      Logger = aLogger;
-    }
-
-    public Task Handle
-    (
-      PostPipelineNotification<IncrementCounterAction, Unit> aPostPipelineNotification,
-      CancellationToken aCancellationToken
-    )
-    {
-      Logger.LogDebug(aPostPipelineNotification.Request.GetType().Name);
-      Logger.LogDebug($"{nameof(IncrementCountNotificationHandler)} handled");
-      return Unit.Task;
-    }
+  public Task Handle
+  (
+    PostPipelineNotification<IncrementCounterAction, Unit> aPostPipelineNotification,
+    CancellationToken aCancellationToken
+  )
+  {
+    Logger.LogDebug(aPostPipelineNotification.Request.GetType().Name);
+    Logger.LogDebug($"{nameof(IncrementCountNotificationHandler)} handled");
+    return Unit.Task;
   }
 }

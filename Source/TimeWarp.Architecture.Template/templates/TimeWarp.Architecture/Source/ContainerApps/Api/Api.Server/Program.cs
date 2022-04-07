@@ -1,96 +1,114 @@
+namespace TimeWarp.Architecture.Api.Server;
+
 using FluentValidation.AspNetCore;
-using Oakton;
 using MediatR;
-using System.Reflection;
-using Microsoft.OpenApi.Models;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
+using Oakton;
+using System.Reflection;
 using TimeWarp.Architecture.Features;
 
-string swaggerVersion = "v1";
-string swaggerApiTitle = $"TimeWarp Architecture API {swaggerVersion}";
-string swaggerEndPoint = $"/swagger/{swaggerVersion}/swagger.json";
-
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-
-ConfigureConfiguration(builder.Configuration);
-ConfigureServices(builder.Services);
-
-WebApplication webApplication = builder.Build();
-
-ConfigureMiddleware(webApplication, webApplication.Services);
-ConfigureEndpoints(webApplication, webApplication.Services);
-
-webApplication.RunOaktonCommandsSynchronously(args);
-
-void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { };
-
-void ConfigureServices(IServiceCollection aServiceCollection)
+public class Program : IProgram
 {
-  aServiceCollection
-    .AddControllers()
-    .AddFluentValidation
-      (
-        aFluentValidationMvcConfiguration =>
-        {
-          // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
-          // will NOT register internals. This feature is utilized.
-          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Program>();
-          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<BaseRequest>();
-        }
-      );
-  
-  // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-  aServiceCollection.AddEndpointsApiExplorer();
-  aServiceCollection.AddSwaggerGen();
-  aServiceCollection.AddMediatR(typeof(Program).GetTypeInfo().Assembly);
-  ConfigureSwagger(aServiceCollection);
-}
+  const string SwaggerVersion = "v1";
+  const string SwaggerApiTitle = $"TimeWarp Architecture API {SwaggerVersion}";
+  const string SwaggerEndPoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
-void ConfigureMiddleware(IApplicationBuilder aApplicationBuilder, IServiceProvider aServiceCollection)
-{
-  webApplication.UseSwagger();
-  webApplication.UseSwaggerUI
-  (
-    aSwaggerUIOptions => aSwaggerUIOptions.SwaggerEndpoint(swaggerEndPoint, swaggerApiTitle)
-  );
+  public static Task<int> Main(string[] aArgumentArray)
+  {
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(aArgumentArray);
 
-  webApplication.UseHttpsRedirection();
+    ConfigureConfiguration(builder.Configuration);
+    ConfigureServices(builder.Services, builder.Configuration);
 
-  webApplication.UseAuthorization();
-}
+    WebApplication webApplication = builder.Build();
 
-void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection)
-{
-  webApplication.MapControllers();
-}
+    webApplication.Services.ValidateOptions(builder.Services);
 
-void ConfigureSwagger(IServiceCollection aServiceCollection)
-{
-  // Register the Swagger generator, defining 1 or more Swagger documents
-  aServiceCollection.AddSwaggerGen
-    (
-      aSwaggerGenOptions =>
-      {
-        aSwaggerGenOptions
-        .SwaggerDoc
+    ConfigureMiddleware(webApplication, webApplication.Services, webApplication.Environment);
+    ConfigureEndpoints(webApplication, webApplication.Services);
+
+    return webApplication.RunOaktonCommands(aArgumentArray);
+  }
+
+  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { }
+
+  public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  {
+    ConfigureSettings(aServiceCollection, aConfiguration);
+
+    aServiceCollection
+      .AddControllers()
+      .TryAddApplicationPart(typeof(Program).Assembly)
+      .AddFluentValidation
         (
-          swaggerVersion,
-          new OpenApiInfo { Title = swaggerApiTitle, Version = swaggerVersion }
+          aFluentValidationMvcConfiguration =>
+          {
+            // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
+            // will NOT register internals. This feature is utilized.
+            aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Program>();
+            aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<BaseRequest>();
+          }
         );
 
-        aSwaggerGenOptions.EnableAnnotations();
+    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+    aServiceCollection.AddEndpointsApiExplorer();
+    aServiceCollection.AddSwaggerGen();
+    aServiceCollection.AddMediatR(typeof(Program).GetTypeInfo().Assembly);
+    ConfigureSwagger(aServiceCollection);
+  }
 
-        // Set the comments path for the Swagger JSON and UI from Server.
-        string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-        string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-
-        // Set the comments path for the Swagger JSON and UI from Shared.
-        xmlFile = $"{typeof(BaseRequest).Assembly.GetName().Name}.xml";
-        xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-      }
+  public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
+  {
+    aWebApplication.UseSwagger();
+    aWebApplication.UseSwaggerUI
+    (
+      aSwaggerUIOptions => aSwaggerUIOptions.SwaggerEndpoint(SwaggerEndPoint, SwaggerApiTitle)
     );
 
-  aServiceCollection.AddFluentValidationRulesToSwagger();
+    aWebApplication.UseHttpsRedirection();
+
+    aWebApplication.UseAuthorization();
+  }
+
+  public static void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection) =>
+    aEndpointRouteBuilder.MapControllers();
+
+  private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  {
+    //aServiceCollection
+    //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
+    //  .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
+  }
+  static void ConfigureSwagger(IServiceCollection aServiceCollection)
+  {
+    // Register the Swagger generator, defining 1 or more Swagger documents
+    aServiceCollection.AddSwaggerGen
+      (
+        aSwaggerGenOptions =>
+        {
+          aSwaggerGenOptions
+          .SwaggerDoc
+          (
+            SwaggerVersion,
+            new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
+          );
+
+          aSwaggerGenOptions.EnableAnnotations();
+
+          // Set the comments path for the Swagger JSON and UI from Server.
+          string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+          string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+
+          // Set the comments path for the Swagger JSON and UI from Shared.
+          xmlFile = $"{typeof(BaseRequest).Assembly.GetName().Name}.xml";
+          xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+        }
+      );
+
+    aServiceCollection.AddFluentValidationRulesToSwagger();
+  }
 }

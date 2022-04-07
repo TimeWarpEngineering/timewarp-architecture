@@ -2,15 +2,15 @@ namespace WeatherForecastsState;
 
 using FluentAssertions;
 using System.Threading.Tasks;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 using TimeWarp.Architecture.Features.WeatherForecasts;
 using TimeWarp.Architecture.Testing;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsState;
 
 public class FetchWeatherForecastsAction_Should : BaseTest
 {
 #pragma warning disable IDE0052 // Remove unread private members It is used simply because injecting it ensures it is constructed.
-  private readonly TimeWarpBlazorServerApplication TimeWarpBlazorServerApplication;
+  private readonly WebServerApplication TimeWarpBlazorServerApplication;
 #pragma warning restore IDE0052 // Remove unread private members
 
   private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
@@ -18,7 +18,7 @@ public class FetchWeatherForecastsAction_Should : BaseTest
   public FetchWeatherForecastsAction_Should
   (
     TestClientApplication aClientHost,
-    TimeWarpBlazorServerApplication aTimeWarpBlazorServerApplication
+    WebServerApplication aTimeWarpBlazorServerApplication
   )
     : base(aClientHost)
   {

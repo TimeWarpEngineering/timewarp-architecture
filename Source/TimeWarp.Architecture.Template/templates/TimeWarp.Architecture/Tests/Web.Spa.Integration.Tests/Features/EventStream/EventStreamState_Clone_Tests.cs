@@ -3,8 +3,8 @@ namespace EventStreamState;
 using AnyClone;
 using FluentAssertions;
 using System.Collections.Generic;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 using TimeWarp.Architecture.Features.EventStreams;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
 public class Clone_Should : BaseTest
 {
@@ -19,7 +19,7 @@ public class Clone_Should : BaseTest
     EventStreamState.Initialize(events);
 
     //Act
-    var clone = EventStreamState.Clone() as EventStreamState;
+    EventStreamState clone = EventStreamState.Clone();
 
     //Assert
     EventStreamState.Events.Count.Should().Be(clone.Events.Count);

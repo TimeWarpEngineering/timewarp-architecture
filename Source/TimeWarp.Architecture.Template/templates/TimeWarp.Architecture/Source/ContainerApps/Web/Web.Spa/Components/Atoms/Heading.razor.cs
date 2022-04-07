@@ -1,9 +1,8 @@
-namespace TimeWarp.Architecture.Components
-{
-  using Microsoft.AspNetCore.Components;
+namespace TimeWarp.Architecture.Components;
 
-  public partial class Heading
-  {
-    [Parameter] public RenderFragment ChildContent { get; set; }
-  }
+using Microsoft.AspNetCore.Components;
+
+public partial class Heading
+{
+  [Parameter] public RenderFragment ChildContent { get; set; }
 }

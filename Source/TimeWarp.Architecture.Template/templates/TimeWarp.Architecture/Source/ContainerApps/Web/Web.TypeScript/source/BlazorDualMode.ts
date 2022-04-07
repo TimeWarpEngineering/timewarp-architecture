@@ -1,4 +1,4 @@
-export class BlazorDualMode {
+class BlazorDualMode {
   private ApplicationVersion = "TimeWarp.Architecture.0.0.1";
 
   private ClientApplicationKey = "clientApplication";
@@ -43,7 +43,8 @@ export class BlazorDualMode {
 
   // Called from C#
   LoadClient() {
-    if (!window.CompositionRoot?.BlazorDualMode.ClientLoaded) {
+    if (!window.BlazorDualMode?.ClientLoaded) {
+      console.log("BlazorDualMode is loading client");
       localStorage.setItem(this.ClientApplicationKey, this.ApplicationVersion);
       const iframe = document.createElement("iframe");
       iframe.setAttribute("id", "loaderFrame");
@@ -51,6 +52,12 @@ export class BlazorDualMode {
       document.body.appendChild(iframe);
       const iframeSource = window.location.href;
       iframe.setAttribute("src", iframeSource);
+    } else {
+      console.log("Client previously loaded");
     }
   }
 }
+
+window.BlazorDualMode = new BlazorDualMode();
+window.BlazorDualMode.ConfigureBlazor();
+console.log("BlazorDualMode.ts loaded");

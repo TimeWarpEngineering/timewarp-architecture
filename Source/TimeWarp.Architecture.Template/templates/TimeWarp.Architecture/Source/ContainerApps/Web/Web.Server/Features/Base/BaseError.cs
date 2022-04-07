@@ -1,7 +1,6 @@
-namespace TimeWarp.Architecture.Features.Bases
+namespace TimeWarp.Architecture.Features.Bases;
+
+public class BaseError
 {
-  public class BaseError
-  {
-    public string Message { get; set; }
-  }
+  public string Message { get; set; }
 }

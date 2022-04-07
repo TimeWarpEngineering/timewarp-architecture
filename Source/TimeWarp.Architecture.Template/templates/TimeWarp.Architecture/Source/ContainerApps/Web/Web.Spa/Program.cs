@@ -7,6 +7,7 @@ using MediatR;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using PeterLeslieMorris.Blazor.Validation;
 using ProtoBuf.Grpc.Client;
 using System;
@@ -76,7 +77,7 @@ public class Program
     aServiceCollection
       .ConfigureOptions<ServiceCollection, ServiceCollectionValidator>(aConfiguration);
 
-    aServiceCollection.ValidateOptions();
+    //aServiceCollection.ValidateOptions();
   }
 
   private static void ConfigureGrpc(IServiceCollection aServiceCollection)
@@ -86,8 +87,8 @@ public class Program
       aServiceProvider =>
       {
         IConfiguration configuration = aServiceProvider.GetRequiredService<IConfiguration>();
-        const string serviceName = "grpc-server";
-        string grpcUrl = GetServiceUri(configuration, serviceName);
+        const string ServiceName = "grpc-server";
+        string grpcUrl = GetServiceUri(configuration, ServiceName);
 
         // If no address is set then fallback to the current webpage URL
         if (string.IsNullOrEmpty(grpcUrl))
@@ -153,6 +154,7 @@ public class Program
   public static Task Main(string[] aArgumentArray)
   {
     var builder = WebAssemblyHostBuilder.CreateDefault(aArgumentArray);
+    builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
     builder.RootComponents.Add<App>("#app");
     builder.Services.AddScoped
       (_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

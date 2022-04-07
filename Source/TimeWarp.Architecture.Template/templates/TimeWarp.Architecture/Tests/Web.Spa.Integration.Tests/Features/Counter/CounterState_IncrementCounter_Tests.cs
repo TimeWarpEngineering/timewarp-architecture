@@ -1,9 +1,9 @@
-namespace CounterState;
+namespace CounterState_;
 
 using FluentAssertions;
 using System.Threading.Tasks;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 using TimeWarp.Architecture.Features.Counters;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 using static TimeWarp.Architecture.Features.Counters.CounterState;
 
 public class IncrementCounterAction_Should : BaseTest

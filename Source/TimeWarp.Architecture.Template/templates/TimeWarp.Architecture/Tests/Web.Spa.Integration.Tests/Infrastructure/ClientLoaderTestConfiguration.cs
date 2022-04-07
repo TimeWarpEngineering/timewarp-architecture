@@ -1,20 +1,19 @@
-namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure
-{
-  using System;
-  using TimeWarp.Architecture.Features.ClientLoaders;
-  using TimeWarp.Architecture.Testing;
+namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
+using System;
+using TimeWarp.Architecture.Features.ClientLoaders;
+using TimeWarp.Architecture.Testing;
+
+/// <summary>
+/// Replaces the default ClientLoaderConfiguration
+/// To reduce the delay from 10 seconds to 10 milliseconds.
+/// So tests run much faster.
+/// </summary>
+[NotTest]
+public class ClientLoaderTestConfiguration : IClientLoaderConfiguration
+{
   /// <summary>
-  /// Replaces the default ClientLoaderConfiguration
-  /// To reduce the delay from 10 seconds to 10 milliseconds.
-  /// So tests run much faster.
+  /// Shortent the Delay for tests
   /// </summary>
-  [NotTest]
-  public class ClientLoaderTestConfiguration : IClientLoaderConfiguration
-  {
-    /// <summary>
-    /// Shortent the Delay for tests
-    /// </summary>
-    public TimeSpan DelayTimeSpan => TimeSpan.FromMilliseconds(10);
-  }
+  public TimeSpan DelayTimeSpan => TimeSpan.FromMilliseconds(10);
 }

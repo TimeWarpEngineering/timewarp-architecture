@@ -1,11 +1,10 @@
-namespace TimeWarp.Architecture.Pages
+namespace TimeWarp.Architecture.Pages;
+
+using TimeWarp.Architecture.Features.Bases;
+
+public partial class SettingsPage : BaseComponent
 {
-  using TimeWarp.Architecture.Features.Bases;
+  private const string RouteTemplate = "/Settings";
 
-  public partial class SettingsPage : BaseComponent
-  {
-    private const string RouteTemplate = "/Settings";
-
-    public static string GetRoute() => RouteTemplate;
-  }
+  public static string GetRoute() => RouteTemplate;
 }

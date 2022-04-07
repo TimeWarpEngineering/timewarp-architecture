@@ -1,7 +1,6 @@
-﻿namespace TimeWarp.Architecture.Features.Applications
-{
-  using System;
+﻿namespace TimeWarp.Architecture.Features.Applications;
 
-  [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-  public class TrackProcessingAttribute : Attribute { }
-}
+using System;
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public class TrackProcessingAttribute : Attribute { }

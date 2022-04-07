@@ -1,20 +1,19 @@
-﻿namespace TimeWarp.Architecture.Configuration
+﻿namespace TimeWarp.Architecture.Configuration;
+
+using FluentValidation;
+
+/// <remarks>
+/// This class has to be `internal` or it will automatically be registered
+/// by RegisterValidatorsFromAssemblyContaining as scoped
+/// </remarks>
+internal class CosmosDbOptionsValidator : AbstractValidator<CosmosDbOptions>
 {
-  using FluentValidation;
-
-  /// <remarks>
-  /// This class has to be `internal` or it will automatically be registered
-  /// by RegisterValidatorsFromAssemblyContaining as scoped
-  /// </remarks>
-  internal class CosmosDbOptionsValidator : AbstractValidator<CosmosDbOptions>
+  public CosmosDbOptionsValidator()
   {
-    public CosmosDbOptionsValidator()
-    {
-      RuleFor(aCosmosDbOptions => aCosmosDbOptions.EndPoint).NotEmpty();
-      RuleFor(aCosmosDbOptions => aCosmosDbOptions.AccessKey).NotEmpty();
+    RuleFor(aCosmosDbOptions => aCosmosDbOptions.EndPoint).NotEmpty();
+    RuleFor(aCosmosDbOptions => aCosmosDbOptions.AccessKey).NotEmpty();
 
-      RuleFor(aCosmosDbOptions => aCosmosDbOptions.DocumentToCheck).NotEmpty()
-        .When(aCosmosDbOptions => aCosmosDbOptions.EnableMigration);
-    }
+    RuleFor(aCosmosDbOptions => aCosmosDbOptions.DocumentToCheck).NotEmpty()
+      .When(aCosmosDbOptions => aCosmosDbOptions.EnableMigration);
   }
 }

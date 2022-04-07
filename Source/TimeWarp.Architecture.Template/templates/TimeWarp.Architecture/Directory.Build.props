@@ -9,6 +9,7 @@
   <!-- Common compile parameters -->
   <PropertyGroup>
     <LangVersion>preview</LangVersion>
+    <EnablePreviewFeatures>True</EnablePreviewFeatures>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Nullable>disable</Nullable>
     <TargetFramework>net6.0</TargetFramework>
@@ -16,6 +17,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <!-- We use full (Windows PDBs) until cross platform support for source link will get better -->
     <DebugType>full</DebugType>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
   <Target Name="EmbedLocal" BeforeTargets="PrepareForBuild">    

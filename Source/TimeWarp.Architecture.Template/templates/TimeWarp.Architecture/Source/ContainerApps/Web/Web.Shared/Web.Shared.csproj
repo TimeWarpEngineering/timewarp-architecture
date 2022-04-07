@@ -20,8 +20,4 @@
     <PackageReference Include="System.ServiceModel.Primitives" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
-  </ItemGroup>
-
 </Project>

@@ -1,19 +1,18 @@
-namespace TimeWarp.Architecture.Pages
+namespace TimeWarp.Architecture.Pages;
+
+using System.Threading.Tasks;
+using TimeWarp.Architecture.Features.Applications;
+using TimeWarp.Architecture.Features.Bases;
+
+public partial class Index : BaseComponent
 {
-  using System.Threading.Tasks;
-  using TimeWarp.Architecture.Features.Applications;
-  using TimeWarp.Architecture.Features.Bases;
+  private const string RouteTemplate = "/";
 
-  public partial class Index : BaseComponent
-  {
-    private const string RouteTemplate = "/";
+  public static string GetRoute() => RouteTemplate;
 
-    public static string GetRoute() => RouteTemplate;
+  private async Task FiveSecondTaskButtonClick() =>
+    await Send(new ApplicationState.FiveSecondTaskAction());
 
-    private async Task FiveSecondTaskButtonClick() =>
-      await Send(new ApplicationState.FiveSecondTaskAction());
-
-    private async Task TwoSecondTaskButtonClick() =>
-      await Send(new ApplicationState.TwoSecondTaskAction());
-  }
+  private async Task TwoSecondTaskButtonClick() =>
+    await Send(new ApplicationState.TwoSecondTaskAction());
 }

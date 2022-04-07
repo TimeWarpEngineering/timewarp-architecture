@@ -1,25 +1,24 @@
-namespace TimeWarp.Architecture.Features.Counters
+namespace TimeWarp.Architecture.Features.Counters;
+
+using BlazorState;
+using MediatR;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using TimeWarp.Architecture.Features.Bases;
+
+internal partial class CounterState
 {
-  using BlazorState;
-  using MediatR;
-  using System;
-  using System.Threading;
-  using System.Threading.Tasks;
-  using TimeWarp.Architecture.Features.Bases;
-
-  internal partial class CounterState
+  internal class ThrowExceptionHandler : BaseHandler<ThrowExceptionAction>
   {
-    internal class ThrowExceptionHandler : BaseHandler<ThrowExceptionAction>
-    {
-      public ThrowExceptionHandler(IStore aStore) : base(aStore) { }
+    public ThrowExceptionHandler(IStore aStore) : base(aStore) { }
 
-      public override Task<Unit> Handle
-      (
-        ThrowExceptionAction aThrowExceptionAction,
-        CancellationToken aCancellationToken
-      ) =>
-        // Intentionally throw so we can test exception handling.
-        throw new Exception(aThrowExceptionAction.Message);
-    }
+    public override Task<Unit> Handle
+    (
+      ThrowExceptionAction aThrowExceptionAction,
+      CancellationToken aCancellationToken
+    ) =>
+      // Intentionally throw so we can test exception handling.
+      throw new Exception(aThrowExceptionAction.Message);
   }
 }

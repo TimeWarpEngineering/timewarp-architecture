@@ -1,10 +1,9 @@
-namespace TimeWarp.Architecture.Features.Applications
-{
-  using TimeWarp.Architecture.Features.Bases;
+namespace TimeWarp.Architecture.Features.Applications;
 
-  internal partial class ApplicationState
-  {
-    [TrackProcessing]
-    public class FiveSecondTaskAction : BaseAction { }
-  }
+using TimeWarp.Architecture.Features.Bases;
+
+internal partial class ApplicationState
+{
+  [TrackProcessing]
+  public class FiveSecondTaskAction : BaseAction { }
 }

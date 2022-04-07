@@ -1,14 +1,12 @@
-namespace TimeWarp.Architecture.Infrastructure
-{
-  using AutoMapper;
-  using TimeWarp.Architecture.Features.WeatherForecasts;
+namespace TimeWarp.Architecture.Infrastructure;
 
-  public class MappingProfile : Profile
+using AutoMapper;
+
+public class MappingProfile : Profile
+{
+  public MappingProfile()
   {
-    public MappingProfile()
-    {
-      //CreateMap<WeatherForecast, WeatherForecastDto>();
-    }
+    //CreateMap<WeatherForecast, WeatherForecastDto>();
   }
 }
 

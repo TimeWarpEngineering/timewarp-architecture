@@ -1,30 +1,29 @@
-namespace TimeWarp.Architecture.Components.Forms
-{
-  using Microsoft.AspNetCore.Components.Forms;
+namespace TimeWarp.Architecture.Components.Forms;
 
-  public class InputSelectNumber<T> : InputSelect<T>
+using Microsoft.AspNetCore.Components.Forms;
+
+public class InputSelectNumber<T> : InputSelect<T>
+{
+  protected override bool TryParseValueFromString(string aValue, out T aResult, out string aValidationErrorMessage)
   {
-    protected override bool TryParseValueFromString(string aValue, out T aResult, out string aValidationErrorMessage)
+    if (typeof(T) == typeof(int))
     {
-      if (typeof(T) == typeof(int))
+      if (int.TryParse(aValue, out int resultInt))
       {
-        if (int.TryParse(aValue, out int resultInt))
-        {
-          aResult = (T)(object)resultInt;
-          aValidationErrorMessage = null;
-          return true;
-        }
-        else
-        {
-          aResult = default;
-          aValidationErrorMessage = "The chosen value is not a valid number.";
-          return false;
-        }
+        aResult = (T)(object)resultInt;
+        aValidationErrorMessage = null;
+        return true;
       }
       else
       {
-        return base.TryParseValueFromString(aValue, out aResult, out aValidationErrorMessage);
+        aResult = default;
+        aValidationErrorMessage = "The chosen value is not a valid number.";
+        return false;
       }
+    }
+    else
+    {
+      return base.TryParseValueFromString(aValue, out aResult, out aValidationErrorMessage);
     }
   }
 }

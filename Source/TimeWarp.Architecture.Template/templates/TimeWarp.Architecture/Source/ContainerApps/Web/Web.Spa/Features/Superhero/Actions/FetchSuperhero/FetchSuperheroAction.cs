@@ -1,9 +1,8 @@
-﻿namespace TimeWarp.Architecture.Features.Superheros
-{
-  using TimeWarp.Architecture.Features.Bases;
+﻿namespace TimeWarp.Architecture.Features.Superheros;
 
-  internal partial class SuperheroState
-  {
-    public class FetchSuperheroAction : BaseAction { }
-  }
+using TimeWarp.Architecture.Features.Bases;
+
+internal partial class SuperheroState
+{
+  public class FetchSuperheroAction : BaseAction { }
 }

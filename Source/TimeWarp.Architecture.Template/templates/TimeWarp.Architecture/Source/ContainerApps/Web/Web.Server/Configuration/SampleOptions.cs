@@ -1,7 +1,6 @@
-namespace TimeWarp.Architecture.Configuration
+namespace TimeWarp.Architecture.Configuration;
+
+public class SampleOptions
 {
-  public class SampleOptions
-  {
-    public string SampleOption { get; set; }
-  }
+  public string SampleOption { get; set; }
 }
