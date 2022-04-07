@@ -1,4 +1,4 @@
-import { CompositionRoot } from "./CompositionRoot.js";
+import { BlazorDualMode } from "./BlazorDualMode.ts";
 
 declare global {
   declare let BlazorState: BlazorState;
@@ -13,7 +13,7 @@ declare global {
   }
 
   interface Window {
-    CompositionRoot: CompositionRoot | undefined;
+    BlazorDualMode: BlazorDualMode | undefined;
     BlazorState: BlazorState;
     Blazor: Blazor;
   }

@@ -28,7 +28,7 @@ public class ClientLoader
   public async Task LoadClient()
   {
     await Task.Delay(ClientLoaderConfiguration.DelayTimeSpan).ConfigureAwait(false);
-    const string LoadClientInteropName = "CompositionRoot.BlazorDualMode.LoadClient";
+    const string LoadClientInteropName = "BlazorDualMode.LoadClient";
     Logger.LogDebug(LoadClientInteropName);
     await JSRuntime.InvokeAsync<object>(LoadClientInteropName).ConfigureAwait(false);
   }
