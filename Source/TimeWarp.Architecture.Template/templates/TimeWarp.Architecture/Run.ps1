@@ -4,7 +4,8 @@ dotnet build
 
 # Start Cosmos DB emulator
 # see https://timewarpengineering.github.io/timewarp-architecture/#prerequisites
-Start-CosmosDbEmulator
+# Start-CosmosDbEmulator
+# TODO add check for CosmosDB emulator to be running
 
 Push-Location DevOps/Tye
 # Launch new shell for tye 
