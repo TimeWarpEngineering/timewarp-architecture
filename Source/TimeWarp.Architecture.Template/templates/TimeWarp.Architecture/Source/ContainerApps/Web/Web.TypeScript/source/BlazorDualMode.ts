@@ -44,6 +44,7 @@ class BlazorDualMode {
   // Called from C#
   LoadClient() {
     if (!window.BlazorDualMode?.ClientLoaded) {
+      console.log("BlazorDualMode is loading client");
       localStorage.setItem(this.ClientApplicationKey, this.ApplicationVersion);
       const iframe = document.createElement("iframe");
       iframe.setAttribute("id", "loaderFrame");
@@ -51,6 +52,8 @@ class BlazorDualMode {
       document.body.appendChild(iframe);
       const iframeSource = window.location.href;
       iframe.setAttribute("src", iframeSource);
+    } else {
+      console.log("Client previously loaded");
     }
   }
 }
