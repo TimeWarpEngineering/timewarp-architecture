@@ -17,7 +17,7 @@ public class WebServerApplication : TestServerApplication<Web.Server.Program>
       aEnvironmentName: Environments.Development,
       aUrls: new[]
       {
-        "http://localhost:5000"
+        "https://localhost:5001"
       },
       ConfigureServicesDelegate
     )
