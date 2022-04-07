@@ -6,6 +6,7 @@
     <BuildCommand>npm run lint &amp;&amp; npm run prettier &amp;&amp; npm run build &amp;&amp; npm run tailwinds</BuildCommand>
     <StartupCommand>npm run start</StartupCommand>
   </PropertyGroup>
+  
   <ItemGroup>
     <MySourceFiles Include="source\Web.Spa.lib.module.js"/>
   </ItemGroup>
@@ -14,6 +15,7 @@
     <Copy
       SourceFiles="@(MySourceFiles)"
       DestinationFolder="..\Web.Spa\wwwroot/js"
+      SkipUnchangedFiles="true"
     />
   </Target>
 </Project>
