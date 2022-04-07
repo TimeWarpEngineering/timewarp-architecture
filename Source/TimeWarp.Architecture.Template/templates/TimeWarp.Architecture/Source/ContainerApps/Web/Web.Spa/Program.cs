@@ -87,8 +87,8 @@ public class Program
       aServiceProvider =>
       {
         IConfiguration configuration = aServiceProvider.GetRequiredService<IConfiguration>();
-        const string serviceName = "grpc-server";
-        string grpcUrl = GetServiceUri(configuration, serviceName);
+        const string ServiceName = "grpc-server";
+        string grpcUrl = GetServiceUri(configuration, ServiceName);
 
         // If no address is set then fallback to the current webpage URL
         if (string.IsNullOrEmpty(grpcUrl))

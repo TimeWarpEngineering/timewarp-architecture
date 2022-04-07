@@ -1,4 +1,4 @@
-namespace CounterState;
+namespace CounterState_;
 
 using FluentAssertions;
 using System.Threading.Tasks;

@@ -19,7 +19,7 @@ public class Clone_Should : BaseTest
     EventStreamState.Initialize(events);
 
     //Act
-    var clone = EventStreamState.Clone() as EventStreamState;
+    EventStreamState clone = EventStreamState.Clone();
 
     //Assert
     EventStreamState.Events.Count.Should().Be(clone.Events.Count);
