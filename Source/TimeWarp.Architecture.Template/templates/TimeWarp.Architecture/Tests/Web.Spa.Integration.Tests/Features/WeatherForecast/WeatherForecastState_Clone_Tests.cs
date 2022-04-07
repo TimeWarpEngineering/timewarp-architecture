@@ -33,13 +33,16 @@ public class Clone_Should : BaseTest
     WeatherForecastsState.Initialize(weatherForecasts);
 
     //Act
-    var clone = WeatherForecastsState.Clone() as WeatherForecastsState;
+    WeatherForecastsState clone = WeatherForecastsState.Clone();
 
     //Assert
     WeatherForecastsState.Should().NotBeSameAs(clone);
     WeatherForecastsState.WeatherForecasts.Count.Should().Be(clone.WeatherForecasts.Count);
     WeatherForecastsState.Guid.Should().NotBe(clone.Guid);
     WeatherForecastsState.WeatherForecasts[0].TemperatureC.Should().Be(clone.WeatherForecasts[0].TemperatureC);
-    WeatherForecastsState.WeatherForecasts[0].Should().NotBe(clone.WeatherForecasts[0]);
+    WeatherForecastsState.WeatherForecasts[0].Should().Be(clone.WeatherForecasts[0]); //record type
+    object.ReferenceEquals(WeatherForecastsState.WeatherForecasts[0], clone.WeatherForecasts[0]).Should().BeFalse(); // recored type by reference
+    //clone.WeatherForecasts[0]).Should().NotBe(true);
+
   }
 }
