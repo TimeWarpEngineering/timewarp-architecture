@@ -4,12 +4,9 @@ using FluentAssertions;
 using FluentValidation.Results;
 using FluentValidation.TestHelper;
 using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using TimeWarp.Architecture;
 using TimeWarp.Architecture.Configuration;
-using TimeWarp.Architecture.Features.WeatherForecasts;
 
 public class Validate_Should
 {
@@ -19,9 +16,9 @@ public class Validate_Should
   {
     var serviceCollection = new ServiceCollection
     {
-      {Constants.WebServiceName, new ServiceCollection.Service { Host = "myhost", Protocol="https", Port=5001} },
-      {Constants.GrpcServiceName, new ServiceCollection.Service { Host = "myhost", Protocol="https", Port=5001} },
-      {Constants.ApiServiceName, new ServiceCollection.Service { Host = "myhost", Protocol="https", Port=5001} },
+      {Constants.WebServiceName, new ServiceCollection.Service { Host = "myhost", Protocol="https", Port=7001} },
+      {Constants.GrpcServiceName, new ServiceCollection.Service { Host = "myhost", Protocol="https", Port=7001} },
+      {Constants.ApiServiceName, new ServiceCollection.Service { Host = "myhost", Protocol="https", Port=7001} },
     };
 
     ValidationResult validationResult = ServiceCollectionValidator.TestValidate(serviceCollection);
@@ -65,17 +62,17 @@ public class Validate_Should
     ""web-server"": {
       ""protocol"": ""https"",
       ""host"": ""localhost"",
-      ""port"": ""5001""
+      ""port"": ""7001""
     },
     ""api-server"": {
       ""protocol"": ""https"",
       ""host"": ""localhost"",
-      ""port"": ""5001""
+      ""port"": ""7001""
     },
     ""grpc-server"": {
       ""protocol"": ""https"",
       ""host"": ""localhost"",
-      ""port"": ""5001""
+      ""port"": ""7001""
     }
   }
 }
@@ -95,7 +92,7 @@ public class Validate_Should
     serviceCollection.Count.Should().Be(3);
     serviceCollection["web-server"].Host.Should().Be("localhost");
     serviceCollection["web-server"].Protocol.Should().Be("https");
-    serviceCollection["web-server"].Port.Should().Be(5001);
+    serviceCollection["web-server"].Port.Should().Be(7001);
 
     TestValidationResult<ServiceCollection> result =
       ServiceCollectionValidator.TestValidate(serviceCollection);
@@ -103,5 +100,5 @@ public class Validate_Should
     result.IsValid.Should().BeTrue();
   }
 
-    public void Setup() => ServiceCollectionValidator = new ServiceCollectionValidator();
-  }
+  public void Setup() => ServiceCollectionValidator = new ServiceCollectionValidator();
+}
