@@ -6,10 +6,6 @@
     <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
   </PropertyGroup>
 
-  <!--<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
-  </PropertyGroup>-->
-
   <ItemGroup>
     <PackageReference Include="BlazorComponentUtilities" />
     <PackageReference Include="Blazor-State" />
@@ -36,6 +32,10 @@
     </ProjectReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Web.Spa.Integration.Tests" />
+  </ItemGroup>
+  
   <ItemGroup>
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
