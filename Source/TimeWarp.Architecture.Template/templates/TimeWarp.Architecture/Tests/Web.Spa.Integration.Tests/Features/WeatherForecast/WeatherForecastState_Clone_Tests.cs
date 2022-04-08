@@ -14,7 +14,7 @@ public class Clone_Should : BaseTest
 
   public Clone_Should
   (
-    SpaTestApplication<YarpServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
   ) : base(aSpaTestApplication) { }
 
   public void Clone()

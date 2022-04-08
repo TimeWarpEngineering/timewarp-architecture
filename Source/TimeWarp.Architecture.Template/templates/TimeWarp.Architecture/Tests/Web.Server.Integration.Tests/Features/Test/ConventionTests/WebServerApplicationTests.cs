@@ -9,7 +9,7 @@ public class Should
 {
   public Should
   (
-    WebServerApplication aWebServerApplication
+    WebTestServerApplication aWebServerApplication
   )
   {
     Guard.Argument(aWebServerApplication).NotNull();

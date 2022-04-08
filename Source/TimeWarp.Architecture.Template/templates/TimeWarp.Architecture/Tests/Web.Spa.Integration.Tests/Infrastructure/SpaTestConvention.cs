@@ -23,7 +23,7 @@ public class TimeWarpExecution : TestExecution
 
   public override void ConfigureApplications(ServiceCollection aServiceCollection)
   {
-    aServiceCollection.AddSingleton<SpaTestApplication<YarpServerApplication, Yarp.Server.Program>>();
+    aServiceCollection.AddSingleton<SpaTestApplication<YarpTestServerApplication, Yarp.Server.Program>>();
 
     base.ConfigureApplications(aServiceCollection);
   }

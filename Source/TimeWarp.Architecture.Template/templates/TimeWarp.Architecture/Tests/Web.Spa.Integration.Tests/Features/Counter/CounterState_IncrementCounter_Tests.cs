@@ -13,7 +13,7 @@ public class IncrementCounterAction_Should : BaseTest
 
   public IncrementCounterAction_Should
   (
-    SpaTestApplication<YarpServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
   ) : base(aSpaTestApplication) { }
 
   public async Task Decrement_Count_Given_NegativeAmount()

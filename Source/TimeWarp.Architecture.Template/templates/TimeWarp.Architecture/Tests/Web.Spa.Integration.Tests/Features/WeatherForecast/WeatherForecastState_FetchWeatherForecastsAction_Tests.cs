@@ -13,7 +13,7 @@ public class FetchWeatherForecastsAction_Should : BaseTest
 
   public FetchWeatherForecastsAction_Should
   (
-    SpaTestApplication<YarpServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
   ) : base(aSpaTestApplication) { }
 
   public async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()

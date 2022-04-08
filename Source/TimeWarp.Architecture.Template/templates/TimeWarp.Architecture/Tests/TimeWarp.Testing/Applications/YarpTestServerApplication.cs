@@ -7,14 +7,14 @@ using Microsoft.Extensions.Hosting;
 /// Used to launch the Api.Server application
 /// </summary>
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
-public class YarpServerApplication : TestServerApplication<Yarp.Server.Program>
+public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Program>
 {
-  private readonly WebServerApplication WebServerApplication;
-  private readonly ApiServerApplication ApiServerApplication;
-  public YarpServerApplication
+  private readonly WebTestServerApplication WebServerApplication;
+  private readonly ApiTestServerApplication ApiServerApplication;
+  public YarpTestServerApplication
   (
-    WebServerApplication aWebServerApplication,
-    ApiServerApplication aApiServerApplication
+    WebTestServerApplication aWebServerApplication,
+    ApiTestServerApplication aApiServerApplication
   ) :
   base
   (

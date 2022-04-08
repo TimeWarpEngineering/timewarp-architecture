@@ -4,20 +4,20 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 /// <summary>
-/// Used to launch the Web.Server application
+/// Used to launch the Api.Server application
 /// </summary>
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
-public class WebServerApplication : TestServerApplication<Web.Server.Program>
+public class ApiTestServerApplication : TestServerApplication<Api.Server.Program>
 {
-  public WebServerApplication() :
+  public ApiTestServerApplication() :
   base
   (
-    new WebApplicationHost<Web.Server.Program>
+    new WebApplicationHost<Api.Server.Program>
     (
       aEnvironmentName: Environments.Development,
       aUrls: new[]
       {
-        "https://localhost:7001"
+        "https://localhost:7255"
       },
       ConfigureServicesDelegate
     )

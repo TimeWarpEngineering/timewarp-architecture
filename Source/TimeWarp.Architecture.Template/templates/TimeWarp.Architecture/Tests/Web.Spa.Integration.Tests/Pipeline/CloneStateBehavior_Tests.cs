@@ -14,7 +14,7 @@ public class Should : BaseTest
 
   public Should
   (
-    SpaTestApplication<YarpServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
   ) : base(aSpaTestApplication) { }
 
   public async Task CloneState()

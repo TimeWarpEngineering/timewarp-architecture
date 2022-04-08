@@ -13,7 +13,7 @@ using TimeWarp.Architecture.Features;
 /// <summary>
 /// An abstract class that adds test functionality for the passed in WebApplication.
 /// </summary>
-/// <example><see cref="WebServerApplication"/></example>
+/// <example><see cref="WebTestServerApplication"/></example>
 /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down. </remarks>
 /// <typeparam name="TProgram"></typeparam>
 [NotTest]

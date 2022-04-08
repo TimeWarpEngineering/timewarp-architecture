@@ -107,9 +107,9 @@ public class TestExecution : IExecution
   {
     Console.WriteLine($"==== {nameof(ConfigureApplications)} ====");
     aServiceCollection
-      .AddSingleton<WebServerApplication>()
-      .AddSingleton<ApiServerApplication>()
-      .AddSingleton<YarpServerApplication>();
+      .AddSingleton<WebTestServerApplication>()
+      .AddSingleton<ApiTestServerApplication>()
+      .AddSingleton<YarpTestServerApplication>();
 
     ; // Add other applications you want to run here
   }
