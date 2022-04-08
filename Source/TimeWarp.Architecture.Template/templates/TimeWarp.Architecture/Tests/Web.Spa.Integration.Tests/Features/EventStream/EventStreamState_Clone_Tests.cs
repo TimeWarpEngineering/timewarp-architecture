@@ -10,7 +10,7 @@ public class Clone_Should : BaseTest
 {
   private EventStreamState EventStreamState => Store.GetState<EventStreamState>();
 
-  public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+  public Clone_Should(SpaTestApplication aSpaTestApplication) : base(aSpaTestApplication) { }
 
   public void Clone()
   {

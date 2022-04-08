@@ -13,21 +13,23 @@ using TimeWarp.Architecture.Features.ClientLoaders;
 using TimeWarp.Architecture.Testing;
 
 /// <summary>
-/// Creates the ServiceProvider for the Client and configures it on construction
+/// Inject this when the SUT is the Web.Spa
+/// Creates the ServiceProvider for the Spa and configures it on construction
 /// </summary>
 [NotTest]
-public class TestClientApplication
+public class SpaTestApplication // Maybe we make this generic passing in the WebApplication we want to use for the URL??
 {
   private readonly ISender ScopedSender;
   public IServiceProvider ServiceProvider { get; }
 
-  public TestClientApplication(WebServerApplication aTimeWarpBlazorServerApplication)
+  public SpaTestApplication(WebServerApplication aWebServerApplication)
   {
     var services = new ServiceCollection();
     // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
-    services.AddSingleton(aTimeWarpBlazorServerApplication.HttpClient);
+    // If using Yarp we want its HttpClient 
+    services.AddSingleton(aWebServerApplication.HttpClient);
 
-    ConfigureServices(services, aTimeWarpBlazorServerApplication.WebApplicationHost.Configuration);
+    ConfigureServices(services, aWebServerApplication.WebApplicationHost.Configuration);
     ServiceProvider = services.BuildServiceProvider();
     ScopedSender = new ScopedSender(ServiceProvider);
   }

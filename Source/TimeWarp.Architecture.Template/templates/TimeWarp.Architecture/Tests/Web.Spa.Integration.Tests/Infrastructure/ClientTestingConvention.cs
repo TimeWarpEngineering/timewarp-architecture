@@ -23,7 +23,7 @@ public class TimeWarpExecution : TestExecution
 
   public override void ConfigureApplications(ServiceCollection aServiceCollection)
   {
-    aServiceCollection.AddSingleton<TestClientApplication>();
+    aServiceCollection.AddSingleton<SpaTestApplication>();
     base.ConfigureApplications(aServiceCollection);
   }
 }

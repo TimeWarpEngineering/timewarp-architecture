@@ -9,7 +9,7 @@ public class Clone_Should : BaseTest
 {
   private CounterState CounterState => Store.GetState<CounterState>();
 
-  public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+  public Clone_Should(SpaTestApplication aSpaTestApplication) : base(aSpaTestApplication) { }
 
   public void Clone()
   {

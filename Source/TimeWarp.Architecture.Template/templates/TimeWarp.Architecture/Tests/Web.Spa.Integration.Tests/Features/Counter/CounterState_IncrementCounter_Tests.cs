@@ -10,7 +10,7 @@ public class IncrementCounterAction_Should : BaseTest
 {
   private CounterState CounterState => Store.GetState<CounterState>();
 
-  public IncrementCounterAction_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+  public IncrementCounterAction_Should(SpaTestApplication aSpaTestApplication) : base(aSpaTestApplication) { }
 
   public async Task Decrement_Count_Given_NegativeAmount()
   {

@@ -11,7 +11,7 @@ public class Should : BaseTest
 {
   private CounterState CounterState => Store.GetState<CounterState>();
 
-  public Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+  public Should(SpaTestApplication aSpaTestApplication) : base(aSpaTestApplication) { }
 
   public async Task CloneState()
   {
