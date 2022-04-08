@@ -144,10 +144,9 @@ public class Program
       Host = aConfiguration.GetValue<string>($"service:{aServiceName}:host"),
       Port = aConfiguration.GetValue<int>($"service:{aServiceName}:port")
     };
-    Console.WriteLine($"********* {uriBuilder}**********");
-    string serviceUri = uriBuilder.ToString();
-    serviceUri = aConfiguration.GetServiceUri(aServiceName)?.AbsoluteUri ?? uriBuilder.ToString();
-    Console.WriteLine($"********* {serviceUri}**********");
+
+    string serviceUri = aConfiguration.GetServiceUri(aServiceName)?.AbsoluteUri ?? uriBuilder.ToString();
+
     return serviceUri;
   }
 
