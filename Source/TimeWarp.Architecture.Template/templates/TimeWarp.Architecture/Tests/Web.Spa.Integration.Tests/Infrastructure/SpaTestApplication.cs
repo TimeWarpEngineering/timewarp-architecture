@@ -13,21 +13,26 @@ using TimeWarp.Architecture.Features.ClientLoaders;
 using TimeWarp.Architecture.Testing;
 
 /// <summary>
-/// Creates the ServiceProvider for the Client and configures it on construction
+/// Inject this when the SUT is the Web.Spa
+/// Creates the ServiceProvider for the Spa and configures it on construction
 /// </summary>
 [NotTest]
-public class TestClientApplication
+public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestApplication
+  where TViaTestServerApplication : TestServerApplication<TProgram>
+  where TProgram : IProgram
 {
   private readonly ISender ScopedSender;
   public IServiceProvider ServiceProvider { get; }
 
-  public TestClientApplication(WebServerApplication aTimeWarpBlazorServerApplication)
+  public SpaTestApplication(IServiceProvider aTestingServiceProvider)
   {
+    var testServerApplication = (TViaTestServerApplication)aTestingServiceProvider.GetRequiredService(typeof(TViaTestServerApplication));
     var services = new ServiceCollection();
-    // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
-    services.AddSingleton(aTimeWarpBlazorServerApplication.HttpClient);
 
-    ConfigureServices(services, aTimeWarpBlazorServerApplication.WebApplicationHost.Configuration);
+    // We need an HttpClient to talk to the Server side configured before calling AddBlazorState.
+    services.AddSingleton(testServerApplication.HttpClient);
+
+    ConfigureServices(services, testServerApplication.WebApplicationHost.Configuration);
     ServiceProvider = services.BuildServiceProvider();
     ScopedSender = new ScopedSender(ServiceProvider);
   }
@@ -59,4 +64,9 @@ public class TestClientApplication
   public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default) =>
     ScopedSender.Send(aRequest, aCancellationToken);
 
+}
+
+public interface ISpaTestApplication
+{
+  public IServiceProvider ServiceProvider { get; }
 }

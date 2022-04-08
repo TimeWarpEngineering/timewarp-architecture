@@ -3,6 +3,7 @@ namespace CounterState_;
 using FluentAssertions;
 using System.Threading.Tasks;
 using TimeWarp.Architecture.Features.Counters;
+using TimeWarp.Architecture.Testing;
 using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 using static TimeWarp.Architecture.Features.Counters.CounterState;
 
@@ -10,7 +11,10 @@ public class IncrementCounterAction_Should : BaseTest
 {
   private CounterState CounterState => Store.GetState<CounterState>();
 
-  public IncrementCounterAction_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+  public IncrementCounterAction_Should
+  (
+    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+  ) : base(aSpaTestApplication) { }
 
   public async Task Decrement_Count_Given_NegativeAmount()
   {

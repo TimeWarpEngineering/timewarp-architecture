@@ -3,13 +3,17 @@ namespace CounterState_;
 using AnyClone;
 using FluentAssertions;
 using TimeWarp.Architecture.Features.Counters;
+using TimeWarp.Architecture.Testing;
 using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
 public class Clone_Should : BaseTest
 {
   private CounterState CounterState => Store.GetState<CounterState>();
 
-  public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+  public Clone_Should
+  (
+    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+  ) : base(aSpaTestApplication) { }
 
   public void Clone()
   {

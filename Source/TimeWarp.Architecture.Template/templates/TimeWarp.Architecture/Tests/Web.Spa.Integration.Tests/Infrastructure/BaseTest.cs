@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 
 /// <summary>
-/// 
+/// Base Class for Client tests.
 /// </summary>
 /// <remarks>
 /// Based on Jimmy's SliceFixture
@@ -20,13 +20,13 @@ public abstract class BaseTest
   protected readonly IStore Store;
 
   /// <summary>
-  /// Base Class for Client tests.
+  /// Base Class for Spa tests.
   /// </summary>
-  /// <param name="aClientHost"></param>
-  /// <remarks>The response to Client Actions is always 'Unit' because the handler updates the state.</remarks>
-  public BaseTest(TestClientApplication aClientHost)
+  /// <param name="aSpaTestApplication"></param>
+  /// <remarks>The response to Spa Actions is always 'Unit' because the handler updates the state.</remarks>
+  public BaseTest(ISpaTestApplication aSpaTestApplication)
   {
-    ServiceScopeFactory = aClientHost.ServiceProvider.GetService<IServiceScopeFactory>();
+    ServiceScopeFactory = aSpaTestApplication.ServiceProvider.GetService<IServiceScopeFactory>();
     ServiceScope = ServiceScopeFactory.CreateScope();
     Sender = ServiceScope.ServiceProvider.GetService<ISender>();
     Store = ServiceScope.ServiceProvider.GetService<IStore>();

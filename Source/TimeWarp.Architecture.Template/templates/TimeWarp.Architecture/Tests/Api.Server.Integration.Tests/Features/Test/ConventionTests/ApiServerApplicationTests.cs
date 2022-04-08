@@ -9,7 +9,7 @@ public class Should
 {
   public Should
   (
-    ApiServerApplication aApiServerApplication
+    ApiTestServerApplication aApiServerApplication
   )
   {
     Guard.Argument(aApiServerApplication).NotNull();

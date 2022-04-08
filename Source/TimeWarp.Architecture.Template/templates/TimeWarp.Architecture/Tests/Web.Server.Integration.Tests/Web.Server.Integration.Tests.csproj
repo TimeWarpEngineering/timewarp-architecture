@@ -9,4 +9,9 @@
     <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Shared\Web.Shared.csproj" />
     <ProjectReference Include="..\TimeWarp.Testing\Testing.Common.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Analytics\" />
+    <Folder Include="Features\Analytics\TrackEvent\" />
+  </ItemGroup>
 </Project>

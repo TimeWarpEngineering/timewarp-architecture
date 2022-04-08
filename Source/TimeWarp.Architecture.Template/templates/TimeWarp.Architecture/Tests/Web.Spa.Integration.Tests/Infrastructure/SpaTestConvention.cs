@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using TimeWarp.Architecture.Testing;
 
 [NotTest]
-public class ClientTestConvention : ITestProject
+public class SpaTestConvention : ITestProject
 {
   public void Configure(TestConfiguration aTestConfiguration, TestEnvironment aTestEnvironment)
   {
@@ -23,7 +23,8 @@ public class TimeWarpExecution : TestExecution
 
   public override void ConfigureApplications(ServiceCollection aServiceCollection)
   {
-    aServiceCollection.AddSingleton<TestClientApplication>();
+    aServiceCollection.AddSingleton<SpaTestApplication<YarpTestServerApplication, Yarp.Server.Program>>();
+
     base.ConfigureApplications(aServiceCollection);
   }
 }

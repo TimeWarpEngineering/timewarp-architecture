@@ -5,13 +5,17 @@ using FluentAssertions;
 using System;
 using System.Collections.Generic;
 using TimeWarp.Architecture.Features.WeatherForecasts;
+using TimeWarp.Architecture.Testing;
 using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
 public class Clone_Should : BaseTest
 {
   private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
-  public Clone_Should(TestClientApplication aWebAssemblyHost) : base(aWebAssemblyHost) { }
+  public Clone_Should
+  (
+    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+  ) : base(aSpaTestApplication) { }
 
   public void Clone()
   {
@@ -40,9 +44,7 @@ public class Clone_Should : BaseTest
     WeatherForecastsState.WeatherForecasts.Count.Should().Be(clone.WeatherForecasts.Count);
     WeatherForecastsState.Guid.Should().NotBe(clone.Guid);
     WeatherForecastsState.WeatherForecasts[0].TemperatureC.Should().Be(clone.WeatherForecasts[0].TemperatureC);
-    WeatherForecastsState.WeatherForecasts[0].Should().Be(clone.WeatherForecasts[0]); //record type
-    object.ReferenceEquals(WeatherForecastsState.WeatherForecasts[0], clone.WeatherForecasts[0]).Should().BeFalse(); // recored type by reference
-    //clone.WeatherForecasts[0]).Should().NotBe(true);
-
+    WeatherForecastsState.WeatherForecasts[0].Should().Be(clone.WeatherForecasts[0]);           // WeatherForecastDTO is a `record class` thus equality should be true
+    WeatherForecastsState.WeatherForecasts[0].Should().NotBeSameAs(clone.WeatherForecasts[0]);  // record class is a reference type thus the reference should be different
   }
 }

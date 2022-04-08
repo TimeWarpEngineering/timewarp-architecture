@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  
   <PropertyGroup>
     <Description>Web Server</Description>
     <DisableImplicitComponentsAnalyzers>true</DisableImplicitComponentsAnalyzers>
