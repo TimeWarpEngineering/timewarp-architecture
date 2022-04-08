@@ -17,19 +17,22 @@ using TimeWarp.Architecture.Testing;
 /// Creates the ServiceProvider for the Spa and configures it on construction
 /// </summary>
 [NotTest]
-public class SpaTestApplication // Maybe we make this generic passing in the WebApplication we want to use for the URL??
+public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestApplication
+  where TViaTestServerApplication : TestServerApplication<TProgram>
+  where TProgram : IProgram
 {
   private readonly ISender ScopedSender;
   public IServiceProvider ServiceProvider { get; }
 
-  public SpaTestApplication(WebServerApplication aWebServerApplication)
+  public SpaTestApplication(IServiceProvider aTestingServiceProvider)
   {
+    var testServerApplication = (TViaTestServerApplication)aTestingServiceProvider.GetRequiredService(typeof(TViaTestServerApplication));
     var services = new ServiceCollection();
-    // Need an HttpClient to talk to the Server side configured before calling AddBlazorState.
-    // If using Yarp we want its HttpClient 
-    services.AddSingleton(aWebServerApplication.HttpClient);
 
-    ConfigureServices(services, aWebServerApplication.WebApplicationHost.Configuration);
+    // We need an HttpClient to talk to the Server side configured before calling AddBlazorState.
+    services.AddSingleton(testServerApplication.HttpClient);
+
+    ConfigureServices(services, testServerApplication.WebApplicationHost.Configuration);
     ServiceProvider = services.BuildServiceProvider();
     ScopedSender = new ScopedSender(ServiceProvider);
   }
@@ -61,4 +64,9 @@ public class SpaTestApplication // Maybe we make this generic passing in the Web
   public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default) =>
     ScopedSender.Send(aRequest, aCancellationToken);
 
+}
+
+public interface ISpaTestApplication
+{
+  public IServiceProvider ServiceProvider { get; }
 }

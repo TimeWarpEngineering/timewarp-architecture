@@ -9,21 +9,12 @@ using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsSta
 
 public class FetchWeatherForecastsAction_Should : BaseTest
 {
-#pragma warning disable IDE0052 // Remove unread private members It is used simply because injecting it ensures it is constructed.
-  private readonly WebServerApplication TimeWarpBlazorServerApplication;
-#pragma warning restore IDE0052 // Remove unread private members
-
   private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
   public FetchWeatherForecastsAction_Should
   (
-    TestClientApplication aClientHost,
-    WebServerApplication aTimeWarpBlazorServerApplication
-  )
-    : base(aClientHost)
-  {
-    TimeWarpBlazorServerApplication = aTimeWarpBlazorServerApplication;
-  }
+    SpaTestApplication<YarpServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+  ) : base(aSpaTestApplication) { }
 
   public async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()
   {

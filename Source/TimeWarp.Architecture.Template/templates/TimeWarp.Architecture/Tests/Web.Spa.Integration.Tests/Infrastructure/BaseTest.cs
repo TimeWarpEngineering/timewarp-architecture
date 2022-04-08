@@ -24,7 +24,7 @@ public abstract class BaseTest
   /// </summary>
   /// <param name="aSpaTestApplication"></param>
   /// <remarks>The response to Spa Actions is always 'Unit' because the handler updates the state.</remarks>
-  public BaseTest(SpaTestApplication aSpaTestApplication)
+  public BaseTest(ISpaTestApplication aSpaTestApplication)
   {
     ServiceScopeFactory = aSpaTestApplication.ServiceProvider.GetService<IServiceScopeFactory>();
     ServiceScope = ServiceScopeFactory.CreateScope();

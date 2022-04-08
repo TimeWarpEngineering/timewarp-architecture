@@ -4,13 +4,17 @@ using AnyClone;
 using FluentAssertions;
 using System.Collections.Generic;
 using TimeWarp.Architecture.Features.EventStreams;
+using TimeWarp.Architecture.Testing;
 using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
 public class Clone_Should : BaseTest
 {
   private EventStreamState EventStreamState => Store.GetState<EventStreamState>();
 
-  public Clone_Should(SpaTestApplication aSpaTestApplication) : base(aSpaTestApplication) { }
+  public Clone_Should
+  (
+    SpaTestApplication<YarpServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+  ) : base(aSpaTestApplication) { }
 
   public void Clone()
   {

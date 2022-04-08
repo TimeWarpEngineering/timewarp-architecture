@@ -5,13 +5,17 @@ using FluentAssertions;
 using System;
 using System.Collections.Generic;
 using TimeWarp.Architecture.Features.WeatherForecasts;
+using TimeWarp.Architecture.Testing;
 using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
 public class Clone_Should : BaseTest
 {
   private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
-  public Clone_Should(SpaTestApplication aSpaTestApplication) : base(aSpaTestApplication) { }
+  public Clone_Should
+  (
+    SpaTestApplication<YarpServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+  ) : base(aSpaTestApplication) { }
 
   public void Clone()
   {
