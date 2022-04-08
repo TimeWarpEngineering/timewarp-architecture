@@ -10,11 +10,11 @@ using Microsoft.Extensions.Hosting;
 public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Program>
 {
   private readonly WebTestServerApplication WebServerApplication;
-  private readonly ApiTestServerApplication ApiServerApplication;
+  private readonly ApiTestServerApplication ApiTestServerApplication;
   public YarpTestServerApplication
   (
     WebTestServerApplication aWebServerApplication,
-    ApiTestServerApplication aApiServerApplication
+    ApiTestServerApplication aApiTestServerApplication
   ) :
   base
   (
@@ -30,7 +30,7 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
   )
   {
     WebServerApplication = aWebServerApplication;
-    ApiServerApplication = aApiServerApplication;
+    ApiTestServerApplication = aApiTestServerApplication;
   }
 
   protected static void ConfigureServicesDelegate

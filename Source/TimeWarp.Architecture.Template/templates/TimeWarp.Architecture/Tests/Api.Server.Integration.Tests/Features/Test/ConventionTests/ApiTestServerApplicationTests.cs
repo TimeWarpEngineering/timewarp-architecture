@@ -1,18 +1,18 @@
-﻿namespace TimeWarpBlazorServerApplication_;
+﻿namespace ApiTestServerApplication_;
 
 using Dawn;
 using FluentAssertions;
 using TimeWarp.Architecture.Testing;
 
-[TestTag("ApiServerApplication")]
+[TestTag("ApiTestServerApplication")]
 public class Should
 {
   public Should
   (
-    ApiTestServerApplication aApiServerApplication
+    ApiTestServerApplication aApiTestServerApplication
   )
   {
-    Guard.Argument(aApiServerApplication).NotNull();
+    Guard.Argument(aApiTestServerApplication).NotNull();
   }
 
   public void Start_Without_Exception() => true.Should().BeTrue();
