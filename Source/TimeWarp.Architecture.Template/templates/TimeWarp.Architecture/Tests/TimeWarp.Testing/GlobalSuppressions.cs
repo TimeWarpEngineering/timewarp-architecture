@@ -6,4 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "Construction the item will start it", Scope = "member", Target = "~F:TimeWarp.Architecture.Testing.YarpTestServerApplication.ApiTestServerApplication")]
-[assembly: SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "Construction the item will start it", Scope = "member", Target = "~F:TimeWarp.Architecture.Testing.YarpTestServerApplication.WebServerApplication")]
+[assembly: SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "Construction the item will start it", Scope = "member", Target = "~F:TimeWarp.Architecture.Testing.YarpTestServerApplication.WebTestServerApplication")]

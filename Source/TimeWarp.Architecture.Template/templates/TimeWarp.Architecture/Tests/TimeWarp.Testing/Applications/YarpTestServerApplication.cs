@@ -9,11 +9,11 @@ using Microsoft.Extensions.Hosting;
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
 public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Program>
 {
-  private readonly WebTestServerApplication WebServerApplication;
+  private readonly WebTestServerApplication WebTestServerApplication;
   private readonly ApiTestServerApplication ApiTestServerApplication;
   public YarpTestServerApplication
   (
-    WebTestServerApplication aWebServerApplication,
+    WebTestServerApplication aWebTestServerApplication,
     ApiTestServerApplication aApiTestServerApplication
   ) :
   base
@@ -29,7 +29,7 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
     )
   )
   {
-    WebServerApplication = aWebServerApplication;
+    WebTestServerApplication = aWebTestServerApplication;
     ApiTestServerApplication = aApiTestServerApplication;
   }
 
