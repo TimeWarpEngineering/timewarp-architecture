@@ -1,6 +1,5 @@
-namespace TimeWarp.Architecture.Features.Bases
-{
-  using BlazorState;
+namespace TimeWarp.Architecture.Features;
 
-  public class BaseAction : BaseRequest, IAction { }
-}
+using BlazorState;
+
+public record BaseAction : BaseRequest, IAction { }

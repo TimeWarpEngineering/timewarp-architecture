@@ -27,15 +27,15 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.CorsPolicies;
 using TimeWarp.Architecture.Data;
-using TimeWarp.Architecture.Features.Bases;
 using TimeWarp.Architecture.HostedServices;
 using TimeWarp.Architecture.Infrastructure;
 
 public class Program : IProgram
 {
   const string SwaggerVersion = "v1";
-  const string SwaggerApiTitle = $"TimeWarp Architecture API {SwaggerVersion}";
+  const string SwaggerApiTitle = $"TimeWarp.Architecture Web.Server API {SwaggerVersion}";
   const string SwaggerEndPoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
   public static Task<int> Main(string[] aArgumentArray)
@@ -59,19 +59,21 @@ public class Program : IProgram
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
     ConfigureSettings(aServiceCollection, aConfiguration);
+    CorsPolicy.Any.Apply(aServiceCollection);
     ConfigureInfrastructure(aServiceCollection);
     aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
     aServiceCollection.AddRazorPages();
     aServiceCollection.AddServerSideBlazor();
     aServiceCollection.AddMvc()
+      .TryAddApplicationPart(typeof(Web_Server_Assembly).Assembly)
       .AddFluentValidation
       (
         aFluentValidationMvcConfiguration =>
         {
           // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
           // will NOT register internals. This feature is utilized.
-          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Program>();
-          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<BaseRequest>();
+          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Web_Server_Assembly>();
+          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Web_Shared_Assembly>();
         }
       );
 
@@ -98,6 +100,13 @@ public class Program : IProgram
 
   public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
   {
+    // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
+    // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
+    // Sometimes, you might want to allow other sites to make cross-origin requests to your app.
+    if (aHostEnvironment.IsDevelopment())
+    {
+      aWebApplication.UseCors(CorsPolicy.Any.Name);
+    }
     // Enable middleware to serve generated Swagger as a JSON endpoint.
     aWebApplication.UseSwagger();
 
@@ -149,12 +158,12 @@ public class Program : IProgram
           aSwaggerGenOptions.EnableAnnotations();
 
           // Set the comments path for the Swagger JSON and UI from Server.
-          string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+          string xmlFile = $"{typeof(Web_Server_Assembly).Assembly.GetName().Name}.xml";
           string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
           aSwaggerGenOptions.IncludeXmlComments(xmlPath);
 
           // Set the comments path for the Swagger JSON and UI from API.
-          xmlFile = $"{typeof(BaseRequest).Assembly.GetName().Name}.xml";
+          xmlFile = $"{typeof(Web_Shared_Assembly).Assembly.GetName().Name}.xml";
           xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
           aSwaggerGenOptions.IncludeXmlComments(xmlPath);
         }
@@ -171,6 +180,11 @@ public class Program : IProgram
     aServiceCollection
       .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
       .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
+
+    aServiceCollection.Configure<ApiBehaviorOptions>
+    (
+      aApiBehaviorOptions => aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
+    );
   }
 
   private static void ConfigureInfrastructure(IServiceCollection aServiceCollection)

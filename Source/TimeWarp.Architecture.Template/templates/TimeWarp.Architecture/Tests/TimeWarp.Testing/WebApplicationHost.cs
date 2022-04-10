@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down.
 /// Further configuring or overriding Services can be done by passing in delegate to the constructor
 /// </remarks>
-/// <example><see cref="WebServerApplication"/></example>
+/// <example><see cref="WebTestServerApplication"/></example>
 /// <typeparam name="TProgram">The IProgram Implementation to use</typeparam>
 [NotTest]
 public class WebApplicationHost<TProgram> : IAsyncDisposable
@@ -37,6 +37,7 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
   public WebApplicationHost
   (
     string aEnvironmentName,
+    //string aContentRoot,
     string[] aUrls,
     Action<HostBuilderContext, IServiceCollection> aConfigureServicesDelegate = null
   )
@@ -46,6 +47,7 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
       WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = aEnvironmentName });
 
     builder.WebHost
+      //.UseContentRoot(aContentRoot)
       .UseUrls(aUrls)
       .UseShutdownTimeout(TimeSpan.FromSeconds(30));
 

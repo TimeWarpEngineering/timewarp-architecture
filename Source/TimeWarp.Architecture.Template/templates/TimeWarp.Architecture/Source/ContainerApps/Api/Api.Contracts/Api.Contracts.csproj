@@ -15,5 +15,12 @@
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.Extensions.Options" />
   </ItemGroup>
-    
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="MediatR"/>
+  </ItemGroup>
 </Project>

@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\AspNetCore.Common\AspNetCore.Common.csproj" />
     <ProjectReference Include="..\..\..\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
     <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj" />
   </ItemGroup>
@@ -31,4 +31,8 @@
     <InternalsVisibleTo Include="Api.Server.Integration.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="MediatR"/>
+  </ItemGroup>
+  
 </Project>

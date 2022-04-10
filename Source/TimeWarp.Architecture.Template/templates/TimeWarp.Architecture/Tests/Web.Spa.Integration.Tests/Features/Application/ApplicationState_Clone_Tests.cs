@@ -1,4 +1,4 @@
-namespace ApplicationState;
+namespace ApplicationState_;
 
 using AnyClone;
 using FluentAssertions;
