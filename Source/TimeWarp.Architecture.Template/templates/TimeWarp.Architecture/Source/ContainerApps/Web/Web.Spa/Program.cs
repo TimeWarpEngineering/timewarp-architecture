@@ -90,12 +90,9 @@ public class Program
         const string ServiceName = "grpc-server";
         string grpcUrl = GetServiceUri(configuration, ServiceName);
 
-        // If no address is set then fallback to the current webpage URL
         if (string.IsNullOrEmpty(grpcUrl))
         {
           throw new Exception("No grpc-server address found in configuration");
-          //NavigationManager navigationManager = aServiceProvider.GetRequiredService<NavigationManager>();
-          // grpcUrl = "https://localhost:7227";
         }
 
         Console.WriteLine($"grpcUrl:{grpcUrl}");

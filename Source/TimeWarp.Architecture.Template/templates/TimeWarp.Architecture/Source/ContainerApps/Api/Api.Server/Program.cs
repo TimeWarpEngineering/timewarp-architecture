@@ -42,7 +42,7 @@ public class Program : IProgram
 
     aServiceCollection
       .AddControllers()
-      .TryAddApplicationPart(typeof(Program).Assembly)
+      .TryAddApplicationPart(typeof(Api_Server_Assembly).Assembly)
       .AddFluentValidation
         (
           aFluentValidationMvcConfiguration =>

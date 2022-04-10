@@ -2,8 +2,9 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
+    <UseRazorSourceGenerator>true</UseRazorSourceGenerator>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <Description>Web Server</Description>
     <DisableImplicitComponentsAnalyzers>true</DisableImplicitComponentsAnalyzers>

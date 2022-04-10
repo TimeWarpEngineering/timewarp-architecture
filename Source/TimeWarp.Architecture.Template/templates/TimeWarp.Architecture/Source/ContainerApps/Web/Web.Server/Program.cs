@@ -65,6 +65,7 @@ public class Program : IProgram
     aServiceCollection.AddRazorPages();
     aServiceCollection.AddServerSideBlazor();
     aServiceCollection.AddMvc()
+      .TryAddApplicationPart(typeof(Web_Server_Assembly).Assembly)
       .AddFluentValidation
       (
         aFluentValidationMvcConfiguration =>

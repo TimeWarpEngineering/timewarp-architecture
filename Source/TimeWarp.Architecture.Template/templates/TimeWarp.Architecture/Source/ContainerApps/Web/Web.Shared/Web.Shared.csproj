@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Api Library</Description>
+    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
@@ -26,7 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Analytics\" />
+    <Using Include="MediatR"/>
   </ItemGroup>
-
 </Project>
