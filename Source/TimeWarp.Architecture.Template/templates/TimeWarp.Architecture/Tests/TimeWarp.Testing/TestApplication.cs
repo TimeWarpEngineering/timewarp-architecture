@@ -11,7 +11,7 @@ using TimeWarp;
 [NotTest]
 public abstract partial class TestApplication
 {
-  [Delegate]
+  [TimeWarp.Delegate]
   private readonly ISender ScopedSender;
 
   public IServiceProvider ServiceProvider { get; }
