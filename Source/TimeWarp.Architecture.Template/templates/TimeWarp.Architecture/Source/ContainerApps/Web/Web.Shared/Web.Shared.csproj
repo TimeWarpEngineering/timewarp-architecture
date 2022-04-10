@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Api Library</Description>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -18,6 +19,14 @@
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.ServiceModel.Primitives" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Analytics\" />
   </ItemGroup>
 
 </Project>

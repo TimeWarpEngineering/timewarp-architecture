@@ -44,6 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\AspNetCore.Common\AspNetCore.Common.csproj" />
     <ProjectReference Include="..\..\..\Common\Common.csproj" />
     <ProjectReference Include="..\Web.Spa\Web.Spa.csproj" />
     <ProjectReference Include="..\Web.Shared\Web.Shared.csproj" />
@@ -52,11 +53,13 @@
   <ItemGroup>
     <Folder Include="Entities\X_Aggregate\Requests\" />
     <Folder Include="Extensions\" />
-    <Folder Include="Features\Analytics\TrackEvent\" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Web.Server.Integration.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="MediatR"/>
+  </ItemGroup>
 </Project>
