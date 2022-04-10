@@ -79,7 +79,7 @@ public class TestExecution : IExecution
         }
       }
     }
-    await Task.Delay(TimeSpan.FromMinutes(5));// This will give me time to see if the webApplication responds
+    //await Task.Delay(TimeSpan.FromMinutes(5));// This will give me time to see if the webApplication responds
 
     await (serviceScopeFactory as IAsyncDisposable).DisposeAsync();
   }
