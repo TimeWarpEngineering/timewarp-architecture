@@ -1,4 +1,4 @@
-namespace GetWeatherForecastsEndpoint;
+namespace GetWeatherForecastsEndpoint_;
 
 using FluentAssertions;
 using System.Threading.Tasks;
