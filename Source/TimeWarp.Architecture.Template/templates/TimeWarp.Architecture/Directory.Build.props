@@ -8,6 +8,7 @@
 
   <!-- Common compile parameters -->
   <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>preview</LangVersion>
     <EnablePreviewFeatures>True</EnablePreviewFeatures>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>

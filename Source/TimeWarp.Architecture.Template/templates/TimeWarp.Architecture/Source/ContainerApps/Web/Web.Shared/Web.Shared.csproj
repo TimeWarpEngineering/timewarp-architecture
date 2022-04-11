@@ -2,7 +2,6 @@
   <PropertyGroup>
     <Description>Api Library</Description>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <PropertyGroup>
