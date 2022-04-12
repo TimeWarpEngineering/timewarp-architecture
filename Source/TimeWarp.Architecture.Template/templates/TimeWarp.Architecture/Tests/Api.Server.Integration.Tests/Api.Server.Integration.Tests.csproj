@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Fixie.TestAdapter" />
     <PackageReference Include="FluentAssertions" />
   </ItemGroup>
