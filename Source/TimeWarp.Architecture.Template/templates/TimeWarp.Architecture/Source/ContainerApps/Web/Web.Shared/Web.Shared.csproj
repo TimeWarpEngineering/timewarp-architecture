@@ -25,7 +25,4 @@
     <ProjectReference Include="..\..\..\Common\Common.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="MediatR"/>
-  </ItemGroup>
 </Project>

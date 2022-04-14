@@ -59,7 +59,4 @@
     <InternalsVisibleTo Include="Web.Server.Integration.Tests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="MediatR"/>
-  </ItemGroup>
 </Project>
