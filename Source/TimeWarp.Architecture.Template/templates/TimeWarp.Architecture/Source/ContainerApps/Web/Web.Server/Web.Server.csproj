@@ -47,7 +47,7 @@
     <ProjectReference Include="..\..\..\AspNetCore.Common\AspNetCore.Common.csproj" />
     <ProjectReference Include="..\..\..\Common\Common.csproj" />
     <ProjectReference Include="..\Web.Spa\Web.Spa.csproj" />
-    <ProjectReference Include="..\Web.Shared\Web.Shared.csproj" />
+    <ProjectReference Include="..\Web.Shared\Web.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
