@@ -8,7 +8,7 @@ root = true
 #### Core EditorConfig Options ####
 
 # Treat all cs files in this folder as generated code 
-# So code cleanup wont' say the using are unneccsary and remove them on save.
+# So code cleanup will NOT remove them on save.
 [_Imports.cs]
 generated_code = true
 

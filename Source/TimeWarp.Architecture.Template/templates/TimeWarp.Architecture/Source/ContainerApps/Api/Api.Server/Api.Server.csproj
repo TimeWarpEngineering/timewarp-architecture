@@ -29,9 +29,5 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Api.Server.Integration.Tests" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="MediatR"/>
-  </ItemGroup>
   
 </Project>

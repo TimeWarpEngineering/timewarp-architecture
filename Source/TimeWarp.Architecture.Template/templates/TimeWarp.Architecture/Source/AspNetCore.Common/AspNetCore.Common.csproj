@@ -12,14 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="Microsoft.Extensions.DependencyInjection" />
-  </ItemGroup>
 </Project>
