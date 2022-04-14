@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 /// <typeparam name="TProgram">The IProgram Implementation to use</typeparam>
 [NotTest]
 public class WebApplicationHost<TProgram> : IAsyncDisposable
-  where TProgram : IProgram
+  where TProgram : IAspNetProgram
 {
   public bool Started;
   private readonly WebApplication WebApplication;
