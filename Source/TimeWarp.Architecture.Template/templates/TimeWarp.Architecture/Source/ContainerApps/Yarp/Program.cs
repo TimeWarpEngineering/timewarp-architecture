@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 
-public class Program : IProgram
+public class Program : IAspNetProgram
 {
   public static Task Main(string[] aArgumentArray)
   {

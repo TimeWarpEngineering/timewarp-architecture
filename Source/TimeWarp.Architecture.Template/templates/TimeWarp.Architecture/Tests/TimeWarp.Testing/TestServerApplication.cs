@@ -18,7 +18,7 @@ using TimeWarp.Architecture.Features;
 /// <typeparam name="TProgram"></typeparam>
 [NotTest]
 public abstract partial class TestServerApplication<TProgram> : IAsyncDisposable, IWebApiTestService, ISender
-  where TProgram : IProgram
+  where TProgram : IAspNetProgram
 {
   [Delegate]
   private readonly ISender ScopedSender;

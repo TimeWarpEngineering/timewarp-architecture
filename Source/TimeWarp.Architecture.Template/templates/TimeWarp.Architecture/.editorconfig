@@ -7,6 +7,11 @@ root = true
 
 #### Core EditorConfig Options ####
 
+# Treat all cs files in this folder as generated code 
+# So code cleanup will NOT remove them on save.
+[_Imports.cs]
+generated_code = true
+
 [*]
 # Indentation and spacing
 indent_size = 2

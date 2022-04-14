@@ -1,6 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <UseRazorSourceGenerator>true</UseRazorSourceGenerator>
   </PropertyGroup>
@@ -60,7 +59,4 @@
     <InternalsVisibleTo Include="Web.Server.Integration.Tests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="MediatR"/>
-  </ItemGroup>
 </Project>

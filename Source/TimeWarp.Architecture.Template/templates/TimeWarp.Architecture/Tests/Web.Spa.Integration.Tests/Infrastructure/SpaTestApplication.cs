@@ -19,7 +19,7 @@ using TimeWarp.Architecture.Testing;
 [NotTest]
 public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestApplication
   where TViaTestServerApplication : TestServerApplication<TProgram>
-  where TProgram : IProgram
+  where TProgram : IAspNetProgram
 {
   private readonly ISender ScopedSender;
   public IServiceProvider ServiceProvider { get; }

@@ -32,7 +32,7 @@ using TimeWarp.Architecture.Data;
 using TimeWarp.Architecture.HostedServices;
 using TimeWarp.Architecture.Infrastructure;
 
-public class Program : IProgram
+public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp.Architecture Web.Server API {SwaggerVersion}";

@@ -2,7 +2,6 @@
   <PropertyGroup>
     <Description>Api Library</Description>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -26,7 +25,4 @@
     <ProjectReference Include="..\..\..\Common\Common.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="MediatR"/>
-  </ItemGroup>
 </Project>

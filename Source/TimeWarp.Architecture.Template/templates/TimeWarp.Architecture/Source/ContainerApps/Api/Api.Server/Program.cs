@@ -9,7 +9,7 @@ using Oakton;
 using System.Reflection;
 using TimeWarp.Architecture.CorsPolicies;
 
-public class Program : IProgram
+public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp.Architecture Api.Server API {SwaggerVersion}";
