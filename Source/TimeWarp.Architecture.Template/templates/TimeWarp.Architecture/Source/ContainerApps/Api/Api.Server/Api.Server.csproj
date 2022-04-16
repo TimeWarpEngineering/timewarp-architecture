@@ -21,10 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\AspNetCore.Common\AspNetCore.Common.csproj" />
+    <ProjectReference Include="..\..\..\Common\Common.Server\Common.Server.csproj" />
     <ProjectReference Include="..\..\..\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
-    <ProjectReference Include="..\Api.Application\Api.Application.csproj" />
-    <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj" />
     <ProjectReference Include="..\Api.Infrastructure\Api.Infrastructure.csproj" />
   </ItemGroup>
 

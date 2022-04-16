@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\AspNetCore.Common\AspNetCore.Common.csproj" />
+    <ProjectReference Include="..\..\Common\Common.Server\Common.Server.csproj" />
   </ItemGroup>
 
 </Project>
