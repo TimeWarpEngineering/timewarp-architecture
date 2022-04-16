@@ -1,0 +1,75 @@
+@startuml Dependency graph
+
+!theme plain
+skinparam ComponentStyle rectangle
+left to right direction
+
+' Projects
+[Web.Contracts] #ecf0f1
+[Web.Server] #ecf0f1
+[Web.Spa] #ecf0f1
+[EndToEnd.TestCafe.Tests] #ecf0f1
+[EndToEnd.Playwright.Tests] #ecf0f1
+[Testing.Common] #ecf0f1
+[SourceCodeGenerators] #ecf0f1
+[SourceCodeGenerators.Tests] #ecf0f1
+[Yarp] #ecf0f1
+[Grpc.Server] #ecf0f1
+[Grpc.Contracts] #ecf0f1
+[Api.Server] #ecf0f1
+[Api.Contracts] #ecf0f1
+[Web.TypeScript] #ecf0f1
+[Web.Spa.Integration.Tests] #ecf0f1
+[Web.Server.Integration.Tests] #ecf0f1
+[Api.Server.Integration.Tests] #ecf0f1
+[TimeWarp.OptionsValidation] #ecf0f1
+[AspNetCore.Common] #ecf0f1
+[Api.Application] #ecf0f1
+[Api.Infrastructure] #ecf0f1
+[Api.Domain] #ecf0f1
+[Common] #ecf0f1
+[Common.Application] #ecf0f1
+[Common.Contracts] #ecf0f1
+[Common.Domain] #ecf0f1
+[Common.Infrastructure] #ecf0f1
+[Common.Server] #ecf0f1
+
+Common --> Web.Contracts
+AspNetCore.Common --> Web.Server
+Web.Spa --> Web.Server
+Web.Contracts --> Web.Server
+TimeWarp.OptionsValidation --> Web.Spa
+Api.Contracts --> Web.Spa
+Grpc.Contracts --> Web.Spa
+Web.Contracts --> Web.Spa
+Web.TypeScript.esproj --> Web.Spa
+AspNetCore.Common --> Testing.Common
+Api.Server --> Testing.Common
+Web.Server --> Testing.Common
+Yarp --> Testing.Common
+SourceCodeGenerators --> Testing.Common
+SourceCodeGenerators --> SourceCodeGenerators.Tests
+Testing.Common --> SourceCodeGenerators.Tests
+AspNetCore.Common --> Yarp
+Grpc.Contracts --> Grpc.Server
+AspNetCore.Common --> Api.Server
+TimeWarp.OptionsValidation --> Api.Server
+Api.Application --> Api.Server
+Api.Contracts --> Api.Server
+Api.Infrastructure --> Api.Server
+Common --> Api.Contracts
+Web.Spa --> Web.Spa.Integration.Tests
+Web.Server --> Web.Spa.Integration.Tests
+Testing.Common --> Web.Spa.Integration.Tests
+Web.Server --> Web.Server.Integration.Tests
+Web.Contracts --> Web.Server.Integration.Tests
+Testing.Common --> Web.Server.Integration.Tests
+Api.Server --> Api.Server.Integration.Tests
+Api.Contracts --> Api.Server.Integration.Tests
+SourceCodeGenerators --> Api.Server.Integration.Tests
+Testing.Common --> Api.Server.Integration.Tests
+Common --> AspNetCore.Common
+Common.Application --> Api.Application
+Api.Contracts --> Api.Application
+Api.Domain --> Api.Application
+@enduml
