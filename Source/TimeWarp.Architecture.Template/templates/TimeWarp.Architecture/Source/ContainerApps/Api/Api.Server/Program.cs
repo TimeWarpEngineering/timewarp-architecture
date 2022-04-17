@@ -57,7 +57,14 @@ public class Program : IAspNetProgram
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     aServiceCollection.AddEndpointsApiExplorer();
     aServiceCollection.AddSwaggerGen();
-    aServiceCollection.AddMediatR(typeof(Api_Server_Assembly).GetTypeInfo().Assembly);
+
+    aServiceCollection
+      .AddMediatR
+      (
+        typeof(Api_Server_Assembly).GetTypeInfo().Assembly,
+        typeof(Api_Application_Assembly).GetTypeInfo().Assembly
+      );
+
     ConfigureSwagger(aServiceCollection);
   }
 

@@ -9,4 +9,4 @@
 /// If you want a specific Assembly you can reference this class.
 /// </remarks>
 
-public class Web_Contracts_Assembly { }
+public class Web_Application_Assembly { }

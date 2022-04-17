@@ -26,6 +26,7 @@ using System.Net.Mime;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using TimeWarp.Architecture;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.CorsPolicies;
 using TimeWarp.Architecture.Data;
@@ -73,7 +74,7 @@ public class Program : IAspNetProgram
           // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
           // will NOT register internals. This feature is utilized.
           aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Web_Server_Assembly>();
-          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Web_Shared_Assembly>();
+          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Web_Contracts_Assembly>();
         }
       );
 
@@ -93,7 +94,12 @@ public class Program : IAspNetProgram
 
     Web.Spa.Program.ConfigureServices(aServiceCollection, aConfiguration);
 
-    aServiceCollection.AddMediatR(typeof(Program).GetTypeInfo().Assembly);
+    aServiceCollection
+      .AddMediatR
+      (
+        typeof(Web_Server_Assembly).GetTypeInfo().Assembly,
+        typeof(Web_Application_Assembly).GetTypeInfo().Assembly
+      );
 
     ConfigureSwagger(aServiceCollection);
   }
@@ -163,7 +169,7 @@ public class Program : IAspNetProgram
           aSwaggerGenOptions.IncludeXmlComments(xmlPath);
 
           // Set the comments path for the Swagger JSON and UI from API.
-          xmlFile = $"{typeof(Web_Shared_Assembly).Assembly.GetName().Name}.xml";
+          xmlFile = $"{typeof(Web_Contracts_Assembly).Assembly.GetName().Name}.xml";
           xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
           aSwaggerGenOptions.IncludeXmlComments(xmlPath);
         }

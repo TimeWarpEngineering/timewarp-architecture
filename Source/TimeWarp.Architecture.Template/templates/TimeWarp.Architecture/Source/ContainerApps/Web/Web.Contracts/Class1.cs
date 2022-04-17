@@ -1,4 +1,4 @@
-﻿namespace Api.Domain;
+﻿namespace Web.Contracts;
 public class Class1
 {
 
