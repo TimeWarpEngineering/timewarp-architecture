@@ -12,5 +12,9 @@
     <PackageReference Include="MediatR" />
     -->
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
+  </ItemGroup>
   
 </Project>

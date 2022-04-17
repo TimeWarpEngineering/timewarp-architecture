@@ -23,11 +23,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj" />
-    <ProjectReference Include="..\Web.Shared\Web.Shared.csproj" />
+    <ProjectReference Include="..\Web.Shared\Web.Contracts.csproj" />
     <ProjectReference Include="..\Web.TypeScript\Web.TypeScript.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

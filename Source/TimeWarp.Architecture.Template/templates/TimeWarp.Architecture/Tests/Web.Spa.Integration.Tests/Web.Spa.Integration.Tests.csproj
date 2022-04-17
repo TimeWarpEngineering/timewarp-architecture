@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="AutoFixture"  />
+    <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.AutoFakeItEasy" />
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Fixie.TestAdapter" />

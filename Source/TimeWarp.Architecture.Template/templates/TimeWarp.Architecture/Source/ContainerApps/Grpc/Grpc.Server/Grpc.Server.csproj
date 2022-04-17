@@ -18,7 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Grpc.Contracts\Grpc.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Common\Common.Server\Common.Server.csproj" />
+    <ProjectReference Include="..\Grpc.Infrastructure\Grpc.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

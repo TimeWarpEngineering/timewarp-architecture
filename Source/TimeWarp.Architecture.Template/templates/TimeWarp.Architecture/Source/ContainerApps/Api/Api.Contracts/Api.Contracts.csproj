@@ -17,7 +17,11 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Service\" />
   </ItemGroup>
 
 </Project>

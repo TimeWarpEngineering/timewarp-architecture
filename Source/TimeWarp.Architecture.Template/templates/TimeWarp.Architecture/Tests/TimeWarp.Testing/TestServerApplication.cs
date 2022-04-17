@@ -20,7 +20,7 @@ using TimeWarp.Architecture.Features;
 public abstract partial class TestServerApplication<TProgram> : IAsyncDisposable, IWebApiTestService, ISender
   where TProgram : IAspNetProgram
 {
-  [Delegate]
+  [TimeWarp.Delegate]
   private readonly ISender ScopedSender;
   private IWebApiTestService WebApiTestService { get; }
 
