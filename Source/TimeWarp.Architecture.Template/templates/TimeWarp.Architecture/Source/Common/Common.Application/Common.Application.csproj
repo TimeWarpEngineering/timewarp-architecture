@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Common.Contracts\Common.Contracts.csproj" />
     <ProjectReference Include="..\Common.Domain\Common.Domain.csproj" />
+    <ProjectReference Include="..\..\Libraries\TimeWarp.Modules\TimeWarp.Modules.csproj" />
   </ItemGroup>
 
 </Project>
