@@ -34,3 +34,31 @@ services:
   bindings:
   - port: 8443
     protocol: https
+
+#- name: cosmosdb
+#  image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator
+#  bindings:
+#  - port: 8081
+#    name: cosmosdb-ui
+#    protocol: https
+#  - port: 8900
+#    name: cosmosdb-8900
+#  - port: 8901
+#    name: cosmosdb-8901
+#  - port: 8979   
+#    name: cosmosdb-8979
+#  - port: 10250
+#    name: cosmosdb-10250
+#  - port: 10251
+#    name: cosmosdb-10251
+#  - port: 10252
+#    name: cosmosdb-10252
+#  - port: 10253
+#    name: cosmosdb-10253
+#  - port: 10254
+#    name: cosmosdb-10254
+#  - port: 10350
+#    name: cosmosdb-10350
+
+#- name: rabbitmq
+#  image: mcr.microsoft.com/rabbitmq/rabbitmq-server-container
