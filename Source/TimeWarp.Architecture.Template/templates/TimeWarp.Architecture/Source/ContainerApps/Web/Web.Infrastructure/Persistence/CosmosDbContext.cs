@@ -6,7 +6,7 @@ using TimeWarp.Architecture.Entities;
 
 public class CosmosDbContext : DbContext
 {
-  public DbSet<Profile> Profiles { get; set; }
+  public DbSet<Profile> Profiles => Set<Profile>();
 
   public CosmosDbContext(DbContextOptions<CosmosDbContext> aDbContextOptions) : base(aDbContextOptions) { }
 

@@ -6,18 +6,18 @@ public class CosmosDbOptions
   /// The Cosmos DB Endpoint.
   /// </summary>
   /// <remarks>Find this value in Azure Portal by selecting your Azure Cosmos DB account and then under "Settings" select Keys</remarks>
-  public string EndPoint { get; set; }
+  public string? EndPoint { get; set; }
 
   /// <summary>
   /// The Cosmos DB access key.
   /// </summary>
   /// /// <remarks>Find this value in Azure Portal by selecting your Azure Cosmos DB account and then under "Settings" select Keys</remarks>
-  public string AccessKey { get; set; }
+  public string? AccessKey { get; set; }
 
   /// <summary>
   /// The Cosmos DB Database Name
   /// </summary>
-  public string DatabaseName { get; set; }
+  public string? DatabaseName { get; set; }
 
   /// <summary>
   /// Gets or sets a value indicating whether startup should check for migrations.
@@ -27,5 +27,5 @@ public class CosmosDbOptions
   /// <summary>
   /// Gets or sets the id of the document to check for migration.
   /// </summary>
-  public string DocumentToCheck { get; set; }
+  public string? DocumentToCheck { get; set; }
 }
