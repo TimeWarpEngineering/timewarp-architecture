@@ -7,12 +7,15 @@
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..\..\..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
     <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
     <PackageReference Include="Oakton" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
@@ -22,7 +25,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.Server\Common.Server.csproj" />
-    <ProjectReference Include="..\..\..\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
     <ProjectReference Include="..\Api.Infrastructure\Api.Infrastructure.csproj" />
   </ItemGroup>
 
