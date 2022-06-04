@@ -73,9 +73,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{B3864467-1369-45DE-9CEB-EF227A5D062A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-DevOps", "00-DevOps", "{968CBDA4-4227-4C7B-9F41-804376A8F193}"
-	ProjectSection(SolutionItems) = preProject
-		DevOps\Tye\tye.yaml = DevOps\Tye\tye.yaml
-	EndProjectSection
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Web.TypeScript", "Source\ContainerApps\Web\Web.TypeScript\Web.TypeScript.esproj", "{2929D233-BD18-46BD-93C3-A4B69EE91BCC}"
 EndProject
