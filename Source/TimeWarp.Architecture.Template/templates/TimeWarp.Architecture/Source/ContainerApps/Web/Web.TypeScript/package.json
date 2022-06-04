@@ -1,6 +1,4 @@
 {
-  "name": "WebTypeScript",
-  "version": "1.0.0",
   "scripts": {
     "build": "tsc",
     "lint": "eslint source --ext .ts",
@@ -10,17 +8,17 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "5.16.0",
-    "@typescript-eslint/parser": "5.16.0",
+    "@typescript-eslint/eslint-plugin": "5.19.0",
+    "@typescript-eslint/parser": "5.19.0",
     "autoprefixer": "10.4.4",
-    "eslint": "8.11.0",
+    "eslint": "8.13.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-config-prettier": "8.5.0",
-    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-import": "2.26.0",
     "eslint-plugin-prettier": "4.0.0",
     "postcss": "8.4.12",
-    "prettier": "2.6.0",
+    "prettier": "2.6.2",
     "tailwindcss": "2.2.16",
-    "typescript": "4.6.2"
+    "typescript": "4.6.3"
   }
 }
