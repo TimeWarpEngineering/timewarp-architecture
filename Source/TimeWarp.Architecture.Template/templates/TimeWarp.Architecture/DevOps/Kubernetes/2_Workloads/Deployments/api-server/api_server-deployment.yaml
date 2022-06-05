@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: $ApplicationName
-  namespace: $POD_IDENTITY_NAMESPACE
+  namespace: $ApplicationNamespace
   labels:
     app.kubernetes.io/name: $ApplicationName
     app.kubernetes.io/part-of: $ApplicationNamespace
