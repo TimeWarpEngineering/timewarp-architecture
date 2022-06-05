@@ -3,19 +3,7 @@
     <ProjectGuid>2929D233-BD18-46BD-93C3-A4B69EE91BCC</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup>
-    <BuildCommand>npm run lint &amp;&amp; npm run prettier &amp;&amp; npm run build &amp;&amp; npm run tailwinds</BuildCommand>
+    <BuildCommand></BuildCommand>
     <StartupCommand>npm run start</StartupCommand>
   </PropertyGroup>
-  
-  <ItemGroup>
-    <MySourceFiles Include="source\Web.Spa.lib.module.js"/>
-  </ItemGroup>
-
-  <Target Name="CopyFiles" AfterTargets="Build">
-    <Copy
-      SourceFiles="@(MySourceFiles)"
-      DestinationFolder="..\Web.Spa\wwwroot/js"
-      SkipUnchangedFiles="true"
-    />
-  </Target>
 </Project>
