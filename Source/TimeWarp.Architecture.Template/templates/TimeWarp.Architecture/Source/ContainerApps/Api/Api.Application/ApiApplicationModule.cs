@@ -1,4 +1,4 @@
-﻿namespace Api.Application;
+﻿namespace TimeWarp.Architecture.Api.Application;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

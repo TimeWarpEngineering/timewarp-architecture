@@ -32,6 +32,7 @@ using TimeWarp.Architecture.CorsPolicies;
 using TimeWarp.Architecture.Data;
 using TimeWarp.Architecture.HostedServices;
 using TimeWarp.Architecture.Infrastructure;
+using TimeWarp.Architecture.Web.Infrastructure;
 
 public class Program : IAspNetProgram
 {
@@ -60,6 +61,7 @@ public class Program : IAspNetProgram
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
     ConfigureSettings(aServiceCollection, aConfiguration);
+    WebInfrastructureModule.ConfigureServices(aServiceCollection, aConfiguration);
     CorsPolicy.Any.Apply(aServiceCollection);
     ConfigureInfrastructure(aServiceCollection);
     aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
@@ -184,7 +186,6 @@ public class Program : IAspNetProgram
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
     aServiceCollection
-      .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
       .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
 
     aServiceCollection.Configure<ApiBehaviorOptions>

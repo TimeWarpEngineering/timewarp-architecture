@@ -1,4 +1,4 @@
-﻿namespace Web.Infrastructure;
+﻿namespace TimeWarp.Architecture.Web.Infrastructure;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
