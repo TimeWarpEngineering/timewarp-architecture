@@ -35,7 +35,8 @@ public static partial class ServiceCollectionExtensions
     return RegisterOptionsValidator<TOptions, TOptionsValidator>(aServiceCollection);
   }
 
-  private static IServiceCollection RegisterOptionsValidator<TOptions, TOptionsValidator>(IServiceCollection aServiceCollection)
+  private static IServiceCollection RegisterOptionsValidator<TOptions, TOptionsValidator>
+    (IServiceCollection aServiceCollection)
     where TOptions : class
     where TOptionsValidator : AbstractValidator<TOptions>
   {
@@ -43,8 +44,11 @@ public static partial class ServiceCollectionExtensions
 
     aServiceCollection.TryAddEnumerable
     (
-      ServiceDescriptor.Singleton<IValidateOptions<TOptions>,
-      OptionsValidation<TOptions, TOptionsValidator>>()
+      ServiceDescriptor.Singleton
+      <
+        IValidateOptions<TOptions>,
+        OptionsValidation<TOptions, TOptionsValidator>
+      >()
     );
 
     return aServiceCollection;

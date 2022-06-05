@@ -11,7 +11,7 @@ using System.Linq;
 /// This will itterate through all the IConfigureOptions in the IServiceCollection
 /// Then it will access each of those which will trigger the validation.
 /// </summary>
-public static partial class ServiceCollectionExtensions
+public static partial class ServiceProviderExtensions
 {
   public static void ValidateOptions(this IServiceProvider aServiceProvider, IServiceCollection aServiceCollection)
   {
