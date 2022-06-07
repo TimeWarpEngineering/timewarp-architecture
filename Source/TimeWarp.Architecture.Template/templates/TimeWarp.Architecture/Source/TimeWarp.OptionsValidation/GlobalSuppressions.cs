@@ -5,4 +5,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Style", "IDE0008:Use explicit type", Justification = "the type doesn't matter here.", Scope = "member", Target = "~M:Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions.ValidateOptions(System.IServiceProvider,Microsoft.Extensions.DependencyInjection.IServiceCollection)")]
+[assembly: SuppressMessage("Style", "IDE0008:Use explicit type", Justification = "the type doesn't matter here.", Scope = "member", Target = "~M:Microsoft.Extensions.DependencyInjection.ServiceProviderExtensions.ValidateOptions(System.IServiceProvider,Microsoft.Extensions.DependencyInjection.IServiceCollection)")]

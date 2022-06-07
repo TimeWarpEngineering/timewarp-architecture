@@ -32,10 +32,15 @@ public class Program : IAspNetProgram
     return webApplication.RunOaktonCommands(aArgumentArray);
   }
 
-  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { }
+  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)
+  {
+    CommonServerModule.ConfigureConfiguration(aConfigurationManager);
+    ;
+  }
 
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
+    CommonServerModule.ConfigureServices(aServiceCollection, aConfiguration);
     ConfigureSettings(aServiceCollection, aConfiguration);
 
     CorsPolicy.Any.Apply(aServiceCollection);
@@ -70,6 +75,8 @@ public class Program : IAspNetProgram
 
   public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
   {
+    CommonServerModule.ConfigureMiddleware(aWebApplication,aServiceCollection,aHostEnvironment);
+
     // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
     // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
     // Sometimes, you might want to allow other sites to make cross-origin requests to your app.
@@ -89,8 +96,11 @@ public class Program : IAspNetProgram
     aWebApplication.UseAuthorization();
   }
 
-  public static void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection) =>
+  public static void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection)
+  {
+    CommonServerModule.ConfigureEndpoints(aEndpointRouteBuilder, aServiceCollection);
     aEndpointRouteBuilder.MapControllers();
+  }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
@@ -98,7 +108,7 @@ public class Program : IAspNetProgram
     //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
     //  .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
   }
-  static void ConfigureSwagger(IServiceCollection aServiceCollection)
+  private static void ConfigureSwagger(IServiceCollection aServiceCollection)
   {
     // Register the Swagger generator, defining 1 or more Swagger documents
     aServiceCollection.AddSwaggerGen
