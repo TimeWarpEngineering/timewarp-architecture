@@ -75,7 +75,7 @@ public class Program : IAspNetProgram
 
   public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
   {
-    CommonServerModule.ConfigureMiddleware(aWebApplication,aServiceCollection,aHostEnvironment);
+    CommonServerModule.ConfigureMiddleware(aWebApplication, aServiceCollection, aHostEnvironment);
 
     // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
     // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.

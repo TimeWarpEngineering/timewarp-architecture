@@ -2,7 +2,6 @@
 
 using MediatR;
 using System;
-using TimeWarp;
 
 /// <summary>
 /// An abstract class that adds test functionality for sending Requests in a scope.

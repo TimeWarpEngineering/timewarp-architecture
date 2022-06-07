@@ -18,9 +18,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Oakton;
 using Oakton.Environment;
-using System;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Mime;
 using System.Reflection;
@@ -56,7 +54,11 @@ public class Program : IAspNetProgram
 
     return webApplication.RunOaktonCommands(aArgumentArray);
   }
-  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { }
+  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)
+  {
+    CommonServerModule.ConfigureConfiguration(aConfigurationManager);
+    ;
+  }
 
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
