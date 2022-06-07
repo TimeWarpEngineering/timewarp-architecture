@@ -58,34 +58,24 @@
 
   <ItemGroup>
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*" />
-    <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js"   />
+    <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
   </ItemGroup>
 
-  <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild"
-          Inputs="@(TypeScriptInputs)"
-          Outputs="@(TypeScriptOutputs)"
-          >
+  <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild" Inputs="@(TypeScriptInputs)" Outputs="@(TypeScriptOutputs)">
     <Exec Command="npm run lint" WorkingDirectory="..\Web.TypeScript\" />
     <Exec Command="npm run prettier" WorkingDirectory="..\Web.TypeScript\" />
     <Exec Command="npm run build" WorkingDirectory="..\Web.TypeScript\" />
   </Target>
 
-  <Target Name ="CopyLibModule" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild">
+  <Target Name="CopyLibModule" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild">
     <ItemGroup>
-      <FilesToCopy Include="..\Web.TypeScript\source\Web.Spa.lib.module.js"/>
+      <FilesToCopy Include="..\Web.TypeScript\source\Web.Spa.lib.module.js" />
     </ItemGroup>
-    
-    <Copy
-      SourceFiles="@(FilesToCopy)"
-      DestinationFolder="wwwroot\js"
-      SkipUnchangedFiles="true"
-    />
+
+    <Copy SourceFiles="@(FilesToCopy)" DestinationFolder="wwwroot\js" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="NpmRunTailWinds" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild"
-          Inputs="..\Web.TypeScript\tailwind.config.js;..\Web.TypeScript\css\input.css"
-          Outputs="wwwroot\css\site.css"
-          >
+  <Target Name="NpmRunTailWinds" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild" Inputs="..\Web.TypeScript\tailwind.config.js;..\Web.TypeScript\css\input.css" Outputs="wwwroot\css\site.css">
     <Exec Command="npm run tailwinds" WorkingDirectory="..\Web.TypeScript\" />
   </Target>
 </Project>
