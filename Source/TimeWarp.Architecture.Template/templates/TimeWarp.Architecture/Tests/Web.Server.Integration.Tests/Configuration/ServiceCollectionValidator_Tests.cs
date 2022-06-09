@@ -10,15 +10,15 @@ using TimeWarp.Architecture.Configuration;
 
 public class Validate_Should
 {
-  private ServiceCollectionValidator ServiceCollectionValidator;
+  private ServiceCollectionOptionsValidator ServiceCollectionValidator;
 
   public void Be_Valid()
   {
-    var serviceCollection = new ServiceCollection
+    var serviceCollection = new ServiceCollectionOptions
     {
-      {Constants.WebServiceName, new ServiceCollection.Service { Host = "myhost", Protocol="https", Port=7001} },
-      {Constants.GrpcServiceName, new ServiceCollection.Service { Host = "myhost", Protocol="https", Port=7001} },
-      {Constants.ApiServiceName, new ServiceCollection.Service { Host = "myhost", Protocol="https", Port=7001} },
+      {Constants.WebServiceName, new ServiceCollectionOptions.Service { Host = "myhost", Protocol="https", Port=7001} },
+      {Constants.GrpcServiceName, new ServiceCollectionOptions.Service { Host = "myhost", Protocol="https", Port=7001} },
+      {Constants.ApiServiceName, new ServiceCollectionOptions.Service { Host = "myhost", Protocol="https", Port=7001} },
     };
 
     ValidationResult validationResult = ServiceCollectionValidator.TestValidate(serviceCollection);
@@ -28,12 +28,12 @@ public class Validate_Should
 
   public void Have_error_when_a_Service_is_missing_or_invalid()
   {
-    var serviceCollection = new ServiceCollection
+    var serviceCollection = new ServiceCollectionOptions
     {
-      {"wrong_Id", new ServiceCollection.Service { Host = "", Protocol="", Port=0} },
+      {"wrong_Id", new ServiceCollectionOptions.Service { Host = "", Protocol="", Port=0} },
     };
 
-    TestValidationResult<ServiceCollection> result =
+    TestValidationResult<ServiceCollectionOptions> result =
       ServiceCollectionValidator.TestValidate(serviceCollection);
 
     result.ShouldHaveValidationErrorFor(aServiceCollection => aServiceCollection)
@@ -86,7 +86,7 @@ public class Validate_Should
 
     IConfigurationRoot config = configurationBuilder.Build();
 
-    ServiceCollection serviceCollection = new();
+    ServiceCollectionOptions serviceCollection = new();
     config.GetSection("service").Bind(serviceCollection);
 
     serviceCollection.Count.Should().Be(3);
@@ -94,11 +94,11 @@ public class Validate_Should
     serviceCollection["web-server"].Protocol.Should().Be("https");
     serviceCollection["web-server"].Port.Should().Be(7001);
 
-    TestValidationResult<ServiceCollection> result =
+    TestValidationResult<ServiceCollectionOptions> result =
       ServiceCollectionValidator.TestValidate(serviceCollection);
 
     result.IsValid.Should().BeTrue();
   }
 
-  public void Setup() => ServiceCollectionValidator = new ServiceCollectionValidator();
+  public void Setup() => ServiceCollectionValidator = new ServiceCollectionOptionsValidator();
 }

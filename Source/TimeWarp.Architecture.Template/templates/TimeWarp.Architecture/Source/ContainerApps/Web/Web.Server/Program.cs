@@ -47,6 +47,8 @@ public class Program : IAspNetProgram
 
     WebApplication webApplication = builder.Build();
 
+    Console.WriteLine($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
+
     ConfigureMiddleware(webApplication, webApplication.Services, webApplication.Environment);
     ConfigureEndpoints(webApplication, webApplication.Services);
 
@@ -62,6 +64,7 @@ public class Program : IAspNetProgram
 
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
+    CommonServerModule.ConfigureServices(aServiceCollection, aConfiguration);
     ConfigureSettings(aServiceCollection, aConfiguration);
     WebInfrastructureModule.ConfigureServices(aServiceCollection, aConfiguration);
     CorsPolicy.Any.Apply(aServiceCollection);
@@ -110,9 +113,11 @@ public class Program : IAspNetProgram
 
   public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
   {
+    CommonServerModule.ConfigureMiddleware(aWebApplication, aServiceCollection, aHostEnvironment);
+
     // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
     // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
-    // Sometimes, you might want to allow other sites to make cross-origin requests to your app.
+    // Although sometimes, you might want to allow other sites to make cross-origin requests to your app to be functional.
     if (aHostEnvironment.IsDevelopment())
     {
       aWebApplication.UseCors(CorsPolicy.Any.Name);
@@ -182,8 +187,11 @@ public class Program : IAspNetProgram
     aServiceCollection.AddFluentValidationRulesToSwagger();
   }
 
-  public static void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection) =>
-  aEndpointRouteBuilder.MapControllers();
+  public static void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection)
+  {
+    CommonServerModule.ConfigureEndpoints(aEndpointRouteBuilder, aServiceCollection);
+    aEndpointRouteBuilder.MapControllers();
+  }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {

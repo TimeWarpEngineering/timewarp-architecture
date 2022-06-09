@@ -2,12 +2,11 @@
 
 using System;
 using System.Collections.Generic;
-using static TimeWarp.Architecture.Configuration.ServiceCollection;
+using static TimeWarp.Architecture.Configuration.ServiceCollectionOptions;
 
-[SectionName("service")]
-public class ServiceCollection : Dictionary<string, Service>
+public class ServiceCollectionOptions : Dictionary<string, Service>
 {
-  public ServiceCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+  public ServiceCollectionOptions() : base(StringComparer.OrdinalIgnoreCase) { }
 
   public class Service
   {
