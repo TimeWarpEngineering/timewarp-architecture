@@ -6,3 +6,4 @@ $global:WebServer_InsecurePort=5200
 $global:WebServer_SecurePort=7200
 $global:ApiServer_InsecurePort=5201
 $global:GrpcServer_InsecurePort=5202
+$global:AspNetCore_Environment = "Kubernetes_Docker"

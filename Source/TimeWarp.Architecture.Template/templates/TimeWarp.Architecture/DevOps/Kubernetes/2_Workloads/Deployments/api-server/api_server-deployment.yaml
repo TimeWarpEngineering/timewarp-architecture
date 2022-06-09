@@ -24,4 +24,8 @@ spec:
           ports:
             - containerPort: 80
               name: http
-          
+          env:
+          - name: "ASPNETCORE_ENVIRONMENT"
+            value: $AspNetCore_Environment
+          - name: "ASPNETCORE_FORWARDEDHEADERS_ENABLED"
+            value: "true"          

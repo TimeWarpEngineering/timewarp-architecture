@@ -1,5 +1,6 @@
 if (!$ApplicationNameSpace) { throw "ApplicationNameSpace is not set"}
 if (!$RegistryHost) { throw "RegistryHost is not set"}
+if (!$AspNetCore_Environment) { throw "AspNetCore_Environment is not set"}
 
 $global:ApplicationName = "web-server"
 $ApplicationImageTag = "1.0.0"
