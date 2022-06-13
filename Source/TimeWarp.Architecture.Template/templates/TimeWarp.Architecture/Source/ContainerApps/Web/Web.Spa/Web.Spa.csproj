@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
+    <ProjectReference Include="..\..\..\Libraries\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj" />
     <ProjectReference Include="..\Web.Shared\Web.Contracts.csproj" />

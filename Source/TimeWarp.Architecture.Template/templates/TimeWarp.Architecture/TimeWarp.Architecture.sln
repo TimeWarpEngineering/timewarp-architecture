@@ -82,8 +82,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Server.Integration.Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.Server.Integration.Tests", "Tests\Api.Server.Integration.Tests\Api.Server.Integration.Tests.csproj", "{E5570C46-7FB6-413A-92C8-061876C3D568}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.OptionsValidation", "Source\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj", "{A9F17600-5A0C-41F8-99E5-173D03983521}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.Application", "Source\ContainerApps\Api\Api.Application\Api.Application.csproj", "{A0330F86-0A50-4264-88EE-3745C187767D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.Infrastructure", "Source\ContainerApps\Api\Api.Infrastructure\Api.Infrastructure.csproj", "{C0DECA29-541A-4BA1-93B3-8C8C2AF5B2C2}"
@@ -117,6 +115,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Grpc.Domain", "Source\ContainerApps\Grpc\Grpc.Domain\Grpc.Domain.csproj", "{39C108FB-C8E1-45B6-B067-83A26054DA2B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Grpc.Infrastructure", "Source\ContainerApps\Grpc\Grpc.Infrastructure\Grpc.Infrastructure.csproj", "{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.OptionsValidation", "Source\Libraries\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj", "{6108B41B-EE8B-4A23-810E-CF2B380F1796}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -230,12 +230,6 @@ Global
 		{E5570C46-7FB6-413A-92C8-061876C3D568}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{E5570C46-7FB6-413A-92C8-061876C3D568}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E5570C46-7FB6-413A-92C8-061876C3D568}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A0330F86-0A50-4264-88EE-3745C187767D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A0330F86-0A50-4264-88EE-3745C187767D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0330F86-0A50-4264-88EE-3745C187767D}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
@@ -326,6 +320,12 @@ Global
 		{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -357,7 +357,6 @@ Global
 		{03E78D0D-A549-4D34-BD55-0AF81B1A203D} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		{C734286B-E573-4F72-BBE6-57ADDD4265D5} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		{E5570C46-7FB6-413A-92C8-061876C3D568} = {E3B896E0-4EBE-410B-A036-2EC3B6FA9EFE}
-		{A9F17600-5A0C-41F8-99E5-173D03983521} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 		{A0330F86-0A50-4264-88EE-3745C187767D} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
 		{C0DECA29-541A-4BA1-93B3-8C8C2AF5B2C2} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
 		{4D43F8E5-727F-4382-A606-21E1C8E204D0} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
@@ -373,6 +372,7 @@ Global
 		{BACD8F0E-B087-4B2E-AE73-D468CCF94B16} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
 		{39C108FB-C8E1-45B6-B067-83A26054DA2B} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
 		{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
