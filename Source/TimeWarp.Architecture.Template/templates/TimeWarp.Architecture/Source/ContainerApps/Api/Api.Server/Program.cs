@@ -105,10 +105,7 @@ public class Program : IAspNetProgram
     aWebApplication.UseAuthorization();
   }
 
-  public static void ConfigureEndpoints
-  (
-    WebApplication aWebApplication
-  )
+  public static void ConfigureEndpoints(WebApplication aWebApplication)
   {
     CommonServerModule.ConfigureEndpoints(aWebApplication);
 
