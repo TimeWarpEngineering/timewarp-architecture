@@ -69,11 +69,11 @@ public class Program
     // Set the JSON serializer options
     aServiceCollection.Configure<JsonSerializerOptions>
     (
-      options =>
+      aJsonSerializerOptions =>
       {
-        //options.PropertyNameCaseInsensitive = false;
-        options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        //options.WriteIndented = true;
+        //aJsonSerializerOptions.PropertyNameCaseInsensitive = false;
+        aJsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        ;//aJsonSerializerOptions.WriteIndented = true;
       }
     );
 
