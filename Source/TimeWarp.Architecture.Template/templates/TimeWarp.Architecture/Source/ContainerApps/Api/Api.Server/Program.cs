@@ -27,8 +27,8 @@ public class Program : IAspNetProgram
 
     webApplication.Services.ValidateOptions(builder.Services);
 
-    ConfigureMiddleware(webApplication, webApplication.Services, webApplication.Environment);
-    ConfigureEndpoints(webApplication, webApplication.Services);
+    ConfigureMiddleware(webApplication);
+    ConfigureEndpoints(webApplication);
 
     return webApplication.RunOaktonCommands(aArgumentArray);
   }
@@ -74,14 +74,14 @@ public class Program : IAspNetProgram
     ConfigureSwagger(aServiceCollection);
   }
 
-  public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
+  public static void ConfigureMiddleware(WebApplication aWebApplication)
   {
-    CommonServerModule.ConfigureMiddleware(aWebApplication, aServiceCollection, aHostEnvironment);
+    CommonServerModule.ConfigureMiddleware(aWebApplication);
 
     // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
     // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
     // Sometimes, you might want to allow other sites to make cross-origin requests to your app.
-    if (aHostEnvironment.IsDevelopment())
+    if (aWebApplication.Environment.IsDevelopment())
     {
       aWebApplication.UseCors(CorsPolicy.Any.Name);
     }
@@ -105,10 +105,14 @@ public class Program : IAspNetProgram
     aWebApplication.UseAuthorization();
   }
 
-  public static void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection)
+  public static void ConfigureEndpoints
+  (
+    WebApplication aWebApplication
+  )
   {
-    CommonServerModule.ConfigureEndpoints(aEndpointRouteBuilder, aServiceCollection);
-    aEndpointRouteBuilder.MapControllers();
+    CommonServerModule.ConfigureEndpoints(aWebApplication);
+
+    aWebApplication.MapControllers();
   }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)

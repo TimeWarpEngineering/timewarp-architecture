@@ -55,8 +55,8 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
     TProgram.ConfigureServices(builder.Services, builder.Configuration);
 
     WebApplication = builder.Build();
-    TProgram.ConfigureMiddleware(WebApplication, WebApplication.Services, WebApplication.Environment);
-    TProgram.ConfigureEndpoints(WebApplication, WebApplication.Services);
+    TProgram.ConfigureMiddleware(WebApplication);
+    TProgram.ConfigureEndpoints(WebApplication);
 
     ServiceProvider = WebApplication.Services;
 

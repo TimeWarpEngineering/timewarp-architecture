@@ -49,8 +49,8 @@ public class Program : IAspNetProgram
 
     Console.WriteLine($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
 
-    ConfigureMiddleware(webApplication, webApplication.Services, webApplication.Environment);
-    ConfigureEndpoints(webApplication, webApplication.Services);
+    ConfigureMiddleware(webApplication);
+    ConfigureEndpoints(webApplication);
 
     webApplication.Services.ValidateOptions(builder.Services);
 
@@ -111,16 +111,18 @@ public class Program : IAspNetProgram
     ConfigureSwagger(aServiceCollection);
   }
 
-  public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
+  public static void ConfigureMiddleware(WebApplication aWebApplication)
   {
-    CommonServerModule.ConfigureMiddleware(aWebApplication, aServiceCollection, aHostEnvironment);
+    CommonServerModule.ConfigureMiddleware(aWebApplication);
 
     // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
     // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
     // Although sometimes, you might want to allow other sites to make cross-origin requests to your app to be functional.
-    if (aHostEnvironment.IsDevelopment())
+    if (aWebApplication.Environment.IsDevelopment())
     {
       aWebApplication.UseCors(CorsPolicy.Any.Name);
+      aWebApplication.UseDeveloperExceptionPage();
+      aWebApplication.UseWebAssemblyDebugging();
     }
     // Enable middleware to serve generated Swagger as a JSON endpoint.
     aWebApplication.UseSwagger();
@@ -133,12 +135,6 @@ public class Program : IAspNetProgram
     );
 
     aWebApplication.UseResponseCompression();
-
-    if (aHostEnvironment.IsDevelopment())
-    {
-      aWebApplication.UseDeveloperExceptionPage();
-      aWebApplication.UseWebAssemblyDebugging();
-    }
 
     aWebApplication.UseRouting();
 
@@ -187,10 +183,10 @@ public class Program : IAspNetProgram
     aServiceCollection.AddFluentValidationRulesToSwagger();
   }
 
-  public static void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection)
+  public static void ConfigureEndpoints(WebApplication aWebApplication)
   {
-    CommonServerModule.ConfigureEndpoints(aEndpointRouteBuilder, aServiceCollection);
-    aEndpointRouteBuilder.MapControllers();
+    CommonServerModule.ConfigureEndpoints(aWebApplication);
+    aWebApplication.MapControllers();
   }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
