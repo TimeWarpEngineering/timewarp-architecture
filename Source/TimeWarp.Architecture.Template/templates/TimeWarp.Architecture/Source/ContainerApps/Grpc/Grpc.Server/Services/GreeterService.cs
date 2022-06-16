@@ -5,7 +5,7 @@ using TimeWarp.Architecture.GrpcServer;
 
 public class GreeterService : Greeter.GreeterBase
 {
-  private readonly ILogger<GreeterService> Logger;
+  private readonly ILogger Logger;
   public GreeterService(ILogger<GreeterService> logger)
   {
     Logger = logger;
