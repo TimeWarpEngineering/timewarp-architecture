@@ -26,7 +26,7 @@
     <ProjectReference Include="..\..\..\Libraries\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj" />
-    <ProjectReference Include="..\Web.Shared\Web.Contracts.csproj" />
+    <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -60,6 +60,12 @@
   <ItemGroup>
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*" />
     <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\appsettings.Production.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild" Inputs="@(TypeScriptInputs)" Outputs="@(TypeScriptOutputs)">
