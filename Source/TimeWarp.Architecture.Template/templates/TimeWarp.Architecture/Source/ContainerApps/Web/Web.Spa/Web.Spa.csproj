@@ -62,12 +62,6 @@
     <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Update="wwwroot\appsettings.Production.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
   <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild" Inputs="@(TypeScriptInputs)" Outputs="@(TypeScriptOutputs)">
     <Exec Command="npm run lint" WorkingDirectory="..\Web.TypeScript\" />
     <Exec Command="npm run prettier" WorkingDirectory="..\Web.TypeScript\" />
