@@ -2,9 +2,7 @@ namespace TimeWarp.Architecture.Api.Server;
 
 using FluentValidation.AspNetCore;
 using MediatR;
-using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
 using Oakton;
 using System.Reflection;
 using TimeWarp.Architecture.CorsPolicies;
@@ -70,8 +68,15 @@ public class Program : IAspNetProgram
         typeof(Api_Server_Assembly).GetTypeInfo().Assembly,
         typeof(Api_Application_Assembly).GetTypeInfo().Assembly
       );
-
-    ConfigureSwagger(aServiceCollection);
+   
+    CommonServerModule
+      .AddSwaggerGen
+      (
+        aServiceCollection,
+        SwaggerVersion,
+        SwaggerApiTitle,
+        new Type[] { typeof(Api_Server_Assembly), typeof(Api_Contracts_Assembly) }
+      );
   }
 
   public static void ConfigureMiddleware(WebApplication aWebApplication)
@@ -86,19 +91,7 @@ public class Program : IAspNetProgram
       aWebApplication.UseCors(CorsPolicy.Any.Name);
     }
 
-    aWebApplication
-      .UseSwagger
-      (
-        aSwaggerOptions => aSwaggerOptions.RouteTemplate = SwaggerBasePath + "/swagger/{documentName}/swagger.json"
-      )
-      .UseSwaggerUI
-      (
-        aSwaggerUIOptions =>
-        {
-          aSwaggerUIOptions.SwaggerEndpoint($"/{SwaggerBasePath}{SwaggerEndPoint}", SwaggerApiTitle);
-          aSwaggerUIOptions.RoutePrefix = $"{SwaggerBasePath}/swagger";
-        }
-      );
+    CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndPoint, SwaggerApiTitle);
 
     //aWebApplication.UseHttpsRedirection(); // In K8s we won't use https so we don't want to redirect
 
@@ -118,32 +111,32 @@ public class Program : IAspNetProgram
     //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
     //  .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
   }
-  private static void ConfigureSwagger(IServiceCollection aServiceCollection)
-  {
-    // Register the Swagger generator, defining 1 or more Swagger documents
-    aServiceCollection.AddSwaggerGen
-      (
-        aSwaggerGenOptions =>
-        {
-          aSwaggerGenOptions
-          .SwaggerDoc
-          (
-            SwaggerVersion,
-            new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
-          );
+  //private static void ConfigureSwagger(IServiceCollection aServiceCollection)
+  //{
+  //  // Register the Swagger generator, defining 1 or more Swagger documents
+  //  aServiceCollection.AddSwaggerGen
+  //    (
+  //      aSwaggerGenOptions =>
+  //      {
+  //        aSwaggerGenOptions
+  //        .SwaggerDoc
+  //        (
+  //          SwaggerVersion,
+  //          new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
+  //        );
 
-          aSwaggerGenOptions.EnableAnnotations();
+  //        aSwaggerGenOptions.EnableAnnotations();
 
-          string xmlFile = $"{typeof(Api_Server_Assembly).Assembly.GetName().Name}.xml";
-          string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+  //        string xmlFile = $"{typeof(Api_Server_Assembly).Assembly.GetName().Name}.xml";
+  //        string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
 
-          xmlFile = $"{typeof(Api_Contracts_Assembly).Assembly.GetName().Name}.xml";
-          xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-        }
-      );
+  //        xmlFile = $"{typeof(Api_Contracts_Assembly).Assembly.GetName().Name}.xml";
+  //        xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+  //      }
+  //    );
 
-    aServiceCollection.AddFluentValidationRulesToSwagger();
-  }
+  //  aServiceCollection.AddFluentValidationRulesToSwagger();
+  //}
 }

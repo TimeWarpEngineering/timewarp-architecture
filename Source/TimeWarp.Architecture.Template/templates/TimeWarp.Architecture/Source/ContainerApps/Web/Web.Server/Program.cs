@@ -36,6 +36,7 @@ public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp.Architecture Web.Server API {SwaggerVersion}";
+  const string SwaggerBasePath = "api/web-server";
   const string SwaggerEndPoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
   public static Task<int> Main(string[] aArgumentArray)
@@ -108,7 +109,14 @@ public class Program : IAspNetProgram
         typeof(Web_Application_Assembly).GetTypeInfo().Assembly
       );
 
-    ConfigureSwagger(aServiceCollection);
+    CommonServerModule
+      .AddSwaggerGen
+      (
+        aServiceCollection,
+        SwaggerVersion,
+        SwaggerApiTitle,
+        new Type[] { typeof(Web_Server_Assembly), typeof(Web_Contracts_Assembly) }
+      );
   }
 
   public static void ConfigureMiddleware(WebApplication aWebApplication)
@@ -124,15 +132,8 @@ public class Program : IAspNetProgram
       aWebApplication.UseDeveloperExceptionPage();
       aWebApplication.UseWebAssemblyDebugging();
     }
-    // Enable middleware to serve generated Swagger as a JSON endpoint.
-    aWebApplication.UseSwagger();
 
-    // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
-    // specifying the Swagger JSON endpoint.
-    aWebApplication.UseSwaggerUI
-    (
-      aSwaggerUIOptions => aSwaggerUIOptions.SwaggerEndpoint(SwaggerEndPoint, SwaggerApiTitle)
-    );
+    CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndPoint, SwaggerApiTitle);
 
     aWebApplication.UseResponseCompression();
 
@@ -153,35 +154,35 @@ public class Program : IAspNetProgram
     aWebApplication.UseBlazorFrameworkFiles();
   }
 
-  private static void ConfigureSwagger(IServiceCollection aServiceCollection)
-  {
-    // Register the Swagger generator, defining 1 or more Swagger documents
-    aServiceCollection.AddSwaggerGen
-      (
-        aSwaggerGenOptions =>
-        {
-          aSwaggerGenOptions
-          .SwaggerDoc
-          (
-            SwaggerVersion,
-            new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
-          );
-          aSwaggerGenOptions.EnableAnnotations();
+  //private static void ConfigureSwagger(IServiceCollection aServiceCollection)
+  //{
+  //  // Register the Swagger generator, defining 1 or more Swagger documents
+  //  aServiceCollection.AddSwaggerGen
+  //    (
+  //      aSwaggerGenOptions =>
+  //      {
+  //        aSwaggerGenOptions
+  //        .SwaggerDoc
+  //        (
+  //          SwaggerVersion,
+  //          new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
+  //        );
+  //        aSwaggerGenOptions.EnableAnnotations();
 
-          // Set the comments path for the Swagger JSON and UI from Server.
-          string xmlFile = $"{typeof(Web_Server_Assembly).Assembly.GetName().Name}.xml";
-          string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+  //        // Set the comments path for the Swagger JSON and UI from Server.
+  //        string xmlFile = $"{typeof(Web_Server_Assembly).Assembly.GetName().Name}.xml";
+  //        string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
 
-          // Set the comments path for the Swagger JSON and UI from API.
-          xmlFile = $"{typeof(Web_Contracts_Assembly).Assembly.GetName().Name}.xml";
-          xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-        }
-      );
+  //        // Set the comments path for the Swagger JSON and UI from API.
+  //        xmlFile = $"{typeof(Web_Contracts_Assembly).Assembly.GetName().Name}.xml";
+  //        xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+  //      }
+  //    );
 
-    aServiceCollection.AddFluentValidationRulesToSwagger();
-  }
+  //  aServiceCollection.AddFluentValidationRulesToSwagger();
+  //}
 
   public static void ConfigureEndpoints(WebApplication aWebApplication)
   {
