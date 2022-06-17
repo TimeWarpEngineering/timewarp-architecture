@@ -6,8 +6,13 @@
 
   <ItemGroup>
     <PackageReference Include="MediatR" />
+    <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" />    
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />    
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
