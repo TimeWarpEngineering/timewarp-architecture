@@ -1,0 +1,253 @@
+@startuml Dependency graph
+
+!theme plain
+skinparam ComponentStyle rectangle
+left to right direction
+
+' Projects
+[Web.Server] #3498db
+[Web.Spa] #3498db
+[EndToEnd.TestCafe.Tests] #3498db
+[EndToEnd.Playwright.Tests] #3498db
+[Testing.Common] #3498db
+[SourceCodeGenerators] #3498db
+[SourceCodeGenerators.Tests] #3498db
+[Yarp] #3498db
+[Grpc.Server] #3498db
+[Grpc.Contracts] #3498db
+[Api.Server] #3498db
+[Api.Contracts] #3498db
+[Web.TypeScript] #3498db
+[Web.Spa.Integration.Tests] #3498db
+[Web.Server.Integration.Tests] #3498db
+[Api.Server.Integration.Tests] #3498db
+[Api.Application] #3498db
+[Api.Infrastructure] #3498db
+[Api.Domain] #3498db
+[Common.Application] #3498db
+[Common.Contracts] #3498db
+[Common.Domain] #3498db
+[Common.Infrastructure] #3498db
+[Common.Server] #3498db
+[TimeWarp.Modules] #3498db
+[Web.Application] #3498db
+[Web.Domain] #3498db
+[Web.Infrastructure] #3498db
+[Grpc.Application] #3498db
+[Grpc.Domain] #3498db
+[Grpc.Infrastructure] #3498db
+[TimeWarp.OptionsValidation] #3498db
+[Web.Contracts] #3498db
+
+' Nuget packages
+[AutoMapper v] as _244150056 #ecf0f1
+[AutoMapper.Extensions.Microsoft.DependencyInjection v] as _1652921083 #ecf0f1
+[Dawn.Guard v] as _925652268 #ecf0f1
+[FluentValidation.AspNetCore v] as __438162728 #ecf0f1
+[MediatR v] as __17685180 #ecf0f1
+[MediatR.Extensions.Microsoft.DependencyInjection v] as _1099322557 #ecf0f1
+[Microsoft.AspNetCore.Components.WebAssembly.Server v] as _1305067036 #ecf0f1
+[Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore v] as _384404020 #ecf0f1
+[Microsoft.CodeAnalysis v] as _2133605923 #ecf0f1
+[Microsoft.EntityFrameworkCore.SqlServer v] as _1075816939 #ecf0f1
+[Microsoft.VisualStudio.Azure.Containers.Tools.Targets v] as _395813971 #ecf0f1
+[Oakton v] as _251395614 #ecf0f1
+[BlazorComponentUtilities v] as _1255037266 #ecf0f1
+[Blazor-State v] as __378471731 #ecf0f1
+[Grpc.Net.Client v] as _1063787755 #ecf0f1
+[Grpc.Net.Client.Web v] as _2119530767 #ecf0f1
+[Microsoft.AspNetCore.Components.WebAssembly v] as _2058486127 #ecf0f1
+[Microsoft.AspNetCore.Components.WebAssembly.DevServer v] as __1027816277 #ecf0f1
+[Microsoft.AspNetCore.SignalR.Client v] as _804473016 #ecf0f1
+[Microsoft.Extensions.Logging.Configuration v] as _266387409 #ecf0f1
+[Microsoft.Tye.Extensions.Configuration v] as _1369767149 #ecf0f1
+[PeterLeslieMorris.Blazor.FluentValidation v] as __1951373188 #ecf0f1
+[protobuf-net.Grpc v] as __2061255785 #ecf0f1
+[System.Net.Http.Json v] as __2061975848 #ecf0f1
+[Microsoft.Playwright v] as __353760211 #ecf0f1
+[Fixie v] as __799075474 #ecf0f1
+[Fixie.TestAdapter v] as __1926459631 #ecf0f1
+[Microsoft.AspNetCore.Mvc.Testing v] as __1225991818 #ecf0f1
+[FluentAssertions v] as __258200286 #ecf0f1
+[Scrutor v] as _189895333 #ecf0f1
+[Microsoft.CodeAnalysis.CSharp v] as _418289580 #ecf0f1
+[Microsoft.CodeAnalysis.Analyzers v] as __721860048 #ecf0f1
+[FakeItEasy v] as _866653926 #ecf0f1
+[Yarp.ReverseProxy v] as _267146568 #ecf0f1
+[Grpc.AspNetCore v] as _1752592133 #ecf0f1
+[Grpc.AspNetCore.Server.Reflection v] as _1908733881 #ecf0f1
+[Grpc.AspNetCore.Web v] as _1318169650 #ecf0f1
+[protobuf-net.Grpc.AspNetCore v] as __1831947858 #ecf0f1
+[protobuf-net.Grpc.AspNetCore.Reflection v] as __782899277 #ecf0f1
+[protobuf-net.Grpc.Reflection v] as __485226785 #ecf0f1
+[System.ServiceModel.Primitives v] as __1800207057 #ecf0f1
+[Microsoft.Extensions.Configuration.Abstractions v] as __919667420 #ecf0f1
+[FluentValidation v] as _1156810516 #ecf0f1
+[Microsoft.Extensions.Options v] as __893415525 #ecf0f1
+[AutoFixture v] as __680092469 #ecf0f1
+[AutoFixture.AutoFakeItEasy v] as _2104306450 #ecf0f1
+[MicroElements.Swashbuckle.FluentValidation v] as _1478416633 #ecf0f1
+[Microsoft.AspNetCore.Http.Abstractions v] as _491748836 #ecf0f1
+[Microsoft.Extensions.DependencyInjection.Abstractions v] as __144659533 #ecf0f1
+[Swashbuckle.AspNetCore.Annotations v] as _717599885 #ecf0f1
+[Swashbuckle.AspNetCore.Swagger v] as __1114516107 #ecf0f1
+[Swashbuckle.AspNetCore.SwaggerGen v] as __1227673389 #ecf0f1
+[Swashbuckle.AspNetCore.SwaggerUI v] as __1596870122 #ecf0f1
+[Microsoft.EntityFrameworkCore.Cosmos v] as _1536358432 #ecf0f1
+[Microsoft.Extensions.DependencyInjection v] as _1632883108 #ecf0f1
+[Microsoft.Extensions.Options.ConfigurationExtensions v] as _1155074539 #ecf0f1
+
+Web.Server --> Common.Server
+Web.Server --> Web.Infrastructure
+Web.Server --> Web.Spa
+Web.Server --> _244150056
+Web.Server --> _1652921083
+Web.Server --> _925652268
+Web.Server --> __438162728
+Web.Server --> __17685180
+Web.Server --> _1099322557
+Web.Server --> _1305067036
+Web.Server --> _384404020
+Web.Server --> _2133605923
+Web.Server --> _1075816939
+Web.Server --> _395813971
+Web.Server --> _251395614
+Web.Spa --> TimeWarp.OptionsValidation
+Web.Spa --> Api.Contracts
+Web.Spa --> Grpc.Contracts
+Web.Spa --> Web.Contracts
+Web.Spa --> _1255037266
+Web.Spa --> __378471731
+Web.Spa --> _1063787755
+Web.Spa --> _925652268
+Web.Spa --> _2119530767
+Web.Spa --> _2058486127
+Web.Spa --> __1027816277
+Web.Spa --> _804473016
+Web.Spa --> _266387409
+Web.Spa --> _1369767149
+Web.Spa --> __1951373188
+Web.Spa --> __2061255785
+Web.Spa --> __2061975848
+EndToEnd.Playwright.Tests --> __353760211
+Testing.Common --> Api.Server
+Testing.Common --> Web.Server
+Testing.Common --> Yarp
+Testing.Common --> SourceCodeGenerators
+Testing.Common --> __799075474
+Testing.Common --> __1926459631
+Testing.Common --> __1225991818
+Testing.Common --> __258200286
+Testing.Common --> _189895333
+SourceCodeGenerators --> _418289580
+SourceCodeGenerators --> __721860048
+SourceCodeGenerators.Tests --> SourceCodeGenerators
+SourceCodeGenerators.Tests --> Testing.Common
+SourceCodeGenerators.Tests --> _866653926
+SourceCodeGenerators.Tests --> __1926459631
+SourceCodeGenerators.Tests --> __1225991818
+SourceCodeGenerators.Tests --> __258200286
+Yarp --> Common.Server
+Yarp --> _395813971
+Yarp --> _267146568
+Grpc.Server --> Common.Server
+Grpc.Server --> Grpc.Infrastructure
+Grpc.Server --> _1752592133
+Grpc.Server --> _1908733881
+Grpc.Server --> _1318169650
+Grpc.Server --> _395813971
+Grpc.Server --> __1831947858
+Grpc.Server --> __782899277
+Grpc.Server --> __485226785
+Grpc.Contracts --> Common.Contracts
+Grpc.Contracts --> __2061255785
+Grpc.Contracts --> __1800207057
+Api.Server --> Common.Server
+Api.Server --> Api.Infrastructure
+Api.Server --> __438162728
+Api.Server --> _1099322557
+Api.Server --> __919667420
+Api.Server --> _395813971
+Api.Server --> _251395614
+Api.Contracts --> Common.Contracts
+Api.Contracts --> _1156810516
+Api.Contracts --> __17685180
+Api.Contracts --> __893415525
+Web.Spa.Integration.Tests --> Web.Spa
+Web.Spa.Integration.Tests --> Web.Server
+Web.Spa.Integration.Tests --> Testing.Common
+Web.Spa.Integration.Tests --> __680092469
+Web.Spa.Integration.Tests --> _2104306450
+Web.Spa.Integration.Tests --> _866653926
+Web.Spa.Integration.Tests --> __1926459631
+Web.Spa.Integration.Tests --> __1225991818
+Web.Spa.Integration.Tests --> __258200286
+Web.Server.Integration.Tests --> Web.Contracts
+Web.Server.Integration.Tests --> Web.Server
+Web.Server.Integration.Tests --> Testing.Common
+Web.Server.Integration.Tests --> __680092469
+Web.Server.Integration.Tests --> _2104306450
+Web.Server.Integration.Tests --> _866653926
+Web.Server.Integration.Tests --> __1926459631
+Web.Server.Integration.Tests --> __258200286
+Api.Server.Integration.Tests --> Api.Server
+Api.Server.Integration.Tests --> Api.Contracts
+Api.Server.Integration.Tests --> SourceCodeGenerators
+Api.Server.Integration.Tests --> Testing.Common
+Api.Server.Integration.Tests --> __680092469
+Api.Server.Integration.Tests --> _2104306450
+Api.Server.Integration.Tests --> _866653926
+Api.Server.Integration.Tests --> __1926459631
+Api.Server.Integration.Tests --> __258200286
+Api.Application --> Common.Application
+Api.Application --> TimeWarp.Modules
+Api.Application --> Api.Contracts
+Api.Application --> Api.Domain
+Api.Infrastructure --> Common.Infrastructure
+Api.Infrastructure --> Api.Application
+Common.Application --> Common.Contracts
+Common.Application --> Common.Domain
+Common.Application --> TimeWarp.Modules
+Common.Contracts --> __893415525
+Common.Infrastructure --> TimeWarp.OptionsValidation
+Common.Infrastructure --> Common.Application
+Common.Server --> Common.Infrastructure
+Common.Server --> __17685180
+Common.Server --> _1478416633
+Common.Server --> _491748836
+Common.Server --> __144659533
+Common.Server --> _717599885
+Common.Server --> __1114516107
+Common.Server --> __1227673389
+Common.Server --> __1596870122
+TimeWarp.Modules --> __17685180
+TimeWarp.Modules --> _491748836
+TimeWarp.Modules --> __144659533
+Web.Application --> Common.Application
+Web.Application --> Web.Contracts
+Web.Application --> Web.Domain
+Web.Domain --> Common.Domain
+Web.Infrastructure --> Common.Infrastructure
+Web.Infrastructure --> Web.Application
+Web.Infrastructure --> _1536358432
+Grpc.Application --> Common.Application
+Grpc.Application --> Grpc.Contracts
+Grpc.Application --> Grpc.Domain
+Grpc.Domain --> Common.Domain
+Grpc.Infrastructure --> Common.Infrastructure
+Grpc.Infrastructure --> Grpc.Application
+TimeWarp.OptionsValidation --> _1156810516
+TimeWarp.OptionsValidation --> _1632883108
+TimeWarp.OptionsValidation --> __144659533
+TimeWarp.OptionsValidation --> _1155074539
+Web.Contracts --> Common.Contracts
+Web.Contracts --> _1156810516
+Web.Contracts --> __17685180
+Web.Contracts --> __144659533
+Web.Contracts --> _1632883108
+Web.Contracts --> __919667420
+Web.Contracts --> _1155074539
+Web.Contracts --> __893415525
+Web.Contracts --> __2061255785
+Web.Contracts --> __1800207057
+@enduml
