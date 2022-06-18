@@ -5,7 +5,7 @@ ARG dotnet_version=6.0
 FROM node:$node_version-alpine AS node
 
 # https://hub.docker.com/_/microsoft-dotnet
-FROM mcr.microsoft.com/dotnet/sdk:$dotnet_version-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:$dotnet_version-jammy AS build
 ENV NODE_OPTIONS=--openssl-legacy-provider
 
 # add node packages from their image
@@ -62,7 +62,7 @@ RUN dotnet build "Web.Server.csproj" -c Release -o /app/build
 FROM build AS publish
 RUN dotnet publish "Web.Server.csproj" -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:$dotnet_version-alpine AS final
+FROM mcr.microsoft.com/dotnet/aspnet:$dotnet_version-jammy AS final
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443

@@ -3,7 +3,7 @@ ARG dotnet_version=6.0
 
 # https://hub.docker.com/_/microsoft-dotnet
 FROM node:$node_version-alpine AS node
-FROM mcr.microsoft.com/dotnet/sdk:$dotnet_version-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:$dotnet_version-jammy AS build
 ENV NODE_OPTIONS=--openssl-legacy-provider
 
 # add node packages from their image
@@ -47,7 +47,7 @@ RUN dotnet publish -c release -o /app --runtime linux-musl-x64 --self-contained 
 
 # final stage/image
 # FROM mcr.microsoft.com/dotnet/aspnet:5.0-alpine-amd64
-FROM mcr.microsoft.com/dotnet/runtime-deps:$dotnet_version-alpine
+FROM mcr.microsoft.com/dotnet/runtime-deps:$dotnet_version-jammy
 WORKDIR /app
 COPY --from=build /app .
 RUN ls -l /app
