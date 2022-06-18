@@ -1,6 +1,6 @@
 # Deploy the Azure Resource Group 
 
-Singapore Data Cetner doesn't seem to support CosmosDB (WHY NOT?) So will use Japan East
+Singapore Data Center doesn't seem to support CosmosDB (WHY NOT?) So will use Japan East
 
 ```Powershell
 $Location = "japaneast"
