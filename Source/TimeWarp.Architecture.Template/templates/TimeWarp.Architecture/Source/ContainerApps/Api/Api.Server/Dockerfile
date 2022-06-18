@@ -34,7 +34,7 @@ RUN dotnet build "Api.Server.csproj" -c Release -o /app/build
 FROM build AS publish
 RUN dotnet publish "Api.Server.csproj" -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:$dotnet_version-alpine AS final
+FROM mcr.microsoft.com/dotnet/aspnet:$dotnet_version-jammy AS final
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443

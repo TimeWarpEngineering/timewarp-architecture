@@ -2,7 +2,7 @@ ARG dotnet_version=6.0
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 # https://hub.docker.com/_/microsoft-dotnet
-FROM mcr.microsoft.com/dotnet/sdk:$dotnet_version-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:$dotnet_version-jammy AS build
 
 WORKDIR /git
 COPY ["NuGet.config", "."]
@@ -36,7 +36,7 @@ RUN dotnet build "Grpc.Server.csproj" -c Release -o /app/build
 FROM build AS publish
 RUN dotnet publish "Grpc.Server.csproj" -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:$dotnet_version-alpine AS final
+FROM mcr.microsoft.com/dotnet/aspnet:$dotnet_version-jammy AS final
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
