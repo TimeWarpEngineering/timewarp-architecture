@@ -51,10 +51,14 @@
     <PackageVersion Include="Microsoft.Tye.Extensions.Configuration" Version="0.10.0-alpha.21420.1" />
     <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="4.6.2" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.15.1" />
+    <PackageVersion Include="Nerdbank.GitVersioning" Version="3.3.37" />
     <PackageVersion Include="Oakton" Version="4.5.1" />
     <PackageVersion Include="Octokit.Webhooks.AspNetCore" Version="1.0.0" />
     <PackageVersion Include="PeterLeslieMorris.Blazor.FluentValidation" Version="1.8.0" />
     <PackageVersion Include="Scrutor" Version="4.2.0" />
+    <PackageVersion Include="Serilog.Extensions.Logging" Version="3.0.1" />
+    <PackageVersion Include="Serilog.Formatting.Compact" Version="1.1.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.3.1" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="6.3.1" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="7.0.2" />
