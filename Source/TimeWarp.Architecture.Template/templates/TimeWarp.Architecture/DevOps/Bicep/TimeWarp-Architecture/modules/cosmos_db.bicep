@@ -1,13 +1,15 @@
+param basename string
+
 @description('Cosmos DB account name')
-param accountName string = 'cosmos-${uniqueString(resourceGroup().id)}'
+param accountName string = '${basename}-cosmos-account'
 
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
 
 @description('The name for the Core (SQL) database')
-param databaseName string
+param databaseName string = basename
 
-resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
+resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
   name: toLower(accountName)
   location: location
   properties: {
@@ -24,7 +26,7 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2021-04-15' = {
   }
 }
 
-resource cosmosDB 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15' = {
+resource cosmosDB 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-10-15' = {
   name: '${cosmosAccount.name}/${toLower(databaseName)}'
   properties: {
     resource: {
@@ -35,3 +37,6 @@ resource cosmosDB 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-04-15
     }
   }
 }
+
+output primaryMasterKey string = cosmosAccount.listKeys().primaryMasterKey
+output primaryConnectionString string = cosmosAccount.listConnectionStrings().connectionStrings[0].connectionString
