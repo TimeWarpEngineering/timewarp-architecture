@@ -1,6 +1,6 @@
-Push-Location $PSScriptRoot
+if (!$ApplicationNameSpace) { throw "ApplicationNameSpace is not set"}
 
-$global:ApplicationNamespace = "timewarp"
+Push-Location $PSScriptRoot
 
 try {   
   Apply-Manifest .\namespace.yaml
