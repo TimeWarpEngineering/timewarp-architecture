@@ -65,7 +65,7 @@ public class CommonServerModule : IAspNetModule
 
           aSwaggerGenOptions.EnableAnnotations();
 
-          foreach(Type? assemblyType in aTypeArray)
+          foreach (Type? assemblyType in aTypeArray)
           {
             string xmlFile = $"{assemblyType.Assembly.GetName().Name}.xml";
             string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -127,7 +127,7 @@ public class CommonServerModule : IAspNetModule
           .ConfigureKeyVault
           (
             aAzureAppConfigurationKeyVaultOptions =>
-              aAzureAppConfigurationKeyVaultOptions.SetCredential(new EnvironmentCredential())
+              aAzureAppConfigurationKeyVaultOptions.SetCredential(new DefaultAzureCredential())
           ),
       optional: false
     );

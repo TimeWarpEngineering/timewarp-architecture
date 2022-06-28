@@ -35,6 +35,3 @@ module main 'main.bicep' = {
 }
 
 output app_config_connectionstring string = main.outputs.app_config_connectionstring
-output azure_client_id string = main.outputs.azure_client_id
-output azure_client_secret string = main.outputs.azure_client_secret
-output azure_tenant_id string = main.outputs.azure_tenant_id

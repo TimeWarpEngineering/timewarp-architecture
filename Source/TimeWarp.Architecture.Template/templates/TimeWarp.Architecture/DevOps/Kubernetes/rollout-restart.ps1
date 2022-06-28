@@ -7,6 +7,8 @@ try {
   kubectl rollout restart deploy grpc-server
   kubectl rollout restart deploy web-server
   kubectl rollout restart deploy yarp
+
+  kubectl get pods
 }
 finally {
   Pop-Location

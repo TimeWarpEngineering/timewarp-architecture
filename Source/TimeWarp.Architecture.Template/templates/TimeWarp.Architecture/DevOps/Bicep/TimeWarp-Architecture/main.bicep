@@ -73,20 +73,20 @@ resource key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
         }
         tenantId: subscription().tenantId
       }
-      // {
-      //   objectId: aks.properties.identityProfile.kubeletidentity.objectId
-      //   permissions: {
-      //     secrets: secrets
-      //   }
-      //   tenantId: subscription().tenantId
-      // }
-      // {
-      //   objectId: aks.identity.principalId
-      //   permissions: {
-      //     secrets: secrets
-      //   }
-      //   tenantId: subscription().tenantId
-      // }
+      {
+        objectId: aks.properties.identityProfile.kubeletidentity.objectId
+        permissions: {
+          secrets: secrets
+        }
+        tenantId: subscription().tenantId
+      }
+      {
+        objectId: aks.identity.principalId
+        permissions: {
+          secrets: secrets
+        }
+        tenantId: subscription().tenantId
+      }
       // {
       //   objectId: function.identity.principalId
       //   permissions: {
@@ -98,7 +98,7 @@ resource key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   }
 
   resource cosmos_primaryMasterKey_secret 'secrets' = {
-    name: 'CosmosPrimaryMasterKey'
+    name: 'CosmosDbOptions--AccessKey'
     properties: {
       value: cosmos_account.listKeys().primaryMasterKey
     }
@@ -106,7 +106,7 @@ resource key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
 }
 
 var cosmosDbOptions_AccessKey_keyVaultRef = {
-  uri: '${key_vault.properties.vaultUri}/sercrets/CosmosDbOptions--AccessKey'
+  uri: '${key_vault.properties.vaultUri}secrets/CosmosDbOptions--AccessKey'
 }
 
 resource app_config 'Microsoft.AppConfiguration/configurationStores@2022-05-01' = {
@@ -191,6 +191,3 @@ module aks_cluster_perms './Modules/Authorization/rolesacr.bicep' = {
 }
 
 output app_config_connectionstring string = app_config.listKeys().value[0].connectionString
-output azure_client_id string = main.outputs.azure_client_id
-output azure_client_secret string = main.outputs.azure_client_secret
-output azure_tenant_id string = subscription().tenantId
