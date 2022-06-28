@@ -7,12 +7,18 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Azure.Identity;
 
 public class CommonServerModule : IAspNetModule
 {
-  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { }
+  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)
+  {
+    ConfgureAzureAppConfig(aConfigurationManager);;
+  }
+
   public static void ConfigureEndpoints(WebApplication aWebApplication)
   {
     var configurationRoot = aWebApplication!.Configuration as IConfigurationRoot;
@@ -93,4 +99,41 @@ public class CommonServerModule : IAspNetModule
         }
       );
   }
+
+  private static void ConfgureAzureAppConfig(ConfigurationManager aConfigurationManager)
+  {
+    string? connectionString = aConfigurationManager.GetConnectionString("AppConfig");
+    if (string.IsNullOrEmpty(connectionString))
+    {
+      Console.WriteLine("No AppConfig ConnectionString");
+      return;
+    }
+
+    Console.WriteLine($"connectionString: {connectionString}");
+
+    aConfigurationManager.AddAzureAppConfiguration
+    (
+      aAzureAppConfigurationOptions =>
+        aAzureAppConfigurationOptions
+          .Connect(connectionString)
+          .UseFeatureFlags()
+          .ConfigureRefresh
+          (
+            aAzureAppConfigurationRefreshOptions =>
+              aAzureAppConfigurationRefreshOptions
+                .Register("Sentinel", refreshAll: true)
+                .SetCacheExpiration(TimeSpan.FromMinutes(5))
+          )
+          .ConfigureKeyVault
+          (
+            aAzureAppConfigurationKeyVaultOptions =>
+              aAzureAppConfigurationKeyVaultOptions.SetCredential(new EnvironmentCredential())
+          ),
+      optional: false
+    );
+
+    string testValue = aConfigurationManager.GetValue<string>("TestValue");
+    Console.WriteLine($"App Config value TestValue: {testValue}");
+  }
+
 }

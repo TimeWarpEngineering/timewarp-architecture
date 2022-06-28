@@ -5,7 +5,7 @@ $global:ApplicationName = "yarp"
 
 Push-Location $PSScriptRoot
 try { 
-  Apply-Manifest -file ./yarp-service.yaml -cluster $ClusterName -namespace $ApplicationNameSpace 
+  Apply-Manifest -file ./api_server-persistent_volume_claim.yaml -cluster $ClusterName -namespace $ApplicationNameSpace 
 }
 finally {
   Pop-Location

@@ -28,4 +28,10 @@ spec:
           - name: "ASPNETCORE_ENVIRONMENT"
             value: $AspNetCore_Environment
           - name: "ASPNETCORE_FORWARDEDHEADERS_ENABLED"
-            value: "true"          
+            value: "true"
+          - name: "AZURE-CLIENT-ID"
+            value: $AzureClientId
+          - name: "AZURE-CLIENT-SECRET"
+            value: $AzureClientSecret
+          - name: "AZURE-TENANT-ID"
+            value: $AzureTenantId   

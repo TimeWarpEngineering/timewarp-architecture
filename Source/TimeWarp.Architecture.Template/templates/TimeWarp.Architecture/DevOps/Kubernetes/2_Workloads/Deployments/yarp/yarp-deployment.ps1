@@ -1,14 +1,13 @@
-if (!$ApplicationNameSpace) { throw "ApplicationNameSpace is not set"}
-if (!$RegistryHost) { throw "RegistryHost is not set"}
-if (!$AspNetCore_Environment) { throw "AspNetCore_Environment is not set"}
-
-$global:ApplicationName = "yarp"
-$ApplicationImageTag = "1.0.0"
-$global:ApplicationImage = "$RegistryHost/$($ApplicationName):$ApplicationImageTag"
-
 Push-Location $PSScriptRoot
-try { 
-  Apply-Manifest ./yarp-deployment.yaml
+try {   
+  Deploy-Server `
+    -file ./yarp-deployment.yaml `
+    -name "yarp" `
+    -imageTag $YarpServerImageTag `
+    -cluster $ClusterName `
+    -namespace $ApplicationNameSpace `
+    -environment $AspNetCore_Environment `
+    -registryHost $RegistryHost 
 }
 finally {
   Pop-Location

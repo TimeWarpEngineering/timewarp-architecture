@@ -1,19 +1,15 @@
-ARG node_version=18.2.0
+ARG node_version=18.4.0
 ARG dotnet_version=6.0
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM node:$node_version-alpine AS node
-
 # https://hub.docker.com/_/microsoft-dotnet
 FROM mcr.microsoft.com/dotnet/sdk:$dotnet_version-jammy AS build
-ENV NODE_OPTIONS=--openssl-legacy-provider
+WORKDIR /tmp
+RUN apt-get update
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - 
+RUN apt-get install --no-install-recommends -y nodejs 
 
-# add node packages from their image
-COPY --from=node /usr/lib /usr/lib
-COPY --from=node /usr/local/share /usr/local/share
-COPY --from=node /usr/local/lib /usr/local/lib
-COPY --from=node /usr/local/include /usr/local/include
-COPY --from=node /usr/local/bin /usr/local/bin
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 RUN node --version
 
@@ -33,7 +29,7 @@ COPY ["Source/Libraries/TimeWarp.OptionsValidation/TimeWarp.OptionsValidation.cs
 COPY ["Source/ContainerApps/Web/Web.Infrastructure/Web.Infrastructure.csproj", "Source/ContainerApps/Web/Web.Infrastructure/"]
 COPY ["Source/ContainerApps/Web/Web.Application/Web.Application.csproj", "Source/ContainerApps/Web/Web.Application/"]
 COPY ["Source/ContainerApps/Web/Web.Domain/Web.Domain.csproj", "Source/ContainerApps/Web/Web.Domain/"]
-COPY ["Source/ContainerApps/Web/Web.Shared/Web.Contracts.csproj", "Source/ContainerApps/Web/Web.Shared/"]
+COPY ["Source/ContainerApps/Web/Web.Contracts/Web.Contracts.csproj", "Source/ContainerApps/Web/Web.Contracts/"]
 COPY ["Source/ContainerApps/Web/Web.Spa/Web.Spa.csproj", "Source/ContainerApps/Web/Web.Spa/"]
 COPY ["Source/ContainerApps/Grpc/Grpc.Contracts/Grpc.Contracts.csproj", "Source/ContainerApps/Grpc/Grpc.Contracts/"]
 COPY ["Source/ContainerApps/Api/Api.Contracts/Api.Contracts.csproj", "Source/ContainerApps/Api/Api.Contracts/"]

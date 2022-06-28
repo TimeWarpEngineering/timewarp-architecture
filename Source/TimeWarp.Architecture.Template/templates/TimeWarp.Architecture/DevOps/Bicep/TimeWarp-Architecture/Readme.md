@@ -1,4 +1,9 @@
-# Deploy the Azure Resource Group 
+# Provision the Azure Resources
+
+Update your desired settings in `DevOps\variables.ps1` and then execute:
+
+`DevOps\Bicep\TimeWarp-Architecture\provision.ps1`
+
 
 Singapore Data Center doesn't seem to support CosmosDB (WHY NOT?) So will use Japan East
 
@@ -6,7 +11,10 @@ Singapore Data Center doesn't seem to support CosmosDB (WHY NOT?) So will use Ja
 $Location = "japaneast"
 ```
 
-## With Powershell
+## Provision the Azure Resource Group 
+
+
+### With Powershell
 
 Set your subscription
 Set-AzContext -Subscription $SubscriptionId
@@ -45,3 +53,7 @@ az configure --defaults group=timewarp-rg
 az deployment group create `
   --template-file main.bicep
 ```
+
+# References
+
+Memealyzer

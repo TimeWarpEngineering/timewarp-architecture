@@ -5,7 +5,7 @@ $global:ApplicationName = "api-server"
 
 Push-Location $PSScriptRoot
 try { 
-  Apply-Manifest ./api_server-service.yaml
+  Apply-Manifest -file ./api_server-service.yaml -cluster $ClusterName -namespace $ApplicationNameSpace 
 }
 finally {
   Pop-Location

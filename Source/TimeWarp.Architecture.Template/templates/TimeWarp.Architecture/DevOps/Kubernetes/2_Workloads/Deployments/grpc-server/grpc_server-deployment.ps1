@@ -1,14 +1,13 @@
-if (!$ApplicationNameSpace) { throw "ApplicationNameSpace is not set"}
-if (!$RegistryHost) { throw "RegistryHost is not set"}
-if (!$AspNetCore_Environment) { throw "AspNetCore_Environment is not set"}
-
-$global:ApplicationName = "grpc-server"
-$ApplicationImageTag = "1.0.0"
-$global:ApplicationImage = "$RegistryHost/$($ApplicationName):$ApplicationImageTag"
-
 Push-Location $PSScriptRoot
-try { 
-  Apply-Manifest ./grpc_server-deployment.yaml
+try {   
+  Deploy-Server `
+    -file ./grpc_server-deployment.yaml `
+    -name "grpc-server" `
+    -imageTag $GrpcServerImageTag `
+    -cluster $ClusterName `
+    -namespace $ApplicationNameSpace `
+    -environment $AspNetCore_Environment `
+    -registryHost $RegistryHost 
 }
 finally {
   Pop-Location

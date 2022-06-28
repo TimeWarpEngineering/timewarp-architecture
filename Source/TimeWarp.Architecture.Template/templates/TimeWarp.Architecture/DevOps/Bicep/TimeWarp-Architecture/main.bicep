@@ -1,5 +1,7 @@
 param basename string
-param location string = 'japaneast'
+param appconfigname string
+param clustername string
+param location string
 
 @minLength(1)
 param principalId string
@@ -11,26 +13,39 @@ var secrets = [
   'delete'
 ]
 
+var accountName = '${basename}-cosmos-account'
+var databaseName = basename
 
-module key_vault 'modules/key_vault.bicep' = {
-  name: '${basename}-keyvault'
-  params: {
-    basename: basename
-    location: location
+resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
+  name: toLower(accountName)
+  location: location
+  properties: {
+    enableFreeTier: true
+    databaseAccountOfferType: 'Standard'
+    consistencyPolicy: {
+      defaultConsistencyLevel: 'Session'
+    }
+    locations: [
+      {
+        locationName: location
+      }
+    ]
+  }
+
+  resource cosmos_db 'sqlDatabases' = {
+    name: databaseName
+    properties: {
+      resource: {
+        id: databaseName
+      }
+      options: {
+        throughput: 400
+      }
+    }
   }
 }
 
-module cosmos_db 'modules/cosmos_db.bicep' = {
-  name: '${basename}-cosmosdb'
-  params: {
-    basename: basename
-    location: location
-  }
-}
-
-
-
-resource acr 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
+resource container_registry 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
   name: '${basename}acr'
   location: location
   sku: {
@@ -83,28 +98,19 @@ resource key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   }
 
   resource cosmos_primaryMasterKey_secret 'secrets' = {
-    name: 'CosmosDbOptions--AccessKey'
+    name: 'CosmosPrimaryMasterKey'
     properties: {
-      value: cosmos_db.outputs.primaryMasterKey
-    }
-  }
-
-  resource cosmos_primaryConnectionString_secret 'secrets' = {
-    name: 'CosmosPrimaryConnectionString'
-    properties: {
-      value: cosmos_db.outputs.primaryConnectionString
+      value: cosmos_account.listKeys().primaryMasterKey
     }
   }
 }
 
-// {"uri":"https://cramer-test-key-vault.vault.azure.net/secrets/KeyServiceOptions--EncryptedAppTitle"}
 var cosmosDbOptions_AccessKey_keyVaultRef = {
   uri: '${key_vault.properties.vaultUri}/sercrets/CosmosDbOptions--AccessKey'
 }
 
-
-resource appconfig 'Microsoft.AppConfiguration/configurationStores@2022-05-01' = {
-  name: '${basename}appconfig'
+resource app_config 'Microsoft.AppConfiguration/configurationStores@2022-05-01' = {
+  name: appconfigname
   location: location
   sku: {
     name: 'Standard'
@@ -128,3 +134,63 @@ resource appconfig 'Microsoft.AppConfiguration/configurationStores@2022-05-01' =
     }
   }
 }
+
+resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
+  name: clustername
+  location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    kubernetesVersion: '1.23.5'
+    nodeResourceGroup: '${clustername}nodes'
+    dnsPrefix: clustername
+
+    agentPoolProfiles: [
+      {
+        name: 'default'
+        count: 1
+        vmSize: 'Standard_DS2_v2'
+        mode: 'System'
+      }
+    ]
+  }
+}
+
+resource application_insights 'Microsoft.Insights/components@2020-02-02' = {
+  name: '${basename}ai'
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+  }
+}
+
+module cli_perms './Modules/Authorization/rolesapp.bicep' = {
+  name: 'cli_perms-${resourceGroup().name}'
+  params: {
+    principalId: principalId
+    principalType: 'User'
+    resourceGroupName: resourceGroup().name
+  }
+}
+
+module aks_kubelet_perms './Modules/Authorization/rolesapp.bicep' = {
+  name: 'aks_kubelet_perms-${resourceGroup().name}'
+  params: {
+    principalId: aks.properties.identityProfile.kubeletidentity.objectId
+    resourceGroupName: resourceGroup().name
+  }
+}
+module aks_cluster_perms './Modules/Authorization/rolesacr.bicep' = {
+  name: 'aks_cluster_perms-${resourceGroup().name}'
+  params: {
+    principalId: aks.identity.principalId
+    resourceGroupName: resourceGroup().name
+  }
+}
+
+output app_config_connectionstring string = app_config.listKeys().value[0].connectionString
+output azure_client_id string = main.outputs.azure_client_id
+output azure_client_secret string = main.outputs.azure_client_secret
+output azure_tenant_id string = subscription().tenantId

@@ -1,14 +1,14 @@
-if (!$ApplicationNameSpace) { throw "ApplicationNameSpace is not set"}
-if (!$RegistryHost) { throw "RegistryHost is not set"}
-if (!$AspNetCore_Environment) { throw "AspNetCore_Environment is not set"}
-
-$global:ApplicationName = "api-server"
-$ApplicationImageTag = "1.0.0"
-$global:ApplicationImage = "$RegistryHost/$($ApplicationName):$ApplicationImageTag"
-
 Push-Location $PSScriptRoot
-try { 
-  Apply-Manifest ./api_server-deployment.yaml
+try {   
+  . "$PSScriptRoot\..\..\..\..\variables.ps1"
+  Deploy-Server `
+    -file ./api_server-deployment.yaml `
+    -name "api-server" `
+    -imageTag $ApiServerImageTag `
+    -cluster $ClusterName `
+    -namespace $ApplicationNameSpace `
+    -environment $AspNetCore_Environment `
+    -registryHost $RegistryHost 
 }
 finally {
   Pop-Location

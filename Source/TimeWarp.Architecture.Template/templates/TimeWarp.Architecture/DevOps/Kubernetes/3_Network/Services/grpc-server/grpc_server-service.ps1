@@ -5,7 +5,7 @@ $global:ApplicationName = "grpc-server"
 
 Push-Location $PSScriptRoot
 try { 
-  Apply-Manifest ./grpc_server-service.yaml
+  Apply-Manifest -file ./grpc_server-service.yaml -cluster $ClusterName -namespace $ApplicationNameSpace 
 }
 finally {
   Pop-Location
