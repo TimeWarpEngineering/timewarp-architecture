@@ -109,6 +109,10 @@ var cosmosDbOptions_AccessKey_keyVaultRef = {
   uri: '${key_vault.properties.vaultUri}secrets/CosmosDbOptions--AccessKey'
 }
 
+var cosmosDbOptions_EndPoint_keyVaultRef = {
+  uri: '${key_vault.properties.vaultUri}secrets/CosmosDbOptions--EndPoint'
+}
+
 resource app_config 'Microsoft.AppConfiguration/configurationStores@2022-05-01' = {
   name: appconfigname
   location: location
@@ -130,6 +134,14 @@ resource app_config 'Microsoft.AppConfiguration/configurationStores@2022-05-01' 
     name: 'CosmosDbOptions:AccessKey'
     properties: {
       value: string(cosmosDbOptions_AccessKey_keyVaultRef)
+      contentType: 'application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8'
+    }
+  }
+
+  resource cosmosDbOptions_EndPoint_keyVaultSecret 'keyValues@2022-05-01' = {
+    name: 'CosmosDbOptions:Endpoint'
+    properties: {
+      value: string(cosmosDbOptions_EndPoint_keyVaultRef)
       contentType: 'application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8'
     }
   }
