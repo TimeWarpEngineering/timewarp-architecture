@@ -12,7 +12,7 @@ public class Program : IAspNetProgram
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp.Architecture Api.Server API {SwaggerVersion}";
   const string SwaggerBasePath = "api/api-server";
-  const string SwaggerEndPoint = $"/swagger/{SwaggerVersion}/swagger.json";
+  const string SwaggerEndpoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
   public static Task<int> Main(string[] aArgumentArray)
   {
@@ -91,7 +91,7 @@ public class Program : IAspNetProgram
       aWebApplication.UseCors(CorsPolicy.Any.Name);
     }
 
-    CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndPoint, SwaggerApiTitle);
+    CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
 
     //aWebApplication.UseHttpsRedirection(); // In K8s we won't use https so we don't want to redirect
 

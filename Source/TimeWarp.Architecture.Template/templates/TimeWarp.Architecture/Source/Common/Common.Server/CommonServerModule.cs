@@ -81,7 +81,7 @@ public class CommonServerModule : IAspNetModule
   (
     WebApplication aWebApplication,
     string aSwaggerBasePath,
-    string aSwaggerEndPoint,
+    string aSwaggerEndpoint,
     string aSwaggerApiTitle
   )
   {
@@ -94,7 +94,7 @@ public class CommonServerModule : IAspNetModule
       (
         aSwaggerUIOptions =>
         {
-          aSwaggerUIOptions.SwaggerEndpoint($"/{aSwaggerBasePath}{aSwaggerEndPoint}", aSwaggerApiTitle);
+          aSwaggerUIOptions.SwaggerEndpoint($"/{aSwaggerBasePath}{aSwaggerEndpoint}", aSwaggerApiTitle);
           aSwaggerUIOptions.RoutePrefix = $"{aSwaggerBasePath}/swagger";
         }
       );

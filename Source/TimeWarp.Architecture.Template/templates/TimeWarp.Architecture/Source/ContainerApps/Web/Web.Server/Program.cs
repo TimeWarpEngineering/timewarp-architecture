@@ -37,7 +37,7 @@ public class Program : IAspNetProgram
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp.Architecture Web.Server API {SwaggerVersion}";
   const string SwaggerBasePath = "api/web-server";
-  const string SwaggerEndPoint = $"/swagger/{SwaggerVersion}/swagger.json";
+  const string SwaggerEndpoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
   public static Task<int> Main(string[] aArgumentArray)
   {
@@ -59,8 +59,7 @@ public class Program : IAspNetProgram
   }
   public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)
   {
-    CommonServerModule.ConfigureConfiguration(aConfigurationManager);
-    ;
+    CommonServerModule.ConfigureConfiguration(aConfigurationManager); ;
   }
 
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
@@ -133,7 +132,7 @@ public class Program : IAspNetProgram
       aWebApplication.UseWebAssemblyDebugging();
     }
 
-    CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndPoint, SwaggerApiTitle);
+    CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
 
     aWebApplication.UseResponseCompression();
 
@@ -264,7 +263,7 @@ public class Program : IAspNetProgram
           aDbContextOptionsBuilder
           .UseCosmos
           (
-            accountEndpoint: cosmosOptions.EndPoint,
+            accountEndpoint: cosmosOptions.Endpoint,
             accountKey: cosmosOptions.AccessKey,
             databaseName: nameof(CosmosDbContext),
             cosmosOptionsAction: CosmosOptionsAction()

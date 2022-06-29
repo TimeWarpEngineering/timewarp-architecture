@@ -6,7 +6,7 @@ public class CosmosDbOptions
   /// The Cosmos DB Endpoint.
   /// </summary>
   /// <remarks>Find this value in Azure Portal by selecting your Azure Cosmos DB account and then under "Settings" select Keys</remarks>
-  public string? EndPoint { get; set; }
+  public string? Endpoint { get; set; }
 
   /// <summary>
   /// The Cosmos DB access key.
