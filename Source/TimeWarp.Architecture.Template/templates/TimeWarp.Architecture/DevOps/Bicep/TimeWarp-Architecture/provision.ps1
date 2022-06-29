@@ -33,6 +33,3 @@ $DeploymentOutputString = az deployment sub create `
 $DeploymentOutput =  $DeploymentOutputString | ConvertFrom-Json
 
 $global:ConnectionStrings__AppConfig = $DeploymentOutput.properties.outputs.app_config_connectionstring.value
-$global:AzureClientId = $DeploymentOutput.properties.outputs.azure_client_id.value
-$global:AzureClientSecret = $DeploymentOutput.properties.outputs.azure_client_secret.value
-$global:AzureTenantId = $DeploymentOutput.properties.outputs.azure_tenant_id.value
