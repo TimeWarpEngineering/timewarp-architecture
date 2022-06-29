@@ -3,22 +3,20 @@
 
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>
-    <Product>TimeWarp Architecture</Product>
+    <Product>TimeWarp.Architecture</Product>
   </PropertyGroup>
 
   <!-- Common compile parameters -->
   <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>preview</LangVersion>
-    <EnablePreviewFeatures>True</EnablePreviewFeatures>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Nullable>disable</Nullable>
     <TargetFramework>net6.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <!-- We use full (Windows PDBs) until cross platform support for source link will get better -->
-    <DebugType>full</DebugType>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
   <Target Name="EmbedLocal" BeforeTargets="PrepareForBuild">    

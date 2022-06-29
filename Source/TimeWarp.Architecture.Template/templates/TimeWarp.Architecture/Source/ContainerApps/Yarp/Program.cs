@@ -17,25 +17,15 @@ public class Program : IAspNetProgram
 
     WebApplication webApplication = builder.Build();
 
-    ConfigureMiddleware(webApplication, webApplication.Services, webApplication.Environment);
-    ConfigureEndpoints(webApplication, webApplication.Services);
+    ConfigureMiddleware(webApplication);
+    ConfigureEndpoints(webApplication);
 
     return webApplication.RunAsync();
   }
   public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { }
-  public static void ConfigureEndpoints
-  (
-    IEndpointRouteBuilder aEndpointRouteBuilder,
-    IServiceProvider aServiceCollection
-  )
-  { }
+  public static void ConfigureEndpoints(WebApplication aWebApplication) { }
 
-  public static void ConfigureMiddleware
-  (
-    WebApplication aWebApplication,
-    IServiceProvider aServiceCollection,
-    IHostEnvironment aHostEnvironment
-  ) => aWebApplication.MapReverseProxy();
+  public static void ConfigureMiddleware(WebApplication aWebApplication) => aWebApplication.MapReverseProxy();
 
   public static void ConfigureServices
   (

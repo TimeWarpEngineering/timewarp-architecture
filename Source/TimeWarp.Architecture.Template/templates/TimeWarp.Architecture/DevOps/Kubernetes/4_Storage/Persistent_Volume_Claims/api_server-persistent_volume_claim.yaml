@@ -1,0 +1,15 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: api-data
+  namespace: $ApplicationNamespace
+  labels:
+    app.kubernetes.io/name: 'api-data'
+    app.kubernetes.io/part-of: $ApplicationNamespace
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-premium-retain
+  resources:
+    requests:
+      storage: 4Gi

@@ -22,7 +22,7 @@ using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.ClientLoaders;
 using TimeWarp.Architecture.Features.EventStreams;
 using TimeWarp.Architecture.Features.Superheros;
-using ServiceCollection = Configuration.ServiceCollection;
+using ServiceCollectionOptions = Configuration.ServiceCollectionOptions;
 
 public class Program
 {
@@ -46,7 +46,19 @@ public class Program
 
     aServiceCollection.AddFormValidation
     (
-      aValidationConfiguration => aValidationConfiguration.AddFluentValidation(typeof(Program).Assembly)
+        aValidationConfiguration =>
+        {
+          aValidationConfiguration.AddFluentValidation(typeof(Web_Spa_Assembly).Assembly);
+          ServiceDescriptor serviceDescriptor =
+            aServiceCollection.First
+            (
+              aServiceDescriptor =>
+                aServiceDescriptor.ServiceType.Name == nameof(ServiceCollectionOptionsValidator.ServiceValidator) &&
+                aServiceDescriptor.Lifetime == ServiceLifetime.Scoped
+            );
+
+          aServiceCollection.Remove(serviceDescriptor);
+        }
     );
 
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
@@ -57,11 +69,11 @@ public class Program
     // Set the JSON serializer options
     aServiceCollection.Configure<JsonSerializerOptions>
     (
-      options =>
+      aJsonSerializerOptions =>
       {
-        //options.PropertyNameCaseInsensitive = false;
-        options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        //options.WriteIndented = true;
+        //aJsonSerializerOptions.PropertyNameCaseInsensitive = false;
+        aJsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        ;//aJsonSerializerOptions.WriteIndented = true;
       }
     );
 
@@ -75,7 +87,7 @@ public class Program
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
     aServiceCollection
-      .ConfigureOptions<ServiceCollection, ServiceCollectionValidator>(aConfiguration);
+      .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(aConfiguration);
 
     //aServiceCollection.ValidateOptions();
   }
@@ -87,15 +99,16 @@ public class Program
       aServiceProvider =>
       {
         IConfiguration configuration = aServiceProvider.GetRequiredService<IConfiguration>();
-        const string ServiceName = "grpc-server";
-        string grpcUrl = GetServiceUri(configuration, ServiceName);
 
-        if (string.IsNullOrEmpty(grpcUrl))
-        {
-          throw new Exception("No grpc-server address found in configuration");
-        }
+        Uri grpcUrl = GetServiceUri(configuration, Constants.GrpcServiceName);
 
         Console.WriteLine($"grpcUrl:{grpcUrl}");
+
+        if (grpcUrl is null)
+        {
+          throw new Exception($"No {Constants.GrpcServiceName} address found in configuration");
+        }
+
 
         // Create a channel with a GrpcWebHandler that is addressed to the backend server.
         //
@@ -133,16 +146,23 @@ public class Program
 
   }
 
-  private static string GetServiceUri(IConfiguration aConfiguration, string aServiceName)
+  private static Uri GetServiceUri(IConfiguration aConfiguration, string aServiceName)
   {
+    ServiceCollectionOptions serviceCollectionOptions =
+      aConfiguration.GetSection(nameof(ServiceCollectionOptions)).Get<ServiceCollectionOptions>();
+
+    ServiceCollectionOptions.Service service = serviceCollectionOptions[Constants.GrpcServiceName];
+
+    Console.WriteLine($"service.Host:{service.Host}");
+
     var uriBuilder = new UriBuilder
     {
-      Scheme = aConfiguration.GetValue<string>($"service:{aServiceName}:protocol"),
-      Host = aConfiguration.GetValue<string>($"service:{aServiceName}:host"),
-      Port = aConfiguration.GetValue<int>($"service:{aServiceName}:port")
+      Scheme = service.Protocol,
+      Host = service.Host,
+      Port = service.Port
     };
 
-    string serviceUri = aConfiguration.GetServiceUri(aServiceName)?.AbsoluteUri ?? uriBuilder.ToString();
+    Uri serviceUri = aConfiguration.GetServiceUri(aServiceName) ?? uriBuilder.Uri;
 
     return serviceUri;
   }

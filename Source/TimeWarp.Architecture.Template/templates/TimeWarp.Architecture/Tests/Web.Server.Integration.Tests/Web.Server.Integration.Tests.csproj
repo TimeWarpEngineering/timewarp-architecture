@@ -9,8 +9,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Contracts\Web.Contracts.csproj" />
     <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Server\Web.Server.csproj" />
-    <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Shared\Web.Contracts.csproj" />
     <ProjectReference Include="..\TimeWarp.Testing\Testing.Common.csproj" />
   </ItemGroup>
 

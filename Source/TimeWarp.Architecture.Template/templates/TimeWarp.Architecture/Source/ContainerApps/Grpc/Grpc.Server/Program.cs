@@ -1,7 +1,5 @@
 using ProtoBuf.Grpc.Server;
 using TimeWarp.Architecture.Features.Superheros;
-using TimeWarp.Architecture.GrpcServer.Services;
-using TimeWarp.Architecture.HostedServices;
 
 const string AllowAllCorsPolicy = "AllowAll";
 
@@ -26,7 +24,7 @@ static void ConfigureServices(IServiceCollection aServiceCollection)
   aServiceCollection.AddCodeFirstGrpc();
   aServiceCollection.AddCodeFirstGrpcReflection();
 
-  
+
   aServiceCollection.AddCors
   (
     o => o.AddPolicy
@@ -40,7 +38,7 @@ static void ConfigureServices(IServiceCollection aServiceCollection)
       }
     )
   );
-  
+
   //aServiceCollection.AddHostedService<ProtobufGenerationHostedService>();
 }
 

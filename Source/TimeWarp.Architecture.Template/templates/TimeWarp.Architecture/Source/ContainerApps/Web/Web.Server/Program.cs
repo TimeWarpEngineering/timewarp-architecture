@@ -18,9 +18,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Oakton;
 using Oakton.Environment;
-using System;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Mime;
 using System.Reflection;
@@ -32,12 +30,14 @@ using TimeWarp.Architecture.CorsPolicies;
 using TimeWarp.Architecture.Data;
 using TimeWarp.Architecture.HostedServices;
 using TimeWarp.Architecture.Infrastructure;
+using TimeWarp.Architecture.Web.Infrastructure;
 
 public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp.Architecture Web.Server API {SwaggerVersion}";
-  const string SwaggerEndPoint = $"/swagger/{SwaggerVersion}/swagger.json";
+  const string SwaggerBasePath = "api/web-server";
+  const string SwaggerEndpoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
   public static Task<int> Main(string[] aArgumentArray)
   {
@@ -48,18 +48,25 @@ public class Program : IAspNetProgram
 
     WebApplication webApplication = builder.Build();
 
-    ConfigureMiddleware(webApplication, webApplication.Services, webApplication.Environment);
-    ConfigureEndpoints(webApplication, webApplication.Services);
+    Console.WriteLine($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
+
+    ConfigureMiddleware(webApplication);
+    ConfigureEndpoints(webApplication);
 
     webApplication.Services.ValidateOptions(builder.Services);
 
     return webApplication.RunOaktonCommands(aArgumentArray);
   }
-  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { }
+  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)
+  {
+    CommonServerModule.ConfigureConfiguration(aConfigurationManager); ;
+  }
 
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
+    CommonServerModule.ConfigureServices(aServiceCollection, aConfiguration);
     ConfigureSettings(aServiceCollection, aConfiguration);
+    WebInfrastructureModule.ConfigureServices(aServiceCollection, aConfiguration);
     CorsPolicy.Any.Apply(aServiceCollection);
     ConfigureInfrastructure(aServiceCollection);
     aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
@@ -101,35 +108,33 @@ public class Program : IAspNetProgram
         typeof(Web_Application_Assembly).GetTypeInfo().Assembly
       );
 
-    ConfigureSwagger(aServiceCollection);
+    CommonServerModule
+      .AddSwaggerGen
+      (
+        aServiceCollection,
+        SwaggerVersion,
+        SwaggerApiTitle,
+        new Type[] { typeof(Web_Server_Assembly), typeof(Web_Contracts_Assembly) }
+      );
   }
 
-  public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
+  public static void ConfigureMiddleware(WebApplication aWebApplication)
   {
+    CommonServerModule.ConfigureMiddleware(aWebApplication);
+
     // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
     // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
-    // Sometimes, you might want to allow other sites to make cross-origin requests to your app.
-    if (aHostEnvironment.IsDevelopment())
+    // Although sometimes, you might want to allow other sites to make cross-origin requests to your app to be functional.
+    if (aWebApplication.Environment.IsDevelopment())
     {
       aWebApplication.UseCors(CorsPolicy.Any.Name);
-    }
-    // Enable middleware to serve generated Swagger as a JSON endpoint.
-    aWebApplication.UseSwagger();
-
-    // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
-    // specifying the Swagger JSON endpoint.
-    aWebApplication.UseSwaggerUI
-    (
-      aSwaggerUIOptions => aSwaggerUIOptions.SwaggerEndpoint(SwaggerEndPoint, SwaggerApiTitle)
-    );
-
-    aWebApplication.UseResponseCompression();
-
-    if (aHostEnvironment.IsDevelopment())
-    {
       aWebApplication.UseDeveloperExceptionPage();
       aWebApplication.UseWebAssemblyDebugging();
     }
+
+    CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
+
+    aWebApplication.UseResponseCompression();
 
     aWebApplication.UseRouting();
 
@@ -148,43 +153,45 @@ public class Program : IAspNetProgram
     aWebApplication.UseBlazorFrameworkFiles();
   }
 
-  private static void ConfigureSwagger(IServiceCollection aServiceCollection)
+  //private static void ConfigureSwagger(IServiceCollection aServiceCollection)
+  //{
+  //  // Register the Swagger generator, defining 1 or more Swagger documents
+  //  aServiceCollection.AddSwaggerGen
+  //    (
+  //      aSwaggerGenOptions =>
+  //      {
+  //        aSwaggerGenOptions
+  //        .SwaggerDoc
+  //        (
+  //          SwaggerVersion,
+  //          new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
+  //        );
+  //        aSwaggerGenOptions.EnableAnnotations();
+
+  //        // Set the comments path for the Swagger JSON and UI from Server.
+  //        string xmlFile = $"{typeof(Web_Server_Assembly).Assembly.GetName().Name}.xml";
+  //        string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+
+  //        // Set the comments path for the Swagger JSON and UI from API.
+  //        xmlFile = $"{typeof(Web_Contracts_Assembly).Assembly.GetName().Name}.xml";
+  //        xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+  //      }
+  //    );
+
+  //  aServiceCollection.AddFluentValidationRulesToSwagger();
+  //}
+
+  public static void ConfigureEndpoints(WebApplication aWebApplication)
   {
-    // Register the Swagger generator, defining 1 or more Swagger documents
-    aServiceCollection.AddSwaggerGen
-      (
-        aSwaggerGenOptions =>
-        {
-          aSwaggerGenOptions
-          .SwaggerDoc
-          (
-            SwaggerVersion,
-            new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
-          );
-          aSwaggerGenOptions.EnableAnnotations();
-
-          // Set the comments path for the Swagger JSON and UI from Server.
-          string xmlFile = $"{typeof(Web_Server_Assembly).Assembly.GetName().Name}.xml";
-          string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-
-          // Set the comments path for the Swagger JSON and UI from API.
-          xmlFile = $"{typeof(Web_Contracts_Assembly).Assembly.GetName().Name}.xml";
-          xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-        }
-      );
-
-    aServiceCollection.AddFluentValidationRulesToSwagger();
+    CommonServerModule.ConfigureEndpoints(aWebApplication);
+    aWebApplication.MapControllers();
   }
-
-  public static void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection) =>
-  aEndpointRouteBuilder.MapControllers();
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
     aServiceCollection
-      .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
       .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
 
     aServiceCollection.Configure<ApiBehaviorOptions>
@@ -256,7 +263,7 @@ public class Program : IAspNetProgram
           aDbContextOptionsBuilder
           .UseCosmos
           (
-            accountEndpoint: cosmosOptions.EndPoint,
+            accountEndpoint: cosmosOptions.Endpoint,
             accountKey: cosmosOptions.AccessKey,
             databaseName: nameof(CosmosDbContext),
             cosmosOptionsAction: CosmosOptionsAction()

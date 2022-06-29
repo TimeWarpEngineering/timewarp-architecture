@@ -19,6 +19,42 @@
       "commands": [
         "tye"
       ]
+    },
+    "dependencygraphdrawer": {
+      "version": "0.9.4",
+      "commands": [
+        "dotnet-dg"
+      ]
+    },
+    "dotnet-depends": {
+      "version": "0.6.1",
+      "commands": [
+        "dotnet-depends"
+      ]
+    },
+    "dotnet-cleanup": {
+      "version": "0.6.1",
+      "commands": [
+        "cleanup"
+      ]
+    },
+    "dotnet-serve": {
+      "version": "1.10.112",
+      "commands": [
+        "dotnet-serve"
+      ]
+    },
+    "dotnet-trace": {
+      "version": "6.0.328102",
+      "commands": [
+        "dotnet-trace"
+      ]
+    },
+    "microsoft.dotnet-httprepl": {
+      "version": "6.0.0",
+      "commands": [
+        "httprepl"
+      ]
     }
   }
 }

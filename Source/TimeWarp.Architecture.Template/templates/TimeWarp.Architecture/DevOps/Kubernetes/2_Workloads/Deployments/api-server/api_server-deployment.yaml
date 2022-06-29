@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $ApplicationName
+  namespace: $ApplicationNamespace
+  labels:
+    app.kubernetes.io/name: $ApplicationName
+    app.kubernetes.io/part-of: $ApplicationNamespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: $ApplicationName
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: $ApplicationName
+        app.kubernetes.io/part-of: $ApplicationNamespace
+    spec:
+      containers:
+        - name: $ApplicationName
+          image: $ApplicationImage
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+          - name: "ConnectionStrings__AppConfig"
+            value: $ConnectionStrings__AppConfig
+          - name: "ASPNETCORE_ENVIRONMENT"
+            value: $AspNetCore_Environment
+          - name: "ASPNETCORE_FORWARDEDHEADERS_ENABLED"
+            value: "true"
+          - name: "AZURE-CLIENT-ID"
+            value: $AzureClientId
+          - name: "AZURE-CLIENT-SECRET"
+            value: $AzureClientSecret
+          - name: "AZURE-TENANT-ID"
+            value: $AzureTenantId
+          volumeMounts:
+          - name: api-data
+            mountPath: /data/
+      volumes:
+      - name: api-data
+        persistentVolumeClaim:
+          claimName: api-data

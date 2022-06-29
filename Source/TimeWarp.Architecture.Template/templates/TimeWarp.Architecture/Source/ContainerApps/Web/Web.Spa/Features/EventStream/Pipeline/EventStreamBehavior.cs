@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.Bases;
 using static TimeWarp.Architecture.Features.EventStreams.EventStreamState;
 
 /// <summary>

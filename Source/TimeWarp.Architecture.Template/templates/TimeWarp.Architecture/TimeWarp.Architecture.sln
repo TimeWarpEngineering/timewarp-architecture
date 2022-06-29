@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04-Tests", "04-Tests", "{2902FDFD-016E-4BF7-8B41-53D674FA53DD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Contracts", "Source\ContainerApps\Web\Web.Shared\Web.Contracts.csproj", "{19B3F119-0F8A-430A-8336-9F6797B990E9}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Server", "Source\ContainerApps\Web\Web.Server\Web.Server.csproj", "{CFFB80F7-6230-4244-A07F-12F5A295FB21}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Spa", "Source\ContainerApps\Web\Web.Spa\Web.Spa.csproj", "{545E3103-354C-4058-8D8F-60D70DCC115B}"
@@ -73,9 +71,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{B3864467-1369-45DE-9CEB-EF227A5D062A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-DevOps", "00-DevOps", "{968CBDA4-4227-4C7B-9F41-804376A8F193}"
-	ProjectSection(SolutionItems) = preProject
-		DevOps\Tye\tye.yaml = DevOps\Tye\tye.yaml
-	EndProjectSection
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Web.TypeScript", "Source\ContainerApps\Web\Web.TypeScript\Web.TypeScript.esproj", "{2929D233-BD18-46BD-93C3-A4B69EE91BCC}"
 EndProject
@@ -84,8 +79,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Server.Integration.Tests", "Tests\Web.Server.Integration.Tests\Web.Server.Integration.Tests.csproj", "{C734286B-E573-4F72-BBE6-57ADDD4265D5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.Server.Integration.Tests", "Tests\Api.Server.Integration.Tests\Api.Server.Integration.Tests.csproj", "{E5570C46-7FB6-413A-92C8-061876C3D568}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.OptionsValidation", "Source\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj", "{A9F17600-5A0C-41F8-99E5-173D03983521}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.Application", "Source\ContainerApps\Api\Api.Application\Api.Application.csproj", "{A0330F86-0A50-4264-88EE-3745C187767D}"
 EndProject
@@ -121,6 +114,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Grpc.Domain", "Source\Conta
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Grpc.Infrastructure", "Source\ContainerApps\Grpc\Grpc.Infrastructure\Grpc.Infrastructure.csproj", "{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.OptionsValidation", "Source\Libraries\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj", "{6108B41B-EE8B-4A23-810E-CF2B380F1796}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Contracts", "Source\ContainerApps\Web\Web.Contracts\Web.Contracts.csproj", "{DBDCECC2-1280-40E7-BDF8-71BB3F941279}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -128,12 +125,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{19B3F119-0F8A-430A-8336-9F6797B990E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{19B3F119-0F8A-430A-8336-9F6797B990E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{19B3F119-0F8A-430A-8336-9F6797B990E9}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
-		{19B3F119-0F8A-430A-8336-9F6797B990E9}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
-		{19B3F119-0F8A-430A-8336-9F6797B990E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{19B3F119-0F8A-430A-8336-9F6797B990E9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
@@ -233,12 +224,6 @@ Global
 		{E5570C46-7FB6-413A-92C8-061876C3D568}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{E5570C46-7FB6-413A-92C8-061876C3D568}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E5570C46-7FB6-413A-92C8-061876C3D568}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A9F17600-5A0C-41F8-99E5-173D03983521}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A0330F86-0A50-4264-88EE-3745C187767D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A0330F86-0A50-4264-88EE-3745C187767D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0330F86-0A50-4264-88EE-3745C187767D}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
@@ -329,12 +314,23 @@ Global
 		{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DBDCECC2-1280-40E7-BDF8-71BB3F941279}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBDCECC2-1280-40E7-BDF8-71BB3F941279}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBDCECC2-1280-40E7-BDF8-71BB3F941279}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{DBDCECC2-1280-40E7-BDF8-71BB3F941279}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{DBDCECC2-1280-40E7-BDF8-71BB3F941279}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBDCECC2-1280-40E7-BDF8-71BB3F941279}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{19B3F119-0F8A-430A-8336-9F6797B990E9} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
 		{CFFB80F7-6230-4244-A07F-12F5A295FB21} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
 		{545E3103-354C-4058-8D8F-60D70DCC115B} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
 		{607246B4-BE03-4E76-99F5-71EE1E90B22C} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
@@ -360,7 +356,6 @@ Global
 		{03E78D0D-A549-4D34-BD55-0AF81B1A203D} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		{C734286B-E573-4F72-BBE6-57ADDD4265D5} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		{E5570C46-7FB6-413A-92C8-061876C3D568} = {E3B896E0-4EBE-410B-A036-2EC3B6FA9EFE}
-		{A9F17600-5A0C-41F8-99E5-173D03983521} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 		{A0330F86-0A50-4264-88EE-3745C187767D} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
 		{C0DECA29-541A-4BA1-93B3-8C8C2AF5B2C2} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
 		{4D43F8E5-727F-4382-A606-21E1C8E204D0} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
@@ -376,6 +371,8 @@ Global
 		{BACD8F0E-B087-4B2E-AE73-D468CCF94B16} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
 		{39C108FB-C8E1-45B6-B067-83A26054DA2B} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
 		{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
+		{6108B41B-EE8B-4A23-810E-CF2B380F1796} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
+		{DBDCECC2-1280-40E7-BDF8-71BB3F941279} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}

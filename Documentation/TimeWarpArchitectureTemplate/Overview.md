@@ -12,9 +12,13 @@ TimeWarp Architecture is a dotnet net 6 template for creating a distributed or m
 
 ## Prerequisites
 
-* Install the latest [.NET 6 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
-* Install the latest [Node.js LTS](https://nodejs.org/en/)
-* Install the latest [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell)
+* Install the **latest** [Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell)
+  > `winget install  Microsoft.PowerShell`
+* Install the latest released [.NET 6 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
+  > trust the developer cert with  
+  > `dotnet dev-certs https --trust`
+
+* Install the latest **LTS** of [Node.js ](https://nodejs.org/en/)
 * Install the latest [Cosmos Db Emulator](https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21)
 * Edit your powershell profile (`code $Profile`) to include the following [^1] :
 
@@ -28,7 +32,9 @@ Import-Module Microsoft.Azure.CosmosDB.Emulator
 ```console
 dotnet tool install -g Microsoft.Tye --version "0.11.0-alpha.22111.1"
 ```
-
+> [!CAUTION]
+> Currently Project Tye will use the latest installed SDK regardless of the `global.json` settings when building the projects.
+> It will not work with Visual Studio 2022 preview 3,4 or 5. installed.
 ## Installation
 
 * Install TimeWarp Architecture Templates

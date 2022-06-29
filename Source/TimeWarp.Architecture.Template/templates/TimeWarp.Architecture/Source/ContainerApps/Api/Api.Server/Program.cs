@@ -2,9 +2,7 @@ namespace TimeWarp.Architecture.Api.Server;
 
 using FluentValidation.AspNetCore;
 using MediatR;
-using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
 using Oakton;
 using System.Reflection;
 using TimeWarp.Architecture.CorsPolicies;
@@ -13,7 +11,8 @@ public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp.Architecture Api.Server API {SwaggerVersion}";
-  const string SwaggerEndPoint = $"/swagger/{SwaggerVersion}/swagger.json";
+  const string SwaggerBasePath = "api/api-server";
+  const string SwaggerEndpoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
   public static Task<int> Main(string[] aArgumentArray)
   {
@@ -26,16 +25,21 @@ public class Program : IAspNetProgram
 
     webApplication.Services.ValidateOptions(builder.Services);
 
-    ConfigureMiddleware(webApplication, webApplication.Services, webApplication.Environment);
-    ConfigureEndpoints(webApplication, webApplication.Services);
+    ConfigureMiddleware(webApplication);
+    ConfigureEndpoints(webApplication);
 
     return webApplication.RunOaktonCommands(aArgumentArray);
   }
 
-  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { }
+  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)
+  {
+    CommonServerModule.ConfigureConfiguration(aConfigurationManager);
+    ;
+  }
 
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
+    CommonServerModule.ConfigureServices(aServiceCollection, aConfiguration);
     ConfigureSettings(aServiceCollection, aConfiguration);
 
     CorsPolicy.Any.Apply(aServiceCollection);
@@ -64,33 +68,42 @@ public class Program : IAspNetProgram
         typeof(Api_Server_Assembly).GetTypeInfo().Assembly,
         typeof(Api_Application_Assembly).GetTypeInfo().Assembly
       );
-
-    ConfigureSwagger(aServiceCollection);
+   
+    CommonServerModule
+      .AddSwaggerGen
+      (
+        aServiceCollection,
+        SwaggerVersion,
+        SwaggerApiTitle,
+        new Type[] { typeof(Api_Server_Assembly), typeof(Api_Contracts_Assembly) }
+      );
   }
 
-  public static void ConfigureMiddleware(WebApplication aWebApplication, IServiceProvider aServiceCollection, IHostEnvironment aHostEnvironment)
+  public static void ConfigureMiddleware(WebApplication aWebApplication)
   {
+    CommonServerModule.ConfigureMiddleware(aWebApplication);
+
     // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
     // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
     // Sometimes, you might want to allow other sites to make cross-origin requests to your app.
-    if (aHostEnvironment.IsDevelopment())
+    if (aWebApplication.Environment.IsDevelopment())
     {
       aWebApplication.UseCors(CorsPolicy.Any.Name);
     }
 
-    aWebApplication.UseSwagger();
-    aWebApplication.UseSwaggerUI
-    (
-      aSwaggerUIOptions => aSwaggerUIOptions.SwaggerEndpoint(SwaggerEndPoint, SwaggerApiTitle)
-    );
+    CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
 
-    aWebApplication.UseHttpsRedirection();
+    //aWebApplication.UseHttpsRedirection(); // In K8s we won't use https so we don't want to redirect
 
     aWebApplication.UseAuthorization();
   }
 
-  public static void ConfigureEndpoints(IEndpointRouteBuilder aEndpointRouteBuilder, IServiceProvider aServiceCollection) =>
-    aEndpointRouteBuilder.MapControllers();
+  public static void ConfigureEndpoints(WebApplication aWebApplication)
+  {
+    CommonServerModule.ConfigureEndpoints(aWebApplication);
+
+    aWebApplication.MapControllers();
+  }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
@@ -98,32 +111,32 @@ public class Program : IAspNetProgram
     //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
     //  .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
   }
-  static void ConfigureSwagger(IServiceCollection aServiceCollection)
-  {
-    // Register the Swagger generator, defining 1 or more Swagger documents
-    aServiceCollection.AddSwaggerGen
-      (
-        aSwaggerGenOptions =>
-        {
-          aSwaggerGenOptions
-          .SwaggerDoc
-          (
-            SwaggerVersion,
-            new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
-          );
+  //private static void ConfigureSwagger(IServiceCollection aServiceCollection)
+  //{
+  //  // Register the Swagger generator, defining 1 or more Swagger documents
+  //  aServiceCollection.AddSwaggerGen
+  //    (
+  //      aSwaggerGenOptions =>
+  //      {
+  //        aSwaggerGenOptions
+  //        .SwaggerDoc
+  //        (
+  //          SwaggerVersion,
+  //          new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
+  //        );
 
-          aSwaggerGenOptions.EnableAnnotations();
+  //        aSwaggerGenOptions.EnableAnnotations();
 
-          string xmlFile = $"{typeof(Api_Server_Assembly).Assembly.GetName().Name}.xml";
-          string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+  //        string xmlFile = $"{typeof(Api_Server_Assembly).Assembly.GetName().Name}.xml";
+  //        string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
 
-          xmlFile = $"{typeof(Api_Contracts_Assembly).Assembly.GetName().Name}.xml";
-          xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-          aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-        }
-      );
+  //        xmlFile = $"{typeof(Api_Contracts_Assembly).Assembly.GetName().Name}.xml";
+  //        xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
+  //      }
+  //    );
 
-    aServiceCollection.AddFluentValidationRulesToSwagger();
-  }
+  //  aServiceCollection.AddFluentValidationRulesToSwagger();
+  //}
 }
