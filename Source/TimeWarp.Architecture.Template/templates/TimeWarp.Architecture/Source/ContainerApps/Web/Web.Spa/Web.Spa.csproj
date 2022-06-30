@@ -53,7 +53,7 @@
   </Target>
 
   <!--
-      2. Run npm run build before building the .NET project.
+      2. Run NpmRunBuild before building the .NET project.
       MSBuild runs NpmInstall before this task because of the DependsOnTargets attribute.
    -->
 
