@@ -1,6 +1,10 @@
 # Variables used for DevOps scripts
 $BaseName = "timewarp" # 'Prefix for all resources, i.e. {basename}storage')
-$Location = "japaneast" # Set your prefered azure location
+
+# Set your prefered azure location 
+# use `az account list-locations -o table ` to get a list of available locations
+# `centralindia` tends to be the cheapest
+$Location = "centralindia" 
 $SubscriptionName = "StevenTCramer" # Set your subscription name
 
 # Bicep
