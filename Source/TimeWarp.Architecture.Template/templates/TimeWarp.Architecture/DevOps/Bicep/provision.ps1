@@ -1,5 +1,5 @@
 # load variables
-. "$PSScriptRoot\..\..\variables.ps1"
+. "$PSScriptRoot\..\variables.ps1"
 # ensure required variables are set
 if (!$BaseName) { throw "BaseName is not set"}
 if (!$Location) { throw "Location is not set"}

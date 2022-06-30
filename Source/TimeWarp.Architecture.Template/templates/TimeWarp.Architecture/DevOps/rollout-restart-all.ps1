@@ -1,6 +1,6 @@
 Push-Location $PSScriptRoot
 try {   
-  . "$PSScriptRoot\..\Bicep\TimeWarp-Architecture\settings.ps1"
+  . "$PSScriptRoot\variables.ps1"
   az account set --subscription $SubscriptionName
   kubectl config set-context $ClusterName --namespace $Namespace
   kubectl rollout restart deploy api-server
