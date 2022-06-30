@@ -8,6 +8,17 @@ Solution Stack
 2. Platform
 3. Application
 
+## Provision Build and Deploy
+
+Execute the following script to deploy
+`.\provision-build-deploy.ps1`
+
+## Deprovision
+
+This will delete EVERYTHING from Azure. Do NOT run this against your production resources.
+
+`.\deprovision.ps1`
+
 ## Terms
 
 Distributed Applications

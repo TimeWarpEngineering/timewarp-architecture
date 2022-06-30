@@ -1,11 +1,14 @@
-# Bicep
+# Variables used for DevOps scripts
 $BaseName = "timewarp" # 'Prefix for all resources, i.e. {basename}storage')
-$Location = "japaneast"
-$SubscriptionName = "StevenTCramer"
+$Location = "japaneast" # Set your prefered azure location
+$SubscriptionName = "StevenTCramer" # Set your subscription name
+
+# Bicep
 $AppConfigName = "$($BaseName)appconfig"
 $ClusterName = "$BaseName-aks"
-$ResourceGroupName = "$BaseName-rg"
 $RegistryName = "$($BaseName)acr"
+$ResourceGroupName = "$BaseName-rg"
+$KeyVaultName = "$($BaseName)-kv"
 
 # Kubernetes
 
@@ -19,10 +22,3 @@ $GrpcServerImageTag = "1.0.0"
 $YarpServerImageTag = "1.0.0"
 
 $ApplicationNamespace = $BaseName
-# $global:Yarp_InsecurePort=80
-# $global:Yarp_SecurePort=443
-# $global:WebServer_InsecurePort=5200
-# $global:WebServer_SecurePort=7200
-# $global:ApiServer_InsecurePort=5201
-# $global:GrpcServer_InsecurePort=5202
-# $global:AspNetCore_Environment = "Kubernetes_Docker"
