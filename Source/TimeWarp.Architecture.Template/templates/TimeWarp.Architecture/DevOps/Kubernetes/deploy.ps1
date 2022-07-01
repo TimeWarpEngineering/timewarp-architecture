@@ -3,11 +3,15 @@ Push-Location $PSScriptRoot
 try {   
   Import-Module .\PowerShell\TimeWarp.Charts\TimeWarp.Charts.psm1
   . "$PSScriptRoot\..\variables.ps1"
+
+  if (!$SubscriptionName) { throw "SubscriptionName is not set"}
+  if (!$ApplicationNamespace) { throw "ApplicationNamespace is not set"}
+  if (!$ClusterName) { throw "ClusterName is not set"}
+
   az account set --subscription $SubscriptionName
   kubectl config use-context $ClusterName
-  .\5_Configuration\Powershell_Variables\initialize_variables.ps1 
   .\0_Namespaces\namespace.ps1
-  kubectl config set-context $ClusterName --namespace $Namespace
+  kubectl config set-context $ClusterName --namespace $ApplicationNamespace
   .\2_Workloads\Deployments\api-server\api_server-deployment.ps1
   .\2_Workloads\Deployments\web-server\web_server-deployment.ps1
   .\2_Workloads\Deployments\grpc-server\grpc_server-deployment.ps1

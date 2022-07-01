@@ -2,6 +2,7 @@ param basename string
 param appconfigname string
 param clustername string
 param location string
+param keyvaultname string
 
 @minLength(1)
 param principalId string
@@ -20,7 +21,7 @@ resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
   name: toLower(accountName)
   location: location
   properties: {
-    enableFreeTier: true
+    enableFreeTier: true // This is only available in a few regions and you have search to find which.
     databaseAccountOfferType: 'Standard'
     consistencyPolicy: {
       defaultConsistencyLevel: 'Session'
@@ -57,7 +58,7 @@ resource container_registry 'Microsoft.ContainerRegistry/registries@2021-09-01' 
 }
 
 resource key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
-  name: '${basename}-kv'
+  name: keyvaultname
   location: location
   properties: {
     tenantId: subscription().tenantId
@@ -157,7 +158,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
       {
         name: 'default'
         count: 1
-        vmSize: 'Standard_DS2_v2'
+        vmSize: 'Standard_D2ads_v5'
         mode: 'System'
       }
     ]

@@ -8,6 +8,17 @@ Solution Stack
 2. Platform
 3. Application
 
+## Provision Build and Deploy
+
+Execute the following script to deploy
+`.\provision-build-deploy.ps1`
+
+## Deprovision
+
+This will delete EVERYTHING from Azure. Do NOT run this against your production resources.
+
+`.\deprovision.ps1`
+
 ## Terms
 
 Distributed Applications
@@ -31,18 +42,19 @@ A typical operations team works on the provisioning, monitoring and management o
 
 ### Infrastructure tools
 
-* Pulumi
-* Bicep (an alternative to Pulumi not implemented in this template)
+* Bicep (Azure specific DSL)
+* Pulumi (Supports multi cloud, but requires different code per cloud) Also can be run like a service to facilitate self deployment. Example a web app could launch deployment.
 
 ### Platform tools
 
-* Tye
+* az cli
+* bicep cli
 * Docker
-* Azure Pipelines
-* GitHub Actions
-* Visual Studio
 * dotnet
+* GitHub Actions
+* Tye
 * TypeScript
+* Visual Studio
 
 ### Application Items
 

@@ -5,7 +5,7 @@ try {
     -name "web-server" `
     -imageTag $WebServerImageTag `
     -cluster $ClusterName `
-    -namespace $ApplicationNameSpace `
+    -namespace $ApplicationNamespace `
     -environment $AspNetCore_Environment `
     -registryHost $RegistryHost 
 }
