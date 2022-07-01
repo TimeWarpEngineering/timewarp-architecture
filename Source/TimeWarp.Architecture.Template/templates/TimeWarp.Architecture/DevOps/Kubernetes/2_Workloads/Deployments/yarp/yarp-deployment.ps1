@@ -5,7 +5,7 @@ try {
     -name "yarp" `
     -imageTag $YarpServerImageTag `
     -cluster $ClusterName `
-    -namespace $ApplicationNameSpace `
+    -namespace $ApplicationNamespace `
     -environment $AspNetCore_Environment `
     -registryHost $RegistryHost 
 }

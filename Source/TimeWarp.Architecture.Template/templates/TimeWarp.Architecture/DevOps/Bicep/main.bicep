@@ -21,7 +21,7 @@ resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
   name: toLower(accountName)
   location: location
   properties: {
-    enableFreeTier: true
+    enableFreeTier: true // This is only available in a few regions and you have search to find which.
     databaseAccountOfferType: 'Standard'
     consistencyPolicy: {
       defaultConsistencyLevel: 'Session'

@@ -5,7 +5,7 @@ try {
     -name "grpc-server" `
     -imageTag $GrpcServerImageTag `
     -cluster $ClusterName `
-    -namespace $ApplicationNameSpace `
+    -namespace $ApplicationNamespace `
     -environment $AspNetCore_Environment `
     -registryHost $RegistryHost 
 }

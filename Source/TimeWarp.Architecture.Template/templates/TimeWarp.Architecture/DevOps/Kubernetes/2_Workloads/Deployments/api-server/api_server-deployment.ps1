@@ -1,12 +1,14 @@
 Push-Location $PSScriptRoot
 try {   
-  . "$PSScriptRoot\..\..\..\..\variables.ps1"
+  . "..\..\..\..\variables.ps1"
+  Write-Output "Shit"
+  $ClusterName
   Deploy-Server `
     -file ./api_server-deployment.yaml `
     -name "api-server" `
     -imageTag $ApiServerImageTag `
     -cluster $ClusterName `
-    -namespace $ApplicationNameSpace `
+    -namespace $ApplicationNamespace `
     -environment $AspNetCore_Environment `
     -registryHost $RegistryHost 
 }

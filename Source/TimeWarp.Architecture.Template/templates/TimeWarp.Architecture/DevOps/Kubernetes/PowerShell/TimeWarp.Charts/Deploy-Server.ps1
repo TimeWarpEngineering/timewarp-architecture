@@ -50,10 +50,11 @@ function Deploy-Server
     [string]$cluster=$(throw "cluster is mandatory, please provide a value.")
   )
 
+  Write-Output "cluster: $cluster"
   $script:ApplicationImage = "$registryHost/$($name):$imageTag"
   $script:ApplicationName = $name
   $script:ApplicationNamespace = $namespace
   $script:AspNetCore_Environment = $environment
 
-  Apply-Manifest -file $file -cluster $ClusterName -namespace $ApplicationNameSpace 
+  Apply-Manifest -file $file -cluster $cluster -namespace $namespace
 }
