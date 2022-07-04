@@ -174,6 +174,17 @@ resource application_insights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
+resource public_ip 'Microsoft.Network/publicIPAddresses@2019-07-01' = {
+  name: '${basename}-public-ip'
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+  }
+}
+
 module cli_perms './Modules/Authorization/rolesapp.bicep' = {
   name: 'cli_perms-${resourceGroup().name}'
   params: {
