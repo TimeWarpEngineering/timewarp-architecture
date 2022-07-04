@@ -10,8 +10,26 @@ Solution Stack
 
 ## Provision Build and Deploy
 
-Execute the following script to deploy
+### Login to Azure
+
+```powershell
+az login
+```
+
+### Set Variables
+
+Edit `variables.ps1` with your selections.
+
+### Run script
+
+Execute the following script to:
+* provision the Azure resources
+* build the docker images
+* apply the Kubernetes manifests
+  
 `.\provision-build-deploy.ps1`
+
+The script could take somewhere around 10 to 20 mins.
 
 ## Deprovision
 
