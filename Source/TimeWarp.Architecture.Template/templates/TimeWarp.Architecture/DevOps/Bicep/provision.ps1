@@ -1,17 +1,17 @@
-# load variables
-. "$PSScriptRoot\..\variables.ps1"
-# ensure required variables are set
-if (!$BaseName) { throw "BaseName is not set" }
-if (!$Location) { throw "Location is not set" }
-if (!$SubscriptionName) { throw "SubscriptionName is not set" }
-if (!$ResourceGroupName) { throw "ResourceGroupName is not set" }
-if (!$ClusterName) { throw "ClusterName is not set" }
-if (!$AppConfigName) { throw "AppConfigName is not set" }
-if (!$KeyVaultName) { throw "AppConfigName is not set" }
-
 Push-Location $PSScriptRoot
 
 try {   
+  # load variables
+  . ..\variables.ps1
+  # ensure required variables are set
+  if (!$BaseName) { throw "BaseName is not set" }
+  if (!$Location) { throw "Location is not set" }
+  if (!$SubscriptionName) { throw "SubscriptionName is not set" }
+  if (!$ResourceGroupName) { throw "ResourceGroupName is not set" }
+  if (!$ClusterName) { throw "ClusterName is not set" }
+  if (!$AppConfigName) { throw "AppConfigName is not set" }
+  if (!$KeyVaultName) { throw "AppConfigName is not set" }
+
   az account set --subscription $SubscriptionName
   if ($LASTEXITCODE -ne 0) { throw "Unable to set subscription: $SubscriptionName" }
 
@@ -35,6 +35,7 @@ try {
 
   $DeploymentOutput = $DeploymentOutputString | ConvertFrom-Json
 
+  (Get-AzAppConfigurationStoreKey -Name timewarpappconfig -ResourceGroupName timewarp-rg | Where-Object Name -EQ "Primary Read Only").ConnectionString
   $global:ConnectionStrings__AppConfig = $DeploymentOutput.properties.outputs.app_config_connectionstring.value
 }
 finally {

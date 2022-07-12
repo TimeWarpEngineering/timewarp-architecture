@@ -13,9 +13,10 @@ $ClusterName = "$BaseName-aks"
 $RegistryName = "$($BaseName)acr"
 $ResourceGroupName = "$BaseName-rg"
 $KeyVaultName = "$($BaseName)-kv"
+$DnsHostName =  "$BaseName-cluster.$Location.cloudapp.azure.com"
+$GrpcServerHostName = "$BaseName-grpc-server.$Location.cloudapp.azure.com"
 
 # Kubernetes
-
 $RegistryHost = "$($RegistryName).azurecr.io"
 $AspNetCore_Environment = "Development"
 

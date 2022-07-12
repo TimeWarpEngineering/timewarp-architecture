@@ -22,6 +22,8 @@ try {
   .\3_Network\Services\yarp\yarp-service.ps1
   .\4_Storage\Storage_Classes\deploy_storage_classes.ps1
   .\4_Storage\Persistent_Volume_Claims\api_server-persistent_volume_claim.ps1
+  .\7_Helm_Releases\deploy-nginx-ingress-controller.ps1
+  .\3_Network\Ingress\ingress.ps1
 }
 finally {
   Pop-Location

@@ -68,7 +68,7 @@ public class Program : IAspNetProgram
         typeof(Api_Server_Assembly).GetTypeInfo().Assembly,
         typeof(Api_Application_Assembly).GetTypeInfo().Assembly
       );
-   
+
     CommonServerModule
       .AddSwaggerGen
       (
@@ -111,32 +111,4 @@ public class Program : IAspNetProgram
     //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
     //  .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
   }
-  //private static void ConfigureSwagger(IServiceCollection aServiceCollection)
-  //{
-  //  // Register the Swagger generator, defining 1 or more Swagger documents
-  //  aServiceCollection.AddSwaggerGen
-  //    (
-  //      aSwaggerGenOptions =>
-  //      {
-  //        aSwaggerGenOptions
-  //        .SwaggerDoc
-  //        (
-  //          SwaggerVersion,
-  //          new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
-  //        );
-
-  //        aSwaggerGenOptions.EnableAnnotations();
-
-  //        string xmlFile = $"{typeof(Api_Server_Assembly).Assembly.GetName().Name}.xml";
-  //        string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-
-  //        xmlFile = $"{typeof(Api_Contracts_Assembly).Assembly.GetName().Name}.xml";
-  //        xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-  //      }
-  //    );
-
-  //  aServiceCollection.AddFluentValidationRulesToSwagger();
-  //}
 }

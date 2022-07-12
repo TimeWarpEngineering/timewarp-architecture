@@ -153,36 +153,6 @@ public class Program : IAspNetProgram
     aWebApplication.UseBlazorFrameworkFiles();
   }
 
-  //private static void ConfigureSwagger(IServiceCollection aServiceCollection)
-  //{
-  //  // Register the Swagger generator, defining 1 or more Swagger documents
-  //  aServiceCollection.AddSwaggerGen
-  //    (
-  //      aSwaggerGenOptions =>
-  //      {
-  //        aSwaggerGenOptions
-  //        .SwaggerDoc
-  //        (
-  //          SwaggerVersion,
-  //          new OpenApiInfo { Title = SwaggerApiTitle, Version = SwaggerVersion }
-  //        );
-  //        aSwaggerGenOptions.EnableAnnotations();
-
-  //        // Set the comments path for the Swagger JSON and UI from Server.
-  //        string xmlFile = $"{typeof(Web_Server_Assembly).Assembly.GetName().Name}.xml";
-  //        string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-
-  //        // Set the comments path for the Swagger JSON and UI from API.
-  //        xmlFile = $"{typeof(Web_Contracts_Assembly).Assembly.GetName().Name}.xml";
-  //        xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-  //        aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-  //      }
-  //    );
-
-  //  aServiceCollection.AddFluentValidationRulesToSwagger();
-  //}
-
   public static void ConfigureEndpoints(WebApplication aWebApplication)
   {
     CommonServerModule.ConfigureEndpoints(aWebApplication);
