@@ -47,7 +47,10 @@ function Deploy-Server
     
     [Parameter()]
     [ValidateNotNullOrEmpty()]
-    [string]$cluster=$(throw "cluster is mandatory, please provide a value.")
+    [string]$cluster=$(throw "cluster is mandatory, please provide a value."),
+
+    [Parameter()]
+    [string]$appConfigConnectionString
   )
 
   Write-Output "cluster: $cluster"
@@ -55,6 +58,7 @@ function Deploy-Server
   $script:ApplicationName = $name
   $script:ApplicationNamespace = $namespace
   $script:AspNetCore_Environment = $environment
+  $script:ConnectionStrings__AppConfig = $appConfigConnectionString
 
   Apply-Manifest -file $file -cluster $cluster -namespace $namespace
 }

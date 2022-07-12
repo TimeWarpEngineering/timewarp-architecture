@@ -16,8 +16,8 @@ try {
 
   Push-Location DevOps/Tye
   # Launch new shell for tye 
-  # tye run --dashboard --watch --logs console
-  Start-Process pwsh -argument '-nologo -noprofile -executionpolicy bypass -command tye run --dashboard --logs console'
+  tye run --dashboard --logs console -v Debug
+  # Start-Process pwsh -argument '-nologo -noprofile -executionpolicy bypass -command tye run --dashboard --logs console'
   Pop-Location
 }
 finally {

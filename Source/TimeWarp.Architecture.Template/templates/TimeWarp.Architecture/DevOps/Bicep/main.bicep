@@ -174,6 +174,7 @@ resource application_insights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
+// https://docs.microsoft.com/en-us/azure/templates/microsoft.network/publicipaddresses?tabs=bicep
 resource public_ip 'Microsoft.Network/publicIPAddresses@2019-07-01' = {
   name: '${basename}-public-ip'
   location: location
@@ -182,8 +183,22 @@ resource public_ip 'Microsoft.Network/publicIPAddresses@2019-07-01' = {
   }
   properties: {
     publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: '$DnsHostName'
+    }
+
   }
 }
+
+// https://docs.microsoft.com/en-us/azure/templates/microsoft.network/dnszones/cname?tabs=bicep
+// resource symbolicname 'Microsoft.Network/dnsZones/CNAME@2018-05-01' = {
+//   name: '${basename}-symbolicname'
+//   properties: {
+//     CNAMERecord: {
+//       cname: '$(public_ip.dnsSettings.fqdn)'
+//     }
+//   } 
+// }
 
 module cli_perms './Modules/Authorization/rolesapp.bicep' = {
   name: 'cli_perms-${resourceGroup().name}'
