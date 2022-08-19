@@ -26,6 +26,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Solution Items", "03-Sol
 		TestCafe.ps1 = TestCafe.ps1
 		TimeWarp.ruleset = TimeWarp.ruleset
 		UNLICENSE.md = UNLICENSE.md
+		Watch.ps1 = Watch.ps1
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.Playwright.Tests", "Tests\EndToEnd.Playwright.Tests\EndToEnd.Playwright.Tests.csproj", "{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}"
