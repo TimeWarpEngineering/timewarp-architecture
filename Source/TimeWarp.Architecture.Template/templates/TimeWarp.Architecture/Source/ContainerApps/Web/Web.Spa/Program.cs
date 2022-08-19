@@ -4,6 +4,7 @@ using BlazorState;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
 using MediatR;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -172,6 +173,7 @@ public class Program
     var builder = WebAssemblyHostBuilder.CreateDefault(aArgumentArray);
     builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
     builder.RootComponents.Add<App>("#app");
+    builder.RootComponents.Add<HeadOutlet>("head::after");
     builder.Services.AddScoped
       (_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
