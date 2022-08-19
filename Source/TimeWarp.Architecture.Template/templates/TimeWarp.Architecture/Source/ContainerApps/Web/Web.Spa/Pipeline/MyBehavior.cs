@@ -15,7 +15,7 @@ namespace TimeWarp.Architecture.Pipeline
   /// <typeparam name="TResponse"></typeparam>
   /// <remarks>see MediatR for more examples</remarks>
   public class MyBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-      where TRequest : IRequest<TResponse>
+    where TRequest : IRequest<TResponse>
   {
     private readonly ILogger Logger;
 
