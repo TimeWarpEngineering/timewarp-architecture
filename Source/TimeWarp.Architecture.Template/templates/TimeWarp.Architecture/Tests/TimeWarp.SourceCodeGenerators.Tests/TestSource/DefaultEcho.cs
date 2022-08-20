@@ -2,8 +2,9 @@
 namespace TimeWarp.SourceCodeGenerators.Tests.TestSource;
 
 using System.Collections.Generic;
-using TimeWarp.Architecture.Testing;
+using TimeWarp.Fixie;
 using TimeWarp.SourceCodeGenerators.Tests.TestSource.Echo;
+
 
 /// <summary>
 /// This class isn't used for anything other than to see how the Roslyn Analzyer generates the interface implementation

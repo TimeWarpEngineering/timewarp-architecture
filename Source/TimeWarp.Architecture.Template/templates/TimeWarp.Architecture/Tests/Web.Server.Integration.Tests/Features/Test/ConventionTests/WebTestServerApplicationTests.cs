@@ -3,6 +3,7 @@
 using Dawn;
 using FluentAssertions;
 using TimeWarp.Architecture.Testing;
+using TimeWarp.Fixie;
 
 [TestTag("WebTestServerApplication")]
 public class Should

@@ -1,26 +1,21 @@
-﻿namespace TimeWarp.Architecture.Testing;
+﻿namespace TimeWarp.Fixie.Tests;
 
-using Fixie;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using TimeWarp.Architecture.Testing;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
-/// <summary>
-/// Fixie allows for the customization of the Test Project Lifecycle
-/// Here we set our implementations of these phases
-/// dotnet test frameworks have two phases:
-/// <see cref="TestDiscovery">discovery</see>
-/// <see cref="TestExecution">execution</see>
-/// </summary>
-/// <seealso href="https://github.com/fixie/fixie/wiki/Customizing-the-Test-Project-Lifecycle"/>
-[NotTest]
-public class TestingConvention : ITestProject
+public class TimeWarpTestingConvention : TimeWarp.Fixie.TestingConvention
 {
-  internal const string SetupLifecycleMethodName = "Setup";
-  internal const string CleanupLifecycleMethodName = "Cleanup";
 
-  public void Configure(TestConfiguration aTestConfiguration, TestEnvironment aTestEnvironment)
+  public TimeWarpTestingConvention() : base(ConfigureAdditionalServicesCallback) { }
+
+  private static void ConfigureAdditionalServicesCallback(ServiceCollection serviceCollection)
   {
-    var testDiscovery = new TestDiscovery(aTestEnvironment.CustomArguments);
-    var testExecution = new TestExecution(aTestEnvironment.CustomArguments);
-
-    aTestConfiguration.Conventions.Add(testDiscovery, testExecution);
+    Console.WriteLine("ConfigureAdditionalServices");
+    serviceCollection
+      .AddSingleton<WebTestServerApplication>()
+      .AddSingleton<ApiTestServerApplication>()
+      .AddSingleton<YarpTestServerApplication>();
   }
 }

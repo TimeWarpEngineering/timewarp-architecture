@@ -2,7 +2,8 @@ namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
 using System;
 using TimeWarp.Architecture.Features.ClientLoaders;
-using TimeWarp.Architecture.Testing;
+using TimeWarp.Fixie;
+
 
 /// <summary>
 /// Replaces the default ClientLoaderConfiguration

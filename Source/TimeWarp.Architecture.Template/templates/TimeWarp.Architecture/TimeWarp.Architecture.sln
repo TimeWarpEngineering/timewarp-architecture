@@ -119,6 +119,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.OptionsValidation"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Contracts", "Source\ContainerApps\Web\Web.Contracts\Web.Contracts.csproj", "{DBDCECC2-1280-40E7-BDF8-71BB3F941279}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Fixie", "..\..\..\..\..\timewarp-fixie\source\TimeWarp.Fixie\TimeWarp.Fixie.csproj", "{0009E83A-33F5-40FF-827B-694DD4350178}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -327,6 +329,12 @@ Global
 		{DBDCECC2-1280-40E7-BDF8-71BB3F941279}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{DBDCECC2-1280-40E7-BDF8-71BB3F941279}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DBDCECC2-1280-40E7-BDF8-71BB3F941279}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0009E83A-33F5-40FF-827B-694DD4350178}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0009E83A-33F5-40FF-827B-694DD4350178}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0009E83A-33F5-40FF-827B-694DD4350178}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{0009E83A-33F5-40FF-827B-694DD4350178}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{0009E83A-33F5-40FF-827B-694DD4350178}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0009E83A-33F5-40FF-827B-694DD4350178}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -374,6 +382,7 @@ Global
 		{F8CCA479-E0F4-4E88-A439-39CC8B3B7C9B} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
 		{6108B41B-EE8B-4A23-810E-CF2B380F1796} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 		{DBDCECC2-1280-40E7-BDF8-71BB3F941279} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
+		{0009E83A-33F5-40FF-827B-694DD4350178} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}

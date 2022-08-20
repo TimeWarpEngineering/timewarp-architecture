@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Architecture.Features.ClientLoaders;
 using TimeWarp.Architecture.Testing;
+using TimeWarp.Fixie;
 
 /// <summary>
 /// Inject this when the SUT is the Web.Spa

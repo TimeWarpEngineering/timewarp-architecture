@@ -68,6 +68,7 @@
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
     <PackageVersion Include="System.Net.Http.Json" Version="6.0.0" />
     <PackageVersion Include="System.ServiceModel.Primitives" Version="4.9.0" />
+    <PackageVersion Include="TimeWarp.Fixie" Version="1.0.0-alpha.1" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="1.1.0"/>
   </ItemGroup>
 </Project>
