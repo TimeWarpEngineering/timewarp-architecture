@@ -1,5 +1,5 @@
 namespace TimeWarp.Architecture.Api.Server.Integration.Tests.Infrastructure;
 
-using TimeWarp.Fixie.Tests;
+using TimeWarp.Architecture.Testing;
 
 class ApiServerTestConvention : TimeWarpTestingConvention { }

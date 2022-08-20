@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
+namespace TimeWarp.Architecture.Testing;
 
 using FakeItEasy;
 using MediatR;
@@ -10,7 +10,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Architecture.Features.ClientLoaders;
-using TimeWarp.Architecture.Testing;
+using TimeWarp.Architecture.Web.Spa;
 using TimeWarp.Fixie;
 
 /// <summary>

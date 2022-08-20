@@ -1,9 +1,8 @@
-﻿namespace TimeWarp.Fixie.Tests;
+﻿namespace TimeWarp.Architecture.Testing;
 
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using TimeWarp.Architecture.Testing;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
 public class TimeWarpTestingConvention : TimeWarp.Fixie.TestingConvention
 {
@@ -14,6 +13,7 @@ public class TimeWarpTestingConvention : TimeWarp.Fixie.TestingConvention
   {
     Console.WriteLine("ConfigureAdditionalServices");
     serviceCollection
+      .AddSingleton<SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program>>()
       .AddSingleton<WebTestServerApplication>()
       .AddSingleton<ApiTestServerApplication>()
       .AddSingleton<YarpTestServerApplication>();

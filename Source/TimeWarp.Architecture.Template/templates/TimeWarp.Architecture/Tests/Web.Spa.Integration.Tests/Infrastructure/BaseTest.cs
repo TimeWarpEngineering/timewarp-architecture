@@ -4,6 +4,7 @@ using BlazorState;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
+using TimeWarp.Architecture.Testing;
 
 /// <summary>
 /// Base Class for Client tests.
