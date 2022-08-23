@@ -10,14 +10,31 @@ internal class ServiceCollectionOptionsValidator : AbstractValidator<ServiceColl
 {
   public ServiceCollectionOptionsValidator()
   {
+    RuleFor(aServiceCollectionOptions => aServiceCollectionOptions)
+      .Must(aServiceCollectionOptions => aServiceCollectionOptions.ContainsKey(Constants.GrpcServiceName))
+      .WithMessage($"The {Constants.GrpcServiceName} service must be configured.");
+
     RuleFor(aServicesOptions => aServicesOptions[Constants.GrpcServiceName])
-      .SetValidator(new ServiceValidator(Constants.GrpcServiceName));
+      .SetValidator(new ServiceValidator(Constants.GrpcServiceName))
+      .When(aServiceCollectionOptions => aServiceCollectionOptions.ContainsKey(Constants.GrpcServiceName));
+
+    //// Api Service
+    //RuleFor(aServiceCollectionOptions => aServiceCollectionOptions)
+    //      .Must(aServiceCollectionOptions => aServiceCollectionOptions.ContainsKey(Constants.ApiServiceName))
+    //      .WithMessage($"The {Constants.ApiServiceName} service must be configured.");
 
     //RuleFor(aServicesOptions => aServicesOptions[Constants.ApiServiceName])
-    //  .SetValidator(new ServiceValidator(Constants.ApiServiceName));
+    //  .SetValidator(new ServiceValidator(Constants.ApiServiceName))
+    //  .When(aServiceCollectionOptions => aServiceCollectionOptions.ContainsKey(Constants.ApiServiceName));
+
+    //// Web Service
+    //RuleFor(aServiceCollectionOptions => aServiceCollectionOptions)
+    //      .Must(aServiceCollectionOptions => aServiceCollectionOptions.ContainsKey(Constants.WebServiceName))
+    //      .WithMessage($"The {Constants.WebServiceName} service must be configured.");
 
     //RuleFor(aServicesOptions => aServicesOptions[Constants.WebServiceName])
-    //  .SetValidator(new ServiceValidator(Constants.WebServiceName));
+    //  .SetValidator(new ServiceValidator(Constants.WebServiceName))
+    //  .When(aServiceCollectionOptions => aServiceCollectionOptions.ContainsKey(Constants.WebServiceName));
   }
 
   internal class ServiceValidator : AbstractValidator<ServiceCollectionOptions.Service>

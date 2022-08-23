@@ -26,7 +26,7 @@ public class Validate_Should
     validationResult.IsValid.Should().BeTrue();
   }
 
-  public void Have_error_when_a_Service_is_missing_or_invalid()
+  public void Have_error_when_a_Service_is_missing()
   {
     var serviceCollection = new ServiceCollectionOptions
     {
@@ -37,14 +37,32 @@ public class Validate_Should
       ServiceCollectionValidator.TestValidate(serviceCollection);
 
     result.ShouldHaveValidationErrorFor(aServiceCollection => aServiceCollection)
-      .WithErrorMessage($"The {Constants.GrpcServiceName} service must be configured.")
-      .WithErrorMessage($"The {Constants.ApiServiceName} service must be configured.")
-      .WithErrorMessage($"The {Constants.WebServiceName} service must be configured.");
+      .WithErrorMessage($"The {Constants.GrpcServiceName} service must be configured.");
 
-    result.ShouldHaveAnyValidationError()
-      .WithErrorMessage("Service[0].Protocol must be assigned.")
-      .WithErrorMessage("Service[0].Host must be assigned.")
-      .WithErrorMessage("Service[0].Port must be greater than '0' but was '0'.");
+    //result.ShouldHaveValidationErrorFor(aServiceCollection => aServiceCollection)
+    //  .WithErrorMessage($"The {Constants.ApiServiceName} service must be configured.");
+
+    //result.ShouldHaveValidationErrorFor(aServiceCollection => aServiceCollection)
+    //  .WithErrorMessage($"The {Constants.WebServiceName} service must be configured.");
+  }
+
+  public void Have_error_when_a_Service_is_invalid()
+  {
+    var serviceCollection = new ServiceCollectionOptions
+    {
+      {Constants.GrpcServiceName, new ServiceCollectionOptions.Service { Host = "", Protocol="", Port=0} },
+      {Constants.ApiServiceName, new ServiceCollectionOptions.Service { Host = "", Protocol="", Port=0} },
+      {Constants.WebServiceName, new ServiceCollectionOptions.Service { Host = "", Protocol="", Port=-10} },
+    };
+
+    TestValidationResult<ServiceCollectionOptions> result =
+      ServiceCollectionValidator.TestValidate(serviceCollection);
+
+    ITestValidationContinuation x = result.ShouldHaveAnyValidationError();
+    result.Errors.Count.Should().Be(3);
+    result.Errors.Where(e => e.PropertyName == nameof(ServiceCollectionOptions.Service.Host)).Count().Should().Be(1);
+    result.Errors.Where(e => e.PropertyName == nameof(ServiceCollectionOptions.Service.Port)).Count().Should().Be(1);
+    result.Errors.Where(e => e.PropertyName == nameof(ServiceCollectionOptions.Service.Protocol)).Count().Should().Be(1);
   }
 
   public void appsettings_can_bind_ServiceCollection()
