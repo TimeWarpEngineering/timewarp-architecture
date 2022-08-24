@@ -1,4 +1,5 @@
-﻿namespace TimeWarp.Architecture.Testing;
+﻿#nullable enable
+namespace TimeWarp.Architecture.Testing;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -37,28 +38,38 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
   public WebApplicationHost
   (
     string aEnvironmentName,
-    //string aContentRoot,
+    string? aContentRoot,
     string[] aUrls,
-    Action<HostBuilderContext, IServiceCollection> aConfigureServicesDelegate = null
+    Action<IServiceCollection>? aConfigureServicesDelegate = null
   )
   {
     Urls = aUrls;
+    var webApplicationOptions =
+      new WebApplicationOptions
+      {
+        EnvironmentName = aEnvironmentName,
+        ContentRootPath = aContentRoot,
+        
+      };
     WebApplicationBuilder builder =
-      WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = aEnvironmentName });
+      WebApplication.CreateBuilder();
+      //WebApplication.CreateBuilder(webApplicationOptions);
 
     builder.WebHost
-      //.UseContentRoot(aContentRoot)
+      .UseStaticWebAssets()
       .UseUrls(aUrls)
       .UseShutdownTimeout(TimeSpan.FromSeconds(30));
 
     Configuration = builder.Configuration;
     TProgram.ConfigureServices(builder.Services, builder.Configuration);
+    aConfigureServicesDelegate?.Invoke(builder.Services);
 
     WebApplication = builder.Build();
     TProgram.ConfigureMiddleware(WebApplication);
     TProgram.ConfigureEndpoints(WebApplication);
 
     ServiceProvider = WebApplication.Services;
+    ServiceProvider.ValidateOptions(builder.Services);
 
     try
     {

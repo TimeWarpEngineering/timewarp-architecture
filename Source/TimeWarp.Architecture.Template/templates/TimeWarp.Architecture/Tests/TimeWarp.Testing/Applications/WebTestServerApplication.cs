@@ -15,19 +15,15 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
     new WebApplicationHost<Web.Server.Program>
     (
       aEnvironmentName: Environments.Development,
+      aContentRoot: @"C:\git\github\TimeWarpEngineering\timewarp-architecture\Source\TimeWarp.Architecture.Template\templates\TimeWarp.Architecture\Source\ContainerApps\Web\Web.Server\",
       aUrls: new[]
       {
         "https://localhost:7000"
       },
-      ConfigureServicesDelegate
+      ConfigureServicesCallback
     )
   )
   { }
 
-  protected static void ConfigureServicesDelegate
-  (
-    HostBuilderContext aHostBuilderContext,
-    IServiceCollection aServiceCollection
-  )
-  { }
+  protected static void ConfigureServicesCallback(IServiceCollection aServiceCollection) { }
 }

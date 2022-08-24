@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 /// <summary>
 /// Used to launch the Api.Server application
 /// </summary>
-/// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
+/// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesCallback"/></remarks>
 public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Program>
 {
   private readonly WebTestServerApplication WebTestServerApplication;
@@ -21,11 +21,12 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
     new WebApplicationHost<Yarp.Server.Program>
     (
       aEnvironmentName: Environments.Development,
+      aContentRoot: null,
       aUrls: new[]
       {
         "https://localhost:8443"
       },
-      ConfigureServicesDelegate
+      ConfigureServicesCallback
     )
   )
   {
@@ -33,10 +34,5 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
     ApiTestServerApplication = aApiTestServerApplication;
   }
 
-  protected static void ConfigureServicesDelegate
-  (
-    HostBuilderContext aHostBuilderContext,
-    IServiceCollection aServiceCollection
-  )
-  { }
+  protected static void ConfigureServicesCallback(IServiceCollection aServiceCollection) { }
 }

@@ -10,24 +10,20 @@ using Microsoft.Extensions.Hosting;
 public class ApiTestServerApplication : TestServerApplication<Api.Server.Program>
 {
   public ApiTestServerApplication() :
-  base
-  (
-    new WebApplicationHost<Api.Server.Program>
+    base
     (
-      aEnvironmentName: Environments.Development,
-      aUrls: new[]
-      {
-        "https://localhost:7255"
-      },
-      ConfigureServicesDelegate
+      new WebApplicationHost<Api.Server.Program>
+      (
+        aEnvironmentName: Environments.Development,
+        aContentRoot: null,
+        aUrls: new[]
+        {
+          "https://localhost:7255"
+        },
+        ConfigureServicesCallback
+      )
     )
-  )
   { }
 
-  protected static void ConfigureServicesDelegate
-  (
-    HostBuilderContext aHostBuilderContext,
-    IServiceCollection aServiceCollection
-  )
-  { }
+  protected static void ConfigureServicesCallback(IServiceCollection aServiceCollection) { }
 }
