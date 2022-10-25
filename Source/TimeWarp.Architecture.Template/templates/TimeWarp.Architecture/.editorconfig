@@ -243,7 +243,7 @@ dotnet_naming_symbols.local_variables.applicable_kinds = local
 dotnet_naming_style.local_variables_style.capitalization = camel_case
 
 # Parameters should be prefixed with an 'a'
-dotnet_naming_rule.parameters_should_be_prefixed.severity         = suggestion
+dotnet_naming_rule.parameters_should_be_prefixed.severity         = none
 dotnet_naming_rule.parameters_should_be_prefixed.symbols          = parameters
 dotnet_naming_rule.parameters_should_be_prefixed.style            = parameter_style
 
