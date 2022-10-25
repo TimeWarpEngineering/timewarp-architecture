@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Pages;
 
-using TimeWarp.Architecture.Features.Bases;
+using TimeWarp.Architecture.Features;
 
 public partial class ChangePasswordPage : BaseComponent
 {

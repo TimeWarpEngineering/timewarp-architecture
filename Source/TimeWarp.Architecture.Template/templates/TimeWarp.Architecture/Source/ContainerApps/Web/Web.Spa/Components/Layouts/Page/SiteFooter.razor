@@ -8,12 +8,12 @@
   }
   else
   {
-    <div class="max-w-screen-xl mx-auto py-4 px-4 sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
+    <div class="max-w-screen-xl px-4 py-4 mx-auto sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
       <BlazorLocation TestId="BlazorLocation" />
       <div>
         @if (IsProcessing)
         {
-          <div style="border-top-color:transparent" class="w-6 h-6 border-4 border-primary-400 border-solid rounded-full animate-spin"></div>
+          <div style="border-top-color:transparent" class="w-6 h-6 border-4 border-solid rounded-full border-primary-400 animate-spin"></div>
         }
       </div>
       <span>Version:@Version</span>

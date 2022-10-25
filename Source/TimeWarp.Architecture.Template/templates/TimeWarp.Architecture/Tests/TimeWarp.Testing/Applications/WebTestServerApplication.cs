@@ -1,5 +1,7 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -14,12 +16,16 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
   (
     new WebApplicationHost<Web.Server.Program>
     (
-      aEnvironmentName: Environments.Development,
-      aContentRoot: @"C:\git\github\TimeWarpEngineering\timewarp-architecture\Source\TimeWarp.Architecture.Template\templates\TimeWarp.Architecture\Source\ContainerApps\Web\Web.Server\",
       aUrls: new[]
       {
         "https://localhost:7000"
       },
+      aWebApplicationOptions:
+        new WebApplicationOptions
+        {
+          ApplicationName = typeof(Web_Server_Assembly).Assembly.GetName().Name,
+          EnvironmentName = Environments.Development,
+        },
       ConfigureServicesCallback
     )
   )

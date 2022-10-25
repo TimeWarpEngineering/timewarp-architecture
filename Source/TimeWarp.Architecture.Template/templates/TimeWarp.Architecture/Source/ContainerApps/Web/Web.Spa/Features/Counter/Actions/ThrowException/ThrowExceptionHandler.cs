@@ -5,7 +5,7 @@ using MediatR;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.Bases;
+using TimeWarp.Architecture.Features;
 
 internal partial class CounterState
 {

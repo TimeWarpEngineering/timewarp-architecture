@@ -1,5 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -14,11 +15,16 @@ public class ApiTestServerApplication : TestServerApplication<Api.Server.Program
     (
       new WebApplicationHost<Api.Server.Program>
       (
-        aEnvironmentName: Environments.Development,
-        aContentRoot: null,
         aUrls: new[]
         {
           "https://localhost:7255"
+        },
+        aWebApplicationOptions:
+        new WebApplicationOptions
+        {
+          ApplicationName = typeof(Api_Server_Assembly).Assembly.GetName().Name,
+          EnvironmentName = Environments.Development,
+          ContentRootPath = default,
         },
         ConfigureServicesCallback
       )

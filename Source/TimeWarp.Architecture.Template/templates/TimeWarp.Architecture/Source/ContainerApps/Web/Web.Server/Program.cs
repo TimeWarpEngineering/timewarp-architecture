@@ -41,9 +41,8 @@ public class Program : IAspNetProgram
 
   public static Task<int> Main(string[] aArgumentArray)
   {
-    //TODO: STC uncomment
-    //WebApplicationBuilder builder = WebApplication.CreateBuilder(aArgumentArray);
-    WebApplicationBuilder builder = WebApplication.CreateBuilder();
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(aArgumentArray);
+    
     
     ConfigureConfiguration(builder.Configuration);
     ConfigureServices(builder.Services, builder.Configuration);

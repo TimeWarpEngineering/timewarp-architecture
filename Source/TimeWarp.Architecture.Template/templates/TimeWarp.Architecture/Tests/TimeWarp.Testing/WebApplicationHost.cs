@@ -32,31 +32,21 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
   /// <summary>
   /// Construct a WebApplication
   /// </summary>
-  /// <param name="aEnvironmentName"></param>
   /// <param name="aUrls"></param>
-  /// <param name="aConfigureServicesDelegate">Allows for adjusting the DI container</param>
+  /// <param name="aWebApplicationOptions"></param>
+  /// <param name="aConfigureServicesDelegate"></param>
   public WebApplicationHost
   (
-    string aEnvironmentName,
-    string? aContentRoot,
     string[] aUrls,
+    WebApplicationOptions aWebApplicationOptions,
     Action<IServiceCollection>? aConfigureServicesDelegate = null
   )
   {
     Urls = aUrls;
-    var webApplicationOptions =
-      new WebApplicationOptions
-      {
-        EnvironmentName = aEnvironmentName,
-        ContentRootPath = aContentRoot,
-        
-      };
     WebApplicationBuilder builder =
-      WebApplication.CreateBuilder();
-      //WebApplication.CreateBuilder(webApplicationOptions);
+      WebApplication.CreateBuilder(aWebApplicationOptions);
 
     builder.WebHost
-      .UseStaticWebAssets()
       .UseUrls(aUrls)
       .UseShutdownTimeout(TimeSpan.FromSeconds(30));
 

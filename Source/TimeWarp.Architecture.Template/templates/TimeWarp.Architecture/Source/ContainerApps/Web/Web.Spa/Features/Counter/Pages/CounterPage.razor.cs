@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Pages;
 
 using BlazorState.Features.Routing;
 using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.Bases;
+using TimeWarp.Architecture.Features;
 using static TimeWarp.Architecture.Features.Applications.ApplicationState;
 
 public partial class CounterPage : BaseComponent

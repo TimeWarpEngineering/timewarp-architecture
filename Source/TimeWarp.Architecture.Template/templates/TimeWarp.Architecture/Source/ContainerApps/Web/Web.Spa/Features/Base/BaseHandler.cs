@@ -1,6 +1,5 @@
-namespace TimeWarp.Architecture.Features.Bases;
+namespace TimeWarp.Architecture.Features;
 
-using BlazorState;
 using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.Counters;
 using TimeWarp.Architecture.Features.EventStreams;

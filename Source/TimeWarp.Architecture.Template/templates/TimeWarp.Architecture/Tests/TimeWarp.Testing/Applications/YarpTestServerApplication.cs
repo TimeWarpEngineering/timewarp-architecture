@@ -1,5 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -20,12 +21,17 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
   (
     new WebApplicationHost<Yarp.Server.Program>
     (
-      aEnvironmentName: Environments.Development,
-      aContentRoot: null,
       aUrls: new[]
       {
         "https://localhost:8443"
       },
+      aWebApplicationOptions:
+        new WebApplicationOptions
+        {
+          ApplicationName = typeof(Yarp_Server_Assembly).Assembly.GetName().Name,
+          EnvironmentName = Environments.Development,
+          ContentRootPath = default,
+        },
       ConfigureServicesCallback
     )
   )
