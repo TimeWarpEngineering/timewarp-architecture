@@ -1,5 +1,6 @@
 namespace TimeWarp.Architecture.Web.Server;
 
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using MediatR;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -42,8 +43,8 @@ public class Program : IAspNetProgram
   public static Task<int> Main(string[] aArgumentArray)
   {
     WebApplicationBuilder builder = WebApplication.CreateBuilder(aArgumentArray);
-    
-    
+
+
     ConfigureConfiguration(builder.Configuration);
     ConfigureServices(builder.Services, builder.Configuration);
 
@@ -74,17 +75,15 @@ public class Program : IAspNetProgram
     aServiceCollection.AddRazorPages();
     aServiceCollection.AddServerSideBlazor();
     aServiceCollection.AddMvc()
-      .TryAddApplicationPart(typeof(Web_Server_Assembly).Assembly)
-      .AddFluentValidation
-      (
-        aFluentValidationMvcConfiguration =>
-        {
-          // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
-          // will NOT register internals. This feature is utilized.
-          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Web_Server_Assembly>();
-          aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Web_Contracts_Assembly>();
-        }
-      );
+      .TryAddApplicationPart(typeof(Web_Server_Assembly).Assembly);
+
+    aServiceCollection.AddFluentValidationAutoValidation();
+    aServiceCollection.AddFluentValidationClientsideAdapters();
+
+    // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
+    // will NOT register internals. This feature is utilized.
+    aServiceCollection.AddValidatorsFromAssemblyContaining<Web_Server_Assembly>();
+    aServiceCollection.AddValidatorsFromAssemblyContaining<Web_Contracts_Assembly>();
 
     aServiceCollection.Configure<ApiBehaviorOptions>
     (
