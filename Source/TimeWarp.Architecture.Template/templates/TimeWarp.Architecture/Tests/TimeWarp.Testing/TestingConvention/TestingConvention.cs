@@ -2,7 +2,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using TimeWarp.Architecture.Testing;
 
 public class TimeWarpTestingConvention : TimeWarp.Fixie.TestingConvention
 {
