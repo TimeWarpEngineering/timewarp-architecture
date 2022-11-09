@@ -7,7 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Libraries\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
+    <PackageReference Include="Timewarp.OptionsValidation" />
+  </ItemGroup>
+  
+  <ItemGroup>
     <ProjectReference Include="..\Common.Application\Common.Application.csproj" />
   </ItemGroup>
 

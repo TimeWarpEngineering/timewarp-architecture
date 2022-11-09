@@ -1,4 +1,4 @@
-name: NuGet Generation
+name: timewarp-architecture.yml
 
 on:
   push:

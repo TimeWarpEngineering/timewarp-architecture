@@ -21,11 +21,12 @@
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all" />
     <PackageReference Include="timewarp-heroicons" />
+    <PackageReference Include="Timewarp.OptionsValidation" />
     <PackageReference Include="timewarp-simple-icons" />
+    
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Libraries\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj" />
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
