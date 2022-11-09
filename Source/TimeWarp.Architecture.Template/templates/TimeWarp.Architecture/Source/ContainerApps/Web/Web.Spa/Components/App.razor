@@ -1,7 +1,5 @@
 @namespace TimeWarp.Architecture.Components
 
-@using Microsoft.AspNetCore.Components.Routing
-
 @inherits ComponentBase
 
 <Router AppAssembly="typeof(Web.Spa.Program).Assembly"  PreferExactMatches=@true>
@@ -9,7 +7,9 @@
     <RouteView RouteData=@routeData DefaultLayout=@typeof(TimeWarp.Architecture.Components.EmptyLayout) />
   </Found>
   <NotFound>
-    <h1>Page not found</h1>
-    <p>Sorry, but there's nothing here!</p>
+    <PageTitle>Not Found</PageTitle>
+      <LayoutView Layout="@typeof(MainLayout)">
+        <p role="alert">Sorry, there's nothing at this address.</p>
+      </LayoutView>
   </NotFound>
 </Router>

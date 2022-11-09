@@ -18,8 +18,8 @@ public class ProcessingBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
   public async Task<TResponse> Handle
   (
     TRequest aRequest,
-    CancellationToken aCancellationToken,
-    RequestHandlerDelegate<TResponse> aNextHandler
+    RequestHandlerDelegate<TResponse> aNextHandler,
+    CancellationToken aCancellationToken
   )
   {
     if (typeof(TRequest).GetCustomAttributes(typeof(TrackProcessingAttribute), false).Any())

@@ -91,7 +91,7 @@ csharp_style_expression_bodied_constructors = false:warning
 csharp_style_expression_bodied_indexers = when_on_single_line:warning
 csharp_style_expression_bodied_lambdas = true:suggestion
 csharp_style_expression_bodied_local_functions = false:suggestion
-csharp_style_expression_bodied_methods = when_on_single_line:warning
+csharp_style_expression_bodied_methods = false:none
 csharp_style_expression_bodied_operators = when_on_single_line:warning
 csharp_style_expression_bodied_properties = when_on_single_line:warning
 
@@ -242,15 +242,15 @@ dotnet_naming_symbols.local_variables.applicable_kinds = local
 
 dotnet_naming_style.local_variables_style.capitalization = camel_case
 
-# Parameters should be prefixed with an 'a'
-dotnet_naming_rule.parameters_should_be_prefixed.severity         = suggestion
-dotnet_naming_rule.parameters_should_be_prefixed.symbols          = parameters
-dotnet_naming_rule.parameters_should_be_prefixed.style            = parameter_style
+# # Parameters should be prefixed with an 'a'
+# dotnet_naming_rule.parameters_should_be_prefixed.severity         = suggestion
+# dotnet_naming_rule.parameters_should_be_prefixed.symbols          = parameters
+# dotnet_naming_rule.parameters_should_be_prefixed.style            = parameter_style
 
-dotnet_naming_symbols.parameters.applicable_kinds = parameter
+# dotnet_naming_symbols.parameters.applicable_kinds = parameter
 
-dotnet_naming_style.parameter_style.required_prefix = a
-dotnet_naming_style.parameter_style.capitalization = pascal_case
+# dotnet_naming_style.parameter_style.required_prefix = a
+# dotnet_naming_style.parameter_style.capitalization = pascal_case
 
 # Local functions are PascalCase
 dotnet_naming_rule.local_functions_should_be_pascal_case.severity = suggestion

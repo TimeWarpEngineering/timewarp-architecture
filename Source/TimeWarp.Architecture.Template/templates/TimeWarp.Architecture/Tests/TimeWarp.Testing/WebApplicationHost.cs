@@ -1,4 +1,5 @@
-﻿namespace TimeWarp.Architecture.Testing;
+﻿#nullable enable
+namespace TimeWarp.Architecture.Testing;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -31,34 +32,34 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
   /// <summary>
   /// Construct a WebApplication
   /// </summary>
-  /// <param name="aEnvironmentName"></param>
   /// <param name="aUrls"></param>
-  /// <param name="aConfigureServicesDelegate">Allows for adjusting the DI container</param>
+  /// <param name="aWebApplicationOptions"></param>
+  /// <param name="aConfigureServicesDelegate"></param>
   public WebApplicationHost
   (
-    string aEnvironmentName,
-    //string aContentRoot,
     string[] aUrls,
-    Action<HostBuilderContext, IServiceCollection> aConfigureServicesDelegate = null
+    WebApplicationOptions aWebApplicationOptions,
+    Action<IServiceCollection>? aConfigureServicesDelegate = null
   )
   {
     Urls = aUrls;
     WebApplicationBuilder builder =
-      WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = aEnvironmentName });
+      WebApplication.CreateBuilder(aWebApplicationOptions);
 
     builder.WebHost
-      //.UseContentRoot(aContentRoot)
       .UseUrls(aUrls)
       .UseShutdownTimeout(TimeSpan.FromSeconds(30));
 
     Configuration = builder.Configuration;
     TProgram.ConfigureServices(builder.Services, builder.Configuration);
+    aConfigureServicesDelegate?.Invoke(builder.Services);
 
     WebApplication = builder.Build();
     TProgram.ConfigureMiddleware(WebApplication);
     TProgram.ConfigureEndpoints(WebApplication);
 
     ServiceProvider = WebApplication.Services;
+    ServiceProvider.ValidateOptions(builder.Services);
 
     try
     {

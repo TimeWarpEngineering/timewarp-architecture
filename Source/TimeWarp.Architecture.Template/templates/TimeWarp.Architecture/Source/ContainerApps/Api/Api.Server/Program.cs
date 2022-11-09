@@ -1,5 +1,6 @@
 namespace TimeWarp.Architecture.Api.Server;
 
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,17 +47,15 @@ public class Program : IAspNetProgram
 
     aServiceCollection
       .AddControllers()
-      .TryAddApplicationPart(typeof(Api_Server_Assembly).Assembly)
-      .AddFluentValidation
-        (
-          aFluentValidationMvcConfiguration =>
-          {
-            // RegisterValidatorsFromAssemblyContaining will register all public Validators as scoped but
-            // will NOT register internals. This feature is utilized.
-            aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Api_Server_Assembly>();
-            aFluentValidationMvcConfiguration.RegisterValidatorsFromAssemblyContaining<Api_Contracts_Assembly>();
-          }
-        );
+      .TryAddApplicationPart(typeof(Api_Server_Assembly).Assembly);
+
+    aServiceCollection.AddFluentValidationAutoValidation();
+    aServiceCollection.AddFluentValidationClientsideAdapters();
+
+    // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
+    // will NOT register internals. This feature is utilized.
+    aServiceCollection.AddValidatorsFromAssemblyContaining<Api_Server_Assembly>();
+    aServiceCollection.AddValidatorsFromAssemblyContaining<Api_Contracts_Assembly>();
 
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     aServiceCollection.AddEndpointsApiExplorer();

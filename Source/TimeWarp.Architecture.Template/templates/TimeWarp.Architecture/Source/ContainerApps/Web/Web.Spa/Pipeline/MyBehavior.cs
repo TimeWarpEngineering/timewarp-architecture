@@ -1,57 +1,56 @@
-namespace TimeWarp.Architecture.Pipeline
+namespace TimeWarp.Architecture.Pipeline;
+
+using BlazorState;
+using Dawn;
+using MediatR;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+/// <summary>
+/// Sample Pipeline Behavior AKA Middle-ware
+/// </summary>
+/// <typeparam name="TRequest"></typeparam>
+/// <typeparam name="TResponse"></typeparam>
+/// <remarks>see MediatR for more examples</remarks>
+public class MyBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+  where TRequest : IRequest<TResponse>
 {
-  using BlazorState;
-  using Dawn;
-  using MediatR;
-  using Microsoft.Extensions.Logging;
-  using System;
-  using System.Threading;
-  using System.Threading.Tasks;
+  private readonly ILogger Logger;
 
-  /// <summary>
-  /// Sample Pipeline Behavior AKA Middle-ware
-  /// </summary>
-  /// <typeparam name="TRequest"></typeparam>
-  /// <typeparam name="TResponse"></typeparam>
-  /// <remarks>see MediatR for more examples</remarks>
-  public class MyBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-      where TRequest : IRequest<TResponse>
+  public Guid Guid { get; } = Guid.NewGuid();
+
+  public MyBehavior
+  (
+    ILogger<MyBehavior<TRequest, TResponse>> aLogger
+  )
   {
-    private readonly ILogger Logger;
+    Logger = aLogger;
+    Logger.LogDebug($"{GetType().Name}: Constructor");
+  }
 
-    public Guid Guid { get; } = Guid.NewGuid();
+  public async Task<TResponse> Handle
+  (
+    TRequest aRequest,
+    RequestHandlerDelegate<TResponse> aNext,
+    CancellationToken aCancellationToken
+  )
+  {
+    Guard.Argument(aNext, nameof(aNext)).NotNull();
 
-    public MyBehavior
-    (
-      ILogger<MyBehavior<TRequest, TResponse>> aLogger
-    )
+    Logger.LogDebug($"{GetType().Name}: Start");
+
+    Logger.LogDebug($"{GetType().Name}: Call next");
+    TResponse newState = await aNext().ConfigureAwait(false);
+    Logger.LogDebug($"{GetType().Name}: Start Post Processing");
+    // Constrain here based on a type or anything you want.
+    if (typeof(IState).IsAssignableFrom(typeof(TResponse)))
     {
-      Logger = aLogger;
-      Logger.LogDebug($"{GetType().Name}: Constructor");
+      Logger.LogDebug($"{GetType().Name}: Do Constrained Action");
     }
 
-    public async Task<TResponse> Handle
-    (
-      TRequest aRequest,
-      CancellationToken aCancellationToken,
-      RequestHandlerDelegate<TResponse> aNext
-    )
-    {
-      Guard.Argument(aNext, nameof(aNext)).NotNull();
-
-      Logger.LogDebug($"{GetType().Name}: Start");
-
-      Logger.LogDebug($"{GetType().Name}: Call next");
-      TResponse newState = await aNext().ConfigureAwait(false);
-      Logger.LogDebug($"{GetType().Name}: Start Post Processing");
-      // Constrain here based on a type or anything you want.
-      if (typeof(IState).IsAssignableFrom(typeof(TResponse)))
-      {
-        Logger.LogDebug($"{GetType().Name}: Do Constrained Action");
-      }
-
-      Logger.LogDebug($"{GetType().Name}: End");
-      return newState;
-    }
+    Logger.LogDebug($"{GetType().Name}: End");
+    return newState;
   }
 }

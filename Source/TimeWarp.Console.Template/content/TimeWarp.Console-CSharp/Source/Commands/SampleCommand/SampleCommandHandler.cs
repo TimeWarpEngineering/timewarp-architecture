@@ -5,8 +5,7 @@
   using System.Threading.Tasks;
   using MediatR;
 
-  internal class SampleCommandHandler
-    : IRequestHandler<SampleCommandRequest>
+  internal class SampleCommandHandler: IRequestHandler<SampleCommandRequest>
   {
     public Task<Unit> Handle(SampleCommandRequest aSampleCommandRequest, CancellationToken aCancellationToken)
     {

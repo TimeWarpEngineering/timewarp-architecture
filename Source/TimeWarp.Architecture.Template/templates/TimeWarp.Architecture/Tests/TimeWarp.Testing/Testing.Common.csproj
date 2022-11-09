@@ -1,20 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Fixie" />
     <PackageReference Include="Fixie.TestAdapter" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="Scrutor" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="TimeWarp.Fixie" />
+    <!--<PackageReference Include="TimeWarp.SourceGenerators" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>-->
+    <PackageReference Include="TimeWarp.SourceGenerators" >
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Source\ContainerApps\Api\Api.Server\Api.Server.csproj" />
     <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Server\Web.Server.csproj" />
     <ProjectReference Include="..\..\Source\ContainerApps\Yarp\Yarp.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Note that this is not a "normal" ProjectReference.
-         It needs the additional 'OutputItemType' and 'ReferenceOutputAssembly' attributes. -->
-    <ProjectReference Include="..\..\Source\SourceCodeGenerators\SourceCodeGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

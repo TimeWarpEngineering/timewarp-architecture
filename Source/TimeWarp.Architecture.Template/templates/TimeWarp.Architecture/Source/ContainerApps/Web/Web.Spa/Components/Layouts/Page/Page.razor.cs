@@ -1,7 +1,7 @@
 namespace TimeWarp.Architecture.Components;
 
 using Microsoft.AspNetCore.Components;
-using TimeWarp.Architecture.Features.Bases;
+using TimeWarp.Architecture.Features;
 
 public partial class Page : BaseComponent
 {

@@ -22,7 +22,7 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
   public Guid Guid { get; } = Guid.NewGuid();
 
   public EventStreamBehavior
-              (
+  (
     ILogger<EventStreamBehavior<TRequest, TResponse>> aLogger,
     ISender aSender
   )
@@ -35,8 +35,8 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
   public async Task<TResponse> Handle
   (
     TRequest aRequest,
-    CancellationToken aCancellationToken,
-    RequestHandlerDelegate<TResponse> aNext
+    RequestHandlerDelegate<TResponse> aNext,
+    CancellationToken aCancellationToken
   )
   {
     Guard.Argument(aNext, nameof(aNext)).NotNull();

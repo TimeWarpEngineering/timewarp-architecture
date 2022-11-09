@@ -1,12 +1,13 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 /// <summary>
 /// Used to launch the Api.Server application
 /// </summary>
-/// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
+/// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesCallback"/></remarks>
 public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Program>
 {
   private readonly WebTestServerApplication WebTestServerApplication;
@@ -20,12 +21,18 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
   (
     new WebApplicationHost<Yarp.Server.Program>
     (
-      aEnvironmentName: Environments.Development,
       aUrls: new[]
       {
         "https://localhost:8443"
       },
-      ConfigureServicesDelegate
+      aWebApplicationOptions:
+        new WebApplicationOptions
+        {
+          ApplicationName = typeof(Yarp_Server_Assembly).Assembly.GetName().Name,
+          EnvironmentName = Environments.Development,
+          ContentRootPath = default,
+        },
+      ConfigureServicesCallback
     )
   )
   {
@@ -33,10 +40,5 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
     ApiTestServerApplication = aApiTestServerApplication;
   }
 
-  protected static void ConfigureServicesDelegate
-  (
-    HostBuilderContext aHostBuilderContext,
-    IServiceCollection aServiceCollection
-  )
-  { }
+  protected static void ConfigureServicesCallback(IServiceCollection aServiceCollection) { }
 }

@@ -4,7 +4,7 @@ using BlazorState;
 using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.Bases;
+using TimeWarp.Architecture.Features;
 
 internal partial class WeatherForecastsState
 {

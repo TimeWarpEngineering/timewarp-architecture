@@ -1,30 +1,16 @@
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
-using Fixie;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
 using TimeWarp.Architecture.Testing;
 
-[NotTest]
-public class SpaTestConvention : ITestProject
+class SpaTestConvention : TimeWarpTestingConvention
 {
-  public void Configure(TestConfiguration aTestConfiguration, TestEnvironment aTestEnvironment)
+
+  private static void ConfigureAdditionalServicesCallback(ServiceCollection serviceCollection)
   {
-    var testDiscovery = new TestDiscovery(aTestEnvironment.CustomArguments);
-    var testExecution = new TimeWarpExecution(aTestEnvironment.CustomArguments);
-    aTestConfiguration.Conventions.Add(testDiscovery, testExecution);
+    serviceCollection.AddSingleton<SpaTestApplication<YarpTestServerApplication, Yarp.Server.Program>>(); ;
+    // One would configure their Appplication Objects here as well as any other test services
   }
-}
 
-[NotTest]
-public class TimeWarpExecution : TestExecution
-{
-  public TimeWarpExecution(IReadOnlyList<string> aCustomArguments) : base(aCustomArguments) { }
-
-  public override void ConfigureApplications(ServiceCollection aServiceCollection)
-  {
-    aServiceCollection.AddSingleton<SpaTestApplication<YarpTestServerApplication, Yarp.Server.Program>>();
-
-    base.ConfigureApplications(aServiceCollection);
-  }
+  
 }

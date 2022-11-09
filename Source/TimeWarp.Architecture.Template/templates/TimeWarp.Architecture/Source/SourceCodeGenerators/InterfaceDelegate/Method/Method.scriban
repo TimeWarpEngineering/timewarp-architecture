@@ -1,1 +1,0 @@
-﻿{{ReturnType}} {{InterfaceName}}.{{MethodName}}{{GenericType}}({{Parameters}}) => {{FieldName}}.{{MethodName}}({{Arguments}});";

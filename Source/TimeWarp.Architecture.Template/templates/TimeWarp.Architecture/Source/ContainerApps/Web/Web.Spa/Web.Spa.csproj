@@ -20,6 +20,8 @@
     <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" />
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all" />
+    <PackageReference Include="timewarp-heroicons" />
+    <PackageReference Include="timewarp-simple-icons" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +29,11 @@
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj" />
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="BlazorState" />
+    <Using Include="MediatR" />
   </ItemGroup>
 
   <ItemGroup>

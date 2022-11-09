@@ -20,6 +20,6 @@ public class GetWeatherForecastsEndpoint : BaseEndpoint<GetWeatherForecastsReque
   [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
   [ProducesResponseType(typeof(GetWeatherForecastsResponse), (int)HttpStatusCode.OK)]
   [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-  public async Task<IActionResult> Process([FromQuery] GetWeatherForecastsRequest aGetWeatherForecastsRequest) =>
-    await Send(aGetWeatherForecastsRequest);
+  public Task<IActionResult> Process([FromQuery] GetWeatherForecastsRequest aGetWeatherForecastsRequest) =>
+    Send(aGetWeatherForecastsRequest);
 }

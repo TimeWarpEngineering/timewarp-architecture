@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.Bases;
+namespace TimeWarp.Architecture.Features;
 
 using BlazorState.Pipeline.ReduxDevTools;
 using MediatR;

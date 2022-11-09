@@ -1,5 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -10,24 +11,25 @@ using Microsoft.Extensions.Hosting;
 public class ApiTestServerApplication : TestServerApplication<Api.Server.Program>
 {
   public ApiTestServerApplication() :
-  base
-  (
-    new WebApplicationHost<Api.Server.Program>
+    base
     (
-      aEnvironmentName: Environments.Development,
-      aUrls: new[]
-      {
-        "https://localhost:7255"
-      },
-      ConfigureServicesDelegate
+      new WebApplicationHost<Api.Server.Program>
+      (
+        aUrls: new[]
+        {
+          "https://localhost:7255"
+        },
+        aWebApplicationOptions:
+        new WebApplicationOptions
+        {
+          ApplicationName = typeof(Api_Server_Assembly).Assembly.GetName().Name,
+          EnvironmentName = Environments.Development,
+          ContentRootPath = default,
+        },
+        ConfigureServicesCallback
+      )
     )
-  )
   { }
 
-  protected static void ConfigureServicesDelegate
-  (
-    HostBuilderContext aHostBuilderContext,
-    IServiceCollection aServiceCollection
-  )
-  { }
+  protected static void ConfigureServicesCallback(IServiceCollection aServiceCollection) { }
 }

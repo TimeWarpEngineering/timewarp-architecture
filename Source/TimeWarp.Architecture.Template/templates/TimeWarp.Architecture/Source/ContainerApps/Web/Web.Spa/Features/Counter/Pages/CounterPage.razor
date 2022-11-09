@@ -1,13 +1,15 @@
 @namespace TimeWarp.Architecture.Pages
 
-@using TimeWarp.Architecture.Features.Bases
+@using TimeWarp.Architecture.Features
 @using TimeWarp.Architecture.Components
 @using TimeWarp.Architecture.Features.Counters.Components
 @using TimeWarp.Architecture.Features.EventStreams
 
 @inherits BaseComponent
 
-@page "/Counter"
+@attribute [Route(CounterPage.RouteTemplate)]
+
+<PageTitle>Counter Page</PageTitle>
 
 <Page>
   <HeaderContent>Counter Page</HeaderContent>
