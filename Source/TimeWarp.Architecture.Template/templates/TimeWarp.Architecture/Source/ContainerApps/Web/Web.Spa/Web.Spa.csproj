@@ -12,7 +12,6 @@
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Dawn.Guard" />
     <PackageReference Include="Grpc.Net.Client.Web" />
-    <PackageReference Include="HeroIcons.Blazor" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
