@@ -16,7 +16,6 @@ COPY ["Source/Common/Common.Application/Common.Application.csproj", "Source/Comm
 COPY ["Source/Common/Common.Domain/Common.Domain.csproj", "Source/Common/Common.Domain/"]
 COPY ["Source/Common/Common.Contracts/Common.Contracts.csproj", "Source/Common/Common.Contracts/"]
 COPY ["Source/Libraries/TimeWarp.Modules/TimeWarp.Modules.csproj", "Source/Libraries/TimeWarp.Modules/"]
-COPY ["Source/Libraries/TimeWarp.OptionsValidation/TimeWarp.OptionsValidation.csproj", "Source/Libraries/TimeWarp.OptionsValidation/"]
 COPY ["Source/ContainerApps/Api/Api.Infrastructure/Api.Infrastructure.csproj", "Source/ContainerApps/Api/Api.Infrastructure/"]
 COPY ["Source/ContainerApps/Api/Api.Application/Api.Application.csproj", "Source/ContainerApps/Api/Api.Application/"]
 COPY ["Source/ContainerApps/Api/Api.Domain/Api.Domain.csproj", "Source/ContainerApps/Api/Api.Domain/"]
