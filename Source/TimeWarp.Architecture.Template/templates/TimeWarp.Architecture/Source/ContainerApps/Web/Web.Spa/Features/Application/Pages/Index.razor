@@ -11,7 +11,7 @@
 
   <MainContent>
     <div class="px-4 py-6 sm:px-0">
-      <VStack>
+      <div class="flex flex-col">
         <p>
           Welcome to your new app with <HyperLink href="https://timewarpengineering.github.io/blazor-state/"> Blazor State</HyperLink> management and an easily extensible pipeline utilizing
           <HyperLink href="https://github.com/jbogard/MediatR" target="blank">MediatR.</HyperLink>
@@ -34,7 +34,7 @@
           <Button Variant=Button.ButtonVariant.Default data-qa="FiveSecondButton" @onclick=FiveSecondTaskButtonClick>Launch Five Second Task</Button>
           <Button Variant=Button.ButtonVariant.Default data-qa="TwoSecondButton" @onclick=TwoSecondTaskButtonClick>Launch Two Second Task</Button>
         </div>
-      </VStack>
+      </div>
     </div>
   </MainContent>
 </Page>

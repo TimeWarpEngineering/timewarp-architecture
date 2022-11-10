@@ -1,9 +1,10 @@
 ﻿@namespace TimeWarp.Architecture.Features.Applications.Components.NavBars.Dark
 @inherits ParentComponent
 
-<NavLink href=@Href
-         target=@Target
-         class="ml-4
+<NavLink
+  href=@Href
+  target=@Target
+  class="ml-4
    px-3
    py-2
    rounded-md
@@ -18,7 +19,8 @@
    focus:bg-gray-700
    transition
    duration-150
-   ease-in-out">
+   ease-in-out"
+>
   @ChildContent
 </NavLink>
 
