@@ -135,16 +135,14 @@ public class Program : IAspNetProgram
     CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
 
     aWebApplication.UseResponseCompression();
-
+    aWebApplication.UseBlazorFrameworkFiles();
+    aWebApplication.UseStaticFiles();
     aWebApplication.UseRouting();
 
     aWebApplication.MapHealthChecks("/api/health");
     aWebApplication.MapControllers();
     aWebApplication.MapBlazorHub();
     aWebApplication.MapFallbackToPage("/_Host");
-
-    aWebApplication.UseStaticFiles();
-    aWebApplication.UseBlazorFrameworkFiles();
   }
 
   public static void ConfigureEndpoints(WebApplication aWebApplication)
