@@ -168,18 +168,16 @@ public class Program
     return serviceUri;
   }
 
-  public static Task Main(string[] aArgumentArray)
+  public static async Task Main(string[] args)
   {
-    var builder = WebAssemblyHostBuilder.CreateDefault(aArgumentArray);
+    var builder = WebAssemblyHostBuilder.CreateDefault(args);
     builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
     builder.RootComponents.Add<App>("#app");
     builder.RootComponents.Add<HeadOutlet>("head::after");
-    builder.Services.AddScoped
-      (_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+    builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
     ConfigureServices(builder.Services, builder.Configuration);
 
-    WebAssemblyHost host = builder.Build();
-    return host.RunAsync();
+    await builder.Build().RunAsync();
   }
 }
