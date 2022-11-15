@@ -138,16 +138,10 @@ public class Program : IAspNetProgram
 
     aWebApplication.UseRouting();
 
-    aWebApplication.UseEndpoints
-    (
-      aEndpointRouteBuilder =>
-      {
-        aEndpointRouteBuilder.MapHealthChecks("/api/health");
-        aEndpointRouteBuilder.MapControllers();
-        aEndpointRouteBuilder.MapBlazorHub();
-        aEndpointRouteBuilder.MapFallbackToPage("/_Host");
-      }
-    );
+    aWebApplication.MapHealthChecks("/api/health");
+    aWebApplication.MapControllers();
+    aWebApplication.MapBlazorHub();
+    aWebApplication.MapFallbackToPage("/_Host");
 
     aWebApplication.UseStaticFiles();
     aWebApplication.UseBlazorFrameworkFiles();
