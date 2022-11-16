@@ -40,7 +40,6 @@ public class Program
       }
     );
 
-    aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
     aServiceCollection.AddScoped<ClientLoader>();
     aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
     aServiceCollection.AddScoped<WebApiService>();
@@ -54,10 +53,6 @@ public class Program
         ;//aJsonSerializerOptions.WriteIndented = true;
       }
     );
-
-#if DEBUG
-    new ProjectAnlayzer().Analyze();
-#endif
   }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)

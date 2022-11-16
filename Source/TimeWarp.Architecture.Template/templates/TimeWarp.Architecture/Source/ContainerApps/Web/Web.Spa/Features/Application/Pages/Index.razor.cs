@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Pages;
 
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features;
 
 public partial class Index : BaseComponent
@@ -10,9 +8,4 @@ public partial class Index : BaseComponent
 
   public static string GetRoute() => RouteTemplate;
 
-  private async Task FiveSecondTaskButtonClick() =>
-    await Send(new ApplicationState.FiveSecondTaskAction());
-
-  private async Task TwoSecondTaskButtonClick() =>
-    await Send(new ApplicationState.TwoSecondTaskAction());
 }
