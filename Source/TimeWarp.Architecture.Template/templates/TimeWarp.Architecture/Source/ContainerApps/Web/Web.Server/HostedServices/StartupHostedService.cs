@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using TimeWarp.Architecture.Data;
 
 public class StartupHostedService : IHostedService
 {

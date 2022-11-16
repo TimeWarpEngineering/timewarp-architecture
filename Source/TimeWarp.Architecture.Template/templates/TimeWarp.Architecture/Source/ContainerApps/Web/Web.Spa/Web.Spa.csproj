@@ -21,17 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Using Include="BlazorState" />
     <Using Include="MediatR" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="Web.Spa.Integration.Tests" />
-    <InternalsVisibleTo Include="Web.Server.Integration.Tests" />
   </ItemGroup>
 
   <ItemGroup>
@@ -60,6 +51,7 @@
 
   <ItemGroup>
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*" />
+    <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
     <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
   </ItemGroup>
 
