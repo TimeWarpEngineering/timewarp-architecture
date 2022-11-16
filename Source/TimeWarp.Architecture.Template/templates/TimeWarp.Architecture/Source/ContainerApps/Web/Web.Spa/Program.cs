@@ -17,7 +17,6 @@ using TimeWarp.Architecture.Analyzer;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Applications;
-using TimeWarp.Architecture.Features.ClientLoaders;
 using ServiceCollectionOptions = Configuration.ServiceCollectionOptions;
 
 public class Program
@@ -40,8 +39,6 @@ public class Program
       }
     );
 
-    aServiceCollection.AddScoped<ClientLoader>();
-    aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
     aServiceCollection.AddScoped<WebApiService>();
     // Set the JSON serializer options
     aServiceCollection.Configure<JsonSerializerOptions>
