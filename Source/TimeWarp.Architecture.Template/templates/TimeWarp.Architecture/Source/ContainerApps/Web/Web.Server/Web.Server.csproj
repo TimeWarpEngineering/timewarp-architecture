@@ -43,10 +43,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="HostedServices\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <InternalsVisibleTo Include="Web.Server.Integration.Tests" />
   </ItemGroup>
 
