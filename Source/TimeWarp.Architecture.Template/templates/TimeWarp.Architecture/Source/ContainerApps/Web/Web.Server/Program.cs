@@ -36,19 +36,6 @@ public class Program
     serviceCollection.AddRazorPages();
     serviceCollection.AddServerSideBlazor();
 
-    serviceCollection.Configure<ApiBehaviorOptions>
-    (
-      aApiBehaviorOptions => aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
-    );
-
-    serviceCollection.AddResponseCompression
-    (
-      aResponseCompressionOptions =>
-        aResponseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat
-        (
-          new[] { MediaTypeNames.Application.Octet }
-        )
-    );
 
     Web.Spa.Program.ConfigureServices(serviceCollection, configuration);
   }
@@ -57,16 +44,12 @@ public class Program
   {
     CommonServerModule.ConfigureMiddleware(webApplication);
 
-    // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
-    // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
-    // Although sometimes, you might want to allow other sites to make cross-origin requests to your app to be functional.
     if (webApplication.Environment.IsDevelopment())
     {
       webApplication.UseDeveloperExceptionPage();
       webApplication.UseWebAssemblyDebugging();
     }
 
-    webApplication.UseResponseCompression();
     webApplication.UseBlazorFrameworkFiles();
     webApplication.UseStaticFiles();
     webApplication.UseRouting();
