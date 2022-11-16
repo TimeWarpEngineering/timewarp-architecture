@@ -22,16 +22,12 @@ public class StartupHostedService : IHostedService
     Logger = aLogger;
   }
 
-  public async Task StartAsync(CancellationToken aCancellationToken)
+  public Task StartAsync(CancellationToken aCancellationToken)
   {
     Logger.LogInformation($"{nameof(StartupHostedService)} has started.");
     using IServiceScope scope = ServiceProvider.CreateScope();
 
-    //SqlDbContext sqlDbContext = scope.ServiceProvider.GetRequiredService<SqlDbContext>();
-    //await sqlDbContext.Database.MigrateAsync(aCancellationToken);
-
-    CosmosDbContext cosmosDbContext = scope.ServiceProvider.GetRequiredService<CosmosDbContext>();
-    await cosmosDbContext.Database.EnsureCreatedAsync(aCancellationToken);
+    return Task.CompletedTask;
   }
 
   public Task StopAsync(CancellationToken aCancellationToken)
