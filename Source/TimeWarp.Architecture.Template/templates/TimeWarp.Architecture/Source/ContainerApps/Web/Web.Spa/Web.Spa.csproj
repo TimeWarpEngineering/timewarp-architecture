@@ -5,17 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BlazorComponentUtilities" />
     <PackageReference Include="Blazor-State" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
     <PackageReference Include="Microsoft.Tye.Extensions.Configuration" />
-    <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" />
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all" />
-    <PackageReference Include="timewarp-heroicons" />
-    <PackageReference Include="timewarp-simple-icons" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,9 +22,5 @@
   <ItemGroup>
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
   </ItemGroup>
 </Project>
