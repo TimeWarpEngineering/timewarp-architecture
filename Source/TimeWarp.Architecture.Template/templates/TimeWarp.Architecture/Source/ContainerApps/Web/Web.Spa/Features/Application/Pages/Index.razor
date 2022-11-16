@@ -12,24 +12,16 @@
   <MainContent>
     <div class="px-4 py-6 sm:px-0">
       <div class="flex flex-col">
-        <p>
-          Welcome to your new app with <HyperLink href="https://timewarpengineering.github.io/blazor-state/"> Blazor State</HyperLink> management and an easily extensible pipeline utilizing
-          <HyperLink href="https://github.com/jbogard/MediatR" target="blank">MediatR.</HyperLink>
-        </p>
-        <p class="mt-4">
-          <HyperLink href="https://github.com/TimeWarpEngineering/blazor-state" target="blank">Blazor State GitHub project</HyperLink>
-        </p>
-
-        <HyperLink href="https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en" target="blank">Redux Dev Tools Chrome Extension </HyperLink>
-
-        <SimpleAlert class="mt-4" Title="Tailwind UI">
-          This site is built with
-          <HyperLink href="https://tailwindcss.com/" target="blank">Tailwind css</HyperLink>
-          and
-          <HyperLink href="https://tailwindui.com" target="blank">Tailwind UI</HyperLink>
-        </SimpleAlert>
 
         <img class="w-full" src="/images/TheFreezeTeam/SOLID_Team.png" />
+        @if (OperatingSystem.IsBrowser())
+        {
+          <div> Running in WASM</div>
+        }
+        else
+        {
+          <div> Running server side </div>
+        }
       </div>
     </div>
   </MainContent>

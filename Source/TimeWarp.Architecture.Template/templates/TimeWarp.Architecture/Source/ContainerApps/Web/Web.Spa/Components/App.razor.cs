@@ -13,10 +13,8 @@ public partial class App : ComponentBase
 
   protected override async Task OnAfterRenderAsync(bool aFirstRender)
   {
-#if ReduxDevToolsEnabled
-    await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
-#endif
+    Console.WriteLine("Pre JsonRequestHandler.InitAsync");
     await JsonRequestHandler.InitAsync().ConfigureAwait(false);
-
+    Console.WriteLine("Post JsonRequestHandler.InitAsync");
   }
 }
