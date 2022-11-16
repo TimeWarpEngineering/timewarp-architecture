@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TimeWarp.Architecture.Components;
-using TimeWarp.Architecture.Features.Applications;
-using TimeWarp.Architecture.Features.Counters;
 
 /// <summary>
 /// Makes access to the State a little easier and by inheriting from
@@ -24,10 +22,7 @@ public class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
   [Parameter(CaptureUnmatchedValues = true)]
   public IReadOnlyDictionary<string, object> Attributes { get; set; } = new Dictionary<string, object>();
 
-  internal ApplicationState ApplicationState => GetState<ApplicationState>();
-  internal CounterState CounterState => GetState<CounterState>();
   protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
 
-  protected bool IsProcessingAny(params string[] aActions) => ApplicationState.IsProcessingAny(aActions);
   protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest).ConfigureAwait(false);
 }
