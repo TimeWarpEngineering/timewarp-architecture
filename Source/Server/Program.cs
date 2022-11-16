@@ -1,11 +1,4 @@
-namespace TimeWarp.Architecture.Web.Server;
-
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using TimeWarp.Architecture;
+namespace Pwa;
 
 public class Program
 {
@@ -24,6 +17,7 @@ public class Program
 
     webApplication.Run();
   }
+
   private static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
     serviceCollection.AddRazorPages();
