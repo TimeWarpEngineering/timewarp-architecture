@@ -1,10 +1,9 @@
-namespace TimeWarp.Architecture.Web.Spa;
+namespace Pwa.Client;
 
 using BlazorState;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using System.Reflection;
-using TimeWarp.Architecture.Components;
 
 
 public class Program

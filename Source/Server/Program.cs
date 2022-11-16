@@ -29,7 +29,7 @@ public class Program
     serviceCollection.AddRazorPages();
     serviceCollection.AddServerSideBlazor();
 
-    Web.Spa.Program.ConfigureServices(serviceCollection, configuration);
+    Pwa.Client.Program.ConfigureServices(serviceCollection, configuration);
   }
 
   private static void ConfigureMiddleware(WebApplication webApplication)
