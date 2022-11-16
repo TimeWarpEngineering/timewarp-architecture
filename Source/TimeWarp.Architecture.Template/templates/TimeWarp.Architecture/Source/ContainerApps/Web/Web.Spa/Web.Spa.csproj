@@ -29,6 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
   </ItemGroup>
 </Project>

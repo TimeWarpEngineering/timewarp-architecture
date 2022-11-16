@@ -16,6 +16,13 @@
     <DockerfileContext>..\..\..\..</DockerfileContext>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Extensions\**" />
+    <Content Remove="Extensions\**" />
+    <EmbeddedResource Remove="Extensions\**" />
+    <None Remove="Extensions\**" />
+  </ItemGroup>
+
   <ItemGroup Label="Core">
     <PackageReference Include="AutoMapper" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" />
@@ -37,7 +44,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Extensions\" />
     <Folder Include="HostedServices\" />
   </ItemGroup>
 
