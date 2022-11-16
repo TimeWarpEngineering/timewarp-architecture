@@ -25,10 +25,9 @@ public class Program
     webApplication.Run();
   }
   private static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
-  {  
+  {
     serviceCollection.AddRazorPages();
     serviceCollection.AddServerSideBlazor();
-
 
     Web.Spa.Program.ConfigureServices(serviceCollection, configuration);
   }
@@ -37,7 +36,6 @@ public class Program
   {
     if (webApplication.Environment.IsDevelopment())
     {
-      webApplication.UseDeveloperExceptionPage();
       webApplication.UseWebAssemblyDebugging();
     }
 
