@@ -299,7 +299,7 @@ __pycache__/
 GeneratedCode/
 
 # Web.Spa generated code
-/Source/ContainerApps/Web/Web.Spa/wwwroot/js/
+#/Source/ContainerApps/Web/Web.Spa/wwwroot/js/
 
 # Tye intermediate files
 .tye/
