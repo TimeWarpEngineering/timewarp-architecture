@@ -13,9 +13,6 @@ using Microsoft.Extensions.Hosting;
 using System.Net.Mime;
 using System.Reflection;
 using TimeWarp.Architecture;
-using TimeWarp.Architecture.CorsPolicies;
-using TimeWarp.Architecture.Infrastructure;
-using TimeWarp.Architecture.Web.Infrastructure;
 
 public class Program
 {
@@ -38,16 +35,6 @@ public class Program
   {  
     serviceCollection.AddRazorPages();
     serviceCollection.AddServerSideBlazor();
-    serviceCollection.AddMvc()
-      .TryAddApplicationPart(typeof(Web_Server_Assembly).Assembly);
-
-    serviceCollection.AddFluentValidationAutoValidation();
-    serviceCollection.AddFluentValidationClientsideAdapters();
-
-    // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
-    // will NOT register internals. This feature is utilized.
-    serviceCollection.AddValidatorsFromAssemblyContaining<Web_Server_Assembly>();
-    serviceCollection.AddValidatorsFromAssemblyContaining<Web_Contracts_Assembly>();
 
     serviceCollection.Configure<ApiBehaviorOptions>
     (
@@ -64,13 +51,6 @@ public class Program
     );
 
     Web.Spa.Program.ConfigureServices(serviceCollection, configuration);
-
-    serviceCollection
-      .AddMediatR
-      (
-        typeof(Web_Server_Assembly).GetTypeInfo().Assembly,
-        typeof(Web_Application_Assembly).GetTypeInfo().Assembly
-      );
   }
 
   public static void ConfigureMiddleware(WebApplication webApplication)
@@ -82,7 +62,6 @@ public class Program
     // Although sometimes, you might want to allow other sites to make cross-origin requests to your app to be functional.
     if (webApplication.Environment.IsDevelopment())
     {
-      webApplication.UseCors(CorsPolicy.Any.Name);
       webApplication.UseDeveloperExceptionPage();
       webApplication.UseWebAssemblyDebugging();
     }
