@@ -22,7 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Solution Items", "03-Sol
 		Watch.ps1 = Watch.ps1
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pwa.Spa", "Source\Client\Pwa.Spa.csproj", "{6812ABB9-30BF-4ACC-8F5A-739239C365AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pwa.Client", "Source\Client\Pwa.Client.csproj", "{6812ABB9-30BF-4ACC-8F5A-739239C365AF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pwa.Server", "Source\Server\Pwa.Server.csproj", "{E41A4D41-4679-4560-A3CA-5A7E1137F5D4}"
 EndProject
