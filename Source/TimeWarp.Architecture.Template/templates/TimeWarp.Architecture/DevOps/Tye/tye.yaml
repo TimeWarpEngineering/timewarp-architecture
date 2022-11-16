@@ -19,12 +19,6 @@ services:
   - port: 7255
     protocol: https
 
-- name: yarp
-  project: ../../Source/ContainerApps/Yarp/Yarp.csproj
-  bindings:
-  - port: 8443
-    protocol: https
-
 #- name: cosmosdb
 #  image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator
 #  bindings:
