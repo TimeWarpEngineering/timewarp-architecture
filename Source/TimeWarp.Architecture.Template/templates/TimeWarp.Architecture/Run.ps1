@@ -2,12 +2,12 @@ $Env:ASPNETCORE_ENVIRONMENT = "Development"
 
 Push-Location $PSScriptRoot
 try {   
-  Push-Location ./Source/ContainerApps/Web/Web.TypeScript
-  npm install  
-  Pop-Location
+  # Push-Location ./Source/ContainerApps/Web/Web.TypeScript
+  # npm install  
+  # Pop-Location
   
   # currently `tye run` doesn't build the esproj file, so we need to do it manually
-  dotnet build
+  # dotnet build
   
   # Start Cosmos DB emulator
   # see https://timewarpengineering.github.io/timewarp-architecture/#prerequisites

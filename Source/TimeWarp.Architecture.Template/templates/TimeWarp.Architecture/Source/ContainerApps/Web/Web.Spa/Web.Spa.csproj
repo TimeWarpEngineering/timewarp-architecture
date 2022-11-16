@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <Description>Blazor Spa</Description>
-    <!--<DefineConstants>ReduxDevToolsEnabled</DefineConstants>-->
-    <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,44 +24,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />-->
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
   </ItemGroup>
 
-  <!--
-      1. Install npm packages
-      "Inputs" and "Outputs" are used for incremental builds. If all output items are up-to-date, MSBuild skips the target.
-      The first time the task is executed. Then, it only runs when you change the package.json file.
-      Documentation: https://docs.microsoft.com/en-us/visualstudio/msbuild/incremental-builds?WT.mc_id=DT-MVP-5003978
-   -->
-  <Target Name="NpmInstall" Inputs="..\Web.TypeScript\package.json" Outputs="..\Web.TypeScript\node_modules\.install-stamp">
-    <Exec Command="npm install" WorkingDirectory="..\Web.TypeScript\" />
-
-    <!-- Write the stamp file, so incremental builds work -->
-    <Touch Files="..\Web.TypeScript\node_modules\.install-stamp" AlwaysCreate="true" />
-  </Target>
-
-  <!--
-      2. Run NpmRunBuild before building the .NET project.
-      MSBuild runs NpmInstall before this task because of the DependsOnTargets attribute.
-   -->
-
   <ItemGroup>
-    <TypeScriptInputs Include="..\Web.TypeScript\source\*.*" />
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
-    <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
   </ItemGroup>
-
-  <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild" Inputs="@(TypeScriptInputs)" Outputs="@(TypeScriptOutputs)">
-    <Exec Command="npm run build" WorkingDirectory="..\Web.TypeScript\" />
-  </Target>
-
-  <Target Name="CopyLibModule" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild">
-    <Copy SourceFiles="@(FilesToCopy)" DestinationFolder="wwwroot\js" SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="NpmRunTailWinds" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild" Inputs="..\Web.TypeScript\tailwind.config.js;..\Web.TypeScript\css\input.css" Outputs="wwwroot\css\site.css">
-    <Exec Command="npm run tailwinds" WorkingDirectory="..\Web.TypeScript\" />
-  </Target>
 </Project>
