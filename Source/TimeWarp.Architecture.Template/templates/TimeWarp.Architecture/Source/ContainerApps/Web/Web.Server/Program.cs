@@ -1,17 +1,10 @@
 namespace TimeWarp.Architecture.Web.Server;
 
-using FluentValidation;
-using FluentValidation.AspNetCore;
-using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Net.Mime;
-using System.Reflection;
 using TimeWarp.Architecture;
 
 public class Program
@@ -31,7 +24,7 @@ public class Program
 
     webApplication.Run();
   }
-  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
+  private static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {  
     serviceCollection.AddRazorPages();
     serviceCollection.AddServerSideBlazor();
@@ -40,10 +33,8 @@ public class Program
     Web.Spa.Program.ConfigureServices(serviceCollection, configuration);
   }
 
-  public static void ConfigureMiddleware(WebApplication webApplication)
+  private static void ConfigureMiddleware(WebApplication webApplication)
   {
-    CommonServerModule.ConfigureMiddleware(webApplication);
-
     if (webApplication.Environment.IsDevelopment())
     {
       webApplication.UseDeveloperExceptionPage();
@@ -55,11 +46,9 @@ public class Program
     webApplication.UseRouting();
   }
 
-  public static void ConfigureEndpoints(WebApplication webApplication)
+  private static void ConfigureEndpoints(WebApplication webApplication)
   {
     webApplication.MapRazorPages();
-    
-    CommonServerModule.ConfigureEndpoints(webApplication);
     webApplication.MapControllers();
     webApplication.MapBlazorHub();
     webApplication.MapFallbackToPage("/_Host");
