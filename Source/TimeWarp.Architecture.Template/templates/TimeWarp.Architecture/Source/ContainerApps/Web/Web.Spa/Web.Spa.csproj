@@ -56,8 +56,6 @@
   </ItemGroup>
 
   <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild" Inputs="@(TypeScriptInputs)" Outputs="@(TypeScriptOutputs)">
-    <Exec Command="npm run lint" WorkingDirectory="..\Web.TypeScript\" />
-    <Exec Command="npm run prettier" WorkingDirectory="..\Web.TypeScript\" />
     <Exec Command="npm run build" WorkingDirectory="..\Web.TypeScript\" />
   </Target>
 
