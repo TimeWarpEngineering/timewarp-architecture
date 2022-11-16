@@ -18,7 +18,6 @@ using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.ClientLoaders;
-using TimeWarp.Architecture.Features.EventStreams;
 using ServiceCollectionOptions = Configuration.ServiceCollectionOptions;
 
 public class Program
@@ -42,7 +41,6 @@ public class Program
     );
 
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
-    aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
     aServiceCollection.AddScoped<ClientLoader>();
     aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
     aServiceCollection.AddScoped<WebApiService>();

@@ -3,7 +3,6 @@
 @using TimeWarp.Architecture.Features
 @using TimeWarp.Architecture.Components
 @using TimeWarp.Architecture.Features.Counters.Components
-@using TimeWarp.Architecture.Features.EventStreams
 
 @inherits BaseComponent
 
@@ -34,10 +33,5 @@
     <Button class="" data-qa="JsInterop" onclick="window.DispatchIncrementCountAction()">
       Increment Count by 7 via JavaScript Interop
     </Button>
-
-    <hr class="mt-4" />
-    <h1 class="mt-4 text-2xl font-bold leading-tight text-gray-900">Event Stream</h1>
-    <SimpleAlert class="mt-2">EventStream is an example of middleware.  It adds each action to a list.</SimpleAlert>
-    <EventStream />
   </MainContent>
 </Page>

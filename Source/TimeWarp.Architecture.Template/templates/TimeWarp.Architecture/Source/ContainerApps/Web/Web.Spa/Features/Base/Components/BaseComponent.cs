@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.Counters;
-using TimeWarp.Architecture.Features.EventStreams;
 
 /// <summary>
 /// Makes access to the State a little easier and by inheriting from
@@ -27,7 +26,6 @@ public class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
 
   internal ApplicationState ApplicationState => GetState<ApplicationState>();
   internal CounterState CounterState => GetState<CounterState>();
-  internal EventStreamState EventStreamState => GetState<EventStreamState>();
   protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
 
   protected bool IsProcessingAny(params string[] aActions) => ApplicationState.IsProcessingAny(aActions);
