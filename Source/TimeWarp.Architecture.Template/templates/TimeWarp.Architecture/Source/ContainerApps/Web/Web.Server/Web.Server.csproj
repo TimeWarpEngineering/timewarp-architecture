@@ -38,6 +38,7 @@
 
   <ItemGroup>
     <Folder Include="Extensions\" />
+    <Folder Include="HostedServices\" />
   </ItemGroup>
 
   <ItemGroup>
