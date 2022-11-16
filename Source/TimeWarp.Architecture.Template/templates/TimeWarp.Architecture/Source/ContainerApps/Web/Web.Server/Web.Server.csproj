@@ -39,7 +39,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.Server\Common.Server.csproj" />
     <ProjectReference Include="..\Web.Spa\Web.Spa.csproj" />
   </ItemGroup>
 
