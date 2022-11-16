@@ -1,28 +1,14 @@
-@namespace TimeWarp.Architecture.Pages
-
 @page "/"
 
-@inherits BaseComponent
+<PageTitle>Index</PageTitle>
 
-<Page>
-  <HeaderContent>
-    @ApplicationState.Name
-  </HeaderContent>
+<img class="w-full" src="/images/TheFreezeTeam/SOLID_Team.png" />
 
-  <MainContent>
-    <div class="px-4 py-6 sm:px-0">
-      <div class="flex flex-col">
-
-        <img class="w-full" src="/images/TheFreezeTeam/SOLID_Team.png" />
-        @if (OperatingSystem.IsBrowser())
-        {
-          <div> Running in WASM</div>
-        }
-        else
-        {
-          <div> Running server side </div>
-        }
-      </div>
-    </div>
-  </MainContent>
-</Page>
+@if (OperatingSystem.IsBrowser())
+{
+  <div> Running in WASM</div>
+}
+else
+{
+  <div> Running server side </div>
+}
