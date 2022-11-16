@@ -1,11 +1,4 @@
 <Project>
-  <!-- Set common properties regarding assembly information and nuget packages -->
-
-  <PropertyGroup>
-    <Authors>Steven T. Cramer</Authors>
-    <Product>TimeWarp.Architecture</Product>
-  </PropertyGroup>
-
   <!-- Common compile parameters -->
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -14,17 +7,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>preview</LangVersion>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <Nullable>disable</Nullable>
     <TargetFramework>net7.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
-
-  <Target Name="EmbedLocal" BeforeTargets="PrepareForBuild">    
-    <!-- Include each file with given extension from None collection to EmbeddedResource-->
-    <ItemGroup>
-      <EmbeddedResource Include="@(None -> WithMetadataValue('Extension', '.scriban'))" />
-      <EmbeddedResource Include="@(None -> WithMetadataValue('Extension', '.cstemplate'))" />
-    </ItemGroup>
-  </Target>
   
 </Project>
