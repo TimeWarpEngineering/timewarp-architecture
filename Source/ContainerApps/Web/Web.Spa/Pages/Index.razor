@@ -1,0 +1,14 @@
+@page "/"
+
+<PageTitle>Index</PageTitle>
+
+<img class="w-full" src="/images/TheFreezeTeam/SOLID_Team.png" />
+
+@if (OperatingSystem.IsBrowser())
+{
+  <div> Running in WASM</div>
+}
+else
+{
+  <div> Running server side </div>
+}
