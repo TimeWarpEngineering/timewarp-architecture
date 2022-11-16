@@ -39,7 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Web.Spa\Web.Spa.csproj" />
+    <ProjectReference Include="..\Client\Web.Spa.csproj" />
   </ItemGroup>
 
   <ItemGroup>

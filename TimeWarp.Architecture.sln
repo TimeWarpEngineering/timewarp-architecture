@@ -3,10 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Server", "Source\ContainerApps\Web\Web.Server\Web.Server.csproj", "{CFFB80F7-6230-4244-A07F-12F5A295FB21}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Spa", "Source\ContainerApps\Web\Web.Spa\Web.Spa.csproj", "{545E3103-354C-4058-8D8F-60D70DCC115B}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Solution Items", "03-Solution Items", "{6B623CDC-91E7-47FD-A039-A40427FB7FE8}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -26,33 +22,30 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Solution Items", "03-Sol
 		Watch.ps1 = Watch.ps1
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Contracts", "Source\Common\Common.Contracts\Common.Contracts.csproj", "{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Contracts", "Source\Shared\Common.Contracts.csproj", "{0E389169-7AD9-49F5-8107-B1BFD502074C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Spa", "Source\Client\Web.Spa.csproj", "{6812ABB9-30BF-4ACC-8F5A-739239C365AF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Server", "Source\Server\Web.Server.csproj", "{E41A4D41-4679-4560-A3CA-5A7E1137F5D4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
-		ReduxDevToolsEnabled|Any CPU = ReduxDevToolsEnabled|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
-		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
-		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CFFB80F7-6230-4244-A07F-12F5A295FB21}.Release|Any CPU.Build.0 = Release|Any CPU
-		{545E3103-354C-4058-8D8F-60D70DCC115B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{545E3103-354C-4058-8D8F-60D70DCC115B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{545E3103-354C-4058-8D8F-60D70DCC115B}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
-		{545E3103-354C-4058-8D8F-60D70DCC115B}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
-		{545E3103-354C-4058-8D8F-60D70DCC115B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{545E3103-354C-4058-8D8F-60D70DCC115B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
-		{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
-		{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E389169-7AD9-49F5-8107-B1BFD502074C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E389169-7AD9-49F5-8107-B1BFD502074C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E389169-7AD9-49F5-8107-B1BFD502074C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E389169-7AD9-49F5-8107-B1BFD502074C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6812ABB9-30BF-4ACC-8F5A-739239C365AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6812ABB9-30BF-4ACC-8F5A-739239C365AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6812ABB9-30BF-4ACC-8F5A-739239C365AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6812ABB9-30BF-4ACC-8F5A-739239C365AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E41A4D41-4679-4560-A3CA-5A7E1137F5D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E41A4D41-4679-4560-A3CA-5A7E1137F5D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E41A4D41-4679-4560-A3CA-5A7E1137F5D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E41A4D41-4679-4560-A3CA-5A7E1137F5D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

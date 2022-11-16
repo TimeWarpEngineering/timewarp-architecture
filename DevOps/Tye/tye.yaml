@@ -8,7 +8,7 @@ name: timewarp.architecture
 services:
     
 - name: web-server
-  project: ../../Source/ContainerApps/Web/Web.Server/Web.Server.csproj
+  project: ../../Source/Server/Web.Server.csproj
   bindings:
   - port: 7000
     protocol: https
