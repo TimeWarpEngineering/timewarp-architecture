@@ -26,21 +26,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Solution Items", "03-Sol
 		Watch.ps1 = Watch.ps1
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01-Tools", "01-Tools", "{E1A28909-AC7A-4D97-810F-D9F2BDEAAFAF}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "05-ContainerApps", "05-ContainerApps", "{3FE33776-60AF-4FAA-AF1A-EC3E15BBB509}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Web", "Web", "{A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02-Common", "02-Common", "{2DB1A6D9-AD51-4D72-9A4C-B08592E7ABA9}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-DevOps", "00-DevOps", "{968CBDA4-4227-4C7B-9F41-804376A8F193}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-Libraries", "00-Libraries", "{78D09B55-6B42-4869-B943-87ACAD8439FB}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Contracts", "Source\Common\Common.Contracts\Common.Contracts.csproj", "{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Modules", "Source\Libraries\TimeWarp.Modules\TimeWarp.Modules.csproj", "{4777B983-0F31-4F72-BD72-70B62D3D8143}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,22 +53,9 @@ Global
 		{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4777B983-0F31-4F72-BD72-70B62D3D8143}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4777B983-0F31-4F72-BD72-70B62D3D8143}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4777B983-0F31-4F72-BD72-70B62D3D8143}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
-		{4777B983-0F31-4F72-BD72-70B62D3D8143}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
-		{4777B983-0F31-4F72-BD72-70B62D3D8143}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4777B983-0F31-4F72-BD72-70B62D3D8143}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{CFFB80F7-6230-4244-A07F-12F5A295FB21} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
-		{545E3103-354C-4058-8D8F-60D70DCC115B} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
-		{A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2} = {3FE33776-60AF-4FAA-AF1A-EC3E15BBB509}
-		{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41} = {2DB1A6D9-AD51-4D72-9A4C-B08592E7ABA9}
-		{4777B983-0F31-4F72-BD72-70B62D3D8143} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
