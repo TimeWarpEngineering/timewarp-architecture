@@ -41,23 +41,6 @@ public class Program
       }
     );
 
-    aServiceCollection.AddFormValidation
-    (
-        aValidationConfiguration =>
-        {
-          aValidationConfiguration.AddFluentValidation(typeof(Web_Spa_Assembly).Assembly);
-          ServiceDescriptor serviceDescriptor =
-            aServiceCollection.First
-            (
-              aServiceDescriptor =>
-                aServiceDescriptor.ServiceType.Name == nameof(ServiceCollectionOptionsValidator.ServiceValidator) &&
-                aServiceDescriptor.Lifetime == ServiceLifetime.Scoped
-            );
-
-          aServiceCollection.Remove(serviceDescriptor);
-        }
-    );
-
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
     aServiceCollection.AddScoped<ClientLoader>();
