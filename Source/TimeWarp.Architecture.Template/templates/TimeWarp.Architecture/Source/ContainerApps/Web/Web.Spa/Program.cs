@@ -3,13 +3,7 @@ namespace TimeWarp.Architecture.Web.Spa;
 using BlazorState;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Net.Http;
 using System.Reflection;
-using System.Threading.Tasks;
 using TimeWarp.Architecture.Components;
 
 
@@ -24,7 +18,7 @@ public class Program
         aOptions.Assemblies =
           new Assembly[]
           {
-              typeof(Program).GetTypeInfo().Assembly,
+            typeof(Program).GetTypeInfo().Assembly,
           };
       }
     );
