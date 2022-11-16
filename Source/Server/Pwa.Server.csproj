@@ -24,26 +24,11 @@
   </ItemGroup>
 
   <ItemGroup Label="Core">
-    <PackageReference Include="AutoMapper" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" />
-    <PackageReference Include="Dawn.Guard" />
-    <PackageReference Include="FluentValidation.AspNetCore" />
-    <PackageReference Include="MediatR" />
-    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.CodeAnalysis" />    
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />    
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
-    <PackageReference Include="Oakton" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Client\Web.Spa.csproj" />
+    <ProjectReference Include="..\Client\Pwa.Spa.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="Web.Server.Integration.Tests" />
-  </ItemGroup>
-
 </Project>
