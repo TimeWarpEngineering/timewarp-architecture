@@ -1,6 +1,6 @@
 {
-  "name": "TimeWarp.Architecture",
-  "short_name": "TimeWarp.Architecture",
+  "name": "Pwa",
+  "short_name": "Pwa",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",

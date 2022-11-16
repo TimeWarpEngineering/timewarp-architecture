@@ -4,7 +4,7 @@
 # when you've given us a try, we'd love to know what you think:
 #    https://aka.ms/AA7q20u
 #
-name: timewarp.architecture
+name: bug
 services:
     
 - name: web-server
