@@ -1,9 +1,11 @@
 name: Api-Server Build and Deployment
+
 on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - [ $default-branch ]
+
 jobs:
   docker:
     runs-on: ubuntu-latest
