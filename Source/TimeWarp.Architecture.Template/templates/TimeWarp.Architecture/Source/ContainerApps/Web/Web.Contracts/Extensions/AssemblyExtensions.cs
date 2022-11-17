@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Extensions;
 
-using System.Reflection;
-
 public static class AssemblyExtensions
 {
   public static IEnumerable<Type> GetTypesWithAttribute(this Assembly aAssembly, Type aAttributeType)

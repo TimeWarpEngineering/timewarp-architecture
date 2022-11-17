@@ -32,11 +32,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="BlazorState" />
-    <Using Include="MediatR" />
-  </ItemGroup>
-
-  <ItemGroup>
     <InternalsVisibleTo Include="Web.Spa.Integration.Tests" />
     <InternalsVisibleTo Include="Web.Server.Integration.Tests" />
   </ItemGroup>
