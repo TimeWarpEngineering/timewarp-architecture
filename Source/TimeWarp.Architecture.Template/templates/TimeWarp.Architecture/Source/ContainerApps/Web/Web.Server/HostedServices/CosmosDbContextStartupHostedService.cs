@@ -1,21 +1,16 @@
 ﻿namespace TimeWarp.Architecture.HostedServices;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+
 using TimeWarp.Architecture.Data;
 
-public class StartupHostedService : IHostedService
+public class CosmosDbContextStartupHostedService : IHostedService
 {
   private readonly IServiceProvider ServiceProvider;
   private readonly ILogger Logger;
 
-  public StartupHostedService
+  public CosmosDbContextStartupHostedService
   (
     IServiceProvider aServiceProvider,
-    ILogger<StartupHostedService> aLogger
+    ILogger<CosmosDbContextStartupHostedService> aLogger
   )
   {
     ServiceProvider = aServiceProvider;
@@ -24,11 +19,8 @@ public class StartupHostedService : IHostedService
 
   public async Task StartAsync(CancellationToken aCancellationToken)
   {
-    Logger.LogInformation($"{nameof(StartupHostedService)} has started.");
+    Logger.LogInformation($"{nameof(CosmosDbContextStartupHostedService)} has started.");
     using IServiceScope scope = ServiceProvider.CreateScope();
-
-    //SqlDbContext sqlDbContext = scope.ServiceProvider.GetRequiredService<SqlDbContext>();
-    //await sqlDbContext.Database.MigrateAsync(aCancellationToken);
 
     CosmosDbContext cosmosDbContext = scope.ServiceProvider.GetRequiredService<CosmosDbContext>();
     await cosmosDbContext.Database.EnsureCreatedAsync(aCancellationToken);
@@ -36,7 +28,7 @@ public class StartupHostedService : IHostedService
 
   public Task StopAsync(CancellationToken aCancellationToken)
   {
-    Logger.LogInformation($"{nameof(StartupHostedService)} has stopped.");
+    Logger.LogInformation($"{nameof(CosmosDbContextStartupHostedService)} has stopped.");
     return Task.CompletedTask;
   }
 }

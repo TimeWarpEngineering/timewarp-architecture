@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <DefineConstants>cosmosdb</DefineConstants>
+  </PropertyGroup>
+  
+  <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -35,10 +39,6 @@
     <ProjectReference Include="..\..\..\Common\Common.Server\Common.Server.csproj" />
     <ProjectReference Include="..\Web.Infrastructure\Web.Infrastructure.csproj" />
     <ProjectReference Include="..\Web.Spa\Web.Spa.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Extensions\" />
   </ItemGroup>
 
   <ItemGroup>

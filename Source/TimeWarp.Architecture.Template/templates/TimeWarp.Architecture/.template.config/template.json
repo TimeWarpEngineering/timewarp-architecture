@@ -26,20 +26,59 @@
     {
       "modifiers": [
         {
-          "condition": "(!IncludeTimeWarpProcess)",
+          "condition": "(!process)",
           "exclude": [
             "Documentation/Process/**/*"
+          ]
+        },
+        {
+          "condition": "(!grpc)",
+          "exclude": [
+            "Source/ContainerApps/Grpc/**/*"
+          ]
+        },
+        {
+          "condition": "(!cosmosdb)",
+          "exclude": [
+            "Source/ContainerApps/Web/Web.Infrastructure/Persistence/CosmosDbContext.cs",
+            "Source/ContainerApps/Web/Web.Server/Configuration/EnvironmentChecks/CosmosDbEnvironmentCheck.cs",
+            "Source/ContainerApps/Web/Web.Server/HostedServices/CosmosDbContextStartupHostedService.cs",
+            "Source/ContainerApps/Web/Web.Server/Modules/CosmosDbModule.cs"
           ]
         }
       ]
     }
   ],
   "symbols": {
-    "IncludeTimeWarpProcess": {
+    "process": {
       "type": "parameter",
-      "description": "Use this flag to include the TimeWarp Process Documents, an editable minimalist process based in markdown documents",
+      "description": "Include the TimeWarp Process Documents, an editable minimalist process based in markdown documents",
       "datatype": "bool",
-      "defaultValue": "false"
+      "defaultValue": "true"
+    },
+    "grpc": {
+      "type": "parameter",
+      "description": "Include the grpc container app (Superheros)",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "api": {
+      "type": "parameter",
+      "description": "Include the api container app (Weather)",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "yarp": {
+      "type": "parameter",
+      "description": "Include the yarp proxy server",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "cosmosdb": {
+      "type": "parameter",
+      "description": "Include the TimeWarp Process Documents, an editable minimalist process based in markdown documents",
+      "datatype": "bool",
+      "defaultValue": "true"
     }
   },
   "tags": {
