@@ -134,7 +134,7 @@ public class Program : IAspNetProgram
 
   private static void ConfigureInfrastructure(IServiceCollection aServiceCollection)
   {
-    //aServiceCollection.AddHealthChecks()
+    aServiceCollection.AddHealthChecks();
     //  .AddDbContextCheck<SqlDbContext>();
 
     ConfigureEnvironmentChecks(aServiceCollection);
