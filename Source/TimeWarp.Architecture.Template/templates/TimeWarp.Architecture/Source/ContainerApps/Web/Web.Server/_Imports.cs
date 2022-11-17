@@ -27,6 +27,9 @@ global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.CorsPolicies;
 global using TimeWarp.Architecture.Data;
-global using TimeWarp.Architecture.HostedServices;
 global using TimeWarp.Architecture.Infrastructure;
 global using TimeWarp.Architecture.Web.Infrastructure;
+
+#if(cosmosdb)
+global using TimeWarp.Architecture.HostedServices;
+#endif
