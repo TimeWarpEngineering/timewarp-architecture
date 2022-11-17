@@ -24,9 +24,9 @@ jobs:
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 7.0.x
         env:
           NUGET_AUTH_TOKEN: ${{secrets.PUBLISH_TO_NUGET_ORG}}     # <-- This is the token for the GitHub account you want to use.
 

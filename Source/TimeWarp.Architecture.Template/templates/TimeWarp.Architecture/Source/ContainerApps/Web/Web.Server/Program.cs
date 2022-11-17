@@ -26,6 +26,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using TimeWarp.Architecture;
+using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.CorsPolicies;
 using TimeWarp.Architecture.Data;
@@ -135,28 +136,20 @@ public class Program : IAspNetProgram
     CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
 
     aWebApplication.UseResponseCompression();
-
-    aWebApplication.UseRouting();
-
-    aWebApplication.UseEndpoints
-    (
-      aEndpointRouteBuilder =>
-      {
-        aEndpointRouteBuilder.MapHealthChecks("/api/health");
-        aEndpointRouteBuilder.MapControllers();
-        aEndpointRouteBuilder.MapBlazorHub();
-        aEndpointRouteBuilder.MapFallbackToPage("/_Host");
-      }
-    );
-
-    aWebApplication.UseStaticFiles();
     aWebApplication.UseBlazorFrameworkFiles();
+    aWebApplication.UseStaticFiles();
+    aWebApplication.UseRouting();
   }
 
   public static void ConfigureEndpoints(WebApplication aWebApplication)
   {
+    aWebApplication.MapRazorPages();
+    aWebApplication.MapHealthChecks("/api/health");
+    
     CommonServerModule.ConfigureEndpoints(aWebApplication);
     aWebApplication.MapControllers();
+    aWebApplication.MapBlazorHub();
+    aWebApplication.MapFallbackToPage("/_Host");
   }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)

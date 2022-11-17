@@ -15,7 +15,7 @@
     <LangVersion>preview</LangVersion>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Nullable>disable</Nullable>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 

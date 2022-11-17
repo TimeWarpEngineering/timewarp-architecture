@@ -26,14 +26,14 @@
   <div id="app">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</div>
   <div id="blazor-error-ui" class="bg-yellow-100 bottom-0 left-0 fixed text-yellow-900 w-full z-50 pt-2.5 pr-5 pb-3 pl-5 border-t-2 border-yellow-800 hidden">
     <div class="flex justify-between">
-      <span>An unhandled error has occurred. <a href="" class="cursor-pointer underline hover:no-underline">Reload</a></span>
+      <span>An unhandled error has occurred. <a href="" class="underline cursor-pointer hover:no-underline">Reload</a></span>
       <a>🗙</a>
     </div>
   </div>
-  <script src="js/BlazorDualMode.js"></script>
+  <script type="module" src="js/BlazorDualMode.js"></script>
   @*TODO: Cramer review PWA block*@
   <!--#if PWA -->
-  <script>navigator.serviceWorker.register('service-worker.js');</script>
+  @*<script>navigator.serviceWorker.register('service-worker.js');</script>*@
   <!--#endif -->
 </body>
 </html>

@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <Description>Blazor Spa</Description>
     <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
+    <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +23,6 @@
     <PackageReference Include="timewarp-heroicons" />
     <PackageReference Include="Timewarp.OptionsValidation" />
     <PackageReference Include="timewarp-simple-icons" />
-    
   </ItemGroup>
 
   <ItemGroup>
@@ -43,6 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />-->
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
   </ItemGroup>

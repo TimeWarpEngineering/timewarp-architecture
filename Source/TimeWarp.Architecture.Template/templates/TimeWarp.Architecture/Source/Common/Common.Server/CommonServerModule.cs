@@ -21,7 +21,7 @@ public class CommonServerModule : IAspNetModule
 
   public static void ConfigureEndpoints(WebApplication aWebApplication)
   {
-    var configurationRoot = aWebApplication!.Configuration as IConfigurationRoot;
+    IConfigurationRoot configurationRoot = (aWebApplication!.Configuration as IConfigurationRoot)!;
 
     if (aWebApplication.Environment.IsDevelopment())
     {
@@ -132,7 +132,7 @@ public class CommonServerModule : IAspNetModule
       optional: false
     );
 
-    string testValue = aConfigurationManager.GetValue<string>("TestValue");
+    string? testValue = aConfigurationManager.GetValue<string>("TestValue");
     Console.WriteLine($"App Config value TestValue: {testValue}");
   }
 
