@@ -34,7 +34,8 @@
         {
           "condition": "(!grpc)",
           "exclude": [
-            "Source/ContainerApps/Grpc/**/*"
+            "Source/ContainerApps/Grpc/**/*",
+            "Source/ContainerApps/Web/Web.Spa/Features/Superhero/**/*"
           ]
         },
         {
