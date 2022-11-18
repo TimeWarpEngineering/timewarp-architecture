@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Pages;
 
-using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Base;
 
 public partial class LogoutPage : BaseComponent
 {

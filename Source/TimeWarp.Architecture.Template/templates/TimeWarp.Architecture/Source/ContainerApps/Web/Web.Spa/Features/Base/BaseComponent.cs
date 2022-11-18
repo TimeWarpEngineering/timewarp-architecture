@@ -1,15 +1,11 @@
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Features.Base;
 
 using BlazorState.Pipeline.ReduxDevTools;
-using MediatR;
 using Microsoft.AspNetCore.Components;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.Counters;
 using TimeWarp.Architecture.Features.EventStreams;
-using TimeWarp.Architecture.Features.Superheros;
 using TimeWarp.Architecture.Features.WeatherForecasts;
 
 /// <summary>
@@ -21,7 +17,7 @@ using TimeWarp.Architecture.Features.WeatherForecasts;
 /// But would be required to properly implement the required interfaces.
 /// one could conditionally inherit from BaseComponent for production build.
 /// </remarks>
-public class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
+public partial class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
 {
 
   [Parameter(CaptureUnmatchedValues = true)]
@@ -31,7 +27,6 @@ public class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
   internal CounterState CounterState => GetState<CounterState>();
   internal EventStreamState EventStreamState => GetState<EventStreamState>();
   internal WeatherForecastsState WeatherForecastsState => GetState<WeatherForecastsState>();
-  internal SuperheroState SuperheroState => GetState<SuperheroState>();
   protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
 
   protected bool IsProcessingAny(params string[] aActions) => ApplicationState.IsProcessingAny(aActions);

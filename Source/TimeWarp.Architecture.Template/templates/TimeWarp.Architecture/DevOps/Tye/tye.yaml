@@ -13,6 +13,7 @@ services:
   - port: 7000
     protocol: https
 
+#if (grpc == "true")
 - name: grpc-server
   project: ../../Source/ContainerApps/Grpc/Grpc.Server/Grpc.Server.csproj
   bindings:
@@ -22,6 +23,7 @@ services:
   - name: http-grpc
     port: 5290
     protocol: http
+#endif
 
 - name: api-server
   project: ../../Source/ContainerApps/Api/Api.Server/Api.Server.csproj

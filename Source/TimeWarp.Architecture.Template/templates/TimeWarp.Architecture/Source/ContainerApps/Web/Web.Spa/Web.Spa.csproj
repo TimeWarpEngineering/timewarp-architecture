@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>Blazor Spa</Description>
-    <DefineConstants>ReduxDevToolsEnabled</DefineConstants>
+    <DefineConstants>ReduxDevToolsEnabled;grpc</DefineConstants>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
   </PropertyGroup>
 
@@ -27,7 +27,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
+    <!--#if(grpc)-->
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj" />
+    <!--#endif-->
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
   </ItemGroup>
 

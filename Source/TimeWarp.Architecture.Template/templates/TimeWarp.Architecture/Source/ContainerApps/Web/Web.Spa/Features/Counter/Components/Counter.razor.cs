@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.Counters.Components;
 
 using System.Threading.Tasks;
 using TimeWarp.Architecture.Components;
-using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Base;
 using static TimeWarp.Architecture.Features.Counters.CounterState;
 
 public partial class Counter : BaseComponent, IAttributeComponent

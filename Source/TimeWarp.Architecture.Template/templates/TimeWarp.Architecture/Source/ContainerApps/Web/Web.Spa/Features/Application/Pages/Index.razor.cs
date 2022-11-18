@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Pages;
 
 using System.Threading.Tasks;
 using TimeWarp.Architecture.Features.Applications;
-using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Base;
 
 public partial class Index : BaseComponent
 {
