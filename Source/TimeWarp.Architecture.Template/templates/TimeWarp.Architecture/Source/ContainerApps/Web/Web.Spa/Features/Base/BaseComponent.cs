@@ -1,13 +1,5 @@
 namespace TimeWarp.Architecture.Features.Base;
 
-using BlazorState.Pipeline.ReduxDevTools;
-using Microsoft.AspNetCore.Components;
-using TimeWarp.Architecture.Components;
-using TimeWarp.Architecture.Features.Applications;
-using TimeWarp.Architecture.Features.Counters;
-using TimeWarp.Architecture.Features.EventStreams;
-using TimeWarp.Architecture.Features.WeatherForecasts;
-
 /// <summary>
 /// Makes access to the State a little easier and by inheriting from
 /// BlazorStateDevToolsComponent it allows for ReduxDevTools operation.
@@ -26,7 +18,6 @@ public partial class BaseComponent : BlazorStateDevToolsComponent, IAttributeCom
   internal ApplicationState ApplicationState => GetState<ApplicationState>();
   internal CounterState CounterState => GetState<CounterState>();
   internal EventStreamState EventStreamState => GetState<EventStreamState>();
-  internal WeatherForecastsState WeatherForecastsState => GetState<WeatherForecastsState>();
   protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
 
   protected bool IsProcessingAny(params string[] aActions) => ApplicationState.IsProcessingAny(aActions);

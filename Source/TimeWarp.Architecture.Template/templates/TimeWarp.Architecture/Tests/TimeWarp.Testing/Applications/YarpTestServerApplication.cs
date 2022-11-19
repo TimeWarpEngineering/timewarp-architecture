@@ -1,9 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-
 /// <summary>
 /// Used to launch the Api.Server application
 /// </summary>
@@ -11,11 +7,15 @@ using Microsoft.Extensions.Hosting;
 public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Program>
 {
   private readonly WebTestServerApplication WebTestServerApplication;
+#if(api)
   private readonly ApiTestServerApplication ApiTestServerApplication;
+#endif
   public YarpTestServerApplication
   (
-    WebTestServerApplication aWebTestServerApplication,
-    ApiTestServerApplication aApiTestServerApplication
+    WebTestServerApplication aWebTestServerApplication
+#if(api)
+    ,ApiTestServerApplication aApiTestServerApplication
+#endif
   ) :
   base
   (
@@ -37,7 +37,9 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
   )
   {
     WebTestServerApplication = aWebTestServerApplication;
+#if(api)
     ApiTestServerApplication = aApiTestServerApplication;
+#endif
   }
 
   protected static void ConfigureServicesCallback(IServiceCollection aServiceCollection) { }

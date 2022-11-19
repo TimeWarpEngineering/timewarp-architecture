@@ -1,15 +1,6 @@
 ﻿#nullable enable
 namespace TimeWarp.Architecture.Testing;
 
-using MediatR;
-using Microsoft.Extensions.Options;
-using System;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features;
-
 /// <summary>
 /// An abstract class that adds test functionality for the passed in WebApplication.
 /// </summary>

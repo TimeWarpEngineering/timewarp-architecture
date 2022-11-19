@@ -1,10 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-
 /// <summary>
 /// Used to launch the Web.Server application
 /// </summary>

@@ -1,14 +1,6 @@
 ﻿#nullable enable
 namespace TimeWarp.Architecture.Testing;
 
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System;
-using System.Threading.Tasks;
-
 /// <summary>
 /// A wrapper around WebApplication.CreateBuilder that will launch the WebApplication when constructed and
 /// And properly shut down the WebApplication when disposed.
