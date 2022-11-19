@@ -1,8 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
-using Microsoft.Extensions.DependencyInjection;
-using System;
-
 public class TimeWarpTestingConvention : TimeWarp.Fixie.TestingConvention
 {
 

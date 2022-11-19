@@ -1,18 +1,5 @@
 namespace TimeWarp.Architecture.Testing;
 
-using FakeItEasy;
-using MediatR;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.JSInterop;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.ClientLoaders;
-using TimeWarp.Architecture.Web.Spa;
-using TimeWarp.Fixie;
-
 /// <summary>
 /// Inject this when the SUT is the Web.Spa
 /// Creates the ServiceProvider for the Spa and configures it on construction

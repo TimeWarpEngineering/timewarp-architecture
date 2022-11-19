@@ -1,8 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
-using MediatR;
-using System;
-
 /// <summary>
 /// An abstract class that adds test functionality for sending Requests in a scope.
 /// </summary>

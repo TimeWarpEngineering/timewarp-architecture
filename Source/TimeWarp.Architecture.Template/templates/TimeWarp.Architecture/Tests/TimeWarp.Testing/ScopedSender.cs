@@ -1,11 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
-using MediatR;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 /// <summary>
 /// This is an implementation of MediatR's ISender Interface

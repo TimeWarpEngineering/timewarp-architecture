@@ -1,10 +1,5 @@
 namespace TimeWarp.Architecture.Testing;
 
-using System;
-using TimeWarp.Architecture.Features.ClientLoaders;
-using TimeWarp.Fixie;
-
-
 /// <summary>
 /// Replaces the default ClientLoaderConfiguration
 /// To reduce the delay from 10 seconds to 10 milliseconds.

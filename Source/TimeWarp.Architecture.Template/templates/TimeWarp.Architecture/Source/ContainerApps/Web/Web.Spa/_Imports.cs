@@ -18,20 +18,18 @@ global using TimeWarp.Architecture.Analyzer;
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.Features.Base;
-global using TimeWarp.Architecture.Features.Applications;
-global using TimeWarp.Architecture.Features.ClientLoaders;
-global using TimeWarp.Architecture.Features.EventStreams;
-global using TimeWarp.Architecture.Features.Counters;
 global using Microsoft.AspNetCore.Components;
 
 #if(web)
-
+global using TimeWarp.Architecture.Features.Applications;`
+global using TimeWarp.Architecture.Features.ClientLoaders;
+global using TimeWarp.Architecture.Features.Counters;
+global using TimeWarp.Architecture.Features.EventStreams;
 #endif
 
 #if(api)
 global using TimeWarp.Architecture.Features.WeatherForecasts;
 #endif
-
 
 #if(grpc)
 global using TimeWarp.Architecture.Features.Superheros;

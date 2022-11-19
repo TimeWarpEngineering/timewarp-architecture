@@ -20,7 +20,7 @@
         {
           "condition": "(!process)",
           "exclude": [
-            "Documentation/Process/**/*"
+            "Process/**/*"
           ]
         },
         {
@@ -45,6 +45,8 @@
           "exclude": [
             "Source/ContainerApps/Web/**/*",
             "Tests/TimeWarp.Testing/Applications/WebTestServerApplication.cs",
+            "Tests/TimeWarp.Testing/Applications/SpaTestApplication.cs",
+            "Tests/TimeWarp.Testing/Applications/ClientLoaderTestConfiguration.cs",
             "Tests/Web.Server.Integration.Tests/**/*",
             "Tests/Web.Spa.Integration.Tests/**/*",
             "Tests/EndToEnd.TestCafe.Tests/**/*",
