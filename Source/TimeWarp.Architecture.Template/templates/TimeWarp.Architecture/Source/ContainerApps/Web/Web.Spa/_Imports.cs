@@ -21,10 +21,13 @@ global using TimeWarp.Architecture.Features.Base;
 global using Microsoft.AspNetCore.Components;
 
 #if(web)
-global using TimeWarp.Architecture.Features.Applications;`
+global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.ClientLoaders;
-global using TimeWarp.Architecture.Features.Counters;
 global using TimeWarp.Architecture.Features.EventStreams;
+#endif
+
+#if(web && counter)
+global using TimeWarp.Architecture.Features.Counters;
 #endif
 
 #if(api)

@@ -3,7 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04-Tests", "04-Tests", "{2902FDFD-016E-4BF7-8B41-53D674FA53DD}"
+
+# Top level Solution folders
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-DevOps", "00-DevOps", "{968CBDA4-4227-4C7B-9F41-804376A8F193}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-Libraries", "00-Libraries", "{78D09B55-6B42-4869-B943-87ACAD8439FB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01-Tools", "01-Tools", "{E1A28909-AC7A-4D97-810F-D9F2BDEAAFAF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02-Common", "02-Common", "{2DB1A6D9-AD51-4D72-9A4C-B08592E7ABA9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Solution Items", "03-Solution Items", "{6B623CDC-91E7-47FD-A039-A40427FB7FE8}"
 	ProjectSection(SolutionItems) = preProject
@@ -23,20 +31,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Solution Items", "03-Sol
 		Watch.ps1 = Watch.ps1
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing.Common", "Tests\TimeWarp.Testing\Testing.Common.csproj", "{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01-Tools", "01-Tools", "{E1A28909-AC7A-4D97-810F-D9F2BDEAAFAF}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04-Tests", "04-Tests", "{2902FDFD-016E-4BF7-8B41-53D674FA53DD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "05-ContainerApps", "05-ContainerApps", "{3FE33776-60AF-4FAA-AF1A-EC3E15BBB509}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02-Common", "02-Common", "{2DB1A6D9-AD51-4D72-9A4C-B08592E7ABA9}"
-EndProject
+
+# Second Level Solution Folders
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ContainerApps", "ContainerApps", "{F324E68B-9E03-4D9F-848E-398203410723}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-DevOps", "00-DevOps", "{968CBDA4-4227-4C7B-9F41-804376A8F193}"
+
+# Third Level Solution Folders
+
+# Projects in 02-Common
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing.Common", "Tests\TimeWarp.Testing\Testing.Common.csproj", "{0A40E8BE-AAE4-4382-A76C-5F65D3ABF62E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-Libraries", "00-Libraries", "{78D09B55-6B42-4869-B943-87ACAD8439FB}"
-EndProject
+
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Application", "Source\Common\Common.Application\Common.Application.csproj", "{3F3814F8-BEA1-4447-98A4-4DE447ED7BB8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Contracts", "Source\Common\Common.Contracts\Common.Contracts.csproj", "{B7BFD6D0-E502-4AA4-BF2E-D94C2F084F41}"
