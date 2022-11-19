@@ -6,14 +6,16 @@
 #
 name: timewarp.architecture
 services:
-    
+
+#if(web)
 - name: web-server
   project: ../../Source/ContainerApps/Web/Web.Server/Web.Server.csproj
   bindings:
   - port: 7000
     protocol: https
+#endif
 
-#if (grpc == "true")
+#if(grpc)
 - name: grpc-server
   project: ../../Source/ContainerApps/Grpc/Grpc.Server/Grpc.Server.csproj
   bindings:
@@ -25,17 +27,21 @@ services:
     protocol: http
 #endif
 
+#if(api)
 - name: api-server
   project: ../../Source/ContainerApps/Api/Api.Server/Api.Server.csproj
   bindings:
   - port: 7255
     protocol: https
+#endif
 
+#if(yarp)
 - name: yarp
   project: ../../Source/ContainerApps/Yarp/Yarp.csproj
   bindings:
   - port: 8443
     protocol: https
+#endif
 
 #- name: cosmosdb
 #  image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator

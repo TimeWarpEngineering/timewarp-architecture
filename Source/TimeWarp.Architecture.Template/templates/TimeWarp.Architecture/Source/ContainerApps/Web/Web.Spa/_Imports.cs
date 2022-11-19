@@ -22,7 +22,16 @@ global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.ClientLoaders;
 global using TimeWarp.Architecture.Features.EventStreams;
 global using TimeWarp.Architecture.Features.Counters;
+global using Microsoft.AspNetCore.Components;
+
+#if(web)
+
+#endif
+
+#if(api)
 global using TimeWarp.Architecture.Features.WeatherForecasts;
+#endif
+
 
 #if(grpc)
 global using TimeWarp.Architecture.Features.Superheros;

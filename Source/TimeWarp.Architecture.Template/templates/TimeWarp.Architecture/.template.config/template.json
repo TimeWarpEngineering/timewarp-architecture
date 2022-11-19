@@ -7,16 +7,8 @@
     "Blazor",
     "Hosted"
   ],
+  "description": "A project template for creating a containerized or monolith solution.",
   "groupIdentity": "TimeWarp.Architecture",
-  "guids": [
-    "19B3F119-0F8A-430A-8336-9F6797B990E9",
-    "CFFB80F7-6230-4244-A07F-12F5A295FB21",
-    "545E3103-354C-4058-8D8F-60D70DCC115B",
-    "7A297947-B1E9-4BC6-9F84-22E5EDB389B8",
-    "B82C7C95-4892-443C-AA6B-B6086B03DD30",
-    "86DAE2F4-34F2-4002-AE80-308D8A7FADE0",
-    "607246B4-BE03-4E76-99F5-71EE1E90B22C"
-  ],
   "identity": "TimeWarp.Architecture.CSharp",
   "name": "TimeWarp Architecture",
   "preferNameDirectory": true,
@@ -35,7 +27,35 @@
           "condition": "(!grpc)",
           "exclude": [
             "Source/ContainerApps/Grpc/**/*",
-            "Source/ContainerApps/Web/Web.Spa/Features/Superhero/**/*"
+            "Source/ContainerApps/Web/Web.Spa/Features/Superhero/**/*",
+            "Tests/Grpc.Server.Integration.Tests/**/*"
+          ]
+        },
+        {
+          "condition": "(!api)",
+          "exclude": [
+            "Source/ContainerApps/Api/**/*",
+            "Source/ContainerApps/Web/Web.Spa/Features/WeatherForecast/**/*",
+            "Tests/TimeWarp.Testing/Applications/ApiTestServerApplication.cs",
+            "Tests/Api.Server.Integration.Tests/**/*"
+          ]
+        },
+        {
+          "condition": "(!web)",
+          "exclude": [
+            "Source/ContainerApps/Web/**/*",
+            "Tests/TimeWarp.Testing/Applications/WebTestServerApplication.cs",
+            "Tests/Web.Server.Integration.Tests/**/*",
+            "Tests/Web.Spa.Integration.Tests/**/*",
+            "Tests/EndToEnd.TestCafe.Tests/**/*",
+            "Tests/EndToEnd.Playwright.Tests/**/*"
+          ]
+        },
+        {
+          "condition": "(!yarp)",
+          "exclude": [
+            "Source/ContainerApps/Yarp/**/*",
+            "Tests/TimeWarp.Testing/Applications/YarpTestServerApplication.cs"
           ]
         },
         {
@@ -69,6 +89,12 @@
       "datatype": "bool",
       "defaultValue": "true"
     },
+    "web": {
+      "type": "parameter",
+      "description": "Include the web container app",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
     "yarp": {
       "type": "parameter",
       "description": "Include the yarp proxy server",
@@ -77,7 +103,13 @@
     },
     "cosmosdb": {
       "type": "parameter",
-      "description": "Include the TimeWarp Process Documents, an editable minimalist process based in markdown documents",
+      "description": "Add CosmosDb Features",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "counter": {
+      "type": "parameter",
+      "description": "Add Counter Features to Web.Spa",
       "datatype": "bool",
       "defaultValue": "true"
     }

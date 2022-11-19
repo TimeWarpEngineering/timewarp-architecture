@@ -12,7 +12,6 @@ internal abstract partial class BaseHandler<TAction> : ActionHandler<TAction>
   protected CounterState CounterState => Store.GetState<CounterState>();
 
   protected EventStreamState EventStreamState => Store.GetState<EventStreamState>();
-
-  protected WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
+  
   public BaseHandler(IStore aStore) : base(aStore) { }
 }
