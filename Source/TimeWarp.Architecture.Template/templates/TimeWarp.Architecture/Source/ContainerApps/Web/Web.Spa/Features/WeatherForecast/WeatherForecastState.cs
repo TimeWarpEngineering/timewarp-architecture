@@ -1,8 +1,5 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using BlazorState;
-using System.Collections.Generic;
-
 internal partial class WeatherForecastsState : State<WeatherForecastsState>
 {
   private List<WeatherForecastDto> _WeatherForecasts;

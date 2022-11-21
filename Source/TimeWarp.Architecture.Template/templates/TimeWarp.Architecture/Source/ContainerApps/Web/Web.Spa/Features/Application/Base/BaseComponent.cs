@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.Base;
+namespace TimeWarp.Architecture.Features;
 
 public partial class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
 {

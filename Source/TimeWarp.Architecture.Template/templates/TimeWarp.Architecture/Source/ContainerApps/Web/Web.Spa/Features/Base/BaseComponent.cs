@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.Base;
+namespace TimeWarp.Architecture.Features;
 
 /// <summary>
 /// Makes access to the State a little easier and by inheriting from

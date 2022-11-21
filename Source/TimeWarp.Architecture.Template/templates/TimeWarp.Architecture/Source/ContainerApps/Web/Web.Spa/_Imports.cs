@@ -17,7 +17,7 @@ global using System.Threading.Tasks;
 global using TimeWarp.Architecture.Analyzer;
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
-global using TimeWarp.Architecture.Features.Base;
+global using TimeWarp.Architecture.Features;
 global using Microsoft.AspNetCore.Components;
 
 #if(web)
