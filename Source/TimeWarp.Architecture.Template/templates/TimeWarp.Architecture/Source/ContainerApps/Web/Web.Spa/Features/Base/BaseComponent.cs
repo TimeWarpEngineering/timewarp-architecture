@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.Base;
+namespace TimeWarp.Architecture.Features;
 
 /// <summary>
 /// Makes access to the State a little easier and by inheriting from
@@ -15,9 +15,6 @@ public partial class BaseComponent : BlazorStateDevToolsComponent, IAttributeCom
   [Parameter(CaptureUnmatchedValues = true)]
   public IReadOnlyDictionary<string, object> Attributes { get; set; } = new Dictionary<string, object>();
 
-  internal ApplicationState ApplicationState => GetState<ApplicationState>();
-  internal CounterState CounterState => GetState<CounterState>();
-  internal EventStreamState EventStreamState => GetState<EventStreamState>();
   protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
 
   protected bool IsProcessingAny(params string[] aActions) => ApplicationState.IsProcessingAny(aActions);

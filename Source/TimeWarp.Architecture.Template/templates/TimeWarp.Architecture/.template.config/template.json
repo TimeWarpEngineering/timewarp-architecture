@@ -68,6 +68,18 @@
             "Source/ContainerApps/Web/Web.Server/HostedServices/CosmosDbContextStartupHostedService.cs",
             "Source/ContainerApps/Web/Web.Server/Modules/CosmosDbModule.cs"
           ]
+        },
+        {
+          "condition": "(!counter)",
+          "exclude": [
+            "Source/ContainerApps/Web/Web.Spa/Features/Counter/**/*"
+          ]
+        },
+        {
+          "condition": "(!eventStream)",
+          "exclude": [
+            "Source/ContainerApps/Web/Web.Spa/Features/EventStream/**/*"
+          ]
         }
       ]
     }

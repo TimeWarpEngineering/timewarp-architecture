@@ -3,7 +3,9 @@
 <div class="hidden sm:block sm:ml-6">
   <div class="flex">
     <NavBarLink Href="#">Home</NavBarLink>
+    @*#if (counter)*@
     <NavBarLink Href=@CounterPage.GetRoute()>Counter</NavBarLink>
+    @*#endif*@
     @*#if (api)*@
     <NavBarLink Href=@WeatherForecastsPage.GetRoute()>Weather Forecasts</NavBarLink>
     @*#endif*@
