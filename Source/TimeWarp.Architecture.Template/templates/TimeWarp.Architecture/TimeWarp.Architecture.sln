@@ -45,22 +45,22 @@ EndProject
 
 # 05-ContainerApps
 
-#if (api == "true")
+#if(api)
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "Api", "{40FA15DA-FF57-49E7-AD29-3C6C12F29237}"
 EndProject
 #endif
 
-#if (grpc == "true")
+#if(grpc)
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Grpc", "Grpc", "{F549E7AE-C09B-402D-8AEC-43013297EDC3}"
 EndProject
 #endif
 
-#if (web == "true")
+#if(web)
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Web", "Web", "{A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}"
 EndProject
 #endif
 
-#if (yarp == "true")
+#if(yarp)
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Yarp", "Yarp", "{45A9CAA5-8BF5-48E9-BBAD-85D5001764AC}"
 EndProject
 #endif
@@ -69,17 +69,17 @@ EndProject
 
 # 04-Tests=>ContainerApps
 
-#if (api == "true")
+#if(api)
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "Api", "{E3B896E0-4EBE-410B-A036-2EC3B6FA9EFE}"
 EndProject
 #endif
 
-#if (grpc == "true")
+#if(grpc)
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Grpc", "Grpc", "{97A8BD76-BAAC-4BEB-8D61-4BC1D51EB0A8}"
 EndProject
 #endif
 
-#if (web == "true")
+#if(web)
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Web", "Web", "{4F06C18A-94D0-4F34-89C9-F189FD1C8E74}"
 EndProject
 #endif
@@ -105,7 +105,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Server", "Source\Com
 EndProject
 
 # Projects in 04-Tests=>ContainerApps=>Api
-#if (api == "true")
+#if(api)
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.Server.Integration.Tests", "Tests\Api.Server.Integration.Tests\Api.Server.Integration.Tests.csproj", "{E5570C46-7FB6-413A-92C8-061876C3D568}"
 EndProject
 #endif
@@ -113,7 +113,7 @@ EndProject
 # Projects in 04-Tests=>ContainerApps=>Grpc
 
 # Projects in 04-Tests=>ContainerApps=>Web
-#if (web == "true")
+#if(web)
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.Playwright.Tests", "Tests\EndToEnd.Playwright.Tests\EndToEnd.Playwright.Tests.csproj", "{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.TestCafe.Tests", "Tests\EndToEnd.TestCafe.Tests\EndToEnd.TestCafe.Tests.csproj", "{607246B4-BE03-4E76-99F5-71EE1E90B22C}"
@@ -126,7 +126,7 @@ EndProject
 
 # Projects in 05-ContainerApps=>Api
 
-#if (api == "true")
+#if(api)
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.Server", "Source\ContainerApps\Api\Api.Server\Api.Server.csproj", "{9DB258A0-067A-4F5C-94F0-0D39A1927C6D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.Contracts", "Source\ContainerApps\Api\Api.Contracts\Api.Contracts.csproj", "{FF19203B-D199-459E-8448-06A37D3C7E88}"
@@ -141,7 +141,7 @@ EndProject
 
 # Projects in 05-ContainerApps=>Grpc
 
-#if (grpc == "true")
+#if(grpc)
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Grpc.Server", "Source\ContainerApps\Grpc\Grpc.Server\Grpc.Server.csproj", "{86B3E2AC-37E8-4A07-9DFC-41DC831ECE51}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Grpc.Contracts", "Source\ContainerApps\Grpc\Grpc.Contracts\Grpc.Contracts.csproj", "{8C377EA5-3EBE-4DDC-B800-85731946DEB7}"
@@ -174,12 +174,10 @@ EndProject
 
 # Projects in 05-ContainerApps=>Yarp
 
-#if (yarp == "true")
+#if(yarp)
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yarp", "Source\ContainerApps\Yarp\Yarp.csproj", "{08ED6B59-E051-4B4A-AEEA-351D0720FC46}"
 EndProject
 #endif
-
-#if (web == "true")
 
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -385,12 +383,12 @@ Global
 		{74203078-7F4E-4025-B713-79F2D7DC9D52} = {2DB1A6D9-AD51-4D72-9A4C-B08592E7ABA9}
 		{4777B983-0F31-4F72-BD72-70B62D3D8143} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 
-		#if (yarp == "true")
+		#if(yarp)
 		{45A9CAA5-8BF5-48E9-BBAD-85D5001764AC} = {3FE33776-60AF-4FAA-AF1A-EC3E15BBB509}
 		{08ED6B59-E051-4B4A-AEEA-351D0720FC46} = {45A9CAA5-8BF5-48E9-BBAD-85D5001764AC}
 		#endif
 
-		#if (api == "true")
+		#if(api)
 		{E3B896E0-4EBE-410B-A036-2EC3B6FA9EFE} = {F324E68B-9E03-4D9F-848E-398203410723}
 		{E5570C46-7FB6-413A-92C8-061876C3D568} = {E3B896E0-4EBE-410B-A036-2EC3B6FA9EFE}
 		{40FA15DA-FF57-49E7-AD29-3C6C12F29237} = {3FE33776-60AF-4FAA-AF1A-EC3E15BBB509}
@@ -402,7 +400,7 @@ Global
 		#endif
 
 # -5-ContainerApps=>Web
-		#if (web == "true")
+		#if(web)
 		{A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2} = {3FE33776-60AF-4FAA-AF1A-EC3E15BBB509}
 		{2929D233-BD18-46BD-93C3-A4B69EE91BCC} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
 		{5122D985-AB9C-442E-B60D-27BE2BDED4CE} = {A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}
@@ -419,7 +417,7 @@ Global
 		{C734286B-E573-4F72-BBE6-57ADDD4265D5} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		#endif
 
-		#if (grpc == "true")
+		#if(grpc)
 		{97A8BD76-BAAC-4BEB-8D61-4BC1D51EB0A8} = {F324E68B-9E03-4D9F-848E-398203410723}
 		{F549E7AE-C09B-402D-8AEC-43013297EDC3} = {3FE33776-60AF-4FAA-AF1A-EC3E15BBB509}
 		{BACD8F0E-B087-4B2E-AE73-D468CCF94B16} = {F549E7AE-C09B-402D-8AEC-43013297EDC3}
