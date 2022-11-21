@@ -23,8 +23,9 @@
     <PackageReference Include="timewarp-heroicons" />
     <PackageReference Include="Timewarp.OptionsValidation" />
     <PackageReference Include="timewarp-simple-icons" />
+    <PackageReference Include="TimeWarp.SourceGenerators" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <!--#if(api)-->
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
@@ -63,6 +64,8 @@
 
   <ItemGroup>
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*" />
+    <None Remove="Features\Counter\Base\TwBase.mixin" />
+    <AdditionalFiles Include="Features\Base\BaseStuff.mixin" />
     <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
   </ItemGroup>
 
