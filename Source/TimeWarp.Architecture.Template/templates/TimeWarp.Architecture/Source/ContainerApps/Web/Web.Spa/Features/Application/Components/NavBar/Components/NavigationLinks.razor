@@ -6,6 +6,9 @@
     @*#if (counter)*@
     <NavBarLink Href=@CounterPage.GetRoute()>Counter</NavBarLink>
     @*#endif*@
+    @*#if (eventStream)*@
+    <NavBarLink Href=@EventStreamPage.GetRoute()>Event Stream</NavBarLink>
+    @*#endif*@
     @*#if (api)*@
     <NavBarLink Href=@WeatherForecastsPage.GetRoute()>Weather Forecasts</NavBarLink>
     @*#endif*@
