@@ -1,6 +1,3 @@
-using ProtoBuf.Grpc.Server;
-using TimeWarp.Architecture.Features.Superheros;
-
 const string AllowAllCorsPolicy = "AllowAll";
 
 WebApplicationBuilder? webApplicationBuilder = WebApplication.CreateBuilder(args);
@@ -30,13 +27,11 @@ static void ConfigureServices(IServiceCollection aServiceCollection)
     o => o.AddPolicy
     (
       AllowAllCorsPolicy, builder =>
-      {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding");
-      }
-    )
+        builder
+        .AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding"))
   );
 
   //aServiceCollection.AddHostedService<ProtobufGenerationHostedService>();
