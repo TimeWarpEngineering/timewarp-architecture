@@ -1,9 +1,6 @@
-namespace TimeWarp.Architecture.Pipeline.NotificationPreProcessor
-{
-  using MediatR;
+namespace TimeWarp.Architecture.Pipeline.NotificationPreProcessor;
 
-  public class PrePipelineNotification<TRequest> : INotification
-  {
-    public TRequest Request { get; set; }
-  }
+public class PrePipelineNotification<TRequest> : INotification
+{
+  public TRequest Request { get; set; }
 }

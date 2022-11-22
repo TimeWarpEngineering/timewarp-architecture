@@ -1,11 +1,5 @@
 namespace TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
 
-using MediatR;
-using MediatR.Pipeline;
-using Microsoft.Extensions.Logging;
-using System.Threading;
-using System.Threading.Tasks;
-
 internal class PostPipelineNotificationRequestPostProcessor<TRequest, TResponse> : IRequestPostProcessor<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
@@ -14,7 +8,7 @@ internal class PostPipelineNotificationRequestPostProcessor<TRequest, TResponse>
   private readonly IPublisher Publisher;
 
   public PostPipelineNotificationRequestPostProcessor
-          (
+  (
     ILogger<PostPipelineNotificationRequestPostProcessor<TRequest, TResponse>> aLogger,
     IPublisher aPublisher
   )

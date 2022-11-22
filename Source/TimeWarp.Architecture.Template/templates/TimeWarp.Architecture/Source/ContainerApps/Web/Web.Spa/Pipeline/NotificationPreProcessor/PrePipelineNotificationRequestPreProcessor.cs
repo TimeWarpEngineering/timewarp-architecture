@@ -1,36 +1,29 @@
-namespace TimeWarp.Architecture.Pipeline.NotificationPreProcessor
+namespace TimeWarp.Architecture.Pipeline.NotificationPreProcessor;
+
+internal class PrePipelineNotificationRequestPreProcessor<TRequest> : IRequestPreProcessor<TRequest>
 {
-  using MediatR;
-  using MediatR.Pipeline;
-  using Microsoft.Extensions.Logging;
-  using System.Threading;
-  using System.Threading.Tasks;
+  private readonly ILogger Logger;
 
-  internal class PrePipelineNotificationRequestPreProcessor<TRequest> : IRequestPreProcessor<TRequest>
+  private readonly IPublisher Publisher;
+
+  public PrePipelineNotificationRequestPreProcessor
+  (
+    ILogger<PrePipelineNotificationRequestPreProcessor<TRequest>> aLogger,
+    IPublisher aPublisher
+  )
   {
-    private readonly ILogger Logger;
+    Logger = aLogger;
+    Publisher = aPublisher;
+  }
 
-    private readonly IPublisher Publisher;
-
-    public PrePipelineNotificationRequestPreProcessor
-    (
-      ILogger<PrePipelineNotificationRequestPreProcessor<TRequest>> aLogger,
-      IPublisher aPublisher
-    )
+  public Task Process(TRequest aRequest, CancellationToken aCancellationToken)
+  {
+    var notification = new PrePipelineNotification<TRequest>
     {
-      Logger = aLogger;
-      Publisher = aPublisher;
-    }
+      Request = aRequest,
+    };
 
-    public Task Process(TRequest aRequest, CancellationToken aCancellationToken)
-    {
-      var notification = new PrePipelineNotification<TRequest>
-      {
-        Request = aRequest,
-      };
-
-      Logger.LogDebug("PrePipelineNotificationRequestPreProcessor");
-      return Publisher.Publish(notification, aCancellationToken);
-    }
+    Logger.LogDebug("PrePipelineNotificationRequestPreProcessor");
+    return Publisher.Publish(notification, aCancellationToken);
   }
 }
