@@ -1,8 +1,5 @@
 namespace TimeWarp.Architecture.Components;
 
-using BlazorComponentUtilities;
-using Microsoft.AspNetCore.Components;
-
 public partial class SimpleAlert : ParentComponent
 {
   [Parameter] public string Title { get; set; }

@@ -1,10 +1,5 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using System.Net;
-using System.Threading.Tasks;
-
 public class GetWeatherForecastsEndpoint : BaseEndpoint<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
 {
   /// <summary>

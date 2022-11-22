@@ -1,11 +1,5 @@
 namespace TimeWarp.Architecture.Analyzers;
 
-using Microsoft.AspNetCore.Components;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-
 public class PageAnalyzer
 {
   private const string RouteTemplateName = "RouteTemplate";

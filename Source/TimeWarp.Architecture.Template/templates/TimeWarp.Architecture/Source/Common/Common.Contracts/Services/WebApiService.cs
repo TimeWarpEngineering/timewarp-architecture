@@ -1,13 +1,5 @@
 ﻿namespace TimeWarp.Architecture;
 
-using Microsoft.Extensions.Options;
-using System.Net.Http;
-using System.Net.Mime;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features;
-
 /// <summary>
 /// Class that abstracts the WebAPI into a simple interface.
 /// Given a Request return the Response.

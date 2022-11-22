@@ -1,12 +1,5 @@
 ﻿namespace TimeWarp.Architecture.HostedServices;
 
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.Superheros;
-
 public class ProtobufGenerationHostedService : IHostedService
 {
   private readonly IServiceProvider ServiceProvider;

@@ -1,5 +1,6 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
+[TwBaseSpa]
 internal partial class WeatherForecastsState : State<WeatherForecastsState>
 {
   private List<WeatherForecastDto> _WeatherForecasts;

@@ -1,4 +1,5 @@
-﻿global using MediatR;
+﻿global using AutoMapper;
+global using MediatR;
 global using FluentValidation;
 global using FluentValidation.AspNetCore;
 global using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -16,7 +17,9 @@ global using Microsoft.Extensions.Options;
 global using Microsoft.OpenApi.Models;
 global using Oakton;
 global using Oakton.Environment;
+global using Swashbuckle.AspNetCore.Annotations;
 global using System.IO;
+global using System.Net;
 global using System.Net.Http;
 global using System.Net.Mime;
 global using System.Reflection;

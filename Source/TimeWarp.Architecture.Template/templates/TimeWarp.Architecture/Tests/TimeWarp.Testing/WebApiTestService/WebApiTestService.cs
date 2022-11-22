@@ -1,11 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
-using FluentAssertions;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features;
-
 /// <summary>
 /// A class that contains a common set of methods used when testing Web APIs
 /// </summary>

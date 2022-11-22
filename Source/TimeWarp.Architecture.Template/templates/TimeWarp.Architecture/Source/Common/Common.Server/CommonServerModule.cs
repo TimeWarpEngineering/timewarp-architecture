@@ -1,17 +1,5 @@
 ﻿namespace TimeWarp.Architecture;
 
-using FluentValidation;
-using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration.AzureAppConfiguration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
-using Azure.Identity;
-
 public class CommonServerModule : IAspNetModule
 {
   public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)

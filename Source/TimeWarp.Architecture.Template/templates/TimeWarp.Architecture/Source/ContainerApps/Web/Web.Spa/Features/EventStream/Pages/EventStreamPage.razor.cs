@@ -2,9 +2,9 @@ namespace TimeWarp.Architecture.Pages;
 
 using static TimeWarp.Architecture.Features.Applications.ApplicationState;
 
-public partial class CounterPage : BaseComponent
+public partial class EventStreamPage : BaseComponent
 {
-  private const string RouteTemplate = "/Counter";
+  private const string RouteTemplate = "/EventStream";
 
   public static string GetRoute() => RouteTemplate;
 

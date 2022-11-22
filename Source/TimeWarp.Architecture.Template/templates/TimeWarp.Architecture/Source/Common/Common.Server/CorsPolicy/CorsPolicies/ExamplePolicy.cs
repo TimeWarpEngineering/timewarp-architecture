@@ -1,7 +1,4 @@
 ﻿namespace TimeWarp.Architecture.CorsPolicies;
-
-using Microsoft.Extensions.DependencyInjection;
-
 public partial class CorsPolicy
 {
   private class ExamplePolicy : CorsPolicy

@@ -1,7 +1,5 @@
 ﻿namespace TimeWarp.Architecture.HostedServices;
 
-using TimeWarp.Architecture.Data;
-
 public class CosmosDbContextStartupHostedService : IHostedService
 {
   private readonly IServiceProvider ServiceProvider;

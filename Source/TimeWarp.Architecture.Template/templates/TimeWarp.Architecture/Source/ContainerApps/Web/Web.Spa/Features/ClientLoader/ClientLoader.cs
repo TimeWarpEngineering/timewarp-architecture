@@ -1,9 +1,5 @@
 namespace TimeWarp.Architecture.Features.ClientLoaders;
 
-using Microsoft.Extensions.Logging;
-using Microsoft.JSInterop;
-using System.Threading.Tasks;
-
 public class ClientLoader
 {
   private readonly IClientLoaderConfiguration ClientLoaderConfiguration;

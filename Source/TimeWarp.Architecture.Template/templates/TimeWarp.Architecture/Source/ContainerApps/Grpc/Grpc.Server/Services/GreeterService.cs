@@ -1,8 +1,5 @@
 namespace TimeWarp.Architecture.GrpcServer.Services;
 
-using Grpc.Core;
-using TimeWarp.Architecture.GrpcServer;
-
 public class GreeterService : Greeter.GreeterBase
 {
   private readonly ILogger Logger;

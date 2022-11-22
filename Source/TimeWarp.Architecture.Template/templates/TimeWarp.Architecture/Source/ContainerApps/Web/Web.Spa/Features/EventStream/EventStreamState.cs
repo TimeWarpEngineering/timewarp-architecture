@@ -1,8 +1,6 @@
 namespace TimeWarp.Architecture.Features.EventStreams;
 
-using BlazorState;
-using System.Collections.Generic;
-
+[TwBaseSpa]
 internal partial class EventStreamState : State<EventStreamState>
 {
   public List<string> _Events { get; set; }

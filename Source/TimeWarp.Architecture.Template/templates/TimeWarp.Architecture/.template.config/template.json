@@ -126,6 +126,12 @@
       "description": "Add Counter Features to Web.Spa",
       "datatype": "bool",
       "defaultValue": "true"
+    },
+    "eventstream": {
+      "type": "parameter",
+      "description": "Eventstream is an example of how to implement middleware in Web.Spa",
+      "datatype": "bool",
+      "defaultValue": "true"
     }
   },
   "tags": {

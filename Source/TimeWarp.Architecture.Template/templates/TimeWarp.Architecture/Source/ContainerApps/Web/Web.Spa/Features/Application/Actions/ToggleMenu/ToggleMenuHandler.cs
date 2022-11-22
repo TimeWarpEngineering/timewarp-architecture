@@ -1,11 +1,5 @@
 namespace TimeWarp.Architecture.Features.Applications;
 
-using BlazorState;
-using MediatR;
-using System.Threading;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features;
-
 internal partial class ApplicationState
 {
   internal class ToggleMenuHandler : BaseHandler<ToggleMenuAction>

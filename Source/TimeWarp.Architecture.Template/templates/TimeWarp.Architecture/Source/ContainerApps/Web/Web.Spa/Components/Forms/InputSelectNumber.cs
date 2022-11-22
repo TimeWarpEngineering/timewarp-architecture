@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Components.Forms;
 
-using Microsoft.AspNetCore.Components.Forms;
-
 public class InputSelectNumber<T> : InputSelect<T>
 {
   protected override bool TryParseValueFromString(string aValue, out T aResult, out string aValidationErrorMessage)

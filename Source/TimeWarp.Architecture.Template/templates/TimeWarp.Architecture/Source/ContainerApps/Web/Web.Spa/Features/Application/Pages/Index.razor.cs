@@ -1,8 +1,5 @@
 namespace TimeWarp.Architecture.Pages;
 
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.Applications;
-
 public partial class Index : BaseComponent
 {
   private const string RouteTemplate = "/";

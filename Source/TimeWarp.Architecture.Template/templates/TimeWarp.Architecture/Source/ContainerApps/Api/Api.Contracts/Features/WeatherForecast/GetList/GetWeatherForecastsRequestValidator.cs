@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using FluentValidation;
-
 public class GetWeatherForecastsRequestValidator : AbstractValidator<GetWeatherForecastsRequest>
 {
 

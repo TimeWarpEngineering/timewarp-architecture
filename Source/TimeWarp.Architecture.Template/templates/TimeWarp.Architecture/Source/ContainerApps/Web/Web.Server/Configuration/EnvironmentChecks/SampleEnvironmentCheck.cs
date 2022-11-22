@@ -1,7 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Configuration;
 
-using Microsoft.Extensions.Logging;
-
 public class SampleEnvironmentCheck
 {
   private readonly ILogger Logger;

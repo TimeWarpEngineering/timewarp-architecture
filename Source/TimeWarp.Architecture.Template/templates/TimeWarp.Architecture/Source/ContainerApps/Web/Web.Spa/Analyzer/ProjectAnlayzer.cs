@@ -1,13 +1,4 @@
-namespace TimeWarp.Architecture.Analyzer;
-
-using Microsoft.AspNetCore.Components;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using TimeWarp.Architecture.Analyzers;
-using TimeWarp.Architecture.Extensions;
-using TimeWarp.Architecture.Web.Spa;
+namespace TimeWarp.Architecture.Analyzers;
 
 public class ProjectAnlayzer
 {
@@ -23,7 +14,7 @@ public class ProjectAnlayzer
 
   public void Analyze()
   {
-    Assembly assembly = typeof(Program).GetTypeInfo().Assembly;
+    Assembly assembly = typeof(Web.Spa.Program).GetTypeInfo().Assembly;
     IEnumerable<Type> pageTypes = assembly.GetTypesWithAttribute(typeof(RouteAttribute));
     foreach (Type pageType in pageTypes)
     {

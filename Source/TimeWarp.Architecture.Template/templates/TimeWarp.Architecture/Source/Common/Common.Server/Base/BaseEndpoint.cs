@@ -1,9 +1,5 @@
 namespace TimeWarp.Architecture.Features;
 
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
 
 [ApiController]
 [Produces("application/json")]

@@ -1,9 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Features.Analytics.TrackEvent;
 
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using System.Net;
-
 public class TrackEventEndpoint : BaseEndpoint<TrackEventRequest, TrackEventResponse>
 {
   /// <summary>

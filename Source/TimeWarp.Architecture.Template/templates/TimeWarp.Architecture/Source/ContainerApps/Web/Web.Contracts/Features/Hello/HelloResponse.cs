@@ -1,5 +1,4 @@
 ﻿namespace TimeWarp.Architecture.Features.Hello;
-using System;
 
 public record HelloResponse : BaseResponse
 {

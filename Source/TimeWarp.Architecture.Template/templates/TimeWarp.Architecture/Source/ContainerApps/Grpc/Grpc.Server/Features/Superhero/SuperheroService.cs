@@ -1,10 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Features.Superheros;
 
-using ProtoBuf.Grpc;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
 public class SuperheroService : ISuperheroService
 {
   private readonly string[] Powers = new[]

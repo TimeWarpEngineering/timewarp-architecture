@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
     <PackageReference Include="Microsoft.Tye.Extensions.Configuration" />
+    <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" />
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all" />
@@ -64,8 +65,7 @@
 
   <ItemGroup>
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*" />
-    <None Remove="Features\Counter\Base\TwBase.mixin" />
-    <AdditionalFiles Include="Features\Base\BaseStuff.mixin" />
+    <AdditionalFiles Include="Features\Base\TwBaseSpa.mixin" />
     <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
   </ItemGroup>
 
