@@ -1,13 +1,5 @@
 namespace TimeWarp.Architecture.Api.Server;
 
-using FluentValidation;
-using FluentValidation.AspNetCore;
-using MediatR;
-using Microsoft.Extensions.DependencyInjection;
-using Oakton;
-using System.Reflection;
-using TimeWarp.Architecture.CorsPolicies;
-
 public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";

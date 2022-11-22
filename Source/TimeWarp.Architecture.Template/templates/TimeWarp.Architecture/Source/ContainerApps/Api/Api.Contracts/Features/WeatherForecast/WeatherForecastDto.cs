@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using System;
-
 /// <summary>
 /// The weather forecast
 /// </summary>

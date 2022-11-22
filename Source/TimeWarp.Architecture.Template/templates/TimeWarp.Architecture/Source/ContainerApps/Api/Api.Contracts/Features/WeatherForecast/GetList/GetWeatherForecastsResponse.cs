@@ -1,8 +1,5 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using System;
-using System.Collections.Generic;
-
 public record GetWeatherForecastsResponse : BaseResponse
 {
   /// <summary>
@@ -10,23 +7,9 @@ public record GetWeatherForecastsResponse : BaseResponse
   /// </summary>
   public List<WeatherForecastDto> WeatherForecasts { get; set; }
 
-  ///// <summary>
-  ///// a default constructor is required for client side deserialization
-  ///// </summary>
-  //public GetWeatherForecastsResponse()
-  //{
-  //  WeatherForecasts = new List<WeatherForecastDto>();
-  //}
-
   public GetWeatherForecastsResponse(List<WeatherForecastDto> weatherForecasts, Guid correlationId) :
     base(correlationId)
   {
     WeatherForecasts = weatherForecasts;
   }
-
-  //public GetWeatherForecastsResponse(Guid aCorrelationId) : base(aCorrelationId)
-  //{
-  //  WeatherForecasts = new List<WeatherForecastDto>();
-  //}
-
 }
