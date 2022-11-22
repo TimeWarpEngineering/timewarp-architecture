@@ -1,14 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Configuration;
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Data;
-
 public class CosmosDbEnvironmentCheck
 {
   private readonly CosmosDbOptions CosmosDbOptions;
