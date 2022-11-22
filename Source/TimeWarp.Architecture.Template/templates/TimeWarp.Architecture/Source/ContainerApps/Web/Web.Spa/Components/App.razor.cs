@@ -1,8 +1,5 @@
 namespace TimeWarp.Architecture.Components;
 
-using BlazorState.Features.JavaScriptInterop;
-using TimeWarp.Architecture.Features.ClientLoaders;
-
 public partial class App : ComponentBase
 {
   [Inject] private ClientLoader ClientLoader { get; set; }

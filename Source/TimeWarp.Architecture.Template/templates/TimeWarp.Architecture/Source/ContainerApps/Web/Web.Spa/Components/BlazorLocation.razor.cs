@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Components;
 
-using BlazorState.Services;
-
 public partial class BlazorLocation : BaseComponent
 {
   [Inject] public BlazorHostingLocation BlazorHostingLocation { get; set; }
