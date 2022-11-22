@@ -1,9 +1,5 @@
 ﻿namespace TimeWarp.Architecture.CorsPolicies;
 
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using TimeWarp.Architecture.Enumerations;
 
 /// <summary>
 /// This is the enumeration object for CORS Policies
