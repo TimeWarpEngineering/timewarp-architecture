@@ -1,11 +1,5 @@
 namespace TimeWarp.Architecture.Features.Counters;
 
-using BlazorState;
-using MediatR;
-using System.Threading;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features;
-
 internal partial class CounterState
 {
   internal class IncrementCounterHandler : BaseHandler<IncrementCounterAction>

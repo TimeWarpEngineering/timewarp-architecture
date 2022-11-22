@@ -1,8 +1,5 @@
 namespace TimeWarp.Architecture.Features.Applications.Components.NavBars.Dark;
 
-using BlazorComponentUtilities;
-using Microsoft.AspNetCore.Components;
-
 public partial class ProfileDropDown : ComponentBase
 {
   private readonly string BaseClasses = "origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg";

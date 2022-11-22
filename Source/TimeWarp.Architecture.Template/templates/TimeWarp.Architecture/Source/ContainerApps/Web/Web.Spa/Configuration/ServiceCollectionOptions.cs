@@ -1,7 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Configuration;
 
-using System;
-using System.Collections.Generic;
 using static TimeWarp.Architecture.Configuration.ServiceCollectionOptions;
 
 public class ServiceCollectionOptions : Dictionary<string, Service>

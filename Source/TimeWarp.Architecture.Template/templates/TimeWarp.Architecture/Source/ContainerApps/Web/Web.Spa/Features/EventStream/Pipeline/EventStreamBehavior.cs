@@ -1,11 +1,5 @@
 namespace TimeWarp.Architecture.Features.EventStreams;
 
-using Dawn;
-using MediatR;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using static TimeWarp.Architecture.Features.EventStreams.EventStreamState;
 
 /// <summary>
