@@ -1,8 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Features.Superheros;
 
-using BlazorState;
-using System.Collections.Generic;
-
 [TwBaseSpa]
 internal partial class SuperheroState : State<SuperheroState>
 {

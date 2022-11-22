@@ -1,11 +1,5 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using BlazorState;
-using MediatR;
-using System.Threading;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features;
-
 internal partial class WeatherForecastsState
 {
   public class FetchWeatherForecastsHandler : BaseHandler<FetchWeatherForecastsAction>
