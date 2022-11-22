@@ -1,9 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Data;
 
-using Microsoft.EntityFrameworkCore;
-using TimeWarp.Architecture.Data.Configuration;
-using TimeWarp.Architecture.Entities;
-
 public class CosmosDbContext : DbContext
 {
   public DbSet<Profile> Profiles => Set<Profile>();

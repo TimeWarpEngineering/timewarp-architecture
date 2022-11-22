@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Web.Server;
 
-using Microsoft.Extensions.Configuration;
-
 public class CosmosDbModule : IModule
 {
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)

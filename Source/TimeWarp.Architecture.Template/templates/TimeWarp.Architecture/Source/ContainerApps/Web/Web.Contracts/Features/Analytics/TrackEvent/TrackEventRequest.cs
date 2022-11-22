@@ -1,7 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Features.Analytics;
 
-using TimeWarp.Architecture.Features;
-
 //[FeatureFlag(FeatureFlags.SegmentAnalytics)]
 public record TrackEventRequest : BaseRequest, IApiRequest, IRequest<TrackEventResponse>
 {
