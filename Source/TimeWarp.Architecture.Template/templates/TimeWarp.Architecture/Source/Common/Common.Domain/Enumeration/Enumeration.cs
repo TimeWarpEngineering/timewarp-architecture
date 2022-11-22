@@ -1,7 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Enumerations;
 
-using System.Reflection;
-
 /// <summary>
 /// a base class for creating Enumerations.
 /// https://gist.github.com/slovely/1076365
