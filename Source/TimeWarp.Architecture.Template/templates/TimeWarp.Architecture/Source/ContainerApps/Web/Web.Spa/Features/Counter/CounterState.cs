@@ -2,6 +2,7 @@ namespace TimeWarp.Architecture.Features.Counters;
 
 using BlazorState;
 
+[TwBaseSpa]
 internal partial class CounterState : State<CounterState>
 {
   public int Count { get; private set; }
