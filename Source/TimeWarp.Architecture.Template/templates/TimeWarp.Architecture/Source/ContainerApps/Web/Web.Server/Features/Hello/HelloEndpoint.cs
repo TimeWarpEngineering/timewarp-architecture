@@ -1,9 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Features.Hello;
 
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using System.Net;
-
 public class HelloEndpoint : BaseEndpoint<HelloRequest, HelloResponse>
 {
   /// <summary>
