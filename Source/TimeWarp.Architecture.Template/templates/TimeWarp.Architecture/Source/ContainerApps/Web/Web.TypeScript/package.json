@@ -4,7 +4,8 @@
     "lint": "eslint source --ext .ts",
     "start": "echo \"nothing to start\" ",
     "prettier": "prettier --write .",
-    "tailwinds": "tailwindcss build -i ./css/input.css -o ../Web.Spa/wwwroot/css/site.css",
+    "tailwind": "tailwindcss build -i ./css/input.css -o ../Web.Spa/wwwroot/css/site.css",
+    "tailwind-watch": "tailwindcss build -i ./css/input.css -o ../Web.Spa/wwwroot/css/Site.css --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
