@@ -2,5 +2,5 @@
 
 public record TrackEventResponse : BaseResponse
 {
-  public TrackEventResponse(Guid CorrelationId) : base(CorrelationId) { }
+  public TrackEventResponse() : base() { }
 }

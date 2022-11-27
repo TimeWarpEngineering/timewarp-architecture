@@ -8,6 +8,6 @@ namespace __RootNamespace__.Features.__FeatureName__s
   {
     public Upsert__FeatureName__Response() { }
 
-    public Upsert__FeatureName__Response(Guid aCorrelationId) : base(aCorrelationId) { }
+    public Upsert__FeatureName__Response() : base() { }
   }
 }

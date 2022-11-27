@@ -30,7 +30,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
     )
     {
         __FeatureName__Entity __FeatureName__ = DbContext.__FeatureName__Entities.Find(aGetById__FeatureName__Request.Id);
-        var response = new GetById__FeatureName__Response(aGetById__FeatureName__Request.CorrelationId) 
+        var response = new GetById__FeatureName__Response() 
         {
           __FeatureName__ = Mapper.Map<__FeatureName__Dto>(__FeatureName__)
         };

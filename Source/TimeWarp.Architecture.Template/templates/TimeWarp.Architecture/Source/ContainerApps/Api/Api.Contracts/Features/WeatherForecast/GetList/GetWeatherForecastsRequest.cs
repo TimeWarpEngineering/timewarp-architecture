@@ -10,6 +10,6 @@ public record GetWeatherForecastsRequest : BaseRequest, IApiRequest, IRequest<Ge
   /// <example>5</example>
   public int Days { get; set; }
   public HttpVerb GetHttpVerb() => HttpVerb.Get;
-  public string GetRoute() => $"{Route}?{nameof(Days)}={Days}&{nameof(CorrelationId)}={CorrelationId}";
+  public string GetRoute() => $"{Route}?{nameof(Days)}={Days}";
 
 }

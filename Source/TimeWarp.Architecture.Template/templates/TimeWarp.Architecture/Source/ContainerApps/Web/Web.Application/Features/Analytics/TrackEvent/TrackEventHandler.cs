@@ -10,7 +10,7 @@ public class TrackEventHandler : IRequestHandler<TrackEventRequest, TrackEventRe
   {
     // TODO implement code here that formats and sends data to your favorite Analytics tool
 
-    var trackEventResponse = new TrackEventResponse(aTrackEventRequest.CorrelationId);
+    var trackEventResponse = new TrackEventResponse();
     return Task.FromResult(trackEventResponse);
   }
 }

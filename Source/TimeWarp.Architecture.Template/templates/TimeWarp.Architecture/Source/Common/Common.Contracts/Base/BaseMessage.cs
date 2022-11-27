@@ -5,8 +5,4 @@
 /// </summary>
 public abstract record BaseMessage
 {
-  /// <summary>
-  /// Unique Identifier to Correlate request and response
-  /// </summary>
-  public Guid CorrelationId { get; init; } = Guid.NewGuid();
 }

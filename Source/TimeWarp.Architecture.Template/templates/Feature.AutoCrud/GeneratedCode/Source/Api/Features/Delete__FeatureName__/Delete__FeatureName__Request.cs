@@ -13,6 +13,6 @@ namespace __RootNamespace__.Features.__FeatureName__s
     /// <example>efd66079-23a4-4166-a806-08d8de1257c1</example>
     public string ItemId { get; set; }
 
-    internal override string GetRoute() => $"{RouteTemplate}?{nameof(ItemId)}={ItemId}&{nameof(CorrelationId)}={CorrelationId}";
+    internal override string GetRoute() => $"{RouteTemplate}?{nameof(ItemId)}={ItemId}";
   }
 }

@@ -9,6 +9,6 @@ namespace __RootNamespace__.Features.__FeatureName__s
     public List<__FeatureName__Dto> __FeatureName__s { get; set; }
     public GetAll__FeatureName__Response() { }
 
-    public GetAll__FeatureName__Response(Guid aCorrelationId) : base(aCorrelationId) { }
+    public GetAll__FeatureName__Response() : base() { }
   }
 }

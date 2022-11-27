@@ -13,6 +13,6 @@ namespace __RootNamespace__.Features.__FeatureName__s
     /// <example>TODO</example>
     public string SampleProperty { get; set; }
 
-    internal override string GetRoute() => $"{RouteTemplate}?{nameof(SampleProperty)}={SampleProperty}&{nameof(CorrelationId)}={CorrelationId}";
+    internal override string GetRoute() => $"{RouteTemplate}?{nameof(SampleProperty)}={SampleProperty}";
   }
 }

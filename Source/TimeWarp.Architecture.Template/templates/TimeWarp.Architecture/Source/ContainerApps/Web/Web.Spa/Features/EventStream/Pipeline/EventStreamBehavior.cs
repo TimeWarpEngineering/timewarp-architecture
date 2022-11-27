@@ -50,7 +50,7 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
 
       if (aRequest is BaseRequest request)
       {
-        addEventAction.Message = $"{aTag}:{requestTypeName}:{request.CorrelationId}";
+        addEventAction.Message = $"{aTag}:{requestTypeName}";
       }
       else
       {

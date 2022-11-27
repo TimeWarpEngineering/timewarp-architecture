@@ -25,7 +25,7 @@ namespace __RootNamespace__.Features.__FeatureName__s
       __FeatureName__Entity itemById = DbContext.__FeatureName__Entities.SingleOrDefault(i => i.Id.ToString().Contains(aDelete__FeatureName__Request.ItemId));
       DbContext.__FeatureName__Entities.Remove(itemById);
       DbContext.SaveChanges();
-      var response = new Delete__FeatureName__Response(aDelete__FeatureName__Request.CorrelationId);
+      var response = new Delete__FeatureName__Response();
 
       return await Task.FromResult(response);
     }
