@@ -1,5 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Entities;
-public class BaseEntity
+public abstract class BaseEntity
 {
   public Guid Guid { get; set; }
 }
