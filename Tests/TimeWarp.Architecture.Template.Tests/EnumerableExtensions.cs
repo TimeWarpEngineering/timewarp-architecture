@@ -4,6 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using TimeWarp.Fixie;
+
+[NotTest]
 public static class EnumerableExtensions
 {
     public static IDictionary<string, string> ToArguments(this string[] arguments) =>

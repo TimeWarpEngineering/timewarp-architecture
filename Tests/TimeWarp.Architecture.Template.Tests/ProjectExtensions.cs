@@ -4,6 +4,9 @@ using System;
 using System.Threading.Tasks;
 using Boxed.DotnetNewTest;
 
+using TimeWarp.Fixie;
+
+[NotTest]
 public static class ProjectExtensions
 {
     private const int DefaultRetries = 2;
