@@ -25,6 +25,6 @@ namespace __RootNamespace__.Features.__FeatureName__s
     /// <example>999.99</example>
     public decimal Price { get; set; }
 
-    internal override string GetRoute() => $"{RouteTemplate}?{nameof(Id)}={Id}&{nameof(CorrelationId)}={CorrelationId}";
+    internal override string GetRoute() => $"{RouteTemplate}?{nameof(Id)}={Id}";
   }
 }

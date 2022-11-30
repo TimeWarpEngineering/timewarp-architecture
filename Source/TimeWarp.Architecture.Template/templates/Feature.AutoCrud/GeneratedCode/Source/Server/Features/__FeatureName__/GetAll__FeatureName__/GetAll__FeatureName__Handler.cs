@@ -34,13 +34,13 @@ namespace __RootNamespace__.Features.__FeatureName__s
         GetAll__FeatureName__Response response;
         if (aGetAll__FeatureName__Request.PageIndex == 0 && aGetAll__FeatureName__Request.PageSize == 0)
         {
-            response = new GetAll__FeatureName__Response(aGetAll__FeatureName__Request.CorrelationId) 
+            response = new GetAll__FeatureName__Response() 
             {
                 __FeatureName__s = await DbContext.__FeatureName__Entities.ProjectTo<__FeatureName__Dto>(ConfigurationProvider).ToListAsync()
             };
         } else
         {
-            response = new GetAll__FeatureName__Response(aGetAll__FeatureName__Request.CorrelationId)
+            response = new GetAll__FeatureName__Response()
             {
                 __FeatureName__s = await DbContext.__FeatureName__Entities.ProjectTo<__FeatureName__Dto>(ConfigurationProvider).Take(aGetAll__FeatureName__Request.PageSize).ToListAsync()
             };

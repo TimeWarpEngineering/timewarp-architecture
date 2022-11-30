@@ -10,7 +10,7 @@ public class HelloHandler : IRequestHandler<HelloRequest, HelloResponse>
   {
     // TODO implement code here that formats and sends data to your favorite Analytics tool
 
-    var helloResponse = new HelloResponse(aHelloRequest.CorrelationId);
+    var helloResponse = new HelloResponse();
     return Task.FromResult(helloResponse);
   }
 }

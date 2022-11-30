@@ -7,8 +7,8 @@ public record GetWeatherForecastsResponse : BaseResponse
   /// </summary>
   public List<WeatherForecastDto> WeatherForecasts { get; set; }
 
-  public GetWeatherForecastsResponse(List<WeatherForecastDto> weatherForecasts, Guid correlationId) :
-    base(correlationId)
+  public GetWeatherForecastsResponse(List<WeatherForecastDto> weatherForecasts) :
+    base()
   {
     WeatherForecasts = weatherForecasts;
   }

@@ -28,7 +28,5 @@ public class Handle_Returns
 
   private void ValidateTrackEventResponse(TrackEventResponse aTrackEventResponse)
   {
-    aTrackEventResponse.CorrelationId.Should().Be(TrackEventRequest.CorrelationId);
-    ;
   }
 }

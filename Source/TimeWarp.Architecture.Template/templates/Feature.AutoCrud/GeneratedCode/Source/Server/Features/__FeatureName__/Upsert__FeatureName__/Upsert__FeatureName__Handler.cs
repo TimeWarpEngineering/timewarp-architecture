@@ -39,12 +39,12 @@ namespace __RootNamespace__.Features.__FeatureName__s
         itemInDb.Description = aUpsert__FeatureName__Request.Description;
         itemInDb.Price = aUpsert__FeatureName__Request.Price;
         DbContext.SaveChanges();
-        response = new Upsert__FeatureName__Response(aUpsert__FeatureName__Request.CorrelationId);
+        response = new Upsert__FeatureName__Response();
       } else {
         __FeatureName__Entity mapped__FeatureName__ = Mapper.Map<__FeatureName__Entity>(aUpsert__FeatureName__Request);
         DbContext.__FeatureName__Entities.Add(mapped__FeatureName__);
         DbContext.SaveChanges();
-        response = new Upsert__FeatureName__Response(aUpsert__FeatureName__Request.CorrelationId);
+        response = new Upsert__FeatureName__Response();
       }
       return await Task.FromResult(response);
     }

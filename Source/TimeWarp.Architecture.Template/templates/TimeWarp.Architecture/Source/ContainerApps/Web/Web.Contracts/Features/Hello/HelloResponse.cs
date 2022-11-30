@@ -2,5 +2,5 @@
 
 public record HelloResponse : BaseResponse
 {
-  public HelloResponse(Guid aCorrelationId) : base(aCorrelationId) { }
+  public HelloResponse() : base() { }
 }

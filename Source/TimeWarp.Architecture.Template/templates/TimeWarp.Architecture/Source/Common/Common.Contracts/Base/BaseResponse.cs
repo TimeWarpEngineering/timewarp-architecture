@@ -9,8 +9,7 @@
 /// </remarks>
 public abstract record BaseResponse : BaseMessage
 {
-  public BaseResponse(Guid aCorrelationId) : base()
+  public BaseResponse() : base()
   {
-    CorrelationId = aCorrelationId;
   }
 }
