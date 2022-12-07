@@ -38,7 +38,7 @@ public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsReq
         )
       )
     );
-    var response = new GetWeatherForecastsResponse(weatherForecastDtos, aGetWeatherForecastsRequest.CorrelationId);
+    var response = new GetWeatherForecastsResponse(weatherForecastDtos);
 
     return Task.FromResult(response);
   }
