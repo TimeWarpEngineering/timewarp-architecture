@@ -1,5 +1,7 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
+using System.Net;
+
 /// <summary>
 /// A class that contains a common set of methods used when testing Web APIs
 /// </summary>
