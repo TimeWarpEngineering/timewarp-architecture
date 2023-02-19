@@ -32,18 +32,11 @@
       }
     </div>
   </main>
-  @if (ShowFooter)
-  {
-      @if (SiteFooterContent != null)
-      {
-        <SiteFooter>
-          <SiteFooterContent>
-            @SiteFooterContent
-          </SiteFooterContent>
-        </SiteFooter>
-      } else
-      {
-        <SiteFooter/>
-      }
-  }
+    @if (SiteFooterContent != null)
+    {
+      @SiteFooterContent
+    } else
+    {
+      <SiteFooter/>
+    }
 </div>
