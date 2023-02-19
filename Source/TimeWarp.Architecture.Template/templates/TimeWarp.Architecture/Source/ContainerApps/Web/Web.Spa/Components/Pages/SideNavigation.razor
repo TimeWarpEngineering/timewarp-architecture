@@ -1,0 +1,8 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+
+<If Condition=@(SideNavigationContent != null)>
+  <div data-qa=@nameof(SideNavigation)>
+    @SideNavigationContent
+  </div>
+</If>
