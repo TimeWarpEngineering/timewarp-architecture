@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
     <PackageReference Include="Microsoft.Tye.Extensions.Configuration" />
+    <PackageReference Include="Morris.Blazor.ControlFlow" />
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" />
     <PackageReference Include="protobuf-net.Grpc" />
@@ -25,6 +26,7 @@
     <PackageReference Include="Timewarp.OptionsValidation" />
     <PackageReference Include="timewarp-simple-icons" />
     <PackageReference Include="TimeWarp.SourceGenerators" />
+    <PackageReference Include="Toolbelt.Blazor.SplitContainer" />
   </ItemGroup>
   
   <ItemGroup>
@@ -83,7 +85,7 @@
     <Copy SourceFiles="@(FilesToCopy)" DestinationFolder="wwwroot\js" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="NpmRunTailWinds" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild" Inputs="..\Web.TypeScript\tailwind.config.js;..\Web.TypeScript\css\input.css" Outputs="wwwroot\css\site.css">
-    <Exec Command="npm run tailwinds" WorkingDirectory="..\Web.TypeScript\" />
+  <Target Name="NpmRunTailWind" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild" Inputs="..\Web.TypeScript\tailwind.config.js;..\Web.TypeScript\css\input.css" Outputs="wwwroot\css\site.css">
+    <Exec Command="npm run tailwind" WorkingDirectory="..\Web.TypeScript\" />
   </Target>
 </Project>
