@@ -1,5 +1,4 @@
-﻿// global using xyz;
-global using FakeItEasy;
+﻿global using FakeItEasy;
 global using FluentAssertions;
 global using MediatR;
 global using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +9,7 @@ global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection.Extensions;
 global using Microsoft.Extensions.Options;
 global using Microsoft.JSInterop;
+global using System.Net;
 global using System.Net.Http;
 global using System.Text.Json;
 global using TimeWarp.Architecture.Features;

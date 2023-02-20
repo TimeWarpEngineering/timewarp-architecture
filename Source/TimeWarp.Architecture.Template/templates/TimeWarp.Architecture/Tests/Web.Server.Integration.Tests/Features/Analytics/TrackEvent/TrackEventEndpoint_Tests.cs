@@ -1,16 +1,11 @@
 namespace TrackEventEndpoint_;
 
-using FluentAssertions;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.Analytics;
-using TimeWarp.Architecture.Testing;
-
-public class Returns
+public class Returns_
 {
   private readonly TrackEventRequest TrackEventRequest;
   private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns
+  public Returns_
   (
     WebTestServerApplication aWebTestServerApplication
   )
@@ -19,7 +14,7 @@ public class Returns
     WebTestServerApplication = aWebTestServerApplication;
   }
 
-  public async Task _Ok_Given_SomeEvent()
+  public async Task Ok_Given_SomeEvent()
   {
     TrackEventResponse trackEventResponse =
       await WebTestServerApplication.GetResponse<TrackEventResponse>(TrackEventRequest);

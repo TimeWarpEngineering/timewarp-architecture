@@ -1,8 +1,5 @@
 namespace TimeWarp.Architecture.Components;
 
-using Microsoft.AspNetCore.Components;
-using System.Collections.Generic;
-
 public interface IAttributeComponent
 {
   [Parameter(CaptureUnmatchedValues = true)]

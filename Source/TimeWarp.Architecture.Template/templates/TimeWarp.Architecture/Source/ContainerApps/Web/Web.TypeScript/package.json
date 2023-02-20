@@ -4,25 +4,26 @@
     "lint": "eslint source --ext .ts",
     "start": "echo \"nothing to start\" ",
     "prettier": "prettier --write .",
-    "tailwinds": "tailwindcss build -i ./css/input.css -o ../Web.Spa/wwwroot/css/site.css",
+    "tailwind": "tailwindcss build -i ./css/input.css -o ../Web.Spa/wwwroot/css/site.css",
+    "tailwind-watch": "tailwindcss build -i ./css/input.css -o ../Web.Spa/wwwroot/css/Site.css --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "5.43.0",
-    "@typescript-eslint/parser": "5.43.0",
-    "@tailwindcss/typography": "0.5.8",
+    "@typescript-eslint/eslint-plugin": "5.46.1",
+    "@typescript-eslint/parser": "5.46.1",
+    "@tailwindcss/typography": "0.5.9",
     "@tailwindcss/forms": "0.5.3",
     "@tailwindcss/aspect-ratio": "0.4.2",
     "@tailwindcss/line-clamp": "0.4.2",
     "autoprefixer": "10.4.13",
-    "eslint": "8.28.0",
+    "eslint": "8.32.0",
     "eslint-config-airbnb-base": "15.0.0",
-    "eslint-config-prettier": "8.5.0",
-    "eslint-plugin-import": "2.26.0",
+    "eslint-config-prettier": "8.6.0",
+    "eslint-plugin-import": "2.27.5",
     "eslint-plugin-prettier": "4.2.1",
-    "postcss": "8.4.19",
-    "prettier": "2.7.1",
-    "tailwindcss": "3.2.4",
-    "typescript": "4.9.3"
+    "postcss": "8.4.21",
+    "prettier": "2.8.4",
+    "tailwindcss": "3.2.6",
+    "typescript": "4.9.5"
   }
 }

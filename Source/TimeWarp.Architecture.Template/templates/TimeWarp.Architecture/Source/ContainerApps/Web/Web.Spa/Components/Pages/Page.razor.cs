@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Components;
 
-using Microsoft.AspNetCore.Components;
-
 public partial class Page : BaseComponent
 {
   [Parameter] public RenderFragment HeaderContent { get; set; }
@@ -11,4 +9,5 @@ public partial class Page : BaseComponent
   [Parameter] public bool ShowFooter { get; set; } = true;
 
   private string Version => ApplicationState.Version;
+  public Page shit { get; set; }
 }
