@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="TimeWarp.Fixie" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Source\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
