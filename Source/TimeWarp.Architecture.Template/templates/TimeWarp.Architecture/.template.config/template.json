@@ -137,5 +137,23 @@
   "tags": {
     "language": "C#",
     "type": "project"
-  }
+  },
+  "postActions": [
+    {
+      "actionId": "3A7C4B45-1F5D-4A30-959A-51B88E82B5D2",
+      "args": {
+        "executable": "pwsh",
+        "args": "RunNpmInstall.ps1",
+        "redirectStandardOutput": false,
+        "redirectStandardError": false
+      },
+      "manualInstructions": [
+        {
+          "text": "Run 'RunNpmInstall.ps1'"
+        }
+      ],
+      "continueOnError": false,
+      "description ": "setups the project by calling RunNpmInstall.ps1"
+    }
+  ]
 }
