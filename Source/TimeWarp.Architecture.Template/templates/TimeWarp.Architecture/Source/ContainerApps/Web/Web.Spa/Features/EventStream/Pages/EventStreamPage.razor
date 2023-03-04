@@ -1,15 +1,12 @@
 @namespace TimeWarp.Architecture.Pages
 
 @inherits BaseComponent
-
-@attribute [Route(EventStreamPage.RouteTemplate)]
-
 <PageTitle>Event Stream Page</PageTitle>
 
-<Page>
+<PageComponent>
   <HeaderContent>Event Stream Page</HeaderContent>
   <MainContent>
     <SimpleAlert class="mt-2">EventStream is an example of middleware.  It adds each action to a list.</SimpleAlert>
     <EventStream />
   </MainContent>
-</Page>
+</PageComponent>

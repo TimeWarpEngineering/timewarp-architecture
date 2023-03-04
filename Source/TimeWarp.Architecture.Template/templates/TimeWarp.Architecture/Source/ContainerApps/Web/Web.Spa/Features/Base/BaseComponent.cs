@@ -9,7 +9,7 @@ namespace TimeWarp.Architecture.Features;
 /// But would be required to properly implement the required interfaces.
 /// one could conditionally inherit from BaseComponent for production build.
 /// </remarks>
-public partial class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
+public abstract partial class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
 {
 
   [Parameter(CaptureUnmatchedValues = true)]
