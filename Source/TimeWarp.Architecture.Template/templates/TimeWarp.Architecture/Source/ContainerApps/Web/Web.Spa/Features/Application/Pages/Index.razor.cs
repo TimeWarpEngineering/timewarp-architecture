@@ -1,11 +1,8 @@
 namespace TimeWarp.Architecture.Pages;
 
+[Page("/")]
 public partial class Index : BaseComponent
 {
-  private const string RouteTemplate = "/";
-
-  public static string GetRoute() => RouteTemplate;
-
   private async Task FiveSecondTaskButtonClick() =>
     await Send(new ApplicationState.FiveSecondTaskAction());
 

@@ -47,7 +47,7 @@
     <PackageVersion Include="Microsoft.Tye.Extensions.Configuration" Version="0.10.0-alpha.21420.1" />
     <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="4.6.2" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
-    <PackageVersion Include="Morris.Moxy" Version="0.7.0-Alpha" />
+    <PackageVersion Include="Morris.Moxy" Version="1.1.0" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.0.0" />
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.5.119" />
     <PackageVersion Include="Oakton" Version="4.7.0" />

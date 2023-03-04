@@ -1,6 +1,4 @@
 namespace TimeWarp.Architecture.Pages;
 
-public partial class LoginPage : BaseComponent
-{
-  
-}
+[Page("/Login")]
+public partial class LoginPage : BaseComponent { }

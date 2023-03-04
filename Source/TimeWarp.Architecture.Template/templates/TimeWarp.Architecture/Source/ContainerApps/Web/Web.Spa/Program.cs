@@ -58,10 +58,6 @@ public class Program
 #if grpc
     SuperheroModule.ConfigureServices(aServiceCollection, aConfiguration);
 #endif
-
-#if DEBUG
-    new ProjectAnlayzer().Analyze();
-#endif
   }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)

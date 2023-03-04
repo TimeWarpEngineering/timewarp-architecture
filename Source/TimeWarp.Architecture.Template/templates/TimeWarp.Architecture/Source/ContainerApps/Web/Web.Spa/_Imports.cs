@@ -24,7 +24,6 @@ global using System.Net.Http;
 global using System.Reflection;
 global using System.Text.Json;
 global using System.Threading.Tasks;
-global using TimeWarp.Architecture.Analyzers;
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.Extensions;
