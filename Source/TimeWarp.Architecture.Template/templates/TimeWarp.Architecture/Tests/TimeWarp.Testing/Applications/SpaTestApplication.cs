@@ -56,5 +56,5 @@ public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestA
 
 public interface ISpaTestApplication
 {
-  public IServiceProvider ServiceProvider { get; }
+  IServiceProvider ServiceProvider { get; }
 }

@@ -2,6 +2,6 @@
 
 public interface IModule
 {
-  public static abstract void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration);
+  static abstract void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration);
 
 }

@@ -10,7 +10,7 @@ public interface IWebApiTestService
   /// <param name="aApiRequest"></param>
   /// <param name="aAttributeName"></param>
   /// <returns></returns>
-  public Task ConfirmEndpointValidationError<TResponse>
+  Task ConfirmEndpointValidationError<TResponse>
   (
     IApiRequest aApiRequest,
     string aAttributeName
@@ -22,5 +22,5 @@ public interface IWebApiTestService
   /// <typeparam name="TResponse"></typeparam>
   /// <param name="aRequest"></param>
   /// <returns></returns>
-  public Task<TResponse> GetResponse<TResponse>(IApiRequest aApiRequest);
+  Task<TResponse> GetResponse<TResponse>(IApiRequest aApiRequest);
 }
