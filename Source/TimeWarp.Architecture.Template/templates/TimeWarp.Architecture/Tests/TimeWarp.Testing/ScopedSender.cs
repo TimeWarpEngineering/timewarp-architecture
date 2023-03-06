@@ -1,6 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
-
 /// <summary>
 /// This is an implementation of MediatR's ISender Interface
 /// that wraps calls to Send in a <see cref="IServiceScope"/>.
@@ -26,6 +25,19 @@ public class ScopedSender : ISender
     object aRequest,
     CancellationToken aCancellationToken = default
   ) => throw new NotImplementedException();
+
+  public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest
+  {
+    return ExecuteInScope
+    (
+      aServiceProvider =>
+      {
+        IMediator mediator = aServiceProvider.GetService<IMediator>();
+
+        return mediator.Send(request);
+      }
+    );
+  }
 
   public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default)
   {
@@ -57,5 +69,11 @@ public class ScopedSender : ISender
   {
     using IServiceScope serviceScope = ServiceScopeFactory.CreateScope();
     return await aAction(serviceScope.ServiceProvider).ConfigureAwait(false);
+  }
+
+  internal async Task ExecuteInScope(Func<IServiceProvider, Task> aAction)
+  {
+    using IServiceScope serviceScope = ServiceScopeFactory.CreateScope();
+    await aAction(serviceScope.ServiceProvider).ConfigureAwait(false);
   }
 }

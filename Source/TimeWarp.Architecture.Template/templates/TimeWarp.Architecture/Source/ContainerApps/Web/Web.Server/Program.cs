@@ -74,8 +74,12 @@ public class Program : IAspNetProgram
     aServiceCollection
       .AddMediatR
       (
-        typeof(Web_Server_Assembly).GetTypeInfo().Assembly,
-        typeof(Web_Application_Assembly).GetTypeInfo().Assembly
+        mediatRServiceConfiguration =>
+          mediatRServiceConfiguration.RegisterServicesFromAssemblies
+          (
+            typeof(Web_Server_Assembly).GetTypeInfo().Assembly,
+            typeof(Web_Application_Assembly).GetTypeInfo().Assembly
+          )
       );
 
     CommonServerModule

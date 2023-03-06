@@ -6,7 +6,7 @@ internal partial class CounterState
   {
     public ThrowExceptionHandler(IStore aStore) : base(aStore) { }
 
-    public override Task<Unit> Handle
+    public override Task Handle
     (
       ThrowExceptionAction aThrowExceptionAction,
       CancellationToken aCancellationToken

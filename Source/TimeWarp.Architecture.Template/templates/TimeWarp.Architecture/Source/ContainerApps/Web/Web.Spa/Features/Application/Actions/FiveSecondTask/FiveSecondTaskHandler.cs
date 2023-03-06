@@ -6,12 +6,11 @@ internal partial class ApplicationState
   {
     public FiveSecondTaskHandler(IStore aStore) : base(aStore) { }
 
-    public override async Task<Unit> Handle(FiveSecondTaskAction aFiveSecondTaskAction, CancellationToken aCancellationToken)
+    public override async Task Handle(FiveSecondTaskAction aFiveSecondTaskAction, CancellationToken aCancellationToken)
     {
       Console.WriteLine("Start");
       await Task.Delay(millisecondsDelay: 5000, cancellationToken: aCancellationToken);
       Console.WriteLine("Done");
-      return Unit.Value;
     }
   }
 }

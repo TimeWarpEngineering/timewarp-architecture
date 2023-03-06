@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Web.Domain\Web.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Todo\" />
+  </ItemGroup>
+
 </Project>

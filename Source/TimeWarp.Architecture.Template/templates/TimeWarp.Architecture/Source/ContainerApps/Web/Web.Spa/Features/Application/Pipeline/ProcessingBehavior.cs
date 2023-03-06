@@ -3,7 +3,7 @@
 using static TimeWarp.Architecture.Features.Applications.ApplicationState;
 
 public class ProcessingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-  where TRequest : IRequest<TResponse>
+  where TRequest : notnull
 {
   private readonly IMediator Mediator;
 

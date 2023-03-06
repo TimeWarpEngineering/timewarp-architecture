@@ -6,14 +6,14 @@ internal partial class EventStreamState
   {
     public AddEventHandler(IStore aStore) : base(aStore) { }
 
-    public override Task<Unit> Handle
+    public override Task Handle
     (
       AddEventAction aAddEventAction,
       CancellationToken aCancellationToken
     )
     {
       EventStreamState._Events.Add(aAddEventAction.Message);
-      return Unit.Task;
+      return Task.CompletedTask;
     }
   }
 }
