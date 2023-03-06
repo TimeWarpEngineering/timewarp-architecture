@@ -10,7 +10,7 @@ internal partial class SuperheroState
       SuperheroService = aSuperheroService;
     }
 
-    public override async Task<Unit> Handle
+    public override async Task Handle
     (
       FetchSuperheroAction aFetchSuperheroAction,
       CancellationToken aCancellationToken
@@ -23,8 +23,6 @@ internal partial class SuperheroState
         await SuperheroService.GetSuperheroAsync(getSuperheroRequest);
 
       SuperheroState._Superheros.AddRange(getSuperheroResponse.Superheros);
-
-      return Unit.Value;
     }
   }
 }

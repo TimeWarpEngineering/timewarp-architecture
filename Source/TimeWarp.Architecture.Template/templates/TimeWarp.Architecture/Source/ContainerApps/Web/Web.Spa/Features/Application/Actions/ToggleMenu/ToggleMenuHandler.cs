@@ -6,10 +6,10 @@ internal partial class ApplicationState
   {
     public ToggleMenuHandler(IStore aStore) : base(aStore) { }
 
-    public override Task<Unit> Handle(ToggleMenuAction aResetStoreAction, CancellationToken aCancellationToken)
+    public override Task Handle(ToggleMenuAction aResetStoreAction, CancellationToken aCancellationToken)
     {
       ApplicationState.IsMenuExpanded = !ApplicationState.IsMenuExpanded;
-      return Unit.Task;
+      return Task.CompletedTask;
     }
   }
 }

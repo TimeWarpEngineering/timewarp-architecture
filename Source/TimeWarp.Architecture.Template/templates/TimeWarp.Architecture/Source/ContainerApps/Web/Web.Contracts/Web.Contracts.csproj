@@ -31,4 +31,8 @@
     <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Todo\" />
+  </ItemGroup>
+
 </Project>

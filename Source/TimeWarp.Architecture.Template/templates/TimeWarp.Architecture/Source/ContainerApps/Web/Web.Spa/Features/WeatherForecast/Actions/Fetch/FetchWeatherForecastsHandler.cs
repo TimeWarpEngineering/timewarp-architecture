@@ -11,7 +11,7 @@ internal partial class WeatherForecastsState
       WebApiService = aWebApiService;
     }
 
-    public override async Task<Unit> Handle
+    public override async Task Handle
     (
       FetchWeatherForecastsAction aFetchWeatherForecastsAction,
       CancellationToken aCancellationToken
@@ -24,7 +24,6 @@ internal partial class WeatherForecastsState
           .ConfigureAwait(false);
 
       WeatherForecastsState._WeatherForecasts = getWeatherForecastsResponse.WeatherForecasts;
-      return Unit.Value;
     }
   }
 }

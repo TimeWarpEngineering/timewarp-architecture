@@ -1,7 +1,7 @@
 namespace TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
 
 internal class PostPipelineNotificationRequestPostProcessor<TRequest, TResponse> : IRequestPostProcessor<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+    where TRequest : notnull
 {
   private readonly ILogger Logger;
 

@@ -6,10 +6,10 @@ internal partial class ApplicationState
   {
     public StartProcessingHandler(IStore aStore) : base(aStore) { }
 
-    public override Task<Unit> Handle(StartProcessingAction aStartWaitingAction, CancellationToken aCancellationToken)
+    public override Task Handle(StartProcessingAction aStartWaitingAction, CancellationToken aCancellationToken)
     {
       ApplicationState._ProcessingList.Add(aStartWaitingAction.ActionName);
-      return Unit.Task;
+      return Task.CompletedTask;
     }
   }
 }
