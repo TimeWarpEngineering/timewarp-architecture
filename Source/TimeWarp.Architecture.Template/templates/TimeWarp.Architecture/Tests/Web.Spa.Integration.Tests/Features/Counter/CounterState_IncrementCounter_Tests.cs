@@ -21,10 +21,7 @@ public class IncrementCounterAction_Should : BaseTest
     //Arrange
     CounterState.Initialize(aCount: 15);
 
-    var incrementCounterRequest = new IncrementCounterAction
-    {
-      Amount = -2
-    };
+    var incrementCounterRequest = new IncrementCounterAction(Amount: -2);
 
     //Act
     await Send(incrementCounterRequest);
@@ -38,10 +35,7 @@ public class IncrementCounterAction_Should : BaseTest
     //Arrange
     CounterState.Initialize(aCount: 22);
 
-    var incrementCounterRequest = new IncrementCounterAction
-    {
-      Amount = 5
-    };
+    var incrementCounterRequest = new IncrementCounterAction(Amount: 5);
 
     //Act
     await Send(incrementCounterRequest);

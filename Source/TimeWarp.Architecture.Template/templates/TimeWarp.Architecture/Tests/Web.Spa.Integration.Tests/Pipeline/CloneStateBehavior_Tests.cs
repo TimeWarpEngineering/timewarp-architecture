@@ -24,10 +24,8 @@ public class Should : BaseTest
     Guid preActionGuid = CounterState.Guid;
 
     // Create request
-    var incrementCounterRequest = new IncrementCounterAction
-    {
-      Amount = -2
-    };
+    var incrementCounterRequest = new IncrementCounterAction(Amount: -2);
+
     //Act
     await Send(incrementCounterRequest);
 
@@ -42,14 +40,12 @@ public class Should : BaseTest
     Guid preActionGuid = CounterState.Guid;
 
     // Act
-    var throwExceptionAction = new ThrowExceptionAction
-    {
-      Message = "Test Rollback of State"
-    };
+    var throwExceptionAction =
+      new ThrowExceptionAction (Message: "Test Rollback of State");
 
-    await Send(throwExceptionAction);
+  await Send(throwExceptionAction);
 
-    // Assert State was rolled back and thus Guid didn't change.
-    CounterState.Guid.Equals(preActionGuid);
+  // Assert State was rolled back and thus Guid didn't change.
+  CounterState.Guid.Equals(preActionGuid);
   }
 }
