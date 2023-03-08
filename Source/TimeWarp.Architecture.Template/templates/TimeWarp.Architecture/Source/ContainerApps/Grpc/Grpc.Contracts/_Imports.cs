@@ -1,1 +1,1 @@
-﻿// global using xyz;
+﻿global using System.Runtime.Serialization;
