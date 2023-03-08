@@ -5,11 +5,11 @@ internal partial class ApplicationState : State<ApplicationState>
 {
   private List<string> _ProcessingList;
 
+  public string ActiveModalId { get; private set; }
   public bool IsMenuExpanded { get; private set; }
   public string Logo { get; private set; }
   public string Name { get; private set; }
   public string Version => GetType().Assembly.GetName().Version.ToString();
-
   public bool IsProcessing => _ProcessingList.Count > 0;
 
   #region snippet_IsProcessAny
