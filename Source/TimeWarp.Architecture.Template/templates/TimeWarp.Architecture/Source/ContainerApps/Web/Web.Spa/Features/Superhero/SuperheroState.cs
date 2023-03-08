@@ -3,7 +3,7 @@
 [TwBaseSpa]
 internal partial class SuperheroState : State<SuperheroState>
 {
-  private List<SuperheroDto> _Superheros;
+  private readonly List<SuperheroDto> _Superheros;
 
   public IReadOnlyList<SuperheroDto> Superheros => _Superheros.AsReadOnly();
 
