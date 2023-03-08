@@ -26,5 +26,12 @@
       <EmbeddedResource Include="@(None -> WithMetadataValue('Extension', '.cstemplate'))" />
     </ItemGroup>
   </Target>
+
+  <ItemGroup>
+    <PackageReference Include="GlobalUsingsAnalyzer" >
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
   
 </Project>
