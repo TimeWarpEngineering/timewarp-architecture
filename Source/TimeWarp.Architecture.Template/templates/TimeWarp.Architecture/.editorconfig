@@ -271,3 +271,9 @@ dotnet_diagnostic.CA1062.severity = silent
 
 # CA1308: Normalize strings to uppercase
 dotnet_diagnostic.CA1308.severity = none
+
+# Global Usings Analyzer
+
+dotnet_diagnostic.GlobalUsingsAnalyzer0001.filename = _Imports.cs
+dotnet_diagnostic.GlobalUsingsAnalyzer0002.enabled = true
+dotnet_diagnostic.GlobalUsingsAnalyzer0003.severity = warning
