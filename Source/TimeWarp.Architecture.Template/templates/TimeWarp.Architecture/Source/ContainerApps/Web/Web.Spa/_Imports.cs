@@ -31,6 +31,7 @@ global using TimeWarp.Architecture.Features;
 global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.ClientLoaders;
 global using TimeWarp.Architecture.Features.EventStreams;
+global using TimeWarp.Architecture.Features.Notifications;
 global using TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
 
 #if(counter)
@@ -45,3 +46,4 @@ global using TimeWarp.Architecture.Features.WeatherForecasts;
 global using TimeWarp.Architecture.Features.Superheros;
 global using ProtoBuf.Grpc.Client;
 #endif
+global using System.Diagnostics.CodeAnalysis;
