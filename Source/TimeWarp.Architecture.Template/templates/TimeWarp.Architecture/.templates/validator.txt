@@ -1,0 +1,10 @@
+namespace {namespace};
+
+public class {itemname} : AbstractValidator<{itemname}>
+{
+  public {itemname}()
+  {
+    RuleFor(a{itemname} => a{itemname}).NotEmpty();
+    $
+  }
+}

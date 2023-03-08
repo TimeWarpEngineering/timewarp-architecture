@@ -1,0 +1,6 @@
+﻿namespace {namespace};
+
+internal partial class <TheState>State
+{
+    internal record {itemname}() : BaseAction;
+}
