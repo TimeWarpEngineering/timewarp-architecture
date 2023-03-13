@@ -58,6 +58,7 @@ public class Program
 #if grpc
     SuperheroModule.ConfigureServices(aServiceCollection, aConfiguration);
 #endif
+    aServiceCollection.AddSingleton(aServiceCollection);
   }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
