@@ -2,41 +2,53 @@
 @inherits BaseComponent
 
 <div class="flex flex-col min-h-screen font-sans">
-  @if (ShowNavBar)
-  {
-    <DarkNavBar />
-  }
+    @if (ShowNavBar)
+    {
+        <DarkNavBar />
+    }
 
-  @if (HeaderContent != null)
-  {
-    <header class="bg-white shadow" data-qa="HomeHeader">
-      <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold leading-tight text-gray-900">
-          @HeaderContent
-        </h1>
-      </div>
-    </header>
-  }
+    @if (HeaderContent != null)
+    {
+        <header class="bg-white shadow" data-qa="HomeHeader">
+            <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <h1 class="text-3xl font-bold leading-tight text-gray-900">
+                    @HeaderContent
+                </h1>
+            </div>
+        </header>
+    }
 
-  <main class="grow">
-    <div class="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      @if (@MainContent != null)
-      {
-        @MainContent
-      }
-      else
-      {
-        <div class="h-full border-4 border-gray-200 border-dashed rounded-lg">
-          Add Your Content here.
+    <main class="grow">
+        <div class="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+            @if (@MainContent != null)
+            {
+                @MainContent
+            }
+            else
+            {
+                <div class="h-full border-4 border-gray-200 border-dashed rounded-lg">
+                    Add Your Content here.
+                </div>
+            }
         </div>
-      }
-    </div>
-  </main>
+    </main>
     @if (SiteFooterContent != null)
     {
-      @SiteFooterContent
-    } else
+        @SiteFooterContent
+    }
+    else
     {
-      <SiteFooter/>
+        <SiteFooter />
     }
 </div>
+
+<!-- Absolute Position Items -->
+@if (ModalContent != null)
+{
+  <ModalController ActiveModalId=@ActiveModalId>
+    <ModalContainers>
+      @ModalContent
+    </ModalContainers>
+  </ModalController>
+}
+<!-- End Absolute Position Items -->
