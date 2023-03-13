@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Features.Notifications;
 
-[TwBaseSpa]
+[StateAccessMixin]
 public partial class NotificationState : State<NotificationState>
 {
   private List<Notification> _Notifications;

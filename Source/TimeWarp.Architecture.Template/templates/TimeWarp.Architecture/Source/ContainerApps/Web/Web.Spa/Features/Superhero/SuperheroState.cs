@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Features.Superheros;
 
-[TwBaseSpa]
+[StateAccessMixin]
 internal partial class SuperheroState : State<SuperheroState>
 {
   private readonly List<SuperheroDto> _Superheros;

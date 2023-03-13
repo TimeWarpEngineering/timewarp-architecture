@@ -52,9 +52,7 @@
 }}
 
 namespace {{ moxy.Class.Namespace }}
-{
-  // using Microsoft.AspNetCore.Components;
-  
+{ 
   partial record {{ moxy.Class.Name }}
   {
     public const string RouteTemplate = "{{ RouteTemplate }}";

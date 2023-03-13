@@ -7,7 +7,7 @@ public class HelloEndpoint : BaseEndpoint<HelloRequest, HelloResponse>
   /// </summary>
   /// <param name="aHelloRequest"><see cref="HelloRequest"/></param>
   /// <returns><see cref="HelloResponse"/></returns>
-  [HttpGet(HelloRequest.Route)]
+  [HttpGet(HelloRequest.RouteTemplate)]
   [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
   [ProducesResponseType(typeof(HelloResponse), (int)HttpStatusCode.OK)]
   [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]

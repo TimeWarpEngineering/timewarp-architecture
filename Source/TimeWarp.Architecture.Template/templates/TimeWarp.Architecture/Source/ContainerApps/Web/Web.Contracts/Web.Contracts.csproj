@@ -13,7 +13,7 @@
     <AdditionalFiles Include="..\..\..\..\DependencyValidation\DependencyValidation1.layerdiagram" Link="DependencyValidation1.layerdiagram">
       <Visible>False</Visible>
     </AdditionalFiles>
-    <AdditionalFiles Include="Mixins\Route.mixin" />
+    <AdditionalFiles Include="Mixins\RouteMixin.mixin" />
     <AdditionalFiles Include="Mixins\CreateCommand.mixin" />
   </ItemGroup>
 
@@ -25,6 +25,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.ServiceModel.Primitives" />
   </ItemGroup>

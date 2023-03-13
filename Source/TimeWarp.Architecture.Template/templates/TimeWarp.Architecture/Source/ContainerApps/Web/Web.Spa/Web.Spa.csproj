@@ -73,7 +73,7 @@
   <ItemGroup>
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*" />
     <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
-    <AdditionalFiles Include="Features\Base\TwBaseSpa.mixin" />
+    <AdditionalFiles Include="Features\Base\StateAccessMixin.mixin" />
     <AdditionalFiles Include="Mixins\Page.mixin" />
   </ItemGroup>
 

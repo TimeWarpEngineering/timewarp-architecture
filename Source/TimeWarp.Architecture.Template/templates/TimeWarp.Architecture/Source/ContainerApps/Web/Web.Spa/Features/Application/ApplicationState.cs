@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Applications;
 
-[TwBaseSpa]
+[StateAccessMixin]
 internal partial class ApplicationState : State<ApplicationState>
 {
   private List<string> _ProcessingList;

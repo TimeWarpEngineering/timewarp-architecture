@@ -7,7 +7,7 @@ public class TrackEventEndpoint : BaseEndpoint<TrackEventRequest, TrackEventResp
   /// </summary>
   /// <param name="aTrackEventRequest"><see cref="TrackEventRequest"/></param>
   /// <returns><see cref="TrackEventResponse"/></returns>
-  [HttpPost(TrackEventRequest.Route)]
+  [HttpPost(TrackEventRequest.RouteTemplate)]
   [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
   [ProducesResponseType(typeof(TrackEventResponse), (int)HttpStatusCode.OK)]
   [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
