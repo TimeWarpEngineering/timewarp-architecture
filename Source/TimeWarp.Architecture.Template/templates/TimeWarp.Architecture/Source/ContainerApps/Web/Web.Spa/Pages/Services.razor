@@ -1,0 +1,25 @@
+﻿@page "/services"
+
+<h1 class="text-xl font-bold">Registered Services</h1>
+<div class="grid grid-cols-1 gap-3 mt-4">
+    @foreach (var service in ServiceCollection)
+    {
+        <div class="p-4 bg-white shadow-md rounded-lg">
+            <div class="text-gray-600 mb-2 text-lg font-semibold">@(ServiceCollection.IndexOf(service) + 1) - @service.ServiceType</div>
+            <div class="flex justify-between text-gray-500 text-sm">
+                <div class="font-medium">Lifetime:</div>
+                <div class="font-semibold">@service.Lifetime</div>
+            </div>
+            <div class="flex justify-between text-gray-500 text-sm">
+                <div class="font-medium">Implementation Type:</div>
+                <div class="font-semibold">@service.ImplementationType</div>
+            </div>
+        </div>
+    }
+</div>
+
+@code
+{
+    [Inject]
+    private IServiceCollection ServiceCollection { get; set; } = null!;
+}
