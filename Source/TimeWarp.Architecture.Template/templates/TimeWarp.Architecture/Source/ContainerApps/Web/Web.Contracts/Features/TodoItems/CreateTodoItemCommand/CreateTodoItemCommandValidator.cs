@@ -1,9 +1,9 @@
-// namespace TimeWarp.Architecture.Features.TodoItems;
-//
-// public class CreateTodoItemCommandValidator: AbstractValidator<CreateTodoItemCommand>
-// {
-//   public CreateTodoItemCommandValidator()
-//   {
-//     RuleFor(command => command.Title).NotEmpty();
-//   }
-// }
+namespace TimeWarp.Architecture.Features.TodoItems;
+
+public partial class CreateTodoItemCommandValidator
+{
+  public CreateTodoItemCommandValidator()
+  {
+    RuleFor(command => command.Title).NotEmpty();
+  }
+}

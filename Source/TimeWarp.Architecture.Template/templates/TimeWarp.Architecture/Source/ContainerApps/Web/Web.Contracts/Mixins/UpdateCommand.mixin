@@ -1,6 +1,6 @@
 {{
   $FeatureName = moxy.Class.Name | string.remove_last "Dto"
-  $Action = "Create"
+  $Action = "Update"
   $CommandName = $Action + $FeatureName + "Command"
   $ResponseName = $Action + $FeatureName + "Response"
   $CommandValidatorName = $CommandName + "Validator"

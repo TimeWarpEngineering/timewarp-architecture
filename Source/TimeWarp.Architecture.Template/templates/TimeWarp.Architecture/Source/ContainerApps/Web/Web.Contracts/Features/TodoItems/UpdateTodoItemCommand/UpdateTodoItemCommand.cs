@@ -1,11 +1,14 @@
 namespace TimeWarp.Architecture.Features.TodoItems;
 
-[RouteMixin("api/TodoItems", HttpVerb.Post)]
-public partial record CreateTodoItemCommand : IApiRequest
+public partial record UpdateTodoItemCommand
 {
-  public int ListId { get; init; }
+  public Guid TodoItemId { get; init; }
+
+  public Guid TodoListId { get; init; }
 
   public string Title { get; init; } = string.Empty;
+
+  public bool Done { get; init; }
 
   public int Priority { get; init; }
 

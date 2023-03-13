@@ -1,10 +1,11 @@
 namespace TimeWarp.Architecture.Features.TodoItems;
 
+[CreateCommand, UpdateCommand, DeleteCommand, GetQuery, GetListQuery]
 public class TodoItemDto
 {
-  public int Id { get; set; }
+  public Guid TodoItemId { get; set; }
 
-  public int ListId { get; set; }
+  public Guid TodoListId { get; set; }
 
   public string Title { get; set; } = string.Empty;
 

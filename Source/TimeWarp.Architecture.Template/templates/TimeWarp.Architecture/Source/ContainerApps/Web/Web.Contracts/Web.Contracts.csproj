@@ -13,8 +13,12 @@
     <AdditionalFiles Include="..\..\..\..\DependencyValidation\DependencyValidation1.layerdiagram" Link="DependencyValidation1.layerdiagram">
       <Visible>False</Visible>
     </AdditionalFiles>
+    <AdditionalFiles Include="Mixins\DeleteCommand.mixin" />
+    <AdditionalFiles Include="Mixins\GetListQuery.mixin" />
+    <AdditionalFiles Include="Mixins\GetQuery.mixin" />
     <AdditionalFiles Include="Mixins\RouteMixin.mixin" />
     <AdditionalFiles Include="Mixins\CreateCommand.mixin" />
+    <AdditionalFiles Include="Mixins\UpdateCommand.mixin" />
   </ItemGroup>
 
   <ItemGroup>
