@@ -13,6 +13,8 @@
     <AdditionalFiles Include="..\..\..\..\DependencyValidation\DependencyValidation1.layerdiagram" Link="DependencyValidation1.layerdiagram">
       <Visible>False</Visible>
     </AdditionalFiles>
+    <AdditionalFiles Include="Mixins\Route.mixin" />
+    <AdditionalFiles Include="Mixins\CreateCommand.mixin" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,10 +31,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Features\Todo\" />
   </ItemGroup>
 
 </Project>

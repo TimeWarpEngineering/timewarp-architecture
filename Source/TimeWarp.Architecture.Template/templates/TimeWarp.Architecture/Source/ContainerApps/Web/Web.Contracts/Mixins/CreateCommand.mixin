@@ -1,0 +1,16 @@
+// Anything
+{{
+  $FeatureName = moxy.Class.Name | string.remove_last "Dto"
+  $CommandName = "Create" + $FeatureName + "Command"
+  $ResponseName = "Create" + $FeatureName + "Response"
+  $CommandValidatorName = $CommandName + "Validator"
+}}
+
+// {{$FeatureName}}
+
+namespace {{ moxy.Class.Namespace }}
+{
+  public record {{$CommandName}} : BaseRequest, IApiRequest, IRequest<{{$ResponseName}}>{};
+  public record {{$ResponseName}} : BaseResponse;
+  public class {{$CommandValidatorName}}: AbstractValidator<{{$CommandName}}>{};
+}

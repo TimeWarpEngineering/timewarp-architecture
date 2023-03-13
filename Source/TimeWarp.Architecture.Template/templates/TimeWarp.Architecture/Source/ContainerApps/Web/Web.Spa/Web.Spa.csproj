@@ -27,7 +27,7 @@
     <PackageReference Include="timewarp-simple-icons" />
     <PackageReference Include="Toolbelt.Blazor.SplitContainer" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <!--#if(api)-->
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
@@ -42,6 +42,12 @@
 
   <ItemGroup>
     <!--<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />-->
+    <Folder Include="Components\Editors\" />
+    <Folder Include="Features\Notification\Actions\RemoveNotification\" />
+    <Folder Include="Features\Notification\Components\" />
+    <Folder Include="Features\ToDo\Actions" />
+    <Folder Include="Features\ToDo\Components" />
+    <Folder Include="Features\ToDo\Pages" />
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
   </ItemGroup>
@@ -66,10 +72,9 @@
 
   <ItemGroup>
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*" />
-    <None Remove="Mixins\Page.mixin" />
+    <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
     <AdditionalFiles Include="Features\Base\TwBaseSpa.mixin" />
     <AdditionalFiles Include="Mixins\Page.mixin" />
-    <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
   </ItemGroup>
 
   <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild" Inputs="@(TypeScriptInputs)" Outputs="@(TypeScriptOutputs)">
@@ -89,4 +94,5 @@
   <Target Name="NpmRunTailWind" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild" Inputs="..\Web.TypeScript\tailwind.config.js;..\Web.TypeScript\css\input.css" Outputs="wwwroot\css\site.css">
     <Exec Command="npm run tailwind" WorkingDirectory="..\Web.TypeScript\" />
   </Target>
+
 </Project>
