@@ -19,7 +19,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <Target Name="EmbedLocal" BeforeTargets="PrepareForBuild">    
+  <Target Name="EmbedLocal" BeforeTargets="PrepareForBuild">
     <!-- Include each file with given extension from None collection to EmbeddedResource-->
     <ItemGroup>
       <EmbeddedResource Include="@(None -> WithMetadataValue('Extension', '.scriban'))" />
@@ -33,5 +33,5 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-  
+
 </Project>
