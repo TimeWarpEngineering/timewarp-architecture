@@ -12,7 +12,7 @@ public class Program
       (aOptions) =>
       {
 #if ReduxDevToolsEnabled
-        aOptions.UseReduxDevTools(options => options.Trace = true);
+        aOptions.UseReduxDevTools(options => options.Trace = false);
 #endif
         aOptions.Assemblies =
           new Assembly[]
