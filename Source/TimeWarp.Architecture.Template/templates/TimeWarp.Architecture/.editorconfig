@@ -1,9 +1,9 @@
-﻿# EditorConfig is awesome:http://EditorConfig.org
+root = true
+# EditorConfig is awesome:http://EditorConfig.org
 # For dotnet and Csharp specific see below
 # https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
 
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
-root = true
 
 #### Core EditorConfig Options ####
 
@@ -23,6 +23,9 @@ tab_width = 2
 # New line preferences
 end_of_line = lf
 insert_final_newline = true
+
+# ReSharper properties
+resharper_html_attribute_indent = single_indent
 
 # Development files
 [*.{cs,csx,cshtml,csproj,razor,sln,props,targets,json,yml,gitignore,}]
@@ -183,11 +186,11 @@ dotnet_naming_rule.interface_should_be_begins_with_i.style = interface_style
 
 dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal
-dotnet_naming_symbols.interface.required_modifiers =
+dotnet_naming_symbols.interface.required_modifiers = 
 
 dotnet_naming_style.interface_style.required_prefix = I
-dotnet_naming_style.interface_style.required_suffix =
-dotnet_naming_style.interface_style.word_separator =
+dotnet_naming_style.interface_style.required_suffix = 
+dotnet_naming_style.interface_style.word_separator = 
 dotnet_naming_style.interface_style.capitalization = pascal_case
 
 # Types should be PascalCase
@@ -197,7 +200,7 @@ dotnet_naming_rule.types_should_be_pascal_case.style = types_style
 
 dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
 dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal
-dotnet_naming_symbols.types.required_modifiers =
+dotnet_naming_symbols.types.required_modifiers = 
 
 dotnet_naming_style.types_style.capitalization = pascal_case
 
@@ -235,8 +238,8 @@ dotnet_naming_style.static_field_style.required_prefix = s_
 
 # local variables should be camelCase
 dotnet_naming_rule.camel_case_for_local_variables.severity = suggestion
-dotnet_naming_rule.camel_case_for_local_variables.symbols  = local_variables
-dotnet_naming_rule.camel_case_for_local_variables.style    = local_variables_style
+dotnet_naming_rule.camel_case_for_local_variables.symbols = local_variables
+dotnet_naming_rule.camel_case_for_local_variables.style = local_variables_style
 
 dotnet_naming_symbols.local_variables.applicable_kinds = local
 
@@ -267,13 +270,13 @@ dotnet_code_quality.null_check_validation_methods = NotNull
 
 # CA1062: Validate arguments of public methods
 # TODO: Turn this back on when figure out how to get Dawn.Guard to not trigger it.
-dotnet_diagnostic.CA1062.severity = silent
+dotnet_diagnostic.ca1062.severity = silent
 
 # CA1308: Normalize strings to uppercase
-dotnet_diagnostic.CA1308.severity = none
+dotnet_diagnostic.ca1308.severity = none
 
 # Global Usings Analyzer
 
-dotnet_diagnostic.GlobalUsingsAnalyzer0001.filename = _Imports.cs
-dotnet_diagnostic.GlobalUsingsAnalyzer0002.enabled = true
-dotnet_diagnostic.GlobalUsingsAnalyzer0003.severity = warning
+dotnet_diagnostic.globalusingsanalyzer0001.filename = _Imports.cs
+dotnet_diagnostic.globalusingsanalyzer0002.enabled = true
+dotnet_diagnostic.globalusingsanalyzer0003.severity = warning
