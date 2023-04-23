@@ -34,19 +34,19 @@ Features/
 We use nested classes to group related classes within their respective command or query classes. One can use partial files (show above) if desired. This approach helps to keep the code organized and maintain a close relationship between the classes.
 
 ```csharp
-public partial class CommandOrQuery1
+public partial class Query1
 {
-    public class Command : IRequest<OneOf<SuccessResponse, ProblemDetails>>
+    public class Query : IRequest<OneOf<SuccessResponse, ProblemDetails>>
     {
         // ... properties
     }
 
     public class SuccessResponse
     {
-        public UserDto User { get; set; }
+        public MyExampleDto MyExample { get; set; }
     }
 
-    public class Validator : AbstractValidator<Command>
+    public class Validator : AbstractValidator<Query>
     {
         public Validator()
         {
@@ -54,12 +54,9 @@ public partial class CommandOrQuery1
         }
     }
 
-    public class UserDto
+    public class MyExampleDto
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Email { get; set; }
-        // ... other user properties
+        // ... properties
     }
 }
 ```
