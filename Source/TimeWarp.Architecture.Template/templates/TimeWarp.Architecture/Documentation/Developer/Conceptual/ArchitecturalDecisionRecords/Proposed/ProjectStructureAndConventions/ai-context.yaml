@@ -5,6 +5,7 @@ ai-context:
       - Commands and Queries separated in their respective folders
       - Nested classes for organizing commands, queries, responses, and validators
       - Use of partial files for nested classes (optional)
+      - IRequest and OneOf for handling request and multiple response types
     structure:
       - Features
         - Entity
@@ -15,9 +16,10 @@ ai-context:
               - Command1.Validator
           - Queries
             - Query1
-              - Query1.Request
+              - Query1.Query
               - Query1.SuccessResponse
               - Query1.Validator
     libraries:
       - OneOf: Handling multiple response types
       - FluentValidation: Request validation
+      - MediatR: Handling IRequest
