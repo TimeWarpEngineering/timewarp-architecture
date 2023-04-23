@@ -1,0 +1,23 @@
+ai-context:
+  contracts:
+    organization:
+      - Feature-based folder structure, grouped by entity
+      - Commands and Queries separated in their respective folders
+      - Nested classes for organizing commands, queries, responses, and validators
+      - Use of partial files for nested classes (optional)
+    structure:
+      - Features
+        - Entity
+          - Commands
+            - Command1
+              - Command1.Request
+              - Command1.SuccessResponse
+              - Command1.Validator
+          - Queries
+            - Query1
+              - Query1.Request
+              - Query1.SuccessResponse
+              - Query1.Validator
+    libraries:
+      - OneOf: Handling multiple response types
+      - FluentValidation: Request validation
