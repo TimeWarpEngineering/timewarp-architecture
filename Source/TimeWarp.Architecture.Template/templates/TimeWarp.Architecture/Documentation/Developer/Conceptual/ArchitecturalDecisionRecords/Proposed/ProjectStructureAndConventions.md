@@ -43,7 +43,7 @@ public partial class CommandOrQuery1
 
     public class SuccessResponse
     {
-        // ... properties
+        public UserDto User { get; set; }
     }
 
     public class Validator : AbstractValidator<Command>
@@ -52,6 +52,14 @@ public partial class CommandOrQuery1
         {
             // ... validation rules
         }
+    }
+
+    public class UserDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        // ... other user properties
     }
 }
 ```
