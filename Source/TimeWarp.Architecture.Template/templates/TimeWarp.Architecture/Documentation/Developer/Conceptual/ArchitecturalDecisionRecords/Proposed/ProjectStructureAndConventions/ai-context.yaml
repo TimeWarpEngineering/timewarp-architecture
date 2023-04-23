@@ -1,11 +1,15 @@
 ai-context:
+  container-app:
+    name: Web
   contracts:
     organization:
+      - use global using statements
       - Feature-based folder structure, grouped by entity
       - Commands and Queries separated in their respective folders
       - Nested classes for organizing commands, queries, responses, and validators
       - Use of partial files for nested classes (optional)
-      - IRequest and OneOf for handling request and multiple response types
+      - IRequest and OneOf for handling request, ProblemDetails, and exception response types
+      - namespace format is <container-app.name>.Contracts.Features.Entity; (do NOT descind beyond Entity)
     structure:
       - Features
         - Entity
@@ -13,11 +17,13 @@ ai-context:
             - Command1
               - Command1.Request
               - Command1.SuccessResponse
+              - Command1.<X>Dto
               - Command1.Validator
           - Queries
             - Query1
               - Query1.Query
               - Query1.SuccessResponse
+              - Query1.<X>Dto
               - Query1.Validator
     libraries:
       - OneOf: Handling multiple response types
