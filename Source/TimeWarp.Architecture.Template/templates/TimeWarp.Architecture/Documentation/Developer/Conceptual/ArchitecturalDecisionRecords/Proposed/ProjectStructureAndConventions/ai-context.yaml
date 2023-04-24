@@ -3,13 +3,15 @@ ai-context:
     name: Web
   contracts:
     organization:
-      - use global using statements
+      - Use global using statements
+        - do not generate using statements
       - Feature-based folder structure, grouped by entity
       - Commands and Queries separated in their respective folders
-      - Nested classes for organizing commands, queries, responses, and validators
+      - Nested classes for organizing commands, queries,responses, dtos and validators
       - Use of partial files for nested classes (optional)
       - IRequest and OneOf for handling request, ProblemDetails, and exception response types
-      - namespace format is <container-app.name>.Contracts.Features.Entity; (do NOT descind beyond Entity)
+      - namespace format: <container-app.name>.Contracts.Features.Entity
+        - exclude commands and queries subfolders in namespace
     structure:
       - Features
         - Entity
