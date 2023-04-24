@@ -6,8 +6,6 @@ ai-context:
       - Do NOT generate using statements
       - namespace format: <container-app.name>.Contracts.Features.Entity 
         - IMPORTANT: DO NOT GO DEEPER THAN ENTITY on the namespace!
-        - Valid Example: Web.Contracts.Features.Entity
-        - Invalid Example: Web.Contracts.Features.Entity.Commands
       - Feature-based folder structure, grouped by entity
       - Commands and Queries separated in their respective folders
       - Nested classes for organizing commands, queries,responses, dtos and validators
