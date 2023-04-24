@@ -2,21 +2,22 @@ ai-context:
   container-app:
     name: Web
   contracts:
-    organization:
-      - Use global using statements
-        - do not generate using statements
+    code gen rules:
+      - Do NOT generate using statements
+      - namespace format: <container-app.name>.Contracts.Features.Entity 
+        - IMPORTANT: DO NOT GO DEEPER THAN ENTITY on the namespace!
+        - Valid Example: Web.Contracts.Features.Entity
+        - Invalid Example: Web.Contracts.Features.Entity.Commands
       - Feature-based folder structure, grouped by entity
       - Commands and Queries separated in their respective folders
       - Nested classes for organizing commands, queries,responses, dtos and validators
       - Use of partial files for nested classes (optional)
       - IRequest and OneOf for handling request, ProblemDetails, and exception response types
-      - namespace format: <container-app.name>.Contracts.Features.Entity
-        - exclude commands and queries subfolders in namespace
     structure:
       - Features
         - Entity
           - Commands
-            - Command1
+            - Command1 # namespace Web.Contracts.Features.Entity;
               - Command1.Request
               - Command1.SuccessResponse
               - Command1.<X>Dto
