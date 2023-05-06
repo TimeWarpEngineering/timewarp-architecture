@@ -1,16 +1,18 @@
+
 ai-context:
+  IMPORTANT: Read and follow all of these rules!
   container-app:
     name: Web
   contracts:
     code gen rules:
-      - Do NOT generate using statements
-      - namespace format: <container-app.name>.Contracts.Features.Entity 
+      - IMPORTANT: DO NOT generate using statements
+      - namespace format: namespace <container-app.name>.Contracts.Features.Entity;
         - IMPORTANT: DO NOT GO DEEPER THAN ENTITY on the namespace!
+        - use file scoped namespaces, which do NOT use { } but instead use ;
       - Feature-based folder structure, grouped by entity
-      - Commands and Queries separated in their respective folders
-      - Nested classes for organizing commands, queries,responses, dtos and validators
-      - Use of partial files for nested classes (optional)
-      - IRequest and OneOf for handling request, ProblemDetails, and exception response types
+      - Nested sealed classes for organizing commands, queries,responses, dtos and validators
+      - Use of partial files for nested classes is optional
+      - IRequest and OneOf for handling request, ProblemDetails for error handling
     structure:
       - Features
         - Entity
