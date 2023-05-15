@@ -3,6 +3,4 @@
 /// <summary>
 /// Utlimate Base Class for Requests and Responses
 /// </summary>
-public abstract record BaseMessage
-{
-}
+public abstract record BaseMessage { }

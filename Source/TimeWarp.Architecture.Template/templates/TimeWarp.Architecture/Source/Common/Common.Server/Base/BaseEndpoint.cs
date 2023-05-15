@@ -1,10 +1,9 @@
 namespace TimeWarp.Architecture.Features;
 
-
 [ApiController]
 [Produces("application/json")]
 public class BaseEndpoint<TRequest, TResponse> : ControllerBase
-  where TRequest : IRequest<TResponse>
+  where TRequest : IRequest<OneOf<TResponse, SharedProblemDetails>>
   where TResponse : BaseResponse
 {
   private ISender? sender;
@@ -13,8 +12,12 @@ public class BaseEndpoint<TRequest, TResponse> : ControllerBase
 
   protected virtual async Task<IActionResult> Send(TRequest aRequest)
   {
-    TResponse response = await Sender.Send(aRequest).ConfigureAwait(false);
+    OneOf<TResponse, SharedProblemDetails> response = await Sender.Send(aRequest).ConfigureAwait(false);
 
-    return Ok(response);
+    return response.Match<ActionResult>
+    (
+      Ok,
+      problemDetails => StatusCode(problemDetails.Status ?? 400, problemDetails)
+    );
   }
 }
