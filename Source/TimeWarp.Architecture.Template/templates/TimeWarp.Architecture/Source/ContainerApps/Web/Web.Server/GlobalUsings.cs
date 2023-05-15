@@ -8,6 +8,7 @@ global using Microsoft.AspNetCore.Hosting;
 global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.AspNetCore.ResponseCompression;
 global using Microsoft.AspNetCore.Routing;
+global using Microsoft.AspNetCore.SignalR;
 global using Microsoft.Azure.Cosmos;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Configuration;
@@ -17,6 +18,8 @@ global using Microsoft.Extensions.Options;
 global using Microsoft.OpenApi.Models;
 global using Oakton;
 global using Oakton.Environment;
+global using OneOf;
+global using OneOf.Types;
 global using Swashbuckle.AspNetCore.Annotations;
 global using System.IO;
 global using System.Net;
@@ -31,6 +34,7 @@ global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.CorsPolicies;
 global using TimeWarp.Architecture.Data;
 global using TimeWarp.Architecture.Infrastructure;
+global using TimeWarp.Architecture.Types;
 global using TimeWarp.Architecture.Web.Infrastructure;
 
 #if(cosmosdb)
