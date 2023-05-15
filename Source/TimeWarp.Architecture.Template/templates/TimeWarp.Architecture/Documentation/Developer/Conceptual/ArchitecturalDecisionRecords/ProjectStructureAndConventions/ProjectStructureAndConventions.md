@@ -12,20 +12,20 @@ Features/
 │   ├── Commands/
 │   │   ├── Command1/
 │   │   │   ├── Command1.Command.cs
-│   │   │   ├── Command1.SuccessResponse.cs
+│   │   │   ├── Command1.Response.cs
 │   │   │   └── Command1.Validator.cs
 │   │   └── Command2/
 │   │       ├── Command2.Command.cs
-│   │       ├── Command2.SuccessResponse.cs
+│   │       ├── Command2.Response.cs
 │   │       └── Command2.Validator.cs
 │   └── Queries/
 │       ├── Query1/
 │       │   ├── Query1.Query.cs
-│       │   ├── Query1.SuccessResponse.cs
+│       │   ├── Query1.Response.cs
 │       │   └── Query1.Validator.cs
 │       └── Query2/
 │           ├── Query2.Query.cs
-│           ├── Query2.SuccessResponse.cs
+│           ├── Query2.Response.cs
 │           └── Query2.Validator.cs
 ```
 
