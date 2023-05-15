@@ -1,13 +1,10 @@
 namespace GetWeatherForecastsEndpoint_;
 
-using FluentAssertions;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.WeatherForecasts;
-using TimeWarp.Architecture.Testing;
+using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
 
 public class Returns
 {
-  private readonly GetWeatherForecastsRequest GetWeatherForecastsRequest;
+  private readonly Query Query;
   private readonly ApiTestServerApplication ApiTestServerApplication;
 
   public Returns
@@ -15,27 +12,27 @@ public class Returns
     ApiTestServerApplication aApiTestServerApplication
   )
   {
-    GetWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
+    Query = new Query { Days = 10 };
     ApiTestServerApplication = aApiTestServerApplication;
   }
 
   public async Task _10WeatherForecasts_Given_10DaysRequested()
   {
-    GetWeatherForecastsResponse getWeatherForecastsResponse =
-      await ApiTestServerApplication.GetResponse<GetWeatherForecastsResponse>(GetWeatherForecastsRequest);
+    Response response =
+      await ApiTestServerApplication.GetResponse<Response>(Query);
 
-    ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
+    ValidateGetWeatherForecastsResponse(response);
   }
 
   public async Task ValidationError()
   {
-    GetWeatherForecastsRequest.Days = -1;
+    Query.Days = -1;
 
-    await ApiTestServerApplication.ConfirmEndpointValidationError<GetWeatherForecastsResponse>(GetWeatherForecastsRequest, nameof(GetWeatherForecastsRequest.Days));
+    await ApiTestServerApplication.ConfirmEndpointValidationError<Response>(Query, nameof(Query.Days));
   }
 
-  private void ValidateGetWeatherForecastsResponse(GetWeatherForecastsResponse aGetWeatherForecastsResponse)
+  private void ValidateGetWeatherForecastsResponse(Response aGetWeatherForecastsResponse)
   {
-    aGetWeatherForecastsResponse.WeatherForecasts.Count.Should().Be(GetWeatherForecastsRequest.Days);
+    aGetWeatherForecastsResponse.WeatherForecasts.Count().Should().Be(Query.Days);
   }
 }

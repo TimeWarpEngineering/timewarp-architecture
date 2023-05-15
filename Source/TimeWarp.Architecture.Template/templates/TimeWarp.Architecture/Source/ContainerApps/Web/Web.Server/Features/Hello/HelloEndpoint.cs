@@ -1,16 +1,18 @@
 ﻿namespace TimeWarp.Architecture.Features.Hello;
 
-public class HelloEndpoint : BaseEndpoint<HelloRequest, HelloResponse>
+using static TimeWarp.Architecture.Features.Hello.Contracts.Hello;
+
+public class HelloEndpoint : BaseEndpoint<Query, Response>
 {
   /// <summary>
   /// Simple endpoint for testing
   /// </summary>
-  /// <param name="aHelloRequest"><see cref="HelloRequest"/></param>
-  /// <returns><see cref="HelloResponse"/></returns>
-  [HttpGet(HelloRequest.RouteTemplate)]
+  /// <param name="query"></param>
+  /// <returns></returns>
+  /// <returns><see cref="Response"/></returns>
+  [HttpGet(Query.Route)]
   [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
-  [ProducesResponseType(typeof(HelloResponse), (int)HttpStatusCode.OK)]
+  [ProducesResponseType(typeof(Response), (int)HttpStatusCode.OK)]
   [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
-  public Task<IActionResult> Process([FromQuery] HelloRequest aHelloRequest) => Send(aHelloRequest);
-
+  public Task<IActionResult> Process([FromQuery] Query query) => Send(query);
 }

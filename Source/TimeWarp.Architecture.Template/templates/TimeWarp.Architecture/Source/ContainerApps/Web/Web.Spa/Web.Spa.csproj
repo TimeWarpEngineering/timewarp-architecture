@@ -19,7 +19,7 @@
     <PackageReference Include="Microsoft.Tye.Extensions.Configuration" />
     <PackageReference Include="Morris.Blazor.ControlFlow" />
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true" />
-    <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" />
+    <PackageReference Include="Morris.Blazor.FluentValidation" />
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all" />
     <PackageReference Include="timewarp-heroicons" />
@@ -46,7 +46,6 @@
     <Folder Include="Features\Notification\Actions\RemoveNotification\" />
     <Folder Include="Features\Notification\Components\" />
     <Folder Include="Features\ToDo\Actions" />
-    <Folder Include="Features\ToDo\Components" />
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
   </ItemGroup>

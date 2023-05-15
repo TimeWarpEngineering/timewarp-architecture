@@ -1,33 +1,30 @@
 namespace GetWeatherForecastRequestValidator_;
 
-using FluentAssertions;
-using FluentValidation.Results;
-using FluentValidation.TestHelper;
-using TimeWarp.Architecture.Features.WeatherForecasts;
+using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
 
 public class Validate_Should
 {
-  private GetWeatherForecastsRequestValidator GetWeatherForecastsRequestValidator;
+  private Validator Validator;
 
   public void Be_Valid()
   {
-    var getWeatherForecastsRequest = new GetWeatherForecastsRequest
+    var query = new Query
     {
       Days = 5
     };
 
-    ValidationResult validationResult = GetWeatherForecastsRequestValidator.TestValidate(getWeatherForecastsRequest);
+    ValidationResult validationResult = Validator.TestValidate(query);
 
     validationResult.IsValid.Should().BeTrue();
   }
 
   public void Have_error_when_Days_are_negative()
   {
-    TestValidationResult<GetWeatherForecastsRequest> result =
-      GetWeatherForecastsRequestValidator.TestValidate(new GetWeatherForecastsRequest { Days = -1 });
+    TestValidationResult<Query> result =
+      Validator.TestValidate(new Query { Days = -1 });
 
-    result.ShouldHaveValidationErrorFor(aGetWeatherForecastsRequest => aGetWeatherForecastsRequest.Days);
+    result.ShouldHaveValidationErrorFor(query => query.Days);
   }
 
-  public void Setup() => GetWeatherForecastsRequestValidator = new GetWeatherForecastsRequestValidator();
+  public void Setup() => Validator = new Validator();
 }

@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.WeatherForecasts;
+namespace TimeWarp.Architecture.Features.WeatherForecasts.Contracts;
 
 /// <summary>
 /// The weather forecast

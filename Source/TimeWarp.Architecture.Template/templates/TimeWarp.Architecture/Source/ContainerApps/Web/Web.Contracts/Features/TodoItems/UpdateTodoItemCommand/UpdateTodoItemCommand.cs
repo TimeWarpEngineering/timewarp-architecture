@@ -1,5 +1,6 @@
-namespace TimeWarp.Architecture.Features.TodoItems;
+namespace TimeWarp.Architecture.Features.TodoItems.Contracts;
 
+//[RouteMixin("api/TodoItems/{TodoItemId:Guid}", HttpVerb.Post)]
 public partial record UpdateTodoItemCommand
 {
   public Guid TodoItemId { get; init; }

@@ -38,6 +38,7 @@ public class Program
           aServiceCollection.Remove(serviceDescriptor);
         }
     );
+    aServiceCollection.AddSingleton(s => new TimeWarpHubConnection(aConfiguration[TimeWarpHubConnection.Route]));
 
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));

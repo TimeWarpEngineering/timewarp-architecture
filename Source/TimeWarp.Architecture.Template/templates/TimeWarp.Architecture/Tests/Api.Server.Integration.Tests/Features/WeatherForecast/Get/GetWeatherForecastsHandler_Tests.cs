@@ -1,13 +1,9 @@
 namespace GetWeatherForecastsHandler;
 
-using FluentAssertions;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.WeatherForecasts;
-using TimeWarp.Architecture.Testing;
-
+using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
 public class Handle_Returns
 {
-  private readonly GetWeatherForecastsRequest GetWeatherForecastsRequest;
+  private readonly Query Query;
   private readonly ApiTestServerApplication ApiTestServerApplication;
 
   public Handle_Returns
@@ -15,20 +11,31 @@ public class Handle_Returns
      ApiTestServerApplication aApiTestServerApplication
   )
   {
-    GetWeatherForecastsRequest = new GetWeatherForecastsRequest { Days = 10 };
+    Query = new Query { Days = 10 };
     ApiTestServerApplication = aApiTestServerApplication;
   }
 
   public async Task _10WeatherForecasts_Given_10DaysRequested()
   {
-    GetWeatherForecastsResponse getWeatherForecastsResponse = await ApiTestServerApplication.Send(GetWeatherForecastsRequest);
+    OneOf<Response, SharedProblemDetails> result = await ApiTestServerApplication.Send(Query);
 
-    ValidateGetWeatherForecastsResponse(getWeatherForecastsResponse);
+    ValidateResult(result);
   }
 
-  private void ValidateGetWeatherForecastsResponse(GetWeatherForecastsResponse aGetWeatherForecastsResponse)
+  private void ValidateResult(OneOf<Response, SharedProblemDetails> result)
   {
-    aGetWeatherForecastsResponse.WeatherForecasts.Count.Should().Be(GetWeatherForecastsRequest.Days);
+    result.Switch
+    (
+      response =>
+      {
+        response.Should().NotBeNull();
+        response.WeatherForecasts.Count().Should().Be(Query.Days);
+      },
+      problemDetails =>
+      {
+        // This should not happen in a successful case
+        Execute.Assertion.FailWith("The SignIn handler returned SharedProblemDetails instead of a successful response.");
+      }
+    );
   }
-
 }

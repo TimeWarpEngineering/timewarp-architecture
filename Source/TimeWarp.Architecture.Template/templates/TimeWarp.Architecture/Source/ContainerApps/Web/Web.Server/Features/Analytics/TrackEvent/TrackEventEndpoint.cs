@@ -1,15 +1,16 @@
-﻿namespace TimeWarp.Architecture.Features.Analytics.TrackEvent;
+﻿namespace TimeWarp.Architecture.Features.Analytics.Server;
 
-public class TrackEventEndpoint : BaseEndpoint<TrackEventRequest, TrackEventResponse>
+using static TimeWarp.Architecture.Features.Analytics.Contracts.TrackEvent;
+public class TrackEventEndpoint : BaseEndpoint<Command, Response>
 {
   /// <summary>
   /// Track events in analytics
   /// </summary>
-  /// <param name="aTrackEventRequest"><see cref="TrackEventRequest"/></param>
-  /// <returns><see cref="TrackEventResponse"/></returns>
-  [HttpPost(TrackEventRequest.RouteTemplate)]
+  /// <param name="command"></param>
+  /// <returns></returns>
+  [HttpPost(Command.Route)]
   [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
-  [ProducesResponseType(typeof(TrackEventResponse), (int)HttpStatusCode.OK)]
+  [ProducesResponseType(typeof(Response), (int)HttpStatusCode.OK)]
   [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
-  public Task<IActionResult> Process([FromBody] TrackEventRequest aTrackEventRequest) => Send(aTrackEventRequest);
+  public Task<IActionResult> Process([FromBody] Command command) => Send(command);
 }

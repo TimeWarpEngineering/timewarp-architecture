@@ -1,10 +1,56 @@
 ﻿@namespace TimeWarp.Architecture.Components
 
-<h3>FormContainer</h3>
+<div class="w-screen max-w-2xl">
+  <div class="h-full divide-y divide-gray-200 flex flex-col bg-white shadow-xl">
+    <div class="min-h-0 flex-1 flex flex-col py-6 space-y-6 overflow-y-scroll">
+      <header class="px-4 sm:px-6">
+        <div class="flex items-start justify-between space-x-3">
+          <h2 class="text-lg leading-7 font-medium text-gray-900">
+            @TitleContent
+          </h2>
+          <div class="h-7 flex items-center">
+            @if (TitleButtonContent == null)
+            {
+              <button
+                aria-label="Close panel"
+                class="text-gray-400 hover:text-gray-500 transition ease-in-out duration-150"
+                @onclick=CloseSidePanel>
+                <TimeWarp.HeroIcons.Outline.XCircleIcon class="h-8 w-8"/>
+              </button>
+            }
+            else
+            {
+              @TitleButtonContent
+            }
+          </div>
+        </div>
+      </header>
+      <div class="relative flex-1 px-4 sm:px-6">
+        @MainContent
+      </div>
+    </div>
+    <div class="flex-shrink-0 px-4 py-4 space-x-4 flex justify-end">
+      @ActionContent
+    </div>
+  </div>
+</div>
 
 @code {
-    [Parameter] public RenderFragment MainContent { get; set; }
-    [Parameter] public RenderFragment TitleContent { get; set; }
-    [Parameter] public RenderFragment ActionContent { get; set; }
-    [Parameter] public RenderFragment TitleButtonContent { get; set; }
+
+  [Parameter]
+  public RenderFragment MainContent { get; set; }
+
+  [Parameter]
+  public RenderFragment TitleContent { get; set; }
+
+  [Parameter]
+  public RenderFragment ActionContent { get; set; }
+
+  [Parameter]
+  public RenderFragment TitleButtonContent { get; set; }
+
+  private void CloseSidePanel()
+  {
+    throw new NotImplementedException();
+  }
 }

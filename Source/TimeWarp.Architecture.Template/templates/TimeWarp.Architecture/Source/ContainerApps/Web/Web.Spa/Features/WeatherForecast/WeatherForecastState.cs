@@ -1,15 +1,15 @@
-namespace TimeWarp.Architecture.Features.WeatherForecasts;
+namespace TimeWarp.Architecture.Features.WeatherForecasts.Spa;
 
 [StateAccessMixin]
 internal partial class WeatherForecastsState : State<WeatherForecastsState>
 {
-  private List<WeatherForecastDto> _WeatherForecasts;
+  private List<Contracts.WeatherForecastDto> _WeatherForecasts { get; set; }
 
-  public IReadOnlyList<WeatherForecastDto> WeatherForecasts => _WeatherForecasts.AsReadOnly();
+  public IReadOnlyList<Contracts.WeatherForecastDto> WeatherForecasts => _WeatherForecasts.AsReadOnly();
 
   public WeatherForecastsState()
   {
-    _WeatherForecasts = new List<WeatherForecastDto>();
+    _WeatherForecasts = new List<Contracts.WeatherForecastDto>();
   }
 
   public override void Initialize() { }

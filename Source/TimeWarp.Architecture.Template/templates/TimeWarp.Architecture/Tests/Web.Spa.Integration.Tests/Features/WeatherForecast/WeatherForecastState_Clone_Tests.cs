@@ -1,12 +1,6 @@
-namespace WeatherForecastsState;
+namespace WeatherForecastsState_;
 
-using AnyClone;
-using FluentAssertions;
-using System;
-using System.Collections.Generic;
-using TimeWarp.Architecture.Features.WeatherForecasts;
-using TimeWarp.Architecture.Testing;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
+
 
 public class Clone_Should : BaseTest
 {

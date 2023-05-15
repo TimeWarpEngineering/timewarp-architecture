@@ -1,0 +1,36 @@
+@namespace TimeWarp.Architecture.Features.ToDo
+@inherits BaseComponent
+
+<FormContainer>
+  <TitleContent>
+    Form Title
+  </TitleContent>
+  <TitleButtonContent>
+    <Button
+      Variant=Button.ButtonVariant.Navigation
+      type="button"
+      aria-label="Back"
+      class="text-gray-400 hover:text-gray-500 transition ease-in-out duration-150"
+      @onclick=Back>
+      <SvgIcon>
+        <TimeWarp.HeroIcons.Outline.ArrowLeftCircleIcon class="h-8 w-8"/>
+      </SvgIcon>
+    </Button>
+  </TitleButtonContent>
+  <MainContent>
+    <TodoItemForm/>
+  </MainContent>
+  <ActionContent>
+    <Button type="submit" form=@nameof(TodoItemForm)>
+      Save
+    </Button>
+  </ActionContent>
+</FormContainer>
+@code {
+
+  private void Back()
+  {
+    throw new NotImplementedException();
+  }
+
+}

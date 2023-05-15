@@ -1,0 +1,29 @@
+﻿@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
+
+<PageTitle>TimeWarp.Architecture Chat</PageTitle>
+<PageComponent>
+    <HeaderContent>Chat</HeaderContent>
+    <MainContent>
+        <div class="form-group">
+          <label for="user">User</label>
+          <input type="text" class="form-control" id="user" @bind=User />
+        </div>
+        <div class="form-group">
+          <label for="message">Message</label>
+          <input type="text" class="form-control" id="message" @bind=Message @onkeydown=HandleKeyDown />
+        </div>
+        <button class="btn btn-primary" @onclick=SendMessage>Send</button>
+
+        <hr />
+
+        <ul class="list-group">
+            @foreach (var chatMessage in ChatMessages)
+            {
+              <li class="list-group-item">@chatMessage</li>
+            }
+        </ul>
+    </MainContent>
+</PageComponent>
+
+

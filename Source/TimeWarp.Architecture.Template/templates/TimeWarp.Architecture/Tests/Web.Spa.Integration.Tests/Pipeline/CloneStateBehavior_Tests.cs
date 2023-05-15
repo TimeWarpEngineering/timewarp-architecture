@@ -1,12 +1,6 @@
 namespace CloneStateBehavior;
 
-using FluentAssertions;
-using System;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.Counters;
-using TimeWarp.Architecture.Testing;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
-using static TimeWarp.Architecture.Features.Counters.CounterState;
+using static TimeWarp.Architecture.Features.Counters.Spa.CounterState;
 
 public class Should : BaseTest
 {
@@ -41,11 +35,11 @@ public class Should : BaseTest
 
     // Act
     var throwExceptionAction =
-      new ThrowExceptionAction (Message: "Test Rollback of State");
+      new ThrowExceptionAction(Message: "Test Rollback of State");
 
-  await Send(throwExceptionAction);
+    await Send(throwExceptionAction);
 
-  // Assert State was rolled back and thus Guid didn't change.
-  CounterState.Guid.Equals(preActionGuid);
+    // Assert State was rolled back and thus Guid didn't change.
+    CounterState.Guid.Equals(preActionGuid);
   }
 }

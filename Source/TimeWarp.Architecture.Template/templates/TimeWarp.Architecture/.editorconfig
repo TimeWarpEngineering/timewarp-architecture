@@ -277,6 +277,6 @@ dotnet_diagnostic.ca1308.severity = none
 
 # Global Usings Analyzer
 
-dotnet_diagnostic.globalusingsanalyzer0001.filename = _Imports.cs
+dotnet_diagnostic.globalusingsanalyzer0001.filename = GlobalUsings.cs
 dotnet_diagnostic.globalusingsanalyzer0002.enabled = true
 dotnet_diagnostic.globalusingsanalyzer0003.severity = warning

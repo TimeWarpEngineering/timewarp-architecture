@@ -2,11 +2,11 @@ namespace TimeWarp.Architecture.Features;
 
 public partial class BaseComponent : BlazorStateDevToolsComponent
 {
-  internal {{ moxy.Class.Name }} {{ moxy.Class.Name }} => GetState<{{ moxy.Class.Name }}>();
+  internal {{moxy.Class.Namespace}}.{{ moxy.Class.Name }} {{ moxy.Class.Name }} => GetState<{{moxy.Class.Namespace}}.{{ moxy.Class.Name }}>();
 }
 
 internal abstract partial class BaseHandler<TAction> : ActionHandler<TAction>
   where TAction : IAction
 {
-  protected {{ moxy.Class.Name }} {{ moxy.Class.Name }} => Store.GetState<{{ moxy.Class.Name }}>();
+  protected {{moxy.Class.Namespace}}.{{ moxy.Class.Name }} {{ moxy.Class.Name }} => Store.GetState<{{moxy.Class.Namespace}}.{{ moxy.Class.Name }}>();
 }

@@ -1,7 +1,7 @@
-﻿namespace TimeWarp.Architecture.Features.Notifications;
+﻿namespace TimeWarp.Architecture.Features.Notifications.Spa;
 
 [StateAccessMixin]
-public partial class NotificationState : State<NotificationState>
+internal partial class NotificationState : State<NotificationState>
 {
   private List<Notification> _Notifications;
 

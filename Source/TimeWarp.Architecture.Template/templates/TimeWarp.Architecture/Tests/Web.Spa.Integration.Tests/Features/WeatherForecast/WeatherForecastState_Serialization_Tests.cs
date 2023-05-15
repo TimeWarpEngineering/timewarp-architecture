@@ -1,4 +1,4 @@
-namespace WeatherForecastDto;
+namespace WeatherForecastDto_;
 
 using FluentAssertions;
 using System;

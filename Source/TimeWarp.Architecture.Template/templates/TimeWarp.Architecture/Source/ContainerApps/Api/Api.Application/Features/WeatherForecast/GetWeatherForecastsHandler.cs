@@ -1,6 +1,8 @@
-namespace TimeWarp.Architecture.Features.WeatherForecasts;
+namespace TimeWarp.Architecture.Features.WeatherForecasts.Application;
 
-public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
+using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
+
+public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
 {
   private readonly string[] Summaries = new[]
   {
@@ -16,9 +18,9 @@ public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsReq
     "Scorching"
   };
 
-  public Task<GetWeatherForecastsResponse> Handle
+  public Task<OneOf<Response, SharedProblemDetails>> Handle
   (
-    GetWeatherForecastsRequest aGetWeatherForecastsRequest,
+    Query query,
     CancellationToken aCancellationToken
   )
   {
@@ -26,7 +28,7 @@ public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsReq
 
     List<WeatherForecastDto> weatherForecastDtos = new();
 
-    Enumerable.Range(1, aGetWeatherForecastsRequest.Days).ToList().ForEach
+    Enumerable.Range(1, query.Days).ToList().ForEach
     (
       aIndex => weatherForecastDtos.Add
       (
@@ -38,8 +40,8 @@ public class GetWeatherForecastsHandler : IRequestHandler<GetWeatherForecastsReq
         )
       )
     );
-    var response = new GetWeatherForecastsResponse(weatherForecastDtos);
+    var response = new Response(weatherForecastDtos);
 
-    return Task.FromResult(response);
+    return Task.FromResult((OneOf<Response, SharedProblemDetails>)response);
   }
 }

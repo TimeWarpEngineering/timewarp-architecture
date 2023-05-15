@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.Applications;
+namespace TimeWarp.Architecture.Features.Applications.Spa;
 
 using BlazorState;
 using Microsoft.JSInterop;

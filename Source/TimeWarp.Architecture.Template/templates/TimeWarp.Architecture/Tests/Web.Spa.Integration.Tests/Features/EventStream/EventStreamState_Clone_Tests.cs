@@ -1,9 +1,9 @@
-namespace EventStreamState;
+namespace EventStreamState_;
 
 using AnyClone;
 using FluentAssertions;
 using System.Collections.Generic;
-using TimeWarp.Architecture.Features.EventStreams;
+using TimeWarp.Architecture.Features.EventStreams.Spa;
 using TimeWarp.Architecture.Testing;
 using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 

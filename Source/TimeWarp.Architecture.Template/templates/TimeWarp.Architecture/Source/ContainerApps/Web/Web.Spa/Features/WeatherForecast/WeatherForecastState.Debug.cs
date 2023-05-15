@@ -1,11 +1,4 @@
-namespace TimeWarp.Architecture.Features.WeatherForecasts;
-
-using BlazorState;
-using Dawn;
-using Microsoft.JSInterop;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Text.Json;
+namespace TimeWarp.Architecture.Features.WeatherForecasts.Spa;
 
 internal partial class WeatherForecastsState : State<WeatherForecastsState>
 {
@@ -15,14 +8,14 @@ internal partial class WeatherForecastsState : State<WeatherForecastsState>
 
     var newWeatherForecastsState = new WeatherForecastsState()
     {
-      _WeatherForecasts = JsonSerializer.Deserialize<List<WeatherForecastDto>>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
+      _WeatherForecasts = JsonSerializer.Deserialize<List<Contracts.WeatherForecastDto>>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
       Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
     };
 
     return newWeatherForecastsState;
   }
 
-  internal void Initialize(List<WeatherForecastDto> aWeatherForecastList)
+  internal void Initialize(List<Contracts.WeatherForecastDto> aWeatherForecastList)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
     _WeatherForecasts = Guard.Argument(aWeatherForecastList, nameof(aWeatherForecastList)).NotNull();
