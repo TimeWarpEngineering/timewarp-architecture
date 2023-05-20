@@ -8,19 +8,29 @@ ai-context:
     structure:
       - ContainerApps
         - Api
+          - Api.Application
+          - Api.Contracts
+          - Api.Domain
+          - Api.Infrastructure
+          - Api.Server
         - Web
           - Web.Application
           - Web.Contracts
           - Web.Domain
           - Web.Infrastructure
           - Web.Server
+            - SignalR Hub
           - Web.Spa (Blazor WASM)
+            - SignalR Client
+            - Tailwind CSS
           - Web.TypeScript
         - Grpc
+          - Grpc.Application
+          - Grpc.Contracts
+          - Grpc.Domain
+          - Grpc.Infrastructure
+          - Grpc.Server
         - Yarp
-    signalr:
-      usage: Real-time communication for multiplayer gaming
-      integration: Web.Server and Web.Spa (Blazor WASM)
   database:
     type: PostgreSQL
     config:
