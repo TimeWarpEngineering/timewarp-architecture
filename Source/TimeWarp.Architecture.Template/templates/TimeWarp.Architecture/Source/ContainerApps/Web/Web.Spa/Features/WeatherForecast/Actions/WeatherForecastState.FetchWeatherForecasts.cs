@@ -23,11 +23,10 @@ internal partial class WeatherForecastsState
     {
       IApiRequest getWeatherForecastsRequest = new Contracts.GetWeatherForecasts.Query { Days = 10 };
 
-      Contracts.GetWeatherForecasts.Response getWeatherForecastsResponse =
-        await WebApiService.GetResponse<Contracts.GetWeatherForecasts.Response>(getWeatherForecastsRequest)
-          .ConfigureAwait(false);
+      Contracts.GetWeatherForecasts.Response response =
+        await WebApiService.GetResponse<Contracts.GetWeatherForecasts.Response>(getWeatherForecastsRequest);
 
-      WeatherForecastsState._WeatherForecasts = getWeatherForecastsResponse.WeatherForecasts.ToList();
+      WeatherForecastsState._WeatherForecasts = response.WeatherForecasts.ToList();
     }
   }
 }
