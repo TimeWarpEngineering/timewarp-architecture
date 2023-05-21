@@ -1,10 +1,10 @@
 ﻿namespace TimeWarp.Architecture.Hubs;
 
-public class TimeWarpHub : Hub
+public class ChatHub : Hub
 {
   private readonly ISender Sender;
 
-  public TimeWarpHub(ISender sender)
+  public ChatHub(ISender sender)
   {
     Sender = sender;
   }

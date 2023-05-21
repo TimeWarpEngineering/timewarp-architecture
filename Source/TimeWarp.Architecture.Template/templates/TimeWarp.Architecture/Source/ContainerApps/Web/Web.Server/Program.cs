@@ -39,8 +39,11 @@ public class Program : IAspNetProgram
 #if(cosmosdb)
     CosmosDbModule.ConfigureServices(aServiceCollection, aConfiguration);
 #endif
+    //PostgresDbModule.ConfigureServices(aServiceCollection, aConfiguration);
+    aServiceCollection.AddSingleton<IHubClients>(sp => sp.GetRequiredService<IHubContext<ChatHub>>().Clients);
     CorsPolicy.Any.Apply(aServiceCollection);
     ConfigureInfrastructure(aServiceCollection);
+    aServiceCollection.AddSignalR();
     aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
     aServiceCollection.AddRazorPages();
     aServiceCollection.AddServerSideBlazor();
@@ -122,6 +125,7 @@ public class Program : IAspNetProgram
     CommonServerModule.ConfigureEndpoints(aWebApplication);
     aWebApplication.MapControllers();
     aWebApplication.MapBlazorHub();
+    aWebApplication.MapHub<ChatHub>(ChatHubConstants.Route);
     aWebApplication.MapFallbackToPage("/_Host");
   }
 

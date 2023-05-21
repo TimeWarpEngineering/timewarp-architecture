@@ -11,9 +11,9 @@ public sealed partial class ChatState
 
   internal sealed class SendMessageHandler : BaseHandler<SendMessageAction>
   {
-    private TimeWarpHubConnection TimeWarpHubConnection { get; set; }
+    private ChatHubConnection TimeWarpHubConnection { get; set; }
 
-    public SendMessageHandler(IStore store, TimeWarpHubConnection timeWarpHubConnection) : base(store)
+    public SendMessageHandler(IStore store, ChatHubConnection timeWarpHubConnection) : base(store)
     {
       TimeWarpHubConnection = timeWarpHubConnection;
     }

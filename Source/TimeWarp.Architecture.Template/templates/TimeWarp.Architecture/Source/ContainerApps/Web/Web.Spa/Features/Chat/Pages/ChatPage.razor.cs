@@ -9,7 +9,7 @@ public partial class ChatPage
   private string Message { get; set; } = string.Empty;
   private List<string> ChatMessages { get; set; } = new List<string>();
 
-  [Inject] private TimeWarpHubConnection TimeWarpHubConnection { get; set; }
+  [Inject] private ChatHubConnection TimeWarpHubConnection { get; set; }
   
 
   protected override async Task OnInitializedAsync()

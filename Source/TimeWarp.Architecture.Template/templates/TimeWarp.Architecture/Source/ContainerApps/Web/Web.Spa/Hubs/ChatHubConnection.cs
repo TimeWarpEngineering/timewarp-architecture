@@ -1,13 +1,13 @@
 ﻿namespace TimeWarp.Architecture.Hubs;
 
-public sealed class TimeWarpHubConnection : IDisposable
+public sealed class ChatHubConnection : IDisposable
 {
-  public const string Route = "/TimeWarpHub";
+  //public const string Route = "/TimeWarpHub";
   private readonly HubConnection HubConnection;
   public event Func<string, string, Task> OnReceiveMessage;
   public bool IsConnected => HubConnection.State == HubConnectionState.Connected;
 
-  public TimeWarpHubConnection(string hubUrl)
+  public ChatHubConnection(string hubUrl)
   {
     HubConnection = new HubConnectionBuilder()
     .WithUrl(hubUrl)
