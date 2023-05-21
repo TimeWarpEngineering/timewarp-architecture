@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Web.Spa;
 
-using Microsoft.Extensions.DependencyInjection;
-using TimeWarp.Architecture.Features.Chat.Contracts;
 using ServiceCollectionOptions = Configuration.ServiceCollectionOptions;
 
 public class Program

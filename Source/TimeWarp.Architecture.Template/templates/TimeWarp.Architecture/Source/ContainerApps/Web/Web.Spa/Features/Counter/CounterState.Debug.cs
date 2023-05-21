@@ -1,12 +1,5 @@
 namespace TimeWarp.Architecture.Features.Counters.Spa;
 
-using BlazorState;
-using Microsoft.JSInterop;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Reflection;
-
 internal partial class CounterState : State<CounterState>
 {
   public override CounterState Hydrate(IDictionary<string, object> aKeyValuePairs)

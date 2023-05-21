@@ -1,7 +1,5 @@
 namespace WeatherForecastDto_;
 
-using System.Text.Json;
-
 using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
 
 public class Should

@@ -1,6 +1,5 @@
 namespace TimeWarp.Architecture.JsonSerializer.Tests;
 
-using System;
 internal class Person
 {
   public DateTime? BirthDay { get; set; }

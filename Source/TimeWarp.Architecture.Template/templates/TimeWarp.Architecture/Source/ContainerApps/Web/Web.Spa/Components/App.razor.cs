@@ -4,16 +4,17 @@ public partial class App : ComponentBase
 {
   [Inject] private ClientLoader ClientLoader { get; set; }
   [Inject] private JsonRequestHandler JsonRequestHandler { get; set; }
-#if ReduxDevToolsEnabled
+  #if DEBUG
   [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; }
-#endif
+  #endif
+
   [Inject] private RouteManager RouteManager { get; set; }
 
   protected override async Task OnAfterRenderAsync(bool aFirstRender)
   {
-#if ReduxDevToolsEnabled
+    #if DEBUG
     await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
-#endif
+    #endif
     await JsonRequestHandler.InitAsync().ConfigureAwait(false);
     await ClientLoader.LoadClient().ConfigureAwait(false);
   }

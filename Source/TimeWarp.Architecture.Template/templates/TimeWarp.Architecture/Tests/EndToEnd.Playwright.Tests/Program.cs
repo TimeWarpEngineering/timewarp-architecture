@@ -1,7 +1,4 @@
-﻿namespace EndToEnd.Playwright.Tests;
-
-using Microsoft.Playwright;
-using System.Threading.Tasks;
+﻿namespace EndToEnd.Playwright_.Tests;
 
 class Program
 {

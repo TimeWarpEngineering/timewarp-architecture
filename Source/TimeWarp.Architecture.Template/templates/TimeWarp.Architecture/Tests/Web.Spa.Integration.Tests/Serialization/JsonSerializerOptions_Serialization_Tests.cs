@@ -1,7 +1,5 @@
 namespace JsonSerializerOptions_;
 
-using TimeWarp.Architecture.JsonSerializer.Tests;
-
 public class JsonSerializer_Should
 {
   public void SerializeAndDeserializePerson()

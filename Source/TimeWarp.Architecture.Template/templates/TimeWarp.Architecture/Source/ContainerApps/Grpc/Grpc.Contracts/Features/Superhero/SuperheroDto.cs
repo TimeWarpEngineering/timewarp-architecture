@@ -1,8 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Features.Superheros;
 
-using ProtoBuf;
-using System;
-
 [ProtoContract]
 public class SuperheroDto
 {

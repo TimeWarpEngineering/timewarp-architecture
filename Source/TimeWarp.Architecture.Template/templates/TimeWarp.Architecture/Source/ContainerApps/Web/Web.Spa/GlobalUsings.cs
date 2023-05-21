@@ -20,11 +20,14 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.JSInterop;
 global using Morris.Blazor.Validation;
+
 #if(grpc)
 global using ProtoBuf.Grpc.Client;
 #endif
+
 global using System;
 global using System.Diagnostics.CodeAnalysis;
+global using System.Globalization;
 global using System.Net.Http;
 global using System.Reflection;
 global using System.Text.Json;
@@ -37,6 +40,7 @@ global using TimeWarp.Architecture.Extensions;
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.Applications.Spa;
+global using TimeWarp.Architecture.Features.Chat.Contracts;
 global using TimeWarp.Architecture.Features.Chat.Spa;
 global using TimeWarp.Architecture.Features.ClientLoaders;
 global using TimeWarp.Architecture.Features.EventStreams;

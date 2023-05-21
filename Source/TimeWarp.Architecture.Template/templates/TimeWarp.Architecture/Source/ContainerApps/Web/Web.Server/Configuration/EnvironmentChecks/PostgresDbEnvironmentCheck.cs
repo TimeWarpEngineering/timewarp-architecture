@@ -1,7 +1,6 @@
 ﻿// TOOD: This is copilot generated code, it needs to be reviewed and cleaned up
 namespace TimeWarp.Architecture.Configuration;
 
-using TimeWarp.Architecture.Persistence;
 public class PostgresDbEnvironmentCheck
 {
   private readonly PostgresDbOptions PostgresDbOptions;

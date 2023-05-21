@@ -1,8 +1,5 @@
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
-using Microsoft.Extensions.DependencyInjection;
-using TimeWarp.Architecture.Testing;
-
 class SpaTestConvention : TimeWarpTestingConvention
 {
 

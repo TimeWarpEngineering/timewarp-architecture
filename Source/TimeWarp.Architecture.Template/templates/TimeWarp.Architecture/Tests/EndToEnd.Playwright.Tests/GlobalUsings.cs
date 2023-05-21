@@ -1,1 +1,1 @@
-﻿// global using xyz;
+﻿global using Microsoft.Playwright;
