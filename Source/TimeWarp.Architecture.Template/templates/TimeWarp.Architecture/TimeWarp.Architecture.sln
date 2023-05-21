@@ -38,9 +38,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "Api", "{40FA15DA-FF57-49E7-AD29-3C6C12F29237}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Grpc", "Grpc", "{F549E7AE-C09B-402D-8AEC-43013297EDC3}"
-	ProjectSection(SolutionItems) = preProject
-		AboutModal.razor = AboutModal.razor
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Web", "Web", "{A6A5A004-4F3D-46E8-BA25-BCEF3DB8A4E2}"
 EndProject

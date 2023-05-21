@@ -1,5 +1,7 @@
 namespace TimeWarp.Architecture.Web.Spa;
 
+using Microsoft.Extensions.DependencyInjection;
+using TimeWarp.Architecture.Features.Chat.Contracts;
 using ServiceCollectionOptions = Configuration.ServiceCollectionOptions;
 
 public class Program
@@ -38,7 +40,24 @@ public class Program
           aServiceCollection.Remove(serviceDescriptor);
         }
     );
-    aServiceCollection.AddSingleton(s => new TimeWarpHubConnection(aConfiguration[TimeWarpHubConnection.Route]));
+
+    aServiceCollection.AddScoped<ChatHubConnection>
+    (
+      serviceProvider =>
+      {
+        var navigationManager = serviceProvider.GetRequiredService<NavigationManager>();
+        var chatHubUrl = new Uri(new Uri(navigationManager.BaseUri), ChatHubConstants.Route);
+        return new ChatHubConnection(chatHubUrl.ToString());
+      }
+    );
+
+    //aServiceCollection.AddScoped((Func<IServiceProvider, ChatHubConnection>)(serviceProvider =>
+    //{
+    //  NavigationManager navigationManager = serviceProvider.GetRequiredService<NavigationManager>();
+    //  string chatHubUrl = $"{navigationManager.BaseUri}{Features.Chat.Contracts.ChatHubConstants.Route}";
+    //  return new ChatHubConnection(chatHubUrl);
+    //}));
+
 
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));

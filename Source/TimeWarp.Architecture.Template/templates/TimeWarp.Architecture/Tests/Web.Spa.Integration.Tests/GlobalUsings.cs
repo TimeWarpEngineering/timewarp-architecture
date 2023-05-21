@@ -1,5 +1,6 @@
 ﻿global using AnyClone;
 global using FluentAssertions;
+global using System.Text.Json;
 global using TimeWarp.Architecture.Features.Applications.Spa;
 global using TimeWarp.Architecture.Features.Counters.Spa;
 global using TimeWarp.Architecture.Features.WeatherForecasts.Spa;

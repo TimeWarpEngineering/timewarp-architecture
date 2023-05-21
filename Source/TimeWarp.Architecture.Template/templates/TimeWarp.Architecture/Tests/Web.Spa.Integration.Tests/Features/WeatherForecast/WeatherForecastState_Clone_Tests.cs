@@ -1,6 +1,6 @@
 namespace WeatherForecastsState_;
 
-
+using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
 
 public class Clone_Should : BaseTest
 {

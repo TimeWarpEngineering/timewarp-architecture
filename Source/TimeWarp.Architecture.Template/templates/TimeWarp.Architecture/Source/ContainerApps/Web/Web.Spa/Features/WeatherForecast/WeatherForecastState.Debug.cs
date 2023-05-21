@@ -1,5 +1,7 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts.Spa;
 
+using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
+
 internal partial class WeatherForecastsState : State<WeatherForecastsState>
 {
   public override WeatherForecastsState Hydrate(IDictionary<string, object> aKeyValuePairs)
@@ -8,14 +10,14 @@ internal partial class WeatherForecastsState : State<WeatherForecastsState>
 
     var newWeatherForecastsState = new WeatherForecastsState()
     {
-      _WeatherForecasts = JsonSerializer.Deserialize<List<Contracts.WeatherForecastDto>>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
-      Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
+      _WeatherForecasts = JsonSerializer.Deserialize<List<WeatherForecastDto>>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
+      Guid = new Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
     };
 
     return newWeatherForecastsState;
   }
 
-  internal void Initialize(List<Contracts.WeatherForecastDto> aWeatherForecastList)
+  internal void Initialize(List<WeatherForecastDto> aWeatherForecastList)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
     _WeatherForecasts = Guard.Argument(aWeatherForecastList, nameof(aWeatherForecastList)).NotNull();

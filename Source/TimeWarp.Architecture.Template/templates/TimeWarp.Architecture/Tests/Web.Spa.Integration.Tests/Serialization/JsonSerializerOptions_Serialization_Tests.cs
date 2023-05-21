@@ -1,8 +1,5 @@
-namespace JsonSerializerOptions;
+namespace JsonSerializerOptions_;
 
-using FluentAssertions;
-using System;
-using System.Text.Json;
 using TimeWarp.Architecture.JsonSerializer.Tests;
 
 public class JsonSerializer_Should
