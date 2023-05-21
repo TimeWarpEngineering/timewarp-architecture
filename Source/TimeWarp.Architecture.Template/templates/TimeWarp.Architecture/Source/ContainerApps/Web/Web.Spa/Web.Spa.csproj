@@ -3,6 +3,7 @@
   <PropertyGroup>
     <Description>Blazor Spa</Description>
     <DefineConstants>ReduxDevToolsEnabled;grpc;api;web;counter</DefineConstants>
+    <Nullable>disable</Nullable>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
   </PropertyGroup>
 

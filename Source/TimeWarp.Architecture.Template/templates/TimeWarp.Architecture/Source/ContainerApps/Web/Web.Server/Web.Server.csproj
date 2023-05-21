@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>cosmosdb</DefineConstants>
+    <DefineConstants>cosmosdb;postgres</DefineConstants>
   </PropertyGroup>
   
   <PropertyGroup>
