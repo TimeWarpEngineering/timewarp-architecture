@@ -14,5 +14,7 @@ global using Microsoft.AspNetCore.Mvc.ApplicationParts;
 global using OneOf;
 global using System.Linq;
 global using System.Reflection;
+
+// Solution usings
 global using TimeWarp.Architecture.Enumerations;
 global using TimeWarp.Architecture.Types;

@@ -20,11 +20,17 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.JSInterop;
 global using Morris.Blazor.Validation;
+#if(grpc)
+global using ProtoBuf.Grpc.Client;
+#endif
 global using System;
+global using System.Diagnostics.CodeAnalysis;
 global using System.Net.Http;
 global using System.Reflection;
 global using System.Text.Json;
 global using System.Threading.Tasks;
+
+// Solution usings
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.Extensions;
@@ -44,13 +50,12 @@ global using TimeWarp.Architecture.Features.Counters.Spa;
 global using TimeWarp.Architecture.Features.Counters;
 #endif
 
+#if(grpc)
+global using TimeWarp.Architecture.Features.Superheros;
+#endif
+
 #if(api)
 global using TimeWarp.Architecture.Features.WeatherForecast.Pages;
 global using TimeWarp.Architecture.Features.WeatherForecasts;
 #endif
 
-#if(grpc)
-global using TimeWarp.Architecture.Features.Superheros;
-global using ProtoBuf.Grpc.Client;
-#endif
-global using System.Diagnostics.CodeAnalysis;

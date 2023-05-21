@@ -16,6 +16,9 @@ global using Microsoft.Extensions.Diagnostics.HealthChecks;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Options;
 global using Microsoft.OpenApi.Models;
+#if(postgres)
+global using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
+#endif
 global using Oakton;
 global using Oakton.Environment;
 global using OneOf;
@@ -28,6 +31,8 @@ global using System.Net.Mime;
 global using System.Reflection;
 global using System.Threading;
 global using System.Threading.Tasks;
+
+// Solution usings
 global using TimeWarp.Architecture;
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
@@ -36,9 +41,9 @@ global using TimeWarp.Architecture.Data;
 global using TimeWarp.Architecture.Features.Chat.Contracts;
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Architecture.Infrastructure;
+global using TimeWarp.Architecture.Persistence;
 global using TimeWarp.Architecture.Types;
 global using TimeWarp.Architecture.Web.Infrastructure;
-
 #if(cosmosdb)
 global using TimeWarp.Architecture.HostedServices;
 #endif
