@@ -40,7 +40,7 @@ public class Program : IAspNetProgram
     CosmosDbModule.ConfigureServices(aServiceCollection, aConfiguration);
 #endif
     //PostgresDbModule.ConfigureServices(aServiceCollection, aConfiguration);
-    aServiceCollection.AddSingleton<IHubClients>(sp => sp.GetRequiredService<IHubContext<ChatHub>>().Clients);
+    aServiceCollection.AddSingleton<IChatHubClients>(sp => sp.GetRequiredService<IHubContext<ChatHub>>().Clients as IChatHubClients);
     CorsPolicy.Any.Apply(aServiceCollection);
     ConfigureInfrastructure(aServiceCollection);
     aServiceCollection.AddSignalR();

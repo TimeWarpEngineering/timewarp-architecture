@@ -1,4 +1,4 @@
 namespace TimeWarp.Architecture.Pages;
 
-[PageAttribute("/changePassword")]
+[Page("/changePassword")]
 public partial class ChangePasswordPage : BaseComponent { }

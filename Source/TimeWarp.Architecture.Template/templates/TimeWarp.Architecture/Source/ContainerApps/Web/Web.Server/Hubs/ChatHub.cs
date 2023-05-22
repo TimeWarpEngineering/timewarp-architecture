@@ -23,9 +23,6 @@ public class ChatHub : Hub
     }
   }
 
-  // Add more methods for handling other interactions
-  //public async Task<OneOf<SignIn.Response, SharedProblemDetails>> SignInCommand(SignIn.Command signInCommand)
-  //{
-  //  return await Sender.Send(signInCommand);
-  //}
+  // Add more methods for handling other chat interactions as required
+
 }

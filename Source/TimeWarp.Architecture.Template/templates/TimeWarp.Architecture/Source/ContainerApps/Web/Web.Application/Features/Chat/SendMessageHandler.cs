@@ -2,18 +2,18 @@
 
 public sealed class SendMessageHandler : IRequestHandler<Contracts.SendMessage.Command, OneOf<Success, SharedProblemDetails>>
 {
-  private readonly IHubClients HubClients;
+  private readonly IChatHubClients ChatHubClients;
 
-  public SendMessageHandler(IHubClients hubClients)
+  public SendMessageHandler(IChatHubClients chatHubClients)
   {
-    HubClients = hubClients;
+    ChatHubClients = chatHubClients;
   }
 
   public async Task<OneOf<Success, SharedProblemDetails>> Handle(Contracts.SendMessage.Command request, CancellationToken cancellationToken)
   {
     try
     {
-      await HubClients.All.SendAsync("ReceiveMessage", request.User, request.Message, cancellationToken: cancellationToken);
+      await ChatHubClients.All.SendAsync("ReceiveMessage", request.User, request.Message, cancellationToken: cancellationToken);
       return new Success();
     }
     catch (Exception exception)

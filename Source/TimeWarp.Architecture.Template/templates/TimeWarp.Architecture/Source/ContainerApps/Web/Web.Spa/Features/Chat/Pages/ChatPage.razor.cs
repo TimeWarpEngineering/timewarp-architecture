@@ -9,18 +9,18 @@ public partial class ChatPage
   private string Message { get; set; } = string.Empty;
   private List<string> ChatMessages { get; set; } = new List<string>();
 
-  [Inject] private ChatHubConnection TimeWarpHubConnection { get; set; }
+  [Inject] private ChatHubConnection ChatHubConnection { get; set; }
   
 
   protected override async Task OnInitializedAsync()
   {
-    TimeWarpHubConnection.OnReceiveMessage += ReceiveMessage;
-    await TimeWarpHubConnection.ConnectAsync();
+    ChatHubConnection.OnReceiveMessage += ReceiveMessage;
+    await ChatHubConnection.ConnectAsync();
   }
 
   private async Task SendMessage()
   {
-    if (!string.IsNullOrEmpty(User) && !string.IsNullOrEmpty(Message) && TimeWarpHubConnection.IsConnected)
+    if (!string.IsNullOrEmpty(User) && !string.IsNullOrEmpty(Message) && ChatHubConnection.IsConnected)
     {
       var sendMessageAction = new SendMessageAction();
       sendMessageAction.SendMessageCommand.User = User;
@@ -47,7 +47,7 @@ public partial class ChatPage
 
   public override void Dispose()
   {
-    TimeWarpHubConnection.OnReceiveMessage -= ReceiveMessage;
-    TimeWarpHubConnection.Dispose();
+    ChatHubConnection.OnReceiveMessage -= ReceiveMessage;
+    ChatHubConnection.Dispose();
   }
 }

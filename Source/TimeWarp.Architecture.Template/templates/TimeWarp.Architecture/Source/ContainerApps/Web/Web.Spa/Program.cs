@@ -11,7 +11,7 @@ public class Program
     (
       (aOptions) =>
       {
-#if ReduxDevToolsEnabled
+#if DEBUG
         aOptions.UseReduxDevTools(options => options.Trace = false);
 #endif
         aOptions.Assemblies =
@@ -43,19 +43,11 @@ public class Program
     (
       serviceProvider =>
       {
-        var navigationManager = serviceProvider.GetRequiredService<NavigationManager>();
+        NavigationManager navigationManager = serviceProvider.GetRequiredService<NavigationManager>();
         var chatHubUrl = new Uri(new Uri(navigationManager.BaseUri), ChatHubConstants.Route);
         return new ChatHubConnection(chatHubUrl.ToString());
       }
     );
-
-    //aServiceCollection.AddScoped((Func<IServiceProvider, ChatHubConnection>)(serviceProvider =>
-    //{
-    //  NavigationManager navigationManager = serviceProvider.GetRequiredService<NavigationManager>();
-    //  string chatHubUrl = $"{navigationManager.BaseUri}{Features.Chat.Contracts.ChatHubConstants.Route}";
-    //  return new ChatHubConnection(chatHubUrl);
-    //}));
-
 
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));

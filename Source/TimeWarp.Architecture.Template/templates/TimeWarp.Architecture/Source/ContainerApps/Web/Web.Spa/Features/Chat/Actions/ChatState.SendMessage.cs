@@ -11,16 +11,16 @@ public sealed partial class ChatState
 
   internal sealed class SendMessageHandler : BaseHandler<SendMessageAction>
   {
-    private ChatHubConnection TimeWarpHubConnection { get; set; }
+    private ChatHubConnection ChatHubConnection { get; set; }
 
-    public SendMessageHandler(IStore store, ChatHubConnection timeWarpHubConnection) : base(store)
+    public SendMessageHandler(IStore store, ChatHubConnection chatHubConnection) : base(store)
     {
-      TimeWarpHubConnection = timeWarpHubConnection;
+      ChatHubConnection = chatHubConnection;
     }
 
     public override async Task Handle(SendMessageAction sendMessageAction, CancellationToken cancellationToken)
     {
-      await TimeWarpHubConnection.SendMessageAsync(sendMessageAction.SendMessageCommand);
+      await ChatHubConnection.SendMessageAsync(sendMessageAction.SendMessageCommand);
     }
   }
 }
