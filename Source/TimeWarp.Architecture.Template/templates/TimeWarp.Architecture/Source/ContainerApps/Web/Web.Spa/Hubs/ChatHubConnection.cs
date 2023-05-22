@@ -2,22 +2,26 @@
 
 public sealed class ChatHubConnection : IDisposable
 {
-  //public const string Route = "/TimeWarpHub";
   private readonly HubConnection HubConnection;
-  public event Func<string, string, Task> OnReceiveMessage;
+  private readonly ISender Sender;
   public bool IsConnected => HubConnection.State == HubConnectionState.Connected;
 
-  public ChatHubConnection(string hubUrl)
+  public ChatHubConnection(NavigationManager navigationManager, ISender sender)
   {
+    Sender = sender;
+    var chatHubUrl = new Uri(new Uri(navigationManager.BaseUri), ChatHubConstants.Route);
     HubConnection = new HubConnectionBuilder()
-    .WithUrl(hubUrl)
+    .WithUrl(chatHubUrl)
     .Build();
 
-    HubConnection.On<string, string>("ReceiveMessage", (user, message) =>
-    {
-      OnReceiveMessage?.Invoke(user, message);
-      return Task.CompletedTask;
-    });
+    HubConnection.On<ReceiveMessage.Command>
+    (
+      nameof(ReceiveMessage), (command) =>
+      {
+        Sender.Send(new ChatState.ServerToClientMessageAction(command));
+        return Task.CompletedTask;
+      }
+    );
   }
 
   public async Task ConnectAsync()
@@ -35,18 +39,9 @@ public sealed class ChatHubConnection : IDisposable
     HubConnection.DisposeAsync();
   }
 
-  // Add more methods for handling player interactions, such as sending and receiving messages
-
-  public async Task SendMessageAsync(string user, string message)
+  public async Task SendMessageAsync(SendMessage.Command sendMessageCommand)
   {
-    var sendMessageCommand = new Features.Chat.Contracts.SendMessage.Command { User = user, Message = message };
-    await HubConnection.InvokeAsync("SendMessage", sendMessageCommand);
+    await HubConnection.InvokeAsync(nameof(SendMessage), sendMessageCommand);
   }
-
-  public async Task SendMessageAsync(Features.Chat.Contracts.SendMessage.Command sendMessageCommand)
-  {
-    await HubConnection.InvokeAsync(nameof(Features.Chat.Contracts.SendMessage), sendMessageCommand);
-  }
-
 }
 

@@ -3,13 +3,9 @@
 public sealed partial class ChatState
 {
   [TrackProcessing]
-  public record SendMessageAction : BaseAction
-  {
-    public Contracts.SendMessage.Command SendMessageCommand { get; set; } = new();
+  public record ClientToServerMessageAction(SendMessage.Command SendMessageCommand) : BaseAction;
 
-  }
-
-  internal sealed class SendMessageHandler : BaseHandler<SendMessageAction>
+  internal sealed class SendMessageHandler : BaseHandler<ClientToServerMessageAction>
   {
     private ChatHubConnection ChatHubConnection { get; set; }
 
@@ -18,7 +14,7 @@ public sealed partial class ChatState
       ChatHubConnection = chatHubConnection;
     }
 
-    public override async Task Handle(SendMessageAction sendMessageAction, CancellationToken cancellationToken)
+    public override async Task Handle(ClientToServerMessageAction sendMessageAction, CancellationToken cancellationToken)
     {
       await ChatHubConnection.SendMessageAsync(sendMessageAction.SendMessageCommand);
     }

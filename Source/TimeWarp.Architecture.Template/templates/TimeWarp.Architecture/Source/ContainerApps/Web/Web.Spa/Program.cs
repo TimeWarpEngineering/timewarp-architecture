@@ -39,16 +39,7 @@ public class Program
         }
     );
 
-    aServiceCollection.AddScoped<ChatHubConnection>
-    (
-      serviceProvider =>
-      {
-        NavigationManager navigationManager = serviceProvider.GetRequiredService<NavigationManager>();
-        var chatHubUrl = new Uri(new Uri(navigationManager.BaseUri), ChatHubConstants.Route);
-        return new ChatHubConnection(chatHubUrl.ToString());
-      }
-    );
-
+    aServiceCollection.AddScoped<ChatHubConnection>();
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
     aServiceCollection.AddScoped<ClientLoader>();
