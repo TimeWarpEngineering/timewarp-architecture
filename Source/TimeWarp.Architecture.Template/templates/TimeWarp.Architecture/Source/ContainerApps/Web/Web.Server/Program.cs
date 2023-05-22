@@ -1,5 +1,7 @@
 namespace TimeWarp.Architecture.Web.Server;
 
+using TimeWarp.Architecture.Services;
+
 public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
@@ -40,7 +42,7 @@ public class Program : IAspNetProgram
     CosmosDbModule.ConfigureServices(aServiceCollection, aConfiguration);
 #endif
     //PostgresDbModule.ConfigureServices(aServiceCollection, aConfiguration);
-    aServiceCollection.AddSingleton<IChatHubClients>(sp => sp.GetRequiredService<IHubContext<ChatHub>>().Clients as IChatHubClients);
+    aServiceCollection.AddSingleton<IChatHubService, ChatHubService>();
     CorsPolicy.Any.Apply(aServiceCollection);
     ConfigureInfrastructure(aServiceCollection);
     aServiceCollection.AddSignalR();
