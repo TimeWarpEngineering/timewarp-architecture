@@ -47,6 +47,16 @@ public partial class Button : DisplayComponent
     "text-primary-500"
   );
 
+  private  readonly  string NavigationCss  =  string.Join
+  (
+    separator:  " ",
+    "text-gray-400",
+    "hover:text-gray-500",
+    "transition",
+    "ease-in-out",
+    "duration-150"
+  );
+
   [Parameter] public RenderFragment ButtonText { get; set; }
   [Parameter] public RenderFragment ChildContent { get; set; }
   [Parameter] public RenderFragment SvgIcon { get; set; }
@@ -56,13 +66,27 @@ public partial class Button : DisplayComponent
   public enum ButtonVariant
   {
     Default,
-    Outline
+    Outline,
+    Navigation
   }
 
   protected override void OnParametersSet()
   {
-    string cssString = Variant == ButtonVariant.Default ? DefaultCss : OutlineCss;
-    cssString = BaseCss + " " + cssString;
+    string cssString = string.Empty;
+    switch (Variant)
+    {
+      case ButtonVariant.Default:
+        cssString = BaseCss + DefaultCss;
+        break;
+      case ButtonVariant.Outline:
+        cssString = BaseCss + OutlineCss;
+        break;
+      case ButtonVariant.Navigation:
+        cssString = NavigationCss;
+        break;
+      default:
+        throw new ArgumentOutOfRangeException();
+    }
     CssClass =
       new CssBuilder(cssString)
       .AddClassFromAttributes(Attributes)

@@ -1,11 +1,6 @@
 namespace CounterState_;
 
-using FluentAssertions;
-using System.Threading.Tasks;
-using TimeWarp.Architecture.Features.Counters;
-using TimeWarp.Architecture.Testing;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
-using static TimeWarp.Architecture.Features.Counters.CounterState;
+using static TimeWarp.Architecture.Features.Counters.Spa.CounterState;
 
 public class IncrementCounterAction_Should : BaseTest
 {
@@ -21,10 +16,7 @@ public class IncrementCounterAction_Should : BaseTest
     //Arrange
     CounterState.Initialize(aCount: 15);
 
-    var incrementCounterRequest = new IncrementCounterAction
-    {
-      Amount = -2
-    };
+    var incrementCounterRequest = new IncrementCounterAction(Amount: -2);
 
     //Act
     await Send(incrementCounterRequest);
@@ -38,10 +30,7 @@ public class IncrementCounterAction_Should : BaseTest
     //Arrange
     CounterState.Initialize(aCount: 22);
 
-    var incrementCounterRequest = new IncrementCounterAction
-    {
-      Amount = 5
-    };
+    var incrementCounterRequest = new IncrementCounterAction(Amount: 5);
 
     //Act
     await Send(incrementCounterRequest);

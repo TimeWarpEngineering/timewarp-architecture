@@ -1,20 +1,21 @@
-namespace TimeWarp.Architecture.Features.WeatherForecasts;
+namespace TimeWarp.Architecture.Features.WeatherForecasts.Server;
 
-public class GetWeatherForecastsEndpoint : BaseEndpoint<GetWeatherForecastsRequest, GetWeatherForecastsResponse>
+using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
+public class GetWeatherForecastsEndpoint : BaseEndpoint<Query, Response>
 {
   /// <summary>
   /// Get Weather Forecasts
   /// </summary>
   /// <remarks>
   /// Gets Weather Forecasts for the number of days specified in the request
-  /// `<see cref="GetWeatherForecastsRequest.Days"/>`
+  /// `<see cref="Query.Days"/>`
   /// </remarks>
-  /// <param name="aGetWeatherForecastsRequest"></param>
-  /// <returns><see cref="GetWeatherForecastsResponse"/></returns>
-  [HttpGet(GetWeatherForecastsRequest.Route)]
-  [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
-  [ProducesResponseType(typeof(GetWeatherForecastsResponse), (int)HttpStatusCode.OK)]
+  /// <param name="query"></param>
+  /// <returns><see cref="Response"/></returns>
+  [HttpGet(Query.Route)]
+  [SwaggerOperation(Tags = new[] { Contracts.FeatureAnnotations.FeatureGroup })]
+  [ProducesResponseType(typeof(Response), (int)HttpStatusCode.OK)]
   [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-  public Task<IActionResult> Process([FromQuery] GetWeatherForecastsRequest aGetWeatherForecastsRequest) =>
-    Send(aGetWeatherForecastsRequest);
+  public Task<IActionResult> Process([FromQuery] Query query) =>
+    Send(query);
 }

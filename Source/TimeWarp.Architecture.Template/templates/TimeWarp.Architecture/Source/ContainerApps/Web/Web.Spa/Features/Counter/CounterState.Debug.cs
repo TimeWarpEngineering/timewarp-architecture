@@ -1,11 +1,4 @@
-namespace TimeWarp.Architecture.Features.Counters;
-
-using BlazorState;
-using Microsoft.JSInterop;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Reflection;
+namespace TimeWarp.Architecture.Features.Counters.Spa;
 
 internal partial class CounterState : State<CounterState>
 {

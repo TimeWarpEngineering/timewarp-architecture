@@ -3,6 +3,7 @@
   <PropertyGroup>
     <Description>Blazor Spa</Description>
     <DefineConstants>ReduxDevToolsEnabled;grpc;api;web;counter</DefineConstants>
+    <Nullable>disable</Nullable>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
   </PropertyGroup>
 
@@ -19,7 +20,7 @@
     <PackageReference Include="Microsoft.Tye.Extensions.Configuration" />
     <PackageReference Include="Morris.Blazor.ControlFlow" />
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true" />
-    <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" />
+    <PackageReference Include="Morris.Blazor.FluentValidation" />
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all" />
     <PackageReference Include="timewarp-heroicons" />
@@ -27,7 +28,7 @@
     <PackageReference Include="timewarp-simple-icons" />
     <PackageReference Include="Toolbelt.Blazor.SplitContainer" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <!--#if(api)-->
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj" />
@@ -42,6 +43,10 @@
 
   <ItemGroup>
     <!--<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />-->
+    <Folder Include="Components\Editors\" />
+    <Folder Include="Features\Notification\Actions\RemoveNotification\" />
+    <Folder Include="Features\Notification\Components\" />
+    <Folder Include="Features\ToDo\Actions" />
     <Folder Include="wwwroot\css\" />
     <Folder Include="wwwroot\js\" />
   </ItemGroup>
@@ -66,10 +71,9 @@
 
   <ItemGroup>
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*" />
-    <None Remove="Mixins\Page.mixin" />
-    <AdditionalFiles Include="Features\Base\TwBaseSpa.mixin" />
-    <AdditionalFiles Include="Mixins\Page.mixin" />
     <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js" />
+    <AdditionalFiles Include="Features\Base\StateAccessMixin.mixin" />
+    <AdditionalFiles Include="Mixins\Page.mixin" />
   </ItemGroup>
 
   <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild" Inputs="@(TypeScriptInputs)" Outputs="@(TypeScriptOutputs)">
@@ -89,4 +93,5 @@
   <Target Name="NpmRunTailWind" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild" Inputs="..\Web.TypeScript\tailwind.config.js;..\Web.TypeScript\css\input.css" Outputs="wwwroot\css\site.css">
     <Exec Command="npm run tailwind" WorkingDirectory="..\Web.TypeScript\" />
   </Target>
+
 </Project>

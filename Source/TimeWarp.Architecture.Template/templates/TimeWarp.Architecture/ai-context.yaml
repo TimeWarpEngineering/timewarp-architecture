@@ -1,0 +1,48 @@
+ai-context:
+  project:
+    name: TimeWarp.Architecture
+    description: A template for dotnet core web applications.
+    pattern: DDD
+    sdlc: Kanban
+      stages: Backlog, Todo, InProgress, Done
+    structure:
+      - ContainerApps
+        - Api
+          - Api.Application
+          - Api.Contracts
+          - Api.Domain
+          - Api.Infrastructure
+          - Api.Server
+        - Web
+          - Web.Application
+          - Web.Contracts
+          - Web.Domain
+          - Web.Infrastructure
+          - Web.Server
+            - SignalR Hub
+          - Web.Spa (Blazor WASM)
+            - SignalR Client
+            - Tailwind CSS
+          - Web.TypeScript
+        - Grpc
+          - Grpc.Application
+          - Grpc.Contracts
+          - Grpc.Domain
+          - Grpc.Infrastructure
+          - Grpc.Server
+        - Yarp
+  database:
+    type: PostgreSQL
+    config:
+      connectionStringLocation: UserSecrets
+      settings:
+        PostgresDbOptions:
+          ConnectionString: override in secrets
+      userSecretsId: Directory.Build.props
+  scripts:
+    powershell:
+      - Add-Migration.ps1
+      - Drop-Database.ps1
+      - EfSharedVariables.ps1
+      - Reset-DatabaseMigrations.ps1
+      - Update-Database.ps1

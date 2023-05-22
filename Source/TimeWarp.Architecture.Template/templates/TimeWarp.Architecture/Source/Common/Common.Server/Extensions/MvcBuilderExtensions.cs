@@ -1,10 +1,6 @@
 ﻿// https://github.com/aspnet/Mvc/issues/6749
 namespace Microsoft.Extensions.DependencyInjection;
 
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
-using System.Linq;
-using System.Reflection;
-
 public static class MvcBuilderExtensions
 {
 

@@ -27,6 +27,5 @@ public partial class CorsPolicy : Enumeration
   public virtual void Apply(IServiceCollection aServiceCollection)
   {
     throw new InvalidOperationException();
-    ;
   }
 }

@@ -2,14 +2,14 @@
 
 @inherits ComponentBase
 
-<Router AppAssembly="typeof(Web.Spa.Program).Assembly"  PreferExactMatches=@true>
+<Router AppAssembly=@typeof(Web.Spa.Program).Assembly  PreferExactMatches=@true>
   <Found Context="routeData">
     <RouteView RouteData=@routeData DefaultLayout=@typeof(MainLayout) />
-    <FocusOnNavigate RouteData="@routeData" Selector="main" />
+    <FocusOnNavigate RouteData=@routeData Selector="main" />
   </Found>
   <NotFound>
     <PageTitle>Not Found</PageTitle>
-      <LayoutView Layout="@typeof(MainLayout)">
+      <LayoutView Layout=@typeof(MainLayout)>
         <p role="alert">Sorry, there's nothing at this address.</p>
       </LayoutView>
   </NotFound>

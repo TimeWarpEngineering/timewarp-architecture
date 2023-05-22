@@ -1,9 +1,6 @@
-namespace WeatherForecastDto;
+namespace WeatherForecastDto_;
 
-using FluentAssertions;
-using System;
-using System.Text.Json;
-using TimeWarp.Architecture.Features.WeatherForecasts;
+using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
 
 public class Should
 {

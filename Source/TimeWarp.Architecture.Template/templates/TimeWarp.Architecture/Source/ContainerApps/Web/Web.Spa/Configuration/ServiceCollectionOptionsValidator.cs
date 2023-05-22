@@ -8,6 +8,7 @@ internal class ServiceCollectionOptionsValidator : AbstractValidator<ServiceColl
 {
   public ServiceCollectionOptionsValidator()
   {
+#if grpc
     RuleFor(aServiceCollectionOptions => aServiceCollectionOptions)
       .Must(aServiceCollectionOptions => aServiceCollectionOptions.ContainsKey(Constants.GrpcServiceName))
       .WithMessage($"The {Constants.GrpcServiceName} service must be configured.");
@@ -15,7 +16,7 @@ internal class ServiceCollectionOptionsValidator : AbstractValidator<ServiceColl
     RuleFor(aServicesOptions => aServicesOptions[Constants.GrpcServiceName])
       .SetValidator(new ServiceValidator(Constants.GrpcServiceName))
       .When(aServiceCollectionOptions => aServiceCollectionOptions.ContainsKey(Constants.GrpcServiceName));
-
+#endif
     //// Api Service
     //RuleFor(aServiceCollectionOptions => aServiceCollectionOptions)
     //      .Must(aServiceCollectionOptions => aServiceCollectionOptions.ContainsKey(Constants.ApiServiceName))

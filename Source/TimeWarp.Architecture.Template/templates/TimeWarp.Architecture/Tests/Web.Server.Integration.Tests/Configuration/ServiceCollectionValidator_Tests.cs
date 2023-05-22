@@ -1,12 +1,6 @@
 namespace ServiceCollectionValidator_;
 
-using FluentAssertions;
-using FluentValidation.Results;
-using FluentValidation.TestHelper;
-using Microsoft.Extensions.Configuration;
-using System.IO;
-using TimeWarp.Architecture;
-using TimeWarp.Architecture.Configuration;
+using static TimeWarp.Architecture.Configuration.Constants;
 
 public class Validate_Should
 {
@@ -16,9 +10,9 @@ public class Validate_Should
   {
     var serviceCollection = new ServiceCollectionOptions
     {
-      {Constants.WebServiceName, new ServiceCollectionOptions.Service { Host = "myhost", Protocol="https", Port=7001} },
-      {Constants.GrpcServiceName, new ServiceCollectionOptions.Service { Host = "myhost", Protocol="https", Port=7001} },
-      {Constants.ApiServiceName, new ServiceCollectionOptions.Service { Host = "myhost", Protocol="https", Port=7001} },
+      {WebServiceName, new ServiceCollectionOptions.Service { Host = "myhost", Protocol="https", Port=7001} },
+      {GrpcServiceName, new ServiceCollectionOptions.Service { Host = "myhost", Protocol="https", Port=7001} },
+      {ApiServiceName, new ServiceCollectionOptions.Service { Host = "myhost", Protocol="https", Port=7001} },
     };
 
     ValidationResult validationResult = ServiceCollectionValidator.TestValidate(serviceCollection);
@@ -37,7 +31,7 @@ public class Validate_Should
       ServiceCollectionValidator.TestValidate(serviceCollection);
 
     result.ShouldHaveValidationErrorFor(aServiceCollection => aServiceCollection)
-      .WithErrorMessage($"The {Constants.GrpcServiceName} service must be configured.");
+      .WithErrorMessage($"The {GrpcServiceName} service must be configured.");
 
     //result.ShouldHaveValidationErrorFor(aServiceCollection => aServiceCollection)
     //  .WithErrorMessage($"The {Constants.ApiServiceName} service must be configured.");
@@ -50,9 +44,9 @@ public class Validate_Should
   {
     var serviceCollection = new ServiceCollectionOptions
     {
-      {Constants.GrpcServiceName, new ServiceCollectionOptions.Service { Host = "", Protocol="", Port=0} },
-      {Constants.ApiServiceName, new ServiceCollectionOptions.Service { Host = "", Protocol="", Port=0} },
-      {Constants.WebServiceName, new ServiceCollectionOptions.Service { Host = "", Protocol="", Port=-10} },
+      {GrpcServiceName, new ServiceCollectionOptions.Service { Host = "", Protocol="", Port=0} },
+      {ApiServiceName, new ServiceCollectionOptions.Service { Host = "", Protocol="", Port=0} },
+      {WebServiceName, new ServiceCollectionOptions.Service { Host = "", Protocol="", Port=-10} },
     };
 
     TestValidationResult<ServiceCollectionOptions> result =

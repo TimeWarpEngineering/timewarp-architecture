@@ -1,11 +1,4 @@
-namespace EventStreamState;
-
-using AnyClone;
-using FluentAssertions;
-using System.Collections.Generic;
-using TimeWarp.Architecture.Features.EventStreams;
-using TimeWarp.Architecture.Testing;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
+namespace EventStreamState_;
 
 public class Clone_Should : BaseTest
 {

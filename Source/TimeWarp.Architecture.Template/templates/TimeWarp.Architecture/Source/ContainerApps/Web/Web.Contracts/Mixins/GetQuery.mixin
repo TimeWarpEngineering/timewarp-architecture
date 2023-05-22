@@ -1,0 +1,13 @@
+{{
+  $FeatureName = moxy.Class.Name | string.remove_last "Dto"
+  $Action = "Get"
+  $QueryName = $Action + $FeatureName + "Query"
+  $ResponseName = $Action + $FeatureName + "Response"
+  $QueryValidatorName = $QueryName + "Validator"
+}}
+namespace {{ moxy.Class.Namespace }}
+{
+  public partial record {{$QueryName}} : BaseRequest, IRequest<{{$ResponseName}}>{};
+  public partial record {{$ResponseName}} : BaseResponse;
+  public partial class {{$QueryValidatorName}}: AbstractValidator<{{$QueryName}}>{};
+}

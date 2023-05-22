@@ -11439,6 +11439,14 @@
 					"documentation": "\n```\n│   Clean.Architecture.Infrastructure.csproj\n│   DefaultInfrastructureModule.cs\n│   FakeEmailSender.cs\n│   SmtpEmailSender.cs\n│   StartupSetup.cs\n│\n└───Data\n    │   AppDbContext.cs\n    │   EfRepository.cs\n    │\n    └───Config\n            ContributorConfiguration.cs\n            ProjectConfiguration.cs\n            ToDoConfiguration.cs\n```\n"
 				}
 			]
+		},
+		{
+			"_type": "UMLSubsystem",
+			"_id": "AAAAAAGGrXVxjOMV7nU=",
+			"_parent": {
+				"$ref": "AAAAAAFF+h6SjaM2Hec="
+			},
+			"name": "Blazor Hero"
 		}
 	]
 }

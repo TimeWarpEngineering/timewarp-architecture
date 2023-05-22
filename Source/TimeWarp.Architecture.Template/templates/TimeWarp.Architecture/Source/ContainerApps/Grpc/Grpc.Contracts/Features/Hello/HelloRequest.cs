@@ -1,7 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Features.Hellos;
 
-using System.Runtime.Serialization;
-
 [DataContract]
 public class HelloRequest
 {

@@ -1,6 +1,6 @@
-namespace TimeWarp.Architecture.Features.EventStreams;
+namespace TimeWarp.Architecture.Features.EventStreams.Spa;
 
-using static TimeWarp.Architecture.Features.EventStreams.EventStreamState;
+using static TimeWarp.Architecture.Features.EventStreams.Spa.EventStreamState;
 
 /// <summary>
 /// Every event that comes through the pipeline adds an object to the EventStreamState
@@ -9,7 +9,7 @@ using static TimeWarp.Architecture.Features.EventStreams.EventStreamState;
 /// <typeparam name="TResponse"></typeparam>
 /// <remarks>To avoid infinite recursion don't add AddEvent to the event stream</remarks>
 public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-  where TRequest : notnull
+  where TRequest : notnull, IAction
 {
   private readonly ILogger Logger;
   private readonly ISender Sender;
@@ -17,12 +17,12 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
 
   public EventStreamBehavior
   (
-    ILogger<EventStreamBehavior<TRequest, TResponse>> aLogger,
-    ISender aSender
+    ILogger<EventStreamBehavior<TRequest, TResponse>> logger,
+    ISender sender
   )
   {
-    Logger = aLogger;
-    Sender = aSender;
+    Logger = logger;
+    Sender = sender;
     Logger.LogDebug($"{GetType().Name}: Constructor");
   }
 

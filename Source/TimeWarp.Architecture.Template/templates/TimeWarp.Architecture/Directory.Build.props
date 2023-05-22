@@ -19,12 +19,19 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <Target Name="EmbedLocal" BeforeTargets="PrepareForBuild">    
+  <Target Name="EmbedLocal" BeforeTargets="PrepareForBuild">
     <!-- Include each file with given extension from None collection to EmbeddedResource-->
     <ItemGroup>
       <EmbeddedResource Include="@(None -> WithMetadataValue('Extension', '.scriban'))" />
       <EmbeddedResource Include="@(None -> WithMetadataValue('Extension', '.cstemplate'))" />
     </ItemGroup>
   </Target>
-  
+
+  <ItemGroup>
+    <PackageReference Include="GlobalUsingsAnalyzer" >
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
 </Project>

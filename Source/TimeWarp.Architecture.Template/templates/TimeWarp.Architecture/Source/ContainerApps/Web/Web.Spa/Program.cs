@@ -11,8 +11,8 @@ public class Program
     (
       (aOptions) =>
       {
-#if ReduxDevToolsEnabled
-        aOptions.UseReduxDevTools(options => options.Trace = true);
+#if DEBUG
+        aOptions.UseReduxDevTools(options => options.Trace = false);
 #endif
         aOptions.Assemblies =
           new Assembly[]
@@ -39,6 +39,7 @@ public class Program
         }
     );
 
+    aServiceCollection.AddScoped<ChatHubConnection>();
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
     aServiceCollection.AddScoped<ClientLoader>();
@@ -58,6 +59,7 @@ public class Program
 #if grpc
     SuperheroModule.ConfigureServices(aServiceCollection, aConfiguration);
 #endif
+    aServiceCollection.AddSingleton(aServiceCollection);
   }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)

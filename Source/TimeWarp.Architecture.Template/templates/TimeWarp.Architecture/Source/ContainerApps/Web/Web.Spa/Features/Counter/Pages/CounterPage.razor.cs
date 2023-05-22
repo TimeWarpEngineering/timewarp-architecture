@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Pages;
 
-using static TimeWarp.Architecture.Features.Applications.ApplicationState;
+using static TimeWarp.Architecture.Features.Applications.Spa.ApplicationState;
 
 [Page("/Counter")]
 public partial class CounterPage : BaseComponent

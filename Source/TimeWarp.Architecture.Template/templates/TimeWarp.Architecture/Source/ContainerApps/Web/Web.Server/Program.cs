@@ -1,5 +1,7 @@
 namespace TimeWarp.Architecture.Web.Server;
 
+using TimeWarp.Architecture.Services;
+
 public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
@@ -39,8 +41,11 @@ public class Program : IAspNetProgram
 #if(cosmosdb)
     CosmosDbModule.ConfigureServices(aServiceCollection, aConfiguration);
 #endif
+    //PostgresDbModule.ConfigureServices(aServiceCollection, aConfiguration);
+    aServiceCollection.AddSingleton<IChatHubService, ChatHubService>();
     CorsPolicy.Any.Apply(aServiceCollection);
     ConfigureInfrastructure(aServiceCollection);
+    aServiceCollection.AddSignalR();
     aServiceCollection.AddAutoMapper(typeof(MappingProfile).Assembly);
     aServiceCollection.AddRazorPages();
     aServiceCollection.AddServerSideBlazor();
@@ -122,6 +127,7 @@ public class Program : IAspNetProgram
     CommonServerModule.ConfigureEndpoints(aWebApplication);
     aWebApplication.MapControllers();
     aWebApplication.MapBlazorHub();
+    aWebApplication.MapHub<ChatHub>(ChatHubConstants.Route);
     aWebApplication.MapFallbackToPage("/_Host");
   }
 

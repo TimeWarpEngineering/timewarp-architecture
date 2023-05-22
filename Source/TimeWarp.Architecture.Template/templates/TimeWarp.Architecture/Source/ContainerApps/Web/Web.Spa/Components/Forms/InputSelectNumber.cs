@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Components.Forms;
+namespace TimeWarp.Architecture.Components;
 
 public class InputSelectNumber<T> : InputSelect<T>
 {

@@ -1,9 +1,4 @@
-namespace TimeWarp.Architecture.Features.Applications;
-
-using BlazorState;
-using Microsoft.JSInterop;
-using System.Collections.Generic;
-using System.Reflection;
+namespace TimeWarp.Architecture.Features.Applications.Spa;
 
 internal partial class ApplicationState : State<ApplicationState>
 {

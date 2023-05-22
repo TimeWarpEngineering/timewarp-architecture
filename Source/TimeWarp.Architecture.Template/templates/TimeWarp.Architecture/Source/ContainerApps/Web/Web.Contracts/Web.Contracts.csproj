@@ -13,26 +13,31 @@
     <AdditionalFiles Include="..\..\..\..\DependencyValidation\DependencyValidation1.layerdiagram" Link="DependencyValidation1.layerdiagram">
       <Visible>False</Visible>
     </AdditionalFiles>
+    <AdditionalFiles Include="Mixins\DeleteCommand.mixin" />
+    <AdditionalFiles Include="Mixins\GetListQuery.mixin" />
+    <AdditionalFiles Include="Mixins\GetQuery.mixin" />
+    <AdditionalFiles Include="Mixins\RouteMixin.mixin" />
+    <AdditionalFiles Include="Mixins\CreateCommand.mixin" />
+    <AdditionalFiles Include="Mixins\UpdateCommand.mixin" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="OneOf" />
     <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.ServiceModel.Primitives" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Features\Todo\" />
   </ItemGroup>
 
 </Project>

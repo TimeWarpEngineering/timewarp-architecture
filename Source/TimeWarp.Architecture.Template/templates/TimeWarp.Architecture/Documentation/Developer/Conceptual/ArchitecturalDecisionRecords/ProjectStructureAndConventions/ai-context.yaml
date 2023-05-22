@@ -1,0 +1,34 @@
+
+ai-context:
+  IMPORTANT: Read and follow all of these rules!
+  container-app:
+    name: Web
+  contracts:
+    code gen rules:
+      - IMPORTANT: DO NOT generate using statements
+      - namespace format: namespace <container-app.name>.Contracts.Features.Entity;
+        - IMPORTANT: DO NOT GO DEEPER THAN ENTITY on the namespace!
+        - use file scoped namespaces, which do NOT use { } but instead use ;
+      - Feature-based folder structure, grouped by entity
+      - Nested sealed classes for organizing commands, queries,responses, dtos and validators
+      - Use of partial files for nested classes is optional
+      - IRequest and OneOf for handling request, ProblemDetails for error handling
+    structure:
+      - Features
+        - Entity
+          - Commands
+            - Command1 # namespace Web.Contracts.Features.Entity;
+              - Command1.Request
+              - Command1.SuccessResponse
+              - Command1.<X>Dto
+              - Command1.Validator
+          - Queries
+            - Query1
+              - Query1.Query
+              - Query1.SuccessResponse
+              - Query1.<X>Dto
+              - Query1.Validator
+    libraries:
+      - OneOf: Handling multiple response types
+      - FluentValidation: Request validation
+      - MediatR: Handling IRequest

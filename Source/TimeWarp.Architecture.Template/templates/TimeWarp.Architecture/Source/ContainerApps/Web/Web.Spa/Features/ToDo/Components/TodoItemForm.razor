@@ -1,0 +1,12 @@
+@namespace TimeWarp.Architecture.Features.ToDo
+@using TimeWarp.Architecture.Features.TodoItems
+@inherits BaseComponent
+
+<EditForm Model=@UpdateTodoItemCommand>
+  <Validate />
+  <ValidationSummary class="mt-4"/>
+</EditForm>
+
+@code {
+  private UpdateTodoItemCommand UpdateTodoItemCommand { get; set; } = new();
+}

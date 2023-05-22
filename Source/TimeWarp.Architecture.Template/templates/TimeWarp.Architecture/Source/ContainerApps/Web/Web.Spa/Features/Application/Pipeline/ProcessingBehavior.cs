@@ -1,13 +1,13 @@
 ﻿namespace TimeWarp.Architecture.Features.Applications;
 
-using static TimeWarp.Architecture.Features.Applications.ApplicationState;
+using static TimeWarp.Architecture.Features.Applications.Spa.ApplicationState;
 
 public class ProcessingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
   where TRequest : notnull
 {
-  private readonly IMediator Mediator;
+  private readonly ISender Sender;
 
-  public ProcessingBehavior(IMediator aMediator) { Mediator = aMediator; }
+  public ProcessingBehavior(ISender sender) { Sender = sender; }
 
   public async Task<TResponse> Handle
   (
@@ -24,9 +24,9 @@ public class ProcessingBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
         .NotType<CompleteProcessingAction>();
 
       string actionName = typeof(TRequest).Name;
-      await Mediator.Send(new StartProcessingAction { ActionName = actionName }).ConfigureAwait(false);
+      await Sender.Send(new StartProcessingAction(actionName)).ConfigureAwait(false);
       TResponse response = await aNextHandler().ConfigureAwait(false);
-      await Mediator.Send(new CompleteProcessingAction { ActionName = actionName }).ConfigureAwait(false);
+      await Sender.Send(new CompleteProcessingAction(actionName)).ConfigureAwait(false);
       return response;
     }
     else

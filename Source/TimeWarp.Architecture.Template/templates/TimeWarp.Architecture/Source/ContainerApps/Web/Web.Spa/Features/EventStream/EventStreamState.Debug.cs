@@ -1,8 +1,4 @@
-namespace TimeWarp.Architecture.Features.EventStreams;
-
-using BlazorState;
-using System.Collections.Generic;
-using System.Reflection;
+namespace TimeWarp.Architecture.Features.EventStreams.Spa;
 
 internal partial class EventStreamState : State<EventStreamState>
 {

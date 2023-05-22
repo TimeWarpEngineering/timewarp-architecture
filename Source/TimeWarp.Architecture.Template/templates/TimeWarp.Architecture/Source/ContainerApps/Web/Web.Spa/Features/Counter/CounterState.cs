@@ -1,6 +1,6 @@
-namespace TimeWarp.Architecture.Features.Counters;
+namespace TimeWarp.Architecture.Features.Counters.Spa;
 
-[TwBaseSpa]
+[StateAccessMixin]
 internal partial class CounterState : State<CounterState>
 {
   public int Count { get; private set; }
