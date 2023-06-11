@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.Counters.Spa;
+namespace TimeWarp.Architecture.Features.Counters;
 
 [StateAccessMixin]
 internal partial class CounterState : State<CounterState>

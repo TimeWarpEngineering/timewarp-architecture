@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Counters.Spa;
 
-using static TimeWarp.Architecture.Features.Counters.Spa.CounterState;
+using static TimeWarp.Architecture.Features.Counters.CounterState;
 
 internal class IncrementCountNotificationHandler
   : INotificationHandler<PostPipelineNotification<IncrementCounterAction, Unit>>

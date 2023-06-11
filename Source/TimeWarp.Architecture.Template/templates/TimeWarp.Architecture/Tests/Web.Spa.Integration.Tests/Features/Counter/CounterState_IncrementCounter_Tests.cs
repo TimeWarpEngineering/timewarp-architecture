@@ -1,6 +1,6 @@
 namespace CounterState_;
 
-using static TimeWarp.Architecture.Features.Counters.Spa.CounterState;
+using static TimeWarp.Architecture.Features.Counters.CounterState;
 
 public class IncrementCounterAction_Should : BaseTest
 {

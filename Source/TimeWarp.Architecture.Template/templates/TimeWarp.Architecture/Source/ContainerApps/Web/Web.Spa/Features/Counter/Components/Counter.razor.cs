@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Counters.Components;
 
-using static TimeWarp.Architecture.Features.Counters.Spa.CounterState;
+using static TimeWarp.Architecture.Features.Counters.CounterState;
 
 public partial class Counter : BaseComponent, IAttributeComponent
 {

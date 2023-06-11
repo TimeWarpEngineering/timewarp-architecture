@@ -41,7 +41,6 @@ global using TimeWarp.Architecture.Features;
 global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.Applications.Spa;
 global using TimeWarp.Architecture.Features.Chat;
-global using TimeWarp.Architecture.Features.Chat.Spa;
 global using TimeWarp.Architecture.Features.ClientLoaders;
 global using TimeWarp.Architecture.Features.EventStreams;
 global using TimeWarp.Architecture.Features.EventStreams.Spa;
@@ -50,7 +49,6 @@ global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
 
 #if(counter)
-global using TimeWarp.Architecture.Features.Counters.Spa;
 global using TimeWarp.Architecture.Features.Counters;
 #endif
 

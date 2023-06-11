@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Pages;
 
-using static TimeWarp.Architecture.Features.Chat.Spa.ChatState;
+using static TimeWarp.Architecture.Features.Chat.ChatState;
 
 [Page("/Chat")]
 public partial class ChatPage

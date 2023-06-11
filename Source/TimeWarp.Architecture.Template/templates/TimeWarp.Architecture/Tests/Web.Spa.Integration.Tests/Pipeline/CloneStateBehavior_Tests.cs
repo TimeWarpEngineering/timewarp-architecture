@@ -1,6 +1,6 @@
 namespace CloneStateBehavior;
 
-using static TimeWarp.Architecture.Features.Counters.Spa.CounterState;
+using static TimeWarp.Architecture.Features.Counters.CounterState;
 
 public class Should : BaseTest
 {
