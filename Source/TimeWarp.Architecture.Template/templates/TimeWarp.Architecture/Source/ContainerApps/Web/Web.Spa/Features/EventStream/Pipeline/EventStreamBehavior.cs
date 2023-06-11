@@ -43,9 +43,9 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
 
   private async Task AddEventToStream(TRequest aRequest, string aTag)
   {
-    if (aRequest is not AddEventAction) //Skip to avoid recursion
+    if (aRequest is not AddEvent.Action) //Skip to avoid recursion
     {
-      var addEventAction = new AddEventAction();
+      var addEventAction = new AddEvent.Action();
       string requestTypeName = aRequest.GetType().Name;
 
       if (aRequest is BaseRequest request)
