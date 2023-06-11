@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Pages;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.Spa.WeatherForecastsState;
+using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsState;
 
 [Page("/WeatherForecasts")]
 public partial class WeatherForecastsPage : BaseComponent

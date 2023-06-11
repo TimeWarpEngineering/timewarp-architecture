@@ -9,7 +9,7 @@ global using Microsoft.Extensions.DependencyInjection;
 global using TimeWarp.Architecture.Features.Applications.Spa;
 global using TimeWarp.Architecture.Features.Counters.Spa;
 global using TimeWarp.Architecture.Features.EventStreams.Spa;
-global using TimeWarp.Architecture.Features.WeatherForecasts.Spa;
+global using TimeWarp.Architecture.Features.WeatherForecasts;
 global using TimeWarp.Architecture.JsonSerializer.Tests;
 global using TimeWarp.Architecture.Testing;
 global using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;

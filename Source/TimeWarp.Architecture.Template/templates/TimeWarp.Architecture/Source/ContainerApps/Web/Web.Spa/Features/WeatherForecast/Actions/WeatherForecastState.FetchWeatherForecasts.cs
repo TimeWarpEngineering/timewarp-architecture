@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.WeatherForecasts.Spa;
+﻿namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 internal partial class WeatherForecastsState
 {

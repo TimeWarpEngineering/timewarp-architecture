@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.WeatherForecasts.Spa;
+namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 

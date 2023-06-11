@@ -1,6 +1,6 @@
 namespace WeatherForecastsState_;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.Spa.WeatherForecastsState;
+using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsState;
 
 public class FetchWeatherForecastsAction_Should : BaseTest
 {
