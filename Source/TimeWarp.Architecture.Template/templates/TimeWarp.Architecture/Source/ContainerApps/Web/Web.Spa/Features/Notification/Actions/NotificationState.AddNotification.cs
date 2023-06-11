@@ -1,6 +1,6 @@
-﻿namespace TimeWarp.Architecture.Features.Notifications.Spa;
+﻿namespace TimeWarp.Architecture.Features.Notifications;
 
-using static TimeWarp.Architecture.Features.Notifications.Spa.NotificationState.Notification;
+using static TimeWarp.Architecture.Features.Notifications.NotificationState.Notification;
 
 internal partial class NotificationState
 {

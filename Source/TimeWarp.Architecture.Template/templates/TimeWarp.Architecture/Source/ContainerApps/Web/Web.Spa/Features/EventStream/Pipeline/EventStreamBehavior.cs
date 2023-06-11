@@ -1,6 +1,6 @@
-namespace TimeWarp.Architecture.Features.EventStreams.Spa;
+namespace TimeWarp.Architecture.Features.EventStreams;
 
-using static TimeWarp.Architecture.Features.EventStreams.Spa.EventStreamState;
+using static TimeWarp.Architecture.Features.EventStreams.EventStreamState;
 
 /// <summary>
 /// Every event that comes through the pipeline adds an object to the EventStreamState

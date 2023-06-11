@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.Counters.Spa;
+namespace TimeWarp.Architecture.Features.Counters;
 
 using static TimeWarp.Architecture.Features.Counters.CounterState;
 
