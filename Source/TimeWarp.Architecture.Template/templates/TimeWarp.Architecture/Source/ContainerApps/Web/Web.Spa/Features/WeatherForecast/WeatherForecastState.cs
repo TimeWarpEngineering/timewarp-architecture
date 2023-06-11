@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts.Spa;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
+using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 
 [StateAccessMixin]
 internal partial class WeatherForecastsState : State<WeatherForecastsState>

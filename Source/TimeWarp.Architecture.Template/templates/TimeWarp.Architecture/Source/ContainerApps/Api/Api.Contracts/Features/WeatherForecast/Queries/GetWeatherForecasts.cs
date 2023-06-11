@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.WeatherForecasts.Contracts;
+namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 public static partial class GetWeatherForecasts
 {

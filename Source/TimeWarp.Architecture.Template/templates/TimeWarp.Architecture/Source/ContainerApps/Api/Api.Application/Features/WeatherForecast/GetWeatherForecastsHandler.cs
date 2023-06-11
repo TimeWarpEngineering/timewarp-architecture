@@ -1,6 +1,6 @@
-namespace TimeWarp.Architecture.Features.WeatherForecasts.Application;
+namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
+using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 
 public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
 {

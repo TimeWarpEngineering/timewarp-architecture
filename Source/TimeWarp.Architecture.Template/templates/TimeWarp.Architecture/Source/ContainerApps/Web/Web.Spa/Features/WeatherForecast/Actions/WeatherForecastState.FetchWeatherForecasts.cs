@@ -21,10 +21,10 @@ internal partial class WeatherForecastsState
       CancellationToken aCancellationToken
     )
     {
-      IApiRequest getWeatherForecastsRequest = new Contracts.GetWeatherForecasts.Query { Days = 10 };
+      IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = 10 };
 
-      Contracts.GetWeatherForecasts.Response response =
-        await WebApiService.GetResponse<Contracts.GetWeatherForecasts.Response>(getWeatherForecastsRequest);
+      GetWeatherForecasts.Response response =
+        await WebApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest);
 
       WeatherForecastsState._WeatherForecasts = response.WeatherForecasts.ToList();
     }

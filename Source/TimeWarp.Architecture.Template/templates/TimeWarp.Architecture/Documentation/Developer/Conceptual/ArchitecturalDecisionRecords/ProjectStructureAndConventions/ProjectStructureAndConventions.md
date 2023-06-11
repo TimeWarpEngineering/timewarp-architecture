@@ -85,9 +85,11 @@ Features/
 
 Namespaces should be ordered by most significant to least significant. Consider using the following pattern: `<Container>.<Feature>.<Entity>.<Assembly>` instead of `<Container>.<Assembly>.<Feature>.<Entity>.<Folder>`. The Feature is more significant than the Assembly, and the Container is the most significant, as they are not supposed to have any dependencies at all.
 
-\```
+```
 <Container>.<Feature>.<Entity>.<Assembly>
-\```
+```
+
+Only use the Assembly portion of the namespace when required to distinguish it from other classes. Thus the majority of the namespaces will be just `<Container>.<Feature>.<Entity>`
 
 ## Nested Classes
 

@@ -1,6 +1,6 @@
-namespace TimeWarp.Architecture.Features.WeatherForecasts.Server;
+namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
+using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 public class GetWeatherForecastsEndpoint : BaseEndpoint<Query, Response>
 {
   /// <summary>
@@ -13,7 +13,7 @@ public class GetWeatherForecastsEndpoint : BaseEndpoint<Query, Response>
   /// <param name="query"></param>
   /// <returns><see cref="Response"/></returns>
   [HttpGet(Query.Route)]
-  [SwaggerOperation(Tags = new[] { Contracts.FeatureAnnotations.FeatureGroup })]
+  [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
   [ProducesResponseType(typeof(Response), (int)HttpStatusCode.OK)]
   [ProducesResponseType((int)HttpStatusCode.BadRequest)]
   public Task<IActionResult> Process([FromQuery] Query query) =>
