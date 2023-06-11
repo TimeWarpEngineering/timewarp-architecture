@@ -4,24 +4,28 @@ using static BlazorState.Features.Routing.RouteState;
 
 internal partial class ApplicationState
 {
-  internal record ResetStoreAction : BaseAction { }
-
-  internal class ResetStoreHandler : IRequestHandler<ResetStoreAction>
+  public static class ResetStore
   {
-    private readonly ISender Sender;
 
-    private readonly IStore Store;
+    internal record Action : BaseAction { }
 
-    public ResetStoreHandler(IStore aStore, ISender aSender)
+    internal class Handler : IRequestHandler<Action>
     {
-      Sender = aSender;
-      Store = aStore;
-    }
+      private readonly ISender Sender;
 
-    public async Task Handle(ResetStoreAction aResetStoreAction, CancellationToken aCancellationToken)
-    {
-      Store.Reset();
-      await Sender.Send(new ChangeRouteAction { NewRoute = "/" }, aCancellationToken).ConfigureAwait(false);
+      private readonly IStore Store;
+
+      public Handler(IStore store, ISender sender)
+      {
+        Sender = sender;
+        Store = store;
+      }
+
+      public async Task Handle(Action action, CancellationToken cancellationToken)
+      {
+        Store.Reset();
+        await Sender.Send(new ChangeRouteAction { NewRoute = "/" }, cancellationToken).ConfigureAwait(false);
+      }
     }
   }
 }
