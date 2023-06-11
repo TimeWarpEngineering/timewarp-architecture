@@ -4,7 +4,7 @@ namespace TimeWarp.Architecture.Pages;
 public partial class Index : BaseComponent
 {
   private async Task FiveSecondTaskButtonClick() =>
-    await Send(new ApplicationState.FiveSecondTaskAction());
+    await Send(new ApplicationState.FiveSecondTask.Action());
 
   private async Task TwoSecondTaskButtonClick() =>
     await Send(new ApplicationState.TwoSecondTaskAction());

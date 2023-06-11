@@ -2,27 +2,30 @@ namespace TimeWarp.Architecture.Features.Applications;
 
 internal partial class ApplicationState
 {
-  [TrackProcessing]
-  internal record FiveSecondTaskAction : BaseAction { }
-
-  internal record struct FiveSecondTaskCompleteNotification : INotification;
-
-  internal class FiveSecondTaskHandler : BaseHandler<FiveSecondTaskAction>
+  public static class FiveSecondTask
   {
-    private readonly IPublisher Publisher;
 
-    public FiveSecondTaskHandler(IStore aStore, IPublisher publisher) : base(aStore)
-    {
-      Publisher = publisher;
-    }
+    [TrackProcessing]
+    internal record Action : BaseAction { }
 
-    public override async Task Handle(FiveSecondTaskAction aFiveSecondTaskAction, CancellationToken aCancellationToken)
+    internal record struct CompleteNotification : INotification;
+
+    internal class Handler : BaseHandler<Action>
     {
-      Console.WriteLine("Start");
-      await Task.Delay(millisecondsDelay: 5000, cancellationToken: aCancellationToken);
-      await Publisher.Publish(new FiveSecondTaskCompleteNotification(), aCancellationToken);
-      Console.WriteLine("Done");
+      private readonly IPublisher Publisher;
+
+      public Handler(IStore aStore, IPublisher publisher) : base(aStore)
+      {
+        Publisher = publisher;
+      }
+
+      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      {
+        Console.WriteLine("Start");
+        await Task.Delay(millisecondsDelay: 5000, cancellationToken: cancellationToken);
+        await Publisher.Publish(new CompleteNotification(), cancellationToken);
+        Console.WriteLine("Done");
+      }
     }
   }
 }
-
