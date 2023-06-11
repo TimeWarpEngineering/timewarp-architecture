@@ -34,7 +34,7 @@ public class Should : BaseTest
 
     // Act
     var action =
-      new ThrowExceptionAction(Message: "Test Rollback of State");
+      new ThrowException.Action(Message: "Test Rollback of State");
 
     await Send(action);
 
