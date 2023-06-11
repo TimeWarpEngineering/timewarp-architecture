@@ -4,34 +4,38 @@ using static TimeWarp.Architecture.Features.Notifications.NotificationState.Noti
 
 internal partial class NotificationState
 {
-  internal record AddNotificationAction
-  (
-    string Title,
-    string Message,
-    NotificationType Type
-  ) : BaseAction;
-
-  internal class AddNotificationHandler : BaseHandler<AddNotificationAction>
+  public static class AddNotification
   {
 
-    public AddNotificationHandler(IStore aStore) : base(aStore) { }
-    public override Task Handle
+    internal record Action
     (
-      AddNotificationAction aAddNotificationAction,
-      CancellationToken aCancellationToken
-    )
+      string Title,
+      string Message,
+      NotificationType Type
+    ) : BaseAction;
+
+    internal class Handler : BaseHandler<Action>
     {
-      NotificationState._Notifications.Add
+
+      public Handler(IStore store) : base(store) { }
+      public override Task Handle
       (
-        new Notification
-        {
-          Title = aAddNotificationAction.Title,
-          Message = aAddNotificationAction.Message,
-          Type = aAddNotificationAction.Type,
-          Id = Guid.NewGuid(),
-        }
-      );
-      return Task.CompletedTask;
+        Action action,
+        CancellationToken aCancellationToken
+      )
+      {
+        NotificationState._Notifications.Add
+        (
+          new Notification
+          {
+            Title = action.Title,
+            Message = action.Message,
+            Type = action.Type,
+            Id = Guid.NewGuid(),
+          }
+        );
+        return Task.CompletedTask;
+      }
     }
   }
 }
