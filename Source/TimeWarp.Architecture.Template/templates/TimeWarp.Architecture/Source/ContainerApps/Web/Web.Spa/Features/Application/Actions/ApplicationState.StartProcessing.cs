@@ -2,16 +2,19 @@
 
 internal partial class ApplicationState
 {
-  internal record StartProcessingAction(string ActionName) : BaseAction;
-  
-  internal class StartProcessingHandler : BaseHandler<StartProcessingAction>
+  public static class StartProcessing
   {
-    public StartProcessingHandler(IStore aStore) : base(aStore) { }
+    internal record Action(string ActionName) : BaseAction;
 
-    public override Task Handle(StartProcessingAction aStartWaitingAction, CancellationToken aCancellationToken)
+    internal class Handler : BaseHandler<Action>
     {
-      ApplicationState._ProcessingList.Add(aStartWaitingAction.ActionName);
-      return Task.CompletedTask;
+      public Handler(IStore store) : base(store) { }
+
+      public override Task Handle(Action action, CancellationToken cancellationToken)
+      {
+        ApplicationState._ProcessingList.Add(action.ActionName);
+        return Task.CompletedTask;
+      }
     }
   }
 }
