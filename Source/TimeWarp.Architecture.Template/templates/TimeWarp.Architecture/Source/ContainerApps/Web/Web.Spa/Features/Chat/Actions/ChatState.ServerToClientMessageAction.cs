@@ -2,23 +2,26 @@
 
 public sealed partial class ChatState
 {
-  [TrackProcessing]
-  public record ServerToClientMessageAction(ReceiveMessage.Command Command) : BaseAction { }
-
-  internal sealed class ReceiveMessageHandler : BaseHandler<ServerToClientMessageAction>
+  public static class ServerToClientMessage
   {
-    public ReceiveMessageHandler(IStore store) : base(store) { }
+    [TrackProcessing]
+    public record Action(ReceiveMessage.Command Command) : BaseAction { }
 
-    public override Task Handle(ServerToClientMessageAction receiveMessageAction, CancellationToken cancellationToken)
+    internal sealed class Handler : BaseHandler<Action>
     {
-      ChatMessage chatMessage = new()
-      {
-        Message = receiveMessageAction.Command.Message,
-        User = receiveMessageAction.Command.User
-      };
+      public Handler(IStore store) : base(store) { }
 
-      ChatState.ChatMessages.Add(chatMessage);
-      return Task.CompletedTask;
+      public override Task Handle(Action action, CancellationToken cancellationToken)
+      {
+        ChatMessage chatMessage = new()
+        {
+          Message = action.Command.Message,
+          User = action.Command.User
+        };
+
+        ChatState.ChatMessages.Add(chatMessage);
+        return Task.CompletedTask;
+      }
     }
   }
 }

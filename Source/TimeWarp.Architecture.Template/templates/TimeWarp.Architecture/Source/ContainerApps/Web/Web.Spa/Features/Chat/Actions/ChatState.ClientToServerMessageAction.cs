@@ -2,21 +2,24 @@
 
 public sealed partial class ChatState
 {
-  [TrackProcessing]
-  public record ClientToServerMessageAction(SendMessage.Command SendMessageCommand) : BaseAction;
-
-  internal sealed class SendMessageHandler : BaseHandler<ClientToServerMessageAction>
+  public static class ClientToServerMessage
   {
-    private ChatHubConnection ChatHubConnection { get; set; }
+    [TrackProcessing]
+    public record Action(SendMessage.Command SendMessageCommand) : BaseAction;
 
-    public SendMessageHandler(IStore store, ChatHubConnection chatHubConnection) : base(store)
+    internal sealed class Handler : BaseHandler<Action>
     {
-      ChatHubConnection = chatHubConnection;
-    }
+      private ChatHubConnection ChatHubConnection { get; set; }
 
-    public override async Task Handle(ClientToServerMessageAction sendMessageAction, CancellationToken cancellationToken)
-    {
-      await ChatHubConnection.SendMessageAsync(sendMessageAction.SendMessageCommand);
+      public Handler(IStore store, ChatHubConnection chatHubConnection) : base(store)
+      {
+        ChatHubConnection = chatHubConnection;
+      }
+
+      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      {
+        await ChatHubConnection.SendMessageAsync(action.SendMessageCommand);
+      }
     }
   }
 }

@@ -22,7 +22,7 @@ public partial class ChatPage
     if (!string.IsNullOrEmpty(User) && !string.IsNullOrEmpty(Message) && ChatHubConnection.IsConnected)
     {
       var sendMessageAction =
-        new ClientToServerMessageAction
+        new ClientToServerMessage.Action
         (
           new SendMessage.Command { User = User, Message = Message}
         );
