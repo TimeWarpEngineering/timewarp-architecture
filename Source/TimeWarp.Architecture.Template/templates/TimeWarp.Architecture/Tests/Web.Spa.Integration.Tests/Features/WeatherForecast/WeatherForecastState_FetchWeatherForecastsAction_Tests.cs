@@ -2,18 +2,18 @@ namespace WeatherForecastsState_;
 
 using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsState;
 
-public class FetchWeatherForecastsAction_Should : BaseTest
+public class FetchWeatherForecasts_Action_Should : BaseTest
 {
   private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
 
-  public FetchWeatherForecastsAction_Should
+  public FetchWeatherForecasts_Action_Should
   (
     SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
   ) : base(aSpaTestApplication) { }
 
   public async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()
   {
-    var fetchWeatherForecastsRequest = new FetchWeatherForecastsAction();
+    var fetchWeatherForecastsRequest = new FetchWeatherForecasts.Action();
 
     await Send(fetchWeatherForecastsRequest);
 

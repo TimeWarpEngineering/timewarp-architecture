@@ -6,5 +6,5 @@ using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsSta
 public partial class WeatherForecastsPage : BaseComponent
 {
   protected override async Task OnInitializedAsync() =>
-    await Send(new FetchWeatherForecastsAction()).ConfigureAwait(false);
+    await Send(new FetchWeatherForecasts.Action());
 }
