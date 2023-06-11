@@ -3,7 +3,7 @@ import { blazorState } from "/_content/Blazor-State/js/BlazorState.js";
 const dispatchIncrementCountAction = () => {
   console.log("%cdispatchIncrementCountAction", "color: green");
   const IncrementCountActionName =
-    "TimeWarp.Architecture.Features.Counters.CounterState+IncrementCounterAction, Web.Spa, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
+    "TimeWarp.Architecture.Features.Counters.CounterState+IncrementCounter+Action, Web.Spa, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
   blazorState.DispatchRequest(IncrementCountActionName, { amount: 7 });
 };
 
