@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.Hello;
+namespace TimeWarp.Architecture.Features.Hellos;
 
 public static class FeatureAnnotations
 {
