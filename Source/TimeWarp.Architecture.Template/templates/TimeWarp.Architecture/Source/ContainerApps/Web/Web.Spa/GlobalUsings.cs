@@ -39,7 +39,6 @@ global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.Extensions;
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Architecture.Features.Applications;
-global using TimeWarp.Architecture.Features.Applications.Spa;
 global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Features.ClientLoaders;
 global using TimeWarp.Architecture.Features.EventStreams;

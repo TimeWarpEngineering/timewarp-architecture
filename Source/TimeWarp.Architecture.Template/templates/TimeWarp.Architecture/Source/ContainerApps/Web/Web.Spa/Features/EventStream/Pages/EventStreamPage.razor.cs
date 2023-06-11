@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Pages;
 
-using static TimeWarp.Architecture.Features.Applications.Spa.ApplicationState;
+using static TimeWarp.Architecture.Features.Applications.ApplicationState;
 
 [Page("/EventStream")]
 public partial class EventStreamPage : BaseComponent

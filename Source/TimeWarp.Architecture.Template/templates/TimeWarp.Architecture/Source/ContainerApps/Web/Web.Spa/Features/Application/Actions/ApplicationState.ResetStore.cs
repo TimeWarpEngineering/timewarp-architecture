@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.Applications.Spa;
+namespace TimeWarp.Architecture.Features.Applications;
 
 using static BlazorState.Features.Routing.RouteState;
 

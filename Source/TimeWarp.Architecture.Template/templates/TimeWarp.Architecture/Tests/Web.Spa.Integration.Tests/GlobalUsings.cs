@@ -6,7 +6,7 @@ global using MediatR;
 global using Microsoft.Extensions.DependencyInjection;
 
 // Solution usings
-global using TimeWarp.Architecture.Features.Applications.Spa;
+global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.Counters;
 global using TimeWarp.Architecture.Features.EventStreams.Spa;
 global using TimeWarp.Architecture.Features.WeatherForecasts;

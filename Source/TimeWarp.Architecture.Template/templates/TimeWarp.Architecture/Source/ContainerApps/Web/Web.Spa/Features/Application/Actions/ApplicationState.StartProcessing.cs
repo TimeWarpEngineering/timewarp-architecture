@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Applications.Spa;
+﻿namespace TimeWarp.Architecture.Features.Applications;
 
 internal partial class ApplicationState
 {
