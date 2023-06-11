@@ -39,7 +39,7 @@
         }
     }
 
-    public Task CloseModal() => Send(new SetActiveModalAction(ModalId: null));
+    public Task CloseModal() => Send(new SetActiveModal.Action(ModalId: null));
 
     protected override void OnInitialized()
     {

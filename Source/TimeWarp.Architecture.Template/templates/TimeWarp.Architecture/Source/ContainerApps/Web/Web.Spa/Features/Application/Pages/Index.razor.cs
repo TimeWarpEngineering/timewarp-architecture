@@ -10,5 +10,5 @@ public partial class Index : BaseComponent
     await Send(new ApplicationState.TwoSecondTaskAction());
 
   private async Task ModalButtonClick() =>
-    await Send(new ApplicationState.SetActiveModalAction(ModalId: AboutModal.ModalId));
+    await Send(new ApplicationState.SetActiveModal.Action(ModalId: AboutModal.ModalId));
 }
