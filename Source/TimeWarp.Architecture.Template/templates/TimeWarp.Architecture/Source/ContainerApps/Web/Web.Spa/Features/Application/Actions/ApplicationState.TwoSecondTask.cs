@@ -2,18 +2,21 @@ namespace TimeWarp.Architecture.Features.Applications;
 
 internal partial class ApplicationState
 {
-  [TrackProcessing]
-  public record TwoSecondTaskAction : BaseAction;
-
-  internal class TwoSecondTaskHandler : BaseHandler<TwoSecondTaskAction>
+  public static class TwoSecondTask
   {
-    public TwoSecondTaskHandler(IStore aStore) : base(aStore) { }
+    [TrackProcessing]
+    public record Action : BaseAction;
 
-    public override async Task Handle(TwoSecondTaskAction aTwoSecondTaskAction, CancellationToken aCancellationToken)
+    internal class Handler : BaseHandler<Action>
     {
-      Console.WriteLine("Start 2 Second Task");
-      await Task.Delay(millisecondsDelay: 2000, cancellationToken: aCancellationToken);
-      Console.WriteLine("Completed 2 Second Task");
+      public Handler(IStore store) : base(store) { }
+
+      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      {
+        Console.WriteLine("Start 2 Second Task");
+        await Task.Delay(millisecondsDelay: 2000, cancellationToken: cancellationToken);
+        Console.WriteLine("Completed 2 Second Task");
+      }
     }
   }
 }
