@@ -5,4 +5,4 @@ global using OneOf.Types;
 
 // Solution usings
 global using TimeWarp.Architecture.Types;
-global using TimeWarp.Architecture.Features.Chat.Contracts;
+global using TimeWarp.Architecture.Features.Chat;

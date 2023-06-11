@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Analytics.Contracts;
+﻿namespace TimeWarp.Architecture.Features.Analytics;
 
 public static partial class TrackEvent
 {

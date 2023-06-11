@@ -1,6 +1,6 @@
 namespace TrackEventRequestValidator_;
 
-using static TimeWarp.Architecture.Features.Analytics.Contracts.TrackEvent;
+using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 
 public class Validate_Should
 {

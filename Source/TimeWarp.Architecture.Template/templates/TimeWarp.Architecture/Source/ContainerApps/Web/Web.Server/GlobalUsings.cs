@@ -38,7 +38,7 @@ global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.CorsPolicies;
 global using TimeWarp.Architecture.Data;
-global using TimeWarp.Architecture.Features.Chat.Contracts;
+global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Architecture.Infrastructure;
 global using TimeWarp.Architecture.Persistence;

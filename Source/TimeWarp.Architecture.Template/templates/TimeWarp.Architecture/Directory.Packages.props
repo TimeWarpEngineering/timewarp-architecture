@@ -58,6 +58,7 @@
     <PackageVersion Include="Oakton" Version="6.0.1" />
     <PackageVersion Include="Octokit.Webhooks.AspNetCore" Version="1.0.0" />
     <PackageVersion Include="OneOf" Version="3.0.243" />
+    <PackageVersion Include="OneOf.SourceGenerator" Version="3.0.243" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.1.1" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.1.1" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.1.1" />
