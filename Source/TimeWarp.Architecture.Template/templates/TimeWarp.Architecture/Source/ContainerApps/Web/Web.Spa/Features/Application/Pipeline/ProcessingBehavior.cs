@@ -21,12 +21,12 @@ public class ProcessingBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
       Guard.Support(aRequest is IAction);
       Guard.Argument(aRequest as object, nameof(aRequest))
         .NotType<StartProcessingAction>()
-        .NotType<CompleteProcessingAction>();
+        .NotType<CompleteProcessing.Action>();
 
       string actionName = typeof(TRequest).Name;
-      await Sender.Send(new StartProcessingAction(actionName)).ConfigureAwait(false);
+      await Sender.Send(new StartProcessingAction(actionName), aCancellationToken).ConfigureAwait(false);
       TResponse response = await aNextHandler().ConfigureAwait(false);
-      await Sender.Send(new CompleteProcessingAction(actionName)).ConfigureAwait(false);
+      await Sender.Send(new CompleteProcessing.Action(actionName), aCancellationToken).ConfigureAwait(false);
       return response;
     }
     else
