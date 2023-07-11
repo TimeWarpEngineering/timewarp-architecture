@@ -81,8 +81,6 @@ Features/
 
 ## Namespaces
 
-## Namespaces
-
 Namespaces should be ordered by most significant to least significant. Consider using the following pattern: `<Container>.<Feature>.<Entity>.<Assembly>` instead of `<Container>.<Assembly>.<Feature>.<Entity>.<Folder>`. The Feature is more significant than the Assembly, and the Container is the most significant, as they are not supposed to have any dependencies at all.
 
 ```
