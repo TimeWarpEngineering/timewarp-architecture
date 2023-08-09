@@ -1,3 +1,3 @@
 namespace TimeWarp.Architecture.Features;
 
-public record BaseAction : BaseRequest, IAction { }
+public abstract record BaseAction : BaseRequest, IAction { }
