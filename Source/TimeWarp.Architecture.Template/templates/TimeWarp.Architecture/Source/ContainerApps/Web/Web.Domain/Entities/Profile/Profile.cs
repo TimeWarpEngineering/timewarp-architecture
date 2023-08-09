@@ -1,5 +1,7 @@
 ﻿namespace TimeWarp.Architecture.Entities;
 
+using FluentValidation;
+
 public class Profile : BaseEntity
 {
   public Profile(string displayName, string language, string region, string theme)
@@ -15,4 +17,9 @@ public class Profile : BaseEntity
   public bool Notifications { get; set; }
   public string Region { get; set; }
   public string Theme { get; set; }
+
+  private class Invariants : AbstractValidator<Profile>
+  {
+    
+  }
 }
