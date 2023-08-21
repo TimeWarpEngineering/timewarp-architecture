@@ -1,5 +1,5 @@
 ﻿@namespace TimeWarp.Architecture.Components
-@using static TimeWarp.Architecture.Features.Applications.Spa.ApplicationState;
+@using static TimeWarp.Architecture.Features.Applications.ApplicationState;
 @inherits BaseComponent
 
 @if (IsActive)
@@ -39,7 +39,7 @@
         }
     }
 
-    public Task CloseModal() => Send(new SetActiveModalAction(ModalId: null));
+    public Task CloseModal() => Send(new SetActiveModal.Action(ModalId: null));
 
     protected override void OnInitialized()
     {

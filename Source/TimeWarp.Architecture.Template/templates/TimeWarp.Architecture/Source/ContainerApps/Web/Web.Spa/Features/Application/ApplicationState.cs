@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.Applications.Spa;
+namespace TimeWarp.Architecture.Features.Applications;
 
 [StateAccessMixin]
 internal partial class ApplicationState : State<ApplicationState>

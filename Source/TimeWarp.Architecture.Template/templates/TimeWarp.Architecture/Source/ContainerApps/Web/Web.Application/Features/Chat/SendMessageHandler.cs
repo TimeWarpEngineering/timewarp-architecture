@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Features.Chat.Application;
 
-public sealed class SendMessageHandler : IRequestHandler<Contracts.SendMessage.Command, OneOf<Success, SharedProblemDetails>>
+public sealed class SendMessageHandler : IRequestHandler<SendMessage.Command, OneOf<Success, SharedProblemDetails>>
 {
   private readonly IChatHubService ChatHubService;
 
@@ -9,7 +9,7 @@ public sealed class SendMessageHandler : IRequestHandler<Contracts.SendMessage.C
     ChatHubService = chatHubClients;
   }
 
-  public async Task<OneOf<Success, SharedProblemDetails>> Handle(Contracts.SendMessage.Command request, CancellationToken cancellationToken)
+  public async Task<OneOf<Success, SharedProblemDetails>> Handle(SendMessage.Command request, CancellationToken cancellationToken)
   {
     try
     {

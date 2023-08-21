@@ -9,7 +9,7 @@ public class ChatHub : Hub
     Sender = sender;
   }
 
-  public async Task<SignalrResult<Success, SharedProblemDetails>> SendMessage(Features.Chat.Contracts.SendMessage.Command sendMessageCommand)
+  public async Task<SignalrResult<Success, SharedProblemDetails>> SendMessage(SendMessage.Command sendMessageCommand)
   {
     OneOf<Success, SharedProblemDetails> result = await Sender.Send(sendMessageCommand);
 

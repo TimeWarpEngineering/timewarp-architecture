@@ -1,12 +1,12 @@
 namespace CounterState_;
 
-using static TimeWarp.Architecture.Features.Counters.Spa.CounterState;
+using static TimeWarp.Architecture.Features.Counters.CounterState;
 
-public class IncrementCounterAction_Should : BaseTest
+public class IncrementCounter_Action_Should : BaseTest
 {
   private CounterState CounterState => Store.GetState<CounterState>();
 
-  public IncrementCounterAction_Should
+  public IncrementCounter_Action_Should
   (
     SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
   ) : base(aSpaTestApplication) { }
@@ -16,10 +16,10 @@ public class IncrementCounterAction_Should : BaseTest
     //Arrange
     CounterState.Initialize(aCount: 15);
 
-    var incrementCounterRequest = new IncrementCounterAction(Amount: -2);
+    var action = new IncrementCounter.Action(Amount: -2);
 
     //Act
-    await Send(incrementCounterRequest);
+    await Send(action);
 
     //Assert
     CounterState.Count.Should().Be(13);
@@ -30,10 +30,10 @@ public class IncrementCounterAction_Should : BaseTest
     //Arrange
     CounterState.Initialize(aCount: 22);
 
-    var incrementCounterRequest = new IncrementCounterAction(Amount: 5);
+    var action = new IncrementCounter.Action(Amount: 5);
 
     //Act
-    await Send(incrementCounterRequest);
+    await Send(action);
 
     //Assert
     CounterState.Count.Should().Be(27);
