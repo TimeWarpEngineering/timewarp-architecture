@@ -1,5 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Features.Analytics;
 
+[TrackEventValidiation]
 public static partial class TrackEvent
 {
   public sealed class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
@@ -14,13 +15,13 @@ public static partial class TrackEvent
 
   public record Response : BaseResponse {}
 
-  public class Validator : AbstractValidator<Command>
-  {
-    public Validator()
-    {
-      RuleFor(command => command.EventName)
-        .NotEmpty();
-    }
-  }
+  //public class Validator : AbstractValidator<Command>
+  //{
+  //  public Validator()
+  //  {
+  //    RuleFor(command => command.EventName)
+  //      .NotEmpty();
+  //  }
+  //}
 }
 
