@@ -1,0 +1,41 @@
+﻿@moxy
+@attribute required string QueryParameters
+@moxy
+
+// QueryParameters {{QueryParameters}}
+// [QueryStringParameters("tab:int;lang:string")]
+{{
+  // add required code here
+}}
+namespace {{ moxy.Class.Namespace }}
+{
+  partial class {{ moxy.Class.Name }}
+  { 
+    private TQueryStringParameters QueryStringParameters { get; set; }
+
+    public class TQueryStringParameters
+    {
+        // Add Property for each QueryStringParameter
+
+        public static TQueryStringParameters ParseQueryParameters(string query)
+        {
+            var parameters = QueryHelpers.ParseQuery(query);
+            return new TQueryStringParameters
+            {
+                // Tab = int.TryParse(parameters[nameof(Tab).ToLower()].ToString(), out var tabIndex) ? tabIndex : 0
+                // Do for each QueryStringParameter
+            };
+        }
+
+        public static string BuildQueryParameters(TQueryStringParameters parameters)
+        {
+            var query = new Dictionary<string, string>
+            {
+                //{ nameof(Tab).ToLower(), parameters.Tab.ToString() }
+                // Do for each QueryStringParameter
+            };
+            return QueryHelpers.AddQueryString("", query);
+        }
+    }
+  }
+}
