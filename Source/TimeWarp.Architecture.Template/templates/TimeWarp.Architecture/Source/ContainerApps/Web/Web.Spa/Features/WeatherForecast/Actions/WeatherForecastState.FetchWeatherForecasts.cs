@@ -4,9 +4,9 @@ internal partial class WeatherForecastsState
 {
 
   [TrackProcessing]
-  internal record FetchWeatherForecastsAction : BaseAction { }
+  internal sealed record FetchWeatherForecastsAction(int? Days) : BaseAction { }
 
-  internal class FetchWeatherForecastsHandler : BaseHandler<FetchWeatherForecastsAction>
+  internal sealed class FetchWeatherForecastsHandler : BaseHandler<FetchWeatherForecastsAction>
   {
     private readonly WebApiService WebApiService;
 
@@ -21,7 +21,8 @@ internal partial class WeatherForecastsState
       CancellationToken aCancellationToken
     )
     {
-      IApiRequest getWeatherForecastsRequest = new Contracts.GetWeatherForecasts.Query { Days = 10 };
+      IApiRequest getWeatherForecastsRequest =
+        new Contracts.GetWeatherForecasts.Query { Days = aFetchWeatherForecastsAction.Days ?? 10 };
 
       Contracts.GetWeatherForecasts.Response response =
         await WebApiService.GetResponse<Contracts.GetWeatherForecasts.Response>(getWeatherForecastsRequest);

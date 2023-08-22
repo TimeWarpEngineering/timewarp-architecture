@@ -5,6 +5,8 @@ using static TimeWarp.Architecture.Features.WeatherForecasts.Spa.WeatherForecast
 [Page("/WeatherForecasts")]
 public partial class WeatherForecastsPage : BaseComponent
 {
+  [Parameter] [SupplyParameterFromQuery] public int? Days { get; set; }
+
   protected override async Task OnInitializedAsync() =>
-    await Send(new FetchWeatherForecastsAction()).ConfigureAwait(false);
+    await Send(new FetchWeatherForecastsAction(Days)).ConfigureAwait(false);
 }

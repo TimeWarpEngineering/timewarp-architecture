@@ -41,14 +41,14 @@
 
   capture $parametersSource
     for $currentParameter in $routeParameterTypesAndNames
-      "[Parameter] public " + $currentParameter.Type + " " + $currentParameter.Name + " { get; set; }\r\n"
+      "[Parameter] public " + $currentParameter.Type + " " + $currentParameter.Name + " { get; set; }\n"
     end
   end
 
   $routeAttributeString = $urlSegmentsForRouteAttribute | array.join("/");
   $getRouteSignatureSource = $getRouteMethodParameterSources | array.join(", ")
   $getRouteFormat = $getRouteMethodFormatParts | array.join("/")
-}}
+-}}
 
 namespace {{ moxy.Class.Namespace }}
 {
@@ -60,3 +60,4 @@ namespace {{ moxy.Class.Namespace }}
     {{ $parametersSource }}
   }
 }
+{{- }}
