@@ -1,20 +1,23 @@
-namespace TimeWarp.Architecture.Features.Counters.Spa;
+namespace TimeWarp.Architecture.Features.Counters;
 
 internal partial class CounterState
 {
-  public record IncrementCounterAction(int Amount) : BaseAction;
-  internal class IncrementCounterHandler : BaseHandler<IncrementCounterAction>
+  public static class IncrementCounter
   {
-    public IncrementCounterHandler(IStore aStore) : base(aStore) { }
-
-    public override Task Handle
-    (
-      IncrementCounterAction aIncrementCounterAction,
-      CancellationToken aCancellationToken
-    )
+    public record Action(int Amount) : BaseAction;
+    internal class Handler : BaseHandler<Action>
     {
-      CounterState.Count += aIncrementCounterAction.Amount;
-      return Task.CompletedTask;
+      public Handler(IStore aStore) : base(aStore) { }
+
+      public override Task Handle
+      (
+        Action action,
+        CancellationToken aCancellationToken
+      )
+      {
+        CounterState.Count += action.Amount;
+        return Task.CompletedTask;
+      }
     }
   }
 }

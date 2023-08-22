@@ -18,7 +18,7 @@ public sealed class ChatHubConnection : IDisposable
     (
       nameof(ReceiveMessage), (command) =>
       {
-        Sender.Send(new ChatState.ServerToClientMessageAction(command));
+        Sender.Send(new ChatState.ServerToClientMessage.Action(command));
         return Task.CompletedTask;
       }
     );

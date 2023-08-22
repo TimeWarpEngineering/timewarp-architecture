@@ -1,9 +1,9 @@
 ﻿namespace TimeWarp.Architecture.Features.Applications;
 
-using static TimeWarp.Architecture.Features.Applications.Spa.ApplicationState;
+using static TimeWarp.Architecture.Features.Applications.ApplicationState;
 
 public class ProcessingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-  where TRequest : notnull
+  where TRequest : notnull, IAction
 {
   private readonly ISender Sender;
 
@@ -18,15 +18,14 @@ public class ProcessingBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
   {
     if (typeof(TRequest).GetCustomAttributes(typeof(TrackProcessingAttribute), false).Any())
     {
-      Guard.Support(aRequest is IAction);
       Guard.Argument(aRequest as object, nameof(aRequest))
-        .NotType<StartProcessingAction>()
-        .NotType<CompleteProcessingAction>();
+        .NotType<StartProcessing.Action>()
+        .NotType<CompleteProcessing.Action>();
 
       string actionName = typeof(TRequest).Name;
-      await Sender.Send(new StartProcessingAction(actionName)).ConfigureAwait(false);
+      await Sender.Send(new StartProcessing.Action(actionName), aCancellationToken).ConfigureAwait(false);
       TResponse response = await aNextHandler().ConfigureAwait(false);
-      await Sender.Send(new CompleteProcessingAction(actionName)).ConfigureAwait(false);
+      await Sender.Send(new CompleteProcessing.Action(actionName), aCancellationToken).ConfigureAwait(false);
       return response;
     }
     else

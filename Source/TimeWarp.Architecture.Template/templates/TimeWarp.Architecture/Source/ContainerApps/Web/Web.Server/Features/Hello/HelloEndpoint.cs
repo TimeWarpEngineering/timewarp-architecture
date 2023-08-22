@@ -1,6 +1,6 @@
-﻿namespace TimeWarp.Architecture.Features.Hello;
+﻿namespace TimeWarp.Architecture.Features.Hellos;
 
-using static TimeWarp.Architecture.Features.Hello.Contracts.Hello;
+using static TimeWarp.Architecture.Features.Hellos.Hello;
 
 public class HelloEndpoint : BaseEndpoint<Query, Response>
 {

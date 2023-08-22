@@ -338,3 +338,4 @@ ASALocalRun/
 /Source/TimeWarp.Architecture.Template/templates/TimeWarp.Architecture/Source/ContainerApps/Web/Web.Spa/wwwroot/css/site.css
 TimeWarp.Architecture.sln.EasyRun.json
 /Source/TimeWarp.Architecture.Template/templates/TimeWarp.Architecture/Documentation/StarUml/Generated/html-docs
+/.vscode

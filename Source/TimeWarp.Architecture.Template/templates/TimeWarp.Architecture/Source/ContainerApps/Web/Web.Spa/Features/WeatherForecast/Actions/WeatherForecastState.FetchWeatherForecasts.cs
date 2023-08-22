@@ -1,32 +1,31 @@
-﻿namespace TimeWarp.Architecture.Features.WeatherForecasts.Spa;
+﻿namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 internal partial class WeatherForecastsState
 {
-
-  [TrackProcessing]
-  internal record FetchWeatherForecastsAction : BaseAction { }
-
-  internal class FetchWeatherForecastsHandler : BaseHandler<FetchWeatherForecastsAction>
+  public static class FetchWeatherForecasts
   {
-    private readonly WebApiService WebApiService;
 
-    public FetchWeatherForecastsHandler(IStore aStore, WebApiService aWebApiService) : base(aStore)
+    [TrackProcessing]
+    internal record Action : BaseAction { }
+
+    internal class Handler : BaseHandler<Action>
     {
-      WebApiService = aWebApiService;
-    }
+      private readonly WebApiService WebApiService;
 
-    public override async Task Handle
-    (
-      FetchWeatherForecastsAction aFetchWeatherForecastsAction,
-      CancellationToken aCancellationToken
-    )
-    {
-      IApiRequest getWeatherForecastsRequest = new Contracts.GetWeatherForecasts.Query { Days = 10 };
+      public Handler(IStore store, WebApiService webApiService) : base(store)
+      {
+        WebApiService = webApiService;
+      }
 
-      Contracts.GetWeatherForecasts.Response response =
-        await WebApiService.GetResponse<Contracts.GetWeatherForecasts.Response>(getWeatherForecastsRequest);
+      public override async Task Handle(Action action, CancellationToken aCancellationToken)
+      {
+        IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = 10 };
 
-      WeatherForecastsState._WeatherForecasts = response.WeatherForecasts.ToList();
+        GetWeatherForecasts.Response response =
+          await WebApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest);
+
+        WeatherForecastsState._WeatherForecasts = response.WeatherForecasts.ToList();
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 namespace GetWeatherForecastsEndpoint_;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
+using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 
 public class Returns
 {

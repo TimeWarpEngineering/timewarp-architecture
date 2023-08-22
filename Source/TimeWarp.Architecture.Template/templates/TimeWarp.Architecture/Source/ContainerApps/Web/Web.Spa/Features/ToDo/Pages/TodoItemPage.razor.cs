@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Pages;
 
-[Page("/todoitem/{TodoItemId:Guid}")]
+[Page("/todoitems/{TodoItemId:Guid}")]
 public partial class TodoItemPage: BaseComponent
 {
 

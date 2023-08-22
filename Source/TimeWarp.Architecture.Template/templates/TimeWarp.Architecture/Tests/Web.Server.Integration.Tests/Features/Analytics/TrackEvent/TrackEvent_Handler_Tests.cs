@@ -1,6 +1,6 @@
 namespace TrackEventHandler_;
 
-using static TimeWarp.Architecture.Features.Analytics.Contracts.TrackEvent;
+using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 
 public class Handle_Returns
 {

@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Pages;
 
-using static TimeWarp.Architecture.Features.Chat.Spa.ChatState;
+using static TimeWarp.Architecture.Features.Chat.ChatState;
 
 [Page("/Chat")]
 public partial class ChatPage
@@ -22,7 +22,7 @@ public partial class ChatPage
     if (!string.IsNullOrEmpty(User) && !string.IsNullOrEmpty(Message) && ChatHubConnection.IsConnected)
     {
       var sendMessageAction =
-        new ClientToServerMessageAction
+        new ClientToServerMessage.Action
         (
           new SendMessage.Command { User = User, Message = Message}
         );

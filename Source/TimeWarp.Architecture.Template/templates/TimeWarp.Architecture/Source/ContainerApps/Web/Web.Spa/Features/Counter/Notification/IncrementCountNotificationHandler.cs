@@ -1,9 +1,9 @@
-namespace TimeWarp.Architecture.Features.Counters.Spa;
+namespace TimeWarp.Architecture.Features.Counters;
 
-using static TimeWarp.Architecture.Features.Counters.Spa.CounterState;
+using static TimeWarp.Architecture.Features.Counters.CounterState;
 
 internal class IncrementCountNotificationHandler
-  : INotificationHandler<PostPipelineNotification<IncrementCounterAction, Unit>>
+  : INotificationHandler<PostPipelineNotification<IncrementCounter.Action, Unit>>
 {
   private readonly ILogger Logger;
 
@@ -14,11 +14,11 @@ internal class IncrementCountNotificationHandler
 
   public Task Handle
   (
-    PostPipelineNotification<IncrementCounterAction, Unit> aPostPipelineNotification,
-    CancellationToken aCancellationToken
+    PostPipelineNotification<IncrementCounter.Action, Unit> postPipelineNotification,
+    CancellationToken cancellationToken
   )
   {
-    Logger.LogDebug(aPostPipelineNotification.Request.GetType().Name);
+    Logger.LogDebug(postPipelineNotification.Request.GetType().Name);
     Logger.LogDebug($"{nameof(IncrementCountNotificationHandler)} handled");
     return Unit.Task;
   }

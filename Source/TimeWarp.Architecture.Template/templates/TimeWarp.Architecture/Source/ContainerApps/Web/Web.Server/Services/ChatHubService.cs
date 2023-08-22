@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Services;
 
-using TimeWarp.Architecture.Features.Chat.Contracts;
+using TimeWarp.Architecture.Features.Chat;
 
 public sealed class ChatHubService : IChatHubService
 {

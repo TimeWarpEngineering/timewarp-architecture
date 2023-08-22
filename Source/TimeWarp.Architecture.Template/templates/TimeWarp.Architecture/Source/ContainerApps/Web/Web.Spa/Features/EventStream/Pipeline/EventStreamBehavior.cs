@@ -1,6 +1,6 @@
-namespace TimeWarp.Architecture.Features.EventStreams.Spa;
+namespace TimeWarp.Architecture.Features.EventStreams;
 
-using static TimeWarp.Architecture.Features.EventStreams.Spa.EventStreamState;
+using static TimeWarp.Architecture.Features.EventStreams.EventStreamState;
 
 /// <summary>
 /// Every event that comes through the pipeline adds an object to the EventStreamState
@@ -43,9 +43,9 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
 
   private async Task AddEventToStream(TRequest aRequest, string aTag)
   {
-    if (aRequest is not AddEventAction) //Skip to avoid recursion
+    if (aRequest is not AddEvent.Action) //Skip to avoid recursion
     {
-      var addEventAction = new AddEventAction();
+      var addEventAction = new AddEvent.Action();
       string requestTypeName = aRequest.GetType().Name;
 
       if (aRequest is BaseRequest request)
