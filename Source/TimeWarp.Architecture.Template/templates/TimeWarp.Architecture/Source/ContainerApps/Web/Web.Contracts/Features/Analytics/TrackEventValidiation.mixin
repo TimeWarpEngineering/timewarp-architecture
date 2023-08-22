@@ -1,0 +1,30 @@
+﻿// TODO there is no need for this mixin to vs just putting in the validator
+// As this not an EditModel.  I was just using it as an example
+// I need to add real use case for examples.
+{{
+    $isCreate = string.contains moxy.Class.Name "Create";
+    $isUpdate = string.contains moxy.Class.Name "Update";
+    $isDelete = string.contains moxy.Class.Name "Delete";
+    $isClientSide = string.contains moxy.Class.Name "EditModel";
+    $isServerSide = !$isClientSide
+}}
+
+namespace TimeWarp.Architecture.Features.Analytics;
+
+public static partial class TrackEvent
+{
+
+  public class Validator : AbstractValidator<Command>
+  {
+    public Validator()
+    {
+{{ if $isUpdate }}
+      RuleFor(p => p.Id).NotEmpty();
+{{ end }}
+      RuleFor(command => command.EventName)
+        .NotEmpty();
+      // Something here
+    }
+  }
+}
+

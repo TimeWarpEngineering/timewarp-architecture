@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features.EventStreams.Spa;
+namespace TimeWarp.Architecture.Features.EventStreams;
 
 [StateAccessMixin]
 internal partial class EventStreamState : State<EventStreamState>

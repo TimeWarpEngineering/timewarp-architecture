@@ -1,6 +1,6 @@
 namespace GetWeatherForecastsHandler;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
+using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 public class Handle_Returns
 {
   private readonly Query Query;

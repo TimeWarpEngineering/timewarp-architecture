@@ -1,24 +1,28 @@
-namespace TimeWarp.Architecture.Features.EventStreams.Spa;
+namespace TimeWarp.Architecture.Features.EventStreams;
 
 internal partial class EventStreamState
 {
-  internal record AddEventAction : BaseAction
+  public static class AddEvent
   {
-    public string Message { get; set; }
-  }
 
-  internal class AddEventHandler : BaseHandler<AddEventAction>
-  {
-    public AddEventHandler(IStore aStore) : base(aStore) { }
-
-    public override Task Handle
-    (
-      AddEventAction aAddEventAction,
-      CancellationToken aCancellationToken
-    )
+    internal record Action : BaseAction
     {
-      EventStreamState._Events.Add(aAddEventAction.Message);
-      return Task.CompletedTask;
+      public string Message { get; set; }
+    }
+
+    internal class Handler : BaseHandler<Action>
+    {
+      public Handler(IStore store) : base(store) { }
+
+      public override Task Handle
+      (
+        Action action,
+        CancellationToken aCancellationToken
+      )
+      {
+        EventStreamState._Events.Add(action.Message);
+        return Task.CompletedTask;
+      }
     }
   }
 }

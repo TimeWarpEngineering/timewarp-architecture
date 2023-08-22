@@ -1,6 +1,6 @@
 namespace GetWeatherForecastRequestValidator_;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.Contracts.GetWeatherForecasts;
+using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 
 public class Validate_Should
 {

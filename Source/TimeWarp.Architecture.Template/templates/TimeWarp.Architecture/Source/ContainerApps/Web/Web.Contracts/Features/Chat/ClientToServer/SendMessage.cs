@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Chat.Contracts;
+﻿namespace TimeWarp.Architecture.Features.Chat;
 
 public static partial class SendMessage
 {

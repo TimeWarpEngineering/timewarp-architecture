@@ -53,7 +53,7 @@
 
 namespace {{ moxy.Class.Namespace }}
 { 
-  partial record {{ moxy.Class.Name }}
+  partial class {{ moxy.Class.Name }}
   {
     public const string RouteTemplate = "{{ RouteTemplate }}";
     public HttpVerb GetHttpVerb() => {{ HttpVerb }};

@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Features.Analytics.Application;
 
-using static TimeWarp.Architecture.Features.Analytics.Contracts.TrackEvent;
+using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 
 public sealed partial class TrackEvent
 {

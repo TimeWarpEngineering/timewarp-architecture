@@ -1,5 +1,7 @@
 <Project>
   <ItemGroup>
+    <PackageVersion Include="Asp.Versioning.Http" Version="7.0.0" />
+    <PackageVersion Include="Asp.Versioning.Mvc" Version="7.0.0" />
     <PackageVersion Include="AutoFixture" Version="4.18.0" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.0" />
     <PackageVersion Include="AutoMapper" Version="12.0.1" />
@@ -7,7 +9,7 @@
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.2.2" />
     <PackageVersion Include="Azure.Identity" Version="1.9.0" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
-    <PackageVersion Include="Blazor-State" Version="8.2.1" />
+    <PackageVersion Include="Blazor-State" Version="8.2.6" />
     <PackageVersion Include="Dawn.Guard" Version="1.12.0" />
     <PackageVersion Include="FakeItEasy" Version="7.4.0" />
     <PackageVersion Include="Fixie" Version="3.3.0" />
@@ -22,6 +24,7 @@
     <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.53.0" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.53.0" />
     <PackageVersion Include="Grpc.Net.Client.Web" Version="2.53.0" />
+    <PackageVersion Include="Riok.Mapperly" Version="2.8.0" />
     <PackageVersion Include="MediatR" Version="12.0.1" />
     <PackageVersion Include="MediatR.Contracts" Version="2.0.1" />
     <PackageVersion Include="MicroElements.Swashbuckle.FluentValidation" Version="5.7.0" />
@@ -52,12 +55,13 @@
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.0.0" />
     <PackageVersion Include="Morris.Blazor.FluentValidation" Version="2.0.0" />
-    <PackageVersion Include="Morris.Moxy" Version="1.2.0" />
+    <PackageVersion Include="Morris.Moxy" Version="1.5.0" />
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.5.119" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.3" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.4" />
     <PackageVersion Include="Oakton" Version="6.0.1" />
     <PackageVersion Include="Octokit.Webhooks.AspNetCore" Version="1.0.0" />
     <PackageVersion Include="OneOf" Version="3.0.243" />
+    <PackageVersion Include="OneOf.SourceGenerator" Version="3.0.243" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.1.1" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.1.1" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.1.1" />
@@ -81,6 +85,6 @@
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-alpha.2" />
     <PackageVersion Include="timewarp-simple-icons" Version="7.17.0" />
     <PackageVersion Include="Toolbelt.Blazor.SplitContainer" Version="1.1.2" />
-    <PackageVersion Include="Yarp.ReverseProxy" Version="1.1.1" />
+    <PackageVersion Include="Yarp.ReverseProxy" Version="1.1.2" />
   </ItemGroup>
 </Project>
