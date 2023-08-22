@@ -13,10 +13,10 @@ public class FetchWeatherForecasts_Action_Should : BaseTest
 
   public async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()
   {
-    var fetchWeatherForecastsRequest = new FetchWeatherForecasts.Action();
+    var fetchWeatherForecastsRequest = new FetchWeatherForecasts.Action(5);
 
     await Send(fetchWeatherForecastsRequest);
 
-    WeatherForecastsState.WeatherForecasts.Count.Should().BeGreaterThan(0);
+    WeatherForecastsState.WeatherForecasts.Count.Should().Be(5);
   }
 }

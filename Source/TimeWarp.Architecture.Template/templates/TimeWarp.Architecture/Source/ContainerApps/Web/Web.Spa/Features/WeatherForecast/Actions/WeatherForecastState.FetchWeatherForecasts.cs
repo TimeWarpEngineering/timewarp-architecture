@@ -19,7 +19,7 @@ internal partial class WeatherForecastsState
 
       public override async Task Handle(Action action, CancellationToken aCancellationToken)
       {
-        IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = aFetchWeatherForecastsAction.Days ?? 10 };
+        IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = action.Days ?? 10 };
 
         GetWeatherForecasts.Response response =
           await WebApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest);
