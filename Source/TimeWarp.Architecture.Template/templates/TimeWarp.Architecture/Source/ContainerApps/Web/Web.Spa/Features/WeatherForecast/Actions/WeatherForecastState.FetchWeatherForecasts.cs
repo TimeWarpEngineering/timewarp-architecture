@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.WeatherForecasts;
+namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 internal partial class WeatherForecastsState
 {
@@ -6,7 +6,7 @@ internal partial class WeatherForecastsState
   {
 
     [TrackProcessing]
-    internal record Action : BaseAction { }
+    internal sealed record Action(int? Days) : BaseAction { }
 
     internal class Handler : BaseHandler<Action>
     {
@@ -19,7 +19,7 @@ internal partial class WeatherForecastsState
 
       public override async Task Handle(Action action, CancellationToken aCancellationToken)
       {
-        IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = 10 };
+        IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = action.Days ?? 10 };
 
         GetWeatherForecasts.Response response =
           await WebApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest);
