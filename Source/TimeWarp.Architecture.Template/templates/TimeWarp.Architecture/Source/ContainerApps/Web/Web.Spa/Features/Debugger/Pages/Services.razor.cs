@@ -5,6 +5,7 @@ public partial class Services
 {
   [Inject]
   private IServiceCollection ServiceCollection { get; set; } = null!;
+
   private List<ServiceDescriptor> IPipelineBehaviors => FilterServices(typeof(IPipelineBehavior<,>));
   private List<ServiceDescriptor> IRequestPreProcessors => FilterServices(typeof(IRequestPreProcessor<>));
   private List<ServiceDescriptor> IRequestPostProcessors => FilterServices(typeof(IRequestPostProcessor<,>));
