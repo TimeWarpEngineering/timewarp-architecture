@@ -1,0 +1,41 @@
+﻿<div class="ml-4 mb-4">
+    <button class="text-lg font-bold" @onclick="ToggleCollapse">@Title</button>
+    <table class="mt-2 w-full border-collapse" style="display: @(IsCollapsed ? "none" : "block")">
+        <thead>
+            <tr class="border-b">
+                <th class="p-2 text-left text-gray-600">Implementation Type</th>
+                <th class="p-2 text-left text-gray-600">Lifetime</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in Services)
+            {
+                <tr class="border-b">
+                    <td class="p-2">@GetNonGenericTypeName(service.ImplementationType)</td>
+                    <td class="p-2">@service.Lifetime</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+  #nullable enable
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public List<ServiceDescriptor> Services { get; set; } = new List<ServiceDescriptor>();
+
+    private bool IsCollapsed { get; set; } = true;
+
+    private void ToggleCollapse()
+    {
+        IsCollapsed = !IsCollapsed;
+    }
+
+    private string GetNonGenericTypeName(Type? type)
+    {
+        return type?.IsGenericType == true ? type.Name.Split('`')[0] : type?.Name ?? string.Empty;
+    }
+}
