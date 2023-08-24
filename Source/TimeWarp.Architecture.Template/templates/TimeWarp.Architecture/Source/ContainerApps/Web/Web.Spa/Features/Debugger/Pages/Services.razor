@@ -1,8 +1,12 @@
 ﻿@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
 
-<h1 class="text-xl font-bold">Registered Services</h1>
-
-<ServiceList Title="IPipelineBehavior" Services=IPipelineBehaviors />
-<ServiceList Title="IRequestPreProcessor" Services=IRequestPreProcessors />
-<ServiceList Title="IRequestPostProcessor" Services=IRequestPostProcessors />
-<ServiceList Title="IStreamPipelineBehavior" Services=IStreamPipelineBehaviors />
+<PageComponent>
+    <HeaderContent>Middleware Services</HeaderContent>
+    <MainContent>
+        <ServiceList Title="IPipelineBehavior" Services=IPipelineBehaviors />
+        <ServiceList Title="IRequestPreProcessor" Services=IRequestPreProcessors />
+        <ServiceList Title="IRequestPostProcessor" Services=IRequestPostProcessors />
+        <ServiceList Title="IStreamPipelineBehavior" Services=IStreamPipelineBehaviors />
+    </MainContent>
+</PageComponent>

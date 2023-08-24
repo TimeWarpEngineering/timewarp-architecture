@@ -1,24 +1,26 @@
-﻿<div class="mb-4">
+﻿<div class="ml-4 mb-4">
     <button class="text-lg font-bold" @onclick="ToggleCollapse">@Title</button>
-    <div class="grid grid-cols-1 gap-3 mt-2" style="display: @(IsCollapsed ? "none" : "block")">
-        @foreach (var service in Services)
-        {
-            <div class="p-4 bg-white shadow-md rounded-lg">
-                <div class="text-gray-600 mb-2 text-lg font-semibold">@service.ServiceType</div>
-                <div class="flex justify-between text-gray-500 text-sm">
-                    <div class="font-medium">Lifetime:</div>
-                    <div class="font-semibold">@service.Lifetime</div>
-                </div>
-                <div class="flex justify-between text-gray-500 text-sm">
-                    <div class="font-medium">Implementation Type:</div>
-                    <div class="font-semibold">@service.ImplementationType</div>
-                </div>
-            </div>
-        }
-    </div>
+    <table class="mt-2 w-full border-collapse" style="display: @(IsCollapsed ? "none" : "block")">
+        <thead>
+            <tr class="border-b">
+                <th class="p-2 text-left text-gray-600">Implementation Type</th>
+                <th class="p-2 text-left text-gray-600">Lifetime</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in Services)
+            {
+                <tr class="border-b">
+                    <td class="p-2">@GetNonGenericTypeName(service.ImplementationType)</td>
+                    <td class="p-2">@service.Lifetime</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
 
 @code {
+  #nullable enable
     [Parameter]
     public string Title { get; set; } = string.Empty;
 
@@ -30,5 +32,10 @@
     private void ToggleCollapse()
     {
         IsCollapsed = !IsCollapsed;
+    }
+
+    private string GetNonGenericTypeName(Type? type)
+    {
+        return type?.IsGenericType == true ? type.Name.Split('`')[0] : type?.Name ?? string.Empty;
     }
 }
