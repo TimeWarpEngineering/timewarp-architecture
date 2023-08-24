@@ -78,7 +78,7 @@
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.5.0" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
     <PackageVersion Include="System.Net.Http.Json" Version="7.0.1" />
-    <PackageVersion Include="System.ServiceModel.Primitives" Version="4.10.2" />
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="6.0.0" />
     <PackageVersion Include="TimeWarp.Fixie" Version="1.0.2" />
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-alpha.5" />
     <PackageVersion Include="timewarp-heroicons" Version="2.0.18" />
