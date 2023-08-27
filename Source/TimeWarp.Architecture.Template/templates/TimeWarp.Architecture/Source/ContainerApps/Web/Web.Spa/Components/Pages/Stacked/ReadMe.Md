@@ -1,11 +1,11 @@
-﻿# PageComponent.razor
+﻿# StackedPage.razor
 
-The `PageComponent.razor` file represents a page component in the TimeWarp.Architecture project. 
+The `StackedPage.razor` file represents a page component in the TimeWarp.Architecture project. 
 It is a Blazor WASM component used to render the UI for a specific page within the application.
 
 ## Component Structure
 
-The `PageComponent` consists of the following sections:
+The `StackedPage` consists of the following sections:
 
 1. **SiteHeader**: This section represents the site header and contains the following components:
    - `DarkNavBar`: This component displays a dark-colored navigation bar.
@@ -21,7 +21,7 @@ The `PageComponent` consists of the following sections:
 
 ## Absolute Position Items
 
-The `PageComponent` includes the following absolute positioned items:
+The `StackedPage` includes the following absolute positioned items:
 
 - **ModalContent**: If the `ModalContent` property is set, it renders a modal controller and modal containers to display the modal content.
 

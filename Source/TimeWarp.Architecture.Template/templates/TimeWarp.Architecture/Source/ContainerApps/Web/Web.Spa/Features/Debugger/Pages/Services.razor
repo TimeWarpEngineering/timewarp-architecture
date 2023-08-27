@@ -1,7 +1,7 @@
 ﻿@namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
 
-<PageComponent>
+<StackedPage>
     <HeaderContent>Middleware Services</HeaderContent>
     <MainContent>
         <ServiceList Title="IPipelineBehavior" Services=IPipelineBehaviors />
@@ -9,4 +9,4 @@
         <ServiceList Title="IRequestPostProcessor" Services=IRequestPostProcessors />
         <ServiceList Title="IStreamPipelineBehavior" Services=IStreamPipelineBehaviors />
     </MainContent>
-</PageComponent>
+</StackedPage>
