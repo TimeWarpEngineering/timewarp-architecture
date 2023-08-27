@@ -1,0 +1,20 @@
+﻿<div class="h-full">
+  <div class="relative z-50 lg:hidden" role="dialog" aria-modal="true">
+    Off-canvas menu for mobile, show/hide based on off-canvas menu state.
+  </div>
+  <!-- Static sidebar for desktop hidden by default visible on lg and up -->
+  <div class="hidden lg:block lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+    <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-gray-900 px-6 pb-4">
+      <Sidebar/>
+    </div>
+  </div>
+  <div class="min-h-screen lg:pl-72 lg:flex lg:flex-col">
+    <HeaderBar/>
+    <main class="py-10 px-4 sm:px-6 lg:px-8 grow flex flex-col ">
+      @MainContent
+    </main>
+    <footer>
+      <SiteFooter/>
+    </footer>
+  </div>
+</div>
