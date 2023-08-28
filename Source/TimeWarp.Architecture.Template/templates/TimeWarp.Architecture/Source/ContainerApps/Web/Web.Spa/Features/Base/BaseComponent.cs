@@ -17,6 +17,6 @@ public abstract partial class BaseComponent : BlazorStateDevToolsComponent, IAtt
 
   protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
 
-  protected bool IsProcessingAny(params string[] aActions) => ApplicationState.IsProcessingAny(aActions);
+  protected bool IsProcessingAny(params string[] aActions) => ProcessingState.IsProcessingAny(aActions);
   protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest).ConfigureAwait(false);
 }
