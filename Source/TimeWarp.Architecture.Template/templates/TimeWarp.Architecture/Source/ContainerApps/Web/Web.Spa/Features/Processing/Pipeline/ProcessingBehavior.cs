@@ -1,6 +1,6 @@
-﻿namespace TimeWarp.Architecture.Features.Applications;
+﻿namespace TimeWarp.Architecture.Features.Processing;
 
-using static TimeWarp.Architecture.Features.Applications.ApplicationState;
+using static TimeWarp.Architecture.Features.Processing.ProcessingState;
 
 public class ProcessingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
   where TRequest : notnull, IAction

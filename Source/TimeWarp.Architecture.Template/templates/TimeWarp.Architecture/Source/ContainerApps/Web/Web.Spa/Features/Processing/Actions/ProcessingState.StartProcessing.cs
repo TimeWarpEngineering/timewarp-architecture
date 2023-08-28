@@ -1,18 +1,18 @@
-﻿namespace TimeWarp.Architecture.Features.Applications;
+﻿namespace TimeWarp.Architecture.Features.Processing;
 
-internal partial class ApplicationState
+internal partial class ProcessingState
 {
-  public static class CompleteProcessing
+  public static class StartProcessing
   {
     internal record Action(string ActionName) : BaseAction;
 
     internal class Handler : BaseHandler<Action>
     {
-      public Handler(IStore aStore) : base(aStore) { }
+      public Handler(IStore store) : base(store) { }
 
       public override Task Handle(Action action, CancellationToken cancellationToken)
       {
-        ApplicationState._ProcessingList.Remove(action.ActionName);
+        ProcessingState._ProcessingList.Add(action.ActionName);
         return Task.CompletedTask;
       }
     }

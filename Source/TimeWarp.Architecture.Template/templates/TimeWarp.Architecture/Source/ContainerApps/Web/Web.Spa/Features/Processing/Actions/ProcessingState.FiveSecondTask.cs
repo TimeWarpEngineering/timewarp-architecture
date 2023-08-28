@@ -1,6 +1,6 @@
-namespace TimeWarp.Architecture.Features.Applications;
+namespace TimeWarp.Architecture.Features.Processing;
 
-internal partial class ApplicationState
+internal partial class ProcessingState
 {
   public static class FiveSecondTask
   {
