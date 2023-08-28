@@ -1,7 +1,7 @@
 @namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
 
-<StackedPage>
+<SideBarPage>
   <HeaderContent>
     @ApplicationState.Name
   </HeaderContent>
@@ -35,11 +35,7 @@
       </div>
     </div>
   </MainContent>
-  <SideNavigationContent>
-        <TimeWarp.Architecture.Components.Pages.Tailwind.DesktopSidebar />
-  </SideNavigationContent>
-
   <ModalContent>
     <AboutModal/>
   </ModalContent>
-</StackedPage>
+</SideBarPage>
