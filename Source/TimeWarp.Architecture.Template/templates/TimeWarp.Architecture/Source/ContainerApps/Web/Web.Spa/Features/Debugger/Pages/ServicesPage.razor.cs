@@ -1,7 +1,7 @@
 namespace TimeWarp.Architecture.Pages;
 
-[Page("/services")]
-public partial class Services
+[Page("/Services")]
+public partial class ServicesPage
 {
   [Inject]
   private IServiceCollection ServiceCollection { get; set; } = null!;
