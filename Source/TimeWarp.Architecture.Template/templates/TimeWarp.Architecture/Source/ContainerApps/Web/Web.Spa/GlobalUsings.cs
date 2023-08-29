@@ -44,6 +44,7 @@ global using TimeWarp.Architecture.Features.ClientLoaders;
 global using TimeWarp.Architecture.Features.EventStreams;
 global using TimeWarp.Architecture.Features.Notifications;
 global using TimeWarp.Architecture.Features.Processing;
+global using TimeWarp.Architecture.Features.Sidebars;
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
 
