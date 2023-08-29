@@ -81,7 +81,7 @@
     <PackageVersion Include="System.ServiceModel.Primitives" Version="6.0.0" />
     <PackageVersion Include="TimeWarp.Fixie" Version="1.0.2" />
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-alpha.5" />
-    <PackageVersion Include="timewarp-heroicons" Version="2.0.18" />
+    <PackageVersion Include="timewarp-heroicons" Version="2.0.19" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-alpha.2" />
     <PackageVersion Include="timewarp-simple-icons" Version="9.9.0" />
     <PackageVersion Include="Toolbelt.Blazor.SplitContainer" Version="1.1.2.1" />
