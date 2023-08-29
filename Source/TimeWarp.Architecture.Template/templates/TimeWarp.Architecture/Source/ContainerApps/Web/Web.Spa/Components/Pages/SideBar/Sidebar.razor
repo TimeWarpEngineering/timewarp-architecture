@@ -10,7 +10,7 @@
                 <ul role="list" class="-mx-2 space-y-1">
                     <SideNavBarLink Href=@HomePage.GetPageUrl()>
                         <SvgIcon>
-                            <TimeWarp.HeroIcons.Outline.HomeIcon stroke="currentColor" />
+                            <TimeWarp.HeroIcons.Outline.HomeIcon class="h-5 w-5"/>
                         </SvgIcon>
                         <ChildContent>
                             Home
@@ -29,7 +29,7 @@
                     @*#endif*@
                     <SideNavBarLink Href=@ChatPage.GetPageUrl()>
                         <SvgIcon>
-                            <TimeWarp.HeroIcons.Outline.ChatBubbleOvalLeftIcon />
+              <TimeWarp.HeroIcons.Outline.ChatBubbleOvalLeftIcon class="h-5 w-5" />
                         </SvgIcon>
                         <ChildContent>
                             Chat
@@ -51,7 +51,7 @@
                     @*#if (web)*@
                     <SideNavBarLink Href="/api/web-server/swagger/" Target=SideNavBarLink.TargetValue._blank>
                         <SvgIcon>
-                            <TimeWarp.HeroIcons.Outline.BookOpenIcon />
+                          <TimeWarp.HeroIcons.Outline.BookOpenIcon class="h-5 w-5" />
                         </SvgIcon>
                         <ChildContent>
                             Web-Server Docs
@@ -62,7 +62,7 @@
                     @*#if (api)*@
                     <SideNavBarLink Href="/api/api-server/swagger/" Target=SideNavBarLink.TargetValue._blank>
                         <SvgIcon>
-                            <TimeWarp.HeroIcons.Outline.BookOpenIcon />
+              <TimeWarp.HeroIcons.Outline.BookOpenIcon class="h-5 w-5" />
                         </SvgIcon>
                         <ChildContent>
                             Api-Server Docs
@@ -76,7 +76,7 @@
                 <ul role="list" class="-mx-2 mt-2 space-y-1">
                     <SideNavBarLink Href="https://thefreezeteam.com/" Target=SideNavBarLink.TargetValue._blank>
                         <SvgIcon>
-                            <TimeWarp.HeroIcons.Outline.LinkIcon />
+                          <TimeWarp.HeroIcons.Outline.LinkIcon class="h-5 w-5" />
                         </SvgIcon>
                         <ChildContent>
                             The Freeze Team
@@ -84,7 +84,7 @@
                     </SideNavBarLink>
                     <SideNavBarLink Href="https://github.com/TimeWarpEngineering/timewarp-architecture" Target=SideNavBarLink.TargetValue._blank>
                         <SvgIcon>
-                            <TimeWarp.Simple.Icons.GithubIcon class="w-6 h-6 fill-slate-400" />
+                            <TimeWarp.Simple.Icons.GithubIcon class="w-5 h-5 fill-slate-400" />
                         </SvgIcon>
                         <ChildContent>
                             GitHub
@@ -95,7 +95,7 @@
             <li class="mt-auto">
                 <SideNavBarLink Href=@SettingsPage.GetPageUrl() >
                     <SvgIcon>
-                        <TimeWarp.HeroIcons.Outline.CogIcon />
+                      <TimeWarp.HeroIcons.Outline.CogIcon class="h-5 w-5" />
                     </SvgIcon>
                     <ChildContent>
                         Settings
