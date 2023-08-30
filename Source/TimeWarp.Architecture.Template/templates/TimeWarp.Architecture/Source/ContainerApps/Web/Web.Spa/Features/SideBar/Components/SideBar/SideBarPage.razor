@@ -1,0 +1,30 @@
+﻿@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+
+<div class="h-full">
+  <SidebarMobileMenu />
+  <!-- Static sidebar for desktop hidden by default visible on lg and up -->
+  <div class="hidden lg:block lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+    <Sidebar />
+  </div>
+  <div class="min-h-screen flex flex-col lg:pl-72 lg:flex lg:flex-col">
+    <HeaderBar />
+    <main class="py-10 px-4 sm:px-6 lg:px-8 grow flex flex-col ">
+      @MainContent
+    </main>
+    <footer>
+      <SiteFooter />
+    </footer>
+  </div>
+</div>
+
+<!-- Absolute Position Items -->
+@if (ModalContent != null)
+{
+  <ModalController ActiveModalId=@ActiveModalId>
+    <ModalContainers>
+      @ModalContent
+    </ModalContainers>
+  </ModalController>
+}
+<!-- End Absolute Position Items -->
