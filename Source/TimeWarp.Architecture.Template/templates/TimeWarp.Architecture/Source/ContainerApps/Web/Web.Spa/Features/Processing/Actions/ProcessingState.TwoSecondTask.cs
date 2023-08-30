@@ -13,9 +13,9 @@ internal partial class ProcessingState
 
       public override async Task Handle(Action action, CancellationToken cancellationToken)
       {
-        Console.WriteLine("Start 2 Second Task");
+        Console.WriteLine("Start two Second Task");
         await Task.Delay(millisecondsDelay: 2000, cancellationToken: cancellationToken);
-        Console.WriteLine("Completed 2 Second Task");
+        Console.WriteLine("Two Second Task Complete");
       }
     }
   }

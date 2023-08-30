@@ -21,10 +21,10 @@ internal partial class ProcessingState
 
       public override async Task Handle(Action action, CancellationToken cancellationToken)
       {
-        Console.WriteLine("Start");
+        Console.WriteLine("Start Five Second Task");
         await Task.Delay(millisecondsDelay: 5000, cancellationToken: cancellationToken);
         await Publisher.Publish(new CompleteNotification(), cancellationToken);
-        Console.WriteLine("Done");
+        Console.WriteLine("Five Second Task Complete");
       }
     }
   }
