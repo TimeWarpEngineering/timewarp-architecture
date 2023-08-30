@@ -1,6 +1,7 @@
 ﻿@namespace TimeWarp.Architecture.Features.Applications.Components.NavBars.Dark
+@inherits DisplayComponent
 
-<div class="py-1 bg-white rounded-md shadow-xs ring-1 ring-gray-900/5" role="menu" aria-orientation="vertical" aria-labelledby="user-menu">
+<div class="py-1 bg-white rounded-md shadow-xs ring-1 ring-gray-900/5" role="menu" aria-orientation="vertical" aria-labelledby="user-menu" @attributes=Attributes>
   <ProfileMenuNavLink href=@ProfilePage.GetPageUrl() role="menuitem">Your Profile</ProfileMenuNavLink>
   <ProfileMenuNavLink href=@SettingsPage.GetPageUrl() role="menuitem">Settings</ProfileMenuNavLink>
   <ProfileMenuNavLink href=@LogoutPage.GetPageUrl() role="menuitem">Sign out</ProfileMenuNavLink>

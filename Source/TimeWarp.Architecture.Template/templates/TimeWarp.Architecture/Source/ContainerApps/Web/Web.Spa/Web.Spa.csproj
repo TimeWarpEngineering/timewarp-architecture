@@ -44,6 +44,7 @@
   <ItemGroup>
     <!--<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />-->
     <Folder Include="Components\Editors\" />
+    <Folder Include="Features\Modal\Actions\" />
     <Folder Include="Features\Notification\Actions\RemoveNotification\" />
     <Folder Include="Features\Notification\Components\" />
     <Folder Include="Features\ToDo\Actions" />
