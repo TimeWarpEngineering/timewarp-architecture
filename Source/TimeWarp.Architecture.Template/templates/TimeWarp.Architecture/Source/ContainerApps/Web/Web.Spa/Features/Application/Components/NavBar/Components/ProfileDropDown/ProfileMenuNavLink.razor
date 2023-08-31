@@ -1,7 +1,7 @@
 ﻿@namespace TimeWarp.Architecture.Features.Applications.Components.NavBars.Dark
-@inherits ParentComponent
+@inherits BaseComponent
+@implements IParentComponent
 
-<a class="block px-4 py-2 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100" role="menuitem" @attributes=Attributes>
+<a class="block px-4 py-2 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100" tabindex=@GetTabIndex() role="menuitem" @attributes=Attributes>
   @ChildContent
 </a>
-

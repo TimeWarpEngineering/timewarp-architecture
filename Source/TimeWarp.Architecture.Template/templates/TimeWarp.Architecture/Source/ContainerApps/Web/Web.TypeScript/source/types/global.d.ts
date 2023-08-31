@@ -25,8 +25,8 @@ declare global {
     BlazorState: BlazorState;
     Blazor: Blazor;
     Spa: typeof import("../Spa").Spa;
-    //NotifyLossOfInterest: (elementId: string, blazorMethodReference: BlazorMethodReference) => DisposeHandler;  // Added line
+    NotifyLossOfInterest: (elementId: string, blazorMethodReference: BlazorMethodReference) => DisposeHandler;  // Added line
   }
 }
 
-export { };
+export {};

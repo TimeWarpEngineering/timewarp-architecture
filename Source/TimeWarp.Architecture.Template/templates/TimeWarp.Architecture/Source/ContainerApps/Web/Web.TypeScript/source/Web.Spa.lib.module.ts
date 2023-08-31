@@ -1,5 +1,6 @@
 import { Spa } from "./Spa.js";
 import { Counter } from './features/Counter.js';
+import { NotifyLossOfInterest } from './NotifyLossOfInterestAsync.js';
 
 // https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/startup?view=aspnetcore-7.0&source=docs
 // at this point the blazor is not yet initialized
@@ -8,6 +9,7 @@ export function beforeStart(options: any, extensions: any) {
   console.log("****beforeStart Web.Spa ****");
   Spa.Counter = Counter;
   window.Spa = Spa;
+  window.NotifyLossOfInterest = NotifyLossOfInterest;
 }
 
 // at this point the blazor is initialized
