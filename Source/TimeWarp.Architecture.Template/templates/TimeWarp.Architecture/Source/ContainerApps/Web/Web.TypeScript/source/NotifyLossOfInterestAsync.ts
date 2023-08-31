@@ -1,37 +1,48 @@
-window.NotifyLossOfInterest = function (elementId, blazorMethodReference) {
-  const element = document.getElementById(elementId);
+//interface BlazorMethodReference {
+//  invokeMethodAsync: (methodName: string, ...args: any[]) => Promise<void>;
+//}
 
-  function handleClick(event) {
-    if (!element.contains(event.target)) {
-      blazorMethodReference.invokeMethodAsync('NotifyLossOfInterestAsync');
-    }
-  }
+//interface DisposeHandler {
+//  dispose: () => void;
+//}
 
-  function handleScroll() {
-    blazorMethodReference.invokeMethodAsync('NotifyLossOfInterestAsync');
-  }
+//window.NotifyLossOfInterest = function (elementId: string, blazorMethodReference: BlazorMethodReference): DisposeHandler {
+//  const element = document.getElementById(elementId);
 
-  document.addEventListener('click', handleClick);
-  document.addEventListener('scroll', handleScroll);
+//  let handleClick: (event: Event) => void;
+//  let handleScroll: () => void;
 
-  const observer = new MutationObserver(() => {
-    if (!document.contains(element)) {
-      document.removeEventListener('click', handleClick);
-      document.removeEventListener('scroll', handleScroll);
-      observer.disconnect();
-    }
-  });
+//  handleClick = (event: Event) => {
+//    if (element && !element.contains(event.target as Node)) {
+//      blazorMethodReference.invokeMethodAsync('MethodName');
+//    }
+//  };
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+//  handleScroll = () => {
+//    blazorMethodReference.invokeMethodAsync('MethodName');
+//  };
 
-  return {
-    dispose: function () {
-      document.removeEventListener('click', handleClick);
-      document.removeEventListener('scroll', handleScroll);
-      observer.disconnect();
-    }
-  };
-};
+//  document.addEventListener('click', handleClick);
+//  document.addEventListener('scroll', handleScroll);
+
+//  const observer = new MutationObserver(() => {
+//    if (!document.contains(element)) {
+//      document.removeEventListener('click', handleClick);
+//      document.removeEventListener('scroll', handleScroll);
+//      observer.disconnect();
+//    }
+//  });
+
+//  observer.observe(document.body, {
+//    childList: true,
+//    subtree: true
+//  });
+
+//  return {
+//    dispose: () => {
+//      document.removeEventListener('click', handleClick);
+//      document.removeEventListener('scroll', handleScroll);
+//      observer.disconnect();
+//    }
+//  };
+//};
