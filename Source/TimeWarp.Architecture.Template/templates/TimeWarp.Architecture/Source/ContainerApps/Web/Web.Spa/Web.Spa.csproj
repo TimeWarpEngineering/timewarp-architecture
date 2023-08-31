@@ -84,10 +84,6 @@
   </Target>
 
   <Target Name="CopyLibModule" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild">
-    <ItemGroup>
-      <FilesToCopy Include="..\Web.TypeScript\source\Web.Spa.lib.module.js" />
-    </ItemGroup>
-
     <Copy SourceFiles="@(FilesToCopy)" DestinationFolder="wwwroot\js" SkipUnchangedFiles="true" />
   </Target>
 
