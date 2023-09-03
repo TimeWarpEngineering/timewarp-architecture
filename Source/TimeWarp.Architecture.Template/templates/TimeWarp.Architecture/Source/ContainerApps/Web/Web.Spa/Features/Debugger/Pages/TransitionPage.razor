@@ -1,0 +1,28 @@
+﻿@namespace TimeWarp.Architecture.Pages
+
+<SideBarPage>
+  <MainContent>
+    <Button @onclick=OnClickHandler>Click Me</Button>
+    <Transition
+      Show=IsOpen
+      Enter="transition-opacity duration-75"
+      EnterFrom="opacity-0"
+      EnterTo="opacity-100"
+      Leave="transition-opacity duration-150"
+      LeaveFrom="opacity-100"
+      LeaveTo="opacity-0"
+    >
+      I will fade in and out when this component is working correctly.
+    </Transition>
+  </MainContent>
+</SideBarPage>
+
+@code{
+  private bool IsOpen { get; set; }
+
+  private void OnClickHandler()
+  {
+    IsOpen = !IsOpen;
+  }
+}
+

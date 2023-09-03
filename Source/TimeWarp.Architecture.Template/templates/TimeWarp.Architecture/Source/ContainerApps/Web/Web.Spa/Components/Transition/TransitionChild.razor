@@ -1,0 +1,30 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div @ref="transitionDiv">
+  @ChildContent
+</div>
+
+@code {
+  private ElementReference transitionDiv;
+
+  [Parameter] public string Enter { get; set; }
+  [Parameter] public string EnterFrom { get; set; }
+  [Parameter] public string EnterTo { get; set; }
+  [Parameter] public string Leave { get; set; }
+  [Parameter] public string LeaveFrom { get; set; }
+  [Parameter] public string LeaveTo { get; set; }
+  [Parameter] public RenderFragment ChildContent { get; set; }
+  [CascadingParameter] public TransitionContext TransitionContext { get; set; }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (TransitionContext.Show)
+    {
+      await JSRuntime.InvokeVoidAsync("applyTransition", transitionDiv, Enter, EnterFrom, EnterTo);
+    }
+    else
+    {
+      await JSRuntime.InvokeVoidAsync("applyTransition", transitionDiv, Leave, LeaveFrom, LeaveTo);
+    }
+  }
+}
