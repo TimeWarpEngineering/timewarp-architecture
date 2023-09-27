@@ -1,12 +1,21 @@
 ﻿namespace TimeWarp.Architecture.Features.ProfileMenus;
 
 [StateAccessMixin]
-internal sealed partial class ProfileMenuState: State<ProfileMenuState>
+internal sealed partial class ProfileMenuState : State<ProfileMenuState>
 {
-  public bool IsOpen { get; private set; }
+
+  public enum MenuStates
+  {
+    Closed,
+    Closing,
+    Open,
+    Opening
+  }
+
+  public MenuStates MenuState { get; private set; }
 
   public override void Initialize()
   {
-    IsOpen = false;
+    MenuState = MenuStates.Closed;
   }
 }

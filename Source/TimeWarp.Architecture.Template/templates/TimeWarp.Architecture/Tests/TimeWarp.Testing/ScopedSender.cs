@@ -1,79 +1,81 @@
-﻿namespace TimeWarp.Architecture.Testing;
+﻿#nullable enable
+namespace TimeWarp.Architecture.Testing;
 
 /// <summary>
 /// This is an implementation of MediatR's ISender Interface
 /// that wraps calls to Send in a <see cref="IServiceScope"/>.
 /// </summary>
-[NotTest]
 public class ScopedSender : ISender
 {
   private readonly IServiceScopeFactory ServiceScopeFactory;
 
-  public ScopedSender(IServiceProvider aServiceProvider)
+  public ScopedSender(IServiceProvider serviceProvider)
   {
-    ServiceScopeFactory = aServiceProvider.GetService<IServiceScopeFactory>();
+    ServiceScopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
   }
 
+  // TODO: Implement this method when needed
   public IAsyncEnumerable<TResponse> CreateStream<TResponse>
   (
-    IStreamRequest<TResponse> aStreamRequest,
-    CancellationToken aCancellationToken = default
+    IStreamRequest<TResponse> streamRequest,
+    CancellationToken cancellationToken = default
   ) => throw new NotImplementedException();
 
+  // TODO: Implement this method when needed
   public IAsyncEnumerable<object> CreateStream
   (
-    object aRequest,
-    CancellationToken aCancellationToken = default
+    object request,
+    CancellationToken cancellationToken = default
   ) => throw new NotImplementedException();
 
   public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest
   {
     return ExecuteInScope
     (
-      aServiceProvider =>
+      serviceProvider =>
       {
-        IMediator mediator = aServiceProvider.GetService<IMediator>();
+        ISender sender = serviceProvider.GetRequiredService<ISender>();
 
-        return mediator.Send(request);
+        return sender.Send(request);
       }
     );
   }
 
-  public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default)
+  public async Task<object?> Send(object request, CancellationToken aCancellationToken = default)
   {
-    return ExecuteInScope
+    return await ExecuteInScope
     (
-      aServiceProvider =>
+      serviceProvider =>
       {
-        IMediator mediator = aServiceProvider.GetService<IMediator>();
+        ISender sender = serviceProvider.GetRequiredService<ISender>();
 
-        return mediator.Send(aRequest);
+        return sender.Send(request);
       }
     );
   }
 
-  public Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest, CancellationToken aCancellationToken = default)
+  public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
   {
-    return ExecuteInScope
+    return await ExecuteInScope
     (
-      aServiceProvider =>
+      serviceProvider =>
       {
-        IMediator mediator = aServiceProvider.GetService<IMediator>();
+        ISender sender = serviceProvider.GetRequiredService<ISender>();
 
-        return mediator.Send(aRequest);
+        return sender.Send(request);
       }
     );
   }
 
-  internal async Task<T> ExecuteInScope<T>(Func<IServiceProvider, Task<T>> aAction)
+  internal async Task<T> ExecuteInScope<T>(Func<IServiceProvider, Task<T>> action)
   {
     using IServiceScope serviceScope = ServiceScopeFactory.CreateScope();
-    return await aAction(serviceScope.ServiceProvider).ConfigureAwait(false);
+    return await action(serviceScope.ServiceProvider).ConfigureAwait(false);
   }
 
-  internal async Task ExecuteInScope(Func<IServiceProvider, Task> aAction)
+  internal async Task ExecuteInScope(Func<IServiceProvider, Task> action)
   {
     using IServiceScope serviceScope = ServiceScopeFactory.CreateScope();
-    await aAction(serviceScope.ServiceProvider).ConfigureAwait(false);
+    await action(serviceScope.ServiceProvider).ConfigureAwait(false);
   }
 }

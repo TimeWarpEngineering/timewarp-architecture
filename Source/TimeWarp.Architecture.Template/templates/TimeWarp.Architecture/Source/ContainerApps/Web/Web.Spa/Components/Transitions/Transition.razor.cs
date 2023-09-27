@@ -48,24 +48,52 @@ public partial class Transition
   /// </summary>
   [Parameter] public string LeaveTo { get; set; }
 
+  private bool IsTransitionUpdated = false;
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+    Console.WriteLine("OnParametersSet");
+    Console.WriteLine($"Show: {Show}");
+  }
+
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
-    if (Show)
+    if (firstRender)
     {
-      TransitionClass = $"{Enter} {EnterFrom}";
+      Console.WriteLine("Invoking Spa.Transition.AddTransitionEndListener");
+      await JSRuntime.InvokeVoidAsync
+      (
+        "Spa.Transition.AddTransitionEndListener",
+        TransitionDiv,
+        DotNetObjectReference.Create(this),
+        nameof(TransitionToEndState)
+      );
     }
-    else
+
+    if (!IsTransitionUpdated)
     {
-      TransitionClass = $"{Leave} {LeaveFrom}";
+      if (Show)
+      {
+        TransitionClass = $"{Enter} {EnterFrom}";
+      }
+      else
+      {
+        TransitionClass = $"{Leave} {LeaveFrom}";
+      }
+      IsTransitionUpdated = true;
+      StateHasChanged();
     }
-    StateHasChanged();
-    await JSRuntime.InvokeVoidAsync("addTransitionEndListener", TransitionDiv, DotNetObjectReference.Create(this), "TransitionToEndState");
   }
+
 
   [JSInvokable]
   public void TransitionToEndState()
   {
+    Console.WriteLine("TransitionToEndState");
+
     TransitionClass = Show ? EnterTo : LeaveTo;
+    IsTransitionUpdated = false;
     StateHasChanged();
   }
 

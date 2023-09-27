@@ -7,13 +7,20 @@ internal partial class ProfileMenuState : State<ProfileMenuState>
     return new ProfileMenuState
     {
       Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
-      IsOpen = bool.Parse(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(IsOpen))].ToString()),
+
+      MenuState =
+        (MenuStates)Enum.Parse
+        (
+          typeof(MenuStates),
+          aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(MenuState))].ToString()
+        ),
+      
     };
   }
 
   internal void Initialize(bool isOpen)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
-    IsOpen = isOpen;
+    MenuState = MenuStates.Closed;
   }
 }

@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.ProfileMenus;
 
 internal partial class ProfileMenuState
 {
-  public static class Close
+  public static class Toggle
   {
     internal record Action : BaseAction { }
     internal class Handler : BaseHandler<Action>
@@ -11,10 +11,15 @@ internal partial class ProfileMenuState
 
       public override Task Handle(Action action, CancellationToken cancellationToken)
       {
-        if (ProfileMenuState.MenuState == MenuStates.Open)
+        ProfileMenuState.MenuState = ProfileMenuState.MenuState switch
         {
-          ProfileMenuState.MenuState = MenuStates.Closing;
-        }
+          MenuStates.Closed => MenuStates.Opening,
+          MenuStates.Open => MenuStates.Closing,
+          MenuStates.Closing => MenuStates.Closing, // Do nothing
+          MenuStates.Opening => MenuStates.Opening, // Do nothing
+          _ => throw new NotImplementedException()
+        };
+
         return Task.CompletedTask;
       }
     }

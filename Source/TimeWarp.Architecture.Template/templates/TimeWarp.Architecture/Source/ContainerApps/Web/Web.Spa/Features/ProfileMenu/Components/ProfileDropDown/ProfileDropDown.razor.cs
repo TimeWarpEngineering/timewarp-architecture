@@ -1,8 +1,13 @@
-namespace TimeWarp.Architecture.Features.Applications.Components.NavBars.Dark;
+namespace TimeWarp.Architecture.Features.ProfileMenus.Components;
 
 public partial class ProfileDropDown : BaseComponent, IDisposable
 {
   [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
+
+  /// <summary>
+  ///  Need to render it while opening and closing to visualize the transitions.
+  /// </summary>
+  private bool RenderMenuPanel => ProfileMenuState.MenuState != ProfileMenuState.MenuStates.Closed;
 
   private readonly string BaseClasses = "absolute right-0 z-10 mt-2.5 w-32 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-gray-900/5 focus:outline-none";
 
@@ -20,41 +25,22 @@ public partial class ProfileDropDown : BaseComponent, IDisposable
   private CssBuilder CssBuilder =>
     new CssBuilder(BaseClasses)
       .AddClass("transition ease-out duration-500")
-      //.AddClass("hidden", when: !ProfileMenuState.IsOpen)
-      .AddClass("opacity-100 scale-100", when: ProfileMenuState.IsOpen)
-      .AddClass("opacity-0 scale-95 pointer-events-none", when: !ProfileMenuState.IsOpen);
+      .AddClass("opacity-100 scale-100", when: ProfileMenuState.MenuState == ProfileMenuState.MenuStates.Opening)
+      .AddClass("opacity-0 scale-95", when: ProfileMenuState.MenuState == ProfileMenuState.MenuStates.Closing);
 
   private async Task OnClickHandler()
   {
-    await Send(new ProfileMenuState.ToggleOpen.Action());
+    await Send(new ProfileMenuState.Toggle.Action());
   }
-
-  // I need to detect when IsOpen changes from false to true.
-
-  private bool WasOpen = false;
 
   private DotNetObjectReference<ProfileDropDown> ObjRef;
 
   protected override void OnInitialized()
   {
     base.OnInitialized();
-    WasOpen = ProfileMenuState.IsOpen;
   }
 
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    if (firstRender)
-    {
-      ObjRef = DotNetObjectReference.Create(this);
-    }
-    await base.OnAfterRenderAsync(firstRender);
-    if (!WasOpen && ProfileMenuState.IsOpen)
-    {
-      await JSRuntime.InvokeVoidAsync("window.NotifyLossOfInterest", nameof(ProfileMenuPanel), ObjRef);
-      WasOpen = ProfileMenuState.IsOpen;
-      StateHasChanged();
-    }
-  }
+
 
   [JSInvokable]
   public async Task NotifyLossOfInterest()

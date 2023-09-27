@@ -14,6 +14,7 @@
     >
       I will fade in and out when this component is working correctly.
     </Transition>
+    <span>IsOpen:@IsOpen</span>
   </MainContent>
 </SideBarPage>
 
@@ -22,6 +23,7 @@
 
   private void OnClickHandler()
   {
+    Console.WriteLine("Clicked");
     IsOpen = !IsOpen;
   }
 }
