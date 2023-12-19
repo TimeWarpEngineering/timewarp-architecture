@@ -1,7 +1,5 @@
 ﻿@namespace TimeWarp.Architecture.Features.Applications.Components.NavBars.Dark
 @inherits BaseComponent
 
-<div class="flex-shrink-0">
-  <img class="block lg:hidden h-8 w-auto" src="@ApplicationState.Logo" alt="TimeWarp.Architecture logo">
-  <img class="hidden lg:block h-8 w-auto" src="@ApplicationState.Logo" alt="TimeWarp.Architecture logo">
-</div>
+<img class="hidden lg:block h-8 w-auto" src="@ApplicationState.Logo" alt="TimeWarp.Architecture logo" @attributes=Attributes>
+

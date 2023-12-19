@@ -17,6 +17,6 @@ public class Should
   public async Task RunForever()
   {
     await Task.Delay(int.MaxValue);
-    Console.WriteLine("done");
+    Console.WriteLine("Wlll never get here");
   }
 }

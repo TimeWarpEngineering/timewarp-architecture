@@ -44,6 +44,7 @@
   <ItemGroup>
     <!--<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />-->
     <Folder Include="Components\Editors\" />
+    <Folder Include="Features\Modal\Actions\" />
     <Folder Include="Features\Notification\Actions\RemoveNotification\" />
     <Folder Include="Features\Notification\Components\" />
     <Folder Include="Features\ToDo\Actions" />
@@ -83,10 +84,6 @@
   </Target>
 
   <Target Name="CopyLibModule" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild">
-    <ItemGroup>
-      <FilesToCopy Include="..\Web.TypeScript\source\Web.Spa.lib.module.js" />
-    </ItemGroup>
-
     <Copy SourceFiles="@(FilesToCopy)" DestinationFolder="wwwroot\js" SkipUnchangedFiles="true" />
   </Target>
 
