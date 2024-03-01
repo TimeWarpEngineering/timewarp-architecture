@@ -1,6 +1,7 @@
+#nullable enable
 namespace TimeWarp.Architecture.Components;
 
-public class ParentComponent : DisplayComponent, IParentComponent
+public abstract class ParentComponent : DisplayComponent, IParentComponent
 {
-  [Parameter] public RenderFragment ChildContent { get; set; }
+  [Parameter] public RenderFragment ChildContent { get; set; } = default!;
 }
