@@ -12,7 +12,7 @@
   <PropertyGroup>
     <DefineConstants>cosmosdb;postgres</DefineConstants>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
@@ -28,9 +28,8 @@
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
-    <PackageReference Include="Microsoft.CodeAnalysis" />    
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />    
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+    <PackageReference Include="Microsoft.CodeAnalysis" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Oakton" />
   </ItemGroup>
 

@@ -14,7 +14,6 @@
   <ItemGroup Label="Core">
     <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
     <PackageReference Include="Oakton" />
   </ItemGroup>
 
@@ -26,5 +25,5 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Api.Server.Integration.Tests" />
   </ItemGroup>
-  
+
 </Project>
