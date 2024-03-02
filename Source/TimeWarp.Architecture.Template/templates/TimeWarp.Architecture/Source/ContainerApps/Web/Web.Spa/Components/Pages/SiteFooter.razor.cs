@@ -2,7 +2,7 @@
 
 public partial class SiteFooter : BaseComponent
 {
-  [Parameter] public RenderFragment CustomContent { get; set; }
-  private string Version => ApplicationState.Version;
+  [Parameter] public RenderFragment? CustomContent { get; set; }
+  private string? Version => ApplicationState.Version;
   private bool IsProcessing => ProcessingState.IsProcessing;
 }
