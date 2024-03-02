@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Pipeline.NotificationPreProcessor;
 
-internal class PrePipelineNotificationRequestPreProcessor<TRequest> : IRequestPreProcessor<TRequest>
+internal class PrePipelineNotificationRequestPreProcessor<TRequest> : IRequestPreProcessor<TRequest> where TRequest : IAction
 {
   private readonly ILogger Logger;
 
