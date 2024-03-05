@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture;
+﻿namespace TimeWarp.Architecture.Yarp.Server;
 
 /// <summary>
 /// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.

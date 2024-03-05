@@ -46,19 +46,19 @@ public class Program : IAspNetProgram
     CorsPolicy.Any.Apply(aServiceCollection);
     ConfigureInfrastructure(aServiceCollection);
     aServiceCollection.AddSignalR();
-    aServiceCollection.AddAutoMapper(typeof(Web_Application_Assembly).Assembly);
+    aServiceCollection.AddAutoMapper(typeof(TimeWarp.Architecture.Web.Application.AssemblyMarker).Assembly);
     aServiceCollection.AddRazorPages();
     aServiceCollection.AddServerSideBlazor();
     aServiceCollection.AddMvc()
-      .TryAddApplicationPart(typeof(Web_Server_Assembly).Assembly);
+      .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker).Assembly);
 
     aServiceCollection.AddFluentValidationAutoValidation();
     aServiceCollection.AddFluentValidationClientsideAdapters();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
-    aServiceCollection.AddValidatorsFromAssemblyContaining<Web_Server_Assembly>();
-    aServiceCollection.AddValidatorsFromAssemblyContaining<Web_Contracts_Assembly>();
+    aServiceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Server.AssemblyMarker>();
+    aServiceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Contracts.AssemblyMarker>();
 
     aServiceCollection.Configure<ApiBehaviorOptions>
     (
@@ -82,8 +82,8 @@ public class Program : IAspNetProgram
         mediatRServiceConfiguration =>
           mediatRServiceConfiguration.RegisterServicesFromAssemblies
           (
-            typeof(Web_Server_Assembly).GetTypeInfo().Assembly,
-            typeof(Web_Application_Assembly).GetTypeInfo().Assembly
+            typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker).GetTypeInfo().Assembly,
+            typeof(TimeWarp.Architecture.Web.Application.AssemblyMarker).GetTypeInfo().Assembly
           )
       );
 
@@ -93,7 +93,7 @@ public class Program : IAspNetProgram
         aServiceCollection,
         SwaggerVersion,
         SwaggerApiTitle,
-        new Type[] { typeof(Web_Server_Assembly), typeof(Web_Contracts_Assembly) }
+        [typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker), typeof(TimeWarp.Architecture.Web.Contracts.AssemblyMarker)]
       );
   }
 
@@ -123,7 +123,7 @@ public class Program : IAspNetProgram
   {
     aWebApplication.MapRazorPages();
     aWebApplication.MapHealthChecks("/api/health");
-    
+
     CommonServerModule.ConfigureEndpoints(aWebApplication);
     aWebApplication.MapControllers();
     aWebApplication.MapBlazorHub();
@@ -154,7 +154,7 @@ public class Program : IAspNetProgram
   private static void ConfigureEnvironmentChecks(IServiceCollection aServiceCollection)
   {
     aServiceCollection.AddSingleton<SampleEnvironmentCheck>();
-    
+
     aServiceCollection.CheckEnvironment<SampleEnvironmentCheck>
     (
       SampleEnvironmentCheck.Description, aSampleEnvironmentCheck => aSampleEnvironmentCheck.Check()
