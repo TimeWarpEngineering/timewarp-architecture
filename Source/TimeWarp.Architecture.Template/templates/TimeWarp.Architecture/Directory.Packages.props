@@ -1,4 +1,3 @@
-
 <Project>
   <ItemGroup>
     <PackageVersion Include="Asp.Versioning.Http" Version="7.0.0" />
@@ -10,7 +9,7 @@
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.2.2" />
     <PackageVersion Include="Azure.Identity" Version="1.10.4" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
-    <PackageVersion Include="Blazor-State" Version="10.0.0" />
+    <PackageVersion Include="Blazor-State" Version="11.0.0-beta.12" />
     <PackageVersion Include="Dawn.Guard" Version="1.12.0" />
     <PackageVersion Include="FakeItEasy" Version="8.0.0" />
     <PackageVersion Include="Fixie" Version="3.4.0" />
@@ -25,6 +24,7 @@
     <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.59.0" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.59.0" />
     <PackageVersion Include="Grpc.Net.Client.Web" Version="2.59.0" />
+    <PackageVersion Include="JetBrains.Annotations" Version="2023.3.0" />
     <PackageVersion Include="Riok.Mapperly" Version="3.3.0" />
     <PackageVersion Include="MediatR" Version="12.2.0" />
     <PackageVersion Include="MediatR.Contracts" Version="2.0.1" />
@@ -85,6 +85,7 @@
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-alpha.5" />
     <PackageVersion Include="timewarp-heroicons" Version="2.0.19" />
     <PackageVersion Include="timewarp-simple-icons" Version="9.9.0" />
+    <PackageVersion Include="TimeWarp.State.Plus" Version="11.0.0-beta.12" />
     <PackageVersion Include="Toolbelt.Blazor.SplitContainer" Version="1.1.2.1" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.1.0" />
   </ItemGroup>
