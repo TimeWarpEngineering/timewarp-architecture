@@ -2,6 +2,7 @@
 global using MediatR;
 global using FluentValidation;
 global using FluentValidation.AspNetCore;
+global using JetBrains.Annotations;
 global using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Hosting;

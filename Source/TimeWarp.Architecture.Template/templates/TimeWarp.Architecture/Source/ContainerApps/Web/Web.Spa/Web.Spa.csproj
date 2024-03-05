@@ -26,6 +26,7 @@
     <PackageReference Include="timewarp-heroicons" />
     <PackageReference Include="Timewarp.OptionsValidation" />
     <PackageReference Include="timewarp-simple-icons" />
+    <PackageReference Include="TimeWarp.State.Plus" />
     <PackageReference Include="Toolbelt.Blazor.SplitContainer" />
   </ItemGroup>
 

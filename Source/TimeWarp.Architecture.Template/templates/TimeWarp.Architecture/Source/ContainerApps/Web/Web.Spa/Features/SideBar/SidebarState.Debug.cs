@@ -1,13 +1,13 @@
 namespace TimeWarp.Architecture.Features.Sidebars;
 
-internal partial class SidebarState : State<SidebarState>
+internal partial class SidebarState
 {
-  public override SidebarState Hydrate(IDictionary<string, object> aKeyValuePairs)
+  public override SidebarState Hydrate(IDictionary<string, object> keyValuePairs)
   {
     return new SidebarState
     {
-      Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
-      IsOpen = bool.Parse(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(IsOpen))].ToString()),
+      Guid = new Guid(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString() ?? throw new InvalidOperationException()),
+      IsOpen = bool.Parse(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(IsOpen))].ToString() ?? throw new InvalidOperationException()),
     };
   }
 
@@ -17,3 +17,4 @@ internal partial class SidebarState : State<SidebarState>
     IsOpen = isOpen;
   }
 }
+

@@ -60,7 +60,8 @@ public class SuperheroModule
   private static Uri GetServiceUri(IConfiguration aConfiguration, string aServiceName)
   {
     ServiceCollectionOptions serviceCollectionOptions =
-      aConfiguration.GetSection(nameof(ServiceCollectionOptions)).Get<ServiceCollectionOptions>();
+      aConfiguration.GetSection(nameof(ServiceCollectionOptions)).Get<ServiceCollectionOptions>() ??
+      throw new InvalidOperationException();
 
     ServiceCollectionOptions.Service service = serviceCollectionOptions[Constants.GrpcServiceName];
 

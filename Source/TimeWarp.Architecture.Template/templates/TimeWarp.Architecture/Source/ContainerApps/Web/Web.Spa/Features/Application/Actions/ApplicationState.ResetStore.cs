@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Applications;
 
-using static BlazorState.Features.Routing.RouteState;
+using static TimeWarp.Features.Routing.RouteState;
 
 internal partial class ApplicationState
 {
@@ -24,7 +24,7 @@ internal partial class ApplicationState
       public async Task Handle(Action action, CancellationToken cancellationToken)
       {
         Store.Reset();
-        await Sender.Send(new ChangeRouteAction { NewRoute = "/" }, cancellationToken).ConfigureAwait(false);
+        await Sender.Send(new ChangeRoute.Action { NewRoute = "/" }, cancellationToken).ConfigureAwait(false);
       }
     }
   }

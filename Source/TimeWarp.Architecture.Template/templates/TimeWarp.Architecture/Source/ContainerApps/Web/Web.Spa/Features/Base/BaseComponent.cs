@@ -11,12 +11,9 @@ namespace TimeWarp.Architecture.Features;
 /// </remarks>
 public abstract partial class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
 {
-
   [Parameter(CaptureUnmatchedValues = true)]
   public IReadOnlyDictionary<string, object> Attributes { get; set; } = new Dictionary<string, object>();
-
-  protected Task<TResponse> Send<TResponse>(IRequest<TResponse> aRequest) => Send(aRequest);
-
-  protected bool IsProcessingAny(params string[] aActions) => ProcessingState.IsProcessingAny(aActions);
-  protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest).ConfigureAwait(false);
+  internal ActionTrackingState ActionTrackingState => GetState<ActionTrackingState>();
+  protected bool IsAnyActive(params Type[] aActions) => ActionTrackingState.IsAnyActive(aActions);
+  protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest);
 }

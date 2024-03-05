@@ -45,18 +45,19 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
   {
     if (aRequest is not AddEvent.Action) //Skip to avoid recursion
     {
-      var addEventAction = new AddEvent.Action();
+      string message;
       string requestTypeName = aRequest.GetType().Name;
 
       if (aRequest is BaseRequest request)
       {
-        addEventAction.Message = $"{aTag}:{requestTypeName}";
+        message = $"{aTag}:{requestTypeName}";
       }
       else
       {
-        addEventAction.Message = $"{aTag}:{requestTypeName}";
+        message = $"{aTag}:{requestTypeName}";
       }
-      await Sender.Send(addEventAction).ConfigureAwait(false);
+      var addEventAction = new AddEvent.Action(){ Message = message};
+      await Sender.Send(addEventAction);
     }
   }
 }

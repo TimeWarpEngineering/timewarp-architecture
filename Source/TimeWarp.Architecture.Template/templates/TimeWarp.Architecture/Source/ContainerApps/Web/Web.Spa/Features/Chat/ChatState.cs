@@ -3,12 +3,17 @@
 [StateAccessMixin]
 public sealed partial class ChatState : State<ChatState>
 {
-   public List<ChatMessage> ChatMessages { get; set; } = new();
-   public override void Initialize() { }
+  private readonly List<ChatMessage> ChatMessageList = [];
+  public IReadOnlyList<ChatMessage> ChatMessages => ChatMessageList.AsReadOnly();
+  public override void Initialize() {}
 
-   public sealed class ChatMessage
-   {
-     public string Message { get; set; }
-     public string User { get; set; }
-   }
+  public sealed class ChatMessage
+  (
+    string message,
+    string user
+  )
+  {
+    public string Message { get; init; } = message;
+    public string User { get; init; } = user;
+  }
 }

@@ -4,27 +4,29 @@ internal partial class WeatherForecastsState
 {
   public static class FetchWeatherForecasts
   {
+    [TrackAction]
+    internal sealed record Action
+    (
+      int? Days
+    ) : BaseAction;
 
-    [TrackProcessing]
-    internal sealed record Action(int? Days) : BaseAction { }
-
-    internal class Handler : BaseHandler<Action>
+    [UsedImplicitly]
+    internal class Handler
+    (
+      IStore store,
+      WebApiService WebApiService
+    ) : BaseHandler<Action>(store)
     {
-      private readonly WebApiService WebApiService;
-
-      public Handler(IStore store, WebApiService webApiService) : base(store)
-      {
-        WebApiService = webApiService;
-      }
 
       public override async Task Handle(Action action, CancellationToken aCancellationToken)
       {
         IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = action.Days ?? 10 };
 
         GetWeatherForecasts.Response response =
-          await WebApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest);
+          await WebApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest) ??
+          throw new InvalidOperationException();
 
-        WeatherForecastsState._WeatherForecasts = response.WeatherForecasts.ToList();
+        WeatherForecastsState.WeatherForecastList = response.WeatherForecasts.ToList();
       }
     }
   }

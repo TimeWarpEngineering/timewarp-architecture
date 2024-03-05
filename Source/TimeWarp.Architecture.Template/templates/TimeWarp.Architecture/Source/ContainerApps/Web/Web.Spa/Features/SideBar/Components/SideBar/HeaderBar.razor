@@ -30,3 +30,8 @@
     </div>
   </div>
 </div>
+
+@code
+{
+  private async Task OnClickHandlerAsync() => await Send(new SidebarState.OpenSideBar.Action());
+}

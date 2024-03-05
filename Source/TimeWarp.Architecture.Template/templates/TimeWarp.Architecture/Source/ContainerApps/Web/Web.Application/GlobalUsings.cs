@@ -1,4 +1,5 @@
-﻿global using MediatR;
+﻿global using JetBrains.Annotations;
+global using MediatR;
 global using Microsoft.AspNetCore.SignalR;
 global using OneOf;
 global using OneOf.Types;

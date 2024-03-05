@@ -10,6 +10,6 @@ public partial class StackedPage : BaseComponent
   [Parameter] public bool ShowNavBar { get; set; } = true;
   [Parameter] public bool ShowFooter { get; set; } = true;
 
-  protected string ActiveModalId => ApplicationState.ActiveModalId;
-  private string Version => ApplicationState.Version;
+  private string? ActiveModalId => ApplicationState.ActiveModalId;
+  private string? Version => ApplicationState.Version;
 }

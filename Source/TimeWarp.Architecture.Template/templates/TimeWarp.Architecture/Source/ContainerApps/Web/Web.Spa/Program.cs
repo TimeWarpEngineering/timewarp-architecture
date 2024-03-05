@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Web.Spa;
 
-using ServiceCollectionOptions = Configuration.ServiceCollectionOptions;
+using ServiceCollectionOptions = ServiceCollectionOptions;
 
 public class Program
 {
@@ -11,13 +11,14 @@ public class Program
     (
       (aOptions) =>
       {
-#if DEBUG
+        #if DEBUG
         aOptions.UseReduxDevTools(options => options.Trace = false);
-#endif
+        #endif
         aOptions.Assemblies =
-          new Assembly[]
+          new[]
           {
-              typeof(Program).GetTypeInfo().Assembly,
+              typeof(Web.Spa.AssemblyMarker).GetTypeInfo().Assembly,
+              typeof(TimeWarp.State.Plus.AssemblyMarker).GetTypeInfo().Assembly,
           };
       }
     );
@@ -26,7 +27,7 @@ public class Program
     (
         aValidationConfiguration =>
         {
-          aValidationConfiguration.AddFluentValidation(typeof(Web_Spa_Assembly).Assembly);
+          aValidationConfiguration.AddFluentValidation(typeof(Web.Spa.AssemblyMarker).Assembly);
           ServiceDescriptor serviceDescriptor =
             aServiceCollection.First
             (
@@ -40,7 +41,7 @@ public class Program
     );
 
     aServiceCollection.AddScoped<ChatHubConnection>();
-    aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProcessingBehavior<,>));
+    aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
     aServiceCollection.AddScoped<ClientLoader>();
     aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();

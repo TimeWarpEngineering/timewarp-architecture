@@ -1,26 +1,25 @@
 namespace TimeWarp.Architecture.Features.ProfileMenus;
 
-internal partial class ProfileMenuState : State<ProfileMenuState>
+internal partial class ProfileMenuState
 {
-  public override ProfileMenuState Hydrate(IDictionary<string, object> aKeyValuePairs)
+  public override ProfileMenuState Hydrate(IDictionary<string, object> keyValuePairs)
   {
     return new ProfileMenuState
     {
-      Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
+      Guid = new Guid(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString() ?? throw new InvalidOperationException()),
 
       MenuState =
         (MenuStates)Enum.Parse
         (
           typeof(MenuStates),
-          aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(MenuState))].ToString()
+          keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(MenuState))].ToString() ?? throw new InvalidOperationException()
         ),
-      
     };
   }
 
-  internal void Initialize(bool isOpen)
+  internal void Initialize(MenuStates menuState)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
-    MenuState = MenuStates.Closed;
+    MenuState = menuState;
   }
 }

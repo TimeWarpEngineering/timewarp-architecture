@@ -27,13 +27,25 @@
 @code{
   public enum TargetValue
   {
+    // ReSharper disable once InconsistentNaming
     _blank,
+    // ReSharper disable once InconsistentNaming
     _parent,
+    // ReSharper disable once InconsistentNaming
     _self,
+    // ReSharper disable once InconsistentNaming
     _top
   }
 
-  [Parameter] public string Href { get; set; }
+  [Parameter, EditorRequired] public string Href { get; set; } = default!;
   [Parameter] public TargetValue Target { get; set; } = TargetValue._self;
 
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+    if (Href is null)
+    {
+      throw new ArgumentException("The Href parameter is required.");
+    }
+  }
 }

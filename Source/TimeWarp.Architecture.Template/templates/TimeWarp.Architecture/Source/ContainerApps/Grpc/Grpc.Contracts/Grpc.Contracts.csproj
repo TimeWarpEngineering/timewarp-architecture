@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.ServiceModel.Primitives" />
     <!--

@@ -7,12 +7,15 @@ internal partial class EventStreamState
 
     internal record Action : BaseAction
     {
-      public string Message { get; set; }
+      public required string Message { get; init; }
     }
 
-    internal class Handler : BaseHandler<Action>
+    [UsedImplicitly]
+    internal class Handler
+    (
+      IStore store
+    ) : BaseHandler<Action>(store)
     {
-      public Handler(IStore store) : base(store) { }
 
       public override Task Handle
       (

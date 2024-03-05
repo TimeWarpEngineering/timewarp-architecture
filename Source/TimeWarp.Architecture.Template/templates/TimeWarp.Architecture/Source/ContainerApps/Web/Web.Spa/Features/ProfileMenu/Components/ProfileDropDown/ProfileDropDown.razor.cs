@@ -1,8 +1,8 @@
 namespace TimeWarp.Architecture.Features.ProfileMenus.Components;
 
-public partial class ProfileDropDown : BaseComponent, IDisposable
+public partial class ProfileDropDown : BaseComponent
 {
-  [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
+  [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
 
   /// <summary>
   ///  Need to render it while opening and closing to visualize the transitions.
@@ -33,14 +33,7 @@ public partial class ProfileDropDown : BaseComponent, IDisposable
     await Send(new ProfileMenuState.Toggle.Action());
   }
 
-  private DotNetObjectReference<ProfileDropDown> ObjRef;
-
-  protected override void OnInitialized()
-  {
-    base.OnInitialized();
-  }
-
-
+  private DotNetObjectReference<ProfileDropDown>? ObjRef;
 
   [JSInvokable]
   public async Task NotifyLossOfInterest()
@@ -50,14 +43,13 @@ public partial class ProfileDropDown : BaseComponent, IDisposable
 
   public override void Dispose()
   {
+    GC.SuppressFinalize(this);
     base.Dispose();
     try
     {
-      if (ObjRef != null)
-      {
-        ObjRef.Dispose();
-        ObjRef = null;
-      }
+      if (ObjRef is null) return;
+      ObjRef.Dispose();
+      ObjRef = null;
     }
     catch (JSException)
     {

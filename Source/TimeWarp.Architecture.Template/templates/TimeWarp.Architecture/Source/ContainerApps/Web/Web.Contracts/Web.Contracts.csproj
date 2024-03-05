@@ -37,6 +37,7 @@
     able for the specified RuntimeIdentifier 'browser-wasm'. [C:\git\github\TimeWarpEngineering\timewarp-architecture\Source\TimeWarp.Architecture.Template\templates\TimeWarp.Architecture\Source\ContainerApps\Web
     \Web.Spa\Web.Spa.csproj]-->
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="OneOf" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" />
