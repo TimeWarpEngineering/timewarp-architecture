@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Components;
 
-public partial class SideBarPage: BaseComponent
+public partial class SidebarPage: BaseComponent
 {
   [Parameter] public RenderFragment? HeaderContent { get; set; }
   [Parameter, EditorRequired] public RenderFragment MainContent { get; set; } = default!;
