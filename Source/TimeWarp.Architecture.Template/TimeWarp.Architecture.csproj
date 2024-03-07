@@ -3,16 +3,16 @@
   <PropertyGroup>
     <PackageType>Template</PackageType>
     <PackageId>TimeWarp.Architecture</PackageId>
-    <Version>2.0.0-alpha.8+7.0.100</Version>
+    <Version>2.0.0-alpha.9+8.0.200</Version>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <Title>TimeWarp Architecture</Title>
     <Authors>Steven T. Cramer</Authors>
     <Description>TimeWarp Architecture Templates</Description>
-    <PackageTags>dotnet-new;templates;aspnet;blazor;spa;pwa;timewarp;gRPC;Tye;YARP</PackageTags>
+    <PackageTags>dotnet-new;templates;aspnet;blazor;spa;pwa;timewarp;gRPC;Tye;Aspire;YARP;Clean Architecture;Domain Driven Design</PackageTags>
     <PackageIcon>Logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <ContentTargetFolders>content</ContentTargetFolders>
