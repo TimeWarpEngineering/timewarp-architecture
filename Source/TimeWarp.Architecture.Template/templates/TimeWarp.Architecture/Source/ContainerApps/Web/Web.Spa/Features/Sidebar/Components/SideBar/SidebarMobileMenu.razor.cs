@@ -1,9 +1,9 @@
-namespace TimeWarp.Architecture.Components;
+namespace TimeWarp.Architecture.Features.Sidebars;
 
 public sealed partial class SidebarMobileMenu : BaseComponent
 {
 
-    
+
   //Off-canvas menu backdrop, show/hide based on off-canvas menu state.
 
   //Entering: "transition-opacity ease-linear duration-300"
@@ -12,7 +12,7 @@ public sealed partial class SidebarMobileMenu : BaseComponent
   //Leaving: "transition-opacity ease-linear duration-300"
   //  From: "opacity-100"
   //  To: "opacity-0"
-    
+
   private string BackdropClasses =>
     new CssBuilder("fixed inset-0 bg-gray-900/80")
       .AddClass(new CssBuilder("transition-opacity ease-linear duration-300"), true)

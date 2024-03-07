@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Components;
+namespace TimeWarp.Architecture.Features.Sidebars;
 
 public partial class SidebarPage: BaseComponent
 {
