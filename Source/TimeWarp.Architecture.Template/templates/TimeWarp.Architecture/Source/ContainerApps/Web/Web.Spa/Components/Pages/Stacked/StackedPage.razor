@@ -7,7 +7,7 @@
       <DarkNavBar />
     }
 
-    @if (HeaderContent != null)
+    @if (HeaderContent is not null)
     {
       <header class="bg-white shadow" data-qa="HomeHeader">
         <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -20,7 +20,7 @@
 
     <main class="grow">
         <div class="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
-            @if (@MainContent != null)
+            @if (@MainContent is not null)
             {
                 @MainContent
             }
@@ -40,7 +40,7 @@
 </div>
 
 <!-- Absolute Position Items -->
-@if (ModalContent != null)
+@if (ModalContent is null)
 {
   <ModalController ActiveModalId=@ActiveModalId>
     <ModalContainers>

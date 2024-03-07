@@ -12,6 +12,7 @@
   
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="OneOf" />

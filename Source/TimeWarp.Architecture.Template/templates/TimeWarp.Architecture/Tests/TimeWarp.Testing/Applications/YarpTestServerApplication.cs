@@ -28,7 +28,7 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
       aWebApplicationOptions:
         new WebApplicationOptions
         {
-          ApplicationName = typeof(Yarp_Server_Assembly).Assembly.GetName().Name,
+          ApplicationName = typeof(TimeWarp.Architecture.Yarp.Server.AssemblyMarker).Assembly.GetName().Name,
           EnvironmentName = Environments.Development,
           ContentRootPath = default,
         },

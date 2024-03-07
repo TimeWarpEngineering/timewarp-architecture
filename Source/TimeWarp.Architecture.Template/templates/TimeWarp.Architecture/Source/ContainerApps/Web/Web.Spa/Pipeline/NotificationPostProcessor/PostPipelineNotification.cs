@@ -2,6 +2,6 @@ namespace TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
 
 public class PostPipelineNotification<TRequest, TResponse> : INotification
 {
-  public TRequest Request { get; set; }
-  public TResponse Response { get; set; }
+  public required TRequest Request { get; init; }
+  public required TResponse Response { get; init; }
 }

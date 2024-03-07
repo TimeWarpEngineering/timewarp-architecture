@@ -2,5 +2,5 @@ namespace TimeWarp.Architecture.Pipeline.NotificationPreProcessor;
 
 public class PrePipelineNotification<TRequest> : INotification
 {
-  public TRequest Request { get; set; }
+  public required TRequest Request { get; init; }
 }

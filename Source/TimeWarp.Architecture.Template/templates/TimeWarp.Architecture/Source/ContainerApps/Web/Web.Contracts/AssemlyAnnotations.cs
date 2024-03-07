@@ -1,12 +1,12 @@
-﻿namespace TimeWarp.Architecture;
+﻿namespace TimeWarp.Architecture.Web.Contracts;
 
 /// <summary>
-/// A class used to reference the assembly
+/// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.
 /// </summary>
 /// <remarks>
-/// When you want to scan items in assembly you have pass in a class in the assembly.
-/// Refactoring by moving things around can sometimes cause issues.
-/// If you want a specific Assembly you can reference this class.
+/// This class is intended to be used as a reference point within the assembly for scenarios such as assembly scanning,
+/// where a stable, known type is required to locate the assembly at runtime. The class is sealed to indicate it is not
+/// designed for inheritance or extension, reinforcing its role as a simple marker.
 /// </remarks>
-
-public class Web_Contracts_Assembly { }
+[UsedImplicitly]
+public sealed class AssemblyMarker;

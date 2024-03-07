@@ -4,17 +4,18 @@ internal partial class ApplicationState
 {
   public static class SetActiveModal
   {
-
     internal record Action(string ModalId) : BaseAction;
 
-    internal class Handler : BaseHandler<Action>
+    [UsedImplicitly]
+    internal class Handler
+    (
+      IStore store
+    ) : BaseHandler<Action>(store)
     {
-      public Handler(IStore store) : base(store) { }
-
-      public override Task<Unit> Handle(Action action, CancellationToken cancellationToken)
+      public override Task Handle(Action action, CancellationToken cancellationToken)
       {
         ApplicationState.ActiveModalId = action.ModalId;
-        return Unit.Task;
+        return Task.CompletedTask;
       }
     }
   }

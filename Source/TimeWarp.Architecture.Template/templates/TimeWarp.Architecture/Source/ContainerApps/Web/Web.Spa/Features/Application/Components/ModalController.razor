@@ -5,10 +5,10 @@
 </CascadingValue>
 
 @code {
-    private string PreviousActiveModalId;
-    private readonly Dictionary<string, ModalContainer> ChildModals = new Dictionary<string, ModalContainer>();
-    [Parameter] public string ActiveModalId { get; set; }
-    [Parameter] public RenderFragment ModalContainers { get; set; }
+    private string? PreviousActiveModalId;
+    private readonly Dictionary<string, ModalContainer> ChildModals = new();
+    [Parameter] public string? ActiveModalId { get; set; }
+    [Parameter, EditorRequired] public RenderFragment ModalContainers { get; set; } = default!;
 
     internal void AddModal(ModalContainer aModal) => ChildModals.Add(aModal.ModalId, aModal);
 
@@ -18,12 +18,12 @@
         {
             PreviousActiveModalId = null;
         }
-        else if (ActiveModalId != PreviousActiveModalId && ChildModals != null)
+        else if (ActiveModalId != PreviousActiveModalId)
         {
-            if (ChildModals.TryGetValue(ActiveModalId, out ModalContainer Modal))
+            if (ChildModals.TryGetValue(ActiveModalId, out ModalContainer? modal))
             {
                 PreviousActiveModalId = ActiveModalId;
-                await Modal.OnActivate.InvokeAsync(null).ConfigureAwait(false);
+                await modal.OnActivate.InvokeAsync();
             }
         }
 

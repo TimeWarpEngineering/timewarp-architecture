@@ -1,0 +1,7 @@
+@namespace TimeWarp.Architecture.Features.Sidebars
+
+<SidebarNavSection Title="Developer Pages">
+  <SidebarLink Href=@TestPage.GetPageUrl() IconCharacter=@('T')>@TestPage.Title</SidebarLink>
+  <SidebarLink Href=@EventStreamPage.GetPageUrl() IconCharacter=@('E')>@EventStreamPage.Title</SidebarLink>
+  <SidebarLink Href=@ServicesPage.GetPageUrl() IconCharacter=@('S')>@ServicesPage.Title</SidebarLink>
+</SidebarNavSection>

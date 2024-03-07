@@ -1,16 +1,17 @@
 namespace TimeWarp.Architecture.Pages;
 
-using static TimeWarp.Architecture.Features.Chat.ChatState;
+using static ChatState;
 
+[UsedImplicitly]
 [Page("/Chat")]
 public partial class ChatPage
 {
   private string User { get; set; } = string.Empty;
   private string Message { get; set; } = string.Empty;
-  private List<ChatMessage> ChatMessages => ChatState.ChatMessages;
+  private IEnumerable<ChatMessage> ChatMessages => ChatState.ChatMessages;
 
-  [Inject] private ChatHubConnection ChatHubConnection { get; set; }
-  
+  [Inject] private ChatHubConnection ChatHubConnection { get; set; } = default!;
+
 
   protected override async Task OnInitializedAsync()
   {
@@ -26,7 +27,7 @@ public partial class ChatPage
         (
           new SendMessage.Command { User = User, Message = Message}
         );
-      
+
       await Send(sendMessageAction);
       Message = string.Empty;
     }
@@ -42,6 +43,7 @@ public partial class ChatPage
 
   public override void Dispose()
   {
+    GC.SuppressFinalize(this);
     ChatHubConnection.Dispose();
   }
 }

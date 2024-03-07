@@ -1,0 +1,29 @@
+@namespace TimeWarp.Architecture.Features.Sidebars
+
+<li>
+  <div class="text-xs font-semibold leading-6 text-gray-500">Swagger Docs</div>
+  <ul role="list" class="-mx-2 mt-2 space-y-1">
+    @*#if (web)*@
+    <SidebarLink Href="/api/web-server/swagger/" Target=SidebarLink.TargetValue._blank>
+      <SvgIcon>
+        <TimeWarp.HeroIcons.Outline.BookOpenIcon class="h-5 w-5"/>
+      </SvgIcon>
+      <ChildContent>
+        Web-Server Docs
+      </ChildContent>
+    </SidebarLink>
+
+    @*#endif*@
+    @*#if (api)*@
+    <SidebarLink Href="/api/api-server/swagger/" Target=SidebarLink.TargetValue._blank>
+      <SvgIcon>
+        <TimeWarp.HeroIcons.Outline.BookOpenIcon class="h-5 w-5"/>
+      </SvgIcon>
+      <ChildContent>
+        Api-Server Docs
+      </ChildContent>
+    </SidebarLink>
+    @*#endif*@
+  </ul>
+</li>
+

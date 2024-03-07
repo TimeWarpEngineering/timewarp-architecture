@@ -3,14 +3,9 @@
 [StateAccessMixin]
 internal partial class SuperheroState : State<SuperheroState>
 {
-  private readonly List<SuperheroDto> _Superheros;
+  private readonly List<SuperheroDto> SuperheroList = [];
 
-  public IReadOnlyList<SuperheroDto> Superheros => _Superheros.AsReadOnly();
-
-  public SuperheroState()
-  {
-    _Superheros = new List<SuperheroDto>();
-  }
+  public IReadOnlyList<SuperheroDto> Superheros => SuperheroList.AsReadOnly();
 
   public override void Initialize() { }
 }

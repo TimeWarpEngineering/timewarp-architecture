@@ -6,23 +6,23 @@ internal partial class SuperheroState
 
     public record Action : BaseAction { }
 
-    public class Handler : BaseHandler<Action>
+    [UsedImplicitly]
+    public class Handler
+    (
+      IStore store,
+      ISuperheroService superheroService
+    ) : BaseHandler<Action>(store)
     {
-      private readonly ISuperheroService SuperheroService;
-      public Handler(IStore store, ISuperheroService superheroService) : base(store)
-      {
-        SuperheroService = superheroService;
-      }
 
       public override async Task Handle(Action action, CancellationToken aCancellationToken)
       {
-        SuperheroState._Superheros.Clear();
+        SuperheroState.SuperheroList.Clear();
         var getSuperheroRequest = new SuperheroRequest { NumberOfHeros = 5 };
 
         SuperheroResponse getSuperheroResponse =
-          await SuperheroService.GetSuperheroAsync(getSuperheroRequest);
+          await superheroService.GetSuperheroAsync(getSuperheroRequest);
 
-        SuperheroState._Superheros.AddRange(getSuperheroResponse.Superheros);
+        SuperheroState.SuperheroList.AddRange(getSuperheroResponse.Superheros);
       }
     }
   }

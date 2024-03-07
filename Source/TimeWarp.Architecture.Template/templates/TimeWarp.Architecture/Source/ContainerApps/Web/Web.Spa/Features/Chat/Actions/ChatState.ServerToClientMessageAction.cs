@@ -4,22 +4,18 @@ public sealed partial class ChatState
 {
   public static class ServerToClientMessage
   {
-    [TrackProcessing]
+    [TrackAction]
     public record Action(ReceiveMessage.Command Command) : BaseAction { }
 
-    internal sealed class Handler : BaseHandler<Action>
+    internal sealed class Handler
+    (
+      IStore store
+    ) : BaseHandler<Action>(store)
     {
-      public Handler(IStore store) : base(store) { }
-
       public override Task Handle(Action action, CancellationToken cancellationToken)
       {
-        ChatMessage chatMessage = new()
-        {
-          Message = action.Command.Message,
-          User = action.Command.User
-        };
-
-        ChatState.ChatMessages.Add(chatMessage);
+        ChatMessage chatMessage = new(action.Command.Message, action.Command.User);
+        ChatState.ChatMessageList.Add(chatMessage);
         return Task.CompletedTask;
       }
     }

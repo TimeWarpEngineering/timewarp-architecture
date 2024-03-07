@@ -2,5 +2,5 @@
 
 public partial class SideNavigation : BaseComponent
 {
-  [Parameter] public RenderFragment SideNavigationContent { get; set; }
+  [Parameter] public RenderFragment? SideNavigationContent { get; set; }
 }

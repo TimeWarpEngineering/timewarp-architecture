@@ -1,0 +1,17 @@
+@namespace TimeWarp.Architecture.Features.Sidebars
+@inherits ParentComponent
+
+<li>
+  @if (Title is not null)
+  {
+    <div class="text-xs font-semibold leading-6 text-gray-500">@Title</div>
+  }
+  <ul role="list" class="-mx-2 mt-2 space-y-1">
+    @ChildContent
+  </ul>
+</li>
+
+@code
+{
+  [Parameter] public string? Title { get; set; }
+}

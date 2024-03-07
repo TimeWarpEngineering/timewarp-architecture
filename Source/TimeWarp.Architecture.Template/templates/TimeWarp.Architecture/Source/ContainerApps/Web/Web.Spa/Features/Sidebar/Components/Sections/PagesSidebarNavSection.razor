@@ -1,0 +1,20 @@
+@namespace TimeWarp.Architecture.Features.Sidebars
+
+<li>
+  <div class="text-xs font-semibold leading-6 text-gray-500">Pages</div>
+  <ul role="list" class="-mx-2 mt-2 space-y-1">
+    <SidebarLink Href=@CounterPage.GetPageUrl() IconCharacter=@('C')>Counter</SidebarLink>
+    <SidebarLink Href=@WeatherForecastsPage.GetPageUrl() IconCharacter=@('W')>Weather Forecasts</SidebarLink>
+    @*#if (grpc)*@
+    <SidebarLink Href=@SuperheroPage.GetPageUrl() IconCharacter=@('S')>Superheros</SidebarLink>
+    @*#endif*@
+    <SidebarLink Href=@ChatPage.GetPageUrl()>
+      <SvgIcon>
+        <TimeWarp.HeroIcons.Outline.ChatBubbleOvalLeftIcon class="h-5 w-5"/>
+      </SvgIcon>
+      <ChildContent>
+        Chat
+      </ChildContent>
+    </SidebarLink>
+  </ul>
+</li>

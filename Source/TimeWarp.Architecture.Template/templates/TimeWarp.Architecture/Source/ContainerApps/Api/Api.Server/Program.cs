@@ -39,15 +39,15 @@ public class Program : IAspNetProgram
 
     aServiceCollection
       .AddControllers()
-      .TryAddApplicationPart(typeof(Api_Server_Assembly).Assembly);
+      .TryAddApplicationPart(typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).Assembly);
 
     aServiceCollection.AddFluentValidationAutoValidation();
     aServiceCollection.AddFluentValidationClientsideAdapters();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
-    aServiceCollection.AddValidatorsFromAssemblyContaining<Api_Server_Assembly>();
-    aServiceCollection.AddValidatorsFromAssemblyContaining<Api_Contracts_Assembly>();
+    aServiceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Server.AssemblyMarker>();
+    aServiceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Contracts.AssemblyMarker>();
 
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     aServiceCollection.AddEndpointsApiExplorer();
@@ -59,8 +59,8 @@ public class Program : IAspNetProgram
         mediatRServiceConfiguration =>
           mediatRServiceConfiguration.RegisterServicesFromAssemblies
           (
-            typeof(Api_Server_Assembly).GetTypeInfo().Assembly,
-            typeof(Api_Application_Assembly).GetTypeInfo().Assembly
+            typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).GetTypeInfo().Assembly,
+            typeof(TimeWarp.Architecture.Api.Application.AssemblyMarker).GetTypeInfo().Assembly
           )
       );
 
@@ -70,7 +70,7 @@ public class Program : IAspNetProgram
         aServiceCollection,
         SwaggerVersion,
         SwaggerApiTitle,
-        new Type[] { typeof(Api_Server_Assembly), typeof(Api_Contracts_Assembly) }
+        [typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker), typeof(TimeWarp.Architecture.Api.Contracts.AssemblyMarker)]
       );
   }
 

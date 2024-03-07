@@ -11,14 +11,14 @@ public class ApiTestServerApplication : TestServerApplication<Api.Server.Program
     (
       new WebApplicationHost<Api.Server.Program>
       (
-        aUrls: new[]
-        {
+        aUrls:
+        [
           "https://localhost:7255"
-        },
+        ],
         aWebApplicationOptions:
         new WebApplicationOptions
         {
-          ApplicationName = typeof(Api_Server_Assembly).Assembly.GetName().Name,
+          ApplicationName = typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).Assembly.GetName().Name,
           EnvironmentName = Environments.Development,
           ContentRootPath = default,
         },

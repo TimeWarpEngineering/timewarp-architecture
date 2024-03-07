@@ -4,7 +4,7 @@ public sealed partial class ChatState
 {
   public static class ClientToServerMessage
   {
-    [TrackProcessing]
+    [TrackAction]
     public record Action(SendMessage.Command SendMessageCommand) : BaseAction;
 
     internal sealed class Handler : BaseHandler<Action>

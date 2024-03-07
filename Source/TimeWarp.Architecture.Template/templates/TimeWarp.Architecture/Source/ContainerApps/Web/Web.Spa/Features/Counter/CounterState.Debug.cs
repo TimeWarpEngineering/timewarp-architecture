@@ -2,12 +2,12 @@ namespace TimeWarp.Architecture.Features.Counters;
 
 internal partial class CounterState : State<CounterState>
 {
-  public override CounterState Hydrate(IDictionary<string, object> aKeyValuePairs)
+  public override CounterState Hydrate(IDictionary<string, object> keyValuePairs)
   {
     var counterState = new CounterState()
     {
-      Count = Convert.ToInt32(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Count))].ToString(), CultureInfo.InvariantCulture),
-      Guid = new System.Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
+      Guid = new Guid(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString() ?? throw new InvalidOperationException()),
+      Count = Convert.ToInt32(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Count))].ToString(), CultureInfo.InvariantCulture),
     };
 
     return counterState;

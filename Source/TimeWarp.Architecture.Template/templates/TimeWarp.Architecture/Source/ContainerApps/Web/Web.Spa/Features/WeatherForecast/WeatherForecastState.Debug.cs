@@ -1,17 +1,23 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
+using static GetWeatherForecasts;
 
-internal partial class WeatherForecastsState : State<WeatherForecastsState>
+internal partial class WeatherForecastsState
 {
-  public override WeatherForecastsState Hydrate(IDictionary<string, object> aKeyValuePairs)
+
+  public override WeatherForecastsState Hydrate(IDictionary<string, object> keyValuePairs)
   {
-    string json = aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(WeatherForecasts))].ToString();
+    var jsonSerializerOptions = new JsonSerializerOptions
+    {
+      PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    string json = keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(WeatherForecasts))].ToString() ?? throw new InvalidOperationException();
 
     var newWeatherForecastsState = new WeatherForecastsState()
     {
-      _WeatherForecasts = JsonSerializer.Deserialize<List<WeatherForecastDto>>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
-      Guid = new Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()),
+      WeatherForecastList = JsonSerializer.Deserialize<List<WeatherForecastDto>>(json, jsonSerializerOptions) ?? throw new InvalidOperationException(),
+      Guid = new Guid(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString() ?? throw new InvalidOperationException()),
     };
 
     return newWeatherForecastsState;
@@ -20,6 +26,6 @@ internal partial class WeatherForecastsState : State<WeatherForecastsState>
   internal void Initialize(List<WeatherForecastDto> aWeatherForecastList)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
-    _WeatherForecasts = Guard.Argument(aWeatherForecastList, nameof(aWeatherForecastList)).NotNull();
+    WeatherForecastList = Guard.Argument(aWeatherForecastList, nameof(aWeatherForecastList)).NotNull();
   }
 }

@@ -57,11 +57,11 @@ public partial class Button : DisplayComponent
     "duration-150"
   );
 
-  [Parameter] public RenderFragment ButtonText { get; set; }
-  [Parameter] public RenderFragment ChildContent { get; set; }
-  [Parameter] public RenderFragment SvgIcon { get; set; }
+  [Parameter] public RenderFragment? ButtonText { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public RenderFragment? SvgIcon { get; set; }
   [Parameter] public ButtonVariant Variant { get; set; } = ButtonVariant.Default;
-  private string CssClass { get; set; }
+  private string? CssClass { get; set; }
 
   public enum ButtonVariant
   {
@@ -72,21 +72,13 @@ public partial class Button : DisplayComponent
 
   protected override void OnParametersSet()
   {
-    string cssString = string.Empty;
-    switch (Variant)
+    string cssString = Variant switch
     {
-      case ButtonVariant.Default:
-        cssString = BaseCss + DefaultCss;
-        break;
-      case ButtonVariant.Outline:
-        cssString = BaseCss + OutlineCss;
-        break;
-      case ButtonVariant.Navigation:
-        cssString = NavigationCss;
-        break;
-      default:
-        throw new ArgumentOutOfRangeException();
-    }
+      ButtonVariant.Default => BaseCss + DefaultCss,
+      ButtonVariant.Outline => BaseCss + OutlineCss,
+      ButtonVariant.Navigation => NavigationCss,
+      _ => throw new ArgumentOutOfRangeException()
+    };
     CssClass =
       new CssBuilder(cssString)
       .AddClassFromAttributes(Attributes)

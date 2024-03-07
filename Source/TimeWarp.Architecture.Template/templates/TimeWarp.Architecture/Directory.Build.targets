@@ -1,0 +1,6 @@
+<Project>
+  <ItemGroup>
+    <!-- Exclude everything in the base folder, correctly scoped to each project -->
+    <Compile Remove="$(GeneratedFolder)\**\*.cs"/>
+  </ItemGroup>
+</Project>

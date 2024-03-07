@@ -24,7 +24,7 @@ internal partial class NotificationState
         CancellationToken aCancellationToken
       )
       {
-        NotificationState._Notifications.Add
+        NotificationState.NotificationList.Add
         (
           new Notification
           {

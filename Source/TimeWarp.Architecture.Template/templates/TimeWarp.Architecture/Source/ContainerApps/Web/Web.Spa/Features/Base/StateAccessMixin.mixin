@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features;
 
-public partial class BaseComponent : BlazorStateDevToolsComponent
+public partial class BaseComponent
 {
   internal {{moxy.Class.Namespace}}.{{ moxy.Class.Name }} {{ moxy.Class.Name }} => GetState<{{moxy.Class.Namespace}}.{{ moxy.Class.Name }}>();
 }
