@@ -10,25 +10,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Features\Analytics\TrackEventValidiation.mixin.cs" />
+    <Compile Remove="Features\Analytics\TrackEventValidiation.mixin.cs"/>
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Features\Analytics\TrackEventValidiation.mixin" />
+    <None Remove="Features\Analytics\TrackEventValidiation.mixin"/>
   </ItemGroup>
 
   <ItemGroup>
     <AdditionalFiles Include="..\..\..\..\DependencyValidation\DependencyValidation1.layerdiagram" Link="DependencyValidation1.layerdiagram">
       <Visible>False</Visible>
     </AdditionalFiles>
-    <AdditionalFiles Include="Features\Analytics\TrackEventValidiation.mixin" />
-    <AdditionalFiles Include="Features\Analytics\TrackEventValidiation.mixin.cs" />
-    <AdditionalFiles Include="Mixins\DeleteCommand.mixin" />
-    <AdditionalFiles Include="Mixins\GetListQuery.mixin" />
-    <AdditionalFiles Include="Mixins\GetQuery.mixin" />
-    <AdditionalFiles Include="Mixins\RouteMixin.mixin" />
-    <AdditionalFiles Include="Mixins\CreateCommand.mixin" />
-    <AdditionalFiles Include="Mixins\UpdateCommand.mixin" />
+    <AdditionalFiles Include="Features\Analytics\TrackEventValidiation.mixin"/>
+    <AdditionalFiles Include="Features\Analytics\TrackEventValidiation.mixin.cs"/>
+    <AdditionalFiles Include="Mixins\DeleteCommand.mixin"/>
+    <AdditionalFiles Include="Mixins\GetListQuery.mixin"/>
+    <AdditionalFiles Include="Mixins\GetQuery.mixin"/>
+    <AdditionalFiles Include="Mixins\RouteMixin.mixin"/>
+    <AdditionalFiles Include="Mixins\CreateCommand.mixin"/>
+    <AdditionalFiles Include="Mixins\UpdateCommand.mixin"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -36,23 +36,23 @@
     <!-- The above causes the following error: C:\Program Files\dotnet\sdk\7.0.400\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.Sdk.FrameworkReferenceResolution.targets(447,5): error NETSDK1082: There was no runtime pack for Microsoft.AspNetCore.App avail
     able for the specified RuntimeIdentifier 'browser-wasm'. [C:\git\github\TimeWarpEngineering\timewarp-architecture\Source\TimeWarp.Architecture.Template\templates\TimeWarp.Architecture\Source\ContainerApps\Web
     \Web.Spa\Web.Spa.csproj]-->
-    <PackageReference Include="FluentValidation" />
-    <PackageReference Include="JetBrains.Annotations" />
-    <PackageReference Include="OneOf" />
-    <PackageReference Include="MediatR" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
-    <PackageReference Include="Microsoft.Extensions.Options" />
-    <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true" />
-    <PackageReference Include="protobuf-net.Grpc" />
-    <PackageReference Include="System.ServiceModel.Primitives" />
+    <PackageReference Include="FluentValidation"/>
+    <PackageReference Include="JetBrains.Annotations"/>
+    <PackageReference Include="OneOf"/>
+    <PackageReference Include="MediatR"/>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Core"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"/>
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
+    <PackageReference Include="Microsoft.Extensions.Options"/>
+    <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
+    <PackageReference Include="protobuf-net.Grpc"/>
+    <PackageReference Include="System.ServiceModel.Primitives"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj"/>
   </ItemGroup>
 
 </Project>
