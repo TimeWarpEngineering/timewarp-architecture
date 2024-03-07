@@ -7,43 +7,43 @@
 /// <remarks>
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
-public class WebApiService
+public class WebApiService : IApiService
 {
   private readonly HttpClient HttpClient;
   private readonly JsonSerializerOptions JsonSerializerOptions;
 
-  public WebApiService(HttpClient aHttpClient, IOptions<JsonSerializerOptions> aJsonSerializerOptionsAccessor)
+  public WebApiService(HttpClient httpClient, IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor)
   {
-    HttpClient = aHttpClient;
-    JsonSerializerOptions = aJsonSerializerOptionsAccessor.Value;
+    HttpClient = httpClient;
+    JsonSerializerOptions = jsonSerializerOptionsAccessor.Value;
   }
 
   /// <summary>
   /// Get the response for the given request
   /// </summary>
   /// <typeparam name="TResponse"></typeparam>
-  /// <param name="aRequest"></param>
+  /// <param name="request"></param>
   /// <returns></returns>
-  public async Task<TResponse?> GetResponse<TResponse>(IApiRequest aRequest)
+  public async Task<TResponse?> GetResponse<TResponse>(IApiRequest request)
   {
     HttpResponseMessage httpResponseMessage =
-      await GetHttpResponseMessageFromRequest<TResponse>(aRequest).ConfigureAwait(false);
+      await GetHttpResponseMessageFromRequest<TResponse>(request).ConfigureAwait(false);
 
     return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
   }
 
   public async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest<TResponse>
   (
-    IApiRequest aApiRequest
+    IApiRequest apiRequest
   )
   {
-    HttpVerb httpverb = aApiRequest.GetHttpVerb();
+    HttpVerb httpVerb = apiRequest.GetHttpVerb();
     StringContent? httpContent = null;
 
-    if (httpverb == HttpVerb.Post || httpverb == HttpVerb.Put || httpverb == HttpVerb.Patch)
+    if (httpVerb is HttpVerb.Post or HttpVerb.Put or HttpVerb.Patch)
     {
 
-      string requestAsJson = JsonSerializer.Serialize(aApiRequest, aApiRequest.GetType());
+      string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType());
 
       httpContent =
         new StringContent
@@ -54,13 +54,13 @@ public class WebApiService
         );
     }
 
-    return httpverb switch
+    return httpVerb switch
     {
-      HttpVerb.Get => await HttpClient.GetAsync(aApiRequest.GetRoute()).ConfigureAwait(false),
-      HttpVerb.Delete => await HttpClient.DeleteAsync(aApiRequest.GetRoute()).ConfigureAwait(false),
-      HttpVerb.Post => await HttpClient.PostAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
-      HttpVerb.Put => await HttpClient.PutAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
-      HttpVerb.Patch => await HttpClient.PatchAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
+      HttpVerb.Get => await HttpClient.GetAsync(apiRequest.GetRoute()).ConfigureAwait(false),
+      HttpVerb.Delete => await HttpClient.DeleteAsync(apiRequest.GetRoute()).ConfigureAwait(false),
+      HttpVerb.Post => await HttpClient.PostAsync(apiRequest.GetRoute(), httpContent).ConfigureAwait(false),
+      HttpVerb.Put => await HttpClient.PutAsync(apiRequest.GetRoute(), httpContent).ConfigureAwait(false),
+      HttpVerb.Patch => await HttpClient.PatchAsync(apiRequest.GetRoute(), httpContent).ConfigureAwait(false),
       HttpVerb.Head => throw new NotImplementedException(),
       HttpVerb.Options => throw new NotImplementedException(),
       _ => throw new NotImplementedException()
