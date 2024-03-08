@@ -1,4 +1,6 @@
-﻿global using Microsoft.Extensions.Options;
+﻿global using JetBrains.Annotations;
+global using Microsoft.Extensions.Options;
+global using System.Collections.Specialized;
 global using System.Net.Http;
 global using System.Net.Mime;
 global using System.Text;
