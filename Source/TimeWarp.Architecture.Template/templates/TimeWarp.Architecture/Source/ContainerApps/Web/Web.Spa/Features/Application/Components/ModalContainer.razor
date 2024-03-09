@@ -13,43 +13,17 @@
             @MainContent
           </div>
           <div class="mt-5 sm:mt-6">
-            <Button Variant=Button.ButtonVariant.Default data-qa="ModalButton" @onclick=CloseModal>Go back</Button>
+            @if (ActionContent is null)
+            {
+              <Button Variant=Button.ButtonVariant.Default data-qa="ModalButton" @onclick=CloseModal>Close</Button>
+            }
+            else
+            {
+              @ActionContent
+            }
           </div>
         </div>
       </div>
     </div>
   </div>
-}
-
-
-@code {
-  [CascadingParameter, EditorRequired] private ModalController Parent { get; set; } = default!;
-  [Parameter, EditorRequired] public RenderFragment MainContent { get; set; } = default!;
-  [Parameter, EditorRequired] public string ModalId { get; set; } = default!;
-  [Parameter] public EventCallback OnActivate { get; set; }
-
-
-  private bool IsActive => Parent.ActiveModalId == ModalId;
-
-  private Task CloseModal() => Send(new CloseModal.Action());
-
-  protected override void OnInitialized()
-  {
-    if (Parent == null)
-      throw new ArgumentNullException
-      (
-        nameof(Parent),
-        $"{nameof(ModalContainer)} must exist within a {nameof(ModalController)} Component"
-      );
-
-    if (!OnActivate.HasDelegate)
-      throw new ArgumentNullException
-      (
-        nameof(OnActivate),
-        $"{nameof(OnActivate)} is required"
-      );
-
-    base.OnInitialized();
-    Parent.AddModal(this);
-  }
 }
