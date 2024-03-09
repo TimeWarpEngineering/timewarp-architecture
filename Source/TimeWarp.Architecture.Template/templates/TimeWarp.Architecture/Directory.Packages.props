@@ -58,7 +58,6 @@
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.0.0" />
     <PackageVersion Include="Morris.Blazor.FluentValidation" Version="3.0.0" />
     <PackageVersion Include="Morris.Moxy" Version="1.8.0" />
-    <PackageVersion Include="Nerdbank.GitVersioning" Version="3.5.119" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
     <PackageVersion Include="Oakton" Version="6.1.0" />
     <PackageVersion Include="Octokit.Webhooks.AspNetCore" Version="1.0.0" />
