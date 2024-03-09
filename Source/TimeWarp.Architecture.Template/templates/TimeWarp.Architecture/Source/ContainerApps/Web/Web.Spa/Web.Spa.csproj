@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <Description>Blazor Spa</Description>
+    <Description>TimeWarp Architecture Demo Application</Description>
     <DefineConstants>ReduxDevToolsEnabled;grpc;api;web;counter</DefineConstants>
     <Nullable>enable</Nullable>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
