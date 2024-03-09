@@ -7,16 +7,13 @@
 /// <remarks>
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
-public class WebApiService : IApiService
+public class WebApiService
+(
+  HttpClient HttpClient,
+  IOptions<JsonSerializerOptions> JsonSerializerOptionsAccessor
+) : IApiService
 {
-  private readonly HttpClient HttpClient;
-  private readonly JsonSerializerOptions JsonSerializerOptions;
-
-  public WebApiService(HttpClient httpClient, IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor)
-  {
-    HttpClient = httpClient;
-    JsonSerializerOptions = jsonSerializerOptionsAccessor.Value;
-  }
+  private readonly JsonSerializerOptions JsonSerializerOptions = JsonSerializerOptionsAccessor.Value;
 
   /// <summary>
   /// Get the response for the given request
@@ -24,15 +21,15 @@ public class WebApiService : IApiService
   /// <typeparam name="TResponse"></typeparam>
   /// <param name="request"></param>
   /// <returns></returns>
-  public async Task<TResponse?> GetResponse<TResponse>(IApiRequest request)
+  public async Task<TResponse?> GetResponse<TResponse>(IApiRequest request) where TResponse : class
   {
     HttpResponseMessage httpResponseMessage =
-      await GetHttpResponseMessageFromRequest<TResponse>(request).ConfigureAwait(false);
+      await GetHttpResponseMessageFromRequest(request).ConfigureAwait(false);
 
     return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
   }
 
-  public async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest<TResponse>
+  public async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest
   (
     IApiRequest apiRequest
   )
