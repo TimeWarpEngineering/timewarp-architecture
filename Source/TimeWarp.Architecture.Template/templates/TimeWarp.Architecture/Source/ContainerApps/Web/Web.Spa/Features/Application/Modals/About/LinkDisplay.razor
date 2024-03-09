@@ -1,0 +1,17 @@
+@namespace TimeWarp.Architecture.Components
+
+@if (!string.IsNullOrWhiteSpace(Url))
+{
+  <p class="@CssClass"><a href="@Url" class="text-blue-500">@DisplayText</a></p>
+}
+
+@code {
+  [Parameter]
+  public string? Url { get; set; }
+
+  [Parameter]
+  public string? DisplayText { get; set; }
+
+  [Parameter]
+  public string CssClass { get; set; } = "mt-2 text-sm text-gray-500";
+}

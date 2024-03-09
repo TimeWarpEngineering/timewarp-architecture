@@ -4,7 +4,7 @@ public partial class ModalContainer
 {
   [CascadingParameter, EditorRequired] private ModalController Parent { get; set; } = default!;
   [Parameter, EditorRequired] public RenderFragment MainContent { get; set; } = default!;
-  [Parameter] public RenderFragment ActionContent { get; set; } = default!;
+  [Parameter] public RenderFragment? ActionContent { get; set; } = default!;
   [Parameter, EditorRequired] public string ModalId { get; set; } = default!;
   [Parameter] public EventCallback OnActivate { get; set; }
   private bool IsActive => Parent.ActiveModalId == ModalId;
