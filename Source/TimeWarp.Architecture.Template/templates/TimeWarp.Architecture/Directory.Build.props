@@ -5,6 +5,8 @@
     <Authors>Steven T. Cramer</Authors>
     <Company>TimeWarp Enterprises</Company>
     <Product>TimeWarp.Architecture</Product>
+    <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-architecture.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <!-- Common compile parameters -->
