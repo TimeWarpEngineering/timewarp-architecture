@@ -7,6 +7,7 @@
     <Product>TimeWarp.Architecture</Product>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-architecture.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <Version>0.0.1</Version>
   </PropertyGroup>
 
   <!-- Common compile parameters -->
