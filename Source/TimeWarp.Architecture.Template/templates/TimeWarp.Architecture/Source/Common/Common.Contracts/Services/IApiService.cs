@@ -8,5 +8,5 @@ public interface IApiService
   /// <typeparam name="TResponse"></typeparam>
   /// <param name="request"></param>
   /// <returns></returns>
-  Task<TResponse?> GetResponse<TResponse>(IApiRequest request);
+  Task<TResponse?> GetResponse<TResponse>(IApiRequest request) where TResponse : class;
 }
