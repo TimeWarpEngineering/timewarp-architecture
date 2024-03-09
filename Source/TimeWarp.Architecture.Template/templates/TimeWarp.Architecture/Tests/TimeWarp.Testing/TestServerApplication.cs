@@ -8,7 +8,7 @@ namespace TimeWarp.Architecture.Testing;
 /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down. </remarks>
 /// <typeparam name="TProgram"></typeparam>
 [NotTest]
-public abstract partial class TestServerApplication<TProgram> : IAsyncDisposable, IWebApiTestService, ISender
+public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebApiTestService, ISender
   where TProgram : IAspNetProgram
 {
   private readonly ISender ScopedSender;
@@ -17,7 +17,7 @@ public abstract partial class TestServerApplication<TProgram> : IAsyncDisposable
   public readonly WebApplicationHost<TProgram> WebApplicationHost;
   public HttpClient HttpClient { get; }
 
-  public TestServerApplication(WebApplicationHost<TProgram> aWebApplicationHost) : base()
+  protected TestServerApplication(WebApplicationHost<TProgram> aWebApplicationHost)
   {
     WebApplicationHost = aWebApplicationHost;
 
@@ -48,11 +48,12 @@ public abstract partial class TestServerApplication<TProgram> : IAsyncDisposable
     return WebApplicationHost.DisposeAsync();
   }
 
-  public Task ConfirmEndpointValidationError<TResponse>(IApiRequest aRequest, string aAttributeName) =>
-    WebApiTestService.ConfirmEndpointValidationError<TResponse>(aRequest, aAttributeName);
+  public Task ConfirmEndpointValidationError<TResponse>(IApiRequest apiRequest, string attributeName) =>
+    WebApiTestService.ConfirmEndpointValidationError<TResponse>(apiRequest, attributeName);
 
   #region IWebApiTestService
-  public Task<TResponse> GetResponse<TResponse>(IApiRequest aRequest) => WebApiTestService.GetResponse<TResponse>(aRequest);
+
+  public Task<TResponse> GetResponse<TResponse>(IApiRequest apiRequest) where TResponse : class => WebApiTestService.GetResponse<TResponse>(apiRequest);
   #endregion
 
   #region ISender
