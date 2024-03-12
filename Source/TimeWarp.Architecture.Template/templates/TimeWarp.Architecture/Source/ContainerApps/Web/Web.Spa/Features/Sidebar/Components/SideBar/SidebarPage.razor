@@ -36,12 +36,12 @@
 </div>
 
 <!-- Absolute Position Items -->
-@if (ModalContent != null)
-{
-  <ModalController ActiveModalId=@ActiveModalId>
-    <ModalContainers>
-      @ModalContent
-    </ModalContainers>
-  </ModalController>
-}
+
+<ModalController ActiveModalId=@ActiveModalId>
+  <ModalContainers>
+    @ModalContent
+    <AssemblyInfoModal/>
+  </ModalContainers>
+</ModalController>
+
 <!-- End Absolute Position Items -->
