@@ -2,7 +2,10 @@
 
 @if (!string.IsNullOrWhiteSpace(Value))
 {
-  <p class="@CssClass">@PropertyName: @Value</p>
+  <div class="@CssClass">
+    <span class="font-bold">@PropertyName:</span>
+    <span class="font-normal">@Value</span>
+  </div>
 }
 
 @code {
@@ -13,5 +16,5 @@
   public string? Value { get; set; }
 
   [Parameter]
-  public string CssClass { get; set; } = "mt-2 text-sm text-gray-500";
+  public string CssClass { get; set; } = "text-sm text-gray-500";
 }

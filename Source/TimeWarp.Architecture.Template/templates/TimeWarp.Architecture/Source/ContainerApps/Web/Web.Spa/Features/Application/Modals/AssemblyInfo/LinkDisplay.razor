@@ -2,7 +2,7 @@
 
 @if (!string.IsNullOrWhiteSpace(Url))
 {
-  <p class="@CssClass"><a href="@Url" class="text-blue-500">@DisplayText</a></p>
+  <div class="@CssClass"><a href="@Url" class="break-words max-w-full inline-block whitespace-normal text-blue-500">@DisplayText</a></div>
 }
 
 @code {
@@ -13,5 +13,5 @@
   public string? DisplayText { get; set; }
 
   [Parameter]
-  public string CssClass { get; set; } = "mt-2 text-sm text-gray-500";
+  public string CssClass { get; set; } = "text-sm text-gray-500";
 }
