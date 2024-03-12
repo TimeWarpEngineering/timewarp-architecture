@@ -11,5 +11,5 @@ public partial class HomePage : BaseComponent
     await Send(new ActionTrackingState.TwoSecondTask.Action());
 
   private async Task ModalButtonClick() =>
-    await Send(new ApplicationState.SetActiveModal.Action(ModalId: AboutModal.ModalId));
+    await Send(new ApplicationState.SetActiveModal.Action(ModalId: AssemblyInfoModal.ModalId));
 }
