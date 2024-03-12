@@ -7,13 +7,13 @@ export class Transition extends Spa {
     methodName: string
   ) {
     console.log("%cAddTransitionEndListener", "color: green");
-    // Add some lable to the console logs below.
+    // Add some label to the console logs below.
     console.log(element);
     console.log(dotNetObject);
-    console.log(`methodname: ${methodName}`);
+    console.log(`methodName: ${methodName}`);
     element.addEventListener("transitionend", function listener() {
       console.log(
-        "%cTransitionend fired attempting to call back to C#",
+        "%cTransitionend fired. Attempting to call back to C#",
         "color: green"
       );
       dotNetObject.invokeMethodAsync(methodName);
