@@ -2,37 +2,38 @@ namespace GetWeatherForecastsEndpoint_;
 
 using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 
+[UsedImplicitly]
 public class Returns
+(
+  ApiTestServerApplication apiTestServerApplication
+)
 {
-  private readonly Query Query;
-  private readonly ApiTestServerApplication ApiTestServerApplication;
+  private readonly Query Query = new() { Days = 10 };
 
-  public Returns
-  (
-    ApiTestServerApplication aApiTestServerApplication
-  )
-  {
-    Query = new Query { Days = 10 };
-    ApiTestServerApplication = aApiTestServerApplication;
-  }
-
+  [UsedImplicitly]
   public async Task _10WeatherForecasts_Given_10DaysRequested()
   {
-    Response response =
-      await ApiTestServerApplication.GetResponse<Response>(Query);
+    OneOf<Response, SharedProblemDetails> response =
+      await apiTestServerApplication.GetResponse<Response>(Query, new CancellationToken());
 
-    ValidateGetWeatherForecastsResponse(response);
+    // Validate the response
+    response.Switch
+    (
+      ValidateGetWeatherForecastsResponse,
+      _ => throw new Exception("Problem details returned")
+    );
   }
 
+  [UsedImplicitly]
   public async Task ValidationError()
   {
     Query.Days = -1;
 
-    await ApiTestServerApplication.ConfirmEndpointValidationError<Response>(Query, nameof(Query.Days));
+    await apiTestServerApplication.ConfirmEndpointValidationError<Response>(Query, nameof(Query.Days));
   }
 
-  private void ValidateGetWeatherForecastsResponse(Response aGetWeatherForecastsResponse)
+  private void ValidateGetWeatherForecastsResponse(Response getWeatherForecastsResponse)
   {
-    aGetWeatherForecastsResponse.WeatherForecasts.Count().Should().Be(Query.Days);
+    getWeatherForecastsResponse.WeatherForecasts.Count().Should().Be(Query.Days);
   }
 }

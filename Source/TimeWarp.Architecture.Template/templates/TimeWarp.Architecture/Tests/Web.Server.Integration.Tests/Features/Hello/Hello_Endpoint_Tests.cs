@@ -3,27 +3,27 @@ namespace HelloEndpoint_;
 using static TimeWarp.Architecture.Features.Hellos.Hello;
 
 public class Returns_
+(
+  IWebApiTestService WebTestServerApplication
+)
 {
-  private readonly Query Query;
-  private readonly WebTestServerApplication WebTestServerApplication;
+  private readonly Query Query = new()
+    { Name = "Bob" };
 
-  public Returns_
-  (
-    WebTestServerApplication aWebTestServerApplication
-  )
-  {
-    Query = new Query { Name = "Bob" };
-    WebTestServerApplication = aWebTestServerApplication;
-  }
-
+  [UsedImplicitly]
   public async Task Ok_Given_Valid_Request()
   {
-    Response response =
-      await WebTestServerApplication.GetResponse<Response>(Query);
+    OneOf<Response, SharedProblemDetails> response =
+      await WebTestServerApplication.GetResponse<Response>(Query, new CancellationToken());
 
-    ValidateResponse(response);
+    response.Switch
+    (
+      ValidateResponse,
+      _ => throw new Exception("Problem details returned")
+    );
   }
 
+  [UsedImplicitly]
   public async Task ValidationError()
   {
     Query.Name = "";
@@ -35,7 +35,7 @@ public class Returns_
     );
   }
 
-  private void ValidateResponse(Response response)
+  private static void ValidateResponse(Response response)
   {
     response.Should().NotBeNull();
     response.Message.Should().Be("Hello, Bob!");

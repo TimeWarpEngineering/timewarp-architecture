@@ -53,7 +53,13 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
 
   #region IWebApiTestService
 
-  public Task<TResponse> GetResponse<TResponse>(IApiRequest apiRequest) where TResponse : class => WebApiTestService.GetResponse<TResponse>(apiRequest);
+  public async Task<OneOf.OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+  (
+    IApiRequest apiRequest,
+    CancellationToken cancellationToken
+  ) where TResponse : class =>
+    await WebApiTestService.GetResponse<TResponse>(apiRequest, cancellationToken);
+
   #endregion
 
   #region ISender

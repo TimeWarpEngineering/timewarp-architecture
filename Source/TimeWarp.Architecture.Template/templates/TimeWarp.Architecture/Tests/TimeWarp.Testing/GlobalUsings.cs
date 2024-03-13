@@ -16,6 +16,7 @@ global using System.Text.Json;
 
 // Solution usings
 global using TimeWarp.Architecture.Features;
+global using TimeWarp.Architecture.Types;
 global using TimeWarp.Fixie;
 
 #if(web)

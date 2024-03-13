@@ -21,6 +21,9 @@ public interface IWebApiTestService
   /// </summary>
   /// <typeparam name="TResponse"></typeparam>
   /// <param name="apiRequest"></param>
+  /// <param name="request"></param>
+  /// <param name="cancellationToken"></param>
   /// <returns></returns>
-  Task<TResponse> GetResponse<TResponse>(IApiRequest apiRequest) where TResponse : class;
+  ///
+  public Task<OneOf.OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest apiRequest, CancellationToken cancellationToken) where TResponse : class;
 }

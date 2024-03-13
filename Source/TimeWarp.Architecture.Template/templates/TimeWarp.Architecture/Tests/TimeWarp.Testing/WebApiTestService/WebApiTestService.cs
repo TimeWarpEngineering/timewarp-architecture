@@ -27,6 +27,13 @@ public class WebApiTestService : IWebApiTestService
     await ConfirmEndpointValidationError(httpResponseMessage, attributeName).ConfigureAwait(false);
   }
 
+  public async Task<OneOf.OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+    (
+      IApiRequest apiRequest,
+      CancellationToken cancellationToken
+    ) where TResponse : class =>
+      await WebApiService.GetResponse<TResponse>(apiRequest, cancellationToken);
+
   private static async Task ConfirmEndpointValidationError
   (
     HttpResponseMessage aHttpResponseMessage,
@@ -39,7 +46,4 @@ public class WebApiTestService : IWebApiTestService
     json.Should().Contain("errors");
     json.Should().Contain(attributeName);
   }
-
-  public async Task<TResponse?> GetResponse<TResponse>(IApiRequest apiRequest) where TResponse : class =>
-    await WebApiService.GetResponse<TResponse>(apiRequest);
 }
