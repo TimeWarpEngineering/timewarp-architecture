@@ -304,4 +304,5 @@ GeneratedCode/
 # Tye intermediate files
 .tye/
 /Source/ContainerApps/Web/Web.Contracts/Generated/**
+/Source/ContainerApps/Web/Web.Spa/Generated/**
 /Tests/TimeWarp.Testing/Generated/**
