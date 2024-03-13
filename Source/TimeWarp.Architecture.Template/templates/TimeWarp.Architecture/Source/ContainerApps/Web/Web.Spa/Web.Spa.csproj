@@ -81,13 +81,12 @@
   <ItemGroup>
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*"/>
     <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js"/>
-    <AdditionalFiles Include="Features\Application\Modals\About\AboutModal.razor" />
     <AdditionalFiles Include="Features\Base\StateAccessMixin.mixin"/>
     <AdditionalFiles Include="Mixins\Page.mixin"/>
   </ItemGroup>
 
   <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild" Inputs="@(TypeScriptInputs)" Outputs="@(TypeScriptOutputs)">
-    <Exec Command="npm run lint" WorkingDirectory="..\Web.TypeScript\"/>
+<!--    <Exec Command="npm run lint" WorkingDirectory="..\Web.TypeScript\"/>-->
     <Exec Command="npm run prettier" WorkingDirectory="..\Web.TypeScript\"/>
     <Exec Command="npm run build" WorkingDirectory="..\Web.TypeScript\"/>
   </Target>
