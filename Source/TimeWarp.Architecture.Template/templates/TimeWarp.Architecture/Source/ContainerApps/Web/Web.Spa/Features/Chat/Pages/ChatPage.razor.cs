@@ -8,7 +8,7 @@ public partial class ChatPage
 {
   private string User { get; set; } = string.Empty;
   private string Message { get; set; } = string.Empty;
-  private IEnumerable<ChatMessage> ChatMessages => ChatState.ChatMessages;
+  private IEnumerable<ChatMessage> ChatMessages => ChatState.ChatMessages ?? Enumerable.Empty<ChatMessage>();
 
   [Inject] private ChatHubConnection ChatHubConnection { get; set; } = default!;
 

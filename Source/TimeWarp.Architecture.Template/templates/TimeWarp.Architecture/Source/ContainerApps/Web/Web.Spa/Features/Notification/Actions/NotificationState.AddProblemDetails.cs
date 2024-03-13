@@ -5,15 +5,13 @@ using static NotificationState.Notification;
 internal partial class NotificationState
 {
   [UsedImplicitly]
-  public static class AddNotification
+  public static class AddProblemDetails
   {
 
     [UsedImplicitly]
     internal record Action
     (
-      string Title,
-      string Message,
-      NotificationType Type
+      SharedProblemDetails SharedProblemDetails
     ) : BaseAction;
 
     [UsedImplicitly]
@@ -31,16 +29,15 @@ internal partial class NotificationState
       {
         NotificationState.NotificationList ??= [];
 
-        NotificationState.NotificationList.Add
-        (
-          new Notification
-          {
-            Title = action.Title,
-            Message = action.Message,
-            Type = action.Type,
-            Id = Guid.NewGuid(),
-          }
-        );
+        var notification = new Notification
+        {
+          Title = action.SharedProblemDetails.Title ?? "Error",
+          Message = action.SharedProblemDetails.Detail ?? "An error occurred",
+          Type = NotificationType.Error,
+          Id = Guid.NewGuid(),
+        };
+
+        NotificationState.NotificationList.Add(notification);
         return Task.CompletedTask;
       }
     }

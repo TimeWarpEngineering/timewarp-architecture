@@ -14,6 +14,7 @@ public sealed partial class ChatState
     {
       public override Task Handle(Action action, CancellationToken cancellationToken)
       {
+        ChatState.ChatMessageList ??= [];
         ChatMessage chatMessage = new(action.Command.Message, action.Command.User);
         ChatState.ChatMessageList.Add(chatMessage);
         return Task.CompletedTask;
