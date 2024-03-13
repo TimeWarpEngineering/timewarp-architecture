@@ -1,5 +1,7 @@
 ﻿namespace TimeWarp.Architecture;
 
+using System.Net;
+
 /// <summary>
 /// Class that abstracts the WebAPI into a simple interface.
 /// Given a Request return the Response.
@@ -7,6 +9,7 @@
 /// <remarks>
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
+[UsedImplicitly]
 public class WebApiService
 (
   HttpClient HttpClient,
@@ -20,15 +23,30 @@ public class WebApiService
   /// </summary>
   /// <typeparam name="TResponse"></typeparam>
   /// <param name="request"></param>
+  /// <param name="cancellationToken"></param>
   /// <returns></returns>
-  public async Task<TResponse?> GetResponse<TResponse>(IApiRequest request) where TResponse : class
+  public async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest request, CancellationToken cancellationToken) where TResponse : class
   {
     HttpResponseMessage httpResponseMessage =
       await GetHttpResponseMessageFromRequest(request).ConfigureAwait(false);
 
-    return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
+    if (httpResponseMessage.StatusCode == HttpStatusCode.NoContent)
+    {
+      return new SharedProblemDetails
+      {
+        Title = "No Content",
+        Status = (int)HttpStatusCode.NoContent,
+        Detail = "The response content is empty."
+      };
+    }
+
+    if (httpResponseMessage.IsSuccessStatusCode)
+      return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
+
+    return await ReadFromJson<SharedProblemDetails>(httpResponseMessage).ConfigureAwait(false);
   }
 
+  [UsedImplicitly]// Used by the WebApiServiceTests
   public async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest
   (
     IApiRequest apiRequest
@@ -45,9 +63,9 @@ public class WebApiService
       httpContent =
         new StringContent
         (
-          requestAsJson,
-          Encoding.UTF8,
-          MediaTypeNames.Application.Json
+        requestAsJson,
+        Encoding.UTF8,
+        MediaTypeNames.Application.Json
         );
     }
 
@@ -65,14 +83,15 @@ public class WebApiService
   }
 
 
-  private async Task<TResponse?> ReadFromJson<TResponse>(HttpResponseMessage aHttpResponseMessage)
+  private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage)
   {
-    aHttpResponseMessage.EnsureSuccessStatusCode();
+    httpResponseMessage.EnsureSuccessStatusCode();
 
-    string json = await aHttpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
+    string json = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
     TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
-    Console.WriteLine(JsonSerializerOptions.ToString());
+    if (response is null)
+      throw new InvalidOperationException("The response is null.");
 
     return response;
   }

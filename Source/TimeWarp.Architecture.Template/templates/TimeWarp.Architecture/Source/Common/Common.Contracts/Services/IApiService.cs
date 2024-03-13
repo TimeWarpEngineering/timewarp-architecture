@@ -7,6 +7,7 @@ public interface IApiService
   /// </summary>
   /// <typeparam name="TResponse"></typeparam>
   /// <param name="request"></param>
+  /// <param name="cancellationToken"></param>
   /// <returns></returns>
-  Task<TResponse?> GetResponse<TResponse>(IApiRequest request) where TResponse : class;
+  Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest request, CancellationToken cancellationToken) where TResponse : class;
 }
