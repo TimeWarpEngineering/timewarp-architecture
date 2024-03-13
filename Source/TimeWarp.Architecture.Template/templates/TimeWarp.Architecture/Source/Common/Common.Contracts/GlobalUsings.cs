@@ -2,6 +2,7 @@
 global using Microsoft.Extensions.Options;
 global using OneOf;
 global using System.Collections.Specialized;
+global using System.Net;
 global using System.Net.Http;
 global using System.Net.Mime;
 global using System.Text;

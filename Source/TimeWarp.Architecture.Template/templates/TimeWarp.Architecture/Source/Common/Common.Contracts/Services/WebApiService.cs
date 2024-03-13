@@ -1,7 +1,5 @@
 ﻿namespace TimeWarp.Architecture;
 
-using System.Net;
-
 /// <summary>
 /// Class that abstracts the WebAPI into a simple interface.
 /// Given a Request return the Response.
