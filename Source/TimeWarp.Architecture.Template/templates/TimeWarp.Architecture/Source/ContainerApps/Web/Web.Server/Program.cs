@@ -1,7 +1,9 @@
+// ReSharper disable RedundantNameQualifier
 namespace TimeWarp.Architecture.Web.Server;
 
-using TimeWarp.Architecture.Services;
+using Services;
 
+[UsedImplicitly]
 public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
@@ -9,9 +11,9 @@ public class Program : IAspNetProgram
   const string SwaggerBasePath = "api/web-server";
   const string SwaggerEndpoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
-  public static Task<int> Main(string[] aArgumentArray)
+  public static Task<int> Main(string[] argumentArray)
   {
-    WebApplicationBuilder builder = WebApplication.CreateBuilder(aArgumentArray);
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
 
 
     ConfigureConfiguration(builder.Configuration);
@@ -26,46 +28,46 @@ public class Program : IAspNetProgram
 
     webApplication.Services.ValidateOptions(builder.Services);
 
-    return webApplication.RunOaktonCommands(aArgumentArray);
+    return webApplication.RunOaktonCommands(argumentArray);
   }
-  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)
+  public static void ConfigureConfiguration(ConfigurationManager configurationManager)
   {
-    CommonServerModule.ConfigureConfiguration(aConfigurationManager); ;
+    CommonServerModule.ConfigureConfiguration(configurationManager);
   }
 
-  public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    CommonServerModule.ConfigureServices(aServiceCollection, aConfiguration);
-    ConfigureSettings(aServiceCollection, aConfiguration);
-    WebInfrastructureModule.ConfigureServices(aServiceCollection, aConfiguration);
+    CommonServerModule.ConfigureServices(serviceCollection, configuration);
+    ConfigureSettings(serviceCollection, configuration);
+    WebInfrastructureModule.ConfigureServices(serviceCollection, configuration);
 #if(cosmosdb)
-    CosmosDbModule.ConfigureServices(aServiceCollection, aConfiguration);
+    CosmosDbModule.ConfigureServices(serviceCollection, configuration);
 #endif
     //PostgresDbModule.ConfigureServices(aServiceCollection, aConfiguration);
-    aServiceCollection.AddSingleton<IChatHubService, ChatHubService>();
-    CorsPolicy.Any.Apply(aServiceCollection);
-    ConfigureInfrastructure(aServiceCollection);
-    aServiceCollection.AddSignalR();
-    aServiceCollection.AddAutoMapper(typeof(TimeWarp.Architecture.Web.Application.AssemblyMarker).Assembly);
-    aServiceCollection.AddRazorPages();
-    aServiceCollection.AddServerSideBlazor();
-    aServiceCollection.AddMvc()
+    serviceCollection.AddSingleton<IChatHubService, ChatHubService>();
+    CorsPolicy.Any.Apply(serviceCollection);
+    ConfigureInfrastructure(serviceCollection);
+    serviceCollection.AddSignalR();
+    serviceCollection.AddAutoMapper(typeof(TimeWarp.Architecture.Web.Application.AssemblyMarker).Assembly);
+    serviceCollection.AddRazorPages();
+    serviceCollection.AddServerSideBlazor();
+    serviceCollection.AddMvc()
       .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker).Assembly);
 
-    aServiceCollection.AddFluentValidationAutoValidation();
-    aServiceCollection.AddFluentValidationClientsideAdapters();
+    serviceCollection.AddFluentValidationAutoValidation();
+    serviceCollection.AddFluentValidationClientsideAdapters();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
-    aServiceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Server.AssemblyMarker>();
-    aServiceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Contracts.AssemblyMarker>();
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Server.AssemblyMarker>();
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Contracts.AssemblyMarker>();
 
-    aServiceCollection.Configure<ApiBehaviorOptions>
+    serviceCollection.Configure<ApiBehaviorOptions>
     (
       aApiBehaviorOptions => aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
     );
 
-    aServiceCollection.AddResponseCompression
+    serviceCollection.AddResponseCompression
     (
       aResponseCompressionOptions =>
         aResponseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat
@@ -74,9 +76,9 @@ public class Program : IAspNetProgram
         )
     );
 
-    Web.Spa.Program.ConfigureServices(aServiceCollection, aConfiguration);
+    Web.Spa.Program.ConfigureServices(serviceCollection, configuration);
 
-    aServiceCollection
+    serviceCollection
       .AddMediatR
       (
         mediatRServiceConfiguration =>
@@ -90,72 +92,72 @@ public class Program : IAspNetProgram
     CommonServerModule
       .AddSwaggerGen
       (
-        aServiceCollection,
+        serviceCollection,
         SwaggerVersion,
         SwaggerApiTitle,
         [typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker), typeof(TimeWarp.Architecture.Web.Contracts.AssemblyMarker)]
       );
   }
 
-  public static void ConfigureMiddleware(WebApplication aWebApplication)
+  public static void ConfigureMiddleware(WebApplication webApplication)
   {
-    CommonServerModule.ConfigureMiddleware(aWebApplication);
+    CommonServerModule.ConfigureMiddleware(webApplication);
 
     // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
     // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
     // Although sometimes, you might want to allow other sites to make cross-origin requests to your app to be functional.
-    if (aWebApplication.Environment.IsDevelopment())
+    if (webApplication.Environment.IsDevelopment())
     {
-      aWebApplication.UseCors(CorsPolicy.Any.Name);
-      aWebApplication.UseDeveloperExceptionPage();
-      aWebApplication.UseWebAssemblyDebugging();
+      webApplication.UseCors(CorsPolicy.Any.Name);
+      webApplication.UseDeveloperExceptionPage();
+      webApplication.UseWebAssemblyDebugging();
     }
 
-    CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
+    CommonServerModule.UseSwaggerUi(webApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
 
-    aWebApplication.UseResponseCompression();
-    aWebApplication.UseBlazorFrameworkFiles();
-    aWebApplication.UseStaticFiles();
-    aWebApplication.UseRouting();
+    webApplication.UseResponseCompression();
+    webApplication.UseBlazorFrameworkFiles();
+    webApplication.UseStaticFiles();
+    webApplication.UseRouting();
   }
 
-  public static void ConfigureEndpoints(WebApplication aWebApplication)
+  public static void ConfigureEndpoints(WebApplication webApplication)
   {
-    aWebApplication.MapRazorPages();
-    aWebApplication.MapHealthChecks("/api/health");
+    webApplication.MapRazorPages();
+    webApplication.MapHealthChecks("/api/health");
 
-    CommonServerModule.ConfigureEndpoints(aWebApplication);
-    aWebApplication.MapControllers();
-    aWebApplication.MapBlazorHub();
-    aWebApplication.MapHub<ChatHub>(ChatHubConstants.Route);
-    aWebApplication.MapFallbackToPage("/_Host");
+    CommonServerModule.ConfigureEndpoints(webApplication);
+    webApplication.MapControllers();
+    webApplication.MapBlazorHub();
+    webApplication.MapHub<ChatHub>(ChatHubConstants.Route);
+    webApplication.MapFallbackToPage("/_Host");
   }
 
-  private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    aServiceCollection
-      .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
+    serviceCollection
+      .ConfigureOptions<SampleOptions, SampleOptionsValidator>(configuration);
 
-    aServiceCollection.Configure<ApiBehaviorOptions>
+    serviceCollection.Configure<ApiBehaviorOptions>
     (
       aApiBehaviorOptions => aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
     );
   }
 
-  private static void ConfigureInfrastructure(IServiceCollection aServiceCollection)
+  private static void ConfigureInfrastructure(IServiceCollection serviceCollection)
   {
-    aServiceCollection.AddHealthChecks();
+    serviceCollection.AddHealthChecks();
     //  .AddDbContextCheck<SqlDbContext>();
 
-    ConfigureEnvironmentChecks(aServiceCollection);
+    ConfigureEnvironmentChecks(serviceCollection);
     //ConfigureSqlDb(aServiceCollection, Configuration);
   }
 
-  private static void ConfigureEnvironmentChecks(IServiceCollection aServiceCollection)
+  private static void ConfigureEnvironmentChecks(IServiceCollection serviceCollection)
   {
-    aServiceCollection.AddSingleton<SampleEnvironmentCheck>();
+    serviceCollection.AddSingleton<SampleEnvironmentCheck>();
 
-    aServiceCollection.CheckEnvironment<SampleEnvironmentCheck>
+    serviceCollection.CheckEnvironment<SampleEnvironmentCheck>
     (
       SampleEnvironmentCheck.Description, aSampleEnvironmentCheck => aSampleEnvironmentCheck.Check()
     );
