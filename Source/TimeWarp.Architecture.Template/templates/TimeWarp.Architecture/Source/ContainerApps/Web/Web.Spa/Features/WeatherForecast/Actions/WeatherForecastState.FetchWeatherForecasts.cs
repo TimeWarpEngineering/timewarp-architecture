@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using OneOf;
-
 internal partial class WeatherForecastsState
 {
   public static class FetchWeatherForecasts
@@ -16,7 +14,7 @@ internal partial class WeatherForecastsState
     internal class Handler
     (
       IStore store,
-      WebApiService WebApiService,
+      ApiService ApiService,
       IPublisher Publisher
     ) : BaseHandler<Action>(store)
     {
@@ -25,8 +23,8 @@ internal partial class WeatherForecastsState
       {
         IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = action.Days ?? 10 };
 
-        OneOf<GetWeatherForecasts.Response, SharedProblemDetails> response =
-          await WebApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest,cancellationToken);
+        OneOf.OneOf<GetWeatherForecasts.Response, SharedProblemDetails> response =
+          await ApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest,cancellationToken);
 
         response.Switch
         (

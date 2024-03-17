@@ -18,9 +18,11 @@ public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestA
     var services = new ServiceCollection();
 
     // We need an HttpClient to talk to the Server side configured before calling AddBlazorState.
-    services.AddSingleton(testServerApplication.HttpClient);
+    // services.AddSingleton(testServerApplication.HttpClient);
 
     ConfigureServices(services, testServerApplication.WebApplicationHost.Configuration);
+    string baseurl = testServerApplication.WebApplicationHost.Urls.First();
+    services.AddHttpClient(Configuration.Constants.ApiServiceName, c => c.BaseAddress = new Uri(baseurl));
     ServiceProvider = services.BuildServiceProvider();
     ScopedSender = new ScopedSender(ServiceProvider);
   }

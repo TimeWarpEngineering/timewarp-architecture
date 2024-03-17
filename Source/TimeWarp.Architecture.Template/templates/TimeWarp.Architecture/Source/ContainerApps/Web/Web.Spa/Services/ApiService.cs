@@ -5,4 +5,4 @@ public sealed class ApiService
 (
   IHttpClientFactory httpClientFactory,
   IOptions<JsonSerializerOptions> options
-) : WebApiService(httpClientFactory.CreateClient(Constants.ApiServiceName), options);
+) : WebApiService(httpClientFactory, Constants.ApiServiceName, options);

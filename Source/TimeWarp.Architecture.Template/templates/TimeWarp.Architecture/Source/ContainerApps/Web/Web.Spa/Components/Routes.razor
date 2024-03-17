@@ -1,0 +1,39 @@
+@using TimeWarp.Features.Developer
+@using TimeWarp.Features.JavaScriptInterop
+@using TimeWarp.Features.Routing
+@using Microsoft.AspNetCore.Components.Routing
+@using TimeWarp.Architecture.Features.ClientLoaders
+@using TimeWarp.Features.ReduxDevTools
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+
+<Router
+  AppAssembly="@typeof(Web.Spa.AssemblyMarker).Assembly"
+  AdditionalAssemblies="new[] { typeof(TimeWarp.Architecture.Web.Spa.AssemblyMarker).Assembly }">
+  <Found Context="routeData">
+    <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+    <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+  </Found>
+</Router>
+<ReduxDevTools @rendermode=InteractiveAuto></ReduxDevTools>
+<TimeWarpJavaScriptInterop @rendermode=InteractiveAuto></TimeWarpJavaScriptInterop>
+<TimeWarpNavigation @rendermode=InteractiveAuto></TimeWarpNavigation>
+
+@code
+{
+  [Inject] private ClientLoader ClientLoader { get; set; } = default!;
+  [Inject] private JsonRequestHandler JsonRequestHandler { get; set; } = default!;
+#if DEBUG
+  [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; } = default!;
+#endif
+
+  [Inject] private TimeWarpNavigationManager TimeWarpNavigationManager { get; set; } = default!;
+
+  protected override async Task OnAfterRenderAsync(bool aFirstRender)
+  {
+#if DEBUG
+    await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
+#endif
+    await JsonRequestHandler.InitAsync().ConfigureAwait(false);
+    await ClientLoader.LoadClient().ConfigureAwait(false);
+  }
+}

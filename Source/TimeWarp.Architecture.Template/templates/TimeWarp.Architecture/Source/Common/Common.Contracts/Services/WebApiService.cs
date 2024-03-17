@@ -8,12 +8,14 @@
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
 [UsedImplicitly]
-public class WebApiService
+public abstract class WebApiService
 (
-  HttpClient HttpClient,
+  IHttpClientFactory HttpClientFactory,
+  string HttpClientName,
   IOptions<JsonSerializerOptions> JsonSerializerOptionsAccessor
 ) : IApiService
 {
+  private HttpClient HttpClient => HttpClientFactory.CreateClient(HttpClientName);
   private readonly JsonSerializerOptions JsonSerializerOptions = JsonSerializerOptionsAccessor.Value;
 
   /// <summary>

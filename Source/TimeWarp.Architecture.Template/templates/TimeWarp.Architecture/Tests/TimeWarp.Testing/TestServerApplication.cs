@@ -1,6 +1,8 @@
 ﻿#nullable enable
 namespace TimeWarp.Architecture.Testing;
 
+using Services;
+
 /// <summary>
 /// An abstract class that adds test functionality for the passed in WebApplication.
 /// </summary>
@@ -31,8 +33,12 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
 
     var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor = Options.Create(jsonSerializerOptions);
-    var webApiService = new WebApiService(HttpClient, jsonSerializerOptionsAccessor);
-    WebApiTestService = new WebApiTestService(webApiService);
+
+    // I need Ihttpclientfactory to create the WebApiService.  Where can I get it?
+    IHttpClientFactory httpClientFactory = aWebApplicationHost.ServiceProvider.GetRequiredService<IHttpClientFactory>();
+
+    var apiService = new ApiService(httpClientFactory, jsonSerializerOptionsAccessor);
+    WebApiTestService = new WebApiTestService(apiService);
   }
 
   public async ValueTask DisposeAsync()

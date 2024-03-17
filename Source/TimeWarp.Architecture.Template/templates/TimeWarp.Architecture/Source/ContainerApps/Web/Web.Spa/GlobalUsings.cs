@@ -48,6 +48,7 @@ global using TimeWarp.Architecture.Features.ProfileMenus;
 global using TimeWarp.Architecture.Features.Sidebars;
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
+global using TimeWarp.Architecture.Services;
 global using TimeWarp.Architecture.Types;
 global using TimeWarp.Features.ActionTracking;
 

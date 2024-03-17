@@ -43,4 +43,10 @@
     <InternalsVisibleTo Include="Web.Server.Integration.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Components\Layout\" />
+    <Folder Include="Pages\" />
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>

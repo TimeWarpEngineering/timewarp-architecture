@@ -2,7 +2,7 @@
   <PropertyGroup>
     <DefineConstants>api;yarp;web</DefineConstants>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Fixie" />

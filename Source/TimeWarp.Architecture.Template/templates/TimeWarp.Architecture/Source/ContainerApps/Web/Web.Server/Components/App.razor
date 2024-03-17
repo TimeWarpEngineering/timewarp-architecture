@@ -1,7 +1,4 @@
-﻿@page "/"
-@namespace TimeWarp.Architecture.Pages
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-@using TimeWarp.Architecture.Components
+﻿@using Microsoft.AspNetCore.Components.Web
 
 <!DOCTYPE html>
 <html lang="en">
@@ -9,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TimeWarp.Architecture</title>
-  <base href="~/" />
+  <base href="/"/>
 
   <!-- add inter font -->
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
@@ -22,17 +19,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   @* Add FluentUI *@
-  <link href="Web.Spa.styles.css" rel="stylesheet" />
-  <link href="_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css" rel="stylesheet" />
+  @* <link href="Web.Spa.styles.css" rel="stylesheet" /> *@
+  @* <link href="_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css" rel="stylesheet" /> *@
   <script src="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js" type="module" async></script>
 
+  @* Icons *@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+
+   @* PWA Manifest *@
   <link rel="manifest" href="manifest.json" />
+  <HeadOutlet @rendermode=InteractiveWebAssembly />
 </head>
 <body class="font-sans antialiased">
-  <div id="app">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</div>
+  <Routes @rendermode=InteractiveWebAssembly />
+  @* <div id="app">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</div> *@
   <div id="blazor-error-ui" class="bg-yellow-100 bottom-0 left-0 fixed text-yellow-900 w-full z-50 pt-2.5 pr-5 pb-3 pl-5 border-t-2 border-yellow-800 hidden">
     <div class="flex justify-between">
       <span>An unhandled error has occurred. <a href="" class="underline cursor-pointer hover:no-underline">Reload</a></span>

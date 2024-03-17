@@ -15,7 +15,6 @@ public class Program : IAspNetProgram
   {
     WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
 
-
     ConfigureConfiguration(builder.Configuration);
     ConfigureServices(builder.Services, builder.Configuration);
 
@@ -37,6 +36,13 @@ public class Program : IAspNetProgram
 
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
+    serviceCollection.AddHttpClient();
+
+    serviceCollection
+      .AddRazorComponents()
+      .AddInteractiveServerComponents()
+      .AddInteractiveWebAssemblyComponents();
+
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
     ConfigureSettings(serviceCollection, configuration);
     WebInfrastructureModule.ConfigureServices(serviceCollection, configuration);
@@ -49,8 +55,8 @@ public class Program : IAspNetProgram
     ConfigureInfrastructure(serviceCollection);
     serviceCollection.AddSignalR();
     serviceCollection.AddAutoMapper(typeof(TimeWarp.Architecture.Web.Application.AssemblyMarker).Assembly);
-    serviceCollection.AddRazorPages();
-    serviceCollection.AddServerSideBlazor();
+    // serviceCollection.AddRazorPages();
+    // serviceCollection.AddServerSideBlazor();
     serviceCollection.AddMvc()
       .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker).Assembly);
 
@@ -119,18 +125,25 @@ public class Program : IAspNetProgram
     webApplication.UseBlazorFrameworkFiles();
     webApplication.UseStaticFiles();
     webApplication.UseRouting();
+    webApplication.UseAntiforgery();
   }
 
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
-    webApplication.MapRazorPages();
+    webApplication.MapRazorComponents<App>()
+      .AddInteractiveServerRenderMode()
+      .AddInteractiveWebAssemblyRenderMode()
+      .AddAdditionalAssemblies(typeof(TimeWarp.Architecture.Web.Spa.AssemblyMarker).Assembly);
+
+    // webApplication.MapRazorPages();
+    // webApplication.MapBlazorHub();
+    // webApplication.MapFallbackToPage("/_Host");
+
     webApplication.MapHealthChecks("/api/health");
 
     CommonServerModule.ConfigureEndpoints(webApplication);
     webApplication.MapControllers();
-    webApplication.MapBlazorHub();
     webApplication.MapHub<ChatHub>(ChatHubConstants.Route);
-    webApplication.MapFallbackToPage("/_Host");
   }
 
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)

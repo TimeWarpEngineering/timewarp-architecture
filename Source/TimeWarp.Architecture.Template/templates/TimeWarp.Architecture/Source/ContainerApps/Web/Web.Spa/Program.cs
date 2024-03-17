@@ -1,9 +1,18 @@
 namespace TimeWarp.Architecture.Web.Spa;
 
-using ServiceCollectionOptions = ServiceCollectionOptions;
-
 public class Program
 {
+  public static async Task Main(string[] args)
+  {
+    var builder = WebAssemblyHostBuilder.CreateDefault(args);
+    builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
+
+    ConfigureServices(builder.Services, builder.Configuration);
+    builder.Services.AddHttpClient(Constants.ApiServiceName, aClient => aClient.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
+
+    await builder.Build().RunAsync();
+  }
+
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
     ConfigureSettings(aServiceCollection, aConfiguration);
@@ -45,7 +54,7 @@ public class Program
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
     aServiceCollection.AddScoped<ClientLoader>();
     aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
-    aServiceCollection.AddScoped<WebApiService>();
+    aServiceCollection.AddScoped<ApiService>();
     // Set the JSON serializer options
     aServiceCollection.Configure<JsonSerializerOptions>
     (
@@ -69,18 +78,5 @@ public class Program
       .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(aConfiguration);
 
     //aServiceCollection.ValidateOptions();
-  }
-
-  public static async Task Main(string[] args)
-  {
-    var builder = WebAssemblyHostBuilder.CreateDefault(args);
-    builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
-    builder.RootComponents.Add<App>("#app");
-    builder.RootComponents.Add<HeadOutlet>("head::after");
-    builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-
-    ConfigureServices(builder.Services, builder.Configuration);
-
-    await builder.Build().RunAsync();
   }
 }
