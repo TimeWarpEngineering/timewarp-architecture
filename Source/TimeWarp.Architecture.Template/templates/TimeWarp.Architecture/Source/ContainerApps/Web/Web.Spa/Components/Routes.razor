@@ -7,16 +7,16 @@
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
 
 <Router
-  AppAssembly="@typeof(Web.Spa.AssemblyMarker).Assembly"
-  AdditionalAssemblies="new[] { typeof(TimeWarp.Architecture.Web.Spa.AssemblyMarker).Assembly }">
+  AppAssembly="@typeof(AssemblyMarker).Assembly"
+  AdditionalAssemblies="new[] { typeof(AssemblyMarker).Assembly }">
   <Found Context="routeData">
     <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
     <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
   </Found>
 </Router>
-<ReduxDevTools @rendermode=InteractiveAuto></ReduxDevTools>
-<TimeWarpJavaScriptInterop @rendermode=InteractiveAuto></TimeWarpJavaScriptInterop>
-<TimeWarpNavigation @rendermode=InteractiveAuto></TimeWarpNavigation>
+<ReduxDevTools/>
+<TimeWarpJavaScriptInterop />
+<TimeWarpNavigation />
 
 @code
 {
@@ -34,6 +34,5 @@
     await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
 #endif
     await JsonRequestHandler.InitAsync().ConfigureAwait(false);
-    await ClientLoader.LoadClient().ConfigureAwait(false);
   }
 }
