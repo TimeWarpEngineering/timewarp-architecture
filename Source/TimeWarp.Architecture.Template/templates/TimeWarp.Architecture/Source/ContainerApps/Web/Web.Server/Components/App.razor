@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
 
 <!DOCTYPE html>
 <html lang="en">
@@ -28,23 +29,33 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 
-   @* PWA Manifest *@
+  @* PWA Manifest *@
   <link rel="manifest" href="manifest.json" />
-  <HeadOutlet @rendermode=InteractiveWebAssembly />
+
+  <HeadOutlet @rendermode=RenderMode />
 </head>
 <body class="font-sans antialiased">
-  <Routes @rendermode=InteractiveWebAssembly />
-  @* <div id="app">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</div> *@
-  <div id="blazor-error-ui" class="bg-yellow-100 bottom-0 left-0 fixed text-yellow-900 w-full z-50 pt-2.5 pr-5 pb-3 pl-5 border-t-2 border-yellow-800 hidden">
-    <div class="flex justify-between">
-      <span>An unhandled error has occurred. <a href="" class="underline cursor-pointer hover:no-underline">Reload</a></span>
-      <a>🗙</a>
-    </div>
+<Routes @rendermode=RenderMode />
+@* <div id="app">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</div> *@
+<div id="blazor-error-ui" class="bg-yellow-100 bottom-0 left-0 fixed text-yellow-900 w-full z-50 pt-2.5 pr-5 pb-3 pl-5 border-t-2 border-yellow-800 hidden">
+  <div class="flex justify-between">
+    <span>An unhandled error has occurred. <a href="" class="underline cursor-pointer hover:no-underline">Reload</a></span>
+    <a>🗙</a>
   </div>
-  <script type="module" src="js/BlazorDualMode.js"></script>
-  @*TODO: Cramer review PWA block*@
-  <!--#if PWA -->
-  @*<script>navigator.serviceWorker.register('service-worker.js');</script>*@
-  <!--#endif -->
+</div>
+
+<script src="_framework/blazor.web.js"></script>
+
+@*TODO: Cramer review PWA block*@
+<!--#if PWA -->
+@*<script>navigator.serviceWorker.register('service-worker.js');</script>*@
+<!--#endif -->
 </body>
 </html>
+
+@code
+{
+  // private readonly IComponentRenderMode RenderMode = InteractiveServer;
+  // private readonly IComponentRenderMode RenderMode = InteractiveWebAssembly;
+  private readonly IComponentRenderMode RenderMode = InteractiveAuto;
+}
