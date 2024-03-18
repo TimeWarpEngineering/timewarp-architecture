@@ -52,8 +52,6 @@ public class Program
     aServiceCollection.AddScoped<ChatHubConnection>();
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
-    aServiceCollection.AddScoped<ClientLoader>();
-    aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
     aServiceCollection.AddScoped<ApiService>();
     // Set the JSON serializer options
     aServiceCollection.Configure<JsonSerializerOptions>

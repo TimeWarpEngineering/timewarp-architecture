@@ -2,7 +2,6 @@
 @using TimeWarp.Features.JavaScriptInterop
 @using TimeWarp.Features.Routing
 @using Microsoft.AspNetCore.Components.Routing
-@using TimeWarp.Architecture.Features.ClientLoaders
 @using TimeWarp.Features.ReduxDevTools
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
 
@@ -20,7 +19,6 @@
 
 @code
 {
-  [Inject] private ClientLoader ClientLoader { get; set; } = default!;
   [Inject] private JsonRequestHandler JsonRequestHandler { get; set; } = default!;
 #if DEBUG
   [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; } = default!;
