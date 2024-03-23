@@ -1,13 +1,8 @@
-@using TimeWarp.Features.Developer
-@using TimeWarp.Features.JavaScriptInterop
-@using TimeWarp.Features.Routing
-@using Microsoft.AspNetCore.Components.Routing
-@using TimeWarp.Features.ReduxDevTools
-@using static Microsoft.AspNetCore.Components.Web.RenderMode
+
 
 <Router
   AppAssembly="@typeof(AssemblyMarker).Assembly"
-  AdditionalAssemblies="new[] { typeof(AssemblyMarker).Assembly }">
+  AdditionalAssemblies=@(new[] { typeof(AssemblyMarker).Assembly })>
   <Found Context="routeData">
     <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
     <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
@@ -20,11 +15,11 @@
 @code
 {
   [Inject] private JsonRequestHandler JsonRequestHandler { get; set; } = default!;
+  [Inject] private TimeWarpNavigationManager TimeWarpNavigationManager { get; set; } = default!;
+
 #if DEBUG
   [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; } = default!;
 #endif
-
-  [Inject] private TimeWarpNavigationManager TimeWarpNavigationManager { get; set; } = default!;
 
   protected override async Task OnAfterRenderAsync(bool aFirstRender)
   {
