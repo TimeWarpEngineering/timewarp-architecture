@@ -18,6 +18,11 @@ public class Program : IAspNetProgram
     ConfigureConfiguration(builder.Configuration);
     ConfigureServices(builder.Services, builder.Configuration);
 
+    // TODO: Add Serilog eventually but until
+    builder.Logging
+      .AddConsole()
+      .AddDebug();
+
     WebApplication webApplication = builder.Build();
 
     Console.WriteLine($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
@@ -133,11 +138,12 @@ public class Program : IAspNetProgram
     webApplication.MapRazorComponents<App>()
       .AddInteractiveServerRenderMode()
       .AddInteractiveWebAssemblyRenderMode()
-      .AddAdditionalAssemblies(typeof(TimeWarp.Architecture.Web.Spa.AssemblyMarker).Assembly);
-
-    // webApplication.MapRazorPages();
-    // webApplication.MapBlazorHub();
-    // webApplication.MapFallbackToPage("/_Host");
+      .AddAdditionalAssemblies
+      (
+        typeof(BlazorState.AssemblyMarker).Assembly,
+        typeof(TimeWarp.State.Plus.AssemblyMarker).Assembly,
+        typeof(TimeWarp.Architecture.Web.Spa.AssemblyMarker).Assembly
+      );
 
     webApplication.MapHealthChecks("/api/health");
 
