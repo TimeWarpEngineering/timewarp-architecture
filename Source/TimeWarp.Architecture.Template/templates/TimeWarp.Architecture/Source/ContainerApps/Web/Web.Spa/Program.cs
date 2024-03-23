@@ -15,6 +15,9 @@ public class Program
 
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
+    aServiceCollection.AddBlazoredSessionStorage();
+    aServiceCollection.AddBlazoredLocalStorage();
+
     ConfigureSettings(aServiceCollection, aConfiguration);
     aServiceCollection.AddBlazorState
     (
@@ -52,6 +55,7 @@ public class Program
     aServiceCollection.AddScoped<ChatHubConnection>();
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
+
     aServiceCollection.AddScoped<ApiService>();
     // Set the JSON serializer options
     aServiceCollection.Configure<JsonSerializerOptions>
