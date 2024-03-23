@@ -6,7 +6,7 @@ export class Counter extends Spa {
   public static DispatchIncrementCountAction = () => {
     console.log("%cdispatchIncrementCountAction", "color: green");
     const IncrementCountActionName =
-      "TimeWarp.Architecture.Features.Counters.CounterState+IncrementCounter+Action, Web.Spa, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
+      "TimeWarp.Architecture.Features.Counters.CounterState+IncrementCounter+Action, Web.Spa";
     blazorState.DispatchRequest(IncrementCountActionName, { amount: 7 }).then();
   };
 }
