@@ -5,14 +5,18 @@ internal partial class CounterState
   public static class IncrementCounter
   {
     public record Action(int Amount) : BaseAction;
-    internal class Handler : BaseHandler<Action>
+
+    [UsedImplicitly]
+    internal class Handler
+    (
+      IStore store
+    ) : BaseHandler<Action>(store)
     {
-      public Handler(IStore aStore) : base(aStore) { }
 
       public override Task Handle
       (
         Action action,
-        CancellationToken aCancellationToken
+        CancellationToken cancellationToken
       )
       {
         CounterState.Count += action.Amount;

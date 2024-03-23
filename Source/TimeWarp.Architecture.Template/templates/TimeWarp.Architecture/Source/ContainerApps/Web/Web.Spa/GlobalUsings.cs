@@ -1,4 +1,6 @@
 ﻿global using BlazorComponentUtilities;
+global using Blazored.LocalStorage;
+global using Blazored.SessionStorage;
 global using BlazorState;
 global using TimeWarp.Features.JavaScriptInterop;
 global using TimeWarp.Features.Routing;
