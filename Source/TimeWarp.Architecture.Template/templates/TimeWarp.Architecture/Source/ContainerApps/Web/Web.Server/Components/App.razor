@@ -1,5 +1,4 @@
 ﻿@using Microsoft.AspNetCore.Components.Web
-@using Microsoft.JSInterop
 
 <!DOCTYPE html>
 <html lang="en">
@@ -55,7 +54,15 @@
 
 @code
 {
-  // private readonly IComponentRenderMode RenderMode = InteractiveServer;
-  // private readonly IComponentRenderMode RenderMode = InteractiveWebAssembly;
-  private readonly IComponentRenderMode RenderMode = InteractiveAuto;
+  [Inject] private IOptions<BlazorSettings> BlazorSettingsAccessor { get; set; } = null!;
+
+  private BlazorSettings BlazorSettings => BlazorSettingsAccessor.Value;
+
+  private IComponentRenderMode RenderMode => BlazorSettings.RenderMode switch
+  {
+    Configuration.RenderMode.InteractiveServer => new InteractiveServerRenderMode(BlazorSettings.Prerender),
+    Configuration.RenderMode.InteractiveWebAssembly => new InteractiveWebAssemblyRenderMode(BlazorSettings.Prerender),
+    Configuration.RenderMode.InteractiveAuto => new InteractiveAutoRenderMode(BlazorSettings.Prerender),
+    _ => throw new InvalidOperationException($"Unsupported render mode: {BlazorSettingsAccessor.Value.RenderMode}")
+  };
 }
