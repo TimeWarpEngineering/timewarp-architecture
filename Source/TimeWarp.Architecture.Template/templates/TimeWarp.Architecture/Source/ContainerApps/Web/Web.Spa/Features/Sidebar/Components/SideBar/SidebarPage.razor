@@ -20,19 +20,28 @@
       </header>
     }
     <main class="py-10 px-4 sm:px-6 lg:px-8 grow flex flex-col ">
+      @if (@MainContent is not null)
+      {
       @MainContent
+      }
+      else
+      {
+        <div class="h-full border-4 border-gray-200 border-dashed rounded-lg">
+          Add Your Content here.
+        </div>
+      }
     </main>
     <SiteFooter />
   </div>
 </div>
 
 <!-- Absolute Position Items -->
-@if (ModalContent != null)
-{
-  <ModalController ActiveModalId=@ActiveModalId>
-    <ModalContainers>
-      @ModalContent
-    </ModalContainers>
-  </ModalController>
-}
+
+<ModalController ActiveModalId=@ActiveModalId>
+  <ModalContainers>
+    @ModalContent
+    <AssemblyInfoModal/>
+  </ModalContainers>
+</ModalController>
+
 <!-- End Absolute Position Items -->

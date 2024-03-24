@@ -7,60 +7,75 @@
 /// <remarks>
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
-public class WebApiService
+[UsedImplicitly]
+public abstract class WebApiService
+(
+  IHttpClientFactory HttpClientFactory,
+  string HttpClientName,
+  IOptions<JsonSerializerOptions> JsonSerializerOptionsAccessor
+) : IApiService
 {
-  private readonly HttpClient HttpClient;
-  private readonly JsonSerializerOptions JsonSerializerOptions;
-
-  public WebApiService(HttpClient aHttpClient, IOptions<JsonSerializerOptions> aJsonSerializerOptionsAccessor)
-  {
-    HttpClient = aHttpClient;
-    JsonSerializerOptions = aJsonSerializerOptionsAccessor.Value;
-  }
+  private HttpClient HttpClient => HttpClientFactory.CreateClient(HttpClientName);
+  private readonly JsonSerializerOptions JsonSerializerOptions = JsonSerializerOptionsAccessor.Value;
 
   /// <summary>
   /// Get the response for the given request
   /// </summary>
   /// <typeparam name="TResponse"></typeparam>
-  /// <param name="aRequest"></param>
+  /// <param name="request"></param>
+  /// <param name="cancellationToken"></param>
   /// <returns></returns>
-  public async Task<TResponse?> GetResponse<TResponse>(IApiRequest aRequest)
+  public async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest request, CancellationToken cancellationToken) where TResponse : class
   {
     HttpResponseMessage httpResponseMessage =
-      await GetHttpResponseMessageFromRequest<TResponse>(aRequest).ConfigureAwait(false);
+      await GetHttpResponseMessageFromRequest(request).ConfigureAwait(false);
 
-    return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
+    if (httpResponseMessage.StatusCode == HttpStatusCode.NoContent)
+    {
+      return new SharedProblemDetails
+      {
+        Title = "No Content",
+        Status = (int)HttpStatusCode.NoContent,
+        Detail = "The response content is empty."
+      };
+    }
+
+    if (httpResponseMessage.IsSuccessStatusCode)
+      return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
+
+    return await ReadFromJson<SharedProblemDetails>(httpResponseMessage).ConfigureAwait(false);
   }
 
-  public async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest<TResponse>
+  [UsedImplicitly]// Used by the WebApiServiceTests
+  public async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest
   (
-    IApiRequest aApiRequest
+    IApiRequest apiRequest
   )
   {
-    HttpVerb httpverb = aApiRequest.GetHttpVerb();
+    HttpVerb httpVerb = apiRequest.GetHttpVerb();
     StringContent? httpContent = null;
 
-    if (httpverb == HttpVerb.Post || httpverb == HttpVerb.Put || httpverb == HttpVerb.Patch)
+    if (httpVerb is HttpVerb.Post or HttpVerb.Put or HttpVerb.Patch)
     {
 
-      string requestAsJson = JsonSerializer.Serialize(aApiRequest, aApiRequest.GetType());
+      string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType());
 
       httpContent =
         new StringContent
         (
-          requestAsJson,
-          Encoding.UTF8,
-          MediaTypeNames.Application.Json
+        requestAsJson,
+        Encoding.UTF8,
+        MediaTypeNames.Application.Json
         );
     }
 
-    return httpverb switch
+    return httpVerb switch
     {
-      HttpVerb.Get => await HttpClient.GetAsync(aApiRequest.GetRoute()).ConfigureAwait(false),
-      HttpVerb.Delete => await HttpClient.DeleteAsync(aApiRequest.GetRoute()).ConfigureAwait(false),
-      HttpVerb.Post => await HttpClient.PostAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
-      HttpVerb.Put => await HttpClient.PutAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
-      HttpVerb.Patch => await HttpClient.PatchAsync(aApiRequest.GetRoute(), httpContent).ConfigureAwait(false),
+      HttpVerb.Get => await HttpClient.GetAsync(apiRequest.GetRoute()).ConfigureAwait(false),
+      HttpVerb.Delete => await HttpClient.DeleteAsync(apiRequest.GetRoute()).ConfigureAwait(false),
+      HttpVerb.Post => await HttpClient.PostAsync(apiRequest.GetRoute(), httpContent).ConfigureAwait(false),
+      HttpVerb.Put => await HttpClient.PutAsync(apiRequest.GetRoute(), httpContent).ConfigureAwait(false),
+      HttpVerb.Patch => await HttpClient.PatchAsync(apiRequest.GetRoute(), httpContent).ConfigureAwait(false),
       HttpVerb.Head => throw new NotImplementedException(),
       HttpVerb.Options => throw new NotImplementedException(),
       _ => throw new NotImplementedException()
@@ -68,14 +83,15 @@ public class WebApiService
   }
 
 
-  private async Task<TResponse?> ReadFromJson<TResponse>(HttpResponseMessage aHttpResponseMessage)
+  private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage)
   {
-    aHttpResponseMessage.EnsureSuccessStatusCode();
+    httpResponseMessage.EnsureSuccessStatusCode();
 
-    string json = await aHttpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
+    string json = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
     TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
-    Console.WriteLine(JsonSerializerOptions.ToString());
+    if (response is null)
+      throw new InvalidOperationException("The response is null.");
 
     return response;
   }

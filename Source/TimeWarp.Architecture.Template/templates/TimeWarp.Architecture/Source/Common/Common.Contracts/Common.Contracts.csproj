@@ -1,7 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="OneOf" />
   </ItemGroup>
   
 </Project>

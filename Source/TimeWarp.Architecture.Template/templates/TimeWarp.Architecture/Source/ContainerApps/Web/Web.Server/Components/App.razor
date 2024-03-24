@@ -1,0 +1,68 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TimeWarp.Architecture</title>
+  <base href="/"/>
+
+  <!-- add inter font -->
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+
+  <!-- Compiled Tailwind CSS -->
+  <link href="css/site.css" rel="stylesheet" />
+
+  <!-- Full Tailwind Development CDN -->
+  @* TODO: Remove for production *@
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  @* Add FluentUI *@
+  @* <link href="Web.Spa.styles.css" rel="stylesheet" /> *@
+  @* <link href="_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css" rel="stylesheet" /> *@
+  <script src="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js" type="module" async></script>
+
+  @* Icons *@
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+
+  @* PWA Manifest *@
+  <link rel="manifest" href="manifest.json" />
+
+  <HeadOutlet @rendermode=RenderMode />
+</head>
+<body class="font-sans antialiased">
+<Routes @rendermode=RenderMode />
+@* <div id="app">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</div> *@
+<div id="blazor-error-ui" class="bg-yellow-100 bottom-0 left-0 fixed text-yellow-900 w-full z-50 pt-2.5 pr-5 pb-3 pl-5 border-t-2 border-yellow-800 hidden">
+  <div class="flex justify-between">
+    <span>An unhandled error has occurred. <a href="" class="underline cursor-pointer hover:no-underline">Reload</a></span>
+    <a>🗙</a>
+  </div>
+</div>
+
+<script src="_framework/blazor.web.js"></script>
+
+@*TODO: Cramer review PWA block*@
+<!--#if PWA -->
+@*<script>navigator.serviceWorker.register('service-worker.js');</script>*@
+<!--#endif -->
+</body>
+</html>
+
+@code
+{
+  [Inject] private IOptions<BlazorSettings> BlazorSettingsAccessor { get; set; } = null!;
+
+  private BlazorSettings BlazorSettings => BlazorSettingsAccessor.Value;
+
+  private IComponentRenderMode RenderMode => BlazorSettings.RenderMode switch
+  {
+    Configuration.RenderMode.InteractiveServer => new InteractiveServerRenderMode(BlazorSettings.Prerender),
+    Configuration.RenderMode.InteractiveWebAssembly => new InteractiveWebAssemblyRenderMode(BlazorSettings.Prerender),
+    Configuration.RenderMode.InteractiveAuto => new InteractiveAutoRenderMode(BlazorSettings.Prerender),
+    _ => throw new InvalidOperationException($"Unsupported render mode: {BlazorSettingsAccessor.Value.RenderMode}")
+  };
+}

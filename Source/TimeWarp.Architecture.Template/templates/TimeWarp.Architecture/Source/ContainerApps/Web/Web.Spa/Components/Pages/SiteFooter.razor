@@ -11,16 +11,18 @@
    <!-- Default Footer -->
      <div class="max-w-screen-xl px-4 py-4 mx-auto sm:px-6 sm:flex sm:items-center sm:justify-between lg:px-8">
        <div data-qa="@TestId">@CurrentRenderMode</div>
-       <div >
-         @if (IsActive)
-         {
-           <div
-             style="border-top-color:transparent"
-             class="w-6 h-6 border-4 border-solid rounded-full border-primary-400 animate-spin">
-           </div>
-         }
-       </div>
-       <span>Version:@Version</span>
+     <div >
+       @if (IsActive)
+       {
+         <div
+           style="border-top-color:transparent"
+           class="w-6 h-6 border-4 border-solid rounded-full border-primary-400 animate-spin">
+         </div>
+       }
+     </div>
+     <button @onclick=ShowAssemblyInfoModal class="text-blue-500 hover:text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+         @Version
+     </button>
      </div>
    }
  </footer>

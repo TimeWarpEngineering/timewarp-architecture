@@ -1,12 +1,14 @@
 ﻿namespace TimeWarp.Architecture.Features.Notifications;
 
-using static TimeWarp.Architecture.Features.Notifications.NotificationState.Notification;
+using static NotificationState.Notification;
 
 internal partial class NotificationState
 {
+  [UsedImplicitly]
   public static class AddNotification
   {
 
+    [UsedImplicitly]
     internal record Action
     (
       string Title,
@@ -14,16 +16,21 @@ internal partial class NotificationState
       NotificationType Type
     ) : BaseAction;
 
-    internal class Handler : BaseHandler<Action>
+    [UsedImplicitly]
+    internal class Handler
+    (
+      IStore store
+    ) : BaseHandler<Action>(store)
     {
 
-      public Handler(IStore store) : base(store) { }
       public override Task Handle
       (
         Action action,
         CancellationToken aCancellationToken
       )
       {
+        NotificationState.NotificationList ??= [];
+
         NotificationState.NotificationList.Add
         (
           new Notification
@@ -39,4 +46,3 @@ internal partial class NotificationState
     }
   }
 }
-

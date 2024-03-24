@@ -1,0 +1,67 @@
+﻿@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+
+<ModalContainer ModalId=@ModalId OnActivate=Activate>
+  <ActionContent></ActionContent>
+  <MainContent>
+    <div class="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
+      <button
+        type="button"
+        class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        @onclick=CloseModal>
+        <span class="sr-only">Close</span>
+        <TimeWarp.HeroIcons.Outline.XMarkIcon class="h-6 w-6"/>
+      </button>
+    </div>
+    <div class="mx-auto flex flex-col h-12 w-12 items-center justify-center rounded-full">
+      <img alt="Solid Team" class="w-full" src="/images/TheFreezeTeam/SOLID_S.png"/>
+      <h3 class="text-lg font-semibold leading-6 text-gray-900" id="modal-title">@AssemblyInfo?.Title</h3>
+    </div>
+    <div class="mt-3 text-left sm:mt-5">
+      @if (AssemblyInfo != null)
+      {
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.AlgorithmId) Value=@AssemblyInfo.AlgorithmId?.ToString()/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Description) Value=@AssemblyInfo.Description/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Configuration) Value=@AssemblyInfo.Configuration/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Company) Value=@AssemblyInfo.Company/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Product) Value=@AssemblyInfo.Product/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Copyright) Value=@AssemblyInfo.Copyright/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Trademark) Value=@AssemblyInfo.Trademark/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Culture) Value=@AssemblyInfo.Culture/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Version) Value=@AssemblyInfo.Version/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.FileVersion) Value=@AssemblyInfo.FileVersion/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.InformationalVersion) Value=@AssemblyInfo.InformationalVersion/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.NeutralResourcesLanguage) Value=@AssemblyInfo.NeutralResourcesLanguage/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.ClsCompliant) Value=@AssemblyInfo.ClsCompliant/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.InternalsVisibleTo) Value=@AssemblyInfo.InternalsVisibleTo/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.DelaySign) Value=@AssemblyInfo.DelaySign/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.KeyFile) Value=@AssemblyInfo.KeyFile/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.KeyName) Value=@AssemblyInfo.KeyName/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.CommitHash) Value=@AssemblyInfo.CommitHash/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.ShortHash) Value=@AssemblyInfo.ShortHash/>
+        <PropertyDisplay PropertyName=@nameof(AssemblyInfo.CommitDate) Value=@AssemblyInfo.CommitDate?.ToString("yyyy-MM-dd HH:mm:ss")/>
+        <LinkDisplay Url=@AssemblyInfo.CommitUrl DisplayText="View Commit Details"/>
+        <LinkDisplay Url=@AssemblyInfo.RepositoryUrl DisplayText="View Repository"/>
+      }
+      else
+      {
+        <p class="text-sm text-gray-500">Loading...</p>
+      }
+    </div>
+  </MainContent>
+</ModalContainer>
+
+@code
+{
+  public const string ModalId = nameof(AssemblyInfoModal);
+  private AssemblyInfo? AssemblyInfo;
+
+  protected Task Activate()
+  {
+    AssemblyInfo = typeof(Program).Assembly.GetAssemblyInfo();
+    // Do something when the modal is activated
+    return Task.CompletedTask;
+  }
+
+  private Task CloseModal() => Send(new ApplicationState.CloseModal.Action());
+}

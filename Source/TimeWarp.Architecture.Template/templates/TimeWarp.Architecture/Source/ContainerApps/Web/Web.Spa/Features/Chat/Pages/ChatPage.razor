@@ -18,7 +18,7 @@
         <hr />
 
         <ul class="list-group">
-            @foreach (var chatMessage in ChatMessages)
+            @foreach (ChatState.ChatMessage chatMessage in ChatMessages.AsEnumerable())
             {
               <li class="list-group-item">@chatMessage.User: @chatMessage.Message</li>
             }

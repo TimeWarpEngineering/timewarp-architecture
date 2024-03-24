@@ -1,53 +1,65 @@
 namespace TimeWarp.Architecture.Web.Spa;
 
-using ServiceCollectionOptions = ServiceCollectionOptions;
-
 public class Program
 {
-  public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  public static async Task Main(string[] args)
   {
-    ConfigureSettings(aServiceCollection, aConfiguration);
-    aServiceCollection.AddBlazorState
+    var builder = WebAssemblyHostBuilder.CreateDefault(args);
+    builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
+
+    ConfigureServices(builder.Services, builder.Configuration);
+    builder.Services.AddHttpClient(Constants.ApiServiceName, aClient => aClient.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
+
+    await builder.Build().RunAsync();
+  }
+
+  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
+  {
+    serviceCollection.AddBlazoredSessionStorage();
+    serviceCollection.AddBlazoredLocalStorage();
+
+    ConfigureSettings(serviceCollection, configuration);
+    serviceCollection.AddBlazorState
     (
-      (aOptions) =>
+      (blazorStateOptions) =>
       {
         #if DEBUG
-        aOptions.UseReduxDevTools(options => options.Trace = false);
+        blazorStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
         #endif
-        aOptions.Assemblies =
+
+        blazorStateOptions.Assemblies =
           new[]
           {
-              typeof(Web.Spa.AssemblyMarker).GetTypeInfo().Assembly,
-              typeof(TimeWarp.State.Plus.AssemblyMarker).GetTypeInfo().Assembly,
+            // ReSharper disable once RedundantNameQualifier
+            typeof(Web.Spa.AssemblyMarker).GetTypeInfo().Assembly, typeof(TimeWarp.State.Plus.AssemblyMarker).GetTypeInfo().Assembly,
           };
       }
     );
 
-    aServiceCollection.AddFormValidation
+    serviceCollection.AddFormValidation
     (
-        aValidationConfiguration =>
-        {
-          aValidationConfiguration.AddFluentValidation(typeof(Web.Spa.AssemblyMarker).Assembly);
-          ServiceDescriptor serviceDescriptor =
-            aServiceCollection.First
-            (
-              aServiceDescriptor =>
-                aServiceDescriptor.ServiceType.Name == nameof(ServiceCollectionOptionsValidator.ServiceValidator) &&
-                aServiceDescriptor.Lifetime == ServiceLifetime.Scoped
-            );
+      aValidationConfiguration =>
+      {
+        aValidationConfiguration.AddFluentValidation(typeof(Web.Spa.AssemblyMarker).Assembly);
+        ServiceDescriptor serviceDescriptor =
+          serviceCollection.First
+          (
+            aServiceDescriptor =>
+              aServiceDescriptor.ServiceType.Name == nameof(ServiceCollectionOptionsValidator.ServiceValidator) &&
+              aServiceDescriptor.Lifetime == ServiceLifetime.Scoped
+          );
 
-          aServiceCollection.Remove(serviceDescriptor);
-        }
+        serviceCollection.Remove(serviceDescriptor);
+      }
     );
 
-    aServiceCollection.AddScoped<ChatHubConnection>();
-    aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
-    aServiceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
-    aServiceCollection.AddScoped<ClientLoader>();
-    aServiceCollection.AddScoped<IClientLoaderConfiguration, ClientLoaderConfiguration>();
-    aServiceCollection.AddScoped<WebApiService>();
+    serviceCollection.AddScoped<ChatHubConnection>();
+    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
+    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
+
+    serviceCollection.AddScoped<ApiService>();
     // Set the JSON serializer options
-    aServiceCollection.Configure<JsonSerializerOptions>
+    serviceCollection.Configure<JsonSerializerOptions>
     (
       aJsonSerializerOptions =>
       {
@@ -58,29 +70,17 @@ public class Program
     );
 
 #if grpc
-    SuperheroModule.ConfigureServices(aServiceCollection, aConfiguration);
+    SuperheroModule.ConfigureServices(serviceCollection, configuration);
 #endif
-    aServiceCollection.AddSingleton(aServiceCollection);
+    serviceCollection.AddSingleton(serviceCollection);
   }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
     aServiceCollection
-      .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(aConfiguration);
+      .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(aConfiguration)
+      .ConfigureOptions<BlazorSettings, BlazorSettingsValidator>(aConfiguration);
 
     //aServiceCollection.ValidateOptions();
-  }
-
-  public static async Task Main(string[] args)
-  {
-    var builder = WebAssemblyHostBuilder.CreateDefault(args);
-    builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
-    builder.RootComponents.Add<App>("#app");
-    builder.RootComponents.Add<HeadOutlet>("head::after");
-    builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-
-    ConfigureServices(builder.Services, builder.Configuration);
-
-    await builder.Build().RunAsync();
   }
 }

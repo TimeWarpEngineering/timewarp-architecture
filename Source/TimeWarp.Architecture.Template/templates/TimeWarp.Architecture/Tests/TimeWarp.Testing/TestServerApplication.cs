@@ -1,6 +1,8 @@
 ﻿#nullable enable
 namespace TimeWarp.Architecture.Testing;
 
+using Services;
+
 /// <summary>
 /// An abstract class that adds test functionality for the passed in WebApplication.
 /// </summary>
@@ -8,7 +10,7 @@ namespace TimeWarp.Architecture.Testing;
 /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down. </remarks>
 /// <typeparam name="TProgram"></typeparam>
 [NotTest]
-public abstract partial class TestServerApplication<TProgram> : IAsyncDisposable, IWebApiTestService, ISender
+public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebApiTestService, ISender
   where TProgram : IAspNetProgram
 {
   private readonly ISender ScopedSender;
@@ -17,7 +19,7 @@ public abstract partial class TestServerApplication<TProgram> : IAsyncDisposable
   public readonly WebApplicationHost<TProgram> WebApplicationHost;
   public HttpClient HttpClient { get; }
 
-  public TestServerApplication(WebApplicationHost<TProgram> aWebApplicationHost) : base()
+  protected TestServerApplication(WebApplicationHost<TProgram> aWebApplicationHost)
   {
     WebApplicationHost = aWebApplicationHost;
 
@@ -31,8 +33,12 @@ public abstract partial class TestServerApplication<TProgram> : IAsyncDisposable
 
     var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor = Options.Create(jsonSerializerOptions);
-    var webApiService = new WebApiService(HttpClient, jsonSerializerOptionsAccessor);
-    WebApiTestService = new WebApiTestService(webApiService);
+
+    // I need Ihttpclientfactory to create the WebApiService.  Where can I get it?
+    IHttpClientFactory httpClientFactory = aWebApplicationHost.ServiceProvider.GetRequiredService<IHttpClientFactory>();
+
+    var apiService = new ApiService(httpClientFactory, jsonSerializerOptionsAccessor);
+    WebApiTestService = new WebApiTestService(apiService);
   }
 
   public async ValueTask DisposeAsync()
@@ -48,11 +54,18 @@ public abstract partial class TestServerApplication<TProgram> : IAsyncDisposable
     return WebApplicationHost.DisposeAsync();
   }
 
-  public Task ConfirmEndpointValidationError<TResponse>(IApiRequest aRequest, string aAttributeName) =>
-    WebApiTestService.ConfirmEndpointValidationError<TResponse>(aRequest, aAttributeName);
+  public Task ConfirmEndpointValidationError<TResponse>(IApiRequest apiRequest, string attributeName) =>
+    WebApiTestService.ConfirmEndpointValidationError<TResponse>(apiRequest, attributeName);
 
   #region IWebApiTestService
-  public Task<TResponse> GetResponse<TResponse>(IApiRequest aRequest) => WebApiTestService.GetResponse<TResponse>(aRequest);
+
+  public async Task<OneOf.OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+  (
+    IApiRequest apiRequest,
+    CancellationToken cancellationToken
+  ) where TResponse : class =>
+    await WebApiTestService.GetResponse<TResponse>(apiRequest, cancellationToken);
+
   #endregion
 
   #region ISender

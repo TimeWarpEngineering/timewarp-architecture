@@ -1,0 +1,20 @@
+@namespace TimeWarp.Architecture.Components
+
+@if (!string.IsNullOrWhiteSpace(Value))
+{
+  <div class="@CssClass">
+    <span class="font-bold">@PropertyName:</span>
+    <span class="font-normal">@Value</span>
+  </div>
+}
+
+@code {
+  [Parameter]
+  public string PropertyName { get; set; } = string.Empty;
+
+  [Parameter]
+  public string? Value { get; set; }
+
+  [Parameter]
+  public string CssClass { get; set; } = "text-sm text-gray-500";
+}

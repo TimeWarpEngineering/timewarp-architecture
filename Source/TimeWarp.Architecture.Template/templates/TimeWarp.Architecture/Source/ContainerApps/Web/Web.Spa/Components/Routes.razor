@@ -1,0 +1,31 @@
+
+
+<Router
+  AppAssembly="@typeof(AssemblyMarker).Assembly"
+  AdditionalAssemblies=@(new[] { typeof(AssemblyMarker).Assembly })>
+  <Found Context="routeData">
+    <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+    <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+  </Found>
+</Router>
+<ReduxDevTools/>
+<TimeWarpJavaScriptInterop />
+<TimeWarpNavigation />
+
+@code
+{
+  [Inject] private JsonRequestHandler JsonRequestHandler { get; set; } = default!;
+  [Inject] private TimeWarpNavigationManager TimeWarpNavigationManager { get; set; } = default!;
+
+#if DEBUG
+  [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; } = default!;
+#endif
+
+  protected override async Task OnAfterRenderAsync(bool aFirstRender)
+  {
+#if DEBUG
+    await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
+#endif
+    await JsonRequestHandler.InitAsync().ConfigureAwait(false);
+  }
+}

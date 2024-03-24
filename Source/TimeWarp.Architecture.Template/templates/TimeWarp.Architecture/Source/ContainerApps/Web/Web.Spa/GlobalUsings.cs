@@ -1,4 +1,6 @@
 ﻿global using BlazorComponentUtilities;
+global using Blazored.LocalStorage;
+global using Blazored.SessionStorage;
 global using BlazorState;
 global using TimeWarp.Features.JavaScriptInterop;
 global using TimeWarp.Features.Routing;
@@ -18,6 +20,7 @@ global using Microsoft.AspNetCore.SignalR.Client;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Options;
 global using Microsoft.JSInterop;
 global using Morris.Blazor.Validation;
 
@@ -40,13 +43,14 @@ global using TimeWarp.Architecture.Extensions;
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.Chat;
-global using TimeWarp.Architecture.Features.ClientLoaders;
 global using TimeWarp.Architecture.Features.EventStreams;
 global using TimeWarp.Architecture.Features.Notifications;
 global using TimeWarp.Architecture.Features.ProfileMenus;
 global using TimeWarp.Architecture.Features.Sidebars;
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
+global using TimeWarp.Architecture.Services;
+global using TimeWarp.Architecture.Types;
 global using TimeWarp.Features.ActionTracking;
 
 

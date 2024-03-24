@@ -14,19 +14,23 @@ internal partial class WeatherForecastsState
     internal class Handler
     (
       IStore store,
-      WebApiService WebApiService
+      ApiService ApiService,
+      IPublisher Publisher
     ) : BaseHandler<Action>(store)
     {
 
-      public override async Task Handle(Action action, CancellationToken aCancellationToken)
+      public override async Task Handle(Action action, CancellationToken cancellationToken)
       {
         IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = action.Days ?? 10 };
 
-        GetWeatherForecasts.Response response =
-          await WebApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest) ??
-          throw new InvalidOperationException();
+        OneOf.OneOf<GetWeatherForecasts.Response, SharedProblemDetails> response =
+          await ApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest,cancellationToken);
 
-        WeatherForecastsState.WeatherForecastList = response.WeatherForecasts.ToList();
+        response.Switch
+        (
+          weatherForecasts => WeatherForecastsState.WeatherForecastList = weatherForecasts.WeatherForecasts.ToList(),
+          problemDetails => Publisher.Publish(new NotificationState.AddProblemDetails.Action(problemDetails), cancellationToken)
+        );
       }
     }
   }

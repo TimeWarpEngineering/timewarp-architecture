@@ -3,6 +3,7 @@ global using FluentAssertions;
 global using FluentAssertions.Execution;
 global using FluentValidation.Results;
 global using FluentValidation.TestHelper;
+global using JetBrains.Annotations;
 global using OneOf;
 
 // Solution usings

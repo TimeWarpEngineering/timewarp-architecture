@@ -8,48 +8,20 @@
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75"></div>
     <div class="fixed inset-0 z-10 overflow-y-auto">
       <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl  sm:my-8 sm:w-full sm:max-w-sm sm:p-6">
-          <div>
-            @MainContent
-          </div>
+        <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl sm:my-8 sm:w-1/2 sm:max-w-md sm:p-6">
+          @MainContent
           <div class="mt-5 sm:mt-6">
-            <Button Variant=Button.ButtonVariant.Default data-qa="ModalButton" @onclick=CloseModal>Go back</Button>
+            @if (ActionContent is null)
+            {
+              <Button Variant=Button.ButtonVariant.Default data-qa="ModalButton" @onclick=CloseModal>Close</Button>
+            }
+            else
+            {
+              @ActionContent
+            }
           </div>
         </div>
       </div>
     </div>
   </div>
-}
-
-
-@code {
-  [CascadingParameter, EditorRequired] private ModalController Parent { get; set; } = default!;
-  [Parameter, EditorRequired] public RenderFragment MainContent { get; set; } = default!;
-  [Parameter, EditorRequired] public string ModalId { get; set; } = default!;
-  [Parameter] public EventCallback OnActivate { get; set; }
-
-
-  private bool IsActive => Parent.ActiveModalId == ModalId;
-
-  private Task CloseModal() => Send(new CloseModal.Action());
-
-  protected override void OnInitialized()
-  {
-    if (Parent == null)
-      throw new ArgumentNullException
-      (
-        nameof(Parent),
-        $"{nameof(ModalContainer)} must exist within a {nameof(ModalController)} Component"
-      );
-
-    if (!OnActivate.HasDelegate)
-      throw new ArgumentNullException
-      (
-        nameof(OnActivate),
-        $"{nameof(OnActivate)} is required"
-      );
-
-    base.OnInitialized();
-    Parent.AddModal(this);
-  }
 }

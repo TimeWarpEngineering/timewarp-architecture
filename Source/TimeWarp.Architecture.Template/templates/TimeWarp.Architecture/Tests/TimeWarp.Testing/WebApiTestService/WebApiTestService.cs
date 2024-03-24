@@ -1,4 +1,5 @@
-﻿namespace TimeWarp.Architecture.Testing;
+﻿#nullable enable
+namespace TimeWarp.Architecture.Testing;
 
 /// <summary>
 /// A class that contains a common set of methods used when testing Web APIs
@@ -16,29 +17,33 @@ public class WebApiTestService : IWebApiTestService
   /// <inheritdoc/>
   public async Task ConfirmEndpointValidationError<TResponse>
   (
-    IApiRequest aApiRequest,
-    string aAttributeName
+    IApiRequest apiRequest,
+    string attributeName
   )
   {
     HttpResponseMessage httpResponseMessage =
-      await WebApiService.GetHttpResponseMessageFromRequest<TResponse>(aApiRequest).ConfigureAwait(false);
+      await WebApiService.GetHttpResponseMessageFromRequest(apiRequest).ConfigureAwait(false);
 
-    await ConfirmEndpointValidationError(httpResponseMessage, aAttributeName).ConfigureAwait(false);
+    await ConfirmEndpointValidationError(httpResponseMessage, attributeName).ConfigureAwait(false);
   }
+
+  public async Task<OneOf.OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+    (
+      IApiRequest apiRequest,
+      CancellationToken cancellationToken
+    ) where TResponse : class =>
+      await WebApiService.GetResponse<TResponse>(apiRequest, cancellationToken);
 
   private static async Task ConfirmEndpointValidationError
   (
     HttpResponseMessage aHttpResponseMessage,
-    string aAttributeName
+    string attributeName
   )
   {
     string json = await aHttpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
     aHttpResponseMessage.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     json.Should().Contain("errors");
-    json.Should().Contain(aAttributeName);
+    json.Should().Contain(attributeName);
   }
-
-  public async Task<TResponse> GetResponse<TResponse>(IApiRequest aApiRequest) =>
-    await WebApiService.GetResponse<TResponse>(aApiRequest);
 }

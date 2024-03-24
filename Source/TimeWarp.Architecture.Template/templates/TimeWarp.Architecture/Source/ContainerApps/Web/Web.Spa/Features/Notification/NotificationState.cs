@@ -3,15 +3,15 @@
 [StateAccessMixin]
 internal partial class NotificationState : State<NotificationState>
 {
-  private List<Notification> NotificationList = [];
-  public IReadOnlyList<Notification> Notifications => NotificationList.AsReadOnly();
+  private List<Notification>? NotificationList = [];
+  public IReadOnlyList<Notification>? Notifications => NotificationList?.AsReadOnly();
 
   public NotificationState()
   {
     Initialize();
   }
 
-  public sealed override void Initialize() => NotificationList = [];
+  public sealed override void Initialize() => NotificationList = null;
 
   public class Notification
   {

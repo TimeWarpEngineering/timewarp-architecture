@@ -4,23 +4,26 @@ public interface IWebApiTestService
 {
   /// <summary>
   /// Confirm that the endpoint for the request will return a BadRequest Status and
-  /// explicitly contain the <paramref name="aAttributeName"/> in the error message
+  /// explicitly contain the <paramref name="attributeName"/> in the error message
   /// </summary>
   /// <typeparam name="TResponse"></typeparam>
-  /// <param name="aApiRequest"></param>
-  /// <param name="aAttributeName"></param>
+  /// <param name="apiRequest"></param>
+  /// <param name="attributeName"></param>
   /// <returns></returns>
   Task ConfirmEndpointValidationError<TResponse>
   (
-    IApiRequest aApiRequest,
-    string aAttributeName
+    IApiRequest apiRequest,
+    string attributeName
   );
 
   /// <summary>
-  /// Return the Response object by getting it as json and deseralizing it/>
+  /// Return the Response object by getting it as json and deserializing it/>
   /// </summary>
   /// <typeparam name="TResponse"></typeparam>
-  /// <param name="aRequest"></param>
+  /// <param name="apiRequest"></param>
+  /// <param name="request"></param>
+  /// <param name="cancellationToken"></param>
   /// <returns></returns>
-  Task<TResponse> GetResponse<TResponse>(IApiRequest aApiRequest);
+  ///
+  public Task<OneOf.OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest apiRequest, CancellationToken cancellationToken) where TResponse : class;
 }

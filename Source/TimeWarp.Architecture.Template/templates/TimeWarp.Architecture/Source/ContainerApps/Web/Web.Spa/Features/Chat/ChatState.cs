@@ -3,9 +3,9 @@
 [StateAccessMixin]
 public sealed partial class ChatState : State<ChatState>
 {
-  private readonly List<ChatMessage> ChatMessageList = [];
-  public IReadOnlyList<ChatMessage> ChatMessages => ChatMessageList.AsReadOnly();
-  public override void Initialize() {}
+  private List<ChatMessage>? ChatMessageList { get; set; }
+  public IReadOnlyList<ChatMessage>? ChatMessages => ChatMessageList?.AsReadOnly();
+  public override void Initialize() => ChatMessageList = null;
 
   public sealed class ChatMessage
   (

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <Description>Blazor Spa</Description>
+    <Description>TimeWarp Architecture Demo Application</Description>
     <DefineConstants>ReduxDevToolsEnabled;grpc;api;web;counter</DefineConstants>
     <Nullable>enable</Nullable>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
@@ -9,14 +9,19 @@
 
   <ItemGroup>
     <PackageReference Include="BlazorComponentUtilities"/>
-    <PackageReference Include="Blazor-State"/>
+<!--    <PackageReference Include="Blazor-State"/>-->
     <PackageReference Include="Grpc.Net.Client"/>
     <PackageReference Include="Dawn.Guard"/>
     <PackageReference Include="Grpc.Net.Client.Web"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly"/>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all"/>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client"/>
+    <PackageReference Include="Microsoft.Extensions.Http"/>
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration"/>
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji"/>
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons"/>
     <PackageReference Include="Microsoft.Tye.Extensions.Configuration"/>
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
@@ -27,7 +32,6 @@
     <PackageReference Include="Timewarp.OptionsValidation"/>
     <PackageReference Include="timewarp-simple-icons"/>
     <PackageReference Include="TimeWarp.State.Plus"/>
-    <PackageReference Include="Toolbelt.Blazor.SplitContainer"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -38,6 +42,7 @@
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj"/>
     <!--#endif-->
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj"/>
+    <ProjectReference Include="D:\git\github\TimeWarpEngineering\blazor-state\Source\BlazorState\BlazorState.csproj" />
     <InternalsVisibleTo Include="Web.Spa.Integration.Tests"/>
     <InternalsVisibleTo Include="Web.Server.Integration.Tests"/>
   </ItemGroup>
@@ -79,13 +84,12 @@
 
   <ItemGroup>
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*"/>
-    <TypeScriptOutputs Include="wwwroot\js\BlazorDualMode.js"/>
     <AdditionalFiles Include="Features\Base\StateAccessMixin.mixin"/>
     <AdditionalFiles Include="Mixins\Page.mixin"/>
   </ItemGroup>
 
   <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild" Inputs="@(TypeScriptInputs)" Outputs="@(TypeScriptOutputs)">
-    <Exec Command="npm run lint" WorkingDirectory="..\Web.TypeScript\"/>
+    <!--    <Exec Command="npm run lint" WorkingDirectory="..\Web.TypeScript\"/>-->
     <Exec Command="npm run prettier" WorkingDirectory="..\Web.TypeScript\"/>
     <Exec Command="npm run build" WorkingDirectory="..\Web.TypeScript\"/>
   </Target>

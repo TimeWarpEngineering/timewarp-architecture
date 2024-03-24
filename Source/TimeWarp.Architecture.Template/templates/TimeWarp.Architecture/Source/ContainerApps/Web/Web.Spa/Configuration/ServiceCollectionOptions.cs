@@ -1,10 +1,9 @@
 ﻿namespace TimeWarp.Architecture.Configuration;
 
-using static TimeWarp.Architecture.Configuration.ServiceCollectionOptions;
+using static ServiceCollectionOptions;
 
-public class ServiceCollectionOptions : Dictionary<string, Service>
+public class ServiceCollectionOptions() : Dictionary<string, Service>(StringComparer.OrdinalIgnoreCase)
 {
-  public ServiceCollectionOptions() : base(StringComparer.OrdinalIgnoreCase) { }
 
   public class Service
   {
