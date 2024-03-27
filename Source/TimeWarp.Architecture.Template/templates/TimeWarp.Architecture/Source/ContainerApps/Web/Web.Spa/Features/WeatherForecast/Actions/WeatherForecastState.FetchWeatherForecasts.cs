@@ -5,10 +5,13 @@ internal partial class WeatherForecastsState
   public static class FetchWeatherForecasts
   {
     [TrackAction]
-    internal sealed record Action
+    internal sealed class Action
     (
       int? Days
-    ) : BaseAction;
+    ) : BaseAction
+    {
+      public int? Days { get; init; } = Days;
+    }
 
     [UsedImplicitly]
     internal class Handler

@@ -7,7 +7,7 @@
 }}
 namespace {{ moxy.Class.Namespace }}
 {
-  public partial record {{$QueryName}} : BaseRequest, IRequest<{{$ResponseName}}>{};
-  public partial record {{$ResponseName}} : BaseResponse;
+  public partial class {{$QueryName}} : BaseRequest, IRequest<{{$ResponseName}}>{};
+  public partial class {{$ResponseName}} : BaseResponse;
   public partial class {{$QueryValidatorName}}: AbstractValidator<{{$QueryName}}>{};
 }

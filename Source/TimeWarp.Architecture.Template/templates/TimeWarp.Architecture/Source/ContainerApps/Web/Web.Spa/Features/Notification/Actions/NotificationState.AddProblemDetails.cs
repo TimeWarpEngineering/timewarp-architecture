@@ -9,13 +9,16 @@ internal partial class NotificationState
   {
 
     [UsedImplicitly]
-    internal record Action
+    internal sealed class Action
     (
       SharedProblemDetails SharedProblemDetails
-    ) : BaseAction;
+    ) : BaseAction
+    {
+      public SharedProblemDetails SharedProblemDetails { get; init; } = SharedProblemDetails;
+    }
 
     [UsedImplicitly]
-    internal class Handler
+    internal sealed class Handler
     (
       IStore store
     ) : BaseHandler<Action>(store)

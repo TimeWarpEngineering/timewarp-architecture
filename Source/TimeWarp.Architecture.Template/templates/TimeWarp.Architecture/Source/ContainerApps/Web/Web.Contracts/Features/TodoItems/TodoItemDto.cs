@@ -15,3 +15,15 @@ public class TodoItemDto
 
   public string Note { get; set; } = string.Empty;
 }
+
+public partial class Joe
+(
+  int? Page = null,
+  int? PageSize = null,
+  string? SearchString = null
+  )
+{
+  public int? Page { get; init; } = Page;
+  public int? PageSize { get; init; } = PageSize;
+  public string? SearchString { get; init; } = SearchString;
+}

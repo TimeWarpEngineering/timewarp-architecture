@@ -4,7 +4,7 @@ internal partial class ProfileMenuState
 {
   public static class Toggle
   {
-    internal record Action : BaseAction { }
+    internal class Action : BaseAction { }
 
     [UsedImplicitly]
     internal class Handler

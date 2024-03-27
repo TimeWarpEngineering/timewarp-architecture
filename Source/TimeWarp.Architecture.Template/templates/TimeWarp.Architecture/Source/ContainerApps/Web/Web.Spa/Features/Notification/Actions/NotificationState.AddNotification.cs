@@ -2,22 +2,27 @@
 
 using static NotificationState.Notification;
 
-internal partial class NotificationState
+internal sealed partial class NotificationState
 {
   [UsedImplicitly]
   public static class AddNotification
   {
 
     [UsedImplicitly]
-    internal record Action
+    internal sealed class Action
     (
       string Title,
       string Message,
       NotificationType Type
-    ) : BaseAction;
+    ) : BaseAction
+    {
+      public string Title { get; set; } = Title;
+      public string Message { get; set; } = Message;
+      public NotificationType Type { get; set; } = Type;
+    }
 
     [UsedImplicitly]
-    internal class Handler
+    internal sealed class Handler
     (
       IStore store
     ) : BaseHandler<Action>(store)

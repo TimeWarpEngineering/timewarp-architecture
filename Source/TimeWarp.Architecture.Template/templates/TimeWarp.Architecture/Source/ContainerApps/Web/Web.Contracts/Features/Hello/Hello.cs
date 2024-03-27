@@ -2,7 +2,7 @@
 
 public static partial class Hello
 {
-  public sealed record Query : BaseRequest, IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed class Query : BaseRequest, IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public const string Route = "Hello";
 
@@ -12,7 +12,7 @@ public static partial class Hello
     public string GetRoute() => $"{Route}?{nameof(Name)}={Name}";
   }
 
-  public sealed record Response : BaseResponse
+  public sealed class Response : BaseResponse
   {
     public string? Message { get; set; }
   }

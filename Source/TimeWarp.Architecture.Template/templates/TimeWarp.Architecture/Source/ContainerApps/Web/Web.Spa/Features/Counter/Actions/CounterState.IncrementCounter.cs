@@ -4,7 +4,10 @@ internal partial class CounterState
 {
   public static class IncrementCounter
   {
-    public record Action(int Amount) : BaseAction;
+    public class Action(int Amount) : BaseAction
+    {
+      public int Amount { get; set; } = Amount;
+    }
 
     [UsedImplicitly]
     internal class Handler

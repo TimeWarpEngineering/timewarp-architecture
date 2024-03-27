@@ -22,7 +22,7 @@ public static class UpdateTodoItem
     public string GetRoute() => FormattableString.Invariant($"api/TodoItems/{TodoItemId:Guid}");
   }
 
-  public record Response : BaseResponse { }
+  public class Response : BaseResponse { }
 
   public class Validator : AbstractValidator<Command>
   {

@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.EventStreams;
 
-internal partial class EventStreamState : State<EventStreamState>
+internal partial class EventStreamState
 {
   /// <summary>
   /// Use in Tests ONLY, to initialize the State
@@ -9,6 +9,6 @@ internal partial class EventStreamState : State<EventStreamState>
   public void Initialize(List<string> aEvents)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
-    _Events = aEvents;
+    EventList = aEvents;
   }
 }

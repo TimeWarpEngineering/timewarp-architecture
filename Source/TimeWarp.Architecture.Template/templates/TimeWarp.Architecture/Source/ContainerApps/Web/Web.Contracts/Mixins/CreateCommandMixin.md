@@ -15,8 +15,8 @@ public class TodoItemDto
 ```csharp
 namespace TimeWarp.Architecture.Features.TodoItems
 {
-public partial record CreateTodoItemCommand : BaseRequest, IRequest<CreateTodoItemResponse>{};
-public partial record CreateTodoItemResponse : BaseResponse;
+public partial class CreateTodoItemCommand : BaseRequest, IRequest<CreateTodoItemResponse>{};
+public partial class CreateTodoItemResponse : BaseResponse;
 public partial class CreateTodoItemCommandValidator: AbstractValidator<CreateTodoItemCommand>{};
 }
 ```

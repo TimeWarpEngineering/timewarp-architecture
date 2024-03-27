@@ -1,19 +1,18 @@
 ﻿namespace TimeWarp.Architecture.Features.Superheros;
+
 internal partial class SuperheroState
 {
   public static class FetchSuperhero
   {
-
-    public record Action : BaseAction { }
+    public sealed class Action : BaseAction { }
 
     [UsedImplicitly]
-    public class Handler
+    public sealed class Handler
     (
       IStore store,
       ISuperheroService superheroService
     ) : BaseHandler<Action>(store)
     {
-
       public override async Task Handle(Action action, CancellationToken aCancellationToken)
       {
         SuperheroState.SuperheroList.Clear();

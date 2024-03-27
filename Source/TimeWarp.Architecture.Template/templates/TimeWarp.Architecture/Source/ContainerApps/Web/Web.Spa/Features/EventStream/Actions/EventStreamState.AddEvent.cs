@@ -5,13 +5,13 @@ internal partial class EventStreamState
   public static class AddEvent
   {
 
-    internal record Action : BaseAction
+    internal sealed class Action : BaseAction
     {
       public required string Message { get; init; }
     }
 
     [UsedImplicitly]
-    internal class Handler
+    internal sealed class Handler
     (
       IStore store
     ) : BaseHandler<Action>(store)
@@ -23,7 +23,7 @@ internal partial class EventStreamState
         CancellationToken aCancellationToken
       )
       {
-        EventStreamState._Events.Add(action.Message);
+        EventStreamState.EventList.Add(action.Message);
         return Task.CompletedTask;
       }
     }

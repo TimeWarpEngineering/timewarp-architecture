@@ -13,7 +13,7 @@ public static partial class TrackEvent
     public string GetRoute() => $"{Route}";
   }
 
-  public record Response : BaseResponse {}
+  public class Response : BaseResponse {}
 
   //public class Validator : AbstractValidator<Command>
   //{

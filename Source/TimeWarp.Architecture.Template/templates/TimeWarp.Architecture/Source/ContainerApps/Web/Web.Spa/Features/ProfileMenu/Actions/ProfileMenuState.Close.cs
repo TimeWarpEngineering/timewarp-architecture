@@ -4,11 +4,14 @@ internal partial class ProfileMenuState
 {
   public static class Close
   {
-    internal record Action : BaseAction { }
-    internal class Handler : BaseHandler<Action>
-    {
-      public Handler(IStore store) : base(store) { }
+    internal class Action : BaseAction { }
 
+    [UsedImplicitly]
+    internal class Handler
+    (
+      IStore store
+    ) : BaseHandler<Action>(store)
+    {
       public override Task Handle(Action action, CancellationToken cancellationToken)
       {
         if (ProfileMenuState.MenuState == MenuStates.Open)

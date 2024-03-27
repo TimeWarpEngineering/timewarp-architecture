@@ -4,6 +4,6 @@
 /// Base Request used for all Requests
 /// </summary>
 /// <remarks>
-/// Requests should be mutable reference types. 
+/// Requests should be mutable reference types.
 /// </remarks>
-public abstract record BaseRequest : BaseMessage { }
+public abstract class BaseRequest : BaseMessage { }
