@@ -7,20 +7,15 @@ internal partial class ApplicationState
   public static class ResetStore
   {
 
-    internal record Action : BaseAction { }
+    internal class Action : BaseAction { }
 
-    internal class Handler : IRequestHandler<Action>
+    [UsedImplicitly]
+    internal class Handler
+    (
+      IStore Store,
+      ISender Sender
+    ) : IRequestHandler<Action>
     {
-      private readonly ISender Sender;
-
-      private readonly IStore Store;
-
-      public Handler(IStore store, ISender sender)
-      {
-        Sender = sender;
-        Store = store;
-      }
-
       public async Task Handle(Action action, CancellationToken cancellationToken)
       {
         Store.Reset();

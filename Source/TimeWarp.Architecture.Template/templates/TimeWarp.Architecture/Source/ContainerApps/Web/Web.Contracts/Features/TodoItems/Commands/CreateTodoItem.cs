@@ -18,7 +18,7 @@ public static class CreateTodoItem
     public HttpVerb GetHttpVerb() => HttpVerb.Post;
     public string GetRoute() => FormattableString.Invariant($"api/TodoItems");
   }
-  public record Response : BaseResponse { }
+  public class Response : BaseResponse { }
 
   public class Validator : AbstractValidator<Command>
   {

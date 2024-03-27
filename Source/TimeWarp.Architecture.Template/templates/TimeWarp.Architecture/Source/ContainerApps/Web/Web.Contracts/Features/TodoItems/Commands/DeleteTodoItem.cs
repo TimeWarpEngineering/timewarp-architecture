@@ -11,7 +11,7 @@ public sealed partial class DeleteTodoItem
     public string GetRoute() => $"{Route}";
   }
 
-  public record Response : BaseResponse { }
+  public class Response : BaseResponse { }
 
   public sealed partial class Validator : AbstractValidator<Command>
   {

@@ -5,8 +5,12 @@ public sealed partial class ChatState
   public static class ServerToClientMessage
   {
     [TrackAction]
-    public record Action(ReceiveMessage.Command Command) : BaseAction { }
+    public class Action(ReceiveMessage.Command Command) : BaseAction
+    {
+      public ReceiveMessage.Command Command { get; set; } = Command;
+    }
 
+    [UsedImplicitly]
     internal sealed class Handler
     (
       IStore store

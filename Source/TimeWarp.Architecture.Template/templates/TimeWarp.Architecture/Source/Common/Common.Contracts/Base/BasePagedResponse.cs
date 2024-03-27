@@ -1,10 +1,10 @@
 namespace TimeWarp.Architecture.Features;
 
-public abstract record BasePagedResponse : BaseResponse
+public abstract class BasePagedResponse : BaseResponse
 {
   public PaginationInfo Pagination { get; init; } = new();
 
-  public record PaginationInfo
+  public class PaginationInfo
   {
     [UsedImplicitly]
     public int CurrentPage { get; init; } = 1;

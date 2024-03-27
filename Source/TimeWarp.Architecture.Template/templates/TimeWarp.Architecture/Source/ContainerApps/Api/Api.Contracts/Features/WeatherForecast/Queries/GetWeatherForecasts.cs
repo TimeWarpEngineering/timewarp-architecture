@@ -3,7 +3,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 public static partial class GetWeatherForecasts
 {
 
-  public sealed record Query : BaseRequest, IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed class Query : BaseRequest, IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public const string Route = "api/weatherForecasts";
 
@@ -16,7 +16,10 @@ public static partial class GetWeatherForecasts
     public string GetRoute() => $"{Route}?{nameof(Days)}={Days}";
   }
 
-  public sealed record Response(IEnumerable<WeatherForecastDto> WeatherForecasts) : BaseResponse;
+  public sealed class Response(IEnumerable<WeatherForecastDto> WeatherForecasts) : BaseResponse
+  {
+    public IEnumerable<WeatherForecastDto> WeatherForecasts { get; init; } = WeatherForecasts;
+  }
 
 
   /// <summary>
@@ -25,7 +28,7 @@ public static partial class GetWeatherForecasts
   public sealed class WeatherForecastDto
   {
     /// <summary>
-    /// The forecast for this Date 
+    /// The forecast for this Date
     /// </summary>
     /// <example>2020-06-08T12:32:39.9828696+07:00</example>
     public DateTime Date { get; set; }

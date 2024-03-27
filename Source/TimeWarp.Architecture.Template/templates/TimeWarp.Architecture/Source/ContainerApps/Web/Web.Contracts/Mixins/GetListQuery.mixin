@@ -8,13 +8,18 @@
 #nullable enable
 namespace {{ moxy.Class.Namespace }}
 {
-  public partial record {{$QueryName}}
+  public partial class {{$QueryName}}
   (
     int? Page = null,
     int? PageSize = null,
     string? SearchString = null
-  ): BaseRequest, IRequest<{{$ResponseName}}>;
+  ): BaseRequest, IRequest<{{$ResponseName}}>
+  {
+    public int? Page { get; init; } = Page;
+    public int? PageSize { get; init; } = PageSize;
+    public string? SearchString { get; init; } = SearchString;
+  }
   
-  public partial record {{$ResponseName}} : BaseResponse;
+  public partial class {{$ResponseName}} : BaseResponse;
   public partial class {{$QueryValidatorName}}: AbstractValidator<{{$QueryName}}>{};
 }

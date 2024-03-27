@@ -4,7 +4,10 @@ internal partial class ApplicationState
 {
   public static class SetActiveModal
   {
-    internal record Action(string ModalId) : BaseAction;
+    internal class Action(string ModalId) : BaseAction
+    {
+      public string ModalId { get; set; } = ModalId;
+    }
 
     [UsedImplicitly]
     internal class Handler

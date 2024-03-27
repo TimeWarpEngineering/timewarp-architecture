@@ -1,16 +1,11 @@
 namespace TimeWarp.Architecture.Features.EventStreams;
 
 [StateAccessMixin]
-internal partial class EventStreamState : State<EventStreamState>
+internal sealed partial class EventStreamState : State<EventStreamState>
 {
-  private List<string> _Events { get; set; }
+  private List<string> EventList { get; set; } = [];
 
-  public IReadOnlyList<string> Events => _Events.AsReadOnly();
-
-  public EventStreamState()
-  {
-    _Events = new List<string>();
-  }
+  public IReadOnlyList<string> Events => EventList.AsReadOnly();
 
   public override void Initialize() { }
 }

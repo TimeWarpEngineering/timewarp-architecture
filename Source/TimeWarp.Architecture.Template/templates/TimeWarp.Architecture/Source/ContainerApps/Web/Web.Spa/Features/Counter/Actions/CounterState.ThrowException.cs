@@ -4,10 +4,17 @@ internal partial class CounterState
 {
   public static class ThrowException
   {
-    public record Action(string Message) : BaseAction;
-    internal class Handler : BaseHandler<Action>
+    public class Action(string Message) : BaseAction
     {
-      public Handler(IStore store) : base(store) { }
+      public string Message { get; init; } = Message;
+    }
+
+    [UsedImplicitly]
+    internal class Handler
+    (
+      IStore store
+    ) : BaseHandler<Action>(store)
+    {
 
       public override Task Handle
       (

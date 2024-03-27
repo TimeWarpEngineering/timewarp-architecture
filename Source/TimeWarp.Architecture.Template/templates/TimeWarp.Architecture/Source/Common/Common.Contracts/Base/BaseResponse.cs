@@ -3,5 +3,5 @@
 /// <summary>
 /// Base Response used for all Requests
 /// </summary>
-public abstract record BaseResponse : BaseMessage;
+public abstract class BaseResponse : BaseMessage;
 
