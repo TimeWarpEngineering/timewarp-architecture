@@ -67,8 +67,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.Server.Integration.Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.Playwright.Tests", "Tests\EndToEnd.Playwright.Tests\EndToEnd.Playwright.Tests.csproj", "{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEnd.TestCafe.Tests", "Tests\EndToEnd.TestCafe.Tests\EndToEnd.TestCafe.Tests.csproj", "{607246B4-BE03-4E76-99F5-71EE1E90B22C}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Server.Integration.Tests", "Tests\Web.Server.Integration.Tests\Web.Server.Integration.Tests.csproj", "{C734286B-E573-4F72-BBE6-57ADDD4265D5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web.Spa.Integration.Tests", "Tests\Web.Spa.Integration.Tests\Web.Spa.Integration.Tests.csproj", "{03E78D0D-A549-4D34-BD55-0AF81B1A203D}"
@@ -124,6 +122,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "06-NewFileTemplates", "06-N
 		.templates\package.json.txt = .templates\package.json.txt
 		.templates\validator.txt = .templates\validator.txt
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Morris.Moxy", "..\..\..\..\..\..\mrpmorris\Morris.Moxy\Source\Lib\Morris.Moxy\Morris.Moxy.csproj", "{CDB8C099-C094-487D-ABCF-91040E0B70D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -186,12 +186,6 @@ Global
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
-		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
-		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{607246B4-BE03-4E76-99F5-71EE1E90B22C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C734286B-E573-4F72-BBE6-57ADDD4265D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C734286B-E573-4F72-BBE6-57ADDD4265D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C734286B-E573-4F72-BBE6-57ADDD4265D5}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
@@ -321,6 +315,12 @@ Global
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDB8C099-C094-487D-ABCF-91040E0B70D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDB8C099-C094-487D-ABCF-91040E0B70D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDB8C099-C094-487D-ABCF-91040E0B70D8}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDB8C099-C094-487D-ABCF-91040E0B70D8}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{CDB8C099-C094-487D-ABCF-91040E0B70D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDB8C099-C094-487D-ABCF-91040E0B70D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -343,7 +343,6 @@ Global
 		{74203078-7F4E-4025-B713-79F2D7DC9D52} = {2DB1A6D9-AD51-4D72-9A4C-B08592E7ABA9}
 		{E5570C46-7FB6-413A-92C8-061876C3D568} = {E3B896E0-4EBE-410B-A036-2EC3B6FA9EFE}
 		{77DF0E93-7A26-442E-A995-BACAD6A3B3C7} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
-		{607246B4-BE03-4E76-99F5-71EE1E90B22C} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		{C734286B-E573-4F72-BBE6-57ADDD4265D5} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		{03E78D0D-A549-4D34-BD55-0AF81B1A203D} = {4F06C18A-94D0-4F34-89C9-F189FD1C8E74}
 		{9DB258A0-067A-4F5C-94F0-0D39A1927C6D} = {40FA15DA-FF57-49E7-AD29-3C6C12F29237}
@@ -366,6 +365,7 @@ Global
 		{08ED6B59-E051-4B4A-AEEA-351D0720FC46} = {45A9CAA5-8BF5-48E9-BBAD-85D5001764AC}
 		{AF802A33-1D61-4089-986C-1265BFD04C79} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67} = {AF802A33-1D61-4089-986C-1265BFD04C79}
+		{CDB8C099-C094-487D-ABCF-91040E0B70D8} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
