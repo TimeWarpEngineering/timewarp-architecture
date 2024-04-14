@@ -6,8 +6,21 @@ This is used in place of the @page directive and must be put on a C# class in a 
 
 ## Usage
 
-[Page("/changePassword")]
-public partial class ChangePasswordPage : BaseComponent { }
+[Page("/todoitems/{TodoItemId:Guid}")]
+public partial class TodoItemPage: BaseComponent;
 
 ## Generate code
 
+```csharp
+namespace TimeWarp.Architecture.Pages
+{
+  using Microsoft.AspNetCore.Components;
+  [Route("/todoitems/{TodoItemId:guid}")]
+  partial class TodoItemPage
+  {
+    public static string GetPageUrl(Guid TodoItemId) => FormattableString.Invariant($"/todoitems/{TodoItemId}");
+    [Parameter] public Guid TodoItemId { get; set; }
+
+  }
+}
+```
