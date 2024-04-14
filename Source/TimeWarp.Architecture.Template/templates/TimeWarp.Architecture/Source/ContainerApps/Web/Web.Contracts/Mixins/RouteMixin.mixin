@@ -53,11 +53,14 @@
 
 namespace {{ moxy.Class.Namespace }};
  
-partial class {{ moxy.Class.Name }}
+public partial class {{ moxy.Class.DeclaringType.Name }}
 {
-  public const string RouteTemplate = "{{ RouteTemplate }}";
-  public HttpVerb GetHttpVerb() => {{ HttpVerb }};
-  public string GetRoute({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
-  {{ $parametersSource -}}
+  public partial class {{ moxy.Class.Name }}
+  {
+    public const string RouteTemplate = "{{ RouteTemplate }}";
+    public HttpVerb GetHttpVerb() => {{ HttpVerb }};
+    public string GetRoute({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
+    {{ $parametersSource -}}
+  }
 }
 {{- -}}
