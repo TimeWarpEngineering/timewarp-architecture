@@ -42,22 +42,22 @@
 
   capture $parametersSource
     for $currentParameter in $routeParameterTypesAndNames
-      "[Parameter] public " + $currentParameter.Type + " " + $currentParameter.Name + " { get; set; }\r\n"
+      "public " + $currentParameter.Type + " " + $currentParameter.Name + " { get; set; }\n"
     end
   end
 
   $routeAttributeString = $urlSegmentsForRouteAttribute | array.join("/");
   $getRouteSignatureSource = $getRouteMethodParameterSources | array.join(", ")
   $getRouteFormat = $getRouteMethodFormatParts | array.join("/")
-}}
+-}}
 
-namespace {{ moxy.Class.Namespace }}
-{ 
-  partial class {{ moxy.Class.Name }}
-  {
-    public const string RouteTemplate = "{{ RouteTemplate }}";
-    public HttpVerb GetHttpVerb() => {{ HttpVerb }};
-    public string GetRoute({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
-    {{ $parametersSource }}
-  }
+namespace {{ moxy.Class.Namespace }};
+ 
+partial class {{ moxy.Class.Name }}
+{
+  public const string RouteTemplate = "{{ RouteTemplate }}";
+  public HttpVerb GetHttpVerb() => {{ HttpVerb }};
+  public string GetRoute({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
+  {{ $parametersSource -}}
 }
+{{- -}}
