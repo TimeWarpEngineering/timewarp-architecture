@@ -57,7 +57,7 @@ namespace {{ moxy.Class.Namespace }}
   partial class {{ moxy.Class.Name }}
   {
     public static string GetPageUrl({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
-    {{ $parametersSource }}
+    {{ $parametersSource -}}
   }
 }
 {{- }}
