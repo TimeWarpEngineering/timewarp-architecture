@@ -71,7 +71,9 @@ public partial class {{ moxy.Class.DeclaringType.Name }}
     public const string RouteTemplate = "{{ RouteTemplate }}";
     public HttpVerb GetHttpVerb() => {{ HttpVerb }};
     public string GetRoute({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
-  {{ $parametersSource ~}}
+    {{~ if $parametersSource ~}}
+    {{ $parametersSource ~}}
+    {{~ end ~}}
   }
 }
 {{- -}}
