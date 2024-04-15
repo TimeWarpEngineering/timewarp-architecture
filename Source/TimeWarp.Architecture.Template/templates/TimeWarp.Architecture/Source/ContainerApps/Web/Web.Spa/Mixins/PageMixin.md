@@ -9,7 +9,7 @@ This is used in place of the @page directive and must be put on a C# class in a 
 [Page("/todoitems/{TodoItemId:Guid}")]
 public partial class TodoItemPage: BaseComponent;
 
-## Generate code
+## Generated code
 
 ```csharp
 namespace TimeWarp.Architecture.Pages
