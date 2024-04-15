@@ -27,7 +27,18 @@
         else
           $paramValueFormat = "";
       end
-
+      
+      case $paramType
+        when "guid"
+        $paramType = "Guid"
+        when "datetime"
+          $paramType = "DateTime"
+        when "alpha", "required", starts_with("minlength"), starts_with("maxlength"), starts_with("length"), starts_with("regex")
+          $paramType = "string"
+        when starts_with("min("), starts_with("max("), starts_with("range(")
+          $paramType = "int"
+      end      
+      
       $getRouteMethodFormatParts = $getRouteMethodFormatParts | array.add("{" + $paramName + $paramValueFormat + "}")
       $getRouteMethodParameterSources = $getRouteMethodParameterSources | array.add($paramType + " " + $paramName);
 
@@ -60,7 +71,7 @@ public partial class {{ moxy.Class.DeclaringType.Name }}
     public const string RouteTemplate = "{{ RouteTemplate }}";
     public HttpVerb GetHttpVerb() => {{ HttpVerb }};
     public string GetRoute({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
-    {{ $parametersSource -}}
+  {{ $parametersSource ~}}
   }
 }
 {{- -}}
