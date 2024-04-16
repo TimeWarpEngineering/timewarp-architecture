@@ -63,15 +63,18 @@
 -}}
 
 namespace {{ moxy.Class.Namespace }};
- 
+
 public partial class {{ moxy.Class.DeclaringType.Name }}
 {
   public partial class {{ moxy.Class.Name }}
   {
     public const string RouteTemplate = "{{ RouteTemplate }}";
     public HttpVerb GetHttpVerb() => {{ HttpVerb }};
+    {{~ if !($getRouteSignatureSource | string.empty) ~}}
     public string GetRoute({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
-    {{~ if $parametersSource ~}}
+    {{~ end ~}}
+    public string GetRoute() => FormattableString.Invariant($"{{$getRouteFormat}}");
+    {{~ if !($parametersSource | string.empty) ~}}
     {{ $parametersSource ~}}
     {{~ end ~}}
   }
