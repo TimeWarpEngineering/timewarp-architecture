@@ -52,6 +52,7 @@
   </ItemGroup>
 
   <ItemGroup>
+<!--    <ProjectReference Include="..\..\..\..\..\..\..\..\..\..\mrpmorris\Morris.Moxy\Source\Lib\Morris.Moxy\Morris.Moxy.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />-->
     <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj"/>
   </ItemGroup>
 
