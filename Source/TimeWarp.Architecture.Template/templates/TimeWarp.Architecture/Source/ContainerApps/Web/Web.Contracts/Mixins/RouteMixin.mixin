@@ -28,14 +28,13 @@
           $paramValueFormat = "";
       end
       
-      case $paramType
-        when "guid"
+      if $paramType == "guid"
         $paramType = "Guid"
-        when "datetime"
+      else if $paramType == "datetime"
           $paramType = "DateTime"
-        when "alpha", "required", starts_with("minlength"), starts_with("maxlength"), starts_with("length"), starts_with("regex")
+      else if $paramType == "alpha" || $paramType == "required" || ($paramType | string.starts_with "minlength") || ($paramType | string.starts_with "maxlength") || ($paramType | string.starts_with "range") || ($paramType | string.starts_with "regex") || ($paramType | string.starts_with "length")
           $paramType = "string"
-        when starts_with("min("), starts_with("max("), starts_with("range(")
+      else if ($paramType | string.starts_with "min") || ($paramType | string.starts_with "max") || ($paramType | string.starts_with "range")
           $paramType = "int"
       end      
       
