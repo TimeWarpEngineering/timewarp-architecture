@@ -1,7 +1,8 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
+using static GetWeatherForecasts;
 
+[UsedImplicitly]
 public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
 {
   private readonly string[] Summaries = new[]
@@ -26,21 +27,21 @@ public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response,
   {
     var random = new Random();
 
-    List<WeatherForecastDto> weatherForecastDtos = new();
+    List<WeatherForecastDto> weatherForecasts = [];
 
-    Enumerable.Range(1, query.Days).ToList().ForEach
+    Enumerable.Range(1, query?.Days ?? 5).ToList().ForEach
     (
-      aIndex => weatherForecastDtos.Add
+      index => weatherForecasts.Add
       (
         new WeatherForecastDto
         (
-          date: DateTime.Now.AddDays(aIndex),
+          date: DateTime.Now.AddDays(index),
           summary: Summaries[random.Next(Summaries.Length)],
           temperatureC: random.Next(-20, 55)
         )
       )
     );
-    var response = new Response(weatherForecastDtos);
+    var response = new Response(weatherForecasts);
 
     return Task.FromResult((OneOf<Response, SharedProblemDetails>)response);
   }
