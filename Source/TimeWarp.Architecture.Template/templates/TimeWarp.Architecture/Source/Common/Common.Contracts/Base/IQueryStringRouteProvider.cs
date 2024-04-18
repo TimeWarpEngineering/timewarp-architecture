@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features;
 
-public interface IHttpGetRequest:IApiRequest
+public interface IQueryStringRouteProvider:IApiRequest
 {
   string GetRouteWithQueryString();
 }
