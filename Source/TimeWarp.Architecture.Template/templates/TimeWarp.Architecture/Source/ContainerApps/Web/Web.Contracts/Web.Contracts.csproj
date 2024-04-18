@@ -26,7 +26,6 @@
     <AdditionalFiles Include="Mixins\DeleteCommand.mixin"/>
     <AdditionalFiles Include="Mixins\GetListQuery.mixin"/>
     <AdditionalFiles Include="Mixins\GetQuery.mixin"/>
-    <AdditionalFiles Include="Mixins\RouteMixin.mixin"/>
     <AdditionalFiles Include="Mixins\CreateCommand.mixin"/>
     <AdditionalFiles Include="Mixins\UpdateCommand.mixin"/>
   </ItemGroup>
@@ -54,6 +53,12 @@
   <ItemGroup>
 <!--    <ProjectReference Include="..\..\..\..\..\..\..\..\..\..\mrpmorris\Morris.Moxy\Source\Lib\Morris.Moxy\Morris.Moxy.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />-->
     <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\RouteMixin.mixin">
+      <Link>Mixins\RouteMixin.mixin</Link>
+    </AdditionalFiles>
   </ItemGroup>
 
 </Project>

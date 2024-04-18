@@ -6,5 +6,9 @@
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="OneOf" />
   </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Mixins\RouteMixin.mixin" />
+  </ItemGroup>
   
 </Project>
