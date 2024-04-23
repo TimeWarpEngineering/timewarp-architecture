@@ -1,7 +1,8 @@
 # {short title of solved problem and solution}
 
 * Status: {proposed | rejected | accepted | deprecated | … | superseded by [ADR-0005](0005-example.md)} <!-- optional -->
-* Deciders: {list everyone involved in the decision} <!-- optional -->
+* Architect: {primary decision maker} <!-- required -->
+* Consulted: {list of people whose inputs were considered} <!-- optional -->
 * Date: {YYYY-MM-DD when the decision was last updated} <!-- optional -->
 
 Technical Story: {description | ticket/issue URL} <!-- optional -->
