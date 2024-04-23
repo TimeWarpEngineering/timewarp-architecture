@@ -7,15 +7,15 @@
 
 ## Context and Problem Statement
 
-When designing a new API, a critical decision is the selection of a design pattern that will govern our approach to creating API Contracts, which include Commands, Queries, data transfer objects (DTOs) and validation. The choice between an endpoint-centric and entity-centric design impacts coupling, flexibility, maintenance, and the ease of integration with front-end systems. Which pattern should we adopt to optimize these aspects?
+When designing a new API, a critical decision involves selecting a design pattern that will shape our approach to creating API Contracts (Commands, Queries, DTOs, and validation). The choice between endpoint-centric and entity-centric designs significantly affects aspects such as coupling, flexibility, maintenance, and the ease of integration with front-end systems. We aim to select a pattern that optimizes these aspects while aligning with our strategic goals.
 
 ## Decision Drivers
 
 * Requirement to maintain high flexibility and specificity for each endpoint.
-* Minimize coupling between endpoints to make api more resilient.
-* Avoid over-fetching or under-fetching of data.
-* Need for efficient data validation and binding mechanisms.
-* Desire to ensure ease of maintenance and understandability of the API.
+* Minimize coupling between endpoints to enhance API resilience and scalability.
+* Prevent over-fetching or under-fetching of data to optimize performance and resource usage.
+* Need for efficient and scalable data validation and binding mechanisms.
+* Desire to ensure ease of maintenance and comprehensibility of the API.
 
 ## Considered Options
 
@@ -25,25 +25,25 @@ When designing a new API, a critical decision is the selection of a design patte
 
 ## Decision Outcome
 
-Chosen option: "Endpoint-Centric API Design with Interface Validation", because it aligns best with our goals of maintaining endpoint specificity and flexibility while also centralizing and simplifying validation logic. This approach facilitates easier data binding with UI components and reduces redundant code.
+Chosen option: "Endpoint-Centric API Design with Interface Validation". This approach best aligns with our goals by maintaining endpoint specificity and flexibility while centralizing and simplifying validation logic. It also facilitates easier and more consistent data binding with UI components, thereby reducing redundant code and improving maintainability.
 
 ### Positive Consequences
 
 * Precise control over the data structure and validation rules for each endpoint.
-* Reduced duplication in validation logic through the use of shared interfaces.
-* Improved data binding compatibility with UI components, simplifying front-end integrations.
+* Reduction in validation logic duplication through the use of shared interfaces.
+* Enhanced data binding compatibility with UI components, simplifying front-end integrations.
 
 ### Negative Consequences
 
-* Initial complexity in setting up and managing the interface structures.
-* Requirement for careful documentation and understanding of interface inheritance and its implications on API behavior.
+* Increased initial complexity in setting up and managing the interface structures.
+* Need for detailed documentation and deep understanding of interface inheritance and its implications on API behavior.
 
 ## Pros and Cons of the Options
 
 ### Entity-Centric API Design
 
 * Good, because it simplifies the API model by reducing the number of DTOs.
-* Bad, because it couples the DTO across multiple endpoints, potentially leading to less flexibility.
+* Bad, because it couples the DTOs across multiple endpoints, potentially leading to less flexibility.
 * Bad, because it may lead to less flexibility in tailoring data structures to specific endpoint needs.
 * Bad, because it can result in either over-fetching or under-fetching of data.
 
@@ -61,4 +61,4 @@ Chosen option: "Endpoint-Centric API Design with Interface Validation", because 
 
 ## Links
 
-* [API Design Best Practices](https://example.com/api-design-best-practices)
+* [API Design](../ApiDesign.md)
