@@ -1,62 +1,64 @@
-# Endpoint-Centric API Design Using Interfaces for Validation
+# Choosing an Endpoint-Centric API Design Enhanced by Interface-Based Validation
 
 * Status: proposed
-* Deciders: Amina, Development Team, API Architect
+* Deciders: Architect
+* Consulted: Amina
 * Date: 2024-04-23
-
-Technical Story: Rethink API structure to enhance maintainability and data binding without compromising endpoint specificity.
 
 ## Context and Problem Statement
 
-We have struggled with data binding complexities and redundant validation logic in our current API designs. How can we reduce these issues while preserving or enhancing the flexibility and specificity of our APIs?
+When designing a new API, a critical decision is the selection of a design pattern that will govern our approach to creating API Contracts, which include Commands, Queries, data transfer objects (DTOs) and validation. The choice between an endpoint-centric and entity-centric design impacts coupling, flexibility, maintenance, and the ease of integration with front-end systems. Which pattern should we adopt to optimize these aspects?
 
 ## Decision Drivers
 
-* Need to minimize redundant validation logic across multiple endpoints.
-* Requirement for improved data binding compatibility with UI components.
-* Desire to maintain or enhance flexibility and specificity for each API endpoint.
+* Requirement to maintain high flexibility and specificity for each endpoint.
+* Minimize coupling between endpoints to make api more resilient.
+* Avoid over-fetching or under-fetching of data.
+* Need for efficient data validation and binding mechanisms.
+* Desire to ensure ease of maintenance and understandability of the API.
 
 ## Considered Options
 
-* **Endpoint-Centric API without Interface Validation**: Continue the current approach but without any improvement in validation or data binding.
-* **Entity-Centric API**: Consolidate DTOs across endpoints, improving validation and data binding at the risk of losing endpoint specificity.
-* **Endpoint-Centric API with Interface Validation**: Implement an interface-based validation approach for endpoint-specific DTOs.
+* **Entity-Centric API Design**: Utilizes shared DTOs across multiple endpoints.
+* **Endpoint-Centric API Design without Interface Validation**: Uses separate DTOs for each endpoint without shared validation.
+* **Endpoint-Centric API Design with Interface Validation**: Uses separate DTOs for each endpoint but with shared validation logic through interfaces.
 
 ## Decision Outcome
 
-Chosen option: "Endpoint-Centric API with Interface Validation", because it provides the necessary improvements in data binding and validation without compromising the API's flexibility and specificity. The introduction of interfaces removes the need for duplicate validation logic, streamlining development while maintaining strict control over each endpoint's data contract.
+Chosen option: "Endpoint-Centric API Design with Interface Validation", because it aligns best with our goals of maintaining endpoint specificity and flexibility while also centralizing and simplifying validation logic. This approach facilitates easier data binding with UI components and reduces redundant code.
 
 ### Positive Consequences
 
-* Elimination of duplicate validation logic, centralizing it in common interfaces.
-* Simplification of UI form bindings, improving consistency across different endpoints.
-* Retention of endpoint-specific data contracts, enabling precise control and maintenance.
+* Precise control over the data structure and validation rules for each endpoint.
+* Reduced duplication in validation logic through the use of shared interfaces.
+* Improved data binding compatibility with UI components, simplifying front-end integrations.
 
 ### Negative Consequences
 
-* Slight increase in initial setup complexity due to the need for defining and managing interfaces.
-* Potential need for ongoing management to ensure interfaces accurately reflect evolving business logic and API requirements.
+* Initial complexity in setting up and managing the interface structures.
+* Requirement for careful documentation and understanding of interface inheritance and its implications on API behavior.
 
 ## Pros and Cons of the Options
 
-### Endpoint-Centric API without Interface Validation
+### Entity-Centric API Design
 
-* Good, because it provides strict separation of concerns and full control over each endpoint.
-* Bad, because it maintains redundancy in validation logic.
-* Bad, because it complicates UI data binding in complex forms.
+* Good, because it simplifies the API model by reducing the number of DTOs.
+* Bad, because it couples the DTO across multiple endpoints, potentially leading to less flexibility.
+* Bad, because it may lead to less flexibility in tailoring data structures to specific endpoint needs.
+* Bad, because it can result in either over-fetching or under-fetching of data.
 
-### Entity-Centric API
+### Endpoint-Centric API Design without Interface Validation
 
-* Good, because it reduces duplication and simplifies the API surface.
-* Bad, because it can lead to over-fetching or under-fetching of data and reduced flexibility.
-* Bad, because it often results in a generic approach that might not suit all endpoint-specific requirements.
+* Good, because it ensures maximum flexibility and control over each endpoint's data contracts.
+* Bad, because it leads to potential redundancy in validation logic across similar DTOs.
+* Bad, because it complicates consistency in form data binding across the API.
 
-### Endpoint-Centric API with Interface Validation
+### Endpoint-Centric API Design with Interface Validation
 
-* Good, because it maintains the flexibility and specificity of endpoint-centric designs while reducing validation redundancy.
-* Good, because it significantly improves UI form data binding through standardized interfaces.
-* Bad, because it introduces some complexity in defining and managing interfaces.
+* Good, because it maintains the flexibility of endpoint-specific DTOs while centralizing common validation logic.
+* Good, because it streamlines integration with UI by standardizing data binding practices.
+* Bad, because it adds complexity in managing and evolving interface definitions over time.
 
 ## Links
 
-* Comparison of API design patterns discussed in [API Design Patterns Book](https://example.com/api-design-patterns).
+* [API Design Best Practices](https://example.com/api-design-best-practices)
