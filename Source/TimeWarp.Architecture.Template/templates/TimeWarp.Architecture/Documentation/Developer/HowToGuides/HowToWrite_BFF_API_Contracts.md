@@ -36,19 +36,11 @@ When features are part of a larger domain, an additional categorization layer is
 
 - **Queries**: Prefixed with "Get" to denote retrieval, like `GetUser` or `GetUsers`.
 
-#### Shared Interfaces
+#### UX Bindable Interfaces
 
-Shared interfaces and their corresponding validators are key components within the TimeWarp Architecture. They should reside within the same file for ease of reference and maintenance.
+These interfaces are shared amongst requests in the feature. The requests that implement these interfaces can be bound to EdiForms In the UI and will share the same validation rules reducing duplication.
 
-- **Shared Interfaces**: Define common contract structures used across different parts of the application.
-
-- **Validators**: Contain rules to ensure the integrity and validity of the data according to the contracts.
-
-Files containing both an interface and its validator are typically placed within the feature folder, alongside the `Commands` and `Queries` folders.
-
-The file is named in a descriptive manner, reflecting the entity or resource it represents, and includes both the interface definition and its validator.
-
-By adhering to these conventions, developers can quickly comprehend the API's structure, enabling efficient navigation and modification within the codebase.
+The file is named in a descriptive manner, reflecting the entity or resource it represents, and includes both the interface definition and its validator and are typically placed within the feature folder, alongside the `Commands` and `Queries` folders.
 
 #### Namespace
 
@@ -64,14 +56,14 @@ namespace <ProjectName>.Features.<FeatureName>
 > Note: Sometimes Features are grouped and there could be another layer.
 > Example: `namespace TimeWarp.Features.Accounting.ChartOfAccounts`
 
-This organization helps in logically grouping vertical slice of items across the projects of the solution. 
+This organization helps in logically grouping vertical slices of functionality across the projects of the solution. 
 
 #### Public Sealed Partial Class
 
 Each API contract is encapsulated in a `public sealed partial class`, named according to its primary function within the system. This class acts as a container for all components related to a specific API operation. Naming follows typical CRUD operation prefixes such as Get, Create, Delete, Update, reflecting the action the API endpoint will perform:
 
 \```csharp
-public sealed partial class GetSecurityRole // Example for a "Get" operation
+public sealed partial class GetUsers // Example for a "Get" operation
 \```
 
 #### Nested Classes
@@ -85,7 +77,7 @@ Within the main class, several nested classes define the structure of the API co
 
 - **Response**: Defines the shape of the data returned by the API.
   \```csharp
-  public sealed class Response : ISecurityRoleDetails
+  public sealed class Response : IUserDetails
   \```
 
 - **Validator**: Provides validation rules for the request, ensuring that the data meets expected formats and constraints before processing by the API.
@@ -96,4 +88,3 @@ Within the main class, several nested classes define the structure of the API co
 ### Conclusion
 
 Understanding and implementing the standardized structure for API contracts within the TimeWarp Architecture not only promotes consistency across the development team but also aids in maintaining and scaling the application efficiently. By adhering to this structured approach, teams ensure that their API contracts are easy to manage, extend, and integrate.
-
