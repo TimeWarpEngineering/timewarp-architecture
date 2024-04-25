@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This guide is tailored for designing API contracts within the TimeWarp Architecture, where the backend-for-frontend (BFF) approach empowers UX designers to dictate the structure of API contracts, which will be implemented by the API. This BFF strategy ensures that the APIs are optimized for the specific use cases and workflows of the frontend, enhancing user experience and streamlining development. This document provides a concise roadmap for creating these API contracts, ensuring they are functional, efficient, and aligned with the frontend needs.
+This guide is tailored for designing API contracts within the TimeWarp Architecture, where the backend-for-frontend (BFF) approach empowers UX designers to dictate the structure of API contracts, which will be implemented by the API. This BFF strategy ensures that the APIs are optimized for the specific use cases and workflows of the frontend, streamlining development. This document provides a concise roadmap for creating these API contracts, ensuring they are functional, efficient, and aligned with the frontend needs.
 
 ## 1. Define Your Data Models
 
