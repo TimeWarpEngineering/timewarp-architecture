@@ -12,39 +12,44 @@ API contracts in the TimeWarp Architecture are designed to be clear and efficien
 
 The Location of the contract will be in the `Features` folder of the project . The file name should be the same as the primary function of the API operation, following the convention:
 
+> Note: FeatureName should be plural this helps avoid naming conflicts with Classes.
+> Example: `namespace TimeWarp.Features.ChartOfAccounts`
+
+> Note: Sometimes Features are grouped and there could be another layer.
+> Example: `namespace TimeWarp.Features.Accounting.ChartOfAccounts`
 
 ### File Naming Convention
 
-The TimeWarp Architecture emphasizes a clear and systematic approach to file organization. This ensures that developers can intuitively locate and understand the purpose of each file within the project. Files should be organized into specific folders within the `Features` directory of the project, and named following a clear and descriptive pattern.
+The TimeWarp Architecture emphasizes a systematic and intuitive approach to organizing files. It's critical that the structure and naming of files within the `Features` directory clearly reflect their purpose and function.
 
 #### Folder Structure
 
-- **Commands Folder**: This folder contains all command files, which are associated with write operations such as create, update, and delete.
-
+- **Commands Folder**: Contains command files for write operations (create, update, delete).
   - **Path**: `Features/<FeatureName>/Commands`
 
-- **Queries Folder**: This folder houses all query files, which are associated with read operations.
-
+- **Queries Folder**: Contains query files for read operations.
   - **Path**: `Features/<FeatureName>/Queries`
 
 #### Naming the Contract Files Within Folders
 
-- **Inside Commands Folder**: The files should be named using a verb that indicates the action they perform, such as:
+- **Commands**: Named with an action verb indicating the operation, like `CreateUser`, `UpdateUser`, or `DeleteUser`.
 
-  - **CreateUser.cs**: For commands that create a new entity or resource.
-  - **UpdateUser.cs**: For commands that modify an existing entity or resource.
-  - **DeleteUser.cs**: For commands that remove an existing entity or resource.
+- **Queries**: Prefixed with "Get" to denote retrieval, like `GetUser` or `GetUsers`.
 
-- **Inside Queries Folder**: The files should be named with a prefix that suggests data retrieval, typically starting with "Get":
+#### Shared Interfaces and Validators
 
-  - **GetUser.cs**: Retrieves the details of a specific user.
-  - **GetUsers.cs**: Retrieves a list of users.
+Shared interfaces and their corresponding validators are key components within the TimeWarp Architecture. They should reside within the same file for ease of reference and maintenance.
 
-- **Shared Interfaces**: Shared interface 
+- **Shared Interfaces**: Define common contract structures used across different parts of the application.
 
-/// AI SEE Example and infer
+- **Validators**: Contain rules to ensure the integrity and validity of the data according to the contracts.
 
-By maintaining this structured approach to file naming and organization, the TimeWarp Architecture facilitates easier maintenance, scalability, and collaboration across the development team.
+Files containing both an interface and its validator are typically placed within the feature folder, alongside commands and queries. This collocation is important as it facilitates a single point of truth for the contract definition and its validation logic, ensuring consistency and ease of updates.
+
+The file is named in a descriptive manner, reflecting the entity or resource it represents, and includes both the interface definition and its validator.
+
+By adhering to these conventions, developers can quickly comprehend the API's structure, enabling efficient navigation and modification within the codebase.
+
 
 
 #### Namespace
