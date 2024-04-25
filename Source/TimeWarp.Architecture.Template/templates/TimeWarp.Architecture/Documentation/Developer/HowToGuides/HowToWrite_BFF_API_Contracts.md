@@ -6,6 +6,102 @@ This guide is tailored for designing API contracts within the TimeWarp Architect
 
 ### Contract Structure and Contents
 
+API contracts in the TimeWarp Architecture are designed to be clear and efficient. The structure of each contract file is critical for ensuring that developers can easily navigate and understand the API’s capabilities. Below, we detail the standard components and file structure for these contracts.
+
+#### File Naming:
+
+The Location of the contract will be in the `Features` folder of the project . The file name should be the same as the primary function of the API operation, following the convention:
+
+
+### File Naming Convention
+
+The TimeWarp Architecture emphasizes a clear and systematic approach to file organization. This ensures that developers can intuitively locate and understand the purpose of each file within the project. Files should be organized into specific folders within the `Features` directory of the project, and named following a clear and descriptive pattern.
+
+#### Folder Structure
+
+- **Commands Folder**: This folder contains all command files, which are associated with write operations such as create, update, and delete.
+
+  - **Path**: `Features/<FeatureName>/Commands`
+
+- **Queries Folder**: This folder houses all query files, which are associated with read operations.
+
+  - **Path**: `Features/<FeatureName>/Queries`
+
+#### Naming the Contract Files Within Folders
+
+- **Inside Commands Folder**: The files should be named using a verb that indicates the action they perform, such as:
+
+  - **CreateUser.cs**: For commands that create a new entity or resource.
+  - **UpdateUser.cs**: For commands that modify an existing entity or resource.
+  - **DeleteUser.cs**: For commands that remove an existing entity or resource.
+
+- **Inside Queries Folder**: The files should be named with a prefix that suggests data retrieval, typically starting with "Get":
+
+  - **GetUser.cs**: Retrieves the details of a specific user.
+  - **GetUsers.cs**: Retrieves a list of users.
+
+- **Shared Interfaces**: Shared interface 
+
+/// AI SEE Example and infer
+
+By maintaining this structured approach to file naming and organization, the TimeWarp Architecture facilitates easier maintenance, scalability, and collaboration across the development team.
+
+
+#### Namespace
+
+The namespace should be at the feature level, following the convention:
+
+\```csharp
+namespace <ProjectName>.Features.<FeatureName>
+\```
+
+> Note: FeatureName should be plural this helps avoid naming conflicts with Classes.
+> Example: `namespace TimeWarp.Features.ChartOfAccounts`
+
+> Note: Sometimes Features are grouped and there could be another layer.
+> Example: `namespace TimeWarp.Features.Accounting.ChartOfAccounts`
+
+This organization helps in logically grouping vertical slice of items across the projects of the solution. 
+
+#### Public Sealed Partial Class
+
+Each API contract is encapsulated in a `public sealed partial class`, named according to its primary function within the system. This class acts as a container for all components related to a specific API operation. Naming follows typical CRUD operation prefixes such as Get, Create, Delete, Update, reflecting the action the API endpoint will perform:
+
+\```csharp
+public sealed partial class GetSecurityRole // Example for a "Get" operation
+\```
+
+#### Nested Classes
+
+Within the main class, several nested classes define the structure of the API contract:
+
+- **Query/Command**: Represents the request. Named `Query` for read operations or `Command` for create, update, and delete operations.
+  \```csharp
+  public sealed partial class Query : IRequest<OneOf<Response, SharedProblemDetails>>
+  \```
+
+- **Response**: Defines the shape of the data returned by the API.
+  \```csharp
+  public sealed class Response : ISecurityRoleDetails
+  \```
+
+- **Validator**: Provides validation rules for the request, ensuring that the data meets expected formats and constraints before processing by the API.
+  \```csharp
+  public sealed class Validator : AbstractValidator<Query>
+  \```
+
+### Conclusion
+
+Understanding and implementing the standardized structure for API contracts within the TimeWarp Architecture not only promotes consistency across the development team but also aids in maintaining and scaling the application efficiently. By adhering to this structured approach, teams ensure that their API contracts are easy to manage, extend, and integrate.
+
+
+
+
+
+
+
+### Contract Structure and Contents
+
 When constructing API contracts, especially within the TimeWarp Architecture, maintaining a clear and simple structure is crucial. This ensures that both the development team and UX designers can easily understand and work with the API. The example provided exemplifies a well-structured approach.
 
 #### Example Explained
