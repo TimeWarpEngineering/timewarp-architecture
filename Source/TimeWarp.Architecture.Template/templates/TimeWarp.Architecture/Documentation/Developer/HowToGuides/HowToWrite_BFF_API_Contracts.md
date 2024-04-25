@@ -1,8 +1,8 @@
-# How to Build Your API Contracts
+# How to Build Your BFF API Contracts
 
 ## Introduction
 
-API contracts are critical components in the development of reliable, scalable, and maintainable applications. They serve as formal agreements between different software components, often between a server and clients, ensuring consistent communication. A well-designed API contract facilitates clear expectations, minimizes integration challenges, and supports long-term system evolution.
+In the context of a Backend-for-Frontend (BFF) architecture, particularly between a Blazor client and a .NET backend, API contracts are foundational. They dictate how the frontend and backend communicate, ensuring that data flows are well-structured and predictable. This document guides the creation of these contracts, emphasizing clarity, maintainability, and the specific needs of a tightly integrated client-server relationship.
 
 ## 1. Define Your Data Models
 
