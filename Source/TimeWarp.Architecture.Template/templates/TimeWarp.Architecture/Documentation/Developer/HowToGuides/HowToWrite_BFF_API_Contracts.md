@@ -66,6 +66,8 @@ Each API contract is encapsulated in a `public sealed partial class`, named acco
 public sealed partial class GetUsers // Example for a "Get" operation
 \```
 
+The class is partial to allow Mixins placed on Requests to generate code.
+
 #### Nested Classes
 
 Within the main class, several nested classes define the structure of the API contract:
