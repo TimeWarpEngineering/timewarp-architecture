@@ -10,13 +10,15 @@ API contracts in the TimeWarp Architecture are designed to be clear and efficien
 
 #### File Naming:
 
-The Location of the contract will be in the `Features` folder of the project . The file name should be the same as the primary function of the API operation, following the convention:
-
+The Location of the contract will be in the `Feature` folder (Features/<FeatureName>) of the project .
+- **Path**: `Features/<FeatureName>`
 > Note: FeatureName should be plural this helps avoid naming conflicts with Classes.
 > Example: `namespace TimeWarp.Features.ChartOfAccounts`
 
 > Note: Sometimes Features are grouped and there could be another layer.
 > Example: `namespace TimeWarp.Features.Accounting.ChartOfAccounts`
+
+The file name should be the same as the primary function of the API operation, following the convention:
 
 ### File Naming Convention
 
