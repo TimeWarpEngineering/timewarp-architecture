@@ -1,9 +1,9 @@
 # Choosing an Endpoint-Centric API Design Enhanced by Interface-Based Validation
 
-* Status: proposed
+* Status: accepted
 * Deciders: Architect
 * Consulted: Amina
-* Date: 2024-04-23
+* Date: 2024-04-01
 
 ## Context and Problem Statement
 
