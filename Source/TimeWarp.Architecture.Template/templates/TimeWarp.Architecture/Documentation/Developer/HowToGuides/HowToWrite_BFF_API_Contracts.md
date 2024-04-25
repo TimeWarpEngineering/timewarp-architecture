@@ -38,9 +38,7 @@ When features are part of a larger domain, an additional categorization layer is
 
 #### UX Bindable Interfaces
 
-These interfaces are shared amongst requests in the feature. The requests that implement these interfaces can be bound to EdiForms In the UI and will share the same validation rules reducing duplication.
-
-The file is named in a descriptive manner, reflecting the entity or resource it represents, and includes both the interface definition and its validator and are typically placed within the feature folder, alongside the `Commands` and `Queries` folders.
+Bindable interfaces are defined for requests within a feature. These interfaces can be implemented by requests that are bound to Blazor's `EditForm` components, promoting consistent validation across the frontend. The naming of the interface files should be clear, descriptive, and reflective of the entities they model. They are placed within the feature folder, alongside the `Commands` and `Queries` folders.
 
 #### Namespace
 
@@ -60,13 +58,16 @@ This organization helps in logically grouping vertical slices of functionality a
 
 #### Public Sealed Partial Class
 
-Each API contract is encapsulated in a `public sealed partial class`, named according to its primary function within the system. This class acts as a container for all components related to a specific API operation. Naming follows typical CRUD operation prefixes such as Get, Create, Delete, Update, reflecting the action the API endpoint will perform:
+Each API contract is encapsulated in a `public sealed partial class`, facilitating separation of concerns and clean organization. The `partial` keyword is utilized to allow for mixin code generation.
+
+The Naming follows typical CRUD operation prefixes such as Get, Create, Delete, Update, reflecting the action the API endpoint will perform:
 
 \```csharp
-public sealed partial class GetUsers // Example for a "Get" operation
+public sealed partial class GetUser 
+public sealed partial class CreateUser
+public sealed partial class UpdateUser
+public sealed partial class DeleteUser
 \```
-
-The class is partial to allow Mixins placed on Requests to generate code.
 
 #### Nested Classes
 
@@ -89,4 +90,4 @@ Within the main class, several nested classes define the structure of the API co
 
 ### Conclusion
 
-Understanding and implementing the standardized structure for API contracts within the TimeWarp Architecture not only promotes consistency across the development team but also aids in maintaining and scaling the application efficiently. By adhering to this structured approach, teams ensure that their API contracts are easy to manage, extend, and integrate.
+The TimeWarp Architecture's structured approach to API contracts fosters a clear, manageable, and scalable development environment. Consistency across the development team is enhanced, and integration between the frontend and backend becomes more cohesive.
