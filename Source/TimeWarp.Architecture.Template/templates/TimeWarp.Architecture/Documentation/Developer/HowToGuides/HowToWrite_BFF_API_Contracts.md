@@ -6,19 +6,26 @@ This guide is tailored for designing API contracts within the TimeWarp Architect
 
 ### Contract Structure and Contents
 
-API contracts in the TimeWarp Architecture are designed to be clear and efficient. The structure of each contract file is critical for ensuring that developers can easily navigate and understand the API’s capabilities. Below, we detail the standard components and file structure for these contracts.
+In the TimeWarp Architecture, API contracts are constructed for maximum clarity and efficiency. The organizational structure is designed to ensure easy navigation and comprehension of the API’s functionalities.
 
-#### File Naming:
+#### File Naming and Location
 
-The Location of the contract will be in the `Feature` folder (Features/<FeatureName>) of the project .
+API contract files reside within the `Features` directory, structured according to the feature they pertain to.
+
 - **Path**: `Features/<FeatureName>`
-> Note: FeatureName should be plural this helps avoid naming conflicts with Classes.
-> Example: `namespace TimeWarp.Features.ChartOfAccounts`
 
-> Note: Sometimes Features are grouped and there could be another layer.
-> Example: `namespace TimeWarp.Features.Accounting.ChartOfAccounts`
+  > **Note**: The `<FeatureName>` should be plural to prevent naming conflicts with class names, and it represents a logical grouping of related functionalities within the system.
+  >
+  > Example: `namespace TimeWarp.Architecture.Features.ChartOfAccounts`
 
-The file name should be the same as the primary function of the API operation, following the convention:
+  Additional layers of grouping are acceptable if features are sub-categorized within a larger context.
+
+  > Example: `namespace TimeWarp.Architecture.Features.Accounting.ChartOfAccounts`
+
+Each contract file is named after the primary function it serves in the API, aligning with the conventional CRUD operation it performs. This naming convention facilitates an intuitive understanding of the contract's role within the feature set.
+
+The contract's primary class, encapsulating its operations, adopts a naming pattern indicative of its behavior—such as `Get`, `Create`, `Update`, or `Delete`—followed by the entity it manages.
+
 
 ### File Naming Convention
 
