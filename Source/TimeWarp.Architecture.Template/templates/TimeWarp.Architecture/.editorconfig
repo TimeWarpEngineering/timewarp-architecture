@@ -1,9 +1,9 @@
-root = true
 # EditorConfig is awesome:http://EditorConfig.org
 # For dotnet and Csharp specific see below
 # https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
 
-# Remove the line below if you want to inherit .editorconfig settings from higher directories
+# top-most EditorConfig file
+root = true
 
 #### Core EditorConfig Options ####
 
@@ -225,16 +225,15 @@ dotnet_naming_symbols.constants.required_modifiers = const
 
 dotnet_naming_style.constant_style.capitalization = pascal_case
 
-# Static fields are camelCase and start with s_
-dotnet_naming_rule.static_fields_should_be_camel_case.severity = suggestion
-dotnet_naming_rule.static_fields_should_be_camel_case.symbols = static_fields
-dotnet_naming_rule.static_fields_should_be_camel_case.style = static_field_style
+# Static fields are PascalCase 
+dotnet_naming_rule.static_fields_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.static_fields_should_be_pascal_case.symbols = static_fields
+dotnet_naming_rule.static_fields_should_be_pascal_case.style = static_field_style
 
 dotnet_naming_symbols.static_fields.applicable_kinds = field
 dotnet_naming_symbols.static_fields.required_modifiers = static
 
 dotnet_naming_style.static_field_style.capitalization = pascal_case
-dotnet_naming_style.static_field_style.required_prefix = s_
 
 # local variables should be camelCase
 dotnet_naming_rule.camel_case_for_local_variables.severity = suggestion
