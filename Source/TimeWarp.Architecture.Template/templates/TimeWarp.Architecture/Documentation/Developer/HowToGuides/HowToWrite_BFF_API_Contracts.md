@@ -12,7 +12,7 @@ The TimeWarp Architecture prescribes a methodical approach for organizing API co
 
 All API contract files are located in the `Features` directory, nested under the respective feature name.
 
-- **Path**: `Features/<FeatureName>`
+- **Path**: `Features/<PluralizedFeatureName>`
 
   > **Note**: The `<FeatureName>` is pluralized to differentiate from class names, representing a group of related functionalities.
   >
@@ -47,7 +47,7 @@ These interfaces facilitate a modular approach by centralizing validation rules,
 The namespace should be at the feature level, following the convention:
 
 ```csharp
-namespace <ProjectName>.Features.<FeatureName>
+namespace <ProjectName>.Features.<PluralizedFeatureName>
 ```
 
 > Note: FeatureName should be plural this helps avoid naming conflicts with Classes.
@@ -60,9 +60,9 @@ This organization helps in logically grouping vertical slices of functionality a
 
 #### Public Sealed Partial Class
 
-The `public sealed partial class` use of the `partial` keyword supports mixin patterns, allowing for extendable code generation without modifying the original class. This separation of generated and custom code promotes a clean and maintainable codebase. The class names, following CRUD operation prefixes, provide instant clarity on the API's purpose, enabling developers to quickly identify and understand the contract's functionality.
+The `public sealed partial class` use of the `partial` keyword supports mixin patterns, allowing for extendable code generation without modifying the original class. This separation of generated and custom code promotes a clean and maintainable codebase. The class names follow CRUD operation prefixes. This provides instant clarity on the API's purpose, enabling developers to quickly identify and understand the contract's functionality.
 
-This naming strategy not only enhances discoverability but also aligns with RESTful design principles, making it easier for new developers to understand the API's functions intuitively.
+This naming strategy aligns with RESTful design principles, making it easier for new developers to understand the API's functions intuitively.
 
 ```csharp
 public sealed partial class GetUser 
@@ -85,7 +85,7 @@ Within the main class, several nested classes define the structure of the API co
   public sealed class Response : IUserDetails
   ```
 
-- **Validator**: Provides validation rules for the request, ensuring that the data meets expected formats and constraints before processing by the API.
+- **Validator**: Provides validation rules for the request, ensuring that the data meets expected formats and constraints before processing by the API. These same rules will be evaluated by the API Server to ensure data integrity.
   ```csharp
   public sealed class Validator : AbstractValidator<Query>
   ```

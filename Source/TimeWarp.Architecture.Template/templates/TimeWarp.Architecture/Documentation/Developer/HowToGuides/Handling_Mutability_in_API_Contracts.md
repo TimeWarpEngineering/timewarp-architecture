@@ -11,9 +11,9 @@ Example of an immutable Dto:
 ```csharp
 public sealed class UserDto
 {
-  public int UserId { get; init; }
-  public string UserName { get; init; }
-  public string Email { get; init; }
+  public int UserId { get; init; } // Immutable
+  public string UserName { get; init; } // Immutable
+  public string Email { get; init; } // Immutable
 }
 ```
 
@@ -32,7 +32,7 @@ public interface IUserDetails
 
 public sealed class UserDto : IUserDetails
 {
-  public int UserId { get; init; }
+  public int UserId { get; init; } // Immutable
   public string Email { get; set; } // Mutable
   public string FirstName { get; set; } // Mutable
   public string LastName { get; set; } // Mutable
@@ -41,9 +41,10 @@ public sealed class UserDto : IUserDetails
 
 #### Collections and Aggregate Data
 
-Handling collections and aggregates requires careful consideration of their roles within the application. If a collection is part of a larger aggregate that is fetched for display purposes only, it should be exposed as an `IReadOnlyList<T>` to ensure it remains unmodifiable from the client side. Conversely, if the collection needs to be editable as part of a transactional operation, it should be mutable and often paired with appropriate validation logic to manage changes.
+Handling collections within aggregates depends on their roles within the application. If a collection is part of a larger aggregate that is fetched for display purposes only, it should be exposed as an `IReadOnlyList<T>` to ensure it remains unmodifiable from the client side. Conversely, if the collection needs to be editable in the UX it should be exposed as a `List<T>`.
 
 Example of immutable collection:
+
 ```csharp
 public sealed class ProjectDto
 {
@@ -53,6 +54,7 @@ public IReadOnlyList<TaskDetails> Tasks { get; init; } // Display only
 ```
 
 Example of mutable collection:
+
 ```csharp
 public class ProjectDto
 {
@@ -63,10 +65,14 @@ public List<TaskUpdateInfo> Tasks { get; set; } // Editable for updates
 
 #### Interface-Driven Mutability
 
-Since interfaces drive the binding and validation in the Blazor frontend, ensuring that the interfaces reflect the correct level of mutability is essential. Interfaces should clearly distinguish between fields that are meant to be displayed and those intended for user interaction and modification.
+Using the two previously mentioned techniques (`set` Vs `init`, and `List<T>` Vs `IReadonlyList<t>`) on classes clearly distinguish between data that is meant only to be read by the user and the data they may modify.
+
+Components in the front-end rely solely on interfaces for editing data, and therefore it is essential that such interfaces have properties defined using the mutable patterns.
 
 By adhering to these principles, API contracts within the TimeWarp Architecture ensure that data flows are appropriately controlled, reducing errors and enhancing the robustness of the application.
 
 ### Conclusion
 
-Understanding and implementing the correct mutability settings in API contracts is crucial for maintaining data integrity and providing a flexible yet secure user interface. The TimeWarp Architecture's approach to clearly defined mutability helps streamline frontend interactions and backend processes, leading to more maintainable and error-resistant code.
+Understanding and implementing the correct mutability settings in API contracts is crucial for indicating the intended use of each contract class. 
+
+The TimeWarp Architecture's approach to clearly defined mutability helps streamline frontend interactions and backend processes, leading to more maintainable and error-resistant code.
