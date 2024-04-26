@@ -56,7 +56,7 @@ public IReadOnlyList<TaskDetails> Tasks { get; init; } // Display only
 Example of mutable collection:
 
 ```csharp
-public class ProjectDto
+public sealed class ProjectDto
 {
 public int ProjectId { get; init; }
 public List<TaskUpdateInfo> Tasks { get; set; } // Editable for updates
