@@ -14,6 +14,7 @@ public abstract partial class BaseComponent : BlazorStateDevToolsComponent, IAtt
   [Parameter(CaptureUnmatchedValues = true)]
   public IReadOnlyDictionary<string, object> Attributes { get; set; } = new Dictionary<string, object>();
   internal ActionTrackingState ActionTrackingState => GetState<ActionTrackingState>();
+  internal RouteState RouteState => GetState<RouteState>();
   protected bool IsAnyActive(params Type[] aActions) => ActionTrackingState.IsAnyActive(aActions);
   protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest);
 }
