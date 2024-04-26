@@ -7,7 +7,7 @@ internal partial class ApplicationState
   public static class ResetStore
   {
 
-    internal class Action : BaseAction { }
+    internal class Action : IBaseAction { }
 
     [UsedImplicitly]
     internal class Handler

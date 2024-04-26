@@ -8,7 +8,7 @@ internal partial class WeatherForecastsState
     internal sealed class Action
     (
       int? Days
-    ) : BaseAction
+    ) : IBaseAction
     {
       public int? Days { get; init; } = Days;
     }

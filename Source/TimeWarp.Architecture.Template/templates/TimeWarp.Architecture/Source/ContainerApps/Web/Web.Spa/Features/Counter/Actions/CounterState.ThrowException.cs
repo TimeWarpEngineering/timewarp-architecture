@@ -4,7 +4,7 @@ internal partial class CounterState
 {
   public static class ThrowException
   {
-    public class Action(string Message) : BaseAction
+    public class Action(string Message) : IBaseAction
     {
       public string Message { get; init; } = Message;
     }

@@ -12,7 +12,7 @@ internal partial class NotificationState
     internal sealed class Action
     (
       SharedProblemDetails SharedProblemDetails
-    ) : BaseAction
+    ) : IBaseAction
     {
       public SharedProblemDetails SharedProblemDetails { get; init; } = SharedProblemDetails;
     }

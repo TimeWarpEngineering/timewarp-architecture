@@ -4,7 +4,7 @@ internal partial class ApplicationState
 {
   public static class ToggleMenu
   {
-    internal class Action : BaseAction { }
+    internal class Action : IBaseAction { }
 
     [UsedImplicitly]
     internal class Handler
