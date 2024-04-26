@@ -1,5 +1,8 @@
 ﻿namespace TimeWarp.Architecture;
 
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+using System.Net.Http.Headers;
+
 /// <summary>
 /// Class that abstracts the WebAPI into a simple interface.
 /// Given a Request return the Response.
@@ -8,10 +11,11 @@
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
 [UsedImplicitly]
-public abstract class WebApiService
+public abstract class ApiService
 (
   IHttpClientFactory HttpClientFactory,
   string HttpClientName,
+  IAccessTokenProvider AccessTokenProvider,
   IOptions<JsonSerializerOptions> JsonSerializerOptionsAccessor
 ) : IApiService
 {
@@ -25,7 +29,11 @@ public abstract class WebApiService
   /// <param name="request"></param>
   /// <param name="cancellationToken"></param>
   /// <returns></returns>
-  public async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest request, CancellationToken cancellationToken) where TResponse : class
+  public async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+  (
+    IApiRequest request,
+    CancellationToken cancellationToken
+  ) where TResponse : class
   {
     HttpResponseMessage httpResponseMessage =
       await GetHttpResponseMessageFromRequest(request).ConfigureAwait(false);
@@ -55,6 +63,7 @@ public abstract class WebApiService
     string route = PrepareRoute(apiRequest);
     StringContent? httpContent = PrepareContent(apiRequest);
     HttpVerb httpVerb = apiRequest.GetHttpVerb();
+	  await SetBearerTokenAsync();
     return httpVerb switch
     {
       HttpVerb.Get => await HttpClient.GetAsync(route).ConfigureAwait(false),
@@ -101,8 +110,7 @@ public abstract class WebApiService
     switch (apiRequest.GetHttpVerb())
     {
       case HttpVerb.Get:
-        return (apiRequest as IHttpGetRequest)?.GetRouteWithQueryString() ??
-          throw new InvalidOperationException("The request must implement IHttpGetRequest.");
+        return (apiRequest as IQueryStringRouteProvider)?.GetRouteWithQueryString() ?? apiRequest.GetRoute();
       case HttpVerb.Post:
       case HttpVerb.Delete:
       case HttpVerb.Put:
@@ -124,5 +132,15 @@ public abstract class WebApiService
       throw new InvalidOperationException("The response is null.");
 
     return response;
+  }
+
+  private async Task SetBearerTokenAsync()
+  {
+    AccessTokenResult tokenResult = await AccessTokenProvider.RequestAccessToken();
+    if (tokenResult.TryGetToken(out AccessToken? token))
+    {
+      HttpClient.DefaultRequestHeaders.Authorization =
+        new AuthenticationHeaderValue("Bearer", token.Value);
+    }
   }
 }
