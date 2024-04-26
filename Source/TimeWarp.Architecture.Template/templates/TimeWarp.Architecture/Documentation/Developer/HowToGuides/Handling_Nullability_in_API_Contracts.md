@@ -9,7 +9,7 @@ When a `Request` property may not be validated for non-null values, it should be
 Example of nullable property in a `Command`:
 
 ```csharp
-public sealed partial class UpdateUser 
+public static partial class UpdateUser 
 {  
   public sealed partial class Command
   {
@@ -25,7 +25,7 @@ If the `Request`'s `Validator` ensures a property is non-null, then the property
 Example of non-nullable property initialized using null-forgiving operator:
 
 ```csharp
-public sealed partial class UpdateUser
+public static partial class UpdateUser
   public sealed partial class Command
   {
     public string MandatoryEmail { get; set; } = default!;
