@@ -11,7 +11,7 @@ using System.Net.Http.Headers;
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
 [UsedImplicitly]
-public abstract class ApiService
+public abstract class BaseApiService
 (
   IHttpClientFactory HttpClientFactory,
   string HttpClientName,
@@ -54,8 +54,7 @@ public abstract class ApiService
     return await ReadFromJson<SharedProblemDetails>(httpResponseMessage).ConfigureAwait(false);
   }
 
-  [UsedImplicitly] // Used by the WebApiServiceTests
-  public async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest
+  private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest
   (
     IApiRequest apiRequest
   )
