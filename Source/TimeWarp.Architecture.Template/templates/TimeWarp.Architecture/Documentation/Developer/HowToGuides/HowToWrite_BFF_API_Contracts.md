@@ -14,7 +14,7 @@ All API contract files are located in the `Features` directory, nested under the
 
 - **Path**: `Features/<PluralizedFeatureName>`
 
-  > **Note**: The `<FeatureName>` is pluralized to differentiate from class names, representing a group of related functionalities.
+  > **Note**: The FeatureName is pluralized to differentiate from class names, representing a group of related functionalities.
   >
   > Example: `Features/ChartOfAccounts`, `Features/Users` 
 
@@ -25,10 +25,10 @@ When features are part of a larger domain, an additional categorization layer is
 #### Feature Folder Contents
 
 - **Commands Folder**: Contains command files for write operations (create, update, delete).
-  - **Path**: `Features/<FeatureName>/Commands`
+  - **Path**: `Features/<PluralizedFeatureName>/Commands`
 
 - **Queries Folder**: Contains query files for read operations.
-  - **Path**: `Features/<FeatureName>/Queries`
+  - **Path**: `Features/<PluralizedFeatureName>/Queries`
 
 #### Naming the Contract Files Within Folders
 
