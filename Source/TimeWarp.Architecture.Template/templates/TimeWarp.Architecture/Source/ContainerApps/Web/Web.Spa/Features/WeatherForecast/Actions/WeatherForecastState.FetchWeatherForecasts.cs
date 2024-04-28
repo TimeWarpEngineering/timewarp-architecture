@@ -17,7 +17,7 @@ internal partial class WeatherForecastsState
     internal class Handler
     (
       IStore store,
-      ApiService ApiService,
+      IApiServerApiService ApiServerApiService,
       IPublisher Publisher
     ) : BaseHandler<Action>(store)
     {
@@ -27,7 +27,7 @@ internal partial class WeatherForecastsState
         IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = action.Days ?? 10 };
 
         OneOf.OneOf<GetWeatherForecasts.Response, SharedProblemDetails> response =
-          await ApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest,cancellationToken);
+          await ApiServerApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest,cancellationToken);
 
         response.Switch
         (
