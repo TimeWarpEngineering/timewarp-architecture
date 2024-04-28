@@ -51,7 +51,8 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
     TProgram.ConfigureEndpoints(WebApplication);
 
     ServiceProvider = WebApplication.Services;
-    ServiceProvider.ValidateOptions(builder.Services);
+    ILogger logger = ServiceProvider.GetService<ILogger<WebApplicationHost<TProgram>>>() ?? throw new InvalidOperationException();
+    ServiceProvider.ValidateOptions(builder.Services, logger);
 
     try
     {
