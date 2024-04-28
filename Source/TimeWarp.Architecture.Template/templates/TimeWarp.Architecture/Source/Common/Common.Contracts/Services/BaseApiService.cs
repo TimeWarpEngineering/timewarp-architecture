@@ -1,8 +1,5 @@
 ﻿namespace TimeWarp.Architecture;
 
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
-using System.Net.Http.Headers;
-
 /// <summary>
 /// Class that abstracts the WebAPI into a simple interface.
 /// Given a Request return the Response.
@@ -15,11 +12,10 @@ public abstract class BaseApiService
 (
   IHttpClientFactory HttpClientFactory,
   string HttpClientName,
-  IAccessTokenProvider AccessTokenProvider,
   IOptions<JsonSerializerOptions> JsonSerializerOptionsAccessor
 ) : IApiService
 {
-  private HttpClient HttpClient => HttpClientFactory.CreateClient(HttpClientName);
+  protected HttpClient HttpClient => HttpClientFactory.CreateClient(HttpClientName);
   private readonly JsonSerializerOptions JsonSerializerOptions = JsonSerializerOptionsAccessor.Value;
 
   /// <summary>
@@ -29,7 +25,7 @@ public abstract class BaseApiService
   /// <param name="request"></param>
   /// <param name="cancellationToken"></param>
   /// <returns></returns>
-  public async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+  public virtual async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
   (
     IApiRequest request,
     CancellationToken cancellationToken
@@ -62,7 +58,6 @@ public abstract class BaseApiService
     string route = PrepareRoute(apiRequest);
     StringContent? httpContent = PrepareContent(apiRequest);
     HttpVerb httpVerb = apiRequest.GetHttpVerb();
-	  await SetBearerTokenAsync();
     return httpVerb switch
     {
       HttpVerb.Get => await HttpClient.GetAsync(route).ConfigureAwait(false),
@@ -131,15 +126,5 @@ public abstract class BaseApiService
       throw new InvalidOperationException("The response is null.");
 
     return response;
-  }
-
-  private async Task SetBearerTokenAsync()
-  {
-    AccessTokenResult tokenResult = await AccessTokenProvider.RequestAccessToken();
-    if (tokenResult.TryGetToken(out AccessToken? token))
-    {
-      HttpClient.DefaultRequestHeaders.Authorization =
-        new AuthenticationHeaderValue("Bearer", token.Value);
-    }
   }
 }
