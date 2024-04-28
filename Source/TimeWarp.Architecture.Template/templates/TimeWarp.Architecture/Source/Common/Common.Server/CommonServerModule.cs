@@ -2,18 +2,17 @@
 
 public class CommonServerModule : IAspNetModule
 {
-  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)
+  public static void ConfigureConfiguration(ConfigurationManager configurationManager)
   {
-    ConfgureAzureAppConfig(aConfigurationManager);;
+    ConfigureAzureAppConfig(configurationManager);;
   }
-
-  public static void ConfigureEndpoints(WebApplication aWebApplication)
+  public static void ConfigureEndpoints(WebApplication webApplication)
   {
-    IConfigurationRoot configurationRoot = (aWebApplication!.Configuration as IConfigurationRoot)!;
+    IConfigurationRoot configurationRoot = webApplication!.Configuration as IConfigurationRoot ?? throw new InvalidOperationException();
 
-    if (aWebApplication.Environment.IsDevelopment())
+    if (webApplication.Environment.IsDevelopment())
     {
-      aWebApplication.MapGet
+      webApplication.MapGet
       (
         "/api/debug-config",
         aHttpContext =>
@@ -24,8 +23,8 @@ public class CommonServerModule : IAspNetModule
       );
     }
   }
-  public static void ConfigureMiddleware(WebApplication aWebApplication) { }
-  public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  public static void ConfigureMiddleware(WebApplication webApplication) { }
+  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
     ValidatorOptions.Global.DisplayNameResolver =
       (aType, aMemberInfo, aLambdaExpression) =>
@@ -34,26 +33,26 @@ public class CommonServerModule : IAspNetModule
 
   public static void AddSwaggerGen
   (
-    IServiceCollection aServiceCollection,
-    string aSwaggerVersion,
-    string aSwaggerApiTitle,
-    Type[] aTypeArray
+    IServiceCollection serviceCollection,
+    string swaggerVersion,
+    string swaggerApiTitle,
+    Type[] typeArray
   )
   {
-    aServiceCollection.AddSwaggerGen
+    serviceCollection.AddSwaggerGen
       (
         aSwaggerGenOptions =>
         {
           aSwaggerGenOptions
           .SwaggerDoc
           (
-            aSwaggerVersion,
-            new OpenApiInfo { Title = aSwaggerApiTitle, Version = aSwaggerVersion }
+            swaggerVersion,
+            new OpenApiInfo { Title = swaggerApiTitle, Version = swaggerVersion }
           );
 
           aSwaggerGenOptions.EnableAnnotations();
 
-          foreach (Type? assemblyType in aTypeArray)
+          foreach (Type? assemblyType in typeArray)
           {
             string xmlFile = $"{assemblyType.Assembly.GetName().Name}.xml";
             string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -62,33 +61,33 @@ public class CommonServerModule : IAspNetModule
         }
       );
 
-    aServiceCollection.AddFluentValidationRulesToSwagger();
+    serviceCollection.AddFluentValidationRulesToSwagger();
   }
 
   public static void UseSwaggerUi
   (
-    WebApplication aWebApplication,
-    string aSwaggerBasePath,
-    string aSwaggerEndpoint,
-    string aSwaggerApiTitle
+    WebApplication webApplication,
+    string swaggerBasePath,
+    string swaggerEndpoint,
+    string swaggerApiTitle
   )
   {
-    aWebApplication
+    webApplication
       .UseSwagger
       (
-        aSwaggerOptions => aSwaggerOptions.RouteTemplate = aSwaggerBasePath + "/swagger/{documentName}/swagger.json"
+        aSwaggerOptions => aSwaggerOptions.RouteTemplate = swaggerBasePath + "/swagger/{documentName}/swagger.json"
       )
       .UseSwaggerUI
       (
         aSwaggerUIOptions =>
         {
-          aSwaggerUIOptions.SwaggerEndpoint($"/{aSwaggerBasePath}{aSwaggerEndpoint}", aSwaggerApiTitle);
-          aSwaggerUIOptions.RoutePrefix = $"{aSwaggerBasePath}/swagger";
+          aSwaggerUIOptions.SwaggerEndpoint($"/{swaggerBasePath}{swaggerEndpoint}", swaggerApiTitle);
+          aSwaggerUIOptions.RoutePrefix = $"{swaggerBasePath}/swagger";
         }
       );
   }
 
-  private static void ConfgureAzureAppConfig(ConfigurationManager aConfigurationManager)
+  private static void ConfigureAzureAppConfig(IConfigurationManager aConfigurationManager)
   {
     string? connectionString = aConfigurationManager.GetConnectionString("AppConfig");
     if (string.IsNullOrEmpty(connectionString))
