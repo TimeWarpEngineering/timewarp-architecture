@@ -123,6 +123,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "06-NewFileTemplates", "06-N
 		.templates\validator.txt = .templates\validator.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Morris.Moxy", "..\..\..\..\..\..\mrpmorris\Morris.Moxy\Source\Lib\Morris.Moxy\Morris.Moxy.csproj", "{B8D4DBAC-5428-48A2-855F-83D5567F56D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.OptionsValidation", "..\..\..\..\..\timewarp-options-validation\source\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj", "{6FC7CF02-2FFB-43D0-A804-553260A84E4F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -313,6 +317,18 @@ Global
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8D4DBAC-5428-48A2-855F-83D5567F56D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8D4DBAC-5428-48A2-855F-83D5567F56D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8D4DBAC-5428-48A2-855F-83D5567F56D9}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8D4DBAC-5428-48A2-855F-83D5567F56D9}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{B8D4DBAC-5428-48A2-855F-83D5567F56D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8D4DBAC-5428-48A2-855F-83D5567F56D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FC7CF02-2FFB-43D0-A804-553260A84E4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FC7CF02-2FFB-43D0-A804-553260A84E4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FC7CF02-2FFB-43D0-A804-553260A84E4F}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FC7CF02-2FFB-43D0-A804-553260A84E4F}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{6FC7CF02-2FFB-43D0-A804-553260A84E4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FC7CF02-2FFB-43D0-A804-553260A84E4F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -357,6 +373,8 @@ Global
 		{08ED6B59-E051-4B4A-AEEA-351D0720FC46} = {45A9CAA5-8BF5-48E9-BBAD-85D5001764AC}
 		{AF802A33-1D61-4089-986C-1265BFD04C79} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67} = {AF802A33-1D61-4089-986C-1265BFD04C79}
+		{B8D4DBAC-5428-48A2-855F-83D5567F56D9} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
+		{6FC7CF02-2FFB-43D0-A804-553260A84E4F} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
