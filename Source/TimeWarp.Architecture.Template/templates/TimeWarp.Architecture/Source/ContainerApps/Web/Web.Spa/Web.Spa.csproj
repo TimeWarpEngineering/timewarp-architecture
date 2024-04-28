@@ -7,7 +7,15 @@
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <!-- Uncomment the following line if you want to Mock B2C.
+     Note you will need to run all Mock Data if you do
+     because the token won't work on the real API -->
+<!--    <DefineConstants>$(DefineConstants);MOCK_AUTHENTICATION</DefineConstants>-->
+  </PropertyGroup>
+
   <ItemGroup>
+    <PackageReference Include="Blazor-State" />
     <PackageReference Include="BlazorComponentUtilities"/>
 <!--    <PackageReference Include="Blazor-State"/>-->
     <PackageReference Include="Grpc.Net.Client"/>
@@ -17,6 +25,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all"/>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client"/>
+    <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" />
     <PackageReference Include="Microsoft.Extensions.Http"/>
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
@@ -29,12 +38,13 @@
     <PackageReference Include="protobuf-net.Grpc"/>
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all"/>
     <PackageReference Include="timewarp-heroicons"/>
-    <PackageReference Include="Timewarp.OptionsValidation"/>
+<!--    <PackageReference Include="Timewarp.OptionsValidation"/>-->
     <PackageReference Include="timewarp-simple-icons"/>
     <PackageReference Include="TimeWarp.State.Plus"/>
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="D:\git\github\TimeWarpEngineering\timewarp-options-validation\source\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
     <!--#if(api)-->
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj"/>
     <!--#endif-->
@@ -50,6 +60,8 @@
   <ItemGroup>
     <!--<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />-->
     <Folder Include="Components\Editors\"/>
+    <Folder Include="Features\Admin\" />
+    <Folder Include="Features\CurrentUser\" />
     <Folder Include="Features\Modal\Actions\"/>
     <Folder Include="Features\Notification\Actions\RemoveNotification\"/>
     <Folder Include="Features\Notification\Components\"/>
@@ -86,6 +98,12 @@
     <TypeScriptInputs Include="..\Web.TypeScript\source\*.*"/>
     <AdditionalFiles Include="Features\Base\StateAccessMixin.mixin"/>
     <AdditionalFiles Include="Mixins\Page.mixin"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Pages\Authentication\ProfilePage.razor" />
+    <_ContentIncludedByDefault Remove="Pages\Authentication\SettingsPage.razor" />
+    <_ContentIncludedByDefault Remove="Pages\Authentication\_Imports.razor" />
   </ItemGroup>
 
   <Target Name="NpmRunBuild" DependsOnTargets="NpmInstall" BeforeTargets="BeforeBuild" Inputs="@(TypeScriptInputs)" Outputs="@(TypeScriptOutputs)">
