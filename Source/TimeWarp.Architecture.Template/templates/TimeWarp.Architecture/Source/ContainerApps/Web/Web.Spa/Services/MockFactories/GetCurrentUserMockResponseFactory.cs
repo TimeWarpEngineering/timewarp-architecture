@@ -43,38 +43,35 @@ internal sealed class GetCurrentUserMockResponseFactory : IMockResponseFactory
   private static GetCurrentUser.Response CreateMockResponseForUnknown()
   {
     return new GetCurrentUser.Response
-    {
-      Modules = AllModules,
-      Roles = new List<Guid>
-      {
+    (
+      modules: AllModules,
+      roles:
+      [
         RoleIds.Administrator,
-        RoleIds.Developer,
-      }
-    };
+        RoleIds.Developer
+      ]
+    );
   }
 
   private static GetCurrentUser.Response CreateMockResponseForAdministrator()
   {
     return new GetCurrentUser.Response
-    {
-      Modules = AllModules,
-      Roles = new List<Guid>
-      {
+    (
+      modules: AllModules,
+      roles:
+      [
         RoleIds.Administrator,
-        RoleIds.Developer,
-      }
-    };
+        RoleIds.Developer
+      ]
+    );
   }
 
   private static GetCurrentUser.Response CreateMockResponseForDeveloper()
   {
     return new GetCurrentUser.Response
-    {
-      Modules = AllModules,
-      Roles = new List<Guid>
-      {
-        RoleIds.Developer
-      }
-    };
+    (
+      modules: AllModules,
+      roles: [RoleIds.Developer]
+    );
   }
 }
