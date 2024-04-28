@@ -7,9 +7,9 @@ public class SuperheroModule
 
     aServiceCollection.AddSingleton
     (
-      aServiceProvider =>
+      serviceProvider =>
       {
-        IConfiguration configuration = aServiceProvider.GetRequiredService<IConfiguration>();
+        IConfiguration configuration = serviceProvider.GetRequiredService<IConfiguration>();
 
         Uri grpcUrl = GetServiceUri(configuration, Constants.GrpcServiceName);
 
