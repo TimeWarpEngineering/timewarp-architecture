@@ -10,5 +10,5 @@
   <ItemGroup>
     <AdditionalFiles Include="Mixins\RouteMixin.mixin" />
   </ItemGroup>
-  
+
 </Project>
