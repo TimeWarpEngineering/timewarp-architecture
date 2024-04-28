@@ -1,6 +1,8 @@
 namespace TimeWarp.Architecture.Features.TodoItems;
 
-[CreateCommand, UpdateCommand, DeleteCommand, GetQuery, GetListQuery]
+// TODO: Revist the Mixins now that we have established better patterns
+// We will use Endpoint centric APIs not Entity Centric so this DTO will go away.
+// [CreateCommand, UpdateCommand, DeleteCommand, GetQuery, GetListQuery]
 public class TodoItemDto
 {
   public Guid TodoItemId { get; set; }
