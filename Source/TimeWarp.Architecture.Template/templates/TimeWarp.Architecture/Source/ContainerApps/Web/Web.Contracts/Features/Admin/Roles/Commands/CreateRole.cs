@@ -10,17 +10,22 @@ public static partial class CreateRole
     public string Description { get; set; } = null!;
   }
 
-  public sealed class Response(Guid roleId)
-  {
-    public Guid RoleId { get; init; } = roleId != Guid.Empty ? roleId : throw new ArgumentException("RoleId cannot be Empty", nameof(roleId));
-  }
-
   public sealed class Validator : AbstractValidator<Command>
   {
     public Validator()
     {
       RuleFor(x => x).SetValidator(new RoleDetailsValidator());
       RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
+    }
+  }
+
+  public sealed class Response
+  {
+    public Guid RoleId { get; }
+
+    public Response(Guid roleId)
+    {
+      RoleId = Guard.Against.NullOrEmpty(roleId);
     }
   }
 }
