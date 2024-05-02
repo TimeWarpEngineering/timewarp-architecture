@@ -71,15 +71,25 @@ Example of `Response` with a parameterized constructor:
 ```csharp
 public sealed class Response
 {
-  public string Email { get; init; }
-  public string Name { get; init; }
+  public string Email { get; }
+  public string Name { get;  }
   
   public Response(string email, string name)
   {
-    Email = email ?? throw new ArgumentNullException(nameof(email));
-    Name = name ?? throw new ArgumentNullException(nameof(name));
+    Email = Guard.Against.NullOrWhiteSpace(email); 
+    Name = Guard.Against.NullOrWhiteSpace(name);
   }
 }
 ```
 
 By following these guidelines, the mutability and nullability of properties in the API contracts can be effectively managed, further improving the robustness and reliability of the application within the TimeWarp Architecture.
+
+
+### FAQ
+
+**Question:** Why not use Fluent validation for Responses?
+
+**Answer:** Validation is designed to provide user-friendly feedback, while exceptions aim to alert developers to code issues. Using Fluent validation for responses would involve additional CPU processing to generate user-friendly errors, which isn't necessary since the main audience for these messages are developers who can interpret technical details like stack traces. Therefore, we avoid the extra computational overhead by not using Fluent validation in responses.
+
+
+
