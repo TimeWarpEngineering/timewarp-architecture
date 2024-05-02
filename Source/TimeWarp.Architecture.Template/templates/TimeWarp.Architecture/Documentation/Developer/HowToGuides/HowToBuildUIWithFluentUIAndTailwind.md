@@ -31,21 +31,24 @@ Adhering to these guidelines will ensure that the TimeWarp application remains c
 ## Appendix
 
 ### Tailwind CSS Classes to Avoid
-- **Restricted Tailwind Classes**: List specific Tailwind classes that are restricted due to potential conflicts with FluentUI's design system. 
+Initially, avoid classes that directly conflict with FluentUI's color and shadow systems. As development progresses, this list may be updated based on specific conflicts or requirements that arise. Key classes to avoid include:
 
-Mostly colors.
-
-bg-*-*,
-text-*-*,
-border-*-*,
-shadow-*-*,
+- `bg-*-*`
+- `text-*-*`
+- `border-*-*`
+- `shadow-*-*`
 
 ### Tailwind CSS Classes to Use
-- **Recommended Tailwind Classes**: Specify Tailwind classes that are safe to use in conjunction with FluentUI components.
+Tailwind classes that are generally safe and recommended to use for enhancing HTML elements outside of FluentUI components, especially for layout and spacing, include:
 
-m-*,
-p-*,
-hover:*
-group-hover:*
-group
+- Margin and Padding: `m-*`, `p-*`
+- Hover Effects: `hover:*`, `group-hover:*`
+- Standard HTML Elements:
+  - Flex and Grid Layout Utilities for non-FluentUI elements: `flex`, `grid`, `place-content-*`, `place-items-*`
+- Responsiveness: `sm:*`, `md:*`, `lg:*`, `xl:*`
 
+### Guidance on Using Tailwind with FluentUI Components
+- When styling FluentUI components, use the properties and methods provided by FluentUI to manage layout and responsiveness. This ensures compatibility and leverages the full capabilities of the design system.
+- Use Tailwind utilities primarily for spacing, responsive adjustments, and cosmetic enhancements on elements that are not already styled or managed by FluentUI.
+
+This section of the guidelines will continue to evolve and be refined as we better understand the interactions between Tailwind CSS and FluentUI throughout the development process.
