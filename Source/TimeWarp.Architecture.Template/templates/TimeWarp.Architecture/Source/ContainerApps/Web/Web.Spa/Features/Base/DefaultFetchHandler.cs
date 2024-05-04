@@ -10,11 +10,10 @@ internal abstract class DefaultFetchHandler<TAction, TResponse, TRequest> : Fetc
   protected DefaultFetchHandler
   (
     IStore store,
-    AuthenticationStateProvider authenticationStateProvider,
     IApiService apiService,
     ISender sender,
-    bool requiresAuthentication = false
-  ) : base(store, authenticationStateProvider, apiService, sender, requiresAuthentication)
+    AuthenticationStateProvider? authenticationStateProvider = null
+  ) : base(store, apiService, authenticationStateProvider)
   {
     Sender = sender;
   }

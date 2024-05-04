@@ -5,22 +5,19 @@ internal abstract class FetchHandler<TAction, TResponse, TRequest> : BaseHandler
     where TResponse : class
     where TRequest : IApiRequest
 {
-    private readonly AuthenticationStateProvider AuthenticationStateProvider;
+    private readonly AuthenticationStateProvider? AuthenticationStateProvider;
     private readonly IApiService ApiService;
-    private readonly bool RequiresAuthentication;
+    private bool RequiresAuthentication => AuthenticationStateProvider is not null;
 
     protected FetchHandler
     (
       IStore store,
-      AuthenticationStateProvider authenticationStateProvider,
       IApiService apiService,
-      ISender sender,
-      bool requiresAuthentication = false
+      AuthenticationStateProvider? authenticationStateProvider = null
     ) : base(store)
     {
         AuthenticationStateProvider = authenticationStateProvider;
         ApiService = apiService;
-        RequiresAuthentication = requiresAuthentication;
     }
 
     public sealed override async Task Handle(TAction action, CancellationToken cancellationToken)
@@ -46,12 +43,12 @@ internal abstract class FetchHandler<TAction, TResponse, TRequest> : BaseHandler
 
     private async Task<bool> IsUserAuthenticatedAsync()
     {
-        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        AuthenticationState authState = await AuthenticationStateProvider!.GetAuthenticationStateAsync();
         ClaimsPrincipal user = authState.User;
         return user.Identity?.IsAuthenticated ?? false;
     }
 
     protected abstract Task<TRequest?> GetRequest(TAction action, CancellationToken cancellationToken);
-    protected abstract Task HandleSuccess(TResponse success, CancellationToken cancellationToken);
+    protected abstract Task HandleSuccess(TResponse response, CancellationToken cancellationToken);
     protected abstract Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken);
 }
