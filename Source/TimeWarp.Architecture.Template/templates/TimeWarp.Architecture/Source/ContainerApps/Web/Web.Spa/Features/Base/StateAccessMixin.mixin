@@ -5,8 +5,7 @@ public partial class BaseComponent
   internal {{moxy.Class.Namespace}}.{{ moxy.Class.Name }} {{ moxy.Class.Name }} => GetState<{{moxy.Class.Namespace}}.{{ moxy.Class.Name }}>();
 }
 
-internal abstract partial class BaseHandler<TAction> : ActionHandler<TAction>
-  where TAction : IAction
+internal abstract partial class BaseHandler<TAction>
 {
   protected {{moxy.Class.Namespace}}.{{ moxy.Class.Name }} {{ moxy.Class.Name }} => Store.GetState<{{moxy.Class.Namespace}}.{{ moxy.Class.Name }}>();
 }
