@@ -1,11 +1,11 @@
 <Project>
   <ItemGroup>
+    <PackageVersion Include="Ardalis.GuardClauses" Version="4.5.0" />
     <PackageVersion Include="Asp.Versioning.Http" Version="7.0.0" />
     <PackageVersion Include="Asp.Versioning.Mvc" Version="7.0.0" />
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
-    <PackageVersion Include="AutoMapper" Version="12.0.1" />
-    <PackageVersion Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageVersion Include="AutoMapper" Version="13.0.1" />
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.2.2" />
     <PackageVersion Include="Azure.Identity" Version="1.11.2" />
     <PackageVersion Include="Blazor-State" Version="11.0.0-beta.31" />
@@ -37,7 +37,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.4" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Core" Version="1.1.0" />
     <PackageVersion Include="Microsoft.Authentication.WebAssembly.Msal" Version="8.0.4" />
-    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="7.1.0" />
+    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="7.2.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis" Version="4.9.2" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />
@@ -52,9 +52,9 @@
     <PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.2" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
     <PackageVersion Include="Microsoft.FeatureManagement.AspNetCore" Version="2.5.1" />
-    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.7.1" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.7.2" />
     <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Emoji" Version="4.6.0" />
-    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.7.0" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.7.2" />
     <PackageVersion Include="Microsoft.Identity.Web" Version="2.18.1" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.43.0" />
     <PackageVersion Include="Microsoft.Tye.Extensions.Configuration" Version="0.10.0-alpha.21420.1" />
