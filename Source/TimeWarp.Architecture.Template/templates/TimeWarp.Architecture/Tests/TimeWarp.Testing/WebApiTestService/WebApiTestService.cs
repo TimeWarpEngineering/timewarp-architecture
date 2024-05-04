@@ -5,14 +5,11 @@ namespace TimeWarp.Architecture.Testing;
 /// A class that contains a common set of methods used when testing Web APIs
 /// </summary>
 [NotTest]
-public class WebApiTestService : IWebApiTestService
+public class WebApiTestService
+(
+  IApiService ApiService
+) : IWebApiTestService
 {
-  private readonly WebApiService WebApiService;
-
-  public WebApiTestService(WebApiService aWebApiService)
-  {
-    WebApiService = aWebApiService;
-  }
 
   /// <inheritdoc/>
   public async Task ConfirmEndpointValidationError<TResponse>
@@ -21,8 +18,14 @@ public class WebApiTestService : IWebApiTestService
     string attributeName
   )
   {
-    HttpResponseMessage httpResponseMessage =
-      await WebApiService.GetHttpResponseMessageFromRequest(apiRequest).ConfigureAwait(false);
+    // Get the type of the current class
+    Type type = typeof(BaseApiService);
+
+    // Get the private method you want to call.
+    MethodInfo method = type.GetMethod("GetHttpResponseMessageFromRequest") ?? throw new InvalidOperationException();
+
+    // Call the method
+    var httpResponseMessage = (HttpResponseMessage)await method.InvokeAsync(ApiService, [apiRequest]).ConfigureAwait(false);
 
     await ConfirmEndpointValidationError(httpResponseMessage, attributeName).ConfigureAwait(false);
   }
@@ -32,7 +35,7 @@ public class WebApiTestService : IWebApiTestService
       IApiRequest apiRequest,
       CancellationToken cancellationToken
     ) where TResponse : class =>
-      await WebApiService.GetResponse<TResponse>(apiRequest, cancellationToken);
+      await ApiService.GetResponse<TResponse>(apiRequest, cancellationToken);
 
   private static async Task ConfirmEndpointValidationError
   (

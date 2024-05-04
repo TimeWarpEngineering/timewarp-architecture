@@ -1,5 +1,7 @@
 namespace TimeWarp.Architecture.Components;
 
+using Ardalis.GuardClauses;
+
 public partial class SimpleAlert : ParentComponent
 {
   [Parameter, EditorRequired] public string Title { get; set; } = default!;
@@ -10,7 +12,7 @@ public partial class SimpleAlert : ParentComponent
   protected override void OnParametersSet()
   {
     base.OnParametersSet();
-    if (Title is null) throw new ArgumentException("Title is required", nameof(Title));
+    Guard.Against.Null(Title);
   }
 
   private CssBuilder CssBuilder =>

@@ -1,4 +1,5 @@
 ﻿@namespace TimeWarp.Architecture.Features.Applications.Components.NavBars.Dark
+
 @inherits ParentComponent
 
 <NavLink
@@ -43,9 +44,6 @@
   protected override void OnParametersSet()
   {
     base.OnParametersSet();
-    if (Href is null)
-    {
-      throw new ArgumentException("The Href parameter is required.");
-    }
+    Guard.Against.NullOrWhiteSpace(Href);
   }
 }

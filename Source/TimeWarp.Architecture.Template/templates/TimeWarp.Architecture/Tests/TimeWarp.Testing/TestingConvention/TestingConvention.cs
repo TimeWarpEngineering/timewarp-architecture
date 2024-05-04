@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Testing;
 
-public class TimeWarpTestingConvention : TimeWarp.Fixie.TestingConvention
+public class TimeWarpTestingConvention : TestingConvention
 {
 
   public TimeWarpTestingConvention() : base(ConfigureAdditionalServicesCallback) { }

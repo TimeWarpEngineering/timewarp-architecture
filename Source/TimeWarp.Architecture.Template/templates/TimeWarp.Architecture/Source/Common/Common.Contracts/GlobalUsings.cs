@@ -1,4 +1,5 @@
-﻿global using JetBrains.Annotations;
+﻿global using Ardalis.GuardClauses;
+global using JetBrains.Annotations;
 global using Microsoft.Extensions.Options;
 global using OneOf;
 global using System.Collections.Specialized;

@@ -5,7 +5,7 @@ internal partial class EventStreamState
   public static class AddEvent
   {
 
-    internal sealed class Action : BaseAction
+    internal sealed class Action : IBaseAction
     {
       public required string Message { get; init; }
     }

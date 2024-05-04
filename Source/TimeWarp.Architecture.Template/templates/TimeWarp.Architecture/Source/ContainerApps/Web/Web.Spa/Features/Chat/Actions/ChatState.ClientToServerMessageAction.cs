@@ -5,7 +5,7 @@ public sealed partial class ChatState
   public static class ClientToServerMessage
   {
     [TrackAction]
-    public class Action(SendMessage.Command SendMessageCommand) : BaseAction
+    public class Action(SendMessage.Command SendMessageCommand) : IBaseAction
     {
       public SendMessage.Command SendMessageCommand { get; set; } = SendMessageCommand;
     }

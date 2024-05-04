@@ -1,5 +1,10 @@
 # ADR-001: Region Naming and Usage in Entity Classes
 
+* Status: proposed
+* Deciders: Architect
+* Consulted: Amina
+* Date: 2024-03-05
+
 ## Context
 
 In our object-oriented design, we have various types of associations between entities, including Composite, Aggregate, and Normal associations. These associations can be represented in code using properties, but without clear organization, the code can become difficult to understand and maintain.

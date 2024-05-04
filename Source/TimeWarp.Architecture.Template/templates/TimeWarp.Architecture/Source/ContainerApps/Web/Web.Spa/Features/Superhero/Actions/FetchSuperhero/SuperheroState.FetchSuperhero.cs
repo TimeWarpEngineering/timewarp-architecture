@@ -4,7 +4,7 @@ internal partial class SuperheroState
 {
   public static class FetchSuperhero
   {
-    public sealed class Action : BaseAction { }
+    public sealed class Action : IBaseAction { }
 
     [UsedImplicitly]
     public sealed class Handler

@@ -1,16 +1,32 @@
+<CascadingAuthenticationState>
+  <Router
+    AppAssembly="@typeof(AssemblyMarker).Assembly"
+    AdditionalAssemblies=@(new[] { typeof(AssemblyMarker).Assembly })>
+    <Found Context="routeData">
+      <AuthorizeRouteView RouteData=@routeData DefaultLayout=@typeof(MainLayout)>
+        <NotAuthorized>
+          @if (context.User.Identity?.IsAuthenticated != true)
+          {
+            <RedirectToLogin/>
+          }
+          else
+          {
+            <ForbiddenPage/>
+          }
+        </NotAuthorized>
+      </AuthorizeRouteView>
+      <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+    </Found>
+    <NotFound>
+      <NotFoundPage/>
+    </NotFound>
+  </Router>
 
-
-<Router
-  AppAssembly="@typeof(AssemblyMarker).Assembly"
-  AdditionalAssemblies=@(new[] { typeof(AssemblyMarker).Assembly })>
-  <Found Context="routeData">
-    <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
-    <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
-  </Found>
-</Router>
-<ReduxDevTools/>
-<TimeWarpJavaScriptInterop />
-<TimeWarpNavigation />
+  <ReduxDevTools />
+  <TimeWarpJavaScriptInterop />
+  <TimeWarpNavigation />
+  @* TODO <AuthenticationStateListener/> *@
+</CascadingAuthenticationState>
 
 @code
 {

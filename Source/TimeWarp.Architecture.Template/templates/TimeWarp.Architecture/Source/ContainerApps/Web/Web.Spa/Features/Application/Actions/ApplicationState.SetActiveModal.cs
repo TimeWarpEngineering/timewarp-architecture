@@ -4,7 +4,7 @@ internal partial class ApplicationState
 {
   public static class SetActiveModal
   {
-    internal class Action(string ModalId) : BaseAction
+    internal class Action(string ModalId) : IBaseAction
     {
       public string ModalId { get; set; } = ModalId;
     }

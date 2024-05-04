@@ -15,6 +15,24 @@ public class Program
 
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
+
+#if MOCK_AUTHENTICATION
+    serviceCollection.AddScoped<AuthenticationStateProvider, MockAuthenticationStateProvider>();
+    serviceCollection.AddScoped<IAccessTokenProvider, MockAccessTokenProvider>();
+#else
+    serviceCollection.AddMsalAuthentication
+    (
+      options =>
+      {
+        configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
+        options.ProviderOptions.LoginMode = "Redirect";
+      }
+    ).AddAccountClaimsPrincipalFactory<AccountClaimsPrincipalFactoryWithRoles>();
+#endif
+
+    // Add authorization services
+    serviceCollection.AddAuthorizationCore(PolicyRegistration.AddPolicies);
+    serviceCollection.AddFluentUIComponents();
     serviceCollection.AddBlazoredSessionStorage();
     serviceCollection.AddBlazoredLocalStorage();
 
@@ -57,7 +75,9 @@ public class Program
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
 
-    serviceCollection.AddScoped<ApiService>();
+    // TODO: Look into naming of the services. I think we can clear up the naming.
+    serviceCollection.AddScoped<IWebServerApiService,WebServerApiService>();
+    serviceCollection.AddScoped<IApiServerApiService,ApiServerApiService>();
     // Set the JSON serializer options
     serviceCollection.Configure<JsonSerializerOptions>
     (

@@ -8,14 +8,14 @@
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
 [UsedImplicitly]
-public abstract class WebApiService
+public abstract class BaseApiService
 (
   IHttpClientFactory HttpClientFactory,
   string HttpClientName,
   IOptions<JsonSerializerOptions> JsonSerializerOptionsAccessor
 ) : IApiService
 {
-  private HttpClient HttpClient => HttpClientFactory.CreateClient(HttpClientName);
+  protected HttpClient HttpClient => HttpClientFactory.CreateClient(HttpClientName);
   private readonly JsonSerializerOptions JsonSerializerOptions = JsonSerializerOptionsAccessor.Value;
 
   /// <summary>
@@ -25,7 +25,11 @@ public abstract class WebApiService
   /// <param name="request"></param>
   /// <param name="cancellationToken"></param>
   /// <returns></returns>
-  public async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest request, CancellationToken cancellationToken) where TResponse : class
+  public virtual async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+  (
+    IApiRequest request,
+    CancellationToken cancellationToken
+  ) where TResponse : class
   {
     HttpResponseMessage httpResponseMessage =
       await GetHttpResponseMessageFromRequest(request).ConfigureAwait(false);
@@ -46,43 +50,71 @@ public abstract class WebApiService
     return await ReadFromJson<SharedProblemDetails>(httpResponseMessage).ConfigureAwait(false);
   }
 
-  [UsedImplicitly]// Used by the WebApiServiceTests
-  public async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest
+  private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest
   (
     IApiRequest apiRequest
   )
   {
+    string route = PrepareRoute(apiRequest);
+    StringContent? httpContent = PrepareContent(apiRequest);
     HttpVerb httpVerb = apiRequest.GetHttpVerb();
-    StringContent? httpContent = null;
-
-    if (httpVerb is HttpVerb.Post or HttpVerb.Put or HttpVerb.Patch)
-    {
-
-      string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType());
-
-      httpContent =
-        new StringContent
-        (
-        requestAsJson,
-        Encoding.UTF8,
-        MediaTypeNames.Application.Json
-        );
-    }
-
     return httpVerb switch
     {
-      HttpVerb.Get => await HttpClient.GetAsync(apiRequest.GetRoute()).ConfigureAwait(false),
-      HttpVerb.Delete => await HttpClient.DeleteAsync(apiRequest.GetRoute()).ConfigureAwait(false),
-      HttpVerb.Post => await HttpClient.PostAsync(apiRequest.GetRoute(), httpContent).ConfigureAwait(false),
-      HttpVerb.Put => await HttpClient.PutAsync(apiRequest.GetRoute(), httpContent).ConfigureAwait(false),
-      HttpVerb.Patch => await HttpClient.PatchAsync(apiRequest.GetRoute(), httpContent).ConfigureAwait(false),
+      HttpVerb.Get => await HttpClient.GetAsync(route).ConfigureAwait(false),
+      HttpVerb.Delete => await HttpClient.DeleteAsync(route).ConfigureAwait(false),
+      HttpVerb.Post => await HttpClient.PostAsync(route, httpContent).ConfigureAwait(false),
+      HttpVerb.Put => await HttpClient.PutAsync(route, httpContent).ConfigureAwait(false),
+      HttpVerb.Patch => await HttpClient.PatchAsync(route, httpContent).ConfigureAwait(false),
       HttpVerb.Head => throw new NotImplementedException(),
       HttpVerb.Options => throw new NotImplementedException(),
       _ => throw new NotImplementedException()
     };
   }
 
+  private static StringContent? PrepareContent(IApiRequest apiRequest)
+  {
+    HttpVerb httpVerb = apiRequest.GetHttpVerb();
+    switch (httpVerb)
+    {
+      case HttpVerb.Post:
+      case HttpVerb.Put:
+      case HttpVerb.Patch:
+        {
+          string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType());
 
+          return
+            new StringContent
+            (
+              requestAsJson,
+              Encoding.UTF8,
+              MediaTypeNames.Application.Json
+            );
+        }
+      case HttpVerb.Get:
+      case HttpVerb.Delete:
+      case HttpVerb.Head:
+      case HttpVerb.Options:
+        return null;
+      default:
+        throw new ArgumentOutOfRangeException($"HttpVerb: {httpVerb} is not supported.");
+    }
+  }
+  private static string PrepareRoute(IApiRequest apiRequest)
+  {
+    switch (apiRequest.GetHttpVerb())
+    {
+      case HttpVerb.Get:
+        return (apiRequest as IQueryStringRouteProvider)?.GetRouteWithQueryString() ?? apiRequest.GetRoute();
+      case HttpVerb.Post:
+      case HttpVerb.Delete:
+      case HttpVerb.Put:
+      case HttpVerb.Patch:
+      case HttpVerb.Head:
+      case HttpVerb.Options:
+      default:
+        return apiRequest.GetRoute();
+    }
+  }
   private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage)
   {
     httpResponseMessage.EnsureSuccessStatusCode();

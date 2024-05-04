@@ -5,35 +5,31 @@ internal partial class WeatherForecastsState
   public static class FetchWeatherForecasts
   {
     [TrackAction]
-    internal sealed class Action
-    (
-      int? Days
-    ) : BaseAction
+    internal sealed class Action : IBaseAction
     {
-      public int? Days { get; init; } = Days;
+      public int? Days { get; }
+      public Action(int? days)
+      {
+        Days = days;
+      }
     }
 
     [UsedImplicitly]
     internal class Handler
     (
       IStore store,
-      ApiService ApiService,
-      IPublisher Publisher
-    ) : BaseHandler<Action>(store)
+      IApiServerApiService apiServerApiService,
+      ISender sender
+    ) : DefaultFetchHandler<Action,GetWeatherForecasts.Response,GetWeatherForecasts.Query>(store, apiServerApiService, sender)
     {
-
-      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      protected override Task<GetWeatherForecasts.Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {
-        IApiRequest getWeatherForecastsRequest = new GetWeatherForecasts.Query { Days = action.Days ?? 10 };
-
-        OneOf.OneOf<GetWeatherForecasts.Response, SharedProblemDetails> response =
-          await ApiService.GetResponse<GetWeatherForecasts.Response>(getWeatherForecastsRequest,cancellationToken);
-
-        response.Switch
-        (
-          weatherForecasts => WeatherForecastsState.WeatherForecastList = weatherForecasts.WeatherForecasts.ToList(),
-          problemDetails => Publisher.Publish(new NotificationState.AddProblemDetails.Action(problemDetails), cancellationToken)
-        );
+        return Task.FromResult<GetWeatherForecasts.Query?>(new GetWeatherForecasts.Query { Days = action.Days ?? 10 });
+      }
+      protected override Task HandleSuccess(GetWeatherForecasts.Response response, CancellationToken cancellationToken)
+      {
+        WeatherForecastsState.WeatherForecastList = response.WeatherForecasts.ToList();
+        return Task.CompletedTask;
       }
     }
   }

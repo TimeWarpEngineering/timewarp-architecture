@@ -4,7 +4,7 @@ internal partial class SidebarState
 {
   public static class OpenSideBar
   {
-    internal class Action : BaseAction { }
+    internal class Action : IBaseAction { }
 
     [UsedImplicitly]
     internal class Handler

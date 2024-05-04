@@ -15,15 +15,22 @@
     <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
     <PackageReference Include="OneOf" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
   </ItemGroup>
   
   <ItemGroup>
     <Folder Include="Service\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\RouteMixin.mixin">
+      <Link>Mixins\RouteMixin.mixin</Link>
+    </AdditionalFiles>
   </ItemGroup>
 
 </Project>

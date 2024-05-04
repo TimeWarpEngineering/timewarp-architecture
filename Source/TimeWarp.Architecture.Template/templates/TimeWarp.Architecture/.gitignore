@@ -305,4 +305,7 @@ GeneratedCode/
 .tye/
 /Source/ContainerApps/Web/Web.Contracts/Generated/**
 /Source/ContainerApps/Web/Web.Spa/Generated/**
+/Source/ContainerApps/Web/Web.Server/Generated/**
 /Tests/TimeWarp.Testing/Generated/**
+/Source/ContainerApps/Web/Web.Server/Logs/log.txt
+/Source/ContainerApps/Api/Api.Contracts/Generated/**

@@ -1,8 +1,8 @@
 namespace TimeWarp.Architecture.Features.TodoItems;
 
-public static class CreateTodoItem
+public sealed partial class CreateTodoItem
 {
-  // TODO: Use Mixin to make this cleaner [RouteMixin("api/TodoItems", HttpVerb.Post)]
+  [RouteMixin("api/TodoItems", HttpVerb.Post)]
   public sealed partial class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
   {
 
@@ -14,9 +14,6 @@ public static class CreateTodoItem
 
     public string Note { get; init; } = string.Empty;
 
-    public const string RouteTemplate = "api/TodoItems";
-    public HttpVerb GetHttpVerb() => HttpVerb.Post;
-    public string GetRoute() => FormattableString.Invariant($"api/TodoItems");
   }
   public class Response : BaseResponse { }
 

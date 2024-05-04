@@ -1,6 +1,10 @@
 // ReSharper disable RedundantNameQualifier
 namespace TimeWarp.Architecture.Web.Server;
 
+using Microsoft.Identity.Web;
+using Serilog;
+using Serilog.Core;
+using Serilog.Debugging;
 using Services;
 
 [UsedImplicitly]
@@ -13,27 +17,53 @@ public class Program : IAspNetProgram
 
   public static Task<int> Main(string[] argumentArray)
   {
-    WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
+    SelfLog.Enable(Console.Error);
+    Thread.CurrentThread.Name = nameof(Main);
 
-    ConfigureConfiguration(builder.Configuration);
-    ConfigureServices(builder.Services, builder.Configuration);
+    IConfigurationRoot configuration = new ConfigurationBuilder()
+      .SetBasePath(Directory.GetCurrentDirectory())
+      .AddJsonFile("appsettings.json")
+      .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true)
+      .Build();
 
-    // TODO: Add Serilog eventually but until
-    builder.Logging
-      .AddConsole()
-      .AddDebug();
+    Logger serilog = new LoggerConfiguration()
+      .ReadFrom.Configuration(configuration)
+      .CreateLogger();
 
-    WebApplication webApplication = builder.Build();
+    ILoggerFactory loggerFactory = new LoggerFactory().AddSerilog(serilog);
 
-    Console.WriteLine($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
+    ILogger<Program> logger = loggerFactory.CreateLogger<Program>();
 
-    ConfigureMiddleware(webApplication);
-    ConfigureEndpoints(webApplication);
+    try
+    {
+      serilog.Information("Starting web host");
+      WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
 
-    webApplication.Services.ValidateOptions(builder.Services);
+      ConfigureConfiguration(builder.Configuration);
+      ConfigureServices(builder.Services, builder.Configuration);
 
-    return webApplication.RunOaktonCommands(argumentArray);
+      WebApplication webApplication = builder.Build();
+
+      Console.WriteLine($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
+
+      ConfigureMiddleware(webApplication);
+      ConfigureEndpoints(webApplication);
+
+      webApplication.Services.ValidateOptions(builder.Services, logger);
+
+      return webApplication.RunOaktonCommands(argumentArray);
+    }
+    catch (Exception exception)
+    {
+      Log.Fatal(exception, "Host terminated unexpectedly");
+      return Task.FromResult(1);
+    }
+    finally
+    {
+      Log.CloseAndFlush();
+    }
   }
+
   public static void ConfigureConfiguration(ConfigurationManager configurationManager)
   {
     CommonServerModule.ConfigureConfiguration(configurationManager);
@@ -41,12 +71,18 @@ public class Program : IAspNetProgram
 
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
+    serviceCollection.AddSerilog();
     serviceCollection.AddHttpClient();
 
     serviceCollection
       .AddRazorComponents()
       .AddInteractiveServerComponents()
       .AddInteractiveWebAssemblyComponents();
+
+    serviceCollection.AddCascadingAuthenticationState();
+    serviceCollection.AddAuthorization();
+    ConfigureAuthentication(serviceCollection, configuration);
+
 
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
     ConfigureSettings(serviceCollection, configuration);
@@ -83,7 +119,10 @@ public class Program : IAspNetProgram
       aResponseCompressionOptions =>
         aResponseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat
         (
-          new[] { MediaTypeNames.Application.Octet }
+          new[]
+          {
+            MediaTypeNames.Application.Octet
+          }
         )
     );
 
@@ -108,6 +147,11 @@ public class Program : IAspNetProgram
         SwaggerApiTitle,
         [typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker), typeof(TimeWarp.Architecture.Web.Contracts.AssemblyMarker)]
       );
+  }
+  private static void ConfigureAuthentication(IServiceCollection serviceCollection, IConfiguration configuration)
+  {
+    serviceCollection.AddMicrosoftIdentityWebAppAuthentication(configuration);
+    // serviceCollection.AddMicrosoftIdentityWebApiAuthentication(configuration);
   }
 
   public static void ConfigureMiddleware(WebApplication webApplication)

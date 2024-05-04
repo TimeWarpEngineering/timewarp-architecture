@@ -6,6 +6,9 @@ const colors = require("tailwindcss/colors");
 /** @type {import('tailwindcss').Config} */
 
 module.exports = {
+  corePlugins: {
+    preflight: false,
+  },
   content: [
     "../Web.Spa/**/*.razor",
     "../Web.Spa/**/*.razor.cs",
@@ -43,7 +46,7 @@ module.exports = {
   },
   plugins: [
     require("@tailwindcss/typography"),
-    require("@tailwindcss/forms"),
+    // require("@tailwindcss/forms"),
     require("@tailwindcss/aspect-ratio"),
   ],
 };

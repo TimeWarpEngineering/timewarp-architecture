@@ -1,0 +1,72 @@
+﻿<AuthorizeView>
+  <Authorized>
+    <p>@AuthMessage</p>
+    <h4>
+      Claims from the ID token
+    </h4>
+    @if (Claims.Any())
+    {
+      <ul>
+        @foreach (Claim claim in Claims)
+        {
+          <li><b>@claim.Type</b>: @claim.Value</li>
+        }
+      </ul>
+    }
+    else
+    {
+      <h3>_authMessage</h3>
+    }
+  </Authorized>
+  <NotAuthorized>
+    Sign-in to see user details.
+  </NotAuthorized>
+</AuthorizeView>
+
+@code
+{
+  [Inject]
+  private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+
+  private string? AuthMessage;
+  private IEnumerable<Claim> Claims = Enumerable.Empty<Claim>();
+
+  // Defines list of claim types that will be displayed after successful sign-in.
+  private readonly string[] ReturnClaims =
+  [
+    // "idp", "name", "oid"
+  ];
+
+  protected override async Task OnInitializedAsync()
+  {
+    await GetClaimsPrincipalData();
+  }
+
+  /// <summary>
+  /// Retrieves user claims for the signed-in user.
+  /// </summary>
+  /// <returns></returns>
+  private async Task GetClaimsPrincipalData()
+  {
+    // Gets an AuthenticationState that describes the current user.
+    AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+    ClaimsPrincipal user = authState.User;
+
+    // Checks if the user has been authenticated.
+    if (user.Identity is { IsAuthenticated: true })
+    {
+      AuthMessage = $"{user.Identity.Name} is authenticated.";
+
+      // Sets the claims value in _claims variable.
+      // The claims mentioned in returnClaims variable are selected only.
+      // if ReturnClaims is empty, all claims are selected.
+
+      Claims = user.Claims.Where(c => ReturnClaims.Length == 0 || ReturnClaims.Contains(c.Type));
+    }
+    else
+    {
+      AuthMessage = "The user is NOT authenticated.";
+    }
+  }
+}

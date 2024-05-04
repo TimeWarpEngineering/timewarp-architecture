@@ -6,7 +6,7 @@ internal partial class ApplicationState
   public static class CloseModal
   {
     [UsedImplicitly]
-    internal class Action() : BaseAction;
+    internal class Action() : IBaseAction;
 
     [UsedImplicitly]
     internal class Handler

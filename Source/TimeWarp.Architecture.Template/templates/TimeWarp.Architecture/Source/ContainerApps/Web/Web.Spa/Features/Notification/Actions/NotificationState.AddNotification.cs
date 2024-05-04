@@ -14,7 +14,7 @@ internal sealed partial class NotificationState
       string Title,
       string Message,
       NotificationType Type
-    ) : BaseAction
+    ) : IBaseAction
     {
       public string Title { get; set; } = Title;
       public string Message { get; set; } = Message;

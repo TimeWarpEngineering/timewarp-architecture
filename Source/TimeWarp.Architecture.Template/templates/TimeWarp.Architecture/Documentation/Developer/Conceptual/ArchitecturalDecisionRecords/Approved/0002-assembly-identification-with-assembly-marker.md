@@ -1,7 +1,8 @@
 # Standardizing Assembly Identification with AssemblyMarker
 
 * Status: accepted
-* Deciders: Architecture Team, Development Team Leads
+* Deciders: Architect
+* Consulted: Amina
 * Date: 2024-03-05
 
 ## Context and Problem Statement

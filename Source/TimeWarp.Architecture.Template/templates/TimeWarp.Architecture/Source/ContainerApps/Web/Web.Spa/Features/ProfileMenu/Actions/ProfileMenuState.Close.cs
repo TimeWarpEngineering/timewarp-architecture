@@ -4,7 +4,7 @@ internal partial class ProfileMenuState
 {
   public static class Close
   {
-    internal class Action : BaseAction { }
+    internal class Action : IBaseAction;
 
     [UsedImplicitly]
     internal class Handler

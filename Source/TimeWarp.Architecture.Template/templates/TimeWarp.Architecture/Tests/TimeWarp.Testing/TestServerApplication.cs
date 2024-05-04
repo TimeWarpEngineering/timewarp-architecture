@@ -1,8 +1,6 @@
 ﻿#nullable enable
 namespace TimeWarp.Architecture.Testing;
 
-using Services;
-
 /// <summary>
 /// An abstract class that adds test functionality for the passed in WebApplication.
 /// </summary>
@@ -37,7 +35,12 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
     // I need Ihttpclientfactory to create the WebApiService.  Where can I get it?
     IHttpClientFactory httpClientFactory = aWebApplicationHost.ServiceProvider.GetRequiredService<IHttpClientFactory>();
 
-    var apiService = new ApiService(httpClientFactory, jsonSerializerOptionsAccessor);
+    // I need IAccessTokenProvider to create the WebApiService.  Where can I get it?
+    // TODO:
+    // Will it be registered in the WebApplicationHost.ServiceProvider? Will I need a Mock? I think I will need a Mock.
+    IAccessTokenProvider accessTokenProvider = aWebApplicationHost.ServiceProvider.GetRequiredService<IAccessTokenProvider>();
+
+    var apiService = new WebServerApiService( accessTokenProvider, httpClientFactory, jsonSerializerOptionsAccessor);
     WebApiTestService = new WebApiTestService(apiService);
   }
 
