@@ -14,10 +14,6 @@
   <!-- Compiled Tailwind CSS -->
   <link href="css/site.css" rel="stylesheet" />
 
-  <!-- Full Tailwind Development CDN -->
-  @* TODO: Remove for production *@
-  <script src="https://cdn.tailwindcss.com"></script>
-
   @* Add FluentUI *@
   @* <link href="Web.Spa.styles.css" rel="stylesheet" /> *@
   @* <link href="_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css" rel="stylesheet" /> *@
@@ -43,6 +39,9 @@
   </div>
 </div>
 
+<!--#if B2C -->
+<script src="_content/Microsoft.Authentication.WebAssembly.Msal/AuthenticationService.js"></script>
+<!--#endif -->
 <script src="_framework/blazor.web.js"></script>
 
 @*TODO: Cramer review PWA block*@
