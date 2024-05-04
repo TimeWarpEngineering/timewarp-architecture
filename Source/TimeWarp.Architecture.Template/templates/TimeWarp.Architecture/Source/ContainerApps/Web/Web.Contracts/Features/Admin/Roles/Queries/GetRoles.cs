@@ -1,5 +1,8 @@
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
+/// <summary>
+/// Get a list of roles for display only.
+/// </summary>
 public static partial class GetRoles
 {
 
@@ -14,12 +17,6 @@ public static partial class GetRoles
     public bool ReturnTotalCount { get; set; }
   }
 
-  public sealed class Response
-  (
-    int totalCount,
-    RoleDto[] items
-  ) : ListResponse<RoleDto>(totalCount, items);
-
   public sealed class Validator : AbstractValidator<Query>
   {
     public Validator()
@@ -28,15 +25,28 @@ public static partial class GetRoles
     }
   }
 
-  public sealed class RoleDto
+  public sealed class Response
   (
-    Guid roleId,
-    string name,
-    string description
-  )
+    int totalCount,
+    RoleDto[] items
+  ) : ListResponse<RoleDto>(totalCount, items);
+
+  public sealed class RoleDto
   {
-    public Guid RoleId { get; init; } = roleId != Guid.Empty ? roleId : throw new ArgumentException("RoleId cannot be Empty", nameof(roleId));
-    public string Name { get; init; } = !string.IsNullOrEmpty(name) ? name : throw new ArgumentException("Name cannot be Empty", nameof(name));
-    public string Description { get; init; } = !string.IsNullOrEmpty(description) ? description : throw new ArgumentException("Description cannot be Empty", nameof(description));
+    public Guid RoleId { get; }
+    public string Name { get; }
+    public string Description { get; }
+
+    public RoleDto
+    (
+      Guid roleId,
+      string name,
+      string description
+    )
+    {
+      RoleId = Guard.Against.NullOrEmpty(roleId);
+      Name = Guard.Against.NullOrEmpty(name);
+      Description = Guard.Against.NullOrEmpty(description);
+    }
   }
 }

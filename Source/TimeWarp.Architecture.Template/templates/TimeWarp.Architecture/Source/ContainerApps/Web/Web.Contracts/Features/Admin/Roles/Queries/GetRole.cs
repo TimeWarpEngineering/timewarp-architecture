@@ -1,5 +1,8 @@
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
+/// <summary>
+/// Get a role by its unique identifier for possible editing.
+/// </summary>
 public static partial class GetRole
 {
   [RouteMixin("api/Roles/{RoleId:min(1)}", HttpVerb.Get)]
@@ -8,17 +11,29 @@ public static partial class GetRole
     public Guid UserId { get; set; }
   }
 
-  public sealed class Validator : AbstractValidator<Query>;
-
-  public sealed class Response
-  (
-    Guid roleId,
-    string name,
-    string description
-  ) : IRoleDetails
+  public sealed class Validator : AbstractValidator<Query>
   {
-    public Guid RoleId { get; init; } = roleId != Guid.Empty ? roleId : throw new ArgumentException("RoleId cannot be Empty", nameof(roleId));
-    public string Name { get; set; } = !string.IsNullOrEmpty(name) ? name : throw new ArgumentException("Name cannot be Empty", nameof(name));
-    public string Description { get; set; } = !string.IsNullOrEmpty(description) ? description : throw new ArgumentException("Description cannot be Empty", nameof(description));
+    public Validator()
+    {
+      RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
+    }
+  }
+
+  public sealed class Response : IRoleDetails
+  {
+    public Guid RoleId { get; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+
+    public Response
+    (
+      Guid roleId,
+      string name,
+      string description)
+    {
+      RoleId = Guard.Against.NullOrEmpty(roleId);
+      Name = Guard.Against.NullOrEmpty(name);
+      Description = Guard.Against.NullOrEmpty(description);
+    }
   }
 }
