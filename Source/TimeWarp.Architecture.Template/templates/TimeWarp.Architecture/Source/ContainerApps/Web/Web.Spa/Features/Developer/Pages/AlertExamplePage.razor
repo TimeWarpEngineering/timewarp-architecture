@@ -1,0 +1,59 @@
+@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
+
+<SidebarPage>
+  <HeaderContent>
+    @ApplicationState.Name
+  </HeaderContent>
+
+  <MainContent>
+    <FluentStack Orientation=Orientation.Vertical>
+
+      <FluentLabel Typo="Typography.H1">Alert Types</FluentLabel>
+
+      <SimpleAlert Type=SimpleAlert.AlertType.Success Title="Success">
+        The operation was completed successfully.
+      </SimpleAlert>
+
+      <SimpleAlert Type=SimpleAlert.AlertType.Danger Title="Error">
+        There was an error processing your request.
+      </SimpleAlert>
+
+      <SimpleAlert Type=SimpleAlert.AlertType.Warning Title="Warning">
+        You are nearing your storage capacity.
+      </SimpleAlert>
+
+      <SimpleAlert Type=SimpleAlert.AlertType.Info Title="Information">
+        New updates will be applied during the next system maintenance window.
+      </SimpleAlert>
+
+      <FluentLabel Typo="Typography.H1">Customized with tailwind classes</FluentLabel>
+
+      <SimpleAlert class="mt-4 w-fit" Title="Alert">
+        This alert is styled with extra tailwind classes. "mt-4 w-fit" which will be applied to the root element.
+      </SimpleAlert>
+
+      <SimpleAlert class="simple-alert__title--uppercase simple-alert__content--italic" Title="Alert">
+        This alert is styled with BEM based tailwind classes.
+        "simple-alert__title--uppercase"
+        "simple-alert__content--italic"
+      </SimpleAlert>
+
+      <FluentLabel Typo="Typography.H1">Customized with consumer css</FluentLabel>
+
+      <div>
+        <SimpleAlert Type=SimpleAlert.AlertType.Custom Title="Custom">
+          This alert is styled with scoped css. It requires a parent container to allow deep to work. Not sure why.
+          It changes the title to uppercase and the content to italic and sets the card background to a light blue.
+        </SimpleAlert>
+      </div>
+
+      <FluentLabel Typo="Typography.H1">Customized with inline style css</FluentLabel>
+
+      <SimpleAlert Title="Alert" Style="">
+        Customized with inline style.  To make the title uppercase and the content italic.
+      </SimpleAlert>
+
+    </FluentStack>
+  </MainContent>
+</SidebarPage>

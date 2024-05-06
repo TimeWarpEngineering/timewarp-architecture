@@ -1,0 +1,16 @@
+/* Custom Alert Styles */
+::deep .simple-alert--custom .simple-alert__card {
+  background-color: lightblue;
+}
+
+::deep .simple-alert--custom .simple-alert__label {
+  color: darkgreen;
+}
+
+::deep .simple-alert--custom .simple-alert__title {
+  text-transform: uppercase;
+}
+
+::deep .simple-alert--custom .simple-alert__content {
+  font-style: italic;
+}
