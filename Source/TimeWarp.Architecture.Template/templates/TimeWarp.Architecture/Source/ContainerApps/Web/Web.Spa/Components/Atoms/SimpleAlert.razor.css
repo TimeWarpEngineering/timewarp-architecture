@@ -1,0 +1,57 @@
+.simple-alert {
+  @apply p-4 bg-purple-500;
+}
+
+::deep .simple-alert__label {
+  @apply m-0;
+}
+
+::deep .simple-alert__title {
+  @apply font-bold;
+}
+
+::deep .simple-alert__content {
+  @apply block sm:inline
+}
+
+ /* Base styles for any alert */
+::deep .simple-alert__card {
+  @apply px-4 py-3 rounded relative border;
+}
+
+/* Success Alert Styles */  
+::deep.simple-alert--success .simple-alert__card {
+  @apply bg-positive-100 border-positive-400;
+}
+
+::deep.simple-alert--success .simple-alert__label {
+  @apply text-positive-700;
+}
+
+/* Danger Alert Styles */
+ ::deep.simple-alert--danger .simple-alert__card {
+  @apply bg-danger-100 border-danger-400;
+}
+
+::deep.simple-alert--danger .simple-alert__label {
+  @apply text-danger-700;
+}
+
+/* Warning Alert Styles */
+::deep.simple-alert--warning .simple-alert__card {
+  @apply bg-warning-100 border-warning-400;
+}
+
+::deep.simple-alert--warning .simple-alert__label {
+  @apply text-warning-700;
+}
+
+/* Info Alert Styles */
+::deep.simple-alert--info .simple-alert__card {
+  @apply bg-info-100 border-info-400;
+}
+
+::deep.simple-alert--info .simple-alert__label {
+  @apply text-info-700;
+}
+

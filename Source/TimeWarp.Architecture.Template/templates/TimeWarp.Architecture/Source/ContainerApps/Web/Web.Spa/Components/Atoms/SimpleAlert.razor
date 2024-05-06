@@ -1,7 +1,40 @@
 ﻿@namespace TimeWarp.Architecture.Components
 @inherits ParentComponent
 
-<div @attributes=Attributes class=@CssBuilder role="alert">
-  <strong class="font-bold">@Title</strong>
-  <span class="block sm:inline">@ChildContent</span>
+@* wrap this in a div so that the card can be styled *@
+<div class="@RootCssBuilder">
+  <FluentCard  @attributes=Attributes Class="simple-alert__card" role="alert">
+    <FluentLabel Typo=Typography.Body Class="simple-alert__label">
+      <span class="simple-alert__title">@Title</span>
+      <span class="simple-alert__content">@ChildContent</span>
+    </FluentLabel>
+  </FluentCard>
 </div>
+
+@code
+{
+  public enum AlertType
+  {
+    Success,
+    Danger,
+    Warning,
+    Info,
+    Custom
+  }
+
+  [Parameter, EditorRequired] public string Title { get; set; } = null!;
+  [Parameter] public AlertType Type { get; set; } = AlertType.Success;
+  private string SimpleAlertTypeClass => $"simple-alert--{Type.ToString().ToLower()}";
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+    Guard.Against.Null(Title);
+    Guard.Against.EnumOutOfRange(Type);
+  }
+
+  private CssBuilder RootCssBuilder =>
+    new CssBuilder("simple-alert")
+      .AddClass(SimpleAlertTypeClass)
+      .AddClassFromAttributes(Attributes);
+}
