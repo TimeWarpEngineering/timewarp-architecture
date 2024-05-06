@@ -1,40 +1,91 @@
 ﻿@namespace TimeWarp.Architecture.Components
 @inherits ParentComponent
 
-@* wrap this in a div so that the card can be styled *@
-<div class="@RootCssBuilder">
-  <FluentCard  @attributes=Attributes Class="simple-alert__card" role="alert">
-    <FluentLabel Typo=Typography.Body Class="simple-alert__label">
-      <span class="simple-alert__title">@Title</span>
-      <span class="simple-alert__content">@ChildContent</span>
+<div @attributes=RootAttributes class=@RootCssBuilder>
+  <FluentCard Class=@CardClasses.ToString() role="alert">
+    <FluentLabel Typo=Typography.Body Class=@LabelClasses.ToString()>
+      <span class=@TitleClasses>@Title</span>
+      <span class=@ContentClasses>@ChildContent</span>
     </FluentLabel>
   </FluentCard>
 </div>
 
-@code
-{
+@code {
+
   public enum AlertType
   {
-    Success,
-    Danger,
-    Warning,
-    Info,
-    Custom
+    Success, Danger, Warning, Info, Custom
   }
+
+  private const string RootClass = "simple-alert";
+  private const string CardClass = "simple-alert__card";
+  private const string LabelClass = "simple-alert__label";
+  private const string TitleClass = "simple-alert__title";
+  private const string ContentClass = "simple-alert__content";
 
   [Parameter, EditorRequired] public string Title { get; set; } = null!;
   [Parameter] public AlertType Type { get; set; } = AlertType.Success;
-  private string SimpleAlertTypeClass => $"simple-alert--{Type.ToString().ToLower()}";
+  private string SimpleAlertTypeClass => $"{RootClass}--{Type.ToString().ToLower()}";
+
+  private CssBuilder RootCssBuilder = new(RootClass);
+  private CssBuilder CardClasses = new(CardClass);
+  private CssBuilder LabelClasses = new(LabelClass);
+  private CssBuilder TitleClasses = new(TitleClass);
+  private CssBuilder ContentClasses = new(ContentClass);
+
+  private Dictionary<string, object> RootAttributes = new();
 
   protected override void OnParametersSet()
   {
     base.OnParametersSet();
     Guard.Against.Null(Title);
     Guard.Against.EnumOutOfRange(Type);
+
+    ProcessAttributes();
   }
 
-  private CssBuilder RootCssBuilder =>
-    new CssBuilder("simple-alert")
-      .AddClass(SimpleAlertTypeClass)
-      .AddClassFromAttributes(Attributes);
+  private void ProcessAttributes()
+  {
+    RootAttributes.Clear();
+    RootCssBuilder.AddClass(SimpleAlertTypeClass);
+
+    // Process the "class" attribute specifically
+    if (Attributes.TryGetValue("class", out object? classValue) && classValue is string classString)
+    {
+      string[] classes = classString.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+      foreach (string className in classes)
+      {
+        if (className.StartsWith($"{CardClass}-"))
+        {
+          CardClasses.AddClass(className[(CardClass.Length + 2)..]);
+        }
+        else if (className.StartsWith($"{LabelClass}-"))
+        {
+          LabelClasses.AddClass(className[(LabelClass.Length + 2)..]);
+        }
+        else if (className.StartsWith($"{TitleClass}-"))
+        {
+          TitleClasses.AddClass(className[(TitleClass.Length + 2)..]);
+        }
+        else if (className.StartsWith($"{ContentClass}-"))
+        {
+          ContentClasses.AddClass(className[(ContentClass.Length + 2)..]);
+        }
+        else
+        {
+          RootCssBuilder.AddClass(className);
+        }
+      }
+    }
+
+    // Copy all other attributes except "class" to the root
+    foreach (KeyValuePair<string, object> attribute in Attributes)
+    {
+      if (attribute.Key != "class")
+      {
+        RootAttributes[attribute.Key] = attribute.Value;
+      }
+    }
+  }
 }
