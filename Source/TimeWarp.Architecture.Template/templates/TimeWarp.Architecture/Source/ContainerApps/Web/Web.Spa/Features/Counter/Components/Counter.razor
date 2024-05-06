@@ -5,5 +5,10 @@
 <div data-qa="@TestId" @attributes=Attributes >
   <p>Current count: @CounterState.Count</p>
 
-  <Button Variant=Button.ButtonVariant.Default @onclick=ButtonClick>Click me</Button>
+  <FluentButton Appearance=Appearance.Accent OnClick=ButtonClick>Click me</FluentButton>
 </div>
+
+@code
+{
+  protected async Task ButtonClick() => await Send(new CounterState.IncrementCounter.Action(Amount: 5));
+}
