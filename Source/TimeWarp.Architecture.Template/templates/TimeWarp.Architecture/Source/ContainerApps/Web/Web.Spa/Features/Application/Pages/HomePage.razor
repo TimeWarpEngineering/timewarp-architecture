@@ -7,44 +7,55 @@
   </HeaderContent>
 
   <MainContent>
-    <div class="px-4 py-6 sm:px-0">
-      <div class="flex flex-col">
-        <div>
-          Welcome to your new
-          <HyperLink href="https://github.com/TimeWarpEngineering/timewarp-architecture">TimeWarp Architecture</HyperLink>
-          app with
-          <ul>
-            <li>
-              <HyperLink href="https://www.nuget.org/profiles/TimeWarp.Enterprises">TimeWarp.Enterprises nugets</HyperLink>
-            </li>
-            <li>
-              <HyperLink href="https://timewarpengineering.github.io/blazor-state/"> Blazor State</HyperLink>
-            </li>
-            <li>
-              <HyperLink href="https://github.com/jbogard/MediatR" target="blank">MediatR.</HyperLink>
-            </li>
-            <li>
-              <HyperLink href="https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en" target="blank">Redux Dev Tools Chrome Extension </HyperLink>
-            </li>
-          </ul>
-        </div>
+    <FluentStack Orientation=Orientation.Vertical>
+      <FluentLabel Typo=Typography.Body>
+        Welcome to your new
+        <NavLink href="https://github.com/TimeWarpEngineering/timewarp-architecture">TimeWarp Architecture</NavLink>
+        app with
+        <ul>
+          <li>
+            <NavLink href="https://www.nuget.org/profiles/TimeWarp.Enterprises">TimeWarp.Enterprises nugets</NavLink>
+          </li>
+          <li>
+            <NavLink href="https://timewarpengineering.github.io/blazor-state/"> Blazor State</NavLink>
+          </li>
+          <li>
+            <NavLink href="https://github.com/jbogard/MediatR" target="blank">MediatR.</NavLink>
+          </li>
+          <li>
+            <NavLink href="https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en" target="blank">Redux Dev Tools Chrome Extension </NavLink>
+          </li>
+        </ul>
+      </FluentLabel>
 
+      <SimpleAlert class="mt-4 w-fit" Title="Alert">
+        This site is built with
+        <NavLink href="https://github.com/microsoft/fluentui-blazor" target="blank">Fluent UI</NavLink>
+        and
+        <HyperLink href="https://tailwindcss.com/" target="blank">Tailwind css</HyperLink>
+      </SimpleAlert>
 
-        <SimpleAlert class="mt-4" Title="Tailwind UI">
-          This site is built with
-          <HyperLink href="https://tailwindcss.com/" target="blank">Tailwind css</HyperLink>
-          and
-          <HyperLink href="https://tailwindui.com" target="blank">Tailwind UI</HyperLink>
-        </SimpleAlert>
-
-        <img alt="Solid Team" class="w-full" src="/images/TheFreezeTeam/SOLID_Team.png" />
-        <div>
-          <FluentButton Appearance="Appearance.Accent" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
-          <Button Variant=Button.ButtonVariant.Default data-qa="FiveSecondButton" @onclick=FiveSecondTaskButtonClick>Launch Five Second Task</Button>
-          <Button Variant=Button.ButtonVariant.Default data-qa="TwoSecondButton" @onclick=TwoSecondTaskButtonClick>Launch Two Second Task</Button>
-          <Button Variant=Button.ButtonVariant.Default data-qa="ModalButton" @onclick=ModalButtonClick>Show Modal</Button>
-        </div>
+      <img alt="Solid Team" class="w-full" src="/images/TheFreezeTeam/SOLID_Team.png" />
+      <div>
+        <FluentButton Appearance="Appearance.Accent" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick=TwoSecondTaskButtonClick>Launch Two Second Task</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick=ModalButtonClick>Show Modal</FluentButton>
       </div>
-    </div>
+
+      <FluentLabel Typo="Typography.Body"> Example 'Body' label </FluentLabel>
+      <FluentLabel Typo="Typography.Subject"> Example 'Subject' label </FluentLabel>
+      <FluentLabel Typo="Typography.Header"> Example 'Header' label </FluentLabel>
+      <FluentLabel Typo="Typography.PaneHeader"> Example 'PaneHeader' label </FluentLabel>
+      <FluentLabel Typo="Typography.EmailHeader"> Example 'EmailHeader' label </FluentLabel>
+      <FluentLabel Typo="Typography.PageTitle"> Example 'PageTitle' label </FluentLabel>
+      <FluentLabel Typo="Typography.HeroTitle"> Example 'HeroTitle' label </FluentLabel>
+      <FluentLabel Typo="Typography.H1"> Example 'H1' label </FluentLabel>
+      <FluentLabel Typo="Typography.H2"> Example 'H2' label </FluentLabel>
+      <FluentLabel Typo="Typography.H3"> Example 'H3' label </FluentLabel>
+      <FluentLabel Typo="Typography.H4"> Example 'H4' label </FluentLabel>
+      <FluentLabel Typo="Typography.H5"> Example 'H5' label </FluentLabel>
+      <FluentLabel Typo="Typography.H6"> Example 'H6' label </FluentLabel>
+
+    </FluentStack>
   </MainContent>
 </SidebarPage>
