@@ -72,11 +72,6 @@
     <Folder Include="wwwroot\js\"/>
   </ItemGroup>
 
-  <!--  <ItemGroup>-->
-  <!--    &lt;!&ndash; Exclude everything in the base folder, correctly scoped to each project &ndash;&gt;-->
-  <!--    <Compile Remove="$(GeneratedFolder)\**\*.cs"/>-->
-  <!--  </ItemGroup>-->
-
   <!--
       1. Install npm packages
       "Inputs" and "Outputs" are used for incremental builds. If all output items are up-to-date, MSBuild skips the target.
@@ -117,7 +112,19 @@
     <Copy SourceFiles="@(FilesToCopy)" DestinationFolder="wwwroot\js" SkipUnchangedFiles="true"/>
   </Target>
 
-  <Target Name="NpmRunTailWind" DependsOnTargets="NpmRunBuild" BeforeTargets="BeforeBuild" Inputs="..\Web.TypeScript\tailwind.config.js;..\Web.TypeScript\css\input.css" Outputs="wwwroot\css\site.css">
+  <!-- Target to copy scoped CSS to a more accessible location -->
+  <Target Name="CopyScopedCss" AfterTargets="Build">
+    <Copy SourceFiles="$(ProjectDir)obj\$(ConfigurationName)\$(TargetFramework)\scopedcss\bundle\$(ProjectName).styles.css"
+          DestinationFolder="$(ProjectDir)obj\css\"
+          SkipUnchangedFiles="true" />
+  </Target>
+  
+  <Target 
+    Name="NpmRunTailWind" 
+    DependsOnTargets="Build;NpmRunBuild;CopyScopedCss" 
+    AfterTargets="Build" 
+    Inputs="..\Web.TypeScript\tailwind.config.js;..\Web.TypeScript\css\input.css;.\;..\Web.Spa\obj\css\Web.Spa.styles.css" 
+    Outputs="wwwroot\css\site.css">
     <Exec Command="npm run tailwind" WorkingDirectory="..\Web.TypeScript\"/>
   </Target>
 
