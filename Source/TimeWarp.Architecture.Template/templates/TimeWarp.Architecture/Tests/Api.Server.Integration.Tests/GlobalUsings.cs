@@ -1,5 +1,4 @@
-﻿global using Dawn;
-global using FluentAssertions;
+﻿global using FluentAssertions;
 global using FluentAssertions.Execution;
 global using FluentValidation.Results;
 global using FluentValidation.TestHelper;

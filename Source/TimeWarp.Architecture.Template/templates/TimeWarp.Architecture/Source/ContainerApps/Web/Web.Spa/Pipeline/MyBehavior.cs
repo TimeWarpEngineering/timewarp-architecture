@@ -29,7 +29,7 @@ public class MyBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResp
     CancellationToken aCancellationToken
   )
   {
-    Guard.Argument(aNext, nameof(aNext)).NotNull();
+    Guard.Against.Null(aNext);
 
     Logger.LogDebug($"{GetType().Name}: Start");
 
