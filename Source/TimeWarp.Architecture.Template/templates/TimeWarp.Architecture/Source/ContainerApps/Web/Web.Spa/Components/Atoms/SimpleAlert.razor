@@ -2,10 +2,10 @@
 @inherits ParentComponent
 
 <div @attributes=RootAttributes class=@RootCssBuilder>
-  <FluentCard Class=@CardClasses.ToString() role="alert">
-    <FluentLabel Typo=Typography.Body Class=@LabelClasses.ToString()>
-      <span class=@TitleClasses>@Title</span>
-      <span class=@ContentClasses>@ChildContent</span>
+  <FluentCard Class=@CardClasses.ToString() role="alert" Style=@CardStyle>
+    <FluentLabel Typo=Typography.Body Class=@LabelClasses.ToString() Style=@LabelStyle>
+      <span class=@TitleClasses style=@TitleStyle>@Title</span>
+      <span class=@ContentClasses style=@ContentStyle>@ChildContent</span>
     </FluentLabel>
   </FluentCard>
 </div>
@@ -25,6 +25,12 @@
 
   [Parameter, EditorRequired] public string Title { get; set; } = null!;
   [Parameter] public AlertType Type { get; set; } = AlertType.Success;
+  [Parameter] public string? CardStyle { get; set; }
+  [Parameter] public string? TitleStyle { get; set; }
+  [Parameter] public string? ContentStyle { get; set; }
+  [Parameter] public string? LabelStyle { get; set; }
+
+
   private string SimpleAlertTypeClass => $"{RootClass}--{Type.ToString().ToLower()}";
 
   private CssBuilder RootCssBuilder = new(RootClass);

@@ -1,5 +1,4 @@
 .simple-alert {
-  @apply p-4 bg-purple-500;
 }
 
 ::deep .simple-alert__label {
