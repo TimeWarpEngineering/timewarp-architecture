@@ -1,6 +1,7 @@
 namespace TimeWarp.Architecture.Features.EventStreams;
 
-using static TimeWarp.Architecture.Features.EventStreams.EventStreamState;
+using static EventStreamState;
+using Guard=Ardalis.GuardClauses.Guard;
 
 /// <summary>
 /// Every event that comes through the pipeline adds an object to the EventStreamState
@@ -33,7 +34,7 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
     CancellationToken aCancellationToken
   )
   {
-    Guard.Argument(aNext, nameof(aNext)).NotNull();
+    Guard.Against.Null(aNext);
 
     await AddEventToStream(aRequest, "Start").ConfigureAwait(false);
     TResponse newState = await aNext().ConfigureAwait(false);
