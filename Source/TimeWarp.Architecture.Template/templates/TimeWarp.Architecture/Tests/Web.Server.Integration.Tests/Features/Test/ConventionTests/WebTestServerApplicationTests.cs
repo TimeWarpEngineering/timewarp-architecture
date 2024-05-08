@@ -8,7 +8,7 @@ public class Should
     WebTestServerApplication aWebTestServerApplication
   )
   {
-    Guard.Argument(aWebTestServerApplication).NotNull();
+    Guard.Against.Null(aWebTestServerApplication);
   }
 
   /// <summary>

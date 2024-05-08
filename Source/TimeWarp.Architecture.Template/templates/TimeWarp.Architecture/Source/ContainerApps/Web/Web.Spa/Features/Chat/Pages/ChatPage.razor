@@ -13,7 +13,7 @@
           <label for="message">Message</label>
           <input type="text" class="form-control" id="message" @bind=Message @onkeydown=HandleKeyDown />
         </div>
-        <Button Variant=Button.ButtonVariant.Default @onclick=SendMessage>Send</Button>
+        <FluentButton Appearance=Appearance.Accent OnClick=SendMessage>Send</FluentButton>
 
         <hr />
 

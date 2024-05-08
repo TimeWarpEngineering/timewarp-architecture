@@ -1,18 +1,20 @@
 ﻿namespace ApiTestServerApplication_;
 
+using Ardalis.GuardClauses;
+
 [TestTag("ApiTestServerApplication")]
 public class Should
 {
   public Should
   (
-    ApiTestServerApplication aApiTestServerApplication
+    ApiTestServerApplication apiTestServerApplication
   )
   {
-    Guard.Argument(aApiTestServerApplication).NotNull();
+    Guard.Against.Null(apiTestServerApplication);
   }
 
   public void Start_Without_Exception() => true.Should().BeTrue();
-  
+
   [Skip("This test runs forever to allow me to manually test if servers are running properly.  Normally needs to be skipped as it will never completed")]
   public async Task RunForever()
   {

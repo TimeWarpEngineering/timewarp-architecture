@@ -26,6 +26,6 @@ internal partial class WeatherForecastsState
   internal void Initialize(List<WeatherForecastDto> aWeatherForecastList)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
-    WeatherForecastList = Guard.Argument(aWeatherForecastList, nameof(aWeatherForecastList)).NotNull();
+    WeatherForecastList = Guard.Against.Null(aWeatherForecastList);
   }
 }

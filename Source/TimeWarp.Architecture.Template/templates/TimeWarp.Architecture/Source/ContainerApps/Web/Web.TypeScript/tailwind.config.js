@@ -7,11 +7,12 @@ const colors = require("tailwindcss/colors");
 
 module.exports = {
   corePlugins: {
-    preflight: false,
+    preflight: true,
   },
   content: [
     "../Web.Spa/**/*.razor",
     "../Web.Spa/**/*.razor.cs",
+    "../Web.Spa/obj/css/Web.Spa.styles.css",
     "../**/*.html",
   ],
   safelist: [
@@ -38,6 +39,7 @@ module.exports = {
         danger: colors.red,
         warning: colors.amber,
         positive: colors.emerald,
+        info: colors.blue,
       },
       fontFamily: {
         sans: ["Inter var", ...defaultTheme.fontFamily.sans],

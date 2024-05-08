@@ -1,4 +1,4 @@
-﻿global using Dawn;
+﻿global using Ardalis.GuardClauses;
 global using FluentAssertions;
 global using FluentAssertions.Execution;
 global using FluentValidation.Results;

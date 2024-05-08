@@ -13,7 +13,7 @@
           <div class="mt-5 sm:mt-6">
             @if (ActionContent is null)
             {
-              <Button Variant=Button.ButtonVariant.Default data-qa="ModalButton" @onclick=CloseModal>Close</Button>
+              <FluentButton Appearance=Appearance.Accent data-qa="ModalButton" OnClick=CloseModal>Close</FluentButton>
             }
             else
             {
@@ -25,3 +25,5 @@
     </div>
   </div>
 }
+
+

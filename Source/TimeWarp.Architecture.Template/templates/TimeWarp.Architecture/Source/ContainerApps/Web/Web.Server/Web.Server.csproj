@@ -22,7 +22,6 @@
 
   <ItemGroup Label="Core">
     <PackageReference Include="AutoMapper" />
-    <PackageReference Include="Dawn.Guard" />
     <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
