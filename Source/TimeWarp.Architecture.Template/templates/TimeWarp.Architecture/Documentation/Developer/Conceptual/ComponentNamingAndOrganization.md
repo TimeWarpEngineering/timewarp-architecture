@@ -95,8 +95,8 @@ These components are specialized for editing specific types of values. In the co
 
 ## Example Directory Structure
 
-\```
-src/
+```
+Web.Spa/
 ├── Components/
 │   ├── Button.razor
 │   ├── InputField.razor
@@ -123,7 +123,7 @@ src/
 ├── MainLayout.razor
 ├── NavMenu.razor
 └── ...
-\```
+```
 
 ## Conclusion
 
