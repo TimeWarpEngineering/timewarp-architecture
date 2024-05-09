@@ -80,11 +80,18 @@ These components are small, self-contained, and focused on a specific piece of f
 
 ### Editor Components
 
-These components are specialized for editing specific types of values. They handle the user input for different data types.
+These components are specialized for editing specific types of values. In the context of Domain-Driven Design (DDD), value types are simple or complex data types that are immutable and have no identity. They represent concepts that are not entities but are significant to the business domain. The editors handle the user input for different value types, ensuring appropriate validation and formatting.
 
 **Naming Convention:**
 - Suffix: `Editor`
 - Example: `DateEditor.razor`, `NumericEditor.razor`, `PhoneEditor.razor`, `StringEditor.razor`
+
+**Examples of Value Type Editors**:
+- **DateEditor**: Handles input and validation for date values.
+- **NumericEditor**: Manages numeric inputs, including integers, floats, and decimals.
+- **PhoneEditor**: Specifically designed for phone number inputs, ensuring correct format.
+- **StringEditor**: Generic string input with validation for length, pattern, etc.
+- **Complex Value Type Editors**: Editors for more complex value types that may combine multiple fields or require more sophisticated validation, such as `AddressEditor` or `MoneyEditor`.
 
 ## Example Directory Structure
 
@@ -93,3 +100,31 @@ src/
 ├── Components/
 │   ├── Button.razor
 │   ├── InputField.razor
+│   ├── LoadingSpinner.razor
+│   ├── DateEditor.razor
+│   ├── NumericEditor.razor
+│   ├── PhoneEditor.razor
+│   ├── StringEditor.razor
+│   └── ...
+├── Features/
+│   ├── UserManagement/
+│   │   ├── UserProfileComponent.razor
+│   │   ├── UserTable.razor
+│   │   └── ...
+│   ├── Sales/
+│   │   ├── SalesChart.razor
+│   │   ├── SalesPage.razor
+│   │   └── ...
+│   └── Inventory/
+│       ├── InventoryTable.razor
+│       ├── InventoryForm.razor
+│       └── ...
+└── Shared/
+├── MainLayout.razor
+├── NavMenu.razor
+└── ...
+\```
+
+## Conclusion
+
+Adhering to these naming conventions and organizational structures will help maintain a clear, consistent, and maintainable codebase. It distinguishes between atomic components that can be reused across different parts of the application and domain-specific components that are tied to particular features.
