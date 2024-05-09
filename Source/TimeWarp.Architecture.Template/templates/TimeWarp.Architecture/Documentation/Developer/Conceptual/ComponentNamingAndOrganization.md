@@ -80,7 +80,7 @@ These components are small, self-contained, and focused on a specific piece of f
 
 ### Editor Components
 
-These components are specialized for editing specific types of values. In the context of Domain-Driven Design (DDD), value types are simple or complex data types that are immutable and have no identity. They represent concepts that are not entities but are significant to the business domain. The editors handle the user input for different value types, ensuring appropriate validation and formatting.
+These components are specialized for editing specific types of values. In the context of Domain-Driven Design (DDD), value types are simple or complex data types that are immutable and have no identity. They represent concepts that are not entities but are significant to the business domain. Value types are used by business domains like `int` and `string`, but are decoupled from them, allowing a library of value types to be reused across many domains. The editors handle user input for different value types, ensuring appropriate validation and formatting.
 
 **Naming Convention:**
 - Suffix: `Editor`
