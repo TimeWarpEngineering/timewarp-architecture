@@ -14,6 +14,10 @@ This folder contains atomic, non-business domain components. These components ar
 - `Button.razor`
 - `InputField.razor`
 - `LoadingSpinner.razor`
+- `DateEditor.razor`
+- `NumericEditor.razor`
+- `PhoneEditor.razor`
+- `StringEditor.razor`
 
 ### Feature Folders
 
@@ -74,6 +78,14 @@ These components are small, self-contained, and focused on a specific piece of f
 - Suffix: `Widget`
 - Example: `WeatherWidget.razor`
 
+### Editor Components
+
+These components are specialized for editing specific types of values. They handle the user input for different data types.
+
+**Naming Convention:**
+- Suffix: `Editor`
+- Example: `DateEditor.razor`, `NumericEditor.razor`, `PhoneEditor.razor`, `StringEditor.razor`
+
 ## Example Directory Structure
 
 \```
@@ -81,27 +93,3 @@ src/
 ├── Components/
 │   ├── Button.razor
 │   ├── InputField.razor
-│   ├── LoadingSpinner.razor
-│   └── ...
-├── Features/
-│   ├── UserManagement/
-│   │   ├── UserProfileComponent.razor
-│   │   ├── UserTable.razor
-│   │   └── ...
-│   ├── Sales/
-│   │   ├── SalesChart.razor
-│   │   ├── SalesPage.razor
-│   │   └── ...
-│   └── Inventory/
-│       ├── InventoryTable.razor
-│       ├── InventoryForm.razor
-│       └── ...
-└── Shared/
-├── MainLayout.razor
-├── NavMenu.razor
-└── ...
-\```
-
-## Conclusion
-
-Adhering to these naming conventions and organizational structures will help maintain a clear, consistent, and maintainable codebase. It distinguishes between atomic components that can be reused across different parts of the application and domain-specific components that are tied to particular features.
