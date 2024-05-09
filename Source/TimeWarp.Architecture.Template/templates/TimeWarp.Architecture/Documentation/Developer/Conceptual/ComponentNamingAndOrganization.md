@@ -12,7 +12,6 @@ This folder contains atomic, non-business domain components. These components ar
 
 **Examples:**
 - `Button.razor`
-- `InputField.razor`
 - `LoadingSpinner.razor`
 - `DateEditor.razor`
 - `NumericEditor.razor`
@@ -98,13 +97,52 @@ These components are specialized for editing specific types of values. In the co
 ```
 Web.Spa/
 ├── Components/
-│   ├── Button.razor
-│   ├── InputField.razor
-│   ├── LoadingSpinner.razor
-│   ├── DateEditor.razor
-│   ├── NumericEditor.razor
-│   ├── PhoneEditor.razor
-│   ├── StringEditor.razor
+│   ├── Elements/
+│   │   ├── Button.razor
+│   │   ├── InputField.razor
+│   │   ├── LoadingSpinner.razor
+│   ├── Base/
+│   │   ├── Abstractions/
+│   │   │   ├── IAttributeComponent.cs
+│   │   │   ├── IParentComponent.razor
+│   │   │   └── ...
+│   │   ├── DisplayComponent.razor
+│   │   ├── ParentComponent.razor
+│   │   └── ...
+│   ├── Editors/
+│   │   ├── DateEditor.razor
+│   │   ├── NumericEditor.razor
+│   │   ├── PhoneEditor.razor
+│   │   ├── StringEditor.razor
+│   │   ├── AddressEditor.razor
+│   │   └── ...
+│   ├── Forms/
+│   │   ├── FormContainer.razor
+│   │   └── ...
+│   ├── Layouts/
+│   │   ├── MainLayout.razor
+│   │   ├── AltLayout.razor
+│   │   └── ...
+│   ├── Composites/
+│   │   ├── AuthorizedFluentNavLink.razor
+│   │   └── ...
+│   ├── Pages/
+│   │   ├── TimeWarpPage/
+│   │   │   ├── TimeWarpPage.razor
+│   │   │   ├── Footer.razor
+│   │   │   ├── Header.razor
+│   │   │   ├── Navigation.razor
+│   │   │   ├── Banner.razor
+│   │   │   └── ...
+│   │   ├── AlternatePage/
+│   │   │   ├── AlternatePage.razor
+│   │   │   ├── Footer.razor
+│   │   │   ├── Header.razor
+│   │   │   ├── Navigation.razor
+│   │   │   ├── Banner.razor
+│   │   │   └── ...
+│   │   └── ...
+│   ├── Routes.razor
 │   └── ...
 ├── Features/
 │   ├── UserManagement/
