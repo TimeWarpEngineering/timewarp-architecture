@@ -193,6 +193,7 @@ Web.Spa/
 │   │   ├── Components/
 │   │   │   ├── SalesTable.razor
 │   │   │   ├── SalesChart.razor
+│   │   │   ├── SalesDashboardWidget.razor
 │   │   │   └── ...
 │   │   └── ...
 │   ├── Inventory/
