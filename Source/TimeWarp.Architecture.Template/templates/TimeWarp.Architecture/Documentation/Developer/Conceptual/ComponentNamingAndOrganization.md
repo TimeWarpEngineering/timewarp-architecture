@@ -121,6 +121,22 @@ These components represent modal dialogs used for user interactions that require
 - Suffix: `Dialog`
 - Example: `ConfirmDialog.razor`
 
+### Section Components
+
+Section components represent significant parts of a page but do not have their own routes. They are larger than widgets and can encapsulate substantial functionality, often comprising multiple widgets or other components. Sections are integral parts of a page layout, contributing to the overall structure and functionality of a feature.
+
+**Naming Convention:**
+- Suffix: `Section`
+- Example: `CustomerSearchSection.razor`
+
+**Examples:**
+- **CustomerSearchSection**: Encapsulates the entire customer search functionality within a section of a page.
+  - `CustomerSearchSection.razor`
+  - This section might include several widgets or other components, such as search forms and result tables.
+- **UserProfileSection**: Represents the user profile area within a page, containing detailed user information and related functionalities.
+  - `UserProfileSection.razor`
+  - This section might include components like user details, activity logs, and settings forms.
+
 ### Widget Components
 
 These components are small, self-contained, and focused on a specific piece of functionality or UI element. They are often used to create a modular and reusable interface.
