@@ -1,0 +1,11 @@
+#nullable enable
+namespace {{ moxy.Class.Namespace }};
+
+partial class {{ moxy.Class.DeclaringType.Name }}
+{
+  partial class {{ moxy.Class.Name }} : IAuthApiRequest
+  {
+    public Guid UserId { get; set; }
+  }
+}
+{{- -}}

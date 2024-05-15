@@ -59,6 +59,12 @@
     <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\RouteMixin.mixin">
       <Link>Mixins\RouteMixin.mixin</Link>
     </AdditionalFiles>
+    <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\IOpenDataQueryParametersMixin.mixin">
+      <Link>Mixins\IOpenDataQueryParametersMixin.mixin</Link>
+    </AdditionalFiles>
+    <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\IAuthApiRequestMixin.mixin">
+      <Link>Mixins\IAuthApiRequestMixin.mixin</Link>
+    </AdditionalFiles>
   </ItemGroup>
 
 </Project>

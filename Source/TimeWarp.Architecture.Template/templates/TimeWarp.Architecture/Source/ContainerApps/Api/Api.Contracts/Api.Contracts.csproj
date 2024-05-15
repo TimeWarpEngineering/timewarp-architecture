@@ -4,12 +4,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="JetBrains.Annotations" />
@@ -22,14 +22,20 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <Folder Include="Service\" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\RouteMixin.mixin">
       <Link>Mixins\RouteMixin.mixin</Link>
+    </AdditionalFiles>
+    <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\IOpenDataQueryParametersMixin.mixin">
+      <Link>Mixins\IOpenDataQueryParametersMixin.mixin</Link>
+    </AdditionalFiles>
+    <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\IAuthApiRequestMixin.mixin">
+      <Link>Mixins\IAuthApiRequestMixin.mixin</Link>
     </AdditionalFiles>
   </ItemGroup>
 

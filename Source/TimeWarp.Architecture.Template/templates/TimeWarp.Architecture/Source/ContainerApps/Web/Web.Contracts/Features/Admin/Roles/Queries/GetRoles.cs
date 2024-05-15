@@ -7,15 +7,9 @@ public static partial class GetRoles
 {
 
   [RouteMixin("api/Roles", HttpVerb.Get)]
-  public sealed partial class Query : IAuthApiRequest, IOpenDataQueryParameters, IRequest<OneOf<Response, SharedProblemDetails>>
-  {
-    public Guid UserId { get; set; }
-    public int? Top { get; set; }
-    public int? Skip { get; set; }
-    public string? Filter { get; set; }
-    public string? OrderBy { get; set; }
-    public bool ReturnTotalCount { get; set; }
-  }
+  [IOpenDataQueryParametersMixin]
+  [IAuthApiRequestMixin]
+  public sealed partial class Query : IRequest<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>
   {

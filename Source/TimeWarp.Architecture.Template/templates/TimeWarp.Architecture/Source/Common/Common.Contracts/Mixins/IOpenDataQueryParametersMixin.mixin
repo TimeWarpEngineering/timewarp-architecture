@@ -1,0 +1,15 @@
+#nullable enable
+namespace {{ moxy.Class.Namespace }};
+
+partial class {{ moxy.Class.DeclaringType.Name }}
+{
+  partial class {{ moxy.Class.Name }} : IOpenDataQueryParameters
+  {
+    public int? Top { get; set; }
+    public int? Skip { get; set; }
+    public string? Filter { get; set; }
+    public string? OrderBy { get; set; }
+    public bool ReturnTotalCount { get; set; }
+  }
+}
+{{- -}}

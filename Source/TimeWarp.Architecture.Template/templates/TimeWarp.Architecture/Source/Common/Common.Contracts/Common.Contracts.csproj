@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <AdditionalFiles Include="Mixins\RouteMixin.mixin" />
+    <AdditionalFiles Include="Mixins\IAuthApiRequestMixin.mixin" />
+    <AdditionalFiles Include="Mixins\IOpenDataQueryParametersMixin.mixin" />
   </ItemGroup>
 
 </Project>
