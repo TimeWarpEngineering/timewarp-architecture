@@ -9,7 +9,18 @@ public static partial class GetRoles
   [RouteMixin("api/Roles", HttpVerb.Get)]
   [IOpenDataQueryParametersMixin]
   [IAuthApiRequestMixin]
-  public sealed partial class Query : IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  {
+    public string GetRouteWithQueryString()
+    {
+      var collection = new NameValueCollection
+      {
+        GetAuthQueryParameters(),
+        GetOpenDataQueryParameters()
+      };
+      return $"{GetRoute()}?{this.GetQueryString(collection)}";
+    }
+  }
 
   public sealed class Validator : AbstractValidator<Query>
   {
