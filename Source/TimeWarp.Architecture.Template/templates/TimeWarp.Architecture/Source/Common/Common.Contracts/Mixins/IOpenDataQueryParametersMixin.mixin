@@ -1,5 +1,6 @@
 #nullable enable
 namespace {{ moxy.Class.Namespace }};
+using System.Collections.Specialized;
 
 partial class {{ moxy.Class.DeclaringType.Name }}
 {
@@ -10,6 +11,18 @@ partial class {{ moxy.Class.DeclaringType.Name }}
     public string? Filter { get; set; }
     public string? OrderBy { get; set; }
     public bool ReturnTotalCount { get; set; }
+    
+    private NameValueCollection GetOpenDataQueryParameters()
+    {
+        return new NameValueCollection
+        {
+            { nameof(Top), Top?.ToString() },
+            { nameof(Skip), Skip?.ToString() },
+            { nameof(Filter), Filter },
+            { nameof(OrderBy), OrderBy },
+            { nameof(ReturnTotalCount), ReturnTotalCount.ToString() }
+        };
+    }
   }
 }
 {{- -}}

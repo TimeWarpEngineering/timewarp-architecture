@@ -12,7 +12,7 @@
   $segments = RouteTemplate | regex.split("/");
 
   for $segment in $segments
-   $match = $segment | regex.match `\{(\w+)\s*:?(\w+)\}?`;
+   $match = $segment | regex.match `\{(\w+)\s*:?(\w+(\(\d+\))?)\}?`;
     if !$match[0]
       $urlSegmentsForRouteAttribute = $urlSegmentsForRouteAttribute | array.add($segment)
       $getRouteMethodFormatParts = $getRouteMethodFormatParts | array.add($segment)
@@ -67,7 +67,7 @@ partial class {{ moxy.Class.DeclaringType.Name }}
 {
   partial class {{ moxy.Class.Name }}
   {
-    public const string RouteTemplate = "{{ RouteTemplate }}";
+    public const string RouteTemplate = "{{ $routeAttributeString }}";
     public HttpVerb GetHttpVerb() => {{ HttpVerb }};
     {{~ if !($getRouteSignatureSource | string.empty) ~}}
     public string GetRoute({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
