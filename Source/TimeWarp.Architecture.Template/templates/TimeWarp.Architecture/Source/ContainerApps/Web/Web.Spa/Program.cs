@@ -1,10 +1,17 @@
 namespace TimeWarp.Architecture.Web.Spa;
 
+using System.Globalization;
 public class Program
 {
   public static async Task Main(string[] args)
   {
     var builder = WebAssemblyHostBuilder.CreateDefault(args);
+    var isoCulture = new CultureInfo("en-US")
+    {
+      DateTimeFormat = { ShortDatePattern = "yyyy-MM-dd", LongDatePattern = "yyyy-MM-ddTHH:mm:ss" }
+    };
+    CultureInfo.DefaultThreadCurrentCulture = isoCulture;
+    CultureInfo.DefaultThreadCurrentUICulture = isoCulture;
     builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
 
     ConfigureServices(builder.Services, builder.Configuration);
@@ -32,6 +39,7 @@ public class Program
 
     // Add authorization services
     serviceCollection.AddAuthorizationCore(PolicyRegistration.AddPolicies);
+    // Register the custom requirements handlers
     serviceCollection.AddFluentUIComponents();
     serviceCollection.AddBlazoredSessionStorage();
     serviceCollection.AddBlazoredLocalStorage();
@@ -39,7 +47,7 @@ public class Program
     ConfigureSettings(serviceCollection, configuration);
     serviceCollection.AddBlazorState
     (
-      (blazorStateOptions) =>
+      blazorStateOptions =>
       {
         #if DEBUG
         blazorStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
@@ -49,27 +57,28 @@ public class Program
           new[]
           {
             // ReSharper disable once RedundantNameQualifier
-            typeof(Web.Spa.AssemblyMarker).GetTypeInfo().Assembly, typeof(TimeWarp.State.Plus.AssemblyMarker).GetTypeInfo().Assembly,
+            typeof(Web.Spa.AssemblyMarker).GetTypeInfo().Assembly,
+			typeof(TimeWarp.State.Plus.AssemblyMarker).GetTypeInfo().Assembly,
           };
       }
     );
 
-    serviceCollection.AddFormValidation
-    (
-      aValidationConfiguration =>
-      {
-        aValidationConfiguration.AddFluentValidation(typeof(Web.Spa.AssemblyMarker).Assembly);
-        ServiceDescriptor serviceDescriptor =
-          serviceCollection.First
-          (
-            aServiceDescriptor =>
-              aServiceDescriptor.ServiceType.Name == nameof(ServiceCollectionOptionsValidator.ServiceValidator) &&
-              aServiceDescriptor.Lifetime == ServiceLifetime.Scoped
-          );
-
-        serviceCollection.Remove(serviceDescriptor);
-      }
-    );
+    // serviceCollection.AddFormValidation
+    // (
+    //   aValidationConfiguration =>
+    //   {
+    //     aValidationConfiguration.AddFluentValidation(typeof(Web.Spa.AssemblyMarker).Assembly);
+    //     ServiceDescriptor serviceDescriptor =
+    //       serviceCollection.First
+    //       (
+    //         aServiceDescriptor =>
+    //           aServiceDescriptor.ServiceType.Name == nameof(ServiceCollectionOptionsValidator.ServiceValidator) &&
+    //           aServiceDescriptor.Lifetime == ServiceLifetime.Scoped
+    //       );
+    //
+    //     serviceCollection.Remove(serviceDescriptor);
+    //   }
+    // );
 
     serviceCollection.AddScoped<ChatHubConnection>();
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
