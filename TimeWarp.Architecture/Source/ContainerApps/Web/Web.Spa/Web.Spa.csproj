@@ -18,7 +18,6 @@
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="Blazor-State" />
     <PackageReference Include="BlazorComponentUtilities"/>
-<!--    <PackageReference Include="Blazor-State"/>-->
     <PackageReference Include="Grpc.Net.Client"/>
     <PackageReference Include="Grpc.Net.Client.Web"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly"/>
@@ -124,6 +123,14 @@
     Inputs="..\Web.TypeScript\tailwind.config.js;..\Web.TypeScript\css\input.css;.\;..\Web.Spa\obj\css\Web.Spa.styles.css"
     Outputs="wwwroot\css\site.css">
     <Exec Command="npm run tailwind" WorkingDirectory="..\Web.TypeScript\"/>
+  </Target>
+
+  <Target Name="CreateDummyFluentUICSS" BeforeTargets="Build">
+    <ItemGroup>
+      <DummyCSSFile Include="$(ProjectDir)obj\_content\Microsoft.FluentUI.AspNetCore.Components\Microsoft.FluentUI.AspNetCore.Components.bundle.scp.css" />
+    </ItemGroup>
+    <MakeDir Directories="$(ProjectDir)obj\css\_content\Microsoft.FluentUI.AspNetCore.Components" />
+    <WriteLinesToFile File="@(DummyCSSFile)" Lines="/* Dummy file to satisfy build requirement */" Overwrite="true" />
   </Target>
 
 </Project>
