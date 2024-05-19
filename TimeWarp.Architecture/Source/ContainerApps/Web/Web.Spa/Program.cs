@@ -49,9 +49,11 @@ public class Program
     (
       blazorStateOptions =>
       {
+        //-:cnd:noEmit
         #if DEBUG
         blazorStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
         #endif
+        //+:cnd:noEmit
 
         blazorStateOptions.Assemblies =
           new[]

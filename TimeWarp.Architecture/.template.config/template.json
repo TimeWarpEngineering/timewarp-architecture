@@ -80,6 +80,15 @@
           "exclude": [
             "Source/ContainerApps/Web/Web.Spa/Features/EventStream/**/*"
           ]
+        },
+        {
+          "condition": "(!postgres)",
+          "exclude": [
+            "Source/ContainerApps/Web/Web.Infrastructure/Persistence/PostgresDbContext.cs",
+            "Source/ContainerApps/Web/Web.Server/Configuration/EnvironmentChecks/PostgresDbEnvironmentCheck.cs",
+            "Source/ContainerApps/Web/Web.Server/HostedServices/PostgresDbContextStartupHostedService.cs",
+            "Source/ContainerApps/Web/Web.Server/Modules/PostgresDbModule.cs"
+          ]
         }
       ]
     }
@@ -130,6 +139,12 @@
     "eventstream": {
       "type": "parameter",
       "description": "Eventstream is an example of how to implement middleware in Web.Spa",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "postgres": {
+      "type": "parameter",
+      "description": "Add Postgres Features",
       "datatype": "bool",
       "defaultValue": "true"
     }
