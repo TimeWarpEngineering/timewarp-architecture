@@ -28,10 +28,10 @@ jobs:
 
       - name: Pack
         run: |
-          cd TimeWarp.Architecture/Source/TimeWarp.Architecture.Template/
+          cd TimeWarp.Templates/Source/TimeWarp.Architecture.Template/
           dotnet build -c Release
           
       - name: Publish
-        run: dotnet nuget push TimeWarp.Architecture/Source/TimeWarp.Architecture.Template/bin/Release/TimeWarp.Architecture.*.nupkg --skip-duplicate --no-symbols --source https://api.nuget.org/v3/index.json --api-key ${{secrets.PUBLISH_TO_NUGET_ORG}}
+        run: dotnet nuget push TimeWarp.Templates/Source/TimeWarp.Architecture.Template/bin/Release/TimeWarp.Architecture.*.nupkg --skip-duplicate --no-symbols --source https://api.nuget.org/v3/index.json --api-key ${{secrets.PUBLISH_TO_NUGET_ORG}}
         env:
           NUGET_AUTH_TOKEN: ${{secrets.PUBLISH_TO_NUGET_ORG}}
