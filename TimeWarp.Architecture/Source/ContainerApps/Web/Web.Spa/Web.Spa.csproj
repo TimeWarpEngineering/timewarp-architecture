@@ -38,13 +38,12 @@
     <PackageReference Include="protobuf-net.Grpc"/>
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all"/>
     <PackageReference Include="timewarp-heroicons"/>
-<!--    <PackageReference Include="Timewarp.OptionsValidation"/>-->
+    <PackageReference Include="Timewarp.OptionsValidation"/>
     <PackageReference Include="timewarp-simple-icons"/>
     <PackageReference Include="TimeWarp.State.Plus"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="D:\git\github\TimeWarpEngineering\timewarp-options-validation\source\TimeWarp.OptionsValidation\TimeWarp.OptionsValidation.csproj" />
     <!--#if(api)-->
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj"/>
     <!--#endif-->
