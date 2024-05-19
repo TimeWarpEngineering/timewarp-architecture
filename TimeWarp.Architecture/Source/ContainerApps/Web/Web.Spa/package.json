@@ -1,0 +1,30 @@
+{
+  "name": "web.spa",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "prettier": "prettier --write .",
+    "css:build": "npx tailwindcss -i ./Styles/input.css -o ./wwwroot/css/site.css --minify --verbose",
+    "tailwind": "npx tailwindcss -i ./Styles/input.css -o ./wwwroot/css/site.css --minify",
+    "tailwind-watch": "npx tailwindcss -i ./Styles/input.css -o ./wwwroot/css/site.css --minify --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/forms": "^0.5.3",
+    "@tailwindcss/typography": "^0.5.9",
+    "@typescript-eslint/eslint-plugin": "5.54.1",
+    "@typescript-eslint/parser": "5.54.1",
+    "autoprefixer": "10.4.13",
+    "eslint": "8.35.0",
+    "eslint-config-airbnb-base": "15.0.0",
+    "eslint-config-prettier": "8.7.0",
+    "eslint-plugin-import": "2.27.5",
+    "eslint-plugin-prettier": "4.2.1",
+    "postcss": "8.4.21",
+    "prettier": "2.8.4",
+    "tailwindcss": "^3.2.7",
+    "typescript": "4.9.5"
+  }
+}

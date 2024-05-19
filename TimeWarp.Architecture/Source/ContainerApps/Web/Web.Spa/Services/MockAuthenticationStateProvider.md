@@ -23,17 +23,19 @@ To integrate the `MockAuthenticationStateProvider` in the development build of t
 ### Enabling Mock Authentication
 
 1. **Visual Studio Configuration:**
-  - Right-click on the project in Solution Explorer and select **Properties**.
-  - Navigate to the **Build** tab.
-  - In the **Conditional compilation symbols** field, add `MOCK_AUTHENTICATION`.
+
+- Right-click on the project in Solution Explorer and select **Properties**.
+- Navigate to the **Build** tab.
+- In the **Conditional compilation symbols** field, add `MOCK_AUTHENTICATION`.
 
 2. **.csproj File Configuration:**
-  - Edit your `.csproj` file to include the following conditional property group:
-    ```xml
-    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-      <DefineConstants>$(DefineConstants);MOCK_AUTHENTICATION</DefineConstants>
-    </PropertyGroup>
-    ```
+
+- Edit your `.csproj` file to include the following conditional property group:
+  ```xml
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>$(DefineConstants);MOCK_AUTHENTICATION</DefineConstants>
+  </PropertyGroup>
+  ```
 
 ### Sample Configuration in `Program.cs`
 

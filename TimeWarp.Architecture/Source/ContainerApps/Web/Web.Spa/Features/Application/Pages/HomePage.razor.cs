@@ -23,6 +23,6 @@ public partial class HomePage : BaseComponent
     Logger.LogInformation("This is an info message");
     Logger.LogWarning("This is a warning message");
     Logger.LogError("This is an error message");
-    Logger.LogCritical("This is a critical message");
+    // Logger.LogCritical("This is a critical message");
   }
 }
