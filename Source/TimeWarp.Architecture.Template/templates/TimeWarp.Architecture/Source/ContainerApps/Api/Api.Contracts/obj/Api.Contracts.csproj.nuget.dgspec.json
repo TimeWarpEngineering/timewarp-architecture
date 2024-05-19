@@ -1,0 +1,424 @@
+{
+  "format": 1,
+  "restore": {
+    "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\ContainerApps\\Api\\Api.Contracts\\Api.Contracts.csproj": {}
+  },
+  "projects": {
+    "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\Common\\Common.Contracts\\Common.Contracts.csproj": {
+      "version": "0.0.1",
+      "restore": {
+        "projectUniqueName": "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\Common\\Common.Contracts\\Common.Contracts.csproj",
+        "projectName": "Common.Contracts",
+        "projectPath": "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\Common\\Common.Contracts\\Common.Contracts.csproj",
+        "packagesPath": "C:\\Users\\StevenTCramer\\.nuget\\packages\\",
+        "outputPath": "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\Common\\Common.Contracts\\obj\\",
+        "projectStyle": "PackageReference",
+        "centralPackageVersionsManagementEnabled": true,
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\NuGet.Config",
+          "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\NuGet.Config",
+          "C:\\Users\\StevenTCramer\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "allWarningsAsErrors": true,
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Ardalis.GuardClauses": {
+              "target": "Package",
+              "version": "[4.5.0, )",
+              "versionCentrallyManaged": true
+            },
+            "FluentValidation": {
+              "target": "Package",
+              "version": "[11.9.1, )",
+              "versionCentrallyManaged": true
+            },
+            "GlobalUsingsAnalyzer": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.4.0, )",
+              "versionCentrallyManaged": true
+            },
+            "JetBrains.Annotations": {
+              "target": "Package",
+              "version": "[2023.3.0, )",
+              "versionCentrallyManaged": true
+            },
+            "Microsoft.Extensions.Http": {
+              "target": "Package",
+              "version": "[8.0.0, )",
+              "versionCentrallyManaged": true
+            },
+            "Microsoft.Extensions.Options": {
+              "target": "Package",
+              "version": "[8.0.2, )",
+              "versionCentrallyManaged": true
+            },
+            "OneOf": {
+              "target": "Package",
+              "version": "[3.0.263, )",
+              "versionCentrallyManaged": true
+            }
+          },
+          "centralPackageVersions": {
+            "Ardalis.GuardClauses": "[4.5.0, )",
+            "Asp.Versioning.Http": "[7.0.0, )",
+            "Asp.Versioning.Mvc": "[7.0.0, )",
+            "AutoFixture": "[4.18.1, )",
+            "AutoFixture.AutoFakeItEasy": "[4.18.1, )",
+            "AutoMapper": "[13.0.1, )",
+            "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.2.2, )",
+            "Azure.Identity": "[1.11.2, )",
+            "Blazor-State": "[11.0.0-beta.31, )",
+            "BlazorComponentUtilities": "[1.8.0, )",
+            "FakeItEasy": "[8.2.0, )",
+            "Fixie": "[3.4.0, )",
+            "Fixie.TestAdapter": "[3.4.0, )",
+            "FluentAssertions": "[6.12.0, )",
+            "FluentValidation": "[11.9.1, )",
+            "FluentValidation.AspNetCore": "[11.3.0, )",
+            "FluentValidation.DependencyInjectionExtensions": "[11.9.1, )",
+            "GlobalUsingsAnalyzer": "[1.4.0, )",
+            "Grpc.AspNetCore": "[2.62.0, )",
+            "Grpc.AspNetCore.Server.Reflection": "[2.62.0, )",
+            "Grpc.AspNetCore.Web": "[2.62.0, )",
+            "Grpc.Net.Client": "[2.62.0, )",
+            "Grpc.Net.Client.Web": "[2.62.0, )",
+            "JetBrains.Annotations": "[2023.3.0, )",
+            "MediatR": "[12.2.0, )",
+            "MediatR.Contracts": "[2.0.1, )",
+            "MicroElements.Swashbuckle.FluentValidation": "[6.0.0, )",
+            "Microsoft.AspNetCore.Components.WebAssembly": "[8.0.4, )",
+            "Microsoft.AspNetCore.Components.WebAssembly.Authentication": "[8.0.4, )",
+            "Microsoft.AspNetCore.Components.WebAssembly.DevServer": "[8.0.4, )",
+            "Microsoft.AspNetCore.Components.WebAssembly.Server": "[8.0.4, )",
+            "Microsoft.AspNetCore.Http.Abstractions": "[2.2.0, )",
+            "Microsoft.AspNetCore.Mvc.Testing": "[8.0.4, )",
+            "Microsoft.AspNetCore.SignalR.Client": "[8.0.4, )",
+            "Microsoft.AspNetCore.SignalR.Core": "[1.1.0, )",
+            "Microsoft.Authentication.WebAssembly.Msal": "[8.0.4, )",
+            "Microsoft.Azure.AppConfiguration.AspNetCore": "[7.2.0, )",
+            "Microsoft.CodeAnalysis": "[4.9.2, )",
+            "Microsoft.CodeAnalysis.Analyzers": "[3.3.3, )",
+            "Microsoft.CodeAnalysis.CSharp": "[4.9.2, )",
+            "Microsoft.EntityFrameworkCore.Cosmos": "[8.0.4, )",
+            "Microsoft.EntityFrameworkCore.SqlServer": "[8.0.4, )",
+            "Microsoft.Extensions.Configuration.Abstractions": "[8.0.0, )",
+            "Microsoft.Extensions.DependencyInjection": "[8.0.0, )",
+            "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.1, )",
+            "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[8.0.4, )",
+            "Microsoft.Extensions.Http": "[8.0.0, )",
+            "Microsoft.Extensions.Logging.Configuration": "[8.0.0, )",
+            "Microsoft.Extensions.Options": "[8.0.2, )",
+            "Microsoft.Extensions.Options.ConfigurationExtensions": "[8.0.0, )",
+            "Microsoft.FeatureManagement.AspNetCore": "[2.5.1, )",
+            "Microsoft.FluentUI.AspNetCore.Components": "[4.7.2, )",
+            "Microsoft.FluentUI.AspNetCore.Components.Emoji": "[4.6.0, )",
+            "Microsoft.FluentUI.AspNetCore.Components.Icons": "[4.7.2, )",
+            "Microsoft.Identity.Web": "[2.18.1, )",
+            "Microsoft.Playwright": "[1.43.0, )",
+            "Microsoft.Tye.Extensions.Configuration": "[0.10.0-alpha.21420.1, )",
+            "Microsoft.TypeScript.MSBuild": "[4.6.2, )",
+            "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": "[1.19.5, )",
+            "Morris.Blazor.ControlFlow": "[2.0.0, )",
+            "Morris.Blazor.FluentValidation": "[3.0.0, )",
+            "Morris.Moxy": "[1.10.0, )",
+            "Npgsql.EntityFrameworkCore.PostgreSQL": "[8.0.2, )",
+            "Oakton": "[6.1.0, )",
+            "Octokit.Webhooks.AspNetCore": "[1.0.0, )",
+            "OneOf": "[3.0.263, )",
+            "OneOf.SourceGenerator": "[3.0.243, )",
+            "protobuf-net.Grpc": "[1.1.1, )",
+            "protobuf-net.Grpc.AspNetCore": "[1.1.1, )",
+            "protobuf-net.Grpc.AspNetCore.Reflection": "[1.1.1, )",
+            "protobuf-net.Grpc.Reflection": "[1.1.1, )",
+            "Riok.Mapperly": "[3.5.1, )",
+            "Scrutor": "[4.2.0, )",
+            "Serilog.AspNetCore": "[8.0.1, )",
+            "Serilog.Enrichers.Environment": "[2.3.0, )",
+            "Serilog.Enrichers.Thread": "[3.1.0, )",
+            "Serilog.Extensions.Logging": "[8.0.0, )",
+            "Serilog.Formatting.Compact": "[2.0.0, )",
+            "Serilog.Sinks.Console": "[5.0.1, )",
+            "Serilog.Sinks.File": "[5.0.0, )",
+            "Swashbuckle.AspNetCore": "[6.3.1, )",
+            "Swashbuckle.AspNetCore.Annotations": "[6.5.0, )",
+            "Swashbuckle.AspNetCore.Filters": "[7.0.2, )",
+            "Swashbuckle.AspNetCore.Swagger": "[6.5.0, )",
+            "Swashbuckle.AspNetCore.SwaggerGen": "[6.5.0, )",
+            "Swashbuckle.AspNetCore.SwaggerUI": "[6.5.0, )",
+            "System.Configuration.ConfigurationManager": "[7.0.0, )",
+            "System.Net.Http.Json": "[8.0.0, )",
+            "System.ServiceModel.Primitives": "[8.0.0, )",
+            "timewarp-heroicons": "[2.0.19, )",
+            "timewarp-simple-icons": "[11.11.0, )",
+            "TimeWarp.Fixie": "[1.0.2, )",
+            "Timewarp.OptionsValidation": "[1.0.0-alpha.2, )",
+            "TimeWarp.SourceGenerators": "[1.0.0-alpha.5, )",
+            "TimeWarp.State.Plus": "[11.0.0-beta.31, )",
+            "Yarp.ReverseProxy": "[2.1.0, )"
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.205/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\ContainerApps\\Api\\Api.Contracts\\Api.Contracts.csproj": {
+      "version": "0.0.1",
+      "restore": {
+        "projectUniqueName": "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\ContainerApps\\Api\\Api.Contracts\\Api.Contracts.csproj",
+        "projectName": "Api.Contracts",
+        "projectPath": "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\ContainerApps\\Api\\Api.Contracts\\Api.Contracts.csproj",
+        "packagesPath": "C:\\Users\\StevenTCramer\\.nuget\\packages\\",
+        "outputPath": "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\ContainerApps\\Api\\Api.Contracts\\obj\\",
+        "projectStyle": "PackageReference",
+        "centralPackageVersionsManagementEnabled": true,
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\NuGet.Config",
+          "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\NuGet.Config",
+          "C:\\Users\\StevenTCramer\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\Common\\Common.Contracts\\Common.Contracts.csproj": {
+                "projectPath": "D:\\git\\github\\TimeWarpEngineering\\timewarp-architecture\\Source\\TimeWarp.Architecture.Template\\templates\\TimeWarp.Architecture\\Source\\Common\\Common.Contracts\\Common.Contracts.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "allWarningsAsErrors": true,
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "FluentValidation": {
+              "target": "Package",
+              "version": "[11.9.1, )",
+              "versionCentrallyManaged": true
+            },
+            "GlobalUsingsAnalyzer": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.4.0, )",
+              "versionCentrallyManaged": true
+            },
+            "JetBrains.Annotations": {
+              "target": "Package",
+              "version": "[2023.3.0, )",
+              "versionCentrallyManaged": true
+            },
+            "MediatR": {
+              "target": "Package",
+              "version": "[12.2.0, )",
+              "versionCentrallyManaged": true
+            },
+            "Microsoft.Extensions.Options": {
+              "target": "Package",
+              "version": "[8.0.2, )",
+              "versionCentrallyManaged": true
+            },
+            "Morris.Moxy": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.10.0, )",
+              "generatePathProperty": true,
+              "versionCentrallyManaged": true
+            },
+            "OneOf": {
+              "target": "Package",
+              "version": "[3.0.263, )",
+              "versionCentrallyManaged": true
+            }
+          },
+          "centralPackageVersions": {
+            "Ardalis.GuardClauses": "[4.5.0, )",
+            "Asp.Versioning.Http": "[7.0.0, )",
+            "Asp.Versioning.Mvc": "[7.0.0, )",
+            "AutoFixture": "[4.18.1, )",
+            "AutoFixture.AutoFakeItEasy": "[4.18.1, )",
+            "AutoMapper": "[13.0.1, )",
+            "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.2.2, )",
+            "Azure.Identity": "[1.11.2, )",
+            "Blazor-State": "[11.0.0-beta.31, )",
+            "BlazorComponentUtilities": "[1.8.0, )",
+            "FakeItEasy": "[8.2.0, )",
+            "Fixie": "[3.4.0, )",
+            "Fixie.TestAdapter": "[3.4.0, )",
+            "FluentAssertions": "[6.12.0, )",
+            "FluentValidation": "[11.9.1, )",
+            "FluentValidation.AspNetCore": "[11.3.0, )",
+            "FluentValidation.DependencyInjectionExtensions": "[11.9.1, )",
+            "GlobalUsingsAnalyzer": "[1.4.0, )",
+            "Grpc.AspNetCore": "[2.62.0, )",
+            "Grpc.AspNetCore.Server.Reflection": "[2.62.0, )",
+            "Grpc.AspNetCore.Web": "[2.62.0, )",
+            "Grpc.Net.Client": "[2.62.0, )",
+            "Grpc.Net.Client.Web": "[2.62.0, )",
+            "JetBrains.Annotations": "[2023.3.0, )",
+            "MediatR": "[12.2.0, )",
+            "MediatR.Contracts": "[2.0.1, )",
+            "MicroElements.Swashbuckle.FluentValidation": "[6.0.0, )",
+            "Microsoft.AspNetCore.Components.WebAssembly": "[8.0.4, )",
+            "Microsoft.AspNetCore.Components.WebAssembly.Authentication": "[8.0.4, )",
+            "Microsoft.AspNetCore.Components.WebAssembly.DevServer": "[8.0.4, )",
+            "Microsoft.AspNetCore.Components.WebAssembly.Server": "[8.0.4, )",
+            "Microsoft.AspNetCore.Http.Abstractions": "[2.2.0, )",
+            "Microsoft.AspNetCore.Mvc.Testing": "[8.0.4, )",
+            "Microsoft.AspNetCore.SignalR.Client": "[8.0.4, )",
+            "Microsoft.AspNetCore.SignalR.Core": "[1.1.0, )",
+            "Microsoft.Authentication.WebAssembly.Msal": "[8.0.4, )",
+            "Microsoft.Azure.AppConfiguration.AspNetCore": "[7.2.0, )",
+            "Microsoft.CodeAnalysis": "[4.9.2, )",
+            "Microsoft.CodeAnalysis.Analyzers": "[3.3.3, )",
+            "Microsoft.CodeAnalysis.CSharp": "[4.9.2, )",
+            "Microsoft.EntityFrameworkCore.Cosmos": "[8.0.4, )",
+            "Microsoft.EntityFrameworkCore.SqlServer": "[8.0.4, )",
+            "Microsoft.Extensions.Configuration.Abstractions": "[8.0.0, )",
+            "Microsoft.Extensions.DependencyInjection": "[8.0.0, )",
+            "Microsoft.Extensions.DependencyInjection.Abstractions": "[8.0.1, )",
+            "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[8.0.4, )",
+            "Microsoft.Extensions.Http": "[8.0.0, )",
+            "Microsoft.Extensions.Logging.Configuration": "[8.0.0, )",
+            "Microsoft.Extensions.Options": "[8.0.2, )",
+            "Microsoft.Extensions.Options.ConfigurationExtensions": "[8.0.0, )",
+            "Microsoft.FeatureManagement.AspNetCore": "[2.5.1, )",
+            "Microsoft.FluentUI.AspNetCore.Components": "[4.7.2, )",
+            "Microsoft.FluentUI.AspNetCore.Components.Emoji": "[4.6.0, )",
+            "Microsoft.FluentUI.AspNetCore.Components.Icons": "[4.7.2, )",
+            "Microsoft.Identity.Web": "[2.18.1, )",
+            "Microsoft.Playwright": "[1.43.0, )",
+            "Microsoft.Tye.Extensions.Configuration": "[0.10.0-alpha.21420.1, )",
+            "Microsoft.TypeScript.MSBuild": "[4.6.2, )",
+            "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": "[1.19.5, )",
+            "Morris.Blazor.ControlFlow": "[2.0.0, )",
+            "Morris.Blazor.FluentValidation": "[3.0.0, )",
+            "Morris.Moxy": "[1.10.0, )",
+            "Npgsql.EntityFrameworkCore.PostgreSQL": "[8.0.2, )",
+            "Oakton": "[6.1.0, )",
+            "Octokit.Webhooks.AspNetCore": "[1.0.0, )",
+            "OneOf": "[3.0.263, )",
+            "OneOf.SourceGenerator": "[3.0.243, )",
+            "protobuf-net.Grpc": "[1.1.1, )",
+            "protobuf-net.Grpc.AspNetCore": "[1.1.1, )",
+            "protobuf-net.Grpc.AspNetCore.Reflection": "[1.1.1, )",
+            "protobuf-net.Grpc.Reflection": "[1.1.1, )",
+            "Riok.Mapperly": "[3.5.1, )",
+            "Scrutor": "[4.2.0, )",
+            "Serilog.AspNetCore": "[8.0.1, )",
+            "Serilog.Enrichers.Environment": "[2.3.0, )",
+            "Serilog.Enrichers.Thread": "[3.1.0, )",
+            "Serilog.Extensions.Logging": "[8.0.0, )",
+            "Serilog.Formatting.Compact": "[2.0.0, )",
+            "Serilog.Sinks.Console": "[5.0.1, )",
+            "Serilog.Sinks.File": "[5.0.0, )",
+            "Swashbuckle.AspNetCore": "[6.3.1, )",
+            "Swashbuckle.AspNetCore.Annotations": "[6.5.0, )",
+            "Swashbuckle.AspNetCore.Filters": "[7.0.2, )",
+            "Swashbuckle.AspNetCore.Swagger": "[6.5.0, )",
+            "Swashbuckle.AspNetCore.SwaggerGen": "[6.5.0, )",
+            "Swashbuckle.AspNetCore.SwaggerUI": "[6.5.0, )",
+            "System.Configuration.ConfigurationManager": "[7.0.0, )",
+            "System.Net.Http.Json": "[8.0.0, )",
+            "System.ServiceModel.Primitives": "[8.0.0, )",
+            "timewarp-heroicons": "[2.0.19, )",
+            "timewarp-simple-icons": "[11.11.0, )",
+            "TimeWarp.Fixie": "[1.0.2, )",
+            "Timewarp.OptionsValidation": "[1.0.0-alpha.2, )",
+            "TimeWarp.SourceGenerators": "[1.0.0-alpha.5, )",
+            "TimeWarp.State.Plus": "[11.0.0-beta.31, )",
+            "Yarp.ReverseProxy": "[2.1.0, )"
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.205/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

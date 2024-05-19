@@ -1,0 +1,59 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32210.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{908B0A29-DD28-4807-B28E-3CF820B86B1B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Console", "Console", "{980E7B16-9AE3-43F9-B4A8-D9710104E6FA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{3B39AA15-731F-47BB-BBD0-0114411DAD95}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Architecture", "Architecture", "{59CF6606-B4EF-4BAF-8DAF-DD40FC9282E9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console-CSharp", "Source\TimeWarp.Console.Template\content\TimeWarp.Console-CSharp\Source\Console-CSharp.csproj", "{391B22DF-4016-4845-B0B8-BE8F82353E72}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console-CSharp.Tests", "Source\TimeWarp.Console.Template\content\TimeWarp.Console-CSharp\Tests\Console-CSharp.Tests\Console-CSharp.Tests.csproj", "{4DF9461D-E8CE-4C03-B0EE-A4D3A458F1FF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture", "Source\TimeWarp.Architecture.Template\TimeWarp.Architecture.csproj", "{8C2061AA-4067-487C-9840-F5436291FD55}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TimeWarp.Architecture.Template.Tests", "Tests\TimeWarp.Architecture.Template.Tests\TimeWarp.Architecture.Template.Tests.csproj", "{E56BD316-C4CF-494B-ADCD-73998104E3AF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{391B22DF-4016-4845-B0B8-BE8F82353E72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{391B22DF-4016-4845-B0B8-BE8F82353E72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{391B22DF-4016-4845-B0B8-BE8F82353E72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{391B22DF-4016-4845-B0B8-BE8F82353E72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DF9461D-E8CE-4C03-B0EE-A4D3A458F1FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DF9461D-E8CE-4C03-B0EE-A4D3A458F1FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DF9461D-E8CE-4C03-B0EE-A4D3A458F1FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DF9461D-E8CE-4C03-B0EE-A4D3A458F1FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C2061AA-4067-487C-9840-F5436291FD55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C2061AA-4067-487C-9840-F5436291FD55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C2061AA-4067-487C-9840-F5436291FD55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C2061AA-4067-487C-9840-F5436291FD55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E56BD316-C4CF-494B-ADCD-73998104E3AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E56BD316-C4CF-494B-ADCD-73998104E3AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E56BD316-C4CF-494B-ADCD-73998104E3AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E56BD316-C4CF-494B-ADCD-73998104E3AF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{980E7B16-9AE3-43F9-B4A8-D9710104E6FA} = {908B0A29-DD28-4807-B28E-3CF820B86B1B}
+		{3B39AA15-731F-47BB-BBD0-0114411DAD95} = {980E7B16-9AE3-43F9-B4A8-D9710104E6FA}
+		{59CF6606-B4EF-4BAF-8DAF-DD40FC9282E9} = {908B0A29-DD28-4807-B28E-3CF820B86B1B}
+		{391B22DF-4016-4845-B0B8-BE8F82353E72} = {980E7B16-9AE3-43F9-B4A8-D9710104E6FA}
+		{4DF9461D-E8CE-4C03-B0EE-A4D3A458F1FF} = {3B39AA15-731F-47BB-BBD0-0114411DAD95}
+		{8C2061AA-4067-487C-9840-F5436291FD55} = {59CF6606-B4EF-4BAF-8DAF-DD40FC9282E9}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
+	EndGlobalSection
+EndGlobal
