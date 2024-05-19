@@ -1,0 +1,55 @@
+﻿# Primary output is a new Nuget Package for TimeWarp Console Templates
+name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+trigger:
+ branches:
+  include:
+  - master
+ paths:
+  include:
+  - Source/TimeWarp.Console.Template/*
+
+pool:
+  name: TimeWarpEnterprises
+
+variables:
+ Major: '5'
+ Minor: '0'
+ MajorAndMinor: '$(Major).$(Minor)'
+ Patch: $[counter(variables.MajorAndMinor,0)]
+ DotNetSdkVersion: 5.0.301
+ Version: '$(Major).$(Minor).$(Patch)+$(DotNetSdkVersion)'
+ Configuration: debug
+
+steps:
+- script: dotnet --version
+- script: echo Version $(Version)
+
+- task: DotNetCoreCLI@2
+  displayName: Build Timewarp Console Template projects
+  inputs:
+    command: build
+    projects: 'source/TimeWarp.Console.Template/**/*.csproj'
+    configuration: $(Configuration)
+
+- task: DotNetCoreCLI@2
+  displayName: Test
+  inputs:
+    command: test
+    projects: "source/TimeWarp.Console.Template/**/*Tests/*.csproj"
+    configurationToPack: $(Configuration)
+
+- task: DotNetCoreCLI@2
+  displayName: Pack into Nuget
+  inputs:
+    command: pack
+    packagesToPack: $(Build.SourcesDirectory)/source/TimeWarp.Console.Template/TimeWarp.Console.Template.nuspec
+    configurationToPack: $(Configuration)
+    versioningScheme: byEnvVar
+    versionEnvVar: Version
+
+- task: PublishBuildArtifacts@1
+  displayName: Publish Artifact
+  inputs:
+    PathtoPublish: '$(build.artifactstagingdirectory)'
+    ArtifactName: drop
+    publishLocation: Container

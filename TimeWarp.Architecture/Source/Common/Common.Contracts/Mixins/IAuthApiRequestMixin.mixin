@@ -1,0 +1,20 @@
+#nullable enable
+namespace {{ moxy.Class.Namespace }};
+using System.Collections.Specialized;
+
+partial class {{ moxy.Class.DeclaringType.Name }}
+{
+  partial class {{ moxy.Class.Name }} : IAuthApiRequest
+  {
+    public Guid UserId { get; set; }
+        
+    private NameValueCollection GetAuthQueryParameters()
+    {
+        return new NameValueCollection
+        {
+            { nameof(UserId), UserId.ToString() }
+        };
+    }
+  }
+}
+{{- -}}
