@@ -1,6 +1,6 @@
 ﻿# StackedPage.razor
 
-The `StackedPage.razor` file represents a page component in the TimeWarp.Architecture project. 
+The `StackedPage.razor` file represents a page component in the TimeWarp.Architecture project.
 It is a Blazor WASM component used to render the UI for a specific page within the application.
 
 ## Component Structure
@@ -8,12 +8,15 @@ It is a Blazor WASM component used to render the UI for a specific page within t
 The `StackedPage` consists of the following sections:
 
 1. **SiteHeader**: This section represents the site header and contains the following components:
+
    - `DarkNavBar`: This component displays a dark-colored navigation bar.
 
 2. **Header**: This section represents the header content and contains the following components:
+
    - `HeaderContent`: This component displays a title or header text for the page.
 
 3. **MainContent**: This section represents the main content of the page. It includes:
+
    - Content that is dynamically rendered based on the `MainContent` property.
 
 4. **SiteFooter**: This section represents the site footer and includes the following components:

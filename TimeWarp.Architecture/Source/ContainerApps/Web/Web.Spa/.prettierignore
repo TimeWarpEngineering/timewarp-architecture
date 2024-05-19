@@ -1,0 +1,6 @@
+﻿# Ignore everything
+*
+
+# Except the src folder
+!source/
+!source/**

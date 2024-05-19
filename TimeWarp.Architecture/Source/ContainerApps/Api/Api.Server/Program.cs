@@ -16,7 +16,7 @@ public class Program : IAspNetProgram
 
     WebApplication webApplication = builder.Build();
 
-    webApplication.Services.ValidateOptions(builder.Services);
+    webApplication.Services.ValidateOptions(builder.Services, webApplication.Logger);
 
     ConfigureMiddleware(webApplication);
     ConfigureEndpoints(webApplication);
@@ -27,7 +27,6 @@ public class Program : IAspNetProgram
   public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)
   {
     CommonServerModule.ConfigureConfiguration(aConfigurationManager);
-    ;
   }
 
   public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)

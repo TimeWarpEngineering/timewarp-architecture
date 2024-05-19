@@ -19,13 +19,13 @@ To use the `MockAccessTokenProvider` in your application during the development 
 ### Integration in Application Configuration
 
 1. **Dependency Injection Configuration:**
-  - In the application startup configuration, register `MockAccessTokenProvider` as the implementation for `IAccessTokenProvider`:
 
-   /```
+- In the application startup configuration, register `MockAccessTokenProvider` as the implementation for `IAccessTokenProvider`:
+
+/`
    #if DEBUG
    builder.Services.AddScoped<IAccessTokenProvider, MockAccessTokenProvider>();
    #endif
-   /```
+   /`
 
-   This setup ensures that `MockAccessTokenProvider` is used only during development or debugging phases, controlled by the `DEBUG` compilation symbol.
-
+This setup ensures that `MockAccessTokenProvider` is used only during development or debugging phases, controlled by the `DEBUG` compilation symbol.
