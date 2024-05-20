@@ -1,12 +1,12 @@
 namespace TimeWarp.Architecture.Validators;
 
-public class PhoneNumberValidator<T> : PropertyValidator<T, string>
+public class PhoneNumberValidator<T> : PropertyValidator<T, string?>
 {
   private readonly PhoneNumberUtil PhoneNumberUtil = PhoneNumberUtil.GetInstance();
 
   public override string Name => "PhoneNumberValidator";
 
-  public override bool IsValid(ValidationContext<T> context, string value)
+  public override bool IsValid(ValidationContext<T> context, string? value)
   {
     try
     {
