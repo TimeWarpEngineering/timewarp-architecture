@@ -8,6 +8,8 @@ public class PhoneNumberValidator<T> : PropertyValidator<T, string?>
 
   public override bool IsValid(ValidationContext<T> context, string? value)
   {
+    if (string.IsNullOrWhiteSpace(value)) return false;
+	
     try
     {
       PhoneNumber? phoneNumber = PhoneNumberUtil.Parse(value, null);
