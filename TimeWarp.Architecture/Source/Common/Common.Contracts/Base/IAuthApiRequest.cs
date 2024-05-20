@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Features;
 
-using FluentValidation;
-
 public interface IAuthApiRequest : IApiRequest
 {
   /// <summary>
