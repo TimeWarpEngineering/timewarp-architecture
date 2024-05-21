@@ -5,10 +5,13 @@ public class Program : IAspNetProgram
   public static Task Main(string[] aArgumentArray)
   {
     WebApplicationBuilder builder = WebApplication.CreateBuilder(aArgumentArray);
+    builder.AddServiceDefaults();
     ConfigureConfiguration(builder.Configuration);
     ConfigureServices(builder.Services, builder.Configuration);
 
     WebApplication webApplication = builder.Build();
+
+    webApplication.MapDefaultEndpoints();
 
     ConfigureMiddleware(webApplication);
     ConfigureEndpoints(webApplication);
