@@ -6,4 +6,6 @@ builder.AddProject<Projects.Yarp>("yarp");
 
 builder.AddProject<Projects.Web_Server>("web-server");
 
+builder.AddProject<Projects.Grpc_Server>("grpc-server");
+
 builder.Build().Run();
