@@ -38,11 +38,14 @@ public class Program : IAspNetProgram
     {
       serilog.Information("Starting web host");
       WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
+      builder.AddServiceDefaults();
 
       ConfigureConfiguration(builder.Configuration);
       ConfigureServices(builder.Services, builder.Configuration);
 
       WebApplication webApplication = builder.Build();
+
+      webApplication.MapDefaultEndpoints();
 
       Console.WriteLine($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
 
