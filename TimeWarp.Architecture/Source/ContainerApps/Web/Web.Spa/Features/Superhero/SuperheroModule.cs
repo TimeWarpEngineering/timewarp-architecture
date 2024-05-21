@@ -74,8 +74,12 @@ public class SuperheroModule
       Port = service.Port
     };
 
-    Uri serviceUri = aConfiguration.GetServiceUri(aServiceName) ?? uriBuilder.Uri;
+    Uri serviceUri = aConfiguration.GetServiceHttpsUri(aServiceName) ?? uriBuilder.Uri;
+    Console.WriteLine($"serviceUri:{serviceUri}");
+    // https://github.com/dotnet/aspire/issues/2549
 
     return serviceUri;
   }
 }
+
+
