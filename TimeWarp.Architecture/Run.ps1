@@ -1,18 +1,21 @@
+# Run.ps1
 $Env:ASPNETCORE_ENVIRONMENT = "Development"
 
 Push-Location $PSScriptRoot
 try {
-  # Start Cosmos DB emulator
-  # see https://timewarpengineering.github.io/timewarp-architecture/#prerequisites
-  # Start-CosmosDbEmulator
-  # TODO add check for CosmosDB emulator to be running
+  # Run the dotnet project and capture the output
+  $output = & dotnet watch --project Source/ContainerApps/Aspire/Aspire.AppHost/Aspire.AppHost.csproj
 
-  Push-Location DevOps/Tye
-  # dotnet build -c Release
-  # tye run --dashboard --logs console -v Debug --no-build
-  tye run --dashboard --watch --logs console -v Debug
-  # Start-Process pwsh -argument '-nologo -noprofile -executionpolicy bypass -command tye run --dashboard --logs console'
-  Pop-Location
+  # Extract the login URL from the output
+  $url = ($output -split "`n" | Where-Object { $_ -match "https://localhost:17204/login?t=" }) -replace ".*(https://localhost:17204/login\?t=[a-f0-9]+).*", '$1'
+
+  if ($url) {
+    # Launch the browser to the dashboard URL
+    Start-Process $url
+  } else {
+    Write-Host "Failed to extract the login URL from the output."
+  }
+
 }
 finally {
   Pop-Location
