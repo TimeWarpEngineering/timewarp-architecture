@@ -68,7 +68,7 @@
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
     <PackageVersion Include="Oakton" Version="6.1.0" />
     <PackageVersion Include="Octokit.Webhooks.AspNetCore" Version="1.0.0" />
-    <PackageVersion Include="OneOf" Version="3.0.263" />
+    <PackageVersion Include="OneOf" Version="3.0.271" />
     <PackageVersion Include="OneOf.SourceGenerator" Version="3.0.243" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.8.1" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.8.1" />
