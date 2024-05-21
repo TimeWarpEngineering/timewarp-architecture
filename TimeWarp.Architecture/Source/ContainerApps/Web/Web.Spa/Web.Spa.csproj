@@ -30,7 +30,6 @@
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons"/>
-    <PackageReference Include="Microsoft.Tye.Extensions.Configuration"/>
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
     <PackageReference Include="Morris.Blazor.FluentValidation"/>
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
@@ -90,7 +89,7 @@
           DestinationFolder="$(ProjectDir)obj\css\"
           SkipUnchangedFiles="true" />
   </Target>
-  
+
   <Target Name="Tailwind" AfterTargets="Build,CopyScopedCss">
     <Exec Command="npm install" />
     <Exec Command="npm run prettier" />
@@ -105,5 +104,5 @@
     <MakeDir Directories="$(ProjectDir)obj\css\_content\Microsoft.FluentUI.AspNetCore.Components" />
     <WriteLinesToFile File="@(DummyCSSFile)" Lines="/* Dummy file to satisfy build requirement */" Overwrite="true" />
   </Target>
-  
+
 </Project>

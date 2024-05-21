@@ -59,7 +59,6 @@
     <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.7.2" />
     <PackageVersion Include="Microsoft.Identity.Web" Version="2.18.2" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.44.0" />
-    <PackageVersion Include="Microsoft.Tye.Extensions.Configuration" Version="0.10.0-alpha.21420.1" />
     <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="4.6.2" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.0.0" />
