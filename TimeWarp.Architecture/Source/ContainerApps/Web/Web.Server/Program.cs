@@ -1,11 +1,8 @@
+#nullable enable
 // ReSharper disable RedundantNameQualifier
 namespace TimeWarp.Architecture.Web.Server;
 
-using Microsoft.Identity.Web;
 using Serilog;
-using Serilog.Core;
-using Serilog.Debugging;
-using Services;
 
 [UsedImplicitly]
 public class Program : IAspNetProgram
