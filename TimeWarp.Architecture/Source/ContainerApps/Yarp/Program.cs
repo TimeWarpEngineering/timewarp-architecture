@@ -2,9 +2,9 @@ namespace TimeWarp.Architecture.Yarp.Server;
 
 public class Program : IAspNetProgram
 {
-  public static Task Main(string[] aArgumentArray)
+  public static Task Main(string[] argumentArray)
   {
-    WebApplicationBuilder builder = WebApplication.CreateBuilder(aArgumentArray);
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
     builder.AddServiceDefaults();
     ConfigureConfiguration(builder.Configuration);
     ConfigureServices(builder.Services, builder.Configuration);
@@ -18,19 +18,23 @@ public class Program : IAspNetProgram
 
     return webApplication.RunAsync();
   }
-  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager) { }
-  public static void ConfigureEndpoints(WebApplication aWebApplication) { }
+  public static void ConfigureConfiguration(ConfigurationManager configurationManager) {}
+  public static void ConfigureEndpoints(WebApplication webApplication) {}
 
-  public static void ConfigureMiddleware(WebApplication aWebApplication) => aWebApplication.MapReverseProxy();
+  public static void ConfigureMiddleware(WebApplication webApplication)
+  {
+    webApplication.MapReverseProxy();
+  }
 
   public static void ConfigureServices
   (
-    IServiceCollection aServiceCollection,
-    IConfiguration aConfiguration
+    IServiceCollection serviceCollection,
+    IConfiguration configuration
   )
   {
-    aServiceCollection
+    serviceCollection
       .AddReverseProxy()
-      .LoadFromConfig(aConfiguration.GetSection("ReverseProxy"));
+      .LoadFromConfig(configuration.GetSection("ReverseProxy"))
+      .AddServiceDiscoveryDestinationResolver();
   }
 }
