@@ -1,7 +1,13 @@
 # Run.ps1
+$Env:ASPNETCORE_ENVIRONMENT = "Development"
 
-# Define the project path
-$projectPath = "Source/ContainerApps/Aspire/Aspire.AppHost/Aspire.AppHost.csproj"
-
-# Start the dotnet run process
-dotnet run --project $projectPath
+Push-Location $PSScriptRoot
+try
+{
+  $projectPath = "Source/ContainerApps/Aspire/Aspire.AppHost/Aspire.AppHost.csproj"
+  dotnet run --project $projectPath
+}
+finally
+{
+  Pop-Location
+}
