@@ -10,6 +10,8 @@ IResourceBuilder<ProjectResource> webServer =
     .WithReference(apiServer)
     .WithReference(grpcServer);
 
+    webServer.WithReference(webServer);
+
 builder.AddProject<Projects.Yarp>("yarp")
   .WithReference(apiServer)
   .WithReference(webServer)
