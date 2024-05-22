@@ -1,5 +1,5 @@
 ﻿namespace TimeWarp.Architecture.Configuration;
-public static class Constants
+public static class ServiceNames
 {
   public const string ApiServiceName = "api-server";
   public const string GrpcServiceName = "grpc-server";
