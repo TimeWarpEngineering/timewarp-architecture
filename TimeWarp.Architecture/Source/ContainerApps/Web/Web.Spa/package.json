@@ -6,23 +6,20 @@
   "scripts": {
     "build": "tsc",
     "prettier": "prettier --write .",
-    "css:build": "npx tailwindcss -i ./Styles/input.css -o ./wwwroot/css/site.css --minify --verbose",
-    "tailwind": "npx tailwindcss -i ./Styles/input.css -o ./wwwroot/css/site.css --minify",
-    "tailwind-watch": "npx tailwindcss -i ./Styles/input.css -o ./wwwroot/css/site.css --minify --watch"
+    "css:build": "npx tailwindcss -i ./Styles/input.css -o ./wwwroot/css/site.css --minify",
+    "tailwind-watch": "npx tailwindcss -i ./Styles/input.css -o ./wwwroot/css/site.css --minify --watch",
+    "lint": "eslint source/**/*.ts"
   },
   "devDependencies": {
     "@tailwindcss/aspect-ratio": "0.4.2",
     "@tailwindcss/forms": "0.5.7",
     "@tailwindcss/typography": "0.5.13",
-    "@typescript-eslint/eslint-plugin": "7.9.0",
-    "@typescript-eslint/parser": "7.9.0",
-    "autoprefixer": "10.4.19",
-    "eslint": "9.3.0",
+    "@typescript-eslint/eslint-plugin": "7.10.0",
+    "@typescript-eslint/parser": "7.10.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "2.29.1",
     "eslint-plugin-prettier": "5.1.3",
-    "postcss": "8.4.38",
     "prettier": "3.2.5",
     "tailwindcss": "3.4.3",
     "typescript": "5.4.5"

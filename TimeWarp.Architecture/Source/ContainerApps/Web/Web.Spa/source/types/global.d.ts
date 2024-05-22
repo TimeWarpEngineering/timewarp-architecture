@@ -1,7 +1,5 @@
-import { BlazorDualMode } from "./BlazorDualMode";
-
 interface BlazorMethodReference {
-  invokeMethodAsync: (methodName: string, ...args: any[]) => Promise<void>;
+  invokeMethodAsync: (methodName: string, ...args: unknown[]) => Promise<void>;
 }
 
 interface DisposeHandler {
@@ -13,7 +11,7 @@ declare global {
   function boot(): Promise<void>;
 
   interface BlazorState {
-    DispatchRequest(requestTypeFullName: string, request: any): Promise<void>;
+    DispatchRequest(requestTypeFullName: string, request: unknown): Promise<void>;
   }
 
   interface Blazor {
@@ -25,10 +23,7 @@ declare global {
     BlazorState: BlazorState;
     Blazor: Blazor;
     Spa: typeof import("../Spa").Spa;
-    NotifyLossOfInterest: (
-      elementId: string,
-      blazorMethodReference: BlazorMethodReference
-    ) => DisposeHandler; // Added line
+    NotifyLossOfInterest: (elementId: string, blazorMethodReference: BlazorMethodReference) => DisposeHandler; // Added line
   }
 }
 
