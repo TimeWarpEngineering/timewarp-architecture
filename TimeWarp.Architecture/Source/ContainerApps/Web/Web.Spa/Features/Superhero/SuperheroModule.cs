@@ -57,10 +57,10 @@ public class SuperheroModule
 
   }
 
-  private static Uri GetServiceUri(IConfiguration aConfiguration, string aServiceName)
+  private static Uri GetServiceUri(IConfiguration configuration, string serviceName)
   {
     ServiceCollectionOptions serviceCollectionOptions =
-      aConfiguration.GetSection(nameof(ServiceCollectionOptions)).Get<ServiceCollectionOptions>() ??
+      configuration.GetSection(nameof(ServiceCollectionOptions)).Get<ServiceCollectionOptions>() ??
       throw new InvalidOperationException();
 
     ServiceCollectionOptions.Service service = serviceCollectionOptions[Constants.GrpcServiceName];
@@ -74,7 +74,7 @@ public class SuperheroModule
       Port = service.Port
     };
 
-    Uri serviceUri = aConfiguration.GetServiceHttpsUri(aServiceName) ?? uriBuilder.Uri;
+    Uri serviceUri = configuration.GetServiceHttpsUri(serviceName) ?? uriBuilder.Uri;
     Console.WriteLine($"serviceUri:{serviceUri}");
     // https://github.com/dotnet/aspire/issues/2549
 
