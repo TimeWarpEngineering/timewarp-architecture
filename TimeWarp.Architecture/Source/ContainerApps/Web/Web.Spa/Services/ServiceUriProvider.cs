@@ -21,7 +21,7 @@ public class ServiceUriProvider
 
     try
     {
-      HttpClient httpClient = HttpClientFactory.CreateClient(Constants.WebServiceName);
+      HttpClient httpClient = HttpClientFactory.CreateClient(ServiceNames.WebServiceName);
 
       Logger.LogInformation("Fetching service discovery information.");
       HttpResponseMessage response = await httpClient.GetAsync("/service-discovery", cancellationToken);

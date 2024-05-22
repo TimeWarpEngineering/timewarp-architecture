@@ -7,6 +7,6 @@ public sealed class ApiServerApiService
 (
   IHttpClientFactory httpClientFactory,
   IOptions<JsonSerializerOptions> options
-) : BaseApiService(httpClientFactory, Constants.ApiServiceName, options), IApiServerApiService;
+) : BaseApiService(httpClientFactory, ServiceNames.ApiServiceName, options), IApiServerApiService;
 
 public interface IApiServerApiService : IApiService;

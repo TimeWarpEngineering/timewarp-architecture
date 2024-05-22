@@ -21,7 +21,7 @@ public class SuperheroGrpcServiceProvider
     // Ensure the ServiceUriProvider is initialized
     await ServiceUriProvider.InitializeAsync(cancellationToken);
 
-    if (ServiceUriProvider.ServiceUris.TryGetValue(Constants.GrpcServiceName, out Uri? grpcUri))
+    if (ServiceUriProvider.ServiceUris.TryGetValue(ServiceNames.GrpcServiceName, out Uri? grpcUri))
     {
       var httpHandler = new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler());
 
