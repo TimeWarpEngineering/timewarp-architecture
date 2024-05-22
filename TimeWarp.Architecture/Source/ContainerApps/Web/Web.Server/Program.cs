@@ -197,6 +197,23 @@ public class Program : IAspNetProgram
     CommonServerModule.ConfigureEndpoints(webApplication);
     webApplication.MapControllers();
     webApplication.MapHub<ChatHub>(ChatHubConstants.Route);
+
+    // Map the new endpoint to expose service discovery information
+    webApplication.MapGet
+    (
+      "/service-discovery",
+      async context =>
+      {
+        var services = new Dictionary<string, Uri?>
+        {
+          { Configuration.ServiceNames.GrpcServiceName, ServiceUriHelper.GetServiceHttpsUri(Configuration.ServiceNames.GrpcServiceName) },
+          { Configuration.ServiceNames.ApiServiceName, ServiceUriHelper.GetServiceHttpsUri(Configuration.ServiceNames.ApiServiceName) },
+          { Configuration.ServiceNames.WebServiceName, ServiceUriHelper.GetServiceHttpsUri(Configuration.ServiceNames.WebServiceName) }
+        };
+
+        await context.Response.WriteAsJsonAsync(services);
+      }
+    );
   }
 
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
