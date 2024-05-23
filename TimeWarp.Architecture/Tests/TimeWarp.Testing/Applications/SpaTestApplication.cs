@@ -22,7 +22,7 @@ public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestA
 
     ConfigureServices(services, testServerApplication.WebApplicationHost.Configuration);
     string baseurl = testServerApplication.WebApplicationHost.Urls.First();
-    services.AddHttpClient(Configuration.Constants.ApiServiceName, c => c.BaseAddress = new Uri(baseurl));
+    services.AddHttpClient(Configuration.ServiceNames.ApiServiceName, c => c.BaseAddress = new Uri(baseurl));
     ServiceProvider = services.BuildServiceProvider();
     ScopedSender = new ScopedSender(ServiceProvider);
   }

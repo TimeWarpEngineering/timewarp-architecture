@@ -1,6 +1,6 @@
 export declare class BlazorState {
-  jsonRequestHandler: any;
-  reduxDevTools: any;
-  DispatchRequest(requestTypeFullName: string, request: any): Promise<void>;
+  jsonRequestHandler: unknown;
+  reduxDevTools: unknown;
+  DispatchRequest(requestTypeFullName: string, request: unknown): Promise<void>;
 }
 export declare const blazorState: BlazorState;

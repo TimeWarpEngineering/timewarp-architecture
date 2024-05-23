@@ -15,7 +15,8 @@ public class Program
     builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
 
     ConfigureServices(builder.Services, builder.Configuration);
-    builder.Services.AddHttpClient(Constants.ApiServiceName, aClient => aClient.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
+    builder.Services.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
+    builder.Services.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
 
     await builder.Build().RunAsync();
   }
@@ -109,7 +110,7 @@ public class Program
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
     aServiceCollection
-      .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(aConfiguration)
+      // .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(aConfiguration)
       .ConfigureOptions<BlazorSettings, BlazorSettingsValidator>(aConfiguration);
 
     //aServiceCollection.ValidateOptions();

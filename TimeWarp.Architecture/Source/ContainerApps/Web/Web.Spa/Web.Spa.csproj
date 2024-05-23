@@ -30,7 +30,6 @@
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons"/>
-    <PackageReference Include="Microsoft.Tye.Extensions.Configuration"/>
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
     <PackageReference Include="Morris.Blazor.FluentValidation"/>
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
@@ -40,11 +39,6 @@
     <PackageReference Include="protobuf-net.Grpc"/>
     <PackageReference Include="timewarp-heroicons"/>
     <PackageReference Include="timewarp-simple-icons"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <UpToDateCheckBuilt Include="Styles/input.css" Set="Css" />
-    <UpToDateCheckBuilt Include="tailwind.config.js" Set="Css" />
   </ItemGroup>
 
   <ItemGroup>
@@ -73,7 +67,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <UpToDateCheckBuilt Include="Styles/input.css" Set="Css" />
+    <UpToDateCheckBuilt Include="tailwind.config.js" Set="Css" />
+  </ItemGroup>
+
+  <ItemGroup>
     <TypeScriptInputs Include="source\*.*"/>
+  </ItemGroup>
+  
+  <ItemGroup>
     <AdditionalFiles Include="Features\Base\StateAccessMixin.mixin"/>
     <AdditionalFiles Include="Mixins\Page.mixin"/>
   </ItemGroup>
@@ -90,10 +92,11 @@
           DestinationFolder="$(ProjectDir)obj\css\"
           SkipUnchangedFiles="true" />
   </Target>
-  
+
   <Target Name="Tailwind" AfterTargets="Build,CopyScopedCss">
     <Exec Command="npm install" />
     <Exec Command="npm run prettier" />
+    <Exec Command="npm run lint" />
     <Exec Command="npm run build" />
     <Exec Command="npm run css:build" />
   </Target>
@@ -105,5 +108,5 @@
     <MakeDir Directories="$(ProjectDir)obj\css\_content\Microsoft.FluentUI.AspNetCore.Components" />
     <WriteLinesToFile File="@(DummyCSSFile)" Lines="/* Dummy file to satisfy build requirement */" Overwrite="true" />
   </Target>
-  
+
 </Project>

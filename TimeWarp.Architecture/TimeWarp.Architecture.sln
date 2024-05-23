@@ -121,6 +121,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "06-NewFileTemplates", "06-N
 		.templates\validator.txt = .templates\validator.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.AppHost", "Source\ContainerApps\Aspire\Aspire.AppHost\Aspire.AppHost.csproj", "{8A027784-9F48-4EF7-979F-9DF6AA37F25B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aspire.ServiceDefaults", "Source\ContainerApps\Aspire\Aspire.ServiceDefaults\Aspire.ServiceDefaults.csproj", "{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "07-Aspire", "07-Aspire", "{DA25DAAF-F149-43EB-AD42-34DB9840D97D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aspire", "Aspire", "{03E1531D-A295-4B91-91A9-DF50D3BF3C53}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -302,6 +310,18 @@ Global
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A027784-9F48-4EF7-979F-9DF6AA37F25B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A027784-9F48-4EF7-979F-9DF6AA37F25B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A027784-9F48-4EF7-979F-9DF6AA37F25B}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{8A027784-9F48-4EF7-979F-9DF6AA37F25B}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{8A027784-9F48-4EF7-979F-9DF6AA37F25B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A027784-9F48-4EF7-979F-9DF6AA37F25B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -345,6 +365,9 @@ Global
 		{08ED6B59-E051-4B4A-AEEA-351D0720FC46} = {45A9CAA5-8BF5-48E9-BBAD-85D5001764AC}
 		{AF802A33-1D61-4089-986C-1265BFD04C79} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{92834F28-8ECE-4F49-A4F5-DF6AA560CC67} = {AF802A33-1D61-4089-986C-1265BFD04C79}
+		{8A027784-9F48-4EF7-979F-9DF6AA37F25B} = {DA25DAAF-F149-43EB-AD42-34DB9840D97D}
+		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8} = {DA25DAAF-F149-43EB-AD42-34DB9840D97D}
+		{03E1531D-A295-4B91-91A9-DF50D3BF3C53} = {F324E68B-9E03-4D9F-848E-398203410723}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}

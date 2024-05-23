@@ -12,29 +12,30 @@ function initializeEnvironment() {
   Spa.Counter = Counter;
   window.Spa = Spa;
 }
-export function beforeWebStart(_options: any, _extensions: any) {
+
+export function beforeWebStart(_options: unknown, _extensions: unknown) {
   log("Web.Spa Web", "beforeWebStart", "info", LogAction.Begin);
   initializeEnvironment();
 }
 
-export function afterWebStarted(_blazor: any) {
+export function afterWebStarted(_blazor: unknown) {
   log("Web.Spa Web", "afterWebStarted", "info", LogAction.End);
 }
 
-export function beforeWebAssemblyStart(_options: any, _extensions: any) {
+export function beforeWebAssemblyStart(_options: unknown, _extensions: unknown) {
   log("Web.Spa WebAssembly", "beforeWebAssemblyStart", "info", LogAction.Begin);
   initializeEnvironment();
 }
 
-export function afterWebAssemblyStarted(_blazor: any) {
+export function afterWebAssemblyStarted(_blazor: unknown) {
   log("Web.Spa WebAssembly", "afterWebAssemblyStarted", "info", LogAction.End);
 }
 
-export function beforeServerStart(_options: any, _extensions: any) {
+export function beforeServerStart(_options: unknown, _extensions: unknown) {
   log("Web.Spa Server", "beforeServerStart", "info", LogAction.Begin);
   initializeEnvironment();
 }
 
-export function afterServerStarted(_blazor: any) {
+export function afterServerStarted(_blazor: unknown) {
   log("Web.Spa Server", "afterServerStarted", "info", LogAction.End);
 }

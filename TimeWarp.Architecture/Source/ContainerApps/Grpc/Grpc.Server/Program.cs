@@ -2,6 +2,8 @@ const string AllowAllCorsPolicy = "AllowAll";
 
 WebApplicationBuilder? webApplicationBuilder = WebApplication.CreateBuilder(args);
 
+webApplicationBuilder.AddServiceDefaults();
+
 // Additional configuration is required to successfully run gRPC on macOS.
 // For instructions on how to configure Kestrel and gRPC clients on macOS,
 // visit https://go.microsoft.com/fwlink/?linkid=2099682
@@ -10,6 +12,8 @@ WebApplicationBuilder? webApplicationBuilder = WebApplication.CreateBuilder(args
 ConfigureServices(webApplicationBuilder.Services);
 
 WebApplication webApplication = webApplicationBuilder.Build();
+
+webApplication.MapDefaultEndpoints();
 ConfigurePipeline(webApplication);
 
 webApplication.Run();

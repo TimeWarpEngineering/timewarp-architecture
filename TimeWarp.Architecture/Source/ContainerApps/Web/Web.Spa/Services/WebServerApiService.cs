@@ -5,6 +5,6 @@ internal sealed class WebServerApiService
   IAccessTokenProvider accessTokenProvider,
   IHttpClientFactory httpClientFactory,
   IOptions<JsonSerializerOptions> options
-) : BaseAuthApiService(accessTokenProvider, httpClientFactory, Constants.WebServiceName, options), IWebServerApiService;
+) : BaseAuthApiService(accessTokenProvider, httpClientFactory, ServiceNames.WebServiceName, options), IWebServerApiService;
 
 public interface IWebServerApiService : IApiService;

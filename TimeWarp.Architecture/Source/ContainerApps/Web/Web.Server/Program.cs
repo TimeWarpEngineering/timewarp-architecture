@@ -1,11 +1,8 @@
+#nullable enable
 // ReSharper disable RedundantNameQualifier
 namespace TimeWarp.Architecture.Web.Server;
 
-using Microsoft.Identity.Web;
 using Serilog;
-using Serilog.Core;
-using Serilog.Debugging;
-using Services;
 
 [UsedImplicitly]
 public class Program : IAspNetProgram
@@ -38,11 +35,14 @@ public class Program : IAspNetProgram
     {
       serilog.Information("Starting web host");
       WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
+      builder.AddServiceDefaults();
 
       ConfigureConfiguration(builder.Configuration);
       ConfigureServices(builder.Services, builder.Configuration);
 
       WebApplication webApplication = builder.Build();
+
+      webApplication.MapDefaultEndpoints();
 
       Console.WriteLine($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
 
@@ -73,6 +73,8 @@ public class Program : IAspNetProgram
   {
     serviceCollection.AddSerilog();
     serviceCollection.AddHttpClient();
+    serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.WebServiceName));
+    serviceCollection.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.ApiServiceName));
 
     serviceCollection
       .AddRazorComponents()
@@ -194,6 +196,23 @@ public class Program : IAspNetProgram
     CommonServerModule.ConfigureEndpoints(webApplication);
     webApplication.MapControllers();
     webApplication.MapHub<ChatHub>(ChatHubConstants.Route);
+
+    // Map the new endpoint to expose service discovery information
+    webApplication.MapGet
+    (
+      "/service-discovery",
+      async context =>
+      {
+        var services = new Dictionary<string, Uri?>
+        {
+          { Configuration.ServiceNames.GrpcServiceName, ServiceUriHelper.GetServiceHttpsUri(Configuration.ServiceNames.GrpcServiceName) },
+          { Configuration.ServiceNames.ApiServiceName, ServiceUriHelper.GetServiceHttpsUri(Configuration.ServiceNames.ApiServiceName) },
+          { Configuration.ServiceNames.WebServiceName, ServiceUriHelper.GetServiceHttpsUri(Configuration.ServiceNames.WebServiceName) }
+        };
+
+        await context.Response.WriteAsJsonAsync(services);
+      }
+    );
   }
 
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
