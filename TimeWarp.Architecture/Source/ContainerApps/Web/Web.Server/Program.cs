@@ -73,6 +73,8 @@ public class Program : IAspNetProgram
   {
     serviceCollection.AddSerilog();
     serviceCollection.AddHttpClient();
+    serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.WebServiceName));
+    serviceCollection.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.ApiServiceName));
 
     serviceCollection
       .AddRazorComponents()
