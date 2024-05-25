@@ -109,4 +109,11 @@
     <WriteLinesToFile File="@(DummyCSSFile)" Lines="/* Dummy file to satisfy build requirement */" Overwrite="true" />
   </Target>
 
+  <Target Name="CreateDummyQuickGridCSS" BeforeTargets="Build">
+    <ItemGroup>
+      <DummyQuickGridCSSFile Include="$(ProjectDir)obj\css\_content\Microsoft.AspNetCore.Components.QuickGrid\Microsoft.AspNetCore.Components.QuickGrid.bundle.scp.css" />
+    </ItemGroup>
+    <MakeDir Directories="$(ProjectDir)obj\css\_content\Microsoft.AspNetCore.Components.QuickGrid" />
+    <WriteLinesToFile File="@(DummyQuickGridCSSFile)" Lines="/* Dummy file to satisfy build requirement */" Overwrite="true" />
+  </Target>
 </Project>
