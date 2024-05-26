@@ -1,12 +1,18 @@
 @inherits BaseComponent
 
 @code {
+  [CascadingParameter] public TimeWarpPage? TimeWarpPage { get; set; }
 
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+    Guard.Against.Null(TimeWarpPage, nameof(TimeWarpPage));
+  }
 }
 
 <FluentStack Class="aside-pane" Orientation="Orientation.Vertical" Style="height: 100%" @attributes=Attributes>
   <AsidePane_Header class="aside-pane__aside-pane_header"/>
-  <div class="aside-pain__content placeholder" style="height: 100%">AsidePane Content</div>
+  <div class="aside-pain__content placeholder" style="height: 100%">@TimeWarpPage?.AsidePane_AsideContent</div>
   <FluentSpacer/>
   <AsidePane_Footer class="aside-pane__aside-pane_footer"/>
 </FluentStack>

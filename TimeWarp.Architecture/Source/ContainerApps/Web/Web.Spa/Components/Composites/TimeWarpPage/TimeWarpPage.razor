@@ -16,9 +16,9 @@
   // [Parameter] public RenderFragment? SiteHeaderContent { get; set; }
   // [Parameter] public RenderFragment? SiteFooterContent { get; set; }
 
-  [Parameter] public RenderFragment? PageHeaderContent { get; set; }
-  [Parameter] public RenderFragment? MainContent { get; set; }
-  [Parameter] public RenderFragment? AsideContent { get; set; }
+  [Parameter] public RenderFragment? PagePane_HeaderContent { get; set; }
+  [Parameter] public RenderFragment? PagePane_PageContent { get; set; }
+  [Parameter] public RenderFragment? AsidePane_AsideContent { get; set; }
 
   // [Parameter] public RenderFragment? ModalContent { get; set; }
   // [Parameter] public RenderFragment? CustomSiteFooterContent { get; set; }
@@ -26,11 +26,13 @@
   [Parameter] public bool ShowSiteFooter { get; set; } = true;
 }
 
-<FluentMultiSplitter Class="timewarp-page" Height="100vh">
-  <FluentMultiSplitterPane Size="20%" Min="275px" Max="70%" Collapsible="true">
-    <LeftPane />
-  </FluentMultiSplitterPane>
-  <FluentMultiSplitterPane Size="80%">
-    <RightPane />
-  </FluentMultiSplitterPane>
-</FluentMultiSplitter>
+<CascadingValue Value="this">
+  <FluentMultiSplitter Class="timewarp-page" Height="100vh">
+    <FluentMultiSplitterPane Size="20%" Min="275px" Max="70%" Collapsible="true">
+      <LeftPane />
+    </FluentMultiSplitterPane>
+    <FluentMultiSplitterPane Size="80%">
+      <RightPane />
+    </FluentMultiSplitterPane>
+  </FluentMultiSplitter>
+</CascadingValue>
