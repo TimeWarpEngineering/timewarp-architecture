@@ -2,10 +2,9 @@ $Env:ASPNETCORE_ENVIRONMENT = "Development"
 
 Push-Location $PSScriptRoot
 try {
-  #if(web)
-  Push-Location ./Source/ContainerApps/Web/Web.TypeScript
+  Push-Location ./Source/ContainerApps/Web/Web.Spa
   try {
-    npx run tailwind-watch
+    npm run css:build
   }
   finally {
     Pop-Location
