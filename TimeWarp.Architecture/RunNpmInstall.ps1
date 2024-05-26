@@ -8,8 +8,7 @@ try {
     if (Test-Path .\node_modules\) {
       Remove-Item .\node_modules\ -Force -Recurse
     }
-    npm install  
-    dotnet build
+    npm install
   }
   finally {
     Pop-Location
