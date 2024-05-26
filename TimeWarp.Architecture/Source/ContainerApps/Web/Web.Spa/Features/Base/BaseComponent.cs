@@ -11,10 +11,28 @@ namespace TimeWarp.Architecture.Features;
 /// </remarks>
 public abstract partial class BaseComponent : BlazorStateDevToolsComponent, IAttributeComponent
 {
+  [Parameter]
+  public string? Class { get; set; }
+
   [Parameter(CaptureUnmatchedValues = true)]
   public IReadOnlyDictionary<string, object> Attributes { get; set; } = new Dictionary<string, object>();
   internal ActionTrackingState ActionTrackingState => GetState<ActionTrackingState>();
   internal RouteState RouteState => GetState<RouteState>();
+  protected string? BaseClass { get; set; }
+  protected CssBuilder BaseCssBuilder { get; private set; }
   protected bool IsAnyActive(params Type[] aActions) => ActionTrackingState.IsAnyActive(aActions);
   protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest);
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+    BaseCssBuilder = new CssBuilder(BaseClass);
+    if (string.IsNullOrWhiteSpace(Class)) return;
+
+    string[] classesToAdd = Class.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    foreach (string classToAdd in classesToAdd)
+    {
+      BaseCssBuilder = BaseCssBuilder.AddClass(classToAdd);
+    }
+  }
 }
