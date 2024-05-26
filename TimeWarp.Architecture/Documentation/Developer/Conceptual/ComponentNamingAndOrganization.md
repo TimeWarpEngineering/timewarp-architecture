@@ -151,7 +151,7 @@ Components that define the layout of a page or a section of a page. These compon
 
 ### Pane Components
 
-Pane components are explicitly `FluentMultiSplitterPane` contents. They are used within `FluentMultiSplitter` components to divide the layout into resizable panes.
+Pane components are explicitly `FluentMultiSplitterPane` contents. They are used within `FluentMultiSplitter` components to divide the layout into resizable panes. These panes can be adjusted by the user to change the size and layout of the content dynamically.
 
 **Naming Convention:**
 - Suffix: `Pane`
@@ -165,17 +165,18 @@ Pane components are explicitly `FluentMultiSplitterPane` contents. They are used
   </FluentMultiSplitterPane>
   <FluentMultiSplitterPane Size="20%" Collapsible="true">
     <AsidePane />
-  </FluentMultiSplitterPane>
-</FluentMultiSplitter>
+  </FluentMultiSplitter>
 ```
+
 
 ### Area Components
 
-Area components are containers that are not panes. They serve as organizational units within a page, often grouping related content.
+Area components are containers that are not panes. They serve as organizational units within a page, often grouping related content. Unlike panes, area components are not user-resizable and rely on CSS techniques such as media queries, flexbox, and grid layouts to manage their size and layout.
 
 **Naming Convention:**
 - Suffix: `Area`
 - Example: `SiteArea.razor`
+
 
 ## Example Directory Structure
 
