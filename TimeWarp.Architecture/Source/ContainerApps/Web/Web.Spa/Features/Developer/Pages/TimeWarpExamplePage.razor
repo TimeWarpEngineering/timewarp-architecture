@@ -1,72 +1,79 @@
 @namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
 
-<TimeWarp.Architecture.Components.Composites.TimeWarpPage.TimeWarpPage>
-  <PageHeaderContent>
-    <div>PageHeader</div>
-  </PageHeaderContent>
 
-  <MainContent>
-    <FluentStack Orientation=Orientation.Vertical>
+<TimeWarpPage>
+  <PagePane_HeaderContent>
+    PagePane_HeaderContent
+  </PagePane_HeaderContent>
 
-      <FluentLabel Typo=Typography.H3>Alert Types</FluentLabel>
-
-      <SimpleAlert Type=SimpleAlert.AlertType.Success Title="Success">
-        The operation was completed successfully.
-      </SimpleAlert>
-
-      <SimpleAlert Type=SimpleAlert.AlertType.Danger Title="Error">
-        There was an error processing your request.
-      </SimpleAlert>
-
-      <SimpleAlert Type=SimpleAlert.AlertType.Warning Title="Warning">
-        You are nearing your storage capacity.
-      </SimpleAlert>
-
-      <SimpleAlert Type=SimpleAlert.AlertType.Info Title="Information">
-        New updates will be applied during the next system maintenance window.
-      </SimpleAlert>
-
-      <FluentLabel Typo=Typography.H3>Customized with tailwind classes</FluentLabel>
-
-      <SimpleAlert class="simple-alert__title--uppercase simple-alert__content--italic mt-4 w-fit" Title="Alert">
-        This alert is styled with BEM based tailwind classes.
-        "simple-alert__title--uppercase"
-        "simple-alert__content--italic"
-        "mt-4 w-fit"
-      </SimpleAlert>
-
-      <FluentLabel Typo=Typography.H3>Customized with consumer css</FluentLabel>
-
-      <div>
-        <SimpleAlert Type=SimpleAlert.AlertType.Custom Title="Custom">
-          This alert is styled with scoped css. It requires a parent container (div) to allow deep to work. Not sure why.
-          <pre><code>
-            ::deep .simple-alert--custom .simple-alert__card {
-              background-color: lightblue;
-            }
-
-            ::deep .simple-alert--custom .simple-alert__label {
-              color: darkgreen;
-            }
-
-            ::deep .simple-alert--custom .simple-alert__title {
-              text-transform: uppercase;
-            }
-
-            ::deep .simple-alert--custom .simple-alert__content {
-              font-style: italic;
-            }
-          </code></pre>
-        </SimpleAlert>
-      </div>
-
-      <FluentLabel Typo=Typography.H3>Customized with inline style css</FluentLabel>
-
-      <SimpleAlert Title="Alert" TitleStyle="text-transform: uppercase;" ContentStyle="font-style: italic;">
-        Customized with inline style. To make the title uppercase and the content italic.
-      </SimpleAlert>
-
-    </FluentStack>
-  </MainContent>
-</TimeWarp.Architecture.Components.Composites.TimeWarpPage.TimeWarpPage>
+  <PagePane_PageContent>
+    PagePane_PageContent
+  </PagePane_PageContent>
+  <AsidePane_AsideContent>
+    AsidePane_AsideContent
+  </AsidePane_AsideContent>
+ @*  <MainContent> *@
+ @*    <FluentStack Orientation=Orientation.Vertical> *@
+ @* *@
+ @*      <FluentLabel Typo=Typography.H3>Alert Types</FluentLabel> *@
+ @* *@
+ @*      <SimpleAlert Type=SimpleAlert.AlertType.Success Title="Success"> *@
+ @*        The operation was completed successfully. *@
+ @*      </SimpleAlert> *@
+ @* *@
+ @*      <SimpleAlert Type=SimpleAlert.AlertType.Danger Title="Error"> *@
+ @*        There was an error processing your request. *@
+ @*      </SimpleAlert> *@
+ @* *@
+ @*      <SimpleAlert Type=SimpleAlert.AlertType.Warning Title="Warning"> *@
+ @*        You are nearing your storage capacity. *@
+ @*      </SimpleAlert> *@
+ @* *@
+ @*      <SimpleAlert Type=SimpleAlert.AlertType.Info Title="Information"> *@
+ @*        New updates will be applied during the next system maintenance window. *@
+ @*      </SimpleAlert> *@
+ @* *@
+ @*      <FluentLabel Typo=Typography.H3>Customized with tailwind classes</FluentLabel> *@
+ @* *@
+ @*      <SimpleAlert class="simple-alert__title--uppercase simple-alert__content--italic mt-4 w-fit" Title="Alert"> *@
+ @*        This alert is styled with BEM based tailwind classes. *@
+ @*        "simple-alert__title--uppercase" *@
+ @*        "simple-alert__content--italic" *@
+ @*        "mt-4 w-fit" *@
+ @*      </SimpleAlert> *@
+ @* *@
+ @*      <FluentLabel Typo=Typography.H3>Customized with consumer css</FluentLabel> *@
+ @* *@
+ @*      <div> *@
+ @*        <SimpleAlert Type=SimpleAlert.AlertType.Custom Title="Custom"> *@
+ @*          This alert is styled with scoped css. It requires a parent container (div) to allow deep to work. Not sure why. *@
+ @*          <pre><code> *@
+ @*            ::deep .simple-alert--custom .simple-alert__card { *@
+ @*              background-color: lightblue; *@
+ @*            } *@
+ @* *@
+ @*            ::deep .simple-alert--custom .simple-alert__label { *@
+ @*              color: darkgreen; *@
+ @*            } *@
+ @* *@
+ @*            ::deep .simple-alert--custom .simple-alert__title { *@
+ @*              text-transform: uppercase; *@
+ @*            } *@
+ @* *@
+ @*            ::deep .simple-alert--custom .simple-alert__content { *@
+ @*              font-style: italic; *@
+ @*            } *@
+ @*          </code></pre> *@
+ @*        </SimpleAlert> *@
+ @*      </div> *@
+ @* *@
+ @*      <FluentLabel Typo=Typography.H3>Customized with inline style css</FluentLabel> *@
+ @* *@
+ @*      <SimpleAlert Title="Alert" TitleStyle="text-transform: uppercase;" ContentStyle="font-style: italic;"> *@
+ @*        Customized with inline style. To make the title uppercase and the content italic. *@
+ @*      </SimpleAlert> *@
+ @* *@
+ @*    </FluentStack> *@
+ @*  </MainContent> *@
+</TimeWarpPage>
