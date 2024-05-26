@@ -1,0 +1,13 @@
+@inherits BaseComponent
+@code {
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    BaseClass = "right-pane-header placeholder";
+  }
+}
+
+<div class=@BaseCssBuilder @attributes=Attributes>
+  RightPane_Header
+</div>
+

@@ -1,0 +1,19 @@
+@{
+  #pragma warning disable FluentMultiSplitter
+}
+@inherits BaseComponent
+@using TimeWarp.Architecture.Components.Composites.TimeWarpPage.RightPane.SiteArea.AsidePane
+@using TimeWarp.Architecture.Components.Composites.TimeWarpPage.RightPane.SiteArea.PagePane
+
+@code {
+
+}
+
+<FluentMultiSplitter Class="site-area" @attributes=Attributes>
+  <FluentMultiSplitterPane>
+    <PagePane class="site-area__page-pane" />
+  </FluentMultiSplitterPane>
+  <FluentMultiSplitterPane Size="20%" Collapsible="true">
+    <AsidePane class="site-area__aside-pane" />
+  </FluentMultiSplitterPane>
+</FluentMultiSplitter>
