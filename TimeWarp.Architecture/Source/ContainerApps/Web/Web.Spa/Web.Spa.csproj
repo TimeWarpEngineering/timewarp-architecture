@@ -80,12 +80,6 @@
     <AdditionalFiles Include="Mixins\Page.mixin"/>
   </ItemGroup>
 
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="Pages\Authentication\ProfilePage.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Authentication\SettingsPage.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Authentication\_Imports.razor" />
-  </ItemGroup>
-
   <!-- Target to copy scoped CSS to a more accessible location -->
   <Target Name="CopyScopedCss" AfterTargets="Build">
     <Copy SourceFiles="$(ProjectDir)obj\$(ConfigurationName)\$(TargetFramework)\scopedcss\bundle\$(ProjectName).styles.css"
