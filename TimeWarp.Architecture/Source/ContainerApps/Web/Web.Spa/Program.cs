@@ -88,8 +88,27 @@ public class Program
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
 
     // TODO: Look into naming of the services. I think we can clear up the naming.
-    serviceCollection.AddScoped<IWebServerApiService,WebServerApiService>();
-    serviceCollection.AddScoped<IApiServerApiService,ApiServerApiService>();
+    serviceCollection.AddScoped<IWebServerApiService>
+    (
+      serviceProvider =>
+      {
+        IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
+        IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+        IOptions<JsonSerializerOptions> options = serviceProvider.GetRequiredService<IOptions<JsonSerializerOptions>>();
+        return new WebServerApiService(accessTokenProvider, httpClientFactory, options);
+      }
+    );
+
+    serviceCollection.AddScoped<IApiServerApiService>
+    (
+      serviceProvider =>
+      {
+        IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+        IOptions<JsonSerializerOptions> options = serviceProvider.GetRequiredService<IOptions<JsonSerializerOptions>>();
+        return new ApiServerApiService(httpClientFactory, options);
+      }
+    );
+
     // Set the JSON serializer options
     serviceCollection.Configure<JsonSerializerOptions>
     (
