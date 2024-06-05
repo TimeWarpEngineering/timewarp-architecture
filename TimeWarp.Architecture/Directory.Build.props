@@ -72,8 +72,19 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitTimestamp"/>
     </Exec>
     <PropertyGroup Condition="'$(GitRepoAvailable)' == 'true'">
-      <LastCommitDate>$([System.DateTime]::UnixEpoch.AddSeconds($(GitCommitTimestamp)).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssK"))</LastCommitDate>
+      <!-- Define the Unix epoch start date -->
+      <UnixEpochStart>1970-01-01T00:00:00Z</UnixEpochStart>
+
+      <!-- Calculate the commit date in UTC from the timestamp -->
+      <GitCommitDate>$([System.DateTime]::Parse($(UnixEpochStart)).AddSeconds($(GitCommitTimestamp)).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssK'))</GitCommitDate>
+
+      <!-- Assign the calculated date to LastCommitDate -->
+      <LastCommitDate>$(GitCommitDate)</LastCommitDate>
     </PropertyGroup>
+
+    <!--<PropertyGroup Condition="'$(GitRepoAvailable)' == 'true'">
+      <LastCommitDate>$([System.DateTime]::UnixEpoch.AddSeconds($(GitCommitTimestamp)).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssK"))</LastCommitDate>
+    </PropertyGroup>-->
     <ItemGroup Condition="'$(GitRepoAvailable)' == 'true'">
       <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
         <_Parameter1>CommitDate</_Parameter1>
