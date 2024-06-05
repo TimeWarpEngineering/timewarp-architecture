@@ -1,5 +1,4 @@
 ﻿global using Ardalis.GuardClauses;
-global using BlazorComponentUtilities;
 global using BlazorState;
 global using Blazored.LocalStorage;
 global using Blazored.SessionStorage;
@@ -23,8 +22,8 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Options;
 global using Microsoft.FluentUI.AspNetCore.Components;
+global using Microsoft.FluentUI.AspNetCore.Components.Utilities;
 global using Microsoft.JSInterop;
-global using Morris.Blazor.Validation;
 global using OneOf;
 global using TimeWarp.Features.JavaScriptInterop;
 global using TimeWarp.Features.ReduxDevTools;
