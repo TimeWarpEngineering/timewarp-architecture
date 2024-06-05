@@ -1,17 +1,13 @@
 namespace TimeWarp.Architecture.Web.Spa;
 
 using System.Globalization;
+
 public class Program
 {
   public static async Task Main(string[] args)
   {
     var builder = WebAssemblyHostBuilder.CreateDefault(args);
-    var isoCulture = new CultureInfo("en-US")
-    {
-      DateTimeFormat = { ShortDatePattern = "yyyy-MM-dd", LongDatePattern = "yyyy-MM-ddTHH:mm:ss" }
-    };
-    CultureInfo.DefaultThreadCurrentCulture = isoCulture;
-    CultureInfo.DefaultThreadCurrentUICulture = isoCulture;
+    SetIsoCulture();
     builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
 
     ConfigureServices(builder.Services, builder.Configuration);
@@ -19,6 +15,21 @@ public class Program
     builder.Services.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
 
     await builder.Build().RunAsync();
+  }
+
+  private static void SetIsoCulture()
+  {
+    var isoCulture =
+      new CultureInfo("en-US")
+      {
+        DateTimeFormat =
+        {
+          ShortDatePattern = "yyyy-MM-dd", LongDatePattern = "yyyy-MM-ddTHH:mm:ss"
+        }
+      };
+
+    CultureInfo.DefaultThreadCurrentCulture = isoCulture;
+    CultureInfo.DefaultThreadCurrentUICulture = isoCulture;
   }
 
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
@@ -51,9 +62,9 @@ public class Program
       blazorStateOptions =>
       {
         //-:cnd:noEmit
-        #if DEBUG
+#if DEBUG
         blazorStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
-        #endif
+#endif
         //+:cnd:noEmit
 
         blazorStateOptions.Assemblies =
@@ -61,11 +72,12 @@ public class Program
           {
             // ReSharper disable once RedundantNameQualifier
             typeof(Web.Spa.AssemblyMarker).GetTypeInfo().Assembly,
-			typeof(TimeWarp.State.Plus.AssemblyMarker).GetTypeInfo().Assembly,
+            typeof(TimeWarp.State.Plus.AssemblyMarker).GetTypeInfo().Assembly,
           };
       }
     );
 
+    // TODO: Either Fix Petes or remove this and continue to use Blazored
     // serviceCollection.AddFormValidation
     // (
     //   aValidationConfiguration =>
