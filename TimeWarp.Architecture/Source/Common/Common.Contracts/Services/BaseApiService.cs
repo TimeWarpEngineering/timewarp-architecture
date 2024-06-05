@@ -11,7 +11,7 @@
 public abstract class BaseApiService : IApiService
 {
   protected HttpClient HttpClient { get; init; }
-  private readonly JsonSerializerOptions JsonSerializerJsonSerializerOptions;
+  private readonly JsonSerializerOptions JsonSerializerOptions;
 
   /// <summary>
   /// This is the Service that is used to interact with the API.Server
@@ -19,7 +19,6 @@ public abstract class BaseApiService : IApiService
   /// <param name="httpClientFactory"></param>
   /// <param name="httpClientName"></param>
   /// <param name="jsonSerializerOptionsAccessor"></param>
-  [ActivatorUtilitiesConstructor]
   protected BaseApiService
   (
     IHttpClientFactory httpClientFactory,
@@ -27,7 +26,7 @@ public abstract class BaseApiService : IApiService
     IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor
   )
   {
-    JsonSerializerJsonSerializerOptions = jsonSerializerOptionsAccessor.Value;
+    JsonSerializerOptions = jsonSerializerOptionsAccessor.Value;
     HttpClient = httpClientFactory.CreateClient(httpClientName);
   }
 
@@ -40,7 +39,7 @@ public abstract class BaseApiService : IApiService
   protected BaseApiService(HttpClient httpClient, JsonSerializerOptions jsonSerializerOptions)
   {
     HttpClient = httpClient;
-    JsonSerializerJsonSerializerOptions = jsonSerializerOptions;
+    JsonSerializerOptions = jsonSerializerOptions;
   }
 
   /// <summary>
@@ -146,7 +145,7 @@ public abstract class BaseApiService : IApiService
 
     string json = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-    TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerJsonSerializerOptions);
+    TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
     if (response is null)
       throw new InvalidOperationException("The response is null.");
 

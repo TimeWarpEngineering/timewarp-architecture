@@ -8,9 +8,11 @@ public sealed class ApiServerApiService : BaseApiService, IApiServerApiService
   /// <summary>
   /// This is the Service that is used to interact with the API.Server
   /// </summary>
-  [ActivatorUtilitiesConstructor]
-  public ApiServerApiService(IHttpClientFactory httpClientFactory,
-    IOptions<JsonSerializerOptions> options) : base(httpClientFactory, ServiceNames.ApiServiceName, options) {}
+  public ApiServerApiService
+  (
+    IHttpClientFactory httpClientFactory,
+    IOptions<JsonSerializerOptions> options
+  ) : base(httpClientFactory, ServiceNames.ApiServiceName, options) {}
 
   /// <summary>
   /// Used for testing purposes

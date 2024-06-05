@@ -5,7 +5,6 @@ namespace TimeWarp.Architecture.Services;
 /// <summary>
 /// This is the Service that is used to interact with the Web.Server
 /// </summary>
-[ActivatorUtilitiesConstructor]
 internal sealed class WebServerApiService : BaseAuthApiService, IWebServerApiService
 {
   public WebServerApiService
