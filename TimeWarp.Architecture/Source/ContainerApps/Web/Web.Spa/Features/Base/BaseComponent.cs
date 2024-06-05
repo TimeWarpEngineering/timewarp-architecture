@@ -1,3 +1,4 @@
+#nullable enable
 namespace TimeWarp.Architecture.Features;
 
 /// <summary>
@@ -19,7 +20,7 @@ public abstract partial class BaseComponent : BlazorStateDevToolsComponent, IAtt
   internal ActionTrackingState ActionTrackingState => GetState<ActionTrackingState>();
   internal RouteState RouteState => GetState<RouteState>();
   protected string? BaseClass { get; set; }
-  protected CssBuilder BaseCssBuilder { get; private set; }
+  protected CssBuilder BaseCssBuilder { get; set; }
   protected bool IsAnyActive(params Type[] aActions) => ActionTrackingState.IsAnyActive(aActions);
   protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest);
 
@@ -35,4 +36,13 @@ public abstract partial class BaseComponent : BlazorStateDevToolsComponent, IAtt
       BaseCssBuilder = BaseCssBuilder.AddClass(classToAdd);
     }
   }
+
+  // Method to get the class attribute from the Attributes dictionary
+  protected string? GetClassFromAttributes()
+  {
+    return Attributes.TryGetValue("class", out object? classValue) ?
+      classValue as string :
+      null;
+  }
+
 }
