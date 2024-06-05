@@ -1,12 +1,8 @@
-@inherits ParentComponent
-@code {
-  // [Parameter] public RenderFragment? HeaderContent { get; set; }
-  // [Parameter] public RenderFragment? Content { get; set; }
-  // [Parameter] public RenderFragment? FooterContent { get; set; }
-}
+@inherits TimeWarpPageSubComponentBase
+
 <FluentStack Class="left-pane" Orientation=Orientation.Vertical Style="height: 100vh" @attributes=Attributes>
   <LeftPane_Header class="left-pane__left-pane_header"/>
-  <div class="left-pane__content placeholder" style="height: 100%" >LeftPane Content</div>
+  <LeftPane_Main class="left-pane__left-pane_main"></LeftPane_Main>
   <FluentSpacer/>
   <LeftPane_Footer class="left-pane__left-pane__footer"/>
 </FluentStack>

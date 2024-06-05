@@ -1,13 +1,3 @@
-@inherits BaseComponent
-
-@code {
-  [CascadingParameter] public TimeWarpPage? TimeWarpPage { get; set; }
-
-  protected override void OnParametersSet()
-  {
-    base.OnParametersSet();
-    Guard.Against.Null(TimeWarpPage, nameof(TimeWarpPage));
-  }
-}
+@inherits TimeWarpPageSubComponentBase
 
 <div class="page-pane_header placeholder" @attributes=Attributes>@TimeWarpPage?.PagePane_HeaderContent</div>

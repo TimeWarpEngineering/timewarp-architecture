@@ -1,5 +1,7 @@
-@inherits BaseComponent
+@inherits TimeWarpPageSubComponentBase
 @code {
 
 }
-<div class="left-pane_header placeholder" @attributes=Attributes>LeftPane_Header</div>
+<div class="left-pane_header placeholder" @attributes=Attributes>
+  @TimeWarpPage?.LeftPane_HeaderContent
+</div>

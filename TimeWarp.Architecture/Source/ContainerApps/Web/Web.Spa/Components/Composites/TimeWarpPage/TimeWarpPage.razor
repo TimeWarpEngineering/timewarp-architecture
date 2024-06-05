@@ -9,26 +9,43 @@
 
 @code
 {
-  // [Parameter] public RenderFragment? SideBarHeaderContent { get; set; }
-  // [Parameter] public RenderFragment? SideBarContent { get; set; }
-  // [Parameter] public RenderFragment? SideBarFooterContent { get; set; }
-
-  // [Parameter] public RenderFragment? SiteHeaderContent { get; set; }
-  // [Parameter] public RenderFragment? SiteFooterContent { get; set; }
-
+  [Parameter] public RenderFragment? LeftPane_HeaderContent { get; set; }
+  [Parameter] public RenderFragment? LeftPane_MainContent { get; set; }
+  [Parameter] public RenderFragment? LeftPane_FooterContent { get; set; }
+  [Parameter] public RenderFragment? RightPane_HeaderContent { get; set; }
+  [Parameter] public RenderFragment? RightPane_FooterContent { get; set; }
   [Parameter] public RenderFragment? PagePane_HeaderContent { get; set; }
-  [Parameter] public RenderFragment? PagePane_PageContent { get; set; }
-  [Parameter] public RenderFragment? AsidePane_AsideContent { get; set; }
+  [Parameter] public RenderFragment? PagePane_MainContent { get; set; }
+  [Parameter] public RenderFragment? PagePane_FooterContent { get; set; }
+  [Parameter] public RenderFragment? AsidePane_HeaderContent { get; set; }
+  [Parameter] public RenderFragment? AsidePane_MainContent { get; set; }
+  [Parameter] public RenderFragment? AsidePane_FooterContent { get; set; }
 
-  // [Parameter] public RenderFragment? ModalContent { get; set; }
-  // [Parameter] public RenderFragment? CustomSiteFooterContent { get; set; }
-  [Parameter] public bool ShowNavBar { get; set; } = true;
+  // Control the visibility of Panes and Areas
+  [Parameter] public bool ShowLeftPane { get; set; } = true;
   [Parameter] public bool ShowSiteFooter { get; set; } = true;
+  [Parameter] public bool ShowPlaceholders { get; set; } = true;
+  private FluentMultiSplitter FluentMultiSplitter { get; set; } = null!;
+  private FluentMultiSplitterPane? LeftPane { get; set; }
+
+  protected override void OnAfterRender(bool firstRender)
+  {
+    base.OnAfterRender(firstRender);
+    if (firstRender)
+    {
+      if (LeftPane == null) return;
+
+      if (!ShowLeftPane)
+      {
+        FluentMultiSplitter.RemovePane(LeftPane);
+      }
+    }
+  }
 }
 
 <CascadingValue Value="this">
-  <FluentMultiSplitter Class="timewarp-page" Height="100vh">
-    <FluentMultiSplitterPane Size="20%" Min="275px" Max="70%" Collapsible="true">
+  <FluentMultiSplitter ref=FluentMultiSplitter Class="timewarp-page" Height="100vh">
+    <FluentMultiSplitterPane ref=LeftPane Size="20%" Min="275px" Max="70%" Collapsible=ShowLeftPane Collapsed=@(!ShowLeftPane)>
       <LeftPane />
     </FluentMultiSplitterPane>
     <FluentMultiSplitterPane Size="80%">

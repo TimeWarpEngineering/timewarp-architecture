@@ -1,0 +1,12 @@
+@inherits TimeWarpPageSubComponentBase
+@code
+{
+  protected override void OnInitialized()
+  {
+    BaseClass = "left-pane__main";
+    base.OnInitialized();
+  }
+}
+<div class="left-pane__main placeholder" style="height: 100%">
+  @TimeWarpPage?.LeftPane_MainContent
+</div>
