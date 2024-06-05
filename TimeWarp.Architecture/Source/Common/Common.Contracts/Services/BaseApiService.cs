@@ -8,15 +8,40 @@
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
 [UsedImplicitly]
-public abstract class BaseApiService
-(
-  IHttpClientFactory HttpClientFactory,
-  string HttpClientName,
-  IOptions<JsonSerializerOptions> JsonSerializerOptionsAccessor
-) : IApiService
+public abstract class BaseApiService : IApiService
 {
-  protected HttpClient HttpClient => HttpClientFactory.CreateClient(HttpClientName);
-  private readonly JsonSerializerOptions JsonSerializerOptions = JsonSerializerOptionsAccessor.Value;
+  protected HttpClient HttpClient { get; init; }
+  private readonly JsonSerializerOptions JsonSerializerJsonSerializerOptions;
+
+  /// <summary>
+  /// This is the Service that is used to interact with the API.Server
+  /// </summary>
+  /// <param name="httpClientFactory"></param>
+  /// <param name="httpClientName"></param>
+  /// <param name="jsonSerializerOptionsAccessor"></param>
+  [ActivatorUtilitiesConstructor]
+  protected BaseApiService
+  (
+    IHttpClientFactory httpClientFactory,
+    string httpClientName,
+    IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor
+  )
+  {
+    JsonSerializerJsonSerializerOptions = jsonSerializerOptionsAccessor.Value;
+    HttpClient = httpClientFactory.CreateClient(httpClientName);
+  }
+
+  /// <summary>
+  /// This is the Service that is used to interact with the API.Server
+  /// This constructor is provided for testing purposes.
+  /// </summary>
+  /// <param name="httpClient"></param>
+  /// <param name="jsonSerializerOptions"></param>
+  protected BaseApiService(HttpClient httpClient, JsonSerializerOptions jsonSerializerOptions)
+  {
+    HttpClient = httpClient;
+    JsonSerializerJsonSerializerOptions = jsonSerializerOptions;
+  }
 
   /// <summary>
   /// Get the response for the given request
@@ -117,11 +142,11 @@ public abstract class BaseApiService
   }
   private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage)
   {
-    httpResponseMessage.EnsureSuccessStatusCode();
+    //httpResponseMessage.EnsureSuccessStatusCode();
 
     string json = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-    TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
+    TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerJsonSerializerOptions);
     if (response is null)
       throw new InvalidOperationException("The response is null.");
 
