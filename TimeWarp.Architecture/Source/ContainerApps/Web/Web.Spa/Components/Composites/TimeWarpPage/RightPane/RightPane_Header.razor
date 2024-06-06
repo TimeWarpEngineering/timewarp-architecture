@@ -1,13 +1,13 @@
 @inherits TimeWarpPageSubComponentBase
+
 @code {
   protected override void OnInitialized()
   {
     base.OnInitialized();
-    BaseClass = "right-pane-header placeholder";
+    BaseClass = "right-pane-header";
   }
 }
 
-<div class=@BaseCssBuilder @attributes=Attributes>
-  RightPane_Header
+<div class=@BaseCssBuilder>
+  @TimeWarpPage?.RightPane_HeaderContent
 </div>
-

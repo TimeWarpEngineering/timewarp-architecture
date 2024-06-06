@@ -5,10 +5,18 @@
   protected override void OnInitialized()
   {
     base.OnInitialized();
-    BaseClass = "left-pane_footer";
+    BaseClass = "page-pane_main";
   }
 }
 
 <div class=@BaseCssBuilder>
-  @TimeWarpPage?.LeftPane_FooterContent
+  @TimeWarpPage?.PagePane_MainContent
 </div>
+
+<style>
+  @($@"
+    .{Id}.page-pane_main {{
+       height: 100%;
+    }}
+  ")
+</style>

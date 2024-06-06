@@ -1,6 +1,13 @@
 @inherits TimeWarpPageSubComponentBase
-@code {
 
+@code {
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    BaseClass = "right-pane-footer";
+  }
 }
 
-<div class="right-pane_footer placeholder">RightPane_Footer</div>
+<div class=@BaseCssBuilder>
+  @TimeWarpPage?.RightPane_FooterContent
+</div>

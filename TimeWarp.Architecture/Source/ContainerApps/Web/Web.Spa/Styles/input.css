@@ -33,7 +33,7 @@
 
   .placeholder {
     width: 100%;
-    border: 4px dashed var(--neutral-foreground-rest);
+    border: 2px dashed var(--neutral-foreground-rest);
     border-radius: 0.5rem;
   }
 }

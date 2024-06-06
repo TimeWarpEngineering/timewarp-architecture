@@ -25,6 +25,7 @@
   [Parameter] public bool ShowLeftPane { get; set; } = true;
   [Parameter] public bool ShowSiteFooter { get; set; } = true;
   [Parameter] public bool ShowPlaceholders { get; set; } = true;
+
   private FluentMultiSplitter FluentMultiSplitter { get; set; } = null!;
   private FluentMultiSplitterPane? LeftPane { get; set; }
 
@@ -43,6 +44,8 @@
   }
 }
 
+<CascadingValue Value=1>
+
 <CascadingValue Value="this">
   <FluentMultiSplitter ref=FluentMultiSplitter Class="timewarp-page" Height="100vh">
     <FluentMultiSplitterPane ref=LeftPane Size="20%" Min="275px" Max="70%" Collapsible=ShowLeftPane Collapsed=@(!ShowLeftPane)>
@@ -52,4 +55,5 @@
       <RightPane />
     </FluentMultiSplitterPane>
   </FluentMultiSplitter>
+</CascadingValue>
 </CascadingValue>

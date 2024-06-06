@@ -5,20 +5,20 @@
   protected override void OnInitialized()
   {
     base.OnInitialized();
-    BaseClass = "left-pane";
+    BaseClass = "aside-pane";
   }
 }
 
-<FluentStack Class=@BaseCssBuilder.ToString() Orientation=Orientation.Vertical >
-  <LeftPane_Header />
-  <LeftPane_Main />
+<FluentStack Class=@BaseCssBuilder.ToString() Orientation="Orientation.Vertical">
+  <AsidePane_Header />
+  <AsidePane_Main />
   <FluentSpacer />
-  <LeftPane_Footer />
+  <AsidePane_Footer />
 </FluentStack>
 
 <style>
   @($@"
-    .{Id}.left-pane {{
+    .{Id}.aside-pane {{
       height: 100%;
     }}
   ")

@@ -1,5 +1,17 @@
 @code {
+  // Expose the RenderFragment properties of the TimeWarpPage as needed
 
+  [Parameter] public RenderFragment? PagePane_HeaderContent { get; set; }
+  [Parameter] public RenderFragment? PagePane_MainContent { get; set; }
+  [Parameter] public RenderFragment? PagePane_FooterContent { get; set; }
+  [Parameter] public RenderFragment? AsidePane_HeaderContent { get; set; }
+  [Parameter] public RenderFragment? AsidePane_MainContent { get; set; }
+  [Parameter] public RenderFragment? AsidePane_FooterContent { get; set; }
+
+  // Control the visibility of Panes and Areas
+  [Parameter] public bool ShowLeftPane { get; set; } = true;
+  [Parameter] public bool ShowSiteFooter { get; set; } = true;
+  [Parameter] public bool ShowPlaceholders { get; set; } = true;
 }
 
 <TimeWarpPage>

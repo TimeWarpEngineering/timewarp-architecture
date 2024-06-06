@@ -7,9 +7,10 @@ public abstract class TimeWarpPageSubComponentBase : BaseComponent
   protected override void OnInitialized()
   {
     base.OnInitialized();
+    BaseCssBuilder.AddClass(Id);
     if (TimeWarpPage?.ShowPlaceholders == true)
     {
-      BaseCssBuilder = BaseCssBuilder.AddClass("placeholder");
+      BaseCssBuilder.AddClass("placeholder");
     }
   }
   protected override void OnParametersSet()

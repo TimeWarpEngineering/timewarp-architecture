@@ -2,15 +2,29 @@
   #pragma warning disable FluentMultiSplitter
 }
 @using TimeWarp.Architecture.Components.Composites.TimeWarpPage.RightPane
-@using TimeWarp.Architecture.Components.Composites.TimeWarpPage.RightPane.SiteArea
+@using TimeWarp.Architecture.Components.Composites.TimeWarpPage.RightPane.RightPane_Main
 @inherits TimeWarpPageSubComponentBase
 
-@code {
-
+@code
+{
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    BaseClass = "right-pane";
+  }
 }
 
-<FluentStack Class="right-pane" Orientation="Orientation.Vertical" Style="height: 100vh" @attributes=Attributes>
-  <RightPane_Header class="right-pane__right-pane_header" />
-  <SiteArea class="right-pane__site-area" />
-  <RightPane_Footer class="right-pane__right-pane_footer" />
+<FluentStack Class=@BaseCssBuilder.ToString() Orientation=Orientation.Vertical >
+  <RightPane_Header />
+  <RightPane_Main />
+  <FluentSpacer />
+  <RightPane_Footer />
 </FluentStack>
+
+<style>
+  @($@"
+    .{Id}.right-pane {{
+      height: 100%;
+    }}
+  ")
+</style>
