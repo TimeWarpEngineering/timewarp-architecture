@@ -18,9 +18,16 @@ IResourceBuilder<ProjectResource> webServer =
 
     webServer.WithReference(webServer);
 
-builder.AddProject<Projects.Yarp>(YarpProjectResourceName)
+// builder.AddProject<Projects.Yarp>(YarpProjectResourceName)
+//   .WithReference(apiServer)
+//   .WithReference(webServer)
+//   .WithReference(grpcServer);
+
+builder.AddYarp(YarpResourceName)
+  .WithHttpEndpoint(port: 8001)
   .WithReference(apiServer)
   .WithReference(webServer)
-  .WithReference(grpcServer);
+  .WithReference(grpcServer)
+  .LoadFromConfiguration("ReverseProxy");
 
 builder.Build().Run();

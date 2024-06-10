@@ -9,4 +9,5 @@ internal class Constants
   public const string WebServerProjectResourceName = "web";
   public const string GrpcServerProjectResourceName = "grpc";
   public const string YarpProjectResourceName = "yarp";
+  public const string YarpResourceName = "ingress";
 }

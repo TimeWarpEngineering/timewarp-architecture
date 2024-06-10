@@ -135,6 +135,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Yarp", "Yarp", "{B190F92F-6
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aspire", "Tests\ContainerApps\Aspire\Aspire.csproj", "{A1AB07F6-E7FF-4A19-8B95-8653273E4EC3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.Hosting.Yarp", "Source\ContainerApps\Aspire\Aspire.Hosting.Yarp\Aspire.Hosting.Yarp.csproj", "{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -340,6 +342,12 @@ Global
 		{A1AB07F6-E7FF-4A19-8B95-8653273E4EC3}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{A1AB07F6-E7FF-4A19-8B95-8653273E4EC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1AB07F6-E7FF-4A19-8B95-8653273E4EC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -389,6 +397,7 @@ Global
 		{13F27F0D-B598-464F-83A0-E4EB4E3B9B34} = {E3B896E0-4EBE-410B-A036-2EC3B6FA9EFE}
 		{B190F92F-6117-48F1-AB9A-E2097F1C062E} = {F324E68B-9E03-4D9F-848E-398203410723}
 		{A1AB07F6-E7FF-4A19-8B95-8653273E4EC3} = {03E1531D-A295-4B91-91A9-DF50D3BF3C53}
+		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6} = {DA25DAAF-F149-43EB-AD42-34DB9840D97D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
