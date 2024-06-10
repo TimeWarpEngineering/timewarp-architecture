@@ -24,7 +24,7 @@
   // Control the visibility of Panes and Areas
   [Parameter] public bool ShowLeftPane { get; set; } = true;
   [Parameter] public bool ShowSiteFooter { get; set; } = true;
-  [Parameter] public bool ShowPlaceholders { get; set; } = true;
+  [Parameter] public bool ShowPlaceholders { get; set; } = false;
 
   private FluentMultiSplitter FluentMultiSplitter { get; set; } = null!;
   private FluentMultiSplitterPane? LeftPane { get; set; }
