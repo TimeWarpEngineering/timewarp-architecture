@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features;
 
-internal abstract class FetchHandler<TAction, TRequest, TResponse> : BaseHandler<TAction>
+internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<TAction>
     where TAction : IBaseAction
     where TRequest : IApiRequest
     where TResponse : class
@@ -9,7 +9,7 @@ internal abstract class FetchHandler<TAction, TRequest, TResponse> : BaseHandler
     private readonly IApiService ApiService;
     private bool RequiresAuthentication => AuthenticationStateProvider is not null;
 
-    protected FetchHandler
+    protected ApiHandler
     (
       IStore store,
       IApiService apiService,
