@@ -4,7 +4,10 @@
     <PackageVersion Include="Asp.Versioning.Http" Version="7.0.0" />
     <PackageVersion Include="Asp.Versioning.Mvc" Version="7.0.0" />
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="8.0.0-preview.7.24251.11" />
+    <PackageVersion Include="Aspire.Hosting.Azure.CosmosDB" Version="8.0.1" />
     <PackageVersion Include="Aspire.Hosting.Testing" Version="8.0.1" />
+    <PackageVersion Include="Aspire.Microsoft.Azure.Cosmos" Version="8.0.1" />
+    <PackageVersion Include="Aspire.Microsoft.EntityFrameworkCore.Cosmos" Version="8.0.1" />
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
     <PackageVersion Include="AutoMapper" Version="13.0.1" />
