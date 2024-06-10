@@ -23,11 +23,22 @@ IResourceBuilder<ProjectResource> webServer =
 //   .WithReference(webServer)
 //   .WithReference(grpcServer);
 
-builder.AddYarp(YarpResourceName)
-  .WithHttpEndpoint(port: 8001)
-  .WithReference(apiServer)
-  .WithReference(webServer)
-  .WithReference(grpcServer)
-  .LoadFromConfiguration("ReverseProxy");
+// Using Configuration File
+// builder.AddYarp(YarpResourceName)
+//   .WithHttpEndpoint(port: 8001)
+//   .WithReference(apiServer)
+//   .WithReference(webServer)
+//   .WithReference(grpcServer)
+//   .LoadFromConfiguration("ReverseProxy");
+
+// Using Code based routes
+    builder.AddYarp(YarpResourceName)
+      .WithHttpEndpoint(port: 8001)
+      // .WithHttpsEndpoint(port: 8002)
+      .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
+      .Route(routeId: "spa", target: webServer, path: "/{**catch-all}")
+      .Route(routeId: "api-server-api", target: apiServer, path: "/api/{**catch-all}")
+      .Route(routeId: "web-server-api", target: webServer, path: "/api/web-server/{**catch-all}")
+      .Route(routeId: "grpc", target: grpcServer, path: "/grpc/{**catch-all}", preservePath:false);
 
 builder.Build().Run();
