@@ -16,8 +16,8 @@
 
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
-    <PackageReference Include="Blazor-State" />
     <PackageReference Include="BlazorComponentUtilities"/>
+    <PackageReference Include="Blazor-State" />
     <PackageReference Include="Grpc.Net.Client"/>
     <PackageReference Include="Grpc.Net.Client.Web"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly"/>
@@ -27,7 +27,7 @@
     <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" />
     <PackageReference Include="Microsoft.Extensions.Http"/>
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration"/>
-    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
+<!--    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>-->
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons"/>
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
@@ -43,6 +43,7 @@
 
   <ItemGroup>
     <!--#if(api)-->
+    <ProjectReference Include="..\..\..\..\..\..\..\microsoft\fluentui-blazor\src\Core\Microsoft.FluentUI.AspNetCore.Components.csproj" />
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj"/>
     <!--#endif-->
     <!--#if(grpc)-->
@@ -64,6 +65,7 @@
     <Folder Include="Features\Notification\Components\"/>
     <Folder Include="Features\ToDo\Actions"/>
     <Folder Include="Generated\net8.0\Morris.Moxy\Morris.Moxy.RoslynIncrementalGenerator\"/>
+    <Folder Include="Services\ApiServices\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -74,16 +76,10 @@
   <ItemGroup>
     <TypeScriptInputs Include="source\*.*"/>
   </ItemGroup>
-  
+
   <ItemGroup>
     <AdditionalFiles Include="Features\Base\StateAccessMixin.mixin"/>
     <AdditionalFiles Include="Mixins\Page.mixin"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="Pages\Authentication\ProfilePage.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Authentication\SettingsPage.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Authentication\_Imports.razor" />
   </ItemGroup>
 
   <!-- Target to copy scoped CSS to a more accessible location -->
@@ -109,4 +105,11 @@
     <WriteLinesToFile File="@(DummyCSSFile)" Lines="/* Dummy file to satisfy build requirement */" Overwrite="true" />
   </Target>
 
+  <Target Name="CreateDummyQuickGridCSS" BeforeTargets="Build">
+    <ItemGroup>
+      <DummyQuickGridCSSFile Include="$(ProjectDir)obj\css\_content\Microsoft.AspNetCore.Components.QuickGrid\Microsoft.AspNetCore.Components.QuickGrid.bundle.scp.css" />
+    </ItemGroup>
+    <MakeDir Directories="$(ProjectDir)obj\css\_content\Microsoft.AspNetCore.Components.QuickGrid" />
+    <WriteLinesToFile File="@(DummyQuickGridCSSFile)" Lines="/* Dummy file to satisfy build requirement */" Overwrite="true" />
+  </Target>
 </Project>

@@ -123,7 +123,7 @@ These components represent modal dialogs used for user interactions that require
 
 ### Section Components
 
-Section components represent significant parts of a page but do not have their own routes. They are larger than widgets and can encapsulate substantial functionality, often comprising multiple widgets or other components. Sections are integral parts of a page layout, contributing to the overall structure and functionality of a feature.
+Section components represent significant parts of a page but do not have their own routes. Sections are integral parts of a page layout, contributing to the overall structure and functionality of a feature.
 
 **Naming Convention:**
 - Suffix: `Section`
@@ -139,11 +139,44 @@ Section components represent significant parts of a page but do not have their o
 
 ### Widget Components
 
-These components are small, self-contained, and focused on a specific piece of functionality or UI element. They are often used to create a modular and reusable interface.
+These components are self-contained, and focused on a specific piece of functionality or UI element. They are often used to create a modular and reusable interface. For example, a weather widget that displays the current weather conditions. And can be placed on a dashboard.  Widgets can contain Sections, Forms, Tables, Charts, and Dialogs.
 
 **Naming Convention:**
 - Suffix: `Widget`
 - Example: `WeatherWidget.razor`
+
+## Layout Component Naming Conventions
+
+Components that define the layout of a page or a section of a page. These components are used to structure the UI and organize the content.
+
+### Pane Components
+
+Pane components are explicitly `FluentMultiSplitterPane` contents. They are used within `FluentMultiSplitter` components to divide the layout into resizable panes. These panes can be adjusted by the user to change the size and layout of the content dynamically.
+
+**Naming Convention:**
+- Suffix: `Pane`
+- Example: `LeftPane.razor`
+
+**Usage Example:**
+```html
+<FluentMultiSplitter>
+  <FluentMultiSplitterPane>
+    <PagePane/>
+  </FluentMultiSplitterPane>
+  <FluentMultiSplitterPane Size="20%" Collapsible="true">
+    <AsidePane />
+  </FluentMultiSplitter>
+```
+
+
+### Area Components
+
+Area components are containers that are not panes. They serve as organizational units within a page, often grouping related content. Unlike panes, area components are not user-resizable and rely on CSS techniques such as media queries, flexbox, and grid layouts to manage their size and layout.
+
+**Naming Convention:**
+- Suffix: `Area`
+- Example: `SiteArea.razor`
+
 
 ## Example Directory Structure
 

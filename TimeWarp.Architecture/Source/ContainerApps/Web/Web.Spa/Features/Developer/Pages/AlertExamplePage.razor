@@ -1,4 +1,5 @@
 @namespace TimeWarp.Architecture.Pages
+@using TimeWarp.Architecture.Features.Sidebars
 @inherits BaseComponent
 
 <SidebarPage>
@@ -40,7 +41,7 @@
 
       <div>
         <SimpleAlert Type=SimpleAlert.AlertType.Custom Title="Custom">
-          This alert is styled with scoped css. It requires a parent container (div) to allow deep to work. Not sure why.
+          This alert is styled with isolated css. It requires a parent container (div) to allow deep to work. Not sure why.
           <pre><code>
             ::deep .simple-alert--custom .simple-alert__card {
               background-color: lightblue;

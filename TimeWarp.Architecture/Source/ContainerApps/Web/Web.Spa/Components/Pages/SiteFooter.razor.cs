@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Components;
+﻿namespace TimeWarp.Architecture.Components.Pages;
 
 public partial class SiteFooter : BaseComponent
 {

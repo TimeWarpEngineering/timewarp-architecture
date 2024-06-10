@@ -35,8 +35,7 @@ public class Program : IAspNetProgram
     {
       serilog.Information("Starting web host");
       WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
-      builder.AddServiceDefaults();
-
+      ConfigureHostApplicationBuilder(builder);
       ConfigureConfiguration(builder.Configuration);
       ConfigureServices(builder.Services, builder.Configuration);
 
@@ -62,6 +61,11 @@ public class Program : IAspNetProgram
     {
       Log.CloseAndFlush();
     }
+  }
+  private static void ConfigureHostApplicationBuilder(IHostApplicationBuilder builder)
+  {
+    builder.AddServiceDefaults();
+    CosmosDbModule.ConfigureHostApplicationBuilder(builder);
   }
 
   public static void ConfigureConfiguration(ConfigurationManager configurationManager)

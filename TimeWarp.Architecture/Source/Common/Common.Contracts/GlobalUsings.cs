@@ -2,6 +2,7 @@
 global using FluentValidation;
 global using FluentValidation.Validators;
 global using JetBrains.Annotations;
+global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Options;
 global using OneOf;
 global using PhoneNumbers;

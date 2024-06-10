@@ -1,0 +1,15 @@
+@inherits BaseComponent
+@using TimeWarp.Architecture.Features.Application.Components.NavBar.Components
+
+<FluentStack Class=@BaseCssBuilder.ToString() HorizontalAlignment=HorizontalAlignment.Center>
+  <Logo />
+</FluentStack>
+
+<style>
+  @($@"
+    .{Id} .timewarp-logo {{
+      height: 2rem;
+      width: auto;
+    }}
+  ")
+</style>

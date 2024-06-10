@@ -80,7 +80,7 @@ public partial class Button : DisplayComponent
       _ => throw new ArgumentOutOfRangeException()
     };
     CssClass =
-      new CssBuilder(cssString)
+      new BlazorComponentUtilities.CssBuilder(cssString)
       .AddClassFromAttributes(Attributes)
       .Build();
 

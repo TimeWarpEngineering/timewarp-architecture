@@ -1,0 +1,33 @@
+@{
+  #pragma warning disable FluentMultiSplitter
+}
+@inherits TimeWarpPageSubComponentBase
+@using TimeWarp.Architecture.Components.Composites.TimeWarpPage.RightPane.RightPane_Main.AsidePane
+@using TimeWarp.Architecture.Components.Composites.TimeWarpPage.RightPane.RightPane_Main.PagePane
+
+@code
+{
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    BaseClass = "right-pane_main";
+  }
+}
+
+<FluentMultiSplitter Class=@BaseCssBuilder.ToString()>
+  <FluentMultiSplitterPane>
+    <PagePane />
+  </FluentMultiSplitterPane>
+  <FluentMultiSplitterPane Size="20%" Collapsible="true">
+    <AsidePane />
+  </FluentMultiSplitterPane>
+</FluentMultiSplitter>
+
+<style>
+  @($@"
+    .{Id}.right-pane_main {{
+      height: 100%;
+      width: 100%;
+    }}
+  ")
+</style>

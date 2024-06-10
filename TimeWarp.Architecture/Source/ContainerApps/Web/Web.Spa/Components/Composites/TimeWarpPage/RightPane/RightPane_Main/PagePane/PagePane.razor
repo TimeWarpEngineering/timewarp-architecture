@@ -1,0 +1,25 @@
+@inherits TimeWarpPageSubComponentBase
+
+@code
+{
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    BaseClass = "page-pane";
+  }
+}
+
+<FluentStack Class=@BaseCssBuilder.ToString() Orientation=Orientation.Vertical>
+  <PagePane_Header />
+  <PagePane_Main />
+  <FluentSpacer />
+  <PagePane_Footer />
+</FluentStack>
+
+<style>
+  @($@"
+    .{Id}.page-pane {{
+      height: 100%;
+    }}
+  ")
+</style>

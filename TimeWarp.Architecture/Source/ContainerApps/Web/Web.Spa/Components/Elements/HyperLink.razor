@@ -1,7 +1,22 @@
 ﻿@namespace TimeWarp.Architecture.Components
-@inherits ParentComponent
+@inherits BaseComponent
+@implements IParentComponent
 
-<NavLink class=@CssBuilder @attributes=Attributes>
+@code {
+  [Parameter] public RenderFragment ChildContent { get; set; } = null!;
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    BaseClass = "cursor-pointer underline text-gray-600 hover:text-gray-800 visited:text-purple-600";
+  }
+
+  // private CssBuilder CssBuilder =>
+  //   new CssBuilder(BaseClass)
+  //     .AddClasses(GetClassFromAttributes());
+}
+
+<NavLink class=@BaseCssBuilder @attributes=Attributes>
   @ChildContent
 </NavLink>
 

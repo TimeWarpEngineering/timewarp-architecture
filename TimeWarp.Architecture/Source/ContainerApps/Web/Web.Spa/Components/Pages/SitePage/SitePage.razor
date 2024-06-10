@@ -1,0 +1,34 @@
+@inherits BaseComponent
+@using TimeWarp.Architecture.Components.Pages.SitePage
+@code {
+  // Expose the RenderFragment properties of the TimeWarpPage as needed
+
+  [Parameter] public RenderFragment? PagePane_HeaderContent { get; set; }
+  [Parameter] public RenderFragment? PagePane_MainContent { get; set; }
+  [Parameter] public RenderFragment? PagePane_FooterContent { get; set; }
+  [Parameter] public RenderFragment? AsidePane_HeaderContent { get; set; }
+  [Parameter] public RenderFragment? AsidePane_MainContent { get; set; }
+  [Parameter] public RenderFragment? AsidePane_FooterContent { get; set; }
+
+  // Control the visibility of Panes and Areas
+  [Parameter] public bool ShowLeftPane { get; set; } = true;
+  [Parameter] public bool ShowSiteFooter { get; set; } = true;
+  [Parameter] public bool ShowPlaceholders { get; set; } = true;
+}
+
+<TimeWarpPage>
+  <LeftPane_HeaderContent>
+    <LeftPane_Header/>
+  </LeftPane_HeaderContent>
+  <LeftPane_MainContent>
+    <LeftPane_Main/>
+  </LeftPane_MainContent>
+  <LeftPane_FooterContent>
+    <LeftPane_Footer/>
+  </LeftPane_FooterContent>
+  <RightPane_FooterContent>
+    <RightPane_Footer/>
+  </RightPane_FooterContent>
+</TimeWarpPage>
+
+

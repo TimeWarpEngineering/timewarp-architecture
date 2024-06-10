@@ -2,6 +2,7 @@
   <PropertyGroup>
     <Nullable>disable</Nullable>
     <UseRazorSourceGenerator>true</UseRazorSourceGenerator>
+    <UserSecretsId>0e53fdd3-6f93-4d5a-9c86-040621f7929e</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -18,9 +19,11 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..\..\..</DockerfileContext>
-  </PropertyGroup>
+  </PropertyGroup>  
 
   <ItemGroup Label="Core">
+    <PackageReference Include="Aspire.Microsoft.Azure.Cosmos" />
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.Cosmos" />
     <PackageReference Include="AutoMapper" />
     <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="MediatR" />
@@ -52,6 +55,12 @@
     <Folder Include="Components\Layout\" />
     <Folder Include="Pages\" />
     <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Aspire\Aspire.AppHost\Constants.cs">
+      <Link>Configuration\Constants.cs</Link>
+    </Compile>
   </ItemGroup>
 
 </Project>

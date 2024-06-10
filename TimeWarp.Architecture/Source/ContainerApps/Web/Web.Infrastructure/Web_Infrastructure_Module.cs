@@ -2,9 +2,8 @@
 
 public class WebInfrastructureModule : IModule
 {
-  public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    aServiceCollection
-      .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration);
+
   }
 }
