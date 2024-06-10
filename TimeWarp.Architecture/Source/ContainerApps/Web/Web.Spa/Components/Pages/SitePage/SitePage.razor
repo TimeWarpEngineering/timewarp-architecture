@@ -1,3 +1,5 @@
+@inherits BaseComponent
+@using TimeWarp.Architecture.Components.Pages.SitePage
 @code {
   // Expose the RenderFragment properties of the TimeWarpPage as needed
 
@@ -16,6 +18,17 @@
 
 <TimeWarpPage>
   <LeftPane_HeaderContent>
-
+    <LeftPane_Header/>
   </LeftPane_HeaderContent>
+  <LeftPane_MainContent>
+    <LeftPane_Main/>
+  </LeftPane_MainContent>
+  <LeftPane_FooterContent>
+    <LeftPane_Footer/>
+  </LeftPane_FooterContent>
+  <RightPane_FooterContent>
+    <RightPane_Footer/>
+  </RightPane_FooterContent>
 </TimeWarpPage>
+
+
