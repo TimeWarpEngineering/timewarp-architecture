@@ -4,10 +4,19 @@
   protected override void OnInitialized()
   {
     base.OnInitialized();
-    BaseClass = "right-pane-footer";
+    BaseClass = "right-pane_footer";
   }
 }
 
 <div class=@BaseCssBuilder>
   @TimeWarpPage?.RightPane_FooterContent
 </div>
+
+<style>
+  @($@"
+    .{Id}.right-pane_footer {{
+      padding: 0.5rem;
+      width: 100%;
+    }}
+  ")
+</style>
