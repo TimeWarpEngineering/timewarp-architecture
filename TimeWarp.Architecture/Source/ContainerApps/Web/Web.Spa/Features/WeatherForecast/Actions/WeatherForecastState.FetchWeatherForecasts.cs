@@ -19,7 +19,7 @@ internal partial class WeatherForecastsState
       IStore store,
       IApiServerApiService apiServerApiService,
       ISender sender
-    ) : DefaultFetchHandler<Action,Query,Response>(store, apiServerApiService, sender)
+    ) : DefaultApiHandler<Action,Query,Response>(store, apiServerApiService, sender)
     {
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {

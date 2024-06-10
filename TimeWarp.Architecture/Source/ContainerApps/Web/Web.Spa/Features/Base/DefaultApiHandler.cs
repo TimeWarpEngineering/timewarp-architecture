@@ -1,13 +1,13 @@
 namespace TimeWarp.Architecture.Features;
 
-internal abstract class DefaultFetchHandler<TAction, TRequest, TResponse> : FetchHandler<TAction, TRequest, TResponse>
+internal abstract class DefaultApiHandler<TAction, TRequest, TResponse> : FetchHandler<TAction, TRequest, TResponse>
   where TAction : IBaseAction
   where TRequest : IApiRequest
   where TResponse : class
 {
   private readonly ISender Sender;
 
-  protected DefaultFetchHandler
+  protected DefaultApiHandler
   (
     IStore store,
     IApiService apiService,
