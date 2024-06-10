@@ -1,0 +1,27 @@
+@inherits BaseComponent
+@code {
+  [Parameter] public RenderFragment? CustomContent { get; set; }
+  private string? Version => ApplicationState.Version;
+  private bool IsActive => ActionTrackingState.IsActive;
+
+  private async Task ShowAssemblyInfoModal() =>
+    await Send(new ApplicationState.SetActiveModal.Action(ModalId: AssemblyInfoModal.ModalId));
+}
+
+<FluentFooter Class=@BaseCssBuilder.ToString() Style="display: flex; flex-direction: row; height: var(--footer-height)">
+  <FluentLabel>@CurrentRenderMode</FluentLabel>
+  <FluentSpacer/>
+  <FluentProgressRing Class="grow" Visible=IsActive></FluentProgressRing>
+  <FluentSpacer/>
+  <FluentButton Appearance=Appearance.Lightweight @onclick=ShowAssemblyInfoModal>
+    @Version
+  </FluentButton>
+</FluentFooter>
+
+<style>
+  @($@"
+    .{Id} {{
+      width: 100%;
+    }}
+  ")
+</style>
