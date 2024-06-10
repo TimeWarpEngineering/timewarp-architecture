@@ -38,7 +38,7 @@ global using System.Threading;
 global using System.Threading.Tasks;
 
 // Solution usings
-global using TimeWarp.Architecture;
+global using static TimeWarp.Architecture.Aspire.Constants;
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.CorsPolicies;
