@@ -24,14 +24,12 @@
 
   <ReduxDevTools />
   <TimeWarpJavaScriptInterop />
-  <TimeWarpNavigation />
   @* TODO <AuthenticationStateListener/> *@
 </CascadingAuthenticationState>
 
 @code
 {
   [Inject] private JsonRequestHandler JsonRequestHandler { get; set; } = default!;
-  [Inject] private TimeWarpNavigationManager TimeWarpNavigationManager { get; set; } = default!;
 
 #if DEBUG
   [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; } = default!;
