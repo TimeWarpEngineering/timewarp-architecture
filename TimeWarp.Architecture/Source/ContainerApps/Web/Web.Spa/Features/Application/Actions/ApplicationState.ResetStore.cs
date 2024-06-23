@@ -19,7 +19,7 @@ internal partial class ApplicationState
       public async Task Handle(Action action, CancellationToken cancellationToken)
       {
         Store.Reset();
-        await Sender.Send(new ChangeRoute.Action { NewRoute = "/" }, cancellationToken).ConfigureAwait(false);
+        await Sender.Send(new ChangeRoute.Action( newRoute:"/" ), cancellationToken);
       }
     }
   }

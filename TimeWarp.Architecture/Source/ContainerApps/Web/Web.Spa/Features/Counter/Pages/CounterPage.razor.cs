@@ -7,7 +7,7 @@ using static ApplicationState;
 public partial class CounterPage : BaseComponent
 {
   private async Task ButtonClick() =>
-    await Send(new RouteState.ChangeRoute.Action { NewRoute = "/" }).ConfigureAwait(false);
+    await Send(new RouteState.ChangeRoute.Action( newRoute: "/"));
 
   private async Task ResetButtonClick() => await Send(new ResetStore.Action()).ConfigureAwait(false);
 }
