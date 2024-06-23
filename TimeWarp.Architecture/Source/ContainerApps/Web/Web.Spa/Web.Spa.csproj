@@ -17,7 +17,6 @@
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="BlazorComponentUtilities"/>
-    <PackageReference Include="Blazor-State" />
     <PackageReference Include="Grpc.Net.Client"/>
     <PackageReference Include="Grpc.Net.Client.Web"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly"/>
@@ -27,13 +26,14 @@
     <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" />
     <PackageReference Include="Microsoft.Extensions.Http"/>
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration"/>
-<!--    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>-->
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons"/>
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
     <PackageReference Include="Morris.Blazor.FluentValidation"/>
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all"/>
+    <PackageReference Include="TimeWarp.State" />
     <PackageReference Include="TimeWarp.State.Plus"/>
     <PackageReference Include="Timewarp.OptionsValidation"/>
     <PackageReference Include="protobuf-net.Grpc"/>
@@ -43,14 +43,12 @@
 
   <ItemGroup>
     <!--#if(api)-->
-    <ProjectReference Include="..\..\..\..\..\..\..\microsoft\fluentui-blazor\src\Core\Microsoft.FluentUI.AspNetCore.Components.csproj" />
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj"/>
     <!--#endif-->
     <!--#if(grpc)-->
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj"/>
     <!--#endif-->
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj"/>
-    <ProjectReference Include="D:\git\github\TimeWarpEngineering\blazor-state\Source\BlazorState\BlazorState.csproj" />
     <InternalsVisibleTo Include="Web.Spa.Integration.Tests"/>
     <InternalsVisibleTo Include="Web.Server.Integration.Tests"/>
   </ItemGroup>

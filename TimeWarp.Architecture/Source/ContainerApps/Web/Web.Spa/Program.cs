@@ -57,7 +57,7 @@ public class Program
     serviceCollection.AddBlazoredLocalStorage();
 
     ConfigureSettings(serviceCollection, configuration);
-    serviceCollection.AddBlazorState
+    serviceCollection.AddTimeWarpState
     (
       blazorStateOptions =>
       {

@@ -190,7 +190,7 @@ public class Program : IAspNetProgram
       .AddInteractiveWebAssemblyRenderMode()
       .AddAdditionalAssemblies
       (
-        typeof(BlazorState.AssemblyMarker).Assembly,
+        typeof(TimeWarp.State.AssemblyMarker).Assembly,
         typeof(TimeWarp.State.Plus.AssemblyMarker).Assembly,
         typeof(TimeWarp.Architecture.Web.Spa.AssemblyMarker).Assembly
       );

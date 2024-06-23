@@ -17,7 +17,7 @@ public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestA
     var testServerApplication = (TViaTestServerApplication)aTestingServiceProvider.GetRequiredService(typeof(TViaTestServerApplication));
     var services = new ServiceCollection();
 
-    // We need an HttpClient to talk to the Server side configured before calling AddBlazorState.
+    // We need an HttpClient to talk to the Server side configured before calling AddTimeWarpState.
     // services.AddSingleton(testServerApplication.HttpClient);
 
     ConfigureServices(services, testServerApplication.WebApplicationHost.Configuration);

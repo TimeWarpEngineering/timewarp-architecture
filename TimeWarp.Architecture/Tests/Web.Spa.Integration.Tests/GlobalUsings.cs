@@ -1,7 +1,7 @@
 ﻿global using AnyClone;
 global using FluentAssertions;
 global using System.Text.Json;
-global using BlazorState;
+global using TimeWarp.State;
 global using MediatR;
 global using Microsoft.Extensions.DependencyInjection;
 

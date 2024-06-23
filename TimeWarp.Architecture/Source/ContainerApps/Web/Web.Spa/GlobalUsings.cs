@@ -1,5 +1,5 @@
 ﻿global using Ardalis.GuardClauses;
-global using BlazorState;
+global using TimeWarp.State;
 global using Blazored.LocalStorage;
 global using Blazored.SessionStorage;
 global using FluentValidation;
@@ -67,6 +67,7 @@ global using TimeWarp.Architecture.Services;
 global using TimeWarp.Architecture.Types;
 global using TimeWarp.Features.ActionTracking;
 global using TimeWarp.Features.StateTransactions;
+global using TimeWarp.State.Extensions;
 global using static TimeWarp.Architecture.AuthorizationConstants;
 
 
