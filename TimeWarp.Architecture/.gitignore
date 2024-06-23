@@ -293,7 +293,6 @@ __pycache__/
 /BlazorDefault2018-05-02.Client/
 /BlazorDefault2018-05-02.Server/
 /BlazorDefault2018-05-02.Shared/
-/source/BlazorState.Js/dist/
 
 # TimeWarp architecture templates Generated Code
 GeneratedCode/
@@ -303,16 +302,28 @@ GeneratedCode/
 
 # Tye intermediate files
 .tye/
+
+# TimeWarp architecture templates Generated Code
 /Source/ContainerApps/Web/Web.Contracts/Generated/**
 /Source/ContainerApps/Web/Web.Spa/Generated/**
 /Source/ContainerApps/Web/Web.Server/Generated/**
-/Tests/TimeWarp.Testing/Generated/**
-/Source/ContainerApps/Web/Web.Server/Logs/log.txt
 /Source/ContainerApps/Api/Api.Contracts/Generated/**
+/Tests/TimeWarp.Testing/Generated/**
+
+# TimeWarp architecture Log files
+/Source/ContainerApps/Web/Web.Server/Logs/log.txt
+
+# TimeWarp architecture templates Generated Documentation
 /Documentation/Developer/Conceptual/ComponentNamingAndOrganization.pdf
 /Documentation/Developer/HowToGuides/Api_Contracts/Handling_Mutability_in_API_Contracts.pdf
 /Documentation/Developer/HowToGuides/Api_Contracts/Handling_Nullability_in_API_Contracts.pdf
 /Documentation/Developer/HowToGuides/Api_Contracts/HowToWrite_BFF_API_Contracts.pdf
-/output.txt
+
+# TimeWarp architecture templates Generated css
 /Source/ContainerApps/Web/Web.Spa/wwwroot/css/site.css
+
+# Ignore launchsettings on non executable projects
 /Source/ContainerApps/Web/Web.Spa/Properties/launchSettings.json
+
+# Misc
+/output.txt
