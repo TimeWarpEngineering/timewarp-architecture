@@ -7,10 +7,10 @@ interface DisposeHandler {
 }
 
 declare global {
-  let BlazorState: BlazorState;
+  let TimeWarpState: TimeWarpState;
   function boot(): Promise<void>;
 
-  interface BlazorState {
+  interface TimeWarpState {
     DispatchRequest(requestTypeFullName: string, request: unknown): Promise<void>;
   }
 
@@ -19,11 +19,9 @@ declare global {
   }
 
   interface Window {
-    BlazorDualMode: BlazorDualMode | undefined;
-    BlazorState: BlazorState;
+    TimeWarpState: TimeWarpState;
     Blazor: Blazor;
     Spa: typeof import("../Spa").Spa;
-    NotifyLossOfInterest: (elementId: string, blazorMethodReference: BlazorMethodReference) => DisposeHandler; // Added line
   }
 }
 
