@@ -7,19 +7,14 @@ interface DisposeHandler {
 }
 
 declare global {
-  let TimeWarpState: TimeWarpState;
   function boot(): Promise<void>;
-
-  interface TimeWarpState {
-    DispatchRequest(requestTypeFullName: string, request: unknown): Promise<void>;
-  }
 
   interface Blazor {
     start(): Promise<void>;
   }
 
   interface Window {
-    TimeWarpState: TimeWarpState;
+    TimeWarpState: typeof import("/_content/TimeWarp.State/js/TimeWarpState.js").TimeWarpState;
     Blazor: Blazor;
     Spa: typeof import("../Spa").Spa;
   }
