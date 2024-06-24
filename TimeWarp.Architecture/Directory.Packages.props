@@ -34,6 +34,7 @@
     <PackageVersion Include="MediatR" Version="12.3.0" />
     <PackageVersion Include="MediatR.Contracts" Version="2.0.1" />
     <PackageVersion Include="MicroElements.Swashbuckle.FluentValidation" Version="6.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="8.0.6" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.5" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="8.0.5" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.5" />
@@ -68,7 +69,7 @@
     <PackageVersion Include="Microsoft.Identity.Web" Version="2.18.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.44.0" />
-    <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="4.6.2" />
+    <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="4.7.2" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.0.0" />
     <PackageVersion Include="Morris.Blazor.FluentValidation" Version="3.0.0" />
@@ -108,8 +109,8 @@
     <PackageVersion Include="TimeWarp.Fixie" Version="1.0.2" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-alpha.5" />
-    <PackageVersion Include="TimeWarp.State" Version="11.0.0-beta.40" />
-    <PackageVersion Include="TimeWarp.State.Plus" Version="11.0.0-beta.40" />
+    <PackageVersion Include="TimeWarp.State" Version="11.0.0-beta.41" />
+    <PackageVersion Include="TimeWarp.State.Plus" Version="11.0.0-beta.41" />
     <PackageVersion Include="timewarp-heroicons" Version="2.0.19" />
     <PackageVersion Include="timewarp-simple-icons" Version="11.15.0" />
     <PackageVersion Include="xunit" Version="2.5.3" />
