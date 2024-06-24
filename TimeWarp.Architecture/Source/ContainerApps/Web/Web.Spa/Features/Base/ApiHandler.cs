@@ -20,7 +20,7 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
     ApiService = apiService;
   }
 
-  public sealed override async Task Handle(TAction action, CancellationToken cancellationToken)
+  public override sealed async Task Handle(TAction action, CancellationToken cancellationToken)
   {
     if (RequiresAuthentication && !await IsUserAuthenticatedAsync()) return;
 
@@ -60,6 +60,13 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
     return user.Identity?.IsAuthenticated ?? false;
   }
 
+  /// <summary>
+  /// Get the request object to send to the API
+  /// If null is returned, the action will be skipped
+  /// </summary>
+  /// <param name="action"></param>
+  /// <param name="cancellationToken"></param>
+  /// <returns></returns>
   protected abstract Task<TRequest?> GetRequest(TAction action, CancellationToken cancellationToken);
   protected abstract Task HandleSuccess(TResponse response, CancellationToken cancellationToken);
   protected abstract Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken);
