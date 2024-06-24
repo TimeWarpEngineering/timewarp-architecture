@@ -1,3 +1,5 @@
+import { Spa } from "../Spa.js";
+import type { TimeWarpState } from "/_content/TimeWarp.State/js/TimeWarpState.js";
 interface BlazorMethodReference {
   invokeMethodAsync: (methodName: string, ...args: unknown[]) => Promise<void>;
 }
@@ -14,9 +16,9 @@ declare global {
   }
 
   interface Window {
-    TimeWarpState: typeof import("/_content/TimeWarp.State/js/TimeWarpState.js").TimeWarpState;
+    TimeWarpState: TimeWarpState;
     Blazor: Blazor;
-    Spa: typeof import("../Spa").Spa;
+    Spa: Spa;
   }
 }
 
