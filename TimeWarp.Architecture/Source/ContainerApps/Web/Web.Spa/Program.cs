@@ -59,15 +59,15 @@ public class Program
     ConfigureSettings(serviceCollection, configuration);
     serviceCollection.AddTimeWarpState
     (
-      blazorStateOptions =>
+      timeWarpStateOptions =>
       {
         //-:cnd:noEmit
 #if DEBUG
-        blazorStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
+        timeWarpStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
 #endif
         //+:cnd:noEmit
 
-        blazorStateOptions.Assemblies =
+        timeWarpStateOptions.Assemblies =
           new[]
           {
             // ReSharper disable once RedundantNameQualifier
