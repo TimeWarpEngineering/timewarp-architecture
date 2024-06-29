@@ -12,10 +12,16 @@ internal abstract class DefaultApiHandler<TAction, TRequest, TResponse> : ApiHan
     IStore store,
     IApiService apiService,
     ISender sender,
+    IValidator<TRequest>? validator = null,
     AuthenticationStateProvider? authenticationStateProvider = null
-  ) : base(store, apiService, authenticationStateProvider)
+  ) : base(store, apiService, validator, authenticationStateProvider)
   {
     Sender = sender;
+  }
+
+  protected override Task HandleFileResponse(FileResponse fileResponse, CancellationToken cancellationToken)
+  {
+    throw new NotImplementedException();
   }
 
   protected override async Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken)
