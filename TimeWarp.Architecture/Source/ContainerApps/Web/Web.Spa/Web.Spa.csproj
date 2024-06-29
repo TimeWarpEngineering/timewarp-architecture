@@ -54,6 +54,9 @@
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj"/>
     <!--#endif-->
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj"/>
+  </ItemGroup>
+  
+  <ItemGroup>
     <InternalsVisibleTo Include="Web.Spa.Integration.Tests"/>
     <InternalsVisibleTo Include="Web.Server.Integration.Tests"/>
   </ItemGroup>
@@ -68,7 +71,6 @@
     <Folder Include="Features\Notification\Components\"/>
     <Folder Include="Features\ToDo\Actions"/>
     <Folder Include="Generated\net8.0\Morris.Moxy\Morris.Moxy.RoslynIncrementalGenerator\"/>
-    <Folder Include="Services\ApiServices\" />
   </ItemGroup>
 
   <ItemGroup>
