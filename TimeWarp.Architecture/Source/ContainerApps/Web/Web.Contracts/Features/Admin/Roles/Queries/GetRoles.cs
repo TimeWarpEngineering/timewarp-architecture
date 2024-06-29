@@ -1,5 +1,7 @@
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
+using Authorization;
+
 /// <summary>
 /// Get a list of roles for display only.
 /// </summary>
@@ -30,11 +32,10 @@ public static partial class GetRoles
     }
   }
 
-  public sealed class Response
-  (
-    int totalCount,
-    RoleDto[] items
-  ) : ListResponse<RoleDto>(totalCount, items);
+  public sealed class Response : ListResponse<RoleDto>
+  {
+    public Response(int totalCount, RoleDto[] items) : base(totalCount, items) {}
+  }
 
   public sealed class RoleDto
   {
@@ -53,5 +54,28 @@ public static partial class GetRoles
       Name = Guard.Against.NullOrEmpty(name);
       Description = Guard.Against.NullOrEmpty(description);
     }
+  }
+
+  public static object CreateMockResponse(dynamic request)
+  {
+    Query query = request;
+
+    RoleDto[] items =
+    [
+      new
+      (
+        roleId: RoleIds.Administrator,
+        name: nameof(RoleIds.Administrator),
+        description: "The Administrator role is for administrators. And has access to all modules."
+      ),
+      new
+      (
+        roleId: RoleIds.Accountant,
+        name: nameof(RoleIds.Accountant),
+        description: "The Accountant role is for accountants. And has access to the accounting module."
+      ),
+    ];
+
+    return new Response(totalCount: items.Length, items);
   }
 }

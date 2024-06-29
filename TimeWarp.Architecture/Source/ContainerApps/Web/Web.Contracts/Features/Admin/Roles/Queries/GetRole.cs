@@ -1,5 +1,7 @@
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
+using Authorization;
+
 /// <summary>
 /// Get a role by its unique identifier for possible editing.
 /// </summary>
@@ -29,11 +31,24 @@ public static partial class GetRole
     (
       Guid roleId,
       string name,
-      string description)
+      string description
+    )
     {
       RoleId = Guard.Against.NullOrEmpty(roleId);
       Name = Guard.Against.NullOrEmpty(name);
       Description = Guard.Against.NullOrEmpty(description);
     }
+  }
+
+  public static object CreateMockResponse(dynamic request)
+  {
+    Query query = request;
+
+    return new Response
+    (
+      roleId: RoleIds.Administrator,
+      name: nameof(RoleIds.Administrator),
+      description: "The Administrator role is for administrators. And has access to all modules."
+    );
   }
 }

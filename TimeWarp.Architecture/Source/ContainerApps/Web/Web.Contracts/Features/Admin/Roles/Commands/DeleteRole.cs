@@ -20,4 +20,8 @@ public static partial class DeleteRole
 
   public sealed class Response;
 
+  public static object CreateMockResponse(dynamic request)
+  {
+    return new Response();
+  }
 }

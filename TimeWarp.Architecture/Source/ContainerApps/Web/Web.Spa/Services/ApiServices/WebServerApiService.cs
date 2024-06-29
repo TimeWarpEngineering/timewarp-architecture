@@ -12,7 +12,7 @@ internal sealed class WebServerApiService : BaseAuthApiService, IWebServerApiSer
     IAccessTokenProvider accessTokenProvider,
     IHttpClientFactory httpClientFactory,
     IOptions<JsonSerializerOptions> options
-  ) : base(accessTokenProvider, httpClientFactory, ServiceNames.WebServiceName, options) {}
+  ) : base(httpClientFactory, ServiceNames.WebServiceName, accessTokenProvider, options) {}
 
   // add testing constructor
   public WebServerApiService
@@ -20,7 +20,7 @@ internal sealed class WebServerApiService : BaseAuthApiService, IWebServerApiSer
     IAccessTokenProvider accessTokenProvider,
     HttpClient httpClient,
     JsonSerializerOptions jsonSerializerOptions
-  ) : base(accessTokenProvider, httpClient, jsonSerializerOptions) {}
+  ) : base(httpClient, accessTokenProvider, jsonSerializerOptions) {}
 
 }
 

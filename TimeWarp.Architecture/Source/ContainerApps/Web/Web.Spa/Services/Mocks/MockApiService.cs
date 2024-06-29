@@ -3,7 +3,7 @@ namespace TimeWarp.Architecture.Services;
 [UsedImplicitly]
 public class MockApiService : IApiService
 {
-  public async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+  public async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
     (
       IApiRequest request, CancellationToken cancellationToken
     ) where TResponse : class
