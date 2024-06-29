@@ -116,8 +116,10 @@ public class Program
       serviceProvider =>
       {
         IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+        IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
         IOptions<JsonSerializerOptions> options = serviceProvider.GetRequiredService<IOptions<JsonSerializerOptions>>();
-        return new ApiServerApiService(httpClientFactory, options);
+
+        return new ApiServerApiService(httpClientFactory, accessTokenProvider, options);
       }
     );
 
