@@ -11,13 +11,14 @@ public class Returns
 
   public async Task _10WeatherForecasts_Given_10DaysRequested()
   {
-    OneOf<Response, SharedProblemDetails> response =
+    OneOf<Response, FileResponse, SharedProblemDetails> response =
       await apiTestServerApplication.GetResponse<Response>(Query, new CancellationToken());
 
     // Validate the response
     response.Switch
     (
       ValidateGetWeatherForecastsResponse,
+      _ => throw new Exception("File response returned"),
       _ => throw new Exception("Problem details returned")
     );
   }

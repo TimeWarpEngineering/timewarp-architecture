@@ -19,13 +19,14 @@ public class Returns
   public async Task _10WeatherForecasts_Given_10DaysRequested()
   {
 
-    OneOf<Response, SharedProblemDetails> response =
+    OneOf<Response, FileResponse, SharedProblemDetails> response =
       await ApiServerApiService.GetResponse<Response>(Query, new CancellationToken());
 
     // Validate the response
     response.Switch
     (
       ValidateGetWeatherForecastsResponse,
+      _ => throw new Exception("File response returned"),
       _ => throw new Exception("Problem details returned")
     );
 
@@ -35,13 +36,14 @@ public class Returns
   {
     Query.Days = -1;
 
-    OneOf<Response, SharedProblemDetails> response =
+    OneOf<Response, FileResponse, SharedProblemDetails> response =
       await ApiServerApiService.GetResponse<Response>(Query, new CancellationToken());
 
     // Validate the response
     response.Switch
     (
       _ => throw new Exception("Received a response but expectedSharedProblemDetails "),
+      _ => throw new Exception("Received a file response but expectedSharedProblemDetails "),
       ConfirmEndpointValidationError
     );
   }
@@ -55,7 +57,7 @@ public class Returns
   {
     sharedProblemDetails.Status.Should().Be(400);
     sharedProblemDetails.Extensions.Count().Should().Be(2);
- 
+
     sharedProblemDetails.Title.Should().Be("One or more validation errors occurred.");
     sharedProblemDetails.Type.Should().Be("https://tools.ietf.org/html/rfc9110#section-15.5.1");
 

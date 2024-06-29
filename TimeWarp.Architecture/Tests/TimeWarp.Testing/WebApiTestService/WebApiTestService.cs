@@ -5,11 +5,15 @@ namespace TimeWarp.Architecture.Testing;
 /// A class that contains a common set of methods used when testing Web APIs
 /// </summary>
 [NotTest]
-public class WebApiTestService
-(
-  IApiService ApiService
-) : IWebApiTestService
+public class WebApiTestService : IWebApiTestService
 {
+  private readonly IApiService ApiService;
+  /// <summary>
+  /// A class that contains a common set of methods used when testing Web APIs
+  /// </summary>
+  public WebApiTestService(IApiService apiService) {
+    ApiService = apiService;
+  }
 
   /// <inheritdoc/>
   public async Task ConfirmEndpointValidationError<TResponse>
@@ -30,7 +34,7 @@ public class WebApiTestService
     await ConfirmEndpointValidationError(httpResponseMessage, attributeName).ConfigureAwait(false);
   }
 
-  public async Task<OneOf.OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+  public async Task<OneOf.OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
     (
       IApiRequest apiRequest,
       CancellationToken cancellationToken

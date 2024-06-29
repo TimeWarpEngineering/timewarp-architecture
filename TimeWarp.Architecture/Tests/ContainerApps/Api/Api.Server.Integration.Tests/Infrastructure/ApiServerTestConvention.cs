@@ -36,7 +36,8 @@ class ApiServerTestConvention : TimeWarpTestingConvention
       DistributedApplication distributedApp = distributedAppTask.Result; // Ensure the app is available
       HttpClient httpClient = distributedApp.CreateHttpClient("api-server");
       JsonSerializerOptions jsonSerializerOptions = provider.GetRequiredService<JsonSerializerOptions>();
-      return new ApiServerApiService(httpClient, jsonSerializerOptions);
+      IAccessTokenProvider accessTokenProvider = provider.GetRequiredService<IAccessTokenProvider>();
+      return new ApiServerApiService(httpClient, accessTokenProvider, jsonSerializerOptions);
     });
 
     // Register IWebServerApiService
