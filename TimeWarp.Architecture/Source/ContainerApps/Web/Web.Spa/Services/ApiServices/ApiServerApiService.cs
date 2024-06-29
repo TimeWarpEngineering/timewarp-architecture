@@ -11,15 +11,22 @@ public sealed class ApiServerApiService : BaseApiService, IApiServerApiService
   public ApiServerApiService
   (
     IHttpClientFactory httpClientFactory,
+    IAccessTokenProvider accessTokenProvider,
     IOptions<JsonSerializerOptions> options
-  ) : base(httpClientFactory, ServiceNames.ApiServiceName, options) {}
+  ) : base(httpClientFactory, ServiceNames.ApiServiceName, accessTokenProvider, options) {}
 
   /// <summary>
   /// Used for testing purposes
   /// </summary>
   /// <param name="httpClient"></param>
+  /// <param name="accessTokenProvider"></param>
   /// <param name="jsonSerializerOptions"></param>
-  public ApiServerApiService(HttpClient httpClient, JsonSerializerOptions jsonSerializerOptions) : base(httpClient, jsonSerializerOptions) {}
+  public ApiServerApiService
+  (
+    HttpClient httpClient,
+    IAccessTokenProvider accessTokenProvider,
+    JsonSerializerOptions jsonSerializerOptions
+  ) : base(httpClient, accessTokenProvider, jsonSerializerOptions) {}
 
 }
 

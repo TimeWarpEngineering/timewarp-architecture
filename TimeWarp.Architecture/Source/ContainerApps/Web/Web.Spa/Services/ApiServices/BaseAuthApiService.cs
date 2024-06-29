@@ -9,11 +9,11 @@ internal abstract class BaseAuthApiService : BaseApiService
   private readonly IAccessTokenProvider AccessTokenProvider;
   protected BaseAuthApiService
   (
-    IAccessTokenProvider accessTokenProvider,
     IHttpClientFactory httpClientFactory,
     string httpClientName,
+    IAccessTokenProvider accessTokenProvider,
     IOptions<JsonSerializerOptions> options
-  ) : base(httpClientFactory, httpClientName, options)
+  ) : base(httpClientFactory, httpClientName, accessTokenProvider, options)
   {
     AccessTokenProvider = accessTokenProvider;
   }
@@ -21,15 +21,15 @@ internal abstract class BaseAuthApiService : BaseApiService
   // Add testing constructor
   protected BaseAuthApiService
   (
-    IAccessTokenProvider accessTokenProvider,
     HttpClient httpClient,
+    IAccessTokenProvider accessTokenProvider,
     JsonSerializerOptions jsonSerializerOptions
-  ) : base(httpClient, jsonSerializerOptions)
+  ) : base(httpClient, accessTokenProvider, jsonSerializerOptions)
   {
     AccessTokenProvider = accessTokenProvider;
   }
 
-  public override async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest request, CancellationToken cancellationToken)
+  public override async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest request, CancellationToken cancellationToken)
   {
     await SetBearerTokenAsync();
     return await base.GetResponse<TResponse>(request, cancellationToken);
