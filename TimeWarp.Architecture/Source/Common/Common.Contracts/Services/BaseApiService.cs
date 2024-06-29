@@ -13,21 +13,26 @@ public abstract class BaseApiService : IApiService
   protected HttpClient HttpClient { get; init; }
   private readonly JsonSerializerOptions JsonSerializerOptions;
 
+  private readonly IAccessTokenProvider AccessTokenProvider;
   /// <summary>
   /// This is the Service that is used to interact with the API.Server
+  /// Given a Request return the Response.
   /// </summary>
   /// <param name="httpClientFactory"></param>
   /// <param name="httpClientName"></param>
+  /// <param name="accessTokenProvider"></param>
   /// <param name="jsonSerializerOptionsAccessor"></param>
   protected BaseApiService
   (
     IHttpClientFactory httpClientFactory,
     string httpClientName,
+    IAccessTokenProvider accessTokenProvider,
     IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor
   )
   {
-    JsonSerializerOptions = jsonSerializerOptionsAccessor.Value;
     HttpClient = httpClientFactory.CreateClient(httpClientName);
+    AccessTokenProvider = accessTokenProvider;
+    JsonSerializerOptions = jsonSerializerOptionsAccessor.Value;
   }
 
   /// <summary>
@@ -35,10 +40,17 @@ public abstract class BaseApiService : IApiService
   /// This constructor is provided for testing purposes.
   /// </summary>
   /// <param name="httpClient"></param>
+  /// <param name="accessTokenProvider"></param>
   /// <param name="jsonSerializerOptions"></param>
-  protected BaseApiService(HttpClient httpClient, JsonSerializerOptions jsonSerializerOptions)
+  protected BaseApiService
+  (
+  	HttpClient httpClient,
+    IAccessTokenProvider accessTokenProvider,
+	  JsonSerializerOptions jsonSerializerOptions
+  )
   {
     HttpClient = httpClient;
+    AccessTokenProvider = accessTokenProvider;
     JsonSerializerOptions = jsonSerializerOptions;
   }
 
@@ -49,14 +61,13 @@ public abstract class BaseApiService : IApiService
   /// <param name="request"></param>
   /// <param name="cancellationToken"></param>
   /// <returns></returns>
-  public virtual async Task<OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+  public virtual async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
   (
     IApiRequest request,
     CancellationToken cancellationToken
   ) where TResponse : class
   {
-    HttpResponseMessage httpResponseMessage =
-      await GetHttpResponseMessageFromRequest(request).ConfigureAwait(false);
+    HttpResponseMessage httpResponseMessage = await GetHttpResponseMessageFromRequest(request).ConfigureAwait(false);
 
     if (httpResponseMessage.StatusCode == HttpStatusCode.NoContent)
     {
@@ -69,19 +80,29 @@ public abstract class BaseApiService : IApiService
     }
 
     if (httpResponseMessage.IsSuccessStatusCode)
+    {
+      if (typeof(TResponse) == typeof(Stream))
+      {
+        Stream fileStream = await ReadFileStream(httpResponseMessage).ConfigureAwait(false);
+        var fileResponse = new FileResponse(fileStream: fileStream)
+          {
+            FileName = httpResponseMessage.Content.Headers.ContentDisposition?.FileName,
+            ContentType = httpResponseMessage.Content.Headers.ContentType?.MediaType
+          };
+        return fileResponse;
+      }
       return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
+    }
 
     return await ReadFromJson<SharedProblemDetails>(httpResponseMessage).ConfigureAwait(false);
   }
 
-  private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest
-  (
-    IApiRequest apiRequest
-  )
+  private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest(IApiRequest apiRequest)
   {
     string route = PrepareRoute(apiRequest);
     StringContent? httpContent = PrepareContent(apiRequest);
     HttpVerb httpVerb = apiRequest.GetHttpVerb();
+    await SetBearerTokenAsync();
     return httpVerb switch
     {
       HttpVerb.Get => await HttpClient.GetAsync(route).ConfigureAwait(false),
@@ -105,14 +126,7 @@ public abstract class BaseApiService : IApiService
       case HttpVerb.Patch:
         {
           string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType());
-
-          return
-            new StringContent
-            (
-              requestAsJson,
-              Encoding.UTF8,
-              MediaTypeNames.Application.Json
-            );
+          return new StringContent(requestAsJson, Encoding.UTF8, MediaTypeNames.Application.Json);
         }
       case HttpVerb.Get:
       case HttpVerb.Delete:
@@ -141,7 +155,7 @@ public abstract class BaseApiService : IApiService
   }
   private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage)
   {
-    //httpResponseMessage.EnsureSuccessStatusCode();
+    httpResponseMessage.EnsureSuccessStatusCode();
 
     string json = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
@@ -150,5 +164,19 @@ public abstract class BaseApiService : IApiService
       throw new InvalidOperationException("The response is null.");
 
     return response;
+  }
+  private static async Task<Stream> ReadFileStream(HttpResponseMessage httpResponseMessage)
+  {
+    httpResponseMessage.EnsureSuccessStatusCode();
+    return await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+  }
+
+  private async Task SetBearerTokenAsync()
+  {
+    AccessTokenResult tokenResult = await AccessTokenProvider.RequestAccessToken();
+    if (tokenResult.TryGetToken(out AccessToken? token))
+    {
+      HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
+    }
   }
 }
