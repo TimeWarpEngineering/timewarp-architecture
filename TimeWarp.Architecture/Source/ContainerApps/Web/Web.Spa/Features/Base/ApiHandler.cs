@@ -1,4 +1,5 @@
 namespace TimeWarp.Architecture.Features;
+using FluentValidation.Results;
 
 internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<TAction>
   where TAction : IBaseAction
@@ -7,34 +8,42 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
 {
   private readonly AuthenticationStateProvider? AuthenticationStateProvider;
   private readonly IApiService ApiService;
+  private readonly IValidator<TRequest>? Validator;
   private bool RequiresAuthentication => AuthenticationStateProvider is not null;
 
   protected ApiHandler
   (
     IStore store,
     IApiService apiService,
+    IValidator<TRequest>? validator = null,
     AuthenticationStateProvider? authenticationStateProvider = null
   ) : base(store)
   {
     AuthenticationStateProvider = authenticationStateProvider;
     ApiService = apiService;
+    Validator = validator;
   }
 
-  public override sealed async Task Handle(TAction action, CancellationToken cancellationToken)
+  public sealed override async Task Handle(TAction action, CancellationToken cancellationToken)
   {
     if (RequiresAuthentication && !await IsUserAuthenticatedAsync()) return;
 
     // get the semaphore so we only call the API one at a time
-    Type currentType = typeof(TRequest).GetEnclosingStateType();
-    var state = (IState)Store.GetState(currentType);
-    await state.Semaphore.WaitAsync(cancellationToken);
+    Type currentType = typeof(TAction).GetEnclosingStateType();
+    SemaphoreSlim semaphore = Store.GetSemaphore(currentType);
+    await semaphore.WaitAsync(cancellationToken);
     try
     {
       TRequest? request = await GetRequest(action, cancellationToken);
       if (request is null) return;// Skip the action
-      if (request is IAuthApiRequest authRequest) authRequest.UserId = await AuthenticationStateProvider!.GetUserIdAsync();
 
-      OneOf<TResponse, SharedProblemDetails> apiResponse =
+      ValidationResult? x = Validator?.Validate(request);
+      if (x?.IsValid == false)
+      {
+        throw new ValidationException(x.Errors);
+      }
+
+      OneOf<TResponse, FileResponse, SharedProblemDetails> apiResponse =
         await ApiService.GetResponse<TResponse>
         (
           request,
@@ -44,12 +53,13 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
       apiResponse.Switch
       (
         response => HandleSuccess(response, cancellationToken),
+        fileResponse => HandleFileResponse(fileResponse, cancellationToken),
         problemDetails => HandleError(problemDetails, cancellationToken)
       );
     }
     finally
     {
-      state.Semaphore.Release();
+      semaphore.Release();
     }
   }
 
@@ -69,5 +79,6 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
   /// <returns></returns>
   protected abstract Task<TRequest?> GetRequest(TAction action, CancellationToken cancellationToken);
   protected abstract Task HandleSuccess(TResponse response, CancellationToken cancellationToken);
+  protected abstract Task HandleFileResponse(FileResponse fileResponse, CancellationToken cancellationToken);
   protected abstract Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken);
 }
