@@ -40,15 +40,14 @@ public static partial class GetRole
     }
   }
 
-  public static object CreateMockResponse(dynamic request)
+  public static MockResponseFactory<Response> CreateMockResponse()
   {
-    Query query = request;
-
-    return new Response
-    (
-      roleId: RoleIds.Administrator,
-      name: nameof(RoleIds.Administrator),
-      description: "The Administrator role is for administrators. And has access to all modules."
-    );
+    return _ =>
+      new Response
+      (
+        roleId: RoleIds.Administrator,
+        name: nameof(RoleIds.Administrator),
+        description: "The Administrator role is for administrators. And has access to all modules."
+      );
   }
 }

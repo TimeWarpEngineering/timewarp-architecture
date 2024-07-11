@@ -1,7 +1,7 @@
 namespace TimeWarp.Architecture.Features.Authentication;
 
 using Authorization;
-using TimeWarp.Architecture.Services;
+using Services;
 
 public static partial class GetCurrentUser
 {
@@ -59,9 +59,15 @@ public static partial class GetCurrentUser
     ModuleIds.Payroll,
     ModuleIds.UserAccessManagement
   ];
-  public static object CreateMockResponse(dynamic request)
+
+  public static MockResponseFactory<Response> CreateMockResponse()
   {
-    Query query = request;
+    return CreateMockResponse;
+  }
+
+  private static Response CreateMockResponse(IApiRequest request)
+  {
+    var query = (Query)request;
 
     var responseCreators = new Dictionary<Guid, Func<Response>>
     {

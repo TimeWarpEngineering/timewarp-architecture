@@ -56,10 +56,8 @@ public static partial class GetRoles
     }
   }
 
-  public static object CreateMockResponse(dynamic request)
+  public static MockResponseFactory<Response> CreateMockResponse(IApiRequest request)
   {
-    Query query = request;
-
     RoleDto[] items =
     [
       new
@@ -76,6 +74,6 @@ public static partial class GetRoles
       ),
     ];
 
-    return new Response(totalCount: items.Length, items);
+    return _ => new Response(totalCount: items.Length, items);
   }
 }

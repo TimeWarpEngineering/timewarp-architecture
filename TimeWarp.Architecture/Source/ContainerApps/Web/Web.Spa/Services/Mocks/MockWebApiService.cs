@@ -4,7 +4,6 @@ using FluentValidation.Results;
 
 public class MockWebApiService : IWebServerApiService
 {
-  private delegate object MockResponseFactory(dynamic request);
   private readonly IApiService ApiService;
   private readonly ILogger<MockWebApiService> Logger;
   private readonly IServiceProvider ServiceProvider;
@@ -20,7 +19,7 @@ public class MockWebApiService : IWebServerApiService
     ServiceProvider = serviceProvider;
   }
 
-  private readonly Dictionary<Type, MockResponseFactory> Factories = new()
+  private readonly Dictionary<Type, Delegate> Factories = new()
   {
     // Comment out those where you want to use the real API service
     { typeof(GetCurrentUser.Query), GetCurrentUser.CreateMockResponse },
@@ -43,7 +42,7 @@ public class MockWebApiService : IWebServerApiService
 
     ValidateRequest(request, ServiceProvider);
     // If no mock factory is found, fall back to the real API service
-    if (!Factories.TryGetValue(requestType, out MockResponseFactory? factory))
+    if (!Factories.TryGetValue(requestType, out Delegate? factory))
     {
       Logger.LogDebug("No mock response factory found for {requestType}. Falling back to real API service.", requestType.FullName);
       return await ApiService.GetResponse<TResponse>(request, cancellationToken);
@@ -51,13 +50,22 @@ public class MockWebApiService : IWebServerApiService
 
     await Task.Delay(100, cancellationToken); // Simulate async work
     Logger.LogDebug("Mock Api Call, Request type: {requestType} Url:{url}",requestType.FullName,request.GetRoute() );
-    object response = factory(request);
-    return response switch
+
+    switch (factory)
     {
-      TResponse strongResponse => strongResponse!,
-      FileResponse fileResponse => fileResponse!,
-      _ => throw new InvalidOperationException($"Mock response factory for {requestType.FullName} did not return a response of the expected type {typeof(TResponse).FullName}")
-    };
+      case Func<IApiRequest, TResponse> typedFactory:
+        {
+          TResponse response = typedFactory(request);
+          return response;
+        }
+      case Func<IApiRequest, FileResponse> fileFactory:
+        {
+          FileResponse response = fileFactory(request);
+          return response;
+        }
+      default:
+        throw new NotImplementedException();
+    }
   }
 
   private static void ValidateRequest(object request, IServiceProvider serviceProvider)

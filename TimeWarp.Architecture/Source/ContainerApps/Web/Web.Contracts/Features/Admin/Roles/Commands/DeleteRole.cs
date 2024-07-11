@@ -19,9 +19,9 @@ public static partial class DeleteRole
   }
 
   public sealed class Response;
-
-  public static object CreateMockResponse(dynamic request)
+  
+  public static MockResponseFactory<Response> CreateMockResponse()
   {
-    return new Response();
+    return _ => new Response();
   }
 }
