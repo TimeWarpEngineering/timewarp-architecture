@@ -12,4 +12,5 @@ internal abstract partial class BaseHandler<TAction> : ActionHandler<TAction>
   /// </summary>
   /// <typeparam name="TAction"></typeparam>
   protected BaseHandler(IStore store) : base(store) {}
+  protected RouteState RouteState => Store.GetState<RouteState>();
 }
