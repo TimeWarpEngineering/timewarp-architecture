@@ -327,3 +327,6 @@ GeneratedCode/
 
 # Misc
 /output.txt
+
+# aider chat AI files
+.aider*
