@@ -18,11 +18,12 @@ public abstract partial class BaseComponent : TimeWarpStateDevToolsComponent, IA
   [Parameter(CaptureUnmatchedValues = true)]
   public IReadOnlyDictionary<string, object> Attributes { get; set; } = new Dictionary<string, object>();
   internal ActionTrackingState ActionTrackingState => GetState<ActionTrackingState>();
-  internal RouteState RouteState => GetState<RouteState>();
+  internal ActionTrackingState NoSubActionTrackingState => GetState<ActionTrackingState>(false);
+  internal RouteState NoSubRouteState => GetState<RouteState>(false);
   protected string? BaseClass { get; set; }
-  protected CssBuilder BaseCssBuilder { get; set; } = new();
-  protected bool IsAnyActive(params Type[] aActions) => ActionTrackingState.IsAnyActive(aActions);
-  protected async Task Send(IRequest aRequest) => await Mediator.Send(aRequest);
+  protected CssBuilder BaseCssBuilder { get; } = new();
+  protected bool IsAnyActive(params Type[] actions) => ActionTrackingState.IsAnyActive(actions);
+  protected async Task Send(IRequest request) => await Mediator.Send(request);
 
   protected override void OnParametersSet()
   {
