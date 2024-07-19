@@ -22,11 +22,11 @@ public class MockWebApiService : IWebServerApiService
   private readonly Dictionary<Type, Delegate> Factories = new()
   {
     // Comment out those where you want to use the real API service
-    { typeof(GetCurrentUser.Query), GetCurrentUser.CreateMockResponse },
-    { typeof(GetRoles.Query),GetRoles.CreateMockResponse },
-    { typeof(GetRole.Query), GetRole.CreateMockResponse },
-    { typeof(UpdateRole.Command), UpdateRole.CreateMockResponse},
-    { typeof(DeleteRole.Command), DeleteRole.CreateMockResponse}
+    { typeof(GetCurrentUser.Query), GetCurrentUser.GetMockResponseFactory },
+    { typeof(GetRoles.Query),GetRoles.GetMockResponseFactory },
+    { typeof(GetRole.Query), GetRole.GetMockResponseFactory },
+    { typeof(UpdateRole.Command), UpdateRole.GetMockResponseFactory},
+    { typeof(DeleteRole.Command), DeleteRole.GetMockResponseFactory}
 
     // Add other mappings here
   };
