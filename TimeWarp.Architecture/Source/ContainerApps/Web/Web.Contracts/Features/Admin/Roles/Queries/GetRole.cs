@@ -40,7 +40,7 @@ public static partial class GetRole
     }
   }
 
-  public static MockResponseFactory<Response> CreateMockResponse()
+  public static MockResponseFactory<Response> GetMockResponseFactory()
   {
     return _ =>
       new Response
