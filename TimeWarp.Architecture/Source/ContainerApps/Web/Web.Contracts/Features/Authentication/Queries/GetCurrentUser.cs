@@ -60,7 +60,7 @@ public static partial class GetCurrentUser
     ModuleIds.UserAccessManagement
   ];
 
-  public static MockResponseFactory<Response> CreateMockResponse()
+  public static MockResponseFactory<Response> GetMockResponseFactory()
   {
     return CreateMockResponse;
   }
