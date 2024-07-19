@@ -1,25 +1,24 @@
 namespace TimeWarp.Architecture.Features.Applications;
 
-using static TimeWarp.Features.Routing.RouteState;
-
 internal partial class ApplicationState
 {
   public static class ResetStore
   {
 
-    internal class Action : IBaseAction { }
+    internal class Action : IBaseAction {}
 
     [UsedImplicitly]
-    internal class Handler
-    (
-      IStore Store,
-      ISender Sender
-    ) : IRequestHandler<Action>
+    internal class Handler : BaseHandler<Action>
     {
-      public async Task Handle(Action action, CancellationToken cancellationToken)
+      private readonly ISender Sender;
+      public Handler(IStore store, ISender sender) : base(store)
+      {
+        Sender = sender;
+      }
+      public override async Task Handle(Action action, CancellationToken cancellationToken)
       {
         Store.Reset();
-        await Sender.Send(new ChangeRoute.Action( newRoute:"/" ), cancellationToken);
+        await RouteState.ChangeRoute(newRoute: "/", cancellationToken);
       }
     }
   }
