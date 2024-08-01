@@ -44,9 +44,9 @@ public abstract class BaseApiService : IApiService
   /// <param name="jsonSerializerOptions"></param>
   protected BaseApiService
   (
-  	HttpClient httpClient,
+    HttpClient httpClient,
     IAccessTokenProvider accessTokenProvider,
-	  JsonSerializerOptions jsonSerializerOptions
+    JsonSerializerOptions jsonSerializerOptions
   )
   {
     HttpClient = httpClient;
@@ -67,37 +67,47 @@ public abstract class BaseApiService : IApiService
     CancellationToken cancellationToken
   ) where TResponse : class
   {
-    HttpResponseMessage httpResponseMessage = await GetHttpResponseMessageFromRequest(request).ConfigureAwait(false);
+    try
+    {
+      HttpResponseMessage httpResponseMessage =
+        await GetHttpResponseMessageFromRequest(request, cancellationToken).ConfigureAwait(false);
 
-    if (httpResponseMessage.StatusCode == HttpStatusCode.NoContent)
+      if (httpResponseMessage.StatusCode == HttpStatusCode.NoContent)
+      {
+        return new SharedProblemDetails
+        {
+          Title = "No Content", Status = (int)HttpStatusCode.NoContent, Detail = "The response content is empty."
+        };
+      }
+
+      if (httpResponseMessage.IsSuccessStatusCode)
+      {
+        if (typeof(TResponse) == typeof(Stream))
+        {
+          Stream fileStream = await ReadFileStream(httpResponseMessage, cancellationToken).ConfigureAwait(false);
+          var fileResponse = new FileResponse(fileStream: fileStream)
+          {
+            FileName = httpResponseMessage.Content.Headers.ContentDisposition?.FileName, ContentType = httpResponseMessage.Content.Headers.ContentType?.MediaType
+          };
+          return fileResponse;
+        }
+        return await ReadFromJson<TResponse>(httpResponseMessage, cancellationToken).ConfigureAwait(false);
+      }
+
+      return await ReadFromJson<SharedProblemDetails>(httpResponseMessage, cancellationToken).ConfigureAwait(false);
+    }
+    catch (OperationCanceledException)
     {
       return new SharedProblemDetails
       {
-        Title = "No Content",
-        Status = (int)HttpStatusCode.NoContent,
-        Detail = "The response content is empty."
+        Title = "Operation Cancelled",
+        Status = (int)HttpStatusCode.RequestTimeout,
+        Detail = "The request was cancelled."
       };
     }
-
-    if (httpResponseMessage.IsSuccessStatusCode)
-    {
-      if (typeof(TResponse) == typeof(Stream))
-      {
-        Stream fileStream = await ReadFileStream(httpResponseMessage).ConfigureAwait(false);
-        var fileResponse = new FileResponse(fileStream: fileStream)
-          {
-            FileName = httpResponseMessage.Content.Headers.ContentDisposition?.FileName,
-            ContentType = httpResponseMessage.Content.Headers.ContentType?.MediaType
-          };
-        return fileResponse;
-      }
-      return await ReadFromJson<TResponse>(httpResponseMessage).ConfigureAwait(false);
-    }
-
-    return await ReadFromJson<SharedProblemDetails>(httpResponseMessage).ConfigureAwait(false);
   }
 
-  private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest(IApiRequest apiRequest)
+  private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest(IApiRequest apiRequest, CancellationToken cancellationToken)
   {
     string route = PrepareRoute(apiRequest);
     StringContent? httpContent = PrepareContent(apiRequest);
@@ -105,11 +115,11 @@ public abstract class BaseApiService : IApiService
     await SetBearerTokenAsync();
     return httpVerb switch
     {
-      HttpVerb.Get => await HttpClient.GetAsync(route).ConfigureAwait(false),
-      HttpVerb.Delete => await HttpClient.DeleteAsync(route).ConfigureAwait(false),
-      HttpVerb.Post => await HttpClient.PostAsync(route, httpContent).ConfigureAwait(false),
-      HttpVerb.Put => await HttpClient.PutAsync(route, httpContent).ConfigureAwait(false),
-      HttpVerb.Patch => await HttpClient.PatchAsync(route, httpContent).ConfigureAwait(false),
+      HttpVerb.Get => await HttpClient.GetAsync(route, cancellationToken).ConfigureAwait(false),
+      HttpVerb.Delete => await HttpClient.DeleteAsync(route, cancellationToken).ConfigureAwait(false),
+      HttpVerb.Post => await HttpClient.PostAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
+      HttpVerb.Put => await HttpClient.PutAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
+      HttpVerb.Patch => await HttpClient.PatchAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
       HttpVerb.Head => throw new NotImplementedException(),
       HttpVerb.Options => throw new NotImplementedException(),
       _ => throw new NotImplementedException()
@@ -153,11 +163,11 @@ public abstract class BaseApiService : IApiService
         return apiRequest.GetRoute();
     }
   }
-  private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage)
+  private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage, CancellationToken cancellationToken)
   {
     httpResponseMessage.EnsureSuccessStatusCode();
 
-    string json = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
+    string json = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
     TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
     if (response is null)
@@ -165,10 +175,10 @@ public abstract class BaseApiService : IApiService
 
     return response;
   }
-  private static async Task<Stream> ReadFileStream(HttpResponseMessage httpResponseMessage)
+  private static async Task<Stream> ReadFileStream(HttpResponseMessage httpResponseMessage, CancellationToken cancellationToken)
   {
     httpResponseMessage.EnsureSuccessStatusCode();
-    return await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+    return await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
   }
 
   private async Task SetBearerTokenAsync()
