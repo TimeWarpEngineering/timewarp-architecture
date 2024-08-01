@@ -109,8 +109,8 @@
     <PackageVersion Include="TimeWarp.Fixie" Version="1.0.2" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-alpha.5" />
-    <PackageVersion Include="TimeWarp.State" Version="11.0.0-beta.51" />
-    <PackageVersion Include="TimeWarp.State.Plus" Version="11.0.0-beta.51" />
+    <PackageVersion Include="TimeWarp.State" Version="11.0.0-beta.75" />
+    <PackageVersion Include="TimeWarp.State.Plus" Version="11.0.0-beta.75" />
     <PackageVersion Include="timewarp-heroicons" Version="2.0.19" />
     <PackageVersion Include="timewarp-simple-icons" Version="11.15.0" />
     <PackageVersion Include="xunit" Version="2.5.3" />
