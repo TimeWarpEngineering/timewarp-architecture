@@ -48,23 +48,35 @@ public class MockWebApiService : IWebServerApiService
       return await ApiService.GetResponse<TResponse>(request, cancellationToken);
     }
 
-    await Task.Delay(100, cancellationToken); // Simulate async work
-    Logger.LogDebug("Mock Api Call, Request type: {requestType} Url:{url}",requestType.FullName,request.GetRoute() );
-
-    switch (factory)
+    try
     {
-      case Func<IApiRequest, TResponse> typedFactory:
-        {
-          TResponse response = typedFactory(request);
-          return response;
-        }
-      case Func<IApiRequest, FileResponse> fileFactory:
-        {
-          FileResponse response = fileFactory(request);
-          return response;
-        }
-      default:
-        throw new NotImplementedException();
+      await Task.Delay(100, cancellationToken); // Simulate async work
+      Logger.LogDebug("Mock Api Call, Request type: {requestType} Url:{url}",requestType.FullName,request.GetRoute() );
+
+      switch (factory)
+      {
+        case Func<IApiRequest, TResponse> typedFactory:
+          {
+            TResponse response = typedFactory(request);
+            return response;
+          }
+        case Func<IApiRequest, FileResponse> fileFactory:
+          {
+            FileResponse response = fileFactory(request);
+            return response;
+          }
+        default:
+          throw new NotImplementedException();
+      }
+    }
+    catch (OperationCanceledException)
+    {
+      return new SharedProblemDetails
+      {
+        Title = "Operation Cancelled",
+        Status = 499, // 499 is the code for "Client Closed Request"
+        Detail = "The request was cancelled.",
+      };
     }
   }
 
