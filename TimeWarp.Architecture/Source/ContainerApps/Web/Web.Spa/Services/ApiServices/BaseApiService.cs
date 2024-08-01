@@ -101,7 +101,7 @@ public abstract class BaseApiService : IApiService
       return new SharedProblemDetails
       {
         Title = "Operation Cancelled",
-        Status = (int)HttpStatusCode.RequestTimeout,
+        Status = 499, // 499 is the code for "Client Closed Request"
         Detail = "The request was cancelled."
       };
     }
