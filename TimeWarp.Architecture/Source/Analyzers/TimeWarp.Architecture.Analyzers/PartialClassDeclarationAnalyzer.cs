@@ -10,18 +10,20 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
   private static readonly LocalizableString Description = "Partial classes should have one primary declaration in the main file with full specifiers and inheritance, while secondary files should have minimal declaration without inheritance.";
   private const string Category = "Design";
 
-  private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
-    DiagnosticId,
-    Title,
-    MessageFormat,
-    Category,
-    DiagnosticSeverity.Warning,
-    isEnabledByDefault: true,
-    description: Description,
-    helpLinkUri: "https://github.com/TimeWarpEngineering/timewarp-architecture/blob/main/Documentation/Analyzers/TWPA0001.md"
-  );
+  private static readonly DiagnosticDescriptor Rule =
+    new
+    (
+      DiagnosticId,
+      Title,
+      MessageFormat,
+      Category,
+      DiagnosticSeverity.Warning,
+      isEnabledByDefault: true,
+      description: Description,
+      helpLinkUri: "https://github.com/TimeWarpEngineering/timewarp-architecture/blob/main/Documentation/Analyzers/TWPA0001.md"
+    );
 
-  public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+  public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
   public override void Initialize(AnalysisContext context)
   {
@@ -37,31 +39,28 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
     if (!namedTypeSymbol.IsType || !IsPartialType(namedTypeSymbol))
       return;
 
-    var declarations = namedTypeSymbol.DeclaringSyntaxReferences;
+    ImmutableArray<SyntaxReference> declarations = namedTypeSymbol.DeclaringSyntaxReferences;
 
     if (declarations.Length <= 1)
       return;
 
-    foreach (var declaration in declarations)
+    foreach (SyntaxReference? declaration in declarations)
     {
-      var classSyntax = declaration.GetSyntax() as ClassDeclarationSyntax;
-      if (classSyntax == null)
+      if (declaration.GetSyntax() is not ClassDeclarationSyntax classSyntax)
         continue;
 
-      var sourceTree = declaration.SyntaxTree;
-      var filePath = sourceTree.FilePath;
-      var fileName = Path.GetFileName(filePath);
+      SyntaxTree sourceTree = declaration.SyntaxTree;
+      string filePath = sourceTree.FilePath;
+      string? fileName = Path.GetFileName(filePath);
 
       bool isPrimaryFile = fileName.Equals($"{namedTypeSymbol.Name}.cs", StringComparison.OrdinalIgnoreCase);
 
       if (isPrimaryFile)
       {
-        if (!HasFullSpecifiers(classSyntax))
-        {
-          var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
-            namedTypeSymbol.Name, "should have full specifiers in the primary file");
-          context.ReportDiagnostic(diagnostic);
-        }
+        if (HasFullSpecifiers(classSyntax)) continue;
+        var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
+          namedTypeSymbol.Name, "should have full specifiers in the primary file");
+        context.ReportDiagnostic(diagnostic);
       }
       else if (fileName.StartsWith($"{namedTypeSymbol.Name}.", StringComparison.OrdinalIgnoreCase))
       {
@@ -88,28 +87,27 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
     }
   }
 
-  private static bool IsPartialType(INamedTypeSymbol symbol)
+  private static bool IsPartialType(ISymbol symbol)
   {
-    return symbol.DeclaringSyntaxReferences.Length > 1 ||
-           (symbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is ClassDeclarationSyntax classDeclaration &&
-            classDeclaration.Modifiers.Any(SyntaxKind.PartialKeyword));
+    return symbol.DeclaringSyntaxReferences.Length > 1
+      || (symbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is ClassDeclarationSyntax classDeclaration
+      && classDeclaration.Modifiers.Any(SyntaxKind.PartialKeyword));
   }
 
-  private static bool HasFullSpecifiers(ClassDeclarationSyntax classDeclaration)
+  private static bool HasFullSpecifiers(MemberDeclarationSyntax memberDeclarationSyntax)
   {
-    return classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword) ||
-                                               m.IsKind(SyntaxKind.InternalKeyword) ||
-                                               m.IsKind(SyntaxKind.ProtectedKeyword) ||
-                                               m.IsKind(SyntaxKind.PrivateKeyword));
+    return memberDeclarationSyntax.Modifiers.Any
+    (
+      m => m.IsKind(SyntaxKind.PublicKeyword)
+        || m.IsKind(SyntaxKind.InternalKeyword)
+        || m.IsKind(SyntaxKind.ProtectedKeyword)
+        || m.IsKind(SyntaxKind.PrivateKeyword)
+    );
   }
 
-  private static bool HasExcessiveSpecifiers(ClassDeclarationSyntax classDeclaration)
-  {
-    return classDeclaration.Modifiers.Any(m => !m.IsKind(SyntaxKind.PartialKeyword));
-  }
+  private static bool HasExcessiveSpecifiers(MemberDeclarationSyntax memberDeclarationSyntax) =>
+    memberDeclarationSyntax.Modifiers.Any(m => !m.IsKind(SyntaxKind.PartialKeyword));
 
-  private static bool HasInheritanceOrInterfaces(ClassDeclarationSyntax classDeclaration)
-  {
-    return classDeclaration.BaseList != null && classDeclaration.BaseList.Types.Count > 0;
-  }
+  private static bool HasInheritanceOrInterfaces(BaseTypeDeclarationSyntax baseTypeDeclarationSyntax) =>
+    baseTypeDeclarationSyntax.BaseList is { Types.Count: > 0 };
 }
