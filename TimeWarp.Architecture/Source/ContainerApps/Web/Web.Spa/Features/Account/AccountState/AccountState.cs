@@ -2,7 +2,7 @@
 namespace TimeWarp.Architecture.Features.Account;
 
 [StateAccessMixin]
-internal partial class AccountState : State<AccountState>
+public sealed partial class AccountState : State<AccountState>
 {
   public string? Alias { get; private set; }
   public string? WalletAddress { get; private set; }
