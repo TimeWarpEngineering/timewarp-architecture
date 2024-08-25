@@ -49,61 +49,76 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
       if (declaration.GetSyntax() is not ClassDeclarationSyntax classSyntax)
         continue;
 
-      SyntaxTree sourceTree = declaration.SyntaxTree;
-      string filePath = sourceTree.FilePath;
-      string? fileName = Path.GetFileName(filePath);
-
-      bool isPrimaryFile = fileName.Equals($"{namedTypeSymbol.Name}.cs", StringComparison.OrdinalIgnoreCase);
-
-      if (isPrimaryFile)
-      {
-        if (HasFullSpecifiers(classSyntax)) continue;
-        var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
-          namedTypeSymbol.Name, "should have full specifiers in the primary file");
-        context.ReportDiagnostic(diagnostic);
-      }
-      else if (fileName.StartsWith($"{namedTypeSymbol.Name}.", StringComparison.OrdinalIgnoreCase))
-      {
-        if (HasExcessiveSpecifiers(classSyntax))
-        {
-          var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
-            namedTypeSymbol.Name, "should have minimal specifiers in secondary files");
-          context.ReportDiagnostic(diagnostic);
-        }
-
-        if (HasInheritanceOrInterfaces(classSyntax))
-        {
-          var diagnostic = Diagnostic.Create(Rule, classSyntax.BaseList?.GetLocation() ?? classSyntax.GetLocation(),
-            namedTypeSymbol.Name, "should not include inheritance or interfaces in secondary files");
-          context.ReportDiagnostic(diagnostic);
-        }
-      }
-      else
-      {
-        var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
-          namedTypeSymbol.Name, $"file name '{fileName}' does not follow the expected naming convention");
-        context.ReportDiagnostic(diagnostic);
-      }
+      AnalyzeDeclaration(context, namedTypeSymbol, classSyntax, declaration.SyntaxTree);
     }
   }
 
-  private static bool IsPartialType(ISymbol symbol)
+  private static void AnalyzeDeclaration(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol, ClassDeclarationSyntax classSyntax, SyntaxTree sourceTree)
   {
-    return symbol.DeclaringSyntaxReferences.Length > 1
-      || (symbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is ClassDeclarationSyntax classDeclaration
-      && classDeclaration.Modifiers.Any(SyntaxKind.PartialKeyword));
+    string filePath = sourceTree.FilePath;
+    string? fileName = Path.GetFileName(filePath);
+
+    bool isPrimaryFile = fileName.Equals($"{namedTypeSymbol.Name}.cs", StringComparison.OrdinalIgnoreCase);
+
+    if (isPrimaryFile)
+    {
+      AnalyzePrimaryFile(context, namedTypeSymbol, classSyntax);
+    }
+    else if (fileName.StartsWith($"{namedTypeSymbol.Name}.", StringComparison.OrdinalIgnoreCase))
+    {
+      AnalyzeSecondaryFile(context, namedTypeSymbol, classSyntax);
+    }
+    else
+    {
+      ReportIncorrectFileName(context, namedTypeSymbol, classSyntax, fileName);
+    }
   }
 
-  private static bool HasFullSpecifiers(MemberDeclarationSyntax memberDeclarationSyntax)
+  private static void AnalyzePrimaryFile(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol, ClassDeclarationSyntax classSyntax)
   {
-    return memberDeclarationSyntax.Modifiers.Any
+    if (HasFullSpecifiers(classSyntax)) return;
+    var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
+      namedTypeSymbol.Name, "should have full specifiers in the primary file");
+    context.ReportDiagnostic(diagnostic);
+  }
+
+  private static void AnalyzeSecondaryFile(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol, ClassDeclarationSyntax classSyntax)
+  {
+    if (HasExcessiveSpecifiers(classSyntax))
+    {
+      var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
+        namedTypeSymbol.Name, "should have minimal specifiers in secondary files");
+      context.ReportDiagnostic(diagnostic);
+    }
+
+    if (HasInheritanceOrInterfaces(classSyntax))
+    {
+      var diagnostic = Diagnostic.Create(Rule, classSyntax.BaseList?.GetLocation() ?? classSyntax.GetLocation(),
+        namedTypeSymbol.Name, "should not include inheritance or interfaces in secondary files");
+      context.ReportDiagnostic(diagnostic);
+    }
+  }
+
+  private static void ReportIncorrectFileName(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol, ClassDeclarationSyntax classSyntax, string? fileName)
+  {
+    var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
+      namedTypeSymbol.Name, $"file name '{fileName}' does not follow the expected naming convention");
+    context.ReportDiagnostic(diagnostic);
+  }
+
+  private static bool IsPartialType(ISymbol symbol) =>
+    symbol.DeclaringSyntaxReferences.Length > 1
+    || (symbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is ClassDeclarationSyntax classDeclaration
+    && classDeclaration.Modifiers.Any(SyntaxKind.PartialKeyword));
+
+  private static bool HasFullSpecifiers(MemberDeclarationSyntax memberDeclarationSyntax) =>
+    memberDeclarationSyntax.Modifiers.Any
     (
       m => m.IsKind(SyntaxKind.PublicKeyword)
         || m.IsKind(SyntaxKind.InternalKeyword)
         || m.IsKind(SyntaxKind.ProtectedKeyword)
         || m.IsKind(SyntaxKind.PrivateKeyword)
     );
-  }
 
   private static bool HasExcessiveSpecifiers(MemberDeclarationSyntax memberDeclarationSyntax) =>
     memberDeclarationSyntax.Modifiers.Any(m => !m.IsKind(SyntaxKind.PartialKeyword));
