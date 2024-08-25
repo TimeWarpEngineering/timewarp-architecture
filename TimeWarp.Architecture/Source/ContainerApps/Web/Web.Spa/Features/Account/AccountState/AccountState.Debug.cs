@@ -1,7 +1,7 @@
 ﻿# nullable enable
 namespace TimeWarp.Architecture.Features.Account;
 
-internal partial class AccountState : State<AccountState>
+partial class AccountState
 {
   public override AccountState Hydrate(IDictionary<string, object> aKeyValuePairs)
   {
