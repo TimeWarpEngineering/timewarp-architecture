@@ -2,7 +2,8 @@
 namespace PartialClassDeclarationAnalyzer_;
 
 using Microsoft.CodeAnalysis.CSharp.Testing;
-using TimeWarp.State.Analyzer.Tests;
+using TimeWarp.Architecture.Analyzer;
+using TimeWarp.Architecture.Analyzer.Tests;
 
 public class Should_Trigger_PartialClassDeclaration
 {
@@ -16,14 +17,14 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    DiagnosticResult expectedDiagnostic = new DiagnosticResult("PartialClassDeclaration", DiagnosticSeverity.Warning)
-      .WithSpan(1, 15, 1, 32)
+    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "PartialClassDeclaration", DiagnosticSeverity.Warning)
+      .WithSpan(startLine: 1, startColumn: 15, endLine: 1, endColumn: 32)
       .WithArguments("ApplicationState", "should have full specifiers in the primary file");
 
     var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
     {
       TestCode = TestCode,
-      TestState = { AdditionalFiles = { ("ApplicationState.cs", TestCode) } }
+      TestState = { AdditionalFiles = { (filename: "ApplicationState.cs", TestCode) } }
     };
 
     analyzerTest.ExpectedDiagnostics.Add(expectedDiagnostic);
@@ -41,8 +42,8 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    DiagnosticResult expectedDiagnostic = new DiagnosticResult("PartialClassDeclaration", DiagnosticSeverity.Warning)
-      .WithSpan(1, 22, 1, 39)
+    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "PartialClassDeclaration", DiagnosticSeverity.Warning)
+      .WithSpan(startLine: 1, startColumn: 22, endLine: 1, endColumn: 39)
       .WithArguments("ApplicationState", "should have minimal specifiers in secondary files");
 
     var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
@@ -66,14 +67,14 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    DiagnosticResult expectedDiagnostic = new DiagnosticResult("PartialClassDeclaration", DiagnosticSeverity.Warning)
-      .WithSpan(1, 15, 1, 32)
+    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "PartialClassDeclaration", DiagnosticSeverity.Warning)
+      .WithSpan(startLine: 1, startColumn: 15, endLine: 1, endColumn: 32)
       .WithArguments("ApplicationState", "file name 'WrongFileName.cs' does not follow the expected naming convention");
 
     var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
     {
       TestCode = TestCode,
-      TestState = { AdditionalFiles = { ("WrongFileName.cs", TestCode) } }
+      TestState = { AdditionalFiles = { (filename: "WrongFileName.cs", TestCode) } }
     };
 
     analyzerTest.ExpectedDiagnostics.Add(expectedDiagnostic);

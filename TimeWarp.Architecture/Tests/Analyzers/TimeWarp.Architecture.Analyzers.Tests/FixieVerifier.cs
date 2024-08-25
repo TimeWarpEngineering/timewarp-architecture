@@ -1,4 +1,4 @@
-namespace TimeWarp.State.Analyzer.Tests;
+namespace TimeWarp.Architecture.Analyzer.Tests;
 
 // FixieVerifier is a basic implementation since Fixie doesn't have a verifier like xUnit or NUnit.
 internal class FixieVerifier : IVerifier
@@ -70,9 +70,9 @@ internal class FixieVerifier : IVerifier
       );
     }
   }
-  
+
   public IVerifier PushContext(string context) => this; // No operation. Context information is not used.
-  
+
   // ReSharper disable once UnusedMember.Global
   [SuppressMessage("Performance", "CA1822:Mark members as static")]
   public Task Verify(string actual, string expected, string? message = null, string? path = null, int? line = null, int? column = null)
