@@ -1,7 +1,7 @@
 namespace TimeWarp.Architecture.Features.Applications;
 
 [StateAccessMixin]
-internal partial class ApplicationState : State<ApplicationState>
+public sealed partial class ApplicationState : State<ApplicationState>
 {
   public string? ActiveModalId { get; private set; }
   public bool IsMenuExpanded { get; private set; }
