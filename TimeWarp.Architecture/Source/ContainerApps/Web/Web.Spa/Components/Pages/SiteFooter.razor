@@ -1,4 +1,5 @@
 ﻿@inherits BaseComponent
+
 @code
 {
   [Parameter] public RenderFragment? CustomContent { get; set; }
@@ -8,6 +9,11 @@
   private async Task ShowAssemblyInfoModal() =>
     await Send(new ApplicationState.SetActiveModal.Action(ModalId: AssemblyInfoModal.ModalId));
 
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    RegisterRenderTrigger<ActionTrackingState>(p => p.IsActive);
+  }
 }
 
 <footer class="bg-white">
