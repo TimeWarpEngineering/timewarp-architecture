@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Features.Applications;
 
-internal partial class ApplicationState
+partial class ApplicationState
 {
   [UsedImplicitly]
   public static class CloseModal

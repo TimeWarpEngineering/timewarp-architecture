@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Applications;
 
-internal partial class ApplicationState
+partial class ApplicationState
 {
   public static class ToggleMenu
   {
