@@ -7,7 +7,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
 
   private static readonly LocalizableString Title = "Incorrect partial class declaration";
   private static readonly LocalizableString MessageFormat = "Partial class '{0}' {1}";
-  private static readonly LocalizableString Description = "Partial classes should have one primary declaration in the main file with full specifiers and inheritance, while secondary files should have minimal declaration without inheritance.";
+  private static readonly LocalizableString Description = "Partial classes should have one primary declaration in the main file with full specifiers and inheritance, while secondary files should have minimal declaration without class inheritance.";
   private const string Category = "Design";
 
   private static readonly DiagnosticDescriptor Rule =
@@ -74,35 +74,35 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
     }
   }
 
-  private static void AnalyzePrimaryFile(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol, ClassDeclarationSyntax classSyntax)
+  private static void AnalyzePrimaryFile(SymbolAnalysisContext context, ISymbol symbol, BaseTypeDeclarationSyntax baseTypeDeclarationSyntax)
   {
-    if (HasFullSpecifiers(classSyntax)) return;
-    var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
-      namedTypeSymbol.Name, "should have full specifiers in the primary file");
+    if (HasFullSpecifiers(baseTypeDeclarationSyntax)) return;
+    var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
+      symbol.Name, "should have full specifiers in the primary file");
     context.ReportDiagnostic(diagnostic);
   }
 
-  private static void AnalyzeSecondaryFile(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol, ClassDeclarationSyntax classSyntax)
+  private static void AnalyzeSecondaryFile(SymbolAnalysisContext context, ISymbol symbol, BaseTypeDeclarationSyntax baseTypeDeclarationSyntax)
   {
-    if (HasExcessiveSpecifiers(classSyntax))
+    if (HasExcessiveSpecifiers(baseTypeDeclarationSyntax))
     {
-      var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
-        namedTypeSymbol.Name, "should have minimal specifiers in secondary files");
+      var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
+        symbol.Name, "should have minimal specifiers in secondary files");
       context.ReportDiagnostic(diagnostic);
     }
 
-    if (HasInheritanceOrInterfaces(classSyntax))
+    if (HasClassInheritance(baseTypeDeclarationSyntax))
     {
-      var diagnostic = Diagnostic.Create(Rule, classSyntax.BaseList?.GetLocation() ?? classSyntax.GetLocation(),
-        namedTypeSymbol.Name, "should not include inheritance or interfaces in secondary files");
+      var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.BaseList?.GetLocation() ?? baseTypeDeclarationSyntax.GetLocation(),
+        symbol.Name, "should not include class inheritance in secondary files");
       context.ReportDiagnostic(diagnostic);
     }
   }
 
-  private static void ReportIncorrectFileName(SymbolAnalysisContext context, INamedTypeSymbol namedTypeSymbol, ClassDeclarationSyntax classSyntax, string? fileName)
+  private static void ReportIncorrectFileName(SymbolAnalysisContext context, ISymbol symbol, BaseTypeDeclarationSyntax baseTypeDeclarationSyntax, string? fileName)
   {
-    var diagnostic = Diagnostic.Create(Rule, classSyntax.Identifier.GetLocation(),
-      namedTypeSymbol.Name, $"file name '{fileName}' does not follow the expected naming convention");
+    var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
+      symbol.Name, $"file name '{fileName}' does not follow the expected naming convention");
     context.ReportDiagnostic(diagnostic);
   }
 
@@ -123,6 +123,13 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
   private static bool HasExcessiveSpecifiers(MemberDeclarationSyntax memberDeclarationSyntax) =>
     memberDeclarationSyntax.Modifiers.Any(m => !m.IsKind(SyntaxKind.PartialKeyword));
 
-  private static bool HasInheritanceOrInterfaces(BaseTypeDeclarationSyntax baseTypeDeclarationSyntax) =>
-    baseTypeDeclarationSyntax.BaseList is { Types.Count: > 0 };
+  private static bool HasClassInheritance(BaseTypeDeclarationSyntax baseTypeDeclarationSyntax)
+  {
+    if (baseTypeDeclarationSyntax.BaseList is not { Types.Count: > 0 })
+      return false;
+
+    return baseTypeDeclarationSyntax.BaseList.Types.Any(t =>
+      (t.Type is IdentifierNameSyntax identifierName && !identifierName.Identifier.Text.StartsWith("I")) ||
+      (t.Type is QualifiedNameSyntax qualifiedName && !qualifiedName.Right.Identifier.Text.StartsWith("I")));
+  }
 }
