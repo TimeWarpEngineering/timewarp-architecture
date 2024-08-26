@@ -12,6 +12,7 @@ public class MyBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResp
   private readonly ILogger Logger;
 
   public Guid Guid { get; } = Guid.NewGuid();
+  private string TypeName => GetType().Name;
 
   public MyBehavior
   (
@@ -19,30 +20,30 @@ public class MyBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResp
   )
   {
     Logger = aLogger;
-    Logger.LogDebug($"{GetType().Name}: Constructor");
+    Logger.LogDebug(message: "{GetType().Name}: Constructor",TypeName);
   }
 
   public async Task<TResponse> Handle
   (
-    TRequest aRequest,
-    RequestHandlerDelegate<TResponse> aNext,
-    CancellationToken aCancellationToken
+    TRequest request,
+    RequestHandlerDelegate<TResponse> next,
+    CancellationToken cancellationToken
   )
   {
-    Guard.Against.Null(aNext);
+    Guard.Against.Null(next);
 
-    Logger.LogDebug($"{GetType().Name}: Start");
+    Logger.LogDebug(message: "{typeName}: Start", TypeName);
 
-    Logger.LogDebug($"{GetType().Name}: Call next");
-    TResponse newState = await aNext().ConfigureAwait(false);
-    Logger.LogDebug($"{GetType().Name}: Start Post Processing");
+    Logger.LogDebug(message: "{typeName}: Call next", TypeName);
+    TResponse newState = await next().ConfigureAwait(false);
+    Logger.LogDebug(message: "{typeName}: Start Post Processing",TypeName);
     // Constrain here based on a type or anything you want.
     if (typeof(IState).IsAssignableFrom(typeof(TResponse)))
     {
-      Logger.LogDebug($"{GetType().Name}: Do Constrained Action");
+      Logger.LogDebug(message: "{typeName}: Do Constrained Action", TypeName);
     }
 
-    Logger.LogDebug($"{GetType().Name}: End");
+    Logger.LogDebug(message: "{typeName}: End",TypeName);
     return newState;
   }
 }
