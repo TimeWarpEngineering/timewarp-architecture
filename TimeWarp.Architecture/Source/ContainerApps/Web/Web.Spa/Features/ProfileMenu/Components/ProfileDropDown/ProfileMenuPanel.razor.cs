@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.ProfileMenus.Components;
 
-public partial class ProfileMenuPanel : BaseComponent
+partial class ProfileMenuPanel
 {
   /// <summary>
   ///  Need to render it while opening and closing to visualize the transitions.

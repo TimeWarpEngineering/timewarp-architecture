@@ -3,7 +3,7 @@ namespace TimeWarp.Architecture.Pages;
 using static WeatherForecastsState;
 
 [Page("/WeatherForecasts")]
-public partial class WeatherForecastsPage : BaseComponent
+partial class WeatherForecastsPage
 {
   [Parameter] [SupplyParameterFromQuery] public int? Days { get; set; }
 

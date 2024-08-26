@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.ProfileMenus.Components;
 
-public partial class ProfileDropDown : BaseComponent
+partial class ProfileDropDown
 {
   [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
 

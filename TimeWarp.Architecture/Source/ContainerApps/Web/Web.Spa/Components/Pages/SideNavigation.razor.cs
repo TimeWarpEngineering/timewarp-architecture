@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Components;
 
-public partial class SideNavigation : BaseComponent
+partial class SideNavigation
 {
   [Parameter] public RenderFragment? SideNavigationContent { get; set; }
 }

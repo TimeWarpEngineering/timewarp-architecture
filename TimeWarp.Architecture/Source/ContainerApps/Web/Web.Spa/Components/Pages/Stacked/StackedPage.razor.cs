@@ -1,7 +1,7 @@
 #nullable enable
 namespace TimeWarp.Architecture.Components;
 
-public partial class StackedPage : BaseComponent
+partial class StackedPage
 {
   [Parameter] public RenderFragment? HeaderContent { get; set; }
   [Parameter] public RenderFragment? MainContent { get; set; }

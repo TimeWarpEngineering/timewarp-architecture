@@ -4,7 +4,7 @@ using static ChatState;
 
 [UsedImplicitly]
 [Page("/Chat")]
-public partial class ChatPage
+partial class ChatPage
 {
   private string User { get; set; } = string.Empty;
   private string Message { get; set; } = string.Empty;

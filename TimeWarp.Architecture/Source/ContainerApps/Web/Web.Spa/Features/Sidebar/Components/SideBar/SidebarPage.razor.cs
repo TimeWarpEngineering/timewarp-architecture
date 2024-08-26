@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Sidebars;
 
-public partial class SidebarPage: BaseComponent
+partial class SidebarPage
 {
   [Parameter] public RenderFragment? HeaderContent { get; set; }
   [Parameter] public RenderFragment? MainContent { get; set; }

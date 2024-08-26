@@ -2,9 +2,8 @@ namespace TimeWarp.Architecture.Pages;
 
 using static ApplicationState;
 
-[UsedImplicitly]
 [Page("/Counter")]
-public partial class CounterPage : BaseComponent
+partial class CounterPage
 {
   private async Task ButtonClick() =>
     await NoSubRouteState.ChangeRoute(newRoute: "/", CancellationToken.None);

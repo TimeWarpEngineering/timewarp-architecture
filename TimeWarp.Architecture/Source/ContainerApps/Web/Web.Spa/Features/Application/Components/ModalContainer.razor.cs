@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Components;
 
-public partial class ModalContainer
+partial class ModalContainer
 {
   [CascadingParameter, EditorRequired] private ModalController Parent { get; set; } = default!;
   [Parameter, EditorRequired] public RenderFragment MainContent { get; set; } = default!;

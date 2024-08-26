@@ -1,10 +1,8 @@
 namespace TimeWarp.Architecture.Features.Sidebars;
 
 using CssBuilder = BlazorComponentUtilities.CssBuilder;
-public sealed partial class SidebarMobileMenu : BaseComponent
+partial class SidebarMobileMenu
 {
-
-
   //Off-canvas menu backdrop, show/hide based on off-canvas menu state.
 
   //Entering: "transition-opacity ease-linear duration-300"

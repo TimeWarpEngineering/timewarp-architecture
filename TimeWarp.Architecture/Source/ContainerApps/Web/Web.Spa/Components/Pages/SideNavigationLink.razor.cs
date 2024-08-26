@@ -5,7 +5,7 @@ using CssBuilder = BlazorComponentUtilities.CssBuilder;
 // TODO use TimeWarp Source Gen and attributes once Chandu gets them finished
 //[TwParentComponent]
 //[TwAttributeComponent]
-public partial class SideNavigationLink : ParentComponent
+partial class SideNavigationLink
 {
     private readonly string BaseClasses = ""; // TODO Add Bootstrap classes
 
