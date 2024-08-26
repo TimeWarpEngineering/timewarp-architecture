@@ -10,7 +10,7 @@
 [UsedImplicitly]
 public abstract class BaseApiService : IApiService
 {
-  protected HttpClient HttpClient { get; init; }
+  protected readonly HttpClient HttpClient;
   private readonly JsonSerializerOptions JsonSerializerOptions;
 
   private readonly IAccessTokenProvider AccessTokenProvider;
@@ -37,7 +37,7 @@ public abstract class BaseApiService : IApiService
 
   /// <summary>
   /// This is the Service that is used to interact with the API.Server
-  /// This constructor is provided for testing purposes.
+  /// This constructor is provided for testing purposes only.
   /// </summary>
   /// <param name="httpClient"></param>
   /// <param name="accessTokenProvider"></param>
@@ -76,7 +76,9 @@ public abstract class BaseApiService : IApiService
       {
         return new SharedProblemDetails
         {
-          Title = "No Content", Status = (int)HttpStatusCode.NoContent, Detail = "The response content is empty."
+          Title = "No Content",
+          Status = (int)HttpStatusCode.NoContent,
+          Detail = "The response content is empty."
         };
       }
 
@@ -87,7 +89,8 @@ public abstract class BaseApiService : IApiService
           Stream fileStream = await ReadFileStream(httpResponseMessage, cancellationToken).ConfigureAwait(false);
           var fileResponse = new FileResponse(fileStream: fileStream)
           {
-            FileName = httpResponseMessage.Content.Headers.ContentDisposition?.FileName, ContentType = httpResponseMessage.Content.Headers.ContentType?.MediaType
+            FileName = httpResponseMessage.Content.Headers.ContentDisposition?.FileName,
+            ContentType = httpResponseMessage.Content.Headers.ContentType?.MediaType
           };
           return fileResponse;
         }
@@ -134,10 +137,8 @@ public abstract class BaseApiService : IApiService
       case HttpVerb.Post:
       case HttpVerb.Put:
       case HttpVerb.Patch:
-        {
-          string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType());
-          return new StringContent(requestAsJson, Encoding.UTF8, MediaTypeNames.Application.Json);
-        }
+        string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType());
+        return new StringContent(requestAsJson, Encoding.UTF8, MediaTypeNames.Application.Json);
       case HttpVerb.Get:
       case HttpVerb.Delete:
       case HttpVerb.Head:
