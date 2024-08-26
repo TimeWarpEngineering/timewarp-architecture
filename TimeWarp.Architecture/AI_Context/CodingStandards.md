@@ -1,0 +1,7 @@
+- 2 space indentation
+- indent do NOT align
+- align all brackets in the same column {} <> () [] that are not on the same line
+- explicit type names unless it is obvious from the context
+- file scoped namespaces
+- use PascalCase for class scoped names
+- use camelCase for local scoped names
