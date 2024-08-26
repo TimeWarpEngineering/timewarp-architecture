@@ -41,7 +41,7 @@ internal abstract class BaseAuthApiService : BaseApiService
     if (tokenResult.TryGetToken(out AccessToken? token))
     {
       HttpClient.DefaultRequestHeaders.Authorization =
-        new AuthenticationHeaderValue("Bearer", token.Value);
+        new AuthenticationHeaderValue(scheme: "Bearer", token.Value);
     }
   }
 }
