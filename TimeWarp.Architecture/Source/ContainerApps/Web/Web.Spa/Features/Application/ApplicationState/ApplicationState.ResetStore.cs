@@ -4,17 +4,11 @@ partial class ApplicationState
 {
   public static class ResetStore
   {
+    internal class Action : IBaseAction;
 
-    internal class Action : IBaseAction {}
-
-    [UsedImplicitly]
     internal class Handler : BaseHandler<Action>
     {
-      private readonly ISender Sender;
-      public Handler(IStore store, ISender sender) : base(store)
-      {
-        Sender = sender;
-      }
+      public Handler(IStore store) : base(store) {}
       public override async Task Handle(Action action, CancellationToken cancellationToken)
       {
         Store.Reset();
