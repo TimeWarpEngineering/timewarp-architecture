@@ -10,7 +10,7 @@ namespace TimeWarp.Architecture.Features;
 /// But would be required to properly implement the required interfaces.
 /// one could conditionally inherit from BaseComponent for production build.
 /// </remarks>
-public abstract partial class BaseComponent : TimeWarpStateDevToolsComponent, IAttributeComponent
+public abstract partial class BaseComponent : TimeWarpStateDevComponent, IAttributeComponent
 {
   [Parameter]
   public string? Class { get; set; }
