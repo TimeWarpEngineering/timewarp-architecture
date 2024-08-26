@@ -29,16 +29,16 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
 
   public async Task<TResponse> Handle
   (
-    TRequest aRequest,
-    RequestHandlerDelegate<TResponse> aNext,
-    CancellationToken aCancellationToken
+    TRequest request,
+    RequestHandlerDelegate<TResponse> next,
+    CancellationToken cancellationToken
   )
   {
-    Guard.Against.Null(aNext);
+    Guard.Against.Null(next);
 
-    await AddEventToStream(aRequest, "Start").ConfigureAwait(false);
-    TResponse newState = await aNext().ConfigureAwait(false);
-    await AddEventToStream(aRequest, "Completed").ConfigureAwait(false);
+    await AddEventToStream(request, aTag: "Start").ConfigureAwait(false);
+    TResponse newState = await next().ConfigureAwait(false);
+    await AddEventToStream(request, aTag: "Completed").ConfigureAwait(false);
     return newState;
   }
 
