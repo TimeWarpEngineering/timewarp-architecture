@@ -3,6 +3,7 @@ global using TimeWarp.State;
 global using Blazored.LocalStorage;
 global using Blazored.SessionStorage;
 global using FluentValidation;
+global using FluentValidation.Results;
 global using Grpc.Net.Client.Web;
 global using Grpc.Net.Client;
 global using JetBrains.Annotations;
@@ -48,6 +49,7 @@ global using System.Text.Json;
 global using System.Text.RegularExpressions;
 global using System.Threading;
 global using System.Threading.Tasks;
+global using TimeWarp.Architecture;
 
 // Solution usings
 global using TimeWarp.Architecture.Components;
@@ -71,6 +73,7 @@ global using TimeWarp.Architecture.Types;
 global using TimeWarp.Features.ActionTracking;
 global using TimeWarp.Features.StateTransactions;
 global using TimeWarp.State.Extensions;
+global using TimeWarp.State.Plus.State;
 global using static TimeWarp.Architecture.AuthorizationConstants;
 
 
