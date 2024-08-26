@@ -1,35 +1,38 @@
 namespace TimeWarp.Architecture.Features.Authorization;
 using static GetCurrentUser;
 
-internal partial class AuthorizationState
+partial class AuthorizationState
 {
-  public static class FetchCurrentUser
+  internal static class FetchCurrentUserActionSet
   {
     [TrackAction]
-    public sealed class Action : IBaseAction;
+    internal sealed class Action : IBaseAction;
 
-    public sealed class Handler : DefaultApiHandler<Action,Query, Response>
+    internal sealed class Handler : DefaultApiHandler<Action, Query, Response>
     {
+      private string? CacheKey { get; set; }
       public Handler
       (
         IStore store,
         IWebServerApiService webServerApiService,
-        ISender sender
-      ) : base(store, webServerApiService, sender) {}
+        ISender sender,
+        ILogger<Handler> logger
+      ) : base(store, webServerApiService, sender, logger) {}
 
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {
-        // Some logic to determine if the request should be skipped (use current state/cache)
+        CacheKey = GenerateCacheKey(action);
 
         // return UseCache
-        return AuthorizationState.RolesList == null
-          ? Task.FromResult<Query?>(new Query())
-          : Task.FromResult<Query?>(null);
+        return AuthorizationState.IsCacheValid(CacheKey)
+          ? Task.FromResult<Query?>(null)
+          : Task.FromResult<Query?>(new Query());
       }
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         AuthorizationState.ModulesList = response.Modules;
         AuthorizationState.RolesList = response.Roles;
+        AuthorizationState.UpdateCacheKey(CacheKey!);
         return Task.CompletedTask;
       }
     }
