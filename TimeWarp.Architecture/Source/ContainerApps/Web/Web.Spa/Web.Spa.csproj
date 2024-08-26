@@ -48,6 +48,7 @@
 
   <ItemGroup>
     <!--#if(api)-->
+    <ProjectReference Include="..\..\..\Analyzers\TimeWarp.Architecture.Analyzers\TimeWarp.Architecture.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj"/>
     <!--#endif-->
     <!--#if(grpc)-->
@@ -65,12 +66,6 @@
     <!--<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />-->
     <Folder Include="Components\Editors\"/>
     <Folder Include="Features\Admin\" />
-    <Folder Include="Features\CurrentUser\" />
-    <Folder Include="Features\Modal\Actions\"/>
-    <Folder Include="Features\Notification\Actions\RemoveNotification\"/>
-    <Folder Include="Features\Notification\Components\"/>
-    <Folder Include="Features\ToDo\Actions"/>
-    <Folder Include="Generated\net8.0\Morris.Moxy\Morris.Moxy.RoslynIncrementalGenerator\"/>
   </ItemGroup>
 
   <ItemGroup>
