@@ -87,6 +87,11 @@ public class Program : IAspNetProgram
 
     serviceCollection.AddCascadingAuthenticationState();
     serviceCollection.AddAuthorization();
+    // TODO: Review the options for this seesm like could just pass whole config???
+    serviceCollection.AddPasswordlessSdk(options =>
+    {
+      options.ApiSecret = configuration["Passwordless:ApiSecret"] ?? throw new InvalidOperationException();
+    });
     ConfigureAuthentication(serviceCollection, configuration);
 
 
