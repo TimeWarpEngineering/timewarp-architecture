@@ -1,0 +1,83 @@
+@inject IJSRuntime JsRuntime
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+@code {
+  private string ErrorMessage = string.Empty;
+
+  private async Task RegisterWithPasskey()
+  {
+    try
+    {
+      RegisterResult? result = await JsRuntime.InvokeAsync<RegisterResult>(identifier: "passwordless.register");
+
+      if (result?.Error is not null)
+      {
+        ErrorMessage = $"Passkey registration failed: {result.Error}";
+      }
+      else if (result?.UserId is not null)
+      {
+        await SendRegistrationRequest(result.UserId);
+      }
+      else
+      {
+        ErrorMessage = "Passkey registration failed. Please try again.";
+      }
+    }
+    catch (Exception ex)
+    {
+      ErrorMessage = $"An error occurred during passkey registration: {ex.Message}";
+    }
+  }
+
+  private async Task SendRegistrationRequest(string userId)
+  {
+    try
+    {
+      HttpResponseMessage response =
+        await HttpClient.PostAsJsonAsync
+        (
+          requestUri: "api/account/register", new RegisterRequest
+          {
+            UserId = userId
+          }
+        );
+
+      if (response.IsSuccessStatusCode)
+      {
+        NavigationManager.NavigateToLogin("/login");
+      }
+      else
+      {
+        ErrorMessage = "User registration failed. Please try again.";
+      }
+    }
+    catch (Exception ex)
+    {
+      ErrorMessage = $"An error occurred during user registration: {ex.Message}";
+    }
+  }
+
+  private class RegisterResult
+  {
+    public string? UserId { get; set; }
+    public string? Error { get; set; }
+  }
+
+  private class RegisterRequest
+  {
+    public string UserId { get; set; } = null!;
+  }
+
+}
+
+<h1>Register with Passkey</h1>
+
+<button class="btn btn-primary" @onclick="RegisterWithPasskey">
+  Register with Passkey
+</button>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+  <div class="alert alert-danger mt-3">@ErrorMessage</div>
+}
