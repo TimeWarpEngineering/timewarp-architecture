@@ -5,8 +5,7 @@ using Services;
 
 public static partial class GetCurrentUser
 {
-  [UsedImplicitly]
-  [RouteMixin("api/GetCurrentUser", HttpVerb.Get)]
+  [RouteMixin(RouteTemplate: "api/GetCurrentUser", HttpVerb.Get)]
   public sealed partial class Query : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
@@ -21,23 +20,28 @@ public static partial class GetCurrentUser
   }
 
   public sealed class Response
-  (
-    List<Guid> modules,
-    List<Guid> roles
-  )
   {
+    public Response
+    (
+      List<Guid> modules,
+      List<Guid> roles
+    )
+    {
+      Modules = modules;
+      Roles = roles;
+    }
     /// <summary>
     /// List of Module Ids the current user has access to.
     /// </summary>
     /// <remarks> Should be from the ModuleIds</remarks>
-    public List<Guid> Modules { get; init; } = modules;
+    public List<Guid> Modules { get; init; }
 
 
     /// <summary>
     /// List of Roles to which the current user belongs
     /// </summary>
     /// <remarks>Should be from RoleIds</remarks>
-    public List<Guid> Roles { get; init; } = roles;
+    public List<Guid> Roles { get; init; }
   }
 
   private static readonly List<Guid> AllModules =
