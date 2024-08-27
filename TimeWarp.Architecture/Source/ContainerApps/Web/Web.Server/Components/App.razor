@@ -40,6 +40,13 @@
 <!--#if B2C -->
 <script src="_content/Microsoft.Authentication.WebAssembly.Msal/AuthenticationService.js"></script>
 <!--#endif -->
+
+@* TODO: Review Passwordless and make it conditional liks MSAL above *@
+<script type="module">
+import { Client } from "https://cdn.passwordless.dev/dist/1.1.0/esm/passwordless.min.mjs"
+window.passwordless = new Client({ apiKey: "timewarp:public:b00cdd667db547de90debf2808340c42" });
+</script>
+
 <script src="_framework/blazor.web.js"></script>
 <script src="js/downloadFile.js"></script>
 
