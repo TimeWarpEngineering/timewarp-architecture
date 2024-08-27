@@ -90,6 +90,7 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.9.0" />
+    <PackageVersion Include="Passwordless" Version="2.0.0" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.1.1" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.1.1" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.1.1" />
