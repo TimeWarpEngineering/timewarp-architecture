@@ -46,6 +46,7 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
     <PackageReference Include="Microsoft.Extensions.Options"/>
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
+    <PackageReference Include="Passwordless" />
     <PackageReference Include="protobuf-net.Grpc"/>
     <PackageReference Include="System.ServiceModel.Primitives"/>
   </ItemGroup>
@@ -65,6 +66,10 @@
     <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\IAuthApiRequestMixin.mixin">
       <Link>Mixins\IAuthApiRequestMixin.mixin</Link>
     </AdditionalFiles>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Auth\Commands\" />
   </ItemGroup>
 
 </Project>
