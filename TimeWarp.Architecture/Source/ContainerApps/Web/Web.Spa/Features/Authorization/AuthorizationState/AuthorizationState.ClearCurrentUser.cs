@@ -2,15 +2,13 @@ namespace TimeWarp.Architecture.Features.Authorization;
 
 partial class AuthorizationState
 {
-  public static class ClearCurrentUser
+  internal static class ClearCurrentUserActionSet
   {
-    public sealed class Action : IBaseAction;
+    internal sealed class Action : IBaseAction;
 
-    internal class Handler
-    (
-      IStore store
-    ) : BaseHandler<Action>(store)
+    internal sealed class Handler : BaseHandler<Action>
     {
+      public Handler(IStore store) : base(store) {}
       public override Task Handle(Action action, CancellationToken cancellationToken)
       {
         AuthorizationState.Initialize();
