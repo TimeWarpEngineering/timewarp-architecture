@@ -22,13 +22,15 @@ partial class ChatPage
   {
     if (!string.IsNullOrEmpty(User) && !string.IsNullOrEmpty(Message) && ChatHubConnection.IsConnected)
     {
-      var sendMessageAction =
-        new ClientToServerMessage.Action
-        (
-          new SendMessage.Command { User = User, Message = Message}
-        );
+      await ChatState.SendMessageToServer
+      (
+        new SendMessage.Command
+        {
+          User = User,
+          Message = Message
+        }
+      );
 
-      await Send(sendMessageAction);
       Message = string.Empty;
     }
   }

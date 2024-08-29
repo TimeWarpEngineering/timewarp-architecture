@@ -63,5 +63,5 @@
     return Task.CompletedTask;
   }
 
-  private Task CloseModal() => Send(new ApplicationState.CloseModal.Action());
+  private async Task CloseModal() => await ApplicationState.CloseModal();
 }

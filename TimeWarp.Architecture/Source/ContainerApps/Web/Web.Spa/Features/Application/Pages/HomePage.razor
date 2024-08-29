@@ -14,7 +14,7 @@
     await ApplicationState.TwoSecondTask(CancellationToken.None);
 
   private async Task ModalButtonClick() =>
-    await Send(new ApplicationState.SetActiveModal.Action(ModalId: AssemblyInfoModal.ModalId));
+    await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
 
   protected override void OnInitialized()
   {

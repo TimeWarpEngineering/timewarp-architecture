@@ -2,11 +2,15 @@
 
 partial class ApplicationState
 {
-  public static class SetActiveModal
+  public static class SetActiveModalActionSet
   {
-    internal class Action(string ModalId) : IBaseAction
+    internal class Action : IBaseAction
     {
-      public string ModalId { get; set; } = ModalId;
+      public string ModalId { get; }
+      public Action(string modalId)
+      {
+        ModalId = modalId;
+      }
     }
 
     [UsedImplicitly]

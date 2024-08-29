@@ -8,7 +8,7 @@ partial class ModalContainer
   [Parameter, EditorRequired] public string ModalId { get; set; } = default!;
   [Parameter] public EventCallback OnActivate { get; set; }
   private bool IsActive => Parent.ActiveModalId == ModalId;
-  private Task CloseModal() => Send(new ApplicationState.CloseModal.Action());
+  private Task CloseModal() => ApplicationState.CloseModal();
 
   protected override void OnInitialized()
   {

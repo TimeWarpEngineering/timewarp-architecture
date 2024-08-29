@@ -3,7 +3,7 @@
 partial class ApplicationState
 {
   [UsedImplicitly]
-  public static class CloseModal
+  public static class CloseModalActionSet
   {
     [UsedImplicitly]
     internal class Action() : IBaseAction;

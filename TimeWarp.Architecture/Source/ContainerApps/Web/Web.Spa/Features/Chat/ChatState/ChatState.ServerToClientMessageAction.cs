@@ -1,21 +1,20 @@
 ﻿namespace TimeWarp.Architecture.Features.Chat;
 
+using static ReceiveMessage;
 partial class ChatState
 {
   public static class ServerToClientMessage
   {
     [TrackAction]
-    public class Action(ReceiveMessage.Command Command) : IBaseAction
+    public class Action(Command Command) : IBaseAction
     {
-      public ReceiveMessage.Command Command { get; set; } = Command;
+      public Command Command { get; set; } = Command;
     }
 
-    [UsedImplicitly]
-    internal sealed class Handler
-    (
-      IStore store
-    ) : BaseHandler<Action>(store)
+    internal sealed class Handler : BaseHandler<Action>
     {
+      public Handler(IStore store) : base(store) {}
+
       public override Task Handle(Action action, CancellationToken cancellationToken)
       {
         ChatState.ChatMessageList ??= [];

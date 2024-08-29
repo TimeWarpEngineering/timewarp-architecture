@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.Applications;
 
 partial class ApplicationState
 {
-  public static class ResetStore
+  public static class ResetStoreActionSet
   {
     internal class Action : IBaseAction;
 

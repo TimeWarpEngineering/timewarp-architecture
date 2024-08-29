@@ -6,7 +6,7 @@ using static ApplicationState;
 partial class CounterPage
 {
   private async Task ButtonClick() =>
-    await NoSubRouteState.ChangeRoute(newRoute: "/", CancellationToken.None);
+    await NoSubRouteState.ChangeRoute(newRoute: HomePage.GetPageUrl(), CancellationToken.None);
 
-  private async Task ResetButtonClick() => await Send(new ResetStore.Action()).ConfigureAwait(false);
+  private async Task ResetButtonClick() => await ApplicationState.ResetStore();
 }
