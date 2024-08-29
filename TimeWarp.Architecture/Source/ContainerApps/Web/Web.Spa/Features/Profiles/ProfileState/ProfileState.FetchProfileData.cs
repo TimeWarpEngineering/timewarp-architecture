@@ -15,12 +15,12 @@ partial class ProfileState
       public Handler
       (
         IStore store,
-        IApiService apiService,
+        IWebServerApiService webServerApiService,
         ISender sender,
         ILogger<Handler> logger,
         IValidator<Query>? validator = null,
         AuthenticationStateProvider? authenticationStateProvider = null
-      ) : base(store, apiService, sender, logger, validator, authenticationStateProvider) {}
+      ) : base(store, webServerApiService, sender, logger, validator, authenticationStateProvider) {}
 
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {
