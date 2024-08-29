@@ -54,6 +54,7 @@ global using TimeWarp.Architecture;
 // Solution usings
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
+global using TimeWarp.Architecture.Configuration.Passwordless;
 global using TimeWarp.Architecture.Extensions;
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Architecture.Features.Admin.Roles;
