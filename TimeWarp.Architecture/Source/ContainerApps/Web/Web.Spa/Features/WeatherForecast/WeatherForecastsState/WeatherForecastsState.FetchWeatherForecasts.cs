@@ -17,10 +17,10 @@ partial class WeatherForecastsState
     internal class Handler
     (
       IStore store,
-      IApiServerApiService webServerApiServerWebServerApiService,
+      IApiServerApiService apiServerApiService,
       ISender sender,
       ILogger<Handler> logger
-    ) : DefaultApiHandler<Action,Query,Response>(store, webServerApiServerWebServerApiService, sender, logger)
+    ) : DefaultApiHandler<Action,Query,Response>(store, apiServerApiService, sender, logger)
     {
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {
