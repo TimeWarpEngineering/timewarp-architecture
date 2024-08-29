@@ -53,6 +53,6 @@ partial class SidebarMobileMenu
 
   private async Task CloseSideBar()
   {
-    await Send(new SidebarState.CloseSideBar.Action());
+    await SidebarState.CloseSideBar();
   }
 }
