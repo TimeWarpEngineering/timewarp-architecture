@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.Sidebars;
 
 partial class SidebarState
 {
-  public static class CloseSideBar
+  public static class CloseSideBarActionSet
   {
     internal class Action : IBaseAction { }
 

@@ -1,7 +1,7 @@
 ﻿namespace TimeWarp.Architecture.Features.Sidebars;
 
 [StateAccessMixin]
-internal sealed partial class SidebarState: State<SidebarState>
+public sealed partial class SidebarState: State<SidebarState>
 {
   public bool IsOpen { get; private set; }
 
