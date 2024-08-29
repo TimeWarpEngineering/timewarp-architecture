@@ -2,14 +2,17 @@ namespace TimeWarp.Architecture.Features.Counters;
 
 partial class CounterState
 {
-  public static class IncrementCounter
+  public static class IncrementCounterActionSet
   {
-    public class Action(int Amount) : IBaseAction
+    public class Action : IBaseAction
     {
-      public int Amount { get; set; } = Amount;
+      public int Amount { get; }
+      public Action(int amount)
+      {
+        Amount = amount;
+      }
     }
 
-    [UsedImplicitly]
     internal class Handler
     (
       IStore store
