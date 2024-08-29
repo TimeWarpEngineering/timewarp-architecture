@@ -1,0 +1,34 @@
+@inherits BaseComponent
+@using TimeWarp.Architecture.Features.Profiles
+@code
+{
+  [CascadingParameter] public SitePage SitePage { get; set; } = null!;
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+    Guard.Against.Null(SitePage, nameof(SitePage));
+  }
+}
+
+<FluentHeader Class=@Id Height=@(null) >
+  <FluentStack VerticalAlignment=VerticalAlignment.Center>
+    <FluentSpacer />
+    <Profile />
+  </FluentStack>
+</FluentHeader>
+
+<style>
+  @($@"
+    .{Id}.header {{
+      background-color: var(--neutral-layer-1);
+      height: var(--header-height);
+    }}
+
+    #Copic_Logo {{
+      height: 60px;
+      width: auto;
+    }}
+
+  ")
+</style>

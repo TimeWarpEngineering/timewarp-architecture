@@ -14,8 +14,8 @@
     <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Chat</FluentNavLink>
   </FluentNavGroup>
   <FluentNavGroup Title="Developer">
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Example TimeWarpPage</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Example SitePage</FluentNavLink>
+    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@ExampleTimeWarpPage.GetPageUrl() Match=NavLinkMatch.All>Example TimeWarpPage</FluentNavLink>
+    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@ExampleSitePage.GetPageUrl() Match=NavLinkMatch.All>Example SitePage</FluentNavLink>
     <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>TestPage</FluentNavLink>
     <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Event Stream</FluentNavLink>
     <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Services</FluentNavLink>
@@ -33,6 +33,7 @@
   </FluentNavGroup>
   <FluentNavLink Icon=@(new Icons.Regular.Size20.Settings()) Href="/" Match=NavLinkMatch.All>Settings</FluentNavLink>
 </FluentNavMenu>
+
 <style>
   @($@"
     .{Id} {{
