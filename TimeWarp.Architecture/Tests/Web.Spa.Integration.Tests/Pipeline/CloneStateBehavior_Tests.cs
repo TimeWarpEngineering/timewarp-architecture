@@ -17,7 +17,7 @@ public class Should : BaseTest
     CounterState.Initialize(aCount: 15);
     Guid preActionGuid = CounterState.Guid;
 
-    var action = new IncrementCounter.Action(Amount: -2);
+    var action = new IncrementCounterActionSet.Action(amount: -2);
 
     //Act
     await Send(action);

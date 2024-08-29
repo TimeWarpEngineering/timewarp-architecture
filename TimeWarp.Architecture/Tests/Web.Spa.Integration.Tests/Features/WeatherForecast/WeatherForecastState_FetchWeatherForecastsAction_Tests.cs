@@ -13,7 +13,7 @@ public class FetchWeatherForecasts_Action_Should : BaseTest
 
   public async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()
   {
-    var fetchWeatherForecastsRequest = new FetchWeatherForecasts.Action(5);
+    var fetchWeatherForecastsRequest = new FetchWeatherForecastsActionSet.Action(5);
 
     await Send(fetchWeatherForecastsRequest);
 
