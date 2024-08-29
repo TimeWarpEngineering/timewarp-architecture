@@ -3,7 +3,7 @@ namespace TimeWarp.Architecture.Features.Counters;
 using static CounterState;
 
 internal class IncrementCountNotificationHandler
-  : INotificationHandler<PostPipelineNotification<IncrementCounter.Action, Unit>>
+  : INotificationHandler<PostPipelineNotification<IncrementCounterActionSet.Action, Unit>>
 {
   private readonly ILogger Logger;
 
@@ -14,7 +14,7 @@ internal class IncrementCountNotificationHandler
 
   public Task Handle
   (
-    PostPipelineNotification<IncrementCounter.Action, Unit> postPipelineNotification,
+    PostPipelineNotification<IncrementCounterActionSet.Action, Unit> postPipelineNotification,
     CancellationToken cancellationToken
   )
   {
