@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.ProfileMenus;
 
 partial class ProfileMenuState
 {
-  public static class Toggle
+  public static class ToggleActionSet
   {
     internal class Action : IBaseAction { }
 

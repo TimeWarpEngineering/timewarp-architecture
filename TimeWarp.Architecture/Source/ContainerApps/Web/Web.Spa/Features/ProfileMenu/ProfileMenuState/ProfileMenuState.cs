@@ -1,7 +1,7 @@
 ﻿namespace TimeWarp.Architecture.Features.ProfileMenus;
 
 [StateAccessMixin]
-internal sealed partial class ProfileMenuState : State<ProfileMenuState>
+public sealed partial class ProfileMenuState : State<ProfileMenuState>
 {
 
   public enum MenuStates
