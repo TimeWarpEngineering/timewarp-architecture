@@ -5,5 +5,5 @@ using static TimeWarp.Architecture.Features.Superheros.SuperheroState;
 [Page("/Superheros")]
 partial class SuperheroPage
 {
-  protected override async Task OnInitializedAsync() => await Send(new FetchSuperhero.Action());
+  protected override async Task OnInitializedAsync() => await SuperheroState.FetchSuperhero();
 }

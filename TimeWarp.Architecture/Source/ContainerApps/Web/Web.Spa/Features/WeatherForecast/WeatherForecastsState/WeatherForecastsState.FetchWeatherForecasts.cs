@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 using static GetWeatherForecasts;
 partial class WeatherForecastsState
 {
-  public static class FetchWeatherForecasts
+  public static class FetchWeatherForecastsActionSet
   {
     [TrackAction]
     internal sealed class Action : IBaseAction
@@ -17,10 +17,10 @@ partial class WeatherForecastsState
     internal class Handler
     (
       IStore store,
-      IApiServerApiService apiServerApiService,
+      IApiServerApiService webServerApiServerWebServerApiService,
       ISender sender,
       ILogger<Handler> logger
-    ) : DefaultApiHandler<Action,Query,Response>(store, apiServerApiService, sender, logger)
+    ) : DefaultApiHandler<Action,Query,Response>(store, webServerApiServerWebServerApiService, sender, logger)
     {
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {

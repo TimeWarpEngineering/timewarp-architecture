@@ -2,23 +2,27 @@
 
 partial class SuperheroState
 {
-  public static class FetchSuperhero
+  public static class FetchSuperheroActionSet
   {
     public sealed class Action : IBaseAction { }
 
-    [UsedImplicitly]
-    internal sealed class Handler
-    (
-      IStore store,
-      SuperheroGrpcServiceProvider superheroGrpcServiceProvider
-    ) : BaseHandler<Action>(store)
+    internal sealed class Handler : BaseHandler<Action>
     {
+      private readonly SuperheroGrpcServiceProvider SuperheroGrpcServiceProvider;
+      public Handler
+      (
+        IStore store,
+        SuperheroGrpcServiceProvider superheroGrpcServiceProvider
+      ) : base(store)
+      {
+        SuperheroGrpcServiceProvider = superheroGrpcServiceProvider;
+      }
       public override async Task Handle(Action action, CancellationToken cancellationToken)
       {
         SuperheroState.SuperheroList.Clear();
         var getSuperheroRequest = new SuperheroRequest { NumberOfHeros = 5 };
 
-        ISuperheroService superheroService = await superheroGrpcServiceProvider.GetGrpcServiceAsync(cancellationToken);
+        ISuperheroService superheroService = await SuperheroGrpcServiceProvider.GetGrpcServiceAsync(cancellationToken);
 
         SuperheroResponse getSuperheroResponse =
           await superheroService.GetSuperheroAsync(getSuperheroRequest);
