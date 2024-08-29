@@ -96,6 +96,7 @@ public class Program
     // );
 
     serviceCollection.AddScoped<ChatHubConnection>();
+    serviceCollection.AddScoped<PasswordlessService>();
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
 
@@ -140,12 +141,13 @@ public class Program
     serviceCollection.AddSingleton(serviceCollection);
   }
 
-  private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    aServiceCollection
-      // .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(aConfiguration)
-      .ConfigureOptions<BlazorSettings, BlazorSettingsValidator>(aConfiguration);
+    serviceCollection
+      // .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(configuration)
+      .ConfigureOptions<BlazorSettings, BlazorSettingsValidator>(configuration)
+      .ConfigureOptions<PasswordlessOptions, PasswordlessOptionsValidator>(configuration);
 
-    //aServiceCollection.ValidateOptions();
+    //serviceCollection.ValidateOptions();
   }
 }

@@ -37,7 +37,6 @@
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
     <PackageReference Include="Morris.Blazor.FluentValidation"/>
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
-    <PackageReference Include="Passwordless" />
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all"/>
     <PackageReference Include="TimeWarp.State" />
     <PackageReference Include="TimeWarp.State.Plus"/>
@@ -85,8 +84,15 @@
 
   <ItemGroup>
     <AdditionalFiles Include="Features\Account\Pages\LoginPage\RegisterPasskey.razor" />
+    <AdditionalFiles Include="Features\Authentication\AuthenticationStateListener.razor" />
     <AdditionalFiles Include="Features\Base\StateAccessMixin.mixin"/>
     <AdditionalFiles Include="Mixins\Page.mixin"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Features\ProfileMenu\Components\ProfileDropDown\ProfileDropDown.razor" />
+    <_ContentIncludedByDefault Remove="Features\ProfileMenu\Components\ProfileDropDown\ProfileMenuNavLink.razor" />
+    <_ContentIncludedByDefault Remove="Features\ProfileMenu\Components\ProfileDropDown\ProfileMenuPanel.razor" />
   </ItemGroup>
 
   <!-- Target to copy scoped CSS to a more accessible location -->
