@@ -1,12 +1,0 @@
-﻿@namespace TimeWarp.Architecture.Features.ProfileMenus.Components
-@inherits BaseComponent
-<!-- Profile dropdown -->
-<div class="relative ml-3">
-  <div>
-    <ProfileButton @onclick=OnClickHandler />
-  </div>
-  @if (RenderMenuPanel)
-  {
-    <ProfileMenuPanel Id=@nameof(ProfileMenuPanel) class=@CssBuilder />       }
-</div>
-
