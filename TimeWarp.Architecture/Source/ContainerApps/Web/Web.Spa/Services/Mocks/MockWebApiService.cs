@@ -24,7 +24,8 @@ public class MockWebApiService : IWebServerApiService
     { typeof(GetRoles.Query),GetRoles.GetMockResponseFactory },
     { typeof(GetRole.Query), GetRole.GetMockResponseFactory },
     { typeof(UpdateRole.Command), UpdateRole.GetMockResponseFactory},
-    { typeof(DeleteRole.Command), DeleteRole.GetMockResponseFactory}
+    { typeof(DeleteRole.Command), DeleteRole.GetMockResponseFactory},
+    { typeof(GetProfile.Query), GetProfile.GetMockResponseFactory }
 
     // Add other mappings here
   };
@@ -42,14 +43,14 @@ public class MockWebApiService : IWebServerApiService
     // If no mock factory is found, fall back to the real API service
     if (!Factories.TryGetValue(requestType, out Delegate? factory))
     {
-      Logger.LogDebug("No mock response factory found for {requestType}. Falling back to real API service.", requestType.FullName);
+      Logger.LogDebug(message: "No mock response factory found for {requestType}. Falling back to real API service.", requestType.FullName);
       return await ApiService.GetResponse<TResponse>(request, cancellationToken);
     }
 
     try
     {
-      await Task.Delay(100, cancellationToken); // Simulate async work
-      Logger.LogDebug("Mock Api Call, Request type: {requestType} Url:{url}",requestType.FullName,request.GetRoute() );
+      await Task.Delay(millisecondsDelay: 100, cancellationToken); // Simulate async work
+      Logger.LogDebug(message: "Mock Api Call, Request type: {requestType} Url:{url}",requestType.FullName,request.GetRoute() );
 
       switch (factory)
       {
