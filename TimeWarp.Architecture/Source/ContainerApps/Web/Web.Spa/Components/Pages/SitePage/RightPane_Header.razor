@@ -1,19 +1,19 @@
 @inherits BaseComponent
 @using TimeWarp.Architecture.Features.Profiles
-@code
-{
-  [CascadingParameter] public SitePage SitePage { get; set; } = null!;
-
-  protected override void OnParametersSet()
-  {
-    base.OnParametersSet();
-    Guard.Against.Null(SitePage, nameof(SitePage));
-  }
-}
+@using TimeWarp.Features.Theme
 
 <FluentHeader Class=@Id Height=@(null) >
-  <FluentStack VerticalAlignment=VerticalAlignment.Center>
+  <FluentStack Orientation=Orientation.Horizontal VerticalAlignment=VerticalAlignment.Center>
+    <FluentTextField
+      Placeholder="Search">
+      <span class="search-end" slot="end">
+        Ctrl-K
+      </span>
+    </FluentTextField>
     <FluentSpacer />
+    <FluentButton Appearance=Appearance.Stealth OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark)) >
+      <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color=Color.Neutral />
+    </FluentButton>
     <Profile />
   </FluentStack>
 </FluentHeader>
@@ -21,13 +21,19 @@
 <style>
   @($@"
     .{Id}.header {{
-      background-color: var(--neutral-layer-1);
       height: var(--header-height);
     }}
 
-    #Copic_Logo {{
-      height: 60px;
+    .{Id} fluent-text-field {{
+      width: 50%
+    }}
+
+    .{Id} .search-end {{
+      text-align: right;
+      display: inline-block;
+      white-space: nowrap;
       width: auto;
+      min-width: fit-content;
     }}
 
   ")
