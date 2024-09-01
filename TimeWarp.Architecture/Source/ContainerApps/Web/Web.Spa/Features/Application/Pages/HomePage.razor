@@ -6,7 +6,7 @@
 @inject ILogger<HomePage> Logger
 @code
 {
-  private bool ShowOld = true;
+  private readonly bool ShowOld = false;
   private async Task FiveSecondTaskButtonClick() =>
     await ApplicationState.FiveSecondTask(CancellationToken.None);
 
