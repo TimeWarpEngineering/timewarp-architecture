@@ -20,12 +20,12 @@ public class MockWebApiService : IWebServerApiService
   private readonly Dictionary<Type, Delegate> Factories = new()
   {
     // Comment out those where you want to use the real API service
-    { typeof(GetCurrentUser.Query), GetCurrentUser.GetMockResponseFactory },
-    { typeof(GetRoles.Query),GetRoles.GetMockResponseFactory },
-    { typeof(GetRole.Query), GetRole.GetMockResponseFactory },
-    { typeof(UpdateRole.Command), UpdateRole.GetMockResponseFactory},
-    { typeof(DeleteRole.Command), DeleteRole.GetMockResponseFactory},
-    { typeof(GetProfile.Query), GetProfile.GetMockResponseFactory }
+    { typeof(GetCurrentUser.Query), GetCurrentUser.GetMockResponseFactory() },
+    { typeof(GetRoles.Query),GetRoles.GetMockResponseFactory() },
+    { typeof(GetRole.Query), GetRole.GetMockResponseFactory() },
+    { typeof(UpdateRole.Command), UpdateRole.GetMockResponseFactory()},
+    { typeof(DeleteRole.Command), DeleteRole.GetMockResponseFactory()},
+    { typeof(GetProfile.Query), GetProfile.GetMockResponseFactory() }
 
     // Add other mappings here
   };
@@ -36,7 +36,6 @@ public class MockWebApiService : IWebServerApiService
     CancellationToken cancellationToken
   ) where TResponse : class
   {
-
     Type requestType = request.GetType();
 
     ValidateRequest(request, ServiceProvider);
@@ -50,32 +49,21 @@ public class MockWebApiService : IWebServerApiService
     try
     {
       await Task.Delay(millisecondsDelay: 100, cancellationToken); // Simulate async work
-      Logger.LogDebug(message: "Mock Api Call, Request type: {requestType} Url:{url}",requestType.FullName,request.GetRoute() );
+      Logger.LogDebug(message: "Mock Api Call, Request type: {requestType} Url:{url}", requestType.FullName, request.GetRoute());
 
-      switch (factory)
+      // Invoke the MockResponseFactory
+      if (factory is MockResponseFactory<TResponse> mockResponseFactory)
       {
-        case Func<IApiRequest, TResponse> typedFactory:
-          {
-            TResponse response = typedFactory(request);
-            return response;
-          }
-        case Func<IApiRequest, FileResponse> fileFactory:
-          {
-            FileResponse response = fileFactory(request);
-            return response;
-          }
-        default:
-          throw new NotImplementedException();
+        TResponse response = mockResponseFactory(request);
+        return response;
       }
+      throw new InvalidOperationException($"Factory for {requestType} is not a MockResponseFactory<{typeof(TResponse)}>");
     }
-    catch (OperationCanceledException)
+    catch (Exception ex)
     {
-      return new SharedProblemDetails
-      {
-        Title = "Operation Cancelled",
-        Status = 499, // 499 is the code for "Client Closed Request"
-        Detail = "The request was cancelled.",
-      };
+      // Log the exception for debugging purposes
+      Logger.LogError(ex, message: "Error occurred while invoking mock factory for {RequestType}", requestType);
+      throw;
     }
   }
 
