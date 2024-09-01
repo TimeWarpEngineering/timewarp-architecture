@@ -10,7 +10,7 @@ public class HelloEndpoint : BaseEndpoint<Query, Response>
   /// <param name="query"></param>
   /// <returns></returns>
   /// <returns><see cref="Response"/></returns>
-  [HttpGet(Query.Route)]
+  [HttpGet(Query.RouteTemplate)]
   [SwaggerOperation(Tags = [FeatureAnnotations.FeatureGroup])]
   [ProducesResponseType(typeof(Response), (int)HttpStatusCode.OK)]
   [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
