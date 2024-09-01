@@ -5,8 +5,7 @@
 
 @code {
   private string PersonaId = "persona";
-
-  bool Open = false;
+  private bool Open = false;
   private async Task HandleSignIn()
   {
     await NoSubRouteState.ChangeRoute(newRoute: "authentication/login");
@@ -23,29 +22,36 @@
   {
     await NoSubRouteState.ChangeRoute(newRoute: SettingsPage.GetPageUrl());
   }
+  protected override async Task OnInitializedAsync()
+  {
+    if (await CheckAuthorization())
+    {
+      await ProfileState.FetchProfileData();
+    }
+  }
 }
 
 <FluentPersona
   Id=@PersonaId
   OnClick=@(() => Open = !Open)
-  Image=@AvatarDataUri
+  Image=@ProfileState.Avatar
   ImageSize="48px"
   TextPosition="TextPosition.End">
   <FluentLabel >@ProfileState.Alias</FluentLabel>
 </FluentPersona>
 
-<FluentMenu Anchor=@PersonaId   @bind-Open=Open VerticalThreshold="170">
+<FluentMenu Anchor=@PersonaId @bind-Open=Open VerticalThreshold="170">
   <AuthorizeView>
     <Authorized>
       <FluentLabel Typo="Typography.Body" Class="w-full m-4">@ProfileState.Alias</FluentLabel>
       <FluentDivider />
-      <FluentMenuItem OnClick=@HandleYourProfile hidden>
+      <FluentMenuItem OnClick=@HandleYourProfile >
         <span slot="start">
-          <FluentIcon Value=@(new Icons.Regular.Size48.Person()) Color=Color.Neutral Slot="start" />
+          <FluentIcon Value=@(new Icons.Regular.Size20.Person()) Color=Color.Neutral Slot="start" />
         </span>
         Profile
       </FluentMenuItem>
-      <FluentMenuItem OnClick=@HandleSettings hidden>
+      <FluentMenuItem OnClick=@HandleSettings >
         <span slot="start">
           <FluentIcon Value=@(new Icons.Regular.Size20.Settings()) Color=Color.Neutral Slot="start" />
         </span>
@@ -69,20 +75,4 @@
   </AuthorizeView>
 </FluentMenu>
 
-@code {
-  private string AvatarDataUri { get; set; }  = null!;
 
-  protected override async Task OnInitializedAsync()
-  {
-    AvatarDataUri = await GetAvatarDataUri();
-  }
-
-  private async Task<string> GetAvatarDataUri()
-  {
-    var avatarUrl = "https://multiavatar.com/d8f42d42-f2f8-4332-af82-8ff357f61aa5";
-    // var avatarUrl = $"https://multiavatar.com/{PasskeyId}";
-    var imageBytes = await HttpClient.GetByteArrayAsync(avatarUrl);
-    var base64 = Convert.ToBase64String(imageBytes);
-    return $"data:image/svg+xml;base64,{base64}";
-  }
-}

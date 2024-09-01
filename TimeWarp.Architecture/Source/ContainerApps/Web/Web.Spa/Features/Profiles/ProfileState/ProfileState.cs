@@ -9,6 +9,6 @@ public sealed partial class ProfileState: State<ProfileState>
   public override void Initialize()
   {
     Alias = null;
-    Avatar = null;
+    Avatar = new Icons.Regular.Size48.Person().ToDataUri(size: "25px", color: "white");
   }
 }

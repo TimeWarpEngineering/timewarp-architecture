@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Profiles;
 
-using static GetProfileData;
+using static GetProfile;
 
 partial class ProfileState
 {
