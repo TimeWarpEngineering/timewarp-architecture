@@ -11,7 +11,9 @@
     <!-- Uncomment the following line if you want to Mock B2C.
      Note you will need to run all Mock Data if you do
      because the token won't work on the real API -->
-    <DefineConstants>$(DefineConstants);MOCK_AUTHENTICATION</DefineConstants>
+    <DefineConstants>$(DefineConstants);MOCK_AUTHENTICATION;</DefineConstants>
+    <!-- Use Mock web API -->
+    <DefineConstants>$(DefineConstants);MOCK_WEB_API;</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -49,7 +51,7 @@
   <ItemGroup>
     <AdditionalFiles Include="**/*.md" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <!--#if(api)-->
     <ProjectReference Include="..\..\..\..\..\..\timewarp-source-generators\source\TimeWarp.SourceGenerators\TimeWarp.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
@@ -61,7 +63,7 @@
     <!--#endif-->
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj"/>
   </ItemGroup>
-  
+
   <ItemGroup>
     <InternalsVisibleTo Include="Web.Spa.Integration.Tests"/>
     <InternalsVisibleTo Include="Web.Server.Integration.Tests"/>

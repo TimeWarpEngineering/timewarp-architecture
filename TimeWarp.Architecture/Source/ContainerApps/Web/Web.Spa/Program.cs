@@ -100,7 +100,7 @@ public class Program
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
 
-    // TODO: Look into naming of the services. I think we can clear up the naming.
+    // We are using a factory here to explicitly determine which constructor to use for DI.
     serviceCollection.AddScoped<IWebServerApiService>
     (
       serviceProvider =>
@@ -108,10 +108,17 @@ public class Program
         IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
         IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
         IOptions<JsonSerializerOptions> options = serviceProvider.GetRequiredService<IOptions<JsonSerializerOptions>>();
-        return new WebServerApiService(accessTokenProvider, httpClientFactory, options);
+        var realService = new WebServerApiService(accessTokenProvider, httpClientFactory, options);
+        #if MOCK_WEB_API
+        ILogger<MockWebApiService> logger = serviceProvider.GetRequiredService<ILogger<MockWebApiService>>();
+        return new MockWebApiService(realService, logger, serviceProvider);
+        #else
+        return realService; // Comment out to use the mock service
+        #endif
       }
     );
 
+    // We are using a factory here to explicitly determine which constructor to use for DI.
     serviceCollection.AddScoped<IApiServerApiService>
     (
       serviceProvider =>
