@@ -56,7 +56,7 @@ public static partial class GetRoles
     }
   }
 
-  public static MockResponseFactory<Response> GetMockResponseFactory(IApiRequest request)
+  public static MockResponseFactory<Response> GetMockResponseFactory()
   {
     RoleDto[] items =
     [
