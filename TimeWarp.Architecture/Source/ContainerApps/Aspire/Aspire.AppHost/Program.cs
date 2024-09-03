@@ -5,7 +5,7 @@ IResourceBuilder<AzureCosmosDBResource> cosmosdb = cosmos.AddDatabase(CosmosDbDa
 #if DEBUG
 cosmosdb.RunAsEmulator();
 #endif
-IResourceBuilder<ProjectResource> apiServer =builder.AddProject<Projects.Api_Server>(ApiServerProjectResourceName);
+IResourceBuilder<ProjectResource> apiServer = builder.AddProject<Projects.Api_Server>(ApiServerProjectResourceName);
 IResourceBuilder<ProjectResource> grpcServer = builder.AddProject<Projects.Grpc_Server>(GrpcServerProjectResourceName);
 
 IResourceBuilder<ProjectResource> webServer =
@@ -16,7 +16,7 @@ IResourceBuilder<ProjectResource> webServer =
     .WithReference(apiServer)
     .WithReference(grpcServer);
 
-    webServer.WithReference(webServer);
+webServer.WithReference(webServer);
 
 // builder.AddProject<Projects.Yarp>(YarpProjectResourceName)
 //   .WithReference(apiServer)
@@ -32,13 +32,13 @@ IResourceBuilder<ProjectResource> webServer =
 //   .LoadFromConfiguration("ReverseProxy");
 
 // Using Code based routes
-    builder.AddYarp(YarpResourceName)
-      .WithHttpEndpoint(port: 8001)
-      // .WithHttpsEndpoint(port: 8002)
-      .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
-      .Route(routeId: "spa", target: webServer, path: "/{**catch-all}")
-      .Route(routeId: "api-server-api", target: apiServer, path: "/api/{**catch-all}")
-      .Route(routeId: "web-server-api", target: webServer, path: "/api/web-server/{**catch-all}")
-      .Route(routeId: "grpc", target: grpcServer, path: "/grpc/{**catch-all}", preservePath:false);
+IResourceBuilder<YarpResource> yarp = builder.AddYarp(YarpResourceName)
+  .WithHttpEndpoint(port: 8001)
+  // .WithHttpsEndpoint(port: 8002)
+  .WithEnvironment(name: "ASPNETCORE_ENVIRONMENT", value: "Development")
+  .Route(routeId: "spa", target: webServer, path: "/{**catch-all}")
+  .Route(routeId: "api-server-api", target: apiServer, path: "/api/{**catch-all}")
+  .Route(routeId: "web-server-api", target: webServer, path: "/api/web-server/{**catch-all}")
+  .Route(routeId: "grpc", target: grpcServer, path: "/grpc/{**catch-all}", preservePath: false);
 
 builder.Build().Run();
