@@ -13,4 +13,9 @@
     <ProjectReference Include="..\..\..\Common\Common.Domain\Common.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\" />
+    <Folder Include="ValueObjects\" />
+  </ItemGroup>
+
 </Project>
