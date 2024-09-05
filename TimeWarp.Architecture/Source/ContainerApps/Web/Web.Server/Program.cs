@@ -2,6 +2,9 @@
 // ReSharper disable RedundantNameQualifier
 namespace TimeWarp.Architecture.Web.Server;
 
+using Abstractions;
+using Common.Infrastructure;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Serilog;
 
 [UsedImplicitly]
@@ -98,6 +101,7 @@ public class Program : IAspNetProgram
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
     ConfigureSettings(serviceCollection, configuration);
     WebInfrastructureModule.ConfigureServices(serviceCollection, configuration);
+    CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
 #if(cosmosdb)
     CosmosDbModule.ConfigureServices(serviceCollection, configuration);
 #endif
