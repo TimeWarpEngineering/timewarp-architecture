@@ -3,10 +3,10 @@ namespace TimeWarp.Architecture.Extensions;
 public static class ServiceUriHelper
 {
   public static Uri? GetServiceHttpUri(string resourceName, int index = 0) =>
-    GetServiceUri(resourceName,"http", index);
+    GetServiceUri(resourceName,endpointName: "http", index);
 
   public static Uri? GetServiceHttpsUri(string resourceName, int index = 0) =>
-    GetServiceUri(resourceName, "https", index);
+    GetServiceUri(resourceName, endpointName: "https", index);
 
   private static Uri? GetServiceUri(string resourceName, string endpointName, int index)
   {

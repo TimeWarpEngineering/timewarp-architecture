@@ -27,8 +27,8 @@ public class CommonServerModule : IAspNetModule
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
     ValidatorOptions.Global.DisplayNameResolver =
-      (aType, aMemberInfo, aLambdaExpression) =>
-        aType != null && aMemberInfo != null ? $"{aType.Name}:{aMemberInfo.Name}" : null;
+      (type, memberInfo, lambdaExpression) =>
+        type != null && memberInfo != null ? $"{type.Name}:{memberInfo.Name}" : null;
   }
 
   public static void AddSwaggerGen
