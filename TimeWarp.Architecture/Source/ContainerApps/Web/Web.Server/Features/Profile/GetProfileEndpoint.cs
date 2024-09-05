@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.Profiles;
 
 using static GetProfile;
 
-public class GetProfileEndpoint : BaseEndpoint<Query, Response>
+public sealed class GetProfileEndpoint : BaseEndpoint<Query, Response>
 {
   [HttpGet(Query.RouteTemplate)]
   [SwaggerOperation(Tags = [FeatureAnnotations.FeatureGroup])]
