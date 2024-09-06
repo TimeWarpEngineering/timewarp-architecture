@@ -13,7 +13,7 @@
      because the token won't work on the real API -->
     <DefineConstants>$(DefineConstants);MOCK_AUTHENTICATION;</DefineConstants>
     <!-- Use Mock web API -->
-    <DefineConstants>$(DefineConstants);MOCK_WEB_API;</DefineConstants>
+<!--    <DefineConstants>$(DefineConstants);MOCK_WEB_API;</DefineConstants>-->
   </PropertyGroup>
 
   <ItemGroup>
