@@ -29,12 +29,13 @@ Create the initial project structure for the .NET 8 console application. This wi
 - **Initialize Project**
   - [ ] From the root directory, run the following command to create the project directly in the `Source` folder:
     ```pwsh
-    dotnet new console --framework net8.0 --name ConsoleApp --output Source
+    dotnet new console --framework net8.0 --name ConsoleApp --output Source/ConsoleApp --use-program-main
+
     ```
 - **Verify Build**
   - [ ] Run the application to confirm it executes successfully:
     ```pwsh
-    dotnet run --project Source/ConsoleApp.csproj
+    dotnet run --project Source/ConsoleApp/ConsoleApp.csproj
     ```
 - **Documentation**
   - [ ] Create a `README.md` placeholder file in the `Documentation` folder with the text `TODO`:
