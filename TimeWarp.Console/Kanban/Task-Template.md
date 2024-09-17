@@ -9,7 +9,8 @@
 - List any specific requirements or criteria that must be met for the task to be considered complete.
 
 ## Checklist
-    Add relevant items to the checklist as necessary when creating the task or implementing it.
+
+> Add relevant items to the checklist as necessary when creating the task or implementing it.
 
 ### Design
 - [ ] Update Model
@@ -20,7 +21,7 @@
 - [ ] Verify Functionality
 ### Documentation
 - [ ] Update Documentation
-- [ ] Update ai-context.md
+- [ ] Update `.ai` files
 ### Review
 - [ ] Consider Accessibility Implications
 - [ ] Consider Monitoring and Alerting Implications
