@@ -1,3 +1,12 @@
+You make an excellent point. Creating the project directly in the `Source` directory simplifies the process and eliminates the need to move files and update the `.csproj` file. We can achieve this by either:
+
+- Navigating into the `Source` directory before running the `dotnet new` command.
+- Using the `--output` (`-o`) option with the `dotnet new` command to specify the `Source` directory as the output path.
+
+Here's the updated task document reflecting this improvement:
+
+---
+
 # Task 001: Set Up Project Structure
 
 ## Description
@@ -69,3 +78,9 @@ Create the initial project structure for the .NET 8 console app template. This w
   - The `Source` directory now contains the project files, eliminating the need to adjust paths in the `.csproj` file.
 - **Avoid Unnecessary Additions**:
   - Do not add extra packages or code at this stage to keep the project clean and focused.
+
+---
+
+By creating the project directly in the `Source` directory, we streamline the setup process and reduce the potential for errors that might occur when moving files and updating project configurations. This approach adheres to best practices and makes the project easier to maintain and convert into a template.
+
+**Feel free to let me know if there's anything else you'd like to adjust or if you have further questions!**
