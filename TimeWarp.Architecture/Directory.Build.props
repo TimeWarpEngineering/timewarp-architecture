@@ -41,6 +41,13 @@
     </ItemGroup>
   </Target>
 
+
+  <ItemGroup>
+    <!--  https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/ide0130-->
+    <CompilerVisibleProperty Include="RootNamespace" />
+    <CompilerVisibleProperty Include="ProjectDir" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="GlobalUsingsAnalyzer">
       <PrivateAssets>all</PrivateAssets>
