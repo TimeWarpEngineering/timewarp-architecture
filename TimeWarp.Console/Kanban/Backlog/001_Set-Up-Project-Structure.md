@@ -21,35 +21,35 @@ Create the initial project structure for the .NET 8 console application. This wi
     - [ ] `Source` for source code:
     - [ ] `Tests` for unit tests:
     - [ ] `Documentation` for project documentation:
-      ```powershell
+      ```pwsh
       New-Item -Path "Source/Index.md" -ItemType File -Force -Value "TODO"
       New-Item -Path "Tests/Index.md" -ItemType File -Force -Value "TODO"
       New-Item -Path "Documentation/Index.md" -ItemType File -Force -Value "TODO"
       ```
 - **Initialize Project**
   - [ ] From the root directory, run the following command to create the project directly in the `Source` folder:
-    ```powershell
+    ```pwsh
     dotnet new console --framework net8.0 --name ConsoleApp --output Source
     ```
 - **Verify Build**
   - [ ] Run the application to confirm it executes successfully:
-    ```powershell
+    ```pwsh
     dotnet run --project Source/ConsoleApp.csproj
     ```
 - **Documentation**
   - [ ] Create a `README.md` placeholder file in the `Documentation` folder with the text `TODO`:
-    ```powershell
+    ```pwsh
     New-Item -Path "Documentation/README.md" -ItemType File -Force -Value "TODO"
     ```
 - **Version Control**
   - [ ] Generate a `.gitignore` file tailored for .NET projects:
-    ```powershell
+    ```pwsh
     dotnet new gitignore
     ```
 
 ## Notes
 
-- **PowerShell Usage**: PowerShell (pwsh) is cross-platform, so all commands are provided using PowerShell.
+- **PowerShell Core (pwsh) Usage**: All commands are provided using PowerShell Core (`pwsh`), which is cross-platform.
 - **Namespace Usage**: Use `ConsoleApp` as the namespace in your code files.
 - **Clean Codebase**: Keep the initial code minimal to simplify the addition of features in future tasks.
 
