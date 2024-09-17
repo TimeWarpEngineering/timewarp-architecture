@@ -1,12 +1,3 @@
-You make an excellent point. Creating the project directly in the `Source` directory simplifies the process and eliminates the need to move files and update the `.csproj` file. We can achieve this by either:
-
-- Navigating into the `Source` directory before running the `dotnet new` command.
-- Using the `--output` (`-o`) option with the `dotnet new` command to specify the `Source` directory as the output path.
-
-Here's the updated task document reflecting this improvement:
-
----
-
 # Task 001: Set Up Project Structure
 
 ## Description
@@ -32,22 +23,15 @@ Create the initial project structure for the .NET 8 console app template. This w
     - [ ] `Tests` for unit tests.
     - [ ] `Documentation` for project documentation.
 - **Initialize Project**
-  - **Option 1: Navigate into `Source` Directory**
-    - [ ] From the root directory, navigate into the `Source` folder:
-      ```bash
-      cd Source
-      ```
-    - [ ] Run the `dotnet new` command inside `Source`:
-      ```bash
-      dotnet new console --framework net8.0 --name ConsoleApp
-      ```
-  - **Option 2: Specify Output Directory**
-    - [ ] From the root directory, run:
-      ```bash
-      dotnet new console --framework net8.0 --name ConsoleApp --output Source
-      ```
+  - [ ] From the root directory, run the following command to create the project directly in the `Source` folder:
+    ```bash
+    dotnet new console --framework net8.0 --name ConsoleApp --output Source
+    ```
 - **Verify Build**
-  - [ ] Navigate to the `Source` directory if not already there.
+  - [ ] Navigate to the `Source` directory:
+    ```bash
+    cd Source
+    ```
   - [ ] Build the project to ensure there are no errors:
     ```bash
     dotnet build
@@ -78,9 +62,3 @@ Create the initial project structure for the .NET 8 console app template. This w
   - The `Source` directory now contains the project files, eliminating the need to adjust paths in the `.csproj` file.
 - **Avoid Unnecessary Additions**:
   - Do not add extra packages or code at this stage to keep the project clean and focused.
-
----
-
-By creating the project directly in the `Source` directory, we streamline the setup process and reduce the potential for errors that might occur when moving files and updating project configurations. This approach adheres to best practices and makes the project easier to maintain and convert into a template.
-
-**Feel free to let me know if there's anything else you'd like to adjust or if you have further questions!**
