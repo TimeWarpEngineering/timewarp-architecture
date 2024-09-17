@@ -21,31 +21,35 @@ Create the initial project structure for the .NET 8 console application. This wi
     - [ ] `Source` for source code:
     - [ ] `Tests` for unit tests:
     - [ ] `Documentation` for project documentation:
-      ```pwsh
+      ```powershell
       New-Item -Path "Source/Index.md" -ItemType File -Force -Value "TODO"
       New-Item -Path "Tests/Index.md" -ItemType File -Force -Value "TODO"
       New-Item -Path "Documentation/Index.md" -ItemType File -Force -Value "TODO"
       ```
 - **Initialize Project**
   - [ ] From the root directory, run the following command to create the project directly in the `Source` folder:
-    ```pwsh
+    ```powershell
     dotnet new console --framework net8.0 --name ConsoleApp --output Source
     ```
 - **Verify Build**
   - [ ] Run the application to confirm it executes successfully:
-    ```pwsh
+    ```powershell
     dotnet run --project Source/ConsoleApp.csproj
     ```
 - **Documentation**
-  - [ ] Create a `README.md` placeholder file in the `Documentation` folder with the text `TODO`.
+  - [ ] Create a `README.md` placeholder file in the `Documentation` folder with the text `TODO`:
+    ```powershell
+    New-Item -Path "Documentation/README.md" -ItemType File -Force -Value "TODO"
+    ```
 - **Version Control**
   - [ ] Generate a `.gitignore` file tailored for .NET projects:
-    ```pwsh
+    ```powershell
     dotnet new gitignore
     ```
 
 ## Notes
 
+- **PowerShell Usage**: PowerShell (pwsh) is cross-platform, so all commands are provided using PowerShell.
 - **Namespace Usage**: Use `ConsoleApp` as the namespace in your code files.
 - **Clean Codebase**: Keep the initial code minimal to simplify the addition of features in future tasks.
 
@@ -54,4 +58,4 @@ Create the initial project structure for the .NET 8 console application. This wi
 - **Avoid Unnecessary Additions**:
   - Do not add extra packages or code at this stage to keep the project clean and focused.
 - **Documentation**:
-  - The `README.md` in the `Documentation` folder should be a placeholder with `TODO` as its content.
+  - The `README.md` in the `Documentation` folder and the `Index.md` files in each directory should contain `TODO` as their content.
