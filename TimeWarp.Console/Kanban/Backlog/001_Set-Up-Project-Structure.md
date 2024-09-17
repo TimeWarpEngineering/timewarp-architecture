@@ -2,18 +2,17 @@
 
 ## Description
 
-Create the initial project structure for the .NET 8 console app template. This will serve as the foundation for integrating Dependency Injection, Hosting, and System.CommandLine in subsequent tasks.
+Create the initial project structure for the .NET 8 console application. This will serve as the foundation for integrating Dependency Injection, Hosting, and System.CommandLine in subsequent tasks.
 
 ## Requirements
 
 - Create a new console application project targeting **.NET 8.0**.
-- Use `ConsoleApp` as the project name, which will serve as the placeholder in the template.
+- Use `ConsoleApp` as the project name.
 - Organize project files and folders logically using the following structure:
   - `Source` for source code.
   - `Tests` for unit tests.
   - `Documentation` for project documentation.
 - Ensure the project builds and runs successfully.
-- Prepare the project for transformation into a reusable template.
 
 ## Checklist
 
@@ -40,25 +39,23 @@ Create the initial project structure for the .NET 8 console app template. This w
     ```bash
     dotnet run
     ```
-- **Prepare for Template Conversion**
-  - [ ] Ensure all occurrences of `ConsoleApp` in code and configuration files are ready for token replacement.
-  - [ ] Avoid hard-coded values that would hinder templating.
 - **Documentation**
   - [ ] Create a `README.md` in the `Documentation` folder with initial project information and instructions.
   - [ ] Document the project structure and its purpose.
+- **Version Control**
+  - [ ] Generate a `.gitignore` file tailored for .NET projects:
+    ```bash
+    dotnet new gitignore
+    ```
 
 ## Notes
 
-- **Simplification**: Creating the project directly in the `Source` directory avoids unnecessary file movements and updates to the `.csproj` file.
-- **Namespace Usage**: Use `ConsoleApp` as the namespace in your code files. This will be replaced with the user's project name when the template is instantiated.
-- **Consistency**: Maintain standard conventions to facilitate ease of use when the project is converted into a template.
-- **Simplicity**: Keep the initial code minimal to simplify the addition of features in future tasks.
+- **Namespace Usage**: Use `ConsoleApp` as the namespace in your code files.
+- **Clean Codebase**: Keep the initial code minimal to simplify the addition of features in future tasks.
 
 ## Implementation Notes
 
-- **Generating `.gitignore`**:
-  - Use the command `dotnet new gitignore` in the root directory to create a standard `.gitignore` file for .NET projects.
-- **Project Structure**:
-  - The `Source` directory now contains the project files, eliminating the need to adjust paths in the `.csproj` file.
 - **Avoid Unnecessary Additions**:
   - Do not add extra packages or code at this stage to keep the project clean and focused.
+- **Documentation**:
+  - Use the `README.md` to provide an overview of the project and explain the directory structure.
