@@ -13,8 +13,8 @@
 > Add relevant items to the checklist as necessary when creating the task or implementing it.
 
 ### Design
+- [ ] Update UX Design
 - [ ] Update Model
-- [ ] Add/Update Tests
 ### Implementation
 - [ ] Update Dependencies
 - [ ] Update Relevant Configuration Settings
