@@ -12,39 +12,35 @@ Create the initial project structure for the .NET 8 console application. This wi
   - `Source` for source code.
   - `Tests` for unit tests.
   - `Documentation` for project documentation.
-- Ensure the project builds and runs successfully.
+- Ensure the project runs successfully.
 
 ## Checklist
 
 - **Organize Structure**
   - [ ] Create the following folders at the root level:
-    - [ ] `Source` for source code.
-    - [ ] `Tests` for unit tests.
-    - [ ] `Documentation` for project documentation.
+    - [ ] `Source` for source code:
+    - [ ] `Tests` for unit tests:
+    - [ ] `Documentation` for project documentation:
+      ```pwsh
+      New-Item -Path "Source/Index.md" -ItemType File -Force -Value "TODO"
+      New-Item -Path "Tests/Index.md" -ItemType File -Force -Value "TODO"
+      New-Item -Path "Documentation/Index.md" -ItemType File -Force -Value "TODO"
+      ```
 - **Initialize Project**
   - [ ] From the root directory, run the following command to create the project directly in the `Source` folder:
-    ```bash
+    ```pwsh
     dotnet new console --framework net8.0 --name ConsoleApp --output Source
     ```
 - **Verify Build**
-  - [ ] Navigate to the `Source` directory:
-    ```bash
-    cd Source
-    ```
-  - [ ] Build the project to ensure there are no errors:
-    ```bash
-    dotnet build
-    ```
   - [ ] Run the application to confirm it executes successfully:
-    ```bash
-    dotnet run
+    ```pwsh
+    dotnet run --project Source/ConsoleApp.csproj
     ```
 - **Documentation**
-  - [ ] Create a `README.md` in the `Documentation` folder with initial project information and instructions.
-  - [ ] Document the project structure and its purpose.
+  - [ ] Create a `README.md` placeholder file in the `Documentation` folder with the text `TODO`.
 - **Version Control**
   - [ ] Generate a `.gitignore` file tailored for .NET projects:
-    ```bash
+    ```pwsh
     dotnet new gitignore
     ```
 
@@ -58,4 +54,4 @@ Create the initial project structure for the .NET 8 console application. This wi
 - **Avoid Unnecessary Additions**:
   - Do not add extra packages or code at this stage to keep the project clean and focused.
 - **Documentation**:
-  - Use the `README.md` to provide an overview of the project and explain the directory structure.
+  - The `README.md` in the `Documentation` folder should be a placeholder with `TODO` as its content.
