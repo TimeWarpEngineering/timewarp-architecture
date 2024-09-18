@@ -1,85 +1,178 @@
-# Task 002: Implement the Generic Host
+# Task 002: Integrate Cocona into the Console Application
 
 ## Description
 
-Set up the .NET Generic Host in the console application to manage the application lifecycle, configuration, and logging. This will provide a robust foundation for integrating Dependency Injection and other services in subsequent tasks.
+Integrate **Cocona** into the console application to simplify command-line parsing and Dependency Injection. This will provide a streamlined foundation for managing commands, options, and services throughout the application.
 
 ## Requirements
 
-- Add the `Microsoft.Extensions.Hosting` package to the project.
-- Modify `Program.cs` to use the Generic Host, ensuring the code adheres to the project's coding standards.
-- Ensure the application runs successfully using the Generic Host.
+- Add the `Cocona` package to the project.
+- Modify `Program.cs` to use Cocona's application builder.
+- Define a sample command using Cocona's attribute-based syntax.
+- Ensure the application runs successfully with Cocona integrated.
+- Adhere to the project's coding standards as specified in the `.ai` directory.
 
 ## Checklist
 
-- **Add Hosting Package**
-  - [ ] Install the `Microsoft.Extensions.Hosting` NuGet package:
+- **Add Cocona Package**
+  - [ ] Install the `Cocona` NuGet package:
 
     ```pwsh
-    dotnet add Source/ConsoleApp/ConsoleApp.csproj package Microsoft.Extensions.Hosting
+    dotnet add Source/ConsoleApp/ConsoleApp.csproj package Cocona
     ```
 
-- **Configure Generic Host**
-  - [ ] Modify `Program.cs` to use the Generic Host builder:
+- **Modify Program.cs**
+  - [ ] Update `Program.cs` to use Cocona's application builder:
 
     ```csharp
     // File: Program.cs
     namespace ConsoleApp;
 
+    using Cocona;
     using System.Threading.Tasks;
-    using Microsoft.Extensions.Hosting;
 
     public class Program
     {
-      public static async Task Main(string[] args)
+      public static void Main(string[] args)
       {
-        using IHost host = Host.CreateDefaultBuilder(args)
-          .ConfigureServices((context, services) =>
-          {
-            // TODO: Register services here in future tasks
-          })
-          .Build();
+        CoconaApp.Run<Program>(args);
+      }
 
-        await host.RunAsync();
+      // Define a command method
+      public void Hello(
+        [Option('n', Description = "Your name")] string name = "World")
+      {
+        Console.WriteLine($"Hello, {name}!");
       }
     }
     ```
 
 - **Verify Application**
-  - [ ] Run the application to ensure it works correctly with the Generic Host implemented:
+  - [ ] Run the application to ensure it works correctly with Cocona integrated:
 
     ```pwsh
-    dotnet run --project Source/ConsoleApp/ConsoleApp.csproj
+    dotnet run --project Source/ConsoleApp/ConsoleApp.csproj -- hello --name "Alice"
     ```
 
-- **Update Documentation**
-  - [ ] Add notes to `Documentation/README.md` about the integration of the Generic Host.
+    - Expected output:
 
-  ```
-  # ConsoleApp
-  
-  ## Updates
-  
-  - Implemented the .NET Generic Host to manage application lifecycle, configuration, and logging.
-  
-  ## Next Steps
-  
-  - Integrate Dependency Injection in upcoming tasks.
-  ```
+      ```
+      Hello, Alice!
+      ```
+
+- **Update Documentation**
+  - [ ] Add notes to `Documentation/README.md` about the integration of Cocona and how to use the application.
+
+    ```markdown
+    # ConsoleApp
+
+    ## Updates
+
+    - Integrated Cocona for command-line parsing and Dependency Injection.
+
+    ## Usage
+
+    Run the application with the following command:
+
+    ```sh
+    dotnet run --project Source/ConsoleApp/ConsoleApp.csproj -- hello --name "YourName"
+    ```
+
+    Replace `"YourName"` with your actual name.
+
+    ## Available Commands
+
+    - `hello`: Greets the user.
+      - Options:
+        - `-n`, `--name`: Specifies the name to greet.
+    ```
+
+- **Ensure Coding Standards**
+  - [ ] Verify that all code changes comply with the coding standards specified in `.ai/coding-standards.md`.
 
 ## Notes
 
-- Ensure all code follows the project's coding standards as specified in the `.ai` directory.
-- Focus on setting up the Generic Host without adding unnecessary complexity.
-- Prepare the project for dependency injection in the next task.
+- **Simplicity**: Cocona reduces boilerplate code and simplifies command-line parsing and DI integration.
+- **Attribute-Based Commands**: Commands and options are defined using attributes, making the code clean and easy to read.
+- **Future Expansion**: This setup allows for easy addition of more commands and services in future tasks.
 
 ## Implementation Notes
 
-- **Program.cs Structure**:
-  - Replace the default content of the `Main` method with the Generic Host configuration.
-- **Async Main Method**:
-  - Use `public static async Task Main(string[] args)` to support asynchronous operations.
-- **Future Considerations**:
-  - Leave placeholders or comments where services will be registered in the next task.
-- **Logging and Configuration**:
-  - The `CreateDefaultBuilder` method sets up default logging and configuration; no additional setup is required at this stage.
+- **Dependency Injection**:
+  - Cocona automatically sets up a service container using `Microsoft.Extensions.DependencyInjection`.
+  - You can register services in the `ConfigureServices` method if needed.
+- **Asynchronous Commands**:
+  - If you need to perform asynchronous operations, you can define commands as `async Task` methods.
+
+  ```csharp
+  public async Task FetchData()
+  {
+    // Asynchronous code here
+    await Task.Delay(1000);
+  }
+  ```
+
+- **Multiple Commands**:
+  - You can define multiple command methods within the `Program` class or separate classes.
+
+  ```csharp
+  public void Goodbye()
+  {
+    Console.WriteLine("Goodbye!");
+  }
+  ```
+
+- **Using Services**:
+  - Inject services into command methods via parameters.
+
+  ```csharp
+  public void ProcessData(IMyService myService)
+  {
+    myService.Execute();
+  }
+  ```
+
+## Example of Registering Services
+
+If you need to register services for Dependency Injection, create a `ConfigureServices` method:
+
+```csharp
+// File: Program.cs
+namespace ConsoleApp;
+
+using Cocona;
+using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
+
+public class Program
+{
+  public static void Main(string[] args)
+  {
+    CoconaApp.CreateBuilder()
+      .ConfigureServices(services =>
+      {
+        services.AddSingleton<IMyService, MyService>();
+      })
+      .Build()
+      .Run();
+  }
+
+  public void UseService(IMyService myService)
+  {
+    myService.Execute();
+  }
+}
+
+public interface IMyService
+{
+  void Execute();
+}
+
+public class MyService : IMyService
+{
+  public void Execute()
+  {
+    Console.WriteLine("Service Executed.");
+  }
+}
+```
