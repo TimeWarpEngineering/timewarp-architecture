@@ -27,6 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Solution Items", "03-Sol
 		TimeWarp.ruleset = TimeWarp.ruleset
 		UNLICENSE.md = UNLICENSE.md
 		Watch.ps1 = Watch.ps1
+		RunRelease.ps1 = RunRelease.ps1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04-Tests", "04-Tests", "{2902FDFD-016E-4BF7-8B41-53D674FA53DD}"
@@ -127,8 +128,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "07-Aspire", "07-Aspire", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aspire", "Aspire", "{03E1531D-A295-4B91-91A9-DF50D3BF3C53}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.FluentUI.AspNetCore.Components", "..\..\..\microsoft\fluentui-blazor\src\Core\Microsoft.FluentUI.AspNetCore.Components.csproj", "{F2E32D90-F2D4-4DE3-8BE2-CA2FAF58DBDC}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api.Server.Integration.Tests", "Tests\ContainerApps\Api\Api.Server.Integration.Tests\Api.Server.Integration.Tests.csproj", "{13F27F0D-B598-464F-83A0-E4EB4E3B9B34}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Yarp", "Yarp", "{B190F92F-6117-48F1-AB9A-E2097F1C062E}"
@@ -136,6 +135,16 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aspire", "Tests\ContainerApps\Aspire\Aspire.csproj", "{A1AB07F6-E7FF-4A19-8B95-8653273E4EC3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.Hosting.Yarp", "Source\ContainerApps\Aspire\Aspire.Hosting.Yarp\Aspire.Hosting.Yarp.csproj", "{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analyzers", "Analyzers", "{3979C93A-21A2-4166-99B9-C62E2839B561}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.Analyzers.Tests", "Tests\Analyzers\TimeWarp.Architecture.Analyzers.Tests\TimeWarp.Architecture.Analyzers.Tests.csproj", "{3AEDDC5D-2E97-49DF-85AD-11DC2E9BB084}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "08-Analyzers", "08-Analyzers", "{A988AE51-34CF-4B84-9CCE-461AA31A560D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.Analyzers", "Source\Analyzers\TimeWarp.Architecture.Analyzers\TimeWarp.Architecture.Analyzers.csproj", "{7069BD78-9259-4AD8-B5D2-68644ADE46D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.SourceGenerators", "..\..\timewarp-source-generators\source\TimeWarp.SourceGenerators\TimeWarp.SourceGenerators.csproj", "{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -324,12 +333,6 @@ Global
 		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
 		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F2E32D90-F2D4-4DE3-8BE2-CA2FAF58DBDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F2E32D90-F2D4-4DE3-8BE2-CA2FAF58DBDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F2E32D90-F2D4-4DE3-8BE2-CA2FAF58DBDC}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
-		{F2E32D90-F2D4-4DE3-8BE2-CA2FAF58DBDC}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
-		{F2E32D90-F2D4-4DE3-8BE2-CA2FAF58DBDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F2E32D90-F2D4-4DE3-8BE2-CA2FAF58DBDC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{13F27F0D-B598-464F-83A0-E4EB4E3B9B34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{13F27F0D-B598-464F-83A0-E4EB4E3B9B34}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13F27F0D-B598-464F-83A0-E4EB4E3B9B34}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
@@ -348,6 +351,24 @@ Global
 		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
 		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3AEDDC5D-2E97-49DF-85AD-11DC2E9BB084}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AEDDC5D-2E97-49DF-85AD-11DC2E9BB084}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AEDDC5D-2E97-49DF-85AD-11DC2E9BB084}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AEDDC5D-2E97-49DF-85AD-11DC2E9BB084}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{3AEDDC5D-2E97-49DF-85AD-11DC2E9BB084}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AEDDC5D-2E97-49DF-85AD-11DC2E9BB084}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7069BD78-9259-4AD8-B5D2-68644ADE46D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7069BD78-9259-4AD8-B5D2-68644ADE46D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7069BD78-9259-4AD8-B5D2-68644ADE46D8}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{7069BD78-9259-4AD8-B5D2-68644ADE46D8}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{7069BD78-9259-4AD8-B5D2-68644ADE46D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7069BD78-9259-4AD8-B5D2-68644ADE46D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -393,11 +414,14 @@ Global
 		{8A027784-9F48-4EF7-979F-9DF6AA37F25B} = {DA25DAAF-F149-43EB-AD42-34DB9840D97D}
 		{C0785709-7B33-46AA-ACB3-D8DE09DA0AA8} = {DA25DAAF-F149-43EB-AD42-34DB9840D97D}
 		{03E1531D-A295-4B91-91A9-DF50D3BF3C53} = {F324E68B-9E03-4D9F-848E-398203410723}
-		{F2E32D90-F2D4-4DE3-8BE2-CA2FAF58DBDC} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 		{13F27F0D-B598-464F-83A0-E4EB4E3B9B34} = {E3B896E0-4EBE-410B-A036-2EC3B6FA9EFE}
 		{B190F92F-6117-48F1-AB9A-E2097F1C062E} = {F324E68B-9E03-4D9F-848E-398203410723}
 		{A1AB07F6-E7FF-4A19-8B95-8653273E4EC3} = {03E1531D-A295-4B91-91A9-DF50D3BF3C53}
 		{D27D6F4F-6180-4608-A8A7-9E30B0DC2AA6} = {DA25DAAF-F149-43EB-AD42-34DB9840D97D}
+		{3979C93A-21A2-4166-99B9-C62E2839B561} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
+		{3AEDDC5D-2E97-49DF-85AD-11DC2E9BB084} = {3979C93A-21A2-4166-99B9-C62E2839B561}
+		{7069BD78-9259-4AD8-B5D2-68644ADE46D8} = {A988AE51-34CF-4B84-9CCE-461AA31A560D}
+		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}

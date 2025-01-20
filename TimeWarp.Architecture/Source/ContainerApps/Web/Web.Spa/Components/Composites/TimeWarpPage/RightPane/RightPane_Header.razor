@@ -4,7 +4,7 @@
   protected override void OnInitialized()
   {
     base.OnInitialized();
-    BaseClass = "right-pane-header";
+    BaseCssClass = "right-pane_header";
   }
 }
 
@@ -14,7 +14,7 @@
 
 <style>
   @($@"
-    .{Id}.right-pane_header {{
+    .{Id}.{BaseCssClass} {{
       width: 100%;
     }}
   ")

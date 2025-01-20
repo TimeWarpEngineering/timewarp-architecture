@@ -3,58 +3,67 @@
   "isRoot": true,
   "tools": {
     "fixie.console": {
-      "version": "3.2.0",
+      "version": "3.4.0",
       "commands": [
         "fixie"
-      ]
+      ],
+      "rollForward": false
     },
     "microsoft.tye": {
       "version": "0.11.0-alpha.22111.1",
       "commands": [
         "tye"
-      ]
+      ],
+      "rollForward": false
     },
     "dependencygraphdrawer": {
       "version": "0.9.4",
       "commands": [
         "dotnet-dg"
-      ]
+      ],
+      "rollForward": false
     },
     "dotnet-depends": {
       "version": "0.6.1",
       "commands": [
         "dotnet-depends"
-      ]
+      ],
+      "rollForward": false
     },
     "dotnet-cleanup": {
       "version": "0.6.1",
       "commands": [
         "cleanup"
-      ]
+      ],
+      "rollForward": false
     },
     "dotnet-serve": {
       "version": "1.10.112",
       "commands": [
         "dotnet-serve"
-      ]
+      ],
+      "rollForward": false
     },
     "dotnet-trace": {
       "version": "6.0.328102",
       "commands": [
         "dotnet-trace"
-      ]
+      ],
+      "rollForward": false
     },
     "microsoft.dotnet-httprepl": {
       "version": "6.0.0",
       "commands": [
         "httprepl"
-      ]
+      ],
+      "rollForward": false
     },
     "dotnet-outdated-tool": {
       "version": "4.5.3",
       "commands": [
         "dotnet-outdated"
-      ]
+      ],
+      "rollForward": false
     }
   }
 }

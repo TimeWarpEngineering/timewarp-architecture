@@ -1,8 +1,9 @@
 ﻿global using Ardalis.GuardClauses;
-global using BlazorState;
+global using TimeWarp.State;
 global using Blazored.LocalStorage;
 global using Blazored.SessionStorage;
 global using FluentValidation;
+global using FluentValidation.Results;
 global using Grpc.Net.Client.Web;
 global using Grpc.Net.Client;
 global using JetBrains.Annotations;
@@ -36,19 +37,24 @@ global using ProtoBuf.Grpc.Client;
 global using System;
 global using System.Diagnostics.CodeAnalysis;
 global using System.Globalization;
+global using System.Net;
 global using System.Net.Http;
 global using System.Net.Http.Headers;
 global using System.Net.Http.Json;
+global using System.Net.Mime;
 global using System.Reflection;
 global using System.Security.Claims;
+global using System.Text;
 global using System.Text.Json;
 global using System.Text.RegularExpressions;
 global using System.Threading;
 global using System.Threading.Tasks;
+global using TimeWarp.Architecture;
 
 // Solution usings
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
+global using TimeWarp.Architecture.Configuration.Passwordless;
 global using TimeWarp.Architecture.Extensions;
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Architecture.Features.Admin.Roles;
@@ -59,6 +65,7 @@ global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Features.EventStreams;
 global using TimeWarp.Architecture.Features.Notifications;
 global using TimeWarp.Architecture.Features.ProfileMenus;
+global using TimeWarp.Architecture.Features.Profiles;
 global using TimeWarp.Architecture.Features.Sidebars;
 global using TimeWarp.Architecture.Features.ToastNotifications;
 global using TimeWarp.Architecture.Hubs;
@@ -67,6 +74,8 @@ global using TimeWarp.Architecture.Services;
 global using TimeWarp.Architecture.Types;
 global using TimeWarp.Features.ActionTracking;
 global using TimeWarp.Features.StateTransactions;
+global using TimeWarp.State.Extensions;
+global using TimeWarp.State.Plus.State;
 global using static TimeWarp.Architecture.AuthorizationConstants;
 
 

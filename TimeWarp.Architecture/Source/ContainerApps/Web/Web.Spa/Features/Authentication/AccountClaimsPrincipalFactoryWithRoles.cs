@@ -1,13 +1,17 @@
 namespace TimeWarp.Architecture.Features.Authentication;
 
-public class AccountClaimsPrincipalFactoryWithRoles
-(
-  IAccessTokenProviderAccessor accessor,
-  IStore Store,
-  ISender Sender
-) : AccountClaimsPrincipalFactory<RemoteUserAccount>(accessor)
+public class AccountClaimsPrincipalFactoryWithRoles : AccountClaimsPrincipalFactory<RemoteUserAccount>
 {
-  private AuthorizationState AuthorizationState => Store.GetState<AuthorizationState>();
+  private readonly IStore Store1;
+  public AccountClaimsPrincipalFactoryWithRoles
+  (
+    IAccessTokenProviderAccessor accessor,
+    IStore Store
+  ) : base(accessor)
+  {
+    Store1 = Store;
+  }
+  private AuthorizationState AuthorizationState => Store1.GetState<AuthorizationState>();
 
   public override async ValueTask<ClaimsPrincipal> CreateUserAsync(RemoteUserAccount account, RemoteAuthenticationUserOptions options)
   {
@@ -18,10 +22,7 @@ public class AccountClaimsPrincipalFactoryWithRoles
     var identity = (ClaimsIdentity)claimsPrincipal.Identity;
     if (identity.IsAuthenticated is false) return claimsPrincipal;
 
-    Claim? nameIdentifier = identity.FindFirst(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException("User does not have a NameIdentifier claim.");
-    var userId = Guid.Parse(nameIdentifier.Value);
-
-    await Sender.Send(new AuthorizationState.FetchCurrentUser.Action(userId));
+    await AuthorizationState.FetchCurrentUser();
     if (AuthorizationState.Roles == null) return claimsPrincipal;
 
     foreach (Guid role in AuthorizationState.Roles)

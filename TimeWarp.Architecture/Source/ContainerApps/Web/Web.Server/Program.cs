@@ -2,6 +2,9 @@
 // ReSharper disable RedundantNameQualifier
 namespace TimeWarp.Architecture.Web.Server;
 
+using Abstractions;
+using Common.Infrastructure;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Serilog;
 
 [UsedImplicitly]
@@ -17,24 +20,24 @@ public class Program : IAspNetProgram
     SelfLog.Enable(Console.Error);
     Thread.CurrentThread.Name = nameof(Main);
 
-    IConfigurationRoot configuration = new ConfigurationBuilder()
-      .SetBasePath(Directory.GetCurrentDirectory())
-      .AddJsonFile("appsettings.json")
-      .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true)
-      .Build();
+    Log.Logger = new LoggerConfiguration()
+      .WriteTo.Console()
+      .CreateBootstrapLogger();
 
-    Logger serilog = new LoggerConfiguration()
-      .ReadFrom.Configuration(configuration)
-      .CreateLogger();
-
-    ILoggerFactory loggerFactory = new LoggerFactory().AddSerilog(serilog);
+    ILoggerFactory loggerFactory = new LoggerFactory().AddSerilog(Log.Logger);
 
     ILogger<Program> logger = loggerFactory.CreateLogger<Program>();
 
     try
     {
-      serilog.Information("Starting web host");
+      Log.Information("Starting web host");
       WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
+      builder.Host.UseSerilog((context, services, configuration) =>
+        configuration
+          .ReadFrom.Configuration(context.Configuration)
+          .ReadFrom.Services(services)
+          .Enrich.FromLogContext());
+
       ConfigureHostApplicationBuilder(builder);
       ConfigureConfiguration(builder.Configuration);
       ConfigureServices(builder.Services, builder.Configuration);
@@ -43,7 +46,7 @@ public class Program : IAspNetProgram
 
       webApplication.MapDefaultEndpoints();
 
-      Console.WriteLine($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
+      Log.Information($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
 
       ConfigureMiddleware(webApplication);
       ConfigureEndpoints(webApplication);
@@ -54,7 +57,7 @@ public class Program : IAspNetProgram
     }
     catch (Exception exception)
     {
-      Log.Fatal(exception, "Host terminated unexpectedly");
+      Log.Fatal(exception, messageTemplate: "Host terminated unexpectedly");
       return Task.FromResult(1);
     }
     finally
@@ -87,12 +90,18 @@ public class Program : IAspNetProgram
 
     serviceCollection.AddCascadingAuthenticationState();
     serviceCollection.AddAuthorization();
+    // TODO: Review the options for this seesm like could just pass whole config???
+    serviceCollection.AddPasswordlessSdk(options =>
+    {
+      options.ApiSecret = configuration["Passwordless:ApiSecret"] ?? throw new InvalidOperationException();
+    });
     ConfigureAuthentication(serviceCollection, configuration);
 
 
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
     ConfigureSettings(serviceCollection, configuration);
     WebInfrastructureModule.ConfigureServices(serviceCollection, configuration);
+    CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
 #if(cosmosdb)
     CosmosDbModule.ConfigureServices(serviceCollection, configuration);
 #endif
@@ -190,7 +199,7 @@ public class Program : IAspNetProgram
       .AddInteractiveWebAssemblyRenderMode()
       .AddAdditionalAssemblies
       (
-        typeof(BlazorState.AssemblyMarker).Assembly,
+        typeof(TimeWarp.State.AssemblyMarker).Assembly,
         typeof(TimeWarp.State.Plus.AssemblyMarker).Assembly,
         typeof(TimeWarp.Architecture.Web.Spa.AssemblyMarker).Assembly
       );

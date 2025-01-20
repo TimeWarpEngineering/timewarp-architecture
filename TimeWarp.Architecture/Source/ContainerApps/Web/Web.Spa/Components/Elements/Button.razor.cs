@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Components;
 
-public partial class Button : DisplayComponent
+partial class Button
 {
   private readonly string BaseCss = string.Join
   (

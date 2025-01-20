@@ -5,6 +5,10 @@ public class Program : IAspNetProgram
   public static Task Main(string[] argumentArray)
   {
     WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
+
+    // This line should be sufficient for HTTPS configuration in Aspire with .NET 8
+    builder.WebHost.UseKestrelHttpsConfiguration();
+
     builder.AddServiceDefaults();
     ConfigureConfiguration(builder.Configuration);
     ConfigureServices(builder.Services, builder.Configuration);

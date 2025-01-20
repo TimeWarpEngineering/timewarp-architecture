@@ -22,4 +22,9 @@ public static partial class UpdateRole
   }
 
   public sealed class Response;
+
+  public static MockResponseFactory<Response> GetMockResponseFactory()
+  {
+    return _ => new Response();
+  }
 }

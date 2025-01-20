@@ -11,15 +11,17 @@
     <!-- Uncomment the following line if you want to Mock B2C.
      Note you will need to run all Mock Data if you do
      because the token won't work on the real API -->
-<!--    <DefineConstants>$(DefineConstants);MOCK_AUTHENTICATION</DefineConstants>-->
+    <DefineConstants>$(DefineConstants);MOCK_AUTHENTICATION;</DefineConstants>
+    <!-- Use Mock web API -->
+<!--    <DefineConstants>$(DefineConstants);MOCK_WEB_API;</DefineConstants>-->
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="BlazorComponentUtilities"/>
-    <PackageReference Include="Blazor-State" />
     <PackageReference Include="Grpc.Net.Client"/>
     <PackageReference Include="Grpc.Net.Client.Web"/>
+    <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all"/>
@@ -27,13 +29,18 @@
     <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" />
     <PackageReference Include="Microsoft.Extensions.Http"/>
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration"/>
-<!--    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>-->
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons"/>
+    <PackageReference Include="Microsoft.TypeScript.MSBuild">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
     <PackageReference Include="Morris.Blazor.FluentValidation"/>
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
     <PackageReference Include="System.Net.Http.Json" PrivateAssets="all"/>
+    <PackageReference Include="TimeWarp.State" />
     <PackageReference Include="TimeWarp.State.Plus"/>
     <PackageReference Include="Timewarp.OptionsValidation"/>
     <PackageReference Include="protobuf-net.Grpc"/>
@@ -42,15 +49,22 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="**/*.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!--#if(api)-->
-    <ProjectReference Include="..\..\..\..\..\..\..\microsoft\fluentui-blazor\src\Core\Microsoft.FluentUI.AspNetCore.Components.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\timewarp-source-generators\source\TimeWarp.SourceGenerators\TimeWarp.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\..\Analyzers\TimeWarp.Architecture.Analyzers\TimeWarp.Architecture.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />
     <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj"/>
     <!--#endif-->
     <!--#if(grpc)-->
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj"/>
     <!--#endif-->
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj"/>
-    <ProjectReference Include="D:\git\github\TimeWarpEngineering\blazor-state\Source\BlazorState\BlazorState.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="Web.Spa.Integration.Tests"/>
     <InternalsVisibleTo Include="Web.Server.Integration.Tests"/>
   </ItemGroup>
@@ -59,13 +73,6 @@
     <!--<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />-->
     <Folder Include="Components\Editors\"/>
     <Folder Include="Features\Admin\" />
-    <Folder Include="Features\CurrentUser\" />
-    <Folder Include="Features\Modal\Actions\"/>
-    <Folder Include="Features\Notification\Actions\RemoveNotification\"/>
-    <Folder Include="Features\Notification\Components\"/>
-    <Folder Include="Features\ToDo\Actions"/>
-    <Folder Include="Generated\net8.0\Morris.Moxy\Morris.Moxy.RoslynIncrementalGenerator\"/>
-    <Folder Include="Services\ApiServices\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -78,8 +85,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="Features\Account\Pages\LoginPage\RegisterPasskey.razor" />
+    <AdditionalFiles Include="Features\Authentication\AuthenticationStateListener.razor" />
     <AdditionalFiles Include="Features\Base\StateAccessMixin.mixin"/>
     <AdditionalFiles Include="Mixins\Page.mixin"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Features\ProfileMenu\Components\ProfileDropDown\ProfileDropDown.razor" />
+    <_ContentIncludedByDefault Remove="Features\ProfileMenu\Components\ProfileDropDown\ProfileMenuNavLink.razor" />
+    <_ContentIncludedByDefault Remove="Features\ProfileMenu\Components\ProfileDropDown\ProfileMenuPanel.razor" />
   </ItemGroup>
 
   <!-- Target to copy scoped CSS to a more accessible location -->

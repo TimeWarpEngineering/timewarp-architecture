@@ -5,7 +5,7 @@
   private bool IsActive => ActionTrackingState.IsActive;
 
   private async Task ShowAssemblyInfoModal() =>
-    await Send(new ApplicationState.SetActiveModal.Action(ModalId: AssemblyInfoModal.ModalId));
+    await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
 }
 
 <FluentFooter Class=@BaseCssBuilder.ToString() Style="display: flex; flex-direction: row; height: var(--footer-height)">

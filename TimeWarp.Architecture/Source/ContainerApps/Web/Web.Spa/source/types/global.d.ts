@@ -1,3 +1,5 @@
+import { Spa } from "../Spa.js";
+import type { TimeWarpState } from "/_content/TimeWarp.State/js/TimeWarpState.js";
 interface BlazorMethodReference {
   invokeMethodAsync: (methodName: string, ...args: unknown[]) => Promise<void>;
 }
@@ -7,23 +9,16 @@ interface DisposeHandler {
 }
 
 declare global {
-  let BlazorState: BlazorState;
   function boot(): Promise<void>;
-
-  interface BlazorState {
-    DispatchRequest(requestTypeFullName: string, request: unknown): Promise<void>;
-  }
 
   interface Blazor {
     start(): Promise<void>;
   }
 
   interface Window {
-    BlazorDualMode: BlazorDualMode | undefined;
-    BlazorState: BlazorState;
+    TimeWarpState: TimeWarpState;
     Blazor: Blazor;
-    Spa: typeof import("../Spa").Spa;
-    NotifyLossOfInterest: (elementId: string, blazorMethodReference: BlazorMethodReference) => DisposeHandler; // Added line
+    Spa: Spa;
   }
 }
 

@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspirant.Hosting.Yarp" />
     <PackageReference Include="Aspire.Hosting.AppHost" />
     <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" />
   </ItemGroup>
@@ -18,8 +19,8 @@
     <ProjectReference Include="..\..\Api\Api.Server\Api.Server.csproj" />
     <ProjectReference Include="..\..\Grpc\Grpc.Server\Grpc.Server.csproj" />
     <ProjectReference Include="..\..\Web\Web.Server\Web.Server.csproj" />
-    <ProjectReference Include="..\..\Yarp\Yarp.csproj" />
-    <ProjectReference Include="..\Aspire.Hosting.Yarp\Aspire.Hosting.Yarp.csproj" IsAspireProjectResource="false" />
+<!--    <ProjectReference Include="..\..\Yarp\Yarp.csproj" />-->
+<!--    <ProjectReference Include="..\Aspire.Hosting.Yarp\Aspire.Hosting.Yarp.csproj" IsAspireProjectResource="false" />-->
   </ItemGroup>
 
 </Project>

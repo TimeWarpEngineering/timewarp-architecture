@@ -1,0 +1,78 @@
+@namespace TimeWarp.Architecture.Features.Profiles
+@inherits BaseComponent
+@inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+
+@code {
+  private string PersonaId = "persona";
+  private bool Open = false;
+  private async Task HandleSignIn()
+  {
+    await NoSubRouteState.ChangeRoute(newRoute: "authentication/login");
+  }
+  private void HandleSignOut()
+  {
+    NavigationManager.NavigateToLogout("authentication/logout");
+  }
+  private async Task HandleYourProfile()
+  {
+    await NoSubRouteState.ChangeRoute(newRoute: ProfilePage.GetPageUrl());
+  }
+  private async Task HandleSettings()
+  {
+    await NoSubRouteState.ChangeRoute(newRoute: SettingsPage.GetPageUrl());
+  }
+  protected override async Task OnInitializedAsync()
+  {
+    if (await CheckAuthorization())
+    {
+      await ProfileState.FetchProfileData();
+    }
+  }
+}
+
+<FluentPersona
+  Id=@PersonaId
+  OnClick=@(() => Open = !Open)
+  Image=@ProfileState.Avatar
+  ImageSize="48px"
+  TextPosition="TextPosition.End">
+  <FluentLabel >@ProfileState.Alias</FluentLabel>
+</FluentPersona>
+
+<FluentMenu Anchor=@PersonaId @bind-Open=Open VerticalThreshold="170">
+  <AuthorizeView>
+    <Authorized>
+      <FluentLabel Typo="Typography.Body" Class="w-full m-4">@ProfileState.Alias</FluentLabel>
+      <FluentDivider />
+      <FluentMenuItem OnClick=@HandleYourProfile >
+        <span slot="start">
+          <FluentIcon Value=@(new Icons.Regular.Size20.Person()) Color=Color.Neutral Slot="start" />
+        </span>
+        Profile
+      </FluentMenuItem>
+      <FluentMenuItem OnClick=@HandleSettings >
+        <span slot="start">
+          <FluentIcon Value=@(new Icons.Regular.Size20.Settings()) Color=Color.Neutral Slot="start" />
+        </span>
+        Settings
+      </FluentMenuItem>
+      <FluentMenuItem OnClick=@HandleSignOut>
+        <span slot="start">
+          <FluentIcon Value=@(new Icons.Regular.Size20.SignOut()) Color=Color.Neutral Slot="start" />
+        </span>
+        Sign out
+      </FluentMenuItem>
+    </Authorized>
+    <NotAuthorized>
+      <FluentMenuItem OnClick=@HandleSignIn>
+        <span slot="start">
+          <FluentIcon Value=@(new Icons.Regular.Size20.Person()) Color=Color.Neutral Slot="start" />
+        </span>
+        Sign-in
+      </FluentMenuItem>
+    </NotAuthorized>
+  </AuthorizeView>
+</FluentMenu>
+
+

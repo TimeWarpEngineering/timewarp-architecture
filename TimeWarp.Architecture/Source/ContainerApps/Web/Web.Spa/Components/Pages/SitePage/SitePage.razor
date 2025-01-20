@@ -13,10 +13,20 @@
   // Control the visibility of Panes and Areas
   [Parameter] public bool ShowLeftPane { get; set; } = true;
   [Parameter] public bool ShowSiteFooter { get; set; } = true;
-  [Parameter] public bool ShowPlaceholders { get; set; } = true;
+  [Parameter] public bool ShowPlaceholders { get; set; } = false;
 }
 
-<TimeWarpPage>
+<TimeWarpPage
+  PagePane_HeaderContent=PagePane_HeaderContent
+  PagePane_MainContent=PagePane_MainContent
+  PagePane_FooterContent=PagePane_FooterContent
+  AsidePane_HeaderContent=AsidePane_HeaderContent
+  AsidePane_MainContent=AsidePane_MainContent
+  AsidePane_FooterContent=AsidePane_FooterContent
+  ShowLeftPane=ShowLeftPane
+  ShowSiteFooter=ShowSiteFooter
+  ShowPlaceholders=ShowPlaceholders
+>
   <LeftPane_HeaderContent>
     <LeftPane_Header/>
   </LeftPane_HeaderContent>
@@ -26,9 +36,10 @@
   <LeftPane_FooterContent>
     <LeftPane_Footer/>
   </LeftPane_FooterContent>
+  <RightPane_HeaderContent>
+    <RightPane_Header/>
+  </RightPane_HeaderContent>
   <RightPane_FooterContent>
     <RightPane_Footer/>
   </RightPane_FooterContent>
 </TimeWarpPage>
-
-

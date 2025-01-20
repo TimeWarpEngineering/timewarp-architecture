@@ -25,6 +25,10 @@ public interface IOpenDataQueryParameters
   /// This should be a valid OData filter expression.
   /// </summary>
   /// <value>The filter expression.</value>
+  /// <example>
+  /// $filter=Price lt 20
+  /// $filter=contains(ProductName, 'chair')
+  /// </example>
   string? Filter { get; set; }
 
   /// <summary>

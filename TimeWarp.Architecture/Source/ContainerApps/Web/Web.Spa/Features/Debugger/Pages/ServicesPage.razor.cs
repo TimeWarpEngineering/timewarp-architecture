@@ -1,7 +1,7 @@
 namespace TimeWarp.Architecture.Pages;
 
 [Page("/Services")]
-public partial class ServicesPage
+partial class ServicesPage
 {
   public static string Title => "Services";
 

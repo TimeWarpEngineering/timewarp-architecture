@@ -44,6 +44,10 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
     WebApiTestService = new WebApiTestService(apiService);
   }
 
+  public Task ConfirmEndpointValidationError<TResponse>(IApiRequest apiRequest, string attributeName) =>
+    WebApiTestService.ConfirmEndpointValidationError<TResponse>(apiRequest, attributeName);
+
+  #region IAyncDisposable
   public async ValueTask DisposeAsync()
   {
     Console.WriteLine("==== TestApplication.DisposeAsync ====");
@@ -57,12 +61,11 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
     return WebApplicationHost.DisposeAsync();
   }
 
-  public Task ConfirmEndpointValidationError<TResponse>(IApiRequest apiRequest, string attributeName) =>
-    WebApiTestService.ConfirmEndpointValidationError<TResponse>(apiRequest, attributeName);
+  #endregion
 
   #region IWebApiTestService
 
-  public async Task<OneOf.OneOf<TResponse, SharedProblemDetails>> GetResponse<TResponse>
+  public async Task<OneOf.OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
   (
     IApiRequest apiRequest,
     CancellationToken cancellationToken

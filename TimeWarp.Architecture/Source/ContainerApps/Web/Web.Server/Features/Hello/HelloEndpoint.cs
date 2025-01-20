@@ -1,6 +1,6 @@
 ﻿namespace TimeWarp.Architecture.Features.Hellos;
 
-using static TimeWarp.Architecture.Features.Hellos.Hello;
+using static Hello;
 
 public class HelloEndpoint : BaseEndpoint<Query, Response>
 {
@@ -10,8 +10,8 @@ public class HelloEndpoint : BaseEndpoint<Query, Response>
   /// <param name="query"></param>
   /// <returns></returns>
   /// <returns><see cref="Response"/></returns>
-  [HttpGet(Query.Route)]
-  [SwaggerOperation(Tags = new[] { FeatureAnnotations.FeatureGroup })]
+  [HttpGet(Query.RouteTemplate)]
+  [SwaggerOperation(Tags = [FeatureAnnotations.FeatureGroup])]
   [ProducesResponseType(typeof(Response), (int)HttpStatusCode.OK)]
   [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
   public Task<IActionResult> Process([FromQuery] Query query) => Send(query);

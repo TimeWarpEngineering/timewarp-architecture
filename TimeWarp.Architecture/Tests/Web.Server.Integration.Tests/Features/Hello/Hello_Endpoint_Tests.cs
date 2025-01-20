@@ -13,12 +13,13 @@ public class Returns_
   [UsedImplicitly]
   public async Task Ok_Given_Valid_Request()
   {
-    OneOf<Response, SharedProblemDetails> response =
+    OneOf<Response, FileResponse, SharedProblemDetails> response =
       await WebTestServerApplication.GetResponse<Response>(Query, new CancellationToken());
 
     response.Switch
     (
       ValidateResponse,
+      _ => throw new Exception("File response returned"),
       _ => throw new Exception("Problem details returned")
     );
   }

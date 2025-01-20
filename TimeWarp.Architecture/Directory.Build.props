@@ -14,9 +14,9 @@
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
-    <GenerateRequiresPreviewFeaturesAttribute>true</GenerateRequiresPreviewFeaturesAttribute>
+<!--    <GenerateRequiresPreviewFeaturesAttribute>true</GenerateRequiresPreviewFeaturesAttribute>-->
     <ImplicitUsings>enable</ImplicitUsings>
-    <LangVersion>preview</LangVersion>
+    <LangVersion>latest</LangVersion>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Nullable>disable</Nullable>
     <TargetFramework>net8.0</TargetFramework>
@@ -40,6 +40,13 @@
       <EmbeddedResource Include="@(None -> WithMetadataValue('Extension', '.cstemplate'))" />
     </ItemGroup>
   </Target>
+
+
+  <ItemGroup>
+    <!--  https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/ide0130-->
+    <CompilerVisibleProperty Include="RootNamespace" />
+    <CompilerVisibleProperty Include="ProjectDir" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="GlobalUsingsAnalyzer">

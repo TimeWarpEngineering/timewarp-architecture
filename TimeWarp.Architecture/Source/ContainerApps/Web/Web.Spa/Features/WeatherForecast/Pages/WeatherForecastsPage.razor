@@ -1,6 +1,12 @@
 @namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
+@code
+{
+  [Parameter] [SupplyParameterFromQuery] public int? Days { get; set; }
 
+  protected override async Task OnInitializedAsync() =>
+    await WeatherForecastsState.FetchWeatherForecasts(Days);
+}
 <StackedPage>
   <HeaderContent>Weather Forecasts</HeaderContent>
   <MainContent>

@@ -1,36 +1,39 @@
 namespace TimeWarp.Architecture.Features;
 
-/// <summary>
-/// Constructs a URL-encoded query string from the specified <see cref="NameValueCollection"/>.
-/// </summary>
-/// <param name="apiRequest">The <see cref="IApiRequest"/> instance on which the extension method is called.</param>
-/// <param name="parameters">The collection of name and value pairs to convert into a query string.</param>
-/// <returns>A URL-encoded query string.</returns>
-/// <exception cref="ArgumentNullException">Thrown when <paramref name="parameters"/> is null.</exception>
-/// <remarks>
-/// This method iterates through all keys in the <paramref name="parameters"/> collection
-/// and adds them to a query string, ignoring any keys that have null or empty values.
-/// The resulting query string is properly URL-encoded.
-/// </remarks>
 public static class ApiRequestExtensions
 {
-  public static string GetQueryString(this IApiRequest apiRequest, NameValueCollection parameters)
+  /// <summary>
+  /// Constructs a URL-encoded query string from the specified <see cref="NameValueCollection"/>.
+  /// </summary>
+  /// <returns>A URL-encoded query string.</returns>
+  /// <exception cref="ArgumentNullException">Thrown when <paramref name="parameters"/> is null.</exception>
+  /// <remarks>
+  /// This method iterates through all keys in the <paramref name="parameters"/> collection
+  /// and adds them to a query string, ignoring any keys that have null or empty values.
+  /// The resulting query string is properly URL-encoded.
+  /// </remarks>
+  public static string GetQueryString(this IApiRequest _, NameValueCollection parameters)
   {
     ArgumentNullException.ThrowIfNull(parameters);
 
-    NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
+    List<string> queryString = [];
     foreach (string? key in parameters.AllKeys)
     {
-      // Assuming parameters.AllKeys does not contain null based on NameValueCollection behavior
-      string? value = parameters[key];
-      if (!string.IsNullOrEmpty(value))
+      if (key == null) continue;
+      string[] values = parameters.GetValues(key) ?? Array.Empty<string>();
+      IEnumerable<string> encodedValues = values
+        .SelectMany(v => v.Split(','))
+        .Where(v => !string.IsNullOrEmpty(v))
+        .Select(Uri.EscapeDataString);
+      IEnumerable<string> enumerable = encodedValues as string[] ?? encodedValues.ToArray();
+      if (enumerable.Any())
       {
-        queryString[key] = value;
+        queryString.Add($"{Uri.EscapeDataString(key)}={string.Join(separator: ",", enumerable)}");
       }
     }
 
     // Check for null before returning.
     // Although in this context, queryString.ToString() should never be null.
-    return queryString.ToString() ?? string.Empty;
+    return string.Join(separator: "&", queryString);
   }
 }

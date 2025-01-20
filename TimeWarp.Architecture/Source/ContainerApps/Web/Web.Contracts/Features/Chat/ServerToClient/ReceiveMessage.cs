@@ -12,11 +12,8 @@ public static partial class ReceiveMessage
     {
         public Validator()
         {
-            RuleFor(x => x.User)
-                .NotEmpty();
-
-            RuleFor(x => x.Message)
-                .NotEmpty();
+            RuleFor(x => x.User).NotEmpty();
+            RuleFor(x => x.Message).NotEmpty();
         }
     }
 }

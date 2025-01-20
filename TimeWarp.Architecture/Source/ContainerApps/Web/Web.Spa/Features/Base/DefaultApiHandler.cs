@@ -12,15 +12,21 @@ internal abstract class DefaultApiHandler<TAction, TRequest, TResponse> : ApiHan
     IStore store,
     IApiService apiService,
     ISender sender,
+    ILogger<DefaultApiHandler<TAction, TRequest, TResponse>> logger,
+    IValidator<TRequest>? validator = null,
     AuthenticationStateProvider? authenticationStateProvider = null
-  ) : base(store, apiService, authenticationStateProvider)
+  ) : base(store, apiService, logger, validator, authenticationStateProvider)
   {
     Sender = sender;
   }
 
+  protected override Task HandleFileResponse(FileResponse fileResponse, CancellationToken cancellationToken)
+  {
+    throw new NotImplementedException();
+  }
+
   protected override async Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken)
   {
-    // Send a toast notification when an error occurs
-    await Sender.Send(new ToastNotificationState.AddProblemDetails.Action(problemDetails), cancellationToken);
+    await ToastNotificationState.AddProblemDetails(problemDetails, cancellationToken);
   }
 }

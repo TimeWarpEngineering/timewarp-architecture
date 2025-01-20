@@ -1,0 +1,40 @@
+@inherits BaseComponent
+@using TimeWarp.Architecture.Features.Profiles
+@using TimeWarp.Features.Theme
+
+<FluentHeader Class=@Id Height=@(null) >
+  <FluentStack Orientation=Orientation.Horizontal VerticalAlignment=VerticalAlignment.Center>
+    <FluentTextField
+      Placeholder="Search">
+      <span class="search-end" slot="end">
+        Ctrl-K
+      </span>
+    </FluentTextField>
+    <FluentSpacer />
+    <FluentButton Appearance=Appearance.Stealth OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark)) >
+      <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color=Color.Neutral />
+    </FluentButton>
+    <Profile />
+  </FluentStack>
+</FluentHeader>
+
+<style>
+  @($@"
+    .{Id}.header {{
+      height: var(--header-height);
+    }}
+
+    .{Id} fluent-text-field {{
+      width: 50%
+    }}
+
+    .{Id} .search-end {{
+      text-align: right;
+      display: inline-block;
+      white-space: nowrap;
+      width: auto;
+      min-width: fit-content;
+    }}
+
+  ")
+</style>

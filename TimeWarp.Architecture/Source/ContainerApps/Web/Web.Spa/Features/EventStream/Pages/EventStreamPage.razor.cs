@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Pages;
 
 [UsedImplicitly]
 [Page("/EventStream")]
-public partial class EventStreamPage : BaseComponent
+partial class EventStreamPage
 {
     public static string Title => "Event Stream";
 }

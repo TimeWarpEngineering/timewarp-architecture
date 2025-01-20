@@ -57,17 +57,17 @@ public class Program
     serviceCollection.AddBlazoredLocalStorage();
 
     ConfigureSettings(serviceCollection, configuration);
-    serviceCollection.AddBlazorState
+    serviceCollection.AddTimeWarpState
     (
-      blazorStateOptions =>
+      timeWarpStateOptions =>
       {
         //-:cnd:noEmit
 #if DEBUG
-        blazorStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
+        timeWarpStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
 #endif
         //+:cnd:noEmit
 
-        blazorStateOptions.Assemblies =
+        timeWarpStateOptions.Assemblies =
           new[]
           {
             // ReSharper disable once RedundantNameQualifier
@@ -96,10 +96,11 @@ public class Program
     // );
 
     serviceCollection.AddScoped<ChatHubConnection>();
+    serviceCollection.AddScoped<PasswordlessService>();
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
 
-    // TODO: Look into naming of the services. I think we can clear up the naming.
+    // We are using a factory here to explicitly determine which constructor to use for DI.
     serviceCollection.AddScoped<IWebServerApiService>
     (
       serviceProvider =>
@@ -107,17 +108,26 @@ public class Program
         IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
         IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
         IOptions<JsonSerializerOptions> options = serviceProvider.GetRequiredService<IOptions<JsonSerializerOptions>>();
-        return new WebServerApiService(accessTokenProvider, httpClientFactory, options);
+        var realService = new WebServerApiService(accessTokenProvider, httpClientFactory, options);
+        #if MOCK_WEB_API
+        ILogger<MockWebApiService> logger = serviceProvider.GetRequiredService<ILogger<MockWebApiService>>();
+        return new MockWebApiService(realService, logger, serviceProvider);
+        #else
+        return realService; // Comment out to use the mock service
+        #endif
       }
     );
 
+    // We are using a factory here to explicitly determine which constructor to use for DI.
     serviceCollection.AddScoped<IApiServerApiService>
     (
       serviceProvider =>
       {
         IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+        IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
         IOptions<JsonSerializerOptions> options = serviceProvider.GetRequiredService<IOptions<JsonSerializerOptions>>();
-        return new ApiServerApiService(httpClientFactory, options);
+
+        return new ApiServerApiService(httpClientFactory, accessTokenProvider, options);
       }
     );
 
@@ -138,12 +148,13 @@ public class Program
     serviceCollection.AddSingleton(serviceCollection);
   }
 
-  private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    aServiceCollection
-      // .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(aConfiguration)
-      .ConfigureOptions<BlazorSettings, BlazorSettingsValidator>(aConfiguration);
+    serviceCollection
+      // .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(configuration)
+      .ConfigureOptions<BlazorSettings, BlazorSettingsValidator>(configuration)
+      .ConfigureOptions<PasswordlessOptions, PasswordlessOptionsValidator>(configuration);
 
-    //aServiceCollection.ValidateOptions();
+    //serviceCollection.ValidateOptions();
   }
 }

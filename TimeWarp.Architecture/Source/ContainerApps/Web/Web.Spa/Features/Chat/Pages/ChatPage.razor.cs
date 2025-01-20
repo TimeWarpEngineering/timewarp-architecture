@@ -4,7 +4,7 @@ using static ChatState;
 
 [UsedImplicitly]
 [Page("/Chat")]
-public partial class ChatPage
+partial class ChatPage
 {
   private string User { get; set; } = string.Empty;
   private string Message { get; set; } = string.Empty;
@@ -22,13 +22,15 @@ public partial class ChatPage
   {
     if (!string.IsNullOrEmpty(User) && !string.IsNullOrEmpty(Message) && ChatHubConnection.IsConnected)
     {
-      var sendMessageAction =
-        new ClientToServerMessage.Action
-        (
-          new SendMessage.Command { User = User, Message = Message}
-        );
+      await ChatState.SendMessageToServer
+      (
+        new SendMessage.Command
+        {
+          User = User,
+          Message = Message
+        }
+      );
 
-      await Send(sendMessageAction);
       Message = string.Empty;
     }
   }

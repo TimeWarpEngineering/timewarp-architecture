@@ -18,6 +18,7 @@ global using Microsoft.Extensions.Diagnostics.HealthChecks;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Options;
 global using Microsoft.Identity.Web;
+global using Microsoft.JSInterop;
 global using Microsoft.OpenApi.Models;
 #if(postgres)
 global using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
@@ -26,6 +27,7 @@ global using Oakton;
 global using Oakton.Environment;
 global using OneOf;
 global using OneOf.Types;
+global using Passwordless;
 global using Serilog.Core;
 global using Serilog.Debugging;
 global using Swashbuckle.AspNetCore.Annotations;

@@ -10,5 +10,5 @@
 
 @code
 {
-  protected async Task ButtonClick() => await Send(new CounterState.IncrementCounter.Action(Amount: 5));
+  protected async Task ButtonClick() => await CounterState.IncrementCounter(5);
 }

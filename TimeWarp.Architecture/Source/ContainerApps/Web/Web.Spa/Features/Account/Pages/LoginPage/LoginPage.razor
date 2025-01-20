@@ -1,5 +1,27 @@
 @namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
+@inject IJSRuntime JSRuntime
+@code {
+  private async Task SignInWithPasskey()
+  {
+    var result = await JSRuntime.InvokeAsync<SignInResult>("passwordless.signinWithDiscoverable");
+    if (result.Error != null)
+    {
+      // Handle error
+    }
+    else
+    {
+      // Send result.Token to backend to verify and get the userId
+    }
+  }
+
+  private class SignInResult
+  {
+    public string? Token { get; set; }
+    public string? Error { get; set; }
+  }
+}
+
 <StackedPage>
   <HeaderContent>Login Page</HeaderContent>
   <MainContent>
@@ -7,18 +29,17 @@
       <div class="max-w-md w-full">
         <div>
           <img class="mx-auto h-24 w-auto" src="@ApplicationState.Logo" alt="Workflow">
-          <h2 class="mt-6 text-center text-3xl leading-9 font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
+          <button @onclick="SignInWithPasskey">Sign in to your account</button>
           <p class="mt-2 text-center text-sm leading-5 text-gray-600">
             Or
             <a href="#" class="font-medium text-primary-600 hover:text-primary-500 focus:outline-none focus:underline transition ease-in-out duration-150">
               start your 14-day free trial
             </a>
+            <RegisterPasskey />
           </p>
         </div>
-        <LoginForm />
       </div>
     </div>
   </MainContent>
 </StackedPage>
+

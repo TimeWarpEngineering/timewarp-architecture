@@ -2,19 +2,10 @@
 
 public static partial class Hello
 {
-  public sealed class Query : BaseRequest, IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  [RouteMixin(RouteTemplate: "api/Hello", HttpVerb.Get)]
+  public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {
-    public const string Route = "Hello";
-
     public string? Name { get; set; }
-
-    public HttpVerb GetHttpVerb() => HttpVerb.Get;
-    public string GetRoute() => $"{Route}?{nameof(Name)}={Name}";
-  }
-
-  public sealed class Response : BaseResponse
-  {
-    public string? Message { get; set; }
   }
 
   public class Validator : AbstractValidator<Query>
@@ -24,5 +15,10 @@ public static partial class Hello
       RuleFor(command => command.Name)
         .NotEmpty();
     }
+  }
+
+  public sealed class Response : BaseResponse
+  {
+    public string? Message { get; init; }
   }
 }
