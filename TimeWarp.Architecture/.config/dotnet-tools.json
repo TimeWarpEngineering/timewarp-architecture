@@ -3,16 +3,9 @@
   "isRoot": true,
   "tools": {
     "fixie.console": {
-      "version": "3.4.0",
+      "version": "4.1.0",
       "commands": [
         "fixie"
-      ],
-      "rollForward": false
-    },
-    "microsoft.tye": {
-      "version": "0.11.0-alpha.22111.1",
-      "commands": [
-        "tye"
       ],
       "rollForward": false
     },
@@ -24,7 +17,7 @@
       "rollForward": false
     },
     "dotnet-depends": {
-      "version": "0.6.1",
+      "version": "0.8.0",
       "commands": [
         "dotnet-depends"
       ],
@@ -38,28 +31,28 @@
       "rollForward": false
     },
     "dotnet-serve": {
-      "version": "1.10.112",
+      "version": "1.10.175",
       "commands": [
         "dotnet-serve"
       ],
       "rollForward": false
     },
     "dotnet-trace": {
-      "version": "6.0.328102",
+      "version": "9.0.553101",
       "commands": [
         "dotnet-trace"
       ],
       "rollForward": false
     },
     "microsoft.dotnet-httprepl": {
-      "version": "6.0.0",
+      "version": "8.0.0",
       "commands": [
         "httprepl"
       ],
       "rollForward": false
     },
     "dotnet-outdated-tool": {
-      "version": "4.5.3",
+      "version": "4.6.4",
       "commands": [
         "dotnet-outdated"
       ],
