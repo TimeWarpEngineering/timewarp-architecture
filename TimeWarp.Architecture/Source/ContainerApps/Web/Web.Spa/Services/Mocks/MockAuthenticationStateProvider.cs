@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Services;
 
-public class MockAuthenticationStateProvider : AuthenticationStateProvider
+public partial class MockAuthenticationStateProvider : AuthenticationStateProvider
 {
   public override Task<AuthenticationState> GetAuthenticationStateAsync()
   {

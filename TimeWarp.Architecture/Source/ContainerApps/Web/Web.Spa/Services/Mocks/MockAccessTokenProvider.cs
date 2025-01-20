@@ -1,5 +1,5 @@
 namespace TimeWarp.Architecture.Services;
-public class MockAccessTokenProvider : IAccessTokenProvider
+public partial class MockAccessTokenProvider : IAccessTokenProvider
 {
   public ValueTask<AccessTokenResult> RequestAccessToken(AccessTokenRequestOptions options)
   {
