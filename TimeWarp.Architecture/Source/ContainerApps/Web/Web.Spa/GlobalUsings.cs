@@ -1,4 +1,5 @@
 ﻿global using Ardalis.GuardClauses;
+global using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons;
 global using TimeWarp.State;
 global using Blazored.LocalStorage;
 global using Blazored.SessionStorage;
