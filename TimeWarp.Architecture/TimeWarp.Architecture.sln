@@ -28,6 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Solution Items", "03-Sol
 		UNLICENSE.md = UNLICENSE.md
 		Watch.ps1 = Watch.ps1
 		RunRelease.ps1 = RunRelease.ps1
+		CSS Bundle Hash Management in Blazor with Tailwind.md = CSS Bundle Hash Management in Blazor with Tailwind.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04-Tests", "04-Tests", "{2902FDFD-016E-4BF7-8B41-53D674FA53DD}"
