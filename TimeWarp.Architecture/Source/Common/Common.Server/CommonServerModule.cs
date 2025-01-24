@@ -87,9 +87,9 @@ public class CommonServerModule : IAspNetModule
       );
   }
 
-  private static void ConfigureAzureAppConfig(IConfigurationManager aConfigurationManager)
+  private static void ConfigureAzureAppConfig(IConfigurationManager configurationManager)
   {
-    string? connectionString = aConfigurationManager.GetConnectionString("AppConfig");
+    string? connectionString = configurationManager.GetConnectionString("AppConfig");
     if (string.IsNullOrEmpty(connectionString))
     {
       Console.WriteLine("No AppConfig ConnectionString");
@@ -98,18 +98,18 @@ public class CommonServerModule : IAspNetModule
 
     Console.WriteLine($"connectionString: {connectionString}");
 
-    aConfigurationManager.AddAzureAppConfiguration
+    configurationManager.AddAzureAppConfiguration
     (
-      aAzureAppConfigurationOptions =>
-        aAzureAppConfigurationOptions
+      azureAppConfigurationOptions =>
+        azureAppConfigurationOptions
           .Connect(connectionString)
           .UseFeatureFlags()
           .ConfigureRefresh
           (
-            aAzureAppConfigurationRefreshOptions =>
-              aAzureAppConfigurationRefreshOptions
+            azureAppConfigurationRefreshOptions =>
+              azureAppConfigurationRefreshOptions
                 .Register("Sentinel", refreshAll: true)
-                .SetCacheExpiration(TimeSpan.FromMinutes(5))
+                .SetRefreshInterval(TimeSpan.FromMinutes(5))
           )
           .ConfigureKeyVault
           (
@@ -119,7 +119,7 @@ public class CommonServerModule : IAspNetModule
       optional: false
     );
 
-    string? testValue = aConfigurationManager.GetValue<string>("TestValue");
+    string? testValue = configurationManager.GetValue<string>("TestValue");
     Console.WriteLine($"App Config value TestValue: {testValue}");
   }
 

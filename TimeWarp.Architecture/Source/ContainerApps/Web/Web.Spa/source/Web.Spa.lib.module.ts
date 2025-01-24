@@ -3,12 +3,18 @@ import { Spa } from "./Spa.js";
 import { Counter } from "./features/Counter.js";
 import { timeWarpState } from "/_content/TimeWarp.State/js/TimeWarpState.js";
 import { log, LogAction } from "/_content/TimeWarp.State/js/Logger.js";
-import { TimeWarpStateName, InitializeJavaScriptInteropName, ReduxDevToolsFactoryName, ReduxDevToolsName } from "/_content/TimeWarp.State/js/Constants.js";
+import {
+  TimeWarpStateName,
+  InitializeJavaScriptInteropName,
+  ReduxDevToolsFactoryName,
+  ReduxDevToolsName,
+} from "/_content/TimeWarp.State/js/Constants.js";
+import "/_content/TimeWarp.State.Plus/js/downloadFile.js";
 
 // https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/startup?view=aspnetcore-7.0&source=docs
 // at this point the blazor is not yet initialized
 // initialize the items you want attached to window here.
- 
+
 function initializeEnvironment() {
   console.log("****initializeEnvironment Web.Spa ****");
   Spa.Counter = Counter;
