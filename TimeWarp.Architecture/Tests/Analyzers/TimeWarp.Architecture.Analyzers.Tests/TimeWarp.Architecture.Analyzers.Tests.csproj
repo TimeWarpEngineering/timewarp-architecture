@@ -9,6 +9,7 @@
     <PackageReference Include="Fixie.TestAdapter" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
     <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
 
