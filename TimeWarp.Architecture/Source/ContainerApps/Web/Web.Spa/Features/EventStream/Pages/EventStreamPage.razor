@@ -1,6 +1,13 @@
 @namespace TimeWarp.Architecture.Pages
 
 @inherits BaseComponent
+
+@code{
+  public static string Title => "Event Stream";
+  public static readonly RenderFragment NavLink =
+    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+}
+
 <PageTitle>Event Stream Page</PageTitle>
 
 <StackedPage>

@@ -2,6 +2,12 @@
 @inherits BaseComponent
 @using TimeWarp.Architecture.Components.Pages.SitePage
 
+@code{
+  private static string Title => "Example SitePage";
+  public static readonly RenderFragment NavLink =
+    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+}
+
 <SitePage>
   <PagePane_HeaderContent>
     PagePane_HeaderContent

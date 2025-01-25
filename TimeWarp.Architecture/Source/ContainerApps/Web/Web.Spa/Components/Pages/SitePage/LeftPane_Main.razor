@@ -7,22 +7,19 @@
 <FluentNavMenu Class=@BaseCssBuilder.ToString()>
   @HomePage.NavLink
   <FluentNavGroup Title="Pages">
-    @* @CounterPage.NavLink *@
+    @CounterPage.NavLink
     @WeatherForecastsPage.NavLink
-    @* @SuperherosPage.NavLink *@
+    @SuperheroPage.NavLink
     @ChatPage.NavLink
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Counter</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Weather</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Superheros</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Chat</FluentNavLink>
   </FluentNavGroup>
   <FluentNavGroup Title="Developer">
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@ExampleTimeWarpPage.GetPageUrl() Match=NavLinkMatch.All>Example TimeWarpPage</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@ExampleSitePage.GetPageUrl() Match=NavLinkMatch.All>Example SitePage</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>TestPage</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Event Stream</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Services</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Claims</FluentNavLink>
+    @* <TimeWarpNavLink TPage=TestPage> TODO:  *@
+    @ExampleTimeWarpPage.NavLink
+    @ExampleSitePage.NavLink
+    @TestPage.NavLink
+    @EventStreamPage.NavLink
+    @ServicesPage.NavLink
+    @UserClaimsPage.NavLink
   </FluentNavGroup>
   <FluentNavGroup Title="Open API">
     <FluentNavLink Icon=@(new Icons.Regular.Size20.Book()) Href="/" Match=NavLinkMatch.All>Web-Server</FluentNavLink>
@@ -34,7 +31,7 @@
       <TimeWarp.Simple.Icons.GithubIcon class="w-5 h-5 fill-slate-400" /> GitHub
     </FluentNavLink>
   </FluentNavGroup>
-  <FluentNavLink Icon=@(new Icons.Regular.Size20.Settings()) Href="/" Match=NavLinkMatch.All>Settings</FluentNavLink>
+  @SettingsPage.NavLink
 </FluentNavMenu>
 
 <style>

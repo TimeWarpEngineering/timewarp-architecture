@@ -1,6 +1,12 @@
 @namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
 
+@code {
+  private static string Title => "Example TimeWarp";
+  public static readonly RenderFragment NavLink =
+    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+}
+
 <TimeWarpPage ShowPlaceholders=true>
   <LeftPane_HeaderContent>
     LeftPane_HeaderContent

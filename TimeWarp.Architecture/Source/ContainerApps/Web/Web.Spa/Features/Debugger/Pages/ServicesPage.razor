@@ -1,6 +1,12 @@
 ﻿@namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
 
+@code {
+  public static string Title => "Services";
+  public static readonly RenderFragment NavLink =
+    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+}
+
 <StackedPage>
     <HeaderContent>Middleware Services</HeaderContent>
     <MainContent>

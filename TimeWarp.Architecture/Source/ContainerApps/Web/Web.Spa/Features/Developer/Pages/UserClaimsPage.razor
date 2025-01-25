@@ -1,6 +1,14 @@
+@namespace TimeWarp.Architecture.Pages
 @page "/UserClaims"
 @using TimeWarp.Architecture.Features.Developer.Components
 @using TimeWarp.Architecture.Features.Sidebars
+@inherits BaseComponent
+
+@code {
+  private static string Title => "User Claims";
+  public static readonly RenderFragment NavLink =
+    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+}
 
 <SidebarPage>
   <MainContent>

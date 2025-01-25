@@ -1,6 +1,12 @@
 ﻿@namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
 
+@code {
+  private static string Title => "Superhero";
+  public static readonly RenderFragment NavLink =
+    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+}
+
 <StackedPage>
   <HeaderContent>Superheros</HeaderContent>
   <MainContent>
@@ -10,7 +16,7 @@
     }
     else
     {
-      <table class="mt-4 min-w-full divide-y divide-gray-200" data-qa="SuperheroTable">
+      <table class="min-w-full mt-4 divide-y divide-gray-200" data-qa="SuperheroTable">
         <thead>
           <tr>
             <TableHeader>Number</TableHeader>
@@ -36,5 +42,4 @@
     }
 
   </MainContent>
-</StackedPage> 
-
+</StackedPage>
