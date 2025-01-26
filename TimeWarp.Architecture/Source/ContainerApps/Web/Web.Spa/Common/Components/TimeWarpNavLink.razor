@@ -3,8 +3,8 @@
 @typeparam TPage where TPage : ITimeWarpPage
 
 <FluentNavLink
-    Href="@TPage.GetPageUrl()"
+    Icon=@TPage.NavIcon
+    Href=@TPage.GetPageUrl()
     Match="NavLinkMatch.All">
-    @TPage.NavigationIconContent
     @TPage.Title
 </FluentNavLink>

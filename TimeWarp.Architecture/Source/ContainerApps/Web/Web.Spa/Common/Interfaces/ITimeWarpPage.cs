@@ -4,5 +4,5 @@ public interface ITimeWarpPage
 {
     static abstract string GetPageUrl();
     static abstract string Title { get; }
-    static abstract RenderFragment NavigationIconContent { get; }
+    static abstract Icon? NavIcon { get; }
 }
