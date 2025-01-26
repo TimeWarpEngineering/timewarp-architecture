@@ -1,0 +1,10 @@
+@namespace TimeWarp.Architecture.Common.Components
+@using TimeWarp.Architecture.Common.Interfaces
+@typeparam TPage where TPage : ITimeWarpPage
+
+<FluentNavLink
+    Href="@TPage.GetPageUrl()"
+    Match="NavLinkMatch.All">
+    @TPage.NavigationIconContent
+    @TPage.Title
+</FluentNavLink>
