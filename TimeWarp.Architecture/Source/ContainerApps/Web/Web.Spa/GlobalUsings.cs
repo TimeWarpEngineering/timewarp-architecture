@@ -27,6 +27,7 @@ global using Microsoft.FluentUI.AspNetCore.Components;
 global using Microsoft.FluentUI.AspNetCore.Components.Utilities;
 global using Microsoft.JSInterop;
 global using OneOf;
+global using TimeWarp.Architecture.Common.Interfaces;
 global using TimeWarp.Features.JavaScriptInterop;
 global using TimeWarp.Features.ReduxDevTools;
 global using TimeWarp.Features.Routing;

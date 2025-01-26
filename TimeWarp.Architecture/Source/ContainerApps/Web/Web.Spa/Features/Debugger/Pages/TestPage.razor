@@ -1,11 +1,11 @@
 ﻿﻿@namespace TimeWarp.Architecture.Pages
 @using TimeWarp.Architecture.Features.Sidebars
+@using TimeWarp.Architecture.Common.Interfaces
 @inherits BaseComponent
 
 @code {
-  public static string Title => "Test";
-  public static readonly RenderFragment NavLink =
-    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+    public static string Title => "Test";
+    public static Icon? NavIcon => new Icons.Regular.Size20.Question();
 }
 
 <SidebarPage>
