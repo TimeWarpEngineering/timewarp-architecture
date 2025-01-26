@@ -20,7 +20,7 @@ public interface ITimeWarpPage
 {
     static abstract string GetPageUrl();
     static abstract string Title { get; }
-    static abstract Icons.Regular.Size20.IRegularIcon Icon { get; }
+    static abstract RenderFragment NavigationIconContent { get; }
 }
 ```
 
@@ -34,7 +34,7 @@ public interface ITimeWarpPage
 public partial class TestPage : ITimeWarpPage
 {
     public static string Title => "Test";
-    public static Icons.Regular.Size20.IRegularIcon Icon => new Icons.Regular.Size20.Question();
+    public static RenderFragment NavigationIconContent => @<Icons.Regular.Size20.Question />;
     public static string GetPageUrl() => "/Debugger/Test";
 }
 ```
