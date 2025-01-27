@@ -5,9 +5,8 @@
 @inherits BaseComponent
 
 @code {
-  private static string Title => "User Claims";
-  public static readonly RenderFragment NavLink =
-    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+  public static string Title => "User Claims";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
 }
 
 <SidebarPage>

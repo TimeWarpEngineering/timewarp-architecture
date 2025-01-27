@@ -4,12 +4,11 @@
 {
   [Parameter] [SupplyParameterFromQuery] public int? Days { get; set; }
 
-  private static string Title => "Weather";
+  public static string Title => "Weather";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+
   protected override async Task OnInitializedAsync() =>
     await WeatherForecastsState.FetchWeatherForecasts(Days);
-
-  public static readonly RenderFragment NavLink =
-    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Home()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
 }
 <StackedPage>
   <HeaderContent>Weather Forecasts</HeaderContent>

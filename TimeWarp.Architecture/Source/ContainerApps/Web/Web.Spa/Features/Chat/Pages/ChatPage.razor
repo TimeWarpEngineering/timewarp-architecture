@@ -3,10 +3,10 @@
 
 @code
 {
-  private static string Title => "Chat";
-  public static readonly RenderFragment NavLink =
-    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+  public static string Title => "Chat";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
 }
+
 <PageTitle>TimeWarp.Architecture Chat</PageTitle>
 <StackedPage>
     <HeaderContent>Chat</HeaderContent>

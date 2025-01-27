@@ -6,6 +6,9 @@
 @inject ILogger<HomePage> Logger
 @code
 {
+  public static Icon? NavIcon => new Icons.Regular.Size20.Home();
+  public static string Title => "Home";
+
   private async Task FiveSecondTaskButtonClick() =>
     await ApplicationState.FiveSecondTask(CancellationToken.None);
 
@@ -24,10 +27,7 @@
     // Logger.LogError("This is an error message");
     // Logger.LogCritical("This is a critical message");
   }
-  public static string Title => "Home";
 
-  public static readonly RenderFragment NavLink =
-    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Home()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
 }
 
 <SitePage>

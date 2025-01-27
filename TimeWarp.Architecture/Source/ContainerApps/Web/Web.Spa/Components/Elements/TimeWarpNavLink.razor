@@ -1,10 +1,9 @@
 @namespace TimeWarp.Architecture.Components
-@using TimeWarp.Architecture.Common.Interfaces
-@typeparam TPage where TPage : ITimeWarpPage
+@typeparam TPage where TPage : INavigableComponent, IStaticRoute
 
 <FluentNavLink
-    Icon=@TPage.NavIcon
-    Href=@TPage.GetPageUrl()
-    Match="NavLinkMatch.All">
-    @TPage.Title
+  Icon=TPage.NavIcon
+  Href=@TPage.GetPageUrl()
+  Match=NavLinkMatch.All>
+  @TPage.Title
 </FluentNavLink>

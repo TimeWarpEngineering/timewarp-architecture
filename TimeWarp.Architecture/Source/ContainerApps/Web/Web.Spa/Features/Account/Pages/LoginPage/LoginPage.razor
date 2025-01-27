@@ -1,7 +1,11 @@
 @namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
 @inject IJSRuntime JSRuntime
+
 @code {
+  public static string Title => "Logout";
+  public static Icon? NavIcon => new Icons.Regular.Size20.ArrowEnter();
+
   private async Task SignInWithPasskey()
   {
     var result = await JSRuntime.InvokeAsync<SignInResult>("passwordless.signinWithDiscoverable");

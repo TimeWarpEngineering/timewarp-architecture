@@ -5,20 +5,20 @@
 }
 
 <FluentNavMenu Class=@BaseCssBuilder.ToString()>
-  @HomePage.NavLink
+  <TimeWarpNavLink TPage=HomePage />
   <FluentNavGroup Title="Pages">
-    @CounterPage.NavLink
-    @WeatherForecastsPage.NavLink
-    @SuperheroPage.NavLink
-    @ChatPage.NavLink
+    <TimeWarpNavLink TPage=CounterPage />
+    <TimeWarpNavLink TPage=WeatherForecastsPage />
+    <TimeWarpNavLink TPage=SuperheroPage />
+    <TimeWarpNavLink TPage=ChatPage />
   </FluentNavGroup>
   <FluentNavGroup Title="Developer">
-    @ExampleTimeWarpPage.NavLink
-    @ExampleSitePage.NavLink
-    <TimeWarpNavLink TPage="TestPage" />
-    @EventStreamPage.NavLink
-    @ServicesPage.NavLink
-    @UserClaimsPage.NavLink
+    <TimeWarpNavLink TPage=ExampleTimeWarpPage />
+    <TimeWarpNavLink TPage=ExampleSitePage />
+    <TimeWarpNavLink TPage=TestPage />
+    <TimeWarpNavLink TPage=EventStreamPage />
+    <TimeWarpNavLink TPage=ServicesPage />
+    <TimeWarpNavLink TPage=UserClaimsPage />
   </FluentNavGroup>
   <FluentNavGroup Title="Open API">
     <FluentNavLink Icon=@(new Icons.Regular.Size20.Book()) Href="/" Match=NavLinkMatch.All>Web-Server</FluentNavLink>
@@ -30,7 +30,7 @@
       <TimeWarp.Simple.Icons.GithubIcon class="w-5 h-5 fill-slate-400" /> GitHub
     </FluentNavLink>
   </FluentNavGroup>
-  @SettingsPage.NavLink
+  <TimeWarpNavLink TPage=SettingsPage />
 </FluentNavMenu>
 
 <style>

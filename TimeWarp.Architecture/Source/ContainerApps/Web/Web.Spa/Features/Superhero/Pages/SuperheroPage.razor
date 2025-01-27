@@ -2,9 +2,8 @@
 @inherits BaseComponent
 
 @code {
-  private static string Title => "Superhero";
-  public static readonly RenderFragment NavLink =
-    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+  public static string Title => "Superhero";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
 }
 
 <StackedPage>

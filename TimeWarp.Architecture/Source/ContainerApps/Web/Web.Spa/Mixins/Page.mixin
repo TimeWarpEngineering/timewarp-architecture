@@ -48,13 +48,14 @@
   $routeAttributeString = $urlSegmentsForRouteAttribute | array.join("/");
   $getRouteSignatureSource = $getRouteMethodParameterSources | array.join(", ")
   $getRouteFormat = $getRouteMethodFormatParts | array.join("/")
+  $hasParameters = $routeParameterTypesAndNames | array.size > 0
 -}}
 
 namespace {{ moxy.Class.Namespace }}
 {
   using Microsoft.AspNetCore.Components;
   [Route("{{ $routeAttributeString }}")]
-  partial class {{ moxy.Class.Name }}
+  partial class {{ moxy.Class.Name }} : INavigableComponent {{ if !$hasParameters }} , IStaticRoute{{ end }}
   {
     public static string GetPageUrl({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
     {{ $parametersSource -}}

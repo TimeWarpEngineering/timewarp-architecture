@@ -4,9 +4,8 @@
 
 @inject IJSRuntime JsRuntime
 @code {
-  private static string Title => "Counter";
-  public static readonly RenderFragment NavLink =
-    @<FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@GetPageUrl() Match=NavLinkMatch.All>@Title</FluentNavLink>;
+  public static string Title => "Counter";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
 
   private async Task IncrementCountViaJsInterop()
   {
