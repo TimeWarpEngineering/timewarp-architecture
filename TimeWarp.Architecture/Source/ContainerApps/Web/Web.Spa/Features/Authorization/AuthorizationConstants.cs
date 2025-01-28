@@ -4,6 +4,9 @@ public static class AuthorizationConstants
 {
   public static class Policies
   {
+    // General
+    public const string Anonymous = nameof(Anonymous);
+
     // Pages
     public const string CanViewAdminPage = nameof(CanViewAdminPage);
     public const string CanViewDeveloperPage = nameof(CanViewDeveloperPage);

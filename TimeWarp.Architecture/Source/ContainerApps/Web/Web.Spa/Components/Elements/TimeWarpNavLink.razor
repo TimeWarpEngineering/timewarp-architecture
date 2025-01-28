@@ -1,9 +1,13 @@
 @namespace TimeWarp.Architecture.Components
 @typeparam TPage where TPage : INavigableComponent, IStaticRoute
 
-<FluentNavLink
-  Icon=TPage.NavIcon
-  Href=@TPage.GetPageUrl()
-  Match=NavLinkMatch.All>
-  @TPage.Title
-</FluentNavLink>
+<AuthorizeView Policy=@TPage.Policy>
+  <Authorized>
+    <FluentNavLink
+      Icon=TPage.NavIcon
+      Href=@TPage.GetPageUrl()
+      Match=NavLinkMatch.All>
+      @TPage.Title
+    </FluentNavLink>
+  </Authorized>
+</AuthorizeView>

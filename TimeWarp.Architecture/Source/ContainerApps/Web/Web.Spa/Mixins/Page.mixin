@@ -1,5 +1,6 @@
 @moxy
 @attribute required string RouteTemplate
+@attribute optional string Policy
 @moxy
 
 {{
@@ -54,10 +55,13 @@
 namespace {{ moxy.Class.Namespace }}
 {
   using Microsoft.AspNetCore.Components;
+  using TimeWarp.Architecture;
+
   [Route("{{ $routeAttributeString }}")]
   partial class {{ moxy.Class.Name }} : INavigableComponent {{ if !$hasParameters }} , IStaticRoute{{ end }}
   {
     public static string GetPageUrl({{ $getRouteSignatureSource }}) => FormattableString.Invariant($"{{$getRouteFormat}}");
+    public static string Policy { get; } = Policies.{{ if Policy }}{{ Policy }}{{ else }}Anonymous{{ end }};
     {{ $parametersSource -}}
   }
 }
