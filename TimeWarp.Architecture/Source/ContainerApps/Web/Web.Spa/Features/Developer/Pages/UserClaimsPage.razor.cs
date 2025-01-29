@@ -1,7 +1,4 @@
-namespace TimeWarp.Architecture.Features.Developer.Pages;
+namespace TimeWarp.Architecture.Pages;
 
 [Page("/Developer/UserClaims")]
-partial class UserClaimsPage
-{
-    public static string Title => "User Claims";
-}
+partial class UserClaimsPage {}

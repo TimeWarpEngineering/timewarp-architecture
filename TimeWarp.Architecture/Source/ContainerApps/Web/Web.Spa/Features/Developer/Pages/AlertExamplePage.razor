@@ -1,6 +1,11 @@
 @namespace TimeWarp.Architecture.Pages
-@using TimeWarp.Architecture.Features.Sidebars
+
 @inherits BaseComponent
+
+@code {
+  public static string Title => "Alert Example Page";
+  public static Icon? NavIcon => new Icons.Regular.Size32.Airplane();
+}
 
 <SidebarPage>
   <HeaderContent>

@@ -1,0 +1,14 @@
+@namespace TimeWarp.Architecture.Components
+@typeparam TPage where TPage : INavigableComponent
+
+@code {
+  [Parameter, EditorRequired]
+  public string Url { get; set; } = null!;
+}
+
+<FluentNavLink
+  Icon=TPage.NavIcon
+  Href=@Url
+  Match="NavLinkMatch.All">
+  @TPage.Title
+</FluentNavLink>

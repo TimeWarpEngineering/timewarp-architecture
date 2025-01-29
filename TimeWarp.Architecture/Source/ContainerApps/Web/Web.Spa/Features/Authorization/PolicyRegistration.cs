@@ -4,6 +4,13 @@ internal static class PolicyRegistration
 {
   public static void AddPolicies(AuthorizationOptions options)
   {
+    // Add Anonymous policy that allows all requests
+    options.AddPolicy
+    (
+      Policies.Anonymous,
+      policy => policy.RequireAssertion(context => true)
+    );
+
     NavigationPolicyRegistration.AddPolicies(options);
     PagePolicyRegistration.AddPolicies(options);
 

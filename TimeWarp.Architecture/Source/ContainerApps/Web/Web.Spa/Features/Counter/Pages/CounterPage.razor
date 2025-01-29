@@ -1,6 +1,18 @@
 @namespace TimeWarp.Architecture.Pages
-@using TimeWarp.Architecture.Features.Sidebars
+
 @inherits BaseComponent
+
+@inject IJSRuntime JsRuntime
+@code {
+  public static string Title => "Counter";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+
+  private async Task IncrementCountViaJsInterop()
+  {
+    await JsRuntime.InvokeVoidAsync("Spa.Counter.DispatchIncrementCountAction");
+  }
+}
+
 <PageTitle>Counter Page</PageTitle>
 
 <SidebarPage>
@@ -14,24 +26,18 @@
     <Counter TestId="Counter2" />
 
     <hr class="mt-4" />
-    <Text class="mt-4 block">Reset button will clear all state in the Store and return you to the home page</Text>
+    <Text class="block mt-4">Reset button will clear all state in the Store and return you to the home page</Text>
     <FluentButton Appearance=Appearance.Accent Id=@Id data-qa=@TestId OnClick=ResetButtonClick>Reset Store</FluentButton>
 
     <hr class="mt-4" />
-    <Text class="mt-4 block">Click below to send a Change Route Request that should take back to home page.</Text>
+    <Text class="block mt-4">Click below to send a Change Route Request that should take back to home page.</Text>
     <FluentButton Appearance=Appearance.Accent data-qa="ChangeRoute" OnClick=ButtonClick>Change Route to Home</FluentButton>
 
     <hr class="mt-4" />
-    <Text class="mt-4 block">Click below to send a IncrementCountAction via JsInterop.</Text>
+    <Text class="block mt-4">Click below to send a IncrementCountAction via JsInterop.</Text>
 
     <FluentButton Appearance=Appearance.Accent data-qa="JsInterop" OnClick=IncrementCountViaJsInterop >Increment Count by 7 via JavaScript Interop</FluentButton>
   </MainContent>
 </SidebarPage>
 
-@inject IJSRuntime JsRuntime
-@code {
-  private async Task IncrementCountViaJsInterop()
-  {
-    await JsRuntime.InvokeVoidAsync("Spa.Counter.DispatchIncrementCountAction");
-  }
-}
+

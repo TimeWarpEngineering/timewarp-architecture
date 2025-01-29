@@ -1,25 +1,24 @@
 @inherits BaseComponent
-@using Microsoft.FluentUI.AspNetCore.Components
 
 @code {
 
 }
 
 <FluentNavMenu Class=@BaseCssBuilder.ToString()>
-  <FluentNavLink Icon=@(new Icons.Regular.Size20.Home()) Href="/" Match=NavLinkMatch.All>Home</FluentNavLink>
+  <TimeWarpNavLink TPage=HomePage />
   <FluentNavGroup Title="Pages">
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Counter</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Weather</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Superheros</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Chat</FluentNavLink>
+    <TimeWarpNavLink TPage=CounterPage />
+    <TimeWarpNavLink TPage=WeatherForecastsPage />
+    <TimeWarpNavLink TPage=SuperheroPage />
+    <TimeWarpNavLink TPage=ChatPage />
   </FluentNavGroup>
   <FluentNavGroup Title="Developer">
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@ExampleTimeWarpPage.GetPageUrl() Match=NavLinkMatch.All>Example TimeWarpPage</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href=@ExampleSitePage.GetPageUrl() Match=NavLinkMatch.All>Example SitePage</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>TestPage</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Event Stream</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Services</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Question()) Href="/" Match=NavLinkMatch.All>Claims</FluentNavLink>
+    <TimeWarpNavLink TPage=ExampleTimeWarpPage />
+    <TimeWarpNavLink TPage=ExampleSitePage />
+    <TimeWarpNavLink TPage=TestPage />
+    <TimeWarpNavLink TPage=EventStreamPage />
+    <TimeWarpNavLink TPage=ServicesPage />
+    <TimeWarpNavLink TPage=UserClaimsPage />
   </FluentNavGroup>
   <FluentNavGroup Title="Open API">
     <FluentNavLink Icon=@(new Icons.Regular.Size20.Book()) Href="/" Match=NavLinkMatch.All>Web-Server</FluentNavLink>
@@ -31,7 +30,7 @@
       <TimeWarp.Simple.Icons.GithubIcon class="w-5 h-5 fill-slate-400" /> GitHub
     </FluentNavLink>
   </FluentNavGroup>
-  <FluentNavLink Icon=@(new Icons.Regular.Size20.Settings()) Href="/" Match=NavLinkMatch.All>Settings</FluentNavLink>
+  <TimeWarpNavLink TPage=SettingsPage />
 </FluentNavMenu>
 
 <style>

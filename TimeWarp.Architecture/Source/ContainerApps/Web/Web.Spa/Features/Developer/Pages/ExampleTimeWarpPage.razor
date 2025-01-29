@@ -1,6 +1,11 @@
 @namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
 
+@code {
+  public static string Title => "Example TimeWarp";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+}
+
 <TimeWarpPage ShowPlaceholders=true>
   <LeftPane_HeaderContent>
     LeftPane_HeaderContent

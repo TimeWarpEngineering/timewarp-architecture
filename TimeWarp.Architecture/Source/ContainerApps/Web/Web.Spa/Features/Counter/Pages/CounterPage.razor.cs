@@ -1,7 +1,5 @@
 namespace TimeWarp.Architecture.Pages;
 
-using static ApplicationState;
-
 [Page("/Counter")]
 partial class CounterPage
 {

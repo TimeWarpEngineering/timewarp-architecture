@@ -3,7 +3,6 @@ namespace TimeWarp.Architecture.Pages;
 [Page("/Services")]
 partial class ServicesPage
 {
-  public static string Title => "Services";
 
   [Inject]
   private IServiceCollection ServiceCollection { get; set; } = null!;

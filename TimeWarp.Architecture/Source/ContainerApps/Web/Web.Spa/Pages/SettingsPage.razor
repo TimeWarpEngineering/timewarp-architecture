@@ -1,6 +1,11 @@
 ﻿@namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
 
+@code{
+  public static string Title => "Settings";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+}
+
 <StackedPage>
   <HeaderContent>Settings Page</HeaderContent>
 </StackedPage>

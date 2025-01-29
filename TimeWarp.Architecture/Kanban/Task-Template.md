@@ -1,12 +1,15 @@
-# Task 000: Title
+# 001_Implement-User-Registration.md
 
 ## Description
 
-- Provide a brief description of the task, outlining its purpose and goals.
+[Provide a brief description of the task, outlining its purpose and goals]
+
+## Parent (optional)
+<Reference to parent item like 001_user-registration>
 
 ## Requirements
 
-- List any specific requirements or criteria that must be met for the task to be considered complete.
+[List any specific requirements or criteria that must be met for the task to be considered complete]
 
 ## Checklist
     Add relevant items to the checklist as necessary when creating the task or implementing it.
@@ -30,8 +33,8 @@
 
 ## Notes
 
-- Include any additional information, resources, or references relevant to the task
+[Include any additional information, resources, or references relevant to the task]
 
 ## Implementation Notes
 
-- Include notes while task is in progress
+[Include notes while task is in progress]

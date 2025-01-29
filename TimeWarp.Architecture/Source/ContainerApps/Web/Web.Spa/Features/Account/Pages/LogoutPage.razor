@@ -1,6 +1,11 @@
 @namespace TimeWarp.Architecture.Pages
 @inherits BaseComponent
 
+@code {
+  public static string Title => "Logout";
+  public static Icon? NavIcon => new Icons.Regular.Size20.ArrowExit();
+}
+
 <StackedPage>
   <HeaderContent>Logout Page</HeaderContent>
 </StackedPage>

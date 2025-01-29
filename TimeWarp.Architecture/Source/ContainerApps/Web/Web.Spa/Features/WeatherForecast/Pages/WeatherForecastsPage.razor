@@ -4,6 +4,9 @@
 {
   [Parameter] [SupplyParameterFromQuery] public int? Days { get; set; }
 
+  public static string Title => "Weather";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+
   protected override async Task OnInitializedAsync() =>
     await WeatherForecastsState.FetchWeatherForecasts(Days);
 }

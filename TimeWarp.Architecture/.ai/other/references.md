@@ -12,11 +12,21 @@ references:
       - TypeScript Handbook: https://www.typescriptlang.org/docs/handbook/intro.html
       - TypeScript Deep Dive: https://basarat.gitbook.io/typescript/
 
+  - name: TimeWarp.Fixie
+    relationship: Use this NuGet for creating a testing convention for integration and unit tests.
+    resources:
+      - TimeWarp Fixie testing convention: https://github.com/TimeWarpEngineering/timewarp-fixie
+
   - name: Fixie
     relationship: Testing framework for integration and unit tests
     resources:
       - Official Documentation: https://github.com/fixie/fixie/wiki
-      - TimeWarp.Fixie testing convention: https://github.com/TimeWarpEngineering/timewarp-fixie
+
+  - name: FluentAssertions
+    relationship: Assertion library used for tests
+    resources:
+      - Official Documentation: https://fluentassertions.com/introduction
+      - GitHub Repository: https://github.com/fluentassertions/fluentassertions
 
   - name: Playwright for .NET
     relationship: End to end testing framework
