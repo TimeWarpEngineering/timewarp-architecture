@@ -29,7 +29,6 @@ public static partial class GetWeatherForecasts
     public IEnumerable<WeatherForecastDto> WeatherForecasts { get; init; } = WeatherForecasts;
   }
 
-
   /// <summary>
   /// The weather forecast
   /// </summary>
@@ -52,7 +51,6 @@ public static partial class GetWeatherForecasts
     /// </summary>
     /// <example>24</example>
     public int TemperatureC { get; set; }
-
 
     /// <summary>
     /// Temperature in Fahrenheit
