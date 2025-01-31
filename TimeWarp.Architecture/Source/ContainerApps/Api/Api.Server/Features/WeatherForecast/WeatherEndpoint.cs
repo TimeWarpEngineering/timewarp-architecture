@@ -1,12 +1,14 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
+using static TimeWarp.Architecture.Features.WeatherForecasts.Weather;
+
 /// <summary>
 /// Get Weather Forecasts
 /// </summary>
 /// <remarks>
 /// Gets Weather Forecasts for the number of days specified in the request
 /// </remarks>
-public class WeatherEndpoint : Endpoint<WeatherRequest, IEnumerable<WeatherResponse>>
+public class WeatherEndpoint : Endpoint<Request, IEnumerable<Response>>
 {
   private static readonly string[] Summaries =
   [
@@ -29,7 +31,7 @@ public class WeatherEndpoint : Endpoint<WeatherRequest, IEnumerable<WeatherRespo
     Description
     (
       d => d
-        .Produces<IEnumerable<WeatherResponse>>(200)
+        .Produces<IEnumerable<Response>>(200)
         .ProducesProblem(400)
         .WithTags("Weather")
     );
@@ -37,7 +39,7 @@ public class WeatherEndpoint : Endpoint<WeatherRequest, IEnumerable<WeatherRespo
 
   public override async Task HandleAsync
   (
-    WeatherRequest aRequest,
+    Request aRequest,
     CancellationToken aCancellationToken
   )
   {
@@ -50,9 +52,9 @@ public class WeatherEndpoint : Endpoint<WeatherRequest, IEnumerable<WeatherRespo
       return;
     }
 
-    IEnumerable<WeatherResponse> forecasts = Enumerable.Range(1, days).Select
+    IEnumerable<Response> forecasts = Enumerable.Range(1, days).Select
     (
-      index => new WeatherResponse
+      index => new Response
       (
         DateTime.Now.AddDays(index),
         Summaries[Random.Shared.Next(Summaries.Length)],
