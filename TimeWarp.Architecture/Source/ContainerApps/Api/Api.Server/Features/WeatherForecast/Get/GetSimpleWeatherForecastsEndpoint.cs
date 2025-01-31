@@ -26,7 +26,7 @@ public class GetSimpleWeatherForecastsEndpoint : Endpoint<Query, IEnumerable<Res
 
   public override void Configure()
   {
-    Get("api/weather");
+    Get(GetSimpleWeatherForecasts.Query.RouteTemplate);
     AllowAnonymous();
     Description
     (
