@@ -43,14 +43,13 @@ public class GetSimpleWeatherForecastsEndpoint : Endpoint<Query, IEnumerable<Res
     CancellationToken aCancellationToken
   )
   {
-    int days = aQuery.Days ?? 5;
-
-    if (days <= 0)
+    if (ValidationFailed)
     {
-      AddError("Days must be greater than 0");
       await SendErrorsAsync(400, cancellation: aCancellationToken);
       return;
     }
+
+    int days = aQuery.Days ?? 5;
 
     IEnumerable<Response> forecasts = Enumerable.Range(1, days).Select
     (

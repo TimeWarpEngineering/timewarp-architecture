@@ -53,4 +53,12 @@ public static partial class GetSimpleWeatherForecasts
       TemperatureC = temperatureC;
     }
   }
+
+  public sealed class Validator : AbstractValidator<Query>, IValidator<Query>
+  {
+    public Validator()
+    {
+      RuleFor(query => query.Days).NotEmpty().GreaterThan(0);
+    }
+  }
 }
