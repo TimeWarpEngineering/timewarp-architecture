@@ -1,11 +1,11 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-public static class Weather
+public static class GetSimpleWeatherForecasts
 {
   /// <summary>
-  /// Weather forecast request
+  /// Query to get weather forecasts
   /// </summary>
-  public sealed class Request
+  public sealed class Query
   {
     /// <summary>
     /// The Number of days of forecasts to get

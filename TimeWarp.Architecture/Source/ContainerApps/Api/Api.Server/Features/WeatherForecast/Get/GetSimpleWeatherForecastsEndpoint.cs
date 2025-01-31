@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.Weather;
+using static TimeWarp.Architecture.Features.WeatherForecasts.GetSimpleWeatherForecasts;
 
 /// <summary>
 /// Get Weather Forecasts
@@ -8,7 +8,7 @@ using static TimeWarp.Architecture.Features.WeatherForecasts.Weather;
 /// <remarks>
 /// Gets Weather Forecasts for the number of days specified in the request
 /// </remarks>
-public class WeatherEndpoint : Endpoint<Request, IEnumerable<Response>>
+public class GetSimpleWeatherForecastsEndpoint : Endpoint<Query, IEnumerable<Response>>
 {
   private static readonly string[] Summaries =
   [
@@ -39,11 +39,11 @@ public class WeatherEndpoint : Endpoint<Request, IEnumerable<Response>>
 
   public override async Task HandleAsync
   (
-    Request aRequest,
+    Query aQuery,
     CancellationToken aCancellationToken
   )
   {
-    int days = aRequest.Days ?? 5;
+    int days = aQuery.Days ?? 5;
 
     if (days <= 0)
     {
