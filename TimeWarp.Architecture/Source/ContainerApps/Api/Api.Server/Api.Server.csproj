@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup Label="Core">
+    <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
