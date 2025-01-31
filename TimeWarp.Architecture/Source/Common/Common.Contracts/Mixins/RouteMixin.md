@@ -14,7 +14,7 @@ namespace TimeWarp.Architecture.Features.TodoItems.Commands;
 
 public partial class ParentClass
 {
-  [RouteMixin("api/TodoItems/{TodoItemId:guid}", HttpVerb.Post)]
+  [RouteMixin("api/TodoItems/{TodoItemId:guid}", HttpVerb.Get)]
   public partial class RouteMixinNestedTestClass
   {
      public string CanISeeRouteTemplate => RouteTemplate;
@@ -49,7 +49,7 @@ public partial class ParentClass
   partial class RouteMixinTestClass
   {
     public const string RouteTemplate = "api/TodoItems/{TodoItemId:guid}";
-    public HttpVerb GetHttpVerb() => HttpVerb.Post;
+    public HttpVerb GetHttpVerb() => HttpVerb.Get;
     public string GetRoute(Guid TodoItemId) => FormattableString.Invariant($"api/TodoItems/{TodoItemId}");
     public string GetUri() => $"api/TodoItems/{TodoItemId:guid}";
     public Guid TodoItemId { get; set; }
