@@ -39,9 +39,8 @@ public class Program : IAspNetProgram
 
     CorsPolicy.Any.Apply(aServiceCollection);
 
-    aServiceCollection
-      .AddControllers()
-      .TryAddApplicationPart(typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).Assembly);
+    aServiceCollection.AddFastEndpoints();
+    aServiceCollection.AddAuthorization();
 
     aServiceCollection.AddFluentValidationAutoValidation();
     aServiceCollection.AddFluentValidationClientsideAdapters();
@@ -92,14 +91,17 @@ public class Program : IAspNetProgram
 
     //aWebApplication.UseHttpsRedirection(); // In K8s we won't use https so we don't want to redirect
 
+    aWebApplication.UseFastEndpoints(config =>
+    {
+      config.Endpoints.RoutePrefix = null;
+    });
+
     aWebApplication.UseAuthorization();
   }
 
   public static void ConfigureEndpoints(WebApplication aWebApplication)
   {
     CommonServerModule.ConfigureEndpoints(aWebApplication);
-
-    aWebApplication.MapControllers();
   }
 
   private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
