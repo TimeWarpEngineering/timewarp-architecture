@@ -54,11 +54,14 @@ public static partial class GetSimpleWeatherForecasts
     }
   }
 
-  public sealed class Validator : AbstractValidator<Query>, IValidator<Query>
+  public sealed class Validator : FastEndpoints.Validator<Query>
   {
     public Validator()
     {
-      RuleFor(query => query.Days).NotEmpty().GreaterThan(0);
+      RuleFor(x => x.Days)
+        .NotEmpty()
+        .GreaterThan(0)
+        .WithMessage("Days must be greater than 0");
     }
   }
 }
