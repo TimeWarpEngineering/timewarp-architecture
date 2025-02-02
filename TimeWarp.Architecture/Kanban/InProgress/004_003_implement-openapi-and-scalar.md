@@ -18,18 +18,18 @@ Replace SwaggerUI with Scalar UI for API documentation, using .NET's built-in Op
 ## Checklist
 
 ### Design
-- [ ] Review current SwaggerUI implementation
-- [ ] Plan migration path to Scalar UI
+- [x] Review current SwaggerUI implementation
+- [x] Plan migration path to Scalar UI
 
 ### Implementation
-- [ ] Remove SwaggerUI packages and configuration
-- [ ] Add Scalar.AspNetCore package
-- [ ] Update service configuration:
+- [x] Remove SwaggerUI packages and configuration
+- [x] Add Scalar.AspNetCore package
+- [x] Update service configuration:
   ```csharp
   services.AddFastEndpoints()
           .SwaggerDocument();
   ```
-- [ ] Configure OpenAPI and Scalar UI in development:
+- [x] Configure OpenAPI and Scalar UI in development:
   ```csharp
   if (app.Environment.IsDevelopment())
   {
@@ -63,4 +63,7 @@ Key changes:
 
 ## Implementation Notes
 
-[Include notes while task is in progress]
+[2024-02-02] Initial implementation completed but encountering schema errors with Scalar UI:
+- Error: "Expected string, received array"
+- Error: "Example at days is invalid"
+- Need to investigate further or consider alternative approaches

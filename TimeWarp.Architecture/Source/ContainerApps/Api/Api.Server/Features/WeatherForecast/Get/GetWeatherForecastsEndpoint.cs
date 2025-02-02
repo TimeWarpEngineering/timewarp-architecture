@@ -28,13 +28,16 @@ public class GetWeatherForecastsEndpoint : Endpoint<Query, IEnumerable<Response>
   {
     Get(GetWeatherForecasts.Query.RouteTemplate);
     AllowAnonymous();
-    Description
-    (
-      d => d
-        .Produces<IEnumerable<Response>>(200)
-        .ProducesProblem(400)
-        .WithTags("Weather")
+    Summary(s =>
+    {
+      s.Summary = "Get Weather Forecasts";
+      s.Description = "Gets Weather Forecasts for the number of days specified in the request";
+    });
+    Description(d => d
+      .Produces<IEnumerable<Response>>(200)
+      .ProducesProblem(400)
     );
+    Tags("Weather");
   }
 
   public override async Task HandleAsync

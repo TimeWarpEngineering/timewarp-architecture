@@ -8,7 +8,6 @@ public static partial class GetWeatherForecasts
     /// <summary>
     /// The Number of days of forecasts to get
     /// </summary>
-    /// <example>5</example>
     public int? Days { get; init; }
   }
 
@@ -59,8 +58,8 @@ public static partial class GetWeatherForecasts
     public Validator()
     {
       RuleFor(x => x.Days)
-        .NotEmpty()
         .GreaterThan(0)
+        .When(x => x.Days.HasValue)
         .WithMessage("Days must be greater than 0");
     }
   }

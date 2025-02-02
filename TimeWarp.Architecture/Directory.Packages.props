@@ -18,7 +18,8 @@
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="FakeItEasy" Version="8.3.0" />
-    <PackageVersion Include="FastEndpoints" Version="5.33.0" />
+    <PackageVersion Include="FastEndpoints" Version="5.34.0" />
+    <PackageVersion Include="FastEndpoints.Swagger" Version="5.34.0" />
     <PackageVersion Include="Fixie" Version="4.1.0" />
     <PackageVersion Include="Fixie.TestAdapter" Version="4.1.0" />
     <PackageVersion Include="FluentAssertions" Version="[7.1.0]" />
@@ -32,7 +33,7 @@
     <PackageVersion Include="Grpc.Net.Client" Version="2.67.0" />
     <PackageVersion Include="Grpc.Net.Client.Web" Version="2.67.0" />
     <PackageVersion Include="JetBrains.Annotations" Version="2024.3.0" />
-    <PackageVersion Include="libphonenumber-csharp" Version="8.13.53" />
+    <PackageVersion Include="libphonenumber-csharp" Version="8.13.54" />
     <PackageVersion Include="MediatR" Version="12.4.1" />
     <PackageVersion Include="MediatR.Contracts" Version="2.0.1" />
     <PackageVersion Include="MicroElements.Swashbuckle.FluentValidation" Version="6.1.0" />
@@ -98,6 +99,7 @@
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.2.2" />
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
     <PackageVersion Include="Riok.Mapperly" Version="4.1.1" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.0.9" />
     <PackageVersion Include="Scrutor" Version="4.2.0" />
     <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
