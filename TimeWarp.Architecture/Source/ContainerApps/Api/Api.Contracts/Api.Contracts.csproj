@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="MediatR" />
