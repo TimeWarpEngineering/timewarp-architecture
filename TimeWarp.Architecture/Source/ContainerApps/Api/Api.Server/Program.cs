@@ -7,9 +7,9 @@ public class Program : IAspNetProgram
   const string SwaggerBasePath = "api/api-server";
   const string SwaggerEndpoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
-  public static Task<int> Main(string[] aArgumentArray)
+  public static Task<int> Main(string[] argumentArray)
   {
-    WebApplicationBuilder builder = WebApplication.CreateBuilder(aArgumentArray);
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
     builder.AddServiceDefaults();
 
     ConfigureConfiguration(builder.Configuration);
@@ -24,37 +24,37 @@ public class Program : IAspNetProgram
     ConfigureMiddleware(webApplication);
     ConfigureEndpoints(webApplication);
 
-    return webApplication.RunOaktonCommands(aArgumentArray);
+    return webApplication.RunOaktonCommands(argumentArray);
   }
 
-  public static void ConfigureConfiguration(ConfigurationManager aConfigurationManager)
+  public static void ConfigureConfiguration(ConfigurationManager configurationManager)
   {
-    CommonServerModule.ConfigureConfiguration(aConfigurationManager);
+    CommonServerModule.ConfigureConfiguration(configurationManager);
   }
 
-  public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    CommonServerModule.ConfigureServices(aServiceCollection, aConfiguration);
-    ConfigureSettings(aServiceCollection, aConfiguration);
+    CommonServerModule.ConfigureServices(serviceCollection, configuration);
+    ConfigureSettings(serviceCollection, configuration);
 
-    CorsPolicy.Any.Apply(aServiceCollection);
+    CorsPolicy.Any.Apply(serviceCollection);
 
-    aServiceCollection.AddFastEndpoints();
-    aServiceCollection.AddAuthorization();
+    serviceCollection.AddFastEndpoints();
+    serviceCollection.AddAuthorization();
 
-    aServiceCollection.AddFluentValidationAutoValidation();
-    aServiceCollection.AddFluentValidationClientsideAdapters();
+    serviceCollection.AddFluentValidationAutoValidation();
+    serviceCollection.AddFluentValidationClientsideAdapters();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
-    aServiceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Server.AssemblyMarker>();
-    aServiceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Contracts.AssemblyMarker>();
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Server.AssemblyMarker>();
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Contracts.AssemblyMarker>();
 
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-    aServiceCollection.AddEndpointsApiExplorer();
-    aServiceCollection.AddSwaggerGen();
+    serviceCollection.AddEndpointsApiExplorer();
+    serviceCollection.AddSwaggerGen();
 
-    aServiceCollection
+    serviceCollection
       .AddMediatR
       (
         mediatRServiceConfiguration =>
@@ -68,43 +68,43 @@ public class Program : IAspNetProgram
     CommonServerModule
       .AddSwaggerGen
       (
-        aServiceCollection,
+        serviceCollection,
         SwaggerVersion,
         SwaggerApiTitle,
         [typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker), typeof(TimeWarp.Architecture.Api.Contracts.AssemblyMarker)]
       );
   }
 
-  public static void ConfigureMiddleware(WebApplication aWebApplication)
+  public static void ConfigureMiddleware(WebApplication webApplication)
   {
-    CommonServerModule.ConfigureMiddleware(aWebApplication);
+    CommonServerModule.ConfigureMiddleware(webApplication);
 
     // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
     // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
     // Sometimes, you might want to allow other sites to make cross-origin requests to your app.
-    if (aWebApplication.Environment.IsDevelopment())
+    if (webApplication.Environment.IsDevelopment())
     {
-      aWebApplication.UseCors(CorsPolicy.Any.Name);
+      webApplication.UseCors(CorsPolicy.Any.Name);
     }
 
-    CommonServerModule.UseSwaggerUi(aWebApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
+    CommonServerModule.UseSwaggerUi(webApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
 
     //aWebApplication.UseHttpsRedirection(); // In K8s we won't use https so we don't want to redirect
 
-    aWebApplication.UseFastEndpoints(config =>
+    webApplication.UseFastEndpoints(config =>
     {
       config.Endpoints.RoutePrefix = null;
     });
 
-    aWebApplication.UseAuthorization();
+    webApplication.UseAuthorization();
   }
 
-  public static void ConfigureEndpoints(WebApplication aWebApplication)
+  public static void ConfigureEndpoints(WebApplication webApplication)
   {
-    CommonServerModule.ConfigureEndpoints(aWebApplication);
+    CommonServerModule.ConfigureEndpoints(webApplication);
   }
 
-  private static void ConfigureSettings(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration aConfiguration)
   {
     //aServiceCollection
     //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
