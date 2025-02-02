@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.GetSimpleWeatherForecasts;
+using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 
 /// <summary>
 /// Get Weather Forecasts
@@ -8,7 +8,7 @@ using static TimeWarp.Architecture.Features.WeatherForecasts.GetSimpleWeatherFor
 /// <remarks>
 /// Gets Weather Forecasts for the number of days specified in the request
 /// </remarks>
-public class GetSimpleWeatherForecastsEndpoint : Endpoint<Query, IEnumerable<Response>>
+public class GetWeatherForecastsEndpoint : Endpoint<Query, IEnumerable<Response>>
 {
   private static readonly string[] Summaries =
   [
@@ -26,7 +26,7 @@ public class GetSimpleWeatherForecastsEndpoint : Endpoint<Query, IEnumerable<Res
 
   public override void Configure()
   {
-    Get(GetSimpleWeatherForecasts.Query.RouteTemplate);
+    Get(GetWeatherForecasts.Query.RouteTemplate);
     AllowAnonymous();
     Description
     (

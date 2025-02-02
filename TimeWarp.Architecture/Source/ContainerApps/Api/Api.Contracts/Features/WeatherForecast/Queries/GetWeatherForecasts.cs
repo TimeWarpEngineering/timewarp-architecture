@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-public static partial class GetSimpleWeatherForecasts
+public static partial class GetWeatherForecasts
 {
   [RouteMixin("api/weather", HttpVerb.Get)]
   public sealed partial class Query
