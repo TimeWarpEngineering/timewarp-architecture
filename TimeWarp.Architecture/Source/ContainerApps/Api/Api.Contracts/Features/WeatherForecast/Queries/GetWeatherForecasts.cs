@@ -5,7 +5,6 @@ public static partial class GetWeatherForecasts
   [RouteMixin("api/weatherForecasts", HttpVerb.Get)]
   public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
-    public const string Route = "api/weatherForecasts";
 
     /// <summary>
     /// The Number of days of forecasts to get
