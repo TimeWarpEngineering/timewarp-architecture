@@ -18,59 +18,90 @@
 # .EXAMPLE
 # Get-NextTaskNumber -KanbanPath "C:\Projects\MyRepo\Kanban"
 # Returns: Next available task number for the specified Kanban directory
+#
+# .NOTES
+# Author: TimeWarp Engineering
+# Last Modified: 2025-01-31
+# Requires PowerShell 5.1 or later
 
 function Get-NextTaskNumber {
-  [CmdletBinding()]
+  [CmdletBinding(SupportsShouldProcess = $true)]
   param(
     [Parameter(
       Position = 0,
       HelpMessage = "Path to the Kanban directory"
     )]
     [ValidateNotNullOrEmpty()]
+    [ValidateScript({
+      if (-not (Test-Path $_)) {
+        throw "Kanban directory not found at: $_"
+      }
+      return $true
+    })]
     [string]$KanbanPath = (Join-Path $PSScriptRoot "..\Kanban")
   )
 
   begin {
-    # Validate Kanban directory exists
-    if (-not (Test-Path $KanbanPath)) {
-      throw "Kanban directory not found at: $KanbanPath"
-    }
+    # Constants
+    $script:KanbanFolders = @("Backlog", "InProgress", "ToDo", "Done")
+    $script:TaskNumberPattern = "^(\d{3})_"
+    $script:HighestTaskNumber = 0
 
-    $Folders = @("Backlog", "InProgress", "ToDo", "Done")
-    $HighestNumber = 0
-    $TaskNumberPattern = "^(\d{3})_"
+    Write-Verbose "Starting task number search in: $KanbanPath"
+    Write-Verbose "Scanning folders: $($KanbanFolders -join ', ')"
   }
 
   process {
     try {
-      foreach ($Folder in $Folders) {
-        $FolderPath = Join-Path -Path $KanbanPath -ChildPath $Folder
+      foreach ($folderName in $KanbanFolders) {
+        $currentFolderPath = Join-Path -Path $KanbanPath -ChildPath $folderName
         
-        if (Test-Path $FolderPath) {
-          # Get all markdown files and extract task numbers in one operation
-          $Numbers = Get-ChildItem -Path $FolderPath -Filter "*.md" |
-            Where-Object { $_.Name -match $TaskNumberPattern } |
-            ForEach-Object { [int]$Matches[1] }
+        if (-not (Test-Path $currentFolderPath)) {
+          Write-Warning "Folder not found: $currentFolderPath"
+          continue
+        }
 
-          # Update highest number if any numbers were found
-          if ($Numbers) {
-            $FolderMax = ($Numbers | Measure-Object -Maximum).Maximum
-            $HighestNumber = [Math]::Max($HighestNumber, $FolderMax)
+        Write-Verbose "Processing folder: $folderName"
+
+        # Get all markdown files and extract task numbers efficiently
+        $taskFiles = Get-ChildItem -Path $currentFolderPath -Filter "*.md" -File
+        
+        if (-not $taskFiles) {
+          Write-Verbose "No markdown files found in: $folderName"
+          continue
+        }
+
+        $taskNumbers = $taskFiles | 
+          Where-Object { $_.Name -match $TaskNumberPattern } |
+          ForEach-Object { 
+            Write-Verbose "Found task number: $($Matches[1]) in $($_.Name)"
+            [int]$Matches[1] 
           }
+
+        # Update highest number if any valid numbers were found
+        if ($taskNumbers) {
+          $folderMaxNumber = ($taskNumbers | Measure-Object -Maximum).Maximum
+          $script:HighestTaskNumber = [Math]::Max($HighestTaskNumber, $folderMaxNumber)
+          Write-Verbose "Current highest number: $HighestTaskNumber"
         }
       }
 
-      $NextNumber = $HighestNumber + 1
-      return $NextNumber.ToString("000")
+      # Calculate and format next task number
+      $nextTaskNumber = $HighestTaskNumber + 1
+      $formattedNumber = $nextTaskNumber.ToString("000")
+      
+      Write-Verbose "Generated next task number: $formattedNumber"
+      return $formattedNumber
     }
     catch {
-      Write-Error "Error processing task numbers: $_"
-      throw
+      $errorMessage = "Failed to process task numbers: $($_.Exception.Message)"
+      Write-Error $errorMessage
+      throw $errorMessage
     }
   }
 }
 
-# Export the function if being imported as a module
-if ($MyInvocation.InvocationName -ne '.') {
-  Export-ModuleMember -Function Get-NextTaskNumber
+# Run the function if script is executed directly
+if ($MyInvocation.InvocationName -eq '.') {
+  Get-NextTaskNumber
 }
