@@ -39,16 +39,15 @@ public class Program : IAspNetProgram
 
     CorsPolicy.Any.Apply(serviceCollection);
 
-    serviceCollection.AddFastEndpoints();
+    serviceCollection.AddFastEndpoints(options =>
+    {
+      options.Assemblies = new[]
+      {
+        typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).Assembly,
+        typeof(TimeWarp.Architecture.Api.Contracts.AssemblyMarker).Assembly
+      };
+    });
     serviceCollection.AddAuthorization();
-
-    serviceCollection.AddFluentValidationAutoValidation();
-    serviceCollection.AddFluentValidationClientsideAdapters();
-
-    // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
-    // will NOT register internals. This feature is utilized.
-    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Server.AssemblyMarker>();
-    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Contracts.AssemblyMarker>();
 
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     serviceCollection.AddEndpointsApiExplorer();
