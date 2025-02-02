@@ -53,17 +53,6 @@ public class Program : IAspNetProgram
     serviceCollection.AddEndpointsApiExplorer();
     serviceCollection.AddSwaggerGen();
 
-    serviceCollection
-      .AddMediatR
-      (
-        mediatRServiceConfiguration =>
-          mediatRServiceConfiguration.RegisterServicesFromAssemblies
-          (
-            typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).GetTypeInfo().Assembly,
-            typeof(TimeWarp.Architecture.Api.Application.AssemblyMarker).GetTypeInfo().Assembly
-          )
-      );
-
     CommonServerModule
       .AddSwaggerGen
       (

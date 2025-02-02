@@ -1,35 +1,34 @@
-# 004_002_remove-controllers-from-api.md
+# 004_002_remove-mediatr-from-api.md
 
 ## Description
 
-Remove all controllers from the API project since we are using FastEndpoints instead. This is part of the API migration to FastEndpoints architecture.
+Remove MediatR from the API project since we are using FastEndpoints instead. This is part of the API migration to FastEndpoints architecture.
 
 ## Parent
 004_migrate-api-to-fastendpoints
 
 ## Requirements
 
-- Remove all controller classes from the API project
-- Remove any controller-specific configurations and middleware
-- Ensure all endpoints are properly implemented using FastEndpoints before removing their controller counterparts
-- Update API documentation to reflect the FastEndpoints architecture
+- Remove MediatR package and related dependencies from the API project
+- Remove MediatR configurations from startup
+- Ensure all MediatR handlers are properly migrated to FastEndpoints
+- Update API documentation to reflect the removal of MediatR
 
 ## Checklist
 
 ### Design
-- [ ] Identify all existing controllers
-- [ ] Verify all controller functionality has FastEndpoints equivalents
+- [ ] Identify all existing MediatR handlers and requests
+- [ ] Verify all MediatR functionality has FastEndpoints equivalents
 
 ### Implementation
-- [ ] Remove controller classes
-- [ ] Remove controller-specific configurations from Program.cs and other startup files
-- [ ] Remove any unused controller-related packages/dependencies
-- [ ] Remove controller-specific middleware
-- [ ] Verify API functionality after controller removal
+- [ ] Remove MediatR package and dependencies
+- [ ] Remove MediatR configurations from Program.cs and other startup files
+- [ ] Remove MediatR handlers and requests
+- [ ] Verify API functionality after MediatR removal
 
 ### Documentation
-- [ ] Update API documentation to reflect FastEndpoints architecture
-- [ ] Remove any controller-specific documentation
+- [ ] Update API documentation to reflect removal of MediatR
+- [ ] Remove any MediatR-specific documentation
 
 ### Review
 - [ ] Consider Accessibility Implications
@@ -40,7 +39,7 @@ Remove all controllers from the API project since we are using FastEndpoints ins
 
 ## Notes
 
-This task is part of the migration to FastEndpoints architecture. Controllers should only be removed after verifying that their functionality has been properly implemented using FastEndpoints.
+This task is part of the migration to FastEndpoints architecture. MediatR should only be removed after verifying that all functionality has been properly implemented using FastEndpoints.
 
 ## Implementation Notes
 
