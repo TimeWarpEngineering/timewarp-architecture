@@ -66,19 +66,18 @@ public class Program : IAspNetProgram
   {
     CommonServerModule.ConfigureMiddleware(webApplication);
 
-    if (webApplication.Environment.IsDevelopment())
-    {
-      webApplication.UseCors(CorsPolicy.Any.Name);
-      webApplication.UseOpenApi(c => c.Path = "/openapi/v1.json");
-      webApplication.MapScalarApiReference();
-    }
-
     webApplication.UseFastEndpoints(config =>
     {
       config.Endpoints.RoutePrefix = null;
     });
-
     webApplication.UseAuthorization();
+
+    if (webApplication.Environment.IsDevelopment())
+    {
+      webApplication.UseCors(CorsPolicy.Any.Name);
+      webApplication.UseOpenApi(c => c.Path = "/openapi/{documentName}.json");
+      webApplication.MapScalarApiReference();
+    }
   }
 
   public static void ConfigureEndpoints(WebApplication webApplication)
@@ -86,10 +85,10 @@ public class Program : IAspNetProgram
     CommonServerModule.ConfigureEndpoints(webApplication);
   }
 
-  private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration aConfiguration)
+  private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    //aServiceCollection
-    //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
-    //  .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
+    //serviceCollection
+    //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(configuration)
+    //  .ConfigureOptions<SampleOptions, SampleOptionsValidator>(configuration);
   }
 }

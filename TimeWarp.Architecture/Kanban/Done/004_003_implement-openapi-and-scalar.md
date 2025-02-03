@@ -66,4 +66,5 @@ Key changes:
 [2024-02-02] Initial implementation completed but encountering schema errors with Scalar UI:
 - Error: "Expected string, received array"
 - Error: "Example at days is invalid"
+- This appears to be a known bug in Scalar when handling nullable strings: https://github.com/scalar/scalar/issues/3450
 - Need to investigate further or consider alternative approaches
