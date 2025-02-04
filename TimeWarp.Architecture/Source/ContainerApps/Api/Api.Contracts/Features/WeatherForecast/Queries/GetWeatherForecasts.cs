@@ -53,7 +53,7 @@ public static partial class GetWeatherForecasts
     }
   }
 
-  public sealed class Validator : FastEndpoints.Validator<Query>
+  public sealed class Validator : AbstractValidator<Query>
   {
     public Validator()
     {
