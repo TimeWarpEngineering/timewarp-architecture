@@ -36,7 +36,7 @@ public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<T
         }
 
         // Group validation errors by property name
-        Dictionary<string, string[]> errors = validationResult.Errors
+        var errors = validationResult.Errors
             .GroupBy(e => e.PropertyName.ToLower())
             .ToDictionary(
                 g => g.Key,

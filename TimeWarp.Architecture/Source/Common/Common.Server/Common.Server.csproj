@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="FastEndpoints" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />

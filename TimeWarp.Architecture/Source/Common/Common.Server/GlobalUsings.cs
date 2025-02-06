@@ -1,5 +1,6 @@
 ﻿global using Ardalis.GuardClauses;
 global using Azure.Identity;
+global using FastEndpoints;
 global using FluentValidation;
 global using MediatR;
 global using MicroElements.Swashbuckle.FluentValidation.AspNetCore;

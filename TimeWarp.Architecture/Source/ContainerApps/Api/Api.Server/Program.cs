@@ -1,5 +1,8 @@
 namespace TimeWarp.Architecture.Api.Server;
 
+using Behaviors;
+using MediatR;
+
 public class Program : IAspNetProgram
 {
   const string ApiTitle = "TimeWarp.Architecture Api.Server API";
@@ -37,8 +40,14 @@ public class Program : IAspNetProgram
 
     CorsPolicy.Any.Apply(serviceCollection);
 
+    // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
+    // will NOT register internals. This feature is utilized.
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Server.AssemblyMarker>();
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Contracts.AssemblyMarker>();
+
     serviceCollection.AddFastEndpoints(options =>
     {
+      options.IncludeAbstractValidators = true; //This will run all AbstractValidators in the FastEndpoints pipeline.
       options.Assemblies = new[]
       {
         typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).Assembly,
@@ -60,6 +69,19 @@ public class Program : IAspNetProgram
 
     serviceCollection.AddAuthorization();
     serviceCollection.AddEndpointsApiExplorer();
+    serviceCollection
+      .AddMediatR
+      (
+        mediatRServiceConfiguration =>
+          mediatRServiceConfiguration
+            .RegisterServicesFromAssemblies
+            (
+              typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).GetTypeInfo().Assembly,
+              typeof(TimeWarp.Architecture.Api.Application.AssemblyMarker).GetTypeInfo().Assembly
+            )
+      );
+    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(GenericPipelineBehavior<,>));
+    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(FluentValidationBehavior<,>));
   }
 
   public static void ConfigureMiddleware(WebApplication webApplication)

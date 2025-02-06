@@ -2,37 +2,54 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 public static partial class GetWeatherForecasts
 {
-  [RouteMixin("api/weatherforecast", HttpVerb.Get)]
-  public sealed partial class Query
+  [RouteMixin("api/weatherForecasts", HttpVerb.Get)]
+  public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
+
     /// <summary>
     /// The Number of days of forecasts to get
     /// </summary>
-    public int? Days { get; init; }
+    /// <example>5</example>
+    public int? Days { get; set; }
+
+    public string GetRouteWithQueryString()
+    {
+      var parameters = new NameValueCollection
+      {
+        { nameof(Days), Days?.ToString() }
+      };
+
+      return $"{this.GetRoute()}?{this.GetQueryString(parameters)}";
+    }
+  }
+
+  public sealed class Response(IEnumerable<WeatherForecastDto> WeatherForecasts) : BaseResponse
+  {
+    public IEnumerable<WeatherForecastDto> WeatherForecasts { get; init; } = WeatherForecasts;
   }
 
   /// <summary>
-  /// Weather forecast response
+  /// The weather forecast
   /// </summary>
-  public sealed class Response
+  public sealed class WeatherForecastDto
   {
     /// <summary>
     /// The forecast for this Date
     /// </summary>
     /// <example>2020-06-08T12:32:39.9828696+07:00</example>
-    public DateTime Date { get; init; }
+    public DateTime Date { get; set; }
 
     /// <summary>
     /// Summary of the forecast
     /// </summary>
     /// <example>Cool</example>
-    public string Summary { get; init; }
+    public string Summary { get; set; }
 
     /// <summary>
     /// Temperature in Celsius
     /// </summary>
     /// <example>24</example>
-    public int TemperatureC { get; init; }
+    public int TemperatureC { get; set; }
 
     /// <summary>
     /// Temperature in Fahrenheit
@@ -40,12 +57,7 @@ public static partial class GetWeatherForecasts
     /// <example>75</example>
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 
-    public Response
-    (
-      DateTime date,
-      string summary,
-      int temperatureC
-    )
+    public WeatherForecastDto(DateTime date, string summary, int temperatureC)
     {
       Date = date;
       Summary = summary;
@@ -57,10 +69,7 @@ public static partial class GetWeatherForecasts
   {
     public Validator()
     {
-      RuleFor(x => x.Days)
-        .GreaterThan(0)
-        .When(x => x.Days.HasValue)
-        .WithMessage("Days must be greater than 0");
+      RuleFor(query => query.Days).NotEmpty().GreaterThan(0);
     }
   }
 }
