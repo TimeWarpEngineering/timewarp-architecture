@@ -19,7 +19,6 @@ public abstract class BaseFastEndpoint<TRequest, TResponse> : Endpoint<TRequest,
     else
     {
       SharedProblemDetails problem = oneOfResponse.AsT1;
-      Console.WriteLine($"BaseFastEndpoint - Problem Details: {System.Text.Json.JsonSerializer.Serialize(problem)}");
 
       // Set response content type with charset
       HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";

@@ -21,19 +21,12 @@ public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<T
         CancellationToken cancellationToken
     )
     {
-        Console.WriteLine("Validating request");
         if (Validator is null)
             return await next();
 
         ValidationResult? validationResult = await Validator.ValidateAsync(request, cancellationToken);
         if (validationResult.IsValid)
             return await next();
-
-        // Debug: Log validation errors
-        foreach (ValidationFailure error in validationResult.Errors)
-        {
-            Console.WriteLine($"Validation Error - Property: {error.PropertyName}, Error: {error.ErrorMessage}");
-        }
 
         // Group validation errors by property name
         var errors = validationResult.Errors
@@ -42,12 +35,6 @@ public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<T
                 g => g.Key,
                 g => g.Select(e => e.ErrorMessage).ToArray()
             );
-
-        // Debug: Log grouped errors
-        foreach (KeyValuePair<string, string[]> error in errors)
-        {
-            Console.WriteLine($"Grouped Error - Property: {error.Key}, Messages: {string.Join(", ", error.Value)}");
-        }
 
         // Construct SharedProblemDetails matching ASP.NET Core's ValidationProblemDetails format
         SharedProblemDetails problemDetails = new()
@@ -61,11 +48,6 @@ public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<T
                 ["errors"] = errors
             }
         };
-
-        // Debug: Log problem details
-        Console.WriteLine($"Problem Details - Title: {problemDetails.Title}");
-        Console.WriteLine($"Problem Details - Detail: {problemDetails.Detail}");
-        Console.WriteLine($"Problem Details - Extensions: {System.Text.Json.JsonSerializer.Serialize(problemDetails.Extensions)}");
 
         // Create OneOf with SharedProblemDetails
         Type successType = typeof(TResponse).GetGenericArguments()[0];

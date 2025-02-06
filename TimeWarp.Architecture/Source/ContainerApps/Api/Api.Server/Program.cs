@@ -47,7 +47,7 @@ public class Program : IAspNetProgram
 
     serviceCollection.AddFastEndpoints(options =>
     {
-      options.IncludeAbstractValidators = true; //This will run all AbstractValidators in the FastEndpoints pipeline.
+      options.IncludeAbstractValidators = false; //This will run all AbstractValidators in the FastEndpoints pipeline.
       options.Assemblies = new[]
       {
         typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).Assembly,
