@@ -9,7 +9,10 @@ Create a source generator that automatically generates FastEndpoint implementati
 1. Source generator should:
    - Detect contract classes with RouteMixin attribute
    - Generate corresponding FastEndpoint implementations
-   - Maintain all OpenAPI documentation from the contract
+   - Extract OpenAPI documentation from:
+     * XML documentation comments on the Query/Command class (for Summary and Description)
+     * Feature folder structure (for Tags, e.g., "WeatherForecast" from Features/WeatherForecast/)
+     * Additional attributes that can be added to the contract for explicit OpenAPI configuration
    - Handle proper routing configuration
    - Support both query and command endpoints
    - Preserve XML documentation comments
@@ -58,11 +61,21 @@ Create a source generator that automatically generates FastEndpoint implementati
 
 ## Notes
 
-Example contract for reference:
+Example contract for reference (in Features/WeatherForecast/Queries/GetWeatherForecasts.cs):
 ```csharp
+/// <summary>
+/// Get Weather Forecasts
+/// </summary>
+/// <remarks>
+/// Gets Weather Forecasts for the number of days specified in the request
+/// </remarks>
 [RouteMixin("api/weatherForecasts", HttpVerb.Get)]
 public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
 {
+    /// <summary>
+    /// The Number of days of forecasts to get
+    /// </summary>
+    /// <example>5</example>
     public int? Days { get; set; }
 }
 ```
@@ -97,3 +110,8 @@ Key considerations:
 3. Handle both query string and route parameters
 4. Support different HTTP verbs (GET, POST, PUT, DELETE)
 5. Maintain proper namespace organization
+6. Documentation sourcing priority:
+   - First: Look for explicit OpenAPI attributes on the contract
+   - Second: Use XML documentation comments
+   - Third: Generate from class/feature names (e.g., "GetWeatherForecasts" -> "Get Weather Forecasts")
+   - Fourth: Allow global defaults in source generator configuration
