@@ -21,8 +21,8 @@ public abstract class BaseFastEndpoint<TRequest, TResponse> : Endpoint<TRequest,
       SharedProblemDetails problem = oneOfResponse.AsT1;
       Console.WriteLine($"BaseFastEndpoint - Problem Details: {System.Text.Json.JsonSerializer.Serialize(problem)}");
 
-      // Set response content type to problem+json
-      HttpContext.Response.ContentType = "application/problem+json";
+      // Set response content type with charset
+      HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";
 
       // Set status code before sending
       HttpContext.Response.StatusCode = problem.Status ?? 400;
