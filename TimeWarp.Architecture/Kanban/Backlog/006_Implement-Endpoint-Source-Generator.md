@@ -10,6 +10,16 @@ Create a source generator that automatically generates FastEndpoint implementati
    - Detect static partial classes marked with [ApiEndpoint] attribute
    - Use [ApiEndpoint] to determine the endpoint type to generate (BaseFastEndpoint by default)
    - Use RouteTemplate from RouteMixin source generator and HttpVerb from RouteMixin attribute for endpoint configuration
+   - Validate source code structure:
+     * Ensure classes with [ApiEndpoint] are static and partial
+     * Verify presence of Query/Command class with [RouteMixin]
+     * Check for proper interface implementations (IQueryStringRouteProvider, IRequest<>)
+     * Detect route conflicts with existing endpoints
+   - Emit clear compiler diagnostics for:
+     * Missing or incorrect class structure
+     * Missing required attributes
+     * Route conflicts
+     * Invalid endpoint type configurations
    - Extract OpenAPI documentation from:
      * XML documentation comments on the Query/Command class (for Summary and Description)
      * Feature folder structure (for Tags, e.g., "WeatherForecast" from Features/WeatherForecast/)
@@ -146,3 +156,18 @@ Key considerations:
    - Second: Use XML documentation comments
    - Third: Generate from class/feature names (e.g., "GetWeatherForecasts" -> "Get Weather Forecasts")
    - Fourth: Allow global defaults in source generator configuration
+
+7. Example compiler diagnostics:
+   ```
+   error TWE001: Class marked with [ApiEndpoint] must be static and partial
+   Location: Features/WeatherForecast/Queries/GetWeatherForecasts.cs:10
+
+   error TWE002: No Query or Command class with [RouteMixin] found in ApiEndpoint class
+   Location: Features/WeatherForecast/Queries/GetWeatherForecasts.cs:10
+
+   error TWE003: Route conflict detected: 'api/weatherForecasts' [GET] is already used by 'ExistingEndpoint'
+   Location: Features/WeatherForecast/Queries/GetWeatherForecasts.cs:15
+
+   warning TWE101: Query class should implement IQueryStringRouteProvider for proper route generation
+   Location: Features/WeatherForecast/Queries/GetWeatherForecasts.cs:12
+   ```
