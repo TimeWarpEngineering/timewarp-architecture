@@ -61,8 +61,28 @@ Create a source generator that automatically generates FastEndpoint implementati
 
 ## Notes
 
-Example contract for reference (in Features/WeatherForecast/Queries/GetWeatherForecasts.cs):
+Example contract showing both XML comments and OpenAPI attributes (in Features/WeatherForecast/Queries/GetWeatherForecasts.cs):
 ```csharp
+/// <summary>
+/// Get Weather Forecasts
+/// </summary>
+/// <remarks>
+/// Gets Weather Forecasts for the number of days specified in the request
+/// </remarks>
+[RouteMixin("api/weatherForecasts", HttpVerb.Get)]
+[OpenApiTags("Weather")] // Explicit tag (highest priority)
+[OpenApiOperation("Get Weather Forecasts", "Gets Weather Forecasts for the number of days specified")] // Explicit summary/description
+public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+{
+    /// <summary>
+    /// The Number of days of forecasts to get
+    /// </summary>
+    /// <example>5</example>
+    [OpenApiParameter(Description = "Number of forecast days to retrieve")] // Explicit parameter documentation
+    public int? Days { get; set; }
+}
+
+// Alternative example using only XML comments (fallback documentation):
 /// <summary>
 /// Get Weather Forecasts
 /// </summary>
