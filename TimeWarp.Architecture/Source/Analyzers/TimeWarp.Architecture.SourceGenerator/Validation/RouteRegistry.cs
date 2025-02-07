@@ -1,6 +1,3 @@
-using Microsoft.CodeAnalysis;
-using System.Collections.Concurrent;
-
 namespace TimeWarp.Architecture.SourceGenerator;
 
 internal class RouteRegistry
@@ -9,9 +6,9 @@ internal class RouteRegistry
 
     public static bool TryRegisterRoute(string route, string httpVerb, string endpointName, SourceProductionContext context)
     {
-        var key = $"{route}:{httpVerb}";
+        string key = $"{route}:{httpVerb}";
         
-        if (RegisteredRoutes.TryGetValue(key, out var existing))
+        if (RegisteredRoutes.TryGetValue(key, out (string Route, string HttpVerb, string Endpoint) existing))
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(

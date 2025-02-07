@@ -1,13 +1,8 @@
-using FluentAssertions;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Testing;
-
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
 public class FastEndpointSourceGenerator_Tests
 {
-    public static async Task Should_Generate_Endpoint_From_Contract()
+    public static Task Should_Generate_Endpoint_From_Contract()
     {
         const string TestCode = @"
 using TimeWarp.Architecture.SourceGenerator;
@@ -30,9 +25,11 @@ public static partial class GetWeatherForecasts
     }
 }";
 
-        var expectedGeneratedCode = @"
+        const string ExpectedGeneratedCode = @"
 using FastEndpoints;
 using OneOf;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Test.Features.WeatherForecast;
 
@@ -46,15 +43,14 @@ public class GetWeatherForecastsEndpoint : BaseFastEndpoint<GetWeatherForecasts.
     public override async Task HandleAsync(GetWeatherForecasts.Query request, CancellationToken ct)
     {
         throw new NotImplementedException();
-    }
-}";
+    }";
 
-        var sources = new[]
+        (string, string)[] sources = new[]
         {
             (typeof(ApiEndpointAttribute).Assembly.GetName().Name + ".cs", TestCode)
         };
 
-        var references = new[]
+        MetadataReference[] references = new[]
         {
             MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(ApiEndpointAttribute).Assembly.Location)
@@ -73,17 +69,16 @@ public class GetWeatherForecastsEndpoint : BaseFastEndpoint<GetWeatherForecasts.
         // Get the driver that will apply the generator to the compilation
         GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
 
-        // Run the generator
-        driver = driver.RunGenerators(compilation);
-        
-        // Use the driver to run the generators and get the results
-        var runResult = driver.GetRunResult();
+        // Run the generator and get results
+        GeneratorDriverRunResult runResult = driver.RunGenerators(compilation).GetRunResult();
 
         // Get the generated files
-        runResult.GeneratedTrees.Length.Should().Be(1);
-        var actualGeneratedCode = runResult.GeneratedTrees[0].ToString();
+        runResult.Results[0].GeneratedSources.Length.Should().Be(1);
+        string actualGeneratedCode = runResult.Results[0].GeneratedSources[0].SourceText.ToString();
 
         // Compare the generated code
-        actualGeneratedCode.Should().Be(expectedGeneratedCode);
+        actualGeneratedCode.Should().Be(ExpectedGeneratedCode);
+
+        return Task.CompletedTask;
     }
 }

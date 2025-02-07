@@ -1,13 +1,8 @@
-using FluentAssertions;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Testing;
-
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
 public class FastEndpointSourceGenerator_RouteConflicts_Tests
 {
-    public static async Task Should_Detect_Route_Conflicts()
+    public static Task Should_Detect_Route_Conflicts()
     {
         const string TestCode1 = @"
 using TimeWarp.Architecture.SourceGenerator;
@@ -45,13 +40,13 @@ public static partial class GetCurrentWeather
     public sealed class Response { }
 }";
 
-        var sources = new[]
+        (string, string)[] sources = new[]
         {
             (typeof(ApiEndpointAttribute).Assembly.GetName().Name + "1.cs", TestCode1),
             (typeof(ApiEndpointAttribute).Assembly.GetName().Name + "2.cs", TestCode2)
         };
 
-        var references = new[]
+        MetadataReference[] references = new[]
         {
             MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(ApiEndpointAttribute).Assembly.Location)
@@ -65,22 +60,24 @@ public static partial class GetCurrentWeather
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
         // Create an instance of the source generator
-        var generator = new FastEndpointSourceGenerator();
+        FastEndpointSourceGenerator generator = new();
 
-        // Run the generator
+        // Run the generator and get results
         GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
-        driver = driver.RunGenerators(compilation);
-        var runResult = driver.GetRunResult();
-
+        GeneratorDriverRunResult runResult = driver.RunGenerators(compilation).GetRunResult();
+        
         // Verify that a diagnostic was reported
-        var diagnostics = runResult.Diagnostics;
-        diagnostics.Should().Contain(d => d.Id == "TWE003" && d.GetMessage().Contains("api/weather"));
+        var diagnostics = runResult.Results.SelectMany(r => r.Diagnostics).ToImmutableArray();
+        bool hasRouteConflict = diagnostics.Any(d => d.Id == "TWE003" && d.GetMessage() != null && d.GetMessage().Contains("api/weather"));
+        hasRouteConflict.Should().BeTrue();
+
+        return Task.CompletedTask;
     }
 }
 
 public class FastEndpointSourceGenerator_OpenApi_Tests
 {
-    public static async Task Should_Generate_OpenApi_Documentation()
+    public static Task Should_Generate_OpenApi_Documentation()
     {
         const string TestCode = @"
 using TimeWarp.Architecture.SourceGenerator;
@@ -111,8 +108,8 @@ public static partial class GetWeatherForecasts
     public sealed class Response { }
 }";
 
-        var sources = new[] { (typeof(ApiEndpointAttribute).Assembly.GetName().Name + ".cs", TestCode) };
-        var references = new[]
+        (string, string)[] sources = new[] { (typeof(ApiEndpointAttribute).Assembly.GetName().Name + ".cs", TestCode) };
+        MetadataReference[] references = new[]
         {
             MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(ApiEndpointAttribute).Assembly.Location)
@@ -124,18 +121,20 @@ public static partial class GetWeatherForecasts
             references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-        var generator = new FastEndpointSourceGenerator();
+        FastEndpointSourceGenerator generator = new();
         GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
-        driver = driver.RunGenerators(compilation);
-        var runResult = driver.GetRunResult();
+        GeneratorDriverRunResult runResult = driver.RunGenerators(compilation).GetRunResult();
 
         // Get the generated code
-        runResult.GeneratedTrees.Length.Should().Be(1);
-        var generatedCode = runResult.GeneratedTrees[0].ToString();
+        var generatedSyntaxTrees = runResult.Results.SelectMany(r => r.GeneratedSources).Select(g => g.SyntaxTree).ToImmutableArray();
+        generatedSyntaxTrees.Length.Should().Be(1);
+        string generatedCode = generatedSyntaxTrees[0].ToString();
 
         // Verify OpenAPI documentation is included
         generatedCode.Should().Contain("Gets weather forecasts for specified days");
         generatedCode.Should().Contain("Retrieves detailed weather forecasts including temperature and conditions");
         generatedCode.Should().Contain(@"Tags(""Weather"", ""Forecasting"")");
+
+        return Task.CompletedTask;
     }
 }

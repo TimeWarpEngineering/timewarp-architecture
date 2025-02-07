@@ -1,6 +1,3 @@
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-
 namespace TimeWarp.Architecture.SourceGenerator.Models;
 
 internal class EndpointMetadata
@@ -17,22 +14,22 @@ internal class EndpointMetadata
 
     public static EndpointMetadata FromSyntax(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
     {
-        var metadata = new EndpointMetadata
+        EndpointMetadata metadata = new()
         {
             ClassName = classDeclaration.Identifier.Text,
             Namespace = GetNamespace(classDeclaration)
         };
 
         // Extract route and HTTP verb from RouteMixin attribute
-        var queryClass = classDeclaration.Members
+        ClassDeclarationSyntax? queryClass = classDeclaration.Members
             .OfType<ClassDeclarationSyntax>()
             .FirstOrDefault(c => c.Identifier.Text is "Query" or "Command");
 
         if (queryClass != null)
         {
-            foreach (var attributeList in queryClass.AttributeLists)
+            foreach (AttributeListSyntax attributeList in queryClass.AttributeLists)
             {
-                foreach (var attribute in attributeList.Attributes)
+                foreach (AttributeSyntax attribute in attributeList.Attributes)
                 {
                     if (IsRouteMixinAttribute(attribute, semanticModel))
                     {
@@ -42,7 +39,7 @@ internal class EndpointMetadata
             }
 
             // Extract documentation from XML comments
-            var xmlTrivia = queryClass.GetLeadingTrivia()
+            DocumentationCommentTriviaSyntax? xmlTrivia = queryClass.GetLeadingTrivia()
                 .Select(t => t.GetStructure())
                 .OfType<DocumentationCommentTriviaSyntax>()
                 .FirstOrDefault();
@@ -68,7 +65,8 @@ internal class EndpointMetadata
 
     private static string GetNamespace(ClassDeclarationSyntax classDeclaration)
     {
-        var candidate = classDeclaration.Parent;
+        SyntaxNode? candidate = classDeclaration.Parent;
+        
         while (candidate is not null and not NamespaceDeclarationSyntax and not FileScopedNamespaceDeclarationSyntax)
         {
             candidate = candidate.Parent;
@@ -89,7 +87,7 @@ internal class EndpointMetadata
             return false;
         }
 
-        var attributeContainingTypeSymbol = attributeSymbol.ContainingType;
+        INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
         string fullName = attributeContainingTypeSymbol.ToDisplayString();
 
         return fullName == "TimeWarp.Architecture.RouteMixinAttribute";
@@ -115,7 +113,7 @@ internal class EndpointMetadata
 
     private static string GetXmlCommentContent(DocumentationCommentTriviaSyntax xmlTrivia, string elementName)
     {
-        var element = xmlTrivia.ChildNodes()
+        XmlElementSyntax? element = xmlTrivia.ChildNodes()
             .OfType<XmlElementSyntax>()
             .FirstOrDefault(x => x.StartTag.Name.LocalName.Text == elementName);
 
@@ -124,13 +122,13 @@ internal class EndpointMetadata
 
     private static bool HasAuthorizationAttribute(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
     {
-        foreach (var attributeList in classDeclaration.AttributeLists)
+        foreach (AttributeListSyntax attributeList in classDeclaration.AttributeLists)
         {
-            foreach (var attribute in attributeList.Attributes)
+            foreach (AttributeSyntax attribute in attributeList.Attributes)
             {
                 if (semanticModel.GetSymbolInfo(attribute).Symbol is IMethodSymbol attributeSymbol)
                 {
-                    var fullName = attributeSymbol.ContainingType.ToDisplayString();
+                    string fullName = attributeSymbol.ContainingType.ToDisplayString();
                     if (fullName.Contains("Authorize"))
                     {
                         return true;
@@ -138,20 +136,21 @@ internal class EndpointMetadata
                 }
             }
         }
+
         return false;
     }
 
     private static Type? GetCustomEndpointType(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
     {
-        foreach (var attributeList in classDeclaration.AttributeLists)
+        foreach (AttributeListSyntax attributeList in classDeclaration.AttributeLists)
         {
-            foreach (var attribute in attributeList.Attributes)
+            foreach (AttributeSyntax attribute in attributeList.Attributes)
             {
                 if (semanticModel.GetSymbolInfo(attribute).Symbol is IMethodSymbol attributeSymbol &&
                     attributeSymbol.ContainingType.ToDisplayString() == "TimeWarp.Architecture.SourceGenerator.ApiEndpointAttribute")
                 {
                     // Check for EndpointType property assignment
-                    var endpointTypeArg = attribute.ArgumentList?.Arguments
+                    AttributeArgumentSyntax? endpointTypeArg = attribute.ArgumentList?.Arguments
                         .FirstOrDefault(a => (a.NameEquals?.Name.Identifier.Text ?? "") == "EndpointType");
 
                     if (endpointTypeArg != null)
@@ -163,19 +162,22 @@ internal class EndpointMetadata
                 }
             }
         }
+
         return null;
     }
 
     private static string[] GetTags(ClassDeclarationSyntax classDeclaration)
     {
-        var tags = new List<string>();
+        List<string> tags = new();
 
         // Add tag from folder structure
-        var filePath = classDeclaration.SyntaxTree.FilePath;
+        string filePath = classDeclaration.SyntaxTree.FilePath;
+        
         if (!string.IsNullOrEmpty(filePath))
         {
-            var folders = filePath.Split(Path.DirectorySeparatorChar);
-            var featuresIndex = Array.IndexOf(folders, "Features");
+            string[] folders = filePath.Split(Path.DirectorySeparatorChar);
+            int featuresIndex = Array.IndexOf(folders, "Features");
+            
             if (featuresIndex >= 0 && featuresIndex < folders.Length - 1)
             {
                 tags.Add(folders[featuresIndex + 1]);
@@ -183,13 +185,13 @@ internal class EndpointMetadata
         }
 
         // Add tags from OpenApiTags attribute (if present)
-        foreach (var attributeList in classDeclaration.AttributeLists)
+        foreach (AttributeListSyntax attributeList in classDeclaration.AttributeLists)
         {
-            foreach (var attribute in attributeList.Attributes)
+            foreach (AttributeSyntax attribute in attributeList.Attributes)
             {
                 if (attribute.Name.ToString() == "OpenApiTags")
                 {
-                    foreach (var arg in attribute.ArgumentList?.Arguments ?? Enumerable.Empty<AttributeArgumentSyntax>())
+                    foreach (AttributeArgumentSyntax arg in attribute.ArgumentList?.Arguments ?? Enumerable.Empty<AttributeArgumentSyntax>())
                     {
                         if (arg.Expression is LiteralExpressionSyntax literal)
                         {
