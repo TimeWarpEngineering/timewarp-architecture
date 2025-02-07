@@ -20,7 +20,7 @@ public class GetWeatherForecastsEndpoint : BaseFastEndpoint<Query, Response>
       s.Description = "Gets Weather Forecasts for the number of days specified in the request";
     });
     Description(d => d
-      .Produces<IEnumerable<Response>>(200)
+      .Produces<Response>(200)
       .ProducesProblem(400)
     );
     Tags("Weather");
