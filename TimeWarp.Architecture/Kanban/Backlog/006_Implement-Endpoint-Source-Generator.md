@@ -7,8 +7,9 @@ Create a source generator that automatically generates FastEndpoint implementati
 ## Requirements
 
 1. Source generator should:
-   - Detect contract classes with RouteMixin attribute
-   - Generate corresponding FastEndpoint implementations
+   - Detect static partial classes marked with [ApiEndpoint] attribute
+   - Use [ApiEndpoint] to determine the endpoint type to generate (BaseFastEndpoint by default)
+   - Use existing [RouteMixin] on Query/Command class for routing configuration
    - Extract OpenAPI documentation from:
      * XML documentation comments on the Query/Command class (for Summary and Description)
      * Feature folder structure (for Tags, e.g., "WeatherForecast" from Features/WeatherForecast/)
@@ -61,42 +62,51 @@ Create a source generator that automatically generates FastEndpoint implementati
 
 ## Notes
 
-Example contract showing both XML comments and OpenAPI attributes (in Features/WeatherForecast/Queries/GetWeatherForecasts.cs):
+Example contract showing ApiEndpoint generation with OpenAPI documentation (in Features/WeatherForecast/Queries/GetWeatherForecasts.cs):
 ```csharp
-/// <summary>
-/// Get Weather Forecasts
-/// </summary>
-/// <remarks>
-/// Gets Weather Forecasts for the number of days specified in the request
-/// </remarks>
-[RouteMixin("api/weatherForecasts", HttpVerb.Get)]
-[OpenApiTags("Weather")] // Explicit tag (highest priority)
-[OpenApiOperation("Get Weather Forecasts", "Gets Weather Forecasts for the number of days specified")] // Explicit summary/description
-public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+[ApiEndpoint] // Triggers FastEndpoint generation (default)
+// Or [ApiEndpoint(EndpointType = typeof(MinimalApiEndpoint<,>))] for different endpoint type
+public static partial class GetWeatherForecasts
 {
     /// <summary>
-    /// The Number of days of forecasts to get
+    /// Get Weather Forecasts
     /// </summary>
-    /// <example>5</example>
-    [OpenApiParameter(Description = "Number of forecast days to retrieve")] // Explicit parameter documentation
-    public int? Days { get; set; }
+    /// <remarks>
+    /// Gets Weather Forecasts for the number of days specified in the request
+    /// </remarks>
+    [RouteMixin("api/weatherForecasts", HttpVerb.Get)] // Handles routing
+    [OpenApiTags("Weather")] // Explicit tag (highest priority)
+    [OpenApiOperation("Get Weather Forecasts", "Gets Weather Forecasts for the number of days specified")] // Explicit summary/description
+    public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+    {
+        /// <summary>
+        /// The Number of days of forecasts to get
+        /// </summary>
+        /// <example>5</example>
+        [OpenApiParameter(Description = "Number of forecast days to retrieve")] // Explicit parameter documentation
+        public int? Days { get; set; }
+    }
 }
 
 // Alternative example using only XML comments (fallback documentation):
-/// <summary>
-/// Get Weather Forecasts
-/// </summary>
-/// <remarks>
-/// Gets Weather Forecasts for the number of days specified in the request
-/// </remarks>
-[RouteMixin("api/weatherForecasts", HttpVerb.Get)]
-public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+[ApiEndpoint]
+public static partial class GetWeatherForecasts
 {
     /// <summary>
-    /// The Number of days of forecasts to get
+    /// Get Weather Forecasts
     /// </summary>
-    /// <example>5</example>
-    public int? Days { get; set; }
+    /// <remarks>
+    /// Gets Weather Forecasts for the number of days specified in the request
+    /// </remarks>
+    [RouteMixin("api/weatherForecasts", HttpVerb.Get)]
+    public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+    {
+        /// <summary>
+        /// The Number of days of forecasts to get
+        /// </summary>
+        /// <example>5</example>
+        public int? Days { get; set; }
+    }
 }
 ```
 
