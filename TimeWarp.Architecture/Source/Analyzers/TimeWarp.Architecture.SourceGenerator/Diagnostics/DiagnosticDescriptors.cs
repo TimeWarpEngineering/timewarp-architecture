@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace TimeWarp.Architecture.SourceGenerator;
 
 internal static class DiagnosticDescriptors
