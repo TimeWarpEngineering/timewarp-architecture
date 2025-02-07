@@ -1,5 +1,4 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -146,6 +145,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.SourceGenerators", "..\..\timewarp-source-generators\source\TimeWarp.SourceGenerators\TimeWarp.SourceGenerators.csproj", "{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.MediatR", "Source\Libraries\TimeWarp.MediatR\TimeWarp.MediatR.csproj", "{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.SourceGenerator", "Source\Analyzers\TimeWarp.Architecture.SourceGenerator\TimeWarp.Architecture.SourceGenerator.csproj", "{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.SourceGenerator.Tests", "Tests\Analyzers\TimeWarp.Architecture.SourceGenerator.Tests\TimeWarp.Architecture.SourceGenerator.Tests.csproj", "{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -370,6 +373,14 @@ Global
 		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
 		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -423,6 +434,8 @@ Global
 		{7069BD78-9259-4AD8-B5D2-68644ADE46D8} = {A988AE51-34CF-4B84-9CCE-461AA31A560D}
 		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D} = {A988AE51-34CF-4B84-9CCE-461AA31A560D}
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D} = {3979C93A-21A2-4166-99B9-C62E2839B561}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
