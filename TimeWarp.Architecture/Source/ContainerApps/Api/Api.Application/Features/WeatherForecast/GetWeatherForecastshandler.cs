@@ -34,11 +34,11 @@ public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response,
       index => weatherForecasts.Add
       (
         new WeatherForecastDto
-        (
-          date: DateTime.Now.AddDays(index),
-          summary: Summaries[random.Next(Summaries.Length)],
-          temperatureC: random.Next(-20, 55)
-        )
+        {
+          Date = DateTime.Now.AddDays(index),
+          Summary = Summaries[random.Next(Summaries.Length)],
+          TemperatureC = random.Next(-20, 55)
+        }
       )
     );
     var response = new Response(weatherForecasts);

@@ -20,11 +20,12 @@ public class MockApiService : IApiService
             (
               new GetWeatherForecasts.WeatherForecastDto[]
               {
-                new(
-                  date: DateTime.Now.AddDays(1),
-                  summary: "Summary 1",
-                  temperatureC: 25
-                ),
+                new()
+                {
+                  Date = DateTime.Now.AddDays(1),
+                  Summary = "Summary 1",
+                  TemperatureC = 25
+                },
               }
             );
         return (response as TResponse)!;
