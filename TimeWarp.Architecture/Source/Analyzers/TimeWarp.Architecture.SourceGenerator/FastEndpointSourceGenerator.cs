@@ -25,7 +25,7 @@ namespace TimeWarp.Architecture.SourceGenerator
 }", Encoding.UTF8)));
 
         // Get all class declarations with the ApiEndpoint attribute
-        IncrementalValuesProvider<(ClassDeclarationSyntax ClassDeclaration, SemanticModel SemanticModel)> classDeclarations = 
+        IncrementalValuesProvider<(ClassDeclarationSyntax ClassDeclaration, SemanticModel SemanticModel)> classDeclarations =
             context.SyntaxProvider
                 .CreateSyntaxProvider(
                     predicate: static (s, _) => IsSyntaxTargetForGeneration(s),
@@ -145,65 +145,84 @@ namespace TimeWarp.Architecture.SourceGenerator
 
         return true; // Skip validation for now as the contracts are correct
     }
+private static string GenerateEndpointClass(EndpointMetadata metadata)
+{
+    StringBuilder builder = new();
 
-    private static string GenerateEndpointClass(EndpointMetadata metadata)
+    // Add using statements
+    builder.AppendLine("using FastEndpoints;");
+    builder.AppendLine("using OneOf;");
+    builder.AppendLine("using System.Threading;");
+    builder.AppendLine("using System.Threading.Tasks;");
+    builder.AppendLine();
+
+    // Add namespace
+    builder.Append("namespace ").Append(metadata.Namespace).AppendLine(";");
+    builder.AppendLine();
+
+    // Add XML comments
+    builder.AppendLine("/// <summary>");
+    builder.Append("/// ").Append(metadata.Summary).AppendLine();
+    builder.AppendLine("/// </summary>");
+    builder.AppendLine("/// <remarks>");
+    builder.Append("/// ").Append(metadata.Description).AppendLine();
+    builder.AppendLine("/// </remarks>");
+
+    // Add class declaration
+    builder.Append("public class ").Append(metadata.ClassName).Append("Endpoint : ");
+    builder.Append(metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint");
+    builder.Append("<").Append(metadata.ClassName).Append(".Query, ");
+    builder.Append(metadata.ClassName).AppendLine(".Response>");
+    builder.AppendLine("{");
+
+    // Add Configure method
+    builder.AppendLine("    public override void Configure()");
+    builder.AppendLine("    {");
+    builder.Append("        ").Append(metadata.HttpVerb).Append("(\"").Append(metadata.Route).AppendLine("\");");
+
+    // Add authorization if required
+    if (metadata.RequiresAuthorization)
     {
-        var builder = new StringBuilder();
-        builder.AppendLine(@"using FastEndpoints;
-using OneOf;
-using System.Threading;
-using System.Threading.Tasks;");
-
-        builder.AppendLine($@"
-namespace {metadata.Namespace};
-
-/// <summary>
-/// {metadata.Summary}
-/// </summary>
-/// <remarks>
-/// {metadata.Description}
-/// </remarks>
-public class {metadata.ClassName}Endpoint : {metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint"}<{metadata.ClassName}.Query, {metadata.ClassName}.Response>
-{{
-    public override void Configure()
-    {{
-        {metadata.HttpVerb}("{metadata.Route}");
-");
-
-        if (metadata.RequiresAuthorization)
-        {
-            builder.AppendLine("        RequireAuthorization();");
-        }
-
-        if (metadata.Tags.Any())
-        {
-            builder.AppendLine($"        Tags({string.Join(", ", metadata.Tags.Select(t => $"\"{t}\""))});");
-        }
-
-        if (!string.IsNullOrEmpty(metadata.Summary))
-        {
-            builder.AppendLine($@"        Summary(s =>
-        {{
-            s.Summary = ""{metadata.Summary}"";
-            s.Description = ""{metadata.Description}"";
-            s.ExampleRequest = new {metadata.ClassName}.Query {{ Days = 5 }};
-        }});
-
-        Description(d => d
-            .Produces<{metadata.ClassName}.Response>(200, ""Success"")
-            .ProducesProblem(400, ""Bad Request"")
-        );");
-        }
-
-        builder.AppendLine(@"    }
-
-    public override async Task HandleAsync(Query request, CancellationToken ct)
-    {
-        // Implementation will be provided by the user
-        throw new NotImplementedException();
+        builder.AppendLine("        RequireAuthorization();");
     }
-}");
 
-        return builder.ToString();
+    // Add tags if any
+    if (metadata.Tags.Any())
+    {
+        builder.Append("        Tags(");
+        IEnumerable<string> tags = metadata.Tags.Select(t => $"\"{t}\"");
+        builder.Append(string.Join(", ", tags));
+        builder.AppendLine(");");
+    }
+
+    // Add summary and description if provided
+    if (!string.IsNullOrEmpty(metadata.Summary))
+    {
+        builder.AppendLine("        Summary(s =>");
+        builder.AppendLine("        {");
+        builder.AppendLine($"            s.Summary = \"{metadata.Summary}\";");
+        builder.AppendLine($"            s.Description = \"{metadata.Description}\";");
+        builder.AppendLine($"            s.ExampleRequest = new {metadata.ClassName}.Query {{ Days = 5 }};");
+        builder.AppendLine("        });");
+        builder.AppendLine();
+        builder.AppendLine("        Description(d => d");
+        builder.AppendLine($"            .Produces<{metadata.ClassName}.Response>(200, \"Success\")");
+        builder.AppendLine("            .ProducesProblem(400, \"Bad Request\")");
+        builder.AppendLine("        );");
+    }
+
+    // Close Configure method
+    builder.AppendLine("    }");
+    builder.AppendLine();
+
+    // Add HandleAsync method
+    builder.AppendLine("    public override async Task HandleAsync(Query request, CancellationToken ct)");
+    builder.AppendLine("    {");
+    builder.AppendLine("        // Implementation will be provided by the user");
+    builder.AppendLine("        throw new NotImplementedException();");
+    builder.AppendLine("    }");
+    builder.AppendLine("}");
+
+    return builder.ToString();
     }
 }
