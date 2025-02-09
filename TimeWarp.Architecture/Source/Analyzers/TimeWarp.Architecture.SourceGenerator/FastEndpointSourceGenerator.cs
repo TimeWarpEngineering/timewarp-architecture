@@ -10,20 +10,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         // Reset route registry at the start of each generation
         RouteRegistry.Reset();
 
-        // Register the attribute source
-        context.RegisterPostInitializationOutput(ctx => ctx.AddSource(
-            "ApiEndpointAttribute.g.cs",
-            SourceText.From(@"
-using System;
-namespace TimeWarp.Architecture.SourceGenerator
-{
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public sealed class ApiEndpointAttribute : Attribute
-    {
-        public Type? EndpointType { get; set; }
-    }
-}", Encoding.UTF8)));
-
         // Get all class declarations with the ApiEndpoint attribute
         IncrementalValuesProvider<(ClassDeclarationSyntax ClassDeclaration, SemanticModel SemanticModel)> classDeclarations =
             context.SyntaxProvider
