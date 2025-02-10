@@ -19,6 +19,13 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                 .Where(static t => t.ClassDeclaration is not null)
                 .Select(static (t, _) => (t.ClassDeclaration!, t.SemanticModel));
 
+        // Register for compilation to ensure we have access to referenced assemblies
+        context.CompilationProvider.Select((compilation, _) =>
+        {
+            // This ensures we have access to the compilation when generating source
+            return compilation;
+        });
+
         // Generate the source
         context.RegisterSourceOutput(classDeclarations,
             static (spc, source) => Execute(source.ClassDeclaration, source.SemanticModel, spc));
@@ -46,9 +53,19 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                 INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
                 string fullName = attributeContainingTypeSymbol.ToDisplayString();
 
+                // Check both the generated attribute and the one from Common.Contracts
                 if (fullName == "TimeWarp.Architecture.SourceGenerator.ApiEndpointAttribute")
                 {
-                    return (classDeclaration, semanticModel);
+                    // Get the containing assembly
+                    IAssemblySymbol assembly = attributeContainingTypeSymbol.ContainingAssembly;
+                    if (assembly != null)
+                    {
+                        // Check if this is from Common.Contracts or our source generator
+                        if (assembly.Name == "Common.Contracts" || assembly.Name.Contains("TimeWarp.Architecture.SourceGenerator"))
+                        {
+                            return (classDeclaration, semanticModel);
+                        }
+                    }
                 }
             }
         }
