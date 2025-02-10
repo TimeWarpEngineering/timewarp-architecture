@@ -46,10 +46,23 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
             static (spc, source) => Execute(source.ClassDeclaration, source.SemanticModel, spc));
     }
 
-    private static bool IsSyntaxTargetForGeneration(SyntaxNode node) =>
-        node is ClassDeclarationSyntax { AttributeLists.Count: > 0 } classDeclaration &&
-        classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)) &&
-        classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
+    private static bool IsSyntaxTargetForGeneration(SyntaxNode node)
+    {
+        if (node is not ClassDeclarationSyntax classDeclaration)
+        {
+            return false;
+        }
+
+        // Log the class we're checking
+        System.Diagnostics.Debug.WriteLine($"Checking class: {classDeclaration.Identifier.Text}");
+        System.Diagnostics.Debug.WriteLine($"Has attributes: {classDeclaration.AttributeLists.Count > 0}");
+        System.Diagnostics.Debug.WriteLine($"Is static: {classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword))}");
+        System.Diagnostics.Debug.WriteLine($"Is partial: {classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))}");
+
+        return classDeclaration.AttributeLists.Count > 0 &&
+               classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)) &&
+               classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
+    }
 
     private static (ClassDeclarationSyntax? ClassDeclaration, SemanticModel SemanticModel) GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
     {
