@@ -10,7 +10,22 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         // Reset route registry at the start of each generation
         RouteRegistry.Reset();
 
+        // Create diagnostic descriptor for logging
+        var logDiagnostic = new DiagnosticDescriptor(
+            "SG001",
+            "Source Generator Log",
+            "{0}",
+            "SourceGenerator",
+            DiagnosticSeverity.Warning,
+            true);
+
         // Get all class declarations with the ApiEndpoint attribute
+        context.ReportDiagnostic(
+            Diagnostic.Create(
+                logDiagnostic,
+                Location.None,
+                "Starting source generator execution"));
+
         IncrementalValuesProvider<(ClassDeclarationSyntax ClassDeclaration, SemanticModel SemanticModel)> classDeclarations =
             context.SyntaxProvider
                 .CreateSyntaxProvider(
@@ -75,12 +90,37 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
     private static void Execute(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel, SourceProductionContext context)
     {
+        var logDiagnostic = new DiagnosticDescriptor(
+            "SG001",
+            "Source Generator Log",
+            "{0}",
+            "SourceGenerator",
+            DiagnosticSeverity.Warning,
+            true);
+
+        context.ReportDiagnostic(
+            Diagnostic.Create(
+                logDiagnostic,
+                Location.None,
+                $"Executing source generation for class: {classDeclaration.Identifier.Text}"));
+
         // Extract metadata
         var metadata = EndpointMetadata.FromSyntax(classDeclaration, semanticModel);
+
+        context.ReportDiagnostic(
+            Diagnostic.Create(
+                logDiagnostic,
+                Location.None,
+                $"Extracted metadata - Class: {metadata.ClassName}, Route: {metadata.Route}"));
 
         // Validate the class structure
         if (!ValidateClassStructure(classDeclaration, context))
         {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    logDiagnostic,
+                    Location.None,
+                    "Class structure validation failed"));
             return;
         }
 
