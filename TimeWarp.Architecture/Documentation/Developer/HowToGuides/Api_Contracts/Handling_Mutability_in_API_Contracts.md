@@ -6,7 +6,7 @@ The mutability of properties in API contracts within the TimeWarp Architecture s
 
 For API contracts designed to fetch data without expecting any modifications to be sent back to the server, properties should be immutable. This immutability is enforced by setting properties with `{ get; init; }` accessors, which allows assignment only during object initialization. Immutable properties prevent accidental data modifications.
 
-Example of an immutable Dto:
+Example of an immutable DTO:
 
 ```csharp
 public sealed class UserDto
