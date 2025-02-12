@@ -29,6 +29,9 @@
     <ProjectReference Include="..\..\..\Analyzers\TimeWarp.Architecture.SourceGenerator\TimeWarp.Architecture.SourceGenerator.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false"/>
+
+    <!-- Add Api.Contracts source files for the source generator -->
+    <AdditionalFiles Include="..\Api.Contracts\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

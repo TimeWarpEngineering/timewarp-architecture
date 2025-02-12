@@ -10,6 +10,26 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         // Reset route registry at the start of each generation
         RouteRegistry.Reset();
 
+        // Create diagnostic descriptor for logging
+        var logDiagnostic = new DiagnosticDescriptor(
+            "SG001",
+            "Source Generator Log",
+            "{0}",
+            "SourceGenerator",
+            DiagnosticSeverity.Warning,
+            true);
+
+        // Register source output for logging initialization
+        context.RegisterSourceOutput(context.CompilationProvider,
+            (spc, compilation) =>
+            {
+                spc.ReportDiagnostic(
+                    Diagnostic.Create(
+                        logDiagnostic,
+                        Location.None,
+                        "Source generator initialized"));
+            });
+
         // Get all class declarations with the ApiEndpoint attribute
         IncrementalValuesProvider<(ClassDeclarationSyntax ClassDeclaration, SemanticModel SemanticModel)> classDeclarations =
             context.SyntaxProvider
@@ -19,12 +39,33 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                 .Where(static t => t.ClassDeclaration is not null)
                 .Select(static (t, _) => (t.ClassDeclaration!, t.SemanticModel));
 
-        // Register for compilation to ensure we have access to referenced assemblies
-        context.CompilationProvider.Select((compilation, _) =>
-        {
-            // This ensures we have access to the compilation when generating source
-            return compilation;
-        });
+        // Register source output for compilation diagnostics
+        context.RegisterSourceOutput(context.CompilationProvider,
+            static (spc, compilation) =>
+            {
+                var logDiagnostic = new DiagnosticDescriptor(
+                    "SG001",
+                    "Source Generator Log",
+                    "{0}",
+                    "SourceGenerator",
+                    DiagnosticSeverity.Warning,
+                    true);
+
+                spc.ReportDiagnostic(
+                    Diagnostic.Create(
+                        logDiagnostic,
+                        Location.None,
+                        $"Compilation started. Assembly: {compilation.AssemblyName}, Syntax trees: {compilation.SyntaxTrees.Count()}"));
+
+                foreach (var tree in compilation.SyntaxTrees)
+                {
+                    spc.ReportDiagnostic(
+                        Diagnostic.Create(
+                            logDiagnostic,
+                            Location.None,
+                            $"Processing file: {tree.FilePath}"));
+                }
+            });
 
         // Generate the source
         context.RegisterSourceOutput(classDeclarations,
@@ -33,20 +74,40 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
     private static bool IsSyntaxTargetForGeneration(SyntaxNode node)
     {
+        // Only look at class declarations
         if (node is not ClassDeclarationSyntax classDeclaration)
         {
             return false;
         }
 
-        // Log the class we're checking
-        System.Diagnostics.Debug.WriteLine($"Checking class: {classDeclaration.Identifier.Text}");
-        System.Diagnostics.Debug.WriteLine($"Has attributes: {classDeclaration.AttributeLists.Count > 0}");
-        System.Diagnostics.Debug.WriteLine($"Is static: {classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword))}");
-        System.Diagnostics.Debug.WriteLine($"Is partial: {classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))}");
+        // Must be static and partial
+        bool isStatic = classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword));
+        bool isPartial = classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
 
-        return classDeclaration.AttributeLists.Count > 0 &&
-               classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)) &&
-               classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
+        // Must have at least one attribute
+        bool hasAttributes = classDeclaration.AttributeLists.Count > 0;
+
+        // Get all attribute names for logging
+        var attributeNames = classDeclaration.AttributeLists
+            .SelectMany(al => al.Attributes)
+            .Select(a => a.Name.ToString())
+            .ToList();
+
+        // Check if any attribute name ends with "ApiEndpoint" or "ApiEndpointAttribute"
+        bool hasApiEndpointAttribute = attributeNames
+            .Any(name => name.EndsWith("ApiEndpoint") || name.EndsWith("ApiEndpointAttribute"));
+
+        // Log using Debug instead of Console
+        System.Diagnostics.Debug.WriteLine($"=== Checking class: {classDeclaration.Identifier.Text} ===");
+        System.Diagnostics.Debug.WriteLine($"IsStatic: {isStatic}");
+        System.Diagnostics.Debug.WriteLine($"IsPartial: {isPartial}");
+        System.Diagnostics.Debug.WriteLine($"HasAttributes: {hasAttributes}");
+        System.Diagnostics.Debug.WriteLine($"HasApiEndpointAttribute: {hasApiEndpointAttribute}");
+        System.Diagnostics.Debug.WriteLine($"Attributes found: {string.Join(", ", attributeNames)}");
+        System.Diagnostics.Debug.WriteLine($"Full class text: {classDeclaration.ToFullString()}");
+        System.Diagnostics.Debug.WriteLine("===================================");
+
+        return isStatic && isPartial && hasAttributes && hasApiEndpointAttribute;
     }
 
     private static (ClassDeclarationSyntax? ClassDeclaration, SemanticModel SemanticModel) GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
@@ -66,19 +127,16 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                 INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
                 string fullName = attributeContainingTypeSymbol.ToDisplayString();
 
-                // Check both the generated attribute and the one from Common.Contracts
-                if (fullName == "TimeWarp.Architecture.SourceGenerator.ApiEndpointAttribute")
+                System.Diagnostics.Debug.WriteLine($"Checking attribute: {fullName}");
+                System.Diagnostics.Debug.WriteLine($"Assembly: {attributeContainingTypeSymbol.ContainingAssembly?.Name}");
+                System.Diagnostics.Debug.WriteLine($"Attribute type name: {attributeContainingTypeSymbol.Name}");
+
+                // Check for ApiEndpoint attribute with any namespace
+                if (attributeContainingTypeSymbol.Name == "ApiEndpointAttribute" ||
+                    attributeContainingTypeSymbol.Name == "ApiEndpoint")
                 {
-                    // Get the containing assembly
-                    IAssemblySymbol assembly = attributeContainingTypeSymbol.ContainingAssembly;
-                    if (assembly != null)
-                    {
-                        // Check if this is from Common.Contracts or our source generator
-                        if (assembly.Name == "Common.Contracts" || assembly.Name.Contains("TimeWarp.Architecture.SourceGenerator"))
-                        {
-                            return (classDeclaration, semanticModel);
-                        }
-                    }
+                    System.Diagnostics.Debug.WriteLine($"Found matching attribute: {fullName}");
+                    return (classDeclaration, semanticModel);
                 }
             }
         }
@@ -96,11 +154,18 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
             DiagnosticSeverity.Warning,
             true);
 
+        // Log generation details
         context.ReportDiagnostic(
             Diagnostic.Create(
                 logDiagnostic,
                 Location.None,
-                $"Executing source generation for class: {classDeclaration.Identifier.Text}"));
+                $"=== Starting generation for {classDeclaration.Identifier.Text} ==="));
+
+        context.ReportDiagnostic(
+            Diagnostic.Create(
+                logDiagnostic,
+                Location.None,
+                $"Class location: {classDeclaration.GetLocation()?.GetLineSpan().Path ?? "unknown"}"));
 
         // Extract metadata
         var metadata = EndpointMetadata.FromSyntax(classDeclaration, semanticModel);
@@ -130,7 +195,21 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
         // Generate the endpoint class
         string endpointClass = GenerateEndpointClass(metadata);
-        context.AddSource($"{metadata.ClassName}Endpoint.g.cs", SourceText.From(endpointClass, Encoding.UTF8));
+        string fileName = $"{metadata.ClassName}Endpoint.g.cs";
+
+        context.ReportDiagnostic(
+            Diagnostic.Create(
+                logDiagnostic,
+                Location.None,
+                $"Generating endpoint file: {fileName}"));
+
+        context.AddSource(fileName, SourceText.From(endpointClass, Encoding.UTF8));
+
+        context.ReportDiagnostic(
+            Diagnostic.Create(
+                logDiagnostic,
+                Location.None,
+                $"Successfully generated endpoint file: {fileName}"));
     }
 
     private static bool ValidateClassStructure(ClassDeclarationSyntax classDeclaration, SourceProductionContext context)
