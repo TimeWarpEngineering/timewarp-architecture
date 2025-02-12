@@ -5,8 +5,8 @@ using static GetWeatherForecasts;
 [UsedImplicitly]
 public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
 {
-  private readonly string[] Summaries = new[]
-  {
+  private readonly string[] Summaries =
+  [
     "Freezing",
     "Bracing",
     "Chilly",
@@ -17,7 +17,7 @@ public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response,
     "Hot",
     "Sweltering",
     "Scorching"
-  };
+  ];
 
   public Task<OneOf<Response, SharedProblemDetails>> Handle
   (
@@ -34,11 +34,11 @@ public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response,
       index => weatherForecasts.Add
       (
         new WeatherForecastDto
-        {
-          Date = DateTime.Now.AddDays(index),
-          Summary = Summaries[random.Next(Summaries.Length)],
-          TemperatureC = random.Next(-20, 55)
-        }
+        (
+          date: DateTime.Now.AddDays(index),
+          summary: Summaries[random.Next(Summaries.Length)],
+          temperatureC: random.Next(-20, 55)
+        )
       )
     );
     var response = new Response(weatherForecasts);
