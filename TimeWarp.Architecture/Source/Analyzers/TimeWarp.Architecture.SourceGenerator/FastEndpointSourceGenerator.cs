@@ -10,22 +10,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         // Reset route registry at the start of each generation
         RouteRegistry.Reset();
 
-        // Create diagnostic descriptor for logging
-        var logDiagnostic = new DiagnosticDescriptor(
-            "SG001",
-            "Source Generator Log",
-            "{0}",
-            "SourceGenerator",
-            DiagnosticSeverity.Warning,
-            true);
-
         // Get all class declarations with the ApiEndpoint attribute
-        context.ReportDiagnostic(
-            Diagnostic.Create(
-                logDiagnostic,
-                Location.None,
-                "Starting source generator execution"));
-
         IncrementalValuesProvider<(ClassDeclarationSyntax ClassDeclaration, SemanticModel SemanticModel)> classDeclarations =
             context.SyntaxProvider
                 .CreateSyntaxProvider(
