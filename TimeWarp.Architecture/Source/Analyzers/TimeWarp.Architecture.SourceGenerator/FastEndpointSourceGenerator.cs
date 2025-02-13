@@ -177,7 +177,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
         // Check if any attribute name matches ApiEndpoint
         bool hasApiEndpointAttribute = attributeNames
-            .Any(name => name.Contains("ApiEndpoint"));
+            .Any(name => name == "ApiEndpoint" || name == "ApiEndpointAttribute");
 
         DiagnosticMessages.Add($"Syntax check - Class: {classDeclaration.Identifier.Text}, Has ApiEndpoint: {hasApiEndpointAttribute}, Attribute names: {string.Join(", ", attributeNames)}");
 
