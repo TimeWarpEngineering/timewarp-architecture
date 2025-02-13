@@ -146,7 +146,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         // Get all attribute names for logging
         var attributeNames = classDeclaration.AttributeLists
             .SelectMany(al => al.Attributes)
-            .Select(a => a.Name.ToString())
+            .Select(a => a.Name.ToFullString().TrimEnd())
             .ToList();
 
         // Check if any attribute name matches ApiEndpoint
