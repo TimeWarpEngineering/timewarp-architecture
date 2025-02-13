@@ -96,16 +96,19 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                             $"Scanning syntax tree: {sourcePath}, First line: {sourceText}"));
                 }
 
-                // Also check additional locations
-                foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+                // Check metadata references for source files
+                foreach (MetadataReference reference in compilation.References)
                 {
-                    foreach (SyntaxReference syntaxRef in assembly.DeclaringSyntaxReferences)
+                    if (reference is CompilationReference compilationRef)
                     {
-                        spc.ReportDiagnostic(
-                            Diagnostic.Create(
-                                logDiagnostic,
-                                Location.None,
-                                $"Additional syntax from {assembly.Name}: {syntaxRef.SyntaxTree.FilePath}"));
+                        foreach (SyntaxTree tree in compilationRef.Compilation.SyntaxTrees)
+                        {
+                            spc.ReportDiagnostic(
+                                Diagnostic.Create(
+                                    logDiagnostic,
+                                    Location.None,
+                                    $"Found source in referenced compilation: {tree.FilePath}"));
+                        }
                     }
                 }
 
