@@ -6,8 +6,6 @@ using Models;
 public class FastEndpointSourceGenerator : IIncrementalGenerator
 {
     private const string ApiEndpointAttributeFullName = "TimeWarp.Architecture.Attributes.ApiEndpointAttribute";
-    private static readonly List<string> DiagnosticMessages = new();
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // Reset route registry at the start of each generation
@@ -54,18 +52,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                         logDiagnostic,
                         Location.None,
                         $"Compilation started. Assembly: {compilation.AssemblyName}"));
-
-                // Output collected diagnostic messages
-                foreach (string message in DiagnosticMessages)
-                {
-                    spc.ReportDiagnostic(
-                        Diagnostic.Create(
-                            logDiagnostic,
-                            Location.None,
-                            message));
-                }
-
-                DiagnosticMessages.Clear(); // Clear for next compilation
 
                 // Log compilation details
                 spc.ReportDiagnostic(
