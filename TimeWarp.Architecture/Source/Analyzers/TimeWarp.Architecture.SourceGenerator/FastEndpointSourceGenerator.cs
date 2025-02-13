@@ -212,7 +212,12 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         // Get all attribute names for logging
         var attributeNames = classDeclaration.AttributeLists
             .SelectMany(al => al.Attributes)
-            .Select(a => a.Name.ToFullString().TrimEnd())
+            .Select(a =>
+            {
+                string name = a.Name.ToFullString().TrimEnd();
+                System.Diagnostics.Debug.WriteLine($"Raw attribute name: '{name}' on class {classDeclaration.Identifier.Text}");
+                return name;
+            })
             .ToList();
 
         // Check if any attribute name matches ApiEndpoint
@@ -240,7 +245,12 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                 string fullName = attributeContainingTypeSymbol.ToDisplayString();
 
                 // Check for ApiEndpoint attribute with any namespace
-                if (fullName == ApiEndpointAttributeFullName)
+                bool isMatch = fullName == ApiEndpointAttributeFullName ||
+                             attributeContainingTypeSymbol.Name == "ApiEndpointAttribute";
+
+                System.Diagnostics.Debug.WriteLine($"Semantic check - Full name: '{fullName}', Symbol name: '{attributeContainingTypeSymbol.Name}', Looking for: '{ApiEndpointAttributeFullName}', IsMatch: {isMatch}");
+
+                if (isMatch)
                 {
                     return (classDeclaration, semanticModel);
                 }
