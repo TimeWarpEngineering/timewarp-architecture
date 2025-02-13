@@ -54,6 +54,25 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                         $"Compilation started. Assembly: {compilation.AssemblyName}"));
 
                 // Log compilation details
+                spc.ReportDiagnostic(
+                    Diagnostic.Create(
+                        logDiagnostic,
+                        Location.None,
+                        $"Compilation references count: {compilation.References.Count()}"));
+
+                foreach (MetadataReference reference in compilation.References)
+                {
+                    if (reference is PortableExecutableReference peReference)
+                    {
+                        string assemblyName = peReference.FilePath?.Split('\\').LastOrDefault() ?? "unknown";
+                        spc.ReportDiagnostic(
+                            Diagnostic.Create(
+                                logDiagnostic,
+                                Location.None,
+                                $"Referenced assembly name: {assemblyName}"));
+                    }
+                }
+
                 foreach (SyntaxTree tree in compilation.SyntaxTrees)
                 {
                     spc.ReportDiagnostic(
