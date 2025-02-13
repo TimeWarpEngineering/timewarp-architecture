@@ -41,13 +41,15 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         return;
       }
 
-      // Inspect the attributes of GetWeatherForecasts
+      // Inspect the attributes and modifiers of GetWeatherForecasts
       bool hasApiEndpointAttribute = getWeatherForecastsSymbol.GetAttributes().Any(attr =>
           SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol));
+      bool isStatic = getWeatherForecastsSymbol.IsStatic;
 
       if (hasApiEndpointAttribute)
       {
-        spc.ReportDiagnostic(Diagnostic.Create(logDiagnostic, Location.None, "GetWeatherForecasts has the ApiEndpoint attribute"));
+        spc.ReportDiagnostic(Diagnostic.Create(logDiagnostic, Location.None,
+          $"GetWeatherForecasts - Has ApiEndpoint: {hasApiEndpointAttribute}, Is Static: {isStatic}"));
       }
       else
       {
@@ -84,12 +86,60 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                 .ForAttributeWithMetadataName(
                     ApiEndpointAttributeFullName,
                     predicate: (node, _) => node is ClassDeclarationSyntax cds &&
-                        cds.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)) &&
-                        cds.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)),
+                        cds.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)),
                     transform: (context, _) => ((ClassDeclarationSyntax)context.TargetNode, context.SemanticModel));
+// Log all namespaces we're searching through
+context.RegisterSourceOutput(context.CompilationProvider,
+    (spc, compilation) =>
+    {
+        foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+        {
+            foreach (INamespaceSymbol ns in GetAllNamespaces(assembly.GlobalNamespace))
+            {
+                spc.ReportDiagnostic(
+                    Diagnostic.Create(
+                        logDiagnostic,
+                        Location.None,
+                        $"Searching namespace: {ns.ToDisplayString()}"));
+            }
+        }
+    });
 
-        // Register source output for compilation diagnostics
-        context.RegisterSourceOutput(context.CompilationProvider,
+// Try finding classes with our attribute using SelectMany
+IncrementalValuesProvider<INamedTypeSymbol> classSymbols = context.CompilationProvider.SelectMany(
+    (compilation, _) =>
+    {
+      INamedTypeSymbol? apiEndpointAttributeSymbol = compilation.GetTypeByMetadataName(ApiEndpointAttributeFullName);
+        if (apiEndpointAttributeSymbol == null) return Array.Empty<INamedTypeSymbol>();
+
+        return compilation.SourceModule.ReferencedAssemblySymbols
+            .SelectMany(assembly => GetAllNamespaces(assembly.GlobalNamespace))
+            .SelectMany(ns => ns.GetTypeMembers())
+            .Where(type => type.GetAttributes()
+                .Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol)));
+    });
+
+// Register source output to log found symbols
+context.RegisterSourceOutput(classSymbols,
+    (spc, symbol) =>
+    {
+        var logDiagnostic = new DiagnosticDescriptor(
+            "SG001",
+            "Source Generator Log",
+            "{0}",
+            "SourceGenerator",
+            DiagnosticSeverity.Warning,
+            true);
+
+        spc.ReportDiagnostic(
+            Diagnostic.Create(
+                logDiagnostic,
+                Location.None,
+                $"Found class with ApiEndpoint attribute using SelectMany: {symbol.Name}"));
+    });
+
+// Register source output for compilation diagnostics
+context.RegisterSourceOutput(context.CompilationProvider,
             (spc, compilation) =>
             {
                 spc.ReportDiagnostic(
@@ -181,6 +231,18 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
             });
     }
 
+    private static IEnumerable<INamespaceSymbol> GetAllNamespaces(INamespaceSymbol root)
+    {
+        yield return root;
+        foreach (INamespaceSymbol ns in root.GetNamespaceMembers())
+        {
+            foreach (INamespaceSymbol childNs in GetAllNamespaces(ns))
+            {
+                yield return childNs;
+            }
+        }
+    }
+
     private static void Execute(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel, SourceProductionContext context)
     {
         var logDiagnostic = new DiagnosticDescriptor(
@@ -251,9 +313,8 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
     private static bool ValidateClassStructure(ClassDeclarationSyntax classDeclaration, SourceProductionContext context)
     {
-        // Check for static and partial modifiers
-        if (!classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)) ||
-            !classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)))
+        // Check for static modifier
+        if (!classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(
