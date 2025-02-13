@@ -83,13 +83,30 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                             $"Looking at assembly: {assembly.Name}"));
                 }
 
+                // Log all syntax trees and their source paths
                 foreach (SyntaxTree tree in compilation.SyntaxTrees)
                 {
+                    string sourcePath = tree.FilePath;
+                    string sourceText = tree.GetText().ToString().Split('\n')[0]; // Get first line for context
+
                     spc.ReportDiagnostic(
                         Diagnostic.Create(
                             logDiagnostic,
                             Location.None,
-                            $"Scanning syntax tree: {tree.FilePath}"));
+                            $"Scanning syntax tree: {sourcePath}, First line: {sourceText}"));
+                }
+
+                // Also check additional locations
+                foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+                {
+                    foreach (SyntaxReference syntaxRef in assembly.DeclaringSyntaxReferences)
+                    {
+                        spc.ReportDiagnostic(
+                            Diagnostic.Create(
+                                logDiagnostic,
+                                Location.None,
+                                $"Additional syntax from {assembly.Name}: {syntaxRef.SyntaxTree.FilePath}"));
+                    }
                 }
 
                 // Log all classes with attributes in the compilation
