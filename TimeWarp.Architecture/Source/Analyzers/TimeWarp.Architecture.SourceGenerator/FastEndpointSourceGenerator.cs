@@ -6,6 +6,7 @@ using Models;
 public class FastEndpointSourceGenerator : IIncrementalGenerator
 {
     private const string ApiEndpointAttributeFullName = "TimeWarp.Architecture.Attributes.ApiEndpointAttribute";
+    private static readonly List<string> DiagnosticMessages = new();
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -52,6 +53,18 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                         logDiagnostic,
                         Location.None,
                         $"Compilation started. Assembly: {compilation.AssemblyName}"));
+
+                // Output collected diagnostic messages
+                foreach (string message in DiagnosticMessages)
+                {
+                    spc.ReportDiagnostic(
+                        Diagnostic.Create(
+                            logDiagnostic,
+                            Location.None,
+                            message));
+                }
+
+                DiagnosticMessages.Clear(); // Clear for next compilation
 
                 // Log compilation details
                 spc.ReportDiagnostic(
@@ -112,94 +125,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                     }
                 }
 
-                // Log all classes with attributes in the compilation
-                IEnumerable<ClassDeclarationSyntax> classesWithAttributes = compilation.SyntaxTrees
-                    .SelectMany(tree =>
-                    {
-                        try
-                        {
-                          SyntaxNode root = tree.GetRoot();
-                            return root.DescendantNodes()
-                                .OfType<ClassDeclarationSyntax>()
-                                .Where(c => c.AttributeLists.Count > 0);
-                        }
-                        catch (Exception ex)
-                        {
-                            spc.ReportDiagnostic(
-                                Diagnostic.Create(
-                                    logDiagnostic,
-                                    Location.None,
-                                    $"Error getting root for {tree.FilePath}: {ex.Message}"));
-                            return Enumerable.Empty<ClassDeclarationSyntax>();
-                        }
-                    });
-
-                foreach (ClassDeclarationSyntax classNode in classesWithAttributes)
-                {
-                    string attributes = string.Join(", ", classNode.AttributeLists
-                        .SelectMany(al => al.Attributes)
-                        .Select(a => a.Name.ToString()));
-
-                    bool hasApiEndpoint = classNode.AttributeLists
-                        .SelectMany(al => al.Attributes)
-                        .Any(a => a.Name.ToString().EndsWith("ApiEndpoint") || a.Name.ToString().EndsWith("ApiEndpointAttribute"));
-
-                    bool isStatic = classNode.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword));
-                    bool isPartial = classNode.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
-
-                    string filePath = classNode.SyntaxTree.FilePath;
-
-                    // Check attribute namespaces
-                    foreach (AttributeListSyntax attributeList in classNode.AttributeLists)
-                    {
-                        foreach (AttributeSyntax attribute in attributeList.Attributes)
-                        {
-                            try
-                            {
-                                SemanticModel model = compilation.GetSemanticModel(classNode.SyntaxTree);
-                                SymbolInfo symbolInfo = model.GetSymbolInfo(attribute);
-                                if (symbolInfo.Symbol is IMethodSymbol attributeSymbol)
-                                {
-                                    string fullName = attributeSymbol.ContainingType.ToDisplayString();
-                                    spc.ReportDiagnostic(
-                                        Diagnostic.Create(
-                                            logDiagnostic,
-                                            Location.None,
-                                            $"Attribute on {classNode.Identifier.Text}: Found {fullName}, Looking for {ApiEndpointAttributeFullName}, IsMatch: {fullName == ApiEndpointAttributeFullName}"));
-                                }
-                                else
-                                {
-                                    spc.ReportDiagnostic(
-                                        Diagnostic.Create(
-                                            logDiagnostic,
-                                            Location.None,
-                                            $"No symbol found for attribute on {classNode.Identifier.Text}"));
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                spc.ReportDiagnostic(
-                                    Diagnostic.Create(
-                                        logDiagnostic,
-                                        Location.None,
-                                        $"Error getting semantic info for attribute on {classNode.Identifier.Text}: {ex.Message}"));
-                            }
-                        }
-                    }
-
-                    bool meetsRequirements = hasApiEndpoint && isStatic && isPartial;
-                    string status = meetsRequirements ? "ACCEPTED" : "REJECTED";
-                    string reason = !meetsRequirements
-                        ? $"Missing: {(hasApiEndpoint ? "" : "ApiEndpoint ")} {(isStatic ? "" : "static ")} {(isPartial ? "" : "partial")}"
-                        : "Meets all requirements";
-
-                    spc.ReportDiagnostic(
-                        Diagnostic.Create(
-                            logDiagnostic,
-                            Location.None,
-                            $"Class: {classNode.Identifier.Text}, Status: {status}, {reason}, File: {filePath}, Attributes: {attributes}"));
-                }
-
             });
 
         // Log discovered classes and generate the source
@@ -245,7 +170,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
             .Select(a =>
             {
                 string name = a.Name.ToFullString().TrimEnd();
-                System.Diagnostics.Debug.WriteLine($"Raw attribute name: '{name}' on class {classDeclaration.Identifier.Text}");
+                DiagnosticMessages.Add($"Raw attribute name: '{name}' on class {classDeclaration.Identifier.Text}");
                 return name;
             })
             .ToList();
@@ -254,7 +179,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         bool hasApiEndpointAttribute = attributeNames
             .Any(name => name.Contains("ApiEndpoint"));
 
-        System.Diagnostics.Debug.WriteLine($"Syntax check - Class: {classDeclaration.Identifier.Text}, Has ApiEndpoint: {hasApiEndpointAttribute}, Attribute names: {string.Join(", ", attributeNames)}");
+        DiagnosticMessages.Add($"Syntax check - Class: {classDeclaration.Identifier.Text}, Has ApiEndpoint: {hasApiEndpointAttribute}, Attribute names: {string.Join(", ", attributeNames)}");
 
         return isStatic && isPartial && hasAttributes && hasApiEndpointAttribute;
     }
@@ -280,7 +205,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                 bool isMatch = fullName == ApiEndpointAttributeFullName ||
                              attributeContainingTypeSymbol.Name == "ApiEndpointAttribute";
 
-                System.Diagnostics.Debug.WriteLine($"Semantic check - Full name: '{fullName}', Symbol name: '{attributeContainingTypeSymbol.Name}', Looking for: '{ApiEndpointAttributeFullName}', IsMatch: {isMatch}");
+                DiagnosticMessages.Add($"Semantic check - Full name: '{fullName}', Symbol name: '{attributeContainingTypeSymbol.Name}', Looking for: '{ApiEndpointAttributeFullName}', IsMatch: {isMatch}");
 
                 if (isMatch)
                 {
