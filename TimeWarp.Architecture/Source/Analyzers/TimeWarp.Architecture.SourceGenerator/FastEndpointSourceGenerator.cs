@@ -74,6 +74,23 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
                     string filePath = classNode.SyntaxTree.FilePath;
 
+                    // Check attribute namespaces
+                    foreach (AttributeListSyntax attributeList in classNode.AttributeLists)
+                    {
+                        foreach (AttributeSyntax attribute in attributeList.Attributes)
+                        {
+                            if (compilation.GetSemanticModel(classNode.SyntaxTree).GetSymbolInfo(attribute).Symbol is IMethodSymbol attributeSymbol)
+                            {
+                                string fullName = attributeSymbol.ContainingType.ToDisplayString();
+                                spc.ReportDiagnostic(
+                                    Diagnostic.Create(
+                                        logDiagnostic,
+                                        Location.None,
+                                        $"Attribute on {classNode.Identifier.Text}: Found {fullName}, Looking for {ApiEndpointAttributeFullName}, IsMatch: {fullName == ApiEndpointAttributeFullName}"));
+                            }
+                        }
+                    }
+
                     bool meetsRequirements = hasApiEndpoint && isStatic && isPartial;
                     string status = meetsRequirements ? "ACCEPTED" : "REJECTED";
                     string reason = !meetsRequirements
