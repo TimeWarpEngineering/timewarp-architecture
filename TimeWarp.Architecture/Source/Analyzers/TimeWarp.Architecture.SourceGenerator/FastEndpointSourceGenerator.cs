@@ -38,11 +38,12 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         // Get all class declarations with the ApiEndpoint attribute
         IncrementalValuesProvider<(ClassDeclarationSyntax ClassDeclaration, SemanticModel SemanticModel)> classDeclarations =
             context.SyntaxProvider
-                .CreateSyntaxProvider(
-                    predicate: (s, _) => IsSyntaxTargetForGeneration(s),
-                    transform: (ctx, _) => GetSemanticTargetForGeneration(ctx))
-                .Where(t => t.ClassDeclaration is not null)
-                .Select((t, _) => (t.ClassDeclaration!, t.SemanticModel));
+                .ForAttributeWithMetadataName(
+                    ApiEndpointAttributeFullName,
+                    predicate: (node, _) => node is ClassDeclarationSyntax cds &&
+                        cds.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)) &&
+                        cds.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)),
+                    transform: (context, _) => ((ClassDeclarationSyntax)context.TargetNode, context.SemanticModel));
 
         // Register source output for compilation diagnostics
         context.RegisterSourceOutput(context.CompilationProvider,
@@ -147,74 +148,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
                 Execute(source.ClassDeclaration, source.SemanticModel, spc);
             });
-    }
-
-    private static bool IsSyntaxTargetForGeneration(SyntaxNode node)
-    {
-        // Only look at class declarations
-        if (node is not ClassDeclarationSyntax classDeclaration)
-        {
-            return false;
-        }
-
-        // Must be static and partial
-        bool isStatic = classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword));
-        bool isPartial = classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
-
-        // Must have at least one attribute
-        bool hasAttributes = classDeclaration.AttributeLists.Count > 0;
-
-        // Get all attribute names for logging
-        var attributeNames = classDeclaration.AttributeLists
-            .SelectMany(al => al.Attributes)
-            .Select(a =>
-            {
-                string name = a.Name.ToFullString().TrimEnd();
-                DiagnosticMessages.Add($"Raw attribute name: '{name}' on class {classDeclaration.Identifier.Text}");
-                return name;
-            })
-            .ToList();
-
-        // Check if any attribute name matches ApiEndpoint
-        bool hasApiEndpointAttribute = attributeNames
-            .Any(name => name == "ApiEndpoint" || name == "ApiEndpointAttribute");
-
-        DiagnosticMessages.Add($"Syntax check - Class: {classDeclaration.Identifier.Text}, Has ApiEndpoint: {hasApiEndpointAttribute}, Attribute names: {string.Join(", ", attributeNames)}");
-
-        return isStatic && isPartial && hasAttributes && hasApiEndpointAttribute;
-    }
-
-    private static (ClassDeclarationSyntax? ClassDeclaration, SemanticModel SemanticModel) GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
-    {
-        var classDeclaration = (ClassDeclarationSyntax)context.Node;
-        SemanticModel semanticModel = context.SemanticModel;
-
-        foreach (AttributeListSyntax attributeList in classDeclaration.AttributeLists)
-        {
-            foreach (AttributeSyntax attribute in attributeList.Attributes)
-            {
-                if (semanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
-                {
-                    continue;
-                }
-
-                INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
-                string fullName = attributeContainingTypeSymbol.ToDisplayString();
-
-                // Check for ApiEndpoint attribute with any namespace
-                bool isMatch = fullName == ApiEndpointAttributeFullName ||
-                             attributeContainingTypeSymbol.Name == "ApiEndpointAttribute";
-
-                DiagnosticMessages.Add($"Semantic check - Full name: '{fullName}', Symbol name: '{attributeContainingTypeSymbol.Name}', Looking for: '{ApiEndpointAttributeFullName}', IsMatch: {isMatch}");
-
-                if (isMatch)
-                {
-                    return (classDeclaration, semanticModel);
-                }
-            }
-        }
-
-        return (null, semanticModel);
     }
 
     private static void Execute(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel, SourceProductionContext context)
