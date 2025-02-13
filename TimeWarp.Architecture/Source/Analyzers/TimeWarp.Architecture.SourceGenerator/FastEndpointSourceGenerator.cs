@@ -73,6 +73,16 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                     }
                 }
 
+                // Log all assemblies and their syntax trees
+                foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+                {
+                    spc.ReportDiagnostic(
+                        Diagnostic.Create(
+                            logDiagnostic,
+                            Location.None,
+                            $"Looking at assembly: {assembly.Name}"));
+                }
+
                 foreach (SyntaxTree tree in compilation.SyntaxTrees)
                 {
                     spc.ReportDiagnostic(
