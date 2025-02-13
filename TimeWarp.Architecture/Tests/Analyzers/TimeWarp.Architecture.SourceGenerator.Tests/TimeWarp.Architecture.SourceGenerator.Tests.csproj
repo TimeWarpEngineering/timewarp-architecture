@@ -1,10 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  
   <ItemGroup>
     <PackageReference Include="Fixie.TestAdapter" />
     <PackageReference Include="FluentAssertions" />
@@ -12,7 +10,6 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
     <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\..\Source\Analyzers\TimeWarp.Architecture.SourceGenerator\TimeWarp.Architecture.SourceGenerator.csproj" />
   </ItemGroup>

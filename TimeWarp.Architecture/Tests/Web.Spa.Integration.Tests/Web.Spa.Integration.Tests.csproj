@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.AutoFakeItEasy" />
@@ -7,17 +7,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="FluentAssertions" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Spa\Web.Spa.csproj" />
     <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Server\Web.Server.csproj" />
     <ProjectReference Include="..\TimeWarp.Testing\Testing.Common.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Folder Include="Configuration\" />
   </ItemGroup>
-
   <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

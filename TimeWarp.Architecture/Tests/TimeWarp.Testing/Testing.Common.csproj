@@ -1,8 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <DefineConstants>api;yarp;web</DefineConstants>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Fixie" />
@@ -11,7 +10,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="TimeWarp.Fixie" />
-    <PackageReference Include="TimeWarp.SourceGenerators" >
+    <PackageReference Include="TimeWarp.SourceGenerators">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>

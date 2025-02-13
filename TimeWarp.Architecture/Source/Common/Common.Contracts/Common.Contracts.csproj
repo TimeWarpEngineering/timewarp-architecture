@@ -1,5 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="FluentValidation" />
@@ -10,11 +9,9 @@
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="OneOf" />
   </ItemGroup>
-
   <ItemGroup>
     <AdditionalFiles Include="Mixins\RouteMixin.mixin" />
     <AdditionalFiles Include="Mixins\IAuthApiRequestMixin.mixin" />
     <AdditionalFiles Include="Mixins\IOpenDataQueryParametersMixin.mixin" />
   </ItemGroup>
-
 </Project>

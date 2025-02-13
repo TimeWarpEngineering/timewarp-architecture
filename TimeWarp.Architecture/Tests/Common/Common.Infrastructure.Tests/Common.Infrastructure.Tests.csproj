@@ -7,5 +7,4 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Source\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
   </ItemGroup>
-
 </Project>

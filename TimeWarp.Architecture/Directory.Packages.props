@@ -49,13 +49,10 @@
     <PackageVersion Include="Microsoft.Authentication.WebAssembly.Msal" Version="9.0.1" />
     <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis" Version="4.12.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageVersion>
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="4.12.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.2" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="4.12.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Cosmos" Version="9.0.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.1" />
@@ -117,13 +114,13 @@
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
     <PackageVersion Include="System.Net.Http.Json" Version="9.0.1" />
     <PackageVersion Include="System.ServiceModel.Primitives" Version="8.1.1" />
+    <PackageVersion Include="timewarp-heroicons" Version="2.0.19" />
+    <PackageVersion Include="timewarp-simple-icons" Version="14.3.0" />
     <PackageVersion Include="TimeWarp.Fixie" Version="2.0.0" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-alpha.8" />
     <PackageVersion Include="TimeWarp.State" Version="11.0.0" />
     <PackageVersion Include="TimeWarp.State.Plus" Version="11.0.0" />
-    <PackageVersion Include="timewarp-heroicons" Version="2.0.19" />
-    <PackageVersion Include="timewarp-simple-icons" Version="14.3.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.1" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.2.0" />
