@@ -65,9 +65,25 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
                 // Log all classes with attributes in the compilation
                 IEnumerable<ClassDeclarationSyntax> classesWithAttributes = compilation.SyntaxTrees
-                    .SelectMany(tree => tree.GetRoot().DescendantNodes()
-                        .OfType<ClassDeclarationSyntax>()
-                        .Where(c => c.AttributeLists.Count > 0));
+                    .SelectMany(tree =>
+                    {
+                        try
+                        {
+                          SyntaxNode root = tree.GetRoot();
+                            return root.DescendantNodes()
+                                .OfType<ClassDeclarationSyntax>()
+                                .Where(c => c.AttributeLists.Count > 0);
+                        }
+                        catch (Exception ex)
+                        {
+                            spc.ReportDiagnostic(
+                                Diagnostic.Create(
+                                    logDiagnostic,
+                                    Location.None,
+                                    $"Error getting root for {tree.FilePath}: {ex.Message}"));
+                            return Enumerable.Empty<ClassDeclarationSyntax>();
+                        }
+                    });
 
                 foreach (ClassDeclarationSyntax classNode in classesWithAttributes)
                 {
