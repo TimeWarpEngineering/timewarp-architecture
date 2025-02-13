@@ -105,14 +105,35 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                     {
                         foreach (AttributeSyntax attribute in attributeList.Attributes)
                         {
-                            if (compilation.GetSemanticModel(classNode.SyntaxTree).GetSymbolInfo(attribute).Symbol is IMethodSymbol attributeSymbol)
+                            try
                             {
-                                string fullName = attributeSymbol.ContainingType.ToDisplayString();
+                                SemanticModel model = compilation.GetSemanticModel(classNode.SyntaxTree);
+                                SymbolInfo symbolInfo = model.GetSymbolInfo(attribute);
+                                if (symbolInfo.Symbol is IMethodSymbol attributeSymbol)
+                                {
+                                    string fullName = attributeSymbol.ContainingType.ToDisplayString();
+                                    spc.ReportDiagnostic(
+                                        Diagnostic.Create(
+                                            logDiagnostic,
+                                            Location.None,
+                                            $"Attribute on {classNode.Identifier.Text}: Found {fullName}, Looking for {ApiEndpointAttributeFullName}, IsMatch: {fullName == ApiEndpointAttributeFullName}"));
+                                }
+                                else
+                                {
+                                    spc.ReportDiagnostic(
+                                        Diagnostic.Create(
+                                            logDiagnostic,
+                                            Location.None,
+                                            $"No symbol found for attribute on {classNode.Identifier.Text}"));
+                                }
+                            }
+                            catch (Exception ex)
+                            {
                                 spc.ReportDiagnostic(
                                     Diagnostic.Create(
                                         logDiagnostic,
                                         Location.None,
-                                        $"Attribute on {classNode.Identifier.Text}: Found {fullName}, Looking for {ApiEndpointAttributeFullName}, IsMatch: {fullName == ApiEndpointAttributeFullName}"));
+                                        $"Error getting semantic info for attribute on {classNode.Identifier.Text}: {ex.Message}"));
                             }
                         }
                     }
