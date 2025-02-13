@@ -22,64 +22,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
             true
         );
 
-    // Register source output for logging initialization
-    // Register source output for logging initialization
-    context.RegisterSourceOutput(context.CompilationProvider, (spc, compilation) =>
-    {
-      INamedTypeSymbol? apiEndpointAttributeSymbol = compilation.GetTypeByMetadataName(ApiEndpointAttributeFullName);
-      if (apiEndpointAttributeSymbol == null)
-      {
-        spc.ReportDiagnostic(Diagnostic.Create(logDiagnostic, Location.None, "ApiEndpointAttribute not found"));
-        return;
-      }
-
-      // Get the specific type symbol for GetWeatherForecasts
-      INamedTypeSymbol? getWeatherForecastsSymbol = compilation.GetTypeByMetadataName("TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts");
-      if (getWeatherForecastsSymbol == null)
-      {
-        spc.ReportDiagnostic(Diagnostic.Create(logDiagnostic, Location.None, "GetWeatherForecasts type not found"));
-        return;
-      }
-
-      // Inspect the attributes and modifiers of GetWeatherForecasts
-      bool hasApiEndpointAttribute = getWeatherForecastsSymbol.GetAttributes().Any(attr =>
-          SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol));
-      bool isStatic = getWeatherForecastsSymbol.IsStatic;
-
-      if (hasApiEndpointAttribute)
-      {
-        spc.ReportDiagnostic(Diagnostic.Create(logDiagnostic, Location.None,
-          $"GetWeatherForecasts - Has ApiEndpoint: {hasApiEndpointAttribute}, Is Static: {isStatic}"));
-      }
-      else
-      {
-        spc.ReportDiagnostic(Diagnostic.Create(logDiagnostic, Location.None, "GetWeatherForecasts does not have the ApiEndpoint attribute"));
-      }
-
-      spc.ReportDiagnostic(Diagnostic.Create(logDiagnostic, Location.None, "Source generator initialized"));
-    });
-
-    context.RegisterSourceOutput(context.CompilationProvider,
-            (spc, compilation) =>
-            {
-              INamedTypeSymbol? getWeatherForecastsSymbol = compilation.GetTypeByMetadataName("TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts");
-              if (getWeatherForecastsSymbol is not null)
-              {
-                spc.ReportDiagnostic(
-                    Diagnostic.Create(
-                        logDiagnostic,
-                        Location.None,
-                        "Found GetWeatherForecasts class"));
-              }
-
-
-              spc.ReportDiagnostic(
-                    Diagnostic.Create(
-                        logDiagnostic,
-                        Location.None,
-                        "Source generator initialized"));
-            });
-
         // Get all class declarations with the ApiEndpoint attribute
         IncrementalValuesProvider<(ClassDeclarationSyntax ClassDeclaration, SemanticModel SemanticModel)> classDeclarations =
             context.SyntaxProvider
