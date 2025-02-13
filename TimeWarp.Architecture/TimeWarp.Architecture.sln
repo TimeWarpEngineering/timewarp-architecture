@@ -150,6 +150,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.Sourc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.SourceGenerator.Tests", "Tests\Analyzers\TimeWarp.Architecture.SourceGenerator.Tests\TimeWarp.Architecture.SourceGenerator.Tests.csproj", "{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.Attributes", "Source\Analyzers\TimeWarp.Architecture.Attributes\TimeWarp.Architecture.Attributes.csproj", "{83873073-34C9-45DE-B2D0-2F101002C75E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -381,6 +383,12 @@ Global
 		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -436,6 +444,7 @@ Global
 		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
 		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D} = {A988AE51-34CF-4B84-9CCE-461AA31A560D}
 		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D} = {3979C93A-21A2-4166-99B9-C62E2839B561}
+		{83873073-34C9-45DE-B2D0-2F101002C75E} = {A988AE51-34CF-4B84-9CCE-461AA31A560D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}
