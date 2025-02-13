@@ -53,6 +53,16 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                         Location.None,
                         $"Compilation started. Assembly: {compilation.AssemblyName}"));
 
+                // Log compilation details
+                foreach (SyntaxTree tree in compilation.SyntaxTrees)
+                {
+                    spc.ReportDiagnostic(
+                        Diagnostic.Create(
+                            logDiagnostic,
+                            Location.None,
+                            $"Scanning syntax tree: {tree.FilePath}"));
+                }
+
                 // Log all classes with attributes in the compilation
                 IEnumerable<ClassDeclarationSyntax> classesWithAttributes = compilation.SyntaxTrees
                     .SelectMany(tree => tree.GetRoot().DescendantNodes()
