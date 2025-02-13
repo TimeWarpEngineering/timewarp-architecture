@@ -1,4 +1,4 @@
-﻿﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -34,11 +34,6 @@
     <!-- Attributes -->
     <ProjectReference Include="..\..\..\Analyzers\TimeWarp.Architecture.Attributes\TimeWarp.Architecture.Attributes.csproj" />
 
-    <!-- Make Api.Contracts visible to analyzers -->
-    <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj"
-                      SetTargetFramework="TargetFramework=net9.0"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="true" />
   </ItemGroup>
 
   <ItemGroup>
