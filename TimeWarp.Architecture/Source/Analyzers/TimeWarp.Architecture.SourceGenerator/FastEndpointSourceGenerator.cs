@@ -119,10 +119,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
     private static bool IsSyntaxTargetForGeneration(SyntaxNode node)
     {
-        // Log every node that comes through
-        System.Diagnostics.Debug.WriteLine($"=== Checking node of type: {node.GetType().Name} ===");
-        System.Diagnostics.Debug.WriteLine($"Node text: {node.ToFullString()}");
-
         // Only look at class declarations
         if (node is not ClassDeclarationSyntax classDeclaration)
         {
@@ -146,16 +142,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         bool hasApiEndpointAttribute = attributeNames
             .Any(name => name.EndsWith("ApiEndpoint") || name.EndsWith("ApiEndpointAttribute"));
 
-        // Log using Debug instead of Console
-        System.Diagnostics.Debug.WriteLine($"=== Checking class: {classDeclaration.Identifier.Text} ===");
-        System.Diagnostics.Debug.WriteLine($"IsStatic: {isStatic}");
-        System.Diagnostics.Debug.WriteLine($"IsPartial: {isPartial}");
-        System.Diagnostics.Debug.WriteLine($"HasAttributes: {hasAttributes}");
-        System.Diagnostics.Debug.WriteLine($"HasApiEndpointAttribute: {hasApiEndpointAttribute}");
-        System.Diagnostics.Debug.WriteLine($"Attributes found: {string.Join(", ", attributeNames)}");
-        System.Diagnostics.Debug.WriteLine($"Full class text: {classDeclaration.ToFullString()}");
-        System.Diagnostics.Debug.WriteLine("===================================");
-
         return isStatic && isPartial && hasAttributes && hasApiEndpointAttribute;
     }
 
@@ -176,19 +162,9 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                 INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
                 string fullName = attributeContainingTypeSymbol.ToDisplayString();
 
-                System.Diagnostics.Debug.WriteLine($"=== Checking attribute ===");
-                System.Diagnostics.Debug.WriteLine($"Full name: {fullName}");
-                System.Diagnostics.Debug.WriteLine($"Assembly: {attributeContainingTypeSymbol.ContainingAssembly?.Name}");
-                System.Diagnostics.Debug.WriteLine($"Namespace: {attributeContainingTypeSymbol.ContainingNamespace}");
-                System.Diagnostics.Debug.WriteLine($"Type name: {attributeContainingTypeSymbol.Name}");
-                System.Diagnostics.Debug.WriteLine($"Looking for: {ApiEndpointAttributeFullName}");
-                System.Diagnostics.Debug.WriteLine($"Equals target: {fullName == ApiEndpointAttributeFullName}");
-                System.Diagnostics.Debug.WriteLine("=========================");
-
                 // Check for ApiEndpoint attribute with any namespace
                 if (fullName == ApiEndpointAttributeFullName)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Found matching attribute: {fullName}");
                     return (classDeclaration, semanticModel);
                 }
             }
