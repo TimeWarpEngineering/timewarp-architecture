@@ -5,7 +5,7 @@ global using MediatR;
 global using OneOf;
 global using System.Collections.Specialized;
 global using TimeWarp.Architecture.Features;
-global using TimeWarp.Architecture.SourceGenerator;
+global using TimeWarp.Architecture.Attributes;
 
 // Solution usings
 global using TimeWarp.Architecture.Types;
