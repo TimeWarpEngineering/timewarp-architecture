@@ -1,10 +1,13 @@
 namespace TimeWarp.Architecture.SourceGenerator;
 
 using Models;
+using TimeWarp.Architecture.Attributes;
 
 [Generator]
 public class FastEndpointSourceGenerator : IIncrementalGenerator
 {
+    private const string ApiEndpointAttributeFullName = "TimeWarp.Architecture.Attributes.ApiEndpointAttribute";
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // Reset route registry at the start of each generation
@@ -34,36 +37,32 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         IncrementalValuesProvider<(ClassDeclarationSyntax ClassDeclaration, SemanticModel SemanticModel)> classDeclarations =
             context.SyntaxProvider
                 .CreateSyntaxProvider(
-                    predicate: static (s, _) => IsSyntaxTargetForGeneration(s),
-                    transform: static (ctx, ct) => GetSemanticTargetForGeneration(ctx))
-                .Where(static t => t.ClassDeclaration is not null)
-                .Select(static (t, _) => (t.ClassDeclaration!, t.SemanticModel));
+                    predicate: (s, _) => IsSyntaxTargetForGeneration(s),
+                    transform: (ctx, _) => GetSemanticTargetForGeneration(ctx))
+                .Where(t => t.ClassDeclaration is not null)
+                .Select((t, _) => (t.ClassDeclaration!, t.SemanticModel));
 
         // Register source output for compilation diagnostics
         context.RegisterSourceOutput(context.CompilationProvider,
-            static (spc, compilation) =>
+            (spc, compilation) =>
             {
-                var logDiagnostic = new DiagnosticDescriptor(
-                    "SG001",
-                    "Source Generator Log",
-                    "{0}",
-                    "SourceGenerator",
-                    DiagnosticSeverity.Warning,
-                    true);
-
                 spc.ReportDiagnostic(
                     Diagnostic.Create(
                         logDiagnostic,
                         Location.None,
-                        $"Compilation started. Assembly: {compilation.AssemblyName}, Syntax trees: {compilation.SyntaxTrees.Count()}"));
+                        $"Compilation started. Assembly: {compilation.AssemblyName}"));
 
-                foreach (var tree in compilation.SyntaxTrees)
+                // Log referenced assemblies
+                foreach (var reference in compilation.References)
                 {
-                    spc.ReportDiagnostic(
-                        Diagnostic.Create(
-                            logDiagnostic,
-                            Location.None,
-                            $"Processing file: {tree.FilePath}"));
+                    if (reference is PortableExecutableReference peReference)
+                    {
+                        spc.ReportDiagnostic(
+                            Diagnostic.Create(
+                                logDiagnostic,
+                                Location.None,
+                                $"Referenced assembly: {peReference.FilePath}"));
+                    }
                 }
             });
 
@@ -132,8 +131,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                 System.Diagnostics.Debug.WriteLine($"Attribute type name: {attributeContainingTypeSymbol.Name}");
 
                 // Check for ApiEndpoint attribute with any namespace
-                if (attributeContainingTypeSymbol.Name == "ApiEndpointAttribute" ||
-                    attributeContainingTypeSymbol.Name == "ApiEndpoint")
+                if (fullName == ApiEndpointAttributeFullName)
                 {
                     System.Diagnostics.Debug.WriteLine($"Found matching attribute: {fullName}");
                     return (classDeclaration, semanticModel);
@@ -265,84 +263,85 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
         return true; // Skip validation for now as the contracts are correct
     }
-private static string GenerateEndpointClass(EndpointMetadata metadata)
-{
-    StringBuilder builder = new();
 
-    // Add using statements
-    builder.AppendLine("using FastEndpoints;");
-    builder.AppendLine("using OneOf;");
-    builder.AppendLine("using System.Threading;");
-    builder.AppendLine("using System.Threading.Tasks;");
-    builder.AppendLine();
-
-    // Add namespace
-    builder.Append("namespace ").Append(metadata.Namespace).AppendLine(";");
-    builder.AppendLine();
-
-    // Add XML comments
-    builder.AppendLine("/// <summary>");
-    builder.Append("/// ").Append(metadata.Summary).AppendLine();
-    builder.AppendLine("/// </summary>");
-    builder.AppendLine("/// <remarks>");
-    builder.Append("/// ").Append(metadata.Description).AppendLine();
-    builder.AppendLine("/// </remarks>");
-
-    // Add class declaration
-    builder.Append("public class ").Append(metadata.ClassName).Append("Endpoint : ");
-    builder.Append(metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint");
-    builder.Append("<").Append(metadata.ClassName).Append(".Query, ");
-    builder.Append(metadata.ClassName).AppendLine(".Response>");
-    builder.AppendLine("{");
-
-    // Add Configure method
-    builder.AppendLine("    public override void Configure()");
-    builder.AppendLine("    {");
-    builder.Append("        ").Append(metadata.HttpVerb).Append("(\"").Append(metadata.Route).AppendLine("\");");
-
-    // Add authorization if required
-    if (metadata.RequiresAuthorization)
+    private static string GenerateEndpointClass(EndpointMetadata metadata)
     {
-        builder.AppendLine("        RequireAuthorization();");
-    }
+        StringBuilder builder = new();
 
-    // Add tags if any
-    if (metadata.Tags.Any())
-    {
-        builder.Append("        Tags(");
-        IEnumerable<string> tags = metadata.Tags.Select(t => $"\"{t}\"");
-        builder.Append(string.Join(", ", tags));
-        builder.AppendLine(");");
-    }
-
-    // Add summary and description if provided
-    if (!string.IsNullOrEmpty(metadata.Summary))
-    {
-        builder.AppendLine("        Summary(s =>");
-        builder.AppendLine("        {");
-        builder.AppendLine($"            s.Summary = \"{metadata.Summary}\";");
-        builder.AppendLine($"            s.Description = \"{metadata.Description}\";");
-        builder.AppendLine($"            s.ExampleRequest = new {metadata.ClassName}.Query {{ Days = 5 }};");
-        builder.AppendLine("        });");
+        // Add using statements
+        builder.AppendLine("using FastEndpoints;");
+        builder.AppendLine("using OneOf;");
+        builder.AppendLine("using System.Threading;");
+        builder.AppendLine("using System.Threading.Tasks;");
         builder.AppendLine();
-        builder.AppendLine("        Description(d => d");
-        builder.AppendLine($"            .Produces<{metadata.ClassName}.Response>(200, \"Success\")");
-        builder.AppendLine("            .ProducesProblem(400, \"Bad Request\")");
-        builder.AppendLine("        );");
-    }
 
-    // Close Configure method
-    builder.AppendLine("    }");
-    builder.AppendLine();
+        // Add namespace
+        builder.Append("namespace ").Append(metadata.Namespace).AppendLine(";");
+        builder.AppendLine();
 
-    // Add HandleAsync method
-    builder.AppendLine("    public override async Task HandleAsync(Query request, CancellationToken ct)");
-    builder.AppendLine("    {");
-    builder.AppendLine("        // Implementation will be provided by the user");
-    builder.AppendLine("        throw new NotImplementedException();");
-    builder.AppendLine("    }");
-    builder.AppendLine("}");
+        // Add XML comments
+        builder.AppendLine("/// <summary>");
+        builder.Append("/// ").Append(metadata.Summary).AppendLine();
+        builder.AppendLine("/// </summary>");
+        builder.AppendLine("/// <remarks>");
+        builder.Append("/// ").Append(metadata.Description).AppendLine();
+        builder.AppendLine("/// </remarks>");
 
-    return builder.ToString();
+        // Add class declaration
+        builder.Append("public class ").Append(metadata.ClassName).Append("Endpoint : ");
+        builder.Append(metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint");
+        builder.Append("<").Append(metadata.ClassName).Append(".Query, ");
+        builder.Append(metadata.ClassName).AppendLine(".Response>");
+        builder.AppendLine("{");
+
+        // Add Configure method
+        builder.AppendLine("    public override void Configure()");
+        builder.AppendLine("    {");
+        builder.Append("        ").Append(metadata.HttpVerb).Append("(\"").Append(metadata.Route).AppendLine("\");");
+
+        // Add authorization if required
+        if (metadata.RequiresAuthorization)
+        {
+            builder.AppendLine("        RequireAuthorization();");
+        }
+
+        // Add tags if any
+        if (metadata.Tags.Any())
+        {
+            builder.Append("        Tags(");
+            IEnumerable<string> tags = metadata.Tags.Select(t => $"\"{t}\"");
+            builder.Append(string.Join(", ", tags));
+            builder.AppendLine(");");
+        }
+
+        // Add summary and description if provided
+        if (!string.IsNullOrEmpty(metadata.Summary))
+        {
+            builder.AppendLine("        Summary(s =>");
+            builder.AppendLine("        {");
+            builder.AppendLine($"            s.Summary = \"{metadata.Summary}\";");
+            builder.AppendLine($"            s.Description = \"{metadata.Description}\";");
+            builder.AppendLine($"            s.ExampleRequest = new {metadata.ClassName}.Query {{ Days = 5 }};");
+            builder.AppendLine("        });");
+            builder.AppendLine();
+            builder.AppendLine("        Description(d => d");
+            builder.AppendLine($"            .Produces<{metadata.ClassName}.Response>(200, \"Success\")");
+            builder.AppendLine("            .ProducesProblem(400, \"Bad Request\")");
+            builder.AppendLine("        );");
+        }
+
+        // Close Configure method
+        builder.AppendLine("    }");
+        builder.AppendLine();
+
+        // Add HandleAsync method
+        builder.AppendLine("    public override async Task HandleAsync(Query request, CancellationToken ct)");
+        builder.AppendLine("    {");
+        builder.AppendLine("        // Implementation will be provided by the user");
+        builder.AppendLine("        throw new NotImplementedException();");
+        builder.AppendLine("    }");
+        builder.AppendLine("}");
+
+        return builder.ToString();
     }
 }
