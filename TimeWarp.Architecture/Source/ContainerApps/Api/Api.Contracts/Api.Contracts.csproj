@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Analyzers\TimeWarp.Architecture.Attributes\TimeWarp.Architecture.Attributes.csproj" />
   </ItemGroup>
 
   <ItemGroup>
