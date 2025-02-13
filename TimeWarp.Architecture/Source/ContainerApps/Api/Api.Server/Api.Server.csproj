@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -26,16 +25,21 @@
     <ProjectReference Include="..\..\Aspire\Aspire.ServiceDefaults\Aspire.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Api.Infrastructure\Api.Infrastructure.csproj" />
     <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj" />
+
+    <!-- Source Generator -->
     <ProjectReference Include="..\..\..\Analyzers\TimeWarp.Architecture.SourceGenerator\TimeWarp.Architecture.SourceGenerator.csproj"
                       OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false"/>
+                      ReferenceOutputAssembly="false" />
 
-    <!-- Add Api.Contracts source files for the source generator -->
-    <AdditionalFiles Include="..\Api.Contracts\**\*.cs" />
+    <!-- Attributes -->
+    <ProjectReference Include="..\..\..\Analyzers\TimeWarp.Architecture.Attributes\TimeWarp.Architecture.Attributes.csproj" />
+
+    <!-- Make Api.Contracts visible to analyzers -->
+    <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj"
+                      PrivateAssets="contentfiles;analyzers" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Api.Server.Integration.Tests" />
   </ItemGroup>
-
 </Project>
