@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿﻿﻿﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -24,7 +24,6 @@
     <ProjectReference Include="..\..\..\Common\Common.Server\Common.Server.csproj" />
     <ProjectReference Include="..\..\Aspire\Aspire.ServiceDefaults\Aspire.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Api.Infrastructure\Api.Infrastructure.csproj" />
-    <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj" />
 
     <!-- Source Generator -->
     <ProjectReference Include="..\..\..\Analyzers\TimeWarp.Architecture.SourceGenerator\TimeWarp.Architecture.SourceGenerator.csproj"
@@ -36,7 +35,9 @@
 
     <!-- Make Api.Contracts visible to analyzers -->
     <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj"
-                      PrivateAssets="contentfiles;analyzers" />
+                      SetTargetFramework="TargetFramework=net9.0"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="true" />
   </ItemGroup>
 
   <ItemGroup>
