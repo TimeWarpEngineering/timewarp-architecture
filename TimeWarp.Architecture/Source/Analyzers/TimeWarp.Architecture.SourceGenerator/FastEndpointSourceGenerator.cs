@@ -81,18 +81,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                             $"Found class: {classNode.Identifier.Text}, File: {filePath}, Has ApiEndpoint: {hasApiEndpoint}, IsStatic: {isStatic}, IsPartial: {isPartial}, All Attributes: {attributes}"));
                 }
 
-                // Log referenced assemblies
-                foreach (PortableExecutableReference reference in compilation.References)
-                {
-                    if (reference is PortableExecutableReference peReference)
-                    {
-                        spc.ReportDiagnostic(
-                            Diagnostic.Create(
-                                logDiagnostic,
-                                Location.None,
-                                $"Referenced assembly: {peReference.FilePath}"));
-                    }
-                }
             });
 
         // Log discovered classes and generate the source
