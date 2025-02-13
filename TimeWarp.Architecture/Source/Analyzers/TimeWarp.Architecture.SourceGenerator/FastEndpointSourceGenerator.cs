@@ -149,9 +149,9 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
             .Select(a => a.Name.ToString())
             .ToList();
 
-        // Check if any attribute name ends with "ApiEndpoint" or "ApiEndpointAttribute"
+        // Check if any attribute name matches ApiEndpoint
         bool hasApiEndpointAttribute = attributeNames
-            .Any(name => name.EndsWith("ApiEndpoint") || name.EndsWith("ApiEndpointAttribute"));
+            .Any(name => name == "ApiEndpoint" || name == "ApiEndpointAttribute");
 
         return isStatic && isPartial && hasAttributes && hasApiEndpointAttribute;
     }
