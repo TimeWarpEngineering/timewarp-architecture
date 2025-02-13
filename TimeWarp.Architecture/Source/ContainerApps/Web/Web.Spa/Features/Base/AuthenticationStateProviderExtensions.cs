@@ -1,6 +1,6 @@
 namespace Microsoft.AspNetCore.Components.Authorization;
 
-[UsedImplicitly]
+
 public static class AuthenticationStateProviderExtensions
 {
   public static async Task<Guid> GetUserIdAsync(this AuthenticationStateProvider authenticationStateProvider)

@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.ToastNotifications;
 
 partial class ToastNotificationState
 {
-  [UsedImplicitly]
+
   internal class ExceptionNotificationHandler
   (
     IToastService ToastService

@@ -7,7 +7,7 @@
 /// <remarks>
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
-[UsedImplicitly]
+
 public abstract class BaseApiService : IApiService
 {
   protected readonly HttpClient HttpClient;

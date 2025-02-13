@@ -2,13 +2,13 @@
 
 partial class ApplicationState
 {
-  [UsedImplicitly]
+
   public static class CloseModalActionSet
   {
-    [UsedImplicitly]
+
     internal class Action() : IBaseAction;
 
-    [UsedImplicitly]
+
     internal class Handler
     (
       IStore store

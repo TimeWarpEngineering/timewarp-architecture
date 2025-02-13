@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Services;
 
-[UsedImplicitly]
+
 public class MockApiService : IApiService
 {
   public async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>

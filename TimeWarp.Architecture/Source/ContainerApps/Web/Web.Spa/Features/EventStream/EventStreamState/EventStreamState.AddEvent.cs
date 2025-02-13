@@ -10,7 +10,7 @@ partial class EventStreamState
       public required string Message { get; init; }
     }
 
-    [UsedImplicitly]
+
     internal sealed class Handler
     (
       IStore store

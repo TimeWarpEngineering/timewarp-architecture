@@ -4,11 +4,11 @@ using static NotificationState.Notification;
 
 partial class NotificationState
 {
-  [UsedImplicitly]
+
   public static class AddProblemDetails
   {
 
-    [UsedImplicitly]
+
     internal sealed class Action
     (
       SharedProblemDetails SharedProblemDetails
@@ -17,7 +17,7 @@ partial class NotificationState
       public SharedProblemDetails SharedProblemDetails { get; init; } = SharedProblemDetails;
     }
 
-    [UsedImplicitly]
+
     internal sealed class Handler
     (
       IStore store

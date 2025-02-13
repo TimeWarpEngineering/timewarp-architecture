@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Pages;
 
 using static ChatState;
 
-[UsedImplicitly]
+
 [Page("/Chat")]
 partial class ChatPage
 {

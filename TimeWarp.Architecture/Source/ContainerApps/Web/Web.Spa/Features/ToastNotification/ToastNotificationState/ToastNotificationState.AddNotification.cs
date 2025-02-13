@@ -2,7 +2,7 @@
 
 partial class ToastNotificationState
 {
-  [UsedImplicitly]
+
   public static class AddNotification
   {
     public sealed class Action : IBaseAction
@@ -21,7 +21,7 @@ partial class ToastNotificationState
       }
     }
 
-    [UsedImplicitly]
+
     internal class Handler
     (
       IStore store,

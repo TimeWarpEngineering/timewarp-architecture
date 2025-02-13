@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 using static GetWeatherForecasts;
 
-[UsedImplicitly]
+
 public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
 {
   private readonly string[] Summaries =
