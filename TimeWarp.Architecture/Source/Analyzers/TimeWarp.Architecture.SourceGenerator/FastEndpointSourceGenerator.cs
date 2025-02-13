@@ -74,11 +74,17 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
                     string filePath = classNode.SyntaxTree.FilePath;
 
+                    bool meetsRequirements = hasApiEndpoint && isStatic && isPartial;
+                    string status = meetsRequirements ? "ACCEPTED" : "REJECTED";
+                    string reason = !meetsRequirements
+                        ? $"Missing: {(hasApiEndpoint ? "" : "ApiEndpoint ")} {(isStatic ? "" : "static ")} {(isPartial ? "" : "partial")}"
+                        : "Meets all requirements";
+
                     spc.ReportDiagnostic(
                         Diagnostic.Create(
                             logDiagnostic,
                             Location.None,
-                            $"Found class: {classNode.Identifier.Text}, File: {filePath}, Has ApiEndpoint: {hasApiEndpoint}, IsStatic: {isStatic}, IsPartial: {isPartial}, All Attributes: {attributes}"));
+                            $"Class: {classNode.Identifier.Text}, Status: {status}, {reason}, File: {filePath}, Attributes: {attributes}"));
                 }
 
             });
