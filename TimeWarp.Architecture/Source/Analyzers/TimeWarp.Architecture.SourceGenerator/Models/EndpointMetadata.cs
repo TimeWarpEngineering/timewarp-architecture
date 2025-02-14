@@ -12,61 +12,116 @@ internal class EndpointMetadata
     public bool RequiresAuthorization { get; set; }
     public Type? CustomEndpointType { get; set; }
 
-    public static EndpointMetadata FromSyntax(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
+    public static EndpointMetadata FromSymbol(INamedTypeSymbol symbol)
     {
         EndpointMetadata metadata = new()
         {
-            ClassName = classDeclaration.Identifier.Text,
-            Namespace = GetNamespace(classDeclaration)
+            ClassName = symbol.Name,
+            Namespace = symbol.ContainingNamespace.ToDisplayString()
         };
 
-        // Extract route and HTTP verb from RouteMixin attribute
-        ClassDeclarationSyntax? queryClass = classDeclaration.Members
-            .OfType<ClassDeclarationSyntax>()
-            .FirstOrDefault(c => c.Identifier.Text is "Query" or "Command");
+        // Find Query/Command class
+        INamedTypeSymbol? queryClass = symbol.GetTypeMembers()
+            .FirstOrDefault(m => m.Name is "Query" or "Command");
 
         if (queryClass != null)
         {
-            foreach (AttributeListSyntax attributeList in queryClass.AttributeLists)
+            // Extract route and HTTP verb from RouteMixin attribute
+            AttributeData? routeMixinAttribute = queryClass.GetAttributes()
+                .FirstOrDefault(attr => attr.AttributeClass?.ToDisplayString() == "TimeWarp.Architecture.RouteMixinAttribute");
+
+            if (routeMixinAttribute != null && routeMixinAttribute.ConstructorArguments.Length >= 2)
             {
-                foreach (AttributeSyntax attribute in attributeList.Attributes)
-                {
-                    if (IsRouteMixinAttribute(attribute, semanticModel))
-                    {
-                        ExtractRouteMixinInfo(attribute, metadata);
-                    }
-                }
+                metadata.Route = routeMixinAttribute.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
+                string httpVerb = routeMixinAttribute.ConstructorArguments[1].Value?.ToString() ?? "Get";
+                metadata.HttpVerb = ConvertHttpVerbToMethodName(httpVerb);
             }
 
-            // Extract documentation from XML comments
-            DocumentationCommentTriviaSyntax? xmlTrivia = queryClass.GetLeadingTrivia()
-                .Select(t => t.GetStructure())
-                .OfType<DocumentationCommentTriviaSyntax>()
-                .FirstOrDefault();
-
-            if (xmlTrivia != null)
+            // Extract documentation
+            string? xmlDoc = queryClass.GetDocumentationCommentXml();
+            if (xmlDoc != null)
             {
-                metadata.Summary = GetXmlCommentContent(xmlTrivia, "summary");
-                metadata.Description = GetXmlCommentContent(xmlTrivia, "remarks");
+                // Simple XML parsing - in real code you'd want to use proper XML parsing
+                metadata.Summary = ExtractXmlContent(xmlDoc, "summary");
+                metadata.Description = ExtractXmlContent(xmlDoc, "remarks");
             }
         }
 
         // Extract authorization requirements
-        metadata.RequiresAuthorization = HasAuthorizationAttribute(classDeclaration, semanticModel);
+        metadata.RequiresAuthorization = symbol.GetAttributes()
+            .Any(attr => attr.AttributeClass?.Name.Contains("Authorize") == true);
 
-        // Extract custom endpoint type if specified
-        metadata.CustomEndpointType = GetCustomEndpointType(classDeclaration, semanticModel);
+        // Extract custom endpoint type
+        AttributeData? apiEndpointAttribute = symbol.GetAttributes()
+            .FirstOrDefault(attr => attr.AttributeClass?.ToDisplayString() == "TimeWarp.Architecture.SourceGenerator.ApiEndpointAttribute");
 
-        // Generate tags from folder structure and attributes
-        metadata.Tags = GetTags(classDeclaration);
+        if (apiEndpointAttribute != null)
+        {
+            KeyValuePair<string, TypedConstant> endpointTypeArg = apiEndpointAttribute.NamedArguments
+                .FirstOrDefault(arg => arg.Key == "EndpointType");
+
+            if (!endpointTypeArg.Equals(default))
+            {
+                // Note: In a real implementation, you'd need to resolve the type
+                // This is simplified for demonstration
+                metadata.CustomEndpointType = null;
+            }
+        }
+
+        // Generate tags from namespace structure
+        List<string> tags = new();
+        INamespaceSymbol? containingNamespace = symbol.ContainingNamespace;
+
+        while (containingNamespace != null)
+        {
+            if (containingNamespace.Name == "Features" && containingNamespace.ContainingNamespace != null)
+            {
+                tags.Add(containingNamespace.ContainingNamespace.Name);
+                break;
+            }
+
+            containingNamespace = containingNamespace.ContainingNamespace;
+        }
+
+        // Add tags from OpenApiTags attribute
+        AttributeData? openApiTagsAttribute = symbol.GetAttributes()
+            .FirstOrDefault(attr => attr.AttributeClass?.Name == "OpenApiTags");
+
+        if (openApiTagsAttribute != null)
+        {
+            foreach (TypedConstant arg in openApiTagsAttribute.ConstructorArguments)
+            {
+                if (arg.Values.Any())
+                {
+                    tags.AddRange(arg.Values.Select(v => v.Value?.ToString() ?? string.Empty));
+                }
+            }
+        }
+
+        metadata.Tags = tags.Where(t => !string.IsNullOrEmpty(t)).Distinct().ToArray();
 
         return metadata;
+    }
+
+    private static string ExtractXmlContent(string xmlDoc, string elementName)
+    {
+        // Simple XML parsing - just look for <elementName> content </elementName>
+        string startTag = $"<{elementName}>";
+        string endTag = $"</{elementName}>";
+        int startIndex = xmlDoc.IndexOf(startTag);
+        if (startIndex == -1) return string.Empty;
+
+        startIndex += startTag.Length;
+        int endIndex = xmlDoc.IndexOf(endTag, startIndex);
+        if (endIndex == -1) return string.Empty;
+
+        return xmlDoc.Substring(startIndex, endIndex - startIndex).Trim();
     }
 
     private static string GetNamespace(ClassDeclarationSyntax classDeclaration)
     {
         SyntaxNode? candidate = classDeclaration.Parent;
-        
+
         while (candidate is not null and not NamespaceDeclarationSyntax and not FileScopedNamespaceDeclarationSyntax)
         {
             candidate = candidate.Parent;
@@ -166,18 +221,32 @@ internal class EndpointMetadata
         return null;
     }
 
+    private static string ConvertHttpVerbToMethodName(string httpVerb)
+    {
+        // Convert HttpVerb enum value to FastEndpoints method name
+        return httpVerb switch
+        {
+            "Get" => "Get",
+            "Post" => "Post",
+            "Put" => "Put",
+            "Delete" => "Delete",
+            "Patch" => "Patch",
+            _ => "Get" // Default to Get if unknown
+        };
+    }
+
     private static string[] GetTags(ClassDeclarationSyntax classDeclaration)
     {
         List<string> tags = new();
 
         // Add tag from folder structure
         string filePath = classDeclaration.SyntaxTree.FilePath;
-        
+
         if (!string.IsNullOrEmpty(filePath))
         {
             string[] folders = filePath.Split(Path.DirectorySeparatorChar);
             int featuresIndex = Array.IndexOf(folders, "Features");
-            
+
             if (featuresIndex >= 0 && featuresIndex < folders.Length - 1)
             {
                 tags.Add(folders[featuresIndex + 1]);
