@@ -50,42 +50,43 @@ context.RegisterSourceOutput(symbolsWithCompilation,
                 Location.None,
                 $"Found class with ApiEndpoint attribute using SelectMany: {symbol.Name}"));
 
-        // Get the syntax and semantic model for the symbol
-        SyntaxReference? syntaxRef = symbol.DeclaringSyntaxReferences.FirstOrDefault();
-        if (syntaxRef == null)
+        try
+        {
+            // Extract metadata directly from symbol
+            var metadata = EndpointMetadata.FromSymbol(symbol);
+
+            // Check for route conflicts
+            if (!RouteRegistry.TryRegisterRoute(metadata.Route, metadata.HttpVerb, metadata.ClassName, spc))
+            {
+                return;
+            }
+
+            // Generate the endpoint class
+            string endpointClass = GenerateEndpointClass(metadata);
+            string fileName = $"{metadata.ClassName}Endpoint.g.cs";
+
+            spc.ReportDiagnostic(
+                Diagnostic.Create(
+                    logDiagnostic,
+                    Location.None,
+                    $"Generating endpoint file: {fileName}"));
+
+            spc.AddSource(fileName, SourceText.From(endpointClass, Encoding.UTF8));
+
+            spc.ReportDiagnostic(
+                Diagnostic.Create(
+                    logDiagnostic,
+                    Location.None,
+                    $"Successfully generated endpoint file: {fileName}"));
+        }
+        catch (Exception ex)
         {
             spc.ReportDiagnostic(
                 Diagnostic.Create(
                     logDiagnostic,
                     Location.None,
-                    $"No syntax reference found for {symbol.Name}"));
-            return;
+                    $"Error generating endpoint: {ex.Message}"));
         }
-
-        SyntaxNode syntax = syntaxRef.GetSyntax();
-        if (syntax is not ClassDeclarationSyntax classDeclaration)
-        {
-            spc.ReportDiagnostic(
-                Diagnostic.Create(
-                    logDiagnostic,
-                    Location.None,
-                    $"Syntax is not a class declaration for {symbol.Name}"));
-            return;
-        }
-
-        spc.ReportDiagnostic(
-            Diagnostic.Create(
-                logDiagnostic,
-                Location.None,
-                $"Got class declaration for {classDeclaration.Identifier.Text}"));
-
-        SemanticModel semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
-        spc.ReportDiagnostic(
-            Diagnostic.Create(
-                logDiagnostic,
-                Location.None,
-                $"About to call Execute for {classDeclaration.Identifier.Text}"));
-        Execute(classDeclaration, semanticModel, spc);
     });
 
     }
@@ -100,146 +101,6 @@ context.RegisterSourceOutput(symbolsWithCompilation,
                 yield return childNs;
             }
         }
-    }
-
-    private static void Execute(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel, SourceProductionContext context)
-    {
-        var logDiagnostic = new DiagnosticDescriptor(
-            "SG001",
-            "Source Generator Log",
-            "{0}",
-            "SourceGenerator",
-            DiagnosticSeverity.Warning,
-            true);
-
-        // Log generation details
-        context.ReportDiagnostic(
-            Diagnostic.Create(
-                logDiagnostic,
-                Location.None,
-                $"=== Starting generation for {classDeclaration.Identifier.Text} ==="));
-
-        context.ReportDiagnostic(
-            Diagnostic.Create(
-                logDiagnostic,
-                Location.None,
-                $"Class location: {classDeclaration.GetLocation()?.GetLineSpan().Path ?? "unknown"}"));
-
-        EndpointMetadata metadata;
-        // Extract metadata
-        try
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    logDiagnostic,
-                    Location.None,
-                    $"Attempting to extract metadata from {classDeclaration.Identifier.Text}"));
-
-            metadata = EndpointMetadata.FromSyntax(classDeclaration, semanticModel);
-
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    logDiagnostic,
-                    Location.None,
-                    $"Extracted metadata - Class: {metadata.ClassName}, Route: {metadata.Route}, Namespace: {metadata.Namespace}"));
-        }
-        catch (Exception ex)
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    logDiagnostic,
-                    Location.None,
-                    $"Error extracting metadata: {ex.Message}\nStack trace: {ex.StackTrace}"));
-            return;
-        }
-
-        // Validate the class structure
-        if (!ValidateClassStructure(classDeclaration, context))
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    logDiagnostic,
-                    Location.None,
-                    "Class structure validation failed"));
-            return;
-        }
-
-        // Check for route conflicts
-        if (!RouteRegistry.TryRegisterRoute(metadata.Route, metadata.HttpVerb, metadata.ClassName, context))
-        {
-            return;
-        }
-
-        // Generate the endpoint class
-        string endpointClass = GenerateEndpointClass(metadata);
-        string fileName = $"{metadata.ClassName}Endpoint.g.cs";
-
-        context.ReportDiagnostic(
-            Diagnostic.Create(
-                logDiagnostic,
-                Location.None,
-                $"Generating endpoint file: {fileName}"));
-
-        context.AddSource(fileName, SourceText.From(endpointClass, Encoding.UTF8));
-
-        context.ReportDiagnostic(
-            Diagnostic.Create(
-                logDiagnostic,
-                Location.None,
-                $"Successfully generated endpoint file: {fileName}"));
-    }
-
-    private static bool ValidateClassStructure(ClassDeclarationSyntax classDeclaration, SourceProductionContext context)
-    {
-        // Check for static modifier
-        if (!classDeclaration.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    DiagnosticDescriptors.ApiEndpointMissingPartial,
-                    classDeclaration.GetLocation(),
-                    classDeclaration.Identifier.Text));
-            return false;
-        }
-
-        // Check for Query/Command class
-        ClassDeclarationSyntax? queryClass = classDeclaration.Members
-            .OfType<ClassDeclarationSyntax>()
-            .FirstOrDefault(c => c.Identifier.Text is "Query" or "Command");
-
-        if (queryClass is null)
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    DiagnosticDescriptors.ApiEndpointMissingQuery,
-                    classDeclaration.GetLocation(),
-                    classDeclaration.Identifier.Text));
-            return false;
-        }
-
-        // Validate interface implementations
-        if (!ValidateQueryInterfaces(queryClass, context))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    private static bool ValidateQueryInterfaces(ClassDeclarationSyntax queryClass, SourceProductionContext context)
-    {
-        // We should validate using semantic model instead of string comparison
-        if (queryClass.BaseList?.Types == null)
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    DiagnosticDescriptors.ApiEndpointInvalidInterface,
-                    queryClass.GetLocation(),
-                    "IRequest<> and IQueryStringRouteProvider"));
-            return false;
-        }
-
-        return true; // Skip validation for now as the contracts are correct
     }
 
     private static string GenerateEndpointClass(EndpointMetadata metadata)
