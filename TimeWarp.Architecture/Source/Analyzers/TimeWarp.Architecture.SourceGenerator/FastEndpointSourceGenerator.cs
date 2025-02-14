@@ -100,14 +100,33 @@ context.RegisterSourceOutput(symbolsWithCompilation,
                 Location.None,
                 $"Class location: {classDeclaration.GetLocation()?.GetLineSpan().Path ?? "unknown"}"));
 
+        EndpointMetadata metadata;
         // Extract metadata
-        var metadata = EndpointMetadata.FromSyntax(classDeclaration, semanticModel);
+        try
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    logDiagnostic,
+                    Location.None,
+                    $"Attempting to extract metadata from {classDeclaration.Identifier.Text}"));
 
-        context.ReportDiagnostic(
-            Diagnostic.Create(
-                logDiagnostic,
-                Location.None,
-                $"Extracted metadata - Class: {metadata.ClassName}, Route: {metadata.Route}"));
+            metadata = EndpointMetadata.FromSyntax(classDeclaration, semanticModel);
+
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    logDiagnostic,
+                    Location.None,
+                    $"Extracted metadata - Class: {metadata.ClassName}, Route: {metadata.Route}, Namespace: {metadata.Namespace}"));
+        }
+        catch (Exception ex)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    logDiagnostic,
+                    Location.None,
+                    $"Error extracting metadata: {ex.Message}\nStack trace: {ex.StackTrace}"));
+            return;
+        }
 
         // Validate the class structure
         if (!ValidateClassStructure(classDeclaration, context))
