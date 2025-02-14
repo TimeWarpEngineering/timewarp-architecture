@@ -156,12 +156,6 @@ context.RegisterSourceOutput(symbolsWithCompilation,
                     {{tags}}
                     {{summary}}
                 }
-
-                public override async Task HandleAsync({{metadata.ClassName}}.Query request, CancellationToken ct)
-                {
-                    // Implementation will be provided by the user
-                    throw new NotImplementedException();
-                }
             }
             """;
     }
