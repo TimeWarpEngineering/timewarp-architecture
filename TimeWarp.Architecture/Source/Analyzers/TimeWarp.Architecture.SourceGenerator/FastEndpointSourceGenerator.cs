@@ -45,12 +45,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
       (spc, data) =>
       {
         (INamedTypeSymbol symbol, Compilation compilation) = data;
-        spc.ReportDiagnostic(
-          Diagnostic.Create(
-            logDiagnostic,
-            Location.None,
-            $"Found class with ApiEndpoint attribute using SelectMany: {symbol.Name}"));
-
         try
         {
           // Extract metadata directly from symbol
@@ -66,19 +60,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
           string endpointClass = GenerateEndpointClass(metadata);
           string fileName = $"{metadata.ClassName}Endpoint.g.cs";
 
-          spc.ReportDiagnostic(
-            Diagnostic.Create(
-              logDiagnostic,
-              Location.None,
-              $"Generating endpoint file: {fileName}"));
-
           spc.AddSource(fileName, SourceText.From(endpointClass, Encoding.UTF8));
-
-          spc.ReportDiagnostic(
-            Diagnostic.Create(
-              logDiagnostic,
-              Location.None,
-              $"Successfully generated endpoint file: {fileName}"));
         }
         catch (Exception ex)
         {
