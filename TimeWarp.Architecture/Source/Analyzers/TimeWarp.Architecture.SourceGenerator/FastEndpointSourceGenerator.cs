@@ -121,13 +121,13 @@ context.RegisterSourceOutput(symbolsWithCompilation,
             ? $$"""
                 Summary(s =>
                 {
-                    s.Summary = "{metadata.Summary}";
-                    s.Description = "{metadata.Description}";
-                    s.ExampleRequest = new {metadata.ClassName}.Query { Days = 5 };
+                    s.Summary = "{{metadata.Summary}}";
+                    s.Description = "{{metadata.Description}}";
+                    s.ExampleRequest = new {{metadata.ClassName}}.Query { Days = 5 };
                 });
 
                 Description(d => d
-                    .Produces<{metadata.ClassName}.Response>(200, "Success")
+                    .Produces<{{metadata.ClassName}}.Response>(200, "Success")
                     .ProducesProblem(400, "Bad Request")
                 );
               """
@@ -139,25 +139,25 @@ context.RegisterSourceOutput(symbolsWithCompilation,
             using System.Threading;
             using System.Threading.Tasks;
 
-            namespace {metadata.Namespace};
+            namespace {{metadata.Namespace}};
 
             /// <summary>
-            /// {metadata.Summary}
+            /// {{metadata.Summary}}
             /// </summary>
             /// <remarks>
-            /// {metadata.Description}
+            /// {{metadata.Description}}
             /// </remarks>
-            public class {metadata.ClassName}Endpoint : {metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint"}<{metadata.ClassName}.Query, {metadata.ClassName}.Response>
+            public class {{metadata.ClassName}}Endpoint : {{metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint"}}<{{metadata.ClassName}}.Query, {{metadata.ClassName}}.Response>
             {
                 public override void Configure()
                 {
-                    {metadata.HttpVerb}("{metadata.Route}");
-                    {auth}
-                    {tags}
-                    {summary}
+                    {{metadata.HttpVerb}}("{{metadata.Route}}");
+                    {{auth}}
+                    {{tags}}
+                    {{summary}}
                 }
 
-                public override async Task HandleAsync({metadata.ClassName}.Query request, CancellationToken ct)
+                public override async Task HandleAsync({{metadata.ClassName}}.Query request, CancellationToken ct)
                 {
                     // Implementation will be provided by the user
                     throw new NotImplementedException();
