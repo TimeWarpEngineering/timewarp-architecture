@@ -21,32 +21,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
             DiagnosticSeverity.Warning,
             true
         );
-
-        // Get all class declarations with the ApiEndpoint attribute
-        IncrementalValuesProvider<(ClassDeclarationSyntax ClassDeclaration, SemanticModel SemanticModel)> classDeclarations =
-            context.SyntaxProvider
-                .ForAttributeWithMetadataName(
-                    ApiEndpointAttributeFullName,
-                    predicate: (node, _) => node is ClassDeclarationSyntax cds &&
-                        cds.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)),
-                    transform: (context, _) => ((ClassDeclarationSyntax)context.TargetNode, context.SemanticModel));
-// Log all namespaces we're searching through
-context.RegisterSourceOutput(context.CompilationProvider,
-    (spc, compilation) =>
-    {
-        foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
-        {
-            foreach (INamespaceSymbol ns in GetAllNamespaces(assembly.GlobalNamespace))
-            {
-                spc.ReportDiagnostic(
-                    Diagnostic.Create(
-                        logDiagnostic,
-                        Location.None,
-                        $"Searching namespace: {ns.ToDisplayString()}"));
-            }
-        }
-    });
-
 // Try finding classes with our attribute using SelectMany
 IncrementalValuesProvider<INamedTypeSymbol> classSymbols = context.CompilationProvider.SelectMany(
     (compilation, _) =>
@@ -61,116 +35,34 @@ IncrementalValuesProvider<INamedTypeSymbol> classSymbols = context.CompilationPr
                 .Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol)));
     });
 
-// Register source output to log found symbols
-context.RegisterSourceOutput(classSymbols,
-    (spc, symbol) =>
-    {
-        var logDiagnostic = new DiagnosticDescriptor(
-            "SG001",
-            "Source Generator Log",
-            "{0}",
-            "SourceGenerator",
-            DiagnosticSeverity.Warning,
-            true);
+// Combine symbols with compilation to get semantic model
+IncrementalValuesProvider<(INamedTypeSymbol Symbol, Compilation Compilation)> symbolsWithCompilation =
+    classSymbols.Combine(context.CompilationProvider);
 
+// Register source output to generate endpoints from found symbols
+context.RegisterSourceOutput(symbolsWithCompilation,
+    (spc, data) =>
+    {
+        (INamedTypeSymbol symbol, Compilation compilation) = data;
         spc.ReportDiagnostic(
             Diagnostic.Create(
                 logDiagnostic,
                 Location.None,
                 $"Found class with ApiEndpoint attribute using SelectMany: {symbol.Name}"));
+
+        // Get the syntax and semantic model for the symbol
+        SyntaxReference? syntaxRef = symbol.DeclaringSyntaxReferences.FirstOrDefault();
+        if (syntaxRef != null)
+        {
+            SyntaxNode syntax = syntaxRef.GetSyntax();
+            if (syntax is ClassDeclarationSyntax classDeclaration)
+            {
+                SemanticModel semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
+                Execute(classDeclaration, semanticModel, spc);
+            }
+        }
     });
 
-// Register source output for compilation diagnostics
-context.RegisterSourceOutput(context.CompilationProvider,
-            (spc, compilation) =>
-            {
-                spc.ReportDiagnostic(
-                    Diagnostic.Create(
-                        logDiagnostic,
-                        Location.None,
-                        $"Compilation started. Assembly: {compilation.AssemblyName}"));
-
-                // Log compilation details
-                spc.ReportDiagnostic(
-                    Diagnostic.Create(
-                        logDiagnostic,
-                        Location.None,
-                        $"Compilation references count: {compilation.References.Count()}"));
-
-                foreach (MetadataReference reference in compilation.References)
-                {
-                    if (reference is PortableExecutableReference peReference)
-                    {
-                        string assemblyName = peReference.FilePath?.Split('\\').LastOrDefault() ?? "unknown";
-                        spc.ReportDiagnostic(
-                            Diagnostic.Create(
-                                logDiagnostic,
-                                Location.None,
-                                $"Referenced assembly name: {assemblyName}"));
-                    }
-                }
-
-                // Log all assemblies and their syntax trees
-                foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
-                {
-                    spc.ReportDiagnostic(
-                        Diagnostic.Create(
-                            logDiagnostic,
-                            Location.None,
-                            $"Looking at assembly: {assembly.Name}"));
-                }
-
-                // Log all syntax trees and their source paths
-                foreach (SyntaxTree tree in compilation.SyntaxTrees)
-                {
-                    string sourcePath = tree.FilePath;
-                    string sourceText = tree.GetText().ToString().Split('\n')[0]; // Get first line for context
-
-                    spc.ReportDiagnostic(
-                        Diagnostic.Create(
-                            logDiagnostic,
-                            Location.None,
-                            $"Scanning syntax tree: {sourcePath}, First line: {sourceText}"));
-                }
-
-                // Check metadata references for source files
-                foreach (MetadataReference reference in compilation.References)
-                {
-                    if (reference is CompilationReference compilationRef)
-                    {
-                        foreach (SyntaxTree tree in compilationRef.Compilation.SyntaxTrees)
-                        {
-                            spc.ReportDiagnostic(
-                                Diagnostic.Create(
-                                    logDiagnostic,
-                                    Location.None,
-                                    $"Found source in referenced compilation: {tree.FilePath}"));
-                        }
-                    }
-                }
-
-            });
-
-        // Log discovered classes and generate the source
-        context.RegisterSourceOutput(classDeclarations,
-            static (spc, source) =>
-            {
-                DiagnosticDescriptor logDiagnostic = new(
-                    "SG001",
-                    "Source Generator Log",
-                    "{0}",
-                    "SourceGenerator",
-                    DiagnosticSeverity.Warning,
-                    true);
-
-                spc.ReportDiagnostic(
-                    Diagnostic.Create(
-                        logDiagnostic,
-                        Location.None,
-                        $"Found ApiEndpoint class: {source.ClassDeclaration.Identifier.Text}"));
-
-                Execute(source.ClassDeclaration, source.SemanticModel, spc);
-            });
     }
 
     private static IEnumerable<INamespaceSymbol> GetAllNamespaces(INamespaceSymbol root)
