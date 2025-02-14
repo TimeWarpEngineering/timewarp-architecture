@@ -308,21 +308,65 @@ context.RegisterSourceOutput(context.CompilationProvider,
 
     private static string GenerateEndpointClass(EndpointMetadata metadata)
     {
-        StringBuilder builder = new();
+        string tags = metadata.Tags.Any()
+            ? $"""
+                Tags({string.Join(", ", metadata.Tags.Select(t => $"\"{t}\""))});
+              """
+            : "";
 
-        builder.AppendLine("// === Debug Information ===");
-        builder.AppendLine($"// Endpoint Class: {metadata.ClassName}");
-        builder.AppendLine($"// Namespace: {metadata.Namespace}");
-        builder.AppendLine($"// Route: {metadata.Route}");
-        builder.AppendLine($"// HTTP Verb: {metadata.HttpVerb}");
-        builder.AppendLine($"// Requires Auth: {metadata.RequiresAuthorization}");
-        builder.AppendLine($"// Tags: {string.Join(", ", metadata.Tags)}");
-        builder.AppendLine($"// Summary: {metadata.Summary}");
-        builder.AppendLine($"// Description: {metadata.Description}");
-        builder.AppendLine($"// Custom Endpoint Type: {metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint"}");
-        builder.AppendLine("// === End Debug Information ===");
+        string auth = metadata.RequiresAuthorization
+            ? """
+                RequireAuthorization();
+              """
+            : "";
 
-        return builder.ToString();
+        string summary = !string.IsNullOrEmpty(metadata.Summary)
+            ? $$"""
+                Summary(s =>
+                {
+                    s.Summary = "{{metadata.Summary}}";
+                    s.Description = "{{metadata.Description}}";
+                    s.ExampleRequest = new {{metadata.ClassName}}.Query { Days = 5 };
+                });
+
+                Description(d => d
+                    .Produces<{{metadata.ClassName}}.Response>(200, "Success")
+                    .ProducesProblem(400, "Bad Request")
+                );
+              """
+            : "";
+
+        return $$$"""
+            using FastEndpoints;
+            using OneOf;
+            using System.Threading;
+            using System.Threading.Tasks;
+
+            namespace {{metadata.Namespace}};
+
+            /// <summary>
+            /// {{metadata.Summary}}
+            /// </summary>
+            /// <remarks>
+            /// {{metadata.Description}}
+            /// </remarks>
+            public class {{metadata.ClassName}}Endpoint : {{metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint"}}<{{metadata.ClassName}}.Query, {{metadata.ClassName}}.Response>
+            {
+                public override void Configure()
+                {
+                    {{metadata.HttpVerb}}("{{metadata.Route}}");
+                    {{auth}}
+                    {{tags}}
+                    {{summary}}
+                }
+
+                public override async Task HandleAsync(Query request, CancellationToken ct)
+                {
+                    // Implementation will be provided by the user
+                    throw new NotImplementedException();
+                }
+            }
+            """;
     }
 
     // AI don't remove this commented code
