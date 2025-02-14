@@ -52,15 +52,40 @@ context.RegisterSourceOutput(symbolsWithCompilation,
 
         // Get the syntax and semantic model for the symbol
         SyntaxReference? syntaxRef = symbol.DeclaringSyntaxReferences.FirstOrDefault();
-        if (syntaxRef != null)
+        if (syntaxRef == null)
         {
-            SyntaxNode syntax = syntaxRef.GetSyntax();
-            if (syntax is ClassDeclarationSyntax classDeclaration)
-            {
-                SemanticModel semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
-                Execute(classDeclaration, semanticModel, spc);
-            }
+            spc.ReportDiagnostic(
+                Diagnostic.Create(
+                    logDiagnostic,
+                    Location.None,
+                    $"No syntax reference found for {symbol.Name}"));
+            return;
         }
+
+        SyntaxNode syntax = syntaxRef.GetSyntax();
+        if (syntax is not ClassDeclarationSyntax classDeclaration)
+        {
+            spc.ReportDiagnostic(
+                Diagnostic.Create(
+                    logDiagnostic,
+                    Location.None,
+                    $"Syntax is not a class declaration for {symbol.Name}"));
+            return;
+        }
+
+        spc.ReportDiagnostic(
+            Diagnostic.Create(
+                logDiagnostic,
+                Location.None,
+                $"Got class declaration for {classDeclaration.Identifier.Text}"));
+
+        SemanticModel semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
+        spc.ReportDiagnostic(
+            Diagnostic.Create(
+                logDiagnostic,
+                Location.None,
+                $"About to call Execute for {classDeclaration.Identifier.Text}"));
+        Execute(classDeclaration, semanticModel, spc);
     });
 
     }
