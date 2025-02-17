@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Services;
 
-[UsedImplicitly]
+
 public class MockApiService : IApiService
 {
   public async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
@@ -20,7 +20,8 @@ public class MockApiService : IApiService
             (
               new GetWeatherForecasts.WeatherForecastDto[]
               {
-                new(
+                new
+                (
                   date: DateTime.Now.AddDays(1),
                   summary: "Summary 1",
                   temperatureC: 25

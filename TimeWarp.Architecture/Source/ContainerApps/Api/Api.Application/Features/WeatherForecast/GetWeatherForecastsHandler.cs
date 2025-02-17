@@ -2,11 +2,11 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 using static GetWeatherForecasts;
 
-[UsedImplicitly]
+
 public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
 {
-  private readonly string[] Summaries = new[]
-  {
+  private readonly string[] Summaries =
+  [
     "Freezing",
     "Bracing",
     "Chilly",
@@ -17,7 +17,7 @@ public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response,
     "Hot",
     "Sweltering",
     "Scorching"
-  };
+  ];
 
   public Task<OneOf<Response, SharedProblemDetails>> Handle
   (

@@ -9,7 +9,7 @@ partial class CounterState
       public string Message { get; init; } = Message;
     }
 
-    [UsedImplicitly]
+
     internal class Handler
     (
       IStore store

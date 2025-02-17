@@ -6,7 +6,7 @@ partial class ProfileMenuState
   {
     internal class Action : IBaseAction { }
 
-    [UsedImplicitly]
+
     internal class Handler
     (
       IStore store

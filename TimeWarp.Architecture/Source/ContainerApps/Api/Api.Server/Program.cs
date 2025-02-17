@@ -1,11 +1,12 @@
 namespace TimeWarp.Architecture.Api.Server;
 
+using Behaviors;
+using MediatR;
+
 public class Program : IAspNetProgram
 {
-  const string SwaggerVersion = "v1";
-  const string SwaggerApiTitle = $"TimeWarp.Architecture Api.Server API {SwaggerVersion}";
-  const string SwaggerBasePath = "api/api-server";
-  const string SwaggerEndpoint = $"/swagger/{SwaggerVersion}/swagger.json";
+  const string ApiTitle = "TimeWarp.Architecture Api.Server API";
+  const string ApiVersion = "v1";
 
   public static Task<int> Main(string[] argumentArray)
   {
@@ -39,63 +40,66 @@ public class Program : IAspNetProgram
 
     CorsPolicy.Any.Apply(serviceCollection);
 
+    // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
+    // will NOT register internals. This feature is utilized.
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Server.AssemblyMarker>();
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Contracts.AssemblyMarker>();
+
     serviceCollection.AddFastEndpoints(options =>
     {
+      options.IncludeAbstractValidators = false; //This will run all AbstractValidators in the FastEndpoints pipeline.
       options.Assemblies = new[]
       {
         typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).Assembly,
         typeof(TimeWarp.Architecture.Api.Contracts.AssemblyMarker).Assembly
       };
+    })
+    .SwaggerDocument(options =>
+    {
+      options.DocumentSettings = settings =>
+      {
+        settings.Title = ApiTitle;
+        settings.Version = ApiVersion;
+      };
+      options.SerializerSettings = serializerSettings =>
+      {
+        serializerSettings.PropertyNamingPolicy = null;
+      };
     });
+
     serviceCollection.AddAuthorization();
-
-    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     serviceCollection.AddEndpointsApiExplorer();
-    serviceCollection.AddSwaggerGen();
-
     serviceCollection
       .AddMediatR
       (
         mediatRServiceConfiguration =>
-          mediatRServiceConfiguration.RegisterServicesFromAssemblies
-          (
-            typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).GetTypeInfo().Assembly,
-            typeof(TimeWarp.Architecture.Api.Application.AssemblyMarker).GetTypeInfo().Assembly
-          )
+          mediatRServiceConfiguration
+            .RegisterServicesFromAssemblies
+            (
+              typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).GetTypeInfo().Assembly,
+              typeof(TimeWarp.Architecture.Api.Application.AssemblyMarker).GetTypeInfo().Assembly
+            )
       );
-
-    CommonServerModule
-      .AddSwaggerGen
-      (
-        serviceCollection,
-        SwaggerVersion,
-        SwaggerApiTitle,
-        [typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker), typeof(TimeWarp.Architecture.Api.Contracts.AssemblyMarker)]
-      );
+    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(GenericPipelineBehavior<,>));
+    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(FluentValidationBehavior<,>));
   }
 
   public static void ConfigureMiddleware(WebApplication webApplication)
   {
     CommonServerModule.ConfigureMiddleware(webApplication);
 
-    // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
-    // CORS Is not a security feature, CORS relaxes security.An API is not safer by allowing CORS.
-    // Sometimes, you might want to allow other sites to make cross-origin requests to your app.
-    if (webApplication.Environment.IsDevelopment())
-    {
-      webApplication.UseCors(CorsPolicy.Any.Name);
-    }
-
-    CommonServerModule.UseSwaggerUi(webApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
-
-    //aWebApplication.UseHttpsRedirection(); // In K8s we won't use https so we don't want to redirect
-
     webApplication.UseFastEndpoints(config =>
     {
       config.Endpoints.RoutePrefix = null;
     });
-
     webApplication.UseAuthorization();
+
+    if (webApplication.Environment.IsDevelopment())
+    {
+      webApplication.UseCors(CorsPolicy.Any.Name);
+      webApplication.UseOpenApi(c => c.Path = "/openapi/{documentName}.json");
+      webApplication.MapScalarApiReference();
+    }
   }
 
   public static void ConfigureEndpoints(WebApplication webApplication)
@@ -103,10 +107,10 @@ public class Program : IAspNetProgram
     CommonServerModule.ConfigureEndpoints(webApplication);
   }
 
-  private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration aConfiguration)
+  private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    //aServiceCollection
-    //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(aConfiguration)
-    //  .ConfigureOptions<SampleOptions, SampleOptionsValidator>(aConfiguration);
+    //serviceCollection
+    //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(configuration)
+    //  .ConfigureOptions<SampleOptions, SampleOptionsValidator>(configuration);
   }
 }

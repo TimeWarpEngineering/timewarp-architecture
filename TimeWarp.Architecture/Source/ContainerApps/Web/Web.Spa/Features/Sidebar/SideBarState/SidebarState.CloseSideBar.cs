@@ -6,7 +6,7 @@ partial class SidebarState
   {
     internal class Action : IBaseAction { }
 
-    [UsedImplicitly]
+
     internal class Handler
     (
       IStore store

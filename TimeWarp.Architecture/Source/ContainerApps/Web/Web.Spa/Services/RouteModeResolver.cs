@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Services;
 
-[UsedImplicitly]
+
 public static partial class RouteModeResolver
 {
   [GeneratedRegex("/.*/(New|Edit|View)(/|$)")]

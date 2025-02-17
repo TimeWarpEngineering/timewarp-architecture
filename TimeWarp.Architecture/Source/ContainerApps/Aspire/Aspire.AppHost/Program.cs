@@ -5,7 +5,7 @@ IResourceBuilder<AzureCosmosDBResource> cosmosdb = cosmos.AddDatabase(CosmosDbDa
 #if DEBUG
 cosmosdb.RunAsEmulator();
 #endif
-IResourceBuilder<ProjectResource> apiServer = builder.AddProject<Projects.Api_Server>(ApiServerProjectResourceName);
+IResourceBuilder<ProjectResource> apiServer = builder.AddProject<Projects.Api_Server>(ApiServerProjectResourceName).WithScalar();
 IResourceBuilder<ProjectResource> grpcServer = builder.AddProject<Projects.Grpc_Server>(GrpcServerProjectResourceName);
 
 IResourceBuilder<ProjectResource> webServer =

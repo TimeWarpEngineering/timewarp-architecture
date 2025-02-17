@@ -7,7 +7,7 @@ using Common.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Serilog;
 
-[UsedImplicitly]
+
 public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";

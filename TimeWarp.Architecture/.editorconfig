@@ -26,6 +26,7 @@ insert_final_newline = true
 
 # ReSharper properties
 resharper_html_attribute_indent = single_indent
+resharper_convert_to_primary_constructor_highlighting = false
 
 # Development files
 [*.{cs,csx,cshtml,csproj,razor,sln,props,targets,json,yml,gitignore,}]

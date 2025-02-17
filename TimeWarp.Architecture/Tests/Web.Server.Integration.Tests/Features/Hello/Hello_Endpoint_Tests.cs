@@ -10,7 +10,7 @@ public class Returns_
   private readonly Query Query = new()
     { Name = "Bob" };
 
-  [UsedImplicitly]
+
   public async Task Ok_Given_Valid_Request()
   {
     OneOf<Response, FileResponse, SharedProblemDetails> response =
@@ -24,7 +24,7 @@ public class Returns_
     );
   }
 
-  [UsedImplicitly]
+
   public async Task ValidationError()
   {
     Query.Name = "";

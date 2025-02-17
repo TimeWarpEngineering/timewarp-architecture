@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Override the default target framework for analyzer compatibility -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- Enable nullable since we're using it in the attribute -->
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

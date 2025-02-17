@@ -7,7 +7,7 @@ partial class ApplicationState
     [TrackAction]
     internal sealed class Action : IAction;
 
-    [UsedImplicitly]
+
     internal sealed class Handler : ActionHandler<Action>
     {
       public Handler(IStore store) : base(store) {}

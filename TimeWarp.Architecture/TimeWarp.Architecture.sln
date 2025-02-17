@@ -16,19 +16,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Solution Items", "03-Sol
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		CodeMaid.config = CodeMaid.config
+		CSS Bundle Hash Management in Blazor with Tailwind.md = CSS Bundle Hash Management in Blazor with Tailwind.md
 		Directory.Build.props = Directory.Build.props
 		Directory.Packages.props = Directory.Packages.props
 		global.json = global.json
 		NuGet.config = NuGet.config
 		README.md = README.md
 		Run.ps1 = Run.ps1
+		RunRelease.ps1 = RunRelease.ps1
 		.template.config\template.json = .template.config\template.json
 		TestCafe.ps1 = TestCafe.ps1
 		TimeWarp.ruleset = TimeWarp.ruleset
 		UNLICENSE.md = UNLICENSE.md
 		Watch.ps1 = Watch.ps1
-		RunRelease.ps1 = RunRelease.ps1
-		CSS Bundle Hash Management in Blazor with Tailwind.md = CSS Bundle Hash Management in Blazor with Tailwind.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04-Tests", "04-Tests", "{2902FDFD-016E-4BF7-8B41-53D674FA53DD}"
@@ -143,7 +143,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "08-Analyzers", "08-Analyzer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.Analyzers", "Source\Analyzers\TimeWarp.Architecture.Analyzers\TimeWarp.Architecture.Analyzers.csproj", "{7069BD78-9259-4AD8-B5D2-68644ADE46D8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.SourceGenerators", "..\..\timewarp-source-generators\source\TimeWarp.SourceGenerators\TimeWarp.SourceGenerators.csproj", "{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.MediatR", "Source\Libraries\TimeWarp.MediatR\TimeWarp.MediatR.csproj", "{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.SourceGenerator", "Source\Analyzers\TimeWarp.Architecture.SourceGenerator\TimeWarp.Architecture.SourceGenerator.csproj", "{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.SourceGenerator.Tests", "Tests\Analyzers\TimeWarp.Architecture.SourceGenerator.Tests\TimeWarp.Architecture.SourceGenerator.Tests.csproj", "{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeWarp.Architecture.Attributes", "Source\Analyzers\TimeWarp.Architecture.Attributes\TimeWarp.Architecture.Attributes.csproj", "{83873073-34C9-45DE-B2D0-2F101002C75E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{48F3B877-972E-4970-9726-26122D873ABD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenTester", "Source\GenTester\GenTester.csproj", "{A3D6B7C7-820E-487A-A63A-56D2E10FAD45}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -356,12 +366,36 @@ Global
 		{7069BD78-9259-4AD8-B5D2-68644ADE46D8}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
 		{7069BD78-9259-4AD8-B5D2-68644ADE46D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7069BD78-9259-4AD8-B5D2-68644ADE46D8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
-		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
-		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Release|Any CPU
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.ReduxDevToolsEnabled|Any CPU.Build.0 = Release|Any CPU
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83873073-34C9-45DE-B2D0-2F101002C75E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3D6B7C7-820E-487A-A63A-56D2E10FAD45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3D6B7C7-820E-487A-A63A-56D2E10FAD45}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3D6B7C7-820E-487A-A63A-56D2E10FAD45}.ReduxDevToolsEnabled|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3D6B7C7-820E-487A-A63A-56D2E10FAD45}.ReduxDevToolsEnabled|Any CPU.Build.0 = Debug|Any CPU
+		{A3D6B7C7-820E-487A-A63A-56D2E10FAD45}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3D6B7C7-820E-487A-A63A-56D2E10FAD45}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -413,7 +447,11 @@ Global
 		{3979C93A-21A2-4166-99B9-C62E2839B561} = {2902FDFD-016E-4BF7-8B41-53D674FA53DD}
 		{3AEDDC5D-2E97-49DF-85AD-11DC2E9BB084} = {3979C93A-21A2-4166-99B9-C62E2839B561}
 		{7069BD78-9259-4AD8-B5D2-68644ADE46D8} = {A988AE51-34CF-4B84-9CCE-461AA31A560D}
-		{EF1EEF67-C94C-447C-AFBA-938B3D759D8A} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
+		{3BAC7DCB-CDA5-4B9F-8330-DA2FD955304D} = {78D09B55-6B42-4869-B943-87ACAD8439FB}
+		{7602C1F5-4F2C-4BF3-8C66-1E5C0C0F6C2D} = {A988AE51-34CF-4B84-9CCE-461AA31A560D}
+		{8C7E9D2F-9E2B-4F2D-8C66-1E5C0C0F6C2D} = {3979C93A-21A2-4166-99B9-C62E2839B561}
+		{83873073-34C9-45DE-B2D0-2F101002C75E} = {A988AE51-34CF-4B84-9CCE-461AA31A560D}
+		{A3D6B7C7-820E-487A-A63A-56D2E10FAD45} = {48F3B877-972E-4970-9726-26122D873ABD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16FA64C2-4A0E-42D4-94E6-C8CFDE84597E}

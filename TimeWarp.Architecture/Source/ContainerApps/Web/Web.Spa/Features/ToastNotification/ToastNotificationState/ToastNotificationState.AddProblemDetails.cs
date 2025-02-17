@@ -13,7 +13,7 @@ partial class ToastNotificationState
       public SharedProblemDetails SharedProblemDetails { get; }
     }
 
-    [UsedImplicitly]
+
     internal sealed class Handler : BaseHandler<Action>
     {
       private readonly IToastService ToastService;

@@ -1,11 +1,12 @@
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
+[ApiEndpoint]
 public static partial class GetWeatherForecasts
 {
-  [RouteMixin("api/weatherForecasts", HttpVerb.Get)]
-  public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  [RouteMixin("api/weatherforecast", HttpVerb.Get)]
+  public sealed partial class Query : IRequest<OneOf<Response, SharedProblemDetails>>, IQueryStringRouteProvider,
+    IApiRequest
   {
-
     /// <summary>
     /// The Number of days of forecasts to get
     /// </summary>
@@ -14,12 +15,9 @@ public static partial class GetWeatherForecasts
 
     public string GetRouteWithQueryString()
     {
-      var parameters = new NameValueCollection
-      {
-        { nameof(Days), Days?.ToString() }
-      };
+      var parameters = new NameValueCollection { { nameof(Days), Days?.ToString() } };
 
-      return $"{this.GetRoute()}?{this.GetQueryString(parameters)}";
+      return $"{GetRoute()}?{this.GetQueryString(parameters)}";
     }
   }
 
@@ -37,19 +35,19 @@ public static partial class GetWeatherForecasts
     /// The forecast for this Date
     /// </summary>
     /// <example>2020-06-08T12:32:39.9828696+07:00</example>
-    public DateTime Date { get; set; }
+    public DateTime Date { get; }
 
     /// <summary>
     /// Summary of the forecast
     /// </summary>
     /// <example>Cool</example>
-    public string Summary { get; set; }
+    public string Summary { get; }
 
     /// <summary>
     /// Temperature in Celsius
     /// </summary>
     /// <example>24</example>
-    public int TemperatureC { get; set; }
+    public int TemperatureC { get; }
 
     /// <summary>
     /// Temperature in Fahrenheit
@@ -59,8 +57,8 @@ public static partial class GetWeatherForecasts
 
     public WeatherForecastDto(DateTime date, string summary, int temperatureC)
     {
-      Date = date;
-      Summary = summary;
+      Date = Guard.Against.NullOrOutOfSQLDateRange(date);
+      Summary = Guard.Against.NullOrWhiteSpace(summary);
       TemperatureC = temperatureC;
     }
   }
@@ -69,7 +67,9 @@ public static partial class GetWeatherForecasts
   {
     public Validator()
     {
-      RuleFor(query => query.Days).NotEmpty().GreaterThan(0);
+      RuleFor(x => x.Days)
+        .GreaterThanOrEqualTo(1)
+        .WithMessage("Days must be greater than or equal to 1");
     }
   }
 }
