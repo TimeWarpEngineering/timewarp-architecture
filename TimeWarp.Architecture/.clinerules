@@ -235,7 +235,7 @@ public class UserService
 .NET CONVENTIONS:
 
 FRAMEWORK:
-- Target net8.0
+- Target net9.0
 
 PROJECT CONFIGURATION:
 - Use Directory.Build.props for shared project properties
