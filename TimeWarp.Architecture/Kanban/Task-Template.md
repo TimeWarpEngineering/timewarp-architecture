@@ -23,7 +23,7 @@
 - [ ] Verify Functionality
 ### Documentation
 - [ ] Update Documentation
-- [ ] Update ai-context.md
+- [ ] Update .ai prompts
 ### Review
 - [ ] Consider Accessibility Implications
 - [ ] Consider Monitoring and Alerting Implications
