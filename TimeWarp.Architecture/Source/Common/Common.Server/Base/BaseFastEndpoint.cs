@@ -12,22 +12,20 @@ public abstract class BaseFastEndpoint<TRequest, TResponse> : Endpoint<TRequest,
   {
     OneOf<TResponse, SharedProblemDetails> oneOfResponse = await Sender.Send(request, cancellationToken).ConfigureAwait(false);
 
-    if (oneOfResponse.IsT0)
-    {
-      await SendAsync(oneOfResponse.AsT0, 200, cancellationToken);
-    }
-    else
-    {
-      SharedProblemDetails problem = oneOfResponse.AsT1;
-
-      // Set response content type with charset
-      HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";
-
-      // Set status code before sending
-      HttpContext.Response.StatusCode = problem.Status ?? 400;
-
-      // Write the problem details directly
-      await HttpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
-    }
+    await oneOfResponse.Match<Task>
+    (
+      async success =>
+      {
+        HttpContext.Response.StatusCode = 200;
+        HttpContext.Response.ContentType = "application/json";
+        await HttpContext.Response.WriteAsJsonAsync(success, cancellationToken);
+      },
+      async problem =>
+      {
+        HttpContext.Response.ContentType = "application/problem+json; charset=utf-8";
+        HttpContext.Response.StatusCode = problem.Status ?? 400;
+        await HttpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
+      }
+    );
   }
 }
