@@ -97,7 +97,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
       ? """
           RequireAuthorization();
         """
-      : "";
+      : "AllowAnonymous();";
 
     string summary = !string.IsNullOrEmpty(metadata.Summary)
       ? $$"""
