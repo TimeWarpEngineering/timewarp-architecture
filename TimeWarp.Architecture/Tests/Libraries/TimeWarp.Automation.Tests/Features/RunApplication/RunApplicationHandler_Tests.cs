@@ -51,7 +51,7 @@ public class Handle_Returns
     // Assert
     result.IsT2.ShouldBeTrue(); // Should be Exception
     Exception exception = result.AsT2;
-    exception.Message.ShouldContain("Failed to start process");
+    exception.Message.ShouldContain("An error occurred trying to start process");
   }
 
   public async Task ValidationResult_Given_EmptyApplicationPath()
