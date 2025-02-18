@@ -117,7 +117,7 @@
     <PackageVersion Include="System.ServiceModel.Primitives" Version="8.1.1" />
     <PackageVersion Include="timewarp-heroicons" Version="2.0.19" />
     <PackageVersion Include="timewarp-simple-icons" Version="14.3.0" />
-    <PackageVersion Include="TimeWarp.Fixie" Version="2.0.0" />
+    <PackageVersion Include="TimeWarp.Fixie" Version="3.0.0" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-alpha.8" />
     <PackageVersion Include="TimeWarp.State" Version="11.0.0" />
