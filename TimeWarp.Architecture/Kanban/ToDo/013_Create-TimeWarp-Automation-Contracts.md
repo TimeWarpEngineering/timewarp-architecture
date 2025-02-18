@@ -8,7 +8,6 @@ Create the TimeWarp.Automation.Contracts project using `dotnet new classlib`.
 
 1. Create new classlib project
 2. Add to solution
-3. Configure for net9.0
 
 ## Checklist
 
