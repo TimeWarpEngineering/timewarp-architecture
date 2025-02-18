@@ -1,9 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <Description>TimeWarp Automation Tests</Description>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Fixie.TestAdapter" />
-    <PackageReference Include="Shouldly" />
-    <PackageReference Include="TimeWarp.Fixie" />
+    <PackageReference Include="FluentAssertions"/>
+    <PackageReference Include="FluentValidation"/>
+    <PackageReference Include="MediatR"/>
+    <PackageReference Include="OneOf"/>
+    <PackageReference Include="Shouldly"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Source\Libraries\TimeWarp.Automation\TimeWarp.Automation.csproj"/>
+    <ProjectReference Include="..\..\..\Source\Libraries\TimeWarp.Automation.Contracts\TimeWarp.Automation.Contracts.csproj"/>
   </ItemGroup>
 
 </Project>
