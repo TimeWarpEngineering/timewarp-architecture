@@ -1,18 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Fixie" />
+    <PackageReference Include="Fixie.TestAdapter" />
     <PackageReference Include="Shouldly" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Source\Libraries\TimeWarp.Automation\TimeWarp.Automation.csproj" />
+    <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
 
 </Project>
