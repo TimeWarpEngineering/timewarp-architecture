@@ -5,23 +5,87 @@ using TimeWarp.Automation.Features.Application;
 
 public class Handle_Returns
 {
-  private readonly Command Command;
   private readonly Handler Handler;
 
   public Handle_Returns()
   {
-    Command = new Command { ApplicationPath = "notepad.exe" };
     Handler = new Handler();
   }
 
   public async Task ProcessId_Given_ValidApplication()
   {
-    OneOf<Response, ValidationResult, Exception> result = await Handler.Handle(Command, CancellationToken.None);
+    // Arrange
+    var command = new Command { ApplicationPath = "notepad.exe" };
 
-    ValidateResult(result);
+    // Act
+    OneOf<Response, ValidationResult, Exception> result = await Handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    ValidateSuccessResult(result);
   }
 
-  private void ValidateResult(OneOf<Response, ValidationResult, Exception> result)
+  public async Task ProcessId_Given_ValidApplication_With_Arguments()
+  {
+    // Arrange
+    var command = new Command
+    {
+      ApplicationPath = "cmd.exe",
+      Arguments = "/c echo test"
+    };
+
+    // Act
+    OneOf<Response, ValidationResult, Exception> result = await Handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    ValidateSuccessResult(result);
+  }
+
+  public async Task Exception_Given_InvalidApplicationPath()
+  {
+    // Arrange
+    var command = new Command { ApplicationPath = "nonexistent.exe" };
+
+    // Act
+    OneOf<Response, ValidationResult, Exception> result = await Handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    result.IsT2.ShouldBeTrue(); // Should be Exception
+    Exception exception = result.AsT2;
+    exception.Message.ShouldContain("Failed to start process");
+  }
+
+  public async Task ValidationResult_Given_EmptyApplicationPath()
+  {
+    // Arrange
+    var command = new Command { ApplicationPath = string.Empty };
+    var validator = new Validator();
+
+    // Act
+    ValidationResult validationResult = await validator.ValidateAsync(command);
+
+    // Assert
+    validationResult.IsValid.ShouldBeFalse();
+    validationResult.Errors.Count.ShouldBe(1);
+    validationResult.Errors[0].PropertyName.ShouldBe(nameof(Command.ApplicationPath));
+  }
+
+  public async Task ProcessId_Given_NullArguments()
+  {
+    // Arrange
+    var command = new Command
+    {
+      ApplicationPath = "notepad.exe",
+      Arguments = null
+    };
+
+    // Act
+    OneOf<Response, ValidationResult, Exception> result = await Handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    ValidateSuccessResult(result);
+  }
+
+  private void ValidateSuccessResult(OneOf<Response, ValidationResult, Exception> result)
   {
     result.Switch
     (
