@@ -1,16 +1,17 @@
 namespace RunApplicationHandler;
 
 using static TimeWarp.Automation.Features.RunApplication;
+using TimeWarp.Automation.Features.Application;
 
 public class Handle_Returns
 {
   private readonly Command Command;
-  private readonly Features.Application.Handler Handler;
+  private readonly Handler Handler;
 
   public Handle_Returns()
   {
     Command = new Command { ApplicationPath = "notepad.exe" };
-    Handler = new Features.Application.Handler();
+    Handler = new Handler();
   }
 
   public async Task ProcessId_Given_ValidApplication()
@@ -26,8 +27,8 @@ public class Handle_Returns
     (
       response =>
       {
-        response.Should().NotBeNull();
-        response.ProcessId.Should().BeGreaterThan(0);
+        response.ShouldNotBeNull();
+        response.ProcessId.ShouldBeGreaterThan(0);
 
         // Cleanup
         var process = Process.GetProcessById(response.ProcessId);
@@ -35,11 +36,11 @@ public class Handle_Returns
       },
       validationResult =>
       {
-        Execute.Assertion.FailWith("The RunApplication handler returned ValidationResult instead of a successful response.");
+        throw new ShouldAssertException("The RunApplication handler returned ValidationResult instead of a successful response.");
       },
       exception =>
       {
-        Execute.Assertion.FailWith("The RunApplication handler returned Exception instead of a successful response.");
+        throw new ShouldAssertException("The RunApplication handler returned Exception instead of a successful response.");
       }
     );
   }
