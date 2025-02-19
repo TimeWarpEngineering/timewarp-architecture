@@ -10,8 +10,4 @@
     <PackageReference Include="OneOf"/>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj"/>
-  </ItemGroup>
-
 </Project>
