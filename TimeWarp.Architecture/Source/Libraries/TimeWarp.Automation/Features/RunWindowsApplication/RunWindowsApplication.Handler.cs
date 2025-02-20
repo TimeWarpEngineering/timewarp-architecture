@@ -19,18 +19,18 @@ public class Handler : IRequestHandler<Command, OneOf<Response, ValidationResult
       {
         FileName = command.ApplicationPath,
         Arguments = command.Arguments,
-        UseShellExecute = true,
+        UseShellExecute = false,
         WorkingDirectory = command.WorkingDirectory ?? Path.GetDirectoryName(command.ApplicationPath) ?? string.Empty,
-      };
 
-      // Map WindowStyle to ProcessWindowStyle
-      startInfo.WindowStyle = command.WindowStyle switch
-      {
-        WindowStyle.Normal => ProcessWindowStyle.Normal,
-        WindowStyle.Hidden => ProcessWindowStyle.Hidden,
-        WindowStyle.Minimized => ProcessWindowStyle.Minimized,
-        WindowStyle.Maximized => ProcessWindowStyle.Maximized,
-        _ => ProcessWindowStyle.Normal
+        // Map WindowStyle to ProcessWindowStyle
+        WindowStyle = command.WindowStyle switch
+        {
+          WindowStyle.Normal => ProcessWindowStyle.Normal,
+          WindowStyle.Hidden => ProcessWindowStyle.Hidden,
+          WindowStyle.Minimized => ProcessWindowStyle.Minimized,
+          WindowStyle.Maximized => ProcessWindowStyle.Maximized,
+          _ => ProcessWindowStyle.Normal
+        }
       };
 
       Process process = Process.Start(startInfo)
@@ -38,7 +38,9 @@ public class Handler : IRequestHandler<Command, OneOf<Response, ValidationResult
 
       if (command.AfterLaunch == AfterLaunchBehavior.WaitForApplicationToLoad)
       {
-        // Wait for window handle to be available
+        // Wait for the process to be ready
+        process.WaitForInputIdle();
+
         TimeSpan timeout = command.Timeout ?? TimeSpan.FromSeconds(30);
         DateTime startTime = DateTime.UtcNow;
 
