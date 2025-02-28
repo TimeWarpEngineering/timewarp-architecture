@@ -1,4 +1,9 @@
-
-nuget pack ..\Source\TimeWarp.Console.Template\TimeWarp.Console.Template.nuspec -Version 0.0.1
-dotnet new -u TimeWarp.Console.Template
-dotnet new -i TimeWarp.Console.Template.0.0.1.nupkg
+Push-Location $PSScriptRoot
+try {
+    nuget pack ..\Source\TimeWarp.Console.Template\TimeWarp.Console.Template.nuspec -Version 0.0.1
+    dotnet new -u TimeWarp.Console.Template
+    dotnet new -i TimeWarp.Console.Template.0.0.1.nupkg
+}
+finally {
+    Pop-Location
+}
