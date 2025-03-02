@@ -1,4 +1,4 @@
-﻿<Solution>
+﻿﻿<Solution>
   <Configurations>
     <BuildType Name="Debug" />
     <BuildType Name="ReduxDevToolsEnabled" />
@@ -145,6 +145,7 @@
     </Project>
   </Folder>
   <Folder Name="/04-Tests/ContainerApps/" />
+  <!--#if (api)-->
   <Folder Name="/04-Tests/ContainerApps/Api/">
     <Project Path="Tests\ContainerApps\Api\Api.Server.Integration.Tests\Api.Server.Integration.Tests.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
@@ -156,6 +157,7 @@
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
   </Folder>
+  <!--#endif-->
   <Folder Name="/04-Tests/ContainerApps/Aspire/">
     <Project Path="Tests\ContainerApps\Aspire\Aspire.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
@@ -167,7 +169,10 @@
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
   </Folder>
+  <!--#if (grpc)-->
   <Folder Name="/04-Tests/ContainerApps/Grpc/" />
+  <!--#endif-->
+  <!--#if (web)-->
   <Folder Name="/04-Tests/ContainerApps/Web/">
     <Project Path="Tests\EndToEnd.Playwright.Tests\EndToEnd.Playwright.Tests.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
@@ -197,7 +202,10 @@
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
   </Folder>
+  <!--#endif-->
+  <!--#if (yarp)-->
   <Folder Name="/04-Tests/ContainerApps/Yarp/" />
+  <!--#endif-->
   <Folder Name="/04-Tests/Libraries/">
     <Project Path="Tests\Libraries\TimeWarp.Automation.Tests\TimeWarp.Automation.Tests.csproj" Type="Classic C#">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
@@ -210,6 +218,7 @@
     </Project>
   </Folder>
   <Folder Name="/05-ContainerApps/" />
+  <!--#if (api)-->
   <Folder Name="/05-ContainerApps/Api/">
     <Project Path="Source\ContainerApps\Api\Api.Application\Api.Application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
@@ -257,6 +266,8 @@
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
   </Folder>
+  <!--#endif-->
+  <!--#if (grpc)-->
   <Folder Name="/05-ContainerApps/Grpc/">
     <Project Path="Source\ContainerApps\Grpc\Grpc.Application\Grpc.Application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
@@ -304,6 +315,8 @@
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
   </Folder>
+  <!--#endif-->
+  <!--#if (web)-->
   <Folder Name="/05-ContainerApps/Web/">
     <Project Path="Source\ContainerApps\Web\Web.Application\Web.Application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
@@ -360,6 +373,8 @@
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
   </Folder>
+  <!--#endif-->
+  <!--#if (yarp)-->
   <Folder Name="/05-ContainerApps/Yarp/">
     <Project Path="Source\ContainerApps\Yarp\Yarp.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
@@ -371,6 +386,7 @@
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
   </Folder>
+  <!--#endif-->
   <Folder Name="/06-NewFileTemplates/">
     <File Path=".templates\.cs-interface.txt" />
     <File Path=".templates\.cs.txt" />
