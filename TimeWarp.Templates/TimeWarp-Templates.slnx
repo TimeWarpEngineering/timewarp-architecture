@@ -1,0 +1,13 @@
+﻿<Solution>
+  <Folder Name="/Templates/" />
+  <Folder Name="/Templates/Architecture/">
+    <Project Path="Source\TimeWarp.Architecture.Template\TimeWarp.Architecture.csproj" />
+  </Folder>
+  <Folder Name="/Templates/Console/">
+    <Project Path="Source\TimeWarp.Console.Template\content\TimeWarp.Console-CSharp\Source\Console-CSharp.csproj" />
+  </Folder>
+  <Folder Name="/Templates/Console/Tests/">
+    <Project Path="Source\TimeWarp.Console.Template\content\TimeWarp.Console-CSharp\Tests\Console-CSharp.Tests\Console-CSharp.Tests.csproj" />
+  </Folder>
+  <Project Path="Tests\TimeWarp.Architecture.Template.Tests\TimeWarp.Architecture.Template.Tests.csproj" />
+</Solution>
