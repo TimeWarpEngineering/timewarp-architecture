@@ -8,6 +8,7 @@ using TimeWarp.Automation.Features.WindowsApplication;
 public class Handle_Returns
 {
   private readonly Handler Handler;
+  private readonly string NotePadPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "notepad.exe");
 
   public Handle_Returns()
   {
@@ -19,8 +20,9 @@ public class Handle_Returns
     // Arrange
     Command command = new()
     {
-      ApplicationPath = "notepad.exe",
-      WindowStyle = WindowStyle.Normal
+      ApplicationPath = NotePadPath,
+      WindowStyle = WindowStyle.Normal,
+      AfterLaunch = AfterLaunchBehavior.WaitForApplicationToLoad
     };
 
     // Act
@@ -35,8 +37,9 @@ public class Handle_Returns
     // Arrange
     Command command = new()
     {
-      ApplicationPath = "notepad.exe",
-      WindowStyle = WindowStyle.Minimized
+      ApplicationPath = NotePadPath,
+      WindowStyle = WindowStyle.Minimized,
+      AfterLaunch = AfterLaunchBehavior.WaitForApplicationToLoad
     };
 
     // Act
