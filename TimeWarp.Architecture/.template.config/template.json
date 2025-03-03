@@ -28,6 +28,7 @@
           "exclude": [
             "Source/ContainerApps/Grpc/**/*",
             "Source/ContainerApps/Web/Web.Spa/Features/Superhero/**/*",
+            "Source/ContainerApps/Web/Web.Spa/Services/SuperheroGrpcServiceProvider.cs",
             "Tests/Grpc.Server.Integration.Tests/**/*"
           ]
         },
@@ -36,6 +37,7 @@
           "exclude": [
             "Source/ContainerApps/Api/**/*",
             "Source/ContainerApps/Web/Web.Spa/Features/WeatherForecast/**/*",
+            "Source/ContainerApps/Web/Web.Spa/Services/Mocks/MockApiService.cs",
             "Tests/TimeWarp.Testing/Applications/ApiTestServerApplication.cs",
             "Tests/Api.Server.Integration.Tests/**/*"
           ]

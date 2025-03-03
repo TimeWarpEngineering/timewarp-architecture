@@ -8,8 +8,12 @@
   <TimeWarpNavLink TPage=HomePage />
   <FluentNavGroup Title="Pages">
     <TimeWarpNavLink TPage=CounterPage />
+    @*#if (api)*@
     <TimeWarpNavLink TPage=WeatherForecastsPage />
+    @*#endif*@
+    @*#if (grpc)*@
     <TimeWarpNavLink TPage=SuperheroPage />
+    @*#endif*@
     <TimeWarpNavLink TPage=ChatPage />
   </FluentNavGroup>
   <FluentNavGroup Title="Developer">
