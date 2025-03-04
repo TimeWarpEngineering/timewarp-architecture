@@ -68,7 +68,9 @@ public class Program : IAspNetProgram
   private static void ConfigureHostApplicationBuilder(IHostApplicationBuilder builder)
   {
     builder.AddServiceDefaults();
+    #if(cosmosdb)
     CosmosDbModule.ConfigureHostApplicationBuilder(builder);
+    #endif
   }
 
   public static void ConfigureConfiguration(ConfigurationManager configurationManager)
