@@ -196,6 +196,7 @@ public class Program : IAspNetProgram
 
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
+    webApplication.MapStaticAssets();
     webApplication.MapRazorComponents<App>()
       .AddInteractiveServerRenderMode()
       .AddInteractiveWebAssemblyRenderMode()
