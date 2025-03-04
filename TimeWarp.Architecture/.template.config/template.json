@@ -38,6 +38,7 @@
             "Source/ContainerApps/Api/**/*",
             "Source/ContainerApps/Web/Web.Spa/Features/WeatherForecast/**/*",
             "Source/ContainerApps/Web/Web.Spa/Services/Mocks/MockApiService.cs",
+            "Source/ContainerApps/Web/Web.Spa/Services/ApiServices/ApiServerApiService.cs",
             "Tests/TimeWarp.Testing/Applications/ApiTestServerApplication.cs",
             "Tests/Api.Server.Integration.Tests/**/*"
           ]

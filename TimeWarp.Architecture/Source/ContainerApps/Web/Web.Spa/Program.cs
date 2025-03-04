@@ -12,7 +12,9 @@ public class Program
 
     ConfigureServices(builder.Services, builder.Configuration);
     builder.Services.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
+#if api
     builder.Services.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
+#endif
 
     await builder.Build().RunAsync();
   }
@@ -119,6 +121,7 @@ public class Program
     );
 
     // We are using a factory here to explicitly determine which constructor to use for DI.
+#if api
     serviceCollection.AddScoped<IApiServerApiService>
     (
       serviceProvider =>
@@ -130,6 +133,7 @@ public class Program
         return new ApiServerApiService(httpClientFactory, accessTokenProvider, options);
       }
     );
+#endif
 
     // Set the JSON serializer options
     serviceCollection.Configure<JsonSerializerOptions>
