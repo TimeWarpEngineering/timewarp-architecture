@@ -12,7 +12,7 @@
     <PackageIcon>Logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <ContentTargetFolders>content</ContentTargetFolders>
@@ -21,14 +21,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content 
-      Include="templates\**\*" 
-      Exclude="**\bin\**;**\obj\**;**\launchSettings.json;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;templates\Directory.Build.*;**\.template.config.src\**" />
+    <Content
+      Include="templates\**\*"
+      Exclude="**\bin\**;**\obj\**;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;templates\Directory.Build.*;**\.template.config.src\**;**\launchSettings.json" />
 <!--    How to include TimeWarp.Architecture folder in the templates dir but it is located in a different folder?-->
-    <Content 
-      Include="..\..\..\TimeWarp.Architecture\**\*" 
-      Exclude="**\bin\**;**\obj\**;**\launchSettings.json;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**" 
+    <!-- Split the Content elements to handle Aspire launchSettings.json separately -->
+    <Content
+      Include="..\..\..\TimeWarp.Architecture\**\*"
+      Exclude="**\bin\**;**\obj\**;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;**\launchSettings.json"
       PackagePath="content\templates\TimeWarp.Architecture\%(RecursiveDir)%(FileName)%(Extension)" />
+      
+    <!-- Explicitly include Aspire launchSettings.json -->
+    <Content
+      Include="..\..\..\TimeWarp.Architecture\Source\ContainerApps\Aspire\**\Properties\launchSettings.json"
+      PackagePath="content\templates\TimeWarp.Architecture\Source\ContainerApps\Aspire\%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Remove="**\*" />
   </ItemGroup>
   
