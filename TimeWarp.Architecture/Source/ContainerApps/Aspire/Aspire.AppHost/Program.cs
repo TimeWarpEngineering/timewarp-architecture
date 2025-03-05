@@ -4,9 +4,11 @@ IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(ar
 // Add CosmosDB resource
 IResourceBuilder<AzureCosmosDBResource> cosmos = builder.AddAzureCosmosDB(CosmosDbResourceName);
 IResourceBuilder<AzureCosmosDBResource> cosmosdb = cosmos.AddDatabase(CosmosDbDatabaseName);
+//-:cnd:noEmit
 #if DEBUG
 cosmosdb.RunAsEmulator();
 #endif
+//+:cnd:noEmit
 #endif
 // Declare project resources based on template flags
 #if api
