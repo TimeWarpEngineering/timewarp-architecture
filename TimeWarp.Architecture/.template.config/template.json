@@ -18,6 +18,15 @@
     {
       "modifiers": [
         {
+          "condition": "(true)",
+          "exclude": [
+            "Kanban/Backlog/B*.md",
+            "Kanban/Done/[0-9]*.md",
+            "Kanban/InProgress/[0-9]*.md",
+            "Kanban/ToDo/[0-9]*.md"
+          ]
+        },
+        {
           "condition": "(!process)",
           "exclude": [
             "Process/**/*"
