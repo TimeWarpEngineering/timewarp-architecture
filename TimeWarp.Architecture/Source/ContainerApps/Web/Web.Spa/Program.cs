@@ -37,6 +37,7 @@ public class Program
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
 
+//-:cnd:noEmit
 #if MOCK_AUTHENTICATION
     serviceCollection.AddScoped<AuthenticationStateProvider, MockAuthenticationStateProvider>();
     serviceCollection.AddScoped<IAccessTokenProvider, MockAccessTokenProvider>();
@@ -50,6 +51,7 @@ public class Program
       }
     ).AddAccountClaimsPrincipalFactory<AccountClaimsPrincipalFactoryWithRoles>();
 #endif
+//+:cnd:noEmit
 
     // Add authorization services
     serviceCollection.AddAuthorizationCore(PolicyRegistration.AddPolicies);
