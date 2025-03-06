@@ -4,7 +4,9 @@
   <div class="text-xs font-semibold leading-6 text-gray-500">Pages</div>
   <ul role="list" class="-mx-2 mt-2 space-y-1">
     <SidebarLink Href=@CounterPage.GetPageUrl() IconCharacter=@('C')>Counter</SidebarLink>
+    @*#if (api)*@
     <SidebarLink Href=@WeatherForecastsPage.GetPageUrl() IconCharacter=@('W')>Weather Forecasts</SidebarLink>
+    @*#endif*@
     @*#if (grpc)*@
     <SidebarLink Href=@SuperheroPage.GetPageUrl() IconCharacter=@('S')>Superheros</SidebarLink>
     @*#endif*@

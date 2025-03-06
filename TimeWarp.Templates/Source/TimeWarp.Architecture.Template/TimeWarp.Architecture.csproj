@@ -12,7 +12,7 @@
     <PackageIcon>Logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <ContentTargetFolders>content</ContentTargetFolders>
@@ -21,13 +21,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content 
-      Include="templates\**\*" 
-      Exclude="**\bin\**;**\obj\**;**\launchSettings.json;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;templates\Directory.Build.*;**\.template.config.src\**" />
+    <Content
+      Include="templates\**\*"
+      Exclude="**\bin\**;**\obj\**;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;templates\Directory.Build.*;**\.template.config.src\**" />
 <!--    How to include TimeWarp.Architecture folder in the templates dir but it is located in a different folder?-->
-    <Content 
-      Include="..\..\..\TimeWarp.Architecture\**\*" 
-      Exclude="**\bin\**;**\obj\**;**\launchSettings.json;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**" 
+    <!-- Include all files including launchSettings.json -->
+    <Content
+      Include="..\..\..\TimeWarp.Architecture\**\*"
+      Exclude="**\bin\**;**\obj\**;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**"
       PackagePath="content\templates\TimeWarp.Architecture\%(RecursiveDir)%(FileName)%(Extension)" />
     <Compile Remove="**\*" />
   </ItemGroup>

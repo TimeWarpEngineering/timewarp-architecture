@@ -1,0 +1,471 @@
+﻿<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="ReduxDevToolsEnabled" />
+    <BuildType Name="Release" />
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/00-DevOps/" />
+  <Folder Name="/00-Libraries/">
+    <Project Path="Source\Libraries\TimeWarp.Automation\TimeWarp.Automation.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\Libraries\TimeWarp.MediatR\TimeWarp.MediatR.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\Libraries\TimeWarp.Modules\TimeWarp.Modules.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Tests\TimeWarp.Testing\Testing.Common.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/01-Tools/" />
+  <Folder Name="/02-Common/">
+    <Project Path="Source\Common\Common.Application\Common.Application.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\Common\Common.Contracts\Common.Contracts.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\Common\Common.Domain\Common.Domain.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\Common\Common.Infrastructure\Common.Infrastructure.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\Common\Common.Server\Common.Server.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/03-Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="CodeMaid.config" />
+    <File Path="CSS Bundle Hash Management in Blazor with Tailwind.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="NuGet.config" />
+    <File Path="README.md" />
+    <File Path="Run.ps1" />
+    <File Path="RunRelease.ps1" />
+    <File Path=".template.config\template.json" />
+    <File Path="TestCafe.ps1" />
+    <File Path="TimeWarp.ruleset" />
+    <File Path="UNLICENSE.md" />
+    <File Path="Watch.ps1" />
+  </Folder>
+  <Folder Name="/04-Tests/" />
+  <Folder Name="/04-Tests/Analyzers/">
+    <Project Path="Tests\Analyzers\TimeWarp.Architecture.Analyzers.Tests\TimeWarp.Architecture.Analyzers.Tests.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Tests\Analyzers\TimeWarp.Architecture.SourceGenerator.Tests\TimeWarp.Architecture.SourceGenerator.Tests.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/04-Tests/Common/">
+    <Project Path="Tests\Common\Common.Infrastructure.Tests\Common.Infrastructure.Tests.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/04-Tests/ContainerApps/" />
+  <!--#if (api)-->
+  <Folder Name="/04-Tests/ContainerApps/Api/">
+    <Project Path="Tests\ContainerApps\Api\Api.Server.Integration.Tests\Api.Server.Integration.Tests.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <!--#endif-->
+  <Folder Name="/04-Tests/ContainerApps/Aspire/">
+    <Project Path="Tests\ContainerApps\Aspire\Aspire.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <!--#if (grpc)-->
+  <Folder Name="/04-Tests/ContainerApps/Grpc/" />
+  <!--#endif-->
+  <!--#if (web)-->
+  <Folder Name="/04-Tests/ContainerApps/Web/">
+    <Project Path="Tests\EndToEnd.Playwright.Tests\EndToEnd.Playwright.Tests.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Tests\Web.Server.Integration.Tests\Web.Server.Integration.Tests.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Tests\Web.Spa.Integration.Tests\Web.Spa.Integration.Tests.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <!--#endif-->
+  <!--#if (yarp)-->
+  <Folder Name="/04-Tests/ContainerApps/Yarp/" />
+  <!--#endif-->
+  <Folder Name="/04-Tests/Libraries/">
+    <Project Path="Tests\Libraries\TimeWarp.Automation.Tests\TimeWarp.Automation.Tests.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/05-ContainerApps/" />
+  <!--#if (api)-->
+  <Folder Name="/05-ContainerApps/Api/">
+    <Project Path="Source\ContainerApps\Api\Api.Application\Api.Application.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Api\Api.Contracts\Api.Contracts.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Api\Api.Domain\Api.Domain.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Api\Api.Infrastructure\Api.Infrastructure.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Api\Api.Server\Api.Server.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <!--#endif-->
+  <!--#if (grpc)-->
+  <Folder Name="/05-ContainerApps/Grpc/">
+    <Project Path="Source\ContainerApps\Grpc\Grpc.Application\Grpc.Application.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Grpc\Grpc.Contracts\Grpc.Contracts.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Grpc\Grpc.Domain\Grpc.Domain.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Grpc\Grpc.Infrastructure\Grpc.Infrastructure.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Grpc\Grpc.Server\Grpc.Server.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <!--#endif-->
+  <!--#if (web)-->
+  <Folder Name="/05-ContainerApps/Web/">
+    <Project Path="Source\ContainerApps\Web\Web.Application\Web.Application.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Web\Web.Contracts\Web.Contracts.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Web\Web.Domain\Web.Domain.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Web\Web.Infrastructure\Web.Infrastructure.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Web\Web.Server\Web.Server.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Web\Web.Spa\Web.Spa.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <!--#endif-->
+  <!--#if (yarp)-->
+  <Folder Name="/05-ContainerApps/Yarp/">
+    <Project Path="Source\ContainerApps\Yarp\Yarp.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <!--#endif-->
+  <Folder Name="/06-NewFileTemplates/">
+    <File Path=".templates\.cs-interface.txt" />
+    <File Path=".templates\.cs.txt" />
+    <File Path=".templates\.html.txt" />
+    <File Path=".templates\.json.txt" />
+    <File Path=".templates\.md.txt" />
+    <File Path=".templates\action.cs.txt" />
+    <File Path=".templates\package.json.txt" />
+    <File Path=".templates\validator.txt" />
+  </Folder>
+  <Folder Name="/07-Aspire/">
+    <Project Path="Source\ContainerApps\Aspire\Aspire.AppHost\Aspire.AppHost.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\ContainerApps\Aspire\Aspire.ServiceDefaults\Aspire.ServiceDefaults.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/08-Analyzers/">
+    <Project Path="Source\Analyzers\TimeWarp.Architecture.Analyzers\TimeWarp.Architecture.Analyzers.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\Analyzers\TimeWarp.Architecture.Attributes\TimeWarp.Architecture.Attributes.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Source\Analyzers\TimeWarp.Architecture.SourceGenerator\TimeWarp.Architecture.SourceGenerator.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/Source/">
+    <Project Path="Source\GenTester\GenTester.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/Source/Libraries/">
+    <Project Path="Source\Libraries\TimeWarp.Automation.Contracts\TimeWarp.Automation.Contracts.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+</Solution>

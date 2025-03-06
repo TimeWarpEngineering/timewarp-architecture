@@ -18,6 +18,15 @@
     {
       "modifiers": [
         {
+          "condition": "(true)",
+          "exclude": [
+            "Kanban/Backlog/B*.md",
+            "Kanban/Done/[0-9]*.md",
+            "Kanban/InProgress/[0-9]*.md",
+            "Kanban/ToDo/[0-9]*.md"
+          ]
+        },
+        {
           "condition": "(!process)",
           "exclude": [
             "Process/**/*"
@@ -28,6 +37,7 @@
           "exclude": [
             "Source/ContainerApps/Grpc/**/*",
             "Source/ContainerApps/Web/Web.Spa/Features/Superhero/**/*",
+            "Source/ContainerApps/Web/Web.Spa/Services/SuperheroGrpcServiceProvider.cs",
             "Tests/Grpc.Server.Integration.Tests/**/*"
           ]
         },
@@ -36,6 +46,8 @@
           "exclude": [
             "Source/ContainerApps/Api/**/*",
             "Source/ContainerApps/Web/Web.Spa/Features/WeatherForecast/**/*",
+            "Source/ContainerApps/Web/Web.Spa/Services/Mocks/MockApiService.cs",
+            "Source/ContainerApps/Web/Web.Spa/Services/ApiServices/ApiServerApiService.cs",
             "Tests/TimeWarp.Testing/Applications/ApiTestServerApplication.cs",
             "Tests/Api.Server.Integration.Tests/**/*"
           ]

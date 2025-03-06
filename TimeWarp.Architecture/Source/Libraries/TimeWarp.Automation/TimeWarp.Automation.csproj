@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>TimeWarp Automation Library</Description>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation"/>
+    <PackageReference Include="MediatR"/>
+    <PackageReference Include="OneOf"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TimeWarp.Automation.Contracts\TimeWarp.Automation.Contracts.csproj"/>
+  </ItemGroup>
+
+</Project>

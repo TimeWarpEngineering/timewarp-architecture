@@ -9,17 +9,28 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspirant.Hosting.Yarp" />
     <PackageReference Include="Aspire.Hosting.AppHost" />
+    <!--#if (cosmosdb) -->
     <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" />
+    <!--#endif -->
+    <!--#if (yarp) -->
+    <PackageReference Include="Aspirant.Hosting.Yarp" />
+    <!--#endif -->
   </ItemGroup>
 
   <ItemGroup>
+    <!--#if (api) -->
     <ProjectReference Include="..\..\Api\Api.Server\Api.Server.csproj" />
+    <!--#endif -->
+    <!--#if (grpc) -->
     <ProjectReference Include="..\..\Grpc\Grpc.Server\Grpc.Server.csproj" />
+    <!--#endif -->
+    <!--#if (web) -->
     <ProjectReference Include="..\..\Web\Web.Server\Web.Server.csproj" />
-<!--    <ProjectReference Include="..\..\Yarp\Yarp.csproj" />-->
-<!--    <ProjectReference Include="..\Aspire.Hosting.Yarp\Aspire.Hosting.Yarp.csproj" IsAspireProjectResource="false" />-->
+    <!--#endif -->
+    <!--#if (yarp) -->
+    <ProjectReference Include="..\..\Yarp\Yarp.csproj" />
+    <!--#endif -->
   </ItemGroup>
 
 </Project>

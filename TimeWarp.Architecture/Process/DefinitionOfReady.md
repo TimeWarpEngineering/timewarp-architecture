@@ -1,10 +1,10 @@
-# Defintion of Ready (TODO)
+# Definition of Ready (TODO)
 
 ## Figma Designs
 
 - [ ] 
 
-## Api Feature Endpoint
+## API Feature Endpoint
 
 - [ ] Data Required by Client has been defined
 
@@ -12,4 +12,3 @@
 ## Client Feature
 
 - [ ] Figma Designs complete
-
