@@ -9,9 +9,10 @@ PROJECT CONFIGURATION:
 - Enable nullable reference types
 
 SOLUTION MANAGEMENT:
-- Never edit .sln file directly
+- Use the new .slnx format
+- Never edit .slnx file directly
   ✓ `dotnet sln add ./src/MyProject/MyProject.csproj`
-  ✗ Manual .sln file editing
+  ✗ Manual .slnx file editing
 
 TOOLING:
 - Initialize local tool manifest
