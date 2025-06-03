@@ -10,7 +10,7 @@ public class IntegrationTest1
   //    </ItemGroup>
   //
   // 2. Uncomment the following example test and update 'Projects.MyAspireApp_AppHost' to match your AppHost project:
-  // 
+  //
   [Fact]
   public async Task GetWebResourceRootReturnsOkStatusCode()
   {
