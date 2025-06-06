@@ -29,7 +29,7 @@ public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestA
 
   private static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
   {
-    Program.ConfigureServices(aServiceCollection, aConfiguration);
+    Web.Spa.Program.ConfigureServices(aServiceCollection, aConfiguration);
 
     // Theres is no JSRuntime in testing as we don't have an actual browser
     IJSRuntime fakeJsRuntime = A.Fake<IJSRuntime>();

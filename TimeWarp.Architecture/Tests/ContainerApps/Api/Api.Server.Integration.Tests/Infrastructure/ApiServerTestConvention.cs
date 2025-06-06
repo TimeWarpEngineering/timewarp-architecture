@@ -1,5 +1,6 @@
 namespace TimeWarp.Architecture.Api.Server.Integration.Tests.Infrastructure;
 
+using global::Aspire.Hosting;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Services;
 using System.Text.Json;
