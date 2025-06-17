@@ -25,13 +25,6 @@
 - [ ] Verify Functionality
 ### Documentation
 - [ ] Update Documentation
-- [ ] Update .ai prompts
-### Review
-- [ ] Consider Accessibility Implications
-- [ ] Consider Monitoring and Alerting Implications
-- [ ] Consider Performance Implications
-- [ ] Consider Security Implications
-- [ ] Code Review
 
 ## Notes (optional)
 
