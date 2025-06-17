@@ -16,6 +16,7 @@ sync_files:
   # GitHub workflows and templates
   - ".github/workflow-templates/"
   - ".github/workflows/sync-configurable-files.yml"
+  - ".github/workflows/sync-configurable-files.md"
   
   # Code quality configurations
   - ".eslintrc.js"
