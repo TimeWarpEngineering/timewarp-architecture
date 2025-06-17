@@ -387,16 +387,6 @@
     </Project>
   </Folder>
   <!--#endif-->
-  <Folder Name="/06-NewFileTemplates/">
-    <File Path=".templates\.cs-interface.txt" />
-    <File Path=".templates\.cs.txt" />
-    <File Path=".templates\.html.txt" />
-    <File Path=".templates\.json.txt" />
-    <File Path=".templates\.md.txt" />
-    <File Path=".templates\action.cs.txt" />
-    <File Path=".templates\package.json.txt" />
-    <File Path=".templates\validator.txt" />
-  </Folder>
   <Folder Name="/07-Aspire/">
     <Project Path="Source\ContainerApps\Aspire\Aspire.AppHost\Aspire.AppHost.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
