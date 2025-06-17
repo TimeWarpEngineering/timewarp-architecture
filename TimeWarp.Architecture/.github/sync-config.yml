@@ -13,8 +13,9 @@ sync_files:
   - ".gitignore"
   - ".editorconfig"
   
-  # GitHub workflow templates (but not the sync workflow itself to avoid recursion)
+  # GitHub workflows and templates
   - ".github/workflow-templates/"
+  - ".github/workflows/sync-configurable-files.yml"
   
   # Code quality configurations
   - ".eslintrc.js"
@@ -30,8 +31,7 @@ sync_files:
 
 # Files to exclude from synchronization (even if matched by patterns above)
 exclude_files:
-  - ".github/workflows/sync-configurable-files.yml"  # Don't sync the sync workflow itself
-  - ".github/sync-config.yml"  # Don't sync this config file
+  - ".github/sync-config.yml"  # Don't sync this config file - each repo has its own configuration
 
 # Sync schedule configuration
 schedule:
