@@ -445,6 +445,9 @@ GeneratedCode/
 # Ignore launchsettings on non executable projects
 /Source/ContainerApps/Web/Web.Spa/Properties/launchSettings.json
 
+#Claude AI files
+.claude/settings.local.json
+
 # Misc
 /output.txt
 **/Generated/
