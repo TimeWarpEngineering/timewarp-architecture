@@ -58,7 +58,7 @@ jobs:
             Sync configurable files from parent repository
 
             Updated files: ${{ env.CHANGED_FILES }}
-            Source: ${{ steps.config.outputs.parent_repo }}@${{ steps.config.outputs.parent_branch }}
+            Source: ${{ steps.sync.outputs.parent_repo }}@${{ steps.sync.outputs.parent_branch }}
 
             🤖 Generated with GitHub Actions
           title: 'Sync configurable files from parent repository'
@@ -67,8 +67,8 @@ jobs:
 
             This PR updates configurable files from the parent repository to maintain consistency.
 
-            **Source Repository:** `${{ steps.config.outputs.parent_repo }}`
-            **Source Branch:** `${{ steps.config.outputs.parent_branch }}`
+            **Source Repository:** `${{ steps.sync.outputs.parent_repo }}`
+            **Source Branch:** `${{ steps.sync.outputs.parent_branch }}`
 
             ### Files Updated
             ${{ env.CHANGED_FILES }}

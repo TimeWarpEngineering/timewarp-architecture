@@ -38,11 +38,44 @@ if (-not (Get-Command yq -ErrorAction SilentlyContinue)) {
             exit 1
         }
     } elseif ($IsLinux) {
-        $yqUrl = "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
-        $yqPath = "/usr/local/bin/yq"
+        $yqVersion = "v4.44.1"  # Use a specific version for consistency
+        $yqUrl = "https://github.com/mikefarah/yq/releases/download/$yqVersion/yq_linux_amd64"
+        $yqChecksumUrl = "https://github.com/mikefarah/yq/releases/download/$yqVersion/checksums.txt"
+        $yqPath = "$env:HOME/.local/bin/yq"  # Use user-writable location to avoid sudo
+        $yqDir = Split-Path -Path $yqPath -Parent
+        
+        if (-not (Test-Path $yqDir)) {
+            New-Item -ItemType Directory -Path $yqDir | Out-Null
+        }
+        
+        Write-Host "Downloading yq from $yqUrl..."
         Invoke-WebRequest -Uri $yqUrl -OutFile $yqPath -UseBasicParsing
-        chmod +x $yqPath
-        if (-not (Test-Path $yqPath)) {
+        
+        Write-Host "Downloading checksums from $yqChecksumUrl..."
+        $checksumFile = "$env:TEMP/checksums.txt"
+        Invoke-WebRequest -Uri $yqChecksumUrl -OutFile $checksumFile -UseBasicParsing
+        
+        if (Test-Path $checksumFile) {
+            $expectedChecksum = (Get-Content $checksumFile | Select-String -Pattern "yq_linux_amd64").ToString().Split()[0]
+            $actualChecksum = (Get-FileHash -Path $yqPath -Algorithm SHA256).Hash.ToLower()
+            
+            if ($actualChecksum -ne $expectedChecksum) {
+                Write-Error "Checksum verification failed for yq. Expected: $expectedChecksum, Actual: $actualChecksum"
+                Remove-Item -Path $yqPath -Force -ErrorAction SilentlyContinue
+                Remove-Item -Path $checksumFile -Force -ErrorAction SilentlyContinue
+                exit 1
+            } else {
+                Write-Host "Checksum verification passed for yq."
+            }
+            Remove-Item -Path $checksumFile -Force -ErrorAction SilentlyContinue
+        } else {
+            Write-Warning "Could not download checksums for yq. Proceeding without verification (not recommended)."
+        }
+        
+        if (Test-Path $yqPath) {
+            & chmod +x $yqPath
+            $env:PATH = "$env:PATH:$yqDir"
+        } else {
             Write-Error "Failed to download yq for Linux"
             exit 1
         }
