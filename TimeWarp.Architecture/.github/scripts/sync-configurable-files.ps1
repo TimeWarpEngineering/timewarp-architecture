@@ -1,6 +1,7 @@
 # PowerShell script to handle syncing configurable files from a parent repository
 # This script is called by the GitHub workflow
 
+# Define script parameters at the top to avoid syntax issues
 param (
     [string]$ConfigFile = ".github/sync-config.yml",
     [string]$GithubOutputFile = $env:GITHUB_OUTPUT,
@@ -8,6 +9,33 @@ param (
     [string]$GithubWorkspace = $env:GITHUB_WORKSPACE,
     [string]$GithubToken = $env:GITHUB_TOKEN
 )
+
+# Function to download a file from a given URL with specified headers
+function Download-File {
+    param (
+        [string]$url,
+        [hashtable]$headers,
+        [string]$file
+    )
+    try {
+        $response = Invoke-WebRequest -Uri $url -Headers $headers -OutFile $file -UseBasicParsing -ErrorAction Stop
+        if (Test-Path $file -PathType Leaf) {
+            return @{ File = $file; Success = $true }
+        } else {
+            Remove-Item -Path $file -ErrorAction SilentlyContinue
+            return @{ File = $file; Success = $false; Error = "Downloaded empty file" }
+        }
+    } catch {
+        Remove-Item -Path $file -ErrorAction SilentlyContinue
+        return @{ File = $file; Success = $false; Error = "$($_.Exception.Response.StatusCode) - $($_.Exception.Message)" }
+    }
+}
+
+# Define the download function as a script block for job execution
+$downloadFunction = {
+    param ($url, $headers, $file)
+    return Download-File -url $url -headers $headers -file $file
+}
 
 # Validate required parameters
 if (-not $GithubToken) {
@@ -60,12 +88,12 @@ if (-not (Get-Command yq -ErrorAction SilentlyContinue)) {
             $actualChecksum = (Get-FileHash -Path $yqPath -Algorithm SHA256).Hash.ToLower()
             
             if ($actualChecksum -ne $expectedChecksum) {
-                Write-Error "Checksum verification failed for yq. Expected: $expectedChecksum, Actual: $actualChecksum"
+                Write-Error "Checksum verification failed for yq. Expected hash (first 8 chars): $($expectedChecksum.Substring(0,8))..., Actual hash (first 8 chars): $($actualChecksum.Substring(0,8))..."
                 Remove-Item -Path $yqPath -Force -ErrorAction SilentlyContinue
                 Remove-Item -Path $checksumFile -Force -ErrorAction SilentlyContinue
                 exit 1
             } else {
-                Write-Host "Checksum verification passed for yq."
+                Write-Host "Checksum verification passed for yq. Hash (first 8 chars): $($actualChecksum.Substring(0,8))..."
             }
             Remove-Item -Path $checksumFile -Force -ErrorAction SilentlyContinue
         } else {
@@ -153,25 +181,11 @@ foreach ($file in $files) {
     
     $url = "https://api.github.com/repos/$parentRepo/contents/$sourcePath?ref=$parentBranch"
     $headers = @{
-        "Authorization" = "token ***" # Mask token in logs
+        "Authorization" = "token $GithubToken" # Masked as "***" in logs, but actual token is used here intentionally for API access
         "Accept" = "application/vnd.github.v3.raw"
     }
     
-    $job = Start-Job -ScriptBlock {
-        param ($url, $headers, $file)
-        try {
-            $response = Invoke-WebRequest -Uri $url -Headers $headers -OutFile $file -UseBasicParsing -ErrorAction Stop
-            if (Test-Path $file -PathType Leaf) {
-                return @{ File = $file; Success = $true }
-            } else {
-                Remove-Item -Path $file -ErrorAction SilentlyContinue
-                return @{ File = $file; Success = $false; Error = "Downloaded empty file" }
-            }
-        } catch {
-            Remove-Item -Path $file -ErrorAction SilentlyContinue
-            return @{ File = $file; Success = $false; Error = $_.Exception.Response.StatusCode }
-        }
-    } -ArgumentList $url, $headers, $file
+    $job = Start-Job -ScriptBlock $downloadFunction -ArgumentList $url, $headers, $file
     
     $jobs += $job
 }
