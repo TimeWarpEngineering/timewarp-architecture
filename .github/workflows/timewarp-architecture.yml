@@ -26,6 +26,9 @@ jobs:
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
+      - name: List Installed .NET SDKs
+        run: dotnet --list-sdks
+
       - name: Pack
         run: |
           cd TimeWarp.Templates/Source/TimeWarp.Architecture.Template/
