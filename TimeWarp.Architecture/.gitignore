@@ -447,3 +447,6 @@ GeneratedCode/
 
 # Misc
 /output.txt
+
+# Claude Code settings
+.claude/

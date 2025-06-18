@@ -1,0 +1,248 @@
+name: Sync Configurable Files from Parent Repository
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC (configurable via sync-config.yml)
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      parent_repo:
+        description: 'Parent repository (owner/repo)'
+        required: false
+        default: ''
+      parent_branch:
+        description: 'Parent repository branch'
+        required: false
+        default: ''
+      files_to_sync:
+        description: 'Comma-separated list of files to sync (leave empty for config file)'
+        required: false
+        default: ''
+      use_config_file:
+        description: 'Use .github/sync-config.yml for configuration'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  CONFIG_FILE: '.github/sync-config.yml'
+
+jobs:
+  sync-files:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Load configuration
+        id: config
+        run: |
+          USE_CONFIG="${{ github.event.inputs.use_config_file || 'true' }}"
+          
+          if [ "$USE_CONFIG" = "true" ] && [ -f "${{ env.CONFIG_FILE }}" ]; then
+            echo "Loading configuration from ${{ env.CONFIG_FILE }}"
+            
+            # Install yq for YAML parsing if not available
+            if ! command -v yq &> /dev/null; then
+              sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+              sudo chmod +x /usr/local/bin/yq
+            fi
+            
+            # Read configuration from file
+            PARENT_REPO=$(yq eval '.parent.repository' ${{ env.CONFIG_FILE }})
+            PARENT_BRANCH=$(yq eval '.parent.branch' ${{ env.CONFIG_FILE }})
+            
+            # Get sync files as comma-separated list
+            SYNC_FILES=$(yq eval '.sync_files | join(",")' ${{ env.CONFIG_FILE }})
+            
+          else
+            echo "Using manual configuration or defaults"
+            PARENT_REPO="${{ github.event.inputs.parent_repo || 'TimeWarpEngineering/timewarp-architecture' }}"
+            PARENT_BRANCH="${{ github.event.inputs.parent_branch || 'master' }}"
+            SYNC_FILES="${{ github.event.inputs.files_to_sync || '.gitignore,.editorconfig' }}"
+          fi
+          
+          # Override with manual inputs if provided
+          if [ -n "${{ github.event.inputs.parent_repo }}" ]; then
+            PARENT_REPO="${{ github.event.inputs.parent_repo }}"
+          fi
+          if [ -n "${{ github.event.inputs.parent_branch }}" ]; then
+            PARENT_BRANCH="${{ github.event.inputs.parent_branch }}"
+          fi
+          if [ -n "${{ github.event.inputs.files_to_sync }}" ]; then
+            SYNC_FILES="${{ github.event.inputs.files_to_sync }}"
+          fi
+          
+          echo "parent_repo=$PARENT_REPO" >> $GITHUB_OUTPUT
+          echo "parent_branch=$PARENT_BRANCH" >> $GITHUB_OUTPUT
+          echo "files_to_sync=$SYNC_FILES" >> $GITHUB_OUTPUT
+          
+          echo "Configuration loaded:"
+          echo "  Parent Repository: $PARENT_REPO"
+          echo "  Parent Branch: $PARENT_BRANCH"
+          echo "  Files to sync: $SYNC_FILES"
+
+      - name: Create temporary directory for parent repo
+        run: |
+          mkdir -p /tmp/parent-repo
+
+      - name: Download files from parent repository
+        run: |
+          cd /tmp/parent-repo
+          FILES="${{ steps.config.outputs.files_to_sync }}"
+          PARENT_REPO="${{ steps.config.outputs.parent_repo }}"
+          PARENT_BRANCH="${{ steps.config.outputs.parent_branch }}"
+          
+          echo "Downloading files from $PARENT_REPO@$PARENT_BRANCH..."
+          
+          # Initialize arrays to track download results
+          declare -a downloaded_files=()
+          declare -a failed_files=()
+          
+          IFS=',' read -ra FILE_ARRAY <<< "$FILES"
+          for file in "${FILE_ARRAY[@]}"; do
+            file=$(echo "$file" | xargs) # trim whitespace
+            echo "Attempting to download: $file"
+            
+            # Create directory structure if needed
+            mkdir -p "$(dirname "$file")"
+            
+            # Download file using GitHub API
+            if curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                    -H "Accept: application/vnd.github.v3.raw" \
+                    -o "$file" \
+                    "https://api.github.com/repos/$PARENT_REPO/contents/$file?ref=$PARENT_BRANCH"; then
+              if [ -s "$file" ]; then
+                downloaded_files+=("$file")
+                echo "✓ Successfully downloaded: $file"
+              else
+                failed_files+=("$file")
+                echo "✗ Downloaded empty file: $file"
+                rm -f "$file"
+              fi
+            else
+              failed_files+=("$file")
+              echo "✗ Failed to download: $file"
+              rm -f "$file"
+            fi
+          done
+          
+          # Output results
+          echo "DOWNLOADED_FILES=${downloaded_files[*]}" >> $GITHUB_ENV
+          echo "FAILED_FILES=${failed_files[*]}" >> $GITHUB_ENV
+          
+          if [ ${#downloaded_files[@]} -eq 0 ]; then
+            echo "No files were successfully downloaded"
+            exit 1
+          fi
+
+      - name: Compare and update files
+        id: changes
+        run: |
+          cd /tmp/parent-repo
+          changes_made=false
+          declare -a changed_files=()
+          
+          if [ -n "$DOWNLOADED_FILES" ]; then
+            for file in $DOWNLOADED_FILES; do
+              if [ -f "$file" ]; then
+                target_file="${{ github.workspace }}/$file"
+                
+                # Create directory if it doesn't exist
+                mkdir -p "$(dirname "$target_file")"
+                
+                # Compare files
+                if [ ! -f "$target_file" ] || ! diff -q "$file" "$target_file" > /dev/null 2>&1; then
+                  echo "Updating file: $file"
+                  cp "$file" "$target_file"
+                  changed_files+=("$file")
+                  changes_made=true
+                else
+                  echo "No changes needed for: $file"
+                fi
+              fi
+            done
+          fi
+          
+          echo "changes_made=$changes_made" >> $GITHUB_OUTPUT
+          echo "CHANGED_FILES=${changed_files[*]}" >> $GITHUB_ENV
+          
+          if [ "$changes_made" = true ]; then
+            echo "Files updated: ${changed_files[*]}"
+          else
+            echo "No files needed updating"
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changes_made == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            Sync configurable files from parent repository
+            
+            Updated files: ${{ env.CHANGED_FILES }}
+            Source: ${{ steps.config.outputs.parent_repo }}@${{ steps.config.outputs.parent_branch }}
+            
+            🤖 Generated with GitHub Actions
+          title: 'Sync configurable files from parent repository'
+          body: |
+            ## Sync Configurable Files
+            
+            This PR updates configurable files from the parent repository to maintain consistency.
+            
+            **Source Repository:** `${{ steps.config.outputs.parent_repo }}`
+            **Source Branch:** `${{ steps.config.outputs.parent_branch }}`
+            
+            ### Files Updated
+            ${{ env.CHANGED_FILES }}
+            
+            ### Files That Failed to Download
+            ${{ env.FAILED_FILES }}
+            
+            ### Configuration
+            This workflow can be customized by:
+            - Modifying the `DEFAULT_FILES` environment variable in the workflow
+            - Using the manual trigger with custom file lists
+            - Adjusting the cron schedule for different sync frequencies
+            
+            ---
+            
+            🤖 This PR was created automatically by the sync-configurable-files workflow.
+          branch: sync-configurable-files
+          branch-suffix: timestamp
+          delete-branch: true
+
+      - name: Output summary
+        run: |
+          echo "## Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "**Parent Repository:** ${{ steps.config.outputs.parent_repo }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Parent Branch:** ${{ steps.config.outputs.parent_branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Files Configured for Sync:** ${{ steps.config.outputs.files_to_sync }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "$DOWNLOADED_FILES" ]; then
+            echo "**Successfully Downloaded:** $DOWNLOADED_FILES" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "$FAILED_FILES" ]; then
+            echo "**Failed to Download:** $FAILED_FILES" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ steps.changes.outputs.changes_made }}" = "true" ]; then
+            echo "**Files Updated:** $CHANGED_FILES" >> $GITHUB_STEP_SUMMARY
+            echo "**Status:** ✅ Pull request created with updates" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** ✅ No updates needed - all files are current" >> $GITHUB_STEP_SUMMARY
+          fi

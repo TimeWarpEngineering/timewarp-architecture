@@ -1,0 +1,59 @@
+# Configuration for sync-configurable-files workflow
+# This file defines which files should be synchronized from the parent repository
+
+# Parent repository configuration
+parent:
+  repository: "TimeWarpEngineering/timewarp-architecture"
+  branch: "master"
+
+# Files to synchronize from parent repository
+# Each entry can be a file path or a pattern
+sync_files:
+  # Development configuration files
+  - ".gitignore"
+  - ".gitattributes"
+  - ".editorconfig"
+  
+  # GitHub workflows and templates
+  - ".github/workflow-templates/"
+  - ".github/workflows/sync-configurable-files.yml"
+  - ".github/workflows/sync-configurable-files.md"
+  
+  # Code quality configurations
+  - ".eslintrc.js"
+  - ".prettierrc.json"
+  - ".prettierignore"
+  
+  # Build and project configuration templates
+  - "Directory.Build.targets"
+  - "NuGet.config"
+  
+  # Documentation templates
+  - ".templates/"
+
+# Files to exclude from synchronization (even if matched by patterns above)
+exclude_files:
+  - ".github/sync-config.yml"  # Don't sync this config file - each repo has its own configuration
+
+# Sync schedule configuration
+schedule:
+  # Cron expression for when to run the sync
+  # Default: Every Monday at 9:00 AM UTC
+  cron: "0 9 * * 1"
+  
+# Pull Request configuration
+pull_request:
+  # Branch name prefix for sync PRs
+  branch_prefix: "sync-configurable-files"
+  
+  # PR title template
+  title: "Sync configurable files from parent repository"
+  
+  # Auto-merge PRs if all checks pass (requires branch protection rules)
+  auto_merge: false
+  
+  # Labels to add to sync PRs
+  labels:
+    - "automated"
+    - "sync"
+    - "configuration"

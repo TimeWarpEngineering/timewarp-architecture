@@ -65,7 +65,7 @@ public static partial class GetCurrentWeather
         // Run the generator and get results
         GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
         GeneratorDriverRunResult runResult = driver.RunGenerators(compilation).GetRunResult();
-        
+
         // Verify that a diagnostic was reported
         var diagnostics = runResult.Results.SelectMany(r => r.Diagnostics).ToImmutableArray();
         bool hasRouteConflict = diagnostics.Any(d => d.Id == "TWE003" && d.GetMessage() != null && d.GetMessage().Contains("api/weather"));

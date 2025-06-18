@@ -1,4 +1,6 @@
-# 001_Implement-User-Registration.md
+# Task Template
+
+> **IMPORTANT NOTE**: This template provides a set of optional suggestions and ideas to choose from when creating tasks. Not all sections or items are required for every task. When creating tasks, choose conservatively which elements should be included based on the specific needs of the task. As an AI assistant, I will select appropriate sections based on the task's complexity and requirements.
 
 ## Description
 
@@ -7,12 +9,12 @@
 ## Parent (optional)
 <Reference to parent item like 001_user-registration>
 
-## Requirements
+## Requirements (optional)
 
 [List any specific requirements or criteria that must be met for the task to be considered complete]
 
-## Checklist
-    Add relevant items to the checklist as necessary when creating the task or implementing it.
+## Checklist (optional)
+    Select relevant items from this checklist based on the task's needs. Not all items will apply to every task.
 
 ### Design
 - [ ] Update Model
@@ -23,18 +25,11 @@
 - [ ] Verify Functionality
 ### Documentation
 - [ ] Update Documentation
-- [ ] Update .ai prompts
-### Review
-- [ ] Consider Accessibility Implications
-- [ ] Consider Monitoring and Alerting Implications
-- [ ] Consider Performance Implications
-- [ ] Consider Security Implications
-- [ ] Code Review
 
-## Notes
+## Notes (optional)
 
 [Include any additional information, resources, or references relevant to the task]
 
-## Implementation Notes
+## Implementation Notes (optional)
 
 [Include notes while task is in progress]
