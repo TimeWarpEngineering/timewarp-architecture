@@ -129,6 +129,10 @@ jobs:
             file=$(echo "$file" | xargs) # trim whitespace
             echo "Attempting to download: $file"
 
+            # Add prefix 'TimeWarp.Architecture/' to source path
+            source_path="TimeWarp.Architecture/$file"
+            echo "Source path (with prefix): $source_path"
+
             # Create directory structure if needed
             mkdir -p "$(dirname "$file")"
 
@@ -137,7 +141,7 @@ jobs:
             response=$(curl -s -w "%{http_code}" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                     -H "Accept: application/vnd.github.v3.raw" \
                     -o "$file" \
-                    "https://api.github.com/repos/$PARENT_REPO/contents/$file?ref=$PARENT_BRANCH")
+                    "https://api.github.com/repos/$PARENT_REPO/contents/$source_path?ref=$PARENT_BRANCH")
             if [ "$response" -eq 200 ]; then
               if [ -s "$file" ]; then
                 downloaded_files+=("$file")
