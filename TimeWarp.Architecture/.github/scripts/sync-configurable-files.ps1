@@ -34,14 +34,8 @@ if (-not (Get-Command yq -ErrorAction SilentlyContinue)) {
                 exit 1
             }
         } else {
-            Write-Host "winget not found, downloading yq manually for Windows..."
-            $yqUrl = "https://github.com/mikefarah/yq/releases/latest/download/yq_windows_amd64.exe"
-            $yqPath = "C:\Windows\yq.exe"
-            Invoke-WebRequest -Uri $yqUrl -OutFile $yqPath -UseBasicParsing
-            if (-not (Test-Path $yqPath)) {
-                Write-Error "Failed to download yq for Windows"
-                exit 1
-            }
+            Write-Error "winget not found on Windows. Please install winget to proceed with yq installation."
+            exit 1
         }
     } elseif ($IsLinux) {
         $yqUrl = "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
