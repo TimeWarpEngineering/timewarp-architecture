@@ -80,7 +80,8 @@ if (-not (Get-Command yq -ErrorAction SilentlyContinue)) {
         Invoke-WebRequest -Uri $yqUrl -OutFile $yqPath -UseBasicParsing
         
         Write-Host "Downloading checksums from $yqChecksumUrl..."
-        $checksumFile = "$env:TEMP/checksums.txt"
+        $tempPath = if ($env:TEMP) { $env:TEMP } else { "/tmp" }
+        $checksumFile = Join-Path -Path $tempPath -ChildPath "checksums.txt"
         Invoke-WebRequest -Uri $yqChecksumUrl -OutFile $checksumFile -UseBasicParsing
         
         if (Test-Path $checksumFile) {
@@ -149,7 +150,8 @@ if ($cronSchedule -and $cronSchedule -ne "null") {
 }
 
 # Create temporary directory for parent repo
-$tempDir = Join-Path -Path $env:TEMP -ChildPath "parent-repo"
+$tempPath = if ($env:TEMP) { $env:TEMP } else { "/tmp" }
+$tempDir = Join-Path -Path $tempPath -ChildPath "parent-repo"
 if (-not (Test-Path $tempDir)) {
     New-Item -ItemType Directory -Path $tempDir | Out-Null
 }
