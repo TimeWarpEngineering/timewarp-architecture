@@ -10,6 +10,10 @@ param (
     [string]$GithubToken = $env:GITHUB_TOKEN
 )
 
+# Log PowerShell version for debugging purposes
+Write-Host "PowerShell Version:"
+Get-Host | Select-Object Version | Format-Table -AutoSize
+
 # Function to download a file from a given URL with specified headers
 function Download-File {
     param (
