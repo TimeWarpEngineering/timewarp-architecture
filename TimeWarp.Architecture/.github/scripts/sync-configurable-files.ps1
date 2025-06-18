@@ -293,6 +293,16 @@ $env:CHANGED_FILES = $changedFiles -join " "
 
 if ($changesMade) {
     Write-Host "Files updated: $($changedFiles -join ' ')"
+    
+    # Stage only the files that were actually synced to avoid including unrelated files
+    Write-Host "Staging synced files for commit..."
+    foreach ($file in $changedFiles) {
+        $targetFile = Join-Path -Path $GithubWorkspace -ChildPath $file
+        if (Test-Path $targetFile) {
+            Write-Host "Staging: $file"
+            & git add $targetFile
+        }
+    }
 } else {
     Write-Host "No files needed updating"
 }
