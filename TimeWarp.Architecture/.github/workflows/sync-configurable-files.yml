@@ -41,168 +41,13 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Setup Git
+      - name: Setup Git and Sync Files with PowerShell
+        id: sync
+        shell: pwsh
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Load configuration
-        id: config
-        run: |
-          USE_CONFIG="${{ github.event.inputs.use_config_file || 'true' }}"
-
-          if [ "$USE_CONFIG" = "true" ] && [ -f "${{ env.CONFIG_FILE }}" ]; then
-            echo "Loading configuration from ${{ env.CONFIG_FILE }}"
-
-            # Install yq for YAML parsing if not available
-            if ! command -v yq &> /dev/null; then
-              sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-              sudo chmod +x /usr/local/bin/yq
-            fi
-
-            # Read configuration from file
-            PARENT_REPO=$(yq eval '.parent.repository' ${{ env.CONFIG_FILE }})
-            PARENT_BRANCH=$(yq eval '.parent.branch' ${{ env.CONFIG_FILE }})
-
-            # Get sync files as comma-separated list
-            SYNC_FILES=$(yq eval '.sync_files | join(",")' ${{ env.CONFIG_FILE }})
-
-            # Get cron schedule if available
-            CRON_SCHEDULE=$(yq eval '.schedule.cron' ${{ env.CONFIG_FILE }})
-            if [ -n "$CRON_SCHEDULE" ] && [ "$CRON_SCHEDULE" != "null" ]; then
-              echo "cron_schedule=$CRON_SCHEDULE" >> $GITHUB_OUTPUT
-              echo "  Cron Schedule: $CRON_SCHEDULE"
-            else
-              echo "cron_schedule=0 9 * * 1" >> $GITHUB_OUTPUT
-              echo "  Cron Schedule: Using default (0 9 * * 1)"
-            fi
-
-          else
-            echo "Using manual configuration or defaults"
-            PARENT_REPO="${{ github.event.inputs.parent_repo || 'TimeWarpEngineering/timewarp-architecture' }}"
-            PARENT_BRANCH="${{ github.event.inputs.parent_branch || 'master' }}"
-            SYNC_FILES="${{ github.event.inputs.files_to_sync || '.gitignore,.editorconfig' }}"
-          fi
-
-          # Override with manual inputs if provided
-          if [ -n "${{ github.event.inputs.parent_repo }}" ]; then
-            PARENT_REPO="${{ github.event.inputs.parent_repo }}"
-          fi
-          if [ -n "${{ github.event.inputs.parent_branch }}" ]; then
-            PARENT_BRANCH="${{ github.event.inputs.parent_branch }}"
-          fi
-          if [ -n "${{ github.event.inputs.files_to_sync }}" ]; then
-            SYNC_FILES="${{ github.event.inputs.files_to_sync }}"
-          fi
-
-          echo "parent_repo=$PARENT_REPO" >> $GITHUB_OUTPUT
-          echo "parent_branch=$PARENT_BRANCH" >> $GITHUB_OUTPUT
-          echo "files_to_sync=$SYNC_FILES" >> $GITHUB_OUTPUT
-
-          echo "Configuration loaded:"
-          echo "  Parent Repository: $PARENT_REPO"
-          echo "  Parent Branch: $PARENT_BRANCH"
-          echo "  Files to sync: $SYNC_FILES"
-          if [ -n "$CRON_SCHEDULE" ] && [ "$CRON_SCHEDULE" != "null" ]; then
-            echo "  Cron Schedule from config: $CRON_SCHEDULE"
-          fi
-
-      - name: Create temporary directory for parent repo
-        run: |
-          mkdir -p /tmp/parent-repo
-
-      - name: Download files from parent repository
-        run: |
-          cd /tmp/parent-repo
-          FILES="${{ steps.config.outputs.files_to_sync }}"
-          PARENT_REPO="${{ steps.config.outputs.parent_repo }}"
-          PARENT_BRANCH="${{ steps.config.outputs.parent_branch }}"
-
-          echo "Downloading files from $PARENT_REPO@$PARENT_BRANCH..."
-
-          # Initialize arrays to track download results
-          declare -a downloaded_files=()
-          declare -a failed_files=()
-
-          IFS=',' read -ra FILE_ARRAY <<< "$FILES"
-          for file in "${FILE_ARRAY[@]}"; do
-            file=$(echo "$file" | xargs) # trim whitespace
-            echo "Attempting to download: $file"
-
-            # Add prefix 'TimeWarp.Architecture/' to source path
-            source_path="TimeWarp.Architecture/$file"
-            echo "Source path (with prefix): $source_path"
-
-            # Create directory structure if needed
-            mkdir -p "$(dirname "$file")"
-
-            # Download file using GitHub API
-            # Attempt to download the file
-            response=$(curl -s -w "%{http_code}" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                    -H "Accept: application/vnd.github.v3.raw" \
-                    -o "$file" \
-                    "https://api.github.com/repos/$PARENT_REPO/contents/$source_path?ref=$PARENT_BRANCH")
-            if [ "$response" -eq 200 ]; then
-              if [ -s "$file" ]; then
-                downloaded_files+=("$file")
-                echo "✓ Successfully downloaded: $file"
-              else
-                failed_files+=("$file")
-                echo "✗ Downloaded empty file: $file"
-                rm -f "$file"
-              fi
-            else
-              failed_files+=("$file")
-              echo "✗ Failed to download: $file (HTTP Status: $response)"
-              rm -f "$file" 2>/dev/null || true
-            fi
-          done
-
-          # Output results
-          echo "DOWNLOADED_FILES=${downloaded_files[*]}" >> $GITHUB_ENV
-          echo "FAILED_FILES=${failed_files[*]}" >> $GITHUB_ENV
-
-          if [ ${#downloaded_files[@]} -eq 0 ]; then
-            echo "No files were successfully downloaded"
-            exit 1
-          fi
-
-      - name: Compare and update files
-        id: changes
-        run: |
-          cd /tmp/parent-repo
-          changes_made=false
-          declare -a changed_files=()
-
-          if [ -n "$DOWNLOADED_FILES" ]; then
-            for file in $DOWNLOADED_FILES; do
-              if [ -f "$file" ]; then
-                target_file="${{ github.workspace }}/$file"
-
-                # Create directory if it doesn't exist
-                mkdir -p "$(dirname "$target_file")"
-
-                # Compare files
-                if [ ! -f "$target_file" ] || ! diff -q "$file" "$target_file" > /dev/null 2>&1; then
-                  echo "Updating file: $file"
-                  cp "$file" "$target_file"
-                  changed_files+=("$file")
-                  changes_made=true
-                else
-                  echo "No changes needed for: $file"
-                fi
-              fi
-            done
-          fi
-
-          echo "changes_made=$changes_made" >> $GITHUB_OUTPUT
-          echo "CHANGED_FILES=${changed_files[*]}" >> $GITHUB_ENV
-
-          if [ "$changes_made" = true ]; then
-            echo "Files updated: ${changed_files[*]}"
-          else
-            echo "No files needed updating"
-          fi
+          ./.github/scripts/sync-configurable-files.ps1
 
       - name: Create Pull Request
         if: steps.changes.outputs.changes_made == 'true'
@@ -244,24 +89,7 @@ jobs:
           branch-suffix: timestamp
           delete-branch: true
 
-      - name: Output summary
+      - name: Output summary (already handled in PowerShell script)
+        shell: pwsh
         run: |
-          echo "## Sync Summary" >> $GITHUB_STEP_SUMMARY
-          echo "**Parent Repository:** ${{ steps.config.outputs.parent_repo }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Parent Branch:** ${{ steps.config.outputs.parent_branch }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Files Configured for Sync:** ${{ steps.config.outputs.files_to_sync }}" >> $GITHUB_STEP_SUMMARY
-
-          if [ -n "$DOWNLOADED_FILES" ]; then
-            echo "**Successfully Downloaded:** $DOWNLOADED_FILES" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ -n "$FAILED_FILES" ]; then
-            echo "**Failed to Download:** $FAILED_FILES" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [ "${{ steps.changes.outputs.changes_made }}" = "true" ]; then
-            echo "**Files Updated:** $CHANGED_FILES" >> $GITHUB_STEP_SUMMARY
-            echo "**Status:** ✅ Pull request created with updates" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "**Status:** ✅ No updates needed - all files are current" >> $GITHUB_STEP_SUMMARY
-          fi
+          Write-Host "Summary has been written by the PowerShell script."
