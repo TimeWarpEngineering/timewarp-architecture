@@ -211,8 +211,13 @@ foreach ($file in $files) {
         New-Item -ItemType Directory -Path $fileDir | Out-Null
     }
     
-    $url = "https://api.github.com/repos/$parentRepo/contents/$sourcePath?ref=$parentBranch"
+    # Construct URL with proper encoding
+    $baseUrl = "https://api.github.com/repos/$parentRepo/contents/$sourcePath"
+    $url = "$baseUrl" + "?ref=" + "$parentBranch"
     Write-Host "API URL: $url"
+    Write-Host "Debug - parentRepo: $parentRepo"
+    Write-Host "Debug - sourcePath: $sourcePath"
+    Write-Host "Debug - parentBranch: $parentBranch"
     $headers = @{
         "Accept" = "application/vnd.github.v3.raw"
     }
