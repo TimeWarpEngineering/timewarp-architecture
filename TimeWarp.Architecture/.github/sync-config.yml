@@ -11,6 +11,7 @@ parent:
 sync_files:
   # Development configuration files
   - ".gitignore"
+  - ".gitattributes"
   - ".editorconfig"
   
   # GitHub workflows and templates
