@@ -212,9 +212,14 @@ foreach ($file in $files) {
     }
     
     $url = "https://api.github.com/repos/$parentRepo/contents/$sourcePath?ref=$parentBranch"
+    Write-Host "API URL: $url"
     $headers = @{
-        "Authorization" = "token $GithubToken" # Masked as "***" in logs, but actual token is used here intentionally for API access
         "Accept" = "application/vnd.github.v3.raw"
+    }
+    
+    # Only add authorization header if token is provided and not empty
+    if ($GithubToken -and $GithubToken.Trim() -ne "") {
+        $headers["Authorization"] = "token $GithubToken"
     }
     
     $job = Start-Job -ScriptBlock $downloadFunction -ArgumentList $url, $headers, $file
