@@ -33,6 +33,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write  # Required to sync workflow files
 
     steps:
       - name: Checkout current repository
