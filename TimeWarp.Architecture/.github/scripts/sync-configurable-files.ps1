@@ -3,7 +3,7 @@
 
 # Define script parameters at the top to avoid syntax issues
 param (
-    [string]$ConfigFile = ".github/sync-config.yml",
+    [string]$ConfigFile = "",
     [string]$GithubOutputFile = $env:GITHUB_OUTPUT,
     [string]$GithubStepSummary = $env:GITHUB_STEP_SUMMARY,
     [string]$GithubWorkspace = $env:GITHUB_WORKSPACE,
@@ -34,6 +34,25 @@ function Download-File {
 # Define the download function as a script block for job execution
 $downloadFunction = {
     param ($url, $headers, $file)
+    function Download-File {
+        param (
+            [string]$url,
+            [hashtable]$headers,
+            [string]$file
+        )
+        try {
+            $response = Invoke-WebRequest -Uri $url -Headers $headers -OutFile $file -UseBasicParsing -ErrorAction Stop
+            if (Test-Path $file -PathType Leaf) {
+                return @{ File = $file; Success = $true }
+            } else {
+                Remove-Item -Path $file -ErrorAction SilentlyContinue
+                return @{ File = $file; Success = $false; Error = "Downloaded empty file" }
+            }
+        } catch {
+            Remove-Item -Path $file -ErrorAction SilentlyContinue
+            return @{ File = $file; Success = $false; Error = "$($_.Exception.Response.StatusCode) - $($_.Exception.Message)" }
+        }
+    }
     return Download-File -url $url -headers $headers -file $file
 }
 
@@ -46,6 +65,13 @@ if (-not $GithubToken) {
 if (-not $GithubWorkspace) {
     Write-Error "GitHub workspace path is required"
     exit 1
+}
+
+# Set ConfigFile to absolute path if not provided or relative
+if (-not $ConfigFile) {
+    $ConfigFile = Join-Path -Path $GithubWorkspace -ChildPath ".github/sync-config.yml"
+} elseif (-not [System.IO.Path]::IsPathRooted($ConfigFile)) {
+    $ConfigFile = Join-Path -Path $GithubWorkspace -ChildPath $ConfigFile
 }
 
 Write-Host "Loading configuration from $ConfigFile"
