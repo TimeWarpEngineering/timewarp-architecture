@@ -50,7 +50,7 @@ jobs:
           ./.github/scripts/sync-configurable-files.ps1
 
       - name: Create Pull Request
-        if: steps.changes.outputs.changes_made == 'true'
+        if: steps.sync.outputs.changes_made == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

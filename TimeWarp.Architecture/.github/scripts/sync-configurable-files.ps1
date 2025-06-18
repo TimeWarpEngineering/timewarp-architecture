@@ -9,6 +9,17 @@ param (
     [string]$GithubToken = $env:GITHUB_TOKEN
 )
 
+# Validate required parameters
+if (-not $GithubToken) {
+    Write-Error "GitHub token is required"
+    exit 1
+}
+
+if (-not $GithubWorkspace) {
+    Write-Error "GitHub workspace path is required"
+    exit 1
+}
+
 Write-Host "Loading configuration from $ConfigFile"
 
 # Check if yq is installed, if not, install it based on the operating system
@@ -96,11 +107,16 @@ $failedFiles = @()
 
 Write-Host "Downloading files from $parentRepo@$parentBranch..."
 
+# Get prefix from config if available, default to "TimeWarp.Architecture"
+$prefix = & yq eval '.parent.prefix // "TimeWarp.Architecture"' $ConfigFile
+
+# Use parallel jobs for downloading files if possible
+$jobs = @()
 foreach ($file in $files) {
     $file = $file.Trim()
     Write-Host "Attempting to download: $file"
     
-    $sourcePath = "TimeWarp.Architecture/$file"
+    $sourcePath = "$prefix/$file"
     Write-Host "Source path (with prefix): $sourcePath"
     
     $fileDir = Split-Path -Path $file -Parent
@@ -110,25 +126,40 @@ foreach ($file in $files) {
     
     $url = "https://api.github.com/repos/$parentRepo/contents/$sourcePath?ref=$parentBranch"
     $headers = @{
-        "Authorization" = "token $GithubToken"
+        "Authorization" = "token ***" # Mask token in logs
         "Accept" = "application/vnd.github.v3.raw"
     }
     
-    try {
-        $response = Invoke-WebRequest -Uri $url -Headers $headers -OutFile $file -UseBasicParsing -ErrorAction Stop
-        if (Test-Path $file -PathType Leaf) {
-            $downloadedFiles += $file
-            Write-Host "✓ Successfully downloaded: $file"
-        } else {
-            $failedFiles += $file
-            Write-Host "✗ Downloaded empty file: $file"
+    $job = Start-Job -ScriptBlock {
+        param ($url, $headers, $file)
+        try {
+            $response = Invoke-WebRequest -Uri $url -Headers $headers -OutFile $file -UseBasicParsing -ErrorAction Stop
+            if (Test-Path $file -PathType Leaf) {
+                return @{ File = $file; Success = $true }
+            } else {
+                Remove-Item -Path $file -ErrorAction SilentlyContinue
+                return @{ File = $file; Success = $false; Error = "Downloaded empty file" }
+            }
+        } catch {
             Remove-Item -Path $file -ErrorAction SilentlyContinue
+            return @{ File = $file; Success = $false; Error = $_.Exception.Response.StatusCode }
         }
-    } catch {
-        $failedFiles += $file
-        Write-Host "✗ Failed to download: $file (HTTP Status: $($_.Exception.Response.StatusCode))"
-        Remove-Item -Path $file -ErrorAction SilentlyContinue
+    } -ArgumentList $url, $headers, $file
+    
+    $jobs += $job
+}
+
+# Wait for all jobs to complete and collect results
+foreach ($job in $jobs) {
+    $result = Receive-Job -Job $job -Wait
+    if ($result.Success) {
+        $downloadedFiles += $result.File
+        Write-Host "✓ Successfully downloaded: $($result.File)"
+    } else {
+        $failedFiles += $result.File
+        Write-Host "✗ Failed to download: $($result.File) (Error: $($result.Error))"
     }
+    Remove-Job -Job $job
 }
 
 # Output results
@@ -153,13 +184,23 @@ foreach ($file in $downloadedFiles) {
             New-Item -ItemType Directory -Path $targetDir | Out-Null
         }
         
-        if (-not (Test-Path $targetFile) -or (Compare-Object -ReferenceObject (Get-Content $file) -DifferenceObject (Get-Content $targetFile))) {
-            Write-Host "Updating file: $file"
+        # Use file hash comparison to avoid loading large files into memory
+        $sourceHash = Get-FileHash -Path $file -Algorithm SHA256
+        if (Test-Path $targetFile) {
+            $targetHash = Get-FileHash -Path $targetFile -Algorithm SHA256
+            if ($sourceHash.Hash -ne $targetHash.Hash) {
+                Write-Host "Updating file: $file (hash mismatch)"
+                Copy-Item -Path $file -Destination $targetFile -Force
+                $changedFiles += $file
+                $changesMade = $true
+            } else {
+                Write-Host "No changes needed for: $file"
+            }
+        } else {
+            Write-Host "Updating file: $file (target does not exist)"
             Copy-Item -Path $file -Destination $targetFile -Force
             $changedFiles += $file
             $changesMade = $true
-        } else {
-            Write-Host "No changes needed for: $file"
         }
     }
 }
