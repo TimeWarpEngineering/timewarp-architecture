@@ -33,19 +33,21 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write
 
     steps:
       - name: Checkout current repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.SYNC_PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Git and Sync Files with PowerShell
         id: sync
         shell: pwsh
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.SYNC_PAT || secrets.GITHUB_TOKEN }}
+          HAS_SYNC_PAT: ${{ secrets.SYNC_PAT != '' }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -55,7 +57,7 @@ jobs:
         if: steps.sync.outputs.changes_made == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.SYNC_PAT || secrets.GITHUB_TOKEN }}
           commit-message: |
             Sync configurable files from parent repository
 
