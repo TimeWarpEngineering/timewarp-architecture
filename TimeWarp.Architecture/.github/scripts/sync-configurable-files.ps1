@@ -39,26 +39,18 @@ function Download-File {
 # Define the download function as a script block for job execution
 $downloadFunction = {
     param ($url, $headers, $file)
-    function Download-File {
-        param (
-            [string]$url,
-            [hashtable]$headers,
-            [string]$file
-        )
-        try {
-            $response = Invoke-WebRequest -Uri $url -Headers $headers -OutFile $file -UseBasicParsing -ErrorAction Stop
-            if (Test-Path $file -PathType Leaf) {
-                return @{ File = $file; Success = $true }
-            } else {
-                Remove-Item -Path $file -ErrorAction SilentlyContinue
-                return @{ File = $file; Success = $false; Error = "Downloaded empty file" }
-            }
-        } catch {
+    try {
+        $response = Invoke-WebRequest -Uri $url -Headers $headers -OutFile $file -UseBasicParsing -ErrorAction Stop
+        if (Test-Path $file -PathType Leaf) {
+            return @{ File = $file; Success = $true }
+        } else {
             Remove-Item -Path $file -ErrorAction SilentlyContinue
-            return @{ File = $file; Success = $false; Error = "$($_.Exception.Response.StatusCode) - $($_.Exception.Message)" }
+            return @{ File = $file; Success = $false; Error = "Downloaded empty file" }
         }
+    } catch {
+        Remove-Item -Path $file -ErrorAction SilentlyContinue
+        return @{ File = $file; Success = $false; Error = "$($_.Exception.Response.StatusCode) - $($_.Exception.Message)" }
     }
-    return Download-File -url $url -headers $headers -file $file
 }
 
 # Validate required parameters
@@ -152,10 +144,19 @@ if (-not (Test-Path $ConfigFile)) {
 }
 
 # Read configuration from file
-$reposCount = & yq eval '.repos | length' $ConfigFile
+try {
+    $reposCount = & yq eval '.repos | length' $ConfigFile 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Error: Failed to parse configuration file. Please verify YAML syntax in $ConfigFile"
+        exit 1
+    }
+} catch {
+    Write-Error "Error: Failed to read configuration file: $($_.Exception.Message)"
+    exit 1
+}
 
 if (-not $reposCount -or $reposCount -eq "null" -or [int]$reposCount -eq 0) {
-    Write-Error "Error: No repositories configured in .repos section. The repos-based configuration is required."
+    Write-Error "Error: No repositories configured in .repos section. Please verify your configuration syntax and ensure at least one repository is defined with valid source files. The repos-based configuration structure is required."
     exit 1
 }
 
@@ -193,9 +194,20 @@ for ($i = 0; $i -lt [int]$reposCount; $i++) {
             $destPath = $sourcePath
             
             # Apply path transformation (remove prefix) if configured
-            if ($removePrefix -and $removePrefix -ne "null" -and $destPath.StartsWith($removePrefix)) {
-                $destPath = $destPath.Substring($removePrefix.Length).TrimStart('/')
+            if ($removePrefix -and $removePrefix -ne "null" -and 
+                $destPath -and -not [string]::IsNullOrWhiteSpace($destPath) -and 
+                $destPath.StartsWith($removePrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                
+                $destPath = $destPath.Substring($removePrefix.Length)
+                # Normalize path separators for cross-platform compatibility
+                $destPath = $destPath.TrimStart('/', '\').Replace('/', [System.IO.Path]::DirectorySeparatorChar)
             }
+        }
+        
+        # Validate destination path
+        if (-not $destPath -or [string]::IsNullOrWhiteSpace($destPath)) {
+            Write-Warning "Destination path is null or empty for source: $sourcePath. Skipping file."
+            continue
         }
         
         $fileSpec = @{
@@ -215,7 +227,11 @@ if ($HasSyncPat -ne "true") {
     Write-Host "No SYNC_PAT detected - filtering out workflow files that require special permissions"
     $filteredFileSpecs = @()
     foreach ($fileSpec in $allFileSpecs) {
-        if ($fileSpec.SourcePath -like "*.github/workflows*" -or $fileSpec.SourcePath -like "*.github/workflow-templates*") {
+        # More precise pattern matching for GitHub workflow and template paths
+        $isWorkflowFile = ($fileSpec.SourcePath -match '\.github[/\\]workflows[/\\]') -or 
+                         ($fileSpec.SourcePath -match '\.github[/\\]workflow-templates[/\\]')
+        
+        if ($isWorkflowFile) {
             Write-Host "Excluding $($fileSpec.SourcePath) (requires SYNC_PAT with workflow permissions)"
         } else {
             $filteredFileSpecs += $fileSpec
@@ -390,13 +406,12 @@ Add-Content -Path $GithubStepSummary -Value "**Default Repository:** $defaultRep
 Add-Content -Path $GithubStepSummary -Value "**Default Branch:** $defaultBranch"
 Add-Content -Path $GithubStepSummary -Value "**Total File Specifications:** $($allFileSpecs.Count)"
 
-# Create a detailed list of file specifications
-$fileSpecDetails = ""
-foreach ($fileSpec in $allFileSpecs) {
-    $fileSpecDetails += "- **$($fileSpec.Repo)@$($fileSpec.Branch)**: $($fileSpec.SourcePath) → $($fileSpec.DestPath)`n"
+# Create a detailed list of file specifications  
+$fileSpecDetails = $allFileSpecs | ForEach-Object {
+    "- **$($_.Repo)@$($_.Branch)**: $($_.SourcePath) → $($_.DestPath)"
 }
 Add-Content -Path $GithubStepSummary -Value "**File Specifications:**"
-Add-Content -Path $GithubStepSummary -Value $fileSpecDetails
+$fileSpecDetails | ForEach-Object { Add-Content -Path $GithubStepSummary -Value $_ }
 
 if ($downloadedFiles) {
     Add-Content -Path $GithubStepSummary -Value "**Successfully Downloaded:** $($downloadedFiles -join ' ')"
