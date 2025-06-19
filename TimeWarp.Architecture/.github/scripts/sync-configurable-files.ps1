@@ -152,27 +152,76 @@ if (-not (Test-Path $ConfigFile)) {
 }
 
 # Read configuration from file
-$parentRepo = & yq eval '.parent.repository' $ConfigFile
-$parentBranch = & yq eval '.parent.branch' $ConfigFile
+$reposCount = & yq eval '.repos | length' $ConfigFile
 
-# Get sync files as comma-separated list
-$syncFiles = & yq eval '.sync_files | join(",")' $ConfigFile
+if (-not $reposCount -or $reposCount -eq "null" -or [int]$reposCount -eq 0) {
+    Write-Error "Error: No repositories configured in .repos section. The repos-based configuration is required."
+    exit 1
+}
 
-# If we don't have a SYNC_PAT, exclude workflow files that require special permissions
+Write-Host "Using repos-based configuration structure"
+
+# Get default values
+$defaultRepo = & yq eval '.default_repo // "TimeWarpEngineering/timewarp-architecture"' $ConfigFile
+$defaultBranch = & yq eval '.default_branch // "master"' $ConfigFile
+
+# Get sync options
+$defaultDestToSource = & yq eval '.sync_options.default_dest_to_source // true' $ConfigFile
+
+Write-Host "Default repo: $defaultRepo"
+Write-Host "Default branch: $defaultBranch"
+Write-Host "Default dest to source: $defaultDestToSource"
+
+# Process repositories and build file specifications
+$allFileSpecs = @()
+
+# Process each repository configuration
+for ($i = 0; $i -lt [int]$reposCount; $i++) {
+    $repo = & yq eval ".repos[$i].repo // `"$defaultRepo`"" $ConfigFile
+    $branch = & yq eval ".repos[$i].branch // `"$defaultBranch`"" $ConfigFile
+    $removePrefix = & yq eval ".repos[$i].path_transform.remove_prefix // null" $ConfigFile
+    
+    # Get files for this repo
+    $repoFilesCount = & yq eval ".repos[$i].files | length" $ConfigFile
+    
+    for ($j = 0; $j -lt [int]$repoFilesCount; $j++) {
+        $sourcePath = & yq eval ".repos[$i].files[$j].source_path" $ConfigFile
+        $destPath = & yq eval ".repos[$i].files[$j].dest_path // null" $ConfigFile
+        
+        # Apply default_dest_to_source logic
+        if (($destPath -eq "null" -or -not $destPath) -and $defaultDestToSource -eq "true") {
+            $destPath = $sourcePath
+            
+            # Apply path transformation (remove prefix) if configured
+            if ($removePrefix -and $removePrefix -ne "null" -and $destPath.StartsWith($removePrefix)) {
+                $destPath = $destPath.Substring($removePrefix.Length).TrimStart('/')
+            }
+        }
+        
+        $fileSpec = @{
+            Repo = $repo
+            Branch = $branch
+            SourcePath = $sourcePath
+            DestPath = $destPath
+            RemovePrefix = $removePrefix
+        }
+        
+        $allFileSpecs += $fileSpec
+    }
+}
+
+# Filter out workflow files if no SYNC_PAT
 if ($HasSyncPat -ne "true") {
     Write-Host "No SYNC_PAT detected - filtering out workflow files that require special permissions"
-    $syncFilesArray = $syncFiles -split ","
-    $filteredFiles = @()
-    foreach ($file in $syncFilesArray) {
-        $file = $file.Trim()
-        if ($file -like "*.github/workflows*" -or $file -like "*.github/workflow-templates*") {
-            Write-Host "Excluding $file (requires SYNC_PAT with workflow permissions)"
+    $filteredFileSpecs = @()
+    foreach ($fileSpec in $allFileSpecs) {
+        if ($fileSpec.SourcePath -like "*.github/workflows*" -or $fileSpec.SourcePath -like "*.github/workflow-templates*") {
+            Write-Host "Excluding $($fileSpec.SourcePath) (requires SYNC_PAT with workflow permissions)"
         } else {
-            $filteredFiles += $file
+            $filteredFileSpecs += $fileSpec
         }
     }
-    $syncFiles = $filteredFiles -join ","
-    Write-Host "Filtered sync files: $syncFiles"
+    $allFileSpecs = $filteredFileSpecs
 }
 
 # Get cron schedule if available
@@ -185,14 +234,26 @@ if ($cronSchedule -and $cronSchedule -ne "null") {
     Write-Host "  Cron Schedule: Using default (0 9 * * 1)"
 }
 
-Add-Content -Path $GithubOutputFile -Value "parent_repo=$parentRepo"
-Add-Content -Path $GithubOutputFile -Value "parent_branch=$parentBranch"
-Add-Content -Path $GithubOutputFile -Value "files_to_sync=$syncFiles"
+# Output configuration for GitHub Actions compatibility
+$primaryRepo = $defaultRepo
+$primaryBranch = $defaultBranch
+if ($allFileSpecs.Count -gt 0) {
+    $primaryRepo = $allFileSpecs[0].Repo
+    $primaryBranch = $allFileSpecs[0].Branch
+}
+
+Add-Content -Path $GithubOutputFile -Value "parent_repo=$primaryRepo"
+Add-Content -Path $GithubOutputFile -Value "parent_branch=$primaryBranch"
+
+# Create a summary of files for output
+$fileSummary = ($allFileSpecs | ForEach-Object { $_.DestPath }) -join ","
+Add-Content -Path $GithubOutputFile -Value "files_to_sync=$fileSummary"
 
 Write-Host "Configuration loaded:"
-Write-Host "  Parent Repository: $parentRepo"
-Write-Host "  Parent Branch: $parentBranch"
-Write-Host "  Files to sync: $syncFiles"
+Write-Host "  Primary Repository: $primaryRepo"
+Write-Host "  Primary Branch: $primaryBranch"
+Write-Host "  Total file specs: $($allFileSpecs.Count)"
+
 if ($cronSchedule -and $cronSchedule -ne "null") {
     Write-Host "  Cron Schedule from config: $cronSchedule"
 }
@@ -204,38 +265,36 @@ if (-not (Test-Path $tempDir)) {
     New-Item -ItemType Directory -Path $tempDir | Out-Null
 }
 
-# Download files from parent repository
+# Download files from repositories
 Set-Location -Path $tempDir
-$files = $syncFiles -split ","
 $downloadedFiles = @()
 $failedFiles = @()
 
-Write-Host "Downloading files from $parentRepo@$parentBranch..."
+Write-Host "Starting file downloads..."
 
-# Get prefix from config if available, default to "TimeWarp.Architecture"
-$prefix = & yq eval '.parent.prefix // "TimeWarp.Architecture"' $ConfigFile
-
-# Use parallel jobs for downloading files if possible
+# Use parallel jobs for downloading files
 $jobs = @()
-foreach ($file in $files) {
-    $file = $file.Trim()
-    Write-Host "Attempting to download: $file"
+
+Write-Host "Processing $($allFileSpecs.Count) file specifications..."
+
+foreach ($fileSpec in $allFileSpecs) {
+    $repo = $fileSpec.Repo
+    $branch = $fileSpec.Branch
+    $sourcePath = $fileSpec.SourcePath
+    $destPath = $fileSpec.DestPath
     
-    $sourcePath = "$prefix/$file"
-    Write-Host "Source path (with prefix): $sourcePath"
+    Write-Host "Attempting to download from ${repo}@${branch}: $sourcePath -> $destPath"
     
-    $fileDir = Split-Path -Path $file -Parent
+    $fileDir = Split-Path -Path $destPath -Parent
     if ($fileDir -and -not (Test-Path $fileDir)) {
         New-Item -ItemType Directory -Path $fileDir | Out-Null
     }
     
     # Construct URL with proper encoding
-    $baseUrl = "https://api.github.com/repos/$parentRepo/contents/$sourcePath"
-    $url = "$baseUrl" + "?ref=" + "$parentBranch"
+    $baseUrl = "https://api.github.com/repos/$repo/contents/$sourcePath"
+    $url = "$baseUrl" + "?ref=" + "$branch"
     Write-Host "API URL: $url"
-    Write-Host "Debug - parentRepo: $parentRepo"
-    Write-Host "Debug - sourcePath: $sourcePath"
-    Write-Host "Debug - parentBranch: $parentBranch"
+    
     $headers = @{
         "Accept" = "application/vnd.github.v3.raw"
     }
@@ -245,8 +304,7 @@ foreach ($file in $files) {
         $headers["Authorization"] = "token $GithubToken"
     }
     
-    $job = Start-Job -ScriptBlock $downloadFunction -ArgumentList $url, $headers, $file
-    
+    $job = Start-Job -ScriptBlock $downloadFunction -ArgumentList $url, $headers, $destPath
     $jobs += $job
 }
 
@@ -327,9 +385,18 @@ if ($changesMade) {
 
 # Output summary
 Add-Content -Path $GithubStepSummary -Value "## Sync Summary"
-Add-Content -Path $GithubStepSummary -Value "**Parent Repository:** $parentRepo"
-Add-Content -Path $GithubStepSummary -Value "**Parent Branch:** $parentBranch"
-Add-Content -Path $GithubStepSummary -Value "**Files Configured for Sync:** $syncFiles"
+Add-Content -Path $GithubStepSummary -Value "**Configuration Type:** Repos-based"
+Add-Content -Path $GithubStepSummary -Value "**Default Repository:** $defaultRepo"
+Add-Content -Path $GithubStepSummary -Value "**Default Branch:** $defaultBranch"
+Add-Content -Path $GithubStepSummary -Value "**Total File Specifications:** $($allFileSpecs.Count)"
+
+# Create a detailed list of file specifications
+$fileSpecDetails = ""
+foreach ($fileSpec in $allFileSpecs) {
+    $fileSpecDetails += "- **$($fileSpec.Repo)@$($fileSpec.Branch)**: $($fileSpec.SourcePath) → $($fileSpec.DestPath)`n"
+}
+Add-Content -Path $GithubStepSummary -Value "**File Specifications:**"
+Add-Content -Path $GithubStepSummary -Value $fileSpecDetails
 
 if ($downloadedFiles) {
     Add-Content -Path $GithubStepSummary -Value "**Successfully Downloaded:** $($downloadedFiles -join ' ')"

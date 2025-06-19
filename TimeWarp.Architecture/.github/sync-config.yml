@@ -1,59 +1,66 @@
-# Configuration for sync-configurable-files workflow
-# This file defines which files should be synchronized from the parent repository
+# Enhanced configuration for sync-configurable-files workflow
+# This file defines which files should be synchronized from repositories with advanced features
 
-# Parent repository configuration
-parent:
-  repository: "TimeWarpEngineering/timewarp-architecture"
-  branch: "master"
-
-# Files to synchronize from parent repository
-# Each entry can be a file path or a pattern
-sync_files:
-  # Development configuration files
-  - ".gitignore"
-  - ".gitattributes"
-  - ".editorconfig"
-
-  # GitHub workflows and templates (requires SYNC_PAT with workflow scope, auto-excluded if not available)
-  - ".github/workflow-templates/"
-  - ".github/workflows/sync-configurable-files.yml"
-  - ".github/workflows/sync-configurable-files.md"
-
-  # Code quality configurations
-  - ".eslintrc.js"
-  - ".prettierrc.json"
-  - ".prettierignore"
-
-  # Build and project configuration templates
-  - "Directory.Build.targets"
-  - "NuGet.config"
-
-  # Documentation templates
-  - ".templates/"
-
-# Files to exclude from synchronization (even if matched by patterns above)
-exclude_files:
-  - ".github/sync-config.yml"  # Don't sync this config file - each repo has its own configuration
+# Default repository configuration (used if not specified in repos list)
+default_repo: 'TimeWarpEngineering/timewarp-architecture'
+default_branch: 'master'
 
 # Sync schedule configuration
 schedule:
-  # Cron expression for when to run the sync
-  # Default: Every Monday at 9:00 AM UTC
-  cron: "0 9 * * 1"
+  cron: '0 9 * * 1'  # Every Monday at 9:00 AM UTC
+
+# Repository-based file sync configuration
+repos:
+  - repo: 'TimeWarpEngineering/timewarp-architecture'
+    branch: 'master'
+    path_transform:
+      remove_prefix: 'TimeWarp.Architecture/'  # Remove this prefix from dest_path if present in source_path
+    files:
+      # Development configuration files
+      - source_path: 'TimeWarp.Architecture/.gitignore'
+      - source_path: 'TimeWarp.Architecture/.gitattributes'
+      - source_path: 'TimeWarp.Architecture/.editorconfig'
+      
+      # GitHub workflows and templates (requires SYNC_PAT with workflow scope, auto-excluded if not available)
+      - source_path: 'TimeWarp.Architecture/.github/workflow-templates/'
+      - source_path: 'TimeWarp.Architecture/.github/workflows/sync-configurable-files.yml'
+      - source_path: 'TimeWarp.Architecture/.github/workflows/sync-configurable-files.md'
+      
+      # Code quality configurations
+      - source_path: 'TimeWarp.Architecture/.eslintrc.js'
+      - source_path: 'TimeWarp.Architecture/.prettierrc.json'
+      - source_path: 'TimeWarp.Architecture/.prettierignore'
+      
+      # Build and project configuration templates
+      - source_path: 'TimeWarp.Architecture/Directory.Build.targets'
+      - source_path: 'TimeWarp.Architecture/NuGet.config'
+      
+      # Documentation templates
+      - source_path: 'TimeWarp.Architecture/.templates/'
+
+# Files to exclude from synchronization (even if matched by patterns above)
+exclude_files:
+  - '.github/sync-config.yml'  # Don't sync this config file - each repo has its own configuration
+
+# Optional settings for the sync process
+sync_options:
+  overwrite_existing: true     # Whether to overwrite files if they already exist
+  ignore_missing: false        # Whether to fail if source files are missing
+  default_dest_to_source: true # If true, dest_path defaults to source_path when not specified
 
 # Pull Request configuration
 pull_request:
   # Branch name prefix for sync PRs
-  branch_prefix: "sync-configurable-files"
+  branch_prefix: 'sync-configurable-files'
 
   # PR title template
-  title: "Sync configurable files from parent repository"
+  title: 'Sync configurable files from parent repository'
 
   # Auto-merge PRs if all checks pass (requires branch protection rules)
   auto_merge: false
 
   # Labels to add to sync PRs
   labels:
-    - "automated"
-    - "sync"
-    - "configuration"
+    - 'automated'
+    - 'sync'
+    - 'configuration'
