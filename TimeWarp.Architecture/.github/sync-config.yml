@@ -14,7 +14,7 @@ sync_files:
   - ".gitattributes"
   - ".editorconfig"
 
-  # GitHub workflows and templates
+  # GitHub workflows and templates (requires SYNC_PAT with workflow scope, auto-excluded if not available)
   - ".github/workflow-templates/"
   - ".github/workflows/sync-configurable-files.yml"
   - ".github/workflows/sync-configurable-files.md"

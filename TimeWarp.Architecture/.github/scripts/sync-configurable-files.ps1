@@ -7,7 +7,8 @@ param (
     [string]$GithubOutputFile = $env:GITHUB_OUTPUT,
     [string]$GithubStepSummary = $env:GITHUB_STEP_SUMMARY,
     [string]$GithubWorkspace = $env:GITHUB_WORKSPACE,
-    [string]$GithubToken = $env:GITHUB_TOKEN
+    [string]$GithubToken = $env:GITHUB_TOKEN,
+    [string]$HasSyncPat = $env:HAS_SYNC_PAT
 )
 
 # Log PowerShell version for debugging purposes
@@ -156,6 +157,23 @@ $parentBranch = & yq eval '.parent.branch' $ConfigFile
 
 # Get sync files as comma-separated list
 $syncFiles = & yq eval '.sync_files | join(",")' $ConfigFile
+
+# If we don't have a SYNC_PAT, exclude workflow files that require special permissions
+if ($HasSyncPat -ne "true") {
+    Write-Host "No SYNC_PAT detected - filtering out workflow files that require special permissions"
+    $syncFilesArray = $syncFiles -split ","
+    $filteredFiles = @()
+    foreach ($file in $syncFilesArray) {
+        $file = $file.Trim()
+        if ($file -like "*.github/workflows*" -or $file -like "*.github/workflow-templates*") {
+            Write-Host "Excluding $file (requires SYNC_PAT with workflow permissions)"
+        } else {
+            $filteredFiles += $file
+        }
+    }
+    $syncFiles = $filteredFiles -join ","
+    Write-Host "Filtered sync files: $syncFiles"
+}
 
 # Get cron schedule if available
 $cronSchedule = & yq eval '.schedule.cron' $ConfigFile
