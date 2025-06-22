@@ -450,3 +450,6 @@ GeneratedCode/
 
 # Claude Code settings
 .claude/
+
+# Kanban task: sync workflow rollout
+Kanban/ToDo/021_Add-Sync-Workflow-To-All-TimeWarpEngineering-Repos.md
