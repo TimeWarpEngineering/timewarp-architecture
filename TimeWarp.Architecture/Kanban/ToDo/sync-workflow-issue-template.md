@@ -6,10 +6,11 @@ Add the sync-configurable-files workflow to this repository to maintain consiste
 
 ## Requirements
 
-- [ ] Add `.github/workflows/sync-configurable-files.yml` workflow file
-- [ ] Create `.github/sync-config.yml` configuration file tailored to this repository's technology stack
-- [ ] Add PowerShell script `.github/scripts/sync-configurable-files.ps1` 
-- [ ] Test workflow functionality via manual trigger
+- [ ] Add `workflows-temp/sync-configurable-files.yml` workflow file (GitHub Apps cannot write to .github/workflows/)
+- [ ] Create `workflows-temp/sync-config.yml` configuration file tailored to this repository's technology stack
+- [ ] Add PowerShell script `workflows-temp/sync-configurable-files.ps1` 
+- [ ] Create manual copy script `copy-workflows.ps1` to move files from temp to .github/workflows/
+- [ ] Test workflow functionality via manual trigger after copying
 - [ ] Implement `.gitignore` sync strategy (see strategy below)
 
 ## Repository Analysis Needed
@@ -76,11 +77,12 @@ Based on repository type, the sync config should include:
 
 ## Expected Deliverables
 
-1. **Workflow File**: `.github/workflows/sync-configurable-files.yml` 
-2. **Configuration**: `.github/sync-config.yml` with repository-specific file list
-3. **Script**: `.github/scripts/sync-configurable-files.ps1`
-4. **Testing**: Successful manual workflow run demonstrating sync functionality
-5. **Documentation**: Brief summary of what files will be synced and from where
+1. **Temporary Workflow File**: `workflows-temp/sync-configurable-files.yml` 
+2. **Temporary Configuration**: `workflows-temp/sync-config.yml` with repository-specific file list
+3. **Temporary Script**: `workflows-temp/sync-configurable-files.ps1`
+4. **Manual Copy Script**: `copy-workflows.ps1` to move files from temp to proper locations
+5. **Testing**: Successful manual workflow run after copying files
+6. **Documentation**: Brief summary of what files will be synced and the two-step deployment process
 
 ## Parent Repository
 
@@ -92,17 +94,26 @@ Based on repository type, the sync config should include:
 
 - Use the existing sync workflow from `timewarp-architecture` as the base template
 - Customize the `sync-config.yml` based on this repository's specific needs
+- Generate all workflow files in `workflows-temp/` directory instead of `.github/workflows/`
+- Create `copy-workflows.ps1` script for manual deployment due to GitHub Apps limitations
 - Ensure the workflow has proper permissions and PAT configuration
 - Test with a dry run before enabling automatic scheduling
 
+## Two-Step Deployment Process
+
+Due to GitHub Apps being unable to update workflow files directly:
+
+1. **Automated Step**: Generate workflow files in `workflows-temp/` directory
+2. **Manual Step**: Run `copy-workflows.ps1` to copy files to `.github/workflows/` and `.github/scripts/`
+
 ---
 
-@Claude Please implement this sync workflow for this repository. Analyze the codebase, create the appropriate configuration, and submit a pull request with the sync workflow implementation.
+@Claude Please implement this sync workflow for this repository using the two-step process. Analyze the codebase, create the appropriate configuration in the temp directory, and provide the manual copy script.
 
 ## Acceptance Criteria
 
-- [ ] Sync workflow files are added and properly configured
-- [ ] Manual workflow trigger works successfully  
+- [ ] Sync workflow files are generated in `workflows-temp/` directory
+- [ ] Manual copy script `copy-workflows.ps1` is created and functional
 - [ ] Configuration is appropriate for this repository's technology stack
-- [ ] No conflicts with existing workflows or configurations
-- [ ] Pull request includes clear documentation of changes
+- [ ] No conflicts with existing workflows or configurations after manual copying
+- [ ] Documentation includes instructions for the two-step deployment process
