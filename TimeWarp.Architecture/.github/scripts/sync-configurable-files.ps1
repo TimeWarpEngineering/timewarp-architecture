@@ -3,12 +3,17 @@
 
 # Define script parameters at the top to avoid syntax issues
 param (
-    [string]$ConfigFile = ".github/sync-config.yml",
+    [string]$ConfigFile = "",
     [string]$GithubOutputFile = $env:GITHUB_OUTPUT,
     [string]$GithubStepSummary = $env:GITHUB_STEP_SUMMARY,
     [string]$GithubWorkspace = $env:GITHUB_WORKSPACE,
-    [string]$GithubToken = $env:GITHUB_TOKEN
+    [string]$GithubToken = $env:GITHUB_TOKEN,
+    [string]$HasSyncPat = $env:HAS_SYNC_PAT
 )
+
+# Log PowerShell version for debugging purposes
+Write-Host "PowerShell Version:"
+Get-Host | Select-Object Version | Format-Table -AutoSize
 
 # Function to download a file from a given URL with specified headers
 function Download-File {
@@ -34,7 +39,18 @@ function Download-File {
 # Define the download function as a script block for job execution
 $downloadFunction = {
     param ($url, $headers, $file)
-    return Download-File -url $url -headers $headers -file $file
+    try {
+        $response = Invoke-WebRequest -Uri $url -Headers $headers -OutFile $file -UseBasicParsing -ErrorAction Stop
+        if (Test-Path $file -PathType Leaf) {
+            return @{ File = $file; Success = $true }
+        } else {
+            Remove-Item -Path $file -ErrorAction SilentlyContinue
+            return @{ File = $file; Success = $false; Error = "Downloaded empty file" }
+        }
+    } catch {
+        Remove-Item -Path $file -ErrorAction SilentlyContinue
+        return @{ File = $file; Success = $false; Error = "$($_.Exception.Response.StatusCode) - $($_.Exception.Message)" }
+    }
 }
 
 # Validate required parameters
@@ -46,6 +62,13 @@ if (-not $GithubToken) {
 if (-not $GithubWorkspace) {
     Write-Error "GitHub workspace path is required"
     exit 1
+}
+
+# Set ConfigFile to absolute path if not provided or relative
+if (-not $ConfigFile) {
+    $ConfigFile = Join-Path -Path $GithubWorkspace -ChildPath ".github/sync-config.yml"
+} elseif (-not [System.IO.Path]::IsPathRooted($ConfigFile)) {
+    $ConfigFile = Join-Path -Path $GithubWorkspace -ChildPath $ConfigFile
 }
 
 Write-Host "Loading configuration from $ConfigFile"
@@ -80,7 +103,8 @@ if (-not (Get-Command yq -ErrorAction SilentlyContinue)) {
         Invoke-WebRequest -Uri $yqUrl -OutFile $yqPath -UseBasicParsing
         
         Write-Host "Downloading checksums from $yqChecksumUrl..."
-        $checksumFile = "$env:TEMP/checksums.txt"
+        $tempPath = if ($env:TEMP) { $env:TEMP } else { "/tmp" }
+        $checksumFile = Join-Path -Path $tempPath -ChildPath "checksums.txt"
         Invoke-WebRequest -Uri $yqChecksumUrl -OutFile $checksumFile -UseBasicParsing
         
         if (Test-Path $checksumFile) {
@@ -120,11 +144,101 @@ if (-not (Test-Path $ConfigFile)) {
 }
 
 # Read configuration from file
-$parentRepo = & yq eval '.parent.repository' $ConfigFile
-$parentBranch = & yq eval '.parent.branch' $ConfigFile
+try {
+    $reposCount = & yq eval '.repos | length' $ConfigFile 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Error: Failed to parse configuration file. Please verify YAML syntax in $ConfigFile"
+        exit 1
+    }
+} catch {
+    Write-Error "Error: Failed to read configuration file: $($_.Exception.Message)"
+    exit 1
+}
 
-# Get sync files as comma-separated list
-$syncFiles = & yq eval '.sync_files | join(",")' $ConfigFile
+if (-not $reposCount -or $reposCount -eq "null" -or [int]$reposCount -eq 0) {
+    Write-Error "Error: No repositories configured in .repos section. Please verify your configuration syntax and ensure at least one repository is defined with valid source files. The repos-based configuration structure is required."
+    exit 1
+}
+
+Write-Host "Using repos-based configuration structure"
+
+# Get default values
+$defaultRepo = & yq eval '.default_repo // "TimeWarpEngineering/timewarp-architecture"' $ConfigFile
+$defaultBranch = & yq eval '.default_branch // "master"' $ConfigFile
+
+# Get sync options
+$defaultDestToSource = & yq eval '.sync_options.default_dest_to_source // true' $ConfigFile
+
+Write-Host "Default repo: $defaultRepo"
+Write-Host "Default branch: $defaultBranch"
+Write-Host "Default dest to source: $defaultDestToSource"
+
+# Process repositories and build file specifications
+$allFileSpecs = @()
+
+# Process each repository configuration
+for ($i = 0; $i -lt [int]$reposCount; $i++) {
+    $repo = & yq eval ".repos[$i].repo // `"$defaultRepo`"" $ConfigFile
+    $branch = & yq eval ".repos[$i].branch // `"$defaultBranch`"" $ConfigFile
+    $removePrefix = & yq eval ".repos[$i].path_transform.remove_prefix // null" $ConfigFile
+    
+    # Get files for this repo
+    $repoFilesCount = & yq eval ".repos[$i].files | length" $ConfigFile
+    
+    for ($j = 0; $j -lt [int]$repoFilesCount; $j++) {
+        $sourcePath = & yq eval ".repos[$i].files[$j].source_path" $ConfigFile
+        $destPath = & yq eval ".repos[$i].files[$j].dest_path // null" $ConfigFile
+        
+        # Apply default_dest_to_source logic
+        if (($destPath -eq "null" -or -not $destPath) -and $defaultDestToSource -eq "true") {
+            $destPath = $sourcePath
+            
+            # Apply path transformation (remove prefix) if configured
+            if ($removePrefix -and $removePrefix -ne "null" -and 
+                $destPath -and -not [string]::IsNullOrWhiteSpace($destPath) -and 
+                $destPath.StartsWith($removePrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                
+                $destPath = $destPath.Substring($removePrefix.Length)
+                # Normalize path separators for cross-platform compatibility
+                $destPath = $destPath.TrimStart('/', '\').Replace('/', [System.IO.Path]::DirectorySeparatorChar)
+            }
+        }
+        
+        # Validate destination path
+        if (-not $destPath -or [string]::IsNullOrWhiteSpace($destPath)) {
+            Write-Warning "Destination path is null or empty for source: $sourcePath. Skipping file."
+            continue
+        }
+        
+        $fileSpec = @{
+            Repo = $repo
+            Branch = $branch
+            SourcePath = $sourcePath
+            DestPath = $destPath
+            RemovePrefix = $removePrefix
+        }
+        
+        $allFileSpecs += $fileSpec
+    }
+}
+
+# Filter out workflow files if no SYNC_PAT
+if ($HasSyncPat -ne "true") {
+    Write-Host "No SYNC_PAT detected - filtering out workflow files that require special permissions"
+    $filteredFileSpecs = @()
+    foreach ($fileSpec in $allFileSpecs) {
+        # More precise pattern matching for GitHub workflow and template paths
+        $isWorkflowFile = ($fileSpec.SourcePath -match '\.github[/\\]workflows[/\\]') -or 
+                         ($fileSpec.SourcePath -match '\.github[/\\]workflow-templates[/\\]')
+        
+        if ($isWorkflowFile) {
+            Write-Host "Excluding $($fileSpec.SourcePath) (requires SYNC_PAT with workflow permissions)"
+        } else {
+            $filteredFileSpecs += $fileSpec
+        }
+    }
+    $allFileSpecs = $filteredFileSpecs
+}
 
 # Get cron schedule if available
 $cronSchedule = & yq eval '.schedule.cron' $ConfigFile
@@ -136,57 +250,77 @@ if ($cronSchedule -and $cronSchedule -ne "null") {
     Write-Host "  Cron Schedule: Using default (0 9 * * 1)"
 }
 
-Add-Content -Path $GithubOutputFile -Value "parent_repo=$parentRepo"
-Add-Content -Path $GithubOutputFile -Value "parent_branch=$parentBranch"
-Add-Content -Path $GithubOutputFile -Value "files_to_sync=$syncFiles"
+# Output configuration for GitHub Actions compatibility
+$primaryRepo = $defaultRepo
+$primaryBranch = $defaultBranch
+if ($allFileSpecs.Count -gt 0) {
+    $primaryRepo = $allFileSpecs[0].Repo
+    $primaryBranch = $allFileSpecs[0].Branch
+}
+
+Add-Content -Path $GithubOutputFile -Value "parent_repo=$primaryRepo"
+Add-Content -Path $GithubOutputFile -Value "parent_branch=$primaryBranch"
+
+# Create a summary of files for output
+$fileSummary = ($allFileSpecs | ForEach-Object { $_.DestPath }) -join ","
+Add-Content -Path $GithubOutputFile -Value "files_to_sync=$fileSummary"
 
 Write-Host "Configuration loaded:"
-Write-Host "  Parent Repository: $parentRepo"
-Write-Host "  Parent Branch: $parentBranch"
-Write-Host "  Files to sync: $syncFiles"
+Write-Host "  Primary Repository: $primaryRepo"
+Write-Host "  Primary Branch: $primaryBranch"
+Write-Host "  Total file specs: $($allFileSpecs.Count)"
+
 if ($cronSchedule -and $cronSchedule -ne "null") {
     Write-Host "  Cron Schedule from config: $cronSchedule"
 }
 
 # Create temporary directory for parent repo
-$tempDir = Join-Path -Path $env:TEMP -ChildPath "parent-repo"
+$tempPath = if ($env:TEMP) { $env:TEMP } else { "/tmp" }
+$tempDir = Join-Path -Path $tempPath -ChildPath "parent-repo"
 if (-not (Test-Path $tempDir)) {
     New-Item -ItemType Directory -Path $tempDir | Out-Null
 }
 
-# Download files from parent repository
+# Download files from repositories
 Set-Location -Path $tempDir
-$files = $syncFiles -split ","
 $downloadedFiles = @()
 $failedFiles = @()
 
-Write-Host "Downloading files from $parentRepo@$parentBranch..."
+Write-Host "Starting file downloads..."
 
-# Get prefix from config if available, default to "TimeWarp.Architecture"
-$prefix = & yq eval '.parent.prefix // "TimeWarp.Architecture"' $ConfigFile
-
-# Use parallel jobs for downloading files if possible
+# Use parallel jobs for downloading files
 $jobs = @()
-foreach ($file in $files) {
-    $file = $file.Trim()
-    Write-Host "Attempting to download: $file"
+
+Write-Host "Processing $($allFileSpecs.Count) file specifications..."
+
+foreach ($fileSpec in $allFileSpecs) {
+    $repo = $fileSpec.Repo
+    $branch = $fileSpec.Branch
+    $sourcePath = $fileSpec.SourcePath
+    $destPath = $fileSpec.DestPath
     
-    $sourcePath = "$prefix/$file"
-    Write-Host "Source path (with prefix): $sourcePath"
+    Write-Host "Attempting to download from ${repo}@${branch}: $sourcePath -> $destPath"
     
-    $fileDir = Split-Path -Path $file -Parent
+    $fileDir = Split-Path -Path $destPath -Parent
     if ($fileDir -and -not (Test-Path $fileDir)) {
         New-Item -ItemType Directory -Path $fileDir | Out-Null
     }
     
-    $url = "https://api.github.com/repos/$parentRepo/contents/$sourcePath?ref=$parentBranch"
+    # Construct URL with proper encoding
+    $baseUrl = "https://api.github.com/repos/$repo/contents/$sourcePath"
+    $url = "$baseUrl" + "?ref=" + "$branch"
+    Write-Host "API URL: $url"
+    
     $headers = @{
-        "Authorization" = "token $GithubToken" # Masked as "***" in logs, but actual token is used here intentionally for API access
         "Accept" = "application/vnd.github.v3.raw"
     }
     
-    $job = Start-Job -ScriptBlock $downloadFunction -ArgumentList $url, $headers, $file
+    # Only add authorization header if token is provided and not empty
+    if ($GithubToken -and $GithubToken.Trim() -ne "") {
+        $headers["Authorization"] = "token $GithubToken"
+    }
     
+    $job = Start-Job -ScriptBlock $downloadFunction -ArgumentList $url, $headers, $destPath
     $jobs += $job
 }
 
@@ -251,15 +385,33 @@ $env:CHANGED_FILES = $changedFiles -join " "
 
 if ($changesMade) {
     Write-Host "Files updated: $($changedFiles -join ' ')"
+    
+    # Stage only the files that were actually synced to avoid including unrelated files
+    Write-Host "Staging synced files for commit..."
+    foreach ($file in $changedFiles) {
+        $targetFile = Join-Path -Path $GithubWorkspace -ChildPath $file
+        if (Test-Path $targetFile) {
+            Write-Host "Staging: $file"
+            & git add $targetFile
+        }
+    }
 } else {
     Write-Host "No files needed updating"
 }
 
 # Output summary
 Add-Content -Path $GithubStepSummary -Value "## Sync Summary"
-Add-Content -Path $GithubStepSummary -Value "**Parent Repository:** $parentRepo"
-Add-Content -Path $GithubStepSummary -Value "**Parent Branch:** $parentBranch"
-Add-Content -Path $GithubStepSummary -Value "**Files Configured for Sync:** $syncFiles"
+Add-Content -Path $GithubStepSummary -Value "**Configuration Type:** Repos-based"
+Add-Content -Path $GithubStepSummary -Value "**Default Repository:** $defaultRepo"
+Add-Content -Path $GithubStepSummary -Value "**Default Branch:** $defaultBranch"
+Add-Content -Path $GithubStepSummary -Value "**Total File Specifications:** $($allFileSpecs.Count)"
+
+# Create a detailed list of file specifications  
+$fileSpecDetails = $allFileSpecs | ForEach-Object {
+    "- **$($_.Repo)@$($_.Branch)**: $($_.SourcePath) → $($_.DestPath)"
+}
+Add-Content -Path $GithubStepSummary -Value "**File Specifications:**"
+$fileSpecDetails | ForEach-Object { Add-Content -Path $GithubStepSummary -Value $_ }
 
 if ($downloadedFiles) {
     Add-Content -Path $GithubStepSummary -Value "**Successfully Downloaded:** $($downloadedFiles -join ' ')"
