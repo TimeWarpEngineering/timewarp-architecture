@@ -156,26 +156,15 @@ Tasks in `Done/` column must meet criteria appropriate to task type:
 - Action tests for positive cases written
 - End-to-end tests for rendering and happy paths
 
-## Migration from Process System
+## Template Evolution
 
-### Process Folder Analysis and Preservation
+This repository will evolve to support only the hybrid approach:
+* **Process folder removal**: Sprint-based methodology will be removed from template
+* **Kanban enhancement**: Extract valuable patterns from Process folder into Kanban documentation  
+* **GitHub Issues integration**: Enable issue templates and AI agent workflows
+* **Template simplification**: New instances will offer only the hybrid approach
 
-**Valuable content to preserve:**
-* **Definition of Done** (Process/DefinitionOfDone.md): Comprehensive completion criteria should be integrated into Kanban documentation
-* **User story examples** (ToastNotification.md): Detailed narrative format provides good task specification patterns
-* **Definition of Ready** (Process/DefinitionOfReady.md): Criteria for task readiness should enhance Kanban workflow
-
-**Template repository context:**
-* This repository serves as a template, not active development
-* Empty folders reflect template nature, not process failure
-* Other template instances may successfully use Process folder approach
-* Process folder provides valuable structure for larger development teams
-
-### Transition Plan
-1. **Archive Process folder**: Move to `Documentation/Historical/Process/` with explanation
-2. **Extract patterns**: Integrate Definition of Done/Ready into `Kanban/Overview.md`
-3. **Preserve examples**: Keep ToastNotification.md as reference for detailed task specification
-4. **Document lessons learned**: Add this analysis to ADR for future reference
+Implementation details are tracked in separate Kanban tasks.
 
 ### AI Agent Integration
 
