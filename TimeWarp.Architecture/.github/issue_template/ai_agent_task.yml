@@ -1,0 +1,123 @@
+name: AI Agent Task
+description: Request AI agent assistance for development work
+title: "[AI Task]: "
+labels: ["ai-agent", "automation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        🤖 **AI Agent Task Request**
+        
+        Use this template to request AI agent assistance. After creating the issue, mention the AI agent (e.g., @claude) in a comment to trigger automated work.
+
+  - type: textarea
+    id: task-description
+    attributes:
+      label: Task Description
+      description: Clearly describe what you want the AI agent to implement
+      placeholder: |
+        Example: "Add dark mode toggle to the settings page with user preference persistence"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: task-type
+    attributes:
+      label: Task Type
+      description: What type of work is this?
+      options:
+        - Feature Implementation
+        - Bug Fix
+        - Refactoring
+        - Testing
+        - Documentation
+        - Architecture Update
+        - Performance Optimization
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements
+      description: Specific requirements and constraints
+      placeholder: |
+        - Must use FluentUI components
+        - Should persist user preference to localStorage
+        - Must include unit tests
+        - Should follow existing patterns in codebase
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: How will we know this task is complete?
+      placeholder: |
+        - [ ] Toggle button appears in settings page
+        - [ ] Dark mode applies to all components
+        - [ ] User preference persists across sessions
+        - [ ] Unit tests cover new functionality
+        - [ ] Documentation is updated
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and Background
+      description: Provide any relevant context or background information
+      placeholder: |
+        - Related files: src/components/Settings.tsx
+        - Existing patterns to follow: src/theme/ThemeProvider.tsx
+        - Dependencies: FluentUI theme system
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      description: Which areas will this task affect?
+      options:
+        - label: Frontend (Client)
+        - label: Backend (API)
+        - label: Database
+        - label: Tests
+        - label: Documentation
+        - label: DevOps/CI-CD
+        - label: Security
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Estimated Complexity
+      description: How complex do you think this task is?
+      options:
+        - Simple - Single file changes, straightforward implementation
+        - Medium - Multiple files, some research needed
+        - Complex - Architecture changes, significant implementation
+        - Research - Unknown complexity, investigation needed
+    validations:
+      required: true
+
+  - type: textarea
+    id: ai-instructions
+    attributes:
+      label: Special Instructions for AI Agent
+      description: Any specific instructions for the AI agent
+      placeholder: |
+        - Please follow the existing code style in the repository
+        - Create feature branch following naming convention: Author/YYYY-MM-DD/Description
+        - Include comprehensive tests
+        - Update relevant documentation
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        **Next Steps:**
+        1. After creating this issue, comment with `@claude please work on this task`
+        2. The AI agent will create a branch and implement the solution
+        3. Review the resulting pull request and provide feedback
+        4. Merge when satisfied with the implementation

@@ -6,23 +6,23 @@ Implement the hybrid Kanban + GitHub Issues approach documented in ADR-0006 by r
 
 ## Requirements
 
-- [ ] Remove Process folder entirely (no historical preservation needed)
-- [ ] Extract valuable patterns from Process folder before deletion:
-  - [ ] Integrate Definition of Done into Kanban/Overview.md
-  - [ ] Preserve ToastNotification.md example as task template reference
-  - [ ] Extract Definition of Ready concepts
-- [ ] Update template files to remove Process references
-- [ ] Enable GitHub Issues with appropriate templates
-- [ ] Update documentation to reflect hybrid approach
+- [x] Remove Process folder entirely (no historical preservation needed)
+- [x] Extract valuable patterns from Process folder before deletion:
+  - [x] Integrate Definition of Done into Kanban/Overview.md
+  - [x] Preserve ToastNotification.md example as task template reference
+  - [x] Extract Definition of Ready concepts
+- [x] Update template files to remove Process references
+- [x] Enable GitHub Issues with appropriate templates
+- [x] Update documentation to reflect hybrid approach
 
 ## Acceptance Criteria
 
-- [ ] Process folder completely removed from repository
-- [ ] Kanban/Overview.md enhanced with Definition of Done/Ready
-- [ ] GitHub Issues enabled with issue templates
-- [ ] No references to Process methodology in template files
-- [ ] ADR-0006 migration section can be removed (task completion replaces it)
-- [ ] Template instances will only offer Kanban approach going forward
+- [x] Process folder completely removed from repository
+- [x] Kanban/Overview.md enhanced with Definition of Done/Ready
+- [x] GitHub Issues enabled with issue templates
+- [x] No references to Process methodology in template files
+- [x] ADR-0006 migration section can be removed (task completion replaces it)
+- [x] Template instances will only offer Kanban approach going forward
 
 ## Implementation Notes
 
