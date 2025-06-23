@@ -1,0 +1,23 @@
+# Test workflow file for sync functionality
+# This is a safe test file that does nothing important
+# Used to test GitHub API workflow sync without affecting real workflows
+
+name: Test Sync Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_input:
+        description: 'Test input parameter'
+        required: false
+        default: 'test-value'
+
+jobs:
+  test-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Step
+        run: |
+          echo "This is a test workflow for sync functionality"
+          echo "Input: ${{ github.event.inputs.test_input }}"
+          echo "This workflow does nothing important and is safe to sync"
