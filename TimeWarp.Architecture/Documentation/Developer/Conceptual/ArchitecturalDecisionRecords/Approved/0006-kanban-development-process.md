@@ -137,15 +137,13 @@ Tasks in `Done/` column must meet criteria appropriate to task type:
 - Action tests for positive cases written
 - End-to-end tests for rendering and happy paths
 
-## Template Evolution
+## Template Implementation
 
-This repository will evolve to support only the hybrid approach:
-* **Process folder removal**: Sprint-based methodology will be removed from template
-* **Kanban enhancement**: Extract valuable patterns from Process folder into Kanban documentation  
-* **GitHub Issues integration**: Enable issue templates and AI agent workflows
-* **Template simplification**: New instances will offer only the hybrid approach
-
-Implementation details are tracked in separate Kanban tasks.
+This repository template implements the hybrid approach:
+* **Kanban folders**: Provide internal development workflow structure
+* **GitHub Issues integration**: Enable external collaboration and AI agent automation
+* **Definition of Done/Ready**: Comprehensive completion criteria integrated into Kanban documentation
+* **AI transparency**: File-based system enables direct AI tool access to project state
 
 ### AI Agent Integration
 
