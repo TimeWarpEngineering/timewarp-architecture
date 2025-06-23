@@ -8,49 +8,107 @@ Which task management and development process should we standardize on for the T
 
 ## Considered Options
 
-### Option 1: Process-Based System
+### Option 1: Sprint-Based Process System
 The existing Process folder structure with:
-* Linear process documentation
-* Traditional project management approach
-* Documentation-heavy workflow
-* Less visual representation of work states
+* **Sprint/iteration planning**: Formal iteration boundaries with per-developer folders
+* **Heavy documentation**: Definition of Done/Ready, user stories, iteration summaries
+* **Multi-developer structure**: Dedicated folders for up to 4 developers per iteration  
+* **Historical tracking**: Past iterations preserved in archive structure
+* **Traditional agile**: Formal sprint planning, review, and retrospective cycles
 
-### Option 2: Kanban Board System
-A folder-based Kanban implementation with:
-* Visual workflow stages (Backlog → ToDo → InProgress → Done)
-* Task cards as markdown files
-* Clear work-in-progress visualization
-* Flexible, iterative workflow
+### Option 2: GitHub Issues + Projects
+Native GitHub project management with:
+* **Issue tracking**: Rich issue templates, labels, milestones, assignees
+* **Project boards**: Kanban-style boards with automation rules
+* **Integration**: Direct link to PRs, commits, and code references
+* **Collaboration**: Comments, mentions, notifications, and external visibility
+* **Reporting**: Built-in metrics, burndown charts, and velocity tracking
 
-### Option 3: Hybrid Approach
-Maintain both systems for different types of work
+### Option 3: Folder-Based Kanban System
+A file-system Kanban implementation with:
+* **Simple workflow**: Backlog → ToDo → InProgress → Done folders
+* **Version controlled**: Task history tracked in git alongside code changes
+* **Self-contained**: No external dependencies or tool integration required
+* **Developer-friendly**: Uses familiar file system and markdown tools
+* **Branch integration**: Task numbers align with branch naming conventions
 
-### Option 4: External Tool Integration
-Use external project management tools (Jira, Azure DevOps, etc.)
+### Option 4: Hybrid Approach
+Combine multiple systems for different work types
+
+### Option 5: External Tool Integration
+Use dedicated project management tools (Jira, Azure DevOps, Linear, etc.)
 
 ## Decision Outcome
 
-Chosen option: **Kanban Board System**, because:
+Chosen option: **Hybrid: Folder-Based Kanban + GitHub Issues**, because:
 
-### Workflow Advantages
-* **Visual workflow**: Clear representation of task states and work progression
-* **WIP limits**: Natural constraints on work in progress prevent context switching
-* **Flexible prioritization**: Easy to reorder tasks within columns
-* **Continuous flow**: Supports iterative development without rigid sprint boundaries
+### AI-Assisted Development Context
+* **Sprint obsolescence**: With AI assistance, development velocity is unpredictable and sprints become artificial constraints
+* **Continuous delivery**: AI enables rapid iteration cycles that don't align with fixed sprint boundaries
+* **Dynamic prioritization**: Work can be reprioritized instantly based on insights or blockers discovered during development
+* **Context switching optimization**: AI helps maintain context across multiple tasks, reducing traditional WIP concerns
 
-### Repository Integration Benefits
-* **Version controlled**: Task history tracked in git alongside code changes
-* **Branch alignment**: Task numbers integrate directly with branch naming convention (ADR-0004)
-* **Self-contained**: No external dependencies or tools required
-* **Collaborative**: All team members can see and update task status
+### Hybrid Approach: Best of Both Worlds
 
-### Simplicity and Maintenance
-* **Single source of truth**: Eliminates confusion between multiple task systems
-* **Low overhead**: Minimal process ceremony, maximum flexibility
-* **Developer-friendly**: Uses familiar file system and markdown
-* **Automation potential**: Can be automated with scripts and git hooks
+**GitHub Issues for External Interface:**
+* **Public visibility**: Community contributions, bug reports, feature requests
+* **AI agent integration**: Create issues and mention AI agents (Claude, etc.) for automated work
+* **Cross-repository coordination**: Issues that span multiple repositories
+* **Stakeholder communication**: Professional interface for external collaboration
+* **Automated workflows**: AI agents can create branches, implement features, and submit PRs
+* **Rich linking**: Cross-references between issues, PRs, and commits
+* **Community engagement**: Public roadmap and transparent development process
+
+**Folder-Based Kanban for Internal Development:**
+* **Rapid iteration**: Quick task creation and management for AI-assisted development
+* **Version controlled**: Task evolution tracked alongside code changes
+* **Zero tool overhead**: Uses familiar file system and markdown
+* **Offline capable**: Works without external dependencies
+* **Branch integration**: Task numbers align perfectly with branch naming (ADR-0004)
+
+### Why not Sprint-Based Process System
+
+**Sprint planning becomes counterproductive** with AI assistance:
+* **Unpredictable velocity**: AI can solve complex problems in minutes or get stuck on simple ones
+* **Artificial boundaries**: Sprint deadlines don't align with natural development flow
+* **Over-planning**: Detailed upfront planning less valuable when AI can rapidly prototype solutions
+* **Context switching cost**: Moving between "planning mode" and "development mode" adds overhead
+
+**Process folder represents valid alternative** for other template instances:
+* Sprint-based approach suitable for teams preferring formal iteration planning
+* Multi-developer structure supports larger development teams
+* Rich documentation templates provide structured approach to requirements
+* Template nature means this repository's usage doesn't reflect adoption in other instances
+
+### Folder-Based Kanban Advantages
+
+**Perfect fit for AI-assisted development:**
+* **Continuous flow**: Work moves organically through states without artificial boundaries
+* **Rapid task creation**: Can quickly capture ideas and convert to actionable tasks
+* **Version controlled**: Task evolution tracked alongside code changes
+* **Zero tool overhead**: Uses familiar file system and markdown
+* **Branch integration**: Task numbers align perfectly with branch naming (ADR-0004)
+* **Offline capable**: Works without external dependencies
+* **Search friendly**: File-based system enables powerful text search
+* **Automation ready**: Can be scripted and automated with git hooks
 
 ## Implementation Details
+
+### Hybrid Workflow
+
+**GitHub Issues for:**
+* External collaboration and community engagement
+* AI agent task assignment and automation
+* Cross-repository coordination
+* Public roadmap and feature requests
+* Bug reports from users
+
+**Folder-Based Kanban for:**
+* Internal development tasks and rapid iteration
+* AI-assisted development workflow
+* Technical debt and refactoring tasks
+* Architecture and design decisions
+* Template development and maintenance
 
 ### Kanban Folder Structure
 ```
@@ -94,17 +152,39 @@ Tasks in `Done/` column must meet criteria appropriate to task type:
 
 ## Migration from Process System
 
-### Process Folder Review
-* **Preserve valuable content**: Extract reusable documentation, templates, or guidelines
-* **Migrate active items**: Convert any active Process items to Kanban tasks
-* **Archive**: Move Process folder to archived state once migration is complete
+### Process Folder Analysis and Preservation
+
+**Valuable content to preserve:**
+* **Definition of Done** (Process/DefinitionOfDone.md): Comprehensive completion criteria should be integrated into Kanban documentation
+* **User story examples** (ToastNotification.md): Detailed narrative format provides good task specification patterns
+* **Definition of Ready** (Process/DefinitionOfReady.md): Criteria for task readiness should enhance Kanban workflow
+
+**Template repository context:**
+* This repository serves as a template, not active development
+* Empty folders reflect template nature, not process failure
+* Other template instances may successfully use Process folder approach
+* Process folder provides valuable structure for larger development teams
 
 ### Transition Plan
-1. **Audit**: Review all content in Process folder
-2. **Extract**: Identify valuable templates, guidelines, or documentation
-3. **Convert**: Transform active Process items into Kanban tasks
-4. **Integrate**: Incorporate useful Process content into Kanban workflow
-5. **Sunset**: Archive or remove Process folder once migration is complete
+1. **Archive Process folder**: Move to `Documentation/Historical/Process/` with explanation
+2. **Extract patterns**: Integrate Definition of Done/Ready into `Kanban/Overview.md`
+3. **Preserve examples**: Keep ToastNotification.md as reference for detailed task specification
+4. **Document lessons learned**: Add this analysis to ADR for future reference
+
+### AI Agent Integration
+
+**GitHub Issues enable powerful AI automation:**
+* **Issue creation**: Create issue describing feature or bug fix needed
+* **AI agent mention**: Comment mentioning @claude or other AI agents
+* **Automated development**: AI agent creates branch, implements solution, submits PR
+* **Code review integration**: AI agents can respond to review feedback
+* **Continuous improvement**: AI agents learn from issue patterns and solutions
+
+**Example workflow:**
+1. User creates GitHub issue: "Add dark mode toggle to settings page"
+2. Maintainer comments: "@claude please implement this feature"
+3. AI agent creates branch, implements feature, adds tests, submits PR
+4. Human reviews and merges, closing the issue automatically
 
 ## Positive Consequences
 
@@ -136,4 +216,4 @@ Tasks in `Done/` column must meet criteria appropriate to task type:
 
 ---
 
-*"We choose Kanban for its visual clarity, git integration, and flexibility to support our iterative development approach while maintaining simplicity and developer focus."*
+*"We choose a hybrid approach combining folder-based Kanban for internal development with GitHub Issues for external collaboration and AI agent integration, maximizing both development velocity and community engagement."*
