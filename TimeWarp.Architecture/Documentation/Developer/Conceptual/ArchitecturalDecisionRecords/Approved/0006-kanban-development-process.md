@@ -50,6 +50,12 @@ Chosen option: **Hybrid: Folder-Based Kanban + GitHub Issues**, because:
 
 ### Hybrid Approach: Best of Both Worlds
 
+**AI Tool Transparency:**
+* **File-based visibility**: Folder-based Kanban enables AI tools to easily search and understand current work state
+* **Context awareness**: AI assistants can quickly scan task files to understand project priorities and progress
+* **No API barriers**: Direct file access eliminates need for GitHub API integration for AI analysis
+* **Real-time insight**: AI tools see task evolution alongside code changes in git history
+
 **GitHub Issues for External Interface:**
 * **Public visibility**: Community contributions, bug reports, feature requests
 * **AI agent integration**: Create issues and mention AI agents (Claude, etc.) for automated work
