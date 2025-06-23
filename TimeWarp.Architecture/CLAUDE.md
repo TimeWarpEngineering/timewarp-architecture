@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Architectural Decisions
+
+Key architectural decisions are documented in `Documentation/Developer/Conceptual/ArchitecturalDecisionRecords/Approved/`:
+- **ADR-0004**: Branch naming conventions
+- **ADR-0005**: Git merge strategy (information preservation over presentation)  
+- **ADR-0006**: Hybrid task management (Kanban + GitHub Issues)
+
 ## Development Commands
 
 ### Running the Application
@@ -107,33 +114,53 @@ The solution uses a mixin system for code reuse:
 
 ## Task Management Workflow
 
-This project uses a **Kanban folder-based workflow** for task management:
+This project uses a **hybrid approach** combining Kanban folders for internal development with GitHub Issues for external collaboration and AI agent integration:
 
-### Kanban Structure
+### Folder-Based Kanban (Internal Development)
 - `Kanban/Backlog/` - Tasks not ready (B### prefix, e.g., `B001_task-name.md`)
 - `Kanban/ToDo/` - Tasks ready to work (### prefix, e.g., `001_task-name.md`) 
 - `Kanban/InProgress/` - Currently being worked on
 - `Kanban/Done/` - Completed tasks
 
+### GitHub Issues (External Interface)
+- **Community contributions**: Bug reports, feature requests from users
+- **AI agent integration**: Create issues and mention AI agents (e.g., @claude) for automated work
+- **Cross-repository coordination**: Issues spanning multiple repositories
+- **Public roadmap**: Features requiring external visibility and stakeholder communication
+
 ### Task Workflow
-1. Create tasks in Backlog with `B###_description.md` naming
-2. Move to ToDo when ready, renaming to `###_description.md`
-3. Move through InProgress → Done as work progresses
-4. Update Implementation Notes section during development
+1. **Internal work**: Create tasks in Kanban folders following B### → ### numbering
+2. **External requests**: Use GitHub Issues with appropriate templates
+3. **AI automation**: Comment on GitHub Issues with "@claude please work on this" to trigger AI agents
+4. **Branch naming**: Task numbers integrate with branch naming convention: `Author/YYYY-MM-DD/Task_###`
 
-### Definition of Done Requirements
+### Definition of Done (API Endpoints)
+**Implementation:**
+- Server: *Endpoint (required), Server-side Validator, Mapper, *Handler (required)
+- Contracts: *Request (required), *Response (required), *RequestValidator (required)
 
-**API Endpoints require:**
-- Server: Endpoint, Handler, Validator, Mapper
-- Contracts: Request, Response, RequestValidator  
-- Integration tests for Handler and Endpoint
-- Documentation for Request/Response classes
+**Integration Tests (Fixie):**
+- *Handler Tests (required): Valid Response given valid Request
+- *Endpoint Tests (required): Valid http Response, validation error handling
+- *RequestValidator Tests (required): Test all validation rules
 
-**Client Features require:**
-- State, Actions, Components/Pages
-- Integration tests for State (ShouldClone, ShouldSerialize)
-- Action tests (at least positive cases)
-- End-to-end tests for page rendering and happy paths
+**Documentation:**
+- *Request class and properties (required)
+- *Response class and properties (required)
+
+### Definition of Done (Client Features)
+**Implementation:**
+- *State (required), Actions, Pipeline, Notification, Components, Pages
+
+**Integration Tests:**
+- State: ShouldClone, ShouldSerialize (Redux DevTools support)
+- Every Action should have at least positive test cases
+
+**End-to-end Tests:**
+- Pages render without error given valid states
+- Happy paths for primary use cases
+
+*Items marked with `*` are required. Others are optional based on feature needs.*
 
 ## API Contract Development Guidelines
 
@@ -177,12 +204,23 @@ Use these regions in entity classes to organize associations:
 - **Tailwind Usage**: Limit to spacing (`m-*`, `p-*`), hover effects, and responsiveness
 - **Avoid**: Tailwind color, typography, border, and shadow classes that conflict with FluentUI
 
-### Development Notes
+## Development Workflow
 
+### Git Strategy
+- **Main branch**: `master` (not `main`)
+- **Merge strategy**: Use merge commits (not squash/rebase) to preserve development history
+- **Branch protection**: Direct commits to master prevented via git hooks
+
+### AI Integration
+- **File-based transparency**: AI tools can directly access Kanban task files for project context
+- **GitHub Issues**: External interface for AI agent automation
+- **Branch creation**: AI agents follow standard branch naming conventions
+
+### Development Notes
 - All projects use `TimeWarp.Architecture` as the root namespace
-- Feature constants are defined via preprocessor directives: `cosmosdb`, `api`, `grpc`, `web`, `yarp`
-- Generated code is excluded via `Directory.Build.targets`
-- Tests use the Fixie framework, not MSTest or xUnit
-- The Aspire orchestrator starts all services for local development
+- Feature constants defined via preprocessor directives: `cosmosdb`, `api`, `grpc`, `web`, `yarp`
+- Generated code excluded via `Directory.Build.targets`
+- Tests use Fixie framework, not MSTest or xUnit
+- Aspire orchestrator starts all services for local development
 - Client state uses TimeWarp patterns with Redux DevTools integration
 - Each assembly must contain a sealed `AssemblyMarker` class for reflection operations
