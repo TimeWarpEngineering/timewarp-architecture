@@ -31,6 +31,12 @@ A file-system Kanban implementation with:
 * **Self-contained**: No external dependencies or tool integration required
 * **Developer-friendly**: Uses familiar file system and markdown tools
 * **Branch integration**: Task numbers align with branch naming conventions
+* **Continuous flow**: Work moves organically through states without artificial boundaries
+* **Rapid task creation**: Can quickly capture ideas and convert to actionable tasks
+* **Zero tool overhead**: Uses familiar file system and markdown
+* **Offline capable**: Works without external dependencies
+* **Search friendly**: File-based system enables powerful text search
+* **Automation ready**: Can be scripted and automated with git hooks
 
 ### Option 4: Hybrid Approach
 Combine multiple systems for different work types
@@ -72,31 +78,6 @@ Chosen option: **Hybrid: Folder-Based Kanban + GitHub Issues**, because:
 * **Offline capable**: Works without external dependencies
 * **Branch integration**: Task numbers align perfectly with branch naming (ADR-0004)
 
-### Why not Sprint-Based Process System
-
-**Sprint planning becomes counterproductive** with AI assistance:
-* **Unpredictable velocity**: AI can solve complex problems in minutes or get stuck on simple ones
-* **Artificial boundaries**: Sprint deadlines don't align with natural development flow
-* **Over-planning**: Detailed upfront planning less valuable when AI can rapidly prototype solutions
-* **Context switching cost**: Moving between "planning mode" and "development mode" adds overhead
-
-**Process folder represents valid alternative** for other template instances:
-* Sprint-based approach suitable for teams preferring formal iteration planning
-* Multi-developer structure supports larger development teams
-* Rich documentation templates provide structured approach to requirements
-* Template nature means this repository's usage doesn't reflect adoption in other instances
-
-### Folder-Based Kanban Advantages
-
-**Perfect fit for AI-assisted development:**
-* **Continuous flow**: Work moves organically through states without artificial boundaries
-* **Rapid task creation**: Can quickly capture ideas and convert to actionable tasks
-* **Version controlled**: Task evolution tracked alongside code changes
-* **Zero tool overhead**: Uses familiar file system and markdown
-* **Branch integration**: Task numbers align perfectly with branch naming (ADR-0004)
-* **Offline capable**: Works without external dependencies
-* **Search friendly**: File-based system enables powerful text search
-* **Automation ready**: Can be scripted and automated with git hooks
 
 ## Implementation Details
 
