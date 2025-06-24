@@ -42,6 +42,25 @@ HowToGuides/
 
 ---
 
+**UPDATE - Semantic Clarity Issue**:
+
+**Deeper Problem**: The directory name `Api_Contracts/` (or `ApiContracts/`) is semantically unclear. This documentation covers both `Api.Contracts` and `Web.Contracts` projects - both deal with JSON-based HTTP APIs (REST/Web APIs), but **not** `Grpc.Contracts`.
+
+**Current Semantic Issue**:
+- Directory name suggests it's only about `Api.Contracts` project
+- Actually covers both `Api.Contracts` AND `Web.Contracts` 
+- Excludes `Grpc.Contracts` (which uses protobuf, not JSON)
+
+**Better Semantic Options**:
+1. `WebApiContracts/` - Covers both Api.Contracts and Web.Contracts (JSON over HTTP)
+2. `HttpApiContracts/` - Emphasizes HTTP-based API contracts  
+3. `JsonApiContracts/` - Emphasizes JSON serialization contracts
+4. `RestApiContracts/` - Traditional REST API terminology
+
+**Status**: **CONFIRMED ISSUE** - Both naming convention (snake_case) and semantic clarity (what does this cover?) need fixing.
+
+---
+
 ### 2. Schizophrenic Bicep Module Naming
 
 **Location**: `/DevOps/Bicep/modules/`
@@ -125,6 +144,45 @@ Deployments/
 
 ---
 
+**UPDATE - Architectural Insight**:
+
+Upon review of the actual project structure, the `yarp/` naming is **actually correct** and reflects the underlying architecture:
+
+```
+Source/ContainerApps/
+├── Api/
+│   ├── Api.Application/
+│   ├── Api.Contracts/
+│   ├── Api.Domain/
+│   ├── Api.Infrastructure/
+│   └── Api.Server/                   # Multiple projects, server is one component
+├── Grpc/
+│   ├── Grpc.Application/
+│   ├── Grpc.Contracts/
+│   ├── Grpc.Domain/
+│   ├── Grpc.Infrastructure/
+│   └── Grpc.Server/                  # Multiple projects, server is one component
+├── Web/
+│   ├── Web.Application/
+│   ├── Web.Contracts/
+│   ├── Web.Domain/
+│   ├── Web.Infrastructure/
+│   ├── Web.Server/                   # Multiple projects, server is one component
+│   └── Web.Spa/                      # Multiple projects, spa is another component
+└── Yarp/
+    └── Yarp/                         # Single project - just the reverse proxy
+```
+
+**Corrected Analysis**: The Kubernetes naming **correctly reflects** the project architecture:
+- Services with multiple projects (Api, Grpc, Web) use `-server` suffix because they deploy specifically the `.Server` component
+- Yarp has only one project, so no suffix is needed - it deploys the entire Yarp service
+
+**Lesson**: This demonstrates why **understanding the underlying architecture** is crucial before labeling naming as "inconsistent." The naming reflects intentional architectural decisions, not sloppy inconsistency.
+
+**Status**: **RETRACTED** - This is not an inconsistency but correct architectural naming.
+
+---
+
 ### 4. Storage Naming Madness
 
 **Location**: `/DevOps/Kubernetes/4_Storage/`
@@ -150,6 +208,77 @@ Deployments/
 ```
 
 **Rationale**: The YAML files inside can still use proper Kubernetes naming (`persistentvolumeclaim`, etc.), but the **file system organization** should follow project standards.
+
+---
+
+**UPDATE - Tool Integration Reality**:
+
+**The VSCode Kubernetes Plugin Reality**: The official Kubernetes VSCode extension displays these resources as:
+- "Persistent Volumes" (with space)
+- "Persistent Volume Claims" (with spaces)  
+- "Storage Classes" (with space)
+
+**Architectural Decision Points**:
+
+1. **You cannot use spaces in directory names** - filesystem limitation
+2. **The numbered parent directories already use underscores**: `0_Namespaces/`, `1_Nodes/`, `2_Workloads/`
+3. **Only 3 multi-word directories exist** in the entire Kubernetes structure
+4. **Tool integration consistency**: Underscores mirror the official K8s plugin terminology
+
+**The Real Choice**:
+
+**Option A: Full Project Consistency (PascalCase)**
+```
+0Namespaces/           # Change numbered directories
+1Nodes/
+2Workloads/
+3Network/
+4Storage/
+├── PersistentVolumeClaims/
+├── PersistentVolumes/
+└── StorageClasses/
+```
+
+**Option B: Kubernetes Domain Consistency (Underscores)**
+```
+0_Namespaces/          # Keep existing pattern
+1_Nodes/
+2_Workloads/
+3Network/
+4_Storage/
+├── Persistent_Volume_Claims/
+├── Persistent_Volumes/
+└── Storage_Classes/
+```
+
+**Analysis of Trade-offs**:
+
+**Option A Benefits**: 
+- Aligns with project-wide PascalCase standard
+- Consistent with .NET naming throughout the rest of the project
+
+**Option A Costs**:
+- Breaks the numbered deployment order pattern (0_Namespaces becomes 0Namespaces - less readable)
+- Loses visual alignment with VSCode K8s plugin terminology
+- May confuse DevOps engineers familiar with K8s tooling
+
+**Option B Benefits**:
+- Maintains internal consistency within the Kubernetes domain
+- Aligns with official Kubernetes tooling displays
+- Numbered directories remain readable (0_Namespaces vs 0Namespaces)
+- Only affects 9 directories total in specialized domain
+
+**Option B Costs**:
+- Deviates from project PascalCase standard
+- Creates exception that must be documented and remembered
+
+**Corrected Analysis**: This is a **specialized domain** with specific tooling integration needs. The underscore pattern:
+1. **Mirrors official tooling** (VSCode Kubernetes plugin)
+2. **Maintains readability** in numbered directories (0_Namespaces vs 0Namespaces)
+3. **Affects minimal scope** (only 9 directories in one specialized area)
+4. **Serves DevOps practitioners** who work with K8s tooling daily
+
+**Status**: **RETRACTED** - This is not "naming madness" but a **thoughtful domain-specific decision** that prioritizes tool integration and specialist workflow over global consistency.
 
 ---
 
@@ -221,6 +350,39 @@ Source/                              # Consistent with project naming
 
 ---
 
+**UPDATE - Numbering Logic Analysis**:
+
+**Kubernetes numbering (0-7)**: These represent **deployment order dependencies**. You have exactly 8 phases of Kubernetes deployment that must happen in sequence:
+1. Namespaces first (0)
+2. Nodes (1) 
+3. Workloads (2)
+4. Network (3)
+5. Storage (4)
+6. Configuration (5)
+7. Custom Resources (6)
+8. Helm Releases (7)
+
+This is a **fixed, bounded sequence** - you'll never have more than these 8 deployment phases. Single digits are perfect because:
+- The count is small and known
+- Zero-padding isn't needed for sorting (0-9 sorts correctly)
+- Brevity matters for operational directory names you navigate frequently
+
+**Task numbering (001, 025)**: These represent **unlimited task sequences** over time. Tasks are:
+- Unbounded (could be 001, 025, 157, 1043...)
+- Need consistent sorting (001, 002, 010, 025, 100 vs 1, 2, 10, 25, 100)
+- Three digits handles up to 999 tasks before needing expansion
+- Zero-padding ensures proper alphabetical/numerical sorting in file systems
+
+**The Logic**: 
+- **Bounded, operational sequences** → Single digits (0-7)
+- **Unbounded, chronological sequences** → Zero-padded (001, 025, 999)
+
+**Corrected Analysis**: This is **exactly** systematic thinking - different numbering schemes for different purposes and constraints.
+
+**Status**: **RETRACTED** - This demonstrates **sophisticated numbering strategy** that adapts to the specific needs of bounded vs unbounded sequences.
+
+---
+
 ### 7. Assembly Marker Inconsistency
 
 **Location**: Various `/AssemblyMarker.cs` files
@@ -281,6 +443,29 @@ GenTester/
 
 ---
 
+**UPDATE - Build Artifact Reality**:
+
+**Generated directories** are created by the **build process** based on target frameworks and source generators.
+
+**Real Analysis**:
+
+The net8.0 directories are **leftover generated files** from before the project migrated to .NET 9.0. These are build artifacts similar to `bin/` and `obj/` directories - they're not part of the repository and should be cleaned up.
+
+**Current State**:
+- **net8.0/ directories**: Stale build artifacts from previous .NET version
+- **net9.0/ directories**: Current build artifacts for .NET 9.0
+
+**The Logic**: These are build-time generated directories that should be:
+1. **Excluded from source control** (like bin/obj)
+2. **Cleaned up** when changing target frameworks
+3. **Regenerated** on each build
+
+**Corrected Analysis**: This is **build artifact cleanup needed** - the net8.0 directories are stale leftovers that should be deleted.
+
+**Status**: **RESOLVED** - Cleaned up 28 leftover net8.0 generated directories from framework migration. These were trivial local build artifacts already excluded from source control.
+
+---
+
 ## Cognitive Load Problems
 
 ### 1. Context Switching Penalty
@@ -312,15 +497,19 @@ This is **mental overhead** that slows development and increases errors.
 
 ### 1. .NET Project Standards
 
-**Microsoft's own .NET templates** use consistent PascalCase throughout:
+**Microsoft's own .NET templates** use PascalCase for project structure, though they placate to the JavaScript crowd with lowercase in `wwwroot/`:
 
 ```
 # Microsoft template structure
 MyProject/
-├── Controllers/                     # Not controllers/
-├── Models/                          # Not models/  
-├── Views/                           # Not views/
-└── Services/                        # Not services/
+├── Controllers/                     # PascalCase for .NET areas
+├── Models/                          # PascalCase structure  
+├── Views/                           # PascalCase organization
+├── Services/                        # PascalCase components
+└── wwwroot/                         # lowercase for web assets
+    ├── css/                         # lowercase (web conventions)
+    ├── js/                          # lowercase (web conventions)
+    └── lib/                         # lowercase (web conventions)
 ```
 
 **TimeWarp violates this** in Web.Spa with `source/`, `features/`, `types/`.
@@ -346,11 +535,11 @@ docs/
 
 **Fix These Now**:
 ```bash
-# Fix the documentation inconsistency
-mv "Documentation/Developer/HowToGuides/Api_Contracts" "Documentation/Developer/HowToGuides/ApiContracts"
+# Fix the documentation inconsistency and semantic clarity
+# Task 033: mv "Documentation/Developer/HowToGuides/Api_Contracts" "Documentation/Developer/HowToGuides/WebApiContracts"
 
-# Fix the assembly annotation typo
-mv "Source/ContainerApps/Web/Web.Contracts/AssemlyAnnotations.cs" "Source/ContainerApps/Web/Web.Contracts/AssemblyAnnotations.cs"
+# Fix the assembly annotation typo  
+# Task 031: mv "Source/ContainerApps/Web/Web.Contracts/AssemlyAnnotations.cs" "Source/ContainerApps/Web/Web.Contracts/AssemblyAnnotations.cs"
 
 # Standardize Bicep modules  
 mv "DevOps/Bicep/modules/aks.bicep" "DevOps/Bicep/modules/Aks.bicep"
@@ -359,6 +548,29 @@ mv "DevOps/Bicep/modules/container_registry.bicep" "DevOps/Bicep/modules/Contain
 mv "DevOps/Bicep/modules/cosmos_db.bicep" "DevOps/Bicep/modules/CosmosDb.bicep"
 mv "DevOps/Bicep/modules/key_vault.bicep" "DevOps/Bicep/modules/KeyVault.bicep"
 ```
+
+### 1a. Strategic Review Required
+
+**DevOps Folder Relevance** (Task 034):
+The entire DevOps folder requires comprehensive review for relevance in the .NET Aspire era:
+
+```bash
+# Question: Is this entire directory structure obsolete?
+DevOps/
+├── Bicep/                           # May be redundant with Aspire deployment
+├── Docker/                          # May be handled by Aspire automatically  
+├── Kubernetes/                      # Aspir8 may generate these manifests
+├── Pipelines/                       # Modern GitHub Actions + Aspire approach?
+└── Pulumi/                          # Alternative IaC - still relevant?
+```
+
+**Key Questions**:
+- Does .NET Aspire + Aspir8 eliminate need for custom Kubernetes configs?
+- Are Bicep templates still best practice for Azure deployment?
+- Should template focus on Aspire-based deployment instead?
+- Is maintaining complex DevOps configurations worth the effort?
+
+**Potential Outcome**: Entire DevOps folder may be removed/replaced with modern Aspire-based deployment approach.
 
 ### 2. Kubernetes Consistency Decisions
 
