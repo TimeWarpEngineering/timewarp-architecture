@@ -122,6 +122,19 @@ This project uses a **hybrid approach** combining Kanban folders for internal de
 - `Kanban/InProgress/` - Currently being worked on
 - `Kanban/Done/` - Completed tasks
 
+### Task Organization Convention
+- **Simple tasks**: Single markdown file (e.g., `001_Fix-Bug.md`)
+- **Complex tasks with deliverables**: Use folder structure:
+  ```
+  025_Create-Analysis-Report/
+  ├── Task.md           # Task specification and notes
+  ├── Report.md         # Generated deliverable
+  └── Additional.md     # Other outputs as needed
+  ```
+- **Folder naming**: Same `###_Task-Name` pattern as single files
+- **Task file naming**: Use `Task.md` within folder (path provides context)
+- **Deliverable naming**: Descriptive names for outputs
+
 ### GitHub Issues (External Interface)
 - **Community contributions**: Bug reports, feature requests from users
 - **AI agent integration**: Create issues and mention AI agents (e.g., @claude) for automated work
