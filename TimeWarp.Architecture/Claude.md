@@ -234,6 +234,12 @@ Use these regions in entity classes to organize associations:
 
 ## Development Workflow
 
+### Code Quality Standards
+- **Be meticulous, not diplomatic**: Identify real issues clearly without excusing them as "strategic adaptations"
+- **Analyze, don't placate**: Understand the underlying reasons before critiquing naming, architecture, or design decisions
+- **Error on the side of quality**: Choose the approach that produces the best long-term product, even if it requires more work upfront
+- **Template responsibility**: Remember this code will be replicated hundreds of times - fix issues now to prevent widespread propagation
+
 ### Git Strategy
 - **Main branch**: `master` (not `main`)
 - **Merge strategy**: Use merge commits (not squash/rebase) to preserve development history
