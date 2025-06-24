@@ -134,6 +134,21 @@ This project uses a **hybrid approach** combining Kanban folders for internal de
 3. **AI automation**: Comment on GitHub Issues with "@claude please work on this" to trigger AI agents
 4. **Branch naming**: Task numbers integrate with branch naming convention: `Author/YYYY-MM-DD/Task_###`
 
+### Branch Naming Convention (ADR-0004)
+**Format**: `Author/YYYY-MM-DD/Task_###`
+
+**Examples**:
+- `Cramer/2025-06-18/Task_019`
+- `Cramer/2025-06-23/Task_023`
+- `Cramer/2025-06-24/Task_025`
+
+**Elements**:
+- **Author**: Developer's name/identifier (e.g., "Cramer")
+- **Date**: Branch creation date in YYYY-MM-DD format
+- **Task**: Task number from Kanban system (###)
+
+**Usage**: Always create feature branches using this convention when starting work on Kanban tasks. This provides clear ownership, temporal context, and traceability to the task management system.
+
 ### Definition of Done (API Endpoints)
 **Implementation:**
 - Server: *Endpoint (required), Server-side Validator, Mapper, *Handler (required)
