@@ -103,7 +103,7 @@
     <File Path="Directory.Packages.props" />
     <File Path="global.json" />
     <File Path="NuGet.config" />
-    <File Path="README.md" />
+    <File Path="Readme.md" />
     <File Path="Run.ps1" />
     <File Path="RunRelease.ps1" />
     <File Path=".template.config\template.json" />

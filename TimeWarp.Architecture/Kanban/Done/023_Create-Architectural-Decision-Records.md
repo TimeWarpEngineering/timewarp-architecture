@@ -48,7 +48,7 @@ Create formal Architectural Decision Records (ADRs) to document key development 
 - ✅ Used consistent terminology (master vs main branch)
 - ✅ Created proper branch and followed Kanban workflow
 - ✅ Committed changes following proper process
-- ✅ Updated CLAUDE.md to reference new ADRs
+- ✅ Updated Claude.md to reference new ADRs
 
 ## Related Tasks
 
@@ -65,5 +65,5 @@ Create formal Architectural Decision Records (ADRs) to document key development 
 2. ✅ Moved task to InProgress 
 3. ✅ Committed ADR files on branch
 4. ✅ Enhanced ADRs based on feedback and comprehensive analysis
-5. ✅ Updated CLAUDE.md to reference new ADRs
+5. ✅ Updated Claude.md to reference new ADRs
 6. ✅ Ready for pull request creation and task completion
