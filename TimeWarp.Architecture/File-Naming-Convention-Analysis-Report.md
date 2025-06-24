@@ -197,7 +197,7 @@ This comprehensive analysis examines file naming conventions across the entire T
 
 ### Documentation
 - **ADRs**: Excellent numbered kebab-case pattern
-- **General**: PascalCase consistently applied (Claude.md, Readme.md, Overview.md)
+- **General**: PascalCase consistently applied (Claude.md, ReadMe.md, Overview.md)
 - **Rating**: ⭐⭐⭐⭐⭐ Excellent
 
 ---
