@@ -10,7 +10,7 @@
     <Description>TimeWarp Architecture Templates</Description>
     <PackageTags>dotnet-new;templates;aspnet;blazor;spa;pwa;timewarp;gRPC;Tye;Aspire;YARP;Clean Architecture;Domain Driven Design</PackageTags>
     <PackageIcon>Logo.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <TargetFramework>net9.0</TargetFramework>
     <IncludeContentInPack>true</IncludeContentInPack>
@@ -39,7 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\README.md">
+    <None Include="..\..\..\ReadMe.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>

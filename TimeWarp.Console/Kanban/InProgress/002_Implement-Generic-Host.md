@@ -61,7 +61,7 @@ Integrate **Cocona** into the console application to simplify command-line parsi
       ```
 
 - **Update Documentation**
-  - [ ] Add notes to `Documentation/README.md` about the integration of Cocona and how to use the application.
+  - [ ] Add notes to `Documentation/ReadMe.md` about the integration of Cocona and how to use the application.
 
     ```markdown
     # ConsoleApp

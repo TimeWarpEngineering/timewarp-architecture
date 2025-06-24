@@ -117,6 +117,19 @@ Kanban/
 * **Active tasks**: `001_`, `002_`, etc. (remove B prefix when ready)
 * **Sequential numbering**: Ensures unique identification and chronological order
 
+### Task Organization Convention
+* **Simple tasks**: Single markdown file (e.g., `001_Fix-Bug.md`)
+* **Complex tasks with deliverables**: Folder structure for organization
+  ```
+  025_Create-File-Naming-Convention-Analysis-Report/
+  ├── Task.md                           # Task specification and notes
+  ├── Analysis-Report.md                # Generated deliverable
+  └── Additional-Files.md               # Other outputs as needed
+  ```
+* **Folder naming**: Use same `###_Task-Name` pattern as single files
+* **Task file naming**: Use `Task.md` within folder (path provides context, eliminates redundancy)
+* **Deliverable naming**: Descriptive names for outputs (reports, documentation, etc.)
+
 ### Integration with Development Workflow
 * **Branch naming**: Task numbers align with branch naming (e.g., `Author/Date/Task_019`)
 * **Commit references**: Commits can reference task numbers for traceability

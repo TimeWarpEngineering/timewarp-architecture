@@ -16,4 +16,4 @@ Some tips for managing your Spike folder might include:
 Remember, the goal of this folder is to encourage experimentation and to help us learn and grow as developers.
 So don't be afraid to take risks and try out new things!
 
-Feel free to update this README.md file as needed to reflect the evolving purpose and usage of the Spike folder. Good luck and have fun experimenting!
+Feel free to update this ReadMe.md file as needed to reflect the evolving purpose and usage of the Spike folder. Good luck and have fun experimenting!

@@ -53,7 +53,7 @@ Implement the hybrid Kanban + GitHub Issues approach documented in ADR-0006 by r
 ### Template Clean-up
 
 - Remove Process folder references from documentation
-- Update CLAUDE.md to reflect hybrid approach
+- Update Claude.md to reflect hybrid approach
 - Ensure new template instances only include Kanban
 
 ## Related Work
