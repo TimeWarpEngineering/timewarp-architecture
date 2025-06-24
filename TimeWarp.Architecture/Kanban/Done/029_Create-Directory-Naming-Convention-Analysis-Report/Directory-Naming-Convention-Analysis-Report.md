@@ -27,11 +27,11 @@ This analysis examines 382 directories across the TimeWarp.Architecture project 
 ```
 Source/
 ├── Common/
-│   ├── Common.Application/          # PascalCase.PascalCase
-│   ├── Common.Contracts/            # Domain layer naming
-│   ├── Common.Domain/               # Infrastructure layer naming  
-│   ├── Common.Infrastructure/       # Server layer naming
-│   └── Common.Server/
+│   ├── Common.Application/          # Application layer naming
+│   ├── Common.Contracts/            # Contracts layer naming
+│   ├── Common.Domain/               # Domain layer naming  
+│   ├── Common.Infrastructure/       # Infrastructure layer naming
+│   └── Common.Server/               # Server layer naming
 ├── ContainerApps/                   # PascalCase grouping
 │   ├── Api/                         # Technology identifier
 │   │   ├── Api.Application/         # Layer + Technology
