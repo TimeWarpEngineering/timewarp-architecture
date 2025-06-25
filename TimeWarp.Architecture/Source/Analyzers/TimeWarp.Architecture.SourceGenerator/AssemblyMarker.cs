@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Api.Server;
+﻿namespace TimeWarp.Architecture.SourceGenerator;
 
 /// <summary>
 /// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.

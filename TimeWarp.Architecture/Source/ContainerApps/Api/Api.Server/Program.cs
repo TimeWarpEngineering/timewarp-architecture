@@ -42,16 +42,16 @@ public class Program : IAspNetProgram
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
-    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Server.AssemblyMarker>();
-    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Contracts.AssemblyMarker>();
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Server.IAssemblyMarker>();
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Contracts.IAssemblyMarker>();
 
     serviceCollection.AddFastEndpoints(options =>
     {
       options.IncludeAbstractValidators = false; //This will run all AbstractValidators in the FastEndpoints pipeline.
       options.Assemblies = new[]
       {
-        typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).Assembly,
-        typeof(TimeWarp.Architecture.Api.Contracts.AssemblyMarker).Assembly
+        typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly,
+        typeof(TimeWarp.Architecture.Api.Contracts.IAssemblyMarker).Assembly
       };
     })
     .SwaggerDocument(options =>
@@ -76,8 +76,8 @@ public class Program : IAspNetProgram
           mediatRServiceConfiguration
             .RegisterServicesFromAssemblies
             (
-              typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).GetTypeInfo().Assembly,
-              typeof(TimeWarp.Architecture.Api.Application.AssemblyMarker).GetTypeInfo().Assembly
+              typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).GetTypeInfo().Assembly,
+              typeof(TimeWarp.Architecture.Api.Application.IAssemblyMarker).GetTypeInfo().Assembly
             )
       );
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(GenericPipelineBehavior<,>));

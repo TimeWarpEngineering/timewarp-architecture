@@ -112,19 +112,19 @@ public class Program : IAspNetProgram
     CorsPolicy.Any.Apply(serviceCollection);
     ConfigureInfrastructure(serviceCollection);
     serviceCollection.AddSignalR();
-    serviceCollection.AddAutoMapper(typeof(TimeWarp.Architecture.Web.Application.AssemblyMarker).Assembly);
+    serviceCollection.AddAutoMapper(typeof(TimeWarp.Architecture.Web.Application.IAssemblyMarker).Assembly);
     // serviceCollection.AddRazorPages();
     // serviceCollection.AddServerSideBlazor();
     serviceCollection.AddMvc()
-      .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker).Assembly);
+      .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly);
 
     serviceCollection.AddFluentValidationAutoValidation();
     serviceCollection.AddFluentValidationClientsideAdapters();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
-    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Server.AssemblyMarker>();
-    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Contracts.AssemblyMarker>();
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Server.IAssemblyMarker>();
+    serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Contracts.IAssemblyMarker>();
 
     serviceCollection.Configure<ApiBehaviorOptions>
     (
@@ -151,8 +151,8 @@ public class Program : IAspNetProgram
         mediatRServiceConfiguration =>
           mediatRServiceConfiguration.RegisterServicesFromAssemblies
           (
-            typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker).GetTypeInfo().Assembly,
-            typeof(TimeWarp.Architecture.Web.Application.AssemblyMarker).GetTypeInfo().Assembly
+            typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).GetTypeInfo().Assembly,
+            typeof(TimeWarp.Architecture.Web.Application.IAssemblyMarker).GetTypeInfo().Assembly
           )
       );
 
@@ -162,7 +162,7 @@ public class Program : IAspNetProgram
         serviceCollection,
         SwaggerVersion,
         SwaggerApiTitle,
-        [typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker), typeof(TimeWarp.Architecture.Web.Contracts.AssemblyMarker)]
+        [typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker), typeof(TimeWarp.Architecture.Web.Contracts.IAssemblyMarker)]
       );
   }
   private static void ConfigureAuthentication(IServiceCollection serviceCollection, IConfiguration configuration)
@@ -204,7 +204,7 @@ public class Program : IAspNetProgram
       (
         typeof(TimeWarp.State.AssemblyMarker).Assembly,
         typeof(TimeWarp.State.Plus.AssemblyMarker).Assembly,
-        typeof(TimeWarp.Architecture.Web.Spa.AssemblyMarker).Assembly
+        typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly
       );
 
     webApplication.MapHealthChecks("/api/health");

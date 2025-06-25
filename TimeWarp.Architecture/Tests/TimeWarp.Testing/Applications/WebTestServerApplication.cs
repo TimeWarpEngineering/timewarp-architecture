@@ -18,7 +18,7 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
       aWebApplicationOptions:
         new WebApplicationOptions
         {
-          ApplicationName = typeof(TimeWarp.Architecture.Web.Server.AssemblyMarker).Assembly.GetName().Name,
+          ApplicationName = typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly.GetName().Name,
           EnvironmentName = Environments.Development,
         },
       ConfigureServicesCallback
