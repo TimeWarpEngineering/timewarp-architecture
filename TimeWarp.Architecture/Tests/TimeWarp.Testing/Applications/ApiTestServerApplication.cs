@@ -18,7 +18,7 @@ public sealed class ApiTestServerApplication : TestServerApplication<Api.Server.
         aWebApplicationOptions:
         new WebApplicationOptions
         {
-          ApplicationName = typeof(TimeWarp.Architecture.Api.Server.AssemblyMarker).Assembly.GetName().Name,
+          ApplicationName = typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly.GetName().Name,
           EnvironmentName = Environments.Development,
           ContentRootPath = default,
         },
