@@ -1,4 +1,4 @@
-# B044: Build Flow to Check @key on Blazor Loops
+# B003: Build Flow to Check @key on Blazor Loops
 
 ## Description
 Create a Flow (validation/analysis tool) to automatically detect Blazor loops that are missing the `@key` directive and ensure proper key usage for performance and correctness.
