@@ -183,7 +183,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Tests\Web.Server.Integration.Tests\Web.Server.Integration.Tests.csproj">
+    <Project Path="Tests\ContainerApps\Web\Web.Server.Integration.Tests\Web.Server.Integration.Tests.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -192,7 +192,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Tests\Web.Spa.Integration.Tests\Web.Spa.Integration.Tests.csproj">
+    <Project Path="Tests\ContainerApps\Web\Web.Spa.Integration.Tests\Web.Spa.Integration.Tests.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />

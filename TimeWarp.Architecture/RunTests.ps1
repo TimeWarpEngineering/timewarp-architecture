@@ -23,8 +23,8 @@ try {
 
     # Web Tests
     Write-Host "Running Web Tests..." -ForegroundColor Cyan
-    dotnet fixie Tests/Web.Server.Integration.Tests
-    dotnet fixie Tests/Web.Spa.Integration.Tests
+    dotnet fixie Tests/ContainerApps/Web/Web.Server.Integration.Tests
+    dotnet fixie Tests/ContainerApps/Web/Web.Spa.Integration.Tests
 }
 finally {
     Pop-Location
