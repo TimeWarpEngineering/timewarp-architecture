@@ -55,15 +55,14 @@
     </PackageReference>
   </ItemGroup>
 
-  <!-- This is to add the CommitDate and CommitHash to your assemblyinfo -->
-
+  <!-- Add git commit date to assembly metadata -->
   <PropertyGroup>
     <GitCheckCommand>git rev-parse --is-inside-work-tree</GitCheckCommand>
-    <GitLogCommand>git log -1 --format=%%ct</GitLogCommand>
+    <GitLogCommand>git log -1 --format=%%cI</GitLogCommand>
   </PropertyGroup>
 
   <Target Name="SetAssemblyMetaData" BeforeTargets="PreBuildEvent">
-    <!-- Check if inside a Git repository and suppress output -->
+    <!-- Check if inside a Git repository -->
     <Exec Command="$(GitCheckCommand)" IgnoreExitCode="true" StandardOutputImportance="Low" StandardErrorImportance="Low">
       <Output TaskParameter="ExitCode" PropertyName="GitInRepo" />
     </Exec>
@@ -74,27 +73,10 @@
       <GitRepoAvailable>false</GitRepoAvailable>
     </PropertyGroup>
 
-    <!-- Get the latest commit timestamp if inside a Git repository -->
+    <!-- Get formatted commit date directly from git -->
     <Exec Command="$(GitLogCommand)" ConsoleToMSBuild="true" Condition="'$(GitRepoAvailable)' == 'true'" StandardOutputImportance="Low" StandardErrorImportance="Low">
-      <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitTimestamp"/>
+      <Output TaskParameter="ConsoleOutput" PropertyName="LastCommitDate"/>
     </Exec>
-    <!-- Windows: Use the working DateTime.Parse().AddSeconds() approach -->
-    <PropertyGroup Condition="'$(GitRepoAvailable)' == 'true' AND '$(OS)' == 'Windows_NT'">
-      <!-- Define the Unix epoch start date -->
-      <UnixEpochStart>1970-01-01T00:00:00Z</UnixEpochStart>
-      <!-- Calculate the commit date in UTC from the timestamp -->
-      <GitCommitDate>$([System.DateTime]::Parse($(UnixEpochStart)).AddSeconds($(GitCommitTimestamp)).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssK'))</GitCommitDate>
-      <!-- Assign the calculated date to LastCommitDate -->
-      <LastCommitDate>$(GitCommitDate)</LastCommitDate>
-    </PropertyGroup>
-    
-    <!-- Linux/macOS: Use DateTime.Now as workaround (MSBuild limitation) -->
-    <PropertyGroup Condition="'$(GitRepoAvailable)' == 'true' AND '$(OS)' != 'Windows_NT'">
-      <!-- LIMITATION: DateTime.Parse().AddSeconds() fails on Linux with "Method not found"
-           This is a known MSBuild cross-platform limitation. Using DateTime.Now as fallback.
-           Git commit timestamp $(GitCommitTimestamp) is available but cannot be converted. -->
-      <LastCommitDate>$([System.DateTime]::Now.ToString('yyyy-MM-ddTHH:mm:ssK'))</LastCommitDate>
-    </PropertyGroup>
     <ItemGroup Condition="'$(GitRepoAvailable)' == 'true'">
       <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
         <_Parameter1>CommitDate</_Parameter1>
