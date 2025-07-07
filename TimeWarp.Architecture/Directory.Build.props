@@ -78,26 +78,6 @@
     <Exec Command="$(GitLogCommand)" ConsoleToMSBuild="true" Condition="'$(GitRepoAvailable)' == 'true'" StandardOutputImportance="Low" StandardErrorImportance="Low">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitTimestamp"/>
     </Exec>
-    <!-- TODO: CRITICAL BUILD ISSUE ON LINUX - Fix DateTime expression
-         The current DateTime.Parse().AddSeconds() approach fails on Linux with:
-         "Method 'System.DateTime.AddSeconds' not found"
-         
-         Need to implement the commented approach using System.DateTime.UnixEpoch.AddSeconds()
-         See lines 92-94 for working alternative implementation
-         
-         Tracked in Kanban task: 036_Fix-Directory-Build-Props-Linux-DateTime-Issue
-    -->
-    <!--<PropertyGroup Condition="'$(GitRepoAvailable)' == 'true'">
-      Define the Unix epoch start date
-      <UnixEpochStart>1970-01-01T00:00:00Z</UnixEpochStart>
-
-      Calculate the commit date in UTC from the timestamp
-      <GitCommitDate>$([System.DateTime]::Parse($(UnixEpochStart)).AddSeconds($(GitCommitTimestamp)).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssK'))</GitCommitDate>
-
-      Assign the calculated date to LastCommitDate
-      <LastCommitDate>$(GitCommitDate)</LastCommitDate>
-    </PropertyGroup>-->
-
     <!-- Windows: Use the working DateTime.Parse().AddSeconds() approach -->
     <PropertyGroup Condition="'$(GitRepoAvailable)' == 'true' AND '$(OS)' == 'Windows_NT'">
       <!-- Define the Unix epoch start date -->
