@@ -80,7 +80,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <TypeScriptInputs Include="source\*.*"/>
+    <TypeScriptInputs Include="Source\*.*"/>
   </ItemGroup>
 
   <ItemGroup>

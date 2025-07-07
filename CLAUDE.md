@@ -20,6 +20,7 @@ Navigate to `TimeWarp.Architecture/` directory first:
 - `./Run.ps1` - Runs the Aspire orchestrator (Development environment)
 - `./RunDocker.ps1` - Run using Docker containers
 - `./RunTailwind.ps1` - Build Tailwind CSS for Web.Spa
+- `./Build.ps1` - Build entire solution without running (validates build including static assets)
 
 **Testing:**
 - `./RunTests.ps1` - Runs all test suites using Fixie framework

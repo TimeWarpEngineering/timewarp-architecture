@@ -1,6 +1,6 @@
 // noinspection JSUnusedLocalSymbols,JSUnusedGlobalSymbols
 import { Spa } from "./Spa.js";
-import { Counter } from "./features/Counter.js";
+import { Counter } from "./Features/Counter.js";
 import { timeWarpState } from "/_content/TimeWarp.State/js/TimeWarpState.js";
 import { log, LogAction } from "/_content/TimeWarp.State/js/Logger.js";
 import {

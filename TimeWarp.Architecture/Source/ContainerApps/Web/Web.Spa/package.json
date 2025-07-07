@@ -8,7 +8,7 @@
     "prettier": "prettier --write .",
     "css:build": "npx tailwindcss -i ./Styles/input.css -o ./wwwroot/css/site.css --minify",
     "tailwind-watch": "npx tailwindcss -i ./Styles/input.css -o ./wwwroot/css/site.css --minify --watch",
-    "lint": "eslint source/**/*.ts"
+    "lint": "eslint Source/**/*.ts"
   },
   "devDependencies": {
     "@tailwindcss/aspect-ratio": "0.4.2",

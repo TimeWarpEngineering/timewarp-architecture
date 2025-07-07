@@ -59,8 +59,9 @@ Original decision: "Using a `sealed` class named `AssemblyMarker` in each assemb
 * Good, because it clearly signifies the assembly's purpose and contents
 * Good, because it is simple to implement and requires minimal code
 * Good, because it avoids the use of reflection for identifying custom attributes, which can be more error-prone and less performant
+* Good, because it works reliably with Blazor WebAssembly's IL trimming and resource collection
 * Bad, because it introduces a small amount of additional code to each assembly
-* Bad, because sealed classes cannot be used as generic type arguments in some scenarios
+* Bad, because static classes cannot be used as generic type arguments in some scenarios
 
 ### Using custom attributes to mark assemblies
 
@@ -104,13 +105,29 @@ public interface IAssemblyMarker;
 public sealed class AssemblyMarker;
 ```
 
+## Blazor WebAssembly Compatibility Note
+
+**Important**: Blazor WebAssembly projects have a specific compatibility issue with interface-based assembly markers. The IL trimming process and resource collection mechanism in Blazor WebAssembly fail when using interfaces as assembly markers, resulting in `resource-collection.*.js` 404 errors at runtime.
+
+For Blazor WebAssembly projects only, use a sealed class instead:
+
+```csharp
+// Blazor WebAssembly projects MUST use sealed class
+public sealed class AssemblyMarker;
+```
+
+This limitation is specific to Blazor WebAssembly's build-time tooling and does not affect server-side .NET applications, which work correctly with interface-based assembly markers.
+
 ## Usage Examples
 
 ```csharp
-// FluentValidation assembly scanning (requires interface pattern)
+// FluentValidation assembly scanning (server-side projects)
 services.AddValidatorsFromAssemblyContaining<IAssemblyMarker>();
 
-// Assembly identification
+// Assembly identification (server-side projects)
 var assembly = typeof(IAssemblyMarker).Assembly;
+
+// Blazor WebAssembly projects
+var assembly = typeof(AssemblyMarker).Assembly; // Note: no 'I' prefix
 var assemblyName = assembly.GetName().Name;
 ```
