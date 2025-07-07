@@ -75,12 +75,13 @@ This comprehensive analysis reveals **significant inconsistencies** in directory
 - ❌ **Bad**: `timewarp.software.com` domain-style naming
 
 ### **Test Structure**
-- ✅ **Good**: Mirrors source structure well
-- ❌ **Bad**: `EndToEnd.Playwright.Tests` inconsistent with naming
+- ✅ **Good**: Mirrors source structure well (after fixes)
+- ✅ **Fixed**: Integration tests moved to mirror source structure
+- ⚠️ **Remaining**: `EndToEnd.Playwright.Tests` uses dot notation (deferred)
 
 ### **Project Management**
 - ✅ **Good**: `Kanban/`, `Done/`, `InProgress/`
-- ❌ **Bad**: `Task-Examples` breaks convention
+- ✅ **Fixed**: `Task-Examples` → `TaskExamples`
 
 ## Compliance Assessment
 
@@ -199,6 +200,12 @@ This comprehensive analysis reveals **significant inconsistencies** in directory
 2. **Task Management Directory** (2025-01-07)
    - **Fixed**: `Task-Examples/` → `TaskExamples/` (Pascal case)
    - **Status**: ✅ Complete - Kanban directory structure now consistent
+
+3. **Test Structure Reorganization** (2025-01-07)
+   - **Fixed**: `Tests/Web.Server.Integration.Tests/` → `Tests/ContainerApps/Web/Web.Server.Integration.Tests/`
+   - **Fixed**: `Tests/Web.Spa.Integration.Tests/` → `Tests/ContainerApps/Web/Web.Spa.Integration.Tests/`
+   - **Updated**: Solution file (TimeWarp.Architecture.slnx) and RunTests.ps1 with new paths
+   - **Status**: ✅ Complete - Test structure now mirrors source structure
 
 ### 🔄 **Remaining Issues**
 
