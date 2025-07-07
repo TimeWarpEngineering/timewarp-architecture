@@ -125,11 +125,23 @@ The underscore pattern represents **component hierarchy**:
 - SitePage: Uses underscores INSTEAD of subdirectories (single hierarchy)
 - Other components: Simple single-file components (no hierarchy needed)
 
-### **3. Directory Naming Issues**
+### **3. Directory Naming Pattern Revealed**
 
-| Directory | Issue | Should Be |
-|-----------|-------|-----------|
-| `RightPane_Main/` | Underscore in directory name | `RightPaneMain/` |
+The `RightPane_Main/` directory initially appeared inconsistent, but it's actually **logical**:
+
+```
+RightPane/
+├── RightPane_Footer.razor    # Simple component (file)
+├── RightPane_Header.razor    # Simple component (file)  
+└── RightPane_Main/           # Complex component (directory)
+    ├── AsidePane/            # Contains sub-components
+    ├── PagePane/             # Contains sub-components
+    └── RightPane_Main.razor  # The main component file
+```
+
+**The underscore pattern extends to directories when they represent component parts that contain sub-components!**
+
+This maintains naming consistency with sibling components while indicating it's a container.
 
 ### **4. Component Organization Logic Revealed**
 
@@ -244,19 +256,15 @@ Only 3 components use code-behind:
 
 ### **Immediate Actions**
 
-1. **Fix Directory Naming Violation**
-   ```
-   RightPane_Main/ → RightPaneMain/
-   ```
-
-2. **Move Misplaced Component**
+1. **Move Misplaced Component**
    ```
    Composites/AuthorizedFluentNavLink.razor → Elements/AuthorizedFluentNavLink.razor
    ```
 
-3. **Document the Pattern**
-   - The underscore pattern is actually **logical and useful**
-   - Create ADR documenting the three-tier component organization
+2. **Document the Sophisticated Pattern**
+   - The underscore pattern extends to directories when they represent component containers
+   - Create ADR documenting the component hierarchy naming system
+   - Document when to use directories vs. underscores vs. both
 
 ### **Strategic Decisions Needed**
 
@@ -306,9 +314,8 @@ The Components directory actually shows **intelligent component organization** o
 - **Consistent Pascal case** for directories (with one exception)
 
 ### ❌ **Issues to Fix**
-1. **Directory naming**: `RightPane_Main/` → `RightPaneMain/`
-2. **Misplaced component**: `AuthorizedFluentNavLink.razor` should be in Elements/
-3. **Missing documentation** of the three-tier pattern
+1. **Misplaced component**: `AuthorizedFluentNavLink.razor` should be in Elements/
+2. **Missing documentation** of the sophisticated component organization patterns
 
 ### 💡 **Key Insight**
 The underscore pattern is **not inconsistent** - it's a logical way to represent component hierarchy:
