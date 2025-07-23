@@ -53,45 +53,71 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           ./.github/scripts/sync-configurable-files.ps1
 
-      - name: Create Pull Request
+      - name: Check for existing PRs and create individual PRs
         if: steps.sync.outputs.changes_made == 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.SYNC_PAT || secrets.GITHUB_TOKEN }}
-          commit-message: |
-            Sync configurable files from parent repository
-
-            Updated files: ${{ env.CHANGED_FILES }}
-            Source: ${{ steps.sync.outputs.parent_repo }}@${{ steps.sync.outputs.parent_branch }}
-
-            🤖 Generated with GitHub Actions
-          title: 'Sync configurable files from parent repository'
-          body: |
-            ## Sync Configurable Files
-
-            This PR updates configurable files from the parent repository to maintain consistency.
-
-            **Source Repository:** `${{ steps.sync.outputs.parent_repo }}`
-            **Source Branch:** `${{ steps.sync.outputs.parent_branch }}`
-
-            ### Files Updated
-            ${{ env.CHANGED_FILES }}
-
-            ### Files That Failed to Download
-            ${{ env.FAILED_FILES }}
-
-            ### Configuration
-            This workflow can be customized by:
-            - Modifying the `DEFAULT_FILES` environment variable in the workflow
-            - Using the manual trigger with custom file lists
-            - Adjusting the cron schedule for different sync frequencies
-
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.SYNC_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          # Get list of changed files from environment variable
+          $changedFiles = $env:CHANGED_FILES -split ' '
+          
+          Write-Host "Processing $($changedFiles.Count) changed files..."
+          
+          foreach ($file in $changedFiles) {
+            if ([string]::IsNullOrWhiteSpace($file)) { continue }
+            
+            # Create a branch name based on the file path
+            $branchName = "sync-file/$($file -replace '[/\\]', '-' -replace '\.', '-')"
+            
+            Write-Host "`nProcessing file: $file"
+            Write-Host "Branch name: $branchName"
+            
+            # Check if a PR already exists for this file
+            $existingPRs = gh pr list --json title,headRefName,state --jq ".[] | select(.headRefName == `"$branchName`" and .state == `"OPEN`")" 2>$null
+            
+            if ($existingPRs) {
+              Write-Host "PR already exists for $file, skipping..."
+              continue
+            }
+            
+            # Create a new branch for this file
+            git checkout -b $branchName
+            
+            # Stage only this specific file
+            git reset --hard HEAD
+            $targetFile = Join-Path -Path ${{ github.workspace }} -ChildPath $file
+            $tempFile = Join-Path -Path $env:TEMP -ChildPath "parent-repo" -ChildPath $file
+            Copy-Item -Path $tempFile -Destination $targetFile -Force
+            git add $targetFile
+            
+            # Commit the file
+            git commit -m "Sync $file from parent repository" -m "Source: ${{ steps.sync.outputs.parent_repo }}@${{ steps.sync.outputs.parent_branch }}" -m "🤖 Generated with GitHub Actions"
+            
+            # Push the branch
+            git push origin $branchName --force
+            
+            # Create PR using gh CLI
+            $prTitle = "Sync $file from parent repository"
+            $prBody = @"
+            ## Sync Configurable File
+            
+            This PR updates a configurable file from the parent repository to maintain consistency.
+            
+            **File:** ``$file``
+            **Source Repository:** ``${{ steps.sync.outputs.parent_repo }}``
+            **Source Branch:** ``${{ steps.sync.outputs.parent_branch }}``
+            
             ---
-
+            
             🤖 This PR was created automatically by the sync-configurable-files workflow.
-          branch: sync-configurable-files
-          branch-suffix: timestamp
-          delete-branch: true
+            "@
+            
+            gh pr create --title "$prTitle" --body "$prBody" --base ${{ github.ref_name }} --head $branchName
+            
+            # Return to main branch for next file
+            git checkout ${{ github.ref_name }}
+          }
 
       - name: Output summary (already handled in PowerShell script)
         shell: pwsh
