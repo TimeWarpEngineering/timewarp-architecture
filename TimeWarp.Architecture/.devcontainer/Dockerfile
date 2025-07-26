@@ -27,11 +27,14 @@ RUN wget https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.100-preview.6.25358
     && rm dotnet-sdk-10.0.100-preview.6.25358.103-linux-x64.tar.gz
 
 # Install PowerShell
-RUN wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" \
+# First install lsb-release to get the Ubuntu version
+RUN apt-get update && apt-get install -y lsb-release \
+    && wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" \
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update \
     && apt-get install -y powershell \
-    && rm packages-microsoft-prod.deb
+    && rm packages-microsoft-prod.deb \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Set up node user permissions
 RUN mkdir -p /usr/local/share/npm-global \
