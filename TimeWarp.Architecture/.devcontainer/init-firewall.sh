@@ -65,20 +65,28 @@ for domain in \
     "mcr.microsoft.com" \
     "azurecr.io"; do
     echo "Resolving $domain..."
-    ips=$(dig +short A "$domain")
+    # Use dig +short to follow CNAMEs and get final IPs
+    ips=$(dig +short "$domain" | grep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$')
+    
+    # If no direct IPs, try to resolve CNAMEs
     if [ -z "$ips" ]; then
-        echo "ERROR: Failed to resolve $domain"
-        exit 1
+        cnames=$(dig +short "$domain" | grep -v -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$')
+        for cname in $cnames; do
+            echo "Following CNAME $cname for $domain"
+            cname_ips=$(dig +short "$cname" | grep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$')
+            ips="$ips$cname_ips"
+        done
+    fi
+    
+    if [ -z "$ips" ]; then
+        echo "WARNING: Could not resolve $domain to any IPs, skipping"
+        continue
     fi
     
     while read -r ip; do
-        if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-            echo "ERROR: Invalid IP from DNS for $domain: $ip"
-            exit 1
-        fi
         echo "Adding $ip for $domain"
-        ipset add allowed-domains "$ip"
-    done < <(echo "$ips")
+        ipset add allowed-domains "$ip" 2>/dev/null || echo "Already exists: $ip"
+    done < <(echo "$ips" | sort -u)
 done
 
 # Get host IP from default route
