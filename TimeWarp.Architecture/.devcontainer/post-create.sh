@@ -20,6 +20,10 @@ if [ -f "Source/ContainerApps/Web/Web.Spa/package.json" ]; then
     cd /workspace/timewarp-architecture
 fi
 
+# Update workloads to prevent verification warnings
+echo "🔧 Updating .NET workloads..."
+dotnet workload update --skip-sign-check || echo "Workload update completed"
+
 # Just restore .NET packages to populate the package cache
 echo "📦 Restoring .NET package cache..."
 dotnet restore || echo "Package restore completed (some packages may be unavailable offline)"
