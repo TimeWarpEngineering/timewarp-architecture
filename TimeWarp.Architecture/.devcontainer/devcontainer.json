@@ -13,12 +13,7 @@
     "--cap-add=NET_RAW"
   ],
   
-  "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "moby": true
-    }
-  },
+  "features": {},
 
   "customizations": {
     "vscode": {
