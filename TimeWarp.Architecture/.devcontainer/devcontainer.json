@@ -1,0 +1,139 @@
+{
+  "name": "TimeWarp Architecture Dev Container with Claude Code",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "VARIANT": "10.0-preview",
+      "NODE_VERSION": "24"
+    }
+  },
+  
+  // Security capabilities for firewall
+  "runArgs": [
+    "--cap-add=NET_ADMIN",
+    "--cap-add=NET_RAW"
+  ],
+  
+  // Features to add to the dev container
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "10.0-preview.6",
+      "additionalVersions": "9.0,8.0"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24"
+    },
+    "ghcr.io/devcontainers/features/powershell:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": false
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+
+  // VS Code extensions to install
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.dotnet-interactive-vscode",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.powershell",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-playwright.playwright",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "donjayamanne.githistory"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "dotnet.preferRuntimeFromSDK": true
+      }
+    }
+  },
+
+  // Forward ports for development
+  "forwardPorts": [
+    5147, // Web Blazor Server
+    5100, // API
+    5200, // gRPC
+    5300, // YARP Gateway
+    15888, // Aspire Dashboard HTTP
+    18889  // Aspire Dashboard gRPC
+  ],
+  "portsAttributes": {
+    "5147": {
+      "label": "Web - Blazor",
+      "onAutoForward": "openBrowser"
+    },
+    "5100": {
+      "label": "API Service",
+      "onAutoForward": "notify"
+    },
+    "15888": {
+      "label": "Aspire Dashboard",
+      "onAutoForward": "openBrowser"
+    }
+  },
+
+  // Mount configuration and history
+  "mounts": [
+    "source=timewarp-claude-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
+    "source=timewarp-claude-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    {
+      "source": "${localWorkspaceFolder}/../..",
+      "target": "/workspace/git-worktree",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.ssh",
+      "target": "/home/vscode/.ssh",
+      "type": "bind",
+      "readonly": true
+    },
+    {
+      "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig",
+      "target": "/home/vscode/.gitconfig",
+      "type": "bind",
+      "readonly": true
+    }
+  ],
+
+  // Set the default workspace folder
+  "workspaceFolder": "/workspace/timewarp-architecture",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/timewarp-architecture,type=bind",
+
+  // Container environment variables
+  "containerEnv": {
+    "ASPNETCORE_ENVIRONMENT": "Development",
+    "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true",
+    "DOTNET_USE_POLLING_FILE_WATCHER": "true",
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    "TZ": "${localEnv:TZ:America/Los_Angeles}"
+  },
+
+  // Run commands after container is created
+  "postCreateCommand": "/bin/bash -c '.devcontainer/post-create.sh'",
+  
+  // Run as vscode user
+  "remoteUser": "vscode",
+  
+  // Keep container running
+  "overrideCommand": false,
+
+  // Additional settings
+  "shutdownAction": "stopContainer",
+  "updateRemoteUserUID": true
+}

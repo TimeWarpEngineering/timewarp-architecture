@@ -1,0 +1,93 @@
+# Start with Node.js base for Claude Code compatibility
+FROM node:20
+
+ARG TZ="America/Los_Angeles"
+ENV TZ="$TZ"
+
+# Install basic development tools and security tools
+RUN apt update && apt install -y \
+    less git procps sudo fzf zsh man-db unzip gnupg2 gh \
+    iptables ipset iproute2 dnsutils aggregate jq \
+    vim htop ripgrep fd-find \
+    wget curl ca-certificates software-properties-common \
+    && apt clean -y && rm -rf /var/lib/apt/lists/*
+
+# Install .NET 10 Preview 6
+RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
+    && chmod +x ./dotnet-install.sh \
+    && ./dotnet-install.sh --channel 10.0-preview6 --install-dir /usr/share/dotnet \
+    && ./dotnet-install.sh --channel 9.0 --install-dir /usr/share/dotnet \
+    && ./dotnet-install.sh --channel 8.0 --install-dir /usr/share/dotnet \
+    && rm ./dotnet-install.sh \
+    && ln -s /usr/share/dotnet/dotnet /usr/local/bin/dotnet
+
+# Install PowerShell
+RUN wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" \
+    && dpkg -i packages-microsoft-prod.deb \
+    && apt-get update \
+    && apt-get install -y powershell \
+    && rm packages-microsoft-prod.deb
+
+# Set up node user permissions
+RUN mkdir -p /usr/local/share/npm-global \
+    && chown -R node:node /usr/local/share
+
+# Create vscode user (for .NET dev containers compatibility)
+RUN useradd -ms /bin/bash vscode \
+    && usermod -aG sudo vscode \
+    && echo 'vscode ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Switch to node user for npm installations
+USER node
+
+# Install Claude Code and global npm packages
+RUN npm config set prefix /usr/local/share/npm-global \
+    && npm install -g \
+        @anthropic-ai/claude-code \
+        tailwindcss \
+        typescript \
+        prettier \
+        eslint
+
+# Add npm global bin to PATH
+ENV PATH="/usr/local/share/npm-global/bin:${PATH}"
+
+# Switch back to root for system configuration
+USER root
+
+# Set up git safe directories
+RUN git config --system --add safe.directory /workspace/timewarp-architecture \
+    && git config --system --add safe.directory /workspace/git-worktree
+
+# Create workspace directories
+RUN mkdir -p /workspace/timewarp-architecture /workspace/git-worktree /commandhistory \
+    && chown -R vscode:vscode /workspace /commandhistory
+
+# Copy and set up firewall script
+COPY init-firewall.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/init-firewall.sh
+
+# Set up Docker-in-Docker
+RUN apt-get update && apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y docker-ce docker-ce-cli containerd.io \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
+    && usermod -aG docker vscode
+
+# Switch to vscode user
+USER vscode
+
+# Set environment variables
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=true \
+    POWERSHELL_TELEMETRY_OPTOUT=1 \
+    DOTNET_ROOT=/usr/share/dotnet \
+    PATH="/usr/share/dotnet:/usr/local/share/npm-global/bin:${PATH}" \
+    NODE_OPTIONS="--max-old-space-size=4096"
