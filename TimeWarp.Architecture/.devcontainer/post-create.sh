@@ -4,25 +4,24 @@ set -e
 echo "🔧 Running post-create setup..."
 
 # Initialize firewall for security
-if [ -f "/usr/local/bin/init-firewall.sh" ]; then
+if [ -f "/workspace/timewarp-architecture/.devcontainer/init-firewall.sh" ]; then
     echo "🔒 Initializing security firewall..."
-    sudo /usr/local/bin/init-firewall.sh || echo "⚠️  Firewall initialization failed, continuing..."
+    sudo /workspace/timewarp-architecture/.devcontainer/init-firewall.sh || echo "⚠️  Firewall initialization failed, continuing..."
 fi
 
 # Navigate to the workspace
 cd /workspace/timewarp-architecture
 
 # Install npm dependencies for Web.Spa if they exist
-if [ -f "TimeWarp.Architecture/Source/ContainerApps/Web/Web.Spa/package.json" ]; then
+if [ -f "Source/ContainerApps/Web/Web.Spa/package.json" ]; then
     echo "📦 Installing npm dependencies for Web.Spa..."
-    cd TimeWarp.Architecture/Source/ContainerApps/Web/Web.Spa
+    cd Source/ContainerApps/Web/Web.Spa
     npm install
     cd /workspace/timewarp-architecture
 fi
 
 # Restore .NET dependencies
 echo "📦 Restoring .NET dependencies..."
-cd TimeWarp.Architecture
 dotnet restore
 
 # Build the solution to ensure everything is set up
@@ -47,7 +46,7 @@ fi
 cat >> ~/.bashrc << 'EOF'
 
 # TimeWarp Architecture aliases
-alias tw='cd /workspace/timewarp-architecture/TimeWarp.Architecture'
+alias tw='cd /workspace/timewarp-architecture'
 alias run='./Run.ps1'
 alias test='./RunTests.ps1'
 alias build='./Build.ps1'
