@@ -26,14 +26,13 @@ RUN wget https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.100-preview.6.25358
     && tar -zxf dotnet-sdk-10.0.100-preview.6.25358.103-linux-x64.tar.gz -C /usr/share/dotnet \
     && rm dotnet-sdk-10.0.100-preview.6.25358.103-linux-x64.tar.gz
 
-# Install PowerShell
-# First install lsb-release to get the Ubuntu version
-RUN apt-get update && apt-get install -y lsb-release \
-    && wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" \
-    && dpkg -i packages-microsoft-prod.deb \
+# Install PowerShell for Debian 12 (bookworm)
+RUN apt-get update \
+    && apt-get install -y ca-certificates curl \
+    && curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/microsoft-debian-bookworm-prod bookworm main" > /etc/apt/sources.list.d/microsoft.list \
     && apt-get update \
     && apt-get install -y powershell \
-    && rm packages-microsoft-prod.deb \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Set up node user permissions
