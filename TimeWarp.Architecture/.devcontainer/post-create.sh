@@ -20,13 +20,9 @@ if [ -f "Source/ContainerApps/Web/Web.Spa/package.json" ]; then
     cd /workspace/timewarp-architecture
 fi
 
-# Restore .NET dependencies
-echo "📦 Restoring .NET dependencies..."
-dotnet restore
-
-# Build the solution to ensure everything is set up
-echo "🔨 Building the solution..."
-./Build.ps1 || echo "Initial build may have warnings, continuing..."
+# Just restore .NET packages to populate the package cache
+echo "📦 Restoring .NET package cache..."
+dotnet restore --no-dependencies || echo "Package restore completed (some packages may be unavailable offline)"
 
 # Set up git worktree symlink if needed
 if [ -d "/workspace/git-worktree" ] && [ ! -L "/workspace/git-worktree-link" ]; then
