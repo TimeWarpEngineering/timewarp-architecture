@@ -102,3 +102,6 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_ROOT=/usr/share/dotnet \
     PATH="/usr/share/dotnet:/usr/local/share/npm-global/bin:${PATH}" \
     NODE_OPTIONS="--max-old-space-size=4096"
+
+# Keep container running
+CMD ["sleep", "infinity"]
