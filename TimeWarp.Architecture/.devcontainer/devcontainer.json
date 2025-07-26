@@ -65,6 +65,11 @@
     "source=timewarp-claude-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
     "source=timewarp-claude-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
     {
+      "source": "/var/run/docker.sock",
+      "target": "/var/run/docker.sock",
+      "type": "bind"
+    },
+    {
       "source": "${localWorkspaceFolder}/../..",
       "target": "/workspace/git-worktree",
       "type": "bind"

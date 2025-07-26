@@ -74,8 +74,23 @@ RUN mkdir -p /workspace/timewarp-architecture /workspace/git-worktree /commandhi
 COPY init-firewall.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/init-firewall.sh
 
-# Ensure vscode user has sudo permissions for any needed operations
-RUN usermod -aG sudo vscode && echo 'vscode ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# Install Docker CLI only (not the daemon) to communicate with host Docker
+RUN apt-get update && apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y docker-ce-cli \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
+# Ensure vscode user has permissions for Docker socket and sudo
+RUN usermod -aG sudo vscode && echo 'vscode ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && groupadd -g 999 docker || true \
+    && usermod -aG docker vscode
 
 # Switch to vscode user
 USER vscode
