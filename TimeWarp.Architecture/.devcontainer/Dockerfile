@@ -67,9 +67,9 @@ USER root
 RUN git config --system --add safe.directory /workspace/timewarp-architecture \
     && git config --system --add safe.directory /workspace/git-worktree
 
-# Create workspace directories
-RUN mkdir -p /workspace/timewarp-architecture /workspace/git-worktree /commandhistory \
-    && chown -R vscode:vscode /workspace /commandhistory
+# Create workspace directories and Claude config directory
+RUN mkdir -p /workspace/timewarp-architecture /workspace/git-worktree /commandhistory /home/vscode/.claude \
+    && chown -R vscode:vscode /workspace /commandhistory /home/vscode
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
