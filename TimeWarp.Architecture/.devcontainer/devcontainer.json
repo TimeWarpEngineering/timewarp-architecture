@@ -8,38 +8,18 @@
     }
   },
   
-  // Security capabilities for firewall
   "runArgs": [
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW"
   ],
   
-  // Features to add to the dev container
   "features": {
-    "ghcr.io/devcontainers/features/dotnet:2": {
-      "version": "10.0-preview.6",
-      "additionalVersions": "9.0,8.0"
-    },
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "24"
-    },
-    "ghcr.io/devcontainers/features/powershell:1": {
-      "version": "latest"
-    },
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "version": "latest",
       "moby": true
-    },
-    "ghcr.io/devcontainers/features/git:1": {
-      "version": "latest",
-      "ppa": false
-    },
-    "ghcr.io/devcontainers/features/github-cli:1": {
-      "version": "latest"
     }
   },
 
-  // VS Code extensions to install
   "customizations": {
     "vscode": {
       "extensions": [
@@ -63,14 +43,13 @@
     }
   },
 
-  // Forward ports for development
   "forwardPorts": [
-    5147, // Web Blazor Server
-    5100, // API
-    5200, // gRPC
-    5300, // YARP Gateway
-    15888, // Aspire Dashboard HTTP
-    18889  // Aspire Dashboard gRPC
+    5147,
+    5100,
+    5200,
+    5300,
+    15888,
+    18889
   ],
   "portsAttributes": {
     "5147": {
@@ -87,7 +66,6 @@
     }
   },
 
-  // Mount configuration and history
   "mounts": [
     "source=timewarp-claude-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
     "source=timewarp-claude-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
@@ -110,11 +88,9 @@
     }
   ],
 
-  // Set the default workspace folder
   "workspaceFolder": "/workspace/timewarp-architecture",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/timewarp-architecture,type=bind",
 
-  // Container environment variables
   "containerEnv": {
     "ASPNETCORE_ENVIRONMENT": "Development",
     "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true",
@@ -124,16 +100,12 @@
     "TZ": "${localEnv:TZ:America/Los_Angeles}"
   },
 
-  // Run commands after container is created
   "postCreateCommand": "/bin/bash -c '.devcontainer/post-create.sh'",
   
-  // Run as vscode user
   "remoteUser": "vscode",
   
-  // Keep container running
   "overrideCommand": false,
 
-  // Additional settings
   "shutdownAction": "stopContainer",
   "updateRemoteUserUID": true
 }

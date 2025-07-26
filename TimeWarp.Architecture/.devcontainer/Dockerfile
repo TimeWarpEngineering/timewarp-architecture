@@ -12,10 +12,10 @@ RUN apt update && apt install -y \
     wget curl ca-certificates software-properties-common \
     && apt clean -y && rm -rf /var/lib/apt/lists/*
 
-# Install .NET 10 Preview 6
+# Install .NET SDKs
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
     && chmod +x ./dotnet-install.sh \
-    && ./dotnet-install.sh --channel 10.0-preview6 --install-dir /usr/share/dotnet \
+    && ./dotnet-install.sh --channel 10.0-preview --install-dir /usr/share/dotnet \
     && ./dotnet-install.sh --channel 9.0 --install-dir /usr/share/dotnet \
     && ./dotnet-install.sh --channel 8.0 --install-dir /usr/share/dotnet \
     && rm ./dotnet-install.sh \
