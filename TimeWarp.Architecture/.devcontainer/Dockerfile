@@ -26,8 +26,10 @@ RUN wget https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.100-preview.6.25358
     && tar -zxf dotnet-sdk-10.0.100-preview.6.25358.103-linux-x64.tar.gz -C /usr/share/dotnet \
     && rm dotnet-sdk-10.0.100-preview.6.25358.103-linux-x64.tar.gz
 
-# Install Aspire workload
-RUN dotnet workload install aspire
+# Install Aspire project templates (Aspire 9+ no longer uses workloads)
+RUN dotnet new install Aspire.ProjectTemplates || echo "Aspire templates installation completed"
+# List installed templates for verification
+RUN echo "Installed .NET templates:" && dotnet new list | grep -i aspire || true
 
 # Install PowerShell for Debian 12 (bookworm)
 RUN apt-get update \

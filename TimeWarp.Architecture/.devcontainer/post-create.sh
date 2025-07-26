@@ -22,7 +22,7 @@ fi
 
 # Just restore .NET packages to populate the package cache
 echo "📦 Restoring .NET package cache..."
-dotnet restore --no-dependencies || echo "Package restore completed (some packages may be unavailable offline)"
+dotnet restore || echo "Package restore completed (some packages may be unavailable offline)"
 
 # Set up git worktree symlink if needed
 if [ -d "/workspace/git-worktree" ] && [ ! -L "/workspace/git-worktree-link" ]; then
@@ -65,4 +65,6 @@ echo "  - Use 'test' to run all tests"
 echo "  - Use 'worktree' to access the git worktree"
 echo "  - Claude is available via 'claude' command"
 echo ""
-echo "🧪 Run '.devcontainer/validate-container.sh' to test the dev container setup"
+echo "🧪 Running validation tests..."
+echo ""
+/workspace/timewarp-architecture/.devcontainer/validate-container.sh || echo "⚠️  Some validation tests failed, but continuing..."
