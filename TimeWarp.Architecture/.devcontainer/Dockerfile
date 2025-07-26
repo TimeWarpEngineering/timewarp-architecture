@@ -26,6 +26,9 @@ RUN wget https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.100-preview.6.25358
     && tar -zxf dotnet-sdk-10.0.100-preview.6.25358.103-linux-x64.tar.gz -C /usr/share/dotnet \
     && rm dotnet-sdk-10.0.100-preview.6.25358.103-linux-x64.tar.gz
 
+# Install Aspire workload
+RUN dotnet workload install aspire
+
 # Install PowerShell for Debian 12 (bookworm)
 RUN apt-get update \
     && apt-get install -y ca-certificates curl \
@@ -48,17 +51,16 @@ RUN mkdir -p /usr/local/share/npm-global \
 # Switch to vscode user for npm installations
 USER vscode
 
-# Install Claude Code and global npm packages
+# Set npm prefix and install Claude Code - THIS MUST WORK
 RUN npm config set prefix /usr/local/share/npm-global \
-    && npm install -g \
-        @anthropic-ai/claude-code \
-        tailwindcss \
-        typescript \
-        prettier \
-        eslint
+    && npm install -g @anthropic-ai/claude-code \
+    && npm install -g tailwindcss typescript prettier eslint
 
 # Add npm global bin to PATH
 ENV PATH="/usr/local/share/npm-global/bin:${PATH}"
+
+# Verify Claude is installed and accessible
+RUN which claude || (echo "FATAL: Claude installation failed!" && exit 1)
 
 # Switch back to root for system configuration
 USER root

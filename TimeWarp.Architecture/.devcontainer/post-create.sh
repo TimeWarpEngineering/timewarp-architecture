@@ -30,12 +30,15 @@ if [ -d "/workspace/git-worktree" ] && [ ! -L "/workspace/git-worktree-link" ]; 
     echo "🔗 Created git worktree symlink"
 fi
 
-# Configure Claude Code if needed
-if command -v claude-code &> /dev/null; then
-    echo "✅ Claude Code is installed and available"
-    claude-code --version || echo "Claude Code installed but version check failed"
+# Verify Claude is installed - CRITICAL for agentic workflow
+if command -v claude &> /dev/null; then
+    echo "✅ Claude is installed and available"
+    claude --version || echo "Claude installed but version check failed"
 else
-    echo "⚠️  Claude Code not found. You may need to install it manually."
+    echo "❌ CRITICAL ERROR: Claude not found!"
+    echo "   The container build failed to install Claude properly."
+    echo "   This dev container is not functional for agentic workflows."
+    exit 1
 fi
 
 # Create helpful aliases
@@ -60,6 +63,6 @@ echo "  - Use 'tw' to navigate to TimeWarp.Architecture"
 echo "  - Use 'run' to start the Aspire orchestrator"
 echo "  - Use 'test' to run all tests"
 echo "  - Use 'worktree' to access the git worktree"
-echo "  - Claude Code should be available via 'claude-code' command"
+echo "  - Claude is available via 'claude' command"
 echo ""
 echo "🧪 Run '.devcontainer/validate-container.sh' to test the dev container setup"
