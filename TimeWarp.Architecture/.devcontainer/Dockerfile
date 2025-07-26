@@ -15,11 +15,16 @@ RUN apt update && apt install -y \
 # Install .NET SDKs
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
     && chmod +x ./dotnet-install.sh \
-    && ./dotnet-install.sh --channel 10.0-preview --install-dir /usr/share/dotnet \
     && ./dotnet-install.sh --channel 9.0 --install-dir /usr/share/dotnet \
     && ./dotnet-install.sh --channel 8.0 --install-dir /usr/share/dotnet \
     && rm ./dotnet-install.sh \
     && ln -s /usr/share/dotnet/dotnet /usr/local/bin/dotnet
+
+# Install .NET 10 Preview manually from direct download
+RUN wget https://download.visualstudio.microsoft.com/download/pr/58731de1-5f50-4d83-b9f6-d8e2e21c0de1/73b5cca0bb4e8b83c088d75ad40e1299/dotnet-sdk-10.0.100-preview.6.24370.6-linux-x64.tar.gz \
+    && mkdir -p /usr/share/dotnet \
+    && tar -zxf dotnet-sdk-10.0.100-preview.6.24370.6-linux-x64.tar.gz -C /usr/share/dotnet \
+    && rm dotnet-sdk-10.0.100-preview.6.24370.6-linux-x64.tar.gz
 
 # Install PowerShell
 RUN wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" \
