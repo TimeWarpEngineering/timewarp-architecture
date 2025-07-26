@@ -35,17 +35,18 @@ RUN apt-get update \
     && apt-get install -y powershell \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-# Set up node user permissions
-RUN mkdir -p /usr/local/share/npm-global \
-    && chown -R node:node /usr/local/share
-
-# Create vscode user (for .NET dev containers compatibility)
-RUN useradd -ms /bin/bash vscode \
+# Create vscode user with UID 1000 (replacing the node user)
+RUN userdel -r node \
+    && useradd -ms /bin/bash -u 1000 vscode \
     && usermod -aG sudo vscode \
     && echo 'vscode ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-# Switch to node user for npm installations
-USER node
+# Set up npm permissions for vscode user
+RUN mkdir -p /usr/local/share/npm-global \
+    && chown -R vscode:vscode /usr/local/share
+
+# Switch to vscode user for npm installations
+USER vscode
 
 # Install Claude Code and global npm packages
 RUN npm config set prefix /usr/local/share/npm-global \
