@@ -12,9 +12,6 @@ fi
 # Navigate to the workspace
 cd /workspace/timewarp-architecture
 
-# Make all PowerShell scripts executable
-chmod +x *.ps1 2>/dev/null || true
-
 # Install npm dependencies for Web.Spa if they exist
 if [ -f "Source/ContainerApps/Web/Web.Spa/package.json" ]; then
     echo "📦 Installing npm dependencies for Web.Spa..."
