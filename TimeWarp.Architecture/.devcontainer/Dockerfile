@@ -89,8 +89,8 @@ RUN apt-get update && apt-get install -y \
 
 # Ensure vscode user has permissions for Docker socket and sudo
 RUN usermod -aG sudo vscode && echo 'vscode ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
-    && groupadd -g 999 docker || true \
-    && usermod -aG docker vscode
+    && (groupadd -g 999 docker 2>/dev/null || groupadd docker 2>/dev/null || true) \
+    && usermod -aG docker vscode || true
 
 # Switch to vscode user
 USER vscode
