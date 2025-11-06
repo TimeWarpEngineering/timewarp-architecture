@@ -166,6 +166,48 @@ public class Should_Trigger_PartialClassDeclaration
     await analyzerTest.RunAsync();
   }
 
+  public static async Task Given_KebabCaseFileNaming()
+  {
+    const string PrimaryFile =
+      """
+      public partial class ApplicationState
+      {
+          // Primary content
+      }
+      """;
+
+    const string SecondaryFile1 =
+      """
+      partial class ApplicationState
+      {
+          // Secondary content 1
+      }
+      """;
+
+    const string SecondaryFile2 =
+      """
+      partial class ApplicationState
+      {
+          // Secondary content 2
+      }
+      """;
+
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    {
+      TestState =
+      {
+        Sources =
+        {
+          ("application-state.cs", PrimaryFile),
+          ("application-state.close-modal.cs", SecondaryFile1),
+          ("application-state.reset-store.cs", SecondaryFile2)
+        }
+      }
+    };
+
+    await analyzerTest.RunAsync();
+  }
+
   public static async Task Given_SecondaryFileWithClassInheritance()
   {
     const string PrimaryFile =

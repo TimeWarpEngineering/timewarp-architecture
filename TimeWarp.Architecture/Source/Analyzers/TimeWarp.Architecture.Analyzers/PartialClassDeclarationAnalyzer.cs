@@ -58,13 +58,24 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
     string filePath = sourceTree.FilePath;
     string? fileName = Path.GetFileName(filePath);
 
-    bool isPrimaryFile = fileName.Equals($"{namedTypeSymbol.Name}.cs", StringComparison.OrdinalIgnoreCase);
+    if (string.IsNullOrEmpty(fileName))
+    {
+      return;
+    }
+
+  string kebabTypeName = ToKebabCase(namedTypeSymbol.Name);
+  string pascalName = $"{namedTypeSymbol.Name}.cs";
+  string kebabName = $"{kebabTypeName}.cs";
+
+    bool isPrimaryFile = fileName.Equals(pascalName, StringComparison.OrdinalIgnoreCase)
+      || fileName.Equals(kebabName, StringComparison.OrdinalIgnoreCase);
 
     if (isPrimaryFile)
     {
       AnalyzePrimaryFile(context, namedTypeSymbol, classSyntax);
     }
-    else if (fileName.StartsWith($"{namedTypeSymbol.Name}.", StringComparison.OrdinalIgnoreCase))
+    else if (fileName.StartsWith($"{namedTypeSymbol.Name}.", StringComparison.OrdinalIgnoreCase)
+      || fileName.StartsWith($"{kebabTypeName}.", StringComparison.OrdinalIgnoreCase))
     {
       AnalyzeSecondaryFile(context, namedTypeSymbol, classSyntax);
     }
@@ -104,6 +115,40 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
     var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
       symbol.Name, $"file name '{fileName}' does not follow the expected naming convention");
     context.ReportDiagnostic(diagnostic);
+  }
+  private static string ToKebabCase(string value)
+  {
+    if (string.IsNullOrEmpty(value))
+    {
+      return value;
+    }
+
+  var builder = new System.Text.StringBuilder(value.Length * 2);
+    bool previousWasUpper = false;
+
+    for (int index = 0; index < value.Length; index++)
+    {
+      char current = value[index];
+      bool isUpper = char.IsUpper(current);
+
+      if (isUpper)
+      {
+        if (builder.Length > 0 && (!previousWasUpper || (index + 1 < value.Length && !char.IsUpper(value[index + 1]))))
+        {
+          builder.Append('-');
+        }
+
+        builder.Append(char.ToLowerInvariant(current));
+      }
+      else
+      {
+        builder.Append(current);
+      }
+
+      previousWasUpper = isUpper;
+    }
+
+    return builder.ToString();
   }
 
   private static bool IsPartialType(ISymbol symbol) =>
