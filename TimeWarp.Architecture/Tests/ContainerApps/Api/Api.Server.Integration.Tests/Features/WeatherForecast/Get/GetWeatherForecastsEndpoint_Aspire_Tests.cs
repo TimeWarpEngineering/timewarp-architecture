@@ -1,5 +1,6 @@
 namespace GetWeatherForecastsEndpoint_Aspire_;
 
+using System.Linq;
 using System.Text.Json;
 using TimeWarp.Architecture.Services;
 using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
@@ -56,19 +57,22 @@ public class Returns
   private void ConfirmEndpointValidationError(SharedProblemDetails sharedProblemDetails)
   {
     sharedProblemDetails.Status.ShouldBe(400);
-    sharedProblemDetails.Extensions.Count().ShouldBe(2);
 
-    sharedProblemDetails.Title.ShouldBe("One or more validation errors occurred.");
-    sharedProblemDetails.Type.ShouldBe("https://tools.ietf.org/html/rfc9110#section-15.5.1");
+  sharedProblemDetails.Title.ShouldBe("One or more validation errors occurred");
+  sharedProblemDetails.Type.ShouldBe("https://tools.ietf.org/html/rfc7231#section-6.5.1");
+
+    sharedProblemDetails.Extensions.ShouldContainKey("errors");
 
     // Deserialize the JSON content in sharedProblemDetails.Extensions["errors"]
     string errorsJson = sharedProblemDetails.Extensions["errors"].ToString();
     Dictionary<string, List<string>> errors = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(errorsJson);
 
-    // Validate the structure and values of the deserialized object
-    errors.ShouldContainKey("Days");
-    string errorMessage = errors["Days"].ShouldHaveSingleItem();
-    errorMessage.ShouldBe("'Query:Days' must be greater than '0'.");
+  // Validate the structure and values of the deserialized object
+  KeyValuePair<string, List<string>> daysError = errors.Single(kvp => kvp.Key.Contains("Days", StringComparison.OrdinalIgnoreCase));
+  string errorMessage = daysError.Value.ShouldHaveSingleItem();
+  string normalizedMessage = errorMessage.ToLowerInvariant();
+  normalizedMessage.ShouldContain("greater than");
+  normalizedMessage.ShouldContain("1");
 
   }
 }

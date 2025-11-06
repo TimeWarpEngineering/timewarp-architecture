@@ -166,8 +166,6 @@ public abstract class BaseApiService : IApiService
   }
   private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage, CancellationToken cancellationToken)
   {
-    httpResponseMessage.EnsureSuccessStatusCode();
-
     string json = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
     TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
