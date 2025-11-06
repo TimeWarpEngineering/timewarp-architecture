@@ -1,6 +1,7 @@
 namespace TimeWarp.Architecture.Api.Server.Integration.Tests.Infrastructure;
 
 using global::Aspire.Hosting;
+using AspireConstants = TimeWarp.Architecture.Aspire.Constants;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Services;
 using System.Text.Json;
@@ -35,7 +36,7 @@ class ApiServerTestConvention : TimeWarpTestingConvention
     {
       Task<DistributedApplication> distributedAppTask = provider.GetRequiredService<Task<DistributedApplication>>();
       DistributedApplication distributedApp = distributedAppTask.Result; // Ensure the app is available
-      HttpClient httpClient = distributedApp.CreateHttpClient("api-server");
+      HttpClient httpClient = distributedApp.CreateHttpClient(AspireConstants.ApiServerProjectResourceName);
       JsonSerializerOptions jsonSerializerOptions = provider.GetRequiredService<JsonSerializerOptions>();
       IAccessTokenProvider accessTokenProvider = provider.GetRequiredService<IAccessTokenProvider>();
       return new ApiServerApiService(httpClient, accessTokenProvider, jsonSerializerOptions);
@@ -47,7 +48,7 @@ class ApiServerTestConvention : TimeWarpTestingConvention
       Task<DistributedApplication> distributedAppTask = provider.GetRequiredService<Task<DistributedApplication>>();
       DistributedApplication distributedApp = distributedAppTask.Result; // Ensure the app is available
       IAccessTokenProvider accessTokenProvider = provider.GetRequiredService<IAccessTokenProvider>();
-      HttpClient httpClient = distributedApp.CreateHttpClient("web-server");
+      HttpClient httpClient = distributedApp.CreateHttpClient(AspireConstants.WebServerProjectResourceName);
       JsonSerializerOptions jsonSerializerOptions = provider.GetRequiredService<JsonSerializerOptions>();
       return new WebServerApiService(accessTokenProvider, httpClient, jsonSerializerOptions);
     });

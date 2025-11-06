@@ -33,4 +33,9 @@
     <!--#endif -->
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="TimeWarp.Architecture.Api.Server.Integration.Tests" />
+    <InternalsVisibleTo Include="Api.Server.Integration.Tests" />
+  </ItemGroup>
+
 </Project>
