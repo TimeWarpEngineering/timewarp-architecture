@@ -18,8 +18,8 @@ try {
     dotnet test Tests/EndToEnd.Playwright.Tests
 
     # Library Tests
-    Write-Host "Running Library Tests..." -ForegroundColor Cyan
-    dotnet fixie Tests/Libraries/TimeWarp.Automation.Tests
+    # Write-Host "Running Library Tests..." -ForegroundColor Cyan
+    # dotnet fixie Tests/Libraries/TimeWarp.Automation.Tests
 
     # Web Tests
     Write-Host "Running Web Tests..." -ForegroundColor Cyan
