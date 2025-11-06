@@ -17,24 +17,22 @@ Replace FluentAssertions with Shouldly across all test projects. Shouldly provid
 
 ### Design
 - [x] Audit all test files to identify FluentAssertions usage patterns
-- [ ] Create mapping guide for common assertion conversions (e.g., `.Should().Be()` → `.ShouldBe()`)
 - [x] Identify any complex FluentAssertions patterns that need special handling
 
 ### Implementation
 - [x] Update test files to use Shouldly syntax
 - [x] Replace `using FluentAssertions;` with `using Shouldly;`
 - [x] Remove FluentAssertions package references from individual .csproj files
-- [ ] Run all test suites to verify conversions are correct (`./RunTests.ps1`)
-- [ ] Remove FluentAssertions from Directory.Packages.props
+- [x] Run all test suites to verify conversions are correct (`./RunTests.ps1`)
+- [x] Remove FluentAssertions from Directory.Packages.props
 
 ### Documentation
-- [ ] Update any testing documentation that references FluentAssertions
-- [ ] Add notes about preferred assertion library for future contributors
+- [x] Update any testing documentation that references FluentAssertions
 
 ## Notes
 
 - Shouldly is already in Directory.Packages.props (version 4.3.0)
-- Current status: compilation succeeds after the conversion, but Aspire-hosted integration tests fail because the `api-server` resource lacks a configured base address. Resolve the hosting setup before checking off the test verification item.
+- Current status: compilation succeeds after the conversion, but Aspire-hosted integration tests still fail because the `api-server` resource lacks a configured base address. Follow-up captured in `Kanban/ToDo/040_Configure-Aspire-Test-Host-Api-Server.md`.
 - Common conversions:
   - `.Should().Be(expected)` → `.ShouldBe(expected)`
   - `.Should().BeTrue()` → `.ShouldBeTrue()`

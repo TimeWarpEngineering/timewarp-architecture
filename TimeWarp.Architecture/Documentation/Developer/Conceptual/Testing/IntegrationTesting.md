@@ -10,4 +10,4 @@ TimeWarp Architecture favors Integration Testing over Unit testing. We recommend
 
 [Fixie](https://github.com/fixie/fixie)
 [FakeItEasy](https://github.com/FakeItEasy/FakeItEasy)
-[Fluent Assertions](https://github.com/fluentassertions/fluentassertions)
+[Shouldly](https://github.com/shouldly/shouldly)

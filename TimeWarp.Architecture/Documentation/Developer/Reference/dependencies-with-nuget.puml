@@ -68,7 +68,7 @@ left to right direction
 [Fixie v] as __799075474 #ecf0f1
 [Fixie.TestAdapter v] as __1926459631 #ecf0f1
 [Microsoft.AspNetCore.Mvc.Testing v] as __1225991818 #ecf0f1
-[FluentAssertions v] as __258200286 #ecf0f1
+[Shouldly v] as __258200286 #ecf0f1
 [Scrutor v] as _189895333 #ecf0f1
 [Microsoft.CodeAnalysis.CSharp v] as _418289580 #ecf0f1
 [Microsoft.CodeAnalysis.Analyzers v] as __721860048 #ecf0f1
