@@ -38,7 +38,7 @@
     <PackageReference Include="FluentValidation"/>
     <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="OneOf"/>
-    <PackageReference Include="MediatR"/>
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Core"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>

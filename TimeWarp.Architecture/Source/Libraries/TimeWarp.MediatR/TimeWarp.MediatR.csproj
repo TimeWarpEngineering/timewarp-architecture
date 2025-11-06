@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
-    <PackageReference Include="MediatR" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="OneOf" />
   </ItemGroup>
 </Project>

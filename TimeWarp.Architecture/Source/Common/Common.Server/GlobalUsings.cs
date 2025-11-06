@@ -2,7 +2,7 @@
 global using Azure.Identity;
 global using FastEndpoints;
 global using FluentValidation;
-global using MediatR;
+global using TimeWarp.Mediator;
 global using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Http;

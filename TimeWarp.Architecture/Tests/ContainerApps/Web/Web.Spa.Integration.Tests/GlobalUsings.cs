@@ -2,7 +2,7 @@
 global using FluentAssertions;
 global using System.Text.Json;
 global using TimeWarp.State;
-global using MediatR;
+global using TimeWarp.Mediator;
 global using Microsoft.Extensions.DependencyInjection;
 
 // Solution usings

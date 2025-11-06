@@ -10,7 +10,8 @@ global using FastEndpoints.Swagger;
 global using Scalar.AspNetCore;
 global using System.Net;
 global using System.Reflection;
-
+global using TimeWarp.Mediator;
+global using TimeWarp.Mediator.Pipeline;
 // Solution usings
 global using TimeWarp.Architecture.CorsPolicies;
 global using TimeWarp.Architecture.Types;

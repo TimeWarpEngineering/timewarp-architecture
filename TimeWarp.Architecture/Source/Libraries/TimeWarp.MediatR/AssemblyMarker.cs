@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.MediatR;
+﻿namespace TimeWarp.Mediator;
 
 /// <summary>
 /// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.

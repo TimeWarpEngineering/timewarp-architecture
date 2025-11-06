@@ -5,7 +5,7 @@ namespace TimeWarp.Architecture.Pipeline;
 /// </summary>
 /// <typeparam name="TRequest"></typeparam>
 /// <typeparam name="TResponse"></typeparam>
-/// <remarks>see MediatR for more examples</remarks>
+/// <remarks>see Mediator for more examples</remarks>
 public class MyBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
   where TRequest : notnull
 {

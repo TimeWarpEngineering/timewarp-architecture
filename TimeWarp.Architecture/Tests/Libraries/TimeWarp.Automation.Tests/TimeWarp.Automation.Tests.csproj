@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation"/>
-    <PackageReference Include="MediatR"/>
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="OneOf"/>
     <PackageReference Include="Shouldly"/>
     <PackageReference Include="Fixie.TestAdapter"/>

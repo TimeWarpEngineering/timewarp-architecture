@@ -1,8 +1,6 @@
 namespace TimeWarp.Architecture.Api.Server;
 
 using Behaviors;
-using MediatR;
-
 public class Program : IAspNetProgram
 {
   const string ApiTitle = "TimeWarp.Architecture Api.Server API";
@@ -70,10 +68,10 @@ public class Program : IAspNetProgram
     serviceCollection.AddAuthorization();
     serviceCollection.AddEndpointsApiExplorer();
     serviceCollection
-      .AddMediatR
+      .AddMediator
       (
-        mediatRServiceConfiguration =>
-          mediatRServiceConfiguration
+        mediatorServiceConfiguration =>
+          mediatorServiceConfiguration
             .RegisterServicesFromAssemblies
             (
               typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).GetTypeInfo().Assembly,

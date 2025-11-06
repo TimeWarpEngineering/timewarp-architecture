@@ -1,6 +1,6 @@
 ﻿global using FakeItEasy;
 global using FluentAssertions;
-global using MediatR;
+global using TimeWarp.Mediator;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;

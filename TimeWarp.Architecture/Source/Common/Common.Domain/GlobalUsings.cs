@@ -1,2 +1,2 @@
 ﻿global using System.Reflection;
-global using MediatR;
+global using TimeWarp.Mediator;

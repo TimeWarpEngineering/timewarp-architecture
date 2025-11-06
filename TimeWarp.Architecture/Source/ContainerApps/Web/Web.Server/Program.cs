@@ -146,10 +146,10 @@ public class Program : IAspNetProgram
     Web.Spa.Program.ConfigureServices(serviceCollection, configuration);
 
     serviceCollection
-      .AddMediatR
+      .AddMediator
       (
-        mediatRServiceConfiguration =>
-          mediatRServiceConfiguration.RegisterServicesFromAssemblies
+        mediatorServiceConfiguration =>
+          mediatorServiceConfiguration.RegisterServicesFromAssemblies
           (
             typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).GetTypeInfo().Assembly,
             typeof(TimeWarp.Architecture.Web.Application.IAssemblyMarker).GetTypeInfo().Assembly

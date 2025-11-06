@@ -1,9 +1,5 @@
 ﻿﻿namespace TimeWarp.Architecture.Behaviors;
 
-using FluentValidation;
-using FluentValidation.Results;
-using MediatR;
-
 public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {

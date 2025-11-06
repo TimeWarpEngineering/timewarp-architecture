@@ -1,5 +1,5 @@
 ﻿global using AutoMapper;
-global using MediatR;
+global using TimeWarp.Mediator;
 global using FluentValidation;
 global using FluentValidation.AspNetCore;
 global using JetBrains.Annotations;

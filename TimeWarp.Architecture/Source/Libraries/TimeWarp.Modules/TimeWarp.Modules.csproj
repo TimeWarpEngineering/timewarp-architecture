@@ -3,7 +3,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MediatR" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
