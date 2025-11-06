@@ -165,4 +165,108 @@ public class Should_Trigger_PartialClassDeclaration
 
     await analyzerTest.RunAsync();
   }
+
+  public static async Task Given_SecondaryFileWithClassInheritance()
+  {
+    const string PrimaryFile =
+      """
+      public abstract class BaseApplicationState
+      {
+      }
+
+      public partial class ApplicationState
+      {
+          // Primary content
+      }
+      """;
+
+    const string SecondaryFile =
+      """
+      partial class ApplicationState : BaseApplicationState
+      {
+          // Secondary content with class inheritance
+      }
+      """;
+
+    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWPA0001", DiagnosticSeverity.Warning)
+      .WithSpan("ApplicationState.Extensions.cs", startLine: 1, startColumn: 32, endLine: 1, endColumn: 54)
+      .WithArguments("ApplicationState", "should not include class inheritance in secondary files");
+
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    {
+      TestState =
+      {
+        Sources =
+        {
+          ("ApplicationState.cs", PrimaryFile),
+          ("ApplicationState.Extensions.cs", SecondaryFile)
+        }
+      }
+    };
+
+    analyzerTest.ExpectedDiagnostics.Add(expectedDiagnostic);
+
+    await analyzerTest.RunAsync();
+  }
+
+  public static async Task Given_SecondaryFileWithInterfaceOnly()
+  {
+    const string PrimaryFile =
+      """
+      public interface IAnotherInterface
+      {
+      }
+
+      public partial class ApplicationState
+      {
+          // Primary content
+      }
+      """;
+
+    const string SecondaryFile =
+      """
+      partial class ApplicationState : IAnotherInterface
+      {
+          // Secondary content with interface implementation
+      }
+      """;
+
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    {
+      TestState =
+      {
+        Sources =
+        {
+          ("ApplicationState.cs", PrimaryFile),
+          ("ApplicationState.Interfaces.cs", SecondaryFile)
+        }
+      }
+    };
+
+    await analyzerTest.RunAsync();
+  }
+
+  public static async Task Given_SinglePartialDeclaration()
+  {
+    const string SingleFile =
+      """
+      partial class ApplicationState
+      {
+          // Only declaration
+      }
+      """;
+
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    {
+      TestState =
+      {
+        Sources =
+        {
+          ("ApplicationState.cs", SingleFile)
+        }
+      }
+    };
+
+    await analyzerTest.RunAsync();
+  }
 }
