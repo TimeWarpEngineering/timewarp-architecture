@@ -23,7 +23,7 @@ public class Should : BaseTest
     await Send(action);
 
     //Assert
-    CounterState.Guid.Should().NotBe(preActionGuid);
+    CounterState.Guid.ShouldNotBe(preActionGuid);
   }
 
   public async Task RollBackState_When_Exception()

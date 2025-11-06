@@ -36,12 +36,12 @@ public class Returns_
     (
       response =>
       {
-        response.Should().NotBeNull();
+        response.ShouldNotBeNull();
       },
       problemDetails =>
       {
         // This should not happen in a successful case
-        Execute.Assertion.FailWith("The SignIn handler returned SharedProblemDetails instead of a successful response.");
+        problemDetails.ShouldBeNull("The SignIn handler returned SharedProblemDetails instead of a successful response.");
       }
     );
   }

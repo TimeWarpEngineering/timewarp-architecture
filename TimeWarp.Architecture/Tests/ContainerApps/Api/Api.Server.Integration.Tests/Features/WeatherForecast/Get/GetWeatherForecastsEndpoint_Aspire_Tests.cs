@@ -50,25 +50,25 @@ public class Returns
 
   private void ValidateGetWeatherForecastsResponse(Response getWeatherForecastsResponse)
   {
-    getWeatherForecastsResponse.WeatherForecasts.Count().Should().Be(Query.Days);
+    getWeatherForecastsResponse.WeatherForecasts.Count().ShouldBe(Query.Days!.Value);
   }
 
   private void ConfirmEndpointValidationError(SharedProblemDetails sharedProblemDetails)
   {
-    sharedProblemDetails.Status.Should().Be(400);
-    sharedProblemDetails.Extensions.Count().Should().Be(2);
+    sharedProblemDetails.Status.ShouldBe(400);
+    sharedProblemDetails.Extensions.Count().ShouldBe(2);
 
-    sharedProblemDetails.Title.Should().Be("One or more validation errors occurred.");
-    sharedProblemDetails.Type.Should().Be("https://tools.ietf.org/html/rfc9110#section-15.5.1");
+    sharedProblemDetails.Title.ShouldBe("One or more validation errors occurred.");
+    sharedProblemDetails.Type.ShouldBe("https://tools.ietf.org/html/rfc9110#section-15.5.1");
 
     // Deserialize the JSON content in sharedProblemDetails.Extensions["errors"]
     string errorsJson = sharedProblemDetails.Extensions["errors"].ToString();
     Dictionary<string, List<string>> errors = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(errorsJson);
 
     // Validate the structure and values of the deserialized object
-    errors.Should().ContainKey("Days");
-    errors["Days"].Should().ContainSingle()
-        .Which.Should().Be("'Query:Days' must be greater than '0'.");
+    errors.ShouldContainKey("Days");
+    string errorMessage = errors["Days"].ShouldHaveSingleItem();
+    errorMessage.ShouldBe("'Query:Days' must be greater than '0'.");
 
   }
 }

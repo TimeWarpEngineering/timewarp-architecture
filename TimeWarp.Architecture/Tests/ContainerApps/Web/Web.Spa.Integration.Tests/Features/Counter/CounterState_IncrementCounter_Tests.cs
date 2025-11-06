@@ -22,7 +22,7 @@ public class IncrementCounter_Action_Should : BaseTest
     await Send(action);
 
     //Assert
-    CounterState.Count.Should().Be(13);
+    CounterState.Count.ShouldBe(13);
   }
 
   public async Task Increment_Count()
@@ -36,6 +36,6 @@ public class IncrementCounter_Action_Should : BaseTest
     await Send(action);
 
     //Assert
-    CounterState.Count.Should().Be(27);
+    CounterState.Count.ShouldBe(27);
   }
 }

@@ -18,8 +18,8 @@ public class Clone_Should : BaseTest
     var clone = CounterState.Clone() as CounterState;
 
     //Assert
-    CounterState.Should().NotBeSameAs(clone);
-    CounterState.Count.Should().Be(clone.Count);
-    CounterState.Guid.Should().NotBe(clone.Guid);
+    CounterState.ShouldNotBeSameAs(clone);
+    CounterState.Count.ShouldBe(clone.Count);
+    CounterState.Guid.ShouldNotBe(clone.Guid);
   }
 }

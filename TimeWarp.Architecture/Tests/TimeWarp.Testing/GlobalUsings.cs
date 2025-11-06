@@ -1,5 +1,5 @@
 ﻿global using FakeItEasy;
-global using FluentAssertions;
+global using Shouldly;
 global using TimeWarp.Mediator;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.AspNetCore.Builder;

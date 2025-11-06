@@ -38,7 +38,7 @@ public class Returns_
 
   private static void ValidateResponse(Response response)
   {
-    response.Should().NotBeNull();
-    response.Message.Should().Be("Hello, Bob!");
+    response.ShouldNotBeNull();
+    response.Message.ShouldBe("Hello, Bob!");
   }
 }

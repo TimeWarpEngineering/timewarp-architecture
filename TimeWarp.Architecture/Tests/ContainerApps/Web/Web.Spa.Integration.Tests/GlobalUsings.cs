@@ -1,5 +1,5 @@
 ﻿global using AnyClone;
-global using FluentAssertions;
+global using Shouldly;
 global using System.Text.Json;
 global using TimeWarp.State;
 global using TimeWarp.Mediator;

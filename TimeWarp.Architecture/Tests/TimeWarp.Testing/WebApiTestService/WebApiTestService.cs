@@ -49,8 +49,8 @@ public class WebApiTestService : IWebApiTestService
   {
     string json = await aHttpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-    aHttpResponseMessage.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    json.Should().Contain("errors");
-    json.Should().Contain(attributeName);
+    aHttpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    json.ShouldContain("errors");
+    json.ShouldContain(attributeName);
   }
 }

@@ -32,6 +32,6 @@ public class Returns
 
   private void ValidateGetWeatherForecastsResponse(Response getWeatherForecastsResponse)
   {
-    getWeatherForecastsResponse.WeatherForecasts.Count().Should().Be(Query.Days);
+    getWeatherForecastsResponse.WeatherForecasts.Count().ShouldBe(Query.Days!.Value);
   }
 }

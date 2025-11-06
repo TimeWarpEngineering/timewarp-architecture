@@ -34,11 +34,11 @@ public class Clone_Should : BaseTest
     WeatherForecastsState clone = WeatherForecastsState.Clone();
 
     //Assert
-    WeatherForecastsState.Should().NotBeSameAs(clone);
-    WeatherForecastsState.WeatherForecasts.Count.Should().Be(clone.WeatherForecasts.Count);
-    WeatherForecastsState.Guid.Should().NotBe(clone.Guid);
-    WeatherForecastsState.WeatherForecasts[0].TemperatureC.Should().Be(clone.WeatherForecasts[0].TemperatureC);
-    WeatherForecastsState.WeatherForecasts[0].Should().Be(clone.WeatherForecasts[0]);           // WeatherForecastDTO is a `record class` thus equality should be true
-    WeatherForecastsState.WeatherForecasts[0].Should().NotBeSameAs(clone.WeatherForecasts[0]);  // record class is a reference type thus the reference should be different
+    WeatherForecastsState.ShouldNotBeSameAs(clone);
+    WeatherForecastsState.WeatherForecasts.Count.ShouldBe(clone.WeatherForecasts.Count);
+    WeatherForecastsState.Guid.ShouldNotBe(clone.Guid);
+    WeatherForecastsState.WeatherForecasts[0].TemperatureC.ShouldBe(clone.WeatherForecasts[0].TemperatureC);
+    WeatherForecastsState.WeatherForecasts[0].ShouldBe(clone.WeatherForecasts[0]);           // WeatherForecastDTO is a `record class` thus equality should be true
+    WeatherForecastsState.WeatherForecasts[0].ShouldNotBeSameAs(clone.WeatherForecasts[0]);  // record class is a reference type thus the reference should be different
   }
 }

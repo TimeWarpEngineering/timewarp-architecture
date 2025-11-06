@@ -1,6 +1,5 @@
 ﻿global using Ardalis.GuardClauses;
-global using FluentAssertions;
-global using FluentAssertions.Execution;
+global using Shouldly;
 global using FluentValidation.Results;
 global using FluentValidation.TestHelper;
 global using JetBrains.Annotations;

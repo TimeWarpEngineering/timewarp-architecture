@@ -17,6 +17,6 @@ public class FetchWeatherForecasts_Action_Should : BaseTest
 
     await Send(fetchWeatherForecastsRequest);
 
-    WeatherForecastsState.WeatherForecasts.Count.Should().Be(5);
+    WeatherForecastsState.WeatherForecasts.Count.ShouldBe(5);
   }
 }

@@ -16,14 +16,14 @@ Replace FluentAssertions with Shouldly across all test projects. Shouldly provid
 ## Checklist
 
 ### Design
-- [ ] Audit all test files to identify FluentAssertions usage patterns
+- [x] Audit all test files to identify FluentAssertions usage patterns
 - [ ] Create mapping guide for common assertion conversions (e.g., `.Should().Be()` → `.ShouldBe()`)
-- [ ] Identify any complex FluentAssertions patterns that need special handling
+- [x] Identify any complex FluentAssertions patterns that need special handling
 
 ### Implementation
-- [ ] Update test files to use Shouldly syntax
-- [ ] Replace `using FluentAssertions;` with `using Shouldly;`
-- [ ] Remove FluentAssertions package references from individual .csproj files
+- [x] Update test files to use Shouldly syntax
+- [x] Replace `using FluentAssertions;` with `using Shouldly;`
+- [x] Remove FluentAssertions package references from individual .csproj files
 - [ ] Run all test suites to verify conversions are correct (`./RunTests.ps1`)
 - [ ] Remove FluentAssertions from Directory.Packages.props
 
@@ -34,6 +34,7 @@ Replace FluentAssertions with Shouldly across all test projects. Shouldly provid
 ## Notes
 
 - Shouldly is already in Directory.Packages.props (version 4.3.0)
+- Current status: compilation succeeds after the conversion, but Aspire-hosted integration tests fail because the `api-server` resource lacks a configured base address. Resolve the hosting setup before checking off the test verification item.
 - Common conversions:
   - `.Should().Be(expected)` → `.ShouldBe(expected)`
   - `.Should().BeTrue()` → `.ShouldBeTrue()`

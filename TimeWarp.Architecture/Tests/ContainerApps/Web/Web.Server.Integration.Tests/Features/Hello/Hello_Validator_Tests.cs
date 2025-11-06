@@ -20,7 +20,7 @@ public class Validate_Should
 
     ValidationResult validationResult = Validator.TestValidate(query);
 
-    validationResult.IsValid.Should().BeTrue();
+    validationResult.IsValid.ShouldBeTrue();
   }
 
   public void Have_error_when_Name_is_empty()
