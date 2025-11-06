@@ -451,3 +451,4 @@ GeneratedCode/
 # Misc
 /output.txt
 **/Generated/
+.agent/workspace/
