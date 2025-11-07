@@ -21,6 +21,16 @@ public class TimeWarpTestingConvention : TestingConvention
     serviceCollection
       #if(web)
       .AddSingleton<WebTestServerApplication>()
+      .AddSingleton<IWebApiTestService>
+      (
+        serviceProvider =>
+        {
+          #if(api)
+          serviceProvider.GetRequiredService<ApiTestServerApplication>();
+          #endif
+          return serviceProvider.GetRequiredService<WebTestServerApplication>();
+        }
+      )
       #endif
       #if(api)
       .AddSingleton<ApiTestServerApplication>()

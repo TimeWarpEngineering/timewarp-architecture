@@ -43,4 +43,11 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
   }
 
   protected static void ConfigureServicesCallback(IServiceCollection aServiceCollection) { }
+
+  protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Yarp.Server.Program> webApplicationHost)
+  {
+    var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var apiService = new ApiServerApiService(HttpClient, new MockAccessTokenProvider(), jsonSerializerOptions);
+    return new WebApiTestService(apiService);
+  }
 }

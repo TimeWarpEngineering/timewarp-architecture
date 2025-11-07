@@ -38,4 +38,18 @@ public sealed class ApiTestServerApplication : TestServerApplication<Api.Server.
     serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = webServiceUri);
     serviceCollection.AddSingleton<IAccessTokenProvider, MockAccessTokenProvider>(); // This will give us the IAccessTokenProvider
   }
+
+  protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Api.Server.Program> webApplicationHost)
+  {
+    IServiceProvider serviceProvider = webApplicationHost.ServiceProvider;
+
+    IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+    IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
+
+    var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor = Options.Create(jsonSerializerOptions);
+
+    var apiService = new ApiServerApiService(httpClientFactory, accessTokenProvider, jsonSerializerOptionsAccessor);
+    return new WebApiTestService(apiService);
+  }
 }
