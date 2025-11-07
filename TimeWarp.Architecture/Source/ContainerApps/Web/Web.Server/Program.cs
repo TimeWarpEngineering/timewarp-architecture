@@ -7,7 +7,6 @@ using Common.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Serilog;
 
-
 public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
@@ -98,7 +97,6 @@ public class Program : IAspNetProgram
       options.ApiSecret = configuration["Passwordless:ApiSecret"] ?? throw new InvalidOperationException();
     });
     ConfigureAuthentication(serviceCollection, configuration);
-
 
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
     ConfigureSettings(serviceCollection, configuration);
