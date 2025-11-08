@@ -1,4 +1,7 @@
 <Project>
+  <!-- Import repository path definitions -->
+  <Import Project="$(MSBuildThisFileDirectory)msbuild/repository.props" />
+
   <!-- Set common properties regarding assembly information and nuget packages -->
 
   <PropertyGroup>
@@ -16,6 +19,7 @@
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
 <!--    <GenerateRequiresPreviewFeaturesAttribute>true</GenerateRequiresPreviewFeaturesAttribute>-->
     <ImplicitUsings>enable</ImplicitUsings>
+  <NoWarn>$(NoWarn);CA2252</NoWarn>
     <LangVersion>latest</LangVersion>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Nullable>disable</Nullable>
