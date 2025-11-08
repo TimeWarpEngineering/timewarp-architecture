@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": ".NET Core Launch (console)",
+      "name": "fixie: Web.Server.Integration.Tests",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
@@ -16,11 +16,15 @@
       "console": "internalConsole"
     },
     {
-      "name": "C#: Web.Server.Integration.Tests",
-      "type": "dotnet",
+      "name": "fixie: Web.Spa.Integration.Tests",
+      "type": "coreclr",
       "request": "launch",
-      "projectPath": "${workspaceFolder}/Tests/ContainerApps/Web/Web.Server.Integration.Tests/Web.Server.Integration.Tests.csproj",
-      "launchConfigurationId": "TargetFramework=;Web.Server.Integration.Tests"
-    }
+      "preLaunchTask": "build",
+      "program": "dotnet",
+      "args": ["fixie", "Tests/ContainerApps/Web/Web.Spa.Integration.Tests", "--debug"],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
   ]
 }

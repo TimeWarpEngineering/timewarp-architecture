@@ -1,0 +1,96 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "fixie: Web.Server.Integration.Tests",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "dotnet",
+      "args": ["fixie", "Tests/ContainerApps/Web/Web.Server.Integration.Tests", "--debug"],
+      "cwd": "${workspaceFolder}/TimeWarp.Architecture",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "fixie: Web.Spa.Integration.Tests",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "dotnet",
+      "args": ["fixie", "Tests/ContainerApps/Web/Web.Spa.Integration.Tests", "--debug"],
+      "cwd": "${workspaceFolder}/TimeWarp.Architecture",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "fixie: Api.Server.Integration.Tests",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "dotnet",
+      "args": ["fixie", "Tests/ContainerApps/Api/Api.Server.Integration.Tests", "--debug"],
+      "cwd": "${workspaceFolder}/TimeWarp.Architecture",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "fixie: Aspire",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "dotnet",
+      "args": ["fixie", "Tests/ContainerApps/Aspire", "--debug"],
+      "cwd": "${workspaceFolder}/TimeWarp.Architecture",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "fixie: Common.Infrastructure.Tests",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "dotnet",
+      "args": ["fixie", "Tests/Common/Common.Infrastructure.Tests", "--debug"],
+      "cwd": "${workspaceFolder}/TimeWarp.Architecture",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "fixie: TimeWarp.Automation.Tests",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "dotnet",
+      "args": ["fixie", "Tests/Libraries/TimeWarp.Automation.Tests", "--debug"],
+      "cwd": "${workspaceFolder}/TimeWarp.Architecture",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "fixie: TimeWarp.Architecture.Analyzers.Tests",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "dotnet",
+      "args": ["fixie", "Tests/Analyzers/TimeWarp.Architecture.Analyzers.Tests", "--debug"],
+      "cwd": "${workspaceFolder}/TimeWarp.Architecture",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "fixie: TimeWarp.Architecture.SourceGenerator.Tests",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "dotnet",
+      "args": ["fixie", "Tests/Analyzers/TimeWarp.Architecture.SourceGenerator.Tests", "--debug"],
+      "cwd": "${workspaceFolder}/TimeWarp.Architecture",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    }
+  ]
+}
