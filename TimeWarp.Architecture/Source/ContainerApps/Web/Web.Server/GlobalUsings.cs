@@ -1,7 +1,6 @@
 ﻿global using AutoMapper;
 global using TimeWarp.Mediator;
 global using FluentValidation;
-global using FluentValidation.AspNetCore;
 global using JetBrains.Annotations;
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Hosting;

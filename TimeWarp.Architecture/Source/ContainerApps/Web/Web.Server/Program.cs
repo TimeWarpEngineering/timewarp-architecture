@@ -114,9 +114,6 @@ public class Program : IAspNetProgram
     serviceCollection.AddMvc()
       .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly);
 
-    serviceCollection.AddFluentValidationAutoValidation();
-    serviceCollection.AddFluentValidationClientsideAdapters();
-
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
     serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Server.IAssemblyMarker>();
