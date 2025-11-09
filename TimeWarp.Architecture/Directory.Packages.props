@@ -18,7 +18,7 @@
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="FakeItEasy" Version="8.3.0" />
-    <PackageVersion Include="FastEndpoints" Version="5.34.0" />
+    <PackageVersion Include="FastEndpoints" Version="7.1.0" />
     <PackageVersion Include="Fixie" Version="4.1.0" />
     <PackageVersion Include="Fixie.TestAdapter" Version="4.1.0" />
     <PackageVersion Include="FluentValidation" Version="12.1.0" />
