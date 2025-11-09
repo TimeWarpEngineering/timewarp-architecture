@@ -21,7 +21,7 @@
       "request": "launch",
       "preLaunchTask": "build",
       "program": "dotnet",
-      "args": ["fixie", "Tests/ContainerApps/Web/Web.Spa.Integration.Tests", "--debug"],
+      "args": ["fixie", "Tests/ContainerApps/Web/Web.Spa.Integration.Tests", "--", "debug"],
       "cwd": "${workspaceFolder}/TimeWarp.Architecture",
       "stopAtEntry": false,
       "console": "internalConsole"
