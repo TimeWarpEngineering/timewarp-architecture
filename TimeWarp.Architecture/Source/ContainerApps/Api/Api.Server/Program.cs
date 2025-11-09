@@ -51,18 +51,6 @@ public class Program : IAspNetProgram
         typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly,
         typeof(TimeWarp.Architecture.Api.Contracts.IAssemblyMarker).Assembly
       };
-    })
-    .SwaggerDocument(options =>
-    {
-      options.DocumentSettings = settings =>
-      {
-        settings.Title = ApiTitle;
-        settings.Version = ApiVersion;
-      };
-      options.SerializerSettings = serializerSettings =>
-      {
-        serializerSettings.PropertyNamingPolicy = null;
-      };
     });
 
     serviceCollection.AddAuthorization();
@@ -95,7 +83,6 @@ public class Program : IAspNetProgram
     if (webApplication.Environment.IsDevelopment())
     {
       webApplication.UseCors(CorsPolicy.Any.Name);
-      webApplication.UseOpenApi(c => c.Path = "/openapi/{documentName}.json");
       webApplication.MapScalarApiReference();
     }
   }

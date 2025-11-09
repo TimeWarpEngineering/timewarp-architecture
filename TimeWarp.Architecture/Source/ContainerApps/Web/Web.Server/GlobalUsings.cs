@@ -1,5 +1,6 @@
 ﻿global using AutoMapper;
 global using TimeWarp.Mediator;
+global using TimeWarp.Mediator.Pipeline;
 global using FluentValidation;
 global using JetBrains.Annotations;
 global using Microsoft.AspNetCore.Builder;
@@ -37,6 +38,7 @@ global using System.Threading.Tasks;
 
 // Solution usings
 global using static TimeWarp.Architecture.Aspire.Constants;
+global using TimeWarp.Architecture.Behaviors;
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.CorsPolicies;

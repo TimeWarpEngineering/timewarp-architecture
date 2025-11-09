@@ -114,6 +114,8 @@ public class Program : IAspNetProgram
     serviceCollection.AddMvc()
       .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly);
 
+    serviceCollection.AddHttpContextAccessor();
+
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
     serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Server.IAssemblyMarker>();
@@ -148,6 +150,7 @@ public class Program : IAspNetProgram
             typeof(TimeWarp.Architecture.Web.Application.IAssemblyMarker).GetTypeInfo().Assembly
           )
       );
+    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(FluentValidationBehavior<,>));
 
     CommonServerModule
       .AddOpenApi

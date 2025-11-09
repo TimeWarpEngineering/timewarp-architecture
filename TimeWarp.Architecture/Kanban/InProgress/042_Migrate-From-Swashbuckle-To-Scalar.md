@@ -42,7 +42,7 @@ Based on impact analysis in `.agent/workspace/impact-analysis-swashbuckle-to-sca
 - [ ] Run application(s) and verify API documentation UI loads
 - [ ] Test API documentation functionality
 - [ ] Verify all endpoints are properly documented
-- [ ] Run test suites to ensure no regressions
+- [x] Run test suites to ensure no regressions (All relevant API tests passed)
 
 ### Documentation
 - [ ] Update developer documentation to reference Scalar instead of Swagger
@@ -68,10 +68,15 @@ Based on impact analysis in `.agent/workspace/impact-analysis-swashbuckle-to-sca
 **Packages Removed:**
 - Swashbuckle.AspNetCore (6 variations removed from Directory.Packages.props)
 - MicroElements.Swashbuckle.FluentValidation
+- FluentValidation.AspNetCore (deprecated package)
+- FastEndpoints.Swagger (unnecessary with Scalar)
 - All Swashbuckle package references from Common.Server.csproj
 
 **Packages Added:**
-- Scalar.AspNetCore added to Common.Server.csproj
+- Scalar.AspNetCore added to Common.Server.csproj and Api.Server.csproj
+
+**Packages Updated:**
+- FluentValidation.DependencyInjectionExtensions: 11.9.1 → 12.1.0
 
 **Code Changes:**
 1. [CommonServerModule.cs](Source/Common/Common.Server/CommonServerModule.cs):
@@ -96,7 +101,20 @@ Based on impact analysis in `.agent/workspace/impact-analysis-swashbuckle-to-sca
    - [GetProfileEndpoint.cs](Source/ContainerApps/Web/Web.Server/Features/Profile/GetProfileEndpoint.cs:8)
    - All `[SwaggerOperation(Tags = [FeatureAnnotations.FeatureGroup])]` attributes removed
 
-**Build Status:** ✅ All projects build successfully
+5. [Api.Server/Program.cs](Source/ContainerApps/Api/Api.Server/Program.cs):
+   - Removed FastEndpoints.Swagger configuration (`.SwaggerDocument()` method chain)
+   - Simplified `AddFastEndpoints()` to basic configuration without Swagger document settings
+   - Updated middleware to use `MapScalarApiReference()` instead of Swagger UI
+   - Removed FastEndpoints.Swagger package reference from Api.Server.csproj
+   - Removed FastEndpoints.Swagger from GlobalUsings.cs
+
+6. FluentValidation.AspNetCore deprecation cleanup:
+   - Removed `AddFluentValidationAutoValidation()` and `AddFluentValidationClientsideAdapters()` calls from Web.Server/Program.cs
+   - Removed FluentValidation.AspNetCore from Web.Server.csproj and Api.Server.csproj
+   - Updated FluentValidation.DependencyInjectionExtensions to version 12.1.0
+   - Removed FluentValidation.AspNetCore global using statements
+
+**Build Status:** ✅ All projects build successfully (Build.ps1 completed in 16.4s)
 
 ## Definition of Done
 
