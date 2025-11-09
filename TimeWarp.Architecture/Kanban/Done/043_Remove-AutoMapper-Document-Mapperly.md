@@ -19,26 +19,26 @@ AutoMapper 13.0.1 is referenced and registered in Web.Server but analysis shows 
 ## Checklist
 
 ### Package Management
-- [ ] Remove `AutoMapper` from Directory.Packages.props (version 13.0.1)
-- [ ] Remove AutoMapper package reference from Web.Server.csproj
-- [ ] Verify Riok.Mapperly is properly referenced in Web.Application.csproj (version 4.1.1)
+- [x] Remove `AutoMapper` from Directory.Packages.props (version 13.0.1)
+- [x] Remove AutoMapper package reference from Web.Server.csproj
+- [x] Verify Riok.Mapperly is properly referenced in Web.Application.csproj (version 4.1.1)
 
 ### Code Changes
-- [ ] Remove AutoMapper global using from Web.Server/GlobalUsings.cs
-  - [ ] Remove `global using AutoMapper;` statement
-- [ ] Remove AutoMapper registration from Web.Server/Program.cs
-  - [ ] Remove `serviceCollection.AddAutoMapper(typeof(TimeWarp.Architecture.Web.Application.IAssemblyMarker).Assembly);` call
-- [ ] Verify no AutoMapper Profile classes exist (analysis confirmed none found)
-- [ ] Verify no IMapper usage exists (analysis confirmed none found)
+- [x] Remove AutoMapper global using from Web.Server/GlobalUsings.cs
+  - [x] Remove `global using AutoMapper;` statement
+- [x] Remove AutoMapper registration from Web.Server/Program.cs
+  - [x] Remove `serviceCollection.AddAutoMapper(typeof(TimeWarp.Architecture.Web.Application.IAssemblyMarker).Assembly);` call
+- [x] Verify no AutoMapper Profile classes exist (analysis confirmed none found)
+- [x] Verify no IMapper usage exists (analysis confirmed none found)
 
 ### Testing
-- [ ] Build solution to verify no compilation errors
-- [ ] Run test suites to ensure no regressions
-- [ ] Verify Web.Server starts successfully without AutoMapper
+- [x] Build solution to verify no compilation errors
+- [x] Run test suites to ensure no regressions
+- [x] Verify Web.Server starts successfully without AutoMapper
 
 ### Documentation
-- [ ] Document Mapperly as preferred mapping library (if not already documented)
-- [ ] Add example of Mapperly usage for future reference (optional)
+- [x] Document Mapperly as preferred mapping library (if not already documented)
+- [x] Add example of Mapperly usage for future reference (optional)
 
 ## Notes
 
@@ -93,8 +93,33 @@ public partial class UserMapper
 
 ## Definition of Done
 
-- AutoMapper completely removed from solution
-- All tests passing
-- Build succeeds without AutoMapper
-- Web.Server runs without AutoMapper registration
-- No compilation errors or warnings related to removal
+- ✅ AutoMapper completely removed from solution
+- ✅ All tests passing (Analyzer: 8 passed, Common: 1 passed, API Integration: 6 passed)
+- ✅ Build succeeds without AutoMapper (0 warnings, 0 errors)
+- ✅ Web.Server runs without AutoMapper registration
+- ✅ No compilation errors or warnings related to removal
+
+## Completion Summary
+
+**Date Completed:** 2025-11-09
+
+**Changes Committed:**
+- Commit: `184c2e54` - Remove unused AutoMapper dependency
+- Files Modified: 4 files changed, 1 insertion(+), 5 deletions(-)
+
+**Files Changed:**
+1. [Directory.Packages.props](Directory.Packages.props) - Removed AutoMapper 13.0.1 package entry
+2. [Web.Server.csproj](Source/ContainerApps/Web/Web.Server/Web.Server.csproj) - Removed AutoMapper package reference
+3. [Web.Server/GlobalUsings.cs](Source/ContainerApps/Web/Web.Server/GlobalUsings.cs:1) - Removed `global using AutoMapper;`
+4. [Web.Server/Program.cs](Source/ContainerApps/Web/Web.Server/Program.cs:111) - Removed `AddAutoMapper()` registration
+
+**Test Results:**
+- Build: ✅ Succeeded (16.20 seconds, 0 warnings, 0 errors)
+- Analyzer Tests: ✅ 8 passed
+- Common Tests: ✅ 1 passed
+- API Integration Tests: ✅ 6 passed, 1 skipped
+
+**Impact:**
+- Zero risk removal - no code was using AutoMapper
+- Reduced startup overhead from unnecessary assembly scanning
+- Clarified Mapperly as the chosen mapping library
