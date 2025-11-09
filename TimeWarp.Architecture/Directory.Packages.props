@@ -32,7 +32,7 @@
     <PackageVersion Include="Grpc.Net.Client" Version="2.71.0" />
     <PackageVersion Include="Grpc.Net.Client.Web" Version="2.71.0" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2" />
-    <PackageVersion Include="libphonenumber-csharp" Version="8.13.54" />
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.18" />
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="13.0.0" />
     <PackageVersion Include="MicroElements.Swashbuckle.FluentValidation" Version="6.1.0" />
@@ -94,7 +94,7 @@
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.2.2" />
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
-    <PackageVersion Include="Riok.Mapperly" Version="4.1.1" />
+    <PackageVersion Include="Riok.Mapperly" Version="4.3.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.10.3" />
     <PackageVersion Include="Scrutor" Version="4.2.0" />
     <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
