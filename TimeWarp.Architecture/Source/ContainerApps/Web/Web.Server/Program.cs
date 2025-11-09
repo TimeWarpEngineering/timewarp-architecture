@@ -108,7 +108,6 @@ public class Program : IAspNetProgram
     CorsPolicy.Any.Apply(serviceCollection);
     ConfigureInfrastructure(serviceCollection);
     serviceCollection.AddSignalR();
-    serviceCollection.AddAutoMapper(typeof(TimeWarp.Architecture.Web.Application.IAssemblyMarker).Assembly);
     // serviceCollection.AddRazorPages();
     // serviceCollection.AddServerSideBlazor();
     serviceCollection.AddMvc()

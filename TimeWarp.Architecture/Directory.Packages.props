@@ -12,7 +12,6 @@
     <PackageVersion Include="Aspire.Microsoft.EntityFrameworkCore.Cosmos" Version="9.5.2" />
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
-    <PackageVersion Include="AutoMapper" Version="13.0.1" />
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.2.2" />
     <PackageVersion Include="Azure.Identity" Version="1.13.2" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
