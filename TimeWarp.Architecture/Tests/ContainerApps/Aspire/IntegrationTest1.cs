@@ -20,8 +20,8 @@ public class IntegrationTest1
     await app.StartAsync();
 
     // Act
-    HttpClient httpClient = app.CreateHttpClient("api-server");
-    HttpResponseMessage response = await httpClient.GetAsync("api/weatherForecasts?Days=10");
+    HttpClient httpClient = app.CreateHttpClient("api");
+    HttpResponseMessage response = await httpClient.GetAsync("api/weatherforecast?Days=10");
 
     // Assert
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);

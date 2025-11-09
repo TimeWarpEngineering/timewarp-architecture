@@ -13,6 +13,7 @@ try {
     # Container Apps Tests
     Write-Host "Running Container Apps Tests..." -ForegroundColor Cyan
     dotnet fixie Tests/ContainerApps/Api/Api.Server.Integration.Tests
+    dotnet test Tests/ContainerApps/Aspire
 
     # End to End Tests
     Write-Host "Running End to End Tests..." -ForegroundColor Cyan
