@@ -1,11 +1,33 @@
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
+using global::Aspire.Hosting;
+using global::Aspire.Hosting.Testing;
+
 class SpaTestConvention : TimeWarpTestingConvention
 {
+  public SpaTestConvention() : base(ConfigureServices) {}
 
-  private static void ConfigureAdditionalServicesCallback(ServiceCollection serviceCollection)
+  private static void ConfigureServices(ServiceCollection serviceCollection)
   {
-    serviceCollection.AddSingleton<SpaTestApplication<YarpTestServerApplication, Yarp.Server.Program>>(); ;
-    // One would configure their Application Objects here as well as any other test services
+    // Register the Aspire DistributedApplication
+    serviceCollection.AddSingleton
+    (
+      async _ =>
+      {
+        IDistributedApplicationTestingBuilder appHost =
+          await DistributedApplicationTestingBuilder.CreateAsync<Projects.Aspire_AppHost>();
+
+        DistributedApplication app = await appHost.BuildAsync();
+        await app.StartAsync();
+        return app;
+      }
+    );
+
+    // Register the SpaTestApplication that uses the Aspire DistributedApplication
+    serviceCollection.AddSingleton<ISpaTestApplication>(provider =>
+    {
+      Task<DistributedApplication> distributedAppTask = provider.GetRequiredService<Task<DistributedApplication>>();
+      return new AspireSpaTestApplication(distributedAppTask);
+    });
   }
 }

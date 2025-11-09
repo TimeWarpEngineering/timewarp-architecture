@@ -8,7 +8,7 @@ public class IncrementCounter_Action_Should : BaseTest
 
   public IncrementCounter_Action_Should
   (
-    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+    ISpaTestApplication aSpaTestApplication
   ) : base(aSpaTestApplication) { }
 
   public async Task Decrement_Count_Given_NegativeAmount()

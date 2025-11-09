@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Testing" />
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.AutoFakeItEasy" />
     <PackageReference Include="FakeItEasy" />
@@ -10,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Source\ContainerApps\Web\Web.Spa\Web.Spa.csproj" />
     <ProjectReference Include="..\..\..\..\Source\ContainerApps\Web\Web.Server\Web.Server.csproj" />
+    <ProjectReference Include="..\..\..\..\Source\ContainerApps\Aspire\Aspire.AppHost\Aspire.AppHost.csproj" />
     <ProjectReference Include="..\..\..\TimeWarp.Testing\Testing.Common.csproj" />
   </ItemGroup>
   <ItemGroup>

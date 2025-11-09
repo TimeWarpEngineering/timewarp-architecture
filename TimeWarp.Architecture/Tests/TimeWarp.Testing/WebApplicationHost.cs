@@ -56,7 +56,14 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
 
     try
     {
-      WebApplication.RunAsync();
+      Task runTask = WebApplication.RunAsync();
+
+      // Wait for the server to be ready to accept connections
+      IHostApplicationLifetime lifetime = ServiceProvider.GetRequiredService<IHostApplicationLifetime>();
+      TaskCompletionSource serverStartedTcs = new();
+      lifetime.ApplicationStarted.Register(() => serverStartedTcs.SetResult());
+      serverStartedTcs.Task.Wait(TimeSpan.FromSeconds(30));
+
       Console.WriteLine("======= WebApplication Started ======");
       Started = true;
     }

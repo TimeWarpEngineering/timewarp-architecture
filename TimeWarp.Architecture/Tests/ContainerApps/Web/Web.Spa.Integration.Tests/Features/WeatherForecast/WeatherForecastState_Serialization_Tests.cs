@@ -10,7 +10,7 @@ public class Should
     var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     var weatherForecastDto = new WeatherForecastDto
     (
-      date: DateTime.MinValue.ToUniversalTime(),
+      date: new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc),
       summary: "Summary 1",
       temperatureC: 24
     );

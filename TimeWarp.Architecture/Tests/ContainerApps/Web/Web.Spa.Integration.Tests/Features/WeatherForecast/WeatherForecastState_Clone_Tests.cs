@@ -8,7 +8,7 @@ public class Clone_Should : BaseTest
 
   public Clone_Should
   (
-    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+    ISpaTestApplication aSpaTestApplication
   ) : base(aSpaTestApplication) { }
 
   public void Clone()
@@ -17,15 +17,15 @@ public class Clone_Should : BaseTest
     var weatherForecasts = new List<WeatherForecastDto> {
       new WeatherForecastDto
       (
-        date: DateTime.MinValue,
+        date: new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc),
         summary: "Summary 1",
         temperatureC: 24
       ),
       new WeatherForecastDto
       (
-        date: new DateTime(2019,05,17),
-        summary: "Summary 1",
-        temperatureC: 24
+        date: new DateTime(2019, 5, 17, 0, 0, 0, DateTimeKind.Utc),
+        summary: "Summary 2",
+        temperatureC: 25
       )
     };
     WeatherForecastsState.Initialize(weatherForecasts);
