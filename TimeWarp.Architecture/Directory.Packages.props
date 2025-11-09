@@ -35,7 +35,6 @@
     <PackageVersion Include="libphonenumber-csharp" Version="9.0.18" />
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="13.0.0" />
-    <PackageVersion Include="MicroElements.Swashbuckle.FluentValidation" Version="6.1.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="9.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="9.0.10" />
@@ -105,12 +104,6 @@
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.3.1" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="7.2.0" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="7.0.2" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="7.2.0" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="7.2.0" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="7.2.0" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
     <PackageVersion Include="System.Net.Http.Json" Version="9.0.10" />
     <PackageVersion Include="System.ServiceModel.Primitives" Version="8.1.2" />

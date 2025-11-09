@@ -11,8 +11,6 @@ public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp.Architecture Web.Server API {SwaggerVersion}";
-  const string SwaggerBasePath = "api/web-server";
-  const string SwaggerEndpoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
   public static Task<int> Main(string[] argumentArray)
   {
@@ -155,7 +153,7 @@ public class Program : IAspNetProgram
       );
 
     CommonServerModule
-      .AddSwaggerGen
+      .AddOpenApi
       (
         serviceCollection,
         SwaggerVersion,
@@ -183,7 +181,7 @@ public class Program : IAspNetProgram
       webApplication.UseWebAssemblyDebugging();
     }
 
-    CommonServerModule.UseSwaggerUi(webApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
+    CommonServerModule.UseScalarApiReference(webApplication, SwaggerVersion, SwaggerApiTitle);
 
     webApplication.UseResponseCompression();
     webApplication.UseBlazorFrameworkFiles();

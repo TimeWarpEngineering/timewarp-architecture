@@ -31,60 +31,26 @@ public class CommonServerModule : IAspNetModule
         type != null && memberInfo != null ? $"{type.Name}:{memberInfo.Name}" : null;
   }
 
-  public static void AddSwaggerGen
+  public static void AddOpenApi
   (
     IServiceCollection serviceCollection,
-    string swaggerVersion,
-    string swaggerApiTitle,
+    string apiVersion,
+    string apiTitle,
     Type[] typeArray
   )
   {
-    serviceCollection.AddSwaggerGen
-      (
-        aSwaggerGenOptions =>
-        {
-          aSwaggerGenOptions
-          .SwaggerDoc
-          (
-            swaggerVersion,
-            new OpenApiInfo { Title = swaggerApiTitle, Version = swaggerVersion }
-          );
-
-          aSwaggerGenOptions.EnableAnnotations();
-
-          foreach (Type? assemblyType in typeArray)
-          {
-            string xmlFile = $"{assemblyType.Assembly.GetName().Name}.xml";
-            string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            aSwaggerGenOptions.IncludeXmlComments(xmlPath);
-          }
-        }
-      );
-
-    serviceCollection.AddFluentValidationRulesToSwagger();
+    // Scalar will generate OpenAPI from API controllers automatically
+    serviceCollection.AddEndpointsApiExplorer();
   }
 
-  public static void UseSwaggerUi
+  public static void UseScalarApiReference
   (
     WebApplication webApplication,
-    string swaggerBasePath,
-    string swaggerEndpoint,
-    string swaggerApiTitle
+    string apiVersion,
+    string apiTitle
   )
   {
-    webApplication
-      .UseSwagger
-      (
-        aSwaggerOptions => aSwaggerOptions.RouteTemplate = swaggerBasePath + "/swagger/{documentName}/swagger.json"
-      )
-      .UseSwaggerUI
-      (
-        aSwaggerUIOptions =>
-        {
-          aSwaggerUIOptions.SwaggerEndpoint($"/{swaggerBasePath}{swaggerEndpoint}", swaggerApiTitle);
-          aSwaggerUIOptions.RoutePrefix = $"{swaggerBasePath}/swagger";
-        }
-      );
+    webApplication.MapScalarApiReference();
   }
 
   private static void ConfigureAzureAppConfig(IConfigurationManager configurationManager)
