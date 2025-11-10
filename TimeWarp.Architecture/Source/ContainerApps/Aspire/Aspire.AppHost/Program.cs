@@ -14,7 +14,7 @@ internal class Program
     cosmos = cosmos.RunAsEmulator();
 #endif
     //+:cnd:noEmit
-    var cosmosdb = cosmos.AddCosmosDatabase(CosmosDbDatabaseName);
+    IResourceBuilder<global::Aspire.Hosting.Azure.AzureCosmosDBDatabaseResource> cosmosdb = cosmos.AddCosmosDatabase(CosmosDbDatabaseName);
 #endif
     // Declare project resources based on template flags
 #if api
