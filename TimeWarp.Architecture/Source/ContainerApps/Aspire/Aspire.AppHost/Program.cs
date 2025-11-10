@@ -9,12 +9,12 @@ internal class Program
 #if cosmosdb
     // Add CosmosDB resource
     IResourceBuilder<AzureCosmosDBResource> cosmos = builder.AddAzureCosmosDB(CosmosDbResourceName);
-    IResourceBuilder<AzureCosmosDBResource> cosmosdb = cosmos.AddDatabase(CosmosDbDatabaseName);
     //-:cnd:noEmit
 #if DEBUG
-    cosmosdb.RunAsEmulator();
+    cosmos = cosmos.RunAsEmulator();
 #endif
     //+:cnd:noEmit
+    var cosmosdb = cosmos.AddCosmosDatabase(CosmosDbDatabaseName);
 #endif
     // Declare project resources based on template flags
 #if api
