@@ -44,9 +44,19 @@ Plan and execute a coordinated set of NuGet dependency updates across the soluti
 - Microsoft.Identity.Web (3.9.2 → 4.0.1) - major version
 - Microsoft.NET.Test.Sdk (17.12.0 → 18.0.0) - major version
 
+### Wave 3: Aspire Updates
+- Aspire.Hosting.AppHost (9.0.0 → 9.5.2)
+- Aspire.Hosting.Azure.CosmosDB (9.0.0 → 9.5.2)
+- Aspire.Hosting.Testing (9.0.0 → 9.5.2)
+- Aspire.Microsoft.Azure.Cosmos (9.0.0 → 9.5.2)
+
+### Breaking Changes Fixed
+- **WithCommand API**: Updated to use new CommandOptions parameter instead of individual parameters
+- **CosmosDB API**: Changed from AddDatabase() to AddCosmosDatabase(), moved RunAsEmulator() to cosmos resource
+
 ### Test Results
 - All tests passing: 25 passed (8 analyzers + 1 common + 6 API + 1 Aspire + 9 Web.Spa)
-- 2 pre-existing CosmosDB emulator failures (not regression)
+- CosmosDB emulator updated to latest version (resolved expired evaluation period)
 - 2 skipped tests
 - Aspire integration test fixed and enabled in RunTests.ps1
 
@@ -54,14 +64,11 @@ Plan and execute a coordinated set of NuGet dependency updates across the soluti
 - Fixed Aspire integration test resource name ("api-server" → "api")
 - Fixed Aspire integration test endpoint URL ("weatherForecasts" → "weatherforecast")
 - Enabled Aspire test in RunTests.ps1
+- Updated CosmosDB emulator Docker image to latest version
 
 ## Outstanding Items
 
-### Aspire Packages (Deferred)
-The only remaining outdated packages are Aspire-related. These should be updated together as a coordinated effort:
-- Aspire.Hosting (8.2.0 → latest)
-- Other Aspire.* packages currently on 9.0.0/9.5.2
-- Requires testing of service orchestration and resource management
+None - all outdated packages have been updated successfully!
 
 ## Notes
 
