@@ -7,7 +7,7 @@ partial class WeatherForecastsState
 
   public override WeatherForecastsState Hydrate(IDictionary<string, object> keyValuePairs)
   {
-    var jsonSerializerOptions = new JsonSerializerOptions
+    JsonSerializerOptions jsonSerializerOptions = new()
     {
       PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
@@ -16,16 +16,16 @@ partial class WeatherForecastsState
 
     var newWeatherForecastsState = new WeatherForecastsState()
     {
-      WeatherForecastList = JsonSerializer.Deserialize<List<WeatherForecastDto>>(json, jsonSerializerOptions) ?? throw new InvalidOperationException(),
+      WeatherForecastList = JsonSerializer.Deserialize<List<TWeatherForecast>>(json, jsonSerializerOptions) ?? throw new InvalidOperationException(),
       Guid = new Guid(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString() ?? throw new InvalidOperationException()),
     };
 
     return newWeatherForecastsState;
   }
 
-  internal void Initialize(List<WeatherForecastDto> aWeatherForecastList)
+  internal void Initialize(List<TWeatherForecast> weatherForecastList)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
-    WeatherForecastList = Guard.Against.Null(aWeatherForecastList);
+    WeatherForecastList = Guard.Against.Null(weatherForecastList);
   }
 }
