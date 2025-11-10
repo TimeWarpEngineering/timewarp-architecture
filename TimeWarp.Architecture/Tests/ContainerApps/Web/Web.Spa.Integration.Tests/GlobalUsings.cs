@@ -1,8 +1,11 @@
 ﻿global using AnyClone;
 global using FakeItEasy;
+global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+global using Microsoft.Extensions.Options;
 global using Microsoft.FluentUI.AspNetCore.Components;
 global using Shouldly;
 global using System.Text.Json;
+global using TimeWarp.Architecture.Services;
 global using TimeWarp.State;
 global using TimeWarp.Mediator;
 global using Microsoft.Extensions.Configuration;

@@ -60,6 +60,26 @@ public class AspireSpaTestApplication : ISpaTestApplication
     // Add HttpClient pointing to the YARP gateway from Aspire
     services.AddHttpClient(Configuration.ServiceNames.ApiServiceName, c => c.BaseAddress = new Uri(baseUrl));
 
+    // Configure JSON serializer options
+    services.Configure<JsonSerializerOptions>(options =>
+    {
+      options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
+
+    // Register IAccessTokenProvider (required for API service)
+    IAccessTokenProvider fakeAccessTokenProvider = A.Fake<IAccessTokenProvider>();
+    services.AddScoped(_ => fakeAccessTokenProvider);
+
+    // Register IApiServerApiService (required for handlers that call the API)
+    services.AddScoped<IApiServerApiService>(serviceProvider =>
+    {
+      IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+      IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
+      IOptions<JsonSerializerOptions> jsonOptions = serviceProvider.GetRequiredService<IOptions<JsonSerializerOptions>>();
+
+      return new ApiServerApiService(httpClientFactory, accessTokenProvider, jsonOptions);
+    });
+
     // Replace JSRuntime with a fake for testing
     IJSRuntime fakeJsRuntime = A.Fake<IJSRuntime>();
     services.AddScoped(_ => fakeJsRuntime);

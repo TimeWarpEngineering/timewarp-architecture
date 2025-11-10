@@ -13,10 +13,9 @@ public class FetchWeatherForecasts_Action_Should : BaseTest
 
   public async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()
   {
-    var fetchWeatherForecastsRequest = new FetchWeatherForecastsActionSet.Action(5);
+    await WeatherForecastsState.FetchWeatherForecasts(5);
 
-    await Send(fetchWeatherForecastsRequest);
-
+    WeatherForecastsState.WeatherForecasts.ShouldNotBeNull();
     WeatherForecastsState.WeatherForecasts.Count.ShouldBe(5);
   }
 }
