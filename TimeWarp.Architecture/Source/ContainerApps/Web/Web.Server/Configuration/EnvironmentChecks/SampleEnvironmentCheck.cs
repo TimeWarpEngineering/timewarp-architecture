@@ -5,9 +5,9 @@ public class SampleEnvironmentCheck
   private readonly ILogger Logger;
   public static string Description => "Sample Environment check";
 
-  public SampleEnvironmentCheck(ILogger<SampleEnvironmentCheck> aLogger)
+  public SampleEnvironmentCheck(ILogger<SampleEnvironmentCheck> logger)
   {
-    Logger = aLogger;
+    Logger = logger;
   }
 
   public void Check()

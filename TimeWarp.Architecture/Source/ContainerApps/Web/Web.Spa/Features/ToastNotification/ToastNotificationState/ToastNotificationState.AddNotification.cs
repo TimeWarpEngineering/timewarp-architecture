@@ -32,7 +32,7 @@ partial class ToastNotificationState
       public override Task Handle
       (
         Action action,
-        CancellationToken aCancellationToken
+        CancellationToken cancellationToken
       )
       {
         ToastService.ShowToast(action.Intent, action.Title);

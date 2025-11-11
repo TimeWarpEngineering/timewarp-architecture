@@ -201,6 +201,18 @@ All 38 instances in Common libraries have been successfully refactored.
 - CloneStateBehavior_Tests.cs: `aSpaTestApplication`, `aCount` → `spaTestApplication`, `count` (2 test methods)
 - Manual review completed - no breaking changes
 
+**Web Infrastructure, Server, and Components Completed**
+- AssemblyExtensions.cs: `aAssembly`, `aAttributeType` → `assembly`, `attributeType`
+- ProfileConfiguration.cs: `aEntityTypeBuilder`, `aProfile` → `entityTypeBuilder`, `profile` (lambda parameters)
+- CosmosDbContext.cs: `aDbContextOptions`, `aModelBuilder` → `dbContextOptions`, `modelBuilder`
+- SampleEnvironmentCheck.cs: `aLogger` → `logger`
+- CosmosDbContextStartupHostedService.cs: `aServiceProvider`, `aLogger`, `aCancellationToken` → camelCase without prefix
+- PostgresDbContextStartupHostedService.cs: `aServiceProvider`, `aLogger`, `aCancellationToken` → camelCase without prefix
+- InputSelectNumber.cs: `aValue`, `aResult`, `aValidationErrorMessage` → `value`, `result`, `validationErrorMessage`
+- ToastNotificationState.AddNotification.cs: `aCancellationToken` → `cancellationToken`
+- ToastNotificationState.AddProblemDetails.cs: `aCancellationToken` → `cancellationToken`
+- Manual review completed - no breaking changes
+
 ## Notes
 
 - Analysis report generated: 2025-11-11 (see .agent/workspace/a-prefix-parameters-report.md)
