@@ -32,7 +32,7 @@ Remove legacy Hungarian notation 'a' prefix from parameters and local variables 
 - [x] Source/Common/Common.Server/CommonServerModule.cs (3 matches)
 - [x] Source/Common/Common.Server/IAspNetModule.cs (4 matches)
 - [x] Source/Common/Common.Server/Base/BaseEndpoint.cs (1 match)
-- [ ] Source/Common/Common.Server/Extensions/MvcBuilderExtensions.cs (5 matches)
+- [x] Source/Common/Common.Server/Extensions/MvcBuilderExtensions.cs (5 matches)
 - [ ] Source/Common/Common.Server/CorsPolicy/*.cs (13 matches across 3 files)
 
 ### Implementation - Phase 2: Container Apps
@@ -115,6 +115,12 @@ Remove legacy Hungarian notation 'a' prefix from parameters and local variables 
 - Refactored 1 instance
 - Changed: `aRequest` → `request`
 - Generic base endpoint Send method updated
+- Manual review completed - no breaking changes
+
+**MvcBuilderExtensions.cs Completed**
+- Refactored all 5 instances
+- Changed: `aMvcBuilder`, `aAssembly`, `aApplicationPartManager`, `aAssemblyPart` → camelCase without prefix
+- Extension method and lambda parameters updated
 - Manual review completed - no breaking changes
 
 ## Notes

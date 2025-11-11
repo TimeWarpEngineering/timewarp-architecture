@@ -4,23 +4,23 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class MvcBuilderExtensions
 {
 
-  public static IMvcBuilder TryAddApplicationPart(this IMvcBuilder aMvcBuilder, Assembly aAssembly)
+  public static IMvcBuilder TryAddApplicationPart(this IMvcBuilder mvcBuilder, Assembly assembly)
   {
-    aMvcBuilder.ConfigureApplicationPartManager
+    mvcBuilder.ConfigureApplicationPartManager
     (
-      aApplicationPartManager =>
+      applicationPartManager =>
       {
         if
         (
-          !aApplicationPartManager.ApplicationParts.OfType<AssemblyPart>()
-            .Any(aAssemblyPart => aAssemblyPart.Assembly == aAssembly)
+          !applicationPartManager.ApplicationParts.OfType<AssemblyPart>()
+            .Any(assemblyPart => assemblyPart.Assembly == assembly)
         )
         {
-          aApplicationPartManager.ApplicationParts.Add(new AssemblyPart(aAssembly));
+          applicationPartManager.ApplicationParts.Add(new AssemblyPart(assembly));
         }
       }
     );
 
-    return aMvcBuilder;
+    return mvcBuilder;
   }
 }
