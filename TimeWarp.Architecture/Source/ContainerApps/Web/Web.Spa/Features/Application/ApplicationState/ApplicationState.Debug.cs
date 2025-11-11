@@ -11,11 +11,11 @@ partial class ApplicationState
     };
   }
 
-  internal void Initialize(string aName, string aLogo, bool aIsMenuExpanded)
+  internal void Initialize(string name, string logo, bool isMenuExpanded)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
-    Name = aName;
-    Logo = aLogo;
-    IsMenuExpanded = aIsMenuExpanded;
+    Name = name;
+    Logo = logo;
+    IsMenuExpanded = isMenuExpanded;
   }
 }

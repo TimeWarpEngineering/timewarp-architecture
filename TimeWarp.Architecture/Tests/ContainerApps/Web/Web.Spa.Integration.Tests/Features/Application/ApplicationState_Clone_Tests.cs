@@ -8,13 +8,13 @@ public class Clone_Should : BaseTest
 
   public Clone_Should
   (
-    ISpaTestApplication aSpaTestApplication
-  ) : base(aSpaTestApplication) { }
+    ISpaTestApplication spaTestApplication
+  ) : base(spaTestApplication) { }
 
   public void Clone()
   {
     //Arrange
-    ApplicationState.Initialize(aName: "TestName", aLogo: "SomeUrl", aIsMenuExpanded: false);
+    ApplicationState.Initialize(name: "TestName", logo: "SomeUrl", isMenuExpanded: false);
 
     //Act
     ApplicationState clone = ApplicationState.Clone();

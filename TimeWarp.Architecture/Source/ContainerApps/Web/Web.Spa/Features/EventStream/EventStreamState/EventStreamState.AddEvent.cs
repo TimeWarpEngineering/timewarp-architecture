@@ -10,7 +10,6 @@ partial class EventStreamState
       public required string Message { get; init; }
     }
 
-
     internal sealed class Handler
     (
       IStore store
@@ -20,7 +19,7 @@ partial class EventStreamState
       public override Task Handle
       (
         Action action,
-        CancellationToken aCancellationToken
+        CancellationToken cancellationToken
       )
       {
         EventStreamState.EventList.Add(action.Message);

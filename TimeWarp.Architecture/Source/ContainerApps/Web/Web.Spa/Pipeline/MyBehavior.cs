@@ -16,10 +16,10 @@ public class MyBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResp
 
   public MyBehavior
   (
-    ILogger<MyBehavior<TRequest, TResponse>> aLogger
+    ILogger<MyBehavior<TRequest, TResponse>> logger
   )
   {
-    Logger = aLogger;
+    Logger = logger;
     Logger.LogDebug(message: "{GetType().Name}: Constructor",TypeName);
   }
 

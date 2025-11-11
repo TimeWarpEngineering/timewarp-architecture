@@ -183,6 +183,16 @@ All 38 instances in Common libraries have been successfully refactored.
 - Pipeline behavior and notification handler parameters updated
 - Manual review completed - no breaking changes
 
+**State Debug and Handler Methods Completed**
+- ApplicationState.Debug.cs: `aName`, `aLogo`, `aIsMenuExpanded` → `name`, `logo`, `isMenuExpanded`
+- CounterState.ThrowException.cs: `aCancellationToken` → `cancellationToken`
+- EventStreamState.AddEvent.cs: `aCancellationToken` → `cancellationToken`
+- EventStreamState.Debug.cs: `aEvents` → `events` (parameter and XML doc)
+- MyBehavior.cs: `aLogger` → `logger`
+- PostPipelineNotificationRequestPostProcessor.cs: `aLogger`, `aPublisher`, `aRequest`, `aResponse`, `aCancellationToken` → camelCase without prefix
+- ApplicationState_Clone_Tests.cs: `aSpaTestApplication`, `aIsMenuExpanded` → `spaTestApplication`, `isMenuExpanded`
+- Manual review completed - no breaking changes
+
 ## Notes
 
 - Analysis report generated: 2025-11-11 (see .agent/workspace/a-prefix-parameters-report.md)

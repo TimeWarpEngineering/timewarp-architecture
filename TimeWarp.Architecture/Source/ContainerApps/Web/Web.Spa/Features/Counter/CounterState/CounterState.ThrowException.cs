@@ -19,7 +19,7 @@ partial class CounterState
       public override Task Handle
       (
         Action action,
-        CancellationToken aCancellationToken
+        CancellationToken cancellationToken
       ) =>
         // Intentionally throw so we can test exception handling.
         throw new Exception(action.Message);
