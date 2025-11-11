@@ -1,7 +1,5 @@
 namespace ApplicationState_;
 
-
-
 public class Clone_Should : BaseTest
 {
   private ApplicationState ApplicationState => Store.GetState<ApplicationState>();

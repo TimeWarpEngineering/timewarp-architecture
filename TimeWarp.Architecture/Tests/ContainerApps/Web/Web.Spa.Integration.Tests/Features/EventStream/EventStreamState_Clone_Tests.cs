@@ -6,8 +6,8 @@ public class Clone_Should : BaseTest
 
   public Clone_Should
   (
-    ISpaTestApplication aSpaTestApplication
-  ) : base(aSpaTestApplication) { }
+    ISpaTestApplication spaTestApplication
+  ) : base(spaTestApplication) { }
 
   public void Clone()
   {

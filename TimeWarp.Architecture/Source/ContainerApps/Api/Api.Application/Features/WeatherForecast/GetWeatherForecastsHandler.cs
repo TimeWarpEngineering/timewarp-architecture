@@ -2,7 +2,6 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 using static GetWeatherForecasts;
 
-
 public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
 {
   private readonly string[] Summaries =
@@ -22,7 +21,7 @@ public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response,
   public Task<OneOf<Response, SharedProblemDetails>> Handle
   (
     Query query,
-    CancellationToken aCancellationToken
+    CancellationToken cancellationToken
   )
   {
     var random = new Random();

@@ -213,6 +213,15 @@ All 38 instances in Common libraries have been successfully refactored.
 - ToastNotificationState.AddProblemDetails.cs: `aCancellationToken` → `cancellationToken`
 - Manual review completed - no breaking changes
 
+**API Application and Test Infrastructure Completed**
+- ApiApplicationModule.cs: `aServiceCollection`, `aConfiguration` → `serviceCollection`, `configuration`
+- GetWeatherForecastsHandler.cs: `aCancellationToken` → `cancellationToken`
+- EventStreamState_Clone_Tests.cs: `aSpaTestApplication` → `spaTestApplication`
+- BaseTest.cs: `aSpaTestApplication`, `aRequest` → `spaTestApplication`, `request` (constructor and methods, XML doc)
+- ConventionTests.cs: `aX`, `aY`, `aExpectedDifference` → `x`, `y`, `expectedDifference`
+- ApplicationState_Clone_Tests.cs: Removed extra blank lines (formatting only)
+- Manual review completed - no breaking changes
+
 ## Notes
 
 - Analysis report generated: 2025-11-11 (see .agent/workspace/a-prefix-parameters-report.md)
