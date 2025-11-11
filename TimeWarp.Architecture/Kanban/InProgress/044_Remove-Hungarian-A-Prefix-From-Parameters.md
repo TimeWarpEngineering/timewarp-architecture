@@ -166,6 +166,17 @@ All 38 instances in Common libraries have been successfully refactored.
 - Commented PostgresDbModule code also updated for consistency
 - Manual review completed - no breaking changes
 
+**NotificationState Files Completed**
+- NotificationState.AddNotification.cs: `aCancellationToken` → `cancellationToken`
+- NotificationState.AddProblemDetails.cs: `aCancellationToken` → `cancellationToken`
+- Handler method parameters updated
+- Manual review completed - no breaking changes
+
+**AccountState.Debug.cs Completed**
+- AccountState.Debug.cs: `aKeyValuePairs` → `keyValuePairs` (used 6 times in Hydrate method)
+- State hydration method parameters updated
+- Manual review completed - no breaking changes
+
 ## Notes
 
 - Analysis report generated: 2025-11-11 (see .agent/workspace/a-prefix-parameters-report.md)
