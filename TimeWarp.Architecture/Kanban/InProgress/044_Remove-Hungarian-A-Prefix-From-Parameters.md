@@ -193,6 +193,14 @@ All 38 instances in Common libraries have been successfully refactored.
 - ApplicationState_Clone_Tests.cs: `aSpaTestApplication`, `aIsMenuExpanded` → `spaTestApplication`, `isMenuExpanded`
 - Manual review completed - no breaking changes
 
+**Counter State and Pipeline Preprocessor Completed**
+- CounterState.Debug.cs: `aCount` → `count` (parameter and XML doc)
+- PrePipelineNotificationRequestPreProcessor.cs: `aLogger`, `aPublisher`, `aRequest`, `aCancellationToken` → camelCase without prefix
+- CounterState_Clone_Tests.cs: `aSpaTestApplication`, `aCount` → `spaTestApplication`, `count`
+- CounterState_IncrementCounter_Tests.cs: `aSpaTestApplication`, `aCount` → `spaTestApplication`, `count` (2 test methods)
+- CloneStateBehavior_Tests.cs: `aSpaTestApplication`, `aCount` → `spaTestApplication`, `count` (2 test methods)
+- Manual review completed - no breaking changes
+
 ## Notes
 
 - Analysis report generated: 2025-11-11 (see .agent/workspace/a-prefix-parameters-report.md)

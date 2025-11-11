@@ -6,13 +6,13 @@ public class Clone_Should : BaseTest
 
   public Clone_Should
   (
-    ISpaTestApplication aSpaTestApplication
-  ) : base(aSpaTestApplication) { }
+    ISpaTestApplication spaTestApplication
+  ) : base(spaTestApplication) { }
 
   public void Clone()
   {
     //Arrange
-    CounterState.Initialize(aCount: 15);
+    CounterState.Initialize(count: 15);
 
     //Act
     var clone = CounterState.Clone() as CounterState;

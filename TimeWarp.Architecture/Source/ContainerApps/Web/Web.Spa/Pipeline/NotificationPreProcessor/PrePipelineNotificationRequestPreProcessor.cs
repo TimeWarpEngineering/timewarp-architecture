@@ -8,22 +8,22 @@ internal class PrePipelineNotificationRequestPreProcessor<TRequest> : IRequestPr
 
   public PrePipelineNotificationRequestPreProcessor
   (
-    ILogger<PrePipelineNotificationRequestPreProcessor<TRequest>> aLogger,
-    IPublisher aPublisher
+    ILogger<PrePipelineNotificationRequestPreProcessor<TRequest>> logger,
+    IPublisher publisher
   )
   {
-    Logger = aLogger;
-    Publisher = aPublisher;
+    Logger = logger;
+    Publisher = publisher;
   }
 
-  public Task Process(TRequest aRequest, CancellationToken aCancellationToken)
+  public Task Process(TRequest request, CancellationToken cancellationToken)
   {
     var notification = new PrePipelineNotification<TRequest>
     {
-      Request = aRequest,
+      Request = request,
     };
 
     Logger.LogDebug("PrePipelineNotificationRequestPreProcessor");
-    return Publisher.Publish(notification, aCancellationToken);
+    return Publisher.Publish(notification, cancellationToken);
   }
 }

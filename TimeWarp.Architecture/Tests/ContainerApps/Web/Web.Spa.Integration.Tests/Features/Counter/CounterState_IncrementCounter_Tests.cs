@@ -8,13 +8,13 @@ public class IncrementCounter_Action_Should : BaseTest
 
   public IncrementCounter_Action_Should
   (
-    ISpaTestApplication aSpaTestApplication
-  ) : base(aSpaTestApplication) { }
+    ISpaTestApplication spaTestApplication
+  ) : base(spaTestApplication) { }
 
   public async Task Decrement_Count_Given_NegativeAmount()
   {
     //Arrange
-    CounterState.Initialize(aCount: 15);
+    CounterState.Initialize(count: 15);
 
     var action = new IncrementCounterActionSet.Action(amount: -2);
 
@@ -28,7 +28,7 @@ public class IncrementCounter_Action_Should : BaseTest
   public async Task Increment_Count()
   {
     //Arrange
-    CounterState.Initialize(aCount: 22);
+    CounterState.Initialize(count: 22);
 
     var action = new IncrementCounterActionSet.Action(amount: 5);
 
