@@ -40,7 +40,7 @@ Remove legacy Hungarian notation 'a' prefix from parameters and local variables 
 - [x] Source/ContainerApps/Grpc/Grpc.Server/**/*.cs (19 matches across 5 files)
 - [x] Source/ContainerApps/Grpc/Grpc.Contracts/**/*.cs (4 matches across 2 files)
 - [ ] Source/ContainerApps/Web/Web.Server/Program.cs (9 matches)
-- [ ] Source/ContainerApps/Web/Web.Spa/Program.cs (6 matches)
+- [x] Source/ContainerApps/Web/Web.Spa/Program.cs (6 matches)
 - [x] Source/ContainerApps/Web/Web.Application/**/*.cs (2 matches)
 - [ ] Source/ContainerApps/Web/Web.Spa/Features/**/*.cs (19 matches across 9 files)
 - [ ] Source/ContainerApps/Web/Web.Spa/Pipeline/*.cs (8 matches across 3 files)
@@ -152,6 +152,12 @@ All 38 instances in Common libraries have been successfully refactored.
 
 **Web Application Handler Completed**
 - TrackEvent.Handler.cs: `aTrackEventRequest`, `aCcancellationToken` → `trackEventRequest`, `cancellationToken`
+- Manual review completed - no breaking changes
+
+**Web.Spa Program.cs Completed**
+- Program.cs: `aJsonSerializerOptions`, `aValidationConfiguration`, `aServiceDescriptor` → camelCase without prefix
+- JSON serializer configuration lambda updated
+- Commented validation code also updated for consistency
 - Manual review completed - no breaking changes
 
 ## Notes

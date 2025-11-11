@@ -84,15 +84,15 @@ public class Program
     // TODO: Either Fix Petes or remove this and continue to use Blazored
     // serviceCollection.AddFormValidation
     // (
-    //   aValidationConfiguration =>
+    //   validationConfiguration =>
     //   {
-    //     aValidationConfiguration.AddFluentValidation(typeof(Web.Spa.IAssemblyMarker).Assembly);
+    //     validationConfiguration.AddFluentValidation(typeof(Web.Spa.IAssemblyMarker).Assembly);
     //     ServiceDescriptor serviceDescriptor =
     //       serviceCollection.First
     //       (
-    //         aServiceDescriptor =>
-    //           aServiceDescriptor.ServiceType.Name == nameof(ServiceCollectionOptionsValidator.ServiceValidator) &&
-    //           aServiceDescriptor.Lifetime == ServiceLifetime.Scoped
+    //         serviceDescriptor =>
+    //           serviceDescriptor.ServiceType.Name == nameof(ServiceCollectionOptionsValidator.ServiceValidator) &&
+    //           serviceDescriptor.Lifetime == ServiceLifetime.Scoped
     //       );
     //
     //     serviceCollection.Remove(serviceDescriptor);
@@ -140,10 +140,10 @@ public class Program
     // Set the JSON serializer options
     serviceCollection.Configure<JsonSerializerOptions>
     (
-      aJsonSerializerOptions =>
+      jsonSerializerOptions =>
       {
         //aJsonSerializerOptions.PropertyNameCaseInsensitive = false;
-        aJsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        jsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         ;//aJsonSerializerOptions.WriteIndented = true;
       }
     );
@@ -160,7 +160,5 @@ public class Program
       // .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(configuration)
       .ConfigureOptions<BlazorSettings, BlazorSettingsValidator>(configuration)
       .ConfigureOptions<PasswordlessOptions, PasswordlessOptionsValidator>(configuration);
-
-    //serviceCollection.ValidateOptions();
   }
 }
