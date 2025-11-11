@@ -4,5 +4,5 @@
 public interface IHelloService
 {
   [OperationContract]
-  Task<HelloResponse> SayHelloAsync(HelloRequest aHelloRequest, ServerCallContext aCallContext);
+  Task<HelloResponse> SayHelloAsync(HelloRequest helloRequest, ServerCallContext callContext);
 }

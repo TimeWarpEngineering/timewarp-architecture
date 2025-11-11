@@ -7,9 +7,9 @@ internal class IncrementCountNotificationHandler
 {
   private readonly ILogger Logger;
 
-  public IncrementCountNotificationHandler(ILogger<IncrementCountNotificationHandler> aLogger)
+  public IncrementCountNotificationHandler(ILogger<IncrementCountNotificationHandler> logger)
   {
-    Logger = aLogger;
+    Logger = logger;
   }
 
   public Task Handle

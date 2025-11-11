@@ -24,27 +24,27 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
   /// <summary>
   /// Construct a WebApplication
   /// </summary>
-  /// <param name="aUrls"></param>
-  /// <param name="aWebApplicationOptions"></param>
-  /// <param name="aConfigureServicesDelegate"></param>
+  /// <param name="urls"></param>
+  /// <param name="webApplicationOptions"></param>
+  /// <param name="configureServicesDelegate"></param>
   public WebApplicationHost
   (
-    string[] aUrls,
-    WebApplicationOptions aWebApplicationOptions,
-    Action<IServiceCollection>? aConfigureServicesDelegate = null
+    string[] urls,
+    WebApplicationOptions webApplicationOptions,
+    Action<IServiceCollection>? configureServicesDelegate = null
   )
   {
-    Urls = aUrls;
+    Urls = urls;
     WebApplicationBuilder builder =
-      WebApplication.CreateBuilder(aWebApplicationOptions);
+      WebApplication.CreateBuilder(webApplicationOptions);
 
     builder.WebHost
-      .UseUrls(aUrls)
+      .UseUrls(urls)
       .UseShutdownTimeout(TimeSpan.FromSeconds(30));
 
     Configuration = builder.Configuration;
     TProgram.ConfigureServices(builder.Services, builder.Configuration);
-    aConfigureServicesDelegate?.Invoke(builder.Services);
+    configureServicesDelegate?.Invoke(builder.Services);
 
     WebApplication = builder.Build();
     TProgram.ConfigureMiddleware(WebApplication);

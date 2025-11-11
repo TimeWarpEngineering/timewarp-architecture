@@ -36,27 +36,27 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
   {
     Guard.Against.Null(next);
 
-    await AddEventToStream(request, aTag: "Start").ConfigureAwait(false);
+    await AddEventToStream(request, tag: "Start").ConfigureAwait(false);
     TResponse newState = await next().ConfigureAwait(false);
-    await AddEventToStream(request, aTag: "Completed").ConfigureAwait(false);
+    await AddEventToStream(request, tag: "Completed").ConfigureAwait(false);
     return newState;
   }
 
-  private async Task AddEventToStream(TRequest aRequest, string aTag)
+  private async Task AddEventToStream(TRequest request, string tag)
   {
-    if (aRequest is not AddEvent.Action) //Skip to avoid recursion
+    if (request is not AddEvent.Action) //Skip to avoid recursion
     {
       string message;
-      string requestTypeName = aRequest.GetType().Name;
-
-      if (aRequest is BaseRequest request)
+      string requestTypeName = request.GetType().Name;
+      if (request is BaseRequest)
       {
-        message = $"{aTag}:{requestTypeName}";
+        message = $"{tag}:{requestTypeName}";
       }
       else
       {
-        message = $"{aTag}:{requestTypeName}";
+        message = $"{tag}:{requestTypeName}";
       }
+
       var addEventAction = new AddEvent.Action(){ Message = message};
       await Sender.Send(addEventAction);
     }

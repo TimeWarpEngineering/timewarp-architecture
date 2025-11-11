@@ -2,5 +2,6 @@
 
 public class ApiApplicationModule : IModule
 {
-  public static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration) => throw new NotImplementedException();
+  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration) =>
+    throw new NotImplementedException();
 }

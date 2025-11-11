@@ -2,8 +2,8 @@
 
 public class SuperheroService : ISuperheroService
 {
-  private readonly string[] Powers = new[]
-   {
+  private readonly string[] Powers =
+   [
     "Super Maggots",
     "Eat Anything",
     "Super Learning",
@@ -19,9 +19,9 @@ public class SuperheroService : ISuperheroService
     "Invulnerability",
     "Telekinesis",
     "Shapeshifting"
-  };
+  ];
 
-  public static string GenerateName(int aLength)
+  public static string GenerateName(int length)
   {
     var random = new Random();
     string[] consonants = { "b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "l", "n", "p", "q", "r", "s", "sh", "zh", "t", "v", "w", "x" };
@@ -30,7 +30,7 @@ public class SuperheroService : ISuperheroService
     name += consonants[random.Next(consonants.Length)].ToUpper();
     name += vowels[random.Next(vowels.Length)];
     int b = 2; //b tells how many times a new letter has been added. It's 2 right now because the first two letters are already in the name.
-    while (b < aLength)
+    while (b < length)
     {
       name += consonants[random.Next(consonants.Length)];
       b++;
@@ -39,16 +39,16 @@ public class SuperheroService : ISuperheroService
     }
     return name;
   }
-  public List<int> SuperheroIds = new();
+  public List<int> SuperheroIds = [];
   public Task<SuperheroResponse> GetSuperheroAsync
   (
-    SuperheroRequest aSuperheroRequest,
-    CallContext aCallContext = default
+    SuperheroRequest superheroRequest,
+    CallContext callContext = default
   )
   {
     var heroList = new List<SuperheroDto>();
     var randonm = new Random();
-    for (int heroNumber = 1; heroNumber <= aSuperheroRequest.NumberOfHeros; heroNumber++)
+    for (int heroNumber = 1; heroNumber <= superheroRequest.NumberOfHeros; heroNumber++)
     {
       int randomAge = randonm.Next(10, 35);
       heroList.Add(new SuperheroDto()
@@ -61,6 +61,7 @@ public class SuperheroService : ISuperheroService
       }
       );
     }
+
     var response = new SuperheroResponse()
     {
       Superheros = heroList

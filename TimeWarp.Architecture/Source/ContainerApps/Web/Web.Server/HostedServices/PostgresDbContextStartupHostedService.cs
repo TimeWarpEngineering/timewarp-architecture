@@ -8,24 +8,24 @@ public sealed partial class PostgresDbContextStartupHostedService : IHostedServi
 
   public PostgresDbContextStartupHostedService
   (
-       IServiceProvider aServiceProvider,
-          ILogger<PostgresDbContextStartupHostedService> aLogger
+       IServiceProvider serviceProvider,
+          ILogger<PostgresDbContextStartupHostedService> logger
      )
   {
-    ServiceProvider = aServiceProvider;
-    Logger = aLogger;
+    ServiceProvider = serviceProvider;
+    Logger = logger;
   }
 
-  public async Task StartAsync(CancellationToken aCancellationToken)
+  public async Task StartAsync(CancellationToken cancellationToken)
   {
     Logger.LogInformation($"{nameof(PostgresDbContextStartupHostedService)} has started.");
     using IServiceScope scope = ServiceProvider.CreateScope();
 
     PostgresDbContext postgresDbContext = scope.ServiceProvider.GetRequiredService<PostgresDbContext>();
-    await postgresDbContext.Database.EnsureCreatedAsync(aCancellationToken);
+    await postgresDbContext.Database.EnsureCreatedAsync(cancellationToken);
   }
 
-  public Task StopAsync(CancellationToken aCancellationToken)
+  public Task StopAsync(CancellationToken cancellationToken)
   {
     Logger.LogInformation($"{nameof(PostgresDbContextStartupHostedService)} has stopped.");
     return Task.CompletedTask;

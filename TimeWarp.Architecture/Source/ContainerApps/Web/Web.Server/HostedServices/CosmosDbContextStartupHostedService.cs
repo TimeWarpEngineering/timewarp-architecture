@@ -7,24 +7,24 @@ public class CosmosDbContextStartupHostedService : IHostedService
 
   public CosmosDbContextStartupHostedService
   (
-    IServiceProvider aServiceProvider,
-    ILogger<CosmosDbContextStartupHostedService> aLogger
+    IServiceProvider serviceProvider,
+    ILogger<CosmosDbContextStartupHostedService> logger
   )
   {
-    ServiceProvider = aServiceProvider;
-    Logger = aLogger;
+    ServiceProvider = serviceProvider;
+    Logger = logger;
   }
 
-  public async Task StartAsync(CancellationToken aCancellationToken)
+  public async Task StartAsync(CancellationToken cancellationToken)
   {
     Logger.LogInformation($"{nameof(CosmosDbContextStartupHostedService)} has started.");
     using IServiceScope scope = ServiceProvider.CreateScope();
 
     CosmosDbContext cosmosDbContext = scope.ServiceProvider.GetRequiredService<CosmosDbContext>();
-    await cosmosDbContext.Database.EnsureCreatedAsync(aCancellationToken);
+    await cosmosDbContext.Database.EnsureCreatedAsync(cancellationToken);
   }
 
-  public Task StopAsync(CancellationToken aCancellationToken)
+  public Task StopAsync(CancellationToken cancellationToken)
   {
     Logger.LogInformation($"{nameof(CosmosDbContextStartupHostedService)} has stopped.");
     return Task.CompletedTask;

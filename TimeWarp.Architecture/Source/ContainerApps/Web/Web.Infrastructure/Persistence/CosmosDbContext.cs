@@ -4,11 +4,11 @@ public class CosmosDbContext : DbContext
 {
   public DbSet<Profile> Profiles => Set<Profile>();
 
-  public CosmosDbContext(DbContextOptions<CosmosDbContext> aDbContextOptions) : base(aDbContextOptions) { }
+  public CosmosDbContext(DbContextOptions<CosmosDbContext> dbContextOptions) : base(dbContextOptions) { }
 
-  protected override void OnModelCreating(ModelBuilder aModelBuilder)
+  protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
-    aModelBuilder.ApplyConfiguration<Profile>(new ProfileConfiguration());
-    base.OnModelCreating(aModelBuilder);
+    modelBuilder.ApplyConfiguration<Profile>(new ProfileConfiguration());
+    base.OnModelCreating(modelBuilder);
   }
 }

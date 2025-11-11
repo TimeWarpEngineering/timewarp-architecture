@@ -6,23 +6,23 @@ public partial class CorsPolicy
   /// 
   /// </summary>
   /// <example>
-  /// `CorsPolicy.Any.Apply(aServiceCollection);`
+  /// `CorsPolicy.Any.Apply(serviceCollection);`
   /// ...
-  /// `aWebApplication.UseCors(CorsPolicy.Any.ToString());`
+  /// `webApplication.UseCors(CorsPolicy.Any.ToString());`
   /// </example>
   public class AnyPolicy : CorsPolicy
   {
-    public AnyPolicy() : base(aValue: 0, aName: "Any") { }
+    public AnyPolicy() : base(value: 0, name: "Any") { }
 
-    public override void Apply(IServiceCollection aServiceCollection)
+    public override void Apply(IServiceCollection serviceCollection)
     {
-      aServiceCollection.AddCors
+      serviceCollection.AddCors
       (
-        aOptions =>
-          aOptions.AddPolicy
+        options =>
+          options.AddPolicy
           (
             CorsPolicy.Any.Name,
-            aBuilder => aBuilder
+            builder => builder
               .AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader()

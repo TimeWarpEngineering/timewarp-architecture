@@ -9,23 +9,23 @@ internal class PostPipelineNotificationRequestPostProcessor<TRequest, TResponse>
 
   public PostPipelineNotificationRequestPostProcessor
   (
-    ILogger<PostPipelineNotificationRequestPostProcessor<TRequest, TResponse>> aLogger,
-    IPublisher aPublisher
+    ILogger<PostPipelineNotificationRequestPostProcessor<TRequest, TResponse>> logger,
+    IPublisher publisher
   )
   {
-    Logger = aLogger;
-    Publisher = aPublisher;
+    Logger = logger;
+    Publisher = publisher;
   }
 
-  public Task Process(TRequest aRequest, TResponse aResponse, CancellationToken aCancellationToken)
+  public Task Process(TRequest request, TResponse response, CancellationToken cancellationToken)
   {
     var notification = new PostPipelineNotification<TRequest, TResponse>
     {
-      Request = aRequest,
-      Response = aResponse
+      Request = request,
+      Response = response
     };
 
     Logger.LogDebug("PostPipelineNotificationRequestPostProcessor");
-    return Publisher.Publish(notification, aCancellationToken);
+    return Publisher.Publish(notification, cancellationToken);
   }
 }

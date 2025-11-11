@@ -8,13 +8,13 @@ public class Should : BaseTest
 
   public Should
   (
-    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
-  ) : base(aSpaTestApplication) { }
+    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> spaTestApplication
+  ) : base(spaTestApplication) { }
 
   public async Task CloneState()
   {
     //Arrange
-    CounterState.Initialize(aCount: 15);
+    CounterState.Initialize(count: 15);
     Guid preActionGuid = CounterState.Guid;
 
     var action = new IncrementCounterActionSet.Action(amount: -2);
@@ -29,7 +29,7 @@ public class Should : BaseTest
   public async Task RollBackState_When_Exception()
   {
     // Arrange
-    CounterState.Initialize(aCount: 22);
+    CounterState.Initialize(count: 22);
     Guid preActionGuid = CounterState.Guid;
 
     // Act

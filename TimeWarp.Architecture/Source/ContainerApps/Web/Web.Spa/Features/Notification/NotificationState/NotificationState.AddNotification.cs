@@ -28,7 +28,7 @@ partial class NotificationState
       public override Task Handle
       (
         Action action,
-        CancellationToken aCancellationToken
+        CancellationToken cancellationToken
       )
       {
         NotificationState.NotificationList ??= [];

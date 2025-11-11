@@ -10,9 +10,9 @@ public class BaseEndpoint<TRequest, TResponse> : ControllerBase
   private ISender Sender => HttpContext?.RequestServices.GetRequiredService<ISender>()
     ?? throw new InvalidOperationException("ISender is not available.");
 
-  protected virtual async Task<IActionResult> Send(TRequest aRequest)
+  protected virtual async Task<IActionResult> Send(TRequest request)
   {
-    OneOf<TResponse, SharedProblemDetails> response = await Sender.Send(aRequest).ConfigureAwait(false);
+    OneOf<TResponse, SharedProblemDetails> response = await Sender.Send(request).ConfigureAwait(false);
 
     return response.Match<ActionResult>
     (

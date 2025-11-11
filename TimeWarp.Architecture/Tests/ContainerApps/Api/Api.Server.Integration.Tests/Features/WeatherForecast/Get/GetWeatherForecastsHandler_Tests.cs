@@ -8,11 +8,11 @@ public class Handle_Returns
 
   public Handle_Returns
   (
-     ApiTestServerApplication aApiTestServerApplication
+     ApiTestServerApplication apiTestServerApplication
   )
   {
     Query = new Query { Days = 10 };
-    ApiTestServerApplication = aApiTestServerApplication;
+    ApiTestServerApplication = apiTestServerApplication;
   }
 
   public async Task _10WeatherForecasts_Given_10DaysRequested()

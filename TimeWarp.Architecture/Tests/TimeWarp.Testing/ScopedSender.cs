@@ -41,7 +41,7 @@ public class ScopedSender : ISender
     );
   }
 
-  public async Task<object?> Send(object request, CancellationToken aCancellationToken = default)
+  public async Task<object?> Send(object request, CancellationToken cancellationToken = default)
   {
     return await ExecuteInScope
     (

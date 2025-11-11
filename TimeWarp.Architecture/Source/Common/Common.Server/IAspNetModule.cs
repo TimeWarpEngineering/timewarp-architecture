@@ -2,7 +2,7 @@
 
 public interface IAspNetModule : IModule
 {
-  static abstract void ConfigureConfiguration(ConfigurationManager aConfigurationManager);
-  static abstract void ConfigureMiddleware(WebApplication aWebApplication);
-  static abstract void ConfigureEndpoints(WebApplication aWebApplication);
+  static abstract void ConfigureConfiguration(ConfigurationManager configurationManager);
+  static abstract void ConfigureMiddleware(WebApplication webApplication);
+  static abstract void ConfigureEndpoints(WebApplication webApplication);
 }

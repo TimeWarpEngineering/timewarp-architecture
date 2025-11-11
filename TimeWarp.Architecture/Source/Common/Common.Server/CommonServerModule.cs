@@ -4,8 +4,9 @@ public class CommonServerModule : IAspNetModule
 {
   public static void ConfigureConfiguration(ConfigurationManager configurationManager)
   {
-    ConfigureAzureAppConfig(configurationManager);;
+    ConfigureAzureAppConfig(configurationManager); ;
   }
+
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
     IConfigurationRoot configurationRoot = webApplication!.Configuration as IConfigurationRoot ?? throw new InvalidOperationException();
@@ -15,10 +16,10 @@ public class CommonServerModule : IAspNetModule
       webApplication.MapGet
       (
         "/api/debug-config",
-        aHttpContext =>
+        httpContext =>
         {
           string? config = configurationRoot.GetDebugView();
-          return aHttpContext.Response.WriteAsync(config);
+          return httpContext.Response.WriteAsync(config);
         }
       );
     }
@@ -79,8 +80,8 @@ public class CommonServerModule : IAspNetModule
           )
           .ConfigureKeyVault
           (
-            aAzureAppConfigurationKeyVaultOptions =>
-              aAzureAppConfigurationKeyVaultOptions.SetCredential(new DefaultAzureCredential())
+            azureAppConfigurationKeyVaultOptions =>
+              azureAppConfigurationKeyVaultOptions.SetCredential(new DefaultAzureCredential())
           ),
       optional: false
     );

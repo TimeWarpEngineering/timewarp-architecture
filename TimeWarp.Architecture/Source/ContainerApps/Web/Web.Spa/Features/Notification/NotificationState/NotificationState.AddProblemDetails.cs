@@ -8,7 +8,6 @@ partial class NotificationState
   public static class AddProblemDetails
   {
 
-
     internal sealed class Action
     (
       SharedProblemDetails SharedProblemDetails
@@ -27,7 +26,7 @@ partial class NotificationState
       public override Task Handle
       (
         Action action,
-        CancellationToken aCancellationToken
+        CancellationToken cancellationToken
       )
       {
         NotificationState.NotificationList ??= [];

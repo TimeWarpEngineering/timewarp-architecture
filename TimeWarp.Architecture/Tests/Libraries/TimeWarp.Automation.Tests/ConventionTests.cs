@@ -16,9 +16,9 @@ public class SimpleNoApplicationTest_Should_
 
     [Input(5, 3, 2)]
     [Input(8, 5, 3)]
-    public static void Subtract(int aX, int aY, int aExpectedDifference)
+    public static void Subtract(int x, int y, int expectedDifference)
     {
-        int result = aX - aY;
-        result.ShouldBe(aExpectedDifference);
+        int result = x - y;
+        result.ShouldBe(expectedDifference);
     }
 }

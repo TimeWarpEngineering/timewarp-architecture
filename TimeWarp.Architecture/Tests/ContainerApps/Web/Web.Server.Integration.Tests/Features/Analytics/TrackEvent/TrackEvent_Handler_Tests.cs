@@ -9,11 +9,11 @@ public class Handle_Returns
 
   public Handle_Returns
   (
-     WebTestServerApplication aWebTestServerApplication
+     WebTestServerApplication webTestServerApplication
   )
   {
     Command = new Command { EventName = "SomeEvent" };
-    WebTestServerApplication = aWebTestServerApplication;
+    WebTestServerApplication = webTestServerApplication;
   }
 
   public async Task Ok_Given_Valid_Request()

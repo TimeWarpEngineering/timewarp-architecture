@@ -29,7 +29,7 @@ partial class ToastNotificationState
       public override Task Handle
       (
         Action action,
-        CancellationToken aCancellationToken
+        CancellationToken cancellationToken
       )
       {
         if (action.SharedProblemDetails.Status == Constants.OperationCancelled) return Task.CompletedTask;

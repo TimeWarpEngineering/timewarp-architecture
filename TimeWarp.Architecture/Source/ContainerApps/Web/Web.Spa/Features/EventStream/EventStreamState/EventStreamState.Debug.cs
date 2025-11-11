@@ -5,10 +5,10 @@ partial class EventStreamState
   /// <summary>
   /// Use in Tests ONLY, to initialize the State
   /// </summary>
-  /// <param name="aEvents"></param>
-  public void Initialize(List<string> aEvents)
+  /// <param name="events"></param>
+  public void Initialize(List<string> events)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
-    EventList = aEvents;
+    EventList = events;
   }
 }

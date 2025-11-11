@@ -9,8 +9,8 @@ public sealed partial class TrackEvent
   {
     public Task<OneOf<Response, SharedProblemDetails>> Handle
     (
-      Command aTrackEventRequest,
-      CancellationToken aCcancellationToken
+      Command trackEventRequest,
+      CancellationToken cancellationToken
     )
     {
       // TODO implement code here that formats and sends data to your favorite Analytics tool

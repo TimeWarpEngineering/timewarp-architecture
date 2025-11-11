@@ -3,15 +3,15 @@ namespace TimeWarp.Architecture.Features.Account;
 
 partial class AccountState
 {
-  public override AccountState Hydrate(IDictionary<string, object> aKeyValuePairs)
+  public override AccountState Hydrate(IDictionary<string, object> keyValuePairs)
   {
     return new AccountState
     {
-      Guid = new Guid(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()!),
-      Alias = aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Alias))].ToString(),
-      WalletAddress = aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(WalletAddress))].ToString(),
-      SessionToken = aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(SessionToken))].ToString(),
-      IsAuthenticated = bool.Parse(aKeyValuePairs[CamelCase.MemberNameToCamelCase(nameof(IsAuthenticated))].ToString()!),
+      Guid = new Guid(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString()!),
+      Alias = keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Alias))].ToString(),
+      WalletAddress = keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(WalletAddress))].ToString(),
+      SessionToken = keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(SessionToken))].ToString(),
+      IsAuthenticated = bool.Parse(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(IsAuthenticated))].ToString()!),
     };
   }
 

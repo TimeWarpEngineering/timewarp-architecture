@@ -7,15 +7,15 @@ public class ProtobufGenerationHostedService : IHostedService
 
   public ProtobufGenerationHostedService
   (
-    IServiceProvider aServiceProvider,
-    ILogger<ProtobufGenerationHostedService> aLogger
+    IServiceProvider serviceProvider,
+    ILogger<ProtobufGenerationHostedService> logger
   )
   {
-    ServiceProvider = aServiceProvider;
-    Logger = aLogger;
+    ServiceProvider = serviceProvider;
+    Logger = logger;
   }
 
-  public async Task StartAsync(CancellationToken aCancellationToken)
+  public async Task StartAsync(CancellationToken cancellationToken)
   {
     Logger.LogInformation($"{nameof(ProtobufGenerationHostedService)} has started.");
 
@@ -33,7 +33,7 @@ public class ProtobufGenerationHostedService : IHostedService
     await Task.CompletedTask;
   }
 
-  public Task StopAsync(CancellationToken aCancellationToken)
+  public Task StopAsync(CancellationToken cancellationToken)
   {
     Logger.LogInformation($"{nameof(ProtobufGenerationHostedService)} has stopped.");
     return Task.CompletedTask;

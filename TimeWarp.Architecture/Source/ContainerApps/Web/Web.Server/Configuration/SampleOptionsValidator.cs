@@ -8,6 +8,6 @@ internal class SampleOptionsValidator : AbstractValidator<SampleOptions>
 {
   public SampleOptionsValidator()
   {
-    RuleFor(aSampleOptions => aSampleOptions.SampleOption).NotEmpty();
+    RuleFor(sampleOptions => sampleOptions.SampleOption).NotEmpty();
   }
 }

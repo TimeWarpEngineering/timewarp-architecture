@@ -12,20 +12,20 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
 #endif
   public YarpTestServerApplication
   (
-    WebTestServerApplication aWebTestServerApplication
+    WebTestServerApplication webTestServerApplication
 #if(api)
-    ,ApiTestServerApplication aApiTestServerApplication
+    ,ApiTestServerApplication apiTestServerApplication
 #endif
   ) :
   base
   (
     new WebApplicationHost<Yarp.Server.Program>
     (
-      aUrls: new[]
-      {
+      urls:
+      [
         "https://localhost:8443"
-      },
-      aWebApplicationOptions:
+      ],
+      webApplicationOptions:
         new WebApplicationOptions
         {
           ApplicationName = typeof(TimeWarp.Architecture.Yarp.Server.IAssemblyMarker).Assembly.GetName().Name,
@@ -36,17 +36,17 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
     )
   )
   {
-    WebTestServerApplication = aWebTestServerApplication;
+    WebTestServerApplication = webTestServerApplication;
 #if(api)
-    ApiTestServerApplication = aApiTestServerApplication;
+    ApiTestServerApplication = apiTestServerApplication;
 #endif
   }
 
-  protected static void ConfigureServicesCallback(IServiceCollection aServiceCollection)
+  protected static void ConfigureServicesCallback(IServiceCollection serviceCollection)
   {
     // Add configuration-based endpoint provider for test environment URLs
     // This allows us to map service names to literal URLs in appsettings.json
-    aServiceCollection.AddConfigurationServiceEndpointProvider();
+    serviceCollection.AddConfigurationServiceEndpointProvider();
   }
 
   protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Yarp.Server.Program> webApplicationHost)

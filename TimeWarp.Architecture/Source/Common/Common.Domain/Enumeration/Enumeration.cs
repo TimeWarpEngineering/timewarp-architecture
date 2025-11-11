@@ -9,11 +9,11 @@ public abstract class Enumeration : IComparable
 {
   //protected Enumeration() { }
 
-  protected Enumeration(int aValue, string aName, List<string>? aAlternateCodes)
+  protected Enumeration(int value, string name, List<string>? alternateCodes)
   {
-    Value = aValue;
-    Name = aName;
-    AlternateCodes = aAlternateCodes ?? new List<string>();
+    Value = value;
+    Name = name;
+    AlternateCodes = alternateCodes ?? [];
   }
 
   public List<string> AlternateCodes { get; }
@@ -25,16 +25,16 @@ public abstract class Enumeration : IComparable
   /// Get the EnumerationItem form an alternate code.
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  /// <param name="aAlternateCode"></param>
+  /// <param name="alternateCode"></param>
   /// <returns></returns>
-  public static T? FromAlternateCode<T>(string aAlternateCode) where T : Enumeration
+  public static T? FromAlternateCode<T>(string alternateCode) where T : Enumeration
   {
     T? matchingItem =
       Parse<T, string>
       (
-        aAlternateCode,
+        alternateCode,
         "alternate code",
-        aItem => aItem.AlternateCodes.Contains(aAlternateCode)
+        item => item.AlternateCodes.Contains(alternateCode)
       );
 
     return matchingItem;
@@ -44,11 +44,11 @@ public abstract class Enumeration : IComparable
   /// Get the EnumerationItem from  its Name
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  /// <param name="aName"></param>
+  /// <param name="name"></param>
   /// <returns></returns>
-  public static T? FromName<T>(string aName) where T : Enumeration
+  public static T? FromName<T>(string name) where T : Enumeration
   {
-    T? matchingItem = Parse<T, string>(aName, "name", aItem => aItem.Name == aName);
+    T? matchingItem = Parse<T, string>(name, "name", item => item.Name == name);
     return matchingItem;
   }
 
@@ -56,13 +56,18 @@ public abstract class Enumeration : IComparable
   /// Get the EnumerationItem from a display name, alternate code or value.
   /// </summary>
   /// <typeparam name="T"></typeparam>
+  /// <param name="value">The string value to search for</param>
   /// <returns></returns>
-  public static T? FromString<T>(string aString) where T : Enumeration
+  public static T? FromString<T>(string value) where T : Enumeration
   {
-    T? matchingItem = Parse<T, string>(aString, "", aItem =>
-    aItem.Name == aString ||
-    aItem.AlternateCodes.Contains(aString)
-    );
+    T? matchingItem =
+      Parse<T, string>
+      (
+        value, "", item =>
+        item.Name == value ||
+        item.AlternateCodes.Contains(value)
+      );
+
     return matchingItem;
   }
 
@@ -70,11 +75,11 @@ public abstract class Enumeration : IComparable
   /// Get the EnumerationItem from is value
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  /// <param name="aValue"></param>
+  /// <param name="value"></param>
   /// <returns></returns>
-  public static T? FromValue<T>(int aValue) where T : Enumeration
+  public static T? FromValue<T>(int value) where T : Enumeration
   {
-    T? matchingItem = Parse<T, int>(aValue, "value", item => item.Value == aValue);
+    T? matchingItem = Parse<T, int>(value, "value", item => item.Value == value);
     return matchingItem;
   }
 
@@ -86,13 +91,13 @@ public abstract class Enumeration : IComparable
     return fields.Select(info => info.GetValue(null)).OfType<T>();
   }
 
-  public int CompareTo(object? aOther) => Value.CompareTo(((Enumeration?)aOther)?.Value);
+  public int CompareTo(object? other) => Value.CompareTo(((Enumeration?)other)?.Value);
 
-  public override bool Equals(object? aObject)
+  public override bool Equals(object? value)
   {
-    if (aObject is not Enumeration otherValue) return false;
+    if (value is not Enumeration otherValue) return false;
 
-    bool typeMatches = GetType().Equals(aObject?.GetType());
+    bool typeMatches = GetType().Equals(value?.GetType());
     bool valueMatches = Value.Equals(otherValue.Value);
 
     return typeMatches && valueMatches;
@@ -102,13 +107,13 @@ public abstract class Enumeration : IComparable
 
   public override string ToString() => Name;
 
-  protected static T? Parse<T, K>(K aValue, string aDescription, Func<T, bool> aPredicate) where T : Enumeration
+  protected static T? Parse<T, K>(K value, string description, Func<T, bool> predicate) where T : Enumeration
   {
-    T? matchingItem = GetAll<T>().FirstOrDefault(aPredicate);
+    T? matchingItem = GetAll<T>().FirstOrDefault(predicate);
 
     if (matchingItem is null)
     {
-      string message = $"'{aValue}' is not a valid {aDescription} in {typeof(T)}";
+      string message = $"'{value}' is not a valid {description} in {typeof(T)}";
       throw new Exception(message);
     }
 

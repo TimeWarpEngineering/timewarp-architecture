@@ -2,18 +2,18 @@
 
 public class ProfileConfiguration : IEntityTypeConfiguration<Profile>
 {
-  public void Configure(EntityTypeBuilder<Profile> aEntityTypeBuilder)
+  public void Configure(EntityTypeBuilder<Profile> entityTypeBuilder)
   {
     var guidToStringConverter = new GuidToStringConverter();
 
-    aEntityTypeBuilder
+    entityTypeBuilder
         .Property(nameof(Profile.Guid))
         .HasConversion(guidToStringConverter);
 
-    aEntityTypeBuilder
+    entityTypeBuilder
         .ToContainer($"{nameof(Profile)}s")
         .HasNoDiscriminator()
-        .HasPartitionKey(aProfile => aProfile.Guid)
-        .HasKey(aProfile => aProfile.Guid);
+        .HasPartitionKey(profile => profile.Guid)
+        .HasKey(profile => profile.Guid);
   }
 }
