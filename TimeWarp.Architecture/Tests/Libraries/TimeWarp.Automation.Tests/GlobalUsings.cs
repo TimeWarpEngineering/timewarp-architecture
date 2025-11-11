@@ -1,6 +1,6 @@
 global using FluentValidation;
 global using FluentValidation.Results;
-global using MediatR;
+global using TimeWarp.Mediator;
 global using OneOf;
 global using Shouldly;
 global using System.Diagnostics;

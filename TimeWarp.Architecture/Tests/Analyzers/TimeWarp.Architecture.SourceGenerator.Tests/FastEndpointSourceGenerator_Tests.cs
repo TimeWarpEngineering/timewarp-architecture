@@ -73,11 +73,11 @@ public class GetWeatherForecastsEndpoint : BaseFastEndpoint<GetWeatherForecasts.
         GeneratorDriverRunResult runResult = driver.RunGenerators(compilation).GetRunResult();
 
         // Get the generated files
-        runResult.Results[0].GeneratedSources.Length.Should().Be(1);
+        runResult.Results[0].GeneratedSources.Length.ShouldBe(1);
         string actualGeneratedCode = runResult.Results[0].GeneratedSources[0].SourceText.ToString();
 
         // Compare the generated code
-        actualGeneratedCode.Should().Be(ExpectedGeneratedCode);
+        actualGeneratedCode.ShouldBe(ExpectedGeneratedCode);
 
         return Task.CompletedTask;
     }

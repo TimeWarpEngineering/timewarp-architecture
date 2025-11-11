@@ -28,7 +28,7 @@ partial class WeatherForecastsState
       }
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        WeatherForecastsState.WeatherForecastList = response.WeatherForecasts.ToList();
+        WeatherForecastsState.WeatherForecastList = [.. response.WeatherForecasts];
         return Task.CompletedTask;
       }
     }

@@ -27,7 +27,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all"/>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client"/>
     <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" />
-    <PackageReference Include="Microsoft.Extensions.Http"/>
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji"/>
@@ -39,7 +38,6 @@
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
     <PackageReference Include="Morris.Blazor.FluentValidation"/>
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
-    <PackageReference Include="System.Net.Http.Json" PrivateAssets="all"/>
     <PackageReference Include="TimeWarp.State" />
     <PackageReference Include="TimeWarp.State.Plus"/>
     <PackageReference Include="Timewarp.OptionsValidation"/>

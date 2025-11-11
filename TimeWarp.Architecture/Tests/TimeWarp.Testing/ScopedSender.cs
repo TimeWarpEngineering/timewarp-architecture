@@ -2,7 +2,7 @@
 namespace TimeWarp.Architecture.Testing;
 
 /// <summary>
-/// This is an implementation of MediatR's ISender Interface
+/// This is an implementation of Mediator's ISender Interface
 /// that wraps calls to Send in a <see cref="IServiceScope"/>.
 /// </summary>
 public class ScopedSender : ISender

@@ -28,13 +28,13 @@ public class Handle_Returns
     (
       response =>
       {
-        response.Should().NotBeNull();
-        response.WeatherForecasts.Count().Should().Be(Query.Days);
+        response.ShouldNotBeNull();
+        response.WeatherForecasts.Count().ShouldBe(Query.Days!.Value);
       },
       problemDetails =>
       {
         // This should not happen in a successful case
-        Execute.Assertion.FailWith("The SignIn handler returned SharedProblemDetails instead of a successful response.");
+        problemDetails.ShouldBeNull("The SignIn handler returned SharedProblemDetails instead of a successful response.");
       }
     );
   }

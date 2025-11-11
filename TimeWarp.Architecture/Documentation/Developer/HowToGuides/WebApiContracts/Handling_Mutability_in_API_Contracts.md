@@ -9,7 +9,7 @@ For API contracts designed to fetch data without expecting any modifications to 
 Example of an immutable DTO:
 
 ```csharp
-public sealed class UserDto
+public sealed class TUser
 {
   public int UserId { get; init; } // Immutable
   public string UserName { get; init; } // Immutable
@@ -30,7 +30,7 @@ public interface IUserDetails
   public string LastName { get; set; } // Mutable
 }
 
-public sealed class UserDto : IUserDetails
+public sealed class TUser : IUserDetails
 {
   public int UserId { get; init; } // Immutable
   public string Email { get; set; } // Mutable

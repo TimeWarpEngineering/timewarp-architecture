@@ -13,7 +13,7 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="JetBrains.Annotations" />
-    <PackageReference Include="MediatR" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
     <PackageReference Include="OneOf" />

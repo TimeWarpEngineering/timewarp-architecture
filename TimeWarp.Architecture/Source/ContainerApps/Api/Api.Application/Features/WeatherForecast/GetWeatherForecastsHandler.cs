@@ -27,13 +27,13 @@ public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response,
   {
     var random = new Random();
 
-    List<WeatherForecastDto> weatherForecasts = [];
+    List<TWeatherForecast> weatherForecasts = [];
 
     Enumerable.Range(1, query?.Days ?? 5).ToList().ForEach
     (
       index => weatherForecasts.Add
       (
-        new WeatherForecastDto
+        new TWeatherForecast
         (
           date: DateTime.Now.AddDays(index),
           summary: Summaries[random.Next(Summaries.Length)],

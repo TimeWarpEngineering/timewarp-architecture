@@ -7,13 +7,10 @@ using Common.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Serilog;
 
-
 public class Program : IAspNetProgram
 {
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp.Architecture Web.Server API {SwaggerVersion}";
-  const string SwaggerBasePath = "api/web-server";
-  const string SwaggerEndpoint = $"/swagger/{SwaggerVersion}/swagger.json";
 
   public static Task<int> Main(string[] argumentArray)
   {
@@ -99,7 +96,6 @@ public class Program : IAspNetProgram
     });
     ConfigureAuthentication(serviceCollection, configuration);
 
-
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
     ConfigureSettings(serviceCollection, configuration);
     WebInfrastructureModule.ConfigureServices(serviceCollection, configuration);
@@ -112,14 +108,12 @@ public class Program : IAspNetProgram
     CorsPolicy.Any.Apply(serviceCollection);
     ConfigureInfrastructure(serviceCollection);
     serviceCollection.AddSignalR();
-    serviceCollection.AddAutoMapper(typeof(TimeWarp.Architecture.Web.Application.IAssemblyMarker).Assembly);
     // serviceCollection.AddRazorPages();
     // serviceCollection.AddServerSideBlazor();
     serviceCollection.AddMvc()
       .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly);
 
-    serviceCollection.AddFluentValidationAutoValidation();
-    serviceCollection.AddFluentValidationClientsideAdapters();
+    serviceCollection.AddHttpContextAccessor();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
@@ -146,18 +140,19 @@ public class Program : IAspNetProgram
     Web.Spa.Program.ConfigureServices(serviceCollection, configuration);
 
     serviceCollection
-      .AddMediatR
+      .AddMediator
       (
-        mediatRServiceConfiguration =>
-          mediatRServiceConfiguration.RegisterServicesFromAssemblies
+        mediatorServiceConfiguration =>
+          mediatorServiceConfiguration.RegisterServicesFromAssemblies
           (
             typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).GetTypeInfo().Assembly,
             typeof(TimeWarp.Architecture.Web.Application.IAssemblyMarker).GetTypeInfo().Assembly
           )
       );
+    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(FluentValidationBehavior<,>));
 
     CommonServerModule
-      .AddSwaggerGen
+      .AddOpenApi
       (
         serviceCollection,
         SwaggerVersion,
@@ -185,7 +180,7 @@ public class Program : IAspNetProgram
       webApplication.UseWebAssemblyDebugging();
     }
 
-    CommonServerModule.UseSwaggerUi(webApplication, SwaggerBasePath, SwaggerEndpoint, SwaggerApiTitle);
+    CommonServerModule.UseScalarApiReference(webApplication, SwaggerVersion, SwaggerApiTitle);
 
     webApplication.UseResponseCompression();
     webApplication.UseBlazorFrameworkFiles();

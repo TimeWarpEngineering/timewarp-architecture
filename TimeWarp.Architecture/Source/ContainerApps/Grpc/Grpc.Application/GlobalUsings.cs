@@ -1,2 +1,2 @@
 ﻿global using JetBrains.Annotations;
-global using MediatR;
+global using TimeWarp.Mediator;

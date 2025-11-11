@@ -1,6 +1,5 @@
 ﻿global using Aspire.Hosting.Testing;
-global using FluentAssertions;
-global using FluentAssertions.Execution;
+global using Shouldly;
 global using FluentValidation.Results;
 global using FluentValidation.TestHelper;
 global using Microsoft.Extensions.DependencyInjection;

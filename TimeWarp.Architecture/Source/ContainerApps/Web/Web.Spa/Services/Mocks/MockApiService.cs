@@ -18,7 +18,7 @@ public class MockApiService : IApiService
         var response =
             new GetWeatherForecasts.Response
             (
-              new GetWeatherForecasts.WeatherForecastDto[]
+              new GetWeatherForecasts.TWeatherForecast[]
               {
                 new
                 (

@@ -6,7 +6,7 @@ public class Clone_Should : BaseTest
 
   public Clone_Should
   (
-    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+    ISpaTestApplication aSpaTestApplication
   ) : base(aSpaTestApplication) { }
 
   public void Clone()
@@ -19,8 +19,8 @@ public class Clone_Should : BaseTest
     EventStreamState clone = EventStreamState.Clone();
 
     //Assert
-    EventStreamState.Events.Count.Should().Be(clone.Events.Count);
-    EventStreamState.Guid.Should().NotBe(clone.Guid);
-    EventStreamState.Events[0].Should().Be(clone.Events[0]);
+    EventStreamState.Events.Count.ShouldBe(clone.Events.Count);
+    EventStreamState.Guid.ShouldNotBe(clone.Guid);
+    EventStreamState.Events[0].ShouldBe(clone.Events[0]);
   }
 }

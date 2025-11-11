@@ -72,42 +72,87 @@ public abstract class BaseApiService : IApiService
       HttpResponseMessage httpResponseMessage =
         await GetHttpResponseMessageFromRequest(request, cancellationToken).ConfigureAwait(false);
 
-      if (httpResponseMessage.StatusCode == HttpStatusCode.NoContent)
-      {
-        return new SharedProblemDetails
+      return httpResponseMessage.IsSuccessStatusCode
+        ? await HandleSuccessResponse<TResponse>(httpResponseMessage, cancellationToken).ConfigureAwait(false)
+        : httpResponseMessage.StatusCode switch
         {
-          Title = "No Content",
-          Status = (int)HttpStatusCode.NoContent,
-          Detail = "The response content is empty."
+          HttpStatusCode.NoContent => HandleNoContentResponse(),
+          _ => await HandleProblemResponse(httpResponseMessage, cancellationToken).ConfigureAwait(false)
         };
-      }
-
-      if (httpResponseMessage.IsSuccessStatusCode)
-      {
-        if (typeof(TResponse) == typeof(Stream))
-        {
-          Stream fileStream = await ReadFileStream(httpResponseMessage, cancellationToken).ConfigureAwait(false);
-          var fileResponse = new FileResponse(fileStream: fileStream)
-          {
-            FileName = httpResponseMessage.Content.Headers.ContentDisposition?.FileName,
-            ContentType = httpResponseMessage.Content.Headers.ContentType?.MediaType
-          };
-          return fileResponse;
-        }
-        return await ReadFromJson<TResponse>(httpResponseMessage, cancellationToken).ConfigureAwait(false);
-      }
-
-      return await ReadFromJson<SharedProblemDetails>(httpResponseMessage, cancellationToken).ConfigureAwait(false);
     }
     catch (OperationCanceledException)
     {
+      return HandleCancellationResponse();
+    }
+  }
+
+  /// <summary>
+  /// Handles successful HTTP responses (2xx status codes).
+  /// Returns OneOf with all three types to match the parent method signature,
+  /// even though SharedProblemDetails is never returned from this method.
+  /// This avoids the need for explicit type conversion at the call site.
+  /// </summary>
+  private async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> HandleSuccessResponse<TResponse>
+  (
+    HttpResponseMessage httpResponseMessage,
+    CancellationToken cancellationToken
+  ) where TResponse : class
+  {
+    if (typeof(TResponse) == typeof(Stream))
+    {
+      Stream fileStream = await ReadFileStream(httpResponseMessage, cancellationToken).ConfigureAwait(false);
+      var fileResponse = new FileResponse(fileStream: fileStream)
+      {
+        FileName = httpResponseMessage.Content.Headers.ContentDisposition?.FileName,
+        ContentType = httpResponseMessage.Content.Headers.ContentType?.MediaType
+      };
+      return fileResponse;
+    }
+
+    return await ReadFromJson<TResponse>(httpResponseMessage, cancellationToken).ConfigureAwait(false);
+  }
+
+  private static SharedProblemDetails HandleNoContentResponse()
+  {
+    return new SharedProblemDetails
+    {
+      Title = "No Content",
+      Status = (int)HttpStatusCode.NoContent,
+      Detail = "The response content is empty."
+    };
+  }
+
+  private async Task<SharedProblemDetails> HandleProblemResponse
+  (
+    HttpResponseMessage httpResponseMessage,
+    CancellationToken cancellationToken
+  )
+  {
+    try
+    {
+      return await ReadFromJson<SharedProblemDetails>(httpResponseMessage, cancellationToken).ConfigureAwait(false);
+    }
+    catch (System.Exception)
+    {
+      // TODO: Log the error
+
       return new SharedProblemDetails
       {
-        Title = "Operation Cancelled",
-        Status = 499, // 499 is the code for "Client Closed Request"
-        Detail = "The request was cancelled."
+        Title = "Unhandled Error",
+        Status = (int)httpResponseMessage.StatusCode,
+        Detail = "An unhandled error occurred while processing the request."
       };
     }
+  }
+
+  private static SharedProblemDetails HandleCancellationResponse()
+  {
+    return new SharedProblemDetails
+    {
+      Title = "Operation Cancelled",
+      Status = 499, // 499 is the code for "Client Closed Request"
+      Detail = "The request was cancelled."
+    };
   }
 
   private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest(IApiRequest apiRequest, CancellationToken cancellationToken)
@@ -166,12 +211,10 @@ public abstract class BaseApiService : IApiService
   }
   private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage, CancellationToken cancellationToken)
   {
-    httpResponseMessage.EnsureSuccessStatusCode();
-
     string json = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
-    TResponse? response = JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions);
-    if (response is null)
+    TResponse? response =
+      JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions) ??
       throw new InvalidOperationException("The response is null.");
 
     return response;

@@ -1,9 +1,7 @@
-﻿global using AutoMapper;
-global using MediatR;
+﻿global using TimeWarp.Mediator;
+global using TimeWarp.Mediator.Pipeline;
 global using FluentValidation;
-global using FluentValidation.AspNetCore;
 global using JetBrains.Annotations;
-global using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Hosting;
 global using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -19,7 +17,6 @@ global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Options;
 global using Microsoft.Identity.Web;
 global using Microsoft.JSInterop;
-global using Microsoft.OpenApi.Models;
 #if(postgres)
 global using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 #endif
@@ -30,7 +27,6 @@ global using OneOf.Types;
 global using Passwordless;
 global using Serilog.Core;
 global using Serilog.Debugging;
-global using Swashbuckle.AspNetCore.Annotations;
 global using System.IO;
 global using System.Net;
 global using System.Net.Http;
@@ -41,6 +37,7 @@ global using System.Threading.Tasks;
 
 // Solution usings
 global using static TimeWarp.Architecture.Aspire.Constants;
+global using TimeWarp.Architecture.Behaviors;
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.CorsPolicies;

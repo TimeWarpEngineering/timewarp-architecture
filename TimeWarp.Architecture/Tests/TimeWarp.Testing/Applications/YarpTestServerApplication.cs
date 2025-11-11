@@ -42,5 +42,17 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
 #endif
   }
 
-  protected static void ConfigureServicesCallback(IServiceCollection aServiceCollection) { }
+  protected static void ConfigureServicesCallback(IServiceCollection aServiceCollection)
+  {
+    // Add configuration-based endpoint provider for test environment URLs
+    // This allows us to map service names to literal URLs in appsettings.json
+    aServiceCollection.AddConfigurationServiceEndpointProvider();
+  }
+
+  protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Yarp.Server.Program> webApplicationHost)
+  {
+    var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var apiService = new ApiServerApiService(HttpClient, new MockAccessTokenProvider(), jsonSerializerOptions);
+    return new WebApiTestService(apiService);
+  }
 }

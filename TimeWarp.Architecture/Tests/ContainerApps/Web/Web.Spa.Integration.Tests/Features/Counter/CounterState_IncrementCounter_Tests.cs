@@ -8,7 +8,7 @@ public class IncrementCounter_Action_Should : BaseTest
 
   public IncrementCounter_Action_Should
   (
-    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> aSpaTestApplication
+    ISpaTestApplication aSpaTestApplication
   ) : base(aSpaTestApplication) { }
 
   public async Task Decrement_Count_Given_NegativeAmount()
@@ -22,7 +22,7 @@ public class IncrementCounter_Action_Should : BaseTest
     await Send(action);
 
     //Assert
-    CounterState.Count.Should().Be(13);
+    CounterState.Count.ShouldBe(13);
   }
 
   public async Task Increment_Count()
@@ -36,6 +36,6 @@ public class IncrementCounter_Action_Should : BaseTest
     await Send(action);
 
     //Assert
-    CounterState.Count.Should().Be(27);
+    CounterState.Count.ShouldBe(27);
   }
 }

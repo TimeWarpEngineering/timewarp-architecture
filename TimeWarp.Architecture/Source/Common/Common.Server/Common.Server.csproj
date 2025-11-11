@@ -2,16 +2,10 @@
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="FastEndpoints" />
-    <PackageReference Include="MediatR" />
-    <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.Azure.AppConfiguration.AspNetCore" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="OneOf" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+    <PackageReference Include="Scalar.AspNetCore" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>

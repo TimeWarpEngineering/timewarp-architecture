@@ -1,0 +1,111 @@
+{
+  "name": "TimeWarp Architecture Dev Container with Claude Code",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "VARIANT": "10.0-preview",
+      "NODE_VERSION": "24"
+    }
+  },
+  
+  "runArgs": [
+    "--cap-add=NET_ADMIN",
+    "--cap-add=NET_RAW"
+  ],
+  
+  "features": {},
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.dotnet-interactive-vscode",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.powershell",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-playwright.playwright",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "donjayamanne.githistory"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "dotnet.preferRuntimeFromSDK": true
+      }
+    }
+  },
+
+  "forwardPorts": [
+    5147,
+    5100,
+    5200,
+    5300,
+    15888,
+    18889
+  ],
+  "portsAttributes": {
+    "5147": {
+      "label": "Web - Blazor",
+      "onAutoForward": "openBrowser"
+    },
+    "5100": {
+      "label": "API Service",
+      "onAutoForward": "notify"
+    },
+    "15888": {
+      "label": "Aspire Dashboard",
+      "onAutoForward": "openBrowser"
+    }
+  },
+
+  "mounts": [
+    "source=timewarp-claude-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
+    "source=timewarp-claude-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    {
+      "source": "/var/run/docker.sock",
+      "target": "/var/run/docker.sock",
+      "type": "bind"
+    },
+    {
+      "source": "${localWorkspaceFolder}/../..",
+      "target": "/workspace/git-worktree",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.ssh",
+      "target": "/home/vscode/.ssh",
+      "type": "bind",
+      "readonly": true
+    },
+    {
+      "source": "${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig",
+      "target": "/home/vscode/.gitconfig",
+      "type": "bind",
+      "readonly": true
+    }
+  ],
+
+  "workspaceFolder": "/workspace/timewarp-architecture",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/timewarp-architecture,type=bind",
+
+  "containerEnv": {
+    "ASPNETCORE_ENVIRONMENT": "Development",
+    "DOTNET_WATCH_RESTART_ON_RUDE_EDIT": "true",
+    "DOTNET_USE_POLLING_FILE_WATCHER": "true",
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    "TZ": "${localEnv:TZ:America/Los_Angeles}"
+  },
+
+  "postCreateCommand": "/bin/bash -c '/workspace/timewarp-architecture/.devcontainer/post-create.sh'",
+  
+  "remoteUser": "vscode",
+  
+  "overrideCommand": false,
+
+  "shutdownAction": "stopContainer",
+  "updateRemoteUserUID": true
+}

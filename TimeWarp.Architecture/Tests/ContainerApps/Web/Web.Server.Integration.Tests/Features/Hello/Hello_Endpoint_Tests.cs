@@ -4,41 +4,38 @@ using static TimeWarp.Architecture.Features.Hellos.Hello;
 
 public class Returns_
 (
-  IWebApiTestService WebTestServerApplication
+  WebTestServerApplication webTestServerApplication
 )
 {
-  private readonly Query Query = new()
-    { Name = "Bob" };
-
-
   public async Task Ok_Given_Valid_Request()
   {
+    Query query = new() { Name = "Bob" };
+
     OneOf<Response, FileResponse, SharedProblemDetails> response =
-      await WebTestServerApplication.GetResponse<Response>(Query, new CancellationToken());
+      await webTestServerApplication.GetResponse<Response>(query, new CancellationToken());
 
     response.Switch
     (
       ValidateResponse,
       _ => throw new Exception("File response returned"),
-      _ => throw new Exception("Problem details returned")
+      problemDetails => throw new Exception($"Problem details returned: Status={problemDetails.Status}, Title={problemDetails.Title}, Detail={problemDetails.Detail}, Type={problemDetails.Type}, Extensions={System.Text.Json.JsonSerializer.Serialize(problemDetails.Extensions)}")
     );
   }
 
-
   public async Task ValidationError()
   {
-    Query.Name = "";
+    Query query = new() { Name = "" };
 
-    await WebTestServerApplication.ConfirmEndpointValidationError<Response>
+    await webTestServerApplication.ConfirmEndpointValidationError<Response>
     (
-      Query,
-      nameof(Query.Name)
+      query,
+      nameof(query.Name)
     );
   }
 
   private static void ValidateResponse(Response response)
   {
-    response.Should().NotBeNull();
-    response.Message.Should().Be("Hello, Bob!");
+    response.ShouldNotBeNull();
+    response.Message.ShouldBe("Hello, Bob!");
   }
 }

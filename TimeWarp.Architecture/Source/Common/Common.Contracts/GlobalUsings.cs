@@ -1,6 +1,7 @@
 ﻿global using Ardalis.GuardClauses;
 global using FluentValidation;
 global using FluentValidation.Validators;
+global using FluentValidation.Results;
 global using JetBrains.Annotations;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Options;
@@ -13,6 +14,7 @@ global using System.Net.Mime;
 global using System.Text;
 global using System.Text.Json;
 global using System.Text.Json.Serialization;
+global using TimeWarp.Mediator;
 
 // Solution usings
 global using TimeWarp.Architecture.Features;

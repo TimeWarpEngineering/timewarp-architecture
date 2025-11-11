@@ -1,5 +1,5 @@
 ﻿global using JetBrains.Annotations;
-global using MediatR;
+global using TimeWarp.Mediator;
 global using Microsoft.AspNetCore.SignalR;
 global using Microsoft.Extensions.Logging;
 global using OneOf;

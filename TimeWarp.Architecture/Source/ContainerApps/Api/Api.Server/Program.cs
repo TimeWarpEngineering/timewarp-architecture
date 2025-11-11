@@ -1,8 +1,6 @@
 namespace TimeWarp.Architecture.Api.Server;
 
 using Behaviors;
-using MediatR;
-
 public class Program : IAspNetProgram
 {
   const string ApiTitle = "TimeWarp.Architecture Api.Server API";
@@ -53,27 +51,15 @@ public class Program : IAspNetProgram
         typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly,
         typeof(TimeWarp.Architecture.Api.Contracts.IAssemblyMarker).Assembly
       };
-    })
-    .SwaggerDocument(options =>
-    {
-      options.DocumentSettings = settings =>
-      {
-        settings.Title = ApiTitle;
-        settings.Version = ApiVersion;
-      };
-      options.SerializerSettings = serializerSettings =>
-      {
-        serializerSettings.PropertyNamingPolicy = null;
-      };
     });
 
     serviceCollection.AddAuthorization();
     serviceCollection.AddEndpointsApiExplorer();
     serviceCollection
-      .AddMediatR
+      .AddMediator
       (
-        mediatRServiceConfiguration =>
-          mediatRServiceConfiguration
+        mediatorServiceConfiguration =>
+          mediatorServiceConfiguration
             .RegisterServicesFromAssemblies
             (
               typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).GetTypeInfo().Assembly,
@@ -97,7 +83,6 @@ public class Program : IAspNetProgram
     if (webApplication.Environment.IsDevelopment())
     {
       webApplication.UseCors(CorsPolicy.Any.Name);
-      webApplication.UseOpenApi(c => c.Path = "/openapi/{documentName}.json");
       webApplication.MapScalarApiReference();
     }
   }

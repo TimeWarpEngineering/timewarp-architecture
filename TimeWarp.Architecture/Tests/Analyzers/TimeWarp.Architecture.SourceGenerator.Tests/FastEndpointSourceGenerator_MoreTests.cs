@@ -69,7 +69,7 @@ public static partial class GetCurrentWeather
         // Verify that a diagnostic was reported
         var diagnostics = runResult.Results.SelectMany(r => r.Diagnostics).ToImmutableArray();
         bool hasRouteConflict = diagnostics.Any(d => d.Id == "TWE003" && d.GetMessage() != null && d.GetMessage().Contains("api/weather"));
-        hasRouteConflict.Should().BeTrue();
+        hasRouteConflict.ShouldBeTrue();
 
         return Task.CompletedTask;
     }
@@ -127,13 +127,13 @@ public static partial class GetWeatherForecasts
 
         // Get the generated code
         var generatedSyntaxTrees = runResult.Results.SelectMany(r => r.GeneratedSources).Select(g => g.SyntaxTree).ToImmutableArray();
-        generatedSyntaxTrees.Length.Should().Be(1);
+        generatedSyntaxTrees.Length.ShouldBe(1);
         string generatedCode = generatedSyntaxTrees[0].ToString();
 
         // Verify OpenAPI documentation is included
-        generatedCode.Should().Contain("Gets weather forecasts for specified days");
-        generatedCode.Should().Contain("Retrieves detailed weather forecasts including temperature and conditions");
-        generatedCode.Should().Contain(@"Tags(""Weather"", ""Forecasting"")");
+        generatedCode.ShouldContain("Gets weather forecasts for specified days");
+        generatedCode.ShouldContain("Retrieves detailed weather forecasts including temperature and conditions");
+        generatedCode.ShouldContain(@"Tags(""Weather"", ""Forecasting"")");
 
         return Task.CompletedTask;
     }

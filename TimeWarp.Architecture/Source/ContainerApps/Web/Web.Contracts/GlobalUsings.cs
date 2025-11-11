@@ -1,7 +1,7 @@
 ﻿global using Ardalis.GuardClauses;
 global using FluentValidation;
 global using JetBrains.Annotations;
-global using MediatR;
+global using TimeWarp.Mediator;
 global using OneOf;
 global using OneOf.Types;
 global using Passwordless;

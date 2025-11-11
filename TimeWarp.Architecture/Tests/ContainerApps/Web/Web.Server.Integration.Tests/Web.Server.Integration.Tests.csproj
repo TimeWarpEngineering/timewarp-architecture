@@ -1,15 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.AutoFakeItEasy" />
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Fixie.TestAdapter" />
-    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Shouldly" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Contracts\Web.Contracts.csproj" />
-    <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Server\Web.Server.csproj" />
-    <ProjectReference Include="..\TimeWarp.Testing\Testing.Common.csproj" />
+    <ProjectReference Include="..\..\..\..\Source\ContainerApps\Web\Web.Contracts\Web.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\Source\ContainerApps\Web\Web.Server\Web.Server.csproj" />
+    <ProjectReference Include="..\..\..\TimeWarp.Testing\Testing.Common.csproj" />
+
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">

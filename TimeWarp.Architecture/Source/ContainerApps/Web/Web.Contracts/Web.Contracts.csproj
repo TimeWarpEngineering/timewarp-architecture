@@ -38,8 +38,7 @@
     <PackageReference Include="FluentValidation"/>
     <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="OneOf"/>
-    <PackageReference Include="MediatR"/>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Core"/>
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"/>
@@ -48,7 +47,6 @@
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
     <PackageReference Include="Passwordless" />
     <PackageReference Include="protobuf-net.Grpc"/>
-    <PackageReference Include="System.ServiceModel.Primitives"/>
   </ItemGroup>
 
   <ItemGroup>

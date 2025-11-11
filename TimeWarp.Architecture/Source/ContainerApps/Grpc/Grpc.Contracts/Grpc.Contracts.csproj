@@ -10,7 +10,7 @@
     <PackageReference Include="System.ServiceModel.Primitives" />
     <!--
     <PackageReference Include="FluentValidation" />
-    <PackageReference Include="MediatR" />
+    <PackageReference Include="TimeWarp.Mediator" />
     -->
   </ItemGroup>
 

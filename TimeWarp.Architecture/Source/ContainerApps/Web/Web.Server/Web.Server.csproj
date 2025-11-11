@@ -24,9 +24,8 @@
   <ItemGroup Label="Core">
     <PackageReference Include="Aspire.Microsoft.Azure.Cosmos" />
     <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.Cosmos" />
-    <PackageReference Include="AutoMapper" />
-    <PackageReference Include="FluentValidation.AspNetCore" />
-    <PackageReference Include="MediatR" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.CodeAnalysis" />

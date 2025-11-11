@@ -17,31 +17,18 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
   public readonly WebApplicationHost<TProgram> WebApplicationHost;
   public HttpClient HttpClient { get; }
 
-  protected TestServerApplication(WebApplicationHost<TProgram> aWebApplicationHost)
+  protected TestServerApplication(WebApplicationHost<TProgram> webApplicationHost)
   {
-    WebApplicationHost = aWebApplicationHost;
+    WebApplicationHost = webApplicationHost;
 
-    // ISender Delegate
-    ScopedSender = new ScopedSender(aWebApplicationHost.ServiceProvider);
+    ScopedSender = new ScopedSender(webApplicationHost.ServiceProvider);
 
     HttpClient = new HttpClient
     {
       BaseAddress = new Uri(WebApplicationHost.Urls.First())
     };
 
-    var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-    IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor = Options.Create(jsonSerializerOptions);
-
-    // I need Ihttpclientfactory to create the WebApiService.  Where can I get it?
-    IHttpClientFactory httpClientFactory = aWebApplicationHost.ServiceProvider.GetRequiredService<IHttpClientFactory>();
-
-    // I need IAccessTokenProvider to create the WebApiService.  Where can I get it?
-    // TODO:
-    // Will it be registered in the WebApplicationHost.ServiceProvider? Will I need a Mock? I think I will need a Mock.
-    IAccessTokenProvider accessTokenProvider = aWebApplicationHost.ServiceProvider.GetRequiredService<IAccessTokenProvider>();
-
-    var apiService = new WebServerApiService( accessTokenProvider, httpClientFactory, jsonSerializerOptionsAccessor);
-    WebApiTestService = new WebApiTestService(apiService);
+    WebApiTestService = CreateWebApiTestService(webApplicationHost);
   }
 
   public Task ConfirmEndpointValidationError<TResponse>(IApiRequest apiRequest, string attributeName) =>
@@ -94,4 +81,26 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
 
   #endregion
 
+  protected abstract IWebApiTestService CreateWebApiTestService(WebApplicationHost<TProgram> webApplicationHost);
+}
+
+public class TestServerApplication : TestServerApplication<Api.Server.Program>
+{
+  public TestServerApplication(WebApplicationHost<Api.Server.Program> webApplicationHost) : base(webApplicationHost)
+  {
+  }
+
+  protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Api.Server.Program> webApplicationHost)
+  {
+    IServiceProvider serviceProvider = webApplicationHost.ServiceProvider;
+
+    IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+    IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
+
+    var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor = Options.Create(jsonSerializerOptions);
+
+    var apiService = new ApiServerApiService(httpClientFactory, accessTokenProvider, jsonSerializerOptionsAccessor);
+    return new WebApiTestService(apiService);
+  }
 }

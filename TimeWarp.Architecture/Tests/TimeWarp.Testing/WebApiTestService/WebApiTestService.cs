@@ -26,10 +26,19 @@ public class WebApiTestService : IWebApiTestService
     Type type = typeof(BaseApiService);
 
     // Get the private method you want to call.
-    MethodInfo method = type.GetMethod("GetHttpResponseMessageFromRequest") ?? throw new InvalidOperationException();
+    System.Reflection.MethodInfo method = type.GetMethod
+    (
+      name: "GetHttpResponseMessageFromRequest",
+      bindingAttr: System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+      binder: null,
+      types: new[] { typeof(IApiRequest), typeof(CancellationToken) },
+      modifiers: null
+    ) ?? throw new InvalidOperationException();
 
-    // Call the method
-    var httpResponseMessage = (HttpResponseMessage)await method.InvokeAsync(ApiService, [apiRequest]).ConfigureAwait(false);
+    // Call the method and provide a deterministic cancellation token
+    var httpResponseMessage = (HttpResponseMessage)await method
+      .InvokeAsync(ApiService, [apiRequest, CancellationToken.None])
+      .ConfigureAwait(false);
 
     await ConfirmEndpointValidationError(httpResponseMessage, attributeName).ConfigureAwait(false);
   }
@@ -49,8 +58,8 @@ public class WebApiTestService : IWebApiTestService
   {
     string json = await aHttpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-    aHttpResponseMessage.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    json.Should().Contain("errors");
-    json.Should().Contain(attributeName);
+    aHttpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    json.ShouldContain("errors");
+    json.ShouldContain(attributeName);
   }
 }

@@ -37,11 +37,14 @@ internal static class ResourceBuilderExtensions
             return Task.FromResult(new ExecuteCommandResult { Success = false, ErrorMessage = e.Message });
           }
         },
-        updateState: context => context.ResourceSnapshot.HealthStatus == HealthStatus.Healthy
-          ? ResourceCommandState.Enabled
-          : ResourceCommandState.Disabled,
-        iconName: "Document",
-        iconVariant: IconVariant.Filled
+        new CommandOptions
+        {
+          UpdateState = context => context.ResourceSnapshot.HealthStatus == HealthStatus.Healthy
+            ? ResourceCommandState.Enabled
+            : ResourceCommandState.Disabled,
+          IconName = "Document",
+          IconVariant = IconVariant.Filled
+        }
       );
   }
 }

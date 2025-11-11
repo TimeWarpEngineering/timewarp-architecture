@@ -28,7 +28,7 @@ public class NextUtcNow_Returns
       .ToArray();
 
     // Assert
-    counts.Length.Should().Be(0);
+    counts.Length.ShouldBe(0);
 
     // Local Functions
     List<DateTime> GetDates(ManualResetEvent trigger)

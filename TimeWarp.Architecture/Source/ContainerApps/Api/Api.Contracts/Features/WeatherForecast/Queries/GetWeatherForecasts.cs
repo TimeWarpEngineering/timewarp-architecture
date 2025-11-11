@@ -21,15 +21,15 @@ public static partial class GetWeatherForecasts
     }
   }
 
-  public sealed class Response(IEnumerable<WeatherForecastDto> WeatherForecasts) : BaseResponse
+  public sealed class Response(IEnumerable<TWeatherForecast> WeatherForecasts) : BaseResponse
   {
-    public IEnumerable<WeatherForecastDto> WeatherForecasts { get; init; } = WeatherForecasts;
+    public IEnumerable<TWeatherForecast> WeatherForecasts { get; init; } = WeatherForecasts;
   }
 
   /// <summary>
   /// The weather forecast
   /// </summary>
-  public sealed class WeatherForecastDto
+  public sealed class TWeatherForecast
   {
     /// <summary>
     /// The forecast for this Date
@@ -55,7 +55,7 @@ public static partial class GetWeatherForecasts
     /// <example>75</example>
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 
-    public WeatherForecastDto(DateTime date, string summary, int temperatureC)
+    public TWeatherForecast(DateTime date, string summary, int temperatureC)
     {
       Date = Guard.Against.NullOrOutOfSQLDateRange(date);
       Summary = Guard.Against.NullOrWhiteSpace(summary);
