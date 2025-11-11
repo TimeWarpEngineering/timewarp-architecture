@@ -103,7 +103,7 @@ public class Program : IAspNetProgram
 #if(cosmosdb)
     CosmosDbModule.ConfigureServices(serviceCollection, configuration);
 #endif
-    //PostgresDbModule.ConfigureServices(aServiceCollection, aConfiguration);
+    //PostgresDbModule.ConfigureServices(serviceCollection, configuration);
     serviceCollection.AddSingleton<IChatHubService, ChatHubService>();
     CorsPolicy.Any.Apply(serviceCollection);
     ConfigureInfrastructure(serviceCollection);
@@ -122,13 +122,13 @@ public class Program : IAspNetProgram
 
     serviceCollection.Configure<ApiBehaviorOptions>
     (
-      aApiBehaviorOptions => aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
+      apiBehaviorOptions => apiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
     );
 
     serviceCollection.AddResponseCompression
     (
-      aResponseCompressionOptions =>
-        aResponseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat
+      responseCompressionOptions =>
+        responseCompressionOptions.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat
         (
           new[]
           {
@@ -252,7 +252,7 @@ public class Program : IAspNetProgram
 
     serviceCollection.CheckEnvironment<SampleEnvironmentCheck>
     (
-      SampleEnvironmentCheck.Description, aSampleEnvironmentCheck => aSampleEnvironmentCheck.Check()
+      SampleEnvironmentCheck.Description, sampleEnvironmentCheck => sampleEnvironmentCheck.Check()
     );
   }
 }
