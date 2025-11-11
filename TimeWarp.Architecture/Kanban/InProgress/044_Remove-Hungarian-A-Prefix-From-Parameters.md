@@ -177,6 +177,12 @@ All 38 instances in Common libraries have been successfully refactored.
 - State hydration method parameters updated
 - Manual review completed - no breaking changes
 
+**EventStream Pipeline and Counter Notification Completed**
+- EventStreamBehavior.cs: `aRequest`, `aTag` → `request`, `tag`
+- IncrementCountNotificationHandler.cs: `aLogger` → `logger`
+- Pipeline behavior and notification handler parameters updated
+- Manual review completed - no breaking changes
+
 ## Notes
 
 - Analysis report generated: 2025-11-11 (see .agent/workspace/a-prefix-parameters-report.md)
