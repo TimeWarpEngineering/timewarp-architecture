@@ -16,15 +16,15 @@ public partial class CorsPolicy : Enumeration
   /// </summary>
   public static readonly CorsPolicy Example = new ExamplePolicy();
 
-  private CorsPolicy(int aValue, string aName, List<string>? aAlternateCodes = null)
-    : base(aValue, aName, aAlternateCodes) { }
+  private CorsPolicy(int value, string name, List<string>? alternateCodes = null)
+    : base(value, name, alternateCodes) { }
 
   /// <summary>
   /// Apply the particular Cors Policy
   /// </summary>
   /// <remarks>Override in the instances of CorsPolicy</remarks>
-  /// <param name="aServiceCollection"></param>
-  public virtual void Apply(IServiceCollection aServiceCollection)
+  /// <param name="serviceCollection"></param>
+  public virtual void Apply(IServiceCollection serviceCollection)
   {
     throw new InvalidOperationException();
   }

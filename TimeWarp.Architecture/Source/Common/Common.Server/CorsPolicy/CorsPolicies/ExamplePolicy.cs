@@ -5,16 +5,15 @@ public partial class CorsPolicy
   {
     public ExamplePolicy() : base(0, "Example.id") { }
 
-    public override void Apply(IServiceCollection aServiceCollection)
+    public override void Apply(IServiceCollection serviceCollection)
     {
-      aServiceCollection.AddCors
+      serviceCollection.AddCors
       (
-        aOptions =>
-        {
-          aOptions.AddPolicy
+        options =>
+          options.AddPolicy
           (
             CorsPolicy.Example.Name,
-            aBuilder =>
+            builder =>
             {
               // #TODO add all of your domains we are using localhost here 
               string[] allowedDomains = new[]
@@ -30,14 +29,13 @@ public partial class CorsPolicy
                 "https://YourApp.Example.com"
               };
 
-              aBuilder
+              builder
                 .WithOrigins(allowedDomains)
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
             }
-          );
-        }
+          )
       );
     }
   }
