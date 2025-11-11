@@ -12,9 +12,9 @@ public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestA
   private readonly ISender ScopedSender;
   public IServiceProvider ServiceProvider { get; }
 
-  public SpaTestApplication(IServiceProvider aTestingServiceProvider)
+  public SpaTestApplication(IServiceProvider testingServiceProvider)
   {
-    var testServerApplication = (TViaTestServerApplication)aTestingServiceProvider.GetRequiredService(typeof(TViaTestServerApplication));
+    var testServerApplication = (TViaTestServerApplication)testingServiceProvider.GetRequiredService(typeof(TViaTestServerApplication));
     var services = new ServiceCollection();
 
     // We need an HttpClient to talk to the Server side configured before calling AddTimeWarpState.
@@ -27,13 +27,13 @@ public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestA
     ScopedSender = new ScopedSender(ServiceProvider);
   }
 
-  private static void ConfigureServices(IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+  private static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    Web.Spa.Program.ConfigureServices(aServiceCollection, aConfiguration);
+    Web.Spa.Program.ConfigureServices(serviceCollection, configuration);
 
     // Theres is no JSRuntime in testing as we don't have an actual browser
     IJSRuntime fakeJsRuntime = A.Fake<IJSRuntime>();
-    aServiceCollection.Replace(ServiceDescriptor.Scoped(_ => fakeJsRuntime));
+    serviceCollection.Replace(ServiceDescriptor.Scoped(_ => fakeJsRuntime));
 
     // Could replace ICurrentUserService here with a logged in one for tests that need to have logged in user.
 
@@ -41,17 +41,17 @@ public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestA
     //A.CallTo(() => fakeCurrentUserService.IsAuthenticated).Returns(true);
     //A.CallTo(() => fakeCurrentUserService.Email).Returns(Constants.UserEmails.TrinsicUser);
 
-    //aServiceCollection.Replace(ServiceDescriptor.Scoped(_ => fakeCurrentUserService));
+    //serviceCollection.Replace(ServiceDescriptor.Scoped(_ => fakeCurrentUserService));
   }
 
   public Task<TResponse> Send<TResponse>
   (
-    IRequest<TResponse> aRequest,
-    CancellationToken aCancellationToken = default
-  ) => ScopedSender.Send(aRequest, aCancellationToken);
+    IRequest<TResponse> request,
+    CancellationToken cancellationToken = default
+  ) => ScopedSender.Send(request, cancellationToken);
 
-  public Task<object> Send(object aRequest, CancellationToken aCancellationToken = default) =>
-    ScopedSender.Send(aRequest, aCancellationToken);
+  public Task<object> Send(object request, CancellationToken cancellationToken = default) =>
+    ScopedSender.Send(request, cancellationToken);
 
 }
 

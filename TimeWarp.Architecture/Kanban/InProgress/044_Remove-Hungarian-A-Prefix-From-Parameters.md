@@ -222,6 +222,14 @@ All 38 instances in Common libraries have been successfully refactored.
 - ApplicationState_Clone_Tests.cs: Removed extra blank lines (formatting only)
 - Manual review completed - no breaking changes
 
+**TimeWarp.Testing Test Applications Completed**
+- ApiTestServerApplication.cs: `aUrls`, `aWebApplicationOptions` → `urls`, `webApplicationOptions`
+- SpaTestApplication.cs: `aTestingServiceProvider`, `aServiceCollection` → `testingServiceProvider`, `serviceCollection` (including commented code)
+- WebTestServerApplication.cs: `aUrls`, `aWebApplicationOptions` → `urls`, `webApplicationOptions`
+- YarpTestServerApplication.cs: `aWebTestServerApplication`, `aApiTestServerApplication`, `aUrls`, `aWebApplicationOptions`, `aServiceCollection` → camelCase without prefix
+- WebApplicationHost.cs: `aUrls`, `aWebApplicationOptions`, `aConfigureServicesDelegate` → `urls`, `webApplicationOptions`, `configureServicesDelegate` (including XML doc)
+- Manual review completed - no breaking changes
+
 ## Notes
 
 - Analysis report generated: 2025-11-11 (see .agent/workspace/a-prefix-parameters-report.md)

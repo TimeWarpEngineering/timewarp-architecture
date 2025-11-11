@@ -16,11 +16,11 @@ public sealed class ApiTestServerApplication : TestServerApplication<Api.Server.
     (
       new WebApplicationHost<Api.Server.Program>
       (
-        aUrls:
+        urls:
         [
           ApiHostUrl
         ],
-        aWebApplicationOptions:
+        webApplicationOptions:
         new WebApplicationOptions
         {
           ApplicationName = typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly.GetName().Name,

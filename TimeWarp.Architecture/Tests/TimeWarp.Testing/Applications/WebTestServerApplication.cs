@@ -18,11 +18,11 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
     (
       new WebApplicationHost<Web.Server.Program>
       (
-        aUrls:
+        urls:
         [
           WebHostUrl
         ],
-        aWebApplicationOptions:
+        webApplicationOptions:
         new WebApplicationOptions
         {
           ApplicationName = typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly.GetName().Name,
