@@ -451,5 +451,7 @@ GeneratedCode/
 # Misc
 /output.txt
 **/Generated/
-.agent/workspace/
-TimeWarp.Architecture/.agent/workspace
+.agent/workspace/*
+!.agent/workspace/overview.md
+TimeWarp.Architecture/.agent/workspace/*
+!TimeWarp.Architecture/.agent/workspace/overview.md
