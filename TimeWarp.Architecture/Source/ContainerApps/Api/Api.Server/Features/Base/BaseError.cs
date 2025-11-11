@@ -2,9 +2,9 @@ namespace TimeWarp.Architecture.Features;
 
 public class BaseError
 {
-  public BaseError(string aMessage)
+  public BaseError(string message)
   {
-    Message = aMessage;
+    Message = message;
   }
 
   public string Message { get; set; }

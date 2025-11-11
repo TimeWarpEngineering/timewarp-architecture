@@ -2,7 +2,7 @@
 
 public class HelloService : IHelloService
 {
-  public Task<HelloResponse> SayHelloAsync(Hellos.HelloRequest aHelloRequest, ServerCallContext aCallContext) =>
-    Task.FromResult(new HelloResponse { Message = $"Hello {aHelloRequest.Name}" });
+  public Task<HelloResponse> SayHelloAsync(Hellos.HelloRequest helloRequest, ServerCallContext callContext) =>
+    Task.FromResult(new HelloResponse { Message = $"Hello {helloRequest.Name}" });
 }
 

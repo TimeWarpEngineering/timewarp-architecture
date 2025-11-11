@@ -36,8 +36,8 @@ Remove legacy Hungarian notation 'a' prefix from parameters and local variables 
 - [x] Source/Common/Common.Server/CorsPolicy/*.cs (13 matches across 3 files)
 
 ### Implementation - Phase 2: Container Apps
-- [ ] Source/ContainerApps/Api/Api.Server/Features/Base/*.cs (2 matches)
-- [ ] Source/ContainerApps/Grpc/Grpc.Server/**/*.cs (25 matches across 5 files)
+- [x] Source/ContainerApps/Api/Api.Server/Features/Base/*.cs (2 matches)
+- [x] Source/ContainerApps/Grpc/Grpc.Server/**/*.cs (6 matches - HelloService.cs and ProtobufGenerationHostedService.cs)
 - [ ] Source/ContainerApps/Web/Web.Server/Program.cs (9 matches)
 - [ ] Source/ContainerApps/Web/Web.Spa/Program.cs (6 matches)
 - [ ] Source/ContainerApps/Web/Web.Application/**/*.cs (2 matches)
@@ -130,7 +130,19 @@ Remove legacy Hungarian notation 'a' prefix from parameters and local variables 
 - Manual review completed - no breaking changes
 
 ### Phase 1 Complete! ✅
-All 35 instances in Common libraries have been successfully refactored.
+All 38 instances in Common libraries have been successfully refactored.
+
+### 2025-11-11: Phase 2 - Container Apps (In Progress)
+
+**API Server Base Classes Completed**
+- BaseException.cs: `aMessage` → `message`
+- BaseError.cs: `aMessage` → `message`
+- Manual review completed - no breaking changes
+
+**gRPC Server Files Completed**
+- HelloService.cs: `aHelloRequest`, `aCallContext` → `helloRequest`, `callContext`
+- ProtobufGenerationHostedService.cs: `aServiceProvider`, `aLogger`, `aCancellationToken` → camelCase without prefix
+- Manual review completed - no breaking changes
 
 ## Notes
 
