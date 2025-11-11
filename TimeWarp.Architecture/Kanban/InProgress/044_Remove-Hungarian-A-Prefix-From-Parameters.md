@@ -37,10 +37,11 @@ Remove legacy Hungarian notation 'a' prefix from parameters and local variables 
 
 ### Implementation - Phase 2: Container Apps
 - [x] Source/ContainerApps/Api/Api.Server/Features/Base/*.cs (2 matches)
-- [x] Source/ContainerApps/Grpc/Grpc.Server/**/*.cs (6 matches - HelloService.cs and ProtobufGenerationHostedService.cs)
+- [x] Source/ContainerApps/Grpc/Grpc.Server/**/*.cs (19 matches across 5 files)
+- [x] Source/ContainerApps/Grpc/Grpc.Contracts/**/*.cs (4 matches across 2 files)
 - [ ] Source/ContainerApps/Web/Web.Server/Program.cs (9 matches)
 - [ ] Source/ContainerApps/Web/Web.Spa/Program.cs (6 matches)
-- [ ] Source/ContainerApps/Web/Web.Application/**/*.cs (2 matches)
+- [x] Source/ContainerApps/Web/Web.Application/**/*.cs (2 matches)
 - [ ] Source/ContainerApps/Web/Web.Spa/Features/**/*.cs (19 matches across 9 files)
 - [ ] Source/ContainerApps/Web/Web.Spa/Pipeline/*.cs (8 matches across 3 files)
 - [ ] Source/ContainerApps/Web/Web.Spa/Components/Forms/*.cs (6 matches)
@@ -139,9 +140,18 @@ All 38 instances in Common libraries have been successfully refactored.
 - BaseError.cs: `aMessage` → `message`
 - Manual review completed - no breaking changes
 
-**gRPC Server Files Completed**
+**gRPC Server and Contract Files Completed**
 - HelloService.cs: `aHelloRequest`, `aCallContext` → `helloRequest`, `callContext`
 - ProtobufGenerationHostedService.cs: `aServiceProvider`, `aLogger`, `aCancellationToken` → camelCase without prefix
+- SuperheroService.cs: `aLength`, `aSuperheroRequest`, `aCallContext` → camelCase without prefix
+- Program.cs: `aServiceCollection`, `aWebApplication` → `serviceCollection`, `webApplication`
+- GreeterService.cs: `aHelloRequest`, `aServerCallContext` → `helloRequest`, `serverCallContext`
+- IHelloService.cs: `aHelloRequest`, `aCallContext` → `helloRequest`, `callContext`
+- ISuperheroService.cs: `aSuperheroRequest`, `aCallContext` → `superheroRequest`, `callContext`
+- Manual review completed - no breaking changes
+
+**Web Application Handler Completed**
+- TrackEvent.Handler.cs: `aTrackEventRequest`, `aCcancellationToken` → `trackEventRequest`, `cancellationToken`
 - Manual review completed - no breaking changes
 
 ## Notes

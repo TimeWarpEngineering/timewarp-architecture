@@ -22,14 +22,14 @@ public partial class Program
 
     webApplication.Run();
 
-    static void ConfigureServices(IServiceCollection aServiceCollection)
+    static void ConfigureServices(IServiceCollection serviceCollection)
     {
       //aServiceCollection.AddGrpc();
       //aServiceCollection.AddGrpcReflection();
-      aServiceCollection.AddCodeFirstGrpc();
-      aServiceCollection.AddCodeFirstGrpcReflection();
+      serviceCollection.AddCodeFirstGrpc();
+      serviceCollection.AddCodeFirstGrpcReflection();
 
-      aServiceCollection.AddCors
+      serviceCollection.AddCors
       (
         o => o.AddPolicy
         (
@@ -44,17 +44,17 @@ public partial class Program
       //aServiceCollection.AddHostedService<ProtobufGenerationHostedService>();
     }
 
-    static void ConfigurePipeline(WebApplication aWebApplication)
+    static void ConfigurePipeline(WebApplication webApplication)
     {
-      aWebApplication.UseRouting();
-      aWebApplication.UseGrpcWeb(new GrpcWebOptions() { DefaultEnabled = true });
-      aWebApplication.UseCors();
+      webApplication.UseRouting();
+      webApplication.UseGrpcWeb(new GrpcWebOptions() { DefaultEnabled = true });
+      webApplication.UseCors();
 
       //aWebApplication.MapGrpcService<GreeterService>().RequireCors("AllowAll").EnableGrpcWeb();
-      aWebApplication.MapGrpcService<SuperheroService>().RequireCors(AllowAllCorsPolicy);
+      webApplication.MapGrpcService<SuperheroService>().RequireCors(AllowAllCorsPolicy);
       //aWebApplication.MapGrpcReflectionService();
-      aWebApplication.MapCodeFirstGrpcReflectionService();
-      aWebApplication.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+      webApplication.MapCodeFirstGrpcReflectionService();
+      webApplication.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
     }
   }
 }

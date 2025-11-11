@@ -8,6 +8,6 @@ public class GreeterService : Greeter.GreeterBase
     Logger = logger;
   }
 
-  public override Task<HelloReply> SayHello(HelloRequest aHelloRequest, ServerCallContext aServerCallContext) =>
-    Task.FromResult(new HelloReply { Message = "Hello " + aHelloRequest.Name });
+  public override Task<HelloReply> SayHello(HelloRequest helloRequest, ServerCallContext serverCallContext) =>
+    Task.FromResult(new HelloReply { Message = "Hello " + helloRequest.Name });
 }
