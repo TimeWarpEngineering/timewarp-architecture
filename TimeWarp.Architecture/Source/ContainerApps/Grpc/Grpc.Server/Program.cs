@@ -24,8 +24,8 @@ public partial class Program
 
     static void ConfigureServices(IServiceCollection serviceCollection)
     {
-      //aServiceCollection.AddGrpc();
-      //aServiceCollection.AddGrpcReflection();
+      //serviceCollection.AddGrpc();
+      //serviceCollection.AddGrpcReflection();
       serviceCollection.AddCodeFirstGrpc();
       serviceCollection.AddCodeFirstGrpcReflection();
 
@@ -41,7 +41,7 @@ public partial class Program
             .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding"))
       );
 
-      //aServiceCollection.AddHostedService<ProtobufGenerationHostedService>();
+      //serviceCollection.AddHostedService<ProtobufGenerationHostedService>();
     }
 
     static void ConfigurePipeline(WebApplication webApplication)
@@ -50,9 +50,9 @@ public partial class Program
       webApplication.UseGrpcWeb(new GrpcWebOptions() { DefaultEnabled = true });
       webApplication.UseCors();
 
-      //aWebApplication.MapGrpcService<GreeterService>().RequireCors("AllowAll").EnableGrpcWeb();
+      //webApplication.MapGrpcService<GreeterService>().RequireCors("AllowAll").EnableGrpcWeb();
       webApplication.MapGrpcService<SuperheroService>().RequireCors(AllowAllCorsPolicy);
-      //aWebApplication.MapGrpcReflectionService();
+      //webApplication.MapGrpcReflectionService();
       webApplication.MapCodeFirstGrpcReflectionService();
       webApplication.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
     }

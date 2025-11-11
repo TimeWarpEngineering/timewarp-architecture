@@ -233,7 +233,7 @@ public class Program : IAspNetProgram
 
     serviceCollection.Configure<ApiBehaviorOptions>
     (
-      aApiBehaviorOptions => aApiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
+      apiBehaviorOptions => apiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
     );
   }
 
@@ -243,7 +243,7 @@ public class Program : IAspNetProgram
     //  .AddDbContextCheck<SqlDbContext>();
 
     ConfigureEnvironmentChecks(serviceCollection);
-    //ConfigureSqlDb(aServiceCollection, Configuration);
+    //ConfigureSqlDb(serviceCollection, Configuration);
   }
 
   private static void ConfigureEnvironmentChecks(IServiceCollection serviceCollection)

@@ -230,6 +230,30 @@ All 38 instances in Common libraries have been successfully refactored.
 - WebApplicationHost.cs: `aUrls`, `aWebApplicationOptions`, `aConfigureServicesDelegate` → `urls`, `webApplicationOptions`, `configureServicesDelegate` (including XML doc)
 - Manual review completed - no breaking changes
 
+**Final Sweep - Remaining Files Completed**
+- Enumeration.cs: `aString` → `value` in FromString<T> method (added XML doc)
+- Grpc.Server/Program.cs: `aServiceCollection`, `aWebApplication` → camelCase (commented code, 5 instances)
+- Web.Server/Program.cs: `aApiBehaviorOptions`, `aServiceCollection` → camelCase (1 active, 1 commented)
+- Web.Spa/Program.cs: `aJsonSerializerOptions` → `jsonSerializerOptions` (commented code, 2 instances)
+- SampleOptionsValidator.cs: `aSampleOptions` → `sampleOptions` (lambda parameter)
+- GetWeatherForecastsHandler_Tests.cs: `aApiTestServerApplication` → `apiTestServerApplication`
+- Hello_Handler_Tests.cs: `aWebTestServerApplication` → `webTestServerApplication`
+- TrackEvent_Handler_Tests.cs: `aWebTestServerApplication` → `webTestServerApplication`
+- TrackEvent_Endpoint_Tests.cs: `aWebTestServerApplication` → `webTestServerApplication`
+- TrackEvent_Validator_Tests.cs: `aTrackEventRequest` → `trackEventRequest` (lambda parameter)
+- WebTestServerApplicationTests.cs: `aWebTestServerApplication` → `webTestServerApplication` (constructor + usage)
+- WeatherForecastState_FetchWeatherForecastsAction_Tests.cs: `aSpaTestApplication` → `spaTestApplication`
+- WeatherForecastState_Clone_Tests.cs: `aSpaTestApplication` → `spaTestApplication`
+- ScopedSender.cs: `aCancellationToken` → `cancellationToken`
+- WebApiTestService.cs: `aHttpResponseMessage` → `httpResponseMessage` (parameter + 2 usages)
+- Manual review completed - no breaking changes
+
+### Phase 2 Complete! ✅
+All 96 remaining instances in Container Apps and Tests have been successfully refactored.
+
+### Refactoring Complete! 🎉
+**Total: 134 instances refactored across 73 files**
+
 ## Notes
 
 - Analysis report generated: 2025-11-11 (see .agent/workspace/a-prefix-parameters-report.md)

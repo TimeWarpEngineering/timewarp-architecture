@@ -52,13 +52,13 @@ public class WebApiTestService : IWebApiTestService
 
   private static async Task ConfirmEndpointValidationError
   (
-    HttpResponseMessage aHttpResponseMessage,
+    HttpResponseMessage httpResponseMessage,
     string attributeName
   )
   {
-    string json = await aHttpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
+    string json = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-    aHttpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     json.ShouldContain("errors");
     json.ShouldContain(attributeName);
   }

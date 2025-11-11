@@ -56,15 +56,16 @@ public abstract class Enumeration : IComparable
   /// Get the EnumerationItem from a display name, alternate code or value.
   /// </summary>
   /// <typeparam name="T"></typeparam>
+  /// <param name="value">The string value to search for</param>
   /// <returns></returns>
-  public static T? FromString<T>(string aString) where T : Enumeration
+  public static T? FromString<T>(string value) where T : Enumeration
   {
     T? matchingItem =
       Parse<T, string>
       (
-        aString, "", item =>
-        item.Name == aString ||
-        item.AlternateCodes.Contains(aString)
+        value, "", item =>
+        item.Name == value ||
+        item.AlternateCodes.Contains(value)
       );
 
     return matchingItem;

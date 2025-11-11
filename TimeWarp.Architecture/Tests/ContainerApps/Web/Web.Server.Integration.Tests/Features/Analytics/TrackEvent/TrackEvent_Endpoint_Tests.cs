@@ -9,11 +9,11 @@ public class Returns_
 
   public Returns_
   (
-    WebTestServerApplication aWebTestServerApplication
+    WebTestServerApplication webTestServerApplication
   )
   {
     Command = new Command { EventName = "MyEvent" };
-    WebTestServerApplication = aWebTestServerApplication;
+    WebTestServerApplication = webTestServerApplication;
   }
 
   public async Task Ok_Given_SomeEvent()

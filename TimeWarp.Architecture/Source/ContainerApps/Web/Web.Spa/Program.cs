@@ -142,9 +142,9 @@ public class Program
     (
       jsonSerializerOptions =>
       {
-        //aJsonSerializerOptions.PropertyNameCaseInsensitive = false;
+        //jsonSerializerOptions.PropertyNameCaseInsensitive = false;
         jsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        ;//aJsonSerializerOptions.WriteIndented = true;
+        ;//jsonSerializerOptions.WriteIndented = true;
       }
     );
 

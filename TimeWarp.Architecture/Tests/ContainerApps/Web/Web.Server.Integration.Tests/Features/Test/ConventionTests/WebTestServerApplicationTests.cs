@@ -5,10 +5,10 @@ public class Should
 {
   public Should
   (
-    WebTestServerApplication aWebTestServerApplication
+    WebTestServerApplication webTestServerApplication
   )
   {
-    Guard.Against.Null(aWebTestServerApplication);
+    Guard.Against.Null(webTestServerApplication);
   }
 
   /// <summary>

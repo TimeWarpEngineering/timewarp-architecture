@@ -8,8 +8,8 @@ public class FetchWeatherForecasts_Action_Should : BaseTest
 
   public FetchWeatherForecasts_Action_Should
   (
-    ISpaTestApplication aSpaTestApplication
-  ) : base(aSpaTestApplication) { }
+    ISpaTestApplication spaTestApplication
+  ) : base(spaTestApplication) { }
 
   public async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()
   {

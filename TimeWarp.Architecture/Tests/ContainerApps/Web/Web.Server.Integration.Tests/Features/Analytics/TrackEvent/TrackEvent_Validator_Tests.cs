@@ -23,7 +23,7 @@ public class Validate_Should
     TestValidationResult<Command> result =
       Validator.TestValidate(new Command { EventName = "" });
 
-    result.ShouldHaveValidationErrorFor(aTrackEventRequest => aTrackEventRequest.EventName);
+    result.ShouldHaveValidationErrorFor(trackEventRequest => trackEventRequest.EventName);
   }
 
   public void Setup() => Validator = new Validator();
