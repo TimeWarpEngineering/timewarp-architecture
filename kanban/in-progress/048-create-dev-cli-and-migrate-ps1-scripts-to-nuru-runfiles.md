@@ -29,8 +29,10 @@ Scaffold dev-cli using `ganda repo enforce-dev-cli --fix` and establish the foun
 - [x] Verify all compliance checks pass
 - [x] Create `timewarp-architecture.slnx` at repo root via `dotnet new sln`
 
+### Completed (post-scaffold updates)
+- [x] Update `build-command.cs` to target `timewarp-architecture.slnx`
+
 ### Remaining (during/after migration)
-- [ ] Update `build-command.cs` to build actual solution (currently generic template)
 - [ ] Update `test-command.cs` to run actual tests (currently generic template)
 - [ ] Add `run` command (replaces `Run.ps1`)
 - [ ] Add `watch` command (replaces `Watch.ps1`)
