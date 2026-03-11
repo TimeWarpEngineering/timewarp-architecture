@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Services;
 
-public class CurrentUserService : ICurrenUserService
+public class CurrentUserService : ICurrentUserService
 {
   public Guid? UserId { get; }
   public bool IsAuthenticated { get; }

@@ -8,17 +8,17 @@ public class GetProfile
   // TODO: Finish implementation
   public class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
-    private readonly ICurrenUserService CurrenUserService;
+    private readonly ICurrentUserService CurrentUserService;
     private readonly HttpClient HttpClient;
     private readonly ILogger<Handler> Logger;
     public Handler
     (
-      ICurrenUserService currenUserService,
+      ICurrentUserService currentUserService,
       HttpClient httpClient,
       ILogger<Handler> logger
     )
     {
-      CurrenUserService = currenUserService;
+      CurrentUserService = currentUserService;
       HttpClient = httpClient;
       Logger = logger;
     }
@@ -29,7 +29,7 @@ public class GetProfile
       Response response = mockResponseFactory(request);
       // https://github.com/kesac/Syllabore
 
-      Guid? userId = CurrenUserService.UserId;
+      Guid? userId = CurrentUserService.UserId;
       if (userId is null) return response;
       // TODO: Read the Profile from the DB/Repository/Service
       // The ProfileId will be the UserId.

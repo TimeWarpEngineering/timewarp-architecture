@@ -4,6 +4,6 @@ public class CommonInfrastructureModule : IModule
 {
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    serviceCollection.TryAddScoped<ICurrenUserService, CurrentUserService>();
+    serviceCollection.TryAddScoped<ICurrentUserService, CurrentUserService>();
   }
 }
