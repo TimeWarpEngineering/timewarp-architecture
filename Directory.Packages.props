@@ -1,0 +1,17 @@
+<Project>
+  <!-- Central Package Management - add your package versions here -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup Label="TimeWarp Packages">
+    <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0-beta.20" />
+    <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.57" />
+    <PackageVersion Include="TimeWarp.Terminal" Version="1.0.0-beta.7" />
+  </ItemGroup>
+  <ItemGroup Label="Code Analyzers">
+    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.12.0-beta1.25218.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageVersion>
+  </ItemGroup>
+</Project>
