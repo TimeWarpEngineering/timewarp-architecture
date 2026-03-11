@@ -27,6 +27,7 @@ Scaffold dev-cli using `ganda repo enforce-dev-cli --fix` and establish the foun
 - [x] Create `BannedSymbols.txt` (bans System.Console)
 - [x] Run `dev self-install` to create `./bin/dev`
 - [x] Verify all compliance checks pass
+- [x] Create `timewarp-architecture.slnx` at repo root via `dotnet new sln`
 
 ### Remaining (during/after migration)
 - [ ] Update `build-command.cs` to build actual solution (currently generic template)
