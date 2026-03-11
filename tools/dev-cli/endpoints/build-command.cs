@@ -61,9 +61,11 @@ internal sealed class BuildCommand : ICommand<Unit>
     {
       if (!Command.Clean) return true;
 
-      Terminal.WriteLine("\nCleaning before build...");
+      string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
+
+      Terminal.WriteLine($"\nCleaning {solutionFile}...");
       CommandOutput result = await DotNet.Clean()
-        .WithWorkingDirectory(RepoRoot)
+        .WithProject(solutionFile)
         .WithNoValidation()
         .CaptureAsync(Ct);
 
@@ -72,10 +74,12 @@ internal sealed class BuildCommand : ICommand<Unit>
 
     private async Task<bool> BuildAsync()
     {
-      Terminal.WriteLine("\nBuilding...");
+      string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
+
+      Terminal.WriteLine($"\nBuilding {solutionFile}...");
       CommandOutput result = await DotNet.Build()
+        .WithProject(solutionFile)
         .WithConfiguration("Release")
-        .WithWorkingDirectory(RepoRoot)
         .WithNoValidation()
         .CaptureAsync(Ct);
 
