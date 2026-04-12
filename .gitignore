@@ -455,3 +455,4 @@ GeneratedCode/
 !.agent/workspace/overview.md
 TimeWarp.Architecture/.agent/workspace/*
 !TimeWarp.Architecture/.agent/workspace/overview.md
+*.lscache
