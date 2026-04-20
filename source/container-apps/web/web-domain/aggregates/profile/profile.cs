@@ -18,8 +18,10 @@ public class Profile : BaseEntity
   public string Region { get; set; }
   public string Theme { get; set; }
 
+  # pragma warning disable CA1852
   private class Invariants : AbstractValidator<Profile>
   {
     
   }
+# pragma warning restore CA1852
 }

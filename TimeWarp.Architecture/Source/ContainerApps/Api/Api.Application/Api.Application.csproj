@@ -8,7 +8,7 @@
     <ProjectReference Include="..\..\..\Common\Common.Application\Common.Application.csproj" />
     <ProjectReference Include="..\..\..\..\..\source\libraries\timewarp-modules\timewarp-modules.csproj" />
     <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj" />
-    <ProjectReference Include="..\Api.Domain\Api.Domain.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\container-apps\api\api-domain\api-domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -11,7 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.Application\Common.Application.csproj" />
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
-    <ProjectReference Include="..\Web.Domain\Web.Domain.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\container-apps\web\web-domain\web-domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

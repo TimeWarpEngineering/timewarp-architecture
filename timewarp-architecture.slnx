@@ -12,4 +12,10 @@
     <Project Path="source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
     <Project Path="source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
   </Folder>
+  <Folder Name="/source/container-apps/">
+    <Project Path="source/container-apps/api/api-domain/api-domain.csproj" />
+    <Project Path="source/container-apps/grpc/grpc-domain/grpc-domain.csproj" />
+    <Project Path="source/container-apps/web/web-domain/web-domain.csproj" />
+    <Project Path="source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj" />
+  </Folder>
 </Solution>

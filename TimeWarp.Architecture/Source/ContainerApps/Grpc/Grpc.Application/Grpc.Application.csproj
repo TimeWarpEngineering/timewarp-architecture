@@ -7,7 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.Application\Common.Application.csproj" />
     <ProjectReference Include="..\Grpc.Contracts\Grpc.Contracts.csproj" />
-    <ProjectReference Include="..\Grpc.Domain\Grpc.Domain.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\container-apps\grpc\grpc-domain\grpc-domain.csproj" />
   </ItemGroup>
 
 </Project>
