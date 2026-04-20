@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Source\Libraries\TimeWarp.Automation\TimeWarp.Automation.csproj"/>
-    <ProjectReference Include="..\..\..\Source\Libraries\TimeWarp.Automation.Contracts\TimeWarp.Automation.Contracts.csproj"/>
+    <ProjectReference Include="..\..\..\..\source\libraries\timewarp-automation-contracts\timewarp-automation-contracts.csproj"/>
   </ItemGroup>
 
 </Project>

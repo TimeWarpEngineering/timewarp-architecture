@@ -1,4 +1,5 @@
-﻿namespace TimeWarp.Automation.Contracts;
+#pragma warning disable CA1040
+namespace TimeWarp.Automation.Contracts;
 
 /// <summary>
 /// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.
@@ -10,3 +11,4 @@
 /// </remarks>
 
 public interface IAssemblyMarker;
+#pragma warning restore CA1040

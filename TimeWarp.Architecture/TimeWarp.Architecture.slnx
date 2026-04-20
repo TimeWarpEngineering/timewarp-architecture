@@ -431,7 +431,7 @@
     </Project>
   </Folder>
   <Folder Name="/Source/Libraries/">
-    <Project Path="Source\Libraries\TimeWarp.Automation.Contracts\TimeWarp.Automation.Contracts.csproj" Type="Classic C#">
+    <Project Path="..\..\source\libraries\timewarp-automation-contracts\timewarp-automation-contracts.csproj" Type="Classic C#">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />

@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/source/libraries/">
     <Project Path="source/libraries/timewarp-modules/timewarp-modules.csproj" />
+    <Project Path="source/libraries/timewarp-automation-contracts/timewarp-automation-contracts.csproj" />
   </Folder>
   <Folder Name="/source/analyzers/">
     <Project Path="source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
