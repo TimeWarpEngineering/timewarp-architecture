@@ -49,6 +49,7 @@ global using TimeWarp.Architecture.Persistence;
 global using TimeWarp.Architecture.Services;
 global using TimeWarp.Architecture.Types;
 global using TimeWarp.Architecture.Web.Infrastructure;
+global using TimeWarp.Modules;
 #if(cosmosdb || postgres)
 global using TimeWarp.Architecture.HostedServices;
 #endif

@@ -1,14 +1,18 @@
 <Project>
-  <!-- Import root Directory.Build.props -->
+  <!-- Import parent Directory.Build.props -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- Package metadata for NuGet publishing -->
+  <!-- Default package metadata (can be overridden in individual projects) -->
   <PropertyGroup Label="Package Metadata">
     <Version>1.0.0-beta.1</Version>
-    <Authors>TimeWarpEngineering</Authors>
-    <PackageProjectUrl>https://github.com/TimeWarpEngineering/timewarp-architecture</PackageProjectUrl>
+    <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-architecture</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
+    <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup Label="Shared Package Assets">
+    <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+  
 </Project>

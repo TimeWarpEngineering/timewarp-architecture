@@ -17,3 +17,4 @@ global using Scalar.AspNetCore;
 // Solution usings
 global using TimeWarp.Architecture.Enumerations;
 global using TimeWarp.Architecture.Types;
+global using TimeWarp.Modules;

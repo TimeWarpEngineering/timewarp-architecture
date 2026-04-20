@@ -7,3 +7,4 @@ global using OneOf;
 // Solution usings
 global using TimeWarp.Architecture;
 global using TimeWarp.Architecture.Types;
+global using TimeWarp.Modules;

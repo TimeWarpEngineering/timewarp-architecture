@@ -2,6 +2,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Common.Contracts\Common.Contracts.csproj" />
     <ProjectReference Include="..\Common.Domain\Common.Domain.csproj" />
-    <ProjectReference Include="..\..\Libraries\TimeWarp.Modules\TimeWarp.Modules.csproj" />
+    <ProjectReference Include="..\..\..\..\source\libraries\timewarp-modules\timewarp-modules.csproj" />
   </ItemGroup>
 </Project>

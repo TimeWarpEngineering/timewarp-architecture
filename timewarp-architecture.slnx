@@ -1,2 +1,6 @@
 <Solution>
+  <Folder Name="/source/" />
+  <Folder Name="/source/libraries/">
+    <Project Path="source/libraries/timewarp-modules/timewarp-modules.csproj" />
+  </Folder>
 </Solution>

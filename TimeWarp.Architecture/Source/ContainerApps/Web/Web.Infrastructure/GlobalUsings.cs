@@ -12,3 +12,4 @@ global using TimeWarp.Architecture;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.Data.Configuration;
 global using TimeWarp.Architecture.Entities;
+global using TimeWarp.Modules;
