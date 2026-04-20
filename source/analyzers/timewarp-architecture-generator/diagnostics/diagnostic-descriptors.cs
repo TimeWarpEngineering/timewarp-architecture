@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.SourceGenerator;
+namespace TimeWarp.Architecture.Generator;
 
 internal static class DiagnosticDescriptors
 {

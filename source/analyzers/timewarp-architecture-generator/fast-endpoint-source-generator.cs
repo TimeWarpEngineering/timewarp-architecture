@@ -1,6 +1,6 @@
-namespace TimeWarp.Architecture.SourceGenerator;
+namespace TimeWarp.Architecture.Generator;
 
-using Models;
+using TimeWarp.Architecture.Generator.Models;
 
 [Generator]
 public class FastEndpointSourceGenerator : IIncrementalGenerator
@@ -13,7 +13,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
     RouteRegistry.Reset();
 
     // Create diagnostic descriptor for logging
-    var logDiagnostic = new DiagnosticDescriptor
+    DiagnosticDescriptor logDiagnostic = new DiagnosticDescriptor
     (
       "SG001",
       "Source Generator Log",
@@ -48,7 +48,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         try
         {
           // Extract metadata directly from symbol
-          var metadata = EndpointMetadata.FromSymbol(symbol);
+          EndpointMetadata metadata = EndpointMetadata.FromSymbol(symbol);
 
           // Check for route conflicts
           if (!RouteRegistry.TryRegisterRoute(metadata.Route, metadata.HttpVerb, metadata.ClassName, spc))
@@ -62,7 +62,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
           spc.AddSource(fileName, SourceText.From(endpointClass, Encoding.UTF8));
         }
-        catch (Exception ex)
+        catch (Exception ex) // CA1031: Source generators must be resilient
         {
           spc.ReportDiagnostic(
             Diagnostic.Create(
@@ -87,7 +87,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
   private static string GenerateEndpointClass(EndpointMetadata metadata)
   {
-    string tags = metadata.Tags.Any()
+    string tags = metadata.Tags.Length > 0
       ? $"""
          Tags({string.Join(", ", metadata.Tags.Select(t => $"\"{t}\""))});
          """
