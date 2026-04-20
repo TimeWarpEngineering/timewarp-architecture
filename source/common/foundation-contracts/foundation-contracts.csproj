@@ -10,8 +10,8 @@
     <PackageReference Include="OneOf" />
   </ItemGroup>
   <ItemGroup>
-    <AdditionalFiles Include="Mixins\RouteMixin.mixin" />
-    <AdditionalFiles Include="Mixins\IAuthApiRequestMixin.mixin" />
-    <AdditionalFiles Include="Mixins\IOpenDataQueryParametersMixin.mixin" />
+    <AdditionalFiles Include="mixins\RouteMixin.mixin" />
+    <AdditionalFiles Include="mixins\IAuthApiRequestMixin.mixin" />
+    <AdditionalFiles Include="mixins\IOpenDataQueryParametersMixin.mixin" />
   </ItemGroup>
 </Project>

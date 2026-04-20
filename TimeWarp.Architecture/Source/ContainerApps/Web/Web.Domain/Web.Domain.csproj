@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.Domain\Common.Domain.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\common\foundation-domain\foundation-domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

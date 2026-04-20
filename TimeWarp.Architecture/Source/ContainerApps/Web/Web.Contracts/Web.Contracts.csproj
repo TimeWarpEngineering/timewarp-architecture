@@ -51,18 +51,18 @@
 
   <ItemGroup>
 <!--    <ProjectReference Include="..\..\..\..\..\..\..\..\..\..\mrpmorris\Morris.Moxy\Source\Lib\Morris.Moxy\Morris.Moxy.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />-->
-    <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj"/>
+    <ProjectReference Include="..\..\..\..\..\source\common\foundation-contracts\foundation-contracts.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\RouteMixin.mixin">
-      <Link>Mixins\RouteMixin.mixin</Link>
+    <AdditionalFiles Include="..\..\..\..\..\source\common\foundation-contracts\mixins\RouteMixin.mixin">
+      <Link>mixins\RouteMixin.mixin</Link>
     </AdditionalFiles>
-    <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\IOpenDataQueryParametersMixin.mixin">
-      <Link>Mixins\IOpenDataQueryParametersMixin.mixin</Link>
+    <AdditionalFiles Include="..\..\..\..\..\source\common\foundation-contracts\mixins\IOpenDataQueryParametersMixin.mixin">
+      <Link>mixins\IOpenDataQueryParametersMixin.mixin</Link>
     </AdditionalFiles>
-    <AdditionalFiles Include="..\..\..\Common\Common.Contracts\Mixins\IAuthApiRequestMixin.mixin">
-      <Link>Mixins\IAuthApiRequestMixin.mixin</Link>
+    <AdditionalFiles Include="..\..\..\..\..\source\common\foundation-contracts\mixins\IAuthApiRequestMixin.mixin">
+      <Link>mixins\IAuthApiRequestMixin.mixin</Link>
     </AdditionalFiles>
   </ItemGroup>
 

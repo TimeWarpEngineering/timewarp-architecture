@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/source/" />
+  <Folder Name="/source/common/">
+    <Project Path="source/common/foundation-contracts/foundation-contracts.csproj" />
+    <Project Path="source/common/foundation-domain/foundation-domain.csproj" />
+  </Folder>
   <Folder Name="/source/libraries/">
     <Project Path="source/libraries/timewarp-modules/timewarp-modules.csproj" />
   </Folder>

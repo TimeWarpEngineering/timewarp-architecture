@@ -9,9 +9,19 @@
     <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.68" />
     <PackageVersion Include="TimeWarp.Terminal" Version="1.0.0-beta.12" />
   </ItemGroup>
-  <ItemGroup Label="Microsoft Extensions Packages">
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.5" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
+<ItemGroup Label="Microsoft Extensions Packages">
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.0-rc.2.25502.107" />
+  </ItemGroup>
+  <ItemGroup Label="Foundation Packages">
+    <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
+    <PackageVersion Include="FluentValidation" Version="12.1.0" />
+    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2" />
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.18" />
+    <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
+    <PackageVersion Include="OneOf" Version="3.0.271" />
   </ItemGroup>
   
   <ItemGroup Label="Code Analyzers">
