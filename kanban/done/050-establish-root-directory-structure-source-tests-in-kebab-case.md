@@ -58,7 +58,7 @@ timewarp-architecture/dev/
 
 ### Child Tasks
 
-- [ ] 052: Migrate TimeWarp.Modules to source/libraries/timewarp-modules/
+- [x] 050-001: Migrate TimeWarp.Modules to source/libraries/timewarp-modules/ (done)
 
 ### Phase 4: Verification
 - [ ] Verify build succeeds

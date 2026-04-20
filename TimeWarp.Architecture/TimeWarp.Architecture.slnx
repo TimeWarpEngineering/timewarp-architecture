@@ -408,7 +408,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\Analyzers\TimeWarp.Architecture.Attributes\TimeWarp.Architecture.Attributes.csproj" Type="Classic C#">
+    <Project Path="../source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" Type="Classic C#">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />

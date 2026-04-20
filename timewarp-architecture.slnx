@@ -3,4 +3,7 @@
   <Folder Name="/source/libraries/">
     <Project Path="source/libraries/timewarp-modules/timewarp-modules.csproj" />
   </Folder>
+  <Folder Name="/source/analyzers/">
+    <Project Path="source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
+  </Folder>
 </Solution>

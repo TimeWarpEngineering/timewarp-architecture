@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TimeWarp.Architecture.Attributes\TimeWarp.Architecture.Attributes.csproj" />
+    <ProjectReference Include="../../../../source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
   </ItemGroup>
 
 </Project>
