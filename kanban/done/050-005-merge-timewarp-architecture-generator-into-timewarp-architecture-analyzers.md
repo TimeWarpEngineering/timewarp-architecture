@@ -63,38 +63,38 @@ source/analyzers/
 ## Checklist
 
 ### Phase 1: Prepare
-- [ ] Review both projects for namespace collisions
-- [ ] Decide on unified namespace: `TimeWarp.Architecture.Analyzers` (keep existing)
-- [ ] Plan file structure under generators/ and helpers/
+- [x] Review both projects for namespace collisions
+- [x] Decide on unified namespace: `TimeWarp.Architecture.Analyzers` (keep existing)
+- [x] Plan file structure under generators/ and helpers/
 
 ### Phase 2: Move Files
-- [ ] Move generator files to analyzers/generators/ subdirectory
-- [ ] Move helper files (deduplicate ToKebabCase)
-- [ ] Move model files
-- [ ] Move validation files
-- [ ] Update AnalyzerReleases files (merge TWE and TWPA rules)
+- [x] Move generator files to analyzers/generators/ subdirectory
+- [x] Move helper files (deduplicate ToKebabCase)
+- [x] Move model files
+- [x] Move validation files
+- [x] Update AnalyzerReleases files (merge TWE and TWPA rules)
 
 ### Phase 3: Merge Code
-- [ ] Update global-usings.cs to include generator namespaces
-- [ ] Deduplicate StringExtensions.ToKebabCase (keep one in helpers/)
-- [ ] Update namespace in all moved files from Generator to Analyzers
-- [ ] Merge diagnostic descriptors if any overlap
+- [x] Update global-usings.cs to include generator namespaces
+- [x] Deduplicate StringExtensions.ToKebabCase (keep one in helpers/)
+- [x] Update namespace in all moved files from Generator to Analyzers
+- [x] Merge diagnostic descriptors if any overlap
 
 ### Phase 4: Update Project
-- [ ] Update timewarp-architecture-analyzers.csproj to include generator files
-- [ ] Add OutputItemType="Analyzer" for generator assembly reference
-- [ ] Remove timewarp-architecture-generator.csproj reference
-- [ ] Update NoWarn to include both RS1041 and CA1031
+- [x] Update timewarp-architecture-analyzers.csproj to include generator files
+- [x] Add OutputItemType="Analyzer" for generator assembly reference
+- [x] Remove timewarp-architecture-generator.csproj reference
+- [x] Update NoWarn to include RS1041, CA1031, and CA1062
 
 ### Phase 5: Update Consumers
-- [ ] Update all csproj references (GenTester, Api.Server, Tests)
-- [ ] Remove separate generator project references
-- [ ] Keep just: timewarp-architecture-attributes + timewarp-architecture-analyzers
+- [x] Update all csproj references (GenTester, Api.Server, Tests)
+- [x] Remove separate generator project references
+- [x] Keep just: timewarp-architecture-attributes + timewarp-architecture-analyzers
 
 ### Phase 6: Cleanup
-- [ ] Delete timewarp-architecture-generator/ directory
-- [ ] Update both .slnx files
-- [ ] Verify build
+- [x] Delete timewarp-architecture-generator/ directory
+- [x] Update both .slnx files
+- [x] Verify build
 
 ## Notes
 
