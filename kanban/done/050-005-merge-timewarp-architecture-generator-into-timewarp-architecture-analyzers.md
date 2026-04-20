@@ -120,5 +120,48 @@ All go into AnalyzerReleases.Unshipped.md
 - Microsoft convention: "Analyzers" = umbrella term for analyzers + generators
 - Current merged projects: timewarp-architecture-analyzers (TWPA0001), timewarp-architecture-generator (TWE001-TWE004)
 
+## Results
+
+Successfully merged timewarp-architecture-generator into timewarp-architecture-analyzers.
+
+### What was implemented
+- All generator files moved to analyzers subdirectories (generators/, diagnostics/, helpers/, models/, validation/)
+- Namespace unified to TimeWarp.Architecture.Analyzers (fixed singular 'Analyzer' bug in partial-class-declaration-analyzer.cs)
+- AnalyzerReleases merged (TWPA0001 + TWE001-TWE004)
+- ToKebabCase deduplicated — analyzer uses shared StringExtensions.ToKebabCase()
+- Consumer references updated (Api.Server, GenTester, SourceGenerator.Tests now point to analyzers project)
+- CA1062 suppressed (Roslyn guarantees non-null context parameters)
+- CA1031 kept suppressed (source generators must be resilient)
+- RS1041 kept suppressed (targeting net10.0 per Nuru pattern)
+- timewarp-architecture-generator/ directory deleted entirely
+- Both .slnx files updated (generator entry removed)
+
+### Files changed
+- source/analyzers/timewarp-architecture-analyzers/ (merged project)
+  - generators/fast-endpoint-source-generator.cs (namespace fix)
+  - diagnostics/diagnostic-descriptors.cs (namespace fix)
+  - helpers/string-extensions.cs (namespace fix)
+  - models/endpoint-metadata.cs (namespace fix)
+  - validation/route-registry.cs (namespace fix)
+  - partial-class-declaration-analyzer.cs (uses shared ToKebabCase)
+  - global-usings.cs (merged)
+  - AnalyzerReleases.Unshipped.md (merged rules)
+  - timewarp-architecture-analyzers.csproj (merged deps, NoWarn RS1041+CA1031+CA1062)
+- source/analyzers/timewarp-architecture-generator/ (deleted entirely)
+- TimeWarp.Architecture/Source/ContainerApps/Api/Api.Server/Api.Server.csproj
+- TimeWarp.Architecture/Source/GenTester/GenTester.csproj
+- TimeWarp.Architecture/Tests/Analyzers/TimeWarp.Architecture.SourceGenerator.Tests/TimeWarp.Architecture.SourceGenerator.Tests.csproj
+- TimeWarp.Architecture/TimeWarp.Architecture.slnx (removed generator entry)
+- timewarp-architecture.slnx (already clean — no generator entry existed)
+
+### Key decisions
+- Followed Nuru pattern: 'analyzers' is umbrella term for analyzers + generators
+- Attributes project kept separate (clean transitive dependency chain for Api.Contracts)
+- All diagnostic IDs preserved (TWPA prefix for analyzer, TWE prefix for generator/endpoint)
+
+### Build verification
+- timewarp-architecture.slnx: Build succeeded, 0 warnings, 0 errors
+
 ## Session
 - Created: ses_2d78597cfffeIe36aerm1ibchw (2026-04-20)
+- Completed: ses_2551679a4ffe6T9dEoaPsaXjoP (2026-04-20)
