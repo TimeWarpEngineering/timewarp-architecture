@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Analyzer;
+namespace TimeWarp.Architecture.Analyzers;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
@@ -27,8 +27,6 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
 
   public override void Initialize(AnalysisContext context)
   {
-    ArgumentNullException.ThrowIfNull(context);
-
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
     context.EnableConcurrentExecution();
     context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
@@ -65,7 +63,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
       return;
     }
 
-    string kebabTypeName = ToKebabCase(namedTypeSymbol.Name);
+    string kebabTypeName = namedTypeSymbol.Name.ToKebabCase();
     string pascalName = $"{namedTypeSymbol.Name}.cs";
     string kebabName = $"{kebabTypeName}.cs";
 
@@ -117,41 +115,6 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
     Diagnostic diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
       symbol.Name, $"file name '{fileName}' does not follow the expected naming convention");
     context.ReportDiagnostic(diagnostic);
-  }
-
-  private static string ToKebabCase(string value)
-  {
-    if (string.IsNullOrEmpty(value))
-    {
-      return value;
-    }
-
-    System.Text.StringBuilder builder = new(value.Length * 2);
-    bool previousWasUpper = false;
-
-    for (int index = 0; index < value.Length; index++)
-    {
-      char current = value[index];
-      bool isUpper = char.IsUpper(current);
-
-      if (isUpper)
-      {
-        if (builder.Length > 0 && (!previousWasUpper || (index + 1 < value.Length && !char.IsUpper(value[index + 1]))))
-        {
-          builder.Append('-');
-        }
-
-        builder.Append(char.ToLowerInvariant(current));
-      }
-      else
-      {
-        builder.Append(current);
-      }
-
-      previousWasUpper = isUpper;
-    }
-
-    return builder.ToString();
   }
 
   private static bool IsPartialType(ISymbol symbol) =>

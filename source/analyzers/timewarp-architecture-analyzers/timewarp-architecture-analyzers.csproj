@@ -3,10 +3,15 @@
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
     <!-- Suppress RS1041: Analyzer intentionally targets net10.0 for CLI usage -->
-    <NoWarn>$(NoWarn);RS1041</NoWarn>
+    <!-- Suppress CA1031: Source generators must be resilient and catch general exceptions -->
+    <!-- Suppress CA1062: Roslyn framework guarantees non-null AnalysisContext/CompilationStartAnalysisContext parameters -->
+    <NoWarn>$(NoWarn);RS1041;CA1031;CA1062</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
   </ItemGroup>
 </Project>

@@ -26,7 +26,7 @@
 
     <!-- Source Generator -->
 
-    <ProjectReference Include="../../../../../source/analyzers/timewarp-architecture-generator/timewarp-architecture-generator.csproj"
+    <ProjectReference Include="../../../../../source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
                        OutputItemType="Analyzer"
                        ReferenceOutputAssembly="false" />
     <!-- Attributes -->

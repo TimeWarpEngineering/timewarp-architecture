@@ -6,6 +6,5 @@
   <Folder Name="/source/analyzers/">
     <Project Path="source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
     <Project Path="source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
-    <Project Path="source/analyzers/timewarp-architecture-generator/timewarp-architecture-generator.csproj" />
   </Folder>
 </Solution>

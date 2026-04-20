@@ -1,6 +1,6 @@
-namespace TimeWarp.Architecture.Generator;
+namespace TimeWarp.Architecture.Analyzers;
 
-using TimeWarp.Architecture.Generator.Models;
+using TimeWarp.Architecture.Analyzers.Models;
 
 [Generator]
 public class FastEndpointSourceGenerator : IIncrementalGenerator

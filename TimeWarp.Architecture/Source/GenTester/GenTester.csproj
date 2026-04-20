@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../source/analyzers/timewarp-architecture-generator/timewarp-architecture-generator.csproj" />
+    <ProjectReference Include="../../../source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
   </ItemGroup>
 
 </Project>

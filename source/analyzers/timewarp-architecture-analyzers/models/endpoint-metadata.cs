@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Generator.Models;
+namespace TimeWarp.Architecture.Analyzers.Models;
 
 internal sealed class EndpointMetadata
 {
@@ -52,7 +52,7 @@ internal sealed class EndpointMetadata
 
     // Extract custom endpoint type
     AttributeData? apiEndpointAttribute = symbol.GetAttributes()
-      .FirstOrDefault(attr => attr.AttributeClass?.ToDisplayString() == "TimeWarp.Architecture.Generator.ApiEndpointAttribute");
+      .FirstOrDefault(attr => attr.AttributeClass?.ToDisplayString() == "TimeWarp.Architecture.Attributes.ApiEndpointAttribute");
 
     if (apiEndpointAttribute != null)
     {

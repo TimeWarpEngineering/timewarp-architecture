@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Generator;
+namespace TimeWarp.Architecture.Analyzers;
 
 using System.Globalization;
 
