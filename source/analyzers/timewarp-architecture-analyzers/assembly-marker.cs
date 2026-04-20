@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Analyzers;
+namespace TimeWarp.Architecture.Analyzers;
 
 /// <summary>
 /// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.
@@ -9,4 +9,6 @@
 /// reinforcing its role as a simple marker.
 /// </remarks>
 
+#pragma warning disable CA1040 // Avoid empty interfaces
 public interface IAssemblyMarker;
+#pragma warning restore CA1040 // Avoid empty interfaces

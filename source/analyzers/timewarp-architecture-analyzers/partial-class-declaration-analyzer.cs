@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Analyzer;
+namespace TimeWarp.Architecture.Analyzer;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
@@ -27,6 +27,8 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
 
   public override void Initialize(AnalysisContext context)
   {
+    ArgumentNullException.ThrowIfNull(context);
+
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
     context.EnableConcurrentExecution();
     context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
@@ -34,7 +36,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
 
   private static void AnalyzeSymbol(SymbolAnalysisContext context)
   {
-    var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
+    INamedTypeSymbol namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
 
     if (!namedTypeSymbol.IsType || !IsPartialType(namedTypeSymbol))
       return;
@@ -63,9 +65,9 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
       return;
     }
 
-  string kebabTypeName = ToKebabCase(namedTypeSymbol.Name);
-  string pascalName = $"{namedTypeSymbol.Name}.cs";
-  string kebabName = $"{kebabTypeName}.cs";
+    string kebabTypeName = ToKebabCase(namedTypeSymbol.Name);
+    string pascalName = $"{namedTypeSymbol.Name}.cs";
+    string kebabName = $"{kebabTypeName}.cs";
 
     bool isPrimaryFile = fileName.Equals(pascalName, StringComparison.OrdinalIgnoreCase)
       || fileName.Equals(kebabName, StringComparison.OrdinalIgnoreCase);
@@ -88,7 +90,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
   private static void AnalyzePrimaryFile(SymbolAnalysisContext context, ISymbol symbol, BaseTypeDeclarationSyntax baseTypeDeclarationSyntax)
   {
     if (HasFullSpecifiers(baseTypeDeclarationSyntax)) return;
-    var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
+    Diagnostic diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
       symbol.Name, "should have full specifiers in the primary file");
     context.ReportDiagnostic(diagnostic);
   }
@@ -97,14 +99,14 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
   {
     if (HasExcessiveSpecifiers(baseTypeDeclarationSyntax))
     {
-      var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
+      Diagnostic diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
         symbol.Name, "should have minimal specifiers in secondary files");
       context.ReportDiagnostic(diagnostic);
     }
 
     if (HasClassInheritance(baseTypeDeclarationSyntax))
     {
-      var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.BaseList?.GetLocation() ?? baseTypeDeclarationSyntax.GetLocation(),
+      Diagnostic diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.BaseList?.GetLocation() ?? baseTypeDeclarationSyntax.GetLocation(),
         symbol.Name, "should not include class inheritance in secondary files");
       context.ReportDiagnostic(diagnostic);
     }
@@ -112,10 +114,11 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
 
   private static void ReportIncorrectFileName(SymbolAnalysisContext context, ISymbol symbol, BaseTypeDeclarationSyntax baseTypeDeclarationSyntax, string? fileName)
   {
-    var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
+    Diagnostic diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
       symbol.Name, $"file name '{fileName}' does not follow the expected naming convention");
     context.ReportDiagnostic(diagnostic);
   }
+
   private static string ToKebabCase(string value)
   {
     if (string.IsNullOrEmpty(value))
@@ -123,7 +126,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
       return value;
     }
 
-  var builder = new System.Text.StringBuilder(value.Length * 2);
+    System.Text.StringBuilder builder = new(value.Length * 2);
     bool previousWasUpper = false;
 
     for (int index = 0; index < value.Length; index++)
@@ -174,7 +177,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
       return false;
 
     return baseTypeDeclarationSyntax.BaseList.Types.Any(t =>
-      (t.Type is IdentifierNameSyntax identifierName && !identifierName.Identifier.Text.StartsWith("I")) ||
-      (t.Type is QualifiedNameSyntax qualifiedName && !qualifiedName.Right.Identifier.Text.StartsWith("I")));
+      (t.Type is IdentifierNameSyntax identifierName && !identifierName.Identifier.Text.StartsWith('I')) ||
+      (t.Type is QualifiedNameSyntax qualifiedName && !qualifiedName.Right.Identifier.Text.StartsWith('I')));
   }
 }
