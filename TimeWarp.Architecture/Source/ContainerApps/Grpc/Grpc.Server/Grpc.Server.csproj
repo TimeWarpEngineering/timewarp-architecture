@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.Server\Common.Server.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\common\foundation-server\foundation-server.csproj" />
     <ProjectReference Include="..\..\..\..\..\source\container-apps\aspire\aspire-service-defaults\aspire-service-defaults.csproj" />
     <ProjectReference Include="..\Grpc.Infrastructure\Grpc.Infrastructure.csproj" />
   </ItemGroup>

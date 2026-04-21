@@ -22,6 +22,10 @@
     <PackageVersion Include="libphonenumber-csharp" Version="9.0.18" />
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
+    <PackageVersion Include="Azure.Identity" Version="1.17.0" />
+    <PackageVersion Include="FastEndpoints" Version="7.1.0" />
+    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.4.0" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.10.3" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.2" />
   </ItemGroup>
 

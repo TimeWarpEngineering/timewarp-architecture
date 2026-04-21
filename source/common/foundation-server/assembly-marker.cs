@@ -9,4 +9,6 @@
 /// reinforcing its role as a simple marker.
 /// </remarks>
 
+#pragma warning disable CA1040
 public interface IAssemblyMarker;
+#pragma warning restore CA1040
