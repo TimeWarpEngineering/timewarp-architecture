@@ -53,42 +53,42 @@ source/common/foundation-application/
 ## Checklist
 
 ### Phase 1: Create Directory Structure
-- [ ] Create source/common/foundation-application/abstractions/
-- [ ] Verify directory is empty and ready
+- [x] Create source/common/foundation-application/abstractions/
+- [x] Verify directory is empty and ready
 
 ### Phase 2: Migrate Files
-- [ ] git mv Common.Application.csproj → foundation-application.csproj
-- [ ] git mv AssemblyMarker.cs → assembly-marker.cs
-- [ ] git mv GlobalUsings.cs → global-usings.cs
-- [ ] git mv Abstractions/ICurrentUserService.cs → abstractions/i-current-user-service.cs
-- [ ] git mv Abstractions/IDateTimeService.cs → abstractions/i-date-time-service.cs
+- [x] git mv Common.Application.csproj → foundation-application.csproj
+- [x] git mv AssemblyMarker.cs → assembly-marker.cs
+- [x] git mv GlobalUsings.cs → global-usings.cs
+- [x] git mv Abstractions/ICurrentUserService.cs → abstractions/i-current-user-service.cs
+- [x] git mv Abstractions/IDateTimeService.cs → abstractions/i-date-time-service.cs
 
 ### Phase 3: Update Project File
-- [ ] Update csproj to minimal format (remove redundant properties inherited from source/Directory.Build.props)
-- [ ] Update ProjectReference paths from `..\..\..\..\source\...` to correct relative paths from new location
+- [x] Update csproj to minimal format (remove redundant properties inherited from source/Directory.Build.props)
+- [x] Update ProjectReference paths from `..\..\..\..\source\...` to correct relative paths from new location
   - foundation-contracts: `..\foundation-contracts\foundation-contracts.csproj` (sibling)
   - foundation-domain: `..\foundation-domain\foundation-domain.csproj` (sibling)
   - timewarp-modules: `..\..\libraries\timewarp-modules\timewarp-modules.csproj` (up to source/, down to libraries/)
 
 ### Phase 4: Update Source Files
-- [ ] Add `#pragma warning disable CA1040` / `#pragma warning restore CA1040` to assembly-marker.cs
-- [ ] Verify namespaces unchanged (TimeWarp.Architecture.Common.Application, TimeWarp.Architecture.Abstractions)
+- [x] Add `#pragma warning disable CA1040` / `#pragma warning restore CA1040` to assembly-marker.cs
+- [x] Verify namespaces unchanged (TimeWarp.Architecture.Common.Application, TimeWarp.Architecture.Abstractions)
 
 ### Phase 5: Update Referencing Projects
 Update these 4 projects' ProjectReference paths to Common.Application:
-- [ ] Common.Infrastructure.csproj — currently references `..\Common.Application\Common.Application.csproj`
-- [ ] Api.Application.csproj — currently references `..\..\..\..\Common\Common.Application\Common.Application.csproj`
-- [ ] Grpc.Application.csproj — currently references `..\..\..\..\Common\Common.Application\Common.Application.csproj`
-- [ ] Web.Application.csproj — currently references `..\..\..\..\Common\Common.Application\Common.Application.csproj`
+- [x] Common.Infrastructure.csproj — currently references `..\Common.Application\Common.Application.csproj`
+- [x] Api.Application.csproj — currently references `..\..\..\..\Common\Common.Application\Common.Application.csproj`
+- [x] Grpc.Application.csproj — currently references `..\..\..\..\Common\Common.Application\Common.Application.csproj`
+- [x] Web.Application.csproj — currently references `..\..\..\..\Common\Common.Application\Common.Application.csproj`
 
 ### Phase 6: Update Solution Files
-- [ ] Update TimeWarp.Architecture/TimeWarp.Architecture.slnx — redirect Common.Application project path
-- [ ] Update timewarp-architecture.slnx — add foundation-application project under /source/common/
+- [x] Update TimeWarp.Architecture/TimeWarp.Architecture.slnx — redirect Common.Application project path
+- [x] Update timewarp-architecture.slnx — add foundation-application project under /source/common/
 
 ### Phase 7: Cleanup and Verify
-- [ ] Remove old Common.Application/ directory
-- [ ] Build verify foundation-application individually: `dotnet build source/common/foundation-application/foundation-application.csproj`
-- [ ] Build verify timewarp-architecture.slnx (now 11 projects)
+- [x] Remove old Common.Application/ directory
+- [x] Build verify foundation-application individually: `dotnet build source/common/foundation-application/foundation-application.csproj`
+- [x] Build verify timewarp-architecture.slnx (now 11 projects)
 
 ## Notes
 
@@ -120,7 +120,33 @@ Common.Application/GlobalUsings.cs is currently empty (just a comment). This is 
 
 ## Results
 
-To be filled after completion.
+Successfully migrated Common.Application to source/common/foundation-application/.
+
+### What was implemented
+- 5 source files migrated with kebab-case naming
+- csproj ProjectReference paths updated to short sibling/relative paths
+- CA1040 pragma added to assembly-marker.cs
+- Updated 4 referencing project paths (Common.Infrastructure, Api.Application, Grpc.Application, Web.Application)
+- Both .slnx files updated
+- Namespace unchanged (TimeWarp.Architecture.Common.Application, TimeWarp.Architecture.Abstractions)
+
+### Files changed
+- source/common/foundation-application/ (new, 5 source files)
+- source/common/foundation-application/foundation-application.csproj (simplified ProjectReferences)
+- TimeWarp.Architecture/Source/Common/Common.Infrastructure/Common.Infrastructure.csproj (path update)
+- TimeWarp.Architecture/Source/ContainerApps/Api/Api.Application/Api.Application.csproj (path update)
+- TimeWarp.Architecture/Source/ContainerApps/Grpc/Grpc.Application/Grpc.Application.csproj (path update)
+- TimeWarp.Architecture/Source/ContainerApps/Web/Web.Application/Web.Application.csproj (path update)
+- TimeWarp.Architecture/TimeWarp.Architecture.slnx (redirected path)
+- timewarp-architecture.slnx (added project)
+
+### Key decisions
+- ProjectReference paths from new location use short sibling paths (e.g., ../foundation-contracts/)
+- GlobalUsings.cs left as-is (empty placeholder — project is a thin abstraction layer)
+
+### Build verification
+- timewarp-architecture.slnx: Build succeeded, 0 warnings, 0 errors (11 projects)
 
 ## Session
 - Created: ses_2d78597cfffeIe36aerm1ibchw (2026-04-21)
+- Completed: ses_251e46a2fffeiN0sytGQ18m531 (2026-04-21)
