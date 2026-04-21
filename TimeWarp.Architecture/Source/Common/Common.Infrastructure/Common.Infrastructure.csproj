@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <PackageReference Include="Timewarp.OptionsValidation" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\source\common\foundation-application\foundation-application.csproj" />
-  </ItemGroup>
-</Project>

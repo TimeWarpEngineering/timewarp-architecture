@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\common\foundation-infrastructure\foundation-infrastructure.csproj" />
     <ProjectReference Include="..\Web.Application\Web.Application.csproj" />
   </ItemGroup>
 

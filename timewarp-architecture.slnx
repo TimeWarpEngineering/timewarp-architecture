@@ -4,6 +4,7 @@
     <Project Path="source/common/foundation-contracts/foundation-contracts.csproj" />
     <Project Path="source/common/foundation-domain/foundation-domain.csproj" />
     <Project Path="source/common/foundation-application/foundation-application.csproj" />
+    <Project Path="source/common/foundation-infrastructure/foundation-infrastructure.csproj" />
   </Folder>
   <Folder Name="/source/libraries/">
     <Project Path="source/libraries/timewarp-modules/timewarp-modules.csproj" />

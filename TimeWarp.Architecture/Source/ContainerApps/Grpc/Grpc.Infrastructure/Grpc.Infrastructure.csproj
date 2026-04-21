@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\common\foundation-infrastructure\foundation-infrastructure.csproj" />
     <ProjectReference Include="..\Grpc.Application\Grpc.Application.csproj" />
   </ItemGroup>
 

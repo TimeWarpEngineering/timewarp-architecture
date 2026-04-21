@@ -5,6 +5,6 @@
     <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Source\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\source\common\foundation-infrastructure\foundation-infrastructure.csproj" />
   </ItemGroup>
 </Project>
