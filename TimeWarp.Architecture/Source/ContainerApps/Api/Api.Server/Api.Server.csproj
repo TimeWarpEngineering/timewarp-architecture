@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\source\common\foundation-server\foundation-server.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\foundation\foundation-server\foundation-server.csproj" />
     <ProjectReference Include="..\..\..\..\..\source\container-apps\aspire\aspire-service-defaults\aspire-service-defaults.csproj" />
     <ProjectReference Include="..\Api.Infrastructure\Api.Infrastructure.csproj" />
     <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj" />

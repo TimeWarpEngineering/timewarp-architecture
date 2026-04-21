@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\source\common\foundation-server\foundation-server.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\foundation\foundation-server\foundation-server.csproj" />
     <ProjectReference Include="..\..\..\..\..\source\container-apps\aspire\aspire-service-defaults\aspire-service-defaults.csproj" />
     <ProjectReference Include="..\Web.Infrastructure\Web.Infrastructure.csproj" />
     <ProjectReference Include="..\Web.Spa\Web.Spa.csproj" />

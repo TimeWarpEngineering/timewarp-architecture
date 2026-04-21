@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\source\common\foundation-contracts\foundation-contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\foundation\foundation-contracts\foundation-contracts.csproj" />
   </ItemGroup>
   
 </Project>

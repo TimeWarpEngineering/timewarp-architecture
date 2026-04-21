@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\source\common\foundation-application\foundation-application.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\foundation\foundation-application\foundation-application.csproj" />
     <ProjectReference Include="..\Grpc.Contracts\Grpc.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\..\source\container-apps\grpc\grpc-domain\grpc-domain.csproj" />
   </ItemGroup>

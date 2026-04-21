@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\source\common\foundation-application\foundation-application.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\foundation\foundation-application\foundation-application.csproj" />
     <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\..\source\container-apps\web\web-domain\web-domain.csproj" />
   </ItemGroup>

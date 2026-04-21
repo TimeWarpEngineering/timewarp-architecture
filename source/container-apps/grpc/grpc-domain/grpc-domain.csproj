@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\common\foundation-domain\foundation-domain.csproj" />
+    <ProjectReference Include="..\..\..\foundation\foundation-domain\foundation-domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
