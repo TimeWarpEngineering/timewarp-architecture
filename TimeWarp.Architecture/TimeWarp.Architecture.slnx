@@ -39,7 +39,7 @@
   </Folder>
   <Folder Name="/01-Tools/" />
   <Folder Name="/02-Common/">
-    <Project Path="Source\Common\Common.Application\Common.Application.csproj">
+    <Project Path="../source/common/foundation-application/foundation-application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />

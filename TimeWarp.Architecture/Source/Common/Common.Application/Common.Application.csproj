@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\source\common\foundation-contracts\foundation-contracts.csproj" />
-    <ProjectReference Include="..\..\..\..\source\common\foundation-domain\foundation-domain.csproj" />
-    <ProjectReference Include="..\..\..\..\source\libraries\timewarp-modules\timewarp-modules.csproj" />
-  </ItemGroup>
-</Project>

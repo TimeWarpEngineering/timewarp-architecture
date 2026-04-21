@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Common.Application\Common.Application.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\common\foundation-application\foundation-application.csproj" />
     <ProjectReference Include="..\..\..\..\..\source\libraries\timewarp-modules\timewarp-modules.csproj" />
     <ProjectReference Include="..\Api.Contracts\Api.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\..\source\container-apps\api\api-domain\api-domain.csproj" />
