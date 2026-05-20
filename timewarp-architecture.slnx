@@ -19,6 +19,7 @@
     <Project Path="source/container-apps/api/api-domain/api-domain.csproj" />
     <Project Path="source/container-apps/grpc/grpc-domain/grpc-domain.csproj" />
     <Project Path="source/container-apps/web/web-domain/web-domain.csproj" />
+    <Project Path="source/container-apps/web/web-contracts/web-contracts.csproj" />
     <Project Path="source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj" />
   </Folder>
 </Solution>

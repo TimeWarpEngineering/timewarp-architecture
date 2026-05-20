@@ -10,7 +10,7 @@
     <PackageReference Include="Shouldly" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Source\ContainerApps\Web\Web.Contracts\Web.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\source\container-apps\web\web-contracts\web-contracts.csproj" />
     <ProjectReference Include="..\..\..\..\Source\ContainerApps\Web\Web.Server\Web.Server.csproj" />
     <ProjectReference Include="..\..\..\TimeWarp.Testing\Testing.Common.csproj" />
 

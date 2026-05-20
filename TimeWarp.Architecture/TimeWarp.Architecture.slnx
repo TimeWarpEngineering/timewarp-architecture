@@ -318,7 +318,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Web\Web.Contracts\Web.Contracts.csproj">
+    <Project Path="../source/container-apps/web/web-contracts/web-contracts.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />

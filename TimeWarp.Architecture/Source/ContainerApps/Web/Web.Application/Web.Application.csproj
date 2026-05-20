@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\source\foundation\foundation-application\foundation-application.csproj" />
-    <ProjectReference Include="..\Web.Contracts\Web.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\container-apps\web\web-contracts\web-contracts.csproj" />
     <ProjectReference Include="..\..\..\..\..\source\container-apps\web\web-domain\web-domain.csproj" />
   </ItemGroup>
 
