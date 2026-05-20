@@ -166,6 +166,44 @@ Web.Contracts follows the Feature pattern:
 - Feature-specific namespaces reflect the domain, not the directory structure
 - This aligns with the pattern used across all Contracts projects
 
+### Implementation Plan
+
+1. Migrate Web.Contracts from `TimeWarp.Architecture/Source/ContainerApps/Web/Web.Contracts/` to `source/container-apps/web/web-contracts/`.
+2. Use `git mv` for all committed files, converting directories and `.cs` filenames to kebab-case.
+3. Keep mixin filenames PascalCase under `mixins/` (`CreateCommand.mixin`, `DeleteCommand.mixin`, `GetListQuery.mixin`, `GetQuery.mixin`, `UpdateCommand.mixin`, plus docs).
+4. Migrate the `.DotSettings` file as `web-contracts.csproj.DotSettings`.
+5. Skip `Generated/` because Morris.Moxy regenerates it.
+6. Update `web-contracts.csproj`:
+   - Reduce to minimal project format consistent with migrated peers.
+   - Update `ProjectReference` to `source/foundation/foundation-contracts/foundation-contracts.csproj` using the correct relative path from `source/container-apps/web/web-contracts/`.
+   - Update `AdditionalFiles`, `Compile Remove`, `None Remove`, and `Folder Include` paths from PascalCase to kebab-case.
+   - Preserve package references and Morris.Moxy AdditionalFiles.
+   - Remove stale comments and stale AdditionalFiles such as `DependencyValidation1.layerdiagram` if present and no longer valid.
+7. Update `assembly-marker.cs` with CA1040 suppression around marker interface.
+8. Leave namespaces unchanged.
+9. Update referencing projects:
+   - `TimeWarp.Architecture/Source/ContainerApps/Web/Web.Application/Web.Application.csproj`
+   - `TimeWarp.Architecture/Source/ContainerApps/Web/Web.Spa/Web.Spa.csproj`
+   - `TimeWarp.Architecture/Tests/ContainerApps/Web/Web.Server.Integration.Tests/Web.Server.Integration.Tests.csproj`
+10. Update solution files:
+    - `TimeWarp.Architecture/TimeWarp.Architecture.slnx`
+    - root `timewarp-architecture.slnx`
+11. Remove old empty `Web.Contracts/` directory after migration.
+12. Verify with:
+    - `dotnet build source/container-apps/web/web-contracts/web-contracts.csproj`
+    - `dotnet build TimeWarp.Architecture/Source/ContainerApps/Web/Web.Application/Web.Application.csproj`
+    - `dotnet build TimeWarp.Architecture/Source/ContainerApps/Web/Web.Spa/Web.Spa.csproj`
+    - `dotnet build timewarp-architecture.slnx`
+    - `dotnet build TimeWarp.Architecture/TimeWarp.Architecture.slnx`
+
+### Design Notes
+
+- `TrackEventValidiation.mixin` spelling appears existing and should be preserved as part of migration.
+- `Web.Contracts.csproj.DotSettings` may contain path-based ReSharper/Rider settings; migrate it as-is unless build/review requires changes.
+- `Features/Auth/Commands/` is an empty folder represented by a csproj `Folder Include`; keep as `features/auth/commands/`.
+- `InternalsVisibleTo` values are assembly names, not paths, and need no updates.
+- If a design issue or architectural problem appears during implementation, stop and report rather than applying workarounds.
+
 ## Results
 
 To be filled after completion.
