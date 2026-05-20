@@ -188,7 +188,39 @@ Web.Contracts follows the Feature pattern:
 
 ## Results
 
-Migration complete. web-contracts builds successfully. Root timewarp-architecture.slnx builds successfully. Pre-existing issues in TimeWarp.Architecture.slnx (broken paths for other migrated projects) and dependent projects (AspNetCore SDK, NuGet vulnerabilities) are unrelated to this migration.
+### What was implemented
+- Migrated Web.Contracts from `TimeWarp.Architecture/Source/ContainerApps/Web/Web.Contracts/` to `source/container-apps/web/web-contracts/`.
+- Converted migrated directory and C# file paths to kebab-case consistent with root `source/` migration conventions.
+- Preserved Morris.Moxy `.mixin` filename casing where required (`TrackEventValidiation.mixin` and mixins under `mixins/`) for generator compatibility.
+- Skipped `Generated/` because Morris.Moxy regenerates generated sources.
+- Added `source/container-apps/Directory.Build.props` so migrated container-app projects inherit root source configuration, `RootNamespace=TimeWarp.Architecture`, and required warning suppressions.
+- Updated `web-contracts.csproj` to a minimal migrated form with corrected ProjectReference, AdditionalFiles, package references, RootNamespace, and stale entry cleanup.
+- Updated project references in Web.Application, Web.Spa, and Web.Server.Integration.Tests.
+- Updated root and nested solution files, including fixing previously migrated `../source/...` paths in `TimeWarp.Architecture.slnx`.
+- Updated Rider/ReSharper DotSettings namespace skip paths for the migrated structure.
+
+### Files changed
+- `source/container-apps/web/web-contracts/**` — migrated Web.Contracts files.
+- `source/container-apps/Directory.Build.props` — new shared container-app source configuration.
+- `Directory.Packages.props` — added missing package versions required by migrated Web.Contracts under root CPM.
+- `TimeWarp.Architecture/Source/ContainerApps/Web/Web.Application/Web.Application.csproj`
+- `TimeWarp.Architecture/Source/ContainerApps/Web/Web.Spa/Web.Spa.csproj`
+- `TimeWarp.Architecture/Tests/ContainerApps/Web/Web.Server.Integration.Tests/Web.Server.Integration.Tests.csproj`
+- `timewarp-architecture.slnx`
+- `TimeWarp.Architecture/TimeWarp.Architecture.slnx`
+- `kanban/in-progress/050-014-migrate-webcontracts-to-sourcecontainer-appswebweb-contracts.md`
+
+### Key decisions
+- Kept namespaces unchanged.
+- Kept `TrackEventValidiation` spelling and `.mixin` casing because Morris.Moxy uses the `.mixin` filename as the generated attribute name.
+- Added `RootNamespace=TimeWarp.Architecture` for migrated container-app source projects so source generator output matches existing namespace/global using expectations.
+- Fixed nested solution paths for previously migrated projects when review found they still used invalid `../../source/...` paths.
+
+### Test/build outcomes
+- `dotnet build source/container-apps/web/web-contracts/web-contracts.csproj` — passed.
+- `dotnet build timewarp-architecture.slnx` — passed.
+- Review passed after fixes.
+- `dotnet build TimeWarp.Architecture/TimeWarp.Architecture.slnx` no longer fails on missing migrated project paths; remaining failures are pre-existing NU1903 vulnerability warnings in test projects and outside this task scope.
 
 ## Session
 - Created: ses_2d78597cfffeIe36aerm1ibchw (2026-04-21)
