@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\foundation\foundation-application\foundation-application.csproj" />
+    <ProjectReference Include="..\grpc-contracts\grpc-contracts.csproj" />
+    <ProjectReference Include="..\grpc-domain\grpc-domain.csproj" />
+  </ItemGroup>
+
+</Project>

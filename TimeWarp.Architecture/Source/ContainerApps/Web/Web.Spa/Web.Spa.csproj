@@ -56,7 +56,7 @@
     <ProjectReference Include="..\..\..\..\..\source\container-apps\api\api-contracts\api-contracts.csproj"/>
     <!--#endif-->
     <!--#if(grpc)-->
-    <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj"/>
+    <ProjectReference Include="..\..\..\..\..\source\container-apps\grpc\grpc-contracts\grpc-contracts.csproj"/>
     <!--#endif-->
     <ProjectReference Include="..\..\..\..\..\source\container-apps\web\web-contracts\web-contracts.csproj"/>
   </ItemGroup>

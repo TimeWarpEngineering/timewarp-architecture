@@ -260,7 +260,7 @@
   <!--#endif-->
   <!--#if (grpc)-->
   <Folder Name="/05-ContainerApps/Grpc/">
-    <Project Path="Source\ContainerApps\Grpc\Grpc.Application\Grpc.Application.csproj">
+    <Project Path="../source/container-apps/grpc/grpc-contracts/grpc-contracts.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -269,7 +269,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Grpc\Grpc.Contracts\Grpc.Contracts.csproj">
+    <Project Path="../source/container-apps/grpc/grpc-application/grpc-application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -287,7 +287,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Grpc\Grpc.Infrastructure\Grpc.Infrastructure.csproj">
+    <Project Path="../source/container-apps/grpc/grpc-infrastructure/grpc-infrastructure.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -296,7 +296,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Grpc\Grpc.Server\Grpc.Server.csproj">
+    <Project Path="../source/container-apps/grpc/grpc-server/grpc-server.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />

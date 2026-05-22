@@ -22,6 +22,10 @@
     <Project Path="source/container-apps/api/api-server/api-server.csproj" />
     <Project Path="source/container-apps/api/api-domain/api-domain.csproj" />
     <Project Path="source/container-apps/grpc/grpc-domain/grpc-domain.csproj" />
+    <Project Path="source/container-apps/grpc/grpc-contracts/grpc-contracts.csproj" />
+    <Project Path="source/container-apps/grpc/grpc-application/grpc-application.csproj" />
+    <Project Path="source/container-apps/grpc/grpc-infrastructure/grpc-infrastructure.csproj" />
+    <Project Path="source/container-apps/grpc/grpc-server/grpc-server.csproj" />
     <Project Path="source/container-apps/web/web-domain/web-domain.csproj" />
     <Project Path="source/container-apps/web/web-contracts/web-contracts.csproj" />
     <Project Path="source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj" />

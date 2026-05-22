@@ -25,7 +25,17 @@
     <PackageVersion Include="Morris.Moxy" Version="1.10.0" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
     <PackageVersion Include="Passwordless" Version="2.0.0" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.71.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.71.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.71.0" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.71.0" />
+    <PackageVersion Include="Grpc.Net.Client.Web" Version="2.71.0" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.2.2" />
+    <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
+    <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.2.2" />
+    <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.6" />
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="Azure.Identity" Version="1.17.0" />
     <PackageVersion Include="FastEndpoints" Version="7.1.0" />
