@@ -88,3 +88,81 @@ source/container-apps/web/
 - Web.Server is the Aspire host entry point — references multiple container apps
 - This is the largest and most complex remaining migration task
 - Consider splitting Web.Spa into a separate task if Blazor WASM specifics warrant it
+
+### Implementation Plan
+
+**1. Projects to migrate** (from `TimeWarp.Architecture/Source/ContainerApps/Web/` to `source/container-apps/web/`):
+- `Web.Application` → `web-application`
+- `Web.Infrastructure` → `web-infrastructure`
+- `Web.Server` → `web-server`
+- `Web.Spa` → `web-spa`
+
+**2. Migration method:**
+- Use `git mv` for committed files
+- Convert directories and source filenames to kebab-case
+- Do NOT migrate `obj/`, `bin/`, `node_modules/`, generated build artifacts, or generated client output unless committed/source-controlled and clearly required
+
+**3. Namespaces:** Keep unchanged (`TimeWarp.Architecture.Web.*` and feature namespaces)
+
+**4. Follow established migration patterns from tasks 050-014 through 050-016:**
+- Minimal project files
+- Rely on `source/container-apps/Directory.Build.props` for `RootNamespace=TimeWarp.Architecture`
+- Rely on root `Directory.Build.props` for `ImplicitUsings=enable` and `Nullable=enable`
+- CA1040 suppression around marker interfaces where applicable
+- Nested solution paths use `../source/...`
+- Root solution paths use `source/...`
+
+**5. Leaf-to-root migration order:**
+1. Web.Application
+2. Web.Infrastructure
+3. Web.Server
+4. Web.Spa (highest risk due to Blazor WASM/npm/TypeScript/Tailwind)
+
+**6. Project references to update:**
+- Web.Infrastructure
+- Web.Server
+- Web.Server.Integration.Tests
+- Web.Spa.Integration.Tests
+- Testing.Common
+- Aspire.AppHost
+- Web.Spa conditional references to api-contracts/grpc-contracts if needed
+
+**7. Solution files to update:**
+- `TimeWarp.Architecture/TimeWarp.Architecture.slnx`
+- `timewarp-architecture.slnx`
+
+**8. Scripts and Docker-related references to update:**
+- `TimeWarp.Architecture/DevOps/Docker/BuildImages.ps1`
+- Web.Server Dockerfile
+- `RunTailwind.ps1`
+- `RunNpmInstall.ps1` if present
+- EF/Postgres helper scripts if they reference Web.Infrastructure/Web.Server
+- Describe/run scripts if they reference Web.Server/Web.Spa paths
+
+**9. Web.Server specifics:**
+- Preserve UserSecretsId/DefineConstants/package references
+- Update Dockerfile paths if they can be corrected cleanly
+- Handle temporary Aspire.AppHost Constants.cs include path carefully since Aspire.AppHost is not migrated yet
+
+**10. Web.Spa specifics:**
+- Update TypeScript/npm/Tailwind paths (`tsconfig.json`, `.eslintrc.js`, `tailwind.config.js`, package scripts if needed)
+- Update MSBuild content/remove/item paths to kebab-case
+- Handle `$(ProjectName)` changes caused by csproj rename (`Web.Spa` → `web-spa`)
+- Preserve static asset casing under `wwwroot` unless clearly source-controlled convention requires change
+- Preserve Blazor/Razor constraints; do not rename component classes/namespaces unless needed
+
+**11. Verification commands:**
+- `dotnet build source/container-apps/web/web-application/web-application.csproj`
+- `dotnet build source/container-apps/web/web-infrastructure/web-infrastructure.csproj`
+- `dotnet build source/container-apps/web/web-server/web-server.csproj`
+- `dotnet build source/container-apps/web/web-spa/web-spa.csproj`
+- `dotnet build timewarp-architecture.slnx`
+- `dotnet build TimeWarp.Architecture/TimeWarp.Architecture.slnx` if practical; report unrelated pre-existing failures separately
+
+### Design Notes
+
+- **Web.Spa is the highest-risk part;** if it exposes a design/architecture issue that cannot be solved cleanly, stop and report rather than forcing a workaround.
+- Aspire.AppHost is not migrated yet; only update Web.Server reference paths into the new Web.Server location.
+- Web.Spa and Web.Server may have cross-references in Tailwind/static asset build steps.
+- Generated/obj/bin/node_modules artifacts must not be migrated.
+- **If a design issue or architectural problem appears during implementation, stop and report rather than applying workarounds.**
