@@ -76,3 +76,56 @@ source/container-apps/grpc/
 - TimeWarp.Architecture.slnx has pre-existing NU1903 failures from System.Security.Cryptography.Xml in Web.Spa, Testing.Common, and integration test projects (these use old-style Directory.Build.props without CPM and without the patched version)
 - TimeWarp.Architecture.slnx has pre-existing path resolution issues: web-contracts and analyzers paths resolve incorrectly (verified — still present)
 - BuildImages.ps1: Other Docker paths (`Source\ContainerApps\Web\Web.Server`, `Source\ContainerApps\Api\Api.Server`, `Source\ContainerApps\Yarp`) still use old PascalCase paths; only grpc-server was updated
+
+## Results
+
+### What was implemented
+- Migrated all four Grpc container-app projects from `TimeWarp.Architecture/Source/ContainerApps/Grpc/` to `source/container-apps/grpc/`:
+  - `Grpc.Contracts` -> `grpc-contracts`
+  - `Grpc.Application` -> `grpc-application`
+  - `Grpc.Infrastructure` -> `grpc-infrastructure`
+  - `Grpc.Server` -> `grpc-server`
+- Converted migrated directory and C# file paths to kebab-case.
+- Kept namespaces unchanged.
+- Replaced old project files with minimal migrated project files using the root source layout.
+- Added CA1040 suppressions around Grpc marker interfaces.
+- Updated project references in migrated Grpc projects and consumers including Web.Spa and Aspire.AppHost.
+- Updated `BuildImages.ps1` to point at the moved Grpc Dockerfile.
+- Updated both solution files with root source paths for the migrated Grpc projects.
+- Added missing root CPM package versions for Grpc/protobuf-net/System.ServiceModel dependencies.
+- Patched the System.Security.Cryptography.Xml vulnerability without suppressing NU1903 by updating System.ServiceModel.Primitives and adding System.Security.Cryptography.Xml 10.0.6 as a direct dependency where needed.
+- Updated Grpc.Server Dockerfile to the root `source/` layout and .NET 10.0.
+- Scoped Grpc.Server-specific analyzer suppressions to `grpc-server.csproj` rather than global container-app props.
+
+### Files changed
+- `source/container-apps/grpc/grpc-contracts/**`
+- `source/container-apps/grpc/grpc-application/**`
+- `source/container-apps/grpc/grpc-infrastructure/**`
+- `source/container-apps/grpc/grpc-server/**`
+- `Directory.Packages.props`
+- `source/container-apps/Directory.Build.props`
+- `TimeWarp.Architecture/Source/ContainerApps/Web/Web.Spa/Web.Spa.csproj`
+- `TimeWarp.Architecture/Source/ContainerApps/Aspire/Aspire.AppHost/Aspire.AppHost.csproj`
+- `TimeWarp.Architecture/DevOps/Docker/BuildImages.ps1`
+- `timewarp-architecture.slnx`
+- `TimeWarp.Architecture/TimeWarp.Architecture.slnx`
+- `kanban/in-progress/053-050-016-migrate-grpc-to-sourcecontainer-appsgrpc.md`
+
+### Key decisions
+- Preserved the original Grpc.Server dependency shape: Grpc.Server does not directly reference Grpc.Contracts; it reaches contracts through Grpc.Infrastructure -> Grpc.Application -> Grpc.Contracts.
+- Updated `protos/greet.proto` casing in the project file to match the new kebab-case/lowercase directory path.
+- Rewrote the Grpc Dockerfile rather than leaving it stale because it could be corrected cleanly to the root `source/` layout.
+- Avoided NU1903 suppression; fixed the vulnerable transitive dependency instead.
+- Kept appsettings filenames with existing casing while converting source directories/files to kebab-case.
+
+### Test/build outcomes
+- `dotnet build source/container-apps/grpc/grpc-contracts/grpc-contracts.csproj` — passed.
+- `dotnet build source/container-apps/grpc/grpc-application/grpc-application.csproj` — passed.
+- `dotnet build source/container-apps/grpc/grpc-infrastructure/grpc-infrastructure.csproj` — passed.
+- `dotnet build source/container-apps/grpc/grpc-server/grpc-server.csproj` — passed.
+- `dotnet build timewarp-architecture.slnx` — passed.
+- Review passed after fixes.
+
+### Pre-existing/out-of-scope notes
+- `TimeWarp.Architecture.slnx` still has unrelated legacy path/audit issues outside the migrated Grpc scope.
+- Other Docker image paths in `BuildImages.ps1` still point to old Web/Api/Yarp locations and will be addressed by later migration tasks.
