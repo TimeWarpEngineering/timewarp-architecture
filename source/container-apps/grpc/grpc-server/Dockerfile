@@ -1,43 +1,40 @@
-ARG dotnet_version=6.0
+ARG dotnet_version=10.0
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 # https://hub.docker.com/_/microsoft-dotnet
 FROM mcr.microsoft.com/dotnet/sdk:$dotnet_version-jammy AS build
 
 WORKDIR /git
-COPY ["NuGet.config", "."]
 COPY ["Directory.Build.props", "."]
 COPY ["Directory.Packages.props", "."]
-COPY ["Source/ContainerApps/Grpc/Grpc.Server/Grpc.Server.csproj", "Source/ContainerApps/Grpc/Grpc.Server/"]
-COPY ["Source/Common/Common.Server/Common.Server.csproj", "Source/Common/Common.Server/"]
-COPY ["Source/Common/Common.Infrastructure/Common.Infrastructure.csproj", "Source/Common/Common.Infrastructure/"]
-COPY ["Source/Common/Common.Application/Common.Application.csproj", "Source/Common/Common.Application/"]
-COPY ["Source/Common/Common.Domain/Common.Domain.csproj", "Source/Common/Common.Domain/"]
-COPY ["Source/Common/Common.Contracts/Common.Contracts.csproj", "Source/Common/Common.Contracts/"]
-COPY ["Source/Libraries/TimeWarp.Modules/TimeWarp.Modules.csproj", "Source/Libraries/TimeWarp.Modules/"]
-COPY ["Source/ContainerApps/Grpc/Grpc.Infrastructure/Grpc.Infrastructure.csproj", "Source/ContainerApps/Grpc/Grpc.Infrastructure/"]
-COPY ["Source/ContainerApps/Grpc/Grpc.Application/Grpc.Application.csproj", "Source/ContainerApps/Grpc/Grpc.Application/"]
-COPY ["Source/ContainerApps/Grpc/Grpc.Domain/Grpc.Domain.csproj", "Source/ContainerApps/Grpc/Grpc.Domain/"]
-COPY ["Source/ContainerApps/Grpc/Grpc.Contracts/Grpc.Contracts.csproj", "Source/ContainerApps/Grpc/Grpc.Contracts/"]
+COPY ["source/container-apps/grpc/grpc-contracts/grpc-contracts.csproj", "source/container-apps/grpc/grpc-contracts/"]
+COPY ["source/container-apps/grpc/grpc-domain/grpc-domain.csproj", "source/container-apps/grpc/grpc-domain/"]
+COPY ["source/container-apps/grpc/grpc-application/grpc-application.csproj", "source/container-apps/grpc/grpc-application/"]
+COPY ["source/container-apps/grpc/grpc-infrastructure/grpc-infrastructure.csproj", "source/container-apps/grpc/grpc-infrastructure/"]
+COPY ["source/container-apps/grpc/grpc-server/grpc-server.csproj", "source/container-apps/grpc/grpc-server/"]
+COPY ["source/foundation/foundation-contracts/foundation-contracts.csproj", "source/foundation/foundation-contracts/"]
+COPY ["source/foundation/foundation-application/foundation-application.csproj", "source/foundation/foundation-application/"]
+COPY ["source/foundation/foundation-infrastructure/foundation-infrastructure.csproj", "source/foundation/foundation-infrastructure/"]
+COPY ["source/foundation/foundation-domain/foundation-domain.csproj", "source/foundation/foundation-domain/"]
+COPY ["source/foundation/foundation-server/foundation-server.csproj", "source/foundation/foundation-server/"]
+COPY ["source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj", "source/container-apps/aspire/aspire-service-defaults/"]
 
 # restore nugets
-RUN dotnet restore "Source/ContainerApps/Grpc/Grpc.Server/Grpc.Server.csproj"
+RUN dotnet restore "source/container-apps/grpc/grpc-server/grpc-server.csproj"
 
-COPY ["/Source/ContainerApps/Grpc/.", "Source/ContainerApps/Grpc"]
-COPY ["/Source/Common/.", "Source/Common"]
-COPY ["/Source/Libraries/.", "Source/Libraries"]
+COPY ["source/container-apps/grpc/.", "source/container-apps/grpc"]
+COPY ["source/foundation/.", "source/foundation"]
+COPY ["source/container-apps/aspire/.", "source/container-apps/aspire"]
 
-WORKDIR "/git/Source/ContainerApps/Grpc/Grpc.Server"
-RUN pwd
-RUN ls
-RUN dotnet build "Grpc.Server.csproj" -c Release -o /app/build
+WORKDIR "/git/source/container-apps/grpc/grpc-server"
+RUN dotnet build "grpc-server.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Grpc.Server.csproj" -c Release -o /app/publish
+RUN dotnet publish "grpc-server.csproj" -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:$dotnet_version-jammy AS final
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Grpc.Server.dll"]
+ENTRYPOINT ["dotnet", "grpc-server.dll"]

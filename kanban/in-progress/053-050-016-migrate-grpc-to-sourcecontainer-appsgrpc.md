@@ -60,18 +60,19 @@ source/container-apps/grpc/
 - Grpc.Server dependency shape preserved: does NOT directly reference Grpc.Contracts (only via Grpc.Infrastructure → Grpc.Application → Grpc.Contracts)
 - Protobuf Include path updated from `Protos\greet.proto` to `protos\greet.proto` (lowercase directory)
 - Properties/launchSettings.json moved to properties/launchSettings.json (lowercase per convention)
-- Dockerfile kept as-is with stale `Source/ContainerApps/Grpc/...` paths (pre-existing issue; not corrected as Dockerfile references old project layout)
-- Added CA1050, CA1051, CA1848, CA1849 to container-apps NoWarn (pre-existing code quality issues in Grpc.Server source)
-- System.ServiceModel.Primitives upgraded from 8.1.2 to 10.0.652802 (compatible with net10.0 target)
-- System.Security.Cryptography.Xml 10.0.6 added as direct PackageReference in grpc-contracts.csproj to patch CVE-2026-33116 (GHSA-37gx/GHSA-w3x6) — this overrides the vulnerable transitive version
+- Pre-existing code quality warnings (CA1050, CA1051, CA1848, CA1849) scoped to grpc-server.csproj only, not globally suppressed
+- System.ServiceModel.Primitives upgraded from 8.1.2 to 10.0.652802 (net10.0 compatible)
+- System.Security.Cryptography.Xml 10.0.6 added as direct PackageReference in grpc-contracts.csproj to patch CVE-2026-33116 (GHSA-37gx/GHSA-w3x6), overriding the vulnerable transitive version. No NU1903 suppression needed.
 - Both PackageVersion entries added to root Directory.Packages.props for CPM
 - Web.Spa Grpc.Contracts reference updated to new path
 - Aspire.AppHost Grpc.Server reference updated to new path
-- BuildImages.ps1 Grpc.Server Dockerfile path updated to `source\container-apps\grpc\grpc-server\` (kebab-case, consistent with new location)
-- No Grpc test projects found in the repository
+- BuildImages.ps1 Grpc.Server Dockerfile path updated to `source\container-apps\grpc\grpc-server\`
+- Dockerfile updated from stale pre-migration paths to current `source/` layout with .NET 10.0 target
+- TimeWarp.Architecture.slnx Grpc projects reordered to dependency order: grpc-contracts, grpc-domain, grpc-application, grpc-infrastructure, grpc-server
+- All four new csproj files use no BOM with trailing newline (matching migrated project conventions)
 
 ### Pre-existing Issues (not introduced by this migration)
 
-- TimeWarp.Architecture.slnx has pre-existing NU1903 failures from System.Security.Cryptography.Xml in Web.Spa, Testing.Common, and integration test projects (these projects use old-style Directory.Build.props without NU1903 suppression)
-- TimeWarp.Architecture.slnx has pre-existing path resolution issues: web-contracts resolves to wrong location (`/home/.../source/container-apps/web/web-contracts/` without `/dev/` prefix), and analyzers resolves to `TimeWarp.Architecture/source/analyzers/...` (double-nested). Both are path issues in the slnx pre-dating this migration.
+- TimeWarp.Architecture.slnx has pre-existing NU1903 failures from System.Security.Cryptography.Xml in Web.Spa, Testing.Common, and integration test projects (these use old-style Directory.Build.props without CPM and without the patched version)
+- TimeWarp.Architecture.slnx has pre-existing path resolution issues: web-contracts and analyzers paths resolve incorrectly (verified — still present)
 - BuildImages.ps1: Other Docker paths (`Source\ContainerApps\Web\Web.Server`, `Source\ContainerApps\Api\Api.Server`, `Source\ContainerApps\Yarp`) still use old PascalCase paths; only grpc-server was updated
