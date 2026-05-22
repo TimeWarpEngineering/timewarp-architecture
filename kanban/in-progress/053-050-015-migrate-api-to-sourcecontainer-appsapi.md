@@ -142,3 +142,49 @@ source/container-apps/api/
 4. **Directory.Packages.props was missing FluentValidation.DependencyInjectionExtensions and Oakton versions**: These were present in the old `TimeWarp.Architecture/Directory.Packages.props` but not in the root one. Added to root `Directory.Packages.props`.
 
 5. **Properties/launchSettings.json path**: Moved to `properties/launchSettings.json` (directory kebab-case). The .NET SDK may not automatically discover launch profiles at this path. This is a known trade-off of the kebab-case directory convention.
+
+## Results
+
+### What was implemented
+- Migrated all four Api container-app projects from `TimeWarp.Architecture/Source/ContainerApps/Api/` to `source/container-apps/api/`:
+  - `Api.Contracts` -> `api-contracts`
+  - `Api.Application` -> `api-application`
+  - `Api.Infrastructure` -> `api-infrastructure`
+  - `Api.Server` -> `api-server`
+- Converted migrated directory and C# file paths to kebab-case.
+- Kept namespaces unchanged.
+- Replaced old project files with minimal migrated project files using the root source layout.
+- Added CA1040 suppressions around Api marker interfaces.
+- Updated project references in migrated Api projects and consumers including Web.Spa, Aspire.AppHost, Api.Server.Integration.Tests, and Testing.Common.
+- Updated both solution files with root source paths for the migrated Api projects.
+- Added missing root CPM package versions for `FluentValidation.DependencyInjectionExtensions` and `Oakton`.
+- Extended `source/container-apps/Directory.Build.props` to preserve required build behavior for migrated container-app projects.
+
+### Files changed
+- `source/container-apps/api/api-contracts/**`
+- `source/container-apps/api/api-application/**`
+- `source/container-apps/api/api-infrastructure/**`
+- `source/container-apps/api/api-server/**`
+- `Directory.Packages.props`
+- `source/container-apps/Directory.Build.props`
+- `TimeWarp.Architecture/Source/ContainerApps/Web/Web.Spa/Web.Spa.csproj`
+- `TimeWarp.Architecture/Source/ContainerApps/Aspire/Aspire.AppHost/Aspire.AppHost.csproj`
+- `TimeWarp.Architecture/Tests/ContainerApps/Api/Api.Server.Integration.Tests/Api.Server.Integration.Tests.csproj`
+- `TimeWarp.Architecture/Tests/TimeWarp.Testing/Testing.Common.csproj`
+- `timewarp-architecture.slnx`
+- `TimeWarp.Architecture/TimeWarp.Architecture.slnx`
+- `kanban/in-progress/053-050-015-migrate-api-to-sourcecontainer-appsapi.md`
+
+### Key decisions
+- Kept `Api.Server` Dockerfile content unchanged after moving it because it is fundamentally stale: it references .NET 6.0 and old/non-existent projects. This is documented as a pre-existing issue requiring a dedicated rewrite.
+- Used lowercase `properties/` to match kebab-case directory convention; launch settings behavior was not a build blocker.
+- Added required warning suppressions/preview feature setting at `source/container-apps/Directory.Build.props` to preserve behavior from the old nested props chain.
+
+### Test/build outcomes
+- `dotnet build source/container-apps/api/api-contracts/api-contracts.csproj` — passed.
+- `dotnet build source/container-apps/api/api-application/api-application.csproj` — passed.
+- `dotnet build source/container-apps/api/api-infrastructure/api-infrastructure.csproj` — passed.
+- `dotnet build source/container-apps/api/api-server/api-server.csproj` — passed.
+- `dotnet build timewarp-architecture.slnx` — passed.
+- `dotnet build TimeWarp.Architecture/TimeWarp.Architecture.slnx` — fails only on pre-existing NU1903 vulnerability warnings in Grpc/Web/Test projects, unrelated to Api migration.
+- Review passed.
