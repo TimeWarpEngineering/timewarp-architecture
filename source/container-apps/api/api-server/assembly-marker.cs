@@ -8,5 +8,6 @@
 /// where a stable, known type is required to locate the assembly at runtime. The interface prevents instantiation,
 /// reinforcing its role as a simple marker.
 /// </remarks>
-
+#pragma warning disable CA1040
 public interface IAssemblyMarker;
+#pragma warning restore CA1040

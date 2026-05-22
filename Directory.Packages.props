@@ -19,6 +19,7 @@
   <ItemGroup Label="Foundation Packages">
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
     <PackageVersion Include="FluentValidation" Version="12.1.0" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.0" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2" />
     <PackageVersion Include="libphonenumber-csharp" Version="9.0.18" />
     <PackageVersion Include="Morris.Moxy" Version="1.10.0" />
@@ -28,6 +29,7 @@
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="Azure.Identity" Version="1.17.0" />
     <PackageVersion Include="FastEndpoints" Version="7.1.0" />
+    <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.4.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.10.3" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.2" />

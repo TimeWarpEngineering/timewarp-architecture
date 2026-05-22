@@ -211,7 +211,7 @@
   <Folder Name="/05-ContainerApps/" />
   <!--#if (api)-->
   <Folder Name="/05-ContainerApps/Api/">
-    <Project Path="Source\ContainerApps\Api\Api.Application\Api.Application.csproj">
+    <Project Path="../source/container-apps/api/api-application/api-application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -220,10 +220,10 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Api\Api.Contracts\Api.Contracts.csproj">
+    <Project Path="../source/container-apps/api/api-contracts/api-contracts.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|any CPU" Project="Release|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
@@ -232,25 +232,25 @@
     <Project Path="../source/container-apps/api/api-domain/api-domain.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|any CPU" Project="Release|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Api\Api.Infrastructure\Api.Infrastructure.csproj">
+    <Project Path="../source/container-apps/api/api-infrastructure/api-infrastructure.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|any CPU" Project="Release|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Api\Api.Server\Api.Server.csproj">
+    <Project Path="../source/container-apps/api/api-server/api-server.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|any CPU" Project="Release|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />

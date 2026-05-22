@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\foundation\foundation-infrastructure\foundation-infrastructure.csproj" />
+    <ProjectReference Include="..\api-application\api-application.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TimeWarp.Architecture</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="TimeWarp.Mediator" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
+    <PackageReference Include="OneOf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\foundation\foundation-contracts\foundation-contracts.csproj" />
+    <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Service\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\RouteMixin.mixin">
+      <Link>mixins\RouteMixin.mixin</Link>
+    </AdditionalFiles>
+    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\IOpenDataQueryParametersMixin.mixin">
+      <Link>mixins\IOpenDataQueryParametersMixin.mixin</Link>
+    </AdditionalFiles>
+    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\IAuthApiRequestMixin.mixin">
+      <Link>mixins\IAuthApiRequestMixin.mixin</Link>
+    </AdditionalFiles>
+  </ItemGroup>
+
+</Project>

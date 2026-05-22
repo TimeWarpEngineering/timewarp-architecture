@@ -53,7 +53,7 @@
   <ItemGroup>
     <!--#if(api)-->
     <ProjectReference Include="../../../../source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />
-    <ProjectReference Include="..\..\Api\Api.Contracts\Api.Contracts.csproj"/>
+    <ProjectReference Include="..\..\..\..\..\source\container-apps\api\api-contracts\api-contracts.csproj"/>
     <!--#endif-->
     <!--#if(grpc)-->
     <ProjectReference Include="..\..\Grpc\Grpc.Contracts\Grpc.Contracts.csproj"/>

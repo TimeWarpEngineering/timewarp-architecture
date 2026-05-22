@@ -12,8 +12,8 @@
     <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Source\ContainerApps\Api\Api.Contracts\Api.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\..\Source\ContainerApps\Api\Api.Server\Api.Server.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\container-apps\api\api-contracts\api-contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\container-apps\api\api-server\api-server.csproj" />
     <ProjectReference Include="..\..\..\..\Source\ContainerApps\Aspire\Aspire.AppHost\Aspire.AppHost.csproj" />
     <ProjectReference Include="..\..\..\TimeWarp.Testing\Testing.Common.csproj" />
     <!--<ProjectReference Include="C:\git\github\TimeWarpEngineering\timewarp-fixie\source\TimeWarp.Fixie\TimeWarp.Fixie.csproj" />-->

@@ -19,7 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <!--#if(api)-->
-    <ProjectReference Include="..\..\Source\ContainerApps\Api\Api.Server\Api.Server.csproj" />
+    <ProjectReference Include="..\..\..\source\container-apps\api\api-server\api-server.csproj" />
     <!--#endif-->
     <!--#if(web)-->
     <ProjectReference Include="..\..\Source\ContainerApps\Web\Web.Server\Web.Server.csproj" />
