@@ -1,0 +1,23 @@
+@namespace TimeWarp.Architecture.Components.Composites.TimeWarpPage.RightPane.RightPane_Main.AsidePane
+@inherits TimeWarpPageSubComponentBase
+
+@code
+{
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    BaseCssClass = "aside-pane_main";
+  }
+}
+
+<div class=@BaseCssBuilder>
+  @TimeWarpPage?.AsidePane_MainContent
+</div>
+
+<style>
+  @($@"
+    .{Id}.aside-pane_main {{
+       height: 100%;
+    }}
+  ")
+</style>

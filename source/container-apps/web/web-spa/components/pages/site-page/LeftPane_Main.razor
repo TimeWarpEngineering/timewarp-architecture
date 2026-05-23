@@ -1,0 +1,47 @@
+@namespace TimeWarp.Architecture.Components.Pages.SitePage
+@inherits BaseComponent
+
+@code {
+
+}
+
+<FluentNavMenu Class=@BaseCssBuilder.ToString()>
+  <TimeWarpNavLink TPage=HomePage />
+  <FluentNavGroup Title="Pages">
+    <TimeWarpNavLink TPage=CounterPage />
+    @*#if (api)*@
+    <TimeWarpNavLink TPage=WeatherForecastsPage />
+    @*#endif*@
+    @*#if (grpc)*@
+    <TimeWarpNavLink TPage=SuperheroPage />
+    @*#endif*@
+    <TimeWarpNavLink TPage=ChatPage />
+  </FluentNavGroup>
+  <FluentNavGroup Title="Developer">
+    <TimeWarpNavLink TPage=ExampleTimeWarpPage />
+    <TimeWarpNavLink TPage=ExampleSitePage />
+    <TimeWarpNavLink TPage=TestPage />
+    <TimeWarpNavLink TPage=EventStreamPage />
+    <TimeWarpNavLink TPage=ServicesPage />
+    <TimeWarpNavLink TPage=UserClaimsPage />
+  </FluentNavGroup>
+  <FluentNavGroup Title="Open API">
+    <FluentNavLink Icon=@(new Icons.Regular.Size20.Book()) Href="/" Match=NavLinkMatch.All>Web-Server</FluentNavLink>
+    <FluentNavLink Icon=@(new Icons.Regular.Size20.Book()) Href="/" Match=NavLinkMatch.All>Api-Server</FluentNavLink>
+  </FluentNavGroup>
+  <FluentNavGroup Title="External">
+    <FluentNavLink Icon=@(new Icons.Regular.Size20.Link()) Href="/" Match=NavLinkMatch.All>The Freeze Team</FluentNavLink>
+    <FluentNavLink Href="/" Match=NavLinkMatch.All>
+      <TimeWarp.Simple.Icons.GithubIcon class="w-5 h-5 fill-slate-400" /> GitHub
+    </FluentNavLink>
+  </FluentNavGroup>
+  <TimeWarpNavLink TPage=SettingsPage />
+</FluentNavMenu>
+
+<style>
+  @($@"
+    .{Id} {{
+      width: 100%;
+    }}
+  ")
+</style>

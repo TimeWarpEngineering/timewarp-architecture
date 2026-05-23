@@ -26,7 +26,7 @@
     <ProjectReference Include="..\..\..\..\..\source\container-apps\grpc\grpc-server\grpc-server.csproj" />
     <!--#endif -->
     <!--#if (web) -->
-    <ProjectReference Include="..\..\Web\Web.Server\Web.Server.csproj" />
+    <ProjectReference Include="..\..\..\..\..\source\container-apps\web\web-server\web-server.csproj" />
     <!--#endif -->
     <!--#if (yarp) -->
     <ProjectReference Include="..\..\Yarp\Yarp.csproj" />

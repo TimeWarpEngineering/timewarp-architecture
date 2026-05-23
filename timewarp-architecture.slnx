@@ -28,6 +28,9 @@
     <Project Path="source/container-apps/grpc/grpc-server/grpc-server.csproj" />
     <Project Path="source/container-apps/web/web-domain/web-domain.csproj" />
     <Project Path="source/container-apps/web/web-contracts/web-contracts.csproj" />
+    <Project Path="source/container-apps/web/web-application/web-application.csproj" />
+    <Project Path="source/container-apps/web/web-infrastructure/web-infrastructure.csproj" />
+    <Project Path="source/container-apps/web/web-server/web-server.csproj" />
     <Project Path="source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj" />
   </Folder>
 </Solution>

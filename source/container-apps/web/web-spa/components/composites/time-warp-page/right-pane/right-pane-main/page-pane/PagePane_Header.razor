@@ -1,0 +1,15 @@
+@namespace TimeWarp.Architecture.Components.Composites.TimeWarpPage.RightPane.RightPane_Main.PagePane
+@inherits TimeWarpPageSubComponentBase
+
+@code
+{
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    BaseCssClass = "page-pane_header";
+  }
+}
+
+<div class=@BaseCssBuilder>
+  @TimeWarpPage?.PagePane_HeaderContent
+</div>

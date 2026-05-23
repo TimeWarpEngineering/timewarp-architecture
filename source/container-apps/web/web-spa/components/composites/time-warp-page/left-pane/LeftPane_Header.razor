@@ -1,0 +1,23 @@
+@namespace TimeWarp.Architecture.Components.Composites.TimeWarpPage.LeftPane
+@inherits TimeWarpPageSubComponentBase
+
+@code
+{
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    BaseCssClass = "left-pane_header";
+  }
+}
+
+<div class=@BaseCssBuilder>
+  @TimeWarpPage?.LeftPane_HeaderContent
+</div>
+
+<style>
+  @($@"
+    .{Id}.left-pane_header {{
+      width: 100%;
+    }}
+  ")
+</style>

@@ -12,8 +12,8 @@
     <PackageReference Include="Shouldly" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Source\ContainerApps\Web\Web.Spa\Web.Spa.csproj" />
-    <ProjectReference Include="..\..\..\..\Source\ContainerApps\Web\Web.Server\Web.Server.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\source\container-apps\web\web-spa\web-spa.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\source\container-apps\web\web-server\web-server.csproj" />
     <ProjectReference Include="..\..\..\..\Source\ContainerApps\Aspire\Aspire.AppHost\Aspire.AppHost.csproj" />
     <ProjectReference Include="..\..\..\TimeWarp.Testing\Testing.Common.csproj" />
   </ItemGroup>

@@ -1,0 +1,26 @@
+@namespace TimeWarp.Architecture.Components.Composites.TimeWarpPage.RightPane.RightPane_Main.AsidePane
+@inherits TimeWarpPageSubComponentBase
+
+@code
+{
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    BaseCssClass = "aside-pane";
+  }
+}
+
+<FluentStack Class=@BaseCssBuilder.ToString() Orientation="Orientation.Vertical">
+  <AsidePane_Header />
+  <AsidePane_Main />
+  <FluentSpacer />
+  <AsidePane_Footer />
+</FluentStack>
+
+<style>
+  @($@"
+    .{Id}.aside-pane {{
+      height: 100%;
+    }}
+  ")
+</style>

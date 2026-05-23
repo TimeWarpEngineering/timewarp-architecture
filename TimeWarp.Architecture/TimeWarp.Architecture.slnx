@@ -309,7 +309,7 @@
   <!--#endif-->
   <!--#if (web)-->
   <Folder Name="/05-ContainerApps/Web/">
-    <Project Path="Source\ContainerApps\Web\Web.Application\Web.Application.csproj">
+    <Project Path="../source/container-apps/web/web-application/web-application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -336,7 +336,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Web\Web.Infrastructure\Web.Infrastructure.csproj">
+    <Project Path="../source/container-apps/web/web-infrastructure/web-infrastructure.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -345,7 +345,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Web\Web.Server\Web.Server.csproj">
+    <Project Path="../source/container-apps/web/web-server/web-server.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -354,7 +354,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Web\Web.Spa\Web.Spa.csproj">
+    <Project Path="../source/container-apps/web/web-spa/web-spa.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
