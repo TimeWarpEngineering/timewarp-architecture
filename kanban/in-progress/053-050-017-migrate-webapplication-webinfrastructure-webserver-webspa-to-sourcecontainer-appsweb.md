@@ -149,7 +149,9 @@ source/container-apps/web/
 - Update MSBuild content/remove/item paths to kebab-case
 - Handle `$(ProjectName)` changes caused by csproj rename (`Web.Spa` → `web-spa`)
 - Preserve static asset casing under `wwwroot` unless clearly source-controlled convention requires change
-- Preserve Blazor/Razor constraints; do not rename component classes/namespaces unless needed
+- Convert folders to kebab-case, but keep `.razor` and `.razor.cs` component filenames PascalCase
+- Ensure Razor component namespaces are explicit; do not rely on folder-derived Razor auto-namespaces
+- Preserve component classes and namespaces
 
 **11. Verification commands:**
 - `dotnet build source/container-apps/web/web-application/web-application.csproj`
@@ -161,8 +163,9 @@ source/container-apps/web/
 
 ### Design Notes
 
-- **Web.Spa is the highest-risk part;** if it exposes a design/architecture issue that cannot be solved cleanly, stop and report rather than forcing a workaround.
+- Web.Spa is the highest-risk part because Razor component filenames and explicit namespaces must be preserved while folders move to kebab-case.
 - Aspire.AppHost is not migrated yet; only update Web.Server reference paths into the new Web.Server location.
 - Web.Spa and Web.Server may have cross-references in Tailwind/static asset build steps.
 - Generated/obj/bin/node_modules artifacts must not be migrated.
+- Folders should be kebab-case; `.razor` component files must stay PascalCase; Razor namespaces must be explicit and unchanged.
 - **If a design issue or architectural problem appears during implementation, stop and report rather than applying workarounds.**
