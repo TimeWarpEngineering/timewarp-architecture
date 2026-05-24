@@ -20,16 +20,16 @@
 
   <ItemGroup>
     <!--#if (api) -->
-    <ProjectReference Include="..\..\..\..\..\source\container-apps\api\api-server\api-server.csproj" />
+    <ProjectReference Include="../../api/api-server/api-server.csproj" />
     <!--#endif -->
     <!--#if (grpc) -->
-    <ProjectReference Include="..\..\..\..\..\source\container-apps\grpc\grpc-server\grpc-server.csproj" />
+    <ProjectReference Include="../../grpc/grpc-server/grpc-server.csproj" />
     <!--#endif -->
     <!--#if (web) -->
-    <ProjectReference Include="..\..\..\..\..\source\container-apps\web\web-server\web-server.csproj" />
+    <ProjectReference Include="../../web/web-server/web-server.csproj" />
     <!--#endif -->
     <!--#if (yarp) -->
-    <ProjectReference Include="..\..\Yarp\Yarp.csproj" />
+    <ProjectReference Include="../../yarp/yarp.csproj" />
     <!--#endif -->
   </ItemGroup>
 

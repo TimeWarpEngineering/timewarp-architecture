@@ -32,5 +32,7 @@
     <Project Path="source/container-apps/web/web-infrastructure/web-infrastructure.csproj" />
     <Project Path="source/container-apps/web/web-server/web-server.csproj" />
     <Project Path="source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj" />
+    <Project Path="source/container-apps/aspire/aspire-app-host/aspire-app-host.csproj" />
+    <Project Path="source/container-apps/yarp/yarp.csproj" />
   </Folder>
 </Solution>

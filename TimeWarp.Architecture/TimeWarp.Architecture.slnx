@@ -367,7 +367,7 @@
   <!--#endif-->
   <!--#if (yarp)-->
   <Folder Name="/05-ContainerApps/Yarp/">
-    <Project Path="Source\ContainerApps\Yarp\Yarp.csproj">
+    <Project Path="../source/container-apps/yarp/yarp.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -379,7 +379,7 @@
   </Folder>
   <!--#endif-->
   <Folder Name="/07-Aspire/">
-    <Project Path="Source\ContainerApps\Aspire\Aspire.AppHost\Aspire.AppHost.csproj">
+    <Project Path="../source/container-apps/aspire/aspire-app-host/aspire-app-host.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
