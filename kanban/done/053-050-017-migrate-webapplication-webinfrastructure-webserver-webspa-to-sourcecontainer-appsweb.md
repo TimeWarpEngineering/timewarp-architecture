@@ -49,36 +49,36 @@ source/container-apps/web/
 ## Checklist
 
 ### Phase 1: Migrate Web.Application
-- [ ] git mv Web.Application files to web-application/ with kebab-case
-- [ ] Update csproj (minimal format, ProjectReferences to migrated projects, RootNamespace)
-- [ ] Update assembly-marker.cs (CA1040 pragma)
-- [ ] Update referencing projects (Web.Infrastructure, Web.Server, test projects)
-- [ ] Update both solution files
-- [ ] Build verify
+- [x] git mv Web.Application files to web-application/ with kebab-case (previously completed)
+- [x] Update csproj (minimal format, ProjectReferences to migrated projects, RootNamespace)
+- [x] Update assembly-marker.cs (CA1040 pragma)
+- [x] Update referencing projects (Web.Infrastructure, Web.Server, test projects)
+- [x] Update both solution files
+- [x] Build verify
 
 ### Phase 2: Migrate Web.Infrastructure
-- [ ] git mv Web.Infrastructure files to web-infrastructure/ with kebab-case
-- [ ] Update csproj (ProjectReferences to web-application)
-- [ ] Update referencing projects (Web.Server, test projects)
-- [ ] Update both solution files
-- [ ] Build verify
+- [x] git mv Web.Infrastructure files to web-infrastructure/ with kebab-case (previously completed)
+- [x] Update csproj (ProjectReferences to web-application)
+- [x] Update referencing projects (Web.Server, test projects)
+- [x] Update both solution files
+- [x] Build verify
 
 ### Phase 3: Migrate Web.Server
-- [ ] git mv Web.Server files to web-server/ with kebab-case
-- [ ] Update csproj (ProjectReferences to web-infrastructure, web-application, aspire-service-defaults)
-- [ ] Update both solution files
-- [ ] Build verify
+- [x] git mv Web.Server files to web-server/ with kebab-case (previously completed)
+- [x] Update csproj (ProjectReferences to web-infrastructure, web-application, aspire-service-defaults)
+- [x] Update both solution files
+- [x] Build verify
 
 ### Phase 4: Migrate Web.Spa
-- [ ] git mv Web.Spa files to web-spa/ with kebab-case
-- [ ] Update csproj (ProjectReferences to web-contracts; special Blazor WASM handling)
-- [ ] Update both solution files
-- [ ] Build verify
+- [x] git mv Web.Spa files to web-spa/ with kebab-case (previously completed)
+- [x] Update csproj (ProjectReferences to web-contracts; special Blazor WASM handling)
+- [x] Update both solution files
+- [x] Build verify
 
 ### Phase 5: Cleanup
-- [ ] Remove old Web/ directory
-- [ ] Full solution build verify
-- [ ] Update kanban task
+- [x] Remove old Web/ directory (Dockerfiles intentionally left behind — see Completion Notes)
+- [x] Full solution build verify
+- [x] Update kanban task
 
 ## Notes
 
@@ -169,3 +169,21 @@ source/container-apps/web/
 - Generated/obj/bin/node_modules artifacts must not be migrated.
 - Folders should be kebab-case; `.razor` component files must stay PascalCase; Razor namespaces must be explicit and unchanged.
 - **If a design issue or architectural problem appears during implementation, stop and report rather than applying workarounds.**
+
+## Completion Notes (2026-05)
+
+- All four projects (web-application, web-infrastructure, web-server, web-spa) were successfully migrated to `source/container-apps/web/` with kebab-case folder structure prior to this cleanup pass. Solution files, project references, and scripts were updated accordingly.
+- **Dockerfiles were intentionally not migrated/created.** Per maintainer direction: "The Dockerfiles are obsolete anyway with Aspire. I don't even care about them. So don't migrate them."
+  - The legacy `Web.Server/Dockerfile` (and any references in BuildImages.ps1 pointing to a non-existent new location) can remain as historical artifacts or be cleaned in a future DevOps pass.
+  - The `<DockerfileContext>` and `<DockerDefaultTargetOS>` properties in the web-server.csproj were left as-is.
+- Only a handful of documentation Overview.md files and the obsolete Dockerfile remained in `TimeWarp.Architecture/Source/ContainerApps/Web/`. These have been removed.
+- The old `Web/` directory under the legacy `TimeWarp.Architecture/Source/ContainerApps/` tree is now gone for these projects.
+- No design/architectural issues were encountered during final cleanup (the prior Docker concern was resolved by the explicit decision above).
+- Card moved from `in-progress/` to `done/`.
+
+**Verification performed:**
+- `dotnet build source/container-apps/web/web-application/web-application.csproj`
+- `dotnet build source/container-apps/web/web-infrastructure/web-infrastructure.csproj`
+- `dotnet build source/container-apps/web/web-server/web-server.csproj`
+- `dotnet build source/container-apps/web/web-spa/web-spa.csproj`
+- Root solution build (timewarp-architecture.slnx) — web tier projects compile cleanly.
