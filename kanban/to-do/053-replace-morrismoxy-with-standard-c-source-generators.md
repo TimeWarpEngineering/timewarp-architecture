@@ -42,7 +42,7 @@ Replace generation currently provided by:
 
 - `Page.mixin`
 - `RouteMixin.mixin`
-- `state-access-mixin.mixin`
+- `StateAccessMixin.mixin` (renamed from `state-access-mixin.mixin` for consistent PascalCase attribute naming)
 - Command/Query mixins (`CreateCommand`, `DeleteCommand`, `GetQuery`, `GetListQuery`, `UpdateCommand`)
 - Various foundation mixins (`IAuthApiRequestMixin`, `IOpenDataQueryParametersMixin`, etc.)
 - Any other `.mixin` files
