@@ -5,6 +5,7 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..\..</DockerfileContext>
+    <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
   </PropertyGroup>
 
   <ItemGroup Label="Core">

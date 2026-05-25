@@ -47,6 +47,7 @@ This approach integrates with the existing build system. Projects (or `Directory
 ### Phase 2: Implementation
 - [x] Add support in `FastEndpointSourceGenerator`
 - [ ] Add the control mechanism to `web-spa.csproj` (and other relevant projects) so the current build errors are resolved
+- [x] Add `<EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>` to `api-server.csproj` (the primary project that should generate FastEndpoints)
 - [ ] Add tests for the new control behavior in the analyzer test project
 - [ ] Ensure diagnostics are emitted when a generator is suppressed or when a required dependency is missing
 
@@ -68,6 +69,7 @@ This approach integrates with the existing build system. Projects (or `Directory
   - Default value: `false` (opt-in / explicit enable required).
   - Updated `FastEndpointSourceGenerator` to respect this property via `AnalyzerConfigOptionsProvider`.
   - Generator is now disabled by default for all projects unless the property is set to `true`.
+- 2026-05-25: Added `<EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>` to `api-server.csproj`.
 
 **Checklist items completed on 2026-05-25:**
 - All of Phase 1 (Design)
