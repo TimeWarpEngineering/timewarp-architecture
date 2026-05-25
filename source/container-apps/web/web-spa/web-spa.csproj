@@ -1,10 +1,17 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
     <Description>TimeWarp Architecture Demo Application</Description>
     <DefineConstants>ReduxDevToolsEnabled;grpc;api;web;counter</DefineConstants>
     <Nullable>enable</Nullable>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
+    <!-- When true, skips npm/TypeScript/Tailwind steps (useful when node is not available in the environment).
+         Set explicitly to 'false' when you want full client asset build (requires node + npm). -->
+    <SkipWebSpaBuildTools Condition="'$(SkipWebSpaBuildTools)' == ''">true</SkipWebSpaBuildTools>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TypeScriptCompileBlocked Condition="'$(SkipWebSpaBuildTools)' == 'true'">true</TypeScriptCompileBlocked>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -52,7 +59,7 @@
 
   <ItemGroup>
     <!--#if(api)-->
-    <ProjectReference Include="..\..\..\foundation\analyzers\timewarp-architecture-analyzers\timewarp-architecture-analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />
+    <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-analyzers\timewarp-architecture-analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />
     <ProjectReference Include="..\..\api\api-contracts\api-contracts.csproj"/>
     <!--#endif-->
     <!--#if(grpc)-->
@@ -83,7 +90,7 @@
 
   <ItemGroup>
     <AdditionalFiles Include="features\base\state-access-mixin.mixin"/>
-    <AdditionalFiles Include="mixins\page.mixin"/>
+    <AdditionalFiles Include="mixins\Page.mixin"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -99,12 +106,12 @@
           SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="Tailwind" AfterTargets="Build,CopyScopedCss">
-    <Exec Command="npm install" />
-    <Exec Command="npm run prettier" />
-    <Exec Command="npm run lint" />
-    <Exec Command="npm run build" />
-    <Exec Command="npm run css:build" />
+  <Target Name="Tailwind" AfterTargets="Build,CopyScopedCss" Condition="'$(SkipWebSpaBuildTools)' != 'true'">
+    <Exec Command="npm install" ContinueOnError="true" />
+    <Exec Command="npm run prettier" ContinueOnError="true" />
+    <Exec Command="npm run lint" ContinueOnError="true" />
+    <Exec Command="npm run build" ContinueOnError="true" />
+    <Exec Command="npm run css:build" ContinueOnError="true" />
   </Target>
 
   <Target Name="CreateDummyFluentUICSS" BeforeTargets="Build">
