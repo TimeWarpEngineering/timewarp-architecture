@@ -5,6 +5,10 @@ using TimeWarp.Architecture.Analyzers.Models;
 [Generator]
 public class FastEndpointSourceGenerator : IIncrementalGenerator
 {
+    // Generator is disabled by default.
+    // Consumers must explicitly set <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
+    // (or via their feature flag system) in their .csproj / Directory.Build.props.
+
   private const string ApiEndpointAttributeFullName = "TimeWarp.Architecture.Attributes.ApiEndpointAttribute";
 
   public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -22,6 +26,17 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
       DiagnosticSeverity.Warning,
       true
     );
+
+    // Diagnostic when generation is requested but required FastEndpoints types are missing
+    DiagnosticDescriptor missingFastEndpointsDescriptor = new DiagnosticDescriptor
+    (
+      "SG002",
+      "Missing FastEndpoints dependencies",
+      "EnableApiEndpointGeneration is set to true, but FastEndpoints or BaseFastEndpoint could not be found in the compilation. Ensure the api feature and required packages are referenced.",
+      "SourceGenerator",
+      DiagnosticSeverity.Warning,
+      isEnabledByDefault: true
+    );
 // Try finding classes with our attribute using SelectMany
     IncrementalValuesProvider<INamedTypeSymbol> classSymbols = context.CompilationProvider.SelectMany(
       (compilation, _) =>
@@ -36,15 +51,55 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
             .Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol)));
       });
 
-// Combine symbols with compilation to get semantic model
-    IncrementalValuesProvider<(INamedTypeSymbol Symbol, Compilation Compilation)> symbolsWithCompilation =
-      classSymbols.Combine(context.CompilationProvider);
+// Read MSBuild property to control whether this generator should run.
+// Default is false (opt-in), as requested.
+    IncrementalValueProvider<bool> enableApiEndpointGeneration = context.AnalyzerConfigOptionsProvider.Select(
+        static (options, _) =>
+        {
+            if (options.GlobalOptions.TryGetValue("build_property.EnableApiEndpointGeneration", out var value) &&
+                bool.TryParse(value, out var enabled))
+            {
+                return enabled;
+            }
+
+            return false; // default to false
+        });
+
+// Combine symbols with compilation and the enable flag so we can check for required types
+    IncrementalValuesProvider<(INamedTypeSymbol Symbol, Compilation Compilation, bool Enabled)> symbolsWithCompilationAndFlag =
+      classSymbols
+        .Combine(context.CompilationProvider)
+        .Combine(enableApiEndpointGeneration)
+        .Select(static (tuple, _) =>
+        {
+            var ((symbol, compilation), enabled) = tuple;
+            return (symbol, compilation, enabled);
+        });
 
 // Register source output to generate endpoints from found symbols
-    context.RegisterSourceOutput(symbolsWithCompilation,
+    context.RegisterSourceOutput(symbolsWithCompilationAndFlag,
       (spc, data) =>
       {
-        (INamedTypeSymbol symbol, Compilation compilation) = data;
+        (INamedTypeSymbol symbol, Compilation compilation, bool enabled) = data;
+
+        if (!enabled)
+        {
+            return; // Generator is disabled for this project (default)
+        }
+
+        // Check that required FastEndpoints types are available before generating
+        INamedTypeSymbol? fastEndpointsSymbol = compilation.GetTypeByMetadataName("FastEndpoints.IEndpoint");
+        INamedTypeSymbol? baseFastEndpointSymbol = compilation.GetTypeByMetadataName("TimeWarp.Architecture.Features.BaseFastEndpoint");
+
+        if (fastEndpointsSymbol == null || baseFastEndpointSymbol == null)
+        {
+            spc.ReportDiagnostic(
+                Diagnostic.Create(
+                    missingFastEndpointsDescriptor,
+                    Location.None));
+            return;
+        }
+
         try
         {
           // Extract metadata directly from symbol

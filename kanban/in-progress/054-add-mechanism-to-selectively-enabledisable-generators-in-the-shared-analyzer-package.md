@@ -49,7 +49,7 @@ This approach integrates with the existing build system. Projects (or `Directory
 - [ ] Re-evaluate later: Decide whether to explicitly document `<EnableApiEndpointGeneration>false</EnableApiEndpointGeneration>` in non-API projects once more generators exist (currently only one generator, so documentation overhead is low)
 - [x] Add `<EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>` to `api-server.csproj` (the primary project that should generate FastEndpoints)
 - [x] Add tests for the new control behavior in the analyzer test project (including disabled by default + explicitly enabled cases)
-- [ ] Ensure diagnostics are emitted when a generator is suppressed or when a required dependency is missing
+- [x] Emit a diagnostic (Warning) when `EnableApiEndpointGeneration=true` but required FastEndpoints types are missing (implemented in FastEndpointSourceGenerator)
 
 ### Phase 3: Cleanup & Documentation
 - [ ] Update developer documentation on how to control generator output
@@ -71,6 +71,7 @@ This approach integrates with the existing build system. Projects (or `Directory
   - Generator is now disabled by default for all projects unless the property is set to `true`.
 - Because the default is now safe (false), no changes are required in `web-spa.csproj` (or similar projects) to resolve the original build errors.
 - 2026-05-25: Added `<EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>` to `api-server.csproj`.
+- Added diagnostic (SG002) when `EnableApiEndpointGeneration=true` but FastEndpoints or BaseFastEndpoint cannot be resolved.
 - Note: With only one generator currently in the package, explicitly setting the property to false in client projects (like web-spa) adds little value and can be deferred until more generators are added.
 
 **Checklist items completed on 2026-05-25:**
