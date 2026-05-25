@@ -10,8 +10,8 @@ Replace the use of Morris.Moxy (and its custom `.mixin` template system) with st
 
 ## Rationale
 
-- Morris.Moxy derives attribute names from the `.mixin` filename (e.g. `page.mixin` → `pageAttribute`), causing confusing case and naming issues. (Note: being renamed to `Page.mixin` as a short-term mitigation)
-- The most complex mixins (`Page.mixin`, `RouteMixin.mixin`) contain non-trivial template logic that is hard to reason about and debug.
+- Morris.Moxy derives attribute names from the `.mixin` filename (e.g. `page.mixin` → `pageAttribute`), causing confusing case and naming issues. (File has been renamed to `Page.mixin` to generate `PageAttribute`.)
+- The more complex mixins (`Page.mixin`, `RouteMixin.mixin`) contain non-trivial template logic.
 - We already maintain real `IIncrementalGenerator`s (e.g. `FastEndpointSourceGenerator`) and have the expertise.
 - AI assistance has dramatically lowered the cost of writing proper source generators.
 - Having two generation systems (Moxy + custom analyzers) increases cognitive load and long-term maintenance cost.
@@ -25,7 +25,7 @@ Replace the use of Morris.Moxy (and its custom `.mixin` template system) with st
   - Contract projects (command/query mixins, auth mixins, route mixins)
   - Foundation contracts
 - Most mixins are small and simple
-- Two are significantly more complex and have caused real friction: `Page.mixin` and `RouteMixin.mixin`
+- `Page.mixin` and `RouteMixin.mixin` are significantly more complex than the others.
 - One existing production `IIncrementalGenerator` already in `source/analyzers/timewarp-architecture-analyzers`
 
 ## Target State
@@ -83,7 +83,7 @@ Replace generation currently provided by:
 ## Notes
 
 - This task became much more attractive after realizing that AI assistance makes writing real `IIncrementalGenerator`s significantly less painful than it was when Moxy was originally adopted.
-- The `Page.mixin` has been a repeated source of friction (attribute naming, generation conflicts).
+- `Page.mixin` highlighted some limitations in Morris.Moxy (particularly attribute naming derived from the filename).
 - We have precedent and existing investment in proper source generators via `timewarp-architecture-analyzers`.
 
 ## Implementation Notes
