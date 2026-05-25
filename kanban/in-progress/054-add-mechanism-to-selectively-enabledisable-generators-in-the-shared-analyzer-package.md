@@ -52,9 +52,11 @@ This approach integrates with the existing build system. Projects (or `Directory
 - [x] Emit a diagnostic (Warning) when `EnableApiEndpointGeneration=true` but required FastEndpoints types are missing (implemented in FastEndpointSourceGenerator)
 
 ### Phase 3: Cleanup & Documentation
-- [ ] Update developer documentation on how to control generator output
-- [ ] Update any relevant templates or example projects
-- [ ] Remove or deprecate any workarounds that were added because of this issue
+- [ ] (Deferred) Update developer documentation on how to control generator output — currently only one endpoint uses the generator, and web-server endpoints have not been converted yet. Defer until more usage exists.
+- [ ] (Deferred) Update any relevant templates or example projects
+- [ ] (Deferred) Remove or deprecate any workarounds that were added because of this issue
+
+**Note (2026-05):** Phase 3 items are intentionally deferred. The core goal of the task (having a reliable way to turn the FastEndpoint generator on/off) is complete. Broader documentation and template updates can be revisited once more endpoints are actively using the generator.
 
 ## Notes
 
@@ -73,6 +75,8 @@ This approach integrates with the existing build system. Projects (or `Directory
 - 2026-05-25: Added `<EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>` to `api-server.csproj`.
 - Added diagnostic (SG002) when `EnableApiEndpointGeneration=true` but FastEndpoints or BaseFastEndpoint cannot be resolved.
 - Note: With only one generator currently in the package, explicitly setting the property to false in client projects (like web-spa) adds little value and can be deferred until more generators are added.
+
+**Task Wrap-up (2026-05):** Core objective achieved — the FastEndpointSourceGenerator can now be safely and explicitly enabled/disabled per project via `<EnableApiEndpointGeneration>`. Phase 3 documentation work deferred until more endpoints are converted from web-server. Task can be moved to Done.
 
 **Checklist items completed on 2026-05-25:**
 - All of Phase 1 (Design)
