@@ -48,7 +48,7 @@ This approach integrates with the existing build system. Projects (or `Directory
 - [x] Add support in `FastEndpointSourceGenerator`
 - [ ] Re-evaluate later: Decide whether to explicitly document `<EnableApiEndpointGeneration>false</EnableApiEndpointGeneration>` in non-API projects once more generators exist (currently only one generator, so documentation overhead is low)
 - [x] Add `<EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>` to `api-server.csproj` (the primary project that should generate FastEndpoints)
-- [ ] Add tests for the new control behavior in the analyzer test project
+- [x] Add tests for the new control behavior in the analyzer test project (including disabled by default + explicitly enabled cases)
 - [ ] Ensure diagnostics are emitted when a generator is suppressed or when a required dependency is missing
 
 ### Phase 3: Cleanup & Documentation
