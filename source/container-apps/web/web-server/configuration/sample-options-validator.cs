@@ -1,5 +1,8 @@
-﻿namespace TimeWarp.Architecture.Configuration;
+namespace TimeWarp.Architecture.Configuration;
 
+/// <summary>
+/// Validator for <see cref="SampleOptions"/>.
+/// </summary>
 /// <remarks>
 /// This class has to be `internal` or it will automatically be registered
 /// by AddValidatorsFromAssemblyContaining as scoped

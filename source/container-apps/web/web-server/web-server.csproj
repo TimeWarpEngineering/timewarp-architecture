@@ -53,7 +53,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\..\..\TimeWarp.Architecture\Source\ContainerApps\Aspire\Aspire.AppHost\Constants.cs">
+    <Compile Include="..\..\aspire\aspire-app-host\constants.cs">
       <Link>Configuration\Constants.cs</Link>
     </Compile>
   </ItemGroup>
