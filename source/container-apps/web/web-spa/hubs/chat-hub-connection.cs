@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Hubs;
+namespace TimeWarp.Architecture.Hubs;
 
 public sealed class ChatHubConnection : IDisposable
 {
@@ -36,7 +36,7 @@ public sealed class ChatHubConnection : IDisposable
 
   public void Dispose()
   {
-    HubConnection.DisposeAsync();
+    HubConnection.DisposeAsync().AsTask().GetAwaiter().GetResult();
   }
 
   public async Task SendMessageAsync(SendMessage.Command sendMessageCommand)
@@ -44,4 +44,3 @@ public sealed class ChatHubConnection : IDisposable
     await HubConnection.InvokeAsync(nameof(SendMessage), sendMessageCommand);
   }
 }
-

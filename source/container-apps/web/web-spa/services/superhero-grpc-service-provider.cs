@@ -1,9 +1,11 @@
 namespace TimeWarp.Architecture.Services;
 
-public class SuperheroGrpcServiceProvider
+public sealed class SuperheroGrpcServiceProvider : IDisposable
 {
   private readonly ServiceUriProvider ServiceUriProvider;
   private readonly ILogger<SuperheroGrpcServiceProvider> Logger;
+  private GrpcChannel? CachedGrpcChannel;
+  private GrpcWebHandler? CachedHttpHandler;
   private ISuperheroService? CachedSuperheroService;
 
   public SuperheroGrpcServiceProvider(ServiceUriProvider serviceUriProvider, ILogger<SuperheroGrpcServiceProvider> logger)
@@ -23,25 +25,48 @@ public class SuperheroGrpcServiceProvider
 
     if (ServiceUriProvider.ServiceUris.TryGetValue(ServiceNames.GrpcServiceName, out Uri? grpcUri))
     {
-      var httpHandler = new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler());
+      HttpClientHandler? httpClientHandler = null;
+      GrpcWebHandler? httpHandler = null;
 
-      var grpcChannel =
-        GrpcChannel.ForAddress
-        (
-          grpcUri,
-          new GrpcChannelOptions
-          {
-            HttpHandler = httpHandler,
-            // Additional options can be set here
-          }
-        );
+      try
+      {
+        httpClientHandler = new HttpClientHandler();
+        httpHandler = new GrpcWebHandler(GrpcWebMode.GrpcWeb, httpClientHandler);
+        httpClientHandler = null;
+
+        CachedGrpcChannel =
+          GrpcChannel.ForAddress
+          (
+            grpcUri,
+            new GrpcChannelOptions
+            {
+              HttpHandler = httpHandler,
+              // Additional options can be set here
+            }
+          );
+
+        CachedHttpHandler = httpHandler;
+        httpHandler = null;
+      }
+      finally
+      {
+        httpHandler?.Dispose();
+        httpClientHandler?.Dispose();
+      }
 
       Logger.LogInformation("gRPC service initialized successfully.");
-      CachedSuperheroService = grpcChannel.CreateGrpcService<ISuperheroService>();
+      CachedSuperheroService = CachedGrpcChannel.CreateGrpcService<ISuperheroService>();
       return CachedSuperheroService;
     }
 
     Logger.LogError("gRPC URI not found in service discovery.");
     throw new InvalidOperationException("gRPC URI not found in service discovery.");
+  }
+
+  public void Dispose()
+  {
+    CachedGrpcChannel?.Dispose();
+    CachedHttpHandler?.Dispose();
+    GC.SuppressFinalize(this);
   }
 }

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture;
+namespace TimeWarp.Architecture;
 
 /// <summary>
 /// Class that abstracts the WebAPI into a simple interface.
@@ -10,7 +10,7 @@
 
 public abstract class BaseApiService : IApiService
 {
-  protected readonly HttpClient HttpClient;
+  protected HttpClient HttpClient { get; }
   private readonly JsonSerializerOptions JsonSerializerOptions;
 
   private readonly IAccessTokenProvider AccessTokenProvider;
@@ -158,7 +158,7 @@ public abstract class BaseApiService : IApiService
   private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest(IApiRequest apiRequest, CancellationToken cancellationToken)
   {
     string route = PrepareRoute(apiRequest);
-    StringContent? httpContent = PrepareContent(apiRequest);
+    using StringContent? httpContent = PrepareContent(apiRequest);
     HttpVerb httpVerb = apiRequest.GetHttpVerb();
     await SetBearerTokenAsync();
     return httpVerb switch

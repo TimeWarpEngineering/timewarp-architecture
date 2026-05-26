@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Configuration.Passwordless;
 
 public class PasswordlessOptions
 {
-  public string ApiUrl { get; set; } = null!;
+  public Uri ApiUrl { get; set; } = null!;
   public string ApiKey { get; set; } = null!;
 
   public RegisterOptions Register { get; set; } = null!;

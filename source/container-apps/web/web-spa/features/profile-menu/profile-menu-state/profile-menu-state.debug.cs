@@ -9,9 +9,8 @@ partial class ProfileMenuState
       Guid = new Guid(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString() ?? throw new InvalidOperationException()),
 
       MenuState =
-        (MenuStates)Enum.Parse
+        Enum.Parse<MenuStates>
         (
-          typeof(MenuStates),
           keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(MenuState))].ToString() ?? throw new InvalidOperationException()
         ),
     };

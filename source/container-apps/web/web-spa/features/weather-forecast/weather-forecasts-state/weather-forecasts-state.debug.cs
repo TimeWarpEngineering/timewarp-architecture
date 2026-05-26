@@ -4,19 +4,18 @@ using static GetWeatherForecasts;
 
 partial class WeatherForecastsState
 {
+  private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+  {
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+  };
 
   public override WeatherForecastsState Hydrate(IDictionary<string, object> keyValuePairs)
   {
-    JsonSerializerOptions jsonSerializerOptions = new()
-    {
-      PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
-
     string json = keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(WeatherForecasts))].ToString() ?? throw new InvalidOperationException();
 
-    var newWeatherForecastsState = new WeatherForecastsState()
+    WeatherForecastsState newWeatherForecastsState = new()
     {
-      WeatherForecastList = JsonSerializer.Deserialize<List<TWeatherForecast>>(json, jsonSerializerOptions) ?? throw new InvalidOperationException(),
+      WeatherForecastList = JsonSerializer.Deserialize<List<TWeatherForecast>>(json, JsonSerializerOptions) ?? throw new InvalidOperationException(),
       Guid = new Guid(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString() ?? throw new InvalidOperationException()),
     };
 
