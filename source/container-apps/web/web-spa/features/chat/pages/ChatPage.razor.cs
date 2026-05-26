@@ -45,6 +45,7 @@ partial class ChatPage
 
   public override void Dispose()
   {
+    base.Dispose();
     GC.SuppressFinalize(this);
     ChatHubConnection.Dispose();
   }
