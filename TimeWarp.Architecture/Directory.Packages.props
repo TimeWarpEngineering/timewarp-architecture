@@ -49,8 +49,8 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0-2.final" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.2" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0-2.final" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Cosmos" Version="9.0.10" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.10" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Cosmos" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0-rc.2.25502.107" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0-rc.2.25502.107" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-rc.2.25502.107" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-rc.2.25502.107" />
@@ -75,7 +75,7 @@
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.1.0" />
     <PackageVersion Include="Morris.Blazor.FluentValidation" Version="3.1.5" />
     <PackageVersion Include="Morris.Moxy" Version="1.10.0" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Octokit.Webhooks.AspNetCore" Version="1.0.0" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
