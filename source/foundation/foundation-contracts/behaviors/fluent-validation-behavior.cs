@@ -3,11 +3,11 @@ namespace TimeWarp.Architecture.Behaviors;
 public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
-    private readonly IValidator<TRequest>? Validator;
+    private readonly IValidator<TRequest>[] Validators;
 
-    public FluentValidationBehavior(IValidator<TRequest>? validator)
+    public FluentValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
     {
-        Validator = validator;
+        Validators = validators.ToArray();
     }
 
     public async Task<TResponse> Handle
@@ -17,15 +17,23 @@ public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<T
         CancellationToken cancellationToken
     )
     {
-        if (Validator is null)
+        if (Validators.Length == 0)
             return await next();
 
-        ValidationResult? validationResult = await Validator.ValidateAsync(request, cancellationToken);
-        if (validationResult.IsValid)
+        ValidationResult[] validationResults = await Task.WhenAll
+        (
+            Validators.Select(validator => validator.ValidateAsync(request, cancellationToken))
+        );
+
+        List<ValidationFailure> validationFailures = validationResults
+            .SelectMany(validationResult => validationResult.Errors)
+            .ToList();
+
+        if (validationFailures.Count == 0)
             return await next();
 
         // Group validation errors by property name
-        var errors = validationResult.Errors
+        Dictionary<string, string[]> errors = validationFailures
             .GroupBy(e => e.PropertyName.ToLower())
             .ToDictionary(
                 g => g.Key,
@@ -38,7 +46,7 @@ public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<T
             Title = "One or more validation errors occurred",
             Status = 400,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-            Detail = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)),
+            Detail = string.Join("; ", validationFailures.Select(e => e.ErrorMessage)),
             Extensions = new Dictionary<string, object?>
             {
                 ["errors"] = errors
