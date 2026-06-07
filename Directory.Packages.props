@@ -39,7 +39,7 @@
     <PackageVersion Include="Aspire.Microsoft.Azure.Cosmos" Version="13.4.2" />
     <PackageVersion Include="Aspire.Microsoft.EntityFrameworkCore.Cosmos" Version="13.4.2" />
     <!-- Yarp / Reverse Proxy (used by Yarp gateway and Aspire.AppHost) -->
-    <PackageVersion Include="Aspirant.Hosting.Yarp" Version="0.0.4" />
+    <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.4.2" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.6.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->

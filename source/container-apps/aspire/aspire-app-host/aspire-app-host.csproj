@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
     <UserSecretsId>a3d4de92-958f-4e04-b927-9d7605bee60e</UserSecretsId>
-    <DefineConstants>$(DefineConstants);api;web;grpc</DefineConstants>
+    <DefineConstants>$(DefineConstants);api;web;grpc;yarp</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,7 +13,7 @@
     <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" />
     <!--#endif -->
     <!--#if (yarp) -->
-    <PackageReference Include="Aspirant.Hosting.Yarp" />
+    <PackageReference Include="Aspire.Hosting.Yarp" />
     <!--#endif -->
   </ItemGroup>
 
@@ -26,9 +26,6 @@
     <!--#endif -->
     <!--#if (web) -->
     <ProjectReference Include="../../web/web-server/web-server.csproj" />
-    <!--#endif -->
-    <!--#if (yarp) -->
-    <ProjectReference Include="../../yarp/yarp.csproj" />
     <!--#endif -->
   </ItemGroup>
 

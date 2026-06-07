@@ -49,26 +49,29 @@ internal class Program
 #if yarp
     // YARP Reverse Proxy
     // YARP is included in the template
-    bool isHttps = builder.Configuration["DOTNET_LAUNCH_PROFILE"] == "https";
     int? ingressPort = int.TryParse(builder.Configuration["Ingress:Port"], out int port) ? port : null;
 
     // Create the YARP resource
-    IResourceBuilder<YarpResource> yarp = builder.AddYarp(YarpResourceName)
-      .WithEndpoint(scheme: isHttps ? "https" : "http", port: ingressPort);
+    IResourceBuilder<YarpResource> yarp = builder.AddYarp(YarpResourceName);
 
-    // Add references to other services if they exist
+    if (ingressPort is not null)
+    {
+      yarp = yarp.WithHostPort(ingressPort.Value);
+    }
+
+    yarp = yarp.WithConfiguration(yarpConfiguration =>
+    {
 #if api
-    yarp = yarp.WithReference(apiServer);
-#endif
-#if web
-    yarp = yarp.WithReference(webServer);
+      yarpConfiguration.AddRoute("/api/{**catch-all}", apiServer);
 #endif
 #if grpc
-    yarp = yarp.WithReference(grpcServer);
+      yarpConfiguration.AddRoute("/grpc/{**catch-all}", grpcServer)
+        .WithTransformPathRemovePrefix("/grpc");
 #endif
-
-    // Load configuration from ReverseProxy section
-    yarp = yarp.LoadFromConfiguration("ReverseProxy");
+#if web
+      yarpConfiguration.AddRoute(webServer);
+#endif
+    });
 #endif
 
     builder.Build().Run();
