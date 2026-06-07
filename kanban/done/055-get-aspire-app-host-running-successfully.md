@@ -32,3 +32,20 @@ The Aspire App Host project fails to run. The `aspire run` command against `sour
 ## Outcome
 
 Updated Aspire project packages and CLI to 13.4.2, aligned incompatible .NET 10 package versions, fixed the obsolete Aspire command result API usage, and verified `dev build`, `aspire doctor`, and `aspire run`.
+
+## Follow-up Work
+
+After the AppHost launched, the dashboard initially showed no resources because the AppHost feature preprocessor symbols were not defined. Added the AppHost feature constants for `api`, `web`, and `grpc`, then enabled `yarp` after moving to the first-party Aspire YARP integration.
+
+Resolved Linux launch-profile discovery by moving service `launchSettings.json` files from lowercase `properties/` folders to canonical `Properties/` folders. This allowed Aspire to discover the project launch profiles and avoid the default Kestrel port collision on `5000`.
+
+Fixed API endpoint generation by exposing `EnableApiEndpointGeneration` to source generators with `CompilerVisibleProperty` and correcting the Roslyn metadata lookup for the generic `BaseFastEndpoint` type. The API now registers the generated WeatherForecast FastEndpoint.
+
+Configured OpenCode to use Aspire MCP through `aspire agent mcp`, enabling direct resource status/log inspection. Verified via MCP that `api`, `grpc`, `web`, and `ingress` are all running and healthy.
+
+Replaced the obsolete `Aspirant.Hosting.Yarp` AppHost integration with first-party `Aspire.Hosting.Yarp`, rewrote YARP routing using code-based `WithConfiguration`, and removed the old custom YARP project reference from the AppHost. Kubernetes ingress replacement was intentionally deferred for later evaluation.
+
+Related commits:
+
+- `ae43f3a2` `fix: restore Aspire project startup`
+- `cb89e43f` `fix: use Aspire YARP gateway`
