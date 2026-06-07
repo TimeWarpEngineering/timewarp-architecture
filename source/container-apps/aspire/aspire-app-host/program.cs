@@ -19,15 +19,17 @@ internal class Program
     // Declare project resources based on template flags
 #if api
     // API Server is included in the template
-    IResourceBuilder<ProjectResource> apiServer = builder.AddProject<Projects.Api_Server>(ApiServerProjectResourceName).WithScalar();
+    IResourceBuilder<ProjectResource> apiServer = builder
+      .AddProject<Projects.api_server>(ApiServerProjectResourceName, options => options.LaunchProfileName = "Api.Server")
+      .WithScalar();
 #endif
 #if grpc
     // gRPC Server is included in the template
-    IResourceBuilder<ProjectResource> grpcServer = builder.AddProject<Projects.Grpc_Server>(GrpcServerProjectResourceName);
+    IResourceBuilder<ProjectResource> grpcServer = builder.AddProject<Projects.grpc_server>(GrpcServerProjectResourceName, options => options.LaunchProfileName = "Grpc.Server");
 #endif
 #if web
     // Web Server is included in the template
-    IResourceBuilder<ProjectResource> webServer = builder.AddProject<Projects.Web_Server>(WebServerProjectResourceName)
+    IResourceBuilder<ProjectResource> webServer = builder.AddProject<Projects.web_server>(WebServerProjectResourceName, options => options.LaunchProfileName = "Web.Server")
       .WithExternalHttpEndpoints();
 
     // Add references to other services if they exist

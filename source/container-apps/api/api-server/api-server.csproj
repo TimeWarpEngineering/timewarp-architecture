@@ -8,6 +8,10 @@
     <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
   </PropertyGroup>
 
+  <ItemGroup>
+    <CompilerVisibleProperty Include="EnableApiEndpointGeneration" />
+  </ItemGroup>
+
   <ItemGroup Label="Core">
     <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />

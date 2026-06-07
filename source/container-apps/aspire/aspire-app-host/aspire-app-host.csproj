@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
     <UserSecretsId>a3d4de92-958f-4e04-b927-9d7605bee60e</UserSecretsId>
+    <DefineConstants>$(DefineConstants);api;web;grpc</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
