@@ -1,5 +1,5 @@
 #nullable enable
-// ReSharper disable RedundantNameQualifier
+
 namespace TimeWarp.Architecture.Web.Server;
 
 using Abstractions;
@@ -12,7 +12,7 @@ public class Program : IAspNetProgram
   const string SwaggerVersion = "v1";
   const string SwaggerApiTitle = $"TimeWarp.Architecture Web.Server API {SwaggerVersion}";
 
-  public static Task<int> Main(string[] argumentArray)
+  public static async Task<int> Main(string[] argumentArray)
   {
     SelfLog.Enable(Console.Error);
     Thread.CurrentThread.Name = nameof(Main);
@@ -21,7 +21,8 @@ public class Program : IAspNetProgram
       .WriteTo.Console()
       .CreateBootstrapLogger();
 
-    ILoggerFactory loggerFactory = new LoggerFactory().AddSerilog(Log.Logger);
+    using ILoggerFactory loggerFactory = new LoggerFactory();
+    loggerFactory.AddSerilog(Log.Logger);
 
     ILogger<Program> logger = loggerFactory.CreateLogger<Program>();
 
@@ -50,18 +51,19 @@ public class Program : IAspNetProgram
 
       webApplication.Services.ValidateOptions(builder.Services, logger);
 
-      return webApplication.RunOaktonCommands(argumentArray);
+      return await webApplication.RunOaktonCommands(argumentArray).ConfigureAwait(false);
     }
     catch (Exception exception)
     {
       Log.Fatal(exception, messageTemplate: "Host terminated unexpectedly");
-      return Task.FromResult(1);
+      return 1;
     }
     finally
     {
-      Log.CloseAndFlush();
+      await Log.CloseAndFlushAsync().ConfigureAwait(false);
     }
   }
+
   private static void ConfigureHostApplicationBuilder(IHostApplicationBuilder builder)
   {
     builder.AddServiceDefaults();

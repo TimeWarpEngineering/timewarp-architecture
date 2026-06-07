@@ -1,8 +1,25 @@
-﻿// TOOD: This is copilot generated code, it needs to be reviewed and cleaned up
+#nullable enable
+// TOOD: This is copilot generated code, it needs to be reviewed and cleaned up
 namespace TimeWarp.Architecture.Configuration;
 
 public class PostgresDbEnvironmentCheck
 {
+  private static readonly Action<ILogger, Exception?> LogStart =
+    LoggerMessage.Define
+    (
+      LogLevel.Information,
+      new EventId(1, nameof(LogStart)),
+      $"Start {nameof(PostgresDbEnvironmentCheck)} "
+    );
+
+  private static readonly Action<ILogger, Exception?> LogCompleted =
+    LoggerMessage.Define
+    (
+      LogLevel.Information,
+      new EventId(2, nameof(LogCompleted)),
+      $"Completed {nameof(PostgresDbEnvironmentCheck)} "
+    );
+
   private readonly PostgresDbOptions PostgresDbOptions;
   private readonly IServiceProvider ServiceProvider;
   private readonly ILogger Logger;
@@ -23,7 +40,7 @@ public class PostgresDbEnvironmentCheck
 
   public async Task<bool> CheckAsync()
   {
-    Logger.LogInformation($"Start {nameof(PostgresDbEnvironmentCheck)} ");
+    LogStart(Logger, null);
 
     using IServiceScope scope = ServiceProvider.CreateScope();
 
@@ -38,8 +55,7 @@ public class PostgresDbEnvironmentCheck
       return false;
     }
 
-    Logger.LogInformation($"Completed {nameof(PostgresDbEnvironmentCheck)} ");
+    LogCompleted(Logger, null);
     return true;
   }
 }
-

@@ -1,7 +1,24 @@
-﻿namespace TimeWarp.Architecture.HostedServices;
+#nullable enable
+namespace TimeWarp.Architecture.HostedServices;
 
 public class CosmosDbContextStartupHostedService : IHostedService
 {
+  private static readonly Action<ILogger, Exception?> LogStarted =
+    LoggerMessage.Define
+    (
+      LogLevel.Information,
+      new EventId(1, nameof(LogStarted)),
+      $"{nameof(CosmosDbContextStartupHostedService)} has started."
+    );
+
+  private static readonly Action<ILogger, Exception?> LogStopped =
+    LoggerMessage.Define
+    (
+      LogLevel.Information,
+      new EventId(2, nameof(LogStopped)),
+      $"{nameof(CosmosDbContextStartupHostedService)} has stopped."
+    );
+
   private readonly IServiceProvider ServiceProvider;
   private readonly ILogger Logger;
 
@@ -17,7 +34,7 @@ public class CosmosDbContextStartupHostedService : IHostedService
 
   public async Task StartAsync(CancellationToken cancellationToken)
   {
-    Logger.LogInformation($"{nameof(CosmosDbContextStartupHostedService)} has started.");
+    LogStarted(Logger, null);
     using IServiceScope scope = ServiceProvider.CreateScope();
 
     CosmosDbContext cosmosDbContext = scope.ServiceProvider.GetRequiredService<CosmosDbContext>();
@@ -26,7 +43,7 @@ public class CosmosDbContextStartupHostedService : IHostedService
 
   public Task StopAsync(CancellationToken cancellationToken)
   {
-    Logger.LogInformation($"{nameof(CosmosDbContextStartupHostedService)} has stopped.");
+    LogStopped(Logger, null);
     return Task.CompletedTask;
   }
 }

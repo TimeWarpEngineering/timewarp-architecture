@@ -1,7 +1,24 @@
-﻿namespace TimeWarp.Architecture.Configuration;
+#nullable enable
+namespace TimeWarp.Architecture.Configuration;
 
 public class SampleEnvironmentCheck
 {
+  private static readonly Action<ILogger, Exception?> LogStart =
+    LoggerMessage.Define
+    (
+      LogLevel.Information,
+      new EventId(1, nameof(LogStart)),
+      $"Start {nameof(SampleEnvironmentCheck)} "
+    );
+
+  private static readonly Action<ILogger, Exception?> LogCompleted =
+    LoggerMessage.Define
+    (
+      LogLevel.Information,
+      new EventId(2, nameof(LogCompleted)),
+      $"Completed {nameof(SampleEnvironmentCheck)} "
+    );
+
   private readonly ILogger Logger;
   public static string Description => "Sample Environment check";
 
@@ -12,8 +29,8 @@ public class SampleEnvironmentCheck
 
   public void Check()
   {
-    Logger.LogInformation($"Start {nameof(SampleEnvironmentCheck)} ");
+    LogStart(Logger, null);
     // Do something here.Throw exception to cause a failure.
-    Logger.LogInformation($"Completed {nameof(SampleEnvironmentCheck)} ");
+    LogCompleted(Logger, null);
   }
 }
