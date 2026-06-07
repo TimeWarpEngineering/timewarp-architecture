@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Hellos;
+namespace TimeWarp.Architecture.Features.Hellos;
 
 public static partial class Hello
 {

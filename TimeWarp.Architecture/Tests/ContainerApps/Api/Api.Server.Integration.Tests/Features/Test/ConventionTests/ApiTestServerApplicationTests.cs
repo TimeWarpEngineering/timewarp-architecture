@@ -1,4 +1,4 @@
-﻿namespace ApiTestServerApplication_;
+namespace ApiTestServerApplication_;
 
 using Ardalis.GuardClauses;
 using System.Diagnostics.CodeAnalysis;

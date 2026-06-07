@@ -1,4 +1,4 @@
-﻿global using Ardalis.GuardClauses;
+global using Ardalis.GuardClauses;
 global using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons;
 global using TimeWarp.State;
 global using Blazored.LocalStorage;
@@ -90,7 +90,7 @@ global using TimeWarp.Architecture.Features.Superheros;
 #endif
 
 #if(api)
-global using TimeWarp.Architecture.Features.WeatherForecast.Pages;
+// global using TimeWarp.Architecture.Features.WeatherForecast.Pages;
 global using TimeWarp.Architecture.Features.WeatherForecasts;
 #endif
 

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture;
+namespace TimeWarp.Architecture;
 
 public class CommonServerModule : IAspNetModule
 {

@@ -1,4 +1,4 @@
-﻿namespace __RootNamespace__.Features.__FeatureName__s
+namespace __RootNamespace__.Features.__FeatureName__s
 {
   using FluentValidation;
   

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.HostedServices;
+namespace TimeWarp.Architecture.HostedServices;
 
 public class ProtobufGenerationHostedService : IHostedService
 {

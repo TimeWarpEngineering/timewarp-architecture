@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Services;
+namespace TimeWarp.Architecture.Services;
 
 using TimeWarp.Architecture.Features.Chat;
 

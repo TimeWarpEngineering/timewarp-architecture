@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Web.Infrastructure;
+namespace TimeWarp.Architecture.Web.Infrastructure;
 
 public class WebInfrastructureModule : IModule
 {

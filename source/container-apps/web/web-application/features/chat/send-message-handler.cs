@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Chat.Application;
+namespace TimeWarp.Architecture.Features.Chat.Application;
 
 public sealed class SendMessageHandler : IRequestHandler<SendMessage.Command, OneOf<Success, SharedProblemDetails>>
 {

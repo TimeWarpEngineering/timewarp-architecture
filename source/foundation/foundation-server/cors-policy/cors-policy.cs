@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.CorsPolicies;
+namespace TimeWarp.Architecture.CorsPolicies;
 
 
 /// <summary>

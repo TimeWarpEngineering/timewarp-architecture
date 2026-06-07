@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Chat;
+namespace TimeWarp.Architecture.Features.Chat;
 
 [StateAccessMixin]
 public sealed partial class ChatState : State<ChatState>

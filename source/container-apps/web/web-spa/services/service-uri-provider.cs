@@ -5,7 +5,7 @@ public class ServiceUriProvider
   private readonly IHttpClientFactory HttpClientFactory;
   private readonly ILogger<ServiceUriProvider> Logger;
   public Dictionary<string, Uri> ServiceUris { get; private set; } = new();
-  private bool IsInitialized = false;
+  private bool IsInitialized;
 
   public ServiceUriProvider(
     IHttpClientFactory httpClientFactory,

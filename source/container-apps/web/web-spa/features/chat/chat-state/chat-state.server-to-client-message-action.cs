@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Chat;
+namespace TimeWarp.Architecture.Features.Chat;
 
 using static ReceiveMessage;
 partial class ChatState

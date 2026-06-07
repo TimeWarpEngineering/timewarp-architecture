@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Sidebars;
+namespace TimeWarp.Architecture.Features.Sidebars;
 
 [StateAccessMixin]
 public sealed partial class SidebarState: State<SidebarState>

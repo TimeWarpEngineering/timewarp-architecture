@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Features;
 public enum HttpVerb
 {
   Get,

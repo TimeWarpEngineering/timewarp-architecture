@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Types;
+namespace TimeWarp.Architecture.Types;
 
 public sealed class SignalrResult<TSuccess, TFailure>
 {

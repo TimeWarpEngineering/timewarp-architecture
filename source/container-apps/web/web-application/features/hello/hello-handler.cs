@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Hellos.Application;
+namespace TimeWarp.Architecture.Features.Hellos.Application;
 
 using static TimeWarp.Architecture.Features.Hellos.Hello;
 

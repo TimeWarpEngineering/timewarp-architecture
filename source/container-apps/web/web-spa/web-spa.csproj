@@ -11,6 +11,21 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <!-- 
+      Suppress these logging performance rules only in this Blazor WASM project:
+
+      CA1848 - Prefer LoggerMessage delegates over LoggerExtensions methods
+      CA1873 - Avoid evaluating logging arguments when the level is disabled
+      CA2254 - Logging message template should be constant
+
+      Reason: These rules target high-throughput server scenarios. In a browser-based 
+      SPA the performance gain is negligible. This is a deliberate exception to the 
+      root AnalysisMode=All policy.
+    -->
+    <NoWarn>$(NoWarn);CA1848;CA1873;CA2254</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <TypeScriptCompileBlocked Condition="'$(SkipWebSpaBuildTools)' == 'true'">true</TypeScriptCompileBlocked>
   </PropertyGroup>
 

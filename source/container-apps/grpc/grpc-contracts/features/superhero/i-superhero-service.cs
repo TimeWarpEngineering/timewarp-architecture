@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Superheros;
+namespace TimeWarp.Architecture.Features.Superheros;
 
 [ServiceContract]
 public interface ISuperheroService

@@ -1,4 +1,4 @@
-﻿global using FluentValidation;
+global using FluentValidation;
 global using JetBrains.Annotations;
 global using TimeWarp.Mediator;
 global using Microsoft.Extensions.Configuration;

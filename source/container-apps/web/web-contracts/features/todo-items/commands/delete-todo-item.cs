@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.TodoItems.Commands;
+namespace TimeWarp.Architecture.Features.TodoItems.Commands;
 
 public sealed partial class DeleteTodoItem
 {

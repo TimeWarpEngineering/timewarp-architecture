@@ -1,4 +1,4 @@
-﻿global using FakeItEasy;
+global using FakeItEasy;
 global using Shouldly;
 global using TimeWarp.Mediator;
 global using Microsoft.Extensions.DependencyInjection;

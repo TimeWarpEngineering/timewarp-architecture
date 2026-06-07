@@ -1,4 +1,4 @@
-﻿// Spa.ts
+// Spa.ts
 import { Counter } from "./features/counter.js";
 
 export class Spa {

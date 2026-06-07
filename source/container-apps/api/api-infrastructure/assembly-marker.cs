@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Api.Infrastructure;
+namespace TimeWarp.Architecture.Api.Infrastructure;
 
 /// <summary>
 /// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.

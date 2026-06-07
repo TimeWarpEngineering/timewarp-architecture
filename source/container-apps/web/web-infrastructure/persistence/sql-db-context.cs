@@ -1,3 +1,3 @@
-﻿namespace TimeWarp.Architecture.Data;
+namespace TimeWarp.Architecture.Data;
 
 public class SqlDbContext : DbContext { }

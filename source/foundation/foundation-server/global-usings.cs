@@ -1,4 +1,4 @@
-﻿global using Ardalis.GuardClauses;
+global using Ardalis.GuardClauses;
 global using Azure.Identity;
 global using FastEndpoints;
 global using FluentValidation;

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Superheros;
+namespace TimeWarp.Architecture.Features.Superheros;
 
 [StateAccessMixin]
 public sealed partial class SuperheroState : State<SuperheroState>

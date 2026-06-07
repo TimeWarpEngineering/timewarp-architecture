@@ -32,18 +32,18 @@ public class MyBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResp
   {
     Guard.Against.Null(next);
 
-    Logger.LogDebug(message: "{typeName}: Start", TypeName);
+    Logger.LogDebug(message: "{TypeName}: Start", TypeName);
 
-    Logger.LogDebug(message: "{typeName}: Call next", TypeName);
+    Logger.LogDebug(message: "{TypeName}: Call next", TypeName);
     TResponse newState = await next().ConfigureAwait(false);
-    Logger.LogDebug(message: "{typeName}: Start Post Processing",TypeName);
+    Logger.LogDebug(message: "{TypeName}: Start Post Processing",TypeName);
     // Constrain here based on a type or anything you want.
     if (typeof(IState).IsAssignableFrom(typeof(TResponse)))
     {
-      Logger.LogDebug(message: "{typeName}: Do Constrained Action", TypeName);
+      Logger.LogDebug(message: "{TypeName}: Do Constrained Action", TypeName);
     }
 
-    Logger.LogDebug(message: "{typeName}: End",TypeName);
+    Logger.LogDebug(message: "{TypeName}: End",TypeName);
     return newState;
   }
 }

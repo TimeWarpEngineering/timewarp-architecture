@@ -1,4 +1,4 @@
-﻿//namespace TimeWarp.Architecture.Entities.Catalog;
+//namespace TimeWarp.Architecture.Entities.Catalog;
 
 //using System;
 //using Nop.Core.Domain.Common;

@@ -1,4 +1,4 @@
-﻿{{
+{{
     $isCreate = string.contains moxy.Class.Name "Create";
     $isUpdate = string.contains moxy.Class.Name "Update";
     $isClientSide = string.contains moxy.Class.Name "EditModel";

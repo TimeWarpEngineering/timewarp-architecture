@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Services;
+namespace TimeWarp.Architecture.Services;
 
 /// <summary>
 /// This is the Service that is used to interact with the API.Server

@@ -1,4 +1,17 @@
-﻿namespace TimeWarp.Architecture.Pages;
+// TODO [2026-06]: Reassess UserClaimsBase after web-spa builds cleanly under AnalysisMode=All.
+// 
+// Context:
+// - This is a diagnostic page only (used solely by UserClaimsPage).
+// - No classes currently inherit from UserClaimsBase.
+// - Logic is duplicated in UserClaims.razor (with minor differences in claim filtering).
+// - Originally intended to separate "UI behavior" from presentation (Flux-style).
+// - Generated CA1051 violations on protected fields.
+// 
+// Decision pending: delete, integrate properly, or leave as-is once the build is green.
+
+#if false
+
+namespace TimeWarp.Architecture.Pages;
 
 using System.Security.Claims;
 
@@ -48,3 +61,6 @@ public class UserClaimsBase: ComponentBase
     }
   }
 }
+
+#endif
+

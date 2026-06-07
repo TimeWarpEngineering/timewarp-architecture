@@ -1,4 +1,4 @@
-﻿global using Ardalis.GuardClauses;
+global using Ardalis.GuardClauses;
 global using FluentValidation;
 global using FluentValidation.Validators;
 global using FluentValidation.Results;

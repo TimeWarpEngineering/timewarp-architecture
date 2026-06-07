@@ -1,4 +1,4 @@
-﻿global using AnyClone;
+global using AnyClone;
 global using FakeItEasy;
 global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 global using Microsoft.Extensions.Options;

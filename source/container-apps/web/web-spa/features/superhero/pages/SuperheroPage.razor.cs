@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Pages;
+namespace TimeWarp.Architecture.Pages;
 
 using static TimeWarp.Architecture.Features.Superheros.SuperheroState;
 

@@ -1,4 +1,4 @@
-﻿// https://github.com/aspnet/Mvc/issues/6749
+// https://github.com/aspnet/Mvc/issues/6749
 namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MvcBuilderExtensions

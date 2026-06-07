@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Configuration;
+namespace TimeWarp.Architecture.Configuration;
 public static class ServiceNames
 {
   public const string ApiServiceName = "api-server";

@@ -1,4 +1,4 @@
-﻿global using Grpc.Core;
+global using Grpc.Core;
 global using JetBrains.Annotations;
 global using ProtoBuf.Grpc;
 global using ProtoBuf.Grpc.Server;

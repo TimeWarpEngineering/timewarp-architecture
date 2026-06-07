@@ -1,4 +1,4 @@
-﻿// Counter.ts
+// Counter.ts
 import { timeWarpState } from "/_content/TimeWarp.State/js/TimeWarpState.js";
 import { Spa } from "../spa.js";
 

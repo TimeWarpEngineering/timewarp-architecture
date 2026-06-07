@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Notifications;
+namespace TimeWarp.Architecture.Features.Notifications;
 
 using static NotificationState.Notification;
 

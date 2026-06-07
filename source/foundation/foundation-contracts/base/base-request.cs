@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Features;
 
 /// <summary>
 /// Base Request used for all Requests

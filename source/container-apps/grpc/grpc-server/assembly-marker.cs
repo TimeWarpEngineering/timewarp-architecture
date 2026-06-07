@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Grpc.Server;
+namespace TimeWarp.Architecture.Grpc.Server;
 
 /// <summary>
 /// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.

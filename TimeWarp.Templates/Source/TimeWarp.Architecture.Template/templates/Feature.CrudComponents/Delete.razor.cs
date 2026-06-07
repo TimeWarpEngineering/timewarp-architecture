@@ -1,4 +1,4 @@
-﻿namespace eShopOnBlazorWasm.Features.CatalogItems.Components
+namespace eShopOnBlazorWasm.Features.CatalogItems.Components
 {
   using Microsoft.AspNetCore.Components;
   using System;

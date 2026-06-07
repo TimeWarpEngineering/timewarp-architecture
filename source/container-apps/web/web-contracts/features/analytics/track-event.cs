@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Analytics;
+namespace TimeWarp.Architecture.Features.Analytics;
 
 [TrackEventValidiation]
 public static partial class TrackEvent

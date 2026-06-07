@@ -1,4 +1,4 @@
-﻿namespace __FeatureName__GetEndpoint
+namespace __FeatureName__GetEndpoint
 {
   using FluentAssertions;
   using Microsoft.AspNetCore.Mvc.Testing;

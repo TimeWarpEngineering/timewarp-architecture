@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Data.Configuration;
+namespace TimeWarp.Architecture.Data.Configuration;
 
 public class ProfileConfiguration : IEntityTypeConfiguration<Profile>
 {

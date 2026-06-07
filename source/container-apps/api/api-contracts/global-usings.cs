@@ -1,4 +1,4 @@
-﻿global using Ardalis.GuardClauses;
+global using Ardalis.GuardClauses;
 global using FluentValidation;
 global using JetBrains.Annotations;
 global using TimeWarp.Mediator;

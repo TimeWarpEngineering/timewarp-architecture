@@ -51,8 +51,8 @@ partial class SidebarMobileMenu
       .AddClass("opacity-0", when: !SidebarState.IsOpen)
       .Build();
 
-  private async Task CloseSideBar()
+  private async Task CloseSidebar()
   {
-    await SidebarState.CloseSideBar();
+    await SidebarState.CloseSidebar();
   }
 }

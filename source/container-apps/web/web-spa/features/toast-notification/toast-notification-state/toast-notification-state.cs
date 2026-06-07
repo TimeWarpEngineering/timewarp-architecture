@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.ToastNotifications;
+namespace TimeWarp.Architecture.Features.ToastNotifications;
 
 [StateAccessMixin]
 public sealed partial class ToastNotificationState : State<ToastNotificationState>

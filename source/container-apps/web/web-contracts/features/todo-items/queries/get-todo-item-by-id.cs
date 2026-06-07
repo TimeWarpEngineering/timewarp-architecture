@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.TodoItems;
+namespace TimeWarp.Architecture.Features.TodoItems;
 
 public sealed partial class GetTodoItemById
 {

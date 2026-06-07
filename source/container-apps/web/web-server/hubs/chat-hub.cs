@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Hubs;
+namespace TimeWarp.Architecture.Hubs;
 
 public class ChatHub : Hub
 {

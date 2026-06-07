@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Modules;
+namespace TimeWarp.Modules;
 
 public interface IModule
 {

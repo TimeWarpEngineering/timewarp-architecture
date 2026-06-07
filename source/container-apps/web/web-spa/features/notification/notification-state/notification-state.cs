@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Notifications;
+namespace TimeWarp.Architecture.Features.Notifications;
 
 [StateAccessMixin]
 public sealed partial class NotificationState : State<NotificationState>

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Analytics.Application;
+namespace TimeWarp.Architecture.Features.Analytics.Application;
 
 using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 

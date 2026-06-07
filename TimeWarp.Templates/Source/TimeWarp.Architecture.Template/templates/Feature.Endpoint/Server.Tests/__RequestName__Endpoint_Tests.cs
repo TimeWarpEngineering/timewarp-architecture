@@ -1,4 +1,4 @@
-﻿namespace __RequestName__Endpoint
+namespace __RequestName__Endpoint
 {
   using FluentAssertions;
   using Microsoft.AspNetCore.Mvc.Testing;

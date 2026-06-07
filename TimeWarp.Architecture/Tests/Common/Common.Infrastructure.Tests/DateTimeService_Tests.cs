@@ -1,4 +1,4 @@
-﻿namespace DateTimeService_;
+namespace DateTimeService_;
 
 public class NextUtcNow_Returns
 {

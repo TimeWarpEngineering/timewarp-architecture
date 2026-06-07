@@ -1,4 +1,4 @@
-﻿global using TimeWarp.Mediator;
+global using TimeWarp.Mediator;
 global using TimeWarp.Mediator.Pipeline;
 global using FluentValidation;
 global using JetBrains.Annotations;

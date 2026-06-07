@@ -1,4 +1,4 @@
-﻿# RouteMixin
+# RouteMixin
 
 Trying to support [route constraints](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-8.0#route-constraints) 
 

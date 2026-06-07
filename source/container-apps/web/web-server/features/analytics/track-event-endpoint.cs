@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.Analytics;
+namespace TimeWarp.Architecture.Features.Analytics;
 
 using static TrackEvent;
 public class TrackEventEndpoint : BaseEndpoint<Command, Response>

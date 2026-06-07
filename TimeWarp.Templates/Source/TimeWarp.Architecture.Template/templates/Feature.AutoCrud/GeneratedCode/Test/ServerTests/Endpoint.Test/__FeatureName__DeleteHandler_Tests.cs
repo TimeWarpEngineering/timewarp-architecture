@@ -1,4 +1,4 @@
-﻿namespace __RequestName__Handler
+namespace __RequestName__Handler
 {
   using System.Threading.Tasks;
   using System.Text.Json;

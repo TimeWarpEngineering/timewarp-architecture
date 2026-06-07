@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Modules;
+namespace TimeWarp.Architecture.Modules;
 
 public sealed partial class PostgresDbModule : IModule
 {

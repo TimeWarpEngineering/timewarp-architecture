@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Components;
+namespace TimeWarp.Architecture.Components;
 
 partial class SideNavigation
 {

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Entities;
+namespace TimeWarp.Architecture.Entities;
 
 using FluentValidation;
 

@@ -1,9 +1,20 @@
 @namespace TimeWarp.Architecture.Features.EventStreams
 @inherits BaseComponent
 
+@code
+{
+    // CA1711: Suppressed because 'EventStream' is the name of a component/feature in this 
+    // application (not a System.IO.Stream type). Renaming it would reduce clarity without 
+    // meaningful benefit.
+    #pragma warning disable CA1711
+    public IReadOnlyList<string> Events => EventStreamState.Events;
+    #pragma warning restore CA1711
+}
+
 <ul class="mt-2" @attributes=Attributes>
   @foreach (var item in Events)
   {
     <li>@item</li>
   }
 </ul>
+

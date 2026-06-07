@@ -42,14 +42,14 @@ public class MockWebApiService : IWebServerApiService
     // If no mock factory is found, fall back to the real API service
     if (!Factories.TryGetValue(requestType, out Delegate? factory))
     {
-      Logger.LogDebug(message: "No mock response factory found for {requestType}. Falling back to real API service.", requestType.FullName);
+      Logger.LogDebug(message: "No mock response factory found for {RequestType}. Falling back to real API service.", requestType.FullName);
       return await ApiService.GetResponse<TResponse>(request, cancellationToken);
     }
 
     try
     {
       await Task.Delay(millisecondsDelay: 100, cancellationToken); // Simulate async work
-      Logger.LogDebug(message: "Mock Api Call, Request type: {requestType} Url:{url}", requestType.FullName, request.GetRoute());
+      Logger.LogDebug(message: "Mock Api Call, Request type: {RequestType} Url:{Url}", requestType.FullName, request.GetRoute());
 
       // Invoke the MockResponseFactory
       if (factory is MockResponseFactory<TResponse> mockResponseFactory)

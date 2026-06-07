@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Api.Application;
+namespace TimeWarp.Architecture.Api.Application;
 
 public class ApiApplicationModule : IModule
 {

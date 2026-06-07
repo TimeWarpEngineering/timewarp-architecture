@@ -1,4 +1,4 @@
-﻿[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Testing.Common")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Testing.Common")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Api.Server.Integration.Tests")]
 namespace TimeWarp.Architecture.Services;
 

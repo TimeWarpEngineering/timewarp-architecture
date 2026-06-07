@@ -1,4 +1,4 @@
-﻿global using JetBrains.Annotations;
+global using JetBrains.Annotations;
 global using TimeWarp.Mediator;
 global using Microsoft.Extensions.Logging;
 global using OneOf;

@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Enumerations;
+namespace TimeWarp.Architecture.Enumerations;
 
 /// <summary>
 /// a base class for creating Enumerations.

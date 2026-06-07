@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Api.Contracts;
+namespace TimeWarp.Architecture.Api.Contracts;
 
 /// <summary>
 /// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.

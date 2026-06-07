@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Features.ToastNotifications;
+namespace TimeWarp.Architecture.Features.ToastNotifications;
 
 partial class ToastNotificationState
 {

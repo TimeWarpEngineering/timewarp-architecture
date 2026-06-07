@@ -1,4 +1,4 @@
-﻿# StackedPage.razor
+# StackedPage.razor
 
 The `StackedPage.razor` file represents a page component in the TimeWarp.Architecture project.
 It is a Blazor WASM component used to render the UI for a specific page within the application.
