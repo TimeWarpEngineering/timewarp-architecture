@@ -69,10 +69,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="**/*.md" />
-  </ItemGroup>
-
-  <ItemGroup>
     <!--#if(api)-->
     <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-analyzers\timewarp-architecture-analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />
     <ProjectReference Include="..\..\api\api-contracts\api-contracts.csproj"/>

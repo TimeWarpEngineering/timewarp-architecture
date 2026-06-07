@@ -1,19 +1,54 @@
 @namespace TimeWarp.Architecture.Components.Pages.SitePage
+@*
+  Site-specific page layout built on TimeWarpPage.
+  The left pane and right pane footer are preconfigured while page and aside pane regions remain customizable.
+*@
 @inherits BaseComponent
 @using TimeWarp.Architecture.Components.Pages.SitePage
 @code {
-  // Expose the RenderFragment properties of the TimeWarpPage as needed
-
+  /// <summary>
+  /// Gets or sets custom content for the page pane header.
+  /// </summary>
   [Parameter] public RenderFragment? PagePane_HeaderContent { get; set; }
+
+  /// <summary>
+  /// Gets or sets custom content for the page pane main region.
+  /// </summary>
   [Parameter] public RenderFragment? PagePane_MainContent { get; set; }
+
+  /// <summary>
+  /// Gets or sets custom content for the page pane footer.
+  /// </summary>
   [Parameter] public RenderFragment? PagePane_FooterContent { get; set; }
+
+  /// <summary>
+  /// Gets or sets custom content for the aside pane header.
+  /// </summary>
   [Parameter] public RenderFragment? AsidePane_HeaderContent { get; set; }
+
+  /// <summary>
+  /// Gets or sets custom content for the aside pane main region.
+  /// </summary>
   [Parameter] public RenderFragment? AsidePane_MainContent { get; set; }
+
+  /// <summary>
+  /// Gets or sets custom content for the aside pane footer.
+  /// </summary>
   [Parameter] public RenderFragment? AsidePane_FooterContent { get; set; }
 
-  // Control the visibility of Panes and Areas
+  /// <summary>
+  /// Gets or sets a value indicating whether the preconfigured left pane is visible.
+  /// </summary>
   [Parameter] public bool ShowLeftPane { get; set; } = true;
+
+  /// <summary>
+  /// Gets or sets a value indicating whether the site footer is visible.
+  /// </summary>
   [Parameter] public bool ShowSiteFooter { get; set; } = true;
+
+  /// <summary>
+  /// Gets or sets a value indicating whether placeholder content is displayed in empty regions.
+  /// </summary>
   [Parameter] public bool ShowPlaceholders { get; set; } = false;
 }
 

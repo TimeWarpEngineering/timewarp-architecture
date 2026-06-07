@@ -49,8 +49,6 @@ public class Program : IAspNetProgram
       ConfigureMiddleware(webApplication);
       ConfigureEndpoints(webApplication);
 
-      webApplication.Services.ValidateOptions(builder.Services, logger);
-
       return await webApplication.RunOaktonCommands(argumentArray).ConfigureAwait(false);
     }
     catch (Exception exception)
@@ -231,7 +229,8 @@ public class Program : IAspNetProgram
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
     serviceCollection
-      .ConfigureOptions<SampleOptions, SampleOptionsValidator>(configuration);
+      .AddFluentValidatedOptions<SampleOptions, SampleOptionsValidator>(configuration)
+      .ValidateOnStart();
 
     serviceCollection.Configure<ApiBehaviorOptions>
     (

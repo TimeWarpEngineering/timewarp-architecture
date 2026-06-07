@@ -157,8 +157,11 @@ public class Program
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
     serviceCollection
-      // .ConfigureOptions<ServiceCollectionOptions, ServiceCollectionOptionsValidator>(configuration)
-      .ConfigureOptions<BlazorSettings, BlazorSettingsValidator>(configuration)
-      .ConfigureOptions<PasswordlessOptions, PasswordlessOptionsValidator>(configuration);
+      .AddFluentValidatedOptions<BlazorSettings, BlazorSettingsValidator>(configuration)
+      .ValidateOnStart();
+
+    serviceCollection
+      .AddFluentValidatedOptions<PasswordlessOptions, PasswordlessOptionsValidator>(configuration)
+      .ValidateOnStart();
   }
 }

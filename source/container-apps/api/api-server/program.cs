@@ -18,8 +18,6 @@ public class Program : IAspNetProgram
 
     webApplication.MapDefaultEndpoints();
 
-    webApplication.Services.ValidateOptions(builder.Services, webApplication.Logger);
-
     ConfigureMiddleware(webApplication);
     ConfigureEndpoints(webApplication);
 
