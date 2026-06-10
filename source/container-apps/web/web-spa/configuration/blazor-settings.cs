@@ -3,7 +3,7 @@ namespace TimeWarp.Architecture.Configuration;
 using static RenderMode;
 public sealed class BlazorSettings
 {
-  public RenderMode RenderMode { get; init; } = InteractiveAuto;
+  public RenderMode RenderMode { get; init; } = InteractiveWebAssembly;
   public bool Prerender { get; init; } = true;
 }
 

@@ -1,4 +1,4 @@
-@import "../obj/css/Web.Spa.styles.css";
+@import "../obj/css/web-spa.styles.css";
 
 @tailwind base;
 @tailwind components;
