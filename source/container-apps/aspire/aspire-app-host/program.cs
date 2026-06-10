@@ -64,6 +64,14 @@ internal class Program
 #if api
       yarpConfiguration.AddRoute("/api/{**catch-all}", apiServer);
 #endif
+#if web
+      // Web.Server owns these /api endpoints (see web-contracts RouteMixin templates); their
+      // literal segments outrank the Api.Server catch-all above, so they win regardless of order.
+      yarpConfiguration.AddRoute("/api/GetCurrentUser", webServer);
+      yarpConfiguration.AddRoute("/api/Hello", webServer);
+      yarpConfiguration.AddRoute("/api/Users/{**catch-all}", webServer);
+      yarpConfiguration.AddRoute("/api/signin-token", webServer);
+#endif
 #if grpc
       yarpConfiguration.AddRoute("/grpc/{**catch-all}", grpcServer)
         .WithTransformPathRemovePrefix("/grpc");
