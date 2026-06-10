@@ -183,8 +183,11 @@ public class Program : IAspNetProgram
     CommonServerModule.UseScalarApiReference(webApplication, SwaggerVersion, SwaggerApiTitle);
 
     webApplication.UseResponseCompression();
-    webApplication.UseBlazorFrameworkFiles();
-    webApplication.UseStaticFiles();
+    // Static assets (including the Blazor WASM framework files) are served exclusively by
+    // MapStaticAssets in ConfigureEndpoints. Do not add UseBlazorFrameworkFiles or UseStaticFiles:
+    // UseBlazorFrameworkFiles' MapWhen branch 404s the dynamic /_framework/resource-collection.*.js
+    // endpoint required by WebAssembly interactivity, and UseStaticFiles bypasses the fingerprinted
+    // caching headers.
     webApplication.UseRouting();
     webApplication.UseAntiforgery();
   }
