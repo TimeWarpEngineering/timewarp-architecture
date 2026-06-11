@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <!-- Import repository path definitions -->
   <Import Project="$(MSBuildThisFileDirectory)msbuild/repository.props" />
@@ -74,6 +75,10 @@
   <!-- Banned API enforcement -->
   <ItemGroup Label="Banned API Files">
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup Label="Build Tasks">
+    <PackageReference Include="TimeWarp.Build.Tasks" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

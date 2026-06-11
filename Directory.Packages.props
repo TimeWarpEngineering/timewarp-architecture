@@ -6,9 +6,9 @@
   </PropertyGroup>
   <ItemGroup Label="TimeWarp Packages">
     <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.70" />
-    
+    <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
   </ItemGroup>
-<ItemGroup Label="Microsoft Extensions Packages">
+  <ItemGroup Label="Microsoft Extensions Packages">
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
@@ -106,5 +106,31 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.3.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0" />
+  </ItemGroup>
+  <!-- Versions for test projects pending migration to the root tree (task 053-050-019).
+       Sourced from TimeWarp.Architecture/Directory.Packages.props; family-versioned
+       packages (ASP.NET Core, Aspire) aligned with the pins above. -->
+  <ItemGroup Label="Test Packages">
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.3" />
+    <PackageVersion Include="AutoFixture" Version="4.18.1" />
+    <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
+    <PackageVersion Include="Boxed.AspNetCore" Version="8.1.2" />
+    <PackageVersion Include="Boxed.DotnetNewTest" Version="5.0.0" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="FakeItEasy" Version="8.3.0" />
+    <PackageVersion Include="Fixie" Version="4.1.0" />
+    <PackageVersion Include="Fixie.TestAdapter" Version="4.1.0" />
+    <PackageVersion Include="FluentAssertions" Version="6.7.0" />
+    <PackageVersion Include="GlobalUsingsAnalyzer" Version="1.4.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.2" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.3.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.55.0" />
+    <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="TimeWarp.Fixie" Version="3.1.0" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.7" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
   </ItemGroup>
 </Project>
