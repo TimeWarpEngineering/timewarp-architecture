@@ -3,7 +3,24 @@
 ## Description
 
 `ganda repo audit` reports 5 failing checks (11 pass, 1 skip). Bring the repo into
-compliance so the audit runs clean. Re-run `ganda repo audit` after each fix to verify.
+compliance so the audit runs clean.
+
+## Related
+
+- 048 (in progress) scaffolded the same convention files the audit fixers touch
+  (Directory.Build.props, BannedSymbols.txt, directory skeleton) via
+  `ganda repo enforce-dev-cli --fix`. Coordinate so the two do not produce
+  conflicting edits.
+- 053-050-019 (test project migration) owns most of the cpm-consistency fallout.
+
+## Plan
+
+1. Run `ganda repo audit --fix` first. Four of the five failures are auto-fixable
+   (assembly-metadata, banned-symbols, directory-structure, workflow-file). Review
+   the generated changes before committing.
+2. Resolve cpm-consistency manually — it is the only non-fixable check and needs
+   per-package decisions (see below).
+3. Re-run `ganda repo audit` to confirm no blocking failures remain.
 
 ## Requirements
 
@@ -62,11 +79,9 @@ expected content or initial placeholder per the ganda convention.
 
 ## Checklist
 
-- [ ] Reference TimeWarp.Build.Tasks in Directory.Build.props
-- [ ] Add required banned API rule
+- [ ] Run `ganda repo audit --fix` and review/commit the generated changes
+      (covers assembly-metadata, banned-symbols, directory-structure, workflow-file)
 - [ ] Resolve all 55 missing PackageVersion entries (add to CPM or retire)
-- [ ] Create documentation/, tests/, skills/, kanban/backlog/
-- [ ] Add .github/workflows/workflow.yml
 - [ ] `ganda repo audit` passes with no blocking failures
 
 ## Notes
