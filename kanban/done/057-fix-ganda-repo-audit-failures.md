@@ -79,12 +79,32 @@ expected content or initial placeholder per the ganda convention.
 
 ## Checklist
 
-- [ ] Run `ganda repo audit --fix` and review/commit the generated changes
+- [x] Run `ganda repo audit --fix` and review/commit the generated changes
       (covers assembly-metadata, banned-symbols, directory-structure, workflow-file)
-- [ ] Resolve all 55 missing PackageVersion entries (add to CPM or retire)
-- [ ] `ganda repo audit` passes with no blocking failures
+- [x] Resolve all 55 missing PackageVersion entries (add to CPM or retire)
+- [x] `ganda repo audit` passes with no blocking failures
 
 ## Notes
 
 Audit run on 2026-06-11 with ganda against the dev worktree. Related existing tasks:
 053-050-019 (test project migration), 056 (nullable reference types).
+
+## Implementation Notes
+
+Completed 2026-06-11. Final audit: 16 passed, 0 failed, 1 skipped.
+
+- `ganda repo audit --fix` handled the four fixable checks: TimeWarp.Build.Tasks
+  reference (props reformatted by hand afterward — the fixer appends unformatted
+  one-liners), ProcessStartInfo banned-symbol rule, directory skeleton with .gitkeep
+  files, and the CI workflow.yml. TimeWarp.Build.Tasks only injects CommitHash and
+  CommitDate assembly metadata; it does not alter build behavior.
+- cpm-consistency: added a "Test Packages" ItemGroup to Directory.Packages.props with
+  the 21 unique missing packages. Versions sourced from
+  TimeWarp.Architecture/Directory.Packages.props; family-versioned packages aligned
+  with existing root pins (Mvc.Testing 10.0.9, Aspire.Hosting.Testing 13.4.3,
+  CodeAnalysis.CSharp.Workspaces 5.3.0).
+- Added global.json pinning SDK 10.0.301 (rollForward latestFeature). The machine now
+  has the .NET 11.0.100-preview.5 SDK installed alongside 10.x, and with
+  AnalysisLevel=latest-all plus warnings-as-errors the preview SDK's newer analyzers
+  produced 423 style errors. Pinning keeps the repo deterministic; remove the pin
+  deliberately when moving to .NET 11.

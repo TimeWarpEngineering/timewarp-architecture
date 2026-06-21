@@ -14,6 +14,19 @@
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "label": "ganda: window icon",
+      "type": "shell",
+      "command": "ganda repo avatar window",
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "silent",
+        "echo": false
+      },
+      "problemMatcher": []
     }
   ]
 }
