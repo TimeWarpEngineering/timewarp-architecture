@@ -41,6 +41,7 @@
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="BlazorComponentUtilities"/>
+    <PackageReference Include="TimeWarp.Components"/>
     <PackageReference Include="Grpc.Net.Client"/>
     <PackageReference Include="Grpc.Net.Client.Web"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" />

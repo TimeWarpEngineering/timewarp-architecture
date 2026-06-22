@@ -55,6 +55,16 @@ global using TimeWarp.Architecture;
 
 // Solution usings
 global using TimeWarp.Architecture.Components;
+
+// Base component hierarchy now comes from the TimeWarp.Components package (was defined
+// inline under TimeWarp.Architecture.Components). Aliased rather than whole-namespace
+// imported to avoid clashing with the FluentUI CssBuilder
+// (Microsoft.FluentUI.AspNetCore.Components.Utilities) imported above. Migrating the
+// CssBuilder usage to TimeWarp.Components is a follow-up (needs API parity).
+global using DisplayComponent = TimeWarp.Components.DisplayComponent;
+global using ParentComponent = TimeWarp.Components.ParentComponent;
+global using IAttributeComponent = TimeWarp.Components.IAttributeComponent;
+global using IParentComponent = TimeWarp.Components.IParentComponent;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.Configuration.Passwordless;
 global using TimeWarp.Architecture.Extensions;
