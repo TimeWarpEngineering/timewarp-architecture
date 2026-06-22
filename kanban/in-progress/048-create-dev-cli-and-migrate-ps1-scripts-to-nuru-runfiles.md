@@ -35,11 +35,16 @@ Scaffold dev-cli using `ganda repo enforce-dev-cli --fix` and establish the foun
 ### Remaining (during/after migration)
 - [ ] Update `test-command.cs` to run actual tests (currently generic template)
 - [x] Add `run` command (replaces `Run.ps1`) - wraps `aspire run --apphost <apphost>`
-- [ ] Add `watch` command (replaces `Watch.ps1`)
-- [ ] Add `tailwind` command (replaces `RunTailwind.ps1`)
-- [ ] Add `npm-install` command (replaces `RunNpmInstall.ps1`)
 - [ ] Keep `.ps1` scripts working in `TimeWarp.Architecture/` during migration
 - [ ] Remove `.ps1` scripts after migration complete
+
+### Dropped (no longer needed)
+- ~~Add `watch` command (replaces `Watch.ps1`)~~ - superseded by `aspire run`'s built-in
+  watch (`defaultWatchEnabled` feature flag); `dev run` inherits it. No per-invocation
+  CLI flag exists, so a separate command would only toggle global config.
+- ~~Add `tailwind` command (replaces `RunTailwind.ps1`)~~ - moving away from Tailwind CSS.
+- ~~Add `npm-install` command (replaces `RunNpmInstall.ps1`)~~ - no longer needed (dropping
+  the npm/Tailwind frontend toolchain).
 
 ## Notes
 
@@ -50,3 +55,8 @@ Scaffold dev-cli using `ganda repo enforce-dev-cli --fix` and establish the foun
   `dotnet run --project` from Run.ps1, matching the move to first-party Aspire. Uses
   Amuru `PassthroughAsync` for interactive dashboard/logs/Ctrl+C. Requires the aspire
   CLI on PATH.
+- For hot reload, enable Aspire's built-in watch once:
+  `aspire config set features.defaultWatchEnabled true`. `dev run` then restarts on file
+  changes, replacing the old `dotnet watch` (Watch.ps1) workflow.
+- Tailwind/npm frontend toolchain is being dropped, so the `tailwind` and `npm-install`
+  commands (and eventually RunTailwind.ps1 / RunNpmInstall.ps1) are not being migrated.
