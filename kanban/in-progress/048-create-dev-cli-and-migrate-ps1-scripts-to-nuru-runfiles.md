@@ -34,7 +34,7 @@ Scaffold dev-cli using `ganda repo enforce-dev-cli --fix` and establish the foun
 
 ### Remaining (during/after migration)
 - [ ] Update `test-command.cs` to run actual tests (currently generic template)
-- [ ] Add `run` command (replaces `Run.ps1`)
+- [x] Add `run` command (replaces `Run.ps1`) - wraps `aspire run --apphost <apphost>`
 - [ ] Add `watch` command (replaces `Watch.ps1`)
 - [ ] Add `tailwind` command (replaces `RunTailwind.ps1`)
 - [ ] Add `npm-install` command (replaces `RunNpmInstall.ps1`)
@@ -46,3 +46,7 @@ Scaffold dev-cli using `ganda repo enforce-dev-cli --fix` and establish the foun
 - Dev-cli commands use `Git.FindRoot()` to discover repository root dynamically
 - Commands will work correctly once projects are migrated to root structure
 - `.ps1` scripts remain in `TimeWarp.Architecture/` as fallback during migration
+- `run` wraps the first-party Aspire CLI (`aspire run`) rather than the legacy
+  `dotnet run --project` from Run.ps1, matching the move to first-party Aspire. Uses
+  Amuru `PassthroughAsync` for interactive dashboard/logs/Ctrl+C. Requires the aspire
+  CLI on PATH.
