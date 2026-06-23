@@ -1,7 +1,6 @@
 @namespace TimeWarp.Architecture.Pages
 @page "/UserClaims"
 @using TimeWarp.Architecture.Features.Developer.Components
-@using TimeWarp.Architecture.Features.Sidebars
 @inherits BaseComponent
 
 @code {
@@ -9,10 +8,8 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.Question();
 }
 
-<SidebarPage>
-  <MainContent>
-    <FluentStack Orientation=Orientation.Vertical>
-      <UserClaims/>
-    </FluentStack>
-  </MainContent>
-</SidebarPage>
+<TimeWarpPage Title="User Claims">
+  <Card>
+    <UserClaims/>
+  </Card>
+</TimeWarpPage>

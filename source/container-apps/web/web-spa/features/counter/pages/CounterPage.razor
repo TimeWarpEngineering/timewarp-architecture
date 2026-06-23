@@ -1,7 +1,5 @@
 @namespace TimeWarp.Architecture.Pages
-
 @inherits BaseComponent
-
 @inject IJSRuntime JsRuntime
 @code {
   public static string Title => "Counter";
@@ -15,29 +13,25 @@
 
 <PageTitle>Counter Page</PageTitle>
 
-<SidebarPage>
-  <HeaderContent>Counter Page</HeaderContent>
-  <MainContent>
-    <h1 class="text-2xl font-bold leading-tight text-gray-900">Counter Display 1</h1>
-    <Counter TestId="Counter1" />
-
-    <hr class="mt-4" />
-    <h1 class="mt-4 text-2xl font-bold leading-tight text-gray-900">Counter Display 2</h1>
-    <Counter TestId="Counter2" />
-
-    <hr class="mt-4" />
-    <Text class="block mt-4">Reset button will clear all state in the Store and return you to the home page</Text>
-    <FluentButton Appearance=ButtonAppearance.Primary Id=@Id data-qa=@TestId OnClick=ResetButtonClick>Reset Store</FluentButton>
-
-    <hr class="mt-4" />
-    <Text class="block mt-4">Click below to send a Change Route Request that should take back to home page.</Text>
-    <FluentButton Appearance=ButtonAppearance.Primary data-qa="ChangeRoute" OnClick=ButtonClick>Change Route to Home</FluentButton>
-
-    <hr class="mt-4" />
-    <Text class="block mt-4">Click below to send a IncrementCountAction via JsInterop.</Text>
-
-    <FluentButton Appearance=ButtonAppearance.Primary data-qa="JsInterop" OnClick=IncrementCountViaJsInterop >Increment Count by 7 via JavaScript Interop</FluentButton>
-  </MainContent>
-</SidebarPage>
-
-
+<TimeWarpPage Title="Counter">
+  <div class="twe-stack">
+    <Card Title="Counter Display 1"><Counter TestId="Counter1" /></Card>
+    <Card Title="Counter Display 2"><Counter TestId="Counter2" /></Card>
+    <Card Title="State actions">
+      <FluentStack Orientation=Orientation.Vertical VerticalGap="16">
+        <div>
+          <p>Reset clears all state in the Store and returns you to the home page.</p>
+          <FluentButton Appearance=ButtonAppearance.Primary Id=@Id data-qa=@TestId OnClick=ResetButtonClick>Reset Store</FluentButton>
+        </div>
+        <div>
+          <p>Send a Change Route request that takes you back to the home page.</p>
+          <FluentButton Appearance=ButtonAppearance.Primary data-qa="ChangeRoute" OnClick=ButtonClick>Change Route to Home</FluentButton>
+        </div>
+        <div>
+          <p>Send an IncrementCount action via JavaScript interop.</p>
+          <FluentButton Appearance=ButtonAppearance.Primary data-qa="JsInterop" OnClick=IncrementCountViaJsInterop>Increment Count by 7 via JavaScript Interop</FluentButton>
+        </div>
+      </FluentStack>
+    </Card>
+  </div>
+</TimeWarpPage>
