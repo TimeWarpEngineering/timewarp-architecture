@@ -71,7 +71,7 @@
       </FluentLayoutItem>
     }
 
-    <FluentLayoutItem Area="LayoutArea.Footer">
+    <FluentLayoutItem Area="LayoutArea.Footer" Height="44px">
       <footer class="twe-footer">
         <span class="twe-footer__mode">@CurrentRenderMode</span>
         <FluentSpacer />
@@ -120,7 +120,7 @@
 
     .twe-shell .twe-footer {
       display: flex; align-items: center; gap: 12px; width: 100%;
-      min-height: 40px; padding: 10px 16px;
+      height: 100%; padding: 0 16px; box-sizing: border-box;
       border-top: 1px solid var(--twe-rule); background: var(--twe-paper);
       color: var(--twe-muted); font-size: var(--twe-text-helper);
     }
