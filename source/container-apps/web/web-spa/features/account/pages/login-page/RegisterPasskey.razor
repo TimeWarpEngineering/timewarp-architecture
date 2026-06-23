@@ -75,13 +75,9 @@
 
 }
 
-<h1>Register with Passkey</h1>
-
-<button class="btn btn-primary" @onclick=RegisterWithPasskey>
-  Register with Passkey
-</button>
+<FluentButton Appearance=ButtonAppearance.Outline OnClick=RegisterWithPasskey>Register with a passkey</FluentButton>
 
 @if (!string.IsNullOrEmpty(ErrorMessage))
 {
-  <div class="alert alert-danger mt-3">@ErrorMessage</div>
+  <SimpleAlert Type=SimpleAlert.AlertType.Danger Title="Error">@ErrorMessage</SimpleAlert>
 }

@@ -32,6 +32,9 @@
   letter-spacing: -0.015em;
   color: var(--twe-ink);
 }
+/* FocusOnNavigate (Routes.razor, Selector="h1") programmatically focuses the title;
+   suppress the focus ring on that non-interactive heading. */
+.twe-page__title:focus { outline: none; }
 .twe-page__body { color: var(--twe-ink); }
 
 /* Aside */
