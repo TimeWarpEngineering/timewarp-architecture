@@ -1,8 +1,20 @@
 @namespace TimeWarp.Architecture.Components
 @inherits LayoutComponentBase
+@inject IThemeService ThemeService
 @code
 {
   protected const string HeadingHeight = "52px";
+
+  // Generate the FluentUI v5 brand ramp from the TimeWarp Enterprises brand purple (the
+  // dominant logo color). SetThemeAsync uses JS interop, so it must run client-side
+  // (interactive), never during server prerender.
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender && RendererInfo.IsInteractive)
+    {
+      await ThemeService.SetThemeAsync(new ThemeSettings("#55409c", 0, 0, ThemeMode.Light, false));
+    }
+  }
 }
 @Body
 

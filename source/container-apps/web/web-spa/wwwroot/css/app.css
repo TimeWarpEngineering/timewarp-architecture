@@ -12,17 +12,17 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  font-family: var(--twa-font-sans);
-  font-size: var(--twa-text-body);
-  color: var(--twa-ink);
-  background: var(--twa-background);
+  font-family: var(--twe-font-sans);
+  font-size: var(--twe-text-body);
+  color: var(--twe-ink);
+  background: var(--twe-background);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4, h5, h6, p, figure { margin: 0; }
 
-a { color: var(--twa-primary); text-decoration: none; }
+a { color: var(--twe-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 img, svg { display: block; max-width: 100%; }
@@ -55,6 +55,6 @@ button { font-family: inherit; }
 /* Placeholder for empty layout regions (TimeWarpPage) */
 .placeholder {
   width: 100%;
-  border: 2px dashed var(--twa-rule);
-  border-radius: var(--twa-radius-sm);
+  border: 2px dashed var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
 }

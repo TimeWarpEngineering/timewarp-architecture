@@ -27,7 +27,7 @@ composes FluentUI:
    native HTML root** (`<section>`/`<button>`/`<div>`/`<span>`), never a FluentUI/child
    component as its root. This is what keeps isolation working.
 2. **Brand tokens are global** in `web-spa/wwwroot/css/tokens.css` as CSS custom properties.
-   Consume them with `var(--twa-*)`. Tokens are the single source of truth for color, type
+   Consume them with `var(--twe-*)`. Tokens are the single source of truth for color, type
    scale, radius, elevation, and status palette — never hard-code these in component CSS.
 3. **Exception A — styling *inside* a FluentUI primitive (shadow DOM):** use `::part()` +
    CSS custom properties only. Nothing else works.
@@ -38,7 +38,7 @@ composes FluentUI:
    `Style=@Value` for genuinely dynamic per-instance values only).
    - **Multi-instance** component → scope by `.@(Id)` (the `Id` from the state base
      component, see Tiers below).
-   - **Singleton** (e.g. the layout/shell) → a fixed namespaced root class (`.twa-shell`).
+   - **Singleton** (e.g. the layout/shell) → a fixed namespaced root class (`.twe-shell`).
 
 ## Two base-class tiers (keep them separate)
 
@@ -72,22 +72,22 @@ a `FluentMultiSplitter` (a child component, Wall A) and styles it without `::dee
 
 The `Class=@($"{Id} ...")` puts our scope handle on the FluentUI component's light-DOM root;
 the `.{Id}` selector in the co-located `<style>` reaches it. Singletons use a fixed class
-(`.twa-shell`) instead of `.{Id}`.
+(`.twe-shell`) instead of `.{Id}`.
 
 ## Tier-1 example (leaf, isolation)
 
 ```razor
 @* Card.razor *@
 <section @attributes="Attributes" class="@CssClass">
-  <div class="twa-card__body">@ChildContent</div>
+  <div class="twe-card__body">@ChildContent</div>
 </section>
 ```
 ```css
 /* Card.razor.css */
-.twa-card {
-  background: var(--twa-paper);
-  border: 1px solid var(--twa-rule);
-  border-radius: var(--twa-radius);
+.twe-card {
+  background: var(--twe-paper);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius);
 }
 ```
 
@@ -96,9 +96,9 @@ the `.{Id}` selector in the co-located `<style>` reaches it. Singletons use a fi
 | Situation | Approach |
 |---|---|
 | Leaf component with a native root | Isolation (`*.razor.css`) |
-| Need a brand color / size / radius | `var(--twa-*)` from `tokens.css` |
+| Need a brand color / size / radius | `var(--twe-*)` from `tokens.css` |
 | Style a FluentUI light-DOM child (FluentStack, FluentNav, splitter…) | Exception B: `Class=@($"{Id} …")` + `.{Id}` in co-located `<style>` |
-| Singleton layout/shell | Exception B with a fixed root class (`.twa-shell`) |
+| Singleton layout/shell | Exception B with a fixed root class (`.twe-shell`) |
 | Change a FluentUI primitive's internals (button bg, text color) | Exception A: `::part()` + CSS variables |
 | Truly dynamic per-instance value | `Style=@Value` (sparingly only) |
 | Anything | **Never** `global.css` dumping ground; **never** inline `style=` as the system |
