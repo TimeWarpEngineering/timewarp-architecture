@@ -1,0 +1,24 @@
+@namespace TimeWarp.Architecture.Components
+@*
+  Design-system status pill (Tier-1 leaf, native root). Styled by .twe-badge in
+  wwwroot/css/components.css using the --twe-* tokens.
+*@
+<span class="twe-badge twe-badge--@Modifier @Class">
+  <span class="twe-badge__dot"></span>
+  @(Label ?? Status.ToString())
+</span>
+
+@code {
+  [Parameter] public BadgeStatus Status { get; set; } = BadgeStatus.Active;
+  [Parameter] public string? Label { get; set; }
+  [Parameter] public string? Class { get; set; }
+
+  private string Modifier => Status switch
+  {
+    BadgeStatus.Active => "active",
+    BadgeStatus.Inactive => "inactive",
+    BadgeStatus.Warning => "warning",
+    BadgeStatus.Info => "info",
+    _ => "active",
+  };
+}

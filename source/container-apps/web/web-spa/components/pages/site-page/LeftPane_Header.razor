@@ -1,15 +1,20 @@
 @namespace TimeWarp.Architecture.Components.Pages.SitePage
 @inherits BaseComponent
 
-<FluentStack Class=@BaseCssBuilder.ToString() HorizontalAlignment=HorizontalAlignment.Center>
-  <Logo />
+<FluentStack Class=@BaseCssBuilder.ToString() HorizontalAlignment=HorizontalAlignment.Center VerticalAlignment=VerticalAlignment.Center>
+  <span class="twe-wordmark">Time<span class="twe-wordmark__accent">Warp</span></span>
 </FluentStack>
 
 <style>
   @($@"
-    .{Id} .timewarp-logo {{
-      height: 2rem;
-      width: auto;
+    .{Id} .twe-wordmark {{
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      color: var(--twe-purple);
+    }}
+    .{Id} .twe-wordmark__accent {{
+      color: var(--twe-green);
     }}
   ")
 </style>

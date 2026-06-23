@@ -1,0 +1,60 @@
+/* TimeWarp design-system components — plain CSS on the --twe-* tokens (tokens.css).
+   Global (not scoped) because the scoped-css pipeline is still vestigial Tailwind-era
+   plumbing; migrate to *.razor.css isolation once 059-006 cleans the csproj. */
+
+/* Card --------------------------------------------------------------------- */
+.twe-card {
+  background: var(--twe-paper);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius);
+  padding: 20px 24px;
+  box-shadow: var(--twe-shadow-sm);
+}
+.twe-card__title {
+  font-size: var(--twe-text-section-title);
+  font-weight: 600;
+  margin: 0 0 16px;
+  color: var(--twe-ink);
+}
+.twe-card__body { color: var(--twe-ink-2); font-size: var(--twe-text-body); line-height: 1.55; }
+
+/* Status badge ------------------------------------------------------------- */
+.twe-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: var(--twe-text-helper);
+  font-weight: 500;
+  line-height: 1.5;
+}
+.twe-badge__dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.twe-badge--active   { background: #e5f7ec; color: #14784a; }
+.twe-badge--active .twe-badge__dot   { background: var(--twe-green); }
+.twe-badge--inactive { background: var(--twe-paper-2); color: var(--twe-muted); }
+.twe-badge--inactive .twe-badge__dot { background: var(--twe-muted); }
+.twe-badge--warning  { background: #fef3c7; color: #92400e; }
+.twe-badge--warning .twe-badge__dot  { background: var(--twe-warning); }
+.twe-badge--info     { background: #e6f4fa; color: var(--twe-blue-deep); }
+.twe-badge--info .twe-badge__dot     { background: var(--twe-blue); }
+
+/* Layout helpers ----------------------------------------------------------- */
+.twe-stack { display: flex; flex-direction: column; gap: 16px; }
+
+/* Inline icon sizing (e.g. brand icons in nav) */
+.twe-icon { width: 20px; height: 20px; fill: var(--twe-muted); }
+
+/* Style-guide page --------------------------------------------------------- */
+.sg-header { margin-bottom: 8px; }
+.sg-title { font-size: var(--twe-text-page-title); font-weight: 700; margin: 0; color: var(--twe-ink); }
+.sg-subtitle { color: var(--twe-muted); margin: 4px 0 0; font-size: var(--twe-text-body); }
+.sg-swatches { display: flex; flex-wrap: wrap; gap: 16px; }
+.sg-swatch { width: 132px; }
+.sg-swatch__chip { height: 64px; border-radius: 10px; border: 1px solid var(--twe-rule); }
+.sg-swatch__name { font-size: var(--twe-text-body); font-weight: 600; margin-top: 8px; color: var(--twe-ink); }
+.sg-swatch__hex { font-size: var(--twe-text-helper); color: var(--twe-muted); }
+.sg-type { display: flex; flex-direction: column; gap: 10px; }
+.sg-type__row { color: var(--twe-ink); font-weight: 600; line-height: 1.1; }
+.sg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }

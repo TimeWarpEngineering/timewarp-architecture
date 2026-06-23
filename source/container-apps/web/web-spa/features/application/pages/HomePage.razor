@@ -3,7 +3,6 @@
 @using TimeWarp.Architecture.Components.Pages.SitePage
 @inherits BaseComponent
 
-@inject ILogger<HomePage> Logger
 @code
 {
   public static Icon? NavIcon => new Icons.Regular.Size20.Home();
@@ -17,17 +16,6 @@
 
   private async Task ModalButtonClick() =>
     await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
-
-  protected override void OnInitialized()
-  {
-    base.OnInitialized();
-    Logger.LogDebug("This is a debug message");
-    Logger.LogInformation("This is an info message");
-    Logger.LogWarning("This is a warning message");
-    // Logger.LogError("This is an error message");
-    // Logger.LogCritical("This is a critical message");
-  }
-
 }
 
 <SitePage>
@@ -35,66 +23,38 @@
     @ApplicationState.Name
   </PagePane_HeaderContent>
   <PagePane_MainContent>
-    <FluentStack Orientation=Orientation.Vertical>
-      <FluentLabel Typo=Typography.Body>
-        Welcome to your new
-        <NavLink href="https://github.com/TimeWarpEngineering/timewarp-architecture">TimeWarp Architecture</NavLink>
-        app with
+    <div class="twe-stack">
+
+      <Card Title="Welcome to TimeWarp.Architecture">
+        A distributed .NET reference application and project template by
+        <NavLink href="https://timewarp.enterprises/" target="_blank">TimeWarp Enterprises</NavLink>.
+        It demonstrates an opinionated, batteries-included architecture you can clone and build on.
+      </Card>
+
+      <Card Title="Built with">
         <ul>
-          <li>
-            <NavLink href="https://www.nuget.org/profiles/TimeWarp.Enterprises">TimeWarp.Enterprises nugets</NavLink>
-          </li>
-          <li>
-            <NavLink href="https://timewarpengineering.github.io/timewarp-state/"> Blazor State</NavLink>
-          </li>
-          <li>
-            <NavLink href="https://github.com/jbogard/MediatR" target="blank">MediatR.</NavLink>
-          </li>
-          <li>
-            <NavLink href="https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en" target="blank">Redux Dev Tools Chrome Extension </NavLink>
-          </li>
+          <li>.NET 10 &amp; Blazor WebAssembly</li>
+          <li><NavLink href="https://github.com/microsoft/fluentui-blazor" target="_blank">FluentUI Blazor v5</NavLink> + plain CSS design tokens</li>
+          <li><NavLink href="https://timewarpengineering.github.io/timewarp-state/" target="_blank">TimeWarp.State</NavLink> (Redux-style state) with Redux DevTools</li>
+          <li><NavLink href="https://github.com/jbogard/MediatR" target="_blank">MediatR</NavLink> for CQRS &amp; <NavLink href="https://fast-endpoints.com/" target="_blank">FastEndpoints</NavLink> for APIs</li>
+          <li><NavLink href="https://learn.microsoft.com/dotnet/aspire/" target="_blank">.NET Aspire</NavLink> orchestration + YARP ingress</li>
         </ul>
-      </FluentLabel>
+      </Card>
 
-      <SimpleAlert Title="Alert">
-        This site is built with
-        <NavLink href="https://github.com/microsoft/fluentui-blazor" target="blank">Fluent UI Blazor v5</NavLink>
-        and plain CSS.
-      </SimpleAlert>
+      <Card Title="Try it">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
+          <FluentButton Appearance="ButtonAppearance.Primary" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Outline" OnClick=TwoSecondTaskButtonClick>Launch Two Second Task</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=ModalButtonClick>Show Modal</FluentButton>
+        </FluentStack>
+      </Card>
 
-      <img alt="Solid Team" class="w-full" src="/images/TheFreezeTeam/SOLID_Team.png" />
-      <div>
-        <FluentButton Appearance="ButtonAppearance.Primary" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
-        <FluentButton Appearance="ButtonAppearance.Primary" OnClick=TwoSecondTaskButtonClick>Launch Two Second Task</FluentButton>
-        <FluentButton Appearance="ButtonAppearance.Primary" OnClick=ModalButtonClick>Show Modal</FluentButton>
-      </div>
+      <Card Title="Credits">
+        Hero artwork from
+        <NavLink href="https://thefreezeteam.com/" target="_blank">The Freeze Team</NavLink>,
+        the TimeWarp Enterprises engineering blog.
+      </Card>
 
-      <FluentLabel Typo="Typography.Body"> Example 'Body' label </FluentLabel>
-      <FluentLabel Typo="Typography.Subject"> Example 'Subject' label </FluentLabel>
-      <FluentLabel Typo="Typography.Header"> Example 'Header' label </FluentLabel>
-      <FluentLabel Typo="Typography.PaneHeader"> Example 'PaneHeader' label </FluentLabel>
-      <FluentLabel Typo="Typography.EmailHeader"> Example 'EmailHeader' label </FluentLabel>
-      <FluentLabel Typo="Typography.PageTitle"> Example 'PageTitle' label </FluentLabel>
-      <FluentLabel Typo="Typography.HeroTitle"> Example 'HeroTitle' label </FluentLabel>
-      <FluentLabel Typo="Typography.H1"> Example 'H1' label </FluentLabel>
-      <FluentLabel Typo="Typography.H2"> Example 'H2' label </FluentLabel>
-      <FluentLabel Typo="Typography.H3"> Example 'H3' label </FluentLabel>
-      <FluentLabel Typo="Typography.H4"> Example 'H4' label </FluentLabel>
-      <FluentLabel Typo="Typography.H5"> Example 'H5' label </FluentLabel>
-      <FluentLabel Typo="Typography.H6"> Example 'H6' label </FluentLabel>
-
-    </FluentStack>
+    </div>
   </PagePane_MainContent>
-  <PagePane_FooterContent>
-    PagePane_FooterContent
-  </PagePane_FooterContent>
-  <AsidePane_HeaderContent>
-    AsidePane_HeaderContent
-  </AsidePane_HeaderContent>
-  <AsidePane_MainContent>
-    AsidePane_MainContent
-  </AsidePane_MainContent>
-  <AsidePane_FooterContent>
-    AsidePane_FooterContent
-  </AsidePane_FooterContent>
 </SitePage>

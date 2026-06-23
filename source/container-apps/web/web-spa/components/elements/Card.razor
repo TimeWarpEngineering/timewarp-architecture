@@ -1,0 +1,20 @@
+@namespace TimeWarp.Architecture.Components
+@*
+  Design-system content card (Tier-1 leaf, native root). Styled by .twe-card in
+  wwwroot/css/components.css using the --twe-* tokens. See skills/blazor-css-strategy.
+*@
+<section class="twe-card @Class">
+  @if (!string.IsNullOrWhiteSpace(Title))
+  {
+    <h2 class="twe-card__title">@Title</h2>
+  }
+  <div class="twe-card__body">
+    @ChildContent
+  </div>
+</section>
+
+@code {
+  [Parameter] public string? Title { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+}
