@@ -1,5 +1,4 @@
 @namespace TimeWarp.Architecture.Pages
-@using TimeWarp.Architecture.Components.Pages.SitePage
 @inherits BaseComponent
 
 @code {
@@ -28,11 +27,7 @@
   ];
 }
 
-<SitePage>
-  <PagePane_HeaderContent>
-    Style Guide
-  </PagePane_HeaderContent>
-  <PagePane_MainContent>
+<TimeWarpPage Title="Style Guide">
     <div class="twe-stack">
 
       <p class="sg-subtitle">Live brand tokens, type scale, and components — TimeWarp Enterprises brand.</p>
@@ -78,5 +73,4 @@
       </Card>
 
     </div>
-  </PagePane_MainContent>
-</SitePage>
+</TimeWarpPage>

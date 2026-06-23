@@ -1,24 +1,20 @@
 @namespace TimeWarp.Architecture.Pages
-@using TimeWarp.Architecture.Components.Pages.SitePage
 @inherits BaseComponent
 
 <PageTitle>Page Not Found</PageTitle>
-<SitePage Tip=@GetType().Name ShowInBreadcrumbs=false>
-
-  <PagePane_MainContent>
-    <main class="error-page">
-      <div class="error-content">
-        <p class="error-code">403</p>
-        <h1 class="error-title">Forbidden</h1>
-        <p class="error-message">You do not have permission to access this resource. Please ensure you are logged in with the correct permissions.</p>
-        <div class="error-actions">
-          <a href="#" class="home-button">Go back home</a>
-          <a href="#" class="support-link">Contact support <span aria-hidden="true">&rarr;</span></a>
-        </div>
+<TimeWarpPage>
+  <main class="error-page">
+    <div class="error-content">
+      <p class="error-code">403</p>
+      <h1 class="error-title">Forbidden</h1>
+      <p class="error-message">You do not have permission to access this resource. Please ensure you are logged in with the correct permissions.</p>
+      <div class="error-actions">
+        <a href="#" class="home-button">Go back home</a>
+        <a href="#" class="support-link">Contact support <span aria-hidden="true">&rarr;</span></a>
       </div>
-    </main>
-  </PagePane_MainContent>
-</SitePage>
+    </div>
+  </main>
+</TimeWarpPage>
 
 <style>
   .error-page {

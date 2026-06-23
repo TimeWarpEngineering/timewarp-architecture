@@ -1,6 +1,4 @@
 @namespace TimeWarp.Architecture.Pages
-@using TimeWarp.Architecture.Features.Sidebars
-@using TimeWarp.Architecture.Components.Pages.SitePage
 @inherits BaseComponent
 
 @code
@@ -18,43 +16,38 @@
     await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
 }
 
-<SitePage>
-  <PagePane_HeaderContent>
-    @ApplicationState.Name
-  </PagePane_HeaderContent>
-  <PagePane_MainContent>
-    <div class="twe-stack">
+<TimeWarpPage Title=@ApplicationState.Name>
+  <div class="twe-stack">
 
-      <Card Title="Welcome to TimeWarp.Architecture">
-        A distributed .NET reference application and project template by
-        <NavLink href="https://timewarp.enterprises/" target="_blank">TimeWarp Enterprises</NavLink>.
-        It demonstrates an opinionated, batteries-included architecture you can clone and build on.
-      </Card>
+    <Card Title="Welcome to TimeWarp.Architecture">
+      A distributed .NET reference application and project template by
+      <NavLink href="https://timewarp.enterprises/" target="_blank">TimeWarp Enterprises</NavLink>.
+      It demonstrates an opinionated, batteries-included architecture you can clone and build on.
+    </Card>
 
-      <Card Title="Built with">
-        <ul>
-          <li>.NET 10 &amp; Blazor WebAssembly</li>
-          <li><NavLink href="https://github.com/microsoft/fluentui-blazor" target="_blank">FluentUI Blazor v5</NavLink> + plain CSS design tokens</li>
-          <li><NavLink href="https://timewarpengineering.github.io/timewarp-state/" target="_blank">TimeWarp.State</NavLink> (Redux-style state) with Redux DevTools</li>
-          <li><NavLink href="https://github.com/jbogard/MediatR" target="_blank">MediatR</NavLink> for CQRS &amp; <NavLink href="https://fast-endpoints.com/" target="_blank">FastEndpoints</NavLink> for APIs</li>
-          <li><NavLink href="https://learn.microsoft.com/dotnet/aspire/" target="_blank">.NET Aspire</NavLink> orchestration + YARP ingress</li>
-        </ul>
-      </Card>
+    <Card Title="Built with">
+      <ul>
+        <li>.NET 10 &amp; Blazor WebAssembly</li>
+        <li><NavLink href="https://github.com/microsoft/fluentui-blazor" target="_blank">FluentUI Blazor v5</NavLink> + plain CSS design tokens</li>
+        <li><NavLink href="https://timewarpengineering.github.io/timewarp-state/" target="_blank">TimeWarp.State</NavLink> (Redux-style state) with Redux DevTools</li>
+        <li><NavLink href="https://github.com/jbogard/MediatR" target="_blank">MediatR</NavLink> for CQRS &amp; <NavLink href="https://fast-endpoints.com/" target="_blank">FastEndpoints</NavLink> for APIs</li>
+        <li><NavLink href="https://learn.microsoft.com/dotnet/aspire/" target="_blank">.NET Aspire</NavLink> orchestration + YARP ingress</li>
+      </ul>
+    </Card>
 
-      <Card Title="Try it">
-        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
-          <FluentButton Appearance="ButtonAppearance.Primary" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
-          <FluentButton Appearance="ButtonAppearance.Outline" OnClick=TwoSecondTaskButtonClick>Launch Two Second Task</FluentButton>
-          <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=ModalButtonClick>Show Modal</FluentButton>
-        </FluentStack>
-      </Card>
+    <Card Title="Try it">
+      <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Outline" OnClick=TwoSecondTaskButtonClick>Launch Two Second Task</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=ModalButtonClick>Show Modal</FluentButton>
+      </FluentStack>
+    </Card>
 
-      <Card Title="Credits">
-        Hero artwork from
-        <NavLink href="https://thefreezeteam.com/" target="_blank">The Freeze Team</NavLink>,
-        the TimeWarp Enterprises engineering blog.
-      </Card>
+    <Card Title="Credits">
+      Hero artwork from
+      <NavLink href="https://thefreezeteam.com/" target="_blank">The Freeze Team</NavLink>,
+      the TimeWarp Enterprises engineering blog.
+    </Card>
 
-    </div>
-  </PagePane_MainContent>
-</SitePage>
+  </div>
+</TimeWarpPage>

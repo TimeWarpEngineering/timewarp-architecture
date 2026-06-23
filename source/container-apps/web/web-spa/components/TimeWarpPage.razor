@@ -1,0 +1,87 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+@using TimeWarp.Architecture.Features.Profiles
+@using TimeWarp.Features.Theme
+@*
+  The single app-shell page component (replaces the old multi-splitter TimeWarpPage,
+  SitePage, SidebarPage, StackedPage). Pages wrap their content in it:
+
+      <TimeWarpPage Title="Settings"> ...content... </TimeWarpPage>
+
+  Built on FluentUI v5 FluentLayout. MainLayout stays empty (just FluentProviders);
+  this component owns the chrome so it gets the TimeWarp.State render-trigger / Id /
+  per-navigation lifecycle that a LayoutComponentBase can't.
+*@
+
+@code {
+  [Parameter] public string? Title { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public RenderFragment? Aside { get; set; }
+
+  private string? ActiveModalId => ApplicationState.ActiveModalId;
+  private async Task ShowAssemblyInfoModalAsync() => await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
+}
+
+<CascadingValue Value=@this>
+  <FluentLayout Class=@($"{Id} twe-shell")>
+
+    <FluentLayoutItem Area="LayoutArea.Header">
+      <header class="twe-appbar">
+        <div class="twe-brand">
+          <span class="twe-brand__mark" aria-hidden="true"></span>
+          <span class="twe-brand__text">
+            <span class="twe-brand__name">TimeWarp</span>
+            <span class="twe-brand__sub">Architecture</span>
+          </span>
+        </div>
+        <div class="twe-appbar__search">
+          <FluentTextInput Placeholder="Search">
+            <EndTemplate><span class="search-end">Ctrl-K</span></EndTemplate>
+          </FluentTextInput>
+        </div>
+        <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark))>
+          <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color="Color.Default" />
+        </FluentButton>
+        <Profile />
+      </header>
+    </FluentLayoutItem>
+
+    <FluentLayoutItem Area="LayoutArea.Navigation" Width="240px">
+      <NavMenu />
+    </FluentLayoutItem>
+
+    <FluentLayoutItem Area="LayoutArea.Content">
+      <div class="twe-page">
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+          <h1 class="twe-page__title">@Title</h1>
+        }
+        <div class="twe-page__body">
+          @ChildContent
+        </div>
+      </div>
+    </FluentLayoutItem>
+
+    @if (Aside is not null)
+    {
+      <FluentLayoutItem Area="LayoutArea.Aside" Width="300px">
+        <div class="twe-aside">@Aside</div>
+      </FluentLayoutItem>
+    }
+
+    <FluentLayoutItem Area="LayoutArea.Footer">
+      <footer class="twe-footer">
+        <span class="twe-footer__mode">@CurrentRenderMode</span>
+        <FluentSpacer />
+        <FluentButton Appearance="ButtonAppearance.Transparent" @onclick=ShowAssemblyInfoModalAsync>@ApplicationState.Version</FluentButton>
+      </footer>
+    </FluentLayoutItem>
+
+  </FluentLayout>
+</CascadingValue>
+
+<ModalController ActiveModalId=@ActiveModalId>
+  <ModalContainers>
+    <AssemblyInfoModal />
+  </ModalContainers>
+</ModalController>
