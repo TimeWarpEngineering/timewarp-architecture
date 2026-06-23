@@ -1,0 +1,15 @@
+/* Card — Tier-1 leaf, CSS isolation (skills/blazor-css-strategy). Tokens from tokens.css. */
+.twe-card {
+  background: var(--twe-paper);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius);
+  padding: 20px 24px;
+  box-shadow: var(--twe-shadow-sm);
+}
+.twe-card__title {
+  font-size: var(--twe-text-section-title);
+  font-weight: 600;
+  margin: 0 0 16px;
+  color: var(--twe-ink);
+}
+.twe-card__body { color: var(--twe-ink-2); font-size: var(--twe-text-body); line-height: 1.55; }

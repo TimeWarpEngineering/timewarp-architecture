@@ -87,3 +87,41 @@
     <AssemblyInfoModal />
   </ModalContainers>
 </ModalController>
+
+@* Tier-2 shell styles (skills/blazor-css-strategy): scoped to the fixed .twe-shell root
+   class because they style FluentUI light-DOM children (fluent-nav, fluent-text-input)
+   which CSS isolation can't reach. Verbatim string so CSS braces are literal. *@
+<style>
+  @(@"
+    .twe-shell .twe-appbar {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%; height: 56px; padding: 0 16px;
+      background: var(--twe-paper); border-bottom: 3px solid var(--twe-green);
+    }
+    .twe-shell .twe-appbar__search { flex: 0 1 520px; width: 520px; margin-inline: auto; }
+    .twe-shell .twe-appbar__search fluent-text-input { width: 100%; }
+    .twe-shell .twe-appbar__actions { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+    .twe-shell .search-end { white-space: nowrap; color: var(--twe-muted); font-size: var(--twe-text-helper); }
+
+    .twe-shell .twe-brand { display: inline-flex; align-items: center; gap: 10px; padding: 0 6px; }
+    .twe-shell .twe-brand__logo { height: 34px; width: auto; flex: none; display: block; }
+    .twe-shell .twe-brand__text { display: flex; flex-direction: column; line-height: 1.04; }
+    .twe-shell .twe-brand__name { font-weight: 800; font-size: 16px; letter-spacing: -0.02em; color: var(--twe-ink); }
+    .twe-shell .twe-brand__sub { font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--twe-muted); }
+
+    .twe-shell .twe-nav { height: 100%; padding: 8px; background: var(--twe-paper-2); border-right: 1px solid var(--twe-rule); }
+
+    .twe-shell .twe-page { padding: 20px 28px 28px; }
+    .twe-shell .twe-page__title { margin: 0 0 16px; font-size: var(--twe-text-page-title); font-weight: 700; letter-spacing: -0.015em; color: var(--twe-ink); }
+    .twe-shell .twe-page__title:focus { outline: none; }
+    .twe-shell .twe-page__body { color: var(--twe-ink); }
+
+    .twe-shell .twe-aside { padding: 20px; border-left: 1px solid var(--twe-rule); height: 100%; }
+
+    .twe-shell .twe-footer {
+      display: flex; align-items: center; gap: 12px; width: 100%; padding: 4px 16px;
+      border-top: 1px solid var(--twe-rule); background: var(--twe-paper);
+      color: var(--twe-muted); font-size: var(--twe-text-helper);
+    }
+  ")
+</style>

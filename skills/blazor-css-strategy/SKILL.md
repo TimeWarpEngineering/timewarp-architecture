@@ -53,26 +53,25 @@ composes FluentUI:
 
 ## Canonical in-repo example (Tier-2 / Exception B)
 
-`web-spa/components/composites/time-warp-page/TimeWarpPage.razor` already does this — it wraps
-a `FluentMultiSplitter` (a child component, Wall A) and styles it without `::deep` or wrappers:
+`web-spa/components/TimeWarpPage.razor` (the app shell) does this — it renders `FluentLayout` /
+`FluentNav` / `FluentTextInput` (light-DOM children, Wall A) and styles them via a co-located
+`<style>` scoped to a fixed root class `.twe-shell` (the shell is a singleton, so a fixed class
+rather than `.@(Id)`):
 
 ```razor
-<FluentMultiSplitter ref=FluentMultiSplitter Class=@($"{Id} timewarp-page")>
-  ...
-</FluentMultiSplitter>
+<FluentLayout Class=@($"{Id} twe-shell")> … <FluentNav Class="twe-nav"/> … </FluentLayout>
 
 <style>
-  @($@"
-    .{Id} {{
-      min-height: 100vh;
-    }}
+  @(@"
+    .twe-shell .twe-nav { background: var(--twe-paper-2); border-right: 1px solid var(--twe-rule); }
+    .twe-shell .twe-appbar__search fluent-text-input { width: 100%; }
   ")
 </style>
 ```
 
-The `Class=@($"{Id} ...")` puts our scope handle on the FluentUI component's light-DOM root;
-the `.{Id}` selector in the co-located `<style>` reaches it. Singletons use a fixed class
-(`.twe-shell`) instead of `.{Id}`.
+`.twe-shell .twe-nav` reaches the FluentNav's light-DOM root (a plain descendant selector from
+the Id'd ancestor — no `::deep`, no wrapper div). Use a **verbatim** string `@(@"…")` so CSS
+braces are literal; only use the interpolated `@($@"… {{ }} …")` form when you need `{Id}`.
 
 ## Tier-1 example (leaf, isolation)
 

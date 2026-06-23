@@ -106,34 +106,11 @@
     <_ContentIncludedByDefault Remove="features\profile-menu\components\ProfileMenuPanel.razor" />
   </ItemGroup>
 
-  <!-- Target to copy scoped CSS to a more accessible location -->
-  <Target Name="CopyScopedCss" AfterTargets="Build">
-    <Copy SourceFiles="$(ProjectDir)obj\$(ConfigurationName)\$(TargetFramework)\scopedcss\bundle\$(ProjectName).styles.css"
-          DestinationFolder="$(ProjectDir)obj\css\"
-          SkipUnchangedFiles="true" />
-  </Target>
-
   <!-- TypeScript/lint build tools (Tailwind step removed). Full removal tracked in 059-006. -->
-  <Target Name="WebSpaBuildTools" AfterTargets="Build,CopyScopedCss" Condition="'$(SkipWebSpaBuildTools)' != 'true'">
+  <Target Name="WebSpaBuildTools" AfterTargets="Build" Condition="'$(SkipWebSpaBuildTools)' != 'true'">
     <Exec Command="npm install" ContinueOnError="true" />
     <Exec Command="npm run prettier" ContinueOnError="true" />
     <Exec Command="npm run lint" ContinueOnError="true" />
     <Exec Command="npm run build" ContinueOnError="true" />
-  </Target>
-
-  <Target Name="CreateDummyFluentUICSS" BeforeTargets="Build">
-    <ItemGroup>
-      <DummyCSSFile Include="$(ProjectDir)obj\css\_content\Microsoft.FluentUI.AspNetCore.Components\Microsoft.FluentUI.AspNetCore.Components.lcdo7z9xd2.bundle.scp.css" />
-    </ItemGroup>
-    <MakeDir Directories="$(ProjectDir)obj\css\_content\Microsoft.FluentUI.AspNetCore.Components" />
-    <WriteLinesToFile File="@(DummyCSSFile)" Lines="/* Dummy file to satisfy build requirement */" Overwrite="true" />
-  </Target>
-
-  <Target Name="CreateDummyQuickGridCSS" BeforeTargets="Build">
-    <ItemGroup>
-      <DummyQuickGridCSSFile Include="$(ProjectDir)obj\css\_content\Microsoft.AspNetCore.Components.QuickGrid\Microsoft.AspNetCore.Components.QuickGrid.boiwgh0w5b.bundle.scp.css" />
-    </ItemGroup>
-    <MakeDir Directories="$(ProjectDir)obj\css\_content\Microsoft.AspNetCore.Components.QuickGrid" />
-    <WriteLinesToFile File="@(DummyQuickGridCSSFile)" Lines="/* Dummy file to satisfy build requirement */" Overwrite="true" />
   </Target>
 </Project>

@@ -58,3 +58,11 @@ button { font-family: inherit; }
   border: 2px dashed var(--twe-rule);
   border-radius: var(--twe-radius-sm);
 }
+
+/* Shared layout utilities (global by design — used across many components/pages, and
+   .twe-table styles <th>/<td> rendered by child components, which CSS isolation can't reach). */
+.twe-stack { display: flex; flex-direction: column; gap: 16px; }
+
+.twe-table { width: 100%; border-collapse: collapse; font-size: var(--twe-text-body); }
+.twe-table th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--twe-rule); color: var(--twe-muted); font-weight: 600; }
+.twe-table td { padding: 8px 12px; border-bottom: 1px solid var(--twe-rule); color: var(--twe-ink); }

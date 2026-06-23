@@ -15,8 +15,9 @@
   @* Design tokens + global app styles + design-system components (plain CSS, replaces Tailwind) *@
   <link href="css/tokens.css" rel="stylesheet"/>
   <link href="css/app.css" rel="stylesheet"/>
-  <link href="css/components.css" rel="stylesheet"/>
-  <link href="css/shell.css" rel="stylesheet"/>
+
+  @* Component-scoped CSS (Blazor isolation) — Card/StatusBadge/Modal/pages *.razor.css *@
+  <link href="web-spa.styles.css" rel="stylesheet"/>
 
   @* FluentUI v5 component styles (design tokens are applied at runtime by FluentProviders) *@
   <link href="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.bundle.scp.css" rel="stylesheet" />

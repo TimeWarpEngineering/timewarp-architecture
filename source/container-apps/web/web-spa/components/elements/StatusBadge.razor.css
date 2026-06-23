@@ -1,0 +1,21 @@
+/* StatusBadge — Tier-1 leaf, CSS isolation. Tokens from tokens.css. */
+.twe-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: var(--twe-text-helper);
+  font-weight: 500;
+  line-height: 1.5;
+}
+.twe-badge__dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.twe-badge--active   { background: #e5f7ec; color: #14784a; }
+.twe-badge--active .twe-badge__dot   { background: var(--twe-green); }
+.twe-badge--inactive { background: var(--twe-paper-2); color: var(--twe-muted); }
+.twe-badge--inactive .twe-badge__dot { background: var(--twe-muted); }
+.twe-badge--warning  { background: #fef3c7; color: #92400e; }
+.twe-badge--warning .twe-badge__dot  { background: var(--twe-warning); }
+.twe-badge--info     { background: #e6f4fa; color: var(--twe-blue-deep); }
+.twe-badge--info .twe-badge__dot     { background: var(--twe-blue); }
