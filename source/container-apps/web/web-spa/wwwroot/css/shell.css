@@ -11,8 +11,10 @@
   background: var(--twe-paper);
   border-bottom: 3px solid var(--twe-green);
 }
-.twe-appbar__search { flex: 1 1 auto; max-width: 560px; }
+/* Three zones: brand (left) · search (centered) · actions (right) */
+.twe-appbar__search { flex: 0 1 520px; width: 520px; margin-inline: auto; }
 .twe-appbar__search fluent-text-input { width: 100%; }
+.twe-appbar__actions { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
 .twe-appbar .search-end { white-space: nowrap; color: var(--twe-muted); font-size: var(--twe-text-helper); }
 
 /* Navigation sidebar */

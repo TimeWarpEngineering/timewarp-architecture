@@ -66,12 +66,7 @@
 
 /* Brand lockup (nav header) — the gradient mark echoes the 3-color logo */
 .twe-brand { display: inline-flex; align-items: center; gap: 10px; padding: 0 6px; }
-.twe-brand__mark {
-  width: 30px; height: 30px; flex: none;
-  border-radius: 9px;
-  background: linear-gradient(135deg, var(--twe-purple) 0%, var(--twe-blue) 55%, var(--twe-green) 100%);
-  box-shadow: var(--twe-shadow-sm);
-}
+.twe-brand__logo { height: 34px; width: auto; flex: none; display: block; }
 .twe-brand__text { display: flex; flex-direction: column; line-height: 1.04; }
 .twe-brand__name { font-weight: 800; font-size: 16px; letter-spacing: -0.02em; color: var(--twe-ink); }
 .twe-brand__sub {

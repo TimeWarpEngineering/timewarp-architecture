@@ -28,7 +28,7 @@
     <FluentLayoutItem Area="LayoutArea.Header">
       <header class="twe-appbar">
         <div class="twe-brand">
-          <span class="twe-brand__mark" aria-hidden="true"></span>
+          <img class="twe-brand__logo" src="images/timewarp-logo.svg" alt="TimeWarp Enterprises" />
           <span class="twe-brand__text">
             <span class="twe-brand__name">TimeWarp</span>
             <span class="twe-brand__sub">Architecture</span>
@@ -39,10 +39,12 @@
             <EndTemplate><span class="search-end">Ctrl-K</span></EndTemplate>
           </FluentTextInput>
         </div>
-        <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark))>
-          <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color="Color.Default" />
-        </FluentButton>
-        <Profile />
+        <div class="twe-appbar__actions">
+          <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark))>
+            <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color="Color.Default" />
+          </FluentButton>
+          <Profile />
+        </div>
       </header>
     </FluentLayoutItem>
 
