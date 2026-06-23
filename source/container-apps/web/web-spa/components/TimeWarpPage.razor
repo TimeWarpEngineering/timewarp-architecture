@@ -74,6 +74,7 @@
     <FluentLayoutItem Area="LayoutArea.Footer" Height="44px">
       <footer class="twe-footer">
         <span class="twe-footer__mode">@CurrentRenderMode</span>
+        <FluentSpacer />
         <FluentSpinner Visible=@ActionTrackingState.IsActive Size="SpinnerSize.Tiny" />
         <FluentSpacer />
         <FluentButton Appearance="ButtonAppearance.Transparent" @onclick=ShowAssemblyInfoModalAsync>@ApplicationState.Version</FluentButton>
