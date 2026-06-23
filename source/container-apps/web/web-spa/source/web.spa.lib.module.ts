@@ -1,29 +1,24 @@
-// noinspection JSUnusedLocalSymbols,JSUnusedGlobalSymbols
 import { Spa } from "./spa.js";
-import { Counter } from "./features/counter.js";
-import { timeWarpState } from "/_content/TimeWarp.State/js/TimeWarpState.js";
 import { log, LogAction } from "/_content/TimeWarp.State/js/Logger.js";
 import {
   TimeWarpStateName,
   InitializeJavaScriptInteropName,
-  ReduxDevToolsFactoryName,
-  ReduxDevToolsName,
 } from "/_content/TimeWarp.State/js/Constants.js";
 import "/_content/TimeWarp.State.Plus/js/downloadFile.js";
 
-// https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/startup?view=aspnetcore-7.0&source=docs
-// at this point the blazor is not yet initialized
-// initialize the items you want attached to window here.
-
+// https://learn.microsoft.com/aspnet/core/blazor/fundamentals/startup
+// At this point Blazor is not yet initialized; attach the items you want on window here.
 function initializeEnvironment() {
   console.log("****initializeEnvironment Web.Spa ****");
-  Spa.Counter = Counter;
+  // Spa is a plain object. Blazor's string-identifier interop resolver requires every
+  // intermediate path segment to be `typeof === "object"` (see blazor.web.js), so the
+  // namespace exposed on window must be plain objects, not classes.
   window.Spa = Spa;
-} 
+}
 
 export function beforeWebStart(_options: unknown, _extensions: unknown) {
-  log("Web.Spa Web",TimeWarpStateName, "info", LogAction.Begin);
-  log("Web.Spa Web",InitializeJavaScriptInteropName, "info", LogAction.Begin);
+  log("Web.Spa Web", TimeWarpStateName, "info", LogAction.Begin);
+  log("Web.Spa Web", InitializeJavaScriptInteropName, "info", LogAction.Begin);
   log("Web.Spa Web", "beforeWebStart", "info", LogAction.Begin);
   initializeEnvironment();
 }

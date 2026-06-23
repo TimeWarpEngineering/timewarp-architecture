@@ -25,8 +25,7 @@
     /* Modules */
     "module": "ESNext" /* Specify what module code is generated. */,
     "rootDir": "./source",                                  /* Specify the root folder within your source files. */
-    "moduleResolution": "node" /* Specify how TypeScript looks up a file from a given module specifier. */,
-    "baseUrl": "./" /* Specify the base directory to resolve non-relative module names. */,
+    "moduleResolution": "bundler" /* Output is browser ES modules; bundler resolution replaces the deprecated node10/"node". */,
     // "paths": { } /* Specify a set of entries that re-map imports to additional lookup locations. */,
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     "typeRoots": ["./source/types"],                                  /* Specify multiple folders that act like `./node_modules/@types`. */

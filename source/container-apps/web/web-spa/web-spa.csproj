@@ -2,11 +2,18 @@
 
   <PropertyGroup>
     <Description>TimeWarp Architecture Demo Application</Description>
+    <!-- Assembly identity is Web.Spa (project file is web-spa.csproj for path-naming consistency).
+         Required: the JS-initializer auto-detection filter is **/$(PackageId).lib.module.js, which
+         must match wwwroot/js/web.spa.lib.module.js; and runtime type strings reference ", Web.Spa"
+         (e.g. the counter's IncrementCounter action dispatched from JS). A 2b5a1ff6 path-rename had
+         silently dropped this, breaking the JS initializer + JS-interop dispatch. -->
+    <AssemblyName>Web.Spa</AssemblyName>
     <DefineConstants>ReduxDevToolsEnabled;grpc;api;web;counter</DefineConstants>
     <Nullable>enable</Nullable>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
-    <!-- When true, skips npm/TypeScript/Tailwind steps (useful when node is not available in the environment).
-         Set explicitly to 'false' when you want full client asset build (requires node + npm). -->
+    <!-- When true, skips the npm-based prettier/lint/build steps (useful when node is not
+         available). This does NOT block the TypeScript -> wwwroot/js compile, which runs via
+         Microsoft.TypeScript.MSBuild (no node required) on every build. -->
     <SkipWebSpaBuildTools Condition="'$(SkipWebSpaBuildTools)' == ''">true</SkipWebSpaBuildTools>
   </PropertyGroup>
 
@@ -23,10 +30,6 @@
       root AnalysisMode=All policy.
     -->
     <NoWarn>$(NoWarn);CA1848;CA1873;CA2254</NoWarn>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <TypeScriptCompileBlocked Condition="'$(SkipWebSpaBuildTools)' == 'true'">true</TypeScriptCompileBlocked>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
