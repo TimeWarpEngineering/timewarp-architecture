@@ -420,8 +420,8 @@ FodyWeavers.xsd
 # TimeWarp architecture templates Generated Code
 GeneratedCode/
 
-# Web.Spa generated code
-/Source/ContainerApps/Web/Web.Spa/wwwroot/js/
+# Web.Spa generated code (TypeScript compiled to wwwroot/js by Microsoft.TypeScript.MSBuild)
+/source/container-apps/web/web-spa/wwwroot/js/
 
 # TimeWarp architecture templates Generated Code
 /Source/ContainerApps/Web/Web.Contracts/Generated/**
