@@ -43,6 +43,11 @@
 /* Layout helpers ----------------------------------------------------------- */
 .twe-stack { display: flex; flex-direction: column; gap: 16px; }
 
+/* Simple data table */
+.twe-table { width: 100%; border-collapse: collapse; font-size: var(--twe-text-body); }
+.twe-table th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--twe-rule); color: var(--twe-muted); font-weight: 600; }
+.twe-table td { padding: 8px 12px; border-bottom: 1px solid var(--twe-rule); color: var(--twe-ink); }
+
 /* Inline icon sizing (e.g. brand icons in nav) */
 .twe-icon { width: 20px; height: 20px; fill: var(--twe-muted); }
 

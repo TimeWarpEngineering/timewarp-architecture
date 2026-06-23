@@ -6,11 +6,6 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.Question();
 }
 
-<StackedPage>
-  <HeaderContent>
-    Todo Item @TodoItemId
-  </HeaderContent>
-  <MainContent>
-    <TodoItemFormContainer/>
-  </MainContent>
-</StackedPage>
+<TimeWarpPage Title=@($"Todo Item {TodoItemId}")>
+  <Card><TodoItemFormContainer/></Card>
+</TimeWarpPage>

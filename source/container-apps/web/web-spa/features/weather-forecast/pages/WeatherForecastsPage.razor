@@ -10,9 +10,8 @@
   protected override async Task OnInitializedAsync() =>
     await WeatherForecastsState.FetchWeatherForecasts(Days);
 }
-<StackedPage>
-  <HeaderContent>Weather Forecasts</HeaderContent>
-  <MainContent>
+<TimeWarpPage Title="Weather Forecasts">
+  <Card>
     <p>This component demonstrates fetching data from the server.</p>
 
     @if (@WeatherForecastsState.WeatherForecasts == null)
@@ -21,7 +20,7 @@
     }
     else
     {
-      <table class="mt-4 min-w-full divide-y divide-gray-200" data-qa="WeatherForecastTable">
+      <table class="twe-table" data-qa="WeatherForecastTable">
         <thead>
           <tr>
             <TableHeader>Date</TableHeader>
@@ -30,23 +29,18 @@
             <TableHeader>Summary</TableHeader>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody>
           @foreach (var forecast in @WeatherForecastsState.WeatherForecasts)
           {
             <tr>
               <Cell>@forecast.Date.ToShortDateString()</Cell>
               <Cell>@forecast.TemperatureC</Cell>
               <Cell>@forecast.TemperatureF</Cell>
-              <Cell>
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                  @forecast.Summary
-                </span>
-              </Cell>
+              <Cell><StatusBadge Status="BadgeStatus.Info" Label=@forecast.Summary /></Cell>
             </tr>
           }
         </tbody>
       </table>
     }
-
-  </MainContent>
-</StackedPage>
+  </Card>
+</TimeWarpPage>

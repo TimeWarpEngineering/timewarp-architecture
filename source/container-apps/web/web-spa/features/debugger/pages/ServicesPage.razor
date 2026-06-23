@@ -6,12 +6,11 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.Question();
 }
 
-<StackedPage>
-    <HeaderContent>Middleware Services</HeaderContent>
-    <MainContent>
-        <ServiceList Title="IPipelineBehavior" Services=PipelineBehaviors />
-        <ServiceList Title="IRequestPreProcessor" Services=RequestPreProcessors />
-        <ServiceList Title="IRequestPostProcessor" Services=RequestPostProcessors />
-        <ServiceList Title="IStreamPipelineBehavior" Services=StreamPipelineBehaviors />
-    </MainContent>
-</StackedPage>
+<TimeWarpPage Title="Middleware Services">
+  <Card>
+    <ServiceList Title="IPipelineBehavior" Services=PipelineBehaviors />
+    <ServiceList Title="IRequestPreProcessor" Services=RequestPreProcessors />
+    <ServiceList Title="IRequestPostProcessor" Services=RequestPostProcessors />
+    <ServiceList Title="IStreamPipelineBehavior" Services=StreamPipelineBehaviors />
+  </Card>
+</TimeWarpPage>
