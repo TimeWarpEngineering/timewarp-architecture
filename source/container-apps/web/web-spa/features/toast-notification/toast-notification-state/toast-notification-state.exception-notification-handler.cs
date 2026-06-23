@@ -8,7 +8,7 @@ partial class ToastNotificationState
     IToastService ToastService
   ) : INotificationHandler<ExceptionNotification>
   {
-    public Task Handle
+    public async Task Handle
     (
       ExceptionNotification exceptionNotification,
       CancellationToken cancellationToken
@@ -16,8 +16,11 @@ partial class ToastNotificationState
     {
       // Note: we are not storing the exceptions in state as they are already logged by middleware.
       // If we think we need a log/Notification view we will want to keep them.
-      ToastService.ShowError(exceptionNotification.Exception.Message);
-      return Task.CompletedTask;
+      await ToastService.ShowToastAsync(options =>
+      {
+        options.Intent = ToastIntent.Error;
+        options.Title = exceptionNotification.Exception.Message;
+      });
     }
   }
 }

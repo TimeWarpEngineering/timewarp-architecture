@@ -1,16 +1,18 @@
 @namespace TimeWarp.Architecture.Components
-@inherits FluentNavLink
 
+@* V5: FluentComponentBase requires a LibraryConfiguration ctor arg, so a Fluent component
+   can no longer be subclassed with a parameterless ctor. Compose FluentNavItem instead. *@
 <AuthorizeView Policy=@Policy>
   <Authorized>
-    @BaseRenderFragment
+    <FluentNavItem Href=@Href IconRest=@Icon Match=NavLinkMatch.All>@ChildContent</FluentNavItem>
   </Authorized>
 </AuthorizeView>
 
 @code {
   [Parameter, EditorRequired] public string Policy { get; set; } = default!;
-
-  private RenderFragment BaseRenderFragment => base.BuildRenderTree;
+  [Parameter] public string? Href { get; set; }
+  [Parameter] public Icon? Icon { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
 
   protected override void OnParametersSet()
   {

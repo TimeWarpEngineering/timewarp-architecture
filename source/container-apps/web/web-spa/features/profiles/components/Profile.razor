@@ -4,8 +4,6 @@
 @inject HttpClient HttpClient
 
 @code {
-  private string PersonaId = "persona";
-  private bool Open = false;
   private async Task HandleSignIn()
   {
     await NoSubRouteState.ChangeRoute(newRoute: "authentication/login");
@@ -24,6 +22,10 @@
   }
   protected override async Task OnInitializedAsync()
   {
+    // During server prerender the WASM HttpClient (BaseAddress from HostEnvironment) does not
+    // exist, so API calls throw "BaseAddress must be set". Only fetch once interactive.
+    if (!RendererInfo.IsInteractive) return;
+
     if (await CheckAuthorization())
     {
       await ProfileState.FetchProfileData();
@@ -31,48 +33,37 @@
   }
 }
 
-<FluentPersona
-  Id=@PersonaId
-  OnClick=@(() => Open = !Open)
-  Image=@ProfileState.Avatar
-  ImageSize="48px"
-  TextPosition="TextPosition.End">
-  <FluentLabel >@ProfileState.Alias</FluentLabel>
-</FluentPersona>
-
-<FluentMenu Anchor=@PersonaId @bind-Open=Open VerticalThreshold="170">
-  <AuthorizeView>
-    <Authorized>
-      <FluentLabel Typo="Typography.Body" Class="w-full m-4">@ProfileState.Alias</FluentLabel>
-      <FluentDivider />
-      <FluentMenuItem OnClick=@HandleYourProfile >
-        <span slot="start">
-          <FluentIcon Value=@(new Icons.Regular.Size20.Person()) Color=Color.Neutral Slot="start" />
-        </span>
-        Profile
-      </FluentMenuItem>
-      <FluentMenuItem OnClick=@HandleSettings >
-        <span slot="start">
-          <FluentIcon Value=@(new Icons.Regular.Size20.Settings()) Color=Color.Neutral Slot="start" />
-        </span>
-        Settings
-      </FluentMenuItem>
-      <FluentMenuItem OnClick=@HandleSignOut>
-        <span slot="start">
-          <FluentIcon Value=@(new Icons.Regular.Size20.SignOut()) Color=Color.Neutral Slot="start" />
-        </span>
-        Sign out
-      </FluentMenuItem>
-    </Authorized>
-    <NotAuthorized>
-      <FluentMenuItem OnClick=@HandleSignIn>
-        <span slot="start">
-          <FluentIcon Value=@(new Icons.Regular.Size20.Person()) Color=Color.Neutral Slot="start" />
-        </span>
-        Sign-in
-      </FluentMenuItem>
-    </NotAuthorized>
-  </AuthorizeView>
+@* V5 removed FluentPersona — compose FluentAvatar + label as the menu trigger.
+   The trigger lives INSIDE FluentMenu via slot="trigger" so the web component wires
+   the click-to-open itself (the external Trigger=<id> attribute did not render in rc.3). *@
+<FluentMenu>
+  <div slot="@FluentSlot.Trigger" class="@($"{Id} profile-persona")">
+    <FluentAvatar Image=@ProfileState.Avatar Name=@ProfileState.Alias Size="AvatarSize.Size48" />
+    <FluentText>@ProfileState.Alias</FluentText>
+  </div>
+  <FluentMenuList>
+    <AuthorizeView>
+      <Authorized>
+        <FluentMenuItem OnClick=@HandleYourProfile IconStart="@(new Icons.Regular.Size20.Person())">Profile</FluentMenuItem>
+        <FluentMenuItem OnClick=@HandleSettings IconStart="@(new Icons.Regular.Size20.Settings())">Settings</FluentMenuItem>
+        <FluentMenuItem OnClick=@HandleSignOut IconStart="@(new Icons.Regular.Size20.SignOut())">Sign out</FluentMenuItem>
+      </Authorized>
+      <NotAuthorized>
+        <FluentMenuItem OnClick=@HandleSignIn IconStart="@(new Icons.Regular.Size20.Person())">Sign-in</FluentMenuItem>
+      </NotAuthorized>
+    </AuthorizeView>
+  </FluentMenuList>
 </FluentMenu>
+
+<style>
+  @($@"
+    .{Id}.profile-persona {{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }}
+  ")
+</style>
 
 

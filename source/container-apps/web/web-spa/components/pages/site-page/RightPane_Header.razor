@@ -3,21 +3,21 @@
 @using TimeWarp.Architecture.Features.Profiles
 @using TimeWarp.Features.Theme
 
-<FluentHeader Class=@Id Height=@(null) >
+@* V5 removed FluentHeader — use a native element styled via the .{Id} scope handle. *@
+<header class="@($"{Id} header")">
   <FluentStack Orientation=Orientation.Horizontal VerticalAlignment=VerticalAlignment.Center>
-    <FluentTextField
-      Placeholder="Search">
-      <span class="search-end" slot="end">
-        Ctrl-K
-      </span>
-    </FluentTextField>
+    <FluentTextInput Placeholder="Search">
+      <EndTemplate>
+        <span class="search-end">Ctrl-K</span>
+      </EndTemplate>
+    </FluentTextInput>
     <FluentSpacer />
-    <FluentButton Appearance=Appearance.Stealth OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark)) >
-      <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color=Color.Neutral />
+    <FluentButton Appearance=ButtonAppearance.Subtle OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark)) >
+      <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color=Color.Default />
     </FluentButton>
     <Profile />
   </FluentStack>
-</FluentHeader>
+</header>
 
 <style>
   @($@"
@@ -25,7 +25,7 @@
       height: var(--header-height);
     }}
 
-    .{Id} fluent-text-field {{
+    .{Id} fluent-text-input {{
       width: 50%
     }}
 

@@ -29,15 +29,17 @@ partial class ToastNotificationState
     ) : BaseHandler<Action>(store)
     {
 
-      public override Task Handle
+      public override async Task Handle
       (
         Action action,
         CancellationToken cancellationToken
       )
       {
-        ToastService.ShowToast(action.Intent, action.Title);
-
-        return Task.CompletedTask;
+        await ToastService.ShowToastAsync(options =>
+        {
+          options.Intent = action.Intent;
+          options.Title = action.Title;
+        });
       }
     }
   }

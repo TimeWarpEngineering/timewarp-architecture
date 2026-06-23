@@ -12,11 +12,12 @@
   @* add inter font *@
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
 
-  @* Compiled Tailwind CSS *@
-  <link href="css/site.css" rel="stylesheet"/>
+  @* Design tokens + global app styles (plain CSS, replaces Tailwind) *@
+  <link href="css/tokens.css" rel="stylesheet"/>
+  <link href="css/app.css" rel="stylesheet"/>
 
-  @* Add FluentUI *@
-  <link href="css/fluent.css" rel="stylesheet" />
+  @* FluentUI v5 component styles (design tokens are applied at runtime by FluentProviders) *@
+  <link href="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.bundle.scp.css" rel="stylesheet" />
 
   @* Icons *@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -28,14 +29,13 @@
 
   <HeadOutlet @rendermode=RenderMode />
 </head>
-<body class="font-sans antialiased">
+<body>
 <Routes @rendermode=RenderMode />
 @* <div id="app">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</div> *@
-<div id="blazor-error-ui" class="bg-yellow-100 bottom-0 left-0 fixed text-yellow-900 w-full z-50 pt-2.5 pr-5 pb-3 pl-5 border-t-2 border-yellow-800 hidden">
-  <div class="flex justify-between">
-    <span>An unhandled error has occurred. <a href="" class="underline cursor-pointer hover:no-underline">Reload</a></span>
-    <a>🗙</a>
-  </div>
+<div id="blazor-error-ui">
+  An unhandled error has occurred.
+  <a href="" class="reload">Reload</a>
+  <a class="dismiss">🗙</a>
 </div>
 
 <!--#if B2C -->

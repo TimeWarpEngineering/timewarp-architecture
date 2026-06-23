@@ -24,9 +24,9 @@ public class LinkHelper
     {
       return builder =>
       {
-        builder.OpenComponent<FluentNavLink>(0);
+        builder.OpenComponent<FluentNavItem>(0);
         builder.AddAttribute(1, "Href", getPageUrl?.Invoke());
-        builder.AddAttribute(2, "Icon", icon);
+        builder.AddAttribute(2, "IconRest", icon);
         builder.AddContent(3, title);
         builder.CloseComponent();
       };

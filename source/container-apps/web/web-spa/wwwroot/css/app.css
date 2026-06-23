@@ -1,0 +1,60 @@
+/* Global app styles: a minimal reset (replacing Tailwind's preflight) plus the few
+   genuinely-global element rules. Component styles live in scoped *.razor.css or
+   scope-handle <style> blocks (see skills/blazor-css-strategy). Brand values come from
+   tokens.css — do not hard-code color/type here. */
+
+/* Reset */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--twa-font-sans);
+  font-size: var(--twa-text-body);
+  color: var(--twa-ink);
+  background: var(--twa-background);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6, p, figure { margin: 0; }
+
+a { color: var(--twa-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+img, svg { display: block; max-width: 100%; }
+
+button { font-family: inherit; }
+
+/* Blazor framework error toast (markup lives in App.razor) */
+#blazor-error-ui {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  margin: 20px 0;
+  padding: 0.6rem 1.25rem 0.7rem;
+  background: #fef9c3;
+  color: #713f12;
+  border-top: 2px solid #854d0e;
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+}
+
+#blazor-error-ui .dismiss {
+  cursor: pointer;
+  position: absolute;
+  right: 0.75rem;
+  top: 0.5rem;
+}
+
+/* Placeholder for empty layout regions (TimeWarpPage) */
+.placeholder {
+  width: 100%;
+  border: 2px dashed var(--twa-rule);
+  border-radius: var(--twa-radius-sm);
+}

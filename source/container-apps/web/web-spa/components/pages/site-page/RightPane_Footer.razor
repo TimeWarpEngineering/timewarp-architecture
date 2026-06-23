@@ -9,15 +9,17 @@
     await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
 }
 
-<FluentFooter Class=@BaseCssBuilder.ToString() Style="display: flex; flex-direction: row; height: var(--footer-height)">
-  <FluentLabel>@CurrentRenderMode</FluentLabel>
+@* V5 removed FluentFooter — use a native element styled via the .{Id} scope handle
+   (see skills/blazor-css-strategy). *@
+<footer class=@BaseCssBuilder.ToString() style="display: flex; flex-direction: row; height: var(--footer-height)">
+  <FluentText>@CurrentRenderMode</FluentText>
   <FluentSpacer/>
-  <FluentProgressRing Class="grow" Visible=IsActive></FluentProgressRing>
+  <FluentSpinner Class="grow" Visible=IsActive></FluentSpinner>
   <FluentSpacer/>
-  <FluentButton Appearance=Appearance.Lightweight @onclick=ShowAssemblyInfoModal>
+  <FluentButton Appearance=ButtonAppearance.Transparent @onclick=ShowAssemblyInfoModal>
     @Version
   </FluentButton>
-</FluentFooter>
+</footer>
 
 <style>
   @($@"

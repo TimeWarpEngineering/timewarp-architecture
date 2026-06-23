@@ -5,9 +5,9 @@
 
 }
 
-<FluentNavMenu Class=@BaseCssBuilder.ToString()>
+<FluentNav Class=@BaseCssBuilder.ToString()>
   <TimeWarpNavLink TPage=HomePage />
-  <FluentNavGroup Title="Pages">
+  <FluentNavCategory Title="Pages">
     <TimeWarpNavLink TPage=CounterPage />
     @*#if (api)*@
     <TimeWarpNavLink TPage=WeatherForecastsPage />
@@ -16,27 +16,27 @@
     <TimeWarpNavLink TPage=SuperheroPage />
     @*#endif*@
     <TimeWarpNavLink TPage=ChatPage />
-  </FluentNavGroup>
-  <FluentNavGroup Title="Developer">
+  </FluentNavCategory>
+  <FluentNavCategory Title="Developer">
     <TimeWarpNavLink TPage=ExampleTimeWarpPage />
     <TimeWarpNavLink TPage=ExampleSitePage />
     <TimeWarpNavLink TPage=TestPage />
     <TimeWarpNavLink TPage=EventStreamPage />
     <TimeWarpNavLink TPage=ServicesPage />
     <TimeWarpNavLink TPage=UserClaimsPage />
-  </FluentNavGroup>
-  <FluentNavGroup Title="Open API">
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Book()) Href="/" Match=NavLinkMatch.All>Web-Server</FluentNavLink>
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Book()) Href="/" Match=NavLinkMatch.All>Api-Server</FluentNavLink>
-  </FluentNavGroup>
-  <FluentNavGroup Title="External">
-    <FluentNavLink Icon=@(new Icons.Regular.Size20.Link()) Href="/" Match=NavLinkMatch.All>The Freeze Team</FluentNavLink>
-    <FluentNavLink Href="/" Match=NavLinkMatch.All>
+  </FluentNavCategory>
+  <FluentNavCategory Title="Open API">
+    <FluentNavItem IconRest=@(new Icons.Regular.Size20.Book()) Href="/" Match=NavLinkMatch.All>Web-Server</FluentNavItem>
+    <FluentNavItem IconRest=@(new Icons.Regular.Size20.Book()) Href="/" Match=NavLinkMatch.All>Api-Server</FluentNavItem>
+  </FluentNavCategory>
+  <FluentNavCategory Title="External">
+    <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="/" Match=NavLinkMatch.All>The Freeze Team</FluentNavItem>
+    <FluentNavItem Href="/" Match=NavLinkMatch.All>
       <TimeWarp.Simple.Icons.GithubIcon class="w-5 h-5 fill-slate-400" /> GitHub
-    </FluentNavLink>
-  </FluentNavGroup>
+    </FluentNavItem>
+  </FluentNavCategory>
   <TimeWarpNavLink TPage=SettingsPage />
-</FluentNavMenu>
+</FluentNav>
 
 <style>
   @($@"

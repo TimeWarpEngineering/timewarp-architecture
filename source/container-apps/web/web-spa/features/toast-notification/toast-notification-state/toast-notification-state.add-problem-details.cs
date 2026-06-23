@@ -26,16 +26,20 @@ partial class ToastNotificationState
         ToastService = toastService;
       }
 
-      public override Task Handle
+      public override async Task Handle
       (
         Action action,
         CancellationToken cancellationToken
       )
       {
-        if (action.SharedProblemDetails.Status == Constants.OperationCancelled) return Task.CompletedTask;
+        if (action.SharedProblemDetails.Status == Constants.OperationCancelled) return;
         string message = action.SharedProblemDetails.Detail ?? "An error occurred";
-        ToastService.ShowError(message, timeout:0);
-        return Task.CompletedTask;
+        await ToastService.ShowToastAsync(options =>
+        {
+          options.Intent = ToastIntent.Error;
+          options.Title = message;
+          options.Timeout = 0;
+        });
       }
     }
   }

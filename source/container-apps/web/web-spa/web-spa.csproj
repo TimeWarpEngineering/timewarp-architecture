@@ -92,11 +92,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <UpToDateCheckBuilt Include="styles/input.css" Set="Css" />
-    <UpToDateCheckBuilt Include="tailwind.config.js" Set="Css" />
-  </ItemGroup>
-
-  <ItemGroup>
     <TypeScriptInputs Include="source\*.*"/>
   </ItemGroup>
 
@@ -118,12 +113,12 @@
           SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="Tailwind" AfterTargets="Build,CopyScopedCss" Condition="'$(SkipWebSpaBuildTools)' != 'true'">
+  <!-- TypeScript/lint build tools (Tailwind step removed). Full removal tracked in 059-006. -->
+  <Target Name="WebSpaBuildTools" AfterTargets="Build,CopyScopedCss" Condition="'$(SkipWebSpaBuildTools)' != 'true'">
     <Exec Command="npm install" ContinueOnError="true" />
     <Exec Command="npm run prettier" ContinueOnError="true" />
     <Exec Command="npm run lint" ContinueOnError="true" />
     <Exec Command="npm run build" ContinueOnError="true" />
-    <Exec Command="npm run css:build" ContinueOnError="true" />
   </Target>
 
   <Target Name="CreateDummyFluentUICSS" BeforeTargets="Build">

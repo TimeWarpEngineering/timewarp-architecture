@@ -3,11 +3,11 @@
 
 <AuthorizeView Policy=@TPage.Policy>
   <Authorized>
-    <FluentNavLink
-      Icon=TPage.NavIcon
+    <FluentNavItem
+      IconRest=TPage.NavIcon
       Href=@TPage.GetPageUrl()
       Match=NavLinkMatch.All>
       @TPage.Title
-    </FluentNavLink>
+    </FluentNavItem>
   </Authorized>
 </AuthorizeView>

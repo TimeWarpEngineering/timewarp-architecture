@@ -56,18 +56,17 @@
         </ul>
       </FluentLabel>
 
-      <SimpleAlert class="mt-4 w-fit" Title="Alert">
+      <SimpleAlert Title="Alert">
         This site is built with
-        <NavLink href="https://github.com/microsoft/fluentui-blazor" target="blank">Fluent UI</NavLink>
-        and
-        <HyperLink href="https://tailwindcss.com/" target="blank">Tailwind css</HyperLink>
+        <NavLink href="https://github.com/microsoft/fluentui-blazor" target="blank">Fluent UI Blazor v5</NavLink>
+        and plain CSS.
       </SimpleAlert>
 
       <img alt="Solid Team" class="w-full" src="/images/TheFreezeTeam/SOLID_Team.png" />
       <div>
-        <FluentButton Appearance="Appearance.Accent" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
-        <FluentButton Appearance="Appearance.Accent" OnClick=TwoSecondTaskButtonClick>Launch Two Second Task</FluentButton>
-        <FluentButton Appearance="Appearance.Accent" OnClick=ModalButtonClick>Show Modal</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick=TwoSecondTaskButtonClick>Launch Two Second Task</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary" OnClick=ModalButtonClick>Show Modal</FluentButton>
       </div>
 
       <FluentLabel Typo="Typography.Body"> Example 'Body' label </FluentLabel>
