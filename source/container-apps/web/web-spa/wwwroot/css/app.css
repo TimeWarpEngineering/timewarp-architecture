@@ -22,8 +22,8 @@ body {
 
 h1, h2, h3, h4, h5, h6, p, figure { margin: 0; }
 
-a { color: var(--twe-primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a { color: var(--twe-blue); text-decoration: none; }
+a:hover { color: var(--twe-secondary-active); text-decoration: underline; }
 
 img, svg { display: block; max-width: 100%; }
 
