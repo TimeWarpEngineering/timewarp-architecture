@@ -459,3 +459,6 @@ TimeWarp.Architecture/.agent/workspace/*
 
 # memsearch: track the memory markdown, ignore the regenerable binary index
 .memsearch/*.db
+
+# playwright-cli: transient per-run page/console scratch output
+.playwright-cli/
