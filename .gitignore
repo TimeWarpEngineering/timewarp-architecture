@@ -456,3 +456,6 @@ GeneratedCode/
 TimeWarp.Architecture/.agent/workspace/*
 !TimeWarp.Architecture/.agent/workspace/overview.md
 *.lscache
+
+# memsearch: track the memory markdown, ignore the regenerable binary index
+.memsearch/*.db
