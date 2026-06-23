@@ -3,40 +3,44 @@
 @using TimeWarp.Architecture.Features.Profiles
 @using TimeWarp.Features.Theme
 
-@* V5 removed FluentHeader — use a native element styled via the .{Id} scope handle. *@
+@* V5 removed FluentHeader — native element as a flex row: search fills, actions pinned right. *@
 <header class="@($"{Id} header")">
-  <FluentStack Orientation=Orientation.Horizontal VerticalAlignment=VerticalAlignment.Center>
+  <div class="header-search">
     <FluentTextInput Placeholder="Search">
       <EndTemplate>
         <span class="search-end">Ctrl-K</span>
       </EndTemplate>
     </FluentTextInput>
-    <FluentSpacer />
-    <FluentButton Appearance=ButtonAppearance.Subtle OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark)) >
-      <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color=Color.Default />
-    </FluentButton>
-    <Profile />
-  </FluentStack>
+  </div>
+  <FluentButton Appearance=ButtonAppearance.Subtle OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark)) >
+    <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color=Color.Default />
+  </FluentButton>
+  <Profile />
 </header>
 
 <style>
   @($@"
     .{Id}.header {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
       height: var(--header-height);
       border-bottom: 3px solid var(--twe-green);
     }}
 
-    .{Id} fluent-text-input {{
-      width: 50%
+    .{Id} .header-search {{
+      flex: 1 1 auto;
+    }}
+
+    .{Id} .header-search fluent-text-input {{
+      width: 100%;
     }}
 
     .{Id} .search-end {{
-      text-align: right;
-      display: inline-block;
       white-space: nowrap;
-      width: auto;
-      min-width: fit-content;
+      color: var(--twe-muted);
+      font-size: var(--twe-text-helper);
     }}
-
   ")
 </style>
