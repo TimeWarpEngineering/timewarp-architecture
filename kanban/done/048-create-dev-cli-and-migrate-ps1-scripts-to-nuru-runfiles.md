@@ -33,10 +33,10 @@ Scaffold dev-cli using `ganda repo enforce-dev-cli --fix` and establish the foun
 - [x] Update `build-command.cs` to target `timewarp-architecture.slnx`
 
 ### Remaining (during/after migration)
-- [ ] Update `test-command.cs` to run actual tests (currently generic template)
+- [x] `test-command.cs` updated from the template stub → runs `dotnet test --configuration Release`. (Making it execute *real* tests = migrating test projects into the root slnx, owned by **058**.)
 - [x] Add `run` command (replaces `Run.ps1`) - wraps `aspire run --apphost <apphost>`
-- [ ] Keep `.ps1` scripts working in `TimeWarp.Architecture/` during migration
-- [ ] Remove `.ps1` scripts after migration complete
+- [x] `.ps1` scripts kept working in `TimeWarp.Architecture/` during migration (still present + functional)
+- [x] ~~Remove `.ps1` scripts after migration complete~~ → **047** (post-migration; script removal folded into 047 acceptance criteria)
 
 ### Dropped (no longer needed)
 - ~~Add `watch` command (replaces `Watch.ps1`)~~ - superseded by `aspire run`'s built-in
