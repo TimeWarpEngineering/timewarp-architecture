@@ -17,9 +17,31 @@ Migrate the TimeWarp.Architecture template project from its current subdirectory
 - [x] Scaffold dev-cli via `ganda repo enforce-dev-cli --fix`
 - [x] Analyze project dependency graph (41 projects, 8 phases)
 - [x] Create root directory structure (`source/`, `tests/`, `tools/`, `msbuild/` at root)
-- [ ] Migrate projects leaf-to-root — app `source/` migrated; **tests + `GenTester` + `TimeWarp.Automation` still under `TimeWarp.Architecture/`** (owned by 058 + 053-050-019)
-- [ ] Verify build succeeds
+- [x] Migrate projects leaf-to-root — DONE. **0 `.csproj` remain under `TimeWarp.Architecture/`.**
+      App `source/` migrated; tests migrated to root `tests/` (058); `GenTester` + `TimeWarp.Automation` dropped.
+- [ ] Verify build succeeds (root `timewarp-architecture.slnx` builds; integration/E2E host strategy pending — 058/060)
 - [ ] Update documentation
+- [ ] Tear down / relocate the remaining `TimeWarp.Architecture/` wrapper (296 non-project files — see status below)
+
+## Status (2026-06-24)
+
+**Code migration: COMPLETE** — no projects left in the wrapper. What remains under
+`TimeWarp.Architecture/` is 296 non-`.csproj` files to relocate-to-root or delete:
+
+- `Documentation/` (142), `DevOps/` (75), `Scripts/` (16) — bulk content; relocate to root or archive.
+- `.ai/` (13), `.github/` (11, incl. CI workflows), `.devcontainer/` (7), `.vscode/`, `.config/`,
+  `.editorconfig`, `.gitignore`, etc. — reconcile vs the root copies (don't duplicate).
+- Build plumbing: `Directory.Build.props`/`.targets`, `Directory.Packages.props`, `global.json`,
+  `NuGet.config`, old `TimeWarp.Architecture.slnx` (orphaned — points at gone `Source/`) → delete/merge.
+- `.template.config/template.json` — **the template definition; still has stale `Source/...` paths.**
+  Repointing it to the root kebab layout (so `dotnet new timewarp-architecture` works) is the
+  biggest remaining piece.
+- Misc one-offs: `ReadMe.md`, `Claude.md`, `Assets/`, `Samples/`, `Spikes/`, `Tools/`, `runfiles/`,
+  `msbuild/`, `FixAnalyzerDebug.reg`, `ApiDependencies.dgml`, `Priority-Analysis-Report.md`.
+
+**Done this session:** Tailwind/npm scrub, Tye-era Docker removal, dev-loop `.ps1` deleted +
+references repointed to dev-cli (`dev run/test/build`). Remaining `.ps1` → dev-cli tracked in
+[[061-migrate-remaining-ps1-scripts-to-dev-cli-endpoints]].
 
 ## Notes
 
