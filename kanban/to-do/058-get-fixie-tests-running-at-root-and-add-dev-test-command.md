@@ -53,16 +53,16 @@ test-framework-agnostic where practical so adding Jaribu later is incremental.
 ## Checklist
 
 ### Migrate
-- [ ] Move test projects to `tests/` with kebab-case naming (mirror the source-tree layout)
+- [~] Move test projects to `tests/` (kebab-case) — DONE for unit/analyzer (foundation-infrastructure-tests, analyzers-tests, sourcegenerator-tests); integration + E2E + Testing.Common remain
 - [ ] Move shared `Testing.Common` to `tests/common/timewarp-testing/`
 - [ ] Fix relative `ProjectReference` paths after the move
 - [ ] Add all test projects to `timewarp-architecture.slnx`
 - [ ] Remove version-less reliance on the old CPM; confirm they resolve against root CPM
-- [ ] Decide on a `tests/Directory.Build.props` chain (relax analyzers for test code?)
+- [x] `tests/Directory.Build.props` — inherits root props, relaxes for test code (TreatWarningsAsErrors=false, NoWarn RS0030)
 
 ### Fix build blockers
-- [ ] Resolve `PartialClassDeclarationAnalyzer` CS0246 in analyzer tests
-- [ ] Resolve MSB3277 CodeAnalysis.CSharp version conflict
+- [x] `PartialClassDeclarationAnalyzer` CS0246 — was a namespace reconcile (Analyzer -> Analyzers); fixed
+- [x] MSB3277 — resolved (root CPM unifies Microsoft.CodeAnalysis* at 5.3.0)
 - [ ] Get every migrated project building under the strict root props
 
 ### Wire dev test
