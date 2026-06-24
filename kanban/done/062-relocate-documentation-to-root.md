@@ -19,15 +19,16 @@ so the wrapper directory can eventually be deleted.
 
 ## Closure (2026-06-24) — DONE (relocation), polish deferred
 
-Relocation complete (commit `264a510c`). Kept dir casing PascalCase rather than kebab to avoid
-churning 44 internal links + the self-contained `StarUml/Generated/html-docs` site; the move's
-value is getting docs out of the wrapper.
+Relocation complete (commit `264a510c`). All directory names then kebab-cased per repo convention
+(commits `3133adf2` c4/user, `8c3f4553` star-uml/generated, `1a423eba` developer subtree) — the
+kebab rename introduced zero new broken links and fixed one; the 2 valid cross-dir links were
+repointed. `.structurizr` (tool dir) and the self-contained `star-uml/generated/html-docs` site
+internals left as-is.
 
-Deferred doc-hygiene (PRE-EXISTING, not caused by the move — out of scope for a relocation):
-- [ ] ~22 stale intra-doc links (ADR index `Overview.md` files link to same-dir `0000-*.md`
-      but those files live in `Approved/`/`Examples/` subdirs).
+Deferred doc-hygiene (PRE-EXISTING, not caused by this task):
+- [ ] ~21 stale intra-doc links (ADR index `Overview.md` files link to same-dir `0000-*.md`
+      but those files live in `approved/`/`examples/` subdirs).
 - [ ] Some docs still mention the old `Source/ContainerApps/...` layout.
-- [ ] Optional: kebab-case the directory names for repo consistency.
 
 If desired these become a small "documentation hygiene" task; not blocking the wrapper teardown.
 
