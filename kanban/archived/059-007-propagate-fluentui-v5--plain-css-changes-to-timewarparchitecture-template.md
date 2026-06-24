@@ -2,6 +2,14 @@
 
 Parent: 059. Last — after 001–006 land in the live `source/` app.
 
+> **SUPERSEDED by 047 (2026-06-24).** The premise below ("two copies; port v5/CSS to the template
+> web-spa") is stale: 047 already migrated the app source OUT of `TimeWarp.Architecture/Source/` to
+> root `source/`, and 047's end-state is that **root `source/` *becomes* the template**. The root app
+> is already on FluentUI v5 + plain CSS (001–006), so there is nothing to "port" — the propagation is
+> automatic once 047 lands. The one unique requirement ("the template must ship v5 + plain CSS, with
+> NO Tailwind/npm — drop the dead `Run*.ps1` scripts, the `template.json` npm `postAction`, and the
+> devcontainer/CLAUDE.md refs") has been folded into 047 as an acceptance criterion. Archiving this task.
+
 ## Context
 
 There are two copies of this codebase:

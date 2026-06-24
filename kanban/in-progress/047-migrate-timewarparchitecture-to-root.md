@@ -26,3 +26,18 @@ Migrate the TimeWarp.Architecture template project from its current subdirectory
 - Namespaces remain unchanged (no coupling to folder structure)
 - Directory naming: `kebab-case` (e.g., `source/`, `tests/`, `tools/`)
 - Migration order: leaf projects first, working up dependency chain
+
+## Acceptance criterion folded in from 059-007 (2026-06-24)
+
+The root `source/` tree (which becomes the template) is already on FluentUI v5 + plain CSS with no
+Tailwind. When reworking the template plumbing as part of this migration, ensure the **template ships
+clean** — i.e. remove the dead frontend toolchain that still lives under `TimeWarp.Architecture/`:
+
+- [ ] Delete `RunTailwind.ps1`, `RunNpmInstall.ps1`, `NpmOutdated.ps1`.
+- [ ] Remove the `RunNpmInstall.ps1` `postAction` from `.template.config/template.json`.
+- [ ] Remove the `npm install` block + `alias tailwind='./RunTailwind.ps1'` from `.devcontainer/post-create.sh`.
+- [ ] Drop the Tailwind/npm dev-command lines from root `CLAUDE.md` + `TimeWarp.Architecture/Claude.md`.
+- [ ] Delete the obsolete `CSS Bundle Hash Management in Blazor with Tailwind.md`.
+- [ ] Verify `dotnet new timewarp-architecture -n MyApp` builds/runs with FluentUI v5 and no Tailwind/npm.
+
+(Originally tracked as 059-007, now superseded by this epic.)
