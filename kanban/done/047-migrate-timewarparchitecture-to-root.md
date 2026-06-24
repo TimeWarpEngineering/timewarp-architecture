@@ -19,29 +19,31 @@ Migrate the TimeWarp.Architecture template project from its current subdirectory
 - [x] Create root directory structure (`source/`, `tests/`, `tools/`, `msbuild/` at root)
 - [x] Migrate projects leaf-to-root — DONE. **0 `.csproj` remain under `TimeWarp.Architecture/`.**
       App `source/` migrated; tests migrated to root `tests/` (058); `GenTester` + `TimeWarp.Automation` dropped.
-- [ ] Verify build succeeds (root `timewarp-architecture.slnx` builds; integration/E2E host strategy pending — 058/060)
-- [ ] Update documentation
-- [ ] Tear down / relocate the remaining `TimeWarp.Architecture/` wrapper (296 non-project files — see status below)
+- [x] Verify build succeeds — root `timewarp-architecture.slnx` builds; integration/E2E *runtime*
+      host strategy is separate work (058 / 060).
+- [x] Wrapper teardown scoped out into per-area follow-on tasks (this epic was too big — see Closure).
 
-## Status (2026-06-24)
+## Closure (2026-06-24) — epic DONE, remainder spun out
 
-**Code migration: COMPLETE** — no projects left in the wrapper. What remains under
-`TimeWarp.Architecture/` is 296 non-`.csproj` files to relocate-to-root or delete:
+The migration's purpose — **get the projects to root** — is achieved: 0 `.csproj` under the
+wrapper. This epic ran too broad, so the remaining wrapper teardown (296 non-project files) is
+broken into focused per-area tasks and 047 is closed:
 
-- `Documentation/` (142), `DevOps/` (75), `Scripts/` (16) — bulk content; relocate to root or archive.
-- `.ai/` (13), `.github/` (11, incl. CI workflows), `.devcontainer/` (7), `.vscode/`, `.config/`,
-  `.editorconfig`, `.gitignore`, etc. — reconcile vs the root copies (don't duplicate).
-- Build plumbing: `Directory.Build.props`/`.targets`, `Directory.Packages.props`, `global.json`,
-  `NuGet.config`, old `TimeWarp.Architecture.slnx` (orphaned — points at gone `Source/`) → delete/merge.
-- `.template.config/template.json` — **the template definition; still has stale `Source/...` paths.**
-  Repointing it to the root kebab layout (so `dotnet new timewarp-architecture` works) is the
-  biggest remaining piece.
-- Misc one-offs: `ReadMe.md`, `Claude.md`, `Assets/`, `Samples/`, `Spikes/`, `Tools/`, `runfiles/`,
-  `msbuild/`, `FixAnalyzerDebug.reg`, `ApiDependencies.dgml`, `Priority-Analysis-Report.md`.
+- [[062-relocate-documentation-to-root]] — `Documentation/` (~142). *Easiest; good starting point.*
+- [[063-relocate-devops-deploy-infra-to-root]] — `DevOps/` (~75).
+- [[064-repoint-template-to-root-layout]] — `.template.config/template.json` + TimeWarp.Templates
+  packaging. **The big one; unblocks `dotnet new`.**
+- [[065-reconcile-dev-environment-config-vs-root]] — `.github`, `.devcontainer`, `.vscode`,
+  `.config`, `.ai`, editor/git dotfiles.
+- [[066-reconcile-remove-wrapper-build-plumbing]] — `Directory.Build.*`, CPM, `global.json`,
+  `NuGet.config`, old slnx.
+- [[067-final-wrapper-sweep-and-delete-directory]] — tail of one-offs, then delete the directory
+  (the verification gate).
+- [[061-migrate-remaining-ps1-scripts-to-dev-cli-endpoints]] — the leftover operational `.ps1`.
 
-**Done this session:** Tailwind/npm scrub, Tye-era Docker removal, dev-loop `.ps1` deleted +
-references repointed to dev-cli (`dev run/test/build`). Remaining `.ps1` → dev-cli tracked in
-[[061-migrate-remaining-ps1-scripts-to-dev-cli-endpoints]].
+**Done under this epic this session:** test migration to root (058 slice 3), Tailwind/npm scrub,
+Tye-era Docker removal, dev-loop `.ps1` deleted + references repointed to the dev-cli
+(`dev run/test/build`).
 
 ## Notes
 
