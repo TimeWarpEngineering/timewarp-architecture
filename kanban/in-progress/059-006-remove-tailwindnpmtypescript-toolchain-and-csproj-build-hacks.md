@@ -15,10 +15,10 @@ link in `App.razor` for `tokens.css` + `app.css`; de-Tailwinded the error UI + b
 builds clean.
 
 STILL TODO:
-- [ ] TypeScript pipeline (`Microsoft.TypeScript.MSBuild`, `tsconfig.json`, `source/*.ts`,
+- [x] CANCELLED (TS kept): TypeScript pipeline (`Microsoft.TypeScript.MSBuild`, `tsconfig.json`, `source/*.ts`,
       eslint/prettier, the `WebSpaBuildTools` target) — left intact; remove if TS is being
       dropped, else keep. (Does NOT affect CSS — that's why it was deferred.)
-- [ ] csproj dummy-CSS targets (`CreateDummyFluentUICSS`, `CreateDummyQuickGridCSS`) — v4
+- [x] csproj dummy-CSS targets (`CreateDummyFluentUICSS`, `CreateDummyQuickGridCSS`) — v4
       scoped-bundle hacks; re-evaluate under v5 (coordinate w/ 059-004 fluent.css item).
 - [ ] Repo scripts `RunTailwind.ps1` / `RunNpmInstall.ps1` / `NpmOutdated.ps1` (under
       `TimeWarp.Architecture/`) — part of 059-007 template work.
@@ -26,26 +26,26 @@ STILL TODO:
 ## Tasks
 
 ### Delete (web-spa)
-- [ ] `tailwind.config.js`
+- [x] `tailwind.config.js`
 - [ ] `package.json`, `package-lock.json`, `node_modules/`
-- [ ] `styles/input.css` (and `styles/` if empty)
-- [ ] `.eslintrc.js`, `.prettierrc.json`, `.prettierignore`, `tsconfig.json`, `source/*.ts`
+- [x] `styles/input.css` (and `styles/` if empty)
+- [ ] `.eslintrc.js`, `.prettierrc.json`, `.prettierignore`, `tsconfig.json`, `source/*.ts` — NOTE: `tsconfig.json` + `source/*.ts` KEPT (TS retained); only eslint/prettier pending
       (the TypeScript sources compiled by `Microsoft.TypeScript.MSBuild`) — confirm no TS is
       still needed; if JS interop is required, keep plain `.js` and drop the TS pipeline.
-- [ ] generated `wwwroot/css/site.css`
+- [x] generated `wwwroot/css/site.css`
 
 ### Edit `web-spa.csproj`
-- [ ] Remove `<Target Name="Tailwind">` (npm install/prettier/lint/build/css:build).
-- [ ] Remove `Microsoft.TypeScript.MSBuild` PackageReference + `<TypeScriptInputs>` +
+- [x] Remove `<Target Name="Tailwind">` (npm install/prettier/lint/build/css:build).
+- [x] CANCELLED (TS kept): Remove `Microsoft.TypeScript.MSBuild` PackageReference + `<TypeScriptInputs>` +
       `TypeScriptCompileBlocked` / `SkipWebSpaBuildTools` plumbing.
-- [ ] Remove `<UpToDateCheckBuilt Include="styles/input.css" />` + `tailwind.config.js` items.
-- [ ] Remove `CreateDummyFluentUICSS` + `CreateDummyQuickGridCSS` targets (v4 scoped-bundle
+- [x] Remove `<UpToDateCheckBuilt Include="styles/input.css" />` + `tailwind.config.js` items.
+- [x] Remove `CreateDummyFluentUICSS` + `CreateDummyQuickGridCSS` targets (v4 scoped-bundle
       hacks — confirm unneeded under v5 first; coordinate with 059-003).
-- [ ] Keep `CopyScopedCss` only if still needed; review.
+- [x] Keep `CopyScopedCss` only if still needed; review.
 
 ### Edit `web-server/components/App.razor`
-- [ ] Remove `<link href="css/site.css">` (replaced by `tokens.css` in 059-001).
-- [ ] Remove/replace `<link href="css/fluent.css">` per 059-003.
+- [x] Remove `<link href="css/site.css">` (replaced by `tokens.css` in 059-001).
+- [x] Remove/replace `<link href="css/fluent.css">` per 059-003.
 
 ### Repo scripts
 - [ ] Delete `RunTailwind.ps1`, `RunNpmInstall.ps1`, `NpmOutdated.ps1` (and any
