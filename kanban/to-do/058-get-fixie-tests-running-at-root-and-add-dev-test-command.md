@@ -100,3 +100,21 @@ Migration sliced (lowest risk first):
    → proves `tests/Directory.Build.props`, root-CPM resolution, slnx wiring, and the `dev test` Fixie command.
 3. Integration slice (fix the Aspire dangling ref; decide how they get a running host).
 4. E2E Playwright → separate `dev` command/filter (needs browsers).
+
+## Slice 3 recon (2026-06-24) — integration tests have PRE-EXISTING breakage
+
+Started migrating `Testing.Common` (shared infra the integration tests depend on) → it does NOT
+build at root, and it's pre-existing (its api/web refs already pointed at root before the move):
+- `CS0122`: `WebServerApiService` is `internal sealed` in web-spa, but `Testing.Common`'s
+  `WebTestServerApplication` does `new WebServerApiService(...)`. Needs an `InternalsVisibleTo`
+  for the test-infra assembly (web-spa currently IVTs only `Web.Spa/Web.Server.Integration.Tests`),
+  or switch to the `IWebServerApiService` interface.
+- `CS1061`: `IServiceProvider.ValidateOptions` not found — `Testing.Common` is missing the
+  `Timewarp.OptionsValidation` package ref (+ using).
+- Also the only remaining stale ref: the `Aspire` test project still references the OLD
+  `Source/ContainerApps/Aspire/Aspire.AppHost` path (now `source/container-apps/aspire/aspire-app-host`).
+
+So slice 3 (Testing.Common + Api/Web.Server/Web.Spa integration + Aspire) is a real fix effort,
+not a mechanical move — fix the IVT/accessibility + the missing package, then the integration
+tests, then decide how integration/Aspire tests get a running host. Deferred from this session;
+slice-1 (unit/analyzer) is migrated + green and committed.
