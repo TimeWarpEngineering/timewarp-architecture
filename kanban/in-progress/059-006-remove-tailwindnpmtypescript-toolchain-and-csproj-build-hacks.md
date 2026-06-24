@@ -54,3 +54,26 @@ STILL TODO:
 ## Done when
 - [ ] `git grep -i tailwind` and `git grep -i "npm "` return nothing meaningful in web-spa.
 - [ ] Clean build with no node/npm present in the environment.
+
+## Status update (2026-06-24) — TypeScript KEPT; csproj hacks done; npm still open
+
+Decision reversed on TypeScript: **keep the TS pipeline.** The `source/*.ts` → `wwwroot/js`
+compile (via `Microsoft.TypeScript.MSBuild`, no node needed) is required for the JS-interop
+demo (`window.Spa.Counter`) and the Blazor JS initializer. This session it was *restored* and
+decoupled from `SkipWebSpaBuildTools` (which now gates only the npm prettier/lint steps), and
+`tsconfig` modernized (`moduleResolution: bundler`, dropped deprecated `baseUrl`). So the
+"remove `Microsoft.TypeScript.MSBuild` / `tsconfig` / `source/*.ts`" items are **cancelled**.
+
+DONE:
+- [x] csproj build hacks removed: `Name="Tailwind"` target, `CreateDummyFluentUICSS`,
+      `CreateDummyQuickGridCSS`, `CopyScopedCss`, `UpToDateCheckBuilt` (verified 0 in HEAD).
+- [x] `App.razor`: `site.css`/`fluent.css` links gone; tokens.css/app.css + v5 bundle + the
+      scoped `Web.Spa.styles.css` bundle wired.
+
+STILL OPEN (the actual remaining scope of this task):
+- [ ] Decide the **npm lint/format toolchain**: `package.json`, `package-lock.json`,
+      `node_modules/`, `.eslintrc.js`, `.prettierrc.json`, and the npm steps in the
+      `WebSpaBuildTools` target. Drop them (and the target) if not wanted — they are NOT needed
+      for the TS compile, which is node-free.
+- [ ] Repo scripts `RunTailwind.ps1` / `RunNpmInstall.ps1` / `NpmOutdated.ps1` (under
+      `TimeWarp.Architecture/`) — fold into 059-007 (template) work.
