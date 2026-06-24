@@ -8,16 +8,16 @@ Migrate the TimeWarp.Architecture template project from its current subdirectory
 
 ## Child Tasks
 
-- [x] 048: Create dev-cli and migrate ps1 scripts to Nuru runfiles (in-progress)
+- [x] 048: Create dev-cli and migrate ps1 scripts to Nuru runfiles (done)
 - [x] 049: Analyze dependency graph to identify leaf projects (done)
-- [ ] 050: Establish root directory structure (source, tests in kebab-case)
+- [x] 050: Establish root directory structure (source, tests in kebab-case) — done
 
 ## Checklist
 
 - [x] Scaffold dev-cli via `ganda repo enforce-dev-cli --fix`
 - [x] Analyze project dependency graph (41 projects, 8 phases)
-- [ ] Create root directory structure
-- [ ] Migrate projects leaf-to-root
+- [x] Create root directory structure (`source/`, `tests/`, `tools/`, `msbuild/` at root)
+- [ ] Migrate projects leaf-to-root — app `source/` migrated; **tests + `GenTester` + `TimeWarp.Automation` still under `TimeWarp.Architecture/`** (owned by 058 + 053-050-019)
 - [ ] Verify build succeeds
 - [ ] Update documentation
 
