@@ -9,7 +9,6 @@
   </Folder>
   <Folder Name="/source/libraries/">
     <Project Path="source/libraries/timewarp-modules/timewarp-modules.csproj" />
-    <Project Path="source/libraries/timewarp-automation-contracts/timewarp-automation-contracts.csproj" />
   </Folder>
   <Folder Name="/source/analyzers/">
     <Project Path="source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
@@ -34,5 +33,10 @@
     <Project Path="source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj" />
     <Project Path="source/container-apps/aspire/aspire-app-host/aspire-app-host.csproj" />
     <Project Path="source/container-apps/yarp/yarp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/foundation/foundation-infrastructure-tests/foundation-infrastructure-tests.csproj" />
+    <Project Path="tests/analyzers/timewarp-architecture-analyzers-tests/timewarp-architecture-analyzers-tests.csproj" />
+    <Project Path="tests/analyzers/timewarp-architecture-sourcegenerator-tests/timewarp-architecture-sourcegenerator-tests.csproj" />
   </Folder>
 </Solution>

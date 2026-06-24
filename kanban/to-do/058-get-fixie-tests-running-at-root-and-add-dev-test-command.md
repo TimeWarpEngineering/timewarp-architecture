@@ -53,16 +53,16 @@ test-framework-agnostic where practical so adding Jaribu later is incremental.
 ## Checklist
 
 ### Migrate
-- [ ] Move test projects to `tests/` with kebab-case naming (mirror the source-tree layout)
+- [~] Move test projects to `tests/` (kebab-case) — DONE for unit/analyzer (foundation-infrastructure-tests, analyzers-tests, sourcegenerator-tests); integration + E2E + Testing.Common remain
 - [ ] Move shared `Testing.Common` to `tests/common/timewarp-testing/`
 - [ ] Fix relative `ProjectReference` paths after the move
 - [ ] Add all test projects to `timewarp-architecture.slnx`
 - [ ] Remove version-less reliance on the old CPM; confirm they resolve against root CPM
-- [ ] Decide on a `tests/Directory.Build.props` chain (relax analyzers for test code?)
+- [x] `tests/Directory.Build.props` — inherits root props, relaxes for test code (TreatWarningsAsErrors=false, NoWarn RS0030)
 
 ### Fix build blockers
-- [ ] Resolve `PartialClassDeclarationAnalyzer` CS0246 in analyzer tests
-- [ ] Resolve MSB3277 CodeAnalysis.CSharp version conflict
+- [x] `PartialClassDeclarationAnalyzer` CS0246 — was a namespace reconcile (Analyzer -> Analyzers); fixed
+- [x] MSB3277 — resolved (root CPM unifies Microsoft.CodeAnalysis* at 5.3.0)
 - [ ] Get every migrated project building under the strict root props
 
 ### Wire dev test
@@ -83,3 +83,38 @@ test-framework-agnostic where practical so adding Jaribu later is incremental.
   Fixie). These may warrant separate dev-cli commands or tag filters rather than one `test`.
 - After migration, the old `TimeWarp.Architecture/Tests/` tree should be removed (coordinate
   with 053-050-019 / the broader migration cleanup).
+
+## Plan & re-verification (2026-06-24)
+
+Re-checked the blockers (notes above were 06-12; much has migrated since):
+- ✅ `PartialClassDeclarationAnalyzer` CS0246 — RESOLVED (analyzer now at
+  `source/analyzers/timewarp-architecture-analyzers/partial-class-declaration-analyzer.cs`).
+- ✅ MSB3277 CodeAnalysis.CSharp 5.0 vs 5.3 — RESOLVED (root CPM unifies `Microsoft.CodeAnalysis*` at 5.3.0).
+- ⚠️ Strict root props remain the real risk → add `tests/Directory.Build.props` to relax analyzers for test code.
+- 🔴 NEW: the `Aspire` test project references the OLD `Source/ContainerApps/Aspire/Aspire.AppHost` path (gone; now `source/container-apps/aspire/aspire-app-host`) — dangling ref, must fix.
+- ✅ Most other test ProjectReferences already point at root `source/`.
+
+Migration sliced (lowest risk first):
+1. `Testing.Common` → `tests/common/timewarp-testing/` (shared infra; others depend on it).
+2. Unit/analyzer slice (no infra): Common.Infrastructure.Tests, Analyzers.Tests, SourceGenerator.Tests
+   → proves `tests/Directory.Build.props`, root-CPM resolution, slnx wiring, and the `dev test` Fixie command.
+3. Integration slice (fix the Aspire dangling ref; decide how they get a running host).
+4. E2E Playwright → separate `dev` command/filter (needs browsers).
+
+## Slice 3 recon (2026-06-24) — integration tests have PRE-EXISTING breakage
+
+Started migrating `Testing.Common` (shared infra the integration tests depend on) → it does NOT
+build at root, and it's pre-existing (its api/web refs already pointed at root before the move):
+- `CS0122`: `WebServerApiService` is `internal sealed` in web-spa, but `Testing.Common`'s
+  `WebTestServerApplication` does `new WebServerApiService(...)`. Needs an `InternalsVisibleTo`
+  for the test-infra assembly (web-spa currently IVTs only `Web.Spa/Web.Server.Integration.Tests`),
+  or switch to the `IWebServerApiService` interface.
+- `CS1061`: `IServiceProvider.ValidateOptions` not found — `Testing.Common` is missing the
+  `Timewarp.OptionsValidation` package ref (+ using).
+- Also the only remaining stale ref: the `Aspire` test project still references the OLD
+  `Source/ContainerApps/Aspire/Aspire.AppHost` path (now `source/container-apps/aspire/aspire-app-host`).
+
+So slice 3 (Testing.Common + Api/Web.Server/Web.Spa integration + Aspire) is a real fix effort,
+not a mechanical move — fix the IVT/accessibility + the missing package, then the integration
+tests, then decide how integration/Aspire tests get a running host. Deferred from this session;
+slice-1 (unit/analyzer) is migrated + green and committed.

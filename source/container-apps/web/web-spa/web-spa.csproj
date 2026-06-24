@@ -11,10 +11,6 @@
     <DefineConstants>ReduxDevToolsEnabled;grpc;api;web;counter</DefineConstants>
     <Nullable>enable</Nullable>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
-    <!-- When true, skips the npm-based prettier/lint/build steps (useful when node is not
-         available). This does NOT block the TypeScript -> wwwroot/js compile, which runs via
-         Microsoft.TypeScript.MSBuild (no node required) on every build. -->
-    <SkipWebSpaBuildTools Condition="'$(SkipWebSpaBuildTools)' == ''">true</SkipWebSpaBuildTools>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -55,7 +51,6 @@
     <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
-    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons"/>
     <PackageReference Include="Microsoft.TypeScript.MSBuild">
       <PrivateAssets>all</PrivateAssets>
@@ -94,6 +89,9 @@
     <Folder Include="features\admin\" />
   </ItemGroup>
 
+  <!-- TypeScript (source/*.ts -> wwwroot/js) is compiled by Microsoft.TypeScript.MSBuild on
+       every build — node/npm NOT required. Type-checking uses the ambient declarations under
+       source/types (tsconfig typeRoots). The npm lint/format toolchain was removed (059-006). -->
   <ItemGroup>
     <TypeScriptInputs Include="source\*.*"/>
   </ItemGroup>
@@ -108,12 +106,4 @@
     <_ContentIncludedByDefault Remove="features\profile-menu\components\ProfileMenuNavLink.razor" />
     <_ContentIncludedByDefault Remove="features\profile-menu\components\ProfileMenuPanel.razor" />
   </ItemGroup>
-
-  <!-- TypeScript/lint build tools (Tailwind step removed). Full removal tracked in 059-006. -->
-  <Target Name="WebSpaBuildTools" AfterTargets="Build" Condition="'$(SkipWebSpaBuildTools)' != 'true'">
-    <Exec Command="npm install" ContinueOnError="true" />
-    <Exec Command="npm run prettier" ContinueOnError="true" />
-    <Exec Command="npm run lint" ContinueOnError="true" />
-    <Exec Command="npm run build" ContinueOnError="true" />
-  </Target>
 </Project>

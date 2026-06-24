@@ -1,9 +1,0 @@
-<Project>
-  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
-  <PropertyGroup>
-    <RootNamespace>TimeWarp.Architecture</RootNamespace>
-    <Nullable>enable</Nullable>
-    <!-- Define all template features as enabled by default -->
-    <DefineConstants>$(DefineConstants);cosmosdb;api;grpc;web;yarp</DefineConstants>
-  </PropertyGroup>
-</Project>
