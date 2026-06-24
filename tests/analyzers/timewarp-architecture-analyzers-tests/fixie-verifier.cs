@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Analyzer.Tests;
+namespace TimeWarp.Architecture.Analyzers.Tests;
 
 // FixieVerifier is a basic implementation since Fixie doesn't have a verifier like xUnit or NUnit.
 internal class FixieVerifier : IVerifier

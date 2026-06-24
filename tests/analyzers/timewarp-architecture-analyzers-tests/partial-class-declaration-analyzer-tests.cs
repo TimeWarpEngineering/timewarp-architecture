@@ -2,8 +2,8 @@
 namespace PartialClassDeclarationAnalyzer_;
 
 using Microsoft.CodeAnalysis.CSharp.Testing;
-using TimeWarp.Architecture.Analyzer;
-using TimeWarp.Architecture.Analyzer.Tests;
+using TimeWarp.Architecture.Analyzers;
+using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Trigger_PartialClassDeclaration
 {

@@ -1,3 +1,5 @@
+global using TimeWarp.Architecture.Analyzers;
+global using Microsoft.CodeAnalysis.Diagnostics;
 global using Shouldly;
 global using Microsoft.CodeAnalysis;
 global using Microsoft.CodeAnalysis.CSharp;

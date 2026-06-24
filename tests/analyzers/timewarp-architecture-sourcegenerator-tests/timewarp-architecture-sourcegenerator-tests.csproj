@@ -11,6 +11,6 @@
     <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../../../source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
+    <ProjectReference Include="../../../source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
   </ItemGroup>
 </Project>

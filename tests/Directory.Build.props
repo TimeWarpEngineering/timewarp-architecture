@@ -1,0 +1,17 @@
+<Project>
+
+  <!-- Inherit the repo-root build configuration, then relax it for TEST code.
+       Test projects are intentionally allowed to be looser than product code. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup Label="Test relaxations">
+    <!-- Don't fail the build on analyzer/style warnings (naming, CA*, banned symbols, etc.).
+         Analyzers still run and report as warnings; test code shouldn't be held to the same
+         warnings-as-errors bar as shipping code. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);RS0030</NoWarn>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

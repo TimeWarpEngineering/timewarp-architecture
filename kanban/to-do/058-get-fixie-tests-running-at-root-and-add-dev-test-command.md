@@ -83,3 +83,20 @@ test-framework-agnostic where practical so adding Jaribu later is incremental.
   Fixie). These may warrant separate dev-cli commands or tag filters rather than one `test`.
 - After migration, the old `TimeWarp.Architecture/Tests/` tree should be removed (coordinate
   with 053-050-019 / the broader migration cleanup).
+
+## Plan & re-verification (2026-06-24)
+
+Re-checked the blockers (notes above were 06-12; much has migrated since):
+- ✅ `PartialClassDeclarationAnalyzer` CS0246 — RESOLVED (analyzer now at
+  `source/analyzers/timewarp-architecture-analyzers/partial-class-declaration-analyzer.cs`).
+- ✅ MSB3277 CodeAnalysis.CSharp 5.0 vs 5.3 — RESOLVED (root CPM unifies `Microsoft.CodeAnalysis*` at 5.3.0).
+- ⚠️ Strict root props remain the real risk → add `tests/Directory.Build.props` to relax analyzers for test code.
+- 🔴 NEW: the `Aspire` test project references the OLD `Source/ContainerApps/Aspire/Aspire.AppHost` path (gone; now `source/container-apps/aspire/aspire-app-host`) — dangling ref, must fix.
+- ✅ Most other test ProjectReferences already point at root `source/`.
+
+Migration sliced (lowest risk first):
+1. `Testing.Common` → `tests/common/timewarp-testing/` (shared infra; others depend on it).
+2. Unit/analyzer slice (no infra): Common.Infrastructure.Tests, Analyzers.Tests, SourceGenerator.Tests
+   → proves `tests/Directory.Build.props`, root-CPM resolution, slnx wiring, and the `dev test` Fixie command.
+3. Integration slice (fix the Aspire dangling ref; decide how they get a running host).
+4. E2E Playwright → separate `dev` command/filter (needs browsers).
