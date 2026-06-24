@@ -51,7 +51,6 @@
     <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
-    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons"/>
     <PackageReference Include="Microsoft.TypeScript.MSBuild">
       <PrivateAssets>all</PrivateAssets>
