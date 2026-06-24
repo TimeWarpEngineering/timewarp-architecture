@@ -1,7 +1,7 @@
 
 * Blazor-State State Management
 * Dynamic Duel Mode
-* TailwindCss
+* FluentUI v5 + plain CSS (design tokens)
 * Feature Folder structure
 * Entity Framework
 * EF Cosmos DB

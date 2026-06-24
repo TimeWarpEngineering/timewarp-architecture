@@ -18,7 +18,6 @@ Navigate to `TimeWarp.Architecture/` directory first:
 **Running Applications:**
 - `./Run.ps1` - Runs the Aspire orchestrator (Development environment)
 - `./RunDocker.ps1` - Run using Docker containers
-- `./RunTailwind.ps1` - Build Tailwind CSS for Web.Spa
 - `./Build.ps1` - Build entire solution without running (validates build including static assets)
 
 **Testing:**
@@ -29,11 +28,10 @@ Navigate to `TimeWarp.Architecture/` directory first:
 - `dotnet test Tests/EndToEnd.Playwright.Tests` - Run Playwright E2E tests
 
 **Frontend Development (Web.Spa):**
-- `npm run css:build` - Build Tailwind CSS
-- `npm run tailwind-watch` - Watch and rebuild CSS changes  
-- `npm run build` - Build TypeScript
-- `npm run lint` - Lint TypeScript files
-- `npm run prettier` - Format code
+- TypeScript (`source/*.ts`) compiles to `wwwroot/js` automatically on build via
+  `Microsoft.TypeScript.MSBuild` — no npm/node required.
+- Styling is plain CSS with design tokens (`wwwroot/css/tokens.css` + `app.css`); the
+  Tailwind/npm toolchain was removed (see the `blazor-css-strategy` skill).
 
 ### Template Management
 - `dotnet new --install TimeWarp.Architecture` - Install the architecture template
@@ -52,7 +50,7 @@ A **distributed microservices architecture** demonstrating enterprise .NET patte
 - **Fixie** testing framework (NOT MSTest/xUnit)
 - **.NET Aspire** for service orchestration
 - **Entity Framework Core** with multiple database providers
-- **FluentUI + Tailwind CSS** for styling
+- **FluentUI v5 + plain CSS** (design tokens) for styling
 
 **Key Patterns:**
 - **Endpoint-Centric Design**: Each API endpoint has dedicated request/response DTOs
@@ -78,11 +76,12 @@ ContainerApps/
 - **Queries**: Read operations (prefixed with "Get")
 - **Validation**: FluentValidation with shared mixins
 
-### UI Development (FluentUI + Tailwind)
+### UI Development (FluentUI v5 + plain CSS)
 - **Layout**: Use `TimeWarpPage` with FluentUI `Stack`/`Grid`
-- **Colors**: FluentUI palette only (automatic light/dark theme support)
-- **Tailwind**: Limited to spacing (`m-*`, `p-*`), hover effects, responsiveness
-- **Avoid**: Tailwind colors, typography, borders that conflict with FluentUI
+- **Colors**: FluentUI palette / design tokens (automatic light/dark theme support)
+- **Styling**: Plain CSS driven by design tokens (`wwwroot/css/tokens.css`); per-component
+  styles via Blazor scoped CSS. See the `blazor-css-strategy` skill.
+- **No Tailwind**: the utility-class toolchain was removed — do not reintroduce it.
 
 ## Task Management Workflow
 

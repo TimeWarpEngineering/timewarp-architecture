@@ -25,7 +25,6 @@
         "ms-vscode.powershell",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "bradlc.vscode-tailwindcss",
         "ms-playwright.playwright",
         "eamodio.gitlens",
         "mhutchie.git-graph",

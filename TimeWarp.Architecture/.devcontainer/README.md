@@ -50,7 +50,6 @@ The container includes helpful aliases:
 - `run` - Execute Run.ps1 (starts Aspire)
 - `test` - Execute RunTests.ps1
 - `build` - Execute Build.ps1
-- `tailwind` - Execute RunTailwind.ps1
 - `worktree` - Navigate to git worktree
 
 ## Port Forwarding

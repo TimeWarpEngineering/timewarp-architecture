@@ -69,7 +69,7 @@ You should see the Tye Dashboard opened in your browser.
 
 * [Dotnet 6](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 * [Blazor](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0)
-* [Tailwind](https://tailwindcss.com/)
+* [FluentUI Blazor](https://www.fluentui-blazor.net/)
 * [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
 * [MediatR](https://github.com/jbogard/MediatR)
 * [Automapper](https://automapper.org/)
