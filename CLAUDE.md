@@ -135,5 +135,5 @@ Tests/
 ## Documentation
 
 Comprehensive documentation available in:
-- `TimeWarp.Architecture/Documentation/` - Architecture and development guides
+- `documentation/` - Architecture and development guides
 - Online docs: https://timewarpengineering.github.io/timewarp-architecture/
