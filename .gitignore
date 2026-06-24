@@ -453,8 +453,6 @@ GeneratedCode/
 **/Generated/
 .agent/workspace/*
 !.agent/workspace/overview.md
-TimeWarp.Architecture/.agent/workspace/*
-!TimeWarp.Architecture/.agent/workspace/overview.md
 *.lscache
 
 # memsearch: track the memory markdown, ignore the regenerable binary index
