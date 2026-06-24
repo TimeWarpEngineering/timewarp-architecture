@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Api.Server.Integration.Tests" />
+    <InternalsVisibleTo Include="api-server-integration-tests" />
   </ItemGroup>
 
 </Project>

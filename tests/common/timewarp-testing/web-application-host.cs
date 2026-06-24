@@ -51,8 +51,9 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
     TProgram.ConfigureEndpoints(WebApplication);
 
     ServiceProvider = WebApplication.Services;
-    ILogger logger = ServiceProvider.GetService<ILogger<WebApplicationHost<TProgram>>>() ?? throw new InvalidOperationException();
-    ServiceProvider.ValidateOptions(builder.Services, logger);
+    // Options validation is now wired at registration time via the Timewarp.OptionsValidation
+    // package's AddFluentValidatedOptions (in each Program's ConfigureServices); the former
+    // host-side ServiceProvider.ValidateOptions sweep no longer exists in the package.
 
     try
     {

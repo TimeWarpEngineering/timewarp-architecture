@@ -8,14 +8,14 @@
     <PackageReference Include="AutoFixture.AutoFakeItEasy" />
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Fixie.TestAdapter" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Shouldly" />
+    <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\source\container-apps\web\web-spa\web-spa.csproj" />
-    <ProjectReference Include="..\..\..\..\..\..\source\container-apps\web\web-server\web-server.csproj" />
-    <ProjectReference Include="..\..\..\..\Source\ContainerApps\Aspire\Aspire.AppHost\Aspire.AppHost.csproj" />
-    <ProjectReference Include="..\..\..\TimeWarp.Testing\Testing.Common.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\api\api-contracts\api-contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\api\api-server\api-server.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\aspire\aspire-app-host\aspire-app-host.csproj" />
+    <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Configuration\" />

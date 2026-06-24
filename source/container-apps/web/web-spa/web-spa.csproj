@@ -79,8 +79,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Web.Spa.Integration.Tests"/>
-    <InternalsVisibleTo Include="Web.Server.Integration.Tests"/>
+    <InternalsVisibleTo Include="web-spa-integration-tests"/>
+    <InternalsVisibleTo Include="web-server-integration-tests"/>
+    <InternalsVisibleTo Include="api-server-integration-tests"/>
+    <InternalsVisibleTo Include="timewarp-testing"/>
   </ItemGroup>
 
   <ItemGroup>

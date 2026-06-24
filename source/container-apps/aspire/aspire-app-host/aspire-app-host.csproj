@@ -30,9 +30,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="TimeWarp.Architecture.Api.Server.Integration.Tests" />
-    <InternalsVisibleTo Include="Api.Server.Integration.Tests" />
-    <InternalsVisibleTo Include="Web.Spa.Integration.Tests" />
+    <InternalsVisibleTo Include="api-server-integration-tests" />
+    <InternalsVisibleTo Include="web-spa-integration-tests" />
   </ItemGroup>
 
 </Project>

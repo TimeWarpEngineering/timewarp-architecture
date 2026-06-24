@@ -25,7 +25,7 @@
     <ProjectReference Include="..\..\..\source\container-apps\web\web-server\web-server.csproj" />
     <!--#endif-->
     <!--#if(yarp)-->
-    <ProjectReference Include="..\..\Source\ContainerApps\Yarp\Yarp.csproj" />
+    <ProjectReference Include="..\..\..\source\container-apps\yarp\yarp.csproj" />
     <!--#endif-->
   </ItemGroup>
 </Project>

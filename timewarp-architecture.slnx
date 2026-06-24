@@ -38,5 +38,10 @@
     <Project Path="tests/foundation/foundation-infrastructure-tests/foundation-infrastructure-tests.csproj" />
     <Project Path="tests/analyzers/timewarp-architecture-analyzers-tests/timewarp-architecture-analyzers-tests.csproj" />
     <Project Path="tests/analyzers/timewarp-architecture-sourcegenerator-tests/timewarp-architecture-sourcegenerator-tests.csproj" />
+    <Project Path="tests/common/timewarp-testing/timewarp-testing.csproj" />
+    <Project Path="tests/container-apps/api/api-server-integration-tests/api-server-integration-tests.csproj" />
+    <Project Path="tests/container-apps/web/web-server-integration-tests/web-server-integration-tests.csproj" />
+    <Project Path="tests/container-apps/web/web-spa-integration-tests/web-spa-integration-tests.csproj" />
+    <Project Path="tests/container-apps/aspire/aspire-tests/aspire-tests.csproj" />
   </Folder>
 </Solution>

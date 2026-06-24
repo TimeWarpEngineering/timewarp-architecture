@@ -17,7 +17,7 @@ class ApiServerTestConvention : TimeWarpTestingConvention
       async _ =>
       {
         IDistributedApplicationTestingBuilder appHost =
-          await DistributedApplicationTestingBuilder.CreateAsync<Projects.Aspire_AppHost>();
+          await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>();
 
         DistributedApplication app = await appHost.BuildAsync();
         await app.StartAsync();

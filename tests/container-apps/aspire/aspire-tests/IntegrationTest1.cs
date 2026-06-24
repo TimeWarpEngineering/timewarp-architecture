@@ -15,7 +15,7 @@ public class IntegrationTest1
   public async Task GetWebResourceRootReturnsOkStatusCode()
   {
     // Arrange
-    IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Aspire_AppHost>();
+    IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>();
     await using DistributedApplication app = await appHost.BuildAsync();
     await app.StartAsync();
 
