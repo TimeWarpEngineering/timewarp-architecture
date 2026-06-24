@@ -1,0 +1,38 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.4.3">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAspireHost>true</IsAspireHost>
+    <UserSecretsId>a3d4de92-958f-4e04-b927-9d7605bee60e</UserSecretsId>
+    <DefineConstants>$(DefineConstants);api;web;grpc;yarp</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--#if (cosmosdb) -->
+    <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" />
+    <!--#endif -->
+    <!--#if (yarp) -->
+    <PackageReference Include="Aspire.Hosting.Yarp" />
+    <!--#endif -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--#if (api) -->
+    <ProjectReference Include="../../api/api-server/api-server.csproj" />
+    <!--#endif -->
+    <!--#if (grpc) -->
+    <ProjectReference Include="../../grpc/grpc-server/grpc-server.csproj" />
+    <!--#endif -->
+    <!--#if (web) -->
+    <ProjectReference Include="../../web/web-server/web-server.csproj" />
+    <!--#endif -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TimeWarp.Architecture.Api.Server.Integration.Tests" />
+    <InternalsVisibleTo Include="Api.Server.Integration.Tests" />
+    <InternalsVisibleTo Include="Web.Spa.Integration.Tests" />
+  </ItemGroup>
+
+</Project>

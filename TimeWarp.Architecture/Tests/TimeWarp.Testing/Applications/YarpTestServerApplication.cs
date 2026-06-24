@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Testing;
+namespace TimeWarp.Architecture.Testing;
 
 /// <summary>
 /// Used to launch the Api.Server application

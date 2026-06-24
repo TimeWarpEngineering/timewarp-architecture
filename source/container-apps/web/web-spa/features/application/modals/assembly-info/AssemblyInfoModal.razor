@@ -1,0 +1,49 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+
+<ModalContainer ModalId=@ModalId OnActivate=Activate>
+  <MainContent>
+    <h3 id="modal-title" style="margin:0 0 12px;font-weight:600;font-size:var(--twe-text-section-title);">@AssemblyInfo?.Title</h3>
+    @if (AssemblyInfo != null)
+    {
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.AlgorithmId) Value=@AssemblyInfo.AlgorithmId?.ToString()/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Description) Value=@AssemblyInfo.Description/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Configuration) Value=@AssemblyInfo.Configuration/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Company) Value=@AssemblyInfo.Company/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Product) Value=@AssemblyInfo.Product/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Copyright) Value=@AssemblyInfo.Copyright/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Trademark) Value=@AssemblyInfo.Trademark/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Culture) Value=@AssemblyInfo.Culture/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.Version) Value=@AssemblyInfo.Version/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.FileVersion) Value=@AssemblyInfo.FileVersion/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.InformationalVersion) Value=@AssemblyInfo.InformationalVersion/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.NeutralResourcesLanguage) Value=@AssemblyInfo.NeutralResourcesLanguage/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.ClsCompliant) Value=@AssemblyInfo.ClsCompliant/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.InternalsVisibleTo) Value=@AssemblyInfo.InternalsVisibleTo/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.DelaySign) Value=@AssemblyInfo.DelaySign/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.KeyFile) Value=@AssemblyInfo.KeyFile/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.KeyName) Value=@AssemblyInfo.KeyName/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.CommitHash) Value=@AssemblyInfo.CommitHash/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.ShortHash) Value=@AssemblyInfo.ShortHash/>
+      <PropertyDisplay PropertyName=@nameof(AssemblyInfo.CommitDate) Value=@AssemblyInfo.CommitDate?.ToString("yyyy-MM-dd HH:mm:ss")/>
+      <LinkDisplay Url=@AssemblyInfo.CommitUrl DisplayText="View Commit Details"/>
+      <LinkDisplay Url=@AssemblyInfo.RepositoryUrl DisplayText="View Repository"/>
+    }
+    else
+    {
+      <p>Loading...</p>
+    }
+  </MainContent>
+</ModalContainer>
+
+@code
+{
+  public const string ModalId = nameof(AssemblyInfoModal);
+  private AssemblyInfo? AssemblyInfo;
+
+  protected Task Activate()
+  {
+    AssemblyInfo = typeof(Program).Assembly.GetAssemblyInfo();
+    return Task.CompletedTask;
+  }
+}

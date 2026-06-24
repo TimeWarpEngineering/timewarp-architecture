@@ -1,0 +1,12 @@
+/* Modal — Tier-1 leaf, CSS isolation. Tokens from tokens.css. */
+.twe-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.twe-modal__backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); }
+.twe-modal__panel {
+  position: relative; z-index: 1;
+  background: var(--twe-paper);
+  border-radius: var(--twe-radius);
+  box-shadow: var(--twe-shadow);
+  padding: 24px;
+  width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto;
+}
+.twe-modal__actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px; }

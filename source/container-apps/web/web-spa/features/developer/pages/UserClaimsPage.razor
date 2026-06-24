@@ -1,0 +1,15 @@
+@namespace TimeWarp.Architecture.Pages
+@page "/UserClaims"
+@using TimeWarp.Architecture.Features.Developer.Components
+@inherits BaseComponent
+
+@code {
+  public static string Title => "User Claims";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+}
+
+<TimeWarpPage Title="User Claims">
+  <Card>
+    <UserClaims/>
+  </Card>
+</TimeWarpPage>

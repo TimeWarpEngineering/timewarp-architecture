@@ -1,0 +1,36 @@
+@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
+
+@code {
+  public static string Title => "Alert Example Page";
+  public static Icon? NavIcon => new Icons.Regular.Size32.Airplane();
+}
+
+<TimeWarpPage Title="Alert Examples">
+  <div class="twe-stack">
+
+    <Card Title="Alert Types">
+      <FluentStack Orientation=Orientation.Vertical VerticalGap="12">
+        <SimpleAlert Type=SimpleAlert.AlertType.Success Title="Success">
+          The operation was completed successfully.
+        </SimpleAlert>
+        <SimpleAlert Type=SimpleAlert.AlertType.Danger Title="Error">
+          There was an error processing your request.
+        </SimpleAlert>
+        <SimpleAlert Type=SimpleAlert.AlertType.Warning Title="Warning">
+          You are nearing your storage capacity.
+        </SimpleAlert>
+        <SimpleAlert Type=SimpleAlert.AlertType.Info Title="Information">
+          New updates will be applied during the next system maintenance window.
+        </SimpleAlert>
+      </FluentStack>
+    </Card>
+
+    <Card Title="Customized with inline style">
+      <SimpleAlert Title="Alert" TitleStyle="text-transform: uppercase;" ContentStyle="font-style: italic;">
+        Customized with inline style — uppercase title, italic content.
+      </SimpleAlert>
+    </Card>
+
+  </div>
+</TimeWarpPage>

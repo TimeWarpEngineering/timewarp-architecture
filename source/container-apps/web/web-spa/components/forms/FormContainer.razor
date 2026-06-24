@@ -1,0 +1,19 @@
+@namespace TimeWarp.Architecture.Components
+
+<Card>
+  <div class="twe-stack">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <h2 style="margin:0;font-size:var(--twe-text-section-title);font-weight:600;">@TitleContent</h2>
+      @TitleButtonContent
+    </div>
+    <div>@MainContent</div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">@ActionContent</div>
+  </div>
+</Card>
+
+@code {
+  [Parameter] public RenderFragment? MainContent { get; set; }
+  [Parameter] public RenderFragment? TitleContent { get; set; }
+  [Parameter] public RenderFragment? ActionContent { get; set; }
+  [Parameter] public RenderFragment? TitleButtonContent { get; set; }
+}

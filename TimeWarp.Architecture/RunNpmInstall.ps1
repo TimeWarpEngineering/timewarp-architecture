@@ -3,7 +3,7 @@ $Env:ASPNETCORE_ENVIRONMENT = "Development"
 Push-Location $PSScriptRoot
 try {
   #if(web)
-  Push-Location ./Source/ContainerApps/Web/Web.Spa
+  Push-Location ../source/container-apps/web/web-spa
   try {
     if (Test-Path .\node_modules\) {
       Remove-Item .\node_modules\ -Force -Recurse

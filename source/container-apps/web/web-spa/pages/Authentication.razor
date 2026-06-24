@@ -1,0 +1,11 @@
+@namespace TimeWarp.Architecture.Pages
+@page "/authentication/{action}"
+@inherits BaseComponent
+
+<TimeWarpPage>
+  <RemoteAuthenticatorView Action=@Action/>
+</TimeWarpPage>
+
+@code{
+  [Parameter] public string? Action { get; set; }
+}

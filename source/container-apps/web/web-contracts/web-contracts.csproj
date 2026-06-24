@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TimeWarp.Architecture</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="features\analytics\track-event-validiation.mixin.cs"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="features\analytics\TrackEventValidiation.mixin"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="features\analytics\TrackEventValidiation.mixin"/>
+    <AdditionalFiles Include="features\analytics\track-event-validiation.mixin.cs"/>
+    <AdditionalFiles Include="mixins\DeleteCommand.mixin"/>
+    <AdditionalFiles Include="mixins\GetListQuery.mixin"/>
+    <AdditionalFiles Include="mixins\GetQuery.mixin"/>
+    <AdditionalFiles Include="mixins\CreateCommand.mixin"/>
+    <AdditionalFiles Include="mixins\UpdateCommand.mixin"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation"/>
+    <PackageReference Include="JetBrains.Annotations"/>
+    <PackageReference Include="OneOf"/>
+    <PackageReference Include="TimeWarp.Mediator"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"/>
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
+    <PackageReference Include="Microsoft.Extensions.Options"/>
+    <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
+    <PackageReference Include="Passwordless"/>
+    <PackageReference Include="protobuf-net.Grpc"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\foundation\foundation-contracts\foundation-contracts.csproj"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\RouteMixin.mixin">
+      <Link>mixins\RouteMixin.mixin</Link>
+    </AdditionalFiles>
+    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\IOpenDataQueryParametersMixin.mixin">
+      <Link>mixins\IOpenDataQueryParametersMixin.mixin</Link>
+    </AdditionalFiles>
+    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\IAuthApiRequestMixin.mixin">
+      <Link>mixins\IAuthApiRequestMixin.mixin</Link>
+    </AdditionalFiles>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="features\auth\commands\"/>
+  </ItemGroup>
+
+</Project>

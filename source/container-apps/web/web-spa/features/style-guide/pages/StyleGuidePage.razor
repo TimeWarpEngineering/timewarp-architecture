@@ -1,0 +1,76 @@
+@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
+
+@code {
+  public static Icon? NavIcon => new Icons.Regular.Size20.Color();
+  public static string Title => "Style Guide";
+
+  private static readonly (string Name, string Token, string Hex)[] ColorTokens =
+  [
+    ("Purple (primary)", "--twe-purple", "#55409c"),
+    ("Blue (secondary)", "--twe-blue", "#0085b2"),
+    ("Green (highlight)", "--twe-green", "#69a144"),
+    ("Ink (text)", "--twe-ink", "#1a1d28"),
+    ("Muted", "--twe-muted", "#767a86"),
+    ("Background", "--twe-background", "#fafafb"),
+    ("Paper", "--twe-paper", "#ffffff"),
+    ("Danger", "--twe-danger", "#c2342a"),
+  ];
+
+  private static readonly (string Token, string Label)[] TypeScale =
+  [
+    ("--twe-text-page-title", "28 — Page title"),
+    ("--twe-text-section-title", "18 — Section title"),
+    ("--twe-text-body", "14 — Body, button"),
+    ("--twe-text-helper", "12 — Helper text"),
+    ("--twe-text-eyebrow", "11 — Section eyebrow"),
+  ];
+}
+
+<TimeWarpPage Title="Style Guide">
+    <div class="twe-stack">
+
+      <p class="sg-subtitle">Live brand tokens, type scale, and components — TimeWarp Enterprises brand.</p>
+
+      <Card Title="Color Tokens">
+        <div class="sg-swatches">
+          @foreach ((string name, string token, string hex) in ColorTokens)
+          {
+            <div class="sg-swatch">
+              <div class="sg-swatch__chip" style="background: var(@token);"></div>
+              <div class="sg-swatch__name">@name</div>
+              <div class="sg-swatch__hex">@hex</div>
+            </div>
+          }
+        </div>
+      </Card>
+
+      <Card Title="Type Scale">
+        <div class="sg-type">
+          @foreach ((string token, string label) in TypeScale)
+          {
+            <div class="sg-type__row" style="font-size: var(@token);">@label</div>
+          }
+        </div>
+      </Card>
+
+      <Card Title="Buttons (FluentUI, themed)">
+        <div class="sg-row">
+          <FluentButton Appearance="ButtonAppearance.Primary">Primary</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Outline">Outline</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Subtle">Subtle</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Transparent">Transparent</FluentButton>
+        </div>
+      </Card>
+
+      <Card Title="Status Badges">
+        <div class="sg-row">
+          <StatusBadge Status="BadgeStatus.Active" />
+          <StatusBadge Status="BadgeStatus.Inactive" />
+          <StatusBadge Status="BadgeStatus.Warning" />
+          <StatusBadge Status="BadgeStatus.Info" />
+        </div>
+      </Card>
+
+    </div>
+</TimeWarpPage>

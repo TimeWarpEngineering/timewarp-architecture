@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Cosmos" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\foundation\foundation-infrastructure\foundation-infrastructure.csproj" />
+    <ProjectReference Include="..\web-application\web-application.csproj" />
+  </ItemGroup>
+
+</Project>

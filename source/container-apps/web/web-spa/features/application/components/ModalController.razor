@@ -1,0 +1,32 @@
+@namespace TimeWarp.Architecture.Components
+
+<CascadingValue Value="this">
+    @ModalContainers
+</CascadingValue>
+
+@code {
+    private string? PreviousActiveModalId;
+    private readonly Dictionary<string, ModalContainer> ChildModals = new();
+    [Parameter] public string? ActiveModalId { get; set; }
+    [Parameter, EditorRequired] public RenderFragment ModalContainers { get; set; } = default!;
+
+    internal void AddModal(ModalContainer aModal) => ChildModals.Add(aModal.ModalId, aModal);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ActiveModalId == null)
+        {
+            PreviousActiveModalId = null;
+        }
+        else if (ActiveModalId != PreviousActiveModalId)
+        {
+            if (ChildModals.TryGetValue(ActiveModalId, out ModalContainer? modal))
+            {
+                PreviousActiveModalId = ActiveModalId;
+                await modal.OnActivate.InvokeAsync();
+            }
+        }
+
+        await base.OnParametersSetAsync().ConfigureAwait(false);
+    }
+}

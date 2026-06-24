@@ -1,0 +1,46 @@
+@namespace TimeWarp.Architecture.Features.Debugger.Components
+
+<div style="margin-bottom:16px;">
+  <FluentButton Appearance=ButtonAppearance.Subtle @onclick=ToggleCollapse>@Title</FluentButton>
+  @if (!IsCollapsed)
+  {
+    <table class="twe-table" style="margin-top:8px;">
+      <thead>
+        <tr>
+          <th>Implementation Type</th>
+          <th>Lifetime</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var service in Services)
+        {
+          <tr>
+            <td>@GetNonGenericTypeName(service.ImplementationType)</td>
+            <td>@service.Lifetime</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@code {
+  #nullable enable
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public List<ServiceDescriptor> Services { get; set; } = new List<ServiceDescriptor>();
+
+    private bool IsCollapsed { get; set; } = true;
+
+    private void ToggleCollapse()
+    {
+        IsCollapsed = !IsCollapsed;
+    }
+
+    private string GetNonGenericTypeName(Type? type)
+    {
+        return type?.IsGenericType == true ? type.Name.Split('`')[0] : type?.Name ?? string.Empty;
+    }
+}

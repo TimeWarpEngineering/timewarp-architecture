@@ -1,4 +1,4 @@
-﻿namespace EndToEnd.Playwright_.Tests;
+namespace EndToEnd.Playwright_.Tests;
 
 class Program
 {

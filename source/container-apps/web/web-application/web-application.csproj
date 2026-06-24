@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Riok.Mapperly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\foundation\foundation-application\foundation-application.csproj" />
+    <ProjectReference Include="..\web-contracts\web-contracts.csproj" />
+    <ProjectReference Include="..\web-domain\web-domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="features\Todo\" />
+  </ItemGroup>
+
+</Project>

@@ -1,4 +1,4 @@
-﻿// ReSharper disable InconsistentNaming
+// ReSharper disable InconsistentNaming
 namespace PartialClassDeclarationAnalyzer_;
 
 using Microsoft.CodeAnalysis.CSharp.Testing;

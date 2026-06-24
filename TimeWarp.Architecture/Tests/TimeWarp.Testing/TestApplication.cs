@@ -1,4 +1,4 @@
-﻿// namespace TimeWarp.Architecture.Testing;
+// namespace TimeWarp.Architecture.Testing;
 
 // /// <summary>
 // /// An abstract class that adds test functionality for sending Requests in a scope.

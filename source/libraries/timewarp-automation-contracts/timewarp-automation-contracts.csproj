@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>TimeWarp Automation Contracts Library</Description>
+    <NoWarn>$(NoWarn);CA1034</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="TimeWarp.Mediator" />
+    <PackageReference Include="OneOf" />
+  </ItemGroup>
+
+</Project>

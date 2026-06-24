@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="JetBrains.Annotations" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\foundation\foundation-domain\foundation-domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="services\" />
+    <Folder Include="value-objects\" />
+  </ItemGroup>
+
+</Project>

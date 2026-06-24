@@ -1,4 +1,4 @@
-﻿<Solution>
+<Solution>
   <Configurations>
     <BuildType Name="Debug" />
     <BuildType Name="ReduxDevToolsEnabled" />
@@ -18,7 +18,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\Libraries\TimeWarp.Modules\TimeWarp.Modules.csproj">
+    <Project Path="..\source\libraries\timewarp-modules\timewarp-modules.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -39,7 +39,7 @@
   </Folder>
   <Folder Name="/01-Tools/" />
   <Folder Name="/02-Common/">
-    <Project Path="Source\Common\Common.Application\Common.Application.csproj">
+    <Project Path="../source/foundation/foundation-application/foundation-application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -48,7 +48,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\Common\Common.Contracts\Common.Contracts.csproj">
+    <Project Path="../source/foundation/foundation-contracts/foundation-contracts.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -57,7 +57,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\Common\Common.Domain\Common.Domain.csproj">
+    <Project Path="../source/foundation/foundation-domain/foundation-domain.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -66,7 +66,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\Common\Common.Infrastructure\Common.Infrastructure.csproj">
+    <Project Path="../source/foundation/foundation-infrastructure/foundation-infrastructure.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -75,7 +75,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\Common\Common.Server\Common.Server.csproj">
+    <Project Path="../source/foundation/foundation-server/foundation-server.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -211,7 +211,7 @@
   <Folder Name="/05-ContainerApps/" />
   <!--#if (api)-->
   <Folder Name="/05-ContainerApps/Api/">
-    <Project Path="Source\ContainerApps\Api\Api.Application\Api.Application.csproj">
+    <Project Path="../source/container-apps/api/api-application/api-application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -220,37 +220,37 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Api\Api.Contracts\Api.Contracts.csproj">
+    <Project Path="../source/container-apps/api/api-contracts/api-contracts.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|any CPU" Project="Release|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Api\Api.Domain\Api.Domain.csproj">
+    <Project Path="../source/container-apps/api/api-domain/api-domain.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|any CPU" Project="Release|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Api\Api.Infrastructure\Api.Infrastructure.csproj">
+    <Project Path="../source/container-apps/api/api-infrastructure/api-infrastructure.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|any CPU" Project="Release|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Api\Api.Server\Api.Server.csproj">
+    <Project Path="../source/container-apps/api/api-server/api-server.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
+      <Configuration Solution="ReduxDevToolsEnabled|any CPU" Project="Release|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
@@ -260,7 +260,7 @@
   <!--#endif-->
   <!--#if (grpc)-->
   <Folder Name="/05-ContainerApps/Grpc/">
-    <Project Path="Source\ContainerApps\Grpc\Grpc.Application\Grpc.Application.csproj">
+    <Project Path="../source/container-apps/grpc/grpc-contracts/grpc-contracts.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -269,7 +269,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Grpc\Grpc.Contracts\Grpc.Contracts.csproj">
+    <Project Path="../source/container-apps/grpc/grpc-domain/grpc-domain.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -278,7 +278,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Grpc\Grpc.Domain\Grpc.Domain.csproj">
+    <Project Path="../source/container-apps/grpc/grpc-application/grpc-application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -287,7 +287,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Grpc\Grpc.Infrastructure\Grpc.Infrastructure.csproj">
+    <Project Path="../source/container-apps/grpc/grpc-infrastructure/grpc-infrastructure.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -296,7 +296,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Grpc\Grpc.Server\Grpc.Server.csproj">
+    <Project Path="../source/container-apps/grpc/grpc-server/grpc-server.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -309,7 +309,7 @@
   <!--#endif-->
   <!--#if (web)-->
   <Folder Name="/05-ContainerApps/Web/">
-    <Project Path="Source\ContainerApps\Web\Web.Application\Web.Application.csproj">
+    <Project Path="../source/container-apps/web/web-application/web-application.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -318,7 +318,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Web\Web.Contracts\Web.Contracts.csproj">
+    <Project Path="../source/container-apps/web/web-contracts/web-contracts.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -327,7 +327,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Web\Web.Domain\Web.Domain.csproj">
+    <Project Path="../source/container-apps/web/web-domain/web-domain.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -336,7 +336,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Web\Web.Infrastructure\Web.Infrastructure.csproj">
+    <Project Path="../source/container-apps/web/web-infrastructure/web-infrastructure.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -345,7 +345,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Web\Web.Server\Web.Server.csproj">
+    <Project Path="../source/container-apps/web/web-server/web-server.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -354,7 +354,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Web\Web.Spa\Web.Spa.csproj">
+    <Project Path="../source/container-apps/web/web-spa/web-spa.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -367,7 +367,7 @@
   <!--#endif-->
   <!--#if (yarp)-->
   <Folder Name="/05-ContainerApps/Yarp/">
-    <Project Path="Source\ContainerApps\Yarp\Yarp.csproj">
+    <Project Path="../source/container-apps/yarp/yarp.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -379,7 +379,7 @@
   </Folder>
   <!--#endif-->
   <Folder Name="/07-Aspire/">
-    <Project Path="Source\ContainerApps\Aspire\Aspire.AppHost\Aspire.AppHost.csproj">
+    <Project Path="../source/container-apps/aspire/aspire-app-host/aspire-app-host.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -388,7 +388,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\ContainerApps\Aspire\Aspire.ServiceDefaults\Aspire.ServiceDefaults.csproj">
+    <Project Path="../source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
@@ -399,7 +399,7 @@
     </Project>
   </Folder>
   <Folder Name="/08-Analyzers/">
-    <Project Path="Source\Analyzers\TimeWarp.Architecture.Analyzers\TimeWarp.Architecture.Analyzers.csproj" Type="Classic C#">
+    <Project Path="../source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" Type="Classic C#">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
@@ -408,7 +408,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\Analyzers\TimeWarp.Architecture.Attributes\TimeWarp.Architecture.Attributes.csproj" Type="Classic C#">
+    <Project Path="../source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" Type="Classic C#">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
@@ -417,15 +417,7 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
       <Configuration Solution="Release|x86" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Source\Analyzers\TimeWarp.Architecture.SourceGenerator\TimeWarp.Architecture.SourceGenerator.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Release|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
-      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
-      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
-    </Project>
+    
   </Folder>
   <Folder Name="/Source/">
     <Project Path="Source\GenTester\GenTester.csproj" Type="Classic C#">
@@ -439,7 +431,7 @@
     </Project>
   </Folder>
   <Folder Name="/Source/Libraries/">
-    <Project Path="Source\Libraries\TimeWarp.Automation.Contracts\TimeWarp.Automation.Contracts.csproj" Type="Classic C#">
+    <Project Path="../source/libraries/timewarp-automation-contracts/timewarp-automation-contracts.csproj" Type="Classic C#">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
       <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />

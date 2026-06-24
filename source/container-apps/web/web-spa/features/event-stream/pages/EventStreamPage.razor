@@ -1,0 +1,17 @@
+@namespace TimeWarp.Architecture.Pages
+
+@inherits BaseComponent
+
+@code{
+  public static string Title => "Event Stream";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+}
+
+<PageTitle>Event Stream Page</PageTitle>
+
+<TimeWarpPage Title="Event Stream">
+  <div class="twe-stack">
+    <SimpleAlert Title="Event Stream">EventStream is an example of middleware. It adds each action to a list.</SimpleAlert>
+    <Card><EventStream /></Card>
+  </div>
+</TimeWarpPage>

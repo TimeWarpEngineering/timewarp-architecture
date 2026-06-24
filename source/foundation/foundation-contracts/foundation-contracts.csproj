@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Ardalis.GuardClauses" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="libphonenumber-csharp" />
+    <PackageReference Include="TimeWarp.Mediator" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="OneOf" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="mixins\RouteMixin.mixin" />
+    <AdditionalFiles Include="mixins\IAuthApiRequestMixin.mixin" />
+    <AdditionalFiles Include="mixins\IOpenDataQueryParametersMixin.mixin" />
+  </ItemGroup>
+</Project>

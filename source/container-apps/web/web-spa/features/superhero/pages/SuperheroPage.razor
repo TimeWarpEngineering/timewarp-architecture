@@ -1,0 +1,42 @@
+@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
+
+@code {
+  public static string Title => "Superhero";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+}
+
+<TimeWarpPage Title="Superheros">
+  <Card>
+    @if (SuperheroState.Superheros == null)
+    {
+      <p><em>Loading...</em></p>
+    }
+    else
+    {
+      <table class="twe-table" data-qa="SuperheroTable">
+        <thead>
+          <tr>
+            <TableHeader>Number</TableHeader>
+            <TableHeader>Name</TableHeader>
+            <TableHeader>Age</TableHeader>
+            <TableHeader>BirthDate</TableHeader>
+            <TableHeader>Power</TableHeader>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var hero in SuperheroState.Superheros)
+          {
+            <tr>
+              <Cell>@hero.Id</Cell>
+              <Cell>@hero.Name</Cell>
+              <Cell>@hero.Age</Cell>
+              <Cell>@hero.BirthDate.ToString("MM/dd/yyyy")</Cell>
+              <Cell>@hero.Power</Cell>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </Card>
+</TimeWarpPage>

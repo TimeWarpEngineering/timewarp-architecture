@@ -1,0 +1,23 @@
+@namespace TimeWarp.Architecture.Components
+@using static TimeWarp.Architecture.Features.Applications.ApplicationState;
+@inherits BaseComponent
+
+@if (IsActive)
+{
+  <div class="twe-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="twe-modal__backdrop" @onclick=CloseModal></div>
+    <div class="twe-modal__panel">
+      @MainContent
+      <div class="twe-modal__actions">
+        @if (ActionContent is null)
+        {
+          <FluentButton Appearance=ButtonAppearance.Primary data-qa="ModalButton" OnClick=CloseModal>Close</FluentButton>
+        }
+        else
+        {
+          @ActionContent
+        }
+      </div>
+    </div>
+  </div>
+}

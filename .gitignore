@@ -420,8 +420,8 @@ FodyWeavers.xsd
 # TimeWarp architecture templates Generated Code
 GeneratedCode/
 
-# Web.Spa generated code
-/Source/ContainerApps/Web/Web.Spa/wwwroot/js/
+# Web.Spa generated code (TypeScript compiled to wwwroot/js by Microsoft.TypeScript.MSBuild)
+/source/container-apps/web/web-spa/wwwroot/js/
 
 # TimeWarp architecture templates Generated Code
 /Source/ContainerApps/Web/Web.Contracts/Generated/**
@@ -455,3 +455,10 @@ GeneratedCode/
 !.agent/workspace/overview.md
 TimeWarp.Architecture/.agent/workspace/*
 !TimeWarp.Architecture/.agent/workspace/overview.md
+*.lscache
+
+# memsearch: track the memory markdown, ignore the regenerable binary index
+.memsearch/*.db
+
+# playwright-cli: transient per-run page/console scratch output
+.playwright-cli/

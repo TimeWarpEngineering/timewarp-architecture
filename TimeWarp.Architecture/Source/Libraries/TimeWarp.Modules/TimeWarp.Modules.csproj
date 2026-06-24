@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="TimeWarp.Mediator" />
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-</Project>

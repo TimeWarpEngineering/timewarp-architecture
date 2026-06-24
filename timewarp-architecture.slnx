@@ -1,0 +1,38 @@
+<Solution>
+  <Folder Name="/source/" />
+  <Folder Name="/source/foundation/">
+    <Project Path="source/foundation/foundation-contracts/foundation-contracts.csproj" />
+    <Project Path="source/foundation/foundation-domain/foundation-domain.csproj" />
+    <Project Path="source/foundation/foundation-application/foundation-application.csproj" />
+    <Project Path="source/foundation/foundation-infrastructure/foundation-infrastructure.csproj" />
+    <Project Path="source/foundation/foundation-server/foundation-server.csproj" />
+  </Folder>
+  <Folder Name="/source/libraries/">
+    <Project Path="source/libraries/timewarp-modules/timewarp-modules.csproj" />
+    <Project Path="source/libraries/timewarp-automation-contracts/timewarp-automation-contracts.csproj" />
+  </Folder>
+  <Folder Name="/source/analyzers/">
+    <Project Path="source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
+    <Project Path="source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
+  </Folder>
+  <Folder Name="/source/container-apps/">
+    <Project Path="source/container-apps/api/api-contracts/api-contracts.csproj" />
+    <Project Path="source/container-apps/api/api-application/api-application.csproj" />
+    <Project Path="source/container-apps/api/api-infrastructure/api-infrastructure.csproj" />
+    <Project Path="source/container-apps/api/api-server/api-server.csproj" />
+    <Project Path="source/container-apps/api/api-domain/api-domain.csproj" />
+    <Project Path="source/container-apps/grpc/grpc-domain/grpc-domain.csproj" />
+    <Project Path="source/container-apps/grpc/grpc-contracts/grpc-contracts.csproj" />
+    <Project Path="source/container-apps/grpc/grpc-application/grpc-application.csproj" />
+    <Project Path="source/container-apps/grpc/grpc-infrastructure/grpc-infrastructure.csproj" />
+    <Project Path="source/container-apps/grpc/grpc-server/grpc-server.csproj" />
+    <Project Path="source/container-apps/web/web-domain/web-domain.csproj" />
+    <Project Path="source/container-apps/web/web-contracts/web-contracts.csproj" />
+    <Project Path="source/container-apps/web/web-application/web-application.csproj" />
+    <Project Path="source/container-apps/web/web-infrastructure/web-infrastructure.csproj" />
+    <Project Path="source/container-apps/web/web-server/web-server.csproj" />
+    <Project Path="source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj" />
+    <Project Path="source/container-apps/aspire/aspire-app-host/aspire-app-host.csproj" />
+    <Project Path="source/container-apps/yarp/yarp.csproj" />
+  </Folder>
+</Solution>

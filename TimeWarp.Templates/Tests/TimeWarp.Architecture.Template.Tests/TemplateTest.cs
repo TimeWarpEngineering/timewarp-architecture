@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Template.Tests;
+namespace TimeWarp.Architecture.Template.Tests;
 using TimeWarp.Fixie;
 using Boxed.DotnetNewTest;
 using Boxed.Templates.FunctionalTest;

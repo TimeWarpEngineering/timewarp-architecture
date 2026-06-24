@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!-- Central Package Management - add your package versions here -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup Label="TimeWarp Packages">
+    <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.70" />
+    <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
+    <PackageVersion Include="TimeWarp.Components" Version="1.0.0-beta.2" />
+  </ItemGroup>
+  <ItemGroup Label="Microsoft Extensions Packages">
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.9" />
+  </ItemGroup>
+  <ItemGroup Label="Foundation Packages">
+    <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
+    <PackageVersion Include="FluentValidation" Version="12.1.1" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.32" />
+    <PackageVersion Include="Morris.Moxy" Version="1.10.0" />
+    <PackageVersion Include="OneOf" Version="3.0.271" />
+    <PackageVersion Include="Passwordless" Version="2.0.0" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.80.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.80.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.80.0" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.80.0" />
+    <PackageVersion Include="Grpc.Net.Client.Web" Version="2.80.0" />
+    <PackageVersion Include="protobuf-net.Grpc" Version="1.2.5" />
+    <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
+    <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.2.2" />
+    <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
+    <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
+    <PackageVersion Include="Aspire.Microsoft.Azure.Cosmos" Version="13.4.6" />
+    <PackageVersion Include="Aspire.Microsoft.EntityFrameworkCore.Cosmos" Version="13.4.6" />
+    <!-- Yarp / Reverse Proxy (used by Yarp gateway and Aspire.AppHost) -->
+    <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.4.6" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.7.0" />
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
+    <!-- Aspire AppHost -->
+    <PackageVersion Include="Aspire.Hosting.Azure.CosmosDB" Version="13.4.6" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Cosmos" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Identity.Web" Version="4.10.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis" Version="5.3.0" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.9" />
+    <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
+    <PackageVersion Include="Azure.Identity" Version="1.21.0" />
+    <PackageVersion Include="FastEndpoints" Version="8.1.0" />
+    <PackageVersion Include="Oakton" Version="6.3.0" />
+    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.5.0" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.2" />
+    <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
+    <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Authentication.WebAssembly.Msal" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.0-rc.3-26138.1" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Emoji" Version="4.14.2" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.2" />
+    <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="6.0.3" />
+    <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.2.0" />
+    <PackageVersion Include="Morris.Blazor.FluentValidation" Version="3.2.0" />
+    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.1" />
+    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.1" />
+    <PackageVersion Include="timewarp-heroicons" Version="2.0.19" />
+    <PackageVersion Include="timewarp-simple-icons" Version="16.18.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Aspire Packages">
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.7.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.7.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
+  </ItemGroup>
+  
+  <ItemGroup Label="Code Analyzers">
+    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.0.0-1.25277.114">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageVersion>
+    <PackageVersion Include="Roslynator.Analyzers" Version="4.15.0" />
+    <PackageVersion Include="Roslynator.CodeAnalysis.Analyzers" Version="4.15.0" />
+    <PackageVersion Include="Roslynator.Formatting.Analyzers" Version="4.15.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.301" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.3.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0" />
+  </ItemGroup>
+  <!-- Versions for test projects pending migration to the root tree (task 053-050-019).
+       Sourced from TimeWarp.Architecture/Directory.Packages.props; family-versioned
+       packages (ASP.NET Core, Aspire) aligned with the pins above. -->
+  <ItemGroup Label="Test Packages">
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.6" />
+    <PackageVersion Include="AutoFixture" Version="4.18.1" />
+    <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
+    <PackageVersion Include="Boxed.AspNetCore" Version="8.1.2" />
+    <PackageVersion Include="Boxed.DotnetNewTest" Version="5.0.0" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="FakeItEasy" Version="8.3.0" />
+    <PackageVersion Include="Fixie" Version="4.1.0" />
+    <PackageVersion Include="Fixie.TestAdapter" Version="4.1.0" />
+    <PackageVersion Include="FluentAssertions" Version="6.7.0" />
+    <PackageVersion Include="GlobalUsingsAnalyzer" Version="1.4.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.2" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.3.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.55.0" />
+    <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="TimeWarp.Fixie" Version="3.1.0" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.7" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+</Project>

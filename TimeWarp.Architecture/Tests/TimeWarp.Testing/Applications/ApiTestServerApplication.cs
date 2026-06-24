@@ -1,4 +1,4 @@
-﻿namespace TimeWarp.Architecture.Testing;
+namespace TimeWarp.Architecture.Testing;
 
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Extensions;

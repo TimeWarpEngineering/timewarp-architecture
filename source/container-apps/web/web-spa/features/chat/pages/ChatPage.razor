@@ -1,0 +1,25 @@
+@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
+
+@code
+{
+  public static string Title => "Chat";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+}
+
+<PageTitle>TimeWarp.Architecture Chat</PageTitle>
+<TimeWarpPage Title="Chat">
+  <Card>
+    <FluentStack Orientation=Orientation.Vertical VerticalGap="12">
+      <FluentTextInput @bind-Value=User Label="Alias" />
+      <FluentTextInput @bind-Value=Message Label="Message" @onkeydown=HandleKeyDown />
+      <FluentButton Appearance=ButtonAppearance.Primary OnClick=SendMessage>Send</FluentButton>
+      <ul>
+        @foreach (ChatState.ChatMessage chatMessage in ChatMessages.AsEnumerable())
+        {
+          <li><strong>@chatMessage.User:</strong> @chatMessage.Message</li>
+        }
+      </ul>
+    </FluentStack>
+  </Card>
+</TimeWarpPage>

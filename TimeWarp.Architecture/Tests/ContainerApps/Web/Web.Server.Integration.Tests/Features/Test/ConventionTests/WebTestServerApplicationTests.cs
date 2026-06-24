@@ -1,4 +1,4 @@
-﻿namespace WebTestServerApplication_;
+namespace WebTestServerApplication_;
 
 [TestTag("WebTestServerApplication")]
 public class Should

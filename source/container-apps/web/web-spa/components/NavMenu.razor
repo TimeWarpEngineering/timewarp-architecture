@@ -1,0 +1,34 @@
+@namespace TimeWarp.Architecture.Components
+@*
+  Primary navigation for the app shell (rendered in TimeWarpPage's Navigation area).
+  Uses FluentUI v5 FluentNav. Page links go through TimeWarpNavLink<TPage>.
+*@
+<FluentNav Class="twe-nav">
+  <TimeWarpNavLink TPage=HomePage />
+
+  <FluentNavCategory Title="Pages">
+    <TimeWarpNavLink TPage=CounterPage />
+    @*#if (api)*@
+    <TimeWarpNavLink TPage=WeatherForecastsPage />
+    @*#endif*@
+    @*#if (grpc)*@
+    <TimeWarpNavLink TPage=SuperheroPage />
+    @*#endif*@
+    <TimeWarpNavLink TPage=ChatPage />
+  </FluentNavCategory>
+
+  <FluentNavCategory Title="Developer">
+    <TimeWarpNavLink TPage=StyleGuidePage />
+    <TimeWarpNavLink TPage=TestPage />
+    <TimeWarpNavLink TPage=EventStreamPage />
+    <TimeWarpNavLink TPage=ServicesPage />
+    <TimeWarpNavLink TPage=UserClaimsPage />
+  </FluentNavCategory>
+
+  <FluentNavCategory Title="External">
+    <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://thefreezeteam.com/" Target="LinkTarget.Blank">The Freeze Team</FluentNavItem>
+    <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://github.com/TimeWarpEngineering/timewarp-architecture" Target="LinkTarget.Blank">GitHub</FluentNavItem>
+  </FluentNavCategory>
+
+  <TimeWarpNavLink TPage=SettingsPage />
+</FluentNav>

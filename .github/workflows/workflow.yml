@@ -1,0 +1,20 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build
+        run: dotnet run tools/dev-cli/dev.cs -- build
+      - name: Test
+        run: dotnet run tools/dev-cli/dev.cs -- test

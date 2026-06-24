@@ -2,7 +2,7 @@ $Env:ASPNETCORE_ENVIRONMENT = "Development"
 
 Push-Location $PSScriptRoot
 try {
-  Push-Location ./Source/ContainerApps/Web/Web.Spa
+  Push-Location ../source/container-apps/web/web-spa
   try {
     npm run css:build
   }

@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!-- Import repository path definitions -->
+  <Import Project="$(MSBuildThisFileDirectory)msbuild/repository.props" />
+
+  <!-- MSBuild and NuGet behavior configuration -->
+  <PropertyGroup Label="MSBuild/NuGet Configuration">
+    <!-- Output packages to our local feed directory -->
+    <PackageOutputPath>$(PackagesDirectory)</PackageOutputPath>
+
+    <!-- Suppress .NET preview SDK message -->
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+  </PropertyGroup>
+
+  <!-- Default language and framework settings for all projects -->
+  <PropertyGroup Label="Project Defaults">
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- Source generator debugging: emit generated files to artifacts directory -->
+  <PropertyGroup Label="Source Generator Output">
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(ArtifactsDirectory)generated/$(MSBuildProjectName)</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <!-- Exclude emitted generated files from compilation (already included by source generator) -->
+  <ItemGroup Label="Source Generator Output">
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
+  </ItemGroup>
+
+  <!-- C# Interceptors (for source generators) -->
+  <PropertyGroup Label="Interceptors">
+    <!-- Enable interceptors in the TimeWarp.Nuru.Generated namespace -->
+    <!-- Note: Property name changed from InterceptorsPreviewNamespaces to InterceptorsNamespaces in .NET 10 -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
+  <!-- Code quality, analyzers, and warning configuration -->
+  <PropertyGroup Label="Code Quality and Analysis">
+    <!-- Treat all warnings as errors -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>5</WarningLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisMode>All</AnalysisMode>
+    <AnalysisLevel>latest-all</AnalysisLevel>
+
+    <!-- Report analyzer diagnostics in build output -->
+    <ReportAnalyzer>true</ReportAnalyzer>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+
+    <!-- Suppress specific warnings -->
+    <!-- CA1014: CLS compliance not required for this library -->
+    <!-- CA1716: Reserved keywords (matching System.Console API: In, Error) -->
+    <!-- CA1724: Type name conflicts (acceptable in this context) -->
+    <!-- CA1812: False positives for DI-instantiated classes -->
+    <!-- IL2026, IL2067, IL2070, IL2075, IL3050, IL2104, IL3053: AOT warnings (not yet implemented) -->
+    <NoWarn>$(NoWarn);CA1014;CA1716;CA1724;CA1812;IL2026;IL2067;IL2070;IL2075;IL3050;IL2104;IL3053</NoWarn>
+  </PropertyGroup>
+
+  <!-- Code analyzers applied to all projects -->
+  <ItemGroup Label="Code Analyzers">
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Roslynator.Formatting.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Banned API enforcement -->
+  <ItemGroup Label="Banned API Files">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup Label="Build Tasks">
+    <PackageReference Include="TimeWarp.Build.Tasks" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

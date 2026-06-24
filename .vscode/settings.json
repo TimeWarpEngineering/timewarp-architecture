@@ -19,5 +19,6 @@
     "titleBar.inactiveForeground": "#15202b99"
   },
   "peacock.remoteColor": "#83F8E4",
-  "timewarp.blurImagePath": "assets/timewarp-architecture-avatar.svg"
+  "timewarp.blurImagePath": "assets/timewarp-architecture-avatar.svg",
+  "window.title": "timewarp-architecture · ${rootName}${separator}${activeEditorShort}"
 }

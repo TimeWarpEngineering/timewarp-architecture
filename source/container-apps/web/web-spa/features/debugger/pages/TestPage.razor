@@ -1,0 +1,11 @@
+@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
+
+@code {
+    public static string Title => "Test";
+    public static Icon? NavIcon => new Icons.Regular.Size32.Airplane();
+}
+
+<TimeWarpPage Title="Test">
+  <Card>A scratch page for ad-hoc testing.</Card>
+</TimeWarpPage>

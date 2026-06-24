@@ -1,0 +1,37 @@
+@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
+@inject IJSRuntime JsRuntime
+@code {
+  public static string Title => "Counter";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+
+  private async Task IncrementCountViaJsInterop()
+  {
+    await JsRuntime.InvokeVoidAsync("Spa.Counter.DispatchIncrementCountAction");
+  }
+}
+
+<PageTitle>Counter Page</PageTitle>
+
+<TimeWarpPage Title="Counter">
+  <div class="twe-stack">
+    <Card Title="Counter Display 1"><Counter TestId="Counter1" /></Card>
+    <Card Title="Counter Display 2"><Counter TestId="Counter2" /></Card>
+    <Card Title="State actions">
+      <FluentStack Orientation=Orientation.Vertical VerticalGap="16">
+        <div>
+          <p>Reset clears all state in the Store and returns you to the home page.</p>
+          <FluentButton Appearance=ButtonAppearance.Primary Id=@Id data-qa=@TestId OnClick=ResetButtonClick>Reset Store</FluentButton>
+        </div>
+        <div>
+          <p>Send a Change Route request that takes you back to the home page.</p>
+          <FluentButton Appearance=ButtonAppearance.Primary data-qa="ChangeRoute" OnClick=ButtonClick>Change Route to Home</FluentButton>
+        </div>
+        <div>
+          <p>Send an IncrementCount action via JavaScript interop.</p>
+          <FluentButton Appearance=ButtonAppearance.Primary data-qa="JsInterop" OnClick=IncrementCountViaJsInterop>Increment Count by 7 via JavaScript Interop</FluentButton>
+        </div>
+      </FluentStack>
+    </Card>
+  </div>
+</TimeWarpPage>

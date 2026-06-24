@@ -1,0 +1,12 @@
+/* Style Guide page — content authored by this page, so CSS isolation applies. */
+.sg-header { margin-bottom: 8px; }
+.sg-title { font-size: var(--twe-text-page-title); font-weight: 700; margin: 0; color: var(--twe-ink); }
+.sg-subtitle { color: var(--twe-muted); margin: 4px 0 0; font-size: var(--twe-text-body); }
+.sg-swatches { display: flex; flex-wrap: wrap; gap: 16px; }
+.sg-swatch { width: 132px; }
+.sg-swatch__chip { height: 64px; border-radius: 10px; border: 1px solid var(--twe-rule); }
+.sg-swatch__name { font-size: var(--twe-text-body); font-weight: 600; margin-top: 8px; color: var(--twe-ink); }
+.sg-swatch__hex { font-size: var(--twe-text-helper); color: var(--twe-muted); }
+.sg-type { display: flex; flex-direction: column; gap: 10px; }
+.sg-type__row { color: var(--twe-ink); font-weight: 600; line-height: 1.1; }
+.sg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }

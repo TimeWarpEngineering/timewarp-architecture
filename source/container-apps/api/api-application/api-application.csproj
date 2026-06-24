@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\foundation\foundation-application\foundation-application.csproj" />
+    <ProjectReference Include="..\..\..\libraries\timewarp-modules\timewarp-modules.csproj" />
+    <ProjectReference Include="..\api-contracts\api-contracts.csproj" />
+    <ProjectReference Include="..\api-domain\api-domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+  </ItemGroup>
+
+</Project>

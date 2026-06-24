@@ -62,8 +62,15 @@ public static partial class GetCurrentWeather
         // Create an instance of the source generator
         FastEndpointSourceGenerator generator = new();
 
+        var options = new Dictionary<string, string>
+        {
+            ["build_property.EnableApiEndpointGeneration"] = "true"
+        };
+
         // Run the generator and get results
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: ImmutableArray.Create(generator.AsSourceGenerator()),
+            optionsProvider: new TestAnalyzerConfigOptionsProvider(options));
         GeneratorDriverRunResult runResult = driver.RunGenerators(compilation).GetRunResult();
 
         // Verify that a diagnostic was reported
@@ -122,7 +129,15 @@ public static partial class GetWeatherForecasts
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
         FastEndpointSourceGenerator generator = new();
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+
+        var options = new Dictionary<string, string>
+        {
+            ["build_property.EnableApiEndpointGeneration"] = "true"
+        };
+
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: ImmutableArray.Create(generator.AsSourceGenerator()),
+            optionsProvider: new TestAnalyzerConfigOptionsProvider(options));
         GeneratorDriverRunResult runResult = driver.RunGenerators(compilation).GetRunResult();
 
         // Get the generated code

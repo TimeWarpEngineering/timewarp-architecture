@@ -1,4 +1,4 @@
-﻿global using Shouldly;
+global using Shouldly;
 
 // Solution usings
 global using TimeWarp.Architecture.Services;

@@ -22,11 +22,11 @@ namespace Web.Contracts.Features.User
 {
     public static partial class GetAllUsers
     {
-        public class Query : IRequest<OneOf<SuccessResponse, ProblemDetails>>
+        public class Query : IRequest<OneOf<Response, ProblemDetails>>
         {
         }
 
-        public class SuccessResponse
+        public class Response
         {
             public IEnumerable<UserDto> Users { get; set; }
         }

@@ -1,4 +1,4 @@
-﻿global using Aspire.Hosting.Testing;
+global using Aspire.Hosting.Testing;
 global using Shouldly;
 global using FluentValidation.Results;
 global using FluentValidation.TestHelper;

@@ -1,0 +1,37 @@
+@namespace TimeWarp.Architecture.Pages
+@inherits BaseComponent
+@inject IJSRuntime JSRuntime
+
+@code {
+  public static string Title => "Logout";
+  public static Icon? NavIcon => new Icons.Regular.Size20.ArrowEnter();
+
+  private async Task SignInWithPasskey()
+  {
+    var result = await JSRuntime.InvokeAsync<SignInResult>("passwordless.signinWithDiscoverable");
+    if (result.Error != null)
+    {
+      // Handle error
+    }
+    else
+    {
+      // Send result.Token to backend to verify and get the userId
+    }
+  }
+
+  private class SignInResult
+  {
+    public string? Token { get; set; }
+    public string? Error { get; set; }
+  }
+}
+
+<TimeWarpPage Title="Login">
+  <Card Title="Sign in">
+    <FluentStack Orientation=Orientation.Vertical VerticalGap="12">
+      <FluentButton Appearance=ButtonAppearance.Primary OnClick=SignInWithPasskey>Sign in with a passkey</FluentButton>
+      <RegisterPasskey />
+    </FluentStack>
+  </Card>
+</TimeWarpPage>
+
