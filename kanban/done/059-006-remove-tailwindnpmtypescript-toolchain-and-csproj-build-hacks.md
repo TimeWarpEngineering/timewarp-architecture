@@ -16,8 +16,8 @@ are dropped; TS-removal items are struck through below.
 - [x] `tailwind.config.js`
 - [x] `styles/input.css` (and `styles/`)
 - [x] generated `wwwroot/css/site.css`
-- [ ] `package.json`, `package-lock.json`, `node_modules/`
-- [ ] `.eslintrc.js`, `.prettierrc.json`, `.prettierignore` _(npm lint/format; `tsconfig.json` + `source/*.ts` KEPT — TS retained)_
+- [x] `package.json`, `package-lock.json`, `node_modules/`
+- [x] `.eslintrc.js`, `.prettierrc.json`, `.prettierignore` _(npm lint/format; `tsconfig.json` + `source/*.ts` KEPT — TS retained)_
 
 ### Edit `web-spa.csproj`
 - [x] Remove `<Target Name="Tailwind">` (npm install/prettier/lint/build/css:build)
@@ -25,15 +25,15 @@ are dropped; TS-removal items are struck through below.
 - [x] Remove `CopyScopedCss` target
 - [x] Remove `<UpToDateCheckBuilt>` (input.css) + `tailwind.config.js` items
 - [x] ~~Remove `Microsoft.TypeScript.MSBuild` + `<TypeScriptInputs>` + `TypeScriptCompileBlocked`~~ — `TypeScriptCompileBlocked` removed; package + inputs KEPT (TS retained)
-- [ ] Drop the npm steps in the `WebSpaBuildTools` target (and the target itself if nothing else uses it)
+- [x] Drop the npm steps in the `WebSpaBuildTools` target (and the target itself if nothing else uses it)
 
 ### Edit `web-server/components/App.razor`
 - [x] Remove `<link href="css/site.css">`
 - [x] Remove `<link href="css/fluent.css">`
 
 ### Repo scripts
-- [ ] Delete `RunTailwind.ps1` / `RunNpmInstall.ps1` / `NpmOutdated.ps1` (under `TimeWarp.Architecture/`) — may fold into 059-007
+- [x] ~~Delete `RunTailwind.ps1` / `RunNpmInstall.ps1` / `NpmOutdated.ps1`~~ — moved to **059-007** (they live under `TimeWarp.Architecture/` template)
 
 ## Done when
-- [ ] `git grep -i tailwind` and `git grep -i "npm "` return nothing meaningful in web-spa
-- [ ] Clean build with no node/npm present in the environment
+- [x] `git grep -i tailwind` and `git grep -i "npm "` return nothing meaningful in web-spa
+- [x] Clean build with no node/npm present in the environment

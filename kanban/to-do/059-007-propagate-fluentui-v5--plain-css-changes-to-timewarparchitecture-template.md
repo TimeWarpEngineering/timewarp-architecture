@@ -33,3 +33,8 @@ live app doesn't.
 
 If the divergence between the two trees is large, consider whether the template should be
 regenerated from the live `source/` tree rather than hand-ported.
+
+## Carried over from 059-006 (npm toolchain in the template)
+- [ ] Delete the dead npm/Tailwind scripts under `TimeWarp.Architecture/`:
+      `RunTailwind.ps1`, `RunNpmInstall.ps1`, `NpmOutdated.ps1` (and any docs/dev-cli references).
+      web-spa already dropped its npm toolchain (059-006); the template copies should follow.
