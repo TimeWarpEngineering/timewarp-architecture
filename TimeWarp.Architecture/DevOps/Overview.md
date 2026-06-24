@@ -70,7 +70,7 @@ A typical operations team works on the provisioning, monitoring and management o
 * Docker
 * dotnet
 * GitHub Actions
-* Tye
+* .NET Aspire
 * TypeScript
 * Visual Studio
 

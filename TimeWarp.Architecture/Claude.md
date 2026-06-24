@@ -13,7 +13,6 @@ Key architectural decisions are documented in `Documentation/Developer/Conceptua
 
 ### Running the Application
 - `./Run.ps1` - Runs the main Aspire orchestrator (Development environment)
-- `./RunDocker.ps1` - Run using Docker containers
 
 ### Testing
 - `./RunTests.ps1` - Runs all test suites using Fixie test framework

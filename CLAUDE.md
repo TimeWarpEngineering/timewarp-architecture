@@ -17,7 +17,6 @@ Navigate to `TimeWarp.Architecture/` directory first:
 
 **Running Applications:**
 - `./Run.ps1` - Runs the Aspire orchestrator (Development environment)
-- `./RunDocker.ps1` - Run using Docker containers
 - `./Build.ps1` - Build entire solution without running (validates build including static assets)
 
 **Testing:**
