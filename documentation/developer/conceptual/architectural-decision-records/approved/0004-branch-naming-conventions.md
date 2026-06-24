@@ -170,7 +170,7 @@ Future enhancements may include:
 
 - [How to Prevent Local Commits to Master](HowToPreventLocalCommitsToMaster.md)
 - [How to Rename Default Branch From Main to Master](HowToRenameDefaultBranchFromMainToMaster.md)
-- [Task Management Workflow](../Conceptual/Overview.md#task-management-workflow)
+- [Task Management Workflow](../../Overview.md#task-management-workflow)
 
 ## Examples from Repository History
 

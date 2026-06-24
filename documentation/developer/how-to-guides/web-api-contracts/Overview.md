@@ -23,5 +23,5 @@ Both projects use HTTP transport with JSON serialization and follow the same con
 
 ## Related Documentation
 
-- [API Design Conceptual Guide](../../Conceptual/ApiDesign.md)
-- [Endpoint-Centric API ADR](../../Conceptual/ArchitecturalDecisionRecords/Approved/0003-endpoint-centric-api-with-interface-based-validation.md)
+- [API Design Conceptual Guide](../../conceptual/ApiDesign.md)
+- [Endpoint-Centric API ADR](../../conceptual/architectural-decision-records/approved/0003-endpoint-centric-api-with-interface-based-validation.md)

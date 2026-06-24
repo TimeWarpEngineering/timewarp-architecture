@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architectural Decisions
 
-Key architectural decisions are documented in `Documentation/Developer/Conceptual/ArchitecturalDecisionRecords/Approved/`:
+Key architectural decisions are documented in `documentation/developer/conceptual/architectural-decision-records/approved/`:
 - **ADR-0004**: Branch naming conventions
 - **ADR-0005**: Git merge strategy (information preservation over presentation)  
 - **ADR-0006**: Hybrid task management (Kanban + GitHub Issues)
