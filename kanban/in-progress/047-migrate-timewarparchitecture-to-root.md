@@ -45,3 +45,4 @@ clean** — i.e. remove the dead frontend toolchain that still lives under `Time
 ## Note (2026-06-24)
 
 TimeWarp.Automation (lib + contracts + test) was **dropped, not migrated** — unused RPA demo superseded by future AI desktop automation; tripped the ProcessStartInfo ban. See archived task 011. One fewer project to migrate leaf-to-root.
+- GenTester (empty Hello-World stub referencing the analyzers) also **dropped** (2026-06-24) — unused, superseded by the real SourceGenerator/Analyzers test projects; would have tripped the System.Console ban. After this, `TimeWarp.Architecture/Source/` holds only leftover scaffolding (`Directory.Build.props`, `Overview.md`, `Program.cs`) for 047 to clean up.

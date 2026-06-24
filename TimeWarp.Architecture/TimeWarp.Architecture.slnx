@@ -402,15 +402,6 @@
     
   </Folder>
   <Folder Name="/Source/">
-    <Project Path="Source\GenTester\GenTester.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="ReduxDevToolsEnabled|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="ReduxDevToolsEnabled|Any CPU" />
-      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
-      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
-    </Project>
   </Folder>
   <Folder Name="/Source/Libraries/">
   </Folder>
