@@ -16,11 +16,11 @@ This is a **multi-project repository** containing .NET project templates and sup
 Navigate to `TimeWarp.Architecture/` directory first:
 
 **Running Applications:**
-- `./Run.ps1` - Runs the Aspire orchestrator (Development environment)
-- `./Build.ps1` - Build entire solution without running (validates build including static assets)
+- `dev run` - Runs the Aspire orchestrator (Development environment)
+- `dev build` - Build entire solution without running (validates build including static assets)
 
 **Testing:**
-- `./RunTests.ps1` - Runs all test suites using Fixie framework
+- `dev test` - Runs all test suites using Fixie framework
 - `dotnet fixie Tests/[ProjectName]` - Run specific test project
 - `dotnet fixie Tests/[ProjectName] --tests [ClassName]` - Run specific test class
 - `dotnet fixie Tests/[ProjectName] --tests [ClassName.MethodName]` - Run specific test method

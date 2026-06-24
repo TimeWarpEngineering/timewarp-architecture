@@ -81,7 +81,6 @@ fi
 echo -e "\n📁 File Permissions:"
 test_command "Workspace writable" "touch /workspace/timewarp-architecture/.test-write && rm /workspace/timewarp-architecture/.test-write"
 test_command "Claude config writable" "[ -w /home/vscode/.claude ]"
-test_command "PowerShell scripts executable" "[ -x /workspace/timewarp-architecture/Build.ps1 ]"
 
 echo -e "\n🌐 Network & Security:"
 # Test allowed domains

@@ -12,10 +12,10 @@ Key architectural decisions are documented in `Documentation/Developer/Conceptua
 ## Development Commands
 
 ### Running the Application
-- `./Run.ps1` - Runs the main Aspire orchestrator (Development environment)
+- `dev run` - Runs the main Aspire orchestrator (Development environment)
 
 ### Testing
-- `./RunTests.ps1` - Runs all test suites using Fixie test framework
+- `dev test` - Runs all test suites using Fixie test framework
 - `dotnet fixie Tests/[ProjectName]` - Run specific test project
 - `dotnet test Tests/EndToEnd.Playwright.Tests` - Run Playwright end-to-end tests specifically
 

@@ -4,10 +4,9 @@
     {
       "label": "build",
       "type": "shell",
-      "command": "pwsh",
+      "command": "dev",
       "args": [
-        "-File",
-        "${workspaceFolder}/TimeWarp.Architecture/Build.ps1"
+        "build"
       ],
       "problemMatcher": "$msCompile",
       "group": {

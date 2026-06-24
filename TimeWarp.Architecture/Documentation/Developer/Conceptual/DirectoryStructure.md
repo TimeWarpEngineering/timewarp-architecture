@@ -30,8 +30,6 @@
 * [global.json](https://docs.microsoft.com/en-us/dotnet/core/tools/global-json?tabs=netcore3x)- (optional) specify required SDK
 * [Nuget.config](https://docs.microsoft.com/en-us/nuget/reference/nuget-config-file) - specify NuGet sources
 * ReadMe.md
-* Run.ps1 - (optional) PowerShell script to Run the application
-* TestCafe.ps1 - Script to execute the TestCafe tests
 * UNLICENSE.md
 
 

@@ -85,13 +85,10 @@
     <File Path="global.json" />
     <File Path="NuGet.config" />
     <File Path="ReadMe.md" />
-    <File Path="Run.ps1" />
-    <File Path="RunRelease.ps1" />
     <File Path=".template.config\template.json" />
     <File Path="TestCafe.ps1" />
     <File Path="TimeWarp.ruleset" />
     <File Path="UNLICENSE.md" />
-    <File Path="Watch.ps1" />
   </Folder>
   <Folder Name="/04-Tests/" />
   <Folder Name="/04-Tests/Analyzers/">

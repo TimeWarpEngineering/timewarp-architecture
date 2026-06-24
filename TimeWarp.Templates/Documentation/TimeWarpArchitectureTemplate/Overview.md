@@ -57,13 +57,13 @@ To run the new solution change to the newly created directory.
 cd .\MyTimeWarpApp\
 ```
 
-Execute the `Run.ps1` powershell script
+Run the Aspire AppHost via the dev-cli
 
 ```console
-./Run.ps1
+dev run
 ```
 
-You should see the Tye Dashboard opened in your browser.
+You should see the Aspire Dashboard open in your browser.
 
 ## Technologies
 

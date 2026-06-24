@@ -42,9 +42,9 @@ cat >> ~/.bashrc << 'EOF'
 
 # TimeWarp Architecture aliases
 alias tw='cd /workspace/timewarp-architecture'
-alias run='./Run.ps1'
-alias test='./RunTests.ps1'
-alias build='./Build.ps1'
+alias run='dev run'
+alias test='dev test'
+alias build='dev build'
 
 # Git worktree alias
 alias worktree='cd /workspace/git-worktree'
