@@ -86,6 +86,7 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
       await WebApplication.StopAsync();
       Started = false;
     }
+
     Console.WriteLine("==== Now dispose of WebApplication ====");
     WebApplication?.DisposeAsync();
   }

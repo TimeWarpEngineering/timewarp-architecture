@@ -1,6 +1,5 @@
 namespace TimeWarp.Architecture.Features.Authorization;
 
-
 public static class ModuleIds
 {
    public static readonly Guid GeneralLedger = new("F0E73E82-BF55-4E62-898C-96ECE9EED825");

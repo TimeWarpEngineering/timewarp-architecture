@@ -15,6 +15,7 @@ partial class ProfileMenuState
         {
           ProfileMenuState.MenuState = MenuStates.Closing;
         }
+
         return Task.CompletedTask;
       }
     }

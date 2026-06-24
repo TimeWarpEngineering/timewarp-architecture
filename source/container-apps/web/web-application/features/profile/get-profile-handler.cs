@@ -45,7 +45,6 @@ public class GetProfile
       return response;
     }
 
-
     // TODO: This will be moved to where we register a user and stored in the DB
     // By storing in the DB our frontend won't be calling out to mulitavatar.com and leaking infomration.
     // Only the backend will do it once and then store it.

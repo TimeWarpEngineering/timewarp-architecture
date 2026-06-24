@@ -1,6 +1,5 @@
 namespace TimeWarp.Architecture.CustomRequirements;
 
-
 public sealed class ModuleRequirement
 (
   Guid requiredModule

@@ -1,10 +1,10 @@
 namespace TimeWarp.Architecture.Api.Server.Integration.Tests.Infrastructure;
 
 using global::Aspire.Hosting;
-using AspireConstants = TimeWarp.Architecture.Aspire.Constants;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Services;
 using System.Text.Json;
+using AspireConstants = TimeWarp.Architecture.Aspire.Constants;
 
 class ApiServerTestConvention : TimeWarpTestingConvention
 {

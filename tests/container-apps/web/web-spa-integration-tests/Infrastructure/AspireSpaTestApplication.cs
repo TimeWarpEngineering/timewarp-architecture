@@ -1,8 +1,8 @@
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
+using FakeItEasy;
 using global::Aspire.Hosting;
 using global::Aspire.Hosting.Testing;
-using FakeItEasy;
 using Microsoft.JSInterop;
 using AspireConstants = TimeWarp.Architecture.Aspire.Constants;
 

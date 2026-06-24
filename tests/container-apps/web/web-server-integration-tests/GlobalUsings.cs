@@ -1,11 +1,10 @@
 global using Ardalis.GuardClauses;
-global using Shouldly;
 global using FluentValidation.Results;
 global using FluentValidation.TestHelper;
 global using JetBrains.Annotations;
 global using Microsoft.Extensions.Configuration;
 global using OneOf;
-
+global using Shouldly;
 // Solution usings
 global using TimeWarp.Architecture;
 global using TimeWarp.Architecture.Configuration;

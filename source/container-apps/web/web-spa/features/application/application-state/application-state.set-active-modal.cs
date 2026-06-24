@@ -13,7 +13,6 @@ partial class ApplicationState
       }
     }
 
-
     internal class Handler
     (
       IStore store

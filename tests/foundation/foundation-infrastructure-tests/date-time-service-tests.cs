@@ -40,6 +40,7 @@ public class NextUtcNow_Returns
       {
         result.Add(dateTimeService.NextUtcNow());
       }
+
       return result;
     }
   }

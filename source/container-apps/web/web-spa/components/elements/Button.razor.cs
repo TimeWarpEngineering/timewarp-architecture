@@ -27,7 +27,6 @@ partial class Button
     "duration-150"
   );
 
-
   private readonly string DefaultCss = string.Join
   (
     separator: " ",

@@ -7,7 +7,6 @@ partial class ApplicationState
     [TrackAction]
     internal sealed record Action : IAction;
 
-
     internal sealed class Handler : ActionHandler<Action>
     {
       public Handler(IStore store) : base(store) {}

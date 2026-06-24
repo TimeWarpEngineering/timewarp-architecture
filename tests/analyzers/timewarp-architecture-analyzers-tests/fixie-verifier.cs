@@ -81,6 +81,7 @@ internal class FixieVerifier : IVerifier
     {
       throw new Exception($"Verification Failed: {message}\nExpected: {expected}\nActual: {actual}\nPath: {path}\nLine: {line}\nColumn: {column}");
     }
+
     return Task.CompletedTask;
   }
 }

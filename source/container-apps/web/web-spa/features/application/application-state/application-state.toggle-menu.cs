@@ -6,7 +6,6 @@ partial class ApplicationState
   {
     internal class Action : IBaseAction { }
 
-
     internal class Handler
     (
       IStore store

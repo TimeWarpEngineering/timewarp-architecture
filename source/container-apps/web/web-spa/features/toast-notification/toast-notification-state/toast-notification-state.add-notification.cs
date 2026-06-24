@@ -21,7 +21,6 @@ partial class ToastNotificationState
       }
     }
 
-
     internal class Handler
     (
       IStore store,

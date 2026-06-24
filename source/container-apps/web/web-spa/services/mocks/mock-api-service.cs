@@ -1,6 +1,5 @@
 namespace TimeWarp.Architecture.Services;
 
-
 public class MockApiService : IApiService
 {
   public async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
@@ -30,6 +29,7 @@ public class MockApiService : IApiService
             );
         return (response as TResponse)!;
       }
+
       throw new NotImplementedException();
     }
     catch (OperationCanceledException)

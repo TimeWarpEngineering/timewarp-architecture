@@ -2,7 +2,6 @@ namespace TimeWarp.Architecture.Pages;
 
 using static ChatState;
 
-
 [Page("/Chat")]
 partial class ChatPage
 {
@@ -11,7 +10,6 @@ partial class ChatPage
   private IEnumerable<ChatMessage> ChatMessages => ChatState.ChatMessages ?? Enumerable.Empty<ChatMessage>();
 
   [Inject] private ChatHubConnection ChatHubConnection { get; set; } = default!;
-
 
   protected override async Task OnInitializedAsync()
   {
