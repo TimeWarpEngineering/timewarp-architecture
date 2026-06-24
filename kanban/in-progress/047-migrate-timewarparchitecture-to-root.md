@@ -41,3 +41,7 @@ clean** — i.e. remove the dead frontend toolchain that still lives under `Time
 - [ ] Verify `dotnet new timewarp-architecture -n MyApp` builds/runs with FluentUI v5 and no Tailwind/npm.
 
 (Originally tracked as 059-007, now superseded by this epic.)
+
+## Note (2026-06-24)
+
+TimeWarp.Automation (lib + contracts + test) was **dropped, not migrated** — unused RPA demo superseded by future AI desktop automation; tripped the ProcessStartInfo ban. See archived task 011. One fewer project to migrate leaf-to-root.

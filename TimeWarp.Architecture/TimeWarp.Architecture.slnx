@@ -9,15 +9,6 @@
   </Configurations>
   <Folder Name="/00-DevOps/" />
   <Folder Name="/00-Libraries/">
-    <Project Path="Source\Libraries\TimeWarp.Automation\TimeWarp.Automation.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
-      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
-    </Project>
     <Project Path="..\source\libraries\timewarp-modules\timewarp-modules.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
@@ -198,15 +189,6 @@
   <Folder Name="/04-Tests/ContainerApps/Yarp/" />
   <!--#endif-->
   <Folder Name="/04-Tests/Libraries/">
-    <Project Path="Tests\Libraries\TimeWarp.Automation.Tests\TimeWarp.Automation.Tests.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
-      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
-    </Project>
   </Folder>
   <Folder Name="/05-ContainerApps/" />
   <!--#if (api)-->
@@ -431,14 +413,5 @@
     </Project>
   </Folder>
   <Folder Name="/Source/Libraries/">
-    <Project Path="../source/libraries/timewarp-automation-contracts/timewarp-automation-contracts.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="Debug|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|Any CPU" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="ReduxDevToolsEnabled|x86" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
-      <Configuration Solution="Release|x86" Project="Release|Any CPU" />
-    </Project>
   </Folder>
 </Solution>
