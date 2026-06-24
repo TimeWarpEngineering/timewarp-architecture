@@ -37,5 +37,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/foundation/foundation-infrastructure-tests/foundation-infrastructure-tests.csproj" />
     <Project Path="tests/analyzers/timewarp-architecture-analyzers-tests/timewarp-architecture-analyzers-tests.csproj" />
+    <Project Path="tests/analyzers/timewarp-architecture-sourcegenerator-tests/timewarp-architecture-sourcegenerator-tests.csproj" />
   </Folder>
 </Solution>
