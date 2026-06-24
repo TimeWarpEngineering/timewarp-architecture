@@ -1,0 +1,16 @@
+# Normalize ALL text files to LF line endings, on every platform.
+# (Modern Windows tooling handles LF fine — no CRLF conversion needed.)
+* text=auto eol=lf
+
+# Known binary types: never convert line endings or treat as text.
+*.dll binary
+*.exe binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.nupkg binary
+*.snupkg binary
