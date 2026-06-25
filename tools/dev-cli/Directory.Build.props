@@ -22,8 +22,10 @@
   <ItemGroup>
     <!-- Package references -->
     <PackageReference Include="TimeWarp.Nuru" />
-    <!-- Amuru is used directly (global-usings.cs) and by the .githooks runfiles;
-         declare it explicitly rather than relying on the transitive Nuru dependency. -->
+    <!-- dev.cs / global-usings.cs use TimeWarp.Amuru APIs (Git, Shell) directly, and the
+         .githooks memsearch runfiles reference it via #:package; declaring it explicitly
+         (rather than leaning on the transitive Nuru dependency) gives the CPM PackageVersion
+         a referencing project so the repo audit doesn't flag it orphaned. -->
     <PackageReference Include="TimeWarp.Amuru" />
   </ItemGroup>
 
