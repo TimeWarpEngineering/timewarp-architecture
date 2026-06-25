@@ -1,0 +1,24 @@
+name: web-api-contracts-eval
+description: Minimal routing smoke — explicit skill read request.
+version: "0.1"
+type: capability
+tags:
+  skill: web-api-contracts
+defaults:
+  runs: 1
+  timeout: 120s
+  executor: copilot-sdk
+  model: gpt-5-mini
+stimuli:
+  - name: should_trigger_read_skill
+    prompt: read web-api-contracts skill
+    tags:
+      priority: p0
+      area: routing
+      signal: trigger
+    graders:
+      - type: skill-invocation
+        name: invokes_web_api_contracts
+        config:
+          required:
+            - web-api-contracts
