@@ -42,6 +42,7 @@ internal sealed class TestCommand : ICommand<Unit>
         Environment.ExitCode = 1;
         return false;
       }
+
       RepoRoot = root;
       return true;
     }
@@ -62,6 +63,7 @@ internal sealed class TestCommand : ICommand<Unit>
         Environment.ExitCode = 1;
         return false;
       }
+
       return true;
     }
   }

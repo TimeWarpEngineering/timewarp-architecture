@@ -44,6 +44,7 @@ internal sealed class CleanCommand : ICommand<Unit>
         Environment.ExitCode = 1;
         return false;
       }
+
       RepoRoot = root;
       Terminal.WriteLine($"Cleaning repository at {RepoRoot}...");
       return true;
@@ -110,6 +111,7 @@ internal sealed class CleanCommand : ICommand<Unit>
         Environment.ExitCode = 1;
         return false;
       }
+
       return true;
     }
   }
