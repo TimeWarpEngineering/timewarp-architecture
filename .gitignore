@@ -455,9 +455,8 @@ GeneratedCode/
 !.agent/workspace/overview.md
 *.lscache
 
-# memsearch: track the memory markdown, ignore the regenerable binary index
-.memsearch/*.db
-.memsearch/.index.pid
+# memsearch: local session index + auto-updated running summaries (not for git)
+.memsearch/
 
 # playwright-cli: transient per-run page/console scratch output
 .playwright-cli/
