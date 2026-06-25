@@ -60,7 +60,7 @@
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.9" />
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
-    <PackageVersion Include="FastEndpoints" Version="8.1.0" />
+    <PackageVersion Include="FastEndpoints" Version="8.2.0" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.5.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.16.5" />
