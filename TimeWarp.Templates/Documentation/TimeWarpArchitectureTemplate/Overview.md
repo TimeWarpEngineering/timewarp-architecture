@@ -75,7 +75,7 @@ You should see the Aspire Dashboard open in your browser.
 * [Automapper](https://automapper.org/)
 * [FluentValidation](https://fluentvalidation.net/)
 * [Fixie](https://github.com/fixie/fixie/wiki)
-* [FluentAssertions](https://fluentassertions.com/)
+* [Shouldly](https://docs.shouldly.org/)
 * [Playwright](https://playwright.dev/)
 * [Project Tye](https://github.com/dotnet/tye)
 * [YARP](https://microsoft.github.io/reverse-proxy/)

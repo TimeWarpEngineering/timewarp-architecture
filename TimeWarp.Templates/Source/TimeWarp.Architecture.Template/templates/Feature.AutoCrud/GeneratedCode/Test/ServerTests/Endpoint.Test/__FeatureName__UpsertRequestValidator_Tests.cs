@@ -1,6 +1,6 @@
 namespace __RequestName__RequestValidator
 {
-  using FluentAssertions;
+  using Shouldly;
   using FluentValidation.Results;
   using FluentValidation.TestHelper;
   using __RootNamespace__.Features.__FeatureName__s;
@@ -25,7 +25,7 @@ namespace __RequestName__RequestValidator
 
       ValidationResult validationResult = __RequestName__RequestValidator.TestValidate(__requestName__Request);
 
-      validationResult.IsValid.Should().BeTrue();
+      validationResult.IsValid.ShouldBeTrue();
     }
 
     // #TODO Rename thie test and add tests for all validation rules

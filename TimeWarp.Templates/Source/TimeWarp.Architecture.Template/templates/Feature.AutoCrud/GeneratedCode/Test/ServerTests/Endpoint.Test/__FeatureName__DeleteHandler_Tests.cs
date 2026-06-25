@@ -6,7 +6,6 @@ namespace __RequestName__Handler
   using __RootNamespace__.Server.Integration.Tests.Infrastructure;
   using __RootNamespace__.Features.__FeatureName__s;
   using __RootNamespace__.Server;
-  using FluentAssertions;
 
   public class Handle_Returns : BaseTest
   {

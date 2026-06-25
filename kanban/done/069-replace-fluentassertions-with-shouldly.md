@@ -57,17 +57,17 @@ FluentAssertions `6.7.0` appears in exactly these places:
 
 ## Checklist
 
-- [ ] Convert the 3 template scaffolding files in `Feature.Endpoint/Server.Tests/`
+- [x] Convert the 3 template scaffolding files in `Feature.Endpoint/Server.Tests/`
       to Shouldly (swap `using`, rewrite `.Should()` assertions)
-- [ ] Check whether `TimeWarp.Architecture.Template.Tests` code actually uses
-      FluentAssertions; convert any real usages to Shouldly
-- [ ] Replace the FluentAssertions `PackageReference` in the template-tests
-      csproj with Shouldly (use a current Shouldly version)
-- [ ] Remove the `FluentAssertions` `PackageVersion` from root `Directory.Packages.props`
-- [ ] Verify no `FluentAssertions` / `using FluentAssertions` / unconverted
+- [x] Convert the `Feature.AutoCrud/GeneratedCode/.../Endpoint.Test/` templates
+      (9 files — see Results; this was NOT in the original scope)
+- [x] Check whether `TimeWarp.Architecture.Template.Tests` code actually uses
+      FluentAssertions — it did not; removed the unused `PackageReference`
+- [x] Remove the `FluentAssertions` `PackageVersion` from root `Directory.Packages.props`
+- [x] Update remaining doc/metadata references (Overview.md, .ai references.md, nugets.md)
+- [x] Verify no `FluentAssertions` / `using FluentAssertions` / unconverted
       `.Should()` references remain repo-wide (excluding `artifacts/`, `obj/`)
-- [ ] Confirm `dev build` is still green (note: the active solution doesn't build
-      the templates tree, so also build/restore the templates project directly if feasible)
+- [x] Confirm `dev build` is still green
 
 ## Notes
 
@@ -79,6 +79,31 @@ FluentAssertions `6.7.0` appears in exactly these places:
   CPM-hygiene cleanup that prevents new scaffolded features from depending on
   FluentAssertions.
 
+## Results
+
+- **Initial scope was incomplete.** The first investigation found only the 3
+  `Feature.Endpoint/Server.Tests/` template files. A deeper grep surfaced a
+  second, larger set under
+  `Feature.AutoCrud/GeneratedCode/Test/ServerTests/Endpoint.Test/` — **9 files**
+  (3 Endpoint, 3 RequestValidator, 3 Handler). All converted.
+- **Conversion pattern applied** (FluentAssertions → Shouldly):
+  `.Should().Be(x)` → `.ShouldBe(x)`, `.Should().Contain(x)` → `.ShouldContain(x)`,
+  `.Should().BeTrue()` → `.ShouldBeTrue()`. Endpoint/Validator files swapped
+  `using FluentAssertions;` → `using Shouldly;`; Handler files had an unused
+  `using FluentAssertions;` which was removed outright.
+- **Package cleanup:** removed unused FluentAssertions `PackageReference` from
+  `TimeWarp.Architecture.Template.Tests.csproj`; removed `PackageVersion` from
+  root `Directory.Packages.props`. No Shouldly reference needed to be added to
+  the templates project (its own code asserts nothing).
+- **Docs/metadata updated:** `TimeWarp.Templates/Documentation/.../Overview.md`,
+  `TimeWarp.Architecture/.ai/other/references.md`, `.ai/other/nugets.md`.
+- **Verification:** zero `FluentAssertions` / unconverted `.Should()` remain
+  repo-wide (excl. `artifacts/`, `obj/`, kanban history). `dev build` green.
+- Note: the templates tree is not part of `timewarp-architecture.slnx`, so it is
+  not compiled by `dev build`; verification was via exhaustive grep + the active
+  build staying green after removing the root CPM declaration.
+
 ## Session
 
 - Created: 2026-06-25 (task spun off from 041)
+- Implementation: 2026-06-25

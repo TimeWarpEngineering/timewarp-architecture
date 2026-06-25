@@ -22,11 +22,11 @@ references:
     resources:
       - Official Documentation: https://github.com/fixie/fixie/wiki
 
-  - name: FluentAssertions
+  - name: Shouldly
     relationship: Assertion library used for tests
     resources:
-      - Official Documentation: https://fluentassertions.com/introduction
-      - GitHub Repository: https://github.com/fluentassertions/fluentassertions
+      - Official Documentation: https://docs.shouldly.org/
+      - GitHub Repository: https://github.com/shouldly/shouldly
 
   - name: Playwright for .NET
     relationship: End to end testing framework
