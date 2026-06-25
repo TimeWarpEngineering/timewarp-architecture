@@ -22,7 +22,9 @@
   <ItemGroup>
     <!-- Package references -->
     <PackageReference Include="TimeWarp.Nuru" />
-    
+    <!-- Amuru is used directly (global-usings.cs) and by the .githooks runfiles;
+         declare it explicitly rather than relying on the transitive Nuru dependency. -->
+    <PackageReference Include="TimeWarp.Amuru" />
   </ItemGroup>
 
 </Project>
