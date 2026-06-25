@@ -15,6 +15,7 @@ vally --version
 
 ```
 .vally.yaml                          # suite filters (ci-gate, nightly)
+.github/workflows/skill-lint.yaml      # PR schema gate (no model token)
 evals/
   contracts/fixtures/                # shared contract snippets for stimuli
   non-contracts/                     # negative-routing fixtures

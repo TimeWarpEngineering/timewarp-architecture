@@ -7,7 +7,7 @@ on:
       - "**/eval.yaml"
       - ".vally.yaml"
       - "evals/**"
-      - ".github/workflows/skill-lint.yml"
+      - ".github/workflows/skill-lint.yaml"
 
 permissions:
   contents: read
