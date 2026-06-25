@@ -7,7 +7,6 @@ global using FluentValidation;
 global using FluentValidation.Results;
 global using Grpc.Net.Client.Web;
 global using Grpc.Net.Client;
-global using JetBrains.Annotations;
 global using TimeWarp.Mediator;
 global using TimeWarp.Mediator.Pipeline;
 global using Microsoft.AspNetCore.Authorization;

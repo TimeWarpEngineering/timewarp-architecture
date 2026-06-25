@@ -24,7 +24,6 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation"/>
-    <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="OneOf"/>
     <PackageReference Include="TimeWarp.Mediator"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>

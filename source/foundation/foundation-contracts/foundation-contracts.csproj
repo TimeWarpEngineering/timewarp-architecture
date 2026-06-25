@@ -2,7 +2,6 @@
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="FluentValidation" />
-    <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="libphonenumber-csharp" />
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.Extensions.Http" />

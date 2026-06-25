@@ -22,7 +22,6 @@
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
     <PackageVersion Include="libphonenumber-csharp" Version="9.0.32" />
     <PackageVersion Include="Morris.Moxy" Version="1.10.0" />
     <PackageVersion Include="OneOf" Version="3.0.271" />

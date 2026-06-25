@@ -15,7 +15,6 @@
   <ItemGroup Label="Core">
     <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
-    <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="Oakton" />
     <PackageReference Include="Scalar.AspNetCore" />
   </ItemGroup>

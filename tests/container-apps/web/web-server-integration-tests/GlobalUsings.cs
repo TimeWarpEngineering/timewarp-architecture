@@ -1,7 +1,6 @@
 global using Ardalis.GuardClauses;
 global using FluentValidation.Results;
 global using FluentValidation.TestHelper;
-global using JetBrains.Annotations;
 global using Microsoft.Extensions.Configuration;
 global using OneOf;
 global using Shouldly;

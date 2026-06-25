@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="protobuf-net.Grpc" />
     <PackageReference Include="System.Security.Cryptography.Xml" />
     <PackageReference Include="System.ServiceModel.Primitives" />
