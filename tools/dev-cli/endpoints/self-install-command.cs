@@ -42,6 +42,7 @@ internal sealed class SelfInstallCommand : ICommand<Unit>
         Environment.ExitCode = 1;
         return false;
       }
+
       RepoRoot = root;
       return true;
     }
@@ -64,6 +65,7 @@ internal sealed class SelfInstallCommand : ICommand<Unit>
         Environment.ExitCode = 1;
         return false;
       }
+
       return true;
     }
   }

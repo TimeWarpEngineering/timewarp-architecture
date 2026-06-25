@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architectural Decisions
 
-Key architectural decisions are documented in `Documentation/Developer/Conceptual/ArchitecturalDecisionRecords/Approved/`:
+Key architectural decisions are documented in `documentation/developer/conceptual/architectural-decision-records/approved/`:
 - **ADR-0004**: Branch naming conventions
 - **ADR-0005**: Git merge strategy (information preservation over presentation)  
 - **ADR-0006**: Hybrid task management (Kanban + GitHub Issues)
@@ -12,21 +12,18 @@ Key architectural decisions are documented in `Documentation/Developer/Conceptua
 ## Development Commands
 
 ### Running the Application
-- `./Run.ps1` - Runs the main Aspire orchestrator (Development environment)
-- `./RunDocker.ps1` - Run using Docker containers
-- `./RunTailwind.ps1` - Build Tailwind CSS for the Web.Spa project
+- `dev run` - Runs the main Aspire orchestrator (Development environment)
 
 ### Testing
-- `./RunTests.ps1` - Runs all test suites using Fixie test framework
+- `dev test` - Runs all test suites using Fixie test framework
 - `dotnet fixie Tests/[ProjectName]` - Run specific test project
 - `dotnet test Tests/EndToEnd.Playwright.Tests` - Run Playwright end-to-end tests specifically
 
 ### Frontend Development (Web.Spa)
-- `npm run css:build` - Build Tailwind CSS
-- `npm run tailwind-watch` - Watch and rebuild CSS changes
-- `npm run build` - Build TypeScript
-- `npm run lint` - Lint TypeScript files
-- `npm run prettier` - Format code
+- TypeScript (`source/*.ts`) compiles to `wwwroot/js` on build via
+  `Microsoft.TypeScript.MSBuild` — no npm/node required.
+- Styling is plain CSS with design tokens (`wwwroot/css/tokens.css` + `app.css`);
+  the Tailwind/npm toolchain was removed.
 
 ### Test Filtering (Fixie Framework)
 - `dotnet fixie Tests/[ProjectName] --tests [ClassName]` - Run specific test class
@@ -100,7 +97,7 @@ Features/[FeatureName]/
 - **FastEndpoints** for minimal API endpoints
 - **Fixie** for testing (not MSTest/xUnit)
 - **TimeWarp State** for client state management
-- **Tailwind CSS** for styling
+- **Plain CSS** (FluentUI v5 + design tokens) for styling
 - **TypeScript** for client-side scripting
 - **Aspire** for service orchestration
 - **Entity Framework Core** for data access
@@ -226,11 +223,11 @@ Use these regions in entity classes to organize associations:
 
 ## UI Development Guidelines
 
-### FluentUI + Tailwind CSS Strategy
+### FluentUI v5 + plain CSS Strategy
 - **Layout**: Use `TimeWarpPage` component with FluentUI's `Stack` and `Grid`
-- **Colors**: Use FluentUI color palette only (supports automatic light/dark themes)
-- **Tailwind Usage**: Limit to spacing (`m-*`, `p-*`), hover effects, and responsiveness
-- **Avoid**: Tailwind color, typography, border, and shadow classes that conflict with FluentUI
+- **Colors**: Use the FluentUI palette / design tokens (supports automatic light/dark themes)
+- **Styling**: Plain CSS driven by design tokens (`wwwroot/css/tokens.css`); per-component
+  styles via Blazor scoped CSS. The Tailwind utility-class toolchain was removed — do not reintroduce it.
 
 ## Development Workflow
 

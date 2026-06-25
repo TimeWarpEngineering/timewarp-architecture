@@ -25,7 +25,7 @@ public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<T
             Validators.Select(validator => validator.ValidateAsync(request, cancellationToken))
         );
 
-        List<ValidationFailure> validationFailures = validationResults
+        var validationFailures = validationResults
             .SelectMany(validationResult => validationResult.Errors)
             .ToList();
 
@@ -33,7 +33,7 @@ public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<T
             return await next();
 
         // Group validation errors by property name
-        Dictionary<string, string[]> errors = validationFailures
+        var errors = validationFailures
             .GroupBy(e => e.PropertyName.ToLower())
             .ToDictionary(
                 g => g.Key,

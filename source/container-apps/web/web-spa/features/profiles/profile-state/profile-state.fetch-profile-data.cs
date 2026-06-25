@@ -9,7 +9,6 @@ partial class ProfileState
     [TrackAction]
     internal sealed class Action : IBaseAction;
 
-
     internal sealed class Handler : DefaultApiHandler<Action, Query, Response>
     {
       public Handler

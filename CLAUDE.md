@@ -16,24 +16,21 @@ This is a **multi-project repository** containing .NET project templates and sup
 Navigate to `TimeWarp.Architecture/` directory first:
 
 **Running Applications:**
-- `./Run.ps1` - Runs the Aspire orchestrator (Development environment)
-- `./RunDocker.ps1` - Run using Docker containers
-- `./RunTailwind.ps1` - Build Tailwind CSS for Web.Spa
-- `./Build.ps1` - Build entire solution without running (validates build including static assets)
+- `dev run` - Runs the Aspire orchestrator (Development environment)
+- `dev build` - Build entire solution without running (validates build including static assets)
 
 **Testing:**
-- `./RunTests.ps1` - Runs all test suites using Fixie framework
+- `dev test` - Runs all test suites using Fixie framework
 - `dotnet fixie Tests/[ProjectName]` - Run specific test project
 - `dotnet fixie Tests/[ProjectName] --tests [ClassName]` - Run specific test class
 - `dotnet fixie Tests/[ProjectName] --tests [ClassName.MethodName]` - Run specific test method
 - `dotnet test Tests/EndToEnd.Playwright.Tests` - Run Playwright E2E tests
 
 **Frontend Development (Web.Spa):**
-- `npm run css:build` - Build Tailwind CSS
-- `npm run tailwind-watch` - Watch and rebuild CSS changes  
-- `npm run build` - Build TypeScript
-- `npm run lint` - Lint TypeScript files
-- `npm run prettier` - Format code
+- TypeScript (`source/*.ts`) compiles to `wwwroot/js` automatically on build via
+  `Microsoft.TypeScript.MSBuild` — no npm/node required.
+- Styling is plain CSS with design tokens (`wwwroot/css/tokens.css` + `app.css`); the
+  Tailwind/npm toolchain was removed (see the `blazor-css-strategy` skill).
 
 ### Template Management
 - `dotnet new --install TimeWarp.Architecture` - Install the architecture template
@@ -52,7 +49,7 @@ A **distributed microservices architecture** demonstrating enterprise .NET patte
 - **Fixie** testing framework (NOT MSTest/xUnit)
 - **.NET Aspire** for service orchestration
 - **Entity Framework Core** with multiple database providers
-- **FluentUI + Tailwind CSS** for styling
+- **FluentUI v5 + plain CSS** (design tokens) for styling
 
 **Key Patterns:**
 - **Endpoint-Centric Design**: Each API endpoint has dedicated request/response DTOs
@@ -78,11 +75,12 @@ ContainerApps/
 - **Queries**: Read operations (prefixed with "Get")
 - **Validation**: FluentValidation with shared mixins
 
-### UI Development (FluentUI + Tailwind)
+### UI Development (FluentUI v5 + plain CSS)
 - **Layout**: Use `TimeWarpPage` with FluentUI `Stack`/`Grid`
-- **Colors**: FluentUI palette only (automatic light/dark theme support)
-- **Tailwind**: Limited to spacing (`m-*`, `p-*`), hover effects, responsiveness
-- **Avoid**: Tailwind colors, typography, borders that conflict with FluentUI
+- **Colors**: FluentUI palette / design tokens (automatic light/dark theme support)
+- **Styling**: Plain CSS driven by design tokens (`wwwroot/css/tokens.css`); per-component
+  styles via Blazor scoped CSS. See the `blazor-css-strategy` skill.
+- **No Tailwind**: the utility-class toolchain was removed — do not reintroduce it.
 
 ## Task Management Workflow
 
@@ -128,7 +126,7 @@ Tests/
 ## Important Development Notes
 
 - **Namespace**: All projects use `TimeWarp.Architecture` as root namespace
-- **Nullable Reference Types**: Disabled by design choice  
+- **Nullable Reference Types**: Enabled repo-wide (`<Nullable>enable</Nullable>` in root `Directory.Build.props`)
 - **Generated Code**: Excluded via `Directory.Build.targets`
 - **Feature Flags**: Via preprocessor directives (`cosmosdb`, `api`, `grpc`, `web`, `yarp`)
 - **State Management**: TimeWarp patterns with Redux DevTools integration
@@ -137,5 +135,5 @@ Tests/
 ## Documentation
 
 Comprehensive documentation available in:
-- `TimeWarp.Architecture/Documentation/` - Architecture and development guides
+- `documentation/` - Architecture and development guides
 - Online docs: https://timewarpengineering.github.io/timewarp-architecture/

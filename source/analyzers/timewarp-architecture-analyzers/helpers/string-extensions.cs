@@ -19,6 +19,7 @@ public static class StringExtensions
     {
       return char.ToLowerInvariant(str[0]) + str.Substring(1);
     }
+
     return str.ToLowerInvariant();
   }
 #pragma warning restore CA1308 // Normalize strings to uppercase

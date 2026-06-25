@@ -1,6 +1,5 @@
 namespace TimeWarp.Architecture.CorsPolicies;
 
-
 /// <summary>
 /// This is the enumeration object for CORS Policies
 /// </summary>

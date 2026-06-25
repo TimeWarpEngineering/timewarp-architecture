@@ -8,7 +8,6 @@
 //using Nop.Core.Domain.Seo;
 //using Nop.Core.Domain.Stores;
 
-
 //{
 //    /// <summary>
 //    /// Represents a product

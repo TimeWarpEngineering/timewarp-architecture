@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AutoFixture" />
+    <PackageReference Include="AutoFixture.AutoFakeItEasy" />
+    <PackageReference Include="FakeItEasy" />
+    <PackageReference Include="Fixie.TestAdapter" />
+    <!-- Direct reference pins Microsoft.Extensions.Hosting 10.0.9 at a nearer graph level than
+         web-server's transitive Oakton (< 10.0.0) bound, resolving the NU1107 version conflict
+         (same approach as web-spa-integration-tests). -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\source\container-apps\web\web-contracts\web-contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\web\web-server\web-server.csproj" />
+    <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
+
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

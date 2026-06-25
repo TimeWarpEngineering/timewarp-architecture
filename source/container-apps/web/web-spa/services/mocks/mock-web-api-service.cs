@@ -57,6 +57,7 @@ public class MockWebApiService : IWebServerApiService
         TResponse response = mockResponseFactory(request);
         return response;
       }
+
       throw new InvalidOperationException($"Factory for {requestType} is not a MockResponseFactory<{typeof(TResponse)}>");
     }
     catch (Exception ex)

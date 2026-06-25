@@ -17,7 +17,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
     RouteRegistry.Reset();
 
     // Create diagnostic descriptor for logging
-    DiagnosticDescriptor logDiagnostic = new DiagnosticDescriptor
+    var logDiagnostic = new DiagnosticDescriptor
     (
       "SG001",
       "Source Generator Log",
@@ -28,7 +28,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
     );
 
     // Diagnostic when generation is requested but required FastEndpoints types are missing
-    DiagnosticDescriptor missingFastEndpointsDescriptor = new DiagnosticDescriptor
+    var missingFastEndpointsDescriptor = new DiagnosticDescriptor
     (
       "SG002",
       "Missing FastEndpoints dependencies",
@@ -56,8 +56,8 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
     IncrementalValueProvider<bool> enableApiEndpointGeneration = context.AnalyzerConfigOptionsProvider.Select(
         static (options, _) =>
         {
-            if (options.GlobalOptions.TryGetValue("build_property.EnableApiEndpointGeneration", out var value) &&
-                bool.TryParse(value, out var enabled))
+            if (options.GlobalOptions.TryGetValue("build_property.EnableApiEndpointGeneration", out string? value) &&
+                bool.TryParse(value, out bool enabled))
             {
                 return enabled;
             }
@@ -72,7 +72,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         .Combine(enableApiEndpointGeneration)
         .Select(static (tuple, _) =>
         {
-            var ((symbol, compilation), enabled) = tuple;
+            ((INamedTypeSymbol symbol, Compilation compilation), bool enabled) = tuple;
             return (symbol, compilation, enabled);
         });
 
@@ -103,7 +103,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         try
         {
           // Extract metadata directly from symbol
-          EndpointMetadata metadata = EndpointMetadata.FromSymbol(symbol);
+          var metadata = EndpointMetadata.FromSymbol(symbol);
 
           // Check for route conflicts
           if (!RouteRegistry.TryRegisterRoute(metadata.Route, metadata.HttpVerb, metadata.ClassName, spc))

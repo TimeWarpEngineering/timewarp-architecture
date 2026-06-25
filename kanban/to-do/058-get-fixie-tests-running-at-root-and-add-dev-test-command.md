@@ -53,17 +53,17 @@ test-framework-agnostic where practical so adding Jaribu later is incremental.
 ## Checklist
 
 ### Migrate
-- [~] Move test projects to `tests/` (kebab-case) — DONE for unit/analyzer (foundation-infrastructure-tests, analyzers-tests, sourcegenerator-tests); integration + E2E + Testing.Common remain
-- [ ] Move shared `Testing.Common` to `tests/common/timewarp-testing/`
-- [ ] Fix relative `ProjectReference` paths after the move
-- [ ] Add all test projects to `timewarp-architecture.slnx`
-- [ ] Remove version-less reliance on the old CPM; confirm they resolve against root CPM
+- [x] Move test projects to `tests/` (kebab-case) — unit/analyzer (slice 1) + integration (slice 3) done; E2E dropped → [[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases--payment-flow]]
+- [x] Move shared `Testing.Common` to `tests/common/timewarp-testing/`
+- [x] Fix relative `ProjectReference` paths after the move
+- [x] Add all test projects to `timewarp-architecture.slnx`
+- [x] Remove version-less reliance on the old CPM; confirm they resolve against root CPM
 - [x] `tests/Directory.Build.props` — inherits root props, relaxes for test code (TreatWarningsAsErrors=false, NoWarn RS0030)
 
 ### Fix build blockers
 - [x] `PartialClassDeclarationAnalyzer` CS0246 — was a namespace reconcile (Analyzer -> Analyzers); fixed
 - [x] MSB3277 — resolved (root CPM unifies Microsoft.CodeAnalysis* at 5.3.0)
-- [ ] Get every migrated project building under the strict root props
+- [x] Get every migrated project building under the strict root props (SourceGen test reds tracked in [[058-001-fix-fastendpoint-source-generator-tests-stale-assertions-generator-now-opt-in]])
 
 ### Wire dev test
 - [ ] Update `tools/dev-cli/endpoints/test-command.cs` to run the Fixie suites
@@ -118,3 +118,33 @@ So slice 3 (Testing.Common + Api/Web.Server/Web.Spa integration + Aspire) is a r
 not a mechanical move — fix the IVT/accessibility + the missing package, then the integration
 tests, then decide how integration/Aspire tests get a running host. Deferred from this session;
 slice-1 (unit/analyzer) is migrated + green and committed.
+
+### Slice 3 DONE (2026-06-24) — all integration tests migrated + building
+
+All five remaining projects moved to root `tests/` (kebab-case) and added to the slnx; each
+builds green:
+- `tests/common/timewarp-testing/` (shared infra)
+- `tests/container-apps/api/api-server-integration-tests/`
+- `tests/container-apps/web/web-server-integration-tests/`
+- `tests/container-apps/web/web-spa-integration-tests/`
+- `tests/container-apps/aspire/aspire-tests/`
+
+Fixes applied (the pre-existing breakage was real, not migration-caused):
+- `CS1061 ValidateOptions` — that host-side sweep was removed from `Timewarp.OptionsValidation`;
+  validation now wires at registration via `AddFluentValidatedOptions`. Removed the dead call.
+- `CS0122 WebServerApiService` — added `InternalsVisibleTo` to web-spa for `timewarp-testing` +
+  `api-server-integration-tests`; updated the existing IVT entries to the new kebab assembly names
+  (`web-spa-integration-tests`, `web-server-integration-tests`, `api-server-integration-tests`)
+  across web-spa/web-server/api-server/aspire-app-host.
+- Aspire dangling ref → real `source/container-apps/aspire/aspire-app-host/aspire-app-host.csproj`;
+  generated metadata type updated `Projects.Aspire_AppHost` → `Projects.aspire_app_host` in the 3
+  test conventions.
+- `NU1107 Microsoft.Extensions.Hosting` (timewarp-testing→Mvc.Testing 10.0.9 vs web-server→Oakton
+  `<10`) in web-server-integration-tests — added a direct `Microsoft.AspNetCore.Mvc.Testing` ref
+  (nearer graph level wins), matching web-spa-integration-tests.
+
+Still open (not blocking the build): integration/Aspire tests need a running host to actually
+PASS — `dev test` builds + runs them but they require Docker/Aspire orchestration at runtime.
+Host strategy is shared with E2E work ([[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases--payment-flow]]).
+The legacy `TimeWarp.Architecture/` wrapper (old slnx + `*.ps1` referencing the gone `Source/`)
+is already orphaned and is a separate cleanup (047).

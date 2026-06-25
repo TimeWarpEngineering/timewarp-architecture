@@ -7,5 +7,5 @@ global using System.Collections.Concurrent;
 global using System.Collections.Immutable;
 global using System.Linq;
 global using System.Text;
-global using TimeWarp.Architecture.Attributes;
 global using TimeWarp.Architecture.Analyzers.Models;
+global using TimeWarp.Architecture.Attributes;

@@ -48,6 +48,7 @@ internal sealed class RunCommand : ICommand<Unit>
         Environment.ExitCode = 1;
         return false;
       }
+
       RepoRoot = root;
       return true;
     }

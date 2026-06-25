@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Testing" />
+    <PackageReference Include="AutoFixture" />
+    <PackageReference Include="AutoFixture.AutoFakeItEasy" />
+    <PackageReference Include="FakeItEasy" />
+    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="TimeWarp.Fixie" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\source\container-apps\api\api-contracts\api-contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\api\api-server\api-server.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\aspire\aspire-app-host\aspire-app-host.csproj" />
+    <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Configuration\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

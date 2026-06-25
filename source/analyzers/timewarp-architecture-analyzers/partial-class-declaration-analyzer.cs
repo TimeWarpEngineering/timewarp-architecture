@@ -34,7 +34,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
 
   private static void AnalyzeSymbol(SymbolAnalysisContext context)
   {
-    INamedTypeSymbol namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
+    var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
 
     if (!namedTypeSymbol.IsType || !IsPartialType(namedTypeSymbol))
       return;
@@ -88,7 +88,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
   private static void AnalyzePrimaryFile(SymbolAnalysisContext context, ISymbol symbol, BaseTypeDeclarationSyntax baseTypeDeclarationSyntax)
   {
     if (HasFullSpecifiers(baseTypeDeclarationSyntax)) return;
-    Diagnostic diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
+    var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
       symbol.Name, "should have full specifiers in the primary file");
     context.ReportDiagnostic(diagnostic);
   }
@@ -97,14 +97,14 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
   {
     if (HasExcessiveSpecifiers(baseTypeDeclarationSyntax))
     {
-      Diagnostic diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
+      var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
         symbol.Name, "should have minimal specifiers in secondary files");
       context.ReportDiagnostic(diagnostic);
     }
 
     if (HasClassInheritance(baseTypeDeclarationSyntax))
     {
-      Diagnostic diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.BaseList?.GetLocation() ?? baseTypeDeclarationSyntax.GetLocation(),
+      var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.BaseList?.GetLocation() ?? baseTypeDeclarationSyntax.GetLocation(),
         symbol.Name, "should not include class inheritance in secondary files");
       context.ReportDiagnostic(diagnostic);
     }
@@ -112,7 +112,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
 
   private static void ReportIncorrectFileName(SymbolAnalysisContext context, ISymbol symbol, BaseTypeDeclarationSyntax baseTypeDeclarationSyntax, string? fileName)
   {
-    Diagnostic diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
+    var diagnostic = Diagnostic.Create(Rule, baseTypeDeclarationSyntax.Identifier.GetLocation(),
       symbol.Name, $"file name '{fileName}' does not follow the expected naming convention");
     context.ReportDiagnostic(diagnostic);
   }

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <DefineConstants>api;yarp;web</DefineConstants>
+    <RootNamespace>TimeWarp.Architecture.Testing</RootNamespace>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FakeItEasy" />
+    <PackageReference Include="Fixie" />
+    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="TimeWarp.Mediator" />
+    <PackageReference Include="TimeWarp.Fixie" />
+    <PackageReference Include="TimeWarp.SourceGenerators">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <!--#if(api)-->
+    <ProjectReference Include="..\..\..\source\container-apps\api\api-server\api-server.csproj" />
+    <!--#endif-->
+    <!--#if(web)-->
+    <ProjectReference Include="..\..\..\source\container-apps\web\web-server\web-server.csproj" />
+    <!--#endif-->
+    <!--#if(yarp)-->
+    <ProjectReference Include="..\..\..\source\container-apps\yarp\yarp.csproj" />
+    <!--#endif-->
+  </ItemGroup>
+</Project>

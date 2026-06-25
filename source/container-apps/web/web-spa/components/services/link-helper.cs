@@ -18,7 +18,7 @@ public class LinkHelper
     Func<string> getPageUrl = pageType.GetProperty("GetPageUrl")?.GetValue(null) as Func<string> ??
       throw new InvalidOperationException("The page type must have a static GetPageUrl property.");
 
-    Icon? icon = pageType.GetProperty("Icon")?.GetValue(null) as Icon;
+    var icon = pageType.GetProperty("Icon")?.GetValue(null) as Icon;
 
     if (policy is null)
     {
@@ -31,6 +31,7 @@ public class LinkHelper
         builder.CloseComponent();
       };
     }
+
     return builder =>
     {
       builder.OpenComponent<AuthorizedFluentNavLink>(0);

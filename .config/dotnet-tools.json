@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "fixie.console": {
+      "version": "4.1.0",
+      "commands": [
+        "fixie"
+      ],
+      "rollForward": false
+    },
+    "microsoft.dotnet-httprepl": {
+      "version": "8.0.0",
+      "commands": [
+        "httprepl"
+      ],
+      "rollForward": false
+    }
+  }
+}

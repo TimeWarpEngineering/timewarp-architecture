@@ -1,6 +1,5 @@
 namespace TimeWarp.Architecture.CustomRequirements;
 
-
 public class ModuleRequirementHandler
 (
   IStore Store

@@ -55,8 +55,7 @@ USER vscode
 
 # Set npm prefix and install Claude Code - THIS MUST WORK
 RUN npm config set prefix /usr/local/share/npm-global \
-    && npm install -g @anthropic-ai/claude-code \
-    && npm install -g tailwindcss typescript prettier eslint
+    && npm install -g @anthropic-ai/claude-code
 
 # Add npm global bin to PATH
 ENV PATH="/usr/local/share/npm-global/bin:${PATH}"

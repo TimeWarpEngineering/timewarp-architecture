@@ -57,19 +57,19 @@ To run the new solution change to the newly created directory.
 cd .\MyTimeWarpApp\
 ```
 
-Execute the `Run.ps1` powershell script
+Run the Aspire AppHost via the dev-cli
 
 ```console
-./Run.ps1
+dev run
 ```
 
-You should see the Tye Dashboard opened in your browser.
+You should see the Aspire Dashboard open in your browser.
 
 ## Technologies
 
 * [Dotnet 6](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 * [Blazor](https://docs.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-6.0)
-* [Tailwind](https://tailwindcss.com/)
+* [FluentUI Blazor](https://www.fluentui-blazor.net/)
 * [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
 * [MediatR](https://github.com/jbogard/MediatR)
 * [Automapper](https://automapper.org/)

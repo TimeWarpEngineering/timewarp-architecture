@@ -12,14 +12,6 @@ fi
 # Navigate to the workspace
 cd /workspace/timewarp-architecture
 
-# Install npm dependencies for Web.Spa if they exist
-if [ -f "Source/ContainerApps/Web/Web.Spa/package.json" ]; then
-    echo "📦 Installing npm dependencies for Web.Spa..."
-    cd Source/ContainerApps/Web/Web.Spa
-    npm install
-    cd /workspace/timewarp-architecture
-fi
-
 # Update workloads to prevent verification warnings
 echo "🔧 Updating .NET workloads..."
 dotnet workload update --skip-sign-check || echo "Workload update completed"
@@ -50,10 +42,9 @@ cat >> ~/.bashrc << 'EOF'
 
 # TimeWarp Architecture aliases
 alias tw='cd /workspace/timewarp-architecture'
-alias run='./Run.ps1'
-alias test='./RunTests.ps1'
-alias build='./Build.ps1'
-alias tailwind='./RunTailwind.ps1'
+alias run='dev run'
+alias test='dev test'
+alias build='dev build'
 
 # Git worktree alias
 alias worktree='cd /workspace/git-worktree'

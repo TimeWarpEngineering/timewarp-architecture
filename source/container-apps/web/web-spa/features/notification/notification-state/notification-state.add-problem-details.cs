@@ -16,7 +16,6 @@ partial class NotificationState
       public SharedProblemDetails SharedProblemDetails { get; init; } = SharedProblemDetails;
     }
 
-
     internal sealed class Handler
     (
       IStore store

@@ -47,10 +47,9 @@ claude-code --version
 The container includes helpful aliases:
 
 - `tw` - Navigate to TimeWarp.Architecture directory
-- `run` - Execute Run.ps1 (starts Aspire)
-- `test` - Execute RunTests.ps1
-- `build` - Execute Build.ps1
-- `tailwind` - Execute RunTailwind.ps1
+- `run` - Execute `dev run` (starts Aspire)
+- `test` - Execute `dev test`
+- `build` - Execute `dev build`
 - `worktree` - Navigate to git worktree
 
 ## Port Forwarding

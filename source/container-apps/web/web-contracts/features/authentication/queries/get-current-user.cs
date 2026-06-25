@@ -36,7 +36,6 @@ public static partial class GetCurrentUser
     /// <remarks> Should be from the ModuleIds</remarks>
     public List<Guid> Modules { get; init; }
 
-
     /// <summary>
     /// List of Roles to which the current user belongs
     /// </summary>

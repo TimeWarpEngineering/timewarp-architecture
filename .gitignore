@@ -434,10 +434,10 @@ GeneratedCode/
 /Source/ContainerApps/Web/Web.Server/Logs/log.txt
 
 # TimeWarp architecture templates Generated Documentation
-/Documentation/Developer/Conceptual/ComponentNamingAndOrganization.pdf
-/Documentation/Developer/HowToGuides/Api_Contracts/Handling_Mutability_in_API_Contracts.pdf
-/Documentation/Developer/HowToGuides/Api_Contracts/Handling_Nullability_in_API_Contracts.pdf
-/Documentation/Developer/HowToGuides/Api_Contracts/HowToWrite_BFF_API_Contracts.pdf
+/documentation/developer/conceptual/ComponentNamingAndOrganization.pdf
+/documentation/developer/how-to-guides/web-api-contracts/Handling_Mutability_in_API_Contracts.pdf
+/documentation/developer/how-to-guides/web-api-contracts/Handling_Nullability_in_API_Contracts.pdf
+/documentation/developer/how-to-guides/web-api-contracts/HowToWrite_BFF_API_Contracts.pdf
 
 # TimeWarp architecture templates Generated css
 /Source/ContainerApps/Web/Web.Spa/wwwroot/css/site.css
@@ -453,12 +453,11 @@ GeneratedCode/
 **/Generated/
 .agent/workspace/*
 !.agent/workspace/overview.md
-TimeWarp.Architecture/.agent/workspace/*
-!TimeWarp.Architecture/.agent/workspace/overview.md
 *.lscache
 
 # memsearch: track the memory markdown, ignore the regenerable binary index
 .memsearch/*.db
+.memsearch/.index.pid
 
 # playwright-cli: transient per-run page/console scratch output
 .playwright-cli/

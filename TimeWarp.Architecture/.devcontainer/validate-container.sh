@@ -62,10 +62,6 @@ test_command "Git" "git --version"
 echo -e "\n🛠️ Development Tools:"
 test_command "Claude" "command -v claude"
 test_command "Claude version" "claude --version"
-test_command "Tailwind CSS" "command -v tailwindcss"
-test_command "TypeScript" "command -v tsc"
-test_command "ESLint" "command -v eslint"
-test_command "Prettier" "command -v prettier"
 
 echo -e "\n🐳 Docker Integration:"
 test_command "Docker CLI" "docker --version"
@@ -85,7 +81,6 @@ fi
 echo -e "\n📁 File Permissions:"
 test_command "Workspace writable" "touch /workspace/timewarp-architecture/.test-write && rm /workspace/timewarp-architecture/.test-write"
 test_command "Claude config writable" "[ -w /home/vscode/.claude ]"
-test_command "PowerShell scripts executable" "[ -x /workspace/timewarp-architecture/Build.ps1 ]"
 
 echo -e "\n🌐 Network & Security:"
 # Test allowed domains
