@@ -126,7 +126,7 @@ Tests/
 ## Important Development Notes
 
 - **Namespace**: All projects use `TimeWarp.Architecture` as root namespace
-- **Nullable Reference Types**: Disabled by design choice  
+- **Nullable Reference Types**: Enabled repo-wide (`<Nullable>enable</Nullable>` in root `Directory.Build.props`)
 - **Generated Code**: Excluded via `Directory.Build.targets`
 - **Feature Flags**: Via preprocessor directives (`cosmosdb`, `api`, `grpc`, `web`, `yarp`)
 - **State Management**: TimeWarp patterns with Redux DevTools integration

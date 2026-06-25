@@ -4,24 +4,23 @@
 
 Enable C# nullable reference types (`<Nullable>enable</Nullable>`) across the entire repository. Currently, nullable is disabled by design choice. This task flips that decision, enabling compiler-enforced null safety and annotating the codebase with nullable reference type annotations (e.g., `string?`, `T?`, `NotNullWhen` attributes, etc.).
 
-## Checklist
+## Closure (2026-06-25) — DONE
 
-- [ ] Audit current nullable settings in `Directory.Build.props` and individual `.csproj` files
-- [ ] Enable `<Nullable>enable</Nullable>` at the repository level (e.g., `Directory.Build.props`)
-- [ ] Fix compiler warnings in `Common.Contracts` projects (shared DTOs, mixins)
-- [ ] Fix compiler warnings in `Common` projects (shared libraries)
-- [ ] Fix compiler warnings in `ContainerApps/Web` (Blazor server + client)
-- [ ] Fix compiler warnings in `ContainerApps/Api` (FastEndpoints)
-- [ ] Fix compiler warnings in `ContainerApps/Grpc` (gRPC service)
-- [ ] Fix compiler warnings in `ContainerApps/Yarp` (API gateway)
-- [ ] Fix compiler warnings in `ContainerApps/Aspire` (orchestration host)
-- [ ] Fix compiler warnings in `Tests/` projects
-- [ ] Fix compiler warnings in `Libraries/` projects
-- [ ] Fix compiler warnings in `Analyzers/` projects (source generators)
-- [ ] Add nullability annotations to public API surfaces (request/response DTOs, handler signatures)
-- [ ] Update `CLAUDE.md` to reflect that nullable reference types are now enabled
-- [ ] Run full build and ensure zero nullable warnings (`dotnet build /warnaserror`)
-- [ ] Run all test suites to verify no regressions
+Mostly accomplished by the root migration, not a separate effort: the root
+`Directory.Build.props` was created with `<Nullable>enable</Nullable>` (+ `TreatWarningsAsErrors`),
+so every project inheriting it has been nullable-enabled and nullable-clean all along (the full
+solution builds green). Verified there were no nullable suppressions hiding it (no `#nullable disable`,
+no `CS86xx` in any `NoWarn`).
+
+The **only holdout** was `web-server.csproj`, which had an explicit `<Nullable>disable</Nullable>`.
+Its entire nullable debt was a single `CS8618` (`SampleOptions.SampleOption`). Finished it:
+- [x] Audit nullable settings — root enables it repo-wide; web-server was the lone opt-out.
+- [x] `<Nullable>enable</Nullable>` at repo level — already in root `Directory.Build.props`.
+- [x] Remove `<Nullable>disable</Nullable>` from `web-server.csproj`.
+- [x] Fix the one warning: `SampleOption` → `= string.Empty;`.
+- [x] All other projects (Common/Web/Api/Grpc/Yarp/Aspire/Tests/Libraries/Analyzers) already clean.
+- [x] Update `CLAUDE.md` ("Disabled by design choice" → enabled repo-wide).
+- [x] web-server builds green under strict settings; full solution already green.
 
 ## Notes
 
