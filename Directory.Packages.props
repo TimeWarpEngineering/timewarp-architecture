@@ -114,8 +114,6 @@
     <PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.6" />
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
-    <PackageVersion Include="Boxed.AspNetCore" Version="8.1.2" />
-    <PackageVersion Include="Boxed.DotnetNewTest" Version="5.0.0" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="FakeItEasy" Version="9.0.1" />
     <PackageVersion Include="Fixie" Version="4.2.0" />
