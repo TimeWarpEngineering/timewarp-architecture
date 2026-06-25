@@ -461,3 +461,7 @@ GeneratedCode/
 
 # playwright-cli: transient per-run page/console scratch output
 .playwright-cli/
+
+# vally eval output (local runs; CI uploads as workflow artifacts)
+results/
+vally-results/
