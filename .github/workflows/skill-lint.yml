@@ -1,0 +1,38 @@
+name: Skill Lint
+
+on:
+  pull_request:
+    paths:
+      - "**/SKILL.md"
+      - "**/eval.yaml"
+      - ".vally.yaml"
+      - "evals/**"
+      - ".github/workflows/skill-lint.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint skill specs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install vally CLI
+        run: npm install -g @microsoft/vally-cli
+
+      - name: Lint all skills
+        run: vally lint skills
+
+      - name: Lint eval specs
+        run: |
+          for spec in skills/*/evals/eval.yaml; do
+            [ -f "$spec" ] || continue
+            echo "Linting $spec"
+            vally lint --eval-spec "$spec"
+          done
