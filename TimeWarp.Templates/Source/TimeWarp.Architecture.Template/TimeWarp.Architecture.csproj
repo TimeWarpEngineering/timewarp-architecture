@@ -21,21 +21,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content
-      Include="templates\**\*"
-      Exclude="**\bin\**;**\obj\**;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**;templates\Directory.Build.*;**\.template.config.src\**" />
-<!--    How to include TimeWarp.Architecture folder in the templates dir but it is located in a different folder?-->
-    <!-- Include all files including launchSettings.json -->
+    <!-- Main project template content. Includes all files including launchSettings.json.
+         TODO(064): repoint this content root from the gutted TimeWarp.Architecture/ tree to
+         root source/ + tests/. -->
     <Content
       Include="..\..\..\TimeWarp.Architecture\**\*"
       Exclude="**\bin\**;**\obj\**;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**"
       PackagePath="content\templates\TimeWarp.Architecture\%(RecursiveDir)%(FileName)%(Extension)" />
     <Compile Remove="**\*" />
-  </ItemGroup>
-  
-
-  <ItemGroup>
-    <None Remove="templates\Feature.State\Pages\Edit.razor" />
   </ItemGroup>
 
   <ItemGroup>
