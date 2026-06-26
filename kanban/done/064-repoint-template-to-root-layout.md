@@ -66,12 +66,22 @@ excludes to kebab paths, and fix the `readme.md`/assets path refs. Only after th
       `dotnet new timewarp-architecture -n MyApp` → the full generated multi-project solution builds
       with **0 errors**, namespaces correctly substituted to `MyApp`. `TimeWarp.Architecture/` fully
       removed. Root `dev build` still green.
-- [ ] **Remaining — feature-flag-OFF combinations.** `--grpc false` (etc.) correctly DROPS the right
-      files, but `timewarp-architecture.slnx` still lists the excluded projects → MSB3202 on build.
-      Need to wrap the optional `<Project>` entries in the `.slnx` (and audit any cross-project
-      `<ProjectReference>` not already `<!--#if-->`-guarded — the AppHost csproj already guards its
-      grpc/api/web refs) in template conditionals, then verify representative flag-off combos build.
-      The default (all-features) template is fully working; this is the remaining completeness gap.
+- [x] **Feature-flag `.slnx` conditionals + blank-line artifacts** (2026-06-26): wrapped the optional
+      api/grpc/web/yarp project groups + their integration-test projects in `.slnx` `<!--#if-->`
+      markers (verified the engine processes `.slnx`); tightened blank lines around the feature
+      `#if` blocks in `web-spa/global-usings.cs` so stripping doesn't leave consecutive blanks
+      (IDE2000). **`--grpc false` and `--cosmosdb false` now generate clean-building solutions.**
+- [ ] **Remaining — per-feature DECOUPLING (spun out to task 071).** Flag-off combos surfaced genuine
+      feature coupling, not template artifacts: `--api`, `--web`, `--yarp`, `--counter`,
+      `--eventstream` (124 errors), `--postgres` false each leave code referencing the excluded
+      feature without `#if` guards → CS0234/CS0246/RZ10012. A real per-feature decoupling effort,
+      distinct from the repoint. Default + grpc + cosmosdb work.
+
+## Status: core repoint COMPLETE & verified
+
+The 064 goal — repoint `dotnet new timewarp-architecture` to the root kebab layout — is DONE and
+verified end-to-end (default template builds 0 errors; grpc/cosmosdb flag-off also build). The
+remaining per-feature decoupling for the other flags is tracked as task 071 so 064 can close.
 
 ## Implementation spec (2026-06-26 — design locked with user)
 
