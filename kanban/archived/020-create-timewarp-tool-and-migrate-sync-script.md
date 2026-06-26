@@ -142,3 +142,8 @@ The tool should follow TimeWarp.Architecture conventions:
 - Use file-scoped namespaces
 - Implement proper async/await patterns
 - Include comprehensive error handling and logging
+
+## Archived (2026-06-26)
+Obsolete: this task was to migrate `.github/scripts/sync-configurable-files.ps1` to a C# tool,
+but that script (and the whole sync-config feature) has since been removed from the repo. Nothing
+left to migrate. Related: 018 (done) / 019 (archived).

@@ -145,3 +145,9 @@ The enhanced configuration should provide:
    - Tested repos structure, file specifications, and sync options
 
 **Simplified Architecture**: The implementation removes legacy configuration support for a cleaner, more maintainable codebase focused solely on the enhanced repos-based configuration structure.
+
+## Archived (2026-06-26)
+Completed at the time, but the entire sync-config feature it enhanced has since been removed from
+the repo (no `.github/scripts/sync-configurable-files.ps1`, no `.github/sync-config.yml`,
+no `.github/scripts/`). Obsolete — archived rather than marked done since the deliverable no
+longer exists. Related: parent 018 and tool-migration 020 are likewise obsolete.

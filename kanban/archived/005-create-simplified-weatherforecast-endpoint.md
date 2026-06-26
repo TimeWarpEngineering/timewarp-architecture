@@ -62,3 +62,11 @@ The new implementation should maintain the same functionality but with a more di
 ## Implementation Notes
 
 [To be filled in during implementation]
+
+## Archived (2026-06-26)
+Archived as obsolete. Unstarted, and its premise — a simplified `api/weather` endpoint that REMOVES
+MediatR (`IRequest/IRequestHandler`) and avoids FluentValidation — contradicts the repo's committed
+convention (MediatR CQRS "Object In, Object Out" + FluentValidation + source-generated FastEndpoints;
+the existing `api/weatherforecast` query is the canonical example). A deliberately-divergent parallel
+endpoint would muddy the template's pattern. Revive only if an intentional "simpler alternative" demo
+is wanted.
