@@ -10,7 +10,7 @@
     <Description>TimeWarp Architecture Templates</Description>
     <PackageTags>dotnet-new;templates;aspnet;blazor;spa;pwa;timewarp;gRPC;Tye;Aspire;YARP;Clean Architecture;Domain Driven Design</PackageTags>
     <PackageIcon>Logo.png</PackageIcon>
-    <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <TargetFramework>net9.0</TargetFramework>
     <IncludeContentInPack>true</IncludeContentInPack>
@@ -20,19 +20,27 @@
     <NoPackageAnalysis>true</NoPackageAnalysis>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- Main project template content. Includes all files including launchSettings.json.
-         TODO(064): repoint this content root from the gutted TimeWarp.Architecture/ tree to
-         root source/ + tests/. -->
-    <Content
-      Include="..\..\..\TimeWarp.Architecture\**\*"
-      Exclude="**\bin\**;**\obj\**;**\node_modules\**;**\*.user;**\.vs\**;**\.vscode\**"
-      PackagePath="content\templates\TimeWarp.Architecture\%(RecursiveDir)%(FileName)%(Extension)" />
+  <ItemGroup Label="Template content (repo root — allow-list)">
+    <!-- The repo IS the template: pack root source/ + tests/ + the solution/build files a
+         generated app needs to build. .template.config/ at the repo root is the template
+         definition. launchSettings.json and dotfiles are included (NoDefaultExcludes). -->
+    <Content Include="..\..\..\source\**\*"
+             Exclude="..\..\..\source\**\bin\**;..\..\..\source\**\obj\**"
+             PackagePath="content\templates\TimeWarp.Architecture\source\%(RecursiveDir)%(FileName)%(Extension)" />
+    <Content Include="..\..\..\tests\**\*"
+             Exclude="..\..\..\tests\**\bin\**;..\..\..\tests\**\obj\**"
+             PackagePath="content\templates\TimeWarp.Architecture\tests\%(RecursiveDir)%(FileName)%(Extension)" />
+    <Content Include="..\..\..\msbuild\**\*"
+             PackagePath="content\templates\TimeWarp.Architecture\msbuild\%(RecursiveDir)%(FileName)%(Extension)" />
+    <Content Include="..\..\..\.template.config\**\*"
+             PackagePath="content\templates\TimeWarp.Architecture\.template.config\%(RecursiveDir)%(FileName)%(Extension)" />
+    <Content Include="..\..\..\timewarp-architecture.slnx;..\..\..\Directory.Build.props;..\..\..\Directory.Packages.props;..\..\..\global.json;..\..\..\BannedSymbols.txt;..\..\..\aspire.config.json;..\..\..\.editorconfig;..\..\..\.gitattributes;..\..\..\.gitignore;..\..\..\unlicense.md"
+             PackagePath="content\templates\TimeWarp.Architecture\%(FileName)%(Extension)" />
     <Compile Remove="**\*" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\ReadMe.md">
+    <None Include="..\..\..\readme.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
