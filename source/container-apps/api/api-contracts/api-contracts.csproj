@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
-    <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>

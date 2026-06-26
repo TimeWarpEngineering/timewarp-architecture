@@ -1,6 +1,6 @@
 namespace __FeatureName__GetEndpoint
 {
-  using FluentAssertions;
+  using Shouldly;
   using Microsoft.AspNetCore.Mvc.Testing;
   using System.Net;
   using System.Net.Http;
@@ -40,9 +40,9 @@ namespace __FeatureName__GetEndpoint
 
       string json = await httpResponseMessage.Content.ReadAsStringAsync();
 
-      httpResponseMessage.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-      json.Should().Contain("errors");
-      json.Should().Contain(nameof(__RequestName__Request.SampleProperty));
+      httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+      json.ShouldContain("errors");
+      json.ShouldContain(nameof(__RequestName__Request.SampleProperty));
     }
 
     private void Validate__RequestName__Response(__RequestName__Response a__RequestName__Response)

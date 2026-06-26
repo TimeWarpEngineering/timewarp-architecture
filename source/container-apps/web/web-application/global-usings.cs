@@ -1,4 +1,3 @@
-global using JetBrains.Annotations;
 global using Microsoft.Extensions.Logging;
 global using OneOf;
 global using OneOf.Types;

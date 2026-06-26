@@ -22,7 +22,7 @@
   <ItemGroup>
     <!-- Package references -->
     <PackageReference Include="TimeWarp.Nuru" />
-    
+    <PackageReference Include="TimeWarp.Amuru" />
   </ItemGroup>
 
 </Project>
