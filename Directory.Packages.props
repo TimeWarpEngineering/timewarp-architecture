@@ -63,7 +63,7 @@
     <PackageVersion Include="FastEndpoints" Version="8.2.0" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.5.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.5" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.6" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.9" />
