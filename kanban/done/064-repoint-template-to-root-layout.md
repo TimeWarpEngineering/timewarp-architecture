@@ -49,7 +49,39 @@ excludes to kebab paths, and fix the `readme.md`/assets path refs. Only after th
       `Feature.CrudPages` (loose razor content, no manifest, unreferenced). Cleaned the packaging
       csproj (dropped the now-empty `templates\**\*` Content include + Feature.State None-Remove +
       vestigial `templates/Directory.Build.*`) and stale `.gitignore` lines. `templates/` is now empty.
-- Remaining: the MAIN project template repoint (below) — the actual hard part.
+- [x] **Kebab-renamed the packaging solution** (2026-06-26): `TimeWarp.Templates/` →
+      `timewarp-templates/` + all internals (`source/`, `tests/`, `documentation/`, `assets/`,
+      `build/`, project dirs/files, `.ps1`/`.cs` files). Updated every internal ref (`.slnx`,
+      `ProjectReference`, `docfx.json`, scripts, `index.md`) and external ref (both
+      `.github/workflows`, `CLAUDE.md`). Modernized to .NET 10: removed stale `9.0.x` `global.json`
+      overrides, bumped CI `setup-dotnet` → `10.0.x`, added a `Directory.Packages.props` that
+      disables CPM for the templates tree (test harness pins older versions inline). Solution
+      restores clean; root `dev build` green.
+- [x] **Content-root repoint + end-to-end verify** (2026-06-26): moved `.template.config/` to the
+      repo root; rewrote `template.json` for the kebab layout; repointed the packaging csproj off
+      the deleted tree to an allow-list of root content; fixed the `readme.md` path. Fixed two
+      template-engine artifacts in source so generated output builds (`user-claims-base.cs`
+      `#if false` guarded with `//-:cnd:noEmit`; dropped dead trailing empty `#if/#endif` blocks in
+      `aspire-app-host/program.cs`). **VERIFIED**: `dotnet pack` → `dotnet new install` →
+      `dotnet new timewarp-architecture -n MyApp` → the full generated multi-project solution builds
+      with **0 errors**, namespaces correctly substituted to `MyApp`. `TimeWarp.Architecture/` fully
+      removed. Root `dev build` still green.
+- [x] **Feature-flag `.slnx` conditionals + blank-line artifacts** (2026-06-26): wrapped the optional
+      api/grpc/web/yarp project groups + their integration-test projects in `.slnx` `<!--#if-->`
+      markers (verified the engine processes `.slnx`); tightened blank lines around the feature
+      `#if` blocks in `web-spa/global-usings.cs` so stripping doesn't leave consecutive blanks
+      (IDE2000). **`--grpc false` and `--cosmosdb false` now generate clean-building solutions.**
+- [ ] **Remaining — per-feature DECOUPLING (spun out to task 071).** Flag-off combos surfaced genuine
+      feature coupling, not template artifacts: `--api`, `--web`, `--yarp`, `--counter`,
+      `--eventstream` (124 errors), `--postgres` false each leave code referencing the excluded
+      feature without `#if` guards → CS0234/CS0246/RZ10012. A real per-feature decoupling effort,
+      distinct from the repoint. Default + grpc + cosmosdb work.
+
+## Status: core repoint COMPLETE & verified
+
+The 064 goal — repoint `dotnet new timewarp-architecture` to the root kebab layout — is DONE and
+verified end-to-end (default template builds 0 errors; grpc/cosmosdb flag-off also build). The
+remaining per-feature decoupling for the other flags is tracked as task 071 so 064 can close.
 
 ## Implementation spec (2026-06-26 — design locked with user)
 

@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Steven T. Cramer",
+  "classifications": [
+    "TimeWarp",
+    "Web",
+    "Blazor",
+    "Hosted"
+  ],
+  "description": "A project template for creating a containerized or monolith solution.",
+  "groupIdentity": "TimeWarp.Architecture",
+  "identity": "TimeWarp.Architecture.CSharp",
+  "name": "TimeWarp Architecture",
+  "preferNameDirectory": true,
+  "shortName": "timewarp-architecture",
+  "sourceName": "TimeWarp.Architecture",
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(true)",
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            "artifacts/**"
+          ]
+        },
+        {
+          "condition": "(!grpc)",
+          "exclude": [
+            "source/container-apps/grpc/**",
+            "source/container-apps/web/web-spa/features/superhero/**",
+            "source/container-apps/web/web-spa/services/superhero-grpc-service-provider.cs"
+          ]
+        },
+        {
+          "condition": "(!api)",
+          "exclude": [
+            "source/container-apps/api/**",
+            "source/container-apps/web/web-spa/features/weather-forecast/**",
+            "source/container-apps/web/web-spa/services/mocks/mock-api-service.cs",
+            "source/container-apps/web/web-spa/services/api-services/api-server-api-service.cs",
+            "tests/common/timewarp-testing/applications/api-test-server-application.cs",
+            "tests/container-apps/api/**"
+          ]
+        },
+        {
+          "condition": "(!web)",
+          "exclude": [
+            "source/container-apps/web/**",
+            "tests/common/timewarp-testing/applications/web-test-server-application.cs",
+            "tests/common/timewarp-testing/applications/spa-test-application.cs",
+            "tests/container-apps/web/**"
+          ]
+        },
+        {
+          "condition": "(!yarp)",
+          "exclude": [
+            "source/container-apps/yarp/**",
+            "tests/common/timewarp-testing/applications/yarp-test-server-application.cs"
+          ]
+        },
+        {
+          "condition": "(!cosmosdb)",
+          "exclude": [
+            "source/container-apps/web/web-infrastructure/persistence/cosmos-db-context.cs",
+            "source/container-apps/web/web-server/hosted-services/cosmos-db-context-startup-hosted-service.cs",
+            "source/container-apps/web/web-server/modules/cosmos-db-module.cs"
+          ]
+        },
+        {
+          "condition": "(!postgres)",
+          "exclude": [
+            "source/container-apps/web/web-infrastructure/persistence/postgres-db-context.cs",
+            "source/container-apps/web/web-infrastructure/configuration/postgres-db-options.cs",
+            "source/container-apps/web/web-server/configuration/environment-checks/postgres-db-environment-check.cs",
+            "source/container-apps/web/web-server/hosted-services/postgres-db-context-startup-hosted-service.cs",
+            "source/container-apps/web/web-server/modules/postgres-db-module.cs"
+          ]
+        },
+        {
+          "condition": "(!counter)",
+          "exclude": [
+            "source/container-apps/web/web-spa/features/counter/**"
+          ]
+        },
+        {
+          "condition": "(!eventstream)",
+          "exclude": [
+            "source/container-apps/web/web-spa/features/event-stream/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "symbols": {
+    "grpc": {
+      "type": "parameter",
+      "description": "Include the grpc container app (Superheros)",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "api": {
+      "type": "parameter",
+      "description": "Include the api container app (Weather)",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "web": {
+      "type": "parameter",
+      "description": "Include the web container app",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "yarp": {
+      "type": "parameter",
+      "description": "Include the yarp proxy server",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "cosmosdb": {
+      "type": "parameter",
+      "description": "Add CosmosDb Features",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "counter": {
+      "type": "parameter",
+      "description": "Add Counter Features to web-spa",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "eventstream": {
+      "type": "parameter",
+      "description": "Eventstream is an example of how to implement middleware in web-spa",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "postgres": {
+      "type": "parameter",
+      "description": "Add Postgres Features",
+      "datatype": "bool",
+      "defaultValue": "true"
+    }
+  },
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  }
+}

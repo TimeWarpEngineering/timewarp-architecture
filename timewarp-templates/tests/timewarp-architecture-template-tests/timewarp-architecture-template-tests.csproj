@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\TimeWarp.Architecture.Template\TimeWarp.Architecture.csproj" />
+    <ProjectReference Include="..\..\source\timewarp-architecture-template\timewarp-architecture-template.csproj" />
   </ItemGroup>
 
 </Project>

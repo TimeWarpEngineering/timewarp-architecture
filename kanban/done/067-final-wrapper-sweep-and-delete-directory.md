@@ -33,3 +33,9 @@ Most of this was swept on 2026-06-26 (the legacy tree had far fewer files than f
 - This task is the verification gate: 047 is truly "migrated to root" only once this directory is gone.
 - Update root `CLAUDE.md` "Repository Structure" (it still lists `TimeWarp.Architecture/` as a main
   project) once the dir is removed.
+
+## Result (2026-06-26)
+`TimeWarp.Architecture/` is fully removed. The final piece — the template's
+`.template.config/` and the packaging content-root sourcing from the tree —
+was resolved by task 064 (content-root repoint to root `source/`+`tests/`,
+verified by generating + building a solution). Directory no longer exists.

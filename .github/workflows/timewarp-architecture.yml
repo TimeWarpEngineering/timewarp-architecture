@@ -30,14 +30,14 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Pack
         run: |
-          cd TimeWarp.Templates/Source/TimeWarp.Architecture.Template/
+          cd timewarp-templates/source/timewarp-architecture-template/
           dotnet build -c Release
-          
+
       - name: Publish
-        run: dotnet nuget push TimeWarp.Templates/Source/TimeWarp.Architecture.Template/bin/Release/TimeWarp.Architecture.*.nupkg --skip-duplicate --no-symbols --source https://api.nuget.org/v3/index.json --api-key ${{secrets.PUBLISH_TO_NUGET_ORG}}
+        run: dotnet nuget push timewarp-templates/source/timewarp-architecture-template/bin/Release/TimeWarp.Architecture.*.nupkg --skip-duplicate --no-symbols --source https://api.nuget.org/v3/index.json --api-key ${{secrets.PUBLISH_TO_NUGET_ORG}}
         env:
           NUGET_AUTH_TOKEN: ${{secrets.PUBLISH_TO_NUGET_ORG}}

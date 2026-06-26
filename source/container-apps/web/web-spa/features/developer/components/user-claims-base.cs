@@ -9,6 +9,7 @@
 // 
 // Decision pending: delete, integrate properly, or leave as-is once the build is green.
 
+//-:cnd:noEmit
 #if false
 
 namespace TimeWarp.Architecture.Pages;
@@ -63,4 +64,5 @@ public class UserClaimsBase: ComponentBase
 }
 
 #endif
+//+:cnd:noEmit
 
