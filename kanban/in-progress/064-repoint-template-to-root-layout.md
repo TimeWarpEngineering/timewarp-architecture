@@ -57,8 +57,21 @@ excludes to kebab paths, and fix the `readme.md`/assets path refs. Only after th
       overrides, bumped CI `setup-dotnet` → `10.0.x`, added a `Directory.Packages.props` that
       disables CPM for the templates tree (test harness pins older versions inline). Solution
       restores clean; root `dev build` green.
-- Remaining: the MAIN project-template **content-root repoint** + verify loop (below) — the actual
-  hard part. The packaging csproj still globs the gutted `TimeWarp.Architecture/` tree.
+- [x] **Content-root repoint + end-to-end verify** (2026-06-26): moved `.template.config/` to the
+      repo root; rewrote `template.json` for the kebab layout; repointed the packaging csproj off
+      the deleted tree to an allow-list of root content; fixed the `readme.md` path. Fixed two
+      template-engine artifacts in source so generated output builds (`user-claims-base.cs`
+      `#if false` guarded with `//-:cnd:noEmit`; dropped dead trailing empty `#if/#endif` blocks in
+      `aspire-app-host/program.cs`). **VERIFIED**: `dotnet pack` → `dotnet new install` →
+      `dotnet new timewarp-architecture -n MyApp` → the full generated multi-project solution builds
+      with **0 errors**, namespaces correctly substituted to `MyApp`. `TimeWarp.Architecture/` fully
+      removed. Root `dev build` still green.
+- [ ] **Remaining — feature-flag-OFF combinations.** `--grpc false` (etc.) correctly DROPS the right
+      files, but `timewarp-architecture.slnx` still lists the excluded projects → MSB3202 on build.
+      Need to wrap the optional `<Project>` entries in the `.slnx` (and audit any cross-project
+      `<ProjectReference>` not already `<!--#if-->`-guarded — the AppHost csproj already guards its
+      grpc/api/web refs) in template conditionals, then verify representative flag-off combos build.
+      The default (all-features) template is fully working; this is the remaining completeness gap.
 
 ## Implementation spec (2026-06-26 — design locked with user)
 
