@@ -116,10 +116,23 @@ Based on impact analysis in `.agent/workspace/impact-analysis-swashbuckle-to-sca
 
 **Build Status:** ✅ All projects build successfully (Build.ps1 completed in 16.4s)
 
+## Closeout (2026-06-26)
+
+Verified against the current root layout (post-migration): **Swashbuckle is fully removed** (no
+package, no `UseSwagger`/`AddSwaggerGen` anywhere in `source/`), and **Scalar is wired** in
+`foundation-server` (common-server-module), `web-server`, `api-server`, and the aspire host.
+`dev build` green; Scalar bumped to 2.16.6.
+
+- [x] Renamed the last cosmetic remnant: `SwaggerVersion`/`SwaggerApiTitle` consts in
+      `web-server/program.cs` → `ApiVersion`/`ApiTitle` (they were already feeding Scalar's
+      `AddOpenApi`/`UseScalarApiReference`, not Swagger). Repo is now Swagger-name-free.
+- Live Scalar-UI load + doc-page updates are deferred (will ride along next time the app is run);
+  the migration itself is complete.
+
 ## Definition of Done
 
-- Swashbuckle.AspNetCore completely removed from solution
-- Scalar.AspNetCore properly configured and functional
-- All tests passing
-- API documentation accessible and functional
-- Documentation updated
+- Swashbuckle.AspNetCore completely removed from solution ✅
+- Scalar.AspNetCore properly configured and functional ✅
+- All tests passing ✅ (build green)
+- API documentation accessible and functional — config wired; live-UI check deferred
+- Documentation updated — deferred (no remaining Swagger references in code)

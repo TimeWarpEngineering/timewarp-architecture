@@ -9,8 +9,8 @@ using Serilog;
 
 public class Program : IAspNetProgram
 {
-  const string SwaggerVersion = "v1";
-  const string SwaggerApiTitle = $"TimeWarp.Architecture Web.Server API {SwaggerVersion}";
+  const string ApiVersion = "v1";
+  const string ApiTitle = $"TimeWarp.Architecture Web.Server API {ApiVersion}";
 
   public static async Task<int> Main(string[] argumentArray)
   {
@@ -155,8 +155,8 @@ public class Program : IAspNetProgram
       .AddOpenApi
       (
         serviceCollection,
-        SwaggerVersion,
-        SwaggerApiTitle,
+        ApiVersion,
+        ApiTitle,
         [typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker), typeof(TimeWarp.Architecture.Web.Contracts.IAssemblyMarker)]
       );
   }
@@ -180,7 +180,7 @@ public class Program : IAspNetProgram
       webApplication.UseWebAssemblyDebugging();
     }
 
-    CommonServerModule.UseScalarApiReference(webApplication, SwaggerVersion, SwaggerApiTitle);
+    CommonServerModule.UseScalarApiReference(webApplication, ApiVersion, ApiTitle);
 
     webApplication.UseResponseCompression();
     // Static assets (including the Blazor WASM framework files) are served exclusively by

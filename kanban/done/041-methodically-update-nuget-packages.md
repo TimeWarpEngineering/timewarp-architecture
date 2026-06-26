@@ -79,9 +79,24 @@ Plan and execute a coordinated set of NuGet dependency updates across the soluti
 - 1 Aspire test passing
 - All builds successful across all target frameworks
 
+## 2026-06-26 Update Wave (post-root-migration)
+
+A second full pass against `ganda nuget outdated`, all built green (`dev build`) and committed
+individually:
+- OpenTelemetry packages → 1.16.0 (4); Fixie + Fixie.TestAdapter → 4.2.0
+- Microsoft.Identity.Web → 4.11.0; Scalar.AspNetCore → 2.16.5 → **2.16.6**
+- Microsoft.NET.Test.Sdk → 18.7.0; libphonenumber-csharp → 9.0.33
+- coverlet.collector → 10.0.1 (major); FastEndpoints → 8.2.0; FakeItEasy → 9.0.1 (major)
+- Microsoft.CodeAnalysis.CSharp.Analyzer.Testing → 1.1.4
+- Removed unused **JetBrains.Annotations** and orphaned **Boxed.\*** / **GlobalUsingsAnalyzer**
+  CPM declarations.
+
+`ganda nuget outdated` and `ganda repo audit` (cpm-consistency) both clean afterward.
+
 ## Outstanding Items
 
-None - all outdated packages have been updated successfully and all tests are passing!
+None. Closing this as an evergreen task — package drift is now caught by `ganda nuget outdated` /
+`ganda repo audit`; spin a fresh task when a new batch accumulates.
 
 ## Notes
 
