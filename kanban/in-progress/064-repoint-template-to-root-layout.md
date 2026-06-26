@@ -49,7 +49,16 @@ excludes to kebab paths, and fix the `readme.md`/assets path refs. Only after th
       `Feature.CrudPages` (loose razor content, no manifest, unreferenced). Cleaned the packaging
       csproj (dropped the now-empty `templates\**\*` Content include + Feature.State None-Remove +
       vestigial `templates/Directory.Build.*`) and stale `.gitignore` lines. `templates/` is now empty.
-- Remaining: the MAIN project template repoint (below) — the actual hard part.
+- [x] **Kebab-renamed the packaging solution** (2026-06-26): `TimeWarp.Templates/` →
+      `timewarp-templates/` + all internals (`source/`, `tests/`, `documentation/`, `assets/`,
+      `build/`, project dirs/files, `.ps1`/`.cs` files). Updated every internal ref (`.slnx`,
+      `ProjectReference`, `docfx.json`, scripts, `index.md`) and external ref (both
+      `.github/workflows`, `CLAUDE.md`). Modernized to .NET 10: removed stale `9.0.x` `global.json`
+      overrides, bumped CI `setup-dotnet` → `10.0.x`, added a `Directory.Packages.props` that
+      disables CPM for the templates tree (test harness pins older versions inline). Solution
+      restores clean; root `dev build` green.
+- Remaining: the MAIN project-template **content-root repoint** + verify loop (below) — the actual
+  hard part. The packaging csproj still globs the gutted `TimeWarp.Architecture/` tree.
 
 ## Implementation spec (2026-06-26 — design locked with user)
 
