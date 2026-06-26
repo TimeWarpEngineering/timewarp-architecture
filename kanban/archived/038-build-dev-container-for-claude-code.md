@@ -53,3 +53,8 @@ Create a Development Container (devcontainer) configuration that allows running 
 - May need to configure port forwarding for Aspire and web applications
 - Consider adding common aliases and shell customizations
 - Ensure timezone and locale are properly configured
+## Archived (2026-06-26)
+Archived as obsolete: never started; references retired tooling (Run.ps1/RunTests.ps1 → dev CLI)
+and the deleted TimeWarp.Architecture/ project path; the legacy .devcontainer/ was removed this
+session and Dev Containers aren't used here. Revive only if a containerized Claude Code workflow
+is wanted against the current root layout.
