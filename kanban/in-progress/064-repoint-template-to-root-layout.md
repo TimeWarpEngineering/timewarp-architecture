@@ -71,8 +71,10 @@ deny-list. `.template.config/` moves to the **repo root**.
 `kanban/`, `.claude/`, `.agents/`, `.agent/`, `.grok/`, `.github/`, `.githooks/`, `.vscode/`,
 `.idea/`, `.playwright/`, `.opencode/`, `.config/`, `skills/`, `evals/`, `spikes/`, `samples/`,
 `runfiles/`, `tools/`, `scripts/`, `TimeWarp.Templates/`, `TimeWarp.Architecture/`, `CLAUDE.md`,
-`opencode.jsonc`, `.memsearch.toml`, `.mcp.json`, `.vally.yaml`, `.mailmap`, `.envrc`, `readme.md`.
-- UNDECIDED (need a call): `documentation/` (142 files — ship as template docs or drop?), `assets/`.
+`opencode.jsonc`, `.memsearch.toml`, `.mcp.json`, `.vally.yaml`, `.mailmap`, `.envrc`, `readme.md`,
+`documentation/` (142 files), `assets/`.
+- DECIDED (2026-06-26): exclude BOTH `documentation/` and `assets/` — generated apps start clean
+  without the framework's own docs/branding.
 
 ### template.json `modifiers` — feature-flag excludes in KEBAB (paths VERIFIED present)
 - `(!grpc)`: `source/container-apps/grpc/**`, `source/container-apps/web/web-spa/features/superhero/**`,
