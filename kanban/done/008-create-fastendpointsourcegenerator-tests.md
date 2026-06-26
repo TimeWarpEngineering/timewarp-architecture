@@ -84,3 +84,17 @@ The test implementation should follow these principles:
 3. Include both positive and negative test cases
 4. Verify both the generated code structure and runtime behavior
 5. Add detailed failure messages for easier debugging
+
+## Closeout (2026-06-26 — failing tests fixed)
+The FastEndpointSourceGenerator tests existed but 4/5 failed because task 007 changed the generator
+to scan REFERENCED assemblies for `[ApiEndpoint]` (cross-assembly), while the tests fed the contract
+as source (so the generator never found it → 0 generated). Rebuilt the harness:
+- New `generator-test-harness.cs`: compiles the `[ApiEndpoint]` contract (+ stub `RouteMixinAttribute`/
+  `HttpVerb`/`OpenApiTags`/`FastEndpoints.IEndpoint`/`BaseFastEndpoint<,>`) into a *referenced* assembly
+  with XML docs (so summary/remarks flow cross-assembly), using the runtime TPA set for full framework refs.
+- Rewrote the 5 cases (generate / disabled / enabled / route-conflict TWE003 / OpenAPI docs+tags) to use
+  it, with robust structural assertions instead of brittle exact-string matches.
+**Result: 5 passed; full `dev build` green.**
+
+Remaining (original scope, optional follow-up): explicit **authorization** (`RequireAuthorization()`)
+and **custom-endpoint-type** coverage are not yet exercised — small additions on the same harness.

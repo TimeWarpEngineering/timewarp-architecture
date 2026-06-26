@@ -50,3 +50,9 @@ This is Phase 1 of the Implementation Timeline from the file naming convention a
 ## Implementation Notes
 
 [To be updated during task execution]
+## Archived (2026-06-26)
+Obsolete — solves a problem in the direction the repo reversed. 026 aimed to convert Kanban files to
+PascalCase (e.g. `004_001_Convert-WeatherForecast-To-FastEndpoints.md`), but the project standardized
+on kebab-case (`NNN-lowercase-kebab.md`) via the naming-convention ADR work. All 4 files it references
+(the old `001_`/`004_001_` underscore-PascalCase scheme) no longer exist; that whole numbering scheme
+was replaced by the kebab `NNN-`/`NNN-NNN-` scheme during migration.

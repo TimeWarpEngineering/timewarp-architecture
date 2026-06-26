@@ -169,3 +169,10 @@ DevOps/
 This review is critical for keeping the template relevant and not misleading users with outdated deployment approaches. The .NET ecosystem has evolved significantly with Aspire, and we need to ensure our DevOps guidance reflects current best practices rather than legacy approaches.
 
 **Key Consideration**: Template users should get opinionated, modern deployment guidance rather than overwhelming choice between multiple outdated approaches.
+## Archived (2026-06-26)
+Superseded by task 063. 034 was a comprehensive "review the DevOps folder and decide keep/modernize/
+remove" effort — but that decision was made and executed under [[063-relocate-devops-deploy-infra-to-root]]:
+the entire hand-rolled DevOps tree (Bicep, Kubernetes, Docker, Pipelines, Pulumi, the .ps1 chain) was
+DELETED this session (034's own "Option 1: Complete Removal"), and the portable Aspire-publish deploy
+strategy was adopted (tracked in [[070-wire-aspire-publish-for-portable-deploy-compose--kubernetes]]).
+The DevOps folder no longer exists, so there is nothing left to review.

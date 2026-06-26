@@ -171,3 +171,10 @@ Documentation/developer/how-to-guides/ # Wrong: Should be PascalCase
 This ADR will codify the sophisticated directory naming strategy identified in the analysis, providing clear guidance for future development and ensuring the rationale for technology-specific adaptations is preserved.
 
 **Key Value**: Transforms ad-hoc naming decisions into documented architectural choices with clear criteria for application.
+## Archived (2026-06-26)
+Obsolete — documents the OPPOSITE of the current convention. 035 codifies an "adaptive" strategy
+(PascalCase default + kebab for K8s + camelCase for JS); its "Correct" examples
+(`Source/Common/Common.Application/`, `Documentation/Developer/HowToGuides/`, `DevOps/Kubernetes/...`)
+are now wrong or deleted, and its "Incorrect" examples (`source/...`, `documentation/developer/
+how-to-guides/`) are the actual current kebab convention. The DevOps/Kubernetes structure it
+references was removed this session. The project standardized on uniform kebab-case.
