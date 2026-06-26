@@ -19,7 +19,8 @@ don't end up with two competing copies.
 - [ ] `.vscode/` (tasks.json etc.) — merge with root `.vscode/`.
 - [ ] `.config/`, `.editorconfig`, `.gitignore`, `.gitattributes`, `.mailmap`, `.rooignore` —
       reconcile vs root; delete duplicates.
-- [ ] `.ai/` (13) + `.clinerules` + `.agent` — agent-guidance files; decide keep-at-root vs drop
+- [x] `.ai/` (13) — agent-guidance files for the old structure: DROPPED (deleted 2026-06-26,
+      obsolete). `.clinerules` + `.agent` (if present) — still decide keep-at-root vs drop.
       (cline.ps1 that generated `.clinerules` was already deleted).
 
 ## Notes
