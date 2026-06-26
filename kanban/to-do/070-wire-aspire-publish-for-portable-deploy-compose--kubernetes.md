@@ -26,8 +26,9 @@ Confirmed strategy (Aspire 13.4 first-party publishers — `Azure | Kubernetes |
       the app-host csproj (guard with template `#if` flags consistent with existing yarp/cosmos).
 - [ ] Verify `aspire publish` emits `compose.yaml` and the K8s manifests; choose an output
       location — propose root **`devops/`** (kebab) as the home for generated artifacts + a README.
-- [ ] Relocate `TimeWarp.Architecture/DevOps/Ports.md` → root `devops/` (the only surviving file
-      from 063); update its content if Aspire owns port assignment.
+- [x] ~~Relocate `Ports.md`~~ — DELETED instead: its `52xx/72xx` ports were stale (current
+      launchSettings use `636xx`, and Aspire owns port assignment + service discovery). Nothing to
+      carry forward; `TimeWarp.Architecture/DevOps/` is now entirely removed.
 - [ ] Decide the per-service `Dockerfile` question (api-server, grpc-server): if `aspire publish`
       builds images via the .NET SDK container target, DELETE the two `Dockerfile`s and the
       `<DockerfileContext>` lines in api/grpc/web/yarp csproj (option 2 from 047). Otherwise document
