@@ -82,3 +82,10 @@ This is Phase 3 of the Implementation Timeline from the file naming convention a
 ## Implementation Notes
 
 [To be updated during task execution]
+## Archived (2026-06-26)
+Obsolete as written. The validation rules enforce the conventions the repo REVERSED: "strict
+PascalCase" for `.cs` (now kebab), `###_Title-With-Hyphens.md` Kanban naming (now `NNN-kebab`),
+and Kubernetes/infra naming (that DevOps tree was deleted). Depends on the archived tasks 026 + 027.
+The useful kernel — automated structure validation — is already partly covered by `ganda repo audit`
+(directory-structure check). If lightweight kebab file-name linting is ever wanted, open a fresh
+small task rather than reviving this PascalCase-era plan.
