@@ -12,7 +12,7 @@ To load the repository-specific profile in your PowerShell session:
 
 ```powershell
 # From the repository root
-. Scripts\profile.ps1
+. scripts\profile.ps1
 ```
 
 This will:
@@ -20,10 +20,10 @@ This will:
 2. Set the REPO_ROOT environment variable
 3. Load repository-specific functions (like Get-NextTaskNumber)
 
-### Get-NextTaskNumber.ps1
+### get-next-task-number.ps1
 Utility script for managing task numbers in the Kanban workflow.
 
-### BuildDependencyDiagram.ps1
+### build-dependency-diagram.ps1
 Generates dependency diagrams for the solution.
 
 ## Adding New Scripts
