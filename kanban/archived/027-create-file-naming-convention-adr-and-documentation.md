@@ -63,3 +63,10 @@ This is Phase 2 of the Implementation Timeline from the file naming convention a
 ## Implementation Notes
 
 [To be updated during task execution]
+## Archived (2026-06-26)
+Obsolete as written. The ADR it specifies documents the conventions the repo REVERSED: PascalCase
+`.cs` files (now kebab), `###_Title`/`###_###_` underscore Kanban naming (now `NNN-kebab`/
+`NNN-NNN-`), and Kubernetes/Bicep/PowerShell infra naming (that DevOps tree was deleted). Builds on
+the now-archived task 026. The kebab convention already won, is in active use, and is noted in
+CLAUDE.md, so a 2-day ADR effort on the old premises adds no value. If a short ADR formalizing the
+current kebab (files/dirs) + PascalCase-Razor convention is ever wanted, open a fresh lean task.
