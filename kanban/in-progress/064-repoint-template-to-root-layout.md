@@ -40,6 +40,17 @@ template breakage concrete and worse than first described:
 excludes to kebab paths, and fix the `readme.md`/assets path refs. Only after this can
 `TimeWarp.Architecture/.template.config/` move/delete and the legacy dir be removed (closes 067).
 
+## Progress
+
+- [x] **Deleted the obsolete `Feature.*` item templates** (2026-06-26). The repo previously shipped
+      multiple templates incl. a Console-App template (dropped — Nuru covers that now); the feature
+      scaffolders are likewise obsolete. Removed `Feature.Action`, `Feature.AutoCrud`,
+      `Feature.Endpoint`, `Feature.State` (real item templates) + `Feature.CrudComponents`,
+      `Feature.CrudPages` (loose razor content, no manifest, unreferenced). Cleaned the packaging
+      csproj (dropped the now-empty `templates\**\*` Content include + Feature.State None-Remove +
+      vestigial `templates/Directory.Build.*`) and stale `.gitignore` lines. `templates/` is now empty.
+- Remaining: the MAIN project template repoint (below) — the actual hard part.
+
 ## Scope
 
 - [ ] Decide the template ROOT: the template now needs to package the repo-root `source/` +
