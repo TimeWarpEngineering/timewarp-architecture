@@ -1,7 +1,0 @@
-<Solution>
-  <Folder Name="/Templates/" />
-  <Folder Name="/Templates/Architecture/">
-    <Project Path="Source\TimeWarp.Architecture.Template\TimeWarp.Architecture.csproj" />
-  </Folder>
-  <Project Path="Tests\TimeWarp.Architecture.Template.Tests\TimeWarp.Architecture.Template.Tests.csproj" />
-</Solution>

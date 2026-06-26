@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <!-- Shadow the repo-root Directory.Packages.props and disable Central Package Management
+         for the templates solution: the template-test harness intentionally pins its own
+         (older) package versions inline on each PackageReference. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

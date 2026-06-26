@@ -14,14 +14,14 @@ steps:
 
 - task: CmdLine@2
   inputs:
-    script: 'docfx Documentation/docfx.json' 
+    script: 'docfx documentation/docfx.json' 
     #workingDirectory: # Optional
     #failOnStderr: false # Optional
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: documentationSite'
   inputs:
-    PathtoPublish: 'Documentation/_site'
+    PathtoPublish: 'documentation/_site'
     ArtifactName: _site
 
 - task: DeleteFiles@1
@@ -32,7 +32,7 @@ steps:
 - task: GitHubPagesPublish@1
   displayName: 'Deploy to Github pages'
   inputs:
-    docPath: '$(System.DefaultWorkingDirectory)\Documentation\_site\*'
+    docPath: '$(System.DefaultWorkingDirectory)\documentation\_site\*'
     githubusername: 'TimeWarpEngineering'
     githubemail: 'Steven.Cramer@TimeWarp.Enterprises'
     githubaccesstoken: $(GitHubPersonalAccessToken)

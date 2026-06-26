@@ -8,7 +8,7 @@ This is a **multi-project repository** containing .NET project templates and sup
 
 ### Main Projects
 - **TimeWarp.Architecture/** - Complete distributed microservices architecture template
-- **TimeWarp.Templates/** - Template packaging and documentation
+- **timewarp-templates/** - Template packaging and documentation
 
 ## Development Commands
 
