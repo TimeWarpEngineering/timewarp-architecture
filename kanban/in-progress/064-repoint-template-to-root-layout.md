@@ -51,6 +51,67 @@ excludes to kebab paths, and fix the `readme.md`/assets path refs. Only after th
       vestigial `templates/Directory.Build.*`) and stale `.gitignore` lines. `templates/` is now empty.
 - Remaining: the MAIN project template repoint (below) — the actual hard part.
 
+## Implementation spec (2026-06-26 — design locked with user)
+
+**Decision: the repo IS the template.** Pack root `source/` + `tests/` in place (no duplicate/staged
+tree). Use an **allow-list** of includes (robust — new root dirs don't leak) rather than a whole-repo
+deny-list. `.template.config/` moves to the **repo root**.
+
+### Mandatory template content (allow-list — VERIFIED required to build)
+- `source/**`, `tests/**`
+- `timewarp-architecture.slnx`
+- `Directory.Build.props`, `Directory.Packages.props`, `global.json`
+- `msbuild/repository.props`  ← `Directory.Build.props` imports it
+- `BannedSymbols.txt`         ← referenced as `AdditionalFiles` by `Directory.Build.props`
+- `aspire.config.json`        ← points at the app host
+- `.editorconfig`, `.gitattributes`, `.gitignore`
+- `unlicense.md`, `.template.config/`
+
+### Repo-only — EXCLUDE (never template content)
+`kanban/`, `.claude/`, `.agents/`, `.agent/`, `.grok/`, `.github/`, `.githooks/`, `.vscode/`,
+`.idea/`, `.playwright/`, `.opencode/`, `.config/`, `skills/`, `evals/`, `spikes/`, `samples/`,
+`runfiles/`, `tools/`, `scripts/`, `TimeWarp.Templates/`, `TimeWarp.Architecture/`, `CLAUDE.md`,
+`opencode.jsonc`, `.memsearch.toml`, `.mcp.json`, `.vally.yaml`, `.mailmap`, `.envrc`, `readme.md`.
+- UNDECIDED (need a call): `documentation/` (142 files — ship as template docs or drop?), `assets/`.
+
+### template.json `modifiers` — feature-flag excludes in KEBAB (paths VERIFIED present)
+- `(!grpc)`: `source/container-apps/grpc/**`, `source/container-apps/web/web-spa/features/superhero/**`,
+  `source/container-apps/web/web-spa/services/superhero-grpc-service-provider.cs`
+  (NOTE: no grpc integration tests exist anymore — drop old `Tests/Grpc.Server.Integration.Tests`)
+- `(!api)`: `source/container-apps/api/**`,
+  `source/container-apps/web/web-spa/features/weather-forecast/**`,
+  `source/container-apps/web/web-spa/services/mocks/mock-api-service.cs`,
+  `source/container-apps/web/web-spa/services/api-services/api-server-api-service.cs`,
+  `tests/common/timewarp-testing/applications/api-test-server-application.cs`,
+  `tests/container-apps/api/**`
+- `(!web)`: `source/container-apps/web/**`,
+  `tests/common/timewarp-testing/applications/{web-test-server-application,spa-test-application}.cs`,
+  `tests/container-apps/web/**`
+- `(!yarp)`: `source/container-apps/yarp/**`,
+  `tests/common/timewarp-testing/applications/yarp-test-server-application.cs`
+- `(!cosmosdb)`: `web-infrastructure/persistence/cosmos-db-context.cs`,
+  `web-server/hosted-services/cosmos-db-context-startup-hosted-service.cs`,
+  `web-server/modules/cosmos-db-module.cs`  (NOTE: no cosmos env-check exists — drop that old exclude)
+- `(!postgres)`: `web-infrastructure/persistence/postgres-db-context.cs`,
+  `web-infrastructure/configuration/postgres-db-options.cs`,
+  `web-server/configuration/environment-checks/postgres-db-environment-check.cs`,
+  `web-server/hosted-services/postgres-db-context-startup-hosted-service.cs`,
+  `web-server/modules/postgres-db-module.cs`
+- `(!counter)`: `source/container-apps/web/web-spa/features/counter/**`
+- `(!eventStream)`: `source/container-apps/web/web-spa/features/event-stream/**`  (was `EventStream/`)
+- Drop the old `Kanban/**` and `Process/**` excludes (not in the allow-list anyway).
+
+### Packaging csproj (`TimeWarp.Templates/.../TimeWarp.Architecture.csproj`)
+- Replace the `..\..\..\TimeWarp.Architecture\**\*` content glob with the allow-list above, packing
+  to `content/templates/TimeWarp.Architecture/%(RecursiveDir)...`.
+- Fix `PackageReadmeFile`/`<None Include="..\..\..\ReadMe.md">` → root `readme.md` (path is broken).
+- Reconcile version: csproj `2.0.0-alpha.11` vs `BuildAndInstallTemplate.ps1` pinned `10.2.3`.
+
+### Verify (the real work — not yet done)
+- `dotnet pack` the template csproj → `dotnet new uninstall/install` → `dotnet new timewarp-architecture
+  -n MyApp` → generated solution **builds** (FluentUI v5, no Tailwind/npm); toggle feature flags and
+  confirm the right folders drop. THIS LOOP IS REQUIRED before 064 can be marked done.
+
 ## Scope
 
 - [ ] Decide the template ROOT: the template now needs to package the repo-root `source/` +
