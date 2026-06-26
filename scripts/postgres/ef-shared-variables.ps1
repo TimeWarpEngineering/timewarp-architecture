@@ -1,4 +1,4 @@
-# EfSharedVariables.ps1
+# ef-shared-variables.ps1
 
 # $projectPath: is used to specify the path to the project that has the DbContext and entity classes (the data model).
 # This is the project where the migrations will be added.

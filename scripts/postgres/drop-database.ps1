@@ -1,9 +1,9 @@
-# Drop-Database.ps1
+# drop-database.ps1
 
 Push-Location $PSScriptRoot
 
 try {
-    . .\EfSharedVariables.ps1
+    . .\ef-shared-variables.ps1
     dotnet ef database drop --project $projectPath --startup-project $startupProjectPath --context $dbContext
 }
 finally {

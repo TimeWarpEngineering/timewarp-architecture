@@ -1,4 +1,4 @@
-# Reset-DatabaseMigrations.ps1
+# reset-database-migrations.ps1
 
 param (
     [string]$NewMigrationName = "InitialCreate"
@@ -8,7 +8,7 @@ param (
     Push-Location $PSScriptRoot
     
 try {
-    . .\EfSharedVariables.ps1
+    . .\ef-shared-variables.ps1
     # Delete all migrations
     if (Test-Path $migrationsFolderPath) {
         Write-Output "Deleting migrations folder: $migrationsFolderPath"
@@ -16,10 +16,10 @@ try {
     } 
  
     # Create a new migration
-    .\Add-Migration.ps1 -migrationName $NewMigrationName
+    .\add-migration.ps1 -migrationName $NewMigrationName
  
     # Update the database
-    .\Update-Database.ps1
+    .\update-database.ps1
 } 
 finally {
     Pop-Location

@@ -1,4 +1,4 @@
-# Get-NextTaskNumber.ps1
+# get-next-task-number.ps1
 #
 # .SYNOPSIS
 # Gets the next available task number for Kanban workflow management.

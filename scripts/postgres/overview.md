@@ -4,52 +4,52 @@ This folder contains a set of PowerShell scripts to help manage Entity Framework
 
 ## Scripts
 
-### Add-Migration.ps1
+### add-migration.ps1
 
 Adds a new migration with the specified name.
 
 Usage:
 
 ```
-.\Add-Migration.ps1 -MigrationName "YourMigrationName"
+.\add-migration.ps1 -MigrationName "YourMigrationName"
 ```
 
-### Drop-Database.ps1
+### drop-database.ps1
 
 Drops the database.
 
 Usage:
 
 ```
-.\Drop-Database.ps1
+.\drop-database.ps1
 ```
 
-### EfSharedVariables.ps1
+### ef-shared-variables.ps1
 
 Defines shared variables used by other PowerShell scripts in this folder, including paths to the project and startup projects, the DbContext class name, and the output directory for migrations.
 
-### Reset-DatabaseMigrations.ps1
+### reset-database-migrations.ps1
 
 Deletes all existing migrations, creates a new migration with the specified name (default is "InitialCreate"), and updates the database with the new migration.
 
 Usage:
 
 ```
-.\Reset-DatabaseMigrations.ps1
+.\reset-database-migrations.ps1
 ```
 or
 ```
-.\Reset-DatabaseMigrations.ps1 -NewMigrationName "YourNewMigrationName"
+.\reset-database-migrations.ps1 -NewMigrationName "YourNewMigrationName"
 ```
 
-### Update-Database.ps1
+### update-database.ps1
 
 Updates the database to the latest migration.
 
 Usage:
 
 ```
-.\Update-Database.ps1
+.\update-database.ps1
 ```
 
 ## Usage

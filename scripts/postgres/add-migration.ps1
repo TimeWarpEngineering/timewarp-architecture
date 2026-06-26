@@ -1,4 +1,4 @@
-# Add-Migration.ps1
+# add-migration.ps1
 
 param (
   [Parameter(Mandatory=$true)]
@@ -8,7 +8,7 @@ param (
   Push-Location $PSScriptRoot
   
 try {
-  . .\EfSharedVariables.ps1
+  . .\ef-shared-variables.ps1
   dotnet ef migrations add $MigrationName `
     --project $projectPath `
     --startup-project $startupProjectPath `
