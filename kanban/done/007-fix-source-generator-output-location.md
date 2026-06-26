@@ -75,3 +75,11 @@ Current State:
 - Generator outputs to Api.Contracts/Generated
 - Attributes defined in Api.Contracts
 - Need to move generation to Api.Server while keeping attributes in Api.Contracts
+
+## Closeout (2026-06-26 — verified DONE)
+Generated endpoints now land in **api-server**, not contracts: `api-server.csproj` references
+`timewarp-architecture-analyzers` with `OutputItemType="Analyzer"` plus the separate
+`timewarp-architecture-attributes` project, and `GetWeatherForecastsEndpoint.g.cs` is emitted under
+`artifacts/generated/api-server/...FastEndpointSourceGenerator/`. Attributes stay in contracts;
+generation happens in the server — exactly the task's goal. Resolved via the FastEndpoints source-gen
+architecture + root restructure. Marking done.

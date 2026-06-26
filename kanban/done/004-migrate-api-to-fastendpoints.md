@@ -51,3 +51,10 @@ The migration should be done in a way that preserves the existing contract struc
 
 Subtasks:
 - B004_001_convert-weatherforecast-to-fastendpoints
+
+## Closeout (2026-06-26 — verified DONE)
+The API runs on FastEndpoints: `api-server/program.cs` calls `AddFastEndpoints()`/`UseFastEndpoints()`,
+and the `FastEndpointSourceGenerator` emits the endpoint (e.g. `GetWeatherForecastsEndpoint.g.cs`)
+into api-server from `[ApiEndpoint]`/`[RouteMixin]` attributes on the contracts. Contract structure +
+RouteMixin source-gen preserved as required. Completed (with the broader FastEndpoints/source-gen
+work + root migration); marking done.
