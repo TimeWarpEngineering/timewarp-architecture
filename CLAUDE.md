@@ -7,13 +7,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a **multi-project repository** containing .NET project templates and supporting infrastructure:
 
 ### Main Projects
-- **TimeWarp.Architecture/** - Complete distributed microservices architecture template
-- **timewarp-templates/** - Template packaging and documentation
+- **source/ + tests/** - The distributed microservices architecture itself. This repo **is** the
+  `dotnet new timewarp-architecture` template (definition in root `.template.config/`); the
+  packaging globs root `source/`+`tests/` as the template content.
+- **timewarp-templates/** - Template packaging (NuGet) and documentation (docfx).
 
 ## Development Commands
 
 ### TimeWarp.Architecture (Main Template)
-Navigate to `TimeWarp.Architecture/` directory first:
+Run from the repository root (the `dev` CLI resolves the repo root via `Git.FindRoot()`):
 
 **Running Applications:**
 - `dev run` - Runs the Aspire orchestrator (Development environment)
