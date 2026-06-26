@@ -1,155 +1,101 @@
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
+using System.Linq;
+
 public class FastEndpointSourceGenerator_RouteConflicts_Tests
 {
-    public static Task Should_Detect_Route_Conflicts()
-    {
-        const string TestCode1 = @"
-using TimeWarp.Architecture.SourceGenerator;
-using OneOf;
+  // Two [ApiEndpoint] contracts that map to the SAME route+verb — must raise the TWE003 conflict.
+  private const string ConflictingContracts = """
+    using TimeWarp.Architecture;
+    using TimeWarp.Architecture.Attributes;
 
-namespace Test.Features.WeatherForecast;
+    namespace Test.Features.WeatherForecast;
 
-[ApiEndpoint]
-public static partial class GetWeatherForecasts
-{
-    [RouteMixin(""api/weather"", HttpVerb.Get)]
-    public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+    [ApiEndpoint]
+    public static partial class GetWeatherForecasts
     {
-        public int? Days { get; set; }
+        [RouteMixin("api/weather", HttpVerb.Get)]
+        public sealed partial class Query { public int? Days { get; set; } }
+        public sealed class Response { }
     }
 
-    public sealed class Response { }
-}";
-
-        const string TestCode2 = @"
-using TimeWarp.Architecture.SourceGenerator;
-using OneOf;
-
-namespace Test.Features.WeatherForecast;
-
-[ApiEndpoint]
-public static partial class GetCurrentWeather
-{
-    [RouteMixin(""api/weather"", HttpVerb.Get)]
-    public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+    [ApiEndpoint]
+    public static partial class GetCurrentWeather
     {
-        public int? Days { get; set; }
+        [RouteMixin("api/weather", HttpVerb.Get)]
+        public sealed partial class Query { public int? Days { get; set; } }
+        public sealed class Response { }
     }
+    """;
 
-    public sealed class Response { }
-}";
+  public static Task Should_Detect_Route_Conflicts()
+  {
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly(ConflictingContracts);
 
-        (string, string)[] sources = new[]
-        {
-            (typeof(ApiEndpointAttribute).Assembly.GetName().Name + "1.cs", TestCode1),
-            (typeof(ApiEndpointAttribute).Assembly.GetName().Name + "2.cs", TestCode2)
-        };
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
 
-        MetadataReference[] references = new[]
-        {
-            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-            MetadataReference.CreateFromFile(typeof(ApiEndpointAttribute).Assembly.Location)
-        };
+    ImmutableArray<Diagnostic> diagnostics = runResult.Results.SelectMany(r => r.Diagnostics).ToImmutableArray();
+    bool hasRouteConflict = diagnostics.Any(d =>
+      d.Id == "TWE003" &&
+      d.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Contains("api/weather", System.StringComparison.Ordinal));
+    hasRouteConflict.ShouldBeTrue();
 
-        // Create compilation
-        var compilation = CSharpCompilation.Create(
-            "test",
-            sources.Select(s => CSharpSyntaxTree.ParseText(s.Item2)),
-            references,
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-
-        // Create an instance of the source generator
-        FastEndpointSourceGenerator generator = new();
-
-        var options = new Dictionary<string, string>
-        {
-            ["build_property.EnableApiEndpointGeneration"] = "true"
-        };
-
-        // Run the generator and get results
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            generators: ImmutableArray.Create(generator.AsSourceGenerator()),
-            optionsProvider: new TestAnalyzerConfigOptionsProvider(options));
-        GeneratorDriverRunResult runResult = driver.RunGenerators(compilation).GetRunResult();
-
-        // Verify that a diagnostic was reported
-        var diagnostics = runResult.Results.SelectMany(r => r.Diagnostics).ToImmutableArray();
-        bool hasRouteConflict = diagnostics.Any(d => d.Id == "TWE003" && d.GetMessage() != null && d.GetMessage().Contains("api/weather"));
-        hasRouteConflict.ShouldBeTrue();
-
-        return Task.CompletedTask;
-    }
+    return Task.CompletedTask;
+  }
 }
 
 public class FastEndpointSourceGenerator_OpenApi_Tests
 {
-    public static Task Should_Generate_OpenApi_Documentation()
-    {
-        const string TestCode = @"
-using TimeWarp.Architecture.SourceGenerator;
-using OneOf;
+  private const string DocumentedContract = """
+    using TimeWarp.Architecture;
+    using TimeWarp.Architecture.Attributes;
 
-namespace Test.Features.WeatherForecast;
+    namespace Test.Features.WeatherForecast;
 
-[ApiEndpoint]
-[OpenApiTags(""Weather"", ""Forecasting"")]
-public static partial class GetWeatherForecasts
-{
-    /// <summary>
-    /// Gets weather forecasts for specified days
-    /// </summary>
-    /// <remarks>
-    /// Retrieves detailed weather forecasts including temperature and conditions
-    /// </remarks>
-    [RouteMixin(""api/weatherForecasts"", HttpVerb.Get)]
-    public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+    [ApiEndpoint]
+    [OpenApiTags("Weather", "Forecasting")]
+    public static partial class GetWeatherForecasts
     {
         /// <summary>
-        /// Number of days to forecast
+        /// Gets weather forecasts for specified days
         /// </summary>
-        /// <example>5</example>
-        public int? Days { get; set; }
-    }
-
-    public sealed class Response { }
-}";
-
-        (string, string)[] sources = new[] { (typeof(ApiEndpointAttribute).Assembly.GetName().Name + ".cs", TestCode) };
-        MetadataReference[] references = new[]
+        /// <remarks>
+        /// Retrieves detailed weather forecasts including temperature and conditions
+        /// </remarks>
+        [RouteMixin("api/weatherForecasts", HttpVerb.Get)]
+        public sealed partial class Query
         {
-            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-            MetadataReference.CreateFromFile(typeof(ApiEndpointAttribute).Assembly.Location)
-        };
+            /// <summary>
+            /// Number of days to forecast
+            /// </summary>
+            public int? Days { get; set; }
+        }
 
-        var compilation = CSharpCompilation.Create(
-            "test",
-            sources.Select(s => CSharpSyntaxTree.ParseText(s.Item2)),
-            references,
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-
-        FastEndpointSourceGenerator generator = new();
-
-        var options = new Dictionary<string, string>
-        {
-            ["build_property.EnableApiEndpointGeneration"] = "true"
-        };
-
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            generators: ImmutableArray.Create(generator.AsSourceGenerator()),
-            optionsProvider: new TestAnalyzerConfigOptionsProvider(options));
-        GeneratorDriverRunResult runResult = driver.RunGenerators(compilation).GetRunResult();
-
-        // Get the generated code
-        var generatedSyntaxTrees = runResult.Results.SelectMany(r => r.GeneratedSources).Select(g => g.SyntaxTree).ToImmutableArray();
-        generatedSyntaxTrees.Length.ShouldBe(1);
-        string generatedCode = generatedSyntaxTrees[0].ToString();
-
-        // Verify OpenAPI documentation is included
-        generatedCode.ShouldContain("Gets weather forecasts for specified days");
-        generatedCode.ShouldContain("Retrieves detailed weather forecasts including temperature and conditions");
-        generatedCode.ShouldContain(@"Tags(""Weather"", ""Forecasting"")");
-
-        return Task.CompletedTask;
+        public sealed class Response { }
     }
+    """;
+
+  public static Task Should_Generate_OpenApi_Documentation()
+  {
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly(DocumentedContract);
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
+
+    ImmutableArray<GeneratedSourceResult> generated =
+      runResult.Results.SelectMany(r => r.GeneratedSources).ToImmutableArray();
+    generated.Length.ShouldBe(1);
+
+    string generatedCode = generated[0].SourceText.ToString();
+
+    // Summary/remarks flow through from the contract's XML docs (cross-assembly).
+    generatedCode.ShouldContain("Gets weather forecasts for specified days");
+    generatedCode.ShouldContain("Retrieves detailed weather forecasts including temperature and conditions");
+
+    // OpenApiTags values appear in the generated Tags(...) call.
+    generatedCode.ShouldContain("Tags(");
+    generatedCode.ShouldContain("\"Weather\"");
+    generatedCode.ShouldContain("\"Forecasting\"");
+
+    return Task.CompletedTask;
+  }
 }
