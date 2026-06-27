@@ -43,3 +43,34 @@ Add comprehensive tests for `Common.Domain/Enumeration/Enumeration.cs` and addre
 - File: `TimeWarp.Architecture/Source/Common/Common.Domain/Enumeration/Enumeration.cs`
 - No existing tests found for this class
 - Uses Fixie test framework (not xUnit/MSTest)
+
+## Closeout (2026-06-27 — done)
+Class relocated to `source/foundation/foundation-domain/enumeration/enumeration.cs` (ns
+`TimeWarp.Architecture.Enumerations`). All Phase 1 + Phase 2 items completed:
+
+**Tests (Phase 1):** new `tests/foundation/foundation-domain-tests/` project (added to the slnx) with
+a `Color` test enumeration and **21 passing** cases covering GetAll, FromValue/FromName/
+FromAlternateCode/FromString (valid + invalid), CompareTo (ordering / null / non-Enumeration),
+Equals + GetHashCode, ToString, the constructor, and the null-alternateCodes default.
+
+**Code-review fixes (Phase 2):**
+- `Parse` and all `From*` now return `T` (not `T?`) — they always return or throw.
+- Bare `Exception` → `InvalidOperationException`.
+- `CompareTo` now guards non-Enumeration input (`ArgumentException`) and null (sorts first) instead of
+  an `InvalidCastException` from a blind cast.
+- Removed the redundant `value?.GetType()` null-conditional in `Equals`.
+- Generic `Parse<T, K>` → `Parse<T>(object value, …)` (K was unused beyond ToString).
+- `AlternateCodes` `List<string>` → `IReadOnlyList<string>` (prevents external mutation).
+- Removed the commented-out default constructor.
+- `FromString` XML doc corrected to match behavior (name or alternate code; no value lookup).
+- Fixed the doc typos ("form"→"from", double space, "from is value"→"from its value").
+
+`dev build` green; the one subclass caller (`foundation-server/cors-policy`) still compiles.
+
+## Jaribu parallel (2026-06-27)
+Added a Jaribu DUPLICATE of these tests (not a replacement) as a small worked example of both
+frameworks against the same class: `tests/foundation/foundation-domain-jaribu-tests/enumeration.cs`
+(a standalone .NET 10 runfile — `dotnet run tests/foundation/foundation-domain-jaribu-tests/enumeration.cs`).
+Same 21 cases, **21 passed**. Added `TimeWarp.Jaribu` to root CPM. The Fixie suite
+(`tests/foundation/foundation-domain-tests`, in the solution) remains the primary; the Jaribu runfile
+demonstrates the runfile-based approach side-by-side.

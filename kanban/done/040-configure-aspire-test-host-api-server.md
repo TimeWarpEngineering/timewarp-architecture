@@ -19,3 +19,13 @@ Ensure the Aspire-hosted integration test environment registers the `api-server`
 ## Notes
 
 - Current failures occur in `Api.Server.Integration.Tests` when `WebApiTestService` cannot resolve an absolute URI.
+
+## Closeout (2026-06-27 — resolved)
+`Api.Server.Integration.Tests` now passes: **6 passed, 1 skipped**, no failures. The symptom this
+task targeted — `WebApiTestService` throwing `InvalidOperationException` because it couldn't resolve
+an absolute URI for `api-server` — no longer occurs. The harness resolves base addresses correctly
+(`test-server-application.cs` sets `BaseAddress` from `WebApplicationHost.Urls`; per-service apps wire
+`BaseAddress` from the configured service URIs), consistent with the fix that Aspire AppHost resource
+names must equal the ServiceNames (`api-server`). Closing as resolved.
+
+(Note: distinct from task 010's web-spa integration tests, which still have runtime failures.)
