@@ -55,3 +55,14 @@ The fix needs to:
 1. Align with current .NET service configuration patterns
 2. Support the test infrastructure's needs
 3. Allow proper initialization of services for integration tests
+
+## Closeout (2026-06-27 — resolved)
+The CS0117 compile error is GONE: `Web.Spa.Program` now has a `ConfigureServices` method
+(`spa-test-application.cs:32` calls `Web.Spa.Program.ConfigureServices(...)`; `web-application-host.cs:46`
+calls `TProgram.ConfigureServices(...)`), and the active solution builds green. The compile blocker
+this task targeted was fixed during the migration/refactor. Closing as resolved.
+
+NOTE (separate concern, not 010): the web-spa integration tests build + run but 9/13 currently fail
+at RUNTIME (`2 passed, 9 failed, 2 skipped`) — part of the broader known-broken test state, distinct
+from this task's missing-ConfigureServices compile error. Track separately if/when the integration
+suite is revived.
