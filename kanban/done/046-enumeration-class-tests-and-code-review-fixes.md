@@ -43,3 +43,26 @@ Add comprehensive tests for `Common.Domain/Enumeration/Enumeration.cs` and addre
 - File: `TimeWarp.Architecture/Source/Common/Common.Domain/Enumeration/Enumeration.cs`
 - No existing tests found for this class
 - Uses Fixie test framework (not xUnit/MSTest)
+
+## Closeout (2026-06-27 — done)
+Class relocated to `source/foundation/foundation-domain/enumeration/enumeration.cs` (ns
+`TimeWarp.Architecture.Enumerations`). All Phase 1 + Phase 2 items completed:
+
+**Tests (Phase 1):** new `tests/foundation/foundation-domain-tests/` project (added to the slnx) with
+a `Color` test enumeration and **21 passing** cases covering GetAll, FromValue/FromName/
+FromAlternateCode/FromString (valid + invalid), CompareTo (ordering / null / non-Enumeration),
+Equals + GetHashCode, ToString, the constructor, and the null-alternateCodes default.
+
+**Code-review fixes (Phase 2):**
+- `Parse` and all `From*` now return `T` (not `T?`) — they always return or throw.
+- Bare `Exception` → `InvalidOperationException`.
+- `CompareTo` now guards non-Enumeration input (`ArgumentException`) and null (sorts first) instead of
+  an `InvalidCastException` from a blind cast.
+- Removed the redundant `value?.GetType()` null-conditional in `Equals`.
+- Generic `Parse<T, K>` → `Parse<T>(object value, …)` (K was unused beyond ToString).
+- `AlternateCodes` `List<string>` → `IReadOnlyList<string>` (prevents external mutation).
+- Removed the commented-out default constructor.
+- `FromString` XML doc corrected to match behavior (name or alternate code; no value lookup).
+- Fixed the doc typos ("form"→"from", double space, "from is value"→"from its value").
+
+`dev build` green; the one subclass caller (`foundation-server/cors-policy`) still compiles.
