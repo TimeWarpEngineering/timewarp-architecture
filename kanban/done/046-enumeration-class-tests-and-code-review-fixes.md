@@ -66,3 +66,11 @@ Equals + GetHashCode, ToString, the constructor, and the null-alternateCodes def
 - Fixed the doc typos ("form"→"from", double space, "from is value"→"from its value").
 
 `dev build` green; the one subclass caller (`foundation-server/cors-policy`) still compiles.
+
+## Jaribu parallel (2026-06-27)
+Added a Jaribu DUPLICATE of these tests (not a replacement) as a small worked example of both
+frameworks against the same class: `tests/foundation/foundation-domain-jaribu-tests/enumeration.cs`
+(a standalone .NET 10 runfile — `dotnet run tests/foundation/foundation-domain-jaribu-tests/enumeration.cs`).
+Same 21 cases, **21 passed**. Added `TimeWarp.Jaribu` to root CPM. The Fixie suite
+(`tests/foundation/foundation-domain-tests`, in the solution) remains the primary; the Jaribu runfile
+demonstrates the runfile-based approach side-by-side.

@@ -1,0 +1,15 @@
+<Project>
+
+  <!-- Inherit repo-wide settings (analyzers, CPM, warnings-as-errors). -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!--
+      Jaribu test conventions intentionally violate these analyzer rules (public test classes,
+      Should_ method naming, ConfigureAwait, block-scoped namespace required by the dual-mode guard).
+      Suppressed here so the runfile builds under the repo's strict analysis.
+    -->
+    <NoWarn>$(NoWarn);CA1031;CA1052;CA1515;CA1707;CA1849;CA2007;RCS1046;RCS1213;IDE0161;IDE0021;IDE0058</NoWarn>
+  </PropertyGroup>
+
+</Project>
