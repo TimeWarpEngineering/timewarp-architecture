@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Single repo-wide version (shared with source/). This tree is standalone (does not import the
+       root Directory.Build.props), so it imports the shared version file directly. -->
+  <Import Project="$(MSBuildThisFileDirectory)../Directory.Version.props" />
+
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>
   </PropertyGroup>

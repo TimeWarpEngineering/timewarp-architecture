@@ -1,0 +1,10 @@
+<Project>
+  <!-- Single source of truth for the repo-wide package version (task 051).
+       Imported by source/Directory.Build.props (Foundation.* + Modules) AND
+       timewarp-templates/Directory.Build.props (the TimeWarp.Architecture template),
+       so every published package shares one version. The previous published template
+       version was 2.0.0-alpha.11; this restructure advances the 2.0.0 line alpha -> beta. -->
+  <PropertyGroup>
+    <Version>2.0.0-beta.1</Version>
+  </PropertyGroup>
+</Project>

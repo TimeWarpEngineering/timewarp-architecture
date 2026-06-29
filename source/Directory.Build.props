@@ -2,9 +2,11 @@
   <!-- Import parent Directory.Build.props -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- Default package metadata (single repo version; can be overridden in individual projects) -->
+  <!-- Single repo-wide version (shared with the template tree). -->
+  <Import Project="$(MSBuildThisFileDirectory)../Directory.Version.props" />
+
+  <!-- Default package metadata (can be overridden in individual projects) -->
   <PropertyGroup Label="Package Metadata">
-    <Version>1.0.0-beta.1</Version>
     <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-architecture</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

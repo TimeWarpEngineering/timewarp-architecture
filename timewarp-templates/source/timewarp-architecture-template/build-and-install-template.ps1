@@ -2,10 +2,12 @@
 Push-Location $PSScriptRoot
 
 try {
-    $Version = '10.2.3'
-    dotnet pack .\TimeWarp.Architecture.csproj -o . /p:PackageVersion=$Version
+    # Version is inherited from the repo-wide Directory.Version.props (single source of truth).
+    dotnet pack .\timewarp-architecture-template.csproj -o .
     dotnet new uninstall TimeWarp.Architecture
-    dotnet new install TimeWarp.Architecture.$Version.nupkg
+    $package = Get-ChildItem -Path . -Filter 'TimeWarp.Architecture.*.nupkg' |
+        Sort-Object Name -Descending | Select-Object -First 1
+    dotnet new install $package.FullName
 }
 finally {
     # Always restore the original location, even if an error occurs
