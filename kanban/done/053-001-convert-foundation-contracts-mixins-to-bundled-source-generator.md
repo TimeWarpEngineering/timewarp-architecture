@@ -27,8 +27,11 @@ The other ~9 mixins (Page, StateAccess, Command/Query, etc.) stay on Moxy — tr
 
 ## Design
 
-- New project `source/foundation/foundation-contracts-generators` (netstandard2.0 Roslyn
-  `IIncrementalGenerator`, CodeAnalysis.CSharp 5.3.0).
+- New project `source/foundation/foundation-contracts-generators` (**net10.0** Roslyn
+  `IIncrementalGenerator`, CodeAnalysis.CSharp 5.3.0). Targets net10.0 (inherited from
+  Directory.Build.props, matching timewarp-architecture-analyzers) — NOT netstandard2.0, which only
+  matters for hosts running Roslyn on .NET Framework (Visual Studio); the dotnet CLI build host is
+  .NET. Verified the net10.0 analyzer loads from the package in a generated app.
 - Generator emits the 3 marker attributes (internal, AllowMultiple, Class|Struct) into the
   consumer's **RootNamespace** (read from `build_property.RootNamespace`) — matching Moxy so the
   FastEndpoint generator still resolves `<RootNamespace>.RouteMixinAttribute` from referenced
