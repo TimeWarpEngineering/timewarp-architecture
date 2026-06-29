@@ -129,6 +129,12 @@ API key. Artifacts uploaded on every run. The standalone `publish-command.cs` an
 *To publish: cut a GitHub Release. Requires nuget.org Trusted Publishing configured for the
 `TimeWarp.Foundation.*`, `TimeWarp.Modules`, and `TimeWarp.Architecture` package IDs.*
 
+**First publish DONE (2026-06-29).** PR #261 merged to master; release `v2.0.0-beta.1` cut. OIDC
+Trusted Publishing policies configured on nuget.org; the release-mode run (28384817802) went green
+end-to-end — OIDC login → clean → build → pack (7) → push all succeeded. All 7 packages published at
+`2.0.0-beta.1` (propagating through nuget.org validation/indexing at time of writing). This UNBLOCKS
+Phase 4 (template can now PackageReference the published `TimeWarp.Foundation.*` IDs).
+
 ## Remaining (blocked / external)
 
 - **Phase 4 — repoint the template to reference the packages (amends 064).** BLOCKED on the
