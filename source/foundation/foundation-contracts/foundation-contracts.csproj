@@ -27,11 +27,15 @@
                       ReferenceOutputAssembly="false" PrivateAssets="all" />
   </ItemGroup>
 
+  <!-- Ask the generator project for its real output path (no hardcoded bin/config/TFM) and bundle
+       it as an analyzer asset. -->
   <Target Name="_BundleContractsGenerator">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\foundation-contracts-generators\foundation-contracts-generators.csproj"
+             Targets="GetTargetPath" RemoveProperties="TargetFramework">
+      <Output TaskParameter="TargetOutputs" ItemName="_ContractsGeneratorDll" />
+    </MSBuild>
     <ItemGroup>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\foundation-contracts-generators\bin\$(Configuration)\net10.0\foundation-contracts-generators.dll">
-        <PackagePath>analyzers/dotnet/cs</PackagePath>
-      </TfmSpecificPackageFile>
+      <TfmSpecificPackageFile Include="@(_ContractsGeneratorDll)" PackagePath="analyzers/dotnet/cs" />
     </ItemGroup>
   </Target>
 </Project>
