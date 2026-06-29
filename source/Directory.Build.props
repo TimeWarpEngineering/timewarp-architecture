@@ -5,6 +5,16 @@
   <!-- Single repo-wide version (shared with the template tree). -->
   <Import Project="$(MSBuildThisFileDirectory)../Directory.Version.props" />
 
+  <!-- Foundation distribution switch (task 051). The container-apps reference the foundation layer
+       as project refs in THIS repo (where the source lives) and as published TimeWarp.Foundation.*
+       NuGet packages in an app generated from the template (where the source is excluded). We detect
+       which world we're in by whether the foundation source is present — so the csproj switch and the
+       dotnet-new template exclusion agree automatically. Can be forced via -p:UseFoundationPackages=. -->
+  <PropertyGroup>
+    <UseFoundationPackages Condition="'$(UseFoundationPackages)' == '' and !Exists('$(MSBuildThisFileDirectory)foundation/foundation-domain/foundation-domain.csproj')">true</UseFoundationPackages>
+    <UseFoundationPackages Condition="'$(UseFoundationPackages)' == ''">false</UseFoundationPackages>
+  </PropertyGroup>
+
   <!-- Default package metadata (can be overridden in individual projects) -->
   <PropertyGroup Label="Package Metadata">
     <Authors>Steven T. Cramer</Authors>

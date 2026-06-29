@@ -1,8 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-application\foundation-application.csproj" />
-    <ProjectReference Include="..\..\..\libraries\timewarp-modules\timewarp-modules.csproj" />
+    <ProjectReference Include="..\..\..\foundation\foundation-application\foundation-application.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Application" Condition="'$(UseFoundationPackages)' == 'true'" />
+    <ProjectReference Include="..\..\..\libraries\timewarp-modules\timewarp-modules.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Modules" Condition="'$(UseFoundationPackages)' == 'true'" />
     <ProjectReference Include="..\api-contracts\api-contracts.csproj" />
     <ProjectReference Include="..\api-domain\api-domain.csproj" />
   </ItemGroup>

@@ -8,12 +8,12 @@
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.Extensions.Options" />
-    <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
     <PackageReference Include="OneOf" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-contracts\foundation-contracts.csproj" />
+    <ProjectReference Include="..\..\..\foundation\foundation-contracts\foundation-contracts.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Contracts" Condition="'$(UseFoundationPackages)' == 'true'" />
     <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj" />
   </ItemGroup>
 
@@ -22,15 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\RouteMixin.mixin">
-      <Link>mixins\RouteMixin.mixin</Link>
-    </AdditionalFiles>
-    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\IOpenDataQueryParametersMixin.mixin">
-      <Link>mixins\IOpenDataQueryParametersMixin.mixin</Link>
-    </AdditionalFiles>
-    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\IAuthApiRequestMixin.mixin">
-      <Link>mixins\IAuthApiRequestMixin.mixin</Link>
-    </AdditionalFiles>
+    <!-- foundation-contracts mixins are now a bundled source generator (task 053-001): analyzer ref
+         in repo mode; flows from the TimeWarp.Foundation.Contracts package in package mode. -->
+    <ProjectReference Include="..\..\..\foundation\foundation-contracts-generators\foundation-contracts-generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      Condition="'$(UseFoundationPackages)' != 'true'" />
   </ItemGroup>
 
 </Project>
