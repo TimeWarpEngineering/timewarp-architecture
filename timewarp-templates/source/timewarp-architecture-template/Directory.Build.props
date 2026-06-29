@@ -1,7 +1,6 @@
 <Project>
-  <!-- Single repo-wide version (shared with source/). This is the nearest Directory.Build.props to
-       the template csproj, so the shared version file is imported here. -->
-  <Import Project="$(MSBuildThisFileDirectory)../../../Directory.Version.props" Condition="'$(Version)' == ''" />
+  <!-- Chain to the timewarp-templates tree's Directory.Build.props (which defines <Version>). -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>
