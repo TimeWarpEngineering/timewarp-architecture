@@ -36,19 +36,25 @@ global using System.Threading.Tasks;
 
 // Solution usings
 global using static TimeWarp.Architecture.Aspire.Constants;
-global using TimeWarp.Architecture.Behaviors;
+global using TimeWarp.Foundation.Behaviors;
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
-global using TimeWarp.Architecture.CorsPolicies;
+global using TimeWarp.Foundation.Configuration;
+global using TimeWarp.Foundation.CorsPolicies;
 global using TimeWarp.Architecture.Data;
 global using TimeWarp.Architecture.Extensions;
+global using TimeWarp.Foundation.Extensions;
 global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Architecture.Persistence;
 global using TimeWarp.Architecture.Services;
+global using TimeWarp.Foundation.Services;
 global using TimeWarp.Architecture.Types;
+global using TimeWarp.Foundation.Types;
 global using TimeWarp.Architecture.Web.Infrastructure;
 global using TimeWarp.Modules;
 #if(cosmosdb || postgres)
 global using TimeWarp.Architecture.HostedServices;
 #endif
+global using TimeWarp.Foundation;
+global using TimeWarp.Foundation.Features;

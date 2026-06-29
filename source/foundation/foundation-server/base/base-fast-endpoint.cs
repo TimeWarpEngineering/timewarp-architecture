@@ -1,5 +1,5 @@
 // TODO: Review this code.  Why not inject ISender?
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Foundation.Features;
 
 public abstract class BaseFastEndpoint<TRequest, TResponse> : Endpoint<TRequest, OneOf<TResponse, SharedProblemDetails>>
   where TRequest : IRequest<OneOf<TResponse, SharedProblemDetails>>

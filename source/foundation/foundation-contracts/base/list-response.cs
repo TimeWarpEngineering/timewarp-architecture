@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Foundation.Features;
 
 /// <summary>
 /// Represents a generic response structure for list-based data. This class encapsulates

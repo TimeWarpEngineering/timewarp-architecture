@@ -6,8 +6,11 @@ global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 // Solution usings
 global using TimeWarp.Architecture;
+global using TimeWarp.Foundation;
 global using TimeWarp.Architecture.Configuration;
+global using TimeWarp.Foundation.Configuration;
 global using TimeWarp.Architecture.Data.Configuration;
 global using TimeWarp.Architecture.Entities;
+global using TimeWarp.Foundation.Entities;
 global using TimeWarp.Mediator;
 global using TimeWarp.Modules;

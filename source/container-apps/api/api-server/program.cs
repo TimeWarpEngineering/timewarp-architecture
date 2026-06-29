@@ -1,6 +1,5 @@
 namespace TimeWarp.Architecture.Api.Server;
 
-using Behaviors;
 public class Program : IAspNetProgram
 {
   const string ApiTitle = "TimeWarp.Architecture Api.Server API";

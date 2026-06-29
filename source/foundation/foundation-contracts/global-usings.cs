@@ -14,6 +14,6 @@ global using System.Text;
 global using System.Text.Json;
 global using System.Text.Json.Serialization;
 // Solution usings
-global using TimeWarp.Architecture.Features;
-global using TimeWarp.Architecture.Types;
+global using TimeWarp.Foundation.Features;
+global using TimeWarp.Foundation.Types;
 global using TimeWarp.Mediator;

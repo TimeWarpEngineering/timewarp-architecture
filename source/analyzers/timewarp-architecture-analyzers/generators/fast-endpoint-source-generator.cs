@@ -89,7 +89,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
         // Check that required FastEndpoints types are available before generating
         INamedTypeSymbol? fastEndpointsSymbol = compilation.GetTypeByMetadataName("FastEndpoints.IEndpoint");
-        INamedTypeSymbol? baseFastEndpointSymbol = compilation.GetTypeByMetadataName("TimeWarp.Architecture.Features.BaseFastEndpoint`2");
+        INamedTypeSymbol? baseFastEndpointSymbol = compilation.GetTypeByMetadataName("TimeWarp.Foundation.Features.BaseFastEndpoint`2");
 
         if (fastEndpointsSymbol == null || baseFastEndpointSymbol == null)
         {

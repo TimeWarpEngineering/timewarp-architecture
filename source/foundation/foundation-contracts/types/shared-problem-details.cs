@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Types;
+namespace TimeWarp.Foundation.Types;
 
 public sealed class SharedProblemDetails
 {

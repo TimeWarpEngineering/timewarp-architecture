@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Foundation.Features;
 
 /// <summary>
 /// Defines the set of query parameters for handling pagination and filtering in OData requests.

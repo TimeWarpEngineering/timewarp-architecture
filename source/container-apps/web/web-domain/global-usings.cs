@@ -1,1 +1,1 @@
-global using TimeWarp.Architecture.Abstractions;
+global using TimeWarp.Foundation.Entities;

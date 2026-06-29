@@ -1,3 +1,3 @@
-namespace TimeWarp.Architecture.Entities.Base;
+namespace TimeWarp.Foundation.Entities.Base;
 
 public abstract class BaseEvent : INotification { }

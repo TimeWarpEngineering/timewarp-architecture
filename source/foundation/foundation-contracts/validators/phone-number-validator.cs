@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Validators;
+namespace TimeWarp.Foundation.Validators;
 
 public class PhoneNumberValidator<T> : PropertyValidator<T, string?>
 {

@@ -8,7 +8,10 @@ global using Scalar.AspNetCore;
 global using System.Net;
 global using System.Reflection;
 // Solution usings
-global using TimeWarp.Architecture.CorsPolicies;
-global using TimeWarp.Architecture.Types;
+global using TimeWarp.Foundation.CorsPolicies;
+global using TimeWarp.Foundation.Types;
 global using TimeWarp.Mediator;
 global using TimeWarp.Mediator.Pipeline;
+global using TimeWarp.Foundation;
+global using TimeWarp.Foundation.Behaviors;
+global using TimeWarp.Foundation.Features;

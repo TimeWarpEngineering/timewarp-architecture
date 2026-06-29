@@ -3,4 +3,5 @@ global using Microsoft.AspNetCore.Routing;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
-global using TimeWarp.Architecture.Extensions;
+global using TimeWarp.Foundation.Extensions;
+global using TimeWarp.Foundation;

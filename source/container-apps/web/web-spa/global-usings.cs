@@ -80,7 +80,6 @@ global using TimeWarp.Architecture.Features.ToastNotifications;
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
 global using TimeWarp.Architecture.Services;
-global using TimeWarp.Architecture.Types;
 global using TimeWarp.Features.ActionTracking;
 global using TimeWarp.Features.StateTransactions;
 global using TimeWarp.State.Extensions;
@@ -97,3 +96,8 @@ global using TimeWarp.Architecture.Features.Superheros;
 global using TimeWarp.Architecture.Features.WeatherForecasts;
 #endif
 
+global using TimeWarp.Foundation;
+global using TimeWarp.Foundation.Features;
+global using TimeWarp.Foundation.Types;
+global using IBaseRequest = TimeWarp.Foundation.Features.IBaseRequest;
+global using TimeWarp.Foundation.Configuration;

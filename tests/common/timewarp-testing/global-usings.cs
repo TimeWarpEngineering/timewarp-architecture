@@ -20,10 +20,16 @@ global using System.Text.Json;
 
 // Solution usings
 global using TimeWarp.Architecture.Features;
+global using TimeWarp.Foundation.Features;
 global using TimeWarp.Architecture.Services;
+global using TimeWarp.Foundation.Services;
 global using TimeWarp.Architecture.Types;
+global using TimeWarp.Foundation.Types;
 global using TimeWarp.Fixie;
 
 #if(web)
 global using TimeWarp.Architecture.Web.Spa;
 #endif
+global using TimeWarp.Foundation;
+global using TimeWarp.Foundation.Configuration;
+global using TimeWarp.Foundation.Extensions;

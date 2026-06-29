@@ -3,6 +3,7 @@ global using Microsoft.Extensions.DependencyInjection;
 global using OneOf;
 // Solution usings
 global using TimeWarp.Architecture;
-global using TimeWarp.Architecture.Types;
+global using TimeWarp.Foundation;
+global using TimeWarp.Foundation.Types;
 global using TimeWarp.Mediator;
 global using TimeWarp.Modules;

@@ -44,7 +44,7 @@ internal static class GeneratorTestHarness
     {
         public interface IEndpoint { }
     }
-    namespace TimeWarp.Architecture.Features
+    namespace TimeWarp.Foundation.Features
     {
         public abstract class BaseFastEndpoint<TRequest, TResponse> : FastEndpoints.IEndpoint { }
     }
