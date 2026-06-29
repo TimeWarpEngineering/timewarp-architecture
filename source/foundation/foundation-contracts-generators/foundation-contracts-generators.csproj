@@ -1,10 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Roslyn source generator that replaces the foundation-contracts Moxy mixins (task 053-001).
-       Targets netstandard2.0 so it loads in the compiler host and can ship as an analyzer asset
-       inside the TimeWarp.Foundation.Contracts package. Not packed on its own. -->
+       Targets net10.0 (inherited from Directory.Build.props, matching timewarp-architecture-analyzers)
+       and ships as an analyzer asset inside the TimeWarp.Foundation.Contracts package. We do NOT
+       target netstandard2.0 — that only matters for hosts running Roslyn on .NET Framework (Visual
+       Studio); the dotnet CLI build host is .NET. Not packed on its own. -->
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>TimeWarp.Foundation.Contracts.Generators</RootNamespace>
     <IsRoslynComponent>true</IsRoslynComponent>
     <IsPackable>false</IsPackable>
