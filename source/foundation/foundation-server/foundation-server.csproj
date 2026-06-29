@@ -1,4 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>TimeWarp.Foundation.Server</PackageId>
+    <Title>TimeWarp.Foundation.Server</Title>
+    <Description>ASP.NET server building blocks (modules, base endpoints, CORS, service discovery) for the TimeWarp foundation layer.</Description>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="FastEndpoints" />

@@ -1,4 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>TimeWarp.Foundation.Infrastructure</PackageId>
+    <Title>TimeWarp.Foundation.Infrastructure</Title>
+    <Description>Infrastructure services (date-time, current-user) for the TimeWarp foundation layer.</Description>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Timewarp.OptionsValidation" />
   </ItemGroup>

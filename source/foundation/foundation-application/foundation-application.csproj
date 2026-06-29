@@ -1,4 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>TimeWarp.Foundation.Application</PackageId>
+    <Title>TimeWarp.Foundation.Application</Title>
+    <Description>Application-layer abstractions and MediatR pipeline behaviors for the TimeWarp foundation layer.</Description>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\foundation-contracts\foundation-contracts.csproj" />
     <ProjectReference Include="..\foundation-domain\foundation-domain.csproj" />
