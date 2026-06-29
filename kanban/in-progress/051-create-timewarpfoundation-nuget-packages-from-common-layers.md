@@ -135,11 +135,23 @@ end-to-end — OIDC login → clean → build → pack (7) → push all succeede
 `2.0.0-beta.1` (propagating through nuget.org validation/indexing at time of writing). This UNBLOCKS
 Phase 4 (template can now PackageReference the published `TimeWarp.Foundation.*` IDs).
 
-## Remaining (blocked / external)
+**Phase 4 — repoint the template to reference the packages: DONE & verified (amends 064).** The
+container-apps reference the foundation layer by project ref in this repo and by `TimeWarp.Foundation.*`
+PackageReference in a generated app. The switch is the MSBuild prop `UseFoundationPackages`
+(source/Directory.Build.props), auto-detected by whether foundation source is present — so the csproj
+switch and the dotnet-new exclusion agree automatically. The template excludes `source/foundation/**`,
+`source/libraries/timewarp-modules/**`, `tests/foundation/**` (template.json `foundationPackages`
+symbol, default true; matching `.slnx` `<!--#if (!foundationPackages)-->` guards). The contract mixins
+travel via the bundled source generator (task **053-001**) — that's what made Phase 4 possible (Moxy
+`.mixin` AdditionalFiles don't cross a package boundary). Foundation `PackageVersion`s track `$(Version)`;
+`Directory.Version.props` is now in the template content (was missing → generated apps had no version).
+Bumped to `2.0.0-beta.2` (package contents changed). **Verified end-to-end:** packed all 7 at beta.2 to
+a local feed, `dotnet new timewarp-architecture`, restored + built the generated app's web-contracts and
+api-server against the packages — green, with the generator flowing from the package and the FastEndpoint
+generator reading the package-generated `RouteMixinAttribute` across the boundary.
 
-- **Phase 4 — repoint the template to reference the packages (amends 064).** BLOCKED on the
-  packages being published: a generated app can't `PackageReference` `TimeWarp.Foundation.*` until
-  they exist on the feed. Once published, exclude `source/foundation/**` from the template content
-  and swap the container-apps' foundation `<ProjectReference>` for `<PackageReference>` (the repo
-  keeps project refs for local dev; the template emits package refs). Verify via `dotnet new` + build.
+*Note: actual nuget.org republish at beta.2 happens when the next release is cut (beta.1 is live).*
+
+## Remaining (external)
+
 - **Phase 5 — per-repo client update agents.** Lives in the separate client repos, not here.

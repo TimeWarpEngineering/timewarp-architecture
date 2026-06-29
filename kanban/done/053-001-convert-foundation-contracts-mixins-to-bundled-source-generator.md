@@ -41,12 +41,14 @@ The other ~9 mixins (Page, StateAccess, Command/Query, etc.) stay on Moxy — tr
 
 ## Checklist
 
-- [ ] Generator project + generator (3 attributes, route parsing matching Moxy ground truth)
-- [ ] Bundle into TimeWarp.Foundation.Contracts package; analyzer ref for repo consumers
-- [ ] Remove 3 AdditionalFiles + delete the 3 .mixin/.md files
-- [ ] Tests (generated output equivalence)
-- [ ] `dev build` green; generated code matches Moxy semantics
-- [ ] Resume 051 Phase 4
+- [x] Generator project + generator (3 attributes, route parsing matching Moxy ground truth)
+- [x] Bundle into TimeWarp.Foundation.Contracts package; analyzer ref for repo consumers
+- [x] Remove 3 AdditionalFiles + delete the 3 .mixin/.md files
+- [x] Tests (generated output equivalence) — 3 new tests, 8/8 source-gen pass
+- [x] `dev build` green; api integration 6/6 (routes resolve); generator dll bundled in nupkg
+- [x] Resume 051 Phase 4 — DONE; generated app builds against packages with the generator flowing
+
+**DONE & verified.** See task 051 Phase 4 note for the end-to-end verification.
 
 ## Notes
 

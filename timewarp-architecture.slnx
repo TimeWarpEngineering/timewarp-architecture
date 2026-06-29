@@ -1,7 +1,9 @@
 <Solution>
   <Folder Name="/source/" />
+  <!--#if (!foundationPackages) -->
   <Folder Name="/source/foundation/">
     <Project Path="source/foundation/foundation-contracts/foundation-contracts.csproj" />
+    <Project Path="source/foundation/foundation-contracts-generators/foundation-contracts-generators.csproj" />
     <Project Path="source/foundation/foundation-domain/foundation-domain.csproj" />
     <Project Path="source/foundation/foundation-application/foundation-application.csproj" />
     <Project Path="source/foundation/foundation-infrastructure/foundation-infrastructure.csproj" />
@@ -10,6 +12,7 @@
   <Folder Name="/source/libraries/">
     <Project Path="source/libraries/timewarp-modules/timewarp-modules.csproj" />
   </Folder>
+  <!--#endif -->
   <Folder Name="/source/analyzers/">
     <Project Path="source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
     <Project Path="source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
@@ -43,8 +46,10 @@
     <!--#endif -->
   </Folder>
   <Folder Name="/tests/">
+    <!--#if (!foundationPackages) -->
     <Project Path="tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj" />
     <Project Path="tests/foundation/foundation-infrastructure-tests/foundation-infrastructure-tests.csproj" />
+    <!--#endif -->
     <Project Path="tests/analyzers/timewarp-architecture-analyzers-tests/timewarp-architecture-analyzers-tests.csproj" />
     <Project Path="tests/analyzers/timewarp-architecture-sourcegenerator-tests/timewarp-architecture-sourcegenerator-tests.csproj" />
     <Project Path="tests/common/timewarp-testing/timewarp-testing.csproj" />

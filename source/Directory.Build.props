@@ -3,7 +3,7 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <!-- Single repo-wide version (shared with the template tree). -->
-  <Import Project="$(MSBuildThisFileDirectory)../Directory.Version.props" />
+  <Import Project="$(MSBuildThisFileDirectory)../Directory.Version.props" Condition="'$(Version)' == ''" />
 
   <!-- Foundation distribution switch (task 051). The container-apps reference the foundation layer
        as project refs in THIS repo (where the source lives) and as published TimeWarp.Foundation.*

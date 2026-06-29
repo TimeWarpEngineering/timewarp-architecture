@@ -1,7 +1,7 @@
 <Project>
   <!-- Single repo-wide version (shared with source/). This is the nearest Directory.Build.props to
        the template csproj, so the shared version file is imported here. -->
-  <Import Project="$(MSBuildThisFileDirectory)../../../Directory.Version.props" />
+  <Import Project="$(MSBuildThisFileDirectory)../../../Directory.Version.props" Condition="'$(Version)' == ''" />
 
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>

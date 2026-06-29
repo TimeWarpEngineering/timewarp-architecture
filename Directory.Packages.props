@@ -1,5 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
+  <!-- Single repo-wide version, so the foundation PackageVersions below track it automatically. -->
+  <Import Project="$(MSBuildThisFileDirectory)Directory.Version.props" Condition="'$(Version)' == ''" />
   <!-- Central Package Management - add your package versions here -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -12,12 +14,12 @@
     <!-- Foundation packages (task 051). Referenced by container-apps ONLY when foundation source is
          absent (i.e. in an app generated from the template); the repo itself uses project refs. The
          version tracks the single repo-wide version in Directory.Version.props. -->
-    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.1" />
-    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.1" />
-    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.1" />
-    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.1" />
-    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.1" />
-    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.1" />
+    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="$(Version)" />
+    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="$(Version)" />
+    <PackageVersion Include="TimeWarp.Foundation.Application" Version="$(Version)" />
+    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="$(Version)" />
+    <PackageVersion Include="TimeWarp.Foundation.Server" Version="$(Version)" />
+    <PackageVersion Include="TimeWarp.Modules" Version="$(Version)" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />

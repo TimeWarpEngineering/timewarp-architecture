@@ -33,7 +33,7 @@
              PackagePath="content\templates\TimeWarp.Architecture\msbuild\%(RecursiveDir)%(FileName)%(Extension)" />
     <Content Include="..\..\..\.template.config\**\*"
              PackagePath="content\templates\TimeWarp.Architecture\.template.config\%(RecursiveDir)%(FileName)%(Extension)" />
-    <Content Include="..\..\..\timewarp-architecture.slnx;..\..\..\Directory.Build.props;..\..\..\Directory.Packages.props;..\..\..\global.json;..\..\..\BannedSymbols.txt;..\..\..\aspire.config.json;..\..\..\.editorconfig;..\..\..\.gitattributes;..\..\..\.gitignore;..\..\..\unlicense.md"
+    <Content Include="..\..\..\timewarp-architecture.slnx;..\..\..\Directory.Build.props;..\..\..\Directory.Packages.props;..\..\..\Directory.Version.props;..\..\..\global.json;..\..\..\BannedSymbols.txt;..\..\..\aspire.config.json;..\..\..\.editorconfig;..\..\..\.gitattributes;..\..\..\.gitignore;..\..\..\unlicense.md"
              PackagePath="content\templates\TimeWarp.Architecture\%(FileName)%(Extension)" />
     <Compile Remove="**\*" />
   </ItemGroup>
