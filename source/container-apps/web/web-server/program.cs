@@ -2,8 +2,8 @@
 
 namespace TimeWarp.Architecture.Web.Server;
 
-using Abstractions;
-using Common.Infrastructure;
+using TimeWarp.Foundation.Abstractions;
+using TimeWarp.Foundation.Common.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Serilog;
 
@@ -219,9 +219,9 @@ public class Program : IAspNetProgram
       {
         var services = new Dictionary<string, Uri?>
         {
-          { Configuration.ServiceNames.GrpcServiceName, ServiceUriHelper.GetServiceHttpsUri(Configuration.ServiceNames.GrpcServiceName) },
-          { Configuration.ServiceNames.ApiServiceName, ServiceUriHelper.GetServiceHttpsUri(Configuration.ServiceNames.ApiServiceName) },
-          { Configuration.ServiceNames.WebServiceName, ServiceUriHelper.GetServiceHttpsUri(Configuration.ServiceNames.WebServiceName) }
+          { TimeWarp.Foundation.Configuration.ServiceNames.GrpcServiceName, ServiceUriHelper.GetServiceHttpsUri(TimeWarp.Foundation.Configuration.ServiceNames.GrpcServiceName) },
+          { TimeWarp.Foundation.Configuration.ServiceNames.ApiServiceName, ServiceUriHelper.GetServiceHttpsUri(TimeWarp.Foundation.Configuration.ServiceNames.ApiServiceName) },
+          { TimeWarp.Foundation.Configuration.ServiceNames.WebServiceName, ServiceUriHelper.GetServiceHttpsUri(TimeWarp.Foundation.Configuration.ServiceNames.WebServiceName) }
         };
 
         await context.Response.WriteAsJsonAsync(services);

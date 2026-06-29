@@ -13,7 +13,7 @@ global using OneOf;
 global using Scalar.AspNetCore;
 global using System.Reflection;
 // Solution usings
-global using TimeWarp.Architecture.Enumerations;
-global using TimeWarp.Architecture.Types;
+global using TimeWarp.Foundation.Enumerations;
+global using TimeWarp.Foundation.Types;
 global using TimeWarp.Mediator;
 global using TimeWarp.Modules;

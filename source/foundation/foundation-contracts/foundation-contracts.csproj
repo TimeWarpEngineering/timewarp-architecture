@@ -1,4 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>TimeWarp.Foundation.Contracts</PackageId>
+    <Title>TimeWarp.Foundation.Contracts</Title>
+    <Description>Shared contracts, request/response markers, route mixins, and common types for the TimeWarp foundation layer.</Description>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="FluentValidation" />

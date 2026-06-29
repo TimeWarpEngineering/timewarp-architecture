@@ -15,6 +15,7 @@ global using TimeWarp.Architecture.Features.EventStreams;
 global using TimeWarp.Architecture.Features.WeatherForecasts;
 global using TimeWarp.Architecture.JsonSerializer.Tests;
 global using TimeWarp.Architecture.Services;
+global using TimeWarp.Foundation.Services;
 global using TimeWarp.Architecture.Testing;
 global using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 global using TimeWarp.Mediator;

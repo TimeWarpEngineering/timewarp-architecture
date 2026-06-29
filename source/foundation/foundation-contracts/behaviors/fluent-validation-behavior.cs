@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Behaviors;
+namespace TimeWarp.Foundation.Behaviors;
 
 public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull

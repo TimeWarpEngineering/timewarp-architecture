@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Common.Infrastructure;
+namespace TimeWarp.Foundation.Common.Infrastructure;
 
 public class CommonInfrastructureModule : IModule
 {

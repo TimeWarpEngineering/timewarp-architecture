@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Services;
+namespace TimeWarp.Foundation.Services;
 
 public class CurrentUserService : ICurrentUserService
 {

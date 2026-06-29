@@ -2,7 +2,6 @@ namespace TimeWarp.Architecture.Features.Authentication;
 
 using Authorization;
 using Services;
-
 public static partial class GetCurrentUser
 {
   [RouteMixin(RouteTemplate: "api/GetCurrentUser", HttpVerb.Get)]

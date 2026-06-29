@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Abstractions;
+namespace TimeWarp.Foundation.Abstractions;
 
 public interface IDateTimeService
 {

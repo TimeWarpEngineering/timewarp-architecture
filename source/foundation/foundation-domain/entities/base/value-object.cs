@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Domain.Base;
+namespace TimeWarp.Foundation.Domain.Base;
 
 // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/implement-value-objects
 // https://enterprisecraftsmanship.com/posts/value-object-better-implementation/

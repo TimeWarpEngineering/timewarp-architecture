@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.CorsPolicies;
+namespace TimeWarp.Foundation.CorsPolicies;
 
 public partial class CorsPolicy
 {

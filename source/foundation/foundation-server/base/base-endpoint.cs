@@ -1,5 +1,5 @@
 // TODO: Review this code.  Why not inject ISender?
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Foundation.Features;
 
 [ApiController]
 [Produces("application/json")]

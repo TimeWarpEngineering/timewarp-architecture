@@ -1,5 +1,5 @@
 #!/usr/bin/env -S dotnet --
-#:project ../../../source/foundation/foundation-domain/foundation-domain.csproj
+#:project $(SourceDirectory)foundation/foundation-domain/foundation-domain.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
 
@@ -11,7 +11,7 @@
 return await TimeWarp.Jaribu.TestRunner.RunAllTests();
 #endif
 
-namespace TimeWarp.Architecture.Enumerations.Jaribu.Tests
+namespace TimeWarp.Foundation.Enumerations.Jaribu.Tests
 {
 
   using System;
@@ -20,7 +20,7 @@ namespace TimeWarp.Architecture.Enumerations.Jaribu.Tests
   using System.Runtime.CompilerServices;
   using System.Threading.Tasks;
   using Shouldly;
-  using TimeWarp.Architecture.Enumerations;
+  using TimeWarp.Foundation.Enumerations;
   using TimeWarp.Jaribu;
   using static TimeWarp.Jaribu.TestRunner;
 
@@ -228,4 +228,4 @@ namespace TimeWarp.Architecture.Enumerations.Jaribu.Tests
     }
   }
 
-} // namespace TimeWarp.Architecture.Enumerations.Jaribu.Tests
+} // namespace TimeWarp.Foundation.Enumerations.Jaribu.Tests

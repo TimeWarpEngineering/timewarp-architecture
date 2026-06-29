@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Foundation.Features;
 
 /// <summary>
 /// Utlimate Base Class for Requests and Responses

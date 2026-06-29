@@ -1,6 +1,6 @@
 @moxy
 @attribute required string RouteTemplate
-@attribute required TimeWarp.Architecture.Features.HttpVerb HttpVerb
+@attribute required TimeWarp.Foundation.Features.HttpVerb HttpVerb
 @moxy
 
 {{

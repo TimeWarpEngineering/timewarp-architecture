@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Foundation.Features;
 
 public interface IAuthApiRequest : IApiRequest
 {

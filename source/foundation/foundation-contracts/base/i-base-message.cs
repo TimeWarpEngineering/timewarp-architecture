@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Foundation.Features;
 
 /// <summary>
 /// Ultimate Base interface marker for Requests and Responses

@@ -4,6 +4,14 @@
 
   <!-- Suppress CA warnings that existed in original Common.Contracts/Common.Domain code -->
   <PropertyGroup>
-    <NoWarn>$(NoWarn);CA1002;CA1034;CA1036;CA1040;CA1062;CA1303;CA1304;CA1311;CA1715;CA1720;CA1725;CA1819;CA1852;CA1861;CA2007;CA2016;CA2201;CA2227;RS0030</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;CA1002;CA1034;CA1036;CA1040;CA1062;CA1303;CA1304;CA1311;CA1715;CA1720;CA1725;CA1819;CA1852;CA1861;CA2007;CA2016;CA2201;CA2227;RS0030</NoWarn>
+  </PropertyGroup>
+
+  <!-- Make the foundation projects packable (TimeWarp.Foundation.*, task 051). Version + shared
+       metadata (Authors/RepositoryUrl/License/Icon) are inherited from source/Directory.Build.props
+       so every source/ package shares the single repo version. Per-project PackageId in each csproj. -->
+  <PropertyGroup Label="Packaging">
+    <IsPackable>true</IsPackable>
+    <PackageTags>timewarp;foundation;architecture;cqrs;mediator;ddd</PackageTags>
   </PropertyGroup>
 </Project>

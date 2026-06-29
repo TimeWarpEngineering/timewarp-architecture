@@ -1,4 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>TimeWarp.Foundation.Domain</PackageId>
+    <Title>TimeWarp.Foundation.Domain</Title>
+    <Description>Domain primitives (Enumeration, base entities, value types) for the TimeWarp foundation layer.</Description>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="TimeWarp.Mediator" />
   </ItemGroup>

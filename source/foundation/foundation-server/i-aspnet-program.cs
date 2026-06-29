@@ -1,2 +1,2 @@
-namespace TimeWarp.Architecture;
+namespace TimeWarp.Foundation;
 public interface IAspNetProgram : IAspNetModule { }

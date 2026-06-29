@@ -58,7 +58,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
     );
 
     // Add HttpClient pointing to the YARP gateway from Aspire
-    services.AddHttpClient(Configuration.ServiceNames.ApiServiceName, c => c.BaseAddress = new Uri(baseUrl));
+    services.AddHttpClient(TimeWarp.Foundation.Configuration.ServiceNames.ApiServiceName, c => c.BaseAddress = new Uri(baseUrl));
 
     // Configure JSON serializer options
     services.Configure<JsonSerializerOptions>(options =>

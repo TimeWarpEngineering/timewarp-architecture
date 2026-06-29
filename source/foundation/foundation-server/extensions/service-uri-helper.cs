@@ -1,4 +1,4 @@
-namespace TimeWarp.Architecture.Extensions;
+namespace TimeWarp.Foundation.Extensions;
 
 public static class ServiceUriHelper
 {

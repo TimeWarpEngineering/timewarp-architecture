@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Api.Server.Integration.Tests.Infrastructure;
 
 using global::Aspire.Hosting;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
-using Services;
+using TimeWarp.Architecture.Services;
 using System.Text.Json;
 using AspireConstants = TimeWarp.Architecture.Aspire.Constants;
 
