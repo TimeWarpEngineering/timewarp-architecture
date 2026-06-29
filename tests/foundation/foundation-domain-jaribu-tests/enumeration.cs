@@ -1,5 +1,5 @@
 #!/usr/bin/env -S dotnet --
-#:project ../../../source/foundation/foundation-domain/foundation-domain.csproj
+#:project $(SourceDirectory)foundation/foundation-domain/foundation-domain.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
 
