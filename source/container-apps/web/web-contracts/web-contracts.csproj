@@ -37,19 +37,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-contracts\foundation-contracts.csproj"/>
+    <ProjectReference Include="..\..\..\foundation\foundation-contracts\foundation-contracts.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Contracts" Condition="'$(UseFoundationPackages)' == 'true'" />
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\RouteMixin.mixin">
-      <Link>mixins\RouteMixin.mixin</Link>
-    </AdditionalFiles>
-    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\IOpenDataQueryParametersMixin.mixin">
-      <Link>mixins\IOpenDataQueryParametersMixin.mixin</Link>
-    </AdditionalFiles>
-    <AdditionalFiles Include="..\..\..\foundation\foundation-contracts\mixins\IAuthApiRequestMixin.mixin">
-      <Link>mixins\IAuthApiRequestMixin.mixin</Link>
-    </AdditionalFiles>
+    <!-- The foundation-contracts mixins (RouteMixin, IAuthApiRequestMixin, IOpenDataQueryParametersMixin)
+         are now a bundled Roslyn source generator (task 053-001). In repo mode (project refs) the
+         generator is referenced as an Analyzer; in package mode it flows from the
+         TimeWarp.Foundation.Contracts package automatically. -->
+    <ProjectReference Include="..\..\..\foundation\foundation-contracts-generators\foundation-contracts-generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      Condition="'$(UseFoundationPackages)' != 'true'" />
   </ItemGroup>
 
   <ItemGroup>

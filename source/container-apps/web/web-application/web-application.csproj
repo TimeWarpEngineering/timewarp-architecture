@@ -5,7 +5,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-application\foundation-application.csproj" />
+    <ProjectReference Include="..\..\..\foundation\foundation-application\foundation-application.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Application" Condition="'$(UseFoundationPackages)' == 'true'" />
     <ProjectReference Include="..\web-contracts\web-contracts.csproj" />
     <ProjectReference Include="..\web-domain\web-domain.csproj" />
   </ItemGroup>

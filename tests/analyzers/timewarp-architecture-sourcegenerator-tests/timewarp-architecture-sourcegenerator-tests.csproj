@@ -12,5 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../../source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
+    <ProjectReference Include="../../../source/foundation/foundation-contracts-generators/foundation-contracts-generators.csproj" />
   </ItemGroup>
 </Project>

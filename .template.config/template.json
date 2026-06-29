@@ -89,6 +89,14 @@
           "exclude": [
             "source/container-apps/web/web-spa/features/event-stream/**"
           ]
+        },
+        {
+          "condition": "(foundationPackages)",
+          "exclude": [
+            "source/foundation/**",
+            "source/libraries/timewarp-modules/**",
+            "tests/foundation/**"
+          ]
         }
       ]
     }
@@ -139,6 +147,12 @@
     "postgres": {
       "type": "parameter",
       "description": "Add Postgres Features",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "foundationPackages": {
+      "type": "parameter",
+      "description": "Reference the published TimeWarp.Foundation.* NuGet packages instead of copying the foundation source into the generated app",
       "datatype": "bool",
       "defaultValue": "true"
     }

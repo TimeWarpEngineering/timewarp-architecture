@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Roslyn source generator that replaces the foundation-contracts Moxy mixins (task 053-001).
+       Targets net10.0 (inherited from Directory.Build.props, matching timewarp-architecture-analyzers)
+       and ships as an analyzer asset inside the TimeWarp.Foundation.Contracts package. We do NOT
+       target netstandard2.0 — that only matters for hosts running Roslyn on .NET Framework (Visual
+       Studio); the dotnet CLI build host is .NET. Not packed on its own. -->
+  <PropertyGroup>
+    <RootNamespace>TimeWarp.Foundation.Contracts.Generators</RootNamespace>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <IsPackable>false</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- CA1031: generators must be resilient. RS1041: distributing for the compiler host. -->
+    <NoWarn>$(NoWarn);RS1041;CA1031;CA1062;NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

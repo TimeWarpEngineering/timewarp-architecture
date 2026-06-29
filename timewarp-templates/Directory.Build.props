@@ -2,7 +2,7 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- Single repo-wide version (shared with source/). This tree is standalone (does not import the
        root Directory.Build.props), so it imports the shared version file directly. -->
-  <Import Project="$(MSBuildThisFileDirectory)../Directory.Version.props" />
+  <Import Project="$(MSBuildThisFileDirectory)../Directory.Version.props" Condition="'$(Version)' == ''" />
 
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>
