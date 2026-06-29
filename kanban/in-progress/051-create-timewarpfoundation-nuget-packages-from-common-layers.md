@@ -93,3 +93,34 @@ Regular NuGets are preferred over source-only packages because:
 - Current project locations: `Source/Common/*`
 - Template projects will consume these via NuGet instead of project reference
 - Client projects are separate repos owned by different clients
+
+## Progress (2026-06-29 — in-repo build-out)
+
+**Phase 1 — namespace rename: DONE & verified.** Renamed all 19 foundation-owned namespaces
+`TimeWarp.Architecture.*` → `TimeWarp.Foundation.*` (+ the RouteMixin.mixin HttpVerb type), and
+updated every consumer (container-apps, tests, analyzers): 11 exclusive namespaces replaced, 8
+shared-with-app namespaces got the Foundation using added per-project, relative/fully-qualified
+refs fixed, an `IBaseRequest` alias added in web-spa. Generator: `BaseFastEndpoint` →
+`TimeWarp.Foundation.Features`; `RouteMixinAttribute` stays `TimeWarp.Architecture` (Moxy emits it
+there). `dev build` green; api integration 6 passed; source-gen 5/5; Enumeration Fixie 21 + Jaribu 21.
+
+**Phase 2 — packaging: DONE & verified.** Added shared packaging props to
+`source/foundation/Directory.Build.props` (IsPackable, license, repo URL, tags, SourceLink via
+PublishRepositoryUrl/EmbedUntrackedSources, snupkg). Per-project PackageId/Title/Description:
+`TimeWarp.Foundation.{Domain,Contracts,Application,Infrastructure,Server}`. Also made the
+foundation dependency `timewarp-modules` packable as `TimeWarp.Modules`. All 6 pack cleanly to a
+local feed with symbol packages and correct inter-package deps (e.g. Application → Contracts +
+Domain + Modules; Server → Infrastructure). Version `1.0.0-beta.1` from TimeWarp.Build.Tasks.
+
+**Phase 3 — CI publish: DONE (in-repo).** `.github/workflows/timewarp-foundation.yml` packs the 6
+packages and pushes to nuget.org on master changes under `source/foundation/`. *Requires the
+existing `PUBLISH_TO_NUGET_ORG` secret to actually publish — that step is yours.*
+
+## Remaining (blocked / external)
+
+- **Phase 4 — repoint the template to reference the packages (amends 064).** BLOCKED on the
+  packages being published: a generated app can't `PackageReference` `TimeWarp.Foundation.*` until
+  they exist on the feed. Once published, exclude `source/foundation/**` from the template content
+  and swap the container-apps' foundation `<ProjectReference>` for `<PackageReference>` (the repo
+  keeps project refs for local dev; the template emits package refs). Verify via `dotnet new` + build.
+- **Phase 5 — per-repo client update agents.** Lives in the separate client repos, not here.

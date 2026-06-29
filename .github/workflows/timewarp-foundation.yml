@@ -1,0 +1,50 @@
+name: timewarp-foundation.yml
+
+# Packs and publishes the TimeWarp.Foundation.* NuGet packages (task 051) from source/foundation/
+# plus TimeWarp.Modules (a foundation dependency). Versions are computed by TimeWarp.Build.Tasks.
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'source/foundation/**'
+      - 'source/libraries/timewarp-modules/**'
+      - '.github/workflows/timewarp-foundation.yml'
+  workflow_dispatch:
+
+jobs:
+  publish-foundation:
+    runs-on: ubuntu-latest
+    env:
+      CI: 'true'
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so TimeWarp.Build.Tasks can derive the version
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pack foundation packages
+        run: |
+          for proj in \
+            source/libraries/timewarp-modules/timewarp-modules.csproj \
+            source/foundation/foundation-domain/foundation-domain.csproj \
+            source/foundation/foundation-contracts/foundation-contracts.csproj \
+            source/foundation/foundation-application/foundation-application.csproj \
+            source/foundation/foundation-infrastructure/foundation-infrastructure.csproj \
+            source/foundation/foundation-server/foundation-server.csproj
+          do
+            dotnet pack "$proj" -c Release -o ./artifacts/nuget
+          done
+
+      - name: Publish to NuGet.org
+        run: |
+          dotnet nuget push "./artifacts/nuget/*.nupkg" \
+            --skip-duplicate \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key ${{ secrets.PUBLISH_TO_NUGET_ORG }}
