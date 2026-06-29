@@ -1,45 +1,80 @@
 name: CI/CD
 
+# Mirrors the TimeWarp.Nuru / TimeWarp.Amuru pattern: one job, one "Run CI Pipeline" step that
+# calls the C# `dev workflow` command. Mode is auto-detected from GITHUB_EVENT_NAME inside the
+# command (push/PR -> build+test; release/dispatch -> build+pack+push, no test gate). Publishing
+# uses OIDC Trusted Publishing (no stored API key) and only runs on a published release.
+
 on:
   push:
-    branches: [ master, main ]
+    branches:
+      - master
+    paths:
+      - 'source/**'
+      - 'tests/**'
+      - 'timewarp-templates/**'
+      - '.template.config/**'
+      - 'tools/**'
+      - 'msbuild/**'
+      - '.github/workflows/**'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
+      - 'Directory.Version.props'
   pull_request:
-    branches: [ master, main ]
+    branches:
+      - master
+    paths:
+      - 'source/**'
+      - 'tests/**'
+      - 'timewarp-templates/**'
+      - '.template.config/**'
+      - 'tools/**'
+      - 'msbuild/**'
+      - '.github/workflows/**'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
+      - 'Directory.Version.props'
+  release:
+    types: [published]
   workflow_dispatch:
-    inputs:
-      target:
-        description: 'Publish target: foundation | template | all'
-        default: all
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-      - name: Build
-        run: dotnet run tools/dev-cli/dev.cs -- build
-      - name: Test
-        run: dotnet run tools/dev-cli/dev.cs -- test
+    permissions:
+      contents: read
+      id-token: write  # Required for NuGet Trusted Publishing (OIDC)
 
-  # Pack + push NuGet packages. All logic lives in C# (tools/dev-cli/endpoints/publish-command.cs);
-  # this is a thin trigger. Single repo version (Directory.Version.props) → all packages move
-  # together, so `--target all` + --skip-duplicate is idempotent (only the bumped version pushes).
-  publish:
-    needs: build
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    runs-on: ubuntu-latest
-    env:
-      CI: 'true'
-      NUGET_API_KEY: ${{ secrets.PUBLISH_TO_NUGET_ORG }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # full history for SourceLink / version metadata
-      - uses: actions/setup-dotnet@v4
+          fetch-depth: 0  # full history for SourceLink / version metadata
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Publish
-        run: dotnet run tools/dev-cli/dev.cs -- publish --target ${{ github.event.inputs.target || 'all' }}
+
+      - name: NuGet login (OIDC Trusted Publishing)
+        if: github.event_name == 'release'
+        id: nuget-login
+        uses: nuget/login@v1
+        with:
+          user: TimeWarp.Enterprises
+
+      - name: Run CI Pipeline
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            dotnet run tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          else
+            dotnet run tools/dev-cli/dev.cs -- workflow
+          fi
+
+      - name: Upload Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Packages-${{ github.run_number }}
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: ignore

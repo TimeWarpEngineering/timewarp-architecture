@@ -112,14 +112,22 @@ foundation dependency `timewarp-modules` packable as `TimeWarp.Modules`. All 6 p
 local feed with symbol packages and correct inter-package deps (e.g. Application → Contracts +
 Domain + Modules; Server → Infrastructure). Version `1.0.0-beta.1` from TimeWarp.Build.Tasks.
 
-**Phase 3 — CI publish: DONE (in-repo), logic moved to C#.** Publish logic now lives in the `dev`
-CLI: `tools/dev-cli/endpoints/publish-command.cs` (`dev publish --target foundation|template|all`)
-packs + pushes via Amuru (`DotNet.Pack` / `DotNet.NuGet().Push(...).WithSkipDuplicate()`), reading
-the key from `NUGET_API_KEY`. The two YAML-heavy workflows (`timewarp-foundation.yml`,
-`timewarp-architecture.yml`) were replaced by one thin trigger `.github/workflows/publish.yml` that
-just calls `dotnet run tools/dev-cli/dev.cs -- publish`. Single repo version → all packages move
-together, so `--target all` + `--skip-duplicate` is idempotent (only the bumped version pushes).
-*Requires the existing `PUBLISH_TO_NUGET_ORG` secret (mapped to `NUGET_API_KEY`) to publish.*
+**Phase 3 — CI publish: DONE (in-repo), matches the TimeWarp.Nuru/Amuru pattern.** Publish logic
+lives in the mode-aware `dev workflow` command (`tools/dev-cli/endpoints/workflow-command.cs`):
+- **Pr/Merge** (push/PR): `clean -> build -> test` (tests gate here).
+- **Release** (release/dispatch): `clean -> build -> pack -> push` — **no test step**; a release
+  publishes as long as it builds. Packs the 7 publishable projects (6 foundation + template) to
+  `artifacts/packages` and pushes `*.nupkg` via Amuru (`DotNet.Pack`, `DotNet.NuGet().Push(...)
+  .WithSkipDuplicate()`). Mode auto-detected from `GITHUB_EVENT_NAME`.
+
+`.github/workflows/workflow.yml` is the single canonical CI file (one `ci` job, one "Run CI
+Pipeline" step calling `dev workflow`), with a `release: types:[published]` trigger and **OIDC
+Trusted Publishing** (`nuget/login@v1`, `id-token: write`, user `TimeWarp.Enterprises`) — no stored
+API key. Artifacts uploaded on every run. The standalone `publish-command.cs` and the separate
+`publish.yml`/`timewarp-foundation.yml`/`timewarp-architecture.yml` workflows were removed.
+
+*To publish: cut a GitHub Release. Requires nuget.org Trusted Publishing configured for the
+`TimeWarp.Foundation.*`, `TimeWarp.Modules`, and `TimeWarp.Architecture` package IDs.*
 
 ## Remaining (blocked / external)
 
