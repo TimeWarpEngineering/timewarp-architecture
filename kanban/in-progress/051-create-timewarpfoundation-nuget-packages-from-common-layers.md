@@ -112,9 +112,14 @@ foundation dependency `timewarp-modules` packable as `TimeWarp.Modules`. All 6 p
 local feed with symbol packages and correct inter-package deps (e.g. Application → Contracts +
 Domain + Modules; Server → Infrastructure). Version `1.0.0-beta.1` from TimeWarp.Build.Tasks.
 
-**Phase 3 — CI publish: DONE (in-repo).** `.github/workflows/timewarp-foundation.yml` packs the 6
-packages and pushes to nuget.org on master changes under `source/foundation/`. *Requires the
-existing `PUBLISH_TO_NUGET_ORG` secret to actually publish — that step is yours.*
+**Phase 3 — CI publish: DONE (in-repo), logic moved to C#.** Publish logic now lives in the `dev`
+CLI: `tools/dev-cli/endpoints/publish-command.cs` (`dev publish --target foundation|template|all`)
+packs + pushes via Amuru (`DotNet.Pack` / `DotNet.NuGet().Push(...).WithSkipDuplicate()`), reading
+the key from `NUGET_API_KEY`. The two YAML-heavy workflows (`timewarp-foundation.yml`,
+`timewarp-architecture.yml`) were replaced by one thin trigger `.github/workflows/publish.yml` that
+just calls `dotnet run tools/dev-cli/dev.cs -- publish`. Single repo version → all packages move
+together, so `--target all` + `--skip-duplicate` is idempotent (only the bumped version pushes).
+*Requires the existing `PUBLISH_TO_NUGET_ORG` secret (mapped to `NUGET_API_KEY`) to publish.*
 
 ## Remaining (blocked / external)
 
