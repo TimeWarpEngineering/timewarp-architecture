@@ -4,6 +4,7 @@
 #region Design
 // Executes dotnet restore, dotnet clean, then removes bin/obj folders via Directory.Delete
 // Handler stores Ct and RepoRoot as fields so private methods are zero-parameter
+// Streams dotnet output by default; --quiet captures and hides success output
 #endregion
 
 namespace DevCli.Commands;
@@ -11,9 +12,13 @@ namespace DevCli.Commands;
 [NuruRoute("clean", Description = "Clean solution and build artifacts")]
 internal sealed class CleanCommand : ICommand<Unit>
 {
+  [Option("quiet", "q", Description = "Hide clean output unless the command fails")]
+  public bool Quiet { get; set; }
+
   internal sealed class Handler : ICommandHandler<CleanCommand, Unit>
   {
     private readonly ITerminal Terminal;
+    private CleanCommand Command = null!;
     private CancellationToken Ct;
     private string RepoRoot = null!;
 
@@ -24,6 +29,7 @@ internal sealed class CleanCommand : ICommand<Unit>
 
     public async ValueTask<Unit> Handle(CleanCommand command, CancellationToken ct)
     {
+      Command = command;
       Ct = ct;
 
       if (!FindRepoRoot()) return Value;
@@ -53,23 +59,35 @@ internal sealed class CleanCommand : ICommand<Unit>
     private async Task<bool> RestoreAsync()
     {
       Terminal.WriteLine("\nRestoring packages...");
-      CommandOutput result = await DotNet.Restore()
+      DotNetRestoreBuilder builder = DotNet.Restore()
         .WithWorkingDirectory(RepoRoot)
-        .WithNoValidation()
-        .CaptureAsync(Ct);
+        .WithNoValidation();
 
-      return ReportResult(result, "dotnet restore failed!");
+      if (Command.Quiet)
+      {
+        CommandOutput capture = await builder.CaptureAsync(Ct);
+        return CommandExecution.ReportCapture(Terminal, capture, "dotnet restore failed!");
+      }
+
+      ExecutionResult execution = await builder.PassthroughAsync(Ct);
+      return CommandExecution.ReportPassthrough(Terminal, execution, "dotnet restore failed!");
     }
 
     private async Task<bool> CleanAsync()
     {
       Terminal.WriteLine("\nCleaning solution...");
-      CommandOutput result = await DotNet.Clean()
+      DotNetCleanBuilder builder = DotNet.Clean()
         .WithWorkingDirectory(RepoRoot)
-        .WithNoValidation()
-        .CaptureAsync(Ct);
+        .WithNoValidation();
 
-      return ReportResult(result, "dotnet clean failed!");
+      if (Command.Quiet)
+      {
+        CommandOutput capture = await builder.CaptureAsync(Ct);
+        return CommandExecution.ReportCapture(Terminal, capture, "dotnet clean failed!");
+      }
+
+      ExecutionResult execution = await builder.PassthroughAsync(Ct);
+      return CommandExecution.ReportPassthrough(Terminal, execution, "dotnet clean failed!");
     }
 
     private void DeleteBinObjDirectories()
@@ -100,19 +118,6 @@ internal sealed class CleanCommand : ICommand<Unit>
       }
 
       Terminal.WriteLine("Deleted all obj and bin directories.");
-    }
-
-    private bool ReportResult(CommandOutput result, string failureMessage)
-    {
-      if (!result.Success)
-      {
-        Terminal.WriteErrorLine(result.Combined);
-        Terminal.WriteErrorLine(failureMessage.Red());
-        Environment.ExitCode = 1;
-        return false;
-      }
-
-      return true;
     }
   }
 }

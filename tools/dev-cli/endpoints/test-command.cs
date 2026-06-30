@@ -4,6 +4,7 @@
 #region Design
 // Executes dotnet test for all tests in the repository
 // Handler stores Ct and RepoRoot as fields so private methods are zero-parameter
+// Streams per-project output by default; --quiet captures and hides success output
 #endregion
 
 namespace DevCli.Commands;
@@ -11,9 +12,13 @@ namespace DevCli.Commands;
 [NuruRoute("test", Description = "Run the test suite")]
 internal sealed class TestCommand : ICommand<Unit>
 {
+  [Option("quiet", "q", Description = "Hide test output unless a project fails")]
+  public bool Quiet { get; set; }
+
   internal sealed class Handler : ICommandHandler<TestCommand, Unit>
   {
     private readonly ITerminal Terminal;
+    private TestCommand Command = null!;
     private CancellationToken Ct;
     private string RepoRoot = null!;
 
@@ -24,6 +29,7 @@ internal sealed class TestCommand : ICommand<Unit>
 
     public async ValueTask<Unit> Handle(TestCommand command, CancellationToken ct)
     {
+      Command = command;
       Ct = ct;
 
       if (!FindRepoRoot()) return Value;
@@ -66,16 +72,23 @@ internal sealed class TestCommand : ICommand<Unit>
       foreach (string project in projects)
       {
         Terminal.WriteLine($"\nTesting {Path.GetFileNameWithoutExtension(project)}...");
-        CommandOutput result = await Shell.Builder("dotnet")
-          .WithArguments("test", project, "--configuration", "Release")
+        DotNetTestBuilder builder = DotNet.Test()
+          .WithProject(project)
+          .WithConfiguration("Release")
           .WithWorkingDirectory(RepoRoot)
-          .WithNoValidation()
-          .RunAndCaptureAsync(Ct);
+          .WithNoValidation();
 
-        if (!result.Success)
+        if (Command.Quiet)
         {
-          Terminal.WriteErrorLine(result.Combined);
-          allPassed = false;
+          CommandOutput result = await builder.CaptureAsync(Ct);
+          if (!CommandExecution.ReportCapture(Terminal, result, "Tests failed!"))
+            allPassed = false;
+        }
+        else
+        {
+          ExecutionResult result = await builder.PassthroughAsync(Ct);
+          if (!CommandExecution.ReportPassthrough(Terminal, result, "Tests failed!"))
+            allPassed = false;
         }
       }
 

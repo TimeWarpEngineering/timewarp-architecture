@@ -4,7 +4,7 @@
 #region Design
 // Discovers the repository root dynamically using Git.FindRoot()
 // Handler stores Command and Ct as fields so private methods are zero-parameter
-// ReportResult handles verbose/error output consistently across steps
+// Streams MSBuild output by default (PassthroughAsync); --quiet captures and hides success output
 #endregion
 
 namespace DevCli.Commands;
@@ -15,8 +15,8 @@ internal sealed class BuildCommand : ICommand<Unit>
   [Option("clean", "c", Description = "Clean before building")]
   public bool Clean { get; set; }
 
-  [Option("verbose", "v", Description = "Verbose output")]
-  public bool Verbose { get; set; }
+  [Option("quiet", "q", Description = "Hide build output unless the command fails")]
+  public bool Quiet { get; set; }
 
   internal sealed class Handler : ICommandHandler<BuildCommand, Unit>
   {
@@ -65,12 +65,18 @@ internal sealed class BuildCommand : ICommand<Unit>
       string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
 
       Terminal.WriteLine($"\nCleaning {solutionFile}...");
-      CommandOutput result = await DotNet.Clean()
+      DotNetCleanBuilder builder = DotNet.Clean()
         .WithProject(solutionFile)
-        .WithNoValidation()
-        .CaptureAsync(Ct);
+        .WithNoValidation();
 
-      return ReportResult(result, "Clean failed!");
+      if (Command.Quiet)
+      {
+        CommandOutput capture = await builder.CaptureAsync(Ct);
+        return CommandExecution.ReportCapture(Terminal, capture, "Clean failed!");
+      }
+
+      ExecutionResult execution = await builder.PassthroughAsync(Ct);
+      return CommandExecution.ReportPassthrough(Terminal, execution, "Clean failed!");
     }
 
     private async Task<bool> BuildAsync()
@@ -78,30 +84,19 @@ internal sealed class BuildCommand : ICommand<Unit>
       string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
 
       Terminal.WriteLine($"\nBuilding {solutionFile}...");
-      CommandOutput result = await DotNet.Build()
+      DotNetBuildBuilder builder = DotNet.Build()
         .WithProject(solutionFile)
         .WithConfiguration("Release")
-        .WithNoValidation()
-        .CaptureAsync(Ct);
+        .WithNoValidation();
 
-      return ReportResult(result, "Build failed!");
-    }
-
-    private bool ReportResult(CommandOutput result, string failureMessage)
-    {
-      if (Command.Verbose)
-        Terminal.WriteLine(result.Combined);
-
-      if (!result.Success)
+      if (Command.Quiet)
       {
-        if (!Command.Verbose)
-          Terminal.WriteErrorLine(result.Combined);
-        Terminal.WriteErrorLine(failureMessage.Red());
-        Environment.ExitCode = 1;
-        return false;
+        CommandOutput capture = await builder.CaptureAsync(Ct);
+        return CommandExecution.ReportCapture(Terminal, capture, "Build failed!");
       }
 
-      return true;
+      ExecutionResult execution = await builder.PassthroughAsync(Ct);
+      return CommandExecution.ReportPassthrough(Terminal, execution, "Build failed!");
     }
   }
 }

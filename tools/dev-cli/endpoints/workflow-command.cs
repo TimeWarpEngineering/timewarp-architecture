@@ -134,19 +134,14 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       foreach (string relativeProject in PackableProjects)
       {
         Terminal.WriteLine($"\nPacking {relativeProject}...");
-        CommandOutput result = await DotNet.Pack(Path.Combine(RepoRoot, relativeProject))
+        ExecutionResult result = await DotNet.Pack(Path.Combine(RepoRoot, relativeProject))
           .WithConfiguration("Release")
           .WithOutput(outputDir)
           .WithNoValidation()
-          .CaptureAsync(Ct);
+          .PassthroughAsync(Ct);
 
-        if (!result.Success)
-        {
-          Terminal.WriteErrorLine(result.Combined);
-          Terminal.WriteErrorLine($"Pack failed for {relativeProject}!".Red());
-          Environment.ExitCode = 1;
+        if (!CommandExecution.ReportPassthrough(Terminal, result, $"Pack failed for {relativeProject}!"))
           return false;
-        }
       }
 
       return true;
@@ -164,22 +159,14 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       string glob = Path.Combine(RepoRoot, "artifacts", "packages", "*.nupkg");
       Terminal.WriteLine($"\nPushing {glob} to nuget.org...");
 
-      CommandOutput result = await DotNet.NuGet()
+      ExecutionResult result = await DotNet.NuGet()
         .Push(glob)
         .WithApiKey(apiKey)
         .WithSource("https://api.nuget.org/v3/index.json")
         .WithSkipDuplicate()
-        .CaptureAsync(Ct);
+        .PassthroughAsync(Ct);
 
-      if (!result.Success)
-      {
-        Terminal.WriteErrorLine(result.Combined);
-        Terminal.WriteErrorLine("Push failed!".Red());
-        Environment.ExitCode = 1;
-        return false;
-      }
-
-      return true;
+      return CommandExecution.ReportPassthrough(Terminal, result, "Push failed!");
     }
 
     private async Task<bool> RunStepAsync(string stepName, ValueTask<Unit> step)
