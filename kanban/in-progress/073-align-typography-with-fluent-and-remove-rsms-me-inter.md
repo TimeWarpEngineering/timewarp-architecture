@@ -20,9 +20,9 @@ Aligning with Fluent gives zero extra font downloads, consistent UI chrome, and 
 
 ## Checklist
 
-- [ ] Remove the `<link rel="stylesheet" href="https://rsms.me/inter/inter.css">` from
-      `web-server/components/App.razor` (and any related comment).
-- [ ] Update `--twe-font-sans` in `web-spa/wwwroot/css/tokens.css` to reference Fluent's own token:
+- [x] Remove the `<link rel="stylesheet" href="https://rsms.me/inter/inter.css">` from
+      `web-server/components/App.razor` (and any related comment). Done (removed the link + `@* add inter font *@`).
+- [x] Update `--twe-font-sans` in `web-spa/wwwroot/css/tokens.css` to reference Fluent's own token:
       `--twe-font-sans: var(--fontFamilyBase, sans-serif);`. **Confirmed available** — FluentUI v5
       ships `--fontFamilyBase`/`--fontFamilyMonospace`/`--fontFamilyNumeric` and its own `reboot.css`
       uses `font-family: var(--fontFamilyBase)`; the value (Segoe UI Variable stack) is set at runtime
@@ -32,11 +32,21 @@ Aligning with Fluent gives zero extra font downloads, consistent UI chrome, and 
         fallback (`var(--fontFamilyBase, sans-serif)`) to cover the prerender/pre-hydration window.
       - Fallback if you ever want zero JS dependency: an explicit
         `"Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif` stack.
-- [ ] Confirm `app.css` and any component CSS that sets `font-family` still consume
-      `var(--twe-font-sans)` — no stray `Inter` references.
-- [ ] Visual smoke-check: shell (`TimeWarpPage`), cards, tables, and Fluent buttons/inputs should
-      read as one type system (no obvious mismatch between custom HTML and Fluent components).
-- [ ] Note the decision in this task's Notes (which token/stack was chosen and why).
+- [x] Confirm `app.css` and any component CSS that sets `font-family` still consume
+      `var(--twe-font-sans)` — no stray `Inter` references. Done: only consumer is `app.css:15`
+      (`body { font-family: var(--twe-font-sans); }`); repo-wide grep for `Inter`/`rsms.me` is clean.
+- [ ] **Visual smoke-check (manual, needs a running app):** shell (`TimeWarpPage`), cards, tables, and
+      Fluent buttons/inputs should read as one type system. Couldn't verify headlessly — do this on the
+      next `dev run`.
+- [x] Note the decision in this task's Notes (which token/stack was chosen and why).
+
+## Decision (implemented)
+
+`--twe-font-sans: var(--fontFamilyBase, sans-serif);` — references FluentUI v5's own base type token so
+content text matches Fluent components exactly and auto-tracks Fluent's choice (currently the Segoe UI
+Variable stack, set at runtime by Fluent's design-token JS). Trailing `sans-serif` covers the
+prerender/pre-hydration window. Removed the rsms.me Inter `<link>`. web-server builds clean.
+Only the manual visual smoke-check remains.
 
 ## Notes
 
