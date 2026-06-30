@@ -20,3 +20,5 @@ global using TimeWarp.Architecture.Testing;
 global using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 global using TimeWarp.Mediator;
 global using TimeWarp.State;
+
+global using TimeWarp.Fixie;

@@ -31,3 +31,11 @@ Failing tests (in `fast-endpoint-source-generator-tests.cs` / `*-more-tests.cs`)
 
 The project IS wired into `timewarp-architecture.slnx`, so `dev test` (and CI) currently runs these
 4 reds. Accepted intentionally (Steven) to surface the debt rather than hide it; this task clears it.
+
+## Resolution (DONE)
+
+Fixed during the task 051 namespace migration and confirmed through the 053 source-generator work:
+the test harness (`generator-test-harness.cs`) now passes `build_property.EnableApiEndpointGeneration`
+and references the trigger attributes/stub `BaseFastEndpoint` in `TimeWarp.Foundation.Features`, so all
+FastEndpoint tests recognize the sample endpoints. The whole source-generator suite is **green** —
+14/14 (the original 5 FastEndpoint + 3 contracts-mixin + 3 state-access + 3 page generator tests).

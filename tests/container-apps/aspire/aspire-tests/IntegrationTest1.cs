@@ -20,7 +20,8 @@ public class IntegrationTest1
     await app.StartAsync();
 
     // Act
-    HttpClient httpClient = app.CreateHttpClient("api");
+    // Resource name must match the AppHost registration (Constants.ApiServerProjectResourceName).
+    HttpClient httpClient = app.CreateHttpClient("api-server");
     HttpResponseMessage response = await httpClient.GetAsync("api/weatherforecast?Days=10");
 
     // Assert
