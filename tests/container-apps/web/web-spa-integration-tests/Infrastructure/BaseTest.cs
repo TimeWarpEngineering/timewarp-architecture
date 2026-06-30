@@ -19,12 +19,12 @@ public abstract class BaseTest
   /// </summary>
   /// <param name="spaTestApplication"></param>
   /// <remarks>The response to Spa Actions is always 'Unit' because the handler updates the state.</remarks>
-  public BaseTest(ISpaTestApplication spaTestApplication)
+  protected BaseTest(ISpaTestApplication spaTestApplication)
   {
-    ServiceScopeFactory = spaTestApplication.ServiceProvider.GetService<IServiceScopeFactory>();
+    ServiceScopeFactory = spaTestApplication.ServiceProvider.GetRequiredService<IServiceScopeFactory>();
     ServiceScope = ServiceScopeFactory.CreateScope();
-    Sender = ServiceScope.ServiceProvider.GetService<ISender>();
-    Store = ServiceScope.ServiceProvider.GetService<IStore>();
+    Sender = ServiceScope.ServiceProvider.GetRequiredService<ISender>();
+    Store = ServiceScope.ServiceProvider.GetRequiredService<IStore>();
   }
 
   protected Task<TResponse> Send<TResponse>(IRequest<TResponse> request) => Send(request);

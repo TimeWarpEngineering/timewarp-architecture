@@ -18,7 +18,7 @@ public class Should
     string json = JsonSerializer.Serialize(weatherForecast, jsonSerializerOptions);
 
     //Act
-    TWeatherForecast parsed = JsonSerializer.Deserialize<TWeatherForecast>(json, jsonSerializerOptions);
+    TWeatherForecast parsed = JsonSerializer.Deserialize<TWeatherForecast>(json, jsonSerializerOptions)!;
 
     //Assert
     weatherForecast.TemperatureC.ShouldBe(parsed.TemperatureC);

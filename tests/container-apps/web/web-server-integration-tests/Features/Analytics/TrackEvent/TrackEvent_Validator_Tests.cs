@@ -4,7 +4,7 @@ using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 
 public class Validate_Should
 {
-  private Validator Validator;
+  private Validator Validator = new();
 
   public void Be_Valid()
   {
