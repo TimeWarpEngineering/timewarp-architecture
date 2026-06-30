@@ -88,4 +88,18 @@ Replace generation currently provided by:
 
 ## Implementation Notes
 
-(Track progress and decisions here once work begins)
+Progress (chipping away; Moxy mixin count 9 → 2):
+- **053-001 (done):** the 3 foundation-contracts mixins (`RouteMixin`, `IAuthApiRequestMixin`,
+  `IOpenDataQueryParametersMixin`) → bundled Roslyn generator in `foundation-contracts-generators`,
+  shipped in the `TimeWarp.Foundation.Contracts` package. (Drove 051 Phase 4.)
+- **StateAccessMixin (done):** → `StateAccessSourceGenerator` in `timewarp-architecture-analyzers`
+  (web-spa already references it as an Analyzer; no packaging boundary). Emits the
+  `BaseComponent`/`BaseHandler<TAction>` accessors + the marker attribute into `$(RootNamespace)`.
+  3 tests added.
+- **Removed dead mixins (not converted):** orphan `IQueryStringRouteProviderMixin` (0 usages) and the
+  5 Entity-Centric CQRS mixins (`CreateCommand`/`DeleteCommand`/`UpdateCommand`/`GetQuery`/
+  `GetListQuery` — only a commented-out usage; the DTO is slated for removal).
+
+**Remaining (2):** `web-spa/mixins/Page.mixin` (the complex one — `[Page("/route")]` routing) and
+`web-contracts/features/analytics/TrackEventValidiation.mixin`. Moxy + `Morris.Moxy` stay until both
+are converted.

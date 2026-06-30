@@ -99,7 +99,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="features\base\StateAccessMixin.mixin"/>
     <AdditionalFiles Include="mixins\Page.mixin"/>
   </ItemGroup>
 
