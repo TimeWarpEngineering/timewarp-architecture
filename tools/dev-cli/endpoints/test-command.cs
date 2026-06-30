@@ -49,16 +49,38 @@ internal sealed class TestCommand : ICommand<Unit>
 
     private async Task<bool> TestAsync()
     {
-      Terminal.WriteLine("Running test suite...");
-      CommandOutput result = await Shell.Builder("dotnet")
-        .WithArguments("test", "--configuration", "Release")
-        .WithWorkingDirectory(RepoRoot)
-        .WithNoValidation()
-        .RunAndCaptureAsync(Ct);
+      // Run test projects ONE AT A TIME. The integration suites spin up real web/api/yarp hosts on
+      // FIXED ports (web=7000, api=7255 shared by the web + api suites, yarp=8443), so running the
+      // whole solution at once lets concurrent hosts collide on those ports and fail spuriously.
+      // Globbing the tests/ tree (rather than the .slnx) keeps this correct in a generated app where
+      // feature-flagged test projects are physically excluded.
+      string testsDirectory = Path.Combine(RepoRoot, "tests");
+      string[] projects = Directory
+        .GetFiles(testsDirectory, "*.csproj", SearchOption.AllDirectories)
+        .Where(p => !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                 && !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+        .OrderBy(p => p, StringComparer.Ordinal)
+        .ToArray();
 
-      if (!result.Success)
+      bool allPassed = true;
+      foreach (string project in projects)
       {
-        Terminal.WriteErrorLine(result.Combined);
+        Terminal.WriteLine($"\nTesting {Path.GetFileNameWithoutExtension(project)}...");
+        CommandOutput result = await Shell.Builder("dotnet")
+          .WithArguments("test", project, "--configuration", "Release")
+          .WithWorkingDirectory(RepoRoot)
+          .WithNoValidation()
+          .RunAndCaptureAsync(Ct);
+
+        if (!result.Success)
+        {
+          Terminal.WriteErrorLine(result.Combined);
+          allPassed = false;
+        }
+      }
+
+      if (!allPassed)
+      {
         Terminal.WriteErrorLine("Tests failed!".Red());
         Environment.ExitCode = 1;
         return false;

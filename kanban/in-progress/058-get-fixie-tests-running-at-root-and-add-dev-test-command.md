@@ -148,3 +148,28 @@ PASS — `dev test` builds + runs them but they require Docker/Aspire orchestrat
 Host strategy is shared with E2E work ([[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases--payment-flow]]).
 The legacy `TimeWarp.Architecture/` wrapper (old slnx + `*.ps1` referencing the gone `Source/`)
 is already orphaned and is a separate cleanup (047).
+
+## Progress (2026-06-30)
+
+Tests are at root + in the `.slnx` + `dev test` exists (the migration/wiring from the original
+description is done). Reconciled the actual failures that kept CI red:
+
+- **`timewarp-testing`** is shared test *infrastructure* (TestingConvention, WebApplicationHost, test
+  applications) with no tests of its own — but it carried `Fixie.TestAdapter`, so `dotnet test` ran
+  Fixie against zero tests → `RunnerException`/`ThrowNoElementsException`. Fixed with
+  `<IsTestProject>false</IsTestProject>`.
+- **aspire-tests** `Resource 'api' not found` — the stub test used `CreateHttpClient("api")`; the
+  AppHost registers it as `Constants.ApiServerProjectResourceName` = `"api-server"`. Fixed; passes (1).
+- **Cross-project port collision** — the integration hosts bind FIXED ports (web=7000, api=7255 shared
+  by the web + api suites, yarp=8443), so running the whole solution at once made concurrent hosts
+  collide (web-server passed alone, failed in the full run). `dev test` now runs test projects
+  **sequentially** (globs `tests/**/*.csproj`). web-server recovered (11 pass).
+
+**Green now:** analyzers 8, source-gen 14, foundation 21+1, api-server 6, aspire 1, web-server 11.
+
+**Remaining blocker — web-spa-integration-tests (9 fail):** the state `Initialize()` test helpers call
+`TimeWarp.State.State<T>.ThrowIfNotTestAssembly(...)`, which throws `System.FieldAccessException` on
+.NET 10 in TimeWarp.State **12.0.0-beta.1** (an upstream bug — NOT related to the mixin→generator
+work). `12.0.0-beta.3` fixes the library but ships breaking API changes (`ActionHandler.Handle` →
+`ValueTask<Unit>`, `INotification` changes) that require migrating the web-spa state handlers. See
+decision below / separate task.

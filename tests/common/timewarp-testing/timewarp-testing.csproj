@@ -3,6 +3,10 @@
     <DefineConstants>api;yarp;web</DefineConstants>
     <RootNamespace>TimeWarp.Architecture.Testing</RootNamespace>
     <NoWarn>$(NoWarn);CS0436</NoWarn>
+    <!-- Shared test-support library (TestingConvention, WebApplicationHost, test applications) used by
+         the integration suites — it has no tests of its own. Mark it so `dotnet test` skips it instead
+         of running Fixie against zero tests (which throws a RunnerException). -->
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FakeItEasy" />
