@@ -35,6 +35,14 @@ public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestA
     IJSRuntime fakeJsRuntime = A.Fake<IJSRuntime>();
     serviceCollection.Replace(ServiceDescriptor.Scoped(_ => fakeJsRuntime));
 
+    // The ExceptionNotificationHandler shows a FluentUI toast (IToastService), which needs a rendered
+    // <FluentToastProvider> component not present in headless tests — it throws
+    // FluentServiceProviderException. IToastService can't be faked/stubbed (FluentUI's
+    // IFluentServiceBase<T> has internal interface members). Toasts are a UI concern, so drop that
+    // handler here (mirrors the IJSRuntime fake above); the error-path state tests still exercise
+    // rollback via the StateTransactionBehavior.
+    serviceCollection.RemoveAll<TimeWarp.Mediator.INotificationHandler<TimeWarp.Features.StateTransactions.ExceptionNotification>>();
+
     // Could replace ICurrentUserService here with a logged in one for tests that need to have logged in user.
 
     //ICurrentUserService fakeCurrentUserService = A.Fake<ICurrentUserService>();

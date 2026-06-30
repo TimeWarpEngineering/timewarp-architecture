@@ -1,6 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <NoWarn>$(NoWarn);CS0436</NoWarn>
+    <!-- TimeWarp.State's test-only State.Initialize() guards with
+         `if (!assembly.FullName.Contains("Test"))` — a CASE-SENSITIVE check for capital "Test".
+         The kebab-case project name ("web-spa-integration-tests") has lowercase "tests" and fails it,
+         so Initialize() throws FieldAccessException. Force a capital "Tests" into the assembly name.
+         (Remove once TimeWarp.State is upgraded past 12.0.0-beta.1, which has this fixed — see 058.) -->
+    <AssemblyName>web-spa-integration-Tests</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Testing" />
