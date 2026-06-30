@@ -11,9 +11,11 @@ global using System.Collections.Generic;
 global using System.Diagnostics;
 global using System.Runtime.CompilerServices;
 global using System.Runtime.InteropServices;
+global using System.Xml.Linq;
 
 global using TimeWarp.Nuru;
 global using static TimeWarp.Nuru.Unit;
 global using TimeWarp.Amuru;
 global using TimeWarp.Terminal;
+global using DevCli;
 global using Microsoft.Extensions.DependencyInjection;

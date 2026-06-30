@@ -4,7 +4,7 @@
 #region Design
 // Executes dotnet test for all tests in the repository
 // Handler stores Ct and RepoRoot as fields so private methods are zero-parameter
-// Streams per-project output by default; --quiet captures and hides success output
+// Streams per-project output via Amuru RunAsync by default; --quiet uses CaptureAsync
 #endregion
 
 namespace DevCli.Commands;
@@ -72,24 +72,15 @@ internal sealed class TestCommand : ICommand<Unit>
       foreach (string project in projects)
       {
         Terminal.WriteLine($"\nTesting {Path.GetFileNameWithoutExtension(project)}...");
-        DotNetTestBuilder builder = DotNet.Test()
+        CommandResult command = DotNet.Test()
           .WithProject(project)
           .WithConfiguration("Release")
           .WithWorkingDirectory(RepoRoot)
-          .WithNoValidation();
+          .WithNoValidation()
+          .Build();
 
-        if (Command.Quiet)
-        {
-          CommandOutput result = await builder.CaptureAsync(Ct);
-          if (!CommandExecution.ReportCapture(Terminal, result, "Tests failed!"))
-            allPassed = false;
-        }
-        else
-        {
-          ExecutionResult result = await builder.PassthroughAsync(Ct);
-          if (!CommandExecution.ReportPassthrough(Terminal, result, "Tests failed!"))
-            allPassed = false;
-        }
+        if (!await ExecuteAsync(command))
+          allPassed = false;
       }
 
       if (!allPassed)
@@ -100,6 +91,24 @@ internal sealed class TestCommand : ICommand<Unit>
       }
 
       return true;
+    }
+
+    private async Task<bool> ExecuteAsync(CommandResult command)
+    {
+      if (Command.Quiet)
+      {
+        CommandOutput result = await command.CaptureAsync(Ct);
+        if (!result.Success)
+        {
+          Terminal.WriteErrorLine(result.Combined);
+          return false;
+        }
+
+        return true;
+      }
+
+      int exitCode = await command.RunAsync(Ct);
+      return exitCode == 0;
     }
   }
 }

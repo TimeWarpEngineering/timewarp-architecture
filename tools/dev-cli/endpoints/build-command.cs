@@ -4,7 +4,7 @@
 #region Design
 // Discovers the repository root dynamically using Git.FindRoot()
 // Handler stores Command and Ct as fields so private methods are zero-parameter
-// Streams MSBuild output by default (PassthroughAsync); --quiet captures and hides success output
+// Streams MSBuild output via Amuru RunAsync by default; --quiet uses CaptureAsync
 #endregion
 
 namespace DevCli.Commands;
@@ -65,18 +65,12 @@ internal sealed class BuildCommand : ICommand<Unit>
       string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
 
       Terminal.WriteLine($"\nCleaning {solutionFile}...");
-      DotNetCleanBuilder builder = DotNet.Clean()
+      CommandResult command = DotNet.Clean()
         .WithProject(solutionFile)
-        .WithNoValidation();
+        .WithNoValidation()
+        .Build();
 
-      if (Command.Quiet)
-      {
-        CommandOutput capture = await builder.CaptureAsync(Ct);
-        return CommandExecution.ReportCapture(Terminal, capture, "Clean failed!");
-      }
-
-      ExecutionResult execution = await builder.PassthroughAsync(Ct);
-      return CommandExecution.ReportPassthrough(Terminal, execution, "Clean failed!");
+      return await ExecuteAsync(command, "Clean failed!");
     }
 
     private async Task<bool> BuildAsync()
@@ -84,19 +78,40 @@ internal sealed class BuildCommand : ICommand<Unit>
       string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
 
       Terminal.WriteLine($"\nBuilding {solutionFile}...");
-      DotNetBuildBuilder builder = DotNet.Build()
+      CommandResult command = DotNet.Build()
         .WithProject(solutionFile)
         .WithConfiguration("Release")
-        .WithNoValidation();
+        .WithNoValidation()
+        .Build();
 
+      return await ExecuteAsync(command, "Build failed!");
+    }
+
+    private async Task<bool> ExecuteAsync(CommandResult command, string failureMessage)
+    {
       if (Command.Quiet)
       {
-        CommandOutput capture = await builder.CaptureAsync(Ct);
-        return CommandExecution.ReportCapture(Terminal, capture, "Build failed!");
+        CommandOutput result = await command.CaptureAsync(Ct);
+        if (!result.Success)
+        {
+          Terminal.WriteErrorLine(result.Combined);
+          Terminal.WriteErrorLine(failureMessage.Red());
+          Environment.ExitCode = 1;
+          return false;
+        }
+
+        return true;
       }
 
-      ExecutionResult execution = await builder.PassthroughAsync(Ct);
-      return CommandExecution.ReportPassthrough(Terminal, execution, "Build failed!");
+      int exitCode = await command.RunAsync(Ct);
+      if (exitCode != 0)
+      {
+        Terminal.WriteErrorLine(failureMessage.Red());
+        Environment.ExitCode = exitCode;
+        return false;
+      }
+
+      return true;
     }
   }
 }

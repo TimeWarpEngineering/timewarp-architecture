@@ -38,12 +38,14 @@ internal sealed class WorkflowCommand : ICommand<Unit>
   internal sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
   {
     private readonly ITerminal Terminal;
+    private readonly IRepoCleanService RepoCleanService;
     private CancellationToken Ct;
     private string RepoRoot = null!;
 
-    public Handler(ITerminal terminal)
+    public Handler(ITerminal terminal, IRepoCleanService repoCleanService)
     {
       Terminal = terminal;
+      RepoCleanService = repoCleanService;
     }
 
     public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
@@ -105,7 +107,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("Pipeline: clean -> build -> test\n");
       Environment.ExitCode = 0;
 
-      if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal).Handle(new CleanCommand(), Ct))) return;
+      if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
       if (!await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand(), Ct))) return;
 
@@ -118,7 +120,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("Pipeline: clean -> build -> pack -> push\n");
       Environment.ExitCode = 0;
 
-      if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal).Handle(new CleanCommand(), Ct))) return;
+      if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
       if (!await PackAsync()) return;
       if (!await PushAsync(apiKey)) return;
@@ -134,14 +136,18 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       foreach (string relativeProject in PackableProjects)
       {
         Terminal.WriteLine($"\nPacking {relativeProject}...");
-        ExecutionResult result = await DotNet.Pack(Path.Combine(RepoRoot, relativeProject))
+        int exitCode = await DotNet.Pack(Path.Combine(RepoRoot, relativeProject))
           .WithConfiguration("Release")
           .WithOutput(outputDir)
           .WithNoValidation()
-          .PassthroughAsync(Ct);
+          .RunAsync(Ct);
 
-        if (!CommandExecution.ReportPassthrough(Terminal, result, $"Pack failed for {relativeProject}!"))
+        if (exitCode != 0)
+        {
+          Terminal.WriteErrorLine($"Pack failed for {relativeProject}!".Red());
+          Environment.ExitCode = exitCode;
           return false;
+        }
       }
 
       return true;
@@ -159,14 +165,21 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       string glob = Path.Combine(RepoRoot, "artifacts", "packages", "*.nupkg");
       Terminal.WriteLine($"\nPushing {glob} to nuget.org...");
 
-      ExecutionResult result = await DotNet.NuGet()
+      int exitCode = await DotNet.NuGet()
         .Push(glob)
         .WithApiKey(apiKey)
         .WithSource("https://api.nuget.org/v3/index.json")
         .WithSkipDuplicate()
-        .PassthroughAsync(Ct);
+        .RunAsync(Ct);
 
-      return CommandExecution.ReportPassthrough(Terminal, result, "Push failed!");
+      if (exitCode != 0)
+      {
+        Terminal.WriteErrorLine("Push failed!".Red());
+        Environment.ExitCode = exitCode;
+        return false;
+      }
+
+      return true;
     }
 
     private async Task<bool> RunStepAsync(string stepName, ValueTask<Unit> step)
