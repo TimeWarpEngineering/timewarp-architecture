@@ -15,11 +15,6 @@
   <ItemGroup>
     <AdditionalFiles Include="features\analytics\TrackEventValidiation.mixin"/>
     <AdditionalFiles Include="features\analytics\track-event-validiation.mixin.cs"/>
-    <AdditionalFiles Include="mixins\DeleteCommand.mixin"/>
-    <AdditionalFiles Include="mixins\GetListQuery.mixin"/>
-    <AdditionalFiles Include="mixins\GetQuery.mixin"/>
-    <AdditionalFiles Include="mixins\CreateCommand.mixin"/>
-    <AdditionalFiles Include="mixins\UpdateCommand.mixin"/>
   </ItemGroup>
 
   <ItemGroup>
