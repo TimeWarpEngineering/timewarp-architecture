@@ -17,7 +17,7 @@ public class ScopedSender : ISender
   // TODO: Implement this method when needed
   public IAsyncEnumerable<TResponse> CreateStream<TResponse>
   (
-    IStreamRequest<TResponse> streamRequest,
+    IStreamRequest<TResponse> request,
     CancellationToken cancellationToken = default
   ) => throw new NotImplementedException();
 

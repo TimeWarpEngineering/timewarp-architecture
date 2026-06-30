@@ -4,7 +4,7 @@
 #region Design
 // Discovers the repository root dynamically using Git.FindRoot()
 // Handler stores Command and Ct as fields so private methods are zero-parameter
-// ReportResult handles verbose/error output consistently across steps
+// Streams MSBuild output via Amuru RunAsync by default; --quiet uses CaptureAsync
 #endregion
 
 namespace DevCli.Commands;
@@ -15,8 +15,8 @@ internal sealed class BuildCommand : ICommand<Unit>
   [Option("clean", "c", Description = "Clean before building")]
   public bool Clean { get; set; }
 
-  [Option("verbose", "v", Description = "Verbose output")]
-  public bool Verbose { get; set; }
+  [Option("quiet", "q", Description = "Hide build output unless the command fails")]
+  public bool Quiet { get; set; }
 
   internal sealed class Handler : ICommandHandler<BuildCommand, Unit>
   {
@@ -65,12 +65,12 @@ internal sealed class BuildCommand : ICommand<Unit>
       string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
 
       Terminal.WriteLine($"\nCleaning {solutionFile}...");
-      CommandOutput result = await DotNet.Clean()
+      CommandResult command = DotNet.Clean()
         .WithProject(solutionFile)
         .WithNoValidation()
-        .CaptureAsync(Ct);
+        .Build();
 
-      return ReportResult(result, "Clean failed!");
+      return await ExecuteAsync(command, "Clean failed!");
     }
 
     private async Task<bool> BuildAsync()
@@ -78,26 +78,36 @@ internal sealed class BuildCommand : ICommand<Unit>
       string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
 
       Terminal.WriteLine($"\nBuilding {solutionFile}...");
-      CommandOutput result = await DotNet.Build()
+      CommandResult command = DotNet.Build()
         .WithProject(solutionFile)
         .WithConfiguration("Release")
         .WithNoValidation()
-        .CaptureAsync(Ct);
+        .Build();
 
-      return ReportResult(result, "Build failed!");
+      return await ExecuteAsync(command, "Build failed!");
     }
 
-    private bool ReportResult(CommandOutput result, string failureMessage)
+    private async Task<bool> ExecuteAsync(CommandResult command, string failureMessage)
     {
-      if (Command.Verbose)
-        Terminal.WriteLine(result.Combined);
-
-      if (!result.Success)
+      if (Command.Quiet)
       {
-        if (!Command.Verbose)
+        CommandOutput result = await command.CaptureAsync(Ct);
+        if (!result.Success)
+        {
           Terminal.WriteErrorLine(result.Combined);
+          Terminal.WriteErrorLine(failureMessage.Red());
+          Environment.ExitCode = 1;
+          return false;
+        }
+
+        return true;
+      }
+
+      int exitCode = await command.RunAsync(Ct);
+      if (exitCode != 0)
+      {
         Terminal.WriteErrorLine(failureMessage.Red());
-        Environment.ExitCode = 1;
+        Environment.ExitCode = exitCode;
         return false;
       }
 

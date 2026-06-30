@@ -58,7 +58,7 @@ public class SpaTestApplication<TViaTestServerApplication, TProgram> : ISpaTestA
     CancellationToken cancellationToken = default
   ) => ScopedSender.Send(request, cancellationToken);
 
-  public Task<object> Send(object request, CancellationToken cancellationToken = default) =>
+  public Task<object?> Send(object request, CancellationToken cancellationToken = default) =>
     ScopedSender.Send(request, cancellationToken);
 
 }

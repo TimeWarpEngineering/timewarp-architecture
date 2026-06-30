@@ -35,7 +35,7 @@ public class Clone_Should : BaseTest
 
     //Assert
     WeatherForecastsState.ShouldNotBeSameAs(clone);
-    WeatherForecastsState.WeatherForecasts.Count.ShouldBe(clone.WeatherForecasts.Count);
+    WeatherForecastsState.WeatherForecasts!.Count.ShouldBe(clone.WeatherForecasts!.Count);
     WeatherForecastsState.Guid.ShouldNotBe(clone.Guid);
     WeatherForecastsState.WeatherForecasts[0].TemperatureC.ShouldBe(clone.WeatherForecasts[0].TemperatureC);
     WeatherForecastsState.WeatherForecasts[0].ShouldNotBeSameAs(clone.WeatherForecasts[0]);

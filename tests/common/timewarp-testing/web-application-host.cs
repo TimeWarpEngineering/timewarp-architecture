@@ -71,7 +71,7 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
     catch (Exception)
     {
       Console.WriteLine("======= Failed to Start WebApplication Disposing ======");
-      WebApplication.DisposeAsync().GetAwaiter().GetResult();
+      WebApplication.DisposeAsync().AsTask().GetAwaiter().GetResult();
       Console.WriteLine("======= WebApplication.Disposed ======");
       throw;
     }
@@ -88,7 +88,7 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
     }
 
     Console.WriteLine("==== Now dispose of WebApplication ====");
-    WebApplication?.DisposeAsync();
+    await WebApplication.DisposeAsync();
   }
 
   public async ValueTask DisposeAsync()

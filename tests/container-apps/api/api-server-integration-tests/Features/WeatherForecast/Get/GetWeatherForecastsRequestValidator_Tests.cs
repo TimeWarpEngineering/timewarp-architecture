@@ -4,7 +4,7 @@ using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts
 
 public class Validate_Should
 {
-  private Validator Validator;
+  private Validator Validator = new();
 
   public void Be_Valid()
   {

@@ -1,0 +1,7 @@
+{
+  // Per-repo configuration for TimeWarp.Nuru.DevCli shared endpoints
+  "checkVersionConfig": {
+    // git-tag: compare repo Version to latest GitHub release (release workflow)
+    "checkVersionStrategy": "git-tag"
+  }
+}

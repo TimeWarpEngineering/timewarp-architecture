@@ -64,8 +64,8 @@ public class Returns
     sharedProblemDetails.Extensions.ShouldContainKey("errors");
 
     // Deserialize the JSON content in sharedProblemDetails.Extensions["errors"]
-    string errorsJson = sharedProblemDetails.Extensions["errors"].ToString();
-    Dictionary<string, List<string>> errors = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(errorsJson);
+    string errorsJson = sharedProblemDetails.Extensions["errors"]?.ToString() ?? string.Empty;
+    Dictionary<string, List<string>> errors = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(errorsJson) ?? [];
 
   // Validate the structure and values of the deserialized object
   KeyValuePair<string, List<string>> daysError = errors.Single(kvp => kvp.Key.Contains("Days", StringComparison.OrdinalIgnoreCase));

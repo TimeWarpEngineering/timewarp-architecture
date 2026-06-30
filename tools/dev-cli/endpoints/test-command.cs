@@ -4,6 +4,7 @@
 #region Design
 // Executes dotnet test for all tests in the repository
 // Handler stores Ct and RepoRoot as fields so private methods are zero-parameter
+// Streams per-project output via Amuru RunAsync by default; --quiet uses CaptureAsync
 #endregion
 
 namespace DevCli.Commands;
@@ -11,9 +12,13 @@ namespace DevCli.Commands;
 [NuruRoute("test", Description = "Run the test suite")]
 internal sealed class TestCommand : ICommand<Unit>
 {
+  [Option("quiet", "q", Description = "Hide test output unless a project fails")]
+  public bool Quiet { get; set; }
+
   internal sealed class Handler : ICommandHandler<TestCommand, Unit>
   {
     private readonly ITerminal Terminal;
+    private TestCommand Command = null!;
     private CancellationToken Ct;
     private string RepoRoot = null!;
 
@@ -24,6 +29,7 @@ internal sealed class TestCommand : ICommand<Unit>
 
     public async ValueTask<Unit> Handle(TestCommand command, CancellationToken ct)
     {
+      Command = command;
       Ct = ct;
 
       if (!FindRepoRoot()) return Value;
@@ -66,17 +72,15 @@ internal sealed class TestCommand : ICommand<Unit>
       foreach (string project in projects)
       {
         Terminal.WriteLine($"\nTesting {Path.GetFileNameWithoutExtension(project)}...");
-        CommandOutput result = await Shell.Builder("dotnet")
-          .WithArguments("test", project, "--configuration", "Release")
+        CommandResult command = DotNet.Test()
+          .WithProject(project)
+          .WithConfiguration("Release")
           .WithWorkingDirectory(RepoRoot)
           .WithNoValidation()
-          .RunAndCaptureAsync(Ct);
+          .Build();
 
-        if (!result.Success)
-        {
-          Terminal.WriteErrorLine(result.Combined);
+        if (!await ExecuteAsync(command))
           allPassed = false;
-        }
       }
 
       if (!allPassed)
@@ -87,6 +91,24 @@ internal sealed class TestCommand : ICommand<Unit>
       }
 
       return true;
+    }
+
+    private async Task<bool> ExecuteAsync(CommandResult command)
+    {
+      if (Command.Quiet)
+      {
+        CommandOutput result = await command.CaptureAsync(Ct);
+        if (!result.Success)
+        {
+          Terminal.WriteErrorLine(result.Combined);
+          return false;
+        }
+
+        return true;
+      }
+
+      int exitCode = await command.RunAsync(Ct);
+      return exitCode == 0;
     }
   }
 }

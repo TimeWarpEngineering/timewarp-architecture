@@ -24,6 +24,15 @@ internal sealed class TestAnalyzerConfigOptions : AnalyzerConfigOptions
         _options = options;
     }
 
-    public override bool TryGetValue(string key, out string value)
-        => _options.TryGetValue(key, out value);
+    public override bool TryGetValue(string key, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out string? value)
+    {
+        if (_options.TryGetValue(key, out string? existing))
+        {
+            value = existing;
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
 }

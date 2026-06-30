@@ -24,6 +24,11 @@ up properly:
    (`IFluentServiceBase<T>` has internal interface members). **Workaround:** the SPA test host
    (`spa-test-application.cs`) removes the `INotificationHandler<ExceptionNotification>`. Revisit when
    FluentUI test support improves, or render a toast provider in the harness.
+   **Proper fix (FluentUI v5 migration debt):** `FluentToast`/`FluentToastProvider`/`IToastService` are
+   **removed in FluentUI v5** — replaced by **`FluentMessageBar`** (per the v5 migration guide,
+   `/Migration/Toast`). Our `ExceptionNotificationHandler` still uses the removed `IToastService`. Migrate
+   it to `FluentMessageBar`; that likely also resolves the headless-test problem (and the test-host
+   handler-removal workaround can then go away). Belongs with the broader epic-059 FluentUI v5 cleanup.
 
 3. **Quarantined test.** `WeatherForecastsState_.FetchWeatherForecasts_Action_Should
    .Update_WeatherForecastState_With_WeatherForecasts_From_Server` is `[Skip]`-ped — the SPA's weather
