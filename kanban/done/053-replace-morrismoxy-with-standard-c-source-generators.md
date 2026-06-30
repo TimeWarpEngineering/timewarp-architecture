@@ -102,5 +102,14 @@ Progress (chipping away; Moxy mixin count 9 → 2):
   "no need… just an example" — replaced with the hand-written validator that was sitting commented
   out in `track-event.cs`; copic doesn't use it). web-contracts dropped its `Morris.Moxy` reference.
 
-**Remaining (1):** `web-spa/mixins/Page.mixin` — the complex `[Page("/route")]` routing one. Only
-web-spa still references `Morris.Moxy`; converting Page lets us drop Moxy entirely.
+- **Page (done):** `[Page("/route"[, Policy = ...])]` → `PageSourceGenerator` in
+  `timewarp-architecture-analyzers`. Emits the `[Route]` attribute, `INavigableComponent`/
+  `IStaticRoute` markers, static `GetPageUrl(...)`, the `Policy` accessor, and `[Parameter]` props.
+  3 tests added.
+
+**DONE.** All Moxy mixins are converted or removed. `Morris.Moxy` deleted from web-spa, web-contracts,
+and `Directory.Packages.props` — zero `.mixin` files and zero Moxy references remain in the repo.
+Source-gen test suite 14/14; full `dev build` green. The generators live where they belong:
+foundation contract generator bundled in the `TimeWarp.Foundation.Contracts` package; StateAccess +
+Page in `timewarp-architecture-analyzers` (template source, referenced by web-spa as an Analyzer).
+Follow-up: **053-002** (review/rename the `*Mixin` attribute names now that Moxy is gone).
