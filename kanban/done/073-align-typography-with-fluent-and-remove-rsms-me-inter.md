@@ -35,9 +35,9 @@ Aligning with Fluent gives zero extra font downloads, consistent UI chrome, and 
 - [x] Confirm `app.css` and any component CSS that sets `font-family` still consume
       `var(--twe-font-sans)` — no stray `Inter` references. Done: only consumer is `app.css:15`
       (`body { font-family: var(--twe-font-sans); }`); repo-wide grep for `Inter`/`rsms.me` is clean.
-- [ ] **Visual smoke-check (manual, needs a running app):** shell (`TimeWarpPage`), cards, tables, and
-      Fluent buttons/inputs should read as one type system. Couldn't verify headlessly — do this on the
-      next `dev run`.
+- [x] **Visual smoke-check — PASSED** (Style Guide page, running app): nav, logo, page/section titles,
+      the type-scale samples (28/18/14/12/11), and Fluent buttons all render as one type system
+      (Fluent's Segoe UI Variable). No Inter artifacts, no custom-HTML-vs-Fluent mismatch.
 - [x] Note the decision in this task's Notes (which token/stack was chosen and why).
 
 ## Decision (implemented)
