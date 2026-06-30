@@ -24,7 +24,7 @@ partial class ToastNotificationState
     internal class Handler
     (
       IStore store,
-      IToastService ToastService
+      INotificationService ToastService
     ) : BaseHandler<Action>(store)
     {
 
