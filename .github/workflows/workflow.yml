@@ -58,10 +58,12 @@ jobs:
 
       # Integration tests hit the servers over HTTPS with the ASP.NET dev certificate; trust it so the
       # runner's HttpClient doesn't fail with UntrustedRoot (passes locally only because the dev box
-      # already trusts it). Not needed for the release path (no tests), but harmless.
+      # already trusts it). On Linux, `--trust` writes the cert to ~/.aspnet/dev-certs/trust and exits
+      # 4 ("trusted by some clients") — OpenSSL (HttpClient) only honours it once that dir is on
+      # SSL_CERT_DIR (set on the Run CI Pipeline step below). See https://aka.ms/dev-certs-trust.
       - name: Trust HTTPS dev certificate
         if: github.event_name != 'release'
-        run: dotnet dev-certs https --trust
+        run: dotnet dev-certs https --trust || true
 
       - name: NuGet login (OIDC Trusted Publishing)
         if: github.event_name == 'release'
@@ -72,6 +74,8 @@ jobs:
 
       - name: Run CI Pipeline
         run: |
+          # Make OpenSSL (the runner's HttpClient) honour the trusted dev cert (see Trust step above).
+          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
           if [ "${{ github.event_name }}" == "release" ]; then
             dotnet run tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
           else
