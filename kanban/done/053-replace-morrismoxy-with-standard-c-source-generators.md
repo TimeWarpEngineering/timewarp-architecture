@@ -88,4 +88,28 @@ Replace generation currently provided by:
 
 ## Implementation Notes
 
-(Track progress and decisions here once work begins)
+Progress (chipping away; Moxy mixin count 9 → 2):
+- **053-001 (done):** the 3 foundation-contracts mixins (`RouteMixin`, `IAuthApiRequestMixin`,
+  `IOpenDataQueryParametersMixin`) → bundled Roslyn generator in `foundation-contracts-generators`,
+  shipped in the `TimeWarp.Foundation.Contracts` package. (Drove 051 Phase 4.)
+- **StateAccessMixin (done):** → `StateAccessSourceGenerator` in `timewarp-architecture-analyzers`
+  (web-spa already references it as an Analyzer; no packaging boundary). Emits the
+  `BaseComponent`/`BaseHandler<TAction>` accessors + the marker attribute into `$(RootNamespace)`.
+  3 tests added.
+- **Removed dead mixins (not converted):** orphan `IQueryStringRouteProviderMixin` (0 usages); the
+  5 Entity-Centric CQRS mixins (`CreateCommand`/`DeleteCommand`/`UpdateCommand`/`GetQuery`/
+  `GetListQuery` — only a commented-out usage); and `TrackEventValidiation` (author's own comment:
+  "no need… just an example" — replaced with the hand-written validator that was sitting commented
+  out in `track-event.cs`; copic doesn't use it). web-contracts dropped its `Morris.Moxy` reference.
+
+- **Page (done):** `[Page("/route"[, Policy = ...])]` → `PageSourceGenerator` in
+  `timewarp-architecture-analyzers`. Emits the `[Route]` attribute, `INavigableComponent`/
+  `IStaticRoute` markers, static `GetPageUrl(...)`, the `Policy` accessor, and `[Parameter]` props.
+  3 tests added.
+
+**DONE.** All Moxy mixins are converted or removed. `Morris.Moxy` deleted from web-spa, web-contracts,
+and `Directory.Packages.props` — zero `.mixin` files and zero Moxy references remain in the repo.
+Source-gen test suite 14/14; full `dev build` green. The generators live where they belong:
+foundation contract generator bundled in the `TimeWarp.Foundation.Contracts` package; StateAccess +
+Page in `timewarp-architecture-analyzers` (template source, referenced by web-spa as an Analyzer).
+Follow-up: **053-002** (review/rename the `*Mixin` attribute names now that Moxy is gone).

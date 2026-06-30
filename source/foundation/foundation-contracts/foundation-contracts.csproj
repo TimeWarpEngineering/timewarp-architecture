@@ -16,22 +16,12 @@
 
   <!-- The contracts mixins are now a Roslyn source generator (task 053-001). foundation-contracts
        only DEFINES the mixins (it doesn't apply them), so we build the generator (for ordering) but
-       do NOT run it here; we BUNDLE its dll into this package (analyzers/dotnet/cs) so consumers of
-       the package get the generator automatically via PackageReference. -->
-  <PropertyGroup>
-    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_BundleContractsGenerator</TargetsForTfmSpecificContentInPackage>
-  </PropertyGroup>
-
+       do NOT run it here; we BUNDLE its dll into this package as an analyzer asset (same pattern as
+       timewarp-nuru) so consumers of the package get the generator automatically via PackageReference. -->
   <ItemGroup>
     <ProjectReference Include="..\foundation-contracts-generators\foundation-contracts-generators.csproj"
                       ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="..\foundation-contracts-generators\bin\$(Configuration)\$(TargetFramework)\foundation-contracts-generators.dll"
+          Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
-
-  <Target Name="_BundleContractsGenerator">
-    <ItemGroup>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\foundation-contracts-generators\bin\$(Configuration)\net10.0\foundation-contracts-generators.dll">
-        <PackagePath>analyzers/dotnet/cs</PackagePath>
-      </TfmSpecificPackageFile>
-    </ItemGroup>
-  </Target>
 </Project>

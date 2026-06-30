@@ -1,7 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
-  <!-- Single repo-wide version, so the foundation PackageVersions below track it automatically. -->
-  <Import Project="$(MSBuildThisFileDirectory)Directory.Version.props" Condition="'$(Version)' == ''" />
   <!-- Central Package Management - add your package versions here -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -11,15 +9,16 @@
     <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0-beta.34" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.Components" Version="1.0.0-beta.2" />
-    <!-- Foundation packages (task 051). Referenced by container-apps ONLY when foundation source is
-         absent (i.e. in an app generated from the template); the repo itself uses project refs. The
-         version tracks the single repo-wide version in Directory.Version.props. -->
-    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="$(Version)" />
-    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="$(Version)" />
-    <PackageVersion Include="TimeWarp.Foundation.Application" Version="$(Version)" />
-    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="$(Version)" />
-    <PackageVersion Include="TimeWarp.Foundation.Server" Version="$(Version)" />
-    <PackageVersion Include="TimeWarp.Modules" Version="$(Version)" />
+    <!-- Foundation packages (task 051). Used ONLY by an app generated from the template (the repo
+         itself uses project refs). Pinned to the last PUBLISHED foundation version — which may lag
+         the repo's in-dev <Version> — so a generated app references packages that actually exist on
+         the feed. Bump these when a new foundation version is published. -->
+    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.2" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
@@ -34,7 +33,6 @@
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageVersion Include="libphonenumber-csharp" Version="9.0.33" />
-    <PackageVersion Include="Morris.Moxy" Version="1.10.0" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
     <PackageVersion Include="Passwordless" Version="2.0.0" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.80.0" />
