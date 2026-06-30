@@ -96,10 +96,11 @@ Progress (chipping away; Moxy mixin count 9 → 2):
   (web-spa already references it as an Analyzer; no packaging boundary). Emits the
   `BaseComponent`/`BaseHandler<TAction>` accessors + the marker attribute into `$(RootNamespace)`.
   3 tests added.
-- **Removed dead mixins (not converted):** orphan `IQueryStringRouteProviderMixin` (0 usages) and the
+- **Removed dead mixins (not converted):** orphan `IQueryStringRouteProviderMixin` (0 usages); the
   5 Entity-Centric CQRS mixins (`CreateCommand`/`DeleteCommand`/`UpdateCommand`/`GetQuery`/
-  `GetListQuery` — only a commented-out usage; the DTO is slated for removal).
+  `GetListQuery` — only a commented-out usage); and `TrackEventValidiation` (author's own comment:
+  "no need… just an example" — replaced with the hand-written validator that was sitting commented
+  out in `track-event.cs`; copic doesn't use it). web-contracts dropped its `Morris.Moxy` reference.
 
-**Remaining (2):** `web-spa/mixins/Page.mixin` (the complex one — `[Page("/route")]` routing) and
-`web-contracts/features/analytics/TrackEventValidiation.mixin`. Moxy + `Morris.Moxy` stay until both
-are converted.
+**Remaining (1):** `web-spa/mixins/Page.mixin` — the complex `[Page("/route")]` routing one. Only
+web-spa still references `Morris.Moxy`; converting Page lets us drop Moxy entirely.

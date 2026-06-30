@@ -5,19 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="features\analytics\track-event-validiation.mixin.cs"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="features\analytics\TrackEventValidiation.mixin"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="features\analytics\TrackEventValidiation.mixin"/>
-    <AdditionalFiles Include="features\analytics\track-event-validiation.mixin.cs"/>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="FluentValidation"/>
     <PackageReference Include="OneOf"/>
     <PackageReference Include="TimeWarp.Mediator"/>
@@ -26,7 +13,6 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"/>
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
     <PackageReference Include="Microsoft.Extensions.Options"/>
-    <PackageReference Include="Morris.Moxy" PrivateAssets="all" GeneratePathProperty="true"/>
     <PackageReference Include="Passwordless"/>
     <PackageReference Include="protobuf-net.Grpc"/>
   </ItemGroup>
