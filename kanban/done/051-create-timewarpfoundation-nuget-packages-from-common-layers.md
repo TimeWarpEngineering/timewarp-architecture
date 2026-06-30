@@ -4,6 +4,23 @@
 
 Extract the Common.* projects (Domain, Contracts, Application, Infrastructure, Server) into publishable NuGet packages under the `TimeWarp.Foundation.*` prefix. This enables 5-10 new client projects to reference shared code via NuGets instead of copying source, preventing drift while maintaining DRY principles.
 
+## Status: DONE (in-repo). Phase 5 is external.
+
+All in-repo phases are complete and merged (the checklist below predates the work — see **Progress**
+for what actually shipped):
+- **Phase 1** namespace rename `Common.* → TimeWarp.Foundation.*` ✅
+- **Phase 2** packaging (6 packages, single version, SourceLink, snupkg, icon) ✅
+- **Phase 3** CI publish — moved to C# `dev workflow` (release mode), OIDC Trusted Publishing ✅;
+  first publish at `2.0.0-beta.1` succeeded on nuget.org. (Bundled contract generator added in
+  **053-001** so the contract mixins cross the package boundary.)
+- **Phase 4** template references the packages via `UseFoundationPackages` / the `foundationPackages`
+  template symbol ✅ (verified `dotnet new` + build against a local feed).
+- **Phase 5** per-repo client update agents — **external** (lives in the client repos, e.g. copic);
+  not a deliverable of this repo. Tracked separately if/when those repos migrate.
+
+Note: nuget.org is published at `2.0.0-beta.1`; the repo is at `2.0.0-beta.2` (cut, publishes on the
+next release). The foundation `PackageVersion`s the template emits are pinned to the published version.
+
 ## Checklist
 
 ### Planning & Design
