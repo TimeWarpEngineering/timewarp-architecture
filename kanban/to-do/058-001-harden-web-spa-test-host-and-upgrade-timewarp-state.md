@@ -41,3 +41,13 @@ up properly:
 ## Notes
 
 Not blocking — `dev test` is green with these workarounds (72 passed / 6 skipped / 0 failed).
+
+## 4. Modernize integration tests to Aspire testing (the bigger one)
+
+The api/web/web-spa integration tests use a hand-rolled `WebApplicationHost` with FIXED ports
+(web=7000, api=7255, yarp=8443) and manual `HttpClient`s — the pre-Aspire pattern. That's what forced
+`dev test` to run sequentially (the suites collide on those ports). The modern approach is Aspire's
+`DistributedApplicationTestingBuilder` (already used by `aspire-tests`): dynamic ports + service
+discovery, no fixed-port management. Migrating would delete the sequential hack and the manual host.
+Note: the HTTPS dev-cert (`UntrustedRoot`) issue is orthogonal — even the Aspire test hit it; CI now
+runs `dotnet dev-certs https --trust` (the standard fix) rather than per-client handler bypass.

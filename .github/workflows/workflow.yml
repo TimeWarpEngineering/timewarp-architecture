@@ -56,6 +56,13 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # Integration tests hit the servers over HTTPS with the ASP.NET dev certificate; trust it so the
+      # runner's HttpClient doesn't fail with UntrustedRoot (passes locally only because the dev box
+      # already trusts it). Not needed for the release path (no tests), but harmless.
+      - name: Trust HTTPS dev certificate
+        if: github.event_name != 'release'
+        run: dotnet dev-certs https --trust
+
       - name: NuGet login (OIDC Trusted Publishing)
         if: github.event_name == 'release'
         id: nuget-login
