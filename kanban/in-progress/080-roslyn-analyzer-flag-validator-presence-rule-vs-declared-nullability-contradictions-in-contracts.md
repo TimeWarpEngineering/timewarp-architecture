@@ -44,16 +44,40 @@ Conversely: `string?` with **no** presence rule is **fine** — do not flag it.
   multiple statements, and shared-validator composition (`SetValidator`).
 
 ## Checklist
-- [ ] Analyzer project wiring (reuse the existing analyzer assembly + package plumbing).
-- [ ] Rule engine: map `RuleFor(...).NotEmpty()/.NotNull()` -> property symbols on `T`.
-- [ ] Follow `SetValidator(new XDetailsValidator())` into shared `AbstractValidator<IDetails>`.
-- [ ] Diagnostic A (nullable + presence rule) and Diagnostic B (`= string.Empty` + presence rule).
-- [ ] Fixie analyzer tests incl. the hard edges above + a negative test (`string?` w/o rule = clean).
-- [ ] Run across TWA contracts; confirm it retro-catches the 077 targets.
-- [ ] **Clear every violation the analyzer reports in this same PR** (that work *is* 077 —
-      `hello.cs`, `track-event.cs`, `create/update-todo-item.cs`, plus anything else it surfaces), so
-      the tree is green from the first commit that turns the rule on. See "Sequencing" below.
-- [ ] (Optional) code fix provider: nullable->non-nullable and `= string.Empty` -> `= null!`.
+- [x] Analyzer project wiring — **NEW analyzer-only assembly** `timewarp-architecture-contract-analyzers`
+      (see Results for why not the existing assembly).
+- [x] Rule engine: map `RuleFor(...).NotEmpty()/.NotNull()` -> property symbols on `T` (direct detection).
+- [ ] Follow `SetValidator(new XDetailsValidator())` into shared `AbstractValidator<IDetails>` —
+      **deferred** (not needed for the 077 targets; shared `AbstractValidator<IDetails>` are analyzed
+      *directly* against the interface, and no current concrete command masks a composed rule). Fast-follow.
+- [x] Diagnostic A (TWPA0002 nullable + presence rule) and B (TWPA0003 `= string.Empty`/`= ""` + presence rule).
+- [x] Fixie analyzer tests incl. hard edges (non-trivial lambda, whole-object `RuleFor(x => x)`) + negatives
+      (`string?` w/o rule, compliant `= null!`). 8 new tests; all 16 analyzer tests green.
+- [x] Run across TWA contracts (web-contracts): surfaced **exactly the 4 expected** violations, no extras.
+- [x] **Cleared every reported violation in this PR** (hello `Name`, track-event `EventName`,
+      create/update-todo-item `Title`). `dev build` green (0/0). See Results.
+- [ ] (Optional) code fix provider: nullable->non-nullable and `= string.Empty` -> `= null!` — deferred.
+
+## Results
+- **Delivery: new analyzer-only assembly** `source/analyzers/timewarp-architecture-contract-analyzers/`
+  (added to `.slnx`). *Why not the existing `timewarp-architecture-analyzers`:* that assembly also
+  contains the FastEndpoint source generator, which triggers on `[RouteMixin]` — abundant in
+  web-contracts — and would emit endpoint classes into a project that can't compile them. An
+  analyzer-only assembly is safe to reference from contracts (verified: no generator fired).
+- **Diagnostics:** `TWPA0002` (nullable + presence rule), `TWPA0003` (empty-string default + presence
+  rule). Registered in the new project's `AnalyzerReleases.Unshipped.md`; removed from the old one.
+- **Detection is direct** — `RuleFor(x => x.Prop)...NotEmpty()/NotNull()` inside `AbstractValidator<T>`,
+  checked against `T.Prop`. Whole-object rules and non-trivial lambda bodies are conservatively skipped;
+  `string?` **without** a presence rule is never flagged (legitimate optional field).
+- **Wired into web-contracts only** (this pass = 077 scope). First build reported precisely:
+  `hello.cs:8 Name` (A), `track-event.cs:9 EventName` (A), `create-todo-item.cs:11 Title` (B),
+  `update-todo-item.cs:10 Title` (B) — an exact match to 077's table. Fixed each to non-nullable `= null!`
+  (validators + `init`/`set` untouched). Full `dev build` green.
+- **Note fields intentionally left** `= string.Empty` (create/update-todo-item `Note`): no presence rule,
+  so not a contradiction this rule targets. 077 also listed `Note`->`string?` as a style cleanup; that is
+  *not* an analyzer violation and is out of this rule's scope (a mismatch we investigated and accepted).
+- **Fast-follows:** wire the analyzer into `api-contracts`/`grpc-contracts`/`foundation-contracts` and
+  fix whatever surfaces; optional `SetValidator` composition-following; optional code-fix provider.
 
 ## Sequencing — absorbs 077 (chosen: option 1)
 Do this **before** [[077-contracts-compliance-01-nullability-validator-agreement]] and fold 077's

@@ -8,7 +8,7 @@ public sealed partial class CreateTodoItem
 
     public int ListId { get; init; }
 
-    public string Title { get; init; } = string.Empty;
+    public string Title { get; init; } = null!;
 
     public int Priority { get; init; }
 

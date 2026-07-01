@@ -7,7 +7,7 @@ public sealed partial class UpdateTodoItem
   {
     public Guid TodoListId { get; init; }
 
-    public string Title { get; init; } = string.Empty;
+    public string Title { get; init; } = null!;
 
     public bool Done { get; init; }
 

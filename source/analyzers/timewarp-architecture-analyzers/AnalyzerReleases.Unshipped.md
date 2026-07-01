@@ -6,8 +6,6 @@
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
 TWPA0001 | Design | Warning | PartialClassDeclarationAnalyzer, [Documentation](https://github.com/TimeWarpEngineering/timewarp-architecture/blob/main/Documentation/Analyzers/TWPA0001.md)
-TWPA0002 | Design | Warning | ContractNullabilityValidatorAnalyzer: nullable property has a NotEmpty()/NotNull() presence rule
-TWPA0003 | Design | Warning | ContractNullabilityValidatorAnalyzer: required property has a fabricated empty-string default
 TWE001 | ApiEndpoint | Error | Endpoint class must be partial
 TWE002 | ApiEndpoint | Error | Missing Query/Command class
 TWE003 | ApiEndpoint | Error | Route conflict detected
