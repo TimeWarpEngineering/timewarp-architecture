@@ -279,7 +279,7 @@ propose a third option — with reasoning.**
 > |---|---|---|---|---|---|
 > | 1 | casing | discover/kebab | discover/kebab | agree — **kebab canonical, Pascal = 1-line "mirror if repo is Pascal"** (not symmetric) | **3–0** (GLM tightens) |
 > | 2 | plurality | plural | plural | plural — but winning arg is **TWA-consistency**, not "copic is mixed" | **3–0** |
-> | 3 | contract tests | new project | new project | **DISSENT** — round-trip on auto-property POCOs is tautological; require a test only when contract uses `required`/`init`/custom converter/non-default ctor | **2–1** ⚠️ |
+> | 3 | contract tests | new project | new project | **DISSENT** — round-trip on auto-property POCOs is tautological; require a test only when contract uses `required`/`init`/custom converter/non-default ctor | **2–1** ⚠️ → maintainer testimony rebuts the dissent's timeline premise (see Decision 3) |
 > | 4 | assertions | Shouldly | Shouldly | **third option** — parameterize; `BeEquivalentTo` semantics differ; **FluentAssertions v8 is commercially licensed** → still anti-FA | 3–0 *(anti-FA)*, GLM: don't hard-code either |
 > | 5 | Create Response | mixed | mixed | mixed — **discriminator must be "has invariants", NOT "trivial/id-only"** (`required init` skips Guard → `Guid.Empty` hole, copic `CreateModule.cs:31`) | **3–0** (GLM fixes the axis) |
 > | 6 | `IAuthApiRequest` | promote | promote | **DISSENT** — copic's server-side derivation is a valid competing design; TWA itself is split attribute-vs-manual; name is renamed by 053-002 → **"document as available (both forms), hold 'canonical' until post-rename"** | **2–1** ⚠️ |
@@ -315,6 +315,23 @@ propose a third option — with reasoning.**
 - **Trade-off:** (a) is the better pattern and makes "follow the skill" literally true, but adds a
   new project + CI wiring. (b) is zero-cost but weakens the skill's testability story.
 - **Author lean:** **(a)** create the project — it's small, fast, and is the pattern copic proved out.
+
+> **Maintainer testimony (2026-07-02) — rebuts the dissent's timeline premise.** In copic the
+> contracts were **written by the frontend developer** while the **backend was implemented by a
+> different developer**, and the backend **integration tests were written *after*** the contract
+> tests. In that window the contract serialization tests were the **only executable check on the
+> seam** — and the maintainer recalls they did catch real issues (specifics not remembered). GLM's
+> "tautological" argument implicitly assumes the integration test already exists to subsume the
+> round-trip; in the real timeline it did not. This is not a copic quirk — it is the **canonical BFF
+> workflow this skill teaches** (contracts + mock-backed SPA first, server later): a dedicated,
+> host-free contracts test project is the only test that can run in the contract-first window.
+>
+> **Emerging synthesis (not yet ruled):** adopt **(a)** — the project exists and runs host-free from
+> day one — and repurpose GLM's trigger list (`required`/`init`/custom converters/non-default ctors,
+> plus camelCase policy and `OneOf`/`SharedProblemDetails` envelopes) as **what to prioritize
+> testing**, not as a gate on the project existing. GLM's technical point survives as "don't write
+> ceremony round-trips for trivial POCOs once the server integration tests exist"; the process
+> point decides the default.
 
 ### Decision 4 — Assertion library in contract tests
 - **Options:** (a) **Shouldly** — TWA repo-wide standard; (b) **FluentAssertions** — copic + skill.
