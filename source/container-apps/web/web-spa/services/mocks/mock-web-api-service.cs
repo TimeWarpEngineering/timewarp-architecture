@@ -23,6 +23,7 @@ public class MockWebApiService : IWebServerApiService
     { typeof(GetCurrentUser.Query), GetCurrentUser.GetMockResponseFactory() },
     { typeof(GetRoles.Query),GetRoles.GetMockResponseFactory() },
     { typeof(GetRole.Query), GetRole.GetMockResponseFactory() },
+    { typeof(CreateRole.Command), CreateRole.GetMockResponseFactory() },
     { typeof(UpdateRole.Command), UpdateRole.GetMockResponseFactory()},
     { typeof(DeleteRole.Command), DeleteRole.GetMockResponseFactory()},
     { typeof(GetProfile.Query), GetProfile.GetMockResponseFactory() }

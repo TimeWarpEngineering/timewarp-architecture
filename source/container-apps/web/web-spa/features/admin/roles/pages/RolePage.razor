@@ -1,0 +1,22 @@
+@namespace TimeWarp.Architecture.Pages
+@using TimeWarp.Architecture.Features.Admin.Roles
+@inherits BaseComponent
+
+@code {
+  public static Icon? NavIcon => new Icons.Regular.Size20.Person();
+  public static string Title => "New Role";
+}
+
+<PageTitle>@Title</PageTitle>
+
+<TimeWarpPage Title="New Role">
+  <div class="twe-stack">
+    <p class="sg-subtitle">
+      Demo of the web-api-contracts binding pattern: this form binds to the
+      <code>IRoleDetails</code> interface and validates with the shared <code>RoleDetailsValidator</code>.
+    </p>
+    <Card Title="Role">
+      <RoleForm />
+    </Card>
+  </div>
+</TimeWarpPage>

@@ -81,23 +81,9 @@ public class Program
       }
     );
 
-    // TODO: Either Fix Petes or remove this and continue to use Blazored
-    // serviceCollection.AddFormValidation
-    // (
-    //   validationConfiguration =>
-    //   {
-    //     validationConfiguration.AddFluentValidation(typeof(Web.Spa.IAssemblyMarker).Assembly);
-    //     ServiceDescriptor serviceDescriptor =
-    //       serviceCollection.First
-    //       (
-    //         serviceDescriptor =>
-    //           serviceDescriptor.ServiceType.Name == nameof(ServiceCollectionOptionsValidator.ServiceValidator) &&
-    //           serviceDescriptor.Lifetime == ServiceLifetime.Scoped
-    //       );
-    //
-    //     serviceCollection.Remove(serviceDescriptor);
-    //   }
-    // );
+    // Form validation uses Blazilla (FluentValidation for EditForm). Components pass an explicit
+    // validator instance (e.g. <FluentValidator Validator="new RoleDetailsValidator()"/>), so no
+    // DI registration is required here. (Replaced the deprecated Blazored / unwired Morris path.)
 
     serviceCollection.AddScoped<ChatHubConnection>();
     serviceCollection.AddScoped<PasswordlessService>();

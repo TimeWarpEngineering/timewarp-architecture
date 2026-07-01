@@ -84,7 +84,7 @@
     <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.3" />
     <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="6.0.3" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.2.0" />
-    <PackageVersion Include="Morris.Blazor.FluentValidation" Version="3.2.0" />
+    <PackageVersion Include="Blazilla" Version="2.4.0" />
     <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.1" />
     <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.1" />
     <PackageVersion Include="timewarp-heroicons" Version="2.0.19" />

@@ -1,5 +1,7 @@
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
+using Authorization;
+
 public static partial class CreateRole
 {
   [RouteMixin("api/Roles", HttpVerb.Post)]
@@ -27,5 +29,10 @@ public static partial class CreateRole
     {
       RoleId = Guard.Against.NullOrEmpty(roleId);
     }
+  }
+
+  public static MockResponseFactory<Response> GetMockResponseFactory()
+  {
+    return _ => new Response(RoleIds.Administrator);
   }
 }
