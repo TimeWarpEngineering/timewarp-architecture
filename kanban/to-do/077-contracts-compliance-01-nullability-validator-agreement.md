@@ -58,6 +58,19 @@ Notes:
 - [ ] Diff is single-axis: only type annotations, initializers, and the contradicting validator
       lines changed. No mutability/shape/modifier churn.
 
+## Sequencing — driven by / merges into 080
+- **Do [[080-roslyn-analyzer-flag-validator-presence-rule-vs-declared-nullability-contradictions-in-contracts]] first.**
+  The analyzer encodes exactly this rule (Contradiction A = `string?` + presence rule,
+  Contradiction B = `= string.Empty` + presence rule) and, at Error severity under warnings-as-errors,
+  its first `dev build` **enumerates every violation with file+line** — an authoritative, exhaustive
+  worklist that supersedes the manual grep/table below.
+- **Chosen flow (option 1): fold this task's fixes into 080's PR.** Add the analyzer, run it, fix
+  everything it reports (that *is* this task), and commit together so `master` is never red. Landing
+  the analyzer-as-error with existing violations present would break the tree; fixing them in the same
+  change keeps it green and makes the analyzer a guard from its first commit.
+- The table below stays as the **expected** result to sanity-check the analyzer against — if 080
+  reports a file not listed here (or misses one that is), investigate before mass-fixing.
+
 ## Notes
 - This is compliance slice **#1 of N**. After it merges, the next task picks the next decision
   (candidates: Response shape / `BaseResponse` → ctor+Guard, mutability `init`→`set`, shell

@@ -50,7 +50,18 @@ Conversely: `string?` with **no** presence rule is **fine** — do not flag it.
 - [ ] Diagnostic A (nullable + presence rule) and Diagnostic B (`= string.Empty` + presence rule).
 - [ ] Fixie analyzer tests incl. the hard edges above + a negative test (`string?` w/o rule = clean).
 - [ ] Run across TWA contracts; confirm it retro-catches the 077 targets.
+- [ ] **Clear every violation the analyzer reports in this same PR** (that work *is* 077 —
+      `hello.cs`, `track-event.cs`, `create/update-todo-item.cs`, plus anything else it surfaces), so
+      the tree is green from the first commit that turns the rule on. See "Sequencing" below.
 - [ ] (Optional) code fix provider: nullable->non-nullable and `= string.Empty` -> `= null!`.
+
+## Sequencing — absorbs 077 (chosen: option 1)
+Do this **before** [[077-contracts-compliance-01-nullability-validator-agreement]] and fold 077's
+fixes into this PR. At Error severity under warnings-as-errors, shipping the analyzer with existing
+violations present would break `master`; adding the analyzer *and* fixing everything it reports in one
+change keeps the tree green and makes the rule a guard from commit one. 077's file/property table is
+the **expected** worklist — cross-check the analyzer's actual output against it (a mismatch either way
+is a signal to investigate before mass-fixing).
 
 ## Notes
 - Enforcement mechanism for [[077-contracts-compliance-01-nullability-validator-agreement]] — 077 is
