@@ -72,5 +72,16 @@
         </div>
       </Card>
 
+      <Card Title="Notifications (toasts)">
+        <p class="sg-subtitle">Dispatched through the app's ToastNotificationState pipeline. The last button throws inside an action to exercise the exception → toast path.</p>
+        <div class="sg-row">
+          <FluentButton Appearance="ButtonAppearance.Primary" data-qa="ToastInfo" OnClick="@(() => ShowToast(ToastIntent.Info, "Heads up — this is an info toast."))">Info</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Primary" data-qa="ToastSuccess" OnClick="@(() => ShowToast(ToastIntent.Success, "Saved successfully."))">Success</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Primary" data-qa="ToastWarning" OnClick="@(() => ShowToast(ToastIntent.Warning, "Careful — this is a warning."))">Warning</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Primary" data-qa="ToastError" OnClick="@(() => ShowToast(ToastIntent.Error, "Something went wrong."))">Error</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Outline" data-qa="ToastException" OnClick="TriggerException">Throw exception</FluentButton>
+        </div>
+      </Card>
+
     </div>
 </TimeWarpPage>

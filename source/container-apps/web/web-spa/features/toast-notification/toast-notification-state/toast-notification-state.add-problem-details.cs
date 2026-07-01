@@ -15,11 +15,11 @@ partial class ToastNotificationState
 
     internal sealed class Handler : BaseHandler<Action>
     {
-      private readonly IToastService ToastService;
+      private readonly INotificationService ToastService;
       public Handler
     (
       IStore store,
-        IToastService toastService
+        INotificationService toastService
       ) : base(store)
     {
         ToastService = toastService;
@@ -37,7 +37,6 @@ partial class ToastNotificationState
         {
           options.Intent = ToastIntent.Error;
           options.Title = message;
-          options.Timeout = 0;
         });
       }
     }

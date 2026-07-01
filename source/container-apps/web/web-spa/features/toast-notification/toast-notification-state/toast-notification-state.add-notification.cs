@@ -3,7 +3,9 @@ namespace TimeWarp.Architecture.Features.ToastNotifications;
 partial class ToastNotificationState
 {
 
-  public static class AddNotification
+  // Named ...ActionSet so the TimeWarp.State ActionSetMethodSourceGenerator emits a strongly-typed
+  // dispatcher: `ToastNotificationState.AddNotification(intent, title)` — matching AddProblemDetailsActionSet.
+  public static class AddNotificationActionSet
   {
     public sealed class Action : IBaseAction
     {
@@ -24,7 +26,7 @@ partial class ToastNotificationState
     internal class Handler
     (
       IStore store,
-      IToastService ToastService
+      INotificationService ToastService
     ) : BaseHandler<Action>(store)
     {
 

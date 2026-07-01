@@ -5,7 +5,7 @@ partial class ToastNotificationState
 
   internal class ExceptionNotificationHandler
   (
-    IToastService ToastService
+    INotificationService ToastService
   ) : INotificationHandler<ExceptionNotification>
   {
     public async Task Handle
