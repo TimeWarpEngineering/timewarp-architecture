@@ -6,16 +6,6 @@ internal class Program
   {
     IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
-#if cosmosdb
-    // Add CosmosDB resource
-    IResourceBuilder<AzureCosmosDBResource> cosmos = builder.AddAzureCosmosDB(CosmosDbResourceName);
-    //-:cnd:noEmit
-#if DEBUG
-    cosmos = cosmos.RunAsEmulator();
-#endif
-    //+:cnd:noEmit
-    IResourceBuilder<global::Aspire.Hosting.Azure.AzureCosmosDBDatabaseResource> cosmosdb = cosmos.AddCosmosDatabase(CosmosDbDatabaseName);
-#endif
     // Declare project resources based on template flags
 #if api
     // API Server is included in the template
@@ -33,9 +23,6 @@ internal class Program
       .WithExternalHttpEndpoints();
 
     // Add references to other services if they exist
-#if cosmosdb
-    webServer = webServer.WithReference(cosmosdb);
-#endif
 #if api
     webServer = webServer.WithReference(apiServer);
 #endif

@@ -2,9 +2,6 @@ namespace TimeWarp.Architecture.Aspire;
 
 internal class Constants
 {
-  public const string CosmosDbResourceName = "cosmos";
-  public const string CosmosDbConnectionStringName = CosmosDbResourceName;
-  public const string CosmosDbDatabaseName = "CosmosDbContext";
   // These MUST match ServiceNames.{Api,Web,Grpc}ServiceName (foundation-contracts) — the apps'
   // server-side ServiceUriHelper resolves BaseAddress from the injected services__{name}__https__0
   // env var, which Aspire keys by these resource names. (Also matches the Docker/K8s YARP config.)

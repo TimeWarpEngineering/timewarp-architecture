@@ -91,8 +91,5 @@ public class Program : IAspNetProgram
 
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    //serviceCollection
-    //  .ConfigureOptions<CosmosDbOptions, CosmosDbOptionsValidator>(configuration)
-    //  .ConfigureOptions<SampleOptions, SampleOptionsValidator>(configuration);
   }
 }

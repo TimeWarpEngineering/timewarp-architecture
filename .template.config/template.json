@@ -61,14 +61,6 @@
           ]
         },
         {
-          "condition": "(!cosmosdb)",
-          "exclude": [
-            "source/container-apps/web/web-infrastructure/persistence/cosmos-db-context.cs",
-            "source/container-apps/web/web-server/hosted-services/cosmos-db-context-startup-hosted-service.cs",
-            "source/container-apps/web/web-server/modules/cosmos-db-module.cs"
-          ]
-        },
-        {
           "condition": "(!postgres)",
           "exclude": [
             "source/container-apps/web/web-infrastructure/persistence/postgres-db-context.cs",
@@ -123,12 +115,6 @@
     "yarp": {
       "type": "parameter",
       "description": "Include the yarp proxy server",
-      "datatype": "bool",
-      "defaultValue": "true"
-    },
-    "cosmosdb": {
-      "type": "parameter",
-      "description": "Add CosmosDb Features",
       "datatype": "bool",
       "defaultValue": "true"
     },

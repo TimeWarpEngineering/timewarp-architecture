@@ -23,7 +23,7 @@ Confirmed strategy (Aspire 13.4 first-party publishers — `Azure | Kubernetes |
 - [ ] Add publisher environment(s) to the AppHost — `AddDockerComposeEnvironment(...)` and
       `AddKubernetesEnvironment(...)` (confirm exact APIs/packages via aspire docs at build time).
       Add the matching `Aspire.Hosting.Docker` / `Aspire.Hosting.Kubernetes` packages to CPM +
-      the app-host csproj (guard with template `#if` flags consistent with existing yarp/cosmos).
+      the app-host csproj (guard with template `#if` flags consistent with existing yarp).
 - [ ] Verify `aspire publish` emits `compose.yaml` and the K8s manifests; choose an output
       location — propose root **`devops/`** (kebab) as the home for generated artifacts + a README.
 - [x] ~~Relocate `Ports.md`~~ — DELETED instead: its `52xx/72xx` ports were stale (current
@@ -41,7 +41,7 @@ Confirmed strategy (Aspire 13.4 first-party publishers — `Azure | Kubernetes |
 
 ## Notes
 
-- Template-flag aware: the AppHost uses `#if api/web/grpc/yarp/cosmosdb`. Publisher wiring and any
+- Template-flag aware: the AppHost uses `#if api/web/grpc/yarp`. Publisher wiring and any
   Dockerfile removal must respect those flags so generated templates stay valid.
 - Coordinates with [[061-migrate-remaining-ps1-scripts-to-dev-cli-endpoints]]: the old DevOps `.ps1`
   were deleted as obsolete under 063, so 061 does not port them.
