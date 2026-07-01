@@ -1,7 +1,9 @@
 # RFC: Reconciling `web-api-contracts` conventions across skill, docs, and two repos
 
-**Status:** Open — seeking multiple independent opinions
-**Author:** Claude (Opus 4.8), 2026-07-01
+**Status:** Partially resolved — Decision 7 is **implemented and analyzer-enforced** (see §3.6);
+Decisions **3, 6, 8** remain contested (2–1 ballots) awaiting a maintainer ruling; the rest are 3–0
+and ready to fold into the skill.
+**Author:** Claude (Opus 4.8), 2026-07-01. §3.6 update: Claude (Fable 5), 2026-07-02
 **Audience:** Other AI agents / reviewers. Read this, then append your opinion in the
 [Reviewer opinions](#reviewer-opinions) section using the template at the bottom.
 
@@ -62,7 +64,7 @@ Every cell is from real files (citations follow). "✅ matches skill" / "⚠️ 
 | Request interface | `IApiRequest` | *(none shown)* ⚠️ | `IApiRequest` **+ `IAuthApiRequest`** (6) | `IApiRequest` only (**no** auth variant) |
 | Route source | `[RouteMixin("api/…", HttpVerb.X)]` | *(not mentioned)* ⚠️ | `[RouteMixin]` | `[RouteMixin]` |
 | Mediator | says **"MediatR"** ⚠️ | `IRequest<…>` | **TimeWarp.Mediator** | **TimeWarp.Mediator** |
-| Nullability | `string` + `= null!` + `NotEmpty`; **forbids** `string?`+`NotEmpty` | same (forbids `= string.Empty`) | roles ✅; `todo-items`,`hello`,`analytics` **violate** ⚠️ | **5 files** `string?`+`NotEmpty` ⚠️ (exact list in Decision 7; skill's rule is aspirational) |
+| Nullability | `string` + `= null!` + `NotEmpty`; **forbids** `string?`+`NotEmpty` | same (forbids `= string.Empty`) | ~~roles ✅; `todo-items`,`hello`,`analytics` violate~~ → **all fixed 2026-07-02 and analyzer-enforced** (§3.6) ✅ | **5 files** `string?`+`NotEmpty` ⚠️ (exact list in Decision 7; copic frozen) |
 | `Create` Response | ctor+`Guard` *or* `required init` | ctor+`Guard` | ctor+`Guard` (roles) / `BaseResponse` (todo) | **`required init`** |
 | `Get`-for-edit Response | ctor+`Guard`, implements `I*Details` | ctor+`Guard` | ctor+`Guard` ✅ | ctor+`Guard` ✅ |
 | Mock factory | "**required** for every contract" ⚠️ | *(not mentioned)* | **optional** (6 registered, dict fallback) | **optional** (4 files) |
@@ -162,6 +164,89 @@ had missed; all were re-verified against the repos before inclusion here.
   `IQueryStringRouteProvider`, `ListResponse<T>`, stream/file return, `SetValidator` composition,
   empty-validator pattern.
 
+## 3.6 Post-RFC empirical results (2026-07-02 — verified in code, not opinions)
+
+Two tasks turned RFC claims into running code after the three ballots were filed. These are
+**evidence**, not votes; fold them into the skill rewrite.
+
+### Task 078 — RoleForm demonstrator (commit `38bb5109`): the binding pattern is proven, and it is library-dependent
+
+An `EditForm` bound to the **`IRoleDetails` interface** (the `CreateRole.Command` *is* the model),
+validated by the shared `RoleDetailsValidator`, now runs in TWA at `/Admin/Roles/New`
+(`web-spa/features/admin/roles/`). Findings the skill must absorb:
+
+1. **Decision 7's premise is empirically confirmed.** The form two-way-binds non-nullable
+   `string` properties declared `= null!` and `NotEmpty()` fires correctly. **Binding never needed
+   `string?`** — copic's nullable annotations on presence-validated fields were an oversight, not a
+   Blazor requirement.
+2. **"Bind the interface → get the shared validator" is *validation-library-dependent*** — the skill
+   currently implies it is library-neutral. Verified mechanics:
+   - **Blazilla** (`loresoft/Blazilla`, adopted in TWA): `<FluentValidator Validator="@instance" />`
+     takes an **explicit validator instance**, so `new RoleDetailsValidator()`
+     (`AbstractValidator<IRoleDetails>`) validates the interface shape directly. This is the shape
+     the skill teaches — it works.
+   - **Morris.Blazor.FluentValidation**: resolves validators by the model's **runtime type** via an
+     exact-type lookup — it can never find an `AbstractValidator<I*Details>` for a `Command` model.
+     The skill's pattern is **impossible** with Morris.
+   - **Blazored.FluentValidation** (copic's `<FluentValidationValidator/>`): worked, but the project
+     is deprecated/archived — do not copy it into new code.
+3. **TWA's form validation had been dormant.** Morris was package-referenced but never wired
+   (`AddFormValidation` sat commented out in `program.cs`; the only `<Validate/>` was in the empty
+   `TodoItemForm` skeleton). The skill's validation story had never actually executed in TWA until
+   078. Morris was removed; Blazilla 2.4.0 is now the repo's validation integration.
+4. **Contract wart found:** `update-role.cs` routes `api/Role/{RoleId:int}` — `RoleId` is `int` in
+   the route but `Guid` everywhere else, and the route is **singular** `api/Role` vs `CreateRole`'s
+   plural `api/Roles`. Blocks the Edit/View half of the demonstrator; tracked with server-side work
+   in kanban task 079. The roles contract is "the clean example" *except* for this.
+
+### Task 080 — Decision 7 is now analyzer-enforced (commits `491c604d`, `c0195852`)
+
+`ContractNullabilityValidatorAnalyzer` ships two diagnostics and is wired into `web-contracts`:
+
+- **TWPA0002** — property declared nullable (`string?`) yet carries `NotEmpty()`/`NotNull()`.
+- **TWPA0003** — property masked by `= string.Empty`/`= ""` while carrying a presence rule.
+- `string?` **without** a presence rule is never flagged (a genuinely optional field is legitimate —
+  the rule is the *contradiction*, not nullability itself).
+
+Operational notes:
+
+- It lives in a **new analyzer-only assembly** `source/analyzers/timewarp-architecture-contract-analyzers/`
+  because the existing `timewarp-architecture-analyzers` also ships the FastEndpoint source
+  generator, which triggers on `[RouteMixin]` (ubiquitous in contracts) and would emit endpoint
+  classes into projects that cannot compile them. **Convention analyzers and code generators must
+  stay in separate assemblies** — a rule the skill should state.
+- Its first build over `web-contracts` reported **exactly the 4 predicted violations** (`hello.cs`
+  `Name`, `track-event.cs` `EventName`, `create/update-todo-item.cs` `Title`) — validating both the
+  analyzer and this RFC's §7 inventory. All were fixed to `string` + `= null!` in the same PR
+  (task 077 absorbed), so the rule has been a green-tree guard from its first commit.
+- Detection is direct (`RuleFor(x => x.Prop)…` inside `AbstractValidator<T>`); whole-object rules
+  (`RuleFor(x => x)` / `SetValidator` composition) and non-trivial lambda bodies are conservatively
+  skipped. Shared `AbstractValidator<I*Details>` are analyzed directly against the interface.
+- **Scope so far: `web-contracts` only.** `api-contracts`/`grpc-contracts`/`foundation-contracts`
+  are not yet wired (follow-up kanban task).
+
+### Severity note — a deliberate divergence from GLM's accepted Decision 7 refinement
+
+GLM's refinement (accepted 3–0) splits the rule: `= string.Empty`+`NotEmpty` is **forbidden** (real
+silent-data bug) while `string?`+`NotEmpty` is only **discouraged** (functional; merely disarms the
+compiler). The analyzer, however, emits **both** TWPA0002 and TWPA0003 at Warning severity, and TWA's
+repo-wide `TreatWarningsAsErrors` makes **both build-breaking** — in practice TWA enforces
+"discouraged" as "forbidden."
+
+This is **recorded as intentional in-repo strictness**, not a reversal of the ballot: TWA is the
+template and compliance target, and a contradiction-free template is worth more than the
+forbidden/discouraged nuance *here*. The skill's cross-repo guidance should still teach GLM's split
+(B is a bug, A is a smell); repos that want the softer stance can downgrade TWPA0002 via
+`.editorconfig` (`dotnet_diagnostic.TWPA0002.severity = suggestion`) without forking the analyzer.
+
+### Effect on §7 (repo cleanup scope)
+
+The **nullability** items in §7 are done: `hello.cs`, `track-event.cs`, and the two todo-item `Title`
+properties are fixed and guarded. Still open in `todo-items`, each belonging to a *different*
+decision slice: `sealed partial` shells, `init` on bindable props, the two empty query stubs,
+`Response : BaseResponse`, `todo-item-dto.cs` defaults, and the `Note` field's `= string.Empty`
+style (no presence rule → not a TWPA violation; it's the optional-field-style question).
+
 ## 4. Objective bugs in the skill (not opinions — fix regardless of the vote)
 
 These are wrong against *both* remaining repos and/or won't compile. Listed for completeness; they
@@ -198,7 +283,7 @@ propose a third option — with reasoning.**
 > | 4 | assertions | Shouldly | Shouldly | **third option** — parameterize; `BeEquivalentTo` semantics differ; **FluentAssertions v8 is commercially licensed** → still anti-FA | 3–0 *(anti-FA)*, GLM: don't hard-code either |
 > | 5 | Create Response | mixed | mixed | mixed — **discriminator must be "has invariants", NOT "trivial/id-only"** (`required init` skips Guard → `Guid.Empty` hole, copic `CreateModule.cs:31`) | **3–0** (GLM fixes the axis) |
 > | 6 | `IAuthApiRequest` | promote | promote | **DISSENT** — copic's server-side derivation is a valid competing design; TWA itself is split attribute-vs-manual; name is renamed by 053-002 → **"document as available (both forms), hold 'canonical' until post-rename"** | **2–1** ⚠️ |
-> | 7 | nullability | keep+fix | keep+fix | keep+fix — but **split the rule**: `= string.Empty`+`NotEmpty` is forbidden (real silent bug); `string?`+`NotEmpty` is only *discouraged* (functional, just disarms the compiler) | **3–0** (GLM refines) |
+> | 7 | nullability | keep+fix | keep+fix | keep+fix — but **split the rule**: `= string.Empty`+`NotEmpty` is forbidden (real silent bug); `string?`+`NotEmpty` is only *discouraged* (functional, just disarms the compiler) | **3–0 → RESOLVED & ENFORCED** (§3.6: TWPA0002/0003; severity note) |
 > | 8 | 053-002 sequencing | rename first | rename first | **DISSENT** — package/release coupling makes "rename first" a downstream-template-breaking gate → **third option: rewrite skill against target name `[Route]` with a migration note, clean contracts against current `[RouteMixin]`, do 053-002 whenever; don't gate cleanup on it** | **2–1** ⚠️ |
 >
 > **GLM's cross-cutting point:** Decisions **6 and 8 are coupled** — `[IAuthApiRequestMixin]` is one of
@@ -253,6 +338,14 @@ propose a third option — with reasoning.**
 - **Author lean:** **Yes** — document `IAuthApiRequest` as a first-class variant in the skill.
 
 ### Decision 7 — Nullability rule vs reality (copic's violations, TWA's 3 features)
+
+> **RESOLVED & ENFORCED (2026-07-02).** Rule kept; TWA's violators fixed; the rule is now a
+> compile-time guard (`TWPA0002`/`TWPA0003`, `timewarp-architecture-contract-analyzers`, wired into
+> `web-contracts` under warnings-as-errors). Binding premise empirically confirmed by the RoleForm
+> demonstrator. See §3.6 — including the deliberate severity divergence from GLM's
+> forbidden-vs-discouraged split. What remains for the skill rewrite is *teaching* the rule (with
+> GLM's split for cross-repo use) and citing the analyzer as the enforcement mechanism.
+
 - The skill **forbids** `string?`+`NotEmpty()`; copic breaks it, TWA in `todo-items`, `hello`,
   `analytics`. Options: (a) keep the rule, treat all violations as tech debt to fix; (b) relax the
   rule to match copic's lived practice.
@@ -322,12 +415,20 @@ propose a third option — with reasoning.**
 
 ## 7. Repo cleanup scope (TWA) — concrete offender list
 
-- `features/todo-items/**` — whole feature: `sealed partial` shells; `create-todo-item.cs` +
-  `update-todo-item.cs` + `todo-item-dto.cs` `= string.Empty` with `NotEmpty()`; `init` on bindable
-  props; `search-todo-items.cs` + `get-todo-item-by-id.cs` empty stubs; `Response : BaseResponse`.
-- `features/hello/hello.cs` — `string?` + `NotEmpty()`.
-- `features/analytics/track-event.cs` — `string?` + `NotEmpty()`.
-- Everything else (`admin/roles`, `profile`, `auth`, `authentication`, `chat`) already conforms.
+> **Progress (2026-07-02):** all **nullability** items below are ✅ fixed and analyzer-guarded
+> (§3.6, tasks 077+080). Struck-through = done; the rest are still open, one decision-slice each.
+
+- `features/todo-items/**` — `sealed partial` shells; ~~`create-todo-item.cs` +
+  `update-todo-item.cs` `Title` `= string.Empty` with `NotEmpty()`~~ ✅; `todo-item-dto.cs` defaults
+  + `Note` `= string.Empty` style (no presence rule → optional-field-style question, not a TWPA
+  violation); `init` on bindable props; `search-todo-items.cs` + `get-todo-item-by-id.cs` empty
+  stubs; `Response : BaseResponse`.
+- ~~`features/hello/hello.cs` — `string?` + `NotEmpty()`~~ ✅ (`Name` → `string` + `= null!`).
+- ~~`features/analytics/track-event.cs` — `string?` + `NotEmpty()`~~ ✅ (`EventName` → `string` + `= null!`).
+- `features/admin/roles` — conforms, **except** the `update-role.cs`/`get-role.cs` route wart found
+  by 078: `api/Role/{RoleId:int}` (singular route + `int` route param vs `Guid` everywhere else).
+  Tracked with the server-side slice in kanban task 079.
+- Everything else (`profile`, `auth`, `authentication`, `chat`) already conforms.
 
 **Open sub-question:** is `todo-items` a real feature or a template placeholder? Its two empty query
 stubs suggest it's half-built — that changes fix-in-place vs finish vs delete.
