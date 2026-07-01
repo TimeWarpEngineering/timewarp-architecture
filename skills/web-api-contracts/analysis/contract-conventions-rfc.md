@@ -62,7 +62,7 @@ Every cell is from real files (citations follow). "✅ matches skill" / "⚠️ 
 | Request interface | `IApiRequest` | *(none shown)* ⚠️ | `IApiRequest` **+ `IAuthApiRequest`** (6) | `IApiRequest` only (**no** auth variant) |
 | Route source | `[RouteMixin("api/…", HttpVerb.X)]` | *(not mentioned)* ⚠️ | `[RouteMixin]` | `[RouteMixin]` |
 | Mediator | says **"MediatR"** ⚠️ | `IRequest<…>` | **TimeWarp.Mediator** | **TimeWarp.Mediator** |
-| Nullability | `string` + `= null!` + `NotEmpty`; **forbids** `string?`+`NotEmpty` | same (forbids `= string.Empty`) | roles ✅; `todo-items`,`hello`,`analytics` **violate** ⚠️ | **17 files** `string?`+`NotEmpty` ⚠️ (skill's rule is aspirational) |
+| Nullability | `string` + `= null!` + `NotEmpty`; **forbids** `string?`+`NotEmpty` | same (forbids `= string.Empty`) | roles ✅; `todo-items`,`hello`,`analytics` **violate** ⚠️ | **5 files** `string?`+`NotEmpty` ⚠️ (exact list in Decision 7; skill's rule is aspirational) |
 | `Create` Response | ctor+`Guard` *or* `required init` | ctor+`Guard` | ctor+`Guard` (roles) / `BaseResponse` (todo) | **`required init`** |
 | `Get`-for-edit Response | ctor+`Guard`, implements `I*Details` | ctor+`Guard` | ctor+`Guard` ✅ | ctor+`Guard` ✅ |
 | Mock factory | "**required** for every contract" ⚠️ | *(not mentioned)* | **optional** (6 registered, dict fallback) | **optional** (4 files) |
@@ -109,7 +109,8 @@ package/release coupling means the rename should **not gate** the contracts clea
   `required init`), `Queries/GetSecurityRole.cs` (Response ctor+`Guard`), `SecurityRoleDetails.cs`.
   Test: `Tests/ContainerApps/Web/Web.Contracts.Tests/Features/Admin/SecurityRoles/Commands/CreateSecurityRole_Tests.cs`
   (FluentAssertions + Fixie, camelCase). Counts gathered via grep: 57 `static`/0 `sealed` shells;
-  17 files with `string?`+`NotEmpty`; 4 `GetMockResponseFactory`; 0 `IAuthApiRequest`.
+  **5 files** with `string?`+`NotEmpty` (exact per-property inventory in Decision 7 — an earlier
+  coarse `grep -l` mis-reported "17"); 4 `GetMockResponseFactory`; 0 `IAuthApiRequest`.
 
 ## 3.5 Additional findings from independent review (Composer, verified)
 
@@ -251,13 +252,35 @@ propose a third option — with reasoning.**
   so the mock API can tailor responses; server re-validates the token).
 - **Author lean:** **Yes** — document `IAuthApiRequest` as a first-class variant in the skill.
 
-### Decision 7 — Nullability rule vs reality (copic's 17 violations, TWA's 3 features)
-- The skill **forbids** `string?`+`NotEmpty()`; copic breaks it in 17 files, TWA in `todo-items`,
-  `hello`, `analytics`. Options: (a) keep the rule, treat all violations as tech debt to fix;
-  (b) relax the rule to match copic's lived practice.
+### Decision 7 — Nullability rule vs reality (copic's violations, TWA's 3 features)
+- The skill **forbids** `string?`+`NotEmpty()`; copic breaks it, TWA in `todo-items`, `hello`,
+  `analytics`. Options: (a) keep the rule, treat all violations as tech debt to fix; (b) relax the
+  rule to match copic's lived practice.
 - **Author lean:** **Keep the rule** (it prevents a real silent-data bug — see
   `references/nullability.md`) and fix TWA's violators. Copic is out of scope but should be noted as
   the cautionary example the rule exists to prevent.
+
+> **Exact copic violation inventory (corrects the earlier "17 files" — that was a coarse `grep -l`
+> co-occurrence that swept in ~12 Query/Response files where the `string?` and the `NotEmpty()` are on
+> *different* properties).** The real `string?` + *unconditional* `NotEmpty()` violations live in
+> **5 files** under `copic/main/Source/ContainerApps/Web/Web.Contracts/Features/`:
+>
+> | File | Violating `string?` props (line) |
+> |---|---|
+> | `Admin/SecurityRole/SecurityRoleDetails.cs` | `Name` (30), `Code` (32) — *`Description` (31) is `MaximumLength` only, NOT a violation* |
+> | `Admin/SecurityRole/Commands/CreateSecurityRole.cs` | `Name`, `Code` — Command redeclares the `string?` props and its `Validator` repeats the inline `NotEmpty()` (a *second* copy of the same two) |
+> | `Admin/Modules/ModuleDetails.cs` | `Name` (22), `Description` (23), `Code` (24) |
+> | `Admin/Applications/ApplicationDetails.cs` | `Name` (15), `AdminUrl` (16) |
+> | `Incidents/Commands/CreateIncidentReport.cs` | nested sub-validators: contact `FirstName`/`LastName`/`EmailAddress` (36–38), a 2nd contact `FirstName`/`LastName`/`EmailAddress` (49–51), patient `FirstName`/`LastName` (63–64), `StateWhereEventOccurred` (77–79) |
+>
+> **Count:** ~**7 canonical property-level violations** in the Admin `*Details` interfaces (9 if you
+> also count `CreateSecurityRole`'s redeclared pair), **plus ~9** in `CreateIncidentReport`'s nested
+> sub-types (same property *names* repeated across Reporter/Insured/Patient/Event). So neither "12"
+> nor "17" is a clean figure — the honest statement is **5 files**, listed above. *(`UpdateSecurityRole`,
+> `UpdateModule`, `UpdateApplication`, and the `Get*` queries flagged by the old grep are NOT
+> violations — they either compose the shared `*DetailsValidator` (inheriting, not re-adding, the
+> issue) or have `string?` and `NotEmpty()` on unrelated properties.)* Copic is **frozen** — this is
+> inventory for the cautionary example, not a cleanup list.
 
 ### Decision 8 — Sequencing: do the `053-002` attribute rename *before* the contracts cleanup?
 - **Context:** The contracts cleanup (§7) touches every contract file; the skill rewrite teaches the
@@ -347,7 +370,7 @@ Append your review below. Keep the matrix + evidence above intact; add your voic
 
 **Decision 6 (IAuthApiRequest):** **Promote** — Genuinely useful BFF pattern (mock tailoring + server re-validation). Absence in copic is omission, not rejection.
 
-**Decision 7 (nullability):** **Keep+fix** — The `string?`+`NotEmpty()` rule prevents a real silent-data bug. Relaxing to match copic's 17 violations would encode tech debt as guidance.
+**Decision 7 (nullability):** **Keep+fix** — The `string?`+`NotEmpty()` rule prevents a real silent-data bug. Relaxing to match copic's violations would encode tech debt as guidance. *[Author note: Composer & GLM both cited "17 files" from the author's original coarse grep; the verified figure is **5 files** — exact inventory in Decision 7.]*
 
 **Decision 8 (sequencing vs 053-002 rename):** **Rename first** — Cleaning contracts and rewriting the skill against `[RouteMixin]` then renaming to `[Route]`/`[AuthApiRequest]` is guaranteed double churn across contracts, the FastEndpoint generator match, the foundation package, and skill text. Front-load the rename or explicitly cancel it.
 
