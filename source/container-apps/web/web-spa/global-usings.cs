@@ -73,7 +73,6 @@ global using TimeWarp.Architecture.Features.Authentication;
 global using TimeWarp.Architecture.Features.Authorization;
 global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Features.EventStreams;
-global using TimeWarp.Architecture.Features.Notifications;
 global using TimeWarp.Architecture.Features.ProfileMenus;
 global using TimeWarp.Architecture.Features.Profiles;
 global using TimeWarp.Architecture.Features.ToastNotifications;
