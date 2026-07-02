@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.TodoItems;
 
 public sealed partial class CreateTodoItem
 {
-  [RouteMixin("api/TodoItems", HttpVerb.Post)]
+  [ApiRoute("api/TodoItems", HttpVerb.Post)]
   public sealed partial class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
   {
 

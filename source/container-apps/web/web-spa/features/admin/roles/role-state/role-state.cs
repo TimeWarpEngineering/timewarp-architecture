@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
-[StateAccessMixin]
+[StateAccess]
 public sealed partial class RoleState : State<RoleState>
 {
   // Id of the most recently created role (demo: lets a page confirm the create round-trip).

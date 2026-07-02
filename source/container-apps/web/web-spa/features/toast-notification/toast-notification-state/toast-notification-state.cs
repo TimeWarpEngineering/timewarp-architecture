@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.ToastNotifications;
 
-[StateAccessMixin]
+[StateAccess]
 public sealed partial class ToastNotificationState : State<ToastNotificationState>
 {
   // Currently we use the FluentUI ToastService to manage all the state and display of toast notifications.

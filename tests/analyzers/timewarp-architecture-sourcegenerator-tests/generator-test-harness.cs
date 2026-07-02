@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.CSharp;
 /// endpoint is generated in the server). So the contract MUST be compiled into a referenced assembly,
 /// not handed to the generator as source. The harness also supplies the stub types the generator now
 /// hard-requires in the compilation: <c>FastEndpoints.IEndpoint</c> and
-/// <c>TimeWarp.Architecture.Features.BaseFastEndpoint`2</c>, plus <c>RouteMixinAttribute</c>/
+/// <c>TimeWarp.Architecture.Features.BaseFastEndpoint`2</c>, plus <c>ApiRouteAttribute</c>/
 /// <c>HttpVerb</c>/<c>OpenApiTags</c>.
 /// </summary>
 internal static class GeneratorTestHarness
@@ -27,9 +27,9 @@ internal static class GeneratorTestHarness
         public enum HttpVerb { Get, Post, Put, Delete, Patch }
 
         [System.AttributeUsage(System.AttributeTargets.Class)]
-        public sealed class RouteMixinAttribute : System.Attribute
+        public sealed class ApiRouteAttribute : System.Attribute
         {
-            public RouteMixinAttribute(string route, HttpVerb httpVerb) { }
+            public ApiRouteAttribute(string route, HttpVerb httpVerb) { }
         }
     }
     namespace TimeWarp.Architecture.Attributes

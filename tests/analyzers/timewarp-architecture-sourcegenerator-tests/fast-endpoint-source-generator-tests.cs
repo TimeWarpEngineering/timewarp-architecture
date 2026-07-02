@@ -15,7 +15,7 @@ public class FastEndpointSourceGenerator_Tests
     [ApiEndpoint]
     public static partial class GetWeatherForecasts
     {
-        [RouteMixin("api/weatherForecasts", HttpVerb.Get)]
+        [ApiRoute("api/weatherForecasts", HttpVerb.Get)]
         public sealed partial class Query
         {
             public int? Days { get; set; }

@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.Hellos;
 
 public static partial class Hello
 {
-  [RouteMixin(RouteTemplate: "api/Hello", HttpVerb.Get)]
+  [ApiRoute(RouteTemplate: "api/Hello", HttpVerb.Get)]
   public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public string Name { get; set; } = null!;

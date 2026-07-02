@@ -52,7 +52,7 @@ internal class Program
       yarpConfiguration.AddRoute("/api/{**catch-all}", apiServer);
 #endif
 #if web
-      // Web.Server owns these /api endpoints (see web-contracts RouteMixin templates); their
+      // Web.Server owns these /api endpoints (see web-contracts ApiRoute templates); their
       // literal segments outrank the Api.Server catch-all above, so they win regardless of order.
       yarpConfiguration.AddRoute("/api/GetCurrentUser", webServer);
       yarpConfiguration.AddRoute("/api/Hello", webServer);

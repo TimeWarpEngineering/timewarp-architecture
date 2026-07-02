@@ -61,11 +61,48 @@ Per the RFC Decision 8 ruling ([[contract-conventions-rfc]] in `skills/web-api-c
 
 ## Checklist
 
-- [ ] Decide: rename, and to what names (keep a consistent convention across all four).
-- [ ] If yes: rename `StateAccessMixin` (low-risk) + usages.
-- [ ] If yes: rename the foundation attributes — update the FastEndpoint generator's name match,
-      all contract usages, the webapi-contracts skill, bump the foundation package version.
-- [ ] If no: note the decision and close.
+- [x] Decide: rename, and to what names (keep a consistent convention across all four) — **decided
+      2026-07-02, maintainer-confirmed** (see Results).
+- [x] Rename `StateAccessMixin` (low-risk) + usages → `[StateAccess]`.
+- [x] Rename the foundation attributes — FastEndpoint generator match updated (now **simple-name**,
+      fixing the namespace pinning), all contract usages swept, foundation package bumped to
+      **2.0.0-beta.3**.
+- [ ] ~~If no: note the decision and close~~ (n/a — renamed).
+- [ ] Skill/docs teach the new names — deliberately deferred to
+      [[081-rewrite-web-api-contracts-skillmd-per-rfc-resolutions]] (the skill rewrite was
+      sequenced *after* this rename by RFC Decision 8; `SKILL.md` has 9 old-name mentions,
+      `references/examples.md` 6).
+
+## Results (2026-07-02)
+
+**Convention decided: intent naming, no source-gen mechanism marker.** The .NET ecosystem norm
+(`[ObservableProperty]`, `[JsonSerializable]`, `[LibraryImport]`) names what the attribute
+*declares*, not how it's implemented; Microsoft's `Generated*` prefix is reserved for
+partial-stub-filling attributes, which these are not (they carry domain metadata / declare
+capabilities). Mechanism-named attributes rot when the mechanism changes — exactly how "Mixin"
+rotted when Moxy was removed.
+
+| Old | New | Note |
+|---|---|---|
+| `[RouteMixin(route, verb)]` | **`[ApiRoute(route, verb)]`** | Not `[Route]` — collides with `Microsoft.AspNetCore.Mvc.RouteAttribute` |
+| `[IAuthApiRequestMixin]` | **`[AuthApiRequest]`** | Also drops the bogus `I` prefix (attribute, not interface) |
+| `[IOpenDataQueryParametersMixin]` | **`[OpenDataQueryParameters]`** | |
+| `[StateAccessMixin]` | **`[StateAccess]`** | |
+
+- **Bonus fix:** the FastEndpoint generator matched the attribute by full display string
+  `"TimeWarp.Architecture.RouteMixinAttribute"` — pinned to one root namespace. Now matches
+  `ApiRouteAttribute` **by simple name** (`endpoint-metadata.cs`), correct for any generated app's
+  RootNamespace.
+- Per the maintainer directive, **no compatibility shims** — clean cut; version bumped
+  2.0.0-beta.2 → 2.0.0-beta.3 (`source/Directory.Build.props`).
+- The `IApiRequest`/`IAuthApiRequest` **interfaces** keep their names (they are interfaces; the `I`
+  is correct there). Internal generator class/file names (`ContractsMixinGenerator`,
+  `contracts-mixin-generator.cs`) intentionally kept — not user-facing API; rename later if desired.
+- **Verification:** 14/14 sourcegen tests, 16/16 analyzer tests, full `dev build` green (0/0);
+  generated endpoints confirmed present in compiled assemblies via ILSpy (web-server:
+  GetProfile/Hello/GetSignInToken/TrackEvent; api-server: GetWeatherForecasts); web-server
+  integration tests 11 passed (routes resolve end-to-end). web-spa integration tests fail only on
+  an unhealthy local Docker (Aspire test host) — environmental, unrelated to the rename.
 
 ## Notes
 

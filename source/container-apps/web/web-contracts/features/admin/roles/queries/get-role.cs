@@ -7,7 +7,7 @@ using Authorization;
 /// </summary>
 public static partial class GetRole
 {
-  [RouteMixin("api/Roles/{RoleId:min(1)}", HttpVerb.Get)]
+  [ApiRoute("api/Roles/{RoleId:min(1)}", HttpVerb.Get)]
   public sealed partial class Query : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }

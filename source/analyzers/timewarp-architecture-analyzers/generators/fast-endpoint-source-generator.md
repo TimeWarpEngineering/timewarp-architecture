@@ -11,7 +11,7 @@ The FastEndpointSourceGenerator is a Roslyn-based source generator that automati
 
 2. **Contract Detection**
    - Identifies static partial classes with [ApiEndpoint] attribute
-   - Validates presence of Query/Command classes with [RouteMixin]
+   - Validates presence of Query/Command classes with [ApiRoute]
    - Checks for proper interface implementations (IQueryStringRouteProvider, IRequest<>)
    - Detects and prevents route conflicts
 
@@ -23,7 +23,7 @@ The FastEndpointSourceGenerator is a Roslyn-based source generator that automati
 
 4. **Generated Endpoint Features**
    - Inherits from BaseFastEndpoint<TRequest, TResponse>
-   - Configures routing based on RouteMixin attributes
+   - Configures routing based on ApiRoute attributes
    - Sets up OpenAPI documentation
    - Handles authorization settings
    - Configures response types
@@ -38,7 +38,7 @@ public static partial class GetWeatherForecasts
   /// <summary>
   /// Get Weather Forecasts
   /// </summary>
-  [RouteMixin("api/weatherForecasts", HttpVerb.Get)]
+  [ApiRoute("api/weatherForecasts", HttpVerb.Get)]
   public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public int? Days { get; set; }

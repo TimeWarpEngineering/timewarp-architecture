@@ -4,7 +4,7 @@ using Authorization;
 
 public static partial class CreateRole
 {
-  [RouteMixin("api/Roles", HttpVerb.Post)]
+  [ApiRoute("api/Roles", HttpVerb.Post)]
   public sealed partial class Command : IAuthApiRequest, IRoleDetails, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }

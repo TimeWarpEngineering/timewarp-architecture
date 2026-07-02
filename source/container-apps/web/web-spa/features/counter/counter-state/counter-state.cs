@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Counters;
 
-[StateAccessMixin]
+[StateAccess]
 public sealed partial class CounterState : State<CounterState>
 {
   public int Count { get; private set; }

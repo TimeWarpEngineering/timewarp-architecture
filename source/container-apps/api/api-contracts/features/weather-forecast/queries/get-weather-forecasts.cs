@@ -3,7 +3,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 [ApiEndpoint]
 public static partial class GetWeatherForecasts
 {
-  [RouteMixin("api/weatherforecast", HttpVerb.Get)]
+  [ApiRoute("api/weatherforecast", HttpVerb.Get)]
   public sealed partial class Query : IRequest<OneOf<Response, SharedProblemDetails>>, IQueryStringRouteProvider,
     IApiRequest
   {

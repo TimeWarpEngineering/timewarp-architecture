@@ -74,6 +74,15 @@ Every cell is from real files (citations follow). "✅ matches skill" / "⚠️ 
 
 ### Mechanism note — `[RouteMixin]` is pure sourcegen now, and its name is about to change
 
+> **DONE (2026-07-02):** 053-002 landed. The attributes are now **`[ApiRoute]`** (not `[Route]` —
+> avoids `Microsoft.AspNetCore.Mvc.RouteAttribute` collision), **`[AuthApiRequest]`**,
+> **`[OpenDataQueryParameters]`**, **`[StateAccess]`**; the FastEndpoint generator now matches
+> `ApiRouteAttribute` **by simple name**, fixing the `TimeWarp.Architecture` namespace pinning
+> described below; foundation package bumped to 2.0.0-beta.3. Naming convention decided: **intent
+> naming, no source-gen mechanism marker** (the `[ObservableProperty]`/`[JsonSerializable]` norm).
+> The paragraphs below are kept as the pre-rename record; the skill rewrite (081) teaches the new
+> names.
+
 The `[RouteMixin("api/…", HttpVerb.X)]` attribute in the matrix is **not** Morris.Moxy anymore.
 Moxy was fully removed (task 053): no `.mixin` files, no `Morris.Moxy` package refs. The attribute is
 now emitted by a plain Roslyn `IIncrementalGenerator`:

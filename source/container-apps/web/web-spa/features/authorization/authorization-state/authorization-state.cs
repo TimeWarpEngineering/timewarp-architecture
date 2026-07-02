@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Authorization;
 
-[StateAccessMixin]
+[StateAccess]
 public sealed partial class AuthorizationState : BaseCacheableState<AuthorizationState>
 {
   private List<Guid>? ModulesList { get; set; }
