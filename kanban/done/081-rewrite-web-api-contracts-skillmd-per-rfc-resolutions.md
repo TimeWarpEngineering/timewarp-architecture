@@ -35,31 +35,41 @@ sections).** The rulings that shape this rewrite:
 
 ## Checklist
 
-- [ ] Resolve gate 1: canonical skill location / sync direction (timewarp-flow vs this repo).
-- [ ] Get maintainer ruling on Decisions 3, 6, 8; record in the RFC vote table.
-- [ ] Fix RFC §4 objective bugs (vote-independent):
-      Tier-2 empty `Command` + `I*Details` won't compile; "MediatR" → TimeWarp.Mediator (incl. the
-      *Detection* table at `SKILL.md:36`); folder-rule self-contradiction; case-sensitive
-      `**/Features/**` discovery globs (TWA is kebab `features/`).
-- [ ] Apply the 3–0 decisions: discover-first casing (kebab canonical, Pascal = 1-line mirror note);
-      plural folders (delete the singular-folder narrative, `SKILL.md:46` + `examples.md:185-188`);
-      Shouldly in TWA examples (FA = copic dialect footnote; note FA v8 commercial license);
-      Create-Response mixed with GLM's axis (**"has invariants" → ctor+Guard**, not "trivial id-only").
-- [ ] Fold in §3.5 findings: mock-pattern **detection** (contract-local `GetMockResponseFactory()`
-      vs copic's SPA `*MockFactory` classes); `[IOpenDataQueryParametersMixin]`; the two
-      **non-equivalent** auth forms + trigger (attribute ⇒ query-string synthesis, manual ⇒ POST/by-id);
-      mock factory "required" → "when SPA mock mode needs the endpoint".
-- [ ] Fold in §3.6 findings (tasks 078/080): binding is **validation-library-dependent**
-      (Blazilla explicit-instance ✅ / Morris runtime-type ✗ / Blazored deprecated); nullability rule
-      with GLM's forbidden-vs-discouraged split + `TWPA0002/0003` as the enforcement mechanism +
-      severity note; analyzer-vs-generator **separate assemblies** rule.
-- [ ] Re-anchor examples to TWA's real `admin/roles` (cite the `update-role.cs` route wart until 079
-      fixes it) and cite `todo-items` as the anti-pattern.
-- [ ] Align TWA docs (`documentation/developer/how-to-guides/web-api-contracts/`): source-generator
-      layer, casing, and the 3 concrete doc bugs (broken `UpdateUser` brace, "mutability and
-      nullability" copy-paste, `IReadonlyList<t>` typo).
-- [ ] Run the skill's evals (`skills/web-api-contracts/evals/`) if runnable; update them to the new
-      spec.
+- [x] Resolve gate 1: 053-002 decided + implemented (commit `9fd133b1`) — skill written once
+      against `[ApiRoute]`/`[AuthApiRequest]`/`[OpenDataQueryParameters]`/`[StateAccess]`.
+- [x] Resolve gate 2: **this repo's `skills/web-api-contracts` is canonical** (maintainer,
+      2026-07-02). Registered as a ganda skill source
+      (`worktree://…/timewarp-architecture/master/skills/web-api-contracts`) and synced — tool
+      copies (claude/grok/opencode) now flow FROM here; the rewrite distributes when dev merges to
+      master. 053-002's `timewarp-flow/…/webapi-contracts` path was stale.
+- [x] Maintainer rulings on Decisions 3, 6, 8 recorded in the RFC (all 8 ballots resolved).
+- [x] RFC §4 objective bugs fixed: Tier-2 command declares interface props (+ found & fixed a 2nd
+      compile bug — initializers on interface properties); MediatR → TimeWarp.Mediator incl.
+      Detection table; folder rule; case-insensitive `[Ff]eatures` discovery globs.
+- [x] 3–0 decisions applied: discover-first casing (kebab canonical + Pascal mirror one-liner);
+      plural folders (singular narrative deleted); Shouldly (FA = copic dialect + v8 license note);
+      Response discriminator = "has invariants" → ctor+Guard (`Guid.Empty` hole documented).
+- [x] §3.5 folded: contract-attributes table incl. `[OpenDataQueryParameters]`; both auth forms +
+      trigger + security rule + copic server-side alternative; mock-pattern detection; mock factory
+      "required" → "when SPA mock mode needs the endpoint".
+- [x] §3.6 folded: validation-library dependence (Blazilla ✅ / Morris ✗ / Blazored deprecated,
+      RoleForm as living anchor); TWPA0002/0003 forbidden-vs-discouraged split + `.editorconfig`
+      downgrade; legacy attribute names documented for recognition only.
+- [x] Examples re-anchored: TWA `admin/roles` as living anchor (update-role wart cited),
+      `todo-items` as anti-pattern.
+- [x] TWA docs aligned: `HowToWrite_BFF_API_Contracts.md` gained the "Route Attributes and Source
+      Generation" section (+ kebab casing note, `[ApiRoute]`d samples, `SetValidator` composition,
+      pointer to the skill); the 3 concrete doc bugs fixed (UpdateUser brace, nullability-doc
+      copy-paste, `IReadonlyList<t>`); nullability doc gained a TWPA0002/0003 enforcement section.
+- [x] Evals reviewed: `evals/eval.yaml` is a routing smoke keyed on the skill name (unchanged) —
+      still valid as-is.
+
+## Results
+
+- Skill rewrite: commit `42bb1175`. The skill is now the single corrected spec; the RFC remains
+  as the decision record under `analysis/`.
+- Follow-on created: [[083-create-web-contracts-tests-project-with-serialization-round-trips]]
+  (Decision 3's build-out — the skill *teaches* the test project; 083 creates TWA's actual one).
 
 ## Notes
 
