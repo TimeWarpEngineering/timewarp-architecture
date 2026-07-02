@@ -65,9 +65,6 @@ public class Program : IAspNetProgram
   private static void ConfigureHostApplicationBuilder(IHostApplicationBuilder builder)
   {
     builder.AddServiceDefaults();
-    #if(cosmosdb)
-    CosmosDbModule.ConfigureHostApplicationBuilder(builder);
-    #endif
   }
 
   public static void ConfigureConfiguration(ConfigurationManager configurationManager)
@@ -100,9 +97,6 @@ public class Program : IAspNetProgram
     ConfigureSettings(serviceCollection, configuration);
     WebInfrastructureModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
-#if(cosmosdb)
-    CosmosDbModule.ConfigureServices(serviceCollection, configuration);
-#endif
     //PostgresDbModule.ConfigureServices(serviceCollection, configuration);
     serviceCollection.AddSingleton<IChatHubService, ChatHubService>();
     CorsPolicy.Any.Apply(serviceCollection);

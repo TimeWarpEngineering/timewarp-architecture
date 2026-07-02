@@ -8,7 +8,6 @@ global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.AspNetCore.ResponseCompression;
 global using Microsoft.AspNetCore.Routing;
 global using Microsoft.AspNetCore.SignalR;
-global using Microsoft.Azure.Cosmos;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -53,7 +52,7 @@ global using TimeWarp.Architecture.Types;
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Architecture.Web.Infrastructure;
 global using TimeWarp.Modules;
-#if(cosmosdb || postgres)
+#if(postgres)
 global using TimeWarp.Architecture.HostedServices;
 #endif
 global using TimeWarp.Foundation;

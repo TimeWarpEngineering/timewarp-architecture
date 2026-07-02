@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Chat;
 
-[StateAccessMixin]
+[StateAccess]
 public sealed partial class ChatState : State<ChatState>
 {
   private List<ChatMessage>? ChatMessageList { get; set; }

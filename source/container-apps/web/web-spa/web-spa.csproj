@@ -57,7 +57,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
-    <PackageReference Include="Morris.Blazor.FluentValidation"/>
+    <PackageReference Include="Blazilla"/>
     <PackageReference Include="TimeWarp.State" />
     <PackageReference Include="TimeWarp.State.Plus"/>
     <PackageReference Include="Timewarp.OptionsValidation"/>

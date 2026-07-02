@@ -1,7 +1,7 @@
 #nullable enable
 namespace TimeWarp.Architecture.Features.Account;
 
-[StateAccessMixin]
+[StateAccess]
 public sealed partial class AccountState : State<AccountState>
 {
   public string? Alias { get; private set; }

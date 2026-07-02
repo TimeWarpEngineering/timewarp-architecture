@@ -48,16 +48,12 @@
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
     <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
     <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
-    <PackageVersion Include="Aspire.Microsoft.Azure.Cosmos" Version="13.4.6" />
-    <PackageVersion Include="Aspire.Microsoft.EntityFrameworkCore.Cosmos" Version="13.4.6" />
     <!-- Yarp / Reverse Proxy (used by Yarp gateway and Aspire.AppHost) -->
     <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.4.6" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.7.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->
-    <PackageVersion Include="Aspire.Hosting.Azure.CosmosDB" Version="13.4.6" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.9" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Cosmos" Version="10.0.9" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Identity.Web" Version="4.11.0" />
@@ -88,7 +84,7 @@
     <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.3" />
     <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="6.0.3" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.2.0" />
-    <PackageVersion Include="Morris.Blazor.FluentValidation" Version="3.2.0" />
+    <PackageVersion Include="Blazilla" Version="2.4.0" />
     <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.1" />
     <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.1" />
     <PackageVersion Include="timewarp-heroicons" Version="2.0.19" />

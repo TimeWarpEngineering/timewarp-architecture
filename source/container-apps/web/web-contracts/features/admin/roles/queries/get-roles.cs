@@ -8,9 +8,9 @@ using Authorization;
 public static partial class GetRoles
 {
 
-  [RouteMixin("api/Roles", HttpVerb.Get)]
-  [IOpenDataQueryParametersMixin]
-  [IAuthApiRequestMixin]
+  [ApiRoute("api/Roles", HttpVerb.Get)]
+  [OpenDataQueryParameters]
+  [AuthApiRequest]
   public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public string GetRouteWithQueryString()

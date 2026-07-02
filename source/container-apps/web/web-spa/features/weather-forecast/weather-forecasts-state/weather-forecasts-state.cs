@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 using static GetWeatherForecasts;
 
-[StateAccessMixin]
+[StateAccess]
 public sealed partial class WeatherForecastsState : State<WeatherForecastsState>
 {
   private List<TWeatherForecast>? WeatherForecastList { get; set; } = [];

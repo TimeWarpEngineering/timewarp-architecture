@@ -1,0 +1,53 @@
+@namespace TimeWarp.Architecture.Features.Admin.Roles
+@inherits BaseComponent
+@inject NavigationManager NavigationManager
+
+@*
+  Demonstrates the web-api-contracts pattern:
+  - EditForm binds to the IRoleDetails INTERFACE (the CreateRole.Command *is* the model — no view model).
+  - Blazilla's <FluentValidator> runs the SHARED RoleDetailsValidator (AbstractValidator<IRoleDetails>)
+    passed explicitly, so only the user-editable Name/Description are validated (no auth/UserId noise).
+    (Morris resolves validators by runtime type and can't target the interface; hence Blazilla.)
+*@
+
+<EditForm Model=@RoleDetails OnValidSubmit=HandleValidSubmit FormName="RoleForm" novalidate>
+  <FluentValidator Validator="@RoleValidator" />
+  <FluentStack Orientation=Orientation.Vertical VerticalGap="16">
+
+    <div>
+      <FluentTextInput @bind-Value=RoleDetails.Name Label="Name" Name="Name" data-qa="RoleName" style="width:100%" />
+      <ValidationMessage For="@(() => RoleDetails.Name)" />
+    </div>
+
+    <div>
+      <FluentTextInput @bind-Value=RoleDetails.Description Label="Description" Name="Description" data-qa="RoleDescription" style="width:100%" />
+      <ValidationMessage For="@(() => RoleDetails.Description)" />
+    </div>
+
+    <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary data-qa="RoleSave">Save</FluentButton>
+
+  </FluentStack>
+</EditForm>
+
+@code {
+  // Shared, endpoint-agnostic validation for the IRoleDetails shape — one instance is enough.
+  private static readonly RoleDetailsValidator RoleValidator = new();
+
+  private RoleState.CreateRoleActionSet.Action CreateAction { get; set; } = default!;
+  private IRoleDetails RoleDetails { get; set; } = default!;
+
+  protected override void OnInitialized()
+  {
+    CreateAction = new RoleState.CreateRoleActionSet.Action();
+    // The BFF normally stamps the current user's id; set it here so the Command-level auth rule
+    // passes when the action is dispatched. The form itself only edits the IRoleDetails fields.
+    CreateAction.Command.UserId = Guid.NewGuid();
+    RoleDetails = CreateAction.Command;
+  }
+
+  private async Task HandleValidSubmit()
+  {
+    await Mediator.Send(CreateAction, CancellationToken);
+    NavigationManager.NavigateTo("/");
+  }
+}

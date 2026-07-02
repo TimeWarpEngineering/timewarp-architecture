@@ -19,13 +19,6 @@ TimeWarp Architecture is a dotnet net 6 template for creating a distributed or m
   > `dotnet dev-certs https --trust`
 
 * Install the latest **LTS** of [Node.js ](https://nodejs.org/en/)
-* Install the latest [Cosmos Db Emulator](https://docs.microsoft.com/en-us/azure/cosmos-db/local-emulator?tabs=ssl-netstd21)
-* Edit your powershell profile (`code $Profile`) to include the following [^1] :
-
-```powershell
-$env:PSModulePath += ";$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules"
-Import-Module Microsoft.Azure.CosmosDB.Emulator
-```
 
 * Install Tye dotnet tool
 
@@ -79,7 +72,6 @@ You should see the Aspire Dashboard open in your browser.
 * [Playwright](https://playwright.dev/)
 * [Project Tye](https://github.com/dotnet/tye)
 * [YARP](https://microsoft.github.io/reverse-proxy/)
-* [Cosmos DB](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction)
 
 ## Content
 
@@ -110,7 +102,3 @@ The template creates the distributed app projects and their corresponding test p
 ### Test Library
 
 TimeWarp.Testing - Share testing library.
-
-#### Footnotes
-
-[^1]: https://docs.microsoft.com/en-us/azure/cosmos-db/emulator-command-line-parameters#:%7E:text=Install%20the%20latest%20version%20of,Azure.

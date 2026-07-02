@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 public static partial class DeleteRole
 {
-  [RouteMixin("api/DeleteRole", HttpVerb.Delete)]
+  [ApiRoute("api/DeleteRole", HttpVerb.Delete)]
   public sealed partial class Command : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }

@@ -65,7 +65,7 @@ public List<TaskUpdateInfo> Tasks { get; set; } // Editable for updates
 
 #### Interface-Driven Mutability
 
-Using the two previously mentioned techniques (`set` Vs `init`, and `List<T>` Vs `IReadonlyList<t>`) on classes clearly distinguish between data that is meant only to be read by the user and the data they may modify.
+Using the two previously mentioned techniques (`set` vs `init`, and `List<T>` vs `IReadOnlyList<T>`) on classes clearly distinguish between data that is meant only to be read by the user and the data they may modify.
 
 Components in the front-end rely solely on interfaces for editing data, and therefore it is essential that such interfaces have properties defined using the mutable patterns.
 

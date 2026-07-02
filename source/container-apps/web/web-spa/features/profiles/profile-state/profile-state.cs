@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Profiles;
 
-[StateAccessMixin]
+[StateAccess]
 public sealed partial class ProfileState: State<ProfileState>
 {
   public string? Alias { get; private set; }

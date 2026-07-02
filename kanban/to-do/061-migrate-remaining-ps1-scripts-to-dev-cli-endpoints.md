@@ -35,7 +35,6 @@ dirs) — porting is the moment to fix those, not patch them in place.
       `reset-database-migrations.ps1`, `update-database.ps1`, `ef-shared-variables.ps1`
 - [ ] Git stats (likely DELETE or `dev git …`): `scripts/git/count-lines-by-author.ps1`,
       `scripts/git/stats.ps1`, `scripts/git/summarize-git-blame.ps1`
-- [ ] `scripts/run-cosmos-db-emulator.ps1` → `dev …` (or drop if cosmos emulator unused)
 - [ ] `scripts/build-dependency-diagram.ps1`, `scripts/describe.ps1`,
       `scripts/get-next-task-number.ps1` → port or drop (note: `get-next-task-number` is now
       superseded by the `kanban` CLI; likely DELETE)

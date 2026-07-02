@@ -9,9 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!--#if (cosmosdb) -->
-    <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" />
-    <!--#endif -->
     <!--#if (yarp) -->
     <PackageReference Include="Aspire.Hosting.Yarp" />
     <!--#endif -->

@@ -4,15 +4,15 @@ using System;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 
-// Verifies the Roslyn generator that replaced the web-spa StateAccessMixin Moxy mixin (task 053):
-// for each [StateAccessMixin] state class it emits the typed accessors into the shared BaseComponent
+// Verifies the Roslyn generator that replaced the web-spa StateAccess Moxy mixin (task 053):
+// for each [StateAccess] state class it emits the typed accessors into the shared BaseComponent
 // and BaseHandler<TAction> partials, plus the marker attribute in the RootNamespace.
 public class StateAccessSourceGenerator_Tests
 {
   private const string Source = """
     namespace Test.Features.Counters;
 
-    [StateAccessMixin]
+    [StateAccess]
     public sealed class CounterState { }
     """;
 
@@ -41,7 +41,7 @@ public class StateAccessSourceGenerator_Tests
     string generated = RunAndConcat("TimeWarp.Architecture");
 
     generated.ShouldContain("namespace TimeWarp.Architecture");
-    generated.ShouldContain("internal sealed class StateAccessMixinAttribute : System.Attribute");
+    generated.ShouldContain("internal sealed class StateAccessAttribute : System.Attribute");
     return Task.CompletedTask;
   }
 

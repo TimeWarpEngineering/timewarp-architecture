@@ -7,7 +7,7 @@ namespace TimeWarp.Architecture.Features.Applications;
 /// The state tracks the active modal, menu expansion, branding, and assembly version displayed by the application shell.
 /// <see cref="Initialize"/> sets the default shell values used when the store starts.
 /// </remarks>
-[StateAccessMixin]
+[StateAccess]
 public sealed partial class ApplicationState : State<ApplicationState>
 {
   /// <summary>

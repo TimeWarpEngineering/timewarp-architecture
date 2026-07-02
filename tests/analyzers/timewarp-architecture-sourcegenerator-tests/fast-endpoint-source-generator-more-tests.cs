@@ -14,7 +14,7 @@ public class FastEndpointSourceGenerator_RouteConflicts_Tests
     [ApiEndpoint]
     public static partial class GetWeatherForecasts
     {
-        [RouteMixin("api/weather", HttpVerb.Get)]
+        [ApiRoute("api/weather", HttpVerb.Get)]
         public sealed partial class Query { public int? Days { get; set; } }
         public sealed class Response { }
     }
@@ -22,7 +22,7 @@ public class FastEndpointSourceGenerator_RouteConflicts_Tests
     [ApiEndpoint]
     public static partial class GetCurrentWeather
     {
-        [RouteMixin("api/weather", HttpVerb.Get)]
+        [ApiRoute("api/weather", HttpVerb.Get)]
         public sealed partial class Query { public int? Days { get; set; } }
         public sealed class Response { }
     }
@@ -62,7 +62,7 @@ public class FastEndpointSourceGenerator_OpenApi_Tests
         /// <remarks>
         /// Retrieves detailed weather forecasts including temperature and conditions
         /// </remarks>
-        [RouteMixin("api/weatherForecasts", HttpVerb.Get)]
+        [ApiRoute("api/weatherForecasts", HttpVerb.Get)]
         public sealed partial class Query
         {
             /// <summary>

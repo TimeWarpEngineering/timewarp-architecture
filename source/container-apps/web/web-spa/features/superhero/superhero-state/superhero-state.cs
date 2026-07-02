@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.Superheros;
 
-[StateAccessMixin]
+[StateAccess]
 public sealed partial class SuperheroState : State<SuperheroState>
 {
   private readonly List<SuperheroDto> SuperheroList = [];

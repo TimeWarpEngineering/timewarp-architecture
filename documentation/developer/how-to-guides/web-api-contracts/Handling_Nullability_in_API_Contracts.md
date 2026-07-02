@@ -30,6 +30,7 @@ Example of non-nullable property initialized using null-forgiving operator:
 
 ```csharp
 public static partial class UpdateUser
+{
   public sealed partial class Command
   {
     public string MandatoryEmail { get; set; } = null!;
@@ -82,7 +83,20 @@ public sealed class Response
 }
 ```
 
-By following these guidelines, the mutability and nullability of properties in the API contracts can be effectively managed, further improving the robustness and reliability of the application within the TimeWarp Architecture.
+By following these guidelines, the nullability of properties in the API contracts can be effectively managed, further improving the robustness and reliability of the application within the TimeWarp Architecture.
+
+#### Compile-Time Enforcement
+
+In this repository these rules are enforced by the `ContractNullabilityValidatorAnalyzer`
+(wired into `web-contracts`, build-breaking under warnings-as-errors):
+
+- **TWPA0002** — a property declared nullable (`string?`) that also carries an unconditional
+  `NotEmpty()`/`NotNull()` rule. The type and the validator disagree; make the property
+  non-nullable (`= null!`) or drop the rule if the field is genuinely optional.
+- **TWPA0003** — a required property (has a presence rule) initialized with `= string.Empty`/`= ""`.
+  This is the silent-data bug described above; use `= null!` (or `required`).
+
+`string?` **without** a presence rule is a legitimate optional field and is never flagged.
 
 
 ### FAQ

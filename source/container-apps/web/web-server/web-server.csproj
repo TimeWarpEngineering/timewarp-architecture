@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>cosmosdb;postgres</DefineConstants>
+    <DefineConstants>postgres</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -22,8 +22,6 @@
   </PropertyGroup>
 
   <ItemGroup Label="Core">
-    <PackageReference Include="Aspire.Microsoft.Azure.Cosmos" />
-    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.Cosmos" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />

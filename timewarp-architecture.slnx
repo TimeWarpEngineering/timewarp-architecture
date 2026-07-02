@@ -16,6 +16,7 @@
   <Folder Name="/source/analyzers/">
     <Project Path="source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
     <Project Path="source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
+    <Project Path="source/analyzers/timewarp-architecture-contract-analyzers/timewarp-architecture-contract-analyzers.csproj" />
   </Folder>
   <Folder Name="/source/container-apps/">
     <!--#if (api) -->

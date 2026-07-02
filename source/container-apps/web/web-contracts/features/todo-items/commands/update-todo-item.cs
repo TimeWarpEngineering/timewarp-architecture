@@ -2,12 +2,12 @@ namespace TimeWarp.Architecture.Features.TodoItems;
 
 public sealed partial class UpdateTodoItem
 {
-  [RouteMixin("api/TodoItems/{TodoItemId:guid}", HttpVerb.Post)]
+  [ApiRoute("api/TodoItems/{TodoItemId:guid}", HttpVerb.Post)]
   public partial class Command: IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
   {
     public Guid TodoListId { get; init; }
 
-    public string Title { get; init; } = string.Empty;
+    public string Title { get; init; } = null!;
 
     public bool Done { get; init; }
 

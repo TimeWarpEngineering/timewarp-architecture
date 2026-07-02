@@ -1,6 +1,6 @@
 namespace TimeWarp.Architecture.Features.EventStreams;
 
-[StateAccessMixin]
+[StateAccess]
 internal sealed partial class EventStreamState : State<EventStreamState>
 {
   private List<string> EventList { get; set; } = [];

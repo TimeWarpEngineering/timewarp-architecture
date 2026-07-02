@@ -16,7 +16,6 @@ artifact (the blank-line/IDE2000 and `.slnx`-conditional artifacts were already 
 | Flag (`--X false`) | Result |
 |--------------------|--------|
 | `grpc`             | ✅ builds clean (done in 064) |
-| `cosmosdb`         | ✅ builds clean |
 | `api`              | ❌ ~4 CS0234 + ~20 RZ10012 (Razor components ref weather/api) |
 | `web`              | ❌ CS0234 + CS0246 |
 | `yarp`             | ❌ ~4 CS0234 |

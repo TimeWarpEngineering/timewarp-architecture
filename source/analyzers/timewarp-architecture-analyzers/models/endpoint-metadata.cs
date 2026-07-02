@@ -26,14 +26,16 @@ internal sealed class EndpointMetadata
 
     if (queryClass != null)
     {
-      // Extract route and HTTP verb from RouteMixin attribute
-      AttributeData? routeMixinAttribute = queryClass.GetAttributes()
-        .FirstOrDefault(attr => attr.AttributeClass?.ToDisplayString() == "TimeWarp.Architecture.RouteMixinAttribute");
+      // Extract route and HTTP verb from ApiRoute attribute. Match by simple name: the attribute is
+      // emitted into each consumer's RootNamespace by the contracts generator, so the namespace
+      // varies per generated app (a full display-string match would pin one root namespace).
+      AttributeData? apiRouteAttribute = queryClass.GetAttributes()
+        .FirstOrDefault(attr => attr.AttributeClass?.Name == "ApiRouteAttribute");
 
-      if (routeMixinAttribute != null && routeMixinAttribute.ConstructorArguments.Length >= 2)
+      if (apiRouteAttribute != null && apiRouteAttribute.ConstructorArguments.Length >= 2)
       {
-        metadata.Route = routeMixinAttribute.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
-        string httpVerb = routeMixinAttribute.ConstructorArguments[1].Value?.ToString() ?? "Get";
+        metadata.Route = apiRouteAttribute.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
+        string httpVerb = apiRouteAttribute.ConstructorArguments[1].Value?.ToString() ?? "Get";
         metadata.HttpVerb = ConvertHttpVerbToMethodName(httpVerb);
       }
 

@@ -15,14 +15,14 @@ public class ContractsMixinGenerator_Tests
 
     public static partial class GetRole
     {
-        [RouteMixin("api/Roles/{RoleId:min(1)}", HttpVerb.Get)]
+        [ApiRoute("api/Roles/{RoleId:min(1)}", HttpVerb.Get)]
         public sealed partial class Query { }
     }
 
     public static partial class GetRoles
     {
-        [IOpenDataQueryParametersMixin]
-        [IAuthApiRequestMixin]
+        [OpenDataQueryParameters]
+        [AuthApiRequest]
         public sealed partial class Query { }
     }
     """;
@@ -52,10 +52,10 @@ public class ContractsMixinGenerator_Tests
     string generated = RunAndConcat("TimeWarp.Architecture");
 
     generated.ShouldContain("namespace TimeWarp.Architecture");
-    generated.ShouldContain("internal sealed class RouteMixinAttribute : System.Attribute");
-    generated.ShouldContain("public RouteMixinAttribute(string RouteTemplate, global::TimeWarp.Foundation.Features.HttpVerb HttpVerb)");
-    generated.ShouldContain("internal sealed class IAuthApiRequestMixinAttribute : System.Attribute");
-    generated.ShouldContain("internal sealed class IOpenDataQueryParametersMixinAttribute : System.Attribute");
+    generated.ShouldContain("internal sealed class ApiRouteAttribute : System.Attribute");
+    generated.ShouldContain("public ApiRouteAttribute(string RouteTemplate, global::TimeWarp.Foundation.Features.HttpVerb HttpVerb)");
+    generated.ShouldContain("internal sealed class AuthApiRequestAttribute : System.Attribute");
+    generated.ShouldContain("internal sealed class OpenDataQueryParametersAttribute : System.Attribute");
     return Task.CompletedTask;
   }
 

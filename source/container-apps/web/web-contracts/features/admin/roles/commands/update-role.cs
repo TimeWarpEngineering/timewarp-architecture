@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 public static partial class UpdateRole
 {
-  [RouteMixin("api/Role/{RoleId:int}", HttpVerb.Put)]
+  [ApiRoute("api/Role/{RoleId:int}", HttpVerb.Put)]
   public sealed partial class Command : IAuthApiRequest, IRoleDetails, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }

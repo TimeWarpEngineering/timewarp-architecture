@@ -6,7 +6,7 @@ public static partial class TrackEvent
   {
     public const string Route = "Analytics/TrackEvent";
 
-    public string? EventName { get; set; }
+    public string EventName { get; set; } = null!;
 
     public HttpVerb GetHttpVerb() => HttpVerb.Post;
     public string GetRoute() => $"{Route}";

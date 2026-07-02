@@ -4,7 +4,7 @@ using Authorization;
 using Services;
 public static partial class GetCurrentUser
 {
-  [RouteMixin(RouteTemplate: "api/GetCurrentUser", HttpVerb.Get)]
+  [ApiRoute(RouteTemplate: "api/GetCurrentUser", HttpVerb.Get)]
   public sealed partial class Query : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }

@@ -2,7 +2,7 @@ namespace TimeWarp.Architecture.Features.Auth;
 
 public static partial class GetSignInToken
 {
-  [RouteMixin(RouteTemplate: "api/signin-token", HttpVerb.Get)]
+  [ApiRoute(RouteTemplate: "api/signin-token", HttpVerb.Get)]
   public sealed partial class Query() : IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public string UserId { get; set; } = null!;
