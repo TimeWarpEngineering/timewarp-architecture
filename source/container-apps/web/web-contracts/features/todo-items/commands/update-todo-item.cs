@@ -13,6 +13,7 @@ namespace TimeWarp.Architecture.Features.TodoItems;
 public sealed partial class UpdateTodoItem
 {
   [ApiRoute("api/TodoItems/{TodoItemId:guid}", HttpVerb.Post)]
+  [ClientOnlyContract("Todo items are a client demo; the server slice awaits the feature's finish-vs-delete decision.")]
   public partial class Command: IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
   {
     public Guid TodoListId { get; init; }

@@ -14,6 +14,7 @@ namespace TimeWarp.Architecture.Features.TodoItems;
 public sealed partial class CreateTodoItem
 {
   [ApiRoute("api/TodoItems", HttpVerb.Post)]
+  [ClientOnlyContract("Todo items are a client demo; the server slice awaits the feature's finish-vs-delete decision.")]
   public sealed partial class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
   {
 
