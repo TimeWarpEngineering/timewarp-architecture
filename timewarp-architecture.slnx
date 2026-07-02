@@ -58,6 +58,7 @@
     <Project Path="tests/container-apps/api/api-server-integration-tests/api-server-integration-tests.csproj" />
     <!--#endif -->
     <!--#if (web) -->
+    <Project Path="tests/container-apps/web/web-contracts-tests/web-contracts-tests.csproj" />
     <Project Path="tests/container-apps/web/web-server-integration-tests/web-server-integration-tests.csproj" />
     <Project Path="tests/container-apps/web/web-spa-integration-tests/web-spa-integration-tests.csproj" />
     <!--#endif -->

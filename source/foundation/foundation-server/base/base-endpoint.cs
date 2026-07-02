@@ -18,7 +18,7 @@ namespace TimeWarp.Foundation.Features;
 [Produces("application/json")]
 public class BaseEndpoint<TRequest, TResponse> : ControllerBase
   where TRequest : IRequest<OneOf<TResponse, SharedProblemDetails>>
-  where TResponse : BaseResponse
+  where TResponse : class
 {
   private ISender Sender => HttpContext?.RequestServices.GetRequiredService<ISender>()
     ?? throw new InvalidOperationException("ISender is not available.");

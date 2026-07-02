@@ -16,7 +16,7 @@ namespace TimeWarp.Foundation.Features;
 
 public abstract class BaseFastEndpoint<TRequest, TResponse> : Endpoint<TRequest, OneOf<TResponse, SharedProblemDetails>>
   where TRequest : IRequest<OneOf<TResponse, SharedProblemDetails>>
-  where TResponse : BaseResponse
+  where TResponse : class
 {
   private ISender Sender => HttpContext?.RequestServices.GetRequiredService<ISender>()
     ?? throw new InvalidOperationException("ISender is not available.");

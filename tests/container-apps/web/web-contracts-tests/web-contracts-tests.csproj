@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="TimeWarp.Fixie" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Contracts only — no server, no host. These tests must run in the contract-first window,
+         before any server exists (the BFF workflow authors contracts + mock-backed SPA first). -->
+    <ProjectReference Include="..\..\..\..\source\container-apps\web\web-contracts\web-contracts.csproj" />
+  </ItemGroup>
+</Project>
