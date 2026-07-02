@@ -18,6 +18,29 @@ Current names:
 - `IOpenDataQueryParametersMixinAttribute` → `[IOpenDataQueryParametersMixin]` — candidate:
   `[OpenDataQueryParameters]`.
 
+## Maintainer directive (2026-07-02) — this task now gates the skill rewrite
+
+Per the RFC Decision 8 ruling ([[contract-conventions-rfc]] in `skills/web-api-contracts/analysis/`):
+
+- **Compatibility / package versioning is explicitly NOT a factor.** "We want the best solution, we
+  don't want tech debt because of 'compatibility' or previous bad decisions." The foundation package
+  is beta and the maintainer owns the downstream — decide the names on merits alone, then bump and
+  publish without ceremony. (The "package API change" bullet below stays as *work to do*, not as a
+  reason to hedge.)
+- **The question set, in order:** (1) **Should** the source-gen attributes be renamed? (2) If so, to
+  **what**? (3) Should there be a **consistent suffix/prefix/convention that signals "this attribute
+  drives source generation"** — or is intent-naming with no mechanism marker (the .NET ecosystem
+  norm: `[ObservableProperty]`, `[JsonSerializable]`, `[LibraryImport]`) the right call?
+- **Sequencing:** answer + implement this, **then** the skill rewrite
+  ([[081-rewrite-web-api-contracts-skillmd-per-rfc-resolutions]]) proceeds once, against final names.
+- While in the FastEndpoint generator's name match, also fix the **hardcoded
+  `"TimeWarp.Architecture.RouteMixinAttribute"`** (`endpoint-metadata.cs:31`) — contrary to the
+  bullet below it is **not** `<RootNamespace>`-parameterized; it is pinned to the
+  `TimeWarp.Architecture` namespace, a latent break for generated apps with a different root
+  namespace (verified in the RFC mechanism note).
+- Naming collision note for the `[Route]` candidate: `Microsoft.AspNetCore.Mvc.RouteAttribute`
+  exists — weigh `[ApiRoute]` against it.
+
 ## Considerations (why this is a deliberate pass, not a one-off)
 
 - **Consistency:** rename all together or none — a half-renamed set is worse than leaving "Mixin"

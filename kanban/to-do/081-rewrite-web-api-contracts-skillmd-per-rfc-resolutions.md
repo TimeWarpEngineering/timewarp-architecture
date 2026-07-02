@@ -7,30 +7,31 @@ The deliverable the whole RFC exercise exists to produce: rewrite
 [[contract-conventions-rfc]] (`skills/web-api-contracts/analysis/`). The RFC has 3 reviewer ballots
 (Author/Opus, Composer/Grok, GLM 5.2) plus post-RFC empirical results (§3.6, tasks 078/080).
 
+**All RFC ballots are now resolved (2026-07-02, recorded in the RFC vote table + decision
+sections).** The rulings that shape this rewrite:
+
+- **Decision 3 — RESOLVED**: dedicated `web-contracts-tests` project; GLM's trigger list
+  (`required`/`init`/custom converters/non-default ctors, camelCase, `OneOf` envelopes) demoted to
+  test-prioritization guidance. Basis: maintainer testimony — in copic the contracts were
+  frontend-authored, the backend was another developer, integration tests came *after*; contract
+  tests were the only seam check in the contract-first window the BFF workflow creates. The rewrite
+  teaches this shape; creating TWA's actual `web-contracts-tests` project is a §7 cleanup slice.
+- **Decision 6 — RESOLVED via Decision 8's sequencing**: document **both** auth forms + the trigger
+  (attribute ⇒ query-string list queries; manual interface ⇒ POST/by-id), the mock-mode rationale,
+  the "server never trusts client-sent `UserId`" rule, and copic's server-side derivation as the
+  valid alternative — all under the **post-rename names**.
+- **Decision 8 — RESOLVED: rename first; compatibility is a NON-factor.** Maintainer: "we want the
+  best solution, we don't want tech debt because of 'compatibility' or previous bad decisions."
+
 **Two gates before editing a line:**
 
-1. **Skill sync path (RFC §6 caveat).** Task 053-002 refers to the skill as
+1. **053-002 must be decided and implemented first** (should we rename, to what, and is there a
+   consistent source-gen attribute convention). This task then writes against the final names, once.
+2. **Skill sync path (RFC §6 caveat).** Task 053-002 refers to the skill as
    `timewarp-flow/master/skills/webapi-contracts` (no hyphen) while this repo has
    `skills/web-api-contracts` (hyphenated). Determine which is canonical and whether one syncs over
    the other (cf. how `ganda skills sync` clobbered the kanban-skill copy) — otherwise the corrected
    spec can be silently overwritten.
-2. **Maintainer ruling on the 3 contested ballots (2–1):**
-   - ~~**Decision 3** (contract serialization tests)~~ — **RESOLVED (maintainer, 2026-07-02)**:
-     dedicated `web-contracts-tests` project; GLM's trigger list (`required`/`init`/custom
-     converters/non-default ctors, camelCase, `OneOf` envelopes) demoted to test-prioritization
-     guidance. Basis: maintainer testimony (recorded in the RFC) — in copic the contracts were
-     frontend-authored, the backend was another developer, integration tests came *after*; the
-     contract tests were the only seam check in the contract-first window the BFF workflow creates.
-     The rewrite should teach this shape; creating TWA's actual `web-contracts-tests` project is a
-     §7 cleanup slice (own task).
-   - **Decision 6** (`IAuthApiRequest`): promote to canonical (Author+Composer) vs GLM's "document
-     both forms + trigger, hold 'canonical' until post-rename" (copic's server-side derivation is a
-     valid competing design; TWA itself is split attribute-vs-manual).
-   - **Decision 8** (053-002 rename sequencing): rename-first (Author+Composer) vs GLM's third
-     option — **rewrite the skill against the target name `[Route]` with a migration note, clean
-     contracts against current `[RouteMixin]`, don't gate anything on the rename.** Note: session
-     evidence (078/080 landed cleanly against `[RouteMixin]`) has strengthened GLM's position, and
-     Decisions 6+8 are coupled (the auth attribute is renamed by 053-002).
 
 ## Checklist
 

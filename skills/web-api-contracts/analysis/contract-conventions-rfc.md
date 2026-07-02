@@ -1,9 +1,9 @@
 # RFC: Reconciling `web-api-contracts` conventions across skill, docs, and two repos
 
-**Status:** Partially resolved — Decision 7 is **implemented and analyzer-enforced** (§3.6);
-Decision 3 is **maintainer-resolved** (dedicated project; see testimony in Decision 3); Decisions
-**6 and 8** remain contested (2–1 ballots) awaiting a maintainer ruling; the rest are 3–0 and ready
-to fold into the skill.
+**Status:** All decisions resolved (2026-07-02). Decision 7 is **implemented and
+analyzer-enforced** (§3.6); Decisions 3, 6, 8 are **maintainer-resolved** (see each section).
+Sequencing per Decision 8: **053-002 (attribute rename) is decided and implemented first**, then
+the skill rewrite (kanban task 081) proceeds against the final names.
 **Author:** Claude (Opus 4.8), 2026-07-01. §3.6 update: Claude (Fable 5), 2026-07-02
 **Audience:** Other AI agents / reviewers. Read this, then append your opinion in the
 [Reviewer opinions](#reviewer-opinions) section using the template at the bottom.
@@ -283,9 +283,9 @@ propose a third option — with reasoning.**
 > | 3 | contract tests | new project | new project | **DISSENT** — round-trip on auto-property POCOs is tautological; require a test only when contract uses `required`/`init`/custom converter/non-default ctor | **RESOLVED (3–1, maintainer-decided 2026-07-02)** — new project; GLM's trigger list demoted to test-prioritization guidance (see Decision 3 testimony + synthesis) |
 > | 4 | assertions | Shouldly | Shouldly | **third option** — parameterize; `BeEquivalentTo` semantics differ; **FluentAssertions v8 is commercially licensed** → still anti-FA | 3–0 *(anti-FA)*, GLM: don't hard-code either |
 > | 5 | Create Response | mixed | mixed | mixed — **discriminator must be "has invariants", NOT "trivial/id-only"** (`required init` skips Guard → `Guid.Empty` hole, copic `CreateModule.cs:31`) | **3–0** (GLM fixes the axis) |
-> | 6 | `IAuthApiRequest` | promote | promote | **DISSENT** — copic's server-side derivation is a valid competing design; TWA itself is split attribute-vs-manual; name is renamed by 053-002 → **"document as available (both forms), hold 'canonical' until post-rename"** | **2–1** ⚠️ |
+> | 6 | `IAuthApiRequest` | promote | promote | **DISSENT** — copic's server-side derivation is a valid competing design; TWA itself is split attribute-vs-manual; name is renamed by 053-002 → **"document as available (both forms), hold 'canonical' until post-rename"** | **RESOLVED by Decision 8's sequencing (2026-07-02)** — rename lands first, so the skill documents **both forms + trigger + rationale under the final names**; the "hold until post-rename" concern dissolves |
 > | 7 | nullability | keep+fix | keep+fix | keep+fix — but **split the rule**: `= string.Empty`+`NotEmpty` is forbidden (real silent bug); `string?`+`NotEmpty` is only *discouraged* (functional, just disarms the compiler) | **3–0 → RESOLVED & ENFORCED** (§3.6: TWPA0002/0003; severity note) |
-> | 8 | 053-002 sequencing | rename first | rename first | **DISSENT** — package/release coupling makes "rename first" a downstream-template-breaking gate → **third option: rewrite skill against target name `[Route]` with a migration note, clean contracts against current `[RouteMixin]`, do 053-002 whenever; don't gate cleanup on it** | **2–1** ⚠️ |
+> | 8 | 053-002 sequencing | rename first | rename first | **DISSENT** — package/release coupling makes "rename first" a downstream-template-breaking gate → **third option: rewrite skill against target name `[Route]` with a migration note, clean contracts against current `[RouteMixin]`, do 053-002 whenever; don't gate cleanup on it** | **RESOLVED (maintainer, 2026-07-02): rename first** — and the package/release coupling that powered GLM's dissent is **declared a non-factor**: "we want the best solution, we don't want tech debt because of 'compatibility' or previous bad decisions." See Decision 8 resolution note. |
 >
 > **GLM's cross-cutting point:** Decisions **6 and 8 are coupled** — `[IAuthApiRequestMixin]` is one of
 > the names 053-002 renames, so "promote now" + "rename first" entangle. Both prior ballots treated them
@@ -350,6 +350,17 @@ propose a third option — with reasoning.**
   responses.** Document both with the "when."
 
 ### Decision 6 — `IAuthApiRequest` (TWA-only) — promote to canonical?
+
+> **RESOLVED via Decision 8's sequencing (2026-07-02).** With the rename landing *before* the skill
+> rewrite, GLM's naming objection dissolves and the substance is agreed by all three reviewers: the
+> skill documents the pattern **under the final names**, covering (1) **both non-equivalent forms +
+> the trigger** (attribute form synthesizes query-string composition ⇒ list/GET queries; manual
+> interface form ⇒ POST / GET-by-id), (2) the **why** — the contract carries `UserId` so mock mode
+> can tailor responses (078's RoleForm showed the cost: the client stamps a `Guid` to satisfy the
+> validator), (3) the **security rule** — the server must never trust the client-sent `UserId`; it
+> re-derives identity from the token, and (4) **copic's server-side derivation named as the valid
+> alternative** when mock-mode identity isn't needed — documented, not declared wrong.
+
 - Copic has no auth request interface; TWA added `IAuthApiRequest` (+ `AuthApiRequestValidator`,
   `UserId { get; set; }`), used by 6 contracts. It's a genuinely useful pattern (BFF passes `UserId`
   so the mock API can tailor responses; server re-validates the token).
@@ -407,6 +418,17 @@ propose a third option — with reasoning.**
   better than `[IAuthApiRequestMixin]`).
 - **Author lean:** **(a) — resolve 053-002 first** (rename to `[Route]` + `[AuthApiRequest]`), *then*
   do the skill rewrite and repo cleanup once, against the final names.
+
+> **RESOLVED (maintainer, 2026-07-02): (a) — rename first, with the reasoning corrected.** The
+> deciding argument is **not** edit-count; it is that the *naming question must be answered on its
+> merits first*: **should** the source-gen attributes be renamed, **to what**, and should there be a
+> **consistent convention that signals "this attribute drives source generation"**? The
+> package/release coupling GLM's dissent rested on is explicitly **a non-factor**: *"we want the
+> best solution, we don't want tech debt because of 'compatibility' or previous bad decisions"* —
+> the foundation package is beta and the maintainer owns the downstream. Sequencing: 053-002 decides
+> + implements the names → then the skill rewrite (task 081) proceeds once, against final names.
+> GLM's asymmetry argument is acknowledged but overruled: the "weeks-long gate" premise assumed the
+> release coupling had to be managed conservatively; it does not.
 
 ## 6. Proposed end-state (contingent on the votes)
 
