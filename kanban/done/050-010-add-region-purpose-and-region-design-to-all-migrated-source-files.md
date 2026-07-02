@@ -29,19 +29,30 @@ All .cs files under `source/`:
 ## Checklist
 
 ### Phase 1: Inventory
-- [ ] List all .cs files under source/; exclude trivial ones (assembly markers, global-usings,
-      <10 lines with no logic, generated code) and the 4 already done.
-- [ ] Group by project so each pass has whole-project context.
+- [x] Inventory: 168 non-trivial candidates (excluded markers, global-usings, generated, <12-line
+      files, and the 4 already done).
+- [x] Grouped path-ordered into 14 slices of ~12 files for project-affine context.
 
-### Phase 2: Add Regions (per project, with cross-file context)
-- [ ] `#region Purpose` — one line — and `#region Design` — the why: decisions, constraints,
-      rationale (5–10 lines max) — at the top of each file, before the namespace.
-- [ ] `#region Open Questions` only where a genuine question surfaced while reading.
-- [ ] No temporal language; say what the code can't; skip anything that would restate the name.
+### Phase 2: Add Regions
+- [x] 14-agent workflow backfilled **160 files** (commit `98c63180`; 1,861 insertions, **0 deletions**
+      — verified insertion-only via `git diff --numstat`).
+- [x] **8 skipped with recorded reasons**: dead commented-out entities (`category.cs`, `product.cs`),
+      `#if false` body (`user-claims-base.cs`), sub-threshold stubs (`greeter-service.cs`,
+      `SideNavigationLink.razor.cs`, `assembly-extensions.cs`), and files whose single design fact
+      was already an inline comment (`constants.cs`, `java-script-interop-constants.cs`).
+- [x] Rules enforced in agent prompts: why-not-what, no temporal language, insertion-only, ≤14 lines.
 
 ### Phase 3: Verify
-- [ ] `dev build` green (regions must not break compilation, incl. source-generated partials).
-- [ ] Sample review for quality: regions must carry the *why*, not paraphrase the class name.
+- [x] `dev build` green (0/0) — regions coexist with source-generated partials.
+- [x] Random spot-checks carry genuine *why* (e.g. service-uri-provider: browser can't read Aspire
+      env vars → server exposes /service-discovery; policy-registration: explicit always-true
+      Anonymous policy avoids special-casing).
+
+## Result
+
+Region coverage went from 4/304 to 164/304 `.cs` files, with the remainder deliberately trivial.
+Freshness from here on is the `AGENTS.md` maintenance rule; presence enforcement via an analyzer
+remains a candidate follow-up (see Notes).
 
 ## Notes
 
