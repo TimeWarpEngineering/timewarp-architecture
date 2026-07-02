@@ -41,8 +41,17 @@ checks; the generator assemblies for emission.
 
 ## Checklist
 
-- [ ] Maintainer triage: accept/reject each candidate; spawn tasks for accepted ones.
-- [ ] Keep appending future candidates here (standing directive) until triaged.
+- [x] Split into child tasks (2026-07-02):
+      [[085-001-endpoint-coverage-analyzer-verb-agreement-and-missing-endpoint-detection]]
+      (candidates 1+2 — same analyzer, two diagnostics),
+      [[085-002-hoist-canonical-jsonserializeroptions-into-foundation-contracts]] (candidate 3),
+      [[085-003-source-generate-the-mockwebapiservice-factory-registry]] (candidate 4),
+      [[085-004-analyzer-aspire-resource-names-must-match-servicenames-constants]] (candidate 5).
+- [x] Candidate 6 (BaseEndpoint/BaseFastEndpoint alignment): **no task** — an analyzer here is
+      over-engineering; if the duplication ever hurts, extract the shared Match/problem-mapping
+      logic instead. Recorded as the decision.
+- [ ] Keep appending future candidates here (standing directive), splitting into 085-nnn children
+      when accepted.
 
 ## Notes
 
