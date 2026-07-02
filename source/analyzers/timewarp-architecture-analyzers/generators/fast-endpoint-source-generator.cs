@@ -1,3 +1,17 @@
+#region Purpose
+// Generates FastEndpoint classes from [ApiEndpoint] contract types in referenced assemblies.
+#endregion
+
+#region Design
+// Opt-in via the EnableApiEndpointGeneration MSBuild property (default false) so any project can
+// reference the analyzers package without silently emitting endpoints.
+// Scans referenced-assembly symbols rather than the current compilation's syntax: contracts live
+// in a separate project from the server that hosts the generated endpoints.
+// Reports SG002 instead of failing when FastEndpoints/BaseFastEndpoint are absent — feature flags
+// can strip those references while the generator package remains attached.
+// Catches all exceptions (CA1031): a throwing generator would break the entire compilation.
+#endregion
+
 namespace TimeWarp.Architecture.Analyzers;
 
 using TimeWarp.Architecture.Analyzers.Models;

@@ -1,3 +1,15 @@
+#region Purpose
+// Shared shape for list queries that support OData-style paging, filtering, and sorting.
+#endregion
+
+#region Design
+// Property names deliberately mirror OData query options ($top, $skip, $filter, $orderby,
+// $count) so queries translate mechanically at the endpoint, but the interface keeps contracts
+// free of any OData library dependency — Filter/OrderBy stay opaque strings the server parses.
+// ReturnTotalCount pairs with ListResponse<T>.TotalCount: clients only pay for the count query
+// when pagination UI needs it.
+#endregion
+
 namespace TimeWarp.Foundation.Features;
 
 /// <summary>

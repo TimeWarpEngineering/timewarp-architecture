@@ -1,3 +1,14 @@
+#region Purpose
+// State slice holding the chat transcript received over the SignalR hub.
+#endregion
+
+#region Design
+// The list is private with a read-only projection so components can only mutate it
+// through the actions in the sibling partial files.
+// ChatMessage is nested here as a client-side view model, deliberately separate from
+// the SendMessage/ReceiveMessage hub contracts.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Chat;
 
 [StateAccess]

@@ -1,3 +1,16 @@
+#region Purpose
+// MVC-controller bridge from HTTP to the mediator pipeline for contract request/response pairs.
+#endregion
+
+#region Design
+// Controllers are thin adapters: all behavior lives in mediator handlers, so an endpoint is just
+// generics + Send. ISender is resolved from HttpContext.RequestServices rather than the
+// constructor so derived (including source-generated) endpoints need no ctor plumbing.
+// OneOf<TResponse, SharedProblemDetails> replaces exceptions for expected failures; the problem
+// branch maps to its own Status code (default 400), keeping handler results transport-agnostic.
+// FastEndpoints counterpart: base-fast-endpoint.cs — keep their semantics aligned.
+#endregion
+
 // TODO: Review this code.  Why not inject ISender?
 namespace TimeWarp.Foundation.Features;
 

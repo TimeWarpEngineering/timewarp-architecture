@@ -1,3 +1,14 @@
+#region Purpose
+// ApplicationState action demonstrating a second tracked long-running task (two-second delay).
+#endregion
+
+#region Design
+// Counterpart to FiveSecondTaskActionSet so the template can demonstrate multiple tracked
+// actions running concurrently; [TrackAction] gives each its own busy indicator.
+// The commented-out wrapper documents the linked-cancellation dispatch pattern; the action
+// can also be sent directly through Sender.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Applications;
 
 partial class ApplicationState

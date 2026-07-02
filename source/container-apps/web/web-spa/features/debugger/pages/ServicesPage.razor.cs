@@ -1,3 +1,14 @@
+#region Purpose
+// Debug page listing the mediator pipeline registrations resolved from DI.
+#endregion
+
+#region Design
+// Pipeline ordering and duplicate registrations are invisible at runtime; this page
+// exposes them by injecting IServiceCollection, which program.cs registers into
+// itself as a singleton specifically to enable this introspection.
+// Diagnostic-only — nothing here should be load-bearing for features.
+#endregion
+
 namespace TimeWarp.Architecture.Pages;
 
 [Page("/Services")]

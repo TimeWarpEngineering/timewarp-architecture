@@ -1,3 +1,14 @@
+#region Purpose
+// Drives WebAuthn passkey registration and login through the Bitwarden Passwordless JS library.
+#endregion
+
+#region Design
+// WebAuthn ceremonies must run in the browser, so both operations delegate to JS interop; this
+// class only orchestrates. Registration first fetches a one-time register token from a backend
+// endpoint because tokens must be minted server-side with the API secret — the client's
+// PasswordlessOptions carries only the public API key and URL.
+#endregion
+
 namespace TimeWarp.Architecture.Services;
 
 public class PasswordlessService

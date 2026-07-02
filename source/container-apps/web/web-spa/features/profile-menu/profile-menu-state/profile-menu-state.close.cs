@@ -1,3 +1,14 @@
+#region Purpose
+// CloseActionSet: dismisses the profile dropdown menu.
+#endregion
+
+#region Design
+// Moves Open to Closing rather than straight to Closed so an animated dismissal can run
+// before the menu is considered gone.
+// The state guard makes close idempotent — safe to fire unconditionally from outside-click
+// or loss-of-interest handlers regardless of the menu's phase.
+#endregion
+
 namespace TimeWarp.Architecture.Features.ProfileMenus;
 
 partial class ProfileMenuState

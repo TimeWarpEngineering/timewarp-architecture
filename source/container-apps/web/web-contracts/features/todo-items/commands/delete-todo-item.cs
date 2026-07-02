@@ -1,3 +1,13 @@
+#region Purpose
+// Contract for deleting a todo item by id.
+#endregion
+
+#region Design
+// Implements GetHttpVerb/GetRoute by hand instead of [ApiRoute], documenting the manual IApiRequest
+// alternative to source generation.
+// GetRoute returns the template with the {TodoItemId} token unexpanded — substitution is left to the sender.
+#endregion
+
 namespace TimeWarp.Architecture.Features.TodoItems.Commands;
 
 public sealed partial class DeleteTodoItem

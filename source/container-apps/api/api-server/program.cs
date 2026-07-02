@@ -1,3 +1,18 @@
+#region Purpose
+// Api.Server composition root: Aspire-enrolled host wiring Mediator, FastEndpoints, and Oakton.
+#endregion
+
+#region Design
+// Cross-server setup is delegated to CommonServerModule; only Api-specific wiring belongs here.
+// Configure* are public statics (IAspNetProgram) so integration-test hosts compose the exact
+// same pipeline as production.
+// Validators register from both the server and contracts assemblies — contracts own request
+// validators, and only public validators are picked up (internals are deliberately excluded).
+// Mediator pipeline behaviors run in registration order: Generic wraps FluentValidation.
+// Oakton runs the host so the binary exposes diagnostic commands alongside serving.
+// Permissive CORS and the Scalar API reference are development-only surfaces.
+#endregion
+
 namespace TimeWarp.Architecture.Api.Server;
 
 public class Program : IAspNetProgram

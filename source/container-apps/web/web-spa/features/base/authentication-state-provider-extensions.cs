@@ -1,3 +1,16 @@
+#region Purpose
+// Resolves the signed-in user's id as a Guid from whichever identifier claim the issuer provides.
+#endregion
+
+#region Design
+// Declared in the Microsoft.AspNetCore.Components.Authorization namespace so the extension is
+// discoverable anywhere AuthenticationStateProvider is already in scope, with no extra using.
+// Claim probe order sub -> oid -> NameIdentifier covers standard OIDC, Microsoft Entra, and
+// ASP.NET Identity token shapes without caller-side branching.
+// Throws rather than returning a nullable: callers need an authenticated identity, and a missing
+// id claim is a configuration error, not a normal state.
+#endregion
+
 namespace Microsoft.AspNetCore.Components.Authorization;
 
 public static class AuthenticationStateProviderExtensions

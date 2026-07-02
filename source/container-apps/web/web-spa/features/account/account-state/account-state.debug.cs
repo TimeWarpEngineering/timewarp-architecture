@@ -1,3 +1,14 @@
+#region Purpose
+// Debug/test support for AccountState: Redux DevTools rehydration and test-only seeding.
+#endregion
+
+#region Design
+// Hydrate rebuilds state from the camelCased key/value payload Redux DevTools round-trips,
+// enabling time-travel debugging.
+// The Initialize overload bypasses the action pipeline so tests can seed state directly;
+// ThrowIfNotTestAssembly blocks production callers from that shortcut.
+#endregion
+
 # nullable enable
 namespace TimeWarp.Architecture.Features.Account;
 

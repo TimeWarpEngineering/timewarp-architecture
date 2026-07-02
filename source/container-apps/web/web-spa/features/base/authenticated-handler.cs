@@ -1,3 +1,14 @@
+#region Purpose
+// Handler base that silently drops actions when the user is not authenticated.
+#endregion
+
+#region Design
+// No error is surfaced by design: components rendered before sign-in completes can fire actions,
+// and treating those as failures would produce noise for an expected condition.
+// Intended for handlers that gate on identity without calling the API; ApiHandler embeds the
+// same optional gate for handlers that do.
+#endregion
+
 namespace TimeWarp.Architecture.Features;
 
 internal abstract class AuthenticatedHandler<TAction> : BaseHandler<TAction>

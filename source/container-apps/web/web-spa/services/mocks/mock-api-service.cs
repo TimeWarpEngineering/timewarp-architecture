@@ -1,3 +1,14 @@
+#region Purpose
+// Hand-rolled IApiService returning canned responses, keyed by request type.
+#endregion
+
+#region Design
+// Unmapped request types throw NotImplementedException so a missing mock fails loudly instead of
+// silently returning empty data. The short delay keeps async code paths realistic.
+// For the richer per-contract factory approach with real-service fallback, see MockWebApiService;
+// this class is the minimal alternative when no real service exists to fall back to.
+#endregion
+
 namespace TimeWarp.Architecture.Services;
 
 public class MockApiService : IApiService

@@ -1,3 +1,16 @@
+#region Purpose
+// SignalR hub for chat; routes client invocations into the mediator pipeline.
+#endregion
+
+#region Design
+// Same thin-shim rule as HTTP endpoints: the hub holds no logic so validation and handling stay
+// in the pipeline shared with REST.
+// The OneOf result is flattened into SignalrResult because a discriminated union cannot be
+// serialized over SignalR — IsSuccess plus two nullable slots is the wire-safe equivalent the
+// Spa client unwraps.
+// Mapped at ChatHubConstants.Route so the URL is owned by Web.Contracts.
+#endregion
+
 namespace TimeWarp.Architecture.Hubs;
 
 public class ChatHub : Hub

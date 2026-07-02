@@ -1,3 +1,17 @@
+#region Purpose
+// Composition root for Web.Server: hosts the Blazor SPA (Server + WebAssembly interactivity), its API endpoints, and the chat hub.
+#endregion
+
+#region Design
+// ConfigureConfiguration/ConfigureServices/ConfigureMiddleware/ConfigureEndpoints are public
+// statics (IAspNetProgram) so integration-test hosts compose the exact production pipeline.
+// Cross-cutting registrations delegate to modules (CommonServerModule etc.); PostgresDbModule
+// stays a single commented call so the `postgres` feature flag is one-line to enable.
+// Serilog bootstrap logger wraps host build so startup crashes are still captured; the app runs
+// through RunOaktonCommands to expose environment checks as CLI commands.
+// Web.Spa services are registered here too — prerendering runs SPA code on the server.
+#endregion
+
 #nullable enable
 
 namespace TimeWarp.Architecture.Web.Server;

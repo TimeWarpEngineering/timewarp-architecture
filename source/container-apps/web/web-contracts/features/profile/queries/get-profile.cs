@@ -1,3 +1,15 @@
+#region Purpose
+// Contract for fetching the signed-in user's display profile (alias and avatar), with a mock for backend-less demos.
+#endregion
+
+#region Design
+// The Query has no properties — identity comes from the auth context, which is why the route says Users/Current.
+// The empty Validator satisfies the convention that every request ships one, keeping source-gen and test
+// patterns uniform across contracts.
+// Guard clauses in the Response constructor make an empty profile unrepresentable; the mock avatar is a
+// data URI so the demo needs no static asset.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Profiles;
 
 public static partial class GetProfile

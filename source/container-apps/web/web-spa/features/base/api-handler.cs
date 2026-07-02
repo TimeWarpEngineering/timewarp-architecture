@@ -1,3 +1,17 @@
+#region Purpose
+// Template-method base for action handlers that call the Web API: build request, send, dispatch the OneOf result.
+#endregion
+
+#region Design
+// A per-state semaphore (from IStore) serializes handlers targeting the same state; the guard
+// tolerates disposal by RemoveState mid-flight, hence the swallowed ObjectDisposedException.
+// Authentication is opt-in via the nullable AuthenticationStateProvider: when supplied, actions
+// from anonymous users are silently dropped rather than surfacing a 401 round-trip.
+// GetRequest returning null is the sanctioned "skip this action" signal for derived handlers.
+// Cancellation maps to a synthetic 499 SharedProblemDetails so HandleError stays the single
+// failure path; validation failures throw instead, since they indicate a client-side coding bug.
+#endregion
+
 namespace TimeWarp.Architecture.Features;
 
 internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<TAction>

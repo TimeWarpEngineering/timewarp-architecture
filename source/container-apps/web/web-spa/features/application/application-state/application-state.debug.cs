@@ -1,3 +1,14 @@
+#region Purpose
+// Debug/test support for ApplicationState: Redux DevTools rehydration and test-only seeding.
+#endregion
+
+#region Design
+// Hydrate restores only the fields time-travel needs (Guid, Name) from the camelCased
+// key/value payload Redux DevTools round-trips.
+// The Initialize overload bypasses the action pipeline so tests can seed state directly;
+// ThrowIfNotTestAssembly blocks production callers from that shortcut.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Applications;
 
 partial class ApplicationState

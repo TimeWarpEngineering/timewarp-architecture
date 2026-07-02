@@ -1,3 +1,15 @@
+#region Purpose
+// Hosts the gRPC service with gRPC-Web enabled so browser (Blazor WASM) clients can call it directly.
+#endregion
+
+#region Design
+// Code-first gRPC (AddCodeFirstGrpc, protobuf-net.Grpc) chosen over proto-first so contracts live in a shared
+// assembly; the stock AddGrpc/GreeterService lines remain commented as the proto-first alternative.
+// UseGrpcWeb(DefaultEnabled) plus permissive CORS exposing the Grpc-* headers are required for browser callers —
+// tighten the CORS policy per deployment.
+// Code-first reflection service is mapped so grpcurl and similar tooling can discover the contract.
+#endregion
+
 public partial class Program
 {
   private static void Main(string[] args)

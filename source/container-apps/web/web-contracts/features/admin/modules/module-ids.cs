@@ -1,3 +1,15 @@
+#region Purpose
+// Well-known module identifiers used for module-level authorization.
+#endregion
+
+#region Design
+// Hardcoded GUIDs, not DB lookups: client and server compare module access (e.g.
+// GetCurrentUser.Response.Modules) against compile-time constants, so no round trip is
+// needed to interpret a claim. Values are contract data — changing one invalidates any
+// stored grant that references it. The ERP-flavored module list is sample domain content
+// demonstrating the pattern; template consumers replace it with their own modules.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Authorization;
 
 public static class ModuleIds

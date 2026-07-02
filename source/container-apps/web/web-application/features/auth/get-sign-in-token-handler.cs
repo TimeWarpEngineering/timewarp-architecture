@@ -1,3 +1,14 @@
+#region Purpose
+// Generates a Passwordless.dev sign-in verification token for a user.
+#endregion
+
+#region Design
+// Runs server-side because token generation needs the Passwordless API secret, which must never reach the
+// browser; the client redeems the returned token through the Passwordless JS sign-in flow.
+// SDK exceptions map to a 400 SharedProblemDetails so the OneOf pipeline yields uniform ProblemDetails
+// instead of an unhandled 500.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Auth.Application;
 
 using Passwordless;

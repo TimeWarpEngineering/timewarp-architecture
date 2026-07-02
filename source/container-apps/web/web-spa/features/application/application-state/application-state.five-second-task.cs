@@ -1,3 +1,14 @@
+#region Purpose
+// ApplicationState action demonstrating a tracked long-running task (five-second delay).
+#endregion
+
+#region Design
+// Template demo, not product behavior: [TrackAction] surfaces the in-flight action via
+// TimeWarp.State action tracking so UI can render busy indicators while it runs.
+// The public wrapper links an optional caller token with the state's own CancellationToken
+// so either the caller or component disposal can cancel the delay.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Applications;
 
 partial class ApplicationState

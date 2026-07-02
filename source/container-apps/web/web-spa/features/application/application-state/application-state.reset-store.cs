@@ -1,3 +1,13 @@
+#region Purpose
+// ApplicationState action that wipes the entire store and returns to the home route.
+#endregion
+
+#region Design
+// Redirects to "/" after Store.Reset because the page being viewed may depend on state that
+// was just re-initialized; landing on home guarantees a valid render after the wipe.
+// Template demo of full-store reset, wired to the Counter page reset button.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Applications;
 
 partial class ApplicationState

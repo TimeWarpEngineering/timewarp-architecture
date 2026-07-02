@@ -1,3 +1,14 @@
+#region Purpose
+// Turns pipeline-published exception notifications into error toasts.
+#endregion
+
+#region Design
+// A plain INotificationHandler rather than an ActionSet: exceptions are published by pipeline
+// middleware, not dispatched by components, so there is no user action to model.
+// Nested in the state partial for feature cohesion even though it touches no state; middleware
+// already logs the exception, leaving display as this handler's sole responsibility.
+#endregion
+
 namespace TimeWarp.Architecture.Features.ToastNotifications;
 
 partial class ToastNotificationState

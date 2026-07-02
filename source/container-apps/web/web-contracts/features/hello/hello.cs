@@ -1,3 +1,13 @@
+#region Purpose
+// Minimal end-to-end sample contract: a GET greeting exercising the full Query/Validator/Response pattern.
+#endregion
+
+#region Design
+// GET requests carry parameters in the query string, so the contract implements IQueryStringRouteProvider
+// and owns URL construction — callers never hand-build routes.
+// GetRoute() itself comes from the [ApiRoute] source generator; this file adds only query-string composition.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Hellos;
 
 public static partial class Hello

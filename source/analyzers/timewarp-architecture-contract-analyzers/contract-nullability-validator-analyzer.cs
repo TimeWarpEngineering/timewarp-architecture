@@ -1,3 +1,16 @@
+#region Purpose
+// TWPA0002/TWPA0003: a contract property's nullability annotation and its FluentValidation
+// presence rule must agree.
+#endregion
+
+#region Design
+// Full rationale (the two contradictions, deliberately skipped shapes) lives in the XML doc on
+// the class — reconcile it with any detection change.
+// Reference types only: value-type presence semantics do not produce the same contradiction.
+// Ships in the contract-analyzers assembly (DiagnosticAnalyzers only, no generators) so contract
+// projects can adopt the check without triggering FastEndpoint generation.
+#endregion
+
 namespace TimeWarp.Architecture.Analyzers;
 
 /// <summary>

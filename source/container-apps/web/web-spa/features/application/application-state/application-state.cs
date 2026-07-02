@@ -1,3 +1,15 @@
+#region Purpose
+// Application shell UI state: active modal, menu expansion, branding, and displayed version.
+#endregion
+
+#region Design
+// A single ActiveModalId gates all modals, so at most one is open and components carry no
+// per-modal open/closed flags.
+// Version is derived from the assembly rather than stored, so it cannot drift from the
+// deployed build.
+// Setters are private; mutation happens only via action-set handlers in sibling partials.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Applications;
 
 /// <summary>

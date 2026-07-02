@@ -1,3 +1,17 @@
+#region Purpose
+// Blazor WebAssembly entry point: composes auth, TimeWarp.State, and API services for the SPA.
+#endregion
+
+#region Design
+// ConfigureServices is public static so integration tests build the same container as the app.
+// MOCK_AUTHENTICATION and MOCK_WEB_API symbols swap in offline fakes, enabling UI development
+// without Azure AD B2C or running servers; template symbols (api, grpc) trim optional services.
+// API services are registered via explicit factories because they expose extra constructors for
+// testing and DI must not guess which one to use.
+// Default culture is forced to ISO date patterns so date rendering/parsing is deterministic
+// regardless of the browser locale.
+#endregion
+
 namespace TimeWarp.Architecture.Web.Spa;
 
 using System.Globalization;

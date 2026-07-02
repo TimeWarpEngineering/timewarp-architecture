@@ -1,3 +1,16 @@
+#region Purpose
+// FastEndpoints bridge from HTTP to the mediator pipeline; base for source-generated endpoints.
+#endregion
+
+#region Design
+// The [ApiRoute] source generator emits subclasses of this, so it must stay ctor-free:
+// ISender comes from HttpContext.RequestServices instead of constructor injection.
+// Writes the response manually (not SendAsync) because the endpoint's declared response type is
+// the OneOf union — success serializes as bare TResponse, failure as application/problem+json
+// with the problem's own Status (default 400), so clients never see the union wrapper.
+// MVC counterpart: base-endpoint.cs — keep their semantics aligned.
+#endregion
+
 // TODO: Review this code.  Why not inject ISender?
 namespace TimeWarp.Foundation.Features;
 

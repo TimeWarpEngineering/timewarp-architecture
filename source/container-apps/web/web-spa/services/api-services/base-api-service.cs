@@ -1,3 +1,16 @@
+#region Purpose
+// Single HTTP transport for all API calls: turns an IApiRequest contract into a request and a OneOf outcome.
+#endregion
+
+#region Design
+// Callers deal only in contracts: verb, route, and body come from the contract itself
+// (GetHttpVerb/GetRoute), so no per-endpoint client code exists.
+// Failures are values, not exceptions: non-success responses, 204, and cancellation (499) all
+// surface as SharedProblemDetails so UI code switches on the OneOf instead of try/catch.
+// Stream TResponse is special-cased into FileResponse to support downloads through the same API.
+// Bearer token is requested per call from IAccessTokenProvider so MSAL owns caching and refresh.
+#endregion
+
 namespace TimeWarp.Architecture;
 
 /// <summary>

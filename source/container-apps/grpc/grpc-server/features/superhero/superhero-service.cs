@@ -1,3 +1,14 @@
+#region Purpose
+// Demo implementation of ISuperheroService that fabricates random superheroes.
+#endregion
+
+#region Design
+// Exists to exercise the code-first gRPC + gRPC-Web path end to end from the Blazor client; no persistence —
+// results are random per call by design, so callers must not expect stable data across requests.
+// Template consumers replace this body with a real implementation while keeping the shared
+// ISuperheroService contract, which clients bind to directly.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Superheros;
 
 public class SuperheroService : ISuperheroService

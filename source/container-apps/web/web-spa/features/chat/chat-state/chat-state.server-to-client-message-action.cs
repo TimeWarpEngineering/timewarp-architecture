@@ -1,3 +1,13 @@
+#region Purpose
+// ChatState action that appends a hub-pushed message to the transcript.
+#endregion
+
+#region Design
+// Dispatched by ChatHubConnection when the hub delivers a ReceiveMessage.Command.
+// This is the single mutation path for ChatMessages — sent messages appear only
+// after the server broadcasts them back, keeping every client consistent.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Chat;
 
 using static ReceiveMessage;

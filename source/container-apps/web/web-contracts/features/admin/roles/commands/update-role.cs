@@ -1,3 +1,15 @@
+#region Purpose
+// Endpoint-centric contract for updating a role.
+#endregion
+
+#region Design
+// The RoleId the Validator references is not declared here: the {RoleId:int} segment in
+// [ApiRoute] makes the source generator emit it on the partial Command, keeping route and
+// body in one type. IRoleDetails lets the Validator compose the shared RoleDetailsValidator
+// so update enforces the same field rules as create. GetMockResponseFactory lets the SPA's
+// MockWebApiService serve this endpoint offline; the empty Response preserves OneOf typing.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 public static partial class UpdateRole

@@ -1,3 +1,13 @@
+#region Purpose
+// CounterState action whose handler always throws, to exercise exception handling.
+#endregion
+
+#region Design
+// Exists so demos and tests can observe how unhandled handler exceptions propagate
+// through the TimeWarp.State pipeline and surface in the UI; never dispatch it from
+// production flows.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Counters;
 
 partial class CounterState

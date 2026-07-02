@@ -1,3 +1,16 @@
+#region Purpose
+// Extracts everything the FastEndpoint generator needs from an [ApiEndpoint] contract symbol.
+#endregion
+
+#region Design
+// One flat DTO decouples template emission from Roslyn symbol traversal, so the generated-code
+// template can change without touching symbol-walking logic.
+// OpenAPI summary/description come from the Query/Command XML docs — the contract is the single
+// authoring point for API documentation.
+// Tags default to the feature folder name (namespace segment above "Features"), keeping OpenAPI
+// grouping aligned with the vertical-slice layout without per-endpoint annotation.
+#endregion
+
 namespace TimeWarp.Architecture.Analyzers.Models;
 
 internal sealed class EndpointMetadata

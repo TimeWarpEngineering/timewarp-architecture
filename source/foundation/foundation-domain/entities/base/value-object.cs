@@ -1,3 +1,16 @@
+#region Purpose
+// DDD base class giving domain value objects structural equality without per-type boilerplate.
+#endregion
+
+#region Design
+// Subclasses supply only GetEqualityComponents; equality, hashing, and operator helpers derive
+// from that single source so the two can never disagree.
+// Equality requires exact runtime type match — a derived value object is never equal to its base,
+// preventing accidental cross-type equivalence.
+// Class (not record) so equality semantics stay explicit and mixed reference/value comparison
+// bugs surface via the null-XOR EqualOperator helper.
+#endregion
+
 namespace TimeWarp.Foundation.Domain.Base;
 
 // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/implement-value-objects

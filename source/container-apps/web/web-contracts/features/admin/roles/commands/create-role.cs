@@ -1,3 +1,15 @@
+#region Purpose
+// Endpoint-centric contract for creating a role.
+#endregion
+
+#region Design
+// [ApiRoute] drives source generation of the FastEndpoint and the Command's route members
+// (hence partial). Implementing IRoleDetails lets the Validator compose the shared
+// RoleDetailsValidator, so create and update forms enforce identical rules.
+// GetMockResponseFactory lets the SPA's MockWebApiService serve this endpoint with no
+// backend running; the response echoes a well-known RoleIds constant for determinism.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 using Authorization;

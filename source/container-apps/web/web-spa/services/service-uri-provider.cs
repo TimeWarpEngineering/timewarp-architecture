@@ -1,3 +1,16 @@
+#region Purpose
+// Supplies the browser-hosted WASM client with backend service URIs it cannot discover itself.
+#endregion
+
+#region Design
+// Aspire service discovery is delivered via environment variables, which a browser process
+// cannot read; the web-server exposes its resolved URIs at /service-discovery and this
+// provider fetches them once over the already-known Web host HttpClient.
+// Lazy, idempotent initialization: callers invoke InitializeAsync before first use so the
+// fetch happens on demand rather than blocking app startup.
+// Failures rethrow after logging — a missing URI map is unrecoverable, not degradable.
+#endregion
+
 namespace TimeWarp.Architecture.Services;
 
 public class ServiceUriProvider

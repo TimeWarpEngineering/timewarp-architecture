@@ -1,3 +1,15 @@
+#region Purpose
+// BaseComponent partial: typed accessors for commonly used states, with and without subscription.
+#endregion
+
+#region Design
+// The NoSub variants read state without registering a re-render subscription — use them in event
+// handlers and one-shot reads where subscribing would cause components to re-render on every
+// change of a state they only sampled once.
+// Centralizing the accessors keeps GetState<T>() calls (and the subscription decision) out of
+// individual components.
+#endregion
+
 namespace TimeWarp.Architecture.Features;
 
 using TimeWarp.Features.Theme;

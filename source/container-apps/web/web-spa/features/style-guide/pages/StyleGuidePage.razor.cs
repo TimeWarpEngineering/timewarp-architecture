@@ -1,3 +1,14 @@
+#region Purpose
+// Interactive demo handlers for the Style Guide page: trigger toasts and errors on demand.
+#endregion
+
+#region Design
+// The style guide is a living reference, so demos must exercise production code paths
+// (state action sets, mediator behaviors) rather than shortcut service calls — what the
+// page shows is exactly what real features get.
+// The markup gallery lives in the .razor file; this partial holds only behavior.
+#endregion
+
 namespace TimeWarp.Architecture.Pages;
 
 [Page("/StyleGuide")]

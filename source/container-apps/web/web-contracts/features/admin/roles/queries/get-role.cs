@@ -1,3 +1,15 @@
+#region Purpose
+// Endpoint-centric contract for fetching a single role to populate an edit form.
+#endregion
+
+#region Design
+// RoleId is not declared on the Query: the {RoleId:min(1)} segment in [ApiRoute] makes the
+// source generator emit it on the partial, and the min(1) route constraint replaces a
+// FluentValidation rule for it. Response implements IRoleDetails so the edit form binds the
+// same shape it submits via UpdateRole. GetMockResponseFactory lets the SPA's
+// MockWebApiService serve this endpoint offline with deterministic RoleIds data.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 using Authorization;

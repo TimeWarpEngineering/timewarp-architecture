@@ -1,3 +1,14 @@
+#region Purpose
+// Serves the GetWeatherForecasts sample query with synthesized data.
+#endregion
+
+#region Design
+// Template demonstration of the application side of a vertical slice: no persistence — random
+// in-memory forecasts keep the sample runnable with zero infrastructure.
+// Only the OneOf success arm is returned; the SharedProblemDetails arm exists to model the
+// error-return pattern real handlers should follow.
+#endregion
+
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 using static GetWeatherForecasts;

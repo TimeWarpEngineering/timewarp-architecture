@@ -1,3 +1,15 @@
+#region Purpose
+// Builds navigation-menu link fragments from a page component's static metadata.
+#endregion
+
+#region Design
+// Pages declare Title/GetPageUrl/Policy/Icon as static properties; reading them via reflection
+// keeps the nav menu derived from the page class itself instead of a duplicate route table.
+// A Policy value switches rendering to AuthorizedFluentNavLink so unauthorized users never see
+// the link. Title and GetPageUrl are mandatory and fail fast to surface miswired pages at
+// render time rather than as dead links.
+#endregion
+
 namespace TimeWarp.Architecture.Components;
 
 public class LinkHelper

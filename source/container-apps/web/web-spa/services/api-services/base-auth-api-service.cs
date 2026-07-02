@@ -1,3 +1,15 @@
+#region Purpose
+// Base for API services that must attach a bearer token before every request.
+#endregion
+
+#region Design
+// Splits authenticated behavior from BaseApiService so anonymous services can share the same
+// transport without pulling in token acquisition.
+// The token is requested per call rather than cached here: IAccessTokenProvider (MSAL) owns
+// expiry and refresh, and a missing token degrades to an anonymous request so the server's 401
+// flows back through the normal SharedProblemDetails path.
+#endregion
+
 namespace TimeWarp.Architecture.Services;
 
 /// <summary>

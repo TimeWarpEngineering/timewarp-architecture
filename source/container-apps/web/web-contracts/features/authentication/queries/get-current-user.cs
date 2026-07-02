@@ -1,3 +1,15 @@
+#region Purpose
+// Contract for fetching the signed-in user's module and role grants, with mock responses for backend-less demos.
+#endregion
+
+#region Design
+// Modules and Roles are Guids drawn from ModuleIds/RoleIds so client menus and route guards key on stable ids
+// instead of matching role-name strings.
+// The mock factory returns per-user responses keyed by well-known UserIds, letting the SPA demonstrate
+// role-driven UI without any auth backend; unknown users get full access because the mock optimizes for
+// demo friction, not security.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Authentication;
 
 using Authorization;

@@ -1,3 +1,15 @@
+#region Purpose
+// AuthorizationState action that loads the current user's module and role grants from the Web API.
+#endregion
+
+#region Design
+// Uses the DefaultApiHandler pipeline; returning a null Query from GetRequest is the cache
+// short-circuit — no HTTP call while AuthorizationState's cache key is still valid.
+// The cache key is updated only in HandleSuccess so failed fetches never extend validity.
+// Invoked from the claims principal factory at sign-in so grants exist before authorization
+// policies evaluate.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Authorization;
 using static GetCurrentUser;
 
