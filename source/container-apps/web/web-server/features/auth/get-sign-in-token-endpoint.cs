@@ -1,3 +1,7 @@
+#region Purpose
+// HTTP GET adapter that exchanges a user id for a Passwordless.dev sign-in token via the mediator pipeline.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Auth;
 
 using static GetSignInToken;

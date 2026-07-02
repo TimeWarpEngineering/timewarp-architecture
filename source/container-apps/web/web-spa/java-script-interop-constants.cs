@@ -1,3 +1,7 @@
+#region Purpose
+// Names of JS interop functions as constants, so C# callers and the wwwroot/js implementations agree on a single string.
+#endregion
+
 namespace TimeWarp.Architecture;
 
 /// <summary>

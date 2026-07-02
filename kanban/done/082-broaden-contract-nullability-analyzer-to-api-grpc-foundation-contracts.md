@@ -1,5 +1,14 @@
 # Broaden contract nullability analyzer to api / grpc / foundation contracts
 
+> **CLOSED — ABSORBED BY
+> [[084-convention-analyzer-require-region-purpose-in-every-source-file-rename-assembly-wire-via-directorybuildprops-absorb-082]]
+> (2026-07-02).** The assembly (renamed `timewarp-architecture-convention-analyzers`) is now wired
+> once via `source/Directory.Build.props`, reaching **every** project under `source/` — a superset
+> of this task's scope. The broadened sweep found one real violation
+> (`web-server/configuration/sample-options.cs` — `= string.Empty` + validated `NotEmpty()`),
+> fixed same-axis; api/grpc/foundation contracts were clean. Stretch items (SetValidator
+> composition-following, code-fix provider) remain unpicked — revive as their own tasks if wanted.
+
 ## Description
 
 Task 080 shipped `ContractNullabilityValidatorAnalyzer` (TWPA0002: `string?` + `NotEmpty()`/

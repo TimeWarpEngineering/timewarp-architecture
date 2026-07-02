@@ -12,6 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\source\analyzers\timewarp-architecture-analyzers\timewarp-architecture-analyzers.csproj" />
-    <ProjectReference Include="..\..\..\source\analyzers\timewarp-architecture-contract-analyzers\timewarp-architecture-contract-analyzers.csproj" />
+    <ProjectReference Include="..\..\..\source\analyzers\timewarp-architecture-convention-analyzers\timewarp-architecture-convention-analyzers.csproj" />
   </ItemGroup>
 </Project>

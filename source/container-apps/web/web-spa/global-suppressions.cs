@@ -1,3 +1,7 @@
+#region Purpose
+// Assembly-level analyzer suppressions for Web.Spa, gathering warnings judged acceptable instead of scattering pragmas through code.
+#endregion
+
 // This file is used by Code Analysis to maintain SuppressMessage
 // attributes that are applied to this project.
 // Project-level suppressions either have no target or are given

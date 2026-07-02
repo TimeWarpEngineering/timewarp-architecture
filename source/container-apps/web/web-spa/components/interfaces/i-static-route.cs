@@ -1,3 +1,7 @@
+#region Purpose
+// Lets links build a page's href via static GetPageUrl() instead of hard-coded route strings; implemented on pages by the [Page] source generator.
+#endregion
+
 namespace TimeWarp.Architecture.Common.Interfaces;
 public interface IStaticRoute
 {

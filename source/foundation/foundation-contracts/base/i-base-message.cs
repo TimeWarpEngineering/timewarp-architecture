@@ -1,3 +1,7 @@
+#region Purpose
+// Root marker of the contract message hierarchy so generic plumbing can constrain to "any request or response".
+#endregion
+
 namespace TimeWarp.Foundation.Features;
 
 /// <summary>

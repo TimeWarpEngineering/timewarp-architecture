@@ -44,21 +44,30 @@ judged mechanically. Design stays governed by the AGENTS.md maintenance rule and
 
 ## Recipe (080-proven: wire + reconcile in the same PR, tree never red)
 
-- [ ] Write `PurposeRegionAnalyzer` (TWPA0004): syntax-tree check for a `#region` directive whose
-      text is `Purpose`; skip generated code; register in AnalyzerReleases.
-- [ ] Fixie tests: file with region = clean; without = flagged; generated file = clean;
-      `#region Purpose` nested/after-namespace = decide (recommend: anywhere in file counts —
-      placement is skill guidance, not analyzer scope).
-- [ ] Rename assembly + rewire per Architecture above; full build to enumerate violations.
-- [ ] Backfill one-line `#region Purpose` into every reported file (~140 trivial: assembly
-      markers, global-usings, the 8 deliberate 050-010 skips incl. dead-code reference files).
-      Mechanical fan-out or script; content must still be true, not filler.
-- [ ] TWPA0002/0003 fallout in api/grpc/foundation contracts: fix same-axis (type + initializer
-      only), per 077/080 precedent.
-- [ ] `dev build` green (0/0); all analyzer + sourcegen tests green.
-- [ ] Close 082 as absorbed; update the `agent-context-regions` skill (timewarp-flow): replace
-      "skip trivial files" with "Purpose is universal — one line even for markers; Design only
-      where there are decisions"; sync skills.
+- [x] `PurposeRegionAnalyzer` (TWPA0004): syntax-tree action; region-name match; generated code
+      excluded via `GeneratedCodeAnalysisFlags.None`; registered in AnalyzerReleases.
+- [x] Fixie tests (5): without = flagged; with = clean; **anywhere-in-file counts** (placement is
+      skill guidance); Design-only still flagged; generated clean. All 21 analyzer tests green.
+- [x] Assembly renamed `timewarp-architecture-convention-analyzers`; wired once in
+      `source/Directory.Build.props` (self-excluded; `IsAspireProjectResource="false"` to keep the
+      Aspire AppHost from treating the analyzer ref as an app resource — ASPIRE004).
+- [x] Backfill: 51 formulaic files scripted (assembly markers, global-usings, identical one-liners);
+      88 small files via 8-agent fan-out (one-line Purpose, Design only where genuine — includes
+      the 050-010 skips: dead-code files now say *why they're kept*). **304/304 coverage.**
+- [x] TWPA0002/0003 broadening caught **one real violation outside web-contracts**:
+      `web-server/configuration/sample-options.cs` `SampleOption = string.Empty` (+ `NotEmpty()`
+      via the options validator) → `= null!`. api/grpc/foundation contracts were clean.
+- [x] `dev build` green (0/0); analyzer 21/21, sourcegen 14/14, web-server integration 11 passed.
+- [x] 082 closed as absorbed; `agent-context-regions` skill updated (universal Purpose, no
+      triviality exemption, TWPA0004 noted) — flow commit `25e288b`, synced.
+
+## Result — analyzer defect found & fixed via the test framework's hidden suppression pass
+
+The testing framework prepends `#pragma warning disable TWPA0004` and verifies the diagnostic
+disappears. The first implementation reported at `TextSpan(0,0)` — a position *before* any leading
+pragma takes effect — making the diagnostic **unsuppressable** (a real defect, not a test
+artifact). Fix: anchor on the file's **first token**; trivia-only files (fully commented out /
+`#if false`) have no active code and are structurally exempt.
 
 ## Notes
 

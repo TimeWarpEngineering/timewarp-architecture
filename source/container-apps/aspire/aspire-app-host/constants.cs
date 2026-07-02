@@ -1,3 +1,7 @@
+#region Purpose
+// Aspire AppHost resource names, pinned to the ServiceNames the apps use for service discovery.
+#endregion
+
 namespace TimeWarp.Architecture.Aspire;
 
 internal class Constants

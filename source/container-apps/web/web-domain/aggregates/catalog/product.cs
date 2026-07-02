@@ -1,3 +1,7 @@
+#region Purpose
+// Commented-out Product entity sketch (nopCommerce-derived) kept as reference for a future catalog aggregate.
+#endregion
+
 //namespace TimeWarp.Architecture.Entities.Catalog;
 
 //using System;

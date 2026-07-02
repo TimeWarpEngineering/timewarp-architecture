@@ -1,3 +1,7 @@
+#region Purpose
+// Code-first gRPC request for the Hello sample; DataContract member ordering defines the wire shape in place of a .proto file.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Hellos;
 
 [DataContract]

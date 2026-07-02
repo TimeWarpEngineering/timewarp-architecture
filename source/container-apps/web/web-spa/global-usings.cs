@@ -1,3 +1,7 @@
+#region Purpose
+// Project-wide using directives so individual files omit repeated imports.
+#endregion
+
 global using Ardalis.GuardClauses;
 global using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons;
 global using TimeWarp.State;

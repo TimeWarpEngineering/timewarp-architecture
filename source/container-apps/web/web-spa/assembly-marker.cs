@@ -1,3 +1,7 @@
+#region Purpose
+// Marker type providing a typed reference to this assembly (registration, scanning, InternalsVisibleTo).
+#endregion
+
 namespace TimeWarp.Architecture.Web.Spa;
 
 /// <summary>

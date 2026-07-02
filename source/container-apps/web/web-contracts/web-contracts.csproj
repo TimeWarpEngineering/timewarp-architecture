@@ -33,13 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Convention analyzers (TWPA0002/0003: property nullability must agree with FluentValidation
-         presence rules). Analyzer-only assembly, so no source generators run here. -->
-    <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-contract-analyzers\timewarp-architecture-contract-analyzers.csproj"
-                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="features\auth\commands\"/>
   </ItemGroup>
 

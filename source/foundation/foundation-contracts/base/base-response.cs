@@ -1,3 +1,7 @@
+#region Purpose
+// Common ancestor for all response contracts, marking the response side of the message hierarchy.
+#endregion
+
 namespace TimeWarp.Foundation.Features;
 
 /// <summary>

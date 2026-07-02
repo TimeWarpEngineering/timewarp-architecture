@@ -1,3 +1,7 @@
+#region Purpose
+// Code-first gRPC request asking the demo superhero service for a batch of fabricated heroes.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Superheros;
 
 [ProtoContract]

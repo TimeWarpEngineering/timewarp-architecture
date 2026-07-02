@@ -1,3 +1,7 @@
+#region Purpose
+// Proto-first gRPC sample: implements the .proto-generated Greeter service, contrasting with the code-first HelloService.
+#endregion
+
 namespace TimeWarp.Architecture.GrpcServer.Services;
 
 public class GreeterService : Greeter.GreeterBase

@@ -1,3 +1,7 @@
+#region Purpose
+// Registers infrastructure services every server needs (current-user resolution) so each host wires them through one module instead of repeating the registrations.
+#endregion
+
 namespace TimeWarp.Foundation.Common.Infrastructure;
 
 public class CommonInfrastructureModule : IModule

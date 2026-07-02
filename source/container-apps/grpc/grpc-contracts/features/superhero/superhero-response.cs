@@ -1,3 +1,7 @@
+#region Purpose
+// Code-first gRPC response carrying the fabricated superhero batch back to the client.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Superheros;
 
 [ProtoContract]

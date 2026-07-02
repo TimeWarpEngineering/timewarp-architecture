@@ -1,3 +1,7 @@
+#region Purpose
+// Root partial of the superhero TimeWarp State store: holds the superhero list; actions live in sibling superhero-state.*.cs partials.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Superheros;
 
 [StateAccess]

@@ -1,3 +1,7 @@
+#region Purpose
+// Server implementation of the code-first IHelloService gRPC contract — the sample showing how Grpc.Server fulfills contracts defined in Grpc.Contracts.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Hellos;
 
 public class HelloService : IHelloService
