@@ -62,12 +62,13 @@ public class GetRole_Query_Should
 {
   public static void SerializeAndDeserialize_Including_Generated_RouteProperty()
   {
-    // RoleId is not declared in get-role.cs — [ApiRoute("api/Roles/{RoleId:min(1)}")] generates it.
-    GetRole.Query query = new() { RoleId = 42, UserId = Guid.NewGuid() };
+    // RoleId is not declared in get-role.cs — [ApiRoute("api/Roles/{RoleId:guid}")] generates it.
+    Guid roleId = Guid.NewGuid();
+    GetRole.Query query = new() { RoleId = roleId, UserId = Guid.NewGuid() };
 
     GetRole.Query parsed = ContractSerialization.RoundTrip(query);
 
-    parsed.RoleId.ShouldBe(42);
+    parsed.RoleId.ShouldBe(roleId);
     parsed.UserId.ShouldBe(query.UserId);
   }
 }

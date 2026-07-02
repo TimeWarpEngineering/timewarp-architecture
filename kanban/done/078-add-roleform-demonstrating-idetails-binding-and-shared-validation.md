@@ -48,7 +48,9 @@ the template a living reference for "one shape, shared validation, no separate v
 - [ ] **Edit/View modes** — deferred: `GetRole`/`UpdateRole` routes have a `RoleId` `int`-vs-`Guid`
       wart (`update-role.cs` uses `api/Role/{RoleId:int}`) that belongs to the contracts cleanup.
       New mode fully demonstrates the binding+validation pattern; Edit/View is follow-up.
-- [ ] **Save round-trip** — deferred to
+- [x] **Save round-trip** — RESOLVED by task 079 (2026-07-02): POST api/Roles now has a real
+      server endpoint + handler with backend validation; integration tests prove 200 + RoleId and
+      400 problem-details on invalid input. Originally deferred to
       [[079-implement-server-side-createrole-endpoint--backend-validation-roles-contract]]. On Save the
       valid `POST api/Roles` reaches the **real** web-server, which has no `CreateRole` endpoint yet →
       **405** → generic error toast (confirmed via Aspire console logs). Expected: this task owns the

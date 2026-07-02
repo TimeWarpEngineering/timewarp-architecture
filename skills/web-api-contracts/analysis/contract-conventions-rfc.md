@@ -474,9 +474,12 @@ propose a third option — with reasoning.**
   stubs; `Response : BaseResponse`.
 - ~~`features/hello/hello.cs` — `string?` + `NotEmpty()`~~ ✅ (`Name` → `string` + `= null!`).
 - ~~`features/analytics/track-event.cs` — `string?` + `NotEmpty()`~~ ✅ (`EventName` → `string` + `= null!`).
-- `features/admin/roles` — conforms, **except** the `update-role.cs`/`get-role.cs` route wart found
-  by 078: `api/Role/{RoleId:int}` (singular route + `int` route param vs `Guid` everywhere else).
-  Tracked with the server-side slice in kanban task 079.
+- ~~`features/admin/roles` — conforms, **except** the `update-role.cs`/`get-role.cs` route wart found
+  by 078: `api/Role/{RoleId:int}` (singular route + `int` route param vs `Guid` everywhere else)~~
+  ✅ **fixed by task 079 (2026-07-02)**: all roles routes are plural resource routes with
+  `{RoleId:guid}`; also removed `update-role.cs`'s stray `Guid Guid` property and `delete-role.cs`'s
+  RPC-style `api/DeleteRole` route + hand-declared `int RoleId`. Server-side CreateRole endpoint +
+  handler + backend validation landed with integration tests.
 - Everything else (`profile`, `auth`, `authentication`, `chat`) already conforms.
 
 **Open sub-question:** is `todo-items` a real feature or a template placeholder? Its two empty query

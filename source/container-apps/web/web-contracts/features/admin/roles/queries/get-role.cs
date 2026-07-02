@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// RoleId is not declared on the Query: the {RoleId:min(1)} segment in [ApiRoute] makes the
+// RoleId is not declared on the Query: the {RoleId:guid} segment in [ApiRoute] makes the
 // source generator emit it on the partial, and the min(1) route constraint replaces a
 // FluentValidation rule for it. Response implements IRoleDetails so the edit form binds the
 // same shape it submits via UpdateRole. GetMockResponseFactory lets the SPA's
@@ -19,7 +19,7 @@ using Authorization;
 /// </summary>
 public static partial class GetRole
 {
-  [ApiRoute("api/Roles/{RoleId:min(1)}", HttpVerb.Get)]
+  [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Get)]
   public sealed partial class Query : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
