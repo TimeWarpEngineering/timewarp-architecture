@@ -50,8 +50,10 @@ checks; the generator assemblies for emission.
 - [x] Candidate 6 (BaseEndpoint/BaseFastEndpoint alignment): **no task** — an analyzer here is
       over-engineering; if the duplication ever hurts, extract the shared Match/problem-mapping
       logic instead. Recorded as the decision.
-- [ ] Keep appending future candidates here (standing directive), splitting into 085-nnn children
-      when accepted.
+- [x] ~~Keep appending future candidates here~~ — **rejected as a perpetual-task anti-pattern**
+      (a collector that never closes never closes). The standing directive lives in agent memory;
+      future candidates are surfaced as their own new tasks directly. This task is DONE: all four
+      accepted candidates shipped (085-001..004), candidate 6 recorded as no-task.
 
 ## Notes
 
