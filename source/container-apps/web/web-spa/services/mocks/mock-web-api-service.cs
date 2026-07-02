@@ -3,9 +3,11 @@
 #endregion
 
 #region Design
-// Mock data lives with each contract (GetMockResponseFactory), so this class only maps request
-// types to factories; commenting a mapping out reverts that feature to the real server, enabling
-// per-feature mocking during UI development. Enabled via the MOCK_WEB_API symbol in Program.
+// Mock data lives with each contract (GetMockResponseFactory); the request-type -> factory
+// registry is SOURCE-GENERATED from every contract exposing that method
+// (MockResponseFactoryRegistryGenerator), so defining a factory IS registering it. To use the
+// real server for a feature during UI development, add its request type to UseRealApi below.
+// Enabled via the MOCK_WEB_API symbol in Program.
 // Requests still run through their FluentValidation validators so mocks cannot mask inputs the
 // real server would reject.
 #endregion
@@ -29,19 +31,20 @@ public class MockWebApiService : IWebServerApiService
     ServiceProvider = serviceProvider;
   }
 
-  private readonly Dictionary<Type, Delegate> Factories = new()
-  {
-    // Comment out those where you want to use the real API service
-    { typeof(GetCurrentUser.Query), GetCurrentUser.GetMockResponseFactory() },
-    { typeof(GetRoles.Query),GetRoles.GetMockResponseFactory() },
-    { typeof(GetRole.Query), GetRole.GetMockResponseFactory() },
-    { typeof(CreateRole.Command), CreateRole.GetMockResponseFactory() },
-    { typeof(UpdateRole.Command), UpdateRole.GetMockResponseFactory()},
-    { typeof(DeleteRole.Command), DeleteRole.GetMockResponseFactory()},
-    { typeof(GetProfile.Query), GetProfile.GetMockResponseFactory() }
+  // Requests listed here fall through to the real API service even in mock mode.
+  private static readonly HashSet<Type> UseRealApi =
+  [
+    // typeof(GetProfile.Query),
+  ];
 
-    // Add other mappings here
-  };
+  private readonly Dictionary<Type, Delegate> Factories = CreateFactories();
+
+  private static Dictionary<Type, Delegate> CreateFactories()
+  {
+    Dictionary<Type, Delegate> factories = GeneratedMockResponseFactories.Create();
+    foreach (Type type in UseRealApi) factories.Remove(type);
+    return factories;
+  }
 
   public async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
   (
