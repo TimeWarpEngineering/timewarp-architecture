@@ -1,3 +1,13 @@
+#region Purpose
+// Client-to-server chat contract: request that a message be broadcast on the chat hub.
+#endregion
+
+#region Design
+// Travels over SignalR, not HTTP — hence no [ApiRoute]; the transport endpoint is ChatHubConstants.Route.
+// Shaped as IRequest<OneOf<Success, SharedProblemDetails>> so hub traffic reuses the same mediator
+// pipeline (validation, problem-details failures) as HTTP contracts.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Chat;
 
 public static partial class SendMessage

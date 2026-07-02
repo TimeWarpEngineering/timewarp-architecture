@@ -1,3 +1,16 @@
+#region Purpose
+// FluentValidation property validator for phone numbers backed by libphonenumber.
+#endregion
+
+#region Design
+// Delegates to PhoneNumberUtil rather than a regex: real-world numbering plans vary by country
+// and change; the library encodes them.
+// Parse is called with a null default region, so only numbers in international E.164 form
+// (leading +country code) validate — contracts require unambiguous, region-independent input.
+// Null/whitespace is invalid here; optionality belongs to the calling rule chain (use When/
+// NotEmpty there), not this validator.
+#endregion
+
 namespace TimeWarp.Foundation.Validators;
 
 public class PhoneNumberValidator<T> : PropertyValidator<T, string?>

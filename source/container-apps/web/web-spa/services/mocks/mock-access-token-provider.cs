@@ -1,3 +1,13 @@
+#region Purpose
+// IAccessTokenProvider stand-in so the SPA and its tests run without an identity provider.
+#endregion
+
+#region Design
+// Wired in only under the MOCK_AUTHENTICATION symbol, paired with MockAuthenticationStateProvider.
+// The token value is an unvalidated placeholder: it satisfies BaseApiService's bearer-header code
+// path but only works against servers that do not verify tokens (mocked or auth-disabled setups).
+#endregion
+
 namespace TimeWarp.Architecture.Services;
 
 /// <summary>

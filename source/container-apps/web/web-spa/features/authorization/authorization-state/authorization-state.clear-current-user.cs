@@ -1,3 +1,13 @@
+#region Purpose
+// AuthorizationState action that discards the user's module and role grants.
+#endregion
+
+#region Design
+// Dispatched by AuthenticationStateListener when the user becomes unauthenticated, so a
+// signed-out session (or the next identity) cannot act on grants fetched for the previous one.
+// Delegates to Initialize so "cleared" is identical to "never fetched".
+#endregion
+
 namespace TimeWarp.Architecture.Features.Authorization;
 
 partial class AuthorizationState

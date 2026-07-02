@@ -1,3 +1,16 @@
+#region Purpose
+// Endpoint-centric contract for listing roles with OData-style paging/sorting.
+#endregion
+
+#region Design
+// Uses the [AuthApiRequest] and [OpenDataQueryParameters] attributes (not the interfaces)
+// so the source generator emits both the auth members and the paging members onto the
+// partial Query; GetRouteWithQueryString then merges the two generated parameter sets into
+// one query string. RoleDto is a flat read model separate from IRoleDetails because list
+// rows are display-only, and Response derives from ListResponse to carry TotalCount for
+// paging. GetMockResponseFactory serves the SPA's MockWebApiService offline.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 using Authorization;

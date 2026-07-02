@@ -1,3 +1,16 @@
+#region Purpose
+// Server plumbing shared by every container app so hosts compose it instead of duplicating it.
+#endregion
+
+#region Design
+// Implements IAspNetModule's static hooks so each server's Program composes modules uniformly.
+// Azure App Config is opt-in: absent "AppConfig" connection string means local config only, so
+// the template runs without any Azure dependency; refresh keys off a "Sentinel" value to avoid
+// per-key registration. /api/debug-config is Development-only because GetDebugView exposes
+// secrets. The FluentValidation DisplayNameResolver emits "Type:Member" so validation errors
+// disambiguate identically named properties across contracts.
+#endregion
+
 namespace TimeWarp.Foundation;
 
 public class CommonServerModule : IAspNetModule

@@ -1,3 +1,15 @@
+#region Purpose
+// Marks a request as requiring an authenticated user and carries the caller's UserId.
+#endregion
+
+#region Design
+// UserId duplicates the token's NameIdentifier claim by design: the server still validates the
+// token as the source of truth, while the explicit property lets the MockAPI produce
+// user-specific responses without any real authentication in play.
+// The validator targets the interface, so one NotEmpty rule covers every auth request; concrete
+// request validators Include it via mixins instead of restating it.
+#endregion
+
 namespace TimeWarp.Foundation.Features;
 
 public interface IAuthApiRequest : IApiRequest

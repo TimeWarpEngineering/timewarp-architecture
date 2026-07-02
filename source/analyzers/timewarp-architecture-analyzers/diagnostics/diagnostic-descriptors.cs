@@ -1,3 +1,14 @@
+#region Purpose
+// Authoritative registry of the TWE diagnostic ID range for the [ApiEndpoint] generation contract.
+#endregion
+
+#region Design
+// Centralized so IDs stay unique and stable across the generator and its validators; an ID may
+// exist here without a referencing check — reserve the ID first, wire the enforcement separately.
+// All are Errors: a violated generation contract yields a missing or broken endpoint at runtime,
+// so it must fail the build instead.
+#endregion
+
 namespace TimeWarp.Architecture.Analyzers;
 
 internal static class DiagnosticDescriptors

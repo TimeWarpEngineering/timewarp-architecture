@@ -1,3 +1,15 @@
+#region Purpose
+// Template exemplar of a restricted-origin CORS policy for template consumers to copy and adapt.
+#endregion
+
+#region Design
+// Shows the shape a production policy needs: explicit origin allowlist per environment plus
+// AllowCredentials (which legally requires named origins, unlike AnyPolicy).
+// The class is private — consumers reach it only through CorsPolicy.Example — so the policy
+// surface stays the enumeration, not a zoo of public subclasses.
+// Origins are placeholders; replace them when instantiating the template.
+#endregion
+
 namespace TimeWarp.Foundation.CorsPolicies;
 public partial class CorsPolicy
 {

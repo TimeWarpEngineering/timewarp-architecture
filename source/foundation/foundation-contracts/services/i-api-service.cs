@@ -1,3 +1,16 @@
+#region Purpose
+// The client-side abstraction every API handler calls to execute an IApiRequest.
+#endregion
+
+#region Design
+// One generic method instead of per-endpoint methods: the request itself carries route and verb,
+// so adding an endpoint never changes this interface.
+// The tri-arm OneOf makes all outcomes explicit — typed DTO, file/stream download, or RFC 7807
+// problem — so callers pattern-match instead of catching exceptions or sniffing content types.
+// Abstracting the transport lets mock implementations stand in for real servers, enabling
+// UX development against contracts alone.
+#endregion
+
 namespace TimeWarp.Foundation;
 
 public interface IApiService

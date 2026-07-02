@@ -1,3 +1,17 @@
+#region Purpose
+// Bundles every PostgreSQL registration (DbContext, health check, environment check, schema-creation service) behind one opt-in module.
+#endregion
+
+#region Design
+// IModule keeps Program.ConfigureServices a single call site to comment in/out with the
+// `postgres` feature flag — all Postgres coupling lives here.
+// ConfigurePostgresDb builds a throwaway provider to read PostgresDbOptions because the
+// connection string is needed while the collection is still being composed; accepted smell,
+// scoped to this method.
+// Health check (liveness) and environment check (startup gate) intentionally share the same
+// CanConnectAsync probe.
+#endregion
+
 namespace TimeWarp.Architecture.Modules;
 
 public sealed partial class PostgresDbModule : IModule

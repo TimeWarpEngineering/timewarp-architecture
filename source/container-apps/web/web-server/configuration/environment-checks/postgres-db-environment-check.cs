@@ -1,3 +1,15 @@
+#region Purpose
+// Oakton environment check that fails fast at startup when PostgreSQL is unreachable.
+#endregion
+
+#region Design
+// Registered as a singleton via PostgresDbModule and run by `RunOaktonCommands` before the app
+// serves traffic — a bad connection string surfaces as a check failure, not a mid-request error.
+// Creates its own scope because PostgresDbContext is scoped while this check is a singleton.
+// Uses CanConnectAsync as the probe so the check needs no schema; LoggerMessage.Define keeps
+// logging allocation-free per the repo's logging convention.
+#endregion
+
 #nullable enable
 // TOOD: This is copilot generated code, it needs to be reviewed and cleaned up
 namespace TimeWarp.Architecture.Configuration;

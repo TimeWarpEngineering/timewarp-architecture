@@ -1,3 +1,16 @@
+#region Purpose
+// Composes the Aspire distributed application: service resources plus YARP ingress, gated by template feature flags.
+#endregion
+
+#region Design
+// #if blocks mirror the dotnet-new template flags (api/grpc/web/yarp) so excluded services leave no trace.
+// Resource names (see constants.cs) MUST equal ServiceNames.* in foundation-contracts — Aspire keys the
+// injected services__{name}__https__0 env vars by resource name; server-side BaseAddress resolution breaks otherwise.
+// webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
+// YARP literal /api routes owned by Web.Server beat the Api.Server catch-all by route precedence, not declaration order.
+// Ingress:Port pins the YARP host port so external clients and E2E tests get a stable ingress URL.
+#endregion
+
 namespace TimeWarp.Architecture.Aspire;
 
 internal class Program

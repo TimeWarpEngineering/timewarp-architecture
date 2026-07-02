@@ -1,3 +1,15 @@
+#region Purpose
+// Pipeline behavior that records Start/Completed entries for every action into EventStreamState.
+#endregion
+
+#region Design
+// Gives an in-app, ordered trace of action dispatch (rendered by the EventStream component)
+// without requiring Redux DevTools to be attached.
+// Writes via Sender.Send(AddEvent.Action) so the log entry itself flows through the normal
+// state pipeline; AddEvent.Action is explicitly skipped or the behavior would recurse forever.
+// Constrained to IAction so non-state mediator requests are not traced.
+#endregion
+
 namespace TimeWarp.Architecture.Features.EventStreams;
 
 using static EventStreamState;

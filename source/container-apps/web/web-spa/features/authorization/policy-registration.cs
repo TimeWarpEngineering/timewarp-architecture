@@ -1,3 +1,14 @@
+#region Purpose
+// Composition root for all client-side authorization policies.
+#endregion
+
+#region Design
+// An explicit always-true Anonymous policy lets every guarded surface declare a policy name
+// uniformly instead of special-casing "no policy required".
+// Delegates to per-concern registration classes (navigation, pages) so each list stays small
+// and a feature's policies are found by concern, not by scanning one large method.
+#endregion
+
 namespace TimeWarp.Architecture;
 
 internal static class PolicyRegistration

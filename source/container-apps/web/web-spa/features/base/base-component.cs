@@ -1,3 +1,16 @@
+#region Purpose
+// Root partial of the shared component base: TimeWarp.State access plus Redux DevTools support.
+#endregion
+
+#region Design
+// Inherits the DevTools-enabled state component so the template demonstrates time-travel
+// debugging out of the box; a production app would swap to the plain base (see remarks).
+// The class is split into partials by concern (auth, css, state accessors) so each aspect can
+// be read and maintained in isolation; this file carries only cross-cutting members.
+// Send is obsoleted to steer components toward ActionSet methods, which wire cancellation
+// tokens automatically.
+#endregion
+
 #nullable enable
 namespace TimeWarp.Architecture.Features;
 

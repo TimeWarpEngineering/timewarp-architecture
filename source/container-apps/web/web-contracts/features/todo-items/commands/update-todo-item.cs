@@ -1,3 +1,13 @@
+#region Purpose
+// Contract for updating an existing todo item.
+#endregion
+
+#region Design
+// The item id rides the route ({TodoItemId:guid}) rather than the body, so the command carries only
+// mutable fields.
+// Validation mirrors CreateTodoItem: the Title invariant must hold on every write, not just creation.
+#endregion
+
 namespace TimeWarp.Architecture.Features.TodoItems;
 
 public sealed partial class UpdateTodoItem

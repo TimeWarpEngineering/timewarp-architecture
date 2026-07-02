@@ -1,3 +1,14 @@
+#region Purpose
+// CounterState action that adds an amount to Count.
+#endregion
+
+#region Design
+// Canonical example of the ActionSet pattern (nested Action + Handler in a static
+// class) that feature states copy.
+// Amount rides on the action and may be negative, so one ActionSet covers both
+// increment and decrement without a second handler.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Counters;
 
 partial class CounterState

@@ -1,3 +1,16 @@
+#region Purpose
+// Code-behind for ModalContainer: registers a modal with its parent ModalController and derives visibility from state.
+#endregion
+
+#region Design
+// Visibility derives from Parent.ActiveModalId (fed by ApplicationState), so opening and
+// closing modals is store-driven rather than component-local.
+// OnActivate is mandatory so modal content is loaded only when the modal actually opens,
+// not when the container renders.
+// Explicit throws in OnInitialized turn missing cascade/callback wiring into clear errors
+// instead of NullReferenceExceptions at render time.
+#endregion
+
 namespace TimeWarp.Architecture.Components;
 
 partial class ModalContainer

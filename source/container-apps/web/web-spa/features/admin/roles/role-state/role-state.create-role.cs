@@ -1,3 +1,14 @@
+#region Purpose
+// CreateRole action set: sends the CreateRole command to the Web API and records the result.
+#endregion
+
+#region Design
+// DefaultApiHandler supplies the send/validation/error plumbing; this file only maps
+// Action to Command and reacts to success.
+// LastCreatedRoleId is recorded on success so a page can confirm the create round-trip
+// (see role-state.cs).
+#endregion
+
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 using static CreateRole;

@@ -1,3 +1,16 @@
+#region Purpose
+// Query-string building shared by every IApiRequest's GetRoute implementation.
+#endregion
+
+#region Design
+// Extension on IApiRequest (receiver discarded) so request contracts get this without a base
+// class — contracts multiply-inherit behavior only through interfaces and mixins.
+// Values are split on ',' then re-joined so multi-value parameters serialize once per key
+// ("key=a,b") rather than repeating the key; empty values are dropped entirely to keep
+// generated routes canonical and cache-friendly.
+// Key and each value are escaped separately, preserving the literal ',' separator.
+#endregion
+
 namespace TimeWarp.Foundation.Features;
 
 public static class ApiRequestExtensions

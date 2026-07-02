@@ -1,3 +1,15 @@
+#region Purpose
+// Contract for obtaining a Passwordless.dev authentication token for a user.
+#endregion
+
+#region Design
+// Token generation lives behind this endpoint because it requires the Passwordless API
+// secret, which must never reach the browser; the Response carries only the opaque token.
+// Not an IAuthApiRequest: it services the sign-in flow itself, before an authenticated
+// user exists. GetMockResponseFactory returns a fixed token so SPA mock mode can exercise
+// the flow without a Passwordless account.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Auth;
 
 public static partial class GetSignInToken

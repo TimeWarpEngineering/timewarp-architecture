@@ -1,3 +1,13 @@
+#region Purpose
+// InputSelect variant that lets forms bind a <select> directly to int-typed model properties.
+#endregion
+
+#region Design
+// HTML option values arrive as strings and InputSelect's default converter rejects numeric
+// targets, so int is parsed explicitly here; every other T delegates to the base converter
+// to keep behavior identical for the types the framework already handles.
+#endregion
+
 namespace TimeWarp.Architecture.Components;
 
 public class InputSelectNumber<T> : InputSelect<T>

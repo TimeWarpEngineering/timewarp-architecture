@@ -1,3 +1,15 @@
+#region Purpose
+// Debug/test surface for WeatherForecastsState: DevTools hydration and a test-only seeder.
+#endregion
+
+#region Design
+// Hydrate rebuilds state from a Redux DevTools JSON snapshot to support time-travel debugging;
+// the camelCase serializer options must match how DevTools serialized the state out.
+// Internal Initialize(list) lets integration tests seed forecasts without hitting the API;
+// ThrowIfNotTestAssembly makes the bypass unusable from production code at runtime, which a
+// visibility modifier alone cannot guarantee (InternalsVisibleTo spans assemblies).
+#endregion
+
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 using static GetWeatherForecasts;

@@ -1,3 +1,15 @@
+#region Purpose
+// Decorator over the real IWebServerApiService that answers selected requests from contract-defined mock factories.
+#endregion
+
+#region Design
+// Mock data lives with each contract (GetMockResponseFactory), so this class only maps request
+// types to factories; commenting a mapping out reverts that feature to the real server, enabling
+// per-feature mocking during UI development. Enabled via the MOCK_WEB_API symbol in Program.
+// Requests still run through their FluentValidation validators so mocks cannot mask inputs the
+// real server would reject.
+#endregion
+
 namespace TimeWarp.Architecture.Services;
 
 public class MockWebApiService : IWebServerApiService

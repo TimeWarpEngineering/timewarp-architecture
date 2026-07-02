@@ -1,3 +1,14 @@
+#region Purpose
+// Derives a page's EditMode from the route convention /feature/{New|Edit|View}/...
+#endregion
+
+#region Design
+// Encoding the mode in the URL (instead of component state) keeps it correct across deep links,
+// refresh, and back navigation, and lets one page component serve all three modes.
+// Unmatched routes default to View — read-only is the safe fallback.
+// GeneratedRegex avoids runtime regex compilation cost on the WASM client.
+#endregion
+
 namespace TimeWarp.Architecture.Services;
 
 public static partial class RouteModeResolver

@@ -1,3 +1,14 @@
+#region Purpose
+// Contract for creating a todo item — the write-command sample for the endpoint-centric pattern.
+#endregion
+
+#region Design
+// Command, Response, and Validator nest in one wrapper class so an endpoint's entire contract lives in a
+// single file (the endpoint-centric rule).
+// Response adds nothing beyond BaseResponse: creation success needs no payload, and OneOf already carries
+// the failure channel.
+#endregion
+
 namespace TimeWarp.Architecture.Features.TodoItems;
 
 public sealed partial class CreateTodoItem

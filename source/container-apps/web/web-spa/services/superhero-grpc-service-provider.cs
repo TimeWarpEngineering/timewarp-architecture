@@ -1,3 +1,17 @@
+#region Purpose
+// Lazily builds and caches the gRPC-Web channel/client for ISuperheroService in the WASM client.
+#endregion
+
+#region Design
+// Browsers cannot speak native gRPC (no HTTP/2 trailer access), so the channel is wrapped in
+// GrpcWebHandler with GrpcWebMode.GrpcWeb.
+// Construction is deferred until first use because the target URI comes from ServiceUriProvider,
+// which itself requires an async fetch; DI constructors cannot await that.
+// Channel, handler, and typed client are cached for the provider's lifetime — creating a channel
+// per call is expensive. The null-swap/try-finally dance ensures handlers are disposed if channel
+// creation throws, without double-disposing on success.
+#endregion
+
 namespace TimeWarp.Architecture.Services;
 
 public sealed class SuperheroGrpcServiceProvider : IDisposable

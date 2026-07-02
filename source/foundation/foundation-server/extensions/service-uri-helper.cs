@@ -1,3 +1,15 @@
+#region Purpose
+// Resolves sibling-service base URIs from Aspire service-discovery environment variables.
+#endregion
+
+#region Design
+// Reads the services__{resource}__{endpoint}__{index} variables the Aspire AppHost injects, so
+// resourceName must exactly match the AppHost resource name (see ServiceNames) — a mismatch
+// resolves to null, which typically surfaces later as a null BaseAddress on server-side clients.
+// Returns null instead of throwing so callers can distinguish "not orchestrated by Aspire"
+// and fall back to configured URLs.
+#endregion
+
 namespace TimeWarp.Foundation.Extensions;
 
 public static class ServiceUriHelper

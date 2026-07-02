@@ -1,3 +1,15 @@
+#region Purpose
+// BaseComponent partial: imperative authentication/authorization checks for component logic.
+#endregion
+
+#region Design
+// Complements declarative AuthorizeView for decisions that live in code rather than markup —
+// e.g. whether to dispatch an action or compute a value — without duplicating the check pattern
+// in every component.
+// A null policy means "authenticated at all", so callers are not forced to invent a policy for
+// the common signed-in/anonymous branch.
+#endregion
+
 namespace TimeWarp.Architecture.Features;
 
 partial class BaseComponent

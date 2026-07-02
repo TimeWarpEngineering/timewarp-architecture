@@ -1,3 +1,15 @@
+#region Purpose
+// Shared service wiring (OpenTelemetry, health checks, service discovery, HTTP resilience) every ContainerApp calls.
+#endregion
+
+#region Design
+// Mirrors the stock Aspire ServiceDefaults template — deviations (including reformatting) are avoided so
+// upgrades can be diffed against upstream; put repo-specific behavior in the service projects instead.
+// Kept in the Microsoft.Extensions.Hosting namespace, as upstream does, so callers need no extra using.
+// OTLP export activates only when Aspire injects OTEL_EXPORTER_OTLP_ENDPOINT; alternative exporters
+// (Prometheus, Azure Monitor) stay as commented opt-ins requiring extra packages.
+#endregion
+
 namespace Microsoft.Extensions.Hosting;
 
 public static class Extensions

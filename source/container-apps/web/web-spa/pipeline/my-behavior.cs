@@ -1,3 +1,14 @@
+#region Purpose
+// Sample mediator pipeline behavior showing where cross-cutting pre/post logic hooks in.
+#endregion
+
+#region Design
+// Template teaching artifact, not production middleware: it only logs each pipeline stage.
+// The IState type check demonstrates how to constrain post-processing to a category of
+// responses without a generic constraint, which would exclude the behavior from other requests.
+// The Guid property exists to observe instance lifetime when debugging DI scope registrations.
+#endregion
+
 namespace TimeWarp.Architecture.Pipeline;
 
 /// <summary>

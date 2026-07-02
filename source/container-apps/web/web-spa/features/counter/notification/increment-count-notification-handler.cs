@@ -1,3 +1,13 @@
+#region Purpose
+// Example of reacting to a completed state action via a post-pipeline notification.
+#endregion
+
+#region Design
+// Logs only — its value is the shape: subscribe to PostPipelineNotification<TAction,
+// TResponse> to run cross-cutting work after an action finishes, without coupling to
+// or modifying the action's handler. Copy this pattern for real side effects.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Counters;
 
 using static CounterState;

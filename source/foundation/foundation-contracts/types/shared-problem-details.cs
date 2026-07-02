@@ -1,3 +1,15 @@
+#region Purpose
+// RFC 7807 problem-details type usable by contracts and the WASM client.
+#endregion
+
+#region Design
+// Duplicates Microsoft.AspNetCore.Mvc.ProblemDetails because contracts must not reference
+// ASP.NET Core: this assembly is shared with the browser client and gRPC services.
+// Serialization attributes mirror the framework type exactly (property order, null omission,
+// extension-data catch-all) so payloads written by server ProblemDetails deserialize here
+// losslessly — the "errors" dictionary of validation responses lands in Extensions.
+#endregion
+
 namespace TimeWarp.Foundation.Types;
 
 public sealed class SharedProblemDetails

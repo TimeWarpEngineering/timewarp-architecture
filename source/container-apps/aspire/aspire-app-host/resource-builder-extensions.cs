@@ -1,3 +1,15 @@
+#region Purpose
+// Adds an Aspire dashboard command that opens a resource's Scalar OpenAPI UI in the local browser.
+#endregion
+
+#region Design
+// Local-dev convenience only: Process.Start with UseShellExecute launches the default browser on the
+// AppHost machine, so the command is meaningless in remote or containerized runs.
+// UpdateState gates the command on Healthy so the dashboard never offers a link to a dead endpoint.
+// Hard-wired to the "https" endpoint; a resource without one fails at click time, surfaced via the
+// caught exception rather than crashing the AppHost.
+#endregion
+
 namespace Aspire.Customization.AppHost;
 
 internal static class ResourceBuilderExtensions

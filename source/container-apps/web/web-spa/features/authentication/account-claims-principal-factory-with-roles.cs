@@ -1,3 +1,15 @@
+#region Purpose
+// Enriches the OIDC ClaimsPrincipal with application role claims fetched from the Web API at sign-in.
+#endregion
+
+#region Design
+// The identity provider's token carries no application roles; they live in the app's own
+// backend, so they are pulled via AuthorizationState.FetchCurrentUser and added as
+// ClaimTypes.Role claims (role Guids as strings) that role-based policies match against.
+// Fetching inside the claims factory guarantees role claims exist before any authorization
+// policy evaluates.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Authentication;
 
 public class AccountClaimsPrincipalFactoryWithRoles : AccountClaimsPrincipalFactory<RemoteUserAccount>

@@ -1,3 +1,13 @@
+#region Purpose
+// CorsPolicy member that disables cross-origin restrictions entirely.
+#endregion
+
+#region Design
+// Exists for development and same-trust-boundary deployments where origin lists add friction
+// without security value. Deliberately omits AllowCredentials — the browser forbids combining
+// wildcard origins with credentials; use ExamplePolicy's shape when credentials are needed.
+#endregion
+
 namespace TimeWarp.Foundation.CorsPolicies;
 
 public partial class CorsPolicy

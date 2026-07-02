@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+@AGENTS.md
+
 ## Repository Structure
 
 This is a **multi-project repository** containing .NET project templates and supporting infrastructure:

@@ -1,3 +1,15 @@
+#region Purpose
+// Code-behind for Button.razor: selects the CSS class string for each button variant.
+#endregion
+
+#region Design
+// Variants are pre-composed class strings merged with caller-supplied classes via CssBuilder,
+// so consumers extend styling through attribute splatting instead of new parameters.
+// The class names are Tailwind utility vocabulary, which conflicts with the repo's plain-CSS +
+// design-token convention (blazor-css-strategy skill): restyling should replace these strings
+// with scoped CSS, not grow them.
+#endregion
+
 namespace TimeWarp.Architecture.Components;
 
 partial class Button

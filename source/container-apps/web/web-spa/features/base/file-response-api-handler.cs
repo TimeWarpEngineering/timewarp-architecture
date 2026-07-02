@@ -1,3 +1,15 @@
+#region Purpose
+// Base for state action handlers whose API call returns a downloadable file stream.
+#endregion
+
+#region Design
+// Counterpart to DefaultApiHandler: TResponse is pinned to Stream and HandleSuccess
+// throws by design because file endpoints deliver through the FileResponse branch,
+// which derived handlers must implement.
+// Errors surface as toast notifications so download failures are user-visible
+// without per-feature error plumbing.
+#endregion
+
 namespace TimeWarp.Architecture;
 
 internal abstract class FileResponseApiHandler<TAction, TRequest> : ApiHandler<TAction, TRequest, Stream>

@@ -1,3 +1,15 @@
+#region Purpose
+// ChatState action that pushes an outbound chat message to the server over the SignalR hub.
+#endregion
+
+#region Design
+// Side-effect-only handler: it does not touch ChatMessages. The message enters the
+// transcript only when the server broadcasts it back via ServerToClientMessage, so
+// the sender and all other clients share one render path.
+// Wraps the SendMessage.Command hub contract so the UI dispatches a state action
+// instead of talking to ChatHubConnection directly.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Chat;
 
 partial class ChatState

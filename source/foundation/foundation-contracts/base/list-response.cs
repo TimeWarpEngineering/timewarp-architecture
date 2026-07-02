@@ -1,3 +1,16 @@
+#region Purpose
+// Base shape for paginated list responses: one page of items plus the source's total count.
+#endregion
+
+#region Design
+// TotalCount is separate from Items.Length so pagination UIs can render page controls from a
+// single request; it answers IOpenDataQueryParameters.ReturnTotalCount.
+// Abstract with a protected constructor: each feature derives a named response type (required
+// for endpoint-centric contracts and serialization) rather than sharing a generic one.
+// Empty is a per-T immutable singleton so handlers return "no results" without allocating;
+// guard clauses make invalid states (null items, negative count) unrepresentable.
+#endregion
+
 namespace TimeWarp.Foundation.Features;
 
 /// <summary>

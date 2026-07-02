@@ -1,3 +1,17 @@
+#region Purpose
+// Endpoint-centric contract for the sample weather-forecast query.
+#endregion
+
+#region Design
+// The template's reference contract: nested Query/Response/Validator with [ApiRoute] feeding the
+// FastEndpoint source generator, so no hand-written endpoint class exists.
+// IQueryStringRouteProvider is implemented because GET carries its parameters in the query
+// string; clients build the URL from the contract instead of duplicating the route.
+// XML docs and <example> tags flow into the generated OpenAPI description.
+// TWeatherForecast guards its invariants in the constructor so an invalid forecast cannot be
+// constructed.
+#endregion
+
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 [ApiEndpoint]

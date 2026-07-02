@@ -1,3 +1,17 @@
+#region Purpose
+// Enforces the primary/secondary file convention for multi-file partial classes (TWPA0001).
+#endregion
+
+#region Design
+// The convention keeps one authoritative declaration — modifiers and base class — in the file
+// named after the type; secondary files (Type.behavior.cs, e.g. state action partials) stay
+// minimal so declarations across partials can never disagree.
+// Both PascalCase and kebab-case file names are accepted: the repo convention is kebab-case, but
+// the standard .NET convention must also pass for consumers of the packaged analyzer.
+// Interface implementations are allowed in secondary files (the 'I'-prefix heuristic); only class
+// inheritance is restricted, so the type's ancestry is stated exactly once.
+#endregion
+
 namespace TimeWarp.Architecture.Analyzers;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]

@@ -1,3 +1,15 @@
+#region Purpose
+// FetchProfileDataActionSet: loads the current user's profile via the GetProfile API.
+#endregion
+
+#region Design
+// Built on DefaultApiHandler so validation, auth token handling, and problem-details
+// error reporting follow the shared API-call path; only HandleSuccess touches state,
+// leaving failures to the common error pipeline.
+// [TrackAction] exposes in-flight status so the UI can render a loading indicator while
+// the fetch is pending.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Profiles;
 
 using static GetProfile;

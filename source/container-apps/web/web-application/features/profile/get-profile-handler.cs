@@ -1,3 +1,15 @@
+#region Purpose
+// Server-side handler for the GetProfile query.
+#endregion
+
+#region Design
+// No profile persistence exists; anonymous callers get the contract's mock response so the
+// demo works without sign-in, and authenticated callers get synthesized data keyed on UserId.
+// The avatar is fetched server-side from multiavatar.com and embedded as a base64 data URI so
+// the browser never contacts the third party and user IDs are not leaked to it; the TODOs
+// record the plan to fetch once at registration and persist instead.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Profiles.Application;
 //<SolutionName>.<ContainerName>.Features.<FeatureName>.<Layer>
 //<SolutionName>.Features.<FeatureName>.<Layer>

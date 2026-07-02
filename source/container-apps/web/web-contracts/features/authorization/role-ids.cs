@@ -1,3 +1,14 @@
+#region Purpose
+// Well-known role identifiers shared by client and server authorization checks.
+#endregion
+
+#region Design
+// Roles are compile-time Guid constants rather than database lookups so both sides agree without a
+// round-trip; once issued, an id must never change.
+// The ERP-flavored role set is sample data for the template — replace with domain roles when instantiating.
+// GetRoleNameByGuid reflects over the public fields so display names can never drift from the id list.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Authorization;
 
 public static class RoleIds

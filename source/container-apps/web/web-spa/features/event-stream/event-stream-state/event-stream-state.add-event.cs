@@ -1,3 +1,14 @@
+#region Purpose
+// AddEvent action set: appends one message to the event stream trace.
+#endregion
+
+#region Design
+// Sent by EventStreamBehavior for every dispatched action; that behavior must filter this
+// Action out before sending or each append would log itself and recurse forever.
+// EventList is mutable only through this handler, keeping the on-screen trace an ordered
+// record of what actually flowed through the pipeline.
+#endregion
+
 namespace TimeWarp.Architecture.Features.EventStreams;
 
 partial class EventStreamState

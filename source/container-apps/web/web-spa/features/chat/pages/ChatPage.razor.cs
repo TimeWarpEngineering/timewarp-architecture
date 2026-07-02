@@ -1,3 +1,15 @@
+#region Purpose
+// Code-behind for the chat demo page: hub lifecycle, outbound dispatch, transcript binding.
+#endregion
+
+#region Design
+// The page owns the SignalR connection lifecycle — connect in OnInitializedAsync,
+// dispose on page teardown — so the socket exists only while chat is in use.
+// Sends go through the ChatState action rather than ChatHubConnection directly, so
+// the message renders only after the server broadcast; the page never mutates the
+// transcript itself.
+#endregion
+
 namespace TimeWarp.Architecture.Pages;
 
 using static ChatState;

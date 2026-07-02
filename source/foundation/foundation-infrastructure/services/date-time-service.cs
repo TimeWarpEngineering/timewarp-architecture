@@ -1,3 +1,15 @@
+#region Purpose
+// Injectable clock abstraction, plus a source of guaranteed-unique UTC timestamps.
+#endregion
+
+#region Design
+// Behind IDateTimeService so tests can freeze or script time instead of racing the wall clock.
+// NextUtcNow exists for consumers that use timestamps as ordering keys: DateTime.UtcNow can
+// return the same tick twice under load, so it hands out strictly increasing ticks via
+// Interlocked (lock-free), drifting at most a few ticks ahead of real time.
+// Uniqueness is per-instance — register as a singleton or the guarantee evaporates.
+#endregion
+
 namespace TimeWarp.Foundation.Services;
 
 public class DateTimeService : IDateTimeService

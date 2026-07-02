@@ -1,3 +1,16 @@
+#region Purpose
+// Enumeration-class base (Bogard pattern) so "enum" members can carry behavior and data.
+#endregion
+
+#region Design
+// Chosen over C# enums so each member can be a full object (see CorsPolicy, which overrides
+// Apply per member) and can map external-system identifiers via AlternateCodes.
+// GetAll discovers members by reflecting over public static fields declared on the subclass —
+// members MUST be declared as public static readonly fields or lookups silently miss them.
+// Equality is by Value + exact type; Parse throws rather than returning null so callers cannot
+// ignore an unknown code.
+#endregion
+
 namespace TimeWarp.Foundation.Enumerations;
 
 /// <summary>

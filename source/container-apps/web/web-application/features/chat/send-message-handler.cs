@@ -1,3 +1,14 @@
+#region Purpose
+// Handles SendMessage.Command by broadcasting the message to all connected chat clients.
+#endregion
+
+#region Design
+// Returns OneOf<Success, ...> with no payload: delivery happens out of band via the SignalR hub push, so the
+// HTTP reply only acknowledges acceptance.
+// Depends on IChatHubService (defined in Web.Contracts) rather than IHubContext so this handler stays testable
+// and Web.Application carries no SignalR server dependency; the hub-backed implementation lives in Web.Server.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Chat.Application;
 
 public sealed class SendMessageHandler : IRequestHandler<SendMessage.Command, OneOf<Success, SharedProblemDetails>>

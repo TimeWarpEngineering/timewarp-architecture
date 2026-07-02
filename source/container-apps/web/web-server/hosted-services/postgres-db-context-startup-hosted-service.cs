@@ -1,3 +1,14 @@
+#region Purpose
+// Creates the PostgreSQL schema at host startup so the template runs against a fresh database.
+#endregion
+
+#region Design
+// Uses EnsureCreatedAsync rather than migrations: the template favors zero-setup first run over
+// schema evolution — switch to Database.Migrate when a generated project needs migrations.
+// Creates its own scope because IHostedService is a singleton while PostgresDbContext is scoped.
+// Registered by PostgresDbModule so the behavior ships only when the postgres feature is wired in.
+#endregion
+
 #nullable enable
 //TODO - the is copilot generated code, it needs to be reviewed and cleaned up
 namespace TimeWarp.Architecture.HostedServices;

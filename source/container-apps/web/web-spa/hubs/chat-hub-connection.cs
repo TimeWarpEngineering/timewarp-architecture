@@ -1,3 +1,16 @@
+#region Purpose
+// SignalR client wrapper for the chat hub: outbound sends and inbound message dispatch.
+#endregion
+
+#region Design
+// Inbound hub messages never touch state directly; they are re-dispatched as ChatState actions
+// so every mutation flows through the mediator pipeline (logging, DevTools, behaviors).
+// Hub method names bind via nameof to the shared SendMessage/ReceiveMessage contracts, so
+// client and server cannot drift silently.
+// The hub URL derives from NavigationManager.BaseUri, letting the same code work behind the
+// YARP gateway or direct hosting without configuration.
+#endregion
+
 namespace TimeWarp.Architecture.Hubs;
 
 public sealed class ChatHubConnection : IDisposable

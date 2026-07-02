@@ -1,3 +1,13 @@
+#region Purpose
+// IApiService binding for the Api.Server backend, selected by named HttpClient.
+#endregion
+
+#region Design
+// One concrete service (and marker interface) per backend lets callers pick the target server by
+// injected interface rather than by URL, and lets DI configure each named HttpClient separately.
+// The second constructor takes a raw HttpClient so tests can bypass IHttpClientFactory.
+#endregion
+
 namespace TimeWarp.Architecture.Services;
 
 /// <summary>

@@ -1,3 +1,12 @@
+#region Purpose
+// Case-convention conversions shared by the analyzers and generator.
+#endregion
+
+#region Design
+// ToKebabCase must mirror the repo's file-naming convention exactly — the partial-class file-name
+// analyzer derives expected file names from it, so a drift here changes what the analyzer accepts.
+#endregion
+
 namespace TimeWarp.Architecture.Analyzers;
 
 using System.Globalization;
