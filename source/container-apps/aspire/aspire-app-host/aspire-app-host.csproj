@@ -27,6 +27,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Compile-time reference (NOT an Aspire app resource): resource-name constants alias
+         ServiceNames so AppHost and apps cannot drift. Same repo/package switch as the apps. -->
+    <ProjectReference Include="../../../foundation/foundation-contracts/foundation-contracts.csproj"
+                      IsAspireProjectResource="false"
+                      Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Contracts" Condition="'$(UseFoundationPackages)' == 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="api-server-integration-tests" />
     <InternalsVisibleTo Include="web-spa-integration-tests" />
   </ItemGroup>

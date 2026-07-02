@@ -10,3 +10,4 @@ TWPA0003 | Design | Warning | ContractNullabilityValidatorAnalyzer: required pro
 TWPA0004 | Documentation | Warning | PurposeRegionAnalyzer: source file lacks a #region Purpose block
 TWPA0005 | Design | Warning | EndpointCoverageAnalyzer: endpoint HTTP verb does not match the contract's [ApiRoute] verb
 TWPA0006 | Design | Warning | EndpointCoverageAnalyzer: routed contract has no server endpoint
+TWPA0007 | Design | Warning | AspireResourceNameAnalyzer: Aspire resource name is not a ServiceNames constant value
