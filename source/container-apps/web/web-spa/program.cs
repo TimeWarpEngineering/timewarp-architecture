@@ -138,15 +138,8 @@ public class Program
 #endif
 
     // Set the JSON serializer options
-    serviceCollection.Configure<JsonSerializerOptions>
-    (
-      jsonSerializerOptions =>
-      {
-        //jsonSerializerOptions.PropertyNameCaseInsensitive = false;
-        jsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        ;//jsonSerializerOptions.WriteIndented = true;
-      }
-    );
+    // Contract-seam serialization is declared once in ContractSerializationDefaults.
+    serviceCollection.Configure<JsonSerializerOptions>(ContractSerializationDefaults.Apply);
 
 #if grpc
     SuperheroModule.ConfigureServices(serviceCollection, configuration);

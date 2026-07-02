@@ -22,3 +22,4 @@ global using TimeWarp.Mediator;
 global using TimeWarp.State;
 
 global using TimeWarp.Fixie;
+global using TimeWarp.Foundation.Types;

@@ -25,8 +25,9 @@ class ApiServerTestConvention : TimeWarpTestingConvention
       }
     );
 
-    // Register JsonSerializerOptions
-    serviceCollection.AddSingleton(new JsonSerializerOptions());
+    // Register the canonical contract-seam JsonSerializerOptions (was default/PascalCase — a
+    // latent mismatch with the camelCase seam).
+    serviceCollection.AddSingleton(ContractSerializationDefaults.Options);
 
     // Register the access token provider
     serviceCollection.AddSingleton<IAccessTokenProvider, MockAccessTokenProvider>();

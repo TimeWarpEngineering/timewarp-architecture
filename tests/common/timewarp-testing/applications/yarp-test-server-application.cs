@@ -51,7 +51,7 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
 
   protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Yarp.Server.Program> webApplicationHost)
   {
-    var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    JsonSerializerOptions jsonSerializerOptions = ContractSerializationDefaults.Options;
     var apiService = new ApiServerApiService(HttpClient, new MockAccessTokenProvider(), jsonSerializerOptions);
     return new WebApiTestService(apiService);
   }

@@ -46,7 +46,7 @@ public sealed class ApiTestServerApplication : TestServerApplication<Api.Server.
     IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
     IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
 
-    var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    JsonSerializerOptions jsonSerializerOptions = ContractSerializationDefaults.Options;
     IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor = Options.Create(jsonSerializerOptions);
 
     var apiService = new ApiServerApiService(httpClientFactory, accessTokenProvider, jsonSerializerOptionsAccessor);
