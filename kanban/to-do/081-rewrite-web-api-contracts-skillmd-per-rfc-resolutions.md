@@ -15,14 +15,14 @@ The deliverable the whole RFC exercise exists to produce: rewrite
    the other (cf. how `ganda skills sync` clobbered the kanban-skill copy) — otherwise the corrected
    spec can be silently overwritten.
 2. **Maintainer ruling on the 3 contested ballots (2–1):**
-   - **Decision 3** (contract serialization tests): dedicated `web-contracts-tests` project
-     (Author+Composer) vs GLM's "only when the contract uses `required`/`init`/custom
-     converters/non-default ctors — round-tripping auto-property POCOs is tautological."
-     **Maintainer testimony (2026-07-02, recorded in the RFC) rebuts the dissent's timeline
-     premise**: in copic the contracts were frontend-authored, the backend was another developer,
-     and integration tests came *after* — the contract tests were the only seam check in the
-     contract-first window (the exact window the skill's BFF workflow creates). Proposed synthesis
-     awaiting confirmation: adopt (a), demote GLM's trigger list to test-prioritization guidance.
+   - ~~**Decision 3** (contract serialization tests)~~ — **RESOLVED (maintainer, 2026-07-02)**:
+     dedicated `web-contracts-tests` project; GLM's trigger list (`required`/`init`/custom
+     converters/non-default ctors, camelCase, `OneOf` envelopes) demoted to test-prioritization
+     guidance. Basis: maintainer testimony (recorded in the RFC) — in copic the contracts were
+     frontend-authored, the backend was another developer, integration tests came *after*; the
+     contract tests were the only seam check in the contract-first window the BFF workflow creates.
+     The rewrite should teach this shape; creating TWA's actual `web-contracts-tests` project is a
+     §7 cleanup slice (own task).
    - **Decision 6** (`IAuthApiRequest`): promote to canonical (Author+Composer) vs GLM's "document
      both forms + trigger, hold 'canonical' until post-rename" (copic's server-side derivation is a
      valid competing design; TWA itself is split attribute-vs-manual).
