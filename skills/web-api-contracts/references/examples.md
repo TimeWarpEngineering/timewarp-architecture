@@ -5,8 +5,7 @@ Always discover conventions in the **current repo** first.
 
 ## Discover conventions in the current repo
 
-Repos differ in path casing (kebab `features/` vs Pascal `Features/`) and attribute era
-(`[ApiRoute]` vs legacy `[RouteMixin]`) — search case-insensitively and for both names:
+Repos differ in path casing (kebab `features/` vs Pascal `Features/`) — search case-insensitively:
 
 ```bash
 # Find the contracts project
@@ -14,7 +13,7 @@ find . -iname '*contracts*.csproj' -not -path '*/obj/*' -not -path '*/[Tt]ests/*
 
 # Find existing contracts to mirror
 rg -l --ignore-case 'public static partial class' --glob '**/[Ff]eatures/**/*.cs'
-rg -l 'ApiRoute|RouteMixin' --glob '**/[Ff]eatures/**/*.cs'
+rg -l 'ApiRoute' --glob '**/[Ff]eatures/**/*.cs'
 
 # Find the contracts test project
 find . -ipath '*contracts?tests*' -name '*.csproj' -not -path '*/obj/*'
@@ -203,8 +202,8 @@ For an authenticated, pageable list see the living example `get-roles.cs` in thi
 Host-free round-trip in the dedicated contracts test project. Prioritize contracts with
 `required`/`init`, custom converters, non-default ctors, or envelope types — a plain
 auto-property POCO round-trip proves little once integration tests exist. Use the repo's
-assertion library (Shouldly here; copic uses FluentAssertions — its dialect, and note
-FluentAssertions v8+ is commercially licensed):
+assertion library (Shouldly here; avoid introducing FluentAssertions — v8+ is commercially
+licensed):
 
 ```csharp
 public class Command_Should_
@@ -235,15 +234,9 @@ public class Command_Should_
 Plural throughout — the folder and namespace agree; plural namespaces also avoid collisions with
 `SecurityRole`, `User`, `Policy` class names.
 
-## Legacy code warning
+## Existing-code caution
 
-Older production repos (e.g. copic) may contain:
-
-- `string?` + unconditional `NotEmpty()` — the nullability contradiction (TWPA0002 in this repo).
-- `[RouteMixin]` / `[IAuthApiRequestMixin]` / `[IOpenDataQueryParametersMixin]` — pre-rename
-  attribute names (Moxy-era or pre-2026-07 sourcegen).
-- Standalone `*MockFactory` classes in the SPA instead of contract-local `GetMockResponseFactory()`.
-- Singular feature folders (`Admin/SecurityRole/`) — plural is the rule.
-
-**Recognize these when reading; do not copy them into new contracts.** Apply
-[nullability.md](nullability.md) and the current attribute names.
+Existing solutions may contain shapes that contradict this spec — `string?` + unconditional
+`NotEmpty()`, standalone `*MockFactory` classes in the SPA, singular feature folders. **Mirror a
+repo's naming and layout conventions, but do not copy rule violations into new contracts** — apply
+[nullability.md](nullability.md) and this skill's rules.

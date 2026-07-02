@@ -9,7 +9,7 @@ description: >-
   "Add web-contracts-tests serialize and deserialize round-trip for my Command".
 when-to-use: >
   Web.Contracts, web-contracts, Features folder, command contract, query contract, ApiRoute,
-  RouteMixin, IRoleDetails, string? plus NotEmpty, API contract Command, serialize and
+  IRoleDetails, string? plus NotEmpty, API contract Command, serialize and
   deserialize round-trip, contracts tests, partial class, Validator, BFF, AuthApiRequest
 ---
 
@@ -32,7 +32,7 @@ Activate when **any** signal matches:
 |--------|----------------|
 | Contracts project | `*.csproj` named `*contracts*` (any casing) with a `features/` or `Features/` tree |
 | Contract file layout | `**/features/**/commands/*.cs` or `**/features/**/queries/*.cs` (search **case-insensitively** — repos use kebab `features/` or Pascal `Features/`) |
-| Contract shell | `public static partial class` + nested `Query`/`Command` + `[ApiRoute(...)]` (older repos: `[RouteMixin(...)]`) |
+| Contract shell | `public static partial class` + nested `Query`/`Command` + `[ApiRoute(...)]` |
 | TimeWarp.Mediator return | `IRequest<OneOf<Response, SharedProblemDetails>>` |
 | Shared validation | `I*Details` interface + `AbstractValidator<I*Details>` |
 
@@ -65,10 +65,8 @@ consumer's root namespace by the bundled contracts generator; the class **must b
 | `[AuthApiRequest]` | `Guid UserId { get; set; }` + private `GetAuthQueryParameters()` for query-string composition | List/GET queries that carry user identity in the query string |
 | `[OpenDataQueryParameters]` | `Top`/`Skip`/`Filter`/`OrderBy`/`ReturnTotalCount` + private `GetOpenDataQueryParameters()` | Pageable/sortable list queries |
 
-> **Legacy names:** repos generated before 2026-07 (and Moxy-era repos like copic) use
-> `[RouteMixin]`, `[IAuthApiRequestMixin]`, `[IOpenDataQueryParametersMixin]`. Recognize them when
-> reading; never write them in new code. The FastEndpoint generator matches `ApiRouteAttribute` by
-> simple name.
+The FastEndpoint generator matches `ApiRouteAttribute` by simple name, so the attribute works from
+any root namespace.
 
 ### HTTP verbs
 
@@ -153,7 +151,7 @@ Both pair with `RuleFor(x => x).SetValidator(new AuthApiRequestValidator())`.
 from the auth token. The contract field exists for mock-mode tailoring and client-side context.
 
 **Valid alternative:** derive the user **entirely server-side** (claims/token) and keep contracts
-auth-agnostic — copic does this. Choose it when mock-mode identity isn't needed; it is not wrong.
+auth-agnostic. Choose it when mock-mode identity isn't needed; it is not wrong.
 
 ## Workflow
 
@@ -214,9 +212,9 @@ validators must agree.
 - `string?` with unconditional `NotEmpty()` — **discouraged, a smell**: runtime behavior is right,
   but the annotation lies and disarms the compiler's null analysis.
 
-In this repo both are **build errors**: the `ContractNullabilityValidatorAnalyzer` emits
-**TWPA0003** / **TWPA0002** respectively, and warnings-as-errors makes them fail the build. Other
-repos may downgrade TWPA0002 via `.editorconfig` if they accept the smell.
+Where the `ContractNullabilityValidatorAnalyzer` is wired (the timewarp-architecture template),
+both are **build errors**: **TWPA0003** / **TWPA0002** respectively, under warnings-as-errors.
+A repo may downgrade TWPA0002 via `.editorconfig` if it accepts the smell.
 
 Also forbidden: `= default!` on non-generic reference types (use `null!`), and FluentValidation on
 `Response` (use ctor + `Guard.Against.*`; validation is for user-facing requests).
@@ -277,8 +275,8 @@ contracts where serialization can actually diverge: `required`/`init` members, c
 non-default constructors, `OneOf`/`SharedProblemDetails` envelopes, casing-sensitive names.
 Plain auto-property POCOs are low-priority once server integration tests exist.
 
-Use the repo's assertion library — **Shouldly** in this repo. (Copic uses FluentAssertions;
-that's its dialect — note FluentAssertions v8+ is commercially licensed.)
+Use the repo's assertion library — **Shouldly** here. (Avoid introducing FluentAssertions into new
+projects; v8+ is commercially licensed.)
 
 ### 10. Mock response factory (when mock mode needs it)
 
@@ -286,10 +284,10 @@ Add `GetMockResponseFactory()` on the contract + register it in the SPA mock ser
 mock mode needs this endpoint** — the mock service falls back to the real API for unregistered
 types, so factories are per-endpoint opt-in, not mandatory ceremony.
 
-**Detect the repo's mock pattern first**: this repo puts the factory *on the contract* and
-registers it in a `Dictionary<Type, Delegate>`; copic instead has ~45 standalone `*MockFactory`
-classes under `Web.Spa/Services/MockFactories/`. Copying the wrong shape into a repo is a common
-agent error. See the `mock-response-factory` skill.
+**Detect the repo's mock pattern first**: the canonical shape puts the factory *on the contract*
+and registers it in a `Dictionary<Type, Delegate>`; some solutions instead use standalone
+`*MockFactory` classes inside the SPA. Copying the wrong shape into a repo is a common agent
+error. See the `mock-response-factory` skill.
 
 ## Validation checklist
 
@@ -320,17 +318,14 @@ agent error. See the `mock-response-factory` skill.
 | Entity-centric shared DTO per endpoint | Endpoint-centric types; share only validation interfaces or read-only display interfaces |
 | `sealed record` request/response | Classes + `partial` + source generation |
 | Hand-declared route params | Trust `[ApiRoute]` source generation |
-| Writing `[RouteMixin]` in new code | Legacy name — write `[ApiRoute]`; recognize old names when reading |
 | `required init` Response with invariants | `Guid.Empty` slips through — ctor + `Guard` |
 | Copying paths/casing from another repo | Read existing contracts in **this** repo first |
 
 ## Canonical examples
 
-- **Living anchor (this repo):** `web-contracts/features/admin/roles/` — `role-details.cs`
-  (`IRoleDetails` + validator), `commands/create-role.cs`, `queries/get-roles.cs` (attribute auth +
-  open-data), `queries/get-role.cs` (manual auth, `I*Details` Response). Known warts tracked for
-  cleanup: `update-role.cs` route (`api/Role/{RoleId:int}` — singular + int-vs-Guid).
-- **Anti-pattern (this repo):** `features/todo-items/` — `sealed` shells, empty query stubs.
+- **Living anchor (timewarp-architecture template):** `web-contracts/features/admin/roles/` —
+  `role-details.cs` (`IRoleDetails` + validator), `commands/create-role.cs`, `queries/get-roles.cs`
+  (attribute auth + open-data), `queries/get-role.cs` (manual auth, `I*Details` Response).
 - Inline reference implementations: [examples.md](references/examples.md).
 
 ## Related skills
