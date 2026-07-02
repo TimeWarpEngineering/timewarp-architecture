@@ -1,3 +1,7 @@
+#region Purpose
+// Tracks the id of the most recently created role so the roles demo page can confirm the create round-trip.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 [StateAccess]

@@ -1,3 +1,7 @@
+#region Purpose
+// Code-behind for a single side-nav link: merges caller-supplied CSS classes into the link via CssBuilder.
+#endregion
+
 namespace TimeWarp.Architecture.Components;
 
 using CssBuilder = BlazorComponentUtilities.CssBuilder;

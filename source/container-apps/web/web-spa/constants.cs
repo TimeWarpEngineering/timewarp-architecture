@@ -1,3 +1,7 @@
+#region Purpose
+// SPA-local constants that have no home elsewhere, such as the non-standard HTTP status representing a client-cancelled operation.
+#endregion
+
 namespace TimeWarp.Architecture;
 
 internal static class Constants

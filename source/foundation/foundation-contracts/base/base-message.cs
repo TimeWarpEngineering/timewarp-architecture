@@ -1,3 +1,7 @@
+#region Purpose
+// Root of the contract message hierarchy, giving requests and responses a single common ancestor.
+#endregion
+
 namespace TimeWarp.Foundation.Features;
 
 /// <summary>

@@ -1,3 +1,7 @@
+#region Purpose
+// Lets navigation menus read a page's title, icon, and auth policy statically, without instantiating the page.
+#endregion
+
 namespace TimeWarp.Architecture.Common.Interfaces;
 
 using TimeWarp.Architecture;

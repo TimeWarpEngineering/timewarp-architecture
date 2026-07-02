@@ -1,3 +1,7 @@
+#region Purpose
+// Project-wide using directives so individual files omit repeated imports.
+#endregion
+
 global using Ardalis.GuardClauses;
 global using FluentValidation;
 global using FluentValidation.Results;

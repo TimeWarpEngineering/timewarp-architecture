@@ -1,3 +1,7 @@
+#region Purpose
+// Abstraction exposing the authenticated user's id so application code never reaches into HttpContext or auth plumbing.
+#endregion
+
 namespace TimeWarp.Foundation.Abstractions;
 
 public interface ICurrentUserService

@@ -1,3 +1,7 @@
+#region Purpose
+// Well-known user ids so seed data, mocks, and contract handlers all reference the same sample identities.
+#endregion
+
 namespace TimeWarp.Architecture.Services;
 
 public static class UserIds

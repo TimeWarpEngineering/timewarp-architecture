@@ -35,5 +35,15 @@
   <ItemGroup Label="Shared Package Assets">
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
-  
+
+  <!-- Repo-wide convention analyzers (analyzer-only assembly — no source generators):
+       TWPA0002/0003 (contract nullability must agree with FluentValidation presence rules) and
+       TWPA0004 (every source file carries a #region Purpose block). Wired once here so every
+       project under source/ — and every app generated from the template — is enforced. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      IsAspireProjectResource="false" />
+  </ItemGroup>
+
 </Project>

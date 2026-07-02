@@ -1,3 +1,7 @@
+#region Purpose
+// HTTP GET adapter serving the signed-in user's display profile via the mediator pipeline.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Profiles;
 
 using static GetProfile;

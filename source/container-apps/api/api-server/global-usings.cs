@@ -1,3 +1,7 @@
+#region Purpose
+// Project-wide using directives so individual files omit repeated imports.
+#endregion
+
 global using FastEndpoints;
 global using FluentValidation;
 global using Microsoft.AspNetCore.Mvc;

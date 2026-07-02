@@ -1,3 +1,7 @@
+#region Purpose
+// Code-first gRPC response carrying the Hello sample's greeting back to the caller.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Hellos;
 
 [DataContract]

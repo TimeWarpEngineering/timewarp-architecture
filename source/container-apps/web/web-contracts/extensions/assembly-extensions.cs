@@ -1,3 +1,7 @@
+#region Purpose
+// Reflection helper for discovering types in an assembly by attribute, used to register contracts without hand-maintained lists.
+#endregion
+
 namespace TimeWarp.Architecture.Extensions;
 
 public static class AssemblyExtensions

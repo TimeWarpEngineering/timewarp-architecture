@@ -1,3 +1,12 @@
+#region Purpose
+// Commented-out Category entity sketch (nopCommerce-derived) kept as reference for a future catalog aggregate.
+#endregion
+
+#region Design
+// Beyond the property list, the sketch records the intended pattern for entity invariants:
+// a nested Invariants : AbstractValidator<Category> class tagged with IInvariants.
+#endregion
+
 //namespace TimeWarp.Architecture.Entities.Catalog;
 
 //using FluentValidation;

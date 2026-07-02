@@ -1,3 +1,7 @@
+#region Purpose
+// Project-wide using directives so individual files omit repeated imports.
+#endregion
+
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 global using Microsoft.Extensions.DependencyInjection;

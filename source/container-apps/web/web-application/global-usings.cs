@@ -1,3 +1,7 @@
+#region Purpose
+// Project-wide using directives so individual files omit repeated imports.
+#endregion
+
 global using Microsoft.Extensions.Logging;
 global using OneOf;
 global using OneOf.Types;

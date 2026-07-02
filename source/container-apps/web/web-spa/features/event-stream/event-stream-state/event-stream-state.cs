@@ -1,3 +1,7 @@
+#region Purpose
+// Accumulates the action names captured by the event-stream middleware demo for display on the EventStream page.
+#endregion
+
 namespace TimeWarp.Architecture.Features.EventStreams;
 
 [StateAccess]
