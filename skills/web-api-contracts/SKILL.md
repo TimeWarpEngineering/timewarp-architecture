@@ -3,14 +3,11 @@ name: web-api-contracts
 description: >-
   **TIMEWARP SKILL** — endpoint-centric Web.Contracts API contracts (Command, Query, ApiRoute,
   I*Details, Validator, serialization tests). Invoke before scaffolding or fixing contracts.
-  WHEN: "Add a CreateTodoItem command contract in web-contracts features folder",
-  "Scaffold a GetRole query with ApiRoute and IRoleDetails for the edit form",
-  "Fix string? plus NotEmpty contradiction in my API contract Command",
-  "Add web-contracts-tests serialize and deserialize round-trip for my Command".
+  WHEN: "Add a CreateTodoItem command contract", "Scaffold a GetRole query with ApiRoute and
+  IRoleDetails for the edit form", "Add a serialization round-trip test for my Command".
 when-to-use: >
-  Web.Contracts, web-contracts, Features folder, command contract, query contract, ApiRoute,
-  IRoleDetails, string? plus NotEmpty, API contract Command, serialize and
-  deserialize round-trip, contracts tests, partial class, Validator, BFF, AuthApiRequest
+  Web.Contracts, web-contracts, command contract, query contract, ApiRoute, I*Details,
+  EditForm binding, Validator, serialization round-trip, BFF, AuthApiRequest
 ---
 
 # Web API Contracts
@@ -43,16 +40,15 @@ namespace root, folder casing, test project layout, and mock-service registratio
 
 ## Folder and namespace rules
 
-| Concern | Rule | Example (this repo) |
+| Concern | Rule | Example |
 |---------|------|---------------------|
 | Feature folder | **Plural**, domain-oriented | `features/admin/roles/` |
 | Namespace | **Plural** | `{Root}.Features.Admin.Roles` |
 | Commands / Queries | Subfolders under feature | `commands/create-role.cs`, `queries/get-role.cs` |
 | Shared bindable shape | Separate file in feature folder | `role-details.cs` (`IRoleDetails`) |
 
-**Casing is repo-local — discover first.** This repo (the canonical anchor) uses
-kebab-case paths; if the repo you are in uses PascalCase folders (`Features/Admin/Roles/`),
-mirror it. Never mix casings within one repo.
+**Casing:** kebab-case paths are canonical; if the repo already uses PascalCase folders
+(`Features/Admin/Roles/`), match it. Never mix casings within one repo.
 
 ## The contract attributes (source-generated)
 
@@ -77,8 +73,7 @@ any root namespace.
 | Update | `Put` |
 | Delete | `Delete` |
 
-Some existing contracts diverge (e.g. `Post` for updates); match the server endpoint, and don't
-copy known warts (see the pitfalls table).
+The verb must match the server endpoint.
 
 ## Contract shell
 
@@ -212,9 +207,7 @@ validators must agree.
 - `string?` with unconditional `NotEmpty()` — **discouraged, a smell**: runtime behavior is right,
   but the annotation lies and disarms the compiler's null analysis.
 
-Where the `ContractNullabilityValidatorAnalyzer` is wired (the timewarp-architecture template),
-both are **build errors**: **TWPA0003** / **TWPA0002** respectively, under warnings-as-errors.
-A repo may downgrade TWPA0002 via `.editorconfig` if it accepts the smell.
+The timewarp-architecture template enforces both at build time (**TWPA0002**/**TWPA0003**).
 
 Also forbidden: `= default!` on non-generic reference types (use `null!`), and FluentValidation on
 `Response` (use ctor + `Guard.Against.*`; validation is for user-facing requests).
@@ -266,17 +259,15 @@ return $"{GetRoute()}?{this.GetQueryString(collection)}";
 
 ### 9. Contract serialization tests (dedicated project)
 
-Contracts are often authored **before** the server exists (frontend-first, mock-backed BFF flow).
-A dedicated, host-free contracts test project (`*contracts-tests`, Fixie) is the only test that
-can run in that window — this is proven practice, not ceremony.
+Contracts are authored **before** the server exists (frontend-first, mock-backed BFF flow); a
+dedicated, host-free contracts test project (`*contracts-tests`, Fixie + **Shouldly**) is the only
+test that can run in that window.
 
 Add `SerializeAndDeserialize` round-trips using camelCase `JsonSerializerOptions`. **Prioritize**
 contracts where serialization can actually diverge: `required`/`init` members, custom converters,
-non-default constructors, `OneOf`/`SharedProblemDetails` envelopes, casing-sensitive names.
-Plain auto-property POCOs are low-priority once server integration tests exist.
-
-Use the repo's assertion library — **Shouldly** here. (Avoid introducing FluentAssertions into new
-projects; v8+ is commercially licensed.)
+non-default constructors, `OneOf`/`SharedProblemDetails` envelopes. Plain auto-property POCOs are
+low-priority once server integration tests exist. Do not use FluentAssertions (v8+ is commercially
+licensed).
 
 ### 10. Mock response factory (when mock mode needs it)
 

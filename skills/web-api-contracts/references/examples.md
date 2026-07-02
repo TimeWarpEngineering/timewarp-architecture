@@ -60,9 +60,8 @@ public static partial class GetAnnouncementsForCurrentUser
 
 ## Tier 2 — CRUD with bindable interface
 
-Folder `features/admin/security-roles/` (plural; kebab in this repo — mirror Pascal
-`Features/Admin/SecurityRoles/` if that's the repo's casing) · namespace
-`MyApp.Features.Admin.SecurityRoles`.
+Folder `features/admin/security-roles/` (plural; kebab canonical — match `Features/Admin/SecurityRoles/`
+if the repo uses PascalCase) · namespace `MyApp.Features.Admin.SecurityRoles`.
 
 **Shared shape + validator** (`security-role-details.cs`). Interface properties have **no
 initializers** (C# forbids them on interfaces) — `= null!` belongs on implementing classes:
@@ -193,17 +192,13 @@ public static partial class GetAccountOwnedPolicies
 }
 ```
 
-For an authenticated, pageable list see the living example `get-roles.cs` in this repo — it stacks
-`[ApiRoute]` + `[OpenDataQueryParameters]` + `[AuthApiRequest]` and composes
+For an authenticated, pageable list see `get-roles.cs` in the timewarp-architecture template — it
+stacks `[ApiRoute]` + `[OpenDataQueryParameters]` + `[AuthApiRequest]` and composes
 `GetAuthQueryParameters()` + `GetOpenDataQueryParameters()` into the query string.
 
 ## Tier 4 — Contract test (serialization)
 
-Host-free round-trip in the dedicated contracts test project. Prioritize contracts with
-`required`/`init`, custom converters, non-default ctors, or envelope types — a plain
-auto-property POCO round-trip proves little once integration tests exist. Use the repo's
-assertion library (Shouldly here; avoid introducing FluentAssertions — v8+ is commercially
-licensed):
+Host-free round-trip in the dedicated contracts test project (Fixie + Shouldly):
 
 ```csharp
 public class Command_Should_
