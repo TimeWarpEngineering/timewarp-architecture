@@ -57,7 +57,7 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
     IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
     IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
 
-    var jsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    JsonSerializerOptions jsonSerializerOptions = ContractSerializationDefaults.Options;
     IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor = Options.Create(jsonSerializerOptions);
 
     var webServerApiService = new WebServerApiService(accessTokenProvider, httpClientFactory, jsonSerializerOptionsAccessor);

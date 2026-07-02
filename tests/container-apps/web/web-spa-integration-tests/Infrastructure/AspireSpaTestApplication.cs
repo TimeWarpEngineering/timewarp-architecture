@@ -61,10 +61,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
     services.AddHttpClient(TimeWarp.Foundation.Configuration.ServiceNames.ApiServiceName, c => c.BaseAddress = new Uri(baseUrl));
 
     // Configure JSON serializer options
-    services.Configure<JsonSerializerOptions>(options =>
-    {
-      options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    });
+    services.Configure<JsonSerializerOptions>(ContractSerializationDefaults.Apply);
 
     // Register IAccessTokenProvider (required for API service)
     IAccessTokenProvider fakeAccessTokenProvider = A.Fake<IAccessTokenProvider>();
