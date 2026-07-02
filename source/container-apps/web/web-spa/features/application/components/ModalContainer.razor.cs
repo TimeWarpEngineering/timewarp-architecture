@@ -26,18 +26,22 @@ partial class ModalContainer
   protected override void OnInitialized()
   {
     if (Parent == null)
+    {
       throw new ArgumentNullException
       (
-      nameof(Parent),
-      $"{nameof(ModalContainer)} must exist within a {nameof(ModalController)} Component"
+        nameof(Parent),
+        $"{nameof(ModalContainer)} must exist within a {nameof(ModalController)} Component"
       );
+    }
 
     if (!OnActivate.HasDelegate)
+    {
       throw new ArgumentNullException
       (
-      nameof(OnActivate),
-      $"{nameof(OnActivate)} is required"
+        nameof(OnActivate),
+        $"{nameof(OnActivate)} is required"
       );
+    }
 
     base.OnInitialized();
     Parent.AddModal(this);

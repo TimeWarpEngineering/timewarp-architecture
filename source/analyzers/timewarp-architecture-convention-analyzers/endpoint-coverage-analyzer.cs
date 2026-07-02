@@ -184,7 +184,10 @@ public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
   {
     string? name = attribute.AttributeClass?.Name;
     if (name is null || !name.StartsWith("Http", System.StringComparison.Ordinal)
-      || !name.EndsWith("Attribute", System.StringComparison.Ordinal)) return null;
+      || !name.EndsWith("Attribute", System.StringComparison.Ordinal))
+    {
+      return null;
+    }
 
     string verb = name.Substring("Http".Length, name.Length - "Http".Length - "Attribute".Length);
     return verb is "Get" or "Post" or "Put" or "Delete" or "Patch" or "Head" or "Options" ? verb : null;
