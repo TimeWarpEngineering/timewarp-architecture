@@ -82,12 +82,14 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     private CiMode DetermineMode(string? explicitMode)
     {
       if (!string.IsNullOrEmpty(explicitMode))
+      {
         return explicitMode.ToLowerInvariant() switch
         {
           "merge" => CiMode.Merge,
           "release" => CiMode.Release,
           _ => CiMode.Pr,
         };
+      }
 
       string? eventName = Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME");
       Terminal.WriteLine($"GITHUB_EVENT_NAME: {eventName ?? "(not set)"}");
