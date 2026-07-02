@@ -210,10 +210,12 @@ public abstract class BaseApiService : IApiService
   {
     switch (apiRequest.GetHttpVerb())
     {
+      // GET and DELETE carry no body (see PrepareContent), so the query string is their only
+      // data channel besides route parameters.
       case HttpVerb.Get:
+      case HttpVerb.Delete:
         return (apiRequest as IQueryStringRouteProvider)?.GetRouteWithQueryString() ?? apiRequest.GetRoute();
       case HttpVerb.Post:
-      case HttpVerb.Delete:
       case HttpVerb.Put:
       case HttpVerb.Patch:
       case HttpVerb.Head:

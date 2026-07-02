@@ -20,9 +20,14 @@ using Authorization;
 public static partial class GetRole
 {
   [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Get)]
-  public sealed partial class Query : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
+
+    // GET carries no body, so UserId travels in the query string (manual IAuthApiRequest form —
+    // the [AuthApiRequest] attribute's generated helper is not available here).
+    public string GetRouteWithQueryString() =>
+      $"{GetRoute()}?{this.GetQueryString(new NameValueCollection { { nameof(UserId), UserId.ToString() } })}";
   }
 
   public sealed class Validator : AbstractValidator<Query>

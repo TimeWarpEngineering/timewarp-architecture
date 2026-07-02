@@ -15,9 +15,13 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 public static partial class DeleteRole
 {
   [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Delete)]
-  public sealed partial class Command : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IAuthApiRequest, IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
+
+    // DELETE carries no body, so UserId travels in the query string.
+    public string GetRouteWithQueryString() =>
+      $"{GetRoute()}?{this.GetQueryString(new NameValueCollection { { nameof(UserId), UserId.ToString() } })}";
   }
 
   public sealed class Validator : AbstractValidator<Command>

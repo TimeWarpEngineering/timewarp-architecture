@@ -17,6 +17,7 @@ using Services;
 public static partial class GetCurrentUser
 {
   [ApiRoute(RouteTemplate: "api/GetCurrentUser", HttpVerb.Get)]
+  [ClientOnlyContract("Served by SPA mock mode; the template has no server-side auth slice.")]
   public sealed partial class Query : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
