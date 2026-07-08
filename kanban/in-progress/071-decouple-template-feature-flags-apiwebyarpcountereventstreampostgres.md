@@ -53,6 +53,38 @@ engine strips them and IDE2000 fails the generated build) — see the `web-spa/g
 - Verify loop: `dotnet pack` the template csproj → `dotnet new install --force` → `dotnet new
   timewarp-architecture -n NoX --X false` → `dotnet build`.
 
+## Implementation Plan
+
+**Verification loop (per flag):**
+1. `dotnet pack` the template csproj in `timewarp-templates/`
+2. `dotnet new install --force`
+3. `dotnet new timewarp-architecture -n NoX --X false` (name must be underscore-free)
+4. `dotnet build` the generated solution and capture errors
+5. For each error:
+   - If referencing code is feature-specific → add `#if(X)` / `#endif` guard (no blank lines immediately adjacent to the block)
+   - If file is wholly feature-specific → add it to the `(!X)` exclude list in `.template.config/template.json`
+6. Repeat until `dotnet build` succeeds clean
+
+**Flag order (smallest → largest):**
+- `--postgres false`
+- `--counter false`
+- `--yarp false`
+- `--api false`
+- `--web false`
+- `--eventstream false` (investigate pervasive coupling first)
+
+**Final verification:**
+- Re-run ALL single-flag-off combinations
+- Spot-check 2–3 multi-flag-off combinations
+- Confirm `dev build` on the real repo stays green after every guard added
+
+**Constraints:**
+- Preserve existing `#if` regions and preprocessor structure
+- Never leave blank lines around injected `#if` blocks (IDE2000)
+- Keep test names underscore-free to avoid CA1707 noise
+
+The existing checklist and per-flag status table remain the source of truth; this plan simply codifies the mechanical loop and ordering.
+
 ## Session
 
 - Created: 2026-06-26 (spun out of 064)
