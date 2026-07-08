@@ -52,6 +52,7 @@ engine strips them and IDE2000 fails the generated build) — see the `web-spa/g
   CA1707 flags underscores, producing false-positive errors.
 - Verify loop: `dotnet pack` the template csproj → `dotnet new install --force` → `dotnet new
   timewarp-architecture -n NoX --X false` → `dotnet build`.
+- Blocked by #086 — template analyzer syntax error prevents feature-flag verification loop from running.
 
 ## Implementation Plan
 
