@@ -54,7 +54,8 @@ public class PurposeRegionAnalyzer : DiagnosticAnalyzer
 
     // Anchor on the first token (not position 0): a diagnostic located before a leading
     // `#pragma warning disable` could never be suppressed by it. Trivia-only files (fully
-    // commented out / #if false) have no active code and are not flagged.
+    // commented out, or entirely inside an excluded preprocessor branch) have no active code
+    // and are not flagged.
     SyntaxToken firstToken = root.GetFirstToken();
     if (firstToken.RawKind == 0) return;
 

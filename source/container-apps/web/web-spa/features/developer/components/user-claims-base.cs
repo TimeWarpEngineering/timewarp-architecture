@@ -1,5 +1,5 @@
 #region Purpose
-// Disabled (#if false) claims-display base-class sketch kept as reference; the TODO below records the pending delete-or-integrate decision.
+// Disabled (preprocessor-excluded) claims-display base-class sketch kept as reference; the TODO below records the pending delete-or-integrate decision.
 #endregion
 
 // TODO [2026-06]: Reassess UserClaimsBase after web-spa builds cleanly under AnalysisMode=All.
