@@ -12,6 +12,9 @@
     <!--#if (yarp) -->
     <PackageReference Include="Aspire.Hosting.Yarp" />
     <!--#endif -->
+    <!-- Direct pin (see Directory.Packages.props): lifts StreamJsonRpc's vulnerable transitive
+         MessagePack when Aspire.Hosting.Yarp isn't in the graph to do it. -->
+    <PackageReference Include="MessagePack" />
   </ItemGroup>
 
   <ItemGroup>

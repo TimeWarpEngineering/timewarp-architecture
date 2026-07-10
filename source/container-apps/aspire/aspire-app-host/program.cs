@@ -45,7 +45,6 @@ internal class Program
     // Self-reference for the web server
     webServer.WithReference(webServer);
 #endif
-
 #if yarp
     // YARP Reverse Proxy
     // YARP is included in the template

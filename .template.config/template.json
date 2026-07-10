@@ -41,7 +41,8 @@
             "source/container-apps/web/web-spa/services/mocks/mock-api-service.cs",
             "source/container-apps/web/web-spa/services/api-services/api-server-api-service.cs",
             "tests/common/timewarp-testing/applications/api-test-server-application.cs",
-            "tests/container-apps/api/**"
+            "tests/container-apps/api/**",
+            "tests/container-apps/web/web-spa-integration-tests/Features/WeatherForecast/**"
           ]
         },
         {
@@ -57,7 +58,8 @@
           "condition": "(!yarp)",
           "exclude": [
             "source/container-apps/yarp/**",
-            "tests/common/timewarp-testing/applications/yarp-test-server-application.cs"
+            "tests/common/timewarp-testing/applications/yarp-test-server-application.cs",
+            "tests/container-apps/web/web-spa-integration-tests/Pipeline/CloneStateBehavior_Tests.cs"
           ]
         },
         {
@@ -73,13 +75,16 @@
         {
           "condition": "(!counter)",
           "exclude": [
-            "source/container-apps/web/web-spa/features/counter/**"
+            "source/container-apps/web/web-spa/features/counter/**",
+            "tests/container-apps/web/web-spa-integration-tests/Features/Counter/**",
+            "tests/container-apps/web/web-spa-integration-tests/Pipeline/CloneStateBehavior_Tests.cs"
           ]
         },
         {
           "condition": "(!eventstream)",
           "exclude": [
-            "source/container-apps/web/web-spa/features/event-stream/**"
+            "source/container-apps/web/web-spa/features/event-stream/**",
+            "tests/container-apps/web/web-spa-integration-tests/Features/EventStream/**"
           ]
         },
         {

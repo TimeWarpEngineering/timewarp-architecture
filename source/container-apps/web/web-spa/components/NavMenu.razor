@@ -7,7 +7,9 @@
   <TimeWarpNavLink TPage=HomePage />
 
   <FluentNavCategory Title="Pages">
+    @*#if (counter)*@
     <TimeWarpNavLink TPage=CounterPage />
+    @*#endif*@
     @*#if (api)*@
     <TimeWarpNavLink TPage=WeatherForecastsPage />
     @*#endif*@
@@ -24,7 +26,9 @@
   <FluentNavCategory Title="Developer">
     <TimeWarpNavLink TPage=StyleGuidePage />
     <TimeWarpNavLink TPage=TestPage />
+    @*#if (eventstream)*@
     <TimeWarpNavLink TPage=EventStreamPage />
+    @*#endif*@
     <TimeWarpNavLink TPage=ServicesPage />
     <TimeWarpNavLink TPage=UserClaimsPage />
   </FluentNavCategory>

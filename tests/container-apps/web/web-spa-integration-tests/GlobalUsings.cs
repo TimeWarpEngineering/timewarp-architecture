@@ -10,9 +10,15 @@ global using Shouldly;
 global using System.Text.Json;
 // Solution usings
 global using TimeWarp.Architecture.Features.Applications;
+#if(counter)
 global using TimeWarp.Architecture.Features.Counters;
+#endif
+#if(eventstream)
 global using TimeWarp.Architecture.Features.EventStreams;
+#endif
+#if(api)
 global using TimeWarp.Architecture.Features.WeatherForecasts;
+#endif
 global using TimeWarp.Architecture.JsonSerializer.Tests;
 global using TimeWarp.Architecture.Services;
 global using TimeWarp.Foundation.Services;

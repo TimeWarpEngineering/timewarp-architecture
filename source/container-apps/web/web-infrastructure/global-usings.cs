@@ -11,7 +11,9 @@ global using Microsoft.Extensions.DependencyInjection;
 // Solution usings
 global using TimeWarp.Architecture;
 global using TimeWarp.Foundation;
+#if(postgres)
 global using TimeWarp.Architecture.Configuration;
+#endif
 global using TimeWarp.Foundation.Configuration;
 global using TimeWarp.Architecture.Entities;
 global using TimeWarp.Foundation.Entities;

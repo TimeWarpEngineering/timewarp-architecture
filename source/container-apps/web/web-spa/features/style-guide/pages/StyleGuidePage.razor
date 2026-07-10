@@ -79,7 +79,9 @@
           <FluentButton Appearance="ButtonAppearance.Primary" data-qa="ToastSuccess" OnClick="@(() => ShowToast(ToastIntent.Success, "Saved successfully."))">Success</FluentButton>
           <FluentButton Appearance="ButtonAppearance.Primary" data-qa="ToastWarning" OnClick="@(() => ShowToast(ToastIntent.Warning, "Careful — this is a warning."))">Warning</FluentButton>
           <FluentButton Appearance="ButtonAppearance.Primary" data-qa="ToastError" OnClick="@(() => ShowToast(ToastIntent.Error, "Something went wrong."))">Error</FluentButton>
+@*#if(counter)*@
           <FluentButton Appearance="ButtonAppearance.Outline" data-qa="ToastException" OnClick="TriggerException">Throw exception</FluentButton>
+@*#endif*@
         </div>
       </Card>
 
