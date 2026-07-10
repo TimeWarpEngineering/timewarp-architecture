@@ -98,3 +98,63 @@ The existing checklist and per-flag status table remain the source of truth; thi
 ## Session
 
 - Created: 2026-06-26 (spun out of 064)
+
+## Results (2026-07-11)
+
+**Every surviving flag combination generates a compiling solution.** Verified matrix
+(pack → install → generate `--foundationPackages false` → build):
+
+| Combo | Errors |
+|-------|--------|
+| Default (all-on; counter + eventstream demos present) | 0 |
+| NoGrpc / NoApi / NoWeb / NoYarp / NoPostgres | 0 each |
+| ApiOnly (`--web false --grpc false --yarp false`) — headless API | 0 |
+| WebOnly (`--api false --grpc false --yarp false --postgres false`) | 0 |
+
+Real repo `dev build` 0/0 throughout.
+
+### Scope decision (maintainer, 2026-07-11)
+
+Flags are the **architecture axis** only: api / grpc / web / yarp / postgres. `counter` and
+`eventstream` (demo content) were **de-flagged** — demos ship unconditionally; removal is
+agent/hand-driven (HowToRemoveDemoFeatures.md). Rationale: demo flags were the most expensive
+guards (eventstream ≈124 errors) serving content users delete after reading; flag matrices rot
+silently (this one went stale in 6 days). Coupling detection moves to build-time analyzers
+(tasks 088/089) instead of a manual generation loop.
+
+### Key changes
+
+- **Blocker 086** (pre-req): template engine mangles `.cs` files with `#if` tokens in comments — 3 files reworded.
+- **postgres**: guarded postgres-only namespaces' global usings (web-infrastructure, web-server).
+- **counter** (pre-de-flag): StyleGuidePage TriggerException + nav link guards; later unwrapped.
+- **yarp**: app-host Aspire.Hosting.Yarp usings; IDE2000 blank line in app-host program.cs;
+  MessagePack 2.5.302 direct pin (StreamJsonRpc pulls vulnerable 2.5.192; only Aspire.Hosting.Yarp
+  lifted it).
+- **api**: real bug — the source-generator ProjectReference sat inside `#if(api)` in web-spa.csproj,
+  so api-off apps lost ALL [Page]/[StateAccess] generation (116-error cascade). TableHeader/Cell
+  promoted from weather-forecast to shared components/ (superhero used them cross-feature).
+- **web**: test infrastructure decoupled from the SPA client stack. New `TestApiService`
+  (timewarp-testing) implements foundation `IApiService` over HttpClient with
+  ContractSerializationDefaults; all fixtures use it; WebApiTestService's reflection into
+  BaseApiService's private transport deleted; dead IWebServerApiService registration dropped;
+  yarp fixture's web/api members fully conditional (incl. conditional ctor comma).
+- **De-flag**: counter/eventstream symbols + excludes removed from template.json; all their
+  `#if` regions unwrapped (undefined symbols evaluate false — leftovers would strip the demos);
+  DefineConstants cleaned.
+
+### Test outcomes
+
+- In-proc integration tests pass — CloneStateBehavior constructs all three swapped fixtures
+  (yarp/web/api) and TestApiService end-to-end. Foundation suites 22/22.
+- 13 aspire-path tests (web-spa aspire + api-server suites) failed **environmentally**: Docker
+  daemon unhealthy in the dev environment; they die at DCP's docker health check before any
+  changed code runs (pre-existing dependency). Rerun `dev test` with Docker Desktop up to confirm.
+
+### Follow-ups filed
+
+087 (#if-in-comments template guard) · 088 (feature-isolation analyzer) ·
+089 (DefineConstants↔template.json agreement) · 090 (BaseApiService body serialized without seam
+options — found writing TestApiService).
+
+Commits: 5ef8d7b6 (086), 4dd8d201 (postgres/counter/yarp), a2ece8ca (api), 3d96a9ce (web),
+721be7a0 (de-flag).
