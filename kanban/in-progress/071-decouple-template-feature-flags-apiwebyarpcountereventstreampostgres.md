@@ -11,17 +11,22 @@ projects from the `.slnx`. But other code still **references** the excluded feat
 guards, so the generated solution fails to compile. This is genuine feature coupling, not a template
 artifact (the blank-line/IDE2000 and `.slnx`-conditional artifacts were already fixed in 064).
 
-## Per-flag status (verified 2026-06-26, clean project names)
+## Per-flag status (re-verified 2026-07-11)
+
+Value assessment (2026-07-11, maintainer decision): flags are the **architecture axis** only.
+`counter` and `eventstream` were demo-content flags — de-flagged; the demos ship unconditionally
+and are removed by hand/agent (see HowToRemoveDemoFeatures.md). Surviving flags:
+api / grpc / web / yarp / postgres.
 
 | Flag (`--X false`) | Result |
 |--------------------|--------|
-| `grpc`             | ✅ builds clean (done in 064) |
-| `api`              | ❌ ~4 CS0234 + ~20 RZ10012 (Razor components ref weather/api) |
-| `web`              | ❌ CS0234 + CS0246 |
-| `yarp`             | ❌ ~4 CS0234 |
-| `counter`          | ❌ ~2 CS0246 |
-| `eventstream`      | ❌ ~124 CS0234 (pervasive coupling — biggest) |
-| `postgres`         | ❌ ~2 CS0234 |
+| `grpc`             | ✅ builds clean (064) |
+| `postgres`         | ✅ builds clean (guarded postgres-only global usings) |
+| `yarp`             | ✅ builds clean (guarded app-host usings; MessagePack pin; IDE2000 blank line) |
+| `api`              | ✅ builds clean (generator ref moved out of #if(api); TableHeader/Cell promoted to shared components; test fixtures decoupled) |
+| `web`              | ✅ builds clean (headless API — test infra owns its client: TestApiService replaces the SPA client stack in timewarp-testing) |
+| `counter`          | — de-flagged (demo ships unconditionally) |
+| `eventstream`      | — de-flagged (demo ships unconditionally; its ~124-error coupling died with the flag) |
 
 ## Approach
 
@@ -37,14 +42,16 @@ engine strips them and IDE2000 fails the generated build) — see the `web-spa/g
 
 ## Checklist
 
-- [ ] `--postgres false` (smallest, ~2 errors) — likely a couple of unguarded refs
-- [ ] `--counter false` (~2)
-- [ ] `--yarp false` (~4)
-- [ ] `--api false` (~4 CS0234 + ~20 RZ10012 razor)
-- [ ] `--web false` (CS0234 + CS0246)
-- [ ] `--eventstream false` (~124 — pervasive; investigate the coupling first)
+- [x] `--postgres false`
+- [x] `--counter false` (fixed, then flag removed by value assessment)
+- [x] `--yarp false`
+- [x] `--api false`
+- [x] `--web false` (test-owned TestApiService; reflection hack deleted)
+- [x] `--eventstream false` → resolved by de-flagging (demo ships unconditionally)
 - [ ] Re-verify ALL single-flag-off combos build clean; spot-check a couple multi-flag-off combos
 - [ ] Confirm the real repo `dev build` stays green after each guard is added
+- [x] Follow-ups filed: 087 (#if-in-comments guard), 088 (feature-isolation analyzer), 089 (DefineConstants↔template.json), 090 (BaseApiService body serialization)
+- [x] HowToRemoveDemoFeatures.md (agent-driven demo removal guide)
 
 ## Notes
 

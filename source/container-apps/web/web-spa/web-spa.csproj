@@ -8,7 +8,7 @@
          (e.g. the counter's IncrementCounter action dispatched from JS). A 2b5a1ff6 path-rename had
          silently dropped this, breaking the JS initializer + JS-interop dispatch. -->
     <AssemblyName>Web.Spa</AssemblyName>
-    <DefineConstants>ReduxDevToolsEnabled;grpc;api;web;counter</DefineConstants>
+    <DefineConstants>ReduxDevToolsEnabled;grpc;api;web</DefineConstants>
     <Nullable>enable</Nullable>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
   </PropertyGroup>

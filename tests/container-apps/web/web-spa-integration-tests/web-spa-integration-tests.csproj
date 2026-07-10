@@ -9,7 +9,7 @@
     <AssemblyName>web-spa-integration-Tests</AssemblyName>
     <!-- Feature-flag symbols: the template engine strips #if(flag) regions at generation time;
          the real repo build (all features on) needs the symbols defined to keep them. -->
-    <DefineConstants>$(DefineConstants);api;counter;eventstream</DefineConstants>
+    <DefineConstants>$(DefineConstants);api</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Testing" />
