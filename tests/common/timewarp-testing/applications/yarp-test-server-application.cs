@@ -51,8 +51,14 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
 
   protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Yarp.Server.Program> webApplicationHost)
   {
+#if(api)
     JsonSerializerOptions jsonSerializerOptions = ContractSerializationDefaults.Options;
     var apiService = new ApiServerApiService(HttpClient, new MockAccessTokenProvider(), jsonSerializerOptions);
     return new WebApiTestService(apiService);
+#else
+    // Without the api feature there is no api-service to exercise through the proxy;
+    // tests that need one are excluded along with the flag.
+    throw new NotSupportedException("The api feature is excluded from this solution.");
+#endif
   }
 }

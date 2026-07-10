@@ -83,7 +83,7 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
 
   protected abstract IWebApiTestService CreateWebApiTestService(WebApplicationHost<TProgram> webApplicationHost);
 }
-
+#if(api)
 public class TestServerApplication : TestServerApplication<Api.Server.Program>
 {
   public TestServerApplication(WebApplicationHost<Api.Server.Program> webApplicationHost) : base(webApplicationHost)
@@ -104,3 +104,4 @@ public class TestServerApplication : TestServerApplication<Api.Server.Program>
     return new WebApiTestService(apiService);
   }
 }
+#endif
