@@ -1,8 +1,17 @@
+#region Purpose
+// DI convention for api-server integration tests: aspire-launched app + a test client bound to it.
+#endregion
+
+#region Design
+// The client is the test-owned TestApiService (timewarp-testing), not the SPA's ApiServerApiService:
+// the api test suite must work in template combinations where the web feature (and with it the SPA
+// client stack) is excluded. A former IWebServerApiService registration had no consumers and was
+// dropped rather than ported.
+#endregion
+
 namespace TimeWarp.Architecture.Api.Server.Integration.Tests.Infrastructure;
 
 using global::Aspire.Hosting;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
-using TimeWarp.Architecture.Services;
 using System.Text.Json;
 using AspireConstants = TimeWarp.Architecture.Aspire.Constants;
 
@@ -29,29 +38,14 @@ class ApiServerTestConvention : TimeWarpTestingConvention
     // latent mismatch with the camelCase seam).
     serviceCollection.AddSingleton(ContractSerializationDefaults.Options);
 
-    // Register the access token provider
-    serviceCollection.AddSingleton<IAccessTokenProvider, MockAccessTokenProvider>();
-
-    // Register IApiServerApiService
-    serviceCollection.AddScoped<IApiServerApiService, ApiServerApiService>(provider =>
+    // Register the api-server test client
+    serviceCollection.AddScoped<TestApiService>(provider =>
     {
       Task<DistributedApplication> distributedAppTask = provider.GetRequiredService<Task<DistributedApplication>>();
       DistributedApplication distributedApp = distributedAppTask.Result; // Ensure the app is available
       HttpClient httpClient = distributedApp.CreateHttpClient(AspireConstants.ApiServerProjectResourceName);
       JsonSerializerOptions jsonSerializerOptions = provider.GetRequiredService<JsonSerializerOptions>();
-      IAccessTokenProvider accessTokenProvider = provider.GetRequiredService<IAccessTokenProvider>();
-      return new ApiServerApiService(httpClient, accessTokenProvider, jsonSerializerOptions);
-    });
-
-    // Register IWebServerApiService
-    serviceCollection.AddScoped<IWebServerApiService, WebServerApiService>(provider =>
-    {
-      Task<DistributedApplication> distributedAppTask = provider.GetRequiredService<Task<DistributedApplication>>();
-      DistributedApplication distributedApp = distributedAppTask.Result; // Ensure the app is available
-      IAccessTokenProvider accessTokenProvider = provider.GetRequiredService<IAccessTokenProvider>();
-      HttpClient httpClient = distributedApp.CreateHttpClient(AspireConstants.WebServerProjectResourceName);
-      JsonSerializerOptions jsonSerializerOptions = provider.GetRequiredService<JsonSerializerOptions>();
-      return new WebServerApiService(accessTokenProvider, httpClient, jsonSerializerOptions);
+      return new TestApiService(httpClient, jsonSerializerOptions);
     });
   }
 }

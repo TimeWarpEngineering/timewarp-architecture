@@ -7,6 +7,5 @@ global using Shouldly;
 global using System.Net;
 // Solution usings
 global using TimeWarp.Architecture.Testing;
-global using TimeWarp.Architecture.Types;
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Fixie;

@@ -6,15 +6,22 @@ namespace TimeWarp.Architecture.Testing;
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesCallback"/></remarks>
 public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Program>
 {
+#if(web)
   private readonly WebTestServerApplication WebTestServerApplication;
+#endif
 #if(api)
   private readonly ApiTestServerApplication ApiTestServerApplication;
 #endif
   public YarpTestServerApplication
   (
+#if(web)
     WebTestServerApplication webTestServerApplication
+#endif
+#if(web && api)
+    ,
+#endif
 #if(api)
-    ,ApiTestServerApplication apiTestServerApplication
+    ApiTestServerApplication apiTestServerApplication
 #endif
   ) :
   base
@@ -36,7 +43,9 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
     )
   )
   {
+#if(web)
     WebTestServerApplication = webTestServerApplication;
+#endif
 #if(api)
     ApiTestServerApplication = apiTestServerApplication;
 #endif
@@ -49,16 +58,6 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
     serviceCollection.AddConfigurationServiceEndpointProvider();
   }
 
-  protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Yarp.Server.Program> webApplicationHost)
-  {
-#if(api)
-    JsonSerializerOptions jsonSerializerOptions = ContractSerializationDefaults.Options;
-    var apiService = new ApiServerApiService(HttpClient, new MockAccessTokenProvider(), jsonSerializerOptions);
-    return new WebApiTestService(apiService);
-#else
-    // Without the api feature there is no api-service to exercise through the proxy;
-    // tests that need one are excluded along with the flag.
-    throw new NotSupportedException("The api feature is excluded from this solution.");
-#endif
-  }
+  protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Yarp.Server.Program> webApplicationHost) =>
+    new WebApiTestService(new TestApiService(HttpClient, ContractSerializationDefaults.Options));
 }
