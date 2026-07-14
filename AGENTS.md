@@ -69,6 +69,7 @@ tests/               # mirrors source/; includes web-contracts-tests (host-free 
 | TWPA0004 | every source file carries `#region Purpose` (one honest line minimum) |
 | TWPA0005/0006 | endpoint verb matches the contract's `[ApiRoute]`; every routed contract has an endpoint or `[ClientOnlyContract(reason)]` |
 | TWPA0007 | Aspire `AddProject` resource names are `ServiceNames` constant values |
+| TWPA0008 | no template-conditional tokens in comments/strings (the dotnet-new engine misreads them and truncates generated files); escape hatch: the `cnd:noEmit` comment-marker pair |
 
 ## Agent Context Regions — maintenance rule
 

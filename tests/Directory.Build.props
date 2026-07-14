@@ -34,6 +34,16 @@
     <NoWarn>$(NoWarn);CA2000</NoWarn>   <!-- Dispose before out of scope — false positives in test infra (WebApplicationHost/HttpClient lifecycle owned by the framework; short-lived test scope) -->
     <NoWarn>$(NoWarn);NU1608</NoWarn>   <!-- Transitive version ceilings that lag .NET 10 / FakeItEasy 9: Oakton 6.3.0 (Hosting <10) and AutoFixture.AutoFakeItEasy 4.18.1 (FakeItEasy <9). Both are latest; resolved versions are runtime-compatible (tests pass). -->
     <NoWarn>$(NoWarn);RCS1102</NoWarn>  <!-- Roslynator 'make class static' — Fixie discovers instance test classes (static methods don't make them static) -->
+    <NoWarn>$(NoWarn);TWPA0004</NoWarn> <!-- #region Purpose not yet adopted for test files — separate decision; TWPA0008 (template-token guard) is the reason the convention analyzers are wired here -->
   </PropertyGroup>
+
+  <!-- Repo-wide convention analyzers for TEST code too: tests/ ships as template content, so
+       TWPA0008 (template-conditional tokens in comments/strings mangle generation) must cover it —
+       analyzer-test files embedding C# source in strings are the likeliest carriers. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      IsAspireProjectResource="false" />
+  </ItemGroup>
 
 </Project>
