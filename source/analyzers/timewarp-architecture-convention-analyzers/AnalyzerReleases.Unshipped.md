@@ -12,3 +12,4 @@ TWPA0005 | Design | Warning | EndpointCoverageAnalyzer: endpoint HTTP verb does 
 TWPA0006 | Design | Warning | EndpointCoverageAnalyzer: routed contract has no server endpoint
 TWPA0007 | Design | Warning | AspireResourceNameAnalyzer: Aspire resource name is not a ServiceNames constant value
 TWPA0008 | Design | Warning | TemplateConditionalTokenAnalyzer: comment or string contains a template-conditional token
+TWPA0009 | Design | Warning | FeatureIsolationAnalyzer: feature references another feature's namespace

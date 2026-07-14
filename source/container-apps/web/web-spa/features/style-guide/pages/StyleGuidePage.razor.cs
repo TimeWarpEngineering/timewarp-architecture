@@ -12,6 +12,7 @@
 namespace TimeWarp.Architecture.Pages;
 
 [Page("/StyleGuide")]
+[CrossFeatureReference("The living style guide deliberately exercises other features' pipelines (counter's throw-exception, toast notifications) so demos run production paths.")]
 partial class StyleGuidePage
 {
   // Toasts go through OUR ToastNotificationState pipeline (the generated ActionSet dispatcher),

@@ -10,6 +10,8 @@
 
 namespace TimeWarp.Architecture.Services;
 
+using TimeWarp.Architecture.Types;
+
 /// <summary>
 /// Simulates an authenticated user for local development and authentication-dependent component testing.
 /// </summary>

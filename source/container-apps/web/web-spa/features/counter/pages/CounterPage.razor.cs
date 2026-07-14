@@ -5,6 +5,7 @@
 namespace TimeWarp.Architecture.Pages;
 
 [Page("/Counter")]
+[CrossFeatureReference("The counter demo's reset button exercises the app-level store reset (ApplicationState) on purpose.")]
 partial class CounterPage
 {
   private async Task ButtonClick() =>
