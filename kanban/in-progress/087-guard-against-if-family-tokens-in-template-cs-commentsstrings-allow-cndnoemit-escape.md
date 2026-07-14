@@ -41,6 +41,28 @@ Its diagnostic message must name both remedies.
   per-flag/foundation excludes in `.template.config/template.json`). Decide whether to scope the
   analyzer or accept repo-wide (repo-wide is simpler and the tokens are rare).
 
+
+## Implementation Plan (2026-07-14)
+
+Decision: Roslyn analyzer (TWPA0008) in timewarp-architecture-convention-analyzers.
+
+1. `template-conditional-token-analyzer.cs`: syntax-tree action scanning comment trivia
+   (single/multi-line + doc) and every string-literal token kind (regular, verbatim, raw,
+   interpolated text, UTF-8) for `#(if|elif|else|endif)\b`. Line ranges between `//-:cnd:noEmit`
+   and `//+:cnd:noEmit` are exempt. Real preprocessor directives are directive trivia — never
+   scanned. Diagnostic anchors on the exact match span; message names both remedies.
+2. Self-hosting: the analyzer source and its tests are themselves template content — the raw byte
+   sequence must not appear in them (the engine matches it even mid-line, per 086). Token text in
+   the analyzer and embedded test sources is composed at runtime ("#" + "if").
+3. Wire convention analyzers into tests/Directory.Build.props (template content includes tests/;
+   analyzer-test files embedding C# in raw strings are the likeliest future carriers) with
+   `NoWarn TWPA0004` for tests — Purpose-region adoption in tests is a separate decision.
+4. Register TWPA0008 in AnalyzerReleases.Unshipped.md; add AGENTS.md enforcement-table row.
+5. Tests: comment hit, string hit, raw-string hit, doc-comment hit, real-directive clean,
+   cnd:noEmit-guarded clean.
+6. Verify: dev build 0/0 (sweep confirmed repo currently clean), analyzer tests green, default
+   template generation sanity check.
+
 ## Checklist
 
 - [ ] Decide crude-script vs Roslyn analyzer (prefer analyzer per the standing directive)
