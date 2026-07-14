@@ -13,7 +13,6 @@
 namespace TimeWarp.Architecture.Features.Authentication;
 
 using Authorization;
-using TimeWarp.Architecture.Types;
 public static partial class GetCurrentUser
 {
   [ApiRoute(RouteTemplate: "api/GetCurrentUser", HttpVerb.Get)]
@@ -86,8 +85,8 @@ public static partial class GetCurrentUser
 
     var responseCreators = new Dictionary<Guid, Func<Response>>
     {
-      { UserIds.SystemAdmin, CreateMockResponseForAdministrator },
-      { UserIds.Developer, CreateMockResponseForDeveloper },
+      { MockUserIds.SystemAdmin, CreateMockResponseForAdministrator },
+      { MockUserIds.Developer, CreateMockResponseForDeveloper },
     };
 
     Response response =

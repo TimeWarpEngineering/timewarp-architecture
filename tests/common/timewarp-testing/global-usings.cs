@@ -27,9 +27,6 @@ global using TimeWarp.Foundation.Features;
 global using TimeWarp.Architecture.Services;
 #endif
 global using TimeWarp.Foundation.Services;
-#if(web)
-global using TimeWarp.Architecture.Types;
-#endif
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Fixie;
 

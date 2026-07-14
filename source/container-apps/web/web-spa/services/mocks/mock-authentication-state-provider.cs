@@ -10,8 +10,6 @@
 
 namespace TimeWarp.Architecture.Services;
 
-using TimeWarp.Architecture.Types;
-
 /// <summary>
 /// Simulates an authenticated user for local development and authentication-dependent component testing.
 /// </summary>
@@ -29,8 +27,8 @@ public partial class MockAuthenticationStateProvider : AuthenticationStateProvid
   {
     List<Claim> claims = new()
     {
-      new("oid", UserIds.SystemAdmin.ToString()),
-      new(ClaimTypes.NameIdentifier, UserIds.SystemAdmin.ToString()),
+      new("oid", MockUserIds.SystemAdmin.ToString()),
+      new(ClaimTypes.NameIdentifier, MockUserIds.SystemAdmin.ToString()),
       new(ClaimTypes.Name, "Mock User"),
       new(ClaimTypes.Role, RoleIds.Administrator.ToString()),
       new(ClaimTypes.Role, RoleIds.Developer.ToString()),
