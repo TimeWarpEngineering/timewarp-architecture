@@ -46,4 +46,10 @@
                       IsAspireProjectResource="false" />
   </ItemGroup>
 
+  <!-- template.json feeds TWPA0010 (template-flag directives must have matching DefineConstants).
+       Absent in generated apps — the analyzer is silent there. -->
+  <ItemGroup Condition="Exists('$(RepositoryRoot).template.config/template.json')">
+    <AdditionalFiles Include="$(RepositoryRoot).template.config/template.json" />
+  </ItemGroup>
+
 </Project>

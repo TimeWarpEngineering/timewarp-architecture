@@ -13,3 +13,4 @@ TWPA0006 | Design | Warning | EndpointCoverageAnalyzer: routed contract has no s
 TWPA0007 | Design | Warning | AspireResourceNameAnalyzer: Aspire resource name is not a ServiceNames constant value
 TWPA0008 | Design | Warning | TemplateConditionalTokenAnalyzer: comment or string contains a template-conditional token
 TWPA0009 | Design | Warning | FeatureIsolationAnalyzer: feature references another feature's namespace
+TWPA0010 | Design | Warning | TemplateFlagConstantsAnalyzer: directive uses a template flag missing from DefineConstants

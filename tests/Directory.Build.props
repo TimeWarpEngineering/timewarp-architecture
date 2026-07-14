@@ -46,4 +46,9 @@
                       IsAspireProjectResource="false" />
   </ItemGroup>
 
+  <!-- template.json feeds TWPA0010 (see source/Directory.Build.props). -->
+  <ItemGroup Condition="Exists('$(RepositoryRoot).template.config/template.json')">
+    <AdditionalFiles Include="$(RepositoryRoot).template.config/template.json" />
+  </ItemGroup>
+
 </Project>
