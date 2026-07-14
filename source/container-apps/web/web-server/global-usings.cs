@@ -49,7 +49,9 @@ global using TimeWarp.Architecture.Extensions;
 global using TimeWarp.Foundation.Extensions;
 global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Hubs;
+#if(postgres)
 global using TimeWarp.Architecture.Persistence;
+#endif
 global using TimeWarp.Architecture.Services;
 global using TimeWarp.Foundation.Services;
 global using TimeWarp.Architecture.Types;

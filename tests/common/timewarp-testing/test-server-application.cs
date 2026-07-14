@@ -83,24 +83,14 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
 
   protected abstract IWebApiTestService CreateWebApiTestService(WebApplicationHost<TProgram> webApplicationHost);
 }
-
+#if(api)
 public class TestServerApplication : TestServerApplication<Api.Server.Program>
 {
   public TestServerApplication(WebApplicationHost<Api.Server.Program> webApplicationHost) : base(webApplicationHost)
   {
   }
 
-  protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Api.Server.Program> webApplicationHost)
-  {
-    IServiceProvider serviceProvider = webApplicationHost.ServiceProvider;
-
-    IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-    IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
-
-    JsonSerializerOptions jsonSerializerOptions = ContractSerializationDefaults.Options;
-    IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor = Options.Create(jsonSerializerOptions);
-
-    var apiService = new ApiServerApiService(httpClientFactory, accessTokenProvider, jsonSerializerOptionsAccessor);
-    return new WebApiTestService(apiService);
-  }
+  protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Api.Server.Program> webApplicationHost) =>
+    new WebApiTestService(new TestApiService(HttpClient, ContractSerializationDefaults.Options));
 }
+#endif

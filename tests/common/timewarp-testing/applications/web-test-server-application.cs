@@ -50,17 +50,6 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
     serviceCollection.AddSingleton<IAccessTokenProvider, MockAccessTokenProvider>();
   }
 
-  protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Web.Server.Program> webApplicationHost)
-  {
-    IServiceProvider serviceProvider = webApplicationHost.ServiceProvider;
-
-    IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-    IAccessTokenProvider accessTokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
-
-    JsonSerializerOptions jsonSerializerOptions = ContractSerializationDefaults.Options;
-    IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor = Options.Create(jsonSerializerOptions);
-
-    var webServerApiService = new WebServerApiService(accessTokenProvider, httpClientFactory, jsonSerializerOptionsAccessor);
-    return new WebApiTestService(webServerApiService);
-  }
+  protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Web.Server.Program> webApplicationHost) =>
+    new WebApiTestService(new TestApiService(HttpClient, ContractSerializationDefaults.Options));
 }

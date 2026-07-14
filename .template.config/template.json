@@ -41,7 +41,8 @@
             "source/container-apps/web/web-spa/services/mocks/mock-api-service.cs",
             "source/container-apps/web/web-spa/services/api-services/api-server-api-service.cs",
             "tests/common/timewarp-testing/applications/api-test-server-application.cs",
-            "tests/container-apps/api/**"
+            "tests/container-apps/api/**",
+            "tests/container-apps/web/web-spa-integration-tests/Features/WeatherForecast/**"
           ]
         },
         {
@@ -57,7 +58,8 @@
           "condition": "(!yarp)",
           "exclude": [
             "source/container-apps/yarp/**",
-            "tests/common/timewarp-testing/applications/yarp-test-server-application.cs"
+            "tests/common/timewarp-testing/applications/yarp-test-server-application.cs",
+            "tests/container-apps/web/web-spa-integration-tests/Pipeline/CloneStateBehavior_Tests.cs"
           ]
         },
         {
@@ -68,18 +70,6 @@
             "source/container-apps/web/web-server/configuration/environment-checks/postgres-db-environment-check.cs",
             "source/container-apps/web/web-server/hosted-services/postgres-db-context-startup-hosted-service.cs",
             "source/container-apps/web/web-server/modules/postgres-db-module.cs"
-          ]
-        },
-        {
-          "condition": "(!counter)",
-          "exclude": [
-            "source/container-apps/web/web-spa/features/counter/**"
-          ]
-        },
-        {
-          "condition": "(!eventstream)",
-          "exclude": [
-            "source/container-apps/web/web-spa/features/event-stream/**"
           ]
         },
         {
@@ -115,18 +105,6 @@
     "yarp": {
       "type": "parameter",
       "description": "Include the yarp proxy server",
-      "datatype": "bool",
-      "defaultValue": "true"
-    },
-    "counter": {
-      "type": "parameter",
-      "description": "Add Counter Features to web-spa",
-      "datatype": "bool",
-      "defaultValue": "true"
-    },
-    "eventstream": {
-      "type": "parameter",
-      "description": "Eventstream is an example of how to implement middleware in web-spa",
       "datatype": "bool",
       "defaultValue": "true"
     },

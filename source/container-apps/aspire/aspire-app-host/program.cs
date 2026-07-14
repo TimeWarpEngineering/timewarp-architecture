@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// #if blocks mirror the dotnet-new template flags (api/grpc/web/yarp) so excluded services leave no trace.
+// Preprocessor blocks mirror the dotnet-new template flags (api/grpc/web/yarp) so excluded services leave no trace.
 // Resource names (see constants.cs) MUST equal ServiceNames.* in foundation-contracts — Aspire keys the
 // injected services__{name}__https__0 env vars by resource name; server-side BaseAddress resolution breaks otherwise.
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
@@ -45,7 +45,6 @@ internal class Program
     // Self-reference for the web server
     webServer.WithReference(webServer);
 #endif
-
 #if yarp
     // YARP Reverse Proxy
     // YARP is included in the template

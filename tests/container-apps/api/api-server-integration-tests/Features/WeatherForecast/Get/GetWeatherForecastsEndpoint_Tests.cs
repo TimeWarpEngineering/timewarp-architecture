@@ -2,18 +2,18 @@ namespace GetWeatherForecastsEndpoint_;
 
 using System.Linq;
 using System.Text.Json;
-using TimeWarp.Architecture.Services;
+using TimeWarp.Architecture.Testing;
 using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 
 public class Returns
 {
-  private readonly IApiServerApiService ApiServerApiService;
+  private readonly TestApiService ApiServerApiService;
   private readonly Query Query = new()
   {
     Days = 10
   };
 
-  public Returns( IApiServerApiService apiServerApiService)
+  public Returns(TestApiService apiServerApiService)
   {
     ApiServerApiService = apiServerApiService;
   }

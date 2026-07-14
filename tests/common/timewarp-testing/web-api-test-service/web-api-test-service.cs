@@ -1,4 +1,15 @@
 #nullable enable
+#region Purpose
+// Shared assertion helpers over TestApiService: typed responses and endpoint-validation checks.
+#endregion
+
+#region Design
+// Takes the concrete TestApiService (not IApiService): ConfirmEndpointValidationError needs the
+// raw HttpResponseMessage, which TestApiService exposes directly. The previous implementation
+// reflected into the SPA's BaseApiService private transport — a hidden compile-time dependency on
+// the web feature and a refactoring trap; owning the client removes both.
+#endregion
+
 namespace TimeWarp.Architecture.Testing;
 
 /// <summary>
@@ -7,11 +18,13 @@ namespace TimeWarp.Architecture.Testing;
 [NotTest]
 public class WebApiTestService : IWebApiTestService
 {
-  private readonly IApiService ApiService;
+  private readonly TestApiService ApiService;
+
   /// <summary>
   /// A class that contains a common set of methods used when testing Web APIs
   /// </summary>
-  public WebApiTestService(IApiService apiService) {
+  public WebApiTestService(TestApiService apiService)
+  {
     ApiService = apiService;
   }
 
@@ -22,25 +35,14 @@ public class WebApiTestService : IWebApiTestService
     string attributeName
   )
   {
-    // Get the type of the current class
-    Type type = typeof(BaseApiService);
+    HttpResponseMessage httpResponseMessage =
+      await ApiService.GetHttpResponseMessage(apiRequest, CancellationToken.None).ConfigureAwait(false);
 
-    // Get the private method you want to call.
-    System.Reflection.MethodInfo method = type.GetMethod
-    (
-      name: "GetHttpResponseMessageFromRequest",
-      bindingAttr: System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
-      binder: null,
-      types: new[] { typeof(IApiRequest), typeof(CancellationToken) },
-      modifiers: null
-    ) ?? throw new InvalidOperationException();
+    string json = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-    // Call the method and provide a deterministic cancellation token
-    var httpResponseMessage = (HttpResponseMessage)await method
-      .InvokeAsync(ApiService, [apiRequest, CancellationToken.None])
-      .ConfigureAwait(false);
-
-    await ConfirmEndpointValidationError(httpResponseMessage, attributeName).ConfigureAwait(false);
+    httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    json.ShouldContain("errors");
+    json.ShouldContain(attributeName);
   }
 
   public async Task<OneOf.OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
@@ -49,17 +51,4 @@ public class WebApiTestService : IWebApiTestService
       CancellationToken cancellationToken
     ) where TResponse : class =>
       await ApiService.GetResponse<TResponse>(apiRequest, cancellationToken);
-
-  private static async Task ConfirmEndpointValidationError
-  (
-    HttpResponseMessage httpResponseMessage,
-    string attributeName
-  )
-  {
-    string json = await httpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-    httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    json.ShouldContain("errors");
-    json.ShouldContain(attributeName);
-  }
 }

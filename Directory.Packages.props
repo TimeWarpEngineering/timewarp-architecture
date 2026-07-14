@@ -53,6 +53,9 @@
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.7.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->
+    <!-- Direct pin: StreamJsonRpc (Aspire AppHost SDK) pulls vulnerable MessagePack 2.5.192 (NU1902/NU1903).
+         With yarp on, Aspire.Hosting.Yarp lifts it to 2.5.302; this pin keeps flag-off graphs safe too. -->
+    <PackageVersion Include="MessagePack" Version="2.5.302" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.9" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.9" />

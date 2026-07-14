@@ -3,8 +3,10 @@
 #endregion
 
 global using Aspire.Customization.AppHost;
+#if(yarp)
 global using Aspire.Hosting.Yarp;
 global using Aspire.Hosting.Yarp.Transforms;
+#endif
 global using Microsoft.Extensions.Diagnostics.HealthChecks;
 global using System.Diagnostics;
 global using static TimeWarp.Architecture.Aspire.Constants;

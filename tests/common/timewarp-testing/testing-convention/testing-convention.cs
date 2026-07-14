@@ -35,8 +35,10 @@ public class TimeWarpTestingConvention : TestingConvention
       #if(api)
       .AddSingleton<ApiTestServerApplication>()
       #endif
-      #if(yarp)
+      #if(web && yarp)
       .AddSingleton<SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program>>()
+      #endif
+      #if(yarp)
       .AddSingleton<YarpTestServerApplication>()
       #endif
       ;

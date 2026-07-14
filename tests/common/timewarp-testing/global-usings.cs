@@ -3,7 +3,9 @@ global using Shouldly;
 global using TimeWarp.Mediator;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.AspNetCore.Builder;
+#if(web)
 global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+#endif
 global using Microsoft.AspNetCore.Hosting;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Configuration;
@@ -21,9 +23,13 @@ global using System.Text.Json;
 // Solution usings
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Foundation.Features;
+#if(web)
 global using TimeWarp.Architecture.Services;
+#endif
 global using TimeWarp.Foundation.Services;
+#if(web)
 global using TimeWarp.Architecture.Types;
+#endif
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Fixie;
 

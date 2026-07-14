@@ -67,6 +67,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
     IAccessTokenProvider fakeAccessTokenProvider = A.Fake<IAccessTokenProvider>();
     services.AddScoped(_ => fakeAccessTokenProvider);
 
+#if(api)
     // Register IApiServerApiService (required for handlers that call the API)
     services.AddScoped<IApiServerApiService>(serviceProvider =>
     {
@@ -76,7 +77,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
 
       return new ApiServerApiService(httpClientFactory, accessTokenProvider, jsonOptions);
     });
-
+#endif
     // Replace JSRuntime with a fake for testing
     IJSRuntime fakeJsRuntime = A.Fake<IJSRuntime>();
     services.AddScoped(_ => fakeJsRuntime);

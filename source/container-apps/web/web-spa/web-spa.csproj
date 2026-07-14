@@ -8,7 +8,7 @@
          (e.g. the counter's IncrementCounter action dispatched from JS). A 2b5a1ff6 path-rename had
          silently dropped this, breaking the JS initializer + JS-interop dispatch. -->
     <AssemblyName>Web.Spa</AssemblyName>
-    <DefineConstants>ReduxDevToolsEnabled;grpc;api;web;counter</DefineConstants>
+    <DefineConstants>ReduxDevToolsEnabled;grpc;api;web</DefineConstants>
     <Nullable>enable</Nullable>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
   </PropertyGroup>
@@ -67,8 +67,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--#if(api)-->
+    <!-- Source generators ([Page], [StateAccess], mock-factory registry) serve ALL of web-spa —
+         this reference must stay outside every feature-flag conditional. -->
     <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-analyzers\timewarp-architecture-analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  />
+    <!--#if(api)-->
     <ProjectReference Include="..\..\api\api-contracts\api-contracts.csproj"/>
     <!--#endif-->
     <!--#if(grpc)-->
