@@ -9,6 +9,8 @@
 // surface as SharedProblemDetails so UI code switches on the OneOf instead of try/catch.
 // Stream TResponse is special-cased into FileResponse to support downloads through the same API.
 // Bearer token is requested per call from IAccessTokenProvider so MSAL owns caching and refresh.
+// Request bodies and responses both use the injected seam options (ContractSerializationDefaults):
+// the seam is camelCase in both directions, matching the test client (TestApiService).
 #endregion
 
 namespace TimeWarp.Architecture;
@@ -187,7 +189,7 @@ public abstract class BaseApiService : IApiService
     };
   }
 
-  private static StringContent? PrepareContent(IApiRequest apiRequest)
+  private StringContent? PrepareContent(IApiRequest apiRequest)
   {
     HttpVerb httpVerb = apiRequest.GetHttpVerb();
     switch (httpVerb)
@@ -195,7 +197,7 @@ public abstract class BaseApiService : IApiService
       case HttpVerb.Post:
       case HttpVerb.Put:
       case HttpVerb.Patch:
-        string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType());
+        string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType(), JsonSerializerOptions);
         return new StringContent(requestAsJson, Encoding.UTF8, MediaTypeNames.Application.Json);
       case HttpVerb.Get:
       case HttpVerb.Delete:
