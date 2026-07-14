@@ -40,12 +40,37 @@ TWPA0009 in timewarp-architecture-convention-analyzers.
 
 ## Checklist
 
-- [ ] Decide namespace-ownership detection (folder-to-namespace convention already exists)
-- [ ] Implement in timewarp-architecture-convention-analyzers, next free TWPA id
-- [ ] Opt-out with mandatory reason for deliberate cross-feature demos (Style Guide)
-- [ ] Tests: cross-feature ref flags; components/ ref clean; opt-out clean
-- [ ] AnalyzerReleases.Unshipped.md; dev build 0/0
+- [x] Decide namespace-ownership detection (folder-to-namespace convention already exists)
+- [x] Implement in timewarp-architecture-convention-analyzers, next free TWPA id
+- [x] Opt-out with mandatory reason for deliberate cross-feature demos (Style Guide)
+- [x] Tests: cross-feature ref flags; components/ ref clean; opt-out clean
+- [x] AnalyzerReleases.Unshipped.md; dev build 0/0
 
 ## Session
 
 - Created: 2026-07-11 (spun out of 071 value assessment)
+
+## Results (2026-07-14)
+
+**Implemented** (commit 28b75b2e): `FeatureIsolationAnalyzer` (TWPA0009).
+
+- Ownership is derived, not configured: a namespace is feature-owned only when every HAND-WRITTEN
+  declaration lives under one `features/<x>/` folder. Shared namespaces (Pages, Components, the
+  authentication/profiles overlap) and the `features/base` substrate drop out automatically.
+- Hard-won discriminators (found by live debugging, now encoded in tests):
+  - Generator trees must be excluded by *.g.cs naming, NOT path-rootedness — the repo persists
+    generator output to `artifacts/generated/` (rooted!), and TimeWarp.State's ActionSet partials
+    were poisoning `Features.Counters` into multi-owner, silencing the rule.
+  - Metadata symbols are exempt: contracts are sharing-by-design (authorization calling the
+    GetCurrentUser contract must not flag). Namespace symbols carry no signal (merged).
+- `[CrossFeatureReference(reason)]` (foundation-contracts) is the reasoned opt-out.
+- **Real drift caught on first sweep**: `UserIds` lived in web-contracts `features/admin` under
+  namespace `TimeWarp.Architecture.Services` and was consumed by the authentication feature —
+  promoted to `web-contracts/types` as `TimeWarp.Architecture.Types.UserIds`.
+- Three deliberate couplings got reasoned opt-outs: StyleGuidePage (demos exercise other
+  features' pipelines), CounterPage (app-level store reset), the claims factory (auth/authz pair).
+- Documented limits: razor markup (generated trees) not scanned; the convention-analyzers
+  project cannot analyze itself.
+
+**Tests**: 6 green (cross-feature flags both identifiers; same-feature, shell→feature,
+shared-namespace, opt-out, base-substrate clean). `dev build` 0/0 repo-wide.

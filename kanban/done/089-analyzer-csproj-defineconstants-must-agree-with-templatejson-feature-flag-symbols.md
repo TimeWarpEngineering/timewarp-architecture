@@ -43,11 +43,32 @@ false-positive).
 
 ## Checklist
 
-- [ ] Choose mechanism (analyzer with AdditionalFiles=template.json vs MSBuild target)
-- [ ] Implement; next free TWPA id if analyzer
-- [ ] Tests both directions (missing constant; stale constant)
-- [ ] dev build 0/0
+- [x] Choose mechanism (analyzer with AdditionalFiles=template.json vs MSBuild target)
+- [x] Implement; next free TWPA id if analyzer
+- [x] Tests both directions (missing constant; stale constant)
+- [x] dev build 0/0
 
 ## Session
 
 - Created: 2026-07-11 (spun out of 071)
+
+## Results (2026-07-14)
+
+**Implemented** (commit 43c70ca6): `TemplateFlagConstantsAnalyzer` (TWPA0010).
+
+- Reads template.json bool symbols via AdditionalFiles (Exists-conditioned wiring in source/ and
+  tests/ Directory.Build.props); flags any `#if`/`#elif` condition naming a template flag absent
+  from the project's preprocessor symbols, at the identifier's exact span.
+- One direction only, per plan: the stale reverse would false-positive (razor/csproj conditional
+  forms are invisible to the C# compilation — web-spa's `web`). Generated apps are naturally
+  silent (no template.json, no surviving flag directives).
+- **The known violation fixed**: web-infrastructure's `#if(postgres)` guarded global using had
+  zero consumers — deleted (NoPostgres generated app verified 0 errors after removal).
+- Test directive syntax composed at runtime with made-up flag names (087 lesson); all new files
+  verified shipping intact through generation.
+- AGENTS.md: enforcement rows for 0009/0010 added; stale counter/eventstream flag list
+  reconciled to post-071 reality.
+
+**Tests**: 6 green (missing-constant flags; defined, compound-partial, non-template symbol,
+non-bool symbol, no-template.json clean/silent). Live-fire: replanting the web-infrastructure
+violation fails the build with TWPA0010 at the exact span. `dev build` 0/0.
