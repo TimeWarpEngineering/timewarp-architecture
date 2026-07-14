@@ -4,8 +4,14 @@
 
 using TimeWarp.Amuru;
 
-string? root = Git.FindRoot();
-if (root is null)
+// Amuru 1.0.0 removed the Git helper class; ask git directly for the root.
+CommandOutput rootOutput = await Shell.Builder("git")
+  .WithArguments("rev-parse", "--show-toplevel")
+  .WithNoValidation()
+  .CaptureAsync();
+
+string root = rootOutput.Stdout.Trim();
+if (!rootOutput.Success || root.Length == 0)
 {
   return 0;
 }
