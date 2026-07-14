@@ -18,6 +18,26 @@ promotion, commit a2ece8ca); shared state/contracts belong in foundation or web-
 Deliberate exceptions (e.g. the Style Guide page demonstrating other features) get an opt-out
 attribute or config, with a reason — mirror the `[ClientOnlyContract(reason)]` pattern.
 
+
+## Implementation Plan (2026-07-14)
+
+TWPA0009 in timewarp-architecture-convention-analyzers.
+
+1. CompilationStart: map namespace → owning feature from declaration file paths. A namespace is
+   feature-owned ONLY if every declaration of it in the compilation lives under a single
+   `features/<x>/` folder — shared namespaces (Pages, Components, Features.Profiles which
+   authentication also declares) are auto-excluded. Bail fast when no tree lives under features/.
+2. Per-file semantic walk: identifiers in a features/<x>/ file resolving to a namespace owned by
+   feature y != x are flagged, unless a containing type carries [CrossFeatureReference(reason)]
+   (matched by name; declared in foundation-contracts/base, mirroring ClientOnlyContract).
+3. Scope: .cs only — razor-generated trees are excluded by GeneratedCodeAnalysisFlags.None (the
+   markup side is covered indirectly: markup references compile into generated code referencing
+   the same namespaces... NOT scanned; documented limitation).
+4. Existing coupling triage at first build: StyleGuidePage (deliberate demo aggregation) gets the
+   opt-out; anything else assessed case by case.
+5. Tests: two fake features via source file paths; cross-ref flags; same-feature clean;
+   shell→feature clean; shared-namespace clean; opt-out clean.
+
 ## Checklist
 
 - [ ] Decide namespace-ownership detection (folder-to-namespace convention already exists)
