@@ -65,12 +65,44 @@ Decision: Roslyn analyzer (TWPA0008) in timewarp-architecture-convention-analyze
 
 ## Checklist
 
-- [ ] Decide crude-script vs Roslyn analyzer (prefer analyzer per the standing directive)
-- [ ] Implement so real directives and `cnd:noEmit`-guarded spans pass; unguarded comment/string tokens fail
-- [ ] Message names both remedies (reword / wrap in `cnd:noEmit`)
-- [ ] Add tests (positive: bare `#if` in comment and in string flag; negative: real directive, guarded span)
-- [ ] Register the TWPA id in AnalyzerReleases.Unshipped.md; `dev build` stays 0/0
+- [x] Decide crude-script vs Roslyn analyzer → Roslyn analyzer, TWPA0008
+- [x] Implement so real directives and `cnd:noEmit`-guarded spans pass; unguarded comment/string tokens fail
+- [x] Message names both remedies (reword / wrap in `cnd:noEmit`)
+- [x] Add tests (9: comment/string/raw/interpolated/doc-comment hits; real-directive, escaped, unclosed-escape, post-escape clean/flag)
+- [x] Register TWPA0008 in AnalyzerReleases.Unshipped.md; `dev build` 0/0
 
 ## Session
 
 - Created: 2026-07-10 (follow-up to 086)
+
+## Results (2026-07-14)
+
+**Implemented** (commit 7a73d3a3): `TemplateConditionalTokenAnalyzer` (TWPA0008) in
+timewarp-architecture-convention-analyzers.
+
+- Scans comment trivia (single/multi-line; doc-comment prose via XmlTextLiteralToken) and every
+  string-literal token kind (regular/verbatim, raw single/multi-line, interpolated text, UTF-8)
+  for the directive-token pattern. Real preprocessor directives are directive trivia — never
+  scanned, so zero false positives on legitimate `(flag)` regions.
+- The engine's own escape is honored: spans between the `cnd:noEmit` disable/enable comment
+  markers are exempt (unclosed disable exempts to EOF). Diagnostic message names both remedies.
+- **Self-hosting**: analyzer source and tests are template content, so directive tokens and
+  marker text are composed at runtime — raw byte sequences never appear in either file. Verified
+  both ship intact through actual generation and the generated analyzers-tests project builds.
+- **Scope extension**: convention analyzers now wired into tests/ (tests/Directory.Build.props) —
+  tests ship as template content and analyzer-test files embedding C# in strings are the likeliest
+  future carriers. TWPA0004 NoWarn'd for tests (Purpose-region adoption there = separate decision).
+- **Known gap** (documented in the analyzer's Design region): the convention-analyzers project
+  cannot analyze itself, so its own sources — where 086 happened — rely on the composition
+  discipline.
+
+**Files**: new `template-conditional-token-analyzer.cs`, new
+`template-conditional-token-analyzer-tests.cs`, `AnalyzerReleases.Unshipped.md`,
+`tests/Directory.Build.props`, AGENTS.md enforcement-table row.
+
+**Test outcomes**
+
+- 9 analyzer tests green (project total 31 → 40).
+- Live-fire negative control: planting the exact 086 comment in foundation-contracts fails the
+  build with `error TWPA0008` at the precise span; reverted, clean.
+- `dev build` 0/0 across source/ + tests/ with the rule active; repo sweep was already clean.
