@@ -4,11 +4,12 @@
 
 #region Design
 // TWPA0009 flags product/platform/substrate code that reaches into a different product slice.
-// This attribute is the explicit, reasoned opt-out: TargetType is compile-checked and scopes
-// suppression to edges into that type's slice only (AllowMultiple for multiple edges). Free-form
-// feature/folder name mutes are rejected — the namespace tree is the catalog, and the typeof
-// argument is the edge. Reason is required human paperwork; empty reasons are not coupling
-// with a blank form. Shared code belongs in Components or contracts first.
+// This attribute is the reasoned opt-out for a single deliberate edge:
+// - TargetType (typeof) identifies the foreign type; the analyzer maps it to that type's slice
+//   (namespace under SliceRoot) and suppresses only references into that slice.
+// - AllowMultiple = true so a type that needs several foreign slices lists one attribute each.
+// - Reason documents why the coupling is intentional; empty/whitespace is rejected at construction.
+// Prefer sharing via Components or contracts when the dependency is not truly slice-local.
 #endregion
 
 namespace TimeWarp.Foundation.Features;
