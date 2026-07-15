@@ -324,4 +324,7 @@ error. See the `mock-response-factory` skill.
 - `mock-response-factory` — `GetMockResponseFactory()` on contracts + SPA mock service registration
 - `csharp` — formatting and naming only; does not override contract nullability/mutability rules
 - `blazor-layout` / `blazor-css-strategy` — UI shell and styling; contracts feed `EditForm` binding
+- `slice-isolation` — product-slice placement / TWA0009; **contracts assemblies are free**
+  under TWA0009 (other assembly), but still use plural `…Features.*` namespaces aligned with
+  the SPA product slices they serve
 - Do **not** use `dotnet-webapi` for this contract pattern
