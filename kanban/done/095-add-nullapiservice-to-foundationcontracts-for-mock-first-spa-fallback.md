@@ -60,18 +60,18 @@ canonical implementation; products delete local copies after package upgrade.
 
 ## Checklist
 
-- [ ] Add `sealed class NullApiService : IApiService` in `foundation-contracts` next to
+- [x] Add `sealed class NullApiService : IApiService` in `foundation-contracts` next to
       `i-api-service.cs` (kebab path: `services/null-api-service.cs`)
-- [ ] Fixed **501** + fixed Title/Detail platform copy; **no** ctor options / message templates
-- [ ] Resilient Detail: always request type full name; verb/route best-effort (no throw from
+- [x] Fixed **501** + fixed Title/Detail platform copy; **no** ctor options / message templates
+- [x] Resilient Detail: always request type full name; verb/route best-effort (no throw from
       `GetRoute`/`GetHttpVerb` failures if avoidable)
-- [ ] `#region Purpose` / `#region Design` + XML on public type (generic language — no product names)
-- [ ] Unit test: returns problem arm (Status 501); Detail mentions type; **does not throw**
-- [ ] Document the two compositions (mock-only + Null vs mock + HTTP) near `IApiService` and/or
+- [x] `#region Purpose` / `#region Design` + XML on public type (generic language — no product names)
+- [x] Unit test: returns problem arm (Status 501); Detail mentions type; **does not throw**
+- [x] Document the two compositions (mock-only + Null vs mock + HTTP) near `IApiService` and/or
       mock-web-api-service Design / developer how-to snippet
-- [ ] Optional one-line comment under template `MOCK_WEB_API` only if accurate — **do not** change
+- [x] Optional one-line comment under template `MOCK_WEB_API` only if accurate — **do not** change
       host-present fall-through to NullApiService
-- [ ] Pack/publish via normal Foundation release; consumers bump CPM and delete local copies
+- [x] Pack/publish via normal Foundation release; consumers bump CPM and delete local copies
 
 ## Notes
 
@@ -127,8 +127,51 @@ zero Blazor / HttpClient / domain. Any mock-first product before a BFF needs thi
 6. No DI auto-register; no template MOCK_WEB_API wiring change
 
 
+
+## Results
+
+### Summary
+
+Shipped **`NullApiService`** in Foundation.Contracts: terminal `IApiService` returning a fixed
+**501** problem arm for mock-first SPAs with no BFF. Composition documented on `IApiService` and
+`MockWebApiService`. Host-present HTTP fall-through unchanged. No auto-DI.
+
+### What was implemented
+
+- `NullApiService` (sealed, parameterless, fixed Title/Status/Detail)
+- Resilient Detail (type always; verb/route best-effort)
+- Design notes on `IApiService` + `MockWebApiService`
+- `tests/foundation/foundation-contracts-tests` + slnx entry
+
+### Files changed
+
+| Path | Change |
+|------|--------|
+| `source/foundation/foundation-contracts/services/null-api-service.cs` | new |
+| `source/foundation/foundation-contracts/services/i-api-service.cs` | Design compositions |
+| `source/container-apps/web/web-spa/services/mocks/mock-web-api-service.cs` | Design terminal note |
+| `tests/foundation/foundation-contracts-tests/**` | new project + tests |
+| `timewarp-architecture.slnx` | add contracts tests |
+
+### Key decisions
+
+- No options/ctor customization (golden minimal)
+- Name: `NullApiService` only
+- 501 frozen; CA1031 suppressed only on route-format helper
+- Pack/publish: next Foundation release (repo already at 2.0.0-beta.4)
+
+### Test outcomes
+
+- `dotnet test foundation-contracts-tests`: **2 passed**
+
+### Review
+
+Self-review against task DoD: matches locked design; host MOCK_WEB_API wiring untouched.
+
+
 ## Session
 
 - Created: from Crunchit mock-first SPA gap
 - Revised: 2026-07-15 — golden platform primitive: minimal NullApiService, fixed 501, no options,
   explicit composition docs, host behavior unchanged
+- Implementation + review: 2026-07-15 (orchestrate-task 095)
