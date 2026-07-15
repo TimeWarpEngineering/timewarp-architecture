@@ -23,7 +23,6 @@ public class SliceIsolationAnalyzer : DiagnosticAnalyzer
 {
   public const string DiagnosticId = "TWPA0009";
 
-  private const string OptOutAttributeName = "CrossSliceReference";
   private const string OptOutAttributeFullName = "CrossSliceReferenceAttribute";
   private const string PlatformSliceId = "Applications";
   private const string RootNamespaceProperty = "build_property.RootNamespace";
@@ -130,8 +129,7 @@ public class SliceIsolationAnalyzer : DiagnosticAnalyzer
   {
     foreach (AttributeData attribute in containingType.GetAttributes())
     {
-      string? attributeName = attribute.AttributeClass?.Name;
-      if (attributeName is not (OptOutAttributeName or OptOutAttributeFullName)) continue;
+      if (attribute.AttributeClass?.Name is not OptOutAttributeFullName) continue;
       if (attribute.ConstructorArguments.Length < 1) continue;
       if (attribute.ConstructorArguments[0].Value is not ITypeSymbol targetType) continue;
 

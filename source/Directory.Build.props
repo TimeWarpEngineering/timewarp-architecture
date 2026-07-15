@@ -44,6 +44,9 @@
     <ProjectReference Include="$(MSBuildThisFileDirectory)analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       IsAspireProjectResource="false" />
+    <!-- TWPA0009 reads build_property.TimeWarpSliceRoot for an optional SliceRoot override.
+         Custom properties are not analyzer-visible unless listed (RootNamespace is SDK-visible). -->
+    <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
   </ItemGroup>
 
   <!-- template.json feeds TWPA0010 (template-flag directives must have matching DefineConstants).

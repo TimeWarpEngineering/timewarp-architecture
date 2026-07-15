@@ -218,6 +218,25 @@ public class Should_Enforce_Slice_Isolation
     await test.RunAsync();
   }
 
+  public static async Task Given_Platform_To_Product_OptOut_IsClean()
+  {
+    const string PlatformSource =
+      """
+      namespace App.Features.Applications;
+
+      [App.Shared.CrossSliceReference(typeof(App.Features.Alphas.AlphaState), "shell demo needs alpha")]
+      public class ApplicationShell
+      {
+        public void Use() => App.Features.Alphas.AlphaState.Poke();
+      }
+      """;
+
+    await Test(
+      ("opt-out.cs", OptOutAttributeSource),
+      ("alpha-state.cs", AlphaSource),
+      ("application-shell.cs", PlatformSource)).RunAsync();
+  }
+
   public static async Task Given_Substrate_To_Product_Flags()
   {
     const string substratePath = "base-handler.cs";

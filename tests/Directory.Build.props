@@ -44,6 +44,7 @@
     <ProjectReference Include="$(MSBuildThisFileDirectory)../source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       IsAspireProjectResource="false" />
+    <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
   </ItemGroup>
 
   <!-- template.json feeds TWPA0010 (see source/Directory.Build.props). -->
