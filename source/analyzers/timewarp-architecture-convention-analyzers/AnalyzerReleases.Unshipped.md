@@ -11,3 +11,6 @@ TWPA0004 | Documentation | Warning | PurposeRegionAnalyzer: source file lacks a 
 TWPA0005 | Design | Warning | EndpointCoverageAnalyzer: endpoint HTTP verb does not match the contract's [ApiRoute] verb
 TWPA0006 | Design | Warning | EndpointCoverageAnalyzer: routed contract has no server endpoint
 TWPA0007 | Design | Warning | AspireResourceNameAnalyzer: Aspire resource name is not a ServiceNames constant value
+TWPA0008 | Design | Warning | TemplateConditionalTokenAnalyzer: comment or string contains a template-conditional token
+TWPA0009 | Design | Warning | SliceIsolationAnalyzer: slice references another product slice
+TWPA0010 | Design | Warning | TemplateFlagConstantsAnalyzer: directive uses a template flag missing from DefineConstants

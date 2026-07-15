@@ -24,6 +24,7 @@
     <PackageReference Include="TimeWarp.Nuru" />
     <PackageReference Include="TimeWarp.Nuru.DevCli" />
     <PackageReference Include="TimeWarp.Amuru" />
+    <PackageReference Include="TimeWarp.Amuru.Tools" />
     <PackageReference Include="TimeWarp.Terminal" />
   </ItemGroup>
 

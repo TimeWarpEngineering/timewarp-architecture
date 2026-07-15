@@ -9,6 +9,5 @@ global using TimeWarp.Architecture.Abstractions;
 global using TimeWarp.Foundation.Abstractions;
 global using TimeWarp.Architecture.Features.Chat;
 // Solution usings
-global using TimeWarp.Architecture.Types;
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Mediator;

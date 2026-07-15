@@ -2,7 +2,7 @@
 // Code-behind for the counter demo page; wires handlers for route navigation home and a full store reset.
 #endregion
 
-namespace TimeWarp.Architecture.Pages;
+namespace TimeWarp.Architecture.Features.Counters;
 
 [Page("/Counter")]
 partial class CounterPage

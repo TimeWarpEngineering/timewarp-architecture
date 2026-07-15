@@ -54,7 +54,6 @@ global using TimeWarp.Architecture.Persistence;
 #endif
 global using TimeWarp.Architecture.Services;
 global using TimeWarp.Foundation.Services;
-global using TimeWarp.Architecture.Types;
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Architecture.Web.Infrastructure;
 global using TimeWarp.Modules;

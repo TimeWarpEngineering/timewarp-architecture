@@ -9,9 +9,10 @@
 // The markup gallery lives in the .razor file; this partial holds only behavior.
 #endregion
 
-namespace TimeWarp.Architecture.Pages;
+namespace TimeWarp.Architecture.Features.StyleGuide;
 
 [Page("/StyleGuide")]
+[CrossSliceReference(typeof(CounterState), "Living style guide deliberately exercises the counter throw-exception pipeline.")]
 partial class StyleGuidePage
 {
   // Toasts go through OUR ToastNotificationState pipeline (the generated ActionSet dispatcher),

@@ -2,7 +2,7 @@
 // Code-behind for the Profile page: declares the route and gates it behind an authenticated user.
 #endregion
 
-namespace TimeWarp.Architecture.Pages;
+namespace TimeWarp.Architecture.Features.Profiles;
 
 [Page("/Profile")]
 [Authorize]

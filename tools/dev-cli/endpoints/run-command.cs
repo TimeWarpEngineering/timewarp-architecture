@@ -58,14 +58,14 @@ internal sealed class RunCommand : ICommand<Unit>
       string project = Path.Combine(RepoRoot, AppHostProject);
 
       Terminal.WriteLine($"Running Aspire AppHost from {project}...");
-      ExecutionResult result = await Shell.Builder("aspire")
+      CommandOutput result = await Shell.Builder("aspire")
         .WithArguments("run", "--apphost", project)
         .WithWorkingDirectory(RepoRoot)
         .WithEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development")
         .WithNoValidation()
         .PassthroughAsync(Ct);
 
-      if (!result.IsSuccess)
+      if (!result.Success)
       {
         Terminal.WriteErrorLine($"AppHost exited with code {result.ExitCode}.".Red());
         Environment.ExitCode = result.ExitCode;

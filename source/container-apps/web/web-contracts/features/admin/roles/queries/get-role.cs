@@ -12,8 +12,6 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
-using Authorization;
-
 /// <summary>
 /// Get a role by its unique identifier for possible editing.
 /// </summary>

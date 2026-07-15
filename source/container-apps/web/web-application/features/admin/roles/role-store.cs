@@ -14,7 +14,7 @@
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
 
 using System.Collections.Concurrent;
-using TimeWarp.Architecture.Features.Authorization;
+using TimeWarp.Architecture.Features;
 
 internal static class RoleStore
 {

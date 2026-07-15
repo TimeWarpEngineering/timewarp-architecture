@@ -12,6 +12,7 @@
 
 namespace TimeWarp.Architecture.Features.Authentication;
 
+[CrossSliceReference(typeof(AuthorizationState), "Identity pipeline: claims factory enriches the signed-in principal with role claims from AuthorizationState — authentication/authorization are deliberately coupled.")]
 public class AccountClaimsPrincipalFactoryWithRoles : AccountClaimsPrincipalFactory<RemoteUserAccount>
 {
   private readonly IStore Store1;

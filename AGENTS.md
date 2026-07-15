@@ -8,8 +8,9 @@ other tools read it directly.
 - **This repo IS the `dotnet new timewarp-architecture` template.** Root `source/` + `tests/` are
   the template content (defined by root `.template.config/`); `timewarp-templates/` is the NuGet
   packaging + docfx tree. Changes here ship to every generated app.
-- Feature flags (`api`, `grpc`, `web`, `yarp`, `counter`, `eventstream`, `postgres`) are template
-  preprocessor switches — keep `<!--#if (flag)-->` / `#if flag` regions intact when editing near them.
+- Feature flags (`api`, `grpc`, `web`, `yarp`, `postgres`) are template preprocessor switches —
+  keep `<!--#if (flag)-->` / `#if flag` regions intact when editing near them. Demo features
+  (counter, event-stream) ship unconditionally; see HowToRemoveDemoFeatures.md.
 
 ## Build / run / test
 
@@ -69,6 +70,9 @@ tests/               # mirrors source/; includes web-contracts-tests (host-free 
 | TWPA0004 | every source file carries `#region Purpose` (one honest line minimum) |
 | TWPA0005/0006 | endpoint verb matches the contract's `[ApiRoute]`; every routed contract has an endpoint or `[ClientOnlyContract(reason)]` |
 | TWPA0007 | Aspire `AddProject` resource names are `ServiceNames` constant values |
+| TWPA0008 | no template-conditional tokens in comments/strings (the dotnet-new engine misreads them and truncates generated files); escape hatch: the `cnd:noEmit` comment-marker pair |
+| TWPA0009 | product slices (`…Features.<Id>` under SliceRoot) must not reference other product slices (share via Components/contracts); platform `Applications` is one-way free; opt-out: `[CrossSliceReference(typeof(T), reason)]` |
+| TWPA0010 | a directive naming a template.json flag requires that flag in DefineConstants (else the region silently vanishes from the repo build) |
 
 ## Agent Context Regions — maintenance rule
 

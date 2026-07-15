@@ -12,7 +12,7 @@ public partial class TodoItemPage: BaseComponent;
 ## Generated code
 
 ```csharp
-namespace TimeWarp.Architecture.Pages
+namespace TimeWarp.Architecture.Features.ToDo
 {
   using Microsoft.AspNetCore.Components;
   [Route("/todoitems/{TodoItemId:guid}")]

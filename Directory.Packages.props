@@ -7,8 +7,9 @@
   <ItemGroup Label="TimeWarp Packages">
     <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.71" />
     <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0-beta.71" />
-    <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0-beta.34" />
-    <PackageVersion Include="TimeWarp.Terminal" Version="1.0.0-beta.13" />
+    <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0" />
+    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="1.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Terminal" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.Components" Version="1.0.0-beta.2" />
     <!-- Foundation packages (task 051). Used ONLY by an app generated from the template (the repo
@@ -34,7 +35,7 @@
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-    <PackageVersion Include="libphonenumber-csharp" Version="9.0.33" />
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.34" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
     <PackageVersion Include="Passwordless" Version="2.0.0" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.80.0" />
@@ -53,27 +54,30 @@
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.7.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->
-    <!-- Direct pin: StreamJsonRpc (Aspire AppHost SDK) pulls vulnerable MessagePack 2.5.192 (NU1902/NU1903).
-         With yarp on, Aspire.Hosting.Yarp lifts it to 2.5.302; this pin keeps flag-off graphs safe too. -->
+    <!-- Direct pin stays on the 2.5.x line (StreamJsonRpc / Aspire AppHost consume 2.x).
+         Transitive default is MessagePack 2.5.192 (NU1903 / CVE-2026-48109 and earlier DoS advisories).
+         Patched 2.x: 2.5.301+; 2.5.302 is the latest 2.5 merge of those security fixes (see
+         MessagePack-CSharp v2.5.302). Aspire.Hosting.Yarp already lifts to 2.5.302 when yarp is on;
+         this pin keeps flag-off graphs (no Yarp) safe without jumping to MessagePack 3.x. -->
     <PackageVersion Include="MessagePack" Version="2.5.302" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.9" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.9" />
-    <PackageVersion Include="Microsoft.Identity.Web" Version="4.11.0" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Identity.Web" Version="4.13.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis" Version="5.3.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis" Version="5.6.0" />
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.9" />
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="FastEndpoints" Version="8.2.0" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.5.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.6" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.11" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.9" />
@@ -101,11 +105,11 @@
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.16.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.16.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.16.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.16.0" />
   </ItemGroup>
   
   <ItemGroup Label="Code Analyzers">
-    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.0.0-1.25277.114">
+    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageVersion>
@@ -113,9 +117,9 @@
     <PackageVersion Include="Roslynator.CodeAnalysis.Analyzers" Version="4.15.0" />
     <PackageVersion Include="Roslynator.Formatting.Analyzers" Version="4.15.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.301" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.3.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.6.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.6.0" />
   </ItemGroup>
   <!-- Versions for test projects pending migration to the root tree (task 053-050-019).
        Sourced from TimeWarp.Architecture/Directory.Packages.props; family-versioned
@@ -130,7 +134,7 @@
     <PackageVersion Include="Fixie.TestAdapter" Version="4.2.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.9" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.3.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.6.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="TimeWarp.Fixie" Version="3.1.0" />

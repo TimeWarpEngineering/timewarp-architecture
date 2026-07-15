@@ -9,7 +9,7 @@
 // already logs the exception, leaving display as this handler's sole responsibility.
 #endregion
 
-namespace TimeWarp.Architecture.Features.ToastNotifications;
+namespace TimeWarp.Architecture.Features;
 
 partial class ToastNotificationState
 {

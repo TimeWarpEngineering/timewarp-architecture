@@ -2,7 +2,7 @@
 // Registers the route for the page demonstrating the EventStream middleware's captured action log.
 #endregion
 
-namespace TimeWarp.Architecture.Pages;
+namespace TimeWarp.Architecture.Features.EventStreams;
 
 [Page("/EventStream")]
 partial class EventStreamPage {}

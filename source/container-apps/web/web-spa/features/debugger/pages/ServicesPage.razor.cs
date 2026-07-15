@@ -9,7 +9,7 @@
 // Diagnostic-only — nothing here should be load-bearing for features.
 #endregion
 
-namespace TimeWarp.Architecture.Pages;
+namespace TimeWarp.Architecture.Features.Debugger;
 
 [Page("/Services")]
 partial class ServicesPage

@@ -6,7 +6,7 @@
 namespace RolesEndpoints_;
 
 using TimeWarp.Architecture.Features.Admin.Roles;
-using TimeWarp.Architecture.Features.Authorization;
+using TimeWarp.Architecture.Features;
 
 public class GetRoles_Returns
 {

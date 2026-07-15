@@ -1,34 +1,43 @@
-# How to remove the demo features (Counter, EventStream)
+# How to remove the demo slices (Counter, EventStream)
 
-Every generated solution includes two small demo features in `web-spa`. They are teaching
+Every generated solution includes two small demo **slices** in `web-spa`. They are teaching
 material — each demonstrates a pattern you will reuse — and they are **not** template flags:
 you remove them by deleting code once you no longer need the reference.
 
-| Feature | Path (under `source/container-apps/web/web-spa/`) | Demonstrates |
-|---------|---------------------------------------------------|--------------|
-| Counter | `features/counter/` | TimeWarp.State action sets, JS-interop dispatch, `[StateAccess]` |
-| EventStream | `features/event-stream/` | mediator pipeline middleware (`EventStreamBehavior`) |
+A **slice** is an independently removable vertical unit. Identity is the namespace under
+`{RootNamespace}.Features` (e.g. `…Features.Counters`, `…Features.EventStreams`), not the
+folder path — folders usually mirror slices for humans but TWPA0009 enforces namespace
+boundaries. Pages that implement a slice live **in that slice's namespace** (not a grab-bag
+`…Pages` namespace).
+
+| Slice | Path (under `source/container-apps/web/web-spa/`) | Namespace | Demonstrates |
+|-------|--------------------------------------------------|-----------|--------------|
+| Counter | `features/counter/` | `…Features.Counters` | TimeWarp.State action sets, JS-interop dispatch, `[StateAccess]` |
+| EventStream | `features/event-stream/` | `…Features.EventStreams` | mediator pipeline middleware (`EventStreamBehavior`) |
 
 ## The fast way
 
 Ask your coding agent:
 
-> Remove the counter feature: delete `web-spa/features/counter/`, then fix every compile error
-> that removal causes (nav links, global usings, `_Imports`, tests) until `dev build` is 0/0.
+> Remove the counter slice: delete `web-spa/features/counter/`, then fix every compile error
+> that removal causes (nav links, global usings, `_Imports`, Style Guide opt-outs, tests)
+> until `dev build` is 0/0.
 
 The compiler is the checklist — deleting the folder surfaces every referencing site as an error,
-and the repo's analyzers (TWPA rules) catch the conventions on the way back to green.
+and the repo's analyzers (TWPA rules, especially TWPA0009 slice isolation) catch the conventions
+on the way back to green.
 
 ## The manual checklist
 
 Deleting a demo touches, at minimum:
 
-1. The feature folder itself (state, pages, components, notification handlers).
+1. The slice folder itself (state, pages, components, notification handlers).
 2. `components/NavMenu.razor` — its nav link.
 3. `global-usings.cs` / `_Imports.razor` — its namespace usings.
 4. `tests/container-apps/web/web-spa-integration-tests/` — its test folder, plus any shared
    pipeline tests that exercise its state (e.g. `CloneStateBehavior_Tests` uses `CounterState`).
-5. Anything the Style Guide page borrowed from it (the counter's throw-exception demo backs the
+5. Cross-slice opt-outs that targeted it — e.g. Style Guide's
+   `[CrossSliceReference(typeof(CounterState), …)]` (the throw-exception demo backs the
    "exception → toast" button).
 
 Build after each step; stop when `dev build` reports 0 warnings / 0 errors.

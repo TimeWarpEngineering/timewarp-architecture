@@ -13,8 +13,6 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
-using Authorization;
-
 /// <summary>
 /// Get a list of roles for display only.
 /// </summary>

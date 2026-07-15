@@ -5,15 +5,13 @@
 #region Design
 // Modules and Roles are Guids drawn from ModuleIds/RoleIds so client menus and route guards key on stable ids
 // instead of matching role-name strings.
-// The mock factory returns per-user responses keyed by well-known UserIds, letting the SPA demonstrate
-// role-driven UI without any auth backend; unknown users get full access because the mock optimizes for
-// demo friction, not security.
+// The mock factory returns per-user responses keyed by MockUserIds (mocks/mock-user-ids.cs), letting the
+// SPA demonstrate role-driven UI without any auth backend; unknown users get full access because the
+// mock optimizes for demo friction, not security.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Authentication;
 
-using Authorization;
-using Services;
 public static partial class GetCurrentUser
 {
   [ApiRoute(RouteTemplate: "api/GetCurrentUser", HttpVerb.Get)]
@@ -86,8 +84,8 @@ public static partial class GetCurrentUser
 
     var responseCreators = new Dictionary<Guid, Func<Response>>
     {
-      { UserIds.SystemAdmin, CreateMockResponseForAdministrator },
-      { UserIds.Developer, CreateMockResponseForDeveloper },
+      { MockUserIds.SystemAdmin, CreateMockResponseForAdministrator },
+      { MockUserIds.Developer, CreateMockResponseForDeveloper },
     };
 
     Response response =
