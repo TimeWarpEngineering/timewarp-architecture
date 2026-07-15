@@ -12,7 +12,6 @@
 
 namespace TimeWarp.Architecture.Features.Authentication;
 
-using Authorization;
 public static partial class GetCurrentUser
 {
   [ApiRoute(RouteTemplate: "api/GetCurrentUser", HttpVerb.Get)]

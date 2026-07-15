@@ -4,14 +4,14 @@
 
 #region Design
 // This is the single failure UX for all API calls: DefaultApiHandler.HandleError dispatches it,
-// so individual feature handlers need no error-display code.
+// so individual product-slice handlers need no error-display code.
 // OperationCancelled status is swallowed — user-initiated cancellation is not an error and
 // would otherwise produce noise toasts.
 // Internal (unlike AddNotificationActionSet) because only pipeline/base-handler code should
 // raise it; components report errors by returning problem details, not by dispatching this.
 #endregion
 
-namespace TimeWarp.Architecture.Features.ToastNotifications;
+namespace TimeWarp.Architecture.Features;
 
 partial class ToastNotificationState
 {

@@ -9,7 +9,7 @@
 // owns toast lifetime and rendering (see the root partial's rationale).
 #endregion
 
-namespace TimeWarp.Architecture.Features.ToastNotifications;
+namespace TimeWarp.Architecture.Features;
 
 partial class ToastNotificationState
 {

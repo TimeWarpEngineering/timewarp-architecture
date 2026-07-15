@@ -2,10 +2,9 @@
 // Code-behind for the counter demo page; wires handlers for route navigation home and a full store reset.
 #endregion
 
-namespace TimeWarp.Architecture.Pages;
+namespace TimeWarp.Architecture.Features.Counters;
 
 [Page("/Counter")]
-[CrossFeatureReference("The counter demo's reset button exercises the app-level store reset (ApplicationState) on purpose.")]
 partial class CounterPage
 {
   private async Task ButtonClick() =>

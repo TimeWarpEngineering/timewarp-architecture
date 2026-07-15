@@ -16,7 +16,7 @@
 //-:cnd:noEmit
 #if false
 
-namespace TimeWarp.Architecture.Pages;
+namespace TimeWarp.Architecture.Features.Developer;
 
 using System.Security.Claims;
 

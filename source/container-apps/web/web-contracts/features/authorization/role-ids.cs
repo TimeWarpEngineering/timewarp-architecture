@@ -7,9 +7,11 @@
 // round-trip; once issued, an id must never change.
 // The ERP-flavored role set is sample data for the template — replace with domain roles when instantiating.
 // GetRoleNameByGuid reflects over the public fields so display names can never drift from the id list.
+// Lives in the Features substrate (not product slice Authorization) so Admin.Roles, Authentication,
+// and other product slices can reference well-known ids without cross-slice coupling (TWPA0009).
 #endregion
 
-namespace TimeWarp.Architecture.Features.Authorization;
+namespace TimeWarp.Architecture.Features;
 
 public static class RoleIds
 {

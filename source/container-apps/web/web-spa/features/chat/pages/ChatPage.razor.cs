@@ -10,7 +10,7 @@
 // transcript itself.
 #endregion
 
-namespace TimeWarp.Architecture.Pages;
+namespace TimeWarp.Architecture.Features.Chat;
 
 using static ChatState;
 
