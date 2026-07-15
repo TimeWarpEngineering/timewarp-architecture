@@ -51,6 +51,7 @@
   <Folder Name="/tests/">
     <!--#if (!foundationPackages) -->
     <Project Path="tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj" />
+    <Project Path="tests/foundation/foundation-contracts-tests/foundation-contracts-tests.csproj" />
     <Project Path="tests/foundation/foundation-infrastructure-tests/foundation-infrastructure-tests.csproj" />
     <!--#endif -->
     <!--#if (!analyzerPackages) -->

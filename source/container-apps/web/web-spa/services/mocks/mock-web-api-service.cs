@@ -10,6 +10,9 @@
 // Enabled via the MOCK_WEB_API symbol in Program.
 // Requests still run through their FluentValidation validators so mocks cannot mask inputs the
 // real server would reject.
+// Inner IApiService (constructor) is the fall-through when no factory matches:
+//   host-present → real WebServerApiService (HTTP)
+//   mock-first / no BFF → TimeWarp.Foundation.NullApiService (501 problem arm, no transport)
 #endregion
 
 namespace TimeWarp.Architecture.Services;
