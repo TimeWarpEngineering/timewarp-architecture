@@ -84,6 +84,49 @@ This skill closes that gap without inventing more packages or analyzers.
 - Prefer **proactive scaffolding** guidance; analyzer remains the **reactive** safety net.
 - Optional later: `HowToAddAProductSlice.md` for humans; not required if skill is solid.
 
+
+
+### Implementation plan (2026-07-15)
+
+# 093 — slice-isolation skill
+
+## Locked decisions
+
+- Skill name: `slice-isolation` (single skill, no family, no references/ folder)
+- Canonical path: `skills/slice-isolation/SKILL.md` in this repo
+- Distribution: ganda skills add/sync to harnesses (no hand-copy into timewarp-flow)
+- Mirror analyzer rules only (Applications platform, full nested ids, edge-scoped opt-out)
+- Cross-links: AGENTS.md paragraph after TWA table; web-api-contracts Related skills; blazor-layout one sentence
+- Skip HowToRemoveDemoFeatures edit and DirectoryStructure rewrite
+
+## Files
+
+| Path | Action |
+|------|--------|
+| skills/slice-isolation/SKILL.md | Create |
+| AGENTS.md | Pointer after enforcement table |
+| skills/web-api-contracts/SKILL.md | Related skills line |
+| skills/blazor-layout/SKILL.md | Slice boundary sentence |
+
+## Skill body sections
+
+1. Why 2. Detection 3. Terms 4. SliceRoot 5. Tiers 6. Placement matrix 7. Greenfield scaffold workflow 8. Share vs opt-out 9. Limits 10. Good/bad examples 11. Checklist 12. Related skills/pointers
+
+## Frontmatter
+
+name: slice-isolation; description with TWA0009 / CrossSliceReference / feature page placement triggers; when-to-use keywords
+
+## Order
+
+1. Write SKILL.md from analyzer Design + living examples
+2. AGENTS + sibling skill cross-links
+3. ganda skills add + sync if available
+4. Commit; mark done with Results
+
+## Done criteria
+
+Skill present; all 10 teaching points; markdown-only; AGENTS/sibling greps; triggers smoke-readable; 093 done with Results
+
 ## Session
 
 - Created: 2026-07-15 (post-release discussion: greenfield skill gap for TWA0009)
