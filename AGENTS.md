@@ -71,7 +71,7 @@ tests/               # mirrors source/; includes web-contracts-tests (host-free 
 | TWPA0005/0006 | endpoint verb matches the contract's `[ApiRoute]`; every routed contract has an endpoint or `[ClientOnlyContract(reason)]` |
 | TWPA0007 | Aspire `AddProject` resource names are `ServiceNames` constant values |
 | TWPA0008 | no template-conditional tokens in comments/strings (the dotnet-new engine misreads them and truncates generated files); escape hatch: the `cnd:noEmit` comment-marker pair |
-| TWPA0009 | feature folders must not reference other features' namespaces (share via components/ or contracts); opt-out: `[CrossFeatureReference(reason)]` |
+| TWPA0009 | product slices (`…Features.<Id>` under SliceRoot) must not reference other product slices (share via Components/contracts); platform `Applications` is one-way free; opt-out: `[CrossSliceReference(typeof(T), reason)]` |
 | TWPA0010 | a directive naming a template.json flag requires that flag in DefineConstants (else the region silently vanishes from the repo build) |
 
 ## Agent Context Regions — maintenance rule
