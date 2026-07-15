@@ -41,12 +41,30 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 ```
 source/
   foundation/        # shared contracts/application/domain/server layers -> TimeWarp.Foundation.* packages
-  analyzers/         # Roslyn analyzers + source generators (see Enforcement)
+  analyzers/         # Roslyn analyzers + source generators -> TimeWarp.Architecture.{Analyzers,Generators,Attributes}
   container-apps/
     web/             # web-spa (WASM), web-contracts, web-application, web-server, ...
     api/  grpc/  aspire/  yarp/
 tests/               # mirrors source/; includes web-contracts-tests (host-free serialization round-trips)
 ```
+
+## Platform packages (foundation + analyzers)
+
+Greenfield `dotnet new timewarp-architecture` apps reference **published NuGet packages** for the
+shared platform (template symbols `foundationPackages` / `analyzerPackages`, both default **true**).
+This monorepo keeps the source and dogfoods it via `ProjectReference`.
+
+| PackageId | Contents |
+|-----------|----------|
+| `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
+| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWPA0002–0010) — safe repo-wide |
+| `TimeWarp.Architecture.Generators` | Source generators + TWPA0001 — attach only where gens should run |
+| `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
+
+MSBuild dual-mode (auto-detects missing source trees): `UseFoundationPackages` /
+`UseAnalyzerPackages`. CPM `PackageVersion` pins lag the last **published** version (may trail
+`source/Directory.Build.props` `<Version>`). Upgrade path for apps that still vendored
+`source/analyzers/**`: see `documentation/developer/how-to-guides/HowToUpgradeToAnalyzerPackages.md`.
 
 ## Key patterns
 
