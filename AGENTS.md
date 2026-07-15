@@ -95,6 +95,10 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0009 | product slices (`…Features.<Id>` under SliceRoot) must not reference other product slices (share via Components/contracts); platform `Applications` is one-way free; opt-out: `[CrossSliceReference(typeof(T), reason)]` |
 | TWA0010 | a directive naming a template.json flag requires that flag in DefineConstants (else the region silently vanishes from the repo build) |
 
+**Slice isolation (TWA0009):** product code under SliceRoot must not reach other product
+slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:
+skill **`slice-isolation`** (`skills/slice-isolation/SKILL.md`).
+
 ## Agent Context Regions — maintenance rule
 
 Every source file carries a `#region Purpose` block (enforced by TWA0004); files with design

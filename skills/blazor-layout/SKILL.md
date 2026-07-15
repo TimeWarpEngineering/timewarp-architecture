@@ -71,3 +71,5 @@ Concrete instance of the pattern in this repo:
   is named `TimeWarpPage` (not `Page`) precisely because `[Page]` is the routing concept.
 - **Styling of the shell:** see the `blazor-css-strategy` skill — this skill is the *structure*, that
   one is the *styling* (Tier-2 scope-handle `.twe-shell`).
+- **Slice boundary:** chrome/shell lives **outside** SliceRoot (e.g. `…Components`); product
+  pages and state live in product slice namespaces (`…Features.<Id>`). See skill `slice-isolation`.
