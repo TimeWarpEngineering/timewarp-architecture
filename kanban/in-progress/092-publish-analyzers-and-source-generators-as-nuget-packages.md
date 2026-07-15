@@ -93,6 +93,61 @@ regions / AGENTS.md when chosen.
 - `timewarp-templates/.../timewarp-architecture-template.csproj` (content include)
 - `.template.config/template.json` (exclusions / foundation-style package switch)
 
+
+
+### Implementation plan (2026-07-15)
+
+# 092 — Publish analyzers and source generators as NuGet packages
+
+## Locked decisions
+
+### Three packages
+
+| Assembly | PackageId | Kind |
+|----------|-----------|------|
+| convention-analyzers | **TimeWarp.Architecture.Analyzers** | Analyzer-only (TWPA0002–0010) |
+| analyzers (generators + TWPA0001) | **TimeWarp.Architecture.Generators** | Analyzer-only |
+| attributes | **TimeWarp.Architecture.Attributes** | Runtime library |
+
+Keep Analyzers vs Generators split (generators must not run repo-wide). Attributes public, not private dep of Generators. No project folder renames — PackageId only.
+
+### Version
+
+Single `<Version>` in `source/Directory.Build.props`. CPM `PackageVersion` pins lag like foundation (last published).
+
+### Template
+
+`analyzerPackages` bool symbol default **true**; excludes `source/analyzers/**` and `tests/analyzers/**`. MSBuild `UseAnalyzerPackages` auto true when convention-analyzers csproj missing (mirror foundation).
+
+### Dogfood
+
+This repo: ProjectReference. Generated apps: PackageReference only. No dual Project+Package for same consumer.
+
+## Pack layout
+
+- **Attributes**: normal lib package
+- **Analyzers/Generators**: `IncludeBuildOutput=false`, `DevelopmentDependency=true`, `SuppressDependenciesWhenPacking=true`, pack dll to `analyzers/dotnet/cs/`
+
+## Phases
+
+**A** — `source/analyzers/Directory.Build.props` + packable csprojs; local pack inspect  
+**B** — `workflow-command.cs` PackableProjects  
+**C** — UseAnalyzerPackages dual-mode in source/tests Directory.Build.props + spa/api-server/api-contracts; Directory.Packages.props pins  
+**D** — template.json symbol + slnx `#if (!analyzerPackages)`  
+**E** — dev build 0/0; analyzer tests; pack smoke; local-feed generated app (no source/analyzers; TWPA + gens work)  
+**F** — AGENTS.md, upgrade how-to, Design regions  
+**G** — Release/Trusted Publishing (ops after code)
+
+## DoD
+
+Three consumer-ready packages; generated app without analyzer source; version policy; workflow pack list; docs; monorepo 0/0; IDs/rules unchanged.
+
+## Risks
+
+Wrong nupkg layout; CodeAnalysis dep leak; chicken-egg unpublished pins (local feed first); Trusted Publishing for new PackageIds.
+
+
 ## Session
 
 - Created: 2026-07-15 (post-merge 278; distribution design discussion)
+- Implementation plan: 2026-07-15 (orchestrate-task 092)
