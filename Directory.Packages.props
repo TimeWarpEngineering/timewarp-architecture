@@ -26,9 +26,9 @@
          (the repo itself uses project refs). Pinned to the last PUBLISHED version — which may lag
          the repo's in-dev <Version> — so a generated app references packages that exist on the feed.
          First ship aligns with 2.0.0-beta.3; bump when a new analyzer package version is published. -->
-    <PackageVersion Include="TimeWarp.Architecture.Analyzers" Version="2.0.0-beta.4" />
-    <PackageVersion Include="TimeWarp.Architecture.Generators" Version="2.0.0-beta.4" />
-    <PackageVersion Include="TimeWarp.Architecture.Attributes" Version="2.0.0-beta.4" />
+    <PackageVersion Include="TimeWarp.Architecture.Analyzers" Version="2.0.0-beta.5" />
+    <PackageVersion Include="TimeWarp.Architecture.Generators" Version="2.0.0-beta.5" />
+    <PackageVersion Include="TimeWarp.Architecture.Attributes" Version="2.0.0-beta.5" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
