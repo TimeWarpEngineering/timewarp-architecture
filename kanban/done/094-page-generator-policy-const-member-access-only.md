@@ -71,19 +71,19 @@ Beta: no compat shims. Downstream (Crunchit) drops `Policy = "SettingsEdit"` and
 
 ## Checklist
 
-- [ ] Replace Policy parse/emit: expression passthrough for const member access; no
+- [x] Replace Policy parse/emit: expression passthrough for const member access; no
       `Policies.` + string glue
-- [ ] Default omit → `Policies.Anonymous` only when `Policy` argument absent
-- [ ] Diagnostic when `Policy =` is present but is a string literal
-- [ ] Diagnostic when `Policy =` is `nameof(...)` (disallowed — force const member access)
-- [ ] Diagnostic when `Policy =` is any other unsupported shape (never fall back to Anonymous)
-- [ ] Generator Design region documents the single authoring form and why
-- [ ] Unit tests: member access with value ≠ identifier (`"settings.edit"`); omit → Anonymous;
+- [x] Default omit → `Policies.Anonymous` only when `Policy` argument absent
+- [x] Diagnostic when `Policy =` is present but is a string literal
+- [x] Diagnostic when `Policy =` is `nameof(...)` (disallowed — force const member access)
+- [x] Diagnostic when `Policy =` is any other unsupported shape (never fall back to Anonymous)
+- [x] Generator Design region documents the single authoring form and why
+- [x] Unit tests: member access with value ≠ identifier (`"settings.edit"`); omit → Anonymous;
       literal rejected; nameof rejected; garbage rejected
-- [ ] Update residual page docs / Purpose on generator (not AGENTS table sprawl)
-- [ ] Template: confirm `Policies.Anonymous` exists; optional dogfood one non-Anonymous
+- [x] Update residual page docs / Purpose on generator (not AGENTS table sprawl)
+- [x] Template: confirm `Policies.Anonymous` exists; optional dogfood one non-Anonymous
       `[Page(..., Policy = Policies.…)]` if a real gated page exists
-- [ ] Bump Generators package version for publish after merge (release ops)
+- [x] Bump Generators package version for publish after merge (release ops)
 
 ## Notes
 
@@ -131,7 +131,53 @@ Beta: no compat shims. Downstream (Crunchit) drops `Policy = "SettingsEdit"` and
 6. Version bump to 2.0.0-beta.4 (single repo version) for next publish
 
 
+
+## Results
+
+### Summary
+
+Replaced `[Page]` Policy identifier-glue with pit-of-success **const member access**:
+generator emits the expression as written; string literals and `nameof` produce **TWE005**;
+omit → `Policies.Anonymous`. Never silent wrong auth. Repo version **2.0.0-beta.4**.
+
+### What was implemented
+
+- `PageSourceGenerator` Policy parse/emit rewrite + Design region
+- Diagnostic **TWE005** (Error) when Policy is not a const field reference
+- Expanded page generator tests (member access, qualified, omit, literal, nameof, garbage)
+- `page-mixin.md` documents the single authoring form
+- Version bump 2.0.0-beta.3 → **2.0.0-beta.4** (source + templates + Architecture package CPM pins)
+
+### Files changed
+
+| Path | Change |
+|------|--------|
+| `source/analyzers/.../page-source-generator.cs` | Policy model + TWE005 |
+| `source/analyzers/.../AnalyzerReleases.Unshipped.md` | TWE005 |
+| `tests/.../page-source-generator-tests.cs` | coverage |
+| `source/container-apps/web/web-spa/mixins/page-mixin.md` | docs |
+| `source/Directory.Build.props` | Version beta.4 |
+| `timewarp-templates/Directory.Build.props` | Version beta.4 |
+| `Directory.Packages.props` | Architecture.* pins beta.4 |
+
+### Key decisions
+
+- One authoring form only: `Policy = Policies.X` (or qualified const access)
+- No nameof/literal compatibility in beta
+- Invalid Policy → diagnostic + **no** page partial emit (not Anonymous fallback)
+- Template already has `Policies.Anonymous`; no SPA pages used `Policy=` yet (no call-site migration)
+
+### Test outcomes
+
+- `dotnet test …PageSourceGenerator`: **21 passed**, 0 failed
+
+### Review
+
+Self-review against task DoD: expression passthrough, TWE005 on reject paths, tests green.
+
+
 ## Session
 
 - Created: from Crunchit generators cutover (nameof/literal footgun)
 - Revised: 2026-07-15 — pit of success: const member access only; break beta glue model
+- Implementation + review: 2026-07-15 (orchestrate-task 094)
