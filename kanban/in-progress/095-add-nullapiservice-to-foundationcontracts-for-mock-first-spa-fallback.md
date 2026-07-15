@@ -115,6 +115,18 @@ zero Blazor / HttpClient / domain. Any mock-first product before a BFF needs thi
 - Mock factory registry generator (`MockWebApiService` host type)
 - Downstream: Crunchit local `NullApiService` until Foundation.Contracts ships the type
 
+
+
+### Implementation plan (2026-07-15)
+
+1. Add `services/null-api-service.cs` — sealed NullApiService, fixed 501, resilient Detail
+2. Extend IApiService Design: two compositions (Null vs HTTP terminal)
+3. Extend MockWebApiService Design: document Null as no-transport inner
+4. New `tests/foundation/foundation-contracts-tests` (Fixie + Shouldly) + slnx entry
+5. Test: problem arm, Status 501, type in Detail, does not throw
+6. No DI auto-register; no template MOCK_WEB_API wiring change
+
+
 ## Session
 
 - Created: from Crunchit mock-first SPA gap
