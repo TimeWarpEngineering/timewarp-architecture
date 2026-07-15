@@ -23,10 +23,8 @@
     <!-- Package references -->
     <PackageReference Include="TimeWarp.Nuru" />
     <PackageReference Include="TimeWarp.Nuru.DevCli" />
-    <!-- VersionOverride: DevCli 3.0.0-beta.71 (latest) ships content compiled against beta.34's
-         IRepoCleanService, which Amuru 1.0.0 removed — the central 1.0.0 pin breaks this compile.
-         Drop the override when a DevCli built for Amuru 1.0.0 is published. -->
-    <PackageReference Include="TimeWarp.Amuru" VersionOverride="1.0.0-beta.34" />
+    <PackageReference Include="TimeWarp.Amuru" />
+    <PackageReference Include="TimeWarp.Amuru.Tools" />
     <PackageReference Include="TimeWarp.Terminal" />
   </ItemGroup>
 
