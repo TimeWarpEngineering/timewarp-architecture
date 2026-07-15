@@ -6,14 +6,11 @@
 using TimeWarp.Amuru;
 
 string? root = Git.FindRoot();
-if (root is null)
+if (root is not null)
 {
-  return 0;
+  await Shell.Builder("ganda")
+    .WithArguments("memsearch", "index-repo", "--background")
+    .WithWorkingDirectory(root)
+    .WithNoValidation()
+    .RunAsync();
 }
-
-await Shell.Builder("ganda")
-  .WithArguments("memsearch", "index-repo", "--background")
-  .WithWorkingDirectory(root)
-  .WithNoValidation()
-  .RunAsync();
-return 0;
