@@ -56,14 +56,14 @@ This skill closes that gap without inventing more packages or analyzers.
 
 ## Checklist
 
-- [ ] Author `skills/slice-isolation/SKILL.md` (frontmatter name + rich description triggers)
-- [ ] Cover why / terms / SliceRoot / tiers / placement / share / opt-out / limits / examples
-- [ ] Wire skill into the same distribution path used by other TIMEWARP skills (architecture repo + Grok flow install if applicable)
-- [ ] Update AGENTS.md with skill pointer
-- [ ] Cross-link from `web-api-contracts` skill
-- [ ] Cross-link from `blazor-layout` skill
-- [ ] Smoke: skill description would auto-invoke for “add a new clients feature page” / “TWA0009”
-- [ ] Commit skill + doc cross-links
+- [x] Author `skills/slice-isolation/SKILL.md` (frontmatter name + rich description triggers)
+- [x] Cover why / terms / SliceRoot / tiers / placement / share / opt-out / limits / examples
+- [x] Wire skill into the same distribution path used by other TIMEWARP skills (architecture repo + Grok flow install if applicable)
+- [x] Update AGENTS.md with skill pointer
+- [x] Cross-link from `web-api-contracts` skill
+- [x] Cross-link from `blazor-layout` skill
+- [x] Smoke: skill description would auto-invoke for “add a new clients feature page” / “TWA0009”
+- [x] Commit skill + doc cross-links
 
 ## Notes
 
@@ -127,6 +127,53 @@ name: slice-isolation; description with TWA0009 / CrossSliceReference / feature 
 
 Skill present; all 10 teaching points; markdown-only; AGENTS/sibling greps; triggers smoke-readable; 093 done with Results
 
+
+## Results
+
+### Summary
+
+Added TIMEWARP skill **`slice-isolation`** teaching proactive product-slice placement for
+TWA0009. Cross-linked from AGENTS.md and sibling skills. Registered with `ganda skills add`
+against this worktree and `ganda skills sync` (wrote grok/claude/opencode harness copies).
+
+### What was implemented
+
+- New `skills/slice-isolation/SKILL.md` (why, detection, terms, SliceRoot, tiers, placement,
+  greenfield workflow, share vs opt-out, limits, good/bad examples, checklist, pointers)
+- AGENTS.md paragraph after enforcement table pointing at the skill
+- `web-api-contracts` Related skills entry (contracts free under TWA0009; align namespaces)
+- `blazor-layout` slice-boundary sentence (shell outside SliceRoot)
+
+### Files changed
+
+| Path | Change |
+|------|--------|
+| `skills/slice-isolation/SKILL.md` | created |
+| `AGENTS.md` | skill pointer |
+| `skills/web-api-contracts/SKILL.md` | Related skills |
+| `skills/blazor-layout/SKILL.md` | slice boundary note |
+
+### Key decisions
+
+- Single skill, no `references/` family
+- Mirror analyzer (platform id `Applications`, full nested slice ids, edge-scoped opt-out)
+- Ganda source URI: `worktree://…/timewarp-architecture/dev/skills/slice-isolation` (dev worktree until master re-point after merge)
+- Did not edit HowToRemoveDemoFeatures or DirectoryStructure (non-goals)
+
+### Verification
+
+- All 10 teaching points present (spot-checked key phrases)
+- Markdown-only commit (`ad57f480`)
+- Triggers include “clients feature page” language and TWA0009
+- No C# / analyzer changes; no `dev build` required
+
+### Review
+
+Self-review of skill content against analyzer Design region and StyleGuide living example —
+no issues.
+
+
 ## Session
 
 - Created: 2026-07-15 (post-release discussion: greenfield skill gap for TWA0009)
+- Implementation + review: 2026-07-15 (orchestrate-task 093)
