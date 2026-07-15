@@ -123,16 +123,16 @@ generators poison ownership if path-based — moot under pure namespace identity
 
 ## Checklist
 
-- [ ] ADR or Design region: lock SliceRoot name (`Features` vs `Slices`), nested-slice policy,
+- [x] ADR or Design region: lock SliceRoot name (`Features` vs `Slices`), nested-slice policy,
       platform one-way vs reserved platform slice
-- [ ] Redefine TWPA0009 ownership/membership to namespace under SliceRoot (drop folder `FeatureOf`)
-- [ ] Rehome SPA product pages (and other non-slice namespaces under slice trees) into slice ns
-- [ ] Rename/reshape opt-out attribute: typeof + reason, edge-scoped, partial-safe, empty reason ban
-- [ ] Fix generic-name walk; keep contracts/metadata exempt
-- [ ] Rewrite analyzer tests; live-fire negative control
-- [ ] Update AGENTS.md, HowToRemoveDemoFeatures (or rename), contracts how-to if namespace root changes
-- [ ] Reconcile Purpose/Design regions on touched files from this task’s Purpose/Design
-- [ ] `dev build` 0/0; generation still ships clean template content
+- [x] Redefine TWPA0009 ownership/membership to namespace under SliceRoot (drop folder `FeatureOf`)
+- [x] Rehome SPA product pages (and other non-slice namespaces under slice trees) into slice ns
+- [x] Rename/reshape opt-out attribute: typeof + reason, edge-scoped, partial-safe, empty reason ban
+- [x] Fix generic-name walk; keep contracts/metadata exempt
+- [x] Rewrite analyzer tests; live-fire negative control
+- [x] Update AGENTS.md, HowToRemoveDemoFeatures (or rename), contracts how-to if namespace root changes
+- [x] Reconcile Purpose/Design regions on touched files from this task’s Purpose/Design
+- [x] `dev build` 0/0; generation still ships clean template content
 
 ## Notes
 
@@ -378,6 +378,61 @@ SliceRoot = TimeWarp.Architecture.Features
 ```
 
 
+
+## Results
+
+### Summary
+
+Redefined TWPA0009 from folder-based feature isolation (task 088) to **namespace-based slice isolation (Option A)**. Slices are independently removable units identified by namespaces under `SliceRoot = {RootNamespace}.Features` (optional `TimeWarpSliceRoot` override, now MSBuild-visible). Grab-bag `…Pages` product pages rehomed into slice namespaces. Opt-out is edge-scoped `[CrossSliceReference(typeof(T), reason)]` with partial-safe semantic attribute lookup.
+
+### What was implemented
+
+1. **`CrossSliceReferenceAttribute`** — replaces deleted `CrossFeatureReferenceAttribute` (no shim); typeof + reason; AllowMultiple; Guard on null/empty.
+2. **`SliceIsolationAnalyzer`** (TWPA0009) — namespace membership; structural suffix strip (`Pages`/`Components`/`Application`); tiers Outside / Substrate / Platform(`Applications` one-way) / Product; SimpleName walk; semantic opt-out.
+3. **Analyzer tests** rewritten path-independently (including platform→product opt-out).
+4. **SPA page rehome** out of `TimeWarp.Architecture.Pages` into slice namespaces.
+5. **Opt-outs** — StyleGuide→CounterState; claims factory→AuthorizationState; AuthenticationStateListener→ProfileState+AuthorizationState; CounterPage opt-out removed (platform free).
+6. **Substrate rehomes** — RoleIds/ModuleIds and ToastNotificationState to bare `…Features` (shared).
+7. **Docs** — AGENTS.md TWPA0009 row; HowToRemoveDemoFeatures.md.
+8. **Review fixes** — `CompilerVisibleProperty` for TimeWarpSliceRoot; listener code-behind; opt-out name match cleanup.
+
+### Files changed (key)
+
+| Role | Path |
+|------|------|
+| Attribute | `source/foundation/foundation-contracts/base/cross-slice-reference-attribute.cs` |
+| Analyzer | `source/analyzers/…/slice-isolation-analyzer.cs` |
+| Tests | `tests/analyzers/…/slice-isolation-analyzer-tests.cs` |
+| MSBuild | `source/Directory.Build.props`, `tests/Directory.Build.props` |
+| SPA | page rehomes under `web-spa/features/**` and `web-spa/pages/` |
+| Docs | `AGENTS.md`, `HowToRemoveDemoFeatures.md` |
+
+### Key decisions
+
+- Keep namespace root **`Features`** (not rename to `Slices`); say “slice” in diagnostics/docs.
+- Nested slice id = full path (`Admin.Roles`); platform id = `Applications` one-way.
+- Toast + well-known role/module ids → substrate (not product slices).
+- Live-fire SPA inject of illegal edge skipped; unit tests cover the matrix.
+
+### Test outcomes
+
+- Analyzer suite: **62 passed**
+- `dev build`: **0 warnings / 0 errors**
+
+### Remaining known gaps (documented, non-blocking)
+
+- Razor markup / generated trees still not scanned (`GeneratedCodeAnalysisFlags.None`)
+- Optional per-type opt-out memoization not implemented (nit)
+
+### Commits
+
+- `c60077b9` feat(analyzers): redefine TWPA0009 as namespace-based slice isolation
+- `fa603586` refactor(web-spa): rehome pages into slice namespaces for TWPA0009
+- `502036a2` docs: update TWPA0009 slice isolation guidance
+- `04ca9cda` fix(091): wire TimeWarpSliceRoot and close review follow-ups
+
+
 ## Session
 
 - Created: 2026-07-15 (design conversation: Option A, slice vs feature, pages-as-slice-UI, typeof opt-out)
+- Implementation + review: 2026-07-15 (orchestrate-task 091)
