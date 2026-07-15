@@ -115,6 +115,22 @@ Beta: no compat shims. Downstream (Crunchit) drops `Policy = "SettingsEdit"` and
 - Tests: `tests/analyzers/timewarp-architecture-sourcegenerator-tests/page-source-generator-tests.cs`
 - Downstream discovery: Crunchit Settings / generators cutover (literal workaround)
 
+
+
+### Implementation plan (2026-07-15)
+
+1. Rewrite Policy parse in `PageSourceGenerator.GetPage`:
+   - Route: string literal only (unchanged)
+   - Policy omitted → emit expression `Policies.Anonymous`
+   - Policy = MemberAccess / IdentifierName → emit expression text as-is
+   - Policy = string literal / nameof / other → Diagnostic TWE005, do not emit page partial
+2. Emit: `public static string Policy { get; } = {expression};` — no glue
+3. Design + Purpose regions; AnalyzerReleases.Unshipped TWE005
+4. Expand page-source-generator-tests for happy path + diagnostics
+5. Confirm template Policies.Anonymous exists (no SPA call sites use Policy= yet)
+6. Version bump to 2.0.0-beta.4 (single repo version) for next publish
+
+
 ## Session
 
 - Created: from Crunchit generators cutover (nameof/literal footgun)
