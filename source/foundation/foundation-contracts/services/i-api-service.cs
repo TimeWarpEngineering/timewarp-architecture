@@ -9,6 +9,10 @@
 // problem — so callers pattern-match instead of catching exceptions or sniffing content types.
 // Abstracting the transport lets mock implementations stand in for real servers, enabling
 // UX development against contracts alone.
+// Terminal compositions for a mock decorator's inner IApiService:
+//   NullApiService — no transport (mock-first SPA before a BFF); always 501 problem arm
+//   WebServerApiService (or other HTTP binding) — real host fall-through when a BFF exists
+// Product DI chooses the inner; Foundation does not auto-register NullApiService.
 #endregion
 
 namespace TimeWarp.Foundation;
