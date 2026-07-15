@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <PackageId>TimeWarp.Architecture.Analyzers</PackageId>
+    <Title>TimeWarp.Architecture.Analyzers</Title>
+    <Description>Roslyn convention analyzers for TimeWarp Architecture (TWPA0002–0010). Analyzer-only package; safe to reference from every project including contracts.</Description>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
     <!-- Convention-enforcement DiagnosticAnalyzers only (no source generators), so this assembly is
