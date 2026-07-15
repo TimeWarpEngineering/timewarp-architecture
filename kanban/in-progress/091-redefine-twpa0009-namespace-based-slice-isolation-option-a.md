@@ -158,6 +158,226 @@ Under Option A that is still a reasoned opt-out via `typeof(AuthorizationState)`
 - SPA pages under `web-spa/features/**` using `namespace …Pages`
 - `AGENTS.md` TWPA0009 row; kanban 088 results for historical context only
 
+### Implementation plan (2026-07-15)
+
+# Implementation Plan: Task 091 — Redefine TWPA0009 (namespace-based slice isolation)
+
+## 1. Locked design decisions
+
+All five open points decided for greenfield purity (repo evidence: existing `…Features.*` tree, contracts skill, SPA layout, task 088 lessons).
+
+### D1. Namespace root: keep `…Features.*` (do not rename to `…Slices.*`)
+
+| Choice | Rationale |
+|--------|-----------|
+| **Keep** `SliceRoot = {RootNamespace}.Features` | Repo, contracts skill, docs, and every assembly already use `Features.*`. Renaming to `Slices.*` is pure vocabulary churn with zero isolation gain (identity is the segment under the root either way). |
+| **Say “slice”** in diagnostics, AGENTS.md, and the opt-out attribute | Matches task terminology without breaking VSA path language. |
+
+**Folder `features/`** remains human organization only — non-normative for the analyzer.
+
+### D2. Nested slices: full path under root is the slice id
+
+Examples:
+
+| Namespace | Slice id |
+|-----------|----------|
+| `…Features.Counters` | `Counters` |
+| `…Features.Counters.Pages` | `Counters` (structural suffix stripped) |
+| `…Features.Counters.Components` | `Counters` |
+| `…Features.Admin.Roles` | `Admin.Roles` |
+| `…Features.Admin.Roles.Application` | `Admin.Roles` (layer suffix stripped) |
+| `…Features` (bare) | **not a product slice** (shared substrate) |
+| `…Features.Applications` | **platform** (reserved; see D3) |
+
+**Reserved structural suffixes** (not part of slice id; strip from the right while present):
+
+- `Pages`, `Components`, `Application`
+
+Rationale: first-segment-only (`Admin`) would glue every future admin capability into one removable unit. The template’s only nest (`Admin.Roles`) is already a vertical product unit. Full path preserves independent removability.
+
+### D3. Platform: reserved platform slice + outside-SliceRoot shell
+
+Three tiers:
+
+| Tier | Membership | May reference product slices? | Product may reference it? |
+|------|------------|-------------------------------|---------------------------|
+| **Outside SliceRoot** | `Components`, root shell, `Pipeline`, `Services`, `Configuration`, `Hubs`, composition roots (`NavMenu`, layouts, `Routes`) | Yes (composition root) | N/A |
+| **Substrate** | exact `…Features` (`BaseComponent`, handlers, cacheable state base) | No (flag if it does) | Yes (free) |
+| **Platform slice** | reserved id `Applications` (`…Features.Applications` and structural children) | No without opt-out | Yes (free, one-way) |
+| **Product slices** | every other id under SliceRoot | Only self + free tiers; other product = flag | Symmetric isolation |
+
+Rationale: Counter’s store-reset and app chrome already depend on `ApplicationState`. Treating `Applications` as a normal product slice forces noise opt-outs on legitimate product→shell edges. One-way platform matches “product may depend on shell; shell must not depend on product.”
+
+Do **not** invent a second reserved name `Platform`; keep existing `Applications` namespace.
+
+### D4. Attribute: rename to `CrossSliceReference` (typeof + reason)
+
+```csharp
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+public sealed class CrossSliceReferenceAttribute : Attribute
+{
+  public Type TargetType { get; }
+  public string Reason { get; }
+
+  public CrossSliceReferenceAttribute(Type targetType, string reason)
+  {
+    // reject null targetType; reject null/whitespace reason
+  }
+}
+```
+
+- **Delete** `CrossFeatureReferenceAttribute` (greenfield; no obsolete shim).
+- Edge-scoped: suppress only references whose target slice equals `SliceOf(TargetType)`.
+- Partial-safe: semantic `INamedTypeSymbol.GetAttributes()` on the containing type (all partials).
+- Match attribute by metadata name (no foundation-contracts dep from convention-analyzers).
+
+### D5. SliceRoot configuration: convention + optional MSBuild override
+
+1. Default: `SliceRoot = {RootNamespace}.Features` from `build_property.RootNamespace`.
+2. Optional override: `build_property.TimeWarpSliceRoot` if non-empty.
+3. If neither yields a usable root → analyzer no-ops.
+
+No registry of slice names. **The namespace tree is the catalog.**
+
+---
+
+## 2. Analyzer algorithm (normative)
+
+### 2.1 Slice identity
+
+```
+TryGetSliceId(namespaceDisplayString, sliceRoot) → (kind, id?)
+
+kind ∈ { Outside, Substrate, Platform, Product }
+
+- if ns == sliceRoot → Substrate
+- if !ns.StartsWith(sliceRoot + ".") → Outside
+- rest = ns[(sliceRoot.Length+1)..]
+- parts = rest.Split('.')
+- while parts.Length > 0 && parts[^1] ∈ StructuralSuffixes: pop
+- if parts empty → treat as Substrate (defensive)
+- id = string.Join('.', parts)
+- if id == "Applications" (Ordinal) → Platform
+- else → Product(id)
+```
+
+### 2.2 Rule
+
+For each hand-written source file, for each `SimpleNameSyntax` (IdentifierName **and** GenericName):
+
+1. Resolve symbol; skip null / `INamespaceSymbol`.
+2. Skip if `ContainingAssembly` ≠ current compilation assembly (contracts/metadata free).
+3. `sourceSlice = SliceOf(containing type)` — Outside → skip.
+4. `targetSlice = SliceOf(symbol)`.
+5. Allowed without opt-out:
+   - source Outside
+   - target Outside or Substrate
+   - target Platform (any source)
+   - source and target same Product id
+6. Flag when:
+   - source Product A → target Product B (A ≠ B)
+   - source Platform → target Product *
+   - source Substrate → target Product *
+7. Opt-out: `CrossSliceReference` on semantic containing type lists `TargetType` whose slice id equals the **target** product slice id.
+
+Diagnostic (keep **TWPA0009**, update text):
+
+```
+Slice '{0}' references '{1}', owned by slice '{2}'; share via Components or contracts, or mark the type [CrossSliceReference(typeof(...), reason)]
+```
+
+Severity: Warning (warnings-as-errors → build-breaking).
+
+### 2.3 Explicit non-behaviors
+
+- Razor markup trees still out (`GeneratedCodeAnalysisFlags.None`) — known gap.
+- No folder scan; no multi-owner namespace dropout.
+- No Option B membership attributes in v1.
+- Same assembly only.
+
+### 2.4 Bugs fixed
+
+| Gap in 088 | Fix |
+|------------|-----|
+| Folder ownership | Namespace membership only |
+| `IdentifierNameSyntax` only | `SimpleNameSyntax` (generics) |
+| Syntax-only opt-out | Semantic `GetAttributes` across partials |
+| Blanket mute | Edge-scoped via `typeof` → slice id |
+| Grab-bag `…Pages` | Rehome pages into slice namespaces |
+
+---
+
+## 3. Ordered implementation steps
+
+**Principle:** land the rule and tests first; then make the template comply (rehome + opt-outs).
+
+### Phase 1 — Opt-out attribute
+
+Replace `cross-feature-reference-attribute.cs` with `cross-slice-reference-attribute.cs` (`CrossSliceReferenceAttribute`). Namespace stays `TimeWarp.Foundation.Features`. Delete `CrossFeatureReferenceAttribute`.
+
+### Phase 2 — Rewrite analyzer
+
+Rewrite/rename to `slice-isolation-analyzer.cs` / `SliceIsolationAnalyzer` (TWPA0009). Read `RootNamespace` / `TimeWarpSliceRoot`. Drop `FeatureOf` and folder ownership map. Implement `TryGetSliceId`, SimpleName walk, semantic opt-out, one-way platform matrix. Update `AnalyzerReleases.Unshipped.md`.
+
+### Phase 3 — Analyzer unit tests (rewrite)
+
+Rename to `slice-isolation-analyzer-tests.cs`. Path-independent ownership. Cover: A→B flag; same product clean; product→substrate/platform clean; platform→product flag; outside→product clean; metadata clean; nested Admin.Roles; structural suffixes; edge-scoped multi opt-out; partial opt-out; generics; missing RootNamespace no-op; substrate→product flag.
+
+### Phase 4 — Rehome SPA namespaces
+
+Product pages → `…Features.<Slice>` (optional `.Pages` child). Platform Home/Forbidden/NotFound → `…Features.Applications`. Root `web-spa/pages/` grab-bag: Profile→Profiles, Settings→Applications, Authentication/RedirectToLogin→Authentication. Fix AuthenticationStateListener ns. Leave ModalContainer as Components. Fix global-usings, nav, page-mixin, tests.
+
+### Phase 5 — Convert opt-outs
+
+- StyleGuidePage: CounterState + ToastNotificationState (AllowMultiple)
+- AccountClaimsPrincipalFactoryWithRoles: AuthorizationState
+- CounterPage: remove if only platform deps remain
+
+Triage remaining TWPA0009 after rehome.
+
+### Phase 6 — Documentation
+
+AGENTS.md TWPA0009 row; HowToRemoveDemoFeatures.md; optional ADR (Design region is minimum).
+
+### Phase 7 — Verification
+
+Analyzer tests green; `dev build` 0/0; live-fire negative control; HowToRemoveDemo* still delete-folder + fix compile.
+
+---
+
+## 4. Suggested commit sequencing
+
+1. Attribute + analyzer rewrite + unit tests
+2. SPA page rehome + opt-out conversion + build green
+3. Docs (AGENTS.md, HowToRemoveDemo*)
+
+Prefer one task-shaped PR; split only if review load demands it.
+
+---
+
+## 5. Risks / non-goals
+
+**Risks:** page rehome breaks usings/nav; incomplete structural suffixes; RootNamespace missing in tests (no-op); razor gap remains; shell composition roots may grow.
+
+**Non-goals:** rename to Slices; assembly-per-slice; folder ownership; Option B; cross-assembly isolation; Copic/external migration; Error severity; scanning generated/razor in v1.
+
+---
+
+## 6. After state (quick reference)
+
+```text
+SliceRoot = TimeWarp.Architecture.Features
+
+…Features                    → substrate (shared base)
+…Features.Applications       → platform (one-way)
+…Features.Counters[.Pages]   → product slice Counters
+…Features.Admin.Roles        → product slice Admin.Roles
+…Components / shell          → outside (composition free)
+
+[CrossSliceReference(typeof(AuthorizationState), "…")]
+```
+
+
 ## Session
 
 - Created: 2026-07-15 (design conversation: Option A, slice vs feature, pages-as-slice-UI, typeof opt-out)
