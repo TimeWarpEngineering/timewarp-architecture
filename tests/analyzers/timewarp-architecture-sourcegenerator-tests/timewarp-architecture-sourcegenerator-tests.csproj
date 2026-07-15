@@ -12,6 +12,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../../source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
+    <!-- Explicit: generators ProjectReference attributes with PrivateAssets=all, so it no longer
+         flows transitively for test code that uses TimeWarp.Architecture.Attributes. -->
+    <ProjectReference Include="../../../source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
     <ProjectReference Include="../../../source/foundation/foundation-contracts-generators/foundation-contracts-generators.csproj" />
   </ItemGroup>
 </Project>

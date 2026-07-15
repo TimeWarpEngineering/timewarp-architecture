@@ -1,0 +1,34 @@
+<Project>
+  <!-- Import parent Directory.Build.props (source/) -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- Make analyzer/generator/attributes projects packable (task 092). Version + shared package
+       metadata inherit from source/Directory.Build.props (single repo version). Per-project
+       PackageId lives in each csproj. -->
+  <PropertyGroup Label="Packaging">
+    <IsPackable>true</IsPackable>
+    <PackageTags>timewarp;architecture;analyzers;roslyn;source-generators</PackageTags>
+  </PropertyGroup>
+
+  <!-- Analyzer-only packages (convention-analyzers + analyzers/generators): detect by project name
+       here because Directory.Build.props is imported before the csproj body, so a project-set
+       IsAnalyzerPackage flag would be too late. No lib/TFM output — dll under analyzers/dotnet/cs/.
+       SuppressDependenciesWhenPacking keeps Microsoft.CodeAnalysis.* out of the consumer graph.
+       DevelopmentDependency so restore marks PrivateAssets=all by default. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'timewarp-architecture-convention-analyzers' or '$(MSBuildProjectName)' == 'timewarp-architecture-analyzers'">
+    <IsAnalyzerPackage>true</IsAnalyzerPackage>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IncludeSymbols>false</IncludeSymbols>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_PackAsAnalyzer</TargetsForTfmSpecificContentInPackage>
+    <!-- NU5128: package has no lib/ for any TFM — intentional for analyzer-only layout. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <Target Name="_PackAsAnalyzer" Condition="'$(IsAnalyzerPackage)' == 'true'">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(TargetPath)" PackagePath="analyzers/dotnet/cs" />
+    </ItemGroup>
+  </Target>
+</Project>

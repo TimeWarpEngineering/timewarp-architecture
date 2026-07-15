@@ -48,7 +48,7 @@ public class Should_Flag_Contradictions
       }
     };
 
-  // --- TWPA0002: nullable + presence rule --------------------------------------------------------
+  // --- TWA0002: nullable + presence rule --------------------------------------------------------
 
   public static async Task Given_NullableProperty_With_NotEmpty()
   {
@@ -61,7 +61,7 @@ public class Should_Flag_Contradictions
       {
         public class Query
         {
-          public string? {|TWPA0002:Name|} { get; set; }
+          public string? {|TWA0002:Name|} { get; set; }
         }
 
         public class QueryValidator : AbstractValidator<Query>
@@ -85,7 +85,7 @@ public class Should_Flag_Contradictions
       {
         public class Command
         {
-          public string? {|TWPA0002:EventName|} { get; set; }
+          public string? {|TWA0002:EventName|} { get; set; }
         }
 
         public class CommandValidator : AbstractValidator<Command>
@@ -98,7 +98,7 @@ public class Should_Flag_Contradictions
     await Test(Source).RunAsync();
   }
 
-  // --- TWPA0003: = string.Empty / = "" + presence rule -------------------------------------------
+  // --- TWA0003: = string.Empty / = "" + presence rule -------------------------------------------
 
   public static async Task Given_EmptyStringDefault_With_NotEmpty()
   {
@@ -111,7 +111,7 @@ public class Should_Flag_Contradictions
       {
         public class Command
         {
-          public string {|TWPA0003:Title|} { get; set; } = string.Empty;
+          public string {|TWA0003:Title|} { get; set; } = string.Empty;
         }
 
         public class CommandValidator : AbstractValidator<Command>
@@ -135,7 +135,7 @@ public class Should_Flag_Contradictions
       {
         public class Command
         {
-          public string {|TWPA0003:Title|} { get; set; } = "";
+          public string {|TWA0003:Title|} { get; set; } = "";
         }
 
         public class CommandValidator : AbstractValidator<Command>

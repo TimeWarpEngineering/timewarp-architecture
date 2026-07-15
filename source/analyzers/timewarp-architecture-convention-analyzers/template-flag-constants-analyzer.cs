@@ -1,6 +1,6 @@
 #region Purpose
 // A conditional-compilation directive naming a template.json flag requires that flag in the
-// project's DefineConstants — otherwise the region silently vanishes from the real build (TWPA0010).
+// project's DefineConstants — otherwise the region silently vanishes from the real build (TWA0010).
 #endregion
 
 #region Design
@@ -24,7 +24,7 @@ using System.Text.Json;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class TemplateFlagConstantsAnalyzer : DiagnosticAnalyzer
 {
-  public const string DiagnosticId = "TWPA0010";
+  public const string DiagnosticId = "TWA0010";
 
   private const string TemplateFileName = "template.json";
 

@@ -9,11 +9,11 @@ One analyzer, two diagnostics, same data walk (server compilation vs. referenced
 metadata) — targets the exact bug class hit in tasks 078/079 (POST api/Roles → 405 because no
 endpoint existed; verb drift is its sibling failure).
 
-- **TWPA0005 — verb mismatch**: for each `BaseEndpoint<TRequest, TResponse>` subclass, the
+- **TWA0005 — verb mismatch**: for each `BaseEndpoint<TRequest, TResponse>` subclass, the
   `[HttpGet/Post/Put/Delete]` attribute on its `Process` method must match `TRequest`'s
   `[ApiRoute]` verb (readable from referenced-assembly metadata: the generated `GetHttpVerb()` or
   the attribute data).
-- **TWPA0006 — contract without endpoint**: enumerate referenced contract types carrying a
+- **TWA0006 — contract without endpoint**: enumerate referenced contract types carrying a
   generated `RouteTemplate` and warn when no endpoint class in the server compilation covers them.
 
 ## Checklist
@@ -32,7 +32,7 @@ endpoint existed; verb drift is its sibling failure).
 ## Results
 
 - **api-server: 0 violations** — source-generated FastEndpoints count as coverage (the generator
-  runs before analyzers, so its endpoints are visible symbols). TWPA0005 deliberately skips
+  runs before analyzers, so its endpoints are visible symbols). TWA0005 deliberately skips
   FastEndpoints: they're generated FROM the contract's verb, drift is impossible.
 - **Pairing rule discovered on first run:** web-server references `api-contracts` as a *client*
   (SPA weather page) — the analyzer initially demanded web-server serve `GetWeatherForecasts`.

@@ -67,7 +67,7 @@ Leaf project - no internal ProjectReferences.
 
 ### Referenced By
 - No direct project references found (analyzer is referenced via OutputItemType="Analyzer")
-- Used by projects that need the partial class declaration analyzer (TWPA0001)
+- Used by projects that need the partial class declaration analyzer (TWA0001)
 
 ## Session
 

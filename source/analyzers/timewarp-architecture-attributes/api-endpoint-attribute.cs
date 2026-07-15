@@ -3,8 +3,9 @@
 #endregion
 
 #region Design
-// Lives in a small runtime-attributes assembly, separate from the analyzer, so contract projects
-// reference plain attributes without taking a Roslyn dependency.
+// Lives in a small runtime-attributes assembly, separate from the analyzer/generators, so contract
+// projects reference plain attributes without taking a Roslyn dependency. Ships as the public
+// TimeWarp.Architecture.Attributes NuGet package (task 092) — not a private dep of Generators.
 // EndpointType optionally overrides the generated endpoint's base class (default BaseFastEndpoint).
 #endregion
 

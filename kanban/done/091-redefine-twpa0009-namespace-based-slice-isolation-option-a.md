@@ -1,9 +1,9 @@
-# Redefine TWPA0009: namespace-based slice isolation (Option A)
+# Redefine TWA0009: namespace-based slice isolation (Option A)
 
-Replaces folder-derived “feature” ownership (current TWPA0009 / task 088) with **namespace-as-slice**
+Replaces folder-derived “feature” ownership (current TWA0009 / task 088) with **namespace-as-slice**
 architecture. Greenfield purity — no migration sympathy; the template must be clear of this tech debt.
 
-Related: 088 (folder-based TWPA0009 — superseded model), 071 (flag matrix that first exposed coupling).
+Related: 088 (folder-based TWA0009 — superseded model), 071 (flag matrix that first exposed coupling).
 
 ## Purpose
 
@@ -21,7 +21,7 @@ opt-out bound to a **real type** (and a reason), not a free-form feature name or
 
 ### Why not folders (reject Option D)
 
-Current TWPA0009 derives “feature” from `…/features/<name>/` path segments. That **mixes file
+Current TWA0009 derives “feature” from `…/features/<name>/` path segments. That **mixes file
 organization with architecture correctness**: moving a file for readability changes legal
 dependencies. Organization and architecture are different concerns. Folders may mirror slices for
 humans but **must not** be the rule.
@@ -125,7 +125,7 @@ generators poison ownership if path-based — moot under pure namespace identity
 
 - [x] ADR or Design region: lock SliceRoot name (`Features` vs `Slices`), nested-slice policy,
       platform one-way vs reserved platform slice
-- [x] Redefine TWPA0009 ownership/membership to namespace under SliceRoot (drop folder `FeatureOf`)
+- [x] Redefine TWA0009 ownership/membership to namespace under SliceRoot (drop folder `FeatureOf`)
 - [x] Rehome SPA product pages (and other non-slice namespaces under slice trees) into slice ns
 - [x] Rename/reshape opt-out attribute: typeof + reason, edge-scoped, partial-safe, empty reason ban
 - [x] Fix generic-name walk; keep contracts/metadata exempt
@@ -153,14 +153,14 @@ Under Option A that is still a reasoned opt-out via `typeof(AuthorizationState)`
 
 ### Implementation entry points (current tree)
 
-- `source/analyzers/…/feature-isolation-analyzer.cs` (TWPA0009)
+- `source/analyzers/…/feature-isolation-analyzer.cs` (TWA0009)
 - `source/foundation/…/cross-feature-reference-attribute.cs`
 - SPA pages under `web-spa/features/**` using `namespace …Pages`
-- `AGENTS.md` TWPA0009 row; kanban 088 results for historical context only
+- `AGENTS.md` TWA0009 row; kanban 088 results for historical context only
 
 ### Implementation plan (2026-07-15)
 
-# Implementation Plan: Task 091 — Redefine TWPA0009 (namespace-based slice isolation)
+# Implementation Plan: Task 091 — Redefine TWA0009 (namespace-based slice isolation)
 
 ## 1. Locked design decisions
 
@@ -280,7 +280,7 @@ For each hand-written source file, for each `SimpleNameSyntax` (IdentifierName *
    - source Substrate → target Product *
 7. Opt-out: `CrossSliceReference` on semantic containing type lists `TargetType` whose slice id equals the **target** product slice id.
 
-Diagnostic (keep **TWPA0009**, update text):
+Diagnostic (keep **TWA0009**, update text):
 
 ```
 Slice '{0}' references '{1}', owned by slice '{2}'; share via Components or contracts, or mark the type [CrossSliceReference(typeof(...), reason)]
@@ -317,7 +317,7 @@ Replace `cross-feature-reference-attribute.cs` with `cross-slice-reference-attri
 
 ### Phase 2 — Rewrite analyzer
 
-Rewrite/rename to `slice-isolation-analyzer.cs` / `SliceIsolationAnalyzer` (TWPA0009). Read `RootNamespace` / `TimeWarpSliceRoot`. Drop `FeatureOf` and folder ownership map. Implement `TryGetSliceId`, SimpleName walk, semantic opt-out, one-way platform matrix. Update `AnalyzerReleases.Unshipped.md`.
+Rewrite/rename to `slice-isolation-analyzer.cs` / `SliceIsolationAnalyzer` (TWA0009). Read `RootNamespace` / `TimeWarpSliceRoot`. Drop `FeatureOf` and folder ownership map. Implement `TryGetSliceId`, SimpleName walk, semantic opt-out, one-way platform matrix. Update `AnalyzerReleases.Unshipped.md`.
 
 ### Phase 3 — Analyzer unit tests (rewrite)
 
@@ -333,11 +333,11 @@ Product pages → `…Features.<Slice>` (optional `.Pages` child). Platform Home
 - AccountClaimsPrincipalFactoryWithRoles: AuthorizationState
 - CounterPage: remove if only platform deps remain
 
-Triage remaining TWPA0009 after rehome.
+Triage remaining TWA0009 after rehome.
 
 ### Phase 6 — Documentation
 
-AGENTS.md TWPA0009 row; HowToRemoveDemoFeatures.md; optional ADR (Design region is minimum).
+AGENTS.md TWA0009 row; HowToRemoveDemoFeatures.md; optional ADR (Design region is minimum).
 
 ### Phase 7 — Verification
 
@@ -383,17 +383,17 @@ SliceRoot = TimeWarp.Architecture.Features
 
 ### Summary
 
-Redefined TWPA0009 from folder-based feature isolation (task 088) to **namespace-based slice isolation (Option A)**. Slices are independently removable units identified by namespaces under `SliceRoot = {RootNamespace}.Features` (optional `TimeWarpSliceRoot` override, now MSBuild-visible). Grab-bag `…Pages` product pages rehomed into slice namespaces. Opt-out is edge-scoped `[CrossSliceReference(typeof(T), reason)]` with partial-safe semantic attribute lookup.
+Redefined TWA0009 from folder-based feature isolation (task 088) to **namespace-based slice isolation (Option A)**. Slices are independently removable units identified by namespaces under `SliceRoot = {RootNamespace}.Features` (optional `TimeWarpSliceRoot` override, now MSBuild-visible). Grab-bag `…Pages` product pages rehomed into slice namespaces. Opt-out is edge-scoped `[CrossSliceReference(typeof(T), reason)]` with partial-safe semantic attribute lookup.
 
 ### What was implemented
 
 1. **`CrossSliceReferenceAttribute`** — replaces deleted `CrossFeatureReferenceAttribute` (no shim); typeof + reason; AllowMultiple; Guard on null/empty.
-2. **`SliceIsolationAnalyzer`** (TWPA0009) — namespace membership; structural suffix strip (`Pages`/`Components`/`Application`); tiers Outside / Substrate / Platform(`Applications` one-way) / Product; SimpleName walk; semantic opt-out.
+2. **`SliceIsolationAnalyzer`** (TWA0009) — namespace membership; structural suffix strip (`Pages`/`Components`/`Application`); tiers Outside / Substrate / Platform(`Applications` one-way) / Product; SimpleName walk; semantic opt-out.
 3. **Analyzer tests** rewritten path-independently (including platform→product opt-out).
 4. **SPA page rehome** out of `TimeWarp.Architecture.Pages` into slice namespaces.
 5. **Opt-outs** — StyleGuide→CounterState; claims factory→AuthorizationState; AuthenticationStateListener→ProfileState+AuthorizationState; CounterPage opt-out removed (platform free).
 6. **Substrate rehomes** — RoleIds/ModuleIds and ToastNotificationState to bare `…Features` (shared).
-7. **Docs** — AGENTS.md TWPA0009 row; HowToRemoveDemoFeatures.md.
+7. **Docs** — AGENTS.md TWA0009 row; HowToRemoveDemoFeatures.md.
 8. **Review fixes** — `CompilerVisibleProperty` for TimeWarpSliceRoot; listener code-behind; opt-out name match cleanup.
 
 ### Files changed (key)
@@ -426,9 +426,9 @@ Redefined TWPA0009 from folder-based feature isolation (task 088) to **namespace
 
 ### Commits
 
-- `c60077b9` feat(analyzers): redefine TWPA0009 as namespace-based slice isolation
-- `fa603586` refactor(web-spa): rehome pages into slice namespaces for TWPA0009
-- `502036a2` docs: update TWPA0009 slice isolation guidance
+- `c60077b9` feat(analyzers): redefine TWA0009 as namespace-based slice isolation
+- `fa603586` refactor(web-spa): rehome pages into slice namespaces for TWA0009
+- `502036a2` docs: update TWA0009 slice isolation guidance
 - `04ca9cda` fix(091): wire TimeWarpSliceRoot and close review follow-ups
 
 

@@ -6,7 +6,7 @@
 // FluentUI's toast service owns display and lifetime, so this state stores nothing; it exists
 // so toast operations run as dispatched actions (pipeline logging, DevTools).
 // Namespace is Features substrate (not a product slice): DefaultApiHandler and other base
-// handlers toast failures, so every product may depend on it without TWPA0009 opt-outs.
+// handlers toast failures, so every product may depend on it without TWA0009 opt-outs.
 // Empty Initialize is intentional — there is no data to reset.
 #endregion
 

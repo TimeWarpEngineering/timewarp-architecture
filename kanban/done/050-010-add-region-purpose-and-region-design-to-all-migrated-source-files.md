@@ -58,7 +58,7 @@ remains a candidate follow-up (see Notes).
 
 - Ongoing freshness is covered by the maintenance rule in `AGENTS.md` (included by CLAUDE.md):
   every edit reconciles the file's regions. This task is the one-time backfill.
-- Candidate follow-up (own task): a `TWPA` analyzer in `timewarp-architecture-contract-analyzers`
+- Candidate follow-up (own task): a `TWA` analyzer in `timewarp-architecture-contract-analyzers`
   flagging non-trivial files without `#region Purpose` — presence enforcement, same lesson as the
   nullability analyzer.
 

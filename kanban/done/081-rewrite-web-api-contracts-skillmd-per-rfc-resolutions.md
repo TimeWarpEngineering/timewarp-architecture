@@ -53,14 +53,14 @@ sections).** The rulings that shape this rewrite:
       trigger + security rule + copic server-side alternative; mock-pattern detection; mock factory
       "required" → "when SPA mock mode needs the endpoint".
 - [x] §3.6 folded: validation-library dependence (Blazilla ✅ / Morris ✗ / Blazored deprecated,
-      RoleForm as living anchor); TWPA0002/0003 forbidden-vs-discouraged split + `.editorconfig`
+      RoleForm as living anchor); TWA0002/0003 forbidden-vs-discouraged split + `.editorconfig`
       downgrade; legacy attribute names documented for recognition only.
 - [x] Examples re-anchored: TWA `admin/roles` as living anchor (update-role wart cited),
       `todo-items` as anti-pattern.
 - [x] TWA docs aligned: `HowToWrite_BFF_API_Contracts.md` gained the "Route Attributes and Source
       Generation" section (+ kebab casing note, `[ApiRoute]`d samples, `SetValidator` composition,
       pointer to the skill); the 3 concrete doc bugs fixed (UpdateUser brace, nullability-doc
-      copy-paste, `IReadonlyList<t>`); nullability doc gained a TWPA0002/0003 enforcement section.
+      copy-paste, `IReadonlyList<t>`); nullability doc gained a TWA0002/0003 enforcement section.
 - [x] Evals reviewed: `evals/eval.yaml` is a routing smoke keyed on the skill name (unchanged) —
       still valid as-is.
 

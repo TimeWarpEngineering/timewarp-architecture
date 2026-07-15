@@ -22,7 +22,7 @@ public class Should_Enforce_Purpose_Region
       }
       """;
 
-    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWPA0004", DiagnosticSeverity.Warning)
+    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWA0004", DiagnosticSeverity.Warning)
       .WithSpan("Widget.cs", 1, 1, 1, 10)
       .WithArguments("Widget.cs");
 
@@ -93,7 +93,7 @@ public class Should_Enforce_Purpose_Region
       public class Widget;
       """;
 
-    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWPA0004", DiagnosticSeverity.Warning)
+    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWA0004", DiagnosticSeverity.Warning)
       .WithSpan("Widget.cs", 5, 1, 5, 10)
       .WithArguments("Widget.cs");
 

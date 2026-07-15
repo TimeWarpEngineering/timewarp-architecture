@@ -55,10 +55,10 @@ Fix: `public string Name { get; set; } = null!` + `NotEmpty()`.
   validator rejects null), but the annotation lies about intent and disarms compiler null analysis.
 
 **Enforcement:** in the timewarp-architecture repo both are compile-time diagnostics from
-`ContractNullabilityValidatorAnalyzer` — **TWPA0002** (`string?` + presence rule) and **TWPA0003**
+`ContractNullabilityValidatorAnalyzer` — **TWA0002** (`string?` + presence rule) and **TWA0003**
 (`= string.Empty`/`= ""` + presence rule) — and build errors under warnings-as-errors. `string?`
 *without* a presence rule is a legitimate optional field and is never flagged. Repos that accept
-the softer smell can downgrade: `dotnet_diagnostic.TWPA0002.severity = suggestion`.
+the softer smell can downgrade: `dotnet_diagnostic.TWA0002.severity = suggestion`.
 
 ### Forbidden initializers on required reference types
 

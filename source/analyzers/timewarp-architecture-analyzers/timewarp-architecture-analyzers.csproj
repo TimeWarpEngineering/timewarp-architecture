@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <PackageId>TimeWarp.Architecture.Generators</PackageId>
+    <Title>TimeWarp.Architecture.Generators</Title>
+    <Description>Roslyn source generators and TWA0001 for TimeWarp Architecture (FastEndpoint, Page, StateAccess, mock-factory registry). Analyzer-only; attach only where generators should run — not repo-wide.</Description>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
     <!-- Suppress RS1041: Analyzer intentionally targets net10.0 for CLI usage -->
@@ -12,6 +15,10 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
+    <!-- Compile-time only; generator matches [ApiEndpoint] by metadata name. Consumers take a
+         separate TimeWarp.Architecture.Attributes PackageReference where they apply the attribute.
+         PrivateAssets so the project ref never flows as a runtime dependency of this analyzer. -->
+    <ProjectReference Include="../timewarp-architecture-attributes/timewarp-architecture-attributes.csproj"
+                      PrivateAssets="all" />
   </ItemGroup>
 </Project>

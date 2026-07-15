@@ -6,7 +6,7 @@ you remove them by deleting code once you no longer need the reference.
 
 A **slice** is an independently removable vertical unit. Identity is the namespace under
 `{RootNamespace}.Features` (e.g. `…Features.Counters`, `…Features.EventStreams`), not the
-folder path — folders usually mirror slices for humans but TWPA0009 enforces namespace
+folder path — folders usually mirror slices for humans but TWA0009 enforces namespace
 boundaries. Pages that implement a slice live **in that slice's namespace** (not a grab-bag
 `…Pages` namespace).
 
@@ -24,7 +24,7 @@ Ask your coding agent:
 > until `dev build` is 0/0.
 
 The compiler is the checklist — deleting the folder surfaces every referencing site as an error,
-and the repo's analyzers (TWPA rules, especially TWPA0009 slice isolation) catch the conventions
+and the repo's analyzers (TWA rules, especially TWA0009 slice isolation) catch the conventions
 on the way back to green.
 
 ## The manual checklist

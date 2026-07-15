@@ -25,7 +25,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWPA0001", DiagnosticSeverity.Warning)
+    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWA0001", DiagnosticSeverity.Warning)
       .WithSpan("ApplicationState.cs", startLine: 1, startColumn: 15, endLine: 1, endColumn: 31)
       .WithArguments("ApplicationState", "should have full specifiers in the primary file");
 
@@ -64,7 +64,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWPA0001", DiagnosticSeverity.Warning)
+    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWA0001", DiagnosticSeverity.Warning)
       .WithSpan("ApplicationState.CloseModal.cs", startLine: 1, startColumn: 22, endLine: 1, endColumn: 38)
       .WithArguments("ApplicationState", "should have minimal specifiers in secondary files");
 
@@ -103,7 +103,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWPA0001", DiagnosticSeverity.Warning)
+    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWA0001", DiagnosticSeverity.Warning)
       .WithSpan("WrongFileName.cs", startLine: 1, startColumn: 15, endLine: 1, endColumn: 31)
       .WithArguments("ApplicationState", "file name 'WrongFileName.cs' does not follow the expected naming convention");
 
@@ -230,7 +230,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWPA0001", DiagnosticSeverity.Warning)
+    DiagnosticResult expectedDiagnostic = new DiagnosticResult(id: "TWA0001", DiagnosticSeverity.Warning)
       .WithSpan("ApplicationState.Extensions.cs", startLine: 1, startColumn: 32, endLine: 1, endColumn: 54)
       .WithArguments("ApplicationState", "should not include class inheritance in secondary files");
 

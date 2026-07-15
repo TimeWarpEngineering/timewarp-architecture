@@ -1,5 +1,5 @@
 #region Purpose
-// Enforces that Aspire AddProject resource names are ServiceNames constant values (TWPA0007).
+// Enforces that Aspire AddProject resource names are ServiceNames constant values (TWA0007).
 #endregion
 
 #region Design
@@ -22,7 +22,7 @@ using System.Collections.Generic;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class AspireResourceNameAnalyzer : DiagnosticAnalyzer
 {
-  public const string DiagnosticId = "TWPA0007";
+  public const string DiagnosticId = "TWA0007";
 
   private const string ServiceNamesMetadataName = "TimeWarp.Foundation.Configuration.ServiceNames";
 

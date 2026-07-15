@@ -41,12 +41,30 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 ```
 source/
   foundation/        # shared contracts/application/domain/server layers -> TimeWarp.Foundation.* packages
-  analyzers/         # Roslyn analyzers + source generators (see Enforcement)
+  analyzers/         # Roslyn analyzers + source generators -> TimeWarp.Architecture.{Analyzers,Generators,Attributes}
   container-apps/
     web/             # web-spa (WASM), web-contracts, web-application, web-server, ...
     api/  grpc/  aspire/  yarp/
 tests/               # mirrors source/; includes web-contracts-tests (host-free serialization round-trips)
 ```
+
+## Platform packages (foundation + analyzers)
+
+Greenfield `dotnet new timewarp-architecture` apps reference **published NuGet packages** for the
+shared platform (template symbols `foundationPackages` / `analyzerPackages`, both default **true**).
+This monorepo keeps the source and dogfoods it via `ProjectReference`.
+
+| PackageId | Contents |
+|-----------|----------|
+| `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
+| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0010) — safe repo-wide |
+| `TimeWarp.Architecture.Generators` | Source generators + TWA0001 — attach only where gens should run |
+| `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
+
+MSBuild dual-mode (auto-detects missing source trees): `UseFoundationPackages` /
+`UseAnalyzerPackages`. CPM `PackageVersion` pins lag the last **published** version (may trail
+`source/Directory.Build.props` `<Version>`). Upgrade path for apps that still vendored
+`source/analyzers/**`: see `documentation/developer/how-to-guides/HowToUpgradeToAnalyzerPackages.md`.
 
 ## Key patterns
 
@@ -63,20 +81,23 @@ tests/               # mirrors source/; includes web-contracts-tests (host-free 
 
 ## Enforcement — conventions are compiler-checked (build-breaking)
 
+Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not the generic
+`TimeWarp.SourceGenerators` package, which will use a different prefix).
+
 | ID | Rule |
 |----|------|
-| TWPA0001 | partial-class primary/secondary file declaration shape |
-| TWPA0002/0003 | contract property nullability must agree with FluentValidation presence rules |
-| TWPA0004 | every source file carries `#region Purpose` (one honest line minimum) |
-| TWPA0005/0006 | endpoint verb matches the contract's `[ApiRoute]`; every routed contract has an endpoint or `[ClientOnlyContract(reason)]` |
-| TWPA0007 | Aspire `AddProject` resource names are `ServiceNames` constant values |
-| TWPA0008 | no template-conditional tokens in comments/strings (the dotnet-new engine misreads them and truncates generated files); escape hatch: the `cnd:noEmit` comment-marker pair |
-| TWPA0009 | product slices (`…Features.<Id>` under SliceRoot) must not reference other product slices (share via Components/contracts); platform `Applications` is one-way free; opt-out: `[CrossSliceReference(typeof(T), reason)]` |
-| TWPA0010 | a directive naming a template.json flag requires that flag in DefineConstants (else the region silently vanishes from the repo build) |
+| TWA0001 | partial-class primary/secondary file declaration shape |
+| TWA0002/0003 | contract property nullability must agree with FluentValidation presence rules |
+| TWA0004 | every source file carries `#region Purpose` (one honest line minimum) |
+| TWA0005/0006 | endpoint verb matches the contract's `[ApiRoute]`; every routed contract has an endpoint or `[ClientOnlyContract(reason)]` |
+| TWA0007 | Aspire `AddProject` resource names are `ServiceNames` constant values |
+| TWA0008 | no template-conditional tokens in comments/strings (the dotnet-new engine misreads them and truncates generated files); escape hatch: the `cnd:noEmit` comment-marker pair |
+| TWA0009 | product slices (`…Features.<Id>` under SliceRoot) must not reference other product slices (share via Components/contracts); platform `Applications` is one-way free; opt-out: `[CrossSliceReference(typeof(T), reason)]` |
+| TWA0010 | a directive naming a template.json flag requires that flag in DefineConstants (else the region silently vanishes from the repo build) |
 
 ## Agent Context Regions — maintenance rule
 
-Every source file carries a `#region Purpose` block (enforced by TWPA0004); files with design
+Every source file carries a `#region Purpose` block (enforced by TWA0004); files with design
 decisions also carry `#region Design`, and optionally `#region Open Questions`. These are part of
 the code, not decoration:
 

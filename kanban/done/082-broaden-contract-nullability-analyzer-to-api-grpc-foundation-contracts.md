@@ -11,8 +11,8 @@
 
 ## Description
 
-Task 080 shipped `ContractNullabilityValidatorAnalyzer` (TWPA0002: `string?` + `NotEmpty()`/
-`NotNull()`; TWPA0003: `= string.Empty`/`= ""` + presence rule) in the analyzer-only assembly
+Task 080 shipped `ContractNullabilityValidatorAnalyzer` (TWA0002: `string?` + `NotEmpty()`/
+`NotNull()`; TWA0003: `= string.Empty`/`= ""` + presence rule) in the analyzer-only assembly
 `source/analyzers/timewarp-architecture-contract-analyzers/`, but wired it into **`web-contracts`
 only** (task 077's scope). Extend enforcement to the remaining contract/validator surfaces so the
 whole template is guarded, using the proven 080 recipe: **wire + fix everything it reports in the
@@ -34,7 +34,7 @@ wiring a project with no validators is harmless but pointless):
 - [ ] Inventory: which projects have `AbstractValidator<T>` + request/DTO shapes.
 - [ ] Wire the `<ProjectReference ... OutputItemType="Analyzer" ReferenceOutputAssembly="false" />`
       into each (copy the `web-contracts.csproj` block, incl. the comment).
-- [ ] Build each; fix every TWPA0002/0003 reported (same-axis fixes only: type annotation +
+- [ ] Build each; fix every TWA0002/0003 reported (same-axis fixes only: type annotation +
       initializer; do not touch mutability/shape).
 - [ ] Full `dev build` green (0/0) in the same PR.
 - [ ] Note in the template docs (or the skill, via [[081-rewrite-web-api-contracts-skillmd-per-rfc-resolutions]])
@@ -46,7 +46,7 @@ wiring a project with no validators is harmless but pointless):
       shared `AbstractValidator<I*Details>` are analyzed directly against the interface, which
       covers TWA's real usage; composition-following matters only if a concrete command's props
       could *mask* the interface's, e.g. property hiding).
-- [ ] Code-fix provider: TWPA0002 → strip `?` + add `= null!`; TWPA0003 → `= string.Empty` → `= null!`.
+- [ ] Code-fix provider: TWA0002 → strip `?` + add `= null!`; TWA0003 → `= string.Empty` → `= null!`.
 
 ## Notes
 

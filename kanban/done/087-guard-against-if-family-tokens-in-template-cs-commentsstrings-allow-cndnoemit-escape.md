@@ -36,7 +36,7 @@ Its diagnostic message must name both remedies.
   `cnd:noEmit` regions and will false-positive once a legit case appears.
 - Durable form: a Roslyn analyzer (in `timewarp-architecture-convention-analyzers`) keyed off comment
   and string-literal trivia, that also tracks `cnd:noEmit` region markers to suppress guarded spans.
-  Assign the next free TWPA id.
+  Assign the next free TWA id.
 - Scope: only files that ship as template content (all of `source/`, `tests/` except the
   per-flag/foundation excludes in `.template.config/template.json`). Decide whether to scope the
   analyzer or accept repo-wide (repo-wide is simpler and the tokens are rare).
@@ -44,7 +44,7 @@ Its diagnostic message must name both remedies.
 
 ## Implementation Plan (2026-07-14)
 
-Decision: Roslyn analyzer (TWPA0008) in timewarp-architecture-convention-analyzers.
+Decision: Roslyn analyzer (TWA0008) in timewarp-architecture-convention-analyzers.
 
 1. `template-conditional-token-analyzer.cs`: syntax-tree action scanning comment trivia
    (single/multi-line + doc) and every string-literal token kind (regular, verbatim, raw,
@@ -56,8 +56,8 @@ Decision: Roslyn analyzer (TWPA0008) in timewarp-architecture-convention-analyze
    the analyzer and embedded test sources is composed at runtime ("#" + "if").
 3. Wire convention analyzers into tests/Directory.Build.props (template content includes tests/;
    analyzer-test files embedding C# in raw strings are the likeliest future carriers) with
-   `NoWarn TWPA0004` for tests — Purpose-region adoption in tests is a separate decision.
-4. Register TWPA0008 in AnalyzerReleases.Unshipped.md; add AGENTS.md enforcement-table row.
+   `NoWarn TWA0004` for tests — Purpose-region adoption in tests is a separate decision.
+4. Register TWA0008 in AnalyzerReleases.Unshipped.md; add AGENTS.md enforcement-table row.
 5. Tests: comment hit, string hit, raw-string hit, doc-comment hit, real-directive clean,
    cnd:noEmit-guarded clean.
 6. Verify: dev build 0/0 (sweep confirmed repo currently clean), analyzer tests green, default
@@ -65,11 +65,11 @@ Decision: Roslyn analyzer (TWPA0008) in timewarp-architecture-convention-analyze
 
 ## Checklist
 
-- [x] Decide crude-script vs Roslyn analyzer → Roslyn analyzer, TWPA0008
+- [x] Decide crude-script vs Roslyn analyzer → Roslyn analyzer, TWA0008
 - [x] Implement so real directives and `cnd:noEmit`-guarded spans pass; unguarded comment/string tokens fail
 - [x] Message names both remedies (reword / wrap in `cnd:noEmit`)
 - [x] Add tests (9: comment/string/raw/interpolated/doc-comment hits; real-directive, escaped, unclosed-escape, post-escape clean/flag)
-- [x] Register TWPA0008 in AnalyzerReleases.Unshipped.md; `dev build` 0/0
+- [x] Register TWA0008 in AnalyzerReleases.Unshipped.md; `dev build` 0/0
 
 ## Session
 
@@ -77,7 +77,7 @@ Decision: Roslyn analyzer (TWPA0008) in timewarp-architecture-convention-analyze
 
 ## Results (2026-07-14)
 
-**Implemented** (commit 7a73d3a3): `TemplateConditionalTokenAnalyzer` (TWPA0008) in
+**Implemented** (commit 7a73d3a3): `TemplateConditionalTokenAnalyzer` (TWA0008) in
 timewarp-architecture-convention-analyzers.
 
 - Scans comment trivia (single/multi-line; doc-comment prose via XmlTextLiteralToken) and every
@@ -91,7 +91,7 @@ timewarp-architecture-convention-analyzers.
   both ship intact through actual generation and the generated analyzers-tests project builds.
 - **Scope extension**: convention analyzers now wired into tests/ (tests/Directory.Build.props) —
   tests ship as template content and analyzer-test files embedding C# in strings are the likeliest
-  future carriers. TWPA0004 NoWarn'd for tests (Purpose-region adoption there = separate decision).
+  future carriers. TWA0004 NoWarn'd for tests (Purpose-region adoption there = separate decision).
 - **Known gap** (documented in the analyzer's Design region): the convention-analyzers project
   cannot analyze itself, so its own sources — where 086 happened — rely on the composition
   discipline.
@@ -104,5 +104,5 @@ timewarp-architecture-convention-analyzers.
 
 - 9 analyzer tests green (project total 31 → 40).
 - Live-fire negative control: planting the exact 086 comment in foundation-contracts fails the
-  build with `error TWPA0008` at the precise span; reverted, clean.
+  build with `error TWA0008` at the precise span; reverted, clean.
 - `dev build` 0/0 across source/ + tests/ with the rule active; repo sweep was already clean.

@@ -4,7 +4,7 @@
 
 #region Design
 // Generic by shape but chat-owned by residence: the chat hub is its only consumer. If a second
-// hub needs it, TWPA0009 will flag the cross-slice reference — promote it to a shared home then.
+// hub needs it, TWA0009 will flag the cross-slice reference — promote it to a shared home then.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Chat;

@@ -18,7 +18,7 @@ namespace TimeWarp.Architecture.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PurposeRegionAnalyzer : DiagnosticAnalyzer
 {
-  public const string DiagnosticId = "TWPA0004";
+  public const string DiagnosticId = "TWA0004";
 
   private static readonly DiagnosticDescriptor Rule =
     new
