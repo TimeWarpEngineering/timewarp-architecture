@@ -50,7 +50,7 @@ Conversely: `string?` with **no** presence rule is **fine** — do not flag it.
 - [ ] Follow `SetValidator(new XDetailsValidator())` into shared `AbstractValidator<IDetails>` —
       **deferred** (not needed for the 077 targets; shared `AbstractValidator<IDetails>` are analyzed
       *directly* against the interface, and no current concrete command masks a composed rule). Fast-follow.
-- [x] Diagnostic A (TWPA0002 nullable + presence rule) and B (TWPA0003 `= string.Empty`/`= ""` + presence rule).
+- [x] Diagnostic A (TWA0002 nullable + presence rule) and B (TWA0003 `= string.Empty`/`= ""` + presence rule).
 - [x] Fixie analyzer tests incl. hard edges (non-trivial lambda, whole-object `RuleFor(x => x)`) + negatives
       (`string?` w/o rule, compliant `= null!`). 8 new tests; all 16 analyzer tests green.
 - [x] Run across TWA contracts (web-contracts): surfaced **exactly the 4 expected** violations, no extras.
@@ -64,7 +64,7 @@ Conversely: `string?` with **no** presence rule is **fine** — do not flag it.
   contains the FastEndpoint source generator, which triggers on `[RouteMixin]` — abundant in
   web-contracts — and would emit endpoint classes into a project that can't compile them. An
   analyzer-only assembly is safe to reference from contracts (verified: no generator fired).
-- **Diagnostics:** `TWPA0002` (nullable + presence rule), `TWPA0003` (empty-string default + presence
+- **Diagnostics:** `TWA0002` (nullable + presence rule), `TWA0003` (empty-string default + presence
   rule). Registered in the new project's `AnalyzerReleases.Unshipped.md`; removed from the old one.
 - **Detection is direct** — `RuleFor(x => x.Prop)...NotEmpty()/NotNull()` inside `AbstractValidator<T>`,
   checked against `T.Prop`. Whole-object rules and non-trivial lambda bodies are conservatively skipped;

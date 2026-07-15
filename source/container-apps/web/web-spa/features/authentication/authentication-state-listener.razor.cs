@@ -5,7 +5,7 @@
 #region Design
 // Identity sign-in/out is a deliberate multi-slice edge: Authentication owns the listener, Profiles
 // owns profile cache, Authorization owns the current-user/roles cache. Documented via
-// CrossSliceReference so TWPA0009 sees the coupling (razor @code alone is not analyzed).
+// CrossSliceReference so TWA0009 sees the coupling (razor @code alone is not analyzed).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Authentication;

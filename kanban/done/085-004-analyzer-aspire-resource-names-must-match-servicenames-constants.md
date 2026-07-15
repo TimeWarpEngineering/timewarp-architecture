@@ -13,7 +13,7 @@ of `ServiceNames`.
 
 ## Checklist
 
-- [x] **TWPA0007** in the convention-analyzers assembly. Scope gate refined: rather than an
+- [x] **TWA0007** in the convention-analyzers assembly. Scope gate refined: rather than an
       Aspire.Hosting reference check, the analyzer is silent unless the compilation can resolve
       `TimeWarp.Foundation.Configuration.ServiceNames` — and only `AddProject` first arguments
       are examined, so nothing else in the repo pays.
@@ -26,10 +26,10 @@ of `ServiceNames`.
 - [x] Reconcile went further than "already clean": **the inference was removed at its source** —
       app-host `Constants` were duplicating ServiceNames values under a "These MUST match"
       comment; they now alias `ServiceNames.*` directly (const-to-const), so drift is impossible,
-      with TWPA0007 guarding any hand-written name. Required adding a compile-time
+      with TWA0007 guarding any hand-written name. Required adding a compile-time
       foundation-contracts reference to app-host (`IsAspireProjectResource="false"`, with the
       repo/package switch) — Aspire's project references are app-model resources, not compile refs.
-- [x] End-to-end negative test in the REAL app-host: sabotaged one constant → TWPA0007 fired with
+- [x] End-to-end negative test in the REAL app-host: sabotaged one constant → TWA0007 fired with
       the allowed-values list in the message → reverted. The delayed null-BaseAddress runtime
       failure (memory: only bites under server-side rendering) is now a build error.
 - [x] `dev build` 0/0; analyzers 31, sourcegen 16, contracts 7, web-server 22, api-server 6.

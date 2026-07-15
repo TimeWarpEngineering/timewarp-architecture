@@ -1,5 +1,5 @@
 #region Purpose
-// Tests for TWPA0010: template-flag directives without a matching DefineConstants entry flag;
+// Tests for TWA0010: template-flag directives without a matching DefineConstants entry flag;
 // defined flags, non-template symbols, and missing template.json stay clean.
 #endregion
 
@@ -59,7 +59,7 @@ public class Should_Require_Constants_For_Template_Flags
   private static DiagnosticResult Hit(string[] lines, int lineNumber, string flag)
   {
     int column = lines[lineNumber - 1].IndexOf(flag, System.StringComparison.Ordinal) + 1;
-    return new DiagnosticResult(id: "TWPA0010", DiagnosticSeverity.Warning)
+    return new DiagnosticResult(id: "TWA0010", DiagnosticSeverity.Warning)
       .WithSpan("Sample.cs", lineNumber, column, lineNumber, column + flag.Length)
       .WithArguments(flag);
   }

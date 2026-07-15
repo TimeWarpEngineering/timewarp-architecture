@@ -1,6 +1,6 @@
 #region Purpose
 // Enforce slice isolation: a type under the configured slice root may not reference types
-// owned by a different product slice in the same assembly (TWPA0009).
+// owned by a different product slice in the same assembly (TWA0009).
 #endregion
 
 #region Design
@@ -21,7 +21,7 @@ using System.Collections.Generic;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class SliceIsolationAnalyzer : DiagnosticAnalyzer
 {
-  public const string DiagnosticId = "TWPA0009";
+  public const string DiagnosticId = "TWA0009";
 
   private const string OptOutAttributeFullName = "CrossSliceReferenceAttribute";
   private const string PlatformSliceId = "Applications";

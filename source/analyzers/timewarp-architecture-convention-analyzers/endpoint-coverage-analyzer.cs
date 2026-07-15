@@ -1,6 +1,6 @@
 #region Purpose
-// Enforces contract<->endpoint agreement in server projects: verbs match (TWPA0005) and every
-// routed contract is served or explicitly opted out (TWPA0006).
+// Enforces contract<->endpoint agreement in server projects: verbs match (TWA0005) and every
+// routed contract is served or explicitly opted out (TWA0006).
 #endregion
 
 #region Design
@@ -12,11 +12,11 @@
 // contract discovery walks only referenced assemblies named *contracts* that share the server's
 // first name segment (web-server <-> web-contracts) — a server referencing another server's
 // contracts as a CLIENT (web-server uses api-contracts for the SPA) must not vouch for them.
-// TWPA0005 applies to MVC BaseEndpoint subclasses only: FastEndpoints are source-generated FROM
+// TWA0005 applies to MVC BaseEndpoint subclasses only: FastEndpoints are source-generated FROM
 // the contract's verb, so drift is impossible there. Contracts using the manual IApiRequest form
 // (no [ApiRoute]) are invisible to both diagnostics by design — the attribute is the contract of
-// enforcement. [ClientOnlyContract(reason)] is the explicit TWPA0006 opt-out.
-// TWPA0006 reports with no location (the defect is an absence); suppress per-contract via the
+// enforcement. [ClientOnlyContract(reason)] is the explicit TWA0006 opt-out.
+// TWA0006 reports with no location (the defect is an absence); suppress per-contract via the
 // attribute, not pragmas.
 #endregion
 
@@ -27,8 +27,8 @@ using System.Collections.Generic;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
 {
-  public const string VerbMismatchId = "TWPA0005";
-  public const string MissingEndpointId = "TWPA0006";
+  public const string VerbMismatchId = "TWA0005";
+  public const string MissingEndpointId = "TWA0006";
 
   private const string Category = "Design";
 
@@ -99,7 +99,7 @@ public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
 
     if (covered.Count == 0) return;   // not a server project
 
-    // TWPA0005 — MVC endpoint [HttpX] must match the contract's [ApiRoute] verb.
+    // TWA0005 — MVC endpoint [HttpX] must match the contract's [ApiRoute] verb.
     foreach ((INamedTypeSymbol endpoint, INamedTypeSymbol request) in mvcEndpoints)
     {
       string? contractVerb = GetApiRouteVerb(request, out _);
@@ -123,7 +123,7 @@ public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
       }
     }
 
-    // TWPA0006 — every routed contract in the PAIRED contracts assemblies must be covered.
+    // TWA0006 — every routed contract in the PAIRED contracts assemblies must be covered.
     // Pairing = shared first name segment (web-server <-> web-contracts): a server may reference
     // another server's contracts as a client (web-server references api-contracts for the SPA)
     // and must not vouch for those.

@@ -90,10 +90,10 @@ By following these guidelines, the nullability of properties in the API contract
 In this repository these rules are enforced by the `ContractNullabilityValidatorAnalyzer`
 (wired into `web-contracts`, build-breaking under warnings-as-errors):
 
-- **TWPA0002** — a property declared nullable (`string?`) that also carries an unconditional
+- **TWA0002** — a property declared nullable (`string?`) that also carries an unconditional
   `NotEmpty()`/`NotNull()` rule. The type and the validator disagree; make the property
   non-nullable (`= null!`) or drop the rule if the field is genuinely optional.
-- **TWPA0003** — a required property (has a presence rule) initialized with `= string.Empty`/`= ""`.
+- **TWA0003** — a required property (has a presence rule) initialized with `= string.Empty`/`= ""`.
   This is the silent-data bug described above; use `= null!` (or `required`).
 
 `string?` **without** a presence rule is a legitimate optional field and is never flagged.

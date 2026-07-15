@@ -1,5 +1,5 @@
 #region Purpose
-// Tests for TWPA0005 (endpoint verb must match contract verb) and TWPA0006 (routed contract
+// Tests for TWA0005 (endpoint verb must match contract verb) and TWA0006 (routed contract
 // must have an endpoint or an explicit [ClientOnlyContract] opt-out).
 #endregion
 
@@ -91,7 +91,7 @@ public class Should_Enforce_Endpoint_Coverage
     await Test(Source).RunAsync();
   }
 
-  public static async Task Given_Verb_Mismatch_Flags_TWPA0005()
+  public static async Task Given_Verb_Mismatch_Flags_TWA0005()
   {
     const string Source =
       """
@@ -117,7 +117,7 @@ public class Should_Enforce_Endpoint_Coverage
 
         public class CreateWidgetEndpoint : BaseEndpoint<App.Contracts.CreateWidget.Command, App.Contracts.CreateWidget.Response>
         {
-          [{|TWPA0005:HttpGet("api/Widgets")|}]
+          [{|TWA0005:HttpGet("api/Widgets")|}]
           public void Process() { }
         }
       }
@@ -126,7 +126,7 @@ public class Should_Enforce_Endpoint_Coverage
     await Test(Source).RunAsync();
   }
 
-  public static async Task Given_Uncovered_Contract_Flags_TWPA0006()
+  public static async Task Given_Uncovered_Contract_Flags_TWA0006()
   {
     const string Source =
       """

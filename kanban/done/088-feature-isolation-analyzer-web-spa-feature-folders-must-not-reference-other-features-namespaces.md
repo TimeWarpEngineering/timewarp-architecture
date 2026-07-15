@@ -21,7 +21,7 @@ attribute or config, with a reason — mirror the `[ClientOnlyContract(reason)]`
 
 ## Implementation Plan (2026-07-14)
 
-TWPA0009 in timewarp-architecture-convention-analyzers.
+TWA0009 in timewarp-architecture-convention-analyzers.
 
 1. CompilationStart: map namespace → owning feature from declaration file paths. A namespace is
    feature-owned ONLY if every declaration of it in the compilation lives under a single
@@ -41,7 +41,7 @@ TWPA0009 in timewarp-architecture-convention-analyzers.
 ## Checklist
 
 - [x] Decide namespace-ownership detection (folder-to-namespace convention already exists)
-- [x] Implement in timewarp-architecture-convention-analyzers, next free TWPA id
+- [x] Implement in timewarp-architecture-convention-analyzers, next free TWA id
 - [x] Opt-out with mandatory reason for deliberate cross-feature demos (Style Guide)
 - [x] Tests: cross-feature ref flags; components/ ref clean; opt-out clean
 - [x] AnalyzerReleases.Unshipped.md; dev build 0/0
@@ -52,7 +52,7 @@ TWPA0009 in timewarp-architecture-convention-analyzers.
 
 ## Results (2026-07-14)
 
-**Implemented** (commit 28b75b2e): `FeatureIsolationAnalyzer` (TWPA0009).
+**Implemented** (commit 28b75b2e): `FeatureIsolationAnalyzer` (TWA0009).
 
 - Ownership is derived, not configured: a namespace is feature-owned only when every HAND-WRITTEN
   declaration lives under one `features/<x>/` folder. Shared namespaces (Pages, Components, the

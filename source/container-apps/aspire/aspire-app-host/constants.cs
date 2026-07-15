@@ -10,7 +10,7 @@ internal class Constants
 {
   // Aliases of ServiceNames.* — the apps' server-side ServiceUriHelper resolves BaseAddress from
   // the injected services__{name}__https__0 env var, which Aspire keys by these resource names.
-  // Const-to-const aliasing makes drift impossible; TWPA0007 additionally guards any
+  // Const-to-const aliasing makes drift impossible; TWA0007 additionally guards any
   // hand-written AddProject name. (Also matches the Docker/K8s YARP config.)
   public const string ApiServerProjectResourceName = ServiceNames.ApiServiceName;
   public const string WebServerProjectResourceName = ServiceNames.WebServiceName;

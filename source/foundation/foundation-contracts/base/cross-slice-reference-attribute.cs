@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// TWPA0009 flags product/platform/substrate code that reaches into a different product slice.
+// TWA0009 flags product/platform/substrate code that reaches into a different product slice.
 // This attribute is the reasoned opt-out for a single deliberate edge:
 // - TargetType (typeof) identifies the foreign type; the analyzer maps it to that type's slice
 //   (namespace under SliceRoot) and suppresses only references into that slice.
@@ -16,7 +16,7 @@ namespace TimeWarp.Foundation.Features;
 
 /// <summary>
 /// Declares that this type intentionally references types owned by the same product slice as
-/// <paramref name="targetType"/>. Suppresses TWPA0009 only for edges into that target slice.
+/// <paramref name="targetType"/>. Suppresses TWA0009 only for edges into that target slice.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
 public sealed class CrossSliceReferenceAttribute : Attribute

@@ -44,13 +44,13 @@
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
-  <!-- Repo-wide convention analyzers (TWPA0002–0010 only — no source generators). Project ref in
+  <!-- Repo-wide convention analyzers (TWA0002–0010 only — no source generators). Project ref in
        monorepo; TimeWarp.Architecture.Analyzers package in generated apps (UseAnalyzerPackages). -->
   <ItemGroup Condition="'$(UseAnalyzerPackages)' != 'true' and '$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       IsAspireProjectResource="false" />
-    <!-- TWPA0009 reads build_property.TimeWarpSliceRoot for an optional SliceRoot override.
+    <!-- TWA0009 reads build_property.TimeWarpSliceRoot for an optional SliceRoot override.
          Custom properties are not analyzer-visible unless listed (RootNamespace is SDK-visible). -->
     <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
   </ItemGroup>
@@ -59,7 +59,7 @@
     <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
   </ItemGroup>
 
-  <!-- template.json feeds TWPA0010 (template-flag directives must have matching DefineConstants).
+  <!-- template.json feeds TWA0010 (template-flag directives must have matching DefineConstants).
        Absent in generated apps — the analyzer is silent there. -->
   <ItemGroup Condition="Exists('$(RepositoryRoot).template.config/template.json')">
     <AdditionalFiles Include="$(RepositoryRoot).template.config/template.json" />

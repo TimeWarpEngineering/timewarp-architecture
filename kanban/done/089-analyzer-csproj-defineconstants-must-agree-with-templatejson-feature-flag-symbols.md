@@ -22,7 +22,7 @@ symbols that no source in the project uses (stale).
 
 ## Implementation Plan (2026-07-14)
 
-TWPA0010 in timewarp-architecture-convention-analyzers. Check ONE direction only: a `#if`/`#elif`
+TWA0010 in timewarp-architecture-convention-analyzers. Check ONE direction only: a `#if`/`#elif`
 condition naming a template.json bool symbol that is NOT in the project's preprocessor symbols =
 error at the directive (the region silently vanishes from the real build — the dangerous drift).
 Stale direction (constant defined, no directive) is deliberately out of scope: razor `@*...*@` and
@@ -44,7 +44,7 @@ false-positive).
 ## Checklist
 
 - [x] Choose mechanism (analyzer with AdditionalFiles=template.json vs MSBuild target)
-- [x] Implement; next free TWPA id if analyzer
+- [x] Implement; next free TWA id if analyzer
 - [x] Tests both directions (missing constant; stale constant)
 - [x] dev build 0/0
 
@@ -54,7 +54,7 @@ false-positive).
 
 ## Results (2026-07-14)
 
-**Implemented** (commit 43c70ca6): `TemplateFlagConstantsAnalyzer` (TWPA0010).
+**Implemented** (commit 43c70ca6): `TemplateFlagConstantsAnalyzer` (TWA0010).
 
 - Reads template.json bool symbols via AdditionalFiles (Exists-conditioned wiring in source/ and
   tests/ Directory.Build.props); flags any `#if`/`#elif` condition naming a template flag absent
@@ -71,4 +71,4 @@ false-positive).
 
 **Tests**: 6 green (missing-constant flags; defined, compound-partial, non-template symbol,
 non-bool symbol, no-template.json clean/silent). Live-fire: replanting the web-infrastructure
-violation fails the build with TWPA0010 at the exact span. `dev build` 0/0.
+violation fails the build with TWA0010 at the exact span. `dev build` 0/0.

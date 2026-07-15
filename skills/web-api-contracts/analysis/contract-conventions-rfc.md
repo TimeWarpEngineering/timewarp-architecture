@@ -213,8 +213,8 @@ validated by the shared `RoleDetailsValidator`, now runs in TWA at `/Admin/Roles
 
 `ContractNullabilityValidatorAnalyzer` ships two diagnostics and is wired into `web-contracts`:
 
-- **TWPA0002** — property declared nullable (`string?`) yet carries `NotEmpty()`/`NotNull()`.
-- **TWPA0003** — property masked by `= string.Empty`/`= ""` while carrying a presence rule.
+- **TWA0002** — property declared nullable (`string?`) yet carries `NotEmpty()`/`NotNull()`.
+- **TWA0003** — property masked by `= string.Empty`/`= ""` while carrying a presence rule.
 - `string?` **without** a presence rule is never flagged (a genuinely optional field is legitimate —
   the rule is the *contradiction*, not nullability itself).
 
@@ -239,15 +239,15 @@ Operational notes:
 
 GLM's refinement (accepted 3–0) splits the rule: `= string.Empty`+`NotEmpty` is **forbidden** (real
 silent-data bug) while `string?`+`NotEmpty` is only **discouraged** (functional; merely disarms the
-compiler). The analyzer, however, emits **both** TWPA0002 and TWPA0003 at Warning severity, and TWA's
+compiler). The analyzer, however, emits **both** TWA0002 and TWA0003 at Warning severity, and TWA's
 repo-wide `TreatWarningsAsErrors` makes **both build-breaking** — in practice TWA enforces
 "discouraged" as "forbidden."
 
 This is **recorded as intentional in-repo strictness**, not a reversal of the ballot: TWA is the
 template and compliance target, and a contradiction-free template is worth more than the
 forbidden/discouraged nuance *here*. The skill's cross-repo guidance should still teach GLM's split
-(B is a bug, A is a smell); repos that want the softer stance can downgrade TWPA0002 via
-`.editorconfig` (`dotnet_diagnostic.TWPA0002.severity = suggestion`) without forking the analyzer.
+(B is a bug, A is a smell); repos that want the softer stance can downgrade TWA0002 via
+`.editorconfig` (`dotnet_diagnostic.TWA0002.severity = suggestion`) without forking the analyzer.
 
 ### Effect on §7 (repo cleanup scope)
 
@@ -255,7 +255,7 @@ The **nullability** items in §7 are done: `hello.cs`, `track-event.cs`, and the
 properties are fixed and guarded. Still open in `todo-items`, each belonging to a *different*
 decision slice: `sealed partial` shells, `init` on bindable props, the two empty query stubs,
 `Response : BaseResponse`, `todo-item-dto.cs` defaults, and the `Note` field's `= string.Empty`
-style (no presence rule → not a TWPA violation; it's the optional-field-style question).
+style (no presence rule → not a TWA violation; it's the optional-field-style question).
 
 ## 4. Objective bugs in the skill (not opinions — fix regardless of the vote)
 
@@ -293,7 +293,7 @@ propose a third option — with reasoning.**
 > | 4 | assertions | Shouldly | Shouldly | **third option** — parameterize; `BeEquivalentTo` semantics differ; **FluentAssertions v8 is commercially licensed** → still anti-FA | 3–0 *(anti-FA)*, GLM: don't hard-code either |
 > | 5 | Create Response | mixed | mixed | mixed — **discriminator must be "has invariants", NOT "trivial/id-only"** (`required init` skips Guard → `Guid.Empty` hole, copic `CreateModule.cs:31`) | **3–0** (GLM fixes the axis) |
 > | 6 | `IAuthApiRequest` | promote | promote | **DISSENT** — copic's server-side derivation is a valid competing design; TWA itself is split attribute-vs-manual; name is renamed by 053-002 → **"document as available (both forms), hold 'canonical' until post-rename"** | **RESOLVED by Decision 8's sequencing (2026-07-02)** — rename lands first, so the skill documents **both forms + trigger + rationale under the final names**; the "hold until post-rename" concern dissolves |
-> | 7 | nullability | keep+fix | keep+fix | keep+fix — but **split the rule**: `= string.Empty`+`NotEmpty` is forbidden (real silent bug); `string?`+`NotEmpty` is only *discouraged* (functional, just disarms the compiler) | **3–0 → RESOLVED & ENFORCED** (§3.6: TWPA0002/0003; severity note) |
+> | 7 | nullability | keep+fix | keep+fix | keep+fix — but **split the rule**: `= string.Empty`+`NotEmpty` is forbidden (real silent bug); `string?`+`NotEmpty` is only *discouraged* (functional, just disarms the compiler) | **3–0 → RESOLVED & ENFORCED** (§3.6: TWA0002/0003; severity note) |
 > | 8 | 053-002 sequencing | rename first | rename first | **DISSENT** — package/release coupling makes "rename first" a downstream-template-breaking gate → **third option: rewrite skill against target name `[Route]` with a migration note, clean contracts against current `[RouteMixin]`, do 053-002 whenever; don't gate cleanup on it** | **RESOLVED (maintainer, 2026-07-02): rename first** — and the package/release coupling that powered GLM's dissent is **declared a non-factor**: "we want the best solution, we don't want tech debt because of 'compatibility' or previous bad decisions." See Decision 8 resolution note. |
 >
 > **GLM's cross-cutting point:** Decisions **6 and 8 are coupled** — `[IAuthApiRequestMixin]` is one of
@@ -378,7 +378,7 @@ propose a third option — with reasoning.**
 ### Decision 7 — Nullability rule vs reality (copic's violations, TWA's 3 features)
 
 > **RESOLVED & ENFORCED (2026-07-02).** Rule kept; TWA's violators fixed; the rule is now a
-> compile-time guard (`TWPA0002`/`TWPA0003`, `timewarp-architecture-contract-analyzers`, wired into
+> compile-time guard (`TWA0002`/`TWA0003`, `timewarp-architecture-contract-analyzers`, wired into
 > `web-contracts` under warnings-as-errors). Binding premise empirically confirmed by the RoleForm
 > demonstrator. See §3.6 — including the deliberate severity divergence from GLM's
 > forbidden-vs-discouraged split. What remains for the skill rewrite is *teaching* the rule (with
@@ -469,7 +469,7 @@ propose a third option — with reasoning.**
 
 - `features/todo-items/**` — `sealed partial` shells; ~~`create-todo-item.cs` +
   `update-todo-item.cs` `Title` `= string.Empty` with `NotEmpty()`~~ ✅; `todo-item-dto.cs` defaults
-  + `Note` `= string.Empty` style (no presence rule → optional-field-style question, not a TWPA
+  + `Note` `= string.Empty` style (no presence rule → optional-field-style question, not a TWA
   violation); `init` on bindable props; `search-todo-items.cs` + `get-todo-item-by-id.cs` empty
   stubs; `Response : BaseResponse`.
 - ~~`features/hello/hello.cs` — `string?` + `NotEmpty()`~~ ✅ (`Name` → `string` + `= null!`).

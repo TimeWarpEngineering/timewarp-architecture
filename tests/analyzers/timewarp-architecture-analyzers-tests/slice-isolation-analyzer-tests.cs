@@ -1,5 +1,5 @@
 #region Purpose
-// Tests for TWPA0009: namespace-based slice isolation (product/platform/substrate matrix).
+// Tests for TWA0009: namespace-based slice isolation (product/platform/substrate matrix).
 #endregion
 
 #region Design
@@ -62,7 +62,7 @@ public class Should_Enforce_Slice_Isolation
   }
 
   private static DiagnosticResult Flag(string path, int line, int startColumn, int endColumn, string sourceSlice, string referenced, string targetSlice) =>
-    new DiagnosticResult(id: "TWPA0009", DiagnosticSeverity.Warning)
+    new DiagnosticResult(id: "TWA0009", DiagnosticSeverity.Warning)
       .WithSpan(path, line, startColumn, line, endColumn)
       .WithArguments(sourceSlice, referenced, targetSlice);
 

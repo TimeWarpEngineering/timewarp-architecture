@@ -5,8 +5,8 @@ Greenfield solutions from `dotnet new timewarp-architecture` (with `analyzerPack
 
 | Package | Role |
 |---------|------|
-| `TimeWarp.Architecture.Analyzers` | Convention rules TWPA0002–0010 (wired via `Directory.Build.props`) |
-| `TimeWarp.Architecture.Generators` | Source generators + TWPA0001 (`web-spa`, `api-server`, …) |
+| `TimeWarp.Architecture.Analyzers` | Convention rules TWA0002–0010 (wired via `Directory.Build.props`) |
+| `TimeWarp.Architecture.Generators` | Source generators + TWA0001 (`web-spa`, `api-server`, …) |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes such as `[ApiEndpoint]` |
 
 Older generated apps may still own a **copy** of `source/analyzers/**` and `tests/analyzers/**`
@@ -40,7 +40,7 @@ in this repository: `UseAnalyzerPackages` is **true** when
 <PackageReference Include="TimeWarp.Architecture.Analyzers" PrivateAssets="all" />
 ```
 
-Keep `<CompilerVisibleProperty Include="TimeWarpSliceRoot" />` in both modes (TWPA0009).
+Keep `<CompilerVisibleProperty Include="TimeWarpSliceRoot" />` in both modes (TWA0009).
 
 **Option B — package-only** (if you are deleting analyzer source in the same change): drop the
 project refs and always use the three package references as in step 3.
@@ -72,14 +72,14 @@ dotnet build   # 0 warnings / 0 errors — warnings are errors in this stack
 
 Spot-check:
 
-- A missing `#region Purpose` still reports **TWPA0004** (convention package).
+- A missing `#region Purpose` still reports **TWA0004** (convention package).
 - `api-server` still emits FastEndpoint generated files when
   `EnableApiEndpointGeneration` is true (generators package).
 - `[ApiEndpoint]` contracts still compile (`Attributes` package).
 
 ## Notes
 
-- Diagnostic IDs stay **TWPA####**; this upgrade is distribution only.
+- Diagnostic IDs stay **TWA####**; this upgrade is distribution only.
 - Generators must **not** be referenced repo-wide — only on projects that should run them
   (`web-spa`, `api-server`). Convention analyzers remain the repo-wide package.
 - Trusted Publishing / NuGet availability: packages ship on the architecture repo’s release

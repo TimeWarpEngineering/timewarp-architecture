@@ -72,7 +72,7 @@ source/analyzers/
 - [x] Move helper files (deduplicate ToKebabCase)
 - [x] Move model files
 - [x] Move validation files
-- [x] Update AnalyzerReleases files (merge TWE and TWPA rules)
+- [x] Update AnalyzerReleases files (merge TWE and TWA rules)
 
 ### Phase 3: Merge Code
 - [x] Update global-usings.cs to include generator namespaces
@@ -110,7 +110,7 @@ source/analyzers/
 
 ### AnalyzerReleases Merge
 Current rules:
-- **Analyzers**: TWPA0001 (PartialClassDeclaration)
+- **Analyzers**: TWA0001 (PartialClassDeclaration)
 - **Generator**: TWE001-TWE004 (Endpoint diagnostics)
 
 All go into AnalyzerReleases.Unshipped.md
@@ -118,7 +118,7 @@ All go into AnalyzerReleases.Unshipped.md
 ## References
 - Nuru pattern: /source/timewarp-nuru-analyzers/ (generators/, diagnostics/, validation/ subdirectories)
 - Microsoft convention: "Analyzers" = umbrella term for analyzers + generators
-- Current merged projects: timewarp-architecture-analyzers (TWPA0001), timewarp-architecture-generator (TWE001-TWE004)
+- Current merged projects: timewarp-architecture-analyzers (TWA0001), timewarp-architecture-generator (TWE001-TWE004)
 
 ## Results
 
@@ -127,7 +127,7 @@ Successfully merged timewarp-architecture-generator into timewarp-architecture-a
 ### What was implemented
 - All generator files moved to analyzers subdirectories (generators/, diagnostics/, helpers/, models/, validation/)
 - Namespace unified to TimeWarp.Architecture.Analyzers (fixed singular 'Analyzer' bug in partial-class-declaration-analyzer.cs)
-- AnalyzerReleases merged (TWPA0001 + TWE001-TWE004)
+- AnalyzerReleases merged (TWA0001 + TWE001-TWE004)
 - ToKebabCase deduplicated — analyzer uses shared StringExtensions.ToKebabCase()
 - Consumer references updated (Api.Server, GenTester, SourceGenerator.Tests now point to analyzers project)
 - CA1062 suppressed (Roslyn guarantees non-null context parameters)
@@ -157,7 +157,7 @@ Successfully merged timewarp-architecture-generator into timewarp-architecture-a
 ### Key decisions
 - Followed Nuru pattern: 'analyzers' is umbrella term for analyzers + generators
 - Attributes project kept separate (clean transitive dependency chain for Api.Contracts)
-- All diagnostic IDs preserved (TWPA prefix for analyzer, TWE prefix for generator/endpoint)
+- All diagnostic IDs preserved (TWA prefix for analyzer, TWE prefix for generator/endpoint)
 
 ### Build verification
 - timewarp-architecture.slnx: Build succeeded, 0 warnings, 0 errors

@@ -1,6 +1,6 @@
 #region Purpose
 // Flags template-conditional tokens (the if/elif/else/endif directives) inside comments or string
-// literals, where the dotnet-new engine misreads them and truncates generated files (TWPA0008).
+// literals, where the dotnet-new engine misreads them and truncates generated files (TWA0008).
 #endregion
 
 #region Design
@@ -29,7 +29,7 @@ using System.Text.RegularExpressions;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class TemplateConditionalTokenAnalyzer : DiagnosticAnalyzer
 {
-  public const string DiagnosticId = "TWPA0008";
+  public const string DiagnosticId = "TWA0008";
 
   // Composed so the raw token sequences never appear in this file (see Design).
   private const string Hash = "#";

@@ -9,7 +9,7 @@
 // stored grant that references it. The ERP-flavored module list is sample domain content
 // demonstrating the pattern; template consumers replace it with their own modules.
 // Lives in the Features substrate (not a product slice) so Authentication and other product
-// slices can reference well-known module ids without cross-slice coupling (TWPA0009).
+// slices can reference well-known module ids without cross-slice coupling (TWA0009).
 #endregion
 
 namespace TimeWarp.Architecture.Features;

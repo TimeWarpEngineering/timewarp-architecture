@@ -1,5 +1,5 @@
 #region Purpose
-// Enforces the primary/secondary file convention for multi-file partial classes (TWPA0001).
+// Enforces the primary/secondary file convention for multi-file partial classes (TWA0001).
 #endregion
 
 #region Design
@@ -17,7 +17,7 @@ namespace TimeWarp.Architecture.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
 {
-  public const string DiagnosticId = "TWPA0001";
+  public const string DiagnosticId = "TWA0001";
 
   private static readonly LocalizableString Title = "Incorrect partial class declaration";
   private static readonly LocalizableString MessageFormat = "Partial class '{0}' {1}";
@@ -34,7 +34,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
       description: Description,
-      helpLinkUri: "https://github.com/TimeWarpEngineering/timewarp-architecture/blob/main/Documentation/Analyzers/TWPA0001.md"
+      helpLinkUri: "https://github.com/TimeWarpEngineering/timewarp-architecture/blob/main/Documentation/Analyzers/TWA0001.md"
     );
 
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);

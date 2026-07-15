@@ -1,4 +1,4 @@
-# TWPA0001: Partial Class Declaration Analyzer
+# TWA0001: Partial Class Declaration Analyzer
 
 ## Summary
 

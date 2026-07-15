@@ -1,5 +1,5 @@
 #region Purpose
-// Tests for TWPA0008: template-conditional tokens in comments/strings flag; real directives and
+// Tests for TWA0008: template-conditional tokens in comments/strings flag; real directives and
 // cnd:noEmit-escaped regions stay clean.
 #endregion
 
@@ -36,7 +36,7 @@ public class Should_Flag_Template_Conditional_Tokens
   private static DiagnosticResult Hit(string[] lines, int lineNumber, string token)
   {
     int column = lines[lineNumber - 1].IndexOf(token, System.StringComparison.Ordinal) + 1;
-    return new DiagnosticResult(id: "TWPA0008", DiagnosticSeverity.Warning)
+    return new DiagnosticResult(id: "TWA0008", DiagnosticSeverity.Warning)
       .WithSpan("Sample.cs", lineNumber, column, lineNumber, column + token.Length)
       .WithArguments(token.Substring(1));
   }

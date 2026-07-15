@@ -1,5 +1,5 @@
 #region Purpose
-// TWPA0002/TWPA0003: a contract property's nullability annotation and its FluentValidation
+// TWA0002/TWA0003: a contract property's nullability annotation and its FluentValidation
 // presence rule must agree.
 #endregion
 
@@ -19,9 +19,9 @@ namespace TimeWarp.Architecture.Analyzers;
 ///
 /// The rule is NOT "properties must be non-nullable" — <c>string?</c> is legitimate for a
 /// genuinely optional field. The defect is the *contradiction*:
-///   TWPA0002 (A) — the property is declared nullable (<c>string?</c>) yet a presence rule
+///   TWA0002 (A) — the property is declared nullable (<c>string?</c>) yet a presence rule
 ///                  says it must be present. Make it non-nullable, or drop the rule if optional.
-///   TWPA0003 (B) — the property is non-nullable but initialized with <c>= string.Empty</c> /
+///   TWA0003 (B) — the property is non-nullable but initialized with <c>= string.Empty</c> /
 ///                  <c>= ""</c>, a fabricated valid-looking default that hides an unset field
 ///                  from the presence rule. Use <c>= null!</c> or <c>required</c>.
 ///
@@ -33,8 +33,8 @@ namespace TimeWarp.Architecture.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ContractNullabilityValidatorAnalyzer : DiagnosticAnalyzer
 {
-  public const string NullableWithPresenceRuleId = "TWPA0002";
-  public const string EmptyDefaultWithPresenceRuleId = "TWPA0003";
+  public const string NullableWithPresenceRuleId = "TWA0002";
+  public const string EmptyDefaultWithPresenceRuleId = "TWA0003";
 
   private const string Category = "Design";
 

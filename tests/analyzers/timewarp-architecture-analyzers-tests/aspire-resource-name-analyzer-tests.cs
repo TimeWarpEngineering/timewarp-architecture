@@ -1,5 +1,5 @@
 #region Purpose
-// Tests for TWPA0007: AddProject resource names must be ServiceNames constant values.
+// Tests for TWA0007: AddProject resource names must be ServiceNames constant values.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -78,7 +78,7 @@ public class Should_Enforce_Aspire_Resource_Names
     await Test(Source).RunAsync();
   }
 
-  public static async Task Given_Unknown_Name_Flags_TWPA0007()
+  public static async Task Given_Unknown_Name_Flags_TWA0007()
   {
     const string Source =
       """
@@ -89,7 +89,7 @@ public class Should_Enforce_Aspire_Resource_Names
       {
         public static void Configure(Aspire.Builder builder)
         {
-          builder.AddProject<object>({|TWPA0007:"webserver"|});
+          builder.AddProject<object>({|TWA0007:"webserver"|});
         }
       }
       """;

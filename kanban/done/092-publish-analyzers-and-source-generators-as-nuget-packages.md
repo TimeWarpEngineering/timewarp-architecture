@@ -7,7 +7,7 @@ references to versioned NuGet packages — same extraction path foundation took 
 never finished for the analyzer layer.
 
 Today every `dotnet new timewarp-architecture` app **owns a copy** of `source/analyzers/**`. Rule
-fixes (TWPA0001–0010, generators) do not roll forward via package bump; apps freeze at generation
+fixes (TWA0001–0010, generators) do not roll forward via package bump; apps freeze at generation
 time. Foundation already ships as `TimeWarp.Foundation.*`; analyzers are the remaining platform
 gap (tech debt, not intentional end-state).
 
@@ -23,8 +23,8 @@ gap (tech debt, not intentional end-state).
 
 | Assembly today | Proposed package | Contents |
 |----------------|------------------|----------|
-| `timewarp-architecture-convention-analyzers` | e.g. `TimeWarp.Architecture.Analyzers` | DiagnosticAnalyzers only (TWPA0002–0010, etc.) — safe for contracts |
-| `timewarp-architecture-analyzers` | e.g. `TimeWarp.Architecture.Generators` (or combine if justified) | Source generators + TWPA0001 if it lives there |
+| `timewarp-architecture-convention-analyzers` | e.g. `TimeWarp.Architecture.Analyzers` | DiagnosticAnalyzers only (TWA0002–0010, etc.) — safe for contracts |
+| `timewarp-architecture-analyzers` | e.g. `TimeWarp.Architecture.Generators` (or combine if justified) | Source generators + TWA0001 if it lives there |
 | `timewarp-architecture-attributes` | ship as dependency of generators package or merge | Marker attributes consumed by generators |
 
 Exact PackageIds, whether one vs two analyzer packages, and version alignment with foundation
@@ -46,7 +46,7 @@ regions / AGENTS.md when chosen.
 
 ### Non-goals (unless required)
 
-- Changing diagnostic IDs (keep **TWPA####**).
+- Changing diagnostic IDs (keep **TWA####**).
 - Rewriting rule logic; this is distribution only.
 - Publishing a separate “ruleset” product beyond the analyzers themselves.
 
@@ -66,7 +66,7 @@ regions / AGENTS.md when chosen.
 - [x] Wire package into release pack/push workflow
 - [x] Switch Directory.Build.props consumers to PackageReference; keep dogfood path for building the packages
 - [x] Exclude analyzer sources from template content (or condition like foundation)
-- [x] Verify: pack → install/local feed → sample app gets TWPA diagnostics + generators
+- [x] Verify: pack → install/local feed → sample app gets TWA diagnostics + generators
 - [x] Docs: AGENTS.md, template notes, upgrade story for already-generated apps
 - [x] `dev build` 0/0 in template repo
 
@@ -75,7 +75,7 @@ regions / AGENTS.md when chosen.
 ### Context (2026-07-15)
 
 - Foundation extracted to NuGet (051); analyzers left as template source — acknowledged tech debt.
-- TWPA0009 slice isolation (091) and the full 0001–0010 family make “forked rules” more costly every
+- TWA0009 slice isolation (091) and the full 0001–0010 family make “forked rules” more costly every
   release.
 - Design discussion: fork model is bootstrap-OK, bad steady-state for a multi-app platform.
 
@@ -83,7 +83,7 @@ regions / AGENTS.md when chosen.
 
 - 051 — foundation NuGet packages (pattern to mirror)
 - 084 — convention-analyzers rename + Directory.Build.props wiring
-- 091 — TWPA0009 namespace-based slices (rules that should version centrally)
+- 091 — TWA0009 namespace-based slices (rules that should version centrally)
 
 ### Entry points
 
@@ -105,8 +105,8 @@ regions / AGENTS.md when chosen.
 
 | Assembly | PackageId | Kind |
 |----------|-----------|------|
-| convention-analyzers | **TimeWarp.Architecture.Analyzers** | Analyzer-only (TWPA0002–0010) |
-| analyzers (generators + TWPA0001) | **TimeWarp.Architecture.Generators** | Analyzer-only |
+| convention-analyzers | **TimeWarp.Architecture.Analyzers** | Analyzer-only (TWA0002–0010) |
+| analyzers (generators + TWA0001) | **TimeWarp.Architecture.Generators** | Analyzer-only |
 | attributes | **TimeWarp.Architecture.Attributes** | Runtime library |
 
 Keep Analyzers vs Generators split (generators must not run repo-wide). Attributes public, not private dep of Generators. No project folder renames — PackageId only.
@@ -134,7 +134,7 @@ This repo: ProjectReference. Generated apps: PackageReference only. No dual Proj
 **B** — `workflow-command.cs` PackableProjects  
 **C** — UseAnalyzerPackages dual-mode in source/tests Directory.Build.props + spa/api-server/api-contracts; Directory.Packages.props pins  
 **D** — template.json symbol + slnx `#if (!analyzerPackages)`  
-**E** — dev build 0/0; analyzer tests; pack smoke; local-feed generated app (no source/analyzers; TWPA + gens work)  
+**E** — dev build 0/0; analyzer tests; pack smoke; local-feed generated app (no source/analyzers; TWA + gens work)  
 **F** — AGENTS.md, upgrade how-to, Design regions  
 **G** — Release/Trusted Publishing (ops after code)
 
@@ -159,7 +159,7 @@ Graduated Roslyn convention analyzers, source generators, and attributes to thre
 | PackageId | Project | Layout |
 |-----------|---------|--------|
 | TimeWarp.Architecture.Analyzers | convention-analyzers | analyzers/dotnet/cs/ |
-| TimeWarp.Architecture.Generators | analyzers (gens + TWPA0001) | analyzers/dotnet/cs/ |
+| TimeWarp.Architecture.Generators | analyzers (gens + TWA0001) | analyzers/dotnet/cs/ |
 | TimeWarp.Architecture.Attributes | attributes | lib/net10.0/ |
 
 ### What was implemented
@@ -182,7 +182,7 @@ Graduated Roslyn convention analyzers, source generators, and attributes to thre
 
 - `dev build` 0/0
 - Analyzer tests 62 passed; sourcegenerator tests 16 passed
-- Pack layout verified; local-feed TWPA0004 smoke OK
+- Pack layout verified; local-feed TWA0004 smoke OK
 
 ### Remaining (ops / post-release)
 
