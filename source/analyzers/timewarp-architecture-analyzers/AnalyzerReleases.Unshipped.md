@@ -10,3 +10,4 @@ TWE001 | ApiEndpoint | Error | Endpoint class must be partial
 TWE002 | ApiEndpoint | Error | Missing Query/Command class
 TWE003 | ApiEndpoint | Error | Route conflict detected
 TWE004 | ApiEndpoint | Error | Invalid interface implementation
+TWE005 | Page | Error | [Page] Policy must be a const field reference (not string literal or nameof)

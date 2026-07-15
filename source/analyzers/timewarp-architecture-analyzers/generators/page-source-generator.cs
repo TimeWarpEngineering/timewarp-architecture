@@ -1,8 +1,19 @@
 #region Purpose
-// Roslyn replacement for the web-spa Page Moxy mixin (task 053) — the last mixin.
-// For a Blazor page class marked [Page("/route"[, Policy = "..."])] it generates the [Route] attribute,
-// the INavigableComponent/IStaticRoute marker interfaces, a static GetPageUrl(...) builder, the Policy
-// accessor, and [Parameter] properties for any route tokens.
+// Roslyn replacement for the web-spa Page Moxy mixin (task 053). For a Blazor page class marked
+// [Page("/route"[, Policy = Policies.X])] generates [Route], INavigableComponent/IStaticRoute,
+// GetPageUrl(...), Policy accessor, and [Parameter] props for route tokens.
+#endregion
+
+#region Design
+// Policy is a pit-of-success const binding (task 094), not a free-form string:
+// - Omitted → emit Policies.Anonymous (product must define that const).
+// - Policy = Policies.SettingsEdit (member access / simple identifier const ref) → emit that
+//   expression verbatim so claim values like "settings.edit" work without identifier glue.
+// - String literals and nameof(...) are rejected with TWE005 — one authoring form only.
+// - Never silently fall back to Anonymous when Policy was written but unparseable.
+// Route stays a string literal (routes are inherently literal templates).
+// Attribute Policy property remains string so const string fields are valid attribute args;
+// generation keys off syntax, not the attribute's compile-time string value.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -18,6 +29,15 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
   // {name:type}? — page route tokens carry real C# type names (Guid, int, …), used directly.
   private static readonly Regex RouteParam = new(@"\{(\w+)\s*:?(\w+)\}?", RegexOptions.Compiled);
 
+  private static readonly DiagnosticDescriptor InvalidPolicyDescriptor = new(
+    id: "TWE005",
+    title: "Invalid [Page] Policy argument",
+    messageFormat: "[Page] Policy must be a const field reference (e.g. Policies.SettingsEdit), not a string literal, nameof(...), or other expression. Omit Policy for Policies.Anonymous.",
+    category: "Page",
+    defaultSeverity: DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Pit of success: product policy constants are the single source of truth for registered policy names. Identifier glue and string literals silently mis-authorize.");
+
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     IncrementalValueProvider<string> rootNamespace = context.AnalyzerConfigOptionsProvider.Select(
@@ -28,19 +48,37 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
     context.RegisterSourceOutput(rootNamespace, static (spc, ns) =>
       spc.AddSource("PageAttribute.g.cs", SourceText.From(BuildAttribute(ns), Encoding.UTF8)));
 
-    IncrementalValuesProvider<Page> pages = context.SyntaxProvider.CreateSyntaxProvider(
+    IncrementalValuesProvider<PageModel> pages = context.SyntaxProvider.CreateSyntaxProvider(
       predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Count > 0,
       transform: static (ctx, _) => GetPage((ClassDeclarationSyntax)ctx.Node))
       .Where(static p => p is not null)
       .Select(static (p, _) => p!.Value);
 
     context.RegisterSourceOutput(pages.Combine(rootNamespace), static (spc, pair) =>
-      spc.AddSource($"{pair.Left.HintName}.Page.g.cs", SourceText.From(Emit(pair.Left, pair.Right), Encoding.UTF8)));
+    {
+      PageModel page = pair.Left;
+      if (page.PolicyDiagnostic is not null)
+      {
+        spc.ReportDiagnostic(page.PolicyDiagnostic);
+        return;
+      }
+
+      spc.AddSource($"{page.HintName}.Page.g.cs", SourceText.From(Emit(page, pair.Right), Encoding.UTF8));
+    });
   }
 
-  private readonly struct Page
+  private readonly struct PageModel
   {
-    public Page(string ns, string className, string hintName, string routeAttribute, string signature, string format, IReadOnlyList<(string Type, string Name)> parameters, string? policy)
+    public PageModel(
+      string ns,
+      string className,
+      string hintName,
+      string routeAttribute,
+      string signature,
+      string format,
+      IReadOnlyList<(string Type, string Name)> parameters,
+      string policyExpression,
+      Diagnostic? policyDiagnostic)
     {
       Namespace = ns;
       ClassName = className;
@@ -49,7 +87,8 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
       Signature = signature;
       Format = format;
       Parameters = parameters;
-      Policy = policy;
+      PolicyExpression = policyExpression;
+      PolicyDiagnostic = policyDiagnostic;
     }
 
     public string Namespace { get; }
@@ -59,10 +98,11 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
     public string Signature { get; }
     public string Format { get; }
     public IReadOnlyList<(string Type, string Name)> Parameters { get; }
-    public string? Policy { get; }
+    public string PolicyExpression { get; }
+    public Diagnostic? PolicyDiagnostic { get; }
   }
 
-  private static Page? GetPage(ClassDeclarationSyntax cls)
+  private static PageModel? GetPage(ClassDeclarationSyntax cls)
   {
     AttributeSyntax? attr = cls.AttributeLists
       .SelectMany(static l => l.Attributes)
@@ -71,18 +111,53 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
     if (attr?.ArgumentList is null) return null;
 
     string? route = null;
-    string? policy = null;
+    string? policyExpression = null;
+    Diagnostic? policyDiagnostic = null;
+    bool policyArgumentPresent = false;
+
     foreach (AttributeArgumentSyntax arg in attr.ArgumentList.Arguments)
     {
-      if (arg.Expression is not LiteralExpressionSyntax lit || lit.Token.Value is not string value) continue;
+      string? argName = arg.NameEquals?.Name.Identifier.Text;
 
-      if (arg.NameEquals?.Name.Identifier.Text == "Policy")
-        policy = value;
-      else if (route is null)
-        route = value;
+      if (argName == "Policy")
+      {
+        policyArgumentPresent = true;
+        if (TryGetConstPolicyExpression(arg.Expression, out string expression))
+        {
+          policyExpression = expression;
+        }
+        else
+        {
+          policyDiagnostic = Diagnostic.Create(InvalidPolicyDescriptor, arg.Expression.GetLocation());
+        }
+
+        continue;
+      }
+
+      // Route: constructor positional or named RouteTemplate — string literal only.
+      if (arg.Expression is LiteralExpressionSyntax lit && lit.Token.Value is string value)
+      {
+        if (argName is null || argName == "RouteTemplate")
+          route ??= value;
+      }
     }
 
     if (route is null) return null;
+
+    // Invalid Policy: still return a model so RegisterSourceOutput can report TWE005.
+    if (policyDiagnostic is not null)
+    {
+      return new PageModel(
+        ns: cls.Identifier.Text,
+        className: cls.Identifier.Text,
+        hintName: cls.Identifier.Text,
+        routeAttribute: route,
+        signature: "",
+        format: "",
+        parameters: [],
+        policyExpression: "",
+        policyDiagnostic: policyDiagnostic);
+    }
 
     string? ns = null;
     for (SyntaxNode? p = cls.Parent; p is not null; p = p.Parent)
@@ -107,7 +182,7 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
       }
 
       string name = m.Groups[1].Value;
-      string type = m.Groups[2].Value;          // used directly as the C# type (Guid, int, …)
+      string type = m.Groups[2].Value;
       string lower = type.ToLowerInvariant();
       string fmt = lower == "datetime" ? ":yyyy-MM-dd" : string.Empty;
 
@@ -120,11 +195,50 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
     string signature = string.Join(", ", parameters.Select(static p => p.Type + " " + p.Name));
     string format = string.Join("/", formatParts);
     string hint = ns + "." + cls.Identifier.Text;
+    string policy = policyArgumentPresent
+      ? policyExpression!
+      : "Policies.Anonymous";
 
-    return new Page(ns, cls.Identifier.Text, hint, routeAttribute, signature, format, parameters, policy);
+    return new PageModel(ns, cls.Identifier.Text, hint, routeAttribute, signature, format, parameters, policy, policyDiagnostic: null);
   }
 
-  private static string Emit(Page page, string rootNamespace)
+  /// <summary>
+  /// Accepts only const-style field references: <c>Policies.X</c>, <c>AuthorizationConstants.Policies.X</c>,
+  /// or a simple <c>IdentifierName</c> (e.g. after <c>using static</c>).
+  /// </summary>
+  private static bool TryGetConstPolicyExpression(ExpressionSyntax expression, out string expressionText)
+  {
+    expressionText = "";
+
+    if (IsNameOfExpression(expression))
+      return false;
+
+    if (expression is LiteralExpressionSyntax)
+      return false;
+
+    if (expression is MemberAccessExpressionSyntax or IdentifierNameSyntax)
+    {
+      expressionText = expression.WithoutTrivia().ToString();
+      return expressionText.Length > 0;
+    }
+
+    return false;
+  }
+
+  private static bool IsNameOfExpression(ExpressionSyntax expression)
+  {
+    if (expression is not InvocationExpressionSyntax invocation)
+      return false;
+
+    return invocation.Expression switch
+    {
+      IdentifierNameSyntax id => id.Identifier.Text == "nameof",
+      MemberAccessExpressionSyntax member => member.Name.Identifier.Text == "nameof",
+      _ => false
+    };
+  }
+
+  private static string Emit(PageModel page, string rootNamespace)
   {
     bool hasParameters = page.Parameters.Count > 0;
 
@@ -141,7 +255,7 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
 
     sb.Append("    public static string GetPageUrl(").Append(page.Signature)
       .Append(") => global::System.FormattableString.Invariant($\"").Append(page.Format).Append("\");\n");
-    sb.Append("    public static string Policy { get; } = Policies.").Append(page.Policy ?? "Anonymous").Append(";\n");
+    sb.Append("    public static string Policy { get; } = ").Append(page.PolicyExpression).Append(";\n");
 
     foreach ((string type, string name) in page.Parameters)
       sb.Append("    [Parameter] public ").Append(type).Append(' ').Append(name).Append(" { get; set; }\n");
@@ -158,6 +272,7 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
     sb.Append("    [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = true)]\n");
     sb.Append("    internal sealed class PageAttribute : System.Attribute\n    {\n");
     sb.Append("        public string RouteTemplate { get; set; }\n");
+    sb.Append("        /// <summary>Const policy field reference only (e.g. Policies.SettingsEdit). Omit Policy for the anonymous default.</summary>\n");
     sb.Append("        public string Policy { get; set; }\n");
     sb.Append("        public PageAttribute(string RouteTemplate) { this.RouteTemplate = RouteTemplate; }\n");
     sb.Append("    }\n}\n");
