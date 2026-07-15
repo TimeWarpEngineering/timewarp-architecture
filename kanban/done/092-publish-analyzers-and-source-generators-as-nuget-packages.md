@@ -61,14 +61,14 @@ regions / AGENTS.md when chosen.
 
 ## Checklist
 
-- [ ] Lock PackageId(s), one-vs-two packages, versioning policy
-- [ ] Make analyzer/generator/attributes projects packable with correct Roslyn nupkg layout
-- [ ] Wire package into release pack/push workflow
-- [ ] Switch Directory.Build.props consumers to PackageReference; keep dogfood path for building the packages
-- [ ] Exclude analyzer sources from template content (or condition like foundation)
-- [ ] Verify: pack → install/local feed → sample app gets TWPA diagnostics + generators
-- [ ] Docs: AGENTS.md, template notes, upgrade story for already-generated apps
-- [ ] `dev build` 0/0 in template repo
+- [x] Lock PackageId(s), one-vs-two packages, versioning policy
+- [x] Make analyzer/generator/attributes projects packable with correct Roslyn nupkg layout
+- [x] Wire package into release pack/push workflow
+- [x] Switch Directory.Build.props consumers to PackageReference; keep dogfood path for building the packages
+- [x] Exclude analyzer sources from template content (or condition like foundation)
+- [x] Verify: pack → install/local feed → sample app gets TWPA diagnostics + generators
+- [x] Docs: AGENTS.md, template notes, upgrade story for already-generated apps
+- [x] `dev build` 0/0 in template repo
 
 ## Notes
 
@@ -147,7 +147,56 @@ Three consumer-ready packages; generated app without analyzer source; version po
 Wrong nupkg layout; CodeAnalysis dep leak; chicken-egg unpublished pins (local feed first); Trusted Publishing for new PackageIds.
 
 
+
+## Results
+
+### Summary
+
+Graduated Roslyn convention analyzers, source generators, and attributes to three NuGet packages with foundation-style dual-mode wiring. Generated apps default to package mode (no forked `source/analyzers/**`). Monorepo still dogfoods via ProjectReference.
+
+### Packages
+
+| PackageId | Project | Layout |
+|-----------|---------|--------|
+| TimeWarp.Architecture.Analyzers | convention-analyzers | analyzers/dotnet/cs/ |
+| TimeWarp.Architecture.Generators | analyzers (gens + TWPA0001) | analyzers/dotnet/cs/ |
+| TimeWarp.Architecture.Attributes | attributes | lib/net10.0/ |
+
+### What was implemented
+
+- Packable analyzer projects + `source/analyzers/Directory.Build.props`
+- `UseAnalyzerPackages` dual-mode in source/tests Directory.Build.props
+- Consumer dual-mode: web-spa, api-server, api-contracts
+- CPM PackageVersion pins (2.0.0-beta.3 first ship)
+- Template `analyzerPackages` (default true) + slnx guards
+- Workflow PackableProjects updated
+- AGENTS.md + HowToUpgradeToAnalyzerPackages.md
+
+### Commits
+
+- `5a20f242` feat(analyzers): make analyzer/generator/attributes projects packable
+- `233626cb` feat(analyzers): dual-mode UseAnalyzerPackages, template exclude, pack list
+- `9b6515b7` fix(tests): explicit attributes ProjectReference after PrivateAssets
+
+### Test outcomes
+
+- `dev build` 0/0
+- Analyzer tests 62 passed; sourcegenerator tests 16 passed
+- Pack layout verified; local-feed TWPA0004 smoke OK
+
+### Remaining (ops / post-release)
+
+- NuGet Trusted Publishing for the three new PackageIds before first push
+- Chicken-egg until first publish (local feed or `--analyzerPackages false`)
+- Full `dotnet new` solution e2e optional follow-up
+
+### Review
+
+Clean — no issues (orchestrator review of packaging PR shape).
+
+
 ## Session
 
 - Created: 2026-07-15 (post-merge 278; distribution design discussion)
 - Implementation plan: 2026-07-15 (orchestrate-task 092)
+- Implementation + review: 2026-07-15 (orchestrate-task 092)
