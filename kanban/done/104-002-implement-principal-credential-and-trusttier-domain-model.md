@@ -17,10 +17,10 @@ Core domain: Principal (Id Guid, Kind Human|Agent|Service, TrustTier, CreatedAt)
 
 ## Checklist
 
-- [ ] Types + enums
-- [ ] Storage abstraction or EF config as needed
-- [ ] Design regions capture hybrid identity + tiers
-- [ ] Unit tests for invariants
+- [x] Types + enums
+- [x] Storage abstraction or EF config as needed
+- [x] Design regions capture hybrid identity + tiers
+- [x] Unit tests for invariants
 
 ## Notes
 
@@ -79,3 +79,45 @@ WebAuthn (003), agent tokens (004), list/revoke APIs (005), ceremony tests (006)
 
 - Created: 2026-07-16
 - Plan: 2026-07-16 (orchestrate-task 104-002)
+- Implementation: 2026-07-16
+- Review: 2026-07-16 (bugs fixed; re-verified)
+
+## Results
+
+### Summary
+Implemented Principal / Credential / TrustTier domain model in dependency-free **TimeWarp.Identity**: value id, enums, entities, `IPrincipalStore` + `InMemoryPrincipalStore`, Fixie+Shouldly unit tests.
+
+### Files changed
+| Action | Path |
+|--------|------|
+| Created | `source/libraries/timewarp-identity/principal-id.cs` |
+| Created | `source/libraries/timewarp-identity/principal-kind.cs` |
+| Created | `source/libraries/timewarp-identity/trust-tier.cs` |
+| Created | `source/libraries/timewarp-identity/credential-type.cs` |
+| Created | `source/libraries/timewarp-identity/principal.cs` |
+| Created | `source/libraries/timewarp-identity/credential.cs` |
+| Created | `source/libraries/timewarp-identity/i-principal-store.cs` |
+| Created | `source/libraries/timewarp-identity/in-memory-principal-store.cs` |
+| Created | `tests/libraries/timewarp-identity-tests/**` |
+| Edited | `timewarp-architecture.slnx` |
+| Edited | `.template.config/template.json` (`tests/libraries/**` exclude under foundationPackages) |
+
+### Key decisions
+- Package remains dependency-free (no Foundation.Domain, EF, GuardClauses)
+- Persistence port only: `IPrincipalStore` + ConcurrentDictionary store; EF later in host
+- Handle uniqueness key is `(CredentialType, hex(handle))`
+- BCL `Argument*Exception` / `InvalidOperationException` for invariants
+- `DateTimeOffset` for timestamps (not `DateTime`)
+- Credential getters return array **copies**; empty `PrincipalId` rejected at `Credential.Create`
+- In-memory store documents reference semantics (shared entity instances)
+
+### Build / tests
+- `dev build`: **0 warnings, 0 errors**
+- `dotnet fixie tests/libraries/timewarp-identity-tests`: **35 passed** (after review fixes)
+
+### Review
+- First pass: bugs (mutable getters, empty PrincipalId), suggestions (DateTimeOffset, store semantics)
+- Fixes applied; tests expanded for getter immutability, empty id, undefined type
+
+### Next
+104-003 WebAuthn passkey register/authenticate

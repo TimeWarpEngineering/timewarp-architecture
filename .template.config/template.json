@@ -78,7 +78,8 @@
             "source/foundation/**",
             "source/libraries/timewarp-modules/**",
             "source/libraries/timewarp-identity/**",
-            "tests/foundation/**"
+            "tests/foundation/**",
+            "tests/libraries/**"
           ]
         },
         {

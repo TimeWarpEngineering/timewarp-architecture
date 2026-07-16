@@ -54,6 +54,7 @@
     <Project Path="tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj" />
     <Project Path="tests/foundation/foundation-contracts-tests/foundation-contracts-tests.csproj" />
     <Project Path="tests/foundation/foundation-infrastructure-tests/foundation-infrastructure-tests.csproj" />
+    <Project Path="tests/libraries/timewarp-identity-tests/timewarp-identity-tests.csproj" />
     <!--#endif -->
     <!--#if (!analyzerPackages) -->
     <Project Path="tests/analyzers/timewarp-architecture-analyzers-tests/timewarp-architecture-analyzers-tests.csproj" />
