@@ -81,6 +81,7 @@ WebAuthn (003), agent tokens (004), list/revoke APIs (005), ceremony tests (006)
 - Plan: 2026-07-16 (orchestrate-task 104-002)
 - Implementation: 2026-07-16
 - Review: 2026-07-16 (bugs fixed; re-verified)
+- Architecture review: 2026-07-16 — [2026-07-16-code-review.md](2026-07-16-code-review.md); items 1–4 to resolve before 104-003
 
 ## Results
 
