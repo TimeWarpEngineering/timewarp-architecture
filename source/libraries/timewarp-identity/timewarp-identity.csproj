@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Version + shared metadata inherited from source/Directory.Build.props (single repo version). -->
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>TimeWarp.Identity</PackageId>
+    <Title>TimeWarp.Identity</Title>
+    <Description>Principal identity (passkeys, agent keys, sessions/tokens, trust tiers) for TimeWarp applications.</Description>
+    <PackageTags>timewarp;identity;webauthn;passkey;agents</PackageTags>
+  </PropertyGroup>
+</Project>

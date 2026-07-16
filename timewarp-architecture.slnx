@@ -11,6 +11,7 @@
   </Folder>
   <Folder Name="/source/libraries/">
     <Project Path="source/libraries/timewarp-modules/timewarp-modules.csproj" />
+    <Project Path="source/libraries/timewarp-identity/timewarp-identity.csproj" />
   </Folder>
   <!--#endif -->
   <!--#if (!analyzerPackages) -->

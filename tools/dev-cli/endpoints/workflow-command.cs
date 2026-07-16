@@ -9,8 +9,9 @@
 // produced master. A release publishes as long as it builds. Publishing is gated only by an
 // API key being supplied (--api-key, from OIDC Trusted Publishing); without one, pack-only.
 // Handlers are invoked directly (no ./bin/dev dependency) so this runs in a clean CI checkout.
-// PackableProjects includes foundation + TimeWarp.Architecture.{Attributes,Analyzers,Generators}
-// (task 092) + the template package; single Version from source/Directory.Build.props.
+// PackableProjects includes source/libraries (TimeWarp.Modules, TimeWarp.Identity), foundation,
+// TimeWarp.Architecture.{Attributes,Analyzers,Generators} (task 092), and the template package;
+// single Version from source/Directory.Build.props.
 #endregion
 
 namespace DevCli.Commands;
@@ -24,12 +25,14 @@ internal sealed class WorkflowCommand : ICommand<Unit>
   [Option("api-key", "k", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
   public string? ApiKey { get; set; }
 
-  // The publishable set — single repo version (source/Directory.Build.props). timewarp-modules ships
-  // because foundation-application depends on it; analyzers/generators/attributes ship as the
-  // platform compile-time packages (task 092); the template is the dotnet-new package.
+  // The publishable set — single repo version (source/Directory.Build.props). libraries (modules,
+  // identity) ship as leaf product packages; foundation-application depends on modules; analyzers/
+  // generators/attributes ship as platform compile-time packages (task 092); the template is the
+  // dotnet-new package.
   internal static readonly string[] PackableProjects =
   [
     "source/libraries/timewarp-modules/timewarp-modules.csproj",
+    "source/libraries/timewarp-identity/timewarp-identity.csproj",
     "source/foundation/foundation-domain/foundation-domain.csproj",
     "source/foundation/foundation-contracts/foundation-contracts.csproj",
     "source/foundation/foundation-application/foundation-application.csproj",
