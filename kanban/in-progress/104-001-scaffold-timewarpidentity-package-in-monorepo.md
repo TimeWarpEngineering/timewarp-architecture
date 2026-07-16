@@ -16,10 +16,10 @@ Create the TimeWarp.Identity project(s), wire CPM/solution, AssemblyMarker, empt
 
 ## Checklist
 
-- [ ] Create csproj + folder
-- [ ] Solution / Directory.Build wiring
-- [ ] AssemblyMarker
-- [ ] `dev build` includes package cleanly
+- [x] Create csproj + folder
+- [x] Solution / Directory.Build wiring
+- [x] AssemblyMarker
+- [x] `dev build` includes package cleanly
 
 ## Notes
 
@@ -77,3 +77,32 @@ Principal/Credential (002), WebAuthn (003), agent keys (004), multi-cred (005), 
 
 - Created: 2026-07-16
 - Plan: 2026-07-16 (orchestrate-task 104-001)
+- Implementation: 2026-07-16
+- Review: clean (template exclude fix)
+
+## Results
+
+### Summary
+Scaffolded empty packable **TimeWarp.Identity** under `source/libraries/timewarp-identity/`, matching the `timewarp-modules` pattern. Wired into solution and pack pipeline; template excludes identity source when `foundationPackages=true`.
+
+### Files changed
+| Action | Path |
+|--------|------|
+| Created | `source/libraries/timewarp-identity/timewarp-identity.csproj` |
+| Created | `source/libraries/timewarp-identity/assembly-marker.cs` |
+| Edited | `timewarp-architecture.slnx` |
+| Edited | `tools/dev-cli/endpoints/workflow-command.cs` (PackableProjects + Design) |
+| Edited | `.template.config/template.json` (exclude under foundationPackages) |
+
+### Key decisions
+- Location: `source/libraries/` not `foundation/` (PackageId `TimeWarp.Identity`, not Foundation.*)
+- Empty surface only: `IAssemblyMarker` public type
+- No app ProjectReference, no CPM PackageVersion, no domain types
+- Template exclude aligned with modules for dual-mode packaging
+
+### Build / tests
+- `dev build`: **0 warnings, 0 errors**
+- Review: first pass found missing template exclude (fixed); re-review clean
+
+### Next
+104-002 Principal / Credential / TrustTier domain model
