@@ -51,6 +51,41 @@ Trust tiers: Keyed (has credential), Funded (paid/credit), later Established/Qua
 
 ### Decision workspace
 
+### Fold-in implementation plan (2026-07-17)
+
+Source of truth: `rfc/rfc.md` §7.1. No further ballot.
+
+#### D2 — Enum zeros (do first — renumbers cascade)
+- `PrincipalKind`: None=0, Human=1, Agent=2, Service=3
+- `TrustTier` (progression only — remove Quarantined): None=0, Provisional=1, Keyed=2, Funded=3, Established=4
+- `CredentialType`: None=0, Passkey=1, AgentKey=2
+- Reject None at Create / Promote / Credential.Create
+
+#### D1 — Trust model (C refined)
+- `Principal.IsQuarantined` bool (default false)
+- Remove `SetTrustTier`
+- `Promote(TrustTier target)` — only forward progression among Provisional→Keyed→Funded→Established; reject None/quarantine coupling; reject if quarantined
+- `Quarantine()` / `ClearQuarantine()`
+- Birth: `Create` → TrustTier.Provisional, IsQuarantined=false
+- `MarkKeyedOnFirstCredential()` or store calls Promote(Keyed) when first cred added — implement on Principal: `RecordCredentialAttached()` promotes Provisional→Keyed if not quarantined
+- Named predicates: `IsFundedAndActive` => !IsQuarantined && TrustTier is Funded or Established; `IsKeyedOrHigherAndActive` as needed
+
+#### D3 — CredentialId
+- `credential-id.cs` mirror PrincipalId (New/From/IsEmpty)
+- Credential.Id type CredentialId; store GetCredentialAsync(CredentialId)
+
+#### D7 — UpdateCredential
+- Remove handle-migration branch; Update only replaces same Id; document Type/Handle immutable; Update used for revoke/label persistence
+
+#### Design regions
+- Document D1–D4, D6–D8, D5 deferred to 104-006
+- Store: LWW, shared refs, FindCredentialByHandle returns revoked
+
+#### Tests
+- Update all for new enum values, Provisional birth, quarantine, promote rules, CredentialId, no free SetTrustTier
+- Reject None kinds/tiers/types
+
+
 - Working RFC: [`rfc/rfc.md`](rfc/rfc.md) (ballots tallied 2026-07-17)
 - Post-impl review: [`2026-07-16-code-review.md`](2026-07-16-code-review.md)
 - Fold-in happens **on this task id** (agent-collaboration / rfc-ballot). Archived process residue **104-026** was incorrect.
