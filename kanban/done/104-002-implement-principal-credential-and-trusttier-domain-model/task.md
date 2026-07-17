@@ -122,3 +122,26 @@ Implemented Principal / Credential / TrustTier domain model in dependency-free *
 
 ### Next
 104-003 WebAuthn passkey register/authenticate
+
+## RFC ballot (2026-07-17)
+
+Working material: [`rfc/rfc.md`](rfc/rfc.md)  
+Post-implementation code review: [`2026-07-16-code-review.md`](2026-07-16-code-review.md)
+
+### Tally summary
+| # | Resolution |
+|---|------------|
+| 1 Trust | C refined (quarantine flag + constrained transitions + birth floor) |
+| 2 Enum zeros | B renumber with reserved 0 |
+| 3 CredentialId | B add wrapper |
+| 4 Store snapshots | A keep shared refs; document LWW |
+| 5 TimeProvider | Defer to 104-006 |
+| 6 Concurrency | A LWW docs only |
+| 7 Update handle | B delete dead branch |
+| 8 Material type | A byte[] copies |
+
+### Fold-in
+Code changes: **104-026** (blocks 104-003).
+
+### Session
+- RFC ballot: 2026-07-17 (3 reviewers: A, B, adversarial-C)
