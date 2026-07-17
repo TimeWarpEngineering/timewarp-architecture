@@ -46,14 +46,14 @@ public readonly partial record struct PrincipalId;
 
 ## Checklist
 
-- [ ] `[TypedId]` attribute injection + incremental generator (BCL surface)
-- [ ] Generated STJ JsonConverter (string form, fail-closed read, dictionary keys)
-- [ ] Parsing/TypeConverter/IComparable members
-- [ ] EF ValueConverter + ConfigureConventions generation into EF-referencing compilations
-- [ ] Migrate PrincipalId + CredentialId; delete hand-written duplicated members
-- [ ] Generator snapshot tests
-- [ ] Identity round-trip/parse/compare tests
-- [ ] `dev build` 0/0; all identity + analyzer test projects pass
+- [x] `[TypedId]` attribute injection + incremental generator (BCL surface)
+- [x] Generated STJ JsonConverter (string form, fail-closed read, dictionary keys)
+- [x] Parsing/TypeConverter/IComparable members
+- [x] EF ValueConverter + ConfigureConventions generation into EF-referencing compilations
+- [x] Migrate PrincipalId + CredentialId; delete hand-written duplicated members
+- [x] Generator snapshot tests
+- [x] Identity round-trip/parse/compare tests
+- [x] `dev build` 0/0; all identity + analyzer test projects pass
 
 ## Notes
 
@@ -160,3 +160,41 @@ dev build 0/0; fixie identity tests + sourcegenerator tests
 
 ## Session
 - Started: 2026-07-17 (orchestrate-task 104-027)
+
+## Results
+
+### Summary
+Added `[TypedId]` incremental source generator to `TimeWarp.Architecture.Generators` and migrated
+`PrincipalId` / `CredentialId` to partial declarations. Generated STJ converter serializes as plain
+Guid string and **throws on empty** at read (closes the proven fail-open STJ default bug). EF
+ValueConverters + `ConfigureTypedIdConventions` emit only when EF is referenced (not on Identity).
+
+### Files changed
+| Action | Path |
+|--------|------|
+| Created | `source/analyzers/.../generators/typed-id-source-generator.cs` |
+| Edited | `timewarp-architecture-analyzers.csproj` (package description) |
+| Edited | `timewarp-identity.csproj` (generator Analyzer dual-mode) |
+| Edited | `principal-id.cs`, `credential-id.cs` → `[TypedId]` partials |
+| Created | `typed-id-source-generator-tests.cs` |
+| Edited | `principal-id-tests.cs`, `credential-id-tests.cs` |
+
+### Key decisions
+- Attribute injected public in `TimeWarp.Architecture` (not Attributes package) so EF hosts see it on referenced ids
+- Comparison operators emitted for CA1036 with IComparable
+- EF converters internal in `TimeWarp.Architecture.TypedIds.Ef`
+- Identity remains EF-free
+- Known: dual attribute emission CS0436 if host both refs Identity and re-emits attribute — follow-up when first EF host attaches generator
+
+### Build / tests
+- `dev build`: 0 warnings / 0 errors
+- `dotnet fixie tests/libraries/timewarp-identity-tests`: **71 passed**
+- `dotnet fixie tests/analyzers/timewarp-architecture-sourcegenerator-tests`: **26 passed**
+
+### Gates
+Unblocks **104-003** (WebAuthn / contracts can carry typed ids safely).
+
+## Session
+- Created: 2026-07-17
+- Implementation: 2026-07-17 (orchestrate-task 104-027)
+- Review: orchestrator spot-check on converter/empty/EF split; tests green

@@ -4,35 +4,14 @@
 
 #region Design
 // Hybrid identity: the server mints PrincipalId (Guid v7) at first registration; passkeys/agent keys bind to it later.
-// Wrapping Guid in a readonly record struct prevents accidental mix-ups with credential ids and other Guids at call sites.
-// Empty is rejected — an unassigned id is not a principal.
+// [TypedId] generates the house BCL surface (Value/New/From, STJ JsonConverter as plain Guid string fail-closed on empty,
+// IParsable/ISpanParsable, TypeConverter, IComparable) so call sites cannot mix principal Guids with credential Guids
+// and contracts never fail-open to default(PrincipalId). Empty remains unguardable for default(T) — use IsEmpty at edges.
 #endregion
 
 namespace TimeWarp.Identity;
 
-public readonly record struct PrincipalId
-{
-  public Guid Value { get; }
+using TimeWarp.Architecture;
 
-  /// <summary>True when this is the default struct (never produced by <see cref="New"/> or <see cref="From"/>).</summary>
-  public bool IsEmpty => Value == Guid.Empty;
-
-  private PrincipalId(Guid value)
-  {
-    Value = value;
-  }
-
-  public static PrincipalId New() => new(Guid.CreateVersion7());
-
-  public static PrincipalId From(Guid value)
-  {
-    if (value == Guid.Empty)
-    {
-      throw new ArgumentException("PrincipalId cannot be empty.", nameof(value));
-    }
-
-    return new PrincipalId(value);
-  }
-
-  public override string ToString() => Value.ToString();
-}
+[TypedId]
+public readonly partial record struct PrincipalId;

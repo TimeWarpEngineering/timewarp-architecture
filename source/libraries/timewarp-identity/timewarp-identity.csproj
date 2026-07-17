@@ -7,4 +7,14 @@
     <Description>Principal identity (passkeys, agent keys, sessions/tokens, trust tiers) for TimeWarp applications.</Description>
     <PackageTags>timewarp;identity;webauthn;passkey;agents</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- [TypedId] BCL surface for PrincipalId / CredentialId (task 104-027). Generators only —
+         not the repo-wide convention analyzer package. -->
+    <ProjectReference Include="../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Architecture.Generators" PrivateAssets="all"
+                      Condition="'$(UseAnalyzerPackages)' == 'true'" />
+  </ItemGroup>
 </Project>
