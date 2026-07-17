@@ -116,3 +116,47 @@ serialization gap.
 ## Session
 
 - Created: 2026-07-17 (architecture review follow-up; StronglyTypedId comparison)
+
+### Implementation plan (104-027)
+
+#### Generator home
+`source/analyzers/timewarp-architecture-analyzers/generators/typed-id-source-generator.cs`
+Package: TimeWarp.Architecture.Generators (existing).
+
+#### Attribute injection
+`RegisterPostInitializationOutput` emits public sealed `TimeWarp.Architecture.TypedIdAttribute`
+(AttributeTargets.Struct). Public so EF-host compilations can see it on referenced id types.
+Still no Attributes package / no Identity package reference — attribute source is generated into each
+compilation that runs the generator.
+
+#### BCL surface (per [TypedId] partial readonly record struct in this compilation)
+Emit `{Type}.TypedId.g.cs`:
+- private ctor(Guid value)
+- Value, IsEmpty
+- New() CreateVersion7, From rejects Empty
+- IComparable<T>, CompareTo
+- IParsable/ISpanParsable TryParse/Parse
+- TypeConverter nested or companion
+- JsonConverter: plain Guid string write; read throws on empty; dictionary key support
+- [JsonConverter(typeof(...))] on the partial
+- ToString → Guid string
+
+#### EF surface (only if compilation references EF Core ValueConverter)
+Scan TypedId types declared **in this compilation and referenced assemblies** (attribute metadata name).
+Emit `{Type}ValueConverter.g.cs` + single `TypedIdModelBuilderExtensions.g.cs` with
+`ConfigureTypedIdConventions(this ModelConfigurationBuilder)` registering all converters.
+Do **not** emit EF into TimeWarp.Identity (no EF ref).
+
+#### Wire Identity
+- ProjectReference Generators as Analyzer on `timewarp-identity.csproj`
+- Collapse principal-id.cs / credential-id.cs to partial + Purpose/Design + [TypedId]
+
+#### Tests
+- `typed-id-source-generator-tests.cs` in sourcegenerator-tests (snapshot/contain assertions)
+- Identity tests: JSON string form, empty reject on read, Parse/TryParse, TypeConverter, Compare
+
+#### Verify
+dev build 0/0; fixie identity tests + sourcegenerator tests
+
+## Session
+- Started: 2026-07-17 (orchestrate-task 104-027)
