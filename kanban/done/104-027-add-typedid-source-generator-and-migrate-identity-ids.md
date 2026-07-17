@@ -124,8 +124,10 @@ serialization gap.
 Package: TimeWarp.Architecture.Generators (existing).
 
 #### Attribute injection
-`RegisterPostInitializationOutput` emits public sealed `TimeWarp.Architecture.TypedIdAttribute`
-(AttributeTargets.Struct). Public so EF-host compilations can see it on referenced id types.
+`RegisterPostInitializationOutput` emits `TimeWarp.Architecture.TypedIdAttribute`
+(AttributeTargets.Struct). ~~Public so EF-host compilations can see it on referenced id types.~~
+**Superseded by Review fold-in finding 1: internal** — public caused CS0436, and Roslyn reads
+attribute applications from metadata regardless of attribute-class accessibility.
 Still no Attributes package / no Identity package reference — attribute source is generated into each
 compilation that runs the generator.
 
@@ -180,7 +182,7 @@ ValueConverters + `ConfigureTypedIdConventions` emit only when EF is referenced 
 | Edited | `principal-id-tests.cs`, `credential-id-tests.cs` |
 
 ### Key decisions
-- Attribute injected public in `TimeWarp.Architecture` (not Attributes package) so EF hosts see it on referenced ids
+- Attribute injected in `TimeWarp.Architecture` (not Attributes package); **internal** per Review fold-in finding 1 (public caused CS0436; metadata scanning never needed public)
 - Comparison operators emitted for CA1036 with IComparable
 - EF converters internal in `TimeWarp.Architecture.TypedIds.Ef`
 - Identity remains EF-free
