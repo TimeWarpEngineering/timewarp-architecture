@@ -29,6 +29,7 @@ Legacy Passwordless.dev in SPA is reference only — first-party is the goal.
 ### Depends on
 
 104-002
+104-027 (TypedId source generator — id JsonConverter closes a fail-open STJ gap; do not put PrincipalId/CredentialId in contracts before it lands)
 
 ## Session
 
