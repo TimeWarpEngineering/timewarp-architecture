@@ -198,3 +198,48 @@ Unblocks **104-003** (WebAuthn / contracts can carry typed ids safely).
 - Created: 2026-07-17
 - Implementation: 2026-07-17 (orchestrate-task 104-027)
 - Review: orchestrator spot-check on converter/empty/EF split; tests green
+- Architecture review + fold-in: 2026-07-17 (see Review fold-in below); pending independent re-review
+
+## Review fold-in (2026-07-17)
+
+Post-completion architecture review found one confirmed defect and three debt items; per the
+no-tech-debt rule all were fixed in the same task.
+
+### Findings → fixes
+
+1. **CS0436 build break (confirmed by probe)** — the injected `TypedIdAttribute` was `public`, so
+   `timewarp-identity.dll` exported it; any second generator-running assembly referencing identity
+   (104-004's session/token ids) got `warning CS0436` at every `[TypedId]` site → error under
+   warnings-as-errors. The stated reason for `public` (EF metadata scanning) was wrong: Roslyn reads
+   attribute *applications* from metadata regardless of attribute-class accessibility.
+   **Fix**: both injected attributes are now `internal`. Probe re-run: 0 warnings. New test
+   `Should_Not_Collide_When_Host_Declares_Own_Ids_And_References_Id_Assembly` locks it in.
+2. **EF pass was non-incremental and walked every referenced assembly's namespace tree** (raw
+   `CompilationProvider` → `RegisterSourceOutput`, ~200 framework assemblies per run in an IDE).
+   **Fix**: compilations declaring ids are stamped with `[assembly: TypedIdsEmbedded]`; the EF pass
+   only walks marked assemblies, and its output is keyed on an equatable model (HasEf + sorted id
+   list) so it regenerates only when the id set or EF-ness changes.
+3. **Latent: referenced-assembly ids were never discoverable** — `IsRecord` is false for record
+   structs loaded from metadata (they compile to plain structs), so the old scan silently rejected
+   every cross-assembly id; the old EF test only used same-compilation stubs and never caught it.
+   **Fix**: metadata candidates are validated by generated member shape (`Value` Guid property +
+   static `From`) instead of `IsRecord`. New cross-assembly test compiles an id assembly, references
+   it from an EF host, and asserts the converter is emitted. (Transitive references are covered
+   because MSBuild passes the transitive closure to the compiler — the review's initial "direct
+   references only" concern was unfounded and is documented in the Design region.)
+4. **Silent skip of invalid shapes** — `[TypedId]` on a non-partial/non-readonly/plain struct
+   generated nothing; a contract carrying such an id would compile and serialize fail-open as `{}`.
+   **Fix**: **TWE006** (Error) reports at the declaration; tests for non-partial record struct and
+   plain struct. Also: multiple attributed partial declarations of one type now emit once instead of
+   colliding on hint name.
+
+### Verification (fold-in)
+- `dev build`: 0 warnings / 0 errors
+- `dotnet fixie tests/analyzers/timewarp-architecture-sourcegenerator-tests`: 32 passed
+- `dotnet fixie tests/libraries/timewarp-identity-tests`: 71 passed
+- CS0436 probe (second assembly with own attribute copy + identity reference): 0 warnings
+
+### Still-open (accepted, on the publish checklist — not debt in this repo)
+Package-mode (`UseAnalyzerPackages=true`) consumers of identity **source** need a published
+`TimeWarp.Architecture.Generators` containing TypedId; ship Generators before or with the first
+release that includes `TimeWarp.Identity` source. In-repo dual-mode is unaffected.
