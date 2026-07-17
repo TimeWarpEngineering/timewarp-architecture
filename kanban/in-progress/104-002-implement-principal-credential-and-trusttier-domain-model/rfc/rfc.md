@@ -1,14 +1,14 @@
 # RFC: Ratify TimeWarp.Identity domain model before Wave 1 ceremonies
 
-**Status:** Ballots tallied (2026-07-17). Resolutions recorded; code fold-in = task **104-026**. Not product law until 104-026 lands.
-**Host task:** 104-002 (done implementation) — debate material only under `rfc/`.
+**Status:** Ballots tallied (2026-07-17). Resolutions recorded; **fold-in on host task 104-002** (reopened in-progress). Not product law until fold-in lands on this task.
+**Host task:** 104-002 — kitchen for RFC + fold-in (agent-collaboration same-task rule).
 **Parent program:** 104 (Agent-ready Identity and x402).
 **Author:** orchestrator (Grok), 2026-07-17.
 **Audience:** Independent reviewers. Append a ballot under [Reviewer opinions](#reviewer-opinions)
 using the template at the bottom. Do **not** rewrite others' entries.
 
-> **Working material, not law.** Resolutions fold into Design regions, product code, and/or
-> follow-up kanban tasks. Do not treat this RFC as a rule until fold-in is recorded in task Results.
+> **Working material, not law.** Resolutions fold into Design regions and product code **on task
+> 104-002**. Do not treat this RFC as a rule until fold-in is recorded in task Results.
 
 ---
 
@@ -300,19 +300,23 @@ If ballots accept leans, implement **before 104-003** in this order:
 
 **Decision 8 — A:** Keep `byte[]` copy-on-get for Wave 1.
 
-### 7.2 Pre-003 implementation task
+### 7.2 Fold-in (same host task)
 
-Fold-in code: **104-026** — *Apply 104-002 RFC ballot resolutions to Identity domain*  
-Must complete (or be explicitly waived) before **104-003**.
+Per **agent-collaboration** / **rfc-ballot**: fold-in is **104-002**, not a sibling process task.
+Erroneous child **104-026** was archived (process residue).
+
+- Host **104-002** reopened → **in-progress**
+- Stop-the-line code (D1 refined, D2, D3, D7) + Design updates for deferred items live on 104-002 checklist
+- **104-003** remains backlog until 104-002 is done with fold-in complete
 
 ---
 
-## 8. Fold-in checklist
+## 8. Fold-in checklist (host 104-002)
 
-- [ ] 104-026 implements stop-the-line: D1 refined, D2, D3, D7
-- [ ] Design regions updated
+- [ ] On **104-002**: implement D1 refined, D2, D3, D7
+- [ ] Design regions updated (incl. D4/D6/D8 docs; D5 deferred note)
 - [ ] Tests green
-- [ ] This RFC status banner: folded in when 104-026 done
-- [ ] 104-002 Results link resolutions + 104-026
-- [ ] D4/D5/D6/D8 documented in Design (no code required for 003)
+- [ ] This RFC status banner: folded in when 104-002 re-done
+- [ ] 104-002 Results cover ballot outcome **and** what landed in the repo
+- [ ] Do **not** create another “apply resolutions” task
 

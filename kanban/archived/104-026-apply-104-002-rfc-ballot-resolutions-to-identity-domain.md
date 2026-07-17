@@ -1,14 +1,18 @@
 # Apply 104-002 RFC ballot resolutions to Identity domain
 
+> **ARCHIVED — process residue (2026-07-17).** Violates agent-collaboration
+> **Same task through fold-in**. Fold-in lives on host **104-002** (reopened
+> in-progress). Do not revive this task; do not create similar “apply RFC”
+> siblings.
+
 ## Parent
 
 104
 
 ## Description
 
-Fold in the resolved decisions from
-`kanban/done/104-002-…/rfc/rfc.md` into `TimeWarp.Identity` code, Design
-regions, and tests. **Blocks 104-003** until stop-the-line items land.
+~~Fold in the resolved decisions from 104-002 RFC into Identity.~~ Superseded:
+implement fold-in on **104-002** checklist / Results.
 
 ## Source RFC
 
