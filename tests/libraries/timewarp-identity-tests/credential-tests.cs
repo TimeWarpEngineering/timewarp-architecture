@@ -10,7 +10,8 @@ public class Create
 
     Credential credential = Credential.Create(principalId, CredentialType.Passkey, handle, material, " laptop ");
 
-    credential.Id.ShouldNotBe(Guid.Empty);
+    credential.Id.IsEmpty.ShouldBeFalse();
+    credential.Id.Value.ShouldNotBe(Guid.Empty);
     credential.PrincipalId.ShouldBe(principalId);
     credential.Type.ShouldBe(CredentialType.Passkey);
     credential.Handle.ShouldBe(handle);
@@ -47,6 +48,10 @@ public class Create
   public void Rejects_empty_principal_id() =>
     Should.Throw<ArgumentException>(() =>
       Credential.Create(default, CredentialType.Passkey, [1], [2]));
+
+  public void Rejects_none_type() =>
+    Should.Throw<ArgumentOutOfRangeException>(() =>
+      Credential.Create(PrincipalId.New(), CredentialType.None, [1], [2]));
 
   public void Rejects_undefined_type() =>
     Should.Throw<ArgumentOutOfRangeException>(() =>

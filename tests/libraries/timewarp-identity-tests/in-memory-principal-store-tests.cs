@@ -13,6 +13,7 @@ public class Principals
     loaded.ShouldNotBeNull();
     loaded.Id.ShouldBe(principal.Id);
     loaded.Kind.ShouldBe(PrincipalKind.Human);
+    loaded.TrustTier.ShouldBe(TrustTier.Provisional);
   }
 
   public async Task Duplicate_principal_id_fails()
@@ -31,7 +32,7 @@ public class Principals
     await store.AddPrincipalAsync(principal);
 
     principal.SetDisplayName("bot");
-    principal.SetTrustTier(TrustTier.Funded);
+    principal.Promote(TrustTier.Funded);
     await store.UpdatePrincipalAsync(principal);
 
     Principal? loaded = await store.GetPrincipalAsync(principal.Id);
@@ -50,6 +51,37 @@ public class Principals
 
 public class Credentials
 {
+  public async Task First_credential_promotes_provisional_to_keyed()
+  {
+    var store = new InMemoryPrincipalStore();
+    Principal principal = Principal.Create(PrincipalKind.Human);
+    await store.AddPrincipalAsync(principal);
+    principal.TrustTier.ShouldBe(TrustTier.Provisional);
+
+    Credential credential = Credential.Create(principal.Id, CredentialType.Passkey, [1], [2]);
+    await store.AddCredentialAsync(credential);
+
+    Principal? loaded = await store.GetPrincipalAsync(principal.Id);
+    loaded.ShouldNotBeNull();
+    loaded.TrustTier.ShouldBe(TrustTier.Keyed);
+  }
+
+  public async Task First_credential_promotes_to_keyed_even_when_quarantined()
+  {
+    var store = new InMemoryPrincipalStore();
+    Principal principal = Principal.Create(PrincipalKind.Human);
+    principal.Quarantine();
+    await store.AddPrincipalAsync(principal);
+
+    await store.AddCredentialAsync(Credential.Create(principal.Id, CredentialType.Passkey, [1], [2]));
+
+    Principal? loaded = await store.GetPrincipalAsync(principal.Id);
+    loaded.ShouldNotBeNull();
+    loaded.TrustTier.ShouldBe(TrustTier.Keyed);
+    loaded.IsQuarantined.ShouldBeTrue();
+    loaded.IsActive.ShouldBeFalse();
+  }
+
   public async Task Multi_credential_per_principal_is_allowed()
   {
     var store = new InMemoryPrincipalStore();
@@ -64,6 +96,7 @@ public class Credentials
 
     IReadOnlyList<Credential> list = await store.ListCredentialsAsync(principal.Id);
     list.Count.ShouldBe(2);
+    principal.TrustTier.ShouldBe(TrustTier.Keyed);
   }
 
   public async Task Find_by_handle_returns_match()
@@ -79,6 +112,23 @@ public class Credentials
     Credential? found = await store.FindCredentialByHandleAsync(CredentialType.AgentKey, [10, 20, 30]);
     found.ShouldNotBeNull();
     found.Id.ShouldBe(credential.Id);
+  }
+
+  public async Task Find_by_handle_returns_revoked_credential()
+  {
+    var store = new InMemoryPrincipalStore();
+    Principal principal = Principal.Create(PrincipalKind.Human);
+    await store.AddPrincipalAsync(principal);
+
+    byte[] handle = [11, 22];
+    Credential credential = Credential.Create(principal.Id, CredentialType.Passkey, handle, [1]);
+    await store.AddCredentialAsync(credential);
+    credential.Revoke();
+    await store.UpdateCredentialAsync(credential);
+
+    Credential? found = await store.FindCredentialByHandleAsync(CredentialType.Passkey, handle);
+    found.ShouldNotBeNull();
+    found.IsRevoked.ShouldBeTrue();
   }
 
   public async Task Duplicate_type_and_handle_fails()
@@ -147,5 +197,13 @@ public class Credentials
     Credential? loaded = await store.GetCredentialAsync(credential.Id);
     loaded.ShouldNotBeNull();
     loaded.PrincipalId.ShouldBe(principal.Id);
+    loaded.Id.ShouldBe(credential.Id);
+  }
+
+  public async Task Update_missing_credential_fails()
+  {
+    var store = new InMemoryPrincipalStore();
+    Credential credential = Credential.Create(PrincipalId.New(), CredentialType.Passkey, [1], [2]);
+    await Should.ThrowAsync<InvalidOperationException>(() => store.UpdateCredentialAsync(credential));
   }
 }

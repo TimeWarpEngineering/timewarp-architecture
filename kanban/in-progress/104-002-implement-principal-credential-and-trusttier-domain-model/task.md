@@ -27,13 +27,13 @@ Core domain: Principal (Id Guid, Kind Human|Agent|Service, TrustTier, CreatedAt)
 - [x] Unit tests for invariants
 
 ### RFC fold-in (same task — before re-done)
-- [ ] **D1** Trust: orthogonal quarantine flag; constrained Promote/Quarantine/ClearQuarantine (no free SetTrustTier); birth floor; named predicates (`IsFundedAndActive`)
-- [ ] **D2** Enum zeros: reserve `0 = None/Unknown`; reject None at domain entry
-- [ ] **D3** Add `CredentialId`; store APIs use it
-- [ ] **D7** Delete dead `UpdateCredentialAsync` handle-migration branch; document immutable Type/Handle
-- [ ] Design regions updated for D1–D4, D6–D8 as resolved
-- [ ] Unit tests updated; `dev build` 0/0; identity tests green
-- [ ] RFC banner: folded in; Results cover ballot **and** fold-in
+- [x] **D1** Trust: orthogonal quarantine flag; constrained Promote/Quarantine/ClearQuarantine (no free SetTrustTier); birth floor; named predicates (`IsFundedAndActive`)
+- [x] **D2** Enum zeros: reserve `0 = None/Unknown`; reject None at domain entry
+- [x] **D3** Add `CredentialId`; store APIs use it
+- [x] **D7** Delete dead `UpdateCredentialAsync` handle-migration branch; document immutable Type/Handle
+- [x] Design regions updated for D1–D4, D6–D8 as resolved
+- [x] Unit tests updated; `dev build` 0/0; identity tests green
+- [x] RFC banner: folded in; Results cover ballot **and** fold-in
 
 ### Explicit deferrals (not fold-in blockers)
 - [x] **D4** Store snapshots → keep shared refs; document LWW only
@@ -147,57 +147,62 @@ WebAuthn (003), agent tokens (004), list/revoke APIs (005), ceremony tests (006)
 
 ## Results
 
-### Summary (implementation pass — pre fold-in)
-Implemented Principal / Credential / TrustTier domain model in dependency-free **TimeWarp.Identity**: value id, enums, entities, `IPrincipalStore` + `InMemoryPrincipalStore`, Fixie+Shouldly unit tests.
+### Summary (fold-in complete — 2026-07-17)
+RFC §7.1 resolutions landed in **TimeWarp.Identity** on this host task (no sibling apply-RFC task). Product law now matches ballot outcomes for D1 (C refined), D2, D3, D7; Design regions document D4/D6/D8 and defer D5 to 104-006.
 
-**Task was marked done too early** — RFC resolutions not yet in product truth. Final Results after fold-in will replace/extend this section.
+### Fold-in what landed
 
-### Files changed (implementation pass)
+| Decision | Outcome | Implementation |
+|----------|---------|----------------|
+| D1 Trust | C refined | `IsQuarantined`; removed `SetTrustTier`; `Promote` / `Quarantine` / `ClearQuarantine`; birth `Provisional`; `RecordCredentialAttached` Provisional→Keyed; store calls it on `AddCredentialAsync`; `IsFundedAndActive` / `IsActive` |
+| D2 Enum zeros | B | `None=0` on PrincipalKind, TrustTier, CredentialType; reject None at Create/Promote/Credential.Create |
+| D3 CredentialId | B | `credential-id.cs`; `Credential.Id` + `GetCredentialAsync(CredentialId)` |
+| D4 Snapshots | A (Design) | Shared refs + LWW documented on store/port |
+| D5 TimeProvider | Defer | Design note → 104-006 |
+| D6 Concurrency | A (Design) | LWW documented; no version token |
+| D7 Update handle | B | Dead reindex branch deleted; immutable Type/Handle throws if changed on Update |
+| D8 Material | A | Keep `byte[]` copy-on-get |
+
+### Promote rule (decided at fold-in)
+Allow **any strictly higher** progression tier (Provisional→…→Established) when not quarantined; reject None, same, lower, and quarantined.
+
+### Files changed (fold-in)
 | Action | Path |
 |--------|------|
-| Created | `source/libraries/timewarp-identity/principal-id.cs` |
-| Created | `source/libraries/timewarp-identity/principal-kind.cs` |
-| Created | `source/libraries/timewarp-identity/trust-tier.cs` |
-| Created | `source/libraries/timewarp-identity/credential-type.cs` |
-| Created | `source/libraries/timewarp-identity/principal.cs` |
-| Created | `source/libraries/timewarp-identity/credential.cs` |
-| Created | `source/libraries/timewarp-identity/i-principal-store.cs` |
-| Created | `source/libraries/timewarp-identity/in-memory-principal-store.cs` |
-| Created | `tests/libraries/timewarp-identity-tests/**` |
-| Edited | `timewarp-architecture.slnx` |
-| Edited | `.template.config/template.json` (`tests/libraries/**` exclude under foundationPackages) |
+| Edited | `source/libraries/timewarp-identity/principal-kind.cs` |
+| Edited | `source/libraries/timewarp-identity/trust-tier.cs` |
+| Edited | `source/libraries/timewarp-identity/credential-type.cs` |
+| Edited | `source/libraries/timewarp-identity/principal.cs` |
+| Edited | `source/libraries/timewarp-identity/credential.cs` |
+| Edited | `source/libraries/timewarp-identity/i-principal-store.cs` |
+| Edited | `source/libraries/timewarp-identity/in-memory-principal-store.cs` |
+| Created | `source/libraries/timewarp-identity/credential-id.cs` |
+| Edited | `tests/libraries/timewarp-identity-tests/principal-tests.cs` |
+| Edited | `tests/libraries/timewarp-identity-tests/credential-tests.cs` |
+| Edited | `tests/libraries/timewarp-identity-tests/in-memory-principal-store-tests.cs` |
+| Created | `tests/libraries/timewarp-identity-tests/credential-id-tests.cs` |
+| Edited | `rfc/rfc.md` (banner + checklist folded in) |
 
-### Key decisions (implementation pass)
-- Package remains dependency-free (no Foundation.Domain, EF, GuardClauses)
-- Persistence port only: `IPrincipalStore` + ConcurrentDictionary store; EF later in host
-- Handle uniqueness key is `(CredentialType, hex(handle))`
-- BCL `Argument*Exception` / `InvalidOperationException` for invariants
-- `DateTimeOffset` for timestamps (not `DateTime`)
-- Credential getters return array **copies**; empty `PrincipalId` rejected at `Credential.Create`
-- In-memory store documents reference semantics (shared entity instances)
-
-### Build / tests (implementation pass)
+### Build / tests (fold-in)
 - `dev build`: **0 warnings, 0 errors**
-- `dotnet fixie tests/libraries/timewarp-identity-tests`: **35 passed** (after review fixes)
+- `dotnet fixie tests/libraries/timewarp-identity-tests`: **54 passed**
 
-### Review
-- First pass: bugs (mutable getters, empty PrincipalId), suggestions (DateTimeOffset, store semantics)
-- Fixes applied; tests expanded for getter immutability, empty id, undefined type
-- Architecture review: cascade items 1–4 → RFC ballot
+### Historical — implementation pass (pre fold-in)
+Domain package + in-memory store + Fixie tests shipped 2026-07-16; marked done too early before RFC. Review → RFC ballot 2026-07-17 → fold-in above.
 
 ### RFC ballot (2026-07-17)
 
-Working material: [`rfc/rfc.md`](rfc/rfc.md)
+Working material: [`rfc/rfc.md`](rfc/rfc.md) — **status: Folded in**.
 
-| # | Resolution | Fold-in |
-|---|------------|---------|
-| 1 Trust | C refined (quarantine flag + constrained transitions + birth floor) | **this task** |
-| 2 Enum zeros | B renumber with reserved 0 | **this task** |
-| 3 CredentialId | B add wrapper | **this task** |
-| 4 Store snapshots | A keep shared refs; document LWW | Design only (done when Design updated) |
-| 5 TimeProvider | Defer to 104-006 | deferred |
-| 6 Concurrency | A LWW docs only | Design only |
-| 7 Update handle | B delete dead branch | **this task** |
-| 8 Material type | A byte[] copies | keep as-is |
+| # | Resolution | Status |
+|---|------------|--------|
+| 1 Trust | C refined | **landed** |
+| 2 Enum zeros | B | **landed** |
+| 3 CredentialId | B | **landed** |
+| 4 Store snapshots | A Design | **documented** |
+| 5 TimeProvider | Defer 104-006 | **deferred** |
+| 6 Concurrency | A LWW Design | **documented** |
+| 7 Update handle | B | **landed** |
+| 8 Material type | A | **kept** |
 
-Downstream **104-003** stays backlog until this task is done with fold-in complete.
+Downstream **104-003** may open once this task is marked done.

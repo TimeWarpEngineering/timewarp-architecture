@@ -3,16 +3,21 @@
 #endregion
 
 #region Design
-// Keyed = has at least one credential (can authenticate). Funded = paid/credit path has succeeded (agent power).
-// Established and Quarantined are later operational tiers (reputation / risk). Cheap to get an id; expensive to act.
+// Progression-only ladder (RFC D1 C refined): None is reserved fail-closed zero; Provisional is birth floor
+// (no credential yet); Keyed = has at least one credential; Funded = paid/credit path; Established = reputation.
+// Quarantine is NOT a tier — it is an orthogonal bool on Principal (IsQuarantined). Free ordinal compares like
+// tier >= Funded are forbidden in handlers; use named predicates (IsFundedAndActive). Transitions go through
+// Promote / RecordCredentialAttached, not a free setter.
+// D5: TimeProvider for CreatedAt/RevokedAt is deferred to 104-006.
 #endregion
 
 namespace TimeWarp.Identity;
 
 public enum TrustTier
 {
-  Keyed = 0,
-  Funded = 1,
-  Established = 2,
-  Quarantined = 3,
+  None = 0,
+  Provisional = 1,
+  Keyed = 2,
+  Funded = 3,
+  Established = 4,
 }

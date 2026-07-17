@@ -5,8 +5,11 @@
 #region Design
 // Multi-credential by model: many Credential rows per PrincipalId (list/revoke APIs come later). Handle is the lookup key
 // (credential id / key id); PublicMaterial is verification material (COSE/public key). Create copies inputs; getters return
-// fresh copies so callers cannot mutate stored material. Empty PrincipalId is rejected at Create. Revoke is one-shot.
-// Timestamps use DateTimeOffset for unambiguous UTC.
+// fresh copies so callers cannot mutate stored material (D8: keep byte[] copy-on-get for Wave 1).
+// Empty PrincipalId rejected at Create. CredentialType.None rejected. Id is CredentialId (RFC D3), not raw Guid.
+// Type and Handle are immutable after Create — store Update replaces by Id only (revoke / label persistence); no handle migration.
+// Revoke is one-shot. Timestamps use DateTimeOffset (D5 TimeProvider deferred to 104-006).
+// Concurrency: last-write-wins until a later host task adds a version token (D6).
 #endregion
 
 namespace TimeWarp.Identity;
@@ -17,7 +20,7 @@ public sealed class Credential
   private readonly byte[] PublicMaterialField;
 
   private Credential(
-    Guid id,
+    CredentialId id,
     PrincipalId principalId,
     CredentialType type,
     byte[] handle,
@@ -34,7 +37,7 @@ public sealed class Credential
     Label = label;
   }
 
-  public Guid Id { get; }
+  public CredentialId Id { get; }
   public PrincipalId PrincipalId { get; }
   public CredentialType Type { get; }
 
@@ -63,9 +66,9 @@ public sealed class Credential
       throw new ArgumentException("PrincipalId cannot be empty.", nameof(principalId));
     }
 
-    if (!Enum.IsDefined(type))
+    if (!Enum.IsDefined(type) || type == CredentialType.None)
     {
-      throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown CredentialType value.");
+      throw new ArgumentOutOfRangeException(nameof(type), type, "CredentialType must be a defined non-None value.");
     }
 
     if (handle.Length == 0)
@@ -81,7 +84,7 @@ public sealed class Credential
     string? normalizedLabel = NormalizeLabel(label);
 
     return new Credential(
-      Guid.CreateVersion7(),
+      CredentialId.New(),
       principalId,
       type,
       handle.ToArray(),

@@ -6,8 +6,20 @@
 // No EF in this package for 104-002: ConcurrentDictionary keeps the library dependency-free. Uniqueness is principal id
 // and (CredentialType, handle content). Multi-credential per principal is allowed. Hosts may later add EF without changing
 // the IPrincipalStore surface.
-// Reference semantics: Get* returns the same entity instances held by the store (test double / early host). Concurrent
-// field mutations on those entities are not synchronized — treat as single-threaded host or call Update* after mutate.
+//
+// Reference semantics (RFC D4 → A): Get* returns the same entity instances held by the store (test double / early host).
+// Concurrent field mutations on those entities are not synchronized — treat as single-threaded host or call Update* after
+// mutate. Snapshot-on-get deferred (EF change-tracking hosts often mutate tracked entities without explicit Update).
+//
+// Last-write-wins (D6): Update* overwrites by id; no concurrency token in Wave 1.
+// Type/Handle immutable (D7): UpdateCredentialAsync replaces by CredentialId only; differing type/handle throws rather
+// than reindexing. Update purpose: revoke (and future label) persistence.
+// FindCredentialByHandle returns the stored row even if revoked — callers check IsRevoked.
+//
+// First credential: after successful AddCredentialAsync, calls Principal.RecordCredentialAttached so Provisional → Keyed
+// without requiring the host to remember the promotion rule.
+//
+// D5 TimeProvider deferred to 104-006. D8 material type remains byte[] copy-on-get on Credential.
 #endregion
 
 namespace TimeWarp.Identity;
@@ -17,8 +29,8 @@ using System.Collections.Concurrent;
 public sealed class InMemoryPrincipalStore : IPrincipalStore
 {
   private readonly ConcurrentDictionary<PrincipalId, Principal> Principals = new();
-  private readonly ConcurrentDictionary<Guid, Credential> Credentials = new();
-  private readonly ConcurrentDictionary<HandleKey, Guid> HandleIndex = new();
+  private readonly ConcurrentDictionary<CredentialId, Credential> Credentials = new();
+  private readonly ConcurrentDictionary<HandleKey, CredentialId> HandleIndex = new();
 
   public Task AddPrincipalAsync(Principal principal, CancellationToken cancellationToken = default)
   {
@@ -59,7 +71,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     ArgumentNullException.ThrowIfNull(credential);
     cancellationToken.ThrowIfCancellationRequested();
 
-    if (!Principals.ContainsKey(credential.PrincipalId))
+    if (!Principals.TryGetValue(credential.PrincipalId, out Principal? principal))
     {
       throw new InvalidOperationException($"Principal '{credential.PrincipalId}' does not exist.");
     }
@@ -76,10 +88,13 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
       throw new InvalidOperationException($"Credential '{credential.Id}' already exists.");
     }
 
+    // First-credential birth rule: Provisional → Keyed (even if quarantined); shared ref mutation intentional.
+    principal.RecordCredentialAttached();
+
     return Task.CompletedTask;
   }
 
-  public Task<Credential?> GetCredentialAsync(Guid credentialId, CancellationToken cancellationToken = default)
+  public Task<Credential?> GetCredentialAsync(CredentialId credentialId, CancellationToken cancellationToken = default)
   {
     cancellationToken.ThrowIfCancellationRequested();
     Credentials.TryGetValue(credentialId, out Credential? credential);
@@ -92,7 +107,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     cancellationToken.ThrowIfCancellationRequested();
 
     var handleKey = HandleKey.From(type, handle);
-    if (!HandleIndex.TryGetValue(handleKey, out Guid credentialId))
+    if (!HandleIndex.TryGetValue(handleKey, out CredentialId credentialId))
     {
       return Task.FromResult<Credential?>(null);
     }
@@ -127,17 +142,13 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
       throw new InvalidOperationException($"Credential '{credential.Id}' does not exist.");
     }
 
+    // Type and Handle are immutable — Update is for revoke (and similar) persistence by Id only (RFC D7).
     var existingKey = HandleKey.From(existing.Type, existing.Handle);
-    var newKey = HandleKey.From(credential.Type, credential.Handle);
-
-    if (!existingKey.Equals(newKey))
+    var incomingKey = HandleKey.From(credential.Type, credential.Handle);
+    if (!existingKey.Equals(incomingKey))
     {
-      if (!HandleIndex.TryAdd(newKey, credential.Id))
-      {
-        throw new InvalidOperationException($"A credential with type '{credential.Type}' and the same handle already exists.");
-      }
-
-      HandleIndex.TryRemove(existingKey, out _);
+      throw new InvalidOperationException(
+        "Credential Type and Handle are immutable; UpdateCredentialAsync cannot change them.");
     }
 
     Credentials[credential.Id] = credential;

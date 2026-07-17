@@ -1,14 +1,14 @@
 # RFC: Ratify TimeWarp.Identity domain model before Wave 1 ceremonies
 
-**Status:** Ballots tallied (2026-07-17). Resolutions recorded; **fold-in on host task 104-002** (reopened in-progress). Not product law until fold-in lands on this task.
+**Status:** **Folded in** (2026-07-17) on host task 104-002. Resolutions are product law in `source/libraries/timewarp-identity/`.
 **Host task:** 104-002 — kitchen for RFC + fold-in (agent-collaboration same-task rule).
 **Parent program:** 104 (Agent-ready Identity and x402).
 **Author:** orchestrator (Grok), 2026-07-17.
 **Audience:** Independent reviewers. Append a ballot under [Reviewer opinions](#reviewer-opinions)
 using the template at the bottom. Do **not** rewrite others' entries.
 
-> **Working material, not law.** Resolutions fold into Design regions and product code **on task
-> 104-002**. Do not treat this RFC as a rule until fold-in is recorded in task Results.
+> **Folded in.** Resolutions are product law in TimeWarp.Identity Design regions and code.
+> See task 104-002 Results for what landed.
 
 ---
 
@@ -313,10 +313,10 @@ Erroneous child **104-026** was archived (process residue).
 
 ## 8. Fold-in checklist (host 104-002)
 
-- [ ] On **104-002**: implement D1 refined, D2, D3, D7
-- [ ] Design regions updated (incl. D4/D6/D8 docs; D5 deferred note)
-- [ ] Tests green
-- [ ] This RFC status banner: folded in when 104-002 re-done
-- [ ] 104-002 Results cover ballot outcome **and** what landed in the repo
-- [ ] Do **not** create another “apply resolutions” task
+- [x] On **104-002**: implement D1 refined, D2, D3, D7
+- [x] Design regions updated (incl. D4/D6/D8 docs; D5 deferred note)
+- [x] Tests green
+- [x] This RFC status banner: folded in when 104-002 re-done
+- [x] 104-002 Results cover ballot outcome **and** what landed in the repo
+- [x] Do **not** create another “apply resolutions” task
 
