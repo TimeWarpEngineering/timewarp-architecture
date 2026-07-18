@@ -1,5 +1,5 @@
 ---
-name: slice-isolation
+name: tw-slice-isolation
 description: >-
   **TIMEWARP SKILL** — product slice placement and TWA0009 isolation (SliceRoot,
   namespaces, platform Applications, Components/contracts sharing,
@@ -91,7 +91,7 @@ does not change legal dependencies** — only the namespace does.
 | Artifact | Where |
 |----------|--------|
 | Page, state, actions, slice-local UI | **Inside** the product slice namespace |
-| App chrome / shell / empty `MainLayout` | **Outside** SliceRoot (e.g. `…Components`) — see `blazor-layout` |
+| App chrome / shell / empty `MainLayout` | **Outside** SliceRoot (e.g. `…Components`) — see `tw-blazor-layout` |
 | Shared UI used by multiple slices | `components/` → namespace outside SliceRoot |
 | Shared API shapes | **Contracts** project (other assembly; free under TWA0009) |
 | Host-wide modal / menu / branding state | Platform `Applications` |
@@ -113,7 +113,7 @@ Living anchors (timewarp-architecture template):
 3. **Namespace** — `{RootNamespace}.Features.{SliceId}` (plural segments; nested with `.`).
 4. **Colocate** page, state, actions, and slice-private components in that namespace (pages are
    **not** shared infrastructure — no grab-bag `…Pages` for product UI).
-5. **Contracts** — same plural feature path under the contracts project (`web-api-contracts`
+5. **Contracts** — same plural feature path under the contracts project (`tw-web-api-contracts`
    skill). Other assembly → free across SPA slices.
 6. **Wire nav / DI** from Outside or platform — not from another product slice.
 7. **Prefer share** (Components / contracts) over `[CrossSliceReference]`.
@@ -186,10 +186,10 @@ Living examples:
 
 ## Related skills and pointers
 
-- `web-api-contracts` — contract placement; **contracts assemblies are free** under TWA0009; still use plural `…Features.*` aligned with SPA product slices
-- `blazor-layout` — empty layout + shell; chrome **outside** SliceRoot
-- `blazor-css-strategy` — shell/component styling only
-- `agent-context-regions` — Purpose/Design on new files (TWA0004)
+- `tw-web-api-contracts` — contract placement; **contracts assemblies are free** under TWA0009; still use plural `…Features.*` aligned with SPA product slices
+- `tw-blazor-layout` — empty layout + shell; chrome **outside** SliceRoot
+- `tw-blazor-css-strategy` — shell/component styling only
+- `tw-agent-context-regions` — Purpose/Design on new files (TWA0004)
 - **AGENTS.md** — TWA diagnostic table (row TWA0009)
 - **HowToRemoveDemoFeatures** — delete Counter/EventStream demo slices
 - **Analyzer (source of truth):** `source/analyzers/timewarp-architecture-convention-analyzers/slice-isolation-analyzer.cs`

@@ -1,5 +1,5 @@
 ---
-name: web-api-contracts
+name: tw-web-api-contracts
 description: >-
   **TIMEWARP SKILL** — endpoint-centric Web.Contracts API contracts (Command, Query, ApiRoute,
   I*Details, Validator, serialization tests). Invoke before scaffolding or fixing contracts.
@@ -344,7 +344,7 @@ types, so factories are per-endpoint opt-in, not mandatory ceremony.
 **Detect the repo's mock pattern first**: the canonical shape puts the factory *on the contract*
 and registers it in a `Dictionary<Type, Delegate>`; some solutions instead use standalone
 `*MockFactory` classes inside the SPA. Copying the wrong shape into a repo is a common agent
-error. See the `mock-response-factory` skill.
+error. See the `tw-mock-response-factory` skill.
 
 ## Validation checklist
 
@@ -393,10 +393,10 @@ error. See the `mock-response-factory` skill.
 
 ## Related skills
 
-- `mock-response-factory` — `GetMockResponseFactory()` on contracts + SPA mock service registration
-- `csharp` — formatting and naming only; does not override contract nullability/mutability rules
-- `blazor-layout` / `blazor-css-strategy` — UI shell and styling; contracts feed `EditForm` binding
-- `slice-isolation` — product-slice placement / TWA0009; **contracts assemblies are free**
+- `tw-mock-response-factory` — `GetMockResponseFactory()` on contracts + SPA mock service registration
+- `tw-csharp` — formatting and naming only; does not override contract nullability/mutability rules
+- `tw-blazor-layout` / `tw-blazor-css-strategy` — UI shell and styling; contracts feed `EditForm` binding
+- `tw-slice-isolation` — product-slice placement / TWA0009; **contracts assemblies are free**
   under TWA0009 (other assembly), but still use plural `…Features.*` namespaces aligned with
   the SPA product slices they serve
 - Do **not** use `dotnet-webapi` for this contract pattern

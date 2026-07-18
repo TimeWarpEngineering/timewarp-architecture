@@ -1,5 +1,5 @@
 ---
-name: mock-response-factory
+name: tw-mock-response-factory
 description: >
   Add GetMockResponseFactory to API contracts and register factories in the SPA mock API service.
 when-to-use: >
@@ -102,4 +102,4 @@ Then register the wrapper class in the mock service's factory dictionary.
 
 ## Related skills
 
-- `web-api-contracts` — full contract workflow; mock factory is step 10 of new endpoints
+- `tw-web-api-contracts` — full contract workflow; mock factory is step 10 of new endpoints

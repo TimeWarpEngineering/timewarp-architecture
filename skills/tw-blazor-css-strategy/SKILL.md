@@ -1,5 +1,5 @@
 ---
-name: blazor-css-strategy
+name: tw-blazor-css-strategy
 description: How to style Blazor + FluentUI components in this repo without Tailwind. The "isolation-first hybrid" convention — CSS isolation by default, global design tokens, and two documented exceptions for FluentUI shadow-DOM and light-DOM children. Use when authoring or restyling any .razor component, choosing where CSS lives, or styling a FluentUI component.
 ---
 

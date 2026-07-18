@@ -1,4 +1,4 @@
-# RFC: Reconciling `web-api-contracts` conventions across skill, docs, and two repos
+# RFC: Reconciling `tw-web-api-contracts` conventions across skill, docs, and two repos
 
 **Status:** All decisions resolved (2026-07-02). Decision 7 is **implemented and
 analyzer-enforced** (§3.6); Decisions 3, 6, 8 are **maintainer-resolved** (see each section).
@@ -17,7 +17,7 @@ the skill rewrite (kanban task 081) proceeds against the final names.
 
 ## 1. Why this exists
 
-The `web-api-contracts` skill describes an endpoint-centric, Blazor-BFF contract pattern (Command/
+The `tw-web-api-contracts` skill describes an endpoint-centric, Blazor-BFF contract pattern (Command/
 Query/Response/Validator, `I*Details` interfaces for shared validation + `EditForm` binding). We
 want to make the skill **solid** and then **clean up the `timewarp-architecture` repo to follow it**.
 
@@ -30,7 +30,7 @@ obvious bugs.
 
 | # | Source | Path | Nature |
 |---|--------|------|--------|
-| A | **The skill** | `skills/web-api-contracts/SKILL.md` (+ `references/`) | Normative/idealized guidance |
+| A | **The skill** | `skills/tw-web-api-contracts/SKILL.md` (+ `references/`) | Normative/idealized guidance |
 | B | **TWA how-to docs** | `documentation/developer/how-to-guides/web-api-contracts/` | Conceptual docs (predate source generators) |
 | C | **TWA code** | `source/container-apps/web/web-contracts/features/**` | This repo (the `dotnet new` template) |
 | D | **Copic code** | `copic/main` → `Source/ContainerApps/Web/Web.Contracts/Features/**` | Production insurance-domain solution |
@@ -103,7 +103,7 @@ package/release coupling means the rename should **not gate** the contracts clea
 
 ### Citations (representative)
 
-- **A (skill):** `skills/web-api-contracts/SKILL.md` (folder rule L44‑52, "MediatR" L36, empty-body
+- **A (skill):** `skills/tw-web-api-contracts/SKILL.md` (folder rule L44‑52, "MediatR" L36, empty-body
   L84‑87, mock "required" L192‑195); `references/examples.md` (Tier‑2 empty `Command` body L92‑93,
   Tier‑4 FluentAssertions test L167‑180).
 - **B (TWA docs):** `.../HowToWrite_BFF_API_Contracts.md` (**plural** folder L15‑19, namespace
@@ -459,7 +459,7 @@ propose a third option — with reasoning.**
 
 > **Skill-location caveat:** task 053-002 refers to the skill as
 > `timewarp-flow/master/skills/webapi-contracts` (no hyphen), while the copy under review here is
-> `skills/web-api-contracts` (hyphenated) in this repo. Confirm which is canonical / whether one syncs
+> `skills/tw-web-api-contracts` (hyphenated) in this repo. Confirm which is canonical / whether one syncs
 > from the other **before** editing, so the corrected spec doesn't get overwritten by a sync.
 
 ## 7. Repo cleanup scope (TWA) — concrete offender list

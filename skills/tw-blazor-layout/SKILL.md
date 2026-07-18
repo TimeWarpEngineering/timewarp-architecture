@@ -1,5 +1,5 @@
 ---
-name: blazor-layout
+name: tw-blazor-layout
 description: How to structure Blazor app chrome with the "empty layout + cascaded page-component shell" pattern — keep LayoutComponentBase empty and put header/nav/content/aside/footer in ONE shell component that pages wrap their content in and that cascades itself. Use when designing a Blazor app's layout/navigation, deciding where chrome belongs, building a layout shell, or when chrome must react to a state store or per-navigation lifecycle that a layout can't provide.
 ---
 
@@ -69,7 +69,7 @@ Concrete instance of the pattern in this repo:
 - **Pages:** `@inherits BaseComponent`, wrap content in `<TimeWarpPage Title="…">…</TimeWarpPage>`;
   routing comes from `[Page("/route")]` in the `.razor.cs` (the Moxy `mixins/Page.mixin`). The shell
   is named `TimeWarpPage` (not `Page`) precisely because `[Page]` is the routing concept.
-- **Styling of the shell:** see the `blazor-css-strategy` skill — this skill is the *structure*, that
+- **Styling of the shell:** see the `tw-blazor-css-strategy` skill — this skill is the *structure*, that
   one is the *styling* (Tier-2 scope-handle `.twe-shell`).
 - **Slice boundary:** chrome/shell lives **outside** SliceRoot (e.g. `…Components`); product
-  pages and state live in product slice namespaces (`…Features.<Id>`). See skill `slice-isolation`.
+  pages and state live in product slice namespaces (`…Features.<Id>`). See skill `tw-slice-isolation`.

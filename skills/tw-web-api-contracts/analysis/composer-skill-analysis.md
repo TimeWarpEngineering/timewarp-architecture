@@ -1,7 +1,7 @@
 # Web API Contracts — Cross-Source Analysis
 
 **Date:** 2026-07-01  
-**Scope:** `skills/web-api-contracts/`, `documentation/developer/how-to-guides/web-api-contracts/`, this template repo (`timewarp-architecture/dev`), and production reference repo (`copic/main`).
+**Scope:** `skills/tw-web-api-contracts/`, `documentation/developer/how-to-guides/web-api-contracts/`, this template repo (`timewarp-architecture/dev`), and production reference repo (`copic/main`).
 
 ---
 
@@ -21,7 +21,7 @@ The skill should be treated as the **agent workflow authority**, with docs updat
 
 | Source | Location | Role |
 |--------|----------|------|
-| Agent skill | `skills/web-api-contracts/SKILL.md` + `references/` | Agent scaffolding workflow |
+| Agent skill | `skills/tw-web-api-contracts/SKILL.md` + `references/` | Agent scaffolding workflow |
 | Official docs | `documentation/developer/how-to-guides/web-api-contracts/` (4 files) | Human-oriented guides |
 | Template repo | `timewarp-architecture/dev` — `source/container-apps/web/web-contracts/` | `dotnet new timewarp-architecture` output |
 | Production repo | `copic/main` — `Source/ContainerApps/Web/Web.Contracts/` | Largest real-world contract set |
@@ -194,7 +194,7 @@ Skill examples use mutable `ApplicationId { get; set; }` with non-nullable `Name
 
 ## Mock response factory patterns
 
-### Skill + `mock-response-factory` skill
+### Skill + `tw-mock-response-factory` skill
 
 Every contract exposes `GetMockResponseFactory()`; SPA registers `typeof(Query/Command) → factory()` in mock API service dictionary.
 
@@ -294,7 +294,7 @@ Solid; typo `IReadonlyList<t>`; missing Blazor binding motivation.
 3. Repo-agnostic with "read 2–3 existing contracts" guardrail
 4. Tiered examples in `references/examples.md` map to Copic patterns
 5. Explicit anti-patterns table and legacy warning
-6. Correct delegation to `mock-response-factory` skill
+6. Correct delegation to `tw-mock-response-factory` skill
 
 ### Gaps and errors
 
@@ -340,7 +340,7 @@ Solid; typo `IReadonlyList<t>`; missing Blazor binding motivation.
 2. **Fix** nullability doc syntax error and closing paragraph.
 3. **Reconcile folder naming** — document namespace invariant + folder follows local convention.
 4. **Add RouteMixin reference** replacing stale Moxy `GetUri()` docs; point to `ContractsMixinGenerator`.
-5. **Cross-link** to `skills/web-api-contracts/` for agent-assisted development.
+5. **Cross-link** to `skills/tw-web-api-contracts/` for agent-assisted development.
 
 ### For template repo (`dev`)
 
@@ -405,7 +405,7 @@ Read [`contract-conventions-rfc.md`](contract-conventions-rfc.md). It sharpens t
 3. Rewrite skill against **final attribute names**, **plural kebab folders**, **Shouldly** tests, **`IAuthApiRequest`**
 4. Add **`web-contracts-tests`**; migrate examples off copic-only FluentAssertions
 5. Kanban cleanup: **`todo-items`**, **`hello`**, **`analytics`** (RFC §7 offender list)
-6. Confirm **skill canonical path** (`skills/web-api-contracts` here vs `timewarp-flow/.../webapi-contracts`) before editing — sync overwrite risk
+6. Confirm **skill canonical path** (`skills/tw-web-api-contracts` here vs `timewarp-flow/.../webapi-contracts`) before editing — sync overwrite risk
 
 ### Unchanged from original analysis
 

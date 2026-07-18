@@ -7,4 +7,4 @@ Detect the repo's pattern before writing: contract-local `GetMockResponseFactory
 a `Dictionary<Type, Delegate>` (canonical) vs standalone `*MockFactory` classes in the SPA (found
 in some solutions).
 
-See the `mock-response-factory` skill for implementation and SPA registration.
+See the `tw-mock-response-factory` skill for implementation and SPA registration.
