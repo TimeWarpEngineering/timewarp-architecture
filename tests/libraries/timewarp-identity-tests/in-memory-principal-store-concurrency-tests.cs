@@ -75,6 +75,36 @@ public class SnapshotSemantics
   }
 }
 
+public class AddPersistsVersionAsIs
+{
+  // Port contract: "Add* persists the given instance's state as-is, including Version." Every
+  // other test in this suite only ever adds a freshly Create()'d (version-0) instance, so a store
+  // that silently reset Version to 0 on Add would pass everything else — this pins the nonzero case
+  // by moving a Get-returned (version-1) snapshot from one store into a fresh, unrelated store.
+  public async Task Add_of_nonzero_version_snapshot_persists_that_version()
+  {
+    var sourceStore = new InMemoryPrincipalStore();
+    Principal principal = Principal.Create(PrincipalKind.Human);
+    await sourceStore.AddPrincipalAsync(principal);
+
+    Principal? loaded = await sourceStore.GetPrincipalAsync(principal.Id);
+    loaded.ShouldNotBeNull();
+    loaded.SetDisplayName("bumped");
+    await sourceStore.UpdatePrincipalAsync(loaded);
+
+    Principal? v1Snapshot = await sourceStore.GetPrincipalAsync(principal.Id);
+    v1Snapshot.ShouldNotBeNull();
+    v1Snapshot.Version.ShouldBe(1);
+
+    var freshStore = new InMemoryPrincipalStore();
+    await freshStore.AddPrincipalAsync(v1Snapshot);
+
+    Principal? reloaded = await freshStore.GetPrincipalAsync(principal.Id);
+    reloaded.ShouldNotBeNull();
+    reloaded.Version.ShouldBe(1);
+  }
+}
+
 public class StalePrincipalUpdate
 {
   public async Task Conflicting_update_throws_with_expected_and_actual_versions()
@@ -127,6 +157,40 @@ public class StalePrincipalUpdate
     final.ShouldNotBeNull();
     final.DisplayName.ShouldBe("second-retry");
     final.Version.ShouldBe(2);
+  }
+}
+
+public class CallerAheadConflict
+{
+  // Every other conflict test in this suite is caller-BEHIND (Expected 0, Actual 1) — the version
+  // check is a plain `!=`, but nothing pinned the other direction, so a regression to `<` (only
+  // catching behind-callers) would have passed the whole suite. Construct a caller-AHEAD instance
+  // via two independent stores: store A advances a principal to version 1; that v1 snapshot is then
+  // presented to store B, which only ever saw the original version-0 principal.
+  public async Task Ahead_of_store_throws_with_expected_greater_than_actual()
+  {
+    var storeA = new InMemoryPrincipalStore();
+    Principal principal = Principal.Create(PrincipalKind.Human);
+    await storeA.AddPrincipalAsync(principal);
+
+    Principal? loaded = await storeA.GetPrincipalAsync(principal.Id);
+    loaded.ShouldNotBeNull();
+    loaded.SetDisplayName("updated");
+    await storeA.UpdatePrincipalAsync(loaded);
+
+    Principal? ahead = await storeA.GetPrincipalAsync(principal.Id);
+    ahead.ShouldNotBeNull();
+    ahead.Version.ShouldBe(1);
+
+    var storeB = new InMemoryPrincipalStore();
+    await storeB.AddPrincipalAsync(principal); // storeB only ever saw version 0
+
+    ConcurrencyConflictException exception =
+      await Should.ThrowAsync<ConcurrencyConflictException>(() => storeB.UpdatePrincipalAsync(ahead));
+
+    exception.ExpectedVersion.ShouldBe(1);
+    exception.ActualVersion.ShouldBe(0);
+    exception.ExpectedVersion.ShouldBeGreaterThan(exception.ActualVersion);
   }
 }
 

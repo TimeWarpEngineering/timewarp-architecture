@@ -35,6 +35,13 @@
 //     snapshot conflicts on their next Update* instead of silently overwriting the tier change.
 //   - Conflict policy (retry vs reload vs fail the request) stays with callers — that half of the
 //     original D6 lean (defer callsite policy) was correct and is unchanged by this task.
+//   - Exception delivery is NOT specified to be synchronous: Add*/Update* may throw before
+//     returning a Task (the in-memory implementation does — its bodies run to completion
+//     synchronously) or may surface the same condition as a faulted Task (an EF-backed
+//     implementation will, since the check naturally happens inside an awaited SaveChanges).
+//     Callers must not assume faulted-task delivery — do not separate task acquisition from
+//     awaiting if you need to catch these exceptions (i.e. always `await store.UpdateXAsync(...)`
+//     directly in a try/catch, not `Task t = store.UpdateXAsync(...); ...; await t;`).
 #endregion
 
 namespace TimeWarp.Identity;

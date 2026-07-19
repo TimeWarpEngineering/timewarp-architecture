@@ -40,6 +40,13 @@
 // holding a stale-but-otherwise-valid credential should learn it is stale before learning about an
 // unrelated type/handle mismatch, since staleness is the more common, expected-to-be-retried case),
 // THEN the type/handle immutability check.
+// Both the type/handle-immutability branch in UpdateCredentialAsync and the Credentials.TryAdd-fails
+// rollback branch in AddCredentialAsync are defensive, not currently reachable via the public API:
+// Credential.Type/Handle have no mutators and CredentialId is minted only inside Create, so no
+// caller can present a same-Id-different-handle credential to Update, and a duplicate CredentialId
+// on Add implies a duplicate handle too (short of a Guid v7 collision), which the HandleIndex.TryAdd
+// check above always catches first. Both branches stay as guards against future internal bugs, not
+// as documentation of caller-observable behavior — no test exercises either without reflection.
 // FindCredentialByHandle returns the stored row even if revoked — callers check IsRevoked.
 //
 // First credential: after successful AddCredentialAsync, the store constructs a NEW principal
