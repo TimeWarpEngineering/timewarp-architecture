@@ -222,6 +222,16 @@ the software authenticator emulator) answers with `CredentialId`/`ClientDataJson
 `/Passkeys` SPA page (`web-spa/features/identity/pages/passkeys-page/`) exercises the identical flow
 through `window.Spa.WebAuthn` + real `navigator.credentials.create/get` in a browser.
 
+**Human smoke verification (2026-07-19, maintainer):** full register → sign-in round-trip performed
+in a real browser against `dev run` (web-server direct origin `https://localhost:63611/Passkeys`)
+with Proton Pass as the passkey provider — passkey created, session issued, authenticate returned
+`SuccessAuthenticated` with a v7 PrincipalId. Two follow-up fixes came out of the smoke: the YARP
+ingress lacked a `/api/identity` literal route so ingress-origin requests 404'd via the Api.Server
+catch-all (fixed in fe722050; hand-maintained route list flagged in the AppHost Design region as a
+generation candidate), and the Passkeys page was added to the nav menu (85dadf6a). Note: passkey
+entries display as "localhost" in password managers — that is the RP ID by design (managers ignore
+rp.name for anti-phishing reasons); template default stays `localhost`, renameable in the manager.
+
 ### Deferred
 - Orphaned Provisional principal on duplicate-registration race (security-reviewed sound; store delete is 104-005). Playwright virtual-authenticator e2e → 104-006/104-022. Rate limiting → 104-015. CTA/login UX + legacy Passwordless removal → 104-016/021. Agent keys/tokens → 104-004. Distributed challenge store, EF store → later waves. Publish ordering: TimeWarp.Identity + Foundation.Domain package releases needed for package-mode consumers.
 - Unblocks: 104-004, 104-005, 104-006.
