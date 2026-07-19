@@ -147,80 +147,26 @@ None unresolvable. Committed-default acks: (a) opaque store-backed tokens over J
 
 Paid elevation is Wave 3 (013–014). Here: Keyed agent can exist.
 
-### Results (2026-07-20)
+### Depends on
 
-Implemented all 7 ordered work items. `dev build` is 0 Warnings/0 Errors. Test counts (all green):
+104-002
 
-- `timewarp-identity-tests`: 168 passed (was 127 before this task; +41: AgentPublicKey.TryParse 10,
-  AgentKeyProof.Verify 13, InMemoryAgentKeyChallengeStore 10, InMemoryAgentTokenStore 8 — the
-  original 127 WebAuthn/passkey tests re-ran unchanged, pinning the challenge-store-core delegation
-  refactor as behavior-preserving).
-- `web-contracts-tests`: 21 passed (was 14; +7 agent contract round-trips).
-- `web-server-integration-tests`: 52 passed, 1 skipped (was 34+1; +18: 7 registration, 5 token
-  issuance, 5 protected-endpoint incl. scheme isolation, 1 options-binding regression pin).
-- Regression sweep (unchanged, all green): `foundation-domain-tests` 37, `foundation-contracts-tests`
-  2, `foundation-application-tests` 13, `foundation-infrastructure-tests` 1, `web-domain-tests` 26,
-  `timewarp-architecture-analyzers-tests` 75, `timewarp-architecture-sourcegenerator-tests` 32.
-  Docker-dependent suites not run, per dispatch scope.
+## Results
 
-**Per-work-item summary:**
+### Implementation
+- Commits: 16beaa46 (implementation), 5960a942 (round-1 fixes M1-M5 + comment hygiene).
+- ceremonies/agent-key in TimeWarp.Identity: ES256 (P-256 by OID) over base64url SPKI DER, DER-only signatures, proof-of-possession with domain-separated prefixes (Register.v1/Token.v1 — cross-ceremony replay impossible, tested both directions); shared InMemoryChallengeStoreCore extracted (WebAuthn store public surface unchanged, 127 prior tests pin the refactor). Ed25519 rejected (absent from .NET 10 BCL — revisit trigger recorded).
+- tokens/: opaque store-backed scoped bearer grants — 32-byte CSPRNG, SHA-256 at rest, 15-min default expiry (configurable AgentTokenOptions, binding-tested), no refresh tokens (refresh = re-run ceremony); scopes identity:read + reserved demo:invoke (104-011/013 consumers). JWT rejected (package + key mgmt, not live-revocable). Store owns expiry/grants only; liveness/quarantine is the caller's (explicit 104-013 warning in port docs).
+- Five contracts under /api/identity/agent/* (no ingress change needed); handlers mirror passkey posture: consume-before-verify, no enumeration oracle (Title-pinned), quarantine 403 post-verify at issuance / silent 401 at bearer validation; duplicate key → 409; scope canonicalization (ordinal Distinct); zero Update* calls (104-005 remains first retry consumer).
+- Named agent-token AuthenticationHandler + agent-scope:identity:read policy; RFC 6750 WWW-Authenticate + problem+json on 401/403; Entra/cookie schemes untouched; GET /api/identity/agent/me proves validate + scope enforcement end-to-end.
 
-1. **Library** (`source/libraries/timewarp-identity/`): `ceremonies/in-memory-challenge-store-core.cs`
-   (new — `InMemoryChallengeStoreCore<TCeremonyType>`, extracted from
-   `InMemoryWebAuthnChallengeStore`, which now delegates to it with its public surface unchanged);
-   `ceremonies/agent-key/` (new — `AgentKeyCeremonyType`, `AgentKeyFailureReason`,
-   `IAgentKeyChallengeStore`/`InMemoryAgentKeyChallengeStore`, `AgentPublicKey` (SPKI DER P-256
-   parse/keyId, empty/oversize/trailing-byte/wrong-curve/wrong-algorithm guards all resolved BEFORE
-   any BCL import), `AgentKeyProof` (domain-separated `BuildSignedData`/`Verify`),
-   `AgentKeyProofResult`); `tokens/` (new — `AgentScopes`, `AgentTokenGrant`,
-   `IAgentTokenStore`/`InMemoryAgentTokenStore`, hash-at-rest, non-consuming `Validate`).
-2. **Unit tests**: `tests/libraries/timewarp-identity-tests/ceremonies/infrastructure/software-agent-key.cs`
-   (fixed P-256 keypairs + canned RSA/P-384 bad-material fixtures) plus
-   `agent-public-key-tests.cs`, `agent-key-proof-tests.cs` (incl. cross-ceremony replay both
-   directions, P1363-format rejection, wrong-key), `in-memory-agent-key-challenge-store-tests.cs`,
-   `tokens/in-memory-agent-token-store-tests.cs`. Existing WebAuthn challenge-store tests re-ran
-   unmodified, confirming the core-extraction refactor is behavior-preserving.
-3. **Contracts** (`web-contracts/features/identity/`): `start-agent-key-registration.cs`,
-   `complete-agent-key-registration.cs`, `start-agent-token-issuance.cs`,
-   `complete-agent-token-issuance.cs`, `queries/get-agent-identity.cs` — every base64url field
-   MaximumLength-capped from day one (PublicKey/ClientData-equivalents 2KB, Challenge/KeyId 256,
-   Signature 1KB, Label 64, Scopes ≤16×64). Round-trip tests added to the existing
-   `identity-contracts-serialization-tests.cs`.
-4. **Handlers + options + caller-context port** (`web-application/`): `configuration/agent-token-options.cs`
-   + validator (section name `AgentTokenOptions`, matching the type name from day one — 104-003's
-   round-1 finding M1 lesson applied proactively); `abstractions/i-agent-caller-context.cs`
-   (`IAgentCallerContext`/`AgentCaller`, sync — claims are already on `HttpContext.User` by handler
-   time); `features/identity/{start-agent-key-registration,complete-agent-key-registration,
-   start-agent-token-issuance,complete-agent-token-issuance,get-agent-identity}-handler.cs` — challenge
-   consumed before verify in both complete handlers; quarantine checked strictly after
-   `AgentKeyProof.Verify` in token issuance (403); no-enumeration-oracle generic 400 across
-   unknown-KeyId/revoked/missing-principal/bad-signature; zero `Update*` calls anywhere;
-   `AddCredentialAsync` wrapped in try/catch(InvalidOperationException) for the concurrent
-   duplicate-key race, mirroring 104-003's post-review pattern from day one.
-5. **web-server**: `configuration/agent-token-defaults.cs`; `services/agent-token-authentication-handler.cs`
-   (custom `AuthenticationHandler<AuthenticationSchemeOptions>` — RFC 6750-shaped
-   challenge/forbidden responses, problem+json bodies, quarantine-at-validation is a silent
-   `Fail()` → 401 (contrasted with issuance's 403 in both Design regions));
-   `services/agent-caller-context.cs`; five endpoint shims in `features/identity/`
-   (`GetAgentIdentityEndpoint` carries `[Authorize(Policy = AgentTokenDefaults.IdentityReadPolicy)]`,
-   scheme-restricted to `agent-token` only); `web-infrastructure-module.cs` (+`IAgentKeyChallengeStore`,
-   `IAgentTokenStore` singletons); `program.cs` (third scheme on the existing `AddAuthentication()`
-   chain — cookie and dormant Entra untouched; `AddAuthorizationBuilder().AddPolicy(...)`;
-   `AddFluentValidatedOptions<AgentTokenOptions, ...>`; `AddScoped<IAgentCallerContext, ...>`);
-   `appsettings.json` (+`AgentTokenOptions` section).
-6. **Integration tests**: `Features/Identity/Infrastructure/integration-software-agent-key.cs`
-   (per-instance-random P-256 keypair — 104-003's round-1 finding M6 lesson applied proactively, since
-   `WebTestServerApplication`/its in-memory store are shared per test class); `Agent_Registration_Tests.cs`,
-   `Agent_Token_Tests.cs` (incl. "bad signature" and "unknown KeyId" asserting the identical
-   400 shape), `Agent_Protected_Endpoint_Tests.cs` (happy path, no-header 401, garbage-token 401
-   `invalid_token`, `demo:invoke`-only-token 403 `insufficient_scope`, and the scheme-isolation case:
-   a real passkey-issued identity-session cookie presented with NO bearer header still 401s against
-   the agent-token-only policy), `AgentTokenOptions_Binding_Tests.cs` (non-default configured value
-   round-trips through `IOptions<AgentTokenOptions>`).
-7. **Closeout**: `dev build` 0/0; full regression sweep green; Design regions reconciled across every
-   touched file (Ed25519/opaque-token/quarantine-mapping/refresh-is-reissuance/scope-vs-credit
-   rationale all recorded in the relevant files' Design regions per the plan); checklist ticked; curl
-   smoke sequence below.
+### Review (Phase 4b)
+- Effort 2 (general + security, same roster as 104-003). Round 1: 5 merged findings — 2 bugs (null-scopes → validator NRE → 500, found independently by BOTH reviewers, fixed three-layered with cross-command audit confirming single occurrence repo-wide; token-store quarantine-cutoff doc misattribution, load-bearing for 104-013), 1 suggestion, 2 nits — all fixed (5960a942). 0 open, 0 wontfix. Disposition: clean (review/disposition.md).
+- Security verdict: no auth bypass, no verification gap; all 104-003 M-series lessons verified applied from day one.
+- Artifacts: review/review-framework.md, round-1/{general,security,merged}.md, disposition.md.
+
+### Verification
+- dev build 0/0. timewarp-identity-tests 168/168 (was 127; +41), web-contracts-tests 21/21 (+7), web-server-integration-tests 53/1 skipped (+19 incl. null-scopes, scheme-isolation, options-binding). Regression sweep green. Docker-dependent suites not runnable (pre-existing env issue).
 
 **Curl-level smoke sequence** (mirrors what `Agent_Registration_Tests`/`Agent_Token_Tests`/
 `Agent_Protected_Endpoint_Tests` assert end-to-end over real HTTP; `$SIGN` stands in for
@@ -274,22 +220,11 @@ curl -si https://localhost:7000/api/identity/agent/me -H "Authorization: Bearer 
 # HTTP/1.1 401 Unauthorized  (WWW-Authenticate: Bearer error="invalid_token")
 ```
 
-**Deviations from the plan:** none — the plan's literal placements (web-application for
-`AgentTokenOptions`/`IAgentCallerContext`, web-server for the scheme/handler/endpoints) already
-incorporated the 104-003 round-1 lesson, so no relocation was needed this time.
-
-**Follow-ups (explicitly out of scope per plan §9, not overlooked):** payment/402/quota
-(104-008..104-014); Funded promotion/credit claims (104-013, including gating `demo:invoke` usage by
-credit balance rather than scope removal); rate limiting (104-015); key/token revoke/list APIs and
-the first real `Update*`/retry-on-conflict policy (104-005); api-server bearer validation; JWT/JWKS;
-refresh tokens (refresh is re-running the ceremony, by design); Ed25519/secp256k1/RSA agent keys; a
-distributed challenge/token store (multi-instance deployment); SPA surface for agent registration;
-discovery docs (104-017); Entra changes.
-
-### Depends on
-
-104-002
+### Deferred
+- Key/token revoke + list, Update*/retry policy → 104-005. Rate limiting (challenge/token store caps are DoS bounds only; valid-grant eviction under flood documented) → 104-015. Paid elevation/credit claims → 104-013/014. api-server bearer validation → later task if needed. Ed25519 → BCL availability. Distributed stores → multi-instance wave. Discovery docs consume the curl smoke → 104-017.
+- Unblocks: 104-005, 104-011, 104-013/014 groundwork.
 
 ## Session
 
 - Created: 2026-07-16
+- Implementation + review: ses 78b9f414 (2026-07-20), build agent a2ef2354b0fc976e7, reviewers a31739ea747756530 (general) + security-reviewer-104-003
