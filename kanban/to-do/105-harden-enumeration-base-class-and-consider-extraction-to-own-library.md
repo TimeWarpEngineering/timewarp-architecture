@@ -43,10 +43,8 @@ Improvements identified in review (2026-07-19):
 
 ## Notes
 
-- **See https://github.com/ardalis/SmartEnum for ideas.** Ardalis created SmartEnum after Steve's
-  enum class and a DevBetter meeting — he drew inspiration from Steve's implementation, so we can
-  freely draw from his in return. Its feature surface (value converters, EF support,
-  `TryFromName`/`TryFromValue`, comparison operators) is a useful checklist, same way
+- **See https://github.com/ardalis/SmartEnum for ideas.** Its feature surface (value converters,
+  EF support, `TryFromName`/`TryFromValue`, comparison operators) is a useful checklist, same way
   StronglyTypedId was used as a spec for 104-027 rather than adopted.
 - **Consider extracting to its own library** — `timewarp-enumeration` or similar — rather than
   keeping it inside `TimeWarp.Foundation.*`. A standalone package would let dependency-free
