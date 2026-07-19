@@ -6,7 +6,7 @@
 #region Design
 // Same one-time/uniform-false-on-failure contract as IWebAuthnChallengeStore (see that port's
 // Design region for the full rationale — not re-derived here). A SEPARATE port/type from
-// IWebAuthnChallengeStore&lt;WebAuthnCeremonyType&gt; (not a shared generic interface) even though
+// IWebAuthnChallengeStore<WebAuthnCeremonyType> (not a shared generic interface) even though
 // InMemoryAgentKeyChallengeStore's IMPLEMENTATION shares a core with InMemoryWebAuthnChallengeStore:
 // the two ceremony families are domain-separated by design (see AgentKeyCeremonyType's Design
 // region), and DI should bind IAgentKeyChallengeStore/IWebAuthnChallengeStore as two distinct

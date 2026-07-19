@@ -15,7 +15,7 @@
 // normal operation) and then evicts the single oldest-by-expiry entry if still at MaxEntries — a
 // cheap DoS bound, not a substitute for real rate limiting (task 104-015).
 // Delegation refactor (task 104-004): the prune/evict/consume body above now lives once in
-// InMemoryChallengeStoreCore&lt;TCeremonyType&gt; (ceremonies/in-memory-challenge-store-core.cs),
+// InMemoryChallengeStoreCore<TCeremonyType> (ceremonies/in-memory-challenge-store-core.cs),
 // shared with InMemoryAgentKeyChallengeStore — this type is a thin, behavior-preserving wrapper.
 // The public surface (this ctor's parameters/defaults, Issue/TryConsume signatures) is UNCHANGED;
 // the existing WebAuthn challenge-store tests re-run unmodified as the regression pin for that claim.

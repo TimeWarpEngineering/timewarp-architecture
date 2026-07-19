@@ -59,6 +59,9 @@ public class Returns_
 
     result.IsT2.ShouldBeTrue("Issuance with an unregistered key should fail.");
     result.AsT2.Status.ShouldBe(400);
+    // Pins the no-enumeration-oracle equivalence (round-1 finding M5): must be byte-identical to
+    // the bad-signature rejection below, not merely the same status code.
+    result.AsT2.Title.ShouldBe("Token issuance failed");
   }
 
   public async Task BadRequest_Given_Bad_Signature_Identical_To_Unknown_KeyId()
@@ -103,6 +106,33 @@ public class Returns_
     result.IsT2.ShouldBeTrue("Issuance with an unknown scope should fail.");
     result.AsT2.Status.ShouldBe(400);
     result.AsT2.Title.ShouldBe("invalid_scope");
+  }
+
+  public async Task ValidationError_Given_Null_Scopes()
+  {
+    // Round-1 finding M1: a JSON body with "scopes": null must produce a clean 400 validation
+    // problem, not an unhandled 500 (FluentValidation's NotEmpty-then-Must cascade previously
+    // dereferenced a null Scopes list). ContractSerializationDefaults writes explicit nulls (no
+    // DefaultIgnoreCondition configured), so setting Scopes = null! here genuinely reaches the wire
+    // as literal "scopes":null, not an omitted property.
+    var key = new IntegrationSoftwareAgentKey();
+    string keyId = await RegisterAgentKey(key);
+
+    OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> start =
+      await WebTestServerApplication.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
+    byte[] challenge = Base64Url.DecodeFromChars(start.AsT0.Challenge);
+    byte[] signature = key.Sign(AgentKeyCeremonyType.TokenIssuance, challenge);
+
+    var tokenCommand = new CompleteAgentTokenIssuance.Command
+    {
+      KeyId = keyId,
+      Challenge = Base64Url.EncodeToString(challenge),
+      Signature = Base64Url.EncodeToString(signature),
+      Scopes = null!
+    };
+
+    await WebTestServerApplication.ConfirmEndpointValidationError<CompleteAgentTokenIssuance.Response>
+      (tokenCommand, nameof(CompleteAgentTokenIssuance.Command.Scopes));
   }
 
   public async Task BadRequest_Given_Reused_Challenge()

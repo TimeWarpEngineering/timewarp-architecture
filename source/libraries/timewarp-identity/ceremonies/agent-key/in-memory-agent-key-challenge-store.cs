@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Thin wrapper over InMemoryChallengeStoreCore&lt;AgentKeyCeremonyType&gt; — see
+// Thin wrapper over InMemoryChallengeStoreCore<AgentKeyCeremonyType> — see
 // ceremonies/in-memory-challenge-store-core.cs for the shared prune/evict/consume behavior, and
 // InMemoryWebAuthnChallengeStore (its sibling) for the original single-instance-semantics rationale.
 #endregion

@@ -10,7 +10,7 @@
 //
 // Concurrency (task 104-028, supersedes D6 last-write-wins and D4's "shared-reference vs
 // snapshot-on-get is an implementation choice"). Principal and Credential inherit
-// Entity&lt;TId&gt;.Version, a store-owned optimistic-concurrency token. Version == 0 means
+// Entity<TId>.Version, a store-owned optimistic-concurrency token. Version == 0 means
 // created-but-never-updated; every implementation MUST advance it by exactly 1 per successful
 // update (EntityVersion.Next) and MUST return snapshots — this port contract requires
 // snapshot-on-get, closing off D4's "implementation choice" framing, because a version check is

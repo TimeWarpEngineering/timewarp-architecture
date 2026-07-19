@@ -14,7 +14,7 @@
 // concrete leaf to declare its OWN nested validator (checked only against `aggregateType.GetTypeMembers()`
 // — directly nested members, not inherited ones), even when a base class already declares one.
 // DomainInvariantsGuard's runtime discovery additionally walks the BaseType chain and CAN resolve a
-// base-declared validator via IValidator&lt;in T&gt; contravariance (see its Design region) — that
+// base-declared validator via IValidator<in T> contravariance (see its Design region) — that
 // walk exists to support EF dynamic proxies (runtime-generated types the analyzer never sees), and
 // tolerates the base-declared-validator shape as a side effect, not as a second sanctioned authoring
 // pattern. A hand-authored aggregate that relies on a base class's validator instead of declaring its
@@ -25,18 +25,18 @@
 // has a parameterless constructor of any accessibility, and derives a base named "AbstractValidator"
 // with one type argument equal to the containing (aggregate) type, where that base's containing
 // namespace is literally "FluentValidation" — this closes the gap where an unrelated same-named
-// AbstractValidator&lt;T&gt; (or an abstract/ctor-parameterized one) would satisfy TWA0011 at build
+// AbstractValidator<T> (or an abstract/ctor-parameterized one) would satisfy TWA0011 at build
 // time yet throw MissingInvariantsValidatorException at DomainInvariantsGuard.EnsureValid. Matching
 // by base-chain shape (not just the name "Invariants"), so a same-named nested type that is not
 // actually a validator does not silently satisfy the rule. This is intentionally the SAME shape
-// DomainInvariantsGuard checks at runtime (!IsAbstract, parameterless ctor, IValidator&lt;T&gt;
+// DomainInvariantsGuard checks at runtime (!IsAbstract, parameterless ctor, IValidator<T>
 // assignable) with one addition here (the FluentValidation-namespace check) that the guard does not
 // need, because the guard also verifies the discovered type is actually assignable to
-// IValidator&lt;T&gt; via reflection — a check the analyzer approximates by name since it works
-// purely from symbols and cannot assume FluentValidation's real IValidator&lt;T&gt; is referenced/
+// IValidator<T> via reflection — a check the analyzer approximates by name since it works
+// purely from symbols and cannot assume FluentValidation's real IValidator<T> is referenced/
 // resolvable in every compilation this analyzer runs against (it ships as an analyzer-only package
 // safe to reference from contract projects that may not carry a FluentValidation package reference
-// at all). Both sides remain out of sync for generic aggregate roots (`Aggregate&lt;T&gt; :
+// at all). Both sides remain out of sync for generic aggregate roots (`Aggregate<T> :
 // IAggregateRoot`): the guard's reflection-based GetNestedTypes() on a closed generic type returns
 // open nested-type definitions and fails discovery even when a validator is declared; no aggregate
 // in this template is generic today.

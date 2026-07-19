@@ -25,6 +25,19 @@
 // 256, Signature 1KB, Scopes capped at 16 entries of at most 64 characters each (this task defines
 // exactly two known scopes — see AgentScopes — so 16 is deliberately generous headroom for future
 // scopes, not a tight bound).
+// Scopes rule (round-1 finding M1): a JSON body with "scopes": null overwrites the `= []`
+// initializer (System.Text.Json does not enforce non-nullability of List<string>), and
+// FluentValidation's default rule-level cascade is Continue — so `.NotEmpty()` recording a failure
+// on null does NOT stop `.Must(scopes => scopes.Count <= 16)` from still running and dereferencing
+// null, producing an unhandled 500 instead of a 400. Fixed with THREE independent layers, not just
+// one, since this exact defect class (104-003's M9) keeps recurring on "the BCL/library call
+// throws something other than what a single guard expects": `Cascade(CascadeMode.Stop)` so a failed
+// `NotNull()` short-circuits the rest of this rule chain; `NotNull()` itself as an explicit, clearly
+// -messaged first check; AND the `Must` predicate is null-safe on its own
+// (`scopes is null || scopes.Count <= 16`) so even a future reordering or a cascade-mode change
+// elsewhere cannot reintroduce the throw. RuleForEach below already handles a null collection
+// gracefully (it simply does not iterate) — confirmed, not assumed, before this fix; no change
+// needed there.
 // No GetMockResponseFactory — see StartAgentKeyRegistration's Design region.
 #endregion
 
@@ -48,8 +61,11 @@ public static partial class CompleteAgentTokenIssuance
       RuleFor(x => x.KeyId).NotEmpty().MaximumLength(256);
       RuleFor(x => x.Challenge).NotEmpty().MaximumLength(256);
       RuleFor(x => x.Signature).NotEmpty().MaximumLength(1024);
-      RuleFor(x => x.Scopes).NotEmpty().Must(scopes => scopes.Count <= 16)
-        .WithMessage("Scopes must contain between 1 and 16 entries.");
+      RuleFor(x => x.Scopes)
+        .Cascade(CascadeMode.Stop)
+        .NotNull().WithMessage("Scopes is required.")
+        .NotEmpty().WithMessage("Scopes must contain between 1 and 16 entries.")
+        .Must(scopes => scopes is null || scopes.Count <= 16).WithMessage("Scopes must contain between 1 and 16 entries.");
       RuleForEach(x => x.Scopes).NotEmpty().MaximumLength(64);
     }
   }

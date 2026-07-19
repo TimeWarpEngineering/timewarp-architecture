@@ -18,6 +18,13 @@
 // reusing that generic core: a token entry's shape — PrincipalId + Scopes, no ceremony type — differs
 // enough, and Validate's non-consuming semantics differ enough from TryConsume, that sharing would
 // need a second generic parameter/behavior flag for no real duplication savings at this size).
+// At-cap eviction consequence (round-1 finding M3): EvictOldest removes the entry with the earliest
+// ExpiresAt among what remains AFTER PruneExpired already swept anything actually expired — so under
+// a token-store flood at MaxEntries (100k), the entry it drops is a still-VALID token (just the
+// soonest-to-expire one), not a stale one. A legitimate agent holding that token gets an early 401
+// before its stated ExpiresInSeconds elapses. This is the accepted DoS posture, not a bug: recovery
+// is cheap (re-run the token-issuance ceremony — the agent's key still works, it just re-signs a
+// fresh challenge), and real capacity limits are 104-015's job, not this store's.
 #endregion
 
 namespace TimeWarp.Identity;

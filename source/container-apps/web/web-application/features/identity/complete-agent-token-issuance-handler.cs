@@ -5,10 +5,22 @@
 
 #region Design
 // Order is deliberate and replay-safety-critical, mirroring CompletePasskeyAuthentication.Handler:
-// decode -> consume the challenge -> validate scope shape -> look up the credential/principal ->
-// verify -> quarantine check -> issue. Consuming the challenge BEFORE verification means a
-// tampered/replayed payload can never retry the same challenge, even when the request fails for an
-// unrelated reason (e.g. an unknown scope) later in the same handler call.
+// decode -> consume the challenge -> validate scope shape (null/empty guard, then canonicalize,
+// then check for unknown scopes) -> look up the credential/principal -> verify -> quarantine check
+// -> issue. Consuming the challenge BEFORE verification means a tampered/replayed payload can never
+// retry the same challenge, even when the request fails for an unrelated reason (e.g. an unknown
+// scope) later in the same handler call.
+// Null-Scopes defense-in-depth (round-1 finding M1): the contract Validator (see that file's Design
+// region) now rejects a null/empty Scopes list before this handler ever runs, via three independent
+// layers (Cascade.Stop, NotNull, a null-safe Must predicate) — the earlier version had a
+// FluentValidation cascade-ordering gap that let ".Must(scopes => scopes.Count <= 16)" dereference
+// a null Scopes list, producing an unhandled 500 (same defect class as 104-003's M9). This handler's
+// own null/empty check below is belt-and-suspenders, not the primary fix.
+// Scope canonicalization (round-1 finding M4): duplicate entries are removed (StringComparer.Ordinal)
+// immediately after the null guard, BEFORE the unknown-scope check, the store Issue call, and the
+// Response — so a caller sending ["identity:read","identity:read"] gets a token/claims/response that
+// all agree on ONE entry, not two. The local `scopes` variable (not `command.Scopes`) is the
+// canonical form used everywhere downstream in this method.
 // Scope validation (unknown scope -> 400 invalid_scope, listing the offending names) runs BEFORE the
 // credential lookup: this is a REQUEST-shape check, not an account-disclosure risk — scope names are
 // public, well-known constants (AgentScopes), so echoing back which ones were not recognized
@@ -76,7 +88,24 @@ public sealed partial class CompleteAgentTokenIssuance
         return ChallengeInvalid();
       }
 
-      var unknownScopes = command.Scopes.Where(scope => !AgentScopes.IsKnown(scope)).ToList();
+      // Defense-in-depth against round-1 finding M1: the contract Validator now rejects a null/empty
+      // Scopes list before this handler ever runs (FluentValidationBehavior), but this handler does
+      // not trust that alone — a null here maps to the same invalid_scope 400 rather than an NRE on
+      // .Where, in case that pipeline behavior is ever bypassed (e.g. a direct mediator Send).
+      if (command.Scopes is null || command.Scopes.Count == 0)
+      {
+        return InvalidScope([]);
+      }
+
+      // Canonicalize before anything downstream sees the scope list (round-1 finding M4): duplicate
+      // entries (e.g. ["identity:read","identity:read"]) would otherwise propagate uncanonicalized
+      // into the stored grant, the claims the auth handler emits (one timewarp:scope claim per
+      // entry — duplicates would emit duplicate claims), and both this Response and
+      // GetAgentIdentity's echoed Scopes. Ordinal comparison matches AgentScopes.IsKnown's own
+      // comparer.
+      var scopes = command.Scopes.Distinct(StringComparer.Ordinal).ToList();
+
+      var unknownScopes = scopes.Where(scope => !AgentScopes.IsKnown(scope)).ToList();
       if (unknownScopes.Count > 0)
       {
         return InvalidScope(unknownScopes);
@@ -108,9 +137,9 @@ public sealed partial class CompleteAgentTokenIssuance
 
       AgentTokenOptions agentTokenOptions = Options.Value;
       var lifetime = TimeSpan.FromMinutes(agentTokenOptions.TokenLifetimeMinutes);
-      string accessToken = TokenStore.Issue(principal.Id, command.Scopes, lifetime);
+      string accessToken = TokenStore.Issue(principal.Id, scopes, lifetime);
 
-      return new Response(accessToken, (int)lifetime.TotalSeconds, command.Scopes, principal.Id);
+      return new Response(accessToken, (int)lifetime.TotalSeconds, scopes, principal.Id);
     }
 
     private static SharedProblemDetails MalformedPayload() => new()

@@ -18,9 +18,13 @@
 // which requires a fresh signature over a one-time challenge) — a distinguishable 403 here would let
 // a caller holding a merely-stolen/leaked token (no private key needed) learn "this principal is
 // quarantined" without ever having proven possession of anything. The quarantine cutoff still takes
-// effect immediately for every already-issued token (IAgentTokenStore's opaque, store-backed design
-// re-reads the principal on every Validate call — see that port's Design region) — it just surfaces
-// as "unauthenticated," not "forbidden."
+// effect immediately for every already-issued token — but THIS METHOD is what delivers that (the
+// explicit PrincipalStore.GetPrincipalAsync + principal.IsActive check below, AFTER
+// TokenStore.Validate succeeds), NOT IAgentTokenStore itself (round-1 finding M2 corrected a prior
+// version of this paragraph and of IAgentTokenStore's own Design region, both of which wrongly
+// attributed the principal re-read to Validate — that port has no IPrincipalStore access and never
+// did; see IAgentTokenStore's Design region for the full, corrected division of responsibility). It
+// just surfaces as "unauthenticated," not "forbidden," here.
 // WWW-Authenticate/RFC 6750 §3.1: HandleChallengeAsync emits a bare "Bearer" challenge when no
 // credential was ever presented (TokenWasPresented false), and "Bearer error=\"invalid_token\""
 // when a Bearer credential WAS presented but rejected — RFC 6750 reserves the error/error_description

@@ -22,7 +22,7 @@
 //      for the "Version" property of every Modified IAggregateRoot — this bypasses the private
 //      setter the same way EF already writes any other private-setter property (its compiled
 //      accessors invoke the setter via reflection regardless of C# accessibility); nothing in
-//      Entity&lt;TId&gt; itself, and no attribute on this property, increments anything.
+//      Entity<TId> itself, and no attribute on this property, increments anything.
 //   2. Hosts that map a concrete aggregate MUST additionally call .IsConcurrencyToken() on the
 //      "Version" property in their own OnModelCreating (PostgresDbContext is entity-free and cannot
 //      do this for entity types it does not know about) — without that, the hook still increments

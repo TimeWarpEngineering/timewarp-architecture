@@ -5,9 +5,9 @@
 #region Design
 // Lives in web-application, not web-server, despite being bound from configuration at the host
 // (web-server's Program.ConfigureSettings calls AddFluentValidatedOptions<WebAuthnOptions,
-// WebAuthnOptionsValidator> there) — the identity handlers that consume IOptions&lt;WebAuthnOptions&gt;
-// live in web-application, which does NOT reference web-server (web-server -&gt; web-infrastructure
-// -&gt; web-application is the one-way dependency chain), so the type has to live where both the
+// WebAuthnOptionsValidator> there) — the identity handlers that consume IOptions<WebAuthnOptions>
+// live in web-application, which does NOT reference web-server (web-server -> web-infrastructure
+// -> web-application is the one-way dependency chain), so the type has to live where both the
 // binder (web-server, which references web-application transitively) and the consumers
 // (web-application's own handlers) can see it. SampleOptions stays in web-server precisely because
 // nothing outside web-server ever consumes it — this is the one place that convention does not fit.
