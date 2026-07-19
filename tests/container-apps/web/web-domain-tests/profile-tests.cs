@@ -35,6 +35,19 @@ public class Create
 
   public void Rejects_whitespace_theme() =>
     Should.Throw<ArgumentException>(() => Profile.Create("Ada", "en-US", "US", "   "));
+
+  public void Accepts_displayName_at_max_length()
+  {
+    string maxLengthName = new('a', Profile.MaxDisplayNameLength);
+    Profile profile = Profile.Create(maxLengthName, "en-US", "US", "dark");
+    profile.DisplayName.ShouldBe(maxLengthName);
+  }
+
+  public void Rejects_displayName_over_max_length()
+  {
+    string tooLongName = new('a', Profile.MaxDisplayNameLength + 1);
+    Should.Throw<ArgumentOutOfRangeException>(() => Profile.Create(tooLongName, "en-US", "US", "dark"));
+  }
 }
 
 public class Rename
@@ -50,6 +63,13 @@ public class Rename
   {
     Profile profile = Profile.Create("Ada", "en-US", "US", "dark");
     Should.Throw<ArgumentException>(() => profile.Rename("   "));
+  }
+
+  public void Rejects_displayName_over_max_length()
+  {
+    Profile profile = Profile.Create("Ada", "en-US", "US", "dark");
+    string tooLongName = new('a', Profile.MaxDisplayNameLength + 1);
+    Should.Throw<ArgumentOutOfRangeException>(() => profile.Rename(tooLongName));
   }
 }
 

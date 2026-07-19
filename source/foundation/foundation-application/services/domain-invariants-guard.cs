@@ -8,14 +8,32 @@
 // EnsureValid overloads directly from their DbContext.SaveChanges(Async) override (e.g.
 // PostgresDbContext), after filtering entries down to Added/Modified IAggregateRoot instances. Kept
 // static/pure so the hook needs no constructor plumbing.
-// Discovery: the first nested type (public or non-public) on the aggregate's exact runtime type that
-// is assignable to IValidator&lt;TAggregate&gt; is treated as its Invariants validator, instantiated
-// once via the validator's parameterless constructor, and cached by aggregate type so repeat saves
-// do not pay reflection cost.
-// Fail-closed by design in both directions: no nested validator is found -&gt;
-// MissingInvariantsValidatorException (an aggregate root MUST declare its invariants); the validator
-// runs and reports failures -&gt; DomainInvariantViolationException. Neither path lets an unvalidated
-// or invalid aggregate reach the store.
+// Discovery walks the aggregate's exact runtime type, then its BaseType chain (object last), looking
+// at each level's own nested types for the first non-abstract one assignable to
+// IValidator&lt;TAggregate&gt;. Walking the chain (not just the runtime type) matters for two real
+// shapes: an EF dynamic proxy (UseLazyLoadingProxies/change-tracking proxies subclass non-sealed
+// entities, so GetType() returns the proxy type, whose own GetNestedTypes() is empty) and a
+// validator declared on an abstract aggregate base rather than every concrete leaf. Both resolve
+// correctly here because FluentValidation's IValidator&lt;in T&gt; is contravariant: a validator
+// implementing IValidator&lt;Base&gt; IS assignable to IValidator&lt;Derived&gt;, so
+// validatorInterface.IsAssignableFrom(candidate) still succeeds when the match is found higher in
+// the chain. Generic aggregate roots remain out of scope: reflection's GetNestedTypes() on a closed
+// constructed generic type returns open nested-type definitions, so discovery does not work for
+// `Aggregate&lt;T&gt; : IAggregateRoot` today; no aggregate in this template is generic.
+// Selection when a level has more than one qualifying candidate (should be rare — TWA0011/TWA0012
+// flag every non-private duplicate at build time, so this is a best-effort pick, not ambiguity
+// detection): prefer a private candidate (the convention-compliant shape); otherwise take the first
+// match. The chosen validator is instantiated once via its parameterless constructor (any
+// accessibility) and cached by runtime aggregate type so repeat saves do not pay reflection cost.
+// Fail-closed by design in three directions: no nested validator is found anywhere in the chain -&gt;
+// MissingInvariantsValidatorException (an aggregate root MUST declare its invariants); a candidate
+// was found but Activator.CreateInstance could not construct it (no parameterless ctor, or an
+// inaccessible one) -&gt; the same exception, wrapping the reflection failure with a cause message
+// instead of letting a raw MissingMethodException/MemberAccessException surface — a genuine bug
+// *inside* a validator's constructor (wrapped by Activator as TargetInvocationException) is
+// deliberately NOT caught here and propagates as-is, since that is not a "missing validator" defect;
+// the validator runs and reports failures -&gt; DomainInvariantViolationException. No path lets an
+// unvalidated or invalid aggregate reach the store.
 // TWA0011/TWA0012 duplicate this check at build time (analyzer = build-time upgrade, this guard =
 // runtime backstop for any path the analyzer cannot see, e.g. dynamically loaded assemblies).
 #endregion
@@ -47,7 +65,7 @@ public static class DomainInvariantsGuard
     ArgumentNullException.ThrowIfNull(aggregate);
 
     Type aggregateType = aggregate.GetType();
-    IValidator validator = ValidatorCache.GetOrAdd(aggregateType, DiscoverValidator)
+    IValidator validator = ValidatorCache.GetOrAdd(aggregateType, DiscoverAndInstantiateValidator)
       ?? throw new MissingInvariantsValidatorException(aggregateType);
 
     ValidationResult result = validator.Validate(new ValidationContext<object>(aggregate));
@@ -57,14 +75,44 @@ public static class DomainInvariantsGuard
     }
   }
 
-  private static IValidator? DiscoverValidator(Type aggregateType)
+  private static IValidator? DiscoverAndInstantiateValidator(Type aggregateType)
   {
     Type validatorInterface = typeof(IValidator<>).MakeGenericType(aggregateType);
 
-    Type? validatorType = aggregateType
-      .GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic)
-      .FirstOrDefault(nested => !nested.IsAbstract && validatorInterface.IsAssignableFrom(nested));
+    for (Type? declaringType = aggregateType; declaringType is not null; declaringType = declaringType.BaseType)
+    {
+      Type? validatorType = SelectValidatorType(declaringType, validatorInterface);
+      if (validatorType is not null)
+      {
+        return Instantiate(validatorType, aggregateType);
+      }
+    }
 
-    return validatorType is null ? null : (IValidator)Activator.CreateInstance(validatorType, nonPublic: true)!;
+    return null;
+  }
+
+  private static Type? SelectValidatorType(Type declaringType, Type validatorInterface)
+  {
+    Type[] candidates = declaringType
+      .GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic)
+      .Where(nested => !nested.IsAbstract && validatorInterface.IsAssignableFrom(nested))
+      .ToArray();
+
+    if (candidates.Length == 0) return null;
+    if (candidates.Length == 1) return candidates[0];
+
+    return candidates.FirstOrDefault(candidate => candidate.IsNestedPrivate) ?? candidates[0];
+  }
+
+  private static IValidator Instantiate(Type validatorType, Type aggregateType)
+  {
+    try
+    {
+      return (IValidator)Activator.CreateInstance(validatorType, nonPublic: true)!;
+    }
+    catch (Exception ex) when (ex is MissingMethodException or MemberAccessException)
+    {
+      throw new MissingInvariantsValidatorException(aggregateType, ex);
+    }
   }
 }

@@ -6,16 +6,34 @@
 
 #region Design
 // Name-based detection (same approach as ContractNullabilityValidatorAnalyzer/SliceIsolationAnalyzer):
-// matches types implementing an interface simple-named "IAggregateRoot" so the check works without a
-// hard compile-time reference to TimeWarp.Foundation.Entities. Abstract classes are exempt — an
-// abstract aggregate base has no invariants of its own; concrete leaves are still checked.
-// A "nested Invariants validator" is any type nested directly on the aggregate whose base chain
-// includes AbstractValidator&lt;T&gt; with T equal to the containing (aggregate) type — the same
-// shape DomainInvariantsGuard discovers at runtime. Matching by base-chain shape, not by name, so
-// the convention does not silently accept a same-named type that is not actually a validator.
-// TWA0012 only fires once a qualifying validator was found (TWA0011 already covers "no validator at
-// all"); it flags a public/internal/protected nested validator, since only private nesting is
-// invisible to AddValidatorsFromAssemblyContaining.
+// matches types implementing an interface simple-named "IAggregateRoot" (via AllInterfaces, so
+// indirect implementation — through a base class or through another interface that itself extends
+// IAggregateRoot — is covered) without a hard compile-time reference to TimeWarp.Foundation.Entities.
+// Abstract classes are exempt — an abstract aggregate base has no invariants of its own; concrete
+// leaves are still checked.
+// A "nested Invariants validator" is a type nested directly on the aggregate that is: not abstract,
+// has a parameterless constructor of any accessibility, and derives a base named "AbstractValidator"
+// with one type argument equal to the containing (aggregate) type, where that base's containing
+// namespace is literally "FluentValidation" — this closes the gap where an unrelated same-named
+// AbstractValidator&lt;T&gt; (or an abstract/ctor-parameterized one) would satisfy TWA0011 at build
+// time yet throw MissingInvariantsValidatorException at DomainInvariantsGuard.EnsureValid. Matching
+// by base-chain shape (not just the name "Invariants"), so a same-named nested type that is not
+// actually a validator does not silently satisfy the rule. This is intentionally the SAME shape
+// DomainInvariantsGuard checks at runtime (!IsAbstract, parameterless ctor, IValidator&lt;T&gt;
+// assignable) with one addition here (the FluentValidation-namespace check) that the guard does not
+// need, because the guard also verifies the discovered type is actually assignable to
+// IValidator&lt;T&gt; via reflection — a check the analyzer approximates by name since it works
+// purely from symbols and cannot assume FluentValidation's real IValidator&lt;T&gt; is referenced/
+// resolvable in every compilation this analyzer runs against (it ships as an analyzer-only package
+// safe to reference from contract projects that may not carry a FluentValidation package reference
+// at all). Both sides remain out of sync for generic aggregate roots (`Aggregate&lt;T&gt; :
+// IAggregateRoot`): the guard's reflection-based GetNestedTypes() on a closed generic type returns
+// open nested-type definitions and fails discovery even when a validator is declared; no aggregate
+// in this template is generic today.
+// TWA0012 enumerates EVERY qualifying nested validator on the aggregate (not just the first) and
+// reports on each one that is not private, since a second, non-private duplicate is exactly the
+// harm the rule exists to catch — a leftover public copy left behind during a refactor can be
+// picked up by assembly scanning even when a correct private one also exists.
 // The runtime DomainInvariantsGuard fail-closed check (foundation-application) intentionally
 // duplicates this: the analyzer is the build-time upgrade, the guard is the persistence-time
 // backstop for anything the analyzer cannot see.
@@ -32,6 +50,7 @@ public class AggregateInvariantsAnalyzer : DiagnosticAnalyzer
   private const string Category = "Design";
   private const string AggregateRootInterfaceName = "IAggregateRoot";
   private const string InvariantsValidatorBaseName = "AbstractValidator";
+  private const string FluentValidationNamespace = "FluentValidation";
 
   private static readonly DiagnosticDescriptor MissingInvariants =
     new
@@ -50,7 +69,7 @@ public class AggregateInvariantsAnalyzer : DiagnosticAnalyzer
     (
       NonPrivateInvariantsId,
       title: "Nested Invariants validator must be private",
-      messageFormat: "'{0}.{1}' must be private; a non-private nested validator is picked up by AddValidatorsFromAssemblyContaining and runs a second time as a request validator",
+      messageFormat: "'{0}.{1}' must be private; a non-private nested validator can be picked up by assembly scanning (such as AddValidatorsFromAssemblyContaining) and run a second time as a request validator",
       Category,
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
@@ -74,34 +93,43 @@ public class AggregateInvariantsAnalyzer : DiagnosticAnalyzer
     if (type.TypeKind != TypeKind.Class || type.IsAbstract) return;
     if (!ImplementsAggregateRoot(type)) return;
 
-    INamedTypeSymbol? validator = FindInvariantsValidator(type);
-    if (validator is null)
+    List<INamedTypeSymbol> validators = FindInvariantsValidators(type);
+    if (validators.Count == 0)
     {
       Location location = type.Locations.FirstOrDefault() ?? Location.None;
       context.ReportDiagnostic(Diagnostic.Create(MissingInvariants, location, type.Name));
       return;
     }
 
-    if (validator.DeclaredAccessibility != Accessibility.Private)
+    foreach (INamedTypeSymbol validator in validators)
     {
-      Location location = validator.Locations.FirstOrDefault() ?? Location.None;
-      context.ReportDiagnostic(Diagnostic.Create(NonPrivateInvariants, location, type.Name, validator.Name));
+      if (validator.DeclaredAccessibility != Accessibility.Private)
+      {
+        Location location = validator.Locations.FirstOrDefault() ?? Location.None;
+        context.ReportDiagnostic(Diagnostic.Create(NonPrivateInvariants, location, type.Name, validator.Name));
+      }
     }
   }
 
   private static bool ImplementsAggregateRoot(INamedTypeSymbol type) =>
     type.AllInterfaces.Any(static i => i.Name == AggregateRootInterfaceName);
 
-  private static INamedTypeSymbol? FindInvariantsValidator(INamedTypeSymbol aggregateType) =>
-    aggregateType.GetTypeMembers().FirstOrDefault(nested => ValidatesAggregate(nested, aggregateType));
+  private static List<INamedTypeSymbol> FindInvariantsValidators(INamedTypeSymbol aggregateType) =>
+    aggregateType.GetTypeMembers()
+      .Where(nested => ValidatesAggregate(nested, aggregateType))
+      .ToList();
 
   private static bool ValidatesAggregate(INamedTypeSymbol candidate, INamedTypeSymbol aggregateType)
   {
+    if (candidate.IsAbstract) return false;
+    if (!HasParameterlessConstructor(candidate)) return false;
+
     for (INamedTypeSymbol? baseType = candidate.BaseType; baseType is not null; baseType = baseType.BaseType)
     {
       if (baseType.Name == InvariantsValidatorBaseName
         && baseType.TypeArguments.Length == 1
-        && SymbolEqualityComparer.Default.Equals(baseType.TypeArguments[0], aggregateType))
+        && SymbolEqualityComparer.Default.Equals(baseType.TypeArguments[0], aggregateType)
+        && baseType.ContainingNamespace?.ToDisplayString() == FluentValidationNamespace)
       {
         return true;
       }
@@ -109,4 +137,10 @@ public class AggregateInvariantsAnalyzer : DiagnosticAnalyzer
 
     return false;
   }
+
+  // Any accessibility qualifies — DomainInvariantsGuard instantiates via
+  // Activator.CreateInstance(validatorType, nonPublic: true). A type with no explicit constructor
+  // has a synthesized public parameterless one, which InstanceConstructors includes.
+  private static bool HasParameterlessConstructor(INamedTypeSymbol candidate) =>
+    candidate.InstanceConstructors.Any(static ctor => ctor.Parameters.Length == 0);
 }
