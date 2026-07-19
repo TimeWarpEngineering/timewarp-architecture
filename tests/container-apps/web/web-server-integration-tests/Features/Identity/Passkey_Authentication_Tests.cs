@@ -7,6 +7,10 @@
 #region Design
 // Same GetResponse-not-Send rationale as Passkey_Registration_Tests.cs — CompletePasskeyAuthentication
 // also issues a cookie via CookieBrowserSessionService, which requires a real HttpContext.
+// Same per-class fixture-sharing caveat as Passkey_Registration_Tests.cs's Design region (round-1
+// finding M6) also applies here: WebTestServerApplication/HttpClient/cookie-jar are shared across
+// every test method in this class, so the happy-path test below isolates its own session cookie
+// (GetCurrentSessionWithCookie) rather than relying on the shared client's ambient state.
 #endregion
 
 namespace PasskeyAuthentication_;
@@ -52,11 +56,12 @@ public class Returns_
     authenticateResponse.ShouldNotBeNull();
     authenticateResponse.PrincipalId.ShouldBe(registeredPrincipalId);
 
-    OneOf<GetCurrentSession.Response, FileResponse, SharedProblemDetails> sessionResult =
-      await WebTestServerApplication.GetResponse<GetCurrentSession.Response>(new GetCurrentSession.Query(), CancellationToken.None);
+    // Isolated cookie (see class Design region): proves THIS response's Set-Cookie actually
+    // authenticates, independent of the shared HttpClient's ambient cookie jar.
+    GetCurrentSession.Response sessionResponse = await GetCurrentSessionWithCookie(setCookieValues!);
 
-    sessionResult.AsT0.IsAuthenticated.ShouldBeTrue();
-    sessionResult.AsT0.PrincipalId.ShouldBe(registeredPrincipalId);
+    sessionResponse.IsAuthenticated.ShouldBeTrue();
+    sessionResponse.PrincipalId.ShouldBe(registeredPrincipalId);
   }
 
   public async Task BadRequest_Given_Unknown_Credential()
@@ -106,6 +111,21 @@ public class Returns_
 
     replay.IsT2.ShouldBeTrue("Replayed authentication should fail.");
     replay.AsT2.Status.ShouldBe(400);
+  }
+
+  public async Task ValidationError_Given_Oversized_CredentialId()
+  {
+    // Round-1 finding M4: CredentialId is now capped at 2KB on this command too.
+    var command = new CompletePasskeyAuthentication.Command
+    {
+      CredentialId = new string('A', (2 * 1024) + 1),
+      ClientDataJson = "QQ",
+      AuthenticatorData = "QQ",
+      Signature = "QQ"
+    };
+
+    await WebTestServerApplication.ConfirmEndpointValidationError<CompletePasskeyAuthentication.Response>
+      (command, nameof(CompletePasskeyAuthentication.Command.CredentialId));
   }
 
   private async Task<PrincipalId> RegisterPasskey(IntegrationSoftwareAuthenticator authenticator)
@@ -161,5 +181,23 @@ public class Returns_
     using JsonDocument document = JsonDocument.Parse(optionsJson);
     string challengeBase64Url = document.RootElement.GetProperty("challenge").GetString()!;
     return Base64Url.DecodeFromChars(challengeBase64Url);
+  }
+
+  // Isolated-cookie GetCurrentSession call (see class Design region, round-1 finding M6) — see
+  // Passkey_Registration_Tests.cs's identical helper for the full rationale.
+  private async Task<GetCurrentSession.Response> GetCurrentSessionWithCookie(IEnumerable<string> setCookieValues)
+  {
+    string? sessionCookie = setCookieValues.FirstOrDefault
+      (value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
+    sessionCookie.ShouldNotBeNull("Expected a Set-Cookie header carrying the identity-session cookie.");
+
+    using HttpClient isolatedClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    isolatedClient.DefaultRequestHeaders.Add("Cookie", sessionCookie.Split(';')[0]);
+
+    HttpResponseMessage response = await isolatedClient.GetAsync(GetCurrentSession.Query.RouteTemplate);
+    string json = await response.Content.ReadAsStringAsync();
+
+    return JsonSerializer.Deserialize<GetCurrentSession.Response>(json, ContractSerializationDefaults.Options)
+      ?? throw new InvalidOperationException("GetCurrentSession response deserialized to null.");
   }
 }

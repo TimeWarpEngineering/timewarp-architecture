@@ -7,11 +7,12 @@
 // Route-only, empty body: identity comes from the request's session cookie (see
 // IBrowserSessionService), never from a client-supplied UserId — this is a read of ambient
 // authentication state, not a lookup by parameter.
-// PrincipalId is nullable: IsAuthenticated=false pairs with PrincipalId=null (no session); the two
-// fields are set together by the handler so they can never disagree from a caller's perspective.
-// No invariant to guard in the ctor beyond that pairing (PrincipalId, unlike the other identity
-// contracts' Responses, is legitimately allowed to be empty/absent here), so a plain ctor without
-// Guard.Against suffices.
+// PrincipalId is nullable: IsAuthenticated=false pairs with PrincipalId=null (no session), and
+// IsAuthenticated=true always carries a non-null PrincipalId. A round-1 review caught this region
+// describing that pairing as an invariant while the ctor accepted any combination — enforced now:
+// the ctor throws ArgumentException on isAuthenticated != (principalId is not null), so a
+// disagreeing pair can never be constructed (and therefore never serialized), not merely one the
+// handler happens to avoid producing.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -30,6 +31,15 @@ public static partial class GetCurrentSession
 
     public Response(bool isAuthenticated, PrincipalId? principalId)
     {
+      if (isAuthenticated != (principalId is not null))
+      {
+        throw new ArgumentException
+        (
+          "IsAuthenticated and PrincipalId must agree: IsAuthenticated=true requires a non-null PrincipalId, IsAuthenticated=false requires null.",
+          nameof(principalId)
+        );
+      }
+
       IsAuthenticated = isAuthenticated;
       PrincipalId = principalId;
     }

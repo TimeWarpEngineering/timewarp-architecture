@@ -5,11 +5,16 @@
 
 #region Design
 // All three fields are base64url-encoded binary (CredentialId, ClientDataJson, AttestationObject) —
-// FluentValidation here only enforces presence and a coarse size ceiling on the largest/most
-// variable field (AttestationObject, 64KB); actual base64url well-formedness and CBOR/structural
-// validity are checked by the handler via WebAuthnChallengeReader/WebAuthnRegistration.Verify, not
-// by a regex here (per the web-api-contracts skill: format validation belongs in the
-// handler/library, not FluentValidation regex, for payloads this shape-sensitive).
+// FluentValidation here only enforces presence and a coarse size ceiling; actual base64url
+// well-formedness and CBOR/structural validity are checked by the handler via
+// WebAuthnChallengeReader/WebAuthnRegistration.Verify, not by a regex here (per the
+// web-api-contracts skill: format validation belongs in the handler/library, not FluentValidation
+// regex, for payloads this shape-sensitive).
+// Every base64url field carries a MaximumLength ceiling, not just AttestationObject (a round-1
+// review caught the original CredentialId/ClientDataJson being left uncapped): CredentialId at 2KB
+// (the spec caps raw credential ids at 1023 bytes, ~1366 base64url chars — 2KB rounds up with
+// headroom) and ClientDataJson/AttestationObject at 64KB (real payloads are a few hundred bytes to
+// a couple KB; 64KB is a coarse DoS-shaped ceiling, not a realistic-size estimate).
 // No GetMockResponseFactory — see StartPasskeyRegistration's Design region.
 #endregion
 
@@ -29,8 +34,8 @@ public static partial class CompletePasskeyRegistration
   {
     public Validator()
     {
-      RuleFor(x => x.CredentialId).NotEmpty();
-      RuleFor(x => x.ClientDataJson).NotEmpty();
+      RuleFor(x => x.CredentialId).NotEmpty().MaximumLength(2 * 1024);
+      RuleFor(x => x.ClientDataJson).NotEmpty().MaximumLength(64 * 1024);
       RuleFor(x => x.AttestationObject).NotEmpty().MaximumLength(64 * 1024);
     }
   }

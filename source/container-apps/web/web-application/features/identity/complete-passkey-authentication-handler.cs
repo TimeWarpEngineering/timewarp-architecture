@@ -11,10 +11,13 @@
 // generic 400 "Authentication failed" — an attacker probing the endpoint cannot distinguish
 // "this credential was never registered" from "this credential exists but is revoked." A
 // quarantined account (IsActive false) is the one deliberate exception: it returns 403, a distinct
-// signal, because at that point the caller has already cryptographically proven possession of a
-// real credential — quarantine is an administrative state on an authenticated identity, not a
-// "did this credential ever exist" question, so hiding it behind a generic 400 would not close any
-// meaningful oracle while making legitimate quarantined users' error messages misleading.
+// signal — but ONLY once WebAuthnAuthentication.Verify has succeeded. The IsActive check runs
+// AFTER Verify, not before: a round-1 security review caught an earlier version of this handler
+// checking IsActive before the signature was verified, which let a caller who merely KNEW a valid
+// CredentialId (no private key required) learn "quarantined" vs "active" as a pre-auth oracle —
+// exactly the enumeration leak this paragraph otherwise prevents. Checking quarantine post-Verify
+// makes the "the caller has already cryptographically proven possession" premise for the distinct
+// 403 actually true, since nothing before Verify can produce it.
 // Concurrency note (104-028): this handler makes zero Update* calls — no sign-count persisted
 // (Credential has no such field; see authenticator-data.cs), so nothing here needs to write back to
 // the store at all. The first real catch-ConcurrencyConflictException-reload-retry-once policy
@@ -76,11 +79,6 @@ public sealed partial class CompletePasskeyAuthentication
         return AuthenticationFailed();
       }
 
-      if (!principal.IsActive)
-      {
-        return Quarantined();
-      }
-
       WebAuthnOptions webAuthnOptions = Options.Value;
       var relyingParty = new WebAuthnRelyingParty(webAuthnOptions.RpId, webAuthnOptions.RpName, webAuthnOptions.AllowedOrigins);
 
@@ -90,6 +88,12 @@ public sealed partial class CompletePasskeyAuthentication
       if (!verifyResult.IsValid)
       {
         return AuthenticationFailed();
+      }
+
+      // Quarantine is checked only AFTER Verify succeeds — see Design region.
+      if (!principal.IsActive)
+      {
+        return Quarantined();
       }
 
       await BrowserSessionService.IssueAsync(principal.Id, principal.DisplayName, cancellationToken);

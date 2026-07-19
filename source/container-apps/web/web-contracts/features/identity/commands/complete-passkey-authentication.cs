@@ -12,6 +12,11 @@
 // PublicKeyCredential.toJSON()/AuthenticatorAssertionResponse always includes a userHandle field for
 // discoverable credentials; declaring it here documents that it travels but is deliberately ignored,
 // rather than silently dropping a field the client sends.
+// Every base64url field carries a MaximumLength ceiling, matching CompletePasskeyRegistration's
+// treatment (a round-1 review caught this command capping nothing at all): CredentialId/UserHandle
+// at 2KB (spec caps raw credential/user ids well under that), ClientDataJson/AuthenticatorData/
+// Signature at 64KB (coarse DoS-shaped ceiling, not a realistic-size estimate — see
+// CompletePasskeyRegistration's Design region for the same rationale).
 // No GetMockResponseFactory — see StartPasskeyRegistration's Design region.
 #endregion
 
@@ -35,10 +40,11 @@ public static partial class CompletePasskeyAuthentication
   {
     public Validator()
     {
-      RuleFor(x => x.CredentialId).NotEmpty();
-      RuleFor(x => x.ClientDataJson).NotEmpty();
-      RuleFor(x => x.AuthenticatorData).NotEmpty();
-      RuleFor(x => x.Signature).NotEmpty();
+      RuleFor(x => x.CredentialId).NotEmpty().MaximumLength(2 * 1024);
+      RuleFor(x => x.ClientDataJson).NotEmpty().MaximumLength(64 * 1024);
+      RuleFor(x => x.AuthenticatorData).NotEmpty().MaximumLength(64 * 1024);
+      RuleFor(x => x.Signature).NotEmpty().MaximumLength(64 * 1024);
+      RuleFor(x => x.UserHandle).MaximumLength(2 * 1024);
     }
   }
 

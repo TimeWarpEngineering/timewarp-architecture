@@ -17,6 +17,12 @@
 // treats as "accept any https origin whose host equals RpId" (see its Design region) — this
 // deliberately covers both fixed local origins above without hand-listing ports; production
 // configuration should set AllowedOrigins explicitly.
+// Configuration section name is "WebAuthnOptions" (matches this type's name), not "WebAuthn":
+// AddFluentValidatedOptions binds `configuration.GetSection(key)` where key defaults to
+// typeof(TOptions).Name absent a [ConfigurationKey] attribute (see TimeWarp.OptionsValidation).
+// A round-1 review caught appsettings.json shipping a "WebAuthn" section that silently never bound
+// (masked because the shipped values equalled these C# defaults) — see
+// WebServerIntegrationTests's WebAuthnOptions_Binds_From_Configuration for the regression pin.
 #endregion
 
 namespace TimeWarp.Architecture.Configuration;

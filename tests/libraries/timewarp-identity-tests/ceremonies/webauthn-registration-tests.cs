@@ -149,6 +149,28 @@ public class Verify
     result.FailureReason.ShouldBe(WebAuthnFailureReason.UnsupportedAlgorithm);
   }
 
+  public void Weak_rsa_modulus_fails()
+  {
+    // Round-1 finding M5: a structurally-valid RSA COSE key (kty=RSA, alg=RS256, parses fine) whose
+    // modulus is only 512 bits must be rejected — CoseKey.TryCreateVerifier's MinimumRsaModulusBits
+    // check, not RSA.ImportParameters (which would happily import it).
+    var authenticator = new SoftwareAuthenticator();
+    byte[] challenge = RandomNumberGenerator.GetBytes(32);
+    byte[] clientDataJson = SoftwareAuthenticator.BuildClientDataJson("webauthn.create", challenge, Origin);
+    byte[] authenticatorData = authenticator.BuildAuthenticatorData
+    (
+      Rp.Id,
+      includeAttestedCredentialData: true,
+      cosePublicKeyOverride: SoftwareAuthenticator.BuildWeakRsaCoseKey()
+    );
+    byte[] attestationObject = SoftwareAuthenticator.BuildAttestationObject(authenticatorData);
+
+    WebAuthnRegistrationResult result = WebAuthnRegistration.Verify(Rp, challenge, clientDataJson, attestationObject, authenticator.CredentialId);
+
+    result.IsValid.ShouldBeFalse();
+    result.FailureReason.ShouldBe(WebAuthnFailureReason.UnsupportedAlgorithm);
+  }
+
   public void Malformed_cbor_attestation_object_fails()
   {
     var authenticator = new SoftwareAuthenticator();

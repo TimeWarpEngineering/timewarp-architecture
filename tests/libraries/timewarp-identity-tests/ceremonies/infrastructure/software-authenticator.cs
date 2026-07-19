@@ -59,6 +59,18 @@ internal sealed class SoftwareAuthenticator
 
   private static readonly byte[] Rs256Exponent = [1, 0, 1];
 
+  // Fixed 512-bit RSA PUBLIC key (round-1 finding M5: weak-modulus rejection vector). Public
+  // components only — nothing signs with this key, it exists solely to be COSE-encoded and rejected
+  // by CoseKey.TryCreateVerifier's MinimumRsaModulusBits check.
+  private static readonly byte[] WeakRsa512Modulus =
+  [
+    187, 49, 140, 131, 19, 15, 51, 23, 114, 201, 232, 217, 21, 217, 45, 46, 166, 136, 31, 16, 20, 25,
+    6, 13, 61, 232, 45, 28, 33, 25, 192, 112, 28, 163, 104, 247, 43, 151, 176, 41, 206, 246, 243, 26,
+    199, 106, 160, 81, 76, 232, 239, 164, 25, 144, 49, 164, 39, 221, 210, 1, 229, 158, 66, 83
+  ];
+
+  private static readonly byte[] WeakRsa512Exponent = [1, 0, 1];
+
   private static readonly byte[] Rs256D =
   [
     107, 139, 89, 163, 61, 189, 178, 205, 143, 29, 38, 74, 255, 102, 189, 99, 100, 230, 119, 28, 192,
@@ -247,6 +259,13 @@ internal sealed class SoftwareAuthenticator
     writer.WriteEndMap();
     return writer.Encode();
   }
+
+  /// <summary>
+  /// Builds an otherwise well-formed RSA COSE_Key (parses fine, kty/alg correct) whose modulus is
+  /// only 512 bits — below CoseKey's MinimumRsaModulusBits (2048). Isolates "key too weak" from
+  /// "key unparseable"/"algorithm unsupported".
+  /// </summary>
+  public static byte[] BuildWeakRsaCoseKey() => BuildRsaCoseKey(WeakRsa512Modulus, WeakRsa512Exponent);
 
   private static ECDsa CreateEcdsa()
   {

@@ -9,8 +9,21 @@
 // WebAuthnRegistration.Verify runs, not after — even a payload that later fails verification has
 // already burned its challenge, so a retry with a corrected payload must start a brand-new ceremony
 // (StartPasskeyRegistration) rather than resubmitting a tampered version of an already-answered one.
-// FindCredentialByHandleAsync runs BEFORE Principal.Create/AddPrincipalAsync so a duplicate-handle
-// rejection never leaves an orphan Principal with no credential.
+// FindCredentialByHandleAsync runs BEFORE Principal.Create/AddPrincipalAsync, so the sequential
+// duplicate-handle case (the common one — resubmitting an already-registered credential) never
+// leaves an orphan Principal: it 409s before either Add call. A round-1 review caught the residual
+// race this check-then-act does NOT close: two concurrent ceremonies for the SAME credential handle
+// (distinct challenges, so the one-time challenge consume does not prevent it) can both pass the
+// Find check, both call AddPrincipalAsync, and then race on AddCredentialAsync — the store enforces
+// handle uniqueness atomically there (InMemoryPrincipalStore.HandleIndex.TryAdd under WriteLock,
+// throwing InvalidOperationException on collision), so the loser's AddCredentialAsync throws. That
+// throw is now caught below and translated to the same 409 CredentialAlreadyRegistered() the
+// sequential path returns, so callers never see a raw 500. What is NOT closed: the loser's
+// already-persisted Principal from AddPrincipalAsync is NOT compensated/removed — IPrincipalStore
+// has no delete method (removal is out of this task's scope; see 104-005). That orphan is an inert
+// Provisional-tier principal with zero credentials — it cannot authenticate (no credential exists to
+// present) and is otherwise harmless, just a stray store row until 104-005's store lifecycle work
+// can add removal.
 // Account resolution is credential-handle-based (FindCredentialByHandleAsync), never by the
 // WebAuthn user.id/userHandle minted in StartPasskeyRegistration's options — that handle is opaque
 // and discarded once the ceremony completes; the Principal is minted HERE, at verify time, so an
@@ -86,7 +99,17 @@ public sealed partial class CompletePasskeyRegistration
       await PrincipalStore.AddPrincipalAsync(principal, cancellationToken);
 
       var credential = Credential.Create(principal.Id, CredentialType.Passkey, verifyResult.CredentialId, verifyResult.CosePublicKey);
-      await PrincipalStore.AddCredentialAsync(credential, cancellationToken);
+      try
+      {
+        await PrincipalStore.AddCredentialAsync(credential, cancellationToken);
+      }
+      catch (InvalidOperationException)
+      {
+        // Lost a concurrent race for this credential handle against another ceremony — see Design
+        // region. The just-added Principal is left as an orphan (no delete capability exists yet);
+        // report the same 409 the sequential check-then-act path returns.
+        return CredentialAlreadyRegistered();
+      }
 
       await BrowserSessionService.IssueAsync(principal.Id, displayName: null, cancellationToken);
 
