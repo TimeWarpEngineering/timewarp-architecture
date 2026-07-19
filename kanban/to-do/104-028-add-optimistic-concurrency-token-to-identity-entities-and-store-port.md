@@ -26,8 +26,15 @@ it — that part of the D6 lean was correct.
 
 ## Requirements
 
-- `long Version` on `Principal` and `Credential` — store-owned, incremented on successful update;
-  not settable by domain code.
+- **Depends on 106** (foundation entity-primitive modernization). Decision 2026-07-19:
+  timewarp-identity's foundation-independence is dropped — foundation-domain is itself a published
+  `TimeWarp.Foundation.*` package, so referencing it is a normal package dependency (ASP.NET
+  Identity -> Microsoft.Extensions.* precedent). Sequencing: 106 -> this task -> 104-003.
+- timewarp-identity references foundation-domain (dual-mode: ProjectReference in-repo,
+  PackageReference in package mode — accepts the release-ordering cost 104-027 already pays for
+  Generators). `Principal` and `Credential` adopt `Entity<TId>` and inherit `Version` from it —
+  store-owned, incremented on successful update; not settable by domain code. Do NOT define a
+  separate identity-local Version.
 - `UpdatePrincipalAsync` / `UpdateCredentialAsync` defined to throw a library-owned
   `ConcurrencyConflictException` on version mismatch. Port semantics documented in the
   `IPrincipalStore` Design region (replacing the LWW note).
@@ -45,7 +52,8 @@ it — that part of the D6 lean was correct.
 
 ## Checklist
 
-- [ ] `Version` on Principal + Credential (store-owned semantics)
+- [ ] Reference foundation-domain (dual-mode); Principal + Credential adopt `Entity<TId>`
+      (inherit `Version`; drop hand-rolled equality where the base now provides it)
 - [ ] `ConcurrencyConflictException` in the library
 - [ ] Port docs: Update* conflict contract replaces the LWW note (D6 superseded)
 - [ ] In-memory store: snapshot-on-get + version check on update
@@ -57,9 +65,10 @@ it — that part of the D6 lean was correct.
 
 ## Notes
 
-- Related: task 106 puts a `Version` token on the foundation `Entity<TId>` base for app-side
-  entities; this task covers the identity library's own entities and port, which stay
-  foundation-independent.
+- Task 106 defines `Entity<TId>` (typed id, equality, `Version`) in foundation-domain; this task
+  adopts it in identity and adds the port conflict semantics on top. The library remains
+  independent of the *rest* of foundation (application/server layers) — the dependency is
+  foundation-domain primitives only, and it must stay that lean.
 - EF `ValueConverter`/mapping for `Version` in host stores arrives with the EF wave; nothing in
   this task references EF.
 

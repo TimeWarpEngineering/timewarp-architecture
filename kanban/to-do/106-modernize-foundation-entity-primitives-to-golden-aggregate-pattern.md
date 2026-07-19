@@ -104,12 +104,18 @@ MediatR). Fix the region; confirm the type is actually used or remove it.
 
 ## Notes
 
-- Sequencing: foundation primitives first, Profile rewrite as the exemplar; timewarp-identity may
-  optionally adopt `Entity<TId>` later (its entities already follow the pattern by hand — the
-  pattern is location-independent, so no rush).
-- The identity library's `IPrincipalStore` LWW/concurrency-token gap (104-002 RFC D6) is related
-  but tracked separately — the library owns its port semantics; this task covers the
-  app/foundation side (`Version` on `Entity<TId>`).
+- **Decision (2026-07-19): identity foundation-independence is dropped.** foundation-domain ships
+  as a published `TimeWarp.Foundation.*` package, so timewarp-identity referencing it is a normal
+  package dependency between two published libraries (ASP.NET Identity -> Microsoft.Extensions.*
+  precedent) — not a reusable library depending on template scaffolding. The prior isolation was
+  a don't-inherit-the-old-junk instinct; this task removes the old junk. Prerequisite: keep
+  foundation-domain deliberately lean (domain primitives only) so the transitive cost to identity
+  consumers stays negligible and its API stays stable.
+- Sequencing: **106 -> 104-028 -> 104-003.** This task lands the primitives; 104-028 then has
+  timewarp-identity adopt `Entity<TId>` (inheriting `Version` instead of defining its own) and
+  adds the store-port conflict semantics; 104-003 handlers come after both.
+- The identity library's `IPrincipalStore` conflict semantics (104-002 RFC D6) stay in 104-028 —
+  the port contract is identity's own; this task provides the entity shape it inherits.
 - The invariants guard runs at the EF persistence boundary, so it lives in
   foundation-application/foundation-infrastructure (or the host EF layer), not foundation-domain;
   the domain keeps only the declaration convention.
