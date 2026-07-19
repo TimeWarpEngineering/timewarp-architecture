@@ -37,6 +37,20 @@
 // their owning aggregate root via navigation metadata is the intended future fix once a real entity
 // model with child/owned types exists in this template; today Profile is single-entity, so the gap
 // is latent, not exercised.
+// IncrementModifiedVersions fails CLOSED and LOUD: IAggregateRoot is a standalone marker interface
+// (nothing forces a concrete aggregate to also inherit Entity<TId>), so a Modified entry whose
+// mapped model has no "Version" property, or one not typed long, throws a convention-pointing
+// InvalidOperationException instead of letting EF's generic property-not-found message or an
+// InvalidCastException surface — this mirrors DomainInvariantsGuard's own fail-closed philosophy
+// (a defect here is exactly as serious as a missing Invariants validator). This is deliberately NOT
+// a skip-and-continue like OnModelCreating's guard above: OnModelCreating only decides whether to
+// pin the access mode for properties that already exist, so skipping a Version-less type there is
+// harmless (there is nothing to pin); the save path is the actual enforcement point, so silently
+// skipping the increment there would let a misdeclared aggregate root persist without ever moving
+// its concurrency token. No unit test covers this throw path — like the increment itself (see
+// entity-version.cs), it requires a live change-tracker EntityEntry/PropertyEntry that this
+// entity-free context has no DbSet to produce without a new EF test package (InMemory/Sqlite),
+// which is out of scope here.
 // SqlDbContext (sql-db-context.cs) is unregistered dead code today; a consumer who activates it
 // should copy this same override.
 #endregion
@@ -93,6 +107,16 @@ public sealed partial class PostgresDbContext : DbContext
     foreach (EntityEntry entry in entries)
     {
       if (entry.State != EntityState.Modified) continue;
+
+      IProperty? versionMetadata = entry.Metadata.FindProperty(VersionPropertyName);
+      if (versionMetadata is null || versionMetadata.ClrType != typeof(long))
+      {
+        throw new InvalidOperationException(
+          $"'{entry.Entity.GetType().Name}' implements IAggregateRoot but has no mapped 'long {VersionPropertyName}' property. " +
+          "Aggregate roots must inherit Entity<TId> (source/foundation/foundation-domain/entities/base/entity.cs) so Version is " +
+          "mapped by convention — see the golden aggregate pattern exemplar (web-domain/aggregates/profile/profile.cs and " +
+          "aggregates/overview.md).");
+      }
 
       PropertyEntry versionProperty = entry.Property(VersionPropertyName);
       versionProperty.CurrentValue = EntityVersion.Next((long)versionProperty.OriginalValue!);

@@ -10,14 +10,21 @@
 // static/pure so the hook needs no constructor plumbing.
 // Discovery walks the aggregate's exact runtime type, then its BaseType chain (object last), looking
 // at each level's own nested types for the first non-abstract one assignable to
-// IValidator&lt;TAggregate&gt;. Walking the chain (not just the runtime type) matters for two real
-// shapes: an EF dynamic proxy (UseLazyLoadingProxies/change-tracking proxies subclass non-sealed
-// entities, so GetType() returns the proxy type, whose own GetNestedTypes() is empty) and a
-// validator declared on an abstract aggregate base rather than every concrete leaf. Both resolve
-// correctly here because FluentValidation's IValidator&lt;in T&gt; is contravariant: a validator
-// implementing IValidator&lt;Base&gt; IS assignable to IValidator&lt;Derived&gt;, so
-// validatorInterface.IsAssignableFrom(candidate) still succeeds when the match is found higher in
-// the chain. Generic aggregate roots remain out of scope: reflection's GetNestedTypes() on a closed
+// IValidator&lt;TAggregate&gt;. Walking the chain (not just the runtime type) exists for ONE
+// sanctioned shape and tolerates a second, unsanctioned one as a courtesy:
+//   - Sanctioned: an EF dynamic proxy (UseLazyLoadingProxies/change-tracking proxies subclass
+//     non-sealed entities, so GetType() returns the proxy type, whose own GetNestedTypes() is
+//     empty). The analyzer never sees proxy types — they are generated at runtime — so this is the
+//     only shape the walk exists FOR.
+//   - Tolerated, not authored: a validator declared on an abstract aggregate base rather than on
+//     every concrete leaf also resolves here (FluentValidation's IValidator&lt;in T&gt; is
+//     contravariant, so a validator implementing IValidator&lt;Base&gt; IS assignable to
+//     IValidator&lt;Derived&gt;) — but TWA0011 deliberately still requires every concrete leaf to
+//     declare its OWN nested validator (see aggregate-invariants-analyzer.cs's Design region), so a
+//     hand-authored base-declared-only validator does not build warning-free. The guard resolving it
+//     anyway is a side effect of the proxy-support walk, not a second authoring shape this pattern
+//     endorses — do not rely on it in new code; TWA0011 is the actual authored contract.
+// Generic aggregate roots remain out of scope: reflection's GetNestedTypes() on a closed
 // constructed generic type returns open nested-type definitions, so discovery does not work for
 // `Aggregate&lt;T&gt; : IAggregateRoot` today; no aggregate in this template is generic.
 // Selection when a level has more than one qualifying candidate (should be rare — TWA0011/TWA0012

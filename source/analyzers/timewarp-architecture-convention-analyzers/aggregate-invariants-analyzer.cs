@@ -10,7 +10,17 @@
 // indirect implementation — through a base class or through another interface that itself extends
 // IAggregateRoot — is covered) without a hard compile-time reference to TimeWarp.Foundation.Entities.
 // Abstract classes are exempt — an abstract aggregate base has no invariants of its own; concrete
-// leaves are still checked.
+// leaves are still checked. This is a deliberate decision, not an oversight: TWA0011 requires EVERY
+// concrete leaf to declare its OWN nested validator (checked only against `aggregateType.GetTypeMembers()`
+// — directly nested members, not inherited ones), even when a base class already declares one.
+// DomainInvariantsGuard's runtime discovery additionally walks the BaseType chain and CAN resolve a
+// base-declared validator via IValidator&lt;in T&gt; contravariance (see its Design region) — that
+// walk exists to support EF dynamic proxies (runtime-generated types the analyzer never sees), and
+// tolerates the base-declared-validator shape as a side effect, not as a second sanctioned authoring
+// pattern. A hand-authored aggregate that relies on a base class's validator instead of declaring its
+// own therefore still fails TWA0011 under warnings-as-errors even though it would pass the runtime
+// guard — that asymmetry is intentional: this analyzer's contract is "every concrete leaf declares
+// its own invariants," full stop.
 // A "nested Invariants validator" is a type nested directly on the aggregate that is: not abstract,
 // has a parameterless constructor of any accessibility, and derives a base named "AbstractValidator"
 // with one type argument equal to the containing (aggregate) type, where that base's containing

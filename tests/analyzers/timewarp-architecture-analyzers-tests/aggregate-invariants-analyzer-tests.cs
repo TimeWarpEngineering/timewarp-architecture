@@ -192,6 +192,35 @@ public class Should_Enforce_Nested_Invariants
     await Test(Source).RunAsync();
   }
 
+  public static async Task Given_CtorParameterized_Nested_Validator_StillFlags_Missing()
+  {
+    // Only constructor takes a parameter — DomainInvariantsGuard's Activator.CreateInstance(...,
+    // nonPublic: true) has no parameterless overload to call, so this can never be instantiated at
+    // save time — must not satisfy TWA0011.
+    const string Source =
+      """
+      using FluentValidation;
+      using TimeWarp.Foundation.Entities;
+
+      namespace Domain
+      {
+        public sealed class {|TWA0011:Widget|} : IAggregateRoot
+        {
+          public string Name { get; set; } = "";
+
+          private sealed class Invariants : AbstractValidator<Widget>
+          {
+            public Invariants(string label)
+            {
+            }
+          }
+        }
+      }
+      """;
+
+    await Test(Source).RunAsync();
+  }
+
   public static async Task Given_WrongNamespace_AbstractValidator_StillFlags_Missing()
   {
     // Simple-name match on "AbstractValidator" but NOT FluentValidation's — must not satisfy
