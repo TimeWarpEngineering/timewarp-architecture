@@ -23,6 +23,19 @@
 // TryParse) so a weak key still maps to WebAuthnFailureReason.UnsupportedAlgorithm — the same
 // reason an unsupported alg/curve produces — rather than a new reason, since "this key is
 // structurally parseable but this verifier will not use it" is the same failure class either way.
+// Zero-length Modulus/Exponent are rejected BEFORE any indexing or RSA import (round-2 finding M9,
+// plus a same-family gap found auditing the neighborhood it flagged): TryParse's RSA branch only
+// null-checks the byte strings it reads (:117), so an attacker-supplied key with an empty `n` or
+// `e` reaches TryCreateVerifier as a non-null, zero-length byte[]. Two independent crashes were
+// possible here before this guard, confirmed on this platform's OpenSSL-backed RSA: an empty
+// Modulus made the bit-length helper below index modulus[0] out of range, and — discovered while
+// auditing this same neighborhood — RSA.ImportParameters(...) with an empty Exponent (valid
+// Modulus) throws IndexOutOfRangeException too, NOT CryptographicException, so it was not caught by
+// this method's catch clause either. Both are excluded by the single length check immediately below
+// before either the bit-length helper or ImportParameters ever sees the arrays.
+// The EC2 path does NOT need the equivalent guard: an empty X/Y ECPoint reaches ECDsa.Create, which
+// throws the expected CryptographicException (verified empirically on this platform, both members
+// empty and only X empty) — already caught by this method's existing catch clause.
 #endregion
 
 namespace TimeWarp.Identity;
@@ -151,6 +164,11 @@ internal sealed class CoseKey
 
       if (Algorithm == AlgorithmRs256 && KeyType == KeyTypeRsa && Modulus is not null && Exponent is not null)
       {
+        // Reject empty byte strings before either the bit-length helper or ImportParameters
+        // dereferences them — see Design region (round-2 finding M9 + the sibling empty-Exponent
+        // gap found auditing it).
+        if (Modulus.Length == 0 || Exponent.Length == 0) return false;
+
         if (GetModulusBitLength(Modulus) < MinimumRsaModulusBits) return false;
 
         var rsa = RSA.Create();
@@ -174,6 +192,12 @@ internal sealed class CoseKey
   // to be minimal-length encodings, so `Modulus.Length * 8` alone could over-report by up to a byte.
   private static int GetModulusBitLength(byte[] modulus)
   {
+    // Defense-in-depth (round-2 finding M9): TryCreateVerifier's caller-side guard above already
+    // excludes an empty modulus before calling this method, but this method stays safe to call on
+    // its own — a zero-length modulus has 0 bits, which is trivially below any minimum, without
+    // dereferencing modulus[0] on an empty array.
+    if (modulus.Length == 0) return 0;
+
     int index = 0;
     while (index < modulus.Length - 1 && modulus[index] == 0) index++;
 

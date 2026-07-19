@@ -171,6 +171,52 @@ public class Verify
     result.FailureReason.ShouldBe(WebAuthnFailureReason.UnsupportedAlgorithm);
   }
 
+  public void Empty_rsa_modulus_fails_without_throwing()
+  {
+    // Round-2 finding M9: CoseKey.TryParse only null-checks the RSA modulus, so a zero-length `n`
+    // reaches TryCreateVerifier. Before the fix, GetModulusBitLength indexed modulus[0] on an empty
+    // array and threw IndexOutOfRangeException, uncaught by TryCreateVerifier's
+    // catch (CryptographicException) — an unhandled 500 on adversarial input. Must reject cleanly.
+    var authenticator = new SoftwareAuthenticator();
+    byte[] challenge = RandomNumberGenerator.GetBytes(32);
+    byte[] clientDataJson = SoftwareAuthenticator.BuildClientDataJson("webauthn.create", challenge, Origin);
+    byte[] authenticatorData = authenticator.BuildAuthenticatorData
+    (
+      Rp.Id,
+      includeAttestedCredentialData: true,
+      cosePublicKeyOverride: SoftwareAuthenticator.BuildEmptyModulusRsaCoseKey()
+    );
+    byte[] attestationObject = SoftwareAuthenticator.BuildAttestationObject(authenticatorData);
+
+    WebAuthnRegistrationResult result = WebAuthnRegistration.Verify(Rp, challenge, clientDataJson, attestationObject, authenticator.CredentialId);
+
+    result.IsValid.ShouldBeFalse();
+    result.FailureReason.ShouldBe(WebAuthnFailureReason.UnsupportedAlgorithm);
+  }
+
+  public void Empty_rsa_exponent_fails_without_throwing()
+  {
+    // Sibling gap found auditing M9's neighborhood: a real, large-enough modulus but a zero-length
+    // exponent. On this platform RSA.ImportParameters throws IndexOutOfRangeException (not
+    // CryptographicException) for an empty Exponent — the same uncaught-exception class as M9,
+    // independently reachable. Must reject cleanly, never reach ImportParameters.
+    var authenticator = new SoftwareAuthenticator();
+    byte[] challenge = RandomNumberGenerator.GetBytes(32);
+    byte[] clientDataJson = SoftwareAuthenticator.BuildClientDataJson("webauthn.create", challenge, Origin);
+    byte[] authenticatorData = authenticator.BuildAuthenticatorData
+    (
+      Rp.Id,
+      includeAttestedCredentialData: true,
+      cosePublicKeyOverride: SoftwareAuthenticator.BuildEmptyExponentRsaCoseKey()
+    );
+    byte[] attestationObject = SoftwareAuthenticator.BuildAttestationObject(authenticatorData);
+
+    WebAuthnRegistrationResult result = WebAuthnRegistration.Verify(Rp, challenge, clientDataJson, attestationObject, authenticator.CredentialId);
+
+    result.IsValid.ShouldBeFalse();
+    result.FailureReason.ShouldBe(WebAuthnFailureReason.UnsupportedAlgorithm);
+  }
+
   public void Malformed_cbor_attestation_object_fails()
   {
     var authenticator = new SoftwareAuthenticator();

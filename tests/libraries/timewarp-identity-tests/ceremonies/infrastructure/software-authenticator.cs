@@ -267,6 +267,23 @@ internal sealed class SoftwareAuthenticator
   /// </summary>
   public static byte[] BuildWeakRsaCoseKey() => BuildRsaCoseKey(WeakRsa512Modulus, WeakRsa512Exponent);
 
+  /// <summary>
+  /// Round-2 finding M9: an otherwise well-formed RSA COSE_Key (parses fine, kty/alg correct) whose
+  /// modulus `n` is a zero-length byte string — CoseKey.TryParse only null-checks it, so this
+  /// reaches TryCreateVerifier as a non-null, empty byte[]. Must be rejected (UnsupportedAlgorithm),
+  /// never throw.
+  /// </summary>
+  public static byte[] BuildEmptyModulusRsaCoseKey() => BuildRsaCoseKey([], WeakRsa512Exponent);
+
+  /// <summary>
+  /// Round-2 finding M9 sibling gap (found auditing the neighborhood the finding flagged): an
+  /// otherwise well-formed RSA COSE_Key with a real, sufficiently-large modulus but a zero-length
+  /// exponent `e`. On this platform RSA.ImportParameters with an empty Exponent throws
+  /// IndexOutOfRangeException (not CryptographicException) — a second, independent crash the same
+  /// length guard must also exclude before ImportParameters is ever called.
+  /// </summary>
+  public static byte[] BuildEmptyExponentRsaCoseKey() => BuildRsaCoseKey(Rs256Modulus, []);
+
   private static ECDsa CreateEcdsa()
   {
     ECParameters parameters = new()
