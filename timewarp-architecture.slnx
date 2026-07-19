@@ -52,6 +52,7 @@
   <Folder Name="/tests/">
     <!--#if (!foundationPackages) -->
     <Project Path="tests/foundation/foundation-domain-tests/foundation-domain-tests.csproj" />
+    <Project Path="tests/foundation/foundation-application-tests/foundation-application-tests.csproj" />
     <Project Path="tests/foundation/foundation-contracts-tests/foundation-contracts-tests.csproj" />
     <Project Path="tests/foundation/foundation-infrastructure-tests/foundation-infrastructure-tests.csproj" />
     <Project Path="tests/libraries/timewarp-identity-tests/timewarp-identity-tests.csproj" />
@@ -65,6 +66,7 @@
     <Project Path="tests/container-apps/api/api-server-integration-tests/api-server-integration-tests.csproj" />
     <!--#endif -->
     <!--#if (web) -->
+    <Project Path="tests/container-apps/web/web-domain-tests/web-domain-tests.csproj" />
     <Project Path="tests/container-apps/web/web-contracts-tests/web-contracts-tests.csproj" />
     <Project Path="tests/container-apps/web/web-server-integration-tests/web-server-integration-tests.csproj" />
     <Project Path="tests/container-apps/web/web-spa-integration-tests/web-spa-integration-tests.csproj" />

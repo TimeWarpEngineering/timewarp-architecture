@@ -2,9 +2,6 @@
   <PropertyGroup>
     <PackageId>TimeWarp.Foundation.Domain</PackageId>
     <Title>TimeWarp.Foundation.Domain</Title>
-    <Description>Domain primitives (Enumeration, base entities, value types) for the TimeWarp foundation layer.</Description>
+    <Description>Domain primitives (Enumeration, Entity&lt;TId&gt;, IAggregateRoot) for the TimeWarp foundation layer. Dependency-free.</Description>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="TimeWarp.Mediator" />
-  </ItemGroup>
 </Project>

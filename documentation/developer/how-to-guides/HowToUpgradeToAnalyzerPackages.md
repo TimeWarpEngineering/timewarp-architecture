@@ -5,7 +5,7 @@ Greenfield solutions from `dotnet new timewarp-architecture` (with `analyzerPack
 
 | Package | Role |
 |---------|------|
-| `TimeWarp.Architecture.Analyzers` | Convention rules TWA0002–0010 (wired via `Directory.Build.props`) |
+| `TimeWarp.Architecture.Analyzers` | Convention rules TWA0002–0012 (wired via `Directory.Build.props`) |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001 (`web-spa`, `api-server`, …) |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes such as `[ApiEndpoint]` |
 

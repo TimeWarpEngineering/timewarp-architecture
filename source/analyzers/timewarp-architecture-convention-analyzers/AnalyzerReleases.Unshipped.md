@@ -14,3 +14,5 @@ TWA0007 | Design | Warning | AspireResourceNameAnalyzer: Aspire resource name is
 TWA0008 | Design | Warning | TemplateConditionalTokenAnalyzer: comment or string contains a template-conditional token
 TWA0009 | Design | Warning | SliceIsolationAnalyzer: slice references another product slice
 TWA0010 | Design | Warning | TemplateFlagConstantsAnalyzer: directive uses a template flag missing from DefineConstants
+TWA0011 | Design | Warning | AggregateInvariantsAnalyzer: aggregate root has no nested Invariants validator
+TWA0012 | Design | Warning | AggregateInvariantsAnalyzer: nested Invariants validator is not private

@@ -57,7 +57,7 @@ This monorepo keeps the source and dogfoods it via `ProjectReference`.
 | PackageId | Contents |
 |-----------|----------|
 | `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
-| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0010) — safe repo-wide |
+| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0012) — safe repo-wide |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001 — attach only where gens should run |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
 
@@ -94,6 +94,7 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0008 | no template-conditional tokens in comments/strings (the dotnet-new engine misreads them and truncates generated files); escape hatch: the `cnd:noEmit` comment-marker pair |
 | TWA0009 | product slices (`…Features.<Id>` under SliceRoot) must not reference other product slices (share via Components/contracts); platform `Applications` is one-way free; opt-out: `[CrossSliceReference(typeof(T), reason)]` |
 | TWA0010 | a directive naming a template.json flag requires that flag in DefineConstants (else the region silently vanishes from the repo build) |
+| TWA0011/0012 | an `IAggregateRoot` must declare a nested `Invariants : AbstractValidator<T>`, and it must be `private` (kept out of `AddValidatorsFromAssemblyContaining`) |
 
 **Slice isolation (TWA0009):** product code under SliceRoot must not reach other product
 slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:

@@ -89,18 +89,18 @@ MediatR). Fix the region; confirm the type is actually used or remove it.
 
 ## Checklist
 
-- [ ] `Entity<TId>` base (typed get-only Id, equality, `long Version`)
-- [ ] `ProfileId` via `[TypedId]`; Profile inherits `Entity<ProfileId>`
-- [ ] Profile: private ctor, `Create` factory, named mutations, real Invariants rules
-- [ ] Domain invariants guard + `SaveChangesAsync` hook + `DomainInvariantViolationException`
-- [ ] Fail-closed: missing Invariants validator on aggregate root = error
-- [ ] TWA analyzer: aggregate root must declare nested Invariants (build-time)
-- [ ] Evaluate shared rule fragments between contract validators and domain invariants
-- [ ] Delete product.cs / category.cs commented sketches
-- [ ] ValueObject: fix hash defects or retire for records
-- [ ] BaseEvent Purpose region corrected (TimeWarp.Mediator, not MediatR)
-- [ ] Reconcile all touched `#region Design` blocks
-- [ ] Tests: entity equality, Version semantics, invariants guard happy + violation paths
+- [x] `Entity<TId>` base (typed get-only Id, equality, `long Version`)
+- [x] `ProfileId` via `[TypedId]`; Profile inherits `Entity<ProfileId>`
+- [x] Profile: private ctor, `Create` factory, named mutations, real Invariants rules
+- [x] Domain invariants guard + `SaveChangesAsync` hook + `DomainInvariantViolationException`
+- [x] Fail-closed: missing Invariants validator on aggregate root = error
+- [x] TWA analyzer: aggregate root must declare nested Invariants (build-time)
+- [x] Evaluate shared rule fragments between contract validators and domain invariants
+- [x] Delete product.cs / category.cs commented sketches
+- [x] ValueObject: fix hash defects or retire for records
+- [x] BaseEvent Purpose region corrected (TimeWarp.Mediator, not MediatR)
+- [x] Reconcile all touched `#region Design` blocks
+- [x] Tests: entity equality, Version semantics, invariants guard happy + violation paths
 
 ## Notes
 

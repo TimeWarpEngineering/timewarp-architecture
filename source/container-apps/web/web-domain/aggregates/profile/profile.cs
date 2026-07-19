@@ -1,22 +1,33 @@
 #region Purpose
-// Domain entity for a user's personalization settings (display name, language, region, theme, notifications).
+// Domain aggregate for a user's personalization settings (display name, language, region, theme, notifications).
 #endregion
 
 #region Design
-// Constructor requires the string settings so an instance can never exist half-initialized;
-// Notifications defaults to false as the safe opt-in posture.
-// The nested private Invariants validator is the template's convention for keeping entity rules
-// inside the aggregate; private nesting keeps it out of AddValidatorsFromAssemblyContaining
-// auto-registration (hence the CA1852 suppression rather than sealing).
+// Private constructor + fail-closed static Create factory (identity style, see
+// source/libraries/timewarp-identity/principal.cs): DisplayName/Language/Region/Theme are
+// guard-clause-validated before the instance exists, so a Profile can never be constructed
+// half-initialized or with a blank required field. Named mutations (Rename/SetLanguage/SetRegion/
+// SetTheme/EnableNotifications/DisableNotifications) keep every state change intention-revealing —
+// there are no public setters.
+// MaxDisplayNameLength is the single source of truth for the length rule so future contract
+// validators reference Profile.MaxDisplayNameLength instead of duplicating the literal
+// (relates to TWA0002/TWA0003 nullability-vs-presence agreement on the contract side).
+// The nested private Invariants validator is the save-time half of the pattern: DomainInvariantsGuard
+// discovers and runs it from the SaveChanges hook before persistence (TWA0011/TWA0012 enforce the
+// shape at build time). Private nesting keeps it out of AddValidatorsFromAssemblyContaining
+// auto-registration; the class being sealed already satisfies CA1852 so no pragma is needed.
 #endregion
 
-namespace TimeWarp.Architecture.Entities;
+namespace TimeWarp.Architecture.Aggregates.Profiles;
 
 using FluentValidation;
 
-public class Profile : BaseEntity
+public sealed class Profile : Entity<ProfileId>, IAggregateRoot
 {
-  public Profile(string displayName, string language, string region, string theme)
+  public const int MaxDisplayNameLength = 100;
+
+  private Profile(ProfileId id, string displayName, string language, string region, string theme)
+    : base(id)
   {
     DisplayName = displayName;
     Language = language;
@@ -24,16 +35,58 @@ public class Profile : BaseEntity
     Theme = theme;
   }
 
-  public string DisplayName { get; set; }
-  public string Language { get; set; }
-  public bool Notifications { get; set; }
-  public string Region { get; set; }
-  public string Theme { get; set; }
+  public string DisplayName { get; private set; }
+  public string Language { get; private set; }
+  public string Region { get; private set; }
+  public string Theme { get; private set; }
+  public bool Notifications { get; private set; }
 
-  # pragma warning disable CA1852
-  private class Invariants : AbstractValidator<Profile>
+  public static Profile Create(string displayName, string language, string region, string theme)
   {
-    
+    ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+    ArgumentException.ThrowIfNullOrWhiteSpace(language);
+    ArgumentException.ThrowIfNullOrWhiteSpace(region);
+    ArgumentException.ThrowIfNullOrWhiteSpace(theme);
+
+    return new Profile(ProfileId.New(), displayName, language, region, theme);
   }
-# pragma warning restore CA1852
+
+  public void Rename(string displayName)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+    DisplayName = displayName;
+  }
+
+  public void SetLanguage(string language)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(language);
+    Language = language;
+  }
+
+  public void SetRegion(string region)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(region);
+    Region = region;
+  }
+
+  public void SetTheme(string theme)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(theme);
+    Theme = theme;
+  }
+
+  public void EnableNotifications() => Notifications = true;
+
+  public void DisableNotifications() => Notifications = false;
+
+  private sealed class Invariants : AbstractValidator<Profile>
+  {
+    public Invariants()
+    {
+      RuleFor(profile => profile.DisplayName).NotEmpty().MaximumLength(MaxDisplayNameLength);
+      RuleFor(profile => profile.Language).NotEmpty();
+      RuleFor(profile => profile.Region).NotEmpty();
+      RuleFor(profile => profile.Theme).NotEmpty();
+    }
+  }
 }

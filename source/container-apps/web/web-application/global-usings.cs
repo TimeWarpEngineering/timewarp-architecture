@@ -5,7 +5,6 @@
 global using Microsoft.Extensions.Logging;
 global using OneOf;
 global using OneOf.Types;
-global using TimeWarp.Architecture.Abstractions;
 global using TimeWarp.Foundation.Abstractions;
 global using TimeWarp.Architecture.Features.Chat;
 // Solution usings

@@ -10,6 +10,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- [TypedId] BCL surface for ProfileId (task 106). Generators only — not the repo-wide
+         convention analyzer package (that is wired repo-wide via source/Directory.Build.props). -->
+    <ProjectReference Include="../../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Architecture.Generators" PrivateAssets="all"
+                      Condition="'$(UseAnalyzerPackages)' == 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="services\" />
     <Folder Include="value-objects\" />
   </ItemGroup>
