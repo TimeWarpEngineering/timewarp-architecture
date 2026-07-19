@@ -17,4 +17,5 @@ global using TimeWarp.Architecture.Features;
 global using TimeWarp.Foundation.Features;
 // Solution usings
 global using TimeWarp.Foundation.Types;
+global using TimeWarp.Identity;
 global using TimeWarp.Mediator;

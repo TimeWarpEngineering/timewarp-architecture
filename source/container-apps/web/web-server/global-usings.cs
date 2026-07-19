@@ -5,6 +5,8 @@
 global using TimeWarp.Mediator;
 global using TimeWarp.Mediator.Pipeline;
 global using FluentValidation;
+global using Microsoft.AspNetCore.Authentication;
+global using Microsoft.AspNetCore.Authentication.Cookies;
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Hosting;
 global using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -40,6 +42,7 @@ global using System.Threading.Tasks;
 // Solution usings
 global using static TimeWarp.Architecture.Aspire.Constants;
 global using TimeWarp.Foundation.Behaviors;
+global using TimeWarp.Architecture.Abstractions;
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Foundation.Configuration;
@@ -48,7 +51,9 @@ global using TimeWarp.Architecture.Data;
 global using TimeWarp.Architecture.Extensions;
 global using TimeWarp.Foundation.Extensions;
 global using TimeWarp.Architecture.Features.Chat;
+global using TimeWarp.Architecture.Features.Identity;
 global using TimeWarp.Architecture.Hubs;
+global using TimeWarp.Identity;
 #if(postgres)
 global using TimeWarp.Architecture.Persistence;
 #endif

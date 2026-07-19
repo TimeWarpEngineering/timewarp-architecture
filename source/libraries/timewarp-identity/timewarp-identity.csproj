@@ -26,4 +26,12 @@
     <ProjectReference Include="../../foundation/foundation-domain/foundation-domain.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Domain" Condition="'$(UseFoundationPackages)' == 'true'" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Hand-rolled WebAuthn verifier (task 104-003): attestationObject/authenticatorData/COSE_Key
+         are CBOR-encoded per spec. Microsoft/MIT, BCL-adjacent (ships in the ASP.NET Core shared
+         framework too) — not a third-party dependency in the Fido2NetLib sense; see the
+         "CENTRAL DECISION" Design region in ceremonies/webauthn/webauthn-registration.cs. -->
+    <PackageReference Include="System.Formats.Cbor" />
+  </ItemGroup>
 </Project>

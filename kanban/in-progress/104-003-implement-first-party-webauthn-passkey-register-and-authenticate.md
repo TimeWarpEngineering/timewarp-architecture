@@ -17,10 +17,10 @@ Browser WebAuthn create/get ceremonies for Human principals. Prefer discoverable
 
 ## Checklist
 
-- [ ] Registration ceremony API
-- [ ] Authentication ceremony API
-- [ ] Session issuance for browser
-- [ ] Smoke path documented in task Results when done
+- [x] Registration ceremony API
+- [x] Authentication ceremony API
+- [x] Session issuance for browser
+- [x] Smoke path documented in task Results when done
 
 ## Notes
 
@@ -186,6 +186,69 @@ No EF store; no Update* callsites/retry policy (104-005); no sign-counter field;
 None unresolvable. Two maintainer-ack items with committed defaults: (a) hand-rolled verifier over Fido2NetLib (§1); (b) web-contracts dual-mode TimeWarp.Identity reference for typed PrincipalId responses (104-027 intent).
 
 Legacy Passwordless.dev in SPA is reference only — first-party is the goal.
+
+### Results (2026-07-19)
+
+Implemented all 9 ordered work items. `dev build` is 0 Warnings/0 Errors. Test counts (all green):
+
+- `timewarp-identity-tests`: 124 passed (registration/authentication Verify happy+negative-path vectors,
+  challenge store, challenge reader).
+- `web-contracts-tests`: 14 passed (7 identity round-trip tests + 7 pre-existing).
+- `web-server-integration-tests`: 31 passed, 1 skipped (pre-existing, unrelated) — 9 new identity tests
+  (registration: happy/reused-challenge/wrong-origin/empty-CredentialId-validator/duplicate-credential;
+  authentication: happy/unknown-credential/tampered-signature/reused-challenge).
+- Regression sweep (unchanged, all green): `foundation-domain-tests` 37, `foundation-contracts-tests` 2,
+  `foundation-application-tests` 13, `foundation-infrastructure-tests` 1, `web-domain-tests` 26,
+  `timewarp-architecture-analyzers-tests` 75, `timewarp-architecture-sourcegenerator-tests` 32.
+  Docker-dependent suites (aspire-tests, api-server-integration-tests, web-spa-integration-tests) were
+  not run, per dispatch scope.
+
+**Smoke path** (manual, matches what `Passkey_Registration_Tests`/`Passkey_Authentication_Tests` assert
+end-to-end over real HTTP): POST `api/identity/passkey/register/options` (anonymous) → returns
+`OptionsJson` (PublicKeyCredentialCreationOptionsJSON, ES256+RS256, attestation "none") → browser (or
+the software authenticator emulator) answers with `CredentialId`/`ClientDataJson`/`AttestationObject`
+(all base64url) → POST `api/identity/passkey/register` → 200 + `Set-Cookie: .timewarp.identity.session`
++ `PrincipalId` → GET `api/identity/session` (cookie attached) → `IsAuthenticated: true` with the same
+`PrincipalId`. Authentication mirrors this via `.../authenticate/options` and `.../authenticate`. The
+`/Passkeys` SPA page (`web-spa/features/identity/pages/passkeys-page/`) exercises the identical flow
+through `window.Spa.WebAuthn` + real `navigator.credentials.create/get` in a browser.
+
+**Deviation from the plan, with rationale:** `WebAuthnOptions`/`WebAuthnOptionsValidator` are declared
+in `web-application/configuration/` rather than the plan's literal `web-server/configuration/`
+placement. The plan's own §6 handlers consume `IOptions<WebAuthnOptions>` directly in
+`web-application/features/identity/*-handler.cs`, but the solution's dependency chain is strictly
+one-way (`web-server → web-infrastructure → web-application → web-contracts/web-domain`) — web-server
+placement made the type unreachable from the handlers that need it (`CS0246`). Relocating to
+web-application (which web-server references transitively) resolves this with no behavior change;
+`WebAuthnOptionsValidator` is `public` (not the `internal`-to-dodge-auto-registration convention
+`SampleOptionsValidator` uses) because web-server's `AddValidatorsFromAssemblyContaining` calls only
+scan the web-server and web-contracts assemblies, never web-application, so there was never a
+double-registration risk to guard against. Binding/validation still happens in
+`web-server/program.cs.ConfigureSettings` exactly as planned (`AddFluentValidatedOptions<WebAuthnOptions,
+WebAuthnOptionsValidator>(configuration).ValidateOnStart()`), only the type declaration moved. Both
+relocated files carry a Design region documenting this, explicitly contrasting with SampleOptions.
+
+**Other implementation notes / minor deviations:**
+- `IntegrationSoftwareAuthenticator` (the integration-test emulator) uses a **per-instance random**
+  `CredentialId`, not the unit fixture's fixed constant. Discovered via a real test failure: this
+  project's `WebTestServerApplication` (and its in-memory `IPrincipalStore`/`IWebAuthnChallengeStore`
+  singletons) is constructed once per test **class**, shared across every test method in that class —
+  a hardcoded shared CredentialId collided across methods (e.g., a credential registered by one test's
+  happy path already existed when a later test's "unknown credential" case expected it absent). The
+  ES256 signing keypair remains fixed/deterministic; only the opaque credential identifier is
+  per-instance. Documented in the fixture's Design region.
+  `TimeWarp.Foundation.NullApiService`'s existing 501 fallback runs automatically (no factory found →
+  real inner `IApiService` → `NullApiService` in a mock-first/no-BFF app) — no bespoke mock-detection
+  code was needed in `PasskeysPage`.
+- `web-authn.ts` hand-rolls base64url↔ArrayBuffer conversion rather than the newer WebAuthn Level 3
+  `PublicKeyCredential.parseCreationOptionsFromJSON`/`.toJSON()` convenience APIs, to avoid a dependency
+  on browser/TypeScript-DOM-lib versions newer than this template's baseline — consistent with the
+  server verifier's own "no exotic/newest APIs" posture.
+
+**Follow-ups (all explicitly out of scope per plan §11, not overlooked):** EF-backed `IPrincipalStore`;
+`Update*`/retry-on-conflict policy and list/revoke UX (104-005); rate limiting (104-015); CTA/login
+rework (104-016); browser e2e via Playwright virtual authenticator (104-006/104-022); agent keys/tokens
+(104-004); progressive profile (104-024); distributed challenge store (multi-instance deployment).
 
 ### Depends on
 

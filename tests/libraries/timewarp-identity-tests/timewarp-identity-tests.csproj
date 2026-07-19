@@ -2,6 +2,7 @@
   <ItemGroup>
     <PackageReference Include="Fixie.TestAdapter" />
     <PackageReference Include="Shouldly" />
+    <PackageReference Include="System.Formats.Cbor" />
     <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>

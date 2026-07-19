@@ -33,6 +33,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- PrincipalId/CredentialId typed-id responses for the identity feature (task 104-003).
+         Dual-mode, mirroring timewarp-identity's own foundation-domain reference: ProjectReference
+         in this monorepo, PackageReference in package mode (gated by UseFoundationPackages since
+         the template ties source/libraries/timewarp-identity's exclusion to the same
+         foundationPackages flag as the rest of foundation — see template.json). -->
+    <ProjectReference Include="..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Identity" Condition="'$(UseFoundationPackages)' == 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="features\auth\commands\"/>
   </ItemGroup>
 

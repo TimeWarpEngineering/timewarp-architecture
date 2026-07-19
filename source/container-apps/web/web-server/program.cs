@@ -122,6 +122,7 @@ public class Program : IAspNetProgram
       .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly);
 
     serviceCollection.AddHttpContextAccessor();
+    serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
@@ -172,6 +173,32 @@ public class Program : IAspNetProgram
   {
     serviceCollection.AddMicrosoftIdentityWebAppAuthentication(configuration);
     // serviceCollection.AddMicrosoftIdentityWebApiAuthentication(configuration);
+
+    // A second AddAuthentication() call (no defaultScheme argument) adds this NAMED cookie scheme
+    // alongside whatever AddMicrosoftIdentityWebAppAuthentication registered as default — the
+    // dormant Entra registration is untouched (lock #10 / 104-021). See IdentitySessionDefaults.
+    serviceCollection.AddAuthentication()
+      .AddCookie(IdentitySessionDefaults.Scheme, options =>
+      {
+        options.Cookie.Name = IdentitySessionDefaults.CookieName;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(24);
+        // Ceremony/session endpoints are JSON APIs, not browser-redirect flows — an unauthenticated
+        // or forbidden request must get a status code, not a 302 to a login page that does not exist.
+        options.Events.OnRedirectToLogin = context =>
+        {
+          context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+          return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+          context.Response.StatusCode = StatusCodes.Status403Forbidden;
+          return Task.CompletedTask;
+        };
+      });
   }
 
   public static void ConfigureMiddleware(WebApplication webApplication)
@@ -197,6 +224,13 @@ public class Program : IAspNetProgram
     // endpoint required by WebAssembly interactivity, and UseStaticFiles bypasses the fingerprinted
     // caching headers.
     webApplication.UseRouting();
+
+    // Identity session (task 104-003): named cookie scheme only — the dormant Entra registration's
+    // own auth flow is untouched. Ceremony endpoints (register/authenticate) are anonymous by
+    // design (they establish the session); GetCurrentSession reads whatever session exists, if any.
+    webApplication.UseAuthentication();
+    webApplication.UseAuthorization();
+
     webApplication.UseAntiforgery();
   }
 
@@ -241,6 +275,10 @@ public class Program : IAspNetProgram
   {
     serviceCollection
       .AddFluentValidatedOptions<SampleOptions, SampleOptionsValidator>(configuration)
+      .ValidateOnStart();
+
+    serviceCollection
+      .AddFluentValidatedOptions<WebAuthnOptions, WebAuthnOptionsValidator>(configuration)
       .ValidateOnStart();
 
     serviceCollection.Configure<ApiBehaviorOptions>
