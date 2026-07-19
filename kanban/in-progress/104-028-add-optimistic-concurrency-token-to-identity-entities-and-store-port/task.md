@@ -188,25 +188,32 @@ None.
 - EF `ValueConverter`/mapping for `Version` in host stores arrives with the EF wave; nothing in
   this task references EF.
 
-### Implementation results (2026-07-19)
+## Results
 
-Work items 1–7 executed as planned; no deviations. `dev build` 0/0; `timewarp-identity-tests`
-88/88 (71 original + 4 new Principal/Credential Version/inequality cases + 13 new
-concurrency-scenario cases, with `Multi_credential_per_principal_is_allowed` changed to re-Get
-per the plan); `foundation-domain-tests` 37/37 (+3 rehydration-ctor cases);
-`foundation-application-tests` 13/13, `web-domain-tests` 26/26, `timewarp-architecture-analyzers-tests`
-75/75, `web-server-integration-tests` 22 passed/1 skipped — all unaffected by the `Entity<TId>`
-ctor addition, confirming no cross-project regression.
+### Implementation
+- Commits: 85932b87 (implementation), ae12b482 (round-1 fixes M1–M3).
+- Principal/Credential adopt Entity<TId> (foundation-domain dual-mode reference; global-usings for TimeWarp.Foundation.Entities); inherited Version + base equality; local Id removed; internal Snapshot(version) rehydration factories (full-state private ctors; byte arrays copied — D8 preserved). IAggregateRoot explicitly NOT adopted (deferral recorded in Design regions).
+- Entity<TId> gained protected rehydration ctor (id, version), negative-guarded — construction-time only; EF hook untouched.
+- ConcurrencyConflictException (EntityType/EntityId/ExpectedVersion/ActualVersion).
+- IPrincipalStore port contract: Update* throws ConcurrencyConflictException on version mismatch (supersedes D6 LWW); Get*/Find*/List* return snapshots (supersedes D4 shared refs); Add* persists Version as-is; exception delivery may be sync or faulted-Task; conflict policy stays with callers.
+- In-memory store: snapshot-on-get, Lock-guarded check-and-swap (TryUpdate unusable as CAS under identity equality), EntityVersion.Next increments, first-credential tier bump advances stored principal Version only on actual tier change.
 
-**Publish-checklist note:** package-mode consumers (`UseFoundationPackages=true` /
-`UseAnalyzerPackages=true`) need a published `TimeWarp.Foundation.Domain` package that actually
-contains `Entity<TId>`/`EntityVersion` (task 106) — the current CPM pin (`2.0.0-beta.2`) predates
-both. Ship a `TimeWarp.Foundation.Domain` release containing them and bump the CPM pin
-before-or-with the first `TimeWarp.Identity` package release that carries this task's changes;
-until then, `TimeWarp.Identity` only builds in this monorepo's default ProjectReference
-(dual-mode) path, same as CI. This is the same release-ordering cost already accepted for
-104-027/Generators — no new risk class, just a second instance of it to track at ship time.
+### Review (Phase 4b)
+- Rounds: 1 (general, effort 1) + orchestrator verification of the fix delta. Findings: 0 bugs, 1 suggestion, 2 nits — all fixed (ae12b482). Final: 0 open, 0 wontfix. Disposition: clean (review/disposition.md).
+- Reviewer verified: full lock coverage, no await under lock, throw-before-mutate ordering, torn-read impossibility, snapshot field/copy completeness, conflict orientation, sealed-entity version-forgery prevention, dual-mode csproj correctness.
+- Artifacts: review/review-framework.md, review/round-1/{general,merged}.md, review/disposition.md.
+
+### Verification
+- dev build 0/0. timewarp-identity-tests 90/90 (was 71; +13 concurrency/race incl. revoke-resurrection, quarantine-loss, tier-demotion; +4 entity cases; +2 contract cases). foundation-domain-tests 37/37 (+3 rehydration ctor). foundation-application 13/13, web-domain 26/26, analyzers 75/75, web-server-integration 22/1 skipped — all unaffected/green. Docker-dependent suites not runnable (pre-existing env issue).
+
+### Deferred
+- Publish ordering: TimeWarp.Foundation.Domain CPM pin (2.0.0-beta.2) predates Entity<TId>/EntityVersion — ship new package + bump pin before/with first TimeWarp.Identity release (package mode only; in-repo/CI unaffected).
+- EF ValueConverter/mapping for Version in host stores → EF wave (104-003+).
+- IAggregateRoot / nested-Invariants alignment for identity → later task.
+- Per-callsite conflict policy (retry/reload/fail) → handlers that hit it (surviving half of D6).
+- Unblocks: 104-003.
 
 ## Session
 
 - Created: 2026-07-19
+- Implementation + review: ses 78b9f414 (2026-07-19), build agent a2ef2354b0fc976e7, reviewer a31739ea747756530
