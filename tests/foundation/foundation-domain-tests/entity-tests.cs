@@ -7,6 +7,8 @@ using System.Reflection;
 internal sealed class Widget : Entity<Guid>
 {
   public Widget(Guid id) : base(id) { }
+
+  public Widget(Guid id, long version) : base(id, version) { }
 }
 
 internal sealed class Gadget : Entity<Guid>
@@ -83,6 +85,23 @@ public class VersionTests
     PropertyInfo? property = typeof(Widget).GetProperty(nameof(Entity<Guid>.Version));
     property.ShouldNotBeNull();
     (property!.SetMethod?.IsPublic ?? false).ShouldBeFalse();
+  }
+
+  public void Rehydration_constructor_sets_version()
+  {
+    Widget widget = new(Guid.NewGuid(), 7);
+    widget.Version.ShouldBe(7);
+  }
+
+  public void Rehydration_constructor_accepts_zero()
+  {
+    Widget widget = new(Guid.NewGuid(), 0);
+    widget.Version.ShouldBe(0);
+  }
+
+  public void Rehydration_constructor_rejects_negative_version()
+  {
+    Should.Throw<ArgumentOutOfRangeException>(() => new Widget(Guid.NewGuid(), -1));
   }
 }
 

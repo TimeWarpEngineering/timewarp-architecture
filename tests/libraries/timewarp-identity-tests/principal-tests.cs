@@ -35,6 +35,19 @@ public class Create
 
   public void Rejects_undefined_kind() =>
     Should.Throw<ArgumentOutOfRangeException>(() => Principal.Create((PrincipalKind)99));
+
+  public void Version_defaults_to_zero()
+  {
+    Principal principal = Principal.Create(PrincipalKind.Human);
+    principal.Version.ShouldBe(0);
+  }
+
+  public void Different_ids_are_not_equal()
+  {
+    Principal a = Principal.Create(PrincipalKind.Human);
+    Principal b = Principal.Create(PrincipalKind.Human);
+    a.ShouldNotBe(b);
+  }
 }
 
 public class SetDisplayName

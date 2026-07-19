@@ -9,12 +9,30 @@
 // Empty PrincipalId rejected at Create. CredentialType.None rejected. Id is CredentialId (RFC D3), not raw Guid.
 // Type and Handle are immutable after Create — store Update replaces by Id only (revoke / label persistence); no handle migration.
 // Revoke is one-shot. Timestamps use DateTimeOffset (D5 TimeProvider deferred to 104-006).
-// Concurrency: last-write-wins until a later host task adds a version token (D6).
+//
+// Concurrency (task 104-028, supersedes D6 last-write-wins): Credential inherits Entity<CredentialId>
+// — typed Id, identity-based (type+Id) equality, and the store-owned Version optimistic-concurrency
+// token — instead of declaring its own Id property. Version is not settable by domain code; Create
+// always mints Version 0. The private constructor is copy-free by design — HandleField/
+// PublicMaterialField are stored as-is, not defensively copied — so every caller of the ctor (Create,
+// Snapshot) is individually responsible for passing arrays it already owns; Create does this via
+// `handle.ToArray()`/`publicMaterial.ToArray()` on the caller-supplied input, and Snapshot does the
+// same on its OWN already-stored fields, so a store's rehydrated copy shares no array with the
+// original instance it snapshotted (this is what keeps D8's "byte[] copy-on-get" guarantee intact
+// across the concurrency-token seam — dropping either ToArray would let a caller mutate storage
+// through a byte[] reference).
+// Snapshot copies RevokedAt too — an incomplete snapshot (e.g. dropping RevokedAt) would silently
+// let a revoked credential rehydrate as active, which is exactly the state-loss class this token
+// exists to prevent.
+//
+// IAggregateRoot: deliberately NOT implemented here, for the same reason as Principal — see
+// principal.cs's Design region. Identity's own guard clauses (Create, Revoke) are the invariant
+// enforcement; aligning with the nested-Invariants/IAggregateRoot pattern is a later task.
 #endregion
 
 namespace TimeWarp.Identity;
 
-public sealed class Credential
+public sealed class Credential : Entity<CredentialId>
 {
   private readonly byte[] HandleField;
   private readonly byte[] PublicMaterialField;
@@ -26,18 +44,20 @@ public sealed class Credential
     byte[] handle,
     byte[] publicMaterial,
     DateTimeOffset createdAt,
-    string? label)
+    DateTimeOffset? revokedAt,
+    string? label,
+    long version)
+    : base(id, version)
   {
-    Id = id;
     PrincipalId = principalId;
     Type = type;
     HandleField = handle;
     PublicMaterialField = publicMaterial;
     CreatedAt = createdAt;
+    RevokedAt = revokedAt;
     Label = label;
   }
 
-  public CredentialId Id { get; }
   public PrincipalId PrincipalId { get; }
   public CredentialType Type { get; }
 
@@ -90,8 +110,19 @@ public sealed class Credential
       handle.ToArray(),
       publicMaterial.ToArray(),
       DateTimeOffset.UtcNow,
-      normalizedLabel);
+      revokedAt: null,
+      normalizedLabel,
+      version: 0);
   }
+
+  /// <summary>
+  /// Store-only rehydration: copies already-valid state at a specific version — no id minting, no
+  /// re-validation, and fresh byte[] copies (preserves D8) so the snapshot shares no storage with
+  /// this instance. Internal because it must only ever be called on an existing Credential instance
+  /// that already passed Create's guards.
+  /// </summary>
+  internal Credential Snapshot(long version) =>
+    new(Id, PrincipalId, Type, HandleField.ToArray(), PublicMaterialField.ToArray(), CreatedAt, RevokedAt, Label, version);
 
   public void Revoke()
   {

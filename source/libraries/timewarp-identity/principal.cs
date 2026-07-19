@@ -16,22 +16,45 @@
 // - Rich PrincipalStatus taxonomy deferred until 008/013 write real gates.
 //
 // Clocks: DateTimeOffset.UtcNow at Create (D5 TimeProvider deferred to 104-006).
-// Concurrency: no version token in Wave 1 (D6); hosts use last-write-wins via UpdatePrincipalAsync.
+//
+// Concurrency (task 104-028, supersedes D6 last-write-wins): Principal inherits Entity<PrincipalId>
+// — typed Id, identity-based (type+Id) equality, and the store-owned Version optimistic-concurrency
+// token — instead of declaring its own Id property or hand-rolled equality. Version is NOT settable
+// by domain code; Create always mints Version 0, and no method on this class bumps it. Stores
+// rehydrate at a specific version via the internal Snapshot factory (construction-time only — see
+// entity.cs's `Entity(TId, long)` ctor) and advance it by constructing a NEW instance with
+// EntityVersion.Next(storedVersion); nothing here mutates Version in place. Full port conflict
+// semantics live on IPrincipalStore's Design region.
+//
+// IAggregateRoot: deliberately NOT implemented here. That marker (foundation-domain,
+// TimeWarp.Foundation.Entities) opts a type into the TWA0011/TWA0012 nested-Invariants convention
+// and the EF SaveChanges invariants-guard hook (task 106) — identity's own Create/Promote/
+// RecordCredentialAttached guard clauses already make invalid states hard to construct, and this
+// task is scoped to the concurrency token only. Aligning identity with the nested-Invariants pattern
+// (and thus IAggregateRoot) is left to a later task, not silently done here.
 #endregion
 
 namespace TimeWarp.Identity;
 
-public sealed class Principal
+public sealed class Principal : Entity<PrincipalId>
 {
-  private Principal(PrincipalId id, PrincipalKind kind, TrustTier trustTier, DateTimeOffset createdAt)
+  private Principal(
+    PrincipalId id,
+    PrincipalKind kind,
+    TrustTier trustTier,
+    bool isQuarantined,
+    DateTimeOffset createdAt,
+    string? displayName,
+    long version)
+    : base(id, version)
   {
-    Id = id;
     Kind = kind;
     TrustTier = trustTier;
+    IsQuarantined = isQuarantined;
     CreatedAt = createdAt;
+    DisplayName = displayName;
   }
 
-  public PrincipalId Id { get; }
   public PrincipalKind Kind { get; }
   public TrustTier TrustTier { get; private set; }
   public bool IsQuarantined { get; private set; }
@@ -56,8 +79,19 @@ public sealed class Principal
       PrincipalId.New(),
       kind,
       TrustTier.Provisional,
-      DateTimeOffset.UtcNow);
+      isQuarantined: false,
+      DateTimeOffset.UtcNow,
+      displayName: null,
+      version: 0);
   }
+
+  /// <summary>
+  /// Store-only rehydration: copies already-valid state at a specific version — no id minting, no
+  /// re-validation. Internal because it must only ever be called with state that already passed
+  /// Create's guards (i.e. an existing Principal instance), never with caller-supplied raw fields.
+  /// </summary>
+  internal Principal Snapshot(long version) =>
+    new(Id, Kind, TrustTier, IsQuarantined, CreatedAt, DisplayName, version);
 
   public void SetDisplayName(string? displayName)
   {

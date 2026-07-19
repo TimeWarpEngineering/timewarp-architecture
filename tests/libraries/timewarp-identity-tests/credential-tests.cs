@@ -72,6 +72,20 @@ public class Create
   public void Rejects_empty_public_material() =>
     Should.Throw<ArgumentException>(() =>
       Credential.Create(PrincipalId.New(), CredentialType.Passkey, [1], []));
+
+  public void Version_defaults_to_zero()
+  {
+    Credential credential = Credential.Create(PrincipalId.New(), CredentialType.Passkey, [1], [2]);
+    credential.Version.ShouldBe(0);
+  }
+
+  public void Different_ids_are_not_equal()
+  {
+    PrincipalId principalId = PrincipalId.New();
+    Credential a = Credential.Create(principalId, CredentialType.Passkey, [1], [2]);
+    Credential b = Credential.Create(principalId, CredentialType.Passkey, [3], [4]);
+    a.ShouldNotBe(b);
+  }
 }
 
 public class Revoke

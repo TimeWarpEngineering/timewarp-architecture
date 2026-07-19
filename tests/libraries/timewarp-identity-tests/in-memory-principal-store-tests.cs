@@ -39,6 +39,8 @@ public class Principals
     loaded.ShouldNotBeNull();
     loaded.DisplayName.ShouldBe("bot");
     loaded.TrustTier.ShouldBe(TrustTier.Funded);
+    loaded.Version.ShouldBe(1);
+    principal.Version.ShouldBe(0);
   }
 
   public async Task Update_missing_principal_fails()
@@ -96,7 +98,13 @@ public class Credentials
 
     IReadOnlyList<Credential> list = await store.ListCredentialsAsync(principal.Id);
     list.Count.ShouldBe(2);
-    principal.TrustTier.ShouldBe(TrustTier.Keyed);
+
+    // Snapshot-on-get (task 104-028): the store no longer shares references, so the caller's
+    // original `principal` instance is never mutated by AddCredentialAsync's first-credential rule
+    // — re-Get to observe the stored tier change.
+    Principal? loaded = await store.GetPrincipalAsync(principal.Id);
+    loaded.ShouldNotBeNull();
+    loaded.TrustTier.ShouldBe(TrustTier.Keyed);
   }
 
   public async Task Find_by_handle_returns_match()

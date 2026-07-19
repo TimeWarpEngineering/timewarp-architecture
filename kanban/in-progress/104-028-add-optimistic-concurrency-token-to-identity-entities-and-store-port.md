@@ -52,16 +52,16 @@ it — that part of the D6 lean was correct.
 
 ## Checklist
 
-- [ ] Reference foundation-domain (dual-mode); Principal + Credential adopt `Entity<TId>`
+- [x] Reference foundation-domain (dual-mode); Principal + Credential adopt `Entity<TId>`
       (inherit `Version`; drop hand-rolled equality where the base now provides it)
-- [ ] `ConcurrencyConflictException` in the library
-- [ ] Port docs: Update* conflict contract replaces the LWW note (D6 superseded)
-- [ ] In-memory store: snapshot-on-get + version check on update
-- [ ] Tests: conflict throw on stale update; revoke-resurrection race test (fails under LWW,
+- [x] `ConcurrencyConflictException` in the library
+- [x] Port docs: Update* conflict contract replaces the LWW note (D6 superseded)
+- [x] In-memory store: snapshot-on-get + version check on update
+- [x] Tests: conflict throw on stale update; revoke-resurrection race test (fails under LWW,
       passes with token); quarantine and tier-demotion race coverage
-- [ ] Reconcile Design regions in principal.cs, credential.cs, i-principal-store.cs,
+- [x] Reconcile Design regions in principal.cs, credential.cs, i-principal-store.cs,
       in-memory-principal-store.cs (remove "LWW (D6)" notes)
-- [ ] Update 104-003 to list this as a dependency
+- [x] Update 104-003 to list this as a dependency (already present — verified)
 
 ## Notes
 
@@ -187,6 +187,25 @@ None.
   foundation-domain primitives only, and it must stay that lean.
 - EF `ValueConverter`/mapping for `Version` in host stores arrives with the EF wave; nothing in
   this task references EF.
+
+### Implementation results (2026-07-19)
+
+Work items 1–7 executed as planned; no deviations. `dev build` 0/0; `timewarp-identity-tests`
+88/88 (71 original + 4 new Principal/Credential Version/inequality cases + 13 new
+concurrency-scenario cases, with `Multi_credential_per_principal_is_allowed` changed to re-Get
+per the plan); `foundation-domain-tests` 37/37 (+3 rehydration-ctor cases);
+`foundation-application-tests` 13/13, `web-domain-tests` 26/26, `timewarp-architecture-analyzers-tests`
+75/75, `web-server-integration-tests` 22 passed/1 skipped — all unaffected by the `Entity<TId>`
+ctor addition, confirming no cross-project regression.
+
+**Publish-checklist note:** package-mode consumers (`UseFoundationPackages=true` /
+`UseAnalyzerPackages=true`) need a published `TimeWarp.Foundation.Domain` package that actually
+contains `Entity<TId>`/`EntityVersion` (task 106) — the current CPM pin (`2.0.0-beta.2`) predates
+both. Ship a `TimeWarp.Foundation.Domain` release containing them and bump the CPM pin
+before-or-with the first `TimeWarp.Identity` package release that carries this task's changes;
+until then, `TimeWarp.Identity` only builds in this monorepo's default ProjectReference
+(dual-mode) path, same as CI. This is the same release-ordering cost already accepted for
+104-027/Generators — no new risk class, just a second instance of it to track at ship time.
 
 ## Session
 

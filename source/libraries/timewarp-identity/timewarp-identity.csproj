@@ -17,4 +17,13 @@
     <PackageReference Include="TimeWarp.Architecture.Generators" PrivateAssets="all"
                       Condition="'$(UseAnalyzerPackages)' == 'true'" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Entity<TId> (typed id, identity equality, Version) for Principal/Credential (task 104-028).
+         Dual-mode, mirroring web-domain.csproj: ProjectReference in this monorepo, PackageReference
+         in package mode. foundation-domain only — this library stays independent of the rest of
+         foundation (application/server layers). -->
+    <ProjectReference Include="../../foundation/foundation-domain/foundation-domain.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Domain" Condition="'$(UseFoundationPackages)' == 'true'" />
+  </ItemGroup>
 </Project>

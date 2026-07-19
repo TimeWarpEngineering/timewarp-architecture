@@ -5,10 +5,36 @@
 #region Design
 // Credential lookup by CredentialId (RFC D3), not raw Guid. Type and Handle are immutable after Create — UpdateCredential
 // persists revoke/label (and similar) changes for the same Id only; no handle reindex contract.
-// Concurrency: last-write-wins (D6) — no version/etag on the port in Wave 1.
 // FindCredentialByHandle may return revoked credentials (callers check IsRevoked).
-// D4: shared-reference vs snapshot-on-get is an implementation choice; Wave 1 in-memory keeps shared refs.
 // D5: TimeProvider not part of this port (deferred to 104-006).
+//
+// Concurrency (task 104-028, supersedes D6 last-write-wins and D4's "shared-reference vs
+// snapshot-on-get is an implementation choice"). Principal and Credential inherit
+// Entity&lt;TId&gt;.Version, a store-owned optimistic-concurrency token. Version == 0 means
+// created-but-never-updated; every implementation MUST advance it by exactly 1 per successful
+// update (EntityVersion.Next) and MUST return snapshots — this port contract requires
+// snapshot-on-get, closing off D4's "implementation choice" framing, because a version check is
+// meaningless if Get* can hand back the same shared instance a concurrent writer is mutating.
+//   - Add*: persists the given instance's state as-is, including Version (0 for every publicly
+//     creatable instance — Create never mints a nonzero Version).
+//   - Get*/Find*/List*: return snapshots — fresh, caller-owned instances. Every call returns a new
+//     instance; mutating a returned instance changes nothing in the store until Update* is called
+//     with it.
+//   - Update*: compares the incoming instance's Version against the stored row's Version. Mismatch
+//     throws ConcurrencyConflictException (entity type, id, expected = the incoming instance's
+//     Version, actual = the stored Version); stored state is left completely untouched. Match
+//     persists a new snapshot with Version = EntityVersion.Next(stored Version). The caller's
+//     in-hand instance is NOT modified by a successful Update* — immediately after, it is one
+//     version stale; a second Update* with the same in-hand instance throws, and a caller that
+//     wants to keep updating must re-Get. Unknown id remains InvalidOperationException — absence
+//     and staleness are distinct failure classes and must not be conflated.
+//   - AddCredentialAsync side effect: the first-credential rule (Provisional → Keyed) mutates the
+//     STORED principal — via a new snapshot, never in place — and advances the stored principal's
+//     Version when, and only when, the tier actually changes; the caller's in-hand principal
+//     instance is untouched either way. A concurrent principal writer holding the pre-attach
+//     snapshot conflicts on their next Update* instead of silently overwriting the tier change.
+//   - Conflict policy (retry vs reload vs fail the request) stays with callers — that half of the
+//     original D6 lean (defer callsite policy) was correct and is unchanged by this task.
 #endregion
 
 namespace TimeWarp.Identity;

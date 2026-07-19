@@ -32,6 +32,13 @@
 //      claimed) leaves the D6 debt open.
 // application code never writes Version directly; the private setter exists only so EF's
 // reflection-based property access can reach it.
+// Non-EF stores (e.g. timewarp-identity's in-memory IPrincipalStore, task 104-028) have no
+// change-tracker to write through, so they need a different seam: `protected Entity(TId id, long
+// version)` is construction-time-only rehydration — a store "increments" by constructing a brand
+// new instance with `EntityVersion.Next(storedVersion)`, not by mutating an existing one. There is
+// no bump method and no mutator; the two-ctor shape (id-only delegates to id+version with 0) keeps
+// every existing EF-mapped subclass (e.g. Profile) unchanged — it still calls `base(id)`, still
+// gets Version 0, and EF still owns every subsequent write via the mechanism above.
 #endregion
 
 namespace TimeWarp.Foundation.Entities;
@@ -39,9 +46,15 @@ namespace TimeWarp.Foundation.Entities;
 public abstract class Entity<TId> : IEquatable<Entity<TId>>
   where TId : struct, IEquatable<TId>
 {
-  protected Entity(TId id)
+  protected Entity(TId id) : this(id, 0)
   {
+  }
+
+  protected Entity(TId id, long version)
+  {
+    ArgumentOutOfRangeException.ThrowIfNegative(version);
     Id = id;
+    Version = version;
   }
 
   public TId Id { get; }
