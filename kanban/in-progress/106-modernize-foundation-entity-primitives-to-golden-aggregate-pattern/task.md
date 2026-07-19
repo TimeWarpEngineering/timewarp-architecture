@@ -219,6 +219,36 @@ None.
   the domain keeps only the declaration convention.
 - Related: task 105 (Enumeration hardening) — same modernization sweep, separate task.
 
+## Results
+
+### Implementation
+- Commits: 437f0e17 (implementation), 848549fa (round-1 fixes M1–M10), 87d08aed (round-2 fixes M11–M13).
+- Entity<TId> (typed get-only Id, exact-type+Id equality, store-owned long Version) + IAggregateRoot in foundation-domain; BaseEntity/BaseEvent/ValueObject deleted — foundation-domain is now dependency-free.
+- EntityVersion.Next increment seam; PostgresDbContext SaveChanges/SaveChangesAsync hook increments Version for Modified roots (OriginalValue-sourced — idempotent under execution-strategy retries) and runs DomainInvariantsGuard over Added/Modified IAggregateRoot entries; fails closed with convention-pointing errors for missing validators AND unmapped Version.
+- DomainInvariantsGuard (foundation-application, EF-agnostic, cached, BaseType walk for EF proxies) + DomainInvariantViolationException / MissingInvariantsValidatorException.
+- TWA0011 (aggregate root must declare nested Invariants validator) + TWA0012 (must be private) — shape-aligned with the runtime guard; docs ranges bumped to TWA0002–0012.
+- Profile rewritten as exemplar: [TypedId] ProfileId, private ctor, fail-closed Create, named mutations, MaxDisplayNameLength enforced in Create/Rename AND Invariants; nopCommerce sketches + IInvariants deleted; aggregates/overview.md written.
+- New test projects foundation-application-tests, web-domain-tests; extended foundation-domain-tests + analyzers-tests.
+
+### Review (Phase 4b)
+- Rounds: 2; roster: general (effort 1).
+- Round 1: 10 findings (2 bug, 5 suggestion, 3 nit) — all fixed (848549fa). Bugs: inert Version token; analyzer/guard shape drift.
+- Round 2: all 10 confirmed fixed, no reopens; 3 new (2 suggestion, 1 nit) — all fixed (87d08aed).
+- Final counts: 13 findings, 13 fixed, 0 open, 0 wontfix. Disposition: clean (review/disposition.md).
+- Artifacts: review/review-framework.md, review/round-1/{general,merged}.md, review/round-2/{general,merged}.md, review/disposition.md.
+
+### Verification
+- dev build: 0 warnings / 0 errors. Tests: analyzers 75/75, foundation-application 13/13, foundation-domain 34/34, web-domain 26/26, web-contracts 7/7, web-server-integration 22 passed/1 skipped, timewarp-identity 71/71. api-server/aspire/web-spa integration suites not runnable (pre-existing Docker daemon issue in this environment, unrelated).
+
+### Deferred (recorded in Design regions / follow-ups)
+- Live EF round-trip test for Version increment + guard hook (needs EF InMemory/Sqlite package — out of scope by constraint).
+- Child-entity-only saves don't trigger root invariants (documented boundary; navigation-metadata resolution when a real child model exists).
+- Generic aggregate roots unsupported by guard reflection (documented; none exist).
+- Shared rule fragments: convention is `public const` limits on aggregates referenced by contract validators; machinery deferred until a real slice duplicates a semantic rule.
+- Language/Region/Theme stay validated strings (task 105 scope). TId=[TypedId] convention noted as candidate future analyzer.
+- Unblocks: 104-028 (identity adopts Entity<TId>), then 104-003.
+
 ## Session
 
 - Created: 2026-07-19
+- Implementation + review: ses 78b9f414 (2026-07-19), build agent a2ef2354b0fc976e7, reviewer a31739ea747756530
