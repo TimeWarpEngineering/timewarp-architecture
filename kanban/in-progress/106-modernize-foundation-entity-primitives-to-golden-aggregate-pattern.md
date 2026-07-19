@@ -104,6 +104,104 @@ MediatR). Fix the region; confirm the type is actually used or remove it.
 
 ## Notes
 
+### Implementation plan (2026-07-19)
+
+#### Investigation summary (facts the plan relies on)
+
+- `Profile` (`TimeWarp.Architecture.Entities.Profile`) is constructed nowhere. `get-profile-handler.cs` builds contract `Response` objects from the mock factory; the endpoint and SPA only touch the contract. The rewrite breaks no seam. `web-infrastructure/global-usings.cs` imports the namespace globally but uses no type from it.
+- `PostgresDbContext` exists (`source/container-apps/web/web-infrastructure/persistence/postgres-db-context.cs`), is `sealed partial`, entity-free, no `SaveChangesAsync` override — the natural home for the enforcement hook. web-infrastructure references Npgsql EF 10.0.3. foundation-application/infrastructure have NO EF reference — guard core must be EF-agnostic; hook lives in the host EF layer.
+- foundation-domain's only third-party dep is `TimeWarp.Mediator` (used solely by `BaseEvent : INotification`) — deleting BaseEvent makes foundation-domain dependency-free (leanness prerequisite for 104-028).
+- foundation-application gets FluentValidation transitively via foundation-contracts (pinned 12.1.1); web-domain already references FluentValidation directly.
+- TypedId generator: `timewarp-architecture-analyzers` project (PackageId `TimeWarp.Architecture.Generators`), attached per-project via `OutputItemType="Analyzer"` ProjectReference (dual-mode pattern in `timewarp-identity.csproj`). web-domain does NOT have it yet. TWE006 enforces the `readonly partial record struct` shape; generated partials are exempt from TWA0001.
+- Next free convention-analyzer ID: **TWA0011** (registry: `AnalyzerReleases.Unshipped.md`).
+- Tests: Fixie + Shouldly + TimeWarp.Fixie; `tests/foundation/foundation-application-tests` and `tests/container-apps/web/web-domain-tests` do not exist yet — create + add to `timewarp-architecture.slnx` inside the correct `<!--#if -->` conditional folders.
+
+#### Ordered work items
+
+### 1. foundation-domain: new primitives, delete old ones
+
+Directory: `source/foundation/foundation-domain/entities/base/`
+
+1. **New `entity.cs`** — `namespace TimeWarp.Foundation.Entities;`
+   - `public abstract class Entity<TId> : IEquatable<Entity<TId>> where TId : struct, IEquatable<TId>`
+   - `protected Entity(TId id)` ctor; `public TId Id { get; }` (get-only; EF binds via ctor-parameter name match)
+   - `public long Version { get; private set; }` — store-owned concurrency token; Design region documents hosts map it with `.IsConcurrencyToken()` (closes 104-002 RFC D6 LWW debt); application code never writes it
+   - Equality: `Equals(object?)` + `Equals(Entity<TId>?)` = exact runtime type + `Id.Equals`; `GetHashCode() => HashCode.Combine(GetType(), Id)`; `==`/`!=` operators
+2. **New `i-aggregate-root.cs`** — `public interface IAggregateRoot;` (CA1040 suppression, pattern: assembly-marker.cs). Marks consistency-boundary roots for the invariants guard and TWA0011.
+3. **Delete `base-entity.cs`** (no remaining users after Profile rewrite).
+4. **Delete `base-event.cs`**; remove `TimeWarp.Mediator` PackageReference from `foundation-domain.csproj` and `global using TimeWarp.Mediator;` from `global-usings.cs`. Update csproj `<Description>`.
+5. **Delete `value-object.cs`**.
+
+### 2. web-domain: TypedId wiring + Profile exemplar + deletions
+
+1. **`web-domain.csproj`**: add generator reference (copy dual-mode block from `timewarp-identity.csproj`).
+2. **New `aggregates/profile/profile-id.cs`** — `[TypedId] public readonly partial record struct ProfileId;` (mirrors `principal-id.cs` incl. region style).
+3. **Rewrite `aggregates/profile/profile.cs`**:
+   - `public sealed class Profile : Entity<ProfileId>, IAggregateRoot`
+   - `public const int MaxDisplayNameLength = 100;` (single source of truth for future contract validators)
+   - Private ctor; `public static Profile Create(string displayName, string language, string region, string theme)` — fail-closed guard clauses, mints `ProfileId.New()`
+   - Private setters + named mutations: `Rename`, `SetLanguage`, `SetRegion`, `SetTheme`, `EnableNotifications`/`DisableNotifications`
+   - `private sealed class Invariants : AbstractValidator<Profile>` with real rules: DisplayName NotEmpty + MaximumLength(MaxDisplayNameLength); Language/Region/Theme NotEmpty
+   - Rewrite Purpose/Design regions (drop CA1852 pragma if sealed satisfies it; keep "private so AddValidatorsFromAssemblyContaining skips it" rationale)
+4. **Delete** `aggregates/catalog/product.cs` and `category.cs` (and empty `catalog/` folder).
+5. **Delete `abstractions/i-invariants.cs`** — only referenced inside the deleted category sketch; markers are now `IAggregateRoot` + nested-validator convention.
+
+### 3. foundation-application: invariants guard (EF-agnostic core)
+
+1. **`exceptions/domain-invariant-violation-exception.cs`** — carries aggregate type name + failed rules.
+2. **`exceptions/missing-invariants-validator-exception.cs`** — fail-closed discovery failure; message points at the convention and TWA0011.
+3. **`services/domain-invariants-guard.cs`** — `public static class DomainInvariantsGuard`:
+   - `EnsureValid(IEnumerable<object>)` + `EnsureValid(object)`
+   - Discovery: nested types (public+non-public) assignable to `IValidator<T>`; instantiate once; cache in `static ConcurrentDictionary<Type, IValidator>`
+   - Fail-closed: no nested validator → `MissingInvariantsValidatorException`; validation failure → `DomainInvariantViolationException`
+   - Static pure function (no DI interface) — no dependencies, hook calls it without ctor plumbing; Design region records the choice.
+4. **`foundation-application.csproj`** — explicit `<PackageReference Include="FluentValidation" />` (already pinned; don't rely on transitive flow for a published package).
+
+### 4. web-infrastructure: SaveChanges enforcement hook
+
+Edit `persistence/postgres-db-context.cs`:
+- Override `SaveChangesAsync(bool, CancellationToken)` + `SaveChanges(bool)`: entries `Added or Modified` where `Entity is IAggregateRoot` → `DomainInvariantsGuard.EnsureValid`, then base. Deleted skipped by design.
+- Update Design region; `SqlDbContext` untouched (one Design sentence noting consumers copy the same override).
+- Recommended: attach generators reference to `web-infrastructure.csproj` so TypedId EF ValueConverter pass emits ProfileId converters when a DbSet appears.
+
+### 5. Analyzer: TWA0011 (+ TWA0012)
+
+New `source/analyzers/timewarp-architecture-convention-analyzers/aggregate-invariants-analyzer.cs`:
+- **TWA0011** — "Aggregate root must declare a nested Invariants validator", Category Design, Warning (build-blocking under warnings-as-errors), on class identifier.
+- `RegisterSymbolAction(SymbolKind.NamedType)`; standard preamble.
+- Semantic check: non-abstract class implementing interface simple-named `IAggregateRoot` (name-based, same approach as contract-nullability analyzer) → must contain nested type whose base chain includes `AbstractValidator` arity-1 with type arg = containing type.
+- **TWA0012** — "Nested Invariants validator must be private" (keeps it out of AddValidatorsFromAssemblyContaining).
+- Bookkeeping: `AnalyzerReleases.Unshipped.md` rows; csproj Description "TWA0002–0012"; Directory.Build.props comment.
+- Runtime fail-closed check intentionally duplicates TWA0011 (analyzer = build-time upgrade, runtime = backstop); record in both Design regions.
+
+### 6. Tests
+
+| Project | Status | Cases |
+|---|---|---|
+| `tests/foundation/foundation-domain-tests` | exists | `entity-tests.cs`: equality (same type+Id, `==`, hash), same Id different types NOT equal, different Ids, nulls; Version defaults 0, no public setter |
+| `tests/foundation/foundation-application-tests` | NEW (copy csproj/testing-convention/global-usings from foundation-domain-tests; add to slnx in `!foundationPackages` block) | guard: valid passes; violation throws with failed rule visible; missing validator throws (fail-closed); cache correctness on repeat; private nested validator found |
+| `tests/container-apps/web/web-domain-tests` | NEW (add to slnx web tests folder) | `profile-id-tests.cs`: New() non-empty/distinct, JSON round-trip (light); `profile-tests.cs`: Create happy + rejects null/whitespace; mutations update state + reject invalid |
+| `tests/analyzers/timewarp-architecture-analyzers-tests` | exists | TWA0011/0012 via `CSharpAnalyzerTest` + stubs (copy FluentValidation stub; add IAggregateRoot stub): root w/ private nested → clean; root w/o → TWA0011; non-root → clean; abstract root → clean; public nested → TWA0012 |
+| SaveChanges integration | skipped | context entity-free, no EF InMemory/Sqlite pinned (no new packages); override is thin glue over directly-tested guard. Revisit when real entity model lands. |
+
+### 7. Docs, regions, closeout
+
+- Reconcile Purpose/Design regions in every touched file (TWA0004).
+- Write `web-domain/aggregates/overview.md` (currently empty): golden aggregate pattern statement; Profile is the exemplar.
+- Verify `dev build` (0/0) and `dev test`.
+- Tick kanban checklist; record recommendations in Notes.
+
+#### Recommendations (decisions recorded)
+
+- **ValueObject: retire (delete).** Zero subclasses; records give structural equality free; removes defect-bearing base (XOR hash, empty-Aggregate throw) from published surface while in 2.0.0-beta.
+- **BaseEvent: delete.** Zero usages; only reason foundation-domain references TimeWarp.Mediator; deleting achieves full dependency-freedom. Reintroduce in foundation-application when domain events are built.
+- **Shared rule fragments: no machinery now.** One aggregate, empty contract validator — nothing duplicated yet. Convention: aggregates expose `public const` limits (e.g. `Profile.MaxDisplayNameLength`) referenced by contract validators. Revisit meta-rules when a real slice duplicates a semantic rule.
+- **Language/Region/Theme: keep validated strings.** Enum/Enumeration conversion belongs to task 105's sweep; coupling avoided.
+
+#### Open questions
+
+None.
+
 - **Decision (2026-07-19): identity foundation-independence is dropped.** foundation-domain ships
   as a published `TimeWarp.Foundation.*` package, so timewarp-identity referencing it is a normal
   package dependency between two published libraries (ASP.NET Identity -> Microsoft.Extensions.*
