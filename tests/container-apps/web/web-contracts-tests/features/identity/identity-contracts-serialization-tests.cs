@@ -1,15 +1,16 @@
 #region Purpose
-// Round-trip tests for the identity feature contracts (task 104-003) — the shapes where
-// serialization can actually diverge: a typed-id (PrincipalId) Response with a ctor Guard, and an
-// optional-property Command (UserHandle).
+// Round-trip tests for the identity feature contracts (tasks 104-003, 104-004) — the shapes where
+// serialization can actually diverge: typed-id (PrincipalId) Responses with a ctor Guard,
+// optional-property Commands, list properties, and enum properties (PrincipalKind/TrustTier).
 #endregion
 
 #region Design
-// StartPasskeyRegistration/StartPasskeyAuthentication's empty Command bodies and their Response's
-// single-string-property shape are plain auto-property POCOs — no test here per the skill's
-// "trivial auto-property POCOs are deliberately not written" guidance; CompletePasskeyRegistration/
-// CompletePasskeyAuthentication/GetCurrentSession are the shapes worth pinning (typed-id ctor Guard,
-// optional property, nullable typed-id).
+// StartPasskeyRegistration/StartPasskeyAuthentication/StartAgentKeyRegistration/
+// StartAgentTokenIssuance's empty Command bodies and their Response's single-string-property shape
+// are plain auto-property POCOs — no test here per the skill's "trivial auto-property POCOs are
+// deliberately not written" guidance; the Complete* commands/responses, GetCurrentSession, and
+// GetAgentIdentity are the shapes worth pinning (typed-id ctor Guard, optional property, nullable
+// typed-id, list property, enum properties).
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -118,5 +119,125 @@ public class GetCurrentSession_Response_Should
 
     parsed.IsAuthenticated.ShouldBeFalse();
     parsed.PrincipalId.ShouldBeNull();
+  }
+}
+
+public class CompleteAgentKeyRegistration_Command_Should
+{
+  public static void SerializeAndDeserialize_Including_Optional_Label()
+  {
+    CompleteAgentKeyRegistration.Command command = new()
+    {
+      PublicKey = "AQIDBA",
+      Challenge = "BQYHCA",
+      Signature = "CQoLDA",
+      Label = "prod-worker-3"
+    };
+
+    CompleteAgentKeyRegistration.Command parsed = ContractSerialization.RoundTrip(command);
+
+    parsed.PublicKey.ShouldBe(command.PublicKey);
+    parsed.Challenge.ShouldBe(command.Challenge);
+    parsed.Signature.ShouldBe(command.Signature);
+    parsed.Label.ShouldBe(command.Label);
+  }
+
+  public static void SerializeAndDeserialize_Without_Label()
+  {
+    CompleteAgentKeyRegistration.Command command = new()
+    {
+      PublicKey = "AQIDBA",
+      Challenge = "BQYHCA",
+      Signature = "CQoLDA"
+    };
+
+    CompleteAgentKeyRegistration.Command parsed = ContractSerialization.RoundTrip(command);
+
+    parsed.Label.ShouldBeNull();
+  }
+}
+
+public class CompleteAgentKeyRegistration_Response_Should
+{
+  public static void SerializeAndDeserialize_Via_Constructor()
+  {
+    CompleteAgentKeyRegistration.Response response = new(PrincipalId.New(), "a1b2c3");
+
+    CompleteAgentKeyRegistration.Response parsed = ContractSerialization.RoundTrip(response);
+
+    parsed.PrincipalId.ShouldBe(response.PrincipalId);
+    parsed.KeyId.ShouldBe(response.KeyId);
+  }
+
+  public static void Reject_EmptyPrincipalId_During_Deserialization()
+  {
+    string json = """{"principalId":"00000000-0000-0000-0000-000000000000","keyId":"a1b2c3"}""";
+
+    Should.Throw<Exception>(() =>
+      JsonSerializer.Deserialize<CompleteAgentKeyRegistration.Response>(json, ContractSerialization.Options));
+  }
+}
+
+public class CompleteAgentTokenIssuance_Command_Should
+{
+  public static void SerializeAndDeserialize_Scopes_List()
+  {
+    CompleteAgentTokenIssuance.Command command = new()
+    {
+      KeyId = "a1b2c3",
+      Challenge = "BQYHCA",
+      Signature = "CQoLDA",
+      Scopes = [AgentScopes.IdentityRead, AgentScopes.DemoInvoke]
+    };
+
+    CompleteAgentTokenIssuance.Command parsed = ContractSerialization.RoundTrip(command);
+
+    parsed.KeyId.ShouldBe(command.KeyId);
+    parsed.Challenge.ShouldBe(command.Challenge);
+    parsed.Signature.ShouldBe(command.Signature);
+    parsed.Scopes.ShouldBe(command.Scopes);
+  }
+}
+
+public class CompleteAgentTokenIssuance_Response_Should
+{
+  public static void SerializeAndDeserialize_Via_Constructor()
+  {
+    CompleteAgentTokenIssuance.Response response = new
+    (
+      accessToken: "opaque-token-value",
+      expiresInSeconds: 900,
+      scopes: [AgentScopes.IdentityRead],
+      principalId: PrincipalId.New()
+    );
+
+    CompleteAgentTokenIssuance.Response parsed = ContractSerialization.RoundTrip(response);
+
+    parsed.AccessToken.ShouldBe(response.AccessToken);
+    parsed.TokenType.ShouldBe("Bearer");
+    parsed.ExpiresInSeconds.ShouldBe(900);
+    parsed.Scopes.ShouldBe(response.Scopes);
+    parsed.PrincipalId.ShouldBe(response.PrincipalId);
+  }
+}
+
+public class GetAgentIdentity_Response_Should
+{
+  public static void SerializeAndDeserialize_Via_Constructor()
+  {
+    GetAgentIdentity.Response response = new
+    (
+      principalId: PrincipalId.New(),
+      kind: PrincipalKind.Agent,
+      trustTier: TrustTier.Keyed,
+      scopes: [AgentScopes.IdentityRead]
+    );
+
+    GetAgentIdentity.Response parsed = ContractSerialization.RoundTrip(response);
+
+    parsed.PrincipalId.ShouldBe(response.PrincipalId);
+    parsed.Kind.ShouldBe(PrincipalKind.Agent);
+    parsed.TrustTier.ShouldBe(TrustTier.Keyed);
+    parsed.Scopes.ShouldBe(response.Scopes);
   }
 }

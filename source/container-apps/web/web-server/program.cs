@@ -99,7 +99,15 @@ public class Program : IAspNetProgram
       .AddInteractiveWebAssemblyComponents();
 
     serviceCollection.AddCascadingAuthenticationState();
-    serviceCollection.AddAuthorization();
+    serviceCollection.AddAuthorizationBuilder()
+      .AddPolicy
+      (
+        AgentTokenDefaults.IdentityReadPolicy,
+        policy => policy
+          .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
+          .RequireAuthenticatedUser()
+          .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.IdentityRead)
+      );
     // TODO: Review the options for this seesm like could just pass whole config???
     serviceCollection.AddPasswordlessSdk(options =>
     {
@@ -123,6 +131,7 @@ public class Program : IAspNetProgram
 
     serviceCollection.AddHttpContextAccessor();
     serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
+    serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
@@ -198,7 +207,13 @@ public class Program : IAspNetProgram
           context.Response.StatusCode = StatusCodes.Status403Forbidden;
           return Task.CompletedTask;
         };
-      });
+      })
+      // Agent bearer-token scheme (task 104-004): a THIRD named scheme on the same chain, alongside
+      // the identity-session cookie scheme above — neither touches the other, nor the dormant Entra
+      // default (lock #10). AgentTokenAuthenticationHandler owns all authenticate/challenge/forbid
+      // behavior for this scheme; AuthenticationSchemeOptions carries no scheme-specific settings of
+      // its own (token lifetime lives in AgentTokenOptions, bound separately in ConfigureSettings).
+      .AddScheme<AuthenticationSchemeOptions, AgentTokenAuthenticationHandler>(AgentTokenDefaults.Scheme, _ => { });
   }
 
   public static void ConfigureMiddleware(WebApplication webApplication)
@@ -279,6 +294,10 @@ public class Program : IAspNetProgram
 
     serviceCollection
       .AddFluentValidatedOptions<WebAuthnOptions, WebAuthnOptionsValidator>(configuration)
+      .ValidateOnStart();
+
+    serviceCollection
+      .AddFluentValidatedOptions<AgentTokenOptions, AgentTokenOptionsValidator>(configuration)
       .ValidateOnStart();
 
     serviceCollection.Configure<ApiBehaviorOptions>

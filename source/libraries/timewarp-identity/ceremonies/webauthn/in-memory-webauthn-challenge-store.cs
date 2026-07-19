@@ -14,86 +14,25 @@
 // Issue prunes expired entries first (bounds unbounded growth from abandoned ceremonies under
 // normal operation) and then evicts the single oldest-by-expiry entry if still at MaxEntries — a
 // cheap DoS bound, not a substitute for real rate limiting (task 104-015).
+// Delegation refactor (task 104-004): the prune/evict/consume body above now lives once in
+// InMemoryChallengeStoreCore&lt;TCeremonyType&gt; (ceremonies/in-memory-challenge-store-core.cs),
+// shared with InMemoryAgentKeyChallengeStore — this type is a thin, behavior-preserving wrapper.
+// The public surface (this ctor's parameters/defaults, Issue/TryConsume signatures) is UNCHANGED;
+// the existing WebAuthn challenge-store tests re-run unmodified as the regression pin for that claim.
 #endregion
 
 namespace TimeWarp.Identity;
 
-using System.Collections.Concurrent;
-
 public sealed class InMemoryWebAuthnChallengeStore : IWebAuthnChallengeStore
 {
-  private readonly ConcurrentDictionary<string, Entry> Challenges = new(StringComparer.Ordinal);
-  private readonly TimeProvider TimeProvider;
-  private readonly TimeSpan TimeToLive;
-  private readonly int MaxEntries;
+  private readonly InMemoryChallengeStoreCore<WebAuthnCeremonyType> Core;
 
   public InMemoryWebAuthnChallengeStore(TimeProvider? timeProvider = null, TimeSpan? timeToLive = null, int maxEntries = 10_000)
   {
-    ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maxEntries, 0);
-
-    TimeProvider = timeProvider ?? TimeProvider.System;
-    TimeToLive = timeToLive ?? TimeSpan.FromMinutes(5);
-    MaxEntries = maxEntries;
+    Core = new InMemoryChallengeStoreCore<WebAuthnCeremonyType>(timeProvider, timeToLive, maxEntries);
   }
 
-  public byte[] Issue(WebAuthnCeremonyType ceremonyType)
-  {
-    PruneExpired();
+  public byte[] Issue(WebAuthnCeremonyType ceremonyType) => Core.Issue(ceremonyType);
 
-    byte[] challenge = RandomNumberGenerator.GetBytes(32);
-    string key = Base64Url.EncodeToString(challenge);
-    DateTimeOffset expiresAt = TimeProvider.GetUtcNow() + TimeToLive;
-
-    if (Challenges.Count >= MaxEntries)
-    {
-      EvictOldest();
-    }
-
-    Challenges[key] = new Entry(ceremonyType, expiresAt);
-    return challenge;
-  }
-
-  public bool TryConsume(WebAuthnCeremonyType ceremonyType, byte[] challenge)
-  {
-    ArgumentNullException.ThrowIfNull(challenge);
-
-    string key = Base64Url.EncodeToString(challenge);
-    if (!Challenges.TryRemove(key, out Entry entry)) return false;
-    if (entry.CeremonyType != ceremonyType) return false;
-    return entry.ExpiresAt > TimeProvider.GetUtcNow();
-  }
-
-  private void PruneExpired()
-  {
-    DateTimeOffset now = TimeProvider.GetUtcNow();
-    foreach (KeyValuePair<string, Entry> pair in Challenges)
-    {
-      if (pair.Value.ExpiresAt <= now)
-      {
-        Challenges.TryRemove(pair.Key, out _);
-      }
-    }
-  }
-
-  private void EvictOldest()
-  {
-    string? oldestKey = null;
-    DateTimeOffset oldestExpiry = DateTimeOffset.MaxValue;
-
-    foreach (KeyValuePair<string, Entry> pair in Challenges)
-    {
-      if (pair.Value.ExpiresAt < oldestExpiry)
-      {
-        oldestExpiry = pair.Value.ExpiresAt;
-        oldestKey = pair.Key;
-      }
-    }
-
-    if (oldestKey is not null)
-    {
-      Challenges.TryRemove(oldestKey, out _);
-    }
-  }
-
-  private readonly record struct Entry(WebAuthnCeremonyType CeremonyType, DateTimeOffset ExpiresAt);
+  public bool TryConsume(WebAuthnCeremonyType ceremonyType, byte[] challenge) => Core.TryConsume(ceremonyType, challenge);
 }
