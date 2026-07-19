@@ -4,7 +4,7 @@
 
 #region Design
 // Private constructor + fail-closed static Create factory (identity style, see
-// source/libraries/timewarp-identity/principal.cs): DisplayName/Language/Region/Theme are
+// source/libraries/timewarp-identity/principals/principal.cs): DisplayName/Language/Region/Theme are
 // guard-clause-validated before the instance exists, so a Profile can never be constructed
 // half-initialized or with a blank required field. Named mutations (Rename/SetLanguage/SetRegion/
 // SetTheme/EnableNotifications/DisableNotifications) keep every state change intention-revealing —
