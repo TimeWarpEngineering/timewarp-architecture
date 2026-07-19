@@ -30,6 +30,7 @@ Legacy Passwordless.dev in SPA is reference only — first-party is the goal.
 
 104-002
 104-027 (TypedId source generator — id JsonConverter closes a fail-open STJ gap; do not put PrincipalId/CredentialId in contracts before it lands)
+104-028 (concurrency token on identity entities + store port — supersedes the D6 LWW deferral; do not write handlers against IPrincipalStore before Update* conflict semantics land)
 
 ## Session
 
