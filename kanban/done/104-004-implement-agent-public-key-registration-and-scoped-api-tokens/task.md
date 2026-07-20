@@ -221,7 +221,7 @@ curl -si https://localhost:7000/api/identity/agent/me -H "Authorization: Bearer 
 ```
 
 ### Deferred
-- Key/token revoke + list, Update*/retry policy → 104-005. Rate limiting (challenge/token store caps are DoS bounds only; valid-grant eviction under flood documented) → 104-015. Paid elevation/credit claims → 104-013/014. api-server bearer validation → later task if needed. Ed25519 → BCL availability. Distributed stores → multi-instance wave. Discovery docs consume the curl smoke → 104-017.
+- Key/token revoke + list, Update*/retry policy → 104-005. Rate limiting (challenge/token store caps are DoS bounds only; valid-grant eviction under flood documented) → 104-015. Paid elevation/credit claims → 104-013/014. **api-server bearer validation → 104-030** (also: verify task-108 string-enum wire holds through FastEndpoints). Ed25519 → BCL availability. Distributed stores → multi-instance wave. Discovery docs consume the curl smoke → 104-017.
 - Unblocks: 104-005, 104-011, 104-013/014 groundwork.
 
 ## Session

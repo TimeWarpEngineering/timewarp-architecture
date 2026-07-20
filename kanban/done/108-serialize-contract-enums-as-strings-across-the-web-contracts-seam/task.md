@@ -118,5 +118,12 @@ Contract enums now serialize as PascalCase member-name strings across the seam (
 - Effort 1 general; disposition **clean**
 - Paths: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`
 
+### Follow-up (not this task)
+String-enum Apply lives in `CommonServerModule` → web-server (MVC) is covered and integration-tested.
+FastEndpoints on **api-server** is expected to inherit `ConfigureHttpJsonOptions`, but nothing proves
+it and no enum currently crosses that seam. Captured on **104-030**: when api-server gets agent
+bearer validation, also verify PascalCase string-enum wire shape through FastEndpoints.
+
 ## Session
 - Started / plan / implement / review: 2026-07-20 (tw-orchestrate-task 108)
+- Follow-up 104-030 noted: 2026-07-20
