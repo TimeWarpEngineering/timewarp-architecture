@@ -29,16 +29,22 @@ the same chain as just another backend.
       since that name already tracks it). Record where timewarp.work DNS is hosted.
 - [ ] timewarp-mikrotik: dst-nat 80/443 → golden-sea-mikrotik. Document RouterOS commands,
       including hairpin NAT for LAN-side access.
-- [ ] golden-sea-mikrotik: dst-nat 80/443 → the Windows machine's private IP (give it a static
-      DHCP lease so the rule doesn't rot).
-- [ ] Windows → WSL2 inbound: verified 2026-07-20 — Windows build **10.0.26200** (Win11 25H2,
-      mirrored-capable), current mode is stock **nat** (`wslinfo --networking-mode`, eth0
-      172.30.x.x/20, no `.wslconfig` present). Plan: switch to **mirrored networking**
-      (`.wslconfig` `networkingMode=mirrored` + Hyper-V firewall allow rules for 80/443) so WSL
-      shares the Windows LAN IP and golden-sea-mikrotik dst-nats straight to it — no portproxy,
-      no per-boot IP chasing. At implementation time confirm Docker Desktop + kind behave under
-      mirrored mode; fallback is `netsh interface portproxy` 80/443 → WSL IP with a startup
-      script (NAT IP changes per boot).
+- [ ] golden-sea-mikrotik: dst-nat 80/443 → the WSL instance's own LAN IP (bridged mode below;
+      give its pinned MAC a static DHCP lease so the rule doesn't rot). Windows box is not in the
+      traffic path.
+- [ ] Windows → WSL2 inbound: verified 2026-07-20 — Windows build **10.0.26200**, WSL **2.7.10**,
+      current mode stock **nat** (`wslinfo --networking-mode`, eth0 172.30.x.x/20, no `.wslconfig`
+      present). Plan: **bridged networking** (un-deprecated in WSL 2.5.6 — "Bring back bridged
+      networking mode"; we're well past that). WSL gets its own IP on the golden-sea LAN:
+      `.wslconfig` `networkingMode=bridged` + `vmSwitch=<external Hyper-V vSwitch>` + pinned
+      `macAddress=` so a static DHCP lease from golden-sea-mikrotik sticks. Router then dst-nats
+      80/443 straight to the WSL IP — Windows is out of the traffic path entirely, and SSH to
+      Windows vs WSL stays two distinct IPs. Prereq: create the external vSwitch (needs Hyper-V
+      management tools). At implementation time confirm Docker Desktop + kind behave under
+      bridged mode. Fallback if bridged misbehaves: stay NAT and
+      `netsh interface portproxy` 80/443 → `connectaddress=127.0.0.1` (the WSL localhost relay
+      delivers it; IP-stable across reboots, no scripts). Mirrored mode rejected: shared IP means
+      Windows/WSL port arbitration (e.g. two sshds can't both own 22).
 - [ ] Reverse proxy in WSL on fixed 80/443 (Caddy / Traefik / YARP — pick one; Caddy is the
       least-config option for automatic TLS) terminating `*.timewarp.work` TLS and routing by
       Host header to local backend ports.
