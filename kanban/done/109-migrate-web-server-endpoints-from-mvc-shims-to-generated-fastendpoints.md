@@ -49,14 +49,14 @@ unifies the endpoint story the template teaches.
 
 ## Checklist
 
-- [ ] Plan: attribute-vocabulary decision ([ApiRoute] vs [ApiEndpoint] unification) + auth-passthrough design
-- [ ] Generator support for web-contracts operations incl. auth metadata
-- [ ] Generated endpoints for all 19 operations; shims + MVC wiring deleted
-- [ ] Identity auth flows verified: cookie session, bearer policy 401/403, scheme isolation
-- [ ] Integration suite passes with routes unchanged; string-enum wire assertion through FastEndpoints
-- [ ] TWA0005/0006 coverage semantics confirmed/extended for generated web endpoints
-- [ ] AGENTS.md + skill/doc updates; Design regions reconciled
-- [ ] dev build 0/0; full dev test
+- [x] Plan: attribute-vocabulary decision ([ApiRoute] vs [ApiEndpoint] unification) + auth-passthrough design
+- [x] Generator support for web-contracts operations incl. auth metadata
+- [x] Generated endpoints for all 19 operations; shims + MVC wiring deleted
+- [x] Identity auth flows verified: cookie session, bearer policy 401/403, scheme isolation
+- [x] Integration suite passes with routes unchanged; string-enum wire assertion through FastEndpoints
+- [x] TWA0005/0006 coverage semantics confirmed/extended for generated web endpoints
+- [x] AGENTS.md + skill/doc updates; Design regions reconciled
+- [x] dev build 0/0; full dev test
 
 ## Notes
 
@@ -97,6 +97,22 @@ UseRouting → UseAuthentication → UseAuthorization → UseAntiforgery → Use
 #### Validation
 IncludeAbstractValidators = false; FluentValidationBehavior remains.
 
+## Results
+
+### Summary
+Web-server cut over from MVC `BaseEndpoint` shims to contract-generated FastEndpoints (same path as api-server). Generator hardened (HttpVerb, Command/Query, EndpointAuthorize). Identity integration suites green. Docs + ADR-0007 accepted.
+
+### Children
+- 109-001 Generator harden — done
+- 109-002 EndpointAuthorize — done
+- 109-003 Web cutover — done
+- 109-004 Prove + docs/ADR — done
+
+### Build / tests
+- dev build 0/0
+- web-server-integration-tests 53 passed, 1 skipped (reconfirmed on 109-004)
+
 ## Session
 - Started: 2026-07-20 (tw-orchestrate-task 109)
 - Plan: 2026-07-20
+- Done: 2026-07-20

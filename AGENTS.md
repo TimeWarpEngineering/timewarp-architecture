@@ -27,8 +27,10 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 - **.NET 10**, C# latest, `Nullable` enabled repo-wide, central package management
 - Blazor WebAssembly + **TimeWarp.State**; **TimeWarp.Mediator** (NOT MediatR):
   `IRequest<OneOf<Response, SharedProblemDetails>>`
-- Server endpoints: web-server = hand-written MVC `BaseEndpoint<TRequest, TResponse>` shims;
-  api-server = FastEndpoints **generated from contracts**
+- Server endpoints: **both** web-server and api-server host **FastEndpoints generated from
+  contracts** (`[ApiEndpoint]` + `[ApiRoute]`; optional `[EndpointAuthorize]` for policies). No
+  hand-written `BaseEndpoint` shims in the template. Validation stays on the mediator's
+  `FluentValidationBehavior` — do not adopt FastEndpoints' validator integration.
 - Tests: **Fixie + Shouldly** (NOT MSTest/xUnit; do not introduce FluentAssertions — v8+ is
   commercially licensed)
 - Blazor form validation: **Blazilla** (explicit validator instance — supports `I*Details` binding)
@@ -71,7 +73,9 @@ MSBuild dual-mode (auto-detects missing source trees): `UseFoundationPackages` /
 - **Endpoint-centric contracts**: `public static partial class Operation` with nested
   `Query`/`Command`, `Response`, `Validator`; `[ApiRoute("api/…", HttpVerb.X)]` (+
   `[AuthApiRequest]`, `[OpenDataQueryParameters]`) source-generate route members onto the partial.
-  Full spec: **`web-api-contracts` skill** — invoke it before touching contracts.
+  Hosted operations also carry `[ApiEndpoint]` (generation opt-in) and optional
+  `[EndpointAuthorize(Policy=…)]` so the FastEndpoint generator emits the HTTP shim. Full
+  spec: **`web-api-contracts` skill** — invoke it before touching contracts.
 - **Prefer analyzers/source generators over convention-by-memory**: when two things must agree,
   generate one from the other or add a build-time check. Existing generators: contract attributes,
   FastEndpoints, `[Page]`, `[StateAccess]`, the SPA mock-factory registry.
@@ -118,7 +122,8 @@ Formats and lifecycle: the `agent-context-regions` skill.
 ## Definition of Done
 
 - **API endpoint**: contract per the skill (Request/Response/Validator, shared `I*Details` where
-  bindable) + server Endpoint + Handler + integration tests (happy path AND validation rejection).
+  bindable; `[ApiEndpoint]` when the host should generate the FastEndpoint; `[EndpointAuthorize]`
+  when auth is required) + Handler + integration tests (happy path AND validation rejection).
   Backend validation comes from the mediator's `FluentValidationBehavior` — do not re-validate in
   handlers.
 - **Client feature**: State/Actions/Components + serialization round-trips in `web-contracts-tests`

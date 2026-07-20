@@ -6,8 +6,9 @@ description: >-
   WHEN: "Add a CreateTodoItem command contract", "Scaffold a GetRole query with ApiRoute and
   IRoleDetails for the edit form", "Add a serialization round-trip test for my Command".
 when-to-use: >
-  Web.Contracts, web-contracts, command contract, query contract, ApiRoute, I*Details,
-  EditForm binding, Validator, serialization round-trip, BFF, AuthApiRequest
+  Web.Contracts, web-contracts, command contract, query contract, ApiRoute, ApiEndpoint,
+  EndpointAuthorize, I*Details, EditForm binding, Validator, serialization round-trip, BFF,
+  AuthApiRequest, FastEndpoint generation
 ---
 
 # Web API Contracts
@@ -52,8 +53,11 @@ namespace root, folder casing, test project layout, and mock-service registratio
 
 ## The contract attributes (source-generated)
 
-Three attributes drive source generation on contract request classes. They are emitted into the
-consumer's root namespace by the bundled contracts generator; the class **must be `partial`**.
+Two layers of attributes. Route/mixin attributes are emitted into the consumer's root namespace by
+the bundled contracts generator (class **must be `partial`**). Server-generation attributes live
+in `TimeWarp.Architecture.Attributes` and mark which contracts become hosted FastEndpoints.
+
+### Route / request mixins (on nested `Query`/`Command`)
 
 | Attribute | Generates | Use when |
 |-----------|-----------|----------|
@@ -63,6 +67,36 @@ consumer's root namespace by the bundled contracts generator; the class **must b
 
 The FastEndpoint generator matches `ApiRouteAttribute` by simple name, so the attribute works from
 any root namespace.
+
+### FastEndpoint generation (on the outer operation class)
+
+Both **web-server** and **api-server** host endpoints **generated from contracts** — there are no
+hand-written MVC `BaseEndpoint` shims in the template. Opt in per operation:
+
+| Attribute | Effect | Use when |
+|-----------|--------|----------|
+| `[ApiEndpoint]` | Generator emits `BaseFastEndpoint<Op.Query\|Command, Response>` for this operation | Every contract hosted on a server with `EnableApiEndpointGeneration` |
+| `[EndpointAuthorize(Policy=…)]` | Generator emits `Policies("…")` / `Roles(…)` / `AuthSchemes(…)` | Protected routes (policy, roles, and/or schemes) |
+| *(no EndpointAuthorize)* | Generator emits `AllowAnonymous()` | Public / ceremony endpoints |
+
+```csharp
+[ApiEndpoint]
+[EndpointAuthorize(Policy = "agent-scope:identity:read")]
+public static partial class GetAgentIdentity
+{
+  [ApiRoute("api/identity/agent/me", HttpVerb.Get)]
+  public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  // …
+}
+```
+
+**Validation stays on the mediator** (`FluentValidationBehavior`). Do not re-validate in handlers
+and do not wire FastEndpoints' own FluentValidation integration (`IncludeAbstractValidators =
+false`). Handlers implement business logic only; the generated endpoint is pure HTTP plumbing.
+
+Server projects set `<EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>`. Web-server
+also sets `ApiEndpointContractAssemblies` so only web-contracts contribute endpoints (it
+transitively references other contract assemblies).
 
 ### HTTP verbs
 
@@ -156,6 +190,8 @@ Read → `queries/get-*.cs` · Write → `commands/create-|update-|delete-*.cs`
 
 ### 2. Scaffold the partial class
 
+- `[ApiEndpoint]` on the outer operation class when a server host should generate the FastEndpoint
+- Optional `[EndpointAuthorize(Policy=…)]` when the route is not anonymous
 - `[ApiRoute("api/...", HttpVerb.*)]` on nested `Query`/`Command`
 - Implement `IApiRequest` (or `IAuthApiRequest` — see auth forms above; add
   `IQueryStringRouteProvider` when query-string filters apply)
@@ -284,6 +320,7 @@ error. See the `mock-response-factory` skill.
 ## Validation checklist
 
 - [ ] `public static partial class` with nested `Query`/`Command`, `Response`, `Validator`
+- [ ] `[ApiEndpoint]` on hosted operations; `[EndpointAuthorize]` when auth is required
 - [ ] `[ApiRoute]` with correct verb and route constraints (`{Id:guid}`, `{Id:min(1)}`, …)
 - [ ] `IRequest<OneOf<Response, SharedProblemDetails>>` (TimeWarp.Mediator)
 - [ ] Folder plural + repo's casing; namespace plural
@@ -310,6 +347,8 @@ error. See the `mock-response-factory` skill.
 | Entity-centric shared DTO per endpoint | Endpoint-centric types; share only validation interfaces or read-only display interfaces |
 | `sealed record` request/response | Classes + `partial` + source generation |
 | Hand-declared route params | Trust `[ApiRoute]` source generation |
+| Hand-written MVC `BaseEndpoint` shim for a hosted contract | Annotate `[ApiEndpoint]` (+ `[EndpointAuthorize]` if needed); generation is the template convention |
+| Re-validating in the handler or enabling FE FluentValidation | Validation is `FluentValidationBehavior` on the mediator only |
 | `required init` Response with invariants | `Guid.Empty` slips through — ctor + `Guard` |
 | Copying paths/casing from another repo | Read existing contracts in **this** repo first |
 
