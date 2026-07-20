@@ -63,12 +63,17 @@ plugs into the same chain as just another backend.
       DHCP, and confirm Docker Desktop + kind still work under bridged mode. Fallback if bridged
       misbehaves: revert `.wslconfig` to NAT + `netsh interface portproxy` 443 →
       `connectaddress=127.0.0.1` (localhost relay; IP-stable, no scripts).
-- [ ] Reverse proxy in WSL on fixed 443 (Caddy / Traefik / YARP — Caddy is the least-config
-      option for automatic TLS) terminating `*.timewarp.work` TLS and routing by Host header to
-      local backend ports.
-- [ ] TLS: wildcard cert via Let's Encrypt **DNS-01 only** (HTTP-01 impossible — port 80 lands on
-      the shop server). Cloudflare API token scoped Zone→DNS→Edit on timewarp.work; Caddy build
-      with the `cloudflare` DNS module (xcaddy or caddyserver.com download with plugin selected).
+- [x] Reverse proxy in WSL on fixed 443: **Caddy v2.11.4** (caddyserver.com build with
+      `dns.providers.cloudflare`) installed as systemd service `caddy.service` on TWE-001 WSL —
+      `/usr/local/bin/caddy`, `/etc/caddy/Caddyfile`, token in root-only `/etc/caddy/caddy.env`
+      (`{env.CLOUDFLARE_API_TOKEN}` in config; token never in files under git or chat). Unmapped
+      hostnames 404 (verified locally).
+- [x] TLS: wildcard `*.timewarp.work` cert **obtained** from Let's Encrypt production via DNS-01
+      + Cloudflare token, 2026-07-20 ("certificate obtained successfully"). Auto-renews via Caddy.
+- [x] Per-project name→backend mapping: lives in `/etc/caddy/Caddyfile` — one `@name host` matcher
+      + `handle` block per app inside the single wildcard site; `arch.timewarp.work` claimed for
+      this repo → `https://localhost:63610` (backend dev-cert verify skipped). Reload:
+      `sudo systemctl reload caddy`.
 - [x] Dynamic-port problem for `dev run` backends: solved by pinning — AppHost `Ingress:Port` set
       to 63610 in appsettings.Development.json (commit `abd6b0dd`); proxy targets
       localhost:63610, YARP ingress fans out internally. Matches the standalone yarp project's
