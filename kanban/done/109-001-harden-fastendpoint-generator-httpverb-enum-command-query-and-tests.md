@@ -14,10 +14,18 @@ Fix blocking generator defects before web-server cutover: HttpVerb enum metadata
 - weather api still builds
 
 ## Checklist
-- [ ] HttpVerb resolution
-- [ ] Command vs Query emission
-- [ ] Generator tests green
-- [ ] api-server weather still works
+- [x] HttpVerb resolution
+- [x] Command vs Query emission
+- [x] Generator tests green
+- [x] api-server weather still works
 
 ## Notes
 Prerequisite for 109-003. See parent 109 plan.
+
+## Results
+
+See parent 109 plan. Generator hardened / EndpointAuthorize shipped as part of tw-orchestrate-task 109 (2026-07-20). Sourcegenerator tests 38 passed.
+
+## Session
+- Done: 2026-07-20
+

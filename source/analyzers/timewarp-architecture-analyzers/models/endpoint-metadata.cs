@@ -9,6 +9,11 @@
 // authoring point for API documentation.
 // Tags default to the feature folder name (namespace segment above "Features"), keeping OpenAPI
 // grouping aligned with the vertical-slice layout without per-endpoint annotation.
+// HttpVerb is resolved via enum member name (metadata stores the underlying int — Value.ToString()
+// would emit "1" for Post and fall through ConvertHttpVerbToMethodName to Get).
+// RequestTypeName is the nested "Query" or "Command" so BaseFastEndpoint<TRequest,TResponse>
+// binds the correct request type.
+// Authorization: [EndpointAuthorize] drives Policies/Roles/AuthSchemes; absence → AllowAnonymous.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Models;
@@ -19,10 +24,16 @@ internal sealed class EndpointMetadata
   public string ClassName { get; set; } = string.Empty;
   public string Route { get; set; } = string.Empty;
   public string HttpVerb { get; set; } = "Get";
+  /// <summary>Nested request type name: "Query" or "Command".</summary>
+  public string RequestTypeName { get; set; } = "Query";
   public string Summary { get; set; } = string.Empty;
   public string Description { get; set; } = string.Empty;
   public string[] Tags { get; set; } = Array.Empty<string>();
-  public bool RequiresAuthorization { get; set; }
+  public string? AuthorizationPolicy { get; set; }
+  public string? AuthenticationSchemes { get; set; }
+  public string? Roles { get; set; }
+  /// <summary>True when no <c>[EndpointAuthorize]</c> is present on the contract.</summary>
+  public bool AllowAnonymous { get; set; } = true;
   public Type? CustomEndpointType { get; set; }
 
   public static EndpointMetadata FromSymbol(INamedTypeSymbol symbol)
@@ -34,26 +45,27 @@ internal sealed class EndpointMetadata
     };
 
     // Find Query/Command class
-    INamedTypeSymbol? queryClass = symbol.GetTypeMembers()
+    INamedTypeSymbol? requestClass = symbol.GetTypeMembers()
       .FirstOrDefault(m => m.Name is "Query" or "Command");
 
-    if (queryClass != null)
+    if (requestClass != null)
     {
+      metadata.RequestTypeName = requestClass.Name;
+
       // Extract route and HTTP verb from ApiRoute attribute. Match by simple name: the attribute is
       // emitted into each consumer's RootNamespace by the contracts generator, so the namespace
       // varies per generated app (a full display-string match would pin one root namespace).
-      AttributeData? apiRouteAttribute = queryClass.GetAttributes()
+      AttributeData? apiRouteAttribute = requestClass.GetAttributes()
         .FirstOrDefault(attr => attr.AttributeClass?.Name == "ApiRouteAttribute");
 
       if (apiRouteAttribute != null && apiRouteAttribute.ConstructorArguments.Length >= 2)
       {
         metadata.Route = apiRouteAttribute.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
-        string httpVerb = apiRouteAttribute.ConstructorArguments[1].Value?.ToString() ?? "Get";
-        metadata.HttpVerb = ConvertHttpVerbToMethodName(httpVerb);
+        metadata.HttpVerb = ConvertHttpVerbToMethodName(ResolveHttpVerbName(apiRouteAttribute.ConstructorArguments[1]));
       }
 
       // Extract documentation
-      string? xmlDoc = queryClass.GetDocumentationCommentXml();
+      string? xmlDoc = requestClass.GetDocumentationCommentXml();
       if (xmlDoc != null)
       {
         metadata.Summary = ExtractXmlContent(xmlDoc, "summary");
@@ -61,9 +73,21 @@ internal sealed class EndpointMetadata
       }
     }
 
-    // Extract authorization requirements
-    metadata.RequiresAuthorization = symbol.GetAttributes()
-      .Any(attr => attr.AttributeClass?.Name.Contains("Authorize", StringComparison.Ordinal) == true);
+    // Authorization from [EndpointAuthorize] on the contract class (simple name match).
+    AttributeData? endpointAuthorize = symbol.GetAttributes()
+      .FirstOrDefault(attr => attr.AttributeClass?.Name == "EndpointAuthorizeAttribute");
+
+    if (endpointAuthorize is null)
+    {
+      metadata.AllowAnonymous = true;
+    }
+    else
+    {
+      metadata.AllowAnonymous = false;
+      metadata.AuthorizationPolicy = GetNamedStringArgument(endpointAuthorize, "Policy");
+      metadata.AuthenticationSchemes = GetNamedStringArgument(endpointAuthorize, "AuthenticationSchemes");
+      metadata.Roles = GetNamedStringArgument(endpointAuthorize, "Roles");
+    }
 
     // Extract custom endpoint type
     AttributeData? apiEndpointAttribute = symbol.GetAttributes()
@@ -113,6 +137,36 @@ internal sealed class EndpointMetadata
     metadata.Tags = tags.Where(t => !string.IsNullOrEmpty(t)).Distinct().ToArray();
 
     return metadata;
+  }
+
+  /// <summary>
+  /// Resolves an HttpVerb TypedConstant to its enum member name.
+  /// Metadata stores the underlying int, so <c>Value.ToString()</c> yields "1" for Post — wrong.
+  /// </summary>
+  private static string ResolveHttpVerbName(TypedConstant verbArgument)
+  {
+    if (verbArgument.Type is INamedTypeSymbol enumType && enumType.TypeKind == TypeKind.Enum)
+    {
+      IFieldSymbol? field = enumType.GetMembers().OfType<IFieldSymbol>()
+        .FirstOrDefault(f => f.HasConstantValue && Equals(f.ConstantValue, verbArgument.Value));
+      if (field is not null) return field.Name;
+    }
+
+    return verbArgument.Value?.ToString() ?? "Get";
+  }
+
+  private static string? GetNamedStringArgument(AttributeData attribute, string name)
+  {
+    foreach (KeyValuePair<string, TypedConstant> arg in attribute.NamedArguments)
+    {
+      if (arg.Key == name)
+      {
+        string? value = arg.Value.Value?.ToString();
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+      }
+    }
+
+    return null;
   }
 
   private static string ExtractXmlContent(string xmlDoc, string elementName)

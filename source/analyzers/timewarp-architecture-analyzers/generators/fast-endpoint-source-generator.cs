@@ -10,6 +10,10 @@
 // Reports SG002 instead of failing when FastEndpoints/BaseFastEndpoint are absent — feature flags
 // can strip those references while the generator package remains attached.
 // Catches all exceptions (CA1031): a throwing generator would break the entire compilation.
+// Request type is Query or Command per metadata.RequestTypeName; HTTP verb comes from resolved
+// enum member name (not the underlying int). Auth: [EndpointAuthorize] → Policies/Roles/AuthSchemes;
+// no attribute → AllowAnonymous. Do not emit RequireAuthorization() (not on EndpointDefinition).
+// Summary/Description only — no weather-specific ExampleRequest.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -162,25 +166,23 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
          """
       : "";
 
-    string auth = metadata.RequiresAuthorization
-      ? """
-          RequireAuthorization();
-        """
-      : "AllowAnonymous();";
+    string auth = BuildAuthConfiguration(metadata);
 
     string summary = !string.IsNullOrEmpty(metadata.Summary)
       ? $$"""
             Summary(s =>
             {
-              s.Summary = "{{metadata.Summary}}";
-              s.Description = "{{metadata.Description}}";
-              s.ExampleRequest = new {{metadata.ClassName}}.Query { Days = 5 };
+              s.Summary = "{{EscapeForStringLiteral(metadata.Summary)}}";
+              s.Description = "{{EscapeForStringLiteral(metadata.Description)}}";
             });
 
             Description(d => d.Produces<{{metadata.ClassName}}.Response>(200, "Success").ProducesProblem(400, "Bad Request")
             );
           """
       : "";
+
+    string requestType = metadata.RequestTypeName;
+    string baseType = metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint";
 
     return $$"""
              using FastEndpoints;
@@ -196,7 +198,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
              /// <remarks>
              /// {{metadata.Description}}
              /// </remarks>
-             public class {{metadata.ClassName}}Endpoint : {{metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint"}}<{{metadata.ClassName}}.Query, {{metadata.ClassName}}.Response>
+             public class {{metadata.ClassName}}Endpoint : {{baseType}}<{{metadata.ClassName}}.{{requestType}}, {{metadata.ClassName}}.Response>
              {
                public override void Configure()
                {
@@ -208,4 +210,50 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
              }
              """;
   }
+
+  /// <summary>
+  /// Builds FastEndpoints Configure() auth lines from [EndpointAuthorize] metadata.
+  /// No attribute → AllowAnonymous. Policy → Policies(...). Roles → Roles(...).
+  /// Schemes → AuthSchemes(...). FE requires auth by default when AllowAnonymous is not called.
+  /// </summary>
+  private static string BuildAuthConfiguration(EndpointMetadata metadata)
+  {
+    if (metadata.AllowAnonymous)
+    {
+      return "AllowAnonymous();";
+    }
+
+    var lines = new List<string>();
+
+    if (!string.IsNullOrEmpty(metadata.AuthenticationSchemes))
+    {
+      lines.Add($"AuthSchemes({FormatCsvStringArgs(metadata.AuthenticationSchemes)});");
+    }
+
+    if (!string.IsNullOrEmpty(metadata.AuthorizationPolicy))
+    {
+      lines.Add($"Policies(\"{EscapeForStringLiteral(metadata.AuthorizationPolicy)}\");");
+    }
+    else if (!string.IsNullOrEmpty(metadata.Roles))
+    {
+      lines.Add($"Roles({FormatCsvStringArgs(metadata.Roles)});");
+    }
+
+    // [EndpointAuthorize] with no Policy/Roles (and optional AuthSchemes only): FE defaults to
+    // requiring authentication — emit no AllowAnonymous and no non-existent RequireAuthorization().
+    return lines.Count > 0
+      ? string.Join("\n         ", lines)
+      : string.Empty;
+  }
+
+  private static string FormatCsvStringArgs(string csv)
+  {
+    IEnumerable<string> parts = csv
+      .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+      .Select(part => $"\"{EscapeForStringLiteral(part)}\"");
+    return string.Join(", ", parts);
+  }
+
+  private static string EscapeForStringLiteral(string value)
+    => value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
 }
