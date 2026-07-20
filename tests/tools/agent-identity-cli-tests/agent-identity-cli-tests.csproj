@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Linked CLI services are DTO/crypto helpers; same CA surface as tools/agent-identity-cli. -->
+    <NoWarn>$(NoWarn);CA1000;CA1002;CA1031;CA1055;CA1819;CA1822;CA2227;RCS1075</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="TimeWarp.Fixie" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\source\libraries\timewarp-identity\timewarp-identity.csproj" />
+  </ItemGroup>
+  <!-- Prefer compile-include of pure services (no HTTP) over a thin core project (task 104-029). -->
+  <ItemGroup>
+    <Compile Include="..\..\..\tools\agent-identity-cli\services\agent-signing.cs" Link="services\agent-signing.cs" />
+    <Compile Include="..\..\..\tools\agent-identity-cli\services\agent-wire-dtos.cs" Link="services\agent-wire-dtos.cs" />
+    <Compile Include="..\..\..\tools\agent-identity-cli\services\cli-json.cs" Link="services\cli-json.cs" />
+    <Compile Include="..\..\..\tools\agent-identity-cli\services\local-key-store.cs" Link="services\local-key-store.cs" />
+    <Compile Include="..\..\..\tools\agent-identity-cli\services\path-defaults.cs" Link="services\path-defaults.cs" />
+  </ItemGroup>
+</Project>

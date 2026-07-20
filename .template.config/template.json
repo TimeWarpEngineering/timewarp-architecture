@@ -22,7 +22,9 @@
           "exclude": [
             "**/bin/**",
             "**/obj/**",
-            "artifacts/**"
+            "artifacts/**",
+            "tools/agent-identity-cli/**",
+            "tests/tools/agent-identity-cli-tests/**"
           ]
         },
         {

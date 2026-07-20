@@ -1,0 +1,29 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!-- Suppress warnings that don't apply to CLI tools (mirror tools/dev-cli). -->
+    <!-- CLI tool: DTO/crypto surface trips collection/array/Uri CA rules that don't apply here. -->
+    <NoWarn>$(NoWarn);CA1000;CA1002;CA1031;CA1034;CA1055;CA1303;CA1508;CA1515;CA1819;CA1822;CA1849;CA2000;CA2007;CA2016;CA2227;CA5399;RCS1046;RCS1075</NoWarn>
+
+    <!-- Enable interceptors for TimeWarp.Nuru source generator -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="global-usings.cs" />
+    <Compile Include="endpoints/**/*.cs" />
+    <Compile Include="services/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TimeWarp.Nuru" />
+    <PackageReference Include="TimeWarp.Terminal" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Pin signed-data construction to the library (task 104-029); do not reimplement Verify. -->
+    <ProjectReference Include="../../source/libraries/timewarp-identity/timewarp-identity.csproj" />
+  </ItemGroup>
+
+</Project>
