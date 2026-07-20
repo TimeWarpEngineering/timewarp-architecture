@@ -34,6 +34,10 @@ internal sealed class EndpointMetadata
   public string? Roles { get; set; }
   /// <summary>True when no <c>[EndpointAuthorize]</c> is present on the contract.</summary>
   public bool AllowAnonymous { get; set; } = true;
+  /// <summary>
+  /// True when the request DTO has no public instance properties (FE default binder rejects these).
+  /// </summary>
+  public bool IsEmptyRequest { get; set; }
   public Type? CustomEndpointType { get; set; }
 
   public static EndpointMetadata FromSymbol(INamedTypeSymbol symbol)
@@ -63,6 +67,15 @@ internal sealed class EndpointMetadata
         metadata.Route = apiRouteAttribute.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
         metadata.HttpVerb = ConvertHttpVerbToMethodName(ResolveHttpVerbName(apiRouteAttribute.ConstructorArguments[1]));
       }
+
+      // FE RequestBinder refuses DTOs with zero public properties. Count declared + inherited
+      // public instance properties (route segments generated onto the partial count too).
+      metadata.IsEmptyRequest = !requestClass
+        .GetMembers()
+        .OfType<IPropertySymbol>()
+        .Any(property =>
+          property.DeclaredAccessibility == Accessibility.Public &&
+          !property.IsStatic);
 
       // Extract documentation
       string? xmlDoc = requestClass.GetDocumentationCommentXml();

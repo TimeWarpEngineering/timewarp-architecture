@@ -12,6 +12,7 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
+[ApiEndpoint]
 public static partial class DeleteRole
 {
   [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Delete)]

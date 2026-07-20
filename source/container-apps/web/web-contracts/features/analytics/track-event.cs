@@ -3,25 +3,23 @@
 #endregion
 
 #region Design
-// Implements IApiRequest by hand (const Route, GetHttpVerb/GetRoute) instead of the
-// [ApiRoute] source-generation path — a worked example of the manual alternative when the
-// generator is not wanted. Response is an empty BaseResponse: the caller only needs
-// success/problem typing for a fire-and-forget write. No MockResponseFactory, so in SPA
-// mock mode this request falls through MockWebApiService to the real API service.
+// [ApiEndpoint] opts the operation into FastEndpoint generation on web-server; [ApiRoute] owns the
+// wire path so client and server cannot drift. Route string is the historical path without an
+// `api/` prefix (Analytics/TrackEvent) — preserve exactly; do not "normalize" it.
+// Response is an empty BaseResponse: the caller only needs success/problem typing for a
+// fire-and-forget write. No MockResponseFactory, so in SPA mock mode this request falls through
+// MockWebApiService to the real API service.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Analytics;
 
+[ApiEndpoint]
 public static partial class TrackEvent
 {
-  public sealed class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
+  [ApiRoute("Analytics/TrackEvent", HttpVerb.Post)]
+  public sealed partial class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
   {
-    public const string Route = "Analytics/TrackEvent";
-
     public string EventName { get; set; } = null!;
-
-    public HttpVerb GetHttpVerb() => HttpVerb.Post;
-    public string GetRoute() => $"{Route}";
   }
 
   public class Response : BaseResponse {}
@@ -35,4 +33,3 @@ public static partial class TrackEvent
     }
   }
 }
-

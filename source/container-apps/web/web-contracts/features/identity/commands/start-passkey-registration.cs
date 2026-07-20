@@ -14,6 +14,7 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
+[ApiEndpoint]
 public static partial class StartPasskeyRegistration
 {
   [ApiRoute("api/identity/passkey/register/options", HttpVerb.Post)]

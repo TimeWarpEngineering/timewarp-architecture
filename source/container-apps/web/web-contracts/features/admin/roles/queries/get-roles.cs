@@ -16,6 +16,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 /// <summary>
 /// Get a list of roles for display only.
 /// </summary>
+[ApiEndpoint]
 public static partial class GetRoles
 {
 

@@ -10,6 +10,7 @@
 
 namespace TimeWarp.Architecture.Features.Hellos;
 
+[ApiEndpoint]
 public static partial class Hello
 {
   [ApiRoute(RouteTemplate: "api/Hello", HttpVerb.Get)]

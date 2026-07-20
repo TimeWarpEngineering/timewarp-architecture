@@ -19,9 +19,18 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..\..</DockerfileContext>
+    <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
+    <!-- Only generate from web-contracts — web-spa transitively references api-contracts. -->
+    <ApiEndpointContractAssemblies>web-contracts</ApiEndpointContractAssemblies>
   </PropertyGroup>
 
+  <ItemGroup>
+    <CompilerVisibleProperty Include="EnableApiEndpointGeneration" />
+    <CompilerVisibleProperty Include="ApiEndpointContractAssemblies" />
+  </ItemGroup>
+
   <ItemGroup Label="Core">
+    <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
@@ -43,7 +52,19 @@
     <PackageReference Include="TimeWarp.Foundation.Server" Condition="'$(UseFoundationPackages)' == 'true'" />
     <ProjectReference Include="..\..\aspire\aspire-service-defaults\aspire-service-defaults.csproj" />
     <ProjectReference Include="..\web-infrastructure\web-infrastructure.csproj" />
+    <ProjectReference Include="..\web-contracts\web-contracts.csproj" />
     <ProjectReference Include="..\web-spa\web-spa.csproj" />
+
+    <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-analyzers\timewarp-architecture-analyzers.csproj"
+                       OutputItemType="Analyzer"
+                       ReferenceOutputAssembly="false"
+                       Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Architecture.Generators" PrivateAssets="all"
+                       Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj"
+                       Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Architecture.Attributes"
+                       Condition="'$(UseAnalyzerPackages)' == 'true'" />
   </ItemGroup>
 
   <ItemGroup>

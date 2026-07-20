@@ -4,6 +4,7 @@
 
 global using TimeWarp.Mediator;
 global using TimeWarp.Mediator.Pipeline;
+global using FastEndpoints;
 global using FluentValidation;
 global using Microsoft.AspNetCore.Authentication;
 global using Microsoft.AspNetCore.Authentication.Cookies;

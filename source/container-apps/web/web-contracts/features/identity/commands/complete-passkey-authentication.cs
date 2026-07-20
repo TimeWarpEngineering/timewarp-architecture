@@ -22,6 +22,7 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
+[ApiEndpoint]
 public static partial class CompletePasskeyAuthentication
 {
   [ApiRoute("api/identity/passkey/authenticate", HttpVerb.Post)]

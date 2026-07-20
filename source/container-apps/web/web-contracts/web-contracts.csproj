@@ -20,6 +20,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\foundation\foundation-contracts\foundation-contracts.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Contracts" Condition="'$(UseFoundationPackages)' == 'true'" />
+    <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj"
+                      Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Architecture.Attributes"
+                      Condition="'$(UseAnalyzerPackages)' == 'true'" />
   </ItemGroup>
 
   <ItemGroup>

@@ -15,6 +15,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 /// <summary>
 /// Get a role by its unique identifier for possible editing.
 /// </summary>
+[ApiEndpoint]
 public static partial class GetRole
 {
   [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Get)]

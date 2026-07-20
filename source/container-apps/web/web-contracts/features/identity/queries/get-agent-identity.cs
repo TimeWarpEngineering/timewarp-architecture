@@ -8,7 +8,7 @@
 // Route-only, empty body: identity comes from the request's Authorization: Bearer token (validated
 // by the agent-token authentication scheme — web-server/services/agent-token-authentication-handler.cs),
 // never from a client-supplied id. This endpoint is the ONE protected resource this task ships
-// (policy AgentTokenDefaults.IdentityReadPolicy, requiring the identity:read scope) — it exists to
+// ([EndpointAuthorize] policy agent-scope:identity:read = AgentTokenDefaults.IdentityReadPolicy) — it exists to
 // prove end-to-end that bearer validation and scope enforcement actually work, not because agents
 // need a self-lookup for its own sake.
 // Scopes on the Response are the scopes carried by the CURRENT token (from its claims), not every
@@ -19,6 +19,8 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
+[ApiEndpoint]
+[EndpointAuthorize(Policy = "agent-scope:identity:read")] // matches AgentTokenDefaults.IdentityReadPolicy
 public static partial class GetAgentIdentity
 {
   [ApiRoute("api/identity/agent/me", HttpVerb.Get)]

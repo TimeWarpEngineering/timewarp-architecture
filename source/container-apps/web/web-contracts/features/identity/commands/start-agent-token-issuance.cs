@@ -15,6 +15,7 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
+[ApiEndpoint]
 public static partial class StartAgentTokenIssuance
 {
   [ApiRoute("api/identity/agent/token/options", HttpVerb.Post)]

@@ -12,6 +12,7 @@
 
 namespace TimeWarp.Architecture.Features.Profiles;
 
+[ApiEndpoint]
 public static partial class GetProfile
 {
   [ApiRoute(RouteTemplate: "api/Users/Current/Profile", HttpVerb.Get)]

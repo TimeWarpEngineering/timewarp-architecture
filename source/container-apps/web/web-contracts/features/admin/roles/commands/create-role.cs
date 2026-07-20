@@ -12,6 +12,7 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
+[ApiEndpoint]
 public static partial class CreateRole
 {
   [ApiRoute("api/Roles", HttpVerb.Post)]

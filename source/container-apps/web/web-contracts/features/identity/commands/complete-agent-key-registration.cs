@@ -23,6 +23,7 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
+[ApiEndpoint]
 public static partial class CompleteAgentKeyRegistration
 {
   [ApiRoute("api/identity/agent/register", HttpVerb.Post)]

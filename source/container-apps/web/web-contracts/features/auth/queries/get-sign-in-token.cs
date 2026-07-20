@@ -12,6 +12,7 @@
 
 namespace TimeWarp.Architecture.Features.Auth;
 
+[ApiEndpoint]
 public static partial class GetSignInToken
 {
   [ApiRoute(RouteTemplate: "api/signin-token", HttpVerb.Get)]

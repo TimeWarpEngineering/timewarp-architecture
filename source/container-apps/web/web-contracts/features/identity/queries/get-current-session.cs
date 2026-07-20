@@ -17,6 +17,7 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
+[ApiEndpoint]
 public static partial class GetCurrentSession
 {
   [ApiRoute("api/identity/session", HttpVerb.Get)]

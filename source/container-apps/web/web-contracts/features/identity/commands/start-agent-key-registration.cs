@@ -15,6 +15,7 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
+[ApiEndpoint]
 public static partial class StartAgentKeyRegistration
 {
   [ApiRoute("api/identity/agent/register/options", HttpVerb.Post)]

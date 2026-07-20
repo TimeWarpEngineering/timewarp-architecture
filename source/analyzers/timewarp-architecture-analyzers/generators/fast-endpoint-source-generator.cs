@@ -7,12 +7,17 @@
 // reference the analyzers package without silently emitting endpoints.
 // Scans referenced-assembly symbols rather than the current compilation's syntax: contracts live
 // in a separate project from the server that hosts the generated endpoints.
+// Optional ApiEndpointContractAssemblies (semicolon-separated assembly names) restricts which
+// referenced assemblies are scanned — needed when the host transitively references other contract
+// assemblies (e.g. web-server → web-spa → api-contracts) and must not emit foreign endpoints.
+// Empty/unset = scan all referenced assemblies (api-server default).
 // Reports SG002 instead of failing when FastEndpoints/BaseFastEndpoint are absent — feature flags
 // can strip those references while the generator package remains attached.
 // Catches all exceptions (CA1031): a throwing generator would break the entire compilation.
 // Request type is Query or Command per metadata.RequestTypeName; HTTP verb comes from resolved
 // enum member name (not the underlying int). Auth: [EndpointAuthorize] → Policies/Roles/AuthSchemes;
 // no attribute → AllowAnonymous. Do not emit RequireAuthorization() (not on EndpointDefinition).
+// Empty request DTOs (no public properties) get EmptyRequestBinder — FE's default binder rejects them.
 // Summary/Description only — no weather-specific ExampleRequest.
 #endregion
 
@@ -55,44 +60,63 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true
     );
-// Try finding classes with our attribute using SelectMany
-    IncrementalValuesProvider<INamedTypeSymbol> classSymbols = context.CompilationProvider.SelectMany(
-      (compilation, _) =>
-      {
-        INamedTypeSymbol? apiEndpointAttributeSymbol = compilation.GetTypeByMetadataName(ApiEndpointAttributeFullName);
-        if (apiEndpointAttributeSymbol == null) return Array.Empty<INamedTypeSymbol>();
-
-        return compilation.SourceModule.ReferencedAssemblySymbols
-          .SelectMany(assembly => GetAllNamespaces(assembly.GlobalNamespace))
-          .SelectMany(ns => ns.GetTypeMembers())
-          .Where(type => type.GetAttributes()
-            .Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol)));
-      });
-
-// Read MSBuild property to control whether this generator should run.
-// Default is false (opt-in), as requested.
-    IncrementalValueProvider<bool> enableApiEndpointGeneration = context.AnalyzerConfigOptionsProvider.Select(
+// MSBuild properties controlling generation. Default Enable=false (opt-in). Optional
+    // ApiEndpointContractAssemblies restricts which referenced assemblies contribute contracts.
+    IncrementalValueProvider<(bool Enabled, HashSet<string>? ContractAssemblies)> generationOptions =
+      context.AnalyzerConfigOptionsProvider.Select(
         static (options, _) =>
         {
-            if (options.GlobalOptions.TryGetValue("build_property.EnableApiEndpointGeneration", out string? value) &&
-                bool.TryParse(value, out bool enabled))
+          bool enabled = false;
+          if (options.GlobalOptions.TryGetValue("build_property.EnableApiEndpointGeneration", out string? enableValue) &&
+              bool.TryParse(enableValue, out bool parsed))
+          {
+            enabled = parsed;
+          }
+
+          HashSet<string>? contractAssemblies = null;
+          if (options.GlobalOptions.TryGetValue("build_property.ApiEndpointContractAssemblies", out string? assembliesValue) &&
+              !string.IsNullOrWhiteSpace(assembliesValue))
+          {
+            contractAssemblies = new HashSet<string>(
+              assembliesValue.Split([';', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+              StringComparer.OrdinalIgnoreCase);
+          }
+
+          return (enabled, contractAssemblies);
+        });
+
+    // Find [ApiEndpoint] types in referenced assemblies (optionally filtered by assembly name).
+    IncrementalValuesProvider<(INamedTypeSymbol Symbol, Compilation Compilation, bool Enabled)> symbolsWithCompilationAndFlag =
+      context.CompilationProvider
+        .Combine(generationOptions)
+        .SelectMany(
+          static (tuple, _) =>
+          {
+            (Compilation compilation, (bool enabled, HashSet<string>? contractAssemblies) genOptions) = tuple;
+            if (!genOptions.enabled)
             {
-                return enabled;
+              return Array.Empty<(INamedTypeSymbol, Compilation, bool)>();
             }
 
-            return false; // default to false
-        });
+            INamedTypeSymbol? apiEndpointAttributeSymbol = compilation.GetTypeByMetadataName(ApiEndpointAttributeFullName);
+            if (apiEndpointAttributeSymbol is null)
+            {
+              return Array.Empty<(INamedTypeSymbol, Compilation, bool)>();
+            }
 
-// Combine symbols with compilation and the enable flag so we can check for required types
-    IncrementalValuesProvider<(INamedTypeSymbol Symbol, Compilation Compilation, bool Enabled)> symbolsWithCompilationAndFlag =
-      classSymbols
-        .Combine(context.CompilationProvider)
-        .Combine(enableApiEndpointGeneration)
-        .Select(static (tuple, _) =>
-        {
-            ((INamedTypeSymbol symbol, Compilation compilation), bool enabled) = tuple;
-            return (symbol, compilation, enabled);
-        });
+            IEnumerable<IAssemblySymbol> assemblies = compilation.SourceModule.ReferencedAssemblySymbols;
+            if (genOptions.contractAssemblies is { Count: > 0 } allowed)
+            {
+              assemblies = assemblies.Where(assembly => allowed.Contains(assembly.Name));
+            }
+
+            return assemblies
+              .SelectMany(assembly => GetAllNamespaces(assembly.GlobalNamespace))
+              .SelectMany(ns => ns.GetTypeMembers())
+              .Where(type => type.GetAttributes()
+                .Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol)))
+              .Select(type => (type, compilation, true));
+          });
 
 // Register source output to generate endpoints from found symbols
     context.RegisterSourceOutput(symbolsWithCompilationAndFlag,
@@ -168,6 +192,11 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
     string auth = BuildAuthConfiguration(metadata);
 
+    // FE default RequestBinder TypeInit-fails on DTOs with zero public properties.
+    string emptyBinder = metadata.IsEmptyRequest
+      ? $"RequestBinder(new EmptyRequestBinder<{metadata.ClassName}.{metadata.RequestTypeName}>());"
+      : "";
+
     string summary = !string.IsNullOrEmpty(metadata.Summary)
       ? $$"""
             Summary(s =>
@@ -189,6 +218,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
              using OneOf;
              using System.Threading;
              using System.Threading.Tasks;
+             using TimeWarp.Foundation.Features;
 
              namespace {{metadata.Namespace}};
 
@@ -204,6 +234,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                {
                  {{metadata.HttpVerb}}("{{metadata.Route}}");
                  {{auth}}
+                 {{emptyBinder}}
                  {{tags}}
                  {{summary}}
                }

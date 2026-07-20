@@ -10,6 +10,10 @@
 // Serilog bootstrap logger wraps host build so startup crashes are still captured; the app runs
 // through RunOaktonCommands to expose environment checks as CLI commands.
 // Web.Spa services are registered here too — prerendering runs SPA code on the server.
+// API surface is generated FastEndpoints from [ApiEndpoint] web-contracts (no MVC BaseEndpoint
+// shims). Pipeline order: UseRouting → UseAuthentication → UseAuthorization → UseAntiforgery
+// (Blazor) → UseFastEndpoints. Auth before FE; no FE antiforgery for JSON APIs.
+// IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
 #endregion
 
 #nullable enable
@@ -18,7 +22,6 @@ namespace TimeWarp.Architecture.Web.Server;
 
 using TimeWarp.Foundation.Abstractions;
 using TimeWarp.Foundation.Common.Infrastructure;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Serilog;
 
 public class Program : IAspNetProgram
@@ -126,8 +129,6 @@ public class Program : IAspNetProgram
     serviceCollection.AddSignalR();
     // serviceCollection.AddRazorPages();
     // serviceCollection.AddServerSideBlazor();
-    serviceCollection.AddMvc()
-      .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly);
 
     serviceCollection.AddHttpContextAccessor();
     serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
@@ -138,10 +139,18 @@ public class Program : IAspNetProgram
     serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Server.IAssemblyMarker>();
     serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Contracts.IAssemblyMarker>();
 
-    serviceCollection.Configure<ApiBehaviorOptions>
-    (
-      apiBehaviorOptions => apiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
-    );
+    serviceCollection.AddFastEndpoints(options =>
+    {
+      // FluentValidationBehavior (mediator) owns validation — do not auto-wire FE validators.
+      options.IncludeAbstractValidators = false;
+      // ApplicationName is web-server (the endpoint assembly). Without DisableAutoDiscovery, FE
+      // would scan that assembly automatically AND again via Assemblies → duplicate routes.
+      options.DisableAutoDiscovery = true;
+      options.Assemblies =
+      [
+        typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly
+      ];
+    });
 
     serviceCollection.AddResponseCompression
     (
@@ -246,7 +255,13 @@ public class Program : IAspNetProgram
     webApplication.UseAuthentication();
     webApplication.UseAuthorization();
 
+    // Blazor antiforgery for interactive components — not applied to FastEndpoints JSON APIs.
     webApplication.UseAntiforgery();
+
+    webApplication.UseFastEndpoints(config =>
+    {
+      config.Endpoints.RoutePrefix = null;
+    });
   }
 
   public static void ConfigureEndpoints(WebApplication webApplication)
@@ -265,7 +280,6 @@ public class Program : IAspNetProgram
     webApplication.MapHealthChecks("/api/health");
 
     CommonServerModule.ConfigureEndpoints(webApplication);
-    webApplication.MapControllers();
     webApplication.MapHub<ChatHub>(ChatHubConstants.Route);
 
     // Map the new endpoint to expose service discovery information
@@ -299,11 +313,6 @@ public class Program : IAspNetProgram
     serviceCollection
       .AddFluentValidatedOptions<AgentTokenOptions, AgentTokenOptionsValidator>(configuration)
       .ValidateOnStart();
-
-    serviceCollection.Configure<ApiBehaviorOptions>
-    (
-      apiBehaviorOptions => apiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
-    );
   }
 
   private static void ConfigureInfrastructure(IServiceCollection serviceCollection)
