@@ -7,6 +7,11 @@
 // browser; the client redeems the returned token through the Passwordless JS sign-in flow.
 // SDK exceptions map to a 400 SharedProblemDetails so the OneOf pipeline yields uniform ProblemDetails
 // instead of an unhandled 500.
+// Task 110 round-1 review (M1): the contract is now [ClientOnlyContract] — no [ApiEndpoint], not
+// generated, not reachable over HTTP. This handler is dead/unwired pending full retirement of the
+// legacy Passwordless.dev path (104-016/104-021); it mints a token for a caller-supplied UserId
+// with no proof of identity, so it must not be re-exposed on the server without first closing that
+// hazard.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Auth.Application;

@@ -20,12 +20,20 @@
 // WebTestServerApplication.HttpClient) for the SAME per-class-fixture-sharing reason documented in
 // Passkey_Registration_Tests.cs's Design region — an anonymous-request test and an
 // authenticated-request test must not leak cookies between them via an ambient jar.
+// Task 110 round-1 review (M3): Unauthorized_Given_Agent_Bearer_Token_No_Cookie pins the
+// scheme-isolation property this new consumer inherits from 104-004's policy design —
+// AddAuthenticationSchemes(identity-session) on the roles policy means a syntactically valid agent
+// bearer token cannot satisfy it (mirrors Agent_Protected_Endpoint_Tests.cs's
+// Unauthorized_Given_CookieSession_Only_No_Bearer, in the opposite direction). The agent-key
+// registration + token-issuance ceremony is duplicated from Agent_Protected_Endpoint_Tests.cs's
+// RegisterAndIssueToken for the same reason as the passkey-cookie duplication above.
 #endregion
 
 namespace RolesAuthorization_;
 
 using System.Buffers.Text;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using TimeWarp.Architecture.Configuration;
@@ -33,6 +41,7 @@ using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Roles;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
+using TimeWarp.Identity;
 
 public class Returns_
 {
@@ -76,6 +85,59 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string json = await response.Content.ReadAsStringAsync();
     json.ShouldContain(nameof(RoleIds.Administrator));
+  }
+
+  public async Task Unauthorized_Given_Agent_Bearer_Token_No_Cookie()
+  {
+    string accessToken = await RegisterAndIssueAgentBearerToken();
+
+    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+    // Deliberately NO Cookie header — only the bearer token.
+
+    HttpResponseMessage response = await client.GetAsync("api/Roles");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+  }
+
+  private async Task<string> RegisterAndIssueAgentBearerToken()
+  {
+    var key = new IntegrationSoftwareAgentKey();
+
+    OneOf<StartAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> registerStart =
+      await WebTestServerApplication.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
+    byte[] registerChallenge = Base64Url.DecodeFromChars(registerStart.AsT0.Challenge);
+    byte[] registerSignature = key.Sign(AgentKeyCeremonyType.Registration, registerChallenge);
+
+    var registerCommand = new CompleteAgentKeyRegistration.Command
+    {
+      PublicKey = Base64Url.EncodeToString(key.SpkiPublicKey),
+      Challenge = Base64Url.EncodeToString(registerChallenge),
+      Signature = Base64Url.EncodeToString(registerSignature)
+    };
+
+    OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> registerResult =
+      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
+    registerResult.IsT0.ShouldBeTrue("Registration setup should succeed.");
+
+    OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenStart =
+      await WebTestServerApplication.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
+    byte[] tokenChallenge = Base64Url.DecodeFromChars(tokenStart.AsT0.Challenge);
+    byte[] tokenSignature = key.Sign(AgentKeyCeremonyType.TokenIssuance, tokenChallenge);
+
+    var tokenCommand = new CompleteAgentTokenIssuance.Command
+    {
+      KeyId = registerResult.AsT0.KeyId,
+      Challenge = Base64Url.EncodeToString(tokenChallenge),
+      Signature = Base64Url.EncodeToString(tokenSignature),
+      Scopes = [AgentScopes.IdentityRead]
+    };
+
+    OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenResult =
+      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+    tokenResult.IsT0.ShouldBeTrue("Token issuance setup should succeed.");
+
+    return tokenResult.AsT0.AccessToken;
   }
 
   private async Task<string> MintIdentitySessionCookie()

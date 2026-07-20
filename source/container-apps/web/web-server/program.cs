@@ -113,6 +113,14 @@ public class Program : IAspNetProgram
       )
       // Task 110: any signed-in identity-session cookie — see IdentitySessionDefaults.AuthenticatedPolicy's
       // Design region for why this is deliberately not an admin/role-based policy.
+      // Round-1 review M4 (nit): this explicit AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
+      // restriction is WHY roles endpoints get a clean 401 for an unauthenticated request. A bare
+      // fail-closed [ApiEndpoint] with no marker at all (only reachable if TWA0013 is suppressed) has
+      // no policy to restrict the scheme — it falls through to ASP.NET Core's DEFAULT authentication
+      // scheme, which here is the dormant AddMicrosoftIdentityWebAppAuthentication registration (see
+      // ConfigureAuthentication below), and that challenges with a redirect/500, not a clean 401. Deny
+      // still holds either way; the clean-401 property specifically belongs to an explicit
+      // scheme-restricted policy like this one, not to the bare fail-closed default.
       .AddPolicy
       (
         IdentitySessionDefaults.AuthenticatedPolicy,

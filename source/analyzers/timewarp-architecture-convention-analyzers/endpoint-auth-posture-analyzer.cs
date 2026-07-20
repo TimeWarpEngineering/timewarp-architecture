@@ -66,7 +66,7 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
     (
       ConflictingPostureId,
       title: "Generated endpoint's auth posture is contradictory",
-      messageFormat: "{0}",
+      messageFormat: "Contract '{0}' has a contradictory auth posture — {1}; resolve on the contract, do not rely on the generator's [EndpointAuthorize]-wins tiebreak",
       Category,
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
@@ -105,7 +105,8 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
       context.ReportDiagnostic(Diagnostic.Create(
         ConflictingPosture,
         location,
-        $"Contract '{type.ToDisplayString()}' carries BOTH [EndpointAuthorize] and [EndpointAllowAnonymous] — remove one; [EndpointAuthorize] wins at generation but the contradiction must be resolved on the contract."));
+        type.ToDisplayString(),
+        "it carries both [EndpointAuthorize] and [EndpointAllowAnonymous]; remove one"));
       return;
     }
 
@@ -127,7 +128,8 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
         context.ReportDiagnostic(Diagnostic.Create(
           ConflictingPosture,
           location,
-          $"Contract '{type.ToDisplayString()}' carries [EndpointAllowAnonymous] but its {requestType.Name} declares IAuthApiRequest (interface or [AuthApiRequest]) — an auth-intent request marked anonymous at the endpoint is contradictory; add [EndpointAuthorize] or remove the auth-intent marker from {requestType.Name}."));
+          type.ToDisplayString(),
+          $"it carries [EndpointAllowAnonymous] but its {requestType.Name} declares IAuthApiRequest; add [EndpointAuthorize] or remove the auth-intent marker from {requestType.Name}"));
       }
     }
   }
