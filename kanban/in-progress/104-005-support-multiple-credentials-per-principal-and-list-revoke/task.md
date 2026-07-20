@@ -138,104 +138,28 @@ Recovery soft-prompt for humans can wait; multi-credential is the structural fix
 
 ## Results
 
-### Summary
+### Implementation
+- Commits: 3b0b52b4 (implementation), 60a6a84e (round-1 fixes M1-M5).
+- New credential-management policy (either scheme via RequireAssertion: cookie = full self-control, agent = must hold credential:manage scope — new AgentScopes.CredentialManage, least-privilege so identity:read cannot manage credentials). ICurrentPrincipalAccessor unifies caller resolution over both schemes via the shared principal-id claim.
+- GetCredentials (CredentialSummary structurally omits Handle/PublicMaterial), RevokeCredential, AddPasskey, AddAgentKey — the two add ceremonies attach to the CURRENT authenticated principal (caller from the accessor, no Principal.Create), reusing the anonymous Start challenge endpoints.
+- Security-load-bearing: caller id sourced ONLY from the accessor (never the request); revoke ownership check (credential.PrincipalId == callerId) before any mutation, 404-not-403 for both foreign and unknown ids (no existence oracle); last-active-credential guard (409); already-revoked (409).
+- RevokeCredential is the first live consumer of the 104-028 ConcurrencyConflictException retry contract: bounded (MaxAttempts=3) catch-reGet-retry, contention-exhausted → 409. Multi-revoke count TOCTOU documented as an accepted Wave-1 residual.
+- Deviations recorded: shared `CredentialCeremonyHelpers.cs` test helper instead of per-file duplication (scale of reuse across 3 files justified departing from the small-duplication convention); `CredentialSummary` implemented as a ctor+Guard class (matching `RoleDto` precedent) rather than a literal C# `record`; `BuildPasskeyAttestationAsync` gained an optional shared-authenticator parameter to exercise the duplicate-handle 409 path around the one-time-challenge check.
 
-Implemented all 4 decisions from the plan exactly as specified. Credential-management is now a
-real, tested surface: `GetCredentials` (list, own-credentials-only by construction),
-`RevokeCredential` (soft-revoke with the 104-028 bounded-retry showcase), `AddPasskey`/`AddAgentKey`
-(attach to the CALLER's existing principal — never `Principal.Create`). A new
-`ICurrentPrincipalAccessor` port resolves the caller scheme-agnostically (cookie or agent bearer)
-by reading `HttpContext.User` post-authorization, and a new `credential-management` policy
-(`RequireAssertion`: cookie = full self-control, agent = requires the new `credential:manage`
-scope) gates all four endpoints. Every IDOR/security load-bearing rule from the dispatch holds:
-principal id never comes from the request, mismatch and unknown-id both 404, `identity:read`-only
-tokens get 403, and `Handle`/`PublicMaterial` are structurally + wire-level pinned as never
-serialized.
+### Review (Phase 4b)
+- Effort 2 (general + security). Round 1: 0 bugs from either lens; 5 findings (2 suggestions, 3 nits) — all doc/test/precision, no code-behavior change needed. Fixed (60a6a84e). 0 open, 0 wontfix.
+- **Security reviewer certified the IDOR/ownership model SOUND** (verified by counterfactual; key material structurally omitted; identity:read→403 least-privilege proven live; retry loop never leaks conflict as 500; cross-principal handle collision → identical 409, no attach, no oracle).
+- Disposition: clean (review/disposition.md). Artifacts: review-framework.md, round-1/{general,security,merged}.md, disposition.md.
 
-### Work items
+### Verification
+- dev build 0/0. timewarp-identity-tests 169, web-contracts-tests 38, web-server-integration-tests 80/1 skipped (incl. cross-principal duplicate-handle + structural key-material-omission tests). Regression sweep green (analyzers 82, sourcegenerator 40, foundation-domain 37, foundation-contracts 2, foundation-application 13, foundation-infrastructure 1, web-domain 26). Docker-dependent suites not runnable.
 
-1. `agent-scopes.cs`: added `CredentialManage = "credential:manage"` + Design region explaining why
-   it's a distinct write scope from `IdentityRead` (least-privilege — a read-only token must not be
-   able to revoke credentials).
-2. `i-current-principal-accessor.cs` (web-application/abstractions, new): `ICurrentPrincipalAccessor`
-   port, async signature matching `IBrowserSessionService` for call-site uniformity.
-3. `http-current-principal-accessor.cs` (web-server/services, new): reads
-   `HttpContext.User.FindFirstValue(IdentitySessionDefaults.PrincipalIdClaimType)` directly —
-   deliberately does NOT re-authenticate against one named scheme (unlike
-   `CookieBrowserSessionService`) since the authorization middleware already resolved which scheme
-   won by the time a handler runs.
-4. `credential-management-defaults.cs` (web-server/configuration, new): `Policy =
-   "credential-management"` + Design region documenting the either-scheme/assertion/scope shape.
-5. `program.cs`: registered the accessor (`AddScoped`) and the policy
-   (`AddAuthenticationSchemes(identity-session, agent-token).RequireAuthenticatedUser()
-   .RequireAssertion(...)`).
-6. 4 new contracts (`get-credentials.cs`, `revoke-credential.cs`, `add-passkey.cs`,
-   `add-agent-key.cs`) — DeleteRole posture (`IAuthApiRequest` client/mock signal +
-   `[EndpointAuthorize(Policy="credential-management")]`), size caps on every base64url field from
-   day one, `CredentialSummary` DTO structurally omits `Handle`/`PublicMaterial`.
-7. 4 new handlers — `GetCredentials`/`RevokeCredential`/`AddPasskey`/`AddAgentKey`, all sourcing the
-   caller from `ICurrentPrincipalAccessor`, never the request. `RevokeCredential.Handler` carries the
-   richest Design region in the codebase: the bounded (`MaxAttempts=3`) catch-reGet-retry loop, the
-   404-not-403 IDOR rule, already-revoked→409 (documented alternative: idempotent 204), the
-   last-active-credential guard, and the multi-revoke count TOCTOU accepted as a documented Wave-1
-   residual (with an Open Questions note on when to revisit).
-8. Tests (see Build/tests below for counts) — unit (store ordering), retry-loop unit (handler seam,
-   fake `IPrincipalStore` decorator), contract round-trips (incl. the no-secret-material pin),
-   integration (list/add/revoke × happy + every rejection branch named in the dispatch).
-9. Docs/regions: every new file carries Purpose (+ Design where there are real decisions); no
-   external doc changes were needed beyond in-file regions — this task reuses task 110's
-   `[EndpointAuthorize]`/`IAuthApiRequest` conventions and TWA0013/0014 enforcement as-is, adding no
-   new architectural vocabulary for AGENTS.md/the skill to describe.
-
-### Deviations from the plan (with rationale)
-
-- **Shared test-ceremony helper, not per-file duplication.** The plan's test list implied the usual
-  per-file duplication convention (see `Roles_Authorization_Tests.cs`'s own Design region), but three
-  new files each needed BOTH "mint a passkey session" and "mint an agent bearer token with given
-  scopes," plus a second "build a fresh WebAuthn/agent-key proof" primitive for the add-credential
-  flows — duplicating that ~150+ times over would have meaningfully raised the risk of a
-  byte-layout mistake diverging between copies. Extracted `CredentialCeremonyHelpers.cs`
-  (Infrastructure/) instead, with a Design region explaining the departure from the small-duplication
-  convention and why this is a different scale, not a change of principle.
-- **`CredentialSummary` implemented as a plain class (ctor + Guard), not a C# `record`.** The plan's
-  shorthand (`record CredentialSummary(...)`) was read as descriptive of the fields, not a literal
-  directive — no DTO anywhere in web-contracts uses `record` (grepped to confirm), and `RoleDto`
-  (the closest precedent, a list-item DTO on `GetRoles`) is a ctor+Guard class. Matched that
-  convention for consistency.
-- **`BuildPasskeyAttestationAsync` gained an optional `IntegrationSoftwareAuthenticator?` parameter**
-  (not in the original helper sketch) after `Credential_Add_Tests.Conflict_Given_Same_Passkey_
-  Handle_Registered_Twice` first failed 400 instead of 409 — replaying the exact same
-  already-consumed challenge hits the one-time-challenge check before the duplicate-handle check.
-  Fixed by letting two independent ceremonies share one authenticator instance (same credential
-  handle, different challenges), which is the only way to exercise that specific 409 path.
-- No design issues required stopping to report — the plan's 4 decisions all implemented cleanly as
-  specified.
-
-### Follow-ups (recorded, out of scope here)
-
-- Multi-revoke count TOCTOU (two different credentials revoked concurrently can both pass the
-  last-active guard) — accepted Wave-1 residual per the plan; true fix (principal-level lock or a
-  store-level atomic revoke-unless-last) deferred until a real caller needs the stronger guarantee.
-- `AddPasskey`'s reused anonymous `StartPasskeyRegistration` challenge has no `excludeCredentials`
-  populated (it doesn't know the caller is signed in) — cosmetic UX gap only; the handler's
-  `FindCredentialByHandleAsync` check still catches a same-credential resubmission as 409.
-- No admin/bulk credential operations, no account-recovery flow, no hard delete — all explicitly out
-  of scope per the plan's scope boundaries.
-
-### Build / tests
-
-- `dev build` (full solution): 0 Warning(s), 0 Error(s)
-- `timewarp-identity-tests`: 169 passed (+1 new `Lists_in_ascending_CreatedAt_order` ordering test)
-- `web-contracts-tests`: 38 passed (+12 new round-trip tests across the 4 new contracts)
-- `web-server-integration-tests`: 78 passed, 1 skipped, 0 failed (+21 new: 2 retry-loop unit tests,
-  6 `Credential_List_Tests`, 5 `Credential_Add_Tests`, 8 `Credential_Revoke_Tests`)
-- `timewarp-architecture-analyzers-tests`: 82 passed (unaffected — no analyzer changes)
-- `timewarp-architecture-sourcegenerator-tests`: 40 passed (unaffected — no generator changes)
-- Regression sweep — `foundation-domain-tests`: 37; `foundation-contracts-tests`: 2;
-  `foundation-application-tests`: 13; `foundation-infrastructure-tests`: 1; `web-domain-tests`: 26 —
-  all unaffected, 0 failures
-- Docker-dependent suites: out of scope, not run
+### Deferred / follow-ups
+- Task 111 (policy-name agreement analyzer) — credential-management is now its third motivating instance.
+- Multi-revoke count TOCTOU: accepted residual (true fix = principal-level guard or store-level atomic revoke-unless-last, deferred).
+- Account recovery / soft-prompt (task Notes defer it); hard credential delete / orphan cleanup (port has no delete; orphans inert); excludeCredentials in add-passkey options (cosmetic UX gap); EF store.
 
 ## Session
 
 - Created: 2026-07-16
+- Implementation + review: ses 78b9f414/00b5f23f (2026-07-20), build agent a2ef2354b0fc976e7, reviewers a31739ea747756530 (general) + security-reviewer-104-005
