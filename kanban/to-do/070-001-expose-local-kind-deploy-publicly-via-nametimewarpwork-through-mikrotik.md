@@ -15,20 +15,22 @@ Requirements:
 - Hostname scheme `<name>.timewarp.work` — one name per deployed app instance; picking the name
   should be a parameter, not an edit.
 - HTTPS with valid certs (Let's Encrypt via cert-manager, or wildcard DNS-01 — decide below).
-- No manual router clicking per deploy: MikroTik dst-nat rules are set up once (80/443 → kind
-  ingress), per-app routing happens at the ingress layer by Host header.
+- No manual router clicking per deploy: the MikroTik has a **static public IP** and forwards
+  80/443 once to the dev machine on the private network; all `*.timewarp.work` traffic lands on
+  the same ingress and per-app routing happens there by Host header.
 
 ## Checklist
 
-- [ ] DNS: point `<name>.timewarp.work` (or wildcard `*.timewarp.work`) at the home public IP.
-      Decide static vs dynamic IP; if dynamic, add a DDNS updater (MikroTik cloud DNS + CNAME, or
-      registrar API updater). Record where timewarp.work DNS is hosted and how records are managed.
+- [ ] DNS: wildcard `*.timewarp.work` A record → the MikroTik's static public IP (single record;
+      new `<name>`s need no DNS work). Record where timewarp.work DNS is hosted and how records
+      are managed.
 - [ ] kind ingress path: install an ingress controller (ingress-nginx is the kind-documented
       default) with `extraPortMappings` for 80/443 in the kind cluster config so host ports reach
       the ingress.
-- [ ] MikroTik: one-time dst-nat (port-forward) rules WAN 80/443 → the machine running kind.
-      Document the RouterOS commands (`/ip firewall nat add ...`) including hairpin NAT so
-      `<name>.timewarp.work` also works from inside the LAN.
+- [ ] MikroTik: one-time dst-nat (port-forward) rules WAN 80/443 → the dev machine's private-LAN
+      IP (kind's ingress host ports). Document the RouterOS commands (`/ip firewall nat add ...`)
+      including hairpin NAT so `<name>.timewarp.work` also works from inside the LAN. Consider a
+      DHCP reservation / static lease for the dev machine so the rule doesn't rot.
 - [ ] TLS: cert-manager + Let's Encrypt HTTP-01 (needs port 80 reachable), or DNS-01 with a
       wildcard cert if the DNS host has API support. Pick one and wire it.
 - [ ] Ingress resources: get Host-based routing onto the deployed app — either from the Aspire
