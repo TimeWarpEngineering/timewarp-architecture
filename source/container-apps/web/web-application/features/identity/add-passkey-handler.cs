@@ -1,0 +1,143 @@
+#region Purpose
+// Server-side handler for the AddPasskey command: verifies the browser's attestation response and
+// attaches a new Credential to the CALLER's EXISTING principal (never mints a new one).
+#endregion
+
+#region Design
+// Order mirrors CompletePasskeyRegistration.Handler exactly (decode -> consume the challenge ->
+// verify -> check for an existing credential -> attach), with two differences: the principal id comes
+// from ICurrentPrincipalAccessor (resolved FIRST, before touching any ceremony state — an
+// unauthenticated caller should never even burn a challenge) instead of Principal.Create, and there
+// is no BrowserSessionService.IssueAsync call — the caller already HAS a session (that is how they
+// got here); minting a new one would be pointless and, worse, would silently replace the session's
+// identity claim (the request's own session should not change as a side effect of adding a second
+// credential to it).
+// The orphan-Principal residual documented on CompletePasskeyRegistration.Handler's Design region
+// does NOT apply here: this handler never calls AddPrincipalAsync (the principal already exists,
+// proven by the caller being authenticated), so there is no principal to orphan if AddCredentialAsync
+// loses a same-handle race — the InvalidOperationException catch below translates that race straight
+// to 409 with nothing left over to compensate.
+// FindCredentialByHandleAsync runs BEFORE Credential.Create/AddCredentialAsync for the same
+// sequential-duplicate reason as CompletePasskeyRegistration.Handler; the response is the SAME 409
+// regardless of which principal (if any) already owns the matching handle — this endpoint does not
+// disclose whether a colliding passkey belongs to the caller's own principal or someone else's.
+// Zero Update* calls (Add* only) — no concurrency retry loop needed here, unlike RevokeCredential.
+#endregion
+
+namespace TimeWarp.Architecture.Features.Identity.Application;
+
+using static TimeWarp.Architecture.Features.Identity.AddPasskey;
+
+public sealed partial class AddPasskey
+{
+  public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
+  {
+    private readonly IPrincipalStore PrincipalStore;
+    private readonly IWebAuthnChallengeStore ChallengeStore;
+    private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
+    private readonly IOptions<WebAuthnOptions> Options;
+
+    public Handler
+    (
+      IPrincipalStore principalStore,
+      IWebAuthnChallengeStore challengeStore,
+      ICurrentPrincipalAccessor currentPrincipalAccessor,
+      IOptions<WebAuthnOptions> options
+    )
+    {
+      PrincipalStore = principalStore;
+      ChallengeStore = challengeStore;
+      CurrentPrincipalAccessor = currentPrincipalAccessor;
+      Options = options;
+    }
+
+    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    {
+      PrincipalId? callerId = await CurrentPrincipalAccessor.GetCurrentPrincipalIdAsync(cancellationToken);
+      if (callerId is null)
+      {
+        return Unauthenticated();
+      }
+
+      if (!WebAuthnPayloadDecoder.TryDecode(command.CredentialId, out byte[] credentialIdBytes)
+        || !WebAuthnPayloadDecoder.TryDecode(command.ClientDataJson, out byte[] clientDataJsonBytes)
+        || !WebAuthnPayloadDecoder.TryDecode(command.AttestationObject, out byte[] attestationObjectBytes))
+      {
+        return MalformedPayload();
+      }
+
+      if (!WebAuthnChallengeReader.TryReadChallenge(clientDataJsonBytes, out byte[] challenge)
+        || !ChallengeStore.TryConsume(WebAuthnCeremonyType.Registration, challenge))
+      {
+        return ChallengeInvalid();
+      }
+
+      WebAuthnOptions webAuthnOptions = Options.Value;
+      var relyingParty = new WebAuthnRelyingParty(webAuthnOptions.RpId, webAuthnOptions.RpName, webAuthnOptions.AllowedOrigins);
+
+      WebAuthnRegistrationResult verifyResult =
+        WebAuthnRegistration.Verify(relyingParty, challenge, clientDataJsonBytes, attestationObjectBytes, credentialIdBytes);
+
+      if (!verifyResult.IsValid)
+      {
+        return VerificationFailed(verifyResult.FailureReason);
+      }
+
+      Credential? existing = await PrincipalStore.FindCredentialByHandleAsync(CredentialType.Passkey, verifyResult.CredentialId, cancellationToken);
+      if (existing is not null)
+      {
+        return CredentialAlreadyRegistered();
+      }
+
+      var credential = Credential.Create(callerId.Value, CredentialType.Passkey, verifyResult.CredentialId, verifyResult.CosePublicKey, command.Label);
+      try
+      {
+        await PrincipalStore.AddCredentialAsync(credential, cancellationToken);
+      }
+      catch (InvalidOperationException)
+      {
+        // Lost a concurrent race for this credential handle — see Design region. Unlike
+        // CompletePasskeyRegistration.Handler, there is no orphan Principal to worry about: the
+        // caller's principal already existed before this call.
+        return CredentialAlreadyRegistered();
+      }
+
+      return new Response(credential.Id);
+    }
+
+    private static SharedProblemDetails Unauthenticated() => new()
+    {
+      Title = "Unauthenticated",
+      Status = 401,
+      Detail = "No authenticated principal."
+    };
+
+    private static SharedProblemDetails MalformedPayload() => new()
+    {
+      Title = "Malformed request",
+      Status = 400,
+      Detail = "CredentialId, ClientDataJson, and AttestationObject must be valid base64url."
+    };
+
+    private static SharedProblemDetails ChallengeInvalid() => new()
+    {
+      Title = "Challenge invalid",
+      Status = 400,
+      Detail = "The registration challenge is unknown, expired, or already used."
+    };
+
+    private static SharedProblemDetails VerificationFailed(WebAuthnFailureReason reason) => new()
+    {
+      Title = "Passkey registration verification failed",
+      Status = 400,
+      Detail = $"Verification failed: {reason}."
+    };
+
+    private static SharedProblemDetails CredentialAlreadyRegistered() => new()
+    {
+      Title = "Credential already registered",
+      Status = 409,
+      Detail = "This passkey is already registered to an account."
+    };
+  }
+}

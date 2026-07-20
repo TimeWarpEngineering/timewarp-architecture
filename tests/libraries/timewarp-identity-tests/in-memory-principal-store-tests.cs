@@ -214,4 +214,35 @@ public class Credentials
     Credential credential = Credential.Create(PrincipalId.New(), CredentialType.Passkey, [1], [2]);
     await Should.ThrowAsync<InvalidOperationException>(() => store.UpdateCredentialAsync(credential));
   }
+
+  // Task 104-005: GetCredentials.Handler trusts ListCredentialsAsync's ordering to present
+  // credentials oldest-first without re-sorting client-side — pin the store's documented
+  // "OrderBy(c => c.CreatedAt)" behavior (in-memory-principal-store.cs) directly, independent of
+  // insertion order.
+  public async Task Lists_in_ascending_CreatedAt_order()
+  {
+    var store = new InMemoryPrincipalStore();
+    Principal principal = Principal.Create(PrincipalKind.Human);
+    await store.AddPrincipalAsync(principal);
+
+    // Created in chronological order (CreatedAt is stamped at Credential.Create), but ADDED to the
+    // store in a DIFFERENT order below — proves the store sorts by CreatedAt rather than merely
+    // reflecting insertion/dictionary order.
+    Credential first = Credential.Create(principal.Id, CredentialType.Passkey, [1], [1]);
+    await Task.Delay(TimeSpan.FromMilliseconds(5));
+    Credential second = Credential.Create(principal.Id, CredentialType.AgentKey, [2], [2]);
+    await Task.Delay(TimeSpan.FromMilliseconds(5));
+    Credential third = Credential.Create(principal.Id, CredentialType.Passkey, [3], [3]);
+
+    await store.AddCredentialAsync(third);
+    await store.AddCredentialAsync(first);
+    await store.AddCredentialAsync(second);
+
+    IReadOnlyList<Credential> list = await store.ListCredentialsAsync(principal.Id);
+
+    list.Count.ShouldBe(3);
+    list[0].Id.ShouldBe(first.Id);
+    list[1].Id.ShouldBe(second.Id);
+    list[2].Id.ShouldBe(third.Id);
+  }
 }

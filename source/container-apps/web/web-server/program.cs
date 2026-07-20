@@ -127,6 +127,18 @@ public class Program : IAspNetProgram
         policy => policy
           .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
           .RequireAuthenticatedUser()
+      )
+      // Task 104-005: the ONE policy that accepts either scheme — see CredentialManagementDefaults'
+      // Design region for the full either-scheme + assertion + scope rationale.
+      .AddPolicy
+      (
+        CredentialManagementDefaults.Policy,
+        policy => policy
+          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, AgentTokenDefaults.Scheme)
+          .RequireAuthenticatedUser()
+          .RequireAssertion(context =>
+            string.Equals(context.User.Identity?.AuthenticationType, IdentitySessionDefaults.Scheme, StringComparison.Ordinal)
+            || context.User.HasClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.CredentialManage))
       );
     // TODO: Review the options for this seesm like could just pass whole config???
     serviceCollection.AddPasswordlessSdk(options =>
@@ -150,6 +162,7 @@ public class Program : IAspNetProgram
     serviceCollection.AddHttpContextAccessor();
     serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
     serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
+    serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
