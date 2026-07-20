@@ -39,12 +39,18 @@ the same chain as just another backend.
 - [ ] timewarp-mikrotik: discovered 2026-07-20 — 80/443 are ALREADY forwarded to an existing web
       server at 10.10.1.80 (public IP 49.0.91.107 → AIS DMZ → 192.168.68.2 → dst-nat). Plan:
       **TLS SNI split** — dst-nat rule `tls-host=*.timewarp.work` placed before the generic 443
-      forward sends only timewarp.work traffic to 10.66.2.6 (goldensea via wg1) + srcnat
-      masquerade out wg1 for the return path. Consequences: port 80 stays with the old server →
-      the timewarp.work path is **HTTPS-only** and certs MUST use DNS-01 (HTTP-01 challenges
-      would hit 10.10.1.80). Alternative (rejected for now): vhost on 10.10.1.80 proxying to the
-      tunnel — touches the production shop server. ECH caveat: SNI matching needs plaintext
-      ClientHello; don't publish ECH configs for these names.
+      forward — **DOES NOT WORK**: RouterOS rejects `tls-host` in the NAT table ("bad parameter",
+      confirmed 2026-07-20) because NAT must pick the destination at the TCP SYN, before the
+      ClientHello carrying SNI exists. The split needs a userspace **SNI passthrough proxy**
+      (reads ClientHello, splices the stream; no certs involved). Option A: nginx `stream` +
+      `ssl_preread` on 10.10.1.80 itself (existing sites rebind internally, e.g. :8443). Option B:
+      tiny HAProxy/sniproxy VM on the shop VM host; router rules 0/1 repoint 443 to it, default
+      backend 10.10.1.80, `*.timewarp.work` → 10.66.2.6:443. Decision pending what runs on
+      10.10.1.80. Bonus: the proxy originates a fresh TCP connection into the tunnel, so the
+      asymmetric-return masquerade is only needed if goldensea lacks a route back to 10.10.1.0/24.
+      Still true: port 80 stays with the old server → timewarp.work path is **HTTPS-only**, certs
+      MUST use DNS-01. ECH caveat: SNI split needs plaintext ClientHello; don't publish ECH
+      configs for these names.
 - [ ] golden-sea-mikrotik: dst-nat 80/443 → the WSL instance's own LAN IP (bridged mode below;
       give its pinned MAC a static DHCP lease so the rule doesn't rot). Windows box is not in the
       traffic path.
