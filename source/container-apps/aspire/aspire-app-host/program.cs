@@ -17,7 +17,11 @@
 // longer serves. /api/signin-token was removed for this reason (task 110 round-1 review M1: the contract
 // mints a Passwordless sign-in token for an arbitrary caller-supplied UserId with no proof of identity, has
 // zero live consumers, and must not be a reachable server endpoint).
-// Ingress:Port pins the YARP host port so external clients and E2E tests get a stable ingress URL.
+// Ingress:Port pins the YARP host port so external clients and E2E tests get a stable ingress URL;
+// Development pins 63610 (appsettings.Development.json) so reverse proxies (e.g. the *.timewarp.work
+// share path) and scripts have a fixed local ingress next to the 63611-13 service ports. 63610 equals
+// the standalone yarp project's launchSettings https port on purpose: the two are alternative ingress
+// modes that never run together, so "the ingress is 63610" holds in both.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
