@@ -72,3 +72,31 @@ unifies the endpoint story the template teaches.
 ## Session
 
 - Created: 2026-07-20
+
+### Implementation plan (109)
+
+#### Attribute strategy (locked)
+Keep **[ApiEndpoint]** (generation opt-in on outer class) + **[ApiRoute]** (route/verb on Query/Command).
+Do NOT generate from every ApiRoute alone. Auth: new **[EndpointAuthorize(Policy=…)]** on operation class → FE `Policies(...)`.
+
+#### Blocking generator fixes first
+1. HttpVerb enum metadata → method name (Post not Get) — same as TWA0005/0006 field resolution
+2. Emit Command vs Query generics (not always Query)
+3. Auth: Policies("…") / AllowAnonymous from EndpointAuthorize
+4. Drop bad ExampleRequest for weather-only
+
+#### Children
+- 109-001 Generator harden
+- 109-002 EndpointAuthorize + emission
+- 109-003 Web cutover (annotate, FE DI/middleware, delete 19 shims)
+- 109-004 Prove + docs (identity suites, AGENTS, skill, short ADR)
+
+#### Middleware (web-server)
+UseRouting → UseAuthentication → UseAuthorization → UseAntiforgery → UseFastEndpoints (no route prefix) → Blazor/static. Auth BEFORE FE. No FE antiforgery for JSON APIs. Atomic cutover — no dual MVC+FE routes.
+
+#### Validation
+IncludeAbstractValidators = false; FluentValidationBehavior remains.
+
+## Session
+- Started: 2026-07-20 (tw-orchestrate-task 109)
+- Plan: 2026-07-20
