@@ -36,8 +36,15 @@ the same chain as just another backend.
 
 - [ ] DNS: wildcard `*.timewarp.work` A record → the static IP (or CNAME → `shop.timewarp.ws`
       since that name already tracks it). Record where timewarp.work DNS is hosted.
-- [ ] timewarp-mikrotik: dst-nat 80/443 → golden-sea-mikrotik. Document RouterOS commands,
-      including hairpin NAT for LAN-side access.
+- [ ] timewarp-mikrotik: discovered 2026-07-20 — 80/443 are ALREADY forwarded to an existing web
+      server at 10.10.1.80 (public IP 49.0.91.107 → AIS DMZ → 192.168.68.2 → dst-nat). Plan:
+      **TLS SNI split** — dst-nat rule `tls-host=*.timewarp.work` placed before the generic 443
+      forward sends only timewarp.work traffic to 10.66.2.6 (goldensea via wg1) + srcnat
+      masquerade out wg1 for the return path. Consequences: port 80 stays with the old server →
+      the timewarp.work path is **HTTPS-only** and certs MUST use DNS-01 (HTTP-01 challenges
+      would hit 10.10.1.80). Alternative (rejected for now): vhost on 10.10.1.80 proxying to the
+      tunnel — touches the production shop server. ECH caveat: SNI matching needs plaintext
+      ClientHello; don't publish ECH configs for these names.
 - [ ] golden-sea-mikrotik: dst-nat 80/443 → the WSL instance's own LAN IP (bridged mode below;
       give its pinned MAC a static DHCP lease so the rule doesn't rot). Windows box is not in the
       traffic path.
