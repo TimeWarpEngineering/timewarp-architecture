@@ -11,11 +11,20 @@ Actual topology:
 ```
 *.timewarp.work (wildcard DNS)
   → static IP (already published as shop.timewarp.ws)
-    → timewarp-mikrotik
-      → golden-sea-mikrotik
-        → Windows machine
-          → WSL2 Ubuntu  ← Aspire `dev run` lives here (today: https://localhost:17204/, dynamic ports)
+    → timewarp-mikrotik (shop)
+      → WireGuard tunnel wg1 (10.66.2.4/30: shop .5 ↔ goldensea .6)
+        → goldensea-gw (LAN bridge 172.16.67.0/24)
+          → WSL2 Ubuntu bridged @ 172.16.67.13  ← Aspire `dev run` (today: https://localhost:17204/, dynamic ports)
 ```
+
+Discovered 2026-07-20 (goldensea-gw `/interface print`, `/ip address print`): the shop↔goldensea
+link is a **WireGuard tunnel**, and goldensea's own uplink is AIS behind a private DMZ
+(192.168.67.2 on ether1) — so inbound arrives via wg1 while the default route exits via AIS.
+**Asymmetric-return gotcha**: the shop end must masquerade 80/443 traffic into the tunnel so
+replies return via wg1; without it every connection half-opens. Trade-off: the WSL proxy sees
+10.66.2.5 as client IP, not the real one — acceptable for MVP; the upgrade path (preserve client
+IP) is policy routing on goldensea (mangle connection-mark on wg1 arrivals → routing-mark replies
+back out wg1), noted for later (matters for rate limiting / abuse visibility, cf. 104-015).
 
 Goal: one stable entry — a reverse proxy in WSL listening on fixed 80/443 — that terminates TLS
 for `*.timewarp.work` and routes by Host header to whichever local app owns that name. Today the
