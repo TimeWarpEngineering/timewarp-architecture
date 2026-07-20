@@ -1,0 +1,31 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!-- Only the two rules this tool genuinely trips (audited 2026-07-20, not copied wholesale from
+         tools/dev-cli): CA1849 — narration writes to ITerminal are intentionally synchronous in a
+         short-lived CLI; CA1031 — top-level command handlers catch Exception to render HTTP/crypto
+         failures as friendly one-line errors. Everything else was fixed rather than suppressed. -->
+    <NoWarn>$(NoWarn);CA1031;CA1849</NoWarn>
+
+    <!-- Enable interceptors for TimeWarp.Nuru source generator -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="global-usings.cs" />
+    <Compile Include="endpoints/**/*.cs" />
+    <Compile Include="services/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TimeWarp.Nuru" />
+    <PackageReference Include="TimeWarp.Terminal" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Pin signed-data construction to the library (task 104-029); do not reimplement Verify. -->
+    <ProjectReference Include="../../source/libraries/timewarp-identity/timewarp-identity.csproj" />
+  </ItemGroup>
+
+</Project>

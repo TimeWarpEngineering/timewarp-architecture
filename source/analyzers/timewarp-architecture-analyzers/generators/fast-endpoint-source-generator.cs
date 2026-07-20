@@ -7,9 +7,21 @@
 // reference the analyzers package without silently emitting endpoints.
 // Scans referenced-assembly symbols rather than the current compilation's syntax: contracts live
 // in a separate project from the server that hosts the generated endpoints.
+// Optional ApiEndpointContractAssemblies (semicolon-separated assembly names) restricts which
+// referenced assemblies are scanned — needed when the host transitively references other contract
+// assemblies (e.g. web-server → web-spa → api-contracts) and must not emit foreign endpoints.
+// Empty/unset = scan all referenced assemblies (api-server default).
 // Reports SG002 instead of failing when FastEndpoints/BaseFastEndpoint are absent — feature flags
 // can strip those references while the generator package remains attached.
 // Catches all exceptions (CA1031): a throwing generator would break the entire compilation.
+// Request type is Query or Command per metadata.RequestTypeName; HTTP verb comes from resolved
+// enum member name (not the underlying int). Auth (task 110, fail-closed default):
+// [EndpointAuthorize] → Policies/Roles/AuthSchemes; [EndpointAllowAnonymous] → AllowAnonymous();
+// NEITHER attribute → emit nothing (FastEndpoints requires authentication by default — the inverse
+// of the pre-110 "no attribute → AllowAnonymous" behavior). Do not emit RequireAuthorization()
+// (not on EndpointDefinition).
+// Empty request DTOs (no public properties) get EmptyRequestBinder — FE's default binder rejects them.
+// Summary/Description only — no weather-specific ExampleRequest.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -51,44 +63,63 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true
     );
-// Try finding classes with our attribute using SelectMany
-    IncrementalValuesProvider<INamedTypeSymbol> classSymbols = context.CompilationProvider.SelectMany(
-      (compilation, _) =>
-      {
-        INamedTypeSymbol? apiEndpointAttributeSymbol = compilation.GetTypeByMetadataName(ApiEndpointAttributeFullName);
-        if (apiEndpointAttributeSymbol == null) return Array.Empty<INamedTypeSymbol>();
-
-        return compilation.SourceModule.ReferencedAssemblySymbols
-          .SelectMany(assembly => GetAllNamespaces(assembly.GlobalNamespace))
-          .SelectMany(ns => ns.GetTypeMembers())
-          .Where(type => type.GetAttributes()
-            .Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol)));
-      });
-
-// Read MSBuild property to control whether this generator should run.
-// Default is false (opt-in), as requested.
-    IncrementalValueProvider<bool> enableApiEndpointGeneration = context.AnalyzerConfigOptionsProvider.Select(
+// MSBuild properties controlling generation. Default Enable=false (opt-in). Optional
+    // ApiEndpointContractAssemblies restricts which referenced assemblies contribute contracts.
+    IncrementalValueProvider<(bool Enabled, HashSet<string>? ContractAssemblies)> generationOptions =
+      context.AnalyzerConfigOptionsProvider.Select(
         static (options, _) =>
         {
-            if (options.GlobalOptions.TryGetValue("build_property.EnableApiEndpointGeneration", out string? value) &&
-                bool.TryParse(value, out bool enabled))
+          bool enabled = false;
+          if (options.GlobalOptions.TryGetValue("build_property.EnableApiEndpointGeneration", out string? enableValue) &&
+              bool.TryParse(enableValue, out bool parsed))
+          {
+            enabled = parsed;
+          }
+
+          HashSet<string>? contractAssemblies = null;
+          if (options.GlobalOptions.TryGetValue("build_property.ApiEndpointContractAssemblies", out string? assembliesValue) &&
+              !string.IsNullOrWhiteSpace(assembliesValue))
+          {
+            contractAssemblies = new HashSet<string>(
+              assembliesValue.Split([';', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+              StringComparer.OrdinalIgnoreCase);
+          }
+
+          return (enabled, contractAssemblies);
+        });
+
+    // Find [ApiEndpoint] types in referenced assemblies (optionally filtered by assembly name).
+    IncrementalValuesProvider<(INamedTypeSymbol Symbol, Compilation Compilation, bool Enabled)> symbolsWithCompilationAndFlag =
+      context.CompilationProvider
+        .Combine(generationOptions)
+        .SelectMany(
+          static (tuple, _) =>
+          {
+            (Compilation compilation, (bool enabled, HashSet<string>? contractAssemblies) genOptions) = tuple;
+            if (!genOptions.enabled)
             {
-                return enabled;
+              return Array.Empty<(INamedTypeSymbol, Compilation, bool)>();
             }
 
-            return false; // default to false
-        });
+            INamedTypeSymbol? apiEndpointAttributeSymbol = compilation.GetTypeByMetadataName(ApiEndpointAttributeFullName);
+            if (apiEndpointAttributeSymbol is null)
+            {
+              return Array.Empty<(INamedTypeSymbol, Compilation, bool)>();
+            }
 
-// Combine symbols with compilation and the enable flag so we can check for required types
-    IncrementalValuesProvider<(INamedTypeSymbol Symbol, Compilation Compilation, bool Enabled)> symbolsWithCompilationAndFlag =
-      classSymbols
-        .Combine(context.CompilationProvider)
-        .Combine(enableApiEndpointGeneration)
-        .Select(static (tuple, _) =>
-        {
-            ((INamedTypeSymbol symbol, Compilation compilation), bool enabled) = tuple;
-            return (symbol, compilation, enabled);
-        });
+            IEnumerable<IAssemblySymbol> assemblies = compilation.SourceModule.ReferencedAssemblySymbols;
+            if (genOptions.contractAssemblies is { Count: > 0 } allowed)
+            {
+              assemblies = assemblies.Where(assembly => allowed.Contains(assembly.Name));
+            }
+
+            return assemblies
+              .SelectMany(assembly => GetAllNamespaces(assembly.GlobalNamespace))
+              .SelectMany(ns => ns.GetTypeMembers())
+              .Where(type => type.GetAttributes()
+                .Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol)))
+              .Select(type => (type, compilation, true));
+          });
 
 // Register source output to generate endpoints from found symbols
     context.RegisterSourceOutput(symbolsWithCompilationAndFlag,
@@ -162,19 +193,19 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
          """
       : "";
 
-    string auth = metadata.RequiresAuthorization
-      ? """
-          RequireAuthorization();
-        """
-      : "AllowAnonymous();";
+    string auth = BuildAuthConfiguration(metadata);
+
+    // FE default RequestBinder TypeInit-fails on DTOs with zero public properties.
+    string emptyBinder = metadata.IsEmptyRequest
+      ? $"RequestBinder(new EmptyRequestBinder<{metadata.ClassName}.{metadata.RequestTypeName}>());"
+      : "";
 
     string summary = !string.IsNullOrEmpty(metadata.Summary)
       ? $$"""
             Summary(s =>
             {
-              s.Summary = "{{metadata.Summary}}";
-              s.Description = "{{metadata.Description}}";
-              s.ExampleRequest = new {{metadata.ClassName}}.Query { Days = 5 };
+              s.Summary = "{{EscapeForStringLiteral(metadata.Summary)}}";
+              s.Description = "{{EscapeForStringLiteral(metadata.Description)}}";
             });
 
             Description(d => d.Produces<{{metadata.ClassName}}.Response>(200, "Success").ProducesProblem(400, "Bad Request")
@@ -182,11 +213,15 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
           """
       : "";
 
+    string requestType = metadata.RequestTypeName;
+    string baseType = metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint";
+
     return $$"""
              using FastEndpoints;
              using OneOf;
              using System.Threading;
              using System.Threading.Tasks;
+             using TimeWarp.Foundation.Features;
 
              namespace {{metadata.Namespace}};
 
@@ -196,16 +231,70 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
              /// <remarks>
              /// {{metadata.Description}}
              /// </remarks>
-             public class {{metadata.ClassName}}Endpoint : {{metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint"}}<{{metadata.ClassName}}.Query, {{metadata.ClassName}}.Response>
+             public class {{metadata.ClassName}}Endpoint : {{baseType}}<{{metadata.ClassName}}.{{requestType}}, {{metadata.ClassName}}.Response>
              {
                public override void Configure()
                {
                  {{metadata.HttpVerb}}("{{metadata.Route}}");
                  {{auth}}
+                 {{emptyBinder}}
                  {{tags}}
                  {{summary}}
                }
              }
              """;
   }
+
+  /// <summary>
+  /// Builds FastEndpoints Configure() auth lines from [EndpointAuthorize]/[EndpointAllowAnonymous]
+  /// metadata. Task 110 fail-closed default: metadata.AllowAnonymous is true ONLY when
+  /// [EndpointAllowAnonymous] was present (see EndpointMetadata.FromSymbol) — in that case emit
+  /// AllowAnonymous(). Otherwise: Policy → Policies(...); Roles → Roles(...);
+  /// Schemes → AuthSchemes(...); and if NONE of those were set (either because [EndpointAuthorize]
+  /// carried no Policy/Roles, or because NEITHER marker was present at all) this method emits
+  /// NOTHING — FE requires auth by default when AllowAnonymous() is never called, which is exactly
+  /// the fail-closed behavior an unmarked contract must get.
+  /// </summary>
+  private static string BuildAuthConfiguration(EndpointMetadata metadata)
+  {
+    if (metadata.AllowAnonymous)
+    {
+      return "AllowAnonymous();";
+    }
+
+    var lines = new List<string>();
+
+    if (!string.IsNullOrEmpty(metadata.AuthenticationSchemes))
+    {
+      lines.Add($"AuthSchemes({FormatCsvStringArgs(metadata.AuthenticationSchemes)});");
+    }
+
+    if (!string.IsNullOrEmpty(metadata.AuthorizationPolicy))
+    {
+      lines.Add($"Policies(\"{EscapeForStringLiteral(metadata.AuthorizationPolicy)}\");");
+    }
+    else if (!string.IsNullOrEmpty(metadata.Roles))
+    {
+      lines.Add($"Roles({FormatCsvStringArgs(metadata.Roles)});");
+    }
+
+    // Either [EndpointAuthorize] carried no Policy/Roles (optional AuthSchemes only), or NEITHER
+    // marker was present at all (task 110 fail-closed default) — either way FE defaults to
+    // requiring authentication when nothing is emitted: no AllowAnonymous, no non-existent
+    // RequireAuthorization().
+    return lines.Count > 0
+      ? string.Join("\n         ", lines)
+      : string.Empty;
+  }
+
+  private static string FormatCsvStringArgs(string csv)
+  {
+    IEnumerable<string> parts = csv
+      .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+      .Select(part => $"\"{EscapeForStringLiteral(part)}\"");
+    return string.Join(", ", parts);
+  }
+
+  private static string EscapeForStringLiteral(string value)
+    => value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
 }

@@ -12,9 +12,11 @@ global using System.Collections.Specialized;
 global using System.Reflection;
 global using System.Runtime.CompilerServices;
 global using TimeWarp.Architecture;
+global using TimeWarp.Architecture.Attributes;
 global using TimeWarp.Foundation;
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Foundation.Features;
 // Solution usings
 global using TimeWarp.Foundation.Types;
+global using TimeWarp.Identity;
 global using TimeWarp.Mediator;

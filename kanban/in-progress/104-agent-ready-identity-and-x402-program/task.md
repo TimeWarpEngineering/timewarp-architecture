@@ -1,0 +1,131 @@
+# Agent-ready Identity and x402 program
+
+## Description
+
+Build first-class principals for **humans and agents**, internet-native **x402
+payment** as both product feature and abuse control, and an **agent-ready**
+template surface. Work happens in kanban → source (with Purpose/Design regions)
+→ tests. Skills and human ADRs are **out of scope until the software works**.
+
+Supersedes archived epic tree 097–103 (ADR-first framing was wrong).
+
+## Build order (do not reorder casually)
+
+```
+Wave 1  Identity package          104-001 … 104-006
+Wave 2  TimeWarp.402 package      104-007 … 104-012
+Wave 3  Compose Identity + 402    104-013 … 104-015
+Wave 4  Template + agent surface  104-016 … 104-022
+Wave 5  Optional polish           104-023 … 104-025
+```
+
+Within a wave, follow child numbers. Wave 2 can start scaffolding (007) once
+001–002 exist enough to know PrincipalId shape; settle→tier (013) needs both
+packages.
+
+## Locked product decisions (from design sessions)
+
+1. **Passkey / key first, profile later.** Account = accepted public key, not a
+   registration form. Progressive profile is optional and later (024).
+2. **Humans and agents are both principals.** Kind: Human | Agent | Service.
+3. **No human required if the agent pays.** Wallet/x402 is enough to buy service.
+4. **Payment is in the template story**, not a bolt-on. Package name:
+   **TimeWarp.402**. Identity package name: **TimeWarp.Identity**.
+5. **Sessions for browsers; short-lived scoped tokens for agents.**
+6. **Hybrid identity:** server-issued PrincipalId (Guid) for FKs + attached
+   public keys. SSI/DID later if useful — not a v1 gate.
+7. **Trust tiers:** cheap identity, expensive power.
+   - Keyed = has credential, tiny/no expensive quota
+   - Funded = paid / has credit
+   - Established / Quarantined as behavior accumulates
+8. **Free/discovery routes never return HTTP 402.** Disabled/misconfigured
+   payment → **503**, never 402. (Hard lesson from timewarp.software tip jar.)
+9. **Any human authenticator** (Proton Pass, platform, hardware). First-party
+   WebAuthn; Passwordless.dev is not the long-term center (legacy in repo).
+10. **Entra/MSAL is not the priority path.** Keep non-default or dormant (021).
+11. **Agent-welcome edge posture** — do not default-block all AI bots. Cloudflare
+    is outer ring (DDoS/WAF/rate limits); Identity+402 are app law (023).
+12. **Score well on https://isitagentready.com/** via real surfaces (017–020),
+    not docs-only.
+
+## Mental model
+
+| Layer | Job |
+|-------|-----|
+| Cloudflare (optional later) | Volumetric abuse, crude rate limits |
+| TimeWarp.Identity | Who is this principal? (passkey / agent key / session-token) |
+| TimeWarp.402 | Did they pay? Credits, tip, metered capability |
+| App / template | What can they do? Demos, slices, agent discovery |
+
+**Sybil defense:** infinite free principals OK if useless; power costs payment
+or earned trust. Rate-limit register + 402 challenge endpoints (015).
+
+## Existing code / material to reuse
+
+- SPA `PasswordlessService` + web-server Passwordless SDK + `GetSignInToken` —
+  reference only; replace center of gravity with first-party WebAuthn in Identity.
+- timewarp-software: `worker/tip.js`, `documentation/x402-tip-spike.md`,
+  tip-buyer, tests — port pattern into 009 (free routes never 402; CDP/mainnet
+  vs Sepolia testnet separation).
+- MSAL/Entra wiring in web-server — deprioritize (021).
+
+## Non-goals (v1)
+
+- Full SSI/DID/VC stack
+- Entra External ID as primary identity
+- Requiring a human sponsor for paid agents
+- Skills or ADRs before working software
+- Blocking training crawlers by default (product may choose later)
+
+## Checklist
+
+### Wave 1 — Identity
+- [ ] 104-001 Scaffold TimeWarp.Identity
+- [ ] 104-002 Principal / Credential / TrustTier
+- [ ] 104-003 Passkey register + authenticate
+- [ ] 104-004 Agent keys + scoped tokens
+- [ ] 104-005 Multi-credential
+- [ ] 104-006 Identity tests
+
+### Wave 2 — 402
+- [ ] 104-007 Scaffold TimeWarp.402
+- [ ] 104-008 Challenge / verify / settle / 503 policy
+- [ ] 104-009 Tip-jar port
+- [ ] 104-010 Credit ledger
+- [ ] 104-011 Metered demo
+- [ ] 104-012 Payment tests
+
+### Wave 3 — Compose
+- [ ] 104-013 Settle → Funded + credits
+- [ ] 104-014 Agent E2E path
+- [ ] 104-015 Rate limits
+
+### Wave 4 — Template + agents
+- [ ] 104-016 Passkey human demo
+- [ ] 104-017 Discovery files
+- [ ] 104-018 Markdown negotiation
+- [ ] 104-019 MCP / skills / A2A stubs
+- [ ] 104-020 x402 discoverable
+- [ ] 104-021 Flags / slices / Entra non-default
+- [ ] 104-022 E2E sunny paths
+
+### Wave 5 — Optional
+- [ ] 104-023 Cloudflare operator notes
+- [ ] 104-024 Progressive profile
+- [ ] 104-025 humanUx link
+
+## Notes
+
+### When code exists
+Every new source file gets `#region Purpose` (required) and `#region Design`
+where decisions live. Reconcile Design when behavior changes. That is the
+durable design store — not this kanban after ships.
+
+### After it works
+Extract skills for consumers; optional human ADRs last. Do not invent either now.
+
+## Session
+
+- Created: 2026-07-16
+- Context: passkey/agent/x402 brainstorm + reject ADR/skill-first sequencing
+- Archived prior tree: 097–103

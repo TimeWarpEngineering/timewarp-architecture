@@ -44,7 +44,7 @@
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
-  <!-- Repo-wide convention analyzers (TWA0002–0010 only — no source generators). Project ref in
+  <!-- Repo-wide convention analyzers (TWA0002–0012 only — no source generators). Project ref in
        monorepo; TimeWarp.Architecture.Analyzers package in generated apps (UseAnalyzerPackages). -->
   <ItemGroup Condition="'$(UseAnalyzerPackages)' != 'true' and '$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"

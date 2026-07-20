@@ -10,6 +10,10 @@
 // Serilog bootstrap logger wraps host build so startup crashes are still captured; the app runs
 // through RunOaktonCommands to expose environment checks as CLI commands.
 // Web.Spa services are registered here too — prerendering runs SPA code on the server.
+// API surface is generated FastEndpoints from [ApiEndpoint] web-contracts (no MVC BaseEndpoint
+// shims). Pipeline order: UseRouting → UseAuthentication → UseAuthorization → UseAntiforgery
+// (Blazor) → UseFastEndpoints. Auth before FE; no FE antiforgery for JSON APIs.
+// IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
 #endregion
 
 #nullable enable
@@ -18,7 +22,6 @@ namespace TimeWarp.Architecture.Web.Server;
 
 using TimeWarp.Foundation.Abstractions;
 using TimeWarp.Foundation.Common.Infrastructure;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Serilog;
 
 public class Program : IAspNetProgram
@@ -99,7 +102,44 @@ public class Program : IAspNetProgram
       .AddInteractiveWebAssemblyComponents();
 
     serviceCollection.AddCascadingAuthenticationState();
-    serviceCollection.AddAuthorization();
+    serviceCollection.AddAuthorizationBuilder()
+      .AddPolicy
+      (
+        AgentTokenDefaults.IdentityReadPolicy,
+        policy => policy
+          .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
+          .RequireAuthenticatedUser()
+          .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.IdentityRead)
+      )
+      // Task 110: any signed-in identity-session cookie — see IdentitySessionDefaults.AuthenticatedPolicy's
+      // Design region for why this is deliberately not an admin/role-based policy.
+      // Round-1 review M4 (nit): this explicit AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
+      // restriction is WHY roles endpoints get a clean 401 for an unauthenticated request. A bare
+      // fail-closed [ApiEndpoint] with no marker at all (only reachable if TWA0013 is suppressed) has
+      // no policy to restrict the scheme — it falls through to ASP.NET Core's DEFAULT authentication
+      // scheme, which here is the dormant AddMicrosoftIdentityWebAppAuthentication registration (see
+      // ConfigureAuthentication below), and that challenges with a redirect/500, not a clean 401. Deny
+      // still holds either way; the clean-401 property specifically belongs to an explicit
+      // scheme-restricted policy like this one, not to the bare fail-closed default.
+      .AddPolicy
+      (
+        IdentitySessionDefaults.AuthenticatedPolicy,
+        policy => policy
+          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
+          .RequireAuthenticatedUser()
+      )
+      // Task 104-005: the ONE policy that accepts either scheme — see CredentialManagementDefaults'
+      // Design region for the full either-scheme + assertion + scope rationale.
+      .AddPolicy
+      (
+        CredentialManagementDefaults.Policy,
+        policy => policy
+          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, AgentTokenDefaults.Scheme)
+          .RequireAuthenticatedUser()
+          .RequireAssertion(context =>
+            string.Equals(context.User.Identity?.AuthenticationType, IdentitySessionDefaults.Scheme, StringComparison.Ordinal)
+            || context.User.HasClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.CredentialManage))
+      );
     // TODO: Review the options for this seesm like could just pass whole config???
     serviceCollection.AddPasswordlessSdk(options =>
     {
@@ -118,20 +158,29 @@ public class Program : IAspNetProgram
     serviceCollection.AddSignalR();
     // serviceCollection.AddRazorPages();
     // serviceCollection.AddServerSideBlazor();
-    serviceCollection.AddMvc()
-      .TryAddApplicationPart(typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly);
 
     serviceCollection.AddHttpContextAccessor();
+    serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
+    serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
+    serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
     serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Server.IAssemblyMarker>();
     serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Contracts.IAssemblyMarker>();
 
-    serviceCollection.Configure<ApiBehaviorOptions>
-    (
-      apiBehaviorOptions => apiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
-    );
+    serviceCollection.AddFastEndpoints(options =>
+    {
+      // FluentValidationBehavior (mediator) owns validation — do not auto-wire FE validators.
+      options.IncludeAbstractValidators = false;
+      // ApplicationName is web-server (the endpoint assembly). Without DisableAutoDiscovery, FE
+      // would scan that assembly automatically AND again via Assemblies → duplicate routes.
+      options.DisableAutoDiscovery = true;
+      options.Assemblies =
+      [
+        typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly
+      ];
+    });
 
     serviceCollection.AddResponseCompression
     (
@@ -172,6 +221,38 @@ public class Program : IAspNetProgram
   {
     serviceCollection.AddMicrosoftIdentityWebAppAuthentication(configuration);
     // serviceCollection.AddMicrosoftIdentityWebApiAuthentication(configuration);
+
+    // A second AddAuthentication() call (no defaultScheme argument) adds this NAMED cookie scheme
+    // alongside whatever AddMicrosoftIdentityWebAppAuthentication registered as default — the
+    // dormant Entra registration is untouched (lock #10 / 104-021). See IdentitySessionDefaults.
+    serviceCollection.AddAuthentication()
+      .AddCookie(IdentitySessionDefaults.Scheme, options =>
+      {
+        options.Cookie.Name = IdentitySessionDefaults.CookieName;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(24);
+        // Ceremony/session endpoints are JSON APIs, not browser-redirect flows — an unauthenticated
+        // or forbidden request must get a status code, not a 302 to a login page that does not exist.
+        options.Events.OnRedirectToLogin = context =>
+        {
+          context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+          return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+          context.Response.StatusCode = StatusCodes.Status403Forbidden;
+          return Task.CompletedTask;
+        };
+      })
+      // Agent bearer-token scheme (task 104-004): a THIRD named scheme on the same chain, alongside
+      // the identity-session cookie scheme above — neither touches the other, nor the dormant Entra
+      // default (lock #10). AgentTokenAuthenticationHandler owns all authenticate/challenge/forbid
+      // behavior for this scheme; AuthenticationSchemeOptions carries no scheme-specific settings of
+      // its own (token lifetime lives in AgentTokenOptions, bound separately in ConfigureSettings).
+      .AddScheme<AuthenticationSchemeOptions, AgentTokenAuthenticationHandler>(AgentTokenDefaults.Scheme, _ => { });
   }
 
   public static void ConfigureMiddleware(WebApplication webApplication)
@@ -197,7 +278,20 @@ public class Program : IAspNetProgram
     // endpoint required by WebAssembly interactivity, and UseStaticFiles bypasses the fingerprinted
     // caching headers.
     webApplication.UseRouting();
+
+    // Identity session (task 104-003): named cookie scheme only — the dormant Entra registration's
+    // own auth flow is untouched. Ceremony endpoints (register/authenticate) are anonymous by
+    // design (they establish the session); GetCurrentSession reads whatever session exists, if any.
+    webApplication.UseAuthentication();
+    webApplication.UseAuthorization();
+
+    // Blazor antiforgery for interactive components — not applied to FastEndpoints JSON APIs.
     webApplication.UseAntiforgery();
+
+    webApplication.UseFastEndpoints(config =>
+    {
+      config.Endpoints.RoutePrefix = null;
+    });
   }
 
   public static void ConfigureEndpoints(WebApplication webApplication)
@@ -216,7 +310,6 @@ public class Program : IAspNetProgram
     webApplication.MapHealthChecks("/api/health");
 
     CommonServerModule.ConfigureEndpoints(webApplication);
-    webApplication.MapControllers();
     webApplication.MapHub<ChatHub>(ChatHubConstants.Route);
 
     // Map the new endpoint to expose service discovery information
@@ -243,10 +336,13 @@ public class Program : IAspNetProgram
       .AddFluentValidatedOptions<SampleOptions, SampleOptionsValidator>(configuration)
       .ValidateOnStart();
 
-    serviceCollection.Configure<ApiBehaviorOptions>
-    (
-      apiBehaviorOptions => apiBehaviorOptions.SuppressInferBindingSourcesForParameters = true
-    );
+    serviceCollection
+      .AddFluentValidatedOptions<WebAuthnOptions, WebAuthnOptionsValidator>(configuration)
+      .ValidateOnStart();
+
+    serviceCollection
+      .AddFluentValidatedOptions<AgentTokenOptions, AgentTokenOptionsValidator>(configuration)
+      .ValidateOnStart();
   }
 
   private static void ConfigureInfrastructure(IServiceCollection serviceCollection)

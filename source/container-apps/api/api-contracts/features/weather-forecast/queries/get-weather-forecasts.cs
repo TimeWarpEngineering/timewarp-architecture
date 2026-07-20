@@ -10,11 +10,14 @@
 // XML docs and <example> tags flow into the generated OpenAPI description.
 // TWeatherForecast guards its invariants in the constructor so an invalid forecast cannot be
 // constructed.
+// [EndpointAllowAnonymous] (task 110): public demo data, no security surface — the template's
+// canonical "hello world" style reference contract is meant to be reachable with zero setup.
 #endregion
 
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("Public demo data with no security surface; the template's reference contract is meant to be reachable with zero setup.")]
 public static partial class GetWeatherForecasts
 {
   [ApiRoute("api/weatherforecast", HttpVerb.Get)]

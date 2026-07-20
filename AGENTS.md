@@ -27,8 +27,13 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 - **.NET 10**, C# latest, `Nullable` enabled repo-wide, central package management
 - Blazor WebAssembly + **TimeWarp.State**; **TimeWarp.Mediator** (NOT MediatR):
   `IRequest<OneOf<Response, SharedProblemDetails>>`
-- Server endpoints: web-server = hand-written MVC `BaseEndpoint<TRequest, TResponse>` shims;
-  api-server = FastEndpoints **generated from contracts**
+- Server endpoints: **both** web-server and api-server host **FastEndpoints generated from
+  contracts** (`[ApiEndpoint]` + `[ApiRoute]`; every hosted contract carries exactly one of
+  `[EndpointAuthorize]` (policies) or `[EndpointAllowAnonymous(reason)]` — the generator is
+  fail-closed, so a contract with neither marker emits no auth config at all rather than defaulting
+  to anonymous; TWA0013/TWA0014 enforce the pairing at build time). No hand-written `BaseEndpoint`
+  shims in the template. Validation stays on the mediator's `FluentValidationBehavior` — do not
+  adopt FastEndpoints' validator integration.
 - Tests: **Fixie + Shouldly** (NOT MSTest/xUnit; do not introduce FluentAssertions — v8+ is
   commercially licensed)
 - Blazor form validation: **Blazilla** (explicit validator instance — supports `I*Details` binding)
@@ -57,7 +62,7 @@ This monorepo keeps the source and dogfoods it via `ProjectReference`.
 | PackageId | Contents |
 |-----------|----------|
 | `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
-| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0010) — safe repo-wide |
+| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0014) — safe repo-wide |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001 — attach only where gens should run |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
 
@@ -71,6 +76,11 @@ MSBuild dual-mode (auto-detects missing source trees): `UseFoundationPackages` /
 - **Endpoint-centric contracts**: `public static partial class Operation` with nested
   `Query`/`Command`, `Response`, `Validator`; `[ApiRoute("api/…", HttpVerb.X)]` (+
   `[AuthApiRequest]`, `[OpenDataQueryParameters]`) source-generate route members onto the partial.
+  Hosted operations also carry `[ApiEndpoint]` (generation opt-in) plus exactly one of
+  `[EndpointAuthorize(Policy=…)]` or `[EndpointAllowAnonymous(reason)]` so the FastEndpoint
+  generator emits the HTTP shim's auth config (fail-closed: no marker means no auth config emitted,
+  not anonymous). `IAuthApiRequest` is a client/mock-mode identity signal only — it never secures
+  the server; `[EndpointAuthorize]` is the sole server-auth marker (TWA0014 enforces the pairing).
   Full spec: **`web-api-contracts` skill** — invoke it before touching contracts.
 - **Prefer analyzers/source generators over convention-by-memory**: when two things must agree,
   generate one from the other or add a build-time check. Existing generators: contract attributes,
@@ -94,6 +104,9 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0008 | no template-conditional tokens in comments/strings (the dotnet-new engine misreads them and truncates generated files); escape hatch: the `cnd:noEmit` comment-marker pair |
 | TWA0009 | product slices (`…Features.<Id>` under SliceRoot) must not reference other product slices (share via Components/contracts); platform `Applications` is one-way free; opt-out: `[CrossSliceReference(typeof(T), reason)]` |
 | TWA0010 | a directive naming a template.json flag requires that flag in DefineConstants (else the region silently vanishes from the repo build) |
+| TWA0011/0012 | an `IAggregateRoot` must declare a nested `Invariants : AbstractValidator<T>`, and it must be `private` (kept out of `AddValidatorsFromAssemblyContaining`) |
+| TWA0013 | an `[ApiEndpoint]` contract must carry `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]` — the generator is fail-closed and emits no auth config for neither |
+| TWA0014 | an `[ApiEndpoint]` contract's auth posture must not be contradictory: not both markers, and not `[EndpointAllowAnonymous]` paired with a nested `Query`/`Command` that declares `IAuthApiRequest` |
 
 **Slice isolation (TWA0009):** product code under SliceRoot must not reach other product
 slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:
@@ -117,9 +130,10 @@ Formats and lifecycle: the `agent-context-regions` skill.
 ## Definition of Done
 
 - **API endpoint**: contract per the skill (Request/Response/Validator, shared `I*Details` where
-  bindable) + server Endpoint + Handler + integration tests (happy path AND validation rejection).
-  Backend validation comes from the mediator's `FluentValidationBehavior` — do not re-validate in
-  handlers.
+  bindable; `[ApiEndpoint]` when the host should generate the FastEndpoint; exactly one of
+  `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]`, always) + Handler + integration tests
+  (happy path AND validation rejection). Backend validation comes from the mediator's
+  `FluentValidationBehavior` — do not re-validate in handlers.
 - **Client feature**: State/Actions/Components + serialization round-trips in `web-contracts-tests`
   for non-trivial shapes (ctor+Guard, envelopes, generated route properties).
 

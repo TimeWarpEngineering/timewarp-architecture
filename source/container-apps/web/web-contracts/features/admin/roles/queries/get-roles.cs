@@ -9,6 +9,11 @@
 // one query string. RoleDto is a flat read model separate from IRoleDetails because list
 // rows are display-only, and Response derives from ListResponse to carry TotalCount for
 // paging. GetMockResponseFactory serves the SPA's MockWebApiService offline.
+// [EndpointAuthorize] (task 110): [AuthApiRequest] on the Query is a client-facing/mock-mode
+// identity signal only — TWA0014 would flag pairing it with [EndpointAllowAnonymous] as a
+// contradiction, so this attribute is what actually gates the generated endpoint. See CreateRole's
+// Design region for the policy/scope-boundary rationale (same policy, same "no admin/role model
+// yet" boundary).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -16,6 +21,8 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 /// <summary>
 /// Get a list of roles for display only.
 /// </summary>
+[ApiEndpoint]
+[EndpointAuthorize(Policy = "identity-session-authenticated")] // matches IdentitySessionDefaults.AuthenticatedPolicy
 public static partial class GetRoles
 {
 

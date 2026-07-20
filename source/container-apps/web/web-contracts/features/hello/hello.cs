@@ -6,10 +6,14 @@
 // GET requests carry parameters in the query string, so the contract implements IQueryStringRouteProvider
 // and owns URL construction — callers never hand-build routes.
 // GetRoute() itself comes from the [ApiRoute] source generator; this file adds only query-string composition.
+// [EndpointAllowAnonymous] (task 110): a minimal end-to-end sample with no security surface — the
+// template's own smoke-test endpoint, meant to be reachable with zero setup.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Hellos;
 
+[ApiEndpoint]
+[EndpointAllowAnonymous("Minimal end-to-end sample endpoint; no security surface, deliberately reachable with zero setup.")]
 public static partial class Hello
 {
   [ApiRoute(RouteTemplate: "api/Hello", HttpVerb.Get)]

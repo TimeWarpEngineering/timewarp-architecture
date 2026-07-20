@@ -8,6 +8,15 @@
 // injected services__{name}__https__0 env vars by resource name; server-side BaseAddress resolution breaks otherwise.
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
 // YARP literal /api routes owned by Web.Server beat the Api.Server catch-all by route precedence, not declaration order.
+// The Web.Server route list below is hand-maintained and MUST gain a line whenever web-contracts adds a new
+// top-level /api path segment — a missed entry sends the path to the Api.Server catch-all, which 404s with a bare
+// body the SPA renders as a generic unhandled error (found the hard way with /api/identity in 104-003; candidate
+// for generation from web-contracts ApiRoute templates per the prefer-analyzers directive).
+// Symmetrically, a line MUST be removed when its contract stops being a hosted endpoint (e.g. becomes
+// [ClientOnlyContract]) — a stale route otherwise still forwards to Web.Server for a path FastEndpoints no
+// longer serves. /api/signin-token was removed for this reason (task 110 round-1 review M1: the contract
+// mints a Passwordless sign-in token for an arbitrary caller-supplied UserId with no proof of identity, has
+// zero live consumers, and must not be a reachable server endpoint).
 // Ingress:Port pins the YARP host port so external clients and E2E tests get a stable ingress URL.
 #endregion
 
@@ -69,7 +78,7 @@ internal class Program
       yarpConfiguration.AddRoute("/api/GetCurrentUser", webServer);
       yarpConfiguration.AddRoute("/api/Hello", webServer);
       yarpConfiguration.AddRoute("/api/Users/{**catch-all}", webServer);
-      yarpConfiguration.AddRoute("/api/signin-token", webServer);
+      yarpConfiguration.AddRoute("/api/identity/{**catch-all}", webServer);
 #endif
 #if grpc
       yarpConfiguration.AddRoute("/grpc/{**catch-all}", grpcServer)

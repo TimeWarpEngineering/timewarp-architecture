@@ -22,7 +22,9 @@
           "exclude": [
             "**/bin/**",
             "**/obj/**",
-            "artifacts/**"
+            "artifacts/**",
+            "tools/agent-identity-cli/**",
+            "tests/tools/agent-identity-cli-tests/**"
           ]
         },
         {
@@ -77,7 +79,9 @@
           "exclude": [
             "source/foundation/**",
             "source/libraries/timewarp-modules/**",
-            "tests/foundation/**"
+            "source/libraries/timewarp-identity/**",
+            "tests/foundation/**",
+            "tests/libraries/**"
           ]
         },
         {

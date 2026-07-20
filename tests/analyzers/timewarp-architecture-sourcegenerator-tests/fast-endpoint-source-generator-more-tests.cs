@@ -96,6 +96,11 @@ public class FastEndpointSourceGenerator_OpenApi_Tests
     generatedCode.ShouldContain("\"Weather\"");
     generatedCode.ShouldContain("\"Forecasting\"");
 
+    // Weather-only ExampleRequest was removed — summary/description only.
+    generatedCode.ShouldNotContain("ExampleRequest");
+    generatedCode.ShouldContain("s.Summary =");
+    generatedCode.ShouldContain("s.Description =");
+
     return Task.CompletedTask;
   }
 }

@@ -6,8 +6,9 @@ description: >-
   WHEN: "Add a CreateTodoItem command contract", "Scaffold a GetRole query with ApiRoute and
   IRoleDetails for the edit form", "Add a serialization round-trip test for my Command".
 when-to-use: >
-  Web.Contracts, web-contracts, command contract, query contract, ApiRoute, I*Details,
-  EditForm binding, Validator, serialization round-trip, BFF, AuthApiRequest
+  Web.Contracts, web-contracts, command contract, query contract, ApiRoute, ApiEndpoint,
+  EndpointAuthorize, EndpointAllowAnonymous, I*Details, EditForm binding, Validator,
+  serialization round-trip, BFF, AuthApiRequest, FastEndpoint generation
 ---
 
 # Web API Contracts
@@ -52,8 +53,11 @@ namespace root, folder casing, test project layout, and mock-service registratio
 
 ## The contract attributes (source-generated)
 
-Three attributes drive source generation on contract request classes. They are emitted into the
-consumer's root namespace by the bundled contracts generator; the class **must be `partial`**.
+Two layers of attributes. Route/mixin attributes are emitted into the consumer's root namespace by
+the bundled contracts generator (class **must be `partial`**). Server-generation attributes live
+in `TimeWarp.Architecture.Attributes` and mark which contracts become hosted FastEndpoints.
+
+### Route / request mixins (on nested `Query`/`Command`)
 
 | Attribute | Generates | Use when |
 |-----------|-----------|----------|
@@ -63,6 +67,42 @@ consumer's root namespace by the bundled contracts generator; the class **must b
 
 The FastEndpoint generator matches `ApiRouteAttribute` by simple name, so the attribute works from
 any root namespace.
+
+### FastEndpoint generation (on the outer operation class)
+
+Both **web-server** and **api-server** host endpoints **generated from contracts** — there are no
+hand-written MVC `BaseEndpoint` shims in the template. Opt in per operation:
+
+| Attribute | Effect | Use when |
+|-----------|--------|----------|
+| `[ApiEndpoint]` | Generator emits `BaseFastEndpoint<Op.Query\|Command, Response>` for this operation | Every contract hosted on a server with `EnableApiEndpointGeneration` |
+| `[EndpointAuthorize(Policy=…)]` | Generator emits `Policies("…")` / `Roles(…)` / `AuthSchemes(…)` | Protected routes (policy, roles, and/or schemes) |
+| `[EndpointAllowAnonymous(reason)]` | Generator emits `AllowAnonymous()` | Genuinely public / pre-auth ceremony endpoints — `reason` is a required, honest, per-contract string |
+| *(no marker)* | **Fail-closed (task 110):** generator emits nothing, so FastEndpoints' own default (auth required) applies | Never — every `[ApiEndpoint]` contract must carry exactly one of the two markers above; **TWA0013** flags the omission at build time |
+
+Picking anonymous when the contract shouldn't be is caught too: **TWA0014** flags a contract that
+carries both markers, or `[EndpointAllowAnonymous]` alongside a nested `Query`/`Command` that
+declares `IAuthApiRequest` (manually or via the `[AuthApiRequest]` mixin) — see the auth-forms
+section below for why that combination is a contradiction, not just a style nit.
+
+```csharp
+[ApiEndpoint]
+[EndpointAuthorize(Policy = "agent-scope:identity:read")]
+public static partial class GetAgentIdentity
+{
+  [ApiRoute("api/identity/agent/me", HttpVerb.Get)]
+  public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  // …
+}
+```
+
+**Validation stays on the mediator** (`FluentValidationBehavior`). Do not re-validate in handlers
+and do not wire FastEndpoints' own FluentValidation integration (`IncludeAbstractValidators =
+false`). Handlers implement business logic only; the generated endpoint is pure HTTP plumbing.
+
+Server projects set `<EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>`. Web-server
+also sets `ApiEndpointContractAssemblies` so only web-contracts contribute endpoints (it
+transitively references other contract assemblies).
 
 ### HTTP verbs
 
@@ -130,7 +170,27 @@ properties on the class** — interface members are not generated, and an empty 
 compile. Do re-declare *data* properties; do **not** re-declare *route* properties (those come
 from `[ApiRoute]`).
 
-## Auth requests — two forms, not interchangeable
+## Auth requests vs. server auth — two different concerns
+
+**Canonical statement (task 110):** `IAuthApiRequest` is a **client/mock-mode identity signal
+only** — it does **not** secure the server. `[EndpointAuthorize]` is the **sole** marker that
+secures a generated endpoint. The two are independent axes; **TWA0014** enforces that they don't
+contradict each other.
+
+### The three valid states (plus the one that's forbidden)
+
+| `IAuthApiRequest` on `Query`/`Command` | Server auth marker | Meaning |
+|---|---|---|
+| Present | `[EndpointAuthorize(...)]` | Secured route; client *also* carries `UserId` for mock-mode tailoring (e.g. `CreateRole`) |
+| Absent | `[EndpointAuthorize(...)]` | Secured route; server derives identity entirely from the auth token/claims — contract stays auth-agnostic |
+| Absent | `[EndpointAllowAnonymous(reason)]` | Genuinely public / pre-auth route; no identity involved |
+| **Present** | **`[EndpointAllowAnonymous(reason)]`** | **Forbidden — TWA0014.** A contract that carries a user identity but declares its endpoint unauthenticated is self-contradictory. Fix by adding `[EndpointAuthorize]` or dropping `IAuthApiRequest`. |
+
+`IAuthApiRequest` is detected by either shape the mixin generator produces — the interface
+implementation or the `[AuthApiRequest]` attribute itself — so the forbidden row is caught
+regardless of which of the two forms below produced it.
+
+### The two forms of `IAuthApiRequest` itself
 
 The contract can carry the current user's identity (`Guid UserId`) so that **mock mode** — where
 no server exists to derive identity — can tailor responses per user. Two forms:
@@ -143,7 +203,8 @@ no server exists to derive identity — can tailor responses per user. Two forms
 Both pair with `RuleFor(x => x).SetValidator(new AuthApiRequestValidator())`.
 
 **Security rule:** the server must **never trust** a client-sent `UserId` — it re-derives identity
-from the auth token. The contract field exists for mock-mode tailoring and client-side context.
+from the auth token. The contract field exists for mock-mode tailoring and client-side context;
+it plays no role in whether the generated endpoint actually requires authentication.
 
 **Valid alternative:** derive the user **entirely server-side** (claims/token) and keep contracts
 auth-agnostic. Choose it when mock-mode identity isn't needed; it is not wrong.
@@ -156,6 +217,10 @@ Read → `queries/get-*.cs` · Write → `commands/create-|update-|delete-*.cs`
 
 ### 2. Scaffold the partial class
 
+- `[ApiEndpoint]` on the outer operation class when a server host should generate the FastEndpoint
+- Exactly one of `[EndpointAuthorize(Policy=…)]` (protected) or `[EndpointAllowAnonymous(reason)]`
+  (genuinely public) — required on every `[ApiEndpoint]` contract; **TWA0013** flags the omission,
+  **TWA0014** flags picking both, or anonymous alongside `IAuthApiRequest`
 - `[ApiRoute("api/...", HttpVerb.*)]` on nested `Query`/`Command`
 - Implement `IApiRequest` (or `IAuthApiRequest` — see auth forms above; add
   `IQueryStringRouteProvider` when query-string filters apply)
@@ -263,11 +328,12 @@ Contracts are authored **before** the server exists (frontend-first, mock-backed
 dedicated, host-free contracts test project (`*contracts-tests`, Fixie + **Shouldly**) is the only
 test that can run in that window.
 
-Add `SerializeAndDeserialize` round-trips using camelCase `JsonSerializerOptions`. **Prioritize**
+Add `SerializeAndDeserialize` round-trips using `ContractSerializationDefaults` (camelCase
+properties; PascalCase string enums via `JsonStringEnumConverter`, integers rejected). **Prioritize**
 contracts where serialization can actually diverge: `required`/`init` members, custom converters,
-non-default constructors, `OneOf`/`SharedProblemDetails` envelopes. Plain auto-property POCOs are
-low-priority once server integration tests exist. Do not use FluentAssertions (v8+ is commercially
-licensed).
+non-default constructors, enum properties, `OneOf`/`SharedProblemDetails` envelopes. Plain
+auto-property POCOs are low-priority once server integration tests exist. Do not use
+FluentAssertions (v8+ is commercially licensed).
 
 ### 10. Mock response factory (when mock mode needs it)
 
@@ -283,6 +349,8 @@ error. See the `mock-response-factory` skill.
 ## Validation checklist
 
 - [ ] `public static partial class` with nested `Query`/`Command`, `Response`, `Validator`
+- [ ] `[ApiEndpoint]` on hosted operations; exactly one of `[EndpointAuthorize]` /
+      `[EndpointAllowAnonymous(reason)]`, always (TWA0013/TWA0014 enforce this)
 - [ ] `[ApiRoute]` with correct verb and route constraints (`{Id:guid}`, `{Id:min(1)}`, …)
 - [ ] `IRequest<OneOf<Response, SharedProblemDetails>>` (TimeWarp.Mediator)
 - [ ] Folder plural + repo's casing; namespace plural
@@ -309,6 +377,10 @@ error. See the `mock-response-factory` skill.
 | Entity-centric shared DTO per endpoint | Endpoint-centric types; share only validation interfaces or read-only display interfaces |
 | `sealed record` request/response | Classes + `partial` + source generation |
 | Hand-declared route params | Trust `[ApiRoute]` source generation |
+| Hand-written MVC `BaseEndpoint` shim for a hosted contract | Annotate `[ApiEndpoint]` (+ `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]`); generation is the template convention |
+| `[ApiEndpoint]` with no auth marker, assuming the generator defaults to anonymous | It doesn't (task 110, fail-closed) — no marker emits nothing, so FastEndpoints' own default (auth required) applies; TWA0013 also catches it at build time |
+| Treating `IAuthApiRequest` as if it secures the route | It's a client/mock-mode identity signal only — `[EndpointAuthorize]` is the sole server-auth marker; TWA0014 flags pairing `IAuthApiRequest` with `[EndpointAllowAnonymous]` |
+| Re-validating in the handler or enabling FE FluentValidation | Validation is `FluentValidationBehavior` on the mediator only |
 | `required init` Response with invariants | `Guid.Empty` slips through — ctor + `Guard` |
 | Copying paths/casing from another repo | Read existing contracts in **this** repo first |
 

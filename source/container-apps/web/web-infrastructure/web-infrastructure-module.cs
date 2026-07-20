@@ -3,9 +3,13 @@
 #endregion
 
 #region Design
-// Empty by design: Postgres wiring lives in Web.Server's PostgresDbModule behind the
-// `postgres` feature flag, so this module is the seam for flag-independent infrastructure
-// services only.
+// Postgres wiring lives in Web.Server's PostgresDbModule behind the `postgres` feature flag, so this
+// module is the seam for flag-independent infrastructure services only.
+// IPrincipalStore, IWebAuthnChallengeStore, IAgentKeyChallengeStore, and IAgentTokenStore are
+// registered here as process-lifetime singletons backed by the in-memory implementations shipped in
+// timewarp-identity — per 104-003/104-004 scope boundaries, there is no EF-backed store yet (a
+// separate, later task) and no distributed challenge/token store; a single web-server instance is
+// the deployment assumption these implementations make.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Infrastructure;
@@ -14,6 +18,9 @@ public class WebInfrastructureModule : IModule
 {
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-
+    serviceCollection.AddSingleton<IPrincipalStore, InMemoryPrincipalStore>();
+    serviceCollection.AddSingleton<IWebAuthnChallengeStore, InMemoryWebAuthnChallengeStore>();
+    serviceCollection.AddSingleton<IAgentKeyChallengeStore, InMemoryAgentKeyChallengeStore>();
+    serviceCollection.AddSingleton<IAgentTokenStore, InMemoryAgentTokenStore>();
   }
 }

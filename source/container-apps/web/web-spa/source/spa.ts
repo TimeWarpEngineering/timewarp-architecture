@@ -3,8 +3,10 @@
 // JS interop resolver requires every intermediate path segment to be typeof "object",
 // so "Spa.Counter.DispatchIncrementCountAction" only resolves if Spa/Counter are objects.
 import { Counter } from "./features/counter.js";
+import { WebAuthn } from "./features/web-authn.js";
 
 export const Spa = {
   Counter,
+  WebAuthn,
   // Additional features can be added here.
 };

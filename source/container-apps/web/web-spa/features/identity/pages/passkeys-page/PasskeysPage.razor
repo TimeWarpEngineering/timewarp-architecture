@@ -1,0 +1,47 @@
+@namespace TimeWarp.Architecture.Features.Identity
+@inherits BaseComponent
+@inject IWebServerApiService ApiService
+@inject IJSRuntime JsRuntime
+
+@code {
+  public static string Title => "Passkeys";
+  public static Icon? NavIcon => new Icons.Regular.Size20.PersonPasskey();
+}
+
+<PageTitle>Passkeys</PageTitle>
+
+<TimeWarpPage Title="Passkeys">
+  <div class="twe-stack">
+    <Card Title="Passkey demo">
+      <FluentStack Orientation=Orientation.Vertical VerticalGap="16">
+        <p>
+          Minimal demo of the first-party WebAuthn passkey ceremony (no email/username collection).
+          A full sign-in call-to-action integration is a separate task (104-016).
+        </p>
+        <p>
+          Session: @(IsAuthenticated is true ? "authenticated" : IsAuthenticated is false ? "not authenticated" : "checking...")
+        </p>
+        <div>
+          <FluentButton Appearance=ButtonAppearance.Primary data-qa="RegisterPasskey" Disabled=IsBusy OnClick=RegisterPasskey>
+            Register a passkey
+          </FluentButton>
+        </div>
+        <div>
+          <FluentButton Appearance=ButtonAppearance.Outline data-qa="AuthenticateWithPasskey" Disabled=IsBusy OnClick=AuthenticateWithPasskey>
+            Sign in with a passkey
+          </FluentButton>
+        </div>
+      </FluentStack>
+    </Card>
+
+    @if (!string.IsNullOrEmpty(StatusMessage))
+    {
+      <SimpleAlert Type="SimpleAlert.AlertType.Success" Title="Success">@StatusMessage</SimpleAlert>
+    }
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+      <SimpleAlert Type="SimpleAlert.AlertType.Danger" Title="Error">@ErrorMessage</SimpleAlert>
+    }
+  </div>
+</TimeWarpPage>

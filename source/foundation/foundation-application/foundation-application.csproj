@@ -5,6 +5,12 @@
     <Description>Application-layer abstractions and MediatR pipeline behaviors for the TimeWarp foundation layer.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Explicit: DomainInvariantsGuard uses FluentValidation directly. Do not rely on the
+         transitive flow from foundation-contracts for a published package. -->
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\foundation-contracts\foundation-contracts.csproj" />
     <ProjectReference Include="..\foundation-domain\foundation-domain.csproj" />
     <ProjectReference Include="..\..\libraries\timewarp-modules\timewarp-modules.csproj" />

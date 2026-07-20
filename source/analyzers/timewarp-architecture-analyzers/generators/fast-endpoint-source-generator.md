@@ -68,6 +68,27 @@ public class GetWeatherForecastsEndpoint : BaseFastEndpoint<Query, Response>
 }
 ```
 
+## Authorization (task 110 — fail-closed default)
+
+The generator reads two mutually-exclusive markers on the outer `[ApiEndpoint]` class:
+
+| Marker | Effect |
+|--------|--------|
+| `[EndpointAuthorize(Policy=…, Roles=…, AuthenticationSchemes=…)]` | Emits `Policies(...)` / `Roles(...)` / `AuthSchemes(...)` |
+| `[EndpointAllowAnonymous("reason")]` | Emits `AllowAnonymous()` |
+| *(neither)* | Emits **nothing** — FastEndpoints requires authentication by default |
+
+Before task 110, an unmarked contract generated `AllowAnonymous()` — fail-open: a contract author
+who forgot the marker shipped a public endpoint silently. The default is now fail-closed: silence
+means "requires auth," and going anonymous requires the explicit, reasoned
+`[EndpointAllowAnonymous]` opt-out (reason is a required constructor argument, mirroring
+`[ClientOnlyContract]`). If both markers are present, `[EndpointAuthorize]` wins at generation, but
+that state is a contract-author error — `TWA0013`/`TWA0014` (in
+`timewarp-architecture-convention-analyzers`) enforce that every `[ApiEndpoint]` contract states
+exactly one posture, and flag a contract carrying `[EndpointAllowAnonymous]` while its nested
+`Query`/`Command` implements `IAuthApiRequest` (interface or `[AuthApiRequest]` mixin) as a
+contradiction.
+
 ## Implementation Details
 1. Uses SelectMany with recursive namespace traversal to find classes in referenced assemblies
 2. Validates class structure and attributes

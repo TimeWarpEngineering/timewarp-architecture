@@ -11,3 +11,6 @@ TWE002 | ApiEndpoint | Error | Missing Query/Command class
 TWE003 | ApiEndpoint | Error | Route conflict detected
 TWE004 | ApiEndpoint | Error | Invalid interface implementation
 TWE005 | Page | Error | [Page] Policy must be a const field reference (not string literal or nameof)
+TWE006 | TypedId | Error | [TypedId] target must be a readonly partial record struct
+SG010 | SourceGenerator | Warning | TypedId BCL surface generation failed (resilience backstop, names the type)
+SG011 | SourceGenerator | Warning | TypedId EF converter generation failed (resilience backstop)
