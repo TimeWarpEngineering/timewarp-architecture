@@ -13,7 +13,9 @@
 // Credential lookup by CredentialId (RFC D3), not raw Guid. Type and Handle are immutable after Create — UpdateCredential
 // persists revoke/label (and similar) changes for the same Id only; no handle reindex contract.
 // FindCredentialByHandle may return revoked credentials (callers check IsRevoked).
-// D5: TimeProvider not part of this port (deferred to 104-006).
+// Clocks (D5, closed 104-006): TimeProvider is not part of this durable port — entity CreatedAt/
+// RevokedAt stay wall-clock; ceremony challenge/token stores (not this port) already accept optional
+// TimeProvider. Full domain-entity TimeProvider is not required for the Wave 1 gate.
 //
 // Concurrency (task 104-028, supersedes D6 last-write-wins and D4's "shared-reference vs
 // snapshot-on-get is an implementation choice"). Principal and Credential inherit

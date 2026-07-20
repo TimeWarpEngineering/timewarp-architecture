@@ -14,6 +14,7 @@ namespace AgentToken_;
 
 using System.Buffers.Text;
 using System.Net;
+using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;
@@ -153,7 +154,40 @@ public class Returns_
     replay.AsT2.Status.ShouldBe(400);
   }
 
+  public async Task Forbidden_Given_Quarantined_Principal()
+  {
+    // G3 (104-006): proof must succeed, then quarantine is the distinct 403 signal — not 400.
+    var key = new IntegrationSoftwareAgentKey();
+    (string keyId, PrincipalId principalId) = await RegisterAgentKeyWithPrincipal(key);
+    await QuarantinePrincipal(principalId);
+
+    CompleteAgentTokenIssuance.Command tokenCommand = await BuildValidTokenCommand(key, keyId, [AgentScopes.IdentityRead]);
+
+    OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> result =
+      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+
+    result.IsT2.ShouldBeTrue("Token issuance for a quarantined principal should return a problem.");
+    result.AsT2.Status.ShouldBe(403);
+    result.AsT2.Title.ShouldBe("Account quarantined");
+  }
+
+  private async Task QuarantinePrincipal(PrincipalId principalId)
+  {
+    IPrincipalStore store =
+      WebTestServerApplication.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
+    Principal? principal = await store.GetPrincipalAsync(principalId);
+    principal.ShouldNotBeNull();
+    principal.Quarantine();
+    await store.UpdatePrincipalAsync(principal);
+  }
+
   private async Task<string> RegisterAgentKey(IntegrationSoftwareAgentKey key)
+  {
+    (string keyId, PrincipalId _) = await RegisterAgentKeyWithPrincipal(key);
+    return keyId;
+  }
+
+  private async Task<(string KeyId, PrincipalId PrincipalId)> RegisterAgentKeyWithPrincipal(IntegrationSoftwareAgentKey key)
   {
     OneOf<StartAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> start =
       await WebTestServerApplication.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
@@ -171,7 +205,7 @@ public class Returns_
       await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
 
     result.IsT0.ShouldBeTrue("Registration setup for a token test should succeed.");
-    return result.AsT0.KeyId;
+    return (result.AsT0.KeyId, result.AsT0.PrincipalId);
   }
 
   private async Task<CompleteAgentTokenIssuance.Command> BuildValidTokenCommand(IntegrationSoftwareAgentKey key, string keyId, List<string> scopes)

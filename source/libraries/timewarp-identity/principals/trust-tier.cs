@@ -8,7 +8,9 @@
 // Quarantine is NOT a tier — it is an orthogonal bool on Principal (IsQuarantined). Free ordinal compares like
 // tier >= Funded are forbidden in handlers; use named predicates (IsFundedAndActive). Transitions go through
 // Promote / RecordCredentialAttached, not a free setter.
-// D5: TimeProvider for CreatedAt/RevokedAt is deferred to 104-006.
+// Clocks (D5, closed 104-006): this enum has no timestamps — Principal/Credential CreatedAt/RevokedAt
+// remain wall-clock with fuzzy tests; ceremony stores already use optional TimeProvider. Full
+// TimeProvider on domain entities is not required for the Wave 1 gate.
 #endregion
 
 namespace TimeWarp.Identity;
