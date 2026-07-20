@@ -5,9 +5,16 @@
 #region Design
 // Mirrors ASP.NET's AuthorizeAttribute property surface so contracts stay familiar, but is a
 // generator-facing marker — not wired through ASP.NET's authorization filter pipeline.
-// Absence means the generator emits AllowAnonymous(); presence without Policy/Roles still requires
-// auth (FastEndpoints default). Policy maps to FE Policies(...); never emit RequireAuthorization()
-// (that API does not exist on EndpointDefinition).
+// Absence rule CHANGED in task 110 (fail-closed default): absence of THIS attribute no longer means
+// AllowAnonymous() — it means the generator emits nothing, and FastEndpoints requires
+// authentication by default. AllowAnonymous() is now emitted ONLY when [EndpointAllowAnonymous] is
+// present (and this attribute is not) — see that attribute's Design region. Presence of this
+// attribute without Policy/Roles still requires auth with no further restriction (FastEndpoints
+// default) — unchanged. Policy maps to FE Policies(...); never emit RequireAuthorization() (that
+// API does not exist on EndpointDefinition). TWA0013 flags an [ApiEndpoint] contract carrying
+// NEITHER this attribute nor [EndpointAllowAnonymous]; TWA0014 flags both present together, or this
+// attribute's absence while [EndpointAllowAnonymous] contradicts an IAuthApiRequest-declaring
+// nested Query/Command.
 // Lives in TimeWarp.Architecture.Attributes so contract assemblies can annotate without a Roslyn dep.
 #endregion
 

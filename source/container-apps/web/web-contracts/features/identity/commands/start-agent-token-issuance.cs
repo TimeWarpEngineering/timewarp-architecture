@@ -11,11 +11,14 @@
 // the agent already knows which KeyId it is claiming and supplies it explicitly in
 // CompleteAgentTokenIssuance.
 // No GetMockResponseFactory — see StartAgentKeyRegistration's Design region.
+// [EndpointAllowAnonymous] (task 110): mints a one-time token-issuance challenge — the agent has
+// not yet proven possession of a key, so there is nothing to authorize against.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("Mints a one-time token-issuance challenge; the agent has not yet proven possession of a key, so there is nothing to authorize against.")]
 public static partial class StartAgentTokenIssuance
 {
   [ApiRoute("api/identity/agent/token/options", HttpVerb.Post)]

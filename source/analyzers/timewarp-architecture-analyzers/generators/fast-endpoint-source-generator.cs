@@ -15,8 +15,11 @@
 // can strip those references while the generator package remains attached.
 // Catches all exceptions (CA1031): a throwing generator would break the entire compilation.
 // Request type is Query or Command per metadata.RequestTypeName; HTTP verb comes from resolved
-// enum member name (not the underlying int). Auth: [EndpointAuthorize] → Policies/Roles/AuthSchemes;
-// no attribute → AllowAnonymous. Do not emit RequireAuthorization() (not on EndpointDefinition).
+// enum member name (not the underlying int). Auth (task 110, fail-closed default):
+// [EndpointAuthorize] → Policies/Roles/AuthSchemes; [EndpointAllowAnonymous] → AllowAnonymous();
+// NEITHER attribute → emit nothing (FastEndpoints requires authentication by default — the inverse
+// of the pre-110 "no attribute → AllowAnonymous" behavior). Do not emit RequireAuthorization()
+// (not on EndpointDefinition).
 // Empty request DTOs (no public properties) get EmptyRequestBinder — FE's default binder rejects them.
 // Summary/Description only — no weather-specific ExampleRequest.
 #endregion
@@ -243,9 +246,14 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Builds FastEndpoints Configure() auth lines from [EndpointAuthorize] metadata.
-  /// No attribute → AllowAnonymous. Policy → Policies(...). Roles → Roles(...).
-  /// Schemes → AuthSchemes(...). FE requires auth by default when AllowAnonymous is not called.
+  /// Builds FastEndpoints Configure() auth lines from [EndpointAuthorize]/[EndpointAllowAnonymous]
+  /// metadata. Task 110 fail-closed default: metadata.AllowAnonymous is true ONLY when
+  /// [EndpointAllowAnonymous] was present (see EndpointMetadata.FromSymbol) — in that case emit
+  /// AllowAnonymous(). Otherwise: Policy → Policies(...); Roles → Roles(...);
+  /// Schemes → AuthSchemes(...); and if NONE of those were set (either because [EndpointAuthorize]
+  /// carried no Policy/Roles, or because NEITHER marker was present at all) this method emits
+  /// NOTHING — FE requires auth by default when AllowAnonymous() is never called, which is exactly
+  /// the fail-closed behavior an unmarked contract must get.
   /// </summary>
   private static string BuildAuthConfiguration(EndpointMetadata metadata)
   {
@@ -270,8 +278,10 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
       lines.Add($"Roles({FormatCsvStringArgs(metadata.Roles)});");
     }
 
-    // [EndpointAuthorize] with no Policy/Roles (and optional AuthSchemes only): FE defaults to
-    // requiring authentication — emit no AllowAnonymous and no non-existent RequireAuthorization().
+    // Either [EndpointAuthorize] carried no Policy/Roles (optional AuthSchemes only), or NEITHER
+    // marker was present at all (task 110 fail-closed default) — either way FE defaults to
+    // requiring authentication when nothing is emitted: no AllowAnonymous, no non-existent
+    // RequireAuthorization().
     return lines.Count > 0
       ? string.Join("\n         ", lines)
       : string.Empty;

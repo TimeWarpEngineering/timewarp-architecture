@@ -110,6 +110,15 @@ public class Program : IAspNetProgram
           .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
           .RequireAuthenticatedUser()
           .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.IdentityRead)
+      )
+      // Task 110: any signed-in identity-session cookie — see IdentitySessionDefaults.AuthenticatedPolicy's
+      // Design region for why this is deliberately not an admin/role-based policy.
+      .AddPolicy
+      (
+        IdentitySessionDefaults.AuthenticatedPolicy,
+        policy => policy
+          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
+          .RequireAuthenticatedUser()
       );
     // TODO: Review the options for this seesm like could just pass whole config???
     serviceCollection.AddPasswordlessSdk(options =>

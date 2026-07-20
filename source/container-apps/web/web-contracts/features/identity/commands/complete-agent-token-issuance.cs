@@ -39,11 +39,15 @@
 // gracefully (it simply does not iterate) — confirmed, not assumed, before this fix; no change
 // needed there.
 // No GetMockResponseFactory — see StartAgentKeyRegistration's Design region.
+// [EndpointAllowAnonymous] (task 110): this IS the proof-of-possession request that mints the
+// bearer token — nothing to authorize against yet (the token this request produces is what later
+// authorizes GetAgentIdentity and other agent-token-protected endpoints).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("This is the proof-of-possession request that mints the bearer token — nothing to authorize against yet.")]
 public static partial class CompleteAgentTokenIssuance
 {
   [ApiRoute("api/identity/agent/token", HttpVerb.Post)]

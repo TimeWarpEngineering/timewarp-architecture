@@ -10,11 +10,14 @@
 // challenge that a later CompletePasskeyRegistration call must also satisfy) — SPA mock mode shows
 // "passkeys not supported" instead (see web-spa/features/identity's PasskeysPage), a deliberate,
 // documented opt-out rather than an oversight.
+// [EndpointAllowAnonymous] (task 110): establishes the ceremony that will, if completed, create the
+// session — there is no prior session to authorize against.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("Starts the passkey registration ceremony that will, if completed, create the session — no prior session exists to authorize against.")]
 public static partial class StartPasskeyRegistration
 {
   [ApiRoute("api/identity/passkey/register/options", HttpVerb.Post)]

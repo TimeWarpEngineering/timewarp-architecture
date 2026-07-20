@@ -123,6 +123,12 @@ Supporting request shapes:
   manual `IAuthApiRequest` form (implement the interface, declare `Guid UserId`) suits POST bodies
   and GET-by-id; the `[AuthApiRequest]` attribute form suits query-string list queries. The server
   must never trust a client-sent `UserId` — it re-derives identity from the auth token.
+  **`IAuthApiRequest` is a client/mock-mode identity signal only — it does not secure the server.**
+  Every hosted (`[ApiEndpoint]`) contract needs its own `[EndpointAuthorize(Policy=…)]` (protected)
+  or `[EndpointAllowAnonymous(reason)]` (genuinely public) to state its real auth posture; the
+  generator is fail-closed (no marker emits no auth config, not anonymous), and TWA0013/TWA0014
+  enforce that the marker is present and doesn't contradict `IAuthApiRequest`. See the
+  `web-api-contracts` skill's "Auth requests vs. server auth" section for the full truth table.
 - **`IQueryStringRouteProvider`**: implement `GetRouteWithQueryString()` for optional filters,
   composing the generated helpers into a `NameValueCollection`.
 - **`ListResponse<TDto>`**: base for list responses (`totalCount` + items).

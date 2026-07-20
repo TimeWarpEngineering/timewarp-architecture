@@ -31,6 +31,7 @@ Empty/unset scans all referenced assemblies (api-server default).
 using TimeWarp.Architecture.Attributes;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("Public demo data with no security surface; the template's reference contract is meant to be reachable with zero setup.")]
 public static partial class GetWeatherForecasts
 {
     /// <summary>
@@ -53,7 +54,7 @@ public static partial class GetWeatherForecasts
 }
 ```
 
-2. Authorization (optional) on the outer class — absence means anonymous:
+2. Authorization on the outer class — **required, exactly one marker** (task 110, fail-closed):
 
 ```csharp
 [ApiEndpoint]
@@ -67,10 +68,11 @@ public static partial class GetAgentIdentity
 
 | Contract annotation | Generated `Configure()` emission |
 |---------------------|----------------------------------|
-| No `[EndpointAuthorize]` | `AllowAnonymous();` |
 | `[EndpointAuthorize(Policy = "…")]` | `Policies("…");` |
 | `Roles` / `AuthenticationSchemes` | `Roles(…)` / `AuthSchemes(…)` |
 | Attribute present, no Policy/Roles | FE default (auth required); no `AllowAnonymous` |
+| `[EndpointAllowAnonymous(reason)]` | `AllowAnonymous();` — `reason` is a required, honest, per-contract string |
+| **Neither marker** | **Nothing emitted — fail-closed.** FastEndpoints' own default (auth required) applies. This is unreachable in a clean build: **TWA0013** flags the omission. Both markers present, or `[EndpointAllowAnonymous]` alongside a nested `Query`/`Command` implementing `IAuthApiRequest`, is **TWA0014**. |
 
 3. The generator emits a `*Endpoint` class (shape simplified):
 
@@ -150,7 +152,8 @@ The generator extracts OpenAPI documentation from:
 | Route conflict | Same route + verb registered twice |
 
 Contract-shape rules for the outer class (`static`/`partial`, Query/Command present) are enforced
-alongside TWA0005/0006 (endpoint verb agreement and coverage for every routed contract).
+alongside TWA0005/0006 (endpoint verb agreement and coverage for every routed contract) and
+TWA0013/0014 (every `[ApiEndpoint]` contract carries exactly one auth-posture marker).
 
 ## Customization
 
@@ -159,12 +162,20 @@ alongside TWA0005/0006 (endpoint verb agreement and coverage for every routed co
    [ApiEndpoint(EndpointType = typeof(MinimalApiEndpoint<,>))]
    ```
 
-2. Authorization — prefer `[EndpointAuthorize]` on the contract (single source of auth intent):
+2. Authorization — the contract is the single source of auth intent; every `[ApiEndpoint]`
+   contract carries exactly one of `[EndpointAuthorize]` (protected) or `[EndpointAllowAnonymous]`
+   (genuinely public):
    ```csharp
    [ApiEndpoint]
    [EndpointAuthorize(Policy = "my-policy")]
    public static partial class SecureEndpoint { /* … */ }
+
+   [ApiEndpoint]
+   [EndpointAllowAnonymous("Public demo endpoint; no security surface.")]
+   public static partial class PublicEndpoint { /* … */ }
    ```
+   `IAuthApiRequest` on the nested `Query`/`Command` is a client/mock-mode identity signal only —
+   it does not secure the server and must not be paired with `[EndpointAllowAnonymous]` (TWA0014).
 
 ## Validation (not in the generator)
 
@@ -178,5 +189,7 @@ Keep `IncludeAbstractValidators = false`. Request validators run via the mediato
 2. Use consistent naming patterns
 3. Document endpoints using XML comments on Query/Command
 4. Organize endpoints in feature folders
-5. Put auth intent on the contract (`[EndpointAuthorize]`), not a hand-maintained sidecar
+5. Put auth intent on the contract — exactly one of `[EndpointAuthorize]` or
+   `[EndpointAllowAnonymous(reason)]`, always — not a hand-maintained sidecar; TWA0013/TWA0014
+   enforce the pairing at build time
 6. Do not hand-write `BaseEndpoint` / MVC controller shims for template contracts

@@ -19,11 +19,15 @@
 // save this and resend it in CompleteAgentTokenIssuance.Command.KeyId; there is no
 // find-by-public-key shortcut at token time (see CompleteAgentTokenIssuance's Design region).
 // No GetMockResponseFactory — see StartAgentKeyRegistration's Design region.
+// [EndpointAllowAnonymous] (task 110): this IS the request that mints the agent's Principal on
+// success — no sponsor, no prior session to authorize against (task 104-004 requirement: no human
+// sponsor required at registration).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("This is the request that mints the agent's Principal on success — no human sponsor or prior session required by design.")]
 public static partial class CompleteAgentKeyRegistration
 {
   [ApiRoute("api/identity/agent/register", HttpVerb.Post)]

@@ -11,11 +11,14 @@
 // CompleteAgentKeyRegistration, so there is no JSON wrapper to extract it from.
 // No GetMockResponseFactory: an agent-key ceremony cannot be meaningfully mocked without a real
 // keypair to answer it, same rationale as StartPasskeyRegistration's Design region.
+// [EndpointAllowAnonymous] (task 110): mints a one-time registration challenge — no prior identity
+// exists to authorize against, and no human sponsor is required by design (task 104-004 requirement).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("Mints a one-time registration challenge; no prior identity to authorize against, and no human sponsor is required by design.")]
 public static partial class StartAgentKeyRegistration
 {
   [ApiRoute("api/identity/agent/register/options", HttpVerb.Post)]

@@ -18,11 +18,16 @@
 // Signature at 64KB (coarse DoS-shaped ceiling, not a realistic-size estimate — see
 // CompletePasskeyRegistration's Design region for the same rationale).
 // No GetMockResponseFactory — see StartPasskeyRegistration's Design region.
+// [EndpointAllowAnonymous] (task 110): this IS the request that establishes the session (on
+// success) — nothing to authorize against yet. A rejected assertion never reaches a 401/403 auth
+// challenge; it returns a SharedProblemDetails, since there is no prior session here to challenge
+// against.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("This is the request that establishes the session on success — nothing to authorize against yet.")]
 public static partial class CompletePasskeyAuthentication
 {
   [ApiRoute("api/identity/passkey/authenticate", HttpVerb.Post)]

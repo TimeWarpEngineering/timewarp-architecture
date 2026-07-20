@@ -43,8 +43,10 @@ Concrete shape:
 
 * **`[ApiEndpoint]`** on the outer operation class — generation opt-in (not every `[ApiRoute]`).
 * **`[ApiRoute("…", HttpVerb.X)]`** on nested `Query`/`Command` — route and verb source of truth.
-* **`[EndpointAuthorize(Policy=…)]`** (optional) — generator emits `Policies(...)` / `Roles(...)` /
-  `AuthSchemes(...)`; absence → `AllowAnonymous()`.
+* **`[EndpointAuthorize(Policy=…)]`** / **`[EndpointAllowAnonymous(reason)]`** — exactly one is
+  required on every `[ApiEndpoint]` contract; the generator emits `Policies(...)` / `Roles(...)` /
+  `AuthSchemes(...)` for the former, `AllowAnonymous()` for the latter, and nothing (fail-closed)
+  if neither is present (task 110; TWA0013/TWA0014 enforce the pairing).
 * **No hand-written `BaseEndpoint` shims** in the template after cutover.
 * **Validation** remains `FluentValidationBehavior` on TimeWarp.Mediator; FastEndpoints'
   `IncludeAbstractValidators` stays false; handlers do not re-validate.
@@ -65,6 +67,9 @@ Concrete shape:
   request binders, and auth emission (hardened in 109-001/002)
 * Blazor + FastEndpoints middleware order must keep auth before FE (documented in host wiring)
 * Older docs/skills that described the MVC split needed updating (109-004)
+* The original absence-means-anonymous default let auth intent go unstated on generated endpoints;
+  landing the fail-closed default required a same-pass sweep annotating every existing
+  `[ApiEndpoint]` contract with an explicit marker (task 110)
 
 ## Pros and Cons of the Options
 
@@ -92,6 +97,6 @@ Concrete shape:
   contracts and interface validation
 * Reference: [ApiEndpointSourceGenerator.md](../../../reference/ApiEndpointSourceGenerator.md)
 * Skill: `skills/web-api-contracts/SKILL.md`
-* Tasks: 004 (api-only), 109 / 109-001…109-004 (web cutover + docs)
+* Tasks: 004 (api-only), 109 / 109-001…109-004 (web cutover + docs), 110 (fail-closed auth default)
 
 <!-- markdownlint-disable-file MD013 -->

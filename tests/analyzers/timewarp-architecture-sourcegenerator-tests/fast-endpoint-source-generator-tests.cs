@@ -40,7 +40,10 @@ public class FastEndpointSourceGenerator_Tests
     generatedCode.ShouldContain("public class GetWeatherForecastsEndpoint");
     generatedCode.ShouldContain("BaseFastEndpoint<GetWeatherForecasts.Query, GetWeatherForecasts.Response>");
     generatedCode.ShouldContain("""Get("api/weatherForecasts")""");
-    generatedCode.ShouldContain("AllowAnonymous()");
+    // Task 110 fail-closed default: no [EndpointAuthorize]/[EndpointAllowAnonymous] marker means
+    // the generator emits NOTHING — FastEndpoints then requires authentication by default. This is
+    // the inverse of the pre-110 assertion (which used to require AllowAnonymous() here).
+    generatedCode.ShouldNotContain("AllowAnonymous");
 
     return Task.CompletedTask;
   }
@@ -106,7 +109,8 @@ public class FastEndpointSourceGenerator_Tests
     generatedCode.ShouldContain("BaseFastEndpoint<CreateItem.Command, CreateItem.Response>");
     generatedCode.ShouldNotContain("CreateItem.Query");
     generatedCode.ShouldNotContain("ExampleRequest");
-    generatedCode.ShouldContain("AllowAnonymous()");
+    // Task 110 fail-closed default — see Should_Generate_Endpoint_From_Contract's comment.
+    generatedCode.ShouldNotContain("AllowAnonymous");
 
     return Task.CompletedTask;
   }
@@ -287,6 +291,77 @@ public class FastEndpointSourceGenerator_Authorization_Tests
     generatedCode.ShouldContain("""AuthSchemes("Bearer")""");
     generatedCode.ShouldNotContain("AllowAnonymous");
     generatedCode.ShouldNotContain("RequireAuthorization");
+
+    return Task.CompletedTask;
+  }
+
+  // Task 110: explicit anonymous opt-out.
+  private const string ExplicitAnonymousContract = """
+    using TimeWarp.Architecture;
+    using TimeWarp.Architecture.Attributes;
+
+    namespace Test.Features.Hello;
+
+    [ApiEndpoint]
+    [EndpointAllowAnonymous("Public demo endpoint; no security surface.")]
+    public static partial class SayHello
+    {
+        [ApiRoute("api/hello", HttpVerb.Get)]
+        public sealed partial class Query { }
+
+        public sealed class Response { }
+    }
+    """;
+
+  public static Task Should_Emit_AllowAnonymous_For_EndpointAllowAnonymous()
+  {
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly(ExplicitAnonymousContract);
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
+
+    string generatedCode = runResult.Results
+      .SelectMany(r => r.GeneratedSources)
+      .Single()
+      .SourceText.ToString();
+
+    generatedCode.ShouldContain("AllowAnonymous()");
+
+    return Task.CompletedTask;
+  }
+
+  // Task 110: both markers present — [EndpointAuthorize] wins at generation (TWA0014 flags the
+  // contradiction separately; the generator must still emit something deterministic).
+  private const string BothMarkersContract = """
+    using TimeWarp.Architecture;
+    using TimeWarp.Architecture.Attributes;
+
+    namespace Test.Features.Admin;
+
+    [ApiEndpoint]
+    [EndpointAuthorize(Policy = "AdminOnly")]
+    [EndpointAllowAnonymous("Contradictory marker for this test.")]
+    public static partial class GetConflictedStats
+    {
+        [ApiRoute("api/admin/conflicted-stats", HttpVerb.Get)]
+        public sealed partial class Query { }
+
+        public sealed class Response { }
+    }
+    """;
+
+  public static Task Should_Prefer_EndpointAuthorize_When_Both_Markers_Present()
+  {
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly(BothMarkersContract);
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
+
+    string generatedCode = runResult.Results
+      .SelectMany(r => r.GeneratedSources)
+      .Single()
+      .SourceText.ToString();
+
+    generatedCode.ShouldContain("""Policies("AdminOnly")""");
+    generatedCode.ShouldNotContain("AllowAnonymous");
 
     return Task.CompletedTask;
   }

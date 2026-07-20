@@ -13,7 +13,14 @@
 // would emit "1" for Post and fall through ConvertHttpVerbToMethodName to Get).
 // RequestTypeName is the nested "Query" or "Command" so BaseFastEndpoint<TRequest,TResponse>
 // binds the correct request type.
-// Authorization: [EndpointAuthorize] drives Policies/Roles/AuthSchemes; absence → AllowAnonymous.
+// Authorization (task 110 — fail-closed default): [EndpointAuthorize] drives Policies/Roles/
+// AuthSchemes. [EndpointAllowAnonymous] (and ONLY that attribute) sets AllowAnonymous=true.
+// Absence of BOTH markers leaves AllowAnonymous=false with no Policy/Roles/Schemes, so
+// BuildAuthConfiguration emits nothing — FastEndpoints then requires authentication by default.
+// This is the inverse of the pre-110 behavior (absence used to mean AllowAnonymous=true). When
+// both markers are present, [EndpointAuthorize] wins (TWA0014 separately flags that as a
+// contract-author error to resolve — the generator does not error, it picks a deterministic
+// winner).
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Models;
@@ -32,8 +39,12 @@ internal sealed class EndpointMetadata
   public string? AuthorizationPolicy { get; set; }
   public string? AuthenticationSchemes { get; set; }
   public string? Roles { get; set; }
-  /// <summary>True when no <c>[EndpointAuthorize]</c> is present on the contract.</summary>
-  public bool AllowAnonymous { get; set; } = true;
+  /// <summary>
+  /// True ONLY when <c>[EndpointAllowAnonymous]</c> is present and <c>[EndpointAuthorize]</c> is
+  /// not (task 110: fail-closed default — absence of BOTH markers leaves this false, so
+  /// BuildAuthConfiguration emits nothing and FastEndpoints requires authentication by default).
+  /// </summary>
+  public bool AllowAnonymous { get; set; }
   /// <summary>
   /// True when the request DTO has no public instance properties (FE default binder rejects these).
   /// </summary>
@@ -86,21 +97,31 @@ internal sealed class EndpointMetadata
       }
     }
 
-    // Authorization from [EndpointAuthorize] on the contract class (simple name match).
+    // Authorization from [EndpointAuthorize]/[EndpointAllowAnonymous] on the contract class
+    // (simple name match — matches every other attribute lookup in this file, so the marker works
+    // regardless of which consuming assembly's root namespace it was generated/declared in).
     AttributeData? endpointAuthorize = symbol.GetAttributes()
       .FirstOrDefault(attr => attr.AttributeClass?.Name == "EndpointAuthorizeAttribute");
+    AttributeData? endpointAllowAnonymous = symbol.GetAttributes()
+      .FirstOrDefault(attr => attr.AttributeClass?.Name == "EndpointAllowAnonymousAttribute");
 
-    if (endpointAuthorize is null)
+    if (endpointAuthorize is not null)
     {
-      metadata.AllowAnonymous = true;
-    }
-    else
-    {
+      // [EndpointAuthorize] wins when both markers are present — see this file's Design region.
       metadata.AllowAnonymous = false;
       metadata.AuthorizationPolicy = GetNamedStringArgument(endpointAuthorize, "Policy");
       metadata.AuthenticationSchemes = GetNamedStringArgument(endpointAuthorize, "AuthenticationSchemes");
       metadata.Roles = GetNamedStringArgument(endpointAuthorize, "Roles");
     }
+    else if (endpointAllowAnonymous is not null)
+    {
+      metadata.AllowAnonymous = true;
+    }
+    // else: fail-closed default already set by the field initializer (AllowAnonymous = false) —
+    // no explicit marker means BuildAuthConfiguration emits nothing and FastEndpoints requires
+    // authentication by default. Unreachable in a clean build once TWA0013 is wired (every
+    // [ApiEndpoint] contract must carry one marker), but stays fail-closed even under a suppressed
+    // analyzer.
 
     // Extract custom endpoint type
     AttributeData? apiEndpointAttribute = symbol.GetAttributes()

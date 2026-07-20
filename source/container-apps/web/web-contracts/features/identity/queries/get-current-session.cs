@@ -13,11 +13,15 @@
 // the ctor throws ArgumentException on isAuthenticated != (principalId is not null), so a
 // disagreeing pair can never be constructed (and therefore never serialized), not merely one the
 // handler happens to avoid producing.
+// [EndpointAllowAnonymous] (task 110): reads whatever ambient session exists, if any — this IS the
+// read of unauthenticated-or-authenticated state (IsAuthenticated=false is a valid, expected
+// response), not a protected resource that requires a session to reach.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("Reads whatever ambient session exists, if any — IsAuthenticated=false is a valid, expected response, not an error.")]
 public static partial class GetCurrentSession
 {
   [ApiRoute("api/identity/session", HttpVerb.Get)]

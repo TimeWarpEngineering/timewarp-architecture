@@ -9,11 +9,15 @@
 // Response is an empty BaseResponse: the caller only needs success/problem typing for a
 // fire-and-forget write. No MockResponseFactory, so in SPA mock mode this request falls through
 // MockWebApiService to the real API service.
+// [EndpointAllowAnonymous] (task 110): analytics ingestion — the payload carries only an event
+// name, no PII, and pre-auth telemetry (page views before sign-in, etc.) is exactly the traffic
+// this endpoint exists to capture; requiring auth would drop it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Analytics;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("Analytics ingestion carries no PII and must capture pre-auth traffic (e.g. page views before sign-in).")]
 public static partial class TrackEvent
 {
   [ApiRoute("Analytics/TrackEvent", HttpVerb.Post)]

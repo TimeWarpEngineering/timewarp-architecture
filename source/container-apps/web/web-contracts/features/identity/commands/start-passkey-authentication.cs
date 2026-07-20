@@ -8,11 +8,14 @@
 // pick, rather than the server pre-listing candidates, which would require knowing identity before
 // authentication starts).
 // No GetMockResponseFactory — see StartPasskeyRegistration's Design region.
+// [EndpointAllowAnonymous] (task 110): issues a fresh challenge for a not-yet-authenticated
+// browser — nothing to authorize yet.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("Issues a fresh challenge for a not-yet-authenticated browser — nothing to authorize yet.")]
 public static partial class StartPasskeyAuthentication
 {
   [ApiRoute("api/identity/passkey/authenticate/options", HttpVerb.Post)]

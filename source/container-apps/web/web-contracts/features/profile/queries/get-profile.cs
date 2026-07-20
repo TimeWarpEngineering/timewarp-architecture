@@ -8,11 +8,18 @@
 // patterns uniform across contracts.
 // Guard clauses in the Response constructor make an empty profile unrepresentable; the mock avatar is a
 // data URI so the demo needs no static asset.
+// [EndpointAllowAnonymous] (task 110): the handler (get-profile-handler.cs) is deliberately
+// dual-mode — an anonymous caller gets the contract's mock response so the demo works with no
+// sign-in, and an authenticated caller (ICurrentUserService.UserId present) gets a
+// UserId-synthesized response instead; neither path persists a real profile yet. Requiring auth at
+// the endpoint would break the anonymous demo path the handler was written to support; real
+// profile persistence + auth is future work (104-016/104-024).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("Handler is deliberately dual-mode (anonymous demo response vs UserId-synthesized authenticated response); requiring auth would break the anonymous demo path. Real profile persistence + auth is 104-016/104-024.")]
 public static partial class GetProfile
 {
   [ApiRoute(RouteTemplate: "api/Users/Current/Profile", HttpVerb.Get)]

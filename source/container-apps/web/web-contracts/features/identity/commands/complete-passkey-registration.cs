@@ -16,11 +16,14 @@
 // headroom) and ClientDataJson/AttestationObject at 64KB (real payloads are a few hundred bytes to
 // a couple KB; 64KB is a coarse DoS-shaped ceiling, not a realistic-size estimate).
 // No GetMockResponseFactory — see StartPasskeyRegistration's Design region.
+// [EndpointAllowAnonymous] (task 110): this IS the request that creates the session (on success) —
+// nothing to authorize against yet.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
+[EndpointAllowAnonymous("This is the request that creates the session on success — nothing to authorize against yet.")]
 public static partial class CompletePasskeyRegistration
 {
   [ApiRoute("api/identity/passkey/register", HttpVerb.Post)]
