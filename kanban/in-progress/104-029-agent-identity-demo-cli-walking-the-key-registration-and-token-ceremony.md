@@ -63,3 +63,32 @@ link both this CLI and the curl sequence.
 ## Session
 
 - Created: 2026-07-20
+
+### Implementation plan (104-029)
+
+#### Placement (decided)
+**`tools/agent-identity-cli/`** multi-file TimeWarp.Nuru runfile (mirrors `tools/dev-cli/`).
+- ProjectReference → TimeWarp.Identity for `AgentKeyProof.BuildSignedData`
+- Not in solution; template-exclude so package-mode apps do not ship a broken tool
+- Tests: `tests/tools/agent-identity-cli-tests/`
+
+#### Commands
+- `keygen` — P-256, PEM under `~/.config/timewarp/agent-identity/default.pem`, print SPKI b64url + KeyId
+- `register` — options → Register.v1 sign → complete; persist principalId/keyId
+- `token [--scopes]` — options → Token.v1 sign → complete; default scope identity:read
+- `whoami` — GET /api/identity/agent/me with stored bearer
+- `demo` — narrated full walkthrough
+- Shared: `--server` default `https://localhost:63611`, `--key-file`, problem details on errors
+
+#### Services
+AgentSigning (library pin), LocalKeyStore, AgentHttpClient, CLI-local camelCase DTOs (no web-contracts)
+
+#### Tests
+Signed-data vectors vs library, SPKI/KeyId shape, key store round-trip; no web-server host
+
+#### Docs pointer
+Note on 104-017 backlog; template.json exclude tools + tests
+
+## Session
+- Started: 2026-07-20 (tw-orchestrate-task 104-029)
+- Plan: 2026-07-20
