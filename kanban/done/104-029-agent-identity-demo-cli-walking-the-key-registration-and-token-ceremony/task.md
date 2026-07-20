@@ -119,10 +119,21 @@ Wire: `System.Buffers.Text.Base64Url`. No Verify reimplementation in CLI.
 
 ### Verify
 - `dotnet run tools/agent-identity-cli/agent.cs -- --help` ✅
-- `dotnet run … -- keygen --key-file /tmp/… --force` ✅ (prints SPKI + KeyId)
-- `dotnet fixie tests/tools/agent-identity-cli-tests` ✅ 9 passed
-- Manual `demo` against live `dev run` **skipped** (server not required for this task completion; offline unit tests cover crypto/store)
+- `dotnet run … -- keygen --force` ✅ (prints SPKI + KeyId)
+- `dotnet fixie tests/tools/agent-identity-cli-tests` ✅ **10 passed** (incl. WhoAmI numeric enum wire fixture)
+- Manual `demo` against live `dev run` **skipped** (no server this session; offline tests cover crypto/store)
+
+### Review (Phase 4b)
+- Effort 1, general reviewer; `review/` kitchen on this task
+- Round 1: **M1 bug** WhoAmI Kind/TrustTier as string vs numeric server enums → **fixed** (`PrincipalKind`/`TrustTier` DTOs + fixture test)
+- Round 1: **M2 nit** double PEM load on token → **fixed**
+- Disposition: **clean** (`review/disposition.md`)
 
 ### 104-017
 Notes updated with pointer to this CLI and 104-004 curl sequence.
+
+## Session
+- Started: 2026-07-20 (tw-orchestrate-task 104-029)
+- Plan / implement / review fix: 2026-07-20
+
 
