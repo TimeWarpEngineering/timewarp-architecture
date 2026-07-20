@@ -3,6 +3,13 @@
 #endregion
 
 #region Design
+// Folder placement rule (why this store lives in persistence/ while the challenge and token stores
+// live beside their features): persistence/ holds the DURABLE domain-data seam — the port a host
+// swaps for EF/Postgres, holding what the database will hold. The ceremony challenge stores
+// (ceremonies/*/) and the token store (tokens/) hold EPHEMERAL protocol state (TTL'd nonces,
+// short-lived grants) that will never be database entities — if distributed, they become
+// cache/Redis-backed — so they are co-located with the feature they serve, per the repo's
+// feature-cohesion convention. See overview.md at the library root.
 // Credential lookup by CredentialId (RFC D3), not raw Guid. Type and Handle are immutable after Create — UpdateCredential
 // persists revoke/label (and similar) changes for the same Id only; no handle reindex contract.
 // FindCredentialByHandle may return revoked credentials (callers check IsRevoked).
