@@ -1,14 +1,21 @@
 # Add EndpointAuthorize attribute and generator policy emission
 
-## Description
+## Parent
+109
 
-[Brief description of the task]
+## Description
+New EndpointAuthorizeAttribute for policy/schemes/roles; generator emits Policies(...) or AllowAnonymous.
+
+## Requirements
+- Attribute in TimeWarp.Architecture.Attributes
+- Generator reads EndpointAuthorize; emit Policies not bare RequireAuthorization
+- Unit test for policy emission
+- Default anonymous when attribute absent
 
 ## Checklist
-
-- [ ] Item 1
-- [ ] Item 2
+- [ ] EndpointAuthorize attribute
+- [ ] Generator emission
+- [ ] Tests
 
 ## Notes
-
-[Additional context]
+Prerequisite for GetAgentIdentity after shim deletion.

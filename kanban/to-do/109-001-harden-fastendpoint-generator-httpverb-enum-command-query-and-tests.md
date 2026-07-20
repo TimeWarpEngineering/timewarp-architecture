@@ -1,14 +1,23 @@
 # Harden FastEndpoint generator HttpVerb enum Command Query and tests
 
-## Description
+## Parent
+109
 
-[Brief description of the task]
+## Description
+Fix blocking generator defects before web-server cutover: HttpVerb enum metadata resolves to Get for all non-Get verbs; always emits Query not Command.
+
+## Requirements
+- Resolve HttpVerb enum member name (like endpoint-coverage-analyzer)
+- Emit BaseFastEndpoint<Op.Command|Query, Response> correctly
+- Generator unit tests for Post/Command/Delete/Put
+- Drop weather-only ExampleRequest or guard it
+- weather api still builds
 
 ## Checklist
-
-- [ ] Item 1
-- [ ] Item 2
+- [ ] HttpVerb resolution
+- [ ] Command vs Query emission
+- [ ] Generator tests green
+- [ ] api-server weather still works
 
 ## Notes
-
-[Additional context]
+Prerequisite for 109-003. See parent 109 plan.

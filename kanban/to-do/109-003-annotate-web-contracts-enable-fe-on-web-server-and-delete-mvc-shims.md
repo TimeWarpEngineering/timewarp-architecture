@@ -1,14 +1,22 @@
 # Annotate web-contracts enable FE on web-server and delete MVC shims
 
-## Description
+## Parent
+109
 
-[Brief description of the task]
+## Description
+Atomic cutover: [ApiEndpoint] on hosted web operations, EndpointAuthorize on GetAgentIdentity, EnableApiEndpointGeneration + FE pipeline, delete 19 BaseEndpoint shims, drop MapControllers.
+
+## Requirements
+- Auth middleware before UseFastEndpoints
+- Routes unchanged
+- IncludeAbstractValidators false
+- TrackEvent preserve route string
 
 ## Checklist
-
-- [ ] Item 1
-- [ ] Item 2
+- [ ] Contracts annotated
+- [ ] web-server FE wired
+- [ ] Shims deleted
+- [ ] Build green TWA0006 clean
 
 ## Notes
-
-[Additional context]
+Depends on 109-001 and 109-002.

@@ -1,14 +1,17 @@
 # Prove identity suites string-enums and update AGENTS skill ADR
 
-## Description
+## Parent
+109
 
-[Brief description of the task]
+## Description
+Prove identity/passkey/agent integration suites + string-enum wire through FastEndpoints; update AGENTS.md, web-api-contracts skill, generator docs; short ADR.
 
 ## Checklist
-
-- [ ] Item 1
-- [ ] Item 2
+- [ ] Identity integration green
+- [ ] String-enum assert green on FE path
+- [ ] AGENTS.md endpoint story uniform
+- [ ] Skill + generator doc + ADR
+- [ ] dev build 0/0; dev test
 
 ## Notes
-
-[Additional context]
+Depends on 109-003.
