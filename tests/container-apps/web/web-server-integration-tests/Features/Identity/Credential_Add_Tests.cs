@@ -215,4 +215,100 @@ public class Returns_
     listAfter.Credentials.Count.ShouldBe(1);
     listAfter.Credentials[0].Id.ShouldNotBe(originalCredentialId);
   }
+
+  // Round-1 review (M3, security): the same duplicate-handle rejection AddPasskey/AddAgentKey use
+  // when a caller resubmits their OWN already-registered credential must behave IDENTICALLY when
+  // the colliding handle belongs to a DIFFERENT principal — same 409, no attach, no oracle
+  // distinguishing "you already have this" from "someone else already has this."
+  public async Task Conflict_Given_Passkey_Handle_Already_Owned_By_Another_Principal()
+  {
+    var sharedAuthenticator = new IntegrationSoftwareAuthenticator();
+
+    (PrincipalId principalAId, string principalACookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication, sharedAuthenticator);
+
+    (PrincipalId principalBId, string principalBCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+
+    using HttpClient principalBClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    principalBClient.DefaultRequestHeaders.Add("Cookie", principalBCookie);
+    var principalBApiService = new TestApiService(principalBClient, ContractSerializationDefaults.Options, bearerToken: null);
+
+    // Principal B attempts to attach PRINCIPAL A's already-registered handle to itself.
+    (string credentialId, string clientDataJson, string attestationObject) =
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(WebTestServerApplication, sharedAuthenticator);
+    var addCommand = new AddPasskey.Command
+    {
+      UserId = Guid.NewGuid(),
+      CredentialId = credentialId,
+      ClientDataJson = clientDataJson,
+      AttestationObject = attestationObject
+    };
+
+    HttpResponseMessage response = await principalBApiService.GetHttpResponseMessage(addCommand, CancellationToken.None);
+    response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+    // Principal B's own credential count is unchanged — no attach happened.
+    using HttpClient principalBReadClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    principalBReadClient.DefaultRequestHeaders.Add("Cookie", principalBCookie);
+    var principalBListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    HttpResponseMessage principalBListResponse = await principalBReadClient.GetAsync(principalBListQuery.GetRouteWithQueryString());
+    GetCredentials.Response? principalBList = JsonSerializer.Deserialize<GetCredentials.Response>
+      (await principalBListResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
+    principalBList.ShouldNotBeNull();
+    principalBList.Credentials.Count.ShouldBe(1);
+
+    // Principal A still exclusively owns the original credential, unaffected.
+    using HttpClient principalAClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    principalAClient.DefaultRequestHeaders.Add("Cookie", principalACookie);
+    var principalAListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    HttpResponseMessage principalAListResponse = await principalAClient.GetAsync(principalAListQuery.GetRouteWithQueryString());
+    GetCredentials.Response? principalAList = JsonSerializer.Deserialize<GetCredentials.Response>
+      (await principalAListResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
+    principalAList.ShouldNotBeNull();
+    principalAList.Credentials.Count.ShouldBe(1);
+    principalAList.Credentials[0].IsActive.ShouldBeTrue();
+  }
+
+  public async Task Conflict_Given_AgentKey_Handle_Already_Owned_By_Another_Principal()
+  {
+    var principalAKey = new IntegrationSoftwareAgentKey();
+    (PrincipalId principalAId, string principalAKeyId, string principalAToken) =
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(WebTestServerApplication, principalAKey, [AgentScopes.CredentialManage]);
+
+    var principalBKey = new IntegrationSoftwareAgentKey();
+    (PrincipalId principalBId, string _, string principalBToken) =
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(WebTestServerApplication, principalBKey, [AgentScopes.CredentialManage]);
+
+    using HttpClient principalBClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    principalBClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", principalBToken);
+    var principalBApiService = new TestApiService(principalBClient, ContractSerializationDefaults.Options, bearerToken: null);
+
+    // Principal B attempts to attach PRINCIPAL A's already-registered key to itself.
+    (string publicKey, string challenge, string signature) =
+      await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(WebTestServerApplication, principalAKey);
+    var addCommand = new AddAgentKey.Command { UserId = Guid.NewGuid(), PublicKey = publicKey, Challenge = challenge, Signature = signature };
+
+    HttpResponseMessage response = await principalBApiService.GetHttpResponseMessage(addCommand, CancellationToken.None);
+    response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+    // Principal B's own credential count is unchanged — no attach happened.
+    var principalBListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    HttpResponseMessage principalBListResponse = await principalBClient.GetAsync(principalBListQuery.GetRouteWithQueryString());
+    GetCredentials.Response? principalBList = JsonSerializer.Deserialize<GetCredentials.Response>
+      (await principalBListResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
+    principalBList.ShouldNotBeNull();
+    principalBList.Credentials.Count.ShouldBe(1);
+
+    // Principal A still exclusively owns the original key, unaffected.
+    using HttpClient principalAClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    principalAClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", principalAToken);
+    var principalAListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    HttpResponseMessage principalAListResponse = await principalAClient.GetAsync(principalAListQuery.GetRouteWithQueryString());
+    GetCredentials.Response? principalAList = JsonSerializer.Deserialize<GetCredentials.Response>
+      (await principalAListResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
+    principalAList.ShouldNotBeNull();
+    principalAList.Credentials.Count.ShouldBe(1);
+    principalAList.Credentials[0].IsActive.ShouldBeTrue();
+  }
 }

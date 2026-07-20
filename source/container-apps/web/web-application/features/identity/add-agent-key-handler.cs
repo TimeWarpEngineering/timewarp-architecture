@@ -26,6 +26,16 @@
 // the task and is not implied by any existing invariant; if a real product need for kind/credential
 // affinity emerges, it belongs on the domain (Principal/Credential), not bolted onto this one handler.
 // Zero Update* calls (Add* only) — no concurrency retry loop needed here, unlike RevokeCredential.
+// Round-1 review (M5, security-confirmed no risk): this handler consumes the SAME
+// AgentKeyCeremonyType.Registration challenge type StartAgentKeyRegistration/
+// CompleteAgentKeyRegistration use, with no separate "add" ceremony type — same reasoning as
+// AddPasskey.Handler's Design region. The challenge is an intent-agnostic one-time liveness proof
+// (proves possession of the private key for this public key, nothing about WHOSE principal the
+// resulting credential should attach to); the new-principal-vs-add-to-current-principal distinction
+// is enforced entirely by this endpoint's own [EndpointAuthorize(Policy="credential-management")]
+// boundary and by sourcing the target principal id from ICurrentPrincipalAccessor, never by which
+// challenge type was consumed — so reusing the Registration ceremony type introduces no
+// confused-deputy risk.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;

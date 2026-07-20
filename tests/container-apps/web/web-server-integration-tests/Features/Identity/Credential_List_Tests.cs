@@ -10,12 +10,13 @@
 // [EndpointAuthorize(Policy="credential-management")]'s either-scheme RequireAssertion). Ceremony
 // setup goes through CredentialCeremonyHelpers (see that file's Design region for why this task's
 // setup is shared rather than duplicated per file).
-// The no-secret-material assertion checks the RAW response body string, not just the deserialized
-// CredentialSummary shape — the contract type not HAVING a Handle/PublicMaterial property already
-// makes leaking them structurally impossible from THIS handler, but the wire-level check is what
-// actually pins the promise end-to-end (matches the plan's explicit "pin with
-// json.ShouldNotContain" instruction) and would catch a future contract change that added the fields
-// back.
+// The no-secret-material assertion is two layers (round-1 review M4): a STRUCTURAL check
+// (reflection over CredentialSummary's own property set) is the real guarantee and cannot false-fail
+// on Label content, plus the wire-level json.ShouldNotContain as belt-and-suspenders (matches the
+// plan's explicit "pin with json.ShouldNotContain" instruction) — it would catch a future contract
+// change that added the fields back even if a reviewer forgot to update the reflection check. The
+// wire check alone was fragile: a Label containing the substring "handle" would false-fail it, which
+// is exactly why the structural check is the one this test actually trusts.
 #endregion
 
 namespace CredentialList_;
@@ -146,6 +147,13 @@ public class Returns_
 
   public async Task Never_Serializes_Handle_Or_PublicMaterial()
   {
+    // Structural check FIRST (round-1 review M4) — the real guarantee, and the only one that cannot
+    // false-fail on Label content: CredentialSummary itself has no Handle/PublicMaterial member, so
+    // no future handler change could serialize either field even by accident.
+    string[] propertyNames = typeof(GetCredentials.CredentialSummary).GetProperties().Select(p => p.Name).ToArray();
+    propertyNames.ShouldNotContain(nameof(Credential.Handle));
+    propertyNames.ShouldNotContain(nameof(Credential.PublicMaterial));
+
     (PrincipalId _, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
 
     using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
@@ -155,6 +163,8 @@ public class Returns_
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    // Wire-level check SECOND, belt-and-suspenders — catches a future contract change that added
+    // the fields back even if a reviewer forgot to update the structural check above.
     string json = await response.Content.ReadAsStringAsync();
     json.ToLowerInvariant().ShouldNotContain("handle");
     json.ToLowerInvariant().ShouldNotContain("publicmaterial");

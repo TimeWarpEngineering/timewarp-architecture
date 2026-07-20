@@ -22,6 +22,18 @@
 // regardless of which principal (if any) already owns the matching handle — this endpoint does not
 // disclose whether a colliding passkey belongs to the caller's own principal or someone else's.
 // Zero Update* calls (Add* only) — no concurrency retry loop needed here, unlike RevokeCredential.
+// Round-1 review (M5, security-confirmed no risk): this handler consumes the SAME
+// WebAuthnCeremonyType.Registration challenge type StartPasskeyRegistration/
+// CompletePasskeyRegistration use, with no separate "add" ceremony type. This is safe because the
+// challenge is an intent-agnostic one-time liveness proof — it only proves "a real authenticator
+// answered a fresh server-issued nonce," nothing about WHOSE principal the resulting credential
+// should attach to. The new-principal-vs-add-to-current-principal distinction is enforced entirely
+// by this endpoint's own [EndpointAuthorize(Policy="credential-management")] boundary (only a
+// caller who is ALREADY authenticated can reach this handler at all) and by sourcing the target
+// principal id from ICurrentPrincipalAccessor rather than the ceremony — never by which challenge
+// type was consumed. A confused-deputy substitution (tricking this handler into treating an "add"
+// ceremony as a "register new principal" one, or vice versa) is therefore not possible: there is no
+// registration-only capability the challenge type itself grants.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;

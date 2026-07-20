@@ -75,9 +75,16 @@ internal static class CredentialCeremonyHelpers
   /// "cookie principal with one credential" starting point every cookie-authenticated
   /// credential-management test needs.
   /// </summary>
-  public static async Task<(PrincipalId PrincipalId, string SessionCookie)> RegisterPasskeyAndMintSessionAsync(WebTestServerApplication app)
+  public static async Task<(PrincipalId PrincipalId, string SessionCookie)> RegisterPasskeyAndMintSessionAsync
+  (
+    WebTestServerApplication app,
+    IntegrationSoftwareAuthenticator? authenticator = null
+  )
   {
-    (string credentialId, string clientDataJson, string attestationObject) = await BuildPasskeyAttestationAsync(app);
+    // Optional caller-supplied authenticator (round-1 review M3): lets a test register principal A
+    // with a KNOWN authenticator instance, then reuse that same instance's handle in a separate
+    // AddPasskey attempt to prove cross-principal duplicate-handle rejection.
+    (string credentialId, string clientDataJson, string attestationObject) = await BuildPasskeyAttestationAsync(app, authenticator);
 
     var registerCommand = new CompletePasskeyRegistration.Command
     {

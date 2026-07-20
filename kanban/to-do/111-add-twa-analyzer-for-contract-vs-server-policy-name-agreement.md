@@ -25,10 +25,13 @@ string literals and the server-side policy-name constants.
 - [ ] Decide the mechanism: new TWA analyzer cross-referencing contract `[EndpointAuthorize(Policy =
       "...")]` literals against known server policy-name constants, vs. a source-generation approach
       that derives one side from the other
-- [ ] Cover both known instances: the five roles contracts'
-      `"identity-session-authenticated"` vs. `IdentitySessionDefaults.AuthenticatedPolicy`, and
+- [ ] Cover all three known instances: the five roles contracts'
+      `"identity-session-authenticated"` vs. `IdentitySessionDefaults.AuthenticatedPolicy`,
       `get-agent-identity.cs`'s `"agent-scope:identity:read"` vs.
-      `AgentTokenDefaults.IdentityReadPolicy`
+      `AgentTokenDefaults.IdentityReadPolicy`, and (104-005 review round-1 M2) the four
+      credential-management contracts' (`get-credentials.cs`, `revoke-credential.cs`,
+      `add-passkey.cs`, `add-agent-key.cs`) `"credential-management"` literal vs.
+      `CredentialManagementDefaults.Policy`
 - [ ] Tests (analyzer positive/negative, or generator round-trip)
 - [ ] Docs: note the new check in AGENTS.md's TWA table and the web-api-contracts skill if the
       convention changes
@@ -39,3 +42,9 @@ string literals and the server-side policy-name constants.
 Do not expand task 110's scope to cover this — 110 left the coupling documented via comments only
 (`// matches IdentitySessionDefaults.AuthenticatedPolicy`) and deliberately did not build a new
 analyzer for it.
+
+104-005 review round-1 (M2) is a THIRD motivating instance: `CredentialManagementDefaults.Policy`
+("credential-management") duplicated as a string literal across `get-credentials.cs`,
+`revoke-credential.cs`, `add-passkey.cs`, and `add-agent-key.cs`. Same coupling, same interim
+mitigation (fail-closed + `// matches CredentialManagementDefaults.Policy` comment) — not fixed
+per-task, tracked here.

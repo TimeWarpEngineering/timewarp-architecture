@@ -13,11 +13,12 @@
 // GetAgentIdentity are the shapes worth pinning (typed-id ctor Guard, optional property, nullable
 // typed-id, list property, enum properties).
 // GetCredentials_Response_Should.Never_Serializes_Handle_Or_PublicMaterial (task 104-005) is the
-// contract-level half of a two-layer pin — CredentialSummary structurally cannot carry Handle/
-// PublicMaterial (see get-credentials.cs's Design region), and this test proves that promise survives
-// actual JSON serialization, not just the C# type shape; the integration-level half
-// (Credential_List_Tests.cs's Never_Serializes_Handle_Or_PublicMaterial) proves it survives the whole
-// generated-endpoint pipeline too.
+// contract-level half of a two-layer pin — a reflection-based structural assertion (CredentialSummary
+// has no Handle/PublicMaterial property, so a Label containing "handle" cannot false-fail it — round-1
+// review M4) plus a wire-level json.ShouldNotContain as belt-and-suspenders, proving the promise
+// survives actual JSON serialization, not just the C# type shape. The integration-level twin
+// (Credential_List_Tests.cs's Never_Serializes_Handle_Or_PublicMaterial) proves the same two-layer
+// promise survives the whole generated-endpoint pipeline too.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -367,6 +368,12 @@ public class GetCredentials_Response_Should
   // C# type shape. See this file's Design region for the second (integration-level) half of this pin.
   public static void Never_Serializes_Handle_Or_PublicMaterial()
   {
+    // Structural check FIRST (round-1 review M4) — the real guarantee, and the only one that cannot
+    // false-fail on Label content: CredentialSummary itself has no Handle/PublicMaterial member.
+    string[] propertyNames = typeof(GetCredentials.CredentialSummary).GetProperties().Select(p => p.Name).ToArray();
+    propertyNames.ShouldNotContain(nameof(Credential.Handle));
+    propertyNames.ShouldNotContain(nameof(Credential.PublicMaterial));
+
     GetCredentials.Response response = new
     (
       [new GetCredentials.CredentialSummary(CredentialId.New(), CredentialType.Passkey, "laptop", DateTimeOffset.UtcNow, revokedAt: null, isActive: true)]
@@ -374,6 +381,8 @@ public class GetCredentials_Response_Should
 
     string json = JsonSerializer.Serialize(response, ContractSerialization.Options);
 
+    // Wire-level check SECOND, belt-and-suspenders — matches Credential_List_Tests.cs's
+    // integration-level twin.
     json.ToLowerInvariant().ShouldNotContain("handle");
     json.ToLowerInvariant().ShouldNotContain("publicmaterial");
   }
