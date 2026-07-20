@@ -31,11 +31,14 @@ the same chain as just another backend.
       including hairpin NAT for LAN-side access.
 - [ ] golden-sea-mikrotik: dst-nat 80/443 → the Windows machine's private IP (give it a static
       DHCP lease so the rule doesn't rot).
-- [ ] Windows → WSL2 inbound: pick and document one of
-      (a) WSL **mirrored networking** (`.wslconfig` `networkingMode=mirrored` + Hyper-V firewall
-      allow rules) — WSL shares the host IP, no forwarding needed; or
-      (b) `netsh interface portproxy` 80/443 → WSL IP — needs a startup script because the WSL
-      NAT IP changes per boot. Prefer (a) if the Windows build supports it.
+- [ ] Windows → WSL2 inbound: verified 2026-07-20 — Windows build **10.0.26200** (Win11 25H2,
+      mirrored-capable), current mode is stock **nat** (`wslinfo --networking-mode`, eth0
+      172.30.x.x/20, no `.wslconfig` present). Plan: switch to **mirrored networking**
+      (`.wslconfig` `networkingMode=mirrored` + Hyper-V firewall allow rules for 80/443) so WSL
+      shares the Windows LAN IP and golden-sea-mikrotik dst-nats straight to it — no portproxy,
+      no per-boot IP chasing. At implementation time confirm Docker Desktop + kind behave under
+      mirrored mode; fallback is `netsh interface portproxy` 80/443 → WSL IP with a startup
+      script (NAT IP changes per boot).
 - [ ] Reverse proxy in WSL on fixed 80/443 (Caddy / Traefik / YARP — pick one; Caddy is the
       least-config option for automatic TLS) terminating `*.timewarp.work` TLS and routing by
       Host header to local backend ports.
