@@ -35,7 +35,11 @@ the same chain as just another backend.
 - [ ] Windows → WSL2 inbound: verified 2026-07-20 — Windows build **10.0.26200**, WSL **2.7.10**,
       current mode stock **nat** (`wslinfo --networking-mode`, eth0 172.30.x.x/20, no `.wslconfig`
       present). Plan: **bridged networking** (un-deprecated in WSL 2.5.6 — "Bring back bridged
-      networking mode"; we're well past that). WSL gets its own IP on the golden-sea LAN:
+      networking mode"; we're well past that). **Progress 2026-07-20**: external vSwitch
+      `WSLBridge` created on "Ethernet 2" (Realtek 2.5GbE) with `-AllowManagementOS $true`;
+      `.wslconfig` staged at `C:\Users\steve\.wslconfig` (bridged, vmSwitch=WSLBridge,
+      macAddress=02:15:5D:8B:4B:AD, dhcp, ipv6). Awaiting `wsl --shutdown` at a convenient time
+      (kills all WSL sessions + Docker Desktop backend). WSL gets its own IP on the golden-sea LAN:
       `.wslconfig` `networkingMode=bridged` + `vmSwitch=<external Hyper-V vSwitch>` + pinned
       `macAddress=` so a static DHCP lease from golden-sea-mikrotik sticks. Router then dst-nats
       80/443 straight to the WSL IP — Windows is out of the traffic path entirely, and SSH to
