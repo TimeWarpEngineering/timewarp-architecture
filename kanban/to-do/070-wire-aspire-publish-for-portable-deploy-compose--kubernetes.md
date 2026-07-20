@@ -47,8 +47,8 @@ Confirmed strategy (Aspire 13.4 first-party publishers — `Azure | Kubernetes |
 ## Notes
 
 - Child task [[070-001-expose-local-kind-deploy-publicly-via-nametimewarpwork-through-mikrotik]]
-  builds on the kind smoke-deploy: public exposure at `<name>.timewarp.work` via MikroTik
-  port-forward + ingress + TLS.
+  builds on the kind smoke-deploy: public exposure at `<name>.timewarp.work`, riding the shared
+  ingress chain in [[112-stand-up-shared-timewarpwork-ingress-chain-to-wsl-for-exposing-local-apps]].
 
 - Template-flag aware: the AppHost uses `#if api/web/grpc/yarp`. Publisher wiring and any
   Dockerfile removal must respect those flags so generated templates stay valid.
