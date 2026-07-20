@@ -121,7 +121,17 @@ Wire: `System.Buffers.Text.Base64Url`. No Verify reimplementation in CLI.
 - `dotnet run tools/agent-identity-cli/agent.cs -- --help` ✅
 - `dotnet run … -- keygen --force` ✅ (prints SPKI + KeyId)
 - `dotnet fixie tests/tools/agent-identity-cli-tests` ✅ **10 passed** (incl. WhoAmI numeric enum wire fixture)
-- Manual `demo` against live `dev run` **skipped** (no server this session; offline tests cover crypto/store)
+- Manual `demo` against live `dev run` **skipped at task time** (no server that session; offline tests cover crypto/store)
+- **Human smoke verification (2026-07-20, maintainer follow-up):** `agent demo` run against a live
+  `dev run` server (`https://localhost:63611`) with a fresh key — full lifecycle green: keygen →
+  register (v7 PrincipalId `019f7da7-…`) → token (Bearer, 900s, `identity:read`) → whoami returns
+  matching PrincipalId with `Kind Agent` / `TrustTier Keyed`. Confirms the M1 enum-wire fix works
+  post-HTTP-200, not just in the offline fixture. Re-verified green after the NoWarn/static-refactor
+  cleanup (commit a5b4bbe4). Follow-ups from this pass: NoWarn trimmed 18→2 (tool) and 8→1 (tests) —
+  only what actually fires, CA1822/CA2007 fixed rather than suppressed (`AgentSigning` is now a
+  static helper, dropped from DI); and the numeric enum wire shape is filed as task 108
+  (serialize contract enums as strings seam-wide) — the CLI's `whoami-wire-tests` numeric fixture
+  tracks that change.
 
 ### Review (Phase 4b)
 - Effort 1, general reviewer; `review/` kitchen on this task
