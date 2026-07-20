@@ -32,10 +32,9 @@ NuruApp app = NuruApp.CreateBuilder()
     services.AddSingleton<PathDefaults>();
     services.AddSingleton<CliJson>();
     services.AddSingleton<LocalKeyStore>();
-    services.AddSingleton<AgentSigning>();
     services.AddSingleton<AgentHttpClient>();
   })
   .DiscoverEndpoints()
   .Build();
 
-return await app.RunAsync(args);
+return await app.RunAsync(args).ConfigureAwait(false);

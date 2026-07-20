@@ -24,15 +24,13 @@ internal sealed class DemoCommand : ICommand<Unit>
   {
     private readonly ITerminal Terminal;
     private readonly PathDefaults Paths;
-    private readonly AgentSigning Signing;
     private readonly AgentHttpClient Http;
     private readonly LocalKeyStore Store;
 
-    public Handler(ITerminal terminal, PathDefaults paths, AgentSigning signing, AgentHttpClient http, LocalKeyStore store)
+    public Handler(ITerminal terminal, PathDefaults paths, AgentHttpClient http, LocalKeyStore store)
     {
       Terminal = terminal;
       Paths = paths;
-      Signing = signing;
       Http = http;
       Store = store;
     }
@@ -53,13 +51,13 @@ internal sealed class DemoCommand : ICommand<Unit>
         Terminal.WriteLine(
           "We export the public half as SPKI DER (openssl/WebCrypto/Python native format) and derive KeyId = SHA-256(SPKI).");
 
-        GeneratedKey generated = Signing.GenerateKey();
-        Signing.WriteKeyFile(keyFile, generated.Pem, command.Force);
+        GeneratedKey generated = AgentSigning.GenerateKey();
+        AgentSigning.WriteKeyFile(keyFile, generated.Pem, command.Force);
         Terminal.WriteLine($"  wrote     {Path.GetFullPath(keyFile)}");
         Terminal.WriteLine($"  SPKI      {AgentSigning.ToBase64Url(generated.SpkiPublicKey)}");
         Terminal.WriteLine($"  KeyId     {AgentSigning.ToBase64Url(generated.KeyId)}");
 
-        using LoadedKey key = Signing.LoadKey(keyFile);
+        using LoadedKey key = AgentSigning.LoadKey(keyFile);
 
         // ── 2. register ────────────────────────────────────────────────────
         Step("2/4  register — prove possession of the NEW key (Register.v1)");
@@ -77,7 +75,7 @@ internal sealed class DemoCommand : ICommand<Unit>
 
         Terminal.WriteLine($"  challenge {regOptions.Value.Challenge}");
         byte[] regChallenge = AgentSigning.FromBase64Url(regOptions.Value.Challenge);
-        byte[] regSig = Signing.Sign(key.Ecdsa, AgentKeyCeremonyType.Registration, regChallenge);
+        byte[] regSig = AgentSigning.Sign(key.Ecdsa, AgentKeyCeremonyType.Registration, regChallenge);
 
         var regRequest = new RegisterRequest
         {
@@ -116,7 +114,7 @@ internal sealed class DemoCommand : ICommand<Unit>
 
         Terminal.WriteLine($"  challenge {tokOptions.Value.Challenge}");
         byte[] tokChallenge = AgentSigning.FromBase64Url(tokOptions.Value.Challenge);
-        byte[] tokSig = Signing.Sign(key.Ecdsa, AgentKeyCeremonyType.TokenIssuance, tokChallenge);
+        byte[] tokSig = AgentSigning.Sign(key.Ecdsa, AgentKeyCeremonyType.TokenIssuance, tokChallenge);
 
         var tokRequest = new TokenRequest
         {

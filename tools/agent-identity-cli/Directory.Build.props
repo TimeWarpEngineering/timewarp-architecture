@@ -2,9 +2,11 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
-    <!-- Suppress warnings that don't apply to CLI tools (mirror tools/dev-cli). -->
-    <!-- CLI tool: DTO/crypto surface trips collection/array/Uri CA rules that don't apply here. -->
-    <NoWarn>$(NoWarn);CA1000;CA1002;CA1031;CA1034;CA1055;CA1303;CA1508;CA1515;CA1819;CA1822;CA1849;CA2000;CA2007;CA2016;CA2227;CA5399;RCS1046;RCS1075</NoWarn>
+    <!-- Only the two rules this tool genuinely trips (audited 2026-07-20, not copied wholesale from
+         tools/dev-cli): CA1849 — narration writes to ITerminal are intentionally synchronous in a
+         short-lived CLI; CA1031 — top-level command handlers catch Exception to render HTTP/crypto
+         failures as friendly one-line errors. Everything else was fixed rather than suppressed. -->
+    <NoWarn>$(NoWarn);CA1031;CA1849</NoWarn>
 
     <!-- Enable interceptors for TimeWarp.Nuru source generator -->
     <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>

@@ -12,9 +12,9 @@
 
 namespace AgentIdentityCli.Services;
 
-internal sealed class AgentSigning
+internal static class AgentSigning
 {
-  public GeneratedKey GenerateKey()
+  public static GeneratedKey GenerateKey()
   {
     using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
     byte[] spki = ecdsa.ExportSubjectPublicKeyInfo();
@@ -28,7 +28,7 @@ internal sealed class AgentSigning
     return new GeneratedKey(pem, spki, keyId);
   }
 
-  public void WriteKeyFile(string path, string pem, bool force)
+  public static void WriteKeyFile(string path, string pem, bool force)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(path);
     ArgumentException.ThrowIfNullOrWhiteSpace(pem);
@@ -58,7 +58,7 @@ internal sealed class AgentSigning
     }
   }
 
-  public LoadedKey LoadKey(string path)
+  public static LoadedKey LoadKey(string path)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(path);
     if (!File.Exists(path))
@@ -82,7 +82,7 @@ internal sealed class AgentSigning
     return new LoadedKey(owned, spki, keyId);
   }
 
-  public byte[] Sign(ECDsa ecdsa, AgentKeyCeremonyType ceremonyType, byte[] challengeBytes)
+  public static byte[] Sign(ECDsa ecdsa, AgentKeyCeremonyType ceremonyType, byte[] challengeBytes)
   {
     ArgumentNullException.ThrowIfNull(ecdsa);
     ArgumentNullException.ThrowIfNull(challengeBytes);

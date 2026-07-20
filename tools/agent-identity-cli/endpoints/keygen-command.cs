@@ -21,13 +21,11 @@ internal sealed class KeygenCommand : ICommand<Unit>
   {
     private readonly ITerminal Terminal;
     private readonly PathDefaults Paths;
-    private readonly AgentSigning Signing;
 
-    public Handler(ITerminal terminal, PathDefaults paths, AgentSigning signing)
+    public Handler(ITerminal terminal, PathDefaults paths)
     {
       Terminal = terminal;
       Paths = paths;
-      Signing = signing;
     }
 
     public ValueTask<Unit> Handle(KeygenCommand command, CancellationToken ct)
@@ -36,8 +34,8 @@ internal sealed class KeygenCommand : ICommand<Unit>
 
       try
       {
-        GeneratedKey generated = Signing.GenerateKey();
-        Signing.WriteKeyFile(keyFile, generated.Pem, command.Force);
+        GeneratedKey generated = AgentSigning.GenerateKey();
+        AgentSigning.WriteKeyFile(keyFile, generated.Pem, command.Force);
 
         Terminal.WriteLine("Generated ECDSA P-256 agent key.".Green());
         Terminal.WriteLine($"Key file : {Path.GetFullPath(keyFile)}");

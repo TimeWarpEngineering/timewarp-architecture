@@ -24,15 +24,13 @@ internal sealed class TokenCommand : ICommand<Unit>
   {
     private readonly ITerminal Terminal;
     private readonly PathDefaults Paths;
-    private readonly AgentSigning Signing;
     private readonly AgentHttpClient Http;
     private readonly LocalKeyStore Store;
 
-    public Handler(ITerminal terminal, PathDefaults paths, AgentSigning signing, AgentHttpClient http, LocalKeyStore store)
+    public Handler(ITerminal terminal, PathDefaults paths, AgentHttpClient http, LocalKeyStore store)
     {
       Terminal = terminal;
       Paths = paths;
-      Signing = signing;
       Http = http;
       Store = store;
     }
@@ -46,7 +44,7 @@ internal sealed class TokenCommand : ICommand<Unit>
       try
       {
         AgentStoreRecord? record = Store.TryLoad(keyFile);
-        using LoadedKey key = Signing.LoadKey(keyFile);
+        using LoadedKey key = AgentSigning.LoadKey(keyFile);
         string keyId = string.IsNullOrWhiteSpace(record?.KeyId)
           ? AgentSigning.ToBase64Url(key.KeyId)
           : record!.KeyId!;
@@ -64,7 +62,7 @@ internal sealed class TokenCommand : ICommand<Unit>
         }
 
         byte[] challengeBytes = AgentSigning.FromBase64Url(options.Value.Challenge);
-        byte[] signature = Signing.Sign(key.Ecdsa, AgentKeyCeremonyType.TokenIssuance, challengeBytes);
+        byte[] signature = AgentSigning.Sign(key.Ecdsa, AgentKeyCeremonyType.TokenIssuance, challengeBytes);
 
         var request = new TokenRequest
         {

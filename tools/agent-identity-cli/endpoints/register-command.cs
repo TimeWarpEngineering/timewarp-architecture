@@ -24,15 +24,13 @@ internal sealed class RegisterCommand : ICommand<Unit>
   {
     private readonly ITerminal Terminal;
     private readonly PathDefaults Paths;
-    private readonly AgentSigning Signing;
     private readonly AgentHttpClient Http;
     private readonly LocalKeyStore Store;
 
-    public Handler(ITerminal terminal, PathDefaults paths, AgentSigning signing, AgentHttpClient http, LocalKeyStore store)
+    public Handler(ITerminal terminal, PathDefaults paths, AgentHttpClient http, LocalKeyStore store)
     {
       Terminal = terminal;
       Paths = paths;
-      Signing = signing;
       Http = http;
       Store = store;
     }
@@ -44,7 +42,7 @@ internal sealed class RegisterCommand : ICommand<Unit>
 
       try
       {
-        using LoadedKey key = Signing.LoadKey(keyFile);
+        using LoadedKey key = AgentSigning.LoadKey(keyFile);
 
         Terminal.WriteLine($"POST {server}{AgentHttpClient.RegisterOptionsPath}");
         HttpResult<ChallengeResponse> options = await Http.PostRegisterOptionsAsync(server, ct).ConfigureAwait(false);
@@ -55,7 +53,7 @@ internal sealed class RegisterCommand : ICommand<Unit>
         }
 
         byte[] challengeBytes = AgentSigning.FromBase64Url(options.Value.Challenge);
-        byte[] signature = Signing.Sign(key.Ecdsa, AgentKeyCeremonyType.Registration, challengeBytes);
+        byte[] signature = AgentSigning.Sign(key.Ecdsa, AgentKeyCeremonyType.Registration, challengeBytes);
 
         var request = new RegisterRequest
         {

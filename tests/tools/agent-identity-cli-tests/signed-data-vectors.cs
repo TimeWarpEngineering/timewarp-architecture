@@ -34,13 +34,12 @@ public class BuildSignedData_And_Sign
 
   public void Cli_Sign_registration_verifies_with_AgentKeyProof()
   {
-    var signing = new AgentSigning();
-    GeneratedKey generated = signing.GenerateKey();
+    GeneratedKey generated = AgentSigning.GenerateKey();
     using ECDsa ecdsa = ECDsa.Create();
     ecdsa.ImportFromPem(generated.Pem);
 
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
-    byte[] signature = signing.Sign(ecdsa, AgentKeyCeremonyType.Registration, challenge);
+    byte[] signature = AgentSigning.Sign(ecdsa, AgentKeyCeremonyType.Registration, challenge);
 
     AgentKeyProofResult result = AgentKeyProof.Verify(
       AgentKeyCeremonyType.Registration,
@@ -54,13 +53,12 @@ public class BuildSignedData_And_Sign
 
   public void Registration_signature_fails_Token_verify()
   {
-    var signing = new AgentSigning();
-    GeneratedKey generated = signing.GenerateKey();
+    GeneratedKey generated = AgentSigning.GenerateKey();
     using ECDsa ecdsa = ECDsa.Create();
     ecdsa.ImportFromPem(generated.Pem);
 
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
-    byte[] registrationSignature = signing.Sign(ecdsa, AgentKeyCeremonyType.Registration, challenge);
+    byte[] registrationSignature = AgentSigning.Sign(ecdsa, AgentKeyCeremonyType.Registration, challenge);
 
     AgentKeyProofResult result = AgentKeyProof.Verify(
       AgentKeyCeremonyType.TokenIssuance,
@@ -74,8 +72,7 @@ public class BuildSignedData_And_Sign
 
   public void Keygen_SPKI_parses_and_KeyId_matches_SHA256()
   {
-    var signing = new AgentSigning();
-    GeneratedKey generated = signing.GenerateKey();
+    GeneratedKey generated = AgentSigning.GenerateKey();
 
     AgentPublicKey.TryParse(generated.SpkiPublicKey, out byte[] keyId).ShouldBeTrue();
     keyId.SequenceEqual(generated.KeyId).ShouldBeTrue();
@@ -90,14 +87,13 @@ public class BuildSignedData_And_Sign
 
   public void LoadKey_round_trips_PEM_and_KeyId()
   {
-    var signing = new AgentSigning();
-    GeneratedKey generated = signing.GenerateKey();
+    GeneratedKey generated = AgentSigning.GenerateKey();
     string path = Path.Combine(Path.GetTempPath(), $"agent-key-{Guid.NewGuid():N}.pem");
 
     try
     {
-      signing.WriteKeyFile(path, generated.Pem, force: true);
-      using LoadedKey loaded = signing.LoadKey(path);
+      AgentSigning.WriteKeyFile(path, generated.Pem, force: true);
+      using LoadedKey loaded = AgentSigning.LoadKey(path);
 
       loaded.SpkiPublicKey.SequenceEqual(generated.SpkiPublicKey).ShouldBeTrue();
       loaded.KeyId.SequenceEqual(generated.KeyId).ShouldBeTrue();
