@@ -61,3 +61,26 @@ Decide the seam's enum representation now, while the only external consumer is o
 ## Session
 
 - Created: 2026-07-20
+
+### Implementation plan (108)
+
+#### Decision
+- Wire: **PascalCase strings** (`"Agent"`, `"Keyed"`) via `JsonStringEnumConverter(namingPolicy: null, allowIntegerValues: false)`
+- Plain C# enums only (not Bogard Enumeration)
+- Rejected: keep integers + TWA renumber analyzer
+
+#### Critical
+Server currently does NOT use ContractSerializationDefaults — must Apply on MVC JsonOptions + HttpJsonOptions in CommonServerModule or client-only change splits wire.
+
+#### Steps
+1. ContractSerializationDefaults.Apply — converter + Design
+2. CommonServerModule — Configure JsonOptions + ConfigureHttpJsonOptions
+3. web-contracts-tests identity serialization — wire text + fail-closed + CredentialType
+4. Agent_Protected_Endpoint_Tests raw JSON assert strings
+5. CLI CliJson + whoami-wire-tests string fixture
+6. Optional skill one-liner
+7. dev build + targeted tests
+
+## Session
+- Started: 2026-07-20 (tw-orchestrate-task 108)
+- Plan: 2026-07-20
