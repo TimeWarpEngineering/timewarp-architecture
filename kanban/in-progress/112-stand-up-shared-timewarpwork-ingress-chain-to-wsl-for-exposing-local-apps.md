@@ -6,105 +6,101 @@ Shared personal-infra ingress that multiple projects ride on — not specific to
 tracked here because this repo is the first consumer (share running dev instances with outside
 people for review).
 
-Actual topology:
+Actual topology (hostnames are the routers' real identities):
 
 ```
-*.timewarp.work (wildcard DNS)
-  → static IP (already published as shop.timewarp.ws)
-    → timewarp-mikrotik (shop)
-      → WireGuard tunnel wg1 (10.66.2.4/30: shop .5 ↔ goldensea .6)
-        → goldensea-gw (LAN bridge 172.16.67.0/24)
-          → WSL2 Ubuntu bridged @ 172.16.67.13  ← Aspire `dev run` (today: https://localhost:17204/, dynamic ports)
+*.timewarp.work (wildcard DNS, pending)
+  → 49.0.91.107 (static public IP; also published as shop.timewarp.ws)
+    → AIS DMZ 192.168.68.2
+      → timewarp-gw (shop RouterOS; 443 currently owned by web server 10.10.1.80 → SNI split needed)
+        → WireGuard wg1 (10.66.2.4/30: timewarp-gw .5 ↔ goldensea-gw .6)
+          → goldensea-gw (LAN bridge 172.16.67.0/24; own uplink = AIS DMZ 192.168.67.2 on ether1)
+            → WSL2 Ubuntu bridged @ 172.16.67.13 (pending wsl restart)
+              → reverse proxy :443 (pending) → localhost:63610 Aspire YARP ingress (pinned)
 ```
 
-Discovered 2026-07-20 (goldensea-gw `/interface print`, `/ip address print`): the shop↔goldensea
-link is a **WireGuard tunnel**, and goldensea's own uplink is AIS behind a private DMZ
-(192.168.67.2 on ether1) — so inbound arrives via wg1 while the default route exits via AIS.
-**Asymmetric-return gotcha**: the shop end must masquerade 80/443 traffic into the tunnel so
-replies return via wg1; without it every connection half-opens. Trade-off: the WSL proxy sees
-10.66.2.5 as client IP, not the real one — acceptable for MVP; the upgrade path (preserve client
-IP) is policy routing on goldensea (mangle connection-mark on wg1 arrivals → routing-mark replies
-back out wg1), noted for later (matters for rate limiting / abuse visibility, cf. 104-015).
+The timewarp.work path is **HTTPS-only** (port 80 stays with the existing shop server) and certs
+MUST come via DNS-01.
 
-Goal: one stable entry — a reverse proxy in WSL listening on fixed 80/443 — that terminates TLS
-for `*.timewarp.work` and routes by Host header to whichever local app owns that name. Today the
-backends are `dev run` Aspire instances (dynamic ports); later a kind cluster's ingress
-([[070-001-expose-local-kind-deploy-publicly-via-nametimewarpwork-through-mikrotik]]) plugs into
-the same chain as just another backend.
+Goal: one stable entry — a reverse proxy in WSL listening on fixed 443 — that terminates TLS for
+`*.timewarp.work` and routes by Host header to whichever local app owns that name. Today the
+backends are `dev run` Aspire instances (ingress now pinned at 63610); later a kind cluster's
+ingress ([[070-001-expose-local-kind-deploy-publicly-via-nametimewarpwork-through-mikrotik]])
+plugs into the same chain as just another backend.
 
 ## Checklist
 
-- [ ] DNS: wildcard `*.timewarp.work` A record → the static IP (or CNAME → `shop.timewarp.ws`
-      since that name already tracks it). Record where timewarp.work DNS is hosted.
-- [ ] timewarp-mikrotik: discovered 2026-07-20 — 80/443 are ALREADY forwarded to an existing web
-      server at 10.10.1.80 (public IP 49.0.91.107 → AIS DMZ → 192.168.68.2 → dst-nat). Plan:
-      **TLS SNI split** — dst-nat rule `tls-host=*.timewarp.work` placed before the generic 443
-      forward — **DOES NOT WORK**: RouterOS rejects `tls-host` in the NAT table ("bad parameter",
-      confirmed 2026-07-20) because NAT must pick the destination at the TCP SYN, before the
-      ClientHello carrying SNI exists. The split needs a userspace **SNI passthrough proxy**
-      (reads ClientHello, splices the stream; no certs involved). Option A: nginx `stream` +
-      `ssl_preread` on 10.10.1.80 itself (existing sites rebind internally, e.g. :8443). Option B:
-      tiny HAProxy/sniproxy VM on the shop VM host; router rules 0/1 repoint 443 to it, default
-      backend 10.10.1.80, `*.timewarp.work` → 10.66.2.6:443. Decision pending what runs on
-      10.10.1.80. Bonus: the proxy originates a fresh TCP connection into the tunnel, so the
-      asymmetric-return masquerade is only needed if goldensea lacks a route back to 10.10.1.0/24.
-      Still true: port 80 stays with the old server → timewarp.work path is **HTTPS-only**, certs
-      MUST use DNS-01. ECH caveat: SNI split needs plaintext ClientHello; don't publish ECH
-      configs for these names.
-- [ ] golden-sea-mikrotik: dst-nat 80/443 → the WSL instance's own LAN IP (bridged mode below;
-      give its pinned MAC a static DHCP lease so the rule doesn't rot). Windows box is not in the
-      traffic path.
-- [ ] Windows → WSL2 inbound: verified 2026-07-20 — Windows build **10.0.26200**, WSL **2.7.10**,
-      current mode stock **nat** (`wslinfo --networking-mode`, eth0 172.30.x.x/20, no `.wslconfig`
-      present). Plan: **bridged networking** (un-deprecated in WSL 2.5.6 — "Bring back bridged
-      networking mode"; we're well past that). **Progress 2026-07-20**: external vSwitch
-      `WSLBridge` created on "Ethernet 2" (Realtek 2.5GbE) with `-AllowManagementOS $true`;
-      `.wslconfig` staged at `C:\Users\steve\.wslconfig` (bridged, vmSwitch=WSLBridge,
-      macAddress=02:15:5D:8B:4B:AD, dhcp, ipv6). Awaiting `wsl --shutdown` at a convenient time
-      (kills all WSL sessions + Docker Desktop backend). WSL gets its own IP on the golden-sea LAN:
-      `.wslconfig` `networkingMode=bridged` + `vmSwitch=<external Hyper-V vSwitch>` + pinned
-      `macAddress=` so a static DHCP lease from golden-sea-mikrotik sticks. Router then dst-nats
-      80/443 straight to the WSL IP — Windows is out of the traffic path entirely, and SSH to
-      Windows vs WSL stays two distinct IPs. Prereq: create the external vSwitch (needs Hyper-V
-      management tools). At implementation time confirm Docker Desktop + kind behave under
-      bridged mode. Fallback if bridged misbehaves: stay NAT and
-      `netsh interface portproxy` 80/443 → `connectaddress=127.0.0.1` (the WSL localhost relay
-      delivers it; IP-stable across reboots, no scripts). Mirrored mode rejected: shared IP means
-      Windows/WSL port arbitration (e.g. two sshds can't both own 22).
-- [ ] Reverse proxy in WSL on fixed 80/443 (Caddy / Traefik / YARP — pick one; Caddy is the
-      least-config option for automatic TLS) terminating `*.timewarp.work` TLS and routing by
-      Host header to local backend ports.
-- [ ] TLS: wildcard cert via Let's Encrypt DNS-01 (needs API access at the DNS host) so every
-      `<name>` is covered with no per-app issuance; HTTP-01 per-name is the fallback since port 80
-      is forwarded anyway.
-- [ ] Solve the dynamic-port problem for `dev run` backends: Aspire assigns dynamic ports (e.g.
-      17204 today), which breaks a static proxy map. Options: pin the public-facing endpoint's
-      port per project (launchSettings / `WithEndpoint(port:)`) — simplest; or a small
-      registration step where `dev run` writes its current port into the proxy config and reloads.
-      Pick one and wire it.
+- [ ] DNS: wildcard `*.timewarp.work` A record → 49.0.91.107 (or CNAME → `shop.timewarp.ws`).
+      **Blocked on: where is timewarp.work DNS hosted?** (Also determines the DNS-01 plugin for
+      cert automation.)
+- [ ] timewarp-gw (shop): SNI passthrough split for 443 — **decision pending: what runs on
+      10.10.1.80?** Option A: nginx `stream`+`ssl_preread` on 10.10.1.80 itself (existing sites
+      rebind internally, e.g. :8443). Option B: tiny HAProxy/sniproxy VM on the shop VM host;
+      NAT rules 0/1 repoint 443 to it, default backend 10.10.1.80, `*.timewarp.work` →
+      10.66.2.6:443. Either way the proxy originates a fresh TCP connection into the tunnel, so
+      the wg1 masquerade is only needed if goldensea-gw lacks a route back to 10.10.1.0/24.
+- [x] goldensea-gw: static DHCP lease 172.16.67.13 for WSL MAC 02:15:5D:8B:4B:AD; dst-nat 80+443
+      `in-interface=wg1` → 172.16.67.13 added **disabled**; forward filter verified (masqueraded
+      tunnel src hits the rfc1918 accept). Side fix: desktop TWE-001 static lease .11 repointed to
+      its current NIC MAC 9C:6B:00:14:0B:9A.
+- [ ] goldensea-gw: enable the 443 dst-nat rule when the chain is ready; drop (or keep disabled)
+      the port-80 rule — dead weight under the HTTPS-only design.
+- [x] Windows → WSL2 bridged networking, staging: external vSwitch `WSLBridge` on "Ethernet 2"
+      (Realtek 2.5GbE, `-AllowManagementOS $true`); `C:\Users\steve\.wslconfig` written
+      (networkingMode=bridged, vmSwitch=WSLBridge, macAddress=02:15:5D:8B:4B:AD, dhcp, ipv6).
+      Basis: Windows 10.0.26200 + WSL 2.7.10; bridged un-deprecated in WSL 2.5.6.
+- [ ] Windows → WSL2 bridged networking, cutover: `wsl --shutdown` at a convenient time (kills all
+      WSL sessions + Docker Desktop backend), then verify eth0 = 172.16.67.13 via goldensea-gw
+      DHCP, and confirm Docker Desktop + kind still work under bridged mode. Fallback if bridged
+      misbehaves: revert `.wslconfig` to NAT + `netsh interface portproxy` 443 →
+      `connectaddress=127.0.0.1` (localhost relay; IP-stable, no scripts).
+- [ ] Reverse proxy in WSL on fixed 443 (Caddy / Traefik / YARP — Caddy is the least-config
+      option for automatic TLS) terminating `*.timewarp.work` TLS and routing by Host header to
+      local backend ports.
+- [ ] TLS: wildcard cert via Let's Encrypt **DNS-01 only** (HTTP-01 impossible — port 80 lands on
+      the shop server). Needs API access at the timewarp.work DNS host; pick the matching Caddy
+      DNS plugin.
+- [x] Dynamic-port problem for `dev run` backends: solved by pinning — AppHost `Ingress:Port` set
+      to 63610 in appsettings.Development.json (commit `abd6b0dd`); proxy targets
+      localhost:63610, YARP ingress fans out internally. Matches the standalone yarp project's
+      launchSettings https port by design (alternative ingress modes, never co-run).
 - [ ] Per-project name→backend mapping: decide where the proxy config lives and the convention for
       claiming a `<name>` (one per project/app instance).
 - [ ] Verify end to end from outside the LAN: HTTPS loads on a real device off-wifi; WebAuthn
       passkey ceremony works with RP ID `<name>.timewarp.work` (real-domain exercise of the 104
       identity work beyond localhost).
 - [ ] Security notes in the runbook: only intentionally mapped names resolve to anything (proxy
-      returns 404/close otherwise); how to disable the timewarp-mikrotik forward when nothing
-      should be public.
+      returns 404/close otherwise); how to disable the public path (timewarp-gw SNI route /
+      goldensea-gw dst-nat) when nothing should be public.
 
 ## Notes
 
-- The proxy forwards to the Aspire app's **http** endpoint; outside users get real TLS at the
-  proxy instead of the localhost dev cert. Check the app tolerates being served under a different
-  host/scheme (forwarded headers) — Blazor WASM + FastEndpoints should be fine, but WebAuthn RP ID
-  and any absolute-URL generation must see the public host.
-- Escape hatch if the double-NAT + WSL hop fights back: Cloudflare Tunnel (or Tailscale Funnel)
-  from inside WSL bypasses both routers and Windows entirely — worth noting as plan B even though
-  the static-IP + MikroTik path is preferred.
+- **Decision log**
+  - Mirrored WSL networking rejected: shared IP forces Windows/WSL port arbitration (two sshds
+    can't both own 22). Bridged chosen; portproxy→127.0.0.1 is the recorded fallback.
+  - `tls-host` in RouterOS NAT confirmed impossible (2026-07-20, "bad parameter"): NAT picks the
+    destination at the TCP SYN, before the ClientHello carrying SNI exists — hence the userspace
+    SNI passthrough proxy at timewarp-gw. ECH caveat: the split needs plaintext ClientHello;
+    don't publish ECH configs for these names.
+  - Asymmetric return path (inbound via wg1, default route via goldensea-gw's AIS uplink): solved
+    structurally by the SNI proxy making a fresh connection into the tunnel. Client source IP is
+    therefore the proxy's, not the visitor's — acceptable for MVP; upgrade path for real client
+    IPs is PROXY protocol from the SNI proxy or policy routing, revisit when rate limiting needs
+    it (cf. 104-015).
+- The WSL proxy forwards to the Aspire ingress's endpoint locally; outside users get real TLS at
+  the proxy instead of the localhost dev cert. Check the app tolerates being served under a
+  different host/scheme (forwarded headers) — Blazor WASM + FastEndpoints should be fine, but
+  WebAuthn RP ID and any absolute-URL generation must see the public host.
+- Escape hatch if the chain fights back: Cloudflare Tunnel (or Tailscale Funnel) from inside WSL
+  bypasses both routers and Windows entirely — plan B only; the static-IP + MikroTik path is
+  preferred.
 - Consumers: this repo's `dev run` review shares (first), other projects' apps, and later the kind
   deploy in [[070-001-expose-local-kind-deploy-publicly-via-nametimewarpwork-through-mikrotik]]
-  (its ingress-nginx host ports become just another backend of this chain, or take over 80/443 on
+  (its ingress-nginx host ports become just another backend of this chain, or take over 443 on
   the WSL side for kind-hosted names).
 
 ## Session
 
 - Created: 2026-07-20
+- Implementation (network staging): 2026-07-20 — goldensea-gw done, WSL bridged staged,
+  ingress port pinned; pending: DNS host answer, 10.10.1.80 identification, wsl restart.
