@@ -41,6 +41,11 @@ public class Returns_
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string json = await response.Content.ReadAsStringAsync();
+    // Server must emit PascalCase string enums (ContractSerializationDefaults on MVC JsonOptions), not integers.
+    json.ShouldContain("\"kind\":\"Agent\"");
+    json.ShouldContain("\"trustTier\":\"Keyed\"");
+    json.ShouldNotContain("\"kind\":2");
+    json.ShouldNotContain("\"trustTier\":2");
     GetAgentIdentity.Response? parsed = JsonSerializer.Deserialize<GetAgentIdentity.Response>(json, ContractSerializationDefaults.Options);
     parsed.ShouldNotBeNull();
     parsed.Kind.ShouldBe(PrincipalKind.Agent);

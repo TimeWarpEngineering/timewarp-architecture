@@ -5,8 +5,8 @@
 // Mirrors the public JSON shapes of Start/Complete agent registration and token
 // issuance plus GetAgentIdentity. principalId/keyId stay strings (typed-id STJ
 // converters not required for this thin client). Kind/TrustTier use the Identity
-// enums so default numeric JSON (ASP.NET / STJ) deserializes correctly — string
-// properties would throw on number tokens after HTTP 200.
+// enums; CliJson registers JsonStringEnumConverter so wire values are PascalCase
+// strings ("Agent", "Keyed"), not integers — matching ContractSerializationDefaults.
 #endregion
 
 namespace AgentIdentityCli.Services;

@@ -43,13 +43,13 @@ Decide the seam's enum representation now, while the only external consumer is o
 
 ## Checklist
 
-- [ ] Confirm strings-over-integers at plan; record rejected numeric+renumber-guard alternative
-- [ ] JsonStringEnumConverter in ContractSerializationDefaults (seam-wide)
-- [ ] Fail-closed unknown-value handling (verify default, guard if needed)
-- [ ] web-contracts-tests round-trips for every contract-facing enum
-- [ ] Update 104-029 CLI wire DTOs + whoami-wire-tests to the string shape
-- [ ] Blast-radius grep (all web-contracts enums + SPA consumers); no numeric dependency remains
-- [ ] dev build 0/0; dev test
+- [x] Confirm strings-over-integers at plan; record rejected numeric+renumber-guard alternative
+- [x] JsonStringEnumConverter in ContractSerializationDefaults (seam-wide)
+- [x] Fail-closed unknown-value handling (verify default, guard if needed)
+- [x] web-contracts-tests round-trips for every contract-facing enum
+- [x] Update 104-029 CLI wire DTOs + whoami-wire-tests to the string shape
+- [x] Blast-radius grep (all web-contracts enums + SPA consumers); no numeric dependency remains
+- [x] dev build 0/0; dev test
 
 ## Notes
 
@@ -84,3 +84,39 @@ Server currently does NOT use ContractSerializationDefaults — must Apply on MV
 ## Session
 - Started: 2026-07-20 (tw-orchestrate-task 108)
 - Plan: 2026-07-20
+
+## Results
+
+### Summary
+Contract enums now serialize as PascalCase member-name strings across the seam (`JsonStringEnumConverter`, `allowIntegerValues: false`). Server hosts Apply the same options (MVC + HttpJson). CLI and tests updated. Integers and unknown names fail closed with `JsonException`.
+
+### Files changed
+| Path | Change |
+|------|--------|
+| `foundation-contracts/.../contract-serialization-defaults.cs` | converter + Design |
+| `foundation-server/common-server-module.cs` | Apply on JsonOptions + HttpJsonOptions |
+| `web-contracts-tests/.../identity-contracts-serialization-tests.cs` | wire text + fail-closed + CredentialType |
+| `web-server-integration-tests/.../Agent_Protected_Endpoint_Tests.cs` | raw JSON string asserts |
+| `tools/agent-identity-cli/services/cli-json.cs` | same converter |
+| `tools/agent-identity-cli/services/agent-wire-dtos.cs` | Design: strings |
+| `tests/tools/.../whoami-wire-tests.cs` | string fixture + numeric reject |
+| `skills/web-api-contracts/SKILL.md` | one-line note |
+
+### Key decisions
+- Strings over integers; PascalCase names; plain enums (not Bogard Enumeration)
+- Rejected: keep integers + TWA renumber analyzer
+- Server must Apply — client-only would split wire
+- STJ unknown strings → JsonException; case-insensitive read is STJ default (documented)
+
+### Build / tests
+- `dev build`: 0/0 (implementer)
+- web-contracts-tests: 26 passed
+- agent-identity-cli-tests: 11 passed
+- Agent protected endpoint tests: 5 passed
+
+### Review
+- Effort 1 general; disposition **clean**
+- Paths: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`
+
+## Session
+- Started / plan / implement / review: 2026-07-20 (tw-orchestrate-task 108)

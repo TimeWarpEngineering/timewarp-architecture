@@ -263,11 +263,12 @@ Contracts are authored **before** the server exists (frontend-first, mock-backed
 dedicated, host-free contracts test project (`*contracts-tests`, Fixie + **Shouldly**) is the only
 test that can run in that window.
 
-Add `SerializeAndDeserialize` round-trips using camelCase `JsonSerializerOptions`. **Prioritize**
+Add `SerializeAndDeserialize` round-trips using `ContractSerializationDefaults` (camelCase
+properties; PascalCase string enums via `JsonStringEnumConverter`, integers rejected). **Prioritize**
 contracts where serialization can actually diverge: `required`/`init` members, custom converters,
-non-default constructors, `OneOf`/`SharedProblemDetails` envelopes. Plain auto-property POCOs are
-low-priority once server integration tests exist. Do not use FluentAssertions (v8+ is commercially
-licensed).
+non-default constructors, enum properties, `OneOf`/`SharedProblemDetails` envelopes. Plain
+auto-property POCOs are low-priority once server integration tests exist. Do not use
+FluentAssertions (v8+ is commercially licensed).
 
 ### 10. Mock response factory (when mock mode needs it)
 

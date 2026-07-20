@@ -8,7 +8,9 @@
 // the template runs without any Azure dependency; refresh keys off a "Sentinel" value to avoid
 // per-key registration. /api/debug-config is Development-only because GetDebugView exposes
 // secrets. The FluentValidation DisplayNameResolver emits "Type:Member" so validation errors
-// disambiguate identically named properties across contracts.
+// disambiguate identically named properties across contracts. ConfigureServices also Applies
+// ContractSerializationDefaults to MVC JsonOptions and HttpJsonOptions so the host wire shape
+// matches the SPA/CLI/tests seam (camelCase properties; PascalCase string enums).
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -43,6 +45,13 @@ public class CommonServerModule : IAspNetModule
     ValidatorOptions.Global.DisplayNameResolver =
       (type, memberInfo, lambdaExpression) =>
         type != null && memberInfo != null ? $"{type.Name}:{memberInfo.Name}" : null;
+
+    // Contract-seam serialization (camelCase properties + PascalCase string enums). Without this,
+    // the server would emit default STJ integers while the SPA/CLI/tests use ContractSerializationDefaults.
+    serviceCollection.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(
+      o => ContractSerializationDefaults.Apply(o.JsonSerializerOptions));
+    serviceCollection.ConfigureHttpJsonOptions(
+      o => ContractSerializationDefaults.Apply(o.SerializerOptions));
   }
 
   public static void AddOpenApi

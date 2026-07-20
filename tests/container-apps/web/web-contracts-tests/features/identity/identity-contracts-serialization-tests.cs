@@ -240,4 +240,71 @@ public class GetAgentIdentity_Response_Should
     parsed.TrustTier.ShouldBe(TrustTier.Keyed);
     parsed.Scopes.ShouldBe(response.Scopes);
   }
+
+  public static void Serializes_Enums_As_PascalCase_Strings()
+  {
+    GetAgentIdentity.Response response = new
+    (
+      principalId: PrincipalId.New(),
+      kind: PrincipalKind.Agent,
+      trustTier: TrustTier.Keyed,
+      scopes: [AgentScopes.IdentityRead]
+    );
+
+    string json = JsonSerializer.Serialize(response, ContractSerialization.Options);
+
+    json.ShouldContain("\"kind\":\"Agent\"");
+    json.ShouldContain("\"trustTier\":\"Keyed\"");
+    json.ShouldNotContain("\"kind\":2");
+    json.ShouldNotContain("\"trustTier\":2");
+  }
+
+  public static void Reject_Unknown_Kind_String()
+  {
+    string json =
+      """{"principalId":"019f6a8b-0000-7000-8000-000000000001","kind":"NotAKind","trustTier":"Keyed","scopes":[]}""";
+
+    Should.Throw<JsonException>(() =>
+      JsonSerializer.Deserialize<GetAgentIdentity.Response>(json, ContractSerialization.Options));
+  }
+
+  public static void Reject_Integer_Kind()
+  {
+    string json =
+      """{"principalId":"019f6a8b-0000-7000-8000-000000000001","kind":2,"trustTier":"Keyed","scopes":[]}""";
+
+    Should.Throw<JsonException>(() =>
+      JsonSerializer.Deserialize<GetAgentIdentity.Response>(json, ContractSerialization.Options));
+  }
+
+  public static void Accepts_Lowercase_Kind_String_Case_Insensitive_Read()
+  {
+    // JsonStringEnumConverter deserializes case-insensitively; wire emission is still PascalCase
+    // ("Agent"). Fail-closed targets integers and unknown names, not case variants.
+    string json =
+      """{"principalId":"019f6a8b-0000-7000-8000-000000000001","kind":"agent","trustTier":"Keyed","scopes":[]}""";
+
+    GetAgentIdentity.Response? parsed =
+      JsonSerializer.Deserialize<GetAgentIdentity.Response>(json, ContractSerialization.Options);
+
+    parsed.ShouldNotBeNull();
+    parsed.Kind.ShouldBe(PrincipalKind.Agent);
+  }
+}
+
+public class CredentialType_Should
+{
+  public static void RoundTrip_Passkey_And_AgentKey_As_Strings()
+  {
+    string passkeyJson = JsonSerializer.Serialize(CredentialType.Passkey, ContractSerialization.Options);
+    string agentKeyJson = JsonSerializer.Serialize(CredentialType.AgentKey, ContractSerialization.Options);
+
+    passkeyJson.ShouldBe("\"Passkey\"");
+    agentKeyJson.ShouldBe("\"AgentKey\"");
+
+    JsonSerializer.Deserialize<CredentialType>(passkeyJson, ContractSerialization.Options)
+      .ShouldBe(CredentialType.Passkey);
+    JsonSerializer.Deserialize<CredentialType>(agentKeyJson, ContractSerialization.Options)
+      .ShouldBe(CredentialType.AgentKey);
+  }
 }
