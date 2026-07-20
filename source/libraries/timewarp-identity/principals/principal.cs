@@ -15,7 +15,9 @@
 // - Named predicates (IsFundedAndActive, IsActive) so handlers never write tier >= Funded.
 // - Rich PrincipalStatus taxonomy deferred until 008/013 write real gates.
 //
-// Clocks: DateTimeOffset.UtcNow at Create (D5 TimeProvider deferred to 104-006).
+// Clocks (D5, closed 104-006): Wave 1 ceremony-critical clocks (challenge/token stores) use optional
+// TimeProvider; domain entity CreatedAt remains wall-clock DateTimeOffset.UtcNow with fuzzy tests.
+// Full TimeProvider on domain entities is not required for the Wave 1 gate.
 //
 // Concurrency (task 104-028, supersedes D6 last-write-wins): Principal inherits Entity<PrincipalId>
 // — typed Id, identity-based (type+Id) equality, and the store-owned Version optimistic-concurrency

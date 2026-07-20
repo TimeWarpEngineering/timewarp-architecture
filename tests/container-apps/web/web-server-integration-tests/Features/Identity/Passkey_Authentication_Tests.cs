@@ -18,6 +18,7 @@ namespace PasskeyAuthentication_;
 using System.Buffers.Text;
 using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
@@ -126,6 +127,33 @@ public class Returns_
 
     await WebTestServerApplication.ConfirmEndpointValidationError<CompletePasskeyAuthentication.Response>
       (command, nameof(CompletePasskeyAuthentication.Command.CredentialId));
+  }
+
+  public async Task Forbidden_Given_Quarantined_Principal()
+  {
+    // G3 (104-006): crypto must succeed, then quarantine is the distinct 403 signal — not 400.
+    IntegrationSoftwareAuthenticator authenticator = new();
+    PrincipalId principalId = await RegisterPasskey(authenticator);
+    await QuarantinePrincipal(principalId);
+
+    CompletePasskeyAuthentication.Command authenticateCommand = await BuildValidAuthenticateCommand(authenticator);
+
+    OneOf<CompletePasskeyAuthentication.Response, FileResponse, SharedProblemDetails> result =
+      await WebTestServerApplication.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
+
+    result.IsT2.ShouldBeTrue("Authentication of a quarantined principal should return a problem.");
+    result.AsT2.Status.ShouldBe(403);
+    result.AsT2.Title.ShouldBe("Account quarantined");
+  }
+
+  private async Task QuarantinePrincipal(PrincipalId principalId)
+  {
+    IPrincipalStore store =
+      WebTestServerApplication.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
+    Principal? principal = await store.GetPrincipalAsync(principalId);
+    principal.ShouldNotBeNull();
+    principal.Quarantine();
+    await store.UpdatePrincipalAsync(principal);
   }
 
   private async Task<PrincipalId> RegisterPasskey(IntegrationSoftwareAuthenticator authenticator)

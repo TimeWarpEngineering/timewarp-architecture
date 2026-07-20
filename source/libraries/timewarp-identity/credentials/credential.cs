@@ -8,7 +8,9 @@
 // fresh copies so callers cannot mutate stored material (D8: keep byte[] copy-on-get for Wave 1).
 // Empty PrincipalId rejected at Create. CredentialType.None rejected. Id is CredentialId (RFC D3), not raw Guid.
 // Type and Handle are immutable after Create — store Update replaces by Id only (revoke / label persistence); no handle migration.
-// Revoke is one-shot. Timestamps use DateTimeOffset (D5 TimeProvider deferred to 104-006).
+// Revoke is one-shot. Clocks (D5, closed 104-006): CreatedAt/RevokedAt remain wall-clock
+// DateTimeOffset with fuzzy tests; ceremony challenge/token stores already take optional
+// TimeProvider. Full TimeProvider on domain entities is not required for the Wave 1 gate.
 //
 // Concurrency (task 104-028, supersedes D6 last-write-wins): Credential inherits Entity<CredentialId>
 // — typed Id, identity-based (type+Id) equality, and the store-owned Version optimistic-concurrency

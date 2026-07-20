@@ -60,9 +60,12 @@
 // the pre-attach snapshot still conflicts correctly (their Version no longer matches once the tier
 // changes), which is the intended "silently demoting the tier" prevention.
 //
-// D5 TimeProvider deferred to 104-006. D8 material type remains byte[] copy-on-get on Credential
-// (Snapshot's ToArray copies plus the getters' own ToArray copies mean a caller can never reach
-// stored byte[] storage through any public surface).
+// Clocks (D5, closed 104-006): this store does not inject TimeProvider — it persists entity stamps
+// as written; ceremony challenge/token stores already take optional TimeProvider. Domain CreatedAt/
+// RevokedAt remain wall-clock with fuzzy tests; full TimeProvider on domain is not required for Wave 1.
+// D8 material type remains byte[] copy-on-get on Credential (Snapshot's ToArray copies plus the
+// getters' own ToArray copies mean a caller can never reach stored byte[] storage through any
+// public surface).
 #endregion
 
 namespace TimeWarp.Identity;
