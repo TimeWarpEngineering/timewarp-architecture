@@ -30,9 +30,11 @@ plugs into the same chain as just another backend.
 
 ## Checklist
 
-- [ ] DNS: wildcard `*.timewarp.work` A record → 49.0.91.107 (or CNAME → `shop.timewarp.ws`).
-      **Blocked on: where is timewarp.work DNS hosted?** (Also determines the DNS-01 plugin for
-      cert automation.)
+- [ ] DNS: **Cloudflare** hosts timewarp.work (confirmed 2026-07-20). Add wildcard A record:
+      Name `*`, IPv4 49.0.91.107, **Proxy status: DNS only (grey cloud)** — Proxied mode would
+      put Cloudflare's TLS termination in the path, breaking the SNI split and advertising ECH
+      (which encrypts the SNI the splitter needs). Safe to add before the SNI split is live
+      (unknown hostnames just land on the shop server).
 - [ ] timewarp-gw (shop): SNI passthrough split for 443 — **decision pending: what runs on
       10.10.1.80?** Option A: nginx `stream`+`ssl_preread` on 10.10.1.80 itself (existing sites
       rebind internally, e.g. :8443). Option B: tiny HAProxy/sniproxy VM on the shop VM host;
@@ -58,8 +60,8 @@ plugs into the same chain as just another backend.
       option for automatic TLS) terminating `*.timewarp.work` TLS and routing by Host header to
       local backend ports.
 - [ ] TLS: wildcard cert via Let's Encrypt **DNS-01 only** (HTTP-01 impossible — port 80 lands on
-      the shop server). Needs API access at the timewarp.work DNS host; pick the matching Caddy
-      DNS plugin.
+      the shop server). Cloudflare API token scoped Zone→DNS→Edit on timewarp.work; Caddy build
+      with the `cloudflare` DNS module (xcaddy or caddyserver.com download with plugin selected).
 - [x] Dynamic-port problem for `dev run` backends: solved by pinning — AppHost `Ingress:Port` set
       to 63610 in appsettings.Development.json (commit `abd6b0dd`); proxy targets
       localhost:63610, YARP ingress fans out internally. Matches the standalone yarp project's
