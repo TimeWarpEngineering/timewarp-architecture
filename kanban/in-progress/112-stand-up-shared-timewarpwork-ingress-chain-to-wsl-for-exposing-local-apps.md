@@ -35,12 +35,19 @@ plugs into the same chain as just another backend.
       put Cloudflare's TLS termination in the path, breaking the SNI split and advertising ECH
       (which encrypts the SNI the splitter needs). Safe to add before the SNI split is live
       (unknown hostnames just land on the shop server).
-- [ ] timewarp-gw (shop): SNI passthrough split for 443 — **decision pending: what runs on
-      10.10.1.80?** Option A: nginx `stream`+`ssl_preread` on 10.10.1.80 itself (existing sites
-      rebind internally, e.g. :8443). Option B: tiny HAProxy/sniproxy VM on the shop VM host;
-      NAT rules 0/1 repoint 443 to it, default backend 10.10.1.80, `*.timewarp.work` →
-      10.66.2.6:443. Either way the proxy originates a fresh TCP connection into the tunnel, so
-      the wg1 masquerade is only needed if goldensea-gw lacks a route back to 10.10.1.0/24.
+- [ ] timewarp-gw (shop), Phase 1 — TEMP direct forward: 10.10.1.80 is currently DOWN
+      (maintenance; ping timeout 2026-07-20), so shop 443 is dead anyway. Add TEMP dst-nat
+      `dst-address=192.168.68.2 dst-port=443` → 10.66.2.6 `place-before=0` (disabled until the
+      WSL side is ready) + srcnat masquerade out wg1 → 10.66.2.6:443 (needed in this phase: plain
+      dst-nat has no fresh-connection proxy, asymmetric return applies). While enabled,
+      shop.timewarp.ws visitors get a cert mismatch from our proxy instead of a timeout.
+- [ ] timewarp-gw (shop), Phase 2 — SNI passthrough split when servers return: decision A vs B
+      deferred until 10.10.1.80 is back and identifiable. Option A: nginx `stream`+`ssl_preread`
+      on 10.10.1.80 itself (existing sites rebind internally, e.g. :8443). Option B: tiny
+      HAProxy/sniproxy VM on the shop VM host; NAT rules 0/1 repoint 443 to it, default backend
+      10.10.1.80, `*.timewarp.work` → 10.66.2.6:443. Either way the splitter originates a fresh
+      TCP connection into the tunnel, so the Phase-1 masquerade can be retired if goldensea-gw
+      routes back to 10.10.1.0/24. Replaces the TEMP rule.
 - [x] goldensea-gw: static DHCP lease 172.16.67.13 for WSL MAC 02:15:5D:8B:4B:AD; dst-nat 80+443
       `in-interface=wg1` → 172.16.67.13 added **disabled**; forward filter verified (masqueraded
       tunnel src hits the rfc1918 accept). Side fix: desktop TWE-001 static lease .11 repointed to
