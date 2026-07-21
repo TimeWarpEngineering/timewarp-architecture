@@ -95,6 +95,12 @@ folders inside one module project; ours remain separate projects):
 
 ## Axis 5 — Persistence shape (joint with 113): OPEN
 
-## Axis 6 — Template flag mechanics: OPEN
+## Axis 6 — Template flag mechanics ✅ (non-blocking, deal with as it comes)
+
+**Decision (Steve):** Keep in-file `#if` as the mechanism of record — it's needed for
+line-granular seams, it works, and TWA0008/0010 guard it. Folder-exclusion `sources.modifiers`
+(FSH style) is easy to add per-case when a flag's footprint is a whole directory; adopt
+opportunistically, watch for a pattern, revisit only if one emerges. Explicitly NOT a blocker
+for anything else.
 
 ## Axis 7 — .NET 11 posture: OPEN
