@@ -41,11 +41,13 @@ layer is half-built.
    problem actors solve for a *template* (single-writer serialization per aggregate, in-memory
    hot state, at the cost of cluster ops + serialization discipline + a much steeper template
    learning curve).
-2. **Actor technology, if adopted**: Akka.NET (Steve's named candidate) vs Microsoft Orleans
-   (virtual actors, first-class Aspire integration) vs Dapr actors. Weigh: Aspire wiring,
-   persistence integration with the golden aggregate seam, licensing (Akka.NET moved to
-   BSL/commercial licensing for larger orgs — check current terms before committing the
-   template to it), template-consumer ergonomics.
+2. **Actor technology, if adopted**: Akka.NET (Steve's named candidate; **Apache 2.0** — the
+   BSL change was JVM Akka/Lightbend only, Akka.NET stayed Apache per Petabridge, ports frozen
+   at upstream 2.6.20) vs Microsoft Orleans (MIT, virtual actors, first-class Aspire
+   integration) vs Dapr actors. Licensing is NOT a differentiator — corrected 2026-07-22 after
+   an earlier false "Akka.NET went BSL" claim biased the framing. Weigh instead: Aspire wiring,
+   persistence integration with the golden aggregate seam, template-consumer approachability,
+   upstream-port freeze implications, support/community (Steve knows the Akka.NET author).
 3. **Persistence shape**: state-store EF (current seam) vs event sourcing (e.g. Marten on
    Postgres — would also answer the actor-journal question) vs hybrid (EF state store now,
    evented aggregates where actors land). Interacts hard with decision 1.
@@ -86,8 +88,8 @@ layer is half-built.
 
 ## Notes
 
-- Akka.NET licensing check is a hard gate before recommending it in a template others generate
-  from — the template's consumers inherit the license posture.
+- Akka.NET licensing RESOLVED (2026-07-22): Apache 2.0 — the BSL move was JVM Akka only.
+  No license gate on either actor candidate (Akka.NET Apache 2.0, Orleans MIT).
 - Orleans note for the RFC: `Aspire.Hosting.Orleans` exists first-party; actor-per-aggregate
   with Orleans grains + Postgres grain storage is the lowest-ops actor option in this stack.
 - The enumeration-hardening task [[105]] and foundation packaging (051) touch the same
