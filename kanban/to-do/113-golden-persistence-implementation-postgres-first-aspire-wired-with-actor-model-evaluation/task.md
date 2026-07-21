@@ -57,15 +57,9 @@ layer is half-built.
 
 ## Checklist
 
-- [ ] Wire Postgres into the AppHost: `Aspire.Hosting.PostgreSQL` in CPM + app-host csproj
-      (guarded consistent with existing flag packaging), `#if postgres` `AddPostgres` +
-      `AddDatabase` + `WithReference` into web-server (and api-server?), pgAdmin/pgweb optional;
-      resource name via `ServiceNames` (TWA0007). `dev run` must come up with a live postgres.
-- [ ] Connection flow: Aspire-injected connection string reaches `PostgresDbModule` in
-      Development; document the non-Aspire path (compose/K8s from 070) too.
-- [ ] Remove SQL Server: delete `sql-db-context.cs` placeholder, drop the CPM package, scrub the
-      commented AddDbContextCheck line in web-server Program; note in docs that Postgres is the
-      relational axis.
+- [ ] Mechanical track (RFC-independent) split to child
+      [[113-001-wire-postgres-into-aspire-apphost-and-remove-sql-server-remnants]]: AppHost
+      `AddPostgres` wiring, connection flow to `PostgresDbModule`, SQL Server removal.
 - [ ] Run the RFC (rfc/ subfolder, tw-rfc-ballot) over the five open decisions; fold resolutions
       back into THIS task's checklist (no separate apply-task).
 - [ ] Implement the golden persistence implementation per resolutions (scope will be refined by
