@@ -39,7 +39,23 @@ membership — the insight that folder=project is a default glob, not a requirem
 - **Validation needed (spike, one slice):** IDE/design-time-build behavior with cross-folder
   globs, duplicate-analysis avoidance, glob perf, dotnet-new template engine interaction.
 
-## Axis 2 — Contracts placement: OPEN (in discussion)
+## Axis 2 — Contracts placement + assembly granularity per layer ✅
+
+**Decision (Steve):**
+
+- **Contracts: single assembly.** Not a compromise — contracts are definitionally the public,
+  shared, serialized seam; `internal` there is near-meaningless and module separation is a
+  non-goal in that layer. TWA0009's namespace rules already govern who may consume what.
+- **Implementation layers (application/domain/infrastructure): default single assembly per
+  layer, enforced by TWA0009** — with **per-module assembly splits as the earned exception**
+  (module gets big/sensitive/heading toward service extraction). Under the axis-1 filename-glob
+  scheme, a split is a csproj/glob operation — files never move — so the template starts simple
+  and extraction stays cheap ("if modules need extracting we are in a good place").
+- **Server / spa: single** (they are the deployment artifacts).
+- Key insight enabling this: assembly granularity is **per-layer independent** under axis 1 —
+  the packaging choice (and therefore what `internal` means) can differ per layer. `internal`
+  stays layer-wide in the default posture; module-privacy is expressed to the analyzer
+  (TWA0009), not the compiler, until a module earns its own assembly.
 
 ## Axis 3 — Async cross-slice channel: OPEN
 
