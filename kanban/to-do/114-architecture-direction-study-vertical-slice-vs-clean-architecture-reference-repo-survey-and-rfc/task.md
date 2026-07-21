@@ -44,16 +44,18 @@ Survey artifacts land in this folder (`survey-*.md`), synthesized into `survey-s
 
 ## Checklist
 
-- [ ] Per-repo structural surveys (5 parallel agents: CASA, trinsic, fullstackhero, ardalis×3
-      compared, jasontaylor) — raw reports into this folder
-- [ ] Synthesis document: comparison matrix (feature organization, module boundaries, endpoint
-      tech, persistence shape, enforcement mechanisms, .NET currency), what each does better
-      than the incumbent, what the incumbent already does better (compiler-enforced isolation
-      and generated endpoints are ahead of ALL of these on enforcement)
-- [ ] Enumerate the actual decisions for RFC ballot (`rfc/` subfolder) — expected axes:
-      slice-vs-layer project granularity; where contracts live; module/slice boundary
-      mechanics + cross-slice communication; foundation packages' role in the hybrid;
-      folder/project renames worth the churn; .NET 11 posture
+- [x] Per-repo structural surveys DONE 2026-07-21 (5 parallel agents) — `survey-trinsic.md`,
+      `survey-casa.md`, `survey-jasontaylor.md`, `survey-ardalis.md`, `survey-fullstackhero.md`
+      in this folder.
+- [x] Synthesis DONE 2026-07-21 — `survey-synthesis.md`: comparison matrix, seven convergence
+      findings (slices won everywhere; MediatR abandoned industry-wide; contracts-project seam
+      is standard; DbContext+schema per module is the modular persistence consensus; NOBODY else
+      has compile-time enforcement — the incumbent's moat), steal-list by source, confirmed
+      incumbent positions.
+- [ ] RFC ballot decisions enumerated in `survey-synthesis.md` §"Refined RFC decision axes"
+      (7 axes: slice project granularity, contracts placement, async cross-slice channel,
+      intra-slice layering enforcement, persistence shape [joint w/113], template flag
+      mechanics, .NET 11 posture) — write the ballot RFC in `rfc/` from these.
 - [ ] Run tw-rfc-ballot; fold resolutions into this task (no separate apply-task)
 - [ ] Sequence the fold-out: which resolutions gate 113's persistence RFC, which spawn
       structural-migration child tasks
