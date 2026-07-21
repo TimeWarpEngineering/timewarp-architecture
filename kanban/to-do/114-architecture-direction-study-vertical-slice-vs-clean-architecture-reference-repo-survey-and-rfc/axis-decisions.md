@@ -93,7 +93,28 @@ folders inside one module project; ours remain separate projects):
   dependency belongs to ("EF Core types are infrastructure; move to `<name>-infrastructure.cs`
   or remove the dependency"), since there's no layer folder structure left to teach the scheme.
 
-## Axis 5 — Persistence shape (joint with 113): OPEN
+## Axis 5 — Persistence shape + actors ✅ (tech choice via dual spike in 113)
+
+**Decision (Steve, 2026-07-22):**
+
+- **State-store EF is the golden path** — no event sourcing for now (paradigm shift without
+  team depth; revisit only if a real need emerges). Actors do NOT require it: Akka.Persistence
+  is Akka's optional event-sourced durable-state mechanism, and Orleans is state-store-first
+  (`IPersistentState<T>` snapshots) — actors + state-store EF is fully coherent.
+- **DbContext + schema per slice** (RiverBooks/FSH consensus pattern) on the existing
+  `PostgresDbContext` golden seam (invariants guard + version token).
+- **Actors: optional, with a shipped example.** The aggregate stays EF-golden by default;
+  specific aggregates earn actor hosting (single-writer serialization, in-memory hot state,
+  long-lived processes). The actor is a concurrency/lifetime shell around the SAME golden
+  aggregate + EF path — no second persistence stack. Natural first example: the 104 credit
+  ledger (per-principal balance = textbook high-contention single-writer).
+- **Actor technology: decided empirically, not in the abstract** — dual spike in 113 (child
+  task): same example aggregate on Akka.NET and Orleans, pick with hands on. License is NOT a
+  differentiator (corrected 2026-07-22: Akka.NET is Apache 2.0 — the BSL move was JVM
+  Akka/Lightbend only; Orleans MIT). Real axes: consumer approachability, Aspire wiring,
+  golden-aggregate/EF fit, upstream-port freeze (Akka.NET independent since JVM 2.6.20),
+  community/support (Steve knows the Akka.NET author).
+- The axis-3 substrate-agnostic publish seam guarantees the losing spike leaves no residue.
 
 ## Axis 6 — Template flag mechanics ✅ (non-blocking, deal with as it comes)
 

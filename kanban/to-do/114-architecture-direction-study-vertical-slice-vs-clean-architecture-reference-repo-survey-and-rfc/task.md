@@ -52,14 +52,18 @@ Survey artifacts land in this folder (`survey-*.md`), synthesized into `survey-s
       is standard; DbContext+schema per module is the modular persistence consensus; NOBODY else
       has compile-time enforcement — the incumbent's moat), steal-list by source, confirmed
       incumbent positions.
-- [ ] RFC ballot decisions enumerated in `survey-synthesis.md` §"Refined RFC decision axes"
-      (7 axes: slice project granularity, contracts placement, async cross-slice channel,
-      intra-slice layering enforcement, persistence shape [joint w/113], template flag
-      mechanics, .NET 11 posture) — write the ballot RFC in `rfc/` from these.
-- [ ] Run tw-rfc-ballot; fold resolutions into this task (no separate apply-task)
-- [ ] Sequence the fold-out: which resolutions gate 113's persistence RFC, which spawn
-      structural-migration child tasks
-- [ ] ADR(s) recording the architectural identity decision
+- [x] All 7 axes DECIDED in-chat with Steve (2026-07-21/22) — see `axis-decisions.md`. The
+      planned tw-rfc-ballot is SUPERSEDED: the decision-maker participated directly, which is
+      the point of a ballot. (Optional later: an adversarial review pass over axis-decisions.md
+      before the ADR, if Steve wants a red team.)
+- [ ] Axis-1 validation spike (one feature slice): filename-grammar globs
+      (`<name>[-function]-<layer>.cs`), cross-folder Compile includes, design-time build / IDE
+      behavior, exactly-one-project check, dotnet-new engine interaction.
+- [ ] Sequence the fold-out: structural-migration child tasks from axes 1–4 (filename grammar +
+      globs + archetype analyzer), 113 carries axis 5 (113-002 dual actor spike created) and
+      the axis-3 outbox question.
+- [ ] ADR(s) recording the architectural identity decision — write from `axis-decisions.md`
+      after the axis-1 spike validates tooling.
 
 ## Notes
 
