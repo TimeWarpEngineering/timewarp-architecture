@@ -61,7 +61,11 @@ layer is half-built.
       [[113-001-wire-postgres-into-aspire-apphost-and-remove-sql-server-remnants]]: AppHost
       `AddPostgres` wiring, connection flow to `PostgresDbModule`, SQL Server removal.
 - [ ] Run the RFC (rfc/ subfolder, tw-rfc-ballot) over the five open decisions; fold resolutions
-      back into THIS task's checklist (no separate apply-task).
+      back into THIS task's checklist (no separate apply-task). **Sequencing: wait on (or run
+      jointly with) the macro-architecture RFC in
+      [[114-architecture-direction-study-vertical-slice-vs-clean-architecture-reference-repo-survey-and-rfc]]
+      — persistence shape follows from the architectural identity decision. 113-001 (mechanical
+      Postgres wiring) is NOT gated.**
 - [ ] Implement the golden persistence implementation per resolutions (scope will be refined by
       the RFC fold-in): reference aggregate persisted end-to-end (entity config, migrations or
       schema-creation story, concurrency-token mapping fulfilling the sql-db-context two-party
