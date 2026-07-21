@@ -77,7 +77,21 @@ membership — the insight that folder=project is a default glob, not a requirem
   processing. Axis-3's contract-level design must not bake in mediator-notification delivery as
   an assumption — keep the publish seam abstract.
 
-## Axis 4 — Intra-slice layering enforcement: OPEN
+## Axis 4 — Intra-slice layering enforcement ✅ (resolved by construction)
+
+**Decision (Steve, agreed 2026-07-21):** No new mechanism needed — axes 1+2 dissolve the problem
+that made RiverBooks reach for NsDepCop and FSH for LayerDependencyTests (their layers are
+folders inside one module project; ours remain separate projects):
+
+- **Layer directionality = ordinary project reference graph** (domain.csproj references nothing
+  outward) — compile-time, free.
+- **Package discipline = per-layer csproj + CPM** (domain carries no EF PackageReference, so
+  domain files using DbContext don't build) — free.
+- **Residual enforcement = the axis-1 archetype analyzer** (function-segment shape rules:
+  `-handler` can't use HTTP types, `-endpoint` can't hold business logic, aggregates carry
+  `Invariants`, …) with **teaching-quality diagnostics** — errors name the layer the offending
+  dependency belongs to ("EF Core types are infrastructure; move to `<name>-infrastructure.cs`
+  or remove the dependency"), since there's no layer folder structure left to teach the scheme.
 
 ## Axis 5 — Persistence shape (joint with 113): OPEN
 
