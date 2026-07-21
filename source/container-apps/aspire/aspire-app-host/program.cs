@@ -17,11 +17,11 @@
 // longer serves. /api/signin-token was removed for this reason (task 110 round-1 review M1: the contract
 // mints a Passwordless sign-in token for an arbitrary caller-supplied UserId with no proof of identity, has
 // zero live consumers, and must not be a reachable server endpoint).
-// Ingress:Port pins the YARP host port so external clients and E2E tests get a stable ingress URL;
-// Development pins 63610 (appsettings.Development.json) so reverse proxies (e.g. the *.timewarp.work
-// share path) and scripts have a fixed local ingress next to the 63611-13 service ports. 63610 equals
-// the standalone yarp project's launchSettings https port on purpose: the two are alternative ingress
-// modes that never run together, so "the ingress is 63610" holds in both.
+// Ingress:Port (https) / Ingress:HttpPort (http) pin the YARP host ports so external clients, E2E
+// tests, and reverse proxies get stable ingress URLs. Development pins https 63610 / http 63620
+// (appsettings.Development.json), matching the standalone yarp project's launchSettings on purpose:
+// the two are alternative ingress modes that never run together, so "ingress https is 63610" holds
+// in both. The *.timewarp.work share path (Caddy in WSL, task 112) targets the http endpoint 63620.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -61,14 +61,20 @@ internal class Program
 #if yarp
     // YARP Reverse Proxy
     // YARP is included in the template
-    int? ingressPort = int.TryParse(builder.Configuration["Ingress:Port"], out int port) ? port : null;
+    int? ingressHttpsPort = int.TryParse(builder.Configuration["Ingress:Port"], out int httpsPort) ? httpsPort : null;
+    int? ingressHttpPort = int.TryParse(builder.Configuration["Ingress:HttpPort"], out int httpPort) ? httpPort : null;
 
     // Create the YARP resource
     IResourceBuilder<YarpResource> yarp = builder.AddYarp(YarpResourceName);
 
-    if (ingressPort is not null)
+    if (ingressHttpsPort is not null)
     {
-      yarp = yarp.WithHostPort(ingressPort.Value);
+      yarp = yarp.WithEndpoint("https", endpoint => endpoint.Port = ingressHttpsPort.Value);
+    }
+
+    if (ingressHttpPort is not null)
+    {
+      yarp = yarp.WithEndpoint("http", endpoint => endpoint.Port = ingressHttpPort.Value);
     }
 
     yarp = yarp.WithConfiguration(yarpConfiguration =>

@@ -16,7 +16,7 @@ Actual topology (hostnames are the routers' real identities):
         → WireGuard wg1 (10.66.2.4/30: timewarp-gw .5 ↔ goldensea-gw .6)
           → goldensea-gw (LAN bridge 172.16.67.0/24; own uplink = AIS DMZ 192.168.67.2 on ether1)
             → WSL2 Ubuntu bridged @ 172.16.67.13 (pending wsl restart)
-              → reverse proxy :443 (pending) → localhost:63610 Aspire YARP ingress (pinned)
+              → Caddy :443 (live) → localhost:63620 Aspire YARP ingress http (pinned; https local = 63610)
 ```
 
 The timewarp.work path is **HTTPS-only** (port 80 stays with the existing shop server) and certs
@@ -74,10 +74,12 @@ plugs into the same chain as just another backend.
       + `handle` block per app inside the single wildcard site; `arch.timewarp.work` claimed for
       this repo → `https://localhost:63610` (backend dev-cert verify skipped). Reload:
       `sudo systemctl reload caddy`.
-- [x] Dynamic-port problem for `dev run` backends: solved by pinning — AppHost `Ingress:Port` set
-      to 63610 in appsettings.Development.json (commit `abd6b0dd`); proxy targets
-      localhost:63610, YARP ingress fans out internally. Matches the standalone yarp project's
-      launchSettings https port by design (alternative ingress modes, never co-run).
+- [x] Dynamic-port problem for `dev run` backends: solved by pinning both YARP ingress endpoints —
+      AppHost `Ingress:Port` (https 63610) + `Ingress:HttpPort` (http 63620) in
+      appsettings.Development.json; Caddy targets the http endpoint localhost:63620, YARP fans out
+      internally. Matches the standalone yarp project's launchSettings by design (alternative
+      ingress modes, never co-run). First pin attempt (`abd6b0dd`, `WithHostPort`) only caught the
+      http endpoint — https stayed random; fixed with per-endpoint `WithEndpoint` pins.
 - [ ] Per-project name→backend mapping: decide where the proxy config lives and the convention for
       claiming a `<name>` (one per project/app instance).
 - [ ] Verify end to end from outside the LAN: HTTPS loads on a real device off-wifi; WebAuthn
