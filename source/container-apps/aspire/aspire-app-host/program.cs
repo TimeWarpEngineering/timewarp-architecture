@@ -22,6 +22,9 @@
 // (appsettings.Development.json), matching the standalone yarp project's launchSettings on purpose:
 // the two are alternative ingress modes that never run together, so "ingress https is 63610" holds
 // in both. The *.timewarp.work share path (Caddy in WSL, task 112) targets the http endpoint 63620.
+// Ingress:PublicUrl (unset by default; personal value belongs in user secrets, never committed —
+// this repo dogfoods as the template) adds a "public" display URL on the ingress resource so the
+// dashboard links to the externally shared hostname (e.g. https://arch.timewarp.work).
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -75,6 +78,13 @@ internal class Program
     if (ingressHttpPort is not null)
     {
       yarp = yarp.WithEndpoint("http", endpoint => endpoint.Port = ingressHttpPort.Value);
+    }
+
+    string? ingressPublicUrl = builder.Configuration["Ingress:PublicUrl"];
+
+    if (!string.IsNullOrWhiteSpace(ingressPublicUrl))
+    {
+      yarp = yarp.WithUrl(ingressPublicUrl, "public");
     }
 
     yarp = yarp.WithConfiguration(yarpConfiguration =>
