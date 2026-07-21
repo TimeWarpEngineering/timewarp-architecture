@@ -103,4 +103,15 @@ line-granular seams, it works, and TWA0008/0010 guard it. Folder-exclusion `sour
 opportunistically, watch for a pattern, revisit only if one emerges. Explicitly NOT a blocker
 for anything else.
 
-## Axis 7 — .NET 11 posture: OPEN
+## Axis 7 — .NET 11 posture ✅
+
+**Decision (Steve):**
+
+1. **Track latest, always** — STS/LTS distinction is irrelevant; the template deliberately
+   forces consumers toward latest ("they don't distrust STS, they're just lazy"). Adopt .NET 11
+   on release (Nov 2026), C# latest throughout. Consistent with the ecosystem's standing
+   never-backward-pin / migrate-forward rule.
+2. **No new runtime-reflection seams, ever** — codified as a design constraint: anything
+   discovery-shaped is generated at build time (globs / analyzers / source generators). All
+   axis 1–4 machinery already complies; three of five surveyed repos still boot-scan assemblies
+   and serve as the counterexample. Citable in reviews.
