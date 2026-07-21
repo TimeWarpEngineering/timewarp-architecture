@@ -118,6 +118,24 @@ is itself a DHCP client on this segment; the physical NIC shows "media disconnec
 design. Watch for Wi-Fi auto-connecting when the wired path blips → dual default gateways
 (192.168.67.1 AIS vs 172.16.67.1 bridge — deceptively similar numbering).
 
+## Consequence: no localhost relay (Windows ↔ WSL are separate hosts now)
+
+The NAT-mode magic where Windows `localhost:<port>` reached WSL services is **gone** in bridged
+mode — that relay is a NAT feature. `localhost` in a Windows browser is the Windows box.
+WSL services that bind localhost (Aspire dashboard :17204, service endpoints 636xx) are
+unreachable from Windows even via `172.16.67.13:<port>` — they don't listen on the LAN interface.
+
+Resolution: Caddy (which binds 0.0.0.0:443) is the front door for anything Windows needs:
+
+- App: `https://arch.timewarp.work` (+ Windows hosts entry `172.16.67.13 arch.timewarp.work`
+  for the LAN-direct path instead of the out-and-back-through-the-internet trombone).
+- Dashboard: `https://dashboard.timewarp.work` route in the Caddyfile, `remote_ip
+  172.16.67.0/24` guarded (public visitors arrive masqueraded as router IPs → 404). Swap the
+  host into the per-run `/login?t=...` link from `dev run` output.
+- Anything else that must be reached from Windows: add a Caddy handle block, or access it from
+  inside WSL. Do NOT rebind template launchSettings to 0.0.0.0 — that changes the shipped
+  template's security posture for a personal-infra convenience.
+
 ## Still open (from the ingress checklist)
 
 - Docker Desktop + kind verification under bridged mode.
