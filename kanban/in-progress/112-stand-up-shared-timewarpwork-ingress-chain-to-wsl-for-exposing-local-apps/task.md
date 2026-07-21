@@ -95,9 +95,10 @@ plugs into the same chain as just another backend.
       included; aged out within ~30 min).
 - [ ] WebAuthn passkey ceremony from an off-LAN device with RP ID `arch.timewarp.work`
       (real-domain exercise of the 104 identity work beyond localhost).
-- [ ] Security notes in the runbook: only intentionally mapped names resolve to anything (proxy
-      returns 404/close otherwise); how to disable the public path (timewarp-gw SNI route /
-      goldensea-gw dst-nat) when nothing should be public.
+- [x] Security notes + operations runbook: [runbook-public-path.md](runbook-public-path.md) —
+      chain diagram, kill switches (either router severs the path; unmapped names always 404),
+      TEMP-rule caveat, name-claiming procedure (Caddyfile block + reload, nothing else), NAT'd
+      client-IP caveat, grey-cloud requirement, health checks.
 
 ## Notes
 
