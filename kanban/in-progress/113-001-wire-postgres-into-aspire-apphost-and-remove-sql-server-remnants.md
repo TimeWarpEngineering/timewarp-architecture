@@ -38,6 +38,49 @@ documented dead code.
   ships with the parent per RFC resolutions.
 - pgAdmin/pgweb dashboard resource: optional, decide during implementation (dev-only nicety).
 
+### Implementation plan (Phase 2, 2026-07-22)
+
+Plan agent findings that CORRECT the checklist above:
+
+1. TWA0007 does NOT cover AddPostgres (analyzer Design region: AddProject-only by design;
+   precedent YarpResourceName="ingress" is a hand-written constant). Shared-constant discipline,
+   not analyzer requirement.
+2. Do NOT add to ServiceNames (foundation-contracts): generated apps consume the PUBLISHED
+   Foundation package which lags source — new constant would break them until republish. Use
+   aspire-app-host/constants.cs instead (already compile-linked into web-server → one constant,
+   zero drift, no publish dependency).
+3. Plumbing deader than described: PostgresDbModule call is a plain // comment (no #if postgres
+   in .cs anywhere); PostgresDbOptions never bound — module's throwaway-provider read always
+   null.
+4. DbContext health check AND Oakton environment check DISCARD CanConnectAsync results and
+   return true (green with no DB; wrong catch type too). Fix both or "green checks" is vacuous.
+5. Test blast radius: web-server-integration-tests direct-host Program.ConfigureServices (no
+   Aspire) → module must skip when unconfigured; Aspire-testing suites will now start a real
+   postgres container (Docker required, WaitFor latency).
+6. api-server needs NO postgres reference (zero EF usage; identity handlers are web-server-hosted
+   and in-memory today).
+
+Steps: (1) CPM +Aspire.Hosting.PostgreSQL 13.4.6, −EFCore.SqlServer; (2) app-host csproj
+DefineConstants +postgres, guarded PackageReference mirroring yarp; (3) constants.cs
+PostgresResourceName="postgres" / PostgresDatabaseResourceName="postgres-db" (db name doubles as
+Aspire ConnectionStrings key); (4) program.cs #if postgres AddPostgres().WithDataVolume()
+.AddDatabase() + webServer.WithReference(postgresDb).WaitFor(postgresDb), Design region
+reconciled; (5) web-server program.cs: #if postgres around module call (TWA0008-safe comment
+rewrite), delete dead SqlDb comment lines; (6) postgres-db-module: single IConfiguration read —
+precedence PostgresDbOptions:ConnectionString then GetConnectionString("postgres-db"), skip-mode
+when absent, Configure<PostgresDbOptions> binding, honest CanConnectAsync health check, remove
+throwaway provider + dead method, Design rewrite; (7) environment-check same honesty fix;
+(8) delete sql-db-context.cs, web-server.csproj SqlServer PackageReference, postgres-db-context
+Design sentence, dependencies-with-nuget.puml node (verify hand-maintained);
+(9) verify dev build 0/0, dev run postgres green, dev test (Docker!), optional template
+both-ways smoke.
+
+Policy decisions taken (flagged to Steve in-chat, proceeding unless vetoed): skip-when-
+unconfigured module; honest health checks (visible behavior change); Aspire test suites now
+need Docker (CI check before merge).
+
+- Plan: 2026-07-22 (plan agent via orchestrator)
+
 ## Session
 
 - Created: 2026-07-21 (split from 113 — mechanical track, RFC-independent)
