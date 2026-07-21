@@ -93,13 +93,16 @@ plugs into the same chain as just another backend.
       loads `https://arch.timewarp.work` (initial ERR_NAME_NOT_RESOLVED was negative-cached
       NXDOMAIN at resolvers that saw queries before the wildcard record existed — 1.1.1.1
       included; aged out within ~30 min).
-- [ ] WebAuthn passkey ceremony from an off-LAN device with RP ID `arch.timewarp.work`
-      (real-domain exercise of the 104 identity work beyond localhost). First attempt 2026-07-21
-      failed as predicted: static `WebAuthnOptions.RpId=localhost` vs public hostname — browser
-      rejects the RP ID mismatch. App-side fix filed as
-      [[104-031-select-webauthn-rp-id-from-request-host-against-allowlist]]; interim workaround
-      for this verification: `WebAuthnOptions__RpId=arch.timewarp.work dev run` (breaks localhost
-      passkeys while set).
+- [x] WebAuthn passkey ceremony from an off-LAN device with RP ID `arch.timewarp.work`:
+      **VERIFIED 2026-07-21 — colleague in Texas registered a passkey on desktop** through the
+      full public chain. First attempt failed as predicted (static `WebAuthnOptions.RpId=
+      localhost` vs public hostname); interim workaround in place: `WebAuthnOptions:RpId=
+      arch.timewarp.work` via web-server user secrets (breaks localhost passkeys while set);
+      proper per-request fix filed as
+      [[104-031-select-webauthn-rp-id-from-request-host-against-allowlist]]. Known non-infra
+      residual: Steve's Android phone gets `NotAllowedError` on both register and sign-in —
+      client-side authenticator-provider issue (passkey provider selection / screen lock / Play
+      services), page + API load fine; not a chain or server problem.
 - [x] Security notes + operations runbook: [runbook-public-path.md](runbook-public-path.md) —
       chain diagram, kill switches (either router severs the path; unmapped names always 404),
       TEMP-rule caveat, name-claiming procedure (Caddyfile block + reload, nothing else), NAT'd
