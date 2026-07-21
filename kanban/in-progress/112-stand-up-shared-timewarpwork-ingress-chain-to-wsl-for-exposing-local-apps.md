@@ -30,17 +30,15 @@ plugs into the same chain as just another backend.
 
 ## Checklist
 
-- [ ] DNS: **Cloudflare** hosts timewarp.work (confirmed 2026-07-20). Add wildcard A record:
-      Name `*`, IPv4 49.0.91.107, **Proxy status: DNS only (grey cloud)** — Proxied mode would
-      put Cloudflare's TLS termination in the path, breaking the SNI split and advertising ECH
-      (which encrypts the SNI the splitter needs). Safe to add before the SNI split is live
-      (unknown hostnames just land on the shop server).
-- [ ] timewarp-gw (shop), Phase 1 — TEMP direct forward: 10.10.1.80 is currently DOWN
-      (maintenance; ping timeout 2026-07-20), so shop 443 is dead anyway. Add TEMP dst-nat
-      `dst-address=192.168.68.2 dst-port=443` → 10.66.2.6 `place-before=0` (disabled until the
-      WSL side is ready) + srcnat masquerade out wg1 → 10.66.2.6:443 (needed in this phase: plain
-      dst-nat has no fresh-connection proxy, asymmetric return applies). While enabled,
-      shop.timewarp.ws visitors get a cert mismatch from our proxy instead of a timeout.
+- [x] DNS: **Cloudflare** hosts timewarp.work. Wildcard A `*.timewarp.work` → 49.0.91.107 added
+      **DNS only (grey cloud)** (2026-07-21; apex A record too). Grey cloud is load-bearing:
+      Proxied mode would put Cloudflare's TLS termination in the path, breaking the SNI split and
+      advertising ECH (which encrypts the SNI the splitter needs).
+- [x] timewarp-gw (shop), Phase 1 — TEMP direct forward LIVE 2026-07-21: dst-nat rule 0
+      `dst-address=192.168.68.2 dst-port=443` → 10.66.2.6 sits above the generic HTTPS forward
+      (10.10.1.80, currently down for maintenance) + srcnat masquerade out wg1 → 10.66.2.6:443
+      for the asymmetric return. While TEMP is enabled, shop.timewarp.ws visitors get a cert
+      mismatch from our proxy instead of a timeout. Remove when Phase 2 lands.
 - [ ] timewarp-gw (shop), Phase 2 — SNI passthrough split when servers return: decision A vs B
       deferred until 10.10.1.80 is back and identifiable. Option A: nginx `stream`+`ssl_preread`
       on 10.10.1.80 itself (existing sites rebind internally, e.g. :8443). Option B: tiny
@@ -52,8 +50,12 @@ plugs into the same chain as just another backend.
       `in-interface=wg1` → 172.16.67.13 added **disabled**; forward filter verified (masqueraded
       tunnel src hits the rfc1918 accept). Side fix: desktop TWE-001 static lease .11 repointed to
       its current NIC MAC 9C:6B:00:14:0B:9A.
-- [ ] goldensea-gw: enable the 443 dst-nat rule when the chain is ready; drop (or keep disabled)
-      the port-80 rule — dead weight under the HTTPS-only design.
+- [x] goldensea-gw: 443 dst-nat rule ENABLED 2026-07-21 (port-80 rule left disabled — dead weight
+      under the HTTPS-only design). Note: goldensea's blanket `srcnat src-address-list=rfc1918 →
+      192.168.67.2` also rewrites tunnel-arriving sources; conntrack un-NATs replies so the path
+      works — double NAT, revisit only if client-IP preservation lands.
+- [x] Full public path VERIFIED 2026-07-21: `https://arch.timewarp.work` via 49.0.91.107 → HTTP
+      200, valid TLS, 153 ms (WSL out via AIS → shop → wg1 → goldensea → Caddy → Aspire ingress).
 - [x] Windows → WSL2 bridged networking, staging: external vSwitch `WSLBridge` on "Ethernet 2"
       (Realtek 2.5GbE, `-AllowManagementOS $true`); `C:\Users\steve\.wslconfig` written
       (networkingMode=bridged, vmSwitch=WSLBridge, macAddress=02:15:5D:8B:4B:AD, dhcp, ipv6).
