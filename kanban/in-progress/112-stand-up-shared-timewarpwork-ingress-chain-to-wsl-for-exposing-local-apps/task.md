@@ -94,7 +94,12 @@ plugs into the same chain as just another backend.
       NXDOMAIN at resolvers that saw queries before the wildcard record existed — 1.1.1.1
       included; aged out within ~30 min).
 - [ ] WebAuthn passkey ceremony from an off-LAN device with RP ID `arch.timewarp.work`
-      (real-domain exercise of the 104 identity work beyond localhost).
+      (real-domain exercise of the 104 identity work beyond localhost). First attempt 2026-07-21
+      failed as predicted: static `WebAuthnOptions.RpId=localhost` vs public hostname — browser
+      rejects the RP ID mismatch. App-side fix filed as
+      [[104-031-select-webauthn-rp-id-from-request-host-against-allowlist]]; interim workaround
+      for this verification: `WebAuthnOptions__RpId=arch.timewarp.work dev run` (breaks localhost
+      passkeys while set).
 - [x] Security notes + operations runbook: [runbook-public-path.md](runbook-public-path.md) —
       chain diagram, kill switches (either router severs the path; unmapped names always 404),
       TEMP-rule caveat, name-claiming procedure (Caddyfile block + reload, nothing else), NAT'd
