@@ -89,9 +89,12 @@ plugs into the same chain as just another backend.
       http endpoint — https stayed random; fixed with per-endpoint `WithEndpoint` pins.
 - [ ] Per-project name→backend mapping: decide where the proxy config lives and the convention for
       claiming a `<name>` (one per project/app instance).
-- [ ] Verify end to end from outside the LAN: HTTPS loads on a real device off-wifi; WebAuthn
-      passkey ceremony works with RP ID `<name>.timewarp.work` (real-domain exercise of the 104
-      identity work beyond localhost).
+- [x] Verify end to end from outside the LAN: **confirmed 2026-07-21** — phone on mobile data
+      loads `https://arch.timewarp.work` (initial ERR_NAME_NOT_RESOLVED was negative-cached
+      NXDOMAIN at resolvers that saw queries before the wildcard record existed — 1.1.1.1
+      included; aged out within ~30 min).
+- [ ] WebAuthn passkey ceremony from an off-LAN device with RP ID `arch.timewarp.work`
+      (real-domain exercise of the 104 identity work beyond localhost).
 - [ ] Security notes in the runbook: only intentionally mapped names resolve to anything (proxy
       returns 404/close otherwise); how to disable the public path (timewarp-gw SNI route /
       goldensea-gw dst-nat) when nothing should be public.
