@@ -57,7 +57,25 @@ membership — the insight that folder=project is a default glob, not a requirem
   stays layer-wide in the default posture; module-privacy is expressed to the analyzer
   (TWA0009), not the compiler, until a module earns its own assembly.
 
-## Axis 3 — Async cross-slice channel: OPEN
+## Axis 3 — Async cross-slice channel ✅ (delivery substrate deferred to 113)
+
+**Decision (Steve):** Adopt the **RiverBooks bridge pattern, in-process** as the golden channel:
+
+- Domain events stay module-private; a handler in the module's `Integrations/` area translates
+  them into **integration events** — public contract types (`<name>-event-contracts.cs` in the
+  axis-1 grammar) delivered via mediator notifications, in-process by default.
+- TWA enforcement: domain event types must never appear outside their slice; integration events
+  are the only event types allowed across the boundary.
+- **Outbox (FSH pattern) is explicitly deferred to task 113** — durable delivery is a
+  persistence decision (same-transaction write + dispatcher), to be weighed there alongside the
+  postgres flag / no-postgres fallback story.
+- **Actor-pattern interaction (113 RFC)**: the channel is designed contract-first so the
+  delivery substrate is swappable (VCMM-04's lesson — same contract, different transport). If
+  actors are adopted for aggregates, actor-hosted aggregates publish the SAME integration-event
+  contract types (via whatever substrate — mediator, Akka event bus, Orleans streams); the
+  bridge shape (domain event → integration event translation) maps cleanly onto actor
+  processing. Axis-3's contract-level design must not bake in mediator-notification delivery as
+  an assumption — keep the publish seam abstract.
 
 ## Axis 4 — Intra-slice layering enforcement: OPEN
 

@@ -49,6 +49,12 @@ layer is half-built.
 3. **Persistence shape**: state-store EF (current seam) vs event sourcing (e.g. Marten on
    Postgres — would also answer the actor-journal question) vs hybrid (EF state store now,
    evented aggregates where actors land). Interacts hard with decision 1.
+3b. **Outbox for integration events** (from 114 axis 3, Steve 2026-07-21): the template's
+   cross-slice channel is the RiverBooks bridge (in-process integration events); THIS task
+   decides whether/when delivery gets the FSH outbox treatment (same-transaction write +
+   hosted dispatcher + dead-letter), and what the no-postgres fallback is (in-memory dispatch).
+   The publish seam is contract-first/substrate-agnostic by design — actor adoption (decision 1)
+   would swap the substrate (mediator vs Akka event bus vs Orleans streams), not the contracts.
 4. **Identity store placement**: does [[104-032]] (EF persistence for principals/credentials/
    agent keys) become the first consumer of the golden implementation, and does its
    store-contract test suite become the template's reference persistence test pattern?
