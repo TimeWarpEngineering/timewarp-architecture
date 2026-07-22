@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!-- Spike-only central package versions. Isolated from the repo-root Directory.Packages.props
+       (the cascade-stopper Directory.Build.props keeps this tree separate). Versions verified on
+       nuget.org during the 113-002 plan / phase 0. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Shared substrate (mirror repo pins where they overlap)">
+    <PackageVersion Include="FluentValidation" Version="12.1.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+  </ItemGroup>
+
+  <ItemGroup Label="Akka.NET host">
+    <PackageVersion Include="Akka" Version="1.5.70" />
+    <PackageVersion Include="Akka.Hosting" Version="1.5.70" />
+  </ItemGroup>
+
+  <ItemGroup Label="Orleans host">
+    <PackageVersion Include="Microsoft.Orleans.Server" Version="10.2.2" />
+    <PackageVersion Include="Microsoft.Orleans.Sdk" Version="10.2.2" />
+    <PackageVersion Include="Microsoft.Orleans.Client" Version="10.2.2" />
+    <PackageVersion Include="Microsoft.Orleans.TestingHost" Version="10.2.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="Test stack (the REAL template test tooling)">
+    <PackageVersion Include="Fixie" Version="4.2.0" />
+    <PackageVersion Include="Fixie.TestAdapter" Version="4.2.0" />
+    <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="TimeWarp.Fixie" Version="3.1.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+  </ItemGroup>
+</Project>

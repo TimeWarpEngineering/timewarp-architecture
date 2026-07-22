@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!-- Cascade-stopper: this file deliberately does NOT import the repo-root Directory.Build.props.
+       MSBuild walks up for the FIRST Directory.Build.props and stops here, so spike projects do
+       not inherit the root's TreatWarningsAsErrors / TWA analyzers / banned-API / platform-package
+       machinery. Foundation projects referenced via ProjectReference still live under source/ and
+       build with the root props unchanged (this stopper only governs the spike tree). Nothing in
+       spikes/ ships in the template. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <!-- Spike velocity: warnings are not errors here. The evaluation criterion is ergonomics, not
+         the repo's zero-warning gate; foundation projects still build under the strict root props. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>
