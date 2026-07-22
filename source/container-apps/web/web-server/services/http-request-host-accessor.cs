@@ -9,10 +9,13 @@
 // web-application while this ASP.NET-Core-bound implementation lives in web-server.
 // HttpRequestHost.Host is the host WITHOUT the port (HostString exposes Host and Port separately),
 // which is exactly the bare domain an RP ID must be. Behind the task-112 ingress this reads the
-// PUBLIC host only because the ingress preserves the original Host header (AppHost
-// WithTransformUseOriginalHostHeader / standalone yarp RequestHeaderOriginalHost) — no
-// UseForwardedHeaders and no spoofable X-Forwarded-Host is consumed; a forged Host can at most select
-// among the already-approved AllowedRpIds, never expand them.
+// PUBLIC host only because that ingress preserves the original Host header: the AppHost's YARP carves
+// /api/identity/** -> Web.Server with WithTransformUseOriginalHostHeader, which is the verified
+// task-112 public chain. (The standalone yarp project does NOT route /api/identity/** to Web.Server
+// at all — a pre-existing routing gap unrelated to 104-031 — so passkey host-preservation there is
+// moot; see that project's appsettings.Development.json.) No UseForwardedHeaders and no spoofable
+// X-Forwarded-Host is consumed; a forged Host can at most select among the already-approved
+// AllowedRpIds, never expand them.
 // Null-safe: no HttpContext (e.g. resolved outside a request) returns null rather than throwing,
 // which the selection treats as a fail-closed "host not allowed" — same posture as
 // HttpCurrentPrincipalAccessor's null return for no authenticated caller.

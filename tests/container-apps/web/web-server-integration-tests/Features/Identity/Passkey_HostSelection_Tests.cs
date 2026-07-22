@@ -137,10 +137,14 @@ public class Returns_
   {
     string json = JsonSerializer.Serialize(command, ContractSerializationDefaults.Options);
 
-    // Setting Headers.Host makes SocketsHttpHandler use it as the TLS SNI/target host, so the
-    // localhost dev cert no longer name-matches when Host is a share hostname. The TCP connection
-    // still targets localhost:7000 (the request URI's authority); accept the dev cert regardless of
-    // the mismatched target name — this test is exercising RP-ID selection, not TLS.
+    // Cert override is REQUIRED here, empirically verified (removing it fails all three non-localhost
+    // cases with AuthenticationException at TLS CompleteHandshake): SocketsHttpHandler derives the TLS
+    // target host used for server-CERTIFICATE-NAME validation from the request authority, which
+    // Headers.Host overrides — so with Host="webauthn-second.test" the localhost dev cert no longer
+    // name-matches and the handshake aborts. The TCP connection still targets localhost:7000 (the
+    // request URI). Accept the dev cert regardless of the mismatched name — this test exercises RP-ID
+    // selection, not TLS. (This is why the localhost case passes without the override and the others do
+    // not.)
     using var handler = new HttpClientHandler
     {
       CheckCertificateRevocationList = true,
