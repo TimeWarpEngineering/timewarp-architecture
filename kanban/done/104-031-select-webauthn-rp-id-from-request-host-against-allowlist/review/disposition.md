@@ -15,7 +15,7 @@ Findings (9): 2 fixed, 3 documented-accepted, 4 accepted/resolved. Zero open.
   regression). Fixed minimally: documented honestly in the yarp config + accessor region and
   attributed to task 107 (yarp-route generation); NO hand-maintained routes added (would have
   been scope creep + added to the very list 107 eliminates). Verified path is the AppHost YARP.
-- **G2 (fixed)** — redundant test cert-override rationale corrected.
+- **G2 (fixed)** — test cert-override COMMENT corrected. Correction of record (2026-07-22, post-close): the override is REQUIRED, not redundant. The build agent empirically disproved the reviewer's (and my) claim — removing `DangerousAcceptAnyServerCertificateValidator` fails 3 non-localhost cases with `AuthenticationException`, because `Headers.Host` moves .NET SocketsHttpHandler's certificate-NAME validation target (Host="webauthn-second.test" name-mismatches the localhost dev cert, aborting the handshake; TCP still targets localhost:7000). Override kept; comment now states this precisely. Commit `7acfdb4c`'s message calling it 'redundant' / 'Headers.Host doesn't change TLS SNI' is INCORRECT — this note is the authoritative record.
 - **S1/S2/S3 (documented, accepted)** — append-only localhost persistence (loopback-confined,
   Steve-accepted), 400 membership-oracle (claim scoped to "no host reflected"), flat
   AllowedOrigins caveat (theoretical, blocked one layer down). All in the options Design region.
