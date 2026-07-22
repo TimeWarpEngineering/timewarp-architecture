@@ -123,7 +123,9 @@ internal class Program
 
     if (!string.IsNullOrWhiteSpace(ingressPublicUrl))
     {
-      yarp = yarp.WithUrl(ingressPublicUrl, "public");
+      // Display text IS the URL: a friendly label ("public") renders INSTEAD of the address in the
+      // dashboard's URL column, hiding the very hostname the link exists to surface.
+      yarp = yarp.WithUrl(ingressPublicUrl, ingressPublicUrl);
     }
 
 #if web
