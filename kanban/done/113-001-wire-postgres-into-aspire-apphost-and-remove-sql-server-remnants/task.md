@@ -122,9 +122,14 @@ skip-mode registers nothing when unconfigured.
 (CA1031 NoWarn'd in container-apps); postgres declaration nested rather than compound-gated
 (matches existing nested-directive template pattern).
 
-**Residue / follow-ups:** (1) `dev run` + dashboard health-check smoke and full `dev test` with
-Docker — first Aspire-suite run will pull the postgres image; confirm CI runners have Docker
-before merging to master (flagged risk). (2) Honest health checks are a visible behavior change:
+**Residue / follow-ups:** (1) `dev run` smoke DONE 2026-07-22: postgres:18.3 container +
+postgres-db resource healthy, WaitFor ordering held, schema-creation hosted service ran,
+web-server /health 200 with the real CanConnectAsync probe, app serves via ingress. The smoke
+caught one latent bug: PostgresDbContext lacked the DbContextOptions constructor that
+AddDbContext validation requires — never fired while the module was dead code; fixed
+`762b4e7c`. STILL OPEN: full `dev test` with Docker — first Aspire-suite run pulls the postgres
+image; confirm CI runners have Docker before merging to master (flagged risk).
+(2) Honest health checks are a visible behavior change:
 web-server reports unhealthy if postgres is configured but unreachable (intended). (3) pgAdmin/
 pgweb dashboard resource: not added (optional nicety, revisit with 113 golden implementation).
 
