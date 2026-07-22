@@ -19,10 +19,11 @@ whose restore fails with 54 NU1101s, ALL pre-existing (not 114-002):
 
 ## Checklist
 
-- [ ] Exempt TimeWarp.Architecture.* package ids from sourceName substitution; regenerate + restore green
-- [ ] Resolve TimeWarp.Identity availability for generated apps (publish or dual-mode)
-- [ ] Template smoke (generate + restore + build, both postgres states) wired into CI
-- [ ] Both flag states build 0/0 from generated output
+- [x] Exempt TimeWarp.Architecture.* package ids from sourceName substitution; regenerate + restore green
+- [x] Resolve TimeWarp.Identity availability for generated apps (publish or dual-mode)
+- [x] Template smoke (generate + restore + build, both postgres states) wired into CI
+- [x] Both flag states build 0/0 from generated output
+
 
 ## Notes
 
@@ -89,3 +90,18 @@ Foundation pin bumps; Identity publish as only fix without dual-mode source path
 
 - Created: 2026-07-22 (from 114-002 template smoke gap)
 - Orchestration: 2026-07-22 — Phase 1 in-progress; Phase 2 plan locked (above)
+- Implementer (2026-07-22): Parts A–C complete.
+  - A: `msbuild/timewarp-platform-packages.props` composes package IDs/namespaces; all PackageReference/
+    PackageVersion/PackageId consumers use properties; dual-mode MSBuild `<Using>` for Attributes +
+    TypedId root namespace (file-level `using TimeWarp.Architecture` removed from id files).
+  - B: `UseIdentityPackages` dual-mode (default source); template symbol `identityPackages` default
+    false; slnx split (single libraries folder, independent identity gate).
+  - C: `dev template-smoke` packs monorepo platform packages @ `2.0.0-smoke` + template, installs,
+    generates SmokeDefault + SmokeNoPostgres, rewrites CPM pins, local NuGet.config with
+    packageSourceMapping, restore+build 0/0. Workflow: `.github/workflows/template-smoke.yml`.
+  - Bonus fix: feature-membership.targets Error condition was stripped by template engine (`&gt;` /
+    empty-string item compares) → always-fail Error in generated apps; staged via property with raw `>`.
+  - Verification: monorepo `dev build` 0/0; `dev template-smoke` SUCCEEDED both matrix cells.
+  - Gaps (ops, not code gate): nuget.org foundation pins lag monorepo `Entity<TId>`; Attributes
+    beta.5 on nuget lacks EndpointAllowAnonymous — smoke packs local monorepo content so CI is green;
+    real nuget.org consumers need republish. Identity package still unpublished (source path default).

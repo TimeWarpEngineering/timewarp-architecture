@@ -68,11 +68,13 @@ tests/               # mirrors source/; includes web-contracts-tests (host-free 
 ⇒ full rebuild** (analyzer DLLs can go stale under pure incremental builds). Namespaces do **not**
 track folders — TWA0009 still keys off `…Features.<Id>`.
 
-## Platform packages (foundation + analyzers)
+## Platform packages (foundation + analyzers + identity)
 
-Greenfield `dotnet new timewarp-architecture` apps reference **published NuGet packages** for the
-shared platform (template symbols `foundationPackages` / `analyzerPackages`, both default **true**).
-This monorepo keeps the source and dogfoods it via `ProjectReference`.
+Greenfield `dotnet new timewarp-architecture` apps reference **published NuGet packages** for
+foundation and analyzers (template symbols `foundationPackages` / `analyzerPackages`, both default
+**true**). **Identity** defaults the other way: `identityPackages` default **false** ships
+`source/libraries/timewarp-identity` into generated apps until `TimeWarp.Identity` is published on
+nuget.org. This monorepo dogfoods all three via `ProjectReference` when source trees are present.
 
 | PackageId | Contents |
 |-----------|----------|
@@ -80,11 +82,23 @@ This monorepo keeps the source and dogfoods it via `ProjectReference`.
 | `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016) — safe repo-wide |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001 — attach only where gens should run |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
+| `TimeWarp.Identity` | Principal identity (passkeys / agent keys); dual-mode until first publish |
 
 MSBuild dual-mode (auto-detects missing source trees): `UseFoundationPackages` /
-`UseAnalyzerPackages`. CPM `PackageVersion` pins lag the last **published** version (may trail
-`source/Directory.Build.props` `<Version>`). Upgrade path for apps that still vendored
-`source/analyzers/**`: see `documentation/developer/how-to-guides/HowToUpgradeToAnalyzerPackages.md`.
+`UseAnalyzerPackages` / `UseIdentityPackages`. CPM `PackageVersion` pins lag the last
+**published** version (may trail `source/Directory.Build.props` `<Version>`). Upgrade path for
+apps that still vendored `source/analyzers/**`: see
+`documentation/developer/how-to-guides/HowToUpgradeToAnalyzerPackages.md`.
+
+**sourceName-safe platform package IDs:** template `sourceName` is `TimeWarp.Architecture`, so a
+literal `TimeWarp.Architecture.Analyzers` in csproj/CPM would rewrite to `AppName.Analyzers` on
+generate. IDs and the Attributes namespace are composed in
+`msbuild/timewarp-platform-packages.props` (`$(_TwPlatformVendor).Architecture.*` → properties
+like `$(TwArchitectureAnalyzersPackageId)`). Import that props from both root
+`Directory.Build.props` and `Directory.Packages.props` (CPM does not inherit DBP). Contracts use
+dual-mode MSBuild `<Using>` for the Attributes namespace (package → platform namespace property;
+source → `$(RootNamespace).Attributes`). Regression gate: `dev template-smoke` (also
+`.github/workflows/template-smoke.yml`).
 
 ## Key patterns
 

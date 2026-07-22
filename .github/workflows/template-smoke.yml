@@ -1,0 +1,54 @@
+name: Template smoke
+
+# Generates apps with names ≠ sourceName (SmokeDefault / SmokeNoPostgres) so package-id rewrite
+# bugs surface, then restore + build. Independent of the main CI workflow so template-content
+# path filters can run without full test suite cost when only template packing changes.
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'source/**'
+      - 'tests/**'
+      - 'timewarp-templates/**'
+      - '.template.config/**'
+      - 'msbuild/**'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
+      - 'timewarp-architecture.slnx'
+      - 'tools/dev-cli/**'
+      - '.github/workflows/template-smoke.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'source/**'
+      - 'tests/**'
+      - 'timewarp-templates/**'
+      - '.template.config/**'
+      - 'msbuild/**'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
+      - 'timewarp-architecture.slnx'
+      - 'tools/dev-cli/**'
+      - '.github/workflows/template-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  template-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Template smoke (pack → install → generate → build)
+        run: dotnet run tools/dev-cli/dev.cs -- template-smoke
