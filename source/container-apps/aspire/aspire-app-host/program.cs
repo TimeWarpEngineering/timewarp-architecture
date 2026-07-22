@@ -38,6 +38,9 @@
 // (WebAuthnOptions.AllowedRpIds), so a forged Host can never mint a credential for an RP ID the
 // operator did not approve. Applied to Web.Server routes only; the api/grpc backends do no host-based
 // selection and keep YARP's default host rewrite.
+// Guarded by aspire-tests/ingress-smoke-tests.cs (task 117): a request-level smoke through the
+// ingress with a foreign Host header on a web route — the exact shape that 502'd when this hop
+// ran over https — so a regression to the https cluster fails CI instead of shipping green.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
