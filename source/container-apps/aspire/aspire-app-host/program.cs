@@ -139,6 +139,12 @@ internal class Program
     // endpoint: http://_http.web-server resolves ONLY services__web-server__http__0.
 
 #endif
+#if web
+    // The web routes below target the named-endpoint cluster (http://_http.web-server), which is
+    // NOT a resource reference — this explicit reference keeps the services__web-server__* env
+    // injected so the ingress can resolve that address.
+    yarp = yarp.WithReference(webServer);
+#endif
     yarp = yarp.WithConfiguration(yarpConfiguration =>
     {
 #if api
@@ -154,10 +160,10 @@ internal class Program
       // HttpRequestHostAccessor sees the public share hostname and the passkey RP-ID selection can
       // match it against the allowlist. Web.Server routes ONLY — the api/grpc backends do not select
       // an RP ID from the host and are left with YARP's default host rewrite.
-      yarpConfiguration.AddRoute("/api/GetCurrentUser", webServer).WithTransformUseOriginalHostHeader(true);
-      yarpConfiguration.AddRoute("/api/Hello", webServer).WithTransformUseOriginalHostHeader(true);
-      yarpConfiguration.AddRoute("/api/Users/{**catch-all}", webServer).WithTransformUseOriginalHostHeader(true);
-      yarpConfiguration.AddRoute("/api/identity/{**catch-all}", webServer).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute("/api/GetCurrentUser", webServerHttp).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute("/api/Hello", webServerHttp).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute("/api/Users/{**catch-all}", webServerHttp).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute("/api/identity/{**catch-all}", webServerHttp).WithTransformUseOriginalHostHeader(true);
 #endif
 #if grpc
       yarpConfiguration.AddRoute("/grpc/{**catch-all}", grpcServer)
@@ -166,7 +172,7 @@ internal class Program
 #if web
       // Catch-all to Web.Server (SPA + everything not owned above): same original-Host forwarding as
       // the literal /api routes so RP-ID selection sees the public host (task 104-031).
-      yarpConfiguration.AddRoute(webServer).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute(webServerHttp).WithTransformUseOriginalHostHeader(true);
 #endif
     });
 #endif
