@@ -68,3 +68,47 @@ wrong. Scope addition: make the integration-test host HERMETIC — explicitly pi
 WebAuthnOptions (and audit other ambient user-secret leakage) in test configuration so
 developer-machine secrets can never alter test outcomes. Until this task lands: green suite and
 phone-testable share are mutually exclusive (remove the secret vs keep it).
+
+### Implementation plan (Phase 2, 2026-07-22; Steve confirmed: remove RpId entirely; hermeticity = strip user secrets only)
+
+Key findings: only the 5 identity handlers construct WebAuthnRelyingParty — the timewarp-identity
+library needs ZERO changes (RP ID flows in via the record; the empty-AllowedOrigins
+host==rp.Id rule keys off whatever we construct). web-application has no ASP.NET ref → request
+host arrives via a new IRequestHostAccessor port (impl in web-server via IHttpContextAccessor,
+ICurrentPrincipalAccessor precedent). YARP rewrites Host by default; Aspire.Hosting.Yarp 13.4.6
+has WithTransformUseOriginalHostHeader. Hermeticity root cause: WebApplicationHost builds as
+Development/Web.Server → loads developer user secrets into every test host.
+
+Steps:
+1. Options: AllowedRpIds (default ["localhost"]) REPLACES RpId (removed outright — stale secret
+   binds to nothing). Binder APPEND semantics documented + pinned by test (user-secret entries
+   are additive; shipped appsettings must not list AllowedRpIds). Validator: NotEmpty +
+   per-entry Uri.CheckHostName==Dns (rejects scheme/port/path/empty/IP-literals).
+2. Selection: pure static WebAuthnRelyingPartySelection.Select(requestHost, options) →
+   OneOf<WebAuthnRelyingParty, SharedProblemDetails>; case-insensitive match returns the
+   ALLOWLIST entry (canonical casing); null/unlisted → 400 "Host not allowed" (no host echo);
+   never falls back. All 5 handlers select FIRST — before challenge issue/consume (disallowed
+   host never burns a challenge).
+3. Forwarded host: preserve original Host at the ingress (WithTransformUseOriginalHostHeader on
+   web routes in AppHost + RequestHeaderOriginalHost transform in standalone yarp config). NO
+   UseForwardedHeaders — no spoofable header consumed, no proxy-trust config; forged Host can
+   only select among pre-approved RP IDs, never expand them. X-Forwarded-Proto out of scope.
+4. Hermetic tests: WebApplicationHost strips secrets.json JsonConfigurationSources
+   unconditionally (all suites); env vars still flow (CI needs them — Steve-confirmed line).
+   Binding test asserts no secrets.json provider. Personal hostname: user secret
+   WebAuthnOptions:AllowedRpIds:0=arch.timewarp.work (Ingress:PublicUrl precedent); old RpId
+   secret removed.
+5. Tests: binding updated (append semantics: ["localhost","webauthn-second.test"]); new
+   host-free validator + selection tests; new Passkey_HostSelection integration tests — full
+   ceremony under second host (happy), 400 for unlisted host (rejection), adversarial
+   X-Forwarded-Host ignored. Existing 23 go green with developer secret still set.
+6. Docs: options Design region (selection/append/fail-closed/credential-scoping + flat
+   AllowedOrigins interplay risk), PasskeysPage note, 112 runbook workaround retirement.
+
+Risks logged: binder-append reliance (test-pinned); Aspire YARP transform needs one live-chain
+confirmation (fallback UseForwardedHeaders/XForwardedHost-only comes back for review first);
+host-preservation blast radius (SPA relative URLs — smoke via ingress); flat AllowedOrigins
+across RP IDs (documented, partitioning out of scope); RpId removal is a breaking config change
+(accepted, pre-release).
+
+- Plan: 2026-07-22 (plan agent via orchestrator; human decisions folded in)
