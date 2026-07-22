@@ -4,7 +4,7 @@ Working through the seven decision axes conversationally; positions recorded her
 each pending validation noted. Survey evidence: `survey-*.md`; my synthesis (`survey-synthesis.md`)
 is raw input only.
 
-## Axis 1 — Slice granularity: feature-cohesive folders, layer projects by filename globs ✅ (pending spike)
+## Axis 1 — Slice granularity: feature-cohesive folders, layer projects by filename globs ✅ (SPIKE VALIDATED 2026-07-22 — Steve: GO)
 
 **Decision (Steve):** Do BOTH cohesion and decoupling by decoupling disk layout from project
 membership — the insight that folder=project is a default glob, not a requirement.
@@ -136,3 +136,12 @@ for anything else.
    discovery-shaped is generated at build time (globs / analyzers / source generators). All
    axis 1–4 machinery already complies; three of five surveyed repos still boot-scan assemblies
    and serve as the counterexample. Citable in reviews.
+
+
+## Axis 1 addendum (post-spike, Steve 2026-07-22)
+
+Spike 114-001: ALL gates pass (see its Results). Grammar addition: **`feature-annotations` is a
+registered function → layer `server`** (e.g. `hello-feature-annotations-server.cs`). Migration
+specced as 114-002; findings to encode there: analyzer path normalization (`..`-traversal
+pitfall), single-source registry generating both the MSBuild guard and the analyzer,
+registry-change ⇒ rebuild note.
