@@ -61,14 +61,18 @@ Survey artifacts land in this folder (`survey-*.md`), synthesized into `survey-s
       (2026-07-22; DoR tightened same day — slice locked to `hello`). The MIGRATION task is
       deliberately uncreated until spike findings land (Definition of Ready — its spec depends
       on them); Steve reviews findings before it is specced.
-- [ ] Sequence the fold-out: structural-migration child tasks from axes 1–4 (filename grammar +
-      globs + archetype analyzer), 113 carries axis 5 (113-002 dual actor spike created) and
-      the axis-3 outbox question.
+- [x] Fold-out sequenced and largely EXECUTED: axes 1–4 shipped via 114-002 (migration,
+      registry, TWA0015/16, guard); 113 carries axis 5 (113-002 created) + axis-3 outbox;
+      axis 6/7 are standing policies recorded in axis-decisions.md. Remaining child: 114-003
+      (skill, in flight).
 - [ ] Author the agent-facing skill:
       [[114-003-author-tw-feature-placement-skill-for-filename-grammar-and-cohesive-folders]]
       (agents' primary source is skills/, not ADRs — Steve 2026-07-22)
-- [ ] ADR(s) recording the architectural identity decision — write from `axis-decisions.md`
-      after the axis-1 spike validates tooling.
+- [x] ADR DONE 2026-07-22: `documentation/.../approved/0008-feature-cohesive-folders-with-
+      filename-grammar-layer-composition.md` — records axes 1+2 (shipped structural identity)
+      with drivers, rejected options (project-per-module pair; layer-folders status quo), and
+      consequences; links axis-decisions.md for axes 3–7 (axis-3 bridge gets its own ADR when
+      implemented via 113).
 
 ## Notes
 
