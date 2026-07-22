@@ -21,8 +21,4 @@
     <PackageReference Include="TimeWarp.Identity" Condition="'$(UseFoundationPackages)' == 'true'" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="features\Todo\" />
-  </ItemGroup>
-
 </Project>
