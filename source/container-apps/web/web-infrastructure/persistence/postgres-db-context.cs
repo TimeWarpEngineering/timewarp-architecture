@@ -63,6 +63,8 @@ public sealed partial class PostgresDbContext : DbContext
 {
   private const string VersionPropertyName = nameof(Entity<Guid>.Version);
 
+  public PostgresDbContext(DbContextOptions<PostgresDbContext> options) : base(options) { }
+
   public override int SaveChanges(bool acceptAllChangesOnSuccess)
   {
     List<EntityEntry> aggregateRootEntries = ChangedAggregateRootEntries();
