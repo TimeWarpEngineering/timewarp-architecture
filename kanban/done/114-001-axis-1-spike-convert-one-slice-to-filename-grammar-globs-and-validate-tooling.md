@@ -192,6 +192,11 @@ GATES PASS; recommendation GO for the migration spec (Steve final-gates).**
 
 Worktree torn down; branch retained locally for reference. NOTHING landed in template source.
 
+### Gate verdict (Steve, 2026-07-22)
+
+**GO.** Grammar decision on finding 3: **`feature-annotations` is REGISTERED as a function**
+(pairs with layer `server`) — not an escape-hatch case. Migration task specced as 114-002.
+
 ## Session
 
 - Spike executed: 2026-07-22, interactive (Steve: IDE verification + gates) + orchestrator.
