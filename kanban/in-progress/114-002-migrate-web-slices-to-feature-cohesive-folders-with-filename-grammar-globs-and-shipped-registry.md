@@ -36,8 +36,8 @@ conventional (axis-1 rule); assembly granularity unchanged (axis 2: single per l
 
 ## Checklist
 
-- [ ] Inventory slices to migrate (hello, identity, admin/roles, users, …) — enumerate from the
-      three layer projects' `features/` folders; migrate slice-by-slice, build green after each
+- [x] Inventory slices (no `users` slice; ~68 product `.cs` files across three layer `features/`
+      trees — see plan §1)
 - [ ] Registry artifact + generation/verification wiring (guard + analyzer from one source)
 - [ ] Membership guard promoted from spike shape to shipped location + tests
 - [ ] Archetype analyzer as real TWA rule (path-normalization + both-path-form tests;
@@ -55,6 +55,87 @@ conventional (axis-1 rule); assembly granularity unchanged (axis 2: single per l
   captured; suspected console race) — note if observed again.
 - New-file misplacement is caught at build (membership guard + TWA0004), not creation — docs note.
 
+### Implementation plan (2026-07-22, Phase 2)
+
+**Status:** Ready to execute. No blocking open questions.  
+**Out of scope:** SPA rehome; namespace renames; domain aggregate moves; ADR write (fold-back into
+114 unblocks ADR).
+
+#### Goal
+
+```text
+source/container-apps/web/features/<slice>/…   # cohesion (all layers together)
+web-{contracts,application,server}/            # compilation via static *-layer.cs globs
+```
+
+#### SSOT registry
+
+- Path: `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
+- Layers: contracts, application, domain, infrastructure, server
+- Functions: `handler`→application, `endpoint`→server, `feature-annotations`→server
+- Analyzer: generate constants into analyzer assembly (no hand-duplicated maps)
+- MSBuild: generate committed `source/container-apps/web/msbuild/feature-filename-grammar.g.props`
+- Test: JSON ↔ generated C# ↔ props must not drift
+- Doc: registry edit ⇒ full rebuild (analyzer incremental staleness)
+
+#### Membership guard
+
+- `web/msbuild/feature-membership.targets` + import once via `web/Directory.Build.targets`
+- Zero-match on `web/features/**/*.cs` without registered `-{layer}` suffix → teaching error
+- Suffix-nesting lint (structural dual-match prevention)
+- Hybrid includes (option 1): default SDK + `../features/**/*-{layer}.cs` + Link metadata on
+  contracts / application / server; also wire empty domain/infrastructure globs
+
+#### Analyzer (TWA0015 / TWA0016)
+
+- Package: convention analyzers (TWA0014 is current max)
+- **TWA0015**: registered function + wrong layer (teaching list of pairs)
+- **TWA0016**: unregistered function segment used as archetype (closed-set longest-match;
+  escape hatch `<name>-<layer>.cs` stays valid — do NOT require every pre-layer token registered)
+- Path pitfall mandatory: normalize `..` project-relative paths; never exclude by bare
+  `web-server/` substring; scope to cohesive `/features/` marker
+- Tests: both path forms (`../features/…` and `…/web-server/../features/…`), escape hatch,
+  contracts, outside-tree silence, AnalyzerReleases.Unshipped
+
+#### Slice inventory (authoritative — no `users`)
+
+| Slice | C/A/S | Notes |
+|-------|-------|-------|
+| hello | 1/1/1 | Pilot first after platform |
+| analytics, auth, profile | 1/1/1 each | Small triples |
+| admin/roles | 6/6/1 | Nested + `role-store` escape hatch |
+| identity | 14/16/1 | Largest — last product slice |
+| chat | 4/1/0 | Multi-folder contracts |
+| authentication, todo-items | contracts-only | |
+| authorization, admin/modules | id substrate | still under cohesive tree |
+| infrastructure IVT | special | **Leave** feature tree → contracts project root |
+| spa features | — | **Not moved** |
+
+Rename: preserve subfolders (`commands/`, `queries/`, …); only filename grammar + reparent.
+Examples: `hello.cs`→`hello-contracts.cs`, `*-handler.cs`→`*-handler-application.cs`,
+`feature-annotations.cs`→`<slice>-feature-annotations-server.cs`.
+
+#### Migration order
+
+1. **Phase A — platform:** JSON + gen, membership targets, hybrid globs, TWA0015/16 + tests;
+   build green with empty cohesive tree.
+2. **Phase B — slices:** hello → analytics → auth → profile → admin/roles → chat →
+   authentication → todo-items → authorization + admin/modules → identity → IVT + delete
+   emptied per-layer `features/`. Build green after each.
+3. **Phase C:** full `dev build`/`dev test`, docs/skills, template smoke (default + flag off),
+   fold into 114.
+
+#### Docs touch list
+
+AGENTS.md (layout + TWA table + rebuild caveat), `skills/tw-slice-isolation`,
+`skills/tw-web-api-contracts`, grep old `web-*/features` paths under skills/.
+
+#### DoD
+
+All product `.cs` from three layer `features/` under `web/features/**` with grammar names;
+single registry; guard + TWA0015/16; 0/0 + tests; docs; 114 fold-in.
+
 ## Session
 
 - Created: 2026-07-22 (specced from 114-001 findings per DoR; Steve gated GO)
+- Orchestration: 2026-07-22 — Phase 1 in-progress; Phase 2 plan locked (above)
