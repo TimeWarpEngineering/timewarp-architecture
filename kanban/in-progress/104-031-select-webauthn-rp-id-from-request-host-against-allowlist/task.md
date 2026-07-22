@@ -112,3 +112,53 @@ across RP IDs (documented, partitioning out of scope); RpId removal is a breakin
 (accepted, pre-release).
 
 - Plan: 2026-07-22 (plan agent via orchestrator; human decisions folded in)
+
+## Results
+
+**Delivered (commits `337527bc`, `7acfdb4c`, 2026-07-22):**
+
+- `WebAuthnOptions.RpId` REMOVED; `AllowedRpIds` (default `["localhost"]`) with binder-APPEND
+  semantics — user-secret entries add to the built-in localhost (zero-config template preserved);
+  validator enforces DNS-name entries (rejects scheme/port/path/empty/IP).
+- Pure static `WebAuthnRelyingPartySelection.Select(requestHost, options)` →
+  `OneOf<WebAuthnRelyingParty, SharedProblemDetails>`: case-insensitive match returns the
+  canonical allowlist entry; unlisted/absent host fails closed (400 "Host not allowed", no host
+  echo, never a fallback RP ID). All five ceremony handlers select per-request BEFORE any
+  challenge issue/consume (AddPasskey keeps its auth-guard-first invariant, still pre-consume);
+  origin validation keys off the selected RP ID. **timewarp-identity library unchanged** — RP ID
+  already flowed in via the record.
+- Original Host preserved through the AppHost YARP ingress
+  (`WithTransformUseOriginalHostHeader` on the web /api carve-outs incl. /api/identity + catch-all)
+  — NO `UseForwardedHeaders`, no spoofable header consumed; a forged Host can only select among
+  pre-approved RP IDs, never expand them.
+- Test hosts made hermetic: `WebApplicationHost` strips user-secrets sources so developer-machine
+  secrets can't alter outcomes; append semantics + no-secrets pinned by the binding test.
+- Personal share host now configured as a user-secret allowlist entry
+  (`WebAuthnOptions:AllowedRpIds:0`), retiring the task-112 `RpId` env-override workaround.
+
+**Verification:** `dev build` 0/0. `web-server-integration-tests` **97 passed / 1 skipped / 0
+failed** WITH the developer's `arch.timewarp.work` secret still set on this machine — the
+previously-red 23 identity tests are green because RpId no longer exists (the secret is now
+inert), which was the task's core goal. The 1 skip is the pre-existing
+`WebTestServerApplication_.Should.RunForever` manual test (resolves review finding G3).
+timewarp-identity-tests 169 green. New coverage: host-free validator + selection unit tests;
+integration host-selection tests (full register+authenticate ceremony under a second allowlisted
+host, 400 rejection for an unlisted host, adversarial X-Forwarded-Host ignored).
+
+**Review (Phase 4b):** 1 round, effort 2 (general + security). **0 critical / 0 major.** Security
+reviewer confirmed the Host-trust model sound. Disposition **accepted-exceptions**
+(`review/disposition.md`): 9 findings — 2 fixed (G1 standalone-yarp gap documented+attributed to
+task 107 rather than adding hand-maintained routes; G2 redundant test cert override), 3
+documented-accepted (S1 localhost persistence loopback-confined, Steve-accepted; S2 membership
+oracle; S3 flat AllowedOrigins caveat), 4 accepted/resolved nits. Zero open.
+
+**Known gaps (accepted):** ingress host-preservation has no automated coverage — rests on the
+manual task-112 live-chain check (a yarp/SpaTest would close it; future). Standalone-yarp
+`/api/identity` routing is a pre-existing gap folded into task 107.
+
+**Human decisions:** remove RpId entirely (vs deprecated fallback); hermeticity strips user
+secrets only (not env vars); S1 document-and-accept.
+
+## Session
+
+- Implementation/review/disposition: 2026-07-22 (orchestrated: plan + build + 2 reviewers)
