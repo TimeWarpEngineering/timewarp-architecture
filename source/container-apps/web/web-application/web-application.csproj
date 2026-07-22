@@ -16,9 +16,10 @@
 
   <ItemGroup>
     <!-- Principal/Credential/IPrincipalStore + WebAuthn ceremony primitives for the identity
-         feature handlers (task 104-003). Dual-mode — see web-contracts.csproj for the rationale. -->
-    <ProjectReference Include="..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
-    <PackageReference Include="TimeWarp.Identity" Condition="'$(UseFoundationPackages)' == 'true'" />
+         feature handlers (task 104-003). Dual-mode via UseIdentityPackages (task 115). -->
+    <ProjectReference Include="..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
+
   </ItemGroup>
 
 </Project>
