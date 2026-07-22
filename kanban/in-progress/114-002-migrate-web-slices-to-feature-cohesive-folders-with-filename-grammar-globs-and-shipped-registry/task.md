@@ -162,3 +162,62 @@ Axis-1 migration shipped at quality (no spike merge):
 
 Commits: platform infra; slice migration; docs (this session).
 
+- Phase 4b review: 2026-07-22 — effort 1 general; 3 findings fixed (M1–M3); disposition clean.
+  Artifacts: `review/review-framework.md`, `review/round-1/`, `review/disposition.md`.
+
+## Results
+
+### What was implemented
+
+Axis-1 migration for the web container-app (re-implemented; spike branch not merged):
+
+1. **Registry SSOT** — `feature-filename-grammar.json` generates analyzer constants
+   (`feature-filename-grammar.g.cs`) and MSBuild props (`feature-filename-grammar.g.props`)
+   including hybrid Compile globs + layer-suffix regex; nesting rejected at generation time.
+2. **Membership guard** — `web/msbuild/feature-membership.targets` (import once via
+   `web/Directory.Build.targets`): zero-match teaching error via generated regex; hybrid includes
+   come from generated props (no hand-listed layers).
+3. **TWA0015 / TWA0016** — function/layer pairing + incomplete/wrong-case function diagnostics;
+   affirmative cohesive path scoping (SPA-safe); AnalyzerReleases unshipped entries.
+4. **Slice rehome** — all product `.cs` from the three layer `features/` trees under
+   `source/container-apps/web/features/<slice>/` with grammar renames; IVT at contracts root;
+   per-layer `features/` removed; SPA/namespaces unchanged.
+5. **Docs** — AGENTS.md layout + TWA table + registry rebuild caveat; slice-isolation +
+   web-api-contracts skills; workflow examples grammar-aligned post-review.
+6. **Parent 114** — fold-in notes recorded; ADR unblocked (ADR write remains on 114).
+
+### Files changed (high level)
+
+- `source/analyzers/timewarp-architecture-convention-analyzers/*grammar*`
+- `source/container-apps/web/msbuild/*`, `web/Directory.Build.targets`, layer csprojs
+- `source/container-apps/web/features/**` (cohesive tree)
+- `tests/analyzers/.../feature-filename-grammar-analyzer-tests.cs`
+- `AGENTS.md`, `skills/tw-slice-isolation`, `skills/tw-web-api-contracts`
+
+### Key decisions / deviations
+
+- Closed-set longest-first function match preserves escape hatches.
+- Hybrid globs generated into props (project name `web-{layer}` convention).
+- Template smoke + full `dev test` not run end-to-end (partial suite verified).
+- Premature “done” by implementer was rolled back for Phase 4b; folderized for `review/`.
+
+### Test outcomes
+
+| Check | Result |
+|--------|--------|
+| `dev build` | 0/0 pass (post-review fix too) |
+| Analyzer tests | 96 passed (after SPA path tests) |
+| web-contracts-tests | 38 passed (implement phase) |
+| web-server-integration-tests | 97 passed, 1 skipped (implement phase) |
+| Full `dev test` | not run |
+| Template smoke | not run |
+
+### Phase 4b review
+
+- **Effort:** 1 (general)
+- **Rounds:** 1
+- **Final counts:** 0 open; 2 suggestion fixed; 1 nit fixed; 0 bugs; 0 wontfix
+- **Disposition:** clean
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`
+

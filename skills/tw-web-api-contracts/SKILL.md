@@ -215,7 +215,7 @@ auth-agnostic. Choose it when mock-mode identity isn't needed; it is not wrong.
 
 ### 1. Identify the operation
 
-Read → `queries/get-*.cs` · Write → `commands/create-|update-|delete-*.cs`
+Read → `queries/get-*-contracts.cs` · Write → `commands/create-|update-|delete-*-contracts.cs`
 
 ### 2. Scaffold the partial class
 
@@ -232,7 +232,7 @@ Read → `queries/get-*.cs` · Write → `commands/create-|update-|delete-*.cs`
 
 When Blazor will bind and edit the payload:
 
-1. Define `I<Feature>Details` in a feature-level file (e.g. `role-details.cs`).
+1. Define `I<Feature>Details` in a feature-level file (e.g. `role-details-contracts.cs`).
 2. Mutable bindable properties use `{ get; set; }` on the interface (no initializers —
    interfaces cannot have them; `= null!` goes on the **implementing class**).
 3. Identity/read-only keys on implementations use `{ get; init; }` or `{ get; }`.

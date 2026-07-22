@@ -18,7 +18,10 @@
 // function under ordinal-ignore-case but not ordinal (casing), else inventing tokens is escape hatch.
 // Path pitfall (spike 114-001): FilePath arrives project-relative WITH `..` traversal
 // (`web-server/../features/...`). Normalize before scoping; never exclude by bare
-// `web-server/` substring — match layer-project `/features/` shapes or the cohesive tree.
+// `web-server/` substring. Scope with affirmative cohesive markers only:
+// `../features/` (layer glob), absolute `…/web/features/…`, and collapsed
+// `features/` ONLY when the original path traversed `../features/` — bare project-local
+// `features/` (SPA) must stay silent even for grammar-shaped names.
 // Registry edit ⇒ full rebuild (analyzer DLLs can go stale under incremental builds).
 #endregion
 
@@ -157,56 +160,44 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
     }
 
     string normalized = NormalizePath(filePath);
+    string collapsed = CollapseDotDot(normalized);
 
-    // Project-relative cohesive form used by glob includes: ../features/...
+    // Layer / SPA project feature folders are never the cohesive tree (including bare
+    // project-relative features/... when the project is web-spa or a layer project —
+    // Roslyn often supplies that form for default SDK includes).
+    if (IsLayerProjectFeaturesPath(collapsed))
+    {
+      return null;
+    }
+
+    // Affirmative cohesive markers only (avoid treating any remaining /features/ as
+    // cohesive — that collides with SPA project-relative paths).
+    // 1) Layer-project glob form: ../features/... (and web-server/../features/... after collapse).
     if (normalized.StartsWith("../features/", StringComparison.Ordinal)
-        || normalized.StartsWith("features/", StringComparison.Ordinal)
-        || normalized.Contains("/../features/", StringComparison.Ordinal))
+        || normalized.Contains("/../features/", StringComparison.Ordinal)
+        || collapsed.StartsWith("../features/", StringComparison.Ordinal))
     {
-      // Collapse .. so web-server/../features becomes features for layer-marker checks.
-      string collapsed = CollapseDotDot(normalized);
-      if (IsLayerProjectFeaturesPath(collapsed))
-      {
-        return null;
-      }
-
-      if (collapsed.Contains("/features/", StringComparison.Ordinal)
-          || collapsed.StartsWith("features/", StringComparison.Ordinal))
-      {
-        return collapsed;
-      }
+      return collapsed.StartsWith("../features/", StringComparison.Ordinal)
+        ? collapsed
+        : CollapseDotDot(normalized);
     }
 
-    string collapsedFull = CollapseDotDot(normalized);
-    if (!collapsedFull.Contains("/features/", StringComparison.Ordinal))
+    // After collapsing web-server/../features/hello/x.cs → features/hello/x.cs from a layer
+    // glob. Accept bare features/ ONLY when the original path had a `..` traversal into
+    // features (layer glob), not when it was a project-local features/ tree (SPA).
+    if (collapsed.StartsWith("features/", StringComparison.Ordinal)
+        && (normalized.Contains("../features/", StringComparison.Ordinal)
+            || normalized.Contains("/../features/", StringComparison.Ordinal)
+            || normalized.StartsWith("../features/", StringComparison.Ordinal)))
     {
-      return null;
+      return collapsed;
     }
 
-    if (IsLayerProjectFeaturesPath(collapsedFull))
+    // Absolute / repo-rooted cohesive tree: .../web/features/... (not .../web-*/features/...)
+    if (collapsed.Contains("/web/features/", StringComparison.Ordinal)
+        || collapsed.Contains("/container-apps/web/features/", StringComparison.Ordinal))
     {
-      return null;
-    }
-
-    // Cohesive tree: .../web/features/... (not .../web-*/features/...)
-    if (collapsedFull.Contains("/web/features/", StringComparison.Ordinal)
-        || collapsedFull.Contains("/container-apps/web/features/", StringComparison.Ordinal))
-    {
-      return collapsedFull;
-    }
-
-    // After collapsing project-relative forms like web-server/../features/hello/x.cs
-    // the path may be just features/hello/x.cs or absolute .../features/hello/x.cs without
-    // a web-server segment. Accept any remaining /features/ that is not a layer-project path.
-    int featuresIndex = collapsedFull.LastIndexOf("/features/", StringComparison.Ordinal);
-    if (featuresIndex >= 0)
-    {
-      return collapsedFull;
-    }
-
-    if (collapsedFull.StartsWith("features/", StringComparison.Ordinal))
-    {
-      return collapsedFull;
+      return collapsed;
     }
 
     return null;

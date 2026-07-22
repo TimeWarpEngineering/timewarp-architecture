@@ -139,6 +139,15 @@ public class Should_Enforce_Feature_Filename_Grammar
       .RunAsync();
   }
 
+  public static async Task Given_Spa_Features_Paths_AreSilent_Even_With_Grammar_Names()
+  {
+    // SPA stays conventional (axis-1). Project-relative features/… and absolute web-spa/features/…
+    // must never enter the cohesive-tree scope, even if the filename looks grammar-shaped.
+    await Test("features/counter/counter-handler-application.cs").RunAsync();
+    await Test("/repo/source/container-apps/web/web-spa/features/counter/counter-handler-application.cs")
+      .RunAsync();
+  }
+
   public static async Task Given_Outside_Features_Tree_IsSilent()
   {
     await Test("services/cookie-browser-session-service.cs").RunAsync();
@@ -199,12 +208,16 @@ public class Should_Keep_Grammar_Registry_In_Sync
       FeatureFilenameGrammar.FunctionToLayer[pair.Key].ShouldBe(pair.Value);
     }
 
-    // Props items must list the same layers and function→layer pairs.
+    // Props items must list the same layers and function→layer pairs, plus generated hybrid globs.
     string props = File.ReadAllText(propsPath);
     foreach (string layer in layers)
     {
       props.ShouldContain($"FeatureFilenameGrammarLayer Include=\"{layer}\"");
+      props.ShouldContain($"**/*-{layer}.cs");
+      props.ShouldContain($"'$(MSBuildProjectName)' == 'web-{layer}'");
     }
+
+    props.ShouldContain("FeatureFilenameLayerSuffixRegex");
 
     foreach (KeyValuePair<string, string> pair in functions)
     {
@@ -213,6 +226,18 @@ public class Should_Keep_Grammar_Registry_In_Sync
         $"FeatureFilenameGrammarFunction Include=\"{pair.Key}\" Layer=\"{pair.Value}\""
       );
     }
+
+    // Membership targets must not re-hand-list layer globs; they consume the generated props.
+    string membershipPath = Path.Combine
+    (
+      repoRoot,
+      "source/container-apps/web/msbuild/feature-membership.targets"
+    );
+    File.Exists(membershipPath).ShouldBeTrue($"Missing {membershipPath}");
+    string membership = File.ReadAllText(membershipPath);
+    membership.ShouldContain("feature-filename-grammar.g.props");
+    membership.ShouldContain("FeatureFilenameLayerSuffixRegex");
+    membership.ShouldNotContain("**/*-contracts.cs");
   }
 
   private static string FindRepoRoot()

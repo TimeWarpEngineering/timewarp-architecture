@@ -2,16 +2,41 @@
   AUTO-GENERATED from source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json
   Do not edit by hand. Edit the JSON and rebuild the convention-analyzers project (or run the generator).
   Registry edit ⇒ full rebuild (analyzer incremental staleness).
+  Nesting of layer suffixes is rejected at generation time (dual-match prevention).
 -->
 <Project>
+  <PropertyGroup>
+    <FeatureFilenameLayerSuffixRegex>-(infrastructure|application|contracts|domain|server)$</FeatureFilenameLayerSuffixRegex>
+  </PropertyGroup>
   <ItemGroup>
-    <FeatureFilenameGrammarLayer Include="contracts" />
-    <FeatureFilenameGrammarLayer Include="application" />
-    <FeatureFilenameGrammarLayer Include="domain" />
-    <FeatureFilenameGrammarLayer Include="infrastructure" />
-    <FeatureFilenameGrammarLayer Include="server" />
+    <FeatureFilenameGrammarLayer Include="contracts" Project="web-contracts" />
+    <FeatureFilenameGrammarLayer Include="application" Project="web-application" />
+    <FeatureFilenameGrammarLayer Include="domain" Project="web-domain" />
+    <FeatureFilenameGrammarLayer Include="infrastructure" Project="web-infrastructure" />
+    <FeatureFilenameGrammarLayer Include="server" Project="web-server" />
     <FeatureFilenameGrammarFunction Include="endpoint" Layer="server" />
     <FeatureFilenameGrammarFunction Include="feature-annotations" Layer="server" />
     <FeatureFilenameGrammarFunction Include="handler" Layer="application" />
+  </ItemGroup>
+  <!-- Hybrid includes (option 1): require WebFeatureTreeRoot set by feature-membership.targets. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-contracts'">
+    <Compile Include="$(WebFeatureTreeRoot)/**/*-contracts.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-application'">
+    <Compile Include="$(WebFeatureTreeRoot)/**/*-application.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-domain'">
+    <Compile Include="$(WebFeatureTreeRoot)/**/*-domain.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-infrastructure'">
+    <Compile Include="$(WebFeatureTreeRoot)/**/*-infrastructure.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-server'">
+    <Compile Include="$(WebFeatureTreeRoot)/**/*-server.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

@@ -2,92 +2,45 @@
   Axis-1 feature-cohesive tree membership guard + hybrid layer includes.
 
   Every .cs under web/features/ must end in exactly one registered layer suffix
-  (from feature-filename-grammar.g.props). Zero-match → teaching build error.
-  Suffix-nesting lint prevents dual-glob-match by construction.
+  (from feature-filename-grammar.g.props, generated from the SSOT JSON).
+  Zero-match → teaching build error. Suffix nesting is rejected at generation
+  time so dual-glob-match cannot occur.
 
   Hybrid includes (option 1): default SDK items stay; each layer project also
-  globs ../features/**/*-{layer}.cs with Link metadata.
+  globs $(WebFeatureTreeRoot)/**/*-{layer}.cs with Link metadata — Compile
+  ItemGroups are generated in feature-filename-grammar.g.props from the same
+  layer list (no hand-duplication).
 
   Import once via web/Directory.Build.targets so the guard runs once per
   framework build of any web project, and each layer project gets its globs.
 -->
 <Project>
-  <Import Project="$(MSBuildThisFileDirectory)feature-filename-grammar.g.props" />
+  <PropertyGroup>
+    <WebFeatureTreeRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../features'))</WebFeatureTreeRoot>
+  </PropertyGroup>
 
-  <!-- Hybrid includes: cohesive feature files compile into the owning layer project. -->
-  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-contracts'">
-    <Compile Include="$(MSBuildThisFileDirectory)../features/**/*-contracts.cs"
-             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-application'">
-    <Compile Include="$(MSBuildThisFileDirectory)../features/**/*-application.cs"
-             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-server'">
-    <Compile Include="$(MSBuildThisFileDirectory)../features/**/*-server.cs"
-             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-domain'">
-    <Compile Include="$(MSBuildThisFileDirectory)../features/**/*-domain.cs"
-             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-infrastructure'">
-    <Compile Include="$(MSBuildThisFileDirectory)../features/**/*-infrastructure.cs"
-             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
+  <Import Project="$(MSBuildThisFileDirectory)feature-filename-grammar.g.props" />
 
   <!-- Membership guard runs once (web-server is the canonical host of the check). -->
   <Target Name="ValidateFeatureFileMembership"
           BeforeTargets="CoreCompile"
           Condition="'$(MSBuildProjectName)' == 'web-server'">
-    <PropertyGroup>
-      <_FeatureTreeRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../features'))</_FeatureTreeRoot>
-    </PropertyGroup>
-
     <ItemGroup>
-      <FeatureTreeFile Include="$(_FeatureTreeRoot)/**/*.cs" />
+      <FeatureTreeFile Include="$(WebFeatureTreeRoot)/**/*.cs" />
     </ItemGroup>
 
-    <!-- Build a condition string: unmatched if Filename ends with none of the registered -{layer} suffixes. -->
-    <PropertyGroup>
-      <_UnmatchedCondition></_UnmatchedCondition>
-    </PropertyGroup>
-    <PropertyGroup Condition="'@(FeatureFilenameGrammarLayer)' != ''">
-      <!--
-        MSBuild lacks a clean "none of" over items for EndsWith; enumerate known layers explicitly
-        via batching into UnmatchedFeatureFile by successive exclusion.
-      -->
-    </PropertyGroup>
-
+    <!--
+      Match via generated FeatureFilenameLayerSuffixRegex (SSOT).
+      Unmatched files have no registered -{layer} suffix and would compile nowhere.
+    -->
     <ItemGroup>
       <_MatchedFeatureFile Include="@(FeatureTreeFile)"
-        Condition="$([System.String]::Copy('%(Filename)').EndsWith('-contracts'))" />
-      <_MatchedFeatureFile Include="@(FeatureTreeFile)"
-        Condition="$([System.String]::Copy('%(Filename)').EndsWith('-application'))" />
-      <_MatchedFeatureFile Include="@(FeatureTreeFile)"
-        Condition="$([System.String]::Copy('%(Filename)').EndsWith('-domain'))" />
-      <_MatchedFeatureFile Include="@(FeatureTreeFile)"
-        Condition="$([System.String]::Copy('%(Filename)').EndsWith('-infrastructure'))" />
-      <_MatchedFeatureFile Include="@(FeatureTreeFile)"
-        Condition="$([System.String]::Copy('%(Filename)').EndsWith('-server'))" />
-
+        Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '$(FeatureFilenameLayerSuffixRegex)'))" />
       <UnmatchedFeatureFile Include="@(FeatureTreeFile)"
         Exclude="@(_MatchedFeatureFile)" />
     </ItemGroup>
 
     <Error Condition="'@(UnmatchedFeatureFile)' != ''"
       Text="Feature file(s) match NO registered layer suffix and would compile into no project: @(UnmatchedFeatureFile->'%(Filename)%(Extension)', ', '). Rename to '&lt;name&gt;[-&lt;function&gt;]-&lt;layer&gt;.cs' with layer one of: @(FeatureFilenameGrammarLayer->'-%(Identity)', ', '). Registry: feature-filename-grammar.json." />
-
-    <!-- Registry lint: no registered layer suffix may nest inside another (prevents dual-match). -->
-    <PropertyGroup>
-      <_SuffixNesting>false</_SuffixNesting>
-      <_SuffixNesting Condition="$([System.String]::Copy('-application').EndsWith('-contracts')) or $([System.String]::Copy('-server').EndsWith('-contracts')) or $([System.String]::Copy('-domain').EndsWith('-contracts')) or $([System.String]::Copy('-infrastructure').EndsWith('-contracts'))">true</_SuffixNesting>
-      <_SuffixNesting Condition="$([System.String]::Copy('-contracts').EndsWith('-application')) or $([System.String]::Copy('-server').EndsWith('-application')) or $([System.String]::Copy('-domain').EndsWith('-application')) or $([System.String]::Copy('-infrastructure').EndsWith('-application'))">true</_SuffixNesting>
-      <_SuffixNesting Condition="$([System.String]::Copy('-contracts').EndsWith('-server')) or $([System.String]::Copy('-application').EndsWith('-server')) or $([System.String]::Copy('-domain').EndsWith('-server')) or $([System.String]::Copy('-infrastructure').EndsWith('-server'))">true</_SuffixNesting>
-      <_SuffixNesting Condition="$([System.String]::Copy('-contracts').EndsWith('-domain')) or $([System.String]::Copy('-application').EndsWith('-domain')) or $([System.String]::Copy('-server').EndsWith('-domain')) or $([System.String]::Copy('-infrastructure').EndsWith('-domain'))">true</_SuffixNesting>
-      <_SuffixNesting Condition="$([System.String]::Copy('-contracts').EndsWith('-infrastructure')) or $([System.String]::Copy('-application').EndsWith('-infrastructure')) or $([System.String]::Copy('-server').EndsWith('-infrastructure')) or $([System.String]::Copy('-domain').EndsWith('-infrastructure'))">true</_SuffixNesting>
-    </PropertyGroup>
-    <Error Condition="'$(_SuffixNesting)' == 'true'"
-      Text="Registered layer suffixes nest (one is a suffix of another) — dual glob match becomes possible. Fix feature-filename-grammar.json and regenerate." />
   </Target>
 </Project>
