@@ -13,7 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ledger-substrate\ledger-substrate.csproj" />
     <ProjectReference Include="..\akka-host\akka-host.csproj" />
-    <!-- orleans-host reference added in its phase. -->
+    <ProjectReference Include="..\orleans-host\orleans-host.csproj" />
   </ItemGroup>
 
 </Project>

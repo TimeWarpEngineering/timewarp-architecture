@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Spike B: Orleans host. UseLocalhostClustering, grain-per-principal, direct EF state-store.
+       NO Orleans grain-storage provider (state is EF only, per the 114 axis-5 decision) — the grain
+       is a lifetime/concurrency shell, not an Orleans-persisted grain. Microsoft.Orleans.Sdk brings
+       the source-generated serializers (the AOT-friendly, no-runtime-reflection path from axis 7). -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Orleans.Server" />
+    <PackageReference Include="Microsoft.Orleans.Sdk" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ledger-substrate\ledger-substrate.csproj" />
+  </ItemGroup>
+
+</Project>
