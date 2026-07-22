@@ -84,3 +84,50 @@ need Docker (CI check before merge).
 ## Session
 
 - Created: 2026-07-21 (split from 113 — mechanical track, RFC-independent)
+
+## Results
+
+**Delivered (commits `00c11d73`, `7b99a3d2`, `285dedfa`, 2026-07-22):**
+
+- AppHost provisions Postgres behind the postgres flag: `AddPostgres("postgres").WithDataVolume()
+  .AddDatabase("postgres-db")`, declared INSIDE the web preprocessor block (Web.Server is the
+  only consumer; api-server deliberately unreferenced — zero EF usage there; no orphan container
+  in the postgres-without-web combo). Web.Server gets `WithReference` + `WaitFor`.
+- Resource names live in aspire-app-host/constants.cs (compile-linked into web-server → zero
+  drift), deliberately NOT in ServiceNames: TWA0007/service discovery cover AddProject only, and
+  a new Foundation constant would break generated apps until the package republishes. The
+  database resource name doubles as the Aspire-injected ConnectionStrings key.
+- PostgresDbModule reworked: single-read two-source connection resolution
+  (`PostgresDbOptions:ConnectionString` section wins → else Aspire `ConnectionStrings:postgres-db`),
+  complete skip-mode when unconfigured (direct-host tests + unconfigured consumers boot
+  unchanged), options actually bound, honest `CanConnectAsync` health check; throwaway
+  BuildServiceProvider and dead code removed. Environment check discarded-result bug fixed.
+- SQL Server fully removed: sql-db-context.cs deleted; CPM + web-server package refs dropped;
+  zero grep residue; Design regions and dependency diagram reconciled.
+- Unblocked in passing: NU1903 high-severity advisory on System.Security.Cryptography.Xml
+  10.0.9 was failing the repo-wide 0/0 gate — bumped to 10.0.10 (`00c11d73`).
+
+**Verification:** `dev build` 0 warnings / 0 errors (full solution, audit on).
+web-server-integration-tests identical to pre-change baseline (59 pass / 23 pre-existing
+ApiSecret-dependent failures / 1 skip) — zero regression; validates skip-mode. `dev run`
+postgres-container smoke + full `dev test` under Docker deliberately left for the next live
+session (see checklist residue below).
+
+**Review (Phase 4b):** 1 round, single general reviewer (effort 1). 0 critical / 0 major /
+1 minor / 2 nit; all fixed (`285dedfa`); disposition **clean** (`review/disposition.md`).
+Reviewer empirically confirmed the postgres-without-web combo builds warning-free and that
+skip-mode registers nothing when unconfigured.
+
+**Deviations from plan:** global-usings.cs edits (compiler-forced); catch(Exception) in probes
+(CA1031 NoWarn'd in container-apps); postgres declaration nested rather than compound-gated
+(matches existing nested-directive template pattern).
+
+**Residue / follow-ups:** (1) `dev run` + dashboard health-check smoke and full `dev test` with
+Docker — first Aspire-suite run will pull the postgres image; confirm CI runners have Docker
+before merging to master (flagged risk). (2) Honest health checks are a visible behavior change:
+web-server reports unhealthy if postgres is configured but unreachable (intended). (3) pgAdmin/
+pgweb dashboard resource: not added (optional nicety, revisit with 113 golden implementation).
+
+## Session
+
+- Implementation/review/disposition: 2026-07-22 (orchestrated: plan + build + review teammates)
