@@ -12,7 +12,8 @@
 
 namespace TimeWarp.Architecture.Aggregates.Profiles;
 
-using TimeWarp.Architecture;
+// TypedId attribute namespace: dual-mode MSBuild <Using> in web-domain.csproj (task 115).
 
 [TypedId]
 public readonly partial record struct ProfileId;
+

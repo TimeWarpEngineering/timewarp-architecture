@@ -1,5 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
+  <!-- Composed platform package IDs (task 115). Guarded: projects also import via Directory.Build.props. -->
+  <Import Project="$(MSBuildThisFileDirectory)msbuild/timewarp-platform-packages.props"
+          Condition="'$(_TwPlatformPackagesPropsImported)' != 'true'" />
+
+
   <!-- Central Package Management - add your package versions here -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -22,20 +27,20 @@
     <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.2" />
-    <!-- Analyzer/generator packages (task 092). Used ONLY by an app generated from the template
-         (the repo itself uses project refs). Pinned to the last PUBLISHED version — which may lag
-         the repo's in-dev <Version> — so a generated app references packages that exist on the feed.
-         First ship aligns with 2.0.0-beta.3; bump when a new analyzer package version is published. -->
-    <PackageVersion Include="TimeWarp.Architecture.Analyzers" Version="2.0.0-beta.5" />
-    <PackageVersion Include="TimeWarp.Architecture.Generators" Version="2.0.0-beta.5" />
-    <PackageVersion Include="TimeWarp.Architecture.Attributes" Version="2.0.0-beta.5" />
+    <!-- Analyzer/generator packages (task 092). Package IDs composed via properties so template
+         sourceName cannot rewrite them (task 115). Pinned to last PUBLISHED version — may lag
+         the repo's in-dev <Version>. Bump when a new analyzer package version is published. -->
+    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.5" />
+    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.5" />
+    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.5" />
     <!-- TimeWarp.Identity has never been published (task 104-003 is its first consumer beyond the
          library itself) — there is no "last published version" to pin to yet, unlike the
          TimeWarp.Foundation.* pins above. Pinned to the repo's current in-dev <Version> as a
-         placeholder; this pin is inert for this repo/CI (UseFoundationPackages resolves to
-         ProjectReference mode here) and only matters for package-mode consumers, which cannot
-         function until the first TimeWarp.Identity publish regardless of the number written here.
-         Bump/verify against the actually-published version at first release. -->
+         placeholder; this pin is inert for this repo/CI (UseIdentityPackages resolves to
+         ProjectReference mode when identity source is present) and only matters for package-mode
+         consumers (identityPackages=true), which cannot function until the first TimeWarp.Identity
+         publish regardless of the number written here. Bump/verify against the actually-published
+         version at first release. -->
     <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.5" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">

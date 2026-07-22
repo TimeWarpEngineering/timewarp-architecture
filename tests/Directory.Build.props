@@ -54,7 +54,7 @@
     <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
   </ItemGroup>
   <ItemGroup Condition="'$(UseAnalyzerPackages)' == 'true'">
-    <PackageReference Include="TimeWarp.Architecture.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="$(TwArchitectureAnalyzersPackageId)" PrivateAssets="all" />
     <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
   </ItemGroup>
 

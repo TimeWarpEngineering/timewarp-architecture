@@ -16,13 +16,21 @@
     <PackageReference Include="TimeWarp.Foundation.Contracts" Condition="'$(UseFoundationPackages)' == 'true'" />
     <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj"
                       Condition="'$(UseAnalyzerPackages)' != 'true'" />
-    <PackageReference Include="TimeWarp.Architecture.Attributes"
+    <PackageReference Include="$(TwArchitectureAttributesPackageId)"
                       Condition="'$(UseAnalyzerPackages)' == 'true'" />
+  </ItemGroup>
+
+  <!-- Dual-mode global using for platform Attributes (task 115): package namespace stays fixed via
+       composed property; source mode tracks RootNamespace (rewritten with the app name). -->
+  <ItemGroup>
+    <Using Include="$(TwArchitectureAttributesNamespace)" Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <Using Include="$(RootNamespace).Attributes" Condition="'$(UseAnalyzerPackages)' != 'true'" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Service\" />
   </ItemGroup>
+
 
   <ItemGroup>
     <!-- foundation-contracts mixins are now a bundled source generator (task 053-001): analyzer ref

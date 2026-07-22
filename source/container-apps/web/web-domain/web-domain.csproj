@@ -15,8 +15,14 @@
     <ProjectReference Include="../../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       Condition="'$(UseAnalyzerPackages)' != 'true'" />
-    <PackageReference Include="TimeWarp.Architecture.Generators" PrivateAssets="all"
+    <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"
                       Condition="'$(UseAnalyzerPackages)' == 'true'" />
+  </ItemGroup>
+
+  <!-- TypedIdAttribute namespace dual-mode (task 115) — see timewarp-identity.csproj. -->
+  <ItemGroup>
+    <Using Include="$(TwArchitectureRootNamespace)" Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <Using Include="TimeWarp.Architecture" Condition="'$(UseAnalyzerPackages)' != 'true'" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,3 +31,4 @@
   </ItemGroup>
 
 </Project>
+

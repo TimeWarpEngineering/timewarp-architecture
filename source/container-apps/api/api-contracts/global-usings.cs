@@ -6,7 +6,8 @@ global using Ardalis.GuardClauses;
 global using FluentValidation;
 global using OneOf;
 global using System.Collections.Specialized;
-global using TimeWarp.Architecture.Attributes;
+// Attributes: dual-mode MSBuild <Using> in api-contracts.csproj (task 115) — package mode keeps
+// the platform namespace; source mode uses $(RootNamespace).Attributes after sourceName rewrite.
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Foundation.Features;
 // Solution usings

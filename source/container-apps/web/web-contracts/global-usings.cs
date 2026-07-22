@@ -12,8 +12,10 @@ global using System.Collections.Specialized;
 global using System.Reflection;
 global using System.Runtime.CompilerServices;
 global using TimeWarp.Architecture;
-global using TimeWarp.Architecture.Attributes;
+// Attributes: dual-mode MSBuild <Using> in web-contracts.csproj (task 115) — package mode keeps
+// the platform namespace; source mode uses $(RootNamespace).Attributes after sourceName rewrite.
 global using TimeWarp.Foundation;
+
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Foundation.Features;
 // Solution usings

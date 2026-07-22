@@ -2,6 +2,11 @@
 <Project>
   <!-- Import repository path definitions -->
   <Import Project="$(MSBuildThisFileDirectory)msbuild/repository.props" />
+  <!-- Composed platform package IDs (sourceName-safe; see timewarp-platform-packages.props) -->
+  <Import Project="$(MSBuildThisFileDirectory)msbuild/timewarp-platform-packages.props"
+          Condition="'$(_TwPlatformPackagesPropsImported)' != 'true'" />
+
+
 
   <!-- MSBuild and NuGet behavior configuration -->
   <PropertyGroup Label="MSBuild/NuGet Configuration">

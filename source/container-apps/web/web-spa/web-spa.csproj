@@ -77,8 +77,9 @@
     <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-analyzers\timewarp-architecture-analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       Condition="'$(UseAnalyzerPackages)' != 'true'" />
-    <PackageReference Include="TimeWarp.Architecture.Generators" PrivateAssets="all"
+    <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"
                       Condition="'$(UseAnalyzerPackages)' == 'true'" />
+
     <!--#if(api)-->
     <ProjectReference Include="..\..\api\api-contracts\api-contracts.csproj"/>
     <!--#endif-->

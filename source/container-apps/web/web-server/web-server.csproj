@@ -58,12 +58,13 @@
                        OutputItemType="Analyzer"
                        ReferenceOutputAssembly="false"
                        Condition="'$(UseAnalyzerPackages)' != 'true'" />
-    <PackageReference Include="TimeWarp.Architecture.Generators" PrivateAssets="all"
+    <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"
                        Condition="'$(UseAnalyzerPackages)' == 'true'" />
     <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj"
                        Condition="'$(UseAnalyzerPackages)' != 'true'" />
-    <PackageReference Include="TimeWarp.Architecture.Attributes"
+    <PackageReference Include="$(TwArchitectureAttributesPackageId)"
                        Condition="'$(UseAnalyzerPackages)' == 'true'" />
+
   </ItemGroup>
 
   <ItemGroup>
