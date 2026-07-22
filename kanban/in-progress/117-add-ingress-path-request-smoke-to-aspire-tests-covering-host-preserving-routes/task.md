@@ -45,3 +45,26 @@ Origin: 104-031 G2i + the 2026-07-22 502 incident. Lesson recorded: 'looks green
   postgres; single-collection fallback only if CI flakes. xUnit asserts (project is xUnit).
 
 - Plan: 2026-07-22 (plan agent, evidence-based via decompilation)
+
+## Results
+
+**Delivered (commits `09ea4162`, review-fix follow-up, 2026-07-22/23):**
+`ingress-smoke-tests.cs` — single-boot AppHost fixture (ephemeral postgres, randomized ports —
+decompilation-proven no collision with live dev run) + three facts through the real YARP
+ingress: `/` proves the Web.Server SPA shell; **foreign-Host `/api/Hello` is the regression
+guard** (negative-proof verified: restoring the https hop fails it with the incident's exact
+502); `/api/weatherforecast` exercises the api-server catch-all https hop. Fixture includes a
+bounded readiness gate for a discovered **DCP-proxy/YARP warm-up race** (ingress reports
+Healthy before accepting requests) — retries only connection-level failures; reviewer proved
+three ways it cannot mask the guarded regression; exhaustion throws with attempt count + last
+exception (review L1).
+
+**Verification:** dev build 0/0; aspire-tests 4/4 (19–28s) across implementer, orchestrator,
+and post-fix runs; negative proof documented. AppHost Design region points at the test.
+
+**Review:** 1 round, effort 1 — 0 blocking/medium, L1 fixed, L2/I1/I2 accepted-noted;
+disposition **clean**. G2i (104-031) is now closed by automation instead of a manual check.
+
+## Session
+
+- Orchestrated 2026-07-22/23: plan (decompilation-evidenced) + build (negative proof) + review.
