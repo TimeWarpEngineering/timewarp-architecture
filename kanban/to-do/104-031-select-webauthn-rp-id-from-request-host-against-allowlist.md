@@ -57,3 +57,14 @@ allowlist, instead of one static value.
 ## Session
 
 - Created: 2026-07-21 (spun out of 112 off-LAN verification)
+
+### Addendum (2026-07-22, from 113-001 full dev test run)
+
+The user-secrets RpId workaround (`arch.timewarp.work`) bleeds into
+web-server-integration-tests: the Development test host loads web-server user secrets, so ALL
+23 identity-suite failures trace to the RP ID mismatch (binding test expects `localhost`, gets
+the secret's value; ceremony tests cascade). Earlier attribution to "missing ApiSecret" was
+wrong. Scope addition: make the integration-test host HERMETIC — explicitly pin
+WebAuthnOptions (and audit other ambient user-secret leakage) in test configuration so
+developer-machine secrets can never alter test outcomes. Until this task lands: green suite and
+phone-testable share are mutually exclusive (remove the secret vs keep it).
