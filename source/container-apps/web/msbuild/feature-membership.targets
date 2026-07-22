@@ -40,7 +40,14 @@
         Exclude="@(_MatchedFeatureFile)" />
     </ItemGroup>
 
-    <Error Condition="'@(UnmatchedFeatureFile)' != ''"
+    <!-- Template engine strips Conditions that use &gt; entities or empty-string item compares
+         (task 115). Raw ">" in the attribute is well-formed XML and survives generation. -->
+    <PropertyGroup>
+      <_HasUnmatchedFeatureFiles>false</_HasUnmatchedFeatureFiles>
+      <_HasUnmatchedFeatureFiles Condition="@(UnmatchedFeatureFile->Count()) > 0">true</_HasUnmatchedFeatureFiles>
+    </PropertyGroup>
+    <Error Condition="'$(_HasUnmatchedFeatureFiles)' == 'true'"
       Text="Feature file(s) match NO registered layer suffix and would compile into no project: @(UnmatchedFeatureFile->'%(Filename)%(Extension)', ', '). Rename to '&lt;name&gt;[-&lt;function&gt;]-&lt;layer&gt;.cs' with layer one of: @(FeatureFilenameGrammarLayer->'-%(Identity)', ', '). Registry: feature-filename-grammar.json." />
+
   </Target>
 </Project>
