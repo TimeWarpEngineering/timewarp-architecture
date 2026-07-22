@@ -79,3 +79,7 @@ Survey artifacts land in this folder (`survey-*.md`), synthesized into `survey-s
 ## Session
 
 - Created: 2026-07-21 — surveys dispatched same session.
+
+### 114-002 fold-in (2026-07-22)
+
+Axis-1 migration **shipped**: cohesive `web/features/<slice>/`, filename grammar globs, registry SSOT, membership guard, TWA0015/16. ADR unblocked for axis-1 write-up.

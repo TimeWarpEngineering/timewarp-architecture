@@ -48,10 +48,25 @@ source/
   foundation/        # shared contracts/application/domain/server layers -> TimeWarp.Foundation.* packages
   analyzers/         # Roslyn analyzers + source generators -> TimeWarp.Architecture.{Analyzers,Generators,Attributes}
   container-apps/
-    web/             # web-spa (WASM), web-contracts, web-application, web-server, ...
+    web/
+      features/      # product slices (feature-cohesive): all layers together under <slice>/
+                     # files named <name>[-<function>]-<layer>.cs; layer projects glob by suffix
+      web-spa/       # WASM UI (features stay conventional under web-spa/features — not rehomed)
+      web-contracts/ web-application/ web-server/ web-domain/ web-infrastructure/
+      msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
     api/  grpc/  aspire/  yarp/
 tests/               # mirrors source/; includes web-contracts-tests (host-free serialization round-trips)
 ```
+
+**Axis-1 filename grammar (web product code):** files under `web/features/` use
+`<name>[-<function>]-<layer>.cs` (`handler`→application, `endpoint`→server,
+`feature-annotations`→server; contracts drop the function segment:
+`create-role-contracts.cs`). Escape hatch: `<name>-<layer>.cs` with no function
+(`role-store-application.cs`). Registry SSOT:
+`source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
+(generates analyzer constants + `web/msbuild/feature-filename-grammar.g.props`). **Registry edit
+⇒ full rebuild** (analyzer DLLs can go stale under pure incremental builds). Namespaces do **not**
+track folders — TWA0009 still keys off `…Features.<Id>`.
 
 ## Platform packages (foundation + analyzers)
 
@@ -62,7 +77,7 @@ This monorepo keeps the source and dogfoods it via `ProjectReference`.
 | PackageId | Contents |
 |-----------|----------|
 | `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
-| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0014) — safe repo-wide |
+| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016) — safe repo-wide |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001 — attach only where gens should run |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
 
@@ -107,10 +122,12 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0011/0012 | an `IAggregateRoot` must declare a nested `Invariants : AbstractValidator<T>`, and it must be `private` (kept out of `AddValidatorsFromAssemblyContaining`) |
 | TWA0013 | an `[ApiEndpoint]` contract must carry `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]` — the generator is fail-closed and emits no auth config for neither |
 | TWA0014 | an `[ApiEndpoint]` contract's auth posture must not be contradictory: not both markers, and not `[EndpointAllowAnonymous]` paired with a nested `Query`/`Command` that declares `IAuthApiRequest` |
+| TWA0015 | feature filename: registered function segment pairs with the wrong layer (see feature-filename-grammar.json) |
+| TWA0016 | feature filename: unregistered or mis-spelled function segment used as archetype (escape hatch `<name>-<layer>.cs` stays valid) |
 
 **Slice isolation (TWA0009):** product code under SliceRoot must not reach other product
 slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:
-skill **`slice-isolation`** (`skills/slice-isolation/SKILL.md`).
+skill **`slice-isolation`** (`skills/tw-slice-isolation/SKILL.md`).
 
 ## Agent Context Regions — maintenance rule
 

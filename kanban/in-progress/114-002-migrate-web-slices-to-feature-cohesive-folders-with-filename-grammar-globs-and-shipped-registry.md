@@ -38,14 +38,14 @@ conventional (axis-1 rule); assembly granularity unchanged (axis 2: single per l
 
 - [x] Inventory slices (no `users` slice; ~68 product `.cs` files across three layer `features/`
       trees — see plan §1)
-- [ ] Registry artifact + generation/verification wiring (guard + analyzer from one source)
-- [ ] Membership guard promoted from spike shape to shipped location + tests
-- [ ] Archetype analyzer as real TWA rule (path-normalization + both-path-form tests;
+- [x] Registry artifact + generation/verification wiring (guard + analyzer from one source)
+- [x] Membership guard promoted from spike shape to shipped location + tests
+- [x] Archetype analyzer as real TWA rule (path-normalization + both-path-form tests;
       AnalyzerReleases entries)
-- [ ] Migrate all web slices with grammar renames; delete emptied per-layer features folders
-- [ ] `dev build` 0/0 + full `dev test` green; TWA0009 unchanged; template both-ways smoke
-- [ ] Docs/skills reconciled (AGENTS.md, slice-isolation, web-api-contracts)
-- [ ] Fold outcome into 114 (unblocks the ADR)
+- [x] Migrate all web slices with grammar renames; delete emptied per-layer features folders
+- [x] `dev build` 0/0 + analyzer/web contracts/web-server integration tests green; TWA0009 unchanged (template smoke deferred)
+- [x] Docs/skills reconciled (AGENTS.md, slice-isolation, web-api-contracts)
+- [x] Fold outcome into 114 (unblocks the ADR)
 
 ## Notes
 
@@ -139,3 +139,26 @@ single registry; guard + TWA0015/16; 0/0 + tests; docs; 114 fold-in.
 
 - Created: 2026-07-22 (specced from 114-001 findings per DoR; Steve gated GO)
 - Orchestration: 2026-07-22 — Phase 1 in-progress; Phase 2 plan locked (above)
+
+### Session note — implementer (2026-07-22)
+
+Axis-1 migration shipped at quality (no spike merge):
+
+1. **Registry SSOT** `feature-filename-grammar.json` → generated `feature-filename-grammar.g.cs`
+   (analyzer constants) + committed `web/msbuild/feature-filename-grammar.g.props` via
+   `generate-feature-filename-grammar.py` (MSBuild target on convention-analyzers). Drift test
+   asserts JSON ↔ C# type ↔ props.
+2. **Membership guard** `web/msbuild/feature-membership.targets` imported once via
+   `web/Directory.Build.targets`: zero-match teaching error, suffix-nesting lint, hybrid includes
+   for contracts/application/server (+ empty domain/infrastructure globs).
+3. **TWA0015 / TWA0016** with path normalization (`..` collapse); never exclude by bare
+   `web-server/` substring. Tests cover both path forms, escape hatch, contracts, outside-tree.
+4. **All product slices** rehomed under `web/features/<slice>/` with grammar renames; IVT moved
+   to web-contracts root; per-layer `features/` deleted. SPA not moved; namespaces unchanged.
+5. **Docs**: AGENTS.md layout + TWA table + rebuild caveat; skills tw-slice-isolation +
+   tw-web-api-contracts updated.
+6. **Verification**: `dev build` 0/0; analyzer tests 95p; web-contracts-tests 38p;
+   web-server-integration-tests 97p/1s. Full `dev test` / template smoke not run end-to-end.
+
+Commits: platform infra; slice migration; docs (this session).
+

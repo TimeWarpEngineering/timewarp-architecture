@@ -28,8 +28,8 @@ Activate when **any** signal matches:
 
 | Signal | How to find it |
 |--------|----------------|
-| Contracts project | `*.csproj` named `*contracts*` (any casing) with a `features/` or `Features/` tree |
-| Contract file layout | `**/features/**/commands/*.cs` or `**/features/**/queries/*.cs` (search **case-insensitively** — repos use kebab `features/` or Pascal `Features/`) |
+| Contracts project | `*.csproj` named `*contracts*` (any casing); product contracts may live in a cohesive `web/features/` tree (axis-1) or a project-local `features/`/`Features/` tree |
+| Contract file layout | `**/features/**/commands/*-contracts.cs` or `**/features/**/queries/*-contracts.cs` (axis-1 grammar; also match legacy `*.cs` without the layer suffix). Search **case-insensitively** — repos use kebab `features/` or Pascal `Features/` |
 | Contract shell | `public static partial class` + nested `Query`/`Command` + `[ApiRoute(...)]` |
 | TimeWarp.Mediator return | `IRequest<OneOf<Response, SharedProblemDetails>>` |
 | Shared validation | `I*Details` interface + `AbstractValidator<I*Details>` |
@@ -43,10 +43,12 @@ namespace root, folder casing, test project layout, and mock-service registratio
 
 | Concern | Rule | Example |
 |---------|------|---------------------|
-| Feature folder | **Plural**, domain-oriented | `features/admin/roles/` |
-| Namespace | **Plural** | `{Root}.Features.Admin.Roles` |
-| Commands / Queries | Subfolders under feature | `commands/create-role.cs`, `queries/get-role.cs` |
-| Shared bindable shape | Separate file in feature folder | `role-details.cs` (`IRoleDetails`) |
+| Feature folder | **Plural**, domain-oriented; axis-1 cohesive root is `web/features/<slice>/` | `web/features/admin/roles/` |
+| Filename grammar | `<name>[-<function>]-<layer>.cs`; contracts drop function | `commands/create-role-contracts.cs` |
+| Namespace | **Plural** (does **not** track folder moves) | `{Root}.Features.Admin.Roles` |
+| Commands / Queries | Subfolders under feature | `commands/create-role-contracts.cs`, `queries/get-role-contracts.cs` |
+| Shared bindable shape | Separate file in feature folder | `role-details-contracts.cs` (`IRoleDetails`) |
+| Registry | Function→layer SSOT (analyzer + membership guard) | `feature-filename-grammar.json` — edit ⇒ full rebuild |
 
 **Casing:** kebab-case paths are canonical; if the repo already uses PascalCase folders
 (`Features/Admin/Roles/`), match it. Never mix casings within one repo.
@@ -386,9 +388,11 @@ error. See the `tw-mock-response-factory` skill.
 
 ## Canonical examples
 
-- **Living anchor (timewarp-architecture template):** `web-contracts/features/admin/roles/` —
-  `role-details.cs` (`IRoleDetails` + validator), `commands/create-role.cs`, `queries/get-roles.cs`
-  (attribute auth + open-data), `queries/get-role.cs` (manual auth, `I*Details` Response).
+- **Living anchor (timewarp-architecture template):** `web/features/admin/roles/` —
+  `role-details-contracts.cs` (`IRoleDetails` + validator), `commands/create-role-contracts.cs`,
+  `queries/get-roles-contracts.cs` (attribute auth + open-data), `queries/get-role-contracts.cs`
+  (manual auth, `I*Details` Response). Handlers sit beside contracts in the same slice folder
+  (`create-role-handler-application.cs`); layer projects compose via static `*-{layer}.cs` globs.
 - Inline reference implementations: [examples.md](references/examples.md).
 
 ## Related skills
