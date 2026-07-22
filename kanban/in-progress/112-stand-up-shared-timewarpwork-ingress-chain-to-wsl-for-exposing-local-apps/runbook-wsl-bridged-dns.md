@@ -120,8 +120,12 @@ design. Watch for Wi-Fi auto-connecting when the wired path blips → dual defau
 
 ## Consequence: no localhost relay (Windows ↔ WSL are separate hosts now)
 
-The NAT-mode magic where Windows `localhost:<port>` reached WSL services is **gone** in bridged
-mode — that relay is a NAT feature. `localhost` in a Windows browser is the Windows box.
+CORRECTION (2026-07-22): the relay is not entirely gone under bridged mode — `wslrelay.exe`
+still relays SELECTED ports (observed: the Aspire dashboard port 17204 works from a Windows
+browser; trigger appears tied to the aspire CLI/dashboard flow, mechanism not fully pinned).
+Arbitrary WSL-loopback ports (e.g. the ingress 63610/63620, dcp-bound to 127.0.0.1) get NO
+relay and are unreachable from Windows localhost — and a netsh portproxy cannot reach
+loopback-only binds either; only wslrelay-style vsock plumbing (or ssh -L) can.
 WSL services that bind localhost (Aspire dashboard :17204, service endpoints 636xx) are
 unreachable from Windows even via `172.16.67.13:<port>` — they don't listen on the LAN interface.
 
