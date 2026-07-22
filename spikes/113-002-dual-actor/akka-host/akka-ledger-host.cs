@@ -72,6 +72,12 @@ public sealed class AkkaLedgerHost : IAsyncDisposable
   public Task<PostResult> DebitAsync(PrincipalId id, long amount) =>
     coordinator.Ask<PostResult>(new LedgerMessages.Debit(id, amount), AskTimeout);
 
+  // Diagnostics overload: a short Ask timeout so the error-propagation probe does not wait the full
+  // AskTimeout when the actor's handler throws (an unhandled handler exception never produces a
+  // reply — see the debugging-story finding).
+  public Task<PostResult> DebitAsync(PrincipalId id, long amount, TimeSpan timeout) =>
+    coordinator.Ask<PostResult>(new LedgerMessages.Debit(id, amount), timeout);
+
   public async ValueTask DisposeAsync()
   {
     await host.StopAsync();

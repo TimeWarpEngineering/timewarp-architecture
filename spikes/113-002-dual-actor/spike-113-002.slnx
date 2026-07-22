@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ledger-substrate/ledger-substrate.csproj" />
+  <Project Path="akka-host/akka-host.csproj" />
+  <Project Path="orleans-host/orleans-host.csproj" />
+  <Project Path="spike-tests/spike-tests.csproj" />
+</Solution>
