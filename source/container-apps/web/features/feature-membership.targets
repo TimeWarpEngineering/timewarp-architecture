@@ -1,0 +1,31 @@
+<Project>
+  <!-- Axis-1 spike (114-001): exactly-one-project membership guard for the feature-cohesive tree.
+       Every .cs under features/ must end in exactly one REGISTERED layer suffix:
+       - unmatched file  -> build error (file belongs to no layer project; it would silently not compile)
+       - nested suffixes -> build error (a registered suffix that is a suffix of another makes
+         dual-glob-match possible; forbidding nesting makes dual-match impossible by construction)
+       Imported by ONE project (web-server) so the check runs once per build. -->
+  <Target Name="ValidateFeatureFileMembership" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <RegisteredLayerSuffix Include="-contracts" />
+      <RegisteredLayerSuffix Include="-application" />
+      <RegisteredLayerSuffix Include="-server" />
+
+      <FeatureTreeFile Include="$(MSBuildThisFileDirectory)**\*.cs" />
+      <UnmatchedFeatureFile Include="@(FeatureTreeFile)"
+        Condition="!$([System.String]::Copy('%(Filename)').EndsWith('-contracts'))
+               and !$([System.String]::Copy('%(Filename)').EndsWith('-application'))
+               and !$([System.String]::Copy('%(Filename)').EndsWith('-server'))" />
+    </ItemGroup>
+
+    <Error Condition="'@(UnmatchedFeatureFile)' != ''"
+      Text="Feature file(s) match NO registered layer suffix and would compile into no project: @(UnmatchedFeatureFile->'%(Filename)%(Extension)', ', '). Rename to '&lt;name&gt;[-&lt;function&gt;]-&lt;layer&gt;.cs' with layer one of: @(RegisteredLayerSuffix, ', ')." />
+
+    <!-- Registry lint: no suffix may nest inside another (prevents dual-match structurally). -->
+    <PropertyGroup>
+      <_SuffixNesting Condition="$([System.String]::Copy('-application').EndsWith('-contracts')) or $([System.String]::Copy('-server').EndsWith('-contracts')) or $([System.String]::Copy('-contracts').EndsWith('-application')) or $([System.String]::Copy('-server').EndsWith('-application')) or $([System.String]::Copy('-contracts').EndsWith('-server')) or $([System.String]::Copy('-application').EndsWith('-server'))">true</_SuffixNesting>
+    </PropertyGroup>
+    <Error Condition="'$(_SuffixNesting)' == 'true'"
+      Text="Registered layer suffixes nest (one is a suffix of another) — dual glob match becomes possible. Fix the registry." />
+  </Target>
+</Project>

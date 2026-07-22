@@ -25,4 +25,11 @@
     <Folder Include="features\Todo\" />
   </ItemGroup>
 
+
+  <!-- Axis-1 spike (114-001): feature-cohesive folders — this layer project includes its files
+       from the shared features tree by filename-grammar glob. Link keeps a sane SolutionExplorer
+       shape. -->
+  <ItemGroup>
+    <Compile Include="..\features\**\*-application.cs" Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

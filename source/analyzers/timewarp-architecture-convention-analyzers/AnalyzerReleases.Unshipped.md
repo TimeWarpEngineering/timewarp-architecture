@@ -18,3 +18,4 @@ TWA0011 | Design | Warning | AggregateInvariantsAnalyzer: aggregate root has no 
 TWA0012 | Design | Warning | AggregateInvariantsAnalyzer: nested Invariants validator is not private
 TWA0013 | Design | Warning | EndpointAuthPostureAnalyzer: [ApiEndpoint] contract has no [EndpointAuthorize]/[EndpointAllowAnonymous] marker
 TWA0014 | Design | Warning | EndpointAuthPostureAnalyzer: contract's auth posture is contradictory (both markers, or [EndpointAllowAnonymous] with IAuthApiRequest)
+TWA9999 | Naming | Warning | FeatureFilenameGrammarAnalyzer (SPIKE 114-001 — not for release)
