@@ -31,18 +31,15 @@ public class PostgresDbEnvironmentCheck
       $"Completed {nameof(PostgresDbEnvironmentCheck)} "
     );
 
-  private readonly PostgresDbOptions PostgresDbOptions;
   private readonly IServiceProvider ServiceProvider;
   private readonly ILogger Logger;
 
   public PostgresDbEnvironmentCheck
   (
-      IOptions<PostgresDbOptions> postgresDbOptionsAccessor,
       IServiceProvider serviceProvider,
       ILogger<PostgresDbEnvironmentCheck> logger
   )
   {
-    PostgresDbOptions = postgresDbOptionsAccessor.Value;
     ServiceProvider = serviceProvider;
     Logger = logger;
   }
