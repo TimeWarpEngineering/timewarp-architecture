@@ -126,6 +126,16 @@ internal class Program
       yarp = yarp.WithUrl(ingressPublicUrl, "public");
     }
 
+#if web
+    // Web routes preserve the ORIGINAL Host (per-request RP-ID selection). Outbound TLS from the
+    // ingress would then validate Web.Server's localhost dev cert against the PUBLIC hostname
+    // (Headers.Host overrides .NET's certificate-name validation target) and 502 with
+    // RemoteCertificateNameMismatch. So the ingress forwards web routes over the HTTP endpoint —
+    // TLS terminates at the ingress edge (and at Caddy on the public chain), not on this hop.
+    // api/grpc routes do not preserve host and stay on their default (https) endpoints.
+    EndpointReference webServerHttp = webServer.GetEndpoint("http");
+
+#endif
     yarp = yarp.WithConfiguration(yarpConfiguration =>
     {
 #if api
