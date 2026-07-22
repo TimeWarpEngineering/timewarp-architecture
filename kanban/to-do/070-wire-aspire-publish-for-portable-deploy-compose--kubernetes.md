@@ -33,6 +33,11 @@ Confirmed strategy (Aspire 13.4 first-party publishers — `Azure | Kubernetes |
       builds images via the .NET SDK container target, DELETE the two `Dockerfile`s and the
       `<DockerfileContext>` lines in api/grpc/web/yarp csproj (option 2 from 047). Otherwise document
       why they stay.
+- [ ] Smoke-deploy to a local `kind` cluster: create a kind cluster, load/publish the container
+      images (kind needs `kind load docker-image` or a local registry — SDK-built images are not
+      visible to the cluster automatically), `kubectl apply` the generated manifests, and verify the
+      app comes up end to end (web reachable, api/grpc healthy). This is the acceptance test for
+      the Kubernetes publisher.
 - [ ] Add a CI path under existing `.github/workflows/` that runs `aspire publish` (and optionally
       `aspire deploy`) — coordinate with the existing workflows rather than re-introducing the old
       Azure-DevOps pipeline.
@@ -40,6 +45,10 @@ Confirmed strategy (Aspire 13.4 first-party publishers — `Azure | Kubernetes |
 - [ ] Confirm `dev build` stays green after AppHost package/API changes.
 
 ## Notes
+
+- Child task [[070-001-expose-local-kind-deploy-publicly-via-nametimewarpwork-through-mikrotik]]
+  builds on the kind smoke-deploy: public exposure at `<name>.timewarp.work`, riding the shared
+  ingress chain in [[112-stand-up-shared-timewarpwork-ingress-chain-to-wsl-for-exposing-local-apps]].
 
 - Template-flag aware: the AppHost uses `#if api/web/grpc/yarp`. Publisher wiring and any
   Dockerfile removal must respect those flags so generated templates stay valid.

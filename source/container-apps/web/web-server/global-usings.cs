@@ -48,7 +48,6 @@ global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Foundation.Configuration;
 global using TimeWarp.Foundation.CorsPolicies;
-global using TimeWarp.Architecture.Data;
 global using TimeWarp.Architecture.Extensions;
 global using TimeWarp.Foundation.Extensions;
 global using TimeWarp.Architecture.Features.Chat;
@@ -65,6 +64,7 @@ global using TimeWarp.Architecture.Web.Infrastructure;
 global using TimeWarp.Modules;
 #if(postgres)
 global using TimeWarp.Architecture.HostedServices;
+global using TimeWarp.Architecture.Modules;
 #endif
 global using TimeWarp.Foundation;
 global using TimeWarp.Foundation.Features;

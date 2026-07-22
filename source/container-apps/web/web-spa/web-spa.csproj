@@ -10,6 +10,11 @@
     <AssemblyName>Web.Spa</AssemblyName>
     <DefineConstants>ReduxDevToolsEnabled;grpc;api;web</DefineConstants>
     <Nullable>enable</Nullable>
+    <!-- Interactive-Auto serves users whose browser culture differs from the server's; without
+         full ICU data the WASM runtime aborts on startup with "Blazor detected a change in the
+         application's culture" (hit by a real en-GB user on the task-112 public share; en-US
+         users never see it). Cost: larger ICU payload in the WASM download. -->
+    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
   </PropertyGroup>
 

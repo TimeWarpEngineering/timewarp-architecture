@@ -30,7 +30,7 @@
 // that reliance rather than a behavior change; it also makes the hook's write independent of
 // whatever backing-field naming a consumer's compiled entity happens to use.
 // Deleted entries are skipped by design — invariants (and the concurrency token) describe valid
-// live state, not deletion.
+// live state, not deletion. This is the sole persistence context the template ships.
 // Known boundary: only entries whose OWN Entity is IAggregateRoot are considered. A save that
 // mutates only a child/owned entity leaves its owning root's entry Unchanged, so that root's
 // invariants and Version increment do not run for that save. Resolving changed child entries to
@@ -51,8 +51,6 @@
 // entity-version.cs), it requires a live change-tracker EntityEntry/PropertyEntry that this
 // entity-free context has no DbSet to produce without a new EF test package (InMemory/Sqlite),
 // which is out of scope here.
-// SqlDbContext (sql-db-context.cs) is unregistered dead code today; a consumer who activates it
-// should copy this same override.
 #endregion
 
 namespace TimeWarp.Architecture.Persistence;
@@ -64,6 +62,8 @@ using TimeWarp.Foundation.Application.Services;
 public sealed partial class PostgresDbContext : DbContext
 {
   private const string VersionPropertyName = nameof(Entity<Guid>.Version);
+
+  public PostgresDbContext(DbContextOptions<PostgresDbContext> options) : base(options) { }
 
   public override int SaveChanges(bool acceptAllChangesOnSuccess)
   {

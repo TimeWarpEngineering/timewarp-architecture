@@ -3,11 +3,19 @@
 #endregion
 
 #region Design
-// IModule keeps Program.ConfigureServices a single call site to comment in/out with the
-// `postgres` feature flag — all Postgres coupling lives here.
-// ConfigurePostgresDb builds a throwaway provider to read PostgresDbOptions because the
-// connection string is needed while the collection is still being composed; accepted smell,
-// scoped to this method.
+// IModule keeps Program.ConfigureServices a single gated call site (the postgres template feature
+// flag compiles the call in or out); all Postgres coupling lives here.
+// Connection string resolution has two sources, checked in order:
+//   1. The PostgresDbOptions:ConnectionString configuration section — the non-Aspire hosting path
+//      (a consumer wiring Postgres by hand via appsettings, environment, or user secrets).
+//   2. The Aspire-injected ConnectionStrings key, whose name IS the database resource name
+//      (constants.cs PostgresDatabaseResourceName); Aspire sets it on every run via WithReference.
+// If neither yields a value the module registers NOTHING and returns. Rationale: the Web.Server
+// integration tests direct-host the app WITHOUT Aspire (no injected string), and a template consumer
+// who has the postgres flag but no configured database must still get a running app rather than a
+// startup failure. Under Aspire the string is always present, so the real registrations always run.
+// The connection string is read once and reused for both Configure<PostgresDbOptions> (the
+// environment check consumes IOptions<PostgresDbOptions>) and AddDbContext, so the two cannot drift.
 // Health check (liveness) and environment check (startup gate) intentionally share the same
 // CanConnectAsync probe.
 #endregion
@@ -18,11 +26,24 @@ public sealed partial class PostgresDbModule : IModule
 {
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    ConfigureInfrastructure(serviceCollection);
-  }
+    string? connectionString =
+      configuration["PostgresDbOptions:ConnectionString"]
+      ?? configuration.GetConnectionString(PostgresDatabaseResourceName);
 
-  private static void ConfigureInfrastructure(IServiceCollection serviceCollection)
-  {
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+      // Unconfigured (no Aspire injection, no explicit config): leave Postgres entirely
+      // unregistered so direct-host integration tests and unconfigured consumers still boot.
+      return;
+    }
+
+    serviceCollection.Configure<PostgresDbOptions>(options => options.ConnectionString = connectionString);
+
+    _ = serviceCollection.AddDbContext<PostgresDbContext>
+    (
+      dbContextOptionsBuilder => dbContextOptionsBuilder.UseNpgsql(connectionString)
+    );
+
     IHealthChecksBuilder healthChecksBuilder = serviceCollection.AddHealthChecks();
     healthChecksBuilder.AddDbContextCheck<PostgresDbContext>
     (
@@ -31,8 +52,8 @@ public sealed partial class PostgresDbModule : IModule
         null,
         PerformPostgresHealthCheck()
     );
+
     ConfigureEnvironmentChecks(serviceCollection);
-    ConfigurePostgresDb(serviceCollection);
     serviceCollection.AddHostedService<PostgresDbContextStartupHostedService>();
   }
 
@@ -46,41 +67,17 @@ public sealed partial class PostgresDbModule : IModule
     );
   }
 
-  private static void ConfigurePostgresDb(IServiceCollection serviceCollection)
-  {
-    using IServiceScope scope = serviceCollection.BuildServiceProvider().CreateScope();
-    {
-      PostgresDbOptions postgresDbOptions = scope.ServiceProvider.GetRequiredService<IOptions<PostgresDbOptions>>().Value;
-
-      _ = serviceCollection.AddDbContext<PostgresDbContext>
-      (
-          dbContextOptionsBuilder =>
-              dbContextOptionsBuilder
-              .UseNpgsql
-              (
-                  connectionString: postgresDbOptions.ConnectionString
-              )
-      );
-    }
-  }
-
-  private static Action<NpgsqlDbContextOptionsBuilder> NpgsqlOptionsAction(string databaseName)
-  {
-    return builder => builder.UseAdminDatabase(databaseName);
-  }
-
   private static Func<PostgresDbContext, CancellationToken, Task<bool>> PerformPostgresHealthCheck() =>
-      async (postgresDbContext, _) =>
+      async (postgresDbContext, cancellationToken) =>
       {
         try
         {
-          await postgresDbContext.Database.CanConnectAsync().ConfigureAwait(true);
+          return await postgresDbContext.Database.CanConnectAsync(cancellationToken).ConfigureAwait(true);
         }
-        catch (HttpRequestException)
+        catch (Exception)
         {
+          // Any failure reaching the database (network, auth, provider) means unhealthy.
           return false;
         }
-
-        return true;
       };
 }

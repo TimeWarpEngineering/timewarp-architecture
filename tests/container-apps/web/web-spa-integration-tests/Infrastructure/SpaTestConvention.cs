@@ -15,7 +15,12 @@ class SpaTestConvention : TimeWarpTestingConvention
       async _ =>
       {
         IDistributedApplicationTestingBuilder appHost =
-          await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>();
+          await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>
+          (
+            // Ephemeral postgres: test AppHosts must NOT share the deterministic data volume
+            // (overlapping instances corrupt its WAL and hang WaitFor - see AppHost Design region).
+            ["--Postgres:UseDataVolume=false"]
+          );
 
         DistributedApplication app = await appHost.BuildAsync();
         await app.StartAsync();

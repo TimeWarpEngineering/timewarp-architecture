@@ -19,6 +19,11 @@
 // window.Spa.WebAuthn.CreateCredential/GetCredential (source/features/web-authn.ts) do the binary
 // ArrayBuffer<->base64url conversion in the browser; this code-behind only shuttles JSON strings
 // and maps field names onto the Complete* commands.
+// RP-ID credential scoping (task 104-031): the server selects the WebAuthn RP ID per request from
+// the request host (WebAuthnOptions.AllowedRpIds), so a passkey registered while visiting one host
+// (e.g. localhost) will NOT surface when authenticating from a different host (e.g. a *.timewarp.work
+// share) and vice versa — this is WebAuthn's per-RP-ID credential scoping, not a bug. Register and
+// authenticate on the SAME host.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

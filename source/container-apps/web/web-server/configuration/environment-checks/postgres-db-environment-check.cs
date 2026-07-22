@@ -11,7 +11,6 @@
 #endregion
 
 #nullable enable
-// TOOD: This is copilot generated code, it needs to be reviewed and cleaned up
 namespace TimeWarp.Architecture.Configuration;
 
 public class PostgresDbEnvironmentCheck
@@ -32,18 +31,15 @@ public class PostgresDbEnvironmentCheck
       $"Completed {nameof(PostgresDbEnvironmentCheck)} "
     );
 
-  private readonly PostgresDbOptions PostgresDbOptions;
   private readonly IServiceProvider ServiceProvider;
   private readonly ILogger Logger;
 
   public PostgresDbEnvironmentCheck
   (
-      IOptions<PostgresDbOptions> postgresDbOptionsAccessor,
       IServiceProvider serviceProvider,
       ILogger<PostgresDbEnvironmentCheck> logger
   )
   {
-    PostgresDbOptions = postgresDbOptionsAccessor.Value;
     ServiceProvider = serviceProvider;
     Logger = logger;
   }
@@ -58,16 +54,18 @@ public class PostgresDbEnvironmentCheck
 
     PostgresDbContext postgresDbContext = scope.ServiceProvider.GetRequiredService<PostgresDbContext>();
 
+    bool canConnect;
     try
     {
-      await postgresDbContext.Database.CanConnectAsync().ConfigureAwait(true);
+      canConnect = await postgresDbContext.Database.CanConnectAsync().ConfigureAwait(true);
     }
-    catch (HttpRequestException)
+    catch (Exception)
     {
+      // Any failure reaching the database (network, auth, provider) fails the startup gate.
       return false;
     }
 
     LogCompleted(Logger, null);
-    return true;
+    return canConnect;
   }
 }

@@ -15,7 +15,12 @@ public class IntegrationTest1
   public async Task GetWebResourceRootReturnsOkStatusCode()
   {
     // Arrange
-    IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>();
+    IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>
+    (
+      // Ephemeral postgres: test AppHosts must NOT share the deterministic data volume
+      // (overlapping instances corrupt its WAL and hang WaitFor - see AppHost Design region).
+      ["--Postgres:UseDataVolume=false"]
+    );
     await using DistributedApplication app = await appHost.BuildAsync();
     await app.StartAsync();
 

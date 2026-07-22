@@ -5,8 +5,10 @@
 #region Design
 // ConfigureConfiguration/ConfigureServices/ConfigureMiddleware/ConfigureEndpoints are public
 // statics (IAspNetProgram) so integration-test hosts compose the exact production pipeline.
-// Cross-cutting registrations delegate to modules (CommonServerModule etc.); PostgresDbModule
-// stays a single commented call so the `postgres` feature flag is one-line to enable.
+// Cross-cutting registrations delegate to modules (CommonServerModule etc.); the PostgresDbModule
+// call is gated by the postgres template feature flag via a preprocessor directive, so a template
+// consumer without that flag compiles the call out entirely. When the flag is present the module
+// itself still no-ops at runtime if no connection string is configured (see PostgresDbModule).
 // Serilog bootstrap logger wraps host build so startup crashes are still captured; the app runs
 // through RunOaktonCommands to expose environment checks as CLI commands.
 // Web.Spa services are registered here too — prerendering runs SPA code on the server.
@@ -151,7 +153,9 @@ public class Program : IAspNetProgram
     ConfigureSettings(serviceCollection, configuration);
     WebInfrastructureModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
-    //PostgresDbModule.ConfigureServices(serviceCollection, configuration);
+#if postgres
+    PostgresDbModule.ConfigureServices(serviceCollection, configuration);
+#endif
     serviceCollection.AddSingleton<IChatHubService, ChatHubService>();
     CorsPolicy.Any.Apply(serviceCollection);
     ConfigureInfrastructure(serviceCollection);
@@ -163,6 +167,7 @@ public class Program : IAspNetProgram
     serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
     serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
     serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
+    serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
@@ -348,10 +353,8 @@ public class Program : IAspNetProgram
   private static void ConfigureInfrastructure(IServiceCollection serviceCollection)
   {
     serviceCollection.AddHealthChecks();
-    //  .AddDbContextCheck<SqlDbContext>();
 
     ConfigureEnvironmentChecks(serviceCollection);
-    //ConfigureSqlDb(serviceCollection, Configuration);
   }
 
   private static void ConfigureEnvironmentChecks(IServiceCollection serviceCollection)

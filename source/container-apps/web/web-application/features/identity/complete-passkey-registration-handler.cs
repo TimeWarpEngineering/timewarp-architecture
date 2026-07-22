@@ -4,8 +4,13 @@
 #endregion
 
 #region Design
-// Order is deliberate and replay-safety-critical: decode -> consume the challenge -> verify ->
-// check for an existing credential -> mint. The challenge is consumed (one-time) BEFORE
+// RP-ID selection (task 104-031) runs FIRST, before decode/consume: the relying party is chosen per
+// request from the request host via WebAuthnRelyingPartySelection.Select, so a host outside the
+// allowlist returns 400 "Host not allowed" without consuming (and wasting) the ceremony's challenge.
+// The selected relying party (its Id being the request host, canonical casing) is what
+// WebAuthnRegistration.Verify then binds rpIdHash and origin against.
+// Order is otherwise deliberate and replay-safety-critical: decode -> consume the challenge ->
+// verify -> check for an existing credential -> mint. The challenge is consumed (one-time) BEFORE
 // WebAuthnRegistration.Verify runs, not after — even a payload that later fails verification has
 // already burned its challenge, so a retry with a corrected payload must start a brand-new ceremony
 // (StartPasskeyRegistration) rather than resubmitting a tampered version of an already-answered one.
@@ -47,6 +52,7 @@ public sealed partial class CompletePasskeyRegistration
     private readonly IPrincipalStore PrincipalStore;
     private readonly IWebAuthnChallengeStore ChallengeStore;
     private readonly IBrowserSessionService BrowserSessionService;
+    private readonly IRequestHostAccessor RequestHostAccessor;
     private readonly IOptions<WebAuthnOptions> Options;
 
     public Handler
@@ -54,17 +60,30 @@ public sealed partial class CompletePasskeyRegistration
       IPrincipalStore principalStore,
       IWebAuthnChallengeStore challengeStore,
       IBrowserSessionService browserSessionService,
+      IRequestHostAccessor requestHostAccessor,
       IOptions<WebAuthnOptions> options
     )
     {
       PrincipalStore = principalStore;
       ChallengeStore = challengeStore;
       BrowserSessionService = browserSessionService;
+      RequestHostAccessor = requestHostAccessor;
       Options = options;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
+      // Select the RP ID FIRST — before decode/consume — so a disallowed host never burns a
+      // challenge (task 104-031).
+      OneOf<WebAuthnRelyingParty, SharedProblemDetails> relyingPartyResult =
+        WebAuthnRelyingPartySelection.Select(RequestHostAccessor.GetRequestHost(), Options.Value);
+      if (relyingPartyResult.IsT1)
+      {
+        return relyingPartyResult.AsT1;
+      }
+
+      WebAuthnRelyingParty relyingParty = relyingPartyResult.AsT0;
+
       if (!WebAuthnPayloadDecoder.TryDecode(command.CredentialId, out byte[] credentialIdBytes)
         || !WebAuthnPayloadDecoder.TryDecode(command.ClientDataJson, out byte[] clientDataJsonBytes)
         || !WebAuthnPayloadDecoder.TryDecode(command.AttestationObject, out byte[] attestationObjectBytes))
@@ -77,9 +96,6 @@ public sealed partial class CompletePasskeyRegistration
       {
         return ChallengeInvalid();
       }
-
-      WebAuthnOptions webAuthnOptions = Options.Value;
-      var relyingParty = new WebAuthnRelyingParty(webAuthnOptions.RpId, webAuthnOptions.RpName, webAuthnOptions.AllowedOrigins);
 
       WebAuthnRegistrationResult verifyResult =
         WebAuthnRegistration.Verify(relyingParty, challenge, clientDataJsonBytes, attestationObjectBytes, credentialIdBytes);

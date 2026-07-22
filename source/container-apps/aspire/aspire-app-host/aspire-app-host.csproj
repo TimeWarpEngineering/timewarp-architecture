@@ -5,12 +5,15 @@
     <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
     <UserSecretsId>a3d4de92-958f-4e04-b927-9d7605bee60e</UserSecretsId>
-    <DefineConstants>$(DefineConstants);api;web;grpc;yarp</DefineConstants>
+    <DefineConstants>$(DefineConstants);api;web;grpc;yarp;postgres</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <!--#if (yarp) -->
     <PackageReference Include="Aspire.Hosting.Yarp" />
+    <!--#endif -->
+    <!--#if (postgres) -->
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <!--#endif -->
     <!-- Direct pin (see Directory.Packages.props): lifts StreamJsonRpc's vulnerable transitive
          MessagePack when Aspire.Hosting.Yarp isn't in the graph to do it. -->

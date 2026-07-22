@@ -49,7 +49,6 @@ left to right direction
 [Microsoft.AspNetCore.Components.WebAssembly.Server v] as _1305067036 #ecf0f1
 [Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore v] as _384404020 #ecf0f1
 [Microsoft.CodeAnalysis v] as _2133605923 #ecf0f1
-[Microsoft.EntityFrameworkCore.SqlServer v] as _1075816939 #ecf0f1
 [Microsoft.VisualStudio.Azure.Containers.Tools.Targets v] as _395813971 #ecf0f1
 [Oakton v] as _251395614 #ecf0f1
 [BlazorComponentUtilities v] as _1255037266 #ecf0f1
@@ -109,7 +108,6 @@ Web.Server --> _1099322557
 Web.Server --> _1305067036
 Web.Server --> _384404020
 Web.Server --> _2133605923
-Web.Server --> _1075816939
 Web.Server --> _395813971
 Web.Server --> _251395614
 Web.Spa --> TimeWarp.OptionsValidation

@@ -12,6 +12,10 @@
 // got here); minting a new one would be pointless and, worse, would silently replace the session's
 // identity claim (the request's own session should not change as a side effect of adding a second
 // credential to it).
+// RP-ID selection (task 104-031): the relying party is chosen per request from the request host via
+// WebAuthnRelyingPartySelection.Select, run after the auth guard but still BEFORE any challenge
+// consume (a disallowed host never burns a challenge). Auth stays first so an unauthenticated caller
+// 401s regardless of host; a host outside the allowlist then returns 400 "Host not allowed".
 // The orphan-Principal residual documented on CompletePasskeyRegistration.Handler's Design region
 // does NOT apply here: this handler never calls AddPrincipalAsync (the principal already exists,
 // proven by the caller being authenticated), so there is no principal to orphan if AddCredentialAsync
@@ -47,6 +51,7 @@ public sealed partial class AddPasskey
     private readonly IPrincipalStore PrincipalStore;
     private readonly IWebAuthnChallengeStore ChallengeStore;
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
+    private readonly IRequestHostAccessor RequestHostAccessor;
     private readonly IOptions<WebAuthnOptions> Options;
 
     public Handler
@@ -54,12 +59,14 @@ public sealed partial class AddPasskey
       IPrincipalStore principalStore,
       IWebAuthnChallengeStore challengeStore,
       ICurrentPrincipalAccessor currentPrincipalAccessor,
+      IRequestHostAccessor requestHostAccessor,
       IOptions<WebAuthnOptions> options
     )
     {
       PrincipalStore = principalStore;
       ChallengeStore = challengeStore;
       CurrentPrincipalAccessor = currentPrincipalAccessor;
+      RequestHostAccessor = requestHostAccessor;
       Options = options;
     }
 
@@ -70,6 +77,18 @@ public sealed partial class AddPasskey
       {
         return Unauthenticated();
       }
+
+      // Select the RP ID before touching any ceremony state — a disallowed host never burns a
+      // challenge (task 104-031). Runs after the auth guard so an unauthenticated caller still 401s
+      // first (preserving the auth-first invariant this handler's Design region relies on).
+      OneOf<WebAuthnRelyingParty, SharedProblemDetails> relyingPartyResult =
+        WebAuthnRelyingPartySelection.Select(RequestHostAccessor.GetRequestHost(), Options.Value);
+      if (relyingPartyResult.IsT1)
+      {
+        return relyingPartyResult.AsT1;
+      }
+
+      WebAuthnRelyingParty relyingParty = relyingPartyResult.AsT0;
 
       if (!WebAuthnPayloadDecoder.TryDecode(command.CredentialId, out byte[] credentialIdBytes)
         || !WebAuthnPayloadDecoder.TryDecode(command.ClientDataJson, out byte[] clientDataJsonBytes)
@@ -83,9 +102,6 @@ public sealed partial class AddPasskey
       {
         return ChallengeInvalid();
       }
-
-      WebAuthnOptions webAuthnOptions = Options.Value;
-      var relyingParty = new WebAuthnRelyingParty(webAuthnOptions.RpId, webAuthnOptions.RpName, webAuthnOptions.AllowedOrigins);
 
       WebAuthnRegistrationResult verifyResult =
         WebAuthnRegistration.Verify(relyingParty, challenge, clientDataJsonBytes, attestationObjectBytes, credentialIdBytes);

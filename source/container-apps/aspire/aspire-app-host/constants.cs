@@ -1,5 +1,6 @@
 #region Purpose
-// Aspire AppHost resource names, pinned to the ServiceNames the apps use for service discovery.
+// Aspire AppHost resource names: project resources aliased to ServiceNames for service discovery,
+// plus the Postgres container/database resource names (the database name doubles as its ConnectionStrings key).
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -17,4 +18,14 @@ internal class Constants
   public const string GrpcServerProjectResourceName = ServiceNames.GrpcServiceName;
   public const string YarpProjectResourceName = ServiceNames.YarpServiceName;
   public const string YarpResourceName = "ingress";
+
+  // Postgres resource names are intentionally NOT ServiceNames.* values: TWA0007 and service
+  // discovery govern AddProject resources only (server-side BaseAddress resolution), and Postgres
+  // is a container resource, not a project. The database resource name doubles as the
+  // ConnectionStrings key Aspire injects (ConnectionStrings__postgres-db), which is why
+  // PostgresDbModule reads the connection string by this same constant. This file is compile-linked
+  // into web-server (see web-server.csproj), so AppHost and PostgresDbModule reference one constant
+  // and cannot drift.
+  public const string PostgresResourceName = "postgres";
+  public const string PostgresDatabaseResourceName = "postgres-db";
 }

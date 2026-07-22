@@ -56,3 +56,15 @@ The api/web/web-spa integration tests use a hand-rolled `WebApplicationHost` wit
 discovery, no fixed-port management. Migrating would delete the sequential hack and the manual host.
 Note: the HTTPS dev-cert (`UntrustedRoot`) issue is orthogonal — even the Aspire test hit it; CI now
 runs `dotnet dev-certs https --trust` (the standard fix) rather than per-client handler bypass.
+
+
+### Evidence addendum (2026-07-22, from PR 286 CI hang investigation)
+
+Aspire test suites LEAK their AppHost containers on teardown: after local `dev test`, three
+ingress containers + tunnelproxies were still Up 5 hours later, and CI's cancellation cleanup
+listed multiple generations of orphaned web-server/api-server/grpc-server/dcp/docker processes.
+The leak amplified the shared-postgres-volume WAL corruption (fixed separately, `943945a4` —
+test AppHosts now run ephemeral postgres). Hardening scope for this task: deterministic
+DistributedApplication disposal in SpaTestConvention/ApiServerTestConvention (await DisposeAsync
+on convention completion), and consider a WaitFor/startup timeout so a wedged resource fails a
+suite loudly instead of hanging it forever (Fixie has no per-test timeout).
