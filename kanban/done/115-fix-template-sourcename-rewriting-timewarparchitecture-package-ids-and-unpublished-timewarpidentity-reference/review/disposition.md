@@ -17,3 +17,10 @@ _(none)_
 ## Escalations
 
 - None. Ops residual (nuget.org pin lag / Identity publish) already documented in task Notes.
+
+## Round-2 addendum (2026-07-22, independent orchestrator verification)
+
+Cross-vendor re-review CONFIRMS clean: reviewer ran the template-smoke gate personally (both
+cells 0/0 from local feed), verified composed IDs cover PackageReference AND CPM PackageVersion,
+membership-targets template-safety fix, and CI wiring. Two nit observations recorded in
+round-2/orchestrator-verification.md; no fixes required.
