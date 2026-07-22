@@ -76,12 +76,25 @@ internal class Program
     // (the api-server deliberately gets no reference). With web excluded there is nothing to
     // reference it, so it must not be declared at all — gating on the postgres flag alone would
     // boot an orphan container in the postgres-without-web template combination.
-    // Persistent data volume; the database resource name doubles as the ConnectionStrings key Aspire
-    // injects into Web.Server (see constants.cs).
-    IResourceBuilder<PostgresDatabaseResource> postgresDb = builder
-      .AddPostgres(PostgresResourceName)
-      .WithDataVolume()
-      .AddDatabase(PostgresDatabaseResourceName);
+    // The data volume (dev-loop persistence) is config-gated: Postgres:UseDataVolume=false makes
+    // the container ephemeral. Aspire test suites MUST pass that flag — the volume name is
+    // deterministic per AppHost, so overlapping AppHost instances (dev run + test hosts, or
+    // leaked test containers) sharing one volume corrupt postgres's WAL ("PANIC: could not
+    // locate a valid checkpoint record"), after which every postgres start crash-loops and
+    // WaitFor blocks forever. Found the hard way: PR 286 CI hang in web-spa-integration-tests.
+    // The database resource name doubles as the ConnectionStrings key Aspire injects into
+    // Web.Server (see constants.cs).
+    bool usePostgresDataVolume = !string.Equals(
+      builder.Configuration["Postgres:UseDataVolume"], "false", StringComparison.OrdinalIgnoreCase);
+
+    IResourceBuilder<PostgresServerResource> postgres = builder.AddPostgres(PostgresResourceName);
+
+    if (usePostgresDataVolume)
+    {
+      postgres = postgres.WithDataVolume();
+    }
+
+    IResourceBuilder<PostgresDatabaseResource> postgresDb = postgres.AddDatabase(PostgresDatabaseResourceName);
     webServer = webServer.WithReference(postgresDb).WaitFor(postgresDb);
 #endif
     // Self-reference for the web server
