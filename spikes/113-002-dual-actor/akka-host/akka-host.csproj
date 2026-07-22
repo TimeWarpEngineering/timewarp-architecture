@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Spike A: Akka.NET host. Local ActorSystem, supervisor + child-per-principal, Ask pattern.
+       NO Akka.Persistence, NO Cluster.Sharding (state-store is EF only, per the 114 axis-5 decision).
+       Akka.Hosting gives the Microsoft.Extensions.Hosting integration a template consumer would use. -->
+
+  <ItemGroup>
+    <PackageReference Include="Akka" />
+    <PackageReference Include="Akka.Hosting" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ledger-substrate\ledger-substrate.csproj" />
+  </ItemGroup>
+
+</Project>

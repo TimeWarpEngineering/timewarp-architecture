@@ -12,7 +12,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ledger-substrate\ledger-substrate.csproj" />
-    <!-- akka-host / orleans-host references added in their respective phases. -->
+    <ProjectReference Include="..\akka-host\akka-host.csproj" />
+    <!-- orleans-host reference added in its phase. -->
   </ItemGroup>
 
 </Project>
