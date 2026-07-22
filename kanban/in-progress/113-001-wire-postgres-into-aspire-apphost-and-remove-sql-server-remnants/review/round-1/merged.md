@@ -7,9 +7,9 @@ SQL Server removal complete (zero residue by grep); Design/Purpose regions accur
 
 | id | sev | status | finding | fix |
 |----|-----|--------|---------|-----|
-| G1 | nit | open | postgres resource declared under `#if postgres` but only consumed under `#if web` — postgres=true/web=false combo builds clean but boots an orphan container | gate declaration `#if postgres && web` (or nest) |
-| G2 | minor | open | postgres-db-environment-check.cs injects IOptions<PostgresDbOptions> into a field never dereferenced (probe goes via PostgresDbContext) | drop ctor param + field |
-| G3 | nit | open | constants.cs missing final newline (insert_final_newline=true) | add newline |
+| G1 | nit | fixed | postgres resource declared under `#if postgres` but only consumed under `#if web` — postgres=true/web=false combo builds clean but boots an orphan container | gate declaration `#if postgres && web` (or nest) |
+| G2 | minor | fixed | postgres-db-environment-check.cs injects IOptions<PostgresDbOptions> into a field never dereferenced (probe goes via PostgresDbContext) | drop ctor param + field |
+| G3 | nit | fixed | constants.cs missing final newline (insert_final_newline=true) | add newline |
 
 Counts: critical 0 / major 0 / minor 1 / nit 2. Decision: fix all three (mechanical), round-2
 verification by orchestrator diff+build.
