@@ -56,11 +56,11 @@ Survey artifacts land in this folder (`survey-*.md`), synthesized into `survey-s
       planned tw-rfc-ballot is SUPERSEDED: the decision-maker participated directly, which is
       the point of a ballot. (Optional later: an adversarial review pass over axis-decisions.md
       before the ADR, if Steve wants a red team.)
-- [ ] Axis-1 validation spike split to child
+- [x] Axis-1 validation spike split to child
       [[114-001-axis-1-spike-convert-one-slice-to-filename-grammar-globs-and-validate-tooling]]
-      (2026-07-22). The MIGRATION task is deliberately uncreated until spike findings land
-      (Definition of Ready — its spec depends on them); Steve reviews findings before it is
-      specced.
+      (2026-07-22; DoR tightened same day — slice locked to `hello`). The MIGRATION task is
+      deliberately uncreated until spike findings land (Definition of Ready — its spec depends
+      on them); Steve reviews findings before it is specced.
 - [ ] Sequence the fold-out: structural-migration child tasks from axes 1–4 (filename grammar +
       globs + archetype analyzer), 113 carries axis 5 (113-002 dual actor spike created) and
       the axis-3 outbox question.
