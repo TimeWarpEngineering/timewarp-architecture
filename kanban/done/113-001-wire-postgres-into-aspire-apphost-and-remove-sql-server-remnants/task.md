@@ -132,6 +132,12 @@ web-server-integration-tests' known 23 (traced to the WebAuthnOptions:RpId user-
 NOT ApiSecret and NOT this task — see 104-031 addendum); aspire-tests booted the AppHost with
 postgres under test cleanly, no port conflicts even with a live dev run. Remaining for CI:
 confirm runners have Docker before merging to master.
+(1b) POST-CLOSE FIX 2 (2026-07-22, PR 286 CI hang): WithDataVolume's deterministic volume
+name was shared by every AppHost instance (dev run + test suites + leaked test containers);
+overlapping postgres instances corrupted the WAL (PANIC: invalid checkpoint) and WaitFor hung
+forever. Fixed `943945a4`: Postgres:UseDataVolume config gate (default true); the three
+DistributedApplicationTestingBuilder call sites run ephemeral. web-spa-integration-tests went
+from infinite hang to 11/3/0 in 35s. Container leak on test teardown remains 058-001's issue.
 (2) Honest health checks are a visible behavior change:
 web-server reports unhealthy if postgres is configured but unreachable (intended). (3) pgAdmin/
 pgweb dashboard resource: not added (optional nicety, revisit with 113 golden implementation).
