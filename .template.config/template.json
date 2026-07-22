@@ -79,9 +79,14 @@
           "exclude": [
             "source/foundation/**",
             "source/libraries/timewarp-modules/**",
+            "tests/foundation/**"
+          ]
+        },
+        {
+          "condition": "(identityPackages)",
+          "exclude": [
             "source/libraries/timewarp-identity/**",
-            "tests/foundation/**",
-            "tests/libraries/**"
+            "tests/libraries/timewarp-identity-tests/**"
           ]
         },
         {
@@ -131,9 +136,15 @@
       "datatype": "bool",
       "defaultValue": "true"
     },
+    "identityPackages": {
+      "type": "parameter",
+      "description": "Reference the published TimeWarp.Identity NuGet package instead of copying identity source into the generated app (default false until Identity is published)",
+      "datatype": "bool",
+      "defaultValue": "false"
+    },
     "analyzerPackages": {
       "type": "parameter",
-      "description": "Reference the published TimeWarp.Architecture.Analyzers/Generators/Attributes NuGet packages instead of copying analyzer source into the generated app",
+      "description": "Reference the published platform Analyzers/Generators/Attributes NuGet packages instead of copying analyzer source into the generated app",
       "datatype": "bool",
       "defaultValue": "true"
     }

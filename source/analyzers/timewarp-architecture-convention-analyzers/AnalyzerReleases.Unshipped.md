@@ -18,3 +18,5 @@ TWA0011 | Design | Warning | AggregateInvariantsAnalyzer: aggregate root has no 
 TWA0012 | Design | Warning | AggregateInvariantsAnalyzer: nested Invariants validator is not private
 TWA0013 | Design | Warning | EndpointAuthPostureAnalyzer: [ApiEndpoint] contract has no [EndpointAuthorize]/[EndpointAllowAnonymous] marker
 TWA0014 | Design | Warning | EndpointAuthPostureAnalyzer: contract's auth posture is contradictory (both markers, or [EndpointAllowAnonymous] with IAuthApiRequest)
+TWA0015 | Naming | Warning | FeatureFilenameGrammarAnalyzer: registered function segment pairs with the wrong layer
+TWA0016 | Naming | Warning | FeatureFilenameGrammarAnalyzer: unregistered or mis-spelled function segment used as archetype

@@ -14,9 +14,18 @@
     <ProjectReference Include="../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       Condition="'$(UseAnalyzerPackages)' != 'true'" />
-    <PackageReference Include="TimeWarp.Architecture.Generators" PrivateAssets="all"
+    <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"
                       Condition="'$(UseAnalyzerPackages)' == 'true'" />
   </ItemGroup>
+
+  <!-- TypedIdAttribute is emitted into the platform root namespace by Generators (package mode =
+       fixed composed root; source mode = literal that sourceName rewrites with the app name,
+       matching AttributeSource rewrite in the generator). Task 115. -->
+  <ItemGroup>
+    <Using Include="$(TwArchitectureRootNamespace)" Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <Using Include="TimeWarp.Architecture" Condition="'$(UseAnalyzerPackages)' != 'true'" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <!-- Entity<TId> (typed id, identity equality, Version) for Principal/Credential (task 104-028).

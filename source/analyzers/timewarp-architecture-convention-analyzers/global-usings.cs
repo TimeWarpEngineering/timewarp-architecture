@@ -10,3 +10,6 @@ global using Microsoft.CodeAnalysis.Text;
 global using System.Collections.Immutable;
 global using System.IO;
 global using System.Linq;
+global using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("timewarp-architecture-analyzers-tests")]

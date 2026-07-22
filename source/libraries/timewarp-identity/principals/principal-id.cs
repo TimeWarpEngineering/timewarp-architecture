@@ -11,7 +11,8 @@
 
 namespace TimeWarp.Identity;
 
-using TimeWarp.Architecture;
+// TypedId attribute namespace: dual-mode MSBuild <Using> in timewarp-identity.csproj (task 115).
 
 [TypedId]
 public readonly partial record struct PrincipalId;
+

@@ -1,0 +1,23 @@
+<Project>
+  <!--
+    Platform package IDs / namespace composed so template sourceName (TimeWarp.Architecture) cannot
+    rewrite them. A continuous "TimeWarp.Architecture" literal in PackageReference / PackageVersion /
+    PackageId would become SmokeDefault.Architecture.* after `dotnet new -n SmokeDefault`.
+
+    Compose: vendor fragment + ".Architecture.*" suffix. Evaluation joins them to the real PackageId.
+    Import from root Directory.Build.props AND Directory.Packages.props (guarded — both can load in
+    one project evaluation; CPM consumers need the properties even if DBP order differs).
+  -->
+  <PropertyGroup Label="TimeWarp platform package IDs" Condition="'$(_TwPlatformPackagesPropsImported)' != 'true'">
+    <_TwPlatformVendor>TimeWarp</_TwPlatformVendor>
+    <TwArchitectureRootNamespace>$(_TwPlatformVendor).Architecture</TwArchitectureRootNamespace>
+    <TwArchitectureAnalyzersPackageId>$(_TwPlatformVendor).Architecture.Analyzers</TwArchitectureAnalyzersPackageId>
+    <TwArchitectureGeneratorsPackageId>$(_TwPlatformVendor).Architecture.Generators</TwArchitectureGeneratorsPackageId>
+    <TwArchitectureAttributesPackageId>$(_TwPlatformVendor).Architecture.Attributes</TwArchitectureAttributesPackageId>
+    <!-- Runtime namespace of the Attributes package (package mode). Source mode uses $(RootNamespace).Attributes. -->
+    <TwArchitectureAttributesNamespace>$(_TwPlatformVendor).Architecture.Attributes</TwArchitectureAttributesNamespace>
+    <_TwPlatformPackagesPropsImported>true</_TwPlatformPackagesPropsImported>
+
+  </PropertyGroup>
+</Project>
+

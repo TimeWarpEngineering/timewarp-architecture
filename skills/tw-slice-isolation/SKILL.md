@@ -27,7 +27,7 @@ re-interpret rules here — mirror the analyzer.
 
 | Signal | How to find it |
 |--------|----------------|
-| Product area under `features/` | `web-spa/features/…`, `web-contracts/features/…` |
+| Product area under `features/` | SPA: `web-spa/features/…`; server product code: `web/features/<slice>/` (axis-1 cohesive tree; layer projects glob `*-{layer}.cs`) |
 | Namespace under SliceRoot | `…Features.<Id>` (or nested `…Features.Admin.Roles`) |
 | TWA0009 / `CrossSliceReference` | diagnostic text or attribute on a type |
 | “Where does this page/state live?” | any new product capability before scaffolding |
@@ -110,11 +110,16 @@ Living anchors (timewarp-architecture template):
 
 1. **Name the slice** — plural, domain-oriented (`Clients`, `Admin.Roles`).
 2. **Folder** — kebab path under the project’s `features/` tree (match sibling casing).
+   - **SPA** UI stays under `web-spa/features/<slice>/` (conventional; not rehomed by axis-1).
+   - **Contracts / application / server** product files live in the cohesive tree
+     `web/features/<slice>/` with filename grammar `<name>[-<function>]-<layer>.cs`
+     (see `tw-feature-placement` for the full grammar and registry).
 3. **Namespace** — `{RootNamespace}.Features.{SliceId}` (plural segments; nested with `.`).
+   Folders rehome freely; **namespaces are not renamed with folder moves**.
 4. **Colocate** page, state, actions, and slice-private components in that namespace (pages are
    **not** shared infrastructure — no grab-bag `…Pages` for product UI).
-5. **Contracts** — same plural feature path under the contracts project (`tw-web-api-contracts`
-   skill). Other assembly → free across SPA slices.
+5. **Contracts** — same plural slice path under `web/features/<slice>/` with `-contracts.cs`
+   suffix (`tw-web-api-contracts` skill). Other assembly → free across SPA slices.
 6. **Wire nav / DI** from Outside or platform — not from another product slice.
 7. **Prefer share** (Components / contracts) over `[CrossSliceReference]`.
 8. **Build** — fix TWA0009 by relocating code first; mute only for deliberate demo/integration edges.
@@ -186,6 +191,8 @@ Living examples:
 
 ## Related skills and pointers
 
+- `tw-feature-placement` — filename grammar and layer membership once you know which slice a
+  file belongs to (`<name>[-<function>]-<layer>.cs`, TWA0015/TWA0016, membership guard)
 - `tw-web-api-contracts` — contract placement; **contracts assemblies are free** under TWA0009; still use plural `…Features.*` aligned with SPA product slices
 - `tw-blazor-layout` — empty layout + shell; chrome **outside** SliceRoot
 - `tw-blazor-css-strategy` — shell/component styling only

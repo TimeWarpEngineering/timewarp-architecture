@@ -20,6 +20,14 @@
     <UseAnalyzerPackages Condition="'$(UseAnalyzerPackages)' == ''">false</UseAnalyzerPackages>
   </PropertyGroup>
 
+  <!-- Identity distribution switch (task 115). Independent of foundation: generated apps default to
+       shipping identity SOURCE (identityPackages=false) until TimeWarp.Identity is published.
+       Force with -p:UseIdentityPackages=. -->
+  <PropertyGroup>
+    <UseIdentityPackages Condition="'$(UseIdentityPackages)' == '' and !Exists('$(MSBuildThisFileDirectory)libraries/timewarp-identity/timewarp-identity.csproj')">true</UseIdentityPackages>
+    <UseIdentityPackages Condition="'$(UseIdentityPackages)' == ''">false</UseIdentityPackages>
+  </PropertyGroup>
+
   <!-- Default package metadata (can be overridden in individual projects) -->
   <PropertyGroup Label="Package Metadata">
     <!-- Single repo-wide package version. Lives here (not root) so it matches the TimeWarp convention
@@ -44,8 +52,9 @@
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
-  <!-- Repo-wide convention analyzers (TWA0002–0012 only — no source generators). Project ref in
-       monorepo; TimeWarp.Architecture.Analyzers package in generated apps (UseAnalyzerPackages). -->
+  <!-- Repo-wide convention analyzers (TWA0002–0016 only — no source generators). Project ref in
+       monorepo; platform Analyzers package in generated apps (UseAnalyzerPackages). Package ID is
+       composed (task 115) so template sourceName cannot rewrite it. -->
   <ItemGroup Condition="'$(UseAnalyzerPackages)' != 'true' and '$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
@@ -55,7 +64,7 @@
     <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
   </ItemGroup>
   <ItemGroup Condition="'$(UseAnalyzerPackages)' == 'true'">
-    <PackageReference Include="TimeWarp.Architecture.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="$(TwArchitectureAnalyzersPackageId)" PrivateAssets="all" />
     <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
   </ItemGroup>
 
