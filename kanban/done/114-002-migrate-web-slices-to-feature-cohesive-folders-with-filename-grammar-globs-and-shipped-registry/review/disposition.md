@@ -16,3 +16,10 @@ _(none)_
 ## Escalations
 
 - None
+
+## Round-2 addendum (2026-07-22, independent orchestrator verification)
+
+Cross-vendor re-review confirmed round-1 `clean` for this task's scope; empirical TWA0015/guard
+demos pass; declared gaps closed (full dev test 548/0; template smoke run — revealed PRE-EXISTING
+template restore breakage, filed as tasks 115/116, not this task's regression). See
+`round-2/orchestrator-verification.md`.
