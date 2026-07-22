@@ -3,9 +3,12 @@
 #endregion
 
 #region Design
-// Preprocessor blocks mirror the dotnet-new template flags (api/grpc/web/yarp) so excluded services leave no trace.
-// Resource names (see constants.cs) MUST equal ServiceNames.* in foundation-contracts — Aspire keys the
+// Preprocessor blocks mirror the dotnet-new template flags (api/grpc/web/yarp/postgres) so excluded services leave no trace.
+// Project resource names (see constants.cs) MUST equal ServiceNames.* in foundation-contracts — Aspire keys the
 // injected services__{name}__https__0 env vars by resource name; server-side BaseAddress resolution breaks otherwise.
+// Postgres is a container resource, not a project: its connection string is injected into Web.Server keyed by the
+// DATABASE resource name (constants.cs PostgresDatabaseResourceName), and PostgresDbModule reads it by that same key.
+// Only Web.Server references Postgres; Api.Server intentionally does not.
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
 // YARP literal /api routes owned by Web.Server beat the Api.Server catch-all by route precedence, not declaration order.
 // The Web.Server route list below is hand-maintained and MUST gain a line whenever web-contracts adds a new
@@ -46,6 +49,14 @@ internal class Program
     // gRPC Server is included in the template
     IResourceBuilder<ProjectResource> grpcServer = builder.AddProject<Projects.grpc_server>(GrpcServerProjectResourceName, options => options.LaunchProfileName = "Grpc.Server");
 #endif
+#if postgres
+    // PostgreSQL container with a persistent data volume; the database resource name doubles as the
+    // ConnectionStrings key Aspire injects into referencing services (see constants.cs).
+    IResourceBuilder<PostgresDatabaseResource> postgresDb = builder
+      .AddPostgres(PostgresResourceName)
+      .WithDataVolume()
+      .AddDatabase(PostgresDatabaseResourceName);
+#endif
 #if web
     // Web Server is included in the template
     IResourceBuilder<ProjectResource> webServer = builder.AddProject<Projects.web_server>(WebServerProjectResourceName, options => options.LaunchProfileName = "Web.Server")
@@ -57,6 +68,10 @@ internal class Program
 #endif
 #if grpc
     webServer = webServer.WithReference(grpcServer);
+#endif
+#if postgres
+    // Only Web.Server owns the Postgres store (the api-server deliberately gets no reference).
+    webServer = webServer.WithReference(postgresDb).WaitFor(postgresDb);
 #endif
     // Self-reference for the web server
     webServer.WithReference(webServer);

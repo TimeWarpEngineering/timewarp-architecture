@@ -10,7 +10,6 @@
 #endregion
 
 #nullable enable
-//TODO - the is copilot generated code, it needs to be reviewed and cleaned up
 namespace TimeWarp.Architecture.HostedServices;
 
 public sealed partial class PostgresDbContextStartupHostedService : IHostedService
