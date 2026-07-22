@@ -108,18 +108,18 @@ Record explicit yes/no in Results for:
 
 ## Checklist
 
-- [ ] Throwaway worktree/branch; rehome `hello` into
+- [x] Throwaway worktree/branch; rehome `hello` into
       `source/container-apps/web/features/hello/` with the expected renames (namespaces unchanged)
-- [ ] Document hybrid include approach; wire layer csprojs; solution builds 0/0
-- [ ] Exactly-one-project guard implemented and demonstrated failing (zero-match and dual-match
+- [x] Document hybrid include approach; wire layer csprojs; solution builds 0/0
+- [x] Exactly-one-project guard implemented and demonstrated failing (zero-match and dual-match
       cases)
-- [ ] Minimal archetype-pairing diagnostic prototyped (`-handler-` ⇒ `-application`)
-- [ ] IDE behavior notes (VS Code primary), new-file flow, light perf notes
-- [ ] Template-flag / `#if` interaction check (dummy file or exclusion proof — see Q5)
-- [ ] Findings write-up in this task's Results + folded into 114 (go/no-go + any grammar
+- [x] Minimal archetype-pairing diagnostic prototyped (`-handler-` ⇒ `-application`)
+- [x] IDE behavior notes (VS Code primary), new-file flow, light perf notes
+- [x] Template-flag / `#if` interaction check (dummy file or exclusion proof — see Q5)
+- [x] Findings write-up in this task's Results + folded into 114 (go/no-go + any grammar
       adjustments, including `feature-annotations` naming); Steve reviews findings BEFORE the
       migration task is specced
-- [ ] Tear down the worktree
+- [x] Tear down the worktree
 
 ## Notes
 
@@ -138,3 +138,60 @@ Record explicit yes/no in Results for:
   spike findings per Definition of Ready)
 - DoR tighten-up: 2026-07-22 — locked slice to `hello`, pinned cohesive path, hybrid includes
   in-scope, renames + namespaces + flag-check scope, soft go/no-go heuristics
+
+
+## Results
+
+**Spike complete 2026-07-22 — branch `spike/axis1-filename-globs` (`04e5b2c8`, local only). ALL
+GATES PASS; recommendation GO for the migration spec (Steve final-gates).**
+
+### Go/no-go outcomes
+
+| Gate | Result |
+|---|---|
+| Solution builds 0/0 with rehomed slice (HARD) | ✅ full `-t:Rebuild` clean (captured) |
+| Zero-match → build error (HARD) | ✅ teaching message names grammar + registry |
+| Dual-match prevented (HARD) | ✅ structural: suffix-nesting is the only path; registry lint forbids it |
+| New file → IntelliSense without reload (soft) | ✅ Steve-verified in VS Code |
+| Archetype analyzer fires with teaching diagnostic (soft) | ✅ TWA9999 in-solution as error under warnaserror |
+
+### What was proven
+
+- **Source generators + TWA analyzers treat glob-included files identically** (ApiRoute/
+  FastEndpoints generation, TWA0004/0010 all live on the rehomed files) — the moat carries over.
+- Hybrid include option 1 (default SDK items + cross-folder suffix globs + Link metadata)
+  works; old layer folders removed cleanly. Grammar renames per spec incl. escape-hatch
+  `hello-feature-annotations-server.cs`.
+- `feature-membership.targets`: central MSBuild guard — unmatched-file error + registry-nesting
+  lint. Runs once (imported by web-server).
+- No `#if`/glob conflict; TWA0010 newly (and correctly) enforces that a feature file's flag use
+  agrees with the DefineConstants of the layer project that globs it.
+- IDE: IntelliSense/go-to-def normal; new matching file picked up with NO reload (Steve).
+- Perf: no measurable evaluation cost (full incremental ~16s unchanged; rebuilds normal).
+
+### Findings for the migration spec (the real payload)
+
+1. **Analyzer path pitfall (cost an hour):** SyntaxTree.FilePath for glob-included files arrives
+   as project-relative WITH `..` traversal (normalizes to `.../web-server/../features/...`).
+   Path heuristics must never match bare project-dir substrings ("web-server/") — the spike's
+   exclusion heuristic silently ate the whole cohesive tree. Match `<proj>/features/` shapes or
+   normalize. MUST be encoded in the shipped analyzer + its tests.
+2. **MSBuild incremental staleness:** analyzer-dll changes don't reliably invalidate downstream
+   compiles (stale rules run silently until a rebuild). Low risk under full `dev build`, but the
+   migration should document it; registry changes ⇒ rebuild.
+3. **Grammar gap:** server-side feature annotations have no registered function segment —
+   escape-hatch name works; registry needs an explicit decision (add `feature-annotations`
+   function, or bless the escape hatch).
+4. **New-file misplacement UX:** a file created in the wrong folder is claimed by that project's
+   default globs (observed live during IDE testing); membership guard + TWA0004 catch it at
+   build, not at creation. Acceptable; worth a docs note.
+5. **Intermittent `-t:Rebuild` "1 Error"** in piped output, never reproducible when captured to a
+   file (3 observations) — suspected console-output race, not the scheme; watch during migration.
+6. TWA9999 prototype is spike-quality: registry duplicated between .targets and analyzer — the
+   shipped version must generate both from ONE registry (the axes' two-things-must-agree rule).
+
+Worktree torn down; branch retained locally for reference. NOTHING landed in template source.
+
+## Session
+
+- Spike executed: 2026-07-22, interactive (Steve: IDE verification + gates) + orchestrator.
