@@ -1,0 +1,17 @@
+<!--
+  AUTO-GENERATED from source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json
+  Do not edit by hand. Edit the JSON and rebuild the convention-analyzers project (or run the generator).
+  Registry edit ⇒ full rebuild (analyzer incremental staleness).
+-->
+<Project>
+  <ItemGroup>
+    <FeatureFilenameGrammarLayer Include="contracts" />
+    <FeatureFilenameGrammarLayer Include="application" />
+    <FeatureFilenameGrammarLayer Include="domain" />
+    <FeatureFilenameGrammarLayer Include="infrastructure" />
+    <FeatureFilenameGrammarLayer Include="server" />
+    <FeatureFilenameGrammarFunction Include="endpoint" Layer="server" />
+    <FeatureFilenameGrammarFunction Include="feature-annotations" Layer="server" />
+    <FeatureFilenameGrammarFunction Include="handler" Layer="application" />
+  </ItemGroup>
+</Project>

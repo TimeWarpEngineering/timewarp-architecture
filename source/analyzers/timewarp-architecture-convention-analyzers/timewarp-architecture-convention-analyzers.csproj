@@ -2,7 +2,7 @@
   <PropertyGroup>
     <PackageId>TimeWarp.Architecture.Analyzers</PackageId>
     <Title>TimeWarp.Architecture.Analyzers</Title>
-    <Description>Roslyn convention analyzers for TimeWarp Architecture (TWA0002–0014). Analyzer-only package; safe to reference from every project including contracts.</Description>
+    <Description>Roslyn convention analyzers for TimeWarp Architecture (TWA0002–0016). Analyzer-only package; safe to reference from every project including contracts.</Description>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
     <!-- Convention-enforcement DiagnosticAnalyzers only (no source generators), so this assembly is
@@ -17,4 +17,24 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
   </ItemGroup>
+
+  <!-- Feature filename grammar SSOT: JSON → committed .g.cs + web msbuild .g.props (regenerate on change). -->
+  <PropertyGroup>
+    <_FeatureFilenameGrammarJson>$(MSBuildProjectDirectory)/feature-filename-grammar.json</_FeatureFilenameGrammarJson>
+    <_FeatureFilenameGrammarCs>$(MSBuildProjectDirectory)/feature-filename-grammar.g.cs</_FeatureFilenameGrammarCs>
+    <_FeatureFilenameGrammarProps>$(MSBuildProjectDirectory)/../../container-apps/web/msbuild/feature-filename-grammar.g.props</_FeatureFilenameGrammarProps>
+    <_FeatureFilenameGrammarGenerator>$(MSBuildProjectDirectory)/generate-feature-filename-grammar.py</_FeatureFilenameGrammarGenerator>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="feature-filename-grammar.json" />
+    <None Include="generate-feature-filename-grammar.py" />
+    <!-- Keep generated C# in compile; it is the baked-in registry for the packaged analyzer. -->
+    <Compile Update="feature-filename-grammar.g.cs" AutoGen="true" DesignTime="true" />
+  </ItemGroup>
+  <Target Name="GenerateFeatureFilenameGrammar"
+          BeforeTargets="BeforeCompile;CoreCompile"
+          Inputs="$(_FeatureFilenameGrammarJson);$(_FeatureFilenameGrammarGenerator)"
+          Outputs="$(_FeatureFilenameGrammarCs);$(_FeatureFilenameGrammarProps)">
+    <Exec Command="python3 &quot;$(_FeatureFilenameGrammarGenerator)&quot; &quot;$(_FeatureFilenameGrammarJson)&quot; &quot;$(_FeatureFilenameGrammarCs)&quot; &quot;$(_FeatureFilenameGrammarProps)&quot;" />
+  </Target>
 </Project>
