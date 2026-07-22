@@ -53,3 +53,42 @@ Constraints fixed by the 114 axis decisions:
 ## Session
 
 - Created: 2026-07-22 (from 114 axis-5 in-chat decision)
+
+### Implementation plan (Phase 2, 2026-07-23)
+
+Worktree `spike-113-002`, branch `spike/113-002-dual-actor`; code under `spikes/113-002-dual-actor/`
+with OWN slnx + cascade-stopper Directory.Build.props + spike-only Directory.Packages.props (root
+CPM/analyzers untouched; root slnx never edited). Golden pattern via ProjectReference to
+foundation-domain/-application (same source, not lagging packages). Known duplication: sealed
+PostgresDbContext forces replicating the ~40-line SaveChanges hook (calling the SAME
+DomainInvariantsGuard/EntityVersion seams) — recorded as seam-packaging finding for 113 decision 5.
+
+Layout: ledger-substrate (aggregate w/ nested private Invariants + overdraw guard, LedgerDbContext
+w/ golden hook + IsConcurrencyToken, thin store, IIntegrationEventPublisher seam + recording impl —
+ZERO actor refs, substrate-agnostic proof is structural); akka-host (Akka/Akka.Hosting/DI 1.5.70,
+local ActorSystem, supervisor + child-per-principal, Ask pattern, NO Persistence/Sharding);
+orleans-host (Orleans 10.2.2, UseLocalhostClustering, grain-per-principal, direct EF — NO storage
+provider; IPersistentState assessed in a 1h box); spike-tests (Fixie/Shouldly/TimeWarp.Fixie
+matching repo pins — the evaluation criterion is the REAL template stack); optional app-host
+(Aspire, ephemeral postgres).
+
+Concurrency demonstration = repeatable Fixie tests: baseline plain-EF 50-parallel-debits asserts
+≥1 DbUpdateConcurrencyException + retry-count report; Akka and Orleans same shape through one
+actor/grain assert ZERO conflicts, balance exact, Version+50, 50 recorded events. Postgres:
+ephemeral container port 5433 (NEVER the dev-run volume — 113-001 WAL lesson), EnsureCreated per
+run, SPIKE_POSTGRES_CONNECTION override.
+
+Verified versions: Akka 1.5.70 (net6 TFM — net10 forward-compat only, first-hour risk gate),
+Orleans 10.2.2 (first-class net10.0 + source-gen serializers), Aspire.Hosting.Orleans 13.4.6
+(Akka has no Aspire integration — itself a finding). Phases: 0 scaffold (1-2h) → 1 substrate+
+baseline green (½d) → 2 Akka (1d cap) → 3 Orleans (1d cap) → 4 Aspire wiring (2-3h, skippable)
+→ 5 comparison+Results+teardown. Stuck rule: 75% of box without green test → document blocker
+as THE approachability finding, move on. Akka first.
+
+Write-up: spike-actor-comparison.md into the 113 PARENT folder on dev — factual observations per
+task criteria incl. measured startup, ceremony counts, debugging notes, AOT posture (Orleans
+source-gen vs Akka HOCON/reflection, shared EF caveat), IPersistentState verdict, substrate-residue
+proof, "no actors" outcome kept alive. NO recommendation decision (clearly-labeled lean OK; Steve
+gates per axis 5).
+
+- Plan: 2026-07-23 (plan agent; versions verified on nuget.org)
