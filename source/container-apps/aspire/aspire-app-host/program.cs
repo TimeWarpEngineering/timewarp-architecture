@@ -133,7 +133,10 @@ internal class Program
     // RemoteCertificateNameMismatch. So the ingress forwards web routes over the HTTP endpoint —
     // TLS terminates at the ingress edge (and at Caddy on the public chain), not on this hop.
     // api/grpc routes do not preserve host and stay on their default (https) endpoints.
-    EndpointReference webServerHttp = webServer.GetEndpoint("http");
+    // NOTE (13.4.6): YarpCluster(EndpointReference) still emits the service-level address
+    // "https+http://web-server", which service discovery resolves https-first — reintroducing the
+    // mismatch. The explicit named-endpoint service-discovery address pins the scheme AND the
+    // endpoint: http://_http.web-server resolves ONLY services__web-server__http__0.
 
 #endif
     yarp = yarp.WithConfiguration(yarpConfiguration =>
@@ -142,6 +145,8 @@ internal class Program
       yarpConfiguration.AddRoute("/api/{**catch-all}", apiServer);
 #endif
 #if web
+      global::Aspire.Hosting.Yarp.YarpCluster webServerHttp = yarpConfiguration.AddCluster("web-server-http", "http://_http.web-server");
+
       // Web.Server owns these /api endpoints (see web-contracts ApiRoute templates); their
       // literal segments outrank the Api.Server catch-all above, so they win regardless of order.
       // WithTransformUseOriginalHostHeader (task 104-031): forward the CLIENT's original Host header
