@@ -167,6 +167,7 @@ public class Program : IAspNetProgram
     serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
     serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
     serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
+    serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.

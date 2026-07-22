@@ -96,10 +96,13 @@ plugs into the same chain as just another backend.
 - [x] WebAuthn passkey ceremony from an off-LAN device with RP ID `arch.timewarp.work`:
       **VERIFIED 2026-07-21 — colleague in Texas registered a passkey on desktop** through the
       full public chain. First attempt failed as predicted (static `WebAuthnOptions.RpId=
-      localhost` vs public hostname); interim workaround in place: `WebAuthnOptions:RpId=
-      arch.timewarp.work` via web-server user secrets (breaks localhost passkeys while set);
-      proper per-request fix filed as
-      [[104-031-select-webauthn-rp-id-from-request-host-against-allowlist]]. Known non-infra
+      localhost` vs public hostname). The old env/user-secret `WebAuthnOptions:RpId=
+      arch.timewarp.work` workaround (which broke localhost passkeys while set) is RETIRED:
+      [[104-031-select-webauthn-rp-id-from-request-host-against-allowlist]] landed per-request
+      RP-ID selection, so `RpId` no longer exists. To serve passkeys on a personal share host now,
+      add the hostname to the allowlist via a user secret
+      (`WebAuthnOptions:AllowedRpIds:0=arch.timewarp.work`) — it APPENDS to the built-in
+      `localhost` default (both hosts work simultaneously; no localhost breakage). Known non-infra
       residual: Steve's Android phone gets `NotAllowedError` on both register and sign-in —
       client-side authenticator-provider issue (passkey provider selection / screen lock / Play
       services), page + API load fine; not a chain or server problem.

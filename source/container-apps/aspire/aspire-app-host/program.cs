@@ -30,6 +30,14 @@
 // Ingress:PublicUrl (unset by default; personal value belongs in user secrets, never committed —
 // this repo dogfoods as the template) adds a "public" display URL on the ingress resource so the
 // dashboard links to the externally shared hostname (e.g. https://arch.timewarp.work).
+// Original-Host forwarding (task 104-031): the Web.Server routes chain
+// WithTransformUseOriginalHostHeader(true) so the client's original Host header reaches Web.Server
+// instead of being rewritten to the destination host — Web.Server's per-request WebAuthn RP-ID
+// selection needs the PUBLIC host to match it against the allowlist. This is NOT UseForwardedHeaders
+// and consumes no spoofable X-Forwarded-* header: the Host only SELECTS among pre-approved RP IDs
+// (WebAuthnOptions.AllowedRpIds), so a forged Host can never mint a credential for an RP ID the
+// operator did not approve. Applied to Web.Server routes only; the api/grpc backends do no host-based
+// selection and keep YARP's default host rewrite.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -113,17 +121,24 @@ internal class Program
 #if web
       // Web.Server owns these /api endpoints (see web-contracts ApiRoute templates); their
       // literal segments outrank the Api.Server catch-all above, so they win regardless of order.
-      yarpConfiguration.AddRoute("/api/GetCurrentUser", webServer);
-      yarpConfiguration.AddRoute("/api/Hello", webServer);
-      yarpConfiguration.AddRoute("/api/Users/{**catch-all}", webServer);
-      yarpConfiguration.AddRoute("/api/identity/{**catch-all}", webServer);
+      // WithTransformUseOriginalHostHeader (task 104-031): forward the CLIENT's original Host header
+      // to Web.Server instead of YARP rewriting it to the destination host, so
+      // HttpRequestHostAccessor sees the public share hostname and the passkey RP-ID selection can
+      // match it against the allowlist. Web.Server routes ONLY — the api/grpc backends do not select
+      // an RP ID from the host and are left with YARP's default host rewrite.
+      yarpConfiguration.AddRoute("/api/GetCurrentUser", webServer).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute("/api/Hello", webServer).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute("/api/Users/{**catch-all}", webServer).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute("/api/identity/{**catch-all}", webServer).WithTransformUseOriginalHostHeader(true);
 #endif
 #if grpc
       yarpConfiguration.AddRoute("/grpc/{**catch-all}", grpcServer)
         .WithTransformPathRemovePrefix("/grpc");
 #endif
 #if web
-      yarpConfiguration.AddRoute(webServer);
+      // Catch-all to Web.Server (SPA + everything not owned above): same original-Host forwarding as
+      // the literal /api routes so RP-ID selection sees the public host (task 104-031).
+      yarpConfiguration.AddRoute(webServer).WithTransformUseOriginalHostHeader(true);
 #endif
     });
 #endif
