@@ -64,6 +64,9 @@ Survey artifacts land in this folder (`survey-*.md`), synthesized into `survey-s
 - [ ] Sequence the fold-out: structural-migration child tasks from axes 1–4 (filename grammar +
       globs + archetype analyzer), 113 carries axis 5 (113-002 dual actor spike created) and
       the axis-3 outbox question.
+- [ ] Author the agent-facing skill:
+      [[114-003-author-tw-feature-placement-skill-for-filename-grammar-and-cohesive-folders]]
+      (agents' primary source is skills/, not ADRs — Steve 2026-07-22)
 - [ ] ADR(s) recording the architectural identity decision — write from `axis-decisions.md`
       after the axis-1 spike validates tooling.
 
