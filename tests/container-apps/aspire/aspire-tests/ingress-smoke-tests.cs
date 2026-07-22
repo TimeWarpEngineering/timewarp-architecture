@@ -41,20 +41,30 @@ public sealed class IngressAppFixture : IAsyncLifetime
   private async Task WaitForIngressReachableAsync(CancellationToken cancellationToken)
   {
     HttpClient httpClient = App.CreateHttpClient("ingress", "http");
+    HttpRequestException? lastException = null;
+    int attempts = 0;
 
     while (true)
     {
-      cancellationToken.ThrowIfCancellationRequested();
+      if (cancellationToken.IsCancellationRequested)
+      {
+        // Review 117 L1: surface WHY the gate exhausted its budget instead of a bare
+        // OperationCanceledException — an unrelated ingress-edge failure should be diagnosable.
+        throw new TimeoutException(
+          $"Ingress never returned an HTTP response after {attempts} attempts.", lastException);
+      }
 
       try
       {
         using HttpResponseMessage response = await httpClient.GetAsync("/", cancellationToken);
         return;
       }
-      catch (HttpRequestException)
+      catch (HttpRequestException exception)
       {
         // Proxy not wired yet — connection reset before any response. Retry within the budget.
-        await Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken);
+        lastException = exception;
+        attempts++;
+        await Task.Delay(TimeSpan.FromMilliseconds(500), CancellationToken.None);
       }
     }
   }
