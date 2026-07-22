@@ -397,6 +397,8 @@ error. See the `tw-mock-response-factory` skill.
 
 ## Related skills
 
+- `tw-feature-placement` — the filename grammar every `-contracts.cs` file follows (function
+  segment dropped, escape hatch, registry, TWA0015/TWA0016)
 - `tw-mock-response-factory` — `GetMockResponseFactory()` on contracts + SPA mock service registration
 - `tw-csharp` — formatting and naming only; does not override contract nullability/mutability rules
 - `tw-blazor-layout` / `tw-blazor-css-strategy` — UI shell and styling; contracts feed `EditForm` binding

@@ -66,7 +66,9 @@ tests/               # mirrors source/; includes web-contracts-tests (host-free 
 `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
 (generates analyzer constants + `web/msbuild/feature-filename-grammar.g.props`). **Registry edit
 ⇒ full rebuild** (analyzer DLLs can go stale under pure incremental builds). Namespaces do **not**
-track folders — TWA0009 still keys off `…Features.<Id>`.
+track folders — TWA0009 still keys off `…Features.<Id>`. Full workflow (worked examples,
+registry extension, TWA0015/0016 fixes, membership-guard errors, SPA exception, per-module
+assembly-split note): **`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
 
 ## Platform packages (foundation + analyzers + identity)
 

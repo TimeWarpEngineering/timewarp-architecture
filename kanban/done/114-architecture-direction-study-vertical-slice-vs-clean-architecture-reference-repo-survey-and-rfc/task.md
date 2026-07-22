@@ -65,7 +65,7 @@ Survey artifacts land in this folder (`survey-*.md`), synthesized into `survey-s
       registry, TWA0015/16, guard); 113 carries axis 5 (113-002 created) + axis-3 outbox;
       axis 6/7 are standing policies recorded in axis-decisions.md. Remaining child: 114-003
       (skill, in flight).
-- [ ] Author the agent-facing skill:
+- [x] Author the agent-facing skill:
       [[114-003-author-tw-feature-placement-skill-for-filename-grammar-and-cohesive-folders]]
       (agents' primary source is skills/, not ADRs — Steve 2026-07-22)
 - [x] ADR DONE 2026-07-22: `documentation/.../approved/0008-feature-cohesive-folders-with-
@@ -90,3 +90,12 @@ Survey artifacts land in this folder (`survey-*.md`), synthesized into `survey-s
 ### 114-002 fold-in (2026-07-22)
 
 Axis-1 migration **shipped**: cohesive `web/features/<slice>/`, filename grammar globs, registry SSOT, membership guard, TWA0015/16. ADR unblocked for axis-1 write-up.
+
+### 114-003 fold-in (2026-07-22)
+
+Agent-facing skill **shipped**: `skills/tw-feature-placement/SKILL.md` — grammar, worked
+examples per archetype, contracts/escape-hatch, registry SSOT + extension workflow (with the
+registry-edit-⇒-full-rebuild caveat), TWA0015/0016 trigger/fix table, membership-guard error,
+SPA exception, axis-2 per-module assembly-split note. Cross-linked from `tw-slice-isolation`,
+`tw-web-api-contracts`, and AGENTS.md. All 114 deliverables (surveys, axis decisions, spike,
+migration, skill, ADR) now closed — 114 has no open children.

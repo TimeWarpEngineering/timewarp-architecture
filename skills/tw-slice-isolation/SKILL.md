@@ -113,7 +113,7 @@ Living anchors (timewarp-architecture template):
    - **SPA** UI stays under `web-spa/features/<slice>/` (conventional; not rehomed by axis-1).
    - **Contracts / application / server** product files live in the cohesive tree
      `web/features/<slice>/` with filename grammar `<name>[-<function>]-<layer>.cs`
-     (see AGENTS.md axis-1 note; registry `feature-filename-grammar.json`).
+     (see `tw-feature-placement` for the full grammar and registry).
 3. **Namespace** — `{RootNamespace}.Features.{SliceId}` (plural segments; nested with `.`).
    Folders rehome freely; **namespaces are not renamed with folder moves**.
 4. **Colocate** page, state, actions, and slice-private components in that namespace (pages are
@@ -191,6 +191,8 @@ Living examples:
 
 ## Related skills and pointers
 
+- `tw-feature-placement` — filename grammar and layer membership once you know which slice a
+  file belongs to (`<name>[-<function>]-<layer>.cs`, TWA0015/TWA0016, membership guard)
 - `tw-web-api-contracts` — contract placement; **contracts assemblies are free** under TWA0009; still use plural `…Features.*` aligned with SPA product slices
 - `tw-blazor-layout` — empty layout + shell; chrome **outside** SliceRoot
 - `tw-blazor-css-strategy` — shell/component styling only
