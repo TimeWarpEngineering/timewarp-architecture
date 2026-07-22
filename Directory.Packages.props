@@ -86,7 +86,7 @@
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis" Version="5.6.0" />
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.9" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
     <!-- Microsoft/MIT, BCL-adjacent (System.Formats.Cbor.dll ships in the ASP.NET Core shared
          framework too) — used by timewarp-identity's hand-rolled WebAuthn verifier (task 104-003)
          to parse attestationObject/authenticatorData COSE keys. timewarp-identity is a plain
