@@ -99,3 +99,18 @@ layer is half-built.
 ## Session
 
 - Created: 2026-07-21
+
+
+### Actor gate resolved (Steve, 2026-07-23 — closes RFC open decisions 1 and 2)
+
+- **Scope**: actors remain optional; EF golden path is the default. Aggregates that earn actor
+  hosting (high-contention single-writer, e.g. the credit ledger) use **Orleans**
+  (grain-per-entity-ID over direct EF — IPersistentState rejected per spike).
+- **Technology**: Orleans for entity-ID-keyed aggregate hosting. Akka.NET reserved as the
+  candidate for 118's device-fleet layer (supervision/streams territory) — evaluated when that
+  layer is built.
+- Evidence: 113-002 spike + `spike-actor-comparison.md`; branch `spike/113-002-dual-actor`
+  pushed to origin.
+- Remaining open here: decision 3b (outbox), decision 4 (identity stores as first consumer —
+  104-032), decision 5 (seam packaging — now reinforced by the spike's sealed-DbContext hook
+  duplication finding).

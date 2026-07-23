@@ -108,8 +108,13 @@ stack), IPersistentState verdict SKIP under EF-only, substrate-residue proof, se
 finding (sealed PostgresDbContext → hook duplication → 113 decision 5), "no actors" outcome
 kept fully alive, in-proc bias caveat, implementer lean toward Orleans (labeled, not decided).
 
-**OPEN: the decision itself — Steve gates per axis 5.** Options: Orleans example / Akka example
-/ no actors in the template (EF golden path only, actors documented as consumer choice).
+**DECIDED (Steve, 2026-07-23): ORLEANS for entity-ID-keyed aggregate hosting** — the
+grain-per-identity model fits the golden-aggregate single-writer shape the spike measured
+(less glue, real activation hook, domain-error propagation, source-gen serializers, first-party
+Aspire). **Akka.NET is NOT ruled out**: it is the standing candidate for 118's device-fleet
+layer where its strengths (supervision trees, streams, fault-injection ergonomics) actually
+apply — evaluated there, not committed now. "No actors" remains the golden default for ordinary
+aggregates; Orleans is the optional-with-example path per axis 5.
 
 ## Session
 

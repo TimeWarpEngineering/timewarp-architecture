@@ -45,6 +45,8 @@ domains (accounting flavor survives inside the ledger).
       per the 113-001 orphan-container lesson (declare inside the enabling blocks)
 - [ ] Enforcement so platform code never depends on showcase types (TWA0009 posture / review
       rule) — protects the OFF path between CI smokes
+- [ ] Mechanical release-flip guard: release workflow fails if template.json ships
+      real-domain default ON (no agreement-by-memory on the flip)
 - [ ] Slice scaffolding for the marketplace domain under `web/features/` per tw-feature-placement
       grammar (identity/ledger/metering/discovery areas; device-fleet module deferred until the
       113 actor gate)
@@ -55,3 +57,7 @@ Sequencing (Steve's priority pass, 2026-07-23): (1) gate 113-002 actor decision,
 task's spec, (3) 107 YARP route generation BEFORE showcase slices multiply hand-maintained
 routes, (4) 113 golden implementation + 104-032 durable identity/ledger, (5) 116 + publish
 residuals in the background lane. Release checklist must include flipping the flag default OFF.
+
+Actor-gate outcome feeding this task (2026-07-23): marketplace/aggregate layer uses the EF
+golden path with **Orleans** for aggregates that earn actor hosting; the fleet layer evaluates
+**Akka.NET** where supervision/streams genuinely fit (spike evidence: 113 folder).

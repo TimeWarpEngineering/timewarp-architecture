@@ -145,3 +145,10 @@ registered function → layer `server`** (e.g. `hello-feature-annotations-server
 specced as 114-002; findings to encode there: analyzer path normalization (`..`-traversal
 pitfall), single-source registry generating both the MSBuild guard and the analyzer,
 registry-change ⇒ rebuild note.
+
+
+## Axis 5 addendum — actor gate outcome (Steve, 2026-07-23)
+
+Dual spike (113-002) evaluated; decision: **Orleans** for entity-ID-keyed aggregate hosting
+(optional-with-example over the EF golden path). **Akka.NET** remains the candidate for the
+118 device-fleet showcase layer where supervision/streams fit — decided there, not here.
