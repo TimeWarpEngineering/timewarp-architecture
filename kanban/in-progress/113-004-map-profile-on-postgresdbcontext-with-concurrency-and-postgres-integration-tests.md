@@ -27,12 +27,12 @@ for the golden base (can land after or with shared worktree if coordinated).
 
 ## Checklist
 
-- [ ] Profile EF configuration + DbSet
-- [ ] EnsureCreated creates Profile table
-- [ ] Postgres round-trip + concurrency tests
-- [ ] Skip-mode preserved without connection
-- [ ] Design regions
-- [ ] `dev build` 0/0 + tests green
+- [x] Profile EF configuration + DbSet
+- [x] EnsureCreated creates Profile table
+- [x] Postgres round-trip + concurrency tests
+- [x] Skip-mode preserved without connection
+- [x] Design regions
+- [x] `dev build` 0/0 + tests green
 
 ## Notes
 
@@ -44,3 +44,5 @@ for the golden base (can land after or with shared worktree if coordinated).
 ## Session
 
 - Created: 2026-07-23 (from 113 remaining-work plan)
+- Implemented: 2026-07-23 — Profile mapped end-to-end; Postgres integration tests via Testcontainers
+  (env connection override; silent skip when neither available). GetProfile product wire left TODO.
