@@ -10,9 +10,23 @@ repo dogfoods a real domain daily.
 Domain (Steve, 2026-07-23): **agentic AI marketplace / metered capability service** — unifies
 the 104 program end to end: passkey humans + keyed agents (identity), credit ledger
 (104-010-shaped, accounting flavor lives here), x402 metered endpoints, and the agent discovery
-surface (104-017/019). Includes a robotics-flavored **device-fleet telemetry module** as the
-future Akka.Streams/actor showcase (actor-per-device supervision + backpressured ingestion) —
-sequenced after the 113 actor decision lands.
+surface (104-017/019). **Expanded vision (Steve, 2026-07-23): "agent Alibaba" for a bamboo microfactory.** A small
+Thailand bamboo products shop — CNC machine, 3D printer, 2–3 humanoid robots (all
+simulated/mocked) — whose fabrication capabilities are sold THROUGH the agent marketplace:
+an external buyer's agent discovers the shop (104-017/019 discovery surface), registers a key,
+pays via x402 for quotes/machine time, submits a design, tracks the job; humans passkey in to
+approve and oversee. Two layers with separate sequencing:
+
+1. **Marketplace layer (priority one, pure software, no hardware dependency)**: catalog, quote,
+   order/job, ledger, metering — every 104 program piece gets a real noun.
+2. **Fleet layer (the actor showcase, AFTER the 113 gate)**: simulated devices as supervised
+   actors — realistic state machines (idle→setup→running→fault), fault injection demoing
+   supervision/restart, backpressured telemetry ingestion. Humanoids are fleet flavor
+   (telemetry + work-order execution), NOT general task planners — scope guard.
+
+V1 scope guard: ONE product family, quote→pay→job→"ship" happy path; expand only after the
+loop closes end to end. Bamboo angle: authentic, sustainable, memorable — no template demos a
+microfactory.
 
 Rejected alternatives (recorded): sibling showcase repo (duplicate-work cost while the template
 is unstable; in-tree default-OFF is a viable permanent end state); ecommerce and accounting as
