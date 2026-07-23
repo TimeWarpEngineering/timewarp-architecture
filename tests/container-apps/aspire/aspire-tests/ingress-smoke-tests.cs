@@ -2,6 +2,10 @@
 // Request-level smoke THROUGH the YARP ingress (task 117): guards the host-preserving
 // http-endpoint forwarding to Web.Server that the 2026-07-22 RemoteCertificateNameMismatch 502
 // shipped around — backend health checks alone proved 'backends up', not 'requests flow'.
+// Extended for task 107: proves the GENERATED Web.Server /api carve-outs
+// (WebServerApiRoutePrefixes) actually reach Web.Server through the ingress — including
+// /api/identity (the 104-003 drift that shipped unreachable) and /api/Roles (a live drift the
+// hand-maintained list had dropped).
 #endregion
 
 namespace Aspire.Tests;
@@ -133,5 +137,55 @@ public class IngressSmokeTests : IClassFixture<IngressAppFixture>
     HttpResponseMessage response = await httpClient.GetAsync("/api/weatherforecast?Days=10");
 
     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+  }
+
+  [Fact]
+  public async Task GetIdentitySessionThroughIngressReachesWebServer()
+  {
+    HttpClient httpClient = Fixture.App.CreateHttpClient("ingress", "http");
+
+    // The exact 104-003 failure: /api/identity/* was unreachable through the ingress and fell to the
+    // Api.Server catch-all (404). The generated /api/identity carve-out must now route it to
+    // Web.Server. GetCurrentSession is [EndpointAllowAnonymous], so no auth setup is needed; an
+    // anonymous session is a valid 200 (IsAuthenticated=false). A 404 here would mean the generated
+    // prefix failed to route — the regression this task exists to prevent.
+    HttpResponseMessage response = await httpClient.GetAsync("/api/identity/session");
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    string body = await response.Content.ReadAsStringAsync();
+    // Web.Server's GetCurrentSession handler shaped this body — proves the request reached the web
+    // backend, not just any 200 from the ingress.
+    Assert.Contains("uthenticated", body, StringComparison.Ordinal);
+  }
+
+  [Fact]
+  public async Task GetRolesThroughIngressReachesWebServerAndRequiresAuth()
+  {
+    HttpClient httpClient = Fixture.App.CreateHttpClient("ingress", "http");
+
+    // /api/Roles is the LIVE drift the hand-maintained list had dropped: 5 admin endpoints that were
+    // falling to the Api.Server catch-all through the ingress. GetRoles is
+    // [EndpointAuthorize] on Web.Server, so an unauthenticated request must return 401 — which proves
+    // the generated prefix routed it to Web.Server (Api.Server hosts no /api/Roles, so a drift would
+    // surface as 404). Asserting 401-not-404 is the bug-fix regression guard.
+    HttpResponseMessage response = await httpClient.GetAsync("/api/Roles");
+
+    Assert.NotEqual(HttpStatusCode.NotFound, response.StatusCode);
+    Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+  }
+}
+
+public class GeneratedIngressRoutesTests
+{
+  [Fact]
+  public void WebServerApiRoutePrefixesCoverIdentityAndHello()
+  {
+    // Compile-time proof (no running app): the generator produced the Web.Server /api carve-outs the
+    // ingress loops over. api/identity is the 104-003 regression shape; api/Hello is the existing
+    // anonymous demo route. Both must be present for the HTTP facts above to be meaningful.
+    Assert.Contains("api/identity", WebServerApiRoutePrefixes.All);
+    Assert.Contains("api/Hello", WebServerApiRoutePrefixes.All);
+    // /api/GetCurrentUser became [ClientOnlyContract] — it must NOT be a generated ingress prefix.
+    Assert.DoesNotContain("api/GetCurrentUser", WebServerApiRoutePrefixes.All);
   }
 }

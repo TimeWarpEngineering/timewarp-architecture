@@ -3,7 +3,7 @@
     <PackageId>$(TwArchitectureGeneratorsPackageId)</PackageId>
     <Title>$(TwArchitectureGeneratorsPackageId)</Title>
 
-    <Description>Roslyn source generators and TWA0001 for TimeWarp Architecture (FastEndpoint, Page, StateAccess, mock-factory registry, TypedId). Analyzer-only; attach only where generators should run — not repo-wide.</Description>
+    <Description>Roslyn source generators and diagnostics for TimeWarp Architecture (FastEndpoint, Page, StateAccess, mock-factory registry, TypedId, ingress route prefixes) — TWA0001 and TWA0017/0018. Analyzer-only; attach only where generators should run — not repo-wide.</Description>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
     <!-- Suppress RS1041: Analyzer intentionally targets net10.0 for CLI usage -->

@@ -31,6 +31,14 @@ internal static class GeneratorTestHarness
         {
             public ApiRouteAttribute(string route, HttpVerb httpVerb) { }
         }
+
+        // Simple-name matched by the ingress generator (ClientOnlyContractAttribute) — namespace is
+        // irrelevant to that match, so a stub here stands in for the foundation-contracts attribute.
+        [System.AttributeUsage(System.AttributeTargets.Class)]
+        public sealed class ClientOnlyContractAttribute : System.Attribute
+        {
+            public ClientOnlyContractAttribute(string reason) { }
+        }
     }
     namespace TimeWarp.Architecture.Attributes
     {
@@ -63,11 +71,19 @@ internal static class GeneratorTestHarness
   /// carrying XML documentation so the generator can read summary/remarks cross-assembly.
   /// </summary>
   public static MetadataReference CompileContractAssembly(string contractSource)
+    => CompileContractAssembly(contractSource, "Test.Contracts");
+
+  /// <summary>
+  /// Compiles a contract assembly under an explicit name — the ingress generator filters referenced
+  /// assemblies by name (IngressWebContractAssemblies) and by a "contracts" substring, so tests must
+  /// control the assembly name (e.g. "web-contracts", "api-contracts").
+  /// </summary>
+  public static MetadataReference CompileContractAssembly(string contractSource, string assemblyName)
   {
     CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithDocumentationMode(DocumentationMode.Parse);
 
     CSharpCompilation compilation = CSharpCompilation.Create(
-      "Test.Contracts",
+      assemblyName,
       new[]
       {
         CSharpSyntaxTree.ParseText(contractSource, parseOptions),
@@ -118,6 +134,40 @@ internal static class GeneratorTestHarness
     {
       options["build_property.EnableApiEndpointGeneration"] = "true";
     }
+
+    GeneratorDriver driver = CSharpGeneratorDriver.Create(
+      generators: ImmutableArray.Create(generator.AsSourceGenerator()),
+      optionsProvider: new TestAnalyzerConfigOptionsProvider(options));
+
+    return driver.RunGenerators(compilation).GetRunResult();
+  }
+
+  /// <summary>
+  /// Runs the <see cref="IngressRoutePrefixGenerator"/> against a host compilation that references
+  /// the supplied contract assemblies, with the given build properties (short keys — the
+  /// "build_property." prefix is added here). The generator scans referenced assemblies for hosted
+  /// [ApiRoute] templates, so the contracts must be metadata references, not source.
+  /// </summary>
+  public static GeneratorDriverRunResult RunIngress(
+    IEnumerable<MetadataReference> contractReferences,
+    IReadOnlyDictionary<string, string> buildProperties)
+  {
+    var references = new List<MetadataReference>
+    {
+      MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+      MetadataReference.CreateFromFile(typeof(ApiEndpointAttribute).Assembly.Location),
+    };
+    references.AddRange(contractReferences);
+
+    var compilation = CSharpCompilation.Create(
+      "Test.IngressHost",
+      syntaxTrees: Array.Empty<SyntaxTree>(),
+      references: references,
+      new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+    var generator = new IngressRoutePrefixGenerator();
+
+    var options = buildProperties.ToDictionary(pair => $"build_property.{pair.Key}", pair => pair.Value);
 
     GeneratorDriver driver = CSharpGeneratorDriver.Create(
       generators: ImmutableArray.Create(generator.AsSourceGenerator()),
