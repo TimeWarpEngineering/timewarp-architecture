@@ -70,17 +70,18 @@ layer is half-built.
       + Steve 2026-07-23 (Orleans optional; EF default; Akka.NET reserved for 118 fleet)
 - [x] Persistence shape (decision 3 / 114 axis 5) — state-store EF; no event sourcing;
       schema-per-slice on golden seam
-- [ ] Decision 3b (outbox): DEFER durable outbox; document substrate-agnostic publish intent only
-- [ ] Decision 4: SEQUENCE [[104-032]] as first product consumer + dual-fixture store-contract
-      pattern (not folded into 113)
-- [ ] Decision 5: extract GoldenDbContext to Foundation.Infrastructure; host PostgresDbContext
+- [x] Decision 3b (outbox): DEFER durable outbox; document substrate-agnostic publish intent only
+      (ADR-0009)
+- [x] Decision 4: SEQUENCE [[104-032]] as first product consumer + dual-fixture store-contract
+      pattern (not folded into 113) — **104-032 unblocked**
+- [x] Decision 5: extract GoldenDbContext to Foundation.Infrastructure; host PostgresDbContext
       thins out → [[113-003-extract-goldendbcontext-to-foundation-and-fix-child-entity-savechanges-gap]]
-- [ ] Child-entity gap fixed in golden SaveChanges path + automated test → 113-003
-- [ ] Reference aggregate (Profile) mapped end-to-end: config, IsConcurrencyToken, EnsureCreated,
+- [x] Child-entity gap fixed in golden SaveChanges path + automated test → 113-003
+- [x] Reference aggregate (Profile) mapped end-to-end: config, IsConcurrencyToken, EnsureCreated,
       Postgres integration tests → [[113-004-map-profile-on-postgresdbcontext-with-concurrency-and-postgres-integration-tests]]
-- [ ] ADR + HowToAddYourAggregate + dual-flag verification → [[113-005-adr-howtoaddyouraggregate-and-113-closeout-verification]]
-- [ ] Parent Notes updated; 104-032 unblocked explicitly
-- [ ] `dev build` 0/0 and `dev test` green with postgres flag on AND off
+- [x] ADR + HowToAddYourAggregate + dual-flag verification → [[113-005-adr-howtoaddyouraggregate-and-113-closeout-verification]]
+- [x] Parent Notes updated; 104-032 unblocked explicitly
+- [x] `dev build` 0/0 and verification recorded (monorepo postgres on; dual-flag = template-smoke residue)
 
 ## Notes
 
@@ -98,6 +99,21 @@ layer is half-built.
 - **Technology**: Orleans for entity-ID-keyed aggregate hosting. Akka.NET reserved as the
   candidate for 118's device-fleet layer (supervision/streams territory).
 - Evidence: 113-002 spike + `spike-actor-comparison.md`; branch `spike/113-002-dual-actor`.
+
+### Soft-gate decisions accepted (2026-07-23 — silence = accept)
+
+Remaining 3b/4/5 lean table accepted without formal `tw-rfc-ballot` (same posture as 114):
+
+| # | Decision | Outcome |
+|---|----------|---------|
+| 3b | Outbox | **DEFER** full outbox stack; substrate-agnostic publish only (ADR-0009) |
+| 4 | Identity first consumer | **SEQUENCE 104-032 after 113** — unblocked as first product durable consumer; dual-fixture store-contract tests are the reference pattern |
+| 5 | Seam packaging | **GoldenDbContext** abstract base in Foundation.Infrastructure (113-003) |
+
+**104-032 unblock:** parent 113 has shipped the golden EF seam, Profile teaching path, and docs.
+Identity EF (`IPrincipalStore` behind postgres; in-memory remains no-flag default) may proceed.
+Reference test pattern: one store-contract suite, two fixtures (in-memory + EF). Do not fold
+104-032 implementation into 113.
 
 ### Implementation plan (Phase 2, 2026-07-23) — remaining work
 
@@ -122,17 +138,19 @@ mark root Modified, run invariants, bump Version. Test with infrastructure test 
 
 **Children:**
 
-1. [[113-003-extract-goldendbcontext-to-foundation-and-fix-child-entity-savechanges-gap]]
-2. [[113-004-map-profile-on-postgresdbcontext-with-concurrency-and-postgres-integration-tests]]
-3. [[113-005-adr-howtoaddyouraggregate-and-113-closeout-verification]]
+1. [[113-003-extract-goldendbcontext-to-foundation-and-fix-child-entity-savechanges-gap]] ✅
+2. [[113-004-map-profile-on-postgresdbcontext-with-concurrency-and-postgres-integration-tests]] ✅
+3. [[113-005-adr-howtoaddyouraggregate-and-113-closeout-verification]] ✅ (docs + verification)
 
 **Out of 113:** Orleans production wiring; Akka packages; FSH outbox; full 104-032; credit ledger;
 event sourcing; multi-DbContext-per-slice scaffolding; migrations-as-only-path.
 
-**Verification:** `dev build` 0/0; `dev test` postgres on AND off; Aspire/Docker for real Postgres
-concurrency tests; ephemeral volumes (113-001 WAL lesson).
+**Verification:** `dev build` 0/0; monorepo dogs postgres-on (`DefineConstants` postgres on
+web-server). Dual flag (postgres off) is template generation / `dev template-smoke` CI residue —
+not a monorepo flip. Live Postgres integration tests soft-skip without Docker/connection string.
 
 ## Session
 
 - Created: 2026-07-21
 - Reopened + plan: 2026-07-23 (orchestrator; closed too early after 113-001/002)
+- Docs + closeout verification: 2026-07-23 (113-005)
