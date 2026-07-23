@@ -41,8 +41,30 @@ for the golden base (can land after or with shared worktree if coordinated).
 - Credit ledger / Orleans example is NOT this task.
 - Identity EF is 104-032 after parent closeout.
 
+## Results
+
+**Implemented 2026-07-23** — Profile teaching aggregate on golden EF path with Postgres tests.
+
+### What was implemented
+- `IEntityTypeConfiguration<Profile>` under features/profile (`profiles` schema/table, TypedId,
+  IsConcurrencyToken on Version)
+- `DbSet<Profile>` + ApplyConfigurationsFromAssembly + TypedId conventions on PostgresDbContext
+- New `web-infrastructure-tests`: model mapping + EnsureCreated round-trip + concurrency conflict
+  + Version increment (Testcontainers ephemeral postgres; env override; soft-skip without Docker)
+
+### Key decisions
+- Feature-cohesive config file; schema-per-slice on single context
+- GetProfile product wire left synthetic (tests prove persistence)
+- Soft skip without Docker (not hard-fail on CI yet)
+
+### Tests
+- `dev build` 0/0
+- `dotnet fixie tests/container-apps/web/web-infrastructure-tests` — 5 passed
+
+### Commit
+- `b70b0616` feat(web): map Profile on PostgresDbContext with concurrency tests
+
 ## Session
 
 - Created: 2026-07-23 (from 113 remaining-work plan)
-- Implemented: 2026-07-23 — Profile mapped end-to-end; Postgres integration tests via Testcontainers
-  (env connection override; silent skip when neither available). GetProfile product wire left TODO.
+- Implementation: 2026-07-23 (build agent via orchestrator)
