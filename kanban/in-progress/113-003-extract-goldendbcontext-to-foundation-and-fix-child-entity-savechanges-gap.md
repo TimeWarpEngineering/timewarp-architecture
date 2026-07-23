@@ -28,12 +28,12 @@ increment skipped).
 
 ## Checklist
 
-- [ ] GoldenDbContext in foundation-infrastructure + EF package ref / CPM
-- [ ] Child→root resolution + root State=Modified when children dirty
-- [ ] PostgresDbContext thinned to host subclass
-- [ ] Hook + gap tests green
-- [ ] Design regions reconciled
-- [ ] `dev build` 0/0
+- [x] GoldenDbContext in foundation-infrastructure + EF package ref / CPM
+- [x] Child→root resolution + root State=Modified when children dirty
+- [x] PostgresDbContext thinned to host subclass
+- [x] Hook + gap tests green
+- [x] Design regions reconciled
+- [x] `dev build` 0/0
 
 ## Notes
 

@@ -17,19 +17,20 @@
 // Version is a store-owned optimistic-concurrency token that closes the 104-002 RFC D6
 // last-write-wins debt — but ONLY when both halves of the mechanism are present, and this type
 // alone is not one of them:
-//   1. The real increment lives in the host EF hook (PostgresDbContext.SaveChanges(Async)), which
-//      sets EntityVersion.Next(originalVersion) onto the change-tracker's PropertyEntry.CurrentValue
-//      for the "Version" property of every Modified IAggregateRoot — this bypasses the private
-//      setter the same way EF already writes any other private-setter property (its compiled
-//      accessors invoke the setter via reflection regardless of C# accessibility); nothing in
-//      Entity<TId> itself, and no attribute on this property, increments anything.
+//   1. The real increment lives in GoldenDbContext.SaveChanges(Async)
+//      (TimeWarp.Foundation.Persistence), which sets EntityVersion.Next(originalVersion) onto the
+//      change-tracker's PropertyEntry.CurrentValue for the "Version" property of every Modified
+//      IAggregateRoot (including roots resolved from dirty children/owned entities) — this bypasses
+//      the private setter the same way EF already writes any other private-setter property (its
+//      compiled accessors invoke the setter via reflection regardless of C# accessibility); nothing
+//      in Entity<TId> itself, and no attribute on this property, increments anything. Host contexts
+//      (e.g. PostgresDbContext) inherit GoldenDbContext rather than reimplementing the hook.
 //   2. Hosts that map a concrete aggregate MUST additionally call .IsConcurrencyToken() on the
-//      "Version" property in their own OnModelCreating (PostgresDbContext is entity-free and cannot
-//      do this for entity types it does not know about) — without that, the hook still increments
+//      "Version" property in their own OnModelCreating (GoldenDbContext / PostgresDbContext cannot
+//      do this for entity types they do not know about) — without that, the hook still increments
 //      Version on every save, but nothing compares the original value in the UPDATE's WHERE clause,
 //      so a stale overwrite still proceeds silently. The increment and the concurrency check are a
-//      pair; shipping only one of them (as the original Design region for this file incorrectly
-//      claimed) leaves the D6 debt open.
+//      pair; shipping only one of them leaves the D6 debt open.
 // application code never writes Version directly; the private setter exists only so EF's
 // reflection-based property access can reach it.
 // Non-EF stores (e.g. timewarp-identity's in-memory IPrincipalStore, task 104-028) have no

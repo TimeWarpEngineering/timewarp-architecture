@@ -4,13 +4,10 @@
 #endregion
 
 #region Design
-// PostgresDbContext is deliberately entity-free (no DbSet, no OnConfiguring target), so there is no
-// way to prove the increment via a real EF SaveChanges round-trip without pulling in a new test
-// package (EF InMemory/Sqlite) — out of scope for this task. This static method is the entire
-// "logic" the hook depends on; foundation-domain-tests/entity-version-tests.cs exercises it
-// directly, and the hook itself (postgres-db-context.cs) is thin glue that reads
-// PropertyEntry.OriginalValue, calls this, and writes PropertyEntry.CurrentValue — reviewed by
-// inspection rather than by an automated integration test.
+// Pure arithmetic only — no EF dependency. foundation-domain-tests/entity-version-tests.cs
+// exercises Next directly; the EF SaveChanges hook that calls it lives in GoldenDbContext
+// (foundation-infrastructure) and is covered by foundation-infrastructure-tests/golden-db-context-tests.cs
+// (InMemory harness: root modify, child-only mutate, fail-closed missing Version).
 #endregion
 
 namespace TimeWarp.Foundation.Entities;
