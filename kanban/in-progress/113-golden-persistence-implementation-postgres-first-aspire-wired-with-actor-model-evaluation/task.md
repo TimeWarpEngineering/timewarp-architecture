@@ -65,41 +65,30 @@ layer is half-built.
 
 ## Checklist
 
-- [ ] Mechanical track (RFC-independent) split to child
-      [[113-001-wire-postgres-into-aspire-apphost-and-remove-sql-server-remnants]]: AppHost
-      `AddPostgres` wiring, connection flow to `PostgresDbModule`, SQL Server removal.
-- [ ] Run the RFC (rfc/ subfolder, tw-rfc-ballot) over the five open decisions; fold resolutions
-      back into THIS task's checklist (no separate apply-task). **Sequencing: wait on (or run
-      jointly with) the macro-architecture RFC in
-      [[114-architecture-direction-study-vertical-slice-vs-clean-architecture-reference-repo-survey-and-rfc]]
-      — persistence shape follows from the architectural identity decision. 113-001 (mechanical
-      Postgres wiring) is NOT gated.**
-- [ ] Implement the golden persistence implementation per resolutions (scope will be refined by
-      the RFC fold-in): reference aggregate persisted end-to-end (entity config, migrations or
-      schema-creation story, concurrency-token mapping fulfilling the sql-db-context two-party
-      contract, integration tests against real Postgres via Aspire).
-- [ ] Resolve the known child-entity gap documented in postgres-db-context Design (Unchanged
-      root when only child entries change) as part of the golden model — first real multi-entity
-      aggregate makes it non-latent.
-- [ ] Fold identity stores in or explicitly sequence [[104-032]] after, per RFC decision 4.
-- [ ] Documentation: ADR for the persistence decisions; developer how-to for "add your aggregate"
-      as the golden path walkthrough.
-- [ ] `dev build` 0/0 and full `dev test` green with postgres flag on AND off (template both ways).
+- [x] Mechanical track (RFC-independent) → [[113-001-wire-postgres-into-aspire-apphost-and-remove-sql-server-remnants]]
+- [x] Actor decisions 1–2 (scope + tech) → [[113-002-dual-actor-spike-same-aggregate-on-akkanet-and-orleans-over-ef-state-store]]
+      + Steve 2026-07-23 (Orleans optional; EF default; Akka.NET reserved for 118 fleet)
+- [x] Persistence shape (decision 3 / 114 axis 5) — state-store EF; no event sourcing;
+      schema-per-slice on golden seam
+- [ ] Decision 3b (outbox): DEFER durable outbox; document substrate-agnostic publish intent only
+- [ ] Decision 4: SEQUENCE [[104-032]] as first product consumer + dual-fixture store-contract
+      pattern (not folded into 113)
+- [ ] Decision 5: extract GoldenDbContext to Foundation.Infrastructure; host PostgresDbContext
+      thins out → [[113-003-extract-goldendbcontext-to-foundation-and-fix-child-entity-savechanges-gap]]
+- [ ] Child-entity gap fixed in golden SaveChanges path + automated test → 113-003
+- [ ] Reference aggregate (Profile) mapped end-to-end: config, IsConcurrencyToken, EnsureCreated,
+      Postgres integration tests → [[113-004-map-profile-on-postgresdbcontext-with-concurrency-and-postgres-integration-tests]]
+- [ ] ADR + HowToAddYourAggregate + dual-flag verification → [[113-005-adr-howtoaddyouraggregate-and-113-closeout-verification]]
+- [ ] Parent Notes updated; 104-032 unblocked explicitly
+- [ ] `dev build` 0/0 and `dev test` green with postgres flag on AND off
 
 ## Notes
 
 - Akka.NET licensing RESOLVED (2026-07-22): Apache 2.0 — the BSL move was JVM Akka only.
-  No license gate on either actor candidate (Akka.NET Apache 2.0, Orleans MIT).
-- Orleans note for the RFC: `Aspire.Hosting.Orleans` exists first-party; actor-per-aggregate
-  with Orleans grains + Postgres grain storage is the lowest-ops actor option in this stack.
+- Orleans note: `Aspire.Hosting.Orleans` exists first-party; lowest-ops actor option when earned.
 - The enumeration-hardening task [[105]] and foundation packaging (051) touch the same
   foundation layers — coordinate, don't collide.
 - Session: created 2026-07-21 out of the 112/104-032 persistence discussion.
-
-## Session
-
-- Created: 2026-07-21
-
 
 ### Actor gate resolved (Steve, 2026-07-23 — closes RFC open decisions 1 and 2)
 
@@ -107,10 +96,43 @@ layer is half-built.
   hosting (high-contention single-writer, e.g. the credit ledger) use **Orleans**
   (grain-per-entity-ID over direct EF — IPersistentState rejected per spike).
 - **Technology**: Orleans for entity-ID-keyed aggregate hosting. Akka.NET reserved as the
-  candidate for 118's device-fleet layer (supervision/streams territory) — evaluated when that
-  layer is built.
-- Evidence: 113-002 spike + `spike-actor-comparison.md`; branch `spike/113-002-dual-actor`
-  pushed to origin.
-- Remaining open here: decision 3b (outbox), decision 4 (identity stores as first consumer —
-  104-032), decision 5 (seam packaging — now reinforced by the spike's sealed-DbContext hook
-  duplication finding).
+  candidate for 118's device-fleet layer (supervision/streams territory).
+- Evidence: 113-002 spike + `spike-actor-comparison.md`; branch `spike/113-002-dual-actor`.
+
+### Implementation plan (Phase 2, 2026-07-23) — remaining work
+
+**Principle:** smallest EF golden path that (a) teaches “add your aggregate,” (b) unblocks
+104-032, (c) does not re-open settled axes or pull Orleans / outbox / ledger into this task.
+
+**No formal `tw-rfc-ballot`** for remaining 3b/4/5 — same as 114 (in-chat / soft-gate leans).
+
+| # | Decision | Lean (Steve soft-gate; silence = accept) |
+|---|----------|------------------------------------------|
+| 3b | Outbox | **DEFER** full outbox stack; no table/dispatcher now; document substrate-agnostic publish |
+| 4 | Identity first consumer | **SEQUENCE 104-032 after 113** — 113 ships seam + teaching Profile + pattern; 104-032 dogfoods |
+| 5 | Seam packaging | **GoldenDbContext abstract base in Foundation.Infrastructure** + EF package; host thins out |
+
+**Reference aggregate:** `Profile` (already `IAggregateRoot` + private Invariants). Not credit ledger
+(Orleans later). Not Principal (104-032). Schema story: keep EnsureCreated; document Migrate for
+grown apps. Schema-per-slice via table schemas on single PostgresDbContext until a second module
+earns isolation.
+
+**Child-entity gap:** resolve ownership/parent navigations in SaveChanges so child-only mutations
+mark root Modified, run invariants, bump Version. Test with infrastructure test model.
+
+**Children:**
+
+1. [[113-003-extract-goldendbcontext-to-foundation-and-fix-child-entity-savechanges-gap]]
+2. [[113-004-map-profile-on-postgresdbcontext-with-concurrency-and-postgres-integration-tests]]
+3. [[113-005-adr-howtoaddyouraggregate-and-113-closeout-verification]]
+
+**Out of 113:** Orleans production wiring; Akka packages; FSH outbox; full 104-032; credit ledger;
+event sourcing; multi-DbContext-per-slice scaffolding; migrations-as-only-path.
+
+**Verification:** `dev build` 0/0; `dev test` postgres on AND off; Aspire/Docker for real Postgres
+concurrency tests; ephemeral volumes (113-001 WAL lesson).
+
+## Session
+
+- Created: 2026-07-21
+- Reopened + plan: 2026-07-23 (orchestrator; closed too early after 113-001/002)
