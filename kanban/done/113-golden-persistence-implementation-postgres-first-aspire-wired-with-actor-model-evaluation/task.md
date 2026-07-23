@@ -149,8 +149,55 @@ event sourcing; multi-DbContext-per-slice scaffolding; migrations-as-only-path.
 web-server). Dual flag (postgres off) is template generation / `dev template-smoke` CI residue —
 not a monorepo flip. Live Postgres integration tests soft-skip without Docker/connection string.
 
+## Results
+
+**Completed 2026-07-23** — Golden Postgres EF persistence path shipped end-to-end; 104-032 unblocked.
+
+### What was implemented
+
+| Track | Outcome |
+|-------|---------|
+| 113-001 | AppHost `AddPostgres`, connection flow, SQL Server removal, honest health checks |
+| 113-002 | Dual actor spike; **Orleans** optional for entity-ID aggregates; EF default; Akka for 118 |
+| Soft gates 3b/4/5 | Outbox deferred; 104-032 sequenced after; GoldenDbContext in Foundation |
+| 113-003 | `GoldenDbContext` + child→root SaveChanges gap + foundation tests |
+| 113-004 | Profile EF mapping + concurrency + Testcontainers Postgres tests |
+| 113-005 | ADR-0009 + HowToAddYourAggregate + doc indexes |
+
+### Key decisions
+- State-store EF only (no event sourcing); actors optional-with-Orleans when earned
+- Two-party Version contract (hook increments; host `.IsConcurrencyToken()`)
+- Profile is teaching aggregate; identity (104-032) is first product durable consumer
+- EnsureCreated template default; Migrate for grown apps
+- Schema-per-slice on single DbContext until isolation is earned
+
+### Files (remaining work after reopen; see children for full lists)
+- `source/foundation/foundation-infrastructure/persistence/golden-db-context.cs`
+- `source/container-apps/web/web-infrastructure/persistence/postgres-db-context.cs`
+- `source/container-apps/web/features/profile/profile-entity-type-configuration-infrastructure.cs`
+- `tests/foundation/foundation-infrastructure-tests/golden-db-context-tests.cs`
+- `tests/container-apps/web/web-infrastructure-tests/**`
+- `documentation/.../approved/0009-postgres-ef-golden-persistence-path.md`
+- `documentation/developer/how-to-guides/HowToAddYourAggregate.md`
+
+### Tests
+- `dev build` 0/0
+- foundation-infrastructure-tests: **9 passed** (after review fixes)
+- web-infrastructure-tests: **5 passed** (live Postgres via Testcontainers)
+- Dual-flag off: monorepo dogs postgres-on; template-smoke CI residue for generated off
+
+### Phase 4b review
+- Effort 1 (general); 1 round under `review/`
+- Final counts: 0 open (1 suggestion fixed, 1 suggestion wontfix, 1 nit fixed)
+- Disposition: **accepted-exceptions** (`review/disposition.md`) — M2 two-party analyzer deferred as intentional design
+- Paths: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`
+
+### Unblocks
+- **[[104-032]]** — EF identity principal store; dual-fixture store-contract suite as reference pattern
+
 ## Session
 
 - Created: 2026-07-21
 - Reopened + plan: 2026-07-23 (orchestrator; closed too early after 113-001/002)
 - Docs + closeout verification: 2026-07-23 (113-005)
+- Review disposition: 2026-07-23 (Phase 4b accepted-exceptions)
