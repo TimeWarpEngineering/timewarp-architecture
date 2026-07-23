@@ -47,6 +47,43 @@ public class SaveChanges_Hook
     root.Lines.Single().Text.ShouldBe("first-rewritten");
   }
 
+  public void Adding_owned_child_after_initial_save_increments_root_version()
+  {
+    using HarnessDbContext db = CreateDb();
+    TestRoot root = new(Guid.NewGuid(), "alpha");
+    db.Roots.Add(root);
+    db.SaveChanges();
+    root.Version.ShouldBe(0);
+
+    root.AddLine("second");
+    db.ChangeTracker.DetectChanges();
+    db.Entry(root).State.ShouldBe(EntityState.Unchanged);
+
+    db.SaveChanges();
+
+    root.Version.ShouldBe(1);
+    root.Lines.Single().Text.ShouldBe("second");
+  }
+
+  public void Deleting_owned_child_increments_root_version()
+  {
+    using HarnessDbContext db = CreateDb();
+    TestRoot root = new(Guid.NewGuid(), "alpha");
+    root.AddLine("first");
+    db.Roots.Add(root);
+    db.SaveChanges();
+    root.Version.ShouldBe(0);
+
+    TestLine line = root.Lines.Single();
+    db.Entry(line).State = EntityState.Deleted;
+    db.ChangeTracker.DetectChanges();
+    db.Entry(root).State.ShouldBe(EntityState.Unchanged);
+
+    db.SaveChanges();
+
+    root.Version.ShouldBe(1);
+  }
+
   public void Child_only_mutation_runs_root_invariants()
   {
     using HarnessDbContext db = CreateDb();

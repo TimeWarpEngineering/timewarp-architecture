@@ -95,11 +95,24 @@ public class Round_Trip
       return false;
     }
 
+    // CI must exercise real Postgres concurrency — soft-skip would green a broken Docker host.
+    // Interactive local agents without Docker still soft-skip (model-mapping tests always run).
+    if (IsCiEnvironment())
+    {
+      throw new InvalidOperationException(
+        "Profile Postgres live tests require a connection string or Docker under CI. " +
+        (availability.SkipReason ?? "no connection"));
+    }
+
     // Fixie has no public conditional-skip exception; print and pass so hosts without Docker
     // (and without a connection string) still green the suite. Model-mapping tests cover mapping.
     Console.WriteLine($"[SKIP] Profile_Postgres_Persistence: {availability.SkipReason ?? "no connection"}");
     return true;
   }
+
+  private static bool IsCiEnvironment() =>
+    !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI"))
+    || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
 
   private static async Task<PostgresDbContext> CreateContextAsync()
   {
@@ -137,10 +150,10 @@ public class Round_Trip
         or DockerContainerNotFoundException
         or HttpRequestException
         or TimeoutException
-        or InvalidOperationException
-        or IOException
-        or NotSupportedException)
+        or IOException)
     {
+      // Narrow filter: InvalidOperationException / NotSupportedException from Testcontainers
+      // misconfiguration must surface, not look like "no Docker".
       string skipReason =
         "No Postgres connection available (set PostgresDbOptions__ConnectionString or " +
         "ConnectionStrings__postgres-db, or enable Docker for Testcontainers). " +
