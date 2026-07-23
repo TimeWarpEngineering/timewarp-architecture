@@ -38,6 +38,9 @@
 //             web route's first segment collides with an IngressReservedPathPrefixes entry (grpc).
 //   TWA0018 — a route cannot be collapsed to a top-level prefix (bare `api`, or a parameterized
 //             second segment like `api/{id}`) — the ingress cannot own an ambiguous prefix.
+//   TWA0019 — a name in IngressWebContractAssemblies matches no referenced assembly (typo,
+//             AssemblyName override, template rename): the silent-empty trap this task exists to
+//             kill — every carve-out would vanish with no signal. Reported per missing name.
 // Location.None: the offending symbol lives in a referenced assembly with no syntax location here.
 // Catches all exceptions (CA1031): a throwing generator would break the whole compilation.
 #endregion
@@ -74,6 +77,16 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
     isEnabledByDefault: true
   );
 
+  private static readonly DiagnosticDescriptor MissingContractsAssemblyDescriptor = new
+  (
+    "TWA0019",
+    "Configured ingress contracts assembly not found",
+    "Configured ingress contracts assembly '{0}' was not found among the compilation's referenced assemblies — no Web.Server ingress routes will be generated from it; check IngressWebContractAssemblies for a typo, or a renamed/stale assembly name",
+    "Design",
+    DiagnosticSeverity.Warning,
+    isEnabledByDefault: true
+  );
+
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     IncrementalValueProvider<GenerationOptions> options = context.AnalyzerConfigOptionsProvider.Select(
@@ -94,6 +107,24 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
 
     try
     {
+      // TWA0019: a configured contracts-assembly name that matches no reference is a silent-empty
+      // trap — every ingress carve-out would vanish with no signal (typo, AssemblyName override, or
+      // a template rename). Report per missing name; generation still emits an (empty) All.
+      if (options.SourceAssemblies.Count > 0)
+      {
+        var referencedNames = compilation.SourceModule.ReferencedAssemblySymbols
+          .Select(referenced => referenced.Name)
+          .ToImmutableHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (string configured in options.SourceAssemblies)
+        {
+          if (!referencedNames.Contains(configured))
+          {
+            spc.ReportDiagnostic(Diagnostic.Create(MissingContractsAssemblyDescriptor, Location.None, configured));
+          }
+        }
+      }
+
       INamedTypeSymbol? apiEndpointAttribute = compilation.GetTypeByMetadataName(ApiEndpointAttributeFullName);
 
       // Hosted web routes (source assemblies) and the collision set (other contracts assemblies).
@@ -227,16 +258,18 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
           continue;
         }
 
-        bool isClientOnly = type.GetAttributes()
-          .Any(attr => attr.AttributeClass?.Name == ClientOnlyContractAttributeSimpleName);
-        if (isClientOnly)
+        INamedTypeSymbol? requestClass = type.GetTypeMembers()
+          .FirstOrDefault(m => m.Name is "Query" or "Command");
+        if (requestClass is null)
         {
           continue;
         }
 
-        INamedTypeSymbol? requestClass = type.GetTypeMembers()
-          .FirstOrDefault(m => m.Name is "Query" or "Command");
-        if (requestClass is null)
+        // [ClientOnlyContract] excludes a contract from server hosting, so it must never gain an
+        // ingress carve-out. Check BOTH the outer type and the nested request: the real convention
+        // places it on the nested Query/Command, but either placement means "not hosted".
+        bool isClientOnly = HasClientOnlyContract(type) || HasClientOnlyContract(requestClass);
+        if (isClientOnly)
         {
           continue;
         }
@@ -256,6 +289,9 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
       }
     }
   }
+
+  private static bool HasClientOnlyContract(INamedTypeSymbol symbol)
+    => symbol.GetAttributes().Any(attr => attr.AttributeClass?.Name == ClientOnlyContractAttributeSimpleName);
 
   private static IEnumerable<INamespaceSymbol> GetAllNamespaces(INamespaceSymbol root)
   {

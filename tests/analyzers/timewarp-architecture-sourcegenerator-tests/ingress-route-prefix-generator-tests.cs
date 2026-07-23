@@ -90,11 +90,13 @@ public class IngressRoutePrefixGenerator_Tests
         public sealed class Response { }
     }
 
-    [ApiEndpoint]
-    [ClientOnlyContract("Client builds the identity locally; never a server endpoint.")]
+    // Real client-only shape (matches get-current-user-contracts.cs): NO [ApiEndpoint] on the outer
+    // type, [ClientOnlyContract] on the NESTED request. Excluded by the [ApiEndpoint] gate and the
+    // nested-[ClientOnlyContract] check alike.
     public static partial class GetCurrentUser
     {
         [ApiRoute("api/GetCurrentUser", HttpVerb.Get)]
+        [ClientOnlyContract("Client builds the identity locally; never a server endpoint.")]
         public sealed partial class Query { }
         public sealed class Response { }
     }
@@ -171,6 +173,38 @@ public class IngressRoutePrefixGenerator_Tests
     return Task.CompletedTask;
   }
 
+  // Belt-and-braces: [ApiEndpoint] on the outer type but [ClientOnlyContract] on the NESTED request
+  // must still be excluded (either placement means "not hosted"). An outer-only check would wrongly
+  // include this.
+  private const string ApiEndpointWithNestedClientOnly = """
+    using TimeWarp.Architecture;
+    using TimeWarp.Architecture.Attributes;
+
+    namespace Test.Web.Features;
+
+    [ApiEndpoint]
+    public static partial class LegacyThing
+    {
+        [ApiRoute("api/legacy", HttpVerb.Get)]
+        [ClientOnlyContract("Hosted marker on the outer type, but client-only on the request — must be excluded.")]
+        public sealed partial class Query { }
+        public sealed class Response { }
+    }
+    """;
+
+  public static Task Should_Exclude_ApiEndpoint_With_Nested_ClientOnlyContract()
+  {
+    MetadataReference web = GeneratorTestHarness.CompileContractAssembly(ApiEndpointWithNestedClientOnly, "web-contracts");
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.RunIngress(new[] { web }, EnabledForWebContracts());
+
+    string generated = GeneratedSource(runResult);
+    generated.ShouldNotContain("api/legacy");
+    generated.ShouldContain("ImmutableArray<string>.Empty");
+
+    return Task.CompletedTask;
+  }
+
   public static Task Should_Skip_Non_Api_Routes()
   {
     MetadataReference web = GeneratorTestHarness.CompileContractAssembly(WebContracts, "web-contracts");
@@ -208,6 +242,28 @@ public class IngressRoutePrefixGenerator_Tests
 
     GeneratorDriverRunResult runResult = GeneratorTestHarness.RunIngress(new[] { web }, EnabledForWebContracts());
 
+    string generated = GeneratedSource(runResult);
+    generated.ShouldContain("public static class WebServerApiRoutePrefixes");
+    generated.ShouldContain("ImmutableArray<string>.Empty");
+
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Report_TWA0019_When_Configured_Assembly_Not_Found()
+  {
+    // web-contracts IS referenced, but IngressWebContractAssemblies names "web-contractz" (typo) —
+    // matches nothing, so every carve-out would silently vanish. TWA0019 must fire, and All still
+    // emits (empty).
+    MetadataReference web = GeneratorTestHarness.CompileContractAssembly(WebContracts, "web-contracts");
+
+    var options = new Dictionary<string, string>
+    {
+      ["EnableIngressRouteGeneration"] = "true",
+      ["IngressWebContractAssemblies"] = "web-contractz",
+    };
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.RunIngress(new[] { web }, options);
+
+    runResult.Diagnostics.ShouldContain(d => d.Id == "TWA0019");
     string generated = GeneratedSource(runResult);
     generated.ShouldContain("public static class WebServerApiRoutePrefixes");
     generated.ShouldContain("ImmutableArray<string>.Empty");
