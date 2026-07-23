@@ -66,3 +66,49 @@ templates on web-contracts operations already declare every Web.Server-owned pat
 ## Session
 
 - Created: 2026-07-20
+
+### Implementation plan (Phase 2, 2026-07-23)
+
+**Decisive finding: the hand list has ALREADY drifted twice more** — `/api/Roles` (5 hosted
+admin endpoints) currently falls to the Api.Server catch-all through the ingress (104-003 bug
+class, live), and `/api/GetCurrentUser` is stale ([ClientOnlyContract]). Mechanism: **Option A,
+pure generation** — the hand list ceases to exist.
+
+Design: `IngressRoutePrefixGenerator` (IIncrementalGenerator) in the Generators project
+(timewarp-architecture-analyzers — corrected ground truth), gated by compiler-visible props
+(EnableIngressRouteGeneration, IngressWebContractAssemblies=web-contracts,
+IngressReservedPathPrefixes=grpc). Scans referenced assemblies for [ApiEndpoint]+[ApiRoute]
+minus [ClientOnlyContract] (simple-name matching per existing scanners); collapses to top-level
+`api/<segment>` prefixes (dedupe, Ordinal sort); emits `WebServerApiRoutePrefixes.All`
+(ImmutableArray<string>) in the **GLOBAL namespace** — sourceName rewriting cannot touch
+generator output but would break a hardcoded namespace (115 lesson). Empty-but-present emission
+when enabled → consumption compiles in every flag combo. Expected current output: api/Hello,
+api/Roles, api/Users, api/identity (+Roles fixed, −GetCurrentUser — both deltas ship LOUDLY in
+Results/commit).
+
+Diagnostics: **TWA0017** (web prefix shadows another server's route space — concrete case:
+api/weatherforecast; also reserved-prefix grpc) + **TWA0018** (non-derivable prefix: bare api or
+parameterized second segment). Release notes + AGENTS.md rows + csproj Description ranges.
+
+AppHost: <!--#if(web)--> guarded props + web-contracts ProjectReference
+(IsAspireProjectResource=false Private=false ExcludeAssets=runtime — foundation-contracts
+precedent) + api-contracts ref (collision set only) + dual-mode Generators attach; program.cs
+hand list → foreach over All with `webServerHttp` cluster AND
+.WithTransformUseOriginalHostHeader(true) preserved; Design region rewritten (hand-maintained
+paragraphs deleted, signin-token note condensed).
+
+Standalone yarp: INCLUDED (review fold-in; live deployment gap) — same generator +
+LoadFromMemory route merge onto the config-defined Web.Server cluster (cross-provider merge
+SPIKED FIRST; fallback in-memory cluster); check https+original-Host cert-mismatch shape (the
+AppHost 502 template) — likely move Development web cluster to http.
+
+Tests: generator unit tests in sourcegenerator-tests (harness extended for multi-assembly +
+build props; 8 cases incl. the named 104-003 regression shape); 117 smoke extension (compile-time
+prefix-coverage fact, GET /api/identity/session → 200 through ingress, optional /api/Roles →
+401-not-404); template both ways + UseAnalyzerPackages=true forced.
+
+Risks ordered: yarp config-merge spike; Generators attach activates TWA0001 on AppHost/yarp;
+ExcludeAssets hygiene; loud behavior deltas; standalone https hop. Order: spike → generator+tests
+→ AppHost → smoke → standalone → docs/template-matrix.
+
+- Plan: 2026-07-23 (plan agent; two live drift instances found during planning)
