@@ -14,7 +14,9 @@
 // Overrides of OnModelCreating must call base.OnModelCreating so the golden pin still runs.
 // ConfigureConventions registers generated TypedId ValueConverters (ConfigureTypedIdConventions)
 // so [TypedId] properties map to Guid without per-entity ceremony; Profile also sets conversion
-// explicitly as the exemplar.
+// explicitly as the exemplar. Its namespace arrives via an MSBuild <Using> in the csproj, NOT a
+// using directive here: the literal would be sourceName-rewritten on dotnet-new while the
+// generator's baked-in namespace is not (task 115 pattern).
 // Concurrency is a two-party contract: GoldenDbContext increments Version on Modified roots; the
 // host must pair .IsConcurrencyToken() (ProfileEntityTypeConfiguration does) or the increment is
 // silent bookkeeping with no WHERE check.
@@ -23,7 +25,6 @@
 namespace TimeWarp.Architecture.Persistence;
 
 using TimeWarp.Architecture.Aggregates.Profiles;
-using TimeWarp.Architecture.TypedIds.Ef;
 using TimeWarp.Foundation.Persistence;
 
 public sealed partial class PostgresDbContext : GoldenDbContext

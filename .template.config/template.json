@@ -71,7 +71,8 @@
             "source/container-apps/web/web-infrastructure/configuration/postgres-db-options.cs",
             "source/container-apps/web/web-server/configuration/environment-checks/postgres-db-environment-check.cs",
             "source/container-apps/web/web-server/hosted-services/postgres-db-context-startup-hosted-service.cs",
-            "source/container-apps/web/web-server/modules/postgres-db-module.cs"
+            "source/container-apps/web/web-server/modules/postgres-db-module.cs",
+            "tests/container-apps/web/web-infrastructure-tests/**"
           ]
         },
         {
