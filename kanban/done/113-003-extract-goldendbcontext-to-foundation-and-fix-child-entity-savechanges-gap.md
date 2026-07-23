@@ -42,6 +42,37 @@ increment skipped).
   use a test-local Root + owned child for the gap test.
 - Outbox / Profile mapping / ADR are sibling children 113-004 / 113-005.
 
+## Results
+
+**Implemented 2026-07-23** — `GoldenDbContext` graduated to Foundation; child-entity SaveChanges gap closed; host thinned.
+
+### What was implemented
+- Abstract unsealed `GoldenDbContext` in `TimeWarp.Foundation.Persistence` with SaveChanges/Async hook, child→root resolution (ownership / FK principal match / reference navigations), Version PropertyAccessMode pin, fail-closed missing Version
+- `PostgresDbContext` inherits base; duplicated hook body removed
+- EF Core package on foundation-infrastructure (Npgsql stays host-only)
+- 7 Fixie tests in foundation-infrastructure-tests (InMemory harness)
+
+### Files changed
+- `source/foundation/foundation-infrastructure/persistence/golden-db-context.cs` (new)
+- `source/foundation/foundation-infrastructure/foundation-infrastructure.csproj`
+- `Directory.Packages.props` (EF Core + InMemory)
+- `source/container-apps/web/web-infrastructure/persistence/postgres-db-context.cs`
+- Design regions: entity.cs, entity-version.cs, domain-invariants-guard.cs
+- `tests/foundation/foundation-infrastructure-tests/golden-db-context-tests.cs` (+ csproj/usings)
+
+### Key decisions
+- FK principal match required for `OwnsMany` + `WithOwner()` without CLR back-nav
+- Materialize `ChangeTracker.Entries()` before marking roots Modified (live enum throws)
+- No Profile/outbox/Orleans (siblings)
+
+### Tests
+- `dev build` 0/0
+- `dotnet fixie tests/foundation/foundation-infrastructure-tests` — 7 passed
+
+### Commit
+- `a462f7bb` feat(foundation): extract GoldenDbContext and close child-entity SaveChanges gap
+
 ## Session
 
 - Created: 2026-07-23 (from 113 remaining-work plan)
+- Implementation: 2026-07-23 (build agent via orchestrator)
