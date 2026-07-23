@@ -112,3 +112,38 @@ ExcludeAssets hygiene; loud behavior deltas; standalone https hop. Order: spike 
 → AppHost → smoke → standalone → docs/template-matrix.
 
 - Plan: 2026-07-23 (plan agent; two live drift instances found during planning)
+
+## Results
+
+**Delivered (commits `52ff73e2`, `a5a17557`, 2026-07-23): the hand-maintained ingress route
+list no longer exists.** `IngressRoutePrefixGenerator` (Generators package) derives Web.Server's
+ingress carve-outs from web-contracts `[ApiRoute]` metadata — global-namespace emission
+(sourceName-rewrite-safe), always-emits-when-enabled, consumed by BOTH the AppHost YARP (cluster
++ original-Host transform preserved) and the standalone yarp gateway (cross-provider
+LoadFromMemory onto the config cluster, spiked first; Development cluster also moved off the
+502-shaped https+original-Host hop). New build-breaking diagnostics: **TWA0017** (prefix shadows
+a foreign contracts route or reserved grpc space), **TWA0018** (non-derivable prefix),
+**TWA0019** (configured contracts assembly not found — closes the generator's own silent-empty
+drift path, review G1).
+
+**Behavior deltas (loud):** `/api/Roles` NEWLY ROUTED — live bug fix; five admin endpoints had
+drifted off the hand list and 404'd through the ingress (104-003 class). `/api/GetCurrentUser`
+carve-out removed ([ClientOnlyContract], no server handler). Generated set:
+api/Hello, api/Roles, api/Users, api/identity.
+
+**Verification:** dev build 0/0; sourcegen 51/51 (11 ingress cases incl. the named 104-003
+regression shape + TWA0017/0018/0019); aspire-tests 7/7 incl. /api/identity/session end-to-end
+and /api/Roles 401-not-404 through the real ingress; template smoke both cells + manual
+--web false; full dev test green except pre-existing Release SPA-shell flake (filed 119,
+reproduced on clean master).
+
+**Review:** round 1 effort 1 — 0 blockers, 2 medium (G1 fixed, G3 accepted → task 120),
+2 low (G2 fixed, G4 accepted); disposition **accepted-exceptions**, zero open.
+
+The 104-003 failure class is now impossible by construction: a new contract's /api segment
+appears in the ingress with no AppHost edit, and every drift mode (missed route, stale route,
+shadowed prefix, misconfigured source) breaks the build or a smoke fact.
+
+## Session
+
+- Orchestrated 2026-07-23: plan (found 2 live drift instances) + build + review + fixes.
