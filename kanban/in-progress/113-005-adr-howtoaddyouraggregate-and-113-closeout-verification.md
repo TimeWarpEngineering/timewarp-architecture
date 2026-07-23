@@ -75,7 +75,7 @@ documentation + dual-flag verification closeout. Lands after 113-003 and 113-004
 
 ### Commit
 
-- `ca51fe44` docs(113-005): ADR-0009 golden Postgres EF path and HowToAddYourAggregate
+- `bc382563` docs(113-005): ADR-0009 golden Postgres EF path and HowToAddYourAggregate
 
 ## Session
 
