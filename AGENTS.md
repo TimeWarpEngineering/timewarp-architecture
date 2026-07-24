@@ -73,10 +73,11 @@ assembly-split note): **`feature-placement` skill** (`skills/tw-feature-placemen
 ## Platform packages (foundation + analyzers + identity)
 
 Greenfield `dotnet new timewarp-architecture` apps reference **published NuGet packages** for
-foundation and analyzers (template symbols `foundationPackages` / `analyzerPackages`, both default
-**true**). **Identity** defaults the other way: `identityPackages` default **false** ships
-`source/libraries/timewarp-identity` into generated apps until `TimeWarp.Identity` is published on
-nuget.org. This monorepo dogfoods all three via `ProjectReference` when source trees are present.
+foundation, analyzers, and identity (template symbols `foundationPackages` / `analyzerPackages` /
+`identityPackages`, all default **true** — identity flipped with the v2.0.0-beta.6 first publish
+of `TimeWarp.Identity`, task 124; `identityPackages=false` still vendors
+`source/libraries/timewarp-identity` for source-mode work). This monorepo dogfoods all three via
+`ProjectReference` when source trees are present.
 
 | PackageId | Contents |
 |-----------|----------|
@@ -84,7 +85,7 @@ nuget.org. This monorepo dogfoods all three via `ProjectReference` when source t
 | `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016) — safe repo-wide |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001, TWA0017/0018 (ingress route generation) — attach only where gens should run |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
-| `TimeWarp.Identity` | Principal identity (passkeys / agent keys); dual-mode until first publish |
+| `TimeWarp.Identity` | Principal identity (passkeys / agent keys); published since 2.0.0-beta.6 |
 
 MSBuild dual-mode (auto-detects missing source trees): `UseFoundationPackages` /
 `UseAnalyzerPackages` / `UseIdentityPackages`. CPM `PackageVersion` pins lag the last

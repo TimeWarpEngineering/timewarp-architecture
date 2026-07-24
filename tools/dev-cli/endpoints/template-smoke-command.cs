@@ -43,6 +43,11 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     "source/foundation/foundation-infrastructure/foundation-infrastructure.csproj",
     "source/foundation/foundation-server/foundation-server.csproj",
     "source/libraries/timewarp-modules/timewarp-modules.csproj",
+    // Identity joined the package-mode default (identityPackages=true, task 124). Without a
+    // smoke-local pack, generated apps would pull nuget.org's TimeWarp.Identity whose
+    // Foundation dependency floor (>= the published version) collides with the 2.0.0-smoke
+    // pins → NU1603 under -warnaserror.
+    "source/libraries/timewarp-identity/timewarp-identity.csproj",
   ];
 
   /// <summary>PackageId substrings whose CPM Version is rewritten to <see cref="SmokePackageVersion"/>.</summary>
@@ -53,6 +58,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     "TwArchitectureAttributesPackageId",
     "TimeWarp.Foundation.",
     "TimeWarp.Modules",
+    "TimeWarp.Identity",
   ];
 
   private static readonly (string Name, string[] ExtraArgs)[] SmokeMatrix =
@@ -363,6 +369,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
               <package pattern="TimeWarp.Architecture.*" />
               <package pattern="TimeWarp.Foundation.*" />
               <package pattern="TimeWarp.Modules" />
+              <package pattern="TimeWarp.Identity" />
             </packageSource>
             <packageSource key="nuget.org">
               <package pattern="*" />

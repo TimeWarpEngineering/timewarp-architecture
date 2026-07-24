@@ -6,7 +6,20 @@
   <Import Project="$(MSBuildThisFileDirectory)msbuild/timewarp-platform-packages.props"
           Condition="'$(_TwPlatformPackagesPropsImported)' != 'true'" />
 
-
+  <!-- Platform distribution switches (tasks 051/092/115): ProjectReference when the source tree is
+       present (this repo dogfoods), PackageReference when the template excluded it (generated
+       apps). Detection lives at ROOT (not source/Directory.Build.props) because tests/ projects
+       need the switches too — tests/common/timewarp-testing references identity dual-mode
+       (task 124) and the source-tree props never reach the tests tree. Force with
+       -p:UseFoundationPackages= / -p:UseAnalyzerPackages= / -p:UseIdentityPackages=. -->
+  <PropertyGroup Label="Platform Distribution Switches">
+    <UseFoundationPackages Condition="'$(UseFoundationPackages)' == '' and !Exists('$(MSBuildThisFileDirectory)source/foundation/foundation-domain/foundation-domain.csproj')">true</UseFoundationPackages>
+    <UseFoundationPackages Condition="'$(UseFoundationPackages)' == ''">false</UseFoundationPackages>
+    <UseAnalyzerPackages Condition="'$(UseAnalyzerPackages)' == '' and !Exists('$(MSBuildThisFileDirectory)source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj')">true</UseAnalyzerPackages>
+    <UseAnalyzerPackages Condition="'$(UseAnalyzerPackages)' == ''">false</UseAnalyzerPackages>
+    <UseIdentityPackages Condition="'$(UseIdentityPackages)' == '' and !Exists('$(MSBuildThisFileDirectory)source/libraries/timewarp-identity/timewarp-identity.csproj')">true</UseIdentityPackages>
+    <UseIdentityPackages Condition="'$(UseIdentityPackages)' == ''">false</UseIdentityPackages>
+  </PropertyGroup>
 
   <!-- MSBuild and NuGet behavior configuration -->
   <PropertyGroup Label="MSBuild/NuGet Configuration">

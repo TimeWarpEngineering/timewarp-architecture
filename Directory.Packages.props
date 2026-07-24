@@ -21,18 +21,18 @@
          itself uses project refs). Pinned to the last PUBLISHED foundation version — which may lag
          the repo's in-dev <Version> — so a generated app references packages that actually exist on
          the feed. Bump these when a new foundation version is published. -->
-    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.6" />
+    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.6" />
+    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.6" />
+    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.6" />
+    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.6" />
+    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.6" />
     <!-- Analyzer/generator packages (task 092). Package IDs composed via properties so template
          sourceName cannot rewrite them (task 115). Pinned to last PUBLISHED version — may lag
          the repo's in-dev <Version>. Bump when a new analyzer package version is published. -->
-    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.5" />
-    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.5" />
-    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.5" />
+    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.6" />
+    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.6" />
+    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.6" />
     <!-- TimeWarp.Identity has never been published (task 104-003 is its first consumer beyond the
          library itself) — there is no "last published version" to pin to yet, unlike the
          TimeWarp.Foundation.* pins above. Pinned to the repo's current in-dev <Version> as a
@@ -41,7 +41,7 @@
          consumers (identityPackages=true), which cannot function until the first TimeWarp.Identity
          publish regardless of the number written here. Bump/verify against the actually-published
          version at first release. -->
-    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.5" />
+    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.6" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />

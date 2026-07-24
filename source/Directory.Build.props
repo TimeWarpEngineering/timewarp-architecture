@@ -2,31 +2,9 @@
   <!-- Import parent Directory.Build.props. -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- Foundation distribution switch (task 051). The container-apps reference the foundation layer
-       as project refs in THIS repo (where the source lives) and as published TimeWarp.Foundation.*
-       NuGet packages in an app generated from the template (where the source is excluded). We detect
-       which world we're in by whether the foundation source is present — so the csproj switch and the
-       dotnet-new template exclusion agree automatically. Can be forced via -p:UseFoundationPackages=. -->
-  <PropertyGroup>
-    <UseFoundationPackages Condition="'$(UseFoundationPackages)' == '' and !Exists('$(MSBuildThisFileDirectory)foundation/foundation-domain/foundation-domain.csproj')">true</UseFoundationPackages>
-    <UseFoundationPackages Condition="'$(UseFoundationPackages)' == ''">false</UseFoundationPackages>
-  </PropertyGroup>
-
-  <!-- Analyzer distribution switch (task 092). Same dual-mode idea as foundation: ProjectReference
-       when source/analyzers is present (this repo dogfoods the projects); PackageReference when the
-       template excluded analyzer source (generated apps). Force with -p:UseAnalyzerPackages=. -->
-  <PropertyGroup>
-    <UseAnalyzerPackages Condition="'$(UseAnalyzerPackages)' == '' and !Exists('$(MSBuildThisFileDirectory)analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj')">true</UseAnalyzerPackages>
-    <UseAnalyzerPackages Condition="'$(UseAnalyzerPackages)' == ''">false</UseAnalyzerPackages>
-  </PropertyGroup>
-
-  <!-- Identity distribution switch (task 115). Independent of foundation: generated apps default to
-       shipping identity SOURCE (identityPackages=false) until TimeWarp.Identity is published.
-       Force with -p:UseIdentityPackages=. -->
-  <PropertyGroup>
-    <UseIdentityPackages Condition="'$(UseIdentityPackages)' == '' and !Exists('$(MSBuildThisFileDirectory)libraries/timewarp-identity/timewarp-identity.csproj')">true</UseIdentityPackages>
-    <UseIdentityPackages Condition="'$(UseIdentityPackages)' == ''">false</UseIdentityPackages>
-  </PropertyGroup>
+  <!-- Platform distribution switches (UseFoundationPackages / UseAnalyzerPackages /
+       UseIdentityPackages) moved to ROOT Directory.Build.props (task 124): tests/ projects need
+       them too, and the source-tree props never reach the tests tree. -->
 
   <!-- Default package metadata (can be overridden in individual projects) -->
   <PropertyGroup Label="Package Metadata">
