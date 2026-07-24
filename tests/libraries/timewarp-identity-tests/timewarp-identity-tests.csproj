@@ -7,5 +7,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\source\libraries\timewarp-identity\timewarp-identity.csproj" />
+    <!-- In-memory fixture subclasses the shared IPrincipalStore contract suite, homed in
+         timewarp-testing (task 124 — survives identityPackages=true generation). -->
+    <ProjectReference Include="..\..\common\timewarp-testing\timewarp-testing.csproj" />
   </ItemGroup>
 </Project>

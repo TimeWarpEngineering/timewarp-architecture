@@ -6,6 +6,8 @@
 
 namespace PrincipalStoreContract_;
 
+using TimeWarp.Identity;
+
 /// <summary>Factory for an empty, independent <see cref="IPrincipalStore"/> instance.</summary>
 public interface IPrincipalStoreFactory
 {

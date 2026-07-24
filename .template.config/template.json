@@ -140,9 +140,9 @@
     },
     "identityPackages": {
       "type": "parameter",
-      "description": "Reference the published TimeWarp.Identity NuGet package instead of copying identity source into the generated app (default false until Identity is published)",
+      "description": "Reference the published TimeWarp.Identity NuGet package instead of copying identity source into the generated app",
       "datatype": "bool",
-      "defaultValue": "false"
+      "defaultValue": "true"
     },
     "analyzerPackages": {
       "type": "parameter",
