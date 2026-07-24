@@ -116,7 +116,52 @@ IPrincipalStore API changes.
 3. InternalsVisibleTo not public rehydrate API
 4. Schema name `identity`
 
+## Results
+
+**Completed 2026-07-24** — EF-backed `IPrincipalStore` behind postgres; first product durable
+consumer of the 113 golden path. Library stays EF-free; tokens/challenges remain in-memory.
+
+### What was implemented
+- `EfPrincipalStore` with full in-memory parity (snapshot-on-get, store-CAS Version,
+  first-credential tier bump, handle uniqueness, immutability checks)
+- EF mapping: schema `identity`, tables `principals`/`credentials`, TypedIds, bytea field access,
+  unique `(Type, Handle)`, Version `.IsConcurrencyToken()`
+- DI: always in-memory default; PostgresDbModule swaps scoped EF store when connection present
+- Template `!postgres` excludes `ef-principal-store.cs`
+- Dual-fixture store-contract suite + model-only mapping tests
+- Docs: HowToAddYourAggregate, ADR-0009 store-CAS note, Design regions
+
+### Key decisions
+- Version authority = **store-CAS + Snapshot** (not IAggregateRoot / Golden-owned Version)
+- Agent tokens + challenge stores stay ephemeral in-memory
+- InternalsVisibleTo for Snapshot (no public rehydrate API)
+
+### Files (primary)
+- `web-infrastructure/persistence/ef-principal-store.cs`
+- `features/identity/{principal,credential}-entity-type-configuration-infrastructure.cs`
+- `postgres-db-context.cs`, `postgres-db-module.cs`, `web-infrastructure-module.cs`
+- `timewarp-identity.csproj` InternalsVisibleTo
+- Dual-fixture tests under `timewarp-identity-tests` + `web-infrastructure-tests`
+- HowToAddYourAggregate + ADR-0009
+
+### Tests
+- `dev build` 0/0
+- `timewarp-identity-tests` — **169 passed**
+- `web-infrastructure-tests` — **39 passed** (EF contract on Testcontainers)
+
+### Phase 4b review
+- Effort 1 (general); 1 round under `review/`
+- Final counts: **0 open** (no findings)
+- Disposition: **clean** (`review/disposition.md`)
+- Paths: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`
+
+### Commits
+- `f6d80f3f` feat(identity): persist principals via EF behind postgres flag
+- `f10e3b81` test(identity): dual-fixture IPrincipalStore contract suite
+- `3ff78687` docs: record identity store-CAS path and dual-fixture pattern
+
 ## Session
 
 - Created: 2026-07-21 (spun out of 112 share observations)
 - Plan: 2026-07-24 (orchestrator + plan agent; unblocked by 113)
+- Implementation + review disposition: 2026-07-24
