@@ -39,3 +39,27 @@ Origin: "publish residuals" thread 2026-07-24. Sequencing: 122 (Golden→Aggrega
 landed BEFORE this on purpose — beta.6 ships the correct names as the first public API.
 Blocks nothing else, but until it ships every real greenfield generation is broken while the
 monorepo stays green.
+
+## Results (2026-07-24)
+
+Took TWO releases — the beta.6 template packed before the pin bump (chicken-and-egg the task
+sequencing missed), so **v2.0.0-beta.7** is the release that actually fixes real users:
+
+- v2.0.0-beta.6: republished all platform packages WITH AggregateDbContext (verified by nupkg
+  strings); **TimeWarp.Identity first publish** — rode the repo-scoped OIDC trusted publishing
+  with zero credential work, exactly as Steve said it would. Template pins were stale (beta.2).
+- v2.0.0-beta.7: **pins == release version policy** (AGENTS.md updated) — pins bump in the
+  same commit as <Version>; packages + template publish together. identityPackages default
+  true; shared IPrincipalStore contract suite rehomed to timewarp-testing; Use*Packages
+  switches hoisted to root Directory.Build.props; smoke packs/pins/maps Identity locally;
+  stale docfx workflow disabled (task 125).
+- Marked beta.6 prerelease retroactively (created without the flag); beta.7 created
+  --prerelease. check-version gotcha: it reads LOCAL tags — `git fetch --tags` after
+  gh-created releases.
+
+Final proof (the real-user path, no local feeds anywhere): published beta.7 template nupkg
+from flatcontainer → dotnet new in a clean hive → generated app pins beta.7 → restored
+against nuget.org ONLY → **Build succeeded, 0 Warnings, 0 Errors** (after git init; the
+27 warnings pre-init were TimeWarp.Build.Tasks git-metadata fallback, environmental).
+NuGet website search-index lag is cosmetic — flatcontainer (the restore path) had every
+version within minutes.
