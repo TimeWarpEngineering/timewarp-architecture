@@ -19,7 +19,7 @@ as long as it builds; tests gated the PR (#288, merged green).
 
 ## Checklist
 
-- [ ] Bump `<Version>` to 2.0.0-beta.6 (source/Directory.Build.props; check timewarp-templates
+- [x] Bump `<Version>` to 2.0.0-beta.6 (both trees, commit 7cad5fcb, PR 289) (source/Directory.Build.props; check timewarp-templates
       tree version note — both publish at this version)
 - [ ] Cut GitHub Release / tag v2.0.0-beta.6 on master (Steve blesses; release event triggers
       OIDC publish, NO test gate)
