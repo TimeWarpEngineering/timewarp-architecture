@@ -36,13 +36,22 @@ the template still runs with zero infrastructure.
 
 ## Checklist
 
-- [ ] Store durability inventory (principal / agent-token / challenge) with decisions recorded
-- [ ] EF entity configuration + DbContext integration for principals, credentials, agent keys
-- [ ] Store-contract test suite against both in-memory and EF implementations
-- [ ] Handle-uniqueness + concurrency-conflict semantics proven under the EF store
-- [ ] Flag-gated DI registration (template `#if postgres` consistency)
-- [ ] Migrations + template output verified for both flag states
-- [ ] Update AGENTS.md / identity ADR if the persistence seam changes documented shape
+- [ ] **Durability inventory** — principal/credentials durable; agent tokens + both challenge
+      stores ephemeral (in-memory); decisions in Notes + store Design region
+- [ ] **InternalsVisibleTo** — `web-infrastructure` + `web-infrastructure-tests` can call `Snapshot`
+- [ ] **EF mapping** — `identity.principals` + `identity.credentials`; TypedIds; bytea handle/
+      material with field access; unique `(Type, Handle)`; Version `.IsConcurrencyToken()`
+- [ ] **`EfPrincipalStore`** — full `IPrincipalStore` parity (snapshot-on-get, CAS Version,
+      first-credential conditional tier, handle uniqueness, immutability checks)
+- [ ] **DbContext** — DbSets; configs via `ApplyConfigurationsFromAssembly`
+- [ ] **DI** — in-memory default; PostgresDbModule swaps scoped EF store only when connection present
+- [ ] **Template** — `!postgres` excludes EF store file; smoke both flag states
+- [ ] **Store-contract dual-fixture** — shared cases; in-memory + EF (Testcontainers CI fail-closed)
+- [ ] **Model-only tests** — schema/TypedId/concurrency/unique index without Docker
+- [ ] **Docs** — HowToAddYourAggregate + ADR-0009 store-CAS note; module Design regions
+- [ ] **Non-goals** — no IAggregateRoot conversion; no token/challenge EF; no migrations mandate;
+      no library EF deps
+- [ ] `dev build` 0/0 and relevant tests green
 
 ## Notes
 
@@ -52,7 +61,62 @@ the template still runs with zero infrastructure.
   PrincipalId must survive restarts before anyone pays into them).
 - Related: [[104-005]] (credential list/revoke UX assumes credentials persist),
   [[104-014-agent-end-to-end-path-register-key-then-pay-then-call-with-quota-token]].
+- Unblocked by [[113-golden-persistence-implementation-postgres-first-aspire-wired-with-actor-model-evaluation]]
+  (GoldenDbContext, Profile teaching path, dual-fixture pattern, ADR-0009).
+
+### Implementation plan (Phase 2, 2026-07-24)
+
+**Principle:** first product durable consumer of the 113 golden EF path; identity stays a
+**port-backed store** (not direct-DbContext teaching aggregate like Profile). Library remains
+EF-free.
+
+#### Durability inventory
+
+| Store | Survive restart? | Decision |
+|-------|------------------|----------|
+| `IPrincipalStore` (Principal + Credential incl. agent keys) | Yes | **EF behind postgres** |
+| `IAgentTokenStore` (~15 min bearer grants) | No | **In-memory** (Redis later if multi-replica) |
+| `IWebAuthnChallengeStore` / `IAgentKeyChallengeStore` | No | **In-memory** |
+
+#### Version authority (soft-gate silence = accept)
+
+**Store-CAS + Snapshot** — do **not** make Principal/Credential `IAggregateRoot` this task.
+Store owns `EntityVersion.Next` / `ConcurrencyConflictException`. Host maps
+`.IsConcurrencyToken()` as DB race belt. Avoids double-bump with GoldenDbContext.
+
+#### Mapping
+
+- Schema `identity`; tables `principals`, `credentials` (independent entities, not OwnsMany)
+- Unique `(Type, Handle)` for atomic handle uniqueness
+- Field access for byte[] Handle/PublicMaterial
+- InternalsVisibleTo web-infrastructure (+ tests) for `Snapshot`
+
+#### Code homes
+
+- Configs: `features/identity/*-entity-type-configuration-infrastructure.cs`
+- Store: `web-infrastructure/persistence/ef-principal-store.cs` (+ template `!postgres` exclude)
+- DI: WebInfrastructureModule always InMemory; PostgresDbModule swaps scoped EfPrincipalStore
+  when connection present (skip-mode)
+
+#### Dual-fixture tests
+
+- Shared abstract contract (refactor existing in-memory tests)
+- In-memory fixture in timewarp-identity-tests
+- EF fixture in web-infrastructure-tests (Testcontainers; CI fail-closed like Profile)
+
+#### Out of scope
+
+IAggregateRoot conversion; token/challenge EF; migrations mandate; Orleans/outbox; library EF;
+IPrincipalStore API changes.
+
+#### Soft-gates (proceed unless vetoed)
+
+1. Store-CAS not Golden-owned Version
+2. Tokens stay in-memory
+3. InternalsVisibleTo not public rehydrate API
+4. Schema name `identity`
 
 ## Session
 
 - Created: 2026-07-21 (spun out of 112 share observations)
+- Plan: 2026-07-24 (orchestrator + plan agent; unblocked by 113)
