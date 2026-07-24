@@ -10,6 +10,14 @@
 // short-lived grants) that will never be database entities — if distributed, they become
 // cache/Redis-backed — so they are co-located with the feature they serve, per the repo's
 // feature-cohesion convention. See overview.md at the library root.
+//
+// Durability inventory (task 104-032):
+//   - IPrincipalStore (Principal + Credential, including agent keys) → durable; host EF behind
+//     the postgres flag (EfPrincipalStore in web-infrastructure). In-memory remains the no-flag /
+//     skip-mode default.
+//   - IAgentTokenStore (~15 min bearer grants) → deliberately ephemeral (in-memory); Redis later
+//     if multi-replica requires shared token state.
+//   - IWebAuthnChallengeStore / IAgentKeyChallengeStore → ephemeral by design (in-memory).
 // Credential lookup by CredentialId (RFC D3), not raw Guid. Type and Handle are immutable after Create — UpdateCredential
 // persists revoke/label (and similar) changes for the same Id only; no handle reindex contract.
 // FindCredentialByHandle may return revoked credentials (callers check IsRevoked).

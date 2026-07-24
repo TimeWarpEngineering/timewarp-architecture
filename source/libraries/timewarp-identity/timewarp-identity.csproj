@@ -43,4 +43,11 @@
          "CENTRAL DECISION" Design region in ceremonies/webauthn/webauthn-registration.cs. -->
     <PackageReference Include="System.Formats.Cbor" />
   </ItemGroup>
+
+  <!-- Snapshot rehydration is internal (store-only). Host EF store (web-infrastructure) and its
+       dual-fixture contract tests call Snapshot; library stays EF-free (task 104-032). -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="web-infrastructure" />
+    <InternalsVisibleTo Include="web-infrastructure-tests" />
+  </ItemGroup>
 </Project>

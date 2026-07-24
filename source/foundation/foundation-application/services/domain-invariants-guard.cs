@@ -4,10 +4,10 @@
 #endregion
 
 #region Design
-// EF-agnostic core: this type has no EF Core dependency and no DI interface — hosts call the static
-// EnsureValid overloads directly from their DbContext.SaveChanges(Async) override (e.g.
-// PostgresDbContext), after filtering entries down to Added/Modified IAggregateRoot instances. Kept
-// static/pure so the hook needs no constructor plumbing.
+// EF-agnostic core: this type has no EF Core dependency and no DI interface — GoldenDbContext
+// (and any host that inherits it) calls the static EnsureValid overloads from SaveChanges(Async)
+// after resolving Added/Modified IAggregateRoot entries (including roots reached from dirty
+// children). Kept static/pure so the hook needs no constructor plumbing.
 // Discovery walks the aggregate's exact runtime type, then its BaseType chain (object last), looking
 // at each level's own nested types for the first non-abstract one assignable to
 // IValidator<TAggregate>. Walking the chain (not just the runtime type) exists for ONE

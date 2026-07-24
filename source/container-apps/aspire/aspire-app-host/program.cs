@@ -13,15 +13,15 @@
 // excluded it would otherwise be an unreferenced orphan container in the postgres-without-web combination.
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
 // YARP literal /api routes owned by Web.Server beat the Api.Server catch-all by route precedence, not declaration order.
-// The Web.Server route list below is hand-maintained and MUST gain a line whenever web-contracts adds a new
-// top-level /api path segment — a missed entry sends the path to the Api.Server catch-all, which 404s with a bare
-// body the SPA renders as a generic unhandled error (found the hard way with /api/identity in 104-003; candidate
-// for generation from web-contracts ApiRoute templates per the prefer-analyzers directive).
-// Symmetrically, a line MUST be removed when its contract stops being a hosted endpoint (e.g. becomes
-// [ClientOnlyContract]) — a stale route otherwise still forwards to Web.Server for a path FastEndpoints no
-// longer serves. /api/signin-token was removed for this reason (task 110 round-1 review M1: the contract
-// mints a Passwordless sign-in token for an arbitrary caller-supplied UserId with no proof of identity, has
-// zero live consumers, and must not be a reachable server endpoint).
+// The Web.Server /api carve-outs are GENERATED, not hand-maintained (task 107): IngressRoutePrefixGenerator emits
+// WebServerApiRoutePrefixes.All from the hosted web-contracts ApiRoute templates (outer ApiEndpoint + nested
+// Query/Command route, minus ClientOnlyContract), collapsed to top-level api/<segment> prefixes; the loop below turns
+// each into a /api/<segment>/{**catch-all} route. A new hosted web /api segment therefore appears in the ingress with
+// no edit here, and a contract that stops being hosted (ClientOnlyContract) drops out automatically — the drift that
+// shipped /api/identity and /api/Roles unreachable (104-003) is now impossible. TWA0017/TWA0018 fail the build on a
+// prefix that would shadow another server's route space or that cannot be collapsed to a top-level segment.
+// Historical note: /api/signin-token was retired as a hosted endpoint (task 110 review M1) and so is absent from the
+// generated set by construction, not by a hand-removed line.
 // Ingress:Port (https) / Ingress:HttpPort (http) pin the YARP host ports so external clients, E2E
 // tests, and reverse proxies get stable ingress URLs. Development pins https 63610 / http 63620
 // (appsettings.Development.json), matching the standalone yarp project's launchSettings on purpose:
@@ -38,6 +38,9 @@
 // (WebAuthnOptions.AllowedRpIds), so a forged Host can never mint a credential for an RP ID the
 // operator did not approve. Applied to Web.Server routes only; the api/grpc backends do no host-based
 // selection and keep YARP's default host rewrite.
+// Guarded by aspire-tests/ingress-smoke-tests.cs (task 117): a request-level smoke through the
+// ingress with a foreign Host header on a web route — the exact shape that 502'd when this hop
+// ran over https — so a regression to the https cluster fails CI instead of shipping green.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -123,26 +126,50 @@ internal class Program
 
     if (!string.IsNullOrWhiteSpace(ingressPublicUrl))
     {
-      yarp = yarp.WithUrl(ingressPublicUrl, "public");
+      // Display text IS the URL: a friendly label ("public") renders INSTEAD of the address in the
+      // dashboard's URL column, hiding the very hostname the link exists to surface.
+      yarp = yarp.WithUrl(ingressPublicUrl, ingressPublicUrl);
     }
 
+#if web
+    // Web routes preserve the ORIGINAL Host (per-request RP-ID selection). Outbound TLS from the
+    // ingress would then validate Web.Server's localhost dev cert against the PUBLIC hostname
+    // (Headers.Host overrides .NET's certificate-name validation target) and 502 with
+    // RemoteCertificateNameMismatch. So the ingress forwards web routes over the HTTP endpoint —
+    // TLS terminates at the ingress edge (and at Caddy on the public chain), not on this hop.
+    // api/grpc routes do not preserve host and stay on their default (https) endpoints.
+    // NOTE (13.4.6): YarpCluster(EndpointReference) still emits the service-level address
+    // "https+http://web-server", which service discovery resolves https-first — reintroducing the
+    // mismatch. The explicit named-endpoint service-discovery address pins the scheme AND the
+    // endpoint: http://_http.web-server resolves ONLY services__web-server__http__0.
+
+#endif
+#if web
+    // The web routes below target the named-endpoint cluster (http://_http.web-server), which is
+    // NOT a resource reference — this explicit reference keeps the services__web-server__* env
+    // injected so the ingress can resolve that address.
+    yarp = yarp.WithReference(webServer);
+#endif
     yarp = yarp.WithConfiguration(yarpConfiguration =>
     {
 #if api
       yarpConfiguration.AddRoute("/api/{**catch-all}", apiServer);
 #endif
 #if web
-      // Web.Server owns these /api endpoints (see web-contracts ApiRoute templates); their
-      // literal segments outrank the Api.Server catch-all above, so they win regardless of order.
+      global::Aspire.Hosting.Yarp.YarpCluster webServerHttp = yarpConfiguration.AddCluster("web-server-http", "http://_http.web-server");
+
+      // Web.Server owns these top-level /api prefixes (generated: WebServerApiRoutePrefixes.All from
+      // the web-contracts ApiRoute templates — see the Design region). Each literal segment outranks
+      // the Api.Server catch-all above, so they win regardless of order.
       // WithTransformUseOriginalHostHeader (task 104-031): forward the CLIENT's original Host header
-      // to Web.Server instead of YARP rewriting it to the destination host, so
-      // HttpRequestHostAccessor sees the public share hostname and the passkey RP-ID selection can
-      // match it against the allowlist. Web.Server routes ONLY — the api/grpc backends do not select
-      // an RP ID from the host and are left with YARP's default host rewrite.
-      yarpConfiguration.AddRoute("/api/GetCurrentUser", webServer).WithTransformUseOriginalHostHeader(true);
-      yarpConfiguration.AddRoute("/api/Hello", webServer).WithTransformUseOriginalHostHeader(true);
-      yarpConfiguration.AddRoute("/api/Users/{**catch-all}", webServer).WithTransformUseOriginalHostHeader(true);
-      yarpConfiguration.AddRoute("/api/identity/{**catch-all}", webServer).WithTransformUseOriginalHostHeader(true);
+      // to Web.Server instead of YARP rewriting it to the destination host, so HttpRequestHostAccessor
+      // sees the public share hostname and the passkey RP-ID selection can match it against the
+      // allowlist. Web.Server routes ONLY — the api/grpc backends keep YARP's default host rewrite.
+      foreach (string apiPrefix in global::WebServerApiRoutePrefixes.All)
+      {
+        yarpConfiguration.AddRoute($"/{apiPrefix}/{{**catch-all}}", webServerHttp).WithTransformUseOriginalHostHeader(true);
+      }
+
 #endif
 #if grpc
       yarpConfiguration.AddRoute("/grpc/{**catch-all}", grpcServer)
@@ -151,7 +178,7 @@ internal class Program
 #if web
       // Catch-all to Web.Server (SPA + everything not owned above): same original-Host forwarding as
       // the literal /api routes so RP-ID selection sees the public host (task 104-031).
-      yarpConfiguration.AddRoute(webServer).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute(webServerHttp).WithTransformUseOriginalHostHeader(true);
 #endif
     });
 #endif

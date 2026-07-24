@@ -82,6 +82,10 @@
     <!--#if (web) -->
     <Project Path="tests/container-apps/web/web-domain-tests/web-domain-tests.csproj" />
     <Project Path="tests/container-apps/web/web-contracts-tests/web-contracts-tests.csproj" />
+    <!--#if (postgres) -->
+    <Project Path="tests/container-apps/web/web-infrastructure-tests/web-infrastructure-tests.csproj" />
+    <!--#endif -->
+
     <Project Path="tests/container-apps/web/web-server-integration-tests/web-server-integration-tests.csproj" />
     <Project Path="tests/container-apps/web/web-spa-integration-tests/web-spa-integration-tests.csproj" />
     <!--#endif -->

@@ -162,3 +162,14 @@ secrets only (not env vars); S1 document-and-accept.
 ## Session
 
 - Implementation/review/disposition: 2026-07-22 (orchestrated: plan + build + 2 reviewers)
+
+### Correction (2026-07-22, post-close)
+
+Results above claimed "personal share host now configured as a user-secret allowlist entry" —
+FALSE on this machine at close time: only the old inert `WebAuthnOptions:RpId` secret existed,
+so `arch.timewarp.work` passkeys failed closed ("Host not allowed") until the migration was
+actually performed today (`WebAuthnOptions:AllowedRpIds:0=arch.timewarp.work` set, stale RpId
+removed, web-server restarted). Verified: register/options mints rp.id=arch.timewarp.work on
+the public path AND localhost simultaneously — the task's dual-host goal now demonstrably live.
+Lesson: a Results claim about MACHINE STATE (secrets, env) isn't done until executed and
+verified on the machine, unlike code claims which CI checks.

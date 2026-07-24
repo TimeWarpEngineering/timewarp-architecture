@@ -14,6 +14,9 @@
 // integration tests direct-host the app WITHOUT Aspire (no injected string), and a template consumer
 // who has the postgres flag but no configured database must still get a running app rather than a
 // startup failure. Under Aspire the string is always present, so the real registrations always run.
+// Skip-mode also keeps WebInfrastructureModule's singleton InMemoryPrincipalStore — only when a
+// connection is present do we Replace the IPrincipalStore registration with scoped EfPrincipalStore
+// (task 104-032). Challenge/token stores stay in-memory either way.
 // The connection string is read once and reused for both Configure<PostgresDbOptions> (the
 // environment check consumes IOptions<PostgresDbOptions>) and AddDbContext, so the two cannot drift.
 // Health check (liveness) and environment check (startup gate) intentionally share the same
@@ -21,6 +24,9 @@
 #endregion
 
 namespace TimeWarp.Architecture.Modules;
+
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using TimeWarp.Identity;
 
 public sealed partial class PostgresDbModule : IModule
 {
@@ -34,6 +40,7 @@ public sealed partial class PostgresDbModule : IModule
     {
       // Unconfigured (no Aspire injection, no explicit config): leave Postgres entirely
       // unregistered so direct-host integration tests and unconfigured consumers still boot.
+      // IPrincipalStore stays the WebInfrastructureModule in-memory singleton.
       return;
     }
 
@@ -43,6 +50,10 @@ public sealed partial class PostgresDbModule : IModule
     (
       dbContextOptionsBuilder => dbContextOptionsBuilder.UseNpgsql(connectionString)
     );
+
+    // Durable principal store only when EF is actually registered (skip-mode keeps in-memory).
+    serviceCollection.RemoveAll<IPrincipalStore>();
+    serviceCollection.AddScoped<IPrincipalStore, EfPrincipalStore>();
 
     IHealthChecksBuilder healthChecksBuilder = serviceCollection.AddHealthChecks();
     healthChecksBuilder.AddDbContextCheck<PostgresDbContext>

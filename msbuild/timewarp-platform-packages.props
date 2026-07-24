@@ -16,6 +16,12 @@
     <TwArchitectureAttributesPackageId>$(_TwPlatformVendor).Architecture.Attributes</TwArchitectureAttributesPackageId>
     <!-- Runtime namespace of the Attributes package (package mode). Source mode uses $(RootNamespace).Attributes. -->
     <TwArchitectureAttributesNamespace>$(_TwPlatformVendor).Architecture.Attributes</TwArchitectureAttributesNamespace>
+    <!-- Namespace of the TypedId generator's EF helpers (ConfigureTypedIdConventions). Unlike the
+         Attributes namespace this is mode-INVARIANT: the generator bakes it in as a constant
+         (EfNamespace in typed-id-source-generator.cs), so source and package mode emit the same
+         namespace — but a literal using in template .cs content would be sourceName-rewritten
+         while the generator output is not. Consumers add <Using Include="$(TwArchitectureTypedIdsEfNamespace)" />. -->
+    <TwArchitectureTypedIdsEfNamespace>$(_TwPlatformVendor).Architecture.TypedIds.Ef</TwArchitectureTypedIdsEfNamespace>
     <_TwPlatformPackagesPropsImported>true</_TwPlatformPackagesPropsImported>
 
   </PropertyGroup>

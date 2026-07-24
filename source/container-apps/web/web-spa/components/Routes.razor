@@ -23,22 +23,32 @@
     </NotFound>
   </Router>
 
-  <ReduxDevTools />
+  @* ReduxDevTools ships only when ReduxDevToolsEnabled (Debug-only symbol, task 119): the
+     component injects ReduxDevToolsInterop, which program.cs registers under the SAME symbol.
+     web-server prerenders this tree with those same services, so an unconditional component
+     with a conditional registration 500'd every Release SPA-shell request. *@
+  @if (ReduxDevToolsEnabled)
+  {
+    <ReduxDevTools />
+  }
   <TimeWarpJavaScriptInterop />
   @* TODO <AuthenticationStateListener/> *@
 </CascadingAuthenticationState>
 
 @code
 {
-  [Inject] private JsonRequestHandler JsonRequestHandler { get; set; } = default!;
-
-#if DEBUG
+#if ReduxDevToolsEnabled
+  private static bool ReduxDevToolsEnabled => true;
   [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; } = default!;
+#else
+  private static bool ReduxDevToolsEnabled => false;
 #endif
+
+  [Inject] private JsonRequestHandler JsonRequestHandler { get; set; } = default!;
 
   protected override async Task OnAfterRenderAsync(bool aFirstRender)
   {
-#if DEBUG
+#if ReduxDevToolsEnabled
     await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
 #endif
     await JsonRequestHandler.InitAsync().ConfigureAwait(false);

@@ -18,4 +18,19 @@
 
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- TypedId EF ValueConverters + ConfigureTypedIdConventions for PostgresDbContext (task 113-004).
+         Generators only — convention analyzers already attach repo-wide via Directory.Build.props. -->
+    <ProjectReference Include="../../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"
+                      Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <!-- The generator's EF-helper namespace via composed property (sourceName-safe, task 115
+         pattern): a literal using in a .cs file would be rewritten to <AppName>.TypedIds.Ef on
+         dotnet-new while the generator's baked-in namespace is not, breaking every generated app.
+         Unconditional: the namespace is identical in source and package mode. -->
+    <Using Include="$(TwArchitectureTypedIdsEfNamespace)" />
+  </ItemGroup>
+
 </Project>

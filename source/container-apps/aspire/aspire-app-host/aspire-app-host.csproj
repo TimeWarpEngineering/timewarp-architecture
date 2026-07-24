@@ -8,6 +8,27 @@
     <DefineConstants>$(DefineConstants);api;web;grpc;yarp;postgres</DefineConstants>
   </PropertyGroup>
 
+  <!--#if (web) -->
+  <PropertyGroup>
+    <!-- Task 107: IngressRoutePrefixGenerator emits WebServerApiRoutePrefixes (the /api carve-outs
+         owned by Web.Server) from the web-contracts ApiRoute templates, so program.cs cannot drift
+         from the contracts. Only web-contracts routes participate. -->
+    <EnableIngressRouteGeneration>true</EnableIngressRouteGeneration>
+    <IngressWebContractAssemblies>web-contracts</IngressWebContractAssemblies>
+    <!--#if (grpc) -->
+    <IngressReservedPathPrefixes>grpc</IngressReservedPathPrefixes>
+    <!--#endif -->
+  </PropertyGroup>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="EnableIngressRouteGeneration" />
+    <CompilerVisibleProperty Include="IngressWebContractAssemblies" />
+    <!--#if (grpc) -->
+    <CompilerVisibleProperty Include="IngressReservedPathPrefixes" />
+    <!--#endif -->
+  </ItemGroup>
+  <!--#endif -->
+
+
   <ItemGroup>
     <!--#if (yarp) -->
     <PackageReference Include="Aspire.Hosting.Yarp" />
@@ -39,6 +60,37 @@
                       IsAspireProjectResource="false"
                       Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Contracts" Condition="'$(UseFoundationPackages)' == 'true'" />
+    <!--#if (web) -->
+    <!-- Task 107: compile-time reference (NOT an Aspire resource) so IngressRoutePrefixGenerator can
+         scan web-contracts ApiRoute templates. ExcludeAssets=runtime / Private=false: metadata only,
+         never a runtime dependency of the orchestrator (foundation-contracts precedent above). -->
+    <ProjectReference Include="../../web/web-contracts/web-contracts.csproj"
+                      IsAspireProjectResource="false"
+                      Private="false"
+                      ExcludeAssets="runtime" />
+    <!--#endif -->
+    <!--#if (api) -->
+    <!-- Task 107: api-contracts is referenced for the TWA0017 collision set only — its hosted routes
+         belong to the Api.Server catch-all, never to a Web.Server ingress carve-out. -->
+    <ProjectReference Include="../../api/api-contracts/api-contracts.csproj"
+                      IsAspireProjectResource="false"
+                      Private="false"
+                      ExcludeAssets="runtime" />
+    <!--#endif -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--#if (web) -->
+    <!-- Task 107: attach the Generators package so IngressRoutePrefixGenerator runs on the AppHost.
+         Dual-mode (task 051/115): project ref as an Analyzer in repo mode, package in package mode. -->
+    <ProjectReference Include="../../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      IsAspireProjectResource="false"
+                      Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"
+                      Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <!--#endif -->
   </ItemGroup>
 
   <ItemGroup>

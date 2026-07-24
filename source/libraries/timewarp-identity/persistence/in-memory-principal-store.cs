@@ -5,8 +5,8 @@
 #region Design
 // No EF in this package: ConcurrentDictionary plus foundation-domain's Entity<TId>/EntityVersion are
 // the only dependencies — no third-party package. Uniqueness is principal id and (CredentialType,
-// handle content). Multi-credential per principal is allowed. Hosts may later add EF without
-// changing the IPrincipalStore surface.
+// handle content). Multi-credential per principal is allowed. Host EF lives in web-infrastructure
+// (EfPrincipalStore, task 104-032) and must match this store's CAS / Snapshot semantics exactly.
 //
 // Snapshot-on-get (task 104-028, supersedes RFC D4 → A): Get*/Find*/List*/Add* all return or store
 // `entity.Snapshot(version)` — a fresh copy, never the caller's or the store's own instance. This

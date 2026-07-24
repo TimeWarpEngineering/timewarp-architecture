@@ -8,7 +8,7 @@
          (e.g. the counter's IncrementCounter action dispatched from JS). A 2b5a1ff6 path-rename had
          silently dropped this, breaking the JS initializer + JS-interop dispatch. -->
     <AssemblyName>Web.Spa</AssemblyName>
-    <DefineConstants>ReduxDevToolsEnabled;grpc;api;web</DefineConstants>
+    <DefineConstants>grpc;api;web</DefineConstants>
     <Nullable>enable</Nullable>
     <!-- Interactive-Auto serves users whose browser culture differs from the server's; without
          full ICU data the WASM runtime aborts on startup with "Blazor detected a change in the
@@ -34,6 +34,13 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <!-- ReduxDevToolsEnabled is the SINGLE symbol gating Redux DevTools (task 119): service
+         registration (program.cs UseReduxDevTools), the <ReduxDevTools/> component, its inject,
+         and its InitAsync all compile under this symbol. It must be Debug-only: web-server
+         composes these same services for prerendering, so a Release build that rendered the
+         component without the registration 500'd every SPA-shell request. Do not gate any of
+         those sites on #if DEBUG directly — one symbol, one truth. -->
+    <DefineConstants>$(DefineConstants);ReduxDevToolsEnabled</DefineConstants>
     <!-- Uncomment the following line if you want to Mock B2C.
      Note you will need to run all Mock Data if you do
      because the token won't work on the real API -->
@@ -102,13 +109,38 @@
     <Folder Include="features\admin\" />
   </ItemGroup>
 
-  <!-- TypeScript (source/*.ts -> wwwroot/js) is compiled by Microsoft.TypeScript.MSBuild on
-       every build — node/npm NOT required. Type-checking uses the ambient declarations under
-       source/types (tsconfig typeRoots). The npm lint/format toolchain was removed (059-006). -->
-  <ItemGroup>
-    <TypeScriptInputs Include="source\*.*"/>
-  </ItemGroup>
+  <!-- TypeScript (source/**/*.ts -> wwwroot/js via tsconfig outDir) is compiled by
+       Microsoft.TypeScript.MSBuild — node/npm NOT required. Type-checking uses ambient
+       declarations under source/types (tsconfig typeRoots). The npm lint/format toolchain
+       was removed (059-006).
 
+       Design (task 116): SWA globs wwwroot/** into Content at evaluation.
+       ResolveProjectStaticWebAssets runs BeforeTargets=AssignTargetPaths (before Compile).
+       Rebuild = Clean;Build in one invocation: TypeScriptDeleteCompilerOutput deletes
+       wwwroot/js, but Content still lists those paths → DefineStaticWebAssets throws
+       "No file exists for the asset". Fix: run the TypeScript pipeline during PrepareForBuild
+       (ASP.NET guidance — microsoft/TypeScript#60538, dotnet/sdk#52301) so files exist before
+       SWA discovery; de-dupe Content before GetTypeScriptOutputForPublishing re-adds
+       GeneratedJavascript. Do not commit wwwroot/js (gitignored). Local workaround can drop
+       when SDK ships Microsoft.NET.Sdk.StaticWebAssets.TypeScript.targets (tracked for .NET 11). -->
+  <PropertyGroup>
+    <PrepareForBuildDependsOn>
+      CheckFileSystemCaseSensitive;
+      FindConfigFiles;
+      TypeScriptDeleteOutputFromOtherConfigs;
+      CompileTypeScript;
+      CompileTypeScriptWithTSConfig;
+      GetTypeScriptOutputForPublishing;
+      $(PrepareForBuildDependsOn)
+    </PrepareForBuildDependsOn>
+  </PropertyGroup>
+
+  <Target Name="RemoveDuplicateTypeScriptOutputs"
+          BeforeTargets="GetTypeScriptOutputForPublishing">
+    <ItemGroup>
+      <Content Remove="@(GeneratedJavascript)" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <_ContentIncludedByDefault Remove="features\profile-menu\components\ProfileDropDown.razor" />

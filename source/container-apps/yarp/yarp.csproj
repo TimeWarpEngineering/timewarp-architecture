@@ -6,6 +6,28 @@
     <DockerfileContext>..\..\..</DockerfileContext>
   </PropertyGroup>
 
+  <!--#if (web) -->
+  <PropertyGroup>
+    <!-- Task 107: same ingress-route generation as the Aspire AppHost — the standalone gateway builds
+         its Web.Server /api carve-outs from WebServerApiRoutePrefixes.All (the web-contracts ApiRoute
+         templates), so it cannot drift from the contracts either. The `web` constant gates the
+         program.cs block that consumes the generated list. -->
+    <DefineConstants>$(DefineConstants);web</DefineConstants>
+    <EnableIngressRouteGeneration>true</EnableIngressRouteGeneration>
+    <IngressWebContractAssemblies>web-contracts</IngressWebContractAssemblies>
+    <!--#if (grpc) -->
+    <IngressReservedPathPrefixes>grpc</IngressReservedPathPrefixes>
+    <!--#endif -->
+  </PropertyGroup>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="EnableIngressRouteGeneration" />
+    <CompilerVisibleProperty Include="IngressWebContractAssemblies" />
+    <!--#if (grpc) -->
+    <CompilerVisibleProperty Include="IngressReservedPathPrefixes" />
+    <!--#endif -->
+  </ItemGroup>
+  <!--#endif -->
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" />
     <PackageReference Include="Yarp.ReverseProxy" />
@@ -15,6 +37,32 @@
     <ProjectReference Include="../../foundation/foundation-server/foundation-server.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Server" Condition="'$(UseFoundationPackages)' == 'true'" />
     <ProjectReference Include="../aspire/aspire-service-defaults/aspire-service-defaults.csproj" />
+    <!--#if (web) -->
+    <!-- Task 107: compile-time reference (metadata only) so IngressRoutePrefixGenerator can scan the
+         web-contracts ApiRoute templates. -->
+    <ProjectReference Include="../web/web-contracts/web-contracts.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime" />
+    <!--#endif -->
+    <!--#if (api) -->
+    <!-- Task 107: api-contracts is the TWA0017 collision set only — its routes belong to Api.Server. -->
+    <ProjectReference Include="../api/api-contracts/api-contracts.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime" />
+    <!--#endif -->
   </ItemGroup>
+
+  <!--#if (web) -->
+  <ItemGroup>
+    <!-- Task 107: attach the Generators package so IngressRoutePrefixGenerator runs here too.
+         Dual-mode (task 051/115): project ref as an Analyzer in repo mode, package in package mode. -->
+    <ProjectReference Include="../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"
+                      Condition="'$(UseAnalyzerPackages)' == 'true'" />
+  </ItemGroup>
+  <!--#endif -->
 
 </Project>
