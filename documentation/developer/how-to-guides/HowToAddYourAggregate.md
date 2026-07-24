@@ -142,9 +142,10 @@ Live Postgres tests should use an **ephemeral** database (Testcontainers without
 volume, or a dedicated connection string). Do not reuse AppHost `WithDataVolume` state across
 test runs (WAL/catalog drift lesson from 113-001).
 
-Identity's dual-fixture **store-contract** suite (one test body, in-memory + EF fixtures) is the
-reference pattern once 104-032 lands for port-backed stores. Direct DbContext aggregates (Profile)
-can stay on mapping + Postgres tests as above.
+Identity's dual-fixture **store-contract** suite is the reference pattern for port-backed
+stores: shared abstract cases in `tests/libraries/timewarp-identity-tests/principal-store-contract-tests.cs`,
+in-memory fixture in the same project, EF fixture in `web-infrastructure-tests` (Testcontainers;
+CI fail-closed). Direct DbContext aggregates (Profile) stay on mapping + Postgres tests as above.
 
 ## 6. When to use a store port vs direct DbContext
 
@@ -154,9 +155,18 @@ can stay on mapping + Postgres tests as above.
 | **Port (`IPrincipalStore`, etc.)** | Library or multi-host seam; in-memory default + EF behind `postgres`; concurrency and snapshot semantics must be implementation-agnostic |
 
 Identity keeps domain entities and port contracts in `TimeWarp.Identity` and leaves EF mapping
-to the host infrastructure layer so the library stays persistence-free. Application handlers
+to the host infrastructure layer so the library stays persistence-free (`EfPrincipalStore` +
+`features/identity/*-entity-type-configuration-infrastructure.cs`). Application handlers
 depend on `IPrincipalStore`, not the DbContext. Profile is the simpler teaching path: host
 DbContext is enough until a second implementation appears.
+
+**Store-CAS vs golden Version (identity):** Principal/Credential deliberately do **not** implement
+`IAggregateRoot`. The store owns optimistic concurrency (`EntityVersion.Next` +
+`ConcurrencyConflictException` + snapshot-on-get). Host mapping still sets
+`.IsConcurrencyToken()` as a DB race belt, but `GoldenDbContext` does not auto-increment Version
+for these types — that avoids a double-bump if the store and the golden hook both advanced
+Version. Use the Profile/`IAggregateRoot` path when the host DbContext is the only writer; use
+store-CAS when a port must honor identical semantics across in-memory and EF backends.
 
 Port rules that both implementations must honor (see `IPrincipalStore` Design region):
 snapshot-on-get, `EntityVersion.Next` on successful update, distinct absence vs concurrency
@@ -204,6 +214,6 @@ stays the same either way.
 - `source/container-apps/web/web-domain/aggregates/overview.md`
 - `source/foundation/foundation-infrastructure/persistence/golden-db-context.cs`
 - Feature placement skill: `skills/tw-feature-placement/SKILL.md`
-- Identity EF consumer (follow-on): kanban 104-032
+- Identity EF consumer (done): kanban 104-032 — `EfPrincipalStore`, dual-fixture contract tests
 
 <!-- markdownlint-disable-file MD013 -->

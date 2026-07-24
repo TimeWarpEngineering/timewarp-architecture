@@ -78,7 +78,11 @@ Concrete shape:
 * **Identity (104-032) is the first product durable consumer** of this seam — sequenced after
   113, not folded into it. The dual-fixture store-contract test pattern (one suite against
   in-memory and EF `IPrincipalStore` implementations) is the reference persistence test pattern
-  for port-backed stores.
+  for port-backed stores. Identity uses **store-CAS** (not `IAggregateRoot` + golden Version
+  auto-increment): `EfPrincipalStore` owns `EntityVersion.Next` / `ConcurrencyConflictException`
+  / snapshot-on-get in parity with `InMemoryPrincipalStore`; mapping still pairs
+  `.IsConcurrencyToken()` as a DB race belt. Schema `identity` tables `principals` /
+  `credentials`. Tokens and ceremony challenge stores stay in-memory (ephemeral by design).
 * **Teaching aggregate: `Profile`.** Already `IAggregateRoot` + private `Invariants`; mapped
   end-to-end with concurrency and Postgres integration tests (113-004). Not Principal (104-032)
   and not the credit ledger (Orleans later).
@@ -99,7 +103,8 @@ Concrete shape:
   notice Version moving
 * Durable cross-process integration delivery remains a gap until outbox (or equivalent) is
   earned
-* Orleans production wiring and 104-032 EF implementation remain follow-on work
+* Orleans production wiring remains follow-on work; 104-032 EF `IPrincipalStore` is implemented
+  (store-CAS, dual-fixture tests)
 
 ## Pros and Cons of the Options
 

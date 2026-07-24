@@ -36,22 +36,22 @@ the template still runs with zero infrastructure.
 
 ## Checklist
 
-- [ ] **Durability inventory** — principal/credentials durable; agent tokens + both challenge
+- [x] **Durability inventory** — principal/credentials durable; agent tokens + both challenge
       stores ephemeral (in-memory); decisions in Notes + store Design region
-- [ ] **InternalsVisibleTo** — `web-infrastructure` + `web-infrastructure-tests` can call `Snapshot`
-- [ ] **EF mapping** — `identity.principals` + `identity.credentials`; TypedIds; bytea handle/
+- [x] **InternalsVisibleTo** — `web-infrastructure` + `web-infrastructure-tests` can call `Snapshot`
+- [x] **EF mapping** — `identity.principals` + `identity.credentials`; TypedIds; bytea handle/
       material with field access; unique `(Type, Handle)`; Version `.IsConcurrencyToken()`
-- [ ] **`EfPrincipalStore`** — full `IPrincipalStore` parity (snapshot-on-get, CAS Version,
+- [x] **`EfPrincipalStore`** — full `IPrincipalStore` parity (snapshot-on-get, CAS Version,
       first-credential conditional tier, handle uniqueness, immutability checks)
-- [ ] **DbContext** — DbSets; configs via `ApplyConfigurationsFromAssembly`
-- [ ] **DI** — in-memory default; PostgresDbModule swaps scoped EF store only when connection present
-- [ ] **Template** — `!postgres` excludes EF store file; smoke both flag states
-- [ ] **Store-contract dual-fixture** — shared cases; in-memory + EF (Testcontainers CI fail-closed)
-- [ ] **Model-only tests** — schema/TypedId/concurrency/unique index without Docker
-- [ ] **Docs** — HowToAddYourAggregate + ADR-0009 store-CAS note; module Design regions
-- [ ] **Non-goals** — no IAggregateRoot conversion; no token/challenge EF; no migrations mandate;
+- [x] **DbContext** — DbSets; configs via `ApplyConfigurationsFromAssembly`
+- [x] **DI** — in-memory default; PostgresDbModule swaps scoped EF store only when connection present
+- [x] **Template** — `!postgres` excludes EF store file; smoke both flag states
+- [x] **Store-contract dual-fixture** — shared cases; in-memory + EF (Testcontainers CI fail-closed)
+- [x] **Model-only tests** — schema/TypedId/concurrency/unique index without Docker
+- [x] **Docs** — HowToAddYourAggregate + ADR-0009 store-CAS note; module Design regions
+- [x] **Non-goals** — no IAggregateRoot conversion; no token/challenge EF; no migrations mandate;
       no library EF deps
-- [ ] `dev build` 0/0 and relevant tests green
+- [x] `dev build` 0/0 and relevant tests green
 
 ## Notes
 
