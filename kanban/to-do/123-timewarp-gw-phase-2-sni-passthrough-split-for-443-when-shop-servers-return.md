@@ -17,10 +17,13 @@ Goal: replace TEMP with an SNI passthrough split so 443 serves BOTH `*.timewarp.
 (Proxied mode would terminate TLS + advertise ECH, hiding the SNI the splitter needs — see
 112's checklist).
 
-**Blocked on:** shop site returning from maintenance. Verified unreachable 2026-07-24
-(http://shop.timewarp.ws:80 and the full arch.timewarp.work chain both time out — the whole
-shop entry point is down, which also means the public share chain is dark until the site is
-back; Phase 1 config is intact, nothing to fix on our side).
+**Blocked on:** the shop web server 10.10.1.80 returning from maintenance (Steve's report;
+consistent with http://shop.timewarp.ws:80 timing out, whose forward targets that box). The
+timewarp-gw router and Phase-1 TEMP rule are ALIVE — `https://arch.timewarp.work` works
+externally whenever `dev run` is up (verified by Steve 2026-07-24). Probe caveat learned the
+hard way: curling the public name from INSIDE WSL always times out (NAT-hairpin trombone for
+self-originated traffic) and says nothing about external availability — probe from an
+external vantage point or ask Steve.
 
 ## Decision to make first (with Steve, once 10.10.1.80 is back and identifiable)
 

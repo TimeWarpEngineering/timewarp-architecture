@@ -40,10 +40,11 @@ plugs into the same chain as just another backend.
       for the asymmetric return. While TEMP is enabled, shop.timewarp.ws visitors get a cert
       mismatch from our proxy instead of a timeout. Remove when Phase 2 lands.
 - [x] timewarp-gw (shop), Phase 2 — EXTRACTED to task 123 (2026-07-24) so 112 closes on its
-      verified scope. Blocked on the shop site returning from maintenance — verified still fully
-      offline 2026-07-24 (shop.timewarp.ws:80 AND the arch.timewarp.work chain both time out; the
-      shared public entry point is dark until the site is back, Phase-1 config intact). Full A/B
-      decision context and the TEMP-rule retirement steps live in
+      verified scope. Blocked only on the shop WEB SERVER 10.10.1.80 returning from maintenance;
+      the timewarp-gw router + Phase-1 TEMP rule remain live (arch.timewarp.work works externally
+      whenever `dev run` is up — confirmed 2026-07-24). NOTE: curling the public name from inside
+      WSL always times out (NAT-hairpin trombone) and is NOT a valid external-liveness probe.
+      Full A/B decision context and the TEMP-rule retirement steps live in
       [123](../../to-do/123-timewarp-gw-phase-2-sni-passthrough-split-for-443-when-shop-servers-return.md).
 - [x] goldensea-gw: static DHCP lease 172.16.67.13 for WSL MAC 02:15:5D:8B:4B:AD; dst-nat 80+443
       `in-interface=wg1` → 172.16.67.13 added **disabled**; forward filter verified (masqueraded
