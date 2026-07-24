@@ -1,5 +1,5 @@
 #region Purpose
-// Abstract EF Core base that enforces the golden aggregate SaveChanges contract for every host context.
+// Abstract EF Core base that enforces the aggregate SaveChanges contract for every host context.
 #endregion
 
 #region Design
@@ -21,7 +21,7 @@
 // Last resort: reference navigations targeting an IAggregateRoot. When the root is still Unchanged
 // after a child change, mark it Modified so the concurrency token participates in the UPDATE.
 // Concurrency-check wiring is now a one-party contract (task 121, 113 review M2 follow-on):
-// ConfigureConventions is sealed here and always registers GoldenAggregateVersionConvention
+// ConfigureConventions is sealed here and always registers AggregateVersionConvention
 // (same namespace, TimeWarp.Foundation.Persistence) before deferring to the new virtual
 // OnConfigureConventions hook. That convention is an IModelFinalizingConvention — it runs after
 // ALL host model configuration (OnModelCreating, ApplyConfigurationsFromAssembly, config-only
@@ -37,7 +37,7 @@
 // forces a concrete aggregate to also inherit Entity{TId}), so a Modified entry whose mapped model
 // has no "Version" property, or one not typed long, throws a convention-pointing
 // InvalidOperationException instead of letting EF's generic property-not-found message surface —
-// mirrors DomainInvariantsGuard's fail-closed philosophy. GoldenAggregateVersionConvention only
+// mirrors DomainInvariantsGuard's fail-closed philosophy. AggregateVersionConvention only
 // configures properties that already exist (skipping Version-less types there is harmless); the
 // save path is the enforcement point, so silently skipping the increment would let a misdeclared
 // root persist without ever moving its concurrency token.
@@ -51,11 +51,11 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using TimeWarp.Foundation.Application.Services;
 using TimeWarp.Foundation.Entities;
 
-public abstract class GoldenDbContext : DbContext
+public abstract class AggregateDbContext : DbContext
 {
   internal const string VersionPropertyName = nameof(Entity<Guid>.Version);
 
-  protected GoldenDbContext(DbContextOptions options) : base(options) { }
+  protected AggregateDbContext(DbContextOptions options) : base(options) { }
 
   public override int SaveChanges(bool acceptAllChangesOnSuccess)
   {
@@ -79,13 +79,13 @@ public abstract class GoldenDbContext : DbContext
 
   protected sealed override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
   {
-    configurationBuilder.Conventions.Add(_ => new GoldenAggregateVersionConvention());
+    configurationBuilder.Conventions.Add(_ => new AggregateVersionConvention());
     OnConfigureConventions(configurationBuilder);
   }
 
   /// <summary>
   /// Hosts override this instead of <see cref="ConfigureConventions"/> (sealed here) to register
-  /// their own conventions — e.g. PostgresDbContext's ConfigureTypedIdConventions. The golden
+  /// their own conventions — e.g. PostgresDbContext's ConfigureTypedIdConventions. The aggregate
   /// Version concurrency convention is always registered first and cannot be skipped.
   /// </summary>
   protected virtual void OnConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -285,7 +285,7 @@ public abstract class GoldenDbContext : DbContext
         (
           $"'{entry.Entity.GetType().Name}' implements IAggregateRoot but has no mapped 'long {VersionPropertyName}' property. " +
           "Aggregate roots must inherit Entity<TId> (source/foundation/foundation-domain/entities/base/entity.cs) so Version is " +
-          "mapped by convention — see the golden aggregate pattern exemplar (web-domain/aggregates/profile/profile.cs and " +
+          "mapped by convention — see the aggregate pattern exemplar (web-domain/aggregates/profile/profile.cs and " +
           "aggregates/overview.md)."
         );
       }

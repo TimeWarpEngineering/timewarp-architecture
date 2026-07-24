@@ -17,19 +17,19 @@
 // Version is a store-owned optimistic-concurrency token that closes the 104-002 RFC D6
 // last-write-wins debt — but ONLY when both halves of the mechanism are present, and this type
 // alone is not one of them:
-//   1. The real increment lives in GoldenDbContext.SaveChanges(Async)
+//   1. The real increment lives in AggregateDbContext.SaveChanges(Async)
 //      (TimeWarp.Foundation.Persistence), which sets EntityVersion.Next(originalVersion) onto the
 //      change-tracker's PropertyEntry.CurrentValue for the "Version" property of every Modified
 //      IAggregateRoot (including roots resolved from dirty children/owned entities) — this bypasses
 //      the private setter the same way EF already writes any other private-setter property (its
 //      compiled accessors invoke the setter via reflection regardless of C# accessibility); nothing
 //      in Entity<TId> itself, and no attribute on this property, increments anything. Host contexts
-//      (e.g. PostgresDbContext) inherit GoldenDbContext rather than reimplementing the hook.
-//   2. GoldenDbContext.ConfigureConventions (sealed) registers GoldenAggregateVersionConvention
+//      (e.g. PostgresDbContext) inherit AggregateDbContext rather than reimplementing the hook.
+//   2. AggregateDbContext.ConfigureConventions (sealed) registers AggregateVersionConvention
 //      (task 121), a model-finalizing convention that configures .IsConcurrencyToken() on the
 //      "Version" property for every mapped IAggregateRoot automatically — hosts no longer map this
 //      themselves. The increment and the concurrency check are now a one-party contract supplied
-//      entirely by GoldenDbContext, closing the D6 debt without relying on host memory.
+//      entirely by AggregateDbContext, closing the D6 debt without relying on host memory.
 // application code never writes Version directly; the private setter exists only so EF's
 // reflection-based property access can reach it.
 // Non-EF stores (e.g. timewarp-identity's in-memory IPrincipalStore, task 104-028) have no

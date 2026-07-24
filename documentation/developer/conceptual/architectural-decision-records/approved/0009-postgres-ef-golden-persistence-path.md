@@ -10,12 +10,12 @@ unblocks 104-032 (identity EF store)
 
 ## Context and Problem Statement
 
-The template's persistence story was half-built: `PostgresDbContext` already hosted the golden
+The template's persistence story was half-built: `PostgresDbContext` already hosted the
 aggregate SaveChanges seam (task 106 invariants + store-owned `Version`), and postgres plumbing
 shipped behind a template flag, but AppHost provisioned no Postgres resource, SQL Server remnants
 still sat in CPM, identity stores were in-memory only (restart-wipes made externally visible in
-112), and open questions remained about actors, event sourcing, outbox, and where the golden
-seam should live. What should every generated app inherit as the **default durable path** for
+112), and open questions remained about actors, event sourcing, outbox, and where the aggregate
+enforcement seam should live. What should every generated app inherit as the **default durable path** for
 aggregates?
 
 ## Decision Drivers
@@ -35,7 +35,7 @@ aggregates?
 * **B — Dual relational engines**: reintroduce SQL Server as a first-class flag beside Postgres
 * **C — Event sourcing first** (e.g. Marten on Postgres) as the golden path
 * **D — Actors as THE aggregate host** (Akka.NET or Orleans everywhere), EF optional
-* **E — Postgres-only state-store EF golden path** with Foundation `GoldenDbContext`, optional
+* **E — Postgres-only state-store EF golden path** with Foundation `AggregateDbContext`, optional
   Orleans later, outbox deferred, Profile as teaching aggregate
 
 ## Decision Outcome
@@ -51,14 +51,14 @@ Concrete shape:
 * **State-store EF Core** is the golden persistence shape. **No event sourcing** for now —
   revisit only if a concrete product need appears. Actors do not require event sourcing;
   Orleans grain-per-entity-ID over the same EF state store remains coherent (114 axis 5).
-* **`GoldenDbContext`** lives in `TimeWarp.Foundation.Infrastructure` /
+* **`AggregateDbContext`** lives in `TimeWarp.Foundation.Infrastructure` /
   `TimeWarp.Foundation.Persistence`. Hosts (`PostgresDbContext` today; future api/grpc or
   package consumers) inherit it so SaveChanges enforcement is not sealed inside one product
   context. Npgsql stays host-only.
 * **One-party `Version` contract** (updated by kanban 121, 113 review M2 follow-on; originally
-  shipped two-party). The golden hook increments `Entity{TId}.Version` on every Modified aggregate
-  root via the change tracker, and `GoldenDbContext`'s sealed `ConfigureConventions` always
-  registers a model-finalizing convention (`GoldenAggregateVersionConvention`) that configures
+  shipped two-party). The aggregate SaveChanges hook increments `Entity{TId}.Version` on every Modified aggregate
+  root via the change tracker, and `AggregateDbContext`'s sealed `ConfigureConventions` always
+  registers a model-finalizing convention (`AggregateVersionConvention`) that configures
   `.IsConcurrencyToken()` + `PropertyAccessMode.Property` on `Version` for every mapped
   `IAggregateRoot` — hosts do not map this themselves and cannot skip the registration. Forgetting
   the WHERE-clause half is no longer possible by construction.
@@ -81,7 +81,7 @@ Concrete shape:
 * **Identity (104-032) is the first product durable consumer** of this seam — sequenced after
   113, not folded into it. The dual-fixture store-contract test pattern (one suite against
   in-memory and EF `IPrincipalStore` implementations) is the reference persistence test pattern
-  for port-backed stores. Identity uses **store-CAS** (not `IAggregateRoot` + golden Version
+  for port-backed stores. Identity uses **store-CAS** (not `IAggregateRoot` + aggregate Version
   auto-increment): `EfPrincipalStore` owns `EntityVersion.Next` / `ConcurrencyConflictException`
   / snapshot-on-get in parity with `InMemoryPrincipalStore`; mapping still pairs
   `.IsConcurrencyToken()` as a DB race belt. Schema `identity` tables `principals` /
@@ -93,7 +93,7 @@ Concrete shape:
 ### Positive Consequences
 
 * One clear "add your aggregate" path from domain through EF to tests
-* Golden enforcement reusable across hosts and published Foundation packages
+* Aggregate enforcement reusable across hosts and published Foundation packages
 * Template still runs with EnsureCreated + Aspire-wired Postgres; no forced migration ceremony
 * Identity persistence (104-032) has an unblocked seam and an explicit test pattern to dogfood
 * Actor and outbox complexity stay opt-in / deferred instead of polluting the default story
@@ -146,7 +146,7 @@ Concrete shape:
 
 * Parent task: kanban 113 (`113-golden-persistence-implementation-postgres-first-aspire-wired-with-actor-model-evaluation`)
 * Children: 113-001 (AppHost Postgres + SQL Server removal), 113-002 (dual actor spike → Orleans
-  optional), 113-003 (`GoldenDbContext` + child-entity gap), 113-004 (Profile mapping + tests),
+  optional), 113-003 (`AggregateDbContext` + child-entity gap), 113-004 (Profile mapping + tests),
   113-005 (this ADR + HowToAddYourAggregate)
 * 114 axis decisions: `kanban/done/114-…/axis-decisions.md` (axis 3 outbox deferral → 113; axis 5
   state-store EF + optional actors; axis 5 addendum Orleans)

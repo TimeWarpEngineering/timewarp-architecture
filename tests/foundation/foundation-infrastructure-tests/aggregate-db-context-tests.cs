@@ -1,9 +1,9 @@
 #region Purpose
-// Automated coverage for GoldenDbContext: SaveChanges (Version increment, child→root gap,
-// fail-closed missing Version) and the golden Version concurrency convention (task 121).
+// Automated coverage for AggregateDbContext: SaveChanges (Version increment, child→root gap,
+// fail-closed missing Version) and the aggregate Version concurrency convention (task 121).
 #endregion
 
-namespace GoldenDbContext_;
+namespace AggregateDbContext_;
 
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -221,7 +221,7 @@ internal sealed class RootWithoutVersion : IAggregateRoot
   }
 }
 
-internal sealed class HarnessDbContext : GoldenDbContext
+internal sealed class HarnessDbContext : AggregateDbContext
 {
   public HarnessDbContext(DbContextOptions<HarnessDbContext> options) : base(options) { }
 
@@ -253,7 +253,7 @@ internal sealed class HarnessDbContext : GoldenDbContext
   }
 }
 
-internal sealed class VersionlessDbContext : GoldenDbContext
+internal sealed class VersionlessDbContext : AggregateDbContext
 {
   public VersionlessDbContext(DbContextOptions<VersionlessDbContext> options) : base(options) { }
 
@@ -267,7 +267,7 @@ internal sealed class VersionlessDbContext : GoldenDbContext
 }
 
 /// <summary>
-/// Coverage for GoldenAggregateVersionConvention (task 121): every mapped IAggregateRoot gets
+/// Coverage for AggregateVersionConvention (task 121): every mapped IAggregateRoot gets
 /// Version.IsConcurrencyToken + PropertyAccessMode.Property for free, with no host mapping call
 /// and regardless of how the entity type reached the model.
 /// </summary>
@@ -341,7 +341,7 @@ internal sealed class PlainRoot : Entity<Guid>, IAggregateRoot
 /// bind the base class's get-only Id property (an EF requirement independent of task 121). No
 /// IsConcurrencyToken/UsePropertyAccessMode call anywhere: proving those come from the convention.
 /// </summary>
-internal sealed class PlainRootDbContext : GoldenDbContext
+internal sealed class PlainRootDbContext : AggregateDbContext
 {
   public PlainRootDbContext(DbContextOptions<PlainRootDbContext> options) : base(options) { }
 
@@ -381,7 +381,7 @@ internal sealed class ConfigOnlyRootConfiguration : IEntityTypeConfiguration<Con
   }
 }
 
-internal sealed class ConfigOnlyDbContext : GoldenDbContext
+internal sealed class ConfigOnlyDbContext : AggregateDbContext
 {
   public ConfigOnlyDbContext(DbContextOptions<ConfigOnlyDbContext> options) : base(options) { }
 

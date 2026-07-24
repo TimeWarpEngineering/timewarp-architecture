@@ -64,7 +64,7 @@ public class Round_Trip
     exception.Entries.ShouldNotBeEmpty();
   }
 
-  public async Task Modified_save_increments_version_through_golden_hook()
+  public async Task Modified_save_increments_version_through_aggregate_savechanges_hook()
   {
     if (await SkipIfUnavailableAsync()) return;
 

@@ -73,11 +73,11 @@ Configure at least:
 | Key | `HasKey(e => e.Id)` |
 | TypedId | `HasConversion(id => id.Value, v => OrderId.From(v))` (host also runs `ConfigureTypedIdConventions`) |
 | Required columns | max lengths aligned with domain constants where shared |
-| **Concurrency** | nothing to do — `GoldenDbContext` configures it for you (see below) |
+| **Concurrency** | nothing to do — `AggregateDbContext` configures it for you (see below) |
 
-**Version concurrency is golden — you get it free.** `GoldenDbContext`'s sealed
+**Version concurrency is free — you get it with AggregateDbContext.** `AggregateDbContext`'s sealed
 `ConfigureConventions` always registers a model-finalizing convention
-(`GoldenAggregateVersionConvention`) that configures `.IsConcurrencyToken()` +
+(`AggregateVersionConvention`) that configures `.IsConcurrencyToken()` +
 `PropertyAccessMode.Property` on `Version` for every mapped `IAggregateRoot`, after all your
 model configuration has run. Do **not** call `.IsConcurrencyToken()` yourself — it is redundant
 and there is nothing to forget: this is a one-party contract (kanban 121; ADR-0009 originally
@@ -92,18 +92,18 @@ On the host context (`PostgresDbContext`):
 
 1. Add `public DbSet<Order> Orders => Set<Order>();`
 2. Keep `OnModelCreating` calling `base.OnModelCreating` and
-   `modelBuilder.ApplyConfigurationsFromAssembly(typeof(PostgresDbContext).Assembly)` — the golden
+   `modelBuilder.ApplyConfigurationsFromAssembly(typeof(PostgresDbContext).Assembly)` — the aggregate
    Version convention no longer depends on this ordering (it runs at model-finalizing time), but
    `base.OnModelCreating` is still good EF hygiene.
 3. Keep `ConfigureTypedIdConventions()` in `OnConfigureConventions` if TypedIds are in the model.
-   `ConfigureConventions` itself is sealed on `GoldenDbContext` — override `OnConfigureConventions`
-   instead; the golden Version convention is always registered first regardless.
+   `ConfigureConventions` itself is sealed on `AggregateDbContext` — override `OnConfigureConventions`
+   instead; the aggregate Version convention is always registered first regardless.
 
 Feature `*-infrastructure.cs` files compile into the web-infrastructure assembly — you do **not**
 hand-register each `IEntityTypeConfiguration` type next to the context.
 
 ```csharp
-public sealed partial class PostgresDbContext : GoldenDbContext
+public sealed partial class PostgresDbContext : AggregateDbContext
 {
   public DbSet<Profile> Profiles => Set<Profile>();
   // public DbSet<Order> Orders => Set<Order>();
@@ -128,7 +128,7 @@ In a mediator handler (or other application service):
 3. Call domain mutations (`Rename`, …).
 4. `await db.SaveChangesAsync(ct)`.
 
-You do **not** call `DomainInvariantsGuard` yourself. `GoldenDbContext.SaveChanges(Async)`:
+You do **not** call `DomainInvariantsGuard` yourself. `AggregateDbContext.SaveChanges(Async)`:
 
 - Resolves dirty children to their aggregate root
 - Runs nested `Invariants` for every Added/Modified root
@@ -143,7 +143,7 @@ surface as `DbUpdateConcurrencyException` (map to a product conflict type at the
 |-------|------|--------|
 | Domain unit | Create/guards/mutations | `tests/…/web-domain-tests/` (see `profile-tests.cs`) |
 | Model mapping | Schema, TypedId, `IsConcurrencyToken` | `web-infrastructure-tests` model tests (no live DB) |
-| Golden hook | Version bump, child→root, missing Version | `foundation-infrastructure-tests` (`GoldenDbContext` harness) |
+| Aggregate SaveChanges hook | Version bump, child→root, missing Version | `foundation-infrastructure-tests` (`AggregateDbContext` harness) |
 | Postgres integration | EnsureCreated, round-trip, concurrent update | `web-infrastructure-tests` style (Testcontainers or connection string; soft-skip when unavailable) |
 
 Live Postgres tests should use an **ephemeral** database (Testcontainers without a shared data
@@ -168,11 +168,11 @@ to the host infrastructure layer so the library stays persistence-free (`EfPrinc
 depend on `IPrincipalStore`, not the DbContext. Profile is the simpler teaching path: host
 DbContext is enough until a second implementation appears.
 
-**Store-CAS vs golden Version (identity):** Principal/Credential deliberately do **not** implement
+**Store-CAS vs aggregate Version (identity):** Principal/Credential deliberately do **not** implement
 `IAggregateRoot`. The store owns optimistic concurrency (`EntityVersion.Next` +
 `ConcurrencyConflictException` + snapshot-on-get). Host mapping still sets
-`.IsConcurrencyToken()` as a DB race belt, but `GoldenDbContext` does not auto-increment Version
-for these types — that avoids a double-bump if the store and the golden hook both advanced
+`.IsConcurrencyToken()` as a DB race belt, but `AggregateDbContext` does not auto-increment Version
+for these types — that avoids a double-bump if the store and the aggregate SaveChanges hook both advanced
 Version. Use the Profile/`IAggregateRoot` path when the host DbContext is the only writer; use
 store-CAS when a port must honor identical semantics across in-memory and EF backends.
 
@@ -211,7 +211,7 @@ stays the same either way.
 
 - [ ] TypedId + `Entity<TId>` + `IAggregateRoot` + private `Invariants`
 - [ ] `IEntityTypeConfiguration` with schema, TypedId conversion (no `.IsConcurrencyToken()` needed
-      — `GoldenDbContext` supplies it for every `IAggregateRoot`)
+      — `AggregateDbContext` supplies it for every `IAggregateRoot`)
 - [ ] `DbSet<>` + configurations discovered from assembly; `base.OnModelCreating` retained
 - [ ] Handler path: load → mutate → `SaveChangesAsync` (no hand-rolled invariant calls)
 - [ ] Domain unit tests + mapping and/or Postgres tests
@@ -221,7 +221,7 @@ stays the same either way.
 
 - [ADR-0009 — Postgres + EF golden persistence path](../conceptual/architectural-decision-records/approved/0009-postgres-ef-golden-persistence-path.md)
 - `source/container-apps/web/web-domain/aggregates/overview.md`
-- `source/foundation/foundation-infrastructure/persistence/golden-db-context.cs`
+- `source/foundation/foundation-infrastructure/persistence/aggregate-db-context.cs`
 - Feature placement skill: `skills/tw-feature-placement/SKILL.md`
 - Identity EF consumer (done): kanban 104-032 — `EfPrincipalStore`, dual-fixture contract tests
 

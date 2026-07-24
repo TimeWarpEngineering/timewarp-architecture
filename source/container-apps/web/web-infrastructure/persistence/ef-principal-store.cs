@@ -13,7 +13,7 @@
 //     principal Version bump only when the tier actually changes
 //   - Type/Handle immutable on UpdateCredential
 //   - List ordered by CreatedAt ascending
-// Version authority is store-CAS, not GoldenDbContext: Principal/Credential are deliberately
+// Version authority is store-CAS, not AggregateDbContext: Principal/Credential are deliberately
 // NOT IAggregateRoot, so SaveChanges will not auto-increment Version or run DomainInvariantsGuard.
 // Mapping pairs .IsConcurrencyToken() as a second belt for true concurrent writers; a
 // DbUpdateConcurrencyException is translated to ConcurrencyConflictException so callers see one

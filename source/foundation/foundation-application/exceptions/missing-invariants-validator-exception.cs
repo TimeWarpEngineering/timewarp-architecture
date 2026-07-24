@@ -52,12 +52,12 @@ public sealed class MissingInvariantsValidatorException : Exception
   private static string BuildMessage(Type aggregateType) =>
     $"{aggregateType.Name} was validated as an aggregate root but declares no nested Invariants " +
     $"validator (a private nested class assignable to IValidator<{aggregateType.Name}>). " +
-    "See the golden aggregate pattern exemplar (web-domain/aggregates/profile/profile.cs and " +
+    "See the aggregate pattern exemplar (web-domain/aggregates/profile/profile.cs and " +
     "aggregates/overview.md) and analyzer rule TWA0011.";
 
   private static string BuildConstructionFailureMessage(Type aggregateType, Exception innerException) =>
     $"{aggregateType.Name} declares a nested Invariants validator, but it could not be constructed " +
     $"({innerException.GetType().Name}: {innerException.Message}). Invariants validators must have a " +
-    "parameterless constructor (any accessibility) — see the golden aggregate pattern exemplar " +
+    "parameterless constructor (any accessibility) — see the aggregate pattern exemplar " +
     "(web-domain/aggregates/profile/profile.cs and aggregates/overview.md).";
 }

@@ -21,23 +21,23 @@ change the day after first publish.
 
 ## Checklist
 
-- [ ] Semantic rename (prefer Roslynk rename_symbol): `GoldenDbContext` → `AggregateDbContext`,
+- [x] Semantic rename (prefer Roslynk rename_symbol): `GoldenDbContext` → `AggregateDbContext`,
       `GoldenAggregateVersionConvention` → `AggregateVersionConvention` (namespace stays
       `TimeWarp.Foundation.Persistence`)
-- [ ] File renames (kebab-case follows type): `golden-db-context.cs` → `aggregate-db-context.cs`,
+- [x] File renames (kebab-case follows type): `golden-db-context.cs` → `aggregate-db-context.cs`,
       `golden-aggregate-version-convention.cs` → `aggregate-version-convention.cs`,
       `golden-db-context-tests.cs` → `aggregate-db-context-tests.cs`
-- [ ] Prose sweep in code comments/Design regions: "golden hook/pin/convention/enforcement" →
+- [x] Prose sweep in code comments/Design regions: "golden hook/pin/convention/enforcement" →
       aggregate-describing language ("the aggregate SaveChanges hook", "the Version convention").
       Files (from survey): postgres-db-context.cs, ef-principal-store.cs, profile + principal
       entity-type-configuration files, domain-invariants-guard.cs,
       missing-invariants-validator-exception.cs, entity.cs, entity-version.cs,
       web-domain/aggregates/overview.md, plus the two renamed foundation files
-- [ ] Docs sweep: ADR-0009 + HowToAddYourAggregate + both Overview.md — update type-name
+- [x] Docs sweep: ADR-0009 + HowToAddYourAggregate + both Overview.md — update type-name
       references; "golden path" prose may stay where it means "the recommended path"
       (ADR-0009's title/filename stays — it is a historical record and the idiom is fine)
-- [ ] Do NOT rewrite kanban done/ records or review files — they are historical
-- [ ] dev build 0/0, foundation-infrastructure-tests, web-infrastructure-tests,
+- [x] Do NOT rewrite kanban done/ records or review files — they are historical
+- [x] dev build 0/0, foundation-infrastructure-tests, web-infrastructure-tests,
       web-server-integration-tests, dev template-smoke — all green
 
 ## Notes
@@ -67,3 +67,4 @@ TimeWarp.Identity). Cheap now, breaking later.
 
 - Created: 2026-07-24
 - Plan: 2026-07-24 (orchestrator; task-as-spec, no open forks)
+- Implemented: 2026-07-24 (rename symbols+files+prose; build/tests/smoke green)

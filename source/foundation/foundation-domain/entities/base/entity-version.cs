@@ -5,8 +5,8 @@
 
 #region Design
 // Pure arithmetic only — no EF dependency. foundation-domain-tests/entity-version-tests.cs
-// exercises Next directly; the EF SaveChanges hook that calls it lives in GoldenDbContext
-// (foundation-infrastructure) and is covered by foundation-infrastructure-tests/golden-db-context-tests.cs
+// exercises Next directly; the EF SaveChanges hook that calls it lives in AggregateDbContext
+// (foundation-infrastructure) and is covered by foundation-infrastructure-tests/aggregate-db-context-tests.cs
 // (InMemory harness: root modify, child-only mutate, fail-closed missing Version).
 #endregion
 

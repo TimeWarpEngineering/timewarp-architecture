@@ -2,7 +2,7 @@
   <PropertyGroup>
     <PackageId>TimeWarp.Foundation.Infrastructure</PackageId>
     <Title>TimeWarp.Foundation.Infrastructure</Title>
-    <Description>Infrastructure services (date-time, current-user) and golden EF persistence (GoldenDbContext) for the TimeWarp foundation layer.</Description>
+    <Description>Infrastructure services (date-time, current-user) and aggregate EF persistence (AggregateDbContext) for the TimeWarp foundation layer.</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
