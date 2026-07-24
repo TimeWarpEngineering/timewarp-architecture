@@ -15,8 +15,8 @@ the web-spa TS pipeline notes in memory/058-001 hardening).
 ## Checklist
 
 - [x] Reproduce deterministically (dotnet build -t:Rebuild web-spa / web-server graph)
-- [ ] Fix target ordering (or asset mapping) so Rebuild is reliable
-- [ ] Verify: 3 consecutive -t:Rebuild runs green; note in web-spa csproj Design comments
+- [x] Fix target ordering (or asset mapping) so Rebuild is reliable
+- [x] Verify: 3 consecutive -t:Rebuild runs green; note in web-spa csproj Design comments
 
 ## Notes
 
@@ -28,22 +28,36 @@ with 058-001 (test-host hardening) but is a build-graph issue, not test infra.
 **Root cause (reproduced):** Rebuild = Clean;Build in one evaluation. SWA globs `wwwroot/**` into
 `Content` at evaluation; Clean deletes `wwwroot/js` via `TypeScriptDeleteCompilerOutput`;
 `ResolveProjectStaticWebAssets` runs before Compile/TS re-emit → `DefineStaticWebAssets` throws.
-`dotnet clean` then `dotnet build` re-evaluates and often works (JS not in Content).
 
-**Repro evidence (2026-07-24):**
-```
-dotnet build web-spa.csproj -t:Rebuild
-→ InvalidOperationException: No file exists for … wwwroot/js/features/counter.js
-```
+**Fix:** Prepend full TypeScript chain to `PrepareForBuildDependsOn` +
+`RemoveDuplicateTypeScriptOutputs` (ASP.NET TypeScript#60538 / sdk#52301). Design comment in
+`web-spa.csproj`. Dropped unused `TypeScriptInputs`.
 
-**Fix (lean):** ASP.NET guidance (TypeScript#60538 / sdk#52301):
-1. Prepend full TypeScript chain to `PrepareForBuildDependsOn` so emit runs before SWA discovery
-2. `RemoveDuplicateTypeScriptOutputs` BeforeTargets=`GetTypeScriptOutputForPublishing`
-3. Design comment in csproj; optional drop dead `TypeScriptInputs`
+## Results
 
-**Out of scope:** emit to obj/, commit wwwroot/js, disable SWA, wait for SDK 11, npm return.
+**Completed 2026-07-24** — web-spa `-t:Rebuild` reliable; StaticWebAssets no longer races TS Clean.
+
+### What was implemented
+- `PrepareForBuildDependsOn` runs TS pipeline before SWA discovery
+- `RemoveDuplicateTypeScriptOutputs` de-dupes Content before re-publish
+- Design comment documents root cause + upstream links + .NET 11 exit path
+
+### Files
+- `source/container-apps/web/web-spa/web-spa.csproj`
+
+### Tests / verification
+- Repro before fix: Rebuild failed on missing `wwwroot/js/features/counter.js`
+- After: 3× web-spa Rebuild green; 3× web-server Rebuild green; normal build green
+- Outputs present: counter.js, spa.js, web.spa.lib.module.js
+
+### Phase 4b review
+- Effort 1 (general); 1 round; **0 open**
+- Disposition: **clean** (`review/disposition.md`)
+
+### Commit
+- `cde14f75` fix(web-spa): run TypeScript before StaticWebAssets on Rebuild
 
 ## Session
 
 - Created: 2026-07-22 (from 114-002 review)
-- Plan + repro: 2026-07-24 (orchestrator)
+- Plan + implement + review: 2026-07-24 (orchestrator)
