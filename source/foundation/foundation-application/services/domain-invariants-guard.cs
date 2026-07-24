@@ -4,7 +4,7 @@
 #endregion
 
 #region Design
-// EF-agnostic core: this type has no EF Core dependency and no DI interface — GoldenDbContext
+// EF-agnostic core: this type has no EF Core dependency and no DI interface — AggregateDbContext
 // (and any host that inherits it) calls the static EnsureValid overloads from SaveChanges(Async)
 // after resolving Added/Modified IAggregateRoot entries (including roots reached from dirty
 // children). Kept static/pure so the hook needs no constructor plumbing.

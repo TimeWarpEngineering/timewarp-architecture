@@ -39,13 +39,13 @@ plugs into the same chain as just another backend.
       (10.10.1.80, currently down for maintenance) + srcnat masquerade out wg1 → 10.66.2.6:443
       for the asymmetric return. While TEMP is enabled, shop.timewarp.ws visitors get a cert
       mismatch from our proxy instead of a timeout. Remove when Phase 2 lands.
-- [ ] timewarp-gw (shop), Phase 2 — SNI passthrough split when servers return: decision A vs B
-      deferred until 10.10.1.80 is back and identifiable. Option A: nginx `stream`+`ssl_preread`
-      on 10.10.1.80 itself (existing sites rebind internally, e.g. :8443). Option B: tiny
-      HAProxy/sniproxy VM on the shop VM host; NAT rules 0/1 repoint 443 to it, default backend
-      10.10.1.80, `*.timewarp.work` → 10.66.2.6:443. Either way the splitter originates a fresh
-      TCP connection into the tunnel, so the Phase-1 masquerade can be retired if goldensea-gw
-      routes back to 10.10.1.0/24. Replaces the TEMP rule.
+- [x] timewarp-gw (shop), Phase 2 — EXTRACTED to task 123 (2026-07-24) so 112 closes on its
+      verified scope. Blocked only on the shop WEB SERVER 10.10.1.80 returning from maintenance;
+      the timewarp-gw router + Phase-1 TEMP rule remain live (arch.timewarp.work works externally
+      whenever `dev run` is up — confirmed 2026-07-24). NOTE: curling the public name from inside
+      WSL always times out (NAT-hairpin trombone) and is NOT a valid external-liveness probe.
+      Full A/B decision context and the TEMP-rule retirement steps live in
+      [123](../../to-do/123-timewarp-gw-phase-2-sni-passthrough-split-for-443-when-shop-servers-return.md).
 - [x] goldensea-gw: static DHCP lease 172.16.67.13 for WSL MAC 02:15:5D:8B:4B:AD; dst-nat 80+443
       `in-interface=wg1` → 172.16.67.13 added **disabled**; forward filter verified (masqueraded
       tunnel src hits the rfc1918 accept). Side fix: desktop TWE-001 static lease .11 repointed to

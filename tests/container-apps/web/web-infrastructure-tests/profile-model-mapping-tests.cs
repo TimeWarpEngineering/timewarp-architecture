@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 /// <summary>
 /// Connection-free coverage: the Profile teaching aggregate is on the PostgresDbContext model
 /// with table/schema, TypedId key, and Version concurrency token (now supplied by
-/// GoldenAggregateVersionConvention, not ProfileEntityTypeConfiguration — task 121).
+/// AggregateVersionConvention, not ProfileEntityTypeConfiguration — task 121).
 /// </summary>
 public class Map
 {

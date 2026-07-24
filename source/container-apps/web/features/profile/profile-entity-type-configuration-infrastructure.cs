@@ -12,8 +12,8 @@
 // TypedId: ProfileId stores as Guid via explicit conversion (Id is get-only; EF binds it through the
 // private constructor parameter). Host also calls ConfigureTypedIdConventions so other TypedIds in
 // the model convert the same way without per-property ceremony.
-// Version: IsConcurrencyToken is now applied for free by GoldenAggregateVersionConvention
-// (registered by GoldenDbContext's sealed ConfigureConventions, task 121) for every mapped
+// Version: IsConcurrencyToken is now applied for free by AggregateVersionConvention
+// (registered by AggregateDbContext's sealed ConfigureConventions, task 121) for every mapped
 // IAggregateRoot — Profile no longer calls .IsConcurrencyToken() itself (one-party contract,
 // ADR-0009 update). The explicit UsePropertyAccessMode(PropertyAccessMode.Property) call below is
 // redundant with the convention's own pin but stays as a local exemplar. Private setters elsewhere

@@ -83,3 +83,17 @@ journalctl -u caddy --since "1 day ago" | grep -i "certificate"                 
 DNS note: a hostname queried before the wildcard existed can sit as negative-cached NXDOMAIN in
 a resolver for ~30 min (bit us at launch — including 1.1.1.1). Test with a fresh name; purge at
 https://one.one.one.one/purge-cache/ if needed.
+
+## Probe caveat: WSL cannot test its own public chain
+
+`curl https://arch.timewarp.work` from INSIDE WSL always times out (000), even when the
+chain is fully working for external visitors: self-originated traffic tromboning out AIS →
+shop → wg1 → back to this box does not survive the NAT hairpin. Do not diagnose the public
+chain from WSL. Valid checks:
+
+- Local half: `curl --resolve arch.timewarp.work:443:127.0.0.1 https://arch.timewarp.work`
+  → 200 proves Caddy + Aspire ingress (requires `dev run`).
+- External half: probe from a phone on mobile data / any off-LAN vantage, or ask Steve.
+- `shop.timewarp.ws:80` timing out only tells you the shop WEB SERVER (10.10.1.80) is down,
+  not the router — the timewarp-gw TEMP rule can be alive regardless (2026-07-24 lesson:
+  misread this as "whole entry point dark" while externals worked fine).
