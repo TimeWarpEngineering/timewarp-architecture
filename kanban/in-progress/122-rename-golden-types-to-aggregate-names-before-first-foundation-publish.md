@@ -49,3 +49,21 @@ meaning-free names (no grab-bag namespaces).
 
 Sequencing: blocks the publish-residuals task (republish Foundation/Attributes, first-publish
 TimeWarp.Identity). Cheap now, breaking later.
+
+### Implementation plan (Phase 2, 2026-07-24)
+
+**No strategic ambiguity** — pure rename before first Foundation publish. No RFC.
+
+| Step | Action |
+|------|--------|
+| 1 | Rename symbols: `GoldenDbContext` → `AggregateDbContext`, `GoldenAggregateVersionConvention` → `AggregateVersionConvention` (namespace unchanged) |
+| 2 | Rename files kebab-case to match types; test file + Fixie namespace `GoldenDbContext_` → `AggregateDbContext_` |
+| 3 | Prose in Design/Purpose: "golden hook/convention" → aggregate-describing language; keep "golden path" only as recommended-route idiom in docs |
+| 4 | Docs: ADR-0009 type-name refs + HowToAddYourAggregate + Overview if needed; ADR title/filename stay |
+| 5 | Skip kanban historical records |
+| 6 | Verify: `dev build` 0/0; foundation-infrastructure-tests; web-infrastructure-tests; template-smoke if cheap |
+
+## Session
+
+- Created: 2026-07-24
+- Plan: 2026-07-24 (orchestrator; task-as-spec, no open forks)
