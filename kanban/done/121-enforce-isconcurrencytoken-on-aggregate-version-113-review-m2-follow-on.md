@@ -57,3 +57,27 @@ round-2 independent review. Files:
 `source/container-apps/web/features/profile/profile-entity-type-configuration-infrastructure.cs`.
 The convention ships in TimeWarp.Foundation.Infrastructure, so generated apps get it with no
 template edit.
+
+## Results (2026-07-24)
+
+Implemented by build agent (commit 7e196656), independently reviewed and re-verified by the
+orchestrator:
+
+- `GoldenAggregateVersionConvention` (IModelFinalizingConvention, foundation-infrastructure):
+  IsConcurrencyToken + PropertyAccessMode.Property on every mapped IAggregateRoot's Version —
+  one-party contract, nothing for hosts to remember.
+- `GoldenDbContext.ConfigureConventions` sealed (always registers the convention) + new
+  `OnConfigureConventions` virtual; PostgresDbContext moved to the virtual. The old
+  OnModelCreating pin loop removed — the convention subsumes it and closes its latent
+  config-only/no-DbSet ordering gap (both proven by new tests).
+- Profile's explicit `.IsConcurrencyToken()` removed; identity Principal/Credential
+  (store-CAS, non-root) untouched. ADR-0009 + HowToAddYourAggregate updated to one-party
+  language.
+- Review note: EF configuration-source precedence means an explicit host
+  `IsConcurrencyToken(false)` still beats the convention — a principled escape hatch exists
+  by EF semantics without us shipping one.
+
+Verification (re-run independently, not taken from the build agent's report): dev build 0/0;
+foundation-infrastructure-tests 11/11 (incl. the two new convention proofs);
+web-infrastructure-tests 39/39 (live Postgres); web-server-integration-tests 97/1;
+dev template-smoke SUCCEEDED (SmokeDefault + SmokeNoPostgres).
