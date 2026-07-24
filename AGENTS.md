@@ -87,10 +87,14 @@ of `TimeWarp.Identity`, task 124; `identityPackages=false` still vendors
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
 | `TimeWarp.Identity` | Principal identity (passkeys / agent keys); published since 2.0.0-beta.6 |
 
-MSBuild dual-mode (auto-detects missing source trees): `UseFoundationPackages` /
-`UseAnalyzerPackages` / `UseIdentityPackages`. CPM `PackageVersion` pins lag the last
-**published** version (may trail `source/Directory.Build.props` `<Version>`). Upgrade path for
-apps that still vendored `source/analyzers/**`: see
+MSBuild dual-mode (auto-detects missing source trees; switches defined in ROOT
+Directory.Build.props so the tests tree gets them too): `UseFoundationPackages` /
+`UseAnalyzerPackages` / `UseIdentityPackages`. CPM `PackageVersion` pins for platform packages
+**equal the release `<Version>`** and bump in the same commit as it (task 124 policy — packages
+and template publish together in one release run, so pins always reference versions that exist
+by the time any generated app restores; the old lag-behind-published policy shipped a template
+whose pins predated its own release). Upgrade path for apps that still vendored
+`source/analyzers/**`: see
 `documentation/developer/how-to-guides/HowToUpgradeToAnalyzerPackages.md`.
 
 **sourceName-safe platform package IDs:** template `sourceName` is `TimeWarp.Architecture`, so a
