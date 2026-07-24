@@ -73,11 +73,15 @@ Configure at least:
 | Key | `HasKey(e => e.Id)` |
 | TypedId | `HasConversion(id => id.Value, v => OrderId.From(v))` (host also runs `ConfigureTypedIdConventions`) |
 | Required columns | max lengths aligned with domain constants where shared |
-| **Concurrency** | `Property(e => e.Version).IsConcurrencyToken().UsePropertyAccessMode(PropertyAccessMode.Property)` |
+| **Concurrency** | nothing to do — `GoldenDbContext` configures it for you (see below) |
 
-The Version line is the **host half** of the two-party concurrency contract. Without
-`.IsConcurrencyToken()`, `GoldenDbContext` still increments Version on Modified roots, but the
-UPDATE never compares the original value and concurrent overwrites succeed silently.
+**Version concurrency is golden — you get it free.** `GoldenDbContext`'s sealed
+`ConfigureConventions` always registers a model-finalizing convention
+(`GoldenAggregateVersionConvention`) that configures `.IsConcurrencyToken()` +
+`PropertyAccessMode.Property` on `Version` for every mapped `IAggregateRoot`, after all your
+model configuration has run. Do **not** call `.IsConcurrencyToken()` yourself — it is redundant
+and there is nothing to forget: this is a one-party contract (kanban 121; ADR-0009 originally
+shipped it two-party).
 
 Profile reference: `features/profile/profile-entity-type-configuration-infrastructure.cs`
 (schema/table `profiles`).
@@ -87,9 +91,13 @@ Profile reference: `features/profile/profile-entity-type-configuration-infrastru
 On the host context (`PostgresDbContext`):
 
 1. Add `public DbSet<Order> Orders => Set<Order>();`
-2. Keep `OnModelCreating` calling `base.OnModelCreating` (so the golden Version access-mode pin
-   still runs) and `modelBuilder.ApplyConfigurationsFromAssembly(typeof(PostgresDbContext).Assembly)`.
-3. Keep `ConfigureTypedIdConventions()` in `ConfigureConventions` if TypedIds are in the model.
+2. Keep `OnModelCreating` calling `base.OnModelCreating` and
+   `modelBuilder.ApplyConfigurationsFromAssembly(typeof(PostgresDbContext).Assembly)` — the golden
+   Version convention no longer depends on this ordering (it runs at model-finalizing time), but
+   `base.OnModelCreating` is still good EF hygiene.
+3. Keep `ConfigureTypedIdConventions()` in `OnConfigureConventions` if TypedIds are in the model.
+   `ConfigureConventions` itself is sealed on `GoldenDbContext` — override `OnConfigureConventions`
+   instead; the golden Version convention is always registered first regardless.
 
 Feature `*-infrastructure.cs` files compile into the web-infrastructure assembly — you do **not**
 hand-register each `IEntityTypeConfiguration` type next to the context.
@@ -100,7 +108,7 @@ public sealed partial class PostgresDbContext : GoldenDbContext
   public DbSet<Profile> Profiles => Set<Profile>();
   // public DbSet<Order> Orders => Set<Order>();
 
-  protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
+  protected override void OnConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
     configurationBuilder.ConfigureTypedIdConventions();
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -202,7 +210,8 @@ stays the same either way.
 ## Checklist (copy into the PR)
 
 - [ ] TypedId + `Entity<TId>` + `IAggregateRoot` + private `Invariants`
-- [ ] `IEntityTypeConfiguration` with schema, TypedId conversion, **`.IsConcurrencyToken()`**
+- [ ] `IEntityTypeConfiguration` with schema, TypedId conversion (no `.IsConcurrencyToken()` needed
+      — `GoldenDbContext` supplies it for every `IAggregateRoot`)
 - [ ] `DbSet<>` + configurations discovered from assembly; `base.OnModelCreating` retained
 - [ ] Handler path: load → mutate → `SaveChangesAsync` (no hand-rolled invariant calls)
 - [ ] Domain unit tests + mapping and/or Postgres tests

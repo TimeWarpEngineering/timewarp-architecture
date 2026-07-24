@@ -20,13 +20,16 @@
 // common template shape), match the FK values to a tracked entry of the principal entity type.
 // Last resort: reference navigations targeting an IAggregateRoot. When the root is still Unchanged
 // after a child change, mark it Modified so the concurrency token participates in the UPDATE.
-// Concurrency-check wiring is a two-party contract: this hook always increments Version on Modified
-// saves, but nothing compares the original value in an UPDATE's WHERE clause unless the host ALSO
-// configures .IsConcurrencyToken() on Version when it maps its concrete aggregate (OnModelCreating
-// here cannot do that for entity types it does not know about — it only pins the access mode).
-// OnModelCreating pins PropertyAccessMode.Property for every mapped IAggregateRoot's "Version"
-// property as defense-in-depth so the hook's PropertyEntry write is independent of backing-field
-// naming; hosts that override OnModelCreating must call base.OnModelCreating.
+// Concurrency-check wiring is now a one-party contract (task 121, 113 review M2 follow-on):
+// ConfigureConventions is sealed here and always registers GoldenAggregateVersionConvention
+// (same namespace, TimeWarp.Foundation.Persistence) before deferring to the new virtual
+// OnConfigureConventions hook. That convention is an IModelFinalizingConvention — it runs after
+// ALL host model configuration (OnModelCreating, ApplyConfigurationsFromAssembly, config-only
+// aggregates with no DbSet property) and configures IsConcurrencyToken + PropertyAccessMode.Property
+// on every mapped IAggregateRoot's Version property unconditionally. Forgetting the WHERE-clause
+// half is no longer possible: hosts cannot reach ConfigureConventions to skip the registration —
+// they customize their own conventions (e.g. PostgresDbContext's ConfigureTypedIdConventions) by
+// overriding OnConfigureConventions instead, mirroring the same forget-base trap this replaces.
 // Deleted aggregate roots are skipped — invariants and the concurrency token describe valid live
 // state, not deletion. A deleted *child* still resolves to its live root so the root's Version
 // moves with the aggregate change.
@@ -34,10 +37,10 @@
 // forces a concrete aggregate to also inherit Entity{TId}), so a Modified entry whose mapped model
 // has no "Version" property, or one not typed long, throws a convention-pointing
 // InvalidOperationException instead of letting EF's generic property-not-found message surface —
-// mirrors DomainInvariantsGuard's fail-closed philosophy. OnModelCreating only pins access mode for
-// properties that already exist (skipping Version-less types there is harmless); the save path is
-// the enforcement point, so silently skipping the increment would let a misdeclared root persist
-// without ever moving its concurrency token.
+// mirrors DomainInvariantsGuard's fail-closed philosophy. GoldenAggregateVersionConvention only
+// configures properties that already exist (skipping Version-less types there is harmless); the
+// save path is the enforcement point, so silently skipping the increment would let a misdeclared
+// root persist without ever moving its concurrency token.
 #endregion
 
 namespace TimeWarp.Foundation.Persistence;
@@ -50,7 +53,7 @@ using TimeWarp.Foundation.Entities;
 
 public abstract class GoldenDbContext : DbContext
 {
-  private const string VersionPropertyName = nameof(Entity<Guid>.Version);
+  internal const string VersionPropertyName = nameof(Entity<Guid>.Version);
 
   protected GoldenDbContext(DbContextOptions options) : base(options) { }
 
@@ -74,19 +77,19 @@ public abstract class GoldenDbContext : DbContext
     return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
   }
 
-  protected override void OnModelCreating(ModelBuilder modelBuilder)
+  protected sealed override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
   {
-    base.OnModelCreating(modelBuilder);
+    configurationBuilder.Conventions.Add(_ => new GoldenAggregateVersionConvention());
+    OnConfigureConventions(configurationBuilder);
+  }
 
-    foreach (IMutableEntityType entityType in modelBuilder.Model.GetEntityTypes().ToList())
-    {
-      if (!typeof(IAggregateRoot).IsAssignableFrom(entityType.ClrType)) continue;
-      if (entityType.ClrType.GetProperty(VersionPropertyName) is null) continue;
-
-      modelBuilder.Entity(entityType.ClrType)
-        .Property(VersionPropertyName)
-        .UsePropertyAccessMode(PropertyAccessMode.Property);
-    }
+  /// <summary>
+  /// Hosts override this instead of <see cref="ConfigureConventions"/> (sealed here) to register
+  /// their own conventions — e.g. PostgresDbContext's ConfigureTypedIdConventions. The golden
+  /// Version concurrency convention is always registered first and cannot be skipped.
+  /// </summary>
+  protected virtual void OnConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+  {
   }
 
   private List<EntityEntry> ChangedAggregateRootEntries()

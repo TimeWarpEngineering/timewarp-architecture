@@ -55,10 +55,13 @@ Concrete shape:
   `TimeWarp.Foundation.Persistence`. Hosts (`PostgresDbContext` today; future api/grpc or
   package consumers) inherit it so SaveChanges enforcement is not sealed inside one product
   context. Npgsql stays host-only.
-* **Two-party `Version` contract.** The golden hook increments `Entity{TId}.Version` on every
-  Modified aggregate root via the change tracker. The host mapping **must** call
-  `.IsConcurrencyToken()` on `Version` for each concrete aggregate; without that half, the
-  increment is silent bookkeeping and stale overwrites still succeed.
+* **One-party `Version` contract** (updated by kanban 121, 113 review M2 follow-on; originally
+  shipped two-party). The golden hook increments `Entity{TId}.Version` on every Modified aggregate
+  root via the change tracker, and `GoldenDbContext`'s sealed `ConfigureConventions` always
+  registers a model-finalizing convention (`GoldenAggregateVersionConvention`) that configures
+  `.IsConcurrencyToken()` + `PropertyAccessMode.Property` on `Version` for every mapped
+  `IAggregateRoot` — hosts do not map this themselves and cannot skip the registration. Forgetting
+  the WHERE-clause half is no longer possible by construction.
 * **Child → root resolution.** Mutating only a child/owned entity marks the owning
   `IAggregateRoot` Modified so invariants and Version still run (113-003).
 * **Schema-per-slice on a single DbContext by default.** Product tables use PostgreSQL schemas
@@ -99,8 +102,9 @@ Concrete shape:
 
 * EnsureCreated does not evolve schema — grown apps must adopt migrations deliberately
 * Single DbContext + table schemas is a soft module boundary until a second context is earned
-* Concurrent writers without `.IsConcurrencyToken()` get a false sense of safety if they only
-  notice Version moving
+* Concurrent writers against non-`IAggregateRoot` store-CAS entities (Identity Principal/Credential)
+  still depend on a manual `.IsConcurrencyToken()` call — a false sense of safety there is still
+  possible if one is forgotten; `IAggregateRoot` types no longer carry this risk (kanban 121)
 * Durable cross-process integration delivery remains a gap until outbox (or equivalent) is
   earned
 * Orleans production wiring remains follow-on work; 104-032 EF `IPrincipalStore` is implemented

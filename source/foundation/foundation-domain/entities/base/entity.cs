@@ -25,12 +25,11 @@
 //      compiled accessors invoke the setter via reflection regardless of C# accessibility); nothing
 //      in Entity<TId> itself, and no attribute on this property, increments anything. Host contexts
 //      (e.g. PostgresDbContext) inherit GoldenDbContext rather than reimplementing the hook.
-//   2. Hosts that map a concrete aggregate MUST additionally call .IsConcurrencyToken() on the
-//      "Version" property in their own OnModelCreating (GoldenDbContext / PostgresDbContext cannot
-//      do this for entity types they do not know about) — without that, the hook still increments
-//      Version on every save, but nothing compares the original value in the UPDATE's WHERE clause,
-//      so a stale overwrite still proceeds silently. The increment and the concurrency check are a
-//      pair; shipping only one of them leaves the D6 debt open.
+//   2. GoldenDbContext.ConfigureConventions (sealed) registers GoldenAggregateVersionConvention
+//      (task 121), a model-finalizing convention that configures .IsConcurrencyToken() on the
+//      "Version" property for every mapped IAggregateRoot automatically — hosts no longer map this
+//      themselves. The increment and the concurrency check are now a one-party contract supplied
+//      entirely by GoldenDbContext, closing the D6 debt without relying on host memory.
 // application code never writes Version directly; the private setter exists only so EF's
 // reflection-based property access can reach it.
 // Non-EF stores (e.g. timewarp-identity's in-memory IPrincipalStore, task 104-028) have no

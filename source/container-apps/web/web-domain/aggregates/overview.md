@@ -28,8 +28,10 @@ the identity library (`source/libraries/timewarp-identity`, Principal/Credential
   mutations resolve to the owning root so invariants and `Version` still run.
 
 `profile/profile.cs` is the exemplar — read it alongside this file before adding a new
-aggregate. Its EF mapping (schema `profiles`, TypedId conversion, `.IsConcurrencyToken()` on
-Version) lives under `web/features/profile/profile-entity-type-configuration-infrastructure.cs`
-and is applied by `PostgresDbContext` (`ApplyConfigurationsFromAssembly`). End-to-end walkthrough
+aggregate. Its EF mapping (schema `profiles`, TypedId conversion) lives under
+`web/features/profile/profile-entity-type-configuration-infrastructure.cs` and is applied by
+`PostgresDbContext` (`ApplyConfigurationsFromAssembly`). `Version`'s `.IsConcurrencyToken()` is
+supplied for free by `GoldenDbContext`'s golden convention — Profile's own mapping does not
+declare it. End-to-end walkthrough
 (domain → config → SaveChanges → tests, store ports, Orleans, EnsureCreated vs Migrate):
 `documentation/developer/how-to-guides/HowToAddYourAggregate.md` (ADR-0009).

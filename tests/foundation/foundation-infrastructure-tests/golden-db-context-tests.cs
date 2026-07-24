@@ -1,11 +1,14 @@
 #region Purpose
-// Automated coverage for GoldenDbContext SaveChanges: Version increment, child→root gap, fail-closed missing Version.
+// Automated coverage for GoldenDbContext: SaveChanges (Version increment, child→root gap,
+// fail-closed missing Version) and the golden Version concurrency convention (task 121).
 #endregion
 
 namespace GoldenDbContext_;
 
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TimeWarp.Foundation.Application.Exceptions;
 using TimeWarp.Foundation.Entities;
 using TimeWarp.Foundation.Persistence;
@@ -260,5 +263,134 @@ internal sealed class VersionlessDbContext : GoldenDbContext
   {
     base.OnModelCreating(modelBuilder);
     modelBuilder.Entity<RootWithoutVersion>().HasKey(root => root.Id);
+  }
+}
+
+/// <summary>
+/// Coverage for GoldenAggregateVersionConvention (task 121): every mapped IAggregateRoot gets
+/// Version.IsConcurrencyToken + PropertyAccessMode.Property for free, with no host mapping call
+/// and regardless of how the entity type reached the model.
+/// </summary>
+public class ConcurrencyConvention
+{
+  public void Root_without_explicit_mapping_gets_concurrency_token_and_access_mode()
+  {
+    using PlainRootDbContext db = CreatePlainRootDb();
+
+    IEntityType entityType = db.Model.FindEntityType(typeof(PlainRoot))
+      .ShouldNotBeNull("PlainRoot must be on the model even without an explicit mapping");
+
+    IProperty version = entityType.FindProperty(nameof(Entity<Guid>.Version)).ShouldNotBeNull();
+    version.IsConcurrencyToken.ShouldBeTrue();
+    version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
+  }
+
+  public void Config_only_root_without_dbset_gets_concurrency_token_and_access_mode()
+  {
+    using ConfigOnlyDbContext db = CreateConfigOnlyDb();
+
+    // ConfigOnlyRoot has no DbSet<> property — it is only discovered via ApplyConfiguration,
+    // called AFTER base.OnModelCreating. This is exactly the ordering gap the old
+    // OnModelCreating-loop pin could miss; the model-finalizing convention always sees it.
+    IEntityType entityType = db.Model.FindEntityType(typeof(ConfigOnlyRoot))
+      .ShouldNotBeNull("ConfigOnlyRoot must be on the model via ApplyConfiguration alone");
+
+    IProperty version = entityType.FindProperty(nameof(Entity<Guid>.Version)).ShouldNotBeNull();
+    version.IsConcurrencyToken.ShouldBeTrue();
+    version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
+  }
+
+  private static PlainRootDbContext CreatePlainRootDb()
+  {
+    DbContextOptions<PlainRootDbContext> options = new DbContextOptionsBuilder<PlainRootDbContext>()
+      .UseInMemoryDatabase(Guid.NewGuid().ToString())
+      .Options;
+    return new PlainRootDbContext(options);
+  }
+
+  private static ConfigOnlyDbContext CreateConfigOnlyDb()
+  {
+    DbContextOptions<ConfigOnlyDbContext> options = new DbContextOptionsBuilder<ConfigOnlyDbContext>()
+      .UseInMemoryDatabase(Guid.NewGuid().ToString())
+      .Options;
+    return new ConfigOnlyDbContext(options);
+  }
+}
+
+/// <summary>IAggregateRoot mapped with no explicit Version configuration at all.</summary>
+internal sealed class PlainRoot : Entity<Guid>, IAggregateRoot
+{
+  public PlainRoot(Guid id, string name) : base(id)
+  {
+    Name = name;
+  }
+
+  public string Name { get; private set; }
+
+  private sealed class Invariants : AbstractValidator<PlainRoot>
+  {
+    public Invariants()
+    {
+      RuleFor(root => root.Name).NotEmpty();
+    }
+  }
+}
+
+/// <summary>
+/// HasKey is the only explicit mapping call — required so EF's constructor-binding convention can
+/// bind the base class's get-only Id property (an EF requirement independent of task 121). No
+/// IsConcurrencyToken/UsePropertyAccessMode call anywhere: proving those come from the convention.
+/// </summary>
+internal sealed class PlainRootDbContext : GoldenDbContext
+{
+  public PlainRootDbContext(DbContextOptions<PlainRootDbContext> options) : base(options) { }
+
+  public DbSet<PlainRoot> Roots => Set<PlainRoot>();
+
+  protected override void OnModelCreating(ModelBuilder modelBuilder)
+  {
+    base.OnModelCreating(modelBuilder);
+    modelBuilder.Entity<PlainRoot>(entity => entity.HasKey(root => root.Id));
+  }
+}
+
+/// <summary>IAggregateRoot discovered ONLY via ApplyConfiguration — deliberately no DbSet property.</summary>
+internal sealed class ConfigOnlyRoot : Entity<Guid>, IAggregateRoot
+{
+  public ConfigOnlyRoot(Guid id, string name) : base(id)
+  {
+    Name = name;
+  }
+
+  public string Name { get; private set; }
+
+  private sealed class Invariants : AbstractValidator<ConfigOnlyRoot>
+  {
+    public Invariants()
+    {
+      RuleFor(root => root.Name).NotEmpty();
+    }
+  }
+}
+
+internal sealed class ConfigOnlyRootConfiguration : IEntityTypeConfiguration<ConfigOnlyRoot>
+{
+  public void Configure(EntityTypeBuilder<ConfigOnlyRoot> builder)
+  {
+    builder.HasKey(root => root.Id);
+  }
+}
+
+internal sealed class ConfigOnlyDbContext : GoldenDbContext
+{
+  public ConfigOnlyDbContext(DbContextOptions<ConfigOnlyDbContext> options) : base(options) { }
+
+  protected override void OnModelCreating(ModelBuilder modelBuilder)
+  {
+    base.OnModelCreating(modelBuilder);
+
+    // No DbSet<ConfigOnlyRoot> property on this context — ApplyConfiguration after base is the
+    // only path that adds it to the model, mirroring a config-only aggregate in a host context.
+    modelBuilder.ApplyConfiguration(new ConfigOnlyRootConfiguration());
   }
 }

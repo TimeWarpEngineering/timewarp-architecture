@@ -14,16 +14,23 @@
 // Golden aggregate enforcement (DomainInvariantsGuard, EntityVersion.Next, child→root resolution,
 // Version PropertyAccessMode pin) lives in GoldenDbContext (TimeWarp.Foundation.Persistence) and
 // only applies to IAggregateRoot types — Principal/Credential intentionally skip it.
-// Overrides of OnModelCreating must call base.OnModelCreating so the golden pin still runs.
-// ConfigureConventions registers generated TypedId ValueConverters (ConfigureTypedIdConventions)
-// so [TypedId] properties map to Guid without per-entity ceremony; Profile and identity configs
-// also set conversion explicitly as exemplars. Its namespace arrives via an MSBuild <Using> in the
-// csproj, NOT a using directive here: the literal would be sourceName-rewritten on dotnet-new while
-// the generator's baked-in namespace is not (task 115 pattern).
-// Concurrency is a two-party contract for IAggregateRoot: GoldenDbContext increments Version on
-// Modified roots; the host must pair .IsConcurrencyToken() (ProfileEntityTypeConfiguration does)
-// or the increment is silent bookkeeping with no WHERE check. Port-backed identity entities use
-// store-CAS + .IsConcurrencyToken() without the golden auto-increment.
+// Overrides of OnModelCreating should still call base.OnModelCreating (EF convention hygiene),
+// but the golden Version pin no longer depends on it: GoldenDbContext's ConfigureConventions is
+// sealed and always registers GoldenAggregateVersionConvention, a model-finalizing convention that
+// runs after OnModelCreating regardless of override order (task 121).
+// This host customizes conventions via OnConfigureConventions (GoldenDbContext's virtual hook) —
+// ConfigureConventions itself is sealed on GoldenDbContext and always registers the golden Version
+// convention first; hosts cannot reach it to skip that registration. OnConfigureConventions here
+// registers generated TypedId ValueConverters (ConfigureTypedIdConventions) so [TypedId] properties
+// map to Guid without per-entity ceremony; Profile and identity configs also set conversion
+// explicitly as exemplars. Its namespace arrives via an MSBuild <Using> in the csproj, NOT a using
+// directive here: the literal would be sourceName-rewritten on dotnet-new while the generator's
+// baked-in namespace is not (task 115 pattern).
+// Concurrency is now a one-party contract for IAggregateRoot: GoldenAggregateVersionConvention
+// configures IsConcurrencyToken + PropertyAccessMode.Property for every mapped root's Version
+// automatically — ProfileEntityTypeConfiguration no longer calls .IsConcurrencyToken() itself.
+// Port-backed identity entities (Principal/Credential) are not IAggregateRoot, so the convention
+// skips them; they keep store-CAS + a manual .IsConcurrencyToken() without the golden auto-increment.
 #endregion
 
 namespace TimeWarp.Architecture.Persistence;
@@ -40,7 +47,7 @@ public sealed partial class PostgresDbContext : GoldenDbContext
   public DbSet<Principal> Principals => Set<Principal>();
   public DbSet<Credential> Credentials => Set<Credential>();
 
-  protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+  protected override void OnConfigureConventions(ModelConfigurationBuilder configurationBuilder)
   {
     configurationBuilder.ConfigureTypedIdConventions();
   }
