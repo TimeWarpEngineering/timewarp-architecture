@@ -68,6 +68,7 @@
           "condition": "(!postgres)",
           "exclude": [
             "source/container-apps/web/web-infrastructure/persistence/postgres-db-context.cs",
+            "source/container-apps/web/web-infrastructure/persistence/ef-principal-store.cs",
             "source/container-apps/web/web-infrastructure/configuration/postgres-db-options.cs",
             "source/container-apps/web/web-server/configuration/environment-checks/postgres-db-environment-check.cs",
             "source/container-apps/web/web-server/hosted-services/postgres-db-context-startup-hosted-service.cs",
