@@ -48,3 +48,24 @@ Current state (recorded while abandoning the deploy fix):
 Origin: "deploy failed" investigation 2026-07-24. The immediate 400 from Pages is FIXED
 (build_type=workflow) — what remains is the strategic question, so no further pipeline work
 until it's answered. AGENTS.md currently points to the stale site under "Documentation".
+
+## Grounding (2026-07-24, after Steve reviewed the published site)
+
+The staleness is in CURRENT source, not just the old published site — a fixed pipeline
+would republish wrong content:
+
+- `timewarp-templates/documentation/timewarp-architecture-template/Overview.md`: install
+  instructions for **Project Tye** (dead upstream), links **MediatR** and **AutoMapper**
+- `.../Features.md`: lists **Tye** as a feature
+- `documentation/developer/conceptual/DirectoryStructure.md`: "the MediatR pipeline"
+- Published site additionally references FluentAssertions (now repo-BANNED — commercial
+  license) and Tailwind (dropped 059)
+
+Checked clean: the template NUPKG does NOT ship the stale docfx tree, and its nuget.org
+readme.md has zero dead-tech references — the package page is fine; only the Pages site and
+the docfx source tree are rotten.
+
+Interim action taken: the failing workflow file was RENAMED to
+`.github/workflows/timewarp-architecture-documentation.yml.disabled` (Steve's call) so
+master pushes stop going red; takes effect on master when the rename merges. Un-rename to
+resurrect, pipeline itself now works (Pages build_type=workflow was fixed).
