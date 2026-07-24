@@ -63,8 +63,42 @@ TimeWarp.Identity). Cheap now, breaking later.
 | 5 | Skip kanban historical records |
 | 6 | Verify: `dev build` 0/0; foundation-infrastructure-tests; web-infrastructure-tests; template-smoke if cheap |
 
+## Results
+
+**Completed 2026-07-24** — public Foundation type names describe aggregate behavior; rename
+lands free before first publish.
+
+### What was implemented
+| Old | New |
+|-----|-----|
+| `GoldenDbContext` | `AggregateDbContext` |
+| `GoldenAggregateVersionConvention` | `AggregateVersionConvention` |
+
+- File renames (kebab-case + tests); namespace `TimeWarp.Foundation.Persistence` unchanged
+- Prose/Design regions: aggregate-describing language
+- Docs: ADR-0009 type refs + HowToAddYourAggregate; "golden path" idiom kept; ADR filename stays
+- Historical kanban untouched
+
+### Tests
+- `dev build` 0/0
+- foundation-infrastructure-tests: **11 passed**
+- web-infrastructure-tests: **39 passed**
+- web-server-integration-tests: **97 passed**, 1 skipped
+- `dev template-smoke`: **SUCCEEDED** (SmokeDefault + SmokeNoPostgres)
+
+### Phase 4b
+- Effort 1 (general); 1 round; **0 open**
+- Disposition: **clean** (`review/disposition.md`)
+
+### Commit
+- `a7cb2977` refactor(foundation): rename GoldenDbContext to AggregateDbContext
+
+### Rule going forward
+- **"golden path"** OK as recommended-route prose
+- **`Golden*` type/member/file names banned**
+
 ## Session
 
 - Created: 2026-07-24
 - Plan: 2026-07-24 (orchestrator; task-as-spec, no open forks)
-- Implemented: 2026-07-24 (rename symbols+files+prose; build/tests/smoke green)
+- Implemented + review: 2026-07-24
