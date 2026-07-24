@@ -80,7 +80,7 @@ public class Program
       timeWarpStateOptions =>
       {
         //-:cnd:noEmit
-#if DEBUG
+#if ReduxDevToolsEnabled
         timeWarpStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
 #endif
         //+:cnd:noEmit
