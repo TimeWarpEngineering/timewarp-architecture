@@ -7,5 +7,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\source\container-apps\web\web-infrastructure\web-infrastructure.csproj" />
+    <!-- Shared IPrincipalStore contract abstract cases (task 104-032 dual-fixture). -->
+    <ProjectReference Include="..\..\..\libraries\timewarp-identity-tests\timewarp-identity-tests.csproj" />
   </ItemGroup>
 </Project>
