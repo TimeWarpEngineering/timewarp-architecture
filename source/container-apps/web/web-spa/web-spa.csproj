@@ -102,13 +102,38 @@
     <Folder Include="features\admin\" />
   </ItemGroup>
 
-  <!-- TypeScript (source/*.ts -> wwwroot/js) is compiled by Microsoft.TypeScript.MSBuild on
-       every build — node/npm NOT required. Type-checking uses the ambient declarations under
-       source/types (tsconfig typeRoots). The npm lint/format toolchain was removed (059-006). -->
-  <ItemGroup>
-    <TypeScriptInputs Include="source\*.*"/>
-  </ItemGroup>
+  <!-- TypeScript (source/**/*.ts -> wwwroot/js via tsconfig outDir) is compiled by
+       Microsoft.TypeScript.MSBuild — node/npm NOT required. Type-checking uses ambient
+       declarations under source/types (tsconfig typeRoots). The npm lint/format toolchain
+       was removed (059-006).
 
+       Design (task 116): SWA globs wwwroot/** into Content at evaluation.
+       ResolveProjectStaticWebAssets runs BeforeTargets=AssignTargetPaths (before Compile).
+       Rebuild = Clean;Build in one invocation: TypeScriptDeleteCompilerOutput deletes
+       wwwroot/js, but Content still lists those paths → DefineStaticWebAssets throws
+       "No file exists for the asset". Fix: run the TypeScript pipeline during PrepareForBuild
+       (ASP.NET guidance — microsoft/TypeScript#60538, dotnet/sdk#52301) so files exist before
+       SWA discovery; de-dupe Content before GetTypeScriptOutputForPublishing re-adds
+       GeneratedJavascript. Do not commit wwwroot/js (gitignored). Local workaround can drop
+       when SDK ships Microsoft.NET.Sdk.StaticWebAssets.TypeScript.targets (tracked for .NET 11). -->
+  <PropertyGroup>
+    <PrepareForBuildDependsOn>
+      CheckFileSystemCaseSensitive;
+      FindConfigFiles;
+      TypeScriptDeleteOutputFromOtherConfigs;
+      CompileTypeScript;
+      CompileTypeScriptWithTSConfig;
+      GetTypeScriptOutputForPublishing;
+      $(PrepareForBuildDependsOn)
+    </PrepareForBuildDependsOn>
+  </PropertyGroup>
+
+  <Target Name="RemoveDuplicateTypeScriptOutputs"
+          BeforeTargets="GetTypeScriptOutputForPublishing">
+    <ItemGroup>
+      <Content Remove="@(GeneratedJavascript)" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <_ContentIncludedByDefault Remove="features\profile-menu\components\ProfileDropDown.razor" />
