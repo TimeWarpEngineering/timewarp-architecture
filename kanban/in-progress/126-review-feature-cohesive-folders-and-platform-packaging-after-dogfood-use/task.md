@@ -123,8 +123,15 @@ decisions**, not a single architecture fork and not Phase 4b “fix this PR unti
 - Process choice (2026-07-25): primary **`tw-rfc-ballot`**, rails **`tw-agent-collaboration`**,
   evidence first; **not** consensus-debate or implementation-review as the main path.
 - Prefer short evidence + numbered decisions over a second architecture study.
+- Implementation plan (2026-07-25): see [plan.md](plan.md) in this folder — operationalizes the
+  three phases with verified paths, mechanical survey commands, the 104-002 `rfc/rfc.md` shape as
+  precedent (2 parallel reviewers + 1 adversarial), and fold-in criteria. Hard constraints carried:
+  Steve resolves ballot dissent; no production restructure on this id; registry edit ⇒ full rebuild.
+  Early finding candidate already spotted: stale "never been published" TimeWarp.Identity pin
+  comment in root `Directory.Packages.props` (predates task 124 beta.6 first publish).
 
 ## Session
 
 - Created: 2026-07-25 — filed after dogfood use of cohesive folders + platform packages.
 - Process updated: 2026-07-25 — recorded rfc-ballot primary + collaboration rails + switches.
+- Plan recorded: 2026-07-25 — plan.md added; orchestration session moving to Phase 1 evidence.
