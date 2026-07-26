@@ -78,6 +78,63 @@ twice (task 115 origin; repeat caught only by human review in task 113 round-2, 
   modifiers + slnx conditionals + defaults true).
 - Do not touch CPM pins, package IDs, or the composed-property mechanism itself.
 
+### Implementation Plan
+
+#### Goal
+
+Always package-mode for generated apps; drop `foundationPackages` / `analyzerPackages` /
+`identityPackages`; keep monorepo `Use*Packages` auto-detect; add sourceName-literal scan
+including `.cs` files.
+
+#### Phase 0 — slnx dual-use
+
+Root slnx is monorepo + template. Template conditionals are comments monorepo-side. Removing
+source-mode `Project` blocks removes them from monorepo solution membership too (`dev test`
+globs `tests/`; pack lists explicit). If monorepo breaks, fallback: `#if (false)` wrap only —
+do **not** reintroduce symbols.
+
+#### Phase 1 — template.json + slnx
+
+- `template.json`: delete the 3 symbols + 3 conditional exclude modifiers; merge platform trees
+  into an unconditional (`true`) exclude
+- `slnx`: remove foundation / libraries / analyzers + their test project regions under
+  `*Packages` conditionals; keep `api` / `web` / `grpc` / `yarp` / `postgres` flags
+- Do **not** change `Use*Packages` MSBuild, composed props, or CPM
+
+#### Phase 2 — doc/comment sweep
+
+- `AGENTS.md` platform section
+- `HowToUpgradeToAnalyzerPackages.md`
+- Comments in: `Directory.Packages.props`, web-contracts, timewarp-testing, identity-tests,
+  web-infrastructure-tests, missing-invariants-validator-exception, template-smoke-command
+  Design region
+- Leave: kanban history, dual-mode code, TWA0010
+- CI `template-smoke.yml` likely no change
+
+#### Phase 3 — scan (new pass, not `AssertPackageIdsNotRewritten`)
+
+`AssertNoUnsafePlatformNamespaceLiterals` on template-shipped consumer content (`.cs` included):
+
+- Regex: `TimeWarp\.Architecture\.(Analyzers|Generators|Attributes|TypedIds)\b`
+- Roots: `source/container-apps`, `tests/common`, `tests/container-apps`, `msbuild`, root
+  props / slnx / `global.json` etc.
+- Skip: foundation / analyzers / libraries platform trees, docs, kanban, tools
+- Post-generate: assert vendored trees absent; symbols gone from generated `template.json`
+- Optional: assert rewritten `{appName}.TypedIds` etc. in generated tree including `.cs`
+- Prove: temporary `using TimeWarp.Architecture.TypedIds.Ef;` in `postgres-db-context.cs` must
+  fail smoke; then revert
+
+#### Verify
+
+- `dev build` 0/0, `dev test`, `template-smoke` both matrices
+- Generated-app spot check
+- No `--*Packages` on help
+
+#### Out of scope
+
+CPM pins, package IDs, `timewarp-platform-packages.props` composition values.
+
 ## Session
 
 - Created: 2026-07-26 — filed from 126 maintainer decision (drop all three symbols) + RFC D4.
+- Planning: 2026-07-26
