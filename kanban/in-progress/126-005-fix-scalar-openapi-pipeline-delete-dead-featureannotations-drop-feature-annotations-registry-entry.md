@@ -83,7 +83,77 @@ after the single-level sidebar is visible and the maintainer wants nesting.
 - FastEndpoints auto-tags by route segment when no explicit `Tags()` — our generator's explicit
   `Tags()` takes precedence; do not remove the generator emission.
 
+### Implementation Plan
+
+#### Goal
+Make Scalar’s feature-grouped sidebar work end-to-end, then remove the dead FeatureAnnotations mechanism.
+
+Three workstreams:
+1. Wire real FastEndpoints OpenAPI document + Scalar consumers (web-server + api-server).
+2. Fix generator tag derivation bug that currently emits `Tags("Architecture")` for every endpoint (blocks DoD).
+3. Delete dead files, drop registry token, regenerate grammar artifacts, update live docs + tests.
+
+#### Critical discovery
+Task claimed “grouping needs NO new work” — **FALSE** against current tree.
+`endpoint-metadata.cs` walks namespace and tags the **parent of Features** (e.g. Architecture), not the leaf feature Id (Roles, Identity). Generated endpoints confirm `Tags("Architecture")`. Must fix: tag = innermost namespace name of contract symbol under Features. Keep `[OpenApiTags]` additive. No `x-tagGroups`.
+
+#### API correction
+Use **FastEndpoints.OpenApi 8.2.0** (match FastEndpoints 8.2.0):
+- `services.OpenApiDocument(o => { ... })` — NOT `SwaggerDocument`, NOT raw `AddOpenApi`
+- `app.UseFastEndpoints().MapOpenApi()` via `CommonServerModule.UseScalarApiReference` after FE
+- `MapScalarApiReference` with `AddDocument` matching `DocumentName` (`apiVersion` `"v1"`)
+
+#### Package wiring
+- `Directory.Packages.props`: `PackageVersion` FastEndpoints.OpenApi 8.2.0
+- `foundation-server.csproj`: PackageReference (with FastEndpoints + Scalar)
+- global-usings: `FastEndpoints.OpenApi`
+- web/api server csprojs: no new ref if APIs stay in CommonServerModule
+
+#### CommonServerModule
+- **AddOpenApi:** `OpenApiDocument` with `DocumentName=apiVersion`, Title, Version, `AutoTagPathSegmentIndex=0`, `ExcludeNonFastEndpoints=true`. Drop `AddEndpointsApiExplorer`. Prefer drop unused `typeArray` param.
+- **UseScalarApiReference:** `MapOpenApi` + `MapScalarApiReference(WithTitle, AddDocument)`. Rewrite false Purpose/Design regions.
+
+#### Hosts
+- **web-server:** keep `AddOpenApi` in ConfigureServices; move `UseScalarApiReference` AFTER `UseFastEndpoints`; Scalar always-on.
+- **api-server:** use `CommonServerModule.AddOpenApi`; Development-only `UseScalarApiReference` after FE; remove orphan `AddEndpointsApiExplorer` and direct `MapScalarApiReference`.
+
+#### Generator fix
+`endpoint-metadata.cs`: if Features is ancestor, `tags.Add(symbol.ContainingNamespace.Name)`. Update Design. Generator tests for WeatherForecast, nested `Admin.Roles` → `Roles`. Do not remove `Tags()` emission.
+
+#### Delete 7 FeatureAnnotations files
+- web features: admin/roles, analytics, auth, hello, identity, profile `*-feature-annotations-server.cs`
+- api: `weather-forecast/feature-annotations.cs`
+
+#### Registry
+Drop `feature-annotations` from `feature-filename-grammar.json` (keep `endpoint`). Regenerate `.g.cs` and `.g.props`. **FULL rebuild mandatory.**
+
+#### Docs/tests
+- AGENTS.md axis-1
+- `skills/tw-feature-placement/SKILL.md`
+- 126-001 placement mentions
+- `feature-filename-grammar-analyzer-tests` (remove feature-annotations cases; multi-segment TWA0016 case)
+- analyzer Design comments
+
+#### Verification order
+1. Package + CommonServerModule + hosts
+2. Generator tag fix + tests
+3. Delete FeatureAnnotations
+4. Registry drop + regen + docs/tests
+5. `dev build` (full) 0/0; `dev test`; `dev template-smoke` both matrices
+6. `dev run` + curl `/openapi/v1.json` tags + Scalar sidebar proof into task record
+
+#### Out of scope
+`x-tagGroups`, Swashbuckle/NSwag, removing generator `Tags`, keeping `feature-annotations` reserved, changing web Scalar always-on policy.
+
+#### Risks
+- Stale analyzer DLLs → full rebuild
+- `MapOpenApi` before FE → order after FE
+- DocumentName mismatch
+- Double tagging → `AutoTagPathSegmentIndex=0`
+- Incomplete multi-segment tests after drop
+
 ## Session
 
 - Created: 2026-07-26 — filed from Scalar research + maintainer decisions (fix pipeline, delete
   dead files, drop registry entry).
+- Planning: 2026-07-26
