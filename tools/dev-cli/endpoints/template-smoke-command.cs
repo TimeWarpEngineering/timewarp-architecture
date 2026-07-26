@@ -22,8 +22,12 @@
 // in postgres-db-context.cs). AssertPackageIdsNotRewritten stays package-id focused and does not
 // scan .cs; the namespace-literal pass is independent. Post-generate asserts also confirm vendored
 // trees and removed symbols are absent from output.
-// Prefer `dotnet run tools/dev-cli/dev.cs -- template-smoke` (or re-self-install) over a stale
-// AOT `./bin/dev` so local runs pick up these gates; CI always uses the runfile path.
+// Task 126-006: the unsafe-namespace scan set is derived at runtime from property values in
+// msbuild/timewarp-platform-packages.props (PackageId AND namespace composition properties). First
+// segment after `.Architecture.` becomes a scan suffix (e.g. TypedIds.Ef → TypedIds). Empty
+// derivation is a hard failure so props drift cannot silently narrow coverage. Prefer
+// `dotnet run tools/dev-cli/dev.cs -- template-smoke` (or re-self-install) over a stale AOT
+// `./bin/dev` so local runs pick up these gates; CI always uses the runfile path.
 #endregion
 
 namespace DevCli.Commands;
@@ -87,12 +91,13 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
   ];
 
   /// <summary>
-  /// Continuous platform-namespace segments that must not appear as raw literals in
-  /// template-shipped consumer content (sourceName rewrites TimeWarp.Architecture → app name).
+  /// Extracts the first identifier after <c>.Architecture.</c> from composed props values such as
+  /// <c>$(_TwPlatformVendor).Architecture.Analyzers</c> or continuous
+  /// <c>TimeWarp.Architecture.TypedIds.Ef</c>.
   /// </summary>
-  private static readonly System.Text.RegularExpressions.Regex UnsafePlatformNamespaceLiteral =
+  private static readonly System.Text.RegularExpressions.Regex ComposedArchitectureSuffix =
     new(
-      @"TimeWarp\.Architecture\.(Analyzers|Generators|Attributes|TypedIds)\b",
+      @"(?:\$\(_TwPlatformVendor\)|TimeWarp)\.Architecture\.([A-Za-z_][A-Za-z0-9_]*)",
       System.Text.RegularExpressions.RegexOptions.Compiled);
 
   private static readonly string[] SourceNameLiteralScanExtensions =
@@ -490,12 +495,18 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
 
     /// <summary>
     /// Scans monorepo template-shipped consumer content (including .cs) for continuous
-    /// TimeWarp.Architecture.(Analyzers|Generators|Attributes|TypedIds) literals that sourceName
-    /// would rewrite. Separate from AssertPackageIdsNotRewritten (which omits .cs by design).
+    /// TimeWarp.Architecture.&lt;suffix&gt; literals that sourceName would rewrite. Suffix set is
+    /// derived from msbuild/timewarp-platform-packages.props (not hand-maintained). Separate from
+    /// AssertPackageIdsNotRewritten (which omits .cs by design).
     /// </summary>
     private bool AssertNoUnsafePlatformNamespaceLiterals()
     {
       Terminal.WriteLine("Scanning monorepo template-shipped content for unsafe platform namespace literals...");
+
+      System.Text.RegularExpressions.Regex? unsafeLiteral = BuildUnsafePlatformNamespaceLiteralRegex();
+      if (unsafeLiteral is null)
+        return false;
+
       List<string> hits = [];
 
       foreach (string relativeRoot in SourceNameLiteralScanRelativeRoots)
@@ -512,7 +523,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
           if (!IsSourceNameLiteralScanExtension(file))
             continue;
 
-          CollectUnsafeNamespaceHits(file, Path.GetRelativePath(RepoRoot, file), hits);
+          CollectUnsafeNamespaceHits(file, Path.GetRelativePath(RepoRoot, file), hits, unsafeLiteral);
         }
       }
 
@@ -522,7 +533,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
         if (!File.Exists(file))
           continue;
 
-        CollectUnsafeNamespaceHits(file, relativeFile, hits);
+        CollectUnsafeNamespaceHits(file, relativeFile, hits, unsafeLiteral);
       }
 
       if (hits.Count > 0)
@@ -541,10 +552,80 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       return true;
     }
 
-    private static void CollectUnsafeNamespaceHits(string file, string relativeDisplay, List<string> hits)
+    /// <summary>
+    /// Builds the continuous-literal scan regex from first segments after <c>.Architecture.</c>
+    /// in property values of <c>msbuild/timewarp-platform-packages.props</c>.
+    /// </summary>
+    private System.Text.RegularExpressions.Regex? BuildUnsafePlatformNamespaceLiteralRegex()
+    {
+      List<string> suffixes = DeriveUnsafePlatformNamespaceSuffixes();
+      if (suffixes.Count == 0)
+        return null;
+
+      Terminal.WriteLine(
+        $"Derived platform-namespace scan suffixes from timewarp-platform-packages.props: {string.Join(", ", suffixes)}");
+
+      string alternation = string.Join(
+        "|",
+        suffixes.Select(static suffix => System.Text.RegularExpressions.Regex.Escape(suffix)));
+
+      return new System.Text.RegularExpressions.Regex(
+        $@"TimeWarp\.Architecture\.({alternation})\b",
+        System.Text.RegularExpressions.RegexOptions.Compiled);
+    }
+
+    /// <summary>
+    /// Parses composed PackageId and namespace property values; returns distinct first segments
+    /// after <c>.Architecture.</c>, ordinal-sorted. Hard-fails (empty list + ExitCode) if the props
+    /// file is missing or yields no suffixes.
+    /// </summary>
+    private List<string> DeriveUnsafePlatformNamespaceSuffixes()
+    {
+      string propsPath = Path.Combine(RepoRoot, "msbuild", "timewarp-platform-packages.props");
+      if (!File.Exists(propsPath))
+      {
+        Terminal.WriteErrorLine(
+          "Cannot derive platform-namespace scan set: msbuild/timewarp-platform-packages.props not found.".Red());
+        Environment.ExitCode = 1;
+        return [];
+      }
+
+      var document = XDocument.Load(propsPath);
+      HashSet<string> suffixes = new(StringComparer.Ordinal);
+
+      foreach (XElement propertyGroup in document.Descendants("PropertyGroup"))
+      {
+        foreach (XElement property in propertyGroup.Elements())
+        {
+          string value = property.Value.Trim();
+          if (value.Length == 0)
+            continue;
+
+          System.Text.RegularExpressions.Match match = ComposedArchitectureSuffix.Match(value);
+          if (match.Success)
+            suffixes.Add(match.Groups[1].Value);
+        }
+      }
+
+      if (suffixes.Count == 0)
+      {
+        Terminal.WriteErrorLine(
+          "Cannot derive platform-namespace scan set: no .Architecture.<suffix> property values found in msbuild/timewarp-platform-packages.props.".Red());
+        Environment.ExitCode = 1;
+        return [];
+      }
+
+      return suffixes.OrderBy(static suffix => suffix, StringComparer.Ordinal).ToList();
+    }
+
+    private static void CollectUnsafeNamespaceHits(
+      string file,
+      string relativeDisplay,
+      List<string> hits,
+      System.Text.RegularExpressions.Regex unsafePlatformNamespaceLiteral)
     {
       string text = File.ReadAllText(file);
-      foreach (System.Text.RegularExpressions.Match match in UnsafePlatformNamespaceLiteral.Matches(text))
+      foreach (System.Text.RegularExpressions.Match match in unsafePlatformNamespaceLiteral.Matches(text))
       {
         hits.Add($"{relativeDisplay}: '{match.Value}'");
       }
