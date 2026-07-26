@@ -41,7 +41,9 @@ rule from 126-001** (operation-specific → `<use-case>/`, shared/multi-operatio
 
 ## Checklist
 
-- [ ] Resolve the namespace question below with the maintainer BEFORE moving files
+- [ ] Apply the resolved namespace rule: migrated files adopt `…Features.<Id>` namespaces
+      (use roslynk rename_symbol so all references update; expect TWA0009 to begin governing
+      these files — any cross-slice reference it surfaces is a finding, not a nuisance)
 - [ ] Complete the category-4 inventory (sweep all five layer folders; classify ambiguous items)
 - [ ] `git mv` + rename to grammar names; verify each file stays in its original project
       (compare `dotnet build` project outputs / use roslynk before-and-after)
@@ -55,12 +57,13 @@ rule from 126-001** (operation-specific → `<use-case>/`, shared/multi-operatio
 
 - Parent: 126. Origin: folder-taxonomy conversation on 126 (see 126 `rfc/rfc.md` post-tally
   notes); maintainer decided category 4 migrates, categories 1–3 unchanged for now.
-- **Open design question (resolve with Steve before execution):** do migrated files adopt
-  `…Features.<Id>` namespaces (making them slice-governed under TWA0009), or keep their current
-  namespaces (pure disk move)? Repo policy says namespaces do not track folders and file moves
-  never justify namespace renames — but slice *membership* under TWA0009 keys off the
-  `…Features.<Id>` namespace, so this is a semantic membership question, not cosmetics. Do not
-  guess; ask.
+- **Namespace question RESOLVED (Steve, 2026-07-26): migrated files adopt `…Features.<Id>`
+  namespaces — namespace declares slice membership.** Rationale: TWA0009 keys off the
+  `…Features.<Id>` namespace, so a pure disk move would leave files in `features/` that the
+  slice-isolation analyzer silently ignores (looks-governed-but-isn't). This is not a cosmetic
+  folder-tracking rename (repo policy against those stands); it is a semantic membership
+  declaration. Consequence: TWA0009 starts governing these files — surface any violations it
+  finds as findings to fix or consciously `[CrossSliceReference]`, not as noise.
 - Dependency note: `postgres-db-context.cs` (stays — platform infrastructure aggregating slice
   entity configs) references migrated types; no reference breakage expected since project
   membership is unchanged, but verify.
