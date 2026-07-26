@@ -16,3 +16,9 @@ _(none)_
 ## Escalations
 
 - None
+
+## Addendum — round 3 (2026-07-26)
+
+Independent cross-vendor verification confirmed the implementation and both prior rounds,
+including a live planted-literal re-proof of the scan and generated-output evidence for the
+slnx technique. Outcome unchanged: clean. Two non-blocking follow-up notes in round-3 record.

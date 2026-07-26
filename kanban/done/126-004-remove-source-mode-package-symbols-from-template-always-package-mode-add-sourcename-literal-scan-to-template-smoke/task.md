@@ -186,3 +186,15 @@ CPM pins, package IDs, `timewarp-platform-packages.props` composition values.
 ### Residual risks
 - Prefer `dotnet run tools/dev-cli/dev.cs -- template-smoke` over stale AOT `./bin/dev` until re-self-install.
 - Dual-mode `Use*Packages` branches remain in shipping csproj for monorepo dogfood only; generated apps always take the package branch.
+
+## Results addendum — independent verification (round 3, 2026-07-26)
+
+Cross-vendor verification (Claude reviewing the Grok implementation): all claims confirmed, no
+bugs; full record at [review/round-3/independent-verification.md](review/round-3/independent-verification.md).
+Notables: the `<!--#if (false) -->` slnx technique proven against actual generated output (zero
+platform entries in SmokeDefault's slnx); the literal scan re-proved live by planting the exact
+historical a251980f literal (immediate pre-scan failure, clean revert); gates re-run
+independently all green. Two non-blocking findings recorded for maintainer consideration: the
+scan's hand-maintained regex set could drift from the composed-property SSOT (candidate for the
+prefer-sourcegen-over-memory directive), and dispositions should quote command output rather
+than assert gate results.
