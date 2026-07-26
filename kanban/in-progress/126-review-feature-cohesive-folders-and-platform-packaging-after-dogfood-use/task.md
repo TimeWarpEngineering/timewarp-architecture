@@ -83,36 +83,44 @@ decisions**, not a single architecture fork and not Phase 4b “fix this PR unti
 
 ### Phase 1 — evidence
 
-- [ ] Re-read ADR-0008, `skills/tw-feature-placement/SKILL.md`, and AGENTS.md packaging
+- [x] Re-read ADR-0008, `skills/tw-feature-placement/SKILL.md`, and AGENTS.md packaging
       sections as the baseline contract under review
-- [ ] Survey live `web/features/` tree: slice list, grammar compliance, escape-hatch count,
+- [x] Survey live `web/features/` tree: slice list, grammar compliance, escape-hatch count,
       SPA exceptions, oddball files
-- [ ] Survey platform package surface: package IDs, dual-mode MSBuild props, Directory.Packages
+- [x] Survey platform package surface: package IDs, dual-mode MSBuild props, Directory.Packages
       pins, template symbols (`foundationPackages` / `analyzerPackages` / `identityPackages`)
-- [ ] Walk 2–3 recent dogfood features (e.g. identity, profile, auth/admin) and note where
+- [x] Walk 2–3 recent dogfood features (e.g. identity, profile, auth/admin) and note where
       agents or humans hesitated, mis-placed files, or worked around the system
-- [ ] Capture packaging dogfood: monorepo ProjectReference path vs `dev template-smoke` /
+- [x] Capture packaging dogfood: monorepo ProjectReference path vs `dev template-smoke` /
       package-mode path; pin-bump and publish friction from 124/beta.7
-- [ ] Write `findings.md` (efficiency wins, frictions, risks, open questions)
+- [x] Write `findings.md` (efficiency wins, frictions, risks, open questions)
 
 ### Phase 2 — RFC ballot (`tw-rfc-ballot` + `tw-agent-collaboration`)
 
-- [ ] Create `rfc/rfc.md`: evidence matrix, numbered decisions (options + author lean), empty
+- [x] Create `rfc/rfc.md`: evidence matrix, numbered decisions (options + author lean), empty
       Reviewer opinions + ballot template
-- [ ] Run parallel ballots; optional adversarial reviewer; re-verify falsifiable claims
-- [ ] Tally decisions; Steve resolves dissent with recorded reasoning
-- [ ] Disposition table: keep / tweak / restructure + proposed follow-up task titles
+- [x] Run parallel ballots; optional adversarial reviewer; re-verify falsifiable claims
+- [x] Tally decisions; Steve resolves dissent with recorded reasoning
+- [x] Disposition table: keep / tweak / restructure + proposed follow-up task titles
+      (rfc.md §7 tally + post-tally maintainer decisions)
 
 ### Phase 3 — fold-in (same task id)
 
-- [ ] Fold accepted resolutions on **126** (docs/skills/analyzers/trivial fixes)
-- [ ] Open only agreed non-trivial follow-up / child tasks (do not auto-expand scope)
-- [ ] Record final disposition in Results (evidence + ballot outcome + fold-in / deferrals)
+- [x] Fold accepted resolutions on **126** (docs/skills/analyzers/trivial fixes) — commit
+      `a3b5f1fd`: P1 pin-policy comments, P2 consumer table, D5 inert-CPM note, D2 domain
+      headroom note
+- [x] Open only agreed non-trivial follow-up / child tasks (do not auto-expand scope) —
+      126-001..004, each maintainer-approved in conversation
+- [x] Record final disposition in Results (evidence + ballot outcome + fold-in / deferrals)
 
 ### Optional switches
 
-- [ ] If machinery bugs found: open `review/` and run `tw-implementation-review` on that delta
-- [ ] If one hard fork remains: open `debate/` and run `tw-consensus-debate` on that single question
+- [ ] ~~If machinery bugs found: open `review/` and run `tw-implementation-review` on that delta~~
+      — not triggered: no fix-now machinery defects found (all frictions were doc drift or
+      gate-coverage gaps)
+- [ ] ~~If one hard fork remains: open `debate/` and run `tw-consensus-debate` on that single
+      question~~ — not triggered: dissent (D1) was resolved directly by maintainer with a third
+      option
 
 ## Notes
 
@@ -130,8 +138,62 @@ decisions**, not a single architecture fork and not Phase 4b “fix this PR unti
   Early finding candidate already spotted: stale "never been published" TimeWarp.Identity pin
   comment in root `Directory.Packages.props` (predates task 124 beta.6 first publish).
 
+## Results
+
+**Evidence (Phase 1)** — [findings.md](findings.md), gathered by two parallel read-only survey
+agents; every claim cites a path/count/commit. Headlines: the grammar design is holding (zero
+grammar-caused renames in the tree's entire history; registry SSOT shows no drift; SPA exception
+intact; 6 of 36 non-contract files use the escape hatch), and the packaging machinery is sound
+(composed-property sourceName-safety verified twice; `dev template-smoke` real and CI-wired;
+task-124 pin policy proven against nuget.org). Real frictions: contracts-subfoldered-vs-flat
+asymmetry (undocumented/unenforced), three stale pin-policy comments, stale Generators consumer
+table (3 listed vs 8 actual), template-smoke structurally blind to stale-published-pin breaks,
+and the sourceName-literal bug class having repeated once (`a251980f`).
+
+**RFC ballot (Phase 2)** — [rfc/rfc.md](rfc/rfc.md): 5 balloted decisions, 3 parallel reviewers
+(2 independent + 1 adversarial), all cast blind. Adversarial reviewer re-derived every
+load-bearing claim from scratch; none failed. Tally: D2–D5 unanimous with author lean; D1 split
+2–1 → maintainer resolved with a **third option** (per-use-case folders, unconditional). The
+adversarial pass materially improved D3 (flatcontainer-not-search-index precision) and D4 (the
+existing smoke helper excludes `.cs` — naive reuse would miss the historical bug class).
+
+**Post-tally maintainer decisions (2026-07-26, recorded under rfc.md §7):**
+- D1 third option: operation files group side by side in `<use-case>/` folders; shared files at
+  slice root; `commands/`/`queries/` folders removed; rule unconditional → **126-001**.
+- Category-4 migration: feature code living in layer project folders (Profile aggregate —
+  which corrects the F4/D2 "empty domain layer" premise — principal store, chat hub,
+  WebAuthn/agent-token pieces) migrates to `features/`; migrated files adopt `…Features.<Id>`
+  namespaces (namespace declares slice membership) → **126-002**.
+- D3 with **block** semantics: post-publish release gate generating the published template
+  against real nuget.org; failed gate = release not done → **126-003**.
+- Drop **all three** source-mode template symbols (`foundationPackages`/`analyzerPackages`/
+  `identityPackages`) — generated apps always package-mode; eject story rejected (clone covers
+  it); D4's literal scan folds in as a now-simple unconditional check → **126-004**.
+
+**Folded in on 126** (commit `a3b5f1fd`, doc/comment-only): three `Directory.Packages.props`
+pin-policy comments corrected; `HowToUpgradeToAnalyzerPackages.md` consumer table fixed to 8 +
+producer-grep caution; `timewarp-templates/Directory.Packages.props` vestigial CPM comment
+corrected; `skills/tw-feature-placement/SKILL.md` domain-headroom note added (present-tense,
+public-skill safe).
+
+**Child tasks filed (all maintainer-approved):** 126-001 (use-case folder migration), 126-002
+(layer-folder feature-code evacuation + slice namespaces), 126-003 (post-publish nuget.org gate,
+block semantics), 126-004 (drop source-mode symbols + sourceName-literal scan).
+
+**Explicit deferrals:** `platform/` home for shared seams and `projects/` pure-selector-csproj
+restructure — deliberately parked until 126-001/002 land, since the post-migration residue in
+the layer folders is the real input to both. Re-examine then.
+
+**Process notes:** optional switches (implementation-review / consensus-debate) not triggered.
+Reviewer/evidence rosters and session trail live in rfc.md §6 and the git history of this
+folder (evidence `0b2e985a`, RFC draft `0235f46e`, ballots+tally `74f3ab98`, fold-in
+`a3b5f1fd`, resolutions `d165108e`/`9f3c2076`/`5a7e6908`/`67158f78`/`5569313c`).
+
 ## Session
 
 - Created: 2026-07-25 — filed after dogfood use of cohesive folders + platform packages.
 - Process updated: 2026-07-25 — recorded rfc-ballot primary + collaboration rails + switches.
 - Plan recorded: 2026-07-25 — plan.md added; orchestration session moving to Phase 1 evidence.
+- Executed: 2026-07-25/26 — evidence (2 agents) → RFC (5 decisions) → ballots (3 reviewers) →
+  maintainer resolutions in-conversation → fold-in + 4 child tasks. Orchestrated by Claude
+  (Fable), workers Claude Sonnet subagents.

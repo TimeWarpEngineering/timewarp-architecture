@@ -1,8 +1,10 @@
 # RFC: Post-dogfood disposition for feature-cohesive folders + platform packaging
 
-**Status:** ballots complete, tallied 2026-07-25. D2–D5 unanimous (self-resolving; doc-only items
-folded in). D1 resolved by maintainer 2026-07-26 — **third option wins**: per-use-case folders,
-unconditional → child task 126-001. Remaining: D3/D4 child-task filing decision.
+**Status:** RESOLVED AND FOLDED IN (2026-07-26). All ballots cast and tallied; every decision
+resolved (D1 third-option-wins by maintainer; D2–D5 unanimous, D3 block-semantics and D4 folded
+into the symbol-removal decision by maintainer). Doc-only items landed on 126; structural work →
+child tasks 126-001..004. Post-tally maintainer decisions recorded below §7. This file is
+historical debate material per `tw-rfc-ballot`.
 **Host task:** 126 — kitchen for RFC + fold-in (agent-collaboration same-task rule).
 **Author:** rfc-author agent (Claude, session 2026-07-25).
 **Audience:** Independent reviewers. Append a ballot under [Reviewer opinions](#reviewer-opinions)
@@ -370,6 +372,18 @@ atomically with the new tree shape.
   126-001 and 126-002 land — the post-migration residue in the layer folders is the real input
   to both, so deciding against the current tree would be designing against a shape about to
   change. Explicit deferral, to be re-examined after the children complete.
+- **D3 block-vs-alert (maintainer, 2026-07-26): block.** A failed post-publish gate means
+  something broken is already published; a red release is the honest state → child task
+  **126-003**.
+- **New decision (maintainer, 2026-07-26): drop all three source-mode template symbols**
+  (`foundationPackages`/`analyzerPackages`/`identityPackages`) — generated apps are always
+  package-mode. Eject story rejected (public + Unlicense repo: eject = clone; maintainer
+  modifies in the monorepo, which uses MSBuild auto-detection, not template symbols). The
+  vendored modes shipped untested (smoke matrix runs defaults only) and were the largest
+  conditional-template surface. All three symbols verified structurally identical before
+  deciding. **D4's balloted resolution folds into this**: with source-mode trees
+  unconditionally excluded, the literal scan becomes a simple unconditional check (must still
+  include `.cs` per Adversarial C) → child task **126-004**.
 
 ---
 
