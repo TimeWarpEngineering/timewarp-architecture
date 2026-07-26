@@ -40,17 +40,17 @@ no analyzer change, no namespace change (namespaces do not track folders — TWA
 
 ## Checklist
 
-- [ ] Inventory all ~73 files under `source/container-apps/web/features/` and classify:
+- [x] Inventory all ~73 files under `source/container-apps/web/features/` and classify:
       operation-specific (→ use-case folder) vs shared (→ stays at slice root)
-- [ ] `git mv` operation files into `<use-case>/` folders; delete emptied `commands/`/`queries/`
+- [x] `git mv` operation files into `<use-case>/` folders; delete emptied `commands/`/`queries/`
       folders (slices: identity, admin/roles, profile, and any others present)
-- [ ] Grep `.template.config/template.json` (and any exclude lists / docs) for feature-tree
+- [x] Grep `.template.config/template.json` (and any exclude lists / docs) for feature-tree
       paths referencing `commands/`/`queries/` — update if any exist
-- [ ] Update `skills/tw-feature-placement/SKILL.md`: whole-slice worked example showing the
+- [x] Update `skills/tw-feature-placement/SKILL.md`: whole-slice worked example showing the
       use-case-folder rule + shared-files-at-root rule (present tense, no task-history narration
       — skill is public)
-- [ ] Update AGENTS.md Layout section if it references the old shape
-- [ ] Verify: `dev build` 0/0, `dev test`, and `dev template-smoke` (feature tree is template
+- [x] Update AGENTS.md Layout section (checked - no change needed) if it references the old shape
+- [x] Verify: `dev build` 0/0, `dev test`, and `dev template-smoke` (feature tree is template
       content — both matrices must stay green)
 - [ ] Consider (optional, discuss first): follow-up analyzer/guard enforcing folder placement —
       NOT in scope here; current decision is convention documented in skill, folders unenforced
@@ -78,3 +78,39 @@ no analyzer change, no namespace change (namespaces do not track folders — TWA
   the rule: any group-by-kind folder inside a slice dissolves).
 - U3: first domain-layer namespace = `TimeWarp.Architecture.Features.Profiles.Domain` (signed
   off exactly).
+
+## Results
+
+**Landed** (commits `5fff1e27` folder moves, `40409ed7` docs, `5dd9d413` review fix; evacuation
+commit `4442ca65` shared with 126-002):
+
+- 54 operation files across 9 slices regrouped into `<use-case>/` folders per the manifest
+  ([migration-manifest.md](migration-manifest.md)): admin/roles (5 use-cases), analytics, auth,
+  authentication, chat, hello, identity (14 use-cases), profile, todo-items (5). Shared files
+  stayed at slice roots. `commands/`, `queries/`, `client-to-server/`, `server-to-client/`
+  folders removed.
+- Maintainer resolutions honored exactly: U1 `hello/hello/` (literal unconditional rule), U2
+  chat by-direction folders collapsed, U3 domain namespace (on the 126-002 half).
+- `skills/tw-feature-placement/SKILL.md`: new "Use-case folders" section — unconditional rule,
+  whole-slice `admin/roles/` worked example, shared-at-root rule, by-kind folders documented as
+  dissolved. `skills/tw-web-api-contracts/SKILL.md`: search patterns, layout table, workflow
+  text, and canonical examples updated to the new shape. Both public-skill style (present tense,
+  no history). AGENTS.md Layout section needed no change.
+
+**Verification:** `dev build` 0/0 at three checkpoints; `dev test` all projects green (run twice
+— executor + independent orchestrator re-run); `dev template-smoke` both matrices SUCCEEDED
+(feature tree is template content).
+
+**Review (Phase 4b):** effort 1 (general reviewer) + orchestrator verification; 2 rounds; final
+counts: 1 bug fixed, 0 suggestion, 0 nit, 0 open; disposition **clean** —
+[review/disposition.md](review/disposition.md). Single finding: stale Design-region comment
+narrating the removed `server-to-client` folder (M1, fixed `5dd9d413`).
+
+**Deferral:** the optional "enforce folder placement via analyzer" checklist item stays
+unimplemented by design — current decision is documented convention, folders unenforced
+(parent 126 RFC D1 resolution).
+
+## Session
+
+- Executed: 2026-07-26 — combined pass with 126-002. Orchestrator Claude Fable; planner,
+  executor, reviewer: Claude Sonnet subagents. Manifest → staged execution → gates → review.

@@ -41,16 +41,16 @@ rule from 126-001** (operation-specific → `<use-case>/`, shared/multi-operatio
 
 ## Checklist
 
-- [ ] Apply the resolved namespace rule: migrated files adopt `…Features.<Id>` namespaces
+- [x] Apply the resolved namespace rule: migrated files adopt `…Features.<Id>` namespaces
       (use roslynk rename_symbol so all references update; expect TWA0009 to begin governing
       these files — any cross-slice reference it surfaces is a finding, not a nuisance)
-- [ ] Complete the category-4 inventory (sweep all five layer folders; classify ambiguous items)
-- [ ] `git mv` + rename to grammar names; verify each file stays in its original project
+- [x] Complete the category-4 inventory (sweep all five layer folders; classify ambiguous items)
+- [x] `git mv` + rename to grammar names; verify each file stays in its original project
       (compare `dotnet build` project outputs / use roslynk before-and-after)
-- [ ] Coordinate with 126-001 (may execute as one pass; migrated files land in use-case folders)
-- [ ] Re-check TWA0004 Purpose regions still honest after moves; reconcile Design regions
-- [ ] Verify: `dev build` 0/0, `dev test`, `dev template-smoke` (both matrices)
-- [ ] Update 126 RFC/record: the "empty domain layer" finding (F4/D2) premise is corrected —
+- [x] Coordinate with 126-001 (may execute as one pass; migrated files land in use-case folders)
+- [x] Re-check TWA0004 Purpose regions still honest after moves; reconcile Design regions
+- [x] Verify: `dev build` 0/0, `dev test`, `dev template-smoke` (both matrices)
+- [x] Update 126 RFC/record: the "empty domain layer" finding (F4/D2) premise is corrected —
       domain files existed in `web-domain/aggregates/`, not zero; skill headroom note stays valid
 
 ## Notes
@@ -71,3 +71,44 @@ rule from 126-001** (operation-specific → `<use-case>/`, shared/multi-operatio
 ## Session
 
 - Created: 2026-07-26 — filed from 126 maintainer decision (category-4 migration).
+
+## Results
+
+**Landed** (commit `4442ca65`; docs in `40409ed7`): all 10 category-4 files evacuated from the
+layer project folders into `features/` with grammar filenames and `…Features.<Id>` namespaces
+per the manifest (`../126-001-…/migration-manifest.md` §2) — Profile aggregate →
+`features/profile/profile-domain.cs` + `profile-id-domain.cs` (first `-domain.cs` files under
+the grammar; namespace `TimeWarp.Architecture.Features.Profiles.Domain` per maintainer sign-off),
+EfPrincipalStore → `features/identity/ef-principal-store-infrastructure.cs`, chat hub + service →
+`features/chat/*-server.cs` (chat feature reunited), WebAuthn/agent-token options+validators →
+`features/identity/*-application.cs`, agent-token auth handler →
+`features/identity/agent-token-authentication-scheme-server.cs`.
+
+**Deviation (recorded):** the auth handler could not keep `-handler-server.cs` — TWA0015
+correctly fired because `handler` is the registered application-layer function token and this is
+an ASP.NET Core `AuthenticationHandler` on the server layer. Renamed via the documented
+`<name>-<layer>` escape hatch to `…-scheme-server.cs`. Gotcha for future moves: ASP.NET
+"Handler"-vocabulary types entering the grammar-checked tree collide with the `handler` token.
+
+**Hazard closures:** H1 template.json path; H2 four `Aggregates.Profiles` using-sites →
+`Features.Profiles.Domain`; H3 test global-using added; H5 dead `Configuration` global using in
+web-application removed (surfaced as hard CS0234, as the manifest's cautious framing predicted);
+H7 + three additional stale path references (exception-message string, two comments) fixed; H8
+`[TypedId]` generator verified emitting under the new namespace. H4 (`Hubs` global using in
+web-server) left in place — not flagged by any build diagnostic; likely inert, cheap to keep.
+Ambiguous candidates all classified STAY (host-wiring default), including two files the spec
+missed (`agent-token-defaults.cs`, `mock-user-ids.cs`) — rationale in the manifest §2 stayers
+table.
+
+**Verification:** `dev build` 0/0; `dev test` all green twice; `dev template-smoke` both
+matrices SUCCEEDED. TWA0009 surfaced no violations from the namespace adoptions.
+
+**Review (Phase 4b):** shared with 126-001 — 2 rounds, 1 bug fixed (stale Design region in chat,
+on the 126-001 half), disposition **clean**:
+`../126-001-…/review/disposition.md`. RFC premise correction (F4/D2) confirmed already recorded
+in the parent 126 RFC post-tally notes.
+
+## Session
+
+- Executed: 2026-07-26 — combined pass with 126-001 (shared manifest, executor, review).
+  Orchestrator Claude Fable; workers Claude Sonnet subagents.
