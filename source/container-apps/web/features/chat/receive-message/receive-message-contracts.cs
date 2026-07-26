@@ -5,7 +5,7 @@
 #region Design
 // Modeled as a mediator Command so an incoming hub message flows through the client's pipeline
 // (validation, state updates) like any other request instead of being handled in an ad hoc callback.
-// Mirrors SendMessage's shape; the folder (server-to-client) encodes direction because the type alone cannot.
+// Mirrors SendMessage's shape; the Purpose region records the direction (server-to-client) because the type alone cannot.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Chat;
