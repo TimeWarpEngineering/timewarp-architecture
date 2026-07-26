@@ -62,6 +62,13 @@ a human remembering the pairing.
 A mismatched pairing (e.g. `create-role-handler-server.cs`, function `handler` on layer
 `server`) is **TWA0015** — see below.
 
+**Reserved layer headroom:** `domain` is a registered layer with its own csproj glob and
+membership-guard entry, but most product slices need only contracts and application (plus
+infrastructure or server where relevant) — a slice earns a `-domain.cs` file only once it needs
+its own aggregate root (`IAggregateRoot`) rather than a platform/shared one. `domain` stays
+registered as intentional headroom for that case, the same way the reserved `endpoint` function
+above is kept documented but currently unused.
+
 ### Contracts drop the function segment
 
 For contracts, function and layer are the same thing, so writing both would stutter

@@ -50,10 +50,15 @@ project refs and always use the three package references as in step 3.
 | Project | Project ref (old) | Package (new) |
 |---------|-------------------|---------------|
 | Almost everything (via props) | convention-analyzers `OutputItemType=Analyzer` | `TimeWarp.Architecture.Analyzers` `PrivateAssets=all` |
-| `web-spa`, `api-server` | analyzers (generators) `OutputItemType=Analyzer` | `TimeWarp.Architecture.Generators` `PrivateAssets=all` |
+| `web-domain`, `web-infrastructure`, `web-spa`, `web-server`, `api-server`, `aspire-app-host`, `yarp`, `timewarp-identity` | analyzers (generators) `OutputItemType=Analyzer` | `TimeWarp.Architecture.Generators` `PrivateAssets=all` |
 | `api-server`, `api-contracts` | attributes project | `TimeWarp.Architecture.Attributes` |
 
 Do **not** leave both a ProjectReference and a PackageReference for the same consumer.
+
+Caution when auditing this list yourself: a naive `grep` for `TwArchitectureGeneratorsPackageId`
+also matches `source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj`,
+which uses the property to set its own PackageId — it's the producer, not a consumer, and should
+be excluded from the consumer count.
 
 ## 4. Remove vendored analyzer source
 
@@ -81,6 +86,8 @@ Spot-check:
 
 - Diagnostic IDs stay **TWA####**; this upgrade is distribution only.
 - Generators must **not** be referenced repo-wide — only on projects that should run them
-  (`web-spa`, `api-server`). Convention analyzers remain the repo-wide package.
+  (`web-domain`, `web-infrastructure`, `web-spa`, `web-server`, `api-server`, `aspire-app-host`,
+  `yarp`, `timewarp-identity` — 8 projects today). Convention analyzers remain the repo-wide
+  package.
 - Trusted Publishing / NuGet availability: packages ship on the architecture repo’s release
   workflow alongside foundation packages.
