@@ -70,3 +70,11 @@ no analyzer change, no namespace change (namespaces do not track folders — TWA
 ## Session
 
 - Created: 2026-07-26 — filed from task 126 RFC Decision 1 maintainer resolution.
+
+## Manifest resolutions (Steve, 2026-07-26)
+
+- U1: `hello` slice → literal rule, `hello/hello/` (unconditional means unconditional).
+- U2: chat `client-to-server/`/`server-to-client/` → collapse into use-case folders (spirit of
+  the rule: any group-by-kind folder inside a slice dissolves).
+- U3: first domain-layer namespace = `TimeWarp.Architecture.Features.Profiles.Domain` (signed
+  off exactly).
