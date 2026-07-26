@@ -1,7 +1,8 @@
 # RFC: Post-dogfood disposition for feature-cohesive folders + platform packaging
 
-**Status:** ballots complete, tallied 2026-07-25 — D2–D5 unanimous (self-resolving); **D1 dissent
-→ maintainer (Steve), awaiting resolution**. Unanimous doc-only items proceeding to fold-in.
+**Status:** ballots complete, tallied 2026-07-25. D2–D5 unanimous (self-resolving; doc-only items
+folded in). D1 resolved by maintainer 2026-07-26 — **third option wins**: per-use-case folders,
+unconditional → child task 126-001. Remaining: D3/D4 child-task filing decision.
 **Host task:** 126 — kitchen for RFC + fold-in (agent-collaboration same-task rule).
 **Author:** rfc-author agent (Claude, session 2026-07-25).
 **Audience:** Independent reviewers. Append a ballot under [Reviewer opinions](#reviewer-opinions)
@@ -321,7 +322,7 @@ self-resolving.
 
 | # | Topic | Reviewer A | Reviewer B | Adversarial C | Outcome |
 |---|-------|------------|------------|----------------|---------|
-| D1 | commands/queries subfolder asymmetry | refined B | A | A | 2–1 split — **Dissent → maintainer (Steve)** |
+| D1 | commands/queries subfolder asymmetry | refined B | A | A | **Resolved by maintainer 2026-07-26: third option wins (D)** — see resolution note below |
 | D2 | empty domain layer | A | A | A | **3–0 resolved: A** + explicit revisit trigger (Reviewer A, seconded by C) |
 | D3 | automate nuget.org release proof | B | B (refined) | B | **3–0 resolved: B** — child task; retry/backoff for flatcontainer propagation (minutes-scale, per 124 notes — not generic index lag); keep manual checklist as documented fallback; child task must specify whether a failed gate blocks the release |
 | D4 | guard sourceName-unsafe literals | B | B | B | **3–0 resolved: B** — child task; MUST scan `.cs` content (existing `AssertPackageIdsNotRewritten` filter excludes `.cs` — naive reuse would miss the a251980f class); must scope/exclude `source/analyzers/**` legit platform-namespace declarations |
@@ -329,12 +330,26 @@ self-resolving.
 
 **Tallied 2026-07-25.** Ballots were cast independently and in parallel; none saw another's entry
 before voting. All falsifiable evidence claims were re-verified by at least one reviewer
-(Adversarial C re-derived every load-bearing claim from scratch; none failed). D1 goes to the
+(Adversarial C re-derived every load-bearing claim from scratch; none failed). D1 went to the
 maintainer with the split rationale: Reviewer A argues documenting-only rationalizes the friction
 without fixing it (wants documented non-enforced symmetrize-going-forward guidance); B and C argue
 an unenforced convention over more layers reproduces the convention-by-memory drift pattern F3
 flagged, and the asymmetry has a real architectural rationale (contracts are the public/shared
 surface per TWA0009's own rule text) worth documenting as intended.
+
+**D1 maintainer resolution (Steve, 2026-07-26) — third option wins, recorded per `tw-rfc-ballot`:**
+neither balloted option; instead group operation files **by use case**, side by side — the actual
+VSA promise both ballot camps were arguing around:
+`admin/roles/create-role/{create-role-contracts.cs, create-role-handler-application.cs}`; shared
+files (`role-details-contracts.cs`, stores, feature annotations) stay at slice root; the
+`commands/`/`queries/` folders are removed (grouping by message kind was a layer instinct inside a
+slice tree). Rule is **unconditional** — 2-file folders are fine; no slice-size judgment call for
+agents to drift on. This dissolves the asymmetry rather than documenting it, and answers Reviewer
+A's "handler isn't beside its contract" objection directly. Mechanically free of machinery changes
+(grammar/guard key on filename only; globs recurse — proven by contracts building from `commands/`
+today). Migration is a tree-wide file move → child task **126-001** per this task's
+no-production-restructure rule; the D1 skill worked-example update moves to 126-001 so docs land
+atomically with the new tree shape.
 
 ---
 
