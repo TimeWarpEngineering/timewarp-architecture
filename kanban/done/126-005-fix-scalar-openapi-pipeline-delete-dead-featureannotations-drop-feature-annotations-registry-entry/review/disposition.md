@@ -16,3 +16,9 @@ _(none)_
 ## Escalations
 
 - None
+
+## Addendum — round 3 (2026-07-26)
+
+Independent cross-vendor verification (maintainer-requested) confirmed the implementation and
+both prior rounds; closed the web runtime-proof residual (feature tags live on the web document;
+Scalar 200) and substantiated the aspire-smoke dismissal empirically. Outcome unchanged: clean.

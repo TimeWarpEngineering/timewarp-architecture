@@ -218,3 +218,18 @@ Drop `feature-annotations` from `feature-filename-grammar.json` (keep `endpoint`
 - Aspire ingress smoke failures appear environmental.
 - Generated Description indentation slightly irregular (cosmetic).
 - `x-tagGroups` two-level nesting remains **explicitly deferred**.
+
+## Results addendum — independent verification (round 3, 2026-07-26)
+
+Cross-vendor verification (Claude reviewing the Grok implementation) confirmed all substantive
+claims; no code bugs. Full record: [review/round-3/independent-verification.md](review/round-3/independent-verification.md).
+Two corrections to this record:
+
+- The web-server runtime proof was recorded as skipped due to a "Passwordless ApiSecret
+  bare-host constraint" — **no such constraint exists** (appsettings placeholder satisfies
+  startup). Proof now exists: `GET /openapi/v1.json` → 200, 22 operations tagged `Analytics`,
+  `Hellos`, `Identity`, `Profiles`, `Roles`; `GET /scalar/v1` → 200 (always-on).
+- The "Aspire ingress smoke looked environmental" dismissal is now substantiated: independent
+  `aspire-tests` re-run passed 7/7 (likely prior cause: leftover processes near the ingress's
+  fixed dev ports). All gates re-run independently: build 0/0, dev test all green,
+  template-smoke both matrices OK.
