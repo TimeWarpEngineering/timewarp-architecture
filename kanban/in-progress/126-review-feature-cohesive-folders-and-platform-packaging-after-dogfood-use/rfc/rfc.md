@@ -351,6 +351,22 @@ today). Migration is a tree-wide file move → child task **126-001** per this t
 no-production-restructure rule; the D1 skill worked-example update moves to 126-001 so docs land
 atomically with the new tree shape.
 
+**Post-tally corrections and decisions (2026-07-26, folder-taxonomy conversation with Steve):**
+
+- **F4/D2 premise correction.** The "domain layer has zero product files ever" finding measured
+  only the `features/` tree. The Profile aggregate root exists at
+  `web-domain/aggregates/profile/{profile.cs, profile-id.cs}` — the domain layer was never
+  unused; its files live in the layer project folder instead of the features tree. D2's
+  resolution (keep layer registered; skill headroom note) still stands — the migration below
+  gives the tree its first real `-domain.cs` files.
+- **New decision (maintainer): category-4 migration.** Survey of the five layer project folders
+  classified contents four ways: (1) assembly/project plumbing, (2) true host/deployable code,
+  (3) platform seams, (4) feature code that never moved into `features/` (Profile aggregate,
+  `ef-principal-store.cs`, `chat-hub.cs`/`chat-hub-service.cs`, WebAuthn/agent-token
+  options+handler). Steve: category 4 belongs in `features/` — migrate it → child task
+  **126-002**. Categories 1–3 unchanged for now; a `platform/` home for seams and a `projects/`
+  home for pure-selector csprojs remain open conversation on this task.
+
 ---
 
 ## 8. Fold-in checklist (host task 126)
