@@ -8,8 +8,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\source\container-apps\web\web-infrastructure\web-infrastructure.csproj" />
     <!-- Shared IPrincipalStore contract abstract cases (task 104-032 dual-fixture) — homed in
-         timewarp-testing so they exist in package-identity mode too (identity-tests is
-         template-excluded when identityPackages=true, task 124). -->
+         timewarp-testing so they exist when identity-tests is template-excluded (generated
+         apps always package-mode; task 124). -->
     <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
   </ItemGroup>
 </Project>

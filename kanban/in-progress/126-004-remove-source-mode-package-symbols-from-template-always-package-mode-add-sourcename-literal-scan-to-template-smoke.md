@@ -32,41 +32,41 @@ twice (task 115 origin; repeat caught only by human review in task 113 round-2, 
 
 ### Symbol removal
 
-- [ ] `.template.config/template.json`: delete the three symbols, their conditional exclude
+- [x] `.template.config/template.json`: delete the three symbols, their conditional exclude
       modifiers, and any other conditions referencing them; make the vendored trees
       (`source/foundation/**`, `source/libraries/timewarp-modules/**`, `source/analyzers/**`,
       `source/libraries/timewarp-identity/**`, and their `tests/**` counterparts)
       **unconditionally excluded** from template output
-- [ ] `timewarp-architecture.slnx`: remove the `<!--#if (!foundationPackages) -->` /
+- [x] `timewarp-architecture.slnx`: remove the `<!--#if (!foundationPackages) -->` /
       `(!identityPackages)` / `(!analyzerPackages)` conditional blocks (keep package-mode
       branches as the only content)
-- [ ] Sweep for other references: csproj/props conditionals keyed on the *template* symbols
+- [x] Sweep for other references: csproj/props conditionals keyed on the *template* symbols
       (the MSBuild `UseFoundationPackages`/`UseAnalyzerPackages`/`UseIdentityPackages`
       source-tree auto-detection switches STAY — monorepo dogfooding depends on them),
       TWA0010-relevant `#if` directives, docs
-- [ ] Update AGENTS.md platform-packages section (remove template-symbol language, e.g.
+- [x] Update AGENTS.md platform-packages section (remove template-symbol language, e.g.
       "identityPackages=false still vendors…"); keep `HowToUpgradeToAnalyzerPackages.md` as
       the migration doc for pre-existing vendored apps
-- [ ] Check `dev template-smoke` and `.github/workflows/template-smoke.yml` for any symbol
+- [x] Check `dev template-smoke` and `.github/workflows/template-smoke.yml` for any symbol
       plumbing to delete
 
 ### sourceName-literal scan (RFC D4)
 
-- [ ] Add scan to `dev template-smoke`: packed template content, **including `.cs` files** (the
+- [x] Add scan to `dev template-smoke`: packed template content, **including `.cs` files** (the
       existing `AssertPackageIdsNotRewritten` helper filters to
       `.props/.csproj/.targets/.slnx/.json` and excludes `.cs` — the historical bug
       (`using TimeWarp.Architecture.TypedIds.Ef;` in `postgres-db-context.cs`) was in a `.cs`
       file; write a new pass, do not naively reuse the helper)
-- [ ] Allowlist/route legitimate occurrences through the composed properties; with source-mode
+- [x] Allowlist/route legitimate occurrences through the composed properties; with source-mode
       trees now unconditionally excluded from template output, no `source/analyzers/**` scoping
       gymnastics should be needed — assert that's true
-- [ ] Prove the scan catches the historical case: temporarily reintroduce the `a251980f`-class
+- [x] Prove the scan catches the historical case: temporarily reintroduce the `a251980f`-class
       literal locally and confirm the gate fails
 
 ### Verify
 
-- [ ] `dev build` 0/0, `dev test`, `dev template-smoke` both matrices green
-- [ ] Generated-app spot check: `dotnet new` output contains no vendored platform source and no
+- [x] `dev build` 0/0, `dev test`, `dev template-smoke` both matrices green
+- [x] Generated-app spot check: `dotnet new` output contains no vendored platform source and no
       dangling references to removed symbols
 
 ## Notes

@@ -37,7 +37,7 @@
          this pin equals the release <Version> and bumps in the same commit as it, same as the
          TimeWarp.Foundation.* and analyzer/generator pins above. This pin is inert for this
          repo/CI (UseIdentityPackages resolves to ProjectReference mode when identity source is
-         present) and only matters for package-mode consumers (identityPackages=true). -->
+         present) and only matters for package-mode consumers (generated apps always package-mode). -->
     <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.7" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">

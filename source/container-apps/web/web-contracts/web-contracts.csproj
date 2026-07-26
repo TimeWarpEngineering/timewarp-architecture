@@ -45,8 +45,8 @@
 
   <ItemGroup>
     <!-- PrincipalId/CredentialId typed-id responses for the identity feature (task 104-003).
-         Dual-mode via UseIdentityPackages (task 115) — independent of foundationPackages so
-         generated apps can ship identity source until TimeWarp.Identity is published. -->
+         Dual-mode via UseIdentityPackages (task 115): monorepo uses ProjectReference when
+         identity source is present; generated apps always package-mode. -->
     <ProjectReference Include="..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
   </ItemGroup>

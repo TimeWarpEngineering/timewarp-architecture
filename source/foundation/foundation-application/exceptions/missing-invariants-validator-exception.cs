@@ -16,7 +16,7 @@
 // no such check (any object without a discoverable validator produces this exception) — and points
 // at the in-repo exemplar (web/features/profile/profile-domain.cs + web-domain/aggregates/overview.md)
 // instead of timewarp-identity, whose Principal/Credential have no nested Invariants validator and
-// whose source is excluded from generated apps under the default foundationPackages=true.
+// whose source is unconditionally excluded from generated apps (always package-mode).
 #endregion
 
 namespace TimeWarp.Foundation.Application.Exceptions;

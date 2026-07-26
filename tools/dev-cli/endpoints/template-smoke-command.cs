@@ -9,10 +9,19 @@
 // generation, then restore + build -warnaserror (TreatWarningsAsErrors already on).
 //
 // Packs the template AND monorepo platform packages (foundation + analyzers/generators/attributes
-// + modules) into a local feed. Published nuget.org pins lag monorepo API surface (e.g. Entity<TId>,
-// EndpointAllowAnonymous); smoke validates "this branch's template + this branch's packages" by
-// packing at the CPM pin versions and routing TimeWarp.* restores to the local feed via
-// packageSourceMapping. Work dir: artifacts/template-smoke/ (under artifacts/).
+// + modules + identity) into a local feed. Published nuget.org pins lag monorepo API surface (e.g.
+// Entity<TId>, EndpointAllowAnonymous); smoke validates "this branch's template + this branch's
+// packages" by packing at the CPM pin versions and routing TimeWarp.* restores to the local feed
+// via packageSourceMapping. Work dir: artifacts/template-smoke/ (under artifacts/).
+//
+// Task 126-004: generated apps are always package-mode (no foundationPackages/analyzerPackages/
+// identityPackages symbols). Vendored platform trees are unconditionally excluded from template
+// output. A separate monorepo pre-scan (AssertNoUnsafePlatformNamespaceLiterals) fails on raw
+// continuous platform-namespace literals in template-shipped consumer content — including .cs —
+// so sourceName cannot rewrite them into the app (historical bug: using TimeWarp.Architecture.TypedIds.Ef
+// in postgres-db-context.cs). AssertPackageIdsNotRewritten stays package-id focused and does not
+// scan .cs; the namespace-literal pass is independent. Post-generate asserts also confirm vendored
+// trees and removed symbols are absent from output.
 #endregion
 
 namespace DevCli.Commands;
@@ -43,10 +52,10 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     "source/foundation/foundation-infrastructure/foundation-infrastructure.csproj",
     "source/foundation/foundation-server/foundation-server.csproj",
     "source/libraries/timewarp-modules/timewarp-modules.csproj",
-    // Identity joined the package-mode default (identityPackages=true, task 124). Without a
-    // smoke-local pack, generated apps would pull nuget.org's TimeWarp.Identity whose
-    // Foundation dependency floor (>= the published version) collides with the 2.0.0-smoke
-    // pins → NU1603 under -warnaserror.
+    // Identity is always package-mode for generated apps (task 126-004). Without a smoke-local
+    // pack, generated apps would pull nuget.org's TimeWarp.Identity whose Foundation dependency
+    // floor (>= the published version) collides with the 2.0.0-smoke pins → NU1603 under
+    // -warnaserror.
     "source/libraries/timewarp-identity/timewarp-identity.csproj",
   ];
 
@@ -72,6 +81,61 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     ".Analyzers",
     ".Generators",
     ".Attributes",
+    ".TypedIds",
+  ];
+
+  /// <summary>
+  /// Continuous platform-namespace segments that must not appear as raw literals in
+  /// template-shipped consumer content (sourceName rewrites TimeWarp.Architecture → app name).
+  /// </summary>
+  private static readonly System.Text.RegularExpressions.Regex UnsafePlatformNamespaceLiteral =
+    new(
+      @"TimeWarp\.Architecture\.(Analyzers|Generators|Attributes|TypedIds)\b",
+      System.Text.RegularExpressions.RegexOptions.Compiled);
+
+  private static readonly string[] SourceNameLiteralScanExtensions =
+  [
+    ".cs", ".csproj", ".props", ".targets", ".slnx", ".json", ".razor", ".proto",
+  ];
+
+  /// <summary>
+  /// Roots under the monorepo that ship into generated apps (or root wiring they inherit).
+  /// Platform source trees (foundation/analyzers/libraries) are template-excluded and not scanned.
+  /// </summary>
+  private static readonly string[] SourceNameLiteralScanRelativeRoots =
+  [
+    "source/container-apps",
+    "tests/common",
+    "tests/container-apps",
+    "msbuild",
+  ];
+
+  private static readonly string[] SourceNameLiteralScanRelativeFiles =
+  [
+    "Directory.Build.props",
+    "Directory.Packages.props",
+    "timewarp-architecture.slnx",
+    "global.json",
+    "BannedSymbols.txt",
+    "aspire.config.json",
+  ];
+
+  private static readonly string[] RemovedTemplateSymbols =
+  [
+    "foundationPackages",
+    "analyzerPackages",
+    "identityPackages",
+  ];
+
+  private static readonly string[] VendoredPlatformRelativeTrees =
+  [
+    "source/foundation",
+    "source/libraries/timewarp-modules",
+    "source/libraries/timewarp-identity",
+    "source/analyzers",
+    "tests/foundation",
+    "tests/libraries/timewarp-identity-tests",
+    "tests/analyzers",
   ];
 
   internal sealed class Handler : ICommandHandler<TemplateSmokeCommand, Unit>
@@ -100,6 +164,8 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
 
       Terminal.WriteLine($"\nTemplate smoke — work root: {SmokeRoot}\n".Cyan());
 
+      if (!AssertNoUnsafePlatformNamespaceLiterals()) return Value;
+      if (!AssertRemovedPackageSymbolsGoneFromTemplateConfig()) return Value;
       if (!await PackPlatformPackagesAsync()) return Value;
       if (!await PackTemplateAsync()) return Value;
       if (!await InstallTemplateAsync()) return Value;
@@ -264,6 +330,9 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       if (!AssertPackageIdsNotRewritten(name, outputDir))
         return false;
 
+      if (!AssertGeneratedAppPackageMode(name, outputDir))
+        return false;
+
       if (!RewriteCpmPinsToSmokeVersion(outputDir))
         return false;
 
@@ -382,9 +451,181 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       Terminal.WriteLine($"Wrote {configPath} (TimeWarp.* → smoke-local).");
     }
 
+    /// <summary>
+    /// Monorepo template.json must not declare the removed source-mode package symbols
+    /// (generated apps never receive .template.config, so this is the authoritative check).
+    /// </summary>
+    private bool AssertRemovedPackageSymbolsGoneFromTemplateConfig()
+    {
+      string templateJson = Path.Combine(RepoRoot, ".template.config", "template.json");
+      if (!File.Exists(templateJson))
+      {
+        Terminal.WriteErrorLine($"Missing {templateJson}.".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      string text = File.ReadAllText(templateJson);
+      var hits = RemovedTemplateSymbols
+        .Where(symbol => text.Contains(symbol, StringComparison.Ordinal))
+        .ToList();
+
+      if (hits.Count > 0)
+      {
+        Terminal.WriteErrorLine(
+          ".template.config/template.json still declares removed package-mode symbols:".Red());
+        foreach (string hit in hits)
+          Terminal.WriteErrorLine($"  {hit}");
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      Terminal.WriteLine("Removed package symbols absent from template.json.");
+      return true;
+    }
+
+    /// <summary>
+    /// Scans monorepo template-shipped consumer content (including .cs) for continuous
+    /// TimeWarp.Architecture.(Analyzers|Generators|Attributes|TypedIds) literals that sourceName
+    /// would rewrite. Separate from AssertPackageIdsNotRewritten (which omits .cs by design).
+    /// </summary>
+    private bool AssertNoUnsafePlatformNamespaceLiterals()
+    {
+      Terminal.WriteLine("Scanning monorepo template-shipped content for unsafe platform namespace literals...");
+      List<string> hits = [];
+
+      foreach (string relativeRoot in SourceNameLiteralScanRelativeRoots)
+      {
+        string root = Path.Combine(RepoRoot, relativeRoot);
+        if (!Directory.Exists(root))
+          continue;
+
+        foreach (string file in Directory.EnumerateFiles(root, "*.*", SearchOption.AllDirectories))
+        {
+          if (IsBinObjOrArtifacts(RepoRoot, file))
+            continue;
+
+          if (!IsSourceNameLiteralScanExtension(file))
+            continue;
+
+          CollectUnsafeNamespaceHits(file, Path.GetRelativePath(RepoRoot, file), hits);
+        }
+      }
+
+      foreach (string relativeFile in SourceNameLiteralScanRelativeFiles)
+      {
+        string file = Path.Combine(RepoRoot, relativeFile);
+        if (!File.Exists(file))
+          continue;
+
+        CollectUnsafeNamespaceHits(file, relativeFile, hits);
+      }
+
+      if (hits.Count > 0)
+      {
+        Terminal.WriteErrorLine(
+          "Unsafe platform namespace literals (sourceName-rewritable) in template-shipped content:".Red());
+        foreach (string hit in hits)
+          Terminal.WriteErrorLine($"  {hit}");
+        Terminal.WriteErrorLine(
+          "Use composed properties from msbuild/timewarp-platform-packages.props (or MSBuild <Using>) instead.".Red());
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      Terminal.WriteLine("Unsafe platform namespace literal scan passed.");
+      return true;
+    }
+
+    private static void CollectUnsafeNamespaceHits(string file, string relativeDisplay, List<string> hits)
+    {
+      string text = File.ReadAllText(file);
+      foreach (System.Text.RegularExpressions.Match match in UnsafePlatformNamespaceLiteral.Matches(text))
+      {
+        hits.Add($"{relativeDisplay}: '{match.Value}'");
+      }
+    }
+
+    private static bool IsSourceNameLiteralScanExtension(string file)
+    {
+      string extension = Path.GetExtension(file);
+      return SourceNameLiteralScanExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static bool IsBinObjOrArtifacts(string root, string file)
+    {
+      string relative = Path.GetRelativePath(root, file);
+      string[] parts = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+      return parts.Any(part =>
+        part.Equals("bin", StringComparison.OrdinalIgnoreCase)
+        || part.Equals("obj", StringComparison.OrdinalIgnoreCase)
+        || part.Equals("artifacts", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Post-generate: no vendored platform trees; removed *Packages symbols gone; belt-and-suspenders
+    /// scan for rewritten {appName}.(Analyzers|Generators|Attributes|TypedIds) including .cs.
+    /// </summary>
+    private bool AssertGeneratedAppPackageMode(string appName, string outputDir)
+    {
+      List<string> failures = [];
+
+      foreach (string relativeTree in VendoredPlatformRelativeTrees)
+      {
+        string path = Path.Combine(outputDir, relativeTree.Replace('/', Path.DirectorySeparatorChar));
+        if (Directory.Exists(path))
+          failures.Add($"vendored platform tree present: {relativeTree}");
+      }
+
+      string generatedTemplateJson = Path.Combine(outputDir, ".template.config", "template.json");
+      if (File.Exists(generatedTemplateJson))
+      {
+        string templateText = File.ReadAllText(generatedTemplateJson);
+        foreach (string symbol in RemovedTemplateSymbols)
+        {
+          if (templateText.Contains(symbol, StringComparison.Ordinal))
+            failures.Add($".template.config/template.json still declares symbol '{symbol}'");
+        }
+      }
+
+      // Optional belt: rewritten continuous platform namespaces in generated tree (incl. .cs).
+      string[] rewrittenTokens = ForbiddenRewrittenPackageFragments
+        .Select(suffix => appName + suffix)
+        .ToArray();
+
+      foreach (string file in Directory.EnumerateFiles(outputDir, "*.*", SearchOption.AllDirectories))
+      {
+        if (IsBinObjOrArtifacts(outputDir, file))
+          continue;
+
+        if (!IsSourceNameLiteralScanExtension(file))
+          continue;
+
+        string text = File.ReadAllText(file);
+        string relative = Path.GetRelativePath(outputDir, file);
+        foreach (string token in rewrittenTokens)
+        {
+          if (text.Contains(token, StringComparison.Ordinal))
+            failures.Add($"{relative}: contains rewritten '{token}'");
+        }
+      }
+
+      if (failures.Count > 0)
+      {
+        Terminal.WriteErrorLine("Generated app is not clean package-mode:".Red());
+        foreach (string failure in failures)
+          Terminal.WriteErrorLine($"  {failure}");
+        return false;
+      }
+
+      Terminal.WriteLine("Generated-app package-mode check passed (no vendored trees / removed symbols / rewritten namespaces).");
+      return true;
+    }
+
     private bool AssertPackageIdsNotRewritten(string appName, string outputDir)
     {
       // sourceName rewrite of package IDs produces e.g. SmokeDefault.Analyzers — nonexistent.
+      // Scoped to MSBuild/JSON (not .cs) — namespace-literal .cs coverage is AssertNoUnsafePlatformNamespaceLiterals.
       string[] forbidden =
         ForbiddenRewrittenPackageFragments
           .Select(suffix => appName + suffix)

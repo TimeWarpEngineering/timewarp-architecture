@@ -23,10 +23,9 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Shared IPrincipalStore contract suite (principal-store-contract-tests.cs) compiles here so
-         it ships in BOTH identity modes (task 124): tests/libraries/timewarp-identity-tests is
-         template-excluded when identityPackages=true, which orphaned web-infrastructure-tests' EF
-         fixture. Explicit dual-mode reference — the transitive path via web-server is #if(web)
-         conditional and must not be load-bearing. -->
+         generated apps (always package-mode; identity-tests tree template-excluded) still have
+         the suite for web-infrastructure-tests' EF fixture. Explicit dual-mode reference — the
+         transitive path via web-server is #if(web) conditional and must not be load-bearing. -->
     <ProjectReference Include="..\..\..\source\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
     <!--#if(api)-->

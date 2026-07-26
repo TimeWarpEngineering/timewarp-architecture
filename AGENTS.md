@@ -71,11 +71,9 @@ assembly-split note): **`feature-placement` skill** (`skills/tw-feature-placemen
 
 ## Platform packages (foundation + analyzers + identity)
 
-Greenfield `dotnet new timewarp-architecture` apps reference **published NuGet packages** for
-foundation, analyzers, and identity (template symbols `foundationPackages` / `analyzerPackages` /
-`identityPackages`, all default **true** — identity flipped with the v2.0.0-beta.6 first publish
-of `TimeWarp.Identity`, task 124; `identityPackages=false` still vendors
-`source/libraries/timewarp-identity` for source-mode work). This monorepo dogfoods all three via
+Greenfield `dotnet new timewarp-architecture` apps **always** reference **published NuGet packages**
+for foundation, analyzers, and identity (package-mode only — vendored platform trees are
+unconditionally excluded from template output). This monorepo dogfoods all three via
 `ProjectReference` when source trees are present.
 
 | PackageId | Contents |

@@ -1,7 +1,7 @@
 # How to upgrade to analyzer NuGet packages
 
-Greenfield solutions from `dotnet new timewarp-architecture` (with `analyzerPackages` default
-**true**) already reference:
+Greenfield solutions from `dotnet new timewarp-architecture` always package-mode and already
+reference:
 
 | Package | Role |
 |---------|------|
