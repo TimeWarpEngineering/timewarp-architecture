@@ -59,10 +59,9 @@ tests/               # mirrors source/; includes web-contracts-tests (host-free 
 ```
 
 **Axis-1 filename grammar (web product code):** files under `web/features/` use
-`<name>[-<function>]-<layer>.cs` (`handler`→application, `endpoint`→server,
-`feature-annotations`→server; contracts drop the function segment:
-`create-role-contracts.cs`). Escape hatch: `<name>-<layer>.cs` with no function
-(`role-store-application.cs`). Registry SSOT:
+`<name>[-<function>]-<layer>.cs` (`handler`→application, `endpoint`→server;
+contracts drop the function segment: `create-role-contracts.cs`). Escape hatch:
+`<name>-<layer>.cs` with no function (`role-store-application.cs`). Registry SSOT:
 `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
 (generates analyzer constants + `web/msbuild/feature-filename-grammar.g.props`). **Registry edit
 ⇒ full rebuild** (analyzer DLLs can go stale under pure incremental builds). Namespaces do **not**

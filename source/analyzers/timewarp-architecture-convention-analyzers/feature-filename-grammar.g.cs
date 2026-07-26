@@ -16,14 +16,12 @@ internal static class FeatureFilenameGrammar
     ImmutableDictionary.CreateRange(System.StringComparer.Ordinal, new[]
     {
       new KeyValuePair<string, string>("endpoint", "server"),
-      new KeyValuePair<string, string>("feature-annotations", "server"),
       new KeyValuePair<string, string>("handler", "application"),
     });
 
   public static readonly ImmutableArray<string> FunctionsLongestFirst =
     ImmutableArray.CreateRange(new[]
     {
-      "feature-annotations",
       "endpoint",
       "handler",
     });

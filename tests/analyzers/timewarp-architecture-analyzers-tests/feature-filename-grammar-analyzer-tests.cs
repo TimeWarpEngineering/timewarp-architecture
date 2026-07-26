@@ -45,7 +45,7 @@ public class Should_Enforce_Feature_Filename_Grammar
         fileName,
         function,
         requiredLayer,
-        "-endpoint- ⇒ -server, -feature-annotations- ⇒ -server, -handler- ⇒ -application"
+        "-endpoint- ⇒ -server, -handler- ⇒ -application"
       );
 
   private static DiagnosticResult Twa0016(string path, string fileName, string function) =>
@@ -55,7 +55,7 @@ public class Should_Enforce_Feature_Filename_Grammar
       (
         fileName,
         function,
-        "-endpoint-, -feature-annotations-, -handler-"
+        "-endpoint-, -handler-"
       );
 
   public static async Task Given_Handler_On_Application_IsClean()
@@ -81,18 +81,18 @@ public class Should_Enforce_Feature_Filename_Grammar
     await analyzerTest.RunAsync();
   }
 
-  public static async Task Given_FeatureAnnotations_On_Server_IsClean()
+  public static async Task Given_Endpoint_On_Server_IsClean()
   {
-    await Test("../features/hello/hello-feature-annotations-server.cs").RunAsync();
+    await Test("../features/hello/hello-endpoint-server.cs").RunAsync();
   }
 
-  public static async Task Given_FeatureAnnotations_On_Application_Flags_TWA0015()
+  public static async Task Given_Endpoint_On_Application_Flags_TWA0015()
   {
-    const string Path = "../features/hello/hello-feature-annotations-application.cs";
+    const string Path = "../features/hello/hello-endpoint-application.cs";
     CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add
     (
-      Twa0015(Path, "hello-feature-annotations-application.cs", "feature-annotations", "server")
+      Twa0015(Path, "hello-endpoint-application.cs", "endpoint", "server")
     );
     await analyzerTest.RunAsync();
   }
@@ -117,25 +117,12 @@ public class Should_Enforce_Feature_Filename_Grammar
     await analyzerTest.RunAsync();
   }
 
-  public static async Task Given_Incomplete_MultiSegment_Function_Flags_TWA0016()
-  {
-    // feature-annotations is registered; a feature-*-annotations form that is not the full
-    // registered function is an incomplete archetype (TWA0016), not an escape-hatch name.
-    const string Path = "../features/hello/feature-only-annotations-server.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
-    analyzerTest.ExpectedDiagnostics.Add
-    (
-      Twa0016(Path, "feature-only-annotations-server.cs", "feature-only-annotations")
-    );
-    await analyzerTest.RunAsync();
-  }
-
   public static async Task Given_Layer_Project_Features_Path_IsSilent()
   {
     // Must not flag files still under a layer project's own features/ folder, and must not
     // be fooled by a bare "web-server/" substring in an unrelated path.
     await Test("web-application/features/hello/hello-handler.cs").RunAsync();
-    await Test("/repo/source/container-apps/web/web-server/features/hello/feature-annotations.cs")
+    await Test("/repo/source/container-apps/web/web-server/features/hello/some-helper.cs")
       .RunAsync();
   }
 

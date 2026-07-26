@@ -14,8 +14,10 @@
 // Web.Spa services are registered here too — prerendering runs SPA code on the server.
 // API surface is generated FastEndpoints from [ApiEndpoint] web-contracts (no MVC BaseEndpoint
 // shims). Pipeline order: UseRouting → UseAuthentication → UseAuthorization → UseAntiforgery
-// (Blazor) → UseFastEndpoints. Auth before FE; no FE antiforgery for JSON APIs.
+// (Blazor) → UseFastEndpoints → UseScalarApiReference (MapOpenApi + Scalar UI; after FE so
+// endpoint metadata is registered). Auth before FE; no FE antiforgery for JSON APIs.
 // IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
+// OpenAPI document: CommonServerModule.AddOpenApi (FastEndpoints.OpenApi, always-on Scalar on web).
 #endregion
 
 #nullable enable
@@ -213,14 +215,7 @@ public class Program : IAspNetProgram
       );
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(FluentValidationBehavior<,>));
 
-    CommonServerModule
-      .AddOpenApi
-      (
-        serviceCollection,
-        ApiVersion,
-        ApiTitle,
-        [typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker), typeof(TimeWarp.Architecture.Web.Contracts.IAssemblyMarker)]
-      );
+    CommonServerModule.AddOpenApi(serviceCollection, ApiVersion, ApiTitle);
   }
   private static void ConfigureAuthentication(IServiceCollection serviceCollection, IConfiguration configuration)
   {
@@ -274,8 +269,6 @@ public class Program : IAspNetProgram
       webApplication.UseWebAssemblyDebugging();
     }
 
-    CommonServerModule.UseScalarApiReference(webApplication, ApiVersion, ApiTitle);
-
     webApplication.UseResponseCompression();
     // Static assets (including the Blazor WASM framework files) are served exclusively by
     // MapStaticAssets in ConfigureEndpoints. Do not add UseBlazorFrameworkFiles or UseStaticFiles:
@@ -297,6 +290,9 @@ public class Program : IAspNetProgram
     {
       config.Endpoints.RoutePrefix = null;
     });
+
+    // OpenAPI document + Scalar UI require FastEndpoints registration first (always-on on web).
+    CommonServerModule.UseScalarApiReference(webApplication, ApiVersion, ApiTitle);
   }
 
   public static void ConfigureEndpoints(WebApplication webApplication)

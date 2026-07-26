@@ -6,8 +6,8 @@
 #region Design
 // Grammar: <name>[-<function>]-<layer>.cs under the feature-cohesive tree (web/features/).
 // Registry SSOT: feature-filename-grammar.json → FeatureFilenameGrammar.g.cs (no hand maps).
-// Function match is closed-set longest-first so multi-segment functions (feature-annotations)
-// win over shorter tokens, and escape-hatch names (role-store-application.cs) stay valid —
+// Function match is closed-set longest-first so multi-segment functions (if registered) win
+// over shorter tokens, and escape-hatch names (role-store-application.cs) stay valid —
 // unregistered trailing tokens are part of <name>, not functions (do not require every
 // pre-layer token to be registered).
 // TWA0015: registered function + wrong layer (message lists valid pairs).
@@ -309,7 +309,7 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
 
     // No registered function matched → escape hatch (<name>-<layer>.cs), including multi-hyphen names.
     // TWA0016: incomplete multi-segment archetype (shares final segment of a multi-segment function
-    // but is not itself registered), e.g. hello-annotations-server when feature-annotations exists.
+    // but is not itself registered), e.g. foo-bar-server when a multi-segment function ending in bar exists.
     string? incomplete = TryFindIncompleteMultiSegmentFunction(preLayer);
     if (incomplete is not null)
     {

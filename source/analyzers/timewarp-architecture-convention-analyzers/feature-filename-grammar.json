@@ -2,7 +2,6 @@
   "layers": [ "contracts", "application", "domain", "infrastructure", "server" ],
   "functions": {
     "handler": "application",
-    "endpoint": "server",
-    "feature-annotations": "server"
+    "endpoint": "server"
   }
 }

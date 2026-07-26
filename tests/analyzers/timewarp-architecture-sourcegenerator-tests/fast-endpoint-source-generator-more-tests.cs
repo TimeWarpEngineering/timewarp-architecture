@@ -91,8 +91,10 @@ public class FastEndpointSourceGenerator_OpenApi_Tests
     generatedCode.ShouldContain("Gets weather forecasts for specified days");
     generatedCode.ShouldContain("Retrieves detailed weather forecasts including temperature and conditions");
 
-    // OpenApiTags values appear in the generated Tags(...) call.
+    // Default leaf feature tag plus additive [OpenApiTags] values (filter + OpenAPI WithTags).
     generatedCode.ShouldContain("Tags(");
+    generatedCode.ShouldContain("WithTags(");
+    generatedCode.ShouldContain("\"WeatherForecast\"");
     generatedCode.ShouldContain("\"Weather\"");
     generatedCode.ShouldContain("\"Forecasting\"");
 

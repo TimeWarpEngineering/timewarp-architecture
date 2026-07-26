@@ -157,3 +157,57 @@ Drop `feature-annotations` from `feature-filename-grammar.json` (keep `endpoint`
 - Created: 2026-07-26 — filed from Scalar research + maintainer decisions (fix pipeline, delete
   dead files, drop registry entry).
 - Planning: 2026-07-26
+- Implementer: grok session 2026-07-26
+
+## Results
+
+### What was implemented
+1. **OpenAPI document pipeline** via FastEndpoints.OpenApi 8.2.0 (not raw `AddOpenApi` / not SwaggerDocument):
+   - CPM pin + foundation-server PackageReference + global using
+   - Transitive lift of Microsoft.OpenApi 2.0.0 → **2.7.5** (NU1903 / GHSA-v5pm-xwqc-g5wc)
+   - `CommonServerModule.AddOpenApi` → `OpenApiDocument` (DocumentName/Title/Version, AutoTagPathSegmentIndex=0, ExcludeNonFastEndpoints)
+   - `CommonServerModule.UseScalarApiReference` → `MapOpenApi` + `MapScalarApiReference` (WithTitle, AddDocument, SortTagsAlphabetically, ExpandAllTags)
+   - web-server: always-on Scalar **after** UseFastEndpoints; dropped unused typeArray arg
+   - api-server: AddOpenApi in ConfigureServices; Development-only UseScalarApiReference after FE; removed bare MapScalarApiReference + AddEndpointsApiExplorer
+
+2. **Generator tag derivation fix**: leaf namespace under Features (`…Admin.Roles` → `Roles`), not parent of Features (`Architecture`). `[OpenApiTags]` remains additive + Distinct.
+
+3. **OpenAPI operation tags**: FE `Tags()` is filter-only (official docs: no relationship with OpenAPI tags). Generator now also emits `Description(d => d.WithTags(...))` so Scalar sidebar groups by feature. `Tags()` emission retained.
+
+4. **Deleted 7 dead FeatureAnnotations files**; dropped `feature-annotations` from registry; regenerated `.g.cs` / `.g.props`; updated AGENTS.md, tw-feature-placement skill, analyzer Design comments, grammar tests.
+
+### Files changed (primary)
+- `Directory.Packages.props` — FastEndpoints.OpenApi 8.2.0, Microsoft.OpenApi 2.7.5
+- `source/foundation/foundation-server/{foundation-server.csproj,global-usings.cs,common-server-module.cs}`
+- `source/container-apps/{web/web-server,api/api-server}/program.cs`
+- `source/analyzers/timewarp-architecture-analyzers/{models/endpoint-metadata.cs,generators/fast-endpoint-source-generator.cs}`
+- `source/analyzers/timewarp-architecture-convention-analyzers/{feature-filename-grammar.json,.g.cs,feature-filename-grammar-analyzer.cs}`
+- `source/container-apps/web/msbuild/feature-filename-grammar.g.props`
+- Deleted 6 `*-feature-annotations-server.cs` + api weather `feature-annotations.cs`
+- Tests: sourcegenerator + feature-filename-grammar analyzer tests
+- Docs: `AGENTS.md`, `skills/tw-feature-placement/SKILL.md`
+
+### Key decisions / deviations
+- **Microsoft.OpenApi 2.7.5 direct pin** required so restore passes with warnings-as-errors (FE.OpenApi transitively pulls vulnerable 2.0.0).
+- **Generator emits both Tags() and WithTags** — plan forbade removing Tags(); runtime proved Tags alone leaves OpenAPI operations untagged.
+- typeArray parameter dropped from AddOpenApi (unused).
+
+### Verification
+| Gate | Result |
+|------|--------|
+| `dev build` (full) | **0 Warning(s), 0 Error(s)** |
+| sourcegenerator-tests | **52 passed** (incl. WeatherForecast / nested Roles / OpenApiTags) |
+| analyzers-tests | **95 passed** (incl. grammar registry sync after drop) |
+| web-server-integration-tests | **97 passed**, 1 skipped |
+| api-server-integration-tests | **6 passed**, 1 skipped |
+| web-spa / foundation / identity | all passed |
+| aspire-tests IngressSmoke | **5 failed** — `ingress` resource failed to start (env/infrastructure; not OpenAPI-related) |
+| `dev template-smoke` | **not run** (time) |
+| Generated artifacts | `Tags("Roles")` / `WithTags("Roles")`, Identity, Analytics, Hellos, Profiles, WeatherForecasts — **no Architecture** |
+| Runtime curl api-server | `GET /openapi/v1.json` **200**, operation tags `["WeatherForecasts"]`; `/scalar` **200** |
+
+### Residual risks / incomplete
+- **template-smoke** both matrices not run — orchestrator should run before release.
+- **web-server runtime OpenAPI curl** not done standalone (Passwordless ApiSecret hard-throw on bare host); verified via api-server + generated web endpoints + web-server integration tests compose the same CommonServerModule path.
+- Aspire ingress smoke failures appear environmental; re-check on orchestrator machine.
+- Generated Description indentation is slightly irregular (cosmetic).

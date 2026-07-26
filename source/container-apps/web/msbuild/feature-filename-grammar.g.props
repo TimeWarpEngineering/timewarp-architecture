@@ -15,7 +15,6 @@
     <FeatureFilenameGrammarLayer Include="infrastructure" Project="web-infrastructure" />
     <FeatureFilenameGrammarLayer Include="server" Project="web-server" />
     <FeatureFilenameGrammarFunction Include="endpoint" Layer="server" />
-    <FeatureFilenameGrammarFunction Include="feature-annotations" Layer="server" />
     <FeatureFilenameGrammarFunction Include="handler" Layer="application" />
   </ItemGroup>
   <!-- Hybrid includes (option 1): require WebFeatureTreeRoot set by feature-membership.targets. -->

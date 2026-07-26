@@ -40,10 +40,53 @@ public class FastEndpointSourceGenerator_Tests
     generatedCode.ShouldContain("public class GetWeatherForecastsEndpoint");
     generatedCode.ShouldContain("BaseFastEndpoint<GetWeatherForecasts.Query, GetWeatherForecasts.Response>");
     generatedCode.ShouldContain("""Get("api/weatherForecasts")""");
+    // Default OpenAPI tag is the leaf namespace under Features (not the parent of Features).
+    // Tags() is FE filter metadata; WithTags is what Scalar/OpenAPI group by.
+    generatedCode.ShouldContain("""Tags("WeatherForecast")""");
+    generatedCode.ShouldContain("""WithTags("WeatherForecast")""");
     // Task 110 fail-closed default: no [EndpointAuthorize]/[EndpointAllowAnonymous] marker means
     // the generator emits NOTHING — FastEndpoints then requires authentication by default. This is
     // the inverse of the pre-110 assertion (which used to require AllowAnonymous() here).
     generatedCode.ShouldNotContain("AllowAnonymous");
+
+    return Task.CompletedTask;
+  }
+
+  private const string NestedAdminRolesContract = """
+    using TimeWarp.Architecture;
+    using TimeWarp.Architecture.Attributes;
+
+    namespace Test.Features.Admin.Roles;
+
+    [ApiEndpoint]
+    public static partial class CreateRole
+    {
+        [ApiRoute("api/admin/roles", HttpVerb.Post)]
+        public sealed partial class Command
+        {
+            public string? Name { get; set; }
+        }
+
+        public sealed class Response { }
+    }
+    """;
+
+  public static Task Should_Tag_Nested_Feature_With_Leaf_Namespace()
+  {
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly(NestedAdminRolesContract);
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
+
+    string generatedCode = runResult.Results
+      .SelectMany(r => r.GeneratedSources)
+      .Single()
+      .SourceText.ToString();
+
+    // Nested …Features.Admin.Roles → leaf "Roles", not "Admin" or "Architecture".
+    generatedCode.ShouldContain("""Tags("Roles")""");
+    generatedCode.ShouldContain("""WithTags("Roles")""");
+    generatedCode.ShouldNotContain("""Tags("Admin")""");
+    generatedCode.ShouldNotContain("""Tags("Architecture")""");
 
     return Task.CompletedTask;
   }

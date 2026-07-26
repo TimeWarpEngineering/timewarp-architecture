@@ -64,8 +64,7 @@ a human remembering the pairing.
 | Filename | Layer | Function → required layer | Living anchor |
 |----------|-------|----------------------------|----------------|
 | `create-role-handler-application.cs` | application | `handler` → `application` | `web/features/admin/roles/create-role/create-role-handler-application.cs` |
-| `hello-feature-annotations-server.cs` | server | `feature-annotations` → `server` | `web/features/hello/hello-feature-annotations-server.cs` |
-| *(reserved)* `<name>-endpoint-server.cs` | server | `endpoint` → `server` | registered for a hand-authored server endpoint shim; the template currently generates FastEndpoints from contracts rather than hand-authoring them, so use this only for a genuinely hand-written endpoint |
+| *(reserved)* `<name>-endpoint-server.cs` | server | `endpoint` → `server` | registered for a hand-authored server endpoint shim; the template generates FastEndpoints from contracts rather than hand-authoring them, so use this only for a genuinely hand-written endpoint |
 
 A mismatched pairing (e.g. `create-role-handler-server.cs`, function `handler` on layer
 `server`) is **TWA0015** — see below.
@@ -106,8 +105,8 @@ The rule is unconditional: **every operation gets its own `<slice>/<use-case>/` 
 holding every layer file for that operation, side by side — the contract next to its handler.
 A folder with only two files in it is correct; there is no size threshold below which an
 operation stays flat at slice root. Files that serve **more than one** operation (a shared
-bindable DTO, a store, feature annotations, an entity-type configuration) stay at slice root
-instead of picking one use-case folder to live in.
+bindable DTO, a store, an entity-type configuration) stay at slice root instead of picking one
+use-case folder to live in.
 
 `commands/` and `queries/` subfolders (or any other group-by-kind split, such as
 `client-to-server/`/`server-to-client/` for a hub) do not appear inside a slice — grouping by
@@ -136,13 +135,12 @@ admin/roles/
     update-role-handler-application.cs
   role-details-contracts.cs          # shared bindable shape used by every use case above
   role-store-application.cs          # shared store, not operation-specific
-  roles-feature-annotations-server.cs
 ```
 
 Every use-case folder here holds exactly one contract file and one handler file — two files is
-the normal case, not a special one. `role-details-contracts.cs`, `role-store-application.cs`,
-and `roles-feature-annotations-server.cs` each serve multiple use cases (or the whole slice), so
-they stay at `admin/roles/` root rather than moving into any single use-case folder.
+the normal case, not a special one. `role-details-contracts.cs` and `role-store-application.cs`
+each serve multiple use cases (or the whole slice), so they stay at `admin/roles/` root rather
+than moving into any single use-case folder.
 
 When a slice's operation name is identical to the slice name (a single-operation slice), the
 use-case folder is still literal — `hello/hello/hello-contracts.cs`, not a special-cased flat
@@ -160,8 +158,7 @@ layout. When a hub or similar has one folder per message DIRECTION instead of pe
   "layers": [ "contracts", "application", "domain", "infrastructure", "server" ],
   "functions": {
     "handler": "application",
-    "endpoint": "server",
-    "feature-annotations": "server"
+    "endpoint": "server"
   }
 }
 ```
@@ -206,7 +203,7 @@ time, so this guard's only failure mode in practice is a missing or misspelled l
 | Diagnostic | Trigger | Fix |
 |------------|---------|-----|
 | **TWA0015** | Filename's function segment is registered, but paired with the wrong layer suffix (e.g. `-handler-` on a file ending `-server`) | Rename the file to end in the function's registered layer, or drop the function segment entirely if the file isn't actually that archetype |
-| **TWA0016** | Filename's trailing segment looks like a function but isn't registered — an unrecognized token, a misspelling, a case mismatch (`-Handler-` vs `-handler-`), or an incomplete multi-segment function (e.g. `feature-only-annotations-server.cs` shares the `annotations` tail of the registered `feature-annotations` function but isn't that function) | Use a registered function name exactly as spelled/cased, or use the escape-hatch form `<name>-<layer>.cs` with no function segment if the file isn't an archetype instance |
+| **TWA0016** | Filename's trailing segment looks like a function but isn't registered — an unrecognized token, a misspelling, a case mismatch (`-Handler-` vs `-handler-`), or an incomplete multi-segment function that shares the final segment of a registered multi-segment function without matching it fully | Use a registered function name exactly as spelled/cased, or use the escape-hatch form `<name>-<layer>.cs` with no function segment if the file isn't an archetype instance |
 
 Both diagnostics report the file name, the offending segment, and the full list of registered
 pairs/functions so the fix doesn't require opening the registry to look it up.
@@ -246,8 +243,8 @@ namespaces don't change; only which project's glob claims them does.
   FastEndpoint annotation → `server`); add a `function` segment only if the file matches a
   registered archetype exactly; otherwise omit it (escape hatch).
 - **Adding a file that serves more than one operation:** it stays at slice root, not inside any
-  single use-case folder — a shared details contract, store, feature-annotations, or
-  entity-type-configuration file is slice-wide, not operation-specific.
+  single use-case folder — a shared details contract, store, or entity-type-configuration file
+  is slice-wide, not operation-specific.
 - **Moving a file between slices:** rename only the `name` segment (and relocate the folder);
   `function`/`layer` segments don't change unless the file's role changed too. Namespaces are
   never renamed by a folder move (see AGENTS.md).

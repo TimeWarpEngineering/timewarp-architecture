@@ -10,7 +10,9 @@
 // validators, and only public validators are picked up (internals are deliberately excluded).
 // Mediator pipeline behaviors run in registration order: Generic wraps FluentValidation.
 // Oakton runs the host so the binary exposes diagnostic commands alongside serving.
-// Permissive CORS and the Scalar API reference are development-only surfaces.
+// Permissive CORS and Scalar (OpenAPI document UI) are development-only surfaces.
+// OpenAPI document registration lives in CommonServerModule.AddOpenApi (FastEndpoints.OpenApi);
+// Scalar maps after UseFastEndpoints so endpoint metadata is available.
 #endregion
 
 namespace TimeWarp.Architecture.Api.Server;
@@ -66,7 +68,7 @@ public class Program : IAspNetProgram
     });
 
     serviceCollection.AddAuthorization();
-    serviceCollection.AddEndpointsApiExplorer();
+    CommonServerModule.AddOpenApi(serviceCollection, ApiVersion, ApiTitle);
     serviceCollection
       .AddMediator
       (
@@ -95,7 +97,7 @@ public class Program : IAspNetProgram
     if (webApplication.Environment.IsDevelopment())
     {
       webApplication.UseCors(CorsPolicy.Any.Name);
-      webApplication.MapScalarApiReference();
+      CommonServerModule.UseScalarApiReference(webApplication, ApiVersion, ApiTitle);
     }
   }
 

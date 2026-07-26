@@ -100,6 +100,12 @@
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="FastEndpoints" Version="8.2.0" />
+    <PackageVersion Include="FastEndpoints.OpenApi" Version="8.2.0" />
+    <!-- FastEndpoints.OpenApi / Microsoft.AspNetCore.OpenApi 10.0.9 transitively pull
+         Microsoft.OpenApi 2.0.0 (NU1903 / GHSA-v5pm-xwqc-g5wc circular-schema stack overflow).
+         Patched 2.x: 2.7.5+. Direct pin on foundation-server lifts the graph without jumping to 3.x
+         (AspNetCore.OpenApi 10.0.9 is not compatible with OpenApi 3.x). -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.5.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.16.11" />
