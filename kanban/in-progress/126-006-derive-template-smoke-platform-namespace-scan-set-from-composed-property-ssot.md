@@ -61,6 +61,72 @@ Either way, drift becomes impossible without a red gate.
 - Scope guard: this hardens the existing scan only — no new analyzer, no scan-scope expansion,
   no changes to what content is scanned.
 
+### Implementation Plan (2026-07-27)
+
+#### Goal
+Eliminate the convention-by-memory gap in `AssertNoUnsafePlatformNamespaceLiterals`: stop
+hand-maintaining the closed suffix set `(Analyzers|Generators|Attributes|TypedIds)` and derive
+it at runtime from `msbuild/timewarp-platform-packages.props`, so adding a composed
+`Architecture.*` property automatically extends scan coverage (or fails the smoke gate loudly
+if derivation breaks).
+
+**Scope guard (unchanged):** harden the existing monorepo pre-scan only — no new analyzer, no
+scan-root/extension expansion, no change to structural exemption of the props file.
+
+#### Chosen approach: Option 1 — Derive at runtime
+Prefer derivation over dual-edit cross-check (option 2). Props file is tiny, stable, checked-in
+MSBuild XML. Matches AGENTS.md "prefer generate/check over convention-by-memory".
+
+#### Inventory (props SSOT vs current regex) — 1:1 today
+- TwArchitectureAnalyzersPackageId → Analyzers
+- TwArchitectureGeneratorsPackageId → Generators
+- TwArchitectureAttributesPackageId → Attributes
+- TwArchitectureAttributesNamespace → Attributes (dup)
+- TwArchitectureTypedIdsEfNamespace → **TypedIds** (namespace-only; must not filter to PackageId-only)
+- TwArchitectureRootNamespace → skip (no third segment)
+
+#### Exact files
+| File | Change |
+|------|--------|
+| tools/dev-cli/endpoints/template-smoke-command.cs | Sole production change |
+| msbuild/timewarp-platform-packages.props | Temporary fake property for drift proof only, then revert |
+| postgres-db-context.cs | Temporary historical plant only, then revert |
+
+#### Parsing strategy
+1. Load `Path.Combine(RepoRoot, "msbuild", "timewarp-platform-packages.props")` via XDocument
+2. Walk PropertyGroup property element values (not PackageId-only)
+3. Capture first segment after `.Architecture.` with regex accepting `$(_TwPlatformVendor).Architecture.X…`
+4. Distinct + stable sort; hard-fail if empty
+5. Build `TimeWarp\.Architecture\.(…)\b` with Regex.Escape per suffix
+6. Not a static field — needs RepoRoot; build once per Handle after FindRepoRoot
+7. Log derived suffixes for operator visibility
+
+#### Structural exemption
+Unchanged: composed `$(_Tw…)` values never contain continuous literals; do not special-case
+props out of scan.
+
+#### Proofs
+- Drift: add TwArchitectureFakeThingPackageId → expect FakeThing in derived suffixes; optional
+  plant to confirm hit; revert
+- Historical: plant `using TimeWarp.Architecture.TypedIds.Ef;` in postgres-db-context.cs →
+  pre-scan fail; revert
+- Happy: clean tree → template-smoke both matrices OK
+
+#### Gates
+dev build 0/0; `dotnet run tools/dev-cli/dev.cs -- template-smoke` both matrices; dev test not
+required unless shared code moves
+
+#### Locked decisions
+1. Option 1 derive
+2. First segment after Architecture (TypedIds from TypedIds.Ef)
+3. Value-based extraction (PackageId AND namespace props)
+4. Hard fail on empty set
+5. No scan surface changes
+6. Single production file: template-smoke-command.cs
+
+Out of scope: ForbiddenRewrittenPackageFragments parallel list (optional follow-up)
+
 ## Session
 
 - Created: 2026-07-26 — filed from 126-004 round-3 verification finding per maintainer request.
+- Orchestration plan: grok (2026-07-27)
