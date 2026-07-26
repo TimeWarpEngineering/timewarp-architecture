@@ -1,0 +1,89 @@
+# Fix Scalar OpenAPI pipeline; delete dead FeatureAnnotations; drop feature-annotations registry entry
+
+## Description
+
+From task 126 dogfood review follow-through (maintainer decisions 2026-07-26). Three coupled
+fixes, one story: make Scalar's feature-grouped sidebar actually work, and remove the vestigial
+mechanism it superseded.
+
+**1. Scalar is broken today — no OpenAPI document is ever generated.**
+`source/foundation/foundation-server/common-server-module.cs:57-77`: `AddOpenApi` is a stub that
+only calls `AddEndpointsApiExplorer()` (Swashbuckle-era metadata; generates no document), and
+`UseScalarApiReference` maps the Scalar UI at a document route (`/openapi/v1.json` class) that
+nothing ever maps. Repo has no `FastEndpoints.OpenApi` package, no `SwaggerDocument()`
+registration, no `MapOpenApi()`. Per FastEndpoints docs
+(fast-endpoints.com/docs/openapi-documents), FastEndpoints documents come from the
+**`FastEndpoints.OpenApi`** package + `SwaggerDocument()` — explicitly NOT ASP.NET's raw
+`services.AddOpenApi()` (which skips FastEndpoints' transformers/metadata).
+
+Fix: add `FastEndpoints.OpenApi` (CPM pin in root `Directory.Packages.props`), replace the
+`CommonServerModule.AddOpenApi` stub with proper `SwaggerDocument()` registration, and ensure the
+document endpoint Scalar points at is actually mapped in `UseScalarApiReference`. Both
+web-server and api-server host FastEndpoints — verify both call sites
+(`web-server/program.cs:216-223`, `api-server/program.cs`).
+
+**Grouping needs NO new work:** the FastEndpoint generator already derives each endpoint's
+OpenAPI tag from the contract's `…Features.<Id>` namespace
+(`source/analyzers/timewarp-architecture-analyzers/models/endpoint-metadata.cs:141-171`) and
+emits `Tags("<Feature>")` in generated `Configure()`
+(`generators/fast-endpoint-source-generator.cs:188-245`), with `[OpenApiTags]` as the
+per-endpoint override hatch. Once a real document exists, Scalar groups by slice automatically.
+
+**2. Delete the seven dead `FeatureAnnotations` files** — zero consumers repo-wide (verified by
+grep 2026-07-26); superseded by the generator's namespace-derived tags:
+- `source/container-apps/web/features/{admin/roles,analytics,auth,hello,identity,profile}/…-feature-annotations-server.cs` (6 files)
+- `source/container-apps/api/api-contracts/features/weather-forecast/feature-annotations.cs`
+
+**3. Drop the `feature-annotations → server` registry entry** (maintainer decision: drop, not
+reserve — easy to re-add if ever needed):
+`source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`.
+**Registry edit ⇒ FULL REBUILD** (stale analyzer DLLs silently keep the old grammar under
+incremental builds — AGENTS.md / tw-feature-placement skill warning).
+
+**Explicitly deferred (do NOT implement):** two-level sidebar nesting via `x-tagGroups`
+(area → slice, e.g. Admin → Roles). Scalar supports it via document transformer, but once
+present, any tag not assigned to a group silently disappears from the sidebar. Revisit only
+after the single-level sidebar is visible and the maintainer wants nesting.
+
+## Checklist
+
+- [ ] Add `FastEndpoints.OpenApi` PackageVersion pin (root Directory.Packages.props) +
+      PackageReference where FastEndpoints is hosted (foundation-server or the two server
+      csprojs — follow how core FastEndpoints is referenced today)
+- [ ] Replace `CommonServerModule.AddOpenApi` stub with `SwaggerDocument()` registration;
+      wire `UseScalarApiReference` to the real document route; reconcile the methods'
+      Purpose/Design regions (they currently claim "Scalar will generate OpenAPI automatically" —
+      false)
+- [ ] Verify both hosts: web-server and api-server serve the document and Scalar renders it
+- [ ] Delete the 7 dead FeatureAnnotations files
+- [ ] Remove `feature-annotations` from `feature-filename-grammar.json`; regenerate
+      `feature-filename-grammar.g.props`; **full rebuild** (not incremental)
+- [ ] Update docs that name the function token: AGENTS.md axis-1 grammar line
+      (`feature-annotations`→server), `skills/tw-feature-placement/SKILL.md` grammar table +
+      stay-at-root examples (present tense, no history), 126-001's use-case section mention of
+      feature annotations as a shared-at-root category
+- [ ] Runtime proof, not just build: launch (dev run / aspire) and confirm
+      `/openapi/…` returns a document whose operations carry feature tags, and the Scalar UI
+      sidebar shows feature groups (Roles, Identity, Analytics, …) — screenshot or curl output
+      into the task record
+- [ ] Gates: `dev build` 0/0 (full rebuild), `dev test`, `dev template-smoke` both matrices
+      (server module + template content changed)
+
+## Notes
+
+- Parent: 126. Lineage: FeatureAnnotations found dead during Steve's post-126-001/002 review;
+  Scalar research (session 2026-07-26) confirmed the generator's namespace-derived tags already
+  implement the intended grouping and the document pipeline is the only missing piece.
+- Registry-drop decision (Steve, 2026-07-26): drop rather than keep-as-reserved — "easy to add
+  back if we later need it." Contrast with `endpoint` token, which stays reserved (126 RFC F5).
+- Scalar facts (researched from scalar/scalar docs + ScalarOptions source): sidebar groups by
+  OpenAPI `tags`; `TagSorter.Alpha`/`OperationSorter`/`DefaultOpenAllTags` are presentation
+  knobs on `MapScalarApiReference`; tag descriptions come from `tags[].description`;
+  `x-tagGroups` gives two-level nesting with the all-tags-must-be-grouped caveat (deferred).
+- FastEndpoints auto-tags by route segment when no explicit `Tags()` — our generator's explicit
+  `Tags()` takes precedence; do not remove the generator emission.
+
+## Session
+
+- Created: 2026-07-26 — filed from Scalar research + maintainer decisions (fix pipeline, delete
+  dead files, drop registry entry).
