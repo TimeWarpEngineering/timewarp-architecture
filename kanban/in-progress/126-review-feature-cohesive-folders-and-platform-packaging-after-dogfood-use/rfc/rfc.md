@@ -366,6 +366,10 @@ atomically with the new tree shape.
   options+handler). Steve: category 4 belongs in `features/` — migrate it → child task
   **126-002**. Categories 1–3 unchanged for now; a `platform/` home for seams and a `projects/`
   home for pure-selector csprojs remain open conversation on this task.
+- **Deferral (maintainer, 2026-07-26):** the `platform/` and `projects/` questions sit until
+  126-001 and 126-002 land — the post-migration residue in the layer folders is the real input
+  to both, so deciding against the current tree would be designing against a shape about to
+  change. Explicit deferral, to be re-examined after the children complete.
 
 ---
 
