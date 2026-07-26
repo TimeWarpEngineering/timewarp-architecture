@@ -35,21 +35,21 @@ Either way, drift becomes impossible without a red gate.
 
 ## Checklist
 
-- [ ] Inventory the props file's composed `Architecture.*` suffixes (PackageId properties AND
+- [x] Inventory the props file's composed `Architecture.*` suffixes (PackageId properties AND
       namespace properties like the TypedIds Ef using) and confirm the current regex set maps
       1:1 to them
-- [ ] Implement derivation (option 1) or cross-check guard (option 2) in
+- [x] Implement derivation (option 1) or cross-check guard (option 2) in
       `template-smoke-command.cs`; keep the scan's file-set and structural exemption
       (composed-property file never contains the continuous literal) unchanged
-- [ ] Prove drift detection: locally add a fake `TwArchitectureFakeThingPackageId` property to
+- [x] Prove drift detection: locally add a fake `TwArchitectureFakeThingPackageId` property to
       the props file and confirm the smoke command either scans for the new suffix (option 1)
       or fails the cross-check (option 2); revert
-- [ ] Re-prove the historical case still fails: plant `using TimeWarp.Architecture.TypedIds.Ef;`
+- [x] Re-prove the historical case still fails: plant `using TimeWarp.Architecture.TypedIds.Ef;`
       in `postgres-db-context.cs`, confirm immediate pre-scan failure, revert (pattern from the
       126-004 round-3 verification)
-- [ ] Update the scan's Purpose/Design region to state the set is derived/guarded, not
+- [x] Update the scan's Purpose/Design region to state the set is derived/guarded, not
       hand-maintained
-- [ ] Gates: `dev build` 0/0, `dev template-smoke` both matrices (dev test not expected to be
+- [x] Gates: `dev build` 0/0, `dev template-smoke` both matrices (dev test not expected to be
       affected — run if any shared code moves)
 
 ## Notes
@@ -126,7 +126,56 @@ required unless shared code moves
 
 Out of scope: ForbiddenRewrittenPackageFragments parallel list (optional follow-up)
 
+
+## Results
+
+### What was implemented
+Replaced the hand-maintained `UnsafePlatformNamespaceLiteral` closed set in `template-smoke-command.cs` with **runtime derivation** from `msbuild/timewarp-platform-packages.props` (Option 1).
+
+- Loads props via `XDocument`
+- Walks all `PropertyGroup` property **values** (PackageId + namespace composition props)
+- Captures first segment after `.Architecture.` (e.g. `TypedIds.Ef` → `TypedIds`)
+- Distinct + ordinal-stable sort; **hard-fails if empty** or props file missing
+- Builds continuous-literal scan regex with `Regex.Escape` per suffix
+- Logs derived suffixes each smoke run
+- Scan roots, extensions, hit formatting, structural exemption of composed props values: **unchanged**
+
+### Files changed
+| File | Change |
+|------|--------|
+| `tools/dev-cli/endpoints/template-smoke-command.cs` | Sole production change (+ Design region) |
+| Props / `postgres-db-context.cs` | Temporary drift + historical plants only — reverted before commit |
+
+### Key decisions / deviations
+1. Option 1 (derive) over option 2 (cross-check)
+2. Value-based extraction so TypedIds Ef namespace is included
+3. First segment only preserves historical `\b` match behavior
+4. Empty derivation hard-fails (fail-closed)
+5. `ForbiddenRewrittenPackageFragments` left hand-maintained (explicit out of scope)
+6. `var` used for `XDocument.Load` / list returns to satisfy IDE0007 / CA1859
+
+### Test outcomes
+| Step | Result |
+|------|--------|
+| Drift proof — `TwArchitectureFakeThingPackageId` | PASS — FakeThing appeared in derived suffix log |
+| Historical plant — `using TimeWarp.Architecture.TypedIds.Ef;` | PASS — immediate pre-scan fail on postgres-db-context.cs |
+| Plants reverted | PASS |
+| `dev build` | PASS — 0 Warning(s), 0 Error(s) |
+| `dotnet run tools/dev-cli/dev.cs -- template-smoke` | PASS — SmokeDefault OK + SmokeNoPostgres OK; suffixes Analyzers, Attributes, Generators, TypedIds |
+
+### Phase 4b review
+- **Effort:** 1 (general only)
+- **Rounds:** 1
+- **Roster:** general
+- **Final counts:** 0 open / 0 fixed / 0 wontfix (all severities)
+- **Disposition:** clean
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+
+### Commit
+- Implementation: `39b82b28`
+
 ## Session
 
 - Created: 2026-07-26 — filed from 126-004 round-3 verification finding per maintainer request.
 - Orchestration plan: grok (2026-07-27)
+- Implementation + review disposition: grok (2026-07-27)
