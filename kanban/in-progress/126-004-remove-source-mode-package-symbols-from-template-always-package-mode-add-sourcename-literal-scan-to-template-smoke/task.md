@@ -138,3 +138,51 @@ CPM pins, package IDs, `timewarp-platform-packages.props` composition values.
 
 - Created: 2026-07-26 — filed from 126 maintainer decision (drop all three symbols) + RFC D4.
 - Planning: 2026-07-26
+- Implementer: grok session 2026-07-26
+- Review: grok Phase 4b effort 1 (round 1 + round 2) 2026-07-26
+- Orchestration complete: 2026-07-26
+
+## Results
+
+### What was implemented
+1. **Always package-mode template** — deleted `foundationPackages` / `analyzerPackages` / `identityPackages` from `.template.config/template.json` and merged platform trees into the unconditional `(true)` exclude.
+2. **Dual-use slnx** — monorepo keeps platform + platform-test projects under `<!--#if (false) -->` (always stripped on generate; no template symbols). Review fix restored membership after initial full deletion.
+3. **Monorepo dual-mode retained** — `UseFoundationPackages` / `UseAnalyzerPackages` / `UseIdentityPackages` auto-detect + ProjectReference/PackageReference paths untouched; CPM pins and composed props unchanged.
+4. **Docs/comments** — AGENTS.md, HowToUpgradeToAnalyzerPackages.md, and dual-mode comments updated for always package-mode greenfield.
+5. **sourceName-literal scan (RFC D4)** — new independent smoke passes:
+   - `AssertNoUnsafePlatformNamespaceLiterals` (includes `.cs`; regex `TimeWarp.Architecture.(Analyzers|Generators|Attributes|TypedIds)`)
+   - `AssertRemovedPackageSymbolsGoneFromTemplateConfig`
+   - `AssertGeneratedAppPackageMode` (vendored trees + rewritten `{appName}.*` belt)
+6. **Prove-scan** — temporary `using TimeWarp.Architecture.TypedIds.Ef;` in `postgres-db-context.cs` failed smoke; poison reverted (not committed).
+
+### Files changed (primary)
+- `.template.config/template.json`
+- `timewarp-architecture.slnx`
+- `tools/dev-cli/endpoints/template-smoke-command.cs`
+- `AGENTS.md`, `documentation/developer/how-to-guides/HowToUpgradeToAnalyzerPackages.md`
+- Comment touch-ups: Directory.Packages.props, web-contracts, timewarp-testing, identity/infrastructure tests, missing-invariants-validator-exception
+
+### Key decisions / deviations
+- **`#if (false)` dual-use** preferred over permanent monorepo solution exclusion (plan Phase 0 fallback; review M1).
+- Scan roots extended with `source/Directory.Build.props` + `tests/Directory.Build.props` (review M3).
+- Template API break (`--*Packages false` gone) accepted (beta; maintainer decision).
+
+### Verification
+| Gate | Result |
+|------|--------|
+| `dev build` / monorepo slnx build | **0/0** |
+| Platform tests via ProjectReference + globs | pass (implementer) |
+| `dotnet run tools/dev-cli/dev.cs -- template-smoke` | **SUCCEEDED** (SmokeDefault + SmokeNoPostgres) after review fixes |
+| Prove a251980f class | smoke **failed** on TypedIds using; reverted |
+| Generated SmokeDefault | no vendored platform trees; no `*Packages` template options |
+
+### Phase 4b review
+- **Effort:** 1 (general only)
+- **Rounds:** 2
+- **Final counts:** suggestion 2 fixed, nit 1 fixed, **0 open**
+- **Disposition:** `clean` — `review/disposition.md`
+- **Paths:** `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`
+
+### Residual risks
+- Prefer `dotnet run tools/dev-cli/dev.cs -- template-smoke` over stale AOT `./bin/dev` until re-self-install.
+- Dual-mode `Use*Packages` branches remain in shipping csproj for monorepo dogfood only; generated apps always take the package branch.

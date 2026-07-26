@@ -22,6 +22,8 @@
 // in postgres-db-context.cs). AssertPackageIdsNotRewritten stays package-id focused and does not
 // scan .cs; the namespace-literal pass is independent. Post-generate asserts also confirm vendored
 // trees and removed symbols are absent from output.
+// Prefer `dotnet run tools/dev-cli/dev.cs -- template-smoke` (or re-self-install) over a stale
+// AOT `./bin/dev` so local runs pick up these gates; CI always uses the runfile path.
 #endregion
 
 namespace DevCli.Commands;
@@ -114,6 +116,8 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
   [
     "Directory.Build.props",
     "Directory.Packages.props",
+    "source/Directory.Build.props",
+    "tests/Directory.Build.props",
     "timewarp-architecture.slnx",
     "global.json",
     "BannedSymbols.txt",
