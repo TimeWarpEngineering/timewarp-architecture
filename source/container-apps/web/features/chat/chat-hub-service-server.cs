@@ -9,9 +9,7 @@
 // the method name, keeping the server push and the Spa client handler bound to one shared shape.
 #endregion
 
-namespace TimeWarp.Architecture.Services;
-
-using TimeWarp.Architecture.Features.Chat;
+namespace TimeWarp.Architecture.Features.Chat;
 
 public sealed class ChatHubService : IChatHubService
 {

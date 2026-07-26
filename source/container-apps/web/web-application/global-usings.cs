@@ -9,7 +9,6 @@ global using OneOf;
 global using OneOf.Types;
 global using TimeWarp.Architecture.Abstractions;
 global using TimeWarp.Foundation.Abstractions;
-global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Features.Identity;
 // Solution usings

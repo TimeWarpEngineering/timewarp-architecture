@@ -17,7 +17,7 @@
 // short-lived-by-design token — this is not meant to become a long-lived credential.
 #endregion
 
-namespace TimeWarp.Architecture.Configuration;
+namespace TimeWarp.Architecture.Features.Identity.Application;
 
 public class AgentTokenOptionsValidator : AbstractValidator<AgentTokenOptions>
 {

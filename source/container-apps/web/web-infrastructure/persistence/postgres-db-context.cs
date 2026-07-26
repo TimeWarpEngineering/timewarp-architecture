@@ -35,7 +35,7 @@
 
 namespace TimeWarp.Architecture.Persistence;
 
-using TimeWarp.Architecture.Aggregates.Profiles;
+using TimeWarp.Architecture.Features.Profiles.Domain;
 using TimeWarp.Foundation.Persistence;
 using TimeWarp.Identity;
 

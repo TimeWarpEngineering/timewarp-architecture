@@ -24,7 +24,7 @@
 // CA1852 so no pragma is needed.
 #endregion
 
-namespace TimeWarp.Architecture.Aggregates.Profiles;
+namespace TimeWarp.Architecture.Features.Profiles.Domain;
 
 using FluentValidation;
 

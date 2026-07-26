@@ -10,7 +10,7 @@
 // Empty remains unguardable for default(T) — use IsEmpty at edges.
 #endregion
 
-namespace TimeWarp.Architecture.Aggregates.Profiles;
+namespace TimeWarp.Architecture.Features.Profiles.Domain;
 
 // TypedId attribute namespace: dual-mode MSBuild <Using> in web-domain.csproj (task 115).
 

@@ -25,7 +25,7 @@
 // failing the host on a duplicate would be a surprising boot crash for a non-security nit.
 #endregion
 
-namespace TimeWarp.Architecture.Configuration;
+namespace TimeWarp.Architecture.Features.Identity.Application;
 
 public class WebAuthnOptionsValidator : AbstractValidator<WebAuthnOptions>
 {

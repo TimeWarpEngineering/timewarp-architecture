@@ -3,12 +3,14 @@
 #endregion
 
 #region Design
-// Lives in web-application (not web-server) for the SAME reason WebAuthnOptions does (104-003
-// round-1 finding M1's sibling deviation, made from day one here rather than discovered by a
-// review): the consuming handler (CompleteAgentTokenIssuance.Handler) lives in web-application,
-// which does NOT reference web-server (web-server -> web-infrastructure -> web-application is the
-// one-way dependency chain), so this type must live where both the binder (web-server, which
-// references web-application transitively) and the consumer (the handler) can see it.
+// Compiles into web-application (namespace TimeWarp.Architecture.Features.Identity.Application,
+// filename suffix -application.cs), not web-server, for the SAME reason WebAuthnOptions does
+// (104-003 round-1 finding M1's sibling deviation, made from day one here rather than discovered by
+// a review): the consuming handler (CompleteAgentTokenIssuance.Handler) compiles into
+// web-application, which does NOT reference web-server (web-server -> web-infrastructure ->
+// web-application is the one-way dependency chain), so this type must live where both the binder
+// (web-server, which references web-application transitively) and the consumer (the handler, same
+// namespace, no using needed) can see it.
 // Configuration section name is "AgentTokenOptions" (matches this type's name) — AddFluentValidatedOptions
 // binds configuration.GetSection(key) where key defaults to typeof(TOptions).Name absent a
 // [ConfigurationKey] attribute (see TimeWarp.OptionsValidation). 104-003's round-1 review (finding
@@ -22,7 +24,7 @@
 // token ceremony (see IAgentTokenStore's Design region).
 #endregion
 
-namespace TimeWarp.Architecture.Configuration;
+namespace TimeWarp.Architecture.Features.Identity.Application;
 
 public class AgentTokenOptions
 {

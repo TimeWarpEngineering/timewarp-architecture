@@ -4,14 +4,16 @@
 #endregion
 
 #region Design
-// Lives in web-application, not web-server, despite being bound from configuration at the host
-// (web-server's Program.ConfigureSettings calls AddFluentValidatedOptions<WebAuthnOptions,
+// Compiles into web-application (namespace TimeWarp.Architecture.Features.Identity.Application,
+// filename suffix -application.cs), not web-server, despite being bound from configuration at the
+// host (web-server's Program.ConfigureSettings calls AddFluentValidatedOptions<WebAuthnOptions,
 // WebAuthnOptionsValidator> there) — the identity handlers that consume IOptions<WebAuthnOptions>
-// live in web-application, which does NOT reference web-server (web-server -> web-infrastructure
+// compile into web-application, which does NOT reference web-server (web-server -> web-infrastructure
 // -> web-application is the one-way dependency chain), so the type has to live where both the
 // binder (web-server, which references web-application transitively) and the consumers
-// (web-application's own handlers) can see it. SampleOptions stays in web-server precisely because
-// nothing outside web-server ever consumes it — this is the one place that convention does not fit.
+// (the identity handlers, same namespace, no using needed) can see it. SampleOptions stays under
+// web-server/configuration/ (Configuration namespace) precisely because nothing outside web-server
+// ever consumes it — this is the one place that convention does not fit.
 //
 // PER-REQUEST RP-ID SELECTION (task 104-031): there is no single static RpId. AllowedRpIds is an
 // allowlist of RP IDs this application may serve passkeys under; the effective RP ID for a given
@@ -89,7 +91,7 @@
 // WebServerIntegrationTests's WebAuthnOptions binding test for the regression pin.
 #endregion
 
-namespace TimeWarp.Architecture.Configuration;
+namespace TimeWarp.Architecture.Features.Identity.Application;
 
 public class WebAuthnOptions
 {

@@ -11,7 +11,7 @@
 // Mapped at ChatHubConstants.Route so the URL is owned by Web.Contracts.
 #endregion
 
-namespace TimeWarp.Architecture.Hubs;
+namespace TimeWarp.Architecture.Features.Chat;
 
 public class ChatHub : Hub
 {

@@ -26,9 +26,10 @@
 // OriginalValue(Version) = stored Version so the concurrency token WHERE clause is correct.
 #endregion
 
-namespace TimeWarp.Architecture.Persistence;
+namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
 
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using TimeWarp.Architecture.Persistence;
 using TimeWarp.Foundation.Entities;
 using TimeWarp.Identity;
 

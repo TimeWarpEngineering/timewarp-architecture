@@ -4,8 +4,9 @@ This guide walks a new **aggregate root** from domain model through EF Core mapp
 registration, application use, and tests — the golden path every generated app inherits
 ([ADR-0009](../conceptual/architectural-decision-records/approved/0009-postgres-ef-golden-persistence-path.md)).
 
-**Exemplar:** `Profile` under `source/container-apps/web/web-domain/aggregates/profile/` with
-mapping in `source/container-apps/web/features/profile/`. Read those files alongside this guide.
+**Exemplar:** `Profile` under `source/container-apps/web/features/profile/` (domain files
+`profile-domain.cs` / `profile-id-domain.cs`, mapping in
+`profile-entity-type-configuration-infrastructure.cs`). Read those files alongside this guide.
 Also read `web-domain/aggregates/overview.md` for the domain-side golden pattern (task 106).
 
 Prerequisites: the `postgres` template flag is on (default). AppHost provisions Postgres for
@@ -25,7 +26,7 @@ domain files if your slice has already moved fully into `web/features/`).
    public readonly partial record struct OrderId;
    ```
 
-   See `profile/profile-id.cs`.
+   See `features/profile/profile-id-domain.cs`.
 
 2. **Aggregate type** — inherit `Entity<TId>`, implement `IAggregateRoot`:
 
@@ -54,8 +55,8 @@ domain files if your slice has already moved fully into `web/features/`).
    }
    ```
 
-Mirror `profile/profile.cs` and the checklist in `aggregates/overview.md`. Application code
-never writes `Version` — it is store-owned.
+Mirror `features/profile/profile-domain.cs` and the checklist in `aggregates/overview.md`.
+Application code never writes `Version` — it is store-owned.
 
 ## 2. Infrastructure: IEntityTypeConfiguration under features/
 

@@ -14,7 +14,7 @@
 //     reflection exception surface, so the message still points at the convention.
 // The message deliberately does not assert the target "implements IAggregateRoot" — EnsureValid has
 // no such check (any object without a discoverable validator produces this exception) — and points
-// at the in-repo exemplar (web-domain/aggregates/profile/profile.cs + aggregates/overview.md)
+// at the in-repo exemplar (web/features/profile/profile-domain.cs + web-domain/aggregates/overview.md)
 // instead of timewarp-identity, whose Principal/Credential have no nested Invariants validator and
 // whose source is excluded from generated apps under the default foundationPackages=true.
 #endregion
@@ -52,12 +52,12 @@ public sealed class MissingInvariantsValidatorException : Exception
   private static string BuildMessage(Type aggregateType) =>
     $"{aggregateType.Name} was validated as an aggregate root but declares no nested Invariants " +
     $"validator (a private nested class assignable to IValidator<{aggregateType.Name}>). " +
-    "See the aggregate pattern exemplar (web-domain/aggregates/profile/profile.cs and " +
-    "aggregates/overview.md) and analyzer rule TWA0011.";
+    "See the aggregate pattern exemplar (web/features/profile/profile-domain.cs and " +
+    "web-domain/aggregates/overview.md) and analyzer rule TWA0011.";
 
   private static string BuildConstructionFailureMessage(Type aggregateType, Exception innerException) =>
     $"{aggregateType.Name} declares a nested Invariants validator, but it could not be constructed " +
     $"({innerException.GetType().Name}: {innerException.Message}). Invariants validators must have a " +
     "parameterless constructor (any accessibility) — see the aggregate pattern exemplar " +
-    "(web-domain/aggregates/profile/profile.cs and aggregates/overview.md).";
+    "(web/features/profile/profile-domain.cs and web-domain/aggregates/overview.md).";
 }

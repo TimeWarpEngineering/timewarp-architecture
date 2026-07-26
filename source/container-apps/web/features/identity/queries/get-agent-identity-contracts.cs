@@ -6,7 +6,7 @@
 
 #region Design
 // Route-only, empty body: identity comes from the request's Authorization: Bearer token (validated
-// by the agent-token authentication scheme — web-server/services/agent-token-authentication-handler.cs),
+// by the agent-token authentication scheme — features/identity/agent-token-authentication-scheme-server.cs),
 // never from a client-supplied id. This endpoint is the ONE protected resource this task ships
 // ([EndpointAuthorize] policy agent-scope:identity:read = AgentTokenDefaults.IdentityReadPolicy) — it exists to
 // prove end-to-end that bearer validation and scope enforcement actually work, not because agents

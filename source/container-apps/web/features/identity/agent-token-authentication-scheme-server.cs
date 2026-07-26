@@ -42,7 +42,7 @@
 // identity error in this feature (task requirement: "Machine-readable errors").
 #endregion
 
-namespace TimeWarp.Architecture.Services;
+namespace TimeWarp.Architecture.Features.Identity;
 
 using System.Net.Http.Headers;
 using System.Security.Claims;
