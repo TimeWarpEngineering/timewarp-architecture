@@ -13,6 +13,8 @@
 // Permissive CORS and Scalar (OpenAPI document UI) are development-only surfaces.
 // OpenAPI document registration lives in CommonServerModule.AddOpenApi (FastEndpoints.OpenApi);
 // Scalar maps after UseFastEndpoints so endpoint metadata is available.
+// AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (EmptyRequestBinder
+// already handles runtime binding; without the flag document generation throws).
 #endregion
 
 namespace TimeWarp.Architecture.Api.Server;
@@ -91,6 +93,9 @@ public class Program : IAspNetProgram
     webApplication.UseFastEndpoints(config =>
     {
       config.Endpoints.RoutePrefix = null;
+      // Empty request DTOs (propertyless Query/Command + EmptyRequestBinder) are first-class;
+      // FE.OpenApi otherwise throws when generating /openapi/*.json for those endpoints.
+      config.Endpoints.AllowEmptyRequestDtos = true;
     });
     webApplication.UseAuthorization();
 

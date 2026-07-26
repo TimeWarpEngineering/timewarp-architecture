@@ -18,6 +18,8 @@
 // endpoint metadata is registered). Auth before FE; no FE antiforgery for JSON APIs.
 // IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
 // OpenAPI document: CommonServerModule.AddOpenApi (FastEndpoints.OpenApi, always-on Scalar on web).
+// AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (identity/profile
+// empty Queries already use EmptyRequestBinder at runtime).
 #endregion
 
 #nullable enable
@@ -289,6 +291,9 @@ public class Program : IAspNetProgram
     webApplication.UseFastEndpoints(config =>
     {
       config.Endpoints.RoutePrefix = null;
+      // Empty request DTOs (propertyless Query/Command + EmptyRequestBinder) are first-class;
+      // FE.OpenApi otherwise throws when generating /openapi/*.json for those endpoints.
+      config.Endpoints.AllowEmptyRequestDtos = true;
     });
 
     // OpenAPI document + Scalar UI require FastEndpoints registration first (always-on on web).

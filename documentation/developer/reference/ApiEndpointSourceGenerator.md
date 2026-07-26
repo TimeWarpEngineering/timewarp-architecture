@@ -74,7 +74,10 @@ public static partial class GetAgentIdentity
 | `[EndpointAllowAnonymous(reason)]` | `AllowAnonymous();` — `reason` is a required, honest, per-contract string |
 | **Neither marker** | **Nothing emitted — fail-closed.** FastEndpoints' own default (auth required) applies. This is unreachable in a clean build: **TWA0013** flags the omission. Both markers present, or `[EndpointAllowAnonymous]` alongside a nested `Query`/`Command` implementing `IAuthApiRequest`, is **TWA0014**. |
 
-3. The generator emits a `*Endpoint` class (shape simplified):
+3. The generator emits a `*Endpoint` class (shape simplified). Production emission pairs FE
+   filter tags with OpenAPI tags, and auth config comes only from the contract's posture marker
+   (here `[EndpointAllowAnonymous]` → `AllowAnonymous()`; protected contracts emit `Policies(…)`
+   instead — there is no fail-open anonymous default):
 
 ```csharp
 public class GetWeatherForecastsEndpoint
@@ -82,15 +85,18 @@ public class GetWeatherForecastsEndpoint
 {
     public override void Configure()
     {
-        Get("api/weatherForecasts");
+        Get("api/weatherforecast");
         AllowAnonymous();
-        Tags("WeatherForecast");
+        // FE Tags() = endpoint-filter metadata only (not OpenAPI operation tags).
+        Tags("WeatherForecasts");
         Summary(s =>
         {
             s.Summary = "Get Weather Forecasts";
             s.Description = "Gets Weather Forecasts for the number of days specified in the request";
         });
+        // OpenAPI/Scalar feature grouping needs Description.WithTags (paired with Tags above).
         Description(d => d
+            .WithTags("WeatherForecasts")
             .Produces<GetWeatherForecasts.Response>(200, "Success")
             .ProducesProblem(400, "Bad Request"));
     }
@@ -103,6 +109,9 @@ public class GetWeatherForecastsEndpoint
   binder does not reject them.
 - `HandleAsync` lives on `BaseFastEndpoint` and dispatches to the mediator — do not re-implement
   the endpoint body.
+- Default OpenAPI/filter tag is the **namespace leaf under `Features`** (e.g.
+  `…Features.WeatherForecasts` → `"WeatherForecasts"`, `…Features.Admin.Roles` → `"Roles"`).
+  Folder paths do not set tags; `[OpenApiTags]` is additive.
 
 ## Requirements
 
@@ -135,10 +144,13 @@ The generator extracts OpenAPI documentation from:
    /// </remarks>
    ```
 
-2. Feature folder structure:
-   - `Features/WeatherForecast/` → Tag: `"WeatherForecast"`
+2. Namespace leaf under `Features` (not folder paths):
+   - `TimeWarp.Architecture.Features.WeatherForecasts` → Tag: `"WeatherForecasts"`
+   - `TimeWarp.Architecture.Features.Admin.Roles` → Tag: `"Roles"`
+   - The generator emits both `Tags("…")` (FE endpoint filters) and
+     `Description(d => d.WithTags("…"))` (OpenAPI operation tags for Scalar grouping)
 
-3. Explicit attributes:
+3. Explicit attributes (additive to the default feature tag):
    ```csharp
    [OpenApiTags("Weather", "Forecasting")]
    ```

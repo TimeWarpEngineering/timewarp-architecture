@@ -12,11 +12,13 @@
 // ContractSerializationDefaults to MVC JsonOptions and HttpJsonOptions so the host wire shape
 // matches the SPA/CLI/tests seam (camelCase properties; PascalCase string enums).
 // OpenAPI: FastEndpoints.OpenApi's OpenApiDocument (not raw services.AddOpenApi) so FE
-// transformers and endpoint metadata (including generator-emitted Tags from Features.* leaf
-// namespaces) flow into the document. AutoTagPathSegmentIndex=0 disables route-segment
-// auto-tags so only explicit Tags() drive Scalar's feature-grouped sidebar.
-// UseScalarApiReference must run after UseFastEndpoints; MapOpenApi serves /openapi/{doc}.json
-// and MapScalarApiReference points at that DocumentName via AddDocument.
+// transformers and endpoint metadata flow into the document. OpenAPI/Scalar feature tags
+// come from generator Description.WithTags (namespace leaf under Features, plus additive
+// [OpenApiTags]); FE Tags() is filter-only and does not set OpenAPI operation tags.
+// AutoTagPathSegmentIndex=0 disables route-segment auto-tags so they do not compete with
+// those explicit OpenAPI tags. UseScalarApiReference must run after UseFastEndpoints;
+// MapOpenApi serves /openapi/{doc}.json and MapScalarApiReference points at that
+// DocumentName via AddDocument.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -73,7 +75,7 @@ public class CommonServerModule : IAspNetModule
     string apiTitle
   )
   {
-    // FastEndpoints.OpenApi — not services.AddOpenApi() — so FE transformers and Tags() metadata wire up.
+    // FastEndpoints.OpenApi — not services.AddOpenApi() — so FE transformers and Description.WithTags metadata wire up.
     serviceCollection.OpenApiDocument
     (
       options =>
@@ -81,7 +83,8 @@ public class CommonServerModule : IAspNetModule
         options.DocumentName = apiVersion;
         options.Title = apiTitle;
         options.Version = apiVersion;
-        // Generator already emits feature Tags from …Features.<Id>; disable route-segment auto-tags.
+        // Generator emits OpenAPI tags via Description.WithTags (…Features.<Id> leaf / [OpenApiTags]).
+        // Disable route-segment auto-tags so they do not compete with those explicit tags.
         options.AutoTagPathSegmentIndex = 0;
         options.ExcludeNonFastEndpoints = true;
       }
