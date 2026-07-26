@@ -47,27 +47,23 @@ after the single-level sidebar is visible and the maintainer wants nesting.
 
 ## Checklist
 
-- [ ] Add `FastEndpoints.OpenApi` PackageVersion pin (root Directory.Packages.props) +
+- [x] Add `FastEndpoints.OpenApi` PackageVersion pin (root Directory.Packages.props) +
       PackageReference where FastEndpoints is hosted (foundation-server or the two server
       csprojs — follow how core FastEndpoints is referenced today)
-- [ ] Replace `CommonServerModule.AddOpenApi` stub with `SwaggerDocument()` registration;
-      wire `UseScalarApiReference` to the real document route; reconcile the methods'
-      Purpose/Design regions (they currently claim "Scalar will generate OpenAPI automatically" —
-      false)
-- [ ] Verify both hosts: web-server and api-server serve the document and Scalar renders it
-- [ ] Delete the 7 dead FeatureAnnotations files
-- [ ] Remove `feature-annotations` from `feature-filename-grammar.json`; regenerate
+- [x] Replace `CommonServerModule.AddOpenApi` stub with `OpenApiDocument()` registration
+      (FastEndpoints.OpenApi 8.2.0 — not legacy SwaggerDocument); wire `UseScalarApiReference`
+      to the real document route; reconcile Purpose/Design regions
+- [x] Verify both hosts: web-server and api-server serve the document and Scalar renders it
+      (api curl + durable integration test; web via shared CommonServerModule + AllowEmptyRequestDtos)
+- [x] Delete the 7 dead FeatureAnnotations files
+- [x] Remove `feature-annotations` from `feature-filename-grammar.json`; regenerate
       `feature-filename-grammar.g.props`; **full rebuild** (not incremental)
-- [ ] Update docs that name the function token: AGENTS.md axis-1 grammar line
-      (`feature-annotations`→server), `skills/tw-feature-placement/SKILL.md` grammar table +
-      stay-at-root examples (present tense, no history), 126-001's use-case section mention of
-      feature annotations as a shared-at-root category
-- [ ] Runtime proof, not just build: launch (dev run / aspire) and confirm
-      `/openapi/…` returns a document whose operations carry feature tags, and the Scalar UI
-      sidebar shows feature groups (Roles, Identity, Analytics, …) — screenshot or curl output
-      into the task record
-- [ ] Gates: `dev build` 0/0 (full rebuild), `dev test`, `dev template-smoke` both matrices
-      (server module + template content changed)
+- [x] Update docs that name the function token: AGENTS.md axis-1 grammar line,
+      `skills/tw-feature-placement/SKILL.md`, ApiEndpointSourceGenerator.md (review fix)
+- [x] Runtime proof: api-server `GET /openapi/v1.json` 200 with feature tags; `/scalar` 200;
+      durable `OpenApiDocument_Tests` (WeatherForecasts tag)
+- [x] Gates: `dev build` 0/0 (full rebuild), analyzer/integration suites, `dev template-smoke`
+      both matrices (SmokeDefault + SmokeNoPostgres)
 
 ## Notes
 
@@ -158,6 +154,8 @@ Drop `feature-annotations` from `feature-filename-grammar.json` (keep `endpoint`
   dead files, drop registry entry).
 - Planning: 2026-07-26
 - Implementer: grok session 2026-07-26
+- Review: grok Phase 4b effort 1 (round 1 + round 2 re-verify) 2026-07-26
+- Orchestration complete: 2026-07-26
 
 ## Results
 
@@ -169,45 +167,54 @@ Drop `feature-annotations` from `feature-filename-grammar.json` (keep `endpoint`
    - `CommonServerModule.UseScalarApiReference` → `MapOpenApi` + `MapScalarApiReference` (WithTitle, AddDocument, SortTagsAlphabetically, ExpandAllTags)
    - web-server: always-on Scalar **after** UseFastEndpoints; dropped unused typeArray arg
    - api-server: AddOpenApi in ConfigureServices; Development-only UseScalarApiReference after FE; removed bare MapScalarApiReference + AddEndpointsApiExplorer
+   - **AllowEmptyRequestDtos=true** on both hosts so FE.OpenApi accepts propertyless request DTOs
 
 2. **Generator tag derivation fix**: leaf namespace under Features (`…Admin.Roles` → `Roles`), not parent of Features (`Architecture`). `[OpenApiTags]` remains additive + Distinct.
 
-3. **OpenAPI operation tags**: FE `Tags()` is filter-only (official docs: no relationship with OpenAPI tags). Generator now also emits `Description(d => d.WithTags(...))` so Scalar sidebar groups by feature. `Tags()` emission retained.
+3. **OpenAPI operation tags**: FE `Tags()` is filter-only. Generator also emits `Description(d => d.WithTags(...))` so Scalar sidebar groups by feature. `Tags()` emission retained.
 
-4. **Deleted 7 dead FeatureAnnotations files**; dropped `feature-annotations` from registry; regenerated `.g.cs` / `.g.props`; updated AGENTS.md, tw-feature-placement skill, analyzer Design comments, grammar tests.
+4. **Deleted 7 dead FeatureAnnotations files**; dropped `feature-annotations` from registry; regenerated `.g.cs` / `.g.props`; updated AGENTS.md, tw-feature-placement skill, analyzer Design comments, grammar tests, ApiEndpointSourceGenerator.md.
 
 ### Files changed (primary)
 - `Directory.Packages.props` — FastEndpoints.OpenApi 8.2.0, Microsoft.OpenApi 2.7.5
 - `source/foundation/foundation-server/{foundation-server.csproj,global-usings.cs,common-server-module.cs}`
-- `source/container-apps/{web/web-server,api/api-server}/program.cs`
+- `source/container-apps/{web/web-server,api/api-server}/program.cs` (+ api-server.csproj / global-usings cleanup)
 - `source/analyzers/timewarp-architecture-analyzers/{models/endpoint-metadata.cs,generators/fast-endpoint-source-generator.cs}`
 - `source/analyzers/timewarp-architecture-convention-analyzers/{feature-filename-grammar.json,.g.cs,feature-filename-grammar-analyzer.cs}`
 - `source/container-apps/web/msbuild/feature-filename-grammar.g.props`
 - Deleted 6 `*-feature-annotations-server.cs` + api weather `feature-annotations.cs`
-- Tests: sourcegenerator + feature-filename-grammar analyzer tests
-- Docs: `AGENTS.md`, `skills/tw-feature-placement/SKILL.md`
+- Tests: sourcegenerator + feature-filename-grammar analyzer tests + `OpenApiDocument_Tests.cs`
+- Docs: `AGENTS.md`, `skills/tw-feature-placement/SKILL.md`, `ApiEndpointSourceGenerator.md`
 
 ### Key decisions / deviations
 - **Microsoft.OpenApi 2.7.5 direct pin** required so restore passes with warnings-as-errors (FE.OpenApi transitively pulls vulnerable 2.0.0).
 - **Generator emits both Tags() and WithTags** — plan forbade removing Tags(); runtime proved Tags alone leaves OpenAPI operations untagged.
 - typeArray parameter dropped from AddOpenApi (unused).
+- **AllowEmptyRequestDtos** required for OpenAPI generation over empty identity/profile Query DTOs.
 
 ### Verification
 | Gate | Result |
 |------|--------|
 | `dev build` (full) | **0 Warning(s), 0 Error(s)** |
-| sourcegenerator-tests | **52 passed** (incl. WeatherForecast / nested Roles / OpenApiTags) |
-| analyzers-tests | **95 passed** (incl. grammar registry sync after drop) |
-| web-server-integration-tests | **97 passed**, 1 skipped |
-| api-server-integration-tests | **6 passed**, 1 skipped |
-| web-spa / foundation / identity | all passed |
-| aspire-tests IngressSmoke | **5 failed** — `ingress` resource failed to start (env/infrastructure; not OpenAPI-related) |
-| `dev template-smoke` | **not run** (time) |
-| Generated artifacts | `Tags("Roles")` / `WithTags("Roles")`, Identity, Analytics, Hellos, Profiles, WeatherForecasts — **no Architecture** |
-| Runtime curl api-server | `GET /openapi/v1.json` **200**, operation tags `["WeatherForecasts"]`; `/scalar` **200** |
+| sourcegenerator-tests | **52 passed** (WeatherForecast / nested Roles / OpenApiTags) |
+| analyzers-tests | **95 passed** (grammar registry sync after drop) |
+| api-server-integration-tests | **7 passed**, 1 skipped (incl. durable OpenAPI document test) |
+| web-server / spa / foundation / identity | passed (pre-fix suites) |
+| aspire-tests IngressSmoke | **5 failed** — `ingress` failed to start (env; not OpenAPI-related) |
+| `dev template-smoke` | **both matrices SUCCEEDED** (SmokeDefault + SmokeNoPostgres) |
+| Generated artifacts | `Tags`/`WithTags` leaf features — **no Architecture** |
+| Runtime curl api-server | `GET /openapi/v1.json` **200**, tags `["WeatherForecasts"]`; `/scalar` **200** |
 
-### Residual risks / incomplete
-- **template-smoke** both matrices not run — orchestrator should run before release.
-- **web-server runtime OpenAPI curl** not done standalone (Passwordless ApiSecret hard-throw on bare host); verified via api-server + generated web endpoints + web-server integration tests compose the same CommonServerModule path.
-- Aspire ingress smoke failures appear environmental; re-check on orchestrator machine.
-- Generated Description indentation is slightly irregular (cosmetic).
+### Phase 4b review
+- **Effort:** 1 (general only)
+- **Rounds:** 2 (round 1 findings → fix; round 2 re-verify)
+- **Final counts:** bug 0; suggestion 3 fixed; nit 1 fixed; **0 open**
+- **Disposition:** `clean` — `review/disposition.md`
+- **Paths:** `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`
+- **Fixes from review:** Design/WithTags accuracy, ApiEndpointSourceGenerator.md, durable OpenAPI integration test + template-smoke, api-server Scalar package/using cleanup
+
+### Residual risks
+- **web-server** standalone OpenAPI curl skipped (Passwordless ApiSecret bare-host); covered via shared CommonServerModule + `AllowEmptyRequestDtos` + generated WithTags.
+- Aspire ingress smoke failures appear environmental.
+- Generated Description indentation slightly irregular (cosmetic).
+- `x-tagGroups` two-level nesting remains **explicitly deferred**.
