@@ -1,16 +1,19 @@
 ---
 name: tw-feature-placement
 description: >-
-  **TIMEWARP SKILL** — feature-cohesive folder placement and the filename grammar
-  `<name>[-<function>]-<layer>.cs` for product code under `web/features/`: which layer a file
-  belongs to, what to name it, the registry that backs TWA0015/TWA0016, and the
-  membership-guard build errors. Invoke before creating, moving, or renaming a file under a
-  feature slice, or when a TWA0015/TWA0016/membership-guard error appears.
+  **TIMEWARP SKILL** — feature-cohesive folder placement, per-use-case folders, and the
+  filename grammar `<name>[-<function>]-<layer>.cs` for product code under `web/features/`:
+  which layer a file belongs to, what to name it and which use-case folder it goes in, the
+  registry that backs TWA0015/TWA0016, and the membership-guard build errors. Invoke before
+  creating, moving, or renaming a file under a feature slice, or when a
+  TWA0015/TWA0016/membership-guard error appears.
   WHEN: "Where does this handler file go?", "What do I name this contract file?",
-  "TWA0015", "TWA0016", "feature file matches no registered layer suffix",
+  "Should this file get its own folder?", "TWA0015", "TWA0016",
+  "feature file matches no registered layer suffix",
   "add a function segment to the registry", "split a module into its own assembly".
 when-to-use: >
   feature filename grammar, feature-cohesive folder, web/features, filename grammar,
+  use-case folder, per-use-case folder, commands folder, queries folder,
   TWA0015, TWA0016, feature-filename-grammar.json, membership guard, feature-membership.targets,
   escape hatch filename, function segment, layer suffix, registry edit rebuild,
   per-module assembly split
@@ -24,6 +27,11 @@ server) colocated in that folder. **Folder location is for humans; filename deci
 membership.** Each layer project composes its files with a static filename glob keyed to a
 suffix, not a folder path. This is the answer to "where does this file live" and "what do I
 name it" — the most common file-placement decision in the repo.
+
+Inside a slice, files group **by use case**, not by message kind: every operation gets its own
+`<slice>/<use-case>/` folder holding all of that operation's layer files side by side — the
+contract next to its handler, not sorted into `commands/`/`queries/` subfolders. See
+[Use-case folders](#use-case-folders) below.
 
 ## Detection — when to invoke
 
@@ -55,7 +63,7 @@ a human remembering the pairing.
 
 | Filename | Layer | Function → required layer | Living anchor |
 |----------|-------|----------------------------|----------------|
-| `create-role-handler-application.cs` | application | `handler` → `application` | `web/features/admin/roles/create-role-handler-application.cs` |
+| `create-role-handler-application.cs` | application | `handler` → `application` | `web/features/admin/roles/create-role/create-role-handler-application.cs` |
 | `hello-feature-annotations-server.cs` | server | `feature-annotations` → `server` | `web/features/hello/hello-feature-annotations-server.cs` |
 | *(reserved)* `<name>-endpoint-server.cs` | server | `endpoint` → `server` | registered for a hand-authored server endpoint shim; the template currently generates FastEndpoints from contracts rather than hand-authoring them, so use this only for a genuinely hand-written endpoint |
 
@@ -91,6 +99,57 @@ on it:
 
 An unregistered or misspelled *token that looks like it's trying to be a function* is
 **TWA0016**, not a silent escape hatch — see below.
+
+## Use-case folders
+
+The rule is unconditional: **every operation gets its own `<slice>/<use-case>/` folder**
+holding every layer file for that operation, side by side — the contract next to its handler.
+A folder with only two files in it is correct; there is no size threshold below which an
+operation stays flat at slice root. Files that serve **more than one** operation (a shared
+bindable DTO, a store, feature annotations, an entity-type configuration) stay at slice root
+instead of picking one use-case folder to live in.
+
+`commands/` and `queries/` subfolders (or any other group-by-kind split, such as
+`client-to-server/`/`server-to-client/` for a hub) do not appear inside a slice — grouping by
+message kind is a layer instinct, and a feature-cohesive slice groups by use case instead.
+Folder path never affects project membership (only the filename suffix does — see Grammar
+above), so this is a pure human-navigation convention, not something the build enforces.
+
+**Worked example — a whole slice (`web/features/admin/roles/`):**
+
+```text
+admin/roles/
+  create-role/
+    create-role-contracts.cs
+    create-role-handler-application.cs
+  delete-role/
+    delete-role-contracts.cs
+    delete-role-handler-application.cs
+  get-role/
+    get-role-contracts.cs
+    get-role-handler-application.cs
+  get-roles/
+    get-roles-contracts.cs
+    get-roles-handler-application.cs
+  update-role/
+    update-role-contracts.cs
+    update-role-handler-application.cs
+  role-details-contracts.cs          # shared bindable shape used by every use case above
+  role-store-application.cs          # shared store, not operation-specific
+  roles-feature-annotations-server.cs
+```
+
+Every use-case folder here holds exactly one contract file and one handler file — two files is
+the normal case, not a special one. `role-details-contracts.cs`, `role-store-application.cs`,
+and `roles-feature-annotations-server.cs` each serve multiple use cases (or the whole slice), so
+they stay at `admin/roles/` root rather than moving into any single use-case folder.
+
+When a slice's operation name is identical to the slice name (a single-operation slice), the
+use-case folder is still literal — `hello/hello/hello-contracts.cs`, not a special-cased flat
+layout. When a hub or similar has one folder per message DIRECTION instead of per use case
+(`client-to-server/`, `server-to-client/`), that is the same group-by-kind instinct as
+`commands/`/`queries/` and collapses the same way: one folder per use case
+(`send-message/`, `receive-message/`), not one folder per direction.
 
 ## Registry (SSOT)
 
@@ -181,10 +240,14 @@ namespaces don't change; only which project's glob claims them does.
 
 ## Agent workflow
 
-- **Creating a new file in a slice:** pick `layer` from what the file's content actually is
-  (mediator handler → `application`; contract shape → `contracts`; FastEndpoint annotation →
-  `server`); add a `function` segment only if the file matches a registered archetype exactly;
-  otherwise omit it (escape hatch).
+- **Creating a new operation in a slice:** give it its own `<slice>/<use-case>/` folder
+  (unconditional — even a two-file folder is correct); pick each file's `layer` from what its
+  content actually is (mediator handler → `application`; contract shape → `contracts`;
+  FastEndpoint annotation → `server`); add a `function` segment only if the file matches a
+  registered archetype exactly; otherwise omit it (escape hatch).
+- **Adding a file that serves more than one operation:** it stays at slice root, not inside any
+  single use-case folder — a shared details contract, store, feature-annotations, or
+  entity-type-configuration file is slice-wide, not operation-specific.
 - **Moving a file between slices:** rename only the `name` segment (and relocate the folder);
   `function`/`layer` segments don't change unless the file's role changed too. Namespaces are
   never renamed by a folder move (see AGENTS.md).
