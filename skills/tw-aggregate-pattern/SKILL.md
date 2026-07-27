@@ -70,8 +70,9 @@ lives.
 ## Exemplar
 
 `web/features/profile/profile-domain.cs` + `profile-id-domain.cs` — read both before adding a
-new aggregate. Its EF mapping (`profile-entity-type-configuration-infrastructure.cs`) is applied
-by `PostgresDbContext` via `ApplyConfigurationsFromAssembly`. `Version`'s `.IsConcurrencyToken()`
+new aggregate. Its EF mapping (`profile-entity-type-configuration-infrastructure.cs` —
+table/schema `profiles`, TypedId key conversion) is applied by `PostgresDbContext` via
+`ApplyConfigurationsFromAssembly`. `Version`'s `.IsConcurrencyToken()`
 is supplied for free by the `AggregateDbContext` `Version` convention — an aggregate's own
 mapping does not declare it.
 
