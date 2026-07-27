@@ -32,19 +32,19 @@ before the pin bump — two releases in one day).
 
 ## Checklist
 
-- [ ] Locate insertion point in the release path (`tools/dev-cli/endpoints/workflow-command.cs`
+- [x] Locate insertion point in the release path (`tools/dev-cli/endpoints/workflow-command.cs`
       Clean→Build→Pack→Push — verified insertion point exists after `PushAsync`; wire through
       `.github/workflows/workflow.yml` release mode)
-- [ ] Implement clean-hive generate + nuget.org-only restore + build, with bounded
+- [x] Implement clean-hive generate + nuget.org-only restore + build, with bounded
       flatcontainer retry/backoff
-- [ ] Failure blocks release completion (exit nonzero in release mode; no test-gate softening)
-- [ ] Consider default matrix (at minimum default flags; optionally reuse template-smoke's
+- [x] Failure blocks release completion (exit nonzero in release mode; no test-gate softening)
+- [x] Consider default matrix (at minimum default flags; optionally reuse template-smoke's
       two-matrix shape if cheap)
-- [ ] Document the manual fallback (the exact 124 steps) in the release how-to/checklist so the
+- [x] Document the manual fallback (the exact 124 steps) in the release how-to/checklist so the
       proof can be run by hand when the automated step is unavailable
-- [ ] Prove the gate catches the real failure class: dry-run it against a known-good published
+- [x] Prove the gate catches the real failure class: dry-run it against a known-good published
       version, and verify it WOULD fail on a synthetic stale-pin scenario if cheaply testable
-- [ ] Leave `dev template-smoke` untouched — complementary coverage (branch-internal vs
+- [x] Leave `dev template-smoke` untouched — complementary coverage (branch-internal vs
       published-reality), not replaced
 
 ## Notes
@@ -58,7 +58,7 @@ before the pin bump — two releases in one day).
   test gate; mirror sibling-repo patterns rather than inventing new workflow shapes.
 - Related but distinct: 126-004 candidate (sourceName-unsafe literal grep inside template-smoke)
   guards a different failure class (source-side literals) — do not merge the two.
-
+- Review kitchen: `review/` (framework, round-1 general + merged, disposition clean).
 
 ## Implementation Plan (2026-07-27)
 
@@ -85,3 +85,45 @@ Do not modify template-smoke; no second workflow job; no soft-fail; no pin rewri
 ## Session
 
 - Created: 2026-07-26 — filed from 126 RFC Decision 3 + maintainer block-semantics resolution.
+- Orchestrator / implement: grok-build 2026-07-27
+- Review: general round-1 2026-07-27
+
+## Results
+
+### What was implemented
+Post-publish release gate (`dev template-publish-smoke`) that, after a real nuget.org push in
+`dev workflow` release mode, waits for flatcontainer availability, installs the published
+template into an isolated CLI hive, generates apps (defaults + `--postgres false`, names ≠
+sourceName), asserts CPM platform pins equal the release version, restore+builds against
+nuget.org only. Failure sets nonzero exit and blocks Pipeline SUCCEEDED. Pack-only (no API key)
+skips the gate.
+
+### Files changed
+| Path | Action |
+|------|--------|
+| `tools/dev-cli/endpoints/template-publish-smoke-command.cs` | Created |
+| `tools/dev-cli/endpoints/workflow-command.cs` | Wire gate after real push; Design region |
+| `documentation/developer/how-to-guides/HowToRelease.md` | Created — automated path + task 124 manual fallback |
+| `documentation/developer/how-to-guides/Overview.md` | Link |
+| `.github/workflows/workflow.yml` | Header comment only (no new job) |
+
+### Key decisions / deviations
+1. **`git init` + empty commit** (not init alone) — TimeWarp.Build.Tasks needs a real HEAD.
+2. Install uses `@` separator (`TimeWarp.Architecture@{version}`), not deprecated `::`.
+3. Always-on pin-assert self-check (correct / stale / zero-pin) proves beta.6 failure class without publishing bad packages.
+4. `template-smoke` left complementary and unmodified.
+
+### Test outcomes
+| Check | Result |
+|-------|--------|
+| `dotnet run tools/dev-cli/dev.cs -- template-publish-smoke --help` | Pass |
+| `--version 2.0.0-beta.7 --skip-wait` dry-run | Pass — both matrix apps 0/0; pins == beta.7 |
+| Pin self-check (stale / zero) | Pass (always-on) |
+| Pack-only skip | Code path: `willPublish` false → no gate |
+
+### Review (Phase 4b)
+- **Rounds:** 1
+- **Effort / roster:** 1 — general only
+- **Final counts:** 0 open / 0 fixed / 0 wontfix (all severities)
+- **Disposition:** `clean` — `review/disposition.md`
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
