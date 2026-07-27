@@ -157,6 +157,10 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:
 skill **`slice-isolation`** (`skills/tw-slice-isolation/SKILL.md`).
 
+**Aggregate pattern (TWA0011/0012):** typed id, `Entity<TId>` base, fail-closed `Create`, named
+mutations, private nested `Invariants`, save-time enforcement via `AggregateDbContext`. Pattern
+SSOT: skill **`tw-aggregate-pattern`** (`skills/tw-aggregate-pattern/SKILL.md`).
+
 ## Agent Context Regions — maintenance rule
 
 Every source file carries a `#region Purpose` block (enforced by TWA0004); files with design

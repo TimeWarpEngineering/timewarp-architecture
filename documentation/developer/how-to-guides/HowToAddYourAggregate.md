@@ -7,7 +7,9 @@ registration, application use, and tests — the golden path every generated app
 **Exemplar:** `Profile` under `source/container-apps/web/features/profile/` (domain files
 `profile-domain.cs` / `profile-id-domain.cs`, mapping in
 `profile-entity-type-configuration-infrastructure.cs`). Read those files alongside this guide.
-Also read `web-domain/aggregates/overview.md` for the domain-side golden pattern (task 106).
+The pattern SSOT for the domain-side golden pattern is the `tw-aggregate-pattern` skill
+(`skills/tw-aggregate-pattern/SKILL.md`) — this guide is the human end-to-end walkthrough that
+defers to it.
 
 Prerequisites: the `postgres` template flag is on (default). AppHost provisions Postgres for
 `dev run`. Without the flag, generated apps drop the Postgres plumbing files and keep
@@ -15,8 +17,8 @@ non-durable paths (e.g. in-memory identity) until you re-enable it.
 
 ## 1. Domain: TypedId + Entity + IAggregateRoot + private Invariants
 
-Place aggregate types under `web-domain/aggregates/<name>/` (or the matching feature-cohesive
-domain files if your slice has already moved fully into `web/features/`).
+Place aggregate types under `web/features/<slice>/` using the feature-cohesive domain filename
+grammar (`<name>-domain.cs` for the aggregate, `<name>-id-domain.cs` for its typed id).
 
 1. **Typed id** — `[TypedId] readonly partial record struct` (never a raw `Guid` as the public
    identity type):
@@ -55,7 +57,7 @@ domain files if your slice has already moved fully into `web/features/`).
    }
    ```
 
-Mirror `features/profile/profile-domain.cs` and the checklist in `aggregates/overview.md`.
+Mirror `features/profile/profile-domain.cs` and the pattern in the `tw-aggregate-pattern` skill.
 Application code never writes `Version` — it is store-owned.
 
 ## 2. Infrastructure: IEntityTypeConfiguration under features/
@@ -221,7 +223,7 @@ stays the same either way.
 ## Related
 
 - [ADR-0009 — Postgres + EF golden persistence path](../conceptual/architectural-decision-records/approved/0009-postgres-ef-golden-persistence-path.md)
-- `source/container-apps/web/web-domain/aggregates/overview.md`
+- Aggregate pattern skill (SSOT): `skills/tw-aggregate-pattern/SKILL.md`
 - `source/foundation/foundation-infrastructure/persistence/aggregate-db-context.cs`
 - Feature placement skill: `skills/tw-feature-placement/SKILL.md`
 - Identity EF consumer (done): kanban 104-032 — `EfPrincipalStore`, dual-fixture contract tests

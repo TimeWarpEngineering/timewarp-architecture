@@ -152,7 +152,7 @@ Concrete shape:
   state-store EF + optional actors; axis 5 addendum Orleans)
 * First product consumer: kanban 104-032 (EF `IPrincipalStore` behind postgres flag)
 * How-to: [HowToAddYourAggregate.md](../../../how-to-guides/HowToAddYourAggregate.md)
-* Domain overview: `source/container-apps/web/web-domain/aggregates/overview.md`
+* Aggregate pattern (SSOT): `skills/tw-aggregate-pattern/SKILL.md`
 * Related: [ADR-0008](0008-feature-cohesive-folders-with-filename-grammar-layer-composition.md)
   (feature placement of `*-infrastructure.cs` configs), golden aggregate analyzers TWA0011/0012
   (AGENTS.md)
