@@ -204,3 +204,18 @@ Family roots show features+platform+projects+msbuild (web); api/grpc/aspire show
 - Created: 2026-07-27 — filed from maintainer decision (all container-apps, web first).
 - 2026-07-27 — planning completed: MSBuild anchoring pre-verified (safe to move, no generator fix); full implementation plan appended under Notes.
 - 2026-07-27 — Stage 1 landed (web under projects/); gates green; **paused for maintainer review before Stage 2** (api/grpc/aspire still pending).
+- 2026-07-27 — Phase 4b review (effort 1, general): disposition **clean** under `review/`; 0 open findings.
+
+## Stage 1 progress (awaiting maintainer checkpoint)
+
+**Commits:**
+- `267b4523` — `refactor(web): group artifact folders under web/projects/`
+- `ad19d511` — `chore(web): fix spa wwwroot/js gitignore after projects/ move`
+
+**Tree:** `web/{features,platform,projects/{web-contracts,web-application,web-domain,web-infrastructure,web-server,web-spa},msbuild}`
+
+**Gates (stage 1):** `dev build` 0/0 · `dev test` all green · `dev template-smoke` both matrices (incl. SmokeNoPostgres canary)
+
+**Review:** `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md` — outcome `clean`, rounds 1, effort 1 general only, final open 0
+
+**Still open:** maintainer review checkpoint → Stage 2 (api → grpc → aspire); yarp asymmetry already documented in placement skill (no move).
