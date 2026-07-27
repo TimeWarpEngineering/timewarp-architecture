@@ -48,7 +48,6 @@ global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Foundation.Configuration;
 global using TimeWarp.Foundation.CorsPolicies;
-global using TimeWarp.Architecture.Extensions;
 global using TimeWarp.Foundation.Extensions;
 global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Features.Identity;

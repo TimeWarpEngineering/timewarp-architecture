@@ -69,7 +69,6 @@ global using IAttributeComponent = TimeWarp.Components.IAttributeComponent;
 global using IParentComponent = TimeWarp.Components.IParentComponent;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.Configuration.Passwordless;
-global using TimeWarp.Architecture.Extensions;
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Architecture.Features.Account;
 global using TimeWarp.Architecture.Features.Admin.Roles;
