@@ -46,6 +46,16 @@ why it lives beside its `-server.cs` implementation in `platform/identity-host/`
 folder split by layer (the old `web-application/abstractions/`, retired: conflating layer with
 folder was never a principled reason to separate a seam from the concern it belongs to).
 
+**Modules follow concerns, not assemblies.** A module (`IModule`) is a concern's registration
+manifest — the DI wiring that concern needs — and lives in the concern's folder like any other
+layer file: a product concern's module at its slice root (e.g.
+`features/identity/in-memory-identity-stores-module-infrastructure.cs`), a platform concern's
+module in its cluster (e.g. `platform/postgres/postgres-db-module-server.cs`). There are no
+assembly-level modules — an assembly is a compilation unit, not a concern. The host's
+`program.cs` remains the ordered composition root: module *definition* is logic (shared tree);
+module *ordering* is bootstrap (artifact folder). A concern with no registrations needs no
+module — no ceremony.
+
 Product code for a web container-app lives in **one feature-cohesive folder per slice** —
 `web/features/<slice>/` — with every layer (contracts, application, domain, infrastructure,
 server) colocated in that folder. Host/platform clusters that are **not** product slices live

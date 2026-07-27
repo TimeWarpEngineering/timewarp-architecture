@@ -1,10 +1,12 @@
 #region Purpose
-// DI registration hook for the Web.Infrastructure assembly, called unconditionally from Web.Server's Program.
+// The identity concern's in-memory store defaults: a module registering zero-infra implementations
+// of the identity persistence ports, called unconditionally from Web.Server's Program.
 #endregion
 
 #region Design
-// Postgres wiring lives in Web.Server's PostgresDbModule behind the `postgres` feature flag, so this
-// module is the seam for flag-independent infrastructure services only.
+// A module is a concern's registration manifest and lives in the concern's folder; this one is the
+// identity slice's flag-independent persistence defaults. Postgres wiring lives in the platform
+// postgres cluster's PostgresDbModule behind the `postgres` feature flag.
 // Durability (task 104-032):
 //   - IPrincipalStore defaults here to singleton InMemoryPrincipalStore (zero-infra / skip-mode).
 //     When PostgresDbModule sees a connection string it replaces this registration with scoped
@@ -15,9 +17,9 @@
 //     yet; a single web-server instance is the deployment assumption for those three.
 #endregion
 
-namespace TimeWarp.Architecture.Web.Infrastructure;
+namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
 
-public class WebInfrastructureModule : IModule
+public class InMemoryIdentityStoresModule : IModule
 {
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {

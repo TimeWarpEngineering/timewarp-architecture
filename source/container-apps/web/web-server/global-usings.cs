@@ -52,16 +52,15 @@ global using TimeWarp.Foundation.Extensions;
 global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Features.Identity;
 global using TimeWarp.Architecture.Features.Identity.Application;
+global using TimeWarp.Architecture.Features.Identity.Infrastructure;
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Identity;
 #if(postgres)
-global using TimeWarp.Architecture.Features.Identity.Infrastructure;
 global using TimeWarp.Architecture.Persistence;
 #endif
 global using TimeWarp.Architecture.Services;
 global using TimeWarp.Foundation.Services;
 global using TimeWarp.Foundation.Types;
-global using TimeWarp.Architecture.Web.Infrastructure;
 global using TimeWarp.Modules;
 #if(postgres)
 global using TimeWarp.Architecture.HostedServices;

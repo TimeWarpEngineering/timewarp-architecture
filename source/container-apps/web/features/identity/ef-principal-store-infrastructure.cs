@@ -18,7 +18,7 @@
 // Mapping pairs .IsConcurrencyToken() as a second belt for true concurrent writers; a
 // DbUpdateConcurrencyException is translated to ConcurrencyConflictException so callers see one
 // conflict type regardless of backend.
-// Scoped lifetime: depends on scoped PostgresDbContext. WebInfrastructureModule still registers
+// Scoped lifetime: depends on scoped PostgresDbContext. InMemoryIdentityStoresModule still registers
 // singleton InMemoryPrincipalStore; PostgresDbModule replaces with this type when a connection
 // string is present (skip-mode keeps in-memory).
 // Reads use AsNoTracking so the change tracker never aliases a returned Snapshot. Writes load

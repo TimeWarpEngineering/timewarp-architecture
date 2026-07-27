@@ -14,7 +14,7 @@
 // integration tests direct-host the app WITHOUT Aspire (no injected string), and a template consumer
 // who has the postgres flag but no configured database must still get a running app rather than a
 // startup failure. Under Aspire the string is always present, so the real registrations always run.
-// Skip-mode also keeps WebInfrastructureModule's singleton InMemoryPrincipalStore — only when a
+// Skip-mode also keeps InMemoryIdentityStoresModule's singleton InMemoryPrincipalStore — only when a
 // connection is present do we Replace the IPrincipalStore registration with scoped EfPrincipalStore
 // (task 104-032). Challenge/token stores stay in-memory either way.
 // The connection string is read once and reused for both Configure<PostgresDbOptions> (the
@@ -40,7 +40,7 @@ public sealed partial class PostgresDbModule : IModule
     {
       // Unconfigured (no Aspire injection, no explicit config): leave Postgres entirely
       // unregistered so direct-host integration tests and unconfigured consumers still boot.
-      // IPrincipalStore stays the WebInfrastructureModule in-memory singleton.
+      // IPrincipalStore stays the InMemoryIdentityStoresModule in-memory singleton.
       return;
     }
 

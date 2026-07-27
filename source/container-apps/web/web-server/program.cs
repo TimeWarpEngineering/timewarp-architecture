@@ -153,7 +153,7 @@ public class Program : IAspNetProgram
 
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
     ConfigureSettings(serviceCollection, configuration);
-    WebInfrastructureModule.ConfigureServices(serviceCollection, configuration);
+    InMemoryIdentityStoresModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
 #if postgres
     PostgresDbModule.ConfigureServices(serviceCollection, configuration);
