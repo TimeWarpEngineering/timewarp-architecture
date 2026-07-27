@@ -284,9 +284,7 @@ public abstract class AggregateDbContext : DbContext
         throw new InvalidOperationException
         (
           $"'{entry.Entity.GetType().Name}' implements IAggregateRoot but has no mapped 'long {VersionPropertyName}' property. " +
-          "Aggregate roots must inherit Entity<TId> (source/foundation/foundation-domain/entities/base/entity.cs) so Version is " +
-          "mapped by convention — see the aggregate pattern exemplar (web/features/profile/profile-domain.cs and " +
-          "web-domain/aggregates/overview.md)."
+          "Aggregate roots must inherit Entity<TId> so Version is mapped by convention. See the Entity<TId> XML docs for a worked example."
         );
       }
 
