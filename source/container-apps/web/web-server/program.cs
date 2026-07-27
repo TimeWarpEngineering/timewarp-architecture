@@ -22,7 +22,6 @@
 // empty Queries already use EmptyRequestBinder at runtime).
 #endregion
 
-
 namespace TimeWarp.Architecture.Web.Server;
 
 using TimeWarp.Foundation.Abstractions;
