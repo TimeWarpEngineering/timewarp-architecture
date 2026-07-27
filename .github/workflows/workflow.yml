@@ -2,8 +2,11 @@ name: CI/CD
 
 # Mirrors the TimeWarp.Nuru / TimeWarp.Amuru pattern: one job, one "Run CI Pipeline" step that
 # calls the C# `dev workflow` command. Mode is auto-detected from GITHUB_EVENT_NAME inside the
-# command (push/PR -> build+test; release/dispatch -> build+pack+push, no test gate). Publishing
-# uses OIDC Trusted Publishing (no stored API key) and only runs on a published release.
+# command (push/PR -> build+test; release/dispatch -> build+pack+push+template-publish-smoke,
+# no test gate). On a real publish (API key from OIDC), template-publish-smoke is required after
+# push — waits for nuget.org flatcontainer, generates the published template, restore+builds
+# against nuget.org only. Pack-only (no key) skips the gate. Publishing uses OIDC Trusted
+# Publishing (no stored API key) and only runs on a published release.
 
 on:
   push:

@@ -4,14 +4,17 @@
 #region Design
 // Mode is auto-detected from GITHUB_EVENT_NAME (or forced with --mode):
 //   pull_request / push  -> Pr/Merge:  clean -> build -> test        (tests are the gate)
-//   release / dispatch   -> Release:   clean -> build -> pack -> push (NO test step)
+//   release / dispatch   -> Release:   clean -> build -> pack -> push -> template-publish-smoke
 // The release path deliberately does not run tests — they already ran on the PR/merge that
 // produced master. A release publishes as long as it builds. Publishing is gated only by an
-// API key being supplied (--api-key, from OIDC Trusted Publishing); without one, pack-only.
-// Handlers are invoked directly (no ./bin/dev dependency) so this runs in a clean CI checkout.
-// PackableProjects includes source/libraries (TimeWarp.Modules, TimeWarp.Identity), foundation,
-// TimeWarp.Architecture.{Attributes,Analyzers,Generators} (task 092), and the template package;
-// single Version from source/Directory.Build.props.
+// API key being supplied (--api-key, from OIDC Trusted Publishing); without one, pack-only
+// and the post-publish template-publish-smoke gate is skipped (nothing was pushed). After a
+// real push, template-publish-smoke waits for nuget.org flatcontainer, generates against the
+// published template, asserts pins==version, restore+builds nuget.org-only — failure blocks
+// the release (task 126-003). Handlers are invoked directly (no ./bin/dev dependency) so this
+// runs in a clean CI checkout. PackableProjects includes source/libraries (TimeWarp.Modules,
+// TimeWarp.Identity), foundation, TimeWarp.Architecture.{Attributes,Analyzers,Generators}
+// (task 092), and the template package; single Version from source/Directory.Build.props.
 #endregion
 
 namespace DevCli.Commands;
@@ -125,16 +128,30 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("\nPipeline SUCCEEDED".Green());
     }
 
-    // Release: NO test step — publish as long as it builds.
+    // Release: NO test step — publish as long as it builds; post-push template-publish-smoke blocks on real publish.
     private async Task RunReleaseAsync(string? apiKey)
     {
-      Terminal.WriteLine("Pipeline: clean -> build -> pack -> push\n");
+      Terminal.WriteLine("Pipeline: clean -> build -> pack -> push -> template-publish-smoke\n");
       Environment.ExitCode = 0;
 
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
       if (!await PackAsync()) return;
+
+      string? resolvedKey = apiKey ?? Environment.GetEnvironmentVariable("NUGET_API_KEY");
+      bool willPublish = !string.IsNullOrWhiteSpace(resolvedKey);
       if (!await PushAsync(apiKey)) return;
+
+      if (willPublish)
+      {
+        if (!await RunStepAsync(
+              "Template publish smoke",
+              new TemplatePublishSmokeCommand.Handler(Terminal)
+                .Handle(new TemplatePublishSmokeCommand(), Ct)))
+        {
+          return;
+        }
+      }
 
       Terminal.WriteLine("\nPipeline SUCCEEDED".Green());
     }

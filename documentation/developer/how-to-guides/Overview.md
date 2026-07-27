@@ -4,6 +4,7 @@ Task-oriented guides for working in a TimeWarp Architecture solution.
 
 ## Platform and upgrade
 
+- [How to release](HowToRelease.md) — version SSOT, pins==version, post-publish template-publish-smoke gate
 - [How to upgrade to analyzer NuGet packages](HowToUpgradeToAnalyzerPackages.md)
 - [How to add your aggregate](HowToAddYourAggregate.md) — domain → EF mapping → SaveChanges → tests
   ([ADR-0009](../conceptual/architectural-decision-records/approved/0009-postgres-ef-golden-persistence-path.md))
