@@ -68,6 +68,31 @@ content — without widening the Generators surface.
   independent, but doing 126-008 first avoids touching moved files' paths here (markers don't
   move in 126-008, so overlap is nil — either order fine).
 
+
+## Implementation Plan (2026-07-27)
+
+### Goal
+Generate `IAssemblyMarker` via root MSBuild target; convert web-contracts IVT to SDK items; delete 26 checked-in markers; normalize web-spa to interface.
+
+### Key design correction
+**Cannot use `$(RootNamespace)` alone.** Container-apps share `RootNamespace=TimeWarp.Architecture`; foundation/libraries have kebab project-name roots. Introduce **`AssemblyMarkerNamespace`**:
+- container-apps map: `$(RootNamespace).Web.Server` etc. (sourceName-safe)
+- foundation/libraries/analyzers: explicit full namespaces matching today's markers
+- Opt-out: aspire hosts, convention-analyzers, generators; hyphen guard
+
+### Steps
+1. Create root `Directory.Build.targets` — GenerateAssemblyMarker → IntermediateOutputPath/AssemblyMarker.g.cs
+2. Namespace maps in container-apps / foundation / analyzers / libraries Directory.Build.props
+3. Pack Directory.Build.targets in template csproj
+4. web-contracts: SDK InternalsVisibleTo with **verified** AssemblyNames (Web.Spa, web-server, … — not the stale PascalCase strings)
+5. Update spa consumers AssemblyMarker → IAssemblyMarker (3 sites)
+6. Delete all 26 assembly-marker.cs + IVT .cs file
+7. AGENTS.md + ADR-0002 present tense
+8. Gates: dev build 0/0, dev test, template-smoke
+
+### Non-goals
+126-008, global-usings→Using, Roslyn generator, external State.AssemblyMarker.
+
 ## Session
 
 - Created: 2026-07-27 — filed from maintainer-approved proposal (task a of two).
