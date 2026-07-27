@@ -62,18 +62,18 @@ the maintainer with a one-line recommendation during execution; do not guess.
 
 ## Checklist
 
-- [ ] Classify `i-request-host-accessor` by real usage; record the rationale
-- [ ] `git mv` + grammar-rename the four interfaces into their clusters; delete `abstractions/`
-- [ ] Verify compilation units unchanged (`-getItem:Compile` on web-application); namespaces
+- [x] Classify `i-request-host-accessor` by real usage; record the rationale
+- [x] `git mv` + grammar-rename the four interfaces into their clusters; delete `abstractions/`
+- [x] Verify compilation units unchanged (`-getItem:Compile` on web-application); namespaces
       untouched; Purpose/Design regions reconciled
-- [ ] Surface the `web-infrastructure-module.cs` judgment call to the maintainer
-- [ ] Author the opening section of `tw-feature-placement` (rule + litmus + table); verify
+- [x] Surface the `web-infrastructure-module.cs` judgment call to the maintainer
+- [x] Author the opening section of `tw-feature-placement` (rule + litmus + table); verify
       every claim against the post-move tree — no aspirational rows
-- [ ] Compress into AGENTS.md Layout; consistency pass over the two sibling skills
-- [ ] Sanity-test the rule against real placements: MockUserIds (slice root), chat-hub (slice
+- [x] Compress into AGENTS.md Layout; consistency pass over the two sibling skills
+- [x] Sanity-test the rule against real placements: MockUserIds (slice root), chat-hub (slice
       root `-server`), postgres cluster, identity-host cluster incl. the newly moved seams,
       sample-options (host) — the rule must reproduce each decision
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke` both matrices (file moves are
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke` both matrices (file moves are
       template content)
 
 ## Notes
@@ -93,3 +93,45 @@ the maintainer with a one-line recommendation during execution; do not guess.
 - Created: 2026-07-27 — filed from maintainer directive during folder review.
 - Revised: 2026-07-27 — folded in the seam-interface moves after the maintainer's
   first-principles challenge; rule collapsed to one sentence + litmus test.
+
+## Results
+
+**Landed** (commits `351959b5` seam moves, `c7d31c07` placement guide, `e28abe56` module
+fold-in):
+
+- Four seam interfaces moved beside their implementations in `platform/identity-host/`
+  (`-application.cs` grammar names; namespaces unchanged; pure renames, 0 content diff);
+  `web-application/abstractions/` retired — `web-application/` is now csproj + global-usings
+  only. `i-request-host-accessor` classified to identity-host on decisive evidence (all
+  consumers are WebAuthn passkey handlers; its impl already lived there).
+- Placement guide shipped: `tw-feature-placement` now OPENS with the one-sentence rule, the
+  deletion litmus test, and a three-row decision table, plus "folder location is for humans;
+  filename decides project membership" and the Modules paragraph; AGENTS.md carries the
+  compressed rule + pointer. Sanity test: the rule reproduces all five real placements checked.
+- **Maintainer ruling folded in mid-task**: modules follow concerns, not assemblies (FSH /
+  modular-monolith sense). `WebInfrastructureModule` → `InMemoryIdentityStoresModule` at
+  `features/identity/in-memory-identity-stores-module-infrastructure.cs` with
+  `Features.Identity.Infrastructure` namespace; assembly-level modules retired as a category;
+  ordering stays in program.cs (bootstrap). The separate "should web-infrastructure remain its
+  own project" question is explicitly NOT decided here (axis-2 territory).
+- **Regression caught by the smoke gate during fold-in**: the `Features.Identity.Infrastructure`
+  global using was `#if(postgres)`-conditional; generated no-postgres apps stranded the
+  unconditional module call (invisible to monorepo builds, which always define postgres). Fixed
+  by making the using unconditional (the module is now the namespace's unconditional occupant).
+  Second live catch for the two-matrix smoke.
+
+**Verification:** `dev build` 0/0; full `dev test` battery green pre-fold-in (15 projects);
+post-fold-in re-run of the two DI-exercising projects (web-infrastructure 39/39,
+web-server-integration 97+1 skip); `dev template-smoke` both matrices SUCCEEDED after the fix.
+
+**Review (Phase 4b):** round 1 general (empirical: pure-rename stat, -getItem:Compile
+membership, live-tree table spot-checks, stale sweep) — zero findings; round 2 orchestrator
+verification of the fold-in delta + regression story. Disposition **clean** —
+[review/disposition.md](review/disposition.md).
+
+## Session
+
+- Executed: 2026-07-27 — orchestrated end-to-end; implementer + reviewer Claude Sonnet
+  subagents, orchestrator Claude Fable. Module ruling and web-server residual-folder review
+  (components/ justified as host document; sample-options kept as live exemplar — maintainer
+  conversation) ran alongside.
