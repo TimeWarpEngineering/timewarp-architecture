@@ -61,3 +61,9 @@ residuals in the background lane. Release checklist must include flipping the fl
 Actor-gate outcome feeding this task (2026-07-23): marketplace/aggregate layer uses the EF
 golden path with **Orleans** for aggregates that earn actor hosting; the fleet layer evaluates
 **Akka.NET** where supervision/streams genuinely fit (spike evidence: 113 folder).
+- Web-server exemplar replacement (Steve, 2026-07-27, from the 126-011 residue review): when
+  the marketplace layer lands, replace the `web-server/configuration/` sample exemplars
+  (`sample-options.cs` + validator, `sample-environment-check.cs`) with REAL domain options
+  using the same AddFluentValidatedOptions/ValidateOnStart and environment-check patterns
+  (e.g. x402 pricing/metering options, fleet endpoints config) — the live-compiled teaching
+  value stays, the "sample" goes.
