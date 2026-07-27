@@ -76,13 +76,13 @@ regression lesson, treat SmokeNoPostgres as the canary for template.json path mi
 - [x] `git mv` the 6 web project folders → `web/projects/`; update all inventoried references
 - [x] Update `tw-feature-placement` opening table + AGENTS.md Layout diagram (projects/ level)
 - [x] Gates: `dev build` 0/0, `dev test` all projects, `dev template-smoke` both matrices
-- [ ] Maintainer review checkpoint before stage 2
+- [x] Maintainer review checkpoint before stage 2
 
 ### Stage 2 — api, grpc, aspire
 
-- [ ] Same inventory + move + reference sweep per family (one commit per family)
-- [ ] yarp: no move; placement-guide note about single-project families
-- [ ] Gates after each family; full battery + smoke at the end
+- [x] Same inventory + move + reference sweep per family (one commit per family)
+- [x] yarp: no move; placement-guide note about single-project families
+- [x] Gates after each family; full battery + smoke at the end
 
 ## Notes
 
@@ -205,8 +205,9 @@ Family roots show features+platform+projects+msbuild (web); api/grpc/aspire show
 - 2026-07-27 — planning completed: MSBuild anchoring pre-verified (safe to move, no generator fix); full implementation plan appended under Notes.
 - 2026-07-27 — Stage 1 landed (web under projects/); gates green; **paused for maintainer review before Stage 2** (api/grpc/aspire still pending).
 - 2026-07-27 — Phase 4b review (effort 1, general): disposition **clean** under `review/`; 0 open findings.
+- 2026-07-28 — Maintainer approved proceeding past stage 1 checkpoint; Stage 2 executed (api → grpc → aspire).
 
-## Stage 1 progress (awaiting maintainer checkpoint)
+## Stage 1 progress (complete)
 
 **Commits:**
 - `267b4523` — `refactor(web): group artifact folders under web/projects/`
@@ -218,4 +219,21 @@ Family roots show features+platform+projects+msbuild (web); api/grpc/aspire show
 
 **Review:** `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md` — outcome `clean`, rounds 1, effort 1 general only, final open 0
 
-**Still open:** maintainer review checkpoint → Stage 2 (api → grpc → aspire); yarp asymmetry already documented in placement skill (no move).
+## Stage 2 progress (complete; awaiting orchestrator Results + done)
+
+**Commits:**
+- `156ccb72` — `refactor(api): group artifact folders under api/projects/`
+- `f62064da` — `refactor(grpc): group artifact folders under grpc/projects/`
+- `6e049ff1` — `refactor(aspire): group artifact folders under aspire/projects/`
+
+**Trees:**
+- `api/projects/{api-contracts,api-application,api-domain,api-infrastructure,api-server}`
+- `grpc/projects/{grpc-contracts,grpc-application,grpc-domain,grpc-infrastructure,grpc-server}`
+- `aspire/projects/{aspire-app-host,aspire-service-defaults}`
+- `yarp/` left flat (single-project family; placement skill note already present)
+
+**Gates (after each family):** `dev build` 0/0 · `dev test` all green · `dev template-smoke` both matrices (SmokeDefault + SmokeNoPostgres)
+
+**Docs:** AGENTS.md Layout diagram updated for api/grpc/aspire under `projects/` + yarp flat note.
+
+**Still open:** orchestrator Results section + move task to done after review.

@@ -57,7 +57,12 @@ source/
                      # web-domain/ web-infrastructure/ web-server/ web-spa/
                      # (SPA features stay conventional under web-spa/features — not rehomed)
       msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
-    api/  grpc/  aspire/  yarp/
+    api/projects/    # api-contracts/ api-application/ api-domain/
+                     # api-infrastructure/ api-server/
+    grpc/projects/   # grpc-contracts/ grpc-application/ grpc-domain/
+                     # grpc-infrastructure/ grpc-server/
+    aspire/projects/ # aspire-app-host/ aspire-service-defaults/
+    yarp/            # single-project family (IS the artifact; left flat)
 tests/               # mirrors source/; includes web-contracts-tests (host-free serialization round-trips)
 ```
 
