@@ -155,3 +155,15 @@ Cohesive `web/platform/postgres/` (5 files) and `web/platform/identity-host/` (7
 - Final: 0 open (1 suggestion fixed)
 - Disposition: clean
 - Paths: review/
+
+## Results addendum — independent verification (round 3, 2026-07-27)
+
+Cross-vendor verification (Claude reviewing the Grok implementation): confirmed, no bugs — full
+record at [review/round-3/independent-verification.md](review/round-3/independent-verification.md).
+Machinery proven live, not just read: MSBuild `-getItem:Compile` evaluation shows all 12 files
+in their original compilation units with platform Link metadata; a planted suffix-less file
+under platform/ failed the membership guard naming both trees; generator emission matches the
+checked-in g.props line-by-line; SmokeNoPostgres artifacts show platform/postgres fully
+stripped with identity-host intact. Independent gate battery green (build 0/0, 15 test projects
+0 failed, smoke both matrices). Recurring process nit: round-1 review was diff-only (no
+empirical run by the reviewer) — third occurrence across 126-005/006/008.

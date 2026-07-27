@@ -10,3 +10,9 @@ Round 1 raised one suggestion (SSOT drift gate missing platform root). Fixed and
 
 ## Exception log
 N/A
+
+## Addendum — round 3 (2026-07-27)
+
+Independent cross-vendor verification confirmed the implementation with live machinery proofs
+(Compile-item evaluation, planted-file guard test, generated-output evidence). Outcome
+unchanged: clean.
