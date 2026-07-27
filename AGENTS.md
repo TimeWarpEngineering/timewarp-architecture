@@ -118,7 +118,10 @@ source → `$(RootNamespace).Attributes`). Regression gate: `dev template-smoke`
 - **Prefer analyzers/source generators over convention-by-memory**: when two things must agree,
   generate one from the other or add a build-time check. Existing generators: contract attributes,
   FastEndpoints, `[Page]`, `[StateAccess]`, the SPA mock-factory registry.
-- **AssemblyMarker**: every assembly declares one.
+- **IAssemblyMarker**: every product/platform assembly gets a generated interface marker
+  (`GenerateAssemblyMarker` in root `Directory.Build.targets`; namespace via
+  `AssemblyMarkerNamespace`, not `RootNamespace` alone — container-apps share one RootNamespace).
+  Opt out with `TwGenerateAssemblyMarker=false`.
 - Serializer options for the contract seam come from `ContractSerializationDefaults` — never
   declare seam options inline.
 

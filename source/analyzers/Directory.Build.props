@@ -10,6 +10,13 @@
     <PackageTags>timewarp;architecture;analyzers;roslyn;source-generators</PackageTags>
   </PropertyGroup>
 
+  <!-- Marker namespaces match published package surface. Convention-analyzers never had a marker. -->
+  <PropertyGroup Label="AssemblyMarkerNamespace">
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'timewarp-architecture-analyzers'">$(TwArchitectureRootNamespace).Analyzers</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'timewarp-architecture-attributes'">$(TwArchitectureAttributesNamespace)</AssemblyMarkerNamespace>
+    <TwGenerateAssemblyMarker Condition="'$(MSBuildProjectName)' == 'timewarp-architecture-convention-analyzers'">false</TwGenerateAssemblyMarker>
+  </PropertyGroup>
+
   <!-- Analyzer-only packages (convention-analyzers + analyzers/generators): detect by project name
        here because Directory.Build.props is imported before the csproj body, so a project-set
        IsAnalyzerPackage flag would be too late. No lib/TFM output — dll under analyzers/dotnet/cs/.

@@ -310,7 +310,7 @@ public class Program : IAspNetProgram
       (
         typeof(TimeWarp.State.AssemblyMarker).Assembly,
         typeof(TimeWarp.State.Plus.AssemblyMarker).Assembly,
-        typeof(TimeWarp.Architecture.Web.Spa.AssemblyMarker).Assembly
+        typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly
       );
 
     webApplication.MapHealthChecks("/api/health");

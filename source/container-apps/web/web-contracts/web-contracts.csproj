@@ -4,6 +4,15 @@
     <RootNamespace>TimeWarp.Architecture</RootNamespace>
   </PropertyGroup>
 
+  <!-- Friend assemblies for Web.Contracts internals (SPA + server + their integration tests).
+       Names match actual AssemblyName (web-spa sets Web.Spa; others default to project file name). -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Web.Spa" />
+    <InternalsVisibleTo Include="web-spa-integration-Tests" />
+    <InternalsVisibleTo Include="web-server" />
+    <InternalsVisibleTo Include="web-server-integration-tests" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="FluentValidation"/>
     <PackageReference Include="OneOf"/>

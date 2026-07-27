@@ -89,7 +89,7 @@ public class Program
           new[]
           {
             // ReSharper disable once RedundantNameQualifier
-            typeof(Web.Spa.AssemblyMarker).GetTypeInfo().Assembly,
+            typeof(Web.Spa.IAssemblyMarker).GetTypeInfo().Assembly,
             typeof(TimeWarp.State.Plus.AssemblyMarker).GetTypeInfo().Assembly,
           };
       }
