@@ -1,8 +1,8 @@
 @namespace TimeWarp.Architecture.Components
 <CascadingAuthenticationState>
   <Router
-    AppAssembly=@typeof(AssemblyMarker).Assembly
-    AdditionalAssemblies=@(new[] { typeof(AssemblyMarker).Assembly })>
+    AppAssembly=@typeof(IAssemblyMarker).Assembly
+    AdditionalAssemblies=@(new[] { typeof(IAssemblyMarker).Assembly })>
     <Found Context="routeData">
       <AuthorizeRouteView RouteData=@routeData DefaultLayout=@typeof(MainLayout)>
         <NotAuthorized>
