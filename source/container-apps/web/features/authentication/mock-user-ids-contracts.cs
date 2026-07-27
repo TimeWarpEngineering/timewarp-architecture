@@ -3,7 +3,7 @@
 // factories agree on the same sample identities.
 #endregion
 
-namespace TimeWarp.Architecture;
+namespace TimeWarp.Architecture.Features.Authentication;
 
 public static class MockUserIds
 {
