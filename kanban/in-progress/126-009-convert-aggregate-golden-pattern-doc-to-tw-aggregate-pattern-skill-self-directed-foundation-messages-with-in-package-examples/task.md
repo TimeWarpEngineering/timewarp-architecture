@@ -56,22 +56,22 @@ Template-relative paths must appear NOWHERE in package content when done.
 
 ## Checklist
 
-- [ ] Author `skills/tw-aggregate-pattern/SKILL.md` (public style; content parity with the doc
+- [x] Author `skills/tw-aggregate-pattern/SKILL.md` (public style; content parity with the doc
       — nothing lost in conversion; exemplar + enforcement map + placement rule)
-- [ ] Delete `web-domain/aggregates/` (doc + folder); confirm web-domain is csproj +
+- [x] Delete `web-domain/aggregates/` (doc + folder); confirm web-domain is csproj +
       global-usings only
-- [ ] Rewrite the 3 foundation message strings per the three-layer rule (fix inline, no paths;
+- [x] Rewrite the 3 foundation message strings per the three-layer rule (fix inline, no paths;
       optional verified docs-site URL)
-- [ ] Add XML `<example>` docs on `IAggregateRoot` and `Entity<TId>`; reconcile their existing
+- [x] Add XML `<example>` docs on `IAggregateRoot` and `Entity<TId>`; reconcile their existing
       XML docs/Design regions
-- [ ] Sweep referrers: HowToAddYourAggregate.md (×3), ADR-0009 (~line 155), any comment in
+- [x] Sweep referrers: HowToAddYourAggregate.md (×3), ADR-0009 (~line 155), any comment in
       `missing-invariants-validator-exception.cs` header, repo-wide grep for
       `aggregates/overview` — zero hits outside kanban history when done
-- [ ] Verify TWA0004/regions on touched files; skills are excluded from that rule (confirm)
-- [ ] Gates: `dev build` 0/0, `dev test` (foundation tests assert on exception messages? grep
+- [x] Verify TWA0004/regions on touched files; skills are excluded from that rule (confirm)
+- [x] Gates: `dev build` 0/0, `dev test` (foundation tests assert on exception messages? grep
       test tree for the old message fragments and update any assertions), `dev template-smoke`
       both matrices via current-code path
-- [ ] Note in Results: message changes ship at the next foundation release (124 policy bundles
+- [x] Note in Results: message changes ship at the next foundation release (124 policy bundles
       packages + template; already-published beta.7 messages keep the old path — acceptable,
       beta channel)
 
@@ -92,3 +92,48 @@ Template-relative paths must appear NOWHERE in package content when done.
 
 - Created: 2026-07-27 — filed from maintainer-approved bundle (skill conversion + message
   self-direction).
+
+## Results
+
+**Landed** (commits `42f0808a` skill + retirement, `07f0c11f` foundation messages + XML
+examples, `ce628368` review fix):
+
+- `skills/tw-aggregate-pattern/SKILL.md` — the golden aggregate pattern as an agent contract
+  (public style: present tense, no task refs), full content parity with the retired
+  `web-domain/aggregates/overview.md` (literal parity after review fix M1 reinstated the
+  exemplar mapping detail). AGENTS.md gained a TWA0011/0012 callout beside the TWA0009 one;
+  `HowToAddYourAggregate.md` (3 spots) and ADR-0009 now defer to the skill as pattern SSOT.
+- `web-domain/aggregates/` deleted — `web-domain/` is now csproj + `global-usings.cs` only
+  (pure artifact shell). Repo-wide `aggregates/overview` grep: zero hits outside kanban history.
+- Foundation messages self-directed per the three-layer rule: both
+  `missing-invariants-validator-exception.cs` strings and the `aggregate-db-context.cs` string
+  now state the fix inline (nested `private sealed class Invariants : AbstractValidator<T>`,
+  TWA0011) with zero file paths; XML `<example>` blocks on `IAggregateRoot` and `Entity<TId>`
+  carry the minimal correct aggregate in-package (IntelliSense channel). Docs-site URL OMITTED
+  per verify-or-omit: the published site has no aggregate page — and notably its docfx build
+  (`timewarp-templates/documentation/`) does not build from the repo's `documentation/` tree at
+  all (surfaced to maintainer; task 125 territory). Existing test assertions survive by design
+  (nameof-based substrings verified against new text).
+
+**Verification:** `dev build` 0/0; `dev template-smoke` both matrices SUCCEEDED; all 15 test
+projects green post-change — 11 in the implementer run, 4 Docker-dependent projects re-run by
+the orchestrator after a genuinely wedged Docker daemon was restarted by the maintainer
+(web-infrastructure 39/39, api-server-integration 7+1skip, web-spa-integration 11+3skip,
+aspire 7/7 via `dotnet test`). Tooling note: standalone `dotnet fixie` intermittently fails its
+`_Fixie_GetTargetFrameworks` msbuild query on aspire-tests (the dev-test vstest path is fine) —
+pattern-matches the Fixie version-drift observation in 104-032's review; not caused by this
+change.
+
+**Review (Phase 4b):** effort 1 (general, empirical — reviewer ran foundation tests 13/13 +
+37/37, `-warnaserror` rebuild, analyzer-source verification, URL re-check, assertion-survival
+proof); 1 round; counts: 1 nit fixed, 0 open; disposition **clean** —
+[review/disposition.md](review/disposition.md).
+
+**Ships:** message/XML changes reach consumers at the next foundation release (124 policy);
+published beta.7 messages keep the old path reference — acceptable, beta channel.
+
+## Session
+
+- Executed: 2026-07-27 — orchestrated end-to-end (spec-as-plan; implementer + reviewer Claude
+  Sonnet subagents; orchestrator Claude Fable). Docker outage mid-gates escalated to maintainer
+  and resolved same-session.
