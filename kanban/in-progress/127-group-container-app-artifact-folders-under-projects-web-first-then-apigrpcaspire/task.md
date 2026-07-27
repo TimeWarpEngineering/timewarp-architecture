@@ -206,6 +206,46 @@ Family roots show features+platform+projects+msbuild (web); api/grpc/aspire show
 - 2026-07-27 — Stage 1 landed (web under projects/); gates green; **paused for maintainer review before Stage 2** (api/grpc/aspire still pending).
 - 2026-07-27 — Phase 4b review (effort 1, general): disposition **clean** under `review/`; 0 open findings.
 - 2026-07-28 — Maintainer approved proceeding past stage 1 checkpoint; Stage 2 executed (api → grpc → aspire).
+- 2026-07-28 — Phase 4b round 2 (stage 2): disposition **clean**; 0 open findings. Results written; task done.
+
+## Results
+
+**Status:** success — both stages complete; placement model visible in tree for all multi-project container-app families.
+
+### What shipped
+
+| Stage | Family | Commit(s) |
+|-------|--------|-----------|
+| 1 | web (6 projects → `web/projects/`) | `267b4523`, `ad19d511` |
+| 2 | api (5 → `api/projects/`) | `156ccb72` |
+| 2 | grpc (5 → `grpc/projects/`) | `f62064da` |
+| 2 | aspire (2 → `aspire/projects/`) | `6e049ff1` |
+| — | yarp | no move; asymmetry documented |
+
+**End-state tree:** multi-project families expose `projects/` for csproj homes; web also keeps `features/`, `platform/`, `msbuild/` as siblings of `projects/`; yarp remains a flat single-project family.
+
+**Mechanical updates:** slnx paths; ProjectReferences (sibling form kept, outward +1 `../`, external insert `projects/`); template.json spa excludes (stage 1); grpc Dockerfile COPY/WORKDIR; DockerfileContext on servers; aspire.config.json + dev-cli `run-command.cs`; scripts; AGENTS.md + `tw-feature-placement` + HowToRemoveDemoFeatures.
+
+**Unchanged by design:** project/assembly/InternalsVisibleTo names; Aspire ServiceNames / AddProject resource strings (TWA0007); features/platform/msbuild trees; tests tree locations; yarp layout; no hand-edit of grammar g.props.
+
+### Gates
+
+After stage 1 and after **each** stage 2 family: `dev build` 0/0 · `dev test` all green · `dev template-smoke` both matrices (SmokeDefault + SmokeNoPostgres canary).
+
+### Review (Phase 4b)
+
+| Field | Value |
+|-------|--------|
+| Effort / roster | 1 · general only |
+| Rounds | 2 (stage 1 + stage 2) |
+| Final counts | open 0 · fixed 0 · wontfix 0 (all severities) |
+| Disposition | **clean** |
+| Paths | `review/review-framework.md`, `review/round-1/`, `review/round-2/`, `review/disposition.md` |
+
+### Residual / deferred
+
+- `api-server/Dockerfile` still has pre-historical PascalCase path debt (pre-existing; not stage-2 residual of kebab-without-`projects/`). Out of scope for this task.
+- Task 118 marketplace (sample options) independent.
 
 ## Stage 1 progress (complete)
 

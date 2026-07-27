@@ -1,13 +1,18 @@
-# Disposition — task 127 (stage 1)
+# Disposition — task 127
 
-**Date:** 2026-07-27
+**Date:** 2026-07-28
 **Outcome:** clean
-**Rounds:** 1
+**Rounds:** 2
 **Final open count:** 0
 
 ## Summary
 
-Stage 1 (web → `web/projects/`) reviewed at effort 1 with a single general reviewer. Tree shape, path references, template.json spa excludes, ServiceNames/AddProject names, docs, and yarp asymmetry all verified. Zero findings. Task remains in-progress pending **maintainer review checkpoint** before stage 2 (api/grpc/aspire).
+Full task (stage 1 web + stage 2 api/grpc/aspire) reviewed at effort 1 with a general reviewer per stage.
+
+- **Round 1** (stage 1 web → `web/projects/`): clean, 0 findings
+- **Round 2** (stage 2 api/grpc/aspire → `*/projects/`): clean, 0 findings
+
+yarp left flat with documented asymmetry. ServiceNames / AddProject resource names unchanged. Final open count 0.
 
 ## Exception log
 
@@ -15,4 +20,4 @@ _(none)_
 
 ## Escalations
 
-- Stage 2 blocked only by explicit maintainer sequencing gate (not a review finding).
+- Maintainer checkpoint between stage 1 and stage 2 was completed (proceed 2026-07-28).
