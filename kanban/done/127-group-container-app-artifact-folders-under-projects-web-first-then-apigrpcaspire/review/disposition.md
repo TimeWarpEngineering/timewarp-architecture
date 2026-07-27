@@ -21,3 +21,8 @@ _(none)_
 ## Escalations
 
 - Maintainer checkpoint between stage 1 and stage 2 was completed (proceed 2026-07-28).
+
+## Addendum — round 3 (2026-07-28)
+
+Independent cross-vendor verification confirmed the implementation across all five commits;
+outcome unchanged: clean.

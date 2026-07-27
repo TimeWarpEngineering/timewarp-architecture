@@ -277,3 +277,12 @@ After stage 1 and after **each** stage 2 family: `dev build` 0/0 · `dev test` a
 **Docs:** AGENTS.md Layout diagram updated for api/grpc/aspire under `projects/` + yarp flat note.
 
 **Review:** round 2 clean; final disposition clean (see ## Results).
+
+## Results addendum — independent verification (round 3, 2026-07-28)
+
+Cross-vendor verification confirmed clean: pure moves, complete reference sweep (re-derived
+independently), anchoring landmine correctly a no-op (msbuild-file-relative roots; no
+hand-edits, SSOT gate intact), stage checkpoint recorded, gates re-run green including both
+smoke matrices. Full record:
+[review/round-3/independent-verification.md](review/round-3/independent-verification.md).
+Follow-up filed for the dead api-server Dockerfile (pre-existing, unexercised).
