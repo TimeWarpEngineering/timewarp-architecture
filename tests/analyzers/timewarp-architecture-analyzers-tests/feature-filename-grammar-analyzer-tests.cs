@@ -195,16 +195,20 @@ public class Should_Keep_Grammar_Registry_In_Sync
       FeatureFilenameGrammar.FunctionToLayer[pair.Key].ShouldBe(pair.Value);
     }
 
-    // Props items must list the same layers and function→layer pairs, plus generated hybrid globs.
+    // Props items must list the same layers and function→layer pairs, plus generated hybrid globs
+    // for both cohesive trees (features/ + platform/).
     string props = File.ReadAllText(propsPath);
     foreach (string layer in layers)
     {
       props.ShouldContain($"FeatureFilenameGrammarLayer Include=\"{layer}\"");
-      props.ShouldContain($"**/*-{layer}.cs");
+      props.ShouldContain($"$(WebFeatureTreeRoot)/**/*-{layer}.cs");
+      props.ShouldContain($"$(WebPlatformTreeRoot)/**/*-{layer}.cs");
       props.ShouldContain($"'$(MSBuildProjectName)' == 'web-{layer}'");
     }
 
     props.ShouldContain("FeatureFilenameLayerSuffixRegex");
+    props.ShouldContain("WebPlatformTreeRoot");
+    props.ShouldContain("Link=\"platform\\%(RecursiveDir)%(Filename)%(Extension)\"");
 
     foreach (KeyValuePair<string, string> pair in functions)
     {
@@ -214,7 +218,8 @@ public class Should_Keep_Grammar_Registry_In_Sync
       );
     }
 
-    // Membership targets must not re-hand-list layer globs; they consume the generated props.
+    // Membership targets must not re-hand-list layer globs; they consume the generated props
+    // and define both tree roots + membership scan both.
     string membershipPath = Path.Combine
     (
       repoRoot,
@@ -224,6 +229,9 @@ public class Should_Keep_Grammar_Registry_In_Sync
     string membership = File.ReadAllText(membershipPath);
     membership.ShouldContain("feature-filename-grammar.g.props");
     membership.ShouldContain("FeatureFilenameLayerSuffixRegex");
+    membership.ShouldContain("WebFeatureTreeRoot");
+    membership.ShouldContain("WebPlatformTreeRoot");
+    membership.ShouldContain("$(WebPlatformTreeRoot)/**/*.cs");
     membership.ShouldNotContain("**/*-contracts.cs");
   }
 
