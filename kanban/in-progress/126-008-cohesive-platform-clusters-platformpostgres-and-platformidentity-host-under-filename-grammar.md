@@ -90,6 +90,32 @@ should NOT get; TWA0009 must keep seeing them as platform). Existing namespaces
 - After both land, the layer folders approach "csproj + host files only" — re-examine whether
   anything further is wanted for the projects/-as-pure-selector idea then.
 
+
+## Implementation Plan (2026-07-27)
+
+### Goal
+Cohesive `web/platform/{postgres,identity-host}/` clusters using filename-grammar layer suffixes; namespaces unchanged; features/ mechanics extended for a second root.
+
+### Glob coverage (critical)
+1. `generate-feature-filename-grammar.py`: emit hybrid Compile globs for both `$(WebFeatureTreeRoot)` (Link=features\…) and `$(WebPlatformTreeRoot)` (Link=platform\…) per layer.
+2. `feature-membership.targets`: set `WebPlatformTreeRoot` to `../platform`; membership guard scans both trees (Exists on platform).
+3. Rebuild convention-analyzers to regenerate `feature-filename-grammar.g.props` — do not hand-edit g.props.
+
+### Moves (git mv + rename)
+**platform/postgres/** (5): infrastructure ×2 + server ×3 per task table.
+**platform/identity-host/** (7): all server-suffixed.
+Delete emptied subfolders under web-server/services, configuration/*, hosted-services, modules, web-infrastructure configuration/persistence if empty.
+
+### Template / docs
+- Update 5 paths in `.template.config/template.json` (!postgres) excludes.
+- AGENTS.md Layout: add `platform/` line.
+- `skills/tw-feature-placement/SKILL.md`: when to use platform/ vs features/ vs host (present tense).
+- Reconcile Purpose/Design regions if they narrate old folder homes.
+- Grep stale path references.
+
+### Gates
+FULL `dev build` 0/0, `dev test`, `dev template-smoke` both matrices (SmokeNoPostgres strips postgres).
+
 ## Session
 
 - Created: 2026-07-27 — filed from maintainer-approved proposal (task b of two).
