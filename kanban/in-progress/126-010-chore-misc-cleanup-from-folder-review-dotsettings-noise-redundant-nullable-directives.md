@@ -41,6 +41,29 @@ below, not a perpetual dumping ground.
   belongs in the ganda/timewarp-flow backlog, not this repo); `dotnet fixie` intermittent
   `_Fixie_GetTargetFrameworks` failure on aspire-tests (tooling, tracked in 126-009 Results).
 
+
+## Implementation Plan (2026-07-27)
+
+### DotSettings
+Skimmed both files: only ReSharper `NamespaceFoldersToSkip` for obsolete feature folder paths
+(todo-items, old SPA application/actions). No real convention → delete both.
+
+### #nullable enable classification
+**Remove (hand-written file-level, 11 files):**
+- tests/common/timewarp-testing: scoped-sender, testing-convention, test-server-application,
+  web-api-test-service, web-application-host
+- web-server program.cs, sample-environment-check.cs
+- platform/postgres: environment-check, startup-hosted-service
+- web-spa: base-component.cs, account-state.cs
+
+**Carve-out (leave):**
+- Generator emitters (typed-id, mock-registry, ingress-prefix, contracts-mixin) — directive in emitted strings
+- feature-filename-grammar.g.cs — generated
+- Analyzer test FluentValidation stubs / source strings — fixture input, not product
+
+### Gates
+dev build 0/0, dev test, template-smoke both matrices
+
 ## Session
 
 - Created: 2026-07-27 — filed from maintainer review findings.
