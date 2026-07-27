@@ -43,7 +43,7 @@
 
   <ItemGroup>
     <!--#if (api) -->
-    <ProjectReference Include="../../api/api-server/api-server.csproj" />
+    <ProjectReference Include="../../api/projects/api-server/api-server.csproj" />
     <!--#endif -->
     <!--#if (grpc) -->
     <ProjectReference Include="../../grpc/grpc-server/grpc-server.csproj" />
@@ -72,7 +72,7 @@
     <!--#if (api) -->
     <!-- Task 107: api-contracts is referenced for the TWA0017 collision set only — its hosted routes
          belong to the Api.Server catch-all, never to a Web.Server ingress carve-out. -->
-    <ProjectReference Include="../../api/api-contracts/api-contracts.csproj"
+    <ProjectReference Include="../../api/projects/api-contracts/api-contracts.csproj"
                       IsAspireProjectResource="false"
                       Private="false"
                       ExcludeAssets="runtime" />

@@ -12,9 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-contracts\foundation-contracts.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <ProjectReference Include="..\..\..\..\foundation\foundation-contracts\foundation-contracts.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Contracts" Condition="'$(UseFoundationPackages)' == 'true'" />
-    <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj"
+    <ProjectReference Include="..\..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj"
                       Condition="'$(UseAnalyzerPackages)' != 'true'" />
     <PackageReference Include="$(TwArchitectureAttributesPackageId)"
                       Condition="'$(UseAnalyzerPackages)' == 'true'" />
@@ -35,7 +35,7 @@
   <ItemGroup>
     <!-- foundation-contracts mixins are now a bundled source generator (task 053-001): analyzer ref
          in repo mode; flows from the TimeWarp.Foundation.Contracts package in package mode. -->
-    <ProjectReference Include="..\..\..\foundation\foundation-contracts-generators\foundation-contracts-generators.csproj"
+    <ProjectReference Include="..\..\..\..\foundation\foundation-contracts-generators\foundation-contracts-generators.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       Condition="'$(UseFoundationPackages)' != 'true'" />
   </ItemGroup>

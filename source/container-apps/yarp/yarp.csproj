@@ -46,7 +46,7 @@
     <!--#endif -->
     <!--#if (api) -->
     <!-- Task 107: api-contracts is the TWA0017 collision set only — its routes belong to Api.Server. -->
-    <ProjectReference Include="../api/api-contracts/api-contracts.csproj"
+    <ProjectReference Include="../api/projects/api-contracts/api-contracts.csproj"
                       Private="false"
                       ExcludeAssets="runtime" />
     <!--#endif -->
