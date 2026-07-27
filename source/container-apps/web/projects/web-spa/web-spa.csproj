@@ -91,7 +91,7 @@
     <ProjectReference Include="..\..\..\api\projects\api-contracts\api-contracts.csproj"/>
     <!--#endif-->
     <!--#if(grpc)-->
-    <ProjectReference Include="..\..\..\grpc\grpc-contracts\grpc-contracts.csproj"/>
+    <ProjectReference Include="..\..\..\grpc\projects\grpc-contracts\grpc-contracts.csproj"/>
     <!--#endif-->
     <ProjectReference Include="..\web-contracts\web-contracts.csproj"/>
   </ItemGroup>

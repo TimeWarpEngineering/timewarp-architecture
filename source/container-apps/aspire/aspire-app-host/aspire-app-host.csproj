@@ -46,7 +46,7 @@
     <ProjectReference Include="../../api/projects/api-server/api-server.csproj" />
     <!--#endif -->
     <!--#if (grpc) -->
-    <ProjectReference Include="../../grpc/grpc-server/grpc-server.csproj" />
+    <ProjectReference Include="../../grpc/projects/grpc-server/grpc-server.csproj" />
     <!--#endif -->
     <!--#if (web) -->
     <ProjectReference Include="../../web/projects/web-server/web-server.csproj" />

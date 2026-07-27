@@ -7,11 +7,11 @@ FROM mcr.microsoft.com/dotnet/sdk:$dotnet_version-jammy AS build
 WORKDIR /git
 COPY ["Directory.Build.props", "."]
 COPY ["Directory.Packages.props", "."]
-COPY ["source/container-apps/grpc/grpc-contracts/grpc-contracts.csproj", "source/container-apps/grpc/grpc-contracts/"]
-COPY ["source/container-apps/grpc/grpc-domain/grpc-domain.csproj", "source/container-apps/grpc/grpc-domain/"]
-COPY ["source/container-apps/grpc/grpc-application/grpc-application.csproj", "source/container-apps/grpc/grpc-application/"]
-COPY ["source/container-apps/grpc/grpc-infrastructure/grpc-infrastructure.csproj", "source/container-apps/grpc/grpc-infrastructure/"]
-COPY ["source/container-apps/grpc/grpc-server/grpc-server.csproj", "source/container-apps/grpc/grpc-server/"]
+COPY ["source/container-apps/grpc/projects/grpc-contracts/grpc-contracts.csproj", "source/container-apps/grpc/projects/grpc-contracts/"]
+COPY ["source/container-apps/grpc/projects/grpc-domain/grpc-domain.csproj", "source/container-apps/grpc/projects/grpc-domain/"]
+COPY ["source/container-apps/grpc/projects/grpc-application/grpc-application.csproj", "source/container-apps/grpc/projects/grpc-application/"]
+COPY ["source/container-apps/grpc/projects/grpc-infrastructure/grpc-infrastructure.csproj", "source/container-apps/grpc/projects/grpc-infrastructure/"]
+COPY ["source/container-apps/grpc/projects/grpc-server/grpc-server.csproj", "source/container-apps/grpc/projects/grpc-server/"]
 COPY ["source/foundation/foundation-contracts/foundation-contracts.csproj", "source/foundation/foundation-contracts/"]
 COPY ["source/foundation/foundation-application/foundation-application.csproj", "source/foundation/foundation-application/"]
 COPY ["source/foundation/foundation-infrastructure/foundation-infrastructure.csproj", "source/foundation/foundation-infrastructure/"]
@@ -20,13 +20,13 @@ COPY ["source/foundation/foundation-server/foundation-server.csproj", "source/fo
 COPY ["source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj", "source/container-apps/aspire/aspire-service-defaults/"]
 
 # restore nugets
-RUN dotnet restore "source/container-apps/grpc/grpc-server/grpc-server.csproj"
+RUN dotnet restore "source/container-apps/grpc/projects/grpc-server/grpc-server.csproj"
 
 COPY ["source/container-apps/grpc/.", "source/container-apps/grpc"]
 COPY ["source/foundation/.", "source/foundation"]
 COPY ["source/container-apps/aspire/.", "source/container-apps/aspire"]
 
-WORKDIR "/git/source/container-apps/grpc/grpc-server"
+WORKDIR "/git/source/container-apps/grpc/projects/grpc-server"
 RUN dotnet build "grpc-server.csproj" -c Release -o /app/build
 
 FROM build AS publish

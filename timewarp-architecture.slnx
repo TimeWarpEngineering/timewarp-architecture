@@ -30,11 +30,11 @@
     <Project Path="source/container-apps/api/projects/api-domain/api-domain.csproj" />
     <!--#endif -->
     <!--#if (grpc) -->
-    <Project Path="source/container-apps/grpc/grpc-domain/grpc-domain.csproj" />
-    <Project Path="source/container-apps/grpc/grpc-contracts/grpc-contracts.csproj" />
-    <Project Path="source/container-apps/grpc/grpc-application/grpc-application.csproj" />
-    <Project Path="source/container-apps/grpc/grpc-infrastructure/grpc-infrastructure.csproj" />
-    <Project Path="source/container-apps/grpc/grpc-server/grpc-server.csproj" />
+    <Project Path="source/container-apps/grpc/projects/grpc-domain/grpc-domain.csproj" />
+    <Project Path="source/container-apps/grpc/projects/grpc-contracts/grpc-contracts.csproj" />
+    <Project Path="source/container-apps/grpc/projects/grpc-application/grpc-application.csproj" />
+    <Project Path="source/container-apps/grpc/projects/grpc-infrastructure/grpc-infrastructure.csproj" />
+    <Project Path="source/container-apps/grpc/projects/grpc-server/grpc-server.csproj" />
     <!--#endif -->
     <!--#if (web) -->
     <Project Path="source/container-apps/web/projects/web-domain/web-domain.csproj" />

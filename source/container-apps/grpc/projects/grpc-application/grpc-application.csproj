@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-application\foundation-application.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <ProjectReference Include="..\..\..\..\foundation\foundation-application\foundation-application.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Application" Condition="'$(UseFoundationPackages)' == 'true'" />
     <ProjectReference Include="..\grpc-contracts\grpc-contracts.csproj" />
     <ProjectReference Include="..\grpc-domain\grpc-domain.csproj" />

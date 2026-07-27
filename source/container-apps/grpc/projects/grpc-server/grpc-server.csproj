@@ -4,7 +4,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CA1050;CA1051;CA1848;CA1849;1591</NoWarn>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileContext>..\..\..</DockerfileContext>
+    <DockerfileContext>..\..\..\..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,9 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-server\foundation-server.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <ProjectReference Include="..\..\..\..\foundation\foundation-server\foundation-server.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Server" Condition="'$(UseFoundationPackages)' == 'true'" />
-    <ProjectReference Include="..\..\aspire\aspire-service-defaults\aspire-service-defaults.csproj" />
+    <ProjectReference Include="..\..\..\aspire\aspire-service-defaults\aspire-service-defaults.csproj" />
     <ProjectReference Include="..\grpc-infrastructure\grpc-infrastructure.csproj" />
   </ItemGroup>
 
