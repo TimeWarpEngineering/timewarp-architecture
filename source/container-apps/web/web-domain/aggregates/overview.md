@@ -5,7 +5,7 @@ Every aggregate root in this project follows the same golden pattern (task 106),
 the identity library (`source/libraries/timewarp-identity`, Principal/Credential):
 
 - **Typed id.** The aggregate's id is a `[TypedId] readonly partial record struct` (e.g.
-  `ProfileId`), never a raw `Guid`. See `profile/profile-id.cs`.
+  `ProfileId`), never a raw `Guid`. See `web/features/profile/profile-id-domain.cs`.
 - **`Entity<TId>` base.** The aggregate inherits `TimeWarp.Foundation.Entities.Entity<TId>`
   (get-only typed `Id`, identity-based equality, a store-owned `Version` concurrency token) and
   implements the marker interface `IAggregateRoot`.
@@ -27,8 +27,8 @@ the identity library (`source/libraries/timewarp-identity`, Principal/Credential
   makes them impossible to persist regardless of which code path produced them. Child-only
   mutations resolve to the owning root so invariants and `Version` still run.
 
-`profile/profile.cs` is the exemplar — read it alongside this file before adding a new
-aggregate. Its EF mapping (schema `profiles`, TypedId conversion) lives under
+`web/features/profile/profile-domain.cs` is the exemplar — read it alongside this file before
+adding a new aggregate. Its EF mapping (schema `profiles`, TypedId conversion) lives under
 `web/features/profile/profile-entity-type-configuration-infrastructure.cs` and is applied by
 `PostgresDbContext` (`ApplyConfigurationsFromAssembly`). `Version`'s `.IsConcurrencyToken()` is
 supplied for free by `AggregateDbContext`'s Version convention — Profile's own mapping does not

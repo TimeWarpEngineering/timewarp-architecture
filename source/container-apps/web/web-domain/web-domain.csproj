@@ -25,10 +25,5 @@
     <Using Include="TimeWarp.Architecture" Condition="'$(UseAnalyzerPackages)' != 'true'" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="services\" />
-    <Folder Include="value-objects\" />
-  </ItemGroup>
-
 </Project>
 
