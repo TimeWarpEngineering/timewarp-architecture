@@ -95,6 +95,111 @@ regression lesson, treat SmokeNoPostgres as the canary for template.json path mi
   reference web paths in stage 1 while api/grpc paths are still old) — that is fine; each
   stage's gates prove the mixed state.
 
+### Implementation plan (2026-07-27)
+
+# Implementation Plan: Task 127 — Group Container-App Artifact Folders Under `projects/`
+
+## Goal
+
+Make the placement model visible in the tree. Each multi-project container-app family groups its csproj homes under `projects/`, so the family root reads as the placement rule:
+
+```text
+web/
+  features/    # product concerns (unchanged)
+  platform/    # platform concerns (unchanged)
+  projects/    # artifact folders (csproj homes)
+  msbuild/     # build machinery (unchanged)
+```
+
+Naming is fixed: **`projects/`** only. Inner folder/csproj names stay identical (`projects/web-server/web-server.csproj`).
+
+---
+
+## Pre-verified: MSBuild anchoring (do this first, then move)
+
+### Verdict: **safe to move without generator changes**
+
+`WebFeatureTreeRoot` / `WebPlatformTreeRoot` are **not csproj-relative**. They are anchored to the MSBuild file that defines them via `MSBuildThisFileDirectory` in `source/container-apps/web/msbuild/feature-membership.targets`:
+
+- Roots resolve to `web/features` and `web/platform` regardless of where the consuming csproj lives
+- Import chain: `web/Directory.Build.targets` → `msbuild/feature-membership.targets` (also `MSBuildThisFileDirectory`-anchored)
+
+### Directory.Build discovery after one extra directory level
+
+Projects at `web/projects/web-server/` still walk up and find web/Directory.Build.targets and container-apps/Directory.Build.props.
+
+**No generator fix required.** Do **not** hand-edit `feature-filename-grammar.g.props`.
+
+---
+
+## Inventory approach (before any `git mv`)
+
+Run a frozen inventory per family; classify hits as:
+- **A — mechanical path**: update with move
+- **B — conceptual name only** (assembly name, ServiceNames): leave
+- **C — historical** (kanban/done): leave
+- **D — still-valid shared trees** (features/platform/msbuild): leave
+
+---
+
+## Exact move lists
+
+### Stage 1 — web (one commit)
+6 folders: web-contracts, web-application, web-domain, web-infrastructure, web-server, web-spa → `web/projects/`
+
+Do not move: features/, platform/, msbuild/, Directory.Build.targets, tests/
+
+### Stage 2 — one family per commit
+- api: 5 projects → api/projects/
+- grpc: 5 projects → grpc/projects/
+- aspire: aspire-app-host + aspire-service-defaults → aspire/projects/
+- Order: api → grpc → aspire
+- yarp: no move; document asymmetry
+
+---
+
+## Path depth rule
+
+Moving one level deeper: outward relative paths need +1 `../`. Sibling refs among co-moved projects stay same form. External → web: insert `projects/` segment.
+
+Special: web-spa web-contracts ref today uses non-sibling detour; normalize to `..\web-contracts\web-contracts.csproj`.
+
+---
+
+## Stage 1 reference surface
+1. timewarp-architecture.slnx (5 web entries; web-spa absent from slnx — keep)
+2. All 6 web csprojs (outward ../, DockerfileContext, constants Compile Include)
+3. External: aspire-app-host, yarp, timewarp-testing, 5 web test csprojs
+4. .template.config/template.json spa excludes under (!grpc)/(!api) need projects/
+5. Aspire AddProject resource names: DO NOT change
+6. CI path filters: likely no change
+7. scripts: describe.ps1, postgres/ef-shared-variables.ps1
+8. Docs: AGENTS.md Layout, tw-feature-placement SKILL.md + yarp note, HowToRemoveDemoFeatures.md
+
+---
+
+## Commit strategy
+1. web (full gates) → **pause for maintainer review**
+2. api → gates
+3. grpc → gates  
+4. aspire → gates + final battery
+
+Gates after each: `dev build` 0/0, `dev test`, `dev template-smoke` both matrices. SmokeNoPostgres is the canary (126-011 lesson).
+
+---
+
+## What NOT to change
+- Project/assembly names, ServiceNames, feature/platform/msbuild trees
+- yarp layout, test tree locations
+- hand-edit of feature-filename-grammar.g.props
+- no artifacts/ naming
+
+---
+
+## Success criteria
+Family roots show features+platform+projects+msbuild (web); api/grpc/aspire show projects/; yarp unchanged with documented asymmetry; all gates green; docs match tree.
+
 ## Session
 
 - Created: 2026-07-27 — filed from maintainer decision (all container-apps, web first).
+- 2026-07-27 — planning completed: MSBuild anchoring pre-verified (safe to move, no generator fix); full implementation plan appended under Notes.
