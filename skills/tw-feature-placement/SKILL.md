@@ -16,30 +16,43 @@ when-to-use: >
   filename grammar, use-case folder, per-use-case folder, commands folder, queries folder,
   TWA0015, TWA0016, feature-filename-grammar.json, membership guard, feature-membership.targets,
   escape hatch filename, function segment, layer suffix, registry edit rebuild,
-  per-module assembly split
+  per-module assembly split, shared tree vs artifact folder, deletion litmus test,
+  where does this file go, seam interface placement
 ---
 
 # Feature placement and filename grammar
+
+> All logic lives in a concern folder under a shared tree — `features/` for product concerns,
+> `platform/` for platform concerns — named by the filename grammar; artifact folders hold only
+> the artifact definition (csproj, global-usings) and its entry-point bootstrap (program.cs,
+> appsettings, launchSettings, host-config exemplars).
+
+The litmus test for the fuzzy middle:
+
+> **If this deployable were deleted, would the file still mean something?** Yes → shared tree
+> (which concern folder?). No → it is bootstrap; it stays with the artifact.
+
+| Home | Use for | Namespace | Examples |
+|------|---------|-----------|----------|
+| `web/features/<slice>/` | Product concerns: an operation gets its own `<slice>/<use-case>/` folder; a file serving more than one operation (shared contract, store) stays at slice root | `…Features.<Id>` (TWA0009) | `admin/roles/create-role/`, `chat/chat-hub-server.cs` |
+| `web/platform/<cluster>/` | Platform concerns: a host/platform cluster split across layers — including a seam interface living beside the implementation it seams with, not sorted into a separate layer folder | Non-Features (e.g. Configuration, Services) | `platform/postgres/`, `platform/identity-host/i-current-principal-accessor-application.cs` + `http-current-principal-accessor-server.cs` |
+| Artifact folder (`web-server/`, `web-infrastructure/`, …) | The artifact's own definition (csproj, global-usings) and entry-point bootstrap only — content that would mean nothing if you imagine the deployable gone | Host assembly defaults | `program.cs`, `sample-options.cs` (binding/validation exemplar, not a real concern) |
+
+**Folder location is for humans; filename decides project membership.** Each layer project
+composes its files with static filename globs keyed to a suffix under both `WebFeatureTreeRoot`
+and `WebPlatformTreeRoot`, not a folder path — a seam interface's `-application.cs` suffix pulls
+it into the web-application compilation unit from wherever it physically sits, which is exactly
+why it lives beside its `-server.cs` implementation in `platform/identity-host/` instead of a
+folder split by layer (the old `web-application/abstractions/`, retired: conflating layer with
+folder was never a principled reason to separate a seam from the concern it belongs to).
 
 Product code for a web container-app lives in **one feature-cohesive folder per slice** —
 `web/features/<slice>/` — with every layer (contracts, application, domain, infrastructure,
 server) colocated in that folder. Host/platform clusters that are **not** product slices live
 under `web/platform/<cluster>/` with the **same** `-layer` filename suffixes (so the same
-layer-project globs pick them up) but **without** `…Features.<Id>` namespaces. **Folder location
-is for humans; filename decides project membership.** Each layer project composes its files with
-static filename globs keyed to a suffix under both `WebFeatureTreeRoot` and `WebPlatformTreeRoot`,
-not a folder path. This is the answer to "where does this file live" and "what do I name it" —
-the most common file-placement decision in the repo.
-
-## `features/` vs `platform/` vs host project folders
-
-| Home | Use for | Namespace | Examples |
-|------|---------|-----------|----------|
-| `web/features/<slice>/` | Product slices / use cases | `…Features.<Id>` (TWA0009) | admin/roles, identity ops, chat |
-| `web/platform/<cluster>/` | Cohesive host/platform concerns split across layers, not a product feature | Non-Features (e.g. Persistence, Services, Configuration) | `platform/postgres/`, `platform/identity-host/` |
-| `web-server/`, `web-infrastructure/`, … | csproj + assembly-level host wiring only (program, modules that are pure DI hooks, sample options) | Host assembly defaults | `program.cs`, `web-infrastructure-module.cs` |
-
-Do **not** move seam interfaces out of `web-application/abstractions/` into platform/ — interface-in-application / impl-in-server is the seam. Do **not** put host wiring into a product slice just because it touches that product.
+layer-project globs pick them up) but **without** `…Features.<Id>` namespaces. This is the
+answer to "where does this file live" and "what do I name it" — the most common file-placement
+decision in the repo.
 
 Inside a slice, files group **by use case**, not by message kind: every operation gets its own
 `<slice>/<use-case>/` folder holding all of that operation's layer files side by side — the

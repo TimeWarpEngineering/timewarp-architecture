@@ -60,6 +60,13 @@ source/
 tests/               # mirrors source/; includes web-contracts-tests (host-free serialization round-trips)
 ```
 
+**Where a file goes:** all logic lives in a concern folder under one of the two shared trees
+above — `features/` for product concerns, `platform/` for platform concerns — named by the
+filename grammar below; an artifact folder (`web-server/`, `web-infrastructure/`, …) holds only
+its own definition (csproj, global-usings) and entry-point bootstrap (program.cs, appsettings,
+host-config exemplars). Litmus test for the fuzzy middle: if the deployable were deleted, would
+the file still mean something? Yes → a shared tree; no → bootstrap, stays with the artifact.
+
 **Axis-1 filename grammar (web product + platform trees):** files under `web/features/` and
 `web/platform/` use `<name>[-<function>]-<layer>.cs` (`handler`→application, `endpoint`→server;
 contracts drop the function segment: `create-role-contracts.cs`). Escape hatch:
@@ -70,8 +77,8 @@ contracts drop the function segment: `create-role-contracts.cs`). Escape hatch:
 globbed into layer projects via `WebFeatureTreeRoot` / `WebPlatformTreeRoot` in
 `feature-membership.targets`. **Registry edit ⇒ full rebuild** (analyzer DLLs can go stale under
 pure incremental builds). Namespaces do **not** track folders — product slices use
-`…Features.<Id>` (TWA0009); platform clusters keep non-Features namespaces. Full workflow:
-**`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
+`…Features.<Id>` (TWA0009); platform clusters keep non-Features namespaces. Full rule, litmus
+test, and decision table: **`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
 
 ## Platform packages (foundation + analyzers + identity)
 
