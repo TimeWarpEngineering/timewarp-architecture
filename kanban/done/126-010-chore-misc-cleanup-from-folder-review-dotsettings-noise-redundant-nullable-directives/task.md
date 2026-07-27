@@ -91,3 +91,11 @@ dev build 0/0, dev test, template-smoke both matrices
 - Rounds: 1; effort 1 general
 - Final: 0 open
 - Disposition: clean
+
+## Results addendum — independent verification (round 2, 2026-07-27)
+
+Cross-vendor verification (orchestrator-inline, proportionate to a deletion chore): confirmed,
+no findings — [review/round-2/independent-verification.md](review/round-2/independent-verification.md).
+Strip arithmetic exact (18 → 11 stripped / 7 legitimate keeps), DotSettings content claim
+accurate, gates re-run green (build 0/0 + smoke both matrices; full test battery deliberately
+not repeated — compile-time-only diff, build gate subsumes it).

@@ -10,3 +10,7 @@ Mechanical cleanup verified: DotSettings gone, hand-written #nullable stripped w
 
 ## Exception log
 N/A
+
+## Addendum — round 2 (2026-07-27)
+
+Independent verification confirmed all claims; outcome unchanged: clean.
