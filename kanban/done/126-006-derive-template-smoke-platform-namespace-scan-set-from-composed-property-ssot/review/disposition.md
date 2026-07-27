@@ -16,3 +16,8 @@ N/A
 ## Escalations
 
 None.
+
+## Addendum — round 2 (2026-07-27)
+
+Independent cross-vendor verification confirmed the implementation with re-executed proofs and
+a clean solo runfile smoke. Outcome unchanged: clean. Process nits in round-2 record.

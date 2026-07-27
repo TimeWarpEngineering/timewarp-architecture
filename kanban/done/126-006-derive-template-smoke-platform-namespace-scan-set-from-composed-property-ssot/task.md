@@ -179,3 +179,15 @@ Replaced the hand-maintained `UnsafePlatformNamespaceLiteral` closed set in `tem
 - Created: 2026-07-26 — filed from 126-004 round-3 verification finding per maintainer request.
 - Orchestration plan: grok (2026-07-27)
 - Implementation + review disposition: grok (2026-07-27)
+
+## Results addendum — independent verification (round 2, 2026-07-27)
+
+Cross-vendor verification (Claude reviewing the Grok implementation) confirmed the change — no
+bugs. Full record with proof transcripts:
+[review/round-2/independent-verification.md](review/round-2/independent-verification.md).
+Derivation traced 1:1 against the props file (TypedIds.Ef → TypedIds correct; vendor/root
+properties correctly excluded); both drift and historical proofs re-executed with quoted
+output; clean solo runfile smoke green (derived-suffix log present, both matrices OK); stale
+`./bin/dev` refreshed via self-install afterward. Nits recorded: no automated test for the
+hard-fail branches; original record asserted proofs without transcripts; round-1 review was
+diff-only.
