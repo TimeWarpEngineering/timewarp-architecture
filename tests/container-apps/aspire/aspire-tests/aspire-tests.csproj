@@ -13,7 +13,7 @@
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\source\container-apps\aspire\aspire-app-host\aspire-app-host.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\aspire\projects\aspire-app-host\aspire-app-host.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Aspire.Hosting.Testing" />

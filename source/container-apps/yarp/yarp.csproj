@@ -36,7 +36,7 @@
   <ItemGroup>
     <ProjectReference Include="../../foundation/foundation-server/foundation-server.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Server" Condition="'$(UseFoundationPackages)' == 'true'" />
-    <ProjectReference Include="../aspire/aspire-service-defaults/aspire-service-defaults.csproj" />
+    <ProjectReference Include="../aspire/projects/aspire-service-defaults/aspire-service-defaults.csproj" />
     <!--#if (web) -->
     <!-- Task 107: compile-time reference (metadata only) so IngressRoutePrefixGenerator can scan the
          web-contracts ApiRoute templates. -->

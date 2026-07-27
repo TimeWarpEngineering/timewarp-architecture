@@ -43,8 +43,8 @@
     <Project Path="source/container-apps/web/projects/web-infrastructure/web-infrastructure.csproj" />
     <Project Path="source/container-apps/web/projects/web-server/web-server.csproj" />
     <!--#endif -->
-    <Project Path="source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj" />
-    <Project Path="source/container-apps/aspire/aspire-app-host/aspire-app-host.csproj" />
+    <Project Path="source/container-apps/aspire/projects/aspire-service-defaults/aspire-service-defaults.csproj" />
+    <Project Path="source/container-apps/aspire/projects/aspire-app-host/aspire-app-host.csproj" />
     <!--#if (yarp) -->
     <Project Path="source/container-apps/yarp/yarp.csproj" />
     <!--#endif -->

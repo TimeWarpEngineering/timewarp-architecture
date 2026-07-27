@@ -23,7 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-spa\web-spa.csproj" />
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-server\web-server.csproj" />
-    <ProjectReference Include="..\..\..\..\source\container-apps\aspire\aspire-app-host\aspire-app-host.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\aspire\projects\aspire-app-host\aspire-app-host.csproj" />
     <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
   </ItemGroup>
   <ItemGroup>

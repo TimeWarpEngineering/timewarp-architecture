@@ -49,7 +49,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\foundation\foundation-server\foundation-server.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Server" Condition="'$(UseFoundationPackages)' == 'true'" />
-    <ProjectReference Include="..\..\..\aspire\aspire-service-defaults\aspire-service-defaults.csproj" />
+    <ProjectReference Include="..\..\..\aspire\projects\aspire-service-defaults\aspire-service-defaults.csproj" />
     <ProjectReference Include="..\web-infrastructure\web-infrastructure.csproj" />
     <ProjectReference Include="..\web-contracts\web-contracts.csproj" />
     <ProjectReference Include="..\web-spa\web-spa.csproj" />
@@ -72,7 +72,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\..\aspire\aspire-app-host\constants.cs">
+    <Compile Include="..\..\..\aspire\projects\aspire-app-host\constants.cs">
       <Link>Configuration\Constants.cs</Link>
     </Compile>
   </ItemGroup>

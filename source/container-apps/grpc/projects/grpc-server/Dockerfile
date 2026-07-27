@@ -17,7 +17,7 @@ COPY ["source/foundation/foundation-application/foundation-application.csproj", 
 COPY ["source/foundation/foundation-infrastructure/foundation-infrastructure.csproj", "source/foundation/foundation-infrastructure/"]
 COPY ["source/foundation/foundation-domain/foundation-domain.csproj", "source/foundation/foundation-domain/"]
 COPY ["source/foundation/foundation-server/foundation-server.csproj", "source/foundation/foundation-server/"]
-COPY ["source/container-apps/aspire/aspire-service-defaults/aspire-service-defaults.csproj", "source/container-apps/aspire/aspire-service-defaults/"]
+COPY ["source/container-apps/aspire/projects/aspire-service-defaults/aspire-service-defaults.csproj", "source/container-apps/aspire/projects/aspire-service-defaults/"]
 
 # restore nugets
 RUN dotnet restore "source/container-apps/grpc/projects/grpc-server/grpc-server.csproj"
