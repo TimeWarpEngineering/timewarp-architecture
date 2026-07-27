@@ -54,3 +54,14 @@ engine's actual generated output, and a live adversarial test of the new gate. D
   asserted narratively in the record; hard evidence had to be recovered from leftover
   `artifacts/template-smoke/` output. Future dispositions should paste a short generated-tree
   excerpt.
+
+## Correction (2026-07-27)
+
+The "Gates (independent re-run)" section above overstated one item: the orchestrator's
+`dev template-smoke` invocation resolved to the stale Jul-24 AOT `./bin/dev` binary — the exact
+footgun this task's own residual warned about — so that particular smoke run predated the
+literal scan and did not exercise it (its pass covers the pack/generate asserts only). The scan
+itself remains fully proven: the round-3 verifier's planted-literal re-proof ran via the current
+runfile path (`dotnet run tools/dev-cli/dev.cs -- template-smoke`) and failed at the pre-scan as
+designed. A corrected runfile-path smoke re-run was performed 2026-07-27 during the 126-006
+verification (see that task's record). Verdict unchanged; recorded for audit honesty.
