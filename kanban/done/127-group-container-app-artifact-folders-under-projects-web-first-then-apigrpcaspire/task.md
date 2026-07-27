@@ -276,4 +276,4 @@ After stage 1 and after **each** stage 2 family: `dev build` 0/0 · `dev test` a
 
 **Docs:** AGENTS.md Layout diagram updated for api/grpc/aspire under `projects/` + yarp flat note.
 
-**Still open:** orchestrator Results section + move task to done after review.
+**Review:** round 2 clean; final disposition clean (see ## Results).
