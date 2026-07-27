@@ -69,13 +69,13 @@ regression lesson, treat SmokeNoPostgres as the canary for template.json path mi
 
 ### Stage 1 — web
 
-- [ ] Path-reference inventory for web-* (slnx, ProjectReferences, template.json, msbuild
+- [x] Path-reference inventory for web-* (slnx, ProjectReferences, template.json, msbuild
       anchoring verification, aspire AddProject, CI filters, docs/skills)
-- [ ] Resolve the WebFeatureTreeRoot/WebPlatformTreeRoot anchoring question BEFORE moving
+- [x] Resolve the WebFeatureTreeRoot/WebPlatformTreeRoot anchoring question BEFORE moving
       (generator fix if emission is csproj-relative)
-- [ ] `git mv` the 6 web project folders → `web/projects/`; update all inventoried references
-- [ ] Update `tw-feature-placement` opening table + AGENTS.md Layout diagram (projects/ level)
-- [ ] Gates: `dev build` 0/0, `dev test` all projects, `dev template-smoke` both matrices
+- [x] `git mv` the 6 web project folders → `web/projects/`; update all inventoried references
+- [x] Update `tw-feature-placement` opening table + AGENTS.md Layout diagram (projects/ level)
+- [x] Gates: `dev build` 0/0, `dev test` all projects, `dev template-smoke` both matrices
 - [ ] Maintainer review checkpoint before stage 2
 
 ### Stage 2 — api, grpc, aspire
@@ -203,3 +203,4 @@ Family roots show features+platform+projects+msbuild (web); api/grpc/aspire show
 
 - Created: 2026-07-27 — filed from maintainer decision (all container-apps, web first).
 - 2026-07-27 — planning completed: MSBuild anchoring pre-verified (safe to move, no generator fix); full implementation plan appended under Notes.
+- 2026-07-27 — Stage 1 landed (web under projects/); gates green; **paused for maintainer review before Stage 2** (api/grpc/aspire still pending).

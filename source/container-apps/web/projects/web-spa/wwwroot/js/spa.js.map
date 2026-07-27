@@ -1,1 +1,0 @@
-{"version":3,"file":"spa.js","sourceRoot":"","sources":["../../source/spa.ts"],"names":[],"mappings":"AAAA,6EAA6E;AAC7E,kFAAkF;AAClF,sFAAsF;AACtF,0FAA0F;AAC1F,OAAO,EAAE,OAAO,EAAE,MAAM,uBAAuB,CAAC;AAChD,OAAO,EAAE,QAAQ,EAAE,MAAM,yBAAyB,CAAC;AAEnD,MAAM,CAAC,MAAM,GAAG,GAAG;IACjB,OAAO;IACP,QAAQ;IACR,yCAAyC;CAC1C,CAAC"}
