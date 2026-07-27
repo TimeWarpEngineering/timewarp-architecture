@@ -51,6 +51,8 @@ source/
     web/
       features/      # product slices (feature-cohesive): all layers together under <slice>/
                      # files named <name>[-<function>]-<layer>.cs; layer projects glob by suffix
+      platform/      # host/platform clusters (postgres, identity-host): same -layer suffix grammar
+                     # as features/, NOT …Features.* namespaces (TWA0009 platform, not product)
       web-spa/       # WASM UI (features stay conventional under web-spa/features — not rehomed)
       web-contracts/ web-application/ web-server/ web-domain/ web-infrastructure/
       msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
@@ -58,16 +60,18 @@ source/
 tests/               # mirrors source/; includes web-contracts-tests (host-free serialization round-trips)
 ```
 
-**Axis-1 filename grammar (web product code):** files under `web/features/` use
-`<name>[-<function>]-<layer>.cs` (`handler`→application, `endpoint`→server;
+**Axis-1 filename grammar (web product + platform trees):** files under `web/features/` and
+`web/platform/` use `<name>[-<function>]-<layer>.cs` (`handler`→application, `endpoint`→server;
 contracts drop the function segment: `create-role-contracts.cs`). Escape hatch:
-`<name>-<layer>.cs` with no function (`role-store-application.cs`). Registry SSOT:
+`<name>-<layer>.cs` with no function (`role-store-application.cs`,
+`postgres-db-context-infrastructure.cs`). Registry SSOT:
 `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
-(generates analyzer constants + `web/msbuild/feature-filename-grammar.g.props`). **Registry edit
-⇒ full rebuild** (analyzer DLLs can go stale under pure incremental builds). Namespaces do **not**
-track folders — TWA0009 still keys off `…Features.<Id>`. Full workflow (worked examples,
-registry extension, TWA0015/0016 fixes, membership-guard errors, SPA exception, per-module
-assembly-split note): **`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
+(generates analyzer constants + `web/msbuild/feature-filename-grammar.g.props`). Both trees are
+globbed into layer projects via `WebFeatureTreeRoot` / `WebPlatformTreeRoot` in
+`feature-membership.targets`. **Registry edit ⇒ full rebuild** (analyzer DLLs can go stale under
+pure incremental builds). Namespaces do **not** track folders — product slices use
+`…Features.<Id>` (TWA0009); platform clusters keep non-Features namespaces. Full workflow:
+**`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
 
 ## Platform packages (foundation + analyzers + identity)
 

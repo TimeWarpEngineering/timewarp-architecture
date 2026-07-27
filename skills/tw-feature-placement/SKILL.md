@@ -2,18 +2,18 @@
 name: tw-feature-placement
 description: >-
   **TIMEWARP SKILL** — feature-cohesive folder placement, per-use-case folders, and the
-  filename grammar `<name>[-<function>]-<layer>.cs` for product code under `web/features/`:
-  which layer a file belongs to, what to name it and which use-case folder it goes in, the
-  registry that backs TWA0015/TWA0016, and the membership-guard build errors. Invoke before
-  creating, moving, or renaming a file under a feature slice, or when a
-  TWA0015/TWA0016/membership-guard error appears.
+  filename grammar `<name>[-<function>]-<layer>.cs` for product code under `web/features/`
+  and platform clusters under `web/platform/`: which layer a file belongs to, what to name it
+  and which folder it goes in, the registry that backs TWA0015/TWA0016, and the membership-guard
+  build errors. Invoke before creating, moving, or renaming a file under a feature slice or
+  platform cluster, or when a TWA0015/TWA0016/membership-guard error appears.
   WHEN: "Where does this handler file go?", "What do I name this contract file?",
   "Should this file get its own folder?", "TWA0015", "TWA0016",
-  "feature file matches no registered layer suffix",
+  "feature file matches no registered layer suffix", "platform/postgres",
   "add a function segment to the registry", "split a module into its own assembly".
 when-to-use: >
-  feature filename grammar, feature-cohesive folder, web/features, filename grammar,
-  use-case folder, per-use-case folder, commands folder, queries folder,
+  feature filename grammar, feature-cohesive folder, web/features, web/platform, platform cluster,
+  filename grammar, use-case folder, per-use-case folder, commands folder, queries folder,
   TWA0015, TWA0016, feature-filename-grammar.json, membership guard, feature-membership.targets,
   escape hatch filename, function segment, layer suffix, registry edit rebuild,
   per-module assembly split
@@ -23,10 +23,23 @@ when-to-use: >
 
 Product code for a web container-app lives in **one feature-cohesive folder per slice** —
 `web/features/<slice>/` — with every layer (contracts, application, domain, infrastructure,
-server) colocated in that folder. **Folder location is for humans; filename decides project
-membership.** Each layer project composes its files with a static filename glob keyed to a
-suffix, not a folder path. This is the answer to "where does this file live" and "what do I
-name it" — the most common file-placement decision in the repo.
+server) colocated in that folder. Host/platform clusters that are **not** product slices live
+under `web/platform/<cluster>/` with the **same** `-layer` filename suffixes (so the same
+layer-project globs pick them up) but **without** `…Features.<Id>` namespaces. **Folder location
+is for humans; filename decides project membership.** Each layer project composes its files with
+static filename globs keyed to a suffix under both `WebFeatureTreeRoot` and `WebPlatformTreeRoot`,
+not a folder path. This is the answer to "where does this file live" and "what do I name it" —
+the most common file-placement decision in the repo.
+
+## `features/` vs `platform/` vs host project folders
+
+| Home | Use for | Namespace | Examples |
+|------|---------|-----------|----------|
+| `web/features/<slice>/` | Product slices / use cases | `…Features.<Id>` (TWA0009) | admin/roles, identity ops, chat |
+| `web/platform/<cluster>/` | Cohesive host/platform concerns split across layers, not a product feature | Non-Features (e.g. Persistence, Services, Configuration) | `platform/postgres/`, `platform/identity-host/` |
+| `web-server/`, `web-infrastructure/`, … | csproj + assembly-level host wiring only (program, modules that are pure DI hooks, sample options) | Host assembly defaults | `program.cs`, `web-infrastructure-module.cs` |
+
+Do **not** move seam interfaces out of `web-application/abstractions/` into platform/ — interface-in-application / impl-in-server is the seam. Do **not** put host wiring into a product slice just because it touches that product.
 
 Inside a slice, files group **by use case**, not by message kind: every operation gets its own
 `<slice>/<use-case>/` folder holding all of that operation's layer files side by side — the
@@ -186,13 +199,14 @@ Adding or changing a function or layer means editing only the JSON:
 ## Membership guard
 
 `web/msbuild/feature-membership.targets` (imported once via `web/Directory.Build.targets`) walks
-every `.cs` under the cohesive tree and requires each one to match exactly one registered
-`-{layer}` suffix, generated from the same registry. A file matching **zero** registered
-suffixes is a **build error** — it would otherwise compile into no project at all:
+every `.cs` under `web/features/` and `web/platform/` and requires each one to match exactly one
+registered `-{layer}` suffix, generated from the same registry. A file matching **zero**
+registered suffixes is a **build error** — it would otherwise compile into no project at all:
 
-> Feature file(s) match NO registered layer suffix and would compile into no project: `<file>`.
-> Rename to `<name>[-<function>]-<layer>.cs` with layer one of: `-contracts, -application,
-> -domain, -infrastructure, -server`. Registry: `feature-filename-grammar.json`.
+> Feature/platform file(s) match NO registered layer suffix and would compile into no project:
+> `<file>`. Rename to `<name>[-<function>]-<layer>.cs` with layer one of: `-contracts,
+> -application, -domain, -infrastructure, -server`. Registry: `feature-filename-grammar.json`.
+> Trees: `features/` and `platform/`.
 
 Fix: rename the file to end in one of the registered layer suffixes. Dual-match (two suffixes
 claiming the same file) can't happen structurally once suffix nesting is rejected at generation

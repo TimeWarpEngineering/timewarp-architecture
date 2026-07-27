@@ -3,6 +3,8 @@
   Do not edit by hand. Edit the JSON and rebuild the convention-analyzers project (or run the generator).
   Registry edit ⇒ full rebuild (analyzer incremental staleness).
   Nesting of layer suffixes is rejected at generation time (dual-match prevention).
+  Hybrid includes: WebFeatureTreeRoot (features/) and WebPlatformTreeRoot (platform/) from
+  feature-membership.targets — same -{layer} suffix → layer project mapping.
 -->
 <Project>
   <PropertyGroup>
@@ -17,25 +19,40 @@
     <FeatureFilenameGrammarFunction Include="endpoint" Layer="server" />
     <FeatureFilenameGrammarFunction Include="handler" Layer="application" />
   </ItemGroup>
-  <!-- Hybrid includes (option 1): require WebFeatureTreeRoot set by feature-membership.targets. -->
+  <!-- Hybrid includes: require tree roots set by feature-membership.targets. -->
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-contracts'">
     <Compile Include="$(WebFeatureTreeRoot)/**/*-contracts.cs"
              Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(WebPlatformTreeRoot)/**/*-contracts.cs"
+             Condition="'$(WebPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-application'">
     <Compile Include="$(WebFeatureTreeRoot)/**/*-application.cs"
              Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(WebPlatformTreeRoot)/**/*-application.cs"
+             Condition="'$(WebPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-domain'">
     <Compile Include="$(WebFeatureTreeRoot)/**/*-domain.cs"
              Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(WebPlatformTreeRoot)/**/*-domain.cs"
+             Condition="'$(WebPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-infrastructure'">
     <Compile Include="$(WebFeatureTreeRoot)/**/*-infrastructure.cs"
              Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(WebPlatformTreeRoot)/**/*-infrastructure.cs"
+             Condition="'$(WebPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-server'">
     <Compile Include="$(WebFeatureTreeRoot)/**/*-server.cs"
              Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(WebPlatformTreeRoot)/**/*-server.cs"
+             Condition="'$(WebPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

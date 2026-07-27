@@ -93,10 +93,15 @@ internal static class FeatureFilenameGrammar
     for function, layer in sorted(functions.items())
   )
   # Hybrid Compile globs generated from the layer list (SSOT — do not hand-list in targets).
+  # Two cohesive roots: features/ (product slices) and platform/ (host/platform clusters).
+  # Both use the same -{layer} suffix → project mapping; membership.targets sets the roots.
   compile_groups = "\n".join(
     f"""  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-{layer}'">
     <Compile Include="$(WebFeatureTreeRoot)/**/*-{layer}.cs"
              Link="features\\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(WebPlatformTreeRoot)/**/*-{layer}.cs"
+             Condition="'$(WebPlatformTreeRoot)' != ''"
+             Link="platform\\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>"""
     for layer in layers
   )
@@ -105,6 +110,8 @@ internal static class FeatureFilenameGrammar
   Do not edit by hand. Edit the JSON and rebuild the convention-analyzers project (or run the generator).
   Registry edit ⇒ full rebuild (analyzer incremental staleness).
   Nesting of layer suffixes is rejected at generation time (dual-match prevention).
+  Hybrid includes: WebFeatureTreeRoot (features/) and WebPlatformTreeRoot (platform/) from
+  feature-membership.targets — same -{{layer}} suffix → layer project mapping.
 -->
 <Project>
   <PropertyGroup>
@@ -114,7 +121,7 @@ internal static class FeatureFilenameGrammar
 {layer_items}
 {function_items}
   </ItemGroup>
-  <!-- Hybrid includes (option 1): require WebFeatureTreeRoot set by feature-membership.targets. -->
+  <!-- Hybrid includes: require tree roots set by feature-membership.targets. -->
 {compile_groups}
 </Project>
 """

@@ -6,7 +6,8 @@
 #region Design
 // Scoped (per-request IHttpContextAccessor), mirroring HttpCurrentPrincipalAccessor/
 // CookieBrowserSessionService — see IRequestHostAccessor's Design region for why the port lives in
-// web-application while this ASP.NET-Core-bound implementation lives in web-server.
+// web-application while this ASP.NET-Core-bound implementation lives in platform/identity-host
+// (compiled into web-server via the -server suffix glob).
 // HttpRequestHost.Host is the host WITHOUT the port (HostString exposes Host and Port separately),
 // which is exactly the bare domain an RP ID must be. Behind the task-112 ingress this reads the
 // PUBLIC host only because that ingress preserves the original Host header: the AppHost's YARP carves
