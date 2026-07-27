@@ -9,7 +9,6 @@
 // Registered by PostgresDbModule so the behavior ships only when the postgres feature is wired in.
 #endregion
 
-#nullable enable
 namespace TimeWarp.Architecture.HostedServices;
 
 public sealed partial class PostgresDbContextStartupHostedService : IHostedService

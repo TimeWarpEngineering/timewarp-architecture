@@ -9,7 +9,6 @@
 // LoggerMessage.Define is used to model the repo's allocation-free logging convention.
 #endregion
 
-#nullable enable
 namespace TimeWarp.Architecture.Configuration;
 
 public class SampleEnvironmentCheck

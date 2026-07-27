@@ -9,7 +9,6 @@
 // DevTools hydration live in account-state.debug.cs.
 #endregion
 
-#nullable enable
 namespace TimeWarp.Architecture.Features.Account;
 
 [StateAccess]

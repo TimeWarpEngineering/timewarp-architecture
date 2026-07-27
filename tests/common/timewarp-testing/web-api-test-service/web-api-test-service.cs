@@ -1,4 +1,3 @@
-#nullable enable
 #region Purpose
 // Shared assertion helpers over TestApiService: typed responses and endpoint-validation checks.
 #endregion

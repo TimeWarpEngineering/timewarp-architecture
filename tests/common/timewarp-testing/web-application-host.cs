@@ -1,4 +1,3 @@
-#nullable enable
 namespace TimeWarp.Architecture.Testing;
 
 using Microsoft.Extensions.Configuration.Json;

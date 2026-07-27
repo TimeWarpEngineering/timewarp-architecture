@@ -10,7 +10,6 @@
 // logging allocation-free per the repo's logging convention.
 #endregion
 
-#nullable enable
 namespace TimeWarp.Architecture.Configuration;
 
 public class PostgresDbEnvironmentCheck

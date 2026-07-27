@@ -22,7 +22,6 @@
 // empty Queries already use EmptyRequestBinder at runtime).
 #endregion
 
-#nullable enable
 
 namespace TimeWarp.Architecture.Web.Server;
 
