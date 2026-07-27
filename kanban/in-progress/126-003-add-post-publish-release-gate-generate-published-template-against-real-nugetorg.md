@@ -59,6 +59,29 @@ before the pin bump — two releases in one day).
 - Related but distinct: 126-004 candidate (sourceName-unsafe literal grep inside template-smoke)
   guards a different failure class (source-side literals) — do not merge the two.
 
+
+## Implementation Plan (2026-07-27)
+
+### Goal
+Required post-publish gate: after real nuget.org push, wait for flatcontainer, install published template in a clean hive, generate (name ≠ sourceName), assert CPM pins == release version, restore nuget.org-only, build. Failure blocks release. Leave `dev template-smoke` untouched.
+
+### Design
+1. **New command** `template-publish-smoke` at `tools/dev-cli/endpoints/template-publish-smoke-command.cs`
+   - `--version` (default: parse `source/Directory.Build.props` `<Version>`)
+   - `--skip-wait` for re-runs when packages already available
+   - Matrix: PublishSmokeDefault + PublishSmokeNoPostgres (same as template-smoke)
+   - Flatcontainer wait: all platform packages + template; exponential backoff; 12 min budget
+   - Isolation: `artifacts/template-publish-smoke/{cli-home,nuget-packages,work}` via DOTNET_CLI_HOME + NUGET_PACKAGES
+   - App-local NuGet.config: clear + nuget.org only
+   - Pin assert + always-on synthetic stale-pin self-check
+   - `git init` before build (task 124)
+2. **Wire** `workflow-command.cs` RunReleaseAsync: after successful PushAsync **and** API key present → invoke gate via RunStepAsync. Pack-only skips.
+3. **Docs** `HowToRelease.md` + Overview link; workflow.yml header comment only (no new job).
+4. **Verify** dry-run against 2.0.0-beta.7; pack-only skip; dev build 0/0; template-smoke still green.
+
+### Non-goals
+Do not modify template-smoke; no second workflow job; no soft-fail; no pin rewrite.
+
 ## Session
 
 - Created: 2026-07-26 — filed from 126 RFC Decision 3 + maintainer block-semantics resolution.
