@@ -53,8 +53,9 @@ source/
                      # files named <name>[-<function>]-<layer>.cs; layer projects glob by suffix
       platform/      # host/platform clusters (postgres, identity-host): same -layer suffix grammar
                      # as features/, NOT …Features.* namespaces (TWA0009 platform, not product)
-      web-spa/       # WASM UI (features stay conventional under web-spa/features — not rehomed)
-      web-contracts/ web-application/ web-server/ web-domain/ web-infrastructure/
+      projects/      # artifact folders (csproj homes): web-contracts/ web-application/
+                     # web-domain/ web-infrastructure/ web-server/ web-spa/
+                     # (SPA features stay conventional under web-spa/features — not rehomed)
       msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
     api/  grpc/  aspire/  yarp/
 tests/               # mirrors source/; includes web-contracts-tests (host-free serialization round-trips)

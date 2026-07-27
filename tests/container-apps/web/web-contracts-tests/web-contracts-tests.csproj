@@ -11,6 +11,6 @@
   <ItemGroup>
     <!-- Contracts only — no server, no host. These tests must run in the contract-first window,
          before any server exists (the BFF workflow authors contracts + mock-backed SPA first). -->
-    <ProjectReference Include="..\..\..\..\source\container-apps\web\web-contracts\web-contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-contracts\web-contracts.csproj" />
   </ItemGroup>
 </Project>

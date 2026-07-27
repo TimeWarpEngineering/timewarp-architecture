@@ -32,7 +32,7 @@
     <ProjectReference Include="..\..\..\source\container-apps\api\api-server\api-server.csproj" />
     <!--#endif-->
     <!--#if(web)-->
-    <ProjectReference Include="..\..\..\source\container-apps\web\web-server\web-server.csproj" />
+    <ProjectReference Include="..\..\..\source\container-apps\web\projects\web-server\web-server.csproj" />
     <!--#endif-->
     <!--#if(yarp)-->
     <ProjectReference Include="..\..\..\source\container-apps\yarp\yarp.csproj" />

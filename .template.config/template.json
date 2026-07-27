@@ -38,17 +38,17 @@
           "condition": "(!grpc)",
           "exclude": [
             "source/container-apps/grpc/**",
-            "source/container-apps/web/web-spa/features/superhero/**",
-            "source/container-apps/web/web-spa/services/superhero-grpc-service-provider.cs"
+            "source/container-apps/web/projects/web-spa/features/superhero/**",
+            "source/container-apps/web/projects/web-spa/services/superhero-grpc-service-provider.cs"
           ]
         },
         {
           "condition": "(!api)",
           "exclude": [
             "source/container-apps/api/**",
-            "source/container-apps/web/web-spa/features/weather-forecast/**",
-            "source/container-apps/web/web-spa/services/mocks/mock-api-service.cs",
-            "source/container-apps/web/web-spa/services/api-services/api-server-api-service.cs",
+            "source/container-apps/web/projects/web-spa/features/weather-forecast/**",
+            "source/container-apps/web/projects/web-spa/services/mocks/mock-api-service.cs",
+            "source/container-apps/web/projects/web-spa/services/api-services/api-server-api-service.cs",
             "tests/common/timewarp-testing/applications/api-test-server-application.cs",
             "tests/container-apps/api/**",
             "tests/container-apps/web/web-spa-integration-tests/Features/WeatherForecast/**"

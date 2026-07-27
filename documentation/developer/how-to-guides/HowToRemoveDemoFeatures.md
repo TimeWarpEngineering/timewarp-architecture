@@ -10,7 +10,7 @@ folder path — folders usually mirror slices for humans but TWA0009 enforces na
 boundaries. Pages that implement a slice live **in that slice's namespace** (not a grab-bag
 `…Pages` namespace).
 
-| Slice | Path (under `source/container-apps/web/web-spa/`) | Namespace | Demonstrates |
+| Slice | Path (under `source/container-apps/web/projects/web-spa/`) | Namespace | Demonstrates |
 |-------|--------------------------------------------------|-----------|--------------|
 | Counter | `features/counter/` | `…Features.Counters` | TimeWarp.State action sets, JS-interop dispatch, `[StateAccess]` |
 | EventStream | `features/event-stream/` | `…Features.EventStreams` | mediator pipeline middleware (`EventStreamBehavior`) |

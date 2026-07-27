@@ -25,4 +25,4 @@
 # │ Baseline                                              │ 2.1.1.0 │
 # └───────────────────────────────────────────────────────┴─────────┘
 
-dotnet run --project .\source\container-apps\web\web-server\web-server.csproj -- describe
+dotnet run --project .\source\container-apps\web\projects\web-server\web-server.csproj -- describe

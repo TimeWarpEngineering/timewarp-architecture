@@ -5,14 +5,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-domain\foundation-domain.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <ProjectReference Include="..\..\..\..\foundation\foundation-domain\foundation-domain.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Domain" Condition="'$(UseFoundationPackages)' == 'true'" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- [TypedId] BCL surface for ProfileId (task 106). Generators only — not the repo-wide
          convention analyzer package (that is wired repo-wide via source/Directory.Build.props). -->
-    <ProjectReference Include="../../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
+    <ProjectReference Include="../../../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       Condition="'$(UseAnalyzerPackages)' != 'true'" />
     <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"

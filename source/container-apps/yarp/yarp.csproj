@@ -40,7 +40,7 @@
     <!--#if (web) -->
     <!-- Task 107: compile-time reference (metadata only) so IngressRoutePrefixGenerator can scan the
          web-contracts ApiRoute templates. -->
-    <ProjectReference Include="../web/web-contracts/web-contracts.csproj"
+    <ProjectReference Include="../web/projects/web-contracts/web-contracts.csproj"
                       Private="false"
                       ExcludeAssets="runtime" />
     <!--#endif -->

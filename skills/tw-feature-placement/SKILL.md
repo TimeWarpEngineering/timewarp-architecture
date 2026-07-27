@@ -36,7 +36,13 @@ The litmus test for the fuzzy middle:
 |------|---------|-----------|----------|
 | `web/features/<slice>/` | Product concerns: an operation gets its own `<slice>/<use-case>/` folder; a file serving more than one operation (shared contract, store) stays at slice root | `…Features.<Id>` (TWA0009) | `admin/roles/create-role/`, `chat/chat-hub-server.cs` |
 | `web/platform/<cluster>/` | Platform concerns: a host/platform cluster split across layers — including a seam interface living beside the implementation it seams with, not sorted into a separate layer folder | Non-Features (e.g. Configuration, Services) | `platform/postgres/`, `platform/identity-host/i-current-principal-accessor-application.cs` + `http-current-principal-accessor-server.cs` |
-| Artifact folder (`web-server/`, `web-infrastructure/`, …) | The artifact's own definition (csproj, global-usings) and entry-point bootstrap only — content that would mean nothing if you imagine the deployable gone | Host assembly defaults | `program.cs`, `sample-options.cs` (binding/validation exemplar, not a real concern) |
+| `web/projects/<artifact>/` | Artifact (csproj home) under the family `projects/` group — definition (csproj, global-usings) and entry-point bootstrap only; content that would mean nothing if you imagine the deployable gone. Occupants: `web-contracts/`, `web-application/`, `web-domain/`, `web-infrastructure/`, `web-server/`, `web-spa/` | Host assembly defaults | `program.cs`, `sample-options.cs` (binding/validation exemplar, not a real concern) |
+| `web/msbuild/` | Build machinery for the web family (filename-grammar props, membership targets) | n/a | `feature-membership.targets` |
+
+**Family root shape:** multi-project container-app families group artifact folders under
+`projects/` so the root reads as the placement rule (`features/` + `platform/` + `projects/` +
+`msbuild/`). **yarp** is a single-project family (`yarp/` *is* the project — appsettings at its
+root); it is not nested under `projects/`. A single-project family is its own artifact folder.
 
 **Folder location is for humans; filename decides project membership.** Each layer project
 composes its files with static filename globs keyed to a suffix under both `WebFeatureTreeRoot`

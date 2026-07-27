@@ -49,7 +49,7 @@
     <ProjectReference Include="../../grpc/grpc-server/grpc-server.csproj" />
     <!--#endif -->
     <!--#if (web) -->
-    <ProjectReference Include="../../web/web-server/web-server.csproj" />
+    <ProjectReference Include="../../web/projects/web-server/web-server.csproj" />
     <!--#endif -->
   </ItemGroup>
 
@@ -64,7 +64,7 @@
     <!-- Task 107: compile-time reference (NOT an Aspire resource) so IngressRoutePrefixGenerator can
          scan web-contracts ApiRoute templates. ExcludeAssets=runtime / Private=false: metadata only,
          never a runtime dependency of the orchestrator (foundation-contracts precedent above). -->
-    <ProjectReference Include="../../web/web-contracts/web-contracts.csproj"
+    <ProjectReference Include="../../web/projects/web-contracts/web-contracts.csproj"
                       IsAspireProjectResource="false"
                       Private="false"
                       ExcludeAssets="runtime" />

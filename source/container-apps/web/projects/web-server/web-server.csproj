@@ -18,7 +18,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileContext>..\..\..</DockerfileContext>
+    <DockerfileContext>..\..\..\..</DockerfileContext>
     <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
     <!-- Only generate from web-contracts — web-spa transitively references api-contracts. -->
     <ApiEndpointContractAssemblies>web-contracts</ApiEndpointContractAssemblies>
@@ -47,20 +47,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-server\foundation-server.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <ProjectReference Include="..\..\..\..\foundation\foundation-server\foundation-server.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Server" Condition="'$(UseFoundationPackages)' == 'true'" />
-    <ProjectReference Include="..\..\aspire\aspire-service-defaults\aspire-service-defaults.csproj" />
+    <ProjectReference Include="..\..\..\aspire\aspire-service-defaults\aspire-service-defaults.csproj" />
     <ProjectReference Include="..\web-infrastructure\web-infrastructure.csproj" />
     <ProjectReference Include="..\web-contracts\web-contracts.csproj" />
     <ProjectReference Include="..\web-spa\web-spa.csproj" />
 
-    <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-analyzers\timewarp-architecture-analyzers.csproj"
+    <ProjectReference Include="..\..\..\..\analyzers\timewarp-architecture-analyzers\timewarp-architecture-analyzers.csproj"
                        OutputItemType="Analyzer"
                        ReferenceOutputAssembly="false"
                        Condition="'$(UseAnalyzerPackages)' != 'true'" />
     <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"
                        Condition="'$(UseAnalyzerPackages)' == 'true'" />
-    <ProjectReference Include="..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj"
+    <ProjectReference Include="..\..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj"
                        Condition="'$(UseAnalyzerPackages)' != 'true'" />
     <PackageReference Include="$(TwArchitectureAttributesPackageId)"
                        Condition="'$(UseAnalyzerPackages)' == 'true'" />
@@ -72,7 +72,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\aspire\aspire-app-host\constants.cs">
+    <Compile Include="..\..\..\aspire\aspire-app-host\constants.cs">
       <Link>Configuration\Constants.cs</Link>
     </Compile>
   </ItemGroup>

@@ -6,7 +6,7 @@
     <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\source\container-apps\web\web-infrastructure\web-infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-infrastructure\web-infrastructure.csproj" />
     <!-- Shared IPrincipalStore contract abstract cases (task 104-032 dual-fixture) — homed in
          timewarp-testing so they exist when identity-tests is template-excluded (generated
          apps always package-mode; task 124). -->

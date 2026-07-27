@@ -122,7 +122,7 @@ public class Should_Enforce_Feature_Filename_Grammar
     // Must not flag files still under a layer project's own features/ folder, and must not
     // be fooled by a bare "web-server/" substring in an unrelated path.
     await Test("web-application/features/hello/hello-handler.cs").RunAsync();
-    await Test("/repo/source/container-apps/web/web-server/features/hello/some-helper.cs")
+    await Test("/repo/source/container-apps/web/projects/web-server/features/hello/some-helper.cs")
       .RunAsync();
   }
 
@@ -131,7 +131,7 @@ public class Should_Enforce_Feature_Filename_Grammar
     // SPA stays conventional (axis-1). Project-relative features/… and absolute web-spa/features/…
     // must never enter the cohesive-tree scope, even if the filename looks grammar-shaped.
     await Test("features/counter/counter-handler-application.cs").RunAsync();
-    await Test("/repo/source/container-apps/web/web-spa/features/counter/counter-handler-application.cs")
+    await Test("/repo/source/container-apps/web/projects/web-spa/features/counter/counter-handler-application.cs")
       .RunAsync();
   }
 

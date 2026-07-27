@@ -8,7 +8,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-application\foundation-application.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <ProjectReference Include="..\..\..\..\foundation\foundation-application\foundation-application.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Application" Condition="'$(UseFoundationPackages)' == 'true'" />
     <ProjectReference Include="..\web-contracts\web-contracts.csproj" />
     <ProjectReference Include="..\web-domain\web-domain.csproj" />
@@ -17,7 +17,7 @@
   <ItemGroup>
     <!-- Principal/Credential/IPrincipalStore + WebAuthn ceremony primitives for the identity
          feature handlers (task 104-003). Dual-mode via UseIdentityPackages (task 115). -->
-    <ProjectReference Include="..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
+    <ProjectReference Include="..\..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
 
   </ItemGroup>

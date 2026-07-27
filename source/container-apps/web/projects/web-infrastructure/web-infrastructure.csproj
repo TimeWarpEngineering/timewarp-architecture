@@ -5,7 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\foundation\foundation-infrastructure\foundation-infrastructure.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <ProjectReference Include="..\..\..\..\foundation\foundation-infrastructure\foundation-infrastructure.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Infrastructure" Condition="'$(UseFoundationPackages)' == 'true'" />
     <ProjectReference Include="..\web-application\web-application.csproj" />
   </ItemGroup>
@@ -13,7 +13,7 @@
   <ItemGroup>
     <!-- InMemoryPrincipalStore / InMemoryWebAuthnChallengeStore DI registration (task 104-003).
          Dual-mode via UseIdentityPackages (task 115). -->
-    <ProjectReference Include="..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
+    <ProjectReference Include="..\..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
 
   </ItemGroup>
@@ -21,7 +21,7 @@
   <ItemGroup>
     <!-- TypedId EF ValueConverters + ConfigureTypedIdConventions for PostgresDbContext (task 113-004).
          Generators only — convention analyzers already attach repo-wide via Directory.Build.props. -->
-    <ProjectReference Include="../../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
+    <ProjectReference Include="../../../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       Condition="'$(UseAnalyzerPackages)' != 'true'" />
     <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"
