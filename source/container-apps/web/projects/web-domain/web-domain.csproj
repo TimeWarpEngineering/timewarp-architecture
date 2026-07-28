@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\foundation\foundation-domain\foundation-domain.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Domain" Condition="'$(UseFoundationPackages)' == 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- [TypedId] BCL surface for ProfileId (task 106). Generators only — not the repo-wide
+         convention analyzer package (that is wired repo-wide via source/Directory.Build.props). -->
+    <ProjectReference Include="../../../../analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="$(TwArchitectureGeneratorsPackageId)" PrivateAssets="all"
+                      Condition="'$(UseAnalyzerPackages)' == 'true'" />
+  </ItemGroup>
+
+  <!-- TypedIdAttribute namespace dual-mode (task 115) — see timewarp-identity.csproj. -->
+  <ItemGroup>
+    <Using Include="$(TwArchitectureRootNamespace)" Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <Using Include="TimeWarp.Architecture" Condition="'$(UseAnalyzerPackages)' != 'true'" />
+  </ItemGroup>
+
+</Project>
+

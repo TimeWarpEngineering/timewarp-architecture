@@ -14,4 +14,14 @@
     <IsPackable>true</IsPackable>
     <PackageTags>timewarp;foundation;architecture;cqrs;mediator;ddd</PackageTags>
   </PropertyGroup>
+
+  <!-- Marker namespaces match published package surface (RootNamespace is the kebab project name). -->
+  <PropertyGroup Label="AssemblyMarkerNamespace">
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'foundation-domain'">TimeWarp.Foundation.Common.Domain</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'foundation-application'">TimeWarp.Foundation.Common.Application</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'foundation-contracts'">TimeWarp.Foundation.Common.Contracts</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'foundation-infrastructure'">TimeWarp.Foundation.Common.Infrastructure</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'foundation-server'">TimeWarp.Foundation.Common.Server</AssemblyMarkerNamespace>
+    <TwGenerateAssemblyMarker Condition="'$(MSBuildProjectName)' == 'foundation-contracts-generators'">false</TwGenerateAssemblyMarker>
+  </PropertyGroup>
 </Project>

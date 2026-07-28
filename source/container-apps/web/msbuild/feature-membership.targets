@@ -1,15 +1,18 @@
 <!--
-  Axis-1 feature-cohesive tree membership guard + hybrid layer includes.
+  Axis-1 cohesive-tree membership guard + hybrid layer includes.
 
-  Every .cs under web/features/ must end in exactly one registered layer suffix
-  (from feature-filename-grammar.g.props, generated from the SSOT JSON).
-  Zero-match → teaching build error. Suffix nesting is rejected at generation
-  time so dual-glob-match cannot occur.
+  Every .cs under web/features/ and web/platform/ must end in exactly one
+  registered layer suffix (from feature-filename-grammar.g.props, generated from
+  the SSOT JSON). Zero-match → teaching build error. Suffix nesting is rejected
+  at generation time so dual-glob-match cannot occur.
 
   Hybrid includes (option 1): default SDK items stay; each layer project also
-  globs $(WebFeatureTreeRoot)/**/*-{layer}.cs with Link metadata — Compile
-  ItemGroups are generated in feature-filename-grammar.g.props from the same
-  layer list (no hand-duplication).
+  globs $(WebFeatureTreeRoot)/**/*-{layer}.cs and
+  $(WebPlatformTreeRoot)/**/*-{layer}.cs with Link metadata — Compile ItemGroups
+  are generated in feature-filename-grammar.g.props from the same layer list
+  (no hand-duplication). features/ holds product slices; platform/ holds
+  host/platform clusters that share grammar suffixes but are NOT …Features.*
+  slice namespaces.
 
   Import once via web/Directory.Build.targets so the guard runs once per
   framework build of any web project, and each layer project gets its globs.
@@ -17,6 +20,7 @@
 <Project>
   <PropertyGroup>
     <WebFeatureTreeRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../features'))</WebFeatureTreeRoot>
+    <WebPlatformTreeRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../platform'))</WebPlatformTreeRoot>
   </PropertyGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)feature-filename-grammar.g.props" />
@@ -27,6 +31,8 @@
           Condition="'$(MSBuildProjectName)' == 'web-server'">
     <ItemGroup>
       <FeatureTreeFile Include="$(WebFeatureTreeRoot)/**/*.cs" />
+      <FeatureTreeFile Include="$(WebPlatformTreeRoot)/**/*.cs"
+                      Condition="Exists('$(WebPlatformTreeRoot)')" />
     </ItemGroup>
 
     <!--
@@ -47,7 +53,7 @@
       <_HasUnmatchedFeatureFiles Condition="@(UnmatchedFeatureFile->Count()) > 0">true</_HasUnmatchedFeatureFiles>
     </PropertyGroup>
     <Error Condition="'$(_HasUnmatchedFeatureFiles)' == 'true'"
-      Text="Feature file(s) match NO registered layer suffix and would compile into no project: @(UnmatchedFeatureFile->'%(Filename)%(Extension)', ', '). Rename to '&lt;name&gt;[-&lt;function&gt;]-&lt;layer&gt;.cs' with layer one of: @(FeatureFilenameGrammarLayer->'-%(Identity)', ', '). Registry: feature-filename-grammar.json." />
+      Text="Feature/platform file(s) match NO registered layer suffix and would compile into no project: @(UnmatchedFeatureFile->'%(Filename)%(Extension)', ', '). Rename to '&lt;name&gt;[-&lt;function&gt;]-&lt;layer&gt;.cs' with layer one of: @(FeatureFilenameGrammarLayer->'-%(Identity)', ', '). Registry: feature-filename-grammar.json. Trees: features/ and platform/." />
 
   </Target>
 </Project>

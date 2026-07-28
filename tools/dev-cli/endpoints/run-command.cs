@@ -16,7 +16,7 @@ namespace DevCli.Commands;
 internal sealed class RunCommand : ICommand<Unit>
 {
   private const string AppHostProject =
-    "source/container-apps/aspire/aspire-app-host/aspire-app-host.csproj";
+    "source/container-apps/aspire/projects/aspire-app-host/aspire-app-host.csproj";
 
   internal sealed class Handler : ICommandHandler<RunCommand, Unit>
   {

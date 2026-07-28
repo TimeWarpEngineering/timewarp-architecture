@@ -11,6 +11,14 @@
 // disambiguate identically named properties across contracts. ConfigureServices also Applies
 // ContractSerializationDefaults to MVC JsonOptions and HttpJsonOptions so the host wire shape
 // matches the SPA/CLI/tests seam (camelCase properties; PascalCase string enums).
+// OpenAPI: FastEndpoints.OpenApi's OpenApiDocument (not raw services.AddOpenApi) so FE
+// transformers and endpoint metadata flow into the document. OpenAPI/Scalar feature tags
+// come from generator Description.WithTags (namespace leaf under Features, plus additive
+// [OpenApiTags]); FE Tags() is filter-only and does not set OpenAPI operation tags.
+// AutoTagPathSegmentIndex=0 disables route-segment auto-tags so they do not compete with
+// those explicit OpenAPI tags. UseScalarApiReference must run after UseFastEndpoints;
+// MapOpenApi serves /openapi/{doc}.json and MapScalarApiReference points at that
+// DocumentName via AddDocument.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -54,18 +62,41 @@ public class CommonServerModule : IAspNetModule
       o => ContractSerializationDefaults.Apply(o.SerializerOptions));
   }
 
+  /// <summary>
+  /// Registers a FastEndpoints OpenAPI document for Scalar (and any other document consumers).
+  /// </summary>
+  /// <param name="serviceCollection">Host service collection.</param>
+  /// <param name="apiVersion">Document name and version (e.g. "v1"); must match AddDocument.</param>
+  /// <param name="apiTitle">Human-readable document title shown in Scalar.</param>
   public static void AddOpenApi
   (
     IServiceCollection serviceCollection,
     string apiVersion,
-    string apiTitle,
-    Type[] typeArray
+    string apiTitle
   )
   {
-    // Scalar will generate OpenAPI from API controllers automatically
-    serviceCollection.AddEndpointsApiExplorer();
+    // FastEndpoints.OpenApi — not services.AddOpenApi() — so FE transformers and Description.WithTags metadata wire up.
+    serviceCollection.OpenApiDocument
+    (
+      options =>
+      {
+        options.DocumentName = apiVersion;
+        options.Title = apiTitle;
+        options.Version = apiVersion;
+        // Generator emits OpenAPI tags via Description.WithTags (…Features.<Id> leaf / [OpenApiTags]).
+        // Disable route-segment auto-tags so they do not compete with those explicit tags.
+        options.AutoTagPathSegmentIndex = 0;
+        options.ExcludeNonFastEndpoints = true;
+      }
+    );
   }
 
+  /// <summary>
+  /// Maps the OpenAPI document endpoint and Scalar UI. Call after <c>UseFastEndpoints</c>.
+  /// </summary>
+  /// <param name="webApplication">Built host.</param>
+  /// <param name="apiVersion">Document name registered in <see cref="AddOpenApi"/>.</param>
+  /// <param name="apiTitle">UI title and document display name.</param>
   public static void UseScalarApiReference
   (
     WebApplication webApplication,
@@ -73,7 +104,18 @@ public class CommonServerModule : IAspNetModule
     string apiTitle
   )
   {
-    webApplication.MapScalarApiReference();
+    webApplication.MapOpenApi();
+    webApplication.MapScalarApiReference
+    (
+      options =>
+      {
+        options
+          .WithTitle(apiTitle)
+          .AddDocument(apiVersion, apiTitle)
+          .SortTagsAlphabetically()
+          .ExpandAllTags();
+      }
+    );
   }
 
   private static void ConfigureAzureAppConfig(IConfigurationManager configurationManager)

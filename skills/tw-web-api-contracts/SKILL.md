@@ -29,7 +29,7 @@ Activate when **any** signal matches:
 | Signal | How to find it |
 |--------|----------------|
 | Contracts project | `*.csproj` named `*contracts*` (any casing); product contracts may live in a cohesive `web/features/` tree (axis-1) or a project-local `features/`/`Features/` tree |
-| Contract file layout | `**/features/**/commands/*-contracts.cs` or `**/features/**/queries/*-contracts.cs` (axis-1 grammar; also match legacy `*.cs` without the layer suffix). Search **case-insensitively** — repos use kebab `features/` or Pascal `Features/` |
+| Contract file layout | `**/features/**/<use-case>/*-contracts.cs` (one folder per operation, contract beside its handler) or a shared `*-contracts.cs` at slice root for a file used by more than one operation (axis-1 grammar; also match legacy `*.cs` without the layer suffix). Search **case-insensitively** — repos use kebab `features/` or Pascal `Features/` |
 | Contract shell | `public static partial class` + nested `Query`/`Command` + `[ApiRoute(...)]` |
 | TimeWarp.Mediator return | `IRequest<OneOf<Response, SharedProblemDetails>>` |
 | Shared validation | `I*Details` interface + `AbstractValidator<I*Details>` |
@@ -44,10 +44,10 @@ namespace root, folder casing, test project layout, and mock-service registratio
 | Concern | Rule | Example |
 |---------|------|---------------------|
 | Feature folder | **Plural**, domain-oriented; axis-1 cohesive root is `web/features/<slice>/` | `web/features/admin/roles/` |
-| Filename grammar | `<name>[-<function>]-<layer>.cs`; contracts drop function | `commands/create-role-contracts.cs` |
+| Filename grammar | `<name>[-<function>]-<layer>.cs`; contracts drop function | `create-role/create-role-contracts.cs` |
 | Namespace | **Plural** (does **not** track folder moves) | `{Root}.Features.Admin.Roles` |
-| Commands / Queries | Subfolders under feature | `commands/create-role-contracts.cs`, `queries/get-role-contracts.cs` |
-| Shared bindable shape | Separate file in feature folder | `role-details-contracts.cs` (`IRoleDetails`) |
+| Use-case folder | One folder per operation, contract beside its handler (see `tw-feature-placement`) | `create-role/create-role-contracts.cs`, `get-role/get-role-contracts.cs` |
+| Shared bindable shape | Separate file at slice root, not inside any use-case folder | `role-details-contracts.cs` (`IRoleDetails`) |
 | Registry | Function→layer SSOT (analyzer + membership guard) | `feature-filename-grammar.json` — edit ⇒ full rebuild |
 
 **Casing:** kebab-case paths are canonical; if the repo already uses PascalCase folders
@@ -215,7 +215,8 @@ auth-agnostic. Choose it when mock-mode identity isn't needed; it is not wrong.
 
 ### 1. Identify the operation
 
-Read → `queries/get-*-contracts.cs` · Write → `commands/create-|update-|delete-*-contracts.cs`
+Read → `get-*/get-*-contracts.cs` · Write → `create-*|update-*|delete-*/…-contracts.cs`
+(one use-case folder per operation, not a `commands`/`queries` split)
 
 ### 2. Scaffold the partial class
 
@@ -389,10 +390,12 @@ error. See the `tw-mock-response-factory` skill.
 ## Canonical examples
 
 - **Living anchor (timewarp-architecture template):** `web/features/admin/roles/` —
-  `role-details-contracts.cs` (`IRoleDetails` + validator), `commands/create-role-contracts.cs`,
-  `queries/get-roles-contracts.cs` (attribute auth + open-data), `queries/get-role-contracts.cs`
-  (manual auth, `I*Details` Response). Handlers sit beside contracts in the same slice folder
-  (`create-role-handler-application.cs`); layer projects compose via static `*-{layer}.cs` globs.
+  `role-details-contracts.cs` (`IRoleDetails` + validator, shared at slice root),
+  `create-role/create-role-contracts.cs`, `get-roles/get-roles-contracts.cs` (attribute auth +
+  open-data), `get-role/get-role-contracts.cs` (manual auth, `I*Details` Response). Each
+  contract sits beside its handler in the same use-case folder
+  (`create-role/create-role-handler-application.cs`); layer projects compose via static
+  `*-{layer}.cs` globs regardless of folder.
 - Inline reference implementations: [examples.md](references/examples.md).
 
 ## Related skills

@@ -52,7 +52,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
       {
         options.Assemblies = new[]
         {
-          typeof(Web.Spa.AssemblyMarker).Assembly
+          typeof(Web.Spa.IAssemblyMarker).Assembly
         };
       }
     );

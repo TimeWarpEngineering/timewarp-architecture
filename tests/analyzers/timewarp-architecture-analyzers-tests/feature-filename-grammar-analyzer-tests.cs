@@ -45,7 +45,7 @@ public class Should_Enforce_Feature_Filename_Grammar
         fileName,
         function,
         requiredLayer,
-        "-endpoint- ⇒ -server, -feature-annotations- ⇒ -server, -handler- ⇒ -application"
+        "-endpoint- ⇒ -server, -handler- ⇒ -application"
       );
 
   private static DiagnosticResult Twa0016(string path, string fileName, string function) =>
@@ -55,7 +55,7 @@ public class Should_Enforce_Feature_Filename_Grammar
       (
         fileName,
         function,
-        "-endpoint-, -feature-annotations-, -handler-"
+        "-endpoint-, -handler-"
       );
 
   public static async Task Given_Handler_On_Application_IsClean()
@@ -81,18 +81,18 @@ public class Should_Enforce_Feature_Filename_Grammar
     await analyzerTest.RunAsync();
   }
 
-  public static async Task Given_FeatureAnnotations_On_Server_IsClean()
+  public static async Task Given_Endpoint_On_Server_IsClean()
   {
-    await Test("../features/hello/hello-feature-annotations-server.cs").RunAsync();
+    await Test("../features/hello/hello-endpoint-server.cs").RunAsync();
   }
 
-  public static async Task Given_FeatureAnnotations_On_Application_Flags_TWA0015()
+  public static async Task Given_Endpoint_On_Application_Flags_TWA0015()
   {
-    const string Path = "../features/hello/hello-feature-annotations-application.cs";
+    const string Path = "../features/hello/hello-endpoint-application.cs";
     CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add
     (
-      Twa0015(Path, "hello-feature-annotations-application.cs", "feature-annotations", "server")
+      Twa0015(Path, "hello-endpoint-application.cs", "endpoint", "server")
     );
     await analyzerTest.RunAsync();
   }
@@ -117,25 +117,21 @@ public class Should_Enforce_Feature_Filename_Grammar
     await analyzerTest.RunAsync();
   }
 
-  public static async Task Given_Incomplete_MultiSegment_Function_Flags_TWA0016()
-  {
-    // feature-annotations is registered; a feature-*-annotations form that is not the full
-    // registered function is an incomplete archetype (TWA0016), not an escape-hatch name.
-    const string Path = "../features/hello/feature-only-annotations-server.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
-    analyzerTest.ExpectedDiagnostics.Add
-    (
-      Twa0016(Path, "feature-only-annotations-server.cs", "feature-only-annotations")
-    );
-    await analyzerTest.RunAsync();
-  }
-
   public static async Task Given_Layer_Project_Features_Path_IsSilent()
   {
     // Must not flag files still under a layer project's own features/ folder, and must not
     // be fooled by a bare "web-server/" substring in an unrelated path.
     await Test("web-application/features/hello/hello-handler.cs").RunAsync();
-    await Test("/repo/source/container-apps/web/web-server/features/hello/feature-annotations.cs")
+    await Test("/repo/source/container-apps/web/projects/web-server/features/hello/some-helper.cs")
+      .RunAsync();
+  }
+
+  public static async Task Given_Api_Family_Layer_Project_Features_Path_IsSilent()
+  {
+    // Family-generic markers (task 129): api-* layer projects' own features/ folders are not
+    // the api family's cohesive tree either.
+    await Test("api-application/features/weather-forecast/weather-forecast-handler.cs").RunAsync();
+    await Test("/repo/source/container-apps/api/projects/api-server/features/weather-forecast/some-helper.cs")
       .RunAsync();
   }
 
@@ -144,7 +140,7 @@ public class Should_Enforce_Feature_Filename_Grammar
     // SPA stays conventional (axis-1). Project-relative features/… and absolute web-spa/features/…
     // must never enter the cohesive-tree scope, even if the filename looks grammar-shaped.
     await Test("features/counter/counter-handler-application.cs").RunAsync();
-    await Test("/repo/source/container-apps/web/web-spa/features/counter/counter-handler-application.cs")
+    await Test("/repo/source/container-apps/web/projects/web-spa/features/counter/counter-handler-application.cs")
       .RunAsync();
   }
 
@@ -162,10 +158,40 @@ public class Should_Enforce_Feature_Filename_Grammar
     analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-contracts.cs", "handler", "application"));
     await analyzerTest.RunAsync();
   }
+
+  public static async Task Given_Absolute_Api_Family_Cohesive_Path_Flags_TWA0015()
+  {
+    // Family-generic scoping (task 129): api/features/ is a cohesive tree too, not just web's.
+    const string Path =
+      "/home/dev/source/container-apps/api/features/weather-forecast/weather-forecast-handler-contracts.cs";
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    analyzerTest.ExpectedDiagnostics.Add
+    (
+      Twa0015(Path, "weather-forecast-handler-contracts.cs", "handler", "application")
+    );
+    await analyzerTest.RunAsync();
+  }
+
+  public static async Task Given_Api_Family_Relative_Cohesive_Path_IsClean()
+  {
+    // ../features/ glob form is family-agnostic already; confirm api-shaped names parse clean.
+    await Test("../features/weather-forecast/get-weather-forecasts/get-weather-forecasts-contracts.cs")
+      .RunAsync();
+  }
 }
 
 public class Should_Keep_Grammar_Registry_In_Sync
 {
+  // Family list must stay in sync with the convention-analyzers csproj's three <Exec> invocations
+  // (source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj).
+  // yarp is a single-project family (no concern trees) and is intentionally excluded (127 precedent).
+  private static readonly (string Prefix, string Family)[] Families =
+  [
+    ("Web", "web"),
+    ("Api", "api"),
+    ("Grpc", "grpc"),
+  ];
+
   public static void Json_Cs_And_Props_Have_No_Drift()
   {
     string repoRoot = FindRepoRoot();
@@ -179,15 +205,9 @@ public class Should_Keep_Grammar_Registry_In_Sync
       repoRoot,
       "source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.g.cs"
     );
-    string propsPath = Path.Combine
-    (
-      repoRoot,
-      "source/container-apps/web/msbuild/feature-filename-grammar.g.props"
-    );
 
     File.Exists(jsonPath).ShouldBeTrue($"Missing {jsonPath}");
     File.Exists(csPath).ShouldBeTrue($"Missing {csPath}");
-    File.Exists(propsPath).ShouldBeTrue($"Missing {propsPath}");
 
     using System.Text.Json.JsonDocument document =
       System.Text.Json.JsonDocument.Parse(File.ReadAllText(jsonPath));
@@ -200,6 +220,7 @@ public class Should_Keep_Grammar_Registry_In_Sync
       .ToDictionary(static p => p.Name, static p => p.Value.GetString()!);
 
     // C# constants must agree with the live FeatureFilenameGrammar type (compiled from .g.cs).
+    // The registry itself is family-agnostic (Decision 2, task 129 stage 0) — checked once.
     FeatureFilenameGrammar.Layers.OrderBy(static l => l).ShouldBe(layers.OrderBy(static l => l));
     FeatureFilenameGrammar.FunctionToLayer.Count.ShouldBe(functions.Count);
     foreach (KeyValuePair<string, string> pair in functions)
@@ -208,36 +229,61 @@ public class Should_Keep_Grammar_Registry_In_Sync
       FeatureFilenameGrammar.FunctionToLayer[pair.Key].ShouldBe(pair.Value);
     }
 
-    // Props items must list the same layers and function→layer pairs, plus generated hybrid globs.
-    string props = File.ReadAllText(propsPath);
-    foreach (string layer in layers)
-    {
-      props.ShouldContain($"FeatureFilenameGrammarLayer Include=\"{layer}\"");
-      props.ShouldContain($"**/*-{layer}.cs");
-      props.ShouldContain($"'$(MSBuildProjectName)' == 'web-{layer}'");
-    }
+    // The .g.cs Families constant (sourced from the csproj's Web <Exec> --families argument)
+    // must agree with this test's own family list — the documented duplication (task 129
+    // stage 1) is now a checked one rather than a silent hand-sync.
+    FeatureFilenameGrammar.Families.OrderBy(static f => f, StringComparer.Ordinal)
+      .ShouldBe(Families.Select(static f => f.Family).OrderBy(static f => f, StringComparer.Ordinal));
 
-    props.ShouldContain("FeatureFilenameLayerSuffixRegex");
-
-    foreach (KeyValuePair<string, string> pair in functions)
+    // Each family gets its own generated props + membership targets, from the same JSON.
+    foreach ((string prefix, string family) in Families)
     {
-      props.ShouldContain
+      string propsPath = Path.Combine
       (
-        $"FeatureFilenameGrammarFunction Include=\"{pair.Key}\" Layer=\"{pair.Value}\""
+        repoRoot,
+        $"source/container-apps/{family}/msbuild/feature-filename-grammar.g.props"
       );
-    }
+      File.Exists(propsPath).ShouldBeTrue($"Missing {propsPath}");
 
-    // Membership targets must not re-hand-list layer globs; they consume the generated props.
-    string membershipPath = Path.Combine
-    (
-      repoRoot,
-      "source/container-apps/web/msbuild/feature-membership.targets"
-    );
-    File.Exists(membershipPath).ShouldBeTrue($"Missing {membershipPath}");
-    string membership = File.ReadAllText(membershipPath);
-    membership.ShouldContain("feature-filename-grammar.g.props");
-    membership.ShouldContain("FeatureFilenameLayerSuffixRegex");
-    membership.ShouldNotContain("**/*-contracts.cs");
+      // Props items must list the same layers and function→layer pairs, plus generated hybrid
+      // globs for both cohesive trees (features/ + platform/).
+      string props = File.ReadAllText(propsPath);
+      foreach (string layer in layers)
+      {
+        props.ShouldContain($"FeatureFilenameGrammarLayer Include=\"{layer}\"");
+        props.ShouldContain($"$({prefix}FeatureTreeRoot)/**/*-{layer}.cs");
+        props.ShouldContain($"$({prefix}PlatformTreeRoot)/**/*-{layer}.cs");
+        props.ShouldContain($"'$(MSBuildProjectName)' == '{family}-{layer}'");
+      }
+
+      props.ShouldContain("FeatureFilenameLayerSuffixRegex");
+      props.ShouldContain($"{prefix}PlatformTreeRoot");
+      props.ShouldContain("Link=\"platform\\%(RecursiveDir)%(Filename)%(Extension)\"");
+
+      foreach (KeyValuePair<string, string> pair in functions)
+      {
+        props.ShouldContain
+        (
+          $"FeatureFilenameGrammarFunction Include=\"{pair.Key}\" Layer=\"{pair.Value}\""
+        );
+      }
+
+      // Membership targets must not re-hand-list layer globs; they consume the generated props
+      // and define both tree roots + membership scan both.
+      string membershipPath = Path.Combine
+      (
+        repoRoot,
+        $"source/container-apps/{family}/msbuild/feature-membership.targets"
+      );
+      File.Exists(membershipPath).ShouldBeTrue($"Missing {membershipPath}");
+      string membership = File.ReadAllText(membershipPath);
+      membership.ShouldContain("feature-filename-grammar.g.props");
+      membership.ShouldContain("FeatureFilenameLayerSuffixRegex");
+      membership.ShouldContain($"{prefix}FeatureTreeRoot");
+      membership.ShouldContain($"{prefix}PlatformTreeRoot");
+      membership.ShouldContain($"$({prefix}PlatformTreeRoot)/**/*.cs");
+      membership.ShouldNotContain("**/*-contracts.cs");
+    }
   }
 
   private static string FindRepoRoot()

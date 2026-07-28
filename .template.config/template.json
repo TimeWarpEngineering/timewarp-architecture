@@ -24,24 +24,32 @@
             "**/obj/**",
             "artifacts/**",
             "tools/agent-identity-cli/**",
-            "tests/tools/agent-identity-cli-tests/**"
+            "tests/tools/agent-identity-cli-tests/**",
+            "source/foundation/**",
+            "source/libraries/timewarp-modules/**",
+            "source/libraries/timewarp-identity/**",
+            "source/analyzers/**",
+            "tests/foundation/**",
+            "tests/libraries/timewarp-identity-tests/**",
+            "tests/analyzers/**"
           ]
         },
         {
           "condition": "(!grpc)",
           "exclude": [
             "source/container-apps/grpc/**",
-            "source/container-apps/web/web-spa/features/superhero/**",
-            "source/container-apps/web/web-spa/services/superhero-grpc-service-provider.cs"
+            "source/container-apps/web/projects/web-spa/features/superhero/**",
+            "source/container-apps/web/projects/web-spa/services/superhero-grpc-service-provider.cs"
           ]
         },
         {
           "condition": "(!api)",
           "exclude": [
             "source/container-apps/api/**",
-            "source/container-apps/web/web-spa/features/weather-forecast/**",
-            "source/container-apps/web/web-spa/services/mocks/mock-api-service.cs",
-            "source/container-apps/web/web-spa/services/api-services/api-server-api-service.cs",
+            "source/container-apps/web/projects/web-spa/features/weather-forecast/**",
+            "source/container-apps/web/projects/web-spa/services/mocks/mock-api-service.cs",
+            "source/container-apps/web/projects/web-spa/services/api-services/api-server-api-service.cs",
+            "tests/container-apps/web/web-spa-integration-tests/Serialization/ApiService_Body_Casing_Tests.cs",
             "tests/common/timewarp-testing/applications/api-test-server-application.cs",
             "tests/container-apps/api/**",
             "tests/container-apps/web/web-spa-integration-tests/Features/WeatherForecast/**"
@@ -67,35 +75,13 @@
         {
           "condition": "(!postgres)",
           "exclude": [
-            "source/container-apps/web/web-infrastructure/persistence/postgres-db-context.cs",
-            "source/container-apps/web/web-infrastructure/persistence/ef-principal-store.cs",
-            "source/container-apps/web/web-infrastructure/configuration/postgres-db-options.cs",
-            "source/container-apps/web/web-server/configuration/environment-checks/postgres-db-environment-check.cs",
-            "source/container-apps/web/web-server/hosted-services/postgres-db-context-startup-hosted-service.cs",
-            "source/container-apps/web/web-server/modules/postgres-db-module.cs",
+            "source/container-apps/web/platform/postgres/postgres-db-context-infrastructure.cs",
+            "source/container-apps/web/features/identity/ef-principal-store-infrastructure.cs",
+            "source/container-apps/web/platform/postgres/postgres-db-options-infrastructure.cs",
+            "source/container-apps/web/platform/postgres/postgres-db-environment-check-server.cs",
+            "source/container-apps/web/platform/postgres/postgres-db-context-startup-hosted-service-server.cs",
+            "source/container-apps/web/platform/postgres/postgres-db-module-server.cs",
             "tests/container-apps/web/web-infrastructure-tests/**"
-          ]
-        },
-        {
-          "condition": "(foundationPackages)",
-          "exclude": [
-            "source/foundation/**",
-            "source/libraries/timewarp-modules/**",
-            "tests/foundation/**"
-          ]
-        },
-        {
-          "condition": "(identityPackages)",
-          "exclude": [
-            "source/libraries/timewarp-identity/**",
-            "tests/libraries/timewarp-identity-tests/**"
-          ]
-        },
-        {
-          "condition": "(analyzerPackages)",
-          "exclude": [
-            "source/analyzers/**",
-            "tests/analyzers/**"
           ]
         }
       ]
@@ -129,24 +115,6 @@
     "postgres": {
       "type": "parameter",
       "description": "Add Postgres Features",
-      "datatype": "bool",
-      "defaultValue": "true"
-    },
-    "foundationPackages": {
-      "type": "parameter",
-      "description": "Reference the published TimeWarp.Foundation.* NuGet packages instead of copying the foundation source into the generated app",
-      "datatype": "bool",
-      "defaultValue": "true"
-    },
-    "identityPackages": {
-      "type": "parameter",
-      "description": "Reference the published TimeWarp.Identity NuGet package instead of copying identity source into the generated app",
-      "datatype": "bool",
-      "defaultValue": "true"
-    },
-    "analyzerPackages": {
-      "type": "parameter",
-      "description": "Reference the published platform Analyzers/Generators/Attributes NuGet packages instead of copying analyzer source into the generated app",
       "datatype": "bool",
       "defaultValue": "true"
     }

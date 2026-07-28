@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TimeWarp.Architecture</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="TimeWarp.Mediator" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="OneOf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\foundation\foundation-contracts\foundation-contracts.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Contracts" Condition="'$(UseFoundationPackages)' == 'true'" />
+    <ProjectReference Include="..\..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj"
+                      Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="$(TwArchitectureAttributesPackageId)"
+                      Condition="'$(UseAnalyzerPackages)' == 'true'" />
+  </ItemGroup>
+
+  <!-- Dual-mode global using for platform Attributes (task 115): package namespace stays fixed via
+       composed property; source mode tracks RootNamespace (rewritten with the app name). -->
+  <ItemGroup>
+    <Using Include="$(TwArchitectureAttributesNamespace)" Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <Using Include="$(RootNamespace).Attributes" Condition="'$(UseAnalyzerPackages)' != 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Service\" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- foundation-contracts mixins are now a bundled source generator (task 053-001): analyzer ref
+         in repo mode; flows from the TimeWarp.Foundation.Contracts package in package mode. -->
+    <ProjectReference Include="..\..\..\..\foundation\foundation-contracts-generators\foundation-contracts-generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      Condition="'$(UseFoundationPackages)' != 'true'" />
+  </ItemGroup>
+
+</Project>

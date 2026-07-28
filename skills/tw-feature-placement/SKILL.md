@@ -1,29 +1,87 @@
 ---
 name: tw-feature-placement
 description: >-
-  **TIMEWARP SKILL** — feature-cohesive folder placement and the filename grammar
-  `<name>[-<function>]-<layer>.cs` for product code under `web/features/`: which layer a file
-  belongs to, what to name it, the registry that backs TWA0015/TWA0016, and the
-  membership-guard build errors. Invoke before creating, moving, or renaming a file under a
-  feature slice, or when a TWA0015/TWA0016/membership-guard error appears.
+  **TIMEWARP SKILL** — feature-cohesive folder placement, per-use-case folders, and the
+  filename grammar `<name>[-<function>]-<layer>.cs` for product code under `<family>/features/`
+  and platform clusters under `<family>/platform/` (family-generic: web, api, grpc all share this
+  machinery — worked examples below use web): which layer a file belongs to, what to name it
+  and which folder it goes in, the registry that backs TWA0015/TWA0016, and the membership-guard
+  build errors. Invoke before creating, moving, or renaming a file under a feature slice or
+  platform cluster, or when a TWA0015/TWA0016/membership-guard error appears.
   WHEN: "Where does this handler file go?", "What do I name this contract file?",
-  "TWA0015", "TWA0016", "feature file matches no registered layer suffix",
+  "Should this file get its own folder?", "TWA0015", "TWA0016",
+  "feature file matches no registered layer suffix", "platform/postgres",
   "add a function segment to the registry", "split a module into its own assembly".
 when-to-use: >
-  feature filename grammar, feature-cohesive folder, web/features, filename grammar,
-  TWA0015, TWA0016, feature-filename-grammar.json, membership guard, feature-membership.targets,
-  escape hatch filename, function segment, layer suffix, registry edit rebuild,
-  per-module assembly split
+  feature filename grammar, feature-cohesive folder, web/features, web/platform, api/features,
+  grpc/features, platform cluster, filename grammar, use-case folder, per-use-case folder,
+  commands folder, queries folder, TWA0015, TWA0016, feature-filename-grammar.json,
+  membership guard, feature-membership.targets, escape hatch filename, function segment,
+  layer suffix, registry edit rebuild, per-module assembly split, shared tree vs artifact folder,
+  deletion litmus test, where does this file go, seam interface placement
 ---
 
 # Feature placement and filename grammar
 
+> All logic lives in a concern folder under a shared tree — `features/` for product concerns,
+> `platform/` for platform concerns — named by the filename grammar; artifact folders hold only
+> the artifact definition (csproj, global-usings) and its entry-point bootstrap (program.cs,
+> appsettings, launchSettings, host-config exemplars). The machinery is family-generic — web,
+> api, and grpc each get their own `features/`/`platform/`/`msbuild/` trees from the same SSOT
+> registry (yarp excepted — single-project family, no concern trees). Worked examples below use
+> web; substitute `api/`/`grpc/` for the family root and the same rules apply.
+
+The litmus test for the fuzzy middle:
+
+> **If this deployable were deleted, would the file still mean something?** Yes → shared tree
+> (which concern folder?). No → it is bootstrap; it stays with the artifact.
+
+| Home | Use for | Namespace | Examples |
+|------|---------|-----------|----------|
+| `web/features/<slice>/` | Product concerns: an operation gets its own `<slice>/<use-case>/` folder; a file serving more than one operation (shared contract, store) stays at slice root | `…Features.<Id>` (TWA0009) | `admin/roles/create-role/`, `chat/chat-hub-server.cs` |
+| `web/platform/<cluster>/` | Platform concerns: a host/platform cluster split across layers — including a seam interface living beside the implementation it seams with, not sorted into a separate layer folder | Non-Features (e.g. Configuration, Services) | `platform/postgres/`, `platform/identity-host/i-current-principal-accessor-application.cs` + `http-current-principal-accessor-server.cs` |
+| `web/projects/<artifact>/` | Artifact (csproj home) under the family `projects/` group — definition (csproj, global-usings) and entry-point bootstrap only; content that would mean nothing if you imagine the deployable gone. Occupants: `web-contracts/`, `web-application/`, `web-domain/`, `web-infrastructure/`, `web-server/`, `web-spa/` | Host assembly defaults | `program.cs`, `sample-options.cs` (binding/validation exemplar, not a real concern) |
+| `web/msbuild/` | Build machinery for the web family (filename-grammar props, membership targets) | n/a | `feature-membership.targets` |
+
+**Family root shape:** multi-project container-app families group artifact folders under
+`projects/` so the root reads as the placement rule (`features/` + `platform/` + `projects/` +
+`msbuild/`). This shape is family-generic — web, api, and grpc each have their own
+`features/`/`platform/`/`msbuild/` trees (task 129: all three now hold real content — web's
+product/platform slices, api's `weather-forecast/`, grpc's `hello/`/`superhero/`/`greeter/` +
+`platform/codegen/`). **yarp** is a single-project family (`yarp/` *is* the project — appsettings
+at its root); it is not nested under `projects/` and has no concern trees.
+
+**Folder location is for humans; filename decides project membership.** Each layer project
+composes its files with static filename globs keyed to a suffix under its own family's
+`{Prefix}FeatureTreeRoot` and `{Prefix}PlatformTreeRoot` (`Web`/`Api`/`Grpc`), not a folder path —
+a seam interface's `-application.cs` suffix pulls it into the family's `-application` compilation
+unit from wherever it physically sits, which is exactly why it lives beside its `-server.cs`
+implementation in `platform/identity-host/` instead of a folder split by layer (the old
+`web-application/abstractions/`, retired: conflating layer with
+folder was never a principled reason to separate a seam from the concern it belongs to).
+
+**Modules follow concerns, not assemblies.** A module (`IModule`) is a concern's registration
+manifest — the DI wiring that concern needs — and lives in the concern's folder like any other
+layer file: a product concern's module at its slice root (e.g.
+`features/identity/in-memory-identity-stores-module-infrastructure.cs`), a platform concern's
+module in its cluster (e.g. `platform/postgres/postgres-db-module-server.cs`). There are no
+assembly-level modules — an assembly is a compilation unit, not a concern. The host's
+`program.cs` remains the ordered composition root: module *definition* is logic (shared tree);
+module *ordering* is bootstrap (artifact folder). A concern with no registrations needs no
+module — no ceremony.
+
 Product code for a web container-app lives in **one feature-cohesive folder per slice** —
 `web/features/<slice>/` — with every layer (contracts, application, domain, infrastructure,
-server) colocated in that folder. **Folder location is for humans; filename decides project
-membership.** Each layer project composes its files with a static filename glob keyed to a
-suffix, not a folder path. This is the answer to "where does this file live" and "what do I
-name it" — the most common file-placement decision in the repo.
+server) colocated in that folder. Host/platform clusters that are **not** product slices live
+under `web/platform/<cluster>/` with the **same** `-layer` filename suffixes (so the same
+layer-project globs pick them up) but **without** `…Features.<Id>` namespaces. This is the
+answer to "where does this file live" and "what do I name it" — the most common file-placement
+decision in the repo.
+
+Inside a slice, files group **by use case**, not by message kind: every operation gets its own
+`<slice>/<use-case>/` folder holding all of that operation's layer files side by side — the
+contract next to its handler, not sorted into `commands/`/`queries/` subfolders. See
+[Use-case folders](#use-case-folders) below.
 
 ## Detection — when to invoke
 
@@ -55,12 +113,18 @@ a human remembering the pairing.
 
 | Filename | Layer | Function → required layer | Living anchor |
 |----------|-------|----------------------------|----------------|
-| `create-role-handler-application.cs` | application | `handler` → `application` | `web/features/admin/roles/create-role-handler-application.cs` |
-| `hello-feature-annotations-server.cs` | server | `feature-annotations` → `server` | `web/features/hello/hello-feature-annotations-server.cs` |
-| *(reserved)* `<name>-endpoint-server.cs` | server | `endpoint` → `server` | registered for a hand-authored server endpoint shim; the template currently generates FastEndpoints from contracts rather than hand-authoring them, so use this only for a genuinely hand-written endpoint |
+| `create-role-handler-application.cs` | application | `handler` → `application` | `web/features/admin/roles/create-role/create-role-handler-application.cs` |
+| *(reserved)* `<name>-endpoint-server.cs` | server | `endpoint` → `server` | registered for a hand-authored server endpoint shim; the template generates FastEndpoints from contracts rather than hand-authoring them, so use this only for a genuinely hand-written endpoint |
 
 A mismatched pairing (e.g. `create-role-handler-server.cs`, function `handler` on layer
 `server`) is **TWA0015** — see below.
+
+**Reserved layer headroom:** `domain` is a registered layer with its own csproj glob and
+membership-guard entry, but most product slices need only contracts and application (plus
+infrastructure or server where relevant) — a slice earns a `-domain.cs` file only once it needs
+its own aggregate root (`IAggregateRoot`) rather than a platform/shared one. `domain` stays
+registered as intentional headroom for that case, the same way the reserved `endpoint` function
+above is kept documented but currently unused.
 
 ### Contracts drop the function segment
 
@@ -85,6 +149,56 @@ on it:
 An unregistered or misspelled *token that looks like it's trying to be a function* is
 **TWA0016**, not a silent escape hatch — see below.
 
+## Use-case folders
+
+The rule is unconditional: **every operation gets its own `<slice>/<use-case>/` folder**
+holding every layer file for that operation, side by side — the contract next to its handler.
+A folder with only two files in it is correct; there is no size threshold below which an
+operation stays flat at slice root. Files that serve **more than one** operation (a shared
+bindable DTO, a store, an entity-type configuration) stay at slice root instead of picking one
+use-case folder to live in.
+
+`commands/` and `queries/` subfolders (or any other group-by-kind split, such as
+`client-to-server/`/`server-to-client/` for a hub) do not appear inside a slice — grouping by
+message kind is a layer instinct, and a feature-cohesive slice groups by use case instead.
+Folder path never affects project membership (only the filename suffix does — see Grammar
+above), so this is a pure human-navigation convention, not something the build enforces.
+
+**Worked example — a whole slice (`web/features/admin/roles/`):**
+
+```text
+admin/roles/
+  create-role/
+    create-role-contracts.cs
+    create-role-handler-application.cs
+  delete-role/
+    delete-role-contracts.cs
+    delete-role-handler-application.cs
+  get-role/
+    get-role-contracts.cs
+    get-role-handler-application.cs
+  get-roles/
+    get-roles-contracts.cs
+    get-roles-handler-application.cs
+  update-role/
+    update-role-contracts.cs
+    update-role-handler-application.cs
+  role-details-contracts.cs          # shared bindable shape used by every use case above
+  role-store-application.cs          # shared store, not operation-specific
+```
+
+Every use-case folder here holds exactly one contract file and one handler file — two files is
+the normal case, not a special one. `role-details-contracts.cs` and `role-store-application.cs`
+each serve multiple use cases (or the whole slice), so they stay at `admin/roles/` root rather
+than moving into any single use-case folder.
+
+When a slice's operation name is identical to the slice name (a single-operation slice), the
+use-case folder is still literal — `hello/hello/hello-contracts.cs`, not a special-cased flat
+layout. When a hub or similar has one folder per message DIRECTION instead of per use case
+(`client-to-server/`, `server-to-client/`), that is the same group-by-kind instinct as
+`commands/`/`queries/` and collapses the same way: one folder per use case
+(`send-message/`, `receive-message/`), not one folder per direction.
+
 ## Registry (SSOT)
 
 `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`:
@@ -94,22 +208,24 @@ An unregistered or misspelled *token that looks like it's trying to be a functio
   "layers": [ "contracts", "application", "domain", "infrastructure", "server" ],
   "functions": {
     "handler": "application",
-    "endpoint": "server",
-    "feature-annotations": "server"
+    "endpoint": "server"
   }
 }
 ```
 
-This JSON is the **single source of truth**. An MSBuild target on the convention-analyzers
-project regenerates two artifacts from it before every compile:
+This JSON is the **single source of truth** and is itself family-agnostic. An MSBuild target on
+the convention-analyzers project regenerates it into a family-agnostic artifact plus one
+standalone artifact per family before every compile:
 
 - `feature-filename-grammar.g.cs` — analyzer constants (layers, function→layer map, longest-first
-  match order) consumed by the TWA0015/TWA0016 analyzer.
-- `source/container-apps/web/msbuild/feature-filename-grammar.g.props` — the layer list and the
-  hybrid `Compile Include` globs the layer projects use, plus the regex the membership guard
-  matches filenames against.
+  match order) consumed by the TWA0015/TWA0016 analyzer. Generated once (family-agnostic).
+- `source/container-apps/{web,api,grpc}/msbuild/feature-filename-grammar.g.props` — one per
+  family, each generated from the same JSON by the same generator parameterized with that
+  family's prefix (`Web`/`Api`/`Grpc`). Each holds its family's layer list, hybrid `Compile
+  Include` globs, and the regex its family's membership guard matches filenames against.
 
-Adding or changing a function or layer means editing only the JSON:
+Adding or changing a function or layer means editing only the JSON — the change applies to every
+family:
 
 1. Add the entry (e.g. a new `"validator": "application"` pair).
 2. Build the analyzers project (or a full solution build) so both generated files regenerate.
@@ -122,14 +238,16 @@ Adding or changing a function or layer means editing only the JSON:
 
 ## Membership guard
 
-`web/msbuild/feature-membership.targets` (imported once via `web/Directory.Build.targets`) walks
-every `.cs` under the cohesive tree and requires each one to match exactly one registered
-`-{layer}` suffix, generated from the same registry. A file matching **zero** registered
-suffixes is a **build error** — it would otherwise compile into no project at all:
+Each family gets its own guard: `<family>/msbuild/feature-membership.targets` (imported once via
+`<family>/Directory.Build.targets`) walks every `.cs` under that family's `features/` and
+`platform/` trees and requires each one to match exactly one registered `-{layer}` suffix,
+generated from the same registry. A file matching **zero** registered suffixes is a **build
+error** — it would otherwise compile into no project at all:
 
-> Feature file(s) match NO registered layer suffix and would compile into no project: `<file>`.
-> Rename to `<name>[-<function>]-<layer>.cs` with layer one of: `-contracts, -application,
-> -domain, -infrastructure, -server`. Registry: `feature-filename-grammar.json`.
+> Feature/platform file(s) match NO registered layer suffix and would compile into no project:
+> `<file>`. Rename to `<name>[-<function>]-<layer>.cs` with layer one of: `-contracts,
+> -application, -domain, -infrastructure, -server`. Registry: `feature-filename-grammar.json`.
+> Trees: `features/` and `platform/`.
 
 Fix: rename the file to end in one of the registered layer suffixes. Dual-match (two suffixes
 claiming the same file) can't happen structurally once suffix nesting is rejected at generation
@@ -140,7 +258,7 @@ time, so this guard's only failure mode in practice is a missing or misspelled l
 | Diagnostic | Trigger | Fix |
 |------------|---------|-----|
 | **TWA0015** | Filename's function segment is registered, but paired with the wrong layer suffix (e.g. `-handler-` on a file ending `-server`) | Rename the file to end in the function's registered layer, or drop the function segment entirely if the file isn't actually that archetype |
-| **TWA0016** | Filename's trailing segment looks like a function but isn't registered — an unrecognized token, a misspelling, a case mismatch (`-Handler-` vs `-handler-`), or an incomplete multi-segment function (e.g. `feature-only-annotations-server.cs` shares the `annotations` tail of the registered `feature-annotations` function but isn't that function) | Use a registered function name exactly as spelled/cased, or use the escape-hatch form `<name>-<layer>.cs` with no function segment if the file isn't an archetype instance |
+| **TWA0016** | Filename's trailing segment looks like a function but isn't registered — an unrecognized token, a misspelling, a case mismatch (`-Handler-` vs `-handler-`), or an incomplete multi-segment function that shares the final segment of a registered multi-segment function without matching it fully | Use a registered function name exactly as spelled/cased, or use the escape-hatch form `<name>-<layer>.cs` with no function segment if the file isn't an archetype instance |
 
 Both diagnostics report the file name, the offending segment, and the full list of registered
 pairs/functions so the fix doesn't require opening the registry to look it up.
@@ -162,6 +280,31 @@ SPA is deliberately left out of the cohesive-tree rehome. Page/state/action plac
 `web-spa/features/<slice>/` is a `tw-slice-isolation` question (namespace/tier), not a
 filename-grammar one.
 
+## Proto exception
+
+grpc's proto-first artifacts — `.proto` source files (e.g. `greet.proto`) and their generated
+`GreeterBase`/message code — stay in their artifact folder (`grpc-server/protos/`) and are
+**out of filename-grammar scope entirely**: no `-<layer>` suffix, no cohesive-tree membership,
+not scanned by the membership guard or TWA0015/TWA0016. The proto toolchain owns their
+compilation and namespace (`option csharp_namespace`); a hand-authored *implementation* of a
+proto-generated service (e.g. `GreeterService : Greeter.GreeterBase`) is ordinary product code
+and follows the normal rules — it lives in its own `grpc/features/<slice>/<use-case>/
+<name>-server.cs` like any other slice, it just happens to inherit from a proto-generated base
+class that lives elsewhere. Code-first gRPC contracts (protobuf-net.Grpc `[ServiceContract]`
+interfaces, `[DataContract]`/`[ProtoContract]` DTOs) are the opposite case: ordinary C# types
+under full grammar scope, `-contracts.cs` like any other contract.
+
+**Code-first service interfaces are not always a free `-application.cs` seam move:** a
+protobuf-net.Grpc `[ServiceContract]` interface carries wire-protocol attributes
+(`System.ServiceModel`/`Grpc.Core`) that only the contracts project references by default —
+moving one to `-application.cs` needs the destination project's own `global-usings.cs` extended
+to match (global usings are per-project and do not flow through `ProjectReference`), and, more
+importantly, if any consumer outside the family (e.g. a WASM client) references the interface
+directly by referencing only `*-contracts.csproj`, moving it to `-application.cs` changes its
+compilation unit and breaks that consumer's reference unless the consumer's project reference
+also changes — check the consumer graph before applying the seam-interface pattern to a
+gRPC service interface, not just for plain seam interfaces.
+
 ## Axis-2 note: per-module assembly splits are a glob operation
 
 Implementation layers (application, domain, infrastructure) default to **one assembly per
@@ -174,10 +317,14 @@ namespaces don't change; only which project's glob claims them does.
 
 ## Agent workflow
 
-- **Creating a new file in a slice:** pick `layer` from what the file's content actually is
-  (mediator handler → `application`; contract shape → `contracts`; FastEndpoint annotation →
-  `server`); add a `function` segment only if the file matches a registered archetype exactly;
-  otherwise omit it (escape hatch).
+- **Creating a new operation in a slice:** give it its own `<slice>/<use-case>/` folder
+  (unconditional — even a two-file folder is correct); pick each file's `layer` from what its
+  content actually is (mediator handler → `application`; contract shape → `contracts`;
+  FastEndpoint annotation → `server`); add a `function` segment only if the file matches a
+  registered archetype exactly; otherwise omit it (escape hatch).
+- **Adding a file that serves more than one operation:** it stays at slice root, not inside any
+  single use-case folder — a shared details contract, store, or entity-type-configuration file
+  is slice-wide, not operation-specific.
 - **Moving a file between slices:** rename only the `name` segment (and relocate the folder);
   `function`/`layer` segments don't change unless the file's role changed too. Namespaces are
   never renamed by a folder move (see AGENTS.md).
@@ -200,5 +347,5 @@ namespaces don't change; only which project's glob claims them does.
   `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
 - **Analyzer (source of truth):**
   `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar-analyzer.cs`
-- **Membership guard (source of truth):**
-  `source/container-apps/web/msbuild/feature-membership.targets`
+- **Membership guard (source of truth, one per family):**
+  `source/container-apps/{web,api,grpc}/msbuild/feature-membership.targets`

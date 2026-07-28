@@ -22,6 +22,10 @@
 // (not on EndpointDefinition).
 // Empty request DTOs (no public properties) get EmptyRequestBinder — FE's default binder rejects them.
 // Summary/Description only — no weather-specific ExampleRequest.
+// OpenAPI feature grouping: FE Tags() is endpoint-filter metadata only (no relationship with
+// OpenAPI tags — see FastEndpoints configuration docs). Scalar sidebar groups by OpenAPI
+// operation tags, so emission pairs Tags(...) with Description(d => d.WithTags(...)).
+// Leaf feature Id comes from EndpointMetadata (…Features.Admin.Roles → "Roles").
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -187,10 +191,13 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
   private static string GenerateEndpointClass(EndpointMetadata metadata)
   {
-    string tags = metadata.Tags.Length > 0
-      ? $"""
-         Tags({string.Join(", ", metadata.Tags.Select(t => $"\"{t}\""))});
-         """
+    // FE Tags() = endpoint-filter metadata only. OpenAPI/Scalar need Description.WithTags.
+    string tagArgs = metadata.Tags.Length > 0
+      ? string.Join(", ", metadata.Tags.Select(static t => $"\"{t}\""))
+      : string.Empty;
+
+    string tagsFilter = metadata.Tags.Length > 0
+      ? $"Tags({tagArgs});"
       : "";
 
     string auth = BuildAuthConfiguration(metadata);
@@ -198,6 +205,11 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
     // FE default RequestBinder TypeInit-fails on DTOs with zero public properties.
     string emptyBinder = metadata.IsEmptyRequest
       ? $"RequestBinder(new EmptyRequestBinder<{metadata.ClassName}.{metadata.RequestTypeName}>());"
+      : "";
+
+    // Fold OpenAPI WithTags into Description when Produces is also emitted; otherwise emit tags alone.
+    string withTagsChain = metadata.Tags.Length > 0
+      ? $".WithTags({tagArgs})"
       : "";
 
     string summary = !string.IsNullOrEmpty(metadata.Summary)
@@ -208,10 +220,14 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
               s.Description = "{{EscapeForStringLiteral(metadata.Description)}}";
             });
 
-            Description(d => d.Produces<{{metadata.ClassName}}.Response>(200, "Success").ProducesProblem(400, "Bad Request")
+            Description(d => d{{withTagsChain}}.Produces<{{metadata.ClassName}}.Response>(200, "Success").ProducesProblem(400, "Bad Request")
             );
           """
-      : "";
+      : metadata.Tags.Length > 0
+        ? $$"""
+            Description(d => d.WithTags({{tagArgs}}));
+          """
+        : "";
 
     string requestType = metadata.RequestTypeName;
     string baseType = metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint";
@@ -238,7 +254,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                  {{metadata.HttpVerb}}("{{metadata.Route}}");
                  {{auth}}
                  {{emptyBinder}}
-                 {{tags}}
+                 {{tagsFilter}}
                  {{summary}}
                }
              }

@@ -7,7 +7,7 @@ other tools read it directly.
 
 - **This repo IS the `dotnet new timewarp-architecture` template.** Root `source/` + `tests/` are
   the template content (defined by root `.template.config/`); `timewarp-templates/` is the NuGet
-  packaging + docfx tree. Changes here ship to every generated app.
+  packaging tree. Changes here ship to every generated app.
 - Feature flags (`api`, `grpc`, `web`, `yarp`, `postgres`) are template preprocessor switches —
   keep `<!--#if (flag)-->` / `#if flag` regions intact when editing near them. Demo features
   (counter, event-stream) ship unconditionally; see HowToRemoveDemoFeatures.md.
@@ -51,32 +51,54 @@ source/
     web/
       features/      # product slices (feature-cohesive): all layers together under <slice>/
                      # files named <name>[-<function>]-<layer>.cs; layer projects glob by suffix
-      web-spa/       # WASM UI (features stay conventional under web-spa/features — not rehomed)
-      web-contracts/ web-application/ web-server/ web-domain/ web-infrastructure/
+      platform/      # host/platform clusters (postgres, identity-host): same -layer suffix grammar
+                     # as features/, NOT …Features.* namespaces (TWA0009 platform, not product)
+      projects/      # artifact folders (csproj homes): web-contracts/ web-application/
+                     # web-domain/ web-infrastructure/ web-server/ web-spa/
+                     # (SPA features stay conventional under web-spa/features — not rehomed)
       msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
-    api/  grpc/  aspire/  yarp/
+    api/             # same axis-1 shape as web (features/ + platform/ + msbuild/);
+                     # features/weather-forecast/ (demo slice); platform/ empty (no content yet)
+      projects/      # api-contracts/ api-application/ api-domain/
+                     # api-infrastructure/ api-server/
+    grpc/            # same axis-1 shape as web (features/ + platform/ + msbuild/);
+                     # features/hello/ superhero/ greeter/ (demo slices); platform/codegen/
+      projects/      # grpc-contracts/ grpc-application/ grpc-domain/
+                     # grpc-infrastructure/ grpc-server/ (protos/ stays out of grammar scope)
+    aspire/projects/ # aspire-app-host/ aspire-service-defaults/
+    yarp/            # single-project family (IS the artifact; left flat)
 tests/               # mirrors source/; includes web-contracts-tests (host-free serialization round-trips)
 ```
 
-**Axis-1 filename grammar (web product code):** files under `web/features/` use
-`<name>[-<function>]-<layer>.cs` (`handler`→application, `endpoint`→server,
-`feature-annotations`→server; contracts drop the function segment:
-`create-role-contracts.cs`). Escape hatch: `<name>-<layer>.cs` with no function
-(`role-store-application.cs`). Registry SSOT:
+**Where a file goes:** all logic lives in a concern folder under one of the two shared trees
+above — `features/` for product concerns, `platform/` for platform concerns — named by the
+filename grammar below; an artifact folder (`web-server/`, `web-infrastructure/`, …) holds only
+its own definition (csproj, global-usings) and entry-point bootstrap (program.cs, appsettings,
+host-config exemplars). Litmus test for the fuzzy middle: if the deployable were deleted, would
+the file still mean something? Yes → a shared tree; no → bootstrap, stays with the artifact.
+
+**Axis-1 filename grammar (family-generic — web, api, grpc):** files under `<family>/features/`
+and `<family>/platform/` use `<name>[-<function>]-<layer>.cs` (`handler`→application,
+`endpoint`→server; contracts drop the function segment: `create-role-contracts.cs`). Escape
+hatch: `<name>-<layer>.cs` with no function (`role-store-application.cs`,
+`postgres-db-context-infrastructure.cs`). Registry SSOT (itself family-agnostic):
 `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
-(generates analyzer constants + `web/msbuild/feature-filename-grammar.g.props`). **Registry edit
-⇒ full rebuild** (analyzer DLLs can go stale under pure incremental builds). Namespaces do **not**
-track folders — TWA0009 still keys off `…Features.<Id>`. Full workflow (worked examples,
-registry extension, TWA0015/0016 fixes, membership-guard errors, SPA exception, per-module
-assembly-split note): **`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
+generates the analyzer constants once, plus a standalone `<family>/msbuild/feature-filename-grammar.g.props`
+per family (web, api, grpc — yarp is a single-project family and is excluded). Each family's own
+tree roots (`WebFeatureTreeRoot`/`WebPlatformTreeRoot`, `ApiFeatureTreeRoot`/`ApiPlatformTreeRoot`,
+`GrpcFeatureTreeRoot`/`GrpcPlatformTreeRoot`) are globbed into that family's layer projects via
+its own `<family>/msbuild/feature-membership.targets`, imported once via
+`<family>/Directory.Build.targets`. **Registry edit ⇒ full rebuild** (analyzer DLLs can go stale
+under pure incremental builds). Namespaces do **not** track folders — product slices use
+`…Features.<Id>` (TWA0009 — namespace-based, already universal across families); platform
+clusters keep non-Features namespaces. Full rule, litmus test, and decision table:
+**`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
 
 ## Platform packages (foundation + analyzers + identity)
 
-Greenfield `dotnet new timewarp-architecture` apps reference **published NuGet packages** for
-foundation, analyzers, and identity (template symbols `foundationPackages` / `analyzerPackages` /
-`identityPackages`, all default **true** — identity flipped with the v2.0.0-beta.6 first publish
-of `TimeWarp.Identity`, task 124; `identityPackages=false` still vendors
-`source/libraries/timewarp-identity` for source-mode work). This monorepo dogfoods all three via
+Greenfield `dotnet new timewarp-architecture` apps **always** reference **published NuGet packages**
+for foundation, analyzers, and identity (package-mode only — vendored platform trees are
+unconditionally excluded from template output). This monorepo dogfoods all three via
 `ProjectReference` when source trees are present.
 
 | PackageId | Contents |
@@ -121,7 +143,10 @@ source → `$(RootNamespace).Attributes`). Regression gate: `dev template-smoke`
 - **Prefer analyzers/source generators over convention-by-memory**: when two things must agree,
   generate one from the other or add a build-time check. Existing generators: contract attributes,
   FastEndpoints, `[Page]`, `[StateAccess]`, the SPA mock-factory registry.
-- **AssemblyMarker**: every assembly declares one.
+- **IAssemblyMarker**: every product/platform assembly gets a generated interface marker
+  (`GenerateAssemblyMarker` in root `Directory.Build.targets`; namespace via
+  `AssemblyMarkerNamespace`, not `RootNamespace` alone — container-apps share one RootNamespace).
+  Opt out with `TwGenerateAssemblyMarker=false`.
 - Serializer options for the contract seam come from `ContractSerializationDefaults` — never
   declare seam options inline.
 
@@ -152,6 +177,10 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 **Slice isolation (TWA0009):** product code under SliceRoot must not reach other product
 slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:
 skill **`slice-isolation`** (`skills/tw-slice-isolation/SKILL.md`).
+
+**Aggregate pattern (TWA0011/0012):** typed id, `Entity<TId>` base, fail-closed `Create`, named
+mutations, private nested `Invariants`, save-time enforcement via `AggregateDbContext`. Pattern
+SSOT: skill **`tw-aggregate-pattern`** (`skills/tw-aggregate-pattern/SKILL.md`).
 
 ## Agent Context Regions — maintenance rule
 
@@ -186,5 +215,6 @@ Formats and lifecycle: the `agent-context-regions` skill.
 
 ## Documentation
 
-`documentation/` (developer + conceptual guides, ADRs) ·
-https://timewarpengineering.github.io/timewarp-architecture/
+`documentation/` (developer + conceptual guides, ADRs) — in-repo markdown is the documentation
+of record; generated apps receive the tree in their template output. No published docs site
+(re-evaluate a public presence when the repo gains an outward-facing audience).

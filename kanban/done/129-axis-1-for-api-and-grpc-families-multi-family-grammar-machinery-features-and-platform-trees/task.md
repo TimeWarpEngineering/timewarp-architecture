@@ -1,0 +1,159 @@
+# Axis-1 for api and grpc families: multi-family grammar machinery, features and platform trees
+
+## Description
+
+Maintainer decision (2026-07-28): bring the api and grpc families to the same axis-1 shape as
+web — family-level `features/` (+ `platform/` where platform concerns exist) cherry-picked into
+the `projects/` compilation units by filename-grammar suffix globs. This is direct preparation
+for task 118: the marketplace's agent-plane endpoints target api-server (host-role mapping
+recorded on 118), and its code needs the grammar there to land cleanly.
+
+**Current state (survey 2026-07-28):** api and grpc are pre-axis-1 — project-local `features/`
+trees inside the project folders, `queries/` subfolders, suffix-less filenames
+(`get-weather-forecasts.cs`, `hello-request.cs`). Content is demo-only (weather-forecast;
+hello + superhero), so the migration is small in files but machinery-heavy.
+
+**Stage 0 — machinery generalization (the real work):**
+
+- The grammar pipeline is web-only today: the registry generator emits
+  `web/msbuild/feature-filename-grammar.g.props` with `WebFeatureTreeRoot`/`WebPlatformTreeRoot`
+  and per-project-conditioned globs; `feature-membership.targets` guards those two roots.
+  Generalize to per-family emission (api/msbuild/, grpc/msbuild/ — or one parameterized props
+  consumed per family; implementer proposes, SSOT rule absolute: all changes via the generator,
+  never hand-edited outputs; extend the SSOT drift test to the new families).
+- Anchoring rule from 127: keep tree roots anchored to the msbuild file's own directory.
+- TWA0009 SliceRoot semantics: confirm the analyzer's slice detection covers the new family
+  namespaces (`…Features.<Id>` in api/grpc contracts) or is web-scoped — extend deliberately,
+  not accidentally.
+
+**Stage 1 — api family:** rehome demo content to `api/features/weather-forecast/` with grammar
+names + use-case folders (e.g. `get-weather-forecasts/get-weather-forecasts-contracts.cs`,
+`…-handler-application.cs`); evaluate api-server's `features/base/` (base-error, base-exception
+— platform-ish error shapes?) and `generic-pipeline-behavior.cs` against the placement rule
+(concern vs bootstrap; surface judgment calls, don't guess); api-application-module follows the
+modules-follow-concerns rule.
+
+**Stage 2 — grpc family:** same treatment (hello, superhero slices); note grpc's
+proto/generated-service specifics — the grammar registry may need grpc-appropriate layer
+mapping decisions (contracts vs server for service interfaces/DTOs); surface anything that
+does not map cleanly rather than forcing it.
+
+**Gates every stage:** `dev build` 0/0, `dev test`, `dev template-smoke` both matrices
+(api/grpc are template flags — the `!api`/`!grpc` exclude paths in template.json and slnx
+conditionals are part of the blast radius, and SmokeNoPostgres-class canaries apply). Stage
+checkpoint with the maintainer after Stage 0 (machinery design is the risk concentration).
+
+## Checklist
+
+- [x] Stage 0: multi-family generator emission + membership guards + SSOT drift-test extension;
+      maintainer checkpoint on the design before family migrations
+- [x] Stage 1: api content migration (grammar names, use-case folders, placement judgments
+      surfaced); template.json/slnx `!api` path updates; gates
+- [x] Stage 2: grpc content migration; `!grpc` path updates; gates
+- [x] Update tw-feature-placement skill + AGENTS.md: grammar now family-generic (drop
+      web-only framing); worked examples stay web-based
+- [x] Full battery + both smoke matrices at the end
+
+## Notes
+
+- Lineage: 126/127 folder program successor; prerequisite direction for 118's agent-plane
+  endpoints (see 118 host-role mapping note, 2026-07-28).
+- Sequencing vs 118: this task standardizes the ground; 118 builds on it. Do not add
+  marketplace content here.
+- yarp: single-project family, no concern trees — out of scope (127 precedent).
+
+## Session
+
+- Created: 2026-07-28 — filed from maintainer decision after the api/grpc weight discussion.
+
+## Checkpoint record
+
+- Stage-0 design APPROVED (Steve, 2026-07-28): Decisions 1–5 as proposed (per-family generated
+  g.props via explicit per-family Exec; registry unchanged; mirrored per-family
+  Directory.Build.targets + feature-membership.targets with own canonical hosts and platform
+  roots defined as no-ops; drift test parameterized over documented three-family list; TWA0009
+  reframed to document-as-already-universal).
+- Decision 6a RESOLVED (Steve, 2026-07-28): grpc service interfaces (i-hello-service,
+  i-superhero-service) take the seam-interface pattern — **`-application.cs`**, living beside
+  their `-server.cs` implementations in the use-case folder (identity-host precedent).
+- Remaining maintainer questions queued one-at-a-time: 6b protobuf codegen tool placement,
+  6c greeter slice naming, api base-error/base-exception, api generic-pipeline-behavior.
+- Decision 6b RESOLVED (Steve, 2026-07-28): protobuf-generation-hosted-service →
+  **`grpc/platform/codegen/`** cluster (concern delivered as a hosted service; `-server.cs`
+  suffix keeps it in grpc-server's compilation unit).
+- Decision 6c RESOLVED (Steve, 2026-07-28): proto-first demo gets its **own `greeter/` slice**
+  (matches the proto service identity; keeps code-first vs proto-first demo styles visibly
+  separate).
+- api base-error/base-exception RESOLVED (Steve, 2026-07-28): **DELETE both** — zero references,
+  zero derived types, self-admitted convention anchors superseded by foundation's
+  SharedProblemDetails/OneOf error story (FeatureAnnotations debris class).
+- api generic-pipeline-behavior RESOLVED (Steve, 2026-07-28): **Option A — stays in api-server
+  as bootstrap exemplar** (sample-options precedent: live wired exemplar whose content is
+  deliberately about nothing; replaced by real cross-cutting concerns when 118 lands — x402
+  metering is a pipeline behavior).
+- **All maintainer questions resolved 2026-07-28** — stages 1 and 2 fully unblocked:
+  6a service interfaces → -application seam beside impls; 6b protobuf codegen →
+  grpc/platform/codegen/; 6c greeter → own slice; base-error/base-exception → delete;
+  generic-pipeline-behavior → stays (bootstrap exemplar).
+- TWA0015/0016 scope RESOLVED (Steve, 2026-07-28): **fold analyzer parameterization into
+  stage 1** — migrated content lands under full enforcement from day one; prefer deriving the
+  family path markers from generated constants over a fourth hand-synced list.
+- Pre-existing `!api` exclude gap (stage-0 finding 2, predates 129): fixed inline by
+  orchestrator — see commit referenced below; web-spa ApiService_Body_Casing_Tests.cs now
+  stripped with the type it references.
+- `!api` exclude fix VERIFIED (2026-07-28, commit c2b3f4a2): packed-template `--api false`
+  generation confirms ApiService_Body_Casing_Tests.cs stripped. Note: the proof app's build
+  still fails CS7036 (AddOpenApi signature) — that is the KNOWN post-126-005 pins-lag window
+  (generated app restores beta.7 foundation from nuget.org; template content needs the newer
+  unpublished signature), NOT a flag bug: default-flags apps against nuget.org fail identically
+  until the next release publishes foundation+template together (124 policy). Exactly the
+  failure class 126-003's post-publish gate will catch. Additional datum: the smoke matrix has
+  no `--api false`/`--grpc false` legs — consider a matrix extension when 126-003 lands.
+
+## Results
+
+**Landed** (commits `001f0ad0` stage 0, `2c175b16` stage 1a, `4b1e4fa9` stage 1b, `30bbdd06`
+stage 2, plus inline fix `c2b3f4a2`):
+
+- **Machinery**: grammar pipeline family-generic — same SSOT JSON emits per-family g.props
+  (web/api/grpc) via three explicit Exec invocations; per-family Directory.Build.targets +
+  feature-membership.targets mirrors with own-directory-anchored tree roots and canonical
+  hosts; drift test parameterized over the family list AND cross-checked against generated
+  `Families` constants (stage-0's documented duplication upgraded to a checked one);
+  TWA0015/0016 markers now derived from Families×Layers (api-family analyzer tests added);
+  TWA0009 confirmed already-universal (documented, zero code change).
+- **api family**: weather-forecast in `api/features/weather-forecast/get-weather-forecasts/`
+  (grammar names, pure moves); base-error/base-exception and the uncalled ApiApplicationModule
+  deleted per rulings/precedent; generic-pipeline-behavior stays (bootstrap exemplar, replaced
+  by real x402 metering per 118).
+- **grpc family**: hello + superhero use-case folders; greeter own slice; codegen hosted
+  service in `grpc/platform/codegen/` (first live platform tree outside web, planted-guard
+  proven); protos exempt from grammar (documented). **Key finding — the 6a rule refined:**
+  code-first gRPC service interfaces are CONTRACTS when clients bind them (ISuperheroService —
+  web-spa consumes via grpc-contracts; moving it would drag application assemblies into the
+  WASM bundle) and application-layer seams only when family-internal (IHelloService). Recorded
+  in both files' Design regions + the placement skill. Gotcha recorded: global usings don't
+  flow through ProjectReference (Grpc.Core/System.ServiceModel added to grpc-application).
+- **Bugs found along the way**: pre-existing `!api` break fixed (`c2b3f4a2` — excluded test
+  file referenced a stripped type; --api false apps couldn't build since bc1a98f2); CS7036 in
+  nuget.org-generated apps correctly attributed to the known pins-lag window (closes at next
+  release; 126-003's gate will police it).
+
+**Verification:** per-stage gates + final orchestrator battery — `dev build` 0/0, `dev test`
+15 projects 0 failed (analyzers 98/98 incl. new api-family cases), `dev template-smoke` both
+matrices (runfile path); planted-file guard proofs on api features tree AND grpc platform tree;
+manual packed-template `--api false --grpc false` generation check.
+
+**Review (Phase 4b):** 1 round (general, empirical — re-derived 6a consumer graph, normalized
+artifact diffs, own planted proofs) — zero findings; disposition **clean**
+([review/disposition.md](review/disposition.md)).
+
+**Deferred/noted:** no grpc integration-test project exists (pre-existing); TWA0015/0016 has
+never scoped platform trees (guard-only, pre-existing); smoke matrix lacks api/grpc-off legs
+(datum for 126-003).
+
+## Session
+
+- Executed: 2026-07-28 — design agent → maintainer checkpoint → staged implementation
+  (stage-1/2 same subagent; orchestrator completed stage-2 gates/commit after agent stand-down)
+  → review. Orchestrator Claude Fable; workers Claude Sonnet subagents.

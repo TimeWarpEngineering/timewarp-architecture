@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TimeWarp.Architecture</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Friend assemblies for Web.Contracts internals (SPA + server + their integration tests).
+       Names match actual AssemblyName (web-spa sets Web.Spa; others default to project file name). -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Web.Spa" />
+    <InternalsVisibleTo Include="web-spa-integration-Tests" />
+    <InternalsVisibleTo Include="web-server" />
+    <InternalsVisibleTo Include="web-server-integration-tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation"/>
+    <PackageReference Include="OneOf"/>
+    <PackageReference Include="TimeWarp.Mediator"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"/>
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
+    <PackageReference Include="Microsoft.Extensions.Options"/>
+    <PackageReference Include="Passwordless"/>
+    <PackageReference Include="protobuf-net.Grpc"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\foundation\foundation-contracts\foundation-contracts.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Contracts" Condition="'$(UseFoundationPackages)' == 'true'" />
+    <ProjectReference Include="..\..\..\..\analyzers\timewarp-architecture-attributes\timewarp-architecture-attributes.csproj"
+                      Condition="'$(UseAnalyzerPackages)' != 'true'" />
+    <PackageReference Include="$(TwArchitectureAttributesPackageId)"
+                      Condition="'$(UseAnalyzerPackages)' == 'true'" />
+  </ItemGroup>
+
+  <!-- Dual-mode global using for platform Attributes (task 115): package namespace stays fixed via
+       composed property; source mode tracks RootNamespace (rewritten with the app name). -->
+  <ItemGroup>
+    <Using Include="$(TwArchitectureAttributesNamespace)" Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <Using Include="$(RootNamespace).Attributes" Condition="'$(UseAnalyzerPackages)' != 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The foundation-contracts attributes (ApiRoute, AuthApiRequest, OpenDataQueryParameters)
+         are now a bundled Roslyn source generator (task 053-001). In repo mode (project refs) the
+         generator is referenced as an Analyzer; in package mode it flows from the
+         TimeWarp.Foundation.Contracts package automatically. -->
+    <ProjectReference Include="..\..\..\..\foundation\foundation-contracts-generators\foundation-contracts-generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"
+                      Condition="'$(UseFoundationPackages)' != 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- PrincipalId/CredentialId typed-id responses for the identity feature (task 104-003).
+         Dual-mode via UseIdentityPackages (task 115): monorepo uses ProjectReference when
+         identity source is present; generated apps always package-mode. -->
+    <ProjectReference Include="..\..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
+  </ItemGroup>
+
+
+</Project>

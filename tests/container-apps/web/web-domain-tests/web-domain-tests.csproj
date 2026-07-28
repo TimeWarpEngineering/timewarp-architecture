@@ -5,6 +5,6 @@
     <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\source\container-apps\web\web-domain\web-domain.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-domain\web-domain.csproj" />
   </ItemGroup>
 </Project>

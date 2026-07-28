@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Profile is the template's reference aggregate (web-domain/aggregates/profile). Mapping lives here
+// Profile is the template's reference aggregate (web/features/profile/profile-domain.cs). Mapping lives here
 // under the feature tree as *-infrastructure.cs so web-infrastructure globs it with the rest of the
 // product infrastructure layer — not hand-registered next to PostgresDbContext.
 // Schema-per-slice on a single PostgresDbContext: table and PostgreSQL schema are both "profiles"
@@ -22,7 +22,7 @@
 
 namespace TimeWarp.Architecture.Features.Profiles.Infrastructure;
 
-using TimeWarp.Architecture.Aggregates.Profiles;
+using TimeWarp.Architecture.Features.Profiles.Domain;
 
 public sealed class ProfileEntityTypeConfiguration : IEntityTypeConfiguration<Profile>
 {

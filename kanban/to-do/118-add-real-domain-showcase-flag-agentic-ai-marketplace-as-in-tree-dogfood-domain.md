@@ -61,3 +61,38 @@ residuals in the background lane. Release checklist must include flipping the fl
 Actor-gate outcome feeding this task (2026-07-23): marketplace/aggregate layer uses the EF
 golden path with **Orleans** for aggregates that earn actor hosting; the fleet layer evaluates
 **Akka.NET** where supervision/streams genuinely fit (spike evidence: 113 folder).
+- Web-server exemplar replacement (Steve, 2026-07-27, from the 126-011 residue review): when
+  the marketplace layer lands, replace the `web-server/configuration/` sample exemplars
+  (`sample-options.cs` + validator, `sample-environment-check.cs`) with REAL domain options
+  using the same AddFluentValidatedOptions/ValidateOnStart and environment-check patterns
+  (e.g. x402 pricing/metering options, fleet endpoints config) — the live-compiled teaching
+  value stays, the "sample" goes.
+- **Host-role mapping (Steve + orchestrator, 2026-07-28)** — the marketplace activates the
+  original BFF/SaaS split rather than replacing it:
+  - **web = the human plane**: passkey ceremonies, approving agent key registrations,
+    overseeing jobs. Cookie/passkey/session auth surface (platform/identity-host).
+  - **api = the agent plane**: discovery surface, agent-token auth, x402 metered endpoints,
+    quote/order/job APIs. Bearer/x402 auth surface, separate ingress route space (TWA0017),
+    separate scaling profile. Marketplace-layer endpoints target api-server from day one — not
+    web-by-default-because-dogfooding-lives-there. Prereq: axis-1 extraction for the api family
+    — task 129 (multi-family grammar machinery + api/grpc features/platform trees).
+  - **grpc = the fleet plane** (stage 2): backpressured telemetry ingestion from the simulated
+    devices.
+- **Boundary caution (Steve, 2026-07-28): the agent/human overlap is bigger than it looks.**
+  Do not treat web=humans-only as a hard wall. Expect agent-driven UX for the human
+  counterpart — an agent composing/serving custom surfaces for its human (tailored approval
+  views, job dashboards, negotiated-quote summaries), agent-initiated flows that *land* in the
+  human plane for a passkey approval, and humans delegating mid-flow back to agents. Design the
+  seam so the agent plane can project UX into the human plane rather than assuming each plane
+  owns its audience exclusively. This territory is new but the industry is converging on it —
+  **agent traffic now exceeds human traffic**: Cloudflare (CEO Matthew Prince, 2026-06-03,
+  Cloudflare Radar data spanning ~1/5 of all websites) reports 57.5% of HTTP requests are
+  automated vs 42.5% human — the first crossover ever recorded, arriving ~18 months before
+  Prince's own end-of-2027 projection, driven by agentic AI. Coverage:
+  https://www.nbcnews.com/tech/tech-news/bot-web-traffic-overtaken-human-web-traffic-data-shows-rcna348522
+  and https://www.tomshardware.com/tech-industry/artificial-intelligence/bots-have-now-passed-human-traffic-online-cloudflare-boss-laments-says-agentic-traffic-wasnt-expected-to-eclipse-real-people-until-next-year
+  (discovery via https://x.com/coinbureau/status/2081585618384273841, 2026-07-28).
+- Second exemplar replacement (Steve, 2026-07-28, from 129 placement rulings): api-server's
+  `generic-pipeline-behavior.cs` (live wired placeholder, console writes) is replaced when real
+  cross-cutting concerns land — x402 metering is a pipeline behavior; same
+  replace-the-sample-with-real pattern as the web-server sample-options note above.

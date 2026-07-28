@@ -16,7 +16,8 @@
 
 ### Documentation
 
-https://timewarpengineering.github.io/timewarp-architecture/
+In-repo: [documentation/](documentation/) (developer guides, conceptual docs, ADRs). Generated
+apps include this tree in their template output.
 
 ### Installation
 

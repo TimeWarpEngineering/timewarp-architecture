@@ -5,6 +5,7 @@
 * Consulted: Amina
 * Date: 2024-03-05
 * Updated: 2025-06-25 (Changed from sealed class to interface pattern)
+* Updated: 2026-07-27 (MSBuild-generated `IAssemblyMarker` everywhere, including SPA; task 126-007)
 
 ## Context and Problem Statement
 
@@ -26,11 +27,11 @@ In our component-based application, we need a consistent and reliable way to ide
 
 ## Decision Outcome
 
-**Updated 2025-06-25**: Changed to "Using an `interface` named `IAssemblyMarker` in each assembly" after discovering that sealed classes cannot be used as generic type arguments in scenarios like FluentValidation's `AddValidatorsFromAssemblyContaining<T>()` method.
+**Current**: Every product/platform assembly gets a generated `public interface IAssemblyMarker` in its marker namespace. Generation is an MSBuild target (`GenerateAssemblyMarker` in root `Directory.Build.targets`) writing `$(IntermediateOutputPath)AssemblyMarker.g.cs`. The marker namespace is **`AssemblyMarkerNamespace`**, not bare `RootNamespace` — container-apps share `RootNamespace=TimeWarp.Architecture` while markers live in layer namespaces (`….Web.Server`, `….Api.Contracts`, …). Maps live under `source/{container-apps,foundation,analyzers,libraries}/Directory.Build.props`. Opt out with `TwGenerateAssemblyMarker=false`.
 
-Original decision: "Using a `sealed` class named `AssemblyMarker` in each assembly", because it provides a clear, consistent, and low-overhead method for marking assemblies for reflection-based operations, aligns with .NET best practices, and avoids the complexity and potential limitations of the other options.
+**Updated 2025-06-25**: Chose the interface pattern after discovering that sealed classes cannot be used as generic type arguments in scenarios like FluentValidation's `AddValidatorsFromAssemblyContaining<T>()`.
 
-**Revised rationale**: The interface pattern maintains all the benefits of the sealed class approach while being compatible with generic type constraints that require reference types. This ensures the assembly marker can be used in all reflection scenarios without compilation errors.
+**Updated 2026-07-27**: Dropped the Blazor WASM sealed-class exception. SPA uses the same generated `IAssemblyMarker` as every other assembly. Hand-written `assembly-marker.cs` files are gone.
 
 ### Positive Consequences
 
@@ -38,10 +39,11 @@ Original decision: "Using a `sealed` class named `AssemblyMarker` in each assemb
 * Simplifies reflection-based operations like assembly scanning
 * Enhances code discoverability and maintainability
 * Avoids the ambiguity and potential errors associated with less explicit marking methods
+* New projects inherit the marker for free via MSBuild (no per-assembly boilerplate)
 
 ### Negative Consequences
 
-* Requires adding a small piece of code to each assembly, which could be considered overhead
+* Marker namespace maps must be maintained when adding a new product project under container-apps (or set `AssemblyMarkerNamespace` explicitly)
 
 ## Pros and Cons of the Options
 
@@ -52,16 +54,13 @@ Original decision: "Using a `sealed` class named `AssemblyMarker` in each assemb
 * Good, because it avoids the use of reflection for identifying custom attributes, which can be more error-prone and less performant
 * Good, because it works as a generic type argument in all scenarios (unlike sealed classes)
 * Good, because interfaces prevent instantiation, reinforcing the marker-only purpose
-* Bad, because it introduces a small amount of additional code to each assembly
+* Good, because MSBuild generation removes hand-maintained copies
 
 ### Using a `sealed` class named `AssemblyMarker` in each assembly (Original Choice)
 
 * Good, because it clearly signifies the assembly's purpose and contents
-* Good, because it is simple to implement and requires minimal code
-* Good, because it avoids the use of reflection for identifying custom attributes, which can be more error-prone and less performant
-* Good, because it works reliably with Blazor WebAssembly's IL trimming and resource collection
-* Bad, because it introduces a small amount of additional code to each assembly
-* Bad, because static classes cannot be used as generic type arguments in some scenarios
+* Bad, because sealed classes cannot be used as generic type arguments in some scenarios
+* Bad, because it historically forced a SPA-only exception path
 
 ### Using custom attributes to mark assemblies
 
@@ -73,61 +72,37 @@ Original decision: "Using a `sealed` class named `AssemblyMarker` in each assemb
 
 * Good, because it requires no additional code
 * Bad, because it is prone to errors and inconsistencies
-* Bad, because it lacks explicitness and clarity, making it harder for new developers to understand and maintain
+* Bad, because it lacks explicitness and clarity
 
 ## Code
 
-**Updated Implementation (2025-06-25)**: The file `AssemblyMarker.cs` should be added to each assembly using the interface pattern:
+Generated shape (do not check this in under `source/`):
 
 ```csharp
-/// <summary>
-/// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.
-/// </summary>
-/// <remarks>
-/// This interface is intended to be used as a reference point within the assembly for scenarios such as assembly scanning,
-/// where a stable, known type is required to locate the assembly at runtime. The interface prevents instantiation,
-/// reinforcing its role as a simple marker.
-/// </remarks>
+// <auto-generated />
+// Generated by GenerateAssemblyMarker (Directory.Build.targets). Do not edit.
+
+#pragma warning disable CA1040 // Empty marker interface is intentional
+
+namespace TimeWarp.Architecture.Web.Server;
+
 public interface IAssemblyMarker;
+
+#pragma warning restore CA1040
 ```
 
-**Original Implementation**: The sealed class pattern (no longer used):
-
-```csharp
-/// <summary>
-/// Serves as a marker for the assembly, facilitating easy identification and reflection-based operations.
-/// </summary>
-/// <remarks>
-/// This class is intended to be used as a reference point within the assembly for scenarios such as assembly scanning,
-/// where a stable, known type is required to locate the assembly at runtime. The class is sealed to indicate it is not
-/// designed for inheritance or extension, reinforcing its role as a simple marker.
-/// </remarks>
-public sealed class AssemblyMarker;
-```
-
-## Blazor WebAssembly Compatibility Note
-
-**Important**: Blazor WebAssembly projects have a specific compatibility issue with interface-based assembly markers. The IL trimming process and resource collection mechanism in Blazor WebAssembly fail when using interfaces as assembly markers, resulting in `resource-collection.*.js` 404 errors at runtime.
-
-For Blazor WebAssembly projects only, use a sealed class instead:
-
-```csharp
-// Blazor WebAssembly projects MUST use sealed class
-public sealed class AssemblyMarker;
-```
-
-This limitation is specific to Blazor WebAssembly's build-time tooling and does not affect server-side .NET applications, which work correctly with interface-based assembly markers.
+Namespace comes from `AssemblyMarkerNamespace` (e.g. `$(RootNamespace).Web.Server` for container-apps after sourceName rewrite).
 
 ## Usage Examples
 
 ```csharp
-// FluentValidation assembly scanning (server-side projects)
+// FluentValidation assembly scanning
 services.AddValidatorsFromAssemblyContaining<IAssemblyMarker>();
 
-// Assembly identification (server-side projects)
+// Assembly identification (including SPA)
 var assembly = typeof(IAssemblyMarker).Assembly;
-
-// Blazor WebAssembly projects
-var assembly = typeof(AssemblyMarker).Assembly; // Note: no 'I' prefix
-var assemblyName = assembly.GetName().Name;
+// or fully qualified when referencing another project:
+var spa = typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly;
 ```
+
+External packages may still expose their own marker types (e.g. `TimeWarp.State.AssemblyMarker`); those are outside this ADR.

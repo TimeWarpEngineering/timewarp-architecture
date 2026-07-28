@@ -1,0 +1,10 @@
+<Project>
+  <!-- Import parent Directory.Build.props (source/) -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- Marker namespaces match PackageId / public surface (RootNamespace is the kebab project name). -->
+  <PropertyGroup Label="AssemblyMarkerNamespace">
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'timewarp-identity'">TimeWarp.Identity</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'timewarp-modules'">TimeWarp.Modules</AssemblyMarkerNamespace>
+  </PropertyGroup>
+</Project>

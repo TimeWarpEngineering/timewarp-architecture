@@ -7,4 +7,32 @@
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <NoWarn>$(NoWarn);CA1002;CA1024;CA1031;CA1032;CA1034;CA1040;CA1052;CA1062;CA1303;CA1304;CA1305;CA1311;CA1515;CA1715;CA1720;CA1725;CA1819;CA1823;CA1852;CA1861;CA2007;CA2016;CA2201;CA2211;CA2227;CA2234;CA2252;CA5394;RCS1102;RCS1194;RS0030</NoWarn>
   </PropertyGroup>
+
+  <!-- IAssemblyMarker lives in layer namespaces (Web.Server, Api.Contracts, …), not RootNamespace
+       alone (shared TimeWarp.Architecture). sourceName rewrites RootNamespace → app name so
+       generated apps get AppName.Web.Server etc. Aspire hosts never had markers — opt out. -->
+  <PropertyGroup Label="AssemblyMarkerNamespace">
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'web-server'">$(RootNamespace).Web.Server</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'web-spa'">$(RootNamespace).Web.Spa</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'web-contracts'">$(RootNamespace).Web.Contracts</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'web-application'">$(RootNamespace).Web.Application</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'web-domain'">$(RootNamespace).Web.Domain</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'web-infrastructure'">$(RootNamespace).Web.Infrastructure</AssemblyMarkerNamespace>
+
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'api-server'">$(RootNamespace).Api.Server</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'api-contracts'">$(RootNamespace).Api.Contracts</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'api-application'">$(RootNamespace).Api.Application</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'api-domain'">$(RootNamespace).Api.Domain</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'api-infrastructure'">$(RootNamespace).Api.Infrastructure</AssemblyMarkerNamespace>
+
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'grpc-server'">$(RootNamespace).Grpc.Server</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'grpc-contracts'">$(RootNamespace).Grpc.Contracts</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'grpc-application'">$(RootNamespace).Grpc.Application</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'grpc-domain'">$(RootNamespace).Grpc.Domain</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'grpc-infrastructure'">$(RootNamespace).Grpc.Infrastructure</AssemblyMarkerNamespace>
+
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'yarp'">$(RootNamespace).Yarp.Server</AssemblyMarkerNamespace>
+
+    <TwGenerateAssemblyMarker Condition="'$(MSBuildProjectName)' == 'aspire-app-host' or '$(MSBuildProjectName)' == 'aspire-service-defaults'">false</TwGenerateAssemblyMarker>
+  </PropertyGroup>
 </Project>

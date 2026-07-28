@@ -43,6 +43,42 @@
 
 namespace TimeWarp.Foundation.Entities;
 
+/// <summary>
+/// Base type for domain entities: a typed <typeparamref name="TId"/> identity, identity-based
+/// equality, and a store-owned <see cref="Version"/> concurrency token. Aggregate roots
+/// (<see cref="IAggregateRoot"/>) inherit this type; by convention <typeparamref name="TId"/> is
+/// a <c>[TypedId]</c> value type, never a raw <see cref="Guid"/>.
+/// </summary>
+/// <example>
+/// <code>
+/// public sealed class Order : Entity&lt;OrderId&gt;, IAggregateRoot
+/// {
+///   private Order(OrderId id, string customerName) : base(id)
+///   {
+///     CustomerName = customerName;
+///   }
+///
+///   public string CustomerName { get; private set; }
+///
+///   public static Order Create(string customerName)
+///   {
+///     ArgumentException.ThrowIfNullOrWhiteSpace(customerName);
+///     return new Order(OrderId.New(), customerName);
+///   }
+///
+///   public void Rename(string customerName)
+///   {
+///     ArgumentException.ThrowIfNullOrWhiteSpace(customerName);
+///     CustomerName = customerName;
+///   }
+///
+///   private sealed class Invariants : AbstractValidator&lt;Order&gt;
+///   {
+///     public Invariants() => RuleFor(order => order.CustomerName).NotEmpty();
+///   }
+/// }
+/// </code>
+/// </example>
 public abstract class Entity<TId> : IEquatable<Entity<TId>>
   where TId : struct, IEquatable<TId>
 {

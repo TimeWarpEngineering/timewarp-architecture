@@ -13,10 +13,11 @@
 //     parameterless constructor) — the guard wraps that failure here instead of letting a raw
 //     reflection exception surface, so the message still points at the convention.
 // The message deliberately does not assert the target "implements IAggregateRoot" — EnsureValid has
-// no such check (any object without a discoverable validator produces this exception) — and points
-// at the in-repo exemplar (web-domain/aggregates/profile/profile.cs + aggregates/overview.md)
-// instead of timewarp-identity, whose Principal/Credential have no nested Invariants validator and
-// whose source is excluded from generated apps under the default foundationPackages=true.
+// no such check (any object without a discoverable validator produces this exception). Messages are
+// self-directed: they state the fix (declare a private nested Invariants validator, rule TWA0011)
+// rather than pointing at a file path in this particular consumer's disk layout — a published
+// foundation package cannot assume every consumer's template layout matches this monorepo's. The
+// in-package XML `<example>` on IAggregateRoot (foundation-domain) carries the worked example.
 #endregion
 
 namespace TimeWarp.Foundation.Application.Exceptions;
@@ -51,13 +52,12 @@ public sealed class MissingInvariantsValidatorException : Exception
 
   private static string BuildMessage(Type aggregateType) =>
     $"{aggregateType.Name} was validated as an aggregate root but declares no nested Invariants " +
-    $"validator (a private nested class assignable to IValidator<{aggregateType.Name}>). " +
-    "See the aggregate pattern exemplar (web-domain/aggregates/profile/profile.cs and " +
-    "aggregates/overview.md) and analyzer rule TWA0011.";
+    $"validator. Declare a private sealed class Invariants : AbstractValidator<{aggregateType.Name}> " +
+    $"nested in {aggregateType.Name} with the aggregate's full rule set (rule TWA0011). See the " +
+    "IAggregateRoot XML docs for a worked example.";
 
   private static string BuildConstructionFailureMessage(Type aggregateType, Exception innerException) =>
     $"{aggregateType.Name} declares a nested Invariants validator, but it could not be constructed " +
     $"({innerException.GetType().Name}: {innerException.Message}). Invariants validators must have a " +
-    "parameterless constructor (any accessibility) — see the aggregate pattern exemplar " +
-    "(web-domain/aggregates/profile/profile.cs and aggregates/overview.md).";
+    "parameterless constructor (any accessibility). See the IAggregateRoot XML docs for a worked example.";
 }

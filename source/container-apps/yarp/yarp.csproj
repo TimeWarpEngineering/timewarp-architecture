@@ -36,17 +36,17 @@
   <ItemGroup>
     <ProjectReference Include="../../foundation/foundation-server/foundation-server.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Foundation.Server" Condition="'$(UseFoundationPackages)' == 'true'" />
-    <ProjectReference Include="../aspire/aspire-service-defaults/aspire-service-defaults.csproj" />
+    <ProjectReference Include="../aspire/projects/aspire-service-defaults/aspire-service-defaults.csproj" />
     <!--#if (web) -->
     <!-- Task 107: compile-time reference (metadata only) so IngressRoutePrefixGenerator can scan the
          web-contracts ApiRoute templates. -->
-    <ProjectReference Include="../web/web-contracts/web-contracts.csproj"
+    <ProjectReference Include="../web/projects/web-contracts/web-contracts.csproj"
                       Private="false"
                       ExcludeAssets="runtime" />
     <!--#endif -->
     <!--#if (api) -->
     <!-- Task 107: api-contracts is the TWA0017 collision set only — its routes belong to Api.Server. -->
-    <ProjectReference Include="../api/api-contracts/api-contracts.csproj"
+    <ProjectReference Include="../api/projects/api-contracts/api-contracts.csproj"
                       Private="false"
                       ExcludeAssets="runtime" />
     <!--#endif -->

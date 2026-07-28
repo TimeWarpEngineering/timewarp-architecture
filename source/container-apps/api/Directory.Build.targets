@@ -1,0 +1,8 @@
+<Project>
+  <!-- Import parent Directory.Build.targets when present. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))"
+          Condition="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../')) != ''" />
+
+  <!-- Axis-1: feature-cohesive folder membership guard + hybrid layer globs. -->
+  <Import Project="$(MSBuildThisFileDirectory)msbuild/feature-membership.targets" />
+</Project>

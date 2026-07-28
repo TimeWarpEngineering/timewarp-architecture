@@ -7,8 +7,9 @@
 // template can change without touching symbol-walking logic.
 // OpenAPI summary/description come from the Query/Command XML docs — the contract is the single
 // authoring point for API documentation.
-// Tags default to the feature folder name (namespace segment above "Features"), keeping OpenAPI
-// grouping aligned with the vertical-slice layout without per-endpoint annotation.
+// Tags default to the leaf namespace under Features (…Features.Admin.Roles → "Roles"), keeping
+// OpenAPI grouping aligned with the vertical-slice Id without per-endpoint annotation.
+// [OpenApiTags] is additive; Distinct() de-dupes.
 // HttpVerb is resolved via enum member name (metadata stores the underlying int — Value.ToString()
 // would emit "1" for Post and fall through ConvertHttpVerbToMethodName to Get).
 // RequestTypeName is the nested "Query" or "Command" so BaseFastEndpoint<TRequest,TResponse>
@@ -138,22 +139,31 @@ internal sealed class EndpointMetadata
       }
     }
 
-    // Generate tags from namespace structure
+    // Default OpenAPI tag = leaf namespace when Features is an ancestor
+    // (…Features.WeatherForecast → WeatherForecast; …Features.Admin.Roles → Roles).
+    // Not the parent of Features (that incorrectly tagged every endpoint "Architecture").
     List<string> tags = new();
-    INamespaceSymbol? containingNamespace = symbol.ContainingNamespace;
-
-    while (containingNamespace != null)
+    INamespaceSymbol? walk = symbol.ContainingNamespace;
+    bool underFeatures = false;
+    while (walk is not null)
     {
-      if (containingNamespace.Name == "Features" && containingNamespace.ContainingNamespace != null)
+      if (walk.Name == "Features")
       {
-        tags.Add(containingNamespace.ContainingNamespace.Name);
+        underFeatures = true;
         break;
       }
 
-      containingNamespace = containingNamespace.ContainingNamespace;
+      walk = walk.ContainingNamespace;
     }
 
-    // Add tags from OpenApiTags attribute
+    if (underFeatures
+        && symbol.ContainingNamespace is { IsGlobalNamespace: false } leaf
+        && !string.IsNullOrEmpty(leaf.Name))
+    {
+      tags.Add(leaf.Name);
+    }
+
+    // [OpenApiTags] is additive to the default feature tag.
     AttributeData? openApiTagsAttribute = symbol.GetAttributes()
       .FirstOrDefault(attr => attr.AttributeClass?.Name == "OpenApiTags");
 

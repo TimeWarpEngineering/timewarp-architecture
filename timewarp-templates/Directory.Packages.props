@@ -1,8 +1,11 @@
 <Project>
   <PropertyGroup>
     <!-- Shadow the repo-root Directory.Packages.props and disable Central Package Management
-         for the templates solution: the template-test harness intentionally pins its own
-         (older) package versions inline on each PackageReference. -->
+         for the templates solution. This is currently inert: the only project in this tree
+         (timewarp-architecture-template.csproj) has zero PackageReference items, so there is
+         nothing for CPM to manage. The disable is kept only as low-cost headroom in case a
+         template-test project with real dependencies (the old harness, removed in commit
+         22aa24b0) returns to this tree. -->
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
   </PropertyGroup>
 </Project>
