@@ -105,7 +105,7 @@ public sealed partial class RevokeCredential
       PrincipalId? callerId = await CurrentPrincipalAccessor.GetCurrentPrincipalIdAsync(cancellationToken);
       if (callerId is null)
       {
-        return Unauthenticated();
+        return IdentityProblems.Unauthenticated();
       }
 
       var credentialId = CredentialId.From(command.CredentialId);
@@ -117,19 +117,19 @@ public sealed partial class RevokeCredential
         {
           // Unknown id and "belongs to someone else" are indistinguishable on the wire — no
           // existence oracle (see Design region).
-          return NotFound();
+          return IdentityProblems.NotFound();
         }
 
         if (credential.IsRevoked)
         {
-          return AlreadyRevoked();
+          return IdentityProblems.AlreadyRevoked();
         }
 
         IReadOnlyList<Credential> active =
           await PrincipalStore.ListCredentialsAsync(callerId.Value, includeRevoked: false, cancellationToken);
         if (active.Count <= 1)
         {
-          return LastCredential();
+          return IdentityProblems.LastCredential();
         }
 
         credential.Revoke();
@@ -146,42 +146,7 @@ public sealed partial class RevokeCredential
         }
       }
 
-      return TooMuchContention();
+      return IdentityProblems.TooMuchContention();
     }
-
-    private static SharedProblemDetails Unauthenticated() => new()
-    {
-      Title = "Unauthenticated",
-      Status = 401,
-      Detail = "No authenticated principal."
-    };
-
-    private static SharedProblemDetails NotFound() => new()
-    {
-      Title = "Credential not found",
-      Status = 404,
-      Detail = "No such credential."
-    };
-
-    private static SharedProblemDetails AlreadyRevoked() => new()
-    {
-      Title = "Credential already revoked",
-      Status = 409,
-      Detail = "This credential has already been revoked."
-    };
-
-    private static SharedProblemDetails LastCredential() => new()
-    {
-      Title = "Cannot revoke last credential",
-      Status = 409,
-      Detail = "Revoking this credential would leave the account with no way to authenticate."
-    };
-
-    private static SharedProblemDetails TooMuchContention() => new()
-    {
-      Title = "Too much contention",
-      Status = 409,
-      Detail = "The credential could not be revoked due to concurrent updates. Try again."
-    };
   }
 }

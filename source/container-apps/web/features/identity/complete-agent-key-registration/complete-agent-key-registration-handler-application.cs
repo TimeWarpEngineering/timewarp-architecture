@@ -4,34 +4,21 @@
 #endregion
 
 #region Design
-// Order is deliberate and replay-safety-critical, mirroring CompletePasskeyRegistration.Handler:
-// decode -> consume the challenge -> verify -> check for an existing credential -> mint. The
-// challenge is consumed (one-time) BEFORE AgentKeyProof.Verify runs — even a payload that later
-// fails verification has already burned its challenge, so a retry must start a brand-new ceremony
-// (StartAgentKeyRegistration).
-// AgentPublicKey.TryParse runs BEFORE AgentKeyProof.Verify (task 104-004 §5): TryParse produces the
-// server-computed KeyId (needed for the duplicate-credential check and the eventual Credential.Create
-// handle) as a distinct, machine-readable "your public key is not usable" 400 — separate from a
-// "the signature does not match" 400 from Verify. There is no enumeration-oracle concern in
-// splitting these two checks here (unlike CompleteAgentTokenIssuance): this is a REGISTRATION
-// ceremony, no credential lookup happens before either check, so nothing about an existing account
-// is ever disclosed by which of the two checks failed.
-// FindCredentialByHandleAsync runs BEFORE Principal.Create/AddPrincipalAsync so a duplicate-handle
-// rejection never leaves an orphan Principal with no credential in the sequential (common) case.
-// AddCredentialAsync is still wrapped in try/catch(InvalidOperationException) for the residual
-// concurrent-race window (two ceremonies registering the SAME key concurrently) — mirrors
-// CompletePasskeyRegistration.Handler exactly (104-003 round-1 finding M3): the store enforces
-// handle uniqueness atomically, so the race can surface as this catch translating to the same 409
-// instead of an unhandled 500; the orphan Principal from the losing race is NOT compensated —
-// IPrincipalStore has no delete method yet (see that Design region for the full rationale, not
-// re-derived here).
-// No sponsor, no cookie: agents need no linked human (task requirement) and are never issued a
-// browser session — only a scoped bearer token, minted separately by CompleteAgentTokenIssuance.
-// Concurrency note (104-028): this handler makes zero Update* calls. AddPrincipalAsync/
-// AddCredentialAsync are both Add* (no version check); AddCredentialAsync's first-credential rule
-// auto-promotes the STORED principal Provisional -> Keyed internally, kind-agnostically (Agent
-// principals promote exactly like Human ones) — this handler's in-hand `principal` local is
-// deliberately left stale afterward, same as CompletePasskeyRegistration.Handler.
+// Ceremony preamble (decode → consume → TryParse → verify → handle-exists) lives in
+// AgentKeyRegistrationCeremony; ordering / replay-safety rationale is owned there. This handler's
+// post-verify path: Principal.Create(Agent) → AddPrincipalAsync → Credential.Create →
+// AddCredentialAsync (try/catch race). No sponsor, no cookie: agents need no linked human and are
+// never issued a browser session — only a scoped bearer token, minted separately by
+// CompleteAgentTokenIssuance.
+// FindCredentialByHandleAsync (in the ceremony) runs BEFORE Principal.Create so sequential
+// duplicate-handle rejection never leaves an orphan Principal. AddCredentialAsync is still wrapped
+// in try/catch(InvalidOperationException) for the residual concurrent-race window (two ceremonies
+// registering the SAME key) — the store enforces handle uniqueness atomically; the orphan Principal
+// from the losing race is NOT compensated (IPrincipalStore has no delete method yet; see
+// CompletePasskeyRegistration.Handler Design for the full residual rationale).
+// Concurrency note (104-028): zero Update* calls. AddCredentialAsync's first-credential rule
+// auto-promotes the STORED principal Provisional -> Keyed kind-agnostically; this handler's in-hand
+// `principal` local is deliberately left stale afterward.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -54,84 +41,35 @@ public sealed partial class CompleteAgentKeyRegistration
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
-      if (!WebAuthnPayloadDecoder.TryDecode(command.PublicKey, out byte[] publicKeyBytes)
-        || !WebAuthnPayloadDecoder.TryDecode(command.Challenge, out byte[] challengeBytes)
-        || !WebAuthnPayloadDecoder.TryDecode(command.Signature, out byte[] signatureBytes))
+      OneOf<AgentKeyRegistrationCeremony.Materials, SharedProblemDetails> ceremonyResult =
+        await AgentKeyRegistrationCeremony.TryCompleteAsync(
+          command.PublicKey,
+          command.Challenge,
+          command.Signature,
+          ChallengeStore,
+          PrincipalStore,
+          cancellationToken);
+      if (ceremonyResult.IsT1)
       {
-        return MalformedPayload();
+        return ceremonyResult.AsT1;
       }
 
-      if (!ChallengeStore.TryConsume(AgentKeyCeremonyType.Registration, challengeBytes))
-      {
-        return ChallengeInvalid();
-      }
-
-      if (!AgentPublicKey.TryParse(publicKeyBytes, out byte[] keyId))
-      {
-        return InvalidPublicKey();
-      }
-
-      AgentKeyProofResult verifyResult = AgentKeyProof.Verify(AgentKeyCeremonyType.Registration, publicKeyBytes, challengeBytes, signatureBytes);
-      if (!verifyResult.IsValid)
-      {
-        return VerificationFailed(verifyResult.FailureReason);
-      }
-
-      Credential? existing = await PrincipalStore.FindCredentialByHandleAsync(CredentialType.AgentKey, keyId, cancellationToken);
-      if (existing is not null)
-      {
-        return CredentialAlreadyRegistered();
-      }
+      AgentKeyRegistrationCeremony.Materials materials = ceremonyResult.AsT0;
 
       var principal = Principal.Create(PrincipalKind.Agent);
       await PrincipalStore.AddPrincipalAsync(principal, cancellationToken);
 
-      var credential = Credential.Create(principal.Id, CredentialType.AgentKey, keyId, publicKeyBytes, command.Label);
+      var credential = Credential.Create(principal.Id, CredentialType.AgentKey, materials.KeyId, materials.PublicKeyBytes, command.Label);
       try
       {
         await PrincipalStore.AddCredentialAsync(credential, cancellationToken);
       }
       catch (InvalidOperationException)
       {
-        return CredentialAlreadyRegistered();
+        return IdentityProblems.CredentialAlreadyRegistered("agent key");
       }
 
-      return new Response(principal.Id, Base64Url.EncodeToString(keyId));
+      return new Response(principal.Id, Base64Url.EncodeToString(materials.KeyId));
     }
-
-    private static SharedProblemDetails MalformedPayload() => new()
-    {
-      Title = "Malformed request",
-      Status = 400,
-      Detail = "PublicKey, Challenge, and Signature must be valid base64url."
-    };
-
-    private static SharedProblemDetails ChallengeInvalid() => new()
-    {
-      Title = "Challenge invalid",
-      Status = 400,
-      Detail = "The registration challenge is unknown, expired, or already used."
-    };
-
-    private static SharedProblemDetails InvalidPublicKey() => new()
-    {
-      Title = "Invalid public key",
-      Status = 400,
-      Detail = "PublicKey must be a well-formed ECDSA P-256 SubjectPublicKeyInfo (DER)."
-    };
-
-    private static SharedProblemDetails VerificationFailed(AgentKeyFailureReason reason) => new()
-    {
-      Title = "Agent key registration verification failed",
-      Status = 400,
-      Detail = $"Verification failed: {reason}."
-    };
-
-    private static SharedProblemDetails CredentialAlreadyRegistered() => new()
-    {
-      Title = "Credential already registered",
-      Status = 409,
-      Detail = "This agent key is already registered to an account."
-    };
   }
 }

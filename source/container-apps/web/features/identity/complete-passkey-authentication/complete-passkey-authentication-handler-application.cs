@@ -8,9 +8,11 @@
 // request from the request host via WebAuthnRelyingPartySelection.Select, so a host outside the
 // allowlist returns 400 "Host not allowed" without consuming the ceremony's challenge. Its selected
 // Id (the request host, canonical casing) is what WebAuthnAuthentication.Verify binds against.
-// Order is otherwise deliberate and replay-safety-critical, same as CompletePasskeyRegistration:
-// decode -> consume the challenge -> look up the credential/principal -> verify. Consuming the
-// challenge BEFORE verification means a tampered/replayed payload can never retry the same challenge.
+// Order is otherwise deliberate and replay-safety-critical: decode -> consume the challenge ->
+// look up the credential/principal -> verify. Consuming the challenge BEFORE verification means a
+// tampered/replayed payload can never retry the same challenge.
+// Single-consumer ladder — problems only extracted to IdentityProblems; no ceremony helper (task
+// 131-002: passkey-auth not shared with a second handler).
 // No-enumeration-oracle posture: an unknown CredentialId and a revoked one both return the SAME
 // generic 400 "Authentication failed" — an attacker probing the endpoint cannot distinguish
 // "this credential was never registered" from "this credential exists but is revoked." A
@@ -24,8 +26,7 @@
 // 403 actually true, since nothing before Verify can produce it.
 // Concurrency note (104-028): this handler makes zero Update* calls — no sign-count persisted
 // (Credential has no such field; see authenticator-data.cs), so nothing here needs to write back to
-// the store at all. The first real catch-ConcurrencyConflictException-reload-retry-once policy
-// lands with 104-005's revoke handler, not here.
+// the store at all.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -76,25 +77,25 @@ public sealed partial class CompletePasskeyAuthentication
         || !WebAuthnPayloadDecoder.TryDecode(command.AuthenticatorData, out byte[] authenticatorDataBytes)
         || !WebAuthnPayloadDecoder.TryDecode(command.Signature, out byte[] signatureBytes))
       {
-        return MalformedPayload();
+        return IdentityProblems.MalformedPayload("CredentialId, ClientDataJson, AuthenticatorData, and Signature");
       }
 
       if (!WebAuthnChallengeReader.TryReadChallenge(clientDataJsonBytes, out byte[] challenge)
         || !ChallengeStore.TryConsume(WebAuthnCeremonyType.Authentication, challenge))
       {
-        return ChallengeInvalid();
+        return IdentityProblems.ChallengeInvalid("authentication");
       }
 
       Credential? credential = await PrincipalStore.FindCredentialByHandleAsync(CredentialType.Passkey, credentialIdBytes, cancellationToken);
       if (credential is null || credential.IsRevoked)
       {
-        return AuthenticationFailed();
+        return IdentityProblems.AuthenticationFailed();
       }
 
       Principal? principal = await PrincipalStore.GetPrincipalAsync(credential.PrincipalId, cancellationToken);
       if (principal is null)
       {
-        return AuthenticationFailed();
+        return IdentityProblems.AuthenticationFailed();
       }
 
       WebAuthnAssertionResult verifyResult =
@@ -102,46 +103,18 @@ public sealed partial class CompletePasskeyAuthentication
 
       if (!verifyResult.IsValid)
       {
-        return AuthenticationFailed();
+        return IdentityProblems.AuthenticationFailed();
       }
 
       // Quarantine is checked only AFTER Verify succeeds — see Design region.
       if (!principal.IsActive)
       {
-        return Quarantined();
+        return IdentityProblems.Quarantined();
       }
 
       await BrowserSessionService.IssueAsync(principal.Id, principal.DisplayName, cancellationToken);
 
       return new Response(principal.Id);
     }
-
-    private static SharedProblemDetails MalformedPayload() => new()
-    {
-      Title = "Malformed request",
-      Status = 400,
-      Detail = "CredentialId, ClientDataJson, AuthenticatorData, and Signature must be valid base64url."
-    };
-
-    private static SharedProblemDetails ChallengeInvalid() => new()
-    {
-      Title = "Challenge invalid",
-      Status = 400,
-      Detail = "The authentication challenge is unknown, expired, or already used."
-    };
-
-    private static SharedProblemDetails AuthenticationFailed() => new()
-    {
-      Title = "Authentication failed",
-      Status = 400,
-      Detail = "The passkey could not be verified."
-    };
-
-    private static SharedProblemDetails Quarantined() => new()
-    {
-      Title = "Account quarantined",
-      Status = 403,
-      Detail = "This account is currently restricted."
-    };
   }
 }
