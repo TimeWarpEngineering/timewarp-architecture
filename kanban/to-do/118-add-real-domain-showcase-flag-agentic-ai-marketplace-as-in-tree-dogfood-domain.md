@@ -75,7 +75,7 @@ golden path with **Orleans** for aggregates that earn actor hosting; the fleet l
     quote/order/job APIs. Bearer/x402 auth surface, separate ingress route space (TWA0017),
     separate scaling profile. Marketplace-layer endpoints target api-server from day one — not
     web-by-default-because-dogfooding-lives-there. Prereq: axis-1 extraction for the api family
-    (task filed separately).
+    — task 129 (multi-family grammar machinery + api/grpc features/platform trees).
   - **grpc = the fleet plane** (stage 2): backpressured telemetry ingestion from the simulated
     devices.
 - **Boundary caution (Steve, 2026-07-28): the agent/human overlap is bigger than it looks.**
