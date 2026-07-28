@@ -45,14 +45,14 @@ checkpoint with the maintainer after Stage 0 (machinery design is the risk conce
 
 ## Checklist
 
-- [ ] Stage 0: multi-family generator emission + membership guards + SSOT drift-test extension;
+- [x] Stage 0: multi-family generator emission + membership guards + SSOT drift-test extension;
       maintainer checkpoint on the design before family migrations
-- [ ] Stage 1: api content migration (grammar names, use-case folders, placement judgments
+- [x] Stage 1: api content migration (grammar names, use-case folders, placement judgments
       surfaced); template.json/slnx `!api` path updates; gates
-- [ ] Stage 2: grpc content migration; `!grpc` path updates; gates
-- [ ] Update tw-feature-placement skill + AGENTS.md: grammar now family-generic (drop
+- [x] Stage 2: grpc content migration; `!grpc` path updates; gates
+- [x] Update tw-feature-placement skill + AGENTS.md: grammar now family-generic (drop
       web-only framing); worked examples stay web-based
-- [ ] Full battery + both smoke matrices at the end
+- [x] Full battery + both smoke matrices at the end
 
 ## Notes
 
@@ -109,3 +109,51 @@ checkpoint with the maintainer after Stage 0 (machinery design is the risk conce
   until the next release publishes foundation+template together (124 policy). Exactly the
   failure class 126-003's post-publish gate will catch. Additional datum: the smoke matrix has
   no `--api false`/`--grpc false` legs — consider a matrix extension when 126-003 lands.
+
+## Results
+
+**Landed** (commits `001f0ad0` stage 0, `2c175b16` stage 1a, `4b1e4fa9` stage 1b, `30bbdd06`
+stage 2, plus inline fix `c2b3f4a2`):
+
+- **Machinery**: grammar pipeline family-generic — same SSOT JSON emits per-family g.props
+  (web/api/grpc) via three explicit Exec invocations; per-family Directory.Build.targets +
+  feature-membership.targets mirrors with own-directory-anchored tree roots and canonical
+  hosts; drift test parameterized over the family list AND cross-checked against generated
+  `Families` constants (stage-0's documented duplication upgraded to a checked one);
+  TWA0015/0016 markers now derived from Families×Layers (api-family analyzer tests added);
+  TWA0009 confirmed already-universal (documented, zero code change).
+- **api family**: weather-forecast in `api/features/weather-forecast/get-weather-forecasts/`
+  (grammar names, pure moves); base-error/base-exception and the uncalled ApiApplicationModule
+  deleted per rulings/precedent; generic-pipeline-behavior stays (bootstrap exemplar, replaced
+  by real x402 metering per 118).
+- **grpc family**: hello + superhero use-case folders; greeter own slice; codegen hosted
+  service in `grpc/platform/codegen/` (first live platform tree outside web, planted-guard
+  proven); protos exempt from grammar (documented). **Key finding — the 6a rule refined:**
+  code-first gRPC service interfaces are CONTRACTS when clients bind them (ISuperheroService —
+  web-spa consumes via grpc-contracts; moving it would drag application assemblies into the
+  WASM bundle) and application-layer seams only when family-internal (IHelloService). Recorded
+  in both files' Design regions + the placement skill. Gotcha recorded: global usings don't
+  flow through ProjectReference (Grpc.Core/System.ServiceModel added to grpc-application).
+- **Bugs found along the way**: pre-existing `!api` break fixed (`c2b3f4a2` — excluded test
+  file referenced a stripped type; --api false apps couldn't build since bc1a98f2); CS7036 in
+  nuget.org-generated apps correctly attributed to the known pins-lag window (closes at next
+  release; 126-003's gate will police it).
+
+**Verification:** per-stage gates + final orchestrator battery — `dev build` 0/0, `dev test`
+15 projects 0 failed (analyzers 98/98 incl. new api-family cases), `dev template-smoke` both
+matrices (runfile path); planted-file guard proofs on api features tree AND grpc platform tree;
+manual packed-template `--api false --grpc false` generation check.
+
+**Review (Phase 4b):** 1 round (general, empirical — re-derived 6a consumer graph, normalized
+artifact diffs, own planted proofs) — zero findings; disposition **clean**
+([review/disposition.md](review/disposition.md)).
+
+**Deferred/noted:** no grpc integration-test project exists (pre-existing); TWA0015/0016 has
+never scoped platform trees (guard-only, pre-existing); smoke matrix lacks api/grpc-off legs
+(datum for 126-003).
+
+## Session
+
+- Executed: 2026-07-28 — design agent → maintainer checkpoint → staged implementation
+  (stage-1/2 same subagent; orchestrator completed stage-2 gates/commit after agent stand-down)
+  → review. Orchestrator Claude Fable; workers Claude Sonnet subagents.
