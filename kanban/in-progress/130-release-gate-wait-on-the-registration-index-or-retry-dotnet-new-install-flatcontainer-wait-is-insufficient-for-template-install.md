@@ -30,12 +30,12 @@ does. Add/extend the gate's log lines so each wait names the endpoint it is wait
 
 ## Checklist
 
-- [ ] Locate the gate implementation (dev workflow release mode / template-publish-smoke in
+- [x] Locate the gate implementation (dev workflow release mode / template-publish-smoke in
       tools/dev-cli) and the flatcontainer wait loop
-- [ ] Implement A (retry the install with bounded backoff, distinct log line) — or B with
+- [x] Implement A (retry the install with bounded backoff, distinct log line) — or B with
       recorded rationale
-- [ ] Regression evidence: cite run 30332386426 in the code comment (the failure this guards)
-- [ ] Gates: `dev build` 0/0; workflow-level change verified at next release (note in Results
+- [x] Regression evidence: cite run 30332386426 in the code comment (the failure this guards)
+- [x] Gates: `dev build` 0/0; workflow-level change verified at next release (note in Results
       that live proof rides the next release run — same verification class as 126-003 itself)
 
 ## Notes
@@ -49,3 +49,28 @@ does. Add/extend the gate's log lines so each wait names the endpoint it is wait
 ## Session
 
 - Created: 2026-07-28 — filed from live release-gate false negative.
+
+## Results
+
+**Landed** (commit `7bd9700e`, single file `tools/dev-cli/endpoints/template-publish-smoke-command.cs`,
++66/−15): Option A per the lean — the `dotnet new install` step now retries inside a bounded
+budget (`InstallRetryBudget` = 15 min; 5s→60s doubling backoff, mirroring the flatcontainer
+loop's shape) with log lines that name the endpoint being waited on ("template install /
+registration index" vs "flatcontainer availability"). Flatcontainer wait untouched (correct for
+the restore path). Regression citation (run 30332386426) in both the class Design region and
+the budget constant's comment. Timeout preserves the prior failure contract (exit code,
+combined-output dump).
+
+**Verification:** `dev build` 0/0 via BOTH the AOT binary and the runfile path (dev-cli source
+changed — stale-binary footgun applied proactively), `template-publish-smoke --help` compiles
+and prints standalone; no dev-cli test coverage exists (verified, not fabricated —
+`tests/tools/` has only agent-identity-cli-tests). `dev self-install` run afterward so
+`./bin/dev` is fresh. **Live proof rides the next release run** — same verification class as
+126-003 itself; the retry's first real exercise will be the next `gh release create`.
+Review: orchestrator-inline diff verification (claims spot-checked against the committed hunks),
+proportionate to a single-file bounded change with an already-adjudicated design.
+
+## Session
+
+- Executed: 2026-07-28 — implemented by Claude Sonnet subagent, verified/closed by orchestrator
+  (Claude Fable). Filed same day as the live false negative it fixes.
