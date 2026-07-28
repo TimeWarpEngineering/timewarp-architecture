@@ -65,3 +65,16 @@ checkpoint with the maintainer after Stage 0 (machinery design is the risk conce
 ## Session
 
 - Created: 2026-07-28 — filed from maintainer decision after the api/grpc weight discussion.
+
+## Checkpoint record
+
+- Stage-0 design APPROVED (Steve, 2026-07-28): Decisions 1–5 as proposed (per-family generated
+  g.props via explicit per-family Exec; registry unchanged; mirrored per-family
+  Directory.Build.targets + feature-membership.targets with own canonical hosts and platform
+  roots defined as no-ops; drift test parameterized over documented three-family list; TWA0009
+  reframed to document-as-already-universal).
+- Decision 6a RESOLVED (Steve, 2026-07-28): grpc service interfaces (i-hello-service,
+  i-superhero-service) take the seam-interface pattern — **`-application.cs`**, living beside
+  their `-server.cs` implementations in the use-case folder (identity-host precedent).
+- Remaining maintainer questions queued one-at-a-time: 6b protobuf codegen tool placement,
+  6c greeter slice naming, api base-error/base-exception, api generic-pipeline-behavior.
