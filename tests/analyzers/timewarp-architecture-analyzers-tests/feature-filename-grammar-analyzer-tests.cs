@@ -153,6 +153,16 @@ public class Should_Enforce_Feature_Filename_Grammar
 
 public class Should_Keep_Grammar_Registry_In_Sync
 {
+  // Family list must stay in sync with the convention-analyzers csproj's three <Exec> invocations
+  // (source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj).
+  // yarp is a single-project family (no concern trees) and is intentionally excluded (127 precedent).
+  private static readonly (string Prefix, string Family)[] Families =
+  [
+    ("Web", "web"),
+    ("Api", "api"),
+    ("Grpc", "grpc"),
+  ];
+
   public static void Json_Cs_And_Props_Have_No_Drift()
   {
     string repoRoot = FindRepoRoot();
@@ -166,15 +176,9 @@ public class Should_Keep_Grammar_Registry_In_Sync
       repoRoot,
       "source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.g.cs"
     );
-    string propsPath = Path.Combine
-    (
-      repoRoot,
-      "source/container-apps/web/msbuild/feature-filename-grammar.g.props"
-    );
 
     File.Exists(jsonPath).ShouldBeTrue($"Missing {jsonPath}");
     File.Exists(csPath).ShouldBeTrue($"Missing {csPath}");
-    File.Exists(propsPath).ShouldBeTrue($"Missing {propsPath}");
 
     using System.Text.Json.JsonDocument document =
       System.Text.Json.JsonDocument.Parse(File.ReadAllText(jsonPath));
@@ -187,6 +191,7 @@ public class Should_Keep_Grammar_Registry_In_Sync
       .ToDictionary(static p => p.Name, static p => p.Value.GetString()!);
 
     // C# constants must agree with the live FeatureFilenameGrammar type (compiled from .g.cs).
+    // The registry itself is family-agnostic (Decision 2, task 129 stage 0) — checked once.
     FeatureFilenameGrammar.Layers.OrderBy(static l => l).ShouldBe(layers.OrderBy(static l => l));
     FeatureFilenameGrammar.FunctionToLayer.Count.ShouldBe(functions.Count);
     foreach (KeyValuePair<string, string> pair in functions)
@@ -195,44 +200,55 @@ public class Should_Keep_Grammar_Registry_In_Sync
       FeatureFilenameGrammar.FunctionToLayer[pair.Key].ShouldBe(pair.Value);
     }
 
-    // Props items must list the same layers and function→layer pairs, plus generated hybrid globs
-    // for both cohesive trees (features/ + platform/).
-    string props = File.ReadAllText(propsPath);
-    foreach (string layer in layers)
+    // Each family gets its own generated props + membership targets, from the same JSON.
+    foreach ((string prefix, string family) in Families)
     {
-      props.ShouldContain($"FeatureFilenameGrammarLayer Include=\"{layer}\"");
-      props.ShouldContain($"$(WebFeatureTreeRoot)/**/*-{layer}.cs");
-      props.ShouldContain($"$(WebPlatformTreeRoot)/**/*-{layer}.cs");
-      props.ShouldContain($"'$(MSBuildProjectName)' == 'web-{layer}'");
-    }
-
-    props.ShouldContain("FeatureFilenameLayerSuffixRegex");
-    props.ShouldContain("WebPlatformTreeRoot");
-    props.ShouldContain("Link=\"platform\\%(RecursiveDir)%(Filename)%(Extension)\"");
-
-    foreach (KeyValuePair<string, string> pair in functions)
-    {
-      props.ShouldContain
+      string propsPath = Path.Combine
       (
-        $"FeatureFilenameGrammarFunction Include=\"{pair.Key}\" Layer=\"{pair.Value}\""
+        repoRoot,
+        $"source/container-apps/{family}/msbuild/feature-filename-grammar.g.props"
       );
-    }
+      File.Exists(propsPath).ShouldBeTrue($"Missing {propsPath}");
 
-    // Membership targets must not re-hand-list layer globs; they consume the generated props
-    // and define both tree roots + membership scan both.
-    string membershipPath = Path.Combine
-    (
-      repoRoot,
-      "source/container-apps/web/msbuild/feature-membership.targets"
-    );
-    File.Exists(membershipPath).ShouldBeTrue($"Missing {membershipPath}");
-    string membership = File.ReadAllText(membershipPath);
-    membership.ShouldContain("feature-filename-grammar.g.props");
-    membership.ShouldContain("FeatureFilenameLayerSuffixRegex");
-    membership.ShouldContain("WebFeatureTreeRoot");
-    membership.ShouldContain("WebPlatformTreeRoot");
-    membership.ShouldContain("$(WebPlatformTreeRoot)/**/*.cs");
-    membership.ShouldNotContain("**/*-contracts.cs");
+      // Props items must list the same layers and function→layer pairs, plus generated hybrid
+      // globs for both cohesive trees (features/ + platform/).
+      string props = File.ReadAllText(propsPath);
+      foreach (string layer in layers)
+      {
+        props.ShouldContain($"FeatureFilenameGrammarLayer Include=\"{layer}\"");
+        props.ShouldContain($"$({prefix}FeatureTreeRoot)/**/*-{layer}.cs");
+        props.ShouldContain($"$({prefix}PlatformTreeRoot)/**/*-{layer}.cs");
+        props.ShouldContain($"'$(MSBuildProjectName)' == '{family}-{layer}'");
+      }
+
+      props.ShouldContain("FeatureFilenameLayerSuffixRegex");
+      props.ShouldContain($"{prefix}PlatformTreeRoot");
+      props.ShouldContain("Link=\"platform\\%(RecursiveDir)%(Filename)%(Extension)\"");
+
+      foreach (KeyValuePair<string, string> pair in functions)
+      {
+        props.ShouldContain
+        (
+          $"FeatureFilenameGrammarFunction Include=\"{pair.Key}\" Layer=\"{pair.Value}\""
+        );
+      }
+
+      // Membership targets must not re-hand-list layer globs; they consume the generated props
+      // and define both tree roots + membership scan both.
+      string membershipPath = Path.Combine
+      (
+        repoRoot,
+        $"source/container-apps/{family}/msbuild/feature-membership.targets"
+      );
+      File.Exists(membershipPath).ShouldBeTrue($"Missing {membershipPath}");
+      string membership = File.ReadAllText(membershipPath);
+      membership.ShouldContain("feature-filename-grammar.g.props");
+      membership.ShouldContain("FeatureFilenameLayerSuffixRegex");
+      membership.ShouldContain($"{prefix}FeatureTreeRoot");
+      membership.ShouldContain($"{prefix}PlatformTreeRoot");
+      membership.ShouldContain($"$({prefix}PlatformTreeRoot)/**/*.cs");
+      membership.ShouldNotContain("**/*-contracts.cs");
+    }
   }
 
   private static string FindRepoRoot()

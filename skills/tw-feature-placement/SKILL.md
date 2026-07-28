@@ -2,8 +2,9 @@
 name: tw-feature-placement
 description: >-
   **TIMEWARP SKILL** — feature-cohesive folder placement, per-use-case folders, and the
-  filename grammar `<name>[-<function>]-<layer>.cs` for product code under `web/features/`
-  and platform clusters under `web/platform/`: which layer a file belongs to, what to name it
+  filename grammar `<name>[-<function>]-<layer>.cs` for product code under `<family>/features/`
+  and platform clusters under `<family>/platform/` (family-generic: web, api, grpc all share this
+  machinery — worked examples below use web): which layer a file belongs to, what to name it
   and which folder it goes in, the registry that backs TWA0015/TWA0016, and the membership-guard
   build errors. Invoke before creating, moving, or renaming a file under a feature slice or
   platform cluster, or when a TWA0015/TWA0016/membership-guard error appears.
@@ -12,12 +13,12 @@ description: >-
   "feature file matches no registered layer suffix", "platform/postgres",
   "add a function segment to the registry", "split a module into its own assembly".
 when-to-use: >
-  feature filename grammar, feature-cohesive folder, web/features, web/platform, platform cluster,
-  filename grammar, use-case folder, per-use-case folder, commands folder, queries folder,
-  TWA0015, TWA0016, feature-filename-grammar.json, membership guard, feature-membership.targets,
-  escape hatch filename, function segment, layer suffix, registry edit rebuild,
-  per-module assembly split, shared tree vs artifact folder, deletion litmus test,
-  where does this file go, seam interface placement
+  feature filename grammar, feature-cohesive folder, web/features, web/platform, api/features,
+  grpc/features, platform cluster, filename grammar, use-case folder, per-use-case folder,
+  commands folder, queries folder, TWA0015, TWA0016, feature-filename-grammar.json,
+  membership guard, feature-membership.targets, escape hatch filename, function segment,
+  layer suffix, registry edit rebuild, per-module assembly split, shared tree vs artifact folder,
+  deletion litmus test, where does this file go, seam interface placement
 ---
 
 # Feature placement and filename grammar
@@ -25,7 +26,10 @@ when-to-use: >
 > All logic lives in a concern folder under a shared tree — `features/` for product concerns,
 > `platform/` for platform concerns — named by the filename grammar; artifact folders hold only
 > the artifact definition (csproj, global-usings) and its entry-point bootstrap (program.cs,
-> appsettings, launchSettings, host-config exemplars).
+> appsettings, launchSettings, host-config exemplars). The machinery is family-generic — web,
+> api, and grpc each get their own `features/`/`platform/`/`msbuild/` trees from the same SSOT
+> registry (yarp excepted — single-project family, no concern trees). Worked examples below use
+> web; substitute `api/`/`grpc/` for the family root and the same rules apply.
 
 The litmus test for the fuzzy middle:
 
@@ -41,15 +45,18 @@ The litmus test for the fuzzy middle:
 
 **Family root shape:** multi-project container-app families group artifact folders under
 `projects/` so the root reads as the placement rule (`features/` + `platform/` + `projects/` +
-`msbuild/`). **yarp** is a single-project family (`yarp/` *is* the project — appsettings at its
-root); it is not nested under `projects/`. A single-project family is its own artifact folder.
+`msbuild/`). This shape is family-generic — web, api, and grpc each have their own
+`features/`/`platform/`/`msbuild/` trees; api and grpc trees are currently empty pending content
+migration. **yarp** is a single-project family (`yarp/` *is* the project — appsettings at its
+root); it is not nested under `projects/` and has no concern trees.
 
 **Folder location is for humans; filename decides project membership.** Each layer project
-composes its files with static filename globs keyed to a suffix under both `WebFeatureTreeRoot`
-and `WebPlatformTreeRoot`, not a folder path — a seam interface's `-application.cs` suffix pulls
-it into the web-application compilation unit from wherever it physically sits, which is exactly
-why it lives beside its `-server.cs` implementation in `platform/identity-host/` instead of a
-folder split by layer (the old `web-application/abstractions/`, retired: conflating layer with
+composes its files with static filename globs keyed to a suffix under its own family's
+`{Prefix}FeatureTreeRoot` and `{Prefix}PlatformTreeRoot` (`Web`/`Api`/`Grpc`), not a folder path —
+a seam interface's `-application.cs` suffix pulls it into the family's `-application` compilation
+unit from wherever it physically sits, which is exactly why it lives beside its `-server.cs`
+implementation in `platform/identity-host/` instead of a folder split by layer (the old
+`web-application/abstractions/`, retired: conflating layer with
 folder was never a principled reason to separate a seam from the concern it belongs to).
 
 **Modules follow concerns, not assemblies.** A module (`IModule`) is a concern's registration
@@ -205,16 +212,19 @@ layout. When a hub or similar has one folder per message DIRECTION instead of pe
 }
 ```
 
-This JSON is the **single source of truth**. An MSBuild target on the convention-analyzers
-project regenerates two artifacts from it before every compile:
+This JSON is the **single source of truth** and is itself family-agnostic. An MSBuild target on
+the convention-analyzers project regenerates it into a family-agnostic artifact plus one
+standalone artifact per family before every compile:
 
 - `feature-filename-grammar.g.cs` — analyzer constants (layers, function→layer map, longest-first
-  match order) consumed by the TWA0015/TWA0016 analyzer.
-- `source/container-apps/web/msbuild/feature-filename-grammar.g.props` — the layer list and the
-  hybrid `Compile Include` globs the layer projects use, plus the regex the membership guard
-  matches filenames against.
+  match order) consumed by the TWA0015/TWA0016 analyzer. Generated once (family-agnostic).
+- `source/container-apps/{web,api,grpc}/msbuild/feature-filename-grammar.g.props` — one per
+  family, each generated from the same JSON by the same generator parameterized with that
+  family's prefix (`Web`/`Api`/`Grpc`). Each holds its family's layer list, hybrid `Compile
+  Include` globs, and the regex its family's membership guard matches filenames against.
 
-Adding or changing a function or layer means editing only the JSON:
+Adding or changing a function or layer means editing only the JSON — the change applies to every
+family:
 
 1. Add the entry (e.g. a new `"validator": "application"` pair).
 2. Build the analyzers project (or a full solution build) so both generated files regenerate.
@@ -227,10 +237,11 @@ Adding or changing a function or layer means editing only the JSON:
 
 ## Membership guard
 
-`web/msbuild/feature-membership.targets` (imported once via `web/Directory.Build.targets`) walks
-every `.cs` under `web/features/` and `web/platform/` and requires each one to match exactly one
-registered `-{layer}` suffix, generated from the same registry. A file matching **zero**
-registered suffixes is a **build error** — it would otherwise compile into no project at all:
+Each family gets its own guard: `<family>/msbuild/feature-membership.targets` (imported once via
+`<family>/Directory.Build.targets`) walks every `.cs` under that family's `features/` and
+`platform/` trees and requires each one to match exactly one registered `-{layer}` suffix,
+generated from the same registry. A file matching **zero** registered suffixes is a **build
+error** — it would otherwise compile into no project at all:
 
 > Feature/platform file(s) match NO registered layer suffix and would compile into no project:
 > `<file>`. Rename to `<name>[-<function>]-<layer>.cs` with layer one of: `-contracts,
@@ -310,5 +321,5 @@ namespaces don't change; only which project's glob claims them does.
   `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
 - **Analyzer (source of truth):**
   `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar-analyzer.cs`
-- **Membership guard (source of truth):**
-  `source/container-apps/web/msbuild/feature-membership.targets`
+- **Membership guard (source of truth, one per family):**
+  `source/container-apps/{web,api,grpc}/msbuild/feature-membership.targets`

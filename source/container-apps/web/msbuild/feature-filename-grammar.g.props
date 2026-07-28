@@ -4,7 +4,7 @@
   Registry edit ⇒ full rebuild (analyzer incremental staleness).
   Nesting of layer suffixes is rejected at generation time (dual-match prevention).
   Hybrid includes: WebFeatureTreeRoot (features/) and WebPlatformTreeRoot (platform/) from
-  feature-membership.targets — same -{layer} suffix → layer project mapping.
+  feature-membership.targets — same -{layer} suffix → layer project mapping. Family: Web.
 -->
 <Project>
   <PropertyGroup>

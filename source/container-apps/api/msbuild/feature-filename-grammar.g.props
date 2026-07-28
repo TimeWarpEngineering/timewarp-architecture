@@ -1,0 +1,58 @@
+<!--
+  AUTO-GENERATED from source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json
+  Do not edit by hand. Edit the JSON and rebuild the convention-analyzers project (or run the generator).
+  Registry edit ⇒ full rebuild (analyzer incremental staleness).
+  Nesting of layer suffixes is rejected at generation time (dual-match prevention).
+  Hybrid includes: ApiFeatureTreeRoot (features/) and ApiPlatformTreeRoot (platform/) from
+  feature-membership.targets — same -{layer} suffix → layer project mapping. Family: Api.
+-->
+<Project>
+  <PropertyGroup>
+    <FeatureFilenameLayerSuffixRegex>-(infrastructure|application|contracts|domain|server)$</FeatureFilenameLayerSuffixRegex>
+  </PropertyGroup>
+  <ItemGroup>
+    <FeatureFilenameGrammarLayer Include="contracts" Project="api-contracts" />
+    <FeatureFilenameGrammarLayer Include="application" Project="api-application" />
+    <FeatureFilenameGrammarLayer Include="domain" Project="api-domain" />
+    <FeatureFilenameGrammarLayer Include="infrastructure" Project="api-infrastructure" />
+    <FeatureFilenameGrammarLayer Include="server" Project="api-server" />
+    <FeatureFilenameGrammarFunction Include="endpoint" Layer="server" />
+    <FeatureFilenameGrammarFunction Include="handler" Layer="application" />
+  </ItemGroup>
+  <!-- Hybrid includes: require tree roots set by feature-membership.targets. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'api-contracts'">
+    <Compile Include="$(ApiFeatureTreeRoot)/**/*-contracts.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(ApiPlatformTreeRoot)/**/*-contracts.cs"
+             Condition="'$(ApiPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'api-application'">
+    <Compile Include="$(ApiFeatureTreeRoot)/**/*-application.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(ApiPlatformTreeRoot)/**/*-application.cs"
+             Condition="'$(ApiPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'api-domain'">
+    <Compile Include="$(ApiFeatureTreeRoot)/**/*-domain.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(ApiPlatformTreeRoot)/**/*-domain.cs"
+             Condition="'$(ApiPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'api-infrastructure'">
+    <Compile Include="$(ApiFeatureTreeRoot)/**/*-infrastructure.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(ApiPlatformTreeRoot)/**/*-infrastructure.cs"
+             Condition="'$(ApiPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'api-server'">
+    <Compile Include="$(ApiFeatureTreeRoot)/**/*-server.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(ApiPlatformTreeRoot)/**/*-server.cs"
+             Condition="'$(ApiPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

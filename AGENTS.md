@@ -57,9 +57,13 @@ source/
                      # web-domain/ web-infrastructure/ web-server/ web-spa/
                      # (SPA features stay conventional under web-spa/features — not rehomed)
       msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
-    api/projects/    # api-contracts/ api-application/ api-domain/
+    api/             # same axis-1 shape as web (features/ + platform/ + msbuild/); trees empty
+                     # until content is migrated (grammar machinery only so far)
+      projects/      # api-contracts/ api-application/ api-domain/
                      # api-infrastructure/ api-server/
-    grpc/projects/   # grpc-contracts/ grpc-application/ grpc-domain/
+    grpc/            # same axis-1 shape as web (features/ + platform/ + msbuild/); trees empty
+                     # until content is migrated (grammar machinery only so far)
+      projects/      # grpc-contracts/ grpc-application/ grpc-domain/
                      # grpc-infrastructure/ grpc-server/
     aspire/projects/ # aspire-app-host/ aspire-service-defaults/
     yarp/            # single-project family (IS the artifact; left flat)
@@ -73,18 +77,22 @@ its own definition (csproj, global-usings) and entry-point bootstrap (program.cs
 host-config exemplars). Litmus test for the fuzzy middle: if the deployable were deleted, would
 the file still mean something? Yes → a shared tree; no → bootstrap, stays with the artifact.
 
-**Axis-1 filename grammar (web product + platform trees):** files under `web/features/` and
-`web/platform/` use `<name>[-<function>]-<layer>.cs` (`handler`→application, `endpoint`→server;
-contracts drop the function segment: `create-role-contracts.cs`). Escape hatch:
-`<name>-<layer>.cs` with no function (`role-store-application.cs`,
-`postgres-db-context-infrastructure.cs`). Registry SSOT:
+**Axis-1 filename grammar (family-generic — web, api, grpc):** files under `<family>/features/`
+and `<family>/platform/` use `<name>[-<function>]-<layer>.cs` (`handler`→application,
+`endpoint`→server; contracts drop the function segment: `create-role-contracts.cs`). Escape
+hatch: `<name>-<layer>.cs` with no function (`role-store-application.cs`,
+`postgres-db-context-infrastructure.cs`). Registry SSOT (itself family-agnostic):
 `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
-(generates analyzer constants + `web/msbuild/feature-filename-grammar.g.props`). Both trees are
-globbed into layer projects via `WebFeatureTreeRoot` / `WebPlatformTreeRoot` in
-`feature-membership.targets`. **Registry edit ⇒ full rebuild** (analyzer DLLs can go stale under
-pure incremental builds). Namespaces do **not** track folders — product slices use
-`…Features.<Id>` (TWA0009); platform clusters keep non-Features namespaces. Full rule, litmus
-test, and decision table: **`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
+generates the analyzer constants once, plus a standalone `<family>/msbuild/feature-filename-grammar.g.props`
+per family (web, api, grpc — yarp is a single-project family and is excluded). Each family's own
+tree roots (`WebFeatureTreeRoot`/`WebPlatformTreeRoot`, `ApiFeatureTreeRoot`/`ApiPlatformTreeRoot`,
+`GrpcFeatureTreeRoot`/`GrpcPlatformTreeRoot`) are globbed into that family's layer projects via
+its own `<family>/msbuild/feature-membership.targets`, imported once via
+`<family>/Directory.Build.targets`. **Registry edit ⇒ full rebuild** (analyzer DLLs can go stale
+under pure incremental builds). Namespaces do **not** track folders — product slices use
+`…Features.<Id>` (TWA0009 — namespace-based, already universal across families); platform
+clusters keep non-Features namespaces. Full rule, litmus test, and decision table:
+**`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
 
 ## Platform packages (foundation + analyzers + identity)
 

@@ -1,0 +1,58 @@
+<!--
+  AUTO-GENERATED from source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json
+  Do not edit by hand. Edit the JSON and rebuild the convention-analyzers project (or run the generator).
+  Registry edit ⇒ full rebuild (analyzer incremental staleness).
+  Nesting of layer suffixes is rejected at generation time (dual-match prevention).
+  Hybrid includes: GrpcFeatureTreeRoot (features/) and GrpcPlatformTreeRoot (platform/) from
+  feature-membership.targets — same -{layer} suffix → layer project mapping. Family: Grpc.
+-->
+<Project>
+  <PropertyGroup>
+    <FeatureFilenameLayerSuffixRegex>-(infrastructure|application|contracts|domain|server)$</FeatureFilenameLayerSuffixRegex>
+  </PropertyGroup>
+  <ItemGroup>
+    <FeatureFilenameGrammarLayer Include="contracts" Project="grpc-contracts" />
+    <FeatureFilenameGrammarLayer Include="application" Project="grpc-application" />
+    <FeatureFilenameGrammarLayer Include="domain" Project="grpc-domain" />
+    <FeatureFilenameGrammarLayer Include="infrastructure" Project="grpc-infrastructure" />
+    <FeatureFilenameGrammarLayer Include="server" Project="grpc-server" />
+    <FeatureFilenameGrammarFunction Include="endpoint" Layer="server" />
+    <FeatureFilenameGrammarFunction Include="handler" Layer="application" />
+  </ItemGroup>
+  <!-- Hybrid includes: require tree roots set by feature-membership.targets. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'grpc-contracts'">
+    <Compile Include="$(GrpcFeatureTreeRoot)/**/*-contracts.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(GrpcPlatformTreeRoot)/**/*-contracts.cs"
+             Condition="'$(GrpcPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'grpc-application'">
+    <Compile Include="$(GrpcFeatureTreeRoot)/**/*-application.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(GrpcPlatformTreeRoot)/**/*-application.cs"
+             Condition="'$(GrpcPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'grpc-domain'">
+    <Compile Include="$(GrpcFeatureTreeRoot)/**/*-domain.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(GrpcPlatformTreeRoot)/**/*-domain.cs"
+             Condition="'$(GrpcPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'grpc-infrastructure'">
+    <Compile Include="$(GrpcFeatureTreeRoot)/**/*-infrastructure.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(GrpcPlatformTreeRoot)/**/*-infrastructure.cs"
+             Condition="'$(GrpcPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'grpc-server'">
+    <Compile Include="$(GrpcFeatureTreeRoot)/**/*-server.cs"
+             Link="features\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(GrpcPlatformTreeRoot)/**/*-server.cs"
+             Condition="'$(GrpcPlatformTreeRoot)' != ''"
+             Link="platform\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>
