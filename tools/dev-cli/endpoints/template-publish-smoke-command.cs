@@ -13,6 +13,12 @@
 // Isolation roots: artifacts/template-publish-smoke/{cli-home,nuget-packages,work}.
 // git init + empty commit before build (task 124): TimeWarp.Build.Tasks git-metadata needs a
 // real HEAD; init alone still warns on empty repos.
+//
+// Two independent availability waits (task 130): flatcontainer (WaitForFlatcontainerAsync) gates
+// restore-path packages and is correct as a one-shot poll-then-proceed. `dotnet new install`
+// resolves through nuget.org's search/registration index instead, which lags flatcontainer, so
+// InstallPublishedTemplateAsync retries the install itself with the same bounded-backoff shape —
+// the install call IS the availability probe for the index it uses, no second endpoint to model.
 #endregion
 
 namespace DevCli.Commands;
@@ -22,6 +28,13 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
 {
   private const string TemplatePackageId = "TimeWarp.Architecture";
   private const string TemplateShortName = "timewarp-architecture";
+
+  // Run 30332386426 (v2.0.0-beta.8, 2026-07-28): flatcontainer saw all packages live at attempt 9
+  // (well under its 12 min budget), but the immediately-following `dotnet new install` still 103'd
+  // as "not found in NuGet feeds" — the registration/search index it resolves through lagged past
+  // flatcontainer. A manual `--failed` rerun ~20 min later passed. Sized generously above the
+  // observed lag.
+  private static readonly TimeSpan InstallRetryBudget = TimeSpan.FromMinutes(15);
 
   private static readonly string[] RequiredPublishedPackageIds =
   [
@@ -323,24 +336,62 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         .CaptureAsync(Ct);
       _ = uninstall; // may fail if not installed
 
-      CommandOutput result = await Shell.Builder("dotnet")
-        .WithArguments("new", "install", packageRef)
-        .WithWorkingDirectory(RepoRoot)
-        .WithEnvironmentVariable("DOTNET_CLI_HOME", CliHomeDir)
-        .WithEnvironmentVariable("NUGET_PACKAGES", NugetPackagesDir)
-        .WithNoValidation()
-        .CaptureAsync(Ct);
+      // dotnet new install resolves through nuget.org's search/registration index, which lags
+      // flatcontainer (see task 130 / run 30332386426 in the class Design region and
+      // InstallRetryBudget above). The install attempt itself is the availability probe for that
+      // index, so retry it directly with the same bounded-backoff shape as WaitForFlatcontainerAsync
+      // instead of polling a second endpoint ahead of time.
+      Terminal.WriteLine(
+        $"Installing (template install / registration index, budget {InstallRetryBudget.TotalMinutes:0} min)...");
 
-      if (!result.Success)
+      DateTimeOffset installDeadline = DateTimeOffset.UtcNow + InstallRetryBudget;
+      int installDelaySeconds = 5;
+      int installAttempt = 0;
+
+      while (true)
       {
-        Terminal.WriteErrorLine(result.Combined);
-        Terminal.WriteErrorLine("dotnet new install failed!".Red());
-        Environment.ExitCode = result.ExitCode == 0 ? 1 : result.ExitCode;
-        return false;
-      }
+        installAttempt++;
 
-      Terminal.WriteLine(result.Combined);
-      return true;
+        CommandOutput result = await Shell.Builder("dotnet")
+          .WithArguments("new", "install", packageRef)
+          .WithWorkingDirectory(RepoRoot)
+          .WithEnvironmentVariable("DOTNET_CLI_HOME", CliHomeDir)
+          .WithEnvironmentVariable("NUGET_PACKAGES", NugetPackagesDir)
+          .WithNoValidation()
+          .CaptureAsync(Ct);
+
+        if (result.Success)
+        {
+          Terminal.WriteLine(result.Combined);
+          Terminal.WriteLine(
+            $"Template install (registration index) succeeded (attempt {installAttempt}).".Green());
+          return true;
+        }
+
+        if (DateTimeOffset.UtcNow >= installDeadline)
+        {
+          Terminal.WriteErrorLine(result.Combined);
+          Terminal.WriteErrorLine(
+            $"Template install (registration index) timed out after {InstallRetryBudget.TotalMinutes:0} min (attempt {installAttempt}).".Red());
+          Environment.ExitCode = result.ExitCode == 0 ? 1 : result.ExitCode;
+          return false;
+        }
+
+        Terminal.WriteLine(
+          $"  attempt {installAttempt}: template install (registration index) failed — retry in {installDelaySeconds}s...");
+
+        try
+        {
+          await Task.Delay(TimeSpan.FromSeconds(installDelaySeconds), Ct);
+        }
+        catch (OperationCanceledException)
+        {
+          Environment.ExitCode = 1;
+          return false;
+        }
+
+        installDelaySeconds = Math.Min(installDelaySeconds * 2, 60);
+      }
     }
 
     private async Task<bool> SmokeOneAsync(string name, string[] extraArgs)
