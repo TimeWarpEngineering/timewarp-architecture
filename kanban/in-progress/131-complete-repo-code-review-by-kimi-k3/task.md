@@ -120,26 +120,26 @@ In addition to generic maintainability, the review **must** check alignment with
 ## Checklist
 
 ### Prep
-- [ ] Pin review commit SHA and record in `review-brief.md`
-- [ ] Confirm reviewer is Kimi K3; note session id under Session
-- [ ] Read root `AGENTS.md` + relevant skills (`tw-csharp`, `tw-feature-placement`,
+- [x] Pin review commit SHA and record in `review-brief.md`
+- [x] Confirm reviewer is Kimi K3; note session id under Session
+- [x] Read root `AGENTS.md` + relevant skills (`tw-csharp`, `tw-feature-placement`,
       `tw-slice-isolation`, `tw-web-api-contracts`, `tw-aggregate-pattern`,
       `agent-context-regions`)
 
 ### Review execution (Kimi K3)
-- [ ] Walk web / api / grpc / yarp / aspire container-apps
-- [ ] Walk foundation + identity library
-- [ ] Walk analyzers / generators and TWA rule surface
-- [ ] Walk tests for pattern drift (Fixie/Shouldly, host-free contract tests)
-- [ ] Walk template packaging and preprocessor / dual-mode MSBuild
-- [ ] Apply ambitious code-judo lens (delete complexity, not just rearrange)
-- [ ] Flag files approaching or past ~1000 lines and unjustified growth risk
-- [ ] Flag spaghetti growth, boundary leaks, thin wrappers, wrong-layer logic
-- [ ] Cross-check high findings against existing kanban (avoid duplicate tasks)
+- [x] Walk web / api / grpc / yarp / aspire container-apps
+- [x] Walk foundation + identity library
+- [x] Walk analyzers / generators and TWA rule surface
+- [x] Walk tests for pattern drift (Fixie/Shouldly, host-free contract tests)
+- [x] Walk template packaging and preprocessor / dual-mode MSBuild
+- [x] Apply ambitious code-judo lens (delete complexity, not just rearrange)
+- [x] Flag files approaching or past ~1000 lines and unjustified growth risk
+- [x] Flag spaghetti growth, boundary leaks, thin wrappers, wrong-layer logic
+- [x] Cross-check high findings against existing kanban (avoid duplicate tasks)
 
 ### Artifacts and disposition
-- [ ] Write `review-brief.md`
-- [ ] Write `findings.md` (high-conviction, prioritized)
+- [x] Write `review-brief.md`
+- [x] Write `findings.md` (high-conviction, prioritized)
 - [ ] Steward disposition on blocker/major items → `disposition.md`
 - [ ] Create follow-on kanban tasks for accepted multi-step work
 - [ ] Commit all artifacts; mark this task done when disposition is complete
@@ -185,7 +185,7 @@ In addition to generic maintainability, the review **must** check alignment with
 ## Session
 
 - Created: (this session) 2026-07-28 — task scaffolding only
-- Review: _pending — Kimi K3_
+- Review: 2026-07-28 — Kimi K3 (orchestrator session, opencode) — complete
 - Disposition: _pending_
 
 ## Results
