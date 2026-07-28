@@ -98,7 +98,6 @@
          library (no FrameworkReference to the shared framework), so it needs the explicit package. -->
     <PackageVersion Include="System.Formats.Cbor" Version="10.0.10" />
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
-    <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="FastEndpoints" Version="8.2.0" />
     <PackageVersion Include="FastEndpoints.OpenApi" Version="8.2.0" />
     <!-- FastEndpoints.OpenApi / Microsoft.AspNetCore.OpenApi 10.0.9 transitively pull
@@ -107,7 +106,6 @@
          (AspNetCore.OpenApi 10.0.9 is not compatible with OpenApi 3.x). -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
-    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.5.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.16.11" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />

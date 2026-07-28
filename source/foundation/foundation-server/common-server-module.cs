@@ -4,13 +4,15 @@
 
 #region Design
 // Implements IAspNetModule's static hooks so each server's Program composes modules uniformly.
-// Azure App Config is opt-in: absent "AppConfig" connection string means local config only, so
-// the template runs without any Azure dependency; refresh keys off a "Sentinel" value to avoid
-// per-key registration. /api/debug-config is Development-only because GetDebugView exposes
-// secrets. The FluentValidation DisplayNameResolver emits "Type:Member" so validation errors
-// disambiguate identically named properties across contracts. ConfigureServices also Applies
-// ContractSerializationDefaults to MVC JsonOptions and HttpJsonOptions so the host wire shape
-// matches the SPA/CLI/tests seam (camelCase properties; PascalCase string enums).
+// ConfigureConfiguration is a no-op host hook: configuration-source composition (Azure App
+// Config, Key Vault, custom providers) belongs in the host's Program, not this published
+// foundation package — libraries must not Console.Write credentials or force Azure package
+// weight on every consumer (task 131 F-001). /api/debug-config is Development-only because
+// GetDebugView exposes secrets. The FluentValidation DisplayNameResolver emits "Type:Member"
+// so validation errors disambiguate identically named properties across contracts.
+// ConfigureServices also Applies ContractSerializationDefaults to MVC JsonOptions and
+// HttpJsonOptions so the host wire shape matches the SPA/CLI/tests seam (camelCase
+// properties; PascalCase string enums).
 // OpenAPI: FastEndpoints.OpenApi's OpenApiDocument (not raw services.AddOpenApi) so FE
 // transformers and endpoint metadata flow into the document. OpenAPI/Scalar feature tags
 // come from generator Description.WithTags (namespace leaf under Features, plus additive
@@ -25,10 +27,11 @@ namespace TimeWarp.Foundation;
 
 public class CommonServerModule : IAspNetModule
 {
-  public static void ConfigureConfiguration(ConfigurationManager configurationManager)
-  {
-    ConfigureAzureAppConfig(configurationManager); ;
-  }
+  /// <summary>
+  /// Host hook for additional configuration sources. Intentionally empty in the foundation
+  /// package — apps that need Azure App Config (or similar) register it in their own Program.
+  /// </summary>
+  public static void ConfigureConfiguration(ConfigurationManager configurationManager) { }
 
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
@@ -117,41 +120,4 @@ public class CommonServerModule : IAspNetModule
       }
     );
   }
-
-  private static void ConfigureAzureAppConfig(IConfigurationManager configurationManager)
-  {
-    string? connectionString = configurationManager.GetConnectionString("AppConfig");
-    if (string.IsNullOrEmpty(connectionString))
-    {
-      Console.WriteLine("No AppConfig ConnectionString");
-      return;
-    }
-
-    Console.WriteLine($"connectionString: {connectionString}");
-
-    configurationManager.AddAzureAppConfiguration
-    (
-      azureAppConfigurationOptions =>
-        azureAppConfigurationOptions
-          .Connect(connectionString)
-          .UseFeatureFlags()
-          .ConfigureRefresh
-          (
-            azureAppConfigurationRefreshOptions =>
-              azureAppConfigurationRefreshOptions
-                .Register("Sentinel", refreshAll: true)
-                .SetRefreshInterval(TimeSpan.FromMinutes(5))
-          )
-          .ConfigureKeyVault
-          (
-            azureAppConfigurationKeyVaultOptions =>
-              azureAppConfigurationKeyVaultOptions.SetCredential(new DefaultAzureCredential())
-          ),
-      optional: false
-    );
-
-    string? testValue = configurationManager.GetValue<string>("TestValue");
-    Console.WriteLine($"App Config value TestValue: {testValue}");
-  }
-
 }
