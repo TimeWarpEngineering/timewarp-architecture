@@ -87,3 +87,11 @@ checkpoint with the maintainer after Stage 0 (machinery design is the risk conce
 - api base-error/base-exception RESOLVED (Steve, 2026-07-28): **DELETE both** — zero references,
   zero derived types, self-admitted convention anchors superseded by foundation's
   SharedProblemDetails/OneOf error story (FeatureAnnotations debris class).
+- api generic-pipeline-behavior RESOLVED (Steve, 2026-07-28): **Option A — stays in api-server
+  as bootstrap exemplar** (sample-options precedent: live wired exemplar whose content is
+  deliberately about nothing; replaced by real cross-cutting concerns when 118 lands — x402
+  metering is a pipeline behavior).
+- **All maintainer questions resolved 2026-07-28** — stages 1 and 2 fully unblocked:
+  6a service interfaces → -application seam beside impls; 6b protobuf codegen →
+  grpc/platform/codegen/; 6c greeter → own slice; base-error/base-exception → delete;
+  generic-pipeline-behavior → stays (bootstrap exemplar).

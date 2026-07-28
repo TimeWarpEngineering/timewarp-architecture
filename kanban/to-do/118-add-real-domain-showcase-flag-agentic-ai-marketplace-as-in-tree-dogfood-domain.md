@@ -92,3 +92,7 @@ golden path with **Orleans** for aggregates that earn actor hosting; the fleet l
   https://www.nbcnews.com/tech/tech-news/bot-web-traffic-overtaken-human-web-traffic-data-shows-rcna348522
   and https://www.tomshardware.com/tech-industry/artificial-intelligence/bots-have-now-passed-human-traffic-online-cloudflare-boss-laments-says-agentic-traffic-wasnt-expected-to-eclipse-real-people-until-next-year
   (discovery via https://x.com/coinbureau/status/2081585618384273841, 2026-07-28).
+- Second exemplar replacement (Steve, 2026-07-28, from 129 placement rulings): api-server's
+  `generic-pipeline-behavior.cs` (live wired placeholder, console writes) is replaced when real
+  cross-cutting concerns land — x402 metering is a pipeline behavior; same
+  replace-the-sample-with-real pattern as the web-server sample-options note above.
