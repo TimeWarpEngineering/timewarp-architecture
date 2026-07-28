@@ -69,3 +69,39 @@ Interim action taken: the failing workflow file was RENAMED to
 `.github/workflows/timewarp-architecture-documentation.yml.disabled` (Steve's call) so
 master pushes stop going red; takes effect on master when the rename merges. Un-rename to
 resurrect, pipeline itself now works (Pages build_type=workflow was fixed).
+
+## Results
+
+**Decision (Steve, 2026-07-28): Option C** — kill the publishing debris now; docs of record are
+in-repo markdown (agents read skills/AGENTS.md/documentation/; template users receive the
+documentation/ tree inside their generated app). Re-evaluate a public docs presence when the
+repo gains an outward-facing audience (task 118's marketplace showcase is the trigger; GitHub
+Pages vs timewarp.software decided then, with a real requirements owner).
+
+**Evidence that settled it** (local run, 2026-07-28): docfx runs locally trivially
+(`dotnet tool install -g docfx`; build = 15s, 0 errors — the historical error_count:10 did not
+reproduce) but builds only **7 files**: the config was copy-paste archaeology from the
+Blazor-State repo (metadata dest literally "Blazor-State/api", empty source list — API docs
+never generated) and never pointed at the real documentation/ tree. The site could never have
+been current; nobody noticed for years = no audience signal. The deploy workflow was already
+disabled (.yml.disabled).
+
+**Landed** (commit `9b8cdb27`, 492 deletions): docfx project deleted
+(timewarp-templates/documentation/), disabled Pages workflow deleted, orphaned ADO pipeline yml
+deleted; template nupkg `PackageProjectUrl` re-pointed from the stale site's Overview.html to
+the GitHub repo (that URL ships on nuget.org); AGENTS.md + readme state the in-repo position
+with the 118 re-evaluation hook. Zero `github.io/timewarp-architecture` references remain.
+Diagnostic docfx tool uninstalled after use.
+
+**Verification:** `dev build` 0/0; `dev template-smoke` both matrices SUCCEEDED (gates also
+covered the concurrently-landed 129 stage-0 machinery present in the same tree).
+
+**Residual (maintainer-side, one step):** GitHub Pages still serves the ancient gh-pages branch
+content at the old URL until Pages is disabled in repo settings (or
+`gh api -X DELETE repos/TimeWarpEngineering/timewarp-architecture/pages`). Repo-side, nothing
+links to it anymore.
+
+## Session
+
+- Executed: 2026-07-28 — decision conversation + inline cleanup by orchestrator (Claude Fable);
+  local docfx run as the deciding evidence.
