@@ -81,3 +81,6 @@ checkpoint with the maintainer after Stage 0 (machinery design is the risk conce
 - Decision 6b RESOLVED (Steve, 2026-07-28): protobuf-generation-hosted-service →
   **`grpc/platform/codegen/`** cluster (concern delivered as a hosted service; `-server.cs`
   suffix keeps it in grpc-server's compilation unit).
+- Decision 6c RESOLVED (Steve, 2026-07-28): proto-first demo gets its **own `greeter/` slice**
+  (matches the proto service identity; keeps code-first vs proto-first demo styles visibly
+  separate).
