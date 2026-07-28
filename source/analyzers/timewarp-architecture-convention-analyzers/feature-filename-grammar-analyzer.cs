@@ -4,8 +4,14 @@
 #endregion
 
 #region Design
-// Grammar: <name>[-<function>]-<layer>.cs under the feature-cohesive tree (web/features/).
+// Grammar: <name>[-<function>]-<layer>.cs under a family's feature-cohesive tree
+// (web/features/, api/features/, grpc/features/ — FeatureFilenameGrammar.Families, task 129).
 // Registry SSOT: feature-filename-grammar.json → FeatureFilenameGrammar.g.cs (no hand maps).
+// Family list is generated too (.g.cs Families constant, sourced from the convention-analyzers
+// csproj's Web <Exec> --families argument) — LayerProjectFeatureMarkers and the cohesive-tree
+// absolute-path check are both derived from Families × Layers, not hand-listed per family.
+// web-spa is the one family-specific exception: a UI project outside the grammar's layer set
+// that only the web family has, so its marker stays a literal append.
 // Function match is closed-set longest-first so multi-segment functions (if registered) win
 // over shorter tokens, and escape-hatch names (role-store-application.cs) stay valid —
 // unregistered trailing tokens are part of <name>, not functions (do not require every
@@ -36,15 +42,24 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
   private const string Category = "Naming";
 
   // Layer-project feature folders that are NOT the cohesive tree (exclude after path normalize).
-  private static readonly string[] LayerProjectFeatureMarkers =
-  [
-    "/web-contracts/features/",
-    "/web-application/features/",
-    "/web-server/features/",
-    "/web-domain/features/",
-    "/web-infrastructure/features/",
-    "/web-spa/features/",
-  ];
+  // Generated from Families × Layers (e.g. /api-server/features/); web-spa is a UI project
+  // outside the grammar's layer set and only the web family has one, so it stays a literal append.
+  private static readonly string[] LayerProjectFeatureMarkers = BuildLayerProjectFeatureMarkers();
+
+  private static string[] BuildLayerProjectFeatureMarkers()
+  {
+    List<string> markers = new();
+    foreach (string family in FeatureFilenameGrammar.Families)
+    {
+      foreach (string layer in FeatureFilenameGrammar.Layers)
+      {
+        markers.Add($"/{family}-{layer}/features/");
+      }
+    }
+
+    markers.Add("/web-spa/features/");
+    return markers.ToArray();
+  }
 
   private static readonly DiagnosticDescriptor PairingMismatchRule =
     new
@@ -193,11 +208,15 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
       return collapsed;
     }
 
-    // Absolute / repo-rooted cohesive tree: .../web/features/... (not .../web-*/features/...)
-    if (collapsed.Contains("/web/features/", StringComparison.Ordinal)
-        || collapsed.Contains("/container-apps/web/features/", StringComparison.Ordinal))
+    // Absolute / repo-rooted cohesive tree: .../{family}/features/... (not .../{family}-*/features/...)
+    // for every registered family (web, api, grpc — FeatureFilenameGrammar.Families).
+    foreach (string family in FeatureFilenameGrammar.Families)
     {
-      return collapsed;
+      if (collapsed.Contains($"/{family}/features/", StringComparison.Ordinal)
+          || collapsed.Contains($"/container-apps/{family}/features/", StringComparison.Ordinal))
+      {
+        return collapsed;
+      }
     }
 
     return null;

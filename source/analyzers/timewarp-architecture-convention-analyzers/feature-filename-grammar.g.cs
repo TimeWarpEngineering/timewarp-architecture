@@ -25,4 +25,10 @@ internal static class FeatureFilenameGrammar
       "endpoint",
       "handler",
     });
+
+  /// <summary>Lowercase family directory names (e.g. "web", "api", "grpc") whose cohesive trees
+  /// TWA0015/TWA0016 scope into; sourced from the Web &lt;Exec&gt; invocation's --families
+  /// argument (convention-analyzers csproj) and cross-checked by the SSOT drift test.</summary>
+  public static readonly ImmutableArray<string> Families =
+    ImmutableArray.Create("web", "api", "grpc");
 }

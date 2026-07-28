@@ -126,6 +126,15 @@ public class Should_Enforce_Feature_Filename_Grammar
       .RunAsync();
   }
 
+  public static async Task Given_Api_Family_Layer_Project_Features_Path_IsSilent()
+  {
+    // Family-generic markers (task 129): api-* layer projects' own features/ folders are not
+    // the api family's cohesive tree either.
+    await Test("api-application/features/weather-forecast/weather-forecast-handler.cs").RunAsync();
+    await Test("/repo/source/container-apps/api/projects/api-server/features/weather-forecast/some-helper.cs")
+      .RunAsync();
+  }
+
   public static async Task Given_Spa_Features_Paths_AreSilent_Even_With_Grammar_Names()
   {
     // SPA stays conventional (axis-1). Project-relative features/… and absolute web-spa/features/…
@@ -148,6 +157,26 @@ public class Should_Enforce_Feature_Filename_Grammar
     CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-contracts.cs", "handler", "application"));
     await analyzerTest.RunAsync();
+  }
+
+  public static async Task Given_Absolute_Api_Family_Cohesive_Path_Flags_TWA0015()
+  {
+    // Family-generic scoping (task 129): api/features/ is a cohesive tree too, not just web's.
+    const string Path =
+      "/home/dev/source/container-apps/api/features/weather-forecast/weather-forecast-handler-contracts.cs";
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    analyzerTest.ExpectedDiagnostics.Add
+    (
+      Twa0015(Path, "weather-forecast-handler-contracts.cs", "handler", "application")
+    );
+    await analyzerTest.RunAsync();
+  }
+
+  public static async Task Given_Api_Family_Relative_Cohesive_Path_IsClean()
+  {
+    // ../features/ glob form is family-agnostic already; confirm api-shaped names parse clean.
+    await Test("../features/weather-forecast/get-weather-forecasts/get-weather-forecasts-contracts.cs")
+      .RunAsync();
   }
 }
 
@@ -199,6 +228,12 @@ public class Should_Keep_Grammar_Registry_In_Sync
       FeatureFilenameGrammar.FunctionToLayer.ContainsKey(pair.Key).ShouldBeTrue();
       FeatureFilenameGrammar.FunctionToLayer[pair.Key].ShouldBe(pair.Value);
     }
+
+    // The .g.cs Families constant (sourced from the csproj's Web <Exec> --families argument)
+    // must agree with this test's own family list — the documented duplication (task 129
+    // stage 1) is now a checked one rather than a silent hand-sync.
+    FeatureFilenameGrammar.Families.OrderBy(static f => f, StringComparer.Ordinal)
+      .ShouldBe(Families.Select(static f => f.Family).OrderBy(static f => f, StringComparer.Ordinal));
 
     // Each family gets its own generated props + membership targets, from the same JSON.
     foreach ((string prefix, string family) in Families)

@@ -41,8 +41,11 @@
           BeforeTargets="BeforeCompile;CoreCompile"
           Inputs="$(_FeatureFilenameGrammarJson);$(_FeatureFilenameGrammarGenerator)"
           Outputs="$(_FeatureFilenameGrammarCs);$(_FeatureFilenameGrammarWebProps);$(_FeatureFilenameGrammarApiProps);$(_FeatureFilenameGrammarGrpcProps)">
-    <!-- .g.cs is family-agnostic; emit it once, from the Web invocation. -->
-    <Exec Command="python3 &quot;$(_FeatureFilenameGrammarGenerator)&quot; --json &quot;$(_FeatureFilenameGrammarJson)&quot; --family-prefix Web --out-props &quot;$(_FeatureFilenameGrammarWebProps)&quot; --out-cs &quot;$(_FeatureFilenameGrammarCs)&quot;" />
+    <!-- .g.cs is family-agnostic; emit it once, from the Web invocation. The families flag below
+         is the SSOT family list baked into the .g.cs Families constant TWA0015/TWA0016 derives
+         its per-family path markers from; keep in sync with Should_Keep_Grammar_Registry_In_Sync's
+         family list. -->
+    <Exec Command="python3 &quot;$(_FeatureFilenameGrammarGenerator)&quot; --json &quot;$(_FeatureFilenameGrammarJson)&quot; --family-prefix Web --families web,api,grpc --out-props &quot;$(_FeatureFilenameGrammarWebProps)&quot; --out-cs &quot;$(_FeatureFilenameGrammarCs)&quot;" />
     <Exec Command="python3 &quot;$(_FeatureFilenameGrammarGenerator)&quot; --json &quot;$(_FeatureFilenameGrammarJson)&quot; --family-prefix Api --out-props &quot;$(_FeatureFilenameGrammarApiProps)&quot;" />
     <Exec Command="python3 &quot;$(_FeatureFilenameGrammarGenerator)&quot; --json &quot;$(_FeatureFilenameGrammarJson)&quot; --family-prefix Grpc --out-props &quot;$(_FeatureFilenameGrammarGrpcProps)&quot;" />
   </Target>
