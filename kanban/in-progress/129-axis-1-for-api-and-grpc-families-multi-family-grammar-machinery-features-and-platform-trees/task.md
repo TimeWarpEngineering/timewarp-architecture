@@ -78,3 +78,6 @@ checkpoint with the maintainer after Stage 0 (machinery design is the risk conce
   their `-server.cs` implementations in the use-case folder (identity-host precedent).
 - Remaining maintainer questions queued one-at-a-time: 6b protobuf codegen tool placement,
   6c greeter slice naming, api base-error/base-exception, api generic-pipeline-behavior.
+- Decision 6b RESOLVED (Steve, 2026-07-28): protobuf-generation-hosted-service →
+  **`grpc/platform/codegen/`** cluster (concern delivered as a hosted service; `-server.cs`
+  suffix keeps it in grpc-server's compilation unit).
