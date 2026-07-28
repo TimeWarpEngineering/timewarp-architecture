@@ -164,8 +164,9 @@ The generator extracts OpenAPI documentation from:
 | Route conflict | Same route + verb registered twice |
 
 Contract-shape rules for the outer class (`static`/`partial`, Query/Command present) are enforced
-alongside TWA0005/0006 (endpoint verb agreement and coverage for every routed contract) and
-TWA0013/0014 (every `[ApiEndpoint]` contract carries exactly one auth-posture marker).
+alongside TWA0006 (coverage for every routed contract; TWA0005 MVC verb-mismatch retired
+with BaseEndpoint, task 131 F-002) and TWA0013/0014 (every `[ApiEndpoint]` contract carries
+exactly one auth-posture marker).
 
 ## Customization
 

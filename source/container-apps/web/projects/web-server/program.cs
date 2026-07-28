@@ -12,8 +12,8 @@
 // Serilog bootstrap logger wraps host build so startup crashes are still captured; the app runs
 // through RunOaktonCommands to expose environment checks as CLI commands.
 // Web.Spa services are registered here too — prerendering runs SPA code on the server.
-// API surface is generated FastEndpoints from [ApiEndpoint] web-contracts (no MVC BaseEndpoint
-// shims). Pipeline order: UseRouting → UseAuthentication → UseAuthorization → UseAntiforgery
+// API surface is generated FastEndpoints from [ApiEndpoint] web-contracts (MVC BaseEndpoint
+// removed task 131 F-002). Pipeline order: UseRouting → UseAuthentication → UseAuthorization → UseAntiforgery
 // (Blazor) → UseFastEndpoints → UseScalarApiReference (MapOpenApi + Scalar UI; after FE so
 // endpoint metadata is registered). Auth before FE; no FE antiforgery for JSON APIs.
 // IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.

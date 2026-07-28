@@ -10,9 +10,9 @@
 // weight on every consumer (task 131 F-001). /api/debug-config is Development-only because
 // GetDebugView exposes secrets. The FluentValidation DisplayNameResolver emits "Type:Member"
 // so validation errors disambiguate identically named properties across contracts.
-// ConfigureServices also Applies ContractSerializationDefaults to MVC JsonOptions and
-// HttpJsonOptions so the host wire shape matches the SPA/CLI/tests seam (camelCase
-// properties; PascalCase string enums).
+// ConfigureServices Applies ContractSerializationDefaults to HttpJsonOptions so the host
+// wire shape matches the SPA/CLI/tests seam (camelCase properties; PascalCase string enums).
+// Mvc.JsonOptions was removed with MVC BaseEndpoint (task 131 F-002) — no MVC consumers.
 // OpenAPI: FastEndpoints.OpenApi's OpenApiDocument (not raw services.AddOpenApi) so FE
 // transformers and endpoint metadata flow into the document. OpenAPI/Scalar feature tags
 // come from generator Description.WithTags (namespace leaf under Features, plus additive
@@ -59,8 +59,6 @@ public class CommonServerModule : IAspNetModule
 
     // Contract-seam serialization (camelCase properties + PascalCase string enums). Without this,
     // the server would emit default STJ integers while the SPA/CLI/tests use ContractSerializationDefaults.
-    serviceCollection.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(
-      o => ContractSerializationDefaults.Apply(o.JsonSerializerOptions));
     serviceCollection.ConfigureHttpJsonOptions(
       o => ContractSerializationDefaults.Apply(o.SerializerOptions));
   }

@@ -175,7 +175,8 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0001 | partial-class primary/secondary file declaration shape |
 | TWA0002/0003 | contract property nullability must agree with FluentValidation presence rules |
 | TWA0004 | every source file carries `#region Purpose` (one honest line minimum) |
-| TWA0005/0006 | endpoint verb matches the contract's `[ApiRoute]`; every routed contract has an endpoint or `[ClientOnlyContract(reason)]` |
+| TWA0005 | **retired** (task 131 F-002) — was MVC endpoint verb vs `[ApiRoute]`; ID reserved, do not reuse. FastEndpoints take verb from the contract at generation time |
+| TWA0006 | every routed contract has a server endpoint or `[ClientOnlyContract(reason)]` |
 | TWA0007 | Aspire `AddProject` resource names are `ServiceNames` constant values |
 | TWA0008 | no template-conditional tokens in comments/strings (the dotnet-new engine misreads them and truncates generated files); escape hatch: the `cnd:noEmit` comment-marker pair |
 | TWA0009 | product slices (`…Features.<Id>` under SliceRoot) must not reference other product slices (share via Components/contracts); platform `Applications` is one-way free; opt-out: `[CrossSliceReference(typeof(T), reason)]` |

@@ -259,7 +259,7 @@ Confirm/extend on existing tasks:
 ## Implement under 131 (checklist)
 
 - [x] F-001 — remove Azure App Config module path from foundation-server  
-- [ ] F-002 — delete MVC BaseEndpoint; retire TWA0005; Mvc.JsonOptions; tests; AGENTS  
+- [x] F-002 — delete MVC BaseEndpoint; retire TWA0005; Mvc.JsonOptions; tests; AGENTS  
 - [ ] F-009 — mock auth consistent across configurations + csproj comment  
 - [ ] F-010 — chrome fossils + MediatR link (not Passwordless key unless specs already allow)  
 - [ ] F-011 — postgres exclude glob  
