@@ -4,10 +4,10 @@
 
   <PropertyGroup>
     <Authors>Steven T. Cramer</Authors>
-    <Product>TimeWarp.Blazor</Product>
+    <Product>TimeWarp.Architecture</Product>
     <PackageIconUrl>https://github.com/TimeWarpEngineering/timewarp-architecture/raw/master/Assets/Logo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/TimeWarpEngineering/timewarp-architecture</PackageProjectUrl>
-    <PackageTags>Microsoft ASP.NET Core Blazor State Blazor-State MediatR Mediator Pipeline Redux</PackageTags>
+    <PackageTags>Microsoft ASP.NET Core Blazor TimeWarp.State TimeWarp.Mediator Mediator Pipeline Template Aspire FastEndpoints</PackageTags>
     <PackageReleaseNotes>TODO</PackageReleaseNotes>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-architecture.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
