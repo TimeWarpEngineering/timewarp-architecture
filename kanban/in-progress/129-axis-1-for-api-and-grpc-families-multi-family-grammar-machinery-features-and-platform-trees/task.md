@@ -101,3 +101,11 @@ checkpoint with the maintainer after Stage 0 (machinery design is the risk conce
 - Pre-existing `!api` exclude gap (stage-0 finding 2, predates 129): fixed inline by
   orchestrator — see commit referenced below; web-spa ApiService_Body_Casing_Tests.cs now
   stripped with the type it references.
+- `!api` exclude fix VERIFIED (2026-07-28, commit c2b3f4a2): packed-template `--api false`
+  generation confirms ApiService_Body_Casing_Tests.cs stripped. Note: the proof app's build
+  still fails CS7036 (AddOpenApi signature) — that is the KNOWN post-126-005 pins-lag window
+  (generated app restores beta.7 foundation from nuget.org; template content needs the newer
+  unpublished signature), NOT a flag bug: default-flags apps against nuget.org fail identically
+  until the next release publishes foundation+template together (124 policy). Exactly the
+  failure class 126-003's post-publish gate will catch. Additional datum: the smoke matrix has
+  no `--api false`/`--grpc false` legs — consider a matrix extension when 126-003 lands.
