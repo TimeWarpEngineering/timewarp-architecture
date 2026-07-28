@@ -206,7 +206,7 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWE003 | route+verb conflict across `[ApiEndpoint]` contracts — **all** parties reported; **none** of the group generated |
 | TWE005 | `[Page]` `Policy` must be a const field reference (not string literal / `nameof`) |
 | TWE006 | `[TypedId]` target must be a `readonly partial record struct` |
-| TWE007 | unknown / unresolvable `HttpVerb` on a hosted contract — fail-closed (never defaults to Get); no emission |
+| TWE007 | unresolvable route or `HttpVerb` (missing/empty `[ApiRoute]`, unknown verb) — fail-closed; no emission |
 | SG001 | shared source-generator log (resilience backstop) |
 | SG002 | `EnableApiEndpointGeneration` true but FastEndpoints / `BaseFastEndpoint` missing |
 | SG010 | TypedId BCL surface generation failed (resilience) |

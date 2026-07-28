@@ -56,12 +56,12 @@ internal static class DiagnosticDescriptors
 
   public static readonly DiagnosticDescriptor ApiEndpointUnknownHttpVerb = new(
     id: "TWE007",
-    title: "Unknown or unresolvable HttpVerb",
-    messageFormat: "Contract '{0}' declares an unresolvable or unsupported HttpVerb ('{1}'); allowed: Get, Post, Put, Delete, Patch, Head, Options — no endpoint is generated",
+    title: "Unresolvable route or HttpVerb",
+    messageFormat: "Contract '{0}' has an unresolvable route or HttpVerb ('{1}'); require [ApiRoute] with a non-empty template and a verb in: Get, Post, Put, Delete, Patch, Head, Options — no endpoint is generated",
     category: "ApiEndpoint",
     DiagnosticSeverity.Error,
     isEnabledByDefault: true,
-    description: "Fail-closed verb resolution: the generator never defaults an unknown verb to Get.");
+    description: "Fail-closed: missing/empty ApiRoute or unknown verb never defaults to Get or silent skip.");
 
   // ── SG: generator logs / resilience ──────────────────────────────────────
 

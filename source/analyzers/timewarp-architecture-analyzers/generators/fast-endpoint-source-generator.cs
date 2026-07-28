@@ -179,20 +179,15 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
           continue;
         }
 
-        if (model.VerbUnresolved || string.IsNullOrEmpty(model.HttpVerb))
+        if (model.VerbUnresolved || string.IsNullOrEmpty(model.HttpVerb) || string.IsNullOrWhiteSpace(model.Route))
         {
           spc.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.ApiEndpointUnknownHttpVerb,
             Location.None,
             model.ClassName,
-            model.UnresolvedVerbDisplay));
-          continue;
-        }
-
-        if (string.IsNullOrEmpty(model.Route))
-        {
-          // Incomplete route without a usable template — treat as unresolvable verb path already
-          // covered above when ApiRoute is missing; if route empty with valid verb, skip emit.
+            string.IsNullOrEmpty(model.UnresolvedVerbDisplay)
+              ? (string.IsNullOrWhiteSpace(model.Route) ? "<empty route>" : "<missing>")
+              : model.UnresolvedVerbDisplay));
           continue;
         }
 

@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.CSharp;
 /// endpoint is generated in the server). So the contract MUST be compiled into a referenced assembly,
 /// not handed to the generator as source. The harness also supplies the stub types the generator now
 /// hard-requires in the compilation: <c>FastEndpoints.IEndpoint</c> and
-/// <c>TimeWarp.Architecture.Features.BaseFastEndpoint`2</c>, plus <c>ApiRouteAttribute</c>/
+/// <c>TimeWarp.Foundation.Features.BaseFastEndpoint`2</c>, plus <c>ApiRouteAttribute</c>/
 /// <c>HttpVerb</c>/<c>OpenApiTags</c>.
 /// </summary>
 internal static class GeneratorTestHarness

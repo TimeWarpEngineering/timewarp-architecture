@@ -102,8 +102,7 @@ contradiction.
 - Cross-assembly type resolution is handled automatically
 
 ## Error Handling
-Provides clear compiler diagnostics for:
-- Missing or incorrect class structure
-- Missing required attributes
-- Route conflicts
-- Invalid endpoint type configurations
+
+Authoritative diagnostics: TWE002 (missing Query/Command), TWE003 (route+verb conflict),
+TWE007 (unresolvable route/HttpVerb), SG002 (missing FastEndpoints). See
+`documentation/developer/reference/ApiEndpointSourceGenerator.md` and AGENTS.md.

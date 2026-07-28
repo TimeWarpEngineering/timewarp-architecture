@@ -225,6 +225,60 @@ public class FastEndpointSourceGenerator_ShapeAndVerb_Tests
     return Task.CompletedTask;
   }
 
+  public static Task Should_Report_TWE007_When_ApiRoute_Missing()
+  {
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly("""
+      using TimeWarp.Architecture.Attributes;
+
+      namespace Test.Features.Broken;
+
+      [ApiEndpoint]
+      public static partial class NoApiRoute
+      {
+          public sealed partial class Query { public string? Id { get; set; } }
+          public sealed class Response { }
+      }
+      """);
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
+
+    ImmutableArray<Diagnostic> diagnostics = runResult.Results.SelectMany(r => r.Diagnostics).ToImmutableArray();
+    diagnostics.ShouldContain(d =>
+      d.Id == "TWE007"
+      && d.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Contains("missing ApiRoute"));
+    runResult.Results.SelectMany(r => r.GeneratedSources).Count().ShouldBe(0);
+
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Report_TWE007_When_Route_Template_Empty()
+  {
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly("""
+      using TimeWarp.Architecture;
+      using TimeWarp.Architecture.Attributes;
+
+      namespace Test.Features.Broken;
+
+      [ApiEndpoint]
+      public static partial class EmptyRoute
+      {
+          [ApiRoute("", HttpVerb.Get)]
+          public sealed partial class Query { public string? Id { get; set; } }
+          public sealed class Response { }
+      }
+      """);
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
+
+    ImmutableArray<Diagnostic> diagnostics = runResult.Results.SelectMany(r => r.Diagnostics).ToImmutableArray();
+    diagnostics.ShouldContain(d =>
+      d.Id == "TWE007"
+      && d.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Contains("empty route"));
+    runResult.Results.SelectMany(r => r.GeneratedSources).Count().ShouldBe(0);
+
+    return Task.CompletedTask;
+  }
+
   public static Task Should_Emit_Head_And_Options_Verbs()
   {
     MetadataReference contract = GeneratorTestHarness.CompileContractAssembly("""

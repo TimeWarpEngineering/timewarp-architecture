@@ -95,26 +95,36 @@ internal sealed record EndpointEmitModel(
     if (apiRouteAttribute is not null && apiRouteAttribute.ConstructorArguments.Length >= 2)
     {
       route = apiRouteAttribute.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
-      string? resolvedName = HostedRouteDiscovery.ResolveHttpVerbName(apiRouteAttribute.ConstructorArguments[1]);
-      string? methodName = resolvedName is null
-        ? null
-        : HostedRouteDiscovery.ConvertHttpVerbToMethodName(resolvedName);
-
-      if (methodName is null)
+      if (string.IsNullOrWhiteSpace(route))
       {
+        // Align with HostedRouteDiscovery (whitespace route is not hosted) — report TWE007, never silent skip.
         verbUnresolved = true;
-        unresolvedVerbDisplay = resolvedName
-          ?? apiRouteAttribute.ConstructorArguments[1].Value?.ToString()
-          ?? "<missing>";
+        unresolvedVerbDisplay = "<empty route>";
+        route = string.Empty;
       }
       else
       {
-        httpVerb = methodName;
+        string? resolvedName = HostedRouteDiscovery.ResolveHttpVerbName(apiRouteAttribute.ConstructorArguments[1]);
+        string? methodName = resolvedName is null
+          ? null
+          : HostedRouteDiscovery.ConvertHttpVerbToMethodName(resolvedName);
+
+        if (methodName is null)
+        {
+          verbUnresolved = true;
+          unresolvedVerbDisplay = resolvedName
+            ?? apiRouteAttribute.ConstructorArguments[1].Value?.ToString()
+            ?? "<missing>";
+        }
+        else
+        {
+          httpVerb = methodName;
+        }
       }
     }
     else
     {
-      // No [ApiRoute] or incomplete ctor args — treat as unresolvable verb so we never emit Get.
+      // No [ApiRoute] or incomplete ctor args — TWE007 (never emit Get, never silent skip).
       verbUnresolved = true;
       unresolvedVerbDisplay = "<missing ApiRoute>";
     }
