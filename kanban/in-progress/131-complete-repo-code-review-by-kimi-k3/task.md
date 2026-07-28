@@ -163,6 +163,25 @@ In addition to generic maintainability, the review **must** check alignment with
   ef-principal-store (~347), ingress-route-prefix generator (~389). None over 1k
   yet; watch generators and host Programs.
 
+### Execution plan (Phase 2, 2026-07-28)
+
+- Review commit pinned: `2b5dc765` (HEAD at execution start).
+- Judgment/findings rendered by Kimi K3 main session only; sub-agents run mechanical inventories only.
+- Out of scope: obj/bin, full dev build/test battery, program-104 future surface, settled architecture (109, 114/126/129) unless drift visible.
+
+**Walk order (ship-risk first):**
+- W0 conventions SSOT (AGENTS.md, TWA table) → W1 dual-mode MSBuild + template packaging + dev-cli smoke commands (deep) → W2 analyzers + generators (deep) → W3 foundation (deep seams, scan leaves) → W4 identity library (deep ceremonies/stores) → W5 web family (deep platform/identity-host/host Programs + identity/profile slices; golden-path one demo slice; structural rest) → W6 api/grpc/yarp/aspire (structural + host deep) → W7 tests (pattern audit) → W8 cross-cutting synthesis.
+
+**Phase A fan-out (6 parallel explore jobs):** A1 file-size/hotspot inventory; A2 convention/anti-pattern grep pack (MediatR leftovers, FluentAssertions, auth-marker pairing, CrossSliceReference, Purpose regions, template flags, dual-mode symbols); A3 slice/placement/grammar scan; A4 contract/endpoint census ([ApiRoute]/[ApiEndpoint]/auth marker/Validator matrix + hand-written ingress list); A5 duplication/thin-wrapper candidates; A6 kanban dedup theme index (incl. done 126-review disposition status).
+
+**Dedup rule:** open task covers it → `note` with `tracked: #N`, no new child. Done task but code still wrong → regression finding, major+. Program 104 cluster = future surface, only flag today's structural mess.
+
+**Triage bar:** target 12–25 findings total, 6–12 blocker/major; every finding answers "delete/reframe what?"; collapse related nits into thematic findings; template-ship impact beats dogfood-only convenience.
+
+**Artifacts under task folder:** review-brief.md (SHA, scope, walk truthfully recorded, sub-agent returns summarized), findings.md (ordered F-001… with severity/area/path/wrong/why/remedy/follow-on + theme summary), disposition.md (steward: accept/defer/reject per blocker/major + child links), optional per-area deep-dives if findings.md > ~400 lines. Sub-agent raw returns folded into brief then discarded (no scratch noise committed).
+
+**Phases:** A mechanical scans (parallel agents) → B deep reads W0–W7 (checkpoints after W2 and W5) → C synthesis + artifacts → D steward disposition + `ganda kanban create` for accepted themes (one parent per theme, not per nit) → Results → done.
+
 ## Session
 
 - Created: (this session) 2026-07-28 — task scaffolding only
