@@ -7,7 +7,7 @@ other tools read it directly.
 
 - **This repo IS the `dotnet new timewarp-architecture` template.** Root `source/` + `tests/` are
   the template content (defined by root `.template.config/`); `timewarp-templates/` is the NuGet
-  packaging + docfx tree. Changes here ship to every generated app.
+  packaging tree. Changes here ship to every generated app.
 - Feature flags (`api`, `grpc`, `web`, `yarp`, `postgres`) are template preprocessor switches —
   keep `<!--#if (flag)-->` / `#if flag` regions intact when editing near them. Demo features
   (counter, event-stream) ship unconditionally; see HowToRemoveDemoFeatures.md.
@@ -215,5 +215,6 @@ Formats and lifecycle: the `agent-context-regions` skill.
 
 ## Documentation
 
-`documentation/` (developer + conceptual guides, ADRs) ·
-https://timewarpengineering.github.io/timewarp-architecture/
+`documentation/` (developer + conceptual guides, ADRs) — in-repo markdown is the documentation
+of record; generated apps receive the tree in their template output. No published docs site
+(re-evaluate a public presence when the repo gains an outward-facing audience).
