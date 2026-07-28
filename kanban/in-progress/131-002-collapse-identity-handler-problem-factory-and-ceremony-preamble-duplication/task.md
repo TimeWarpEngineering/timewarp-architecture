@@ -25,11 +25,12 @@ handlers and kept consistent by Design-region comments.
 
 ## Checklist
 
-- [ ] Inventory factories and ladder families
-- [ ] Extract `IdentityProblems` (or equivalent)
-- [ ] Extract ceremony helpers where ladders match
-- [ ] Identity integration tests green
-- [ ] `dev build` 0/0
+- [x] Inventory factories and ladder families
+- [x] Extract `IdentityProblems` (or equivalent)
+- [x] Extract ceremony helpers where ladders match
+- [x] Identity integration tests green (97 passed, 1 skipped)
+- [x] web-application + web-server build 0/0
+- [x] Phase 4b review disposition clean
 
 ## Notes
 
@@ -38,38 +39,30 @@ Parent: F-006. Ceremony order is security-critical (challenge burn, host check, 
 
 ### Implementation plan (2026-07-29)
 
-#### Defaults
-- `internal static` helpers; namespace `…Features.Identity.Application`
-- Slice-root escape-hatch files: `identity-problems-application.cs`,
-  `passkey-registration-ceremony-application.cs`,
-  `agent-key-registration-ceremony-application.cs`
-- **Problems only** for passkey-auth + agent-token issuance (single-consumer ladders)
-- Copy Title/Status/Detail **verbatim** — no wording “improvements”
-- Ceremony helpers start **after** caller auth-guard + RP select; AddCredential try/catch stays in handlers
-
-#### Inventory (summary)
-- Factories: Unauthenticated×4, MalformedPayload×6 (param field list), ChallengeInvalid×6
-  (param ceremony label), CredentialAlreadyRegistered×4 (param kind), VerificationFailed
-  passkey×2 / agent×2, InvalidPublicKey×2, Quarantined×2, plus unique auth/token/revoke/agent-identity
-- Ladders to extract: **passkey registration** (Complete + Add), **agent-key registration**
-  (Complete + Add). Not extract: passkey auth, token issuance (problems only).
-
-#### Steps
-1. Baseline identity integration tests + build
-2. Extract `IdentityProblems`; replace all private factories; commit
-3. Extract passkey registration ceremony helper; slim Add/Complete passkey reg handlers
-4. Extract agent-key registration ceremony helper; slim Add/Complete agent key handlers
-5. Grep zero private factories; Design regions reconciled; identity tests + `dev build` 0/0
-
-#### Test gate
-`tests/container-apps/web/web-server-integration-tests` Features/Identity/* (Passkey_*,
-Agent_*, Credential_*, Revoke_*, HostSelection)
-
-#### Non-goals
-Merge handlers; generic all-ceremonies framework; AgentTokenAuthenticationHandler; grammar
-registry changes.
+Executed: IdentityProblems + passkey/agent-key registration ceremony helpers; problems-only
+for single-consumer auth/token ladders.
 
 ## Session
 
 - Created: 2026-07-28 — from task 131 disposition
 - Plan: 2026-07-29 — tw-orchestrate-task Phase 2/3
+- Implement: 2026-07-29 — Phase 4 (`7d4653b0`)
+- Review: 2026-07-29 — Phase 4b general, disposition clean
+
+## Results
+
+**What shipped**
+- `identity-problems-application.cs` — 16 shared factories; 36 private factories removed from
+  9 handlers (0 remaining).
+- `passkey-registration-ceremony-application.cs` — shared preamble for AddPasskey +
+  CompletePasskeyRegistration.
+- `agent-key-registration-ceremony-application.cs` — shared preamble for AddAgentKey +
+  CompleteAgentKeyRegistration.
+- Auth/token handlers use IdentityProblems only (no ceremony extract).
+- Design regions: ordering rationale on helpers; handlers keep genuine differences.
+
+**Tests:** web-server-integration-tests **97 passed**, 1 skipped; web-application and
+web-server **0/0**.
+
+**Review:** effort 1 general; round-1 **0 open**; disposition **clean**. Paths under
+`review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`.
