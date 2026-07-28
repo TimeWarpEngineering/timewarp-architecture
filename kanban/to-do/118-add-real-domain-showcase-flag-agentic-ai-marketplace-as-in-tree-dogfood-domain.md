@@ -67,3 +67,24 @@ golden path with **Orleans** for aggregates that earn actor hosting; the fleet l
   using the same AddFluentValidatedOptions/ValidateOnStart and environment-check patterns
   (e.g. x402 pricing/metering options, fleet endpoints config) — the live-compiled teaching
   value stays, the "sample" goes.
+- **Host-role mapping (Steve + orchestrator, 2026-07-28)** — the marketplace activates the
+  original BFF/SaaS split rather than replacing it:
+  - **web = the human plane**: passkey ceremonies, approving agent key registrations,
+    overseeing jobs. Cookie/passkey/session auth surface (platform/identity-host).
+  - **api = the agent plane**: discovery surface, agent-token auth, x402 metered endpoints,
+    quote/order/job APIs. Bearer/x402 auth surface, separate ingress route space (TWA0017),
+    separate scaling profile. Marketplace-layer endpoints target api-server from day one — not
+    web-by-default-because-dogfooding-lives-there. Prereq: axis-1 extraction for the api family
+    (task filed separately).
+  - **grpc = the fleet plane** (stage 2): backpressured telemetry ingestion from the simulated
+    devices.
+- **Boundary caution (Steve, 2026-07-28): the agent/human overlap is bigger than it looks.**
+  Do not treat web=humans-only as a hard wall. Expect agent-driven UX for the human
+  counterpart — an agent composing/serving custom surfaces for its human (tailored approval
+  views, job dashboards, negotiated-quote summaries), agent-initiated flows that *land* in the
+  human plane for a passkey approval, and humans delegating mid-flow back to agents. Design the
+  seam so the agent plane can project UX into the human plane rather than assuming each plane
+  owns its audience exclusively. This territory is new but the industry is converging on it —
+  agent traffic reportedly now exceeds human traffic (Cloudflare, via
+  https://x.com/coinbureau/status/2081585618384273841 — maintainer-provided reference,
+  2026-07-28).
