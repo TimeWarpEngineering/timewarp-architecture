@@ -95,3 +95,9 @@ checkpoint with the maintainer after Stage 0 (machinery design is the risk conce
   6a service interfaces → -application seam beside impls; 6b protobuf codegen →
   grpc/platform/codegen/; 6c greeter → own slice; base-error/base-exception → delete;
   generic-pipeline-behavior → stays (bootstrap exemplar).
+- TWA0015/0016 scope RESOLVED (Steve, 2026-07-28): **fold analyzer parameterization into
+  stage 1** — migrated content lands under full enforcement from day one; prefer deriving the
+  family path markers from generated constants over a fourth hand-synced list.
+- Pre-existing `!api` exclude gap (stage-0 finding 2, predates 129): fixed inline by
+  orchestrator — see commit referenced below; web-spa ApiService_Body_Casing_Tests.cs now
+  stripped with the type it references.

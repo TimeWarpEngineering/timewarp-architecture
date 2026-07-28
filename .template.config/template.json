@@ -49,6 +49,7 @@
             "source/container-apps/web/projects/web-spa/features/weather-forecast/**",
             "source/container-apps/web/projects/web-spa/services/mocks/mock-api-service.cs",
             "source/container-apps/web/projects/web-spa/services/api-services/api-server-api-service.cs",
+            "tests/container-apps/web/web-spa-integration-tests/Serialization/ApiService_Body_Casing_Tests.cs",
             "tests/common/timewarp-testing/applications/api-test-server-application.cs",
             "tests/container-apps/api/**",
             "tests/container-apps/web/web-spa-integration-tests/Features/WeatherForecast/**"
