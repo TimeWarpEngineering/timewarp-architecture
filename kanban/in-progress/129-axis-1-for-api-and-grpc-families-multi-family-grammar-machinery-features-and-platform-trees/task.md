@@ -84,3 +84,6 @@ checkpoint with the maintainer after Stage 0 (machinery design is the risk conce
 - Decision 6c RESOLVED (Steve, 2026-07-28): proto-first demo gets its **own `greeter/` slice**
   (matches the proto service identity; keeps code-first vs proto-first demo styles visibly
   separate).
+- api base-error/base-exception RESOLVED (Steve, 2026-07-28): **DELETE both** — zero references,
+  zero derived types, self-admitted convention anchors superseded by foundation's
+  SharedProblemDetails/OneOf error story (FeatureAnnotations debris class).
