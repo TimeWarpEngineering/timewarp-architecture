@@ -85,6 +85,10 @@ golden path with **Orleans** for aggregates that earn actor hosting; the fleet l
   human plane for a passkey approval, and humans delegating mid-flow back to agents. Design the
   seam so the agent plane can project UX into the human plane rather than assuming each plane
   owns its audience exclusively. This territory is new but the industry is converging on it —
-  agent traffic reportedly now exceeds human traffic (Cloudflare, via
-  https://x.com/coinbureau/status/2081585618384273841 — maintainer-provided reference,
-  2026-07-28).
+  **agent traffic now exceeds human traffic**: Cloudflare (CEO Matthew Prince, 2026-06-03,
+  Cloudflare Radar data spanning ~1/5 of all websites) reports 57.5% of HTTP requests are
+  automated vs 42.5% human — the first crossover ever recorded, arriving ~18 months before
+  Prince's own end-of-2027 projection, driven by agentic AI. Coverage:
+  https://www.nbcnews.com/tech/tech-news/bot-web-traffic-overtaken-human-web-traffic-data-shows-rcna348522
+  and https://www.tomshardware.com/tech-industry/artificial-intelligence/bots-have-now-passed-human-traffic-online-cloudflare-boss-laments-says-agentic-traffic-wasnt-expected-to-eclipse-real-people-until-next-year
+  (discovery via https://x.com/coinbureau/status/2081585618384273841, 2026-07-28).
