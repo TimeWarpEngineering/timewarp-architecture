@@ -46,9 +46,10 @@ The litmus test for the fuzzy middle:
 **Family root shape:** multi-project container-app families group artifact folders under
 `projects/` so the root reads as the placement rule (`features/` + `platform/` + `projects/` +
 `msbuild/`). This shape is family-generic — web, api, and grpc each have their own
-`features/`/`platform/`/`msbuild/` trees; api and grpc trees are currently empty pending content
-migration. **yarp** is a single-project family (`yarp/` *is* the project — appsettings at its
-root); it is not nested under `projects/` and has no concern trees.
+`features/`/`platform/`/`msbuild/` trees (task 129: all three now hold real content — web's
+product/platform slices, api's `weather-forecast/`, grpc's `hello/`/`superhero/`/`greeter/` +
+`platform/codegen/`). **yarp** is a single-project family (`yarp/` *is* the project — appsettings
+at its root); it is not nested under `projects/` and has no concern trees.
 
 **Folder location is for humans; filename decides project membership.** Each layer project
 composes its files with static filename globs keyed to a suffix under its own family's
@@ -278,6 +279,31 @@ source-generation and item types make `.razor` a poor fit for the layer-suffix s
 SPA is deliberately left out of the cohesive-tree rehome. Page/state/action placement inside
 `web-spa/features/<slice>/` is a `tw-slice-isolation` question (namespace/tier), not a
 filename-grammar one.
+
+## Proto exception
+
+grpc's proto-first artifacts — `.proto` source files (e.g. `greet.proto`) and their generated
+`GreeterBase`/message code — stay in their artifact folder (`grpc-server/protos/`) and are
+**out of filename-grammar scope entirely**: no `-<layer>` suffix, no cohesive-tree membership,
+not scanned by the membership guard or TWA0015/TWA0016. The proto toolchain owns their
+compilation and namespace (`option csharp_namespace`); a hand-authored *implementation* of a
+proto-generated service (e.g. `GreeterService : Greeter.GreeterBase`) is ordinary product code
+and follows the normal rules — it lives in its own `grpc/features/<slice>/<use-case>/
+<name>-server.cs` like any other slice, it just happens to inherit from a proto-generated base
+class that lives elsewhere. Code-first gRPC contracts (protobuf-net.Grpc `[ServiceContract]`
+interfaces, `[DataContract]`/`[ProtoContract]` DTOs) are the opposite case: ordinary C# types
+under full grammar scope, `-contracts.cs` like any other contract.
+
+**Code-first service interfaces are not always a free `-application.cs` seam move:** a
+protobuf-net.Grpc `[ServiceContract]` interface carries wire-protocol attributes
+(`System.ServiceModel`/`Grpc.Core`) that only the contracts project references by default —
+moving one to `-application.cs` needs the destination project's own `global-usings.cs` extended
+to match (global usings are per-project and do not flow through `ProjectReference`), and, more
+importantly, if any consumer outside the family (e.g. a WASM client) references the interface
+directly by referencing only `*-contracts.csproj`, moving it to `-application.cs` changes its
+compilation unit and breaks that consumer's reference unless the consumer's project reference
+also changes — check the consumer graph before applying the seam-interface pattern to a
+gRPC service interface, not just for plain seam interfaces.
 
 ## Axis-2 note: per-module assembly splits are a glob operation
 

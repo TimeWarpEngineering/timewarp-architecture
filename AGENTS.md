@@ -57,14 +57,14 @@ source/
                      # web-domain/ web-infrastructure/ web-server/ web-spa/
                      # (SPA features stay conventional under web-spa/features — not rehomed)
       msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
-    api/             # same axis-1 shape as web (features/ + platform/ + msbuild/); trees empty
-                     # until content is migrated (grammar machinery only so far)
+    api/             # same axis-1 shape as web (features/ + platform/ + msbuild/);
+                     # features/weather-forecast/ (demo slice); platform/ empty (no content yet)
       projects/      # api-contracts/ api-application/ api-domain/
                      # api-infrastructure/ api-server/
-    grpc/            # same axis-1 shape as web (features/ + platform/ + msbuild/); trees empty
-                     # until content is migrated (grammar machinery only so far)
+    grpc/            # same axis-1 shape as web (features/ + platform/ + msbuild/);
+                     # features/hello/ superhero/ greeter/ (demo slices); platform/codegen/
       projects/      # grpc-contracts/ grpc-application/ grpc-domain/
-                     # grpc-infrastructure/ grpc-server/
+                     # grpc-infrastructure/ grpc-server/ (protos/ stays out of grammar scope)
     aspire/projects/ # aspire-app-host/ aspire-service-defaults/
     yarp/            # single-project family (IS the artifact; left flat)
 tests/               # mirrors source/; includes web-contracts-tests (host-free serialization round-trips)

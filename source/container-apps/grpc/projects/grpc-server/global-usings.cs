@@ -9,4 +9,5 @@ global using ProtoBuf.Grpc.Server;
 // Solution usings
 global using TimeWarp.Architecture.Features.Hellos;
 global using TimeWarp.Architecture.Features.Superheros;
+global using TimeWarp.Architecture.Features.Greeters;
 global using TimeWarp.Architecture.GrpcServer;
