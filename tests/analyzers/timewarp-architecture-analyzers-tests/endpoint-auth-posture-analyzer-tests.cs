@@ -1,6 +1,6 @@
 #region Purpose
-// Tests for TWA0013 (missing auth posture) and TWA0014 (conflicting auth posture) on
-// [ApiEndpoint] contracts.
+// Tests for TWA0013 (missing auth posture), TWA0014 (conflicting auth posture), and TWA0020
+// ([ApiEndpoint] + [ClientOnlyContract]) on [ApiEndpoint] contracts.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -36,6 +36,10 @@ public class Should_Enforce_Auth_Posture
         public ApiRouteAttribute(string routeTemplate, TimeWarp.Foundation.Features.HttpVerb httpVerb) { }
       }
       internal sealed class AuthApiRequestAttribute : System.Attribute { }
+      internal sealed class ClientOnlyContractAttribute : System.Attribute
+      {
+        public ClientOnlyContractAttribute(string reason) { }
+      }
     }
     namespace TimeWarp.Architecture.Attributes
     {
@@ -253,6 +257,62 @@ public class Should_Enforce_Auth_Posture
         public static class GetWidget
         {
           [ApiRoute("api/Widgets", HttpVerb.Get)]
+          public sealed class Query { }
+          public sealed class Response { }
+        }
+      }
+      """;
+
+    await Test(Source).RunAsync();
+  }
+
+  public static async Task Given_ApiEndpoint_With_ClientOnly_On_Outer_Flags_TWA0020()
+  {
+    const string Source =
+      """
+      #region Purpose
+      // Test feature.
+      #endregion
+      namespace App.Contracts
+      {
+        using TimeWarp.Architecture;
+        using TimeWarp.Architecture.Attributes;
+        using TimeWarp.Foundation.Features;
+
+        [{|TWA0020:ApiEndpoint|}]
+        [ClientOnlyContract("SPA mock only.")]
+        [EndpointAllowAnonymous("Would be public if hosted.")]
+        public static class MockOnlyWidget
+        {
+          [ApiRoute("api/Widgets", HttpVerb.Get)]
+          public sealed class Query { }
+          public sealed class Response { }
+        }
+      }
+      """;
+
+    await Test(Source).RunAsync();
+  }
+
+  public static async Task Given_ApiEndpoint_With_ClientOnly_On_Nested_Flags_TWA0020()
+  {
+    const string Source =
+      """
+      #region Purpose
+      // Test feature.
+      #endregion
+      namespace App.Contracts
+      {
+        using TimeWarp.Architecture;
+        using TimeWarp.Architecture.Attributes;
+        using TimeWarp.Foundation.Features;
+
+        [{|TWA0020:ApiEndpoint|}]
+        [EndpointAllowAnonymous("Would be public if hosted.")]
+        public static class NestedMockWidget
+        {
+          [ApiRoute("api/Widgets", HttpVerb.Get)]
+          [ClientOnlyContract("ClientOnly on nested Query.")]
           public sealed class Query { }
           public sealed class Response { }
         }

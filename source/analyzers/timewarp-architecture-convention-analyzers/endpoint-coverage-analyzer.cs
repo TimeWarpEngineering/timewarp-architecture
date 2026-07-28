@@ -13,8 +13,10 @@
 // are source-generated from the contract's [ApiRoute] verb, so hand-written verb drift cannot
 // occur. ID TWA0005 is reserved and must not be reused. Contracts using the manual IApiRequest
 // form (no [ApiRoute]) are invisible by design — the attribute is the contract of enforcement.
-// [ClientOnlyContract(reason)] is the explicit TWA0006 opt-out. Reports with no location
-// (the defect is an absence); suppress per-contract via the attribute, not pragmas.
+// [ClientOnlyContract(reason)] is the explicit TWA0006 opt-out — on the routed type OR its
+// containing outer operation (F-004). Reports with no location (the defect is an absence);
+// suppress per-contract via the attribute, not pragmas.
+// Discovery via HostedRouteDiscovery (linked shared source shared with generators).
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -62,7 +64,7 @@ public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
     // Collect endpoint subclasses declared (or source-generated) in THIS compilation.
     var covered = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
 
-    foreach (INamedTypeSymbol type in GetAllTypes(context.Compilation.Assembly.GlobalNamespace))
+    foreach (INamedTypeSymbol type in HostedRouteDiscovery.GetAllTypes(context.Compilation.Assembly.GlobalNamespace))
     {
       for (INamedTypeSymbol? baseType = type.BaseType; baseType is not null; baseType = baseType.BaseType)
       {
@@ -92,17 +94,17 @@ public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
 
     foreach (IAssemblySymbol assembly in contractAssemblies)
     {
-      foreach (INamedTypeSymbol type in GetAllTypes(assembly.GlobalNamespace))
+      foreach (INamedTypeSymbol type in HostedRouteDiscovery.GetAllTypes(assembly.GlobalNamespace))
       {
-        string? verb = GetApiRouteVerb(type, out string? route);
-        if (verb is null) continue;
-
-        if (type.GetAttributes().Any(static a => a.AttributeClass?.Name == "ClientOnlyContractAttribute")) continue;
+        if (!HostedRouteDiscovery.TryGetRoutedRequest(type, out RoutedRequestInfo routed))
+        {
+          continue;
+        }
 
         if (!covered.Contains(type))
         {
           context.ReportDiagnostic(Diagnostic.Create(
-            MissingEndpoint, Location.None, type.ToDisplayString(), route ?? "?", verb));
+            MissingEndpoint, Location.None, type.ToDisplayString(), routed.RouteTemplate, routed.HttpVerbName));
         }
       }
     }
@@ -113,52 +115,5 @@ public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
   {
     int cut = assemblyName.IndexOfAny(['-', '.']);
     return cut < 0 ? assemblyName : assemblyName.Substring(0, cut);
-  }
-
-  private static string? GetApiRouteVerb(INamedTypeSymbol type, out string? route)
-  {
-    route = null;
-    AttributeData? apiRoute = type.GetAttributes()
-      .FirstOrDefault(static a => a.AttributeClass?.Name == "ApiRouteAttribute");
-    if (apiRoute is null || apiRoute.ConstructorArguments.Length < 2) return null;
-
-    route = apiRoute.ConstructorArguments[0].Value?.ToString();
-    TypedConstant verbArgument = apiRoute.ConstructorArguments[1];
-
-    // Resolve the enum member name from its constant value (metadata stores the underlying int).
-    if (verbArgument.Type is INamedTypeSymbol { TypeKind: TypeKind.Enum } enumType)
-    {
-      IFieldSymbol? member = enumType.GetMembers().OfType<IFieldSymbol>()
-        .FirstOrDefault(f => f.HasConstantValue && Equals(f.ConstantValue, verbArgument.Value));
-      if (member is not null) return member.Name;
-    }
-
-    return verbArgument.Value?.ToString();
-  }
-
-  private static IEnumerable<INamedTypeSymbol> GetAllTypes(INamespaceSymbol root)
-  {
-    foreach (INamespaceOrTypeSymbol member in root.GetMembers())
-    {
-      switch (member)
-      {
-        case INamespaceSymbol ns:
-          foreach (INamedTypeSymbol nested in GetAllTypes(ns)) yield return nested;
-          break;
-        case INamedTypeSymbol type:
-          yield return type;
-          foreach (INamedTypeSymbol nested in AllNested(type)) yield return nested;
-          break;
-      }
-    }
-  }
-
-  private static IEnumerable<INamedTypeSymbol> AllNested(INamedTypeSymbol type)
-  {
-    foreach (INamedTypeSymbol nested in type.GetTypeMembers())
-    {
-      yield return nested;
-      foreach (INamedTypeSymbol deeper in AllNested(nested)) yield return deeper;
-    }
   }
 }

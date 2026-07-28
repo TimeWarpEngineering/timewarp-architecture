@@ -194,6 +194,26 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0017 | a generated ingress web prefix (`WebServerApiRoutePrefixes`) shadows another server's route space — it equals/parents a hosted route in another contracts assembly, or collides with an `IngressReservedPathPrefixes` entry (grpc) |
 | TWA0018 | a web-contracts route cannot be collapsed to a top-level ingress prefix (bare `api` or a parameterized second segment like `api/{id}`) |
 | TWA0019 | a name in `IngressWebContractAssemblies` matches no referenced assembly (typo / renamed assembly) — otherwise the ingress list would silently generate empty |
+| TWA0020 | `[ApiEndpoint]` combined with `[ClientOnlyContract]` (outer or nested Query/Command) — generators skip ClientOnly; remove one of the markers |
+
+**Generator diagnostics (TWE / SG)** live in
+`source/analyzers/timewarp-architecture-analyzers/diagnostics/diagnostic-descriptors.cs`
+(SSOT — do not redeclare private copies of these IDs):
+
+| ID | Rule |
+|----|------|
+| TWE002 | `[ApiEndpoint]` contract missing nested `Query`/`Command` — no endpoint generated |
+| TWE003 | route+verb conflict across `[ApiEndpoint]` contracts — **all** parties reported; **none** of the group generated |
+| TWE005 | `[Page]` `Policy` must be a const field reference (not string literal / `nameof`) |
+| TWE006 | `[TypedId]` target must be a `readonly partial record struct` |
+| TWE007 | unknown / unresolvable `HttpVerb` on a hosted contract — fail-closed (never defaults to Get); no emission |
+| SG001 | shared source-generator log (resilience backstop) |
+| SG002 | `EnableApiEndpointGeneration` true but FastEndpoints / `BaseFastEndpoint` missing |
+| SG010 | TypedId BCL surface generation failed (resilience) |
+| SG011 | TypedId EF converter generation failed (resilience) |
+
+Retired / reserved generator IDs (do not reuse without deliberate new meaning): **TWE001**,
+**TWE004** (declared historically, never reported; deleted task 131-001 F-014).
 
 **Slice isolation (TWA0009):** product code under SliceRoot must not reach other product
 slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:

@@ -153,6 +153,15 @@ public class Should_Enforce_Endpoint_Coverage
           public sealed class Query { }
           public sealed class Response { }
         }
+
+        // F-004: ClientOnly on outer operation also opts nested routed Query out of TWA0006.
+        [ClientOnlyContract("Outer ClientOnly opt-out.")]
+        public static class OuterClientOnly
+        {
+          [ApiRoute("api/OuterMock", HttpVerb.Get)]
+          public sealed class Query { }
+          public sealed class Response { }
+        }
       }
       namespace App.Server
       {

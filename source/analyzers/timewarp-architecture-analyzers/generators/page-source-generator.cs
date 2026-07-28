@@ -29,15 +29,6 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
   // {name:type}? — page route tokens carry real C# type names (Guid, int, …), used directly.
   private static readonly Regex RouteParam = new(@"\{(\w+)\s*:?(\w+)\}?", RegexOptions.Compiled);
 
-  private static readonly DiagnosticDescriptor InvalidPolicyDescriptor = new(
-    id: "TWE005",
-    title: "Invalid [Page] Policy argument",
-    messageFormat: "[Page] Policy must be a const field reference (e.g. Policies.SettingsEdit), not a string literal, nameof(...), or other expression. Omit Policy for Policies.Anonymous.",
-    category: "Page",
-    defaultSeverity: DiagnosticSeverity.Error,
-    isEnabledByDefault: true,
-    description: "Pit of success: product policy constants are the single source of truth for registered policy names. Identifier glue and string literals silently mis-authorize.");
-
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     IncrementalValueProvider<string> rootNamespace = context.AnalyzerConfigOptionsProvider.Select(
@@ -128,7 +119,7 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
         }
         else
         {
-          policyDiagnostic = Diagnostic.Create(InvalidPolicyDescriptor, arg.Expression.GetLocation());
+          policyDiagnostic = Diagnostic.Create(DiagnosticDescriptors.PageInvalidPolicy, arg.Expression.GetLocation());
         }
 
         continue;

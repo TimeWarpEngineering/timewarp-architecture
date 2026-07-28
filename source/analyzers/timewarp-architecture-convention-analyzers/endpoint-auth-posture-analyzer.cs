@@ -1,6 +1,7 @@
 #region Purpose
 // Enforces that every generated FastEndpoint contract states its auth posture explicitly: neither
-// marker present (TWA0013) or a contradictory pairing of markers (TWA0014).
+// marker present (TWA0013), a contradictory pairing of markers (TWA0014), or [ApiEndpoint] combined
+// with [ClientOnlyContract] (TWA0020).
 #endregion
 
 #region Design
@@ -17,26 +18,19 @@
 //       author must resolve the contradiction, not rely on that tiebreak.
 //   (b) [EndpointAllowAnonymous] present while the nested Query/Command declares
 //       IAuthApiRequest — either the manual interface form (: IAuthApiRequest, detected via
-//       AllInterfaces by SIMPLE NAME, matching the repo's established cross-assembly-symbol
-//       convention — see EndpointCoverageAnalyzer/EndpointMetadata.FromSymbol for the same pattern)
-//       or the [AuthApiRequest] mixin attribute form (foundation-contracts-generators'
-//       ContractsMixinGenerator expands this into BOTH an IAuthApiRequest interface
-//       implementation AND leaves the attribute application on the class — this analyzer checks
-//       for EITHER independently, by simple name, so it does not depend on generator execution
-//       order relative to this analyzer within the same compilation pass). A contract whose
-//       Query/Command says "I carry an authenticated user's identity" but whose endpoint says
-//       "anyone may call this anonymously" is exactly the contradiction task 110 exists to surface
-//       — IAuthApiRequest is a CLIENT/mock-mode identity signal only (see the web-api-contracts
-//       skill's three-state truth table) and does not, by itself, secure the server; pairing it
-//       with an anonymous endpoint marker either means the marker is wrong or the interface should
-//       not be there.
-// Location = the [ApiEndpoint] attribute application (mirrors EndpointCoverageAnalyzer's
-// verb-mismatch location choice) — the contract's own declaration is where an author reads the
-// diagnostic and adds the missing/corrected marker.
+//       AllInterfaces by SIMPLE NAME) or the [AuthApiRequest] mixin attribute form. A contract
+//       whose Query/Command says "I carry an authenticated user's identity" but whose endpoint
+//       says "anyone may call this anonymously" is the contradiction task 110 surfaces —
+//       IAuthApiRequest is a CLIENT/mock-mode identity signal only and does not secure the server.
+// TWA0020 — [ApiEndpoint] + [ClientOnlyContract] (outer or nested Query/Command): generators skip
+// ClientOnly contracts (not hosted), so the generation opt-in contradicts the client-only opt-out.
+// Location = the [ApiEndpoint] attribute application — the contract's own declaration is where an
+// author reads the diagnostic and adds the missing/corrected marker.
 // Registered as a SymbolAction on NamedType (not a CompilationAction like EndpointCoverageAnalyzer):
 // this analyzer's scope is a single contract type's own attributes, not a whole-compilation
 // cross-reference walk, so the finer-grained per-symbol registration is both simpler and (per
 // Roslyn's incremental analyzer model) cheaper to re-run on unrelated edits.
+// ClientOnly checks use HostedRouteDiscovery (linked shared source).
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -46,6 +40,7 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
 {
   public const string MissingPostureId = "TWA0013";
   public const string ConflictingPostureId = "TWA0014";
+  public const string ClientOnlyContradictionId = "TWA0020";
 
   private const string Category = "Design";
 
@@ -73,8 +68,20 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
       description: "Either both [EndpointAuthorize] and [EndpointAllowAnonymous] are present on the same contract, or [EndpointAllowAnonymous] is paired with a nested Query/Command that declares IAuthApiRequest (interface or [AuthApiRequest] mixin) — an auth-intent request marked anonymous at the endpoint. Resolve the contradiction; do not rely on the generator's [EndpointAuthorize]-wins tiebreak."
     );
 
+  private static readonly DiagnosticDescriptor ClientOnlyContradiction =
+    new
+    (
+      ClientOnlyContradictionId,
+      title: "[ApiEndpoint] combined with [ClientOnlyContract]",
+      messageFormat: "Contract '{0}' carries both [ApiEndpoint] and [ClientOnlyContract] ({1}) — generators skip ClientOnly contracts, so remove [ApiEndpoint] or remove [ClientOnlyContract]",
+      Category,
+      DiagnosticSeverity.Warning,
+      isEnabledByDefault: true,
+      description: "Task 131-001 F-004: [ApiEndpoint] opts a contract into FastEndpoint generation; [ClientOnlyContract] opts it out of server hosting (TWA0006). Both on the same operation (outer or nested Query/Command) is a contradiction — generators skip ClientOnly and TWA0006 treats it as coverage opt-out."
+    );
+
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-    ImmutableArray.Create(MissingPosture, ConflictingPosture);
+    ImmutableArray.Create(MissingPosture, ConflictingPosture, ClientOnlyContradiction);
 
   public override void Initialize(AnalysisContext context)
   {
@@ -91,13 +98,34 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
       .FirstOrDefault(static a => a.AttributeClass?.Name == "ApiEndpointAttribute");
     if (apiEndpoint is null) return;
 
+    Location location = apiEndpoint.ApplicationSyntaxReference?.GetSyntax(context.CancellationToken).GetLocation()
+      ?? type.Locations.FirstOrDefault() ?? Location.None;
+
+    INamedTypeSymbol? requestType = type.GetTypeMembers()
+      .FirstOrDefault(static m => m.Name is "Query" or "Command");
+
+    // TWA0020 — [ApiEndpoint] + [ClientOnlyContract] on outer or nested.
+    bool clientOnlyOuter = HostedRouteDiscovery.HasClientOnly(type);
+    bool clientOnlyNested = requestType is not null && HostedRouteDiscovery.HasClientOnly(requestType);
+    if (clientOnlyOuter || clientOnlyNested)
+    {
+      string where = clientOnlyOuter
+        ? "on the outer type"
+        : $"on nested {requestType!.Name}";
+      context.ReportDiagnostic(Diagnostic.Create(
+        ClientOnlyContradiction,
+        location,
+        type.ToDisplayString(),
+        where));
+      // Still useful to surface auth-posture issues after ClientOnly is resolved, but stop here so
+      // authors fix the hosting contradiction first without diagnostic noise.
+      return;
+    }
+
     AttributeData? endpointAuthorize = type.GetAttributes()
       .FirstOrDefault(static a => a.AttributeClass?.Name == "EndpointAuthorizeAttribute");
     AttributeData? endpointAllowAnonymous = type.GetAttributes()
       .FirstOrDefault(static a => a.AttributeClass?.Name == "EndpointAllowAnonymousAttribute");
-
-    Location location = apiEndpoint.ApplicationSyntaxReference?.GetSyntax(context.CancellationToken).GetLocation()
-      ?? type.Locations.FirstOrDefault() ?? Location.None;
 
     // TWA0014(a) — both markers present.
     if (endpointAuthorize is not null && endpointAllowAnonymous is not null)
@@ -118,19 +146,13 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
     }
 
     // TWA0014(b) — [EndpointAllowAnonymous] while the nested Query/Command declares IAuthApiRequest.
-    if (endpointAllowAnonymous is not null)
+    if (endpointAllowAnonymous is not null && requestType is not null && DeclaresAuthApiRequest(requestType))
     {
-      INamedTypeSymbol? requestType = type.GetTypeMembers()
-        .FirstOrDefault(static m => m.Name is "Query" or "Command");
-
-      if (requestType is not null && DeclaresAuthApiRequest(requestType))
-      {
-        context.ReportDiagnostic(Diagnostic.Create(
-          ConflictingPosture,
-          location,
-          type.ToDisplayString(),
-          $"it carries [EndpointAllowAnonymous] but its {requestType.Name} declares IAuthApiRequest; add [EndpointAuthorize] or remove the auth-intent marker from {requestType.Name}"));
-      }
+      context.ReportDiagnostic(Diagnostic.Create(
+        ConflictingPosture,
+        location,
+        type.ToDisplayString(),
+        $"it carries [EndpointAllowAnonymous] but its {requestType.Name} declares IAuthApiRequest; add [EndpointAuthorize] or remove the auth-intent marker from {requestType.Name}"));
     }
   }
 

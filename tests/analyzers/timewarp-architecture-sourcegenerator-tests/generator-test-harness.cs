@@ -24,7 +24,7 @@ internal static class GeneratorTestHarness
   public const string SupportStubs = """
     namespace TimeWarp.Architecture
     {
-        public enum HttpVerb { Get, Post, Put, Delete, Patch }
+        public enum HttpVerb { Get, Post, Put, Delete, Patch, Head, Options, Trace }
 
         [System.AttributeUsage(System.AttributeTargets.Class)]
         public sealed class ApiRouteAttribute : System.Attribute

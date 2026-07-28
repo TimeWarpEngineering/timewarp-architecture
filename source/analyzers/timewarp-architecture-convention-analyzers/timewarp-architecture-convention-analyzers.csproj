@@ -3,7 +3,7 @@
     <PackageId>$(TwArchitectureAnalyzersPackageId)</PackageId>
     <Title>$(TwArchitectureAnalyzersPackageId)</Title>
 
-    <Description>Roslyn convention analyzers for TimeWarp Architecture (TWA0002–0016). Analyzer-only package; safe to reference from every project including contracts.</Description>
+    <Description>Roslyn convention analyzers for TimeWarp Architecture (TWA0002–0016, TWA0020). Analyzer-only package; safe to reference from every project including contracts.</Description>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
     <!-- Convention-enforcement DiagnosticAnalyzers only (no source generators), so this assembly is
@@ -17,6 +17,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- F-004: shared hosted-route discovery linked into both Generators and Analyzers packages
+         (no ProjectReference between them). -->
+    <Compile Include="..\shared\hosted-route-discovery.cs" Link="shared\hosted-route-discovery.cs" />
   </ItemGroup>
 
   <!-- Feature filename grammar SSOT: JSON → committed .g.cs + per-family msbuild .g.props (regenerate on change).
