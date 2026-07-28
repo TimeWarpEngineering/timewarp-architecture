@@ -22,6 +22,21 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 - `dotnet fixie tests/<project> [--tests Class[.Method]]` — one project/class/method
 - More commands: `dev --capabilities` (see the `dev-cli` skill)
 
+## Before opening a PR
+
+Use the **`tw-pr`** skill (`/tw-pr`) — do not open a PR until its gates pass.
+Mandatory for this repo:
+
+1. **`ganda repo audit`** (blocking). On failure, prefer `ganda repo audit --fix`
+   (or `--fix --checks <id>`) then re-run audit and commit any fixes.
+2. **`dev check-version`** when shipping packages/template — source version must
+   be new vs the latest GitHub release tag; platform CPM pins equal `<Version>`
+   (task 124).
+3. **`dev build`** (0/0) for code changes; add tests / `dev template-smoke` when
+   the change type warrants it (see skill for scope table).
+
+Branch naming, commits, and merge policy: **`tw-git`**.
+
 ## Stack
 
 - **.NET 10**, C# latest, `Nullable` enabled repo-wide, central package management
