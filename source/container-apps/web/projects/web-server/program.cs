@@ -144,7 +144,6 @@ public class Program : IAspNetProgram
             string.Equals(context.User.Identity?.AuthenticationType, IdentitySessionDefaults.Scheme, StringComparison.Ordinal)
             || context.User.HasClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.CredentialManage))
       );
-    // TODO: Review the options for this seesm like could just pass whole config???
     serviceCollection.AddPasswordlessSdk(options =>
     {
       options.ApiSecret = configuration["Passwordless:ApiSecret"] ?? throw new InvalidOperationException();
@@ -162,8 +161,6 @@ public class Program : IAspNetProgram
     CorsPolicy.Any.Apply(serviceCollection);
     ConfigureInfrastructure(serviceCollection);
     serviceCollection.AddSignalR();
-    // serviceCollection.AddRazorPages();
-    // serviceCollection.AddServerSideBlazor();
 
     serviceCollection.AddHttpContextAccessor();
     serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();

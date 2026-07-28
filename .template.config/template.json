@@ -75,12 +75,8 @@
         {
           "condition": "(!postgres)",
           "exclude": [
-            "source/container-apps/web/platform/postgres/postgres-db-context-infrastructure.cs",
+            "source/container-apps/web/platform/postgres/**",
             "source/container-apps/web/features/identity/ef-principal-store-infrastructure.cs",
-            "source/container-apps/web/platform/postgres/postgres-db-options-infrastructure.cs",
-            "source/container-apps/web/platform/postgres/postgres-db-environment-check-server.cs",
-            "source/container-apps/web/platform/postgres/postgres-db-context-startup-hosted-service-server.cs",
-            "source/container-apps/web/platform/postgres/postgres-db-module-server.cs",
             "tests/container-apps/web/web-infrastructure-tests/**"
           ]
         }

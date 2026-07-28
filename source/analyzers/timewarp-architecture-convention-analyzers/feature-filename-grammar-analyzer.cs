@@ -192,9 +192,7 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
         || normalized.Contains("/../features/", StringComparison.Ordinal)
         || collapsed.StartsWith("../features/", StringComparison.Ordinal))
     {
-      return collapsed.StartsWith("../features/", StringComparison.Ordinal)
-        ? collapsed
-        : CollapseDotDot(normalized);
+      return collapsed;
     }
 
     // After collapsing web-server/../features/hello/x.cs → features/hello/x.cs from a layer
@@ -208,12 +206,11 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
       return collapsed;
     }
 
-    // Absolute / repo-rooted cohesive tree: .../{family}/features/... (not .../{family}-*/features/...)
-    // for every registered family (web, api, grpc — FeatureFilenameGrammar.Families).
+    // Absolute / repo-rooted cohesive tree: .../{family}/features/... (covers
+    // .../container-apps/{family}/features/... as a substring).
     foreach (string family in FeatureFilenameGrammar.Families)
     {
-      if (collapsed.Contains($"/{family}/features/", StringComparison.Ordinal)
-          || collapsed.Contains($"/container-apps/{family}/features/", StringComparison.Ordinal))
+      if (collapsed.Contains($"/{family}/features/", StringComparison.Ordinal))
       {
         return collapsed;
       }
@@ -327,13 +324,9 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
     }
 
     // No registered function matched → escape hatch (<name>-<layer>.cs), including multi-hyphen names.
-    // TWA0016: incomplete multi-segment archetype (shares final segment of a multi-segment function
-    // but is not itself registered), e.g. foo-bar-server when a multi-segment function ending in bar exists.
-    string? incomplete = TryFindIncompleteMultiSegmentFunction(preLayer);
-    if (incomplete is not null)
-    {
-      return GrammarParse.Unregistered(incomplete);
-    }
+    // Multi-segment incomplete-function machinery was removed (task 131 F-013 / YAGNI): the registry
+    // only has single-segment functions (handler, endpoint). Reintroduce when a multi-segment
+    // function is registered.
 
     // Case-only mismatch against a registered function (e.g. -Handler- vs -handler-).
     foreach (string function in FeatureFilenameGrammar.FunctionsLongestFirst)
@@ -348,71 +341,6 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
     }
 
     return GrammarParse.Ok;
-  }
-
-  private static string? TryFindIncompleteMultiSegmentFunction(string preLayer)
-  {
-    foreach (string function in FeatureFilenameGrammar.FunctionsLongestFirst)
-    {
-      if (!function.Contains('-', StringComparison.Ordinal))
-      {
-        continue;
-      }
-
-      int lastHyphen = function.LastIndexOf('-');
-      string lastSegment = function.Substring(lastHyphen + 1);
-      if (lastSegment.Length == 0)
-      {
-        continue;
-      }
-
-      // preLayer ends with -{lastSegment} or equals lastSegment, but is not the full function.
-      bool endsWithLast = preLayer.Equals(lastSegment, StringComparison.Ordinal)
-        || preLayer.EndsWith("-" + lastSegment, StringComparison.Ordinal);
-      if (!endsWithLast)
-      {
-        continue;
-      }
-
-      if (preLayer.Equals(function, StringComparison.Ordinal)
-          || preLayer.EndsWith("-" + function, StringComparison.Ordinal))
-      {
-        continue; // full match already handled above
-      }
-
-      // Avoid flagging escape-hatch names that merely end with a common word unless the
-      // preceding token looks like the multi-segment function's first segment(s).
-      string functionPrefix = function.Substring(0, function.Length - lastSegment.Length - 1);
-      if (preLayer.Equals(lastSegment, StringComparison.Ordinal))
-      {
-        // Bare last segment as entire pre-layer (e.g. annotations-server) — incomplete.
-        return lastSegment;
-      }
-
-      int prefixHyphen = functionPrefix.IndexOf('-', StringComparison.Ordinal);
-      string firstSegment = prefixHyphen >= 0
-        ? functionPrefix.Substring(0, prefixHyphen)
-        : functionPrefix;
-
-      if (preLayer.Contains("-" + firstSegment + "-", StringComparison.Ordinal)
-          || preLayer.StartsWith(firstSegment + "-", StringComparison.Ordinal))
-      {
-        // Extract the trailing candidate from firstSegment through lastSegment in preLayer.
-        int start = preLayer.StartsWith(firstSegment + "-", StringComparison.Ordinal)
-          ? 0
-          : preLayer.IndexOf("-" + firstSegment + "-", StringComparison.Ordinal) + 1;
-        if (start >= 0 && start < preLayer.Length)
-        {
-          string candidate = preLayer.Substring(start);
-          if (!FeatureFilenameGrammar.FunctionToLayer.ContainsKey(candidate))
-          {
-            return candidate;
-          }
-        }
-      }
-    }
-
-    return null;
   }
 
   private static string ExtractTrailingIgnoreCase(string preLayer, string function)

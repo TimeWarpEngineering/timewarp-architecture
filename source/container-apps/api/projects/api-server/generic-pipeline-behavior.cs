@@ -3,21 +3,36 @@
 #endregion
 
 #region Design
-// Intentionally does nothing beyond console writes: it exists so generated apps ship a wired,
-// working example of pipeline registration (it runs before FluentValidationBehavior because
-// behaviors execute in registration order). Replace with real concerns — logging, metrics,
-// transactions — rather than layering additional demo behaviors.
+// Exemplar for generated apps: a no-op behavior registered before FluentValidationBehavior
+// (registration order is execution order). Logs with LoggerMessage (not Console.WriteLine) so
+// the template does not teach host logging anti-patterns (task 131 F-017). Replace with real
+// concerns (metrics, transactions) rather than stacking more demo behaviors.
+// Lives in the api-server artifact folder as host bootstrap exemplar; move under features/
+// or platform/ if it grows real product logic.
 #endregion
 
 namespace TimeWarp.Architecture.Api.Server;
-public class GenericPipelineBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
-{
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
-    {
-        Console.WriteLine("Handling request");
-        TResponse response = await next();
-        Console.WriteLine("-- Finished Request");
 
-        return response;
-    }
+public partial class GenericPipelineBehavior<TRequest, TResponse>(ILogger<GenericPipelineBehavior<TRequest, TResponse>> logger)
+  : IPipelineBehavior<TRequest, TResponse>
+  where TRequest : notnull
+{
+  public async Task<TResponse> Handle
+  (
+    TRequest request,
+    RequestHandlerDelegate<TResponse> next,
+    CancellationToken cancellationToken
+  )
+  {
+    LogHandling(logger, typeof(TRequest).Name);
+    TResponse response = await next().ConfigureAwait(false);
+    LogFinished(logger, typeof(TRequest).Name);
+    return response;
+  }
+
+  [LoggerMessage(Level = LogLevel.Debug, Message = "Handling {RequestType}")]
+  private static partial void LogHandling(ILogger logger, string requestType);
+
+  [LoggerMessage(Level = LogLevel.Debug, Message = "Finished {RequestType}")]
+  private static partial void LogFinished(ILogger logger, string requestType);
 }

@@ -147,10 +147,9 @@ public abstract class BaseApiService : IApiService
     {
       return await ReadFromJson<SharedProblemDetails>(httpResponseMessage, cancellationToken).ConfigureAwait(false);
     }
-    catch (System.Exception)
+    catch (System.Exception exception) when (exception is JsonException or InvalidOperationException)
     {
-      // TODO: Log the error
-
+      // Body was not RFC 7807 JSON — synthesize a problem from the status code (matches TestApiService).
       return new SharedProblemDetails
       {
         Title = "Unhandled Error",
@@ -183,49 +182,32 @@ public abstract class BaseApiService : IApiService
       HttpVerb.Post => await HttpClient.PostAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
       HttpVerb.Put => await HttpClient.PutAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
       HttpVerb.Patch => await HttpClient.PatchAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
-      HttpVerb.Head => throw new NotImplementedException(),
-      HttpVerb.Options => throw new NotImplementedException(),
-      _ => throw new NotImplementedException()
+      var verb => throw new NotSupportedException($"HttpVerb: {verb} is not supported.")
     };
   }
 
-  private StringContent? PrepareContent(IApiRequest apiRequest)
-  {
-    HttpVerb httpVerb = apiRequest.GetHttpVerb();
-    switch (httpVerb)
+  private StringContent? PrepareContent(IApiRequest apiRequest) =>
+    apiRequest.GetHttpVerb() switch
     {
-      case HttpVerb.Post:
-      case HttpVerb.Put:
-      case HttpVerb.Patch:
-        string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType(), JsonSerializerOptions);
-        return new StringContent(requestAsJson, Encoding.UTF8, MediaTypeNames.Application.Json);
-      case HttpVerb.Get:
-      case HttpVerb.Delete:
-      case HttpVerb.Head:
-      case HttpVerb.Options:
-        return null;
-      default:
-        throw new ArgumentOutOfRangeException($"HttpVerb: {httpVerb} is not supported.");
-    }
-  }
-  private static string PrepareRoute(IApiRequest apiRequest)
-  {
-    switch (apiRequest.GetHttpVerb())
+      HttpVerb.Post or HttpVerb.Put or HttpVerb.Patch =>
+        new StringContent
+        (
+          JsonSerializer.Serialize(apiRequest, apiRequest.GetType(), JsonSerializerOptions),
+          Encoding.UTF8,
+          MediaTypeNames.Application.Json
+        ),
+      _ => null
+    };
+
+  private static string PrepareRoute(IApiRequest apiRequest) =>
+    apiRequest.GetHttpVerb() switch
     {
       // GET and DELETE carry no body (see PrepareContent), so the query string is their only
       // data channel besides route parameters.
-      case HttpVerb.Get:
-      case HttpVerb.Delete:
-        return (apiRequest as IQueryStringRouteProvider)?.GetRouteWithQueryString() ?? apiRequest.GetRoute();
-      case HttpVerb.Post:
-      case HttpVerb.Put:
-      case HttpVerb.Patch:
-      case HttpVerb.Head:
-      case HttpVerb.Options:
-      default:
-        return apiRequest.GetRoute();
-    }
-  }
+      HttpVerb.Get or HttpVerb.Delete =>
+        (apiRequest as IQueryStringRouteProvider)?.GetRouteWithQueryString() ?? apiRequest.GetRoute(),
+      _ => apiRequest.GetRoute()
+    };
   private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage, CancellationToken cancellationToken)
   {
     string json = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);

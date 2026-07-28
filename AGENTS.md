@@ -73,7 +73,7 @@ source/
                      # (SPA features stay conventional under web-spa/features — not rehomed)
       msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
     api/             # same axis-1 shape as web (features/ + platform/ + msbuild/);
-                     # features/weather-forecast/ (demo slice); platform/ empty (no content yet)
+                     # features/weather-forecast/ (demo slice); platform/ tree absent (no content yet)
       projects/      # api-contracts/ api-application/ api-domain/
                      # api-infrastructure/ api-server/
     grpc/            # same axis-1 shape as web (features/ + platform/ + msbuild/);
@@ -91,6 +91,11 @@ filename grammar below; an artifact folder (`web-server/`, `web-infrastructure/`
 its own definition (csproj, global-usings) and entry-point bootstrap (program.cs, appsettings,
 host-config exemplars). Litmus test for the fuzzy middle: if the deployable were deleted, would
 the file still mean something? Yes → a shared tree; no → bootstrap, stays with the artifact.
+
+**Features substrate:** cross-slice compile-time constants (e.g. `ModuleIds`, `RoleIds`) may use
+the bare `…Features` namespace (no slice Id) so product slices can share ids without TWA0009
+cross-slice references. Document the choice in the file's Design region. Full litmus:
+`skills/tw-feature-placement` (**Features substrate**).
 
 **Axis-1 filename grammar (family-generic — web, api, grpc):** files under `<family>/features/`
 and `<family>/platform/` use `<name>[-<function>]-<layer>.cs` (`handler`→application,

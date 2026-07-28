@@ -261,15 +261,24 @@ Confirm/extend on existing tasks:
 - [x] F-001 — remove Azure App Config module path from foundation-server  
 - [x] F-002 — delete MVC BaseEndpoint; retire TWA0005; Mvc.JsonOptions; tests; AGENTS  
 - [x] F-009 — mock auth consistent across configurations + csproj comment  
-- [ ] F-010 — chrome fossils + MediatR link (not Passwordless key unless specs already allow)  
-- [ ] F-011 — postgres exclude glob  
-- [ ] F-012 — tests DBP dead detection  
-- [ ] F-013 — grammar analyzer simplify  
-- [ ] F-015 — BaseApiService catch/verb alignment  
-- [ ] F-016 — document Features substrate  
-- [ ] F-017 — residue sweep  
-- [ ] Create follow-on kanban tasks for B/C/D themes  
-- [ ] Confirm 104-016/021 cover Passwordless key/CDN  
-- [ ] Commit review artifacts + fixes; Results on task 131  
+- [x] F-010 — chrome fossils + MediatR link (Passwordless key tracked 104-016/021)  
+- [x] F-011 — postgres exclude glob  
+- [x] F-012 — tests DBP dead detection  
+- [x] F-013 — grammar analyzer simplify  
+- [x] F-015 — BaseApiService catch/verb alignment  
+- [x] F-016 — document Features substrate  
+- [x] F-017 — residue sweep  
+- [x] Create follow-on kanban tasks for B/C/D themes  
+- [x] Confirm 104-016/021 cover Passwordless key/CDN (notes added)  
+- [ ] Results on task 131; move to done when steward accepts  
 
-**Not under 131 code:** F-003, F-004, F-005, F-006, F-007, F-008, F-014 (follow-ons).
+### Follow-on children created
+
+| Id | Theme |
+|----|--------|
+| **131-001** | Generator/analyzer hardening (F-003, F-004, F-005, F-008, F-014) |
+| **131-002** | Identity problem factories / ceremony helpers (F-006) |
+| **131-003** | Shared template-smoke harness + props SSOT (F-007) |
+| **131-004** | Shared API transport core (F-015 extract) |
+
+**Not under 131 code:** F-003, F-004, F-005, F-006, F-007, F-008, F-014 (children above).

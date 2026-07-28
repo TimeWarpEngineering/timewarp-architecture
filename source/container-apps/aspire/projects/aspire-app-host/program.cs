@@ -142,9 +142,6 @@ internal class Program
     // "https+http://web-server", which service discovery resolves https-first — reintroducing the
     // mismatch. The explicit named-endpoint service-discovery address pins the scheme AND the
     // endpoint: http://_http.web-server resolves ONLY services__web-server__http__0.
-
-#endif
-#if web
     // The web routes below target the named-endpoint cluster (http://_http.web-server), which is
     // NOT a resource reference — this explicit reference keeps the services__web-server__* env
     // injected so the ingress can resolve that address.

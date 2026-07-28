@@ -1,11 +1,13 @@
+#region Purpose
+// Shared test constants for the timewarp-testing library.
+#endregion
+
 namespace TimeWarp.Architecture.Testing;
 
 /// <summary>
-/// Add Shared Constants here
+/// Shared constants for test infrastructure. Add real values as needed.
 /// </summary>
 [NotTest]
 public static class Constants
 {
-  public const string ExampleConst = "Example";
-  // public const string ApiServiceName = "api-server";
 }

@@ -140,9 +140,10 @@ In addition to generic maintainability, the review **must** check alignment with
 ### Artifacts and disposition
 - [x] Write `review-brief.md`
 - [x] Write `findings.md` (high-conviction, prioritized)
-- [ ] Steward disposition on blocker/major items → `disposition.md`
-- [ ] Create follow-on kanban tasks for accepted multi-step work
-- [ ] Commit all artifacts; mark this task done when disposition is complete
+- [x] Steward disposition on blocker/major items → `disposition.md`
+- [x] Create follow-on kanban tasks for accepted multi-step work (131-001…131-004)
+- [x] Implement accepted under-131 fixes (F-001/002/009–017)
+- [ ] Mark this task done when Results accepted and steward moves column
 
 ## Notes
 
@@ -186,9 +187,25 @@ In addition to generic maintainability, the review **must** check alignment with
 
 - Created: (this session) 2026-07-28 — task scaffolding only
 - Review: 2026-07-28 — Kimi K3 (orchestrator session, opencode) — complete
-- Disposition: _pending_
+- Verification: 2026-07-28 — Claude + Grok independent re-verification (round-1)
+- Disposition + implement: 2026-07-28 — steward walk + Grok implement (F-001…F-017 under-131 set)
 
 ## Results
 
-_Fill when the review and disposition are complete. Summarize top themes and link
-child tasks._
+Full-repo maintainability review (17 findings) dispositioned and partially implemented.
+
+**Implemented on 131:** F-001 (Azure App Config out of foundation), F-002 (MVC BaseEndpoint
+deleted, TWA0005 retired), F-009 (MOCK_AUTHENTICATION all configs), F-010 fossils + MediatR
+link, F-011 postgres exclude glob, F-012 tests DBP detection, F-013 grammar simplify, F-015
+SPA transport catch/verbs, F-016 Features substrate docs, F-017 residue sweep.
+
+**Children (to-do):**
+- **131-001** generator/analyzer hardening — F-003, F-004, F-005, F-008, F-014
+- **131-002** identity problem/ceremony de-dup — F-006
+- **131-003** template-smoke harness SSOT — F-007
+- **131-004** shared API transport core — F-015 extract
+
+**Tracked elsewhere:** 104-016 (Passwordless CDN/key), 104-021 (Entra posture; notes updated).
+
+**Review artifacts:** `review-brief.md`, `findings.md`, `disposition.md`,
+`review/review-framework.md`, `review/round-1/{claude,grok}-verification.md`.
