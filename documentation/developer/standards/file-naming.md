@@ -30,10 +30,13 @@ Multi-dot **partial** stems are valid when each segment is kebab:
 - Slice isolation: skill **`tw-slice-isolation`**.
 - Co-located Jaribu runfiles under `source/<family>/features/`/`platform/` use the SAME grammar,
   ending `-tests.cs` (a registered-**unrouted** layer — matched and validated by TWA0015/0016
-  and the membership guard exactly like a routed layer, but claiming no layer project's build:
-  `create-role-tests.cs`, `get-weather-forecasts-tests.cs`). Authoring conventions (runfile
-  preamble, `PublishAot=false`, the `cnd:noEmit`-escaped `JARIBU_MULTI` switch, testing
-  philosophy): skill **`tw-jaribu`**.
+  and the membership guard exactly like a routed layer, but claiming no layer project's build;
+  enforcement only fires when the file itself is compiled, e.g. standalone `dotnet run` — NOT the
+  `dev build` solution gate, which never touches it). Runfile preamble convention (`PublishAot=false`,
+  the `cnd:noEmit`-escaped `JARIBU_MULTI` switch): skill **`tw-feature-placement`** (Co-located
+  Jaribu runfile preamble section); reference implementations `create-role-tests.cs`,
+  `get-weather-forecasts-tests.cs`. Jaribu itself (attributes, naming, assertions, testing
+  philosophy): cross-repo skill **`tw-jaribu`**.
 
 ## Enforcement
 

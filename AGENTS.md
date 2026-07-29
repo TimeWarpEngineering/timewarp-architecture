@@ -53,9 +53,13 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   shims in the template. Validation stays on the mediator's `FluentValidationBehavior` — do not
   adopt FastEndpoints' validator integration.
 - Tests: co-located **Jaribu** runfiles (`<name>[-<function>]-tests.cs`, standalone via
-  `dotnet run`) are the default for new product-slice tests as of task 135 — see
-  **`tw-jaribu`** skill; host-level `tests/` suites stay **Fixie + Shouldly** (NOT MSTest/xUnit;
-  do not introduce FluentAssertions — v8+ is commercially licensed). Migration policy: new tests
+  `dotnet run`) are the default for new product-slice tests as of task 135 — runfile preamble
+  convention lives in **`tw-feature-placement`** skill (Co-located Jaribu runfile preamble
+  section; Jaribu itself — attributes, naming, assertions — is the cross-repo **`tw-jaribu`**
+  skill); reference implementations: `create-role-tests.cs` (web),
+  `get-weather-forecasts-tests.cs` (api). Host-level `tests/` suites stay **Fixie + Shouldly**
+  (NOT MSTest/xUnit; do not introduce FluentAssertions — v8+ is commercially licensed). Migration
+  policy: new tests
   are co-located Jaribu from adoption; existing Fixie projects migrate opportunistically
   slice-by-slice; `tests/` host-level/cross-service integration suites migrate last or never;
   Playwright e2e is unaffected. No `JARIBU_MULTI` aggregator exists yet (task 136 — `dev test`
@@ -145,8 +149,13 @@ clusters keep non-Features namespaces. Full rule, litmus test, and decision tabl
 match and validate exactly like a routed layer, but that gets NO `Compile` glob in any family's
 `feature-filename-grammar.g.props` — a `<name>[-<function>]-tests.cs` co-located Jaribu runfile
 stays a first-class grammar citizen (misnamed/orphaned files still trip the teaching error, and
-`-handler-tests.cs` still trips TWA0015) while compiling into no layer project. See `tw-jaribu`
-skill for the runfile authoring convention.
+`-handler-tests.cs` still trips TWA0015) while compiling into no layer project. **Enforcement
+surface:** this only fires when the file itself is compiled — standalone `dotnet build`/`dotnet
+run` (plus `dev template-smoke` tier 2 for the two exemplars) — NOT the repo's `dev build`
+solution gate, which never touches an unrouted file's `Compile` glob and is structurally blind to
+it; the task-136 `JARIBU_MULTI` family aggregators will restore build-time coverage when they
+land. Runfile authoring convention: **`tw-feature-placement`** skill (Co-located Jaribu runfile
+preamble section).
 
 ## Platform packages (foundation + analyzers + identity)
 
