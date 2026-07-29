@@ -121,6 +121,9 @@ multi-resource/postgres/ingress-topology tier — first candidate to evaluate:
    Blocker M2 must be fixed under either choice.
 3. **Aspire tier:** adopt `Aspire.Hosting.Testing` for a new multi-resource tier now (evaluate
    `ingress-smoke-tests` as first candidate) or defer until postgres-backed scenarios demand it.
+   — **Decided (Steve, 2026-07-29): DEFERRED.** No task created; revisit when postgres-backed
+   integration scenarios materialize. (Q1 → registered-unrouted suffix, task 135;
+   Q2 → family aggregators, task 136.)
 
 ## 9. Follow-up task list (create after §8 decisions)
 
