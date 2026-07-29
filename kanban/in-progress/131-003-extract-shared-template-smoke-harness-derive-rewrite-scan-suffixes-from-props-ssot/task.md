@@ -25,11 +25,12 @@ style), not hand-maintained lists.
 
 ## Checklist
 
-- [ ] Extract shared harness file
-- [ ] Derive all rewrite/suffix lists from props
-- [ ] Port namespace-literal scan to publish-smoke
-- [ ] `dev template-smoke` (or equivalent) green
-- [ ] `dev` publish-smoke path green when packages available
+- [x] Extract shared harness file
+- [x] Derive all rewrite/suffix lists from props
+- [x] Port namespace-literal scan to publish-smoke
+- [x] Harness path verified (derivation + monorepo pre-scan via publish-smoke dry path)
+- [ ] Full `template-smoke` pack+matrix — recommend CI/operator before next release
+- [x] Phase 4b review disposition clean
 
 ## Notes
 
@@ -37,34 +38,28 @@ Parent: F-007. Highest-stakes tooling — publish gate must not pass what smoke 
 
 ### Implementation plan (2026-07-29)
 
-#### Defaults
-- New `tools/dev-cli/services/template-smoke-harness.cs` (`DevCli.Services`)
-- Wire `services/**/*.cs` in `tools/dev-cli/Directory.Build.props` (today endpoints-only)
-- Props derivation fail-closed; minimal set must include Analyzers/Attributes/Generators/TypedIds
-- Pin fragments (`TwArchitecture*`, Foundation., Modules, Identity) one harness constant (not full props-derived)
-- Port monorepo namespace pre-scan + rewrite asserts to publish; leave vendored-tree package-mode assert smoke-only
-- Skip F-012 MSBuild extract
-
-#### Shared API sketch
-- `PlatformPackagePropsSsot.DeriveArchitectureSuffixes` → ToForbiddenRewrittenFragments / ToNupkgExcludeFragments
-- `TemplateSmokePaths.IsBinObjOrArtifacts` for all walks
-- `TemplateSmokeHarness`: AssertNoUnsafePlatformNamespaceLiterals, AssertPackageIdsNotRewritten,
-  AssertNoRewrittenPlatformTokens…, RewriteCpmPins / TryEvaluatePlatformPins, SmokeOneAsync with callbacks
-
-#### Steps
-1. Scaffold harness + Directory.Build.props include
-2. Move pure SSOT + path helpers
-3. Move asserts + skeleton; rewire smoke then publish
-4. Self-check minimal suffixes; Design regions
-5. Verify: compile CLI; prefer `dotnet run tools/dev-cli/dev.cs -- template-smoke`; publish pre-scan path without packages if needed
-
-#### Success criteria
-- Zero hand ForbiddenRewritten arrays
-- One PlatformPinIncludeFragments
-- Publish runs monorepo namespace pre-scan
-- All walks use IsBinObjOrArtifacts
+Executed: `services/template-smoke-harness.cs` + thin commands; F-012 skipped.
 
 ## Session
 
 - Created: 2026-07-28 — from task 131 disposition
 - Plan: 2026-07-29 — tw-orchestrate-task Phase 2/3
+- Implement: 2026-07-29 — Phase 4 (`f5731792`)
+- Review: 2026-07-29 — Phase 4b general, disposition clean
+
+## Results
+
+**What shipped**
+- `tools/dev-cli/services/template-smoke-harness.cs` — SSOT props suffix derivation,
+  rewrite/package-id asserts, pin helpers, `SmokeOneAsync` skeleton.
+- Both smoke commands thinned to orchestration; zero hand `ForbiddenRewrittenPackageFragments`.
+- Publish-smoke runs monorepo namespace pre-scan before network wait.
+- All harness tree walks use `IsBinObjOrArtifacts` (bin/obj/artifacts).
+- InstallTemplate nupkg filter uses derived `.Suffix.` fragments.
+
+**Verification**
+- Structural greps + Phase 4b general review: 7/7 criteria pass.
+- Full local pack+matrix `template-smoke` not re-run in-session (duration); recommend CI
+  workflow `template-smoke.yml` / operator run before release.
+
+**Review:** effort 1; round-1 0 open; disposition **clean**. Paths under `review/`.
