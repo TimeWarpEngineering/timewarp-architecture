@@ -57,13 +57,13 @@ of record.
 
 ## Checklist
 
-- [ ] Contracts round-trip runfile co-located in a slice, runs standalone
-- [ ] Integration-test runfile: real host, endpoint happy path + validation rejection
-- [ ] Test DI container flexibility evaluated; carry/port/gap documented
+- [x] Contracts round-trip runfile co-located in a slice, runs standalone (`create-role-tests.cs`, 5/5; branch `spike/134-jaribu-co-located-integration-tests`)
+- [x] Integration-test runfile: real host, endpoint happy path + validation rejection (`get-weather-forecasts-tests.cs`, 2/2 on :7255, real FastEndpoints + mediator)
+- [x] Test DI container flexibility evaluated; carry/port/gap documented (timewarp-testing host classes carry unchanged; only Fixie DI role replaced by manual `new`; Jaribu lacks class-scoped fixture lifetime)
 - [x] Aspire testing features surveyed (latest); recommendation written (`aspire-testing-survey.md` — complement, not supersede; no in-process DI overrides in Aspire testing)
-- [ ] JARIBU_MULTI project: `dotnet test` / IDE discovery of the same files
-- [ ] Upstream Jaribu gaps filed (if any)
-- [ ] Membership-guard + analyzer interaction sketch written
+- [x] JARIBU_MULTI project: `dotnet test` / IDE discovery of the same files (`tests/container-apps/jaribu-spike-tests/`, 7/7 in 2.6s; needed `TestingPlatformDotnetTestSupport` + `global.json` runner opt-in)
+- [ ] Upstream Jaribu gaps filed (if any) — two gaps documented, filing pending
+- [x] Membership-guard + analyzer interaction sketch written (proven as real diff: `Exclude="**/*-tests.cs"` in both web+api `feature-membership.targets`; `dev build` 0/0; TWA0004/CA1707 etc. confirmed firing on runfiles under `source/`)
 - [ ] findings.md written with adoption follow-up task list
 - [ ] Kanban mutations committed
 
