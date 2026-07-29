@@ -1,6 +1,6 @@
 /* TimeWarp.Architecture design tokens — the single source of truth for color and type.
    Plain CSS custom properties (no Tailwind). Brand = the three colors of the TimeWarp
-   Enterprises SOLID logo (assets/TIMEWARP ENTERPRISES SOLID.svg): purple + blue are the
+   Enterprises SOLID logo (images/timewarp/timewarp-enterprises.svg): purple + blue are the
    dominant brand colors, green is a highlight. Consume via var(--twe-*); never hard-code. */
 :root {
   /* Brand (TimeWarp Enterprises logo) */
