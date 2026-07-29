@@ -127,8 +127,9 @@ rule were wrong; source-generators docs now state SSOT explicitly (task 020).
 1. Policy docs in TWA (`AGENTS.md`, `documentation/developer/standards/file-naming.md`).
 2. Kebab-migrate integration/aspire test basenames + dirs (`Features/` → `features/`, etc.).
 3. Rename pure-`.cs` SPA outlier `badge-status.cs`.
-4. Do **not** enable `TW0001` until SourceGenerators multi-dot support; do **not** implement Ganda 188 here.
-5. Optional HowTo/logo renames deferred.
+4. Do **not** enable `TW0001` until SourceGenerators multi-dot support (task **021** there).
+5. Ganda **188** (`kebab-path-names`) already shipped — not part of this implement wave.
+6. Optional HowTo/logo renames deferred.
 
 ### Cross-repo references
 
@@ -136,7 +137,7 @@ rule were wrong; source-generators docs now state SSOT explicitly (task 020).
 |------|----------|
 | timewarp-source-generators | `file-name-rule-analyzer.cs`, task 011; task **020** (done) — **`TW*`** SSOT docs |
 | timewarp-flow | ADR-0013; `tw-csharp` file-naming section |
-| timewarp-ganda | `file-naming.md`; **task 188** kebab-path-names audit |
+| timewarp-ganda | `file-naming.md`; **task 188** kebab-path-names audit (**done**, check shipped) |
 | timewarp-architecture | This task |
 
 ### Related analyzers (different jobs)
@@ -154,8 +155,10 @@ rule were wrong; source-generators docs now state SSOT explicitly (task 020).
 - **Remediations:** ~79 path renames across web-server, web-spa, api-server integration tests and
   aspire-tests; `badge-status.cs` renamed.
 - **Build:** `dev build` **0 warnings / 0 errors**.
-- **Not done here (accepted deferrals):** enable `TW0001` (upstream multi-dot required); Ganda
-  task 188 implementation; optional doc HowTo/logo renames.
+- **Not done here (accepted deferrals):** enable `TW0001` (upstream multi-dot — source-generators
+  task **021**); optional doc HowTo/logo renames.
+- **Already done elsewhere (not this repo):** Ganda task **188** `kebab-path-names` audit check
+  (completed before/around this wave; available via `ganda repo audit`).
 - **Review:** implementer self-check on renames + build; no multi-round peer review kitchen
   (mechanical renames + docs).
 
