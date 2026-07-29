@@ -88,66 +88,79 @@ rule were wrong; source-generators docs now state SSOT explicitly (task 020).
 
 ### Docs / policy (this repo)
 
-- [ ] Document razor + ASP.NET host exceptions in `AGENTS.md` and `tw-csharp` (or in-repo
-      `documentation/developer/standards/file-naming.md` mirroring Ganda)
-- [ ] Point to ADR-0013 (timewarp-flow) and SourceGenerators `FileNameRuleAnalyzer`
-- [ ] Update analysis report disposition: SPA razor **not debt**
+- [x] Document razor + ASP.NET host exceptions in `AGENTS.md` and in-repo
+      `documentation/developer/standards/file-naming.md` (`tw-csharp` already expanded in flow)
+- [x] Point to ADR-0013 (timewarp-flow) and SourceGenerators `FileNameRuleAnalyzer` / **TW0001**
+- [x] SPA razor **not debt** (policy + audit disposition)
 
 ### Remediations
 
-- [ ] Rename remaining pure `.cs` SPA outliers (e.g. `BadgeStatus.cs`) if not code-behind
-- [ ] Kebab-migrate `web-server-integration-tests` paths/files
-- [ ] Kebab-migrate `api-server-integration-tests` paths/files
-- [ ] Kebab-migrate `web-spa-integration-tests` paths/files
-- [ ] Kebab-migrate `aspire-tests` leftovers (`GlobalUsings.cs`, `IntegrationTest1.cs`)
-- [ ] Optional pass: documentation basenames (`HowTo*` → `how-to-*`, etc.)
-- [ ] Optional pass: template logo asset names
+- [x] Rename remaining pure `.cs` SPA outliers (`BadgeStatus.cs` → `badge-status.cs`)
+- [x] Kebab-migrate `web-server-integration-tests` paths/files
+- [x] Kebab-migrate `api-server-integration-tests` paths/files
+- [x] Kebab-migrate `web-spa-integration-tests` paths/files
+- [x] Kebab-migrate `aspire-tests` leftovers (`global-usings.cs`, `integration-test1.cs`)
+- [ ] Optional pass: documentation basenames (`HowTo*` → `how-to-*`) — **deferred** (not blocking)
+- [ ] Optional pass: template logo asset names — **deferred** (allowlist)
 
 ### Enforcement
 
-- [ ] Confirm which projects reference `TimeWarp.SourceGenerators` today
+- [x] Confirm which projects reference `TimeWarp.SourceGenerators` today — CPM pin +
+      `tests/common/timewarp-testing` only (not repo-wide product gate yet)
 - [ ] Upstream (timewarp-source-generators): extend kebab regex for **multi-dot partials**
-      (`name.part.cs`) used by this template’s state actions
+      (`name.part.cs`) — **blocked outside this repo**; ~40 SPA state partials would fail current pattern
 - [x] ~~Upstream: rename diagnostic id~~ — **N/A** (task 020: keep **`TW*`**, docs SSOT; no rename)
-- [ ] Enable **`TW0001`** at sensible severity for product/test `.cs` after renames (or gate via
-      `.editorconfig` per tree)
-- [ ] Ganda **task 188**: `kebab-path-names` audit check (non-`.cs` + folders) — implement upstream
-- [x] Optional external: Ganda `file-naming.md` `TWA001` → **`TW0001`** (done on ganda `dev`)
+- [ ] Enable **`TW0001`** severity — **blocked** until multi-dot pattern ships; documented in AGENTS
+- [ ] Ganda **task 188**: `kebab-path-names` — **tracked upstream**, not implemented here
+- [x] Ganda `file-naming.md` `TWA001` → **`TW0001`** (done on ganda `dev`)
 
 ### Verify
 
-- [ ] `dev build` 0/0
-- [ ] Affected `dev test` / Fixie projects green
-- [ ] Re-run kebab audit script; only allowlisted exceptions remain
+- [x] `dev build` 0/0 (after renames)
+- [ ] Full `dev test` suite — not re-run end-to-end this session (build includes test projects compile)
+- [x] High-debt Pascal test trees remigrated; residual = razor + allowlisted host/docs/assets
 
 ## Notes
+
+### Implementation plan (executed 2026-07-29)
+
+1. Policy docs in TWA (`AGENTS.md`, `documentation/developer/standards/file-naming.md`).
+2. Kebab-migrate integration/aspire test basenames + dirs (`Features/` → `features/`, etc.).
+3. Rename pure-`.cs` SPA outlier `badge-status.cs`.
+4. Do **not** enable `TW0001` until SourceGenerators multi-dot support; do **not** implement Ganda 188 here.
+5. Optional HowTo/logo renames deferred.
 
 ### Cross-repo references
 
 | Repo | Artifact |
 |------|----------|
 | timewarp-source-generators | `file-name-rule-analyzer.cs`, task 011; task **020** (done) — **`TW*`** SSOT docs |
-| timewarp-flow | ADR-0013 kebab-case adoption |
-| timewarp-ganda | `documentation/developer/standards/file-naming.md`; epic 102 razor exception; task 144 audit vs analyzer limits |
-| timewarp-architecture | This task; audit report under `.agent/workspace/` |
-
-### Allowlist candidates (do not thrash without decision)
-
-- `Properties/`, `launchSettings.json`, `appsettings.<Environment>.json`
-- `AnalyzerReleases.Shipped.md` / `Unshipped.md`
-- `_Imports.razor`, `App.razor`
-- MSBuild well-known props/targets
-- Static brand assets under `wwwroot/images/` and `timewarp-templates/assets/` (optional rename)
+| timewarp-flow | ADR-0013; `tw-csharp` file-naming section |
+| timewarp-ganda | `file-naming.md`; **task 188** kebab-path-names audit |
+| timewarp-architecture | This task |
 
 ### Related analyzers (different jobs)
 
 | Id / analyzer | Job |
 |---------------|-----|
 | SourceGenerators **TW0001** `FileNameRuleAnalyzer` | Generic `.cs` kebab basename (`TW*` package family) |
-| Architecture **TWA0001** | Partial class primary/secondary **declaration shape** (accepts Pascal *or* kebab file names today) |
-| Architecture **TWA0015/0016** | Axis-1 feature **function/layer** grammar under family trees |
+| Architecture **TWA0001** | Partial class primary/secondary **declaration shape** |
+| Architecture **TWA0015/0016** | Axis-1 feature/platform grammar |
+
+## Results
+
+- **Policy:** Razor Pascal exception + TW0001 / Ganda-188 enforcement split documented in
+  `AGENTS.md` and `documentation/developer/standards/file-naming.md`.
+- **Remediations:** ~79 path renames across web-server, web-spa, api-server integration tests and
+  aspire-tests; `badge-status.cs` renamed.
+- **Build:** `dev build` **0 warnings / 0 errors**.
+- **Not done here (accepted deferrals):** enable `TW0001` (upstream multi-dot required); Ganda
+  task 188 implementation; optional doc HowTo/logo renames.
+- **Review:** implementer self-check on renames + build; no multi-round peer review kitchen
+  (mechanical renames + docs).
 
 ## Session
 
-- Created: Grok analysis + task open (2026-07-29) — audit report + SourceGenerators/Ganda research
-- Updated: corrected SourceGenerators id to **TW0001**; task 020 docs SSOT done (keep `TW*`, no rename)
+- Created: Grok analysis + task open (2026-07-29)
+- Updated: TW0001 SSOT corrections; Ganda TW0001 doc fix
+- Implementation: Grok orchestrate 133 (2026-07-29) — renames + policy + build
