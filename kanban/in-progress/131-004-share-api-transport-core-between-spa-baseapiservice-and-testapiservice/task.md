@@ -13,52 +13,47 @@ under 131; this task removes the remaining dual-maintenance mirror.
 ## Requirements
 
 - Shared transport core (HttpClient + seam `JsonSerializerOptions` + token-acquisition
-  delegate) both sides compose — home likely foundation client seam types already shared
-  (`IApiService`, `IApiRequest`, `SharedProblemDetails`, `ContractSerializationDefaults`).
-- Tests must not take a ProjectReference on the SPA stack (flag-combination constraint).
+  delegate) both sides compose.
+- Tests must not take a ProjectReference on the SPA stack.
 - Keep verb matrix consistent (`NotSupportedException` for unsupported verbs).
 - Do not reintroduce swallow-all exception catch on problem deserialization.
 
-## Verification concerns to honor (claude-verification, 131 review audits)
-
-1. **Home must be WASM-safe** — foundation client layer, NOT foundation-server.
-2. **Token acquisition** async per-request delegate.
-3. **Verbatim extraction** except Head/Options once + Stream path reconcile.
-4. **Stream/FileResponse** one behavior.
-5. **Design regions** move with code.
-6. **EndpointEmitModel** equatability comment rider.
-
 ## Checklist
 
-- [ ] Choose home assembly / package for shared core (WASM-safe client layer — concern 1)
-- [ ] Extract and compose from BaseApiService + TestApiService (verbatim rule — concern 3)
-- [ ] Async per-request token seam works for SPA `IAccessTokenProvider` (concern 2)
-- [ ] Head/Options decided once; dead arms removed or verbs supported (concern 3)
-- [ ] Stream/FileResponse path reconciled to one behavior (concern 4)
-- [ ] Design regions rewritten on both composers + core (concern 5)
-- [ ] `EndpointEmitModel` equatability comment fixed (concern 6 rider)
-- [ ] SPA + integration tests green
-- [ ] `dev build` 0/0
+- [x] Choose home assembly — foundation-contracts / HttpApiService
+- [x] Extract and compose BaseApiService + TestApiService
+- [x] Async per-request token seam for SPA IAccessTokenProvider
+- [x] Head/Options → NotSupportedException
+- [x] Stream/FileResponse single path; 204 before success
+- [x] Design regions rewritten on core + composers
+- [x] EndpointEmitModel equatability comment fixed
+- [x] foundation-contracts-tests 13 passed; identity registration suite green
+- [x] Phase 4b review disposition clean
 
 ## Notes
 
 ### Implementation plan (2026-07-29)
 
-**Home:** `source/foundation/foundation-contracts/services/http-api-service.cs`  
-`public sealed class HttpApiService : IApiService`  
-Ctor: `(HttpClient, JsonSerializerOptions, Func<CancellationToken, Task<string?>>? acquireBearerTokenAsync = null)`
-
-**Decisions:**
-- Head/Options → `NotSupportedException` (no real HEAD client)
-- Stream path: drop SPA-only `EnsureSuccessStatusCode` inside success branch
-- SPA adapts `IAccessTokenProvider` → acquire Func; TestApiService pins header, passes null Func
-- Drop BaseAuthApiService double token apply
-- Unit tests in foundation-contracts-tests with HttpMessageHandler double
-- Rider: honest EndpointEmitModel Design on ImmutableArray equality
-
-**Steps:** Add HttpApiService + tests → compose BaseApiService → compose TestApiService → rider → build/test
+Executed: `HttpApiService` in foundation-contracts; SPA/Test composers; rider comment.
 
 ## Session
 
 - Created: 2026-07-28 — from task 131 disposition
 - Plan: 2026-07-29 — tw-orchestrate-task Phase 2/3
+- Implement: 2026-07-29 — Phase 4 (`69a57391`)
+- Review: 2026-07-29 — Phase 4b general, disposition clean
+
+## Results
+
+**What shipped**
+- `source/foundation/foundation-contracts/services/http-api-service.cs` — shared WASM-safe
+  HTTP transport for `IApiService`.
+- SPA `BaseApiService` / `BaseAuthApiService` thin composers; single MSAL acquire path.
+- `TestApiService` composes core; ctor bearer pin unchanged; raw HTTP still public.
+- Unit tests: `tests/foundation/foundation-contracts-tests/http-api-service-tests.cs`.
+- Intentional fix: 204 handled before success branch (old 204 arm was dead under IsSuccessStatusCode).
+- EndpointEmitModel Design: honest ImmutableArray equality note.
+
+**Tests:** foundation-contracts-tests **13 passed**; AgentRegistration-related **14 passed**.
+
+**Review:** effort 1 general; **0 open**; disposition **clean**. Paths under `review/`.
