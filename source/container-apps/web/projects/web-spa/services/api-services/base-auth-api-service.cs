@@ -1,24 +1,21 @@
 #region Purpose
-// Base for API services that must attach a bearer token before every request.
+// Base for authenticated API services (semantic subclass of BaseApiService).
 #endregion
 
 #region Design
-// Splits authenticated behavior from BaseApiService so anonymous services can share the same
-// transport without pulling in token acquisition.
-// The token is requested per call rather than cached here: IAccessTokenProvider (MSAL) owns
-// expiry and refresh, and a missing token degrades to an anonymous request so the server's 401
-// flows back through the normal SharedProblemDetails path.
+// Kept as a distinct type so authenticated backends (WebServerApiService) stay clearly
+// separated from anonymous BaseApiService compositions. Bearer acquisition is owned once by
+// BaseApiService → HttpApiService (MSAL adapter on the acquire Func); this type no longer
+// re-applies the token in GetResponse (that was a double RequestAccessToken per call).
 #endregion
 
 namespace TimeWarp.Architecture.Services;
 
 /// <summary>
-/// This is the Base Service that is used to interact with the API.Server
-/// Using the Bearer Token for Authentication
+/// Base service for authenticated API.Server interaction via bearer token.
 /// </summary>
 internal abstract class BaseAuthApiService : BaseApiService
 {
-  private readonly IAccessTokenProvider AccessTokenProvider;
   protected BaseAuthApiService
   (
     IHttpClientFactory httpClientFactory,
@@ -27,10 +24,8 @@ internal abstract class BaseAuthApiService : BaseApiService
     IOptions<JsonSerializerOptions> options
   ) : base(httpClientFactory, httpClientName, accessTokenProvider, options)
   {
-    AccessTokenProvider = accessTokenProvider;
   }
 
-  // Add testing constructor
   protected BaseAuthApiService
   (
     HttpClient httpClient,
@@ -38,22 +33,5 @@ internal abstract class BaseAuthApiService : BaseApiService
     JsonSerializerOptions jsonSerializerOptions
   ) : base(httpClient, accessTokenProvider, jsonSerializerOptions)
   {
-    AccessTokenProvider = accessTokenProvider;
-  }
-
-  public override async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest request, CancellationToken cancellationToken)
-  {
-    await SetBearerTokenAsync();
-    return await base.GetResponse<TResponse>(request, cancellationToken);
-  }
-
-  private async Task SetBearerTokenAsync()
-  {
-    AccessTokenResult tokenResult = await AccessTokenProvider.RequestAccessToken();
-    if (tokenResult.TryGetToken(out AccessToken? token))
-    {
-      HttpClient.DefaultRequestHeaders.Authorization =
-        new AuthenticationHeaderValue(scheme: "Bearer", token.Value);
-    }
   }
 }

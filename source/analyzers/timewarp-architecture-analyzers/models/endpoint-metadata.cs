@@ -23,8 +23,11 @@
 // When both markers are present, [EndpointAuthorize] wins (TWA0014 separately flags that as a
 // contract-author error — the generator picks a deterministic winner).
 // F-005: no CustomEndpointType — emission always uses BaseFastEndpoint.
-// Equatable (record + ImmutableArray) so the incremental pipeline can .Collect() candidates and
-// batch-detect route conflicts without static cross-compilation state (F-003).
+// Record shape supports Collect() + in-batch route-conflict detection without static
+// cross-compilation state (F-003). Honest caveat: ImmutableArray<T>'s IEquatable is reference
+// equality of the backing array (not element-wise), so two models with identical Tags content
+// but distinct arrays compare unequal — acceptable here because conflict detection keys on
+// Route/HttpVerb and does not require Tags content-equality across independently built arrays.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Models;
