@@ -58,6 +58,20 @@ Branch naming, commits, and merge policy: **`tw-git`**.
 
 ## Layout (kebab-case paths everywhere; namespaces PascalCase)
 
+**File naming:** kebab-case for files and folders (map `user-service.cs` → `UserService`). Full
+agent rules and exception table: **`tw-csharp`** (File and directory naming). Human SSOT sketch:
+`documentation/developer/standards/file-naming.md`. Axis-1 product grammar
+(`name[-function]-layer.cs`): **`tw-feature-placement`**.
+
+**Do not kebab-force:** `.razor` / paired `.razor.cs` / `.razor.css` (Blazor type-matching names);
+MSBuild well-known props/targets; ASP.NET `Properties/`, `launchSettings.json`,
+`appsettings.<Environment>.json`; `_Imports.razor` / `App.razor` where the host requires them.
+
+**`.cs` enforcement:** `TimeWarp.SourceGenerators` diagnostic **`TW0001`** (`TW*` package family —
+not Architecture `TWA*`). Configure `dotnet_diagnostic.TW0001.*`. Multi-dot partials
+(`application-state.close-modal.cs`) need an upstream pattern fix before enabling severity
+repo-wide. Non-`.cs` / folder basenames: Ganda audit check **task 188** (`kebab-path-names`).
+
 ```
 source/
   foundation/        # shared contracts/application/domain/server layers -> TimeWarp.Foundation.* packages

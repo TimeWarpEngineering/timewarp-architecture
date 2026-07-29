@@ -4,7 +4,7 @@
 #endregion
 
 #region Design
-// Deliberately NOT an HTTP integration test (unlike the rest of this Features/Identity folder) — no
+// Deliberately NOT an HTTP integration test (unlike the rest of this features/identity folder) — no
 // WebTestServerApplication, no real host. A genuine HTTP-level concurrency conflict is
 // non-deterministic (it depends on winning an actual race between two in-flight requests), so this
 // drives the handler directly against a fake IPrincipalStore decorator that FORCES
