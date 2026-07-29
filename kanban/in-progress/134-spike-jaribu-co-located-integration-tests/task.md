@@ -62,10 +62,10 @@ of record.
 - [x] Test DI container flexibility evaluated; carry/port/gap documented (timewarp-testing host classes carry unchanged; only Fixie DI role replaced by manual `new`; Jaribu lacks class-scoped fixture lifetime)
 - [x] Aspire testing features surveyed (latest); recommendation written (`aspire-testing-survey.md` — complement, not supersede; no in-process DI overrides in Aspire testing)
 - [x] JARIBU_MULTI project: `dotnet test` / IDE discovery of the same files (`tests/container-apps/jaribu-spike-tests/`, 7/7 in 2.6s; needed `TestingPlatformDotnetTestSupport` + `global.json` runner opt-in)
-- [ ] Upstream Jaribu gaps filed (if any) — two gaps documented, filing pending
+- [x] Upstream Jaribu gaps filed: timewarp-jaribu#19 (class-scoped fixture lifetime), timewarp-jaribu#20 (MTP dotnet-test docs + sdk-pin landmine)
 - [x] Membership-guard + analyzer interaction sketch written (proven as real diff: `Exclude="**/*-tests.cs"` in both web+api `feature-membership.targets`; `dev build` 0/0; TWA0004/CA1707 etc. confirmed firing on runfiles under `source/`)
-- [ ] findings.md written with adoption follow-up task list
-- [ ] Kanban mutations committed
+- [x] findings.md written with adoption follow-up task list
+- [x] Kanban mutations committed (each phase committed on dev as it landed)
 
 ## Notes
 
@@ -86,7 +86,45 @@ of record.
   suite to duplicate). Strategic post-spike questions for Steve are listed at the end of
   `plan.md`; none block the spike.
 
+## Results
+
+**Verdict: spike SUCCEEDS** — Jaribu co-located tests are viable for both the contracts case
+and the primary real-host integration case. Full report: `findings.md` (deliverable of record).
+
+- **Spike branch:** `spike/134-jaribu-co-located-integration-tests` (3 commits off dev;
+  evidence artifact, not intended to merge as-is).
+- **Proofs (all independently re-verified in review):** co-located contracts runfile 5/5
+  standalone; co-located integration runfile 2/2 against the real api host on :7255 (real
+  FastEndpoints + mediator, happy path + validation rejection); solution build 0/0 with both
+  `-tests.cs` files present (carve-out in web+api feature-membership.targets); JARIBU_MULTI
+  aggregator 7/7 via `dotnet test`.
+- **Key evidence:** Directory.Build.props/analyzer chain DOES apply to file-based apps
+  (virtual csproj + upward walk); .NET 10 runfiles default `PublishAot=true` (breaks
+  reflection JSON — needs `#:property PublishAot=false`); timewarp-testing host classes carry
+  over unchanged, only Fixie's DI role replaced by manual instantiation.
+- **Confirmed adoption blockers:** (M1) `#if !JARIBU_MULTI` is not template-safe — dotnet-new
+  strips the directives and generated apps fail CS8802; (M2) `dev test`'s
+  `dotnet test <csproj-path>` invocation fails on MTP projects on .NET 10.
+- **Aspire (req 3):** complements, does not supersede — Aspire testing is closed-box
+  (separate processes, no DI substitution), so the hand-rolled host + configureServicesDelegate
+  stays for endpoint tests; Aspire.Hosting.Testing only for a possible future multi-resource
+  tier. Survey: `aspire-testing-survey.md`.
+- **Upstream filed:** timewarp-jaribu#19 (class-scoped fixture lifetime),
+  timewarp-jaribu#20 (MTP dotnet-test docs, sdk-pin landmine, invocation forms).
+- **Review (Phase 4b):** 1 round, effort 1 (general reviewer), all implementation claims
+  confirmed; final counts — bug 2 wontfix, suggestion 1 wontfix, 0 open; disposition:
+  **accepted-exceptions** (all three findings are spike-branch-only defects recorded as
+  adoption evidence; rationale in `review/round-1/merged.md` and `review/disposition.md`).
+- **Open strategic decisions (Steve), in dependency order — findings.md §8:** carve-out
+  mechanism (exclude-glob vs registered-unrouted `tests` grammar suffix); `dev test`
+  discovery shape for co-located tests; whether/when to add an Aspire multi-resource tier.
+- **Follow-up tasks** to create after those decisions: findings.md §9 (adoption convention +
+  template-safety fix, `dev test` MTP support, upstream follow-through, migration policy,
+  conditional Aspire tier).
+
 ## Session
 
 - Created: c6f1a13b-487f-4085-bf61-ba4761e8579e (2026-07-29)
 - Plan + orchestration: c6f1a13b-487f-4085-bf61-ba4761e8579e (2026-07-29)
+- Implementation: subagent build-134 (isolated worktree, spike branch), 2026-07-29
+- Review round 1: subagent review-134-r1 (isolated worktree, detached), 2026-07-29
