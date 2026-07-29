@@ -76,10 +76,10 @@ rule were wrong; source-generators docs now state SSOT explicitly (task 020).
 - Inventory remaining non-razor, non-allowlist violations and rename or allowlist them.
 - Migrate legacy integration-test path casing to match `web-contracts-tests` kebab layout.
 - Wire or document kebab enforcement:
-  - Prefer enabling/fixing **`TimeWarp.SourceGenerators` `FileNameRuleAnalyzer`**, with a plan for
-    **multi-dot partial** filenames used heavily by TimeWarp.State in this template.
-  - Resolve **TWA001 id collision** with Architecture `TWA0001` (rename SourceGenerators id or
-    accept dual meaning with loud docs — prefer rename upstream).
+  - Prefer enabling/fixing **`TimeWarp.SourceGenerators` `FileNameRuleAnalyzer` (`TW0001`)**, with
+    a plan for **multi-dot partial** filenames used heavily by TimeWarp.State in this template.
+  - Prefix is settled (**`TW*`** keep — source-generators task 020); configure only
+    `dotnet_diagnostic.TW0001.*`, never Architecture `TWA*`.
   - Optionally add a `ganda repo audit` check for dirs / non-`.cs` later (Ganda 144 deferred this).
 - Analyzer tests: valid kebab, multi-dot partials if pattern extended, razor.cs excluded, generated
   files excluded.
@@ -108,10 +108,11 @@ rule were wrong; source-generators docs now state SSOT explicitly (task 020).
 - [ ] Confirm which projects reference `TimeWarp.SourceGenerators` today
 - [ ] Upstream (timewarp-source-generators): extend kebab regex for **multi-dot partials**
       (`name.part.cs`) used by this template’s state actions
-- [ ] Upstream: rename diagnostic id off Architecture collision (`TWG…` preferred)
-- [ ] Enable rule at sensible severity for product/test `.cs` after renames (or gate via
+- [x] ~~Upstream: rename diagnostic id~~ — **N/A** (task 020: keep **`TW*`**, docs SSOT; no rename)
+- [ ] Enable **`TW0001`** at sensible severity for product/test `.cs` after renames (or gate via
       `.editorconfig` per tree)
 - [ ] Consider `ganda repo audit` check for directory basenames / docs (follow Ganda 144 notes)
+- [ ] Optional external: fix Ganda `file-naming.md` if it still says `TWA001` → **`TW0001`**
 
 ### Verify
 
@@ -125,7 +126,7 @@ rule were wrong; source-generators docs now state SSOT explicitly (task 020).
 
 | Repo | Artifact |
 |------|----------|
-| timewarp-source-generators | `file-name-rule-analyzer.cs`, task 011 |
+| timewarp-source-generators | `file-name-rule-analyzer.cs`, task 011; task **020** (done) — **`TW*`** SSOT docs |
 | timewarp-flow | ADR-0013 kebab-case adoption |
 | timewarp-ganda | `documentation/developer/standards/file-naming.md`; epic 102 razor exception; task 144 audit vs analyzer limits |
 | timewarp-architecture | This task; audit report under `.agent/workspace/` |
@@ -142,10 +143,11 @@ rule were wrong; source-generators docs now state SSOT explicitly (task 020).
 
 | Id / analyzer | Job |
 |---------------|-----|
-| SourceGenerators **TWA001** `FileNameRuleAnalyzer` | Generic `.cs` kebab basename |
+| SourceGenerators **TW0001** `FileNameRuleAnalyzer` | Generic `.cs` kebab basename (`TW*` package family) |
 | Architecture **TWA0001** | Partial class primary/secondary **declaration shape** (accepts Pascal *or* kebab file names today) |
 | Architecture **TWA0015/0016** | Axis-1 feature **function/layer** grammar under family trees |
 
 ## Session
 
 - Created: Grok analysis + task open (2026-07-29) — audit report + SourceGenerators/Ganda research
+- Updated: corrected SourceGenerators id to **TW0001**; task 020 docs SSOT done (keep `TW*`, no rename)
