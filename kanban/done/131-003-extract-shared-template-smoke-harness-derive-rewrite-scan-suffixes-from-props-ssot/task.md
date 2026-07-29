@@ -63,3 +63,10 @@ Executed: `services/template-smoke-harness.cs` + thin commands; F-012 skipped.
   workflow `template-smoke.yml` / operator run before release.
 
 **Review:** effort 1; round-1 0 open; disposition **clean**. Paths under `review/`.
+
+**Post-done operator verification (2026-07-29, claude-verification):** `dev self-install`
+(fresh AOT binary including the harness) then full `dev template-smoke` — pack + both
+matrices (SmokeDefault, SmokeNoPostgres) **SUCCEEDED**, exit 0. Structural audit also
+re-confirmed: zero hand rewrite lists, nupkg filter derived, fail-closed suffix
+derivation (ExitCode=1 on props drift), namespace pre-scan in both commands,
+IsBinObjOrArtifacts on all walks. The in-session verification gap is closed.
