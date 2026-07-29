@@ -18,4 +18,5 @@ global using static TimeWarp.Nuru.Unit;
 global using TimeWarp.Amuru;
 global using TimeWarp.Terminal;
 global using DevCli;
+global using DevCli.Services;
 global using Microsoft.Extensions.DependencyInjection;

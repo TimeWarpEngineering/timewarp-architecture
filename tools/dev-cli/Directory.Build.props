@@ -17,6 +17,7 @@
     <!-- Include command files in compilation -->
     <Compile Include="global-usings.cs" />
     <Compile Include="endpoints/**/*.cs" />
+    <Compile Include="services/**/*.cs" />
   </ItemGroup>
 
   <ItemGroup>
