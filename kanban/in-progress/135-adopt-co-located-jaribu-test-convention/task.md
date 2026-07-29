@@ -86,6 +86,15 @@ Aspire multi-resource tier (findings §8 Q3); migrating any existing Fixie suite
   deliberately fenced out of this task.
 - Spike branch is reference material; port files fresh (template-safe), don't merge it.
 
+- **Plan (2026-07-29):** full implementation plan in `plan.md`. Four decided mechanisms:
+  `"unroutedLayers": ["tests"]` in the grammar JSON (python generator, six touch points);
+  `tests` as layer-only → TWA0015 fires on `-handler-tests.cs` for free; `cnd:noEmit` escape
+  for the JARIBU_MULTI switch (in-repo precedent: web-spa/program.cs); standardized
+  `#:property NoWarn=…` preamble directive (TWA0004 never suppressed). timewarp-jaribu#19
+  still open → Lazy-static host stays. Global tw-jaribu skill edit deliberately skipped
+  (external repo) — pointer recorded as follow-up.
+
 ## Session
 
 - Created: c6f1a13b-487f-4085-bf61-ba4761e8579e (2026-07-29)
+- Plan + orchestration: c6f1a13b-487f-4085-bf61-ba4761e8579e (2026-07-29)
