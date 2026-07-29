@@ -1,16 +1,15 @@
 #region Purpose
-// Single HTTP transport for all API calls: turns an IApiRequest contract into a request and a OneOf outcome.
+// SPA composition root for IApiService: HttpClient + MSAL token acquisition over HttpApiService.
 #endregion
 
 #region Design
-// Callers deal only in contracts: verb, route, and body come from the contract itself
-// (GetHttpVerb/GetRoute), so no per-endpoint client code exists.
-// Failures are values, not exceptions: non-success responses, 204, and cancellation (499) all
-// surface as SharedProblemDetails so UI code switches on the OneOf instead of try/catch.
-// Stream TResponse is special-cased into FileResponse to support downloads through the same API.
-// Bearer token is requested per call from IAccessTokenProvider so MSAL owns caching and refresh.
-// Request bodies and responses both use the injected seam options (ContractSerializationDefaults):
-// the seam is camelCase in both directions, matching the test client (TestApiService).
+// Thin composer over foundation HttpApiService — the shared transport (verb matrix, route/body
+// prep, problem mapping, Stream→FileResponse) lives once in foundation-contracts so the test
+// client cannot drift. This type only owns SPA concerns: named HttpClient creation and adapting
+// IAccessTokenProvider into the per-request acquire Func. Token is requested per call so MSAL
+// owns caching and refresh; a missing token degrades to anonymous so the server's 401 flows
+// through SharedProblemDetails. Request/response JSON use the injected seam options
+// (ContractSerializationDefaults).
 #endregion
 
 namespace TimeWarp.Architecture;
@@ -22,21 +21,14 @@ namespace TimeWarp.Architecture;
 /// <remarks>
 /// You don't care what http verb is used or even what protocol is used.
 /// </remarks>
-
 public abstract class BaseApiService : IApiService
 {
-  protected HttpClient HttpClient { get; }
-  private readonly JsonSerializerOptions JsonSerializerOptions;
+  private readonly HttpApiService Core;
 
-  private readonly IAccessTokenProvider AccessTokenProvider;
   /// <summary>
   /// This is the Service that is used to interact with the API.Server
   /// Given a Request return the Response.
   /// </summary>
-  /// <param name="httpClientFactory"></param>
-  /// <param name="httpClientName"></param>
-  /// <param name="accessTokenProvider"></param>
-  /// <param name="jsonSerializerOptionsAccessor"></param>
   protected BaseApiService
   (
     IHttpClientFactory httpClientFactory,
@@ -45,18 +37,19 @@ public abstract class BaseApiService : IApiService
     IOptions<JsonSerializerOptions> jsonSerializerOptionsAccessor
   )
   {
-    HttpClient = httpClientFactory.CreateClient(httpClientName);
-    AccessTokenProvider = accessTokenProvider;
-    JsonSerializerOptions = jsonSerializerOptionsAccessor.Value;
+    HttpClient httpClient = httpClientFactory.CreateClient(httpClientName);
+    Core = new HttpApiService
+    (
+      httpClient,
+      jsonSerializerOptionsAccessor.Value,
+      CreateAcquireBearerToken(accessTokenProvider)
+    );
   }
 
   /// <summary>
   /// This is the Service that is used to interact with the API.Server
   /// This constructor is provided for testing purposes only.
   /// </summary>
-  /// <param name="httpClient"></param>
-  /// <param name="accessTokenProvider"></param>
-  /// <param name="jsonSerializerOptions"></param>
   protected BaseApiService
   (
     HttpClient httpClient,
@@ -64,190 +57,29 @@ public abstract class BaseApiService : IApiService
     JsonSerializerOptions jsonSerializerOptions
   )
   {
-    HttpClient = httpClient;
-    AccessTokenProvider = accessTokenProvider;
-    JsonSerializerOptions = jsonSerializerOptions;
+    Core = new HttpApiService
+    (
+      httpClient,
+      jsonSerializerOptions,
+      CreateAcquireBearerToken(accessTokenProvider)
+    );
   }
 
-  /// <summary>
-  /// Get the response for the given request
-  /// </summary>
-  /// <typeparam name="TResponse"></typeparam>
-  /// <param name="request"></param>
-  /// <param name="cancellationToken"></param>
-  /// <returns></returns>
-  public virtual async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
+  /// <inheritdoc />
+  public virtual Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
   (
     IApiRequest request,
     CancellationToken cancellationToken
-  ) where TResponse : class
-  {
-    try
-    {
-      HttpResponseMessage httpResponseMessage =
-        await GetHttpResponseMessageFromRequest(request, cancellationToken).ConfigureAwait(false);
+  ) where TResponse : class =>
+    Core.GetResponse<TResponse>(request, cancellationToken);
 
-      return httpResponseMessage.IsSuccessStatusCode
-        ? await HandleSuccessResponse<TResponse>(httpResponseMessage, cancellationToken).ConfigureAwait(false)
-        : httpResponseMessage.StatusCode switch
-        {
-          HttpStatusCode.NoContent => HandleNoContentResponse(),
-          _ => await HandleProblemResponse(httpResponseMessage, cancellationToken).ConfigureAwait(false)
-        };
-    }
-    catch (OperationCanceledException)
-    {
-      return HandleCancellationResponse();
-    }
-  }
-
-  /// <summary>
-  /// Handles successful HTTP responses (2xx status codes).
-  /// Returns OneOf with all three types to match the parent method signature,
-  /// even though SharedProblemDetails is never returned from this method.
-  /// This avoids the need for explicit type conversion at the call site.
-  /// </summary>
-  private async Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> HandleSuccessResponse<TResponse>
+  private static Func<CancellationToken, Task<string?>> CreateAcquireBearerToken
   (
-    HttpResponseMessage httpResponseMessage,
-    CancellationToken cancellationToken
-  ) where TResponse : class
-  {
-    if (typeof(TResponse) == typeof(Stream))
+    IAccessTokenProvider accessTokenProvider
+  ) =>
+    async _ =>
     {
-      Stream fileStream = await ReadFileStream(httpResponseMessage, cancellationToken).ConfigureAwait(false);
-      var fileResponse = new FileResponse(fileStream: fileStream)
-      {
-        FileName = httpResponseMessage.Content.Headers.ContentDisposition?.FileName,
-        ContentType = httpResponseMessage.Content.Headers.ContentType?.MediaType
-      };
-      return fileResponse;
-    }
-
-    return await ReadFromJson<TResponse>(httpResponseMessage, cancellationToken).ConfigureAwait(false);
-  }
-
-  private static SharedProblemDetails HandleNoContentResponse()
-  {
-    return new SharedProblemDetails
-    {
-      Title = "No Content",
-      Status = (int)HttpStatusCode.NoContent,
-      Detail = "The response content is empty."
+      AccessTokenResult tokenResult = await accessTokenProvider.RequestAccessToken().ConfigureAwait(false);
+      return tokenResult.TryGetToken(out AccessToken? token) ? token.Value : null;
     };
-  }
-
-  private async Task<SharedProblemDetails> HandleProblemResponse
-  (
-    HttpResponseMessage httpResponseMessage,
-    CancellationToken cancellationToken
-  )
-  {
-    try
-    {
-      return await ReadFromJson<SharedProblemDetails>(httpResponseMessage, cancellationToken).ConfigureAwait(false);
-    }
-    catch (System.Exception)
-    {
-      // TODO: Log the error
-
-      return new SharedProblemDetails
-      {
-        Title = "Unhandled Error",
-        Status = (int)httpResponseMessage.StatusCode,
-        Detail = "An unhandled error occurred while processing the request."
-      };
-    }
-  }
-
-  private static SharedProblemDetails HandleCancellationResponse()
-  {
-    return new SharedProblemDetails
-    {
-      Title = "Operation Cancelled",
-      Status = 499, // 499 is the code for "Client Closed Request"
-      Detail = "The request was cancelled."
-    };
-  }
-
-  private async Task<HttpResponseMessage> GetHttpResponseMessageFromRequest(IApiRequest apiRequest, CancellationToken cancellationToken)
-  {
-    string route = PrepareRoute(apiRequest);
-    using StringContent? httpContent = PrepareContent(apiRequest);
-    HttpVerb httpVerb = apiRequest.GetHttpVerb();
-    await SetBearerTokenAsync();
-    return httpVerb switch
-    {
-      HttpVerb.Get => await HttpClient.GetAsync(route, cancellationToken).ConfigureAwait(false),
-      HttpVerb.Delete => await HttpClient.DeleteAsync(route, cancellationToken).ConfigureAwait(false),
-      HttpVerb.Post => await HttpClient.PostAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
-      HttpVerb.Put => await HttpClient.PutAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
-      HttpVerb.Patch => await HttpClient.PatchAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
-      HttpVerb.Head => throw new NotImplementedException(),
-      HttpVerb.Options => throw new NotImplementedException(),
-      _ => throw new NotImplementedException()
-    };
-  }
-
-  private StringContent? PrepareContent(IApiRequest apiRequest)
-  {
-    HttpVerb httpVerb = apiRequest.GetHttpVerb();
-    switch (httpVerb)
-    {
-      case HttpVerb.Post:
-      case HttpVerb.Put:
-      case HttpVerb.Patch:
-        string requestAsJson = JsonSerializer.Serialize(apiRequest, apiRequest.GetType(), JsonSerializerOptions);
-        return new StringContent(requestAsJson, Encoding.UTF8, MediaTypeNames.Application.Json);
-      case HttpVerb.Get:
-      case HttpVerb.Delete:
-      case HttpVerb.Head:
-      case HttpVerb.Options:
-        return null;
-      default:
-        throw new ArgumentOutOfRangeException($"HttpVerb: {httpVerb} is not supported.");
-    }
-  }
-  private static string PrepareRoute(IApiRequest apiRequest)
-  {
-    switch (apiRequest.GetHttpVerb())
-    {
-      // GET and DELETE carry no body (see PrepareContent), so the query string is their only
-      // data channel besides route parameters.
-      case HttpVerb.Get:
-      case HttpVerb.Delete:
-        return (apiRequest as IQueryStringRouteProvider)?.GetRouteWithQueryString() ?? apiRequest.GetRoute();
-      case HttpVerb.Post:
-      case HttpVerb.Put:
-      case HttpVerb.Patch:
-      case HttpVerb.Head:
-      case HttpVerb.Options:
-      default:
-        return apiRequest.GetRoute();
-    }
-  }
-  private async Task<TResponse> ReadFromJson<TResponse>(HttpResponseMessage httpResponseMessage, CancellationToken cancellationToken)
-  {
-    string json = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-
-    TResponse? response =
-      JsonSerializer.Deserialize<TResponse>(json, JsonSerializerOptions) ??
-      throw new InvalidOperationException("The response is null.");
-
-    return response;
-  }
-  private static async Task<Stream> ReadFileStream(HttpResponseMessage httpResponseMessage, CancellationToken cancellationToken)
-  {
-    httpResponseMessage.EnsureSuccessStatusCode();
-    return await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-  }
-
-  private async Task SetBearerTokenAsync()
-  {
-    AccessTokenResult tokenResult = await AccessTokenProvider.RequestAccessToken();
-    if (tokenResult.TryGetToken(out AccessToken? token))
-    {
-      HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
-    }
-  }
 }

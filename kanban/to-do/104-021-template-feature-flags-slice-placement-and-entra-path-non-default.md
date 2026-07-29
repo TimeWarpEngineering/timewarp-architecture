@@ -25,6 +25,17 @@ Integrate packages into template safely: feature flags/symbols (TWA0008/0010), s
 
 Template is the product delivery vehicle.
 
+### From task 131 disposition (F-009 / F-010)
+
+- **F-009 interim done on 131:** `MOCK_AUTHENTICATION` is defined for **all** configurations
+  so Debug and Release agree (was Debug-only → Release compiled MSAL against placeholder
+  AzureAdB2C). This task still owns long-term Entra/MSAL non-default posture and AzureAd
+  appsettings residue.
+- **F-010:** B2C/PWA fossil regions removed on 131; MSAL script still not in template output.
+  Coordinate with **104-016** on Passwordless CDN + tenant key removal from `App.razor`.
+- Bare `Features` substrate for RoleIds/ModuleIds is documented (placement skill); rehome
+  authorization constants only if still desired under slice cleanup below.
+
 ### Depends on
 
 104-016, packages exist

@@ -11,185 +11,229 @@
 // referenced assemblies are scanned — needed when the host transitively references other contract
 // assemblies (e.g. web-server → web-spa → api-contracts) and must not emit foreign endpoints.
 // Empty/unset = scan all referenced assemblies (api-server default).
-// Reports SG002 instead of failing when FastEndpoints/BaseFastEndpoint are absent — feature flags
+// Reports SG002 once per batch when FastEndpoints/BaseFastEndpoint are absent — feature flags
 // can strip those references while the generator package remains attached.
 // Catches all exceptions (CA1031): a throwing generator would break the entire compilation.
 // Request type is Query or Command per metadata.RequestTypeName; HTTP verb comes from resolved
-// enum member name (not the underlying int). Auth (task 110, fail-closed default):
+// enum member name (not the underlying int). Fail-closed verbs (F-008 / TWE007): never default
+// an unknown verb to Get — report and skip that contract.
+// Missing nested Query/Command → TWE002, no emission.
+// Auth (task 110, fail-closed default):
 // [EndpointAuthorize] → Policies/Roles/AuthSchemes; [EndpointAllowAnonymous] → AllowAnonymous();
-// NEITHER attribute → emit nothing (FastEndpoints requires authentication by default — the inverse
-// of the pre-110 "no attribute → AllowAnonymous" behavior). Do not emit RequireAuthorization()
-// (not on EndpointDefinition).
+// NEITHER attribute → emit nothing (FastEndpoints requires authentication by default).
 // Empty request DTOs (no public properties) get EmptyRequestBinder — FE's default binder rejects them.
 // Summary/Description only — no weather-specific ExampleRequest.
 // OpenAPI feature grouping: FE Tags() is endpoint-filter metadata only (no relationship with
 // OpenAPI tags — see FastEndpoints configuration docs). Scalar sidebar groups by OpenAPI
 // operation tags, so emission pairs Tags(...) with Description(d => d.WithTags(...)).
-// Leaf feature Id comes from EndpointMetadata (…Features.Admin.Roles → "Roles").
+// Leaf feature Id comes from EndpointEmitModel (…Features.Admin.Roles → "Roles").
+// F-003: per-compilation route conflict via equatable models + .Collect() + in-batch group-by
+// (Route, HttpVerb). TWE003 on ALL parties; generate NONE of a conflict group. No static
+// ConcurrentDictionary / RouteRegistry — IDE incremental and multi-project compiler-server
+// runs cannot self-conflict or cross-pollute.
+// F-004: discovery via HostedRouteDiscovery (linked shared source); [ClientOnlyContract] on
+// outer or nested skips generation (TWA0020 flags the contradiction in convention analyzers).
+// F-005: base type is always BaseFastEndpoint (EndpointType override deleted).
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
 
+using System.Collections.Generic;
 using TimeWarp.Architecture.Analyzers.Models;
 
 [Generator]
 public class FastEndpointSourceGenerator : IIncrementalGenerator
 {
-    // Generator is disabled by default.
-    // Consumers must explicitly set <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
-    // (or via their feature flag system) in their .csproj / Directory.Build.props.
-
-  private const string ApiEndpointAttributeFullName = "TimeWarp.Architecture.Attributes.ApiEndpointAttribute";
+  // Generator is disabled by default.
+  // Consumers must explicitly set <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
+  // (or via their feature flag system) in their .csproj / Directory.Build.props.
 
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
-    // Reset route registry at the start of each generation
-    RouteRegistry.Reset();
-
-    // Create diagnostic descriptor for logging
-    var logDiagnostic = new DiagnosticDescriptor
-    (
-      "SG001",
-      "Source Generator Log",
-      "{0}",
-      "SourceGenerator",
-      DiagnosticSeverity.Warning,
-      true
-    );
-
-    // Diagnostic when generation is requested but required FastEndpoints types are missing
-    var missingFastEndpointsDescriptor = new DiagnosticDescriptor
-    (
-      "SG002",
-      "Missing FastEndpoints dependencies",
-      "EnableApiEndpointGeneration is set to true, but FastEndpoints or BaseFastEndpoint could not be found in the compilation. Ensure the api feature and required packages are referenced.",
-      "SourceGenerator",
-      DiagnosticSeverity.Warning,
-      isEnabledByDefault: true
-    );
-// MSBuild properties controlling generation. Default Enable=false (opt-in). Optional
+    // MSBuild properties controlling generation. Default Enable=false (opt-in). Optional
     // ApiEndpointContractAssemblies restricts which referenced assemblies contribute contracts.
-    IncrementalValueProvider<(bool Enabled, HashSet<string>? ContractAssemblies)> generationOptions =
+    IncrementalValueProvider<GenerationOptions> generationOptions =
       context.AnalyzerConfigOptionsProvider.Select(
-        static (options, _) =>
-        {
-          bool enabled = false;
-          if (options.GlobalOptions.TryGetValue("build_property.EnableApiEndpointGeneration", out string? enableValue) &&
-              bool.TryParse(enableValue, out bool parsed))
-          {
-            enabled = parsed;
-          }
+        static (options, _) => GenerationOptions.Read(options.GlobalOptions));
 
-          HashSet<string>? contractAssemblies = null;
-          if (options.GlobalOptions.TryGetValue("build_property.ApiEndpointContractAssemblies", out string? assembliesValue) &&
-              !string.IsNullOrWhiteSpace(assembliesValue))
-          {
-            contractAssemblies = new HashSet<string>(
-              assembliesValue.Split([';', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
-              StringComparer.OrdinalIgnoreCase);
-          }
-
-          return (enabled, contractAssemblies);
-        });
-
-    // Find [ApiEndpoint] types in referenced assemblies (optionally filtered by assembly name).
-    IncrementalValuesProvider<(INamedTypeSymbol Symbol, Compilation Compilation, bool Enabled)> symbolsWithCompilationAndFlag =
+    // Discover equatable emit models (no INamedTypeSymbol in the collected model).
+    IncrementalValuesProvider<EndpointEmitModel> candidates =
       context.CompilationProvider
         .Combine(generationOptions)
         .SelectMany(
           static (tuple, _) =>
           {
-            (Compilation compilation, (bool enabled, HashSet<string>? contractAssemblies) genOptions) = tuple;
-            if (!genOptions.enabled)
+            (Compilation compilation, GenerationOptions genOptions) = tuple;
+            if (!genOptions.Enabled)
             {
-              return Array.Empty<(INamedTypeSymbol, Compilation, bool)>();
+              return ImmutableArray<EndpointEmitModel>.Empty;
             }
 
-            INamedTypeSymbol? apiEndpointAttributeSymbol = compilation.GetTypeByMetadataName(ApiEndpointAttributeFullName);
-            if (apiEndpointAttributeSymbol is null)
-            {
-              return Array.Empty<(INamedTypeSymbol, Compilation, bool)>();
-            }
-
-            IEnumerable<IAssemblySymbol> assemblies = compilation.SourceModule.ReferencedAssemblySymbols;
-            if (genOptions.contractAssemblies is { Count: > 0 } allowed)
-            {
-              assemblies = assemblies.Where(assembly => allowed.Contains(assembly.Name));
-            }
-
-            return assemblies
-              .SelectMany(assembly => GetAllNamespaces(assembly.GlobalNamespace))
-              .SelectMany(ns => ns.GetTypeMembers())
-              .Where(type => type.GetAttributes()
-                .Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol)))
-              .Select(type => (type, compilation, true));
+            return DiscoverCandidates(compilation, genOptions.ContractAssemblies);
           });
 
-// Register source output to generate endpoints from found symbols
-    context.RegisterSourceOutput(symbolsWithCompilationAndFlag,
-      (spc, data) =>
-      {
-        (INamedTypeSymbol symbol, Compilation compilation, bool enabled) = data;
+    IncrementalValueProvider<ImmutableArray<EndpointEmitModel>> batch = candidates.Collect();
 
-        if (!enabled)
+    IncrementalValueProvider<bool> fastEndpointsAvailable =
+      context.CompilationProvider.Select(
+        static (compilation, _) =>
         {
-            return; // Generator is disabled for this project (default)
-        }
+          INamedTypeSymbol? fastEndpointsSymbol =
+            compilation.GetTypeByMetadataName("FastEndpoints.IEndpoint");
+          INamedTypeSymbol? baseFastEndpointSymbol =
+            compilation.GetTypeByMetadataName("TimeWarp.Foundation.Features.BaseFastEndpoint`2");
+          return fastEndpointsSymbol is not null && baseFastEndpointSymbol is not null;
+        });
 
-        // Check that required FastEndpoints types are available before generating
-        INamedTypeSymbol? fastEndpointsSymbol = compilation.GetTypeByMetadataName("FastEndpoints.IEndpoint");
-        INamedTypeSymbol? baseFastEndpointSymbol = compilation.GetTypeByMetadataName("TimeWarp.Foundation.Features.BaseFastEndpoint`2");
-
-        if (fastEndpointsSymbol == null || baseFastEndpointSymbol == null)
+    IncrementalValueProvider<(ImmutableArray<EndpointEmitModel> Models, bool FeAvailable, GenerationOptions Options)> input =
+      batch.Combine(fastEndpointsAvailable).Combine(generationOptions)
+        .Select(static (tuple, _) =>
         {
-            spc.ReportDiagnostic(
-                Diagnostic.Create(
-                    missingFastEndpointsDescriptor,
-                    Location.None));
-            return;
-        }
+          ((ImmutableArray<EndpointEmitModel> models, bool feAvailable), GenerationOptions options) = tuple;
+          return (models, feAvailable, options);
+        });
 
-        try
-        {
-          // Extract metadata directly from symbol
-          var metadata = EndpointMetadata.FromSymbol(symbol);
-
-          // Check for route conflicts
-          if (!RouteRegistry.TryRegisterRoute(metadata.Route, metadata.HttpVerb, metadata.ClassName, spc))
-          {
-            return;
-          }
-
-          // Generate the endpoint class
-          string endpointClass = GenerateEndpointClass(metadata);
-          string fileName = $"{metadata.ClassName}Endpoint.g.cs";
-
-          spc.AddSource(fileName, SourceText.From(endpointClass, Encoding.UTF8));
-        }
-        catch (Exception ex) // CA1031: Source generators must be resilient
-        {
-          spc.ReportDiagnostic(
-            Diagnostic.Create(
-              logDiagnostic,
-              Location.None,
-              $"Error generating endpoint: {ex.Message}"));
-        }
-      });
+    context.RegisterSourceOutput(input, static (spc, data) => ProcessBatch(spc, data.Models, data.FeAvailable, data.Options));
   }
 
-  private static IEnumerable<INamespaceSymbol> GetAllNamespaces(INamespaceSymbol root)
+  private static ImmutableArray<EndpointEmitModel> DiscoverCandidates(
+    Compilation compilation,
+    HashSet<string>? contractAssemblies)
   {
-    yield return root;
-    foreach (INamespaceSymbol ns in root.GetNamespaceMembers())
+    INamedTypeSymbol? apiEndpointAttributeSymbol =
+      compilation.GetTypeByMetadataName(HostedRouteDiscovery.ApiEndpointAttributeFullName);
+    if (apiEndpointAttributeSymbol is null)
     {
-      foreach (INamespaceSymbol childNs in GetAllNamespaces(ns))
+      return ImmutableArray<EndpointEmitModel>.Empty;
+    }
+
+    IEnumerable<IAssemblySymbol> assemblies = compilation.SourceModule.ReferencedAssemblySymbols;
+    if (contractAssemblies is { Count: > 0 } allowed)
+    {
+      assemblies = assemblies.Where(assembly => allowed.Contains(assembly.Name));
+    }
+
+    ImmutableArray<EndpointEmitModel>.Builder builder = ImmutableArray.CreateBuilder<EndpointEmitModel>();
+
+    foreach (IAssemblySymbol assembly in assemblies)
+    {
+      foreach (INamespaceSymbol ns in HostedRouteDiscovery.GetAllNamespaces(assembly.GlobalNamespace))
       {
-        yield return childNs;
+        foreach (INamedTypeSymbol type in ns.GetTypeMembers())
+        {
+          bool hasApiEndpoint = type.GetAttributes().Any(attr =>
+            SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttributeSymbol)
+            || attr.AttributeClass?.Name == HostedRouteDiscovery.ApiEndpointAttributeSimpleName);
+          if (!hasApiEndpoint)
+          {
+            continue;
+          }
+
+          INamedTypeSymbol? requestClass = type.GetTypeMembers()
+            .FirstOrDefault(static m => m.Name is "Query" or "Command");
+
+          // ClientOnly on outer or nested → not hosted (TWA0020 warns separately).
+          if (HostedRouteDiscovery.HasClientOnlyOnOperationOrRequest(type, requestClass))
+          {
+            continue;
+          }
+
+          builder.Add(EndpointEmitModel.FromSymbol(type));
+        }
       }
+    }
+
+    return builder.ToImmutable();
+  }
+
+  private static void ProcessBatch(
+    SourceProductionContext spc,
+    ImmutableArray<EndpointEmitModel> models,
+    bool feAvailable,
+    GenerationOptions options)
+  {
+    if (!options.Enabled)
+    {
+      return;
+    }
+
+    if (!feAvailable)
+    {
+      spc.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.MissingFastEndpoints, Location.None));
+      return;
+    }
+
+    try
+    {
+      // Phase 1: per-contract shape diagnostics (TWE002 / TWE007); only valid models emit.
+      var emitCandidates = new List<EndpointEmitModel>();
+
+      foreach (EndpointEmitModel model in models)
+      {
+        if (model.MissingQueryOrCommand)
+        {
+          spc.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticDescriptors.ApiEndpointMissingQuery,
+            Location.None,
+            model.ClassName));
+          continue;
+        }
+
+        if (model.VerbUnresolved || string.IsNullOrEmpty(model.HttpVerb) || string.IsNullOrWhiteSpace(model.Route))
+        {
+          spc.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticDescriptors.ApiEndpointUnknownHttpVerb,
+            Location.None,
+            model.ClassName,
+            string.IsNullOrEmpty(model.UnresolvedVerbDisplay)
+              ? (string.IsNullOrWhiteSpace(model.Route) ? "<empty route>" : "<missing>")
+              : model.UnresolvedVerbDisplay));
+          continue;
+        }
+
+        emitCandidates.Add(model);
+      }
+
+      // Phase 2: route+verb conflict groups — TWE003 on ALL parties; generate NONE of the group.
+      var groups = emitCandidates
+        .GroupBy(static m => (m.Route, m.HttpVerb), RouteVerbComparer.Instance)
+        .ToList();
+
+      foreach (IGrouping<(string Route, string HttpVerb), EndpointEmitModel> group in groups)
+      {
+        var parties = group.ToList();
+        if (parties.Count > 1)
+        {
+          string allNames = string.Join(", ", parties.Select(static p => p.ClassName).OrderBy(static n => n, StringComparer.Ordinal));
+          foreach (EndpointEmitModel party in parties)
+          {
+            spc.ReportDiagnostic(Diagnostic.Create(
+              DiagnosticDescriptors.ApiEndpointRouteConflict,
+              Location.None,
+              party.Route,
+              party.HttpVerb,
+              allNames));
+          }
+
+          continue;
+        }
+
+        EndpointEmitModel model = parties[0];
+        string endpointClass = GenerateEndpointClass(model);
+        string fileName = $"{model.ClassName}Endpoint.g.cs";
+        spc.AddSource(fileName, SourceText.From(endpointClass, Encoding.UTF8));
+      }
+    }
+    catch (Exception ex) // CA1031: Source generators must be resilient
+    {
+      spc.ReportDiagnostic(Diagnostic.Create(
+        DiagnosticDescriptors.SourceGeneratorLog,
+        Location.None,
+        $"Error generating endpoints: {ex.Message}"));
     }
   }
 
-  private static string GenerateEndpointClass(EndpointMetadata metadata)
+  private static string GenerateEndpointClass(EndpointEmitModel metadata)
   {
     // FE Tags() = endpoint-filter metadata only. OpenAPI/Scalar need Description.WithTags.
     string tagArgs = metadata.Tags.Length > 0
@@ -230,7 +274,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
         : "";
 
     string requestType = metadata.RequestTypeName;
-    string baseType = metadata.CustomEndpointType?.FullName ?? "BaseFastEndpoint";
 
     return $$"""
              using FastEndpoints;
@@ -247,7 +290,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
              /// <remarks>
              /// {{metadata.Description}}
              /// </remarks>
-             public class {{metadata.ClassName}}Endpoint : {{baseType}}<{{metadata.ClassName}}.{{requestType}}, {{metadata.ClassName}}.Response>
+             public class {{metadata.ClassName}}Endpoint : BaseFastEndpoint<{{metadata.ClassName}}.{{requestType}}, {{metadata.ClassName}}.Response>
              {
                public override void Configure()
                {
@@ -264,14 +307,12 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
   /// <summary>
   /// Builds FastEndpoints Configure() auth lines from [EndpointAuthorize]/[EndpointAllowAnonymous]
   /// metadata. Task 110 fail-closed default: metadata.AllowAnonymous is true ONLY when
-  /// [EndpointAllowAnonymous] was present (see EndpointMetadata.FromSymbol) — in that case emit
+  /// [EndpointAllowAnonymous] was present (see EndpointEmitModel.FromSymbol) — in that case emit
   /// AllowAnonymous(). Otherwise: Policy → Policies(...); Roles → Roles(...);
-  /// Schemes → AuthSchemes(...); and if NONE of those were set (either because [EndpointAuthorize]
-  /// carried no Policy/Roles, or because NEITHER marker was present at all) this method emits
-  /// NOTHING — FE requires auth by default when AllowAnonymous() is never called, which is exactly
-  /// the fail-closed behavior an unmarked contract must get.
+  /// Schemes → AuthSchemes(...); and if NONE of those were set this method emits NOTHING —
+  /// FE requires auth by default when AllowAnonymous() is never called.
   /// </summary>
-  private static string BuildAuthConfiguration(EndpointMetadata metadata)
+  private static string BuildAuthConfiguration(EndpointEmitModel metadata)
   {
     if (metadata.AllowAnonymous)
     {
@@ -294,10 +335,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
       lines.Add($"Roles({FormatCsvStringArgs(metadata.Roles)});");
     }
 
-    // Either [EndpointAuthorize] carried no Policy/Roles (optional AuthSchemes only), or NEITHER
-    // marker was present at all (task 110 fail-closed default) — either way FE defaults to
-    // requiring authentication when nothing is emitted: no AllowAnonymous, no non-existent
-    // RequireAuthorization().
     return lines.Count > 0
       ? string.Join("\n         ", lines)
       : string.Empty;
@@ -313,4 +350,52 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
   private static string EscapeForStringLiteral(string value)
     => value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
+
+  private sealed class GenerationOptions
+  {
+    public bool Enabled { get; }
+    public HashSet<string>? ContractAssemblies { get; }
+
+    private GenerationOptions(bool enabled, HashSet<string>? contractAssemblies)
+    {
+      Enabled = enabled;
+      ContractAssemblies = contractAssemblies;
+    }
+
+    public static GenerationOptions Read(AnalyzerConfigOptions globalOptions)
+    {
+      bool enabled = false;
+      if (globalOptions.TryGetValue("build_property.EnableApiEndpointGeneration", out string? enableValue) &&
+          bool.TryParse(enableValue, out bool parsed))
+      {
+        enabled = parsed;
+      }
+
+      HashSet<string>? contractAssemblies = null;
+      if (globalOptions.TryGetValue("build_property.ApiEndpointContractAssemblies", out string? assembliesValue) &&
+          !string.IsNullOrWhiteSpace(assembliesValue))
+      {
+        contractAssemblies = new HashSet<string>(
+          assembliesValue.Split([';', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+          StringComparer.OrdinalIgnoreCase);
+      }
+
+      return new GenerationOptions(enabled, contractAssemblies);
+    }
+  }
+
+  /// <summary>Ordinal route + verb grouping (case-sensitive path match as declared on the contract).</summary>
+  private sealed class RouteVerbComparer : IEqualityComparer<(string Route, string HttpVerb)>
+  {
+    public static readonly RouteVerbComparer Instance = new();
+
+    public bool Equals((string Route, string HttpVerb) x, (string Route, string HttpVerb) y)
+      => string.Equals(x.Route, y.Route, StringComparison.Ordinal)
+         && string.Equals(x.HttpVerb, y.HttpVerb, StringComparison.Ordinal);
+
+    public int GetHashCode((string Route, string HttpVerb) obj)
+      => HashCode.Combine(
+        StringComparer.Ordinal.GetHashCode(obj.Route),
+        StringComparer.Ordinal.GetHashCode(obj.HttpVerb));
+  }
 }

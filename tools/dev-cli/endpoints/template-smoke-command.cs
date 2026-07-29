@@ -5,29 +5,18 @@
 // Regression gate for task 115: template sourceName is TimeWarp.Architecture, so package-id
 // literals TimeWarp.Architecture.* used to rewrite to SmokeDefault.* and break restore. Smoke
 // always generates with names ≠ sourceName (SmokeDefault, SmokeNoPostgres) so rewrite bugs
-// surface. Matrix: defaults + --postgres false. Asserts composed platform package IDs survived
-// generation, then restore + build -warnaserror (TreatWarningsAsErrors already on).
+// surface. Matrix: defaults + --postgres false.
+//
+// Shared rewrite asserts, props SSOT suffix derivation, pin matching, and generate/restore/build
+// skeleton live in TemplateSmokeHarness (task 131-003 / F-007). This command owns smoke-only
+// orchestration: pack platform packages + template at 2.0.0-smoke, local feed NuGet.config,
+// CPM pin rewrite, and package-mode checks (no vendored trees / removed symbols).
 //
 // Packs the template AND monorepo platform packages (foundation + analyzers/generators/attributes
-// + modules + identity) into a local feed. Published nuget.org pins lag monorepo API surface (e.g.
-// Entity<TId>, EndpointAllowAnonymous); smoke validates "this branch's template + this branch's
-// packages" by packing at the CPM pin versions and routing TimeWarp.* restores to the local feed
-// via packageSourceMapping. Work dir: artifacts/template-smoke/ (under artifacts/).
-//
-// Task 126-004: generated apps are always package-mode (no foundationPackages/analyzerPackages/
-// identityPackages symbols). Vendored platform trees are unconditionally excluded from template
-// output. A separate monorepo pre-scan (AssertNoUnsafePlatformNamespaceLiterals) fails on raw
-// continuous platform-namespace literals in template-shipped consumer content — including .cs —
-// so sourceName cannot rewrite them into the app (historical bug: using TimeWarp.Architecture.TypedIds.Ef
-// in postgres-db-context.cs). AssertPackageIdsNotRewritten stays package-id focused and does not
-// scan .cs; the namespace-literal pass is independent. Post-generate asserts also confirm vendored
-// trees and removed symbols are absent from output.
-// Task 126-006: the unsafe-namespace scan set is derived at runtime from property values in
-// msbuild/timewarp-platform-packages.props (PackageId AND namespace composition properties). First
-// segment after `.Architecture.` becomes a scan suffix (e.g. TypedIds.Ef → TypedIds). Empty
-// derivation is a hard failure so props drift cannot silently narrow coverage. Prefer
-// `dotnet run tools/dev-cli/dev.cs -- template-smoke` (or re-self-install) over a stale AOT
-// `./bin/dev` so local runs pick up these gates; CI always uses the runfile path.
+// + modules + identity) into a local feed. Published nuget.org pins lag monorepo API surface;
+// smoke validates "this branch's template + this branch's packages". Work dir:
+// artifacts/template-smoke/. Prefer `dotnet run tools/dev-cli/dev.cs -- template-smoke` (or
+// re-self-install) over a stale AOT `./bin/dev`; CI always uses the runfile path.
 #endregion
 
 namespace DevCli.Commands;
@@ -39,6 +28,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     "timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj";
 
   private const string TemplatePackageId = "TimeWarp.Architecture";
+  private const string TemplateShortName = "timewarp-architecture";
 
   /// <summary>
   /// Unique version for smoke-local packs so the global NuGet cache cannot shadow them with
@@ -65,68 +55,10 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     "source/libraries/timewarp-identity/timewarp-identity.csproj",
   ];
 
-  /// <summary>PackageId substrings whose CPM Version is rewritten to <see cref="SmokePackageVersion"/>.</summary>
-  private static readonly string[] SmokePinnedPackageIdFragments =
-  [
-    "TwArchitectureAnalyzersPackageId",
-    "TwArchitectureGeneratorsPackageId",
-    "TwArchitectureAttributesPackageId",
-    "TimeWarp.Foundation.",
-    "TimeWarp.Modules",
-    "TimeWarp.Identity",
-  ];
-
   private static readonly (string Name, string[] ExtraArgs)[] SmokeMatrix =
   [
     ("SmokeDefault", []),
     ("SmokeNoPostgres", ["--postgres", "false"]),
-  ];
-
-  private static readonly string[] ForbiddenRewrittenPackageFragments =
-  [
-    ".Analyzers",
-    ".Generators",
-    ".Attributes",
-    ".TypedIds",
-  ];
-
-  /// <summary>
-  /// Extracts the first identifier after <c>.Architecture.</c> from composed props values such as
-  /// <c>$(_TwPlatformVendor).Architecture.Analyzers</c> or continuous
-  /// <c>TimeWarp.Architecture.TypedIds.Ef</c>.
-  /// </summary>
-  private static readonly System.Text.RegularExpressions.Regex ComposedArchitectureSuffix =
-    new(
-      @"(?:\$\(_TwPlatformVendor\)|TimeWarp)\.Architecture\.([A-Za-z_][A-Za-z0-9_]*)",
-      System.Text.RegularExpressions.RegexOptions.Compiled);
-
-  private static readonly string[] SourceNameLiteralScanExtensions =
-  [
-    ".cs", ".csproj", ".props", ".targets", ".slnx", ".json", ".razor", ".proto",
-  ];
-
-  /// <summary>
-  /// Roots under the monorepo that ship into generated apps (or root wiring they inherit).
-  /// Platform source trees (foundation/analyzers/libraries) are template-excluded and not scanned.
-  /// </summary>
-  private static readonly string[] SourceNameLiteralScanRelativeRoots =
-  [
-    "source/container-apps",
-    "tests/common",
-    "tests/container-apps",
-    "msbuild",
-  ];
-
-  private static readonly string[] SourceNameLiteralScanRelativeFiles =
-  [
-    "Directory.Build.props",
-    "Directory.Packages.props",
-    "source/Directory.Build.props",
-    "tests/Directory.Build.props",
-    "timewarp-architecture.slnx",
-    "global.json",
-    "BannedSymbols.txt",
-    "aspire.config.json",
   ];
 
   private static readonly string[] RemovedTemplateSymbols =
@@ -155,6 +87,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     private string SmokeRoot = null!;
     private string PackagesDir = null!;
     private string WorkDir = null!;
+    private TemplateSmokeHarness Harness = null!;
 
     public Handler(ITerminal terminal)
     {
@@ -170,10 +103,11 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       SmokeRoot = Path.Combine(RepoRoot, "artifacts", "template-smoke");
       PackagesDir = Path.Combine(SmokeRoot, "packages");
       WorkDir = Path.Combine(SmokeRoot, "work");
+      Harness = new TemplateSmokeHarness(Terminal, RepoRoot);
 
       Terminal.WriteLine($"\nTemplate smoke — work root: {SmokeRoot}\n".Cyan());
 
-      if (!AssertNoUnsafePlatformNamespaceLiterals()) return Value;
+      if (!Harness.AssertNoUnsafePlatformNamespaceLiterals()) return Value;
       if (!AssertRemovedPackageSymbolsGoneFromTemplateConfig()) return Value;
       if (!await PackPlatformPackagesAsync()) return Value;
       if (!await PackTemplateAsync()) return Value;
@@ -264,12 +198,14 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
 
     private async Task<bool> InstallTemplateAsync()
     {
+      // Nupkg exclude fragments (e.g. .Analyzers.) derived from props SSOT — not hand lists.
+      if (!Harness.TryEnsureArchitectureSuffixes(out _))
+        return false;
+
       string? nupkg = Directory
         .GetFiles(PackagesDir, $"{TemplatePackageId}.*.nupkg")
         .Where(p => !p.EndsWith(".snupkg", StringComparison.OrdinalIgnoreCase)
-                 && !Path.GetFileName(p).Contains(".Analyzers.", StringComparison.Ordinal)
-                 && !Path.GetFileName(p).Contains(".Generators.", StringComparison.Ordinal)
-                 && !Path.GetFileName(p).Contains(".Attributes.", StringComparison.Ordinal))
+                 && !Harness.IsExcludedPlatformNupkgFileName(Path.GetFileName(p)))
         .OrderByDescending(p => p, StringComparer.Ordinal)
         .FirstOrDefault();
 
@@ -307,128 +243,28 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       return true;
     }
 
-    private async Task<bool> SmokeOneAsync(string name, string[] extraArgs)
-    {
-      string outputDir = Path.Combine(WorkDir, name);
-      Terminal.WriteLine($"\n── Generate {name} ──".Cyan());
-
-      List<string> args =
-      [
-        "new", "timewarp-architecture",
-        "-n", name,
-        "-o", outputDir,
-        "--force",
-      ];
-      args.AddRange(extraArgs);
-
-      CommandOutput generate = await Shell.Builder("dotnet")
-        .WithArguments([.. args])
-        .WithWorkingDirectory(RepoRoot)
-        .WithNoValidation()
-        .CaptureAsync(Ct);
-
-      if (!generate.Success)
-      {
-        Terminal.WriteErrorLine(generate.Combined);
-        Terminal.WriteErrorLine($"dotnet new failed for {name}!".Red());
-        return false;
-      }
-
-      Terminal.WriteLine(generate.Combined);
-
-      if (!AssertPackageIdsNotRewritten(name, outputDir))
-        return false;
-
-      if (!AssertGeneratedAppPackageMode(name, outputDir))
-        return false;
-
-      if (!RewriteCpmPinsToSmokeVersion(outputDir))
-        return false;
-
-      WriteLocalNuGetConfig(outputDir);
-
-      string? solution = Directory
-        .GetFiles(outputDir, "*.slnx", SearchOption.TopDirectoryOnly)
-        .Concat(Directory.GetFiles(outputDir, "*.sln", SearchOption.TopDirectoryOnly))
-        .FirstOrDefault();
-
-      if (solution is null)
-      {
-        Terminal.WriteErrorLine($"No solution file found under {outputDir}.".Red());
-        return false;
-      }
-
-      Terminal.WriteLine($"Restoring {solution} (local TimeWarp.* feed)...");
-      int restoreExit = await DotNet.Restore()
-        .WithProject(solution)
-        .WithWorkingDirectory(outputDir)
-        .WithNoValidation()
-        .RunAsync(Ct);
-      if (restoreExit != 0)
-      {
-        Terminal.WriteErrorLine($"Restore failed for {name}!".Red());
-        return false;
-      }
-
-      Terminal.WriteLine($"Building {solution} (Release)...");
-      int buildExit = await DotNet.Build()
-        .WithProject(solution)
-        .WithConfiguration("Release")
-        .WithNoRestore()
-        .WithWorkingDirectory(outputDir)
-        .WithNoValidation()
-        .RunAsync(Ct);
-      if (buildExit != 0)
-      {
-        Terminal.WriteErrorLine($"Build failed for {name}!".Red());
-        return false;
-      }
-
-      Terminal.WriteLine($"{name} OK".Green());
-      return true;
-    }
-
-    private bool RewriteCpmPinsToSmokeVersion(string outputDir)
-    {
-      string packagesProps = Path.Combine(outputDir, "Directory.Packages.props");
-      if (!File.Exists(packagesProps))
-      {
-        Terminal.WriteErrorLine($"Missing {packagesProps}.".Red());
-        return false;
-      }
-
-      string text = File.ReadAllText(packagesProps);
-      string original = text;
-
-      // Match PackageVersion Include="..." Version="..." for platform packages only.
-      // Property-composed analyzer IDs appear as Include="$(TwArchitecture…PackageId)".
-      text = System.Text.RegularExpressions.Regex.Replace(
-        text,
-        "PackageVersion\\s+Include=\"([^\"]+)\"\\s+Version=\"[^\"]+\"",
-        match =>
+    private Task<bool> SmokeOneAsync(string name, string[] extraArgs) =>
+      Harness.SmokeOneAsync(
+        name,
+        WorkDir,
+        extraArgs,
+        TemplateShortName,
+        Ct,
+        afterGenerateAsync: outputDir =>
         {
-          string include = match.Groups[1].Value;
-          bool isPlatform = SmokePinnedPackageIdFragments.Any(fragment =>
-            include.Contains(fragment, StringComparison.Ordinal));
-          if (!isPlatform)
-            return match.Value;
-          return $"PackageVersion Include=\"{include}\" Version=\"{SmokePackageVersion}\"";
-        });
+          if (!AssertGeneratedAppPackageMode(name, outputDir))
+            return Task.FromResult(false);
 
-      if (text == original)
-      {
-        Terminal.WriteErrorLine("Directory.Packages.props: no platform PackageVersion pins rewritten — pattern mismatch?".Red());
-        return false;
-      }
+          if (!Harness.RewriteCpmPins(outputDir, SmokePackageVersion))
+            return Task.FromResult(false);
 
-      File.WriteAllText(packagesProps, text);
-      Terminal.WriteLine($"Rewrote platform CPM pins → {SmokePackageVersion}.");
-      return true;
-    }
+          WriteLocalNuGetConfig(outputDir);
+          return Task.FromResult(true);
+        },
+        restoreNarration: " (local TimeWarp.* feed)");
 
     private void WriteLocalNuGetConfig(string outputDir)
     {
-
       // Absolute path so restore from any working directory resolves the feed.
       string feedPath = PackagesDir;
       string configPath = Path.Combine(outputDir, "NuGet.config");
@@ -494,162 +330,9 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     }
 
     /// <summary>
-    /// Scans monorepo template-shipped consumer content (including .cs) for continuous
-    /// TimeWarp.Architecture.&lt;suffix&gt; literals that sourceName would rewrite. Suffix set is
-    /// derived from msbuild/timewarp-platform-packages.props (not hand-maintained). Separate from
-    /// AssertPackageIdsNotRewritten (which omits .cs by design).
-    /// </summary>
-    private bool AssertNoUnsafePlatformNamespaceLiterals()
-    {
-      Terminal.WriteLine("Scanning monorepo template-shipped content for unsafe platform namespace literals...");
-
-      System.Text.RegularExpressions.Regex? unsafeLiteral = BuildUnsafePlatformNamespaceLiteralRegex();
-      if (unsafeLiteral is null)
-        return false;
-
-      List<string> hits = [];
-
-      foreach (string relativeRoot in SourceNameLiteralScanRelativeRoots)
-      {
-        string root = Path.Combine(RepoRoot, relativeRoot);
-        if (!Directory.Exists(root))
-          continue;
-
-        foreach (string file in Directory.EnumerateFiles(root, "*.*", SearchOption.AllDirectories))
-        {
-          if (IsBinObjOrArtifacts(RepoRoot, file))
-            continue;
-
-          if (!IsSourceNameLiteralScanExtension(file))
-            continue;
-
-          CollectUnsafeNamespaceHits(file, Path.GetRelativePath(RepoRoot, file), hits, unsafeLiteral);
-        }
-      }
-
-      foreach (string relativeFile in SourceNameLiteralScanRelativeFiles)
-      {
-        string file = Path.Combine(RepoRoot, relativeFile);
-        if (!File.Exists(file))
-          continue;
-
-        CollectUnsafeNamespaceHits(file, relativeFile, hits, unsafeLiteral);
-      }
-
-      if (hits.Count > 0)
-      {
-        Terminal.WriteErrorLine(
-          "Unsafe platform namespace literals (sourceName-rewritable) in template-shipped content:".Red());
-        foreach (string hit in hits)
-          Terminal.WriteErrorLine($"  {hit}");
-        Terminal.WriteErrorLine(
-          "Use composed properties from msbuild/timewarp-platform-packages.props (or MSBuild <Using>) instead.".Red());
-        Environment.ExitCode = 1;
-        return false;
-      }
-
-      Terminal.WriteLine("Unsafe platform namespace literal scan passed.");
-      return true;
-    }
-
-    /// <summary>
-    /// Builds the continuous-literal scan regex from first segments after <c>.Architecture.</c>
-    /// in property values of <c>msbuild/timewarp-platform-packages.props</c>.
-    /// </summary>
-    private System.Text.RegularExpressions.Regex? BuildUnsafePlatformNamespaceLiteralRegex()
-    {
-      List<string> suffixes = DeriveUnsafePlatformNamespaceSuffixes();
-      if (suffixes.Count == 0)
-        return null;
-
-      Terminal.WriteLine(
-        $"Derived platform-namespace scan suffixes from timewarp-platform-packages.props: {string.Join(", ", suffixes)}");
-
-      string alternation = string.Join(
-        "|",
-        suffixes.Select(static suffix => System.Text.RegularExpressions.Regex.Escape(suffix)));
-
-      return new System.Text.RegularExpressions.Regex(
-        $@"TimeWarp\.Architecture\.({alternation})\b",
-        System.Text.RegularExpressions.RegexOptions.Compiled);
-    }
-
-    /// <summary>
-    /// Parses composed PackageId and namespace property values; returns distinct first segments
-    /// after <c>.Architecture.</c>, ordinal-sorted. Hard-fails (empty list + ExitCode) if the props
-    /// file is missing or yields no suffixes.
-    /// </summary>
-    private List<string> DeriveUnsafePlatformNamespaceSuffixes()
-    {
-      string propsPath = Path.Combine(RepoRoot, "msbuild", "timewarp-platform-packages.props");
-      if (!File.Exists(propsPath))
-      {
-        Terminal.WriteErrorLine(
-          "Cannot derive platform-namespace scan set: msbuild/timewarp-platform-packages.props not found.".Red());
-        Environment.ExitCode = 1;
-        return [];
-      }
-
-      var document = XDocument.Load(propsPath);
-      HashSet<string> suffixes = new(StringComparer.Ordinal);
-
-      foreach (XElement propertyGroup in document.Descendants("PropertyGroup"))
-      {
-        foreach (XElement property in propertyGroup.Elements())
-        {
-          string value = property.Value.Trim();
-          if (value.Length == 0)
-            continue;
-
-          System.Text.RegularExpressions.Match match = ComposedArchitectureSuffix.Match(value);
-          if (match.Success)
-            suffixes.Add(match.Groups[1].Value);
-        }
-      }
-
-      if (suffixes.Count == 0)
-      {
-        Terminal.WriteErrorLine(
-          "Cannot derive platform-namespace scan set: no .Architecture.<suffix> property values found in msbuild/timewarp-platform-packages.props.".Red());
-        Environment.ExitCode = 1;
-        return [];
-      }
-
-      return suffixes.OrderBy(static suffix => suffix, StringComparer.Ordinal).ToList();
-    }
-
-    private static void CollectUnsafeNamespaceHits(
-      string file,
-      string relativeDisplay,
-      List<string> hits,
-      System.Text.RegularExpressions.Regex unsafePlatformNamespaceLiteral)
-    {
-      string text = File.ReadAllText(file);
-      foreach (System.Text.RegularExpressions.Match match in unsafePlatformNamespaceLiteral.Matches(text))
-      {
-        hits.Add($"{relativeDisplay}: '{match.Value}'");
-      }
-    }
-
-    private static bool IsSourceNameLiteralScanExtension(string file)
-    {
-      string extension = Path.GetExtension(file);
-      return SourceNameLiteralScanExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase);
-    }
-
-    private static bool IsBinObjOrArtifacts(string root, string file)
-    {
-      string relative = Path.GetRelativePath(root, file);
-      string[] parts = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-      return parts.Any(part =>
-        part.Equals("bin", StringComparison.OrdinalIgnoreCase)
-        || part.Equals("obj", StringComparison.OrdinalIgnoreCase)
-        || part.Equals("artifacts", StringComparison.OrdinalIgnoreCase));
-    }
-
-    /// <summary>
     /// Post-generate: no vendored platform trees; removed *Packages symbols gone; belt-and-suspenders
     /// scan for rewritten {appName}.(Analyzers|Generators|Attributes|TypedIds) including .cs.
+    /// Suffixes come from harness props SSOT derivation.
     /// </summary>
     private bool AssertGeneratedAppPackageMode(string appName, string outputDir)
     {
@@ -673,27 +356,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
         }
       }
 
-      // Optional belt: rewritten continuous platform namespaces in generated tree (incl. .cs).
-      string[] rewrittenTokens = ForbiddenRewrittenPackageFragments
-        .Select(suffix => appName + suffix)
-        .ToArray();
-
-      foreach (string file in Directory.EnumerateFiles(outputDir, "*.*", SearchOption.AllDirectories))
-      {
-        if (IsBinObjOrArtifacts(outputDir, file))
-          continue;
-
-        if (!IsSourceNameLiteralScanExtension(file))
-          continue;
-
-        string text = File.ReadAllText(file);
-        string relative = Path.GetRelativePath(outputDir, file);
-        foreach (string token in rewrittenTokens)
-        {
-          if (text.Contains(token, StringComparison.Ordinal))
-            failures.Add($"{relative}: contains rewritten '{token}'");
-        }
-      }
+      failures.AddRange(Harness.CollectRewrittenPlatformTokenHits(appName, outputDir));
 
       if (failures.Count > 0)
       {
@@ -704,66 +367,6 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       }
 
       Terminal.WriteLine("Generated-app package-mode check passed (no vendored trees / removed symbols / rewritten namespaces).");
-      return true;
-    }
-
-    private bool AssertPackageIdsNotRewritten(string appName, string outputDir)
-    {
-      // sourceName rewrite of package IDs produces e.g. SmokeDefault.Analyzers — nonexistent.
-      // Scoped to MSBuild/JSON (not .cs) — namespace-literal .cs coverage is AssertNoUnsafePlatformNamespaceLiterals.
-      string[] forbidden =
-        ForbiddenRewrittenPackageFragments
-          .Select(suffix => appName + suffix)
-          .ToArray();
-
-      List<string> hits = [];
-      foreach (string file in Directory.EnumerateFiles(outputDir, "*.*", SearchOption.AllDirectories))
-      {
-        string relative = Path.GetRelativePath(outputDir, file);
-        if (relative.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-            || relative.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-            || relative.StartsWith($"bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-            || relative.StartsWith($"obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
-        {
-          continue;
-        }
-
-        string extension = Path.GetExtension(file);
-        if (extension is not (".props" or ".csproj" or ".targets" or ".slnx" or ".json"))
-          continue;
-
-        string text = File.ReadAllText(file);
-        foreach (string token in forbidden)
-        {
-          if (text.Contains(token, StringComparison.Ordinal))
-            hits.Add($"{relative}: contains '{token}'");
-        }
-      }
-
-      string platformProps = Path.Combine(outputDir, "msbuild", "timewarp-platform-packages.props");
-      if (!File.Exists(platformProps))
-      {
-        Terminal.WriteErrorLine($"Missing {platformProps} — platform package ID composition file not packed.".Red());
-        return false;
-      }
-
-      string propsText = File.ReadAllText(platformProps);
-      if (!propsText.Contains("_TwPlatformVendor", StringComparison.Ordinal)
-          || !propsText.Contains("TwArchitectureAnalyzersPackageId", StringComparison.Ordinal))
-      {
-        Terminal.WriteErrorLine("timewarp-platform-packages.props missing expected property names.".Red());
-        return false;
-      }
-
-      if (hits.Count > 0)
-      {
-        Terminal.WriteErrorLine("Platform package IDs were rewritten by template sourceName:".Red());
-        foreach (string hit in hits)
-          Terminal.WriteErrorLine($"  {hit}");
-        return false;
-      }
-
-      Terminal.WriteLine("Package ID rewrite check passed.");
       return true;
     }
   }

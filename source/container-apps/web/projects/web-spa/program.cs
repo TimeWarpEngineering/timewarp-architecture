@@ -4,8 +4,9 @@
 
 #region Design
 // ConfigureServices is public static so integration tests build the same container as the app.
-// MOCK_AUTHENTICATION and MOCK_WEB_API symbols swap in offline fakes, enabling UI development
-// without Azure AD B2C or running servers; template symbols (api, grpc) trim optional services.
+// MOCK_AUTHENTICATION (all configs — task 131 F-009) and optional MOCK_WEB_API swap in offline
+// fakes so Debug and Release agree; the non-mock compile path is MSAL/AzureAdB2C until 104-021
+// makes Entra non-default explicitly. Template symbols (api, grpc) trim optional services.
 // API services are registered via explicit factories because they expose extra constructors for
 // testing and DI must not guess which one to use.
 // Default culture is forced to ISO date patterns so date rendering/parsing is deterministic

@@ -271,6 +271,22 @@ scopes analysis to the cohesive tree must normalize such paths rather than match
 project-directory substring, or it risks silently treating the entire cohesive tree — or the
 entire SPA tree — as in or out of scope incorrectly.
 
+## Features substrate (cross-slice constants)
+
+Some product files intentionally use the bare `TimeWarp.Architecture.Features` namespace —
+**no** slice `…Features.<Id>` — so multiple product slices can reference well-known ids without
+cross-slice coupling (TWA0009). This is the **Features substrate** tier, not a product slice.
+
+| Litmus | Home |
+|--------|------|
+| Compile-time constants or shapes many product slices must share (role ids, module ids) | Bare `…Features` namespace; file still lives under a folder for humans (e.g. `features/authorization/role-ids-contracts.cs`, `features/admin/modules/module-ids-contracts.cs`) |
+| Product operation / slice-owned logic | `…Features.<Id>` under `features/<slice>/` |
+
+Document the choice in the file's `#region Design` (existing examples do). Do **not** invent a
+grab-bag shared assembly for one-off constants — substrate is for true cross-slice contract data
+only. SPA base types under `web-spa/features/base/` also use bare `Features` by SPA convention;
+that is separate from the cohesive product-tree substrate above.
+
 ## SPA exception
 
 `web-spa/features/` stays **conventionally organized** — one folder per slice, Razor SDK

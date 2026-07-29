@@ -22,6 +22,21 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 - `dotnet fixie tests/<project> [--tests Class[.Method]]` — one project/class/method
 - More commands: `dev --capabilities` (see the `dev-cli` skill)
 
+## Before opening a PR
+
+Use the **`tw-pr`** skill (`/tw-pr`) — do not open a PR until its gates pass.
+Mandatory for this repo:
+
+1. **`ganda repo audit`** (blocking). On failure, prefer `ganda repo audit --fix`
+   (or `--fix --checks <id>`) then re-run audit and commit any fixes.
+2. **`dev check-version`** when shipping packages/template — source version must
+   be new vs the latest GitHub release tag; platform CPM pins equal `<Version>`
+   (task 124).
+3. **`dev build`** (0/0) for code changes; add tests / `dev template-smoke` when
+   the change type warrants it (see skill for scope table).
+
+Branch naming, commits, and merge policy: **`tw-git`**.
+
 ## Stack
 
 - **.NET 10**, C# latest, `Nullable` enabled repo-wide, central package management
@@ -58,7 +73,7 @@ source/
                      # (SPA features stay conventional under web-spa/features — not rehomed)
       msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
     api/             # same axis-1 shape as web (features/ + platform/ + msbuild/);
-                     # features/weather-forecast/ (demo slice); platform/ empty (no content yet)
+                     # features/weather-forecast/ (demo slice); platform/ tree absent (no content yet)
       projects/      # api-contracts/ api-application/ api-domain/
                      # api-infrastructure/ api-server/
     grpc/            # same axis-1 shape as web (features/ + platform/ + msbuild/);
@@ -76,6 +91,11 @@ filename grammar below; an artifact folder (`web-server/`, `web-infrastructure/`
 its own definition (csproj, global-usings) and entry-point bootstrap (program.cs, appsettings,
 host-config exemplars). Litmus test for the fuzzy middle: if the deployable were deleted, would
 the file still mean something? Yes → a shared tree; no → bootstrap, stays with the artifact.
+
+**Features substrate:** cross-slice compile-time constants (e.g. `ModuleIds`, `RoleIds`) may use
+the bare `…Features` namespace (no slice Id) so product slices can share ids without TWA0009
+cross-slice references. Document the choice in the file's Design region. Full litmus:
+`skills/tw-feature-placement` (**Features substrate**).
 
 **Axis-1 filename grammar (family-generic — web, api, grpc):** files under `<family>/features/`
 and `<family>/platform/` use `<name>[-<function>]-<layer>.cs` (`handler`→application,
@@ -160,7 +180,8 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0001 | partial-class primary/secondary file declaration shape |
 | TWA0002/0003 | contract property nullability must agree with FluentValidation presence rules |
 | TWA0004 | every source file carries `#region Purpose` (one honest line minimum) |
-| TWA0005/0006 | endpoint verb matches the contract's `[ApiRoute]`; every routed contract has an endpoint or `[ClientOnlyContract(reason)]` |
+| TWA0005 | **retired** (task 131 F-002) — was MVC endpoint verb vs `[ApiRoute]`; ID reserved, do not reuse. FastEndpoints take verb from the contract at generation time |
+| TWA0006 | every routed contract has a server endpoint or `[ClientOnlyContract(reason)]` |
 | TWA0007 | Aspire `AddProject` resource names are `ServiceNames` constant values |
 | TWA0008 | no template-conditional tokens in comments/strings (the dotnet-new engine misreads them and truncates generated files); escape hatch: the `cnd:noEmit` comment-marker pair |
 | TWA0009 | product slices (`…Features.<Id>` under SliceRoot) must not reference other product slices (share via Components/contracts); platform `Applications` is one-way free; opt-out: `[CrossSliceReference(typeof(T), reason)]` |
@@ -173,6 +194,26 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0017 | a generated ingress web prefix (`WebServerApiRoutePrefixes`) shadows another server's route space — it equals/parents a hosted route in another contracts assembly, or collides with an `IngressReservedPathPrefixes` entry (grpc) |
 | TWA0018 | a web-contracts route cannot be collapsed to a top-level ingress prefix (bare `api` or a parameterized second segment like `api/{id}`) |
 | TWA0019 | a name in `IngressWebContractAssemblies` matches no referenced assembly (typo / renamed assembly) — otherwise the ingress list would silently generate empty |
+| TWA0020 | `[ApiEndpoint]` combined with `[ClientOnlyContract]` (outer or nested Query/Command) — generators skip ClientOnly; remove one of the markers |
+
+**Generator diagnostics (TWE / SG)** live in
+`source/analyzers/timewarp-architecture-analyzers/diagnostics/diagnostic-descriptors.cs`
+(SSOT — do not redeclare private copies of these IDs):
+
+| ID | Rule |
+|----|------|
+| TWE002 | `[ApiEndpoint]` contract missing nested `Query`/`Command` — no endpoint generated |
+| TWE003 | route+verb conflict across `[ApiEndpoint]` contracts — **all** parties reported; **none** of the group generated |
+| TWE005 | `[Page]` `Policy` must be a const field reference (not string literal / `nameof`) |
+| TWE006 | `[TypedId]` target must be a `readonly partial record struct` |
+| TWE007 | unresolvable route or `HttpVerb` (missing/empty `[ApiRoute]`, unknown verb) — fail-closed; no emission |
+| SG001 | shared source-generator log (resilience backstop) |
+| SG002 | `EnableApiEndpointGeneration` true but FastEndpoints / `BaseFastEndpoint` missing |
+| SG010 | TypedId BCL surface generation failed (resilience) |
+| SG011 | TypedId EF converter generation failed (resilience) |
+
+Retired / reserved generator IDs (do not reuse without deliberate new meaning): **TWE001**,
+**TWE004** (declared historically, never reported; deleted task 131-001 F-014).
 
 **Slice isolation (TWA0009):** product code under SliceRoot must not reach other product
 slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:

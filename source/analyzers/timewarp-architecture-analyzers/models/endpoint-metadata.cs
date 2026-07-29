@@ -1,5 +1,6 @@
 #region Purpose
-// Extracts everything the FastEndpoint generator needs from an [ApiEndpoint] contract symbol.
+// Equatable emit model for the FastEndpoint generator: everything needed to emit (or diagnose)
+// an [ApiEndpoint] contract without retaining Roslyn symbols across Collect.
 #endregion
 
 #region Design
@@ -11,138 +12,191 @@
 // OpenAPI grouping aligned with the vertical-slice Id without per-endpoint annotation.
 // [OpenApiTags] is additive; Distinct() de-dupes.
 // HttpVerb is resolved via enum member name (metadata stores the underlying int — Value.ToString()
-// would emit "1" for Post and fall through ConvertHttpVerbToMethodName to Get).
+// would emit "1" for Post). Fail-closed (F-008): unknown/unresolvable verbs leave VerbUnresolved
+// true and never default to Get — the generator reports TWE007 and skips emission.
 // RequestTypeName is the nested "Query" or "Command" so BaseFastEndpoint<TRequest,TResponse>
 // binds the correct request type.
 // Authorization (task 110 — fail-closed default): [EndpointAuthorize] drives Policies/Roles/
 // AuthSchemes. [EndpointAllowAnonymous] (and ONLY that attribute) sets AllowAnonymous=true.
 // Absence of BOTH markers leaves AllowAnonymous=false with no Policy/Roles/Schemes, so
 // BuildAuthConfiguration emits nothing — FastEndpoints then requires authentication by default.
-// This is the inverse of the pre-110 behavior (absence used to mean AllowAnonymous=true). When
-// both markers are present, [EndpointAuthorize] wins (TWA0014 separately flags that as a
-// contract-author error to resolve — the generator does not error, it picks a deterministic
-// winner).
+// When both markers are present, [EndpointAuthorize] wins (TWA0014 separately flags that as a
+// contract-author error — the generator picks a deterministic winner).
+// F-005: no CustomEndpointType — emission always uses BaseFastEndpoint.
+// Record shape supports Collect() + in-batch route-conflict detection without static
+// cross-compilation state (F-003). Honest caveat: ImmutableArray<T>'s IEquatable is reference
+// equality of the backing array (not element-wise), so two models with identical Tags content
+// but distinct arrays compare unequal — acceptable here because conflict detection keys on
+// Route/HttpVerb and does not require Tags content-equality across independently built arrays.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Models;
 
-internal sealed class EndpointMetadata
+using System.Collections.Generic;
+using TimeWarp.Architecture.Analyzers;
+
+internal sealed record EndpointEmitModel(
+  string Namespace,
+  string ClassName,
+  string Route,
+  string HttpVerb,
+  string RequestTypeName,
+  string Summary,
+  string Description,
+  ImmutableArray<string> Tags,
+  string? AuthorizationPolicy,
+  string? AuthenticationSchemes,
+  string? Roles,
+  bool AllowAnonymous,
+  bool IsEmptyRequest,
+  bool MissingQueryOrCommand,
+  bool VerbUnresolved,
+  string UnresolvedVerbDisplay)
 {
-  public string Namespace { get; set; } = string.Empty;
-  public string ClassName { get; set; } = string.Empty;
-  public string Route { get; set; } = string.Empty;
-  public string HttpVerb { get; set; } = "Get";
-  /// <summary>Nested request type name: "Query" or "Command".</summary>
-  public string RequestTypeName { get; set; } = "Query";
-  public string Summary { get; set; } = string.Empty;
-  public string Description { get; set; } = string.Empty;
-  public string[] Tags { get; set; } = Array.Empty<string>();
-  public string? AuthorizationPolicy { get; set; }
-  public string? AuthenticationSchemes { get; set; }
-  public string? Roles { get; set; }
   /// <summary>
-  /// True ONLY when <c>[EndpointAllowAnonymous]</c> is present and <c>[EndpointAuthorize]</c> is
-  /// not (task 110: fail-closed default — absence of BOTH markers leaves this false, so
-  /// BuildAuthConfiguration emits nothing and FastEndpoints requires authentication by default).
+  /// Builds an emit model from an [ApiEndpoint] outer type. ClientOnly contracts should be
+  /// filtered by the caller via <see cref="HostedRouteDiscovery"/> before calling this.
   /// </summary>
-  public bool AllowAnonymous { get; set; }
-  /// <summary>
-  /// True when the request DTO has no public instance properties (FE default binder rejects these).
-  /// </summary>
-  public bool IsEmptyRequest { get; set; }
-  public Type? CustomEndpointType { get; set; }
-
-  public static EndpointMetadata FromSymbol(INamedTypeSymbol symbol)
+  public static EndpointEmitModel FromSymbol(INamedTypeSymbol symbol)
   {
-    EndpointMetadata metadata = new()
-    {
-      ClassName = symbol.Name,
-      Namespace = symbol.ContainingNamespace.ToDisplayString()
-    };
+    string className = symbol.Name;
+    string ns = symbol.ContainingNamespace.ToDisplayString();
 
-    // Find Query/Command class
     INamedTypeSymbol? requestClass = symbol.GetTypeMembers()
-      .FirstOrDefault(m => m.Name is "Query" or "Command");
+      .FirstOrDefault(static m => m.Name is "Query" or "Command");
 
-    if (requestClass != null)
+    if (requestClass is null)
     {
-      metadata.RequestTypeName = requestClass.Name;
-
-      // Extract route and HTTP verb from ApiRoute attribute. Match by simple name: the attribute is
-      // emitted into each consumer's RootNamespace by the contracts generator, so the namespace
-      // varies per generated app (a full display-string match would pin one root namespace).
-      AttributeData? apiRouteAttribute = requestClass.GetAttributes()
-        .FirstOrDefault(attr => attr.AttributeClass?.Name == "ApiRouteAttribute");
-
-      if (apiRouteAttribute != null && apiRouteAttribute.ConstructorArguments.Length >= 2)
-      {
-        metadata.Route = apiRouteAttribute.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
-        metadata.HttpVerb = ConvertHttpVerbToMethodName(ResolveHttpVerbName(apiRouteAttribute.ConstructorArguments[1]));
-      }
-
-      // FE RequestBinder refuses DTOs with zero public properties. Count declared + inherited
-      // public instance properties (route segments generated onto the partial count too).
-      metadata.IsEmptyRequest = !requestClass
-        .GetMembers()
-        .OfType<IPropertySymbol>()
-        .Any(property =>
-          property.DeclaredAccessibility == Accessibility.Public &&
-          !property.IsStatic);
-
-      // Extract documentation
-      string? xmlDoc = requestClass.GetDocumentationCommentXml();
-      if (xmlDoc != null)
-      {
-        metadata.Summary = ExtractXmlContent(xmlDoc, "summary");
-        metadata.Description = ExtractXmlContent(xmlDoc, "remarks");
-      }
+      return new EndpointEmitModel(
+        Namespace: ns,
+        ClassName: className,
+        Route: string.Empty,
+        HttpVerb: string.Empty,
+        RequestTypeName: string.Empty,
+        Summary: string.Empty,
+        Description: string.Empty,
+        Tags: ImmutableArray<string>.Empty,
+        AuthorizationPolicy: null,
+        AuthenticationSchemes: null,
+        Roles: null,
+        AllowAnonymous: false,
+        IsEmptyRequest: false,
+        MissingQueryOrCommand: true,
+        VerbUnresolved: false,
+        UnresolvedVerbDisplay: string.Empty);
     }
 
-    // Authorization from [EndpointAuthorize]/[EndpointAllowAnonymous] on the contract class
-    // (simple name match — matches every other attribute lookup in this file, so the marker works
-    // regardless of which consuming assembly's root namespace it was generated/declared in).
+    string requestTypeName = requestClass.Name;
+    string route = string.Empty;
+    string httpVerb = string.Empty;
+    bool verbUnresolved = false;
+    string unresolvedVerbDisplay = string.Empty;
+
+    AttributeData? apiRouteAttribute = requestClass.GetAttributes()
+      .FirstOrDefault(static attr => attr.AttributeClass?.Name == HostedRouteDiscovery.ApiRouteAttributeSimpleName);
+
+    if (apiRouteAttribute is not null && apiRouteAttribute.ConstructorArguments.Length >= 2)
+    {
+      route = apiRouteAttribute.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
+      if (string.IsNullOrWhiteSpace(route))
+      {
+        // Align with HostedRouteDiscovery (whitespace route is not hosted) — report TWE007, never silent skip.
+        verbUnresolved = true;
+        unresolvedVerbDisplay = "<empty route>";
+        route = string.Empty;
+      }
+      else
+      {
+        string? resolvedName = HostedRouteDiscovery.ResolveHttpVerbName(apiRouteAttribute.ConstructorArguments[1]);
+        string? methodName = resolvedName is null
+          ? null
+          : HostedRouteDiscovery.ConvertHttpVerbToMethodName(resolvedName);
+
+        if (methodName is null)
+        {
+          verbUnresolved = true;
+          unresolvedVerbDisplay = resolvedName
+            ?? apiRouteAttribute.ConstructorArguments[1].Value?.ToString()
+            ?? "<missing>";
+        }
+        else
+        {
+          httpVerb = methodName;
+        }
+      }
+    }
+    else
+    {
+      // No [ApiRoute] or incomplete ctor args — TWE007 (never emit Get, never silent skip).
+      verbUnresolved = true;
+      unresolvedVerbDisplay = "<missing ApiRoute>";
+    }
+
+    bool isEmptyRequest = !requestClass
+      .GetMembers()
+      .OfType<IPropertySymbol>()
+      .Any(static property =>
+        property.DeclaredAccessibility == Accessibility.Public &&
+        !property.IsStatic);
+
+    string summary = string.Empty;
+    string description = string.Empty;
+    string? xmlDoc = requestClass.GetDocumentationCommentXml();
+    if (xmlDoc is not null)
+    {
+      summary = ExtractXmlContent(xmlDoc, "summary");
+      description = ExtractXmlContent(xmlDoc, "remarks");
+    }
+
+    string? authorizationPolicy = null;
+    string? authenticationSchemes = null;
+    string? roles = null;
+    bool allowAnonymous = false;
+
     AttributeData? endpointAuthorize = symbol.GetAttributes()
-      .FirstOrDefault(attr => attr.AttributeClass?.Name == "EndpointAuthorizeAttribute");
+      .FirstOrDefault(static attr => attr.AttributeClass?.Name == "EndpointAuthorizeAttribute");
     AttributeData? endpointAllowAnonymous = symbol.GetAttributes()
-      .FirstOrDefault(attr => attr.AttributeClass?.Name == "EndpointAllowAnonymousAttribute");
+      .FirstOrDefault(static attr => attr.AttributeClass?.Name == "EndpointAllowAnonymousAttribute");
 
     if (endpointAuthorize is not null)
     {
-      // [EndpointAuthorize] wins when both markers are present — see this file's Design region.
-      metadata.AllowAnonymous = false;
-      metadata.AuthorizationPolicy = GetNamedStringArgument(endpointAuthorize, "Policy");
-      metadata.AuthenticationSchemes = GetNamedStringArgument(endpointAuthorize, "AuthenticationSchemes");
-      metadata.Roles = GetNamedStringArgument(endpointAuthorize, "Roles");
+      allowAnonymous = false;
+      authorizationPolicy = GetNamedStringArgument(endpointAuthorize, "Policy");
+      authenticationSchemes = GetNamedStringArgument(endpointAuthorize, "AuthenticationSchemes");
+      roles = GetNamedStringArgument(endpointAuthorize, "Roles");
     }
     else if (endpointAllowAnonymous is not null)
     {
-      metadata.AllowAnonymous = true;
+      allowAnonymous = true;
     }
-    // else: fail-closed default already set by the field initializer (AllowAnonymous = false) —
-    // no explicit marker means BuildAuthConfiguration emits nothing and FastEndpoints requires
-    // authentication by default. Unreachable in a clean build once TWA0013 is wired (every
-    // [ApiEndpoint] contract must carry one marker), but stays fail-closed even under a suppressed
-    // analyzer.
 
-    // Extract custom endpoint type
-    AttributeData? apiEndpointAttribute = symbol.GetAttributes()
-      .FirstOrDefault(attr => attr.AttributeClass?.ToDisplayString() == "TimeWarp.Architecture.Attributes.ApiEndpointAttribute");
+    ImmutableArray<string> tags = CollectTags(symbol);
 
-    if (apiEndpointAttribute != null)
-    {
-      KeyValuePair<string, TypedConstant> endpointTypeArg = apiEndpointAttribute.NamedArguments
-        .FirstOrDefault(arg => arg.Key == "EndpointType");
+    return new EndpointEmitModel(
+      Namespace: ns,
+      ClassName: className,
+      Route: route,
+      HttpVerb: httpVerb,
+      RequestTypeName: requestTypeName,
+      Summary: summary,
+      Description: description,
+      Tags: tags,
+      AuthorizationPolicy: authorizationPolicy,
+      AuthenticationSchemes: authenticationSchemes,
+      Roles: roles,
+      AllowAnonymous: allowAnonymous,
+      IsEmptyRequest: isEmptyRequest,
+      MissingQueryOrCommand: false,
+      VerbUnresolved: verbUnresolved,
+      UnresolvedVerbDisplay: unresolvedVerbDisplay);
+  }
 
-      if (!endpointTypeArg.Equals(default))
-      {
-        metadata.CustomEndpointType = null;
-      }
-    }
+  private static ImmutableArray<string> CollectTags(INamedTypeSymbol symbol)
+  {
+    var tags = new List<string>();
 
     // Default OpenAPI tag = leaf namespace when Features is an ancestor
     // (…Features.WeatherForecast → WeatherForecast; …Features.Admin.Roles → Roles).
-    // Not the parent of Features (that incorrectly tagged every endpoint "Architecture").
-    List<string> tags = new();
     INamespaceSymbol? walk = symbol.ContainingNamespace;
     bool underFeatures = false;
     while (walk is not null)
@@ -163,40 +217,21 @@ internal sealed class EndpointMetadata
       tags.Add(leaf.Name);
     }
 
-    // [OpenApiTags] is additive to the default feature tag.
     AttributeData? openApiTagsAttribute = symbol.GetAttributes()
-      .FirstOrDefault(attr => attr.AttributeClass?.Name == "OpenApiTags");
+      .FirstOrDefault(static attr => attr.AttributeClass?.Name == "OpenApiTags");
 
-    if (openApiTagsAttribute != null)
+    if (openApiTagsAttribute is not null)
     {
       foreach (TypedConstant arg in openApiTagsAttribute.ConstructorArguments)
       {
         if (arg.Values.Length > 0)
         {
-          tags.AddRange(arg.Values.Select(v => v.Value?.ToString() ?? string.Empty));
+          tags.AddRange(arg.Values.Select(static v => v.Value?.ToString() ?? string.Empty));
         }
       }
     }
 
-    metadata.Tags = tags.Where(t => !string.IsNullOrEmpty(t)).Distinct().ToArray();
-
-    return metadata;
-  }
-
-  /// <summary>
-  /// Resolves an HttpVerb TypedConstant to its enum member name.
-  /// Metadata stores the underlying int, so <c>Value.ToString()</c> yields "1" for Post — wrong.
-  /// </summary>
-  private static string ResolveHttpVerbName(TypedConstant verbArgument)
-  {
-    if (verbArgument.Type is INamedTypeSymbol enumType && enumType.TypeKind == TypeKind.Enum)
-    {
-      IFieldSymbol? field = enumType.GetMembers().OfType<IFieldSymbol>()
-        .FirstOrDefault(f => f.HasConstantValue && Equals(f.ConstantValue, verbArgument.Value));
-      if (field is not null) return field.Name;
-    }
-
-    return verbArgument.Value?.ToString() ?? "Get";
+    return tags.Where(static t => !string.IsNullOrEmpty(t)).Distinct().ToImmutableArray();
   }
 
   private static string? GetNamedStringArgument(AttributeData attribute, string name)
@@ -225,18 +260,5 @@ internal sealed class EndpointMetadata
     if (endIndex == -1) return string.Empty;
 
     return xmlDoc.Substring(startIndex, endIndex - startIndex).Trim();
-  }
-
-  private static string ConvertHttpVerbToMethodName(string httpVerb)
-  {
-    return httpVerb switch
-    {
-      "Get" => "Get",
-      "Post" => "Post",
-      "Put" => "Put",
-      "Delete" => "Delete",
-      "Patch" => "Patch",
-      _ => "Get"
-    };
   }
 }

@@ -44,7 +44,7 @@ public sealed partial class GetCredentials
       PrincipalId? callerId = await CurrentPrincipalAccessor.GetCurrentPrincipalIdAsync(cancellationToken);
       if (callerId is null)
       {
-        return Unauthenticated();
+        return IdentityProblems.Unauthenticated();
       }
 
       IReadOnlyList<Credential> credentials =
@@ -62,12 +62,5 @@ public sealed partial class GetCredentials
 
       return new Response(summaries);
     }
-
-    private static SharedProblemDetails Unauthenticated() => new()
-    {
-      Title = "Unauthenticated",
-      Status = 401,
-      Detail = "No authenticated principal."
-    };
   }
 }

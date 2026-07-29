@@ -6,6 +6,7 @@ global using FastEndpoints;
 global using FluentValidation;
 global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
 global using Oakton;
 global using OneOf;
 global using System.Net;

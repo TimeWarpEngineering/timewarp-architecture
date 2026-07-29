@@ -1,6 +1,6 @@
 #region Purpose
-// Tests for TWA0005 (endpoint verb must match contract verb) and TWA0006 (routed contract
-// must have an endpoint or an explicit [ClientOnlyContract] opt-out).
+// Tests for TWA0006 (routed contract must have an endpoint or an explicit [ClientOnlyContract]
+// opt-out). TWA0005 (MVC verb mismatch) was retired with BaseEndpoint (task 131 F-002).
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -12,8 +12,8 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Enforce_Endpoint_Coverage
 {
-  // Minimal foundation/MVC surface so the test compilation resolves the shapes the analyzer
-  // matches by metadata name (BaseEndpoint`2) and simple name (ApiRouteAttribute, Http*Attribute,
+  // Minimal foundation surface so the test compilation resolves the shapes the analyzer
+  // matches by metadata name (BaseFastEndpoint`2) and simple name (ApiRouteAttribute,
   // ClientOnlyContractAttribute).
   private const string Stubs =
     """
@@ -23,7 +23,7 @@ public class Should_Enforce_Endpoint_Coverage
     namespace TimeWarp.Foundation.Features
     {
       public enum HttpVerb { Get, Post, Delete, Put, Patch, Head, Options }
-      public class BaseEndpoint<TRequest, TResponse> { }
+      public class BaseFastEndpoint<TRequest, TResponse> { }
       public sealed class ClientOnlyContractAttribute : System.Attribute
       {
         public ClientOnlyContractAttribute(string reason) { }
@@ -35,11 +35,6 @@ public class Should_Enforce_Endpoint_Coverage
       {
         public ApiRouteAttribute(string routeTemplate, TimeWarp.Foundation.Features.HttpVerb httpVerb) { }
       }
-    }
-    namespace Microsoft.AspNetCore.Mvc
-    {
-      public sealed class HttpGetAttribute : System.Attribute { public HttpGetAttribute(string template) { } }
-      public sealed class HttpPostAttribute : System.Attribute { public HttpPostAttribute(string template) { } }
     }
     """;
 
@@ -56,7 +51,7 @@ public class Should_Enforce_Endpoint_Coverage
       }
     };
 
-  public static async Task Given_Covered_Contract_With_Matching_Verb_IsClean()
+  public static async Task Given_Covered_Contract_IsClean()
   {
     const string Source =
       """
@@ -77,48 +72,10 @@ public class Should_Enforce_Endpoint_Coverage
       }
       namespace App.Server
       {
-        using Microsoft.AspNetCore.Mvc;
         using TimeWarp.Foundation.Features;
 
-        public class GetWidgetEndpoint : BaseEndpoint<App.Contracts.GetWidget.Query, App.Contracts.GetWidget.Response>
+        public class GetWidgetEndpoint : BaseFastEndpoint<App.Contracts.GetWidget.Query, App.Contracts.GetWidget.Response>
         {
-          [HttpGet("api/Widgets")]
-          public void Process() { }
-        }
-      }
-      """;
-
-    await Test(Source).RunAsync();
-  }
-
-  public static async Task Given_Verb_Mismatch_Flags_TWA0005()
-  {
-    const string Source =
-      """
-      #region Purpose
-      // Test feature.
-      #endregion
-      namespace App.Contracts
-      {
-        using TimeWarp.Architecture;
-        using TimeWarp.Foundation.Features;
-
-        public static class CreateWidget
-        {
-          [ApiRoute("api/Widgets", HttpVerb.Post)]
-          public sealed class Command { }
-          public sealed class Response { }
-        }
-      }
-      namespace App.Server
-      {
-        using Microsoft.AspNetCore.Mvc;
-        using TimeWarp.Foundation.Features;
-
-        public class CreateWidgetEndpoint : BaseEndpoint<App.Contracts.CreateWidget.Command, App.Contracts.CreateWidget.Response>
-        {
-          [{|TWA0005:HttpGet("api/Widgets")|}]
-          public void Process() { }
         }
       }
       """;
@@ -154,13 +111,10 @@ public class Should_Enforce_Endpoint_Coverage
       }
       namespace App.Server
       {
-        using Microsoft.AspNetCore.Mvc;
         using TimeWarp.Foundation.Features;
 
-        public class GetWidgetEndpoint : BaseEndpoint<App.Contracts.GetWidget.Query, App.Contracts.GetWidget.Response>
+        public class GetWidgetEndpoint : BaseFastEndpoint<App.Contracts.GetWidget.Query, App.Contracts.GetWidget.Response>
         {
-          [HttpGet("api/Widgets")]
-          public void Process() { }
         }
       }
       """;
@@ -199,16 +153,22 @@ public class Should_Enforce_Endpoint_Coverage
           public sealed class Query { }
           public sealed class Response { }
         }
+
+        // F-004: ClientOnly on outer operation also opts nested routed Query out of TWA0006.
+        [ClientOnlyContract("Outer ClientOnly opt-out.")]
+        public static class OuterClientOnly
+        {
+          [ApiRoute("api/OuterMock", HttpVerb.Get)]
+          public sealed class Query { }
+          public sealed class Response { }
+        }
       }
       namespace App.Server
       {
-        using Microsoft.AspNetCore.Mvc;
         using TimeWarp.Foundation.Features;
 
-        public class GetWidgetEndpoint : BaseEndpoint<App.Contracts.GetWidget.Query, App.Contracts.GetWidget.Response>
+        public class GetWidgetEndpoint : BaseFastEndpoint<App.Contracts.GetWidget.Query, App.Contracts.GetWidget.Response>
         {
-          [HttpGet("api/Widgets")]
-          public void Process() { }
         }
       }
       """;
@@ -219,7 +179,7 @@ public class Should_Enforce_Endpoint_Coverage
   public static async Task Given_Compilation_Without_Endpoints_IsClean()
   {
     // A contracts-only (or SPA) compilation declares routed contracts but no endpoints — the
-    // server-project gate must keep both diagnostics silent.
+    // server-project gate must keep the diagnostic silent.
     const string Source =
       """
       #region Purpose

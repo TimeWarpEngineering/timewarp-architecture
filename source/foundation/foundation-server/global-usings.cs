@@ -3,7 +3,6 @@
 #endregion
 
 global using Ardalis.GuardClauses;
-global using Azure.Identity;
 global using FastEndpoints;
 global using FastEndpoints.OpenApi;
 global using FluentValidation;

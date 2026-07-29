@@ -12,7 +12,9 @@
   are generated in feature-filename-grammar.g.props from the same layer list
   (no hand-duplication). features/ holds product slices; platform/ holds
   host/platform clusters that share grammar suffixes but are NOT …Features.*
-  slice namespaces.
+  slice namespaces. Both trees may be absent (pre-migration) — MSBuild globs
+  over a nonexistent directory yield zero items, so the guard is a no-op until
+  content lands.
 
   Import once via web/Directory.Build.targets so the guard runs once per
   framework build of any web project, and each layer project gets its globs.

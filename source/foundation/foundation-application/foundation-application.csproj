@@ -2,7 +2,7 @@
   <PropertyGroup>
     <PackageId>TimeWarp.Foundation.Application</PackageId>
     <Title>TimeWarp.Foundation.Application</Title>
-    <Description>Application-layer abstractions and MediatR pipeline behaviors for the TimeWarp foundation layer.</Description>
+    <Description>Application-layer abstractions and TimeWarp.Mediator pipeline behaviors for the TimeWarp foundation layer.</Description>
   </PropertyGroup>
   <ItemGroup>
     <!-- Explicit: DomainInvariantsGuard uses FluentValidation directly. Do not rely on the

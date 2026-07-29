@@ -38,23 +38,16 @@ public sealed partial class GetAgentIdentity
       AgentCaller? caller = CallerContext.GetCurrentCaller();
       if (caller is null)
       {
-        return Unauthorized();
+        return IdentityProblems.Unauthorized();
       }
 
       Principal? principal = await PrincipalStore.GetPrincipalAsync(caller.PrincipalId, cancellationToken);
       if (principal is null)
       {
-        return Unauthorized();
+        return IdentityProblems.Unauthorized();
       }
 
       return new Response(principal.Id, principal.Kind, principal.TrustTier, caller.Scopes);
     }
-
-    private static SharedProblemDetails Unauthorized() => new()
-    {
-      Title = "Unauthorized",
-      Status = 401,
-      Detail = "A valid agent bearer token is required."
-    };
   }
 }

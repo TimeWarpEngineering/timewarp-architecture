@@ -37,16 +37,11 @@
     <NoWarn>$(NoWarn);TWA0004</NoWarn> <!-- #region Purpose not yet adopted for test files — separate decision; TWA0008 (template-token guard) is the reason the convention analyzers are wired here -->
   </PropertyGroup>
 
-  <!-- Analyzer distribution switch (task 092). Mirror source/Directory.Build.props: project ref
-       when analyzer source is present; package when the template excluded source/analyzers. -->
-  <PropertyGroup>
-    <UseAnalyzerPackages Condition="'$(UseAnalyzerPackages)' == '' and !Exists('$(MSBuildThisFileDirectory)../source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj')">true</UseAnalyzerPackages>
-    <UseAnalyzerPackages Condition="'$(UseAnalyzerPackages)' == ''">false</UseAnalyzerPackages>
-  </PropertyGroup>
-
   <!-- Repo-wide convention analyzers for TEST code too: tests/ ships as template content, so
        TWA0008 (template-conditional tokens in comments/strings mangle generation) must cover it —
-       analyzer-test files embedding C# source in strings are the likeliest carriers. -->
+       analyzer-test files embedding C# source in strings are the likeliest carriers.
+       UseAnalyzerPackages is computed at root Directory.Build.props (imported above); do not
+       re-detect here (task 131 F-012). Wiring ItemGroups remain — source/DBP does not reach tests. -->
   <ItemGroup Condition="'$(UseAnalyzerPackages)' != 'true' and '$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)../source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"

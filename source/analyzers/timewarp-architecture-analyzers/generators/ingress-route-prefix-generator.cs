@@ -8,10 +8,10 @@
 // Opt-in via EnableIngressRouteGeneration (default false) so the Generators package can attach to a
 // project without emitting this list unless the project is an ingress host.
 // Scans referenced-assembly symbols (not the current compilation's syntax): the contracts live in
-// web-contracts, a separate project from the AppHost/yarp that host the ingress. Same cross-assembly
-// approach as FastEndpointSourceGenerator; participate rule matches EndpointMetadata.FromSymbol
-// (outer [ApiEndpoint] + nested Query/Command [ApiRoute], simple-name attribute matching) minus
-// [ClientOnlyContract] (those never reach the server, so they must not gain an ingress route).
+// web-contracts, a separate project from the AppHost/yarp that host the ingress. Discovery uses
+// HostedRouteDiscovery.TryGetHostedOperation (linked shared source, F-004) — outer [ApiEndpoint] +
+// nested Query/Command [ApiRoute], simple-name attribute matching, ClientOnly on outer OR nested
+// excluded (those never reach the server, so they must not gain an ingress route).
 // IngressWebContractAssemblies (semicolon/comma list) names the assemblies whose routes belong to
 // Web.Server (web-contracts). Empty = scan every referenced assembly (kept only for parity with the
 // FastEndpoint generator; the ingress hosts always name web-contracts explicitly).
@@ -50,9 +50,6 @@ namespace TimeWarp.Architecture.Analyzers;
 [Generator]
 public class IngressRoutePrefixGenerator : IIncrementalGenerator
 {
-  private const string ApiEndpointAttributeFullName = "TimeWarp.Architecture.Attributes.ApiEndpointAttribute";
-  private const string ApiRouteAttributeSimpleName = "ApiRouteAttribute";
-  private const string ClientOnlyContractAttributeSimpleName = "ClientOnlyContractAttribute";
   private const string ApiSegment = "api";
   private static readonly char[] SlashSeparator = { '/' };
   private static readonly char[] ListSeparators = { ';', ',' };
@@ -125,32 +122,27 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
         }
       }
 
-      INamedTypeSymbol? apiEndpointAttribute = compilation.GetTypeByMetadataName(ApiEndpointAttributeFullName);
-
       // Hosted web routes (source assemblies) and the collision set (other contracts assemblies).
       List<HostedRoute> webRoutes = new();
       List<HostedRoute> foreignRoutes = new();
 
-      if (apiEndpointAttribute is not null)
+      foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
       {
-        foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+        bool isSource = options.SourceAssemblies.Count == 0
+          ? true
+          : options.SourceAssemblies.Contains(assembly.Name);
+
+        bool isForeignContracts = !isSource
+          && assembly.Name.Contains("contracts", StringComparison.OrdinalIgnoreCase);
+
+        if (!isSource && !isForeignContracts)
         {
-          bool isSource = options.SourceAssemblies.Count == 0
-            ? true
-            : options.SourceAssemblies.Contains(assembly.Name);
+          continue;
+        }
 
-          bool isForeignContracts = !isSource
-            && assembly.Name.Contains("contracts", StringComparison.OrdinalIgnoreCase);
-
-          if (!isSource && !isForeignContracts)
-          {
-            continue;
-          }
-
-          foreach (HostedRoute route in EnumerateHostedRoutes(assembly, apiEndpointAttribute))
-          {
-            (isSource ? webRoutes : foreignRoutes).Add(route);
-          }
+        foreach (HostedRoute route in EnumerateHostedRoutes(assembly))
+        {
+          (isSource ? webRoutes : foreignRoutes).Add(route);
         }
       }
 
@@ -193,8 +185,10 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
     }
     catch (Exception ex) // CA1031: a source generator must not throw into the compilation.
     {
-      var logDescriptor = new DiagnosticDescriptor("SG001", "Source Generator Log", "{0}", "SourceGenerator", DiagnosticSeverity.Warning, true);
-      spc.ReportDiagnostic(Diagnostic.Create(logDescriptor, Location.None, $"IngressRoutePrefixGenerator error: {ex.Message}"));
+      spc.ReportDiagnostic(Diagnostic.Create(
+        DiagnosticDescriptors.SourceGeneratorLog,
+        Location.None,
+        $"IngressRoutePrefixGenerator error: {ex.Message}"));
     }
   }
 
@@ -245,62 +239,19 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
     }
   }
 
-  private static IEnumerable<HostedRoute> EnumerateHostedRoutes(IAssemblySymbol assembly, INamedTypeSymbol apiEndpointAttribute)
+  private static IEnumerable<HostedRoute> EnumerateHostedRoutes(IAssemblySymbol assembly)
   {
-    foreach (INamespaceSymbol ns in GetAllNamespaces(assembly.GlobalNamespace))
+    foreach (INamespaceSymbol ns in HostedRouteDiscovery.GetAllNamespaces(assembly.GlobalNamespace))
     {
       foreach (INamedTypeSymbol type in ns.GetTypeMembers())
       {
-        bool hasApiEndpoint = type.GetAttributes()
-          .Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, apiEndpointAttribute));
-        if (!hasApiEndpoint)
+        // Shared discovery: [ApiEndpoint] + nested Query/Command + [ApiRoute] + !ClientOnly.
+        if (!HostedRouteDiscovery.TryGetHostedOperation(type, out HostedOperationInfo hosted))
         {
           continue;
         }
 
-        INamedTypeSymbol? requestClass = type.GetTypeMembers()
-          .FirstOrDefault(m => m.Name is "Query" or "Command");
-        if (requestClass is null)
-        {
-          continue;
-        }
-
-        // [ClientOnlyContract] excludes a contract from server hosting, so it must never gain an
-        // ingress carve-out. Check BOTH the outer type and the nested request: the real convention
-        // places it on the nested Query/Command, but either placement means "not hosted".
-        bool isClientOnly = HasClientOnlyContract(type) || HasClientOnlyContract(requestClass);
-        if (isClientOnly)
-        {
-          continue;
-        }
-
-        AttributeData? apiRoute = requestClass.GetAttributes()
-          .FirstOrDefault(attr => attr.AttributeClass?.Name == ApiRouteAttributeSimpleName);
-        if (apiRoute is null || apiRoute.ConstructorArguments.Length == 0)
-        {
-          continue;
-        }
-
-        string? template = apiRoute.ConstructorArguments[0].Value?.ToString();
-        if (!string.IsNullOrWhiteSpace(template))
-        {
-          yield return new HostedRoute(template!, assembly.Name);
-        }
-      }
-    }
-  }
-
-  private static bool HasClientOnlyContract(INamedTypeSymbol symbol)
-    => symbol.GetAttributes().Any(attr => attr.AttributeClass?.Name == ClientOnlyContractAttributeSimpleName);
-
-  private static IEnumerable<INamespaceSymbol> GetAllNamespaces(INamespaceSymbol root)
-  {
-    yield return root;
-    foreach (INamespaceSymbol child in root.GetNamespaceMembers())
-    {
-      foreach (INamespaceSymbol descendant in GetAllNamespaces(child))
-      {
-        yield return descendant;
+        yield return new HostedRoute(hosted.RouteTemplate, assembly.Name);
       }
     }
   }

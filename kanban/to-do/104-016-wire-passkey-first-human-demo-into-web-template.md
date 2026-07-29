@@ -24,6 +24,16 @@ Template UX: primary CTA Continue with passkey (not full registration form). Cre
 
 Human dogfood: Proton Pass or platform authenticator.
 
+### From task 131 disposition (F-010)
+
+When removing legacy Passwordless from the template path, explicitly cover:
+
+- Remove Passwordless CDN script + hardcoded TimeWarp tenant public API key from
+  `web-server/components/App.razor` (still ships into every generated app until this lands).
+- Sweep related `Passwordless:` appsettings, package refs, and
+  `passwordless-service.cs` (including any Console.WriteLine of ApiKey/ApiUrl).
+- Prefer first-party WebAuthn/passkey UX only — no third-party tenant key in template output.
+
 ### Depends on
 
 104-003, 104-006

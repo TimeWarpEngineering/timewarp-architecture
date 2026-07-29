@@ -8,11 +8,25 @@
 // ≠ sourceName (so rewrite bugs surface), asserts CPM platform pins == release version, then
 // restore+build against nuget.org ONLY (app-local NuGet.config with <clear/>).
 //
+// Shared rewrite asserts, props SSOT suffix derivation, pin matching, monorepo namespace pre-scan,
+// and generate/restore/build skeleton live in TemplateSmokeHarness (task 131-003 / F-007). This
+// command owns publish-only orchestration: flatcontainer wait, registration-index install retry,
+// pin self-check, nuget.org-only config, git init for Build.Tasks metadata.
+//
 // Wired as a required step after a real push in `dev workflow` release mode. Pack-only runs
 // (no API key) skip the gate. Failure sets Environment.ExitCode nonzero and blocks the release.
 // Isolation roots: artifacts/template-publish-smoke/{cli-home,nuget-packages,work}.
 // git init + empty commit before build (task 124): TimeWarp.Build.Tasks git-metadata needs a
 // real HEAD; init alone still warns on empty repos.
+//
+// Two independent availability waits (task 130): flatcontainer (WaitForFlatcontainerAsync) gates
+// restore-path packages and is correct as a one-shot poll-then-proceed. `dotnet new install`
+// resolves through nuget.org's search/registration index instead, which lags flatcontainer, so
+// InstallPublishedTemplateAsync retries the install itself with the same bounded-backoff shape —
+// the install call IS the availability probe for the index it uses, no second endpoint to model.
+//
+// Monorepo namespace-literal pre-scan runs before network wait (same gate as template-smoke) so
+// the publish path cannot pass what smoke would fail on sourceName-rewritable literals.
 #endregion
 
 namespace DevCli.Commands;
@@ -22,6 +36,13 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
 {
   private const string TemplatePackageId = "TimeWarp.Architecture";
   private const string TemplateShortName = "timewarp-architecture";
+
+  // Run 30332386426 (v2.0.0-beta.8, 2026-07-28): flatcontainer saw all packages live at attempt 9
+  // (well under its 12 min budget), but the immediately-following `dotnet new install` still 103'd
+  // as "not found in NuGet feeds" — the registration/search index it resolves through lagged past
+  // flatcontainer. A manual `--failed` rerun ~20 min later passed. Sized generously above the
+  // observed lag.
+  private static readonly TimeSpan InstallRetryBudget = TimeSpan.FromMinutes(15);
 
   private static readonly string[] RequiredPublishedPackageIds =
   [
@@ -44,24 +65,6 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
     ("PublishSmokeNoPostgres", ["--postgres", "false"]),
   ];
 
-  private static readonly string[] PlatformPinIncludeFragments =
-  [
-    "TwArchitectureAnalyzersPackageId",
-    "TwArchitectureGeneratorsPackageId",
-    "TwArchitectureAttributesPackageId",
-    "TimeWarp.Foundation.",
-    "TimeWarp.Modules",
-    "TimeWarp.Identity",
-  ];
-
-  private static readonly string[] ForbiddenRewrittenPackageFragments =
-  [
-    ".Analyzers",
-    ".Generators",
-    ".Attributes",
-    ".TypedIds",
-  ];
-
   [Option("version", "v", Description = "Published version to validate (default: source/Directory.Build.props <Version>)")]
   public string? Version { get; set; }
 
@@ -78,6 +81,8 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
     private string NugetPackagesDir = null!;
     private string WorkDir = null!;
     private string Version = null!;
+    private TemplateSmokeHarness Harness = null!;
+    private Dictionary<string, string> IsolationEnv = null!;
 
     public Handler(ITerminal terminal)
     {
@@ -103,9 +108,18 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
       CliHomeDir = Path.Combine(SmokeRoot, "cli-home");
       NugetPackagesDir = Path.Combine(SmokeRoot, "nuget-packages");
       WorkDir = Path.Combine(SmokeRoot, "work");
+      Harness = new TemplateSmokeHarness(Terminal, RepoRoot);
+      IsolationEnv = new Dictionary<string, string>(StringComparer.Ordinal)
+      {
+        ["DOTNET_CLI_HOME"] = CliHomeDir,
+        ["NUGET_PACKAGES"] = NugetPackagesDir,
+      };
 
       Terminal.WriteLine($"\nTemplate publish smoke — version {Version}".Cyan());
       Terminal.WriteLine($"Work root: {SmokeRoot}\n");
+
+      // Same monorepo pre-scan as template-smoke — before network wait so local failures fail fast.
+      if (!Harness.AssertNoUnsafePlatformNamespaceLiterals()) return Value;
 
       PrepareArtifactDirs();
 
@@ -208,7 +222,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         </Project>
         """;
 
-      if (!TryEvaluatePlatformPins(good, expected, out List<string> goodFailures, out int goodCount)
+      if (!TemplateSmokeHarness.TryEvaluatePlatformPins(good, expected, out List<string> goodFailures, out int goodCount)
           || goodCount == 0
           || goodFailures.Count > 0)
       {
@@ -217,7 +231,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         return false;
       }
 
-      if (TryEvaluatePlatformPins(stale, expected, out _, out _))
+      if (TemplateSmokeHarness.TryEvaluatePlatformPins(stale, expected, out _, out _))
       {
         Terminal.WriteErrorLine("Pin-assert self-check failed: stale pins should fail.".Red());
         Environment.ExitCode = 1;
@@ -225,7 +239,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
       }
 
       // Zero platform pins: Evaluate returns false when pinCount == 0.
-      if (TryEvaluatePlatformPins(noPlatformPins, expected, out _, out int emptyCount) || emptyCount != 0)
+      if (TemplateSmokeHarness.TryEvaluatePlatformPins(noPlatformPins, expected, out _, out int emptyCount) || emptyCount != 0)
       {
         Terminal.WriteErrorLine("Pin-assert self-check failed: zero platform pins should hard-fail.".Red());
         Environment.ExitCode = 1;
@@ -323,119 +337,85 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         .CaptureAsync(Ct);
       _ = uninstall; // may fail if not installed
 
-      CommandOutput result = await Shell.Builder("dotnet")
-        .WithArguments("new", "install", packageRef)
-        .WithWorkingDirectory(RepoRoot)
-        .WithEnvironmentVariable("DOTNET_CLI_HOME", CliHomeDir)
-        .WithEnvironmentVariable("NUGET_PACKAGES", NugetPackagesDir)
-        .WithNoValidation()
-        .CaptureAsync(Ct);
+      // dotnet new install resolves through nuget.org's search/registration index, which lags
+      // flatcontainer (see task 130 / run 30332386426 in the class Design region and
+      // InstallRetryBudget above). The install attempt itself is the availability probe for that
+      // index, so retry it directly with the same bounded-backoff shape as WaitForFlatcontainerAsync
+      // instead of polling a second endpoint ahead of time.
+      Terminal.WriteLine(
+        $"Installing (template install / registration index, budget {InstallRetryBudget.TotalMinutes:0} min)...");
 
-      if (!result.Success)
+      DateTimeOffset installDeadline = DateTimeOffset.UtcNow + InstallRetryBudget;
+      int installDelaySeconds = 5;
+      int installAttempt = 0;
+
+      while (true)
       {
-        Terminal.WriteErrorLine(result.Combined);
-        Terminal.WriteErrorLine("dotnet new install failed!".Red());
-        Environment.ExitCode = result.ExitCode == 0 ? 1 : result.ExitCode;
-        return false;
-      }
+        installAttempt++;
 
-      Terminal.WriteLine(result.Combined);
-      return true;
+        CommandOutput result = await Shell.Builder("dotnet")
+          .WithArguments("new", "install", packageRef)
+          .WithWorkingDirectory(RepoRoot)
+          .WithEnvironmentVariable("DOTNET_CLI_HOME", CliHomeDir)
+          .WithEnvironmentVariable("NUGET_PACKAGES", NugetPackagesDir)
+          .WithNoValidation()
+          .CaptureAsync(Ct);
+
+        if (result.Success)
+        {
+          Terminal.WriteLine(result.Combined);
+          Terminal.WriteLine(
+            $"Template install (registration index) succeeded (attempt {installAttempt}).".Green());
+          return true;
+        }
+
+        if (DateTimeOffset.UtcNow >= installDeadline)
+        {
+          Terminal.WriteErrorLine(result.Combined);
+          Terminal.WriteErrorLine(
+            $"Template install (registration index) timed out after {InstallRetryBudget.TotalMinutes:0} min (attempt {installAttempt}).".Red());
+          Environment.ExitCode = result.ExitCode == 0 ? 1 : result.ExitCode;
+          return false;
+        }
+
+        Terminal.WriteLine(
+          $"  attempt {installAttempt}: template install (registration index) failed — retry in {installDelaySeconds}s...");
+
+        try
+        {
+          await Task.Delay(TimeSpan.FromSeconds(installDelaySeconds), Ct);
+        }
+        catch (OperationCanceledException)
+        {
+          Environment.ExitCode = 1;
+          return false;
+        }
+
+        installDelaySeconds = Math.Min(installDelaySeconds * 2, 60);
+      }
     }
 
-    private async Task<bool> SmokeOneAsync(string name, string[] extraArgs)
-    {
-      string outputDir = Path.Combine(WorkDir, name);
-      Terminal.WriteLine($"\n── Generate {name} ──".Cyan());
+    private Task<bool> SmokeOneAsync(string name, string[] extraArgs) =>
+      Harness.SmokeOneAsync(
+        name,
+        WorkDir,
+        extraArgs,
+        TemplateShortName,
+        Ct,
+        afterGenerateAsync: async outputDir =>
+        {
+          if (!Harness.AssertPlatformPinsEqualVersion(outputDir, Version))
+            return false;
 
-      List<string> args =
-      [
-        "new", TemplateShortName,
-        "-n", name,
-        "-o", outputDir,
-        "--force",
-      ];
-      args.AddRange(extraArgs);
+          WriteNugetOrgOnlyConfig(outputDir);
 
-      CommandOutput generate = await Shell.Builder("dotnet")
-        .WithArguments([.. args])
-        .WithWorkingDirectory(RepoRoot)
-        .WithEnvironmentVariable("DOTNET_CLI_HOME", CliHomeDir)
-        .WithEnvironmentVariable("NUGET_PACKAGES", NugetPackagesDir)
-        .WithNoValidation()
-        .CaptureAsync(Ct);
+          if (!await GitInitAsync(outputDir))
+            return false;
 
-      if (!generate.Success)
-      {
-        Terminal.WriteErrorLine(generate.Combined);
-        Terminal.WriteErrorLine($"dotnet new failed for {name}!".Red());
-        return false;
-      }
-
-      Terminal.WriteLine(generate.Combined);
-
-      if (!AssertPackageIdsNotRewritten(name, outputDir))
-        return false;
-
-      if (!AssertPlatformPinsEqualReleaseVersion(outputDir))
-        return false;
-
-      string platformProps = Path.Combine(outputDir, "msbuild", "timewarp-platform-packages.props");
-      if (!File.Exists(platformProps))
-      {
-        Terminal.WriteErrorLine($"Missing {platformProps} — platform package ID composition file not in template output.".Red());
-        return false;
-      }
-
-      WriteNugetOrgOnlyConfig(outputDir);
-
-      if (!await GitInitAsync(outputDir))
-        return false;
-
-      string? solution = Directory
-        .GetFiles(outputDir, "*.slnx", SearchOption.TopDirectoryOnly)
-        .Concat(Directory.GetFiles(outputDir, "*.sln", SearchOption.TopDirectoryOnly))
-        .FirstOrDefault();
-
-      if (solution is null)
-      {
-        Terminal.WriteErrorLine($"No solution file found under {outputDir}.".Red());
-        return false;
-      }
-
-      Terminal.WriteLine($"Restoring {solution} (nuget.org only)...");
-      int restoreExit = await DotNet.Restore()
-        .WithProject(solution)
-        .WithWorkingDirectory(outputDir)
-        .WithEnvironmentVariable("DOTNET_CLI_HOME", CliHomeDir)
-        .WithEnvironmentVariable("NUGET_PACKAGES", NugetPackagesDir)
-        .WithNoValidation()
-        .RunAsync(Ct);
-      if (restoreExit != 0)
-      {
-        Terminal.WriteErrorLine($"Restore failed for {name}!".Red());
-        return false;
-      }
-
-      Terminal.WriteLine($"Building {solution} (Release)...");
-      int buildExit = await DotNet.Build()
-        .WithProject(solution)
-        .WithConfiguration("Release")
-        .WithNoRestore()
-        .WithWorkingDirectory(outputDir)
-        .WithEnvironmentVariable("DOTNET_CLI_HOME", CliHomeDir)
-        .WithEnvironmentVariable("NUGET_PACKAGES", NugetPackagesDir)
-        .WithNoValidation()
-        .RunAsync(Ct);
-      if (buildExit != 0)
-      {
-        Terminal.WriteErrorLine($"Build failed for {name}!".Red());
-        return false;
-      }
-
-      Terminal.WriteLine($"{name} OK".Green());
-      return true;
-    }
+          return true;
+        },
+        restoreNarration: " (nuget.org only)",
+        environment: IsolationEnv);
 
     private async Task<bool> GitInitAsync(string outputDir)
     {
@@ -491,118 +471,6 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         """;
       File.WriteAllText(configPath, xml);
       Terminal.WriteLine($"Wrote {configPath} (nuget.org only).");
-    }
-
-    private bool AssertPlatformPinsEqualReleaseVersion(string outputDir)
-    {
-      string packagesProps = Path.Combine(outputDir, "Directory.Packages.props");
-      if (!File.Exists(packagesProps))
-      {
-        Terminal.WriteErrorLine($"Missing {packagesProps}.".Red());
-        return false;
-      }
-
-      string text = File.ReadAllText(packagesProps);
-      if (!TryEvaluatePlatformPins(text, Version, out List<string> failures, out int pinCount))
-      {
-        if (pinCount == 0)
-        {
-          Terminal.WriteErrorLine(
-            "Directory.Packages.props: zero platform PackageVersion pins matched — pattern/fragment drift?".Red());
-        }
-        else
-        {
-          Terminal.WriteErrorLine(
-            $"Directory.Packages.props: platform pins must equal release version {Version}:".Red());
-          foreach (string failure in failures)
-            Terminal.WriteErrorLine($"  {failure}");
-        }
-
-        return false;
-      }
-
-      Terminal.WriteLine($"Platform CPM pins == {Version} ({pinCount} pins).");
-      return true;
-    }
-
-    /// <summary>
-    /// Returns true only when at least one platform pin was found and every platform pin's Version
-    /// equals <paramref name="expectedVersion"/>.
-    /// </summary>
-    private static bool TryEvaluatePlatformPins(
-      string packagesPropsText,
-      string expectedVersion,
-      out List<string> failures,
-      out int pinCount)
-    {
-      failures = [];
-      pinCount = 0;
-
-      System.Text.RegularExpressions.MatchCollection matches =
-        System.Text.RegularExpressions.Regex.Matches(
-          packagesPropsText,
-          "PackageVersion\\s+Include=\"([^\"]+)\"\\s+Version=\"([^\"]+)\"");
-
-      foreach (System.Text.RegularExpressions.Match match in matches)
-      {
-        string include = match.Groups[1].Value;
-        string pinVersion = match.Groups[2].Value;
-        bool isPlatform = PlatformPinIncludeFragments.Any(fragment =>
-          include.Contains(fragment, StringComparison.Ordinal));
-        if (!isPlatform)
-          continue;
-
-        pinCount++;
-        if (!string.Equals(pinVersion, expectedVersion, StringComparison.Ordinal))
-          failures.Add($"{include}: Version=\"{pinVersion}\" (expected \"{expectedVersion}\")");
-      }
-
-      return pinCount > 0 && failures.Count == 0;
-    }
-
-    private bool AssertPackageIdsNotRewritten(string appName, string outputDir)
-    {
-      // sourceName rewrite of package IDs produces e.g. PublishSmokeDefault.Analyzers — nonexistent.
-      // Scoped to MSBuild/JSON (not .cs) — same policy as template-smoke.
-      string[] forbidden =
-        ForbiddenRewrittenPackageFragments
-          .Select(suffix => appName + suffix)
-          .ToArray();
-
-      List<string> hits = [];
-      foreach (string file in Directory.EnumerateFiles(outputDir, "*.*", SearchOption.AllDirectories))
-      {
-        string relative = Path.GetRelativePath(outputDir, file);
-        if (relative.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-            || relative.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-            || relative.StartsWith($"bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-            || relative.StartsWith($"obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
-        {
-          continue;
-        }
-
-        string extension = Path.GetExtension(file);
-        if (extension is not (".props" or ".csproj" or ".targets" or ".slnx" or ".json"))
-          continue;
-
-        string text = File.ReadAllText(file);
-        foreach (string token in forbidden)
-        {
-          if (text.Contains(token, StringComparison.Ordinal))
-            hits.Add($"{relative}: contains '{token}'");
-        }
-      }
-
-      if (hits.Count > 0)
-      {
-        Terminal.WriteErrorLine("Platform package IDs were rewritten by template sourceName:".Red());
-        foreach (string hit in hits)
-          Terminal.WriteErrorLine($"  {hit}");
-        return false;
-      }
-
-      Terminal.WriteLine("Package ID rewrite check passed.");
-      return true;
     }
   }
 }

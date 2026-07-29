@@ -123,12 +123,16 @@ public class GetWeatherForecastsEndpoint
 
 2. Route uniqueness:
    - Each endpoint must have a unique route + HTTP verb combination
-   - Conflicts report a generator diagnostic
+   - Conflicts report **TWE003** on **all** parties in the conflict group; **none** of them are
+     generated (per-compilation batch via `.Collect()` — no static cross-compilation registry)
 
-3. Host compilation must reference FastEndpoints and
+3. HTTP verb is fail-closed: only `Get|Post|Put|Delete|Patch|Head|Options` emit. Unknown or
+   unresolvable verbs report **TWE007** and skip that contract (never defaults to Get).
+
+4. Host compilation must reference FastEndpoints and
    `TimeWarp.Foundation.Features.BaseFastEndpoint<,>`. When generation is enabled but those types
-   are missing, the generator reports **SG002** instead of failing the whole compilation (feature
-   flags can strip FE packages while the generator package remains attached).
+   are missing, the generator reports **SG002** once per compilation instead of failing the whole
+   compilation (feature flags can strip FE packages while the generator package remains attached).
 
 ## OpenAPI documentation
 
@@ -159,35 +163,38 @@ The generator extracts OpenAPI documentation from:
 
 | ID | Meaning |
 |----|---------|
+| TWE002 | `[ApiEndpoint]` missing nested `Query`/`Command` — no emission |
+| TWE003 | Same route + verb claimed by multiple contracts — all parties; none generated |
+| TWE007 | Unknown / unresolvable `HttpVerb` — fail-closed; no emission |
 | SG001 | Source generator log (warning) |
 | SG002 | `EnableApiEndpointGeneration` is true but FastEndpoints / `BaseFastEndpoint` are missing |
-| Route conflict | Same route + verb registered twice |
+| TWA0013/0014 | Auth-posture missing or contradictory (convention analyzer) |
+| TWA0020 | `[ApiEndpoint]` + `[ClientOnlyContract]` contradiction (convention analyzer) |
 
 Contract-shape rules for the outer class (`static`/`partial`, Query/Command present) are enforced
-alongside TWA0005/0006 (endpoint verb agreement and coverage for every routed contract) and
-TWA0013/0014 (every `[ApiEndpoint]` contract carries exactly one auth-posture marker).
+alongside TWA0006 (coverage for every routed contract; TWA0005 MVC verb-mismatch retired
+with BaseEndpoint, task 131 F-002) and TWA0013/0014 (every `[ApiEndpoint]` contract carries
+exactly one auth-posture marker). Generated endpoints always inherit `BaseFastEndpoint` — there is
+no `EndpointType` override (task 131-001 F-005; YAGNI).
 
-## Customization
+## Authorization
 
-1. Custom endpoint base type:
-   ```csharp
-   [ApiEndpoint(EndpointType = typeof(MinimalApiEndpoint<,>))]
-   ```
+The contract is the single source of auth intent; every `[ApiEndpoint]` contract carries exactly
+one of `[EndpointAuthorize]` (protected) or `[EndpointAllowAnonymous]` (genuinely public):
 
-2. Authorization — the contract is the single source of auth intent; every `[ApiEndpoint]`
-   contract carries exactly one of `[EndpointAuthorize]` (protected) or `[EndpointAllowAnonymous]`
-   (genuinely public):
-   ```csharp
-   [ApiEndpoint]
-   [EndpointAuthorize(Policy = "my-policy")]
-   public static partial class SecureEndpoint { /* … */ }
+```csharp
+[ApiEndpoint]
+[EndpointAuthorize(Policy = "my-policy")]
+public static partial class SecureEndpoint { /* … */ }
 
-   [ApiEndpoint]
-   [EndpointAllowAnonymous("Public demo endpoint; no security surface.")]
-   public static partial class PublicEndpoint { /* … */ }
-   ```
-   `IAuthApiRequest` on the nested `Query`/`Command` is a client/mock-mode identity signal only —
-   it does not secure the server and must not be paired with `[EndpointAllowAnonymous]` (TWA0014).
+[ApiEndpoint]
+[EndpointAllowAnonymous("Public demo endpoint; no security surface.")]
+public static partial class PublicEndpoint { /* … */ }
+```
+
+`IAuthApiRequest` on the nested `Query`/`Command` is a client/mock-mode identity signal only —
+it does not secure the server and must not be paired with `[EndpointAllowAnonymous]` (TWA0014).
+Do not combine `[ApiEndpoint]` with `[ClientOnlyContract]` (TWA0020).
 
 ## Validation (not in the generator)
 

@@ -16,6 +16,15 @@
          users never see it). Cost: larger ICU payload in the WASM download. -->
     <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
+    <!-- MOCK_AUTHENTICATION is the template default for ALL configurations (Debug and Release).
+         Passkey/identity is the real auth story; MSAL/AzureAdB2C is non-default (task 104-021).
+         Defining only under Debug caused Debug↔Release auth flip: template-smoke and
+         `dotnet publish` (Release) compiled AddMsalAuthentication against placeholder AzureAdB2C
+         while local Debug used mocks (task 131 F-009 interim). Remove this define to compile the
+         MSAL branch instead — and configure AzureAdB2C appsettings. -->
+    <DefineConstants>$(DefineConstants);MOCK_AUTHENTICATION</DefineConstants>
+    <!-- Use Mock web API (optional offline SPA API fakes) -->
+    <!-- <DefineConstants>$(DefineConstants);MOCK_WEB_API</DefineConstants> -->
   </PropertyGroup>
 
   <PropertyGroup>
@@ -41,12 +50,6 @@
          component without the registration 500'd every SPA-shell request. Do not gate any of
          those sites on #if DEBUG directly — one symbol, one truth. -->
     <DefineConstants>$(DefineConstants);ReduxDevToolsEnabled</DefineConstants>
-    <!-- Uncomment the following line if you want to Mock B2C.
-     Note you will need to run all Mock Data if you do
-     because the token won't work on the real API -->
-    <DefineConstants>$(DefineConstants);MOCK_AUTHENTICATION;</DefineConstants>
-    <!-- Use Mock web API -->
-<!--    <DefineConstants>$(DefineConstants);MOCK_WEB_API;</DefineConstants>-->
   </PropertyGroup>
 
   <ItemGroup>
