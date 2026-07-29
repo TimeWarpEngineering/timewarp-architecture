@@ -250,9 +250,13 @@ Formats and lifecycle: the `agent-context-regions` skill.
 
 ## Task management
 
+**Always work on a kanban task** when changing this repo (code, docs, config, skills, CI). Prefer an
+existing open task; otherwise create one. Exceptions: pure Q&A, user-waived, read-only exploration.
+
 `ganda kanban` over the `kanban/` tree (`backlog/`, `to-do/`, `in-progress/`, `done/`):
 **always `ganda kanban create "title"`** (it assigns the number — never hand-number), then
-`move`/`done` to transition. Do not create perpetual/never-closing tasks. See the `kanban` skill.
+`move`/`done` to transition. Keep checklist / `## Session` current; commit kanban mutations.
+Do not create perpetual/never-closing tasks. See the `tw-kanban` skill.
 
 ## Documentation
 

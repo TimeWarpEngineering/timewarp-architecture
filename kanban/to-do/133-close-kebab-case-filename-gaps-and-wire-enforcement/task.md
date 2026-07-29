@@ -111,8 +111,8 @@ rule were wrong; source-generators docs now state SSOT explicitly (task 020).
 - [x] ~~Upstream: rename diagnostic id~~ — **N/A** (task 020: keep **`TW*`**, docs SSOT; no rename)
 - [ ] Enable **`TW0001`** at sensible severity for product/test `.cs` after renames (or gate via
       `.editorconfig` per tree)
-- [ ] Consider `ganda repo audit` check for directory basenames / docs (follow Ganda 144 notes)
-- [ ] Optional external: fix Ganda `file-naming.md` if it still says `TWA001` → **`TW0001`**
+- [ ] Ganda **task 188**: `kebab-path-names` audit check (non-`.cs` + folders) — implement upstream
+- [x] Optional external: Ganda `file-naming.md` `TWA001` → **`TW0001`** (done on ganda `dev`)
 
 ### Verify
 
