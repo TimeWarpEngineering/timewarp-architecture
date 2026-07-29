@@ -28,6 +28,12 @@ Multi-dot **partial** stems are valid when each segment is kebab:
 
 - Feature cohesive grammar (`name[-function]-layer.cs`, TWA0015/0016): skill **`tw-feature-placement`**.
 - Slice isolation: skill **`tw-slice-isolation`**.
+- Co-located Jaribu runfiles under `source/<family>/features/`/`platform/` use the SAME grammar,
+  ending `-tests.cs` (a registered-**unrouted** layer — matched and validated by TWA0015/0016
+  and the membership guard exactly like a routed layer, but claiming no layer project's build:
+  `create-role-tests.cs`, `get-weather-forecasts-tests.cs`). Authoring conventions (runfile
+  preamble, `PublishAot=false`, the `cnd:noEmit`-escaped `JARIBU_MULTI` switch, testing
+  philosophy): skill **`tw-jaribu`**.
 
 ## Enforcement
 

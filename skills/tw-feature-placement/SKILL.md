@@ -206,6 +206,7 @@ layout. When a hub or similar has one folder per message DIRECTION instead of pe
 ```json
 {
   "layers": [ "contracts", "application", "domain", "infrastructure", "server" ],
+  "unroutedLayers": [ "tests" ],
   "functions": {
     "handler": "application",
     "endpoint": "server"
@@ -224,17 +225,29 @@ standalone artifact per family before every compile:
   family's prefix (`Web`/`Api`/`Grpc`). Each holds its family's layer list, hybrid `Compile
   Include` globs, and the regex its family's membership guard matches filenames against.
 
+**`unroutedLayers` (task 135):** a registered-but-unrouted layer (currently just `tests`, backing
+co-located Jaribu runfiles — see `tw-jaribu` skill) is matched and validated by TWA0015/TWA0016
+and the membership guard **exactly like a routed layer** — a `-tests.cs` file is a legitimate
+archetype, and `create-role-handler-tests.cs` still trips TWA0015 through the ordinary pairing
+logic (the `handler` function still requires `-application`, no matter which layer the file
+actually ends in) — but it gets **no `Compile` glob** in any family's
+`feature-filename-grammar.g.props`, so it claims no layer project's build. This is what lets a
+co-located test file live beside real slice code, stay a first-class grammar citizen (orphaned
+or misnamed `-tests.cs` files still trip the teaching membership-guard error), and still compile
+into nothing. Functions register **only** against routed layers — `unroutedLayers` entries never
+appear as a `functions` value.
+
 Adding or changing a function or layer means editing only the JSON — the change applies to every
 family:
 
-1. Add the entry (e.g. a new `"validator": "application"` pair).
+1. Add the entry (e.g. a new `"validator": "application"` pair, or a new `unroutedLayers` entry).
 2. Build the analyzers project (or a full solution build) so both generated files regenerate.
 3. **Do a full rebuild, not an incremental one.** Analyzer DLLs can go stale under incremental
    MSBuild — a registry change that doesn't get picked up will silently keep enforcing the old
    pairing. Treat every registry edit as `dev build --clean`-worthy.
 4. A layer-suffix that would nest inside another registered suffix (dual-glob-match risk) is
    rejected at generation time — the generator fails the build rather than shipping an ambiguous
-   registry.
+   registry. The nesting check covers `layers` **and** `unroutedLayers` together.
 
 ## Membership guard
 
@@ -357,6 +370,8 @@ namespaces don't change; only which project's glob claims them does.
   filename/layer question once you already know which slice a file belongs to
 - `tw-web-api-contracts` — the operation-contract shape that every `-contracts.cs` file must
   satisfy
+- `tw-jaribu` — co-located Jaribu runfile authoring convention for the `tests` registered-unrouted
+  layer (`<name>[-<function>]-tests.cs`)
 - **AGENTS.md** — Layout section (cohesive tree diagram) and the TWA diagnostic table
   (TWA0015/TWA0016 rows)
 - **Registry (source of truth):**
