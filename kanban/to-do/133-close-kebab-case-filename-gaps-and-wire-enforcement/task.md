@@ -40,24 +40,23 @@ Evidence:
 |------|--------|
 | Package | **`TimeWarp.SourceGenerators`** (CPM pin here: `1.0.0-beta.8`) |
 | Type | `FileNameRuleAnalyzer` (`IIncrementalGenerator` reporting diagnostics) |
-| Diagnostic id | **`TWA001`** (“File name should use kebab-case”) — **not** TWA Architecture’s `TWA0001` (partial-class shape) |
+| Diagnostic id | **`TW0001`** (“File name should use kebab-case”) — package family **`TW*`**, **not** Architecture **`TWA*`** |
 | Default | `isEnabledByDefault: false`, severity **Info** |
 | Scope | **`.cs` only** — not directories, not `.md` / `.csproj` / `.razor` |
 | Pattern | `^[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.cs$` (simple single-stem kebab — **does not** accept multi-dot partials like `application-state.close-modal.cs`) |
-| Exceptions | `*.g.cs`, `*.Generated.cs`, `*.razor.cs`, `*AssemblyInfo.cs`, AnalyzerReleases, etc.; plus `.editorconfig` `dotnet_diagnostic.TWA001.excluded_files` |
-| Origin task | timewarp-source-generators task **011** (originally TW0003, later **TWA001**) |
+| Exceptions | `*.g.cs`, `*.Generated.cs`, `*.razor.cs`, `*AssemblyInfo.cs`, AnalyzerReleases, etc.; plus `.editorconfig` `dotnet_diagnostic.TW0001.excluded_files` |
+| Origin task | timewarp-source-generators task **011** |
+| Prefix SSOT | source-generators task **020** (done): **keep `TW*`**, docs-only — no rename; do **not** use `TWA001` / `TWG` for this package |
 | ADR | timewarp-flow **ADR-0013** (Adopt kebab-case file naming) — calls for this analyzer |
 
 **Wiring gap in this monorepo:** `TimeWarp.SourceGenerators` is pinned in CPM and referenced by
 `tests/common/timewarp-testing` (and historically listed in package hygiene tasks) but **not** used
-as a repo-wide kebab gate. Ganda’s `file-naming.md` documents TWA001 as the enforcer “when that
-analyzer package is referenced,” and task 144 explicitly deferred “wiring TWA001 into ganda” /
-general non-`.cs` checks.
+as a repo-wide kebab gate. Ganda task 144 deferred wiring + non-`.cs` checks; Ganda
+`file-naming.md` may still say the wrong id (`TWA001`) until that repo is updated.
 
-**ID collision risk:** Architecture analyzers already use the **`TWA`** prefix (`TWA0001`–`TWA0020`).
-SourceGenerators’ kebab rule also uses **`TWA001`**. AGENTS.md notes SourceGenerators “will use a
-different prefix” — the shipped id still says `TWA001`. Prefer renaming SourceGenerators’ rule
-(e.g. **TWG***) before turning severity up repo-wide, or document the dual namespace carefully.
+**Prefix status (resolved upstream):** Shipped ids are **`TW0001`–`TW0006`**. Architecture owns
+**`TWA*`** — no real Roslyn collision. External/historical docs that said `TWA001` for the kebab
+rule were wrong; source-generators docs now state SSOT explicitly (task 020).
 
 ### Remaining debt (after razor exception)
 

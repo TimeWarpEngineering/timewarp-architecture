@@ -10,15 +10,19 @@
 
 - Package: `TimeWarp.SourceGenerators`
 - File: `source/timewarp-source-generators/file-name-rule-analyzer.cs` (in that repo)
-- Diagnostic: `TWA001` (Info, disabled by default) — **collides conceptually with Architecture TWA0001**
+- Diagnostic: **`TW0001`** (Info, disabled by default) — package prefix **`TW*`**
+- Architecture owns **`TWA*`** separately — **no rename needed** (not a real ID collision)
 - Origin: timewarp-source-generators task 011
+- Prefix SSOT: source-generators task **020** (done, 2026-07-29) — keep `TW*`, docs-only;
+  reject opaque `TWG` / churn-only `TWSG`
 - ADR: timewarp-flow ADR-0013
 
-## Gaps to close
+## Gaps to close (this monorepo)
 
-1. Wire/enable after multi-dot partial support + id rename
+1. Wire/enable **`TW0001`** after multi-dot partial support (upstream) if needed
 2. Integration-test path kebab migration
 3. Docs/skills: document razor exception in TWA
 4. Docs/assets optional renames
+5. Optional: Ganda `file-naming.md` still says `TWA001` in places — fix to **`TW0001`** there
 
 See `task.md` and `audit-report.md`.
