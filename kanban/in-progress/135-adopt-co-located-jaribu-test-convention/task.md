@@ -67,17 +67,28 @@ Aspire multi-resource tier (findings §8 Q3); migrating any existing Fixie suite
 
 ## Checklist
 
-- [ ] `tests` registered in grammar SSOT as recognized-unrouted; g.props regenerated; spike
-      exclude-glob approach not used
-- [ ] TWA0015/0016 semantics for `-tests.cs` defined + analyzer tests
-- [ ] Template-safety mechanism chosen, implemented, proven
-- [ ] `dev template-smoke` regression coverage for co-located tests in generated apps
-- [ ] Runfile preamble convention decided (incl. PublishAot=false + analyzer-noise story) and applied
-- [ ] Both spike proof files ported onto dev, passing standalone
-- [ ] timewarp-jaribu#19 status checked; lifetime pattern per outcome
-- [ ] AGENTS.md + skills + standards docs updated, migration policy stated
-- [ ] Gates: `dev build` 0/0, template-smoke green, `ganda repo audit` clean
-- [ ] Kanban mutations committed
+- [x] `tests` registered in grammar SSOT as recognized-unrouted (`"unroutedLayers"`); g.props
+      regenerated ×3 families; no exclude-glob used; guard integrity proven by negative probe
+- [x] TWA0015/0016 semantics for `-tests.cs` defined + analyzer tests (102/0; zero analyzer
+      code changes needed; registry-sync test split routed/unrouted)
+- [x] Template-safety mechanism: `cnd:noEmit` escape (matches web-spa precedent); M1 failure
+      reproduced without escape, survival proven with it
+- [x] `dev template-smoke` two-tier regression coverage (directive survival + standalone
+      `dotnet run` of generated test files); failure path proven by fault injection
+- [x] Runfile preamble convention decided and applied — NOTE plan correction: bare
+      `#:property NoWarn=…` REPLACES the property; canonical form is `NoWarn=$(NoWarn);…`
+- [x] Both spike proof files ported onto dev (100755), passing standalone (5/5, 2/2)
+- [x] timewarp-jaribu#19 checked: still open → documented Lazy-static host workaround kept
+- [x] AGENTS.md + repo-local tw-feature-placement skill + file-naming.md updated; migration
+      policy + standalone-only-until-136 + enforcement-surface caveat stated; cross-repo
+      tw-jaribu skill pointer deferred as follow-up
+- [ ] Gates: `dev build` 0/0 ✓, template-smoke green ✓, analyzer+sourcegen tests ✓ —
+      `ganda repo audit` NOT clean: `kebab-path-names` fails on ~83 PRE-EXISTING paths on
+      dev itself (none from this diff; verified both on the branch and on dev). Blocks the
+      tw-pr gate; needs Steve's decision (exceptions vs rename task vs waive).
+- [x] Kanban mutations committed
+- [ ] PR opened + merged per tw-pr (pending: audit-debt decision + `dev check-version`
+      version/pin bump per task-124 policy — template content changed)
 
 ## Notes
 
@@ -94,7 +105,42 @@ Aspire multi-resource tier (findings §8 Q3); migrating any existing Fixie suite
   still open → Lazy-static host stays. Global tw-jaribu skill edit deliberately skipped
   (external repo) — pointer recorded as follow-up.
 
+## Results
+
+**Implementation complete and review-clean; merge pending two human gate decisions.**
+
+- **Branch:** `Claude/2026-07-29/adopt-co-located-jaribu-tests` (off dev), 5 commits:
+  938a5fe6 grammar/generator/analyzer-tests · c83e088e ported test files · b316c972
+  template-smoke · f33e78a7 docs · 20646757 review fixes.
+- **What landed:** `"unroutedLayers": ["tests"]` in the grammar SSOT (guard accepts, no
+  Compile glob, no Project= metadata); TWA0015 covers `-handler/-endpoint-tests.cs` with zero
+  analyzer code changes; two co-located Jaribu runfiles on dev with the canonical preamble
+  (`PublishAot=false`, `NoWarn=$(NoWarn);…`, Purpose regions, cnd:noEmit-escaped JARIBU_MULTI
+  switch); template-smoke two-tier regression (both matrix entries green, 5/5 + 2/2 in
+  generated apps); docs in AGENTS.md, skills/tw-feature-placement (canonical preamble
+  section), file-naming.md, incl. migration policy and the per-file enforcement-surface
+  caveat (build-time coverage returns with task-136 aggregators).
+- **Gates:** `dev build --clean` 0/0; analyzers-tests 102/0; sourcegenerator-tests 59/0;
+  both runfiles standalone pass; `dev template-smoke` SUCCEEDED (both tiers, both entries).
+  `ganda repo audit`: no new violations from this diff; `kebab-path-names` fails on ~83
+  pre-existing paths on dev itself — blocks tw-pr gate, decision pending.
+- **Review (Phase 4b):** 2 rounds, effort 1. Round 1 confirmed all claims incl. negative
+  probes and fault-injected tier-2 failure path; 3 findings (2 suggestion, 1 nit) → all
+  fixed in 20646757, verified round 2. Disposition: **clean** (0 open, 0 wontfix).
+  Artifacts: `review/review-framework.md`, `review/round-{1,2}/`, `review/disposition.md`.
+- **Plan corrections discovered:** `#:property NoWarn` is NOT additive (needs `$(NoWarn);`
+  prefix); cnd:noEmit marker comments are themselves stripped from generated output; Jaribu
+  TerminalSink emits ANSI unconditionally (harness strips before parsing). Environment
+  footgun (not committed): stale `2.0.0-smoke` NuGet cache shadows fresh template packs.
+- **Follow-ups:** task 136 (aggregators + dev test MTP — restores build-time TWA0015/16
+  coverage for tests files); cross-repo tw-jaribu skill pointer update; optional layer-casing
+  near-miss diagnostics (accepted as-is, consistent with existing layers); pre-existing
+  kebab-path-names audit debt (needs its own decision/task).
+
 ## Session
 
 - Created: c6f1a13b-487f-4085-bf61-ba4761e8579e (2026-07-29)
 - Plan + orchestration: c6f1a13b-487f-4085-bf61-ba4761e8579e (2026-07-29)
+- Implementation + fixes: subagent build-135 (isolated worktree), 2026-07-29
+- Review round 1: subagent review-135-r1 (isolated worktree, detached), 2026-07-29
+- Review round 2: orchestrator verification, 2026-07-29
