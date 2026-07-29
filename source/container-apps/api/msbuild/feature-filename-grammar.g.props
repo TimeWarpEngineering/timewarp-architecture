@@ -8,7 +8,7 @@
 -->
 <Project>
   <PropertyGroup>
-    <FeatureFilenameLayerSuffixRegex>-(infrastructure|application|contracts|domain|server)$</FeatureFilenameLayerSuffixRegex>
+    <FeatureFilenameLayerSuffixRegex>-(infrastructure|application|contracts|domain|server|tests)$</FeatureFilenameLayerSuffixRegex>
   </PropertyGroup>
   <ItemGroup>
     <FeatureFilenameGrammarLayer Include="contracts" Project="api-contracts" />
@@ -16,6 +16,7 @@
     <FeatureFilenameGrammarLayer Include="domain" Project="api-domain" />
     <FeatureFilenameGrammarLayer Include="infrastructure" Project="api-infrastructure" />
     <FeatureFilenameGrammarLayer Include="server" Project="api-server" />
+    <FeatureFilenameGrammarLayer Include="tests" />
     <FeatureFilenameGrammarFunction Include="endpoint" Layer="server" />
     <FeatureFilenameGrammarFunction Include="handler" Layer="application" />
   </ItemGroup>
