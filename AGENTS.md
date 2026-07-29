@@ -70,7 +70,8 @@ MSBuild well-known props/targets; ASP.NET `Properties/`, `launchSettings.json`,
 **`.cs` enforcement:** `TimeWarp.SourceGenerators` diagnostic **`TW0001`** (`TW*` package family —
 not Architecture `TWA*`). Configure `dotnet_diagnostic.TW0001.*`. Multi-dot partials
 (`application-state.close-modal.cs`) need an upstream pattern fix before enabling severity
-repo-wide. Non-`.cs` / folder basenames: Ganda audit check **task 188** (`kebab-path-names`).
+repo-wide. Non-`.cs` / folder basenames: **`ganda repo audit`** check **`kebab-path-names`**
+(Ganda task **188**, shipped).
 
 ```
 source/

@@ -111,7 +111,7 @@ rule were wrong; source-generators docs now state SSOT explicitly (task 020).
       (`name.part.cs`) — **blocked outside this repo**; ~40 SPA state partials would fail current pattern
 - [x] ~~Upstream: rename diagnostic id~~ — **N/A** (task 020: keep **`TW*`**, docs SSOT; no rename)
 - [ ] Enable **`TW0001`** severity — **blocked** until multi-dot pattern ships; documented in AGENTS
-- [ ] Ganda **task 188**: `kebab-path-names` — **tracked upstream**, not implemented here
+- [x] Ganda **task 188**: `kebab-path-names` — **done upstream** before this task finished (audit check shipped)
 - [x] Ganda `file-naming.md` `TWA001` → **`TW0001`** (done on ganda `dev`)
 
 ### Verify
