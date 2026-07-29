@@ -78,6 +78,15 @@ of record.
   per-layer test-csproj routing that Jaribu obsoletes). Co-location grammar work is a
   follow-up task gated on this spike's findings.
 
+- **Plan (2026-07-29):** full implementation plan in `plan.md` (this folder). Spec correction
+  from planning: requirement 1's "e.g. `features/counter/`" example was stale — counter is
+  client-only SPA state with no wire contract; requirement 1 targets
+  `web/features/admin/roles/create-role/` and requirement 2 targets
+  `api/features/weather-forecast/get-weather-forecasts/` (anonymous endpoint, existing Fixie
+  suite to duplicate). Strategic post-spike questions for Steve are listed at the end of
+  `plan.md`; none block the spike.
+
 ## Session
 
 - Created: c6f1a13b-487f-4085-bf61-ba4761e8579e (2026-07-29)
+- Plan + orchestration: c6f1a13b-487f-4085-bf61-ba4761e8579e (2026-07-29)
