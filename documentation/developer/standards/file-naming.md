@@ -34,7 +34,7 @@ Multi-dot **partial** stems are valid when each segment is kebab:
 | Layer | Scope |
 |-------|--------|
 | Agent skill **`tw-csharp`** | Conventions + exceptions (all TimeWarp repos) |
-| **`TW0001`** (`TimeWarp.SourceGenerators`) | `.cs` basenames in compilations only (`TW*`, not Architecture `TWA*`) |
+| **`TW0001`** (`TimeWarp.SourceGenerators` ≥ beta.10) | `.cs` basenames (repo-wide PackageReference + `.editorconfig` warning); skips `obj/`/`bin/` |
 | Ganda **`kebab-path-names`** (task 188, shipped) | Folders + non-`.cs` basenames via `ganda repo audit` |
 | Architecture **TWA0015/0016** | Axis-1 feature/platform grammar only |
 

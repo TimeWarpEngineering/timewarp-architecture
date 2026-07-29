@@ -168,7 +168,7 @@
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="TimeWarp.Fixie" Version="3.1.0" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.13" />
-    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.9" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.10" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
   </ItemGroup>
