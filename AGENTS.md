@@ -10,7 +10,7 @@ other tools read it directly.
   packaging tree. Changes here ship to every generated app.
 - Feature flags (`api`, `grpc`, `web`, `yarp`, `postgres`) are template preprocessor switches —
   keep `<!--#if (flag)-->` / `#if flag` regions intact when editing near them. Demo features
-  (counter, event-stream) ship unconditionally; see HowToRemoveDemoFeatures.md.
+  (counter, event-stream) ship unconditionally; see how-to-remove-demo-features.md.
 
 ## Build / run / test
 
@@ -153,7 +153,7 @@ and template publish together in one release run, so pins always reference versi
 by the time any generated app restores; the old lag-behind-published policy shipped a template
 whose pins predated its own release). Upgrade path for apps that still vendored
 `source/analyzers/**`: see
-`documentation/developer/how-to-guides/HowToUpgradeToAnalyzerPackages.md`.
+`documentation/developer/how-to-guides/how-to-upgrade-to-analyzer-packages.md`.
 
 **sourceName-safe platform package IDs:** template `sourceName` is `TimeWarp.Architecture`, so a
 literal `TimeWarp.Architecture.Analyzers` in csproj/CPM would rewrite to `AppName.Analyzers` on

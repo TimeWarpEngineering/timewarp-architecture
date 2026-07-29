@@ -16,4 +16,4 @@ Accepted decisions that shape the TimeWarp Architecture template.
 | [0009](0009-postgres-ef-golden-persistence-path.md) | Postgres + EF Core as the golden persistence path |
 
 For new ADRs, start from [adr-template.md](../adr-template.md). Parent index:
-[architectural-decision-records/Overview.md](../Overview.md).
+[architectural-decision-records/overview.md](../overview.md).

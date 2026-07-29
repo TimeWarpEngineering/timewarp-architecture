@@ -105,4 +105,4 @@ contradiction.
 
 Authoritative diagnostics: TWE002 (missing Query/Command), TWE003 (route+verb conflict),
 TWE007 (unresolvable route/HttpVerb), SG002 (missing FastEndpoints). See
-`documentation/developer/reference/ApiEndpointSourceGenerator.md` and AGENTS.md.
+`documentation/developer/reference/api-endpoint-source-generator.md` and AGENTS.md.

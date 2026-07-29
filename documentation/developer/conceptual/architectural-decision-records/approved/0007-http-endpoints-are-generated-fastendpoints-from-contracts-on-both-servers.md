@@ -95,7 +95,7 @@ Concrete shape:
 
 * Related: [ADR-0003](0003-endpoint-centric-api-with-interface-based-validation.md) — endpoint-centric
   contracts and interface validation
-* Reference: [ApiEndpointSourceGenerator.md](../../../reference/ApiEndpointSourceGenerator.md)
+* Reference: [api-endpoint-source-generator.md](../../../reference/api-endpoint-source-generator.md)
 * Skill: `skills/web-api-contracts/SKILL.md`
 * Tasks: 004 (api-only), 109 / 109-001…109-004 (web cutover + docs), 110 (fail-closed auth default)
 

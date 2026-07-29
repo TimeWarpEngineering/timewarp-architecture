@@ -17,11 +17,11 @@ Both projects use HTTP transport with JSON serialization and follow the same con
 
 ## Documentation Contents
 
-- **[How to Write BFF API Contracts](HowToWrite_BFF_API_Contracts.md)** - Primary guide for creating API contracts
-- **[Handling Mutability in API Contracts](Handling_Mutability_in_API_Contracts.md)** - Managing mutable data patterns
-- **[Handling Nullability in API Contracts](Handling_Nullability_in_API_Contracts.md)** - Null handling strategies
+- **[How to Write BFF API Contracts](how-to-write-bff-api-contracts.md)** - Primary guide for creating API contracts
+- **[Handling Mutability in API Contracts](handling-mutability-in-api-contracts.md)** - Managing mutable data patterns
+- **[Handling Nullability in API Contracts](handling-nullability-in-api-contracts.md)** - Null handling strategies
 
 ## Related Documentation
 
-- [API Design Conceptual Guide](../../conceptual/ApiDesign.md)
+- [API Design Conceptual Guide](../../conceptual/api-design.md)
 - [Endpoint-Centric API ADR](../../conceptual/architectural-decision-records/approved/0003-endpoint-centric-api-with-interface-based-validation.md)

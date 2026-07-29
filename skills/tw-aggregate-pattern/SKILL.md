@@ -17,7 +17,7 @@ when-to-use: >
 
 An aggregate is a domain entity that is the consistency boundary for a set of invariants.
 Every aggregate root in this repository follows the same golden pattern. This skill is the
-pattern SSOT; `HowToAddYourAggregate.md` is the human end-to-end walkthrough that defers to it.
+pattern SSOT; `how-to-add-your-aggregate.md` is the human end-to-end walkthrough that defers to it.
 
 ## Detection — when to invoke
 
@@ -81,5 +81,5 @@ mapping does not declare it.
 - `tw-feature-placement` — filename grammar and layer membership (`<name>[-<function>]-<layer>.cs`,
   the `domain` layer, registry)
 - `tw-slice-isolation` — which slice an aggregate belongs to before placement
-- `HowToAddYourAggregate.md` — human end-to-end walkthrough (domain → EF mapping → host
+- `how-to-add-your-aggregate.md` — human end-to-end walkthrough (domain → EF mapping → host
   registration → application use → tests)
