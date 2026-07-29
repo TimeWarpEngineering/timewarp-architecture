@@ -21,36 +21,12 @@ under 131; this task removes the remaining dual-maintenance mirror.
 
 ## Verification concerns to honor (claude-verification, 131 review audits)
 
-Fold these into the design — they are constraints and known traps, not suggestions:
-
-1. **Home must be WASM-safe.** The shared core is composed by the SPA (browser WASM) and
-   by test hosts — it must live in a client-safe foundation layer (where
-   `IApiService`/`IApiRequest`/`ContractSerializationDefaults` already sit), NOT
-   foundation-server. No ASP.NET server dependencies may leak into the SPA download.
-2. **Token acquisition is an async per-request seam, not a constructor value.** SPA side
-   acquires via `IAccessTokenProvider` (async `SetBearerTokenAsync` before each send);
-   TestApiService pins a fixed header at construction. The delegate the core exposes must
-   support async per-request acquisition or the SPA side cannot compose it.
-3. **Verbatim extraction, one decided exception.** Copy transport semantics byte-for-byte
-   (131-002 rule: no drive-by "improvements") — including the 204→`SharedProblemDetails`
-   "No Content" mapping and the 499 cancellation mapping. The one deliberate change:
-   the verb matrix. Decide Head/Options ONCE, coherently with F-008's fail-closed server
-   posture — either support them for real or `NotSupportedException` in dispatcher AND
-   remove the dead Head/Options arms in `PrepareContent`/`PrepareRoute` (round-1 found the
-   SPA dispatcher throwing while its own `PrepareContent` handled them).
-4. **Reconcile the Stream/FileResponse success path.** TestApiService special-cases
-   `typeof(TResponse) == typeof(Stream)` → `FileResponse`; verify BaseApiService parity and
-   extract one behavior — a silent difference here is exactly the mirror-drift class this
-   task exists to kill.
-5. **Design regions move with the code** (agent-context-regions rule): TestApiService's
-   "mirrors BaseApiService" Design region must be rewritten to describe composition; the
-   security/ordering rationale for problem mapping lives once, on the core.
-6. **Adjacent one-liner rider (from 131-001 audit):** `EndpointEmitModel`'s Design comment
-   claims "Equatable (record + ImmutableArray)" — `ImmutableArray<T>` equality is
-   reference-based, so record equality never holds when Tags differ by instance. Harmless
-   (pipeline roots at CompilationProvider), but fix the comment to be honest (or add a
-   structural comparer if cache-hits ever matter). One line in
-   `source/analyzers/timewarp-architecture-analyzers/models/endpoint-metadata.cs`.
+1. **Home must be WASM-safe** — foundation client layer, NOT foundation-server.
+2. **Token acquisition** async per-request delegate.
+3. **Verbatim extraction** except Head/Options once + Stream path reconcile.
+4. **Stream/FileResponse** one behavior.
+5. **Design regions** move with code.
+6. **EndpointEmitModel** equatability comment rider.
 
 ## Checklist
 
@@ -66,11 +42,23 @@ Fold these into the design — they are constraints and known traps, not suggest
 
 ## Notes
 
-Parent: F-015. SPA side already aligned with TestApiService catch filter (131 interim).
-Verification concerns above sourced from
-`kanban/in-progress/131-complete-repo-code-review-by-kimi-k3/review/round-1/claude-verification.md`
-(§ F-015) and the 131-001 post-done audit (EndpointEmitModel comment nit).
+### Implementation plan (2026-07-29)
+
+**Home:** `source/foundation/foundation-contracts/services/http-api-service.cs`  
+`public sealed class HttpApiService : IApiService`  
+Ctor: `(HttpClient, JsonSerializerOptions, Func<CancellationToken, Task<string?>>? acquireBearerTokenAsync = null)`
+
+**Decisions:**
+- Head/Options → `NotSupportedException` (no real HEAD client)
+- Stream path: drop SPA-only `EnsureSuccessStatusCode` inside success branch
+- SPA adapts `IAccessTokenProvider` → acquire Func; TestApiService pins header, passes null Func
+- Drop BaseAuthApiService double token apply
+- Unit tests in foundation-contracts-tests with HttpMessageHandler double
+- Rider: honest EndpointEmitModel Design on ImmutableArray equality
+
+**Steps:** Add HttpApiService + tests → compose BaseApiService → compose TestApiService → rider → build/test
 
 ## Session
 
 - Created: 2026-07-28 — from task 131 disposition
+- Plan: 2026-07-29 — tw-orchestrate-task Phase 2/3
