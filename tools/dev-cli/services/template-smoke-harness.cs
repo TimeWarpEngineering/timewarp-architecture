@@ -12,6 +12,11 @@
 // SmokeOneAsync is the shared generate → package-id assert → callback → restore → build path;
 // smoke-only package-mode / local-feed setup and publish-only pin/git/nuget.org steps stay as
 // AfterGenerateAsync callbacks on the commands.
+// Task 135: AssertCoLocatedTestFilesSurviveGeneration (tier 1, cheap) + AssertCoLocatedTestFilesRunAsync
+// (tier 2, authoritative `dotnet run`) regression-test the co-located Jaribu runfile JARIBU_MULTI
+// template-safety escape (cnd:noEmit) for generated apps — the ordinary solution build never
+// touches these files (they compile into no layer project by design), so without this pair the
+// gate would be silently blind to a regression here.
 #endregion
 
 namespace DevCli.Services;
@@ -533,6 +538,141 @@ internal sealed class TemplateSmokeHarness
     }
 
     return hits;
+  }
+
+  /// <summary>
+  /// Co-located Jaribu runfiles (task 135) whose JARIBU_MULTI template-safety (the cnd:noEmit
+  /// escape) and end-to-end runnability must survive `dotnet new` generation. These compile into
+  /// NO layer project (registered-unrouted "tests" suffix, feature-filename-grammar.json) so the
+  /// generated app's ordinary solution build is structurally blind to a regression here — this is
+  /// the only gate that exercises them post-generation. Standalone-run only; no JARIBU_MULTI
+  /// aggregator exists yet (task 136), so both tiers below run each file via `dotnet run`.
+  /// </summary>
+  public static readonly string[] CoLocatedTestFiles =
+  [
+    "source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs",
+    "source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs",
+  ];
+
+  // The exact guarded lines a template-safe co-located runfile preamble must contain, verbatim,
+  // in the GENERATED output. dotnet-new's conditional processor (without the cnd:noEmit escape)
+  // strips the "#if !JARIBU_MULTI" / "#endif" directive lines while keeping the body unconditional
+  // (task 134 finding M1, reproduced and confirmed fixed by the escape during task 135) — so their
+  // literal presence post-generation is the actual proof, not TWA0008 staying quiet (TWA0008 only
+  // flags tokens OUTSIDE the escaped region).
+  private static readonly string[] JaribuMultiGuardLines =
+  [
+    "#if !JARIBU_MULTI",
+    "return await TimeWarp.Jaribu.TestRunner.RunAllTests();",
+    "#endif",
+  ];
+
+  private static readonly System.Text.RegularExpressions.Regex AnsiEscape =
+    new(@"\x1B\[[0-9;]*m", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+  private static readonly System.Text.RegularExpressions.Regex JaribuTotalLine =
+    new(@"Total:\s*(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+  private static readonly System.Text.RegularExpressions.Regex JaribuPassedLine =
+    new(@"Passed:\s*(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+  /// <summary>
+  /// Tier 1 (cheap): asserts every co-located test file that shipped into the generated app
+  /// still contains the JARIBU_MULTI guard lines verbatim. Run right after generation, before
+  /// restore/build, so a regression here is reported before spending time on a build.
+  /// </summary>
+  public bool AssertCoLocatedTestFilesSurviveGeneration(string outputDir)
+  {
+    bool ok = true;
+
+    foreach (string relativePath in CoLocatedTestFiles)
+    {
+      string generatedPath = Path.Combine(outputDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
+      if (!File.Exists(generatedPath))
+      {
+        Terminal.WriteErrorLine($"Co-located test file missing after generation: {relativePath}".Red());
+        ok = false;
+        continue;
+      }
+
+      string text = File.ReadAllText(generatedPath).Replace("\r\n", "\n", StringComparison.Ordinal);
+      foreach (string guardLine in JaribuMultiGuardLines)
+      {
+        if (!text.Contains(guardLine, StringComparison.Ordinal))
+        {
+          Terminal.WriteErrorLine(
+            $"{relativePath}: generated output lost '{guardLine}' — JARIBU_MULTI template-safety guard did not survive dotnet-new generation (M1 regression).".Red());
+          ok = false;
+        }
+      }
+    }
+
+    if (ok)
+      Terminal.WriteLine("Co-located Jaribu JARIBU_MULTI guard survived generation (tier 1).");
+
+    return ok;
+  }
+
+  /// <summary>
+  /// Tier 2 (authoritative): `dotnet run` each generated co-located runfile standalone and assert
+  /// exit 0 with a nonzero, all-passing Jaribu grand total. Proves the file is not just textually
+  /// intact but genuinely compiles and runs end to end post-generation (sourceName namespace
+  /// rewrite, contract shape, everything). Runs files serially — the weather-forecast file spins
+  /// a real host on fixed port 7255 (same constraint as the monorepo original).
+  /// </summary>
+  public async Task<bool> AssertCoLocatedTestFilesRunAsync(string outputDir, CancellationToken ct)
+  {
+    bool ok = true;
+
+    foreach (string relativePath in CoLocatedTestFiles)
+    {
+      string generatedPath = Path.Combine(outputDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
+      if (!File.Exists(generatedPath))
+        continue; // already reported by tier 1
+
+      Terminal.WriteLine($"Running generated co-located test standalone: {relativePath}...");
+
+      CommandOutput result = await Shell.Builder("dotnet")
+        .WithArguments("run", generatedPath)
+        .WithWorkingDirectory(outputDir)
+        .WithNoValidation()
+        .CaptureAsync(ct);
+
+      string plain = AnsiEscape.Replace(result.Combined, "");
+      bool parsed = TryParseJaribuGrandTotal(plain, out int total, out int passed);
+
+      if (!result.Success || !parsed || total == 0 || passed != total)
+      {
+        Terminal.WriteErrorLine(
+          $"{relativePath}: generated co-located test did not pass standalone (exit {result.ExitCode}).".Red());
+        Terminal.WriteErrorLine(result.Combined);
+        ok = false;
+        continue;
+      }
+
+      Terminal.WriteLine($"{relativePath}: {passed}/{total} passed standalone.".Green());
+    }
+
+    return ok;
+  }
+
+  /// <summary>
+  /// Parses the LAST "Total: N" / "Passed: N" pair in Jaribu TerminalSink output — the Grand
+  /// Total across every test class in the file, not a per-class subtotal.
+  /// </summary>
+  private static bool TryParseJaribuGrandTotal(string plainOutput, out int total, out int passed)
+  {
+    total = 0;
+    passed = 0;
+
+    System.Text.RegularExpressions.MatchCollection totalMatches = JaribuTotalLine.Matches(plainOutput);
+    System.Text.RegularExpressions.MatchCollection passedMatches = JaribuPassedLine.Matches(plainOutput);
+    if (totalMatches.Count == 0 || passedMatches.Count == 0)
+      return false;
+
+    total = int.Parse(totalMatches[^1].Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+    passed = int.Parse(passedMatches[^1].Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+    return true;
   }
 
   /// <summary>
