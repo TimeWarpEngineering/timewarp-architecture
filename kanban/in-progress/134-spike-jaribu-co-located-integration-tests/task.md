@@ -60,7 +60,7 @@ of record.
 - [ ] Contracts round-trip runfile co-located in a slice, runs standalone
 - [ ] Integration-test runfile: real host, endpoint happy path + validation rejection
 - [ ] Test DI container flexibility evaluated; carry/port/gap documented
-- [ ] Aspire testing features surveyed (latest); recommendation written
+- [x] Aspire testing features surveyed (latest); recommendation written (`aspire-testing-survey.md` — complement, not supersede; no in-process DI overrides in Aspire testing)
 - [ ] JARIBU_MULTI project: `dotnet test` / IDE discovery of the same files
 - [ ] Upstream Jaribu gaps filed (if any)
 - [ ] Membership-guard + analyzer interaction sketch written
