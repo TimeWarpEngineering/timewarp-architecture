@@ -22,17 +22,13 @@
 #endregion
 
 #region Design
-// A single lazily-initialized static ApiTestServerApplication is shared across every test in
-// this file. Jaribu has no class-scoped setup/teardown hook (Setup/CleanUp run per test), and
-// the precedent Fixie suite gets shared-host lifetime for free from Fixie's DI-singleton
-// convention (TimeWarpTestingConvention). Spinning up WebApplication.CreateBuilder +
+// Shared host lifetime uses Jaribu class-scoped SetupOnce / CleanUpOnce (TimeWarp.Jaribu
+// ≥ 1.0.0-beta.14; timewarp-jaribu#19 / jaribu task 029). SetupOnce runs before the first
+// test that actually executes; CleanUpOnce disposes the host after the last test so the fixed
+// port is released before process exit — required for JARIBU_MULTI aggregators and safer than
+// the pre-beta.14 Lazy-never-dispose workaround. Spinning up WebApplication.CreateBuilder +
 // FastEndpoints + Mediator per test would multiply the host's ~1s+ startup cost by the test
-// count for zero isolation benefit (this endpoint has no mutable state). The host is never
-// explicitly disposed — Jaribu has no run-completion hook to hang a DisposeAsync off of; the
-// process exits and the OS reclaims the port. Acceptable for a short-lived `dotnet run`
-// process; NOT a pattern to carry into a long-lived multi-mode host. Upstream gap tracked at
-// https://github.com/TimeWarpEngineering/timewarp-jaribu/issues/19 (class/assembly-scoped
-// fixture lifetime) — still OPEN as of task 135; revisit this workaround once it ships.
+// count for zero isolation benefit (this endpoint has no mutable state).
 #endregion
 
 //-:cnd:noEmit
@@ -61,25 +57,35 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts
   using static TimeWarp.Jaribu.TestRunner;
   using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 
-  internal static class SharedHost
-  {
-    private static readonly Lazy<ApiTestServerApplication> LazyApplication = new(() => new ApiTestServerApplication());
-
-    public static ApiTestServerApplication Instance => LazyApplication.Value;
-  }
-
   [TestTag("Integration")]
   public class GetWeatherForecastsEndpoint_Given_
   {
+    private static ApiTestServerApplication? Host;
+
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<GetWeatherForecastsEndpoint_Given_>();
+
+    public static Task SetupOnce()
+    {
+      Host = new ApiTestServerApplication();
+      return Task.CompletedTask;
+    }
+
+    public static async Task CleanUpOnce()
+    {
+      if (Host is not null)
+      {
+        await Host.DisposeAsync();
+        Host = null;
+      }
+    }
 
     public static async Task _10DaysRequested_Should_Return10WeatherForecasts()
     {
       Query query = new() { Days = 10 };
 
       OneOf<Response, FileResponse, SharedProblemDetails> response =
-        await SharedHost.Instance.GetResponse<Response>(query, CancellationToken.None);
+        await Host!.GetResponse<Response>(query, CancellationToken.None);
 
       response.Switch
       (
@@ -93,7 +99,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts
     {
       Query query = new() { Days = -1 };
 
-      await SharedHost.Instance.ConfirmEndpointValidationError<Response>(query, nameof(Query.Days));
+      await Host!.ConfirmEndpointValidationError<Response>(query, nameof(Query.Days));
     }
   }
 

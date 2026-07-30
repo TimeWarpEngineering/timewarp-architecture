@@ -256,7 +256,8 @@ duplicated here. Reference implementations:
 `source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs` (host-free
 contract round-trip) and
 `source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs`
-(real host, fixed port 7255) — read one before writing a new co-located test.
+(real host, fixed port 7255, class-scoped `SetupOnce`/`CleanUpOnce` for host dispose —
+requires `TimeWarp.Jaribu` ≥ 1.0.0-beta.14) — read one before writing a new co-located test.
 
 ```csharp
 #!/usr/bin/env -S dotnet --
