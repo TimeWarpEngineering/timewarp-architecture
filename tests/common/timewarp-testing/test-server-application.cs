@@ -22,7 +22,15 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
 
     ScopedSender = new ScopedSender(webApplicationHost.ServiceProvider);
 
-    HttpClient = new HttpClient
+    // CI runners have no trusted ASP.NET dev certificate, so the test client must accept
+    // Kestrel's untrusted cert — but only for loopback hosts; real endpoints still validate.
+    HttpClientHandler handler = new()
+    {
+      ServerCertificateCustomValidationCallback = (message, _, _, errors) =>
+        errors == System.Net.Security.SslPolicyErrors.None || message.RequestUri?.IsLoopback == true
+    };
+
+    HttpClient = new HttpClient(handler)
     {
       BaseAddress = new Uri(WebApplicationHost.Urls.First())
     };
