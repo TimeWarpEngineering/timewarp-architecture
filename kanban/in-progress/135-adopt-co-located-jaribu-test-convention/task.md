@@ -82,13 +82,13 @@ Aspire multi-resource tier (findings §8 Q3); migrating any existing Fixie suite
 - [x] AGENTS.md + repo-local tw-feature-placement skill + file-naming.md updated; migration
       policy + standalone-only-until-136 + enforcement-surface caveat stated; cross-repo
       tw-jaribu skill pointer deferred as follow-up
-- [ ] Gates: `dev build` 0/0 ✓, template-smoke green ✓, analyzer+sourcegen tests ✓ —
-      `ganda repo audit` NOT clean: `kebab-path-names` fails on ~83 PRE-EXISTING paths on
-      dev itself (none from this diff; verified both on the branch and on dev). Blocks the
-      tw-pr gate; needs Steve's decision (exceptions vs rename task vs waive).
+- [x] Gates: `dev build` 0/0 ✓, template-smoke green ✓ (branch AND merged dev),
+      analyzer+sourcegen tests ✓; `ganda repo audit` resolved via tasks 137+138 (+ ganda
+      189/190 hardening) — single remaining path is the documented Dockerfile exemption gap
+      (ganda 190)
 - [x] Kanban mutations committed
-- [ ] PR opened + merged per tw-pr (pending: audit-debt decision + `dev check-version`
-      version/pin bump per task-124 policy — template content changed)
+- [x] PR opened: #293 (dev → master, ships 135+137+138 + 2.0.0-beta.10 bump); merge is
+      Steve's call and feeds the release pipeline
 
 ## Notes
 
