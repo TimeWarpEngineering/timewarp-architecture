@@ -22,12 +22,20 @@ then with a real package restore dependency.
 
 ## Checklist
 
-- [ ] Delete `timewarp-templates/NuGet.config`
-- [ ] Grep for residual references to that path (docs, scripts, CI) and clean if any
-- [ ] Spot-check pack still works: `dotnet pack` on
-      `timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj`
-      (or the existing pack path used by `dev`/workflow) succeeds
-- [ ] Commit
+- [x] Delete `timewarp-templates/NuGet.config`
+- [x] Grep for residual references to that path (docs, scripts, CI) and clean if any — zero
+      found outside kanban history
+- [x] Spot-check pack still works — `dotnet pack timewarp-architecture-template.csproj -c
+      Release` succeeded (`TimeWarp.Architecture.2.0.0-beta.9.nupkg` created)
+- [x] Commit — 3fd7df4d on dev
+
+## Results
+
+Deleted `timewarp-templates/NuGet.config` (commit 3fd7df4d, dev). No residual references
+(repo grep clean outside kanban history). Pack spot-check green without the file. This clears
+one of the two remaining `kebab-path-names` audit paths after task 138's cleanup; the other
+(`grpc-server/Dockerfile`) is a confirmed tool-required name pending a ganda exemption
+(follow-up ganda task filed from this session).
 
 ## Notes
 
