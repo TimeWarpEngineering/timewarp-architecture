@@ -28,7 +28,8 @@ grammar self-evident, e.g.:
 |-----------|---------|-------|
 | `.` (dot before layer) | `create-role.contracts.cs` | Common “name.kind.ext” pattern; layer is the last stem segment before `.cs` |
 | `.` with function | `create-role.handler.application.cs`? or `create.handler.application.cs` | Need a clear rule for multi-segment names vs function |
-| `_` (underscore before layer) | `create-role_contracts.cs` | Distinct from kebab names; uglier |
+| `__` (double underscore before layer) | `create-role__contracts.cs` | Strong visual break; name stays kebab; no multi-dot basename; uncommon in existing tree |
+| `_` (single underscore before layer) | `create-role_contracts.cs` | Distinct from kebab names; weaker boundary than `__`; uglier |
 | double hyphen / other | `create-role--contracts.cs` | Visually noisy; rare in tooling |
 | Keep `-`, document only | status quo | Cheap; does not fix scannability |
 
@@ -76,8 +77,8 @@ recommendation: keep `-`, switch separator(s), and whether the separator is **ha
 ### Motivation (from create)
 
 `create-role-contracts.cs` uses `-` for both name segments and the layer key, so the eye cannot
-tell the grammar boundary. Alternatives floated: `create-role.contracts.cs` (dot), or something
-else.
+tell the grammar boundary. Alternatives floated: `create-role.contracts.cs` (dot),
+`create-role__contracts.cs` (double underscore), or something else.
 
 ### SSOT touchpoints (starting list)
 
@@ -95,6 +96,8 @@ else.
    new separator (`create-role.handler.application.cs`)?
 3. Migration: big-bang rename in-repo + template, or temporary dual-accept of old and new forms?
 4. Does a `.` layer separator conflict with any existing non-grammar multi-dot `.cs` names?
+5. Does `__` collide with any private/dunder-style naming we care about, or with shell/glob
+   patterns that treat `_` specially?
 
 ## Session
 
