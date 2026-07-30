@@ -53,14 +53,35 @@ task 137's NuGet.config deletion.
 
 ## Checklist
 
-- [ ] Tool-required candidates investigated (Dockerfile, testEnvironments.json,
-      Web.Contracts.csproj fixture); outcomes documented; any ganda-189 gaps reported
-- [ ] All remaining paths renamed via git mv with references updated, batched commits
-- [ ] Case-only renames verified two-step
-- [ ] Old-name grep sweep: zero live references
-- [ ] `ganda repo audit` CLEAN
-- [ ] `dev build` 0/0; `dev template-smoke` green
-- [ ] Kanban mutations committed
+- [x] Tool-required candidates investigated: Dockerfile LEFT (VS Container Tools
+      `DockerfileContext` consumes literal default; ganda task 190 filed for exemption);
+      testEnvironments.json DELETED (dead scaffold, all entries commented since task 064);
+      Web.Contracts.csproj RENAMED (name not load-bearing, verified vs eval configs)
+- [x] All remaining paths renamed via git mv with references updated (6 batched commits,
+      90 files; 5 pre-existing broken links found and fixed forward)
+- [x] Case-only renames verified (history preserved via --follow; zero case-duplicates)
+- [x] Old-name grep sweep: zero live references (reviewer-verified; wiki-link blind spot
+      found in review, fixed in d006ad86 with repo-wide catch-all sweep)
+- [x] `ganda repo audit`: kebab failures 79 → 1 tracked exemption gap
+      (`grpc-server/Dockerfile`, ganda 190); NuGet.config cleared by task 137
+- [x] `dev build` 0/0 (branch and merged dev); `dev template-smoke` green on branch
+      (re-running on merged dev as ship gate)
+- [x] Kanban mutations committed
+
+## Results
+
+**Repo-side kebab debt eliminated.** Branch `Claude/2026-07-30/task-138-kebab-case-rename-cleanup`
+(7 commits incl. review fix), merged to dev. 90 files: 76 renames with reference updates
+(docs incl. case-only Overview→overview, web-spa brand images incl. space/underscore names
+and PascalCase dirs, kanban double-hyphen slugs, template assets + LICENSE→license.md, eval
+fixture), 1 deletion (testEnvironments.json), 2 documented leave-in-place (Dockerfile —
+tool-required, ganda 190 filed; NuGet.config — deleted by task 137). Fixed forward 5
+pre-existing broken links (ADR-0004 paths, MADR overview logs, dead PackageIconUrl Assets/
+path, tokens.css comment). Review: 2 rounds, 1 bug (dangling kanban wiki-links) fixed +
+re-verified with catch-all sweep; disposition **clean** (`review/disposition.md`).
+Audit after merge + task 137: only the Dockerfile exemption gap remains, clearing when
+ganda 190 ships. Surprise worth noting: git's rename-similarity heuristic mispairs
+byte-identical files (cosmetic only, verified content-correct).
 
 ## Notes
 
