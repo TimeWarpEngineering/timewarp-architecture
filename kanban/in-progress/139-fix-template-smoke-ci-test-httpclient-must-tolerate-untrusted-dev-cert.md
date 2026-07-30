@@ -23,12 +23,12 @@ This also makes the whole integration tier CI-runnable, which task 136 (aggregat
       (commit f3c2bee6)
 - [x] `dev build` 0/0
 - [x] Integration runfile passes locally (2/2)
-- [ ] Pushed to dev; template-smoke CI green on PR #293
+- [x] Pushed to dev; template-smoke CI green on PR #293 (2m48s, run 30507321632)
 
 ## Results
 
 Commit f3c2bee6 on dev. One-handler fix in shared test infra, scoped to loopback so real
-endpoint validation is unchanged. Local gates green; awaiting CI confirmation on PR #293.
+endpoint validation is unchanged. Local gates green; CI template-smoke PASS on PR #293 (2m48s). With ganda 190 shipped, `ganda repo audit` is now fully clean — the PR has zero gate exceptions.
 
 ## Session
 
