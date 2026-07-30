@@ -206,6 +206,7 @@ layout. When a hub or similar has one folder per message DIRECTION instead of pe
 ```json
 {
   "layers": [ "contracts", "application", "domain", "infrastructure", "server" ],
+  "unroutedLayers": [ "tests" ],
   "functions": {
     "handler": "application",
     "endpoint": "server"
@@ -224,17 +225,91 @@ standalone artifact per family before every compile:
   family's prefix (`Web`/`Api`/`Grpc`). Each holds its family's layer list, hybrid `Compile
   Include` globs, and the regex its family's membership guard matches filenames against.
 
+**`unroutedLayers` (task 135):** a registered-but-unrouted layer (currently just `tests`, backing
+co-located Jaribu runfiles) is matched and validated by TWA0015/TWA0016 and the membership guard
+**exactly like a routed layer** — a `-tests.cs` file is a legitimate archetype, and
+`create-role-handler-tests.cs` still trips TWA0015 through the ordinary pairing logic (the
+`handler` function still requires `-application`, no matter which layer the file actually ends
+in) — but it gets **no `Compile` glob** in any family's `feature-filename-grammar.g.props`, so it
+claims no layer project's build. This is what lets a co-located test file live beside real slice
+code, stay a first-class grammar citizen (orphaned or misnamed `-tests.cs` files still trip the
+teaching membership-guard error), and still compile into nothing. Functions register **only**
+against routed layers — `unroutedLayers` entries never appear as a `functions` value.
+
+**Enforcement surface — honest scope:** TWA0015/0016 and the membership guard only see a
+`-tests.cs` file when it is actually **compiled as part of some MSBuild invocation** —
+`dotnet build`/`dotnet run` against the runfile itself (which synthesizes its own single-file
+project), or, for the two exemplars below, `dev template-smoke`'s tier 2 (`dotnet run` on the
+generated app's copy). Because an unrouted layer claims no layer project's `Compile` glob by
+design, the repo's own `dev build` solution gate **never compiles these files at all** and is
+structurally blind to them — it is not a backstop. Until the task-136 `JARIBU_MULTI` family
+aggregators land, a broken or misnamed co-located test can sit undetected by `dev build`; running
+it standalone (or `dev template-smoke` for the exemplars) is the only thing that exercises the
+grammar checks against it today.
+
+### Co-located Jaribu runfile preamble (the `tests` layer)
+
+This is the canonical in-repo home for the co-located Jaribu runfile authoring convention
+(task 135) — the cross-repo `tw-jaribu` skill covers Jaribu itself (test attributes, naming,
+assertions) but not this repo-specific preamble; updating it there is tracked as a follow-up, not
+duplicated here. Reference implementations:
+`source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs` (host-free
+contract round-trip) and
+`source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs`
+(real host, fixed port 7255) — read one before writing a new co-located test.
+
+```csharp
+#!/usr/bin/env -S dotnet --
+#:project <path-to-the-layer-project-this-test-needs, e.g. $(SourceDirectory)container-apps/web/projects/web-contracts/web-contracts.csproj>
+#:package TimeWarp.Jaribu
+#:package Shouldly
+#:property PublishAot=false
+#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058
+
+#region Purpose
+// One honest line: what this runfile proves.
+#endregion
+
+//-:cnd:noEmit
+#if !JARIBU_MULTI
+return await TimeWarp.Jaribu.TestRunner.RunAllTests();
+#endif
+//+:cnd:noEmit
+
+namespace Your.Slice.Namespace
+{
+  // Jaribu test classes — see the two exemplars above.
+}
+```
+
+- `#:property PublishAot=false` — .NET 10 file-based apps default `PublishAot=true`, which bakes
+  in reflection-disabling runtime feature switches and breaks
+  `ContractSerializationDefaults`-style reflection-based JSON.
+- `#:property NoWarn=$(NoWarn);…` — **the `$(NoWarn);` prefix is required.** A bare
+  `NoWarn=CA1707;…` literal *replaces* the property rather than appending to it, silently
+  un-suppressing everything `Directory.Build.props` already accumulated (CA1052/CA1515/RCS1102
+  are already ambient from `source/container-apps/Directory.Build.props` and don't need
+  re-listing here; CA1707/CA1849/IDE0161/IDE0021/IDE0058 are the ones this runfile shape needs on
+  top of that).
+- The `#if !JARIBU_MULTI` / `return` / `#endif` block MUST stay wrapped in the `//-:cnd:noEmit` /
+  `//+:cnd:noEmit` escape (TWA0008) — without it, `dotnet new`'s conditional processor strips the
+  `#if`/`#endif` directive lines from the generated app's copy while keeping the `return`
+  unconditional (task 134 finding M1), breaking any future `JARIBU_MULTI` aggregator build.
+  `dev template-smoke` tier 1 regression-tests this for the two exemplars.
+- `#region Purpose` is never suppressed (TWA0004) — write the real one-line reason, not a
+  placeholder.
+
 Adding or changing a function or layer means editing only the JSON — the change applies to every
 family:
 
-1. Add the entry (e.g. a new `"validator": "application"` pair).
+1. Add the entry (e.g. a new `"validator": "application"` pair, or a new `unroutedLayers` entry).
 2. Build the analyzers project (or a full solution build) so both generated files regenerate.
 3. **Do a full rebuild, not an incremental one.** Analyzer DLLs can go stale under incremental
    MSBuild — a registry change that doesn't get picked up will silently keep enforcing the old
    pairing. Treat every registry edit as `dev build --clean`-worthy.
 4. A layer-suffix that would nest inside another registered suffix (dual-glob-match risk) is
    rejected at generation time — the generator fails the build rather than shipping an ambiguous
-   registry.
+   registry. The nesting check covers `layers` **and** `unroutedLayers` together.
 
 ## Membership guard
 
@@ -357,6 +432,10 @@ namespaces don't change; only which project's glob claims them does.
   filename/layer question once you already know which slice a file belongs to
 - `tw-web-api-contracts` — the operation-contract shape that every `-contracts.cs` file must
   satisfy
+- `tw-jaribu` (cross-repo) — Jaribu itself (test attributes, naming, assertions); the
+  repo-specific co-located runfile preamble for the `tests` registered-unrouted layer lives
+  above, in **Co-located Jaribu runfile preamble** — updating the cross-repo skill with a pointer
+  to it is tracked as a follow-up, not this skill's job
 - **AGENTS.md** — Layout section (cohesive tree diagram) and the TWA diagnostic table
   (TWA0015/TWA0016 rows)
 - **Registry (source of truth):**

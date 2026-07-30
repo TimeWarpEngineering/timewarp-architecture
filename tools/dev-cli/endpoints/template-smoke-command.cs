@@ -17,6 +17,14 @@
 // smoke validates "this branch's template + this branch's packages". Work dir:
 // artifacts/template-smoke/. Prefer `dotnet run tools/dev-cli/dev.cs -- template-smoke` (or
 // re-self-install) over a stale AOT `./bin/dev`; CI always uses the runfile path.
+//
+// Task 135: SmokeOneAsync also runs the two co-located-Jaribu-test tiers per matrix entry —
+// tier 1 (Harness.AssertCoLocatedTestFilesSurviveGeneration, inside afterGenerateAsync, before
+// restore/build) and tier 2 (Harness.AssertCoLocatedTestFilesRunAsync, after the solution build
+// succeeds). Both are necessary: the ordinary solution build never compiles these files (they're
+// a registered-unrouted "tests" grammar suffix — feature-filename-grammar.json — that claims no
+// layer project's Compile glob by design), so without this pair a regression to the JARIBU_MULTI
+// cnd:noEmit escape would ship silently.
 #endregion
 
 namespace DevCli.Commands;
@@ -243,8 +251,11 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       return true;
     }
 
-    private Task<bool> SmokeOneAsync(string name, string[] extraArgs) =>
-      Harness.SmokeOneAsync(
+    private async Task<bool> SmokeOneAsync(string name, string[] extraArgs)
+    {
+      string? outputDirForTier2 = null;
+
+      bool buildOk = await Harness.SmokeOneAsync(
         name,
         WorkDir,
         extraArgs,
@@ -252,7 +263,14 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
         Ct,
         afterGenerateAsync: outputDir =>
         {
+          outputDirForTier2 = outputDir;
+
           if (!AssertGeneratedAppPackageMode(name, outputDir))
+            return Task.FromResult(false);
+
+          // Tier 1 (cheap): the JARIBU_MULTI guard must survive dotnet-new generation verbatim —
+          // check right after generate, before spending time on restore/build (task 135).
+          if (!Harness.AssertCoLocatedTestFilesSurviveGeneration(outputDir))
             return Task.FromResult(false);
 
           if (!Harness.RewriteCpmPins(outputDir, SmokePackageVersion))
@@ -262,6 +280,19 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
           return Task.FromResult(true);
         },
         restoreNarration: " (local TimeWarp.* feed)");
+
+      if (!buildOk)
+        return false;
+
+      // Tier 2 (authoritative): `dotnet run` each generated co-located test standalone and
+      // confirm it actually passes end to end post-generation (task 135). Runs after the solution
+      // build succeeds — the co-located files compile into no layer project, so the solution
+      // build itself is structurally blind to them; this is the only step that runs them.
+      if (outputDirForTier2 is null)
+        return false;
+
+      return await Harness.AssertCoLocatedTestFilesRunAsync(outputDirForTier2, Ct);
+    }
 
     private void WriteLocalNuGetConfig(string outputDir)
     {

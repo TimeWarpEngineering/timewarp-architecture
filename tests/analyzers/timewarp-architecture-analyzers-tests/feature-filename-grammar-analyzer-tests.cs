@@ -178,6 +178,32 @@ public class Should_Enforce_Feature_Filename_Grammar
     await Test("../features/weather-forecast/get-weather-forecasts/get-weather-forecasts-contracts.cs")
       .RunAsync();
   }
+
+  // "tests" is a registered-unrouted layer (task 135): matched and validated exactly like a
+  // routed layer, but claims no layer project's Compile glob. Registering it ONLY as a layer
+  // (nothing added to "functions") means TWA0015 fires on `-handler-tests.cs`/`-endpoint-tests.cs`
+  // for free through the existing pairing logic — zero analyzer code changes.
+  public static async Task Given_Tests_Escape_Form_IsClean()
+  {
+    await Test("../features/hello/hello-tests.cs").RunAsync();
+    await Test("../features/admin/roles/create-role/create-role-tests.cs").RunAsync();
+  }
+
+  public static async Task Given_Handler_On_Tests_Flags_TWA0015()
+  {
+    const string Path = "../features/hello/hello-handler-tests.cs";
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-tests.cs", "handler", "application"));
+    await analyzerTest.RunAsync();
+  }
+
+  public static async Task Given_Endpoint_On_Tests_Flags_TWA0015()
+  {
+    const string Path = "../features/hello/hello-endpoint-tests.cs";
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-endpoint-tests.cs", "endpoint", "server"));
+    await analyzerTest.RunAsync();
+  }
 }
 
 public class Should_Keep_Grammar_Registry_In_Sync
@@ -216,17 +242,32 @@ public class Should_Keep_Grammar_Registry_In_Sync
     string[] layers = root.GetProperty("layers").EnumerateArray()
       .Select(static e => e.GetString()!)
       .ToArray();
+    // Registered-unrouted layers (task 135, e.g. "tests"): matched/validated exactly like a
+    // routed layer, but own no layer-project Compile glob. Optional property — absent JSON stays
+    // "no unrouted layers registered".
+    string[] unroutedLayers = root.TryGetProperty("unroutedLayers", out System.Text.Json.JsonElement unroutedElement)
+      ? unroutedElement.EnumerateArray().Select(static e => e.GetString()!).ToArray()
+      : [];
     Dictionary<string, string> functions = root.GetProperty("functions").EnumerateObject()
       .ToDictionary(static p => p.Name, static p => p.Value.GetString()!);
 
     // C# constants must agree with the live FeatureFilenameGrammar type (compiled from .g.cs).
     // The registry itself is family-agnostic (Decision 2, task 129 stage 0) — checked once.
-    FeatureFilenameGrammar.Layers.OrderBy(static l => l).ShouldBe(layers.OrderBy(static l => l));
+    // FeatureFilenameGrammar.Layers is routed ∪ unrouted (the analyzer accepts both as valid
+    // archetypes; only routed layers get a layer-project Compile glob — checked below).
+    FeatureFilenameGrammar.Layers.OrderBy(static l => l)
+      .ShouldBe(layers.Concat(unroutedLayers).Distinct().OrderBy(static l => l));
     FeatureFilenameGrammar.FunctionToLayer.Count.ShouldBe(functions.Count);
     foreach (KeyValuePair<string, string> pair in functions)
     {
       FeatureFilenameGrammar.FunctionToLayer.ContainsKey(pair.Key).ShouldBeTrue();
       FeatureFilenameGrammar.FunctionToLayer[pair.Key].ShouldBe(pair.Value);
+
+      // Functions register ONLY against routed layers (task 135 decision — "tests" is a
+      // layer-only registration, nothing added to "functions"). A function pointed at an
+      // unrouted layer would be nonsensical (an archetype whose "correct" layer compiles
+      // nowhere), so guard against that drift too.
+      unroutedLayers.ShouldNotContain(pair.Value);
     }
 
     // The .g.cs Families constant (sourced from the csproj's Web <Exec> --families argument)
@@ -250,10 +291,21 @@ public class Should_Keep_Grammar_Registry_In_Sync
       string props = File.ReadAllText(propsPath);
       foreach (string layer in layers)
       {
-        props.ShouldContain($"FeatureFilenameGrammarLayer Include=\"{layer}\"");
+        props.ShouldContain($"FeatureFilenameGrammarLayer Include=\"{layer}\" Project=\"{family}-{layer}\"");
         props.ShouldContain($"$({prefix}FeatureTreeRoot)/**/*-{layer}.cs");
         props.ShouldContain($"$({prefix}PlatformTreeRoot)/**/*-{layer}.cs");
         props.ShouldContain($"'$(MSBuildProjectName)' == '{family}-{layer}'");
+      }
+
+      // Registered-unrouted layers get a layer item with NO Project metadata, and — the whole
+      // point — NO Compile ItemGroup at all (they must not claim a layer project's build).
+      foreach (string layer in unroutedLayers)
+      {
+        props.ShouldContain($"FeatureFilenameGrammarLayer Include=\"{layer}\" />");
+        props.ShouldNotContain($"FeatureFilenameGrammarLayer Include=\"{layer}\" Project=");
+        props.ShouldNotContain($"$({prefix}FeatureTreeRoot)/**/*-{layer}.cs");
+        props.ShouldNotContain($"$({prefix}PlatformTreeRoot)/**/*-{layer}.cs");
+        props.ShouldNotContain($"'$(MSBuildProjectName)' == '{family}-{layer}'");
       }
 
       props.ShouldContain("FeatureFilenameLayerSuffixRegex");

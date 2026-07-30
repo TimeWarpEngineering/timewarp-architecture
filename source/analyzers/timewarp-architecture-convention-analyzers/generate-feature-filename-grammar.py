@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Generate FeatureFilenameGrammar.g.cs and a family's feature-filename-grammar.g.props from SSOT JSON.
 
-The JSON registry (layers, functions) is family-agnostic. --out-cs emits the family-agnostic
-FeatureFilenameGrammar.g.cs registry consumed by the TWA0015/TWA0016 analyzer; pass it from
-exactly one per-family invocation (conventionally Web) since the .g.cs is shared, not per-family.
+The JSON registry (layers, unroutedLayers, functions) is family-agnostic. --out-cs emits the
+family-agnostic FeatureFilenameGrammar.g.cs registry consumed by the TWA0015/TWA0016 analyzer;
+pass it from exactly one per-family invocation (conventionally Web) since the .g.cs is shared,
+not per-family.
 --out-cs also requires --families (the full lowercase family list, e.g. web,api,grpc) so the
 .g.cs carries a Families constant the analyzer derives its per-family path markers from — the
 csproj's Web <Exec> line is the single place that family list is authored (besides the drift
@@ -12,6 +13,13 @@ test's own copy).
 Compile globs) parameterized by --family-prefix, which drives the emitted property names
 ({Prefix}FeatureTreeRoot / {Prefix}PlatformTreeRoot) and project-name conditions
 ({prefix-lower}-{layer}).
+
+"unroutedLayers" (e.g. "tests") register a filename layer suffix that the membership guard and
+TWA0015/TWA0016 recognize and validate exactly like a routed layer, but that routes into NO
+layer project — no Compile ItemGroup is emitted for it and its FeatureFilenameGrammarLayer item
+carries no Project metadata. This is how co-located `-tests.cs` runfiles stay matched-and-
+validated by the grammar (orphaned/misnamed files still trip the teaching error, and
+`-handler-tests.cs` still trips TWA0015 for free) while compiling into nothing.
 """
 from __future__ import annotations
 
@@ -49,14 +57,20 @@ def main() -> int:
 
   data = json.loads(args.json_path.read_text(encoding="utf-8"))
   layers: list[str] = data["layers"]
+  unrouted_layers: list[str] = data.get("unroutedLayers", [])
   functions: dict[str, str] = data["functions"]
+
+  # Combined set for grammar ACCEPTANCE (regex + analyzer Layers HashSet): a registered-unrouted
+  # layer (e.g. "tests") is a valid archetype for TWA0015/TWA0016 and the membership guard, it
+  # just routes into no layer project (see compile_groups below, which stays routed-only).
+  all_layers: list[str] = layers + [layer for layer in unrouted_layers if layer not in layers]
 
   for function, layer in functions.items():
     if layer not in layers:
       print(f"Function '{function}' maps to unregistered layer '{layer}'.", file=sys.stderr)
       return 2
 
-  nesting = layers_nest(layers)
+  nesting = layers_nest(all_layers)
   if nesting:
     print(nesting, file=sys.stderr)
     return 3
@@ -67,7 +81,7 @@ def main() -> int:
   if args.out_cs is not None:
     args.out_cs.parent.mkdir(parents=True, exist_ok=True)
 
-    layer_args = ", ".join(f'"{layer}"' for layer in layers)
+    layer_args = ", ".join(f'"{layer}"' for layer in all_layers)
     function_entries = "\n".join(
       f'      new KeyValuePair<string, string>("{function}", "{layer}"),'
       for function, layer in sorted(functions.items())
@@ -91,6 +105,9 @@ using System.Collections.Immutable;
 /// <summary>SSOT-backed feature filename grammar constants (TWA0015/TWA0016).</summary>
 internal static class FeatureFilenameGrammar
 {{
+  /// <summary>Routed layers (own a layer-project Compile glob) PLUS registered-unrouted layers
+  /// (e.g. "tests" — matched and validated by TWA0015/TWA0016/the membership guard, but compiled
+  /// into no layer project). See feature-filename-grammar.json's "unroutedLayers".</summary>
   public static readonly ImmutableHashSet<string> Layers =
     ImmutableHashSet.Create(System.StringComparer.Ordinal, {layer_args});
 
@@ -117,19 +134,33 @@ internal static class FeatureFilenameGrammar
     print(f"Generated {args.out_cs}")
 
   # Regex alternation is longest-first so multi-token layer names match correctly if added later.
-  layer_alt = "|".join(sorted(layers, key=lambda layer: (-len(layer), layer)))
+  # Built from all_layers (routed + unrouted) so the membership guard ACCEPTS a registered-unrouted
+  # suffix like "-tests" instead of reporting it as an unmatched/unrouted file.
+  layer_alt = "|".join(sorted(all_layers, key=lambda layer: (-len(layer), layer)))
 
   args.out_props.parent.mkdir(parents=True, exist_ok=True)
 
+  # Routed layers get Project= metadata (which layer project's Compile glob claims them).
+  # Registered-unrouted layers (e.g. "tests") get an item with NO Project metadata — matched and
+  # validated by the guard/analyzer, but claimed by no layer project's glob (see compile_groups,
+  # which stays routed-only below).
   layer_items = "\n".join(
     f'    <FeatureFilenameGrammarLayer Include="{layer}" Project="{prefix_lower}-{layer}" />'
     for layer in layers
   )
+  if unrouted_layers:
+    layer_items += "\n" + "\n".join(
+      f'    <FeatureFilenameGrammarLayer Include="{layer}" />'
+      for layer in unrouted_layers
+    )
   function_items = "\n".join(
     f'    <FeatureFilenameGrammarFunction Include="{function}" Layer="{layer}" />'
     for function, layer in sorted(functions.items())
   )
-  # Hybrid Compile groups generated from the layer list (SSOT — do not hand-list in targets).
+  # Hybrid Compile groups generated from the ROUTED layer list only (SSOT — do not hand-list in
+  # targets). Registered-unrouted layers (e.g. "tests") deliberately get NO Compile ItemGroup here
+  # — that is what keeps a co-located `-tests.cs` runfile out of every layer project's build while
+  # still being matched-and-validated by the guard/analyzer above.
   # Two cohesive roots: features/ (product slices) and platform/ (host/platform clusters).
   # Both use the same -{layer} suffix → project mapping; the family's own feature-membership.targets
   # sets the roots.

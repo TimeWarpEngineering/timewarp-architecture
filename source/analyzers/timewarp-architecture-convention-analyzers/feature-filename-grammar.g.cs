@@ -9,8 +9,11 @@ using System.Collections.Immutable;
 /// <summary>SSOT-backed feature filename grammar constants (TWA0015/TWA0016).</summary>
 internal static class FeatureFilenameGrammar
 {
+  /// <summary>Routed layers (own a layer-project Compile glob) PLUS registered-unrouted layers
+  /// (e.g. "tests" — matched and validated by TWA0015/TWA0016/the membership guard, but compiled
+  /// into no layer project). See feature-filename-grammar.json's "unroutedLayers".</summary>
   public static readonly ImmutableHashSet<string> Layers =
-    ImmutableHashSet.Create(System.StringComparer.Ordinal, "contracts", "application", "domain", "infrastructure", "server");
+    ImmutableHashSet.Create(System.StringComparer.Ordinal, "contracts", "application", "domain", "infrastructure", "server", "tests");
 
   public static readonly ImmutableDictionary<string, string> FunctionToLayer =
     ImmutableDictionary.CreateRange(System.StringComparer.Ordinal, new[]
