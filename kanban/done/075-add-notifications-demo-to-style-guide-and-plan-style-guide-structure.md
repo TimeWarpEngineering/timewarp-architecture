@@ -81,7 +81,7 @@ own demo-site layout. Do NOT split as part of this task — just add the Notific
 - `dev build` = 0 warnings / 0 errors. Web-spa Fixie suite: the non-Docker tests pass; the
   `AspireSpaTestApplication` tests fail **locally only** because Docker isn't running in this WSL
   session (Aspire needs a container runtime) — they pass in CI. Manual/E2E toast verification is
-  still a follow-up (see note re: [[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases--payment-flow]]).
+  still a follow-up (see note re: [[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases-payment-flow]]).
 
 ## Notes
 - rc.4 toast call shape (post-migration) is `INotificationService.ShowToastAsync(options => { options.Intent = ToastIntent.X; options.Title = ...; })`
@@ -89,5 +89,5 @@ own demo-site layout. Do NOT split as part of this task — just add the Notific
 - Headless tests drop the toast handler (`spa-test-application.cs` removes the
   `INotificationHandler<ExceptionNotification>`) because there's no rendered `<FluentToastProvider>`;
   any StyleGuide demo is a manual/E2E check, not a Fixie unit test. An E2E click test could live
-  alongside [[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases--payment-flow]].
+  alongside [[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases-payment-flow]].
 - Verify FluentUI APIs against the `fluent-ui-blazor` MCP (project is on `5.0.0-rc.4-26180.1`).

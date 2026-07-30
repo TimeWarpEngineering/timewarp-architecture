@@ -21,24 +21,24 @@
          itself uses project refs). Per task-124 policy, these pins equal the release <Version> and
          bump in the same commit as it — packages and template publish together in one release run,
          so pins always reference versions that exist by the time a generated app restores. -->
-    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.9" />
-    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.9" />
-    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.9" />
-    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.9" />
-    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.9" />
-    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.9" />
+    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.10" />
+    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.10" />
+    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.10" />
+    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.10" />
+    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.10" />
+    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.10" />
     <!-- Analyzer/generator packages (task 092). Package IDs composed via properties so template
          sourceName cannot rewrite them (task 115). Per task-124 policy, these pins equal the
          release <Version> and bump in the same commit as it. -->
-    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.9" />
-    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.9" />
-    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.9" />
+    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.10" />
+    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.10" />
+    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.10" />
     <!-- TimeWarp.Identity has been published since 2.0.0-beta.6 (task 124). Per task-124 policy,
          this pin equals the release <Version> and bumps in the same commit as it, same as the
          TimeWarp.Foundation.* and analyzer/generator pins above. This pin is inert for this
          repo/CI (UseIdentityPackages resolves to ProjectReference mode when identity source is
          present) and only matters for package-mode consumers (generated apps always package-mode). -->
-    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.9" />
+    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.10" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
@@ -168,7 +168,7 @@
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="TimeWarp.Fixie" Version="3.1.0" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.13" />
-    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.8" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.10" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
   </ItemGroup>

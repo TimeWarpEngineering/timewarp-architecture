@@ -27,7 +27,7 @@ dirs) — porting is the moment to fix those, not patch them in place.
       `provision-build-deploy`/`deprovision`/`rollout-restart-all`/`variables`) was **deleted** under
       [[063-relocate-devops-deploy-infra-to-root]]. The deploy strategy changed: the hand-rolled
       Azure-locked flow is obsolete; deployment is now generated from the Aspire AppHost via
-      `aspire publish` (portable compose + k8s) — tracked in [[070-wire-aspire-publish-for-portable-deploy-compose--kubernetes]].
+      `aspire publish` (portable compose + k8s) — tracked in [[070-wire-aspire-publish-for-portable-deploy-compose-kubernetes]].
       So these are NOT migration targets for dev-cli.
 
 ### Scripts utilities (now root `scripts/`, kebab-cased)

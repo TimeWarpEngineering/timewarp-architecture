@@ -16,10 +16,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="TimeWarp.Fixie" />
-    <PackageReference Include="TimeWarp.SourceGenerators">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <!-- Shared IPrincipalStore contract suite (principal-store-contract-tests.cs) compiles here so

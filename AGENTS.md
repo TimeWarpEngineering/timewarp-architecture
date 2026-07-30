@@ -10,7 +10,7 @@ other tools read it directly.
   packaging tree. Changes here ship to every generated app.
 - Feature flags (`api`, `grpc`, `web`, `yarp`, `postgres`) are template preprocessor switches —
   keep `<!--#if (flag)-->` / `#if flag` regions intact when editing near them. Demo features
-  (counter, event-stream) ship unconditionally; see HowToRemoveDemoFeatures.md.
+  (counter, event-stream) ship unconditionally; see how-to-remove-demo-features.md.
 
 ## Build / run / test
 
@@ -18,8 +18,11 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 
 - `dev run` — Aspire orchestrator (Development)
 - `dev build` — full solution; **warnings are errors, 0/0 is the only acceptable result**
-- `dev test` — every project under `tests/` (globbed, run one at a time — fixed ports)
+- `dev test` — every project under `tests/` (globbed, run one at a time — fixed ports); does NOT
+  yet discover co-located Jaribu runfiles under `source/` (task 136)
 - `dotnet fixie tests/<project> [--tests Class[.Method]]` — one project/class/method
+- `dotnet run source/<family>/features/…/<name>-tests.cs` — one co-located Jaribu runfile,
+  standalone (no aggregator yet — task 136)
 - More commands: `dev --capabilities` (see the `dev-cli` skill)
 
 ## Before opening a PR
@@ -49,14 +52,41 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   to anonymous; TWA0013/TWA0014 enforce the pairing at build time). No hand-written `BaseEndpoint`
   shims in the template. Validation stays on the mediator's `FluentValidationBehavior` — do not
   adopt FastEndpoints' validator integration.
-- Tests: **Fixie + Shouldly** (NOT MSTest/xUnit; do not introduce FluentAssertions — v8+ is
-  commercially licensed)
+- Tests: co-located **Jaribu** runfiles (`<name>[-<function>]-tests.cs`, standalone via
+  `dotnet run`) are the default for new product-slice tests as of task 135 — runfile preamble
+  convention lives in **`tw-feature-placement`** skill (Co-located Jaribu runfile preamble
+  section; Jaribu itself — attributes, naming, assertions — is the cross-repo **`tw-jaribu`**
+  skill); reference implementations: `create-role-tests.cs` (web),
+  `get-weather-forecasts-tests.cs` (api). Host-level `tests/` suites stay **Fixie + Shouldly**
+  (NOT MSTest/xUnit; do not introduce FluentAssertions — v8+ is commercially licensed). Migration
+  policy: new tests
+  are co-located Jaribu from adoption; existing Fixie projects migrate opportunistically
+  slice-by-slice; `tests/` host-level/cross-service integration suites migrate last or never;
+  Playwright e2e is unaffected. No `JARIBU_MULTI` aggregator exists yet (task 136 — `dev test`
+  needs Microsoft.Testing.Platform support first), so co-located tests are standalone-run only
+  for now (`dotnet run <file>.cs`), not yet discovered by `dev test`.
 - Blazor form validation: **Blazilla** (explicit validator instance — supports `I*Details` binding)
 - **FluentUI v5 + plain CSS** design tokens (`wwwroot/css/tokens.css`); no Tailwind — do not
   reintroduce it (see `blazor-css-strategy` skill)
 - .NET Aspire orchestration; EF Core (postgres behind its flag)
 
 ## Layout (kebab-case paths everywhere; namespaces PascalCase)
+
+**File naming:** kebab-case for files and folders (map `user-service.cs` → `UserService`). Full
+agent rules and exception table: **`tw-csharp`** (File and directory naming). Human SSOT sketch:
+`documentation/developer/standards/file-naming.md`. Axis-1 product grammar
+(`name[-function]-layer.cs`): **`tw-feature-placement`**.
+
+**Do not kebab-force:** `.razor` / paired `.razor.cs` / `.razor.css` (Blazor type-matching names);
+MSBuild well-known props/targets; ASP.NET `Properties/`, `launchSettings.json`,
+`appsettings.<Environment>.json`; `_Imports.razor` / `App.razor` where the host requires them.
+
+**`.cs` enforcement:** `TimeWarp.SourceGenerators` diagnostic **`TW0001`** (`TW*` package family —
+not Architecture `TWA*`). Package is referenced repo-wide from root `Directory.Build.props`;
+`.editorconfig` sets `dotnet_diagnostic.TW0001.severity = warning` (build-breaking via
+TreatWarningsAsErrors). Requires SourceGenerators **≥ 1.0.0-beta.10** (multi-dot partials + skip
+`obj/`/`bin/` generated trees). Non-`.cs` / folder basenames: **`ganda repo audit`**
+**`kebab-path-names`** (Ganda task **188**, shipped).
 
 ```
 source/
@@ -114,6 +144,19 @@ under pure incremental builds). Namespaces do **not** track folders — product 
 clusters keep non-Features namespaces. Full rule, litmus test, and decision table:
 **`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
 
+**Registered-unrouted layer (`tests`, task 135):** the JSON registry's `"unroutedLayers"` key
+(currently `["tests"]`) registers a layer suffix that TWA0015/0016 and the membership guard
+match and validate exactly like a routed layer, but that gets NO `Compile` glob in any family's
+`feature-filename-grammar.g.props` — a `<name>[-<function>]-tests.cs` co-located Jaribu runfile
+stays a first-class grammar citizen (misnamed/orphaned files still trip the teaching error, and
+`-handler-tests.cs` still trips TWA0015) while compiling into no layer project. **Enforcement
+surface:** this only fires when the file itself is compiled — standalone `dotnet build`/`dotnet
+run` (plus `dev template-smoke` tier 2 for the two exemplars) — NOT the repo's `dev build`
+solution gate, which never touches an unrouted file's `Compile` glob and is structurally blind to
+it; the task-136 `JARIBU_MULTI` family aggregators will restore build-time coverage when they
+land. Runfile authoring convention: **`tw-feature-placement`** skill (Co-located Jaribu runfile
+preamble section).
+
 ## Platform packages (foundation + analyzers + identity)
 
 Greenfield `dotnet new timewarp-architecture` apps **always** reference **published NuGet packages**
@@ -137,7 +180,7 @@ and template publish together in one release run, so pins always reference versi
 by the time any generated app restores; the old lag-behind-published policy shipped a template
 whose pins predated its own release). Upgrade path for apps that still vendored
 `source/analyzers/**`: see
-`documentation/developer/how-to-guides/HowToUpgradeToAnalyzerPackages.md`.
+`documentation/developer/how-to-guides/how-to-upgrade-to-analyzer-packages.md`.
 
 **sourceName-safe platform package IDs:** template `sourceName` is `TimeWarp.Architecture`, so a
 literal `TimeWarp.Architecture.Analyzers` in csproj/CPM would rewrite to `AppName.Analyzers` on
@@ -189,8 +232,8 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0011/0012 | an `IAggregateRoot` must declare a nested `Invariants : AbstractValidator<T>`, and it must be `private` (kept out of `AddValidatorsFromAssemblyContaining`) |
 | TWA0013 | an `[ApiEndpoint]` contract must carry `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]` — the generator is fail-closed and emits no auth config for neither |
 | TWA0014 | an `[ApiEndpoint]` contract's auth posture must not be contradictory: not both markers, and not `[EndpointAllowAnonymous]` paired with a nested `Query`/`Command` that declares `IAuthApiRequest` |
-| TWA0015 | feature filename: registered function segment pairs with the wrong layer (see feature-filename-grammar.json) |
-| TWA0016 | feature filename: unregistered or mis-spelled function segment used as archetype (escape hatch `<name>-<layer>.cs` stays valid) |
+| TWA0015 | feature filename: registered function segment pairs with the wrong layer (see feature-filename-grammar.json); also fires on a routed function paired with the registered-unrouted `tests` layer (e.g. `create-role-handler-tests.cs`) |
+| TWA0016 | feature filename: unregistered or mis-spelled function segment used as archetype (escape hatch `<name>-<layer>.cs` stays valid, including `<name>-tests.cs`) |
 | TWA0017 | a generated ingress web prefix (`WebServerApiRoutePrefixes`) shadows another server's route space — it equals/parents a hosted route in another contracts assembly, or collides with an `IngressReservedPathPrefixes` entry (grpc) |
 | TWA0018 | a web-contracts route cannot be collapsed to a top-level ingress prefix (bare `api` or a parameterized second segment like `api/{id}`) |
 | TWA0019 | a name in `IngressWebContractAssemblies` matches no referenced assembly (typo / renamed assembly) — otherwise the ingress list would silently generate empty |
@@ -250,9 +293,13 @@ Formats and lifecycle: the `agent-context-regions` skill.
 
 ## Task management
 
+**Always work on a kanban task** when changing this repo (code, docs, config, skills, CI). Prefer an
+existing open task; otherwise create one. Exceptions: pure Q&A, user-waived, read-only exploration.
+
 `ganda kanban` over the `kanban/` tree (`backlog/`, `to-do/`, `in-progress/`, `done/`):
 **always `ganda kanban create "title"`** (it assigns the number — never hand-number), then
-`move`/`done` to transition. Do not create perpetual/never-closing tasks. See the `kanban` skill.
+`move`/`done` to transition. Keep checklist / `## Session` current; commit kanban mutations.
+Do not create perpetual/never-closing tasks. See the `tw-kanban` skill.
 
 ## Documentation
 

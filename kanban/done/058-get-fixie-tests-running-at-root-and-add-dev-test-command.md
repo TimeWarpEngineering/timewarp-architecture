@@ -53,7 +53,7 @@ test-framework-agnostic where practical so adding Jaribu later is incremental.
 ## Checklist
 
 ### Migrate
-- [x] Move test projects to `tests/` (kebab-case) — unit/analyzer (slice 1) + integration (slice 3) done; E2E dropped → [[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases--payment-flow]]
+- [x] Move test projects to `tests/` (kebab-case) — unit/analyzer (slice 1) + integration (slice 3) done; E2E dropped → [[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases-payment-flow]]
 - [x] Move shared `Testing.Common` to `tests/common/timewarp-testing/`
 - [x] Fix relative `ProjectReference` paths after the move
 - [x] Add all test projects to `timewarp-architecture.slnx`
@@ -145,7 +145,7 @@ Fixes applied (the pre-existing breakage was real, not migration-caused):
 
 Still open (not blocking the build): integration/Aspire tests need a running host to actually
 PASS — `dev test` builds + runs them but they require Docker/Aspire orchestration at runtime.
-Host strategy is shared with E2E work ([[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases--payment-flow]]).
+Host strategy is shared with E2E work ([[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases-payment-flow]]).
 The legacy `TimeWarp.Architecture/` wrapper (old slnx + `*.ps1` referencing the gone `Source/`)
 is already orphaned and is a separate cleanup (047).
 

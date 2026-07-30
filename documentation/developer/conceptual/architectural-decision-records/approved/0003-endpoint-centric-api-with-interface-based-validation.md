@@ -61,4 +61,4 @@ Chosen option: 'Endpoint-Centric API Design with Interface Validation.' This app
 
 ## Links
 
-* [API Design](../ApiDesign.md)
+* [API Design](../api-design.md)

@@ -75,7 +75,7 @@ sections).** The rulings that shape this rewrite:
 
 - Supporting docs: `analysis/contract-conventions-rfc.md` (the spec-to-be, §3.6 = newest evidence),
   `analysis/composer-skill-analysis.md`, `analysis/glm52-review.md` (all three read-only inputs).
-- Related: [[079-implement-server-side-createrole-endpoint--backend-validation-roles-contract]]
+- Related: [[079-implement-server-side-createrole-endpoint-backend-validation-roles-contract]]
   (route wart), [[082-broaden-contract-nullability-analyzer-to-api-grpc-foundation-contracts]]
   (enforcement breadth), task 053-002 (rename — Decision 8 decides whether it gates anything).
 - Remaining §7 cleanup slices (`sealed` shells, `init`→`set`, empty stubs, `BaseResponse`,

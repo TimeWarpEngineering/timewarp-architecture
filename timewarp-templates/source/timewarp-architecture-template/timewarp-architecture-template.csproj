@@ -8,7 +8,7 @@
     <Authors>Steven T. Cramer</Authors>
     <Description>TimeWarp Architecture Templates</Description>
     <PackageTags>dotnet-new;templates;aspnet;blazor;spa;pwa;timewarp;gRPC;Tye;Aspire;YARP;Clean Architecture;Domain Driven Design</PackageTags>
-    <PackageIcon>Logo.png</PackageIcon>
+    <PackageIcon>logo.png</PackageIcon>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <TargetFramework>net9.0</TargetFramework>
@@ -43,7 +43,7 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-    <None Include="..\..\assets\Logo.png" Pack="true" PackagePath="\" />
+    <None Include="..\..\assets\logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

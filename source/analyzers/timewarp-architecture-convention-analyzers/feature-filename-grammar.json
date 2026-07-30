@@ -1,5 +1,6 @@
 {
   "layers": [ "contracts", "application", "domain", "infrastructure", "server" ],
+  "unroutedLayers": [ "tests" ],
   "functions": {
     "handler": "application",
     "endpoint": "server"
