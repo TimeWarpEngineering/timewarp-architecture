@@ -51,7 +51,7 @@ the template a living reference for "one shape, shared validation, no separate v
 - [x] **Save round-trip** — RESOLVED by task 079 (2026-07-02): POST api/Roles now has a real
       server endpoint + handler with backend validation; integration tests prove 200 + RoleId and
       400 problem-details on invalid input. Originally deferred to
-      [[079-implement-server-side-createrole-endpoint--backend-validation-roles-contract]]. On Save the
+      [[079-implement-server-side-createrole-endpoint-backend-validation-roles-contract]]. On Save the
       valid `POST api/Roles` reaches the **real** web-server, which has no `CreateRole` endpoint yet →
       **405** → generic error toast (confirmed via Aspire console logs). Expected: this task owns the
       *client* half (binding + validation, done); 079 builds the *server* half + backend validation.
@@ -79,6 +79,6 @@ the template a living reference for "one shape, shared validation, no separate v
   ([[077-contracts-compliance-01-nullability-validator-agreement]]) since roles are already compliant.
 - Kebab-case paths, plural folders, per the RFC ([[contract-conventions-rfc]]).
 - Headless Fixie can't render the FluentUI provider tree; visual verification is manual or an E2E
-  click test (could sit alongside [[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases--payment-flow]]).
+  click test (could sit alongside [[060-write-real-e2e-tests-for-sunny-day-money-paths-primary-use-cases-payment-flow]]).
 - Option B (flesh out `TodoItemForm`) was rejected: it needs an `ITodoItemDetails` interface built
   first and demonstrates a rougher contract. This task uses the exemplary one.

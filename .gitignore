@@ -434,10 +434,10 @@ GeneratedCode/
 /Source/ContainerApps/Web/Web.Server/Logs/log.txt
 
 # TimeWarp architecture templates Generated Documentation
-/documentation/developer/conceptual/ComponentNamingAndOrganization.pdf
-/documentation/developer/how-to-guides/web-api-contracts/Handling_Mutability_in_API_Contracts.pdf
-/documentation/developer/how-to-guides/web-api-contracts/Handling_Nullability_in_API_Contracts.pdf
-/documentation/developer/how-to-guides/web-api-contracts/HowToWrite_BFF_API_Contracts.pdf
+/documentation/developer/conceptual/component-naming-and-organization.pdf
+/documentation/developer/how-to-guides/web-api-contracts/handling-mutability-in-api-contracts.pdf
+/documentation/developer/how-to-guides/web-api-contracts/handling-nullability-in-api-contracts.pdf
+/documentation/developer/how-to-guides/web-api-contracts/how-to-write-bff-api-contracts.pdf
 
 # TimeWarp architecture templates Generated css
 /Source/ContainerApps/Web/Web.Spa/wwwroot/css/site.css

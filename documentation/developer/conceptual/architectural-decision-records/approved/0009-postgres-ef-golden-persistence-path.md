@@ -151,7 +151,7 @@ Concrete shape:
 * 114 axis decisions: `kanban/done/114-…/axis-decisions.md` (axis 3 outbox deferral → 113; axis 5
   state-store EF + optional actors; axis 5 addendum Orleans)
 * First product consumer: kanban 104-032 (EF `IPrincipalStore` behind postgres flag)
-* How-to: [HowToAddYourAggregate.md](../../../how-to-guides/HowToAddYourAggregate.md)
+* How-to: [how-to-add-your-aggregate.md](../../../how-to-guides/how-to-add-your-aggregate.md)
 * Aggregate pattern (SSOT): `skills/tw-aggregate-pattern/SKILL.md`
 * Related: [ADR-0008](0008-feature-cohesive-folders-with-filename-grammar-layer-composition.md)
   (feature placement of `*-infrastructure.cs` configs), golden aggregate analyzers TWA0011/0012

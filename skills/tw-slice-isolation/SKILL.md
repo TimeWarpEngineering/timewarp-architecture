@@ -198,6 +198,6 @@ Living examples:
 - `tw-blazor-css-strategy` — shell/component styling only
 - `tw-agent-context-regions` — Purpose/Design on new files (TWA0004)
 - **AGENTS.md** — TWA diagnostic table (row TWA0009)
-- **HowToRemoveDemoFeatures** — delete Counter/EventStream demo slices
+- **how-to-remove-demo-features.md** — delete Counter/EventStream demo slices
 - **Analyzer (source of truth):** `source/analyzers/timewarp-architecture-convention-analyzers/slice-isolation-analyzer.cs`
 - **Opt-out attribute:** `source/foundation/foundation-contracts/base/cross-slice-reference-attribute.cs`

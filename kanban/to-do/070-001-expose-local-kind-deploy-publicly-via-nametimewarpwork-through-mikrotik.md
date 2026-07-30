@@ -2,7 +2,7 @@
 
 ## Description
 
-Child of [[070-wire-aspire-publish-for-portable-deploy-compose--kubernetes]]. Depends on 070's
+Child of [[070-wire-aspire-publish-for-portable-deploy-compose-kubernetes]]. Depends on 070's
 kind smoke-deploy checklist item AND on the shared ingress chain in
 [[112-stand-up-shared-timewarpwork-ingress-chain-to-wsl-for-exposing-local-apps]] (DNS, the two
 MikroTik hops, Windows→WSL inbound, and TLS all live there — not here).

@@ -174,5 +174,5 @@ Superseded by task 063. 034 was a comprehensive "review the DevOps folder and de
 remove" effort — but that decision was made and executed under [[063-relocate-devops-deploy-infra-to-root]]:
 the entire hand-rolled DevOps tree (Bicep, Kubernetes, Docker, Pipelines, Pulumi, the .ps1 chain) was
 DELETED this session (034's own "Option 1: Complete Removal"), and the portable Aspire-publish deploy
-strategy was adopted (tracked in [[070-wire-aspire-publish-for-portable-deploy-compose--kubernetes]]).
+strategy was adopted (tracked in [[070-wire-aspire-publish-for-portable-deploy-compose-kubernetes]]).
 The DevOps folder no longer exists, so there is nothing left to review.

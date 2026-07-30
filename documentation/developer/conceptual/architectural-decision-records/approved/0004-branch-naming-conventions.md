@@ -168,9 +168,9 @@ Future enhancements may include:
 
 ## Related Documentation
 
-- [How to Prevent Local Commits to Master](HowToPreventLocalCommitsToMaster.md)
-- [How to Rename Default Branch From Main to Master](HowToRenameDefaultBranchFromMainToMaster.md)
-- [Task Management Workflow](../../Overview.md#task-management-workflow)
+- [How to Prevent Local Commits to Master](../../../how-to-guides/how-to-prevent-local-commits-to-master.md)
+- [How to Rename Default Branch From Main to Master](../../../how-to-guides/how-to-rename-default-branch-from-main-to-master.md)
+- [Task Management Workflow](../../../../../kanban/overview.md#workflow)
 
 ## Examples from Repository History
 
