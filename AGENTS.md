@@ -64,8 +64,9 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   slice-by-slice; `tests/` host-level/cross-service integration suites migrate last or never;
   Playwright e2e is unaffected. CI/`dev test` discovers co-located runfiles via per-family
   **`JARIBU_MULTI` aggregators** under `tests/container-apps/<family>/<family>-jaribu-tests/`
-  (web + api; Microsoft.Testing.Platform; not in `.slnx` — task 136). Standalone
-  `dotnet run <file>.cs` remains the local dev loop.
+  (web + api; Microsoft.Testing.Platform; not in `.slnx` — task 136). Each aggregator's
+  project-local `global.json` must **mirror the root SDK pin** when the root SDK bumps
+  (timewarp-jaribu#20 landmine). Standalone `dotnet run <file>.cs` remains the local dev loop.
 - Blazor form validation: **Blazilla** (explicit validator instance — supports `I*Details` binding)
 - **FluentUI v5 + plain CSS** design tokens (`wwwroot/css/tokens.css`); no Tailwind — do not
   reintroduce it (see `blazor-css-strategy` skill)

@@ -590,12 +590,22 @@ internal sealed class TemplateSmokeHarness
   private static readonly System.Text.RegularExpressions.Regex JaribuPassedLine =
     new(@"Passed:\s*(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
-  // MTP `dotnet test` summary lines (case-insensitive): "total: N" / "succeeded: N"
+  // MTP `dotnet test` summary (case-insensitive). Prefer multi-line host lines
+  // (`total: N` / `succeeded: N` alone on a line) but also accept the compact form
+  // `Test summary: total: N, failed: …, succeeded: N, …` (review M2).
   private static readonly System.Text.RegularExpressions.Regex MtpTotalLine =
-    new(@"^\s*total:\s*(\d+)\s*$", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    new(
+      @"(?:^\s*total:\s*(\d+)\s*$|Test summary:\s*total:\s*(\d+))",
+      System.Text.RegularExpressions.RegexOptions.Compiled
+        | System.Text.RegularExpressions.RegexOptions.Multiline
+        | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
   private static readonly System.Text.RegularExpressions.Regex MtpSucceededLine =
-    new(@"^\s*succeeded:\s*(\d+)\s*$", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    new(
+      @"(?:^\s*succeeded:\s*(\d+)\s*$|Test summary:.*?succeeded:\s*(\d+))",
+      System.Text.RegularExpressions.RegexOptions.Compiled
+        | System.Text.RegularExpressions.RegexOptions.Multiline
+        | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
   /// <summary>
   /// Tier 1 (cheap): asserts every co-located test file that shipped into the generated app
@@ -748,8 +758,8 @@ internal sealed class TemplateSmokeHarness
   }
 
   /// <summary>
-  /// Parses Microsoft.Testing.Platform <c>dotnet test</c> summary lines
-  /// (<c>total: N</c> / <c>succeeded: N</c>). Uses the last match of each.
+  /// Parses Microsoft.Testing.Platform <c>dotnet test</c> summary (multi-line host lines or
+  /// compact <c>Test summary: total: N, … succeeded: N</c>). Uses the last match of each.
   /// </summary>
   private static bool TryParseMtpSummary(string plainOutput, out int total, out int succeeded)
   {
@@ -761,9 +771,20 @@ internal sealed class TemplateSmokeHarness
     if (totalMatches.Count == 0 || succeededMatches.Count == 0)
       return false;
 
-    total = int.Parse(totalMatches[^1].Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
-    succeeded = int.Parse(succeededMatches[^1].Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+    total = ParseFirstCapturingGroup(totalMatches[^1]);
+    succeeded = ParseFirstCapturingGroup(succeededMatches[^1]);
     return true;
+  }
+
+  private static int ParseFirstCapturingGroup(System.Text.RegularExpressions.Match match)
+  {
+    for (int i = 1; i < match.Groups.Count; i++)
+    {
+      if (match.Groups[i].Success)
+        return int.Parse(match.Groups[i].Value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    throw new InvalidOperationException("MTP summary regex matched without a capturing group.");
   }
 
   /// <summary>
