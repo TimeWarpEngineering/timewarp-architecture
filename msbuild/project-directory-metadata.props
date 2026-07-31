@@ -1,0 +1,23 @@
+<Project>
+  <!-- Task 145-002 R2-1: bakes this project's own build-time $(MSBuildProjectDirectory) into the
+       compiled assembly as an AssemblyMetadataAttribute("ProjectDirectory"). Consumed by
+       tests/common/timewarp-testing's ProjectContentRoot to resolve a hosted server's
+       ContentRootPath (appsettings.json, etc.) from its OWN source directory rather than
+       Assembly.Location — which, for a transitively-referenced project, points into whichever
+       consumer's output directory the DLL got copied to. That directory can be SHARED by
+       multiple hosted server projects at once (e.g. a test consumer that references both
+       Web.Server and Api.Server), and MSBuild's content-copy pipeline collapses same-named
+       content items (appsettings.json) from every referenced project into that one shared
+       folder — silently letting one project's file shadow another's. Importing this props file
+       from a hosted server project (Web.Server, Api.Server, Yarp.Server) sidesteps that
+       collision entirely: ContentRootPath always resolves to the project's own directory, no
+       matter how many sibling hosts share the same consumer's output folder. Works identically
+       in generated `dotnet new timewarp-architecture` apps — $(MSBuildProjectDirectory) is
+       evaluated at THAT app's own build time, against its own on-disk layout. -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ProjectDirectory</_Parameter1>
+      <_Parameter2>$(MSBuildProjectDirectory)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

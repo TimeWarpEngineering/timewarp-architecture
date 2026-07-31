@@ -32,10 +32,12 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
         {
           ApplicationName = typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly.GetName().Name,
           EnvironmentName = Environments.Development,
-          // Assembly output dir carries appsettings (SampleOptions, WebAuthn, …). Required when
-          // the host is started from a Jaribu runfile / factory (cwd is not the test project).
-          ContentRootPath = Path.GetDirectoryName(
-            typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly.Location),
+          // Web.Server's OWN project directory carries appsettings (SampleOptions, WebAuthn, …).
+          // Resolved via build-time metadata, not Assembly.Location — see ProjectContentRoot's
+          // Design region (task 145-002 R2-1: Assembly.Location breaks for transitive consumers
+          // that also reference Api.Server, since their flattened output dir collides).
+          ContentRootPath = ProjectContentRoot.Resolve(
+            typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly),
         },
         services =>
         {

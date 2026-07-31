@@ -46,8 +46,11 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
         {
           ApplicationName = typeof(TimeWarp.Architecture.Yarp.Server.IAssemblyMarker).Assembly.GetName().Name,
           EnvironmentName = Environments.Development,
-          ContentRootPath = Path.GetDirectoryName(
-            typeof(TimeWarp.Architecture.Yarp.Server.IAssemblyMarker).Assembly.Location),
+          // See ProjectContentRoot's Design region (task 145-002 R2-1) — resolves Yarp's own
+          // project directory via build-time metadata instead of Assembly.Location, which
+          // collides for consumers that also reference Web.Server / Api.Server.
+          ContentRootPath = ProjectContentRoot.Resolve(
+            typeof(TimeWarp.Architecture.Yarp.Server.IAssemblyMarker).Assembly),
         },
       services =>
       {

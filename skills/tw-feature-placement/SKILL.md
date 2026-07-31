@@ -331,7 +331,7 @@ namespace Your.Slice.Namespace
 - When co-located **test method totals** change for an exemplar family (or a new family gains
   runfiles), also bump `TemplateSmokeHarness.JaribuFamilyAggregators` expected counts in
   `tools/dev-cli/services/template-smoke-harness.cs` (tier 3 hardcodes succeeded counts —
-  web 5 / api 4 today). A green `dev test` alone is not enough if smoke still expects the old
+  web 5 / api 2 today). A green `dev test` alone is not enough if smoke still expects the old
   total.
 - `#region Purpose` is never suppressed (TWA0004) — write the real one-line reason, not a
   placeholder.

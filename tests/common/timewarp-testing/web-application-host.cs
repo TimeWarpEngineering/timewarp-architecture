@@ -13,6 +13,15 @@ using Microsoft.Extensions.Configuration.Json;
 // developer has in user secrets. Environment variables are deliberately LEFT intact (CI supplies
 // secrets that way); only the user-secrets file source is removed. The WebAuthnOptions binding test
 // pins this by asserting no configuration source path ends with secrets.json.
+//
+// Task 145-002 R2-1: ContentRootPath (set per-host by each Test*ServerApplication) now always
+// resolves to that host's OWN real project directory — never a shared/flattened consumer output
+// dir, which used to collide when a consumer transitively referenced more than one hosted server
+// project (each ships an appsettings.json at the same relative path; last-copied wins, silently
+// dropping the other host's config). The constructor below layers back in an OPTIONAL, ADDITIVE
+// consumer override read explicitly from AppContext.BaseDirectory — see the inline comment there —
+// so a consumer that authors its own appsettings.json (the pre-existing "merged appsettings.json"
+// pattern) still gets it applied, without reintroducing the collision bug.
 #endregion
 
 /// <summary>
@@ -61,6 +70,28 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
       {
         configurationSources.RemoveAt(index);
       }
+    }
+
+    // Task 145-002 R2-1 follow-up: layer an OPTIONAL consumer-authored override on top of the
+    // host's own real appsettings (ContentRootPath, set by each Test*ServerApplication — see
+    // ProjectContentRoot's Design region). Additive only (a later JSON source overrides matching
+    // KEYS, never deletes sections it doesn't mention), so this cannot reintroduce R2-1's bug
+    // (a whole section silently missing) — it restores the pre-existing "merged appsettings.json"
+    // pattern (web-server-integration-tests/appsettings.json, task 104-031's predecessor, dates to
+    // 05679ba4 2022: "all the projects are merged together and served from one folder") that used
+    // to work by accident, via the SAME flattened-output-directory collision R2-1 fixed. That
+    // consumer file still lands at AppContext.BaseDirectory (the running test process's own output
+    // dir) regardless of ContentRootPath — this reads it back explicitly instead of relying on
+    // which project's content item happened to win the copy collision.
+    string consumerOverridePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+    string ownAppSettingsPath = Path.Combine(
+      webApplicationOptions.ContentRootPath ?? AppContext.BaseDirectory, "appsettings.json");
+    if (
+      !string.Equals(
+        Path.GetFullPath(consumerOverridePath), Path.GetFullPath(ownAppSettingsPath), StringComparison.OrdinalIgnoreCase)
+      && File.Exists(consumerOverridePath))
+    {
+      builder.Configuration.AddJsonFile(consumerOverridePath, optional: true, reloadOnChange: false);
     }
 
     builder.WebHost

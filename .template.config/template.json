@@ -51,6 +51,7 @@
             "source/container-apps/web/projects/web-spa/services/api-services/api-server-api-service.cs",
             "tests/container-apps/web/web-spa-integration-tests/serialization/api-service-body-casing-tests.cs",
             "tests/common/timewarp-testing/applications/api-test-server-application.cs",
+            "tests/common/timewarp-testing-tests/**",
             "tests/container-apps/api/**",
             "tests/container-apps/web/web-spa-integration-tests/features/weather-forecast/**"
           ]
@@ -61,6 +62,7 @@
             "source/container-apps/web/**",
             "tests/common/timewarp-testing/applications/web-test-server-application.cs",
             "tests/common/timewarp-testing/applications/spa-test-application.cs",
+            "tests/common/timewarp-testing-tests/**",
             "tests/container-apps/web/**"
           ]
         },

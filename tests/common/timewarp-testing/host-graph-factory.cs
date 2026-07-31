@@ -19,6 +19,9 @@ using System.Net.Sockets;
 // (Web already registers MockAccessTokenProvider).
 // Host constructors start Kestrel synchronously; async methods still use await for dispose
 // rollback and a consistent SetupOnce await shape.
+// Per-family conditional-compilation guards (task 145-002 R2-1 fix follow-up, template-smoke SmokeNoApi regression):
+// same reasoning as HostGraph — this file ships unconditionally, so each Create* method that
+// names a family-specific type must be guarded to the family combination it needs.
 #endregion
 
 /// <summary>
@@ -27,6 +30,7 @@ using System.Net.Sockets;
 [NotTest]
 public static class HostGraphFactory
 {
+#if(api)
   /// <summary>Api.Server only (fixed port 7255).</summary>
   public static async Task<HostGraph> CreateApiAsync(Action<IServiceCollection>? configureApi = null)
   {
@@ -35,6 +39,8 @@ public static class HostGraphFactory
     await Task.CompletedTask.ConfigureAwait(false);
     return new HostGraph { Api = api };
   }
+#endif
+#if(web && api)
 
   /// <summary>
   /// Api then Web (ports 7255, 7000). Web's built-in wiring includes MockAccessTokenProvider
@@ -63,6 +69,8 @@ public static class HostGraphFactory
       throw;
     }
   }
+#endif
+#if(web && api && yarp)
 
   /// <summary>Api, Web, then Yarp (ports 7255, 7000, 8443).</summary>
   public static async Task<HostGraph> CreateWebApiYarpAsync
@@ -93,6 +101,7 @@ public static class HostGraphFactory
       throw;
     }
   }
+#endif
 
   /// <summary>
   /// Fails if a fixed test port is already bound — usually another suite or a leaked host.

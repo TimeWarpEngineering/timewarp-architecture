@@ -26,8 +26,11 @@ public sealed class ApiTestServerApplication : TestServerApplication<Api.Server.
         {
           ApplicationName = typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly.GetName().Name,
           EnvironmentName = Environments.Development,
-          ContentRootPath = Path.GetDirectoryName(
-            typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly.Location),
+          // See ProjectContentRoot's Design region (task 145-002 R2-1) — resolves Api.Server's
+          // own project directory via build-time metadata instead of Assembly.Location, which
+          // collides for consumers that also reference Web.Server.
+          ContentRootPath = ProjectContentRoot.Resolve(
+            typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly),
         },
         services =>
         {
