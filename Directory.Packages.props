@@ -72,12 +72,14 @@
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.8.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->
-    <!-- Direct pin stays on the 2.5.x line (StreamJsonRpc / Aspire AppHost consume 2.x).
-         Transitive default is MessagePack 2.5.192 (NU1903 / CVE-2026-48109 and earlier DoS advisories).
-         Patched 2.x: 2.5.301+; 2.5.302 is the latest 2.5 merge of those security fixes (see
-         MessagePack-CSharp v2.5.302). Aspire.Hosting.Yarp already lifts to 2.5.302 when yarp is on;
-         this pin keeps flag-off graphs (no Yarp) safe without jumping to MessagePack 3.x. -->
-    <PackageVersion Include="MessagePack" Version="2.5.302" />
+    <!-- No first-party code calls MessagePack APIs directly; this pin only lifts StreamJsonRpc's
+         transitive MessagePack dependency for flag-off graphs (no Yarp) where Aspire.Hosting.Yarp
+         isn't present to do the lift itself (see aspire-app-host.csproj). Bumped 2.5.302 -> 3.1.8
+         (task 144): StreamJsonRpc 2.25.29's own nuspec already floors MessagePack at >=2.5.302
+         (no upper bound), and aspire-tests (DistributedApplicationTestingBuilder spinning up the
+         real AppHost + an HTTP round-trip through api-server) passed 7/7 against MessagePack 3.1.8,
+         verifying the DCP/StreamJsonRpc communication path tolerates the v3 major. -->
+    <PackageVersion Include="MessagePack" Version="3.1.8" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.10" />
