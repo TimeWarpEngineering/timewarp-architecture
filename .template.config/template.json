@@ -49,10 +49,10 @@
             "source/container-apps/web/projects/web-spa/features/weather-forecast/**",
             "source/container-apps/web/projects/web-spa/services/mocks/mock-api-service.cs",
             "source/container-apps/web/projects/web-spa/services/api-services/api-server-api-service.cs",
-            "tests/container-apps/web/web-spa-integration-tests/Serialization/ApiService_Body_Casing_Tests.cs",
+            "tests/container-apps/web/web-spa-integration-tests/serialization/api-service-body-casing-tests.cs",
             "tests/common/timewarp-testing/applications/api-test-server-application.cs",
             "tests/container-apps/api/**",
-            "tests/container-apps/web/web-spa-integration-tests/Features/WeatherForecast/**"
+            "tests/container-apps/web/web-spa-integration-tests/features/weather-forecast/**"
           ]
         },
         {
@@ -69,7 +69,7 @@
           "exclude": [
             "source/container-apps/yarp/**",
             "tests/common/timewarp-testing/applications/yarp-test-server-application.cs",
-            "tests/container-apps/web/web-spa-integration-tests/Pipeline/CloneStateBehavior_Tests.cs"
+            "tests/container-apps/web/web-spa-integration-tests/pipeline/clone-state-behavior-tests.cs"
           ]
         },
         {

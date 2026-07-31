@@ -4,7 +4,7 @@
 #region Design
 // Regression gate for task 115: template sourceName is TimeWarp.Architecture, so package-id
 // literals TimeWarp.Architecture.* used to rewrite to SmokeDefault.* and break restore. Smoke
-// always generates with names ≠ sourceName (SmokeDefault, SmokeNoPostgres) so rewrite bugs
+// always generates with names ≠ sourceName (SmokeDefault, SmokeNoPostgres, SmokeNoApi) so rewrite bugs
 // surface. Matrix: defaults + --postgres false.
 //
 // Shared rewrite asserts, props SSOT suffix derivation, pin matching, and generate/restore/build
@@ -18,13 +18,16 @@
 // artifacts/template-smoke/. Prefer `dotnet run tools/dev-cli/dev.cs -- template-smoke` (or
 // re-self-install) over a stale AOT `./bin/dev`; CI always uses the runfile path.
 //
-// Task 135: SmokeOneAsync also runs the two co-located-Jaribu-test tiers per matrix entry —
+// Task 135: SmokeOneAsync runs co-located-Jaribu tiers per matrix entry —
 // tier 1 (Harness.AssertCoLocatedTestFilesSurviveGeneration, inside afterGenerateAsync, before
 // restore/build) and tier 2 (Harness.AssertCoLocatedTestFilesRunAsync, after the solution build
 // succeeds). Both are necessary: the ordinary solution build never compiles these files (they're
 // a registered-unrouted "tests" grammar suffix — feature-filename-grammar.json — that claims no
 // layer project's Compile glob by design), so without this pair a regression to the JARIBU_MULTI
 // cnd:noEmit escape would ship silently.
+// Task 136: tier 3 (Harness.AssertJaribuFamilyAggregatorsAsync) after tier 2 — bare
+// `dotnet test -c Release` from each generated family aggregator dir (web 5 / api 2). Aggregators
+// are also not in .slnx, so solution build is blind to multi-mode compile + MTP discovery.
 #endregion
 
 namespace DevCli.Commands;
@@ -63,10 +66,14 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     "source/libraries/timewarp-identity/timewarp-identity.csproj",
   ];
 
-  private static readonly (string Name, string[] ExtraArgs)[] SmokeMatrix =
+  // ExcludedFamilies drives flag-off assertions in the co-located-test tiers: for a family
+  // listed here, tiers 1/3 assert its test artifacts are ABSENT from the generated app
+  // (task 136 review R2-1 — an orphaned aggregator under a flag-off generation must fail smoke).
+  private static readonly (string Name, string[] ExtraArgs, string[] ExcludedFamilies)[] SmokeMatrix =
   [
-    ("SmokeDefault", []),
-    ("SmokeNoPostgres", ["--postgres", "false"]),
+    ("SmokeDefault", [], []),
+    ("SmokeNoPostgres", ["--postgres", "false"], []),
+    ("SmokeNoApi", ["--api", "false"], ["api"]),
   ];
 
   private static readonly string[] RemovedTemplateSymbols =
@@ -121,9 +128,9 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       if (!await PackTemplateAsync()) return Value;
       if (!await InstallTemplateAsync()) return Value;
 
-      foreach ((string name, string[] extraArgs) in SmokeMatrix)
+      foreach ((string name, string[] extraArgs, string[] excludedFamilies) in SmokeMatrix)
       {
-        if (!await SmokeOneAsync(name, extraArgs))
+        if (!await SmokeOneAsync(name, extraArgs, excludedFamilies))
         {
           Terminal.WriteErrorLine($"\nTemplate smoke FAILED — {name}".Red());
           Environment.ExitCode = 1;
@@ -251,7 +258,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       return true;
     }
 
-    private async Task<bool> SmokeOneAsync(string name, string[] extraArgs)
+    private async Task<bool> SmokeOneAsync(string name, string[] extraArgs, string[] excludedFamilies)
     {
       string? outputDirForTier2 = null;
 
@@ -270,7 +277,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
 
           // Tier 1 (cheap): the JARIBU_MULTI guard must survive dotnet-new generation verbatim —
           // check right after generate, before spending time on restore/build (task 135).
-          if (!Harness.AssertCoLocatedTestFilesSurviveGeneration(outputDir))
+          if (!Harness.AssertCoLocatedTestFilesSurviveGeneration(outputDir, excludedFamilies))
             return Task.FromResult(false);
 
           if (!Harness.RewriteCpmPins(outputDir, SmokePackageVersion))
@@ -287,11 +294,17 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       // Tier 2 (authoritative): `dotnet run` each generated co-located test standalone and
       // confirm it actually passes end to end post-generation (task 135). Runs after the solution
       // build succeeds — the co-located files compile into no layer project, so the solution
-      // build itself is structurally blind to them; this is the only step that runs them.
+      // build itself is structurally blind to them; this is the only step that runs them standalone.
       if (outputDirForTier2 is null)
         return false;
 
-      return await Harness.AssertCoLocatedTestFilesRunAsync(outputDirForTier2, Ct);
+      if (!await Harness.AssertCoLocatedTestFilesRunAsync(outputDirForTier2, excludedFamilies, Ct))
+        return false;
+
+      // Tier 3 (task 136): family JARIBU_MULTI aggregators — multi-mode compile + MTP bare
+      // `dotnet test` from each project dir. Serial (api fixed port 7255). Not in .slnx.
+      // Flag-off entries assert excluded families' aggregators are absent (review R2-1).
+      return await Harness.AssertJaribuFamilyAggregatorsAsync(outputDirForTier2, excludedFamilies, Ct);
     }
 
     private void WriteLocalNuGetConfig(string outputDir)

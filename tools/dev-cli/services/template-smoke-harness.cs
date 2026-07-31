@@ -17,6 +17,9 @@
 // template-safety escape (cnd:noEmit) for generated apps — the ordinary solution build never
 // touches these files (they compile into no layer project by design), so without this pair the
 // gate would be silently blind to a regression here.
+// Task 136: AssertJaribuFamilyAggregatorsAsync (tier 3) bare `dotnet test -c Release` from each
+// family aggregator project dir in the generated app (web 5, api 2); serial for fixed port 7255.
+// Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
 #endregion
 
 namespace DevCli.Services;
@@ -542,16 +545,29 @@ internal sealed class TemplateSmokeHarness
 
   /// <summary>
   /// Co-located Jaribu runfiles (task 135) whose JARIBU_MULTI template-safety (the cnd:noEmit
-  /// escape) and end-to-end runnability must survive `dotnet new` generation. These compile into
-  /// NO layer project (registered-unrouted "tests" suffix, feature-filename-grammar.json) so the
-  /// generated app's ordinary solution build is structurally blind to a regression here — this is
-  /// the only gate that exercises them post-generation. Standalone-run only; no JARIBU_MULTI
-  /// aggregator exists yet (task 136), so both tiers below run each file via `dotnet run`.
+  /// escape) and end-to-end runnability must survive <c>dotnet new</c> generation. These compile
+  /// into NO layer project (registered-unrouted "tests" suffix, feature-filename-grammar.json) so
+  /// the generated app's ordinary solution build is structurally blind to a regression here.
+  /// Tiers 1–2 exercise standalone <c>dotnet run</c>; tier 3 (task 136) exercises the family
+  /// <c>JARIBU_MULTI</c> aggregators via bare <c>dotnet test</c> from each project directory.
   /// </summary>
-  public static readonly string[] CoLocatedTestFiles =
+  public static readonly (string Family, string RelativePath)[] CoLocatedTestFiles =
   [
-    "source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs",
-    "source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs",
+    ("web", "source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs"),
+    ("api", "source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs"),
+  ];
+
+  /// <summary>
+  /// Per-family JARIBU_MULTI aggregator projects (task 136). Relative to the generated app root.
+  /// ExpectedSucceeded matches co-located exemplar counts (web create-role = 5, api weather = 2).
+  /// Serial execution required — api aggregator binds fixed port 7255. Family tags let a
+  /// flag-off smoke entry assert the artifacts are ABSENT (task 136 review R2-1): an aggregator
+  /// orphaned by a family flag would break the generated app, so absence is the pass condition.
+  /// </summary>
+  public static readonly (string Family, string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
+  [
+    ("web", "tests/container-apps/web/web-jaribu-tests", 5),
+    ("api", "tests/container-apps/api/api-jaribu-tests", 2),
   ];
 
   // The exact guarded lines a template-safe co-located runfile preamble must contain, verbatim,
@@ -576,18 +592,50 @@ internal sealed class TemplateSmokeHarness
   private static readonly System.Text.RegularExpressions.Regex JaribuPassedLine =
     new(@"Passed:\s*(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
+  // MTP `dotnet test` summary (case-insensitive). Prefer multi-line host lines
+  // (`total: N` / `succeeded: N` alone on a line) but also accept the compact form
+  // `Test summary: total: N, failed: …, succeeded: N, …` (review M2).
+  private static readonly System.Text.RegularExpressions.Regex MtpTotalLine =
+    new(
+      @"(?:^\s*total:\s*(\d+)\s*$|Test summary:\s*total:\s*(\d+))",
+      System.Text.RegularExpressions.RegexOptions.Compiled
+        | System.Text.RegularExpressions.RegexOptions.Multiline
+        | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+  private static readonly System.Text.RegularExpressions.Regex MtpSucceededLine =
+    new(
+      @"(?:^\s*succeeded:\s*(\d+)\s*$|Test summary:.*?succeeded:\s*(\d+))",
+      System.Text.RegularExpressions.RegexOptions.Compiled
+        | System.Text.RegularExpressions.RegexOptions.Multiline
+        | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
   /// <summary>
   /// Tier 1 (cheap): asserts every co-located test file that shipped into the generated app
   /// still contains the JARIBU_MULTI guard lines verbatim. Run right after generation, before
   /// restore/build, so a regression here is reported before spending time on a build.
   /// </summary>
-  public bool AssertCoLocatedTestFilesSurviveGeneration(string outputDir)
+  public bool AssertCoLocatedTestFilesSurviveGeneration(string outputDir, IReadOnlyCollection<string> excludedFamilies)
   {
     bool ok = true;
 
-    foreach (string relativePath in CoLocatedTestFiles)
+    foreach ((string family, string relativePath) in CoLocatedTestFiles)
     {
       string generatedPath = Path.Combine(outputDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+      if (excludedFamilies.Contains(family))
+      {
+        // Flag-off entry: the family's co-located test must NOT ship — its presence means the
+        // template's family exclude no longer covers it (orphaned file, broken generated build).
+        if (File.Exists(generatedPath))
+        {
+          Terminal.WriteErrorLine(
+            $"{relativePath}: shipped despite --{family} false — template family exclude no longer covers it.".Red());
+          ok = false;
+        }
+
+        continue;
+      }
+
       if (!File.Exists(generatedPath))
       {
         Terminal.WriteErrorLine($"Co-located test file missing after generation: {relativePath}".Red());
@@ -620,12 +668,18 @@ internal sealed class TemplateSmokeHarness
   /// rewrite, contract shape, everything). Runs files serially — the weather-forecast file spins
   /// a real host on fixed port 7255 (same constraint as the monorepo original).
   /// </summary>
-  public async Task<bool> AssertCoLocatedTestFilesRunAsync(string outputDir, CancellationToken ct)
+  public async Task<bool> AssertCoLocatedTestFilesRunAsync(
+    string outputDir,
+    IReadOnlyCollection<string> excludedFamilies,
+    CancellationToken ct)
   {
     bool ok = true;
 
-    foreach (string relativePath in CoLocatedTestFiles)
+    foreach ((string family, string relativePath) in CoLocatedTestFiles)
     {
+      if (excludedFamilies.Contains(family))
+        continue; // absence already asserted by tier 1
+
       string generatedPath = Path.Combine(outputDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
       if (!File.Exists(generatedPath))
         continue; // already reported by tier 1
@@ -673,6 +727,108 @@ internal sealed class TemplateSmokeHarness
     total = int.Parse(totalMatches[^1].Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
     passed = int.Parse(passedMatches[^1].Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
     return true;
+  }
+
+  /// <summary>
+  /// Tier 3 (task 136): assert each family JARIBU_MULTI aggregator exists in the generated app
+  /// and that bare <c>dotnet test -c Release</c> from that project directory reports the expected
+  /// succeeded count. Aggregators are not in .slnx (solution build never compiles them); this is
+  /// the multi-mode / MTP regression gate. Serial — api aggregator uses fixed port 7255.
+  /// </summary>
+  public async Task<bool> AssertJaribuFamilyAggregatorsAsync(
+    string outputDir,
+    IReadOnlyCollection<string> excludedFamilies,
+    CancellationToken ct)
+  {
+    bool ok = true;
+
+    foreach ((string family, string relativeProjectDir, int expectedSucceeded) in JaribuFamilyAggregators)
+    {
+      string projectDir = Path.Combine(outputDir, relativeProjectDir.Replace('/', Path.DirectorySeparatorChar));
+      string csprojName = Path.GetFileName(relativeProjectDir) + ".csproj";
+      string csprojPath = Path.Combine(projectDir, csprojName);
+
+      if (excludedFamilies.Contains(family))
+      {
+        // Flag-off entry: an orphaned aggregator would reference stripped family projects and
+        // break the generated app — absence is the pass condition here.
+        if (Directory.Exists(projectDir))
+        {
+          Terminal.WriteErrorLine(
+            $"{relativeProjectDir}: generated despite --{family} false — template family exclude no longer covers it.".Red());
+          ok = false;
+        }
+        else
+        {
+          Terminal.WriteLine($"{relativeProjectDir}: correctly excluded (--{family} false).");
+        }
+
+        continue;
+      }
+
+      if (!Directory.Exists(projectDir) || !File.Exists(csprojPath))
+      {
+        Terminal.WriteErrorLine(
+          $"Jaribu family aggregator missing after generation: {relativeProjectDir}/{csprojName}".Red());
+        ok = false;
+        continue;
+      }
+
+      Terminal.WriteLine(
+        $"Running generated Jaribu aggregator (MTP bare dotnet test): {relativeProjectDir} (expect {expectedSucceeded} succeeded)...");
+
+      CommandOutput result = await Shell.Builder("dotnet")
+        .WithArguments("test", "-c", "Release")
+        .WithWorkingDirectory(projectDir)
+        .WithNoValidation()
+        .CaptureAsync(ct);
+
+      string plain = AnsiEscape.Replace(result.Combined, "");
+      bool parsed = TryParseMtpSummary(plain, out int total, out int succeeded);
+
+      if (!result.Success || !parsed || total != expectedSucceeded || succeeded != expectedSucceeded)
+      {
+        Terminal.WriteErrorLine(
+          $"{relativeProjectDir}: aggregator did not report {expectedSucceeded}/{expectedSucceeded} (exit {result.ExitCode}; parsed total={total}, succeeded={succeeded}).".Red());
+        Terminal.WriteErrorLine(result.Combined);
+        ok = false;
+        continue;
+      }
+
+      Terminal.WriteLine($"{relativeProjectDir}: {succeeded}/{total} succeeded via MTP.".Green());
+    }
+
+    return ok;
+  }
+
+  /// <summary>
+  /// Parses Microsoft.Testing.Platform <c>dotnet test</c> summary (multi-line host lines or
+  /// compact <c>Test summary: total: N, … succeeded: N</c>). Uses the last match of each.
+  /// </summary>
+  private static bool TryParseMtpSummary(string plainOutput, out int total, out int succeeded)
+  {
+    total = 0;
+    succeeded = 0;
+
+    System.Text.RegularExpressions.MatchCollection totalMatches = MtpTotalLine.Matches(plainOutput);
+    System.Text.RegularExpressions.MatchCollection succeededMatches = MtpSucceededLine.Matches(plainOutput);
+    if (totalMatches.Count == 0 || succeededMatches.Count == 0)
+      return false;
+
+    total = ParseFirstCapturingGroup(totalMatches[^1]);
+    succeeded = ParseFirstCapturingGroup(succeededMatches[^1]);
+    return true;
+  }
+
+  private static int ParseFirstCapturingGroup(System.Text.RegularExpressions.Match match)
+  {
+    for (int i = 1; i < match.Groups.Count; i++)
+    {
+      if (match.Groups[i].Success)
+        return int.Parse(match.Groups[i].Value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    throw new InvalidOperationException("MTP summary regex matched without a capturing group.");
   }
 
   /// <summary>
