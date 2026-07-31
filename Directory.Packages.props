@@ -104,8 +104,14 @@
     <PackageVersion Include="FastEndpoints.OpenApi" Version="8.2.0" />
     <!-- FastEndpoints.OpenApi / Microsoft.AspNetCore.OpenApi 10.0.9 transitively pull
          Microsoft.OpenApi 2.0.0 (NU1903 / GHSA-v5pm-xwqc-g5wc circular-schema stack overflow).
-         Patched 2.x: 2.7.5+. Direct pin on foundation-server lifts the graph without jumping to 3.x
-         (AspNetCore.OpenApi 10.0.9 is not compatible with OpenApi 3.x). -->
+         Patched 2.x: 2.7.5+. Direct pin on foundation-server lifts the graph without jumping to 3.x.
+         Verified task 144: bumping to 3.9.0 restores fine (both nuspecs declare a floor-only
+         dependency, no upper bound) but fails the build — Microsoft.AspNetCore.OpenApi 10.0.9's
+         own XmlCommentGenerator emits code assigning IOpenApiMediaType.Example, which OpenApi 3.x
+         made read-only (CS0200 in
+         artifacts/generated/foundation-server/.../OpenApiXmlCommentSupport.generated.cs).
+         AspNetCore.OpenApi 10.0.9 is therefore not compatible with OpenApi 3.x; deferred until a
+         .NET version ships an AspNetCore.OpenApi built against the OpenApi 3.x object model. -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.16.17" />
