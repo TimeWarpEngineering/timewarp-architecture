@@ -19,3 +19,14 @@ _None._
 ## Escalations
 
 _None._
+
+---
+
+## Addendum — round 2 (2026-07-31, human-requested independent verification)
+
+Round 2 (independent agent, wider scope: all 9 unpushed commits) reproduced every gate green
+and confirmed round-1's fixes are real. Zero bugs. Two open pre-existing-class findings
+(R2-1 SmokeMatrix flag-off coverage gap — suggestion; R2-2 MTP-detection authoring landmine
+doc callout — nit) recorded in `round-2/independent.md`, disposition pending human decision.
+Ship note: version+pins bump to 2.0.0-beta.11 required in the ship commit (template content
+changed; beta.10 already shipped via PR #293).
