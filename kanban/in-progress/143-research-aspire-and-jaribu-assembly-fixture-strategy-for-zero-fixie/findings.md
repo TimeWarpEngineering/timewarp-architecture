@@ -125,9 +125,12 @@ class fixture — SetupOnce covers it — and xunit's assertion swap to Shouldly
 (d) TimeWarp.Fixie retirement docs. Not blockers: assembly lifetime (never existed), vendor
 ownership (we own the stack), MTP/CI (task 136 proved it), template safety (task 135 proved it).
 
-## 6. DECISION FOR STEVE (north star)
+## 6. DECISION — LOCKED (Steve, 2026-07-31)
 
-**Draft recommendation (amended per review round 1 — M1/M2/M4):** adopt **single-framework
+**DECIDED: adopt the recommendation below as stated.** Implementation epic + child tasks
+created from §7 (see task.md Results for numbers).
+
+**Recommendation (amended per review round 1 — M1/M2/M4):** adopt **single-framework
 Jaribu** as the north star (zero Fixie AND zero xUnit), with the **C-create + A lifetime
 model** (per-class-owned host graphs from an explicit ordered factory; C-share/E deferred
 until aggregator cost data demands), **hybrid migration topology** (product tests co-locate;
