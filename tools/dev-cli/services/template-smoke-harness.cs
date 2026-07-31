@@ -551,21 +551,23 @@ internal sealed class TemplateSmokeHarness
   /// Tiers 1–2 exercise standalone <c>dotnet run</c>; tier 3 (task 136) exercises the family
   /// <c>JARIBU_MULTI</c> aggregators via bare <c>dotnet test</c> from each project directory.
   /// </summary>
-  public static readonly string[] CoLocatedTestFiles =
+  public static readonly (string Family, string RelativePath)[] CoLocatedTestFiles =
   [
-    "source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs",
-    "source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs",
+    ("web", "source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs"),
+    ("api", "source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs"),
   ];
 
   /// <summary>
   /// Per-family JARIBU_MULTI aggregator projects (task 136). Relative to the generated app root.
   /// ExpectedSucceeded matches co-located exemplar counts (web create-role = 5, api weather = 2).
-  /// Serial execution required — api aggregator binds fixed port 7255.
+  /// Serial execution required — api aggregator binds fixed port 7255. Family tags let a
+  /// flag-off smoke entry assert the artifacts are ABSENT (task 136 review R2-1): an aggregator
+  /// orphaned by a family flag would break the generated app, so absence is the pass condition.
   /// </summary>
-  public static readonly (string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
+  public static readonly (string Family, string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
   [
-    ("tests/container-apps/web/web-jaribu-tests", 5),
-    ("tests/container-apps/api/api-jaribu-tests", 2),
+    ("web", "tests/container-apps/web/web-jaribu-tests", 5),
+    ("api", "tests/container-apps/api/api-jaribu-tests", 2),
   ];
 
   // The exact guarded lines a template-safe co-located runfile preamble must contain, verbatim,
@@ -612,13 +614,28 @@ internal sealed class TemplateSmokeHarness
   /// still contains the JARIBU_MULTI guard lines verbatim. Run right after generation, before
   /// restore/build, so a regression here is reported before spending time on a build.
   /// </summary>
-  public bool AssertCoLocatedTestFilesSurviveGeneration(string outputDir)
+  public bool AssertCoLocatedTestFilesSurviveGeneration(string outputDir, IReadOnlyCollection<string> excludedFamilies)
   {
     bool ok = true;
 
-    foreach (string relativePath in CoLocatedTestFiles)
+    foreach ((string family, string relativePath) in CoLocatedTestFiles)
     {
       string generatedPath = Path.Combine(outputDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+      if (excludedFamilies.Contains(family))
+      {
+        // Flag-off entry: the family's co-located test must NOT ship — its presence means the
+        // template's family exclude no longer covers it (orphaned file, broken generated build).
+        if (File.Exists(generatedPath))
+        {
+          Terminal.WriteErrorLine(
+            $"{relativePath}: shipped despite --{family} false — template family exclude no longer covers it.".Red());
+          ok = false;
+        }
+
+        continue;
+      }
+
       if (!File.Exists(generatedPath))
       {
         Terminal.WriteErrorLine($"Co-located test file missing after generation: {relativePath}".Red());
@@ -651,12 +668,18 @@ internal sealed class TemplateSmokeHarness
   /// rewrite, contract shape, everything). Runs files serially — the weather-forecast file spins
   /// a real host on fixed port 7255 (same constraint as the monorepo original).
   /// </summary>
-  public async Task<bool> AssertCoLocatedTestFilesRunAsync(string outputDir, CancellationToken ct)
+  public async Task<bool> AssertCoLocatedTestFilesRunAsync(
+    string outputDir,
+    IReadOnlyCollection<string> excludedFamilies,
+    CancellationToken ct)
   {
     bool ok = true;
 
-    foreach (string relativePath in CoLocatedTestFiles)
+    foreach ((string family, string relativePath) in CoLocatedTestFiles)
     {
+      if (excludedFamilies.Contains(family))
+        continue; // absence already asserted by tier 1
+
       string generatedPath = Path.Combine(outputDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
       if (!File.Exists(generatedPath))
         continue; // already reported by tier 1
@@ -712,15 +735,36 @@ internal sealed class TemplateSmokeHarness
   /// succeeded count. Aggregators are not in .slnx (solution build never compiles them); this is
   /// the multi-mode / MTP regression gate. Serial — api aggregator uses fixed port 7255.
   /// </summary>
-  public async Task<bool> AssertJaribuFamilyAggregatorsAsync(string outputDir, CancellationToken ct)
+  public async Task<bool> AssertJaribuFamilyAggregatorsAsync(
+    string outputDir,
+    IReadOnlyCollection<string> excludedFamilies,
+    CancellationToken ct)
   {
     bool ok = true;
 
-    foreach ((string relativeProjectDir, int expectedSucceeded) in JaribuFamilyAggregators)
+    foreach ((string family, string relativeProjectDir, int expectedSucceeded) in JaribuFamilyAggregators)
     {
       string projectDir = Path.Combine(outputDir, relativeProjectDir.Replace('/', Path.DirectorySeparatorChar));
       string csprojName = Path.GetFileName(relativeProjectDir) + ".csproj";
       string csprojPath = Path.Combine(projectDir, csprojName);
+
+      if (excludedFamilies.Contains(family))
+      {
+        // Flag-off entry: an orphaned aggregator would reference stripped family projects and
+        // break the generated app — absence is the pass condition here.
+        if (Directory.Exists(projectDir))
+        {
+          Terminal.WriteErrorLine(
+            $"{relativeProjectDir}: generated despite --{family} false — template family exclude no longer covers it.".Red());
+          ok = false;
+        }
+        else
+        {
+          Terminal.WriteLine($"{relativeProjectDir}: correctly excluded (--{family} false).");
+        }
+
+        continue;
+      }
 
       if (!Directory.Exists(projectDir) || !File.Exists(csprojPath))
       {

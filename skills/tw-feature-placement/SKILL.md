@@ -247,6 +247,11 @@ Compile coverage for co-located runfiles comes from:
    `tests/container-apps/<family>/<family>-jaribu-tests/` — glob that family's
    `features/**/*-tests.cs` and `platform/**/*-tests.cs`; discovered by `dev test` (MTP bare
    `dotnet test` from the project dir). Web and api exist today; grpc when it gains runfiles.
+   **A new aggregator MUST carry a project-local `global.json` with
+   `"test": { "runner": "Microsoft.Testing.Platform" }` AND the root SDK pin mirrored** — that
+   `global.json` is the sole signal `dev test` keys off to pick the MTP invocation; the csproj's
+   `TestingPlatformDotnetTestSupport` property alone is NOT detected, and an aggregator missing
+   the file silently falls to the unsupported VSTest path and fails at `dev test` time.
 3. **`dev template-smoke`** tiers 1–3 for the two exemplars (guard text, standalone run, aggregator
    MTP counts).
 
