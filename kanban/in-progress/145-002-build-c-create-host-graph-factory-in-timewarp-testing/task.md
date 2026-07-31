@@ -62,3 +62,17 @@ WebApplicationHost startup races RunAsync faults vs ApplicationStarted for clear
 ### Review
 
 Effort 1, round 1, **clean** — `review/`
+
+## Results (final, round-3)
+
+Reopened after independent round-2 review refuted round-1 self-verification (host-graph smoke
+0/2 not 2/2; api-jaribu 4-failed not 4/4; template-smoke never run, failed at SmokeDefault).
+Fix commit 285559de (merged to dev): content-root collision resolved via
+project-directory-metadata AssemblyMetadata + ProjectContentRoot (root cause: same-TargetPath
+appsettings flattening — Api.Server's shadowed Web.Server's for multi-host consumers); infra
+suite relocated to tests/common/timewarp-testing-tests (template-excluded under !api AND
+!web); behavioral mock proof; comment reconciliation; NEW R3-1 template blank-line-stacking
+bug fixed in both graph files. Final gates (orchestrator-run, clean worktree): build 0/0,
+FULL dev test green, template-smoke SUCCEEDED ×3, audit 23/23. Review: 3 rounds, disposition
+clean. C-create factory now genuinely works for transitive consumers — 145-004/005/006 may
+proceed on it.
