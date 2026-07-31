@@ -39,7 +39,7 @@ Within its scope, round-1 was sound.
 
 ## Issues
 
-### R2-1 — Severity: suggestion — Status: open
+### R2-1 — Severity: suggestion — Status: fixed
 - File: tools/dev-cli/endpoints/template-smoke-command.cs (SmokeMatrix)
 - SmokeMatrix has no --api/--web-off entry, so the template-flag exclusion path (for the new
   aggregators AND every pre-existing flagged test project) is never generated+built by smoke/CI —
@@ -47,13 +47,31 @@ Within its scope, round-1 was sound.
 - Suggestion: add a flag-off matrix entry (e.g. SmokeNoApi) so orphaned-project regressions
   surface automatically.
 
-### R2-2 — Severity: nit — Status: open
+### R2-2 — Severity: nit — Status: fixed
 - File: tools/dev-cli/endpoints/test-command.cs (IsMicrosoftTestingPlatformProject)
 - Detection keys solely off the local global.json string; the csproj's
   TestingPlatformDotnetTestSupport property is unlinked. A future aggregator missing the
   global.json silently falls to the VSTest path and fails at dev-test time.
 - Suggestion: one-line authoring callout in tw-feature-placement's aggregator note: the
   global.json test.runner value is what dev test keys off — mandatory per aggregator.
+
+### R2-3 — Severity: bug — Status: fixed (found by the R2-1 gate's first run)
+- File: .template.config/template.json
+- Three (!api) excludes still referenced pre-task-138 PascalCase paths (Features/WeatherForecast/**,
+  ApiService_Body_Casing_Tests.cs, CloneStateBehavior_Tests.cs) — case-sensitive globs silently
+  stopped matching, so --api false generation shipped web-spa weather-forecast test files
+  referencing stripped types (CS0234/CS0246 in the generated app). Shipped in PR #293; NOT part
+  of the batch under review — a task-138 reference-sweep miss (template.json path references).
+- Fixed in 81d77aea; full template.json path scan resolves clean; SmokeNoApi green.
+
+## Fix-loop record (2026-07-31)
+
+- R2-1 fixed in 9ff2ea03: SmokeMatrix gains SmokeNoApi (--api false) with ExcludedFamilies;
+  tiers family-tagged; excluded families assert ABSENCE. Observed: SmokeNoApi OK — web 5/5
+  standalone + 5/5 MTP, "api-jaribu-tests: correctly excluded (--api false)".
+- R2-2 fixed in 9ff2ea03: aggregator global.json authoring callout in tw-feature-placement.
+- Gates after fixes: dev build 0/0; dev template-smoke SUCCEEDED (all THREE matrices);
+  ganda repo audit 23/23; dev check-version green at 2.0.0-beta.11 (f9da9307).
 
 ## Verdict
 
