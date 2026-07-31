@@ -49,7 +49,7 @@ assembly hooks — deliver a written recommendation and follow-up task list only
 - [x] Aspire.Hosting.Testing capabilities vs gaps (research/aspire-fit.md — measured; DI wall re-confirmed; MOCK_AUTHENTICATION compile-time blocker; aspire-tests is xUnit = third framework)
 - [x] Fixture-model options compared incl. discovered option E (research/jaribu-fixture-options.md); preferred design C+A drafted in findings.md §3
 - [x] Zero-Fixie feasibility: no structural blockers (findings.md §5)
-- [ ] findings.md written with follow-up list (§7) — AWAITING Steve's north-star decision (§6) before Results/close; follow-up tasks not created yet
+- [x] findings.md written; decision LOCKED (Steve, 2026-07-31); epic 145 + 9 children created (008/009 backlog by design)
 - [x] Kanban mutations committed (streams + findings)
 
 ## Notes
