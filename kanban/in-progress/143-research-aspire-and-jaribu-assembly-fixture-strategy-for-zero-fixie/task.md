@@ -44,13 +44,13 @@ assembly hooks — deliver a written recommendation and follow-up task list only
 
 ## Checklist
 
-- [ ] Inventory Fixie assembly DI + multi-host consumers (web/api/yarp/spa)
-- [ ] Inventory Jaribu modes in-repo (standalone runfile, JARIBU_MULTI aggregator, SetupOnce)
-- [ ] Aspire.Hosting.Testing: capabilities vs gaps for this monorepo (update or supersede 134 survey)
-- [ ] Compare fixture-model options; pick a preferred design (with rejected alternatives)
-- [ ] Zero-Fixie feasibility: remaining true blockers only (no calendar fluff)
-- [ ] Write `findings.md` + recommended follow-up task titles (create via `ganda kanban create` only if ready to schedule)
-- [ ] Kanban mutations committed
+- [x] Inventory Fixie assembly DI + multi-host consumers (research/lifetime-inventory.md — headline: Fixie assembly sharing is per-class in reality)
+- [x] Inventory Jaribu modes in-repo (same doc §4; both dispatch paths sequential, class-scoped hooks)
+- [x] Aspire.Hosting.Testing capabilities vs gaps (research/aspire-fit.md — measured; DI wall re-confirmed; MOCK_AUTHENTICATION compile-time blocker; aspire-tests is xUnit = third framework)
+- [x] Fixture-model options compared incl. discovered option E (research/jaribu-fixture-options.md); preferred design C+A drafted in findings.md §3
+- [x] Zero-Fixie feasibility: no structural blockers (findings.md §5)
+- [ ] findings.md written with follow-up list (§7) — AWAITING Steve's north-star decision (§6) before Results/close; follow-up tasks not created yet
+- [x] Kanban mutations committed (streams + findings)
 
 ## Notes
 
