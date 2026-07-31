@@ -3,6 +3,19 @@
 Guidance for all coding agents in this repository. CLAUDE.md includes this file (`@AGENTS.md`);
 other tools read it directly.
 
+## Agent communication — no calendar estimates
+
+**Never give temporal estimates** (hours, days, weeks, sprints, quarters, “multi-quarter,”
+“quick win this afternoon,” etc.). Calendar duration is meaningless for agent work: parallelism,
+model choice, and available context/tokens are unknown to the estimator and change per session.
+
+- Prefer **scope** (what / how many surfaces / which blockers) over **when**.
+- Prefer **dependencies and proof gates** over “should take about…”
+- Do **not** substitute “tokens” or “agent-hours” as a fake precision unit either — they are not
+  stable or comparable across runs. If magnitude helps, use countable work (files, suites,
+  decisions, blockers), not time or budget guesses.
+- Kanban tasks must not carry Estimate fields (see **`tw-kanban`**).
+
 ## What this repo is
 
 - **This repo IS the `dotnet new timewarp-architecture` template.** Root `source/` + `tests/` are
