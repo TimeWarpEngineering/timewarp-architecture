@@ -1,32 +1,20 @@
-# Disposition — task 143 (review round 1)
+# Disposition — task 143 (research review)
 
 **Date:** 2026-07-31
-**Outcome:** pending-fold-in (research review; not clean until findings amended or issues wontfix’d)
-**Rounds:** 1
-**Final open count:** 6 (0 bug, 4 suggestion, 2 nit) as of round-1 merge
+**Outcome:** clean
+**Rounds:** 1 (+ fold-in)
+**Final open count:** 0
 
 ## Summary
 
-Round 1 reviewed Claude’s `findings.md` synthesis. **No factual bugs** in the headline Fixie
-lifetime claim (independently decompiled and confirmed). Four suggestions and two nits should be
-folded into `findings.md` (or explicitly wontfix’d with rationale) **before** Steve locks §6
-and before follow-up tasks are created.
-
-Primary action: resolve **M1 (C-create vs C-share)** in findings §3/§5; then re-enter Evaluate
-(0 open → write clean disposition, or accepted-exceptions with documented wontfix).
-
-## Exception log
-
-_Empty until fold-in or wontfix decisions._
+Grok's round-1 review verified the three load-bearing claims independently (Fixie per-class
+ServiceProvider via package decompile; aspire-tests xUnit third framework;
+MOCK_AUTHENTICATION compile-time) and raised 4 suggestions + 2 nits, all folded into
+findings.md by the research author: C-create locked as the day-one fixture semantics (M1),
+hybrid migration topology stated (M2), Testcontainers Lazy documented as explicit exception
+(M3), §6 amended to the endorsed recommendation (M4), decompile citation (M5), approximate
+counts (M6). No wontfix. The north-star LOCK itself is deliberately outside review scope —
+it is the human decision pending on the task.
 
 ## Escalations
-
-- **Steve:** §6 north-star decision (after M1–M4 fold-in preferred).
-- Findings author (or next session): amend `findings.md` per `review/round-1/merged.md`.
-
-## Paths
-
-- `review/review-framework.md`
-- `review/round-1/general.md`
-- `review/round-1/merged.md`
-- `review/disposition.md` (this file — **provisional** until fold-in)
+- None.

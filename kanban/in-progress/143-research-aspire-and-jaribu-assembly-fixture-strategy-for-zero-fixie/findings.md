@@ -9,11 +9,16 @@ Prior art: task 134 (Aspire survey, §8), tasks 135–136, jaribu#19/#20 (029 up
 
 ## 1. The finding that reframes everything
 
-**Fixie's "assembly DI singletons" never existed.** Decompiled TimeWarp.Fixie 3.1.0 builds a
-fresh ServiceProvider **per test class** (ConfigureServices re-invoked, provider disposed
-between classes). Everything believed to be assembly-shared is class-scoped:
+**Fixie's "assembly DI singletons" never existed.** Decompiled TimeWarp.Fixie 3.1.0
+(`TestExecution.Run(TestSuite)` in
+`~/.nuget/packages/timewarp.fixie/3.1.0/lib/net9.0/TimeWarp.Fixie.dll` — calls
+`CreateClassServiceProvider(testClass.Type)` inside the per-class foreach, then
+`classServiceProvider.DisposeAsync()` before the next class) builds a fresh ServiceProvider
+**per test class** (ConfigureServices re-invoked, provider disposed between classes).
+Everything believed to be assembly-shared is class-scoped:
 
-- web-server-integration-tests boots/tears down Web.Server ~14× per run.
+- web-server-integration-tests boots/tears down Web.Server roughly 14× per run (approximate —
+  count of consuming classes; see the consumer table in `research/lifetime-inventory.md`).
 - The Aspire-app-as-Fixie-singleton pattern (api + spa conventions) rebuilds the ENTIRE
   distributed app per consuming class — the intended sharing never happens.
 
@@ -48,10 +53,21 @@ newly-discovered empty `CreateTestSessionAsync`/`CloseTestSessionAsync` seam):
   under bare `dotnet run`, so classes call C's idempotent async factory from their own
   `SetupOnce`; any run-scope hook can only ever be an optimization, never the primitive.
 
-**Model:** a `SharedHostGraph`-style static async factory module in `timewarp-testing`
-(explicit ordering, idempotent, disposal-aware), consumed from per-class `SetupOnce`/
-`CleanUpOnce` (A). Cost parity with Fixie's real behavior on day one (per-class boots — same
-as today). **E (MTP session hooks) is filed upstream only when measured aggregator cost
+**Model — C-create by default (review M1 disambiguation):** C has two possible semantics and
+they must not be conflated:
+
+- **C-create** (the default): the module is a *graph factory* — each class's `SetupOnce`
+  calls it to CREATE a fresh, correctly-ordered host graph owned by that class, and
+  `CleanUpOnce` disposes it. Per-class boots = exact cost parity with Fixie's real behavior
+  today; disposal stays trivially correct (single owner, no refcounting).
+- **C-share** (deferred): a process-static shared instance across classes — fewer boots but
+  hard teardown (refcounting/last-owner problems, the undisposed-static bug class). NOT the
+  day-one model; becomes worth designing only together with E's run-scope teardown, and only
+  when measured aggregator wall-clock demands it.
+
+So: a `HostGraphFactory`-style module in `timewarp-testing` (explicit `Web → Api →
+Yarp(web, api)` ordering as plain code), consumed from per-class `SetupOnce`/`CleanUpOnce`
+(A). **E (MTP session hooks) + C-share are filed upstream only when measured aggregator cost
 demands run-scope sharing** — with data, not speculatively. Replacements for Fixie's five
 conveniences: static factory call (vs ctor injection); explicit factory ordering (vs DI
 graph); a shared helper invoked in SetupOnce (vs assembly override point); mandatory
@@ -82,6 +98,24 @@ Aspire is already load-bearing in 3 of 4 suite categories. The measured shape:
   process wall — its Aspire usage is only "give me an ingress HttpClient". Also: a dead
   competing `SpaTestApplication<,>` path is still registered — delete on migration.
 
+## 4b. Migration topology (review M2) and the Testcontainers exception (review M3)
+
+**Topology — hybrid is the default recommendation:** product-slice tests **co-locate**
+(axis-1 `-tests.cs` grammar, tasks 135–136 machinery) as suites migrate; **topology and
+cross-service suites stay suite-shaped under `tests/`** (ingress smoke, cross-host BFF flows,
+OpenAPI process-isolation — they are about the deployable graph, not a slice, per the
+AGENTS.md litmus). A pure suite-shaped port (α) preserves dead structure; a pure co-locate
+(β) has nowhere honest to put topology tests. Migrations should shrink suites by moving
+slice-shaped tests out to co-location and leaving the genuinely host-level remainder.
+
+**Testcontainers postgres (web-infrastructure-tests) — explicit exception to C:** it uses a
+process-static `Lazy<Task<PostgresAvailability>>` with Docker-skip semantics today. It stays
+that way under zero-Fixie: Testcontainers' Ryuk reaper handles container cleanup at process
+exit, so this is exactly the "static Lazy is fine when no dispose is needed" case the 029
+guidance already blesses. It is NOT a C-create client (a fresh postgres container per class
+would be pure waste) and must not be cited as precedent for C-share of ASP.NET hosts (which
+DO need deterministic dispose — ports).
+
 ## 5. Zero-Fixie feasibility: remaining true blockers
 
 **None structural.** With §1's finding, the blocker list reduces to build-work, not unknowns:
@@ -93,10 +127,12 @@ ownership (we own the stack), MTP/CI (task 136 proved it), template safety (task
 
 ## 6. DECISION FOR STEVE (north star)
 
-**Draft recommendation:** adopt **single-framework Jaribu** as the north star (zero Fixie AND
-zero xUnit), with the **C+A lifetime model** (explicit shared-fixture module + per-class
-hooks; E upstream only when cost data demands) and the **two-lane Aspire role** (in-proc lane
-for DI-substitution/pipeline tests; closed-box lane for topology/process-isolation tests; no
+**Draft recommendation (amended per review round 1 — M1/M2/M4):** adopt **single-framework
+Jaribu** as the north star (zero Fixie AND zero xUnit), with the **C-create + A lifetime
+model** (per-class-owned host graphs from an explicit ordered factory; C-share/E deferred
+until aggregator cost data demands), **hybrid migration topology** (product tests co-locate;
+topology suites stay suite-shaped), and the **two-lane Aspire role** (in-proc lane for
+DI-substitution/pipeline tests; closed-box lane for topology/process-isolation tests; no
 wholesale migration; fixed ports stay in the in-proc lane).
 
 Rejected alternatives, with reasons: run-scope-hooks-first (B/D — reachable only via upstream
