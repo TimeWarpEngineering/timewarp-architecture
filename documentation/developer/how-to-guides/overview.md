@@ -21,4 +21,4 @@ Task-oriented guides for working in a TimeWarp Architecture solution.
 ## Contracts and testing
 
 - [Web API contracts](web-api-contracts/overview.md)
-- [Testing guides](testing/) — endpoint tests, Fixie tags/filters, lifecycles
+- [Testing guides](testing/) — endpoint tests, Jaribu co-located + suite migration (epic 145), host lanes

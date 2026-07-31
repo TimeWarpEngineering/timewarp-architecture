@@ -34,9 +34,10 @@ Multi-dot **partial** stems are valid when each segment is kebab:
   enforcement only fires when the file itself is compiled, e.g. standalone `dotnet run` — NOT the
   `dev build` solution gate, which never touches it). Runfile preamble convention (`PublishAot=false`,
   the `cnd:noEmit`-escaped `JARIBU_MULTI` switch): skill **`tw-feature-placement`** (Co-located
-  Jaribu runfile preamble section); reference implementations `create-role-tests.cs`,
-  `get-weather-forecasts-tests.cs`. Jaribu itself (attributes, naming, assertions, testing
-  philosophy): cross-repo skill **`tw-jaribu`**.
+  Jaribu runfile preamble section, including **C-create** host lifetime); reference
+  implementations `create-role-tests.cs`, `get-weather-forecasts-tests.cs`. Jaribu itself
+  (attributes, naming, assertions): cross-repo skill **`tw-jaribu`**. North star: single-framework
+  Jaribu (epic 145) — do not add new Fixie/xUnit tests.
 
 ## Enforcement
 

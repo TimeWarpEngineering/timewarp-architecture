@@ -1,13 +1,29 @@
 # Integration Testing
 
-The TimeWarp Architecture use [Fixie](https://github.com/fixie/fixie) for the Testing Framework.
+## Framework
 
-Fixie allows for customization of the Test Project Lifecycle. Which is made of the Discovery Phase and 
+**North star (epic 145):** [TimeWarp.Jaribu](https://github.com/TimeWarpEngineering/timewarp-jaribu)
+is the single test framework target (zero Fixie, zero xUnit). Assertions:
+[Shouldly](https://github.com/shouldly/shouldly).
 
-TimeWarp Architecture favors Integration Testing over Unit testing. We recommend only mocking code you don't have control over. If you have control over it then test it also.
+| Lane | When | Host |
+|------|------|------|
+| **In-proc** | DI substitution, mediator/pipeline, fixed-port BFF | `WebApplicationHost` / timewarp-testing (ports 7000 / 7255 / 8443) |
+| **Closed-box** | Topology, ingress, process isolation | `Aspire.Hosting.Testing` / AppHost (dynamic ports) |
 
-# Libraries
+Product-slice tests co-locate as Jaribu runfiles; topology suites stay under `tests/` but
+migrate to Jaribu MTP. See root **AGENTS.md** and skill **`tw-feature-placement`** (C-create
+host lifetime).
 
-[Fixie](https://github.com/fixie/fixie)
-[FakeItEasy](https://github.com/FakeItEasy/FakeItEasy)
-[Shouldly](https://github.com/shouldly/shouldly)
+Legacy suite-shaped projects may still use [Fixie](https://github.com/fixie/fixie) +
+TimeWarp.Fixie until epic 145 children retire them — **do not add new Fixie or xUnit tests**.
+
+TimeWarp Architecture favors integration testing over unit testing. Mock only code you do not
+control.
+
+## Libraries
+
+- [TimeWarp.Jaribu](https://github.com/TimeWarpEngineering/timewarp-jaribu) (target framework)
+- [Shouldly](https://github.com/shouldly/shouldly)
+- [FakeItEasy](https://github.com/FakeItEasy/FakeItEasy) (when fakes are needed)
+- [Fixie](https://github.com/fixie/fixie) (legacy only — epic 145 retirement)

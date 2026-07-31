@@ -65,21 +65,31 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   to anonymous; TWA0013/TWA0014 enforce the pairing at build time). No hand-written `BaseEndpoint`
   shims in the template. Validation stays on the mediator's `FluentValidationBehavior` — do not
   adopt FastEndpoints' validator integration.
-- Tests: co-located **Jaribu** runfiles (`<name>[-<function>]-tests.cs`, standalone via
-  `dotnet run`) are the default for new product-slice tests as of task 135 — runfile preamble
-  convention lives in **`tw-feature-placement`** skill (Co-located Jaribu runfile preamble
-  section; Jaribu itself — attributes, naming, assertions — is the cross-repo **`tw-jaribu`**
-  skill); reference implementations: `create-role-tests.cs` (web),
-  `get-weather-forecasts-tests.cs` (api). Host-level `tests/` suites stay **Fixie + Shouldly**
-  (NOT MSTest/xUnit; do not introduce FluentAssertions — v8+ is commercially licensed). Migration
-  policy: new tests
-  are co-located Jaribu from adoption; existing Fixie projects migrate opportunistically
-  slice-by-slice; `tests/` host-level/cross-service integration suites migrate last or never;
-  Playwright e2e is unaffected. CI/`dev test` discovers co-located runfiles via per-family
-  **`JARIBU_MULTI` aggregators** under `tests/container-apps/<family>/<family>-jaribu-tests/`
-  (web + api; Microsoft.Testing.Platform; not in `.slnx` — task 136). Each aggregator's
-  project-local `global.json` must **mirror the root SDK pin** when the root SDK bumps
-  (timewarp-jaribu#20 landmine). Standalone `dotnet run <file>.cs` remains the local dev loop.
+- Tests — **north star (epic 145; decision task 143 §6): single-framework Jaribu** (zero Fixie
+  **and** zero xUnit). Assertions: **Shouldly** only (do not introduce FluentAssertions — v8+ is
+  commercially licensed). **Do not extend Fixie or xUnit** — no new Fixie projects, conventions,
+  or xUnit `[Fact]` suites; remaining Fixie/`aspire-tests` xUnit code is migration debt only.
+  - **New product-slice tests** are co-located Jaribu runfiles (`<name>[-<function>]-tests.cs`
+    under `features/` / `platform/`), standalone via `dotnet run`. Preamble and C-create host
+    rules: skill **`tw-feature-placement`**; Jaribu itself: cross-repo **`tw-jaribu`**. Exemplars:
+    `create-role-tests.cs` (web, host-free), `get-weather-forecasts-tests.cs` (api, SetupOnce).
+  - **Hybrid migration (epic 145):** slice-shaped coverage co-locates as suites are touched;
+    genuinely host-level / topology remainder stays suite-shaped under `tests/` but on **Jaribu
+    MTP**, not Fixie. Children: 145-002 (HostGraphFactory C-create) → suite ports → 145-007
+    retire TimeWarp.Fixie. Known deviation: `aspire-tests` is still xUnit until 145-003.
+  - **CI:** family **`JARIBU_MULTI` aggregators** under
+    `tests/container-apps/<family>/<family>-jaribu-tests/` (web + api; Microsoft.Testing.Platform;
+    not in `.slnx` — task 136). Each aggregator's project-local `global.json` must **mirror the
+    root SDK pin** on SDK bumps (timewarp-jaribu#20). Standalone `dotnet run <file>.cs` is the
+    local dev loop.
+  - Playwright e2e is unaffected.
+- **Test host lanes (Aspire vs in-proc):** two lanes, no wholesale Aspire migration —
+  - **In-proc** (`WebApplicationHost` / timewarp-testing, fixed ports web=7000 api=7255 yarp=8443):
+    DI substitution, mediator/pipeline, BFF mocks — **only place fixed ports live**; `dev test`
+    stays serialized for those projects.
+  - **Closed-box** (`Aspire.Hosting.Testing` / AppHost): topology, ingress, multi-resource, and
+    process-isolation cases (e.g. FastEndpoints discovery pollution across AppDomain). No DI
+    mock/substitution across the process wall; dynamic Aspire ports.
 - Blazor form validation: **Blazilla** (explicit validator instance — supports `I*Details` binding)
 - **FluentUI v5 + plain CSS** design tokens (`wwwroot/css/tokens.css`); no Tailwind — do not
   reintroduce it (see `blazor-css-strategy` skill)
@@ -301,11 +311,12 @@ Formats and lifecycle: the `agent-context-regions` skill.
 
 - **API endpoint**: contract per the skill (Request/Response/Validator, shared `I*Details` where
   bindable; `[ApiEndpoint]` when the host should generate the FastEndpoint; exactly one of
-  `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]`, always) + Handler + integration tests
-  (happy path AND validation rejection). Backend validation comes from the mediator's
-  `FluentValidationBehavior` — do not re-validate in handlers.
-- **Client feature**: State/Actions/Components + serialization round-trips in `web-contracts-tests`
-  for non-trivial shapes (ctor+Guard, envelopes, generated route properties).
+  `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]`, always) + Handler + **co-located
+  Jaribu** integration tests (happy path AND validation rejection; not new Fixie cases). Backend
+  validation comes from the mediator's `FluentValidationBehavior` — do not re-validate in handlers.
+- **Client feature**: State/Actions/Components + serialization round-trips (prefer co-located
+  Jaribu; existing `web-contracts-tests` Fixie is migration debt) for non-trivial shapes
+  (ctor+Guard, envelopes, generated route properties).
 
 ## Task management
 

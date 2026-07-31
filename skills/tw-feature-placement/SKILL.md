@@ -271,6 +271,22 @@ contract round-trip) and
 (real host, fixed port 7255, class-scoped `SetupOnce`/`CleanUpOnce` for host dispose —
 requires `TimeWarp.Jaribu` ≥ 1.0.0-beta.14) — read one before writing a new co-located test.
 
+**C-create host lifetime (epic 145 / task 143 §6):** when a test class needs ASP.NET hosts
+(in-proc lane), **each class owns its own graph**:
+
+- `SetupOnce` creates hosts via the shared **HostGraphFactory** (task **145-002** — explicit
+  Web→Api→Yarp ordering when multi-host; until that type lands, follow the weather-forecast
+  exemplar’s per-class `new ApiTestServerApplication()` + `DisposeAsync` pattern).
+- `CleanUpOnce` **must** dispose that class’s graph (ports, Kestrel). Never leave hosts to
+  process exit when they bind fixed ports.
+- **Never share** ASP.NET hosts across classes via process-static / `Lazy` / assembly singletons
+  (that was the Fixie mental model; TimeWarp.Fixie actually rebuilt the provider **per class**
+  anyway — see task 143). **C-share** / Jaribu run-scope session hooks are **not** the authoring
+  default (145-008 is data-gated only).
+- **Documented exception (no dispose required):** Testcontainers postgres process-static
+  `Lazy` in foundation/infra tests — Ryuk reaps containers at process exit; do **not** cite that
+  as precedent for sharing Kestrel hosts.
+
 ```csharp
 #!/usr/bin/env -S dotnet --
 #:project <path-to-the-layer-project-this-test-needs, e.g. $(SourceDirectory)container-apps/web/projects/web-contracts/web-contracts.csproj>
