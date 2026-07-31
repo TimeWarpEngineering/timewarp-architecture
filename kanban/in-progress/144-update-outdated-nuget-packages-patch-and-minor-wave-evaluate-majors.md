@@ -31,12 +31,25 @@ Microsoft.TypeScript.MSBuild 6.0.3 → 7.0.0).
 
 ## Checklist
 
-- [ ] Patch + minor bumps applied (FluentUI main untouched)
-- [ ] MessagePack major: consumers identified; bumped or deferred with reason
-- [ ] Microsoft.OpenApi major: FastEndpoints range checked; bumped or deferred with reason
-- [ ] TypeScript.MSBuild major: SPA TS output verified; bumped or deferred with reason
-- [ ] Gates: build 0/0, full dev test, template-smoke ×3, audit clean
-- [ ] Kanban mutations committed
+- [x] Patch + minor bumps applied (33; FluentUI main verified untouched at 5.0.0-rc.4)
+- [x] MessagePack 3.1.8 BUMPED — sole consumer is transitive-lift pin for StreamJsonRpc (floor-only range); aspire-tests 7/7 against it
+- [x] Microsoft.OpenApi DEFERRED — floor-only ranges restore, but Microsoft.AspNetCore.OpenApi 10.0.x XmlCommentGenerator emits CS0200 against 3.x (IOpenApiMediaType.Example read-only); evidence in props comment
+- [x] TypeScript.MSBuild DEFERRED — 7.0.0 rewrite removes target chain web-spa hooks (MSB4057); revert verified byte-identical JS emission (4 files md5-matched)
+- [x] Gates: build 0/0; full dev test ~652 tests 0 failed; template-smoke ×3 SUCCEEDED; audit 23/23
+- [x] Kanban mutations committed
+
+## Results
+
+Branch `Claude/2026-07-31/task-144-nuget-update-wave` (4 commits) fast-forwarded into dev;
+version bumped to 2.0.0-beta.12 (54441158). 33 patch/minor bumps + MessagePack 2.5.302→3.1.8.
+Two majors deferred with verification evidence recorded as comments beside the pins in
+Directory.Packages.props: Microsoft.OpenApi (blocked by ASP.NET 10.0.x's own generated code —
+revisit when Microsoft.AspNetCore.OpenApi supports OpenApi 3.x) and Microsoft.TypeScript.MSBuild
+(v7 tsc-go rewrite removes the classic target chain; web-spa PrepareForBuildDependsOn needs
+reworking first). Orchestrator verification: diff confirmed pins-only, no VersionOverride,
+FluentUI main untouched; post-merge dev build 0/0, audit 23/23, check-version safe.
+Follow-up filed in ganda: `nuget outdated` fails to surface newer patches within the current
+major when the latest version is a different major (OpenApi 2.7.5→2.11.0 not shown).
 
 ## Session
 
