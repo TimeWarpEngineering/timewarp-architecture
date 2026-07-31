@@ -67,7 +67,13 @@ still open).
   Q2 family aggregators (this task), Q3 Aspire tier still open.
 - Stale-`dev`-binary footgun: this task edits dev-cli — verify changed dev-cli code via
   runfile or self-install before trusting `./bin/dev` output.
+- **Implementation plan:** `plan.md` (2026-07-31). Locked: D1 bare `dotnet test` cwd=project;
+  D2 per-aggregator global.json (no root runner); D3 pin TestingPlatform beta.14; D4 not in
+  .slnx; D5 web→contracts, api→contracts+timewarp-testing; D6 template path excludes; D7
+  template-smoke tier 3 (web 5 / api 2); D8 CI unchanged. Order: MTP invoke **before** any
+  aggregator csproj appears.
 
 ## Session
 
 - Created: c6f1a13b-487f-4085-bf61-ba4761e8579e (2026-07-29)
+- Plan: 2026-07-31 (orchestration tw-orchestrate-task 136)
