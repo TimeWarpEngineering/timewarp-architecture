@@ -82,13 +82,29 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
 
     try
     {
-      Task runTask = WebApplication.RunAsync();
-
-      // Wait for the server to be ready to accept connections
+      // Register ApplicationStarted BEFORE RunAsync — a failed host disposes the ServiceProvider.
       IHostApplicationLifetime lifetime = ServiceProvider.GetRequiredService<IHostApplicationLifetime>();
       TaskCompletionSource serverStartedTcs = new();
-      lifetime.ApplicationStarted.Register(() => serverStartedTcs.SetResult());
-      serverStartedTcs.Task.Wait(TimeSpan.FromSeconds(30));
+      lifetime.ApplicationStarted.Register(() => serverStartedTcs.TrySetResult());
+
+      Task runTask = WebApplication.RunAsync();
+
+      // Race ApplicationStarted against RunAsync faulting / timeout so we surface the real error.
+      Task timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
+      Task completed = Task.WhenAny(serverStartedTcs.Task, runTask, timeoutTask).GetAwaiter().GetResult();
+
+      if (completed == runTask)
+        runTask.GetAwaiter().GetResult(); // rethrow host startup failure
+
+      if (completed == timeoutTask)
+      {
+        throw new TimeoutException(
+          $"WebApplication for {typeof(TProgram).FullName} did not signal ApplicationStarted within 30s. " +
+          $"Urls: {string.Join(", ", urls)}");
+      }
+
+      if (runTask.IsFaulted)
+        runTask.GetAwaiter().GetResult();
 
       Console.WriteLine("======= WebApplication Started ======");
       Started = true;

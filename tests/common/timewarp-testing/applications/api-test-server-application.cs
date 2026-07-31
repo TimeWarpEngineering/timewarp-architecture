@@ -6,9 +6,13 @@ namespace TimeWarp.Architecture.Testing;
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
 public sealed class ApiTestServerApplication : TestServerApplication<Api.Server.Program>
 {
-  private const string ApiHostUrl = "https://localhost:7255";
+  internal const string ApiHostUrl = "https://localhost:7255";
+  internal const int ApiPort = 7255;
 
-  public ApiTestServerApplication() :
+  /// <param name="configureServices">
+  /// Optional extras after the built-in test wiring (C-create / <see cref="HostGraphFactory"/>).
+  /// </param>
+  public ApiTestServerApplication(Action<IServiceCollection>? configureServices = null) :
     base
     (
       new WebApplicationHost<Api.Server.Program>
@@ -22,9 +26,14 @@ public sealed class ApiTestServerApplication : TestServerApplication<Api.Server.
         {
           ApplicationName = typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly.GetName().Name,
           EnvironmentName = Environments.Development,
-          ContentRootPath = default,
+          ContentRootPath = Path.GetDirectoryName(
+            typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly.Location),
         },
-        ConfigureServicesCallback
+        services =>
+        {
+          ConfigureServicesCallback(services);
+          configureServices?.Invoke(services);
+        }
       )
     )
   { }

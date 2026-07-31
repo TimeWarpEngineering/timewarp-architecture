@@ -6,29 +6,22 @@
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058
 
-// Co-located Jaribu integration test (task 135, ported from the task 134 spike requirement 2,
-// the PRIMARY case). Duplicates
-// tests/container-apps/api/api-server-integration-tests/features/weather-forecast/get/
-// get-weather-forecasts-endpoint-tests.cs — a real ApiTestServerApplication host (fixed port
-// 7255) exercised over real HTTP through FastEndpoints and the real mediator pipeline, not a
-// host-free unit test. Ensure no other process is bound to :7255 before running (same
-// fixed-port / serialized-execution constraint as the Fixie suite it duplicates).
+// Co-located Jaribu integration test (task 135, C-create via HostGraphFactory task 145-002).
+// Duplicates tests/container-apps/api/api-server-integration-tests/features/weather-forecast/get/
+// get-weather-forecasts-endpoint-tests.cs — real Api host on :7255 through FastEndpoints + mediator.
+// Ensure no other process is bound to :7255 before running (serialized with Fixie suites).
 // Run standalone: dotnet run source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs
 
 #region Purpose
-// Jaribu runfile proving a co-located, real-host integration test: happy path + validation
-// rejection through the real mediator/FastEndpoints pipeline (task 135; task 134 spike
-// requirement 2).
+// Jaribu runfile proving co-located real-host integration (happy path + validation) and the
+// HostGraphFactory C-create Api-only consumption shape (task 145-002).
 #endregion
 
 #region Design
-// Shared host lifetime uses Jaribu class-scoped SetupOnce / CleanUpOnce (TimeWarp.Jaribu
-// ≥ 1.0.0-beta.14; timewarp-jaribu#19 / jaribu task 029). SetupOnce runs before the first
-// test that actually executes; CleanUpOnce disposes the host after the last test so the fixed
-// port is released before process exit — required for JARIBU_MULTI aggregators and safer than
-// the pre-beta.14 Lazy-never-dispose workaround. Spinning up WebApplication.CreateBuilder +
-// FastEndpoints + Mediator per test would multiply the host's ~1s+ startup cost by the test
-// count for zero isolation benefit (this endpoint has no mutable state).
+// Host lifetime: HostGraphFactory.CreateApiAsync (C-create — fresh graph per class, no process
+// statics). SetupOnce stores HostGraph; CleanUpOnce disposes reverse-order (Api only here).
+// Jaribu SetupOnce/CleanUpOnce (beta.14+) are class-scoped; lifetime matches real Fixie
+// per-class ServiceProvider behavior (task 143).
 #endregion
 
 //-:cnd:noEmit
@@ -37,11 +30,6 @@ return await TimeWarp.Jaribu.TestRunner.RunAllTests();
 #endif
 //+:cnd:noEmit
 
-// Jaribu's SUT_/Action_Given_ naming convention requires underscores in type/member names
-// (CA1707, via the NoWarn preamble above); it also requires a block-scoped namespace (top-level
-// statements above cannot be followed by a file-scoped namespace — hence IDE0161 is in the same
-// NoWarn list). Both are structural to the multi-mode runfile template, not a style lapse — see
-// create-role-tests.cs (task 135) for the same rationale.
 namespace TimeWarp.Architecture.Features.WeatherForecasts
 {
 
@@ -60,23 +48,22 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts
   [TestTag("Integration")]
   public class GetWeatherForecastsEndpoint_Given_
   {
-    private static ApiTestServerApplication? Host;
+    private static HostGraph? Graph;
 
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<GetWeatherForecastsEndpoint_Given_>();
 
-    public static Task SetupOnce()
+    public static async Task SetupOnce()
     {
-      Host = new ApiTestServerApplication();
-      return Task.CompletedTask;
+      Graph = await HostGraphFactory.CreateApiAsync();
     }
 
     public static async Task CleanUpOnce()
     {
-      if (Host is not null)
+      if (Graph is not null)
       {
-        await Host.DisposeAsync();
-        Host = null;
+        await Graph.DisposeAsync();
+        Graph = null;
       }
     }
 
@@ -85,7 +72,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts
       Query query = new() { Days = 10 };
 
       OneOf<Response, FileResponse, SharedProblemDetails> response =
-        await Host!.GetResponse<Response>(query, CancellationToken.None);
+        await Graph!.Api!.GetResponse<Response>(query, CancellationToken.None);
 
       response.Switch
       (
@@ -99,7 +86,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts
     {
       Query query = new() { Days = -1 };
 
-      await Host!.ConfirmEndpointValidationError<Response>(query, nameof(Query.Days));
+      await Graph!.Api!.ConfirmEndpointValidationError<Response>(query, nameof(Query.Days));
     }
   }
 

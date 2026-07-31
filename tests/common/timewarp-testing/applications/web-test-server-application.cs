@@ -10,10 +10,15 @@ using TimeWarp.Architecture.Configuration;
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
 public class WebTestServerApplication : TestServerApplication<Web.Server.Program>
 {
-  private const string WebHostUrl = "https://localhost:7000";
+  internal const string WebHostUrl = "https://localhost:7000";
+  internal const int WebPort = 7000;
   private const string ApiHostUrl = "https://localhost:7255";
 
-  public WebTestServerApplication() :
+  /// <param name="configureServices">
+  /// Optional extras after the built-in test wiring (includes <see cref="MockAccessTokenProvider"/>).
+  /// Used by C-create / <see cref="HostGraphFactory"/>.
+  /// </param>
+  public WebTestServerApplication(Action<IServiceCollection>? configureServices = null) :
     base
     (
       new WebApplicationHost<Web.Server.Program>
@@ -27,8 +32,16 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
         {
           ApplicationName = typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly.GetName().Name,
           EnvironmentName = Environments.Development,
+          // Assembly output dir carries appsettings (SampleOptions, WebAuthn, …). Required when
+          // the host is started from a Jaribu runfile / factory (cwd is not the test project).
+          ContentRootPath = Path.GetDirectoryName(
+            typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).Assembly.Location),
         },
-        ConfigureServicesCallback
+        services =>
+        {
+          ConfigureServicesCallback(services);
+          configureServices?.Invoke(services);
+        }
       )
     )
   { }

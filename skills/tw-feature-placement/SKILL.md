@@ -274,11 +274,11 @@ requires `TimeWarp.Jaribu` ≥ 1.0.0-beta.14) — read one before writing a new 
 **C-create host lifetime (epic 145 / task 143 §6):** when a test class needs ASP.NET hosts
 (in-proc lane), **each class owns its own graph**:
 
-- `SetupOnce` creates hosts via the shared **HostGraphFactory** (task **145-002** — explicit
-  Web→Api→Yarp ordering when multi-host; until that type lands, follow the weather-forecast
-  exemplar’s per-class `new ApiTestServerApplication()` + `DisposeAsync` pattern).
-- `CleanUpOnce` **must** dispose that class’s graph (ports, Kestrel). Never leave hosts to
-  process exit when they bind fixed ports.
+- `SetupOnce` creates hosts via **`HostGraphFactory`** (`tests/common/timewarp-testing`,
+  task **145-002**): `CreateApiAsync` / `CreateWebWithApiAsync` / `CreateWebApiYarpAsync` —
+  explicit Api→Web→Yarp order; returns a **`HostGraph`** (`IAsyncDisposable`).
+- `CleanUpOnce` **must** `await graph.DisposeAsync()` (reverse order) and null the static.
+  Never leave fixed-port hosts to process exit.
 - **Never share** ASP.NET hosts across classes via process-static / `Lazy` / assembly singletons
   (that was the Fixie mental model; TimeWarp.Fixie actually rebuilt the provider **per class**
   anyway — see task 143). **C-share** / Jaribu run-scope session hooks are **not** the authoring
@@ -331,7 +331,7 @@ namespace Your.Slice.Namespace
 - When co-located **test method totals** change for an exemplar family (or a new family gains
   runfiles), also bump `TemplateSmokeHarness.JaribuFamilyAggregators` expected counts in
   `tools/dev-cli/services/template-smoke-harness.cs` (tier 3 hardcodes succeeded counts —
-  web 5 / api 2 today). A green `dev test` alone is not enough if smoke still expects the old
+  web 5 / api 4 today). A green `dev test` alone is not enough if smoke still expects the old
   total.
 - `#region Purpose` is never suppressed (TWA0004) — write the real one-line reason, not a
   placeholder.

@@ -555,19 +555,20 @@ internal sealed class TemplateSmokeHarness
   [
     ("web", "source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs"),
     ("api", "source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs"),
+    ("api", "source/container-apps/api/features/host-graph/host-graph-factory-tests.cs"),
   ];
 
   /// <summary>
   /// Per-family JARIBU_MULTI aggregator projects (task 136). Relative to the generated app root.
-  /// ExpectedSucceeded matches co-located exemplar counts (web create-role = 5, api weather = 2).
-  /// Serial execution required — api aggregator binds fixed port 7255. Family tags let a
+  /// ExpectedSucceeded matches co-located counts (web create-role = 5; api weather = 2 +
+  /// host-graph factory smoke = 2 → 4). Serial — api binds :7255/:7000. Family tags let a
   /// flag-off smoke entry assert the artifacts are ABSENT (task 136 review R2-1): an aggregator
   /// orphaned by a family flag would break the generated app, so absence is the pass condition.
   /// </summary>
   public static readonly (string Family, string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
   [
     ("web", "tests/container-apps/web/web-jaribu-tests", 5),
-    ("api", "tests/container-apps/api/api-jaribu-tests", 2),
+    ("api", "tests/container-apps/api/api-jaribu-tests", 4),
   ];
 
   // The exact guarded lines a template-safe co-located runfile preamble must contain, verbatim,
