@@ -76,7 +76,7 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   - **Hybrid migration (epic 145):** slice-shaped coverage co-locates as suites are touched;
     genuinely host-level / topology remainder stays suite-shaped under `tests/` but on **Jaribu
     MTP**, not Fixie. Children: 145-002 (HostGraphFactory C-create) → suite ports → 145-007
-    retire TimeWarp.Fixie. Known deviation: `aspire-tests` is still xUnit until 145-003.
+    retire TimeWarp.Fixie. Closed-box topology suite `aspire-tests` is Jaribu MTP (task 145-003).
   - **CI:** family **`JARIBU_MULTI` aggregators** under
     `tests/container-apps/<family>/<family>-jaribu-tests/` (web + api; Microsoft.Testing.Platform;
     not in `.slnx` — task 136). Each aggregator's project-local `global.json` must **mirror the
