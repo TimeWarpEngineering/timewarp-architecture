@@ -70,10 +70,20 @@ assembly hooks — deliver a written recommendation and follow-up task list only
 - Temporal estimates of any kind (see root `AGENTS.md` — Agent communication).
 - Implementing migrations in this task.
 
+### Review (Phase 4b-style on research deliverable)
+
+- **Kitchen:** `review/` (framework, round-1 general + merged, provisional disposition)
+- **Round 1:** Headline Fixie claim **CONFIRMED** via TimeWarp.Fixie 3.1.0 decompile; 0 bugs;
+  4 suggestions + 2 nits **open** — fold into `findings.md` before locking §6 (primary: **M1
+  C-create vs C-share**). See `review/round-1/merged.md`.
+- Disposition **pending-fold-in** until findings amended or issues wontfix’d.
+
 ## Session
 
 - Created: 2026-07-31 (follow-up to task 136 + zero-Fixie / Aspire design conversation)
+- Research streams + findings.md: 2026-07-31 (Claude)
+- Review round 1 findings.md: 2026-07-31 (Grok) — `review/`
 
 ## Results
 
-_Added after research completes._
+_Added after research completes and §6 decision + review disposition._
