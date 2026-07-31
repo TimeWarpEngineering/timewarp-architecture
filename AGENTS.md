@@ -68,7 +68,8 @@ Branch naming, commits, and merge policy: **`tw-git`**.
 - Tests — **north star (epic 145; decision task 143 §6): single-framework Jaribu** (zero Fixie
   **and** zero xUnit). Assertions: **Shouldly** only (do not introduce FluentAssertions — v8+ is
   commercially licensed). **Do not extend Fixie or xUnit** — no new Fixie projects, conventions,
-  or xUnit `[Fact]` suites; remaining Fixie/`aspire-tests` xUnit code is migration debt only.
+  or xUnit `[Fact]` suites; remaining Fixie code is migration debt only (xUnit is already gone
+  — task 145-003).
   - **New product-slice tests** are co-located Jaribu runfiles (`<name>[-<function>]-tests.cs`
     under `features/` / `platform/`), standalone via `dotnet run`. Preamble and C-create host
     rules: skill **`tw-feature-placement`**; Jaribu itself: cross-repo **`tw-jaribu`**. Exemplars:
