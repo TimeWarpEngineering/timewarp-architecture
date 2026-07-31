@@ -17,6 +17,9 @@
 // template-safety escape (cnd:noEmit) for generated apps — the ordinary solution build never
 // touches these files (they compile into no layer project by design), so without this pair the
 // gate would be silently blind to a regression here.
+// Task 136: AssertJaribuFamilyAggregatorsAsync (tier 3) bare `dotnet test -c Release` from each
+// family aggregator project dir in the generated app (web 5, api 2); serial for fixed port 7255.
+// Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
 #endregion
 
 namespace DevCli.Services;
@@ -542,16 +545,27 @@ internal sealed class TemplateSmokeHarness
 
   /// <summary>
   /// Co-located Jaribu runfiles (task 135) whose JARIBU_MULTI template-safety (the cnd:noEmit
-  /// escape) and end-to-end runnability must survive `dotnet new` generation. These compile into
-  /// NO layer project (registered-unrouted "tests" suffix, feature-filename-grammar.json) so the
-  /// generated app's ordinary solution build is structurally blind to a regression here — this is
-  /// the only gate that exercises them post-generation. Standalone-run only; no JARIBU_MULTI
-  /// aggregator exists yet (task 136), so both tiers below run each file via `dotnet run`.
+  /// escape) and end-to-end runnability must survive <c>dotnet new</c> generation. These compile
+  /// into NO layer project (registered-unrouted "tests" suffix, feature-filename-grammar.json) so
+  /// the generated app's ordinary solution build is structurally blind to a regression here.
+  /// Tiers 1–2 exercise standalone <c>dotnet run</c>; tier 3 (task 136) exercises the family
+  /// <c>JARIBU_MULTI</c> aggregators via bare <c>dotnet test</c> from each project directory.
   /// </summary>
   public static readonly string[] CoLocatedTestFiles =
   [
     "source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs",
     "source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs",
+  ];
+
+  /// <summary>
+  /// Per-family JARIBU_MULTI aggregator projects (task 136). Relative to the generated app root.
+  /// ExpectedSucceeded matches co-located exemplar counts (web create-role = 5, api weather = 2).
+  /// Serial execution required — api aggregator binds fixed port 7255.
+  /// </summary>
+  public static readonly (string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
+  [
+    ("tests/container-apps/web/web-jaribu-tests", 5),
+    ("tests/container-apps/api/api-jaribu-tests", 2),
   ];
 
   // The exact guarded lines a template-safe co-located runfile preamble must contain, verbatim,
@@ -575,6 +589,13 @@ internal sealed class TemplateSmokeHarness
 
   private static readonly System.Text.RegularExpressions.Regex JaribuPassedLine =
     new(@"Passed:\s*(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+  // MTP `dotnet test` summary lines (case-insensitive): "total: N" / "succeeded: N"
+  private static readonly System.Text.RegularExpressions.Regex MtpTotalLine =
+    new(@"^\s*total:\s*(\d+)\s*$", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+  private static readonly System.Text.RegularExpressions.Regex MtpSucceededLine =
+    new(@"^\s*succeeded:\s*(\d+)\s*$", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
   /// <summary>
   /// Tier 1 (cheap): asserts every co-located test file that shipped into the generated app
@@ -672,6 +693,76 @@ internal sealed class TemplateSmokeHarness
 
     total = int.Parse(totalMatches[^1].Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
     passed = int.Parse(passedMatches[^1].Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+    return true;
+  }
+
+  /// <summary>
+  /// Tier 3 (task 136): assert each family JARIBU_MULTI aggregator exists in the generated app
+  /// and that bare <c>dotnet test -c Release</c> from that project directory reports the expected
+  /// succeeded count. Aggregators are not in .slnx (solution build never compiles them); this is
+  /// the multi-mode / MTP regression gate. Serial — api aggregator uses fixed port 7255.
+  /// </summary>
+  public async Task<bool> AssertJaribuFamilyAggregatorsAsync(string outputDir, CancellationToken ct)
+  {
+    bool ok = true;
+
+    foreach ((string relativeProjectDir, int expectedSucceeded) in JaribuFamilyAggregators)
+    {
+      string projectDir = Path.Combine(outputDir, relativeProjectDir.Replace('/', Path.DirectorySeparatorChar));
+      string csprojName = Path.GetFileName(relativeProjectDir) + ".csproj";
+      string csprojPath = Path.Combine(projectDir, csprojName);
+
+      if (!Directory.Exists(projectDir) || !File.Exists(csprojPath))
+      {
+        Terminal.WriteErrorLine(
+          $"Jaribu family aggregator missing after generation: {relativeProjectDir}/{csprojName}".Red());
+        ok = false;
+        continue;
+      }
+
+      Terminal.WriteLine(
+        $"Running generated Jaribu aggregator (MTP bare dotnet test): {relativeProjectDir} (expect {expectedSucceeded} succeeded)...");
+
+      CommandOutput result = await Shell.Builder("dotnet")
+        .WithArguments("test", "-c", "Release")
+        .WithWorkingDirectory(projectDir)
+        .WithNoValidation()
+        .CaptureAsync(ct);
+
+      string plain = AnsiEscape.Replace(result.Combined, "");
+      bool parsed = TryParseMtpSummary(plain, out int total, out int succeeded);
+
+      if (!result.Success || !parsed || total != expectedSucceeded || succeeded != expectedSucceeded)
+      {
+        Terminal.WriteErrorLine(
+          $"{relativeProjectDir}: aggregator did not report {expectedSucceeded}/{expectedSucceeded} (exit {result.ExitCode}; parsed total={total}, succeeded={succeeded}).".Red());
+        Terminal.WriteErrorLine(result.Combined);
+        ok = false;
+        continue;
+      }
+
+      Terminal.WriteLine($"{relativeProjectDir}: {succeeded}/{total} succeeded via MTP.".Green());
+    }
+
+    return ok;
+  }
+
+  /// <summary>
+  /// Parses Microsoft.Testing.Platform <c>dotnet test</c> summary lines
+  /// (<c>total: N</c> / <c>succeeded: N</c>). Uses the last match of each.
+  /// </summary>
+  private static bool TryParseMtpSummary(string plainOutput, out int total, out int succeeded)
+  {
+    total = 0;
+    succeeded = 0;
+
+    System.Text.RegularExpressions.MatchCollection totalMatches = MtpTotalLine.Matches(plainOutput);
+    System.Text.RegularExpressions.MatchCollection succeededMatches = MtpSucceededLine.Matches(plainOutput);
+    if (totalMatches.Count == 0 || succeededMatches.Count == 0)
+      return false;
+
+    total = int.Parse(totalMatches[^1].Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+    succeeded = int.Parse(succeededMatches[^1].Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
     return true;
   }
 

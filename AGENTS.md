@@ -18,11 +18,11 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 
 - `dev run` — Aspire orchestrator (Development)
 - `dev build` — full solution; **warnings are errors, 0/0 is the only acceptable result**
-- `dev test` — every project under `tests/` (globbed, run one at a time — fixed ports); does NOT
-  yet discover co-located Jaribu runfiles under `source/` (task 136)
+- `dev test` — every project under `tests/` (globbed, run one at a time — fixed ports); includes
+  family `JARIBU_MULTI` aggregators that compile co-located `source/**/*-tests.cs` runfiles
 - `dotnet fixie tests/<project> [--tests Class[.Method]]` — one project/class/method
-- `dotnet run source/<family>/features/…/<name>-tests.cs` — one co-located Jaribu runfile,
-  standalone (no aggregator yet — task 136)
+- `dotnet run source/<family>/features/…/<name>-tests.cs` — one co-located Jaribu runfile
+  standalone (local dev loop; CI uses family aggregators via `dev test`)
 - More commands: `dev --capabilities` (see the `dev-cli` skill)
 
 ## Before opening a PR
@@ -62,9 +62,10 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   policy: new tests
   are co-located Jaribu from adoption; existing Fixie projects migrate opportunistically
   slice-by-slice; `tests/` host-level/cross-service integration suites migrate last or never;
-  Playwright e2e is unaffected. No `JARIBU_MULTI` aggregator exists yet (task 136 — `dev test`
-  needs Microsoft.Testing.Platform support first), so co-located tests are standalone-run only
-  for now (`dotnet run <file>.cs`), not yet discovered by `dev test`.
+  Playwright e2e is unaffected. CI/`dev test` discovers co-located runfiles via per-family
+  **`JARIBU_MULTI` aggregators** under `tests/container-apps/<family>/<family>-jaribu-tests/`
+  (web + api; Microsoft.Testing.Platform; not in `.slnx` — task 136). Standalone
+  `dotnet run <file>.cs` remains the local dev loop.
 - Blazor form validation: **Blazilla** (explicit validator instance — supports `I*Details` binding)
 - **FluentUI v5 + plain CSS** design tokens (`wwwroot/css/tokens.css`); no Tailwind — do not
   reintroduce it (see `blazor-css-strategy` skill)
@@ -150,12 +151,13 @@ match and validate exactly like a routed layer, but that gets NO `Compile` glob 
 `feature-filename-grammar.g.props` — a `<name>[-<function>]-tests.cs` co-located Jaribu runfile
 stays a first-class grammar citizen (misnamed/orphaned files still trip the teaching error, and
 `-handler-tests.cs` still trips TWA0015) while compiling into no layer project. **Enforcement
-surface:** this only fires when the file itself is compiled — standalone `dotnet build`/`dotnet
-run` (plus `dev template-smoke` tier 2 for the two exemplars) — NOT the repo's `dev build`
-solution gate, which never touches an unrouted file's `Compile` glob and is structurally blind to
-it; the task-136 `JARIBU_MULTI` family aggregators will restore build-time coverage when they
-land. Runfile authoring convention: **`tw-feature-placement`** skill (Co-located Jaribu runfile
-preamble section).
+surface:** TWA0015/0016 and the membership guard only fire when the file is compiled. The repo
+`dev build` solution gate never touches unrouted `*-tests.cs` (no layer `Compile` glob; not in
+`.slnx`). Coverage restored by (1) standalone `dotnet run` / `dotnet build` on the runfile,
+(2) family `JARIBU_MULTI` aggregators under `tests/container-apps/<family>/<family>-jaribu-tests/`
+via `dev test` (task 136), and (3) `dev template-smoke` tiers 1–3 for the exemplars. Runfile
+authoring convention: **`tw-feature-placement`** skill (Co-located Jaribu runfile preamble
+section).
 
 ## Platform packages (foundation + analyzers + identity)
 

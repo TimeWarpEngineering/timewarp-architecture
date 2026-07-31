@@ -52,14 +52,15 @@ still open).
 
 ## Checklist
 
-- [ ] `dev test` invokes MTP projects in a supported form; Fixie projects unaffected
-- [ ] web + api `<family>-jaribu-tests` aggregators globbing co-located `-tests.cs`
-- [ ] `dotnet test` discovery verified per aggregator (counts match co-located files)
-- [ ] global.json arrangement chosen; sdk pins mirrored; both frameworks green
-- [ ] Aggregators template-flag-conditioned; template-smoke asserts generated-app aggregator
-- [ ] Full `dev test` green serialized; `dev build` 0/0; `ganda repo audit` clean
-- [ ] CI workflow semantics confirmed unchanged
-- [ ] Kanban mutations committed
+- [x] `dev test` invokes MTP projects in a supported form; Fixie projects unaffected
+- [x] web + api `<family>-jaribu-tests` aggregators globbing co-located `-tests.cs`
+- [x] `dotnet test` discovery verified per aggregator (counts match co-located files)
+- [x] global.json arrangement chosen; sdk pins mirrored; both frameworks green
+- [x] Aggregators template-flag-conditioned; template-smoke tier 3 assert code added
+      (full `dev template-smoke` execution left for Phase 5 / residual — long gate)
+- [x] Full `dev test` green serialized; `dev build` 0/0; `ganda repo audit` clean
+- [x] CI workflow semantics confirmed unchanged (`dev workflow` still clean→build→test)
+- [x] Kanban mutations committed
 
 ## Notes
 
@@ -77,3 +78,15 @@ still open).
 
 - Created: c6f1a13b-487f-4085-bf61-ba4761e8579e (2026-07-29)
 - Plan: 2026-07-31 (orchestration tw-orchestrate-task 136)
+- Implementation 2026-07-31:
+  - MTP detect via project-local global.json containing `Microsoft.Testing.Platform`; bare
+    `dotnet test -c Release` cwd=project dir; Fixie path unchanged.
+  - CPM pin `TimeWarp.Jaribu.TestingPlatform` 1.0.0-beta.14.
+  - Aggregators: `tests/container-apps/web/web-jaribu-tests/`, `…/api/api-jaribu-tests/`
+    (not in .slnx; per-project global.json mirrors root SDK 10.0.301 + test.runner MTP).
+  - template-smoke tier 3: AssertJaribuFamilyAggregatorsAsync (web 5 / api 2).
+  - Docs: AGENTS.md + tw-feature-placement enforcement surface.
+  - Verified: bare `dotnet test` web 5/5, api 2/2; full
+    `dotnet run tools/dev-cli/dev.cs -- test` green (MTP + Fixie serialized).
+  - Residual for orchestrator Phase 5: `dev template-smoke`, `dev build` 0/0, `ganda repo audit`
+    if not re-run after final commit; do not mark done here.

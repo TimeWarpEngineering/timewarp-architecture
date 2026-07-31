@@ -237,15 +237,22 @@ teaching membership-guard error), and still compile into nothing. Functions regi
 against routed layers — `unroutedLayers` entries never appear as a `functions` value.
 
 **Enforcement surface — honest scope:** TWA0015/0016 and the membership guard only see a
-`-tests.cs` file when it is actually **compiled as part of some MSBuild invocation** —
-`dotnet build`/`dotnet run` against the runfile itself (which synthesizes its own single-file
-project), or, for the two exemplars below, `dev template-smoke`'s tier 2 (`dotnet run` on the
-generated app's copy). Because an unrouted layer claims no layer project's `Compile` glob by
-design, the repo's own `dev build` solution gate **never compiles these files at all** and is
-structurally blind to them — it is not a backstop. Until the task-136 `JARIBU_MULTI` family
-aggregators land, a broken or misnamed co-located test can sit undetected by `dev build`; running
-it standalone (or `dev template-smoke` for the exemplars) is the only thing that exercises the
-grammar checks against it today.
+`-tests.cs` file when it is actually **compiled as part of some MSBuild invocation**. Because an
+unrouted layer claims no layer project's `Compile` glob by design, the repo's own `dev build`
+solution gate **never compiles these files** (and aggregators are deliberately not in `.slnx`).
+Compile coverage for co-located runfiles comes from:
+
+1. **Standalone** `dotnet build` / `dotnet run` on the runfile (synthesized single-file project).
+2. **Family `JARIBU_MULTI` aggregators** (task 136) under
+   `tests/container-apps/<family>/<family>-jaribu-tests/` — glob that family's
+   `features/**/*-tests.cs` and `platform/**/*-tests.cs`; discovered by `dev test` (MTP bare
+   `dotnet test` from the project dir). Web and api exist today; grpc when it gains runfiles.
+3. **`dev template-smoke`** tiers 1–3 for the two exemplars (guard text, standalone run, aggregator
+   MTP counts).
+
+A broken or misnamed co-located test that is never run standalone and is not yet under an
+aggregator's glob can still sit undetected by `dev build` alone — prefer `dev test` (or
+standalone run) after adding a runfile.
 
 ### Co-located Jaribu runfile preamble (the `tests` layer)
 
@@ -295,8 +302,11 @@ namespace Your.Slice.Namespace
 - The `#if !JARIBU_MULTI` / `return` / `#endif` block MUST stay wrapped in the `//-:cnd:noEmit` /
   `//+:cnd:noEmit` escape (TWA0008) — without it, `dotnet new`'s conditional processor strips the
   `#if`/`#endif` directive lines from the generated app's copy while keeping the `return`
-  unconditional (task 134 finding M1), breaking any future `JARIBU_MULTI` aggregator build.
-  `dev template-smoke` tier 1 regression-tests this for the two exemplars.
+  unconditional (task 134 finding M1), breaking the family `JARIBU_MULTI` aggregator build.
+  `dev template-smoke` tier 1 regression-tests this for the two exemplars; tier 3 runs the
+  generated aggregators via MTP.
+- New runfiles that introduce additional `#:project` dependencies must extend the matching
+  family aggregator's `ProjectReference` list (`web-jaribu-tests` / `api-jaribu-tests`).
 - `#region Purpose` is never suppressed (TWA0004) — write the real one-line reason, not a
   placeholder.
 

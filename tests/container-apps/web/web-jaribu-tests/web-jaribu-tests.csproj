@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Family aggregator for co-located Jaribu runfiles under web/features and web/platform
+         (task 136). Not in the .slnx — discovered only by `dev test` globs under tests/.
+         JARIBU_MULTI suppresses each runfile's top-level `return await TestRunner.RunAllTests()`
+         so many files can share one Microsoft.Testing.Platform host. -->
+    <DefineConstants>$(DefineConstants);JARIBU_MULTI</DefineConstants>
+    <!-- .NET 10 SDK requires this opt-in for the MTP-native `dotnet test` experience
+         (VSTest bridge is no longer supported) — https://aka.ms/dotnet-test-mtp-error.
+         Pair with the project-local global.json test.runner (not root — would break Fixie). -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <!-- Same dual-mode runfile suppressions the exemplars carry via #:property (inert under
+         multi-mode compile); CA1707 is already ambient from tests/Directory.Build.props. -->
+    <NoWarn>$(NoWarn);CA1849;IDE0161;IDE0021;IDE0058</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+
+  <!-- Link keeps paths readable; source stays co-located under source/ (no move, no copy).
+       Globs both product features and platform clusters so new *-tests.cs files are picked up
+       without editing this csproj. #:project directives in runfiles are inert here — ProjectReference
+       below is what resolves types under multi-mode. -->
+  <ItemGroup>
+    <Compile Include="$(SourceDirectory)container-apps/web/features/**/*-tests.cs"
+             Link="features/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="$(SourceDirectory)container-apps/web/platform/**/*-tests.cs"
+             Link="platform/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Matches create-role-tests.cs #:project web-contracts. New runfiles that need more
+         ProjectReferences must extend this list. -->
+    <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-contracts\web-contracts.csproj" />
+  </ItemGroup>
+
+</Project>

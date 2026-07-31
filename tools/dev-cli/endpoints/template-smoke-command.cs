@@ -18,13 +18,16 @@
 // artifacts/template-smoke/. Prefer `dotnet run tools/dev-cli/dev.cs -- template-smoke` (or
 // re-self-install) over a stale AOT `./bin/dev`; CI always uses the runfile path.
 //
-// Task 135: SmokeOneAsync also runs the two co-located-Jaribu-test tiers per matrix entry —
+// Task 135: SmokeOneAsync runs co-located-Jaribu tiers per matrix entry —
 // tier 1 (Harness.AssertCoLocatedTestFilesSurviveGeneration, inside afterGenerateAsync, before
 // restore/build) and tier 2 (Harness.AssertCoLocatedTestFilesRunAsync, after the solution build
 // succeeds). Both are necessary: the ordinary solution build never compiles these files (they're
 // a registered-unrouted "tests" grammar suffix — feature-filename-grammar.json — that claims no
 // layer project's Compile glob by design), so without this pair a regression to the JARIBU_MULTI
 // cnd:noEmit escape would ship silently.
+// Task 136: tier 3 (Harness.AssertJaribuFamilyAggregatorsAsync) after tier 2 — bare
+// `dotnet test -c Release` from each generated family aggregator dir (web 5 / api 2). Aggregators
+// are also not in .slnx, so solution build is blind to multi-mode compile + MTP discovery.
 #endregion
 
 namespace DevCli.Commands;
@@ -287,11 +290,16 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       // Tier 2 (authoritative): `dotnet run` each generated co-located test standalone and
       // confirm it actually passes end to end post-generation (task 135). Runs after the solution
       // build succeeds — the co-located files compile into no layer project, so the solution
-      // build itself is structurally blind to them; this is the only step that runs them.
+      // build itself is structurally blind to them; this is the only step that runs them standalone.
       if (outputDirForTier2 is null)
         return false;
 
-      return await Harness.AssertCoLocatedTestFilesRunAsync(outputDirForTier2, Ct);
+      if (!await Harness.AssertCoLocatedTestFilesRunAsync(outputDirForTier2, Ct))
+        return false;
+
+      // Tier 3 (task 136): family JARIBU_MULTI aggregators — multi-mode compile + MTP bare
+      // `dotnet test` from each project dir. Serial (api fixed port 7255). Not in .slnx.
+      return await Harness.AssertJaribuFamilyAggregatorsAsync(outputDirForTier2, Ct);
     }
 
     private void WriteLocalNuGetConfig(string outputDir)
