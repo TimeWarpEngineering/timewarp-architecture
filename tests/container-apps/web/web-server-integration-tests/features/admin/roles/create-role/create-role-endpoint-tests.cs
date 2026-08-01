@@ -27,26 +27,40 @@ using static TimeWarp.Architecture.Features.Admin.Roles.CreateRole;
 
 public class Returns_
 {
-  private readonly Command Command;
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_
-  (
-    WebTestServerApplication webTestServerApplication
-  )
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    Command = new Command
-    {
-      UserId = Guid.NewGuid(),
-      Name = "Auditor",
-      Description = "Read-only access to financial modules."
-    };
-    WebTestServerApplication = webTestServerApplication;
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
   }
 
-  public async Task Ok_With_RoleId_Given_Valid_Command()
+  public static async Task CleanUpOnce()
   {
-    OneOf<Response, SharedProblemDetails> result = await WebTestServerApplication.Send(Command);
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  private static Command CreateValidCommand() => new()
+  {
+    UserId = Guid.NewGuid(),
+    Name = "Auditor",
+    Description = "Read-only access to financial modules."
+  };
+
+  public static async Task Ok_With_RoleId_Given_Valid_Command()
+  {
+
+    Command command = CreateValidCommand();
+
+    OneOf<Response, SharedProblemDetails> result = await Web.Send(command);
 
     result.Switch
     (
@@ -55,33 +69,39 @@ public class Returns_
     );
   }
 
-  public async Task ValidationError_Given_Empty_Name()
+  public static async Task ValidationError_Given_Empty_Name()
   {
+
+    Command command = CreateValidCommand();
+
     // Backend validation: FluentValidationBehavior runs the contract's Validator
     // (shared RoleDetailsValidator) server-side — the same rules the Blazor form enforced.
     await EnsureAuthenticatedAsync();
-    Command.Name = "";
+    command.Name = "";
 
-    await WebTestServerApplication.ConfirmEndpointValidationError<Response>(Command, nameof(Command.Name));
+    await Web.ConfirmEndpointValidationError<Response>(command, nameof(command.Name));
   }
 
-  public async Task ValidationError_Given_Empty_UserId()
+  public static async Task ValidationError_Given_Empty_UserId()
   {
+
+    Command command = CreateValidCommand();
+
     // AuthApiRequestValidator composes into the same server-side validation pass.
     await EnsureAuthenticatedAsync();
-    Command.UserId = Guid.Empty;
+    command.UserId = Guid.Empty;
 
-    await WebTestServerApplication.ConfirmEndpointValidationError<Response>(Command, nameof(Command.UserId));
+    await Web.ConfirmEndpointValidationError<Response>(command, nameof(command.UserId));
   }
 
-  private async Task EnsureAuthenticatedAsync()
+  private static async Task EnsureAuthenticatedAsync()
   {
     var authenticator = new IntegrationSoftwareAuthenticator();
 
     OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
     byte[] challenge = ReadChallenge(start.AsT0.OptionsJson);
-    string origin = WebTestServerApplication.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
+    string origin = Web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
 
     byte[] authenticatorData = authenticator.BuildAuthenticatorData("localhost", includeAttestedCredentialData: true);
     byte[] attestationObject = IntegrationSoftwareAuthenticator.BuildAttestationObject(authenticatorData);
@@ -95,7 +115,7 @@ public class Returns_
     };
 
     OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompletePasskeyRegistration.Response>(registerCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyRegistration.Response>(registerCommand, CancellationToken.None);
     result.IsT0.ShouldBeTrue("Passkey registration setup for an authenticated Roles test should succeed.");
   }
 
@@ -105,4 +125,5 @@ public class Returns_
     string challengeBase64Url = document.RootElement.GetProperty("challenge").GetString()!;
     return Base64Url.DecodeFromChars(challengeBase64Url);
   }
+
 }

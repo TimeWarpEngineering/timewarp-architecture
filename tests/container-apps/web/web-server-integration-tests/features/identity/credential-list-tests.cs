@@ -31,16 +31,30 @@ using TimeWarp.Identity;
 
 public class Returns_
 {
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
   }
 
-  public async Task Unauthorized_Given_Anonymous_Request()
+  public static async Task CleanUpOnce()
   {
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  public static async Task Unauthorized_Given_Anonymous_Request()
+  {
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
 
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
@@ -48,11 +62,11 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  public async Task Ok_With_Own_Credential_Given_Cookie_Session()
+  public static async Task Ok_With_Own_Credential_Given_Cookie_Session()
   {
-    (PrincipalId _, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+    (PrincipalId _, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
 
@@ -64,13 +78,13 @@ public class Returns_
     json.ShouldContain("\"isActive\":true");
   }
 
-  public async Task Ok_With_Own_Credential_Given_Agent_Bearer_Token()
+  public static async Task Ok_With_Own_Credential_Given_Agent_Bearer_Token()
   {
     var key = new IntegrationSoftwareAgentKey();
     (PrincipalId _, string _, string accessToken) =
-      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(WebTestServerApplication, key, [AgentScopes.CredentialManage]);
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(Web, key, [AgentScopes.CredentialManage]);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
 
@@ -82,13 +96,13 @@ public class Returns_
     json.ShouldContain("\"isActive\":true");
   }
 
-  public async Task Forbidden_Given_IdentityReadOnly_Bearer_Token()
+  public static async Task Forbidden_Given_IdentityReadOnly_Bearer_Token()
   {
     var key = new IntegrationSoftwareAgentKey();
     (PrincipalId _, string _, string accessToken) =
-      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(WebTestServerApplication, key, [AgentScopes.IdentityRead]);
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(Web, key, [AgentScopes.IdentityRead]);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
 
@@ -100,17 +114,17 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
   }
 
-  public async Task Excludes_Revoked_By_Default_And_Includes_When_Asked()
+  public static async Task Excludes_Revoked_By_Default_And_Includes_When_Asked()
   {
-    (PrincipalId _, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+    (PrincipalId _, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
     // Add a second credential, then revoke it, so this principal has one active + one revoked.
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -145,7 +159,7 @@ public class Returns_
     all.Credentials.Count(c => !c.IsActive).ShouldBe(1);
   }
 
-  public async Task Never_Serializes_Handle_Or_PublicMaterial()
+  public static async Task Never_Serializes_Handle_Or_PublicMaterial()
   {
     // Structural check FIRST (round-1 review M4) — the real guarantee, and the only one that cannot
     // false-fail on Label content: CredentialSummary itself has no Handle/PublicMaterial member, so
@@ -154,9 +168,9 @@ public class Returns_
     propertyNames.ShouldNotContain(nameof(Credential.Handle));
     propertyNames.ShouldNotContain(nameof(Credential.PublicMaterial));
 
-    (PrincipalId _, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+    (PrincipalId _, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
 
@@ -169,4 +183,5 @@ public class Returns_
     json.ToLowerInvariant().ShouldNotContain("handle");
     json.ToLowerInvariant().ShouldNotContain("publicmaterial");
   }
+
 }

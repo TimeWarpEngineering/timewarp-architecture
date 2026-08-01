@@ -24,19 +24,33 @@ using TimeWarp.Identity;
 
 public class Returns_
 {
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
   }
 
-  public async Task Unauthorized_Given_Anonymous_AddPasskey()
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  public static async Task Unauthorized_Given_Anonymous_AddPasskey()
   {
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
     var command = new AddPasskey.Command
     {
@@ -51,17 +65,17 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  public async Task Ok_With_Two_Active_Credentials_Given_AddPasskey_On_Cookie_Principal()
+  public static async Task Ok_With_Two_Active_Credentials_Given_AddPasskey_On_Cookie_Principal()
   {
     (PrincipalId principalId, string sessionCookie) =
-      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -88,12 +102,12 @@ public class Returns_
     list.Credentials.ShouldContain(c => c.Label == "second-device");
   }
 
-  public async Task Conflict_Given_Same_Passkey_Handle_Registered_Twice()
+  public static async Task Conflict_Given_Same_Passkey_Handle_Registered_Twice()
   {
     (PrincipalId _, string sessionCookie) =
-      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
@@ -104,7 +118,7 @@ public class Returns_
     var authenticator = new IntegrationSoftwareAuthenticator();
 
     (string firstCredentialId, string firstClientDataJson, string firstAttestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(WebTestServerApplication, authenticator);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, authenticator);
     var firstCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -116,7 +130,7 @@ public class Returns_
     firstResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
     (string secondCredentialId, string secondClientDataJson, string secondAttestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(WebTestServerApplication, authenticator);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, authenticator);
     var secondCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -128,19 +142,19 @@ public class Returns_
     secondResponse.StatusCode.ShouldBe(HttpStatusCode.Conflict);
   }
 
-  public async Task Ok_With_Two_Active_Credentials_Given_AddAgentKey_On_Bearer_Principal()
+  public static async Task Ok_With_Two_Active_Credentials_Given_AddAgentKey_On_Bearer_Principal()
   {
     var firstKey = new IntegrationSoftwareAgentKey();
     (PrincipalId principalId, string _, string accessToken) =
-      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(WebTestServerApplication, firstKey, [AgentScopes.CredentialManage]);
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(Web, firstKey, [AgentScopes.CredentialManage]);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
     var secondKey = new IntegrationSoftwareAgentKey();
     (string publicKey, string challenge, string signature) =
-      await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(WebTestServerApplication, secondKey);
+      await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(Web, secondKey);
     var addCommand = new AddAgentKey.Command
     {
       UserId = Guid.NewGuid(),
@@ -165,13 +179,13 @@ public class Returns_
     list.Credentials.ShouldAllBe(c => c.IsActive);
   }
 
-  public async Task Ok_With_One_Active_Key_Given_Rotation_Adds_New_Then_Revokes_Old()
+  public static async Task Ok_With_One_Active_Key_Given_Rotation_Adds_New_Then_Revokes_Old()
   {
     var originalKey = new IntegrationSoftwareAgentKey();
     (PrincipalId _, string _, string accessToken) =
-      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(WebTestServerApplication, originalKey, [AgentScopes.CredentialManage]);
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(Web, originalKey, [AgentScopes.CredentialManage]);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
@@ -188,7 +202,7 @@ public class Returns_
     // 2. Add the new key.
     var newKey = new IntegrationSoftwareAgentKey();
     (string publicKey, string challenge, string signature) =
-      await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(WebTestServerApplication, newKey);
+      await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(Web, newKey);
     var addCommand = new AddAgentKey.Command
     {
       UserId = Guid.NewGuid(),
@@ -220,23 +234,23 @@ public class Returns_
   // when a caller resubmits their OWN already-registered credential must behave IDENTICALLY when
   // the colliding handle belongs to a DIFFERENT principal — same 409, no attach, no oracle
   // distinguishing "you already have this" from "someone else already has this."
-  public async Task Conflict_Given_Passkey_Handle_Already_Owned_By_Another_Principal()
+  public static async Task Conflict_Given_Passkey_Handle_Already_Owned_By_Another_Principal()
   {
     var sharedAuthenticator = new IntegrationSoftwareAuthenticator();
 
     (PrincipalId principalAId, string principalACookie) =
-      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication, sharedAuthenticator);
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web, sharedAuthenticator);
 
     (PrincipalId principalBId, string principalBCookie) =
-      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient principalBClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient principalBClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     principalBClient.DefaultRequestHeaders.Add("Cookie", principalBCookie);
     var principalBApiService = new TestApiService(principalBClient, ContractSerializationDefaults.Options, bearerToken: null);
 
     // Principal B attempts to attach PRINCIPAL A's already-registered handle to itself.
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(WebTestServerApplication, sharedAuthenticator);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sharedAuthenticator);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -249,7 +263,7 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
     // Principal B's own credential count is unchanged — no attach happened.
-    using HttpClient principalBReadClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient principalBReadClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     principalBReadClient.DefaultRequestHeaders.Add("Cookie", principalBCookie);
     var principalBListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
     HttpResponseMessage principalBListResponse = await principalBReadClient.GetAsync(principalBListQuery.GetRouteWithQueryString());
@@ -259,7 +273,7 @@ public class Returns_
     principalBList.Credentials.Count.ShouldBe(1);
 
     // Principal A still exclusively owns the original credential, unaffected.
-    using HttpClient principalAClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient principalAClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     principalAClient.DefaultRequestHeaders.Add("Cookie", principalACookie);
     var principalAListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
     HttpResponseMessage principalAListResponse = await principalAClient.GetAsync(principalAListQuery.GetRouteWithQueryString());
@@ -270,23 +284,23 @@ public class Returns_
     principalAList.Credentials[0].IsActive.ShouldBeTrue();
   }
 
-  public async Task Conflict_Given_AgentKey_Handle_Already_Owned_By_Another_Principal()
+  public static async Task Conflict_Given_AgentKey_Handle_Already_Owned_By_Another_Principal()
   {
     var principalAKey = new IntegrationSoftwareAgentKey();
     (PrincipalId principalAId, string principalAKeyId, string principalAToken) =
-      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(WebTestServerApplication, principalAKey, [AgentScopes.CredentialManage]);
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(Web, principalAKey, [AgentScopes.CredentialManage]);
 
     var principalBKey = new IntegrationSoftwareAgentKey();
     (PrincipalId principalBId, string _, string principalBToken) =
-      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(WebTestServerApplication, principalBKey, [AgentScopes.CredentialManage]);
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(Web, principalBKey, [AgentScopes.CredentialManage]);
 
-    using HttpClient principalBClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient principalBClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     principalBClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", principalBToken);
     var principalBApiService = new TestApiService(principalBClient, ContractSerializationDefaults.Options, bearerToken: null);
 
     // Principal B attempts to attach PRINCIPAL A's already-registered key to itself.
     (string publicKey, string challenge, string signature) =
-      await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(WebTestServerApplication, principalAKey);
+      await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(Web, principalAKey);
     var addCommand = new AddAgentKey.Command { UserId = Guid.NewGuid(), PublicKey = publicKey, Challenge = challenge, Signature = signature };
 
     HttpResponseMessage response = await principalBApiService.GetHttpResponseMessage(addCommand, CancellationToken.None);
@@ -301,7 +315,7 @@ public class Returns_
     principalBList.Credentials.Count.ShouldBe(1);
 
     // Principal A still exclusively owns the original key, unaffected.
-    using HttpClient principalAClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient principalAClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     principalAClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", principalAToken);
     var principalAListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
     HttpResponseMessage principalAListResponse = await principalAClient.GetAsync(principalAListQuery.GetRouteWithQueryString());
@@ -311,4 +325,5 @@ public class Returns_
     principalAList.Credentials.Count.ShouldBe(1);
     principalAList.Credentials[0].IsActive.ShouldBeTrue();
   }
+
 }

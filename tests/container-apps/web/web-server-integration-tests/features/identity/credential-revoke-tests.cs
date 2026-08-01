@@ -26,16 +26,30 @@ using TimeWarp.Identity;
 
 public class Returns_
 {
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
   }
 
-  public async Task Unauthorized_Given_Anonymous_Revoke()
+  public static async Task CleanUpOnce()
   {
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  public static async Task Unauthorized_Given_Anonymous_Revoke()
+  {
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
     var command = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid() };
 
@@ -44,13 +58,13 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  public async Task Forbidden_Given_IdentityReadOnly_Bearer_Token()
+  public static async Task Forbidden_Given_IdentityReadOnly_Bearer_Token()
   {
     var key = new IntegrationSoftwareAgentKey();
     (PrincipalId _, string _, string accessToken) =
-      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(WebTestServerApplication, key, [AgentScopes.IdentityRead]);
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(Web, key, [AgentScopes.IdentityRead]);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
     var command = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid() };
@@ -60,19 +74,19 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
   }
 
-  public async Task Ok_And_Reflected_Given_Own_Credential_Via_Cookie()
+  public static async Task Ok_And_Reflected_Given_Own_Credential_Via_Cookie()
   {
     (PrincipalId _, string sessionCookie) =
-      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
     // A cookie principal starts with exactly one credential, and the last-active guard forbids
     // revoking it — add a second so the revoke under test is legal.
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -100,19 +114,19 @@ public class Returns_
     revoked.RevokedAt.ShouldNotBeNull();
   }
 
-  public async Task Ok_Given_Own_Credential_Via_Agent_Bearer_Token()
+  public static async Task Ok_Given_Own_Credential_Via_Agent_Bearer_Token()
   {
     var firstKey = new IntegrationSoftwareAgentKey();
     (PrincipalId _, string _, string accessToken) =
-      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(WebTestServerApplication, firstKey, [AgentScopes.CredentialManage]);
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(Web, firstKey, [AgentScopes.CredentialManage]);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
     var secondKey = new IntegrationSoftwareAgentKey();
     (string publicKey, string challenge, string signature) =
-      await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(WebTestServerApplication, secondKey);
+      await CredentialCeremonyHelpers.BuildAgentKeyRegistrationProofAsync(Web, secondKey);
     var addCommand = new AddAgentKey.Command { UserId = Guid.NewGuid(), PublicKey = publicKey, Challenge = challenge, Signature = signature };
     HttpResponseMessage addResponse = await testApiService.GetHttpResponseMessage(addCommand, CancellationToken.None);
     addResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -126,13 +140,13 @@ public class Returns_
     revokeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
   }
 
-  public async Task NotFound_Given_Another_Principals_Credential()
+  public static async Task NotFound_Given_Another_Principals_Credential()
   {
     // Load-bearing IDOR assertion: caller A must get the SAME 404 whether the id is unknown or
     // belongs to a DIFFERENT principal — never 403 (see RevokeCredential.Handler's Design region).
     (PrincipalId _, string ownerCookie) =
-      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
-    using HttpClient ownerClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    using HttpClient ownerClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     ownerClient.DefaultRequestHeaders.Add("Cookie", ownerCookie);
     var ownerListQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
     HttpResponseMessage ownerListResponse = await ownerClient.GetAsync(ownerListQuery.GetRouteWithQueryString());
@@ -142,8 +156,8 @@ public class Returns_
     CredentialId ownersCredentialId = ownerList.Credentials.Single().Id;
 
     (PrincipalId _, string attackerCookie) =
-      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
-    using HttpClient attackerClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    using HttpClient attackerClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     attackerClient.DefaultRequestHeaders.Add("Cookie", attackerCookie);
     var attackerApiService = new TestApiService(attackerClient, ContractSerializationDefaults.Options, bearerToken: null);
 
@@ -153,12 +167,12 @@ public class Returns_
     revokeResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
   }
 
-  public async Task NotFound_Given_Unknown_CredentialId()
+  public static async Task NotFound_Given_Unknown_CredentialId()
   {
     (PrincipalId _, string sessionCookie) =
-      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
     var command = new RevokeCredential.Command { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid() };
@@ -169,12 +183,12 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
   }
 
-  public async Task Conflict_Given_Last_Active_Credential()
+  public static async Task Conflict_Given_Last_Active_Credential()
   {
     (PrincipalId _, string sessionCookie) =
-      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
@@ -191,19 +205,19 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
   }
 
-  public async Task Conflict_Given_Already_Revoked_Credential()
+  public static async Task Conflict_Given_Already_Revoked_Credential()
   {
     (PrincipalId _, string sessionCookie) =
-      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
     // Add a second credential so the FIRST revoke of it succeeds (not blocked by the last-credential
     // guard), then attempt to revoke the SAME one again.
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(WebTestServerApplication);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -224,4 +238,5 @@ public class Returns_
 
     secondRevokeResponse.StatusCode.ShouldBe(HttpStatusCode.Conflict);
   }
+
 }

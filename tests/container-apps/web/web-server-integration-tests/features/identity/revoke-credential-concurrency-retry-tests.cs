@@ -30,7 +30,10 @@ using RevokeCredentialHandler = TimeWarp.Architecture.Features.Identity.Applicat
 
 public class Returns_
 {
-  public async Task Ok_After_One_Stale_Retry()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task Ok_After_One_Stale_Retry()
   {
     var innerStore = new InMemoryPrincipalStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
@@ -59,7 +62,7 @@ public class Returns_
     reloaded.IsRevoked.ShouldBeTrue();
   }
 
-  public async Task TooMuchContention_After_MaxAttempts_Exhausted()
+  public static async Task TooMuchContention_After_MaxAttempts_Exhausted()
   {
     var innerStore = new InMemoryPrincipalStore();
     Principal principal = Principal.Create(PrincipalKind.Human);

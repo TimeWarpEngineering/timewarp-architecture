@@ -21,14 +21,28 @@ using TimeWarp.Identity;
 
 public class Returns_
 {
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
   }
 
-  public async Task Ok_With_Bearer_Token_Given_Valid_Issuance()
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  public static async Task Ok_With_Bearer_Token_Given_Valid_Issuance()
   {
     var key = new IntegrationSoftwareAgentKey();
     string keyId = await RegisterAgentKey(key);
@@ -36,7 +50,7 @@ public class Returns_
     CompleteAgentTokenIssuance.Command tokenCommand = await BuildValidTokenCommand(key, keyId, [AgentScopes.IdentityRead]);
 
     OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
 
     result.IsT0.ShouldBeTrue("Token issuance should succeed.");
     result.AsT0.AccessToken.ShouldNotBeNullOrEmpty();
@@ -47,7 +61,7 @@ public class Returns_
     result.AsT0.Scopes.ShouldBe([AgentScopes.IdentityRead]);
   }
 
-  public async Task BadRequest_Given_Unknown_KeyId()
+  public static async Task BadRequest_Given_Unknown_KeyId()
   {
     var key = new IntegrationSoftwareAgentKey();
     // Never registered — FindCredentialByHandleAsync must return null.
@@ -56,7 +70,7 @@ public class Returns_
     CompleteAgentTokenIssuance.Command tokenCommand = await BuildValidTokenCommand(key, neverRegisteredKeyId, [AgentScopes.IdentityRead]);
 
     OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
 
     result.IsT2.ShouldBeTrue("Issuance with an unregistered key should fail.");
     result.AsT2.Status.ShouldBe(400);
@@ -65,7 +79,7 @@ public class Returns_
     result.AsT2.Title.ShouldBe("Token issuance failed");
   }
 
-  public async Task BadRequest_Given_Bad_Signature_Identical_To_Unknown_KeyId()
+  public static async Task BadRequest_Given_Bad_Signature_Identical_To_Unknown_KeyId()
   {
     // No-enumeration-oracle: registered-but-bad-signature and never-registered must produce the
     // SAME problem shape, not a distinguishable error.
@@ -73,7 +87,7 @@ public class Returns_
     string keyId = await RegisterAgentKey(key);
 
     OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
     byte[] challenge = Base64Url.DecodeFromChars(start.AsT0.Challenge);
     byte[] signature = key.Sign(AgentKeyCeremonyType.TokenIssuance, challenge);
     signature[0] ^= 0xFF;
@@ -87,14 +101,14 @@ public class Returns_
     };
 
     OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
 
     result.IsT2.ShouldBeTrue("Issuance with a tampered signature should fail.");
     result.AsT2.Status.ShouldBe(400);
     result.AsT2.Title.ShouldBe("Token issuance failed");
   }
 
-  public async Task BadRequest_InvalidScope_Given_Unknown_Scope()
+  public static async Task BadRequest_InvalidScope_Given_Unknown_Scope()
   {
     var key = new IntegrationSoftwareAgentKey();
     string keyId = await RegisterAgentKey(key);
@@ -102,14 +116,14 @@ public class Returns_
     CompleteAgentTokenIssuance.Command tokenCommand = await BuildValidTokenCommand(key, keyId, ["not-a-real-scope"]);
 
     OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
 
     result.IsT2.ShouldBeTrue("Issuance with an unknown scope should fail.");
     result.AsT2.Status.ShouldBe(400);
     result.AsT2.Title.ShouldBe("invalid_scope");
   }
 
-  public async Task ValidationError_Given_Null_Scopes()
+  public static async Task ValidationError_Given_Null_Scopes()
   {
     // Round-1 finding M1: a JSON body with "scopes": null must produce a clean 400 validation
     // problem, not an unhandled 500 (FluentValidation's NotEmpty-then-Must cascade previously
@@ -120,7 +134,7 @@ public class Returns_
     string keyId = await RegisterAgentKey(key);
 
     OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
     byte[] challenge = Base64Url.DecodeFromChars(start.AsT0.Challenge);
     byte[] signature = key.Sign(AgentKeyCeremonyType.TokenIssuance, challenge);
 
@@ -132,11 +146,11 @@ public class Returns_
       Scopes = null!
     };
 
-    await WebTestServerApplication.ConfirmEndpointValidationError<CompleteAgentTokenIssuance.Response>
+    await Web.ConfirmEndpointValidationError<CompleteAgentTokenIssuance.Response>
       (tokenCommand, nameof(CompleteAgentTokenIssuance.Command.Scopes));
   }
 
-  public async Task BadRequest_Given_Reused_Challenge()
+  public static async Task BadRequest_Given_Reused_Challenge()
   {
     var key = new IntegrationSoftwareAgentKey();
     string keyId = await RegisterAgentKey(key);
@@ -144,17 +158,17 @@ public class Returns_
     CompleteAgentTokenIssuance.Command tokenCommand = await BuildValidTokenCommand(key, keyId, [AgentScopes.IdentityRead]);
 
     OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> first =
-      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
     first.IsT0.ShouldBeTrue("First issuance should succeed.");
 
     OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> replay =
-      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
 
     replay.IsT2.ShouldBeTrue("Replayed issuance should fail.");
     replay.AsT2.Status.ShouldBe(400);
   }
 
-  public async Task Forbidden_Given_Quarantined_Principal()
+  public static async Task Forbidden_Given_Quarantined_Principal()
   {
     // G3 (104-006): proof must succeed, then quarantine is the distinct 403 signal — not 400.
     var key = new IntegrationSoftwareAgentKey();
@@ -164,33 +178,33 @@ public class Returns_
     CompleteAgentTokenIssuance.Command tokenCommand = await BuildValidTokenCommand(key, keyId, [AgentScopes.IdentityRead]);
 
     OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
 
     result.IsT2.ShouldBeTrue("Token issuance for a quarantined principal should return a problem.");
     result.AsT2.Status.ShouldBe(403);
     result.AsT2.Title.ShouldBe("Account quarantined");
   }
 
-  private async Task QuarantinePrincipal(PrincipalId principalId)
+  private static async Task QuarantinePrincipal(PrincipalId principalId)
   {
     IPrincipalStore store =
-      WebTestServerApplication.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
+      Web.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
     Principal? principal = await store.GetPrincipalAsync(principalId);
     principal.ShouldNotBeNull();
     principal.Quarantine();
     await store.UpdatePrincipalAsync(principal);
   }
 
-  private async Task<string> RegisterAgentKey(IntegrationSoftwareAgentKey key)
+  private static async Task<string> RegisterAgentKey(IntegrationSoftwareAgentKey key)
   {
     (string keyId, PrincipalId _) = await RegisterAgentKeyWithPrincipal(key);
     return keyId;
   }
 
-  private async Task<(string KeyId, PrincipalId PrincipalId)> RegisterAgentKeyWithPrincipal(IntegrationSoftwareAgentKey key)
+  private static async Task<(string KeyId, PrincipalId PrincipalId)> RegisterAgentKeyWithPrincipal(IntegrationSoftwareAgentKey key)
   {
     OneOf<StartAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
     byte[] challenge = Base64Url.DecodeFromChars(start.AsT0.Challenge);
     byte[] signature = key.Sign(AgentKeyCeremonyType.Registration, challenge);
 
@@ -202,16 +216,16 @@ public class Returns_
     };
 
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
 
     result.IsT0.ShouldBeTrue("Registration setup for a token test should succeed.");
     return (result.AsT0.KeyId, result.AsT0.PrincipalId);
   }
 
-  private async Task<CompleteAgentTokenIssuance.Command> BuildValidTokenCommand(IntegrationSoftwareAgentKey key, string keyId, List<string> scopes)
+  private static async Task<CompleteAgentTokenIssuance.Command> BuildValidTokenCommand(IntegrationSoftwareAgentKey key, string keyId, List<string> scopes)
   {
     OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
 
     byte[] challenge = Base64Url.DecodeFromChars(start.AsT0.Challenge);
     byte[] signature = key.Sign(AgentKeyCeremonyType.TokenIssuance, challenge);
@@ -224,4 +238,5 @@ public class Returns_
       Scopes = scopes
     };
   }
+
 }

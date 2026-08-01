@@ -4,33 +4,50 @@ using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 
 public class Returns_
 {
-  private readonly Command Command;
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_
-  (
-    WebTestServerApplication webTestServerApplication
-  )
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    Command = new Command { EventName = "MyEvent" };
-    WebTestServerApplication = webTestServerApplication;
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
   }
 
-  public async Task Ok_Given_SomeEvent()
+  public static async Task CleanUpOnce()
   {
-    OneOf<Response, SharedProblemDetails> result = await WebTestServerApplication.Send(Command);
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  private static Command CreateValidCommand() => new() { EventName = "MyEvent" };
+
+  public static async Task Ok_Given_SomeEvent()
+  {
+
+    Command command = CreateValidCommand();
+
+    OneOf<Response, SharedProblemDetails> result = await Web.Send(command);
 
     ValidateResult(result);
   }
 
-  public async Task ValidationError()
+  public static async Task ValidationError()
   {
-    Command.EventName = "";
 
-    await WebTestServerApplication.ConfirmEndpointValidationError<Response>(Command, nameof(Command.EventName));
+    Command command = CreateValidCommand();
+
+    command.EventName = "";
+
+    await Web.ConfirmEndpointValidationError<Response>(command, nameof(command.EventName));
   }
 
-  private void ValidateResult(OneOf<Response, SharedProblemDetails> result)
+  private static void ValidateResult(OneOf<Response, SharedProblemDetails> result)
   {
     result.Switch
     (
@@ -45,4 +62,5 @@ public class Returns_
       }
     );
   }
+
 }

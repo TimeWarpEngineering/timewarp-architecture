@@ -33,18 +33,32 @@ using TimeWarp.Identity;
 
 public class Returns_
 {
+
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
+  {
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
+  }
+
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
   private const string SecondHost = "webauthn-second.test";
   private const string SecondOrigin = "https://webauthn-second.test";
   private const string UnlistedHost = "not-allowed.example";
 
-  private readonly WebTestServerApplication WebTestServerApplication;
-
-  public Returns_(WebTestServerApplication webTestServerApplication)
-  {
-    WebTestServerApplication = webTestServerApplication;
-  }
-
-  public async Task Ok_Register_And_Authenticate_Under_Second_Allowed_Host()
+  public static async Task Ok_Register_And_Authenticate_Under_Second_Allowed_Host()
   {
     IntegrationSoftwareAuthenticator authenticator = new();
 
@@ -84,21 +98,21 @@ public class Returns_
     authenticateResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
   }
 
-  public async Task BadRequest_StartRegistration_Given_Unlisted_Host()
+  public static async Task BadRequest_StartRegistration_Given_Unlisted_Host()
   {
     HttpResponseMessage response = await Post(StartPasskeyRegistration.Command.RouteTemplate, new StartPasskeyRegistration.Command(), UnlistedHost);
 
     await ShouldBeHostNotAllowed(response);
   }
 
-  public async Task BadRequest_StartAuthentication_Given_Unlisted_Host()
+  public static async Task BadRequest_StartAuthentication_Given_Unlisted_Host()
   {
     HttpResponseMessage response = await Post(StartPasskeyAuthentication.Command.RouteTemplate, new StartPasskeyAuthentication.Command(), UnlistedHost);
 
     await ShouldBeHostNotAllowed(response);
   }
 
-  public async Task Selection_Stays_Localhost_Given_Spoofed_XForwardedHost()
+  public static async Task Selection_Stays_Localhost_Given_Spoofed_XForwardedHost()
   {
     // Real Host is localhost; an attacker sets X-Forwarded-Host to another allowlisted host. Selection
     // must read the real Host only, so the minted options' rp.id stays "localhost".
@@ -122,7 +136,7 @@ public class Returns_
     rpId.ShouldBe("localhost");
   }
 
-  private async Task<byte[]> StartCeremony<TCommand>(string routeTemplate, TCommand command, string host)
+  private static async Task<byte[]> StartCeremony<TCommand>(string routeTemplate, TCommand command, string host)
     where TCommand : class
   {
     HttpResponseMessage response = await Post(routeTemplate, command, host);
@@ -133,7 +147,7 @@ public class Returns_
     return ReadChallenge(optionsJson);
   }
 
-  private async Task<HttpResponseMessage> Post<TCommand>(string routeTemplate, TCommand command, string host, string? forwardedHost = null)
+  private static async Task<HttpResponseMessage> Post<TCommand>(string routeTemplate, TCommand command, string host, string? forwardedHost = null)
   {
     string json = JsonSerializer.Serialize(command, ContractSerializationDefaults.Options);
 
@@ -150,7 +164,7 @@ public class Returns_
       CheckCertificateRevocationList = true,
       ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
     };
-    using var client = new HttpClient(handler) { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using var client = new HttpClient(handler) { BaseAddress = Web.HttpClient.BaseAddress };
 
     using var request = new HttpRequestMessage(HttpMethod.Post, routeTemplate)
     {
@@ -182,4 +196,5 @@ public class Returns_
     string challengeBase64Url = document.RootElement.GetProperty("challenge").GetString()!;
     return Base64Url.DecodeFromChars(challengeBase64Url);
   }
+
 }

@@ -4,27 +4,36 @@ using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 
 public class Validate_Should
 {
-  private Validator Validator = new();
 
-  public void Be_Valid()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Validate_Should>();
+
+  public static Task Be_Valid()
+
   {
     var command = new Command
     {
       EventName = "SomeEvent"
     };
 
-    ValidationResult validationResult = Validator.TestValidate(command);
+    ValidationResult validationResult = new Validator().TestValidate(command);
 
     validationResult.IsValid.ShouldBeTrue();
+
+    return Task.CompletedTask;
+
   }
 
-  public void Have_error_when_EventName_is_empty()
+  public static Task Have_error_when_EventName_is_empty()
+
   {
     TestValidationResult<Command> result =
-      Validator.TestValidate(new Command { EventName = "" });
+      new Validator().TestValidate(new Command { EventName = "" });
 
     result.ShouldHaveValidationErrorFor(trackEventRequest => trackEventRequest.EventName);
+
+    return Task.CompletedTask;
+
   }
 
-  public void Setup() => Validator = new Validator();
 }

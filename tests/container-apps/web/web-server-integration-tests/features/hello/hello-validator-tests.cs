@@ -4,30 +4,36 @@ using static TimeWarp.Architecture.Features.Hellos.Hello;
 
 public class Validate_Should
 {
-  private readonly Validator Validator;
 
-  public Validate_Should()
-  {
-    Validator = new Validator();
-  }
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Validate_Should>();
 
-  public void Be_Valid()
+  public static Task Be_Valid()
+
   {
     var query = new Query
     {
       Name = "SomeEvent"
     };
 
-    ValidationResult validationResult = Validator.TestValidate(query);
+    ValidationResult validationResult = new Validator().TestValidate(query);
 
     validationResult.IsValid.ShouldBeTrue();
+
+    return Task.CompletedTask;
+
   }
 
-  public void Have_error_when_Name_is_empty()
+  public static Task Have_error_when_Name_is_empty()
+
   {
     TestValidationResult<Query> result =
-      Validator.TestValidate(new Query { Name = "" });
+      new Validator().TestValidate(new Query { Name = "" });
 
     result.ShouldHaveValidationErrorFor(command => command.Name);
+
+    return Task.CompletedTask;
+
   }
+
 }

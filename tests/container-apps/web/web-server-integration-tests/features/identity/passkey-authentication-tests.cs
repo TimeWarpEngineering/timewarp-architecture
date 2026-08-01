@@ -26,18 +26,31 @@ using TimeWarp.Identity;
 
 public class Returns_
 {
-  private const string RpId = "localhost";
 
-  private readonly WebTestServerApplication WebTestServerApplication;
-  private readonly TestApiService TestApiService;
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
-    TestApiService = new TestApiService(webTestServerApplication.HttpClient, ContractSerializationDefaults.Options);
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
   }
 
-  public async Task Ok_With_Cookie_And_Session_Given_Valid_Authentication()
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  private const string RpId = "localhost";
+  private static TestApiService TestApiService => new(Web.HttpClient, ContractSerializationDefaults.Options);
+
+  public static async Task Ok_With_Cookie_And_Session_Given_Valid_Authentication()
   {
     IntegrationSoftwareAuthenticator authenticator = new();
     PrincipalId registeredPrincipalId = await RegisterPasskey(authenticator);
@@ -65,20 +78,20 @@ public class Returns_
     sessionResponse.PrincipalId.ShouldBe(registeredPrincipalId);
   }
 
-  public async Task BadRequest_Given_Unknown_Credential()
+  public static async Task BadRequest_Given_Unknown_Credential()
   {
     // Never registered — FindCredentialByHandleAsync must return null.
     IntegrationSoftwareAuthenticator authenticator = new();
     CompletePasskeyAuthentication.Command authenticateCommand = await BuildValidAuthenticateCommand(authenticator);
 
     OneOf<CompletePasskeyAuthentication.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
 
     result.IsT2.ShouldBeTrue("Authentication with an unregistered credential should fail.");
     result.AsT2.Status.ShouldBe(400);
   }
 
-  public async Task BadRequest_Given_Tampered_Signature()
+  public static async Task BadRequest_Given_Tampered_Signature()
   {
     IntegrationSoftwareAuthenticator authenticator = new();
     await RegisterPasskey(authenticator);
@@ -90,13 +103,13 @@ public class Returns_
     authenticateCommand.Signature = Base64Url.EncodeToString(signature);
 
     OneOf<CompletePasskeyAuthentication.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
 
     result.IsT2.ShouldBeTrue("Authentication with a tampered signature should fail.");
     result.AsT2.Status.ShouldBe(400);
   }
 
-  public async Task BadRequest_Given_Reused_Challenge()
+  public static async Task BadRequest_Given_Reused_Challenge()
   {
     IntegrationSoftwareAuthenticator authenticator = new();
     await RegisterPasskey(authenticator);
@@ -104,17 +117,17 @@ public class Returns_
     CompletePasskeyAuthentication.Command authenticateCommand = await BuildValidAuthenticateCommand(authenticator);
 
     OneOf<CompletePasskeyAuthentication.Response, FileResponse, SharedProblemDetails> first =
-      await WebTestServerApplication.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
     first.IsT0.ShouldBeTrue("First authentication should succeed.");
 
     OneOf<CompletePasskeyAuthentication.Response, FileResponse, SharedProblemDetails> replay =
-      await WebTestServerApplication.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
 
     replay.IsT2.ShouldBeTrue("Replayed authentication should fail.");
     replay.AsT2.Status.ShouldBe(400);
   }
 
-  public async Task ValidationError_Given_Oversized_CredentialId()
+  public static async Task ValidationError_Given_Oversized_CredentialId()
   {
     // Round-1 finding M4: CredentialId is now capped at 2KB on this command too.
     var command = new CompletePasskeyAuthentication.Command
@@ -125,11 +138,11 @@ public class Returns_
       Signature = "QQ"
     };
 
-    await WebTestServerApplication.ConfirmEndpointValidationError<CompletePasskeyAuthentication.Response>
+    await Web.ConfirmEndpointValidationError<CompletePasskeyAuthentication.Response>
       (command, nameof(CompletePasskeyAuthentication.Command.CredentialId));
   }
 
-  public async Task Forbidden_Given_Quarantined_Principal()
+  public static async Task Forbidden_Given_Quarantined_Principal()
   {
     // G3 (104-006): crypto must succeed, then quarantine is the distinct 403 signal — not 400.
     IntegrationSoftwareAuthenticator authenticator = new();
@@ -139,30 +152,30 @@ public class Returns_
     CompletePasskeyAuthentication.Command authenticateCommand = await BuildValidAuthenticateCommand(authenticator);
 
     OneOf<CompletePasskeyAuthentication.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyAuthentication.Response>(authenticateCommand, CancellationToken.None);
 
     result.IsT2.ShouldBeTrue("Authentication of a quarantined principal should return a problem.");
     result.AsT2.Status.ShouldBe(403);
     result.AsT2.Title.ShouldBe("Account quarantined");
   }
 
-  private async Task QuarantinePrincipal(PrincipalId principalId)
+  private static async Task QuarantinePrincipal(PrincipalId principalId)
   {
     IPrincipalStore store =
-      WebTestServerApplication.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
+      Web.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
     Principal? principal = await store.GetPrincipalAsync(principalId);
     principal.ShouldNotBeNull();
     principal.Quarantine();
     await store.UpdatePrincipalAsync(principal);
   }
 
-  private async Task<PrincipalId> RegisterPasskey(IntegrationSoftwareAuthenticator authenticator)
+  private static async Task<PrincipalId> RegisterPasskey(IntegrationSoftwareAuthenticator authenticator)
   {
     OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
 
     byte[] challenge = ReadChallenge(start.AsT0.OptionsJson);
-    string origin = WebTestServerApplication.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
+    string origin = Web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
 
     byte[] authenticatorData = authenticator.BuildAuthenticatorData(RpId, includeAttestedCredentialData: true);
     byte[] attestationObject = IntegrationSoftwareAuthenticator.BuildAttestationObject(authenticatorData);
@@ -176,19 +189,19 @@ public class Returns_
     };
 
     OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompletePasskeyRegistration.Response>(registerCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyRegistration.Response>(registerCommand, CancellationToken.None);
 
     result.IsT0.ShouldBeTrue("Registration setup for an authentication test should succeed.");
     return result.AsT0.PrincipalId;
   }
 
-  private async Task<CompletePasskeyAuthentication.Command> BuildValidAuthenticateCommand(IntegrationSoftwareAuthenticator authenticator)
+  private static async Task<CompletePasskeyAuthentication.Command> BuildValidAuthenticateCommand(IntegrationSoftwareAuthenticator authenticator)
   {
     OneOf<StartPasskeyAuthentication.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartPasskeyAuthentication.Response>(new StartPasskeyAuthentication.Command(), CancellationToken.None);
+      await Web.GetResponse<StartPasskeyAuthentication.Response>(new StartPasskeyAuthentication.Command(), CancellationToken.None);
 
     byte[] challenge = ReadChallenge(start.AsT0.OptionsJson);
-    string origin = WebTestServerApplication.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
+    string origin = Web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
 
     // Assertions carry no attested credential data — that block is registration-only.
     byte[] authenticatorData = authenticator.BuildAuthenticatorData(RpId, includeAttestedCredentialData: false);
@@ -213,13 +226,13 @@ public class Returns_
 
   // Isolated-cookie GetCurrentSession call (see class Design region, round-1 finding M6) — see
   // Passkey_Registration_Tests.cs's identical helper for the full rationale.
-  private async Task<GetCurrentSession.Response> GetCurrentSessionWithCookie(IEnumerable<string> setCookieValues)
+  private static async Task<GetCurrentSession.Response> GetCurrentSessionWithCookie(IEnumerable<string> setCookieValues)
   {
     string? sessionCookie = setCookieValues.FirstOrDefault
       (value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
     sessionCookie.ShouldNotBeNull("Expected a Set-Cookie header carrying the identity-session cookie.");
 
-    using HttpClient isolatedClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient isolatedClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     isolatedClient.DefaultRequestHeaders.Add("Cookie", sessionCookie.Split(';')[0]);
 
     HttpResponseMessage response = await isolatedClient.GetAsync(GetCurrentSession.Query.RouteTemplate);
@@ -228,4 +241,5 @@ public class Returns_
     return JsonSerializer.Deserialize<GetCurrentSession.Response>(json, ContractSerializationDefaults.Options)
       ?? throw new InvalidOperationException("GetCurrentSession response deserialized to null.");
   }
+
 }

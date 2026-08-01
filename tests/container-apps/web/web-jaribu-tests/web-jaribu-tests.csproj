@@ -32,9 +32,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Matches create-role-tests.cs #:project web-contracts. New runfiles that need more
-         ProjectReferences must extend this list. -->
+    <!-- Matches create-role-tests.cs #:project web-contracts and hello-tests.cs #:project
+         timewarp-testing (host runfiles). New runfiles that need more ProjectReferences must
+         extend this list. -->
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-contracts\web-contracts.csproj" />
+    <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
   </ItemGroup>
 
 </Project>

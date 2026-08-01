@@ -7,58 +7,87 @@ namespace WebAuthnOptionsValidator_;
 
 public class Validate_Should
 {
-  private WebAuthnOptionsValidator Validator = new();
 
-  public void Be_Valid_Given_Dns_Entries()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Validate_Should>();
+
+  public static Task Be_Valid_Given_Dns_Entries()
+
   {
     var options = new WebAuthnOptions { AllowedRpIds = ["localhost", "arch.timewarp.work"] };
 
-    ValidationResult result = Validator.Validate(options);
+    ValidationResult result = new WebAuthnOptionsValidator().Validate(options);
 
     result.IsValid.ShouldBeTrue();
+
+    return Task.CompletedTask;
+
   }
 
-  public void Have_Error_Given_Empty_List()
+  public static Task Have_Error_Given_Empty_List()
+
   {
     var options = new WebAuthnOptions { AllowedRpIds = [] };
 
-    Validator.Validate(options).IsValid.ShouldBeFalse();
+    new WebAuthnOptionsValidator().Validate(options).IsValid.ShouldBeFalse();
+
+    return Task.CompletedTask;
+
   }
 
-  public void Have_Error_Given_Scheme_Prefixed_Entry()
+  public static Task Have_Error_Given_Scheme_Prefixed_Entry()
+
   {
     var options = new WebAuthnOptions { AllowedRpIds = ["https://arch.timewarp.work"] };
 
-    Validator.Validate(options).IsValid.ShouldBeFalse();
+    new WebAuthnOptionsValidator().Validate(options).IsValid.ShouldBeFalse();
+
+    return Task.CompletedTask;
+
   }
 
-  public void Have_Error_Given_Port_Suffixed_Entry()
+  public static Task Have_Error_Given_Port_Suffixed_Entry()
+
   {
     var options = new WebAuthnOptions { AllowedRpIds = ["arch.timewarp.work:443"] };
 
-    Validator.Validate(options).IsValid.ShouldBeFalse();
+    new WebAuthnOptionsValidator().Validate(options).IsValid.ShouldBeFalse();
+
+    return Task.CompletedTask;
+
   }
 
-  public void Have_Error_Given_Path_In_Entry()
+  public static Task Have_Error_Given_Path_In_Entry()
+
   {
     var options = new WebAuthnOptions { AllowedRpIds = ["arch.timewarp.work/passkeys"] };
 
-    Validator.Validate(options).IsValid.ShouldBeFalse();
+    new WebAuthnOptionsValidator().Validate(options).IsValid.ShouldBeFalse();
+
+    return Task.CompletedTask;
+
   }
 
-  public void Have_Error_Given_Empty_Entry()
+  public static Task Have_Error_Given_Empty_Entry()
+
   {
     var options = new WebAuthnOptions { AllowedRpIds = ["localhost", ""] };
 
-    Validator.Validate(options).IsValid.ShouldBeFalse();
+    new WebAuthnOptionsValidator().Validate(options).IsValid.ShouldBeFalse();
+
+    return Task.CompletedTask;
+
   }
 
-  public void Have_Error_Given_Ip_Literal_Entry()
+  public static Task Have_Error_Given_Ip_Literal_Entry()
+
   {
     var options = new WebAuthnOptions { AllowedRpIds = ["127.0.0.1"] };
 
-    Validator.Validate(options).IsValid.ShouldBeFalse();
+    new WebAuthnOptionsValidator().Validate(options).IsValid.ShouldBeFalse();
+
+    return Task.CompletedTask;
+
   }
 
-  public void Setup() => Validator = new WebAuthnOptionsValidator();
 }

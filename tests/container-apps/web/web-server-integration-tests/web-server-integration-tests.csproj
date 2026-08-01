@@ -1,27 +1,42 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <NoWarn>$(NoWarn);CS0436</NoWarn>
+    <!-- Host-level / hybrid remainder suite (task 145-004): suite-shaped under tests/, Jaribu MTP.
+         C-create HostGraphFactory per class (SetupOnce/CleanUpOnce); no process-static hosts. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- .NET 10 MTP-native dotnet test — pair with project-local global.json test.runner
+         (not root — would break remaining Fixie). timewarp-jaribu#20: mirror root SDK pin. -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <!-- Jaribu SUT_/Action_Given_ naming uses underscores (CA1707); static SetupOnce/CleanUpOnce.
+         CS0436 retained from prior suite (duplicate type surface via project refs). -->
+    <NoWarn>$(NoWarn);CS0436;CA1707;CA1849;IDE0021;IDE0058</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.AutoFakeItEasy" />
     <PackageReference Include="FakeItEasy" />
-    <PackageReference Include="Fixie.TestAdapter" />
     <!-- Direct reference pins Microsoft.Extensions.Hosting 10.0.9 at a nearer graph level than
          web-server's transitive Oakton (< 10.0.0) bound, resolving the NU1107 version conflict
          (same approach as web-spa-integration-tests). -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-contracts\web-contracts.csproj" />
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-server\web-server.csproj" />
     <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
-
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Shouldly" />
+    <Using Include="TimeWarp.Jaribu" />
+    <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
   </ItemGroup>
 </Project>

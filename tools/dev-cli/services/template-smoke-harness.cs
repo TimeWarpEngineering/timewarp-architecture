@@ -560,17 +560,17 @@ internal sealed class TemplateSmokeHarness
   /// <summary>
   /// Per-family JARIBU_MULTI aggregator projects (task 136), plus (task 145-002 R2-3) the
   /// timewarp-testing-tests suite project, which needs BOTH web and api. Relative to the
-  /// generated app root. ExpectedSucceeded matches co-located counts (web create-role = 5; api
-  /// weather = 2; timewarp-testing-tests HostGraphFactory smoke = 3). Serial — api binds
-  /// :7255/:7000. RequiredFamilies lets a flag-off smoke entry assert the artifacts are ABSENT
-  /// (task 136 review R2-1) whenever ANY required family is excluded: an aggregator orphaned by a
-  /// family flag would break the generated app, so absence is the pass condition. Also (task
-  /// 145-002 R2-1) the acid test that the ContentRootPath fix holds for a MULTI-hosted-server
-  /// consumer in a GENERATED app, not just this monorepo.
+  /// generated app root. ExpectedSucceeded matches co-located counts (web create-role = 5 +
+  /// hello endpoint = 2 → 7; api weather = 2; timewarp-testing-tests HostGraphFactory smoke = 3).
+  /// Serial — api binds :7255/:7000. RequiredFamilies lets a flag-off smoke entry assert the
+  /// artifacts are ABSENT (task 136 review R2-1) whenever ANY required family is excluded: an
+  /// aggregator orphaned by a family flag would break the generated app, so absence is the pass
+  /// condition. Also (task 145-002 R2-1) the acid test that the ContentRootPath fix holds for a
+  /// MULTI-hosted-server consumer in a GENERATED app, not just this monorepo.
   /// </summary>
   public static readonly (string[] RequiredFamilies, string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
   [
-    (["web"], "tests/container-apps/web/web-jaribu-tests", 5),
+    (["web"], "tests/container-apps/web/web-jaribu-tests", 7),
     (["api"], "tests/container-apps/api/api-jaribu-tests", 2),
     (["web", "api"], "tests/common/timewarp-testing-tests", 3),
   ];

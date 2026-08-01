@@ -8,26 +8,40 @@ using static TimeWarp.Architecture.Features.Admin.Roles.CreateRole;
 
 public class Handle_Returns
 {
-  private readonly Command Command;
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Handle_Returns
-  (
-    WebTestServerApplication webTestServerApplication
-  )
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Handle_Returns>();
+
+  public static async Task SetupOnce()
   {
-    Command = new Command
-    {
-      UserId = Guid.NewGuid(),
-      Name = "Dispatcher",
-      Description = "Schedules and routes work."
-    };
-    WebTestServerApplication = webTestServerApplication;
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
   }
 
-  public async Task Response_With_NonEmpty_RoleId()
+  public static async Task CleanUpOnce()
   {
-    OneOf<Response, SharedProblemDetails> result = await WebTestServerApplication.Send(Command);
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  private static Command CreateValidCommand() => new()
+  {
+    UserId = Guid.NewGuid(),
+    Name = "Dispatcher",
+    Description = "Schedules and routes work."
+  };
+
+  public static async Task Response_With_NonEmpty_RoleId()
+  {
+
+    Command command = CreateValidCommand();
+
+    OneOf<Response, SharedProblemDetails> result = await Web.Send(command);
 
     result.Switch
     (
@@ -35,4 +49,5 @@ public class Handle_Returns
       problemDetails => problemDetails.ShouldBeNull("CreateRole handler returned SharedProblemDetails for a valid command.")
     );
   }
+
 }
