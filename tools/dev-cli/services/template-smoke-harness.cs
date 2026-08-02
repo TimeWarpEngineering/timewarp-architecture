@@ -564,7 +564,7 @@ internal sealed class TemplateSmokeHarness
   /// Per-family JARIBU_MULTI aggregator projects (task 136), plus (task 145-002 R2-3) the
   /// timewarp-testing-tests suite project, which needs BOTH web and api. Relative to the
   /// generated app root. ExpectedSucceeded matches co-located counts (web create-role = 5 +
-  /// hello endpoint = 2 → 7; api weather = 2; timewarp-testing-tests HostGraphFactory smoke = 3).
+  /// hello endpoint = 2 → 7; api weather = 5; timewarp-testing-tests HostGraphFactory smoke = 3).
   /// Serial — api binds :7255/:7000. RequiredFamilies lets a flag-off smoke entry assert the
   /// artifacts are ABSENT (task 136 review R2-1) whenever ANY required family is excluded: an
   /// aggregator orphaned by a family flag would break the generated app, so absence is the pass
