@@ -574,7 +574,7 @@ internal sealed class TemplateSmokeHarness
   public static readonly (string[] RequiredFamilies, string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
   [
     (["web"], "tests/container-apps/web/web-jaribu-tests", 7),
-    (["api"], "tests/container-apps/api/api-jaribu-tests", 2),
+    (["api"], "tests/container-apps/api/api-jaribu-tests", 5),
     (["web", "api"], "tests/common/timewarp-testing-tests", 3),
   ];
 
