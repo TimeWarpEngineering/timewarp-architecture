@@ -1,12 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <NoWarn>$(NoWarn);CS0436</NoWarn>
+    <!-- Host-level SPA state suite (task 145-006): suite-shaped under tests/, Jaribu MTP.
+         SetupOnce-owned Aspire DistributedApplication + AspireSpaTestApplication per class;
+         pure serialization facts need no host. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- .NET 10 MTP-native dotnet test — pair with project-local global.json test.runner
+         (not root — would break remaining Fixie). timewarp-jaribu#20: mirror root SDK pin. -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!-- TimeWarp.State's test-only State.Initialize() guards with
          `if (!assembly.FullName.Contains("Test"))` — a CASE-SENSITIVE check for capital "Test".
          The kebab-case project name ("web-spa-integration-tests") has lowercase "tests" and fails it,
          so Initialize() throws FieldAccessException. Force a capital "Tests" into the assembly name.
          (Remove once TimeWarp.State is upgraded past 12.0.0-beta.1, which has this fixed — see 058.) -->
     <AssemblyName>web-spa-integration-Tests</AssemblyName>
+    <!-- Jaribu SUT_/Action_Given_ naming uses underscores (CA1707); static SetupOnce/CleanUpOnce.
+         CS0436 retained from prior suite (duplicate type surface via project refs). -->
+    <NoWarn>$(NoWarn);CS0436;CA1707;CA1849;IDE0021;IDE0058</NoWarn>
     <!-- Feature-flag symbols: the template engine strips #if(flag) regions at generation time;
          the real repo build (all features on) needs the symbols defined to keep them. -->
     <DefineConstants>$(DefineConstants);api</DefineConstants>
@@ -16,8 +28,8 @@
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.AutoFakeItEasy" />
     <PackageReference Include="FakeItEasy" />
-    <PackageReference Include="Fixie.TestAdapter" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
   </ItemGroup>
   <ItemGroup>
@@ -27,11 +39,13 @@
     <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Configuration\" />
-  </ItemGroup>
-  <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Shouldly" />
+    <Using Include="TimeWarp.Jaribu" />
+    <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
   </ItemGroup>
 </Project>

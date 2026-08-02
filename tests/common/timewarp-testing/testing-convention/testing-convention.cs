@@ -34,9 +34,8 @@ public class TimeWarpTestingConvention : TestingConvention
       #if(api)
       .AddSingleton<ApiTestServerApplication>()
       #endif
-      #if(web && yarp)
-      .AddSingleton<SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program>>()
-      #endif
+      // SpaTestApplication<Yarp> deleted task 145-006 — SPA suite uses AspireSpaTestApplication
+      // (SetupOnce + closed-box AppHost). Do not reintroduce a Fixie-DI SPA host here.
       #if(yarp)
       .AddSingleton<YarpTestServerApplication>()
       #endif

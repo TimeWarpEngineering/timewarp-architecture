@@ -1,12 +1,18 @@
+#region Purpose
+// TWeatherForecast contract seam serialize/deserialize round-trip (no Aspire host).
+#endregion
+
 namespace TWeatherForecast_;
 
 using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 
 public class Should
 {
-  public static void SerializeAndDeserialize()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should>();
+
+  public static Task SerializeAndDeserialize()
   {
-    //Arrange
     JsonSerializerOptions jsonSerializerOptions = ContractSerializationDefaults.Options;
     var weatherForecast = new TWeatherForecast
     (
@@ -17,12 +23,11 @@ public class Should
 
     string json = JsonSerializer.Serialize(weatherForecast, jsonSerializerOptions);
 
-    //Act
     TWeatherForecast parsed = JsonSerializer.Deserialize<TWeatherForecast>(json, jsonSerializerOptions)!;
 
-    //Assert
     weatherForecast.TemperatureC.ShouldBe(parsed.TemperatureC);
     weatherForecast.Summary.ShouldBe(parsed.Summary);
     weatherForecast.Date.ShouldBe(parsed.Date);
+    return Task.CompletedTask;
   }
 }

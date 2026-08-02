@@ -1,44 +1,66 @@
+#region Purpose
+// StateTransactionBehavior clone-on-dispatch and rollback-on-exception via SPA mediator pipeline.
+// Migrated from dead SpaTestApplication<Yarp> to AspireSpaTestApplication (task 145-006).
+#endregion
+
+#region Design
+// Guid/Count assertions re-fetch state after Send (instance may be replaced on dispatch).
+// Rollback keeps Guid equal to the pre-action snapshot when the exception path restores state.
+#endregion
+
 namespace CloneStateBehavior;
 
+using global::Aspire.Hosting;
 using static TimeWarp.Architecture.Features.Counters.CounterState;
 
-public class Should : BaseTest
+[TestTag("Integration")]
+public class Should
 {
-  private CounterState CounterState => Store.GetState<CounterState>();
+  private static DistributedApplication? App;
+  private static AspireSpaTestApplication? Spa;
 
-  public Should
-  (
-    SpaTestApplication<YarpTestServerApplication, TimeWarp.Architecture.Yarp.Server.Program> spaTestApplication
-  ) : base(spaTestApplication) { }
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should>();
 
-  public async Task CloneState()
+  public static async Task SetupOnce()
   {
-    //Arrange
-    CounterState.Initialize(count: 15);
-    Guid preActionGuid = CounterState.Guid;
-
-    var action = new IncrementCounterActionSet.Action(amount: -2);
-
-    //Act
-    await Send(action);
-
-    //Assert
-    CounterState.Guid.ShouldNotBe(preActionGuid);
+    App = await SpaIntegrationHost.StartAsync();
+    Spa = new AspireSpaTestApplication(App);
   }
 
-  public async Task RollBackState_When_Exception()
+  public static async Task CleanUpOnce()
   {
-    // Arrange
-    CounterState.Initialize(count: 22);
-    Guid preActionGuid = CounterState.Guid;
+    await SpaIntegrationHost.StopAsync(App);
+    App = null;
+    Spa = null;
+  }
 
-    // Act
-    var action =
-      new ThrowException.Action(Message: "Test Rollback of State");
+  public static async Task CloneState()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
 
-    await Send(action);
+    scope.Store.GetState<CounterState>().Initialize(count: 15);
+    Guid preActionGuid = scope.Store.GetState<CounterState>().Guid;
 
-    // Assert State was rolled back and thus Guid didn't change.
-    CounterState.Guid.Equals(preActionGuid);
+    IncrementCounterActionSet.Action action = new(amount: -2);
+
+    await scope.Send(action);
+
+    scope.Store.GetState<CounterState>().Guid.ShouldNotBe(preActionGuid);
+  }
+
+  public static async Task RollBackState_When_Exception()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+
+    scope.Store.GetState<CounterState>().Initialize(count: 22);
+    Guid preActionGuid = scope.Store.GetState<CounterState>().Guid;
+
+    ThrowException.Action action = new(Message: "Test Rollback of State");
+
+    await scope.Send(action);
+
+    // State was rolled back and thus Guid didn't change.
+    scope.Store.GetState<CounterState>().Guid.ShouldBe(preActionGuid);
   }
 }

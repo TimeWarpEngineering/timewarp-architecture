@@ -1,24 +1,44 @@
+#region Purpose
+// WeatherForecastsState.FetchWeatherForecasts against the closed-box API (quarantined — task 058).
+#endregion
+
 namespace WeatherForecastsState_;
 
-using static TimeWarp.Architecture.Features.WeatherForecasts.WeatherForecastsState;
+using global::Aspire.Hosting;
 
-public class FetchWeatherForecasts_Action_Should : BaseTest
+[TestTag("Integration")]
+public class FetchWeatherForecasts_Action_Should
 {
-  private WeatherForecastsState WeatherForecastsState => Store.GetState<WeatherForecastsState>();
+  private static DistributedApplication? App;
+  private static AspireSpaTestApplication? Spa;
 
-  public FetchWeatherForecasts_Action_Should
-  (
-    ISpaTestApplication spaTestApplication
-  ) : base(spaTestApplication) { }
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<FetchWeatherForecasts_Action_Should>();
+
+  public static async Task SetupOnce()
+  {
+    App = await SpaIntegrationHost.StartAsync();
+    Spa = new AspireSpaTestApplication(App);
+  }
+
+  public static async Task CleanUpOnce()
+  {
+    await SpaIntegrationHost.StopAsync(App);
+    App = null;
+    Spa = null;
+  }
 
   [Skip("Quarantined (task 058): the SPA's weather fetch throws in the headless test host (the toast " +
         "ExceptionNotification surfaces a FluentToastProvider error). Needs the SPA->server fetch wired " +
-        "in the SpaTestApplication host. Tracked separately.")]
-  public async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()
+        "in the AspireSpaTestApplication host. Tracked separately.")]
+  public static async Task Update_WeatherForecastState_With_WeatherForecasts_From_Server()
   {
-    await WeatherForecastsState.FetchWeatherForecasts(5);
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    WeatherForecastsState weatherForecastsState = scope.Store.GetState<WeatherForecastsState>();
 
-    WeatherForecastsState.WeatherForecasts.ShouldNotBeNull();
-    WeatherForecastsState.WeatherForecasts.Count.ShouldBe(5);
+    await weatherForecastsState.FetchWeatherForecasts(5);
+
+    weatherForecastsState.WeatherForecasts.ShouldNotBeNull();
+    weatherForecastsState.WeatherForecasts.Count.ShouldBe(5);
   }
 }
