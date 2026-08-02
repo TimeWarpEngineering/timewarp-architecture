@@ -24,3 +24,5 @@ conversion; fold them into this task as its first requirement.
 - [ ] Remaining suites migrated; pins/conventions removed
 - [ ] dev test Fixie branch resolved; docs swept
 - [ ] dev build 0/0; full dev test; template-smoke ×3; audit clean; kanban committed
+
+- **In-scope cleanup (routed from 145-006 round-2, 2026-08-02):** delete the now-orphaned `TimeWarpTestingConvention` class (tests/common/timewarp-testing/testing-convention/) — zero consumers repo-wide since SpaTestConvention was deleted.

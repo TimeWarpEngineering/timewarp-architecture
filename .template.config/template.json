@@ -61,7 +61,6 @@
           "exclude": [
             "source/container-apps/web/**",
             "tests/common/timewarp-testing/applications/web-test-server-application.cs",
-            "tests/common/timewarp-testing/applications/spa-test-application.cs",
             "tests/common/timewarp-testing-tests/**",
             "tests/container-apps/web/**"
           ]

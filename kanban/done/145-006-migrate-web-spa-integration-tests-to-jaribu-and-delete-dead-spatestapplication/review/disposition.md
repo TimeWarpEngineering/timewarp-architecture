@@ -20,3 +20,14 @@ reachability poll deferred until flake evidence (same Healthy-only gate as pre-m
 ## Escalations
 
 - None
+
+---
+
+## Addendum — round 2 (2026-08-02, independent verification)
+
+All claims reproduced incl. template-smoke ×3. Parity confirmed at method level (both sides'
+skip counts were artifacts — Fixie phantoms pre, Jaribu MTP double-count post; upstream
+timewarp-jaribu#22 filed). Wall-clock regression structural + disclosed (new 6th Aspire boot).
+Four findings folded in (template.json dangling exclude, Design-region rewording, upstream
+issue, TimeWarpTestingConvention orphan routed to 145-007). Outcome remains
+accepted-exceptions/clean.

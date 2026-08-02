@@ -9,8 +9,10 @@
 // SetupOnce, and uses SpaTestScope.Create per fact so Store/Sender isolation is explicit.
 // Full-graph boot matches the pre-migration SpaTestConvention (postgres ephemeral via
 // Postgres:UseDataVolume=false). Partial-graph (WithExplicitStart) evaluated under task 145-006 —
-// not adopted: AppHost WaitFor chains and ingress→web→api[+postgres] make pruning grpc the only
-// cheap win, and grpc is a small share of boot vs postgres/web; leave full graph for fidelity.
+// not adopted: the suite needs live web/api/ingress backends (ordering enforced by this host's
+// own sequential WaitForResourceHealthyAsync calls; the AppHost itself chains WaitFor only for
+// postgres), so pruning grpc is the only cheap win — a small share of boot vs postgres/web;
+// leave full graph for fidelity.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;

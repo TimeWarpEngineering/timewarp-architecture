@@ -92,3 +92,5 @@ Effort 1, **accepted-exceptions** — `review/`
   (ingress reachability poll — same Healthy-only gate as pre-migration; re-open if CI EOFs)
 - Paths: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`
 
+
+- **Round-2 note (2026-08-02):** the reported "2 skip" is ONE real [Skip] double-counted by a Jaribu MTP bug (timewarp-jaribu#22); true suite shape is 11 pass / 1 skip. Wall-clock 95→109s is structural: clone-state migration added a 6th full Aspire boot.

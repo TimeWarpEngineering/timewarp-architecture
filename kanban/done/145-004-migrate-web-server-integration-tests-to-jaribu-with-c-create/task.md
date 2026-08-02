@@ -62,3 +62,5 @@ losses, triage reasoned, wall-clock faster than Fixie (~24s vs ~31s — recorded
 145-008 gate). Final gates green twice (fix worktree ×3 smoke runs; orchestrator re-run on
 merged dev). Side artifacts: ganda 197 filed (cpm-consistency scans stale artifacts/).
 Review: 3 rounds, disposition clean.
+
+- **Round-2 note from 145-006 review (2026-08-02):** its reported "2 skip" (RunForever) is ONE real skip double-counted by Jaribu MTP (timewarp-jaribu#22); true shape 95 pass / 1 skip.
