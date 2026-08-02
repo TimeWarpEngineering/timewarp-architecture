@@ -5,7 +5,11 @@ using InMemoryWebAuthnChallengeStore_;
 
 public class Issue_And_Validate
 {
-  public void Round_trips_principal_id_and_scopes()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Issue_And_Validate>();
+
+  public static Task Round_trips_principal_id_and_scopes()
   {
     var store = new InMemoryAgentTokenStore();
     PrincipalId principalId = PrincipalId.New();
@@ -17,9 +21,10 @@ public class Issue_And_Validate
     grant.ShouldNotBeNull();
     grant.PrincipalId.ShouldBe(principalId);
     grant.Scopes.ShouldBe(scopes);
+    return Task.CompletedTask;
   }
 
-  public void Scopes_are_copied_not_aliased()
+  public static Task Scopes_are_copied_not_aliased()
   {
     var store = new InMemoryAgentTokenStore();
     List<string> scopes = [AgentScopes.IdentityRead];
@@ -31,42 +36,51 @@ public class Issue_And_Validate
     grant.ShouldNotBeNull();
     grant.Scopes.Count.ShouldBe(1);
     grant.Scopes.ShouldBe([AgentScopes.IdentityRead]);
+    return Task.CompletedTask;
   }
 
-  public void Unknown_token_returns_null()
+  public static Task Unknown_token_returns_null()
   {
     var store = new InMemoryAgentTokenStore();
 
     store.Validate("never-issued-token").ShouldBeNull();
+    return Task.CompletedTask;
   }
 
-  public void Garbage_token_returns_null_without_throwing()
+  public static Task Garbage_token_returns_null_without_throwing()
   {
     var store = new InMemoryAgentTokenStore();
 
     store.Validate("!!!not-even-base64url!!!").ShouldBeNull();
+    return Task.CompletedTask;
   }
 
-  public void Empty_token_returns_null_without_throwing()
+  public static Task Empty_token_returns_null_without_throwing()
   {
     var store = new InMemoryAgentTokenStore();
 
     store.Validate("").ShouldBeNull();
+    return Task.CompletedTask;
   }
 
-  public void Distinct_issues_return_distinct_tokens()
+  public static Task Distinct_issues_return_distinct_tokens()
   {
     var store = new InMemoryAgentTokenStore();
     string first = store.Issue(PrincipalId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
     string second = store.Issue(PrincipalId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
 
     first.ShouldNotBe(second);
+    return Task.CompletedTask;
   }
 }
 
 public class Expiry
 {
-  public void Expired_token_is_not_valid()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Expiry>();
+
+  public static Task Expired_token_is_not_valid()
   {
     var timeProvider = new ManualTimeProvider(DateTimeOffset.UtcNow);
     var store = new InMemoryAgentTokenStore(timeProvider);
@@ -75,9 +89,10 @@ public class Expiry
     timeProvider.Advance(TimeSpan.FromMinutes(15) + TimeSpan.FromSeconds(1));
 
     store.Validate(token).ShouldBeNull();
+    return Task.CompletedTask;
   }
 
-  public void Not_yet_expired_token_is_valid()
+  public static Task Not_yet_expired_token_is_valid()
   {
     var timeProvider = new ManualTimeProvider(DateTimeOffset.UtcNow);
     var store = new InMemoryAgentTokenStore(timeProvider);
@@ -86,9 +101,10 @@ public class Expiry
     timeProvider.Advance(TimeSpan.FromMinutes(14));
 
     store.Validate(token).ShouldNotBeNull();
+    return Task.CompletedTask;
   }
 
-  public void Validate_does_not_consume_the_token()
+  public static Task Validate_does_not_consume_the_token()
   {
     // Unlike the one-time challenge stores, a token authenticates every request for its whole
     // lifetime — Validate must be repeatable.
@@ -97,12 +113,17 @@ public class Expiry
 
     store.Validate(token).ShouldNotBeNull();
     store.Validate(token).ShouldNotBeNull();
+    return Task.CompletedTask;
   }
 }
 
 public class CapEviction
 {
-  public void Oldest_entry_is_evicted_when_at_capacity()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<CapEviction>();
+
+  public static Task Oldest_entry_is_evicted_when_at_capacity()
   {
     var timeProvider = new ManualTimeProvider(DateTimeOffset.UtcNow);
     var store = new InMemoryAgentTokenStore(timeProvider, maxEntries: 2);
@@ -117,5 +138,6 @@ public class CapEviction
     store.Validate(first).ShouldBeNull();
     store.Validate(second).ShouldNotBeNull();
     store.Validate(third).ShouldNotBeNull();
+    return Task.CompletedTask;
   }
 }

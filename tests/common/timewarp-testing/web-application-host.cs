@@ -13,6 +13,15 @@ using Microsoft.Extensions.Configuration.Json;
 // developer has in user secrets. Environment variables are deliberately LEFT intact (CI supplies
 // secrets that way); only the user-secrets file source is removed. The WebAuthnOptions binding test
 // pins this by asserting no configuration source path ends with secrets.json.
+//
+// Task 145-002 R2-1: ContentRootPath (set per-host by each Test*ServerApplication) now always
+// resolves to that host's OWN real project directory — never a shared/flattened consumer output
+// dir, which used to collide when a consumer transitively referenced more than one hosted server
+// project (each ships an appsettings.json at the same relative path; last-copied wins, silently
+// dropping the other host's config). The constructor below layers back in an OPTIONAL, ADDITIVE
+// consumer override read explicitly from AppContext.BaseDirectory — see the inline comment there —
+// so a consumer that authors its own appsettings.json (the pre-existing "merged appsettings.json"
+// pattern) still gets it applied, without reintroducing the collision bug.
 #endregion
 
 /// <summary>
@@ -24,7 +33,6 @@ using Microsoft.Extensions.Configuration.Json;
 /// </remarks>
 /// <example><see cref="WebTestServerApplication"/></example>
 /// <typeparam name="TProgram">The IProgram Implementation to use</typeparam>
-[NotTest]
 public class WebApplicationHost<TProgram> : IAsyncDisposable
   where TProgram : IAspNetProgram
 {
@@ -63,6 +71,28 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
       }
     }
 
+    // Task 145-002 R2-1 follow-up: layer an OPTIONAL consumer-authored override on top of the
+    // host's own real appsettings (ContentRootPath, set by each Test*ServerApplication — see
+    // ProjectContentRoot's Design region). Additive only (a later JSON source overrides matching
+    // KEYS, never deletes sections it doesn't mention), so this cannot reintroduce R2-1's bug
+    // (a whole section silently missing) — it restores the pre-existing "merged appsettings.json"
+    // pattern (web-server-integration-tests/appsettings.json, task 104-031's predecessor, dates to
+    // 05679ba4 2022: "all the projects are merged together and served from one folder") that used
+    // to work by accident, via the SAME flattened-output-directory collision R2-1 fixed. That
+    // consumer file still lands at AppContext.BaseDirectory (the running test process's own output
+    // dir) regardless of ContentRootPath — this reads it back explicitly instead of relying on
+    // which project's content item happened to win the copy collision.
+    string consumerOverridePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+    string ownAppSettingsPath = Path.Combine(
+      webApplicationOptions.ContentRootPath ?? AppContext.BaseDirectory, "appsettings.json");
+    if (
+      !string.Equals(
+        Path.GetFullPath(consumerOverridePath), Path.GetFullPath(ownAppSettingsPath), StringComparison.OrdinalIgnoreCase)
+      && File.Exists(consumerOverridePath))
+    {
+      builder.Configuration.AddJsonFile(consumerOverridePath, optional: true, reloadOnChange: false);
+    }
+
     builder.WebHost
       .UseUrls(urls)
       .UseShutdownTimeout(TimeSpan.FromSeconds(30));
@@ -82,13 +112,29 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
 
     try
     {
-      Task runTask = WebApplication.RunAsync();
-
-      // Wait for the server to be ready to accept connections
+      // Register ApplicationStarted BEFORE RunAsync — a failed host disposes the ServiceProvider.
       IHostApplicationLifetime lifetime = ServiceProvider.GetRequiredService<IHostApplicationLifetime>();
       TaskCompletionSource serverStartedTcs = new();
-      lifetime.ApplicationStarted.Register(() => serverStartedTcs.SetResult());
-      serverStartedTcs.Task.Wait(TimeSpan.FromSeconds(30));
+      lifetime.ApplicationStarted.Register(() => serverStartedTcs.TrySetResult());
+
+      Task runTask = WebApplication.RunAsync();
+
+      // Race ApplicationStarted against RunAsync faulting / timeout so we surface the real error.
+      Task timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
+      Task completed = Task.WhenAny(serverStartedTcs.Task, runTask, timeoutTask).GetAwaiter().GetResult();
+
+      if (completed == runTask)
+        runTask.GetAwaiter().GetResult(); // rethrow host startup failure
+
+      if (completed == timeoutTask)
+      {
+        throw new TimeoutException(
+          $"WebApplication for {typeof(TProgram).FullName} did not signal ApplicationStarted within 30s. " +
+          $"Urls: {string.Join(", ", urls)}");
+      }
+
+      if (runTask.IsFaulted)
+        runTask.GetAwaiter().GetResult();
 
       Console.WriteLine("======= WebApplication Started ======");
       Started = true;

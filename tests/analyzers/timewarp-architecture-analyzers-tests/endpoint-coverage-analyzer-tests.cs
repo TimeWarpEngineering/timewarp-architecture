@@ -12,6 +12,9 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Enforce_Endpoint_Coverage
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Enforce_Endpoint_Coverage>();
+
   // Minimal foundation surface so the test compilation resolves the shapes the analyzer
   // matches by metadata name (BaseFastEndpoint`2) and simple name (ApiRouteAttribute,
   // ClientOnlyContractAttribute).
@@ -38,7 +41,7 @@ public class Should_Enforce_Endpoint_Coverage
     }
     """;
 
-  private static CSharpAnalyzerTest<EndpointCoverageAnalyzer, FixieVerifier> Test(string source) =>
+  private static CSharpAnalyzerTest<EndpointCoverageAnalyzer, RoslynTestVerifier> Test(string source) =>
     new()
     {
       TestState =
@@ -119,7 +122,7 @@ public class Should_Enforce_Endpoint_Coverage
       }
       """;
 
-    CSharpAnalyzerTest<EndpointCoverageAnalyzer, FixieVerifier> test = Test(Source);
+    CSharpAnalyzerTest<EndpointCoverageAnalyzer, RoslynTestVerifier> test = Test(Source);
     test.ExpectedDiagnostics.Add(
       new DiagnosticResult(EndpointCoverageAnalyzer.MissingEndpointId, DiagnosticSeverity.Warning)
         .WithArguments("App.Contracts.OrphanedContract.Command", "api/Orphans", "Delete"));

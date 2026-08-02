@@ -3,36 +3,60 @@
 #endregion
 
 #region Design
-// Uses the Aspire-launched api-server (TestApiService stack) rather than in-process
-// ApiTestServerApplication: the test process loads web-server via timewarp-testing, and
+// Closed-box lane (task 145-005): Aspire-launched api-server rather than in-process
+// ApiTestServerApplication — the test process used to load web-server via timewarp-testing, and
 // FastEndpoints endpoint discovery can see web types in the same AppDomain, polluting an
-// in-process document. Aspire runs api-server as its own process — same surface the manual
-// curl proof used. ASPNETCORE_ENVIRONMENT is Development under the testing AppHost so
-// CommonServerModule.UseScalarApiReference maps /openapi/{doc}.json.
+// in-process document. Aspire runs api-server as its own process. SetupOnce owns the
+// DistributedApplication (145-003 Jaribu shape). ASPNETCORE_ENVIRONMENT is Development under
+// the testing AppHost so CommonServerModule.UseScalarApiReference maps /openapi/{doc}.json.
 // Asserts HTTP 200 and that at least one operation carries the generator-emitted feature tag
-// (namespace leaf …Features.WeatherForecasts → "WeatherForecasts") — the original failure mode
-// was Scalar UI up with an empty/untagged document.
+// (namespace leaf …Features.WeatherForecasts → "WeatherForecasts").
 #endregion
 
 namespace OpenApiDocument_;
 
-using global::Aspire.Hosting;
 using System.Text.Json;
 using AspireConstants = TimeWarp.Architecture.Aspire.Constants;
 
-public class Returns
+[TestTag("Integration")]
+public class OpenApiDocument_Given_
 {
-  private readonly Task<DistributedApplication> DistributedApplicationTask;
+  private static DistributedApplication? App;
 
-  public Returns(Task<DistributedApplication> distributedApplicationTask)
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<OpenApiDocument_Given_>();
+
+  public static async Task SetupOnce()
   {
-    DistributedApplicationTask = distributedApplicationTask;
+    IDistributedApplicationTestingBuilder appHost =
+      await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>
+      (
+        // Ephemeral postgres: test AppHosts must NOT share the deterministic data volume
+        // (overlapping instances corrupt its WAL and hang WaitFor - see AppHost Design region).
+        ["--Postgres:UseDataVolume=false"]
+      );
+
+    App = await appHost.BuildAsync();
+    await App.StartAsync();
+
+    using CancellationTokenSource cts = new(TimeSpan.FromMinutes(2));
+    await App.ResourceNotifications.WaitForResourceHealthyAsync(
+      AspireConstants.ApiServerProjectResourceName,
+      cts.Token);
   }
 
-  public async Task OpenApi_V1_Document_With_Feature_Tags()
+  public static async Task CleanUpOnce()
   {
-    DistributedApplication app = await DistributedApplicationTask;
-    using HttpClient httpClient = app.CreateHttpClient(AspireConstants.ApiServerProjectResourceName);
+    if (App is not null)
+    {
+      await App.DisposeAsync();
+      App = null;
+    }
+  }
+
+  public static async Task OpenApi_V1_Document_Should_Include_WeatherForecasts_Feature_Tag()
+  {
+    using HttpClient httpClient = App!.CreateHttpClient(AspireConstants.ApiServerProjectResourceName);
 
     HttpResponseMessage response = await httpClient.GetAsync("/openapi/v1.json");
 

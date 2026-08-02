@@ -3,7 +3,11 @@ namespace LocalKeyStore_;
 
 public class Sidecar_RoundTrip
 {
-  public void Save_and_load_preserves_registration_and_token_fields()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Sidecar_RoundTrip>();
+
+  public static Task Save_and_load_preserves_registration_and_token_fields()
   {
     string tempDir = Path.Combine(Path.GetTempPath(), $"agent-store-{Guid.NewGuid():N}");
     Directory.CreateDirectory(tempDir);
@@ -46,12 +50,15 @@ public class Sidecar_RoundTrip
         // temp cleanup best-effort
       }
     }
+
+    return Task.CompletedTask;
   }
 
-  public void TryLoad_returns_null_when_missing()
+  public static Task TryLoad_returns_null_when_missing()
   {
     string keyFile = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.pem");
     var store = new LocalKeyStore(new CliJson());
     store.TryLoad(keyFile).ShouldBeNull();
+    return Task.CompletedTask;
   }
 }

@@ -4,6 +4,9 @@ using System.Linq;
 
 public class FastEndpointSourceGenerator_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<FastEndpointSourceGenerator_Tests>();
+
   // A minimal [ApiEndpoint] contract. The generator finds it by scanning REFERENCED assemblies
   // (cross-assembly, per task 007), so the harness compiles this into a separate assembly.
   private const string WeatherContract = """
@@ -234,6 +237,9 @@ public class FastEndpointSourceGenerator_Tests
 
 public class FastEndpointSourceGenerator_Authorization_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<FastEndpointSourceGenerator_Authorization_Tests>();
+
   private const string PolicyAuthorizedContract = """
     using TimeWarp.Architecture;
     using TimeWarp.Architecture.Attributes;

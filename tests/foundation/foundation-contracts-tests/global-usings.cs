@@ -1,9 +1,10 @@
 #region Purpose
-// Shared usings for foundation-contracts Fixie tests.
+// Shared usings for foundation-contracts Jaribu MTP tests.
 #endregion
 
 global using Shouldly;
-global using TimeWarp.Fixie;
 global using TimeWarp.Foundation;
 global using TimeWarp.Foundation.Features;
 global using TimeWarp.Foundation.Types;
+global using TimeWarp.Jaribu;
+global using static TimeWarp.Jaribu.TestRunner;

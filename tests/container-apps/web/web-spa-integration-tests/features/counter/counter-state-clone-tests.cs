@@ -1,25 +1,45 @@
+#region Purpose
+// CounterState.Clone identity and value semantics under the SPA test host.
+#endregion
+
 namespace CounterState_;
 
-public class Clone_Should : BaseTest
+using global::Aspire.Hosting;
+
+[TestTag("Integration")]
+public class Clone_Should
 {
-  private CounterState CounterState => Store.GetState<CounterState>();
+  private static DistributedApplication? App;
+  private static AspireSpaTestApplication? Spa;
 
-  public Clone_Should
-  (
-    ISpaTestApplication spaTestApplication
-  ) : base(spaTestApplication) { }
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Clone_Should>();
 
-  public void Clone()
+  public static async Task SetupOnce()
   {
-    //Arrange
-    CounterState.Initialize(count: 15);
+    App = await SpaIntegrationHost.StartAsync();
+    Spa = new AspireSpaTestApplication(App);
+  }
 
-    //Act
-    var clone = CounterState.Clone() as CounterState;
+  public static async Task CleanUpOnce()
+  {
+    await SpaIntegrationHost.StopAsync(App);
+    App = null;
+    Spa = null;
+  }
 
-    //Assert
-    CounterState.ShouldNotBeSameAs(clone);
-    CounterState.Count.ShouldBe(clone.Count);
-    CounterState.Guid.ShouldNotBe(clone.Guid);
+  public static Task Clone()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    CounterState counterState = scope.Store.GetState<CounterState>();
+
+    counterState.Initialize(count: 15);
+
+    var clone = counterState.Clone() as CounterState;
+
+    counterState.ShouldNotBeSameAs(clone);
+    counterState.Count.ShouldBe(clone!.Count);
+    counterState.Guid.ShouldNotBe(clone.Guid);
+    return Task.CompletedTask;
   }
 }

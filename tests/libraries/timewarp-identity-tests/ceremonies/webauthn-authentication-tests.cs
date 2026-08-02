@@ -3,10 +3,14 @@ namespace WebAuthnAuthentication_;
 
 public class Verify
 {
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Verify>();
+
   private static readonly WebAuthnRelyingParty Rp = new("localhost", "Test RP", []);
   private const string Origin = "https://localhost:7000";
 
-  public void Happy_path_es256_succeeds()
+  public static Task Happy_path_es256_succeeds()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -18,9 +22,10 @@ public class Verify
 
     result.IsValid.ShouldBeTrue();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.None);
+    return Task.CompletedTask;
   }
 
-  public void Happy_path_rs256_succeeds()
+  public static Task Happy_path_rs256_succeeds()
   {
     var authenticator = new SoftwareAuthenticator(useRsa: true);
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -32,9 +37,10 @@ public class Verify
 
     result.IsValid.ShouldBeTrue();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.None);
+    return Task.CompletedTask;
   }
 
-  public void Tampered_signature_fails()
+  public static Task Tampered_signature_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -47,9 +53,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 
-  public void Tampered_authenticatorData_fails()
+  public static Task Tampered_authenticatorData_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -65,9 +72,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 
-  public void Wrong_challenge_fails()
+  public static Task Wrong_challenge_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] signedChallenge = RandomNumberGenerator.GetBytes(32);
@@ -80,9 +88,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.ChallengeMismatch);
+    return Task.CompletedTask;
   }
 
-  public void Wrong_origin_fails()
+  public static Task Wrong_origin_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -94,9 +103,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.OriginMismatch);
+    return Task.CompletedTask;
   }
 
-  public void RpIdHash_mismatch_fails()
+  public static Task RpIdHash_mismatch_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -108,9 +118,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.RpIdHashMismatch);
+    return Task.CompletedTask;
   }
 
-  public void UserPresence_clear_is_rejected()
+  public static Task UserPresence_clear_is_rejected()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -122,9 +133,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.UserPresenceRequired);
+    return Task.CompletedTask;
   }
 
-  public void UserVerification_clear_is_accepted()
+  public static Task UserVerification_clear_is_accepted()
   {
     // userVerification is "preferred", not required — a passkey/security key that only proves
     // possession (UV clear) must still succeed.
@@ -137,9 +149,10 @@ public class Verify
     WebAuthnAssertionResult result = WebAuthnAuthentication.Verify(Rp, challenge, authenticator.CosePublicKey, clientDataJson, authenticatorData, signature);
 
     result.IsValid.ShouldBeTrue();
+    return Task.CompletedTask;
   }
 
-  public void SignCount_zero_passes()
+  public static Task SignCount_zero_passes()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -150,9 +163,10 @@ public class Verify
     WebAuthnAssertionResult result = WebAuthnAuthentication.Verify(Rp, challenge, authenticator.CosePublicKey, clientDataJson, authenticatorData, signature);
 
     result.IsValid.ShouldBeTrue();
+    return Task.CompletedTask;
   }
 
-  public void SignCount_regressing_still_passes()
+  public static Task SignCount_regressing_still_passes()
   {
     // No sign-count persistence exists on Credential (see authenticator-data.cs) — a "regressing"
     // count (as a cloned/synced authenticator would report) must still verify.
@@ -174,5 +188,6 @@ public class Verify
       WebAuthnAuthentication.Verify(Rp, secondChallenge, authenticator.CosePublicKey, secondClientDataJson, secondAuthenticatorData, secondSignature);
 
     result.IsValid.ShouldBeTrue();
+    return Task.CompletedTask;
   }
 }

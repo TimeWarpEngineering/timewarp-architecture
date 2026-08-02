@@ -6,29 +6,45 @@
 // (WebServerApiRoutePrefixes) actually reach Web.Server through the ingress — including
 // /api/identity (the 104-003 drift that shipped unreachable) and /api/Roles (a live drift the
 // hand-maintained list had dropped).
+// Framework: Jaribu MTP (task 145-003) — SetupOnce replaces xUnit IClassFixture/IAsyncLifetime.
+#endregion
+
+#region Design
+// Closed-box Aspire.Hosting.Testing lane (epic 145 two-lane model): full AppHost graph, zero
+// DI mocks. SetupOnce starts DistributedApplication once per class; CleanUpOnce disposes.
+// Health-gate web→api→ingress then poll ingress reachability (DCP proxy race). Suite-shaped
+// under tests/ per hybrid topology policy — not co-located under features/.
 #endregion
 
 namespace Aspire.Tests;
 
-public sealed class IngressAppFixture : IAsyncLifetime
+/// <summary>
+/// Ingress request smoke through the running AppHost (closed-box).
+/// </summary>
+[TestTag("Integration")]
+public class IngressSmoke_Given_
 {
-  public DistributedApplication App { get; private set; } = null!;
+  private static DistributedApplication? App;
 
-  public async Task InitializeAsync()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<IngressSmoke_Given_>();
+
+  public static async Task SetupOnce()
   {
-    IDistributedApplicationTestingBuilder appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>
-    (
-      // Ephemeral postgres: test AppHosts must NOT share the deterministic data volume
-      // (overlapping instances corrupt its WAL and hang WaitFor - see AppHost Design region).
-      ["--Postgres:UseDataVolume=false"]
-    );
+    IDistributedApplicationTestingBuilder appHost =
+      await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>
+      (
+        // Ephemeral postgres: test AppHosts must NOT share the deterministic data volume
+        // (overlapping instances corrupt its WAL and hang WaitFor - see AppHost Design region).
+        ["--Postgres:UseDataVolume=false"]
+      );
 
     App = await appHost.BuildAsync();
     await App.StartAsync();
 
     // Requests flow only once the backends AND the ingress are healthy; one 2-minute budget
     // covers all three so a slow backend doesn't false-fail the ingress wait.
-    using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+    using CancellationTokenSource cts = new(TimeSpan.FromMinutes(2));
     await App.ResourceNotifications.WaitForResourceHealthyAsync("web-server", cts.Token);
     await App.ResourceNotifications.WaitForResourceHealthyAsync("api-server", cts.Token);
     await App.ResourceNotifications.WaitForResourceHealthyAsync("ingress", cts.Token);
@@ -42,9 +58,18 @@ public sealed class IngressAppFixture : IAsyncLifetime
     await WaitForIngressReachableAsync(cts.Token);
   }
 
-  private async Task WaitForIngressReachableAsync(CancellationToken cancellationToken)
+  public static async Task CleanUpOnce()
   {
-    HttpClient httpClient = App.CreateHttpClient("ingress", "http");
+    if (App is not null)
+    {
+      await App.DisposeAsync();
+      App = null;
+    }
+  }
+
+  private static async Task WaitForIngressReachableAsync(CancellationToken cancellationToken)
+  {
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
     HttpRequestException? lastException = null;
     int attempts = 0;
 
@@ -73,76 +98,54 @@ public sealed class IngressAppFixture : IAsyncLifetime
     }
   }
 
-  public async Task DisposeAsync()
-  {
-    if (App is not null)
-    {
-      await App.DisposeAsync();
-    }
-  }
-}
-
-public class IngressSmokeTests : IClassFixture<IngressAppFixture>
-{
-  private readonly IngressAppFixture Fixture;
-
-  public IngressSmokeTests(IngressAppFixture fixture)
-  {
-    Fixture = fixture;
-  }
-
-  [Fact]
-  public async Task GetRootThroughIngressReturnsSpaShell()
+  public static async Task RootThroughIngress_Should_ReturnSpaShell()
   {
     // ingress "http" endpoint: TLS terminates at the edge, so the test client needs no cert trust.
-    HttpClient httpClient = Fixture.App.CreateHttpClient("ingress", "http");
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
 
     HttpResponseMessage response = await httpClient.GetAsync("/");
 
-    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string body = await response.Content.ReadAsStringAsync();
     // The Blazor bootstrap script proves the catch-all reached Web.Server's SPA shell, not just any 200.
-    Assert.Contains("_framework/blazor.web.js", body, StringComparison.Ordinal);
+    body.ShouldContain("_framework/blazor.web.js");
   }
 
-  [Fact]
-  public async Task GetWebRouteThroughIngressWithForeignHostReturnsOk()
+  public static async Task WebRouteThroughIngressWithForeignHost_Should_ReturnOk()
   {
-    HttpClient httpClient = Fixture.App.CreateHttpClient("ingress", "http");
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
 
     // This exact request 502'd (RemoteCertificateNameMismatch) when the ingress forwarded web
     // routes over https — the foreign Host moved the cert-name validation target to "smoke.test"
     // and .NET rejected Web.Server's localhost dev cert. Guards the http-endpoint forwarding plus
     // WithTransformUseOriginalHostHeader (task 104-031). Hello is [EndpointAllowAnonymous], so no
     // allowlist/auth setup is needed to reach it.
-    using var request = new HttpRequestMessage(HttpMethod.Get, "/api/Hello?Name=Smoke");
+    using HttpRequestMessage request = new(HttpMethod.Get, "/api/Hello?Name=Smoke");
     request.Headers.Host = "smoke.test";
 
     HttpResponseMessage response = await httpClient.SendAsync(request);
 
-    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string body = await response.Content.ReadAsStringAsync();
     // Web.Server's Hello handler shaped this body — proves the request actually traversed the
     // web backend, not just any 200 from the ingress or a wrong destination.
-    Assert.Contains("Hello, Smoke!", body, StringComparison.Ordinal);
+    body.ShouldContain("Hello, Smoke!");
   }
 
-  [Fact]
-  public async Task GetApiRouteThroughIngressReturnsOk()
+  public static async Task ApiRouteThroughIngress_Should_ReturnOk()
   {
-    HttpClient httpClient = Fixture.App.CreateHttpClient("ingress", "http");
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
 
     // Api.Server catch-all over the default https hop — deliberately exercises the internal
     // https forwarding the web routes had to avoid (no original-Host preservation on api routes).
     HttpResponseMessage response = await httpClient.GetAsync("/api/weatherforecast?Days=10");
 
-    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
   }
 
-  [Fact]
-  public async Task GetIdentitySessionThroughIngressReachesWebServer()
+  public static async Task IdentitySessionThroughIngress_Should_ReachWebServer()
   {
-    HttpClient httpClient = Fixture.App.CreateHttpClient("ingress", "http");
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
 
     // The exact 104-003 failure: /api/identity/* was unreachable through the ingress and fell to the
     // Api.Server catch-all (404). The generated /api/identity carve-out must now route it to
@@ -151,17 +154,16 @@ public class IngressSmokeTests : IClassFixture<IngressAppFixture>
     // prefix failed to route — the regression this task exists to prevent.
     HttpResponseMessage response = await httpClient.GetAsync("/api/identity/session");
 
-    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string body = await response.Content.ReadAsStringAsync();
     // Web.Server's GetCurrentSession handler shaped this body — proves the request reached the web
     // backend, not just any 200 from the ingress.
-    Assert.Contains("uthenticated", body, StringComparison.Ordinal);
+    body.ShouldContain("uthenticated");
   }
 
-  [Fact]
-  public async Task GetRolesThroughIngressReachesWebServerAndRequiresAuth()
+  public static async Task RolesThroughIngress_Should_ReachWebServerAndRequireAuth()
   {
-    HttpClient httpClient = Fixture.App.CreateHttpClient("ingress", "http");
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
 
     // /api/Roles is the LIVE drift the hand-maintained list had dropped: 5 admin endpoints that were
     // falling to the Api.Server catch-all through the ingress. GetRoles is
@@ -170,22 +172,29 @@ public class IngressSmokeTests : IClassFixture<IngressAppFixture>
     // surface as 404). Asserting 401-not-404 is the bug-fix regression guard.
     HttpResponseMessage response = await httpClient.GetAsync("/api/Roles");
 
-    Assert.NotEqual(HttpStatusCode.NotFound, response.StatusCode);
-    Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    response.StatusCode.ShouldNotBe(HttpStatusCode.NotFound);
+    response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 }
 
-public class GeneratedIngressRoutesTests
+/// <summary>
+/// Compile-time proof that generated ingress prefixes include identity and Hello carve-outs.
+/// </summary>
+[TestTag("Unit")]
+public class GeneratedIngressRoutes_Given_
 {
-  [Fact]
-  public void WebServerApiRoutePrefixesCoverIdentityAndHello()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<GeneratedIngressRoutes_Given_>();
+
+  public static Task WebServerApiRoutePrefixes_Should_CoverIdentityAndHello()
   {
     // Compile-time proof (no running app): the generator produced the Web.Server /api carve-outs the
     // ingress loops over. api/identity is the 104-003 regression shape; api/Hello is the existing
     // anonymous demo route. Both must be present for the HTTP facts above to be meaningful.
-    Assert.Contains("api/identity", WebServerApiRoutePrefixes.All);
-    Assert.Contains("api/Hello", WebServerApiRoutePrefixes.All);
+    WebServerApiRoutePrefixes.All.ShouldContain("api/identity");
+    WebServerApiRoutePrefixes.All.ShouldContain("api/Hello");
     // /api/GetCurrentUser became [ClientOnlyContract] — it must NOT be a generated ingress prefix.
-    Assert.DoesNotContain("api/GetCurrentUser", WebServerApiRoutePrefixes.All);
+    WebServerApiRoutePrefixes.All.ShouldNotContain("api/GetCurrentUser");
+    return Task.CompletedTask;
   }
 }

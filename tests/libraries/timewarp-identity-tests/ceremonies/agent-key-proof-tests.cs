@@ -3,7 +3,11 @@ namespace AgentKeyProof_;
 
 public class Verify
 {
-  public void Happy_path_registration_succeeds()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Verify>();
+
+  public static Task Happy_path_registration_succeeds()
   {
     var key = new SoftwareAgentKey();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -13,9 +17,10 @@ public class Verify
 
     result.IsValid.ShouldBeTrue();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.None);
+    return Task.CompletedTask;
   }
 
-  public void Happy_path_token_issuance_succeeds()
+  public static Task Happy_path_token_issuance_succeeds()
   {
     var key = new SoftwareAgentKey();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -25,9 +30,10 @@ public class Verify
 
     result.IsValid.ShouldBeTrue();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.None);
+    return Task.CompletedTask;
   }
 
-  public void Tampered_signature_fails()
+  public static Task Tampered_signature_fails()
   {
     var key = new SoftwareAgentKey();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -38,9 +44,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 
-  public void Wrong_challenge_fails()
+  public static Task Wrong_challenge_fails()
   {
     var key = new SoftwareAgentKey();
     byte[] signedChallenge = RandomNumberGenerator.GetBytes(32);
@@ -51,9 +58,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 
-  public void Cross_ceremony_replay_fails()
+  public static Task Cross_ceremony_replay_fails()
   {
     // Domain separation (task 104-004 §1): a signature produced for Registration must not verify
     // for TokenIssuance, even presented with the SAME challenge value — the signed bytes differ
@@ -66,9 +74,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 
-  public void Cross_ceremony_replay_fails_the_other_direction()
+  public static Task Cross_ceremony_replay_fails_the_other_direction()
   {
     var key = new SoftwareAgentKey();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -78,9 +87,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 
-  public void Wrong_key_fails()
+  public static Task Wrong_key_fails()
   {
     var signer = new SoftwareAgentKey(useSecondKey: true);
     var claimedKey = new SoftwareAgentKey();
@@ -92,9 +102,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 
-  public void Empty_public_key_fails_without_throwing()
+  public static Task Empty_public_key_fails_without_throwing()
   {
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
 
@@ -102,9 +113,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.MalformedPublicKey);
+    return Task.CompletedTask;
   }
 
-  public void Empty_signature_fails_without_throwing()
+  public static Task Empty_signature_fails_without_throwing()
   {
     var key = new SoftwareAgentKey();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -113,9 +125,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 
-  public void Empty_challenge_fails_without_throwing()
+  public static Task Empty_challenge_fails_without_throwing()
   {
     var key = new SoftwareAgentKey();
 
@@ -123,9 +136,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 
-  public void Rsa_public_key_is_rejected_as_malformed()
+  public static Task Rsa_public_key_is_rejected_as_malformed()
   {
     var key = new SoftwareAgentKey();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -135,9 +149,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.MalformedPublicKey);
+    return Task.CompletedTask;
   }
 
-  public void P384_public_key_is_rejected_as_unsupported_algorithm()
+  public static Task P384_public_key_is_rejected_as_unsupported_algorithm()
   {
     var key = new SoftwareAgentKey();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -147,9 +162,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.UnsupportedAlgorithm);
+    return Task.CompletedTask;
   }
 
-  public void P1363_signature_format_is_rejected()
+  public static Task P1363_signature_format_is_rejected()
   {
     // Only DER (Rfc3279DerSequence) is accepted — P1363 (raw r‖s) must fail even against the
     // CORRECT key and challenge, since it is cryptographically the "same" signature just differently
@@ -167,5 +183,6 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 }

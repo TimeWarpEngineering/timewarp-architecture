@@ -13,7 +13,10 @@ public class Round_Trip
   private static readonly Lazy<Task<PostgresAvailability>> Availability =
     new(ResolveAvailabilityAsync, LazyThreadSafetyMode.ExecutionAndPublication);
 
-  public async Task EnsureCreated_creates_profile_table_and_round_trips()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Round_Trip>();
+
+  public static async Task EnsureCreated_creates_profile_table_and_round_trips()
   {
     if (await SkipIfUnavailableAsync()) return;
 
@@ -37,7 +40,7 @@ public class Round_Trip
     reloaded.Version.ShouldBe(0);
   }
 
-  public async Task Concurrent_update_throws_db_update_concurrency_exception()
+  public static async Task Concurrent_update_throws_db_update_concurrency_exception()
   {
     if (await SkipIfUnavailableAsync()) return;
 
@@ -64,7 +67,7 @@ public class Round_Trip
     exception.Entries.ShouldNotBeEmpty();
   }
 
-  public async Task Modified_save_increments_version_through_aggregate_savechanges_hook()
+  public static async Task Modified_save_increments_version_through_aggregate_savechanges_hook()
   {
     if (await SkipIfUnavailableAsync()) return;
 
@@ -104,8 +107,8 @@ public class Round_Trip
         (availability.SkipReason ?? "no connection"));
     }
 
-    // Fixie has no public conditional-skip exception; print and pass so hosts without Docker
-    // (and without a connection string) still green the suite. Model-mapping tests cover mapping.
+    // Jaribu has no public conditional-skip exception used here; print and pass so hosts without
+    // Docker (and without a connection string) still green the suite. Model-mapping tests cover mapping.
     Console.WriteLine($"[SKIP] Profile_Postgres_Persistence: {availability.SkipReason ?? "no connection"}");
     return true;
   }

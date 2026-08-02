@@ -7,7 +7,7 @@
 // Black-box through the public GetResponse path: a capturing HttpMessageHandler stands in for the
 // server, so the test exercises the real PrepareContent/transport code without exposing internals.
 // ASP.NET Core's binder is case-insensitive, so no integration test can catch a casing regression —
-// only a direct assertion on the wire body can.
+// only a direct assertion on the wire body can. No Aspire host required.
 #endregion
 
 namespace ApiService_;
@@ -37,7 +37,10 @@ public class RequestBody_Should
     }
   }
 
-  public async Task Serialize_With_The_Seam_Options()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<RequestBody_Should>();
+
+  public static async Task Serialize_With_The_Seam_Options()
   {
     using var handler = new CapturingHandler();
     using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://localhost/") };

@@ -4,11 +4,15 @@
     <!-- Family aggregator for co-located Jaribu runfiles under web/features and web/platform
          (task 136). Not in the .slnx — discovered only by `dev test` globs under tests/.
          JARIBU_MULTI suppresses each runfile's top-level `return await TestRunner.RunAllTests()`
-         so many files can share one Microsoft.Testing.Platform host. -->
-    <DefineConstants>$(DefineConstants);JARIBU_MULTI</DefineConstants>
+         so many files can share one Microsoft.Testing.Platform host. `api` (task 145-004 R2-1):
+         hello-tests.cs branches #if(api) CreateWebWithApiAsync #else CreateWebAsync #endif; the
+         real repo build (all features on) needs the symbol defined here too — #:property
+         directives in the runfile are inert under this aggregator's Compile-glob multi-mode
+         compile. -->
+    <DefineConstants>$(DefineConstants);JARIBU_MULTI;api</DefineConstants>
     <!-- .NET 10 SDK requires this opt-in for the MTP-native `dotnet test` experience
          (VSTest bridge is no longer supported) — https://aka.ms/dotnet-test-mtp-error.
-         Pair with the project-local global.json test.runner (not root — would break Fixie). -->
+         Pair with the project-local global.json test.runner project-local MTP runner; -->
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!-- Same dual-mode runfile suppressions the exemplars carry via #:property (inert under
          multi-mode compile); CA1707 is already ambient from tests/Directory.Build.props. -->
@@ -32,9 +36,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Matches create-role-tests.cs #:project web-contracts. New runfiles that need more
-         ProjectReferences must extend this list. -->
+    <!-- Matches create-role-tests.cs #:project web-contracts and hello-tests.cs #:project
+         timewarp-testing (host runfiles). New runfiles that need more ProjectReferences must
+         extend this list. -->
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-contracts\web-contracts.csproj" />
+    <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
   </ItemGroup>
 
 </Project>

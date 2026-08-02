@@ -119,13 +119,17 @@ internal sealed class WidgetWithTwoValidators
 
 public class EnsureValid_Single
 {
-  public void Passes_when_valid()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<EnsureValid_Single>();
+
+  public static Task Passes_when_valid()
   {
     WidgetWithValidator widget = new("ok");
     Should.NotThrow(() => DomainInvariantsGuard.EnsureValid(widget));
+    return Task.CompletedTask;
   }
 
-  public void Throws_DomainInvariantViolationException_with_failed_rule_visible()
+  public static Task Throws_DomainInvariantViolationException_with_failed_rule_visible()
   {
     WidgetWithValidator widget = new("");
 
@@ -134,9 +138,10 @@ public class EnsureValid_Single
 
     exception.AggregateType.ShouldBe(typeof(WidgetWithValidator));
     exception.FailedRules.ShouldNotBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Throws_MissingInvariantsValidatorException_when_no_nested_validator()
+  public static Task Throws_MissingInvariantsValidatorException_when_no_nested_validator()
   {
     WidgetWithoutValidator widget = new();
 
@@ -144,18 +149,23 @@ public class EnsureValid_Single
       Should.Throw<MissingInvariantsValidatorException>(() => DomainInvariantsGuard.EnsureValid(widget));
 
     exception.AggregateType.ShouldBe(typeof(WidgetWithoutValidator));
+    return Task.CompletedTask;
   }
 
-  public void Rejects_null_aggregate() =>
+  public static Task Rejects_null_aggregate()
+  {
     Should.Throw<ArgumentNullException>(() => DomainInvariantsGuard.EnsureValid((object)null!));
+    return Task.CompletedTask;
+  }
 
-  public void Throws_MissingInvariantsValidatorException_when_nested_validator_targets_a_different_type()
+  public static Task Throws_MissingInvariantsValidatorException_when_nested_validator_targets_a_different_type()
   {
     WidgetWithWrongTypeValidator widget = new();
     Should.Throw<MissingInvariantsValidatorException>(() => DomainInvariantsGuard.EnsureValid(widget));
+    return Task.CompletedTask;
   }
 
-  public void Wraps_constructor_failure_as_MissingInvariantsValidatorException()
+  public static Task Wraps_constructor_failure_as_MissingInvariantsValidatorException()
   {
     WidgetWithCtorlessValidator widget = new();
 
@@ -164,51 +174,66 @@ public class EnsureValid_Single
 
     exception.AggregateType.ShouldBe(typeof(WidgetWithCtorlessValidator));
     exception.InnerException.ShouldNotBeNull();
+    return Task.CompletedTask;
   }
 }
 
 public class EnsureValid_Many
 {
-  public void Validates_every_item()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<EnsureValid_Many>();
+
+  public static Task Validates_every_item()
   {
     WidgetWithValidator[] widgets = [new("a"), new("b")];
     Should.NotThrow(() => DomainInvariantsGuard.EnsureValid(widgets));
+    return Task.CompletedTask;
   }
 
-  public void Throws_when_any_item_is_invalid()
+  public static Task Throws_when_any_item_is_invalid()
   {
     WidgetWithValidator[] widgets = [new("a"), new("")];
     Should.Throw<DomainInvariantViolationException>(() => DomainInvariantsGuard.EnsureValid(widgets));
+    return Task.CompletedTask;
   }
 
-  public void Rejects_null_collection() =>
+  public static Task Rejects_null_collection()
+  {
     Should.Throw<ArgumentNullException>(() => DomainInvariantsGuard.EnsureValid((IEnumerable<object>)null!));
+    return Task.CompletedTask;
+  }
 }
 
 public class Discovery
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Discovery>();
+
   // WidgetWithValidator's Invariants validator is private — discovery must still find it, and
   // repeat calls (which hit the cache) must keep finding it correctly.
-  public void Finds_and_caches_the_private_nested_validator_across_repeated_calls()
+  public static Task Finds_and_caches_the_private_nested_validator_across_repeated_calls()
   {
     Should.NotThrow(() => DomainInvariantsGuard.EnsureValid(new WidgetWithValidator("first")));
     Should.NotThrow(() => DomainInvariantsGuard.EnsureValid(new WidgetWithValidator("second")));
     Should.Throw<DomainInvariantViolationException>(() => DomainInvariantsGuard.EnsureValid(new WidgetWithValidator("")));
+    return Task.CompletedTask;
   }
 
-  public void Finds_a_validator_declared_on_a_base_type()
+  public static Task Finds_a_validator_declared_on_a_base_type()
   {
     WidgetSubclassWithoutOwnValidator widget = new("ok");
     Should.NotThrow(() => DomainInvariantsGuard.EnsureValid(widget));
+    return Task.CompletedTask;
   }
 
-  public void Runs_the_base_type_validator_against_the_subclass_instance()
+  public static Task Runs_the_base_type_validator_against_the_subclass_instance()
   {
     WidgetSubclassWithoutOwnValidator widget = new("");
     Should.Throw<DomainInvariantViolationException>(() => DomainInvariantsGuard.EnsureValid(widget));
+    return Task.CompletedTask;
   }
 
-  public void Prefers_the_private_candidate_when_multiple_nested_validators_qualify()
+  public static Task Prefers_the_private_candidate_when_multiple_nested_validators_qualify()
   {
     // Name is blank (violates the PRIVATE validator's rule); Nickname is present (would satisfy the
     // PUBLIC validator's rule) — the exception (and which property it names) proves the private one
@@ -219,5 +244,6 @@ public class Discovery
       Should.Throw<DomainInvariantViolationException>(() => DomainInvariantsGuard.EnsureValid(widget));
 
     exception.FailedRules.Any(rule => rule.Contains("Name", StringComparison.Ordinal)).ShouldBeTrue();
+    return Task.CompletedTask;
   }
 }

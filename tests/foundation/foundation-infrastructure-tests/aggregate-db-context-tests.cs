@@ -15,7 +15,10 @@ using TimeWarp.Foundation.Persistence;
 
 public class SaveChanges_Hook
 {
-  public void Root_only_modify_increments_version()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<SaveChanges_Hook>();
+
+  public static Task Root_only_modify_increments_version()
   {
     using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
@@ -27,9 +30,10 @@ public class SaveChanges_Hook
     db.SaveChanges();
 
     root.Version.ShouldBe(1);
+    return Task.CompletedTask;
   }
 
-  public void Child_only_mutation_marks_root_modified_and_increments_version()
+  public static Task Child_only_mutation_marks_root_modified_and_increments_version()
   {
     using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
@@ -48,9 +52,10 @@ public class SaveChanges_Hook
 
     root.Version.ShouldBe(1);
     root.Lines.Single().Text.ShouldBe("first-rewritten");
+    return Task.CompletedTask;
   }
 
-  public void Adding_owned_child_after_initial_save_increments_root_version()
+  public static Task Adding_owned_child_after_initial_save_increments_root_version()
   {
     using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
@@ -66,9 +71,10 @@ public class SaveChanges_Hook
 
     root.Version.ShouldBe(1);
     root.Lines.Single().Text.ShouldBe("second");
+    return Task.CompletedTask;
   }
 
-  public void Deleting_owned_child_increments_root_version()
+  public static Task Deleting_owned_child_increments_root_version()
   {
     using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
@@ -85,9 +91,10 @@ public class SaveChanges_Hook
     db.SaveChanges();
 
     root.Version.ShouldBe(1);
+    return Task.CompletedTask;
   }
 
-  public void Child_only_mutation_runs_root_invariants()
+  public static Task Child_only_mutation_runs_root_invariants()
   {
     using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
@@ -100,9 +107,10 @@ public class SaveChanges_Hook
 
     Should.Throw<DomainInvariantViolationException>(() => db.SaveChanges());
     root.Version.ShouldBe(versionBefore);
+    return Task.CompletedTask;
   }
 
-  public void Added_root_does_not_increment_version()
+  public static Task Added_root_does_not_increment_version()
   {
     using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
@@ -111,9 +119,10 @@ public class SaveChanges_Hook
     db.SaveChanges();
 
     root.Version.ShouldBe(0);
+    return Task.CompletedTask;
   }
 
-  public void Missing_version_on_modified_root_fails_closed()
+  public static Task Missing_version_on_modified_root_fails_closed()
   {
     using VersionlessDbContext db = CreateVersionlessDb();
     RootWithoutVersion root = new() { Id = Guid.NewGuid(), Name = "alpha" };
@@ -126,9 +135,10 @@ public class SaveChanges_Hook
     InvalidOperationException ex = Should.Throw<InvalidOperationException>(() => db.SaveChanges());
     ex.Message.ShouldContain(nameof(IAggregateRoot));
     ex.Message.ShouldContain(nameof(Entity<Guid>.Version));
+    return Task.CompletedTask;
   }
 
-  public async Task Save_changes_async_increments_version_on_root_modify()
+  public static async Task Save_changes_async_increments_version_on_root_modify()
   {
     await using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
@@ -273,7 +283,10 @@ internal sealed class VersionlessDbContext : AggregateDbContext
 /// </summary>
 public class ConcurrencyConvention
 {
-  public void Root_without_explicit_mapping_gets_concurrency_token_and_access_mode()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<ConcurrencyConvention>();
+
+  public static Task Root_without_explicit_mapping_gets_concurrency_token_and_access_mode()
   {
     using PlainRootDbContext db = CreatePlainRootDb();
 
@@ -283,9 +296,10 @@ public class ConcurrencyConvention
     IProperty version = entityType.FindProperty(nameof(Entity<Guid>.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
+    return Task.CompletedTask;
   }
 
-  public void Config_only_root_without_dbset_gets_concurrency_token_and_access_mode()
+  public static Task Config_only_root_without_dbset_gets_concurrency_token_and_access_mode()
   {
     using ConfigOnlyDbContext db = CreateConfigOnlyDb();
 
@@ -298,6 +312,7 @@ public class ConcurrencyConvention
     IProperty version = entityType.FindProperty(nameof(Entity<Guid>.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
+    return Task.CompletedTask;
   }
 
   private static PlainRootDbContext CreatePlainRootDb()

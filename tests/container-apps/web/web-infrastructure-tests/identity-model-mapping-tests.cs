@@ -11,7 +11,10 @@ using TimeWarp.Identity;
 /// </summary>
 public class Map
 {
-  public void Principal_with_schema_typed_id_and_concurrency_token()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Map>();
+
+  public static Task Principal_with_schema_typed_id_and_concurrency_token()
   {
     using PostgresDbContext db = CreateModelOnlyContext();
 
@@ -28,9 +31,10 @@ public class Map
     IProperty version = entityType.FindProperty(nameof(Principal.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
+    return Task.CompletedTask;
   }
 
-  public void Credential_with_bytea_field_access_unique_handle_and_concurrency_token()
+  public static Task Credential_with_bytea_field_access_unique_handle_and_concurrency_token()
   {
     using PostgresDbContext db = CreateModelOnlyContext();
 
@@ -61,13 +65,15 @@ public class Map
         && index.Properties[0].Name == nameof(Credential.Type)
         && index.Properties[1].Name == nameof(Credential.Handle));
     uniqueHandle.ShouldNotBeNull("Unique index on (Type, Handle) is required for handle uniqueness");
+    return Task.CompletedTask;
   }
 
-  public void Exposes_principals_and_credentials_dbsets()
+  public static Task Exposes_principals_and_credentials_dbsets()
   {
     using PostgresDbContext db = CreateModelOnlyContext();
     db.Principals.ShouldNotBeNull();
     db.Credentials.ShouldNotBeNull();
+    return Task.CompletedTask;
   }
 
   private static PostgresDbContext CreateModelOnlyContext()

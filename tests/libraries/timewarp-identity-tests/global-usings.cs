@@ -5,6 +5,7 @@ global using System.Security.Cryptography;
 global using System.Text;
 global using System.Text.Json;
 global using Shouldly;
-global using TimeWarp.Fixie;
+global using TimeWarp.Jaribu;
 global using TimeWarp.Identity;
 global using TimeWarp.Identity.Tests.Ceremonies.Infrastructure;
+global using static TimeWarp.Jaribu.TestRunner;

@@ -15,18 +15,41 @@ using TimeWarp.Architecture.Configuration;
 
 public class Returns_
 {
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
+#if(api)
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
-  public void ConfiguredValue_Given_AppSettings_Overrides_The_CSharp_Default()
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  public static Task ConfiguredValue_Given_AppSettings_Overrides_The_CSharp_Default()
+
   {
     IOptions<AgentTokenOptions> options =
-      WebTestServerApplication.WebApplicationHost.ServiceProvider.GetRequiredService<IOptions<AgentTokenOptions>>();
+      Web.WebApplicationHost.ServiceProvider.GetRequiredService<IOptions<AgentTokenOptions>>();
 
     options.Value.TokenLifetimeMinutes.ShouldBe(20);
+
+    return Task.CompletedTask;
+
   }
+
 }

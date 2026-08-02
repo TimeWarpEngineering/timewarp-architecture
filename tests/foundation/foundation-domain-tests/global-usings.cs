@@ -3,4 +3,5 @@ global using Shouldly;
 // Solution usings
 global using TimeWarp.Foundation.Entities;
 global using TimeWarp.Foundation.Enumerations;
-global using TimeWarp.Fixie;
+global using TimeWarp.Jaribu;
+global using static TimeWarp.Jaribu.TestRunner;

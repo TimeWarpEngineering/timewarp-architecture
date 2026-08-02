@@ -1,8 +1,15 @@
+#region Purpose
+// ContractSerializationDefaults.Options round-trip on a simple POCO (no Aspire host).
+#endregion
+
 namespace JsonSerializerOptions_;
 
 public class JsonSerializer_Should
 {
-  public void SerializeAndDeserializePerson()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<JsonSerializer_Should>();
+
+  public static Task SerializeAndDeserializePerson()
   {
     JsonSerializerOptions jsonSerializerOptions = ContractSerializationDefaults.Options;
     var person = new Person { FirstName = "Steve", LastName = "Cramer", BirthDay = new DateTime(1967, 09, 27) };
@@ -11,5 +18,6 @@ public class JsonSerializer_Should
     parsed.BirthDay.ShouldBe(person.BirthDay);
     parsed.FirstName.ShouldBe(person.FirstName);
     parsed.LastName.ShouldBe(person.LastName);
+    return Task.CompletedTask;
   }
 }

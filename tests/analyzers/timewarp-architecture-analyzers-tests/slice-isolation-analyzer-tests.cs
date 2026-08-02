@@ -16,6 +16,9 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Enforce_Slice_Isolation
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Enforce_Slice_Isolation>();
+
   private const string GlobalConfig =
     """
     is_global = true
@@ -49,9 +52,9 @@ public class Should_Enforce_Slice_Isolation
     }
     """;
 
-  private static CSharpAnalyzerTest<SliceIsolationAnalyzer, FixieVerifier> Test(params (string path, string source)[] files)
+  private static CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> Test(params (string path, string source)[] files)
   {
-    CSharpAnalyzerTest<SliceIsolationAnalyzer, FixieVerifier> test = new();
+    CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = new();
     test.TestState.AnalyzerConfigFiles.Add(("/.globalconfig", GlobalConfig));
     foreach ((string path, string source) in files)
     {
@@ -79,7 +82,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    CSharpAnalyzerTest<SliceIsolationAnalyzer, FixieVerifier> test = Test(
+    CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
       ("alpha-state.cs", AlphaSource),
       (betaPath, BetaSource));
 
@@ -208,7 +211,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    CSharpAnalyzerTest<SliceIsolationAnalyzer, FixieVerifier> test = Test(
+    CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
       ("alpha-state.cs", AlphaSource),
       (platformPath, PlatformSource));
 
@@ -250,7 +253,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    CSharpAnalyzerTest<SliceIsolationAnalyzer, FixieVerifier> test = Test(
+    CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
       ("alpha-state.cs", AlphaSource),
       (substratePath, SubstrateSource));
 
@@ -284,7 +287,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    CSharpAnalyzerTest<SliceIsolationAnalyzer, FixieVerifier> test = Test(
+    CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
       (rolesPath, RolesSource),
       (otherPath, OtherSource));
 
@@ -335,7 +338,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    CSharpAnalyzerTest<SliceIsolationAnalyzer, FixieVerifier> test = Test(
+    CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
       ("opt-out.cs", OptOutAttributeSource),
       ("alpha-state.cs", AlphaSource),
       ("gamma-state.cs", gammaSource),
@@ -392,7 +395,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    CSharpAnalyzerTest<SliceIsolationAnalyzer, FixieVerifier> test = Test(
+    CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
       ("alpha-state.cs", AlphaSource),
       (betaPath, BetaSource));
 
@@ -414,7 +417,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    CSharpAnalyzerTest<SliceIsolationAnalyzer, FixieVerifier> test = new();
+    CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = new();
     // No AnalyzerConfigFiles → no RootNamespace → analyzer no-ops.
     test.TestState.Sources.Add(("alpha-state.cs", AlphaSource));
     test.TestState.Sources.Add(("beta-state.cs", BetaSource));
@@ -450,7 +453,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    CSharpAnalyzerTest<SliceIsolationAnalyzer, FixieVerifier> test = new();
+    CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = new();
     test.TestState.AnalyzerConfigFiles.Add(("/.globalconfig", OverrideConfig));
     test.TestState.Sources.Add(("alpha.cs", Alpha));
     test.TestState.Sources.Add((betaPath, Beta));

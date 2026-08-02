@@ -3,15 +3,20 @@ namespace AgentPublicKey_;
 
 public class TryParse
 {
-  public void Happy_path_p256_succeeds()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<TryParse>();
+
+  public static Task Happy_path_p256_succeeds()
   {
     var key = new SoftwareAgentKey();
 
     AgentPublicKey.TryParse(key.SpkiPublicKey, out byte[] keyId).ShouldBeTrue();
     keyId.ShouldBe(SHA256.HashData(key.SpkiPublicKey));
+    return Task.CompletedTask;
   }
 
-  public void KeyId_is_sha256_of_the_exact_spki_bytes()
+  public static Task KeyId_is_sha256_of_the_exact_spki_bytes()
   {
     var key = new SoftwareAgentKey();
     byte[] spki = key.SpkiPublicKey;
@@ -19,70 +24,79 @@ public class TryParse
     AgentPublicKey.TryParse(spki, out byte[] keyId).ShouldBeTrue();
     keyId.ShouldBe(SHA256.HashData(spki));
     keyId.Length.ShouldBe(32);
+    return Task.CompletedTask;
   }
 
-  public void Empty_array_fails_without_throwing()
+  public static Task Empty_array_fails_without_throwing()
   {
     AgentPublicKey.TryParse([], out byte[] keyId).ShouldBeFalse();
     keyId.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Oversized_array_fails_without_throwing()
+  public static Task Oversized_array_fails_without_throwing()
   {
     byte[] oversized = new byte[(2 * 1024) + 1];
 
     AgentPublicKey.TryParse(oversized, out byte[] keyId).ShouldBeFalse();
     keyId.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Truncated_der_fails_without_throwing()
+  public static Task Truncated_der_fails_without_throwing()
   {
     var key = new SoftwareAgentKey();
     byte[] truncated = key.SpkiPublicKey[..^10];
 
     AgentPublicKey.TryParse(truncated, out byte[] keyId).ShouldBeFalse();
     keyId.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Severely_truncated_der_fails_without_throwing()
+  public static Task Severely_truncated_der_fails_without_throwing()
   {
     var key = new SoftwareAgentKey();
     byte[] truncated = key.SpkiPublicKey[..3];
 
     AgentPublicKey.TryParse(truncated, out byte[] keyId).ShouldBeFalse();
     keyId.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Trailing_bytes_fail_without_throwing()
+  public static Task Trailing_bytes_fail_without_throwing()
   {
     var key = new SoftwareAgentKey();
     byte[] trailing = [.. key.SpkiPublicKey, 0xDE, 0xAD, 0xBE, 0xEF];
 
     AgentPublicKey.TryParse(trailing, out byte[] keyId).ShouldBeFalse();
     keyId.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Garbage_bytes_fail_without_throwing()
+  public static Task Garbage_bytes_fail_without_throwing()
   {
     byte[] garbage = [0xFF, 0xFF, 0xFF, 0x00, 0x01];
 
     AgentPublicKey.TryParse(garbage, out byte[] keyId).ShouldBeFalse();
     keyId.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Rsa_spki_is_rejected()
+  public static Task Rsa_spki_is_rejected()
   {
     AgentPublicKey.TryParse(SoftwareAgentKey.RsaSpki, out byte[] keyId).ShouldBeFalse();
     keyId.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void P384_spki_is_rejected()
+  public static Task P384_spki_is_rejected()
   {
     AgentPublicKey.TryParse(SoftwareAgentKey.P384Spki, out byte[] keyId).ShouldBeFalse();
     keyId.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Distinct_keys_produce_distinct_key_ids()
+  public static Task Distinct_keys_produce_distinct_key_ids()
   {
     var key1 = new SoftwareAgentKey();
     var key2 = new SoftwareAgentKey(useSecondKey: true);
@@ -91,5 +105,6 @@ public class TryParse
     AgentPublicKey.TryParse(key2.SpkiPublicKey, out byte[] keyId2).ShouldBeTrue();
 
     keyId1.ShouldNotBe(keyId2);
+    return Task.CompletedTask;
   }
 }

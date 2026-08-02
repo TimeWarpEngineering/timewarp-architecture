@@ -6,7 +6,6 @@ namespace TimeWarp.Architecture.Testing;
 /// <example><see cref="WebTestServerApplication"/></example>
 /// <remarks>This allows for registering a WebApplication as a dependency and DI can fire it up and shut it down. </remarks>
 /// <typeparam name="TProgram"></typeparam>
-[NotTest]
 public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebApiTestService, ISender
   where TProgram : IAspNetProgram
 {

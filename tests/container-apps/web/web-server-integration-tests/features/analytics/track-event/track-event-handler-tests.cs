@@ -4,26 +4,44 @@ using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 
 public class Handle_Returns
 {
-  private readonly Command Command;
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Handle_Returns
-  (
-     WebTestServerApplication webTestServerApplication
-  )
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Handle_Returns>();
+
+  public static async Task SetupOnce()
   {
-    Command = new Command { EventName = "SomeEvent" };
-    WebTestServerApplication = webTestServerApplication;
+#if(api)
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
-  public async Task Ok_Given_Valid_Request()
+  public static async Task CleanUpOnce()
   {
-    OneOf<Response, SharedProblemDetails> result = await WebTestServerApplication.Send(Command);
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  private static Command CreateValidCommand() => new() { EventName = "SomeEvent" };
+
+  public static async Task Ok_Given_Valid_Request()
+  {
+
+    Command command = CreateValidCommand();
+
+    OneOf<Response, SharedProblemDetails> result = await Web.Send(command);
 
     ValidateResult(result);
   }
 
-  private void ValidateResult(OneOf<Response, SharedProblemDetails> result)
+  private static void ValidateResult(OneOf<Response, SharedProblemDetails> result)
   {
     result.Switch(
         response =>
@@ -37,4 +55,5 @@ public class Handle_Returns
         }
     );
   }
+
 }

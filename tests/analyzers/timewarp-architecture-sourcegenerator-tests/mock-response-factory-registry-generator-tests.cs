@@ -11,6 +11,9 @@ using Microsoft.CodeAnalysis.CSharp;
 
 public class MockResponseFactoryRegistryGenerator_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<MockResponseFactoryRegistryGenerator_Tests>();
+
   private const string ContractSource = """
     namespace TimeWarp.Foundation.Features
     {
@@ -44,7 +47,7 @@ public class MockResponseFactoryRegistryGenerator_Tests
     }
     """;
 
-  public static void Should_Register_Contract_Factories()
+  public static Task Should_Register_Contract_Factories()
   {
     string generated = RunGenerator(ContractSource, HostSource);
 
@@ -52,13 +55,15 @@ public class MockResponseFactoryRegistryGenerator_Tests
     generated.ShouldContain("typeof(global::MyApp.Features.Widgets.GetWidget.Query)");
     generated.ShouldContain("global::MyApp.Features.Widgets.GetWidget.GetMockResponseFactory()");
     generated.ShouldNotContain("NoFactory");
+    return Task.CompletedTask;
   }
 
-  public static void Should_Emit_Nothing_Without_MockWebApiService_Host()
+  public static Task Should_Emit_Nothing_Without_MockWebApiService_Host()
   {
     string generated = RunGenerator(ContractSource, consumerSource: "namespace App { public class NotAMockService { } }");
 
     generated.ShouldBe(string.Empty);
+    return Task.CompletedTask;
   }
 
   private static string RunGenerator(string contractSource, string consumerSource)

@@ -328,8 +328,10 @@ return $"{GetRoute()}?{this.GetQueryString(collection)}";
 ### 9. Contract serialization tests (dedicated project)
 
 Contracts are authored **before** the server exists (frontend-first, mock-backed BFF flow); a
-dedicated, host-free contracts test project (`*contracts-tests`, Fixie + **Shouldly**) is the only
-test that can run in that window.
+host-free serialization check is the only test that can run in that window. Prefer a
+**co-located Jaribu** `*-tests.cs` next to the contract (epic 145 north star; see
+`create-role-tests.cs`). Suite-shaped `*contracts-tests` projects are Jaribu MTP — assert with
+**Shouldly** only; do not reintroduce Fixie or xUnit.
 
 Add `SerializeAndDeserialize` round-trips using `ContractSerializationDefaults` (camelCase
 properties; PascalCase string enums via `JsonStringEnumConverter`, integers rejected). **Prioritize**

@@ -1,41 +1,60 @@
+#region Purpose
+// CounterState IncrementCounter action happy paths against AspireSpaTestApplication.
+#endregion
+
+#region Design
+// Re-fetch CounterState via Store.GetState after Send — StateTransactionBehavior (or equivalent)
+// replaces the state instance on dispatch; a pre-Send local reference is stale.
+#endregion
+
 namespace CounterState_;
 
+using global::Aspire.Hosting;
 using static TimeWarp.Architecture.Features.Counters.CounterState;
 
-public class IncrementCounter_Action_Should : BaseTest
+[TestTag("Integration")]
+public class IncrementCounter_Action_Should
 {
-  private CounterState CounterState => Store.GetState<CounterState>();
+  private static DistributedApplication? App;
+  private static AspireSpaTestApplication? Spa;
 
-  public IncrementCounter_Action_Should
-  (
-    ISpaTestApplication spaTestApplication
-  ) : base(spaTestApplication) { }
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<IncrementCounter_Action_Should>();
 
-  public async Task Decrement_Count_Given_NegativeAmount()
+  public static async Task SetupOnce()
   {
-    //Arrange
-    CounterState.Initialize(count: 15);
-
-    var action = new IncrementCounterActionSet.Action(amount: -2);
-
-    //Act
-    await Send(action);
-
-    //Assert
-    CounterState.Count.ShouldBe(13);
+    App = await SpaIntegrationHost.StartAsync();
+    Spa = new AspireSpaTestApplication(App);
   }
 
-  public async Task Increment_Count()
+  public static async Task CleanUpOnce()
   {
-    //Arrange
-    CounterState.Initialize(count: 22);
+    await SpaIntegrationHost.StopAsync(App);
+    App = null;
+    Spa = null;
+  }
 
-    var action = new IncrementCounterActionSet.Action(amount: 5);
+  public static async Task Decrement_Count_Given_NegativeAmount()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
 
-    //Act
-    await Send(action);
+    scope.Store.GetState<CounterState>().Initialize(count: 15);
+    IncrementCounterActionSet.Action action = new(amount: -2);
 
-    //Assert
-    CounterState.Count.ShouldBe(27);
+    await scope.Send(action);
+
+    scope.Store.GetState<CounterState>().Count.ShouldBe(13);
+  }
+
+  public static async Task Increment_Count()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+
+    scope.Store.GetState<CounterState>().Initialize(count: 22);
+    IncrementCounterActionSet.Action action = new(amount: 5);
+
+    await scope.Send(action);
+
+    scope.Store.GetState<CounterState>().Count.ShouldBe(27);
   }
 }

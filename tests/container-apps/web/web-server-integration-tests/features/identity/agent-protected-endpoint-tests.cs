@@ -25,14 +25,32 @@ using TimeWarp.Identity;
 
 public class Returns_
 {
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
+#if(api)
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
-  public async Task Ok_Given_Valid_IdentityRead_Token()
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  public static async Task Ok_Given_Valid_IdentityRead_Token()
   {
     var key = new IntegrationSoftwareAgentKey();
     string accessToken = await RegisterAndIssueToken(key, [AgentScopes.IdentityRead]);
@@ -54,9 +72,9 @@ public class Returns_
     parsed.Scopes.ShouldContain(AgentScopes.IdentityRead);
   }
 
-  public async Task Unauthorized_Given_No_Header()
+  public static async Task Unauthorized_Given_No_Header()
   {
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
 
     HttpResponseMessage response = await client.GetAsync(GetAgentIdentity.Query.RouteTemplate);
 
@@ -65,7 +83,7 @@ public class Returns_
     response.Content.Headers.ContentType?.MediaType.ShouldBe("application/problem+json");
   }
 
-  public async Task Unauthorized_InvalidToken_Given_Garbage_Bearer()
+  public static async Task Unauthorized_InvalidToken_Given_Garbage_Bearer()
   {
     HttpResponseMessage response = await GetAgentMeWithBearer("not-a-real-token");
 
@@ -73,7 +91,7 @@ public class Returns_
     response.Headers.GetValues("WWW-Authenticate").Single().ShouldBe("Bearer error=\"invalid_token\"");
   }
 
-  public async Task Forbidden_InsufficientScope_Given_DemoInvoke_Only_Token()
+  public static async Task Forbidden_InsufficientScope_Given_DemoInvoke_Only_Token()
   {
     var key = new IntegrationSoftwareAgentKey();
     string accessToken = await RegisterAndIssueToken(key, [AgentScopes.DemoInvoke]);
@@ -84,16 +102,16 @@ public class Returns_
     response.Headers.GetValues("WWW-Authenticate").Single().ShouldBe("Bearer error=\"insufficient_scope\"");
   }
 
-  public async Task Unauthorized_Given_CookieSession_Only_No_Bearer()
+  public static async Task Unauthorized_Given_CookieSession_Only_No_Bearer()
   {
     // Scheme isolation (task 104-004 §6 standing caution): a valid identity-session COOKIE (from the
     // 104-003 passkey flow) must not reach this bearer-scheme-restricted policy.
     var authenticator = new IntegrationSoftwareAuthenticator();
 
     OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
     byte[] challenge = ReadWebAuthnChallenge(start.AsT0.OptionsJson);
-    string origin = WebTestServerApplication.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
+    string origin = Web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
 
     byte[] authenticatorData = authenticator.BuildAuthenticatorData("localhost", includeAttestedCredentialData: true);
     byte[] attestationObject = IntegrationSoftwareAuthenticator.BuildAttestationObject(authenticatorData);
@@ -106,13 +124,13 @@ public class Returns_
       AttestationObject = Base64Url.EncodeToString(attestationObject)
     };
 
-    var testApiService = new TestApiService(WebTestServerApplication.HttpClient, ContractSerializationDefaults.Options);
+    var testApiService = new TestApiService(Web.HttpClient, ContractSerializationDefaults.Options);
     HttpResponseMessage registerResponse = await testApiService.GetHttpResponseMessage(registerCommand, CancellationToken.None);
     registerResponse.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? setCookieValues).ShouldBeTrue();
     string? sessionCookie = setCookieValues!.FirstOrDefault(value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
     sessionCookie.ShouldNotBeNull("Expected the passkey registration to issue an identity-session cookie.");
 
-    using HttpClient isolatedClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient isolatedClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     isolatedClient.DefaultRequestHeaders.Add("Cookie", sessionCookie.Split(';')[0]);
     // Deliberately NO Authorization header — only the cookie.
 
@@ -121,10 +139,10 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  private async Task<string> RegisterAndIssueToken(IntegrationSoftwareAgentKey key, List<string> scopes)
+  private static async Task<string> RegisterAndIssueToken(IntegrationSoftwareAgentKey key, List<string> scopes)
   {
     OneOf<StartAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> registerStart =
-      await WebTestServerApplication.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
     byte[] registerChallenge = Base64Url.DecodeFromChars(registerStart.AsT0.Challenge);
     byte[] registerSignature = key.Sign(AgentKeyCeremonyType.Registration, registerChallenge);
 
@@ -136,11 +154,11 @@ public class Returns_
     };
 
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> registerResult =
-      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
     registerResult.IsT0.ShouldBeTrue("Registration setup should succeed.");
 
     OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenStart =
-      await WebTestServerApplication.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
     byte[] tokenChallenge = Base64Url.DecodeFromChars(tokenStart.AsT0.Challenge);
     byte[] tokenSignature = key.Sign(AgentKeyCeremonyType.TokenIssuance, tokenChallenge);
 
@@ -153,15 +171,15 @@ public class Returns_
     };
 
     OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenResult =
-      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
     tokenResult.IsT0.ShouldBeTrue("Token issuance setup should succeed.");
 
     return tokenResult.AsT0.AccessToken;
   }
 
-  private async Task<HttpResponseMessage> GetAgentMeWithBearer(string accessToken)
+  private static async Task<HttpResponseMessage> GetAgentMeWithBearer(string accessToken)
   {
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     return await client.GetAsync(GetAgentIdentity.Query.RouteTemplate);
   }
@@ -172,4 +190,5 @@ public class Returns_
     string challengeBase64Url = document.RootElement.GetProperty("challenge").GetString()!;
     return Base64Url.DecodeFromChars(challengeBase64Url);
   }
+
 }

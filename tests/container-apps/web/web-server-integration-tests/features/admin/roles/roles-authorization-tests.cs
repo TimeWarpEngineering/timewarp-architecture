@@ -45,25 +45,43 @@ using TimeWarp.Identity;
 
 public class Returns_
 {
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
+#if(api)
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
-  public async Task Unauthorized_Given_Anonymous_Get()
+  public static async Task CleanUpOnce()
   {
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  public static async Task Unauthorized_Given_Anonymous_Get()
+  {
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
 
     HttpResponseMessage response = await client.GetAsync("api/Roles");
 
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  public async Task Unauthorized_Given_Anonymous_Post()
+  public static async Task Unauthorized_Given_Anonymous_Post()
   {
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     const string RequestJson = """{"userId":"11111111-1111-1111-1111-111111111111","name":"Auditor","description":"Read-only access."}""";
 
     HttpResponseMessage response = await client.PostAsync
@@ -72,11 +90,11 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  public async Task Ok_With_Seeded_Roles_Given_Passkey_Session_Cookie()
+  public static async Task Ok_With_Seeded_Roles_Given_Passkey_Session_Cookie()
   {
     string sessionCookie = await MintIdentitySessionCookie();
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
     var query = new GetRoles.Query { UserId = Guid.NewGuid() };
@@ -87,11 +105,11 @@ public class Returns_
     json.ShouldContain(nameof(RoleIds.Administrator));
   }
 
-  public async Task Unauthorized_Given_Agent_Bearer_Token_No_Cookie()
+  public static async Task Unauthorized_Given_Agent_Bearer_Token_No_Cookie()
   {
     string accessToken = await RegisterAndIssueAgentBearerToken();
 
-    using HttpClient client = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     // Deliberately NO Cookie header — only the bearer token.
 
@@ -100,12 +118,12 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  private async Task<string> RegisterAndIssueAgentBearerToken()
+  private static async Task<string> RegisterAndIssueAgentBearerToken()
   {
     var key = new IntegrationSoftwareAgentKey();
 
     OneOf<StartAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> registerStart =
-      await WebTestServerApplication.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
     byte[] registerChallenge = Base64Url.DecodeFromChars(registerStart.AsT0.Challenge);
     byte[] registerSignature = key.Sign(AgentKeyCeremonyType.Registration, registerChallenge);
 
@@ -117,11 +135,11 @@ public class Returns_
     };
 
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> registerResult =
-      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
     registerResult.IsT0.ShouldBeTrue("Registration setup should succeed.");
 
     OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenStart =
-      await WebTestServerApplication.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
     byte[] tokenChallenge = Base64Url.DecodeFromChars(tokenStart.AsT0.Challenge);
     byte[] tokenSignature = key.Sign(AgentKeyCeremonyType.TokenIssuance, tokenChallenge);
 
@@ -134,21 +152,21 @@ public class Returns_
     };
 
     OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenResult =
-      await WebTestServerApplication.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
     tokenResult.IsT0.ShouldBeTrue("Token issuance setup should succeed.");
 
     return tokenResult.AsT0.AccessToken;
   }
 
-  private async Task<string> MintIdentitySessionCookie()
+  private static async Task<string> MintIdentitySessionCookie()
   {
     var authenticator = new IntegrationSoftwareAuthenticator();
-    var testApiService = new TestApiService(WebTestServerApplication.HttpClient, ContractSerializationDefaults.Options);
+    var testApiService = new TestApiService(Web.HttpClient, ContractSerializationDefaults.Options);
 
     OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
     byte[] challenge = ReadChallenge(start.AsT0.OptionsJson);
-    string origin = WebTestServerApplication.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
+    string origin = Web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
 
     byte[] authenticatorData = authenticator.BuildAuthenticatorData("localhost", includeAttestedCredentialData: true);
     byte[] attestationObject = IntegrationSoftwareAuthenticator.BuildAttestationObject(authenticatorData);
@@ -176,4 +194,5 @@ public class Returns_
     string challengeBase64Url = document.RootElement.GetProperty("challenge").GetString()!;
     return Base64Url.DecodeFromChars(challengeBase64Url);
   }
+
 }

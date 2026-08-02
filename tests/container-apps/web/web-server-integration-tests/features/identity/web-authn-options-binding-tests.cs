@@ -32,17 +32,36 @@ using TimeWarp.Architecture.Configuration;
 
 public class Returns_
 {
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
+#if(api)
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
-  public void ConfiguredValue_Given_AppSettings_Overrides_The_CSharp_Default()
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  public static Task ConfiguredValue_Given_AppSettings_Overrides_The_CSharp_Default()
+
   {
     IOptions<WebAuthnOptions> options =
-      WebTestServerApplication.WebApplicationHost.ServiceProvider.GetRequiredService<IOptions<WebAuthnOptions>>();
+      Web.WebApplicationHost.ServiceProvider.GetRequiredService<IOptions<WebAuthnOptions>>();
 
     // The test appsettings.json sets WebAuthnOptions:RpName to a value distinct from the C# default
     // ("TimeWarp Architecture") specifically so this assertion cannot pass by coincidence — if the
@@ -55,15 +74,19 @@ public class Returns_
     // binder appends onto the pre-initialized list rather than replacing it. The zero-config
     // "localhost still works after a share host is added" guarantee depends on this.
     options.Value.AllowedRpIds.ShouldBe(new[] { "localhost", "webauthn-second.test" });
+
+    return Task.CompletedTask;
+
   }
 
-  public void NoUserSecrets_Source_Given_HermeticHost()
+  public static Task NoUserSecrets_Source_Given_HermeticHost()
+
   {
     // Hermeticity (task 104-031): WebApplicationHost strips the developer's user-secrets file source,
     // so no bound configuration source may point at a secrets.json — otherwise a machine-local
     // WebAuthnOptions secret could silently alter test outcomes.
     IConfigurationRoot configurationRoot =
-      (IConfigurationRoot)WebTestServerApplication.WebApplicationHost.Configuration;
+      (IConfigurationRoot)Web.WebApplicationHost.Configuration;
 
     foreach (IConfigurationProvider provider in configurationRoot.Providers)
     {
@@ -72,5 +95,9 @@ public class Returns_
         jsonProvider.Source.Path.ShouldNotEndWith("secrets.json");
       }
     }
+
+    return Task.CompletedTask;
+
   }
+
 }

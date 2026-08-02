@@ -11,6 +11,9 @@ using OneOf;
 
 public class NullApiService_GetResponse
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<NullApiService_GetResponse>();
+
   private sealed class SampleRequest : IApiRequest
   {
     public string GetRoute() => "/api/sample";
@@ -23,7 +26,7 @@ public class NullApiService_GetResponse
     public HttpVerb GetHttpVerb() => HttpVerb.Post;
   }
 
-  public async Task Returns_problem_arm_with_501_and_does_not_throw()
+  public static async Task Returns_problem_arm_with_501_and_does_not_throw()
   {
     NullApiService service = new();
     SampleRequest request = new();
@@ -41,7 +44,7 @@ public class NullApiService_GetResponse
     problem.Detail.ShouldContain("/api/sample");
   }
 
-  public async Task Returns_problem_arm_when_route_metadata_throws()
+  public static async Task Returns_problem_arm_when_route_metadata_throws()
   {
     NullApiService service = new();
     ThrowingRouteRequest request = new();

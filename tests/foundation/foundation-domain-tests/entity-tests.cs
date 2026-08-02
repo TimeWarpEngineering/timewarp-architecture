@@ -18,7 +18,10 @@ internal sealed class Gadget : Entity<Guid>
 
 public class Equality
 {
-  public void Same_type_and_id_are_equal()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Equality>();
+
+  public static Task Same_type_and_id_are_equal()
   {
     Guid id = Guid.NewGuid();
     Widget a = new(id);
@@ -28,15 +31,17 @@ public class Equality
     (a == b).ShouldBeTrue();
     (a != b).ShouldBeFalse();
     a.GetHashCode().ShouldBe(b.GetHashCode());
+    return Task.CompletedTask;
   }
 
-  public void Same_instance_is_equal()
+  public static Task Same_instance_is_equal()
   {
     Widget widget = new(Guid.NewGuid());
     widget.Equals(widget).ShouldBeTrue();
+    return Task.CompletedTask;
   }
 
-  public void Different_ids_are_not_equal()
+  public static Task Different_ids_are_not_equal()
   {
     Widget a = new(Guid.NewGuid());
     Widget b = new(Guid.NewGuid());
@@ -44,18 +49,20 @@ public class Equality
     a.Equals(b).ShouldBeFalse();
     (a == b).ShouldBeFalse();
     (a != b).ShouldBeTrue();
+    return Task.CompletedTask;
   }
 
-  public void Same_id_different_type_is_not_equal()
+  public static Task Same_id_different_type_is_not_equal()
   {
     Guid id = Guid.NewGuid();
     Widget widget = new(id);
     Gadget gadget = new(id);
 
     widget.Equals(gadget).ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  public void Null_is_not_equal()
+  public static Task Null_is_not_equal()
   {
     Widget widget = new(Guid.NewGuid());
     Widget? other = Null();
@@ -63,9 +70,14 @@ public class Equality
     widget.Equals(other).ShouldBeFalse();
     (widget == other).ShouldBeFalse();
     (other == widget).ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  public void Two_nulls_are_equal() => (Null() == Null()).ShouldBeTrue();
+  public static Task Two_nulls_are_equal()
+  {
+    (Null() == Null()).ShouldBeTrue();
+    return Task.CompletedTask;
+  }
 
   // Indirection so CA1508 cannot prove the value is always null from local flow — the point of
   // these tests is exercising the operator's actual null handling, not tautological comparisons.
@@ -74,50 +86,63 @@ public class Equality
 
 public class VersionTests
 {
-  public void Defaults_to_zero()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<VersionTests>();
+
+  public static Task Defaults_to_zero()
   {
     Widget widget = new(Guid.NewGuid());
     widget.Version.ShouldBe(0);
+    return Task.CompletedTask;
   }
 
-  public void Has_no_public_setter()
+  public static Task Has_no_public_setter()
   {
     PropertyInfo? property = typeof(Widget).GetProperty(nameof(Entity<Guid>.Version));
     property.ShouldNotBeNull();
     (property!.SetMethod?.IsPublic ?? false).ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  public void Rehydration_constructor_sets_version()
+  public static Task Rehydration_constructor_sets_version()
   {
     Widget widget = new(Guid.NewGuid(), 7);
     widget.Version.ShouldBe(7);
+    return Task.CompletedTask;
   }
 
-  public void Rehydration_constructor_accepts_zero()
+  public static Task Rehydration_constructor_accepts_zero()
   {
     Widget widget = new(Guid.NewGuid(), 0);
     widget.Version.ShouldBe(0);
+    return Task.CompletedTask;
   }
 
-  public void Rehydration_constructor_rejects_negative_version()
+  public static Task Rehydration_constructor_rejects_negative_version()
   {
     Should.Throw<ArgumentOutOfRangeException>(() => new Widget(Guid.NewGuid(), -1));
+    return Task.CompletedTask;
   }
 }
 
 public class IdTests
 {
-  public void Is_assigned_from_constructor()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<IdTests>();
+
+  public static Task Is_assigned_from_constructor()
   {
     Guid id = Guid.NewGuid();
     Widget widget = new(id);
     widget.Id.ShouldBe(id);
+    return Task.CompletedTask;
   }
 
-  public void Has_no_public_setter()
+  public static Task Has_no_public_setter()
   {
     PropertyInfo? property = typeof(Widget).GetProperty(nameof(Entity<Guid>.Id));
     property.ShouldNotBeNull();
     (property!.SetMethod?.IsPublic ?? false).ShouldBeFalse();
+    return Task.CompletedTask;
   }
 }

@@ -25,48 +25,66 @@ using TimeWarp.Identity;
 
 public class Returns_
 {
-  private readonly WebTestServerApplication WebTestServerApplication;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
+#if(api)
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
-  public async Task Ok_With_PrincipalId_And_KeyId_Given_Valid_Registration()
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  public static async Task Ok_With_PrincipalId_And_KeyId_Given_Valid_Registration()
   {
     var key = new IntegrationSoftwareAgentKey();
     CompleteAgentKeyRegistration.Command completeCommand = await BuildValidCompleteCommand(key);
 
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(completeCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(completeCommand, CancellationToken.None);
 
     result.IsT0.ShouldBeTrue("Registration should succeed.");
     result.AsT0.PrincipalId.IsEmpty.ShouldBeFalse();
     result.AsT0.KeyId.ShouldBe(Base64Url.EncodeToString(key.KeyId));
   }
 
-  public async Task BadRequest_Given_Reused_Challenge()
+  public static async Task BadRequest_Given_Reused_Challenge()
   {
     var key = new IntegrationSoftwareAgentKey();
     CompleteAgentKeyRegistration.Command completeCommand = await BuildValidCompleteCommand(key);
 
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> first =
-      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(completeCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(completeCommand, CancellationToken.None);
     first.IsT0.ShouldBeTrue("First completion should succeed.");
 
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> replay =
-      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(completeCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(completeCommand, CancellationToken.None);
 
     replay.IsT2.ShouldBeTrue("Replayed completion should fail.");
     replay.AsT2.Status.ShouldBe(400);
   }
 
-  public async Task BadRequest_Given_Tampered_Signature()
+  public static async Task BadRequest_Given_Tampered_Signature()
   {
     var key = new IntegrationSoftwareAgentKey();
 
     OneOf<StartAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
     byte[] challenge = Base64Url.DecodeFromChars(start.AsT0.Challenge);
     byte[] signature = key.Sign(AgentKeyCeremonyType.Registration, challenge);
     signature[0] ^= 0xFF;
@@ -79,16 +97,16 @@ public class Returns_
     };
 
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(completeCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(completeCommand, CancellationToken.None);
 
     result.IsT2.ShouldBeTrue("Tampered-signature completion should fail.");
     result.AsT2.Status.ShouldBe(400);
   }
 
-  public async Task BadRequest_Given_Malformed_Public_Key()
+  public static async Task BadRequest_Given_Malformed_Public_Key()
   {
     OneOf<StartAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
     byte[] challenge = Base64Url.DecodeFromChars(start.AsT0.Challenge);
 
     var completeCommand = new CompleteAgentKeyRegistration.Command
@@ -99,31 +117,31 @@ public class Returns_
     };
 
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(completeCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(completeCommand, CancellationToken.None);
 
     result.IsT2.ShouldBeTrue("Malformed-public-key completion should fail.");
     result.AsT2.Status.ShouldBe(400);
   }
 
-  public async Task Conflict_Given_Duplicate_Key()
+  public static async Task Conflict_Given_Duplicate_Key()
   {
     var key = new IntegrationSoftwareAgentKey();
 
     CompleteAgentKeyRegistration.Command firstCommand = await BuildValidCompleteCommand(key);
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> first =
-      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(firstCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(firstCommand, CancellationToken.None);
     first.IsT0.ShouldBeTrue("First registration should succeed.");
 
     // Same key, a brand-new ceremony/challenge.
     CompleteAgentKeyRegistration.Command secondCommand = await BuildValidCompleteCommand(key);
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> second =
-      await WebTestServerApplication.GetResponse<CompleteAgentKeyRegistration.Response>(secondCommand, CancellationToken.None);
+      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(secondCommand, CancellationToken.None);
 
     second.IsT2.ShouldBeTrue("Duplicate key registration should fail.");
     second.AsT2.Status.ShouldBe(409);
   }
 
-  public async Task ValidationError_Given_Oversized_PublicKey()
+  public static async Task ValidationError_Given_Oversized_PublicKey()
   {
     var command = new CompleteAgentKeyRegistration.Command
     {
@@ -132,11 +150,11 @@ public class Returns_
       Signature = "QQ"
     };
 
-    await WebTestServerApplication.ConfirmEndpointValidationError<CompleteAgentKeyRegistration.Response>
+    await Web.ConfirmEndpointValidationError<CompleteAgentKeyRegistration.Response>
       (command, nameof(CompleteAgentKeyRegistration.Command.PublicKey));
   }
 
-  public async Task ValidationError_Given_Oversized_Label()
+  public static async Task ValidationError_Given_Oversized_Label()
   {
     var command = new CompleteAgentKeyRegistration.Command
     {
@@ -146,14 +164,14 @@ public class Returns_
       Label = new string('A', 65)
     };
 
-    await WebTestServerApplication.ConfirmEndpointValidationError<CompleteAgentKeyRegistration.Response>
+    await Web.ConfirmEndpointValidationError<CompleteAgentKeyRegistration.Response>
       (command, nameof(CompleteAgentKeyRegistration.Command.Label));
   }
 
-  private async Task<CompleteAgentKeyRegistration.Command> BuildValidCompleteCommand(IntegrationSoftwareAgentKey key)
+  private static async Task<CompleteAgentKeyRegistration.Command> BuildValidCompleteCommand(IntegrationSoftwareAgentKey key)
   {
     OneOf<StartAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
 
     byte[] challenge = Base64Url.DecodeFromChars(start.AsT0.Challenge);
     byte[] signature = key.Sign(AgentKeyCeremonyType.Registration, challenge);
@@ -165,4 +183,5 @@ public class Returns_
       Signature = Base64Url.EncodeToString(signature)
     };
   }
+
 }

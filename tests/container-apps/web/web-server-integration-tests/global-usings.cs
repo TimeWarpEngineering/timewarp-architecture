@@ -13,4 +13,5 @@ global using TimeWarp.Architecture.Features.Analytics;
 global using TimeWarp.Architecture.Features.Identity.Application;
 global using TimeWarp.Architecture.Testing;
 global using TimeWarp.Foundation.Types;
-global using TimeWarp.Fixie;
+global using TimeWarp.Jaribu;
+global using static TimeWarp.Jaribu.TestRunner;

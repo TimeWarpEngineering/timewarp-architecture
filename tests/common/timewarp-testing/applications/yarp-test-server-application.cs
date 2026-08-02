@@ -12,6 +12,11 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
 #if(api)
   private readonly ApiTestServerApplication ApiTestServerApplication;
 #endif
+  internal const int YarpPort = 8443;
+
+  /// <param name="configureServices">
+  /// Optional extras after the built-in test wiring (C-create / <see cref="HostGraphFactory"/>).
+  /// </param>
   public YarpTestServerApplication
   (
 #if(web)
@@ -23,6 +28,10 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
 #if(api)
     ApiTestServerApplication apiTestServerApplication
 #endif
+#if(web || api)
+    ,
+#endif
+    Action<IServiceCollection>? configureServices = null
   ) :
   base
   (
@@ -37,9 +46,17 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
         {
           ApplicationName = typeof(TimeWarp.Architecture.Yarp.Server.IAssemblyMarker).Assembly.GetName().Name,
           EnvironmentName = Environments.Development,
-          ContentRootPath = default,
+          // See ProjectContentRoot's Design region (task 145-002 R2-1) — resolves Yarp's own
+          // project directory via build-time metadata instead of Assembly.Location, which
+          // collides for consumers that also reference Web.Server / Api.Server.
+          ContentRootPath = ProjectContentRoot.Resolve(
+            typeof(TimeWarp.Architecture.Yarp.Server.IAssemblyMarker).Assembly),
         },
-      ConfigureServicesCallback
+      services =>
+      {
+        ConfigureServicesCallback(services);
+        configureServices?.Invoke(services);
+      }
     )
   )
   {

@@ -3,7 +3,11 @@ namespace CliJson_;
 
 public class WhoAmI_Wire_Shape
 {
-  public void Deserializes_string_kind_and_trust_tier()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<WhoAmI_Wire_Shape>();
+
+  public static Task Deserializes_string_kind_and_trust_tier()
   {
     var json = new CliJson();
     // Server STJ (ContractSerializationDefaults) emits enums as PascalCase strings.
@@ -18,9 +22,10 @@ public class WhoAmI_Wire_Shape
     me.Kind.ShouldBe(PrincipalKind.Agent);
     me.TrustTier.ShouldBe(TrustTier.Keyed);
     me.Scopes.ShouldBe(["identity:read"]);
+    return Task.CompletedTask;
   }
 
-  public void Rejects_numeric_kind()
+  public static Task Rejects_numeric_kind()
   {
     var json = new CliJson();
     const string body = """
@@ -28,5 +33,6 @@ public class WhoAmI_Wire_Shape
       """;
 
     Should.Throw<JsonException>(() => json.Deserialize<WhoAmIResponse>(body));
+    return Task.CompletedTask;
   }
 }

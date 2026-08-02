@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Suite-shaped Jaribu MTP project for timewarp-testing's OWN infra (task 145-002 R2-3):
+         proves HostGraphFactory's Web+Api C-create shape. Not a family aggregator (no glob under
+         source/) — its one test file is local to this project and dual-mode (standalone
+         `dotnet run` + JARIBU_MULTI multi-mode compile here), mirroring the api/web family
+         aggregators' MTP wiring (task 136) without their source-glob discovery mechanism. -->
+    <DefineConstants>$(DefineConstants);JARIBU_MULTI</DefineConstants>
+    <!-- .NET 10 SDK requires this opt-in for the MTP-native `dotnet test` experience
+         (VSTest bridge is no longer supported) — https://aka.ms/dotnet-test-mtp-error.
+         Pair with the project-local global.json test.runner project-local MTP runner; -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <!-- Same dual-mode runfile suppressions the exemplars carry via #:property (inert under
+         multi-mode compile); CA1707 is already ambient from tests/Directory.Build.props. -->
+    <NoWarn>$(NoWarn);CA1849;IDE0161;IDE0021;IDE0058</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Needs both families: proves the Web+Api HostGraph shape end to end (BFF → Api bearer
+         flow). Whole project is template-excluded unless BOTH web and api are present — see
+         .template.config/template.json's (!web) and (!api) modifiers. -->
+    <ProjectReference Include="..\..\..\source\container-apps\api\projects\api-contracts\api-contracts.csproj" />
+    <ProjectReference Include="..\timewarp-testing\timewarp-testing.csproj" />
+  </ItemGroup>
+
+</Project>

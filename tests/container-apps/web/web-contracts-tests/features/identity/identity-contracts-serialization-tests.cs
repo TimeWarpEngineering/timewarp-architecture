@@ -30,7 +30,10 @@ using TimeWarp.Identity;
 
 public class CompletePasskeyRegistration_Command_Should
 {
-  public static void SerializeAndDeserialize()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<CompletePasskeyRegistration_Command_Should>();
+
+  public static Task SerializeAndDeserialize()
   {
     CompletePasskeyRegistration.Command command = new()
     {
@@ -44,21 +47,26 @@ public class CompletePasskeyRegistration_Command_Should
     parsed.CredentialId.ShouldBe(command.CredentialId);
     parsed.ClientDataJson.ShouldBe(command.ClientDataJson);
     parsed.AttestationObject.ShouldBe(command.AttestationObject);
+    return Task.CompletedTask;
   }
 }
 
 public class CompletePasskeyRegistration_Response_Should
 {
-  public static void SerializeAndDeserialize_Via_Constructor()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<CompletePasskeyRegistration_Response_Should>();
+
+  public static Task SerializeAndDeserialize_Via_Constructor()
   {
     CompletePasskeyRegistration.Response response = new(PrincipalId.New());
 
     CompletePasskeyRegistration.Response parsed = ContractSerialization.RoundTrip(response);
 
     parsed.PrincipalId.ShouldBe(response.PrincipalId);
+    return Task.CompletedTask;
   }
 
-  public static void Reject_EmptyPrincipalId_During_Deserialization()
+  public static Task Reject_EmptyPrincipalId_During_Deserialization()
   {
     // PrincipalId's own [TypedId] JsonConverter fail-closes on an empty guid before the Response
     // ctor's Guard even runs — either seam rejecting it is the contract that matters here.
@@ -66,12 +74,16 @@ public class CompletePasskeyRegistration_Response_Should
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<CompletePasskeyRegistration.Response>(json, ContractSerialization.Options));
+    return Task.CompletedTask;
   }
 }
 
 public class CompletePasskeyAuthentication_Command_Should
 {
-  public static void SerializeAndDeserialize_Including_Optional_UserHandle()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<CompletePasskeyAuthentication_Command_Should>();
+
+  public static Task SerializeAndDeserialize_Including_Optional_UserHandle()
   {
     CompletePasskeyAuthentication.Command command = new()
     {
@@ -89,9 +101,10 @@ public class CompletePasskeyAuthentication_Command_Should
     parsed.AuthenticatorData.ShouldBe(command.AuthenticatorData);
     parsed.Signature.ShouldBe(command.Signature);
     parsed.UserHandle.ShouldBe(command.UserHandle);
+    return Task.CompletedTask;
   }
 
-  public static void SerializeAndDeserialize_Without_UserHandle()
+  public static Task SerializeAndDeserialize_Without_UserHandle()
   {
     CompletePasskeyAuthentication.Command command = new()
     {
@@ -104,12 +117,16 @@ public class CompletePasskeyAuthentication_Command_Should
     CompletePasskeyAuthentication.Command parsed = ContractSerialization.RoundTrip(command);
 
     parsed.UserHandle.ShouldBeNull();
+    return Task.CompletedTask;
   }
 }
 
 public class GetCurrentSession_Response_Should
 {
-  public static void SerializeAndDeserialize_Authenticated()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<GetCurrentSession_Response_Should>();
+
+  public static Task SerializeAndDeserialize_Authenticated()
   {
     GetCurrentSession.Response response = new(isAuthenticated: true, PrincipalId.New());
 
@@ -117,9 +134,10 @@ public class GetCurrentSession_Response_Should
 
     parsed.IsAuthenticated.ShouldBeTrue();
     parsed.PrincipalId.ShouldBe(response.PrincipalId);
+    return Task.CompletedTask;
   }
 
-  public static void SerializeAndDeserialize_Unauthenticated()
+  public static Task SerializeAndDeserialize_Unauthenticated()
   {
     GetCurrentSession.Response response = new(isAuthenticated: false, principalId: null);
 
@@ -127,12 +145,16 @@ public class GetCurrentSession_Response_Should
 
     parsed.IsAuthenticated.ShouldBeFalse();
     parsed.PrincipalId.ShouldBeNull();
+    return Task.CompletedTask;
   }
 }
 
 public class CompleteAgentKeyRegistration_Command_Should
 {
-  public static void SerializeAndDeserialize_Including_Optional_Label()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<CompleteAgentKeyRegistration_Command_Should>();
+
+  public static Task SerializeAndDeserialize_Including_Optional_Label()
   {
     CompleteAgentKeyRegistration.Command command = new()
     {
@@ -148,9 +170,10 @@ public class CompleteAgentKeyRegistration_Command_Should
     parsed.Challenge.ShouldBe(command.Challenge);
     parsed.Signature.ShouldBe(command.Signature);
     parsed.Label.ShouldBe(command.Label);
+    return Task.CompletedTask;
   }
 
-  public static void SerializeAndDeserialize_Without_Label()
+  public static Task SerializeAndDeserialize_Without_Label()
   {
     CompleteAgentKeyRegistration.Command command = new()
     {
@@ -162,12 +185,16 @@ public class CompleteAgentKeyRegistration_Command_Should
     CompleteAgentKeyRegistration.Command parsed = ContractSerialization.RoundTrip(command);
 
     parsed.Label.ShouldBeNull();
+    return Task.CompletedTask;
   }
 }
 
 public class CompleteAgentKeyRegistration_Response_Should
 {
-  public static void SerializeAndDeserialize_Via_Constructor()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<CompleteAgentKeyRegistration_Response_Should>();
+
+  public static Task SerializeAndDeserialize_Via_Constructor()
   {
     CompleteAgentKeyRegistration.Response response = new(PrincipalId.New(), "a1b2c3");
 
@@ -175,20 +202,25 @@ public class CompleteAgentKeyRegistration_Response_Should
 
     parsed.PrincipalId.ShouldBe(response.PrincipalId);
     parsed.KeyId.ShouldBe(response.KeyId);
+    return Task.CompletedTask;
   }
 
-  public static void Reject_EmptyPrincipalId_During_Deserialization()
+  public static Task Reject_EmptyPrincipalId_During_Deserialization()
   {
     string json = """{"principalId":"00000000-0000-0000-0000-000000000000","keyId":"a1b2c3"}""";
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<CompleteAgentKeyRegistration.Response>(json, ContractSerialization.Options));
+    return Task.CompletedTask;
   }
 }
 
 public class CompleteAgentTokenIssuance_Command_Should
 {
-  public static void SerializeAndDeserialize_Scopes_List()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<CompleteAgentTokenIssuance_Command_Should>();
+
+  public static Task SerializeAndDeserialize_Scopes_List()
   {
     CompleteAgentTokenIssuance.Command command = new()
     {
@@ -204,12 +236,16 @@ public class CompleteAgentTokenIssuance_Command_Should
     parsed.Challenge.ShouldBe(command.Challenge);
     parsed.Signature.ShouldBe(command.Signature);
     parsed.Scopes.ShouldBe(command.Scopes);
+    return Task.CompletedTask;
   }
 }
 
 public class CompleteAgentTokenIssuance_Response_Should
 {
-  public static void SerializeAndDeserialize_Via_Constructor()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<CompleteAgentTokenIssuance_Response_Should>();
+
+  public static Task SerializeAndDeserialize_Via_Constructor()
   {
     CompleteAgentTokenIssuance.Response response = new
     (
@@ -226,12 +262,16 @@ public class CompleteAgentTokenIssuance_Response_Should
     parsed.ExpiresInSeconds.ShouldBe(900);
     parsed.Scopes.ShouldBe(response.Scopes);
     parsed.PrincipalId.ShouldBe(response.PrincipalId);
+    return Task.CompletedTask;
   }
 }
 
 public class GetAgentIdentity_Response_Should
 {
-  public static void SerializeAndDeserialize_Via_Constructor()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<GetAgentIdentity_Response_Should>();
+
+  public static Task SerializeAndDeserialize_Via_Constructor()
   {
     GetAgentIdentity.Response response = new
     (
@@ -247,9 +287,10 @@ public class GetAgentIdentity_Response_Should
     parsed.Kind.ShouldBe(PrincipalKind.Agent);
     parsed.TrustTier.ShouldBe(TrustTier.Keyed);
     parsed.Scopes.ShouldBe(response.Scopes);
+    return Task.CompletedTask;
   }
 
-  public static void Serializes_Enums_As_PascalCase_Strings()
+  public static Task Serializes_Enums_As_PascalCase_Strings()
   {
     GetAgentIdentity.Response response = new
     (
@@ -265,27 +306,30 @@ public class GetAgentIdentity_Response_Should
     json.ShouldContain("\"trustTier\":\"Keyed\"");
     json.ShouldNotContain("\"kind\":2");
     json.ShouldNotContain("\"trustTier\":2");
+    return Task.CompletedTask;
   }
 
-  public static void Reject_Unknown_Kind_String()
+  public static Task Reject_Unknown_Kind_String()
   {
     string json =
       """{"principalId":"019f6a8b-0000-7000-8000-000000000001","kind":"NotAKind","trustTier":"Keyed","scopes":[]}""";
 
     Should.Throw<JsonException>(() =>
       JsonSerializer.Deserialize<GetAgentIdentity.Response>(json, ContractSerialization.Options));
+    return Task.CompletedTask;
   }
 
-  public static void Reject_Integer_Kind()
+  public static Task Reject_Integer_Kind()
   {
     string json =
       """{"principalId":"019f6a8b-0000-7000-8000-000000000001","kind":2,"trustTier":"Keyed","scopes":[]}""";
 
     Should.Throw<JsonException>(() =>
       JsonSerializer.Deserialize<GetAgentIdentity.Response>(json, ContractSerialization.Options));
+    return Task.CompletedTask;
   }
 
-  public static void Accepts_Lowercase_Kind_String_Case_Insensitive_Read()
+  public static Task Accepts_Lowercase_Kind_String_Case_Insensitive_Read()
   {
     // JsonStringEnumConverter deserializes case-insensitively; wire emission is still PascalCase
     // ("Agent"). Fail-closed targets integers and unknown names, not case variants.
@@ -297,12 +341,16 @@ public class GetAgentIdentity_Response_Should
 
     parsed.ShouldNotBeNull();
     parsed.Kind.ShouldBe(PrincipalKind.Agent);
+    return Task.CompletedTask;
   }
 }
 
 public class CredentialType_Should
 {
-  public static void RoundTrip_Passkey_And_AgentKey_As_Strings()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<CredentialType_Should>();
+
+  public static Task RoundTrip_Passkey_And_AgentKey_As_Strings()
   {
     string passkeyJson = JsonSerializer.Serialize(CredentialType.Passkey, ContractSerialization.Options);
     string agentKeyJson = JsonSerializer.Serialize(CredentialType.AgentKey, ContractSerialization.Options);
@@ -314,12 +362,16 @@ public class CredentialType_Should
       .ShouldBe(CredentialType.Passkey);
     JsonSerializer.Deserialize<CredentialType>(agentKeyJson, ContractSerialization.Options)
       .ShouldBe(CredentialType.AgentKey);
+    return Task.CompletedTask;
   }
 }
 
 public class GetCredentials_Query_Should
 {
-  public static void SerializeAndDeserialize_Including_Generated_RouteProperty()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<GetCredentials_Query_Should>();
+
+  public static Task SerializeAndDeserialize_Including_Generated_RouteProperty()
   {
     GetCredentials.Query query = new() { UserId = Guid.NewGuid(), IncludeRevoked = true };
 
@@ -327,12 +379,16 @@ public class GetCredentials_Query_Should
 
     parsed.UserId.ShouldBe(query.UserId);
     parsed.IncludeRevoked.ShouldBeTrue();
+    return Task.CompletedTask;
   }
 }
 
 public class GetCredentials_Response_Should
 {
-  public static void SerializeAndDeserialize_Via_Constructor()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<GetCredentials_Response_Should>();
+
+  public static Task SerializeAndDeserialize_Via_Constructor()
   {
     GetCredentials.Response response = new
     (
@@ -361,12 +417,13 @@ public class GetCredentials_Response_Should
     parsed.Credentials[1].Label.ShouldBeNull();
     parsed.Credentials[1].IsActive.ShouldBeFalse();
     parsed.Credentials[1].RevokedAt.ShouldNotBeNull();
+    return Task.CompletedTask;
   }
 
   // Load-bearing security pin (task 104-005): CredentialSummary structurally omits
   // Handle/PublicMaterial — this proves that holds through actual JSON serialization, not just the
   // C# type shape. See this file's Design region for the second (integration-level) half of this pin.
-  public static void Never_Serializes_Handle_Or_PublicMaterial()
+  public static Task Never_Serializes_Handle_Or_PublicMaterial()
   {
     // Structural check FIRST (round-1 review M4) — the real guarantee, and the only one that cannot
     // false-fail on Label content: CredentialSummary itself has no Handle/PublicMaterial member.
@@ -385,12 +442,16 @@ public class GetCredentials_Response_Should
     // integration-level twin.
     json.ToLowerInvariant().ShouldNotContain("handle");
     json.ToLowerInvariant().ShouldNotContain("publicmaterial");
+    return Task.CompletedTask;
   }
 }
 
 public class RevokeCredential_Command_Should
 {
-  public static void SerializeAndDeserialize_Including_Generated_RouteProperty()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<RevokeCredential_Command_Should>();
+
+  public static Task SerializeAndDeserialize_Including_Generated_RouteProperty()
   {
     RevokeCredential.Command command = new() { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid() };
 
@@ -398,12 +459,16 @@ public class RevokeCredential_Command_Should
 
     parsed.UserId.ShouldBe(command.UserId);
     parsed.CredentialId.ShouldBe(command.CredentialId);
+    return Task.CompletedTask;
   }
 }
 
 public class AddPasskey_Command_Should
 {
-  public static void SerializeAndDeserialize_Including_Optional_Label()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<AddPasskey_Command_Should>();
+
+  public static Task SerializeAndDeserialize_Including_Optional_Label()
   {
     AddPasskey.Command command = new()
     {
@@ -420,9 +485,10 @@ public class AddPasskey_Command_Should
     parsed.ClientDataJson.ShouldBe(command.ClientDataJson);
     parsed.AttestationObject.ShouldBe(command.AttestationObject);
     parsed.Label.ShouldBe("MacBook");
+    return Task.CompletedTask;
   }
 
-  public static void SerializeAndDeserialize_Without_Label()
+  public static Task SerializeAndDeserialize_Without_Label()
   {
     AddPasskey.Command command = new()
     {
@@ -435,32 +501,41 @@ public class AddPasskey_Command_Should
     AddPasskey.Command parsed = ContractSerialization.RoundTrip(command);
 
     parsed.Label.ShouldBeNull();
+    return Task.CompletedTask;
   }
 }
 
 public class AddPasskey_Response_Should
 {
-  public static void SerializeAndDeserialize_Via_Constructor()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<AddPasskey_Response_Should>();
+
+  public static Task SerializeAndDeserialize_Via_Constructor()
   {
     AddPasskey.Response response = new(CredentialId.New());
 
     AddPasskey.Response parsed = ContractSerialization.RoundTrip(response);
 
     parsed.CredentialId.ShouldBe(response.CredentialId);
+    return Task.CompletedTask;
   }
 
-  public static void Reject_EmptyCredentialId_During_Deserialization()
+  public static Task Reject_EmptyCredentialId_During_Deserialization()
   {
     string json = """{"credentialId":"00000000-0000-0000-0000-000000000000"}""";
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<AddPasskey.Response>(json, ContractSerialization.Options));
+    return Task.CompletedTask;
   }
 }
 
 public class AddAgentKey_Command_Should
 {
-  public static void SerializeAndDeserialize_Including_Optional_Label()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<AddAgentKey_Command_Should>();
+
+  public static Task SerializeAndDeserialize_Including_Optional_Label()
   {
     AddAgentKey.Command command = new()
     {
@@ -477,9 +552,10 @@ public class AddAgentKey_Command_Should
     parsed.Challenge.ShouldBe(command.Challenge);
     parsed.Signature.ShouldBe(command.Signature);
     parsed.Label.ShouldBe("prod-worker-4");
+    return Task.CompletedTask;
   }
 
-  public static void SerializeAndDeserialize_Without_Label()
+  public static Task SerializeAndDeserialize_Without_Label()
   {
     AddAgentKey.Command command = new()
     {
@@ -492,12 +568,16 @@ public class AddAgentKey_Command_Should
     AddAgentKey.Command parsed = ContractSerialization.RoundTrip(command);
 
     parsed.Label.ShouldBeNull();
+    return Task.CompletedTask;
   }
 }
 
 public class AddAgentKey_Response_Should
 {
-  public static void SerializeAndDeserialize_Via_Constructor()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<AddAgentKey_Response_Should>();
+
+  public static Task SerializeAndDeserialize_Via_Constructor()
   {
     AddAgentKey.Response response = new(CredentialId.New(), "a1b2c3");
 
@@ -505,13 +585,15 @@ public class AddAgentKey_Response_Should
 
     parsed.CredentialId.ShouldBe(response.CredentialId);
     parsed.KeyId.ShouldBe(response.KeyId);
+    return Task.CompletedTask;
   }
 
-  public static void Reject_EmptyCredentialId_During_Deserialization()
+  public static Task Reject_EmptyCredentialId_During_Deserialization()
   {
     string json = """{"credentialId":"00000000-0000-0000-0000-000000000000","keyId":"a1b2c3"}""";
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<AddAgentKey.Response>(json, ContractSerialization.Options));
+    return Task.CompletedTask;
   }
 }

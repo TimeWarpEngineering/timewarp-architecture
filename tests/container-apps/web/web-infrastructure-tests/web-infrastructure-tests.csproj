@@ -1,9 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Host-level / hybrid remainder suite (task 145-007): suite-shaped under tests/, Jaribu MTP.
+         Profile live Postgres + EF principal-store dual fixture; model-mapping is connection-free. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- .NET 10 MTP-native dotnet test — pair with project-local global.json test.runner
+         project-local MTP runner; timewarp-jaribu#20: mirror root SDK pin. -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <!-- Jaribu SUT_/Action_Given_ naming uses underscores (CA1707). -->
+    <NoWarn>$(NoWarn);CA1707;CA1849;IDE0021;IDE0058</NoWarn>
+  </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Testcontainers.PostgreSql" />
-    <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-infrastructure\web-infrastructure.csproj" />
@@ -11,5 +23,10 @@
          timewarp-testing so they exist when identity-tests is template-excluded (generated
          apps always package-mode; task 124). -->
     <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Shouldly" />
+    <Using Include="TimeWarp.Jaribu" />
+    <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
   </ItemGroup>
 </Project>

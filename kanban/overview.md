@@ -57,7 +57,7 @@ Tasks are considered complete when they meet the appropriate criteria:
   - [ ] *Response (required) 
   - [ ] *RequestValidator (required)
 
-**Integration Tests (Fixie):**
+**Integration Tests (Jaribu):**
 - [ ] *Handler Tests (required)
   - [ ] *Returns a valid Response given a valid Request via Handler
 - [ ] *Endpoint Tests (required)

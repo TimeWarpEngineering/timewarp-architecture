@@ -9,7 +9,10 @@ using Microsoft.EntityFrameworkCore.Metadata;
 /// </summary>
 public class Map
 {
-  public void Profile_with_schema_typed_id_and_concurrency_token()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Map>();
+
+  public static Task Profile_with_schema_typed_id_and_concurrency_token()
   {
     using PostgresDbContext db = CreateModelOnlyContext();
 
@@ -26,12 +29,14 @@ public class Map
     IProperty version = entityType.FindProperty(nameof(Profile.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
+    return Task.CompletedTask;
   }
 
-  public void Exposes_profiles_dbset()
+  public static Task Exposes_profiles_dbset()
   {
     using PostgresDbContext db = CreateModelOnlyContext();
     db.Profiles.ShouldNotBeNull();
+    return Task.CompletedTask;
   }
 
   private static PostgresDbContext CreateModelOnlyContext()

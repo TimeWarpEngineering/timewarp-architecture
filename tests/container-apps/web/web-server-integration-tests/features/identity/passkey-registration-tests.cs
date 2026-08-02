@@ -34,18 +34,35 @@ using TimeWarp.Identity;
 
 public class Returns_
 {
-  private const string RpId = "localhost";
 
-  private readonly WebTestServerApplication WebTestServerApplication;
-  private readonly TestApiService TestApiService;
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
 
-  public Returns_(WebTestServerApplication webTestServerApplication)
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Returns_>();
+
+  public static async Task SetupOnce()
   {
-    WebTestServerApplication = webTestServerApplication;
-    TestApiService = new TestApiService(webTestServerApplication.HttpClient, ContractSerializationDefaults.Options);
+#if(api)
+    Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
-  public async Task Ok_With_Cookie_And_Session_Given_Valid_Registration()
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
+  private const string RpId = "localhost";
+  private static TestApiService TestApiService => new(Web.HttpClient, ContractSerializationDefaults.Options);
+
+  public static async Task Ok_With_Cookie_And_Session_Given_Valid_Registration()
   {
     CompletePasskeyRegistration.Command completeCommand = await BuildValidCompleteCommand(new IntegrationSoftwareAuthenticator());
 
@@ -69,30 +86,30 @@ public class Returns_
     sessionResponse.PrincipalId.ShouldBe(completeResponse.PrincipalId);
   }
 
-  public async Task BadRequest_Given_Reused_Challenge()
+  public static async Task BadRequest_Given_Reused_Challenge()
   {
     CompletePasskeyRegistration.Command completeCommand = await BuildValidCompleteCommand(new IntegrationSoftwareAuthenticator());
 
     OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> first =
-      await WebTestServerApplication.GetResponse<CompletePasskeyRegistration.Response>(completeCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyRegistration.Response>(completeCommand, CancellationToken.None);
     first.IsT0.ShouldBeTrue("First completion should succeed.");
 
     // Replaying the exact same completed payload: the challenge was already consumed on the first
     // call (challenge-consume-before-verify is deliberate — see the handler's Design region), so this
     // must fail even though the payload itself is otherwise byte-identical to a valid one.
     OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> replay =
-      await WebTestServerApplication.GetResponse<CompletePasskeyRegistration.Response>(completeCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyRegistration.Response>(completeCommand, CancellationToken.None);
 
     replay.IsT2.ShouldBeTrue("Replayed completion should fail.");
     replay.AsT2.Status.ShouldBe(400);
   }
 
-  public async Task BadRequest_Given_Wrong_Origin()
+  public static async Task BadRequest_Given_Wrong_Origin()
   {
     IntegrationSoftwareAuthenticator authenticator = new();
 
     OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
     byte[] challenge = ReadChallenge(start.AsT0.OptionsJson);
 
     byte[] authenticatorData = authenticator.BuildAuthenticatorData(RpId, includeAttestedCredentialData: true);
@@ -107,13 +124,13 @@ public class Returns_
     };
 
     OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> result =
-      await WebTestServerApplication.GetResponse<CompletePasskeyRegistration.Response>(completeCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyRegistration.Response>(completeCommand, CancellationToken.None);
 
     result.IsT2.ShouldBeTrue("Wrong-origin completion should fail.");
     result.AsT2.Status.ShouldBe(400);
   }
 
-  public async Task ValidationError_Given_Empty_CredentialId()
+  public static async Task ValidationError_Given_Empty_CredentialId()
   {
     var command = new CompletePasskeyRegistration.Command
     {
@@ -122,11 +139,11 @@ public class Returns_
       AttestationObject = "QQ"
     };
 
-    await WebTestServerApplication.ConfirmEndpointValidationError<CompletePasskeyRegistration.Response>
+    await Web.ConfirmEndpointValidationError<CompletePasskeyRegistration.Response>
       (command, nameof(CompletePasskeyRegistration.Command.CredentialId));
   }
 
-  public async Task ValidationError_Given_Oversized_CredentialId()
+  public static async Task ValidationError_Given_Oversized_CredentialId()
   {
     // Round-1 finding M4: CredentialId is now capped at 2KB — one character past the cap must
     // trigger the same validator rejection path as an empty field.
@@ -137,36 +154,36 @@ public class Returns_
       AttestationObject = "QQ"
     };
 
-    await WebTestServerApplication.ConfirmEndpointValidationError<CompletePasskeyRegistration.Response>
+    await Web.ConfirmEndpointValidationError<CompletePasskeyRegistration.Response>
       (command, nameof(CompletePasskeyRegistration.Command.CredentialId));
   }
 
-  public async Task Conflict_Given_Duplicate_Credential()
+  public static async Task Conflict_Given_Duplicate_Credential()
   {
     IntegrationSoftwareAuthenticator authenticator = new();
 
     CompletePasskeyRegistration.Command firstCommand = await BuildValidCompleteCommand(authenticator);
     OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> first =
-      await WebTestServerApplication.GetResponse<CompletePasskeyRegistration.Response>(firstCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyRegistration.Response>(firstCommand, CancellationToken.None);
     first.IsT0.ShouldBeTrue("First registration should succeed.");
 
     // Same authenticator instance (same per-instance CredentialId — see IntegrationSoftwareAuthenticator's
     // Design region), a brand-new ceremony/challenge.
     CompletePasskeyRegistration.Command secondCommand = await BuildValidCompleteCommand(authenticator);
     OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> second =
-      await WebTestServerApplication.GetResponse<CompletePasskeyRegistration.Response>(secondCommand, CancellationToken.None);
+      await Web.GetResponse<CompletePasskeyRegistration.Response>(secondCommand, CancellationToken.None);
 
     second.IsT2.ShouldBeTrue("Duplicate credential registration should fail.");
     second.AsT2.Status.ShouldBe(409);
   }
 
-  private async Task<CompletePasskeyRegistration.Command> BuildValidCompleteCommand(IntegrationSoftwareAuthenticator authenticator)
+  private static async Task<CompletePasskeyRegistration.Command> BuildValidCompleteCommand(IntegrationSoftwareAuthenticator authenticator)
   {
     OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await WebTestServerApplication.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
+      await Web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
 
     byte[] challenge = ReadChallenge(start.AsT0.OptionsJson);
-    string origin = WebTestServerApplication.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
+    string origin = Web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
 
     byte[] authenticatorData = authenticator.BuildAuthenticatorData(RpId, includeAttestedCredentialData: true);
     byte[] attestationObject = IntegrationSoftwareAuthenticator.BuildAttestationObject(authenticatorData);
@@ -189,14 +206,14 @@ public class Returns_
 
   // Isolated-cookie GetCurrentSession call (see class Design region, round-1 finding M6): a fresh
   // HttpClient carrying only the specific Set-Cookie value the caller captured, never the shared
-  // WebTestServerApplication.HttpClient's ambient cookie jar.
-  private async Task<GetCurrentSession.Response> GetCurrentSessionWithCookie(IEnumerable<string> setCookieValues)
+  // Web.HttpClient's ambient cookie jar.
+  private static async Task<GetCurrentSession.Response> GetCurrentSessionWithCookie(IEnumerable<string> setCookieValues)
   {
     string? sessionCookie = setCookieValues.FirstOrDefault
       (value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
     sessionCookie.ShouldNotBeNull("Expected a Set-Cookie header carrying the identity-session cookie.");
 
-    using HttpClient isolatedClient = new() { BaseAddress = WebTestServerApplication.HttpClient.BaseAddress };
+    using HttpClient isolatedClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
     isolatedClient.DefaultRequestHeaders.Add("Cookie", sessionCookie.Split(';')[0]);
 
     HttpResponseMessage response = await isolatedClient.GetAsync(GetCurrentSession.Query.RouteTemplate);
@@ -205,4 +222,5 @@ public class Returns_
     return JsonSerializer.Deserialize<GetCurrentSession.Response>(json, ContractSerializationDefaults.Options)
       ?? throw new InvalidOperationException("GetCurrentSession response deserialized to null.");
   }
+
 }

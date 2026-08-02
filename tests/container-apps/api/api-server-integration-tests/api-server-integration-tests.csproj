@@ -1,28 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <NoWarn>$(NoWarn);CS0436</NoWarn>
+    <!-- Closed-box Api lane only (task 145-005): OpenAPI process-isolation tests via Aspire.
+         In-proc weather coverage co-located under source/.../get-weather-forecasts-tests.cs. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <NoWarn>$(NoWarn);CS0436;CA1707;CA1849;IDE0021;IDE0058</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Testing" />
-    <PackageReference Include="AutoFixture" />
-    <PackageReference Include="AutoFixture.AutoFakeItEasy" />
-    <PackageReference Include="FakeItEasy" />
-    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\source\container-apps\api\projects\api-contracts\api-contracts.csproj" />
-    <ProjectReference Include="..\..\..\..\source\container-apps\api\projects\api-server\api-server.csproj" />
     <ProjectReference Include="..\..\..\..\source\container-apps\aspire\projects\aspire-app-host\aspire-app-host.csproj" />
-    <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Configuration\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <Using Include="Aspire.Hosting.Testing" />
+    <Using Include="Shouldly" />
+    <Using Include="TimeWarp.Jaribu" />
+    <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
   </ItemGroup>
 </Project>

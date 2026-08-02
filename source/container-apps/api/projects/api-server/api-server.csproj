@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <!-- Task 145-002 R2-1: lets test infra resolve ContentRootPath from THIS project's own
+       directory instead of a transitive consumer's flattened output. See the props file. -->
+  <Import Project="$(RepositoryRoot)msbuild/project-directory-metadata.props" />
+
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>

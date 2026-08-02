@@ -1,11 +1,2 @@
-global using Aspire.Hosting.Testing;
-global using FluentValidation.Results;
-global using FluentValidation.TestHelper;
-global using Microsoft.Extensions.DependencyInjection;
-global using OneOf;
-global using Shouldly;
+global using Aspire.Hosting;
 global using System.Net;
-// Solution usings
-global using TimeWarp.Architecture.Testing;
-global using TimeWarp.Foundation.Types;
-global using TimeWarp.Fixie;

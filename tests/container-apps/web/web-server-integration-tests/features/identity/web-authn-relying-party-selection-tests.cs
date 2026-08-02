@@ -10,7 +10,12 @@ using TimeWarp.Identity;
 
 public class Select_Should
 {
-  public void Return_Canonical_Allowlist_Entry_Given_Case_Insensitive_Match()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Select_Should>();
+
+  public static Task Return_Canonical_Allowlist_Entry_Given_Case_Insensitive_Match()
+
   {
     var options = new WebAuthnOptions
     {
@@ -27,9 +32,13 @@ public class Select_Should
     // RpName and AllowedOrigins flow straight through onto the selected relying party.
     result.AsT0.Name.ShouldBe("Test RP");
     result.AsT0.Origins.ShouldBe(new[] { "https://webauthn-second.test" });
+
+    return Task.CompletedTask;
+
   }
 
-  public void Return_Problem_Given_Null_Host()
+  public static Task Return_Problem_Given_Null_Host()
+
   {
     var options = new WebAuthnOptions { AllowedRpIds = ["localhost"] };
 
@@ -38,9 +47,13 @@ public class Select_Should
     result.IsT1.ShouldBeTrue();
     result.AsT1.Status.ShouldBe(400);
     result.AsT1.Title.ShouldBe("Host not allowed");
+
+    return Task.CompletedTask;
+
   }
 
-  public void Return_Problem_Given_Unlisted_Host()
+  public static Task Return_Problem_Given_Unlisted_Host()
+
   {
     var options = new WebAuthnOptions { AllowedRpIds = ["localhost"] };
 
@@ -50,5 +63,9 @@ public class Select_Should
     result.AsT1.Status.ShouldBe(400);
     // Never echoes the requested host into the response body.
     result.AsT1.Detail!.ShouldNotContain("not-allowed.example");
+
+    return Task.CompletedTask;
+
   }
+
 }

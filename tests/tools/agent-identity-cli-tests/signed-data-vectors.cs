@@ -3,7 +3,11 @@ namespace AgentSigning_;
 
 public class BuildSignedData_And_Sign
 {
-  public void Registration_prefix_is_domain_separated()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<BuildSignedData_And_Sign>();
+
+  public static Task Registration_prefix_is_domain_separated()
   {
     byte[] challenge = [1, 2, 3, 4];
     byte[] signed = AgentKeyProof.BuildSignedData(AgentKeyCeremonyType.Registration, challenge);
@@ -11,9 +15,10 @@ public class BuildSignedData_And_Sign
     byte[] expectedPrefix = Encoding.UTF8.GetBytes("TimeWarp.Identity.AgentKey.Register.v1:");
     signed.AsSpan(0, expectedPrefix.Length).SequenceEqual(expectedPrefix).ShouldBeTrue();
     signed.AsSpan(expectedPrefix.Length).SequenceEqual(challenge).ShouldBeTrue();
+    return Task.CompletedTask;
   }
 
-  public void Token_prefix_is_domain_separated()
+  public static Task Token_prefix_is_domain_separated()
   {
     byte[] challenge = [9, 8, 7, 6];
     byte[] signed = AgentKeyProof.BuildSignedData(AgentKeyCeremonyType.TokenIssuance, challenge);
@@ -21,18 +26,20 @@ public class BuildSignedData_And_Sign
     byte[] expectedPrefix = Encoding.UTF8.GetBytes("TimeWarp.Identity.AgentKey.Token.v1:");
     signed.AsSpan(0, expectedPrefix.Length).SequenceEqual(expectedPrefix).ShouldBeTrue();
     signed.AsSpan(expectedPrefix.Length).SequenceEqual(challenge).ShouldBeTrue();
+    return Task.CompletedTask;
   }
 
-  public void Registration_and_Token_signed_data_differ_for_same_challenge()
+  public static Task Registration_and_Token_signed_data_differ_for_same_challenge()
   {
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
     byte[] registration = AgentKeyProof.BuildSignedData(AgentKeyCeremonyType.Registration, challenge);
     byte[] token = AgentKeyProof.BuildSignedData(AgentKeyCeremonyType.TokenIssuance, challenge);
 
     registration.SequenceEqual(token).ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  public void Cli_Sign_registration_verifies_with_AgentKeyProof()
+  public static Task Cli_Sign_registration_verifies_with_AgentKeyProof()
   {
     GeneratedKey generated = AgentSigning.GenerateKey();
     using ECDsa ecdsa = ECDsa.Create();
@@ -49,9 +56,10 @@ public class BuildSignedData_And_Sign
 
     result.IsValid.ShouldBeTrue();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.None);
+    return Task.CompletedTask;
   }
 
-  public void Registration_signature_fails_Token_verify()
+  public static Task Registration_signature_fails_Token_verify()
   {
     GeneratedKey generated = AgentSigning.GenerateKey();
     using ECDsa ecdsa = ECDsa.Create();
@@ -68,9 +76,10 @@ public class BuildSignedData_And_Sign
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(AgentKeyFailureReason.SignatureInvalid);
+    return Task.CompletedTask;
   }
 
-  public void Keygen_SPKI_parses_and_KeyId_matches_SHA256()
+  public static Task Keygen_SPKI_parses_and_KeyId_matches_SHA256()
   {
     GeneratedKey generated = AgentSigning.GenerateKey();
 
@@ -83,9 +92,10 @@ public class BuildSignedData_And_Sign
     b64url.ShouldNotContain("+");
     b64url.ShouldNotContain("/");
     AgentSigning.FromBase64Url(b64url).SequenceEqual(generated.KeyId).ShouldBeTrue();
+    return Task.CompletedTask;
   }
 
-  public void LoadKey_round_trips_PEM_and_KeyId()
+  public static Task LoadKey_round_trips_PEM_and_KeyId()
   {
     GeneratedKey generated = AgentSigning.GenerateKey();
     string path = Path.Combine(Path.GetTempPath(), $"agent-key-{Guid.NewGuid():N}.pem");
@@ -105,5 +115,7 @@ public class BuildSignedData_And_Sign
         File.Delete(path);
       }
     }
+
+    return Task.CompletedTask;
   }
 }

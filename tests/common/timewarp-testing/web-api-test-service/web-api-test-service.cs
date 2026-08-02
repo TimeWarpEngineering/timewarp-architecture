@@ -14,7 +14,6 @@ namespace TimeWarp.Architecture.Testing;
 /// <summary>
 /// A class that contains a common set of methods used when testing Web APIs
 /// </summary>
-[NotTest]
 public class WebApiTestService : IWebApiTestService
 {
   private readonly TestApiService ApiService;

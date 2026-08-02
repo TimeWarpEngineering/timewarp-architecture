@@ -11,6 +11,9 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Enforce_Feature_Filename_Grammar
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Enforce_Feature_Filename_Grammar>();
+
   private const string MinimalSource =
     """
     #region Purpose
@@ -22,7 +25,7 @@ public class Should_Enforce_Feature_Filename_Grammar
     public static class Marker;
     """;
 
-  private static CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> Test(
+  private static CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> Test(
     string filePath,
     string source = MinimalSource) =>
     new()
@@ -66,7 +69,7 @@ public class Should_Enforce_Feature_Filename_Grammar
   public static async Task Given_Handler_On_Contracts_Flags_TWA0015_ProjectRelativePath()
   {
     const string Path = "../features/hello/hello-handler-contracts.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-contracts.cs", "handler", "application"));
     await analyzerTest.RunAsync();
   }
@@ -76,7 +79,7 @@ public class Should_Enforce_Feature_Filename_Grammar
     // Spike pitfall: FilePath often arrives as project-relative WITH `..` traversal through
     // the layer project directory (e.g. web-server/../features/...). Must still flag.
     const string Path = "web-server/../features/hello/hello-handler-contracts.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-contracts.cs", "handler", "application"));
     await analyzerTest.RunAsync();
   }
@@ -89,7 +92,7 @@ public class Should_Enforce_Feature_Filename_Grammar
   public static async Task Given_Endpoint_On_Application_Flags_TWA0015()
   {
     const string Path = "../features/hello/hello-endpoint-application.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add
     (
       Twa0015(Path, "hello-endpoint-application.cs", "endpoint", "server")
@@ -112,7 +115,7 @@ public class Should_Enforce_Feature_Filename_Grammar
   public static async Task Given_Wrong_Case_Function_Flags_TWA0016()
   {
     const string Path = "../features/hello/hello-Handler-application.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add(Twa0016(Path, "hello-Handler-application.cs", "Handler"));
     await analyzerTest.RunAsync();
   }
@@ -154,7 +157,7 @@ public class Should_Enforce_Feature_Filename_Grammar
   {
     const string Path =
       "/home/dev/source/container-apps/web/features/hello/hello-handler-contracts.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-contracts.cs", "handler", "application"));
     await analyzerTest.RunAsync();
   }
@@ -164,7 +167,7 @@ public class Should_Enforce_Feature_Filename_Grammar
     // Family-generic scoping (task 129): api/features/ is a cohesive tree too, not just web's.
     const string Path =
       "/home/dev/source/container-apps/api/features/weather-forecast/weather-forecast-handler-contracts.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add
     (
       Twa0015(Path, "weather-forecast-handler-contracts.cs", "handler", "application")
@@ -192,7 +195,7 @@ public class Should_Enforce_Feature_Filename_Grammar
   public static async Task Given_Handler_On_Tests_Flags_TWA0015()
   {
     const string Path = "../features/hello/hello-handler-tests.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-tests.cs", "handler", "application"));
     await analyzerTest.RunAsync();
   }
@@ -200,7 +203,7 @@ public class Should_Enforce_Feature_Filename_Grammar
   public static async Task Given_Endpoint_On_Tests_Flags_TWA0015()
   {
     const string Path = "../features/hello/hello-endpoint-tests.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, FixieVerifier> analyzerTest = Test(Path);
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
     analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-endpoint-tests.cs", "endpoint", "server"));
     await analyzerTest.RunAsync();
   }
@@ -208,6 +211,9 @@ public class Should_Enforce_Feature_Filename_Grammar
 
 public class Should_Keep_Grammar_Registry_In_Sync
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Keep_Grammar_Registry_In_Sync>();
+
   // Family list must stay in sync with the convention-analyzers csproj's three <Exec> invocations
   // (source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj).
   // yarp is a single-project family (no concern trees) and is intentionally excluded (127 precedent).
@@ -218,7 +224,7 @@ public class Should_Keep_Grammar_Registry_In_Sync
     ("Grpc", "grpc"),
   ];
 
-  public static void Json_Cs_And_Props_Have_No_Drift()
+  public static Task Json_Cs_And_Props_Have_No_Drift()
   {
     string repoRoot = FindRepoRoot();
     string jsonPath = Path.Combine
@@ -336,6 +342,8 @@ public class Should_Keep_Grammar_Registry_In_Sync
       membership.ShouldContain($"$({prefix}PlatformTreeRoot)/**/*.cs");
       membership.ShouldNotContain("**/*-contracts.cs");
     }
+
+    return Task.CompletedTask;
   }
 
   private static string FindRepoRoot()
