@@ -22,7 +22,7 @@
 #endregion
 
 // Runtime MS DI so service types can stay internal (Nuru source-gen DI requires public types).
-// Internal services also keep compile-included helpers out of Fixie discovery in the test project.
+// Internal services also keep compile-included helpers out of test discovery in the test project.
 NuruApp app = NuruApp.CreateBuilder()
   .WithName("agent")
   .WithDescription("Agent identity demo CLI — keygen, register, token, whoami")

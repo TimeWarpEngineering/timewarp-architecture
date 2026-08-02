@@ -11,6 +11,9 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Enforce_Aspire_Resource_Names
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Enforce_Aspire_Resource_Names>();
+
   private const string Stubs =
     """
     #region Purpose
@@ -33,7 +36,7 @@ public class Should_Enforce_Aspire_Resource_Names
     }
     """;
 
-  private static CSharpAnalyzerTest<AspireResourceNameAnalyzer, FixieVerifier> Test(string source) =>
+  private static CSharpAnalyzerTest<AspireResourceNameAnalyzer, RoslynTestVerifier> Test(string source) =>
     new() { TestState = { Sources = { ("Stubs.cs", Stubs), ("AppHost.cs", source) } } };
 
   public static async Task Given_Name_Matching_ServiceNames_IsClean()
@@ -139,7 +142,7 @@ public class Should_Enforce_Aspire_Resource_Names
       }
       """;
 
-    var test = new CSharpAnalyzerTest<AspireResourceNameAnalyzer, FixieVerifier>
+    var test = new CSharpAnalyzerTest<AspireResourceNameAnalyzer, RoslynTestVerifier>
     {
       TestState = { Sources = { ("AppHost.cs", Source) } }
     };

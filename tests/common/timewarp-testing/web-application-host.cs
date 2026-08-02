@@ -33,7 +33,6 @@ using Microsoft.Extensions.Configuration.Json;
 /// </remarks>
 /// <example><see cref="WebTestServerApplication"/></example>
 /// <typeparam name="TProgram">The IProgram Implementation to use</typeparam>
-[NotTest]
 public class WebApplicationHost<TProgram> : IAsyncDisposable
   where TProgram : IAspNetProgram
 {

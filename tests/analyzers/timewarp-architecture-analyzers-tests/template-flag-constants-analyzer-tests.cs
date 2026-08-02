@@ -20,6 +20,9 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Require_Constants_For_Template_Flags
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Require_Constants_For_Template_Flags>();
+
   private const string If = "#" + "if";
   private const string Endif = "#" + "endif";
 
@@ -34,12 +37,12 @@ public class Should_Require_Constants_For_Template_Flags
     }
     """;
 
-  private static CSharpAnalyzerTest<TemplateFlagConstantsAnalyzer, FixieVerifier> Test(
+  private static CSharpAnalyzerTest<TemplateFlagConstantsAnalyzer, RoslynTestVerifier> Test(
     string[] lines,
     string[]? definedSymbols = null,
     bool includeTemplateJson = true)
   {
-    CSharpAnalyzerTest<TemplateFlagConstantsAnalyzer, FixieVerifier> test =
+    CSharpAnalyzerTest<TemplateFlagConstantsAnalyzer, RoslynTestVerifier> test =
       new() { TestState = { Sources = { ("Sample.cs", string.Join("\n", lines)) } } };
 
     if (includeTemplateJson)
@@ -73,7 +76,7 @@ public class Should_Require_Constants_For_Template_Flags
       Endif,
     ];
 
-    CSharpAnalyzerTest<TemplateFlagConstantsAnalyzer, FixieVerifier> test = Test(lines);
+    CSharpAnalyzerTest<TemplateFlagConstantsAnalyzer, RoslynTestVerifier> test = Test(lines);
     test.ExpectedDiagnostics.Add(Hit(lines, 1, "alpha"));
     await test.RunAsync();
   }
@@ -99,7 +102,7 @@ public class Should_Require_Constants_For_Template_Flags
       Endif,
     ];
 
-    CSharpAnalyzerTest<TemplateFlagConstantsAnalyzer, FixieVerifier> test = Test(lines, definedSymbols: ["alpha"]);
+    CSharpAnalyzerTest<TemplateFlagConstantsAnalyzer, RoslynTestVerifier> test = Test(lines, definedSymbols: ["alpha"]);
     test.ExpectedDiagnostics.Add(Hit(lines, 1, "beta"));
     await test.RunAsync();
   }

@@ -18,6 +18,9 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Enforce_Nested_Invariants
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Enforce_Nested_Invariants>();
+
   private const string FluentValidationStub =
     """
     #nullable enable
@@ -49,12 +52,12 @@ public class Should_Enforce_Nested_Invariants
     }
     """;
 
-  private static CSharpAnalyzerTest<AggregateInvariantsAnalyzer, FixieVerifier> Test(string source) =>
+  private static CSharpAnalyzerTest<AggregateInvariantsAnalyzer, RoslynTestVerifier> Test(string source) =>
     Test(("Aggregate.cs", source));
 
-  private static CSharpAnalyzerTest<AggregateInvariantsAnalyzer, FixieVerifier> Test(params (string path, string source)[] files)
+  private static CSharpAnalyzerTest<AggregateInvariantsAnalyzer, RoslynTestVerifier> Test(params (string path, string source)[] files)
   {
-    CSharpAnalyzerTest<AggregateInvariantsAnalyzer, FixieVerifier> test = new();
+    CSharpAnalyzerTest<AggregateInvariantsAnalyzer, RoslynTestVerifier> test = new();
     test.TestState.Sources.Add(("FluentValidationStub.cs", FluentValidationStub));
     test.TestState.Sources.Add(("IAggregateRootStub.cs", AggregateRootStub));
     foreach ((string path, string source) in files)

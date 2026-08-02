@@ -8,6 +8,9 @@ using System.Linq;
 // assemblies, so each contract set is compiled into its own named metadata assembly.
 public class IngressRoutePrefixGenerator_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<IngressRoutePrefixGenerator_Tests>();
+
   // The 104-003 regression shape: five api/identity/* operations (collapse to one prefix), the
   // api/Roles admin set that the hand list had dropped (must now appear), a [ClientOnlyContract]
   // GetCurrentUser (must NOT appear), a non-api Analytics route (falls to the web catch-all), and a

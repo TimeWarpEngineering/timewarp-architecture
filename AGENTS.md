@@ -65,19 +65,16 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   to anonymous; TWA0013/TWA0014 enforce the pairing at build time). No hand-written `BaseEndpoint`
   shims in the template. Validation stays on the mediator's `FluentValidationBehavior` — do not
   adopt FastEndpoints' validator integration.
-- Tests — **north star (epic 145; decision task 143 §6): single-framework Jaribu** (zero Fixie
-  **and** zero xUnit). Assertions: **Shouldly** only (do not introduce FluentAssertions — v8+ is
-  commercially licensed). **Do not extend Fixie or xUnit** — no new Fixie projects, conventions,
-  or xUnit `[Fact]` suites; remaining Fixie code is migration debt only (xUnit is already gone
-  — task 145-003).
+- Tests — **single-framework Jaribu** (zero Fixie and zero xUnit; epic 145 / decision task 143 §6;
+  Fixie retired task **145-007**). Assertions: **Shouldly** only (do not introduce FluentAssertions
+  — v8+ is commercially licensed). **Do not reintroduce Fixie or xUnit.**
   - **New product-slice tests** are co-located Jaribu runfiles (`<name>[-<function>]-tests.cs`
     under `features/` / `platform/`), standalone via `dotnet run`. Preamble and C-create host
     rules: skill **`tw-feature-placement`**; Jaribu itself: cross-repo **`tw-jaribu`**. Exemplars:
     `create-role-tests.cs` (web, host-free), `get-weather-forecasts-tests.cs` (api, SetupOnce).
-  - **Hybrid migration (epic 145):** slice-shaped coverage co-locates as suites are touched;
-    genuinely host-level / topology remainder stays suite-shaped under `tests/` but on **Jaribu
-    MTP**, not Fixie. Children: 145-002 (HostGraphFactory C-create) → suite ports → 145-007
-    retire TimeWarp.Fixie. Closed-box topology suite `aspire-tests` is Jaribu MTP (task 145-003).
+  - **Host-level / topology** suites stay suite-shaped under `tests/` on **Jaribu MTP** (project-local
+    `global.json` test.runner). Closed-box topology: `aspire-tests` (145-003). In-proc HostGraph:
+    HostGraphFactory C-create (145-002).
   - **CI:** family **`JARIBU_MULTI` aggregators** under
     `tests/container-apps/<family>/<family>-jaribu-tests/` (web + api; Microsoft.Testing.Platform;
     not in `.slnx` — task 136). Each aggregator's project-local `global.json` must **mirror the
@@ -313,11 +310,11 @@ Formats and lifecycle: the `agent-context-regions` skill.
 - **API endpoint**: contract per the skill (Request/Response/Validator, shared `I*Details` where
   bindable; `[ApiEndpoint]` when the host should generate the FastEndpoint; exactly one of
   `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]`, always) + Handler + **co-located
-  Jaribu** integration tests (happy path AND validation rejection; not new Fixie cases). Backend
-  validation comes from the mediator's `FluentValidationBehavior` — do not re-validate in handlers.
+  Jaribu** integration tests (happy path AND validation rejection). Backend validation comes from
+  the mediator's `FluentValidationBehavior` — do not re-validate in handlers.
 - **Client feature**: State/Actions/Components + serialization round-trips (prefer co-located
-  Jaribu; existing `web-contracts-tests` Fixie is migration debt) for non-trivial shapes
-  (ctor+Guard, envelopes, generated route properties).
+  Jaribu; suite-shaped `web-contracts-tests` is Jaribu MTP) for non-trivial shapes (ctor+Guard,
+  envelopes, generated route properties).
 
 ## Task management
 

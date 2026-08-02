@@ -27,7 +27,6 @@ namespace TimeWarp.Architecture.Testing;
 // files above degrade safely instead of throwing here.
 #endregion
 
-[NotTest]
 public static class ProjectContentRoot
 {
   public static string Resolve(Assembly assembly)

@@ -2,8 +2,10 @@ namespace DateTimeService_;
 
 public class NextUtcNow_Returns
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<NextUtcNow_Returns>();
 
-  public void No_Duplicates()
+  public static Task No_Duplicates()
   {
     // Arrange
     var dateTimeService = new DateTimeService();
@@ -29,6 +31,8 @@ public class NextUtcNow_Returns
 
     // Assert
     counts.Length.ShouldBe(0);
+
+    return Task.CompletedTask;
 
     // Local Functions
     List<DateTime> GetDates(ManualResetEvent trigger)

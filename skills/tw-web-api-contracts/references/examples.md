@@ -198,7 +198,7 @@ stacks `[ApiRoute]` + `[OpenDataQueryParameters]` + `[AuthApiRequest]` and compo
 
 ## Tier 4 — Contract test (serialization)
 
-Host-free round-trip — prefer co-located Jaribu `*-tests.cs` (Shouldly); legacy Fixie contracts-tests is migration debt:
+Host-free round-trip — prefer co-located Jaribu `*-tests.cs` (Shouldly); suite-shaped contracts-tests is Jaribu MTP:
 
 ```csharp
 public class Command_Should_

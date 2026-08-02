@@ -12,6 +12,9 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Enforce_Auth_Posture
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Enforce_Auth_Posture>();
+
   // Minimal stub surface — matched by the analyzer via simple name, same convention as
   // EndpointCoverageAnalyzer's stubs. IAuthApiRequest/AuthApiRequestAttribute stand in for BOTH the
   // manual interface form and the [AuthApiRequest] mixin-generator-expanded form: the analyzer only
@@ -59,7 +62,7 @@ public class Should_Enforce_Auth_Posture
     }
     """;
 
-  private static CSharpAnalyzerTest<EndpointAuthPostureAnalyzer, FixieVerifier> Test(string source) =>
+  private static CSharpAnalyzerTest<EndpointAuthPostureAnalyzer, RoslynTestVerifier> Test(string source) =>
     new()
     {
       TestState =

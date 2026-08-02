@@ -4,7 +4,7 @@
 // /// An abstract class that adds test functionality for sending Requests in a scope.
 // /// </summary>
 // /// <example><see cref="TestServerApplication"/></example>
-// [NotTest]
+
 // public abstract partial class TestApplication : ISender
 // {
 //   private readonly ISender ScopedSender;

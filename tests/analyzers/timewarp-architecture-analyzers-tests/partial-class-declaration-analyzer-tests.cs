@@ -7,6 +7,9 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Trigger_PartialClassDeclaration
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Trigger_PartialClassDeclaration>();
+
   public static async Task Given_PrimaryFileWithoutFullSpecifiers()
   {
     const string PrimaryFile =
@@ -29,7 +32,7 @@ public class Should_Trigger_PartialClassDeclaration
       .WithSpan("ApplicationState.cs", startLine: 1, startColumn: 15, endLine: 1, endColumn: 31)
       .WithArguments("ApplicationState", "should have full specifiers in the primary file");
 
-    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, RoslynTestVerifier>
     {
       TestState =
       {
@@ -68,7 +71,7 @@ public class Should_Trigger_PartialClassDeclaration
       .WithSpan("ApplicationState.CloseModal.cs", startLine: 1, startColumn: 22, endLine: 1, endColumn: 38)
       .WithArguments("ApplicationState", "should have minimal specifiers in secondary files");
 
-    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, RoslynTestVerifier>
     {
       TestState =
       {
@@ -107,7 +110,7 @@ public class Should_Trigger_PartialClassDeclaration
       .WithSpan("WrongFileName.cs", startLine: 1, startColumn: 15, endLine: 1, endColumn: 31)
       .WithArguments("ApplicationState", "file name 'WrongFileName.cs' does not follow the expected naming convention");
 
-    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, RoslynTestVerifier>
     {
       TestState =
       {
@@ -150,7 +153,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, RoslynTestVerifier>
     {
       TestState =
       {
@@ -192,7 +195,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, RoslynTestVerifier>
     {
       TestState =
       {
@@ -234,7 +237,7 @@ public class Should_Trigger_PartialClassDeclaration
       .WithSpan("ApplicationState.Extensions.cs", startLine: 1, startColumn: 32, endLine: 1, endColumn: 54)
       .WithArguments("ApplicationState", "should not include class inheritance in secondary files");
 
-    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, RoslynTestVerifier>
     {
       TestState =
       {
@@ -273,7 +276,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, RoslynTestVerifier>
     {
       TestState =
       {
@@ -298,7 +301,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, FixieVerifier>
+    var analyzerTest = new CSharpAnalyzerTest<PartialClassDeclarationAnalyzer, RoslynTestVerifier>
     {
       TestState =
       {

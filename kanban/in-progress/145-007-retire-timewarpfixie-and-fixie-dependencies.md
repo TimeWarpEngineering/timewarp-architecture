@@ -105,3 +105,9 @@ Update live guidance (not historical kanban/analysis folders):
 ## Session
 
 - Started: 145-007 orchestration
+- 2026-08-02: Migrated analyzer suite projects to Jaribu MTP
+  - `tests/analyzers/timewarp-architecture-analyzers-tests` — 12 classes, **102** tests pass
+  - `tests/analyzers/timewarp-architecture-sourcegenerator-tests` — 11 classes, **59** tests pass
+  - Rename: `fixie-verifier.cs` / `FixieVerifier` → `roslyn-test-verifier.cs` / `RoslynTestVerifier`
+  - Deleted both `testing-convention.cs`; Fixie package refs replaced with `TimeWarp.Jaribu.TestingPlatform`
+  - Verified: `dotnet build -c Release && dotnet test -c Release` in each project dir

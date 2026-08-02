@@ -16,7 +16,10 @@ using TimeWarp.Foundation.Types;
 
 public class SharedProblemDetails_Should
 {
-  public static void SerializeAndDeserialize_Preserving_Extensions()
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<SharedProblemDetails_Should>();
+
+  public static Task SerializeAndDeserialize_Preserving_Extensions()
   {
     string serverPayload =
       """
@@ -44,5 +47,6 @@ public class SharedProblemDetails_Should
     string reserialized = JsonSerializer.Serialize(parsed, ContractSerialization.Options);
     reserialized.ShouldContain("errors");
     reserialized.ShouldContain("traceId");
+    return Task.CompletedTask;
   }
 }

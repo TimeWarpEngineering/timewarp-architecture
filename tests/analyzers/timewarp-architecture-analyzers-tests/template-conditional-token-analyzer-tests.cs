@@ -19,15 +19,18 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Flag_Template_Conditional_Tokens
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Flag_Template_Conditional_Tokens>();
+
   // Composed so the raw sequences never appear in this file (see Design).
   private const string If = "#" + "if";
   private const string Endif = "#" + "endif";
   private const string DisableLine = "//" + "-:cnd:noEmit";
   private const string EnableLine = "//" + "+:cnd:noEmit";
 
-  private static CSharpAnalyzerTest<TemplateConditionalTokenAnalyzer, FixieVerifier> Test(string[] lines, params DiagnosticResult[] expected)
+  private static CSharpAnalyzerTest<TemplateConditionalTokenAnalyzer, RoslynTestVerifier> Test(string[] lines, params DiagnosticResult[] expected)
   {
-    CSharpAnalyzerTest<TemplateConditionalTokenAnalyzer, FixieVerifier> test =
+    CSharpAnalyzerTest<TemplateConditionalTokenAnalyzer, RoslynTestVerifier> test =
       new() { TestState = { Sources = { ("Sample.cs", string.Join("\n", lines)) } } };
     test.ExpectedDiagnostics.AddRange(expected);
     return test;

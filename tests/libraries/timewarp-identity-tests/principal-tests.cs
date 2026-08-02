@@ -2,16 +2,21 @@ namespace Principal_;
 
 public class Create
 {
-  public void Sets_provisional_trust_tier_and_not_quarantined()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Create>();
+
+  public static Task Sets_provisional_trust_tier_and_not_quarantined()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.TrustTier.ShouldBe(TrustTier.Provisional);
     principal.IsQuarantined.ShouldBeFalse();
     principal.IsActive.ShouldBeTrue();
     principal.IsFundedAndActive.ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  public void Assigns_non_empty_id_and_created_at()
+  public static Task Assigns_non_empty_id_and_created_at()
   {
     DateTimeOffset before = DateTimeOffset.UtcNow.AddSeconds(-1);
     Principal principal = Principal.Create(PrincipalKind.Service);
@@ -21,70 +26,92 @@ public class Create
     principal.Kind.ShouldBe(PrincipalKind.Service);
     principal.CreatedAt.ShouldBeInRange(before, after);
     principal.DisplayName.ShouldBeNull();
+    return Task.CompletedTask;
   }
 
-  public void Allows_agent_without_human()
+  public static Task Allows_agent_without_human()
   {
     Principal agent = Principal.Create(PrincipalKind.Agent);
     agent.Kind.ShouldBe(PrincipalKind.Agent);
     agent.DisplayName.ShouldBeNull();
+    return Task.CompletedTask;
   }
 
-  public void Rejects_none_kind() =>
+  public static Task Rejects_none_kind()
+  {
     Should.Throw<ArgumentOutOfRangeException>(() => Principal.Create(PrincipalKind.None));
+    return Task.CompletedTask;
+  }
 
-  public void Rejects_undefined_kind() =>
+  public static Task Rejects_undefined_kind()
+  {
     Should.Throw<ArgumentOutOfRangeException>(() => Principal.Create((PrincipalKind)99));
+    return Task.CompletedTask;
+  }
 
-  public void Version_defaults_to_zero()
+  public static Task Version_defaults_to_zero()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.Version.ShouldBe(0);
+    return Task.CompletedTask;
   }
 
-  public void Different_ids_are_not_equal()
+  public static Task Different_ids_are_not_equal()
   {
     Principal a = Principal.Create(PrincipalKind.Human);
     Principal b = Principal.Create(PrincipalKind.Human);
     a.ShouldNotBe(b);
+    return Task.CompletedTask;
   }
 }
 
 public class SetDisplayName
 {
-  public void Trims_whitespace()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<SetDisplayName>();
+
+  public static Task Trims_whitespace()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.SetDisplayName("  Ada  ");
     principal.DisplayName.ShouldBe("Ada");
+    return Task.CompletedTask;
   }
 
-  public void Whitespace_only_becomes_null()
+  public static Task Whitespace_only_becomes_null()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.SetDisplayName("   ");
     principal.DisplayName.ShouldBeNull();
+    return Task.CompletedTask;
   }
 
-  public void Null_clears_name()
+  public static Task Null_clears_name()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.SetDisplayName("Ada");
     principal.SetDisplayName(null);
     principal.DisplayName.ShouldBeNull();
+    return Task.CompletedTask;
   }
 }
 
 public class Promote
 {
-  public void Allows_any_strictly_higher_progression_tier()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Promote>();
+
+  public static Task Allows_any_strictly_higher_progression_tier()
   {
     Principal principal = Principal.Create(PrincipalKind.Agent);
     principal.Promote(TrustTier.Funded);
     principal.TrustTier.ShouldBe(TrustTier.Funded);
+    return Task.CompletedTask;
   }
 
-  public void Allows_step_to_keyed_then_funded_then_established()
+  public static Task Allows_step_to_keyed_then_funded_then_established()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.Promote(TrustTier.Keyed);
@@ -96,21 +123,24 @@ public class Promote
     principal.Promote(TrustTier.Established);
     principal.TrustTier.ShouldBe(TrustTier.Established);
     principal.IsFundedAndActive.ShouldBeTrue();
+    return Task.CompletedTask;
   }
 
-  public void Rejects_none_target()
+  public static Task Rejects_none_target()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     Should.Throw<ArgumentOutOfRangeException>(() => principal.Promote(TrustTier.None));
+    return Task.CompletedTask;
   }
 
-  public void Rejects_undefined_tier()
+  public static Task Rejects_undefined_tier()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     Should.Throw<ArgumentOutOfRangeException>(() => principal.Promote((TrustTier)99));
+    return Task.CompletedTask;
   }
 
-  public void Rejects_same_or_lower_tier()
+  public static Task Rejects_same_or_lower_tier()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.Promote(TrustTier.Funded);
@@ -118,26 +148,33 @@ public class Promote
     Should.Throw<InvalidOperationException>(() => principal.Promote(TrustTier.Funded));
     Should.Throw<InvalidOperationException>(() => principal.Promote(TrustTier.Keyed));
     Should.Throw<InvalidOperationException>(() => principal.Promote(TrustTier.Provisional));
+    return Task.CompletedTask;
   }
 
-  public void Rejects_when_quarantined()
+  public static Task Rejects_when_quarantined()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.Quarantine();
     Should.Throw<InvalidOperationException>(() => principal.Promote(TrustTier.Keyed));
+    return Task.CompletedTask;
   }
 }
 
 public class RecordCredentialAttached
 {
-  public void Promotes_provisional_to_keyed_when_not_quarantined()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<RecordCredentialAttached>();
+
+  public static Task Promotes_provisional_to_keyed_when_not_quarantined()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.RecordCredentialAttached();
     principal.TrustTier.ShouldBe(TrustTier.Keyed);
+    return Task.CompletedTask;
   }
 
-  public void Promotes_provisional_to_keyed_even_when_quarantined()
+  public static Task Promotes_provisional_to_keyed_even_when_quarantined()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.Quarantine();
@@ -146,20 +183,26 @@ public class RecordCredentialAttached
     principal.IsQuarantined.ShouldBeTrue();
     principal.IsActive.ShouldBeFalse();
     principal.IsFundedAndActive.ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  public void No_op_when_already_keyed_or_higher()
+  public static Task No_op_when_already_keyed_or_higher()
   {
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.Promote(TrustTier.Funded);
     principal.RecordCredentialAttached();
     principal.TrustTier.ShouldBe(TrustTier.Funded);
+    return Task.CompletedTask;
   }
 }
 
 public class QuarantineLifecycle
 {
-  public void Quarantine_and_clear()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<QuarantineLifecycle>();
+
+  public static Task Quarantine_and_clear()
   {
     Principal principal = Principal.Create(PrincipalKind.Service);
     principal.IsQuarantined.ShouldBeFalse();
@@ -172,9 +215,10 @@ public class QuarantineLifecycle
     principal.ClearQuarantine();
     principal.IsQuarantined.ShouldBeFalse();
     principal.IsActive.ShouldBeTrue();
+    return Task.CompletedTask;
   }
 
-  public void IsFundedAndActive_requires_funded_and_not_quarantined()
+  public static Task IsFundedAndActive_requires_funded_and_not_quarantined()
   {
     Principal principal = Principal.Create(PrincipalKind.Agent);
     principal.IsFundedAndActive.ShouldBeFalse();
@@ -190,5 +234,6 @@ public class QuarantineLifecycle
 
     principal.Promote(TrustTier.Established);
     principal.IsFundedAndActive.ShouldBeTrue();
+    return Task.CompletedTask;
   }
 }

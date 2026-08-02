@@ -5,44 +5,56 @@ using InMemoryWebAuthnChallengeStore_;
 
 public class Issue_And_TryConsume
 {
-  public void Consume_is_one_time()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Issue_And_TryConsume>();
+
+  public static Task Consume_is_one_time()
   {
     var store = new InMemoryAgentKeyChallengeStore();
     byte[] challenge = store.Issue(AgentKeyCeremonyType.Registration);
 
     store.TryConsume(AgentKeyCeremonyType.Registration, challenge).ShouldBeTrue();
     store.TryConsume(AgentKeyCeremonyType.Registration, challenge).ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  public void Unknown_challenge_returns_false()
+  public static Task Unknown_challenge_returns_false()
   {
     var store = new InMemoryAgentKeyChallengeStore();
     byte[] neverIssued = RandomNumberGenerator.GetBytes(32);
 
     store.TryConsume(AgentKeyCeremonyType.Registration, neverIssued).ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  public void Wrong_ceremony_type_returns_false()
+  public static Task Wrong_ceremony_type_returns_false()
   {
     var store = new InMemoryAgentKeyChallengeStore();
     byte[] challenge = store.Issue(AgentKeyCeremonyType.Registration);
 
     store.TryConsume(AgentKeyCeremonyType.TokenIssuance, challenge).ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  public void Distinct_issues_return_distinct_challenges()
+  public static Task Distinct_issues_return_distinct_challenges()
   {
     var store = new InMemoryAgentKeyChallengeStore();
     byte[] a = store.Issue(AgentKeyCeremonyType.Registration);
     byte[] b = store.Issue(AgentKeyCeremonyType.Registration);
 
     a.ShouldNotBe(b);
+    return Task.CompletedTask;
   }
 }
 
 public class Expiry
 {
-  public void Expired_challenge_is_not_consumable()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Expiry>();
+
+  public static Task Expired_challenge_is_not_consumable()
   {
     var timeProvider = new ManualTimeProvider(DateTimeOffset.UtcNow);
     var store = new InMemoryAgentKeyChallengeStore(timeProvider, TimeSpan.FromMinutes(5));
@@ -51,9 +63,10 @@ public class Expiry
     timeProvider.Advance(TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(1));
 
     store.TryConsume(AgentKeyCeremonyType.TokenIssuance, challenge).ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  public void Not_yet_expired_challenge_is_consumable()
+  public static Task Not_yet_expired_challenge_is_consumable()
   {
     var timeProvider = new ManualTimeProvider(DateTimeOffset.UtcNow);
     var store = new InMemoryAgentKeyChallengeStore(timeProvider, TimeSpan.FromMinutes(5));
@@ -62,12 +75,17 @@ public class Expiry
     timeProvider.Advance(TimeSpan.FromMinutes(4));
 
     store.TryConsume(AgentKeyCeremonyType.TokenIssuance, challenge).ShouldBeTrue();
+    return Task.CompletedTask;
   }
 }
 
 public class CapEviction
 {
-  public void Oldest_entry_is_evicted_when_at_capacity()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<CapEviction>();
+
+  public static Task Oldest_entry_is_evicted_when_at_capacity()
   {
     var timeProvider = new ManualTimeProvider(DateTimeOffset.UtcNow);
     var store = new InMemoryAgentKeyChallengeStore(timeProvider, TimeSpan.FromMinutes(5), maxEntries: 2);
@@ -82,5 +100,6 @@ public class CapEviction
     store.TryConsume(AgentKeyCeremonyType.Registration, first).ShouldBeFalse();
     store.TryConsume(AgentKeyCeremonyType.Registration, second).ShouldBeTrue();
     store.TryConsume(AgentKeyCeremonyType.Registration, third).ShouldBeTrue();
+    return Task.CompletedTask;
   }
 }

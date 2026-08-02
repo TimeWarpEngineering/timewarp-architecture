@@ -7,7 +7,10 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Enforce_Purpose_Region
 {
-  private static CSharpAnalyzerTest<PurposeRegionAnalyzer, FixieVerifier> Test(string fileName, string source) =>
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Enforce_Purpose_Region>();
+
+  private static CSharpAnalyzerTest<PurposeRegionAnalyzer, RoslynTestVerifier> Test(string fileName, string source) =>
     new() { TestState = { Sources = { (fileName, source) } } };
 
   public static async Task Given_File_Without_Purpose_Region()
@@ -26,7 +29,7 @@ public class Should_Enforce_Purpose_Region
       .WithSpan("Widget.cs", 1, 1, 1, 10)
       .WithArguments("Widget.cs");
 
-    CSharpAnalyzerTest<PurposeRegionAnalyzer, FixieVerifier> analyzerTest = new()
+    CSharpAnalyzerTest<PurposeRegionAnalyzer, RoslynTestVerifier> analyzerTest = new()
     {
       TestState =
       {
@@ -97,7 +100,7 @@ public class Should_Enforce_Purpose_Region
       .WithSpan("Widget.cs", 5, 1, 5, 10)
       .WithArguments("Widget.cs");
 
-    CSharpAnalyzerTest<PurposeRegionAnalyzer, FixieVerifier> analyzerTest = new()
+    CSharpAnalyzerTest<PurposeRegionAnalyzer, RoslynTestVerifier> analyzerTest = new()
     {
       TestState =
       {

@@ -16,7 +16,6 @@ namespace TimeWarp.Architecture.Testing;
 using System.Net.Http.Headers;
 using OneOf;
 
-[NotTest]
 public sealed class TestApiService : IApiService
 {
   private readonly HttpApiService Core;

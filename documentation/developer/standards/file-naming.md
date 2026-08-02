@@ -37,7 +37,7 @@ Multi-dot **partial** stems are valid when each segment is kebab:
   Jaribu runfile preamble section, including **C-create** host lifetime); reference
   implementations `create-role-tests.cs`, `get-weather-forecasts-tests.cs`. Jaribu itself
   (attributes, naming, assertions): cross-repo skill **`tw-jaribu`**. North star: single-framework
-  Jaribu (epic 145) — do not add new Fixie/xUnit tests.
+  Jaribu (epic 145 / 145-007) — do not reintroduce Fixie or xUnit.
 
 ## Enforcement
 

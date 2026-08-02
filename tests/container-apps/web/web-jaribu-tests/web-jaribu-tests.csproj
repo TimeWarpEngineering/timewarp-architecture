@@ -12,7 +12,7 @@
     <DefineConstants>$(DefineConstants);JARIBU_MULTI;api</DefineConstants>
     <!-- .NET 10 SDK requires this opt-in for the MTP-native `dotnet test` experience
          (VSTest bridge is no longer supported) — https://aka.ms/dotnet-test-mtp-error.
-         Pair with the project-local global.json test.runner (not root — would break Fixie). -->
+         Pair with the project-local global.json test.runner project-local MTP runner; -->
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!-- Same dual-mode runfile suppressions the exemplars carry via #:property (inert under
          multi-mode compile); CA1707 is already ambient from tests/Directory.Build.props. -->

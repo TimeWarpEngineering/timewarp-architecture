@@ -2,16 +2,23 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <NoWarn>$(NoWarn);CA1707;CA1849;IDE0021;IDE0058</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
-    <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\source\analyzers\timewarp-architecture-analyzers\timewarp-architecture-analyzers.csproj" />
     <ProjectReference Include="..\..\..\source\analyzers\timewarp-architecture-convention-analyzers\timewarp-architecture-convention-analyzers.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="TimeWarp.Jaribu" />
+    <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
   </ItemGroup>
 </Project>

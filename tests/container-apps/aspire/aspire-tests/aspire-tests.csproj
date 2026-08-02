@@ -7,7 +7,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <!-- .NET 10 MTP-native dotnet test — pair with project-local global.json test.runner
-         (not root — would break remaining Fixie). timewarp-jaribu#20: mirror root SDK pin. -->
+         project-local MTP runner; timewarp-jaribu#20: mirror root SDK pin. -->
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!-- Jaribu SUT_/Action_Given_ naming uses underscores (CA1707); static SetupOnce/CleanUpOnce. -->
     <NoWarn>$(NoWarn);CA1707;CA1849;IDE0021;IDE0058</NoWarn>

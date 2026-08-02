@@ -15,6 +15,9 @@ using OneOf;
 
 public class HttpApiService_GetResponse
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<HttpApiService_GetResponse>();
+
   private sealed class GetRequest : IApiRequest
   {
     public string GetRoute() => "/api/sample";
@@ -85,7 +88,7 @@ public class HttpApiService_GetResponse
     };
   }
 
-  public async Task Returns_typed_response_on_success()
+  public static async Task Returns_typed_response_on_success()
   {
     RecordingHandler handler = new(JsonResponse(HttpStatusCode.OK, new SampleDto { Name = "ok" }));
     HttpApiService service = CreateService(handler);
@@ -100,7 +103,7 @@ public class HttpApiService_GetResponse
     handler.LastRequest.RequestUri!.PathAndQuery.ShouldBe("/api/sample");
   }
 
-  public async Task Uses_query_string_route_for_get()
+  public static async Task Uses_query_string_route_for_get()
   {
     RecordingHandler handler = new(JsonResponse(HttpStatusCode.OK, new SampleDto { Name = "q" }));
     HttpApiService service = CreateService(handler);
@@ -111,7 +114,7 @@ public class HttpApiService_GetResponse
     handler.LastRequest!.RequestUri!.PathAndQuery.ShouldBe("/api/items?q=alpha");
   }
 
-  public async Task Maps_204_to_shared_problem_details()
+  public static async Task Maps_204_to_shared_problem_details()
   {
     RecordingHandler handler = new(new HttpResponseMessage(HttpStatusCode.NoContent));
     HttpApiService service = CreateService(handler);
@@ -125,7 +128,7 @@ public class HttpApiService_GetResponse
     problem.Title.ShouldBe("No Content");
   }
 
-  public async Task Maps_problem_json_to_shared_problem_details()
+  public static async Task Maps_problem_json_to_shared_problem_details()
   {
     SharedProblemDetails body = new()
     {
@@ -146,7 +149,7 @@ public class HttpApiService_GetResponse
     problem.Detail.ShouldBe("invalid");
   }
 
-  public async Task Synthesizes_problem_when_error_body_is_not_json()
+  public static async Task Synthesizes_problem_when_error_body_is_not_json()
   {
     RecordingHandler handler = new(
       new HttpResponseMessage(HttpStatusCode.InternalServerError)
@@ -164,7 +167,7 @@ public class HttpApiService_GetResponse
     problem.Title.ShouldBe("Unhandled Error");
   }
 
-  public async Task Maps_cancellation_to_499_problem()
+  public static async Task Maps_cancellation_to_499_problem()
   {
     RecordingHandler handler = new((_, ct) =>
     {
@@ -184,7 +187,7 @@ public class HttpApiService_GetResponse
     problem.Title.ShouldBe("Operation Cancelled");
   }
 
-  public async Task Throws_not_supported_for_head()
+  public static async Task Throws_not_supported_for_head()
   {
     RecordingHandler handler = new(new HttpResponseMessage(HttpStatusCode.OK));
     HttpApiService service = CreateService(handler);
@@ -197,7 +200,7 @@ public class HttpApiService_GetResponse
     exception.Message.ShouldContain("Head");
   }
 
-  public async Task Returns_file_response_for_stream_tresponse()
+  public static async Task Returns_file_response_for_stream_tresponse()
   {
     byte[] bytes = "hello-file"u8.ToArray();
     HttpResponseMessage response = new(HttpStatusCode.OK)
@@ -223,7 +226,7 @@ public class HttpApiService_GetResponse
     (await reader.ReadToEndAsync()).ShouldBe("hello-file");
   }
 
-  public async Task Sets_bearer_header_when_acquire_returns_token()
+  public static async Task Sets_bearer_header_when_acquire_returns_token()
   {
     RecordingHandler handler = new(JsonResponse(HttpStatusCode.OK, new SampleDto { Name = "authed" }));
     HttpApiService service = CreateService(
@@ -238,7 +241,7 @@ public class HttpApiService_GetResponse
     handler.LastRequest.Headers.Authorization.Parameter.ShouldBe("test-token-123");
   }
 
-  public async Task Does_not_set_bearer_when_acquire_returns_null()
+  public static async Task Does_not_set_bearer_when_acquire_returns_null()
   {
     RecordingHandler handler = new(JsonResponse(HttpStatusCode.OK, new SampleDto { Name = "anon" }));
     HttpApiService service = CreateService(
@@ -251,7 +254,7 @@ public class HttpApiService_GetResponse
     handler.LastRequest!.Headers.Authorization.ShouldBeNull();
   }
 
-  public async Task Does_not_set_bearer_when_acquire_is_null()
+  public static async Task Does_not_set_bearer_when_acquire_is_null()
   {
     RecordingHandler handler = new(JsonResponse(HttpStatusCode.OK, new SampleDto { Name = "none" }));
     HttpApiService service = CreateService(handler, acquireBearerTokenAsync: null);

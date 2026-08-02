@@ -4,6 +4,9 @@ using System.Linq;
 
 public class FastEndpointSourceGenerator_RouteConflicts_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<FastEndpointSourceGenerator_RouteConflicts_Tests>();
+
   // Two [ApiEndpoint] contracts that map to the SAME route+verb — must raise TWE003 on ALL
   // parties and generate NONE of them (F-003).
   private const string ConflictingContracts = """
@@ -109,6 +112,9 @@ public class FastEndpointSourceGenerator_RouteConflicts_Tests
 
 public class FastEndpointSourceGenerator_OpenApi_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<FastEndpointSourceGenerator_OpenApi_Tests>();
+
   private const string DocumentedContract = """
     using TimeWarp.Architecture;
     using TimeWarp.Architecture.Attributes;
@@ -172,6 +178,9 @@ public class FastEndpointSourceGenerator_OpenApi_Tests
 
 public class FastEndpointSourceGenerator_ShapeAndVerb_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<FastEndpointSourceGenerator_ShapeAndVerb_Tests>();
+
   public static Task Should_Report_TWE002_When_Missing_Query_Or_Command()
   {
     MetadataReference contract = GeneratorTestHarness.CompileContractAssembly("""

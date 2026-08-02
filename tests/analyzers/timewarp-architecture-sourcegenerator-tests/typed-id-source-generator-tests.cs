@@ -11,6 +11,9 @@ using Microsoft.CodeAnalysis.CSharp;
 // (internal attribute applications and record-struct shape must survive the metadata round-trip).
 public class TypedIdSourceGenerator_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<TypedIdSourceGenerator_Tests>();
+
   private const string SampleSource = """
     namespace Sample;
 

@@ -11,6 +11,9 @@ using Microsoft.CodeAnalysis.CSharp;
 // Policy must be a const field reference (Policies.X); literals and nameof are TWE005 errors.
 public class PageSourceGenerator_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<PageSourceGenerator_Tests>();
+
   private const string RootNamespace = "TimeWarp.Architecture";
 
   private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) Run(string source)

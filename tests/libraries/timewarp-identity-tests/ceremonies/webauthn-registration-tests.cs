@@ -3,10 +3,14 @@ namespace WebAuthnRegistration_;
 
 public class Verify
 {
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Verify>();
+
   private static readonly WebAuthnRelyingParty Rp = new("localhost", "Test RP", []);
   private const string Origin = "https://localhost:7000";
 
-  public void Happy_path_es256_succeeds()
+  public static Task Happy_path_es256_succeeds()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -20,9 +24,10 @@ public class Verify
     result.FailureReason.ShouldBe(WebAuthnFailureReason.None);
     result.CredentialId.ShouldBe(authenticator.CredentialId);
     result.CosePublicKey.ShouldBe(authenticator.CosePublicKey);
+    return Task.CompletedTask;
   }
 
-  public void Wrong_ceremony_type_fails()
+  public static Task Wrong_ceremony_type_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -36,9 +41,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.WrongCeremonyType);
+    return Task.CompletedTask;
   }
 
-  public void Wrong_challenge_fails()
+  public static Task Wrong_challenge_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] signedChallenge = RandomNumberGenerator.GetBytes(32);
@@ -51,9 +57,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.ChallengeMismatch);
+    return Task.CompletedTask;
   }
 
-  public void Wrong_origin_fails()
+  public static Task Wrong_origin_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -65,9 +72,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.OriginMismatch);
+    return Task.CompletedTask;
   }
 
-  public void RpIdHash_mismatch_fails()
+  public static Task RpIdHash_mismatch_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -80,9 +88,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.RpIdHashMismatch);
+    return Task.CompletedTask;
   }
 
-  public void UserPresence_clear_fails()
+  public static Task UserPresence_clear_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -94,9 +103,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.UserPresenceRequired);
+    return Task.CompletedTask;
   }
 
-  public void AttestedCredentialData_clear_fails()
+  public static Task AttestedCredentialData_clear_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -110,9 +120,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.MissingAttestedCredentialData);
+    return Task.CompletedTask;
   }
 
-  public void CredentialId_mismatch_fails()
+  public static Task CredentialId_mismatch_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -128,9 +139,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.CredentialIdMismatch);
+    return Task.CompletedTask;
   }
 
-  public void Unsupported_algorithm_fails()
+  public static Task Unsupported_algorithm_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -147,9 +159,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.UnsupportedAlgorithm);
+    return Task.CompletedTask;
   }
 
-  public void Weak_rsa_modulus_fails()
+  public static Task Weak_rsa_modulus_fails()
   {
     // Round-1 finding M5: a structurally-valid RSA COSE key (kty=RSA, alg=RS256, parses fine) whose
     // modulus is only 512 bits must be rejected — CoseKey.TryCreateVerifier's MinimumRsaModulusBits
@@ -169,9 +182,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.UnsupportedAlgorithm);
+    return Task.CompletedTask;
   }
 
-  public void Empty_rsa_modulus_fails_without_throwing()
+  public static Task Empty_rsa_modulus_fails_without_throwing()
   {
     // Round-2 finding M9: CoseKey.TryParse only null-checks the RSA modulus, so a zero-length `n`
     // reaches TryCreateVerifier. Before the fix, GetModulusBitLength indexed modulus[0] on an empty
@@ -192,9 +206,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.UnsupportedAlgorithm);
+    return Task.CompletedTask;
   }
 
-  public void Empty_rsa_exponent_fails_without_throwing()
+  public static Task Empty_rsa_exponent_fails_without_throwing()
   {
     // Sibling gap found auditing M9's neighborhood: a real, large-enough modulus but a zero-length
     // exponent. On this platform RSA.ImportParameters throws IndexOutOfRangeException (not
@@ -215,9 +230,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.UnsupportedAlgorithm);
+    return Task.CompletedTask;
   }
 
-  public void Malformed_cbor_attestation_object_fails()
+  public static Task Malformed_cbor_attestation_object_fails()
   {
     var authenticator = new SoftwareAuthenticator();
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
@@ -228,9 +244,10 @@ public class Verify
 
     result.IsValid.ShouldBeFalse();
     result.FailureReason.ShouldBe(WebAuthnFailureReason.MalformedAttestationObject);
+    return Task.CompletedTask;
   }
 
-  public void Fmt_packed_with_garbage_attStmt_is_accepted()
+  public static Task Fmt_packed_with_garbage_attStmt_is_accepted()
   {
     // Locks the template posture: attStmt is ignored regardless of what fmt an authenticator
     // returns — a "packed" attestation with nonsense attStmt content must still verify, because
@@ -244,5 +261,6 @@ public class Verify
     WebAuthnRegistrationResult result = WebAuthnRegistration.Verify(Rp, challenge, clientDataJson, attestationObject, authenticator.CredentialId);
 
     result.IsValid.ShouldBeTrue();
+    return Task.CompletedTask;
   }
 }

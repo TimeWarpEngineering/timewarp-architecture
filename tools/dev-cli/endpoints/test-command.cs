@@ -7,13 +7,11 @@
 // Handler stores Ct and RepoRoot as fields so private methods are zero-parameter.
 // Streams per-project output via Amuru RunAsync by default; --quiet uses CaptureAsync.
 //
-// Two frameworks coexist under tests/ during the Fixie → Jaribu migration (task 136):
-//   Fixie:   DotNet.Test().WithProject(csproj).WithWorkingDirectory(RepoRoot) — VSTest adapter.
-//   MTP:     bare `dotnet test -c Release` with cwd = project directory. On .NET 10,
-//            `dotnet test <csproj-path>` / `--project` fail for Microsoft.Testing.Platform
-//            ("Testing with VSTest target is no longer supported"). Detection is a project-local
-//            global.json whose test.runner is Microsoft.Testing.Platform (per-aggregator only;
-//            root global.json must NOT carry test.runner — that would break remaining Fixie).
+// Task 145-007: all suite-shaped projects are Jaribu Microsoft.Testing.Platform. On .NET 10,
+// `dotnet test <csproj-path>` / `--project` fail for MTP ("Testing with VSTest target is no longer
+// supported"). Always run bare `dotnet test -c Release` with cwd = project directory, which
+// picks up the project-local global.json test.runner. Root global.json must NOT set a runner
+// (co-located runfiles and other tooling still use the default VSTest path when needed).
 // Projects still run ONE AT A TIME: integration suites share fixed ports
 // (web=7000, api=7255, yarp=8443).
 #endregion
@@ -100,51 +98,20 @@ internal sealed class TestCommand : ICommand<Unit>
     }
 
     /// <summary>
-    /// Fixie projects: <c>dotnet test &lt;csproj&gt; -c Release</c> from repo root.
-    /// MTP projects: bare <c>dotnet test -c Release</c> with cwd = project directory
-    /// (the form that works on .NET 10 for Microsoft.Testing.Platform).
+    /// All suite-shaped projects are Microsoft.Testing.Platform (Jaribu): bare
+    /// <c>dotnet test -c Release</c> with cwd = project directory so project-local
+    /// global.json supplies the MTP runner (task 145-007).
     /// </summary>
-    private CommandResult BuildTestCommand(string project)
+    private static CommandResult BuildTestCommand(string project)
     {
-      if (IsMicrosoftTestingPlatformProject(project))
-      {
-        string projectDir = Path.GetDirectoryName(project)
-          ?? throw new InvalidOperationException($"No directory for project path: {project}");
+      string projectDir = Path.GetDirectoryName(project)
+        ?? throw new InvalidOperationException($"No directory for project path: {project}");
 
-        return Shell.Builder("dotnet")
-          .WithArguments("test", "-c", "Release")
-          .WithWorkingDirectory(projectDir)
-          .WithNoValidation()
-          .Build();
-      }
-
-      return DotNet.Test()
-        .WithProject(project)
-        .WithConfiguration("Release")
-        .WithWorkingDirectory(RepoRoot)
+      return Shell.Builder("dotnet")
+        .WithArguments("test", "-c", "Release")
+        .WithWorkingDirectory(projectDir)
         .WithNoValidation()
         .Build();
-    }
-
-    /// <summary>
-    /// MTP opt-in lives only in a project-local global.json (test.runner =
-    /// Microsoft.Testing.Platform). Root global.json must not set a runner — Fixie still uses
-    /// the VSTest path.
-    /// </summary>
-    private static bool IsMicrosoftTestingPlatformProject(string csprojPath)
-    {
-      string? projectDir = Path.GetDirectoryName(csprojPath);
-      if (projectDir is null)
-        return false;
-
-      string globalJsonPath = Path.Combine(projectDir, "global.json");
-      if (!File.Exists(globalJsonPath))
-        return false;
-
-      // Lightweight content check — no full JSON parse needed. The runner value is the only
-      // place "Microsoft.Testing.Platform" appears in our aggregator global.json files.
-      string text = File.ReadAllText(globalJsonPath);
-      return text.Contains("Microsoft.Testing.Platform", StringComparison.Ordinal);
     }
 
     private async Task<bool> ExecuteAsync(CommandResult command)

@@ -10,6 +10,9 @@ using TimeWarp.Foundation.Contracts.Generators;
 // members with the correct type mapping, and the two interface mixins.
 public class ContractsMixinGenerator_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<ContractsMixinGenerator_Tests>();
+
   private const string Source = """
     namespace Test.Features.Admin.Roles;
 

@@ -3,32 +3,39 @@ namespace WebAuthnChallengeReader_;
 
 public class TryReadChallenge
 {
-  public void Reads_the_challenge_from_valid_clientDataJson()
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<TryReadChallenge>();
+
+  public static Task Reads_the_challenge_from_valid_clientDataJson()
   {
     byte[] challenge = RandomNumberGenerator.GetBytes(32);
     byte[] clientDataJson = SoftwareAuthenticator.BuildClientDataJson("webauthn.create", challenge, "https://localhost:7000");
 
     WebAuthnChallengeReader.TryReadChallenge(clientDataJson, out byte[] result).ShouldBeTrue();
     result.ShouldBe(challenge);
+    return Task.CompletedTask;
   }
 
-  public void Rejects_malformed_json()
+  public static Task Rejects_malformed_json()
   {
     byte[] garbage = "not json"u8.ToArray();
 
     WebAuthnChallengeReader.TryReadChallenge(garbage, out byte[] result).ShouldBeFalse();
     result.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Rejects_missing_challenge_field()
+  public static Task Rejects_missing_challenge_field()
   {
     byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new { type = "webauthn.create", origin = "https://localhost:7000" });
 
     WebAuthnChallengeReader.TryReadChallenge(clientDataJson, out byte[] result).ShouldBeFalse();
     result.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Rejects_non_base64url_challenge()
+  public static Task Rejects_non_base64url_challenge()
   {
     byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
     {
@@ -39,9 +46,10 @@ public class TryReadChallenge
 
     WebAuthnChallengeReader.TryReadChallenge(clientDataJson, out byte[] result).ShouldBeFalse();
     result.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 
-  public void Rejects_empty_challenge_field()
+  public static Task Rejects_empty_challenge_field()
   {
     byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
     {
@@ -52,5 +60,6 @@ public class TryReadChallenge
 
     WebAuthnChallengeReader.TryReadChallenge(clientDataJson, out byte[] result).ShouldBeFalse();
     result.ShouldBeEmpty();
+    return Task.CompletedTask;
   }
 }

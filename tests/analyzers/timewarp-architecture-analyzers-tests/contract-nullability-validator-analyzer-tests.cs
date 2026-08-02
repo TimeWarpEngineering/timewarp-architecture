@@ -7,6 +7,9 @@ using TimeWarp.Architecture.Analyzers.Tests;
 
 public class Should_Flag_Contradictions
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Should_Flag_Contradictions>();
+
   // Minimal FluentValidation surface so the test compilation resolves AbstractValidator/RuleFor/
   // NotEmpty/NotNull without referencing the real package. The analyzer matches these by shape/name.
   private const string FluentValidationStub =
@@ -35,7 +38,7 @@ public class Should_Flag_Contradictions
     }
     """;
 
-  private static CSharpAnalyzerTest<ContractNullabilityValidatorAnalyzer, FixieVerifier> Test(string source) =>
+  private static CSharpAnalyzerTest<ContractNullabilityValidatorAnalyzer, RoslynTestVerifier> Test(string source) =>
     new()
     {
       TestState =

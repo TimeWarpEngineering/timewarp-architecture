@@ -3,12 +3,14 @@
     <!-- Only CA1031 fires under the linked service sources (audited 2026-07-20): best-effort
          File.SetUnixFileMode chmod-tighten blocks catch Exception so a permission failure can't
          crash key writing. The other suppressions this once carried were dead. -->
-    <NoWarn>$(NoWarn);CA1031</NoWarn>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <NoWarn>$(NoWarn);CA1031;CA1707;CA1849;IDE0021;IDE0058</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\source\libraries\timewarp-identity\timewarp-identity.csproj" />

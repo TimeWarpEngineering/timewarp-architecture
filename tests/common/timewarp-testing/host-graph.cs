@@ -21,7 +21,6 @@ namespace TimeWarp.Architecture.Testing;
 /// <summary>
 /// Per-class-owned set of in-proc test hosts (fixed ports). Dispose after the class finishes.
 /// </summary>
-[NotTest]
 public sealed class HostGraph : IAsyncDisposable
 {
 #if(api)

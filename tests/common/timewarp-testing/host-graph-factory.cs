@@ -40,7 +40,6 @@ using System.Net.Sockets;
 /// <summary>
 /// Explicit ordered construction of in-proc test hosts for C-create Jaribu SetupOnce usage.
 /// </summary>
-[NotTest]
 public static class HostGraphFactory
 {
 #if(api)

@@ -9,6 +9,9 @@ using Microsoft.CodeAnalysis.CSharp;
 // and BaseHandler<TAction> partials, plus the marker attribute in the RootNamespace.
 public class StateAccessSourceGenerator_Tests
 {
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<StateAccessSourceGenerator_Tests>();
+
   private const string Source = """
     namespace Test.Features.Counters;
 

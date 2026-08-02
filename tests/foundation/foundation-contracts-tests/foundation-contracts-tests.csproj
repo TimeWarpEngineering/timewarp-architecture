@@ -1,8 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Host-free suite-shaped Jaribu MTP (task 145-007): mechanical Fixie→Jaribu conversion. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- .NET 10 MTP-native dotnet test — pair with project-local global.json test.runner
+         project-local MTP runner; timewarp-jaribu#20: mirror root SDK pin. -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <!-- Jaribu SUT_/Action_Given_ naming uses underscores (CA1707); static SetupOnce/CleanUpOnce. -->
+    <NoWarn>$(NoWarn);CA1707;CA1849;IDE0021;IDE0058</NoWarn>
+  </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Fixie.TestAdapter" />
+    <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="TimeWarp.Fixie" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\source\foundation\foundation-contracts\foundation-contracts.csproj" />

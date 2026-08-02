@@ -1,7 +1,7 @@
 namespace TimeWarp.Architecture.Analyzers.Tests;
 
-// FixieVerifier is a basic implementation since Fixie doesn't have a verifier like xUnit or NUnit.
-internal class FixieVerifier : IVerifier
+// IVerifier adapter for Microsoft.CodeAnalysis.Testing under Jaribu (not a Fixie type).
+internal class RoslynTestVerifier : IVerifier
 {
   public void Empty<T>(string collectionName, IEnumerable<T> collection)
   {

@@ -8,7 +8,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <!-- .NET 10 MTP-native dotnet test — pair with project-local global.json test.runner
-         (not root — would break remaining Fixie). timewarp-jaribu#20: mirror root SDK pin. -->
+         project-local MTP runner; timewarp-jaribu#20: mirror root SDK pin. -->
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!-- TimeWarp.State's test-only State.Initialize() guards with
          `if (!assembly.FullName.Contains("Test"))` — a CASE-SENSITIVE check for capital "Test".
