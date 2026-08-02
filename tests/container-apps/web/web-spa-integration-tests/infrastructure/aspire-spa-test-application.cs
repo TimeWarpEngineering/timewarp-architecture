@@ -27,7 +27,6 @@ public class AspireSpaTestApplication : ISpaTestApplication
 {
   private const string YarpResourceName = "ingress";
 
-  private readonly ISender ScopedSender;
   public IServiceProvider ServiceProvider { get; }
 
   public AspireSpaTestApplication(DistributedApplication distributedApp)
@@ -41,8 +40,8 @@ public class AspireSpaTestApplication : ISpaTestApplication
 
     ConfigureServices(services, baseUrl);
 
+    // Dispatch via SpaTestScope (per-test Store/Sender), not root ScopedSender.
     ServiceProvider = services.BuildServiceProvider();
-    ScopedSender = new ScopedSender(ServiceProvider);
   }
 
   private static void ConfigureServices(IServiceCollection services, string baseUrl)
@@ -100,13 +99,4 @@ public class AspireSpaTestApplication : ISpaTestApplication
     // StateTransactionBehavior.
     services.RemoveAll<TimeWarp.Mediator.INotificationHandler<TimeWarp.Features.StateTransactions.ExceptionNotification>>();
   }
-
-  public Task<TResponse> Send<TResponse>
-  (
-    IRequest<TResponse> request,
-    CancellationToken cancellationToken = default
-  ) => ScopedSender.Send(request, cancellationToken);
-
-  public Task<object?> Send(object request, CancellationToken cancellationToken = default) =>
-    ScopedSender.Send(request, cancellationToken);
 }
