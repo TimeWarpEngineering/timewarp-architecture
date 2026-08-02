@@ -48,3 +48,17 @@ Coverage parity: 95 suite + 2 hello co-located = 97.
 ### Review
 
 Effort 1, **clean** — `review/`
+
+## Results (final, round-3)
+
+Reopened after round-2 refuted round-1 (SmokeNoApi 21x CS0117; orphaned CPM pins failing
+audit). Fix (effa18a1, 095bb0f0, merged to dev): HostGraphFactory.CreateWebAsync added and
+all 21 call sites branch on the api flag — census showed 100% of the suite is
+web-only-meaningful (zero Graph.Api uses; BFF api HttpClient is SPA-client-side only), so
+the suite now degrades to web-only under --api false exactly as the Fixie DI wiring did;
+orphaned xUnit pins removed (audit 23/23); hello-tests.cs added to smoke tiers 1/2.
+Migration substance from round 2 stands: method-level parity 97→95+2 with zero silent
+losses, triage reasoned, wall-clock faster than Fixie (~24s vs ~31s — recorded for the
+145-008 gate). Final gates green twice (fix worktree ×3 smoke runs; orchestrator re-run on
+merged dev). Side artifacts: ganda 197 filed (cpm-consistency scans stale artifacts/).
+Review: 3 rounds, disposition clean.
