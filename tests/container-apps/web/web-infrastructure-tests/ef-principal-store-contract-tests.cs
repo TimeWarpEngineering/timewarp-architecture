@@ -6,7 +6,7 @@
 // Jaribu only discovers public static Task methods on the registered type. The shared suite in
 // timewarp-testing is instance-based (abstract Factory + dual Fixie/Jaribu fixtures). Concrete
 // classes compose the abstract suite and re-surface each case as a static that runs a fresh
-// instance (task 145-007). Identity-tests still Fixie until its own migration.
+// instance (task 145-007). In-memory identity fixture uses the same wrapper pattern.
 
 namespace PrincipalStoreContract_.Ef;
 

@@ -2,7 +2,7 @@
 // Jaribu discovers only public static new Task methods on the registered type — leaf classes
 // re-export each base instance case as a static wrapper (cast to base to avoid CS0176 when
 // the static method hides the inherited instance name). Abstract bases stay instance-shaped
-// for the still-Fixie EF fixture in web-infrastructure-tests until that suite migrates.
+// shared instance suite in timewarp-testing; both fixtures re-export static wrappers (task 145-007).
 
 namespace PrincipalStoreContract_.InMemory;
 
