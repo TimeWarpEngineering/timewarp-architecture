@@ -555,6 +555,9 @@ internal sealed class TemplateSmokeHarness
   [
     ("web", "source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs"),
     ("api", "source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs"),
+    // task 145-004 R2-3: hello is Web-only (#if(api) CreateWebWithApiAsync #else CreateWebAsync
+    // #endif — R2-1) so tier 2 exercising it under SmokeNoApi is the acceptance test for that fix.
+    ("web", "source/container-apps/web/features/hello/hello/hello-tests.cs"),
   ];
 
   /// <summary>
