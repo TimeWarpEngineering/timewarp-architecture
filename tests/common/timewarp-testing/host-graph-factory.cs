@@ -12,6 +12,7 @@ using System.Net.Sockets;
 // Create* methods (task 145-002 / findings §3 C-create). Each call constructs NEW hosts —
 // never process-static, never refcounted. Ordering:
 //   Api-only: Api :7255
+//   Web-only: Web :7000
 //   Web+Api:  Api first (BFF HttpClient bases point at :7255), then Web :7000
 //   Full:     Api, Web, then Yarp :8443 (Yarp depends on the others for DI identity only)
 // Port preflight fails with a teaching error so parallel/leaked hosts are obvious.
@@ -22,6 +23,18 @@ using System.Net.Sockets;
 // Per-family conditional-compilation guards (task 145-002 R2-1 fix follow-up, template-smoke SmokeNoApi regression):
 // same reasoning as HostGraph — this file ships unconditionally, so each Create* method that
 // names a family-specific type must be guarded to the family combination it needs.
+// CreateWebAsync (task 145-004 R2-1): added because web-server-integration-tests' 19 classes
+// (21 call sites) all call CreateWebWithApiAsync but NONE of them actually touch Graph.Api or
+// any Api-backed HttpClient (verified: zero `.Api` references, zero HttpClient/ApiServiceName
+// usage in the handlers under test — admin/roles, analytics/track-event, hello, identity are
+// all self-contained in Web.Server). The suite inherited "boot everything" from the pre-migration
+// Fixie convention (findings §1: the old "AspiredApp" fixture built the full distributed app for
+// every consumer regardless of need), not from a real Api dependency. Call sites now branch on
+// the api template flag (CreateWebWithApiAsync when present, CreateWebAsync otherwise, guarded
+// via the api-flag conditional-compilation directive pair) so `--api false` degrades to a
+// Web-only host instead of failing to compile (CS0117 x21) — this preserves current behavior
+// when api is present (still boots both, matching the reviewed/shipped topology) while adding
+// the web-only compile+run coverage the Fixie-era suite always had.
 #endregion
 
 /// <summary>
@@ -38,6 +51,21 @@ public static class HostGraphFactory
     ApiTestServerApplication api = new(configureApi);
     await Task.CompletedTask.ConfigureAwait(false);
     return new HostGraph { Api = api };
+  }
+#endif
+#if(web)
+
+  /// <summary>
+  /// Web.Server only (fixed port 7000). Used when the api family is absent — see
+  /// web-server-integration-tests call sites' api-flag-guarded branch (task 145-004 R2-1:
+  /// SmokeNoApi regression) — and by any class that genuinely doesn't need a live Api host.
+  /// </summary>
+  public static async Task<HostGraph> CreateWebAsync(Action<IServiceCollection>? configureWeb = null)
+  {
+    EnsurePortIsFree(WebTestServerApplication.WebPort, "Web.Server (WebTestServerApplication)");
+    WebTestServerApplication web = new(configureWeb);
+    await Task.CompletedTask.ConfigureAwait(false);
+    return new HostGraph { Web = web };
   }
 #endif
 #if(web && api)

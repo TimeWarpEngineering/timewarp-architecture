@@ -5,20 +5,31 @@
 #:package Shouldly
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058
+#:property DefineConstants=$(DefineConstants);api
 
-// Co-located Jaribu integration test (task 145-004). Real Web+Api host via HostGraphFactory
-// CreateWebWithApiAsync (C-create). Ported from tests/.../hello/hello-endpoint-tests.cs.
+// Co-located Jaribu integration test (task 145-004). Real Web host via HostGraphFactory
+// CreateWebWithApiAsync (api present) / CreateWebAsync (api absent) (C-create).
+// Ported from tests/.../hello/hello-endpoint-tests.cs.
 // Run standalone: dotnet run source/container-apps/web/features/hello/hello/hello-tests.cs
+//
+// DefineConstants=api (task 145-004 R2-1): standalone `dotnet run` needs `api` defined so the
+// api-flag-guarded branch below matches this monorepo's real topology (all flags on); generated
+// apps never see this property — dotnet-new strips the losing branch's TEXT at generation time,
+// independent of DefineConstants (see host-graph-factory.cs Design region).
 
 #region Purpose
 // Jaribu runfile proving co-located real-host Hello endpoint integration (happy path + validation)
-// and HostGraphFactory C-create Web+Api consumption (task 145-004).
+// and HostGraphFactory C-create Web(+Api) consumption (task 145-004).
 #endregion
 
 #region Design
-// Host lifetime: HostGraphFactory.CreateWebWithApiAsync (C-create — fresh graph per class, no
-// process statics). SetupOnce stores HostGraph; CleanUpOnce disposes reverse-order.
-// Hello is [EndpointAllowAnonymous], so no auth ceremony is required.
+// Host lifetime: HostGraphFactory.CreateWebWithApiAsync when api is present, else CreateWebAsync
+// (C-create — fresh graph per class, no process statics). Hello is a Web-only endpoint (this
+// file's #:project preamble names only web-contracts/timewarp-testing, no api-contracts) and
+// never touches Graph.Api, so it degrades cleanly to a Web-only host under `--api false` (task
+// 145-004 R2-1: this file feeds the web JARIBU_MULTI aggregator, which ships regardless of the
+// api flag, so it MUST compile+run web-only). SetupOnce stores HostGraph; CleanUpOnce disposes
+// reverse-order. Hello is [EndpointAllowAnonymous], so no auth ceremony is required.
 #endregion
 
 //-:cnd:noEmit
@@ -52,7 +63,11 @@ namespace TimeWarp.Architecture.Features.Hellos
 
     public static async Task SetupOnce()
     {
+#if(api)
       Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+      Graph = await HostGraphFactory.CreateWebAsync();
+#endif
     }
 
     public static async Task CleanUpOnce()

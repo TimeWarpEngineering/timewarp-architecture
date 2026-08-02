@@ -12,6 +12,10 @@
     <!-- Jaribu SUT_/Action_Given_ naming uses underscores (CA1707); static SetupOnce/CleanUpOnce.
          CS0436 retained from prior suite (duplicate type surface via project refs). -->
     <NoWarn>$(NoWarn);CS0436;CA1707;CA1849;IDE0021;IDE0058</NoWarn>
+    <!-- Feature-flag symbols (task 145-004 R2-1): the template engine strips #if(flag) regions
+         at generation time; the real repo build (all features on) needs the symbol defined to
+         keep the CreateWebWithApiAsync branch (else CreateWebAsync) at every SetupOnce call site. -->
+    <DefineConstants>$(DefineConstants);api</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AutoFixture" />

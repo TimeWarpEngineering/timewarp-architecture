@@ -19,7 +19,11 @@ public class GetRoles_Returns
 
   public static async Task SetupOnce()
   {
+#if(api)
     Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
   public static async Task CleanUpOnce()
@@ -61,7 +65,11 @@ public class GetRole_Returns
 
   public static async Task SetupOnce()
   {
+#if(api)
     Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
   public static async Task CleanUpOnce()
@@ -116,7 +124,11 @@ public class UpdateThenDelete_Roundtrip
 
   public static async Task SetupOnce()
   {
+#if(api)
     Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
   public static async Task CleanUpOnce()

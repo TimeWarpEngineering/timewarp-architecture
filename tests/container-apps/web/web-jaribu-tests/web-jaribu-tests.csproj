@@ -4,8 +4,12 @@
     <!-- Family aggregator for co-located Jaribu runfiles under web/features and web/platform
          (task 136). Not in the .slnx — discovered only by `dev test` globs under tests/.
          JARIBU_MULTI suppresses each runfile's top-level `return await TestRunner.RunAllTests()`
-         so many files can share one Microsoft.Testing.Platform host. -->
-    <DefineConstants>$(DefineConstants);JARIBU_MULTI</DefineConstants>
+         so many files can share one Microsoft.Testing.Platform host. `api` (task 145-004 R2-1):
+         hello-tests.cs branches #if(api) CreateWebWithApiAsync #else CreateWebAsync #endif; the
+         real repo build (all features on) needs the symbol defined here too — #:property
+         directives in the runfile are inert under this aggregator's Compile-glob multi-mode
+         compile. -->
+    <DefineConstants>$(DefineConstants);JARIBU_MULTI;api</DefineConstants>
     <!-- .NET 10 SDK requires this opt-in for the MTP-native `dotnet test` experience
          (VSTest bridge is no longer supported) — https://aka.ms/dotnet-test-mtp-error.
          Pair with the project-local global.json test.runner (not root — would break Fixie). -->

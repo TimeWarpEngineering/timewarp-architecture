@@ -12,7 +12,11 @@ public class Should
 
   public static async Task SetupOnce()
   {
+#if(api)
     Graph = await HostGraphFactory.CreateWebWithApiAsync();
+#else
+    Graph = await HostGraphFactory.CreateWebAsync();
+#endif
   }
 
   public static async Task CleanUpOnce()
