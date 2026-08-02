@@ -33,7 +33,10 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 - `dev build` — full solution; **warnings are errors, 0/0 is the only acceptable result**
 - `dev test` — every project under `tests/` (globbed, run one at a time — fixed ports); includes
   family `JARIBU_MULTI` aggregators that compile co-located `source/**/*-tests.cs` runfiles
-- `dotnet fixie tests/<project> [--tests Class[.Method]]` — one project/class/method
+- one suite: `cd tests/<project> && dotnet test -c Release` (MTP — the csproj-path form of
+  `dotnet test` is unsupported on .NET 10). Single-test selection is `--list-tests` +
+  `-- --filter-uid <uid>` for now — human-usable name/tag selection is upstream
+  timewarp-jaribu#23 (see how-to-filter-tests-by-name.md).
 - `dotnet run source/<family>/features/…/<name>-tests.cs` — one co-located Jaribu runfile
   standalone (local dev loop; CI uses family aggregators via `dev test`)
 - More commands: `dev --capabilities` (see the `dev-cli` skill)

@@ -18,3 +18,13 @@ and conventions with all suite-shaped projects on Jaribu MTP.
 ## Escalations
 
 - None
+
+---
+
+## Addendum — round 2 (2026-08-02, independent verification + fold-in)
+
+Functional claims confirmed with exact 518/518 per-suite parity, smoke ×3, audit clean. The
+"zero Fixie" sweep was incomplete (6 doc/config remnants incl. AGENTS.md's own `dotnet fixie`
+line) — all six fixed by orchestrator fold-in same day, with the replacement docs grounded in
+empirically-verified MTP behavior (only --filter-uid; JARIBU_FILTER_TAG standalone-only) and
+the DX gap filed upstream (timewarp-jaribu#23). Outcome: clean.
