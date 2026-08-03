@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "timewarp-identity",
+      "type": "skill-md",
+      "description": "Register an ECDSA P-256 agent public key and issue short-lived scoped opaque bearer tokens on a TimeWarp.Architecture host. Use when onboarding a machine agent without a browser or human sponsor.",
+      "url": "/.well-known/agent-skills/timewarp-identity/SKILL.md",
+      "digest": "sha256:1e84af4234ca5ca66ef8e416d51102dba67b9b80a4b80ceb1dfd8deba97c65fb"
+    },
+    {
+      "name": "timewarp-architecture-discovery",
+      "type": "skill-md",
+      "description": "Locate agent-facing discovery surfaces on a TimeWarp.Architecture template host (llms.txt, auth.md, OpenAPI, MCP/A2A cards, Agent Skills index, markdown negotiation). Use when scanning or onboarding against this host.",
+      "url": "/.well-known/agent-skills/timewarp-architecture-discovery/SKILL.md",
+      "digest": "sha256:bc7508dc2833063a641dabaa464c3249af617634e1c2b51ef4b9c8dadb745c7c"
+    }
+  ]
+}

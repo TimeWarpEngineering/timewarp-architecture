@@ -6,6 +6,8 @@ form filled with an email address.
 
 Content usage preferences: `ai-train=yes, search=yes, ai-input=yes`
 (see [/robots.txt](/robots.txt)). Discovery index: [/llms.txt](/llms.txt).
+Agent skill for this ceremony: [timewarp-identity](/.well-known/agent-skills/timewarp-identity/SKILL.md)
+(index: [/.well-known/agent-skills/index.json](/.well-known/agent-skills/index.json)).
 
 ---
 

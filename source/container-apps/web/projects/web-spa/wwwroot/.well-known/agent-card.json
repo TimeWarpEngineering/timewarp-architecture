@@ -1,0 +1,105 @@
+{
+  "name": "TimeWarp.Architecture Template Host",
+  "description": "Agent-ready .NET template host by TimeWarp Enterprises. Live: passkey and agent-key identity REST APIs, OpenAPI, discovery docs, and Agent Skills. Full A2A JSON-RPC task protocol is not hosted yet — this is an unsigned v1 discoverability card (signed cards later). Prefer REST identity ceremonies (/auth.md), OpenAPI (/openapi/v1.json), and /.well-known/agent-skills/ for operational use.",
+  "supportedInterfaces": [
+    {
+      "url": "/openapi/v1.json",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0"
+    },
+    {
+      "url": "/api/identity/agent/me",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "provider": {
+    "organization": "TimeWarp Enterprises",
+    "url": "https://timewarp.enterprises/"
+  },
+  "version": "2.0.0-beta.14",
+  "documentationUrl": "/llms.txt",
+  "iconUrl": "/icon-192.png",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extendedAgentCard": false
+  },
+  "securitySchemes": {
+    "agentBearer": {
+      "httpAuthSecurityScheme": {
+        "scheme": "bearer",
+        "bearerFormat": "opaque",
+        "description": "Short-lived scoped opaque bearer from POST /api/identity/agent/token after ECDSA P-256 proof-of-possession. See /auth.md and the timewarp-identity skill."
+      }
+    }
+  },
+  "security": [
+    {
+      "agentBearer": [
+        "identity:read"
+      ]
+    }
+  ],
+  "defaultInputModes": [
+    "application/json",
+    "text/plain"
+  ],
+  "defaultOutputModes": [
+    "application/json",
+    "text/markdown",
+    "text/plain"
+  ],
+  "skills": [
+    {
+      "id": "agent-identity-register",
+      "name": "Register agent public key",
+      "description": "Register an ECDSA P-256 agent public key without a human sponsor via POST /api/identity/agent/register/options then /register.",
+      "tags": [
+        "identity",
+        "auth",
+        "agent-key"
+      ],
+      "examples": [
+        "Register my agent key and receive principalId and keyId"
+      ]
+    },
+    {
+      "id": "agent-identity-token",
+      "name": "Issue scoped agent bearer token",
+      "description": "Complete the agent token ceremony (options + signed proof) to receive a short-lived opaque scoped bearer token.",
+      "tags": [
+        "identity",
+        "auth",
+        "token"
+      ],
+      "examples": [
+        "Issue a bearer token with scope identity:read"
+      ]
+    },
+    {
+      "id": "agent-identity-me",
+      "name": "Who am I (agent session)",
+      "description": "Call GET /api/identity/agent/me with Authorization: Bearer to inspect the authenticated principal.",
+      "tags": [
+        "identity",
+        "session"
+      ],
+      "examples": [
+        "Who am I with this bearer token?"
+      ]
+    },
+    {
+      "id": "discovery",
+      "name": "Read agent discovery surfaces",
+      "description": "Fetch llms.txt, auth.md, OpenAPI, MCP/A2A cards, and the Agent Skills index for this host.",
+      "tags": [
+        "discovery",
+        "docs"
+      ],
+      "examples": [
+        "What agent protocols and APIs does this host advertise?"
+      ]
+    }
+  ]
+}

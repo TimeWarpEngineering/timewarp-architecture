@@ -36,4 +36,19 @@
   <url>
     <loc>/api/health</loc>
   </url>
+  <url>
+    <loc>/.well-known/mcp/server-card.json</loc>
+  </url>
+  <url>
+    <loc>/.well-known/mcp.json</loc>
+  </url>
+  <url>
+    <loc>/.well-known/agent-skills/index.json</loc>
+  </url>
+  <url>
+    <loc>/.well-known/agent-card.json</loc>
+  </url>
+  <url>
+    <loc>/.well-known/agent.json</loc>
+  </url>
 </urlset>

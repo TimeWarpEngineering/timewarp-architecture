@@ -49,6 +49,22 @@ Commands: `keygen`, `register`, `token`, `whoami`, `demo`. Default server: `http
 - Scalar UI: [/scalar/v1](/scalar/v1)
 - Health: [/api/health](/api/health)
 
+## Protocol discovery (v1 minimal)
+
+Stable well-known paths. Stubs are **honest**: empty MCP tools and no live A2A JSON-RPC task endpoint yet.
+
+| Surface | Path | Notes |
+|---------|------|-------|
+| MCP Server Card | [/.well-known/mcp/server-card.json](/.well-known/mcp/server-card.json) | Alias: [/.well-known/mcp.json](/.well-known/mcp.json). `capabilities.tools=false`; do not call `/mcp` for tools yet. |
+| Agent Skills index | [/.well-known/agent-skills/index.json](/.well-known/agent-skills/index.json) | Live skill-md artifacts (`timewarp-identity`, `timewarp-architecture-discovery`). |
+| A2A Agent Card | [/.well-known/agent-card.json](/.well-known/agent-card.json) | Alias: [/.well-known/agent.json](/.well-known/agent.json). Unsigned v1; skills map to REST identity + discovery. |
+
+```bash
+curl -sS https://<host>/.well-known/mcp/server-card.json
+curl -sS https://<host>/.well-known/agent-skills/index.json
+curl -sS https://<host>/.well-known/agent-card.json
+```
+
 ## Payment (x402)
 
 - Library: **TimeWarp.402** (challenge / verify / settle; disabled or misconfigured payment → **503**, never 402 on free/discovery paths).
@@ -76,7 +92,8 @@ Browser requests (Accept: text/html) are unchanged — Blazor SPA hosting is not
 
 ## Planned agent surfaces (not yet shipped)
 
-- MCP server card / Agent Skills index / A2A agent card stubs (task 104-019)
 - Discoverable x402 tip or meter path for commerce scanners (task 104-020)
+- Live streamable-HTTP MCP tools endpoint (card exists as stub until then)
+- Full A2A JSON-RPC task protocol + signed Agent Cards
 
-When those land, they will be linked from this index. Stubs are better than fiction: do not assume they exist until linked.
+Stubs are better than fiction: do not invent endpoints not linked here.

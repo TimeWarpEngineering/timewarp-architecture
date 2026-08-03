@@ -34,6 +34,9 @@ negotiation). Discovery index: [/llms.txt](/llms.txt). Auth story: [/auth.md](/a
 | OpenAPI | [/openapi/v1.json](/openapi/v1.json) |
 | Scalar UI | [/scalar/v1](/scalar/v1) |
 | Health | [/api/health](/api/health) |
+| MCP Server Card | [/.well-known/mcp/server-card.json](/.well-known/mcp/server-card.json) |
+| Agent Skills index | [/.well-known/agent-skills/index.json](/.well-known/agent-skills/index.json) |
+| A2A Agent Card | [/.well-known/agent-card.json](/.well-known/agent-card.json) |
 
 Auth is **passkey / agent-key first** — not email/password. Free and discovery
 routes never return HTTP 402.

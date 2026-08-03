@@ -1,0 +1,27 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/mcp-server-card/v1.json",
+  "version": "1.0",
+  "protocolVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "timewarp-architecture",
+    "title": "TimeWarp.Architecture Template Host",
+    "version": "2.0.0-beta.14"
+  },
+  "description": "Discoverable MCP Server Card for the TimeWarp.Architecture template host (v1 stub). No streamable-HTTP MCP tools endpoint is live yet — do not call /mcp expecting tools/list. Prefer REST identity ceremonies (/auth.md), OpenAPI (/openapi/v1.json), and Agent Skills at /.well-known/agent-skills/index.json. When an MCP transport ships, this card will list tools and flip capabilities.tools to true.",
+  "transport": {
+    "type": "streamable-http",
+    "endpoint": "/mcp"
+  },
+  "authentication": {
+    "required": false,
+    "schemes": []
+  },
+  "capabilities": {
+    "tools": false,
+    "resources": false,
+    "prompts": false
+  },
+  "tools": [],
+  "status": "stub",
+  "documentationUrl": "/llms.txt"
+}
