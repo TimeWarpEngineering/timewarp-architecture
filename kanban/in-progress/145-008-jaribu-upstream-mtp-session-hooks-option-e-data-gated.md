@@ -38,11 +38,26 @@ move-cost — this is lifetime-model completion, not an optimization.
 
 ## Checklist
 
-- [ ] Upstream design + implementation task created in timewarp-jaribu (029-rigor), shipped
-- [ ] timewarp-testing session-fixture contract composing with C-create
-- [ ] SPA suite exemplar opted in; before/after wall-clock recorded
-- [ ] Docs updated (skill + AGENTS.md)
-- [ ] Gates green; Jaribu pin bumped forward; kanban committed
+- [x] Upstream shipped: timewarp-jaribu tasks 030 (session fixtures + #22/#23 ride-alongs) + 031 (independent review follow-ups: create/end race, Clear guard, dispose-failure exit code, discovery tag parity) → 1.0.0-beta.15
+- [x] `SessionHostFixture<TInner>` in timewarp-testing — subclass CreateAsync calls the SAME factory C-create callers use (boot logic written once); registration-site composition (deliberately NO runtime is-registered probe: GetAsync's sticky-rethrow makes exception-probing misclassify real boot failures); zero behavior change for non-opted suites
+- [x] SPA suite opted in; wall-clock 1m53.7s → 20.5s (implementer worktree) / 26.8s (orchestrator reproduction on merged dev) — 6 Aspire boots → 1; quarantined class still boots nothing (verified via --filter-tag omission-before-SetupOnce)
+- [x] Docs updated: skill + AGENTS.md session-fixture guidance; both how-to-filter docs + AGENTS.md selection line rewritten from "pending #23" to shipped syntax (--filter-class/--filter-method/--filter-tag; JARIBU_FILTER_TAG honored under MTP, CLI wins; untagged-always-runs semantics documented)
+- [x] Gates green twice: implementer clean worktree (build 0/0, full dev test 3m6s all green with TRUE skip counts, smoke ×3, audit 23/23) + orchestrator reproduction on merged dev (build 0/0, audit 23/23, SPA 26.8s/1-skip, smoke SUCCEEDED); pins beta.15; kanban committed
+
+## Results
+
+Lifetime model COMPLETE. Upstream (jaribu 030+031, beta.15): RegisterSessionFixture<T> +
+SessionFixture accessor on the MTP session seam, standalone parity, generation-guarded races
+fixed in 031's own independent review; #22 (skip double-count) and #23 (MTP selection:
+--filter-class/--filter-method/--filter-tag + JARIBU_FILTER_TAG parity) shipped in the same
+release. Consumer (branch Claude/2026-08-03/task-145-008-consumer, 3 commits, merged to dev):
+SessionHostFixture<TInner> composing with C-create at the registration site; SPA suite
+exemplar 1m53.7s → 20.5s (orchestrator repro 26.8s) with quarantine semantics preserved;
+empirical upstream verification recorded BEFORE consuming (incl. correcting the inadequate
+prescribed tag-filter check — web-domain has no tags; untagged tests are never tag-excluded,
+now documented). Docs converted from pending-upstream placeholders to shipped reality.
+Verification: implementer report + orchestrator reproduction of decisive gates on merged dev
+(review/verification.md).
 
 ## Notes
 
