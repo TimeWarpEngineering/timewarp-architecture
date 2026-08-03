@@ -53,6 +53,9 @@ global using TimeWarp.Architecture.Features.Chat;
 global using TimeWarp.Architecture.Features.Identity;
 global using TimeWarp.Architecture.Features.Identity.Application;
 global using TimeWarp.Architecture.Features.Identity.Infrastructure;
+global using TimeWarp.Architecture.Features.MeteredCapability.Application;
+global using TimeWarp.Architecture.Features.MeteredCapability.Server;
+global using TimeWarp.X402;
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Identity;
 #if(postgres)

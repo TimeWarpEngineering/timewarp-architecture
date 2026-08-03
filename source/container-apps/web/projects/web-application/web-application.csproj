@@ -20,6 +20,9 @@
     <ProjectReference Include="..\..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
 
+    <!-- MeteredCapabilityGate / ICreditLedger for pay-for-capability demo (task 104-011). -->
+    <ProjectReference Include="..\..\..\..\libraries\timewarp-402\timewarp-402.csproj" />
+
   </ItemGroup>
 
 </Project>

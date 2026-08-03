@@ -41,6 +41,8 @@
          extend this list. -->
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-contracts\web-contracts.csproj" />
     <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
+    <!-- invoke-metered-capability-tests.cs uses TimeWarp.X402 (ICreditLedger, PaymentHeaders). -->
+    <ProjectReference Include="..\..\..\..\source\libraries\timewarp-402\timewarp-402.csproj" />
   </ItemGroup>
 
 </Project>

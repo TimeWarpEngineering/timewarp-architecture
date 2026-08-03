@@ -10,7 +10,7 @@ Namespaces do not track folders (everything is `TimeWarp.X402`); folders exist f
 | `options/` | `PaymentOptions`, config evaluator (ready / disabled / misconfigured) |
 | `protocol/` | Headers, accepts, challenge builder, payTo validation |
 | `facilitator/` | `IFacilitatorClient`, HTTP client, verify/settle models |
-| `gate/` | `PaymentGate` outcomes — host maps to HTTP without ASP.NET in this package |
+| `gate/` | `PaymentGate` + `MeteredCapabilityGate` outcomes — host maps to HTTP without ASP.NET |
 | `ledger/` | `ICreditLedger` + in-memory impl (PrincipalId-keyed credits, idempotent receipts) |
 
 ## Hard policy (free never 402)
@@ -22,8 +22,13 @@ Namespaces do not track folders (everything is `TimeWarp.X402`); folders exist f
 - **Settled** → host **200** + `PAYMENT-RESPONSE`.
 - **No merchant private keys** in this package; only public `payTo` + facilitator URL/auth-header factory.
 
+## Host mapping (metered demo — 104-011)
+
+`MeteredCapabilityGate`: prepaid credit debit first; else `PaymentGate` pay-then-credit-then-debit.
+Hosts (web-server metered demo) map outcomes to 200/402/503 and set `PAYMENT-*` headers.
+Free/discovery routes never call the gate.
+
 ## Not in this package yet
 
 - ASP.NET middleware / tip demo host (104-009)
-- Credit ledger (104-010)
 - Identity settle → Funded tier (104-013)

@@ -141,6 +141,15 @@ public class Program : IAspNetProgram
           .RequireAuthenticatedUser()
           .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.IdentityRead)
       )
+      // Task 104-011: metered pay-for-capability demo (AgentScopes.DemoInvoke).
+      .AddPolicy
+      (
+        AgentTokenDefaults.DemoInvokePolicy,
+        policy => policy
+          .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
+          .RequireAuthenticatedUser()
+          .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.DemoInvoke)
+      )
       // Task 110: any signed-in identity-session cookie — see IdentitySessionDefaults.AuthenticatedPolicy's
       // Design region for why this is deliberately not an admin/role-based policy.
       // Round-1 review M4 (nit): this explicit AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
@@ -195,6 +204,23 @@ public class Program : IAspNetProgram
     serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
     serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
     serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
+    serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();
+
+    // TimeWarp.402 metered demo (104-011): in-memory ledger + facilitator + gates.
+    // Free/discovery routes never resolve MeteredCapabilityGate — only InvokeMeteredCapability.
+    serviceCollection.AddSingleton<ICreditLedger, InMemoryCreditLedger>();
+    serviceCollection.AddSingleton<IFacilitatorClient>(static serviceProvider =>
+    {
+      MeteredCapabilityOptions options = serviceProvider
+        .GetRequiredService<IOptions<MeteredCapabilityOptions>>()
+        .Value;
+      string facilitatorBase = string.IsNullOrWhiteSpace(options.FacilitatorBase)
+        ? FacilitatorUrls.X402Org
+        : options.FacilitatorBase;
+      return new HttpFacilitatorClient(facilitatorBase);
+    });
+    serviceCollection.AddSingleton<PaymentGate>();
+    serviceCollection.AddSingleton<MeteredCapabilityGate>();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
@@ -392,6 +418,10 @@ public class Program : IAspNetProgram
 
     serviceCollection
       .AddFluentValidatedOptions<AgentTokenOptions, AgentTokenOptionsValidator>(configuration)
+      .ValidateOnStart();
+
+    serviceCollection
+      .AddFluentValidatedOptions<MeteredCapabilityOptions, MeteredCapabilityOptionsValidator>(configuration)
       .ValidateOnStart();
   }
 

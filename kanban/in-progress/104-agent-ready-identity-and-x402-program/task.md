@@ -103,7 +103,7 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 - [x] 104-010 Credit ledger
 - [ ] 104-030 Agent bearer validation on api-server + string-enum wire verification
       (slot here if the metered endpoint lives on api-server; else before 022)
-- [ ] 104-011 Metered demo
+- [x] 104-011 Metered demo
 - [ ] 104-012 Payment tests (Wave 2 exit gate)
 
 ### Wave 3 — Compose
