@@ -110,7 +110,7 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 ### Wave 3 — Compose
 - [x] 104-013 Settle → Funded + credits
 - [x] 104-015 Rate limits (before advertising discovery paths publicly)
-- [ ] 104-014 Agent E2E path
+- [x] 104-014 Agent E2E path
 
 ### Wave 4 — Template + agents
 - [x] 104-017 Discovery files (may parallelize earlier — story is stable)
