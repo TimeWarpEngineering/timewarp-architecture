@@ -97,7 +97,7 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 ### Wave 2 — 402
 - [x] 104-007 Scaffold TimeWarp.402
 - [x] 104-008 Challenge / verify / settle / 503 policy
-- [ ] 104-016 Passkey human demo (pulled forward from Wave 4 — deps 003/006 done;
+- [x] 104-016 Passkey human demo (pulled forward from Wave 4 — deps 003/006 done;
       removes shipped Passwordless CDN script + tenant key from template, 131 F-010)
 - [x] 104-009 Tip-jar port — web-server GET|POST api/tip, PaymentGate, TIP_* env,
       7/7 host tests + library PaymentGate coverage
@@ -115,8 +115,8 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 ### Wave 4 — Template + agents
 - [x] 104-017 Discovery files (may parallelize earlier — story is stable)
 - [x] 104-018 Markdown negotiation — home twin `/index.md` + Accept rewrite on `/`; SPA untouched
-- [ ] 104-019 MCP / skills / A2A stubs
-- [ ] 104-020 x402 discoverable
+- [x] 104-019 MCP / skills / A2A stubs
+- [x] 104-020 x402 discoverable
 - [ ] 104-021 Flags / slices / Entra non-default + auth-slice consolidation addendum
 - [ ] 104-022 E2E sunny paths (program exit criterion)
 
@@ -164,4 +164,5 @@ listings), child `## Results` / `review/disposition.md` trails.
   metered-endpoint host decision (api-server vs web-server)
 - 2026-08-04 overnight: continuous session; Waves 2–4; local commits; start 007
 - 2026-08-04 progress (local, unpushed): **007 ✅ 008 ✅ 010 ✅ 011 ✅ 017 ✅
-  012 ✅ 009 ✅** (tip jar); **030 ✅**; remaining Wave 2: 016; then Wave 3
+  012 ✅ 009 ✅** (tip jar); **030 ✅**; **018 ✅**; **019 ✅** (MCP/skills/A2A
+  cards); remaining Wave 2: 016; Wave 4: 020; then Wave 3
