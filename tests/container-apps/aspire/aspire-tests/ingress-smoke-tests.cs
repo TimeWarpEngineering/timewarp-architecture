@@ -175,6 +175,22 @@ public class IngressSmoke_Given_
     response.StatusCode.ShouldNotBe(HttpStatusCode.NotFound);
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
+
+  public static async Task RolesThroughIngress_Should_Ok_Given_MockPrincipalHeader()
+  {
+    // Task 145-009: closed-box authenticated BFF — Development + Authentication:UseMock enables
+    // the mock-identity-session scheme. A real identity-session cookie is not required; the
+    // fail-closed gate is the product surface under test. UserId is required by AuthApiRequest
+    // validation on GetRoles (same as in-proc roles-authorization tests).
+    Guid principalId = Guid.NewGuid();
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
+    // Header name SSOT: MockAuthenticationDefaults.MockPrincipalIdHeader (Web.Spa)
+    httpClient.DefaultRequestHeaders.Add("X-TimeWarp-Mock-Principal-Id", principalId.ToString());
+
+    HttpResponseMessage response = await httpClient.GetAsync($"/api/Roles?UserId={principalId:D}");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+  }
 }
 
 /// <summary>

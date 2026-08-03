@@ -4,13 +4,12 @@
 
 namespace WeatherForecastsState_;
 
-using global::Aspire.Hosting;
 using static TimeWarp.Architecture.Features.WeatherForecasts.GetWeatherForecasts;
 
 [TestTag("Integration")]
 public class Clone_Should
 {
-  private static DistributedApplication? App;
+  private static SpaSessionFixture? Session;
   private static AspireSpaTestApplication? Spa;
 
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -18,15 +17,16 @@ public class Clone_Should
 
   public static async Task SetupOnce()
   {
-    App = await SpaIntegrationHost.StartAsync();
-    Spa = new AspireSpaTestApplication(App);
+    Session = await SessionFixture.GetAsync<SpaSessionFixture>();
+    Spa = new AspireSpaTestApplication(Session.Inner);
   }
 
-  public static async Task CleanUpOnce()
+  public static Task CleanUpOnce()
   {
-    await SpaIntegrationHost.StopAsync(App);
-    App = null;
+    // Session-owned: the Jaribu session hook disposes SpaSessionFixture; do not dispose here.
+    Session = null;
     Spa = null;
+    return Task.CompletedTask;
   }
 
   public static Task Clone()

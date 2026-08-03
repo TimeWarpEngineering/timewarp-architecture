@@ -3,14 +3,23 @@
 #endregion
 
 #region Design
-// ConfigureServices is public static so integration tests build the same container as the app.
-// MOCK_AUTHENTICATION (all configs — task 131 F-009) and optional MOCK_WEB_API swap in offline
-// fakes so Debug and Release agree; the non-mock compile path is MSAL/AzureAdB2C until 104-021
-// makes Entra non-default explicitly. Template symbols (api, grpc) trim optional services.
-// API services are registered via explicit factories because they expose extra constructors for
-// testing and DI must not guess which one to use.
-// Default culture is forced to ISO date patterns so date rendering/parsing is deterministic
-// regardless of the browser locale.
+// ConfigureServices is public static so integration tests and Web.Server prerender compose the
+// same container as the app. Auth is runtime-config-gated (task 145-009): Development/Testing +
+// Authentication:UseMock → MockAuthenticationRegistration; otherwise MSAL/AzureAdB2C (104-021
+// keeps Entra non-default). Fail-closed: Production never activates mock even when the flag is
+// true. optional MOCK_WEB_API still compile-time for offline SPA API fakes. Template symbols
+// (api, grpc) trim optional services. API services use explicit factories so DI does not guess
+// constructors. Default culture is forced to ISO date patterns for deterministic rendering.
+//
+// Task 145-009 R2-1 fix: ConfigureServices takes environmentName as a REQUIRED explicit
+// parameter — there is deliberately no config-derived overload. An earlier 2-arg overload used to
+// fall back to configuration["ASPNETCORE_ENVIRONMENT"] ?? ["DOTNET_ENVIRONMENT"], which reads
+// IConfiguration content, NOT the real IHostEnvironment: on a genuinely Production-booted host
+// (real env var unset), any later-loaded config provider (appsettings, CLI args, …) setting either
+// key activated mock auth — proven dynamically in round-2 review. Every caller now passes the real
+// environment: this file's own Main passes builder.HostEnvironment.Environment (WASM host); Web.Server
+// resolves the true IHostEnvironment (never IConfiguration) and passes it in explicitly — see
+// Web.Server.Program's ConfigureServices Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa;
@@ -25,7 +34,7 @@ public class Program
     SetIsoCulture();
     builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
 
-    ConfigureServices(builder.Services, builder.Configuration);
+    ConfigureServices(builder.Services, builder.Configuration, builder.HostEnvironment.Environment);
     builder.Services.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
 #if api
     builder.Services.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
@@ -49,24 +58,32 @@ public class Program
     CultureInfo.DefaultThreadCurrentUICulture = isoCulture;
   }
 
-  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
+  /// <summary>
+  /// Compose SPA services. <paramref name="environmentName"/> drives the fail-closed mock-auth
+  /// gate (Development/Testing + Authentication:UseMock) and MUST be the caller's real
+  /// <see cref="IHostEnvironment.EnvironmentName"/> (or WebAssembly HostEnvironment.Environment) —
+  /// never a value read back out of <paramref name="configuration"/> (task 145-009 R2-1: a
+  /// config-derived environment can diverge from the real host environment and was a fail-open
+  /// bug). Unknown/absent (null/empty) is fail-closed — mock auth is never activated.
+  /// </summary>
+  public static void ConfigureServices
+  (
+    IServiceCollection serviceCollection,
+    IConfiguration configuration,
+    string? environmentName
+  )
   {
-
-//-:cnd:noEmit
-#if MOCK_AUTHENTICATION
-    serviceCollection.AddScoped<AuthenticationStateProvider, MockAuthenticationStateProvider>();
-    serviceCollection.AddScoped<IAccessTokenProvider, MockAccessTokenProvider>();
-#else
-    serviceCollection.AddMsalAuthentication
-    (
-      options =>
-      {
-        configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-        options.ProviderOptions.LoginMode = "Redirect";
-      }
-    ).AddAccountClaimsPrincipalFactory<AccountClaimsPrincipalFactoryWithRoles>();
-#endif
-//+:cnd:noEmit
+    if (!MockAuthenticationRegistration.TryAddSpaMockAuthentication(serviceCollection, configuration, environmentName))
+    {
+      serviceCollection.AddMsalAuthentication
+      (
+        options =>
+        {
+          configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
+          options.ProviderOptions.LoginMode = "Redirect";
+        }
+      ).AddAccountClaimsPrincipalFactory<AccountClaimsPrincipalFactoryWithRoles>();
+    }
 
     // Add authorization services
     serviceCollection.AddAuthorizationCore(PolicyRegistration.AddPolicies);

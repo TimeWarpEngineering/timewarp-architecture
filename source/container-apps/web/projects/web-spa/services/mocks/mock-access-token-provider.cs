@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Wired in only under the MOCK_AUTHENTICATION symbol, paired with MockAuthenticationStateProvider.
+// Registered only via MockAuthenticationRegistration (Development/Testing + Authentication:UseMock).
 // The token value is an unvalidated placeholder: it satisfies BaseApiService's bearer-header code
 // path but only works against servers that do not verify tokens (mocked or auth-disabled setups).
 #endregion

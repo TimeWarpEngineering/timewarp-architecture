@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Wired in only under the MOCK_AUTHENTICATION symbol, paired with MockAccessTokenProvider.
+// Registered only via MockAuthenticationRegistration (Development/Testing + Authentication:UseMock).
 // Role claims carry RoleIds (GUID strings), not role names, because authorization policies match
 // on ids; the "oid" claim mirrors what Azure AD B2C issues so claim-lookup code works unchanged.
 #endregion
