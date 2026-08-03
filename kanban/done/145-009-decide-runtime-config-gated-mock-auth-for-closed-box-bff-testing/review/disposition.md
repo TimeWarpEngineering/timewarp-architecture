@@ -18,3 +18,11 @@ middleware), and Production smoke surfaces are aligned with the task requirement
 ## Escalations
 
 - None
+
+---
+
+## Addendum — round 2 (2026-08-03): round-1 disposition INVALIDATED
+
+Adversarial round 2 dynamically proved a critical fail-closed gap on the SPA composition path
+(config-derived environment gate) plus two proven TWA0021 evasions. Task REOPENED (parent
+epic follows). Disposition to be rewritten after the fix loop's adversarial re-verification.
