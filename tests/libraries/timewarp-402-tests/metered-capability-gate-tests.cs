@@ -1,10 +1,11 @@
 #region Purpose
-// MeteredCapabilityGate: credit debit, 402 challenge/reject, settle→credit→debit, disabled→503.
+// MeteredCapabilityGate: credit debit, 402 challenge/reject, settle→fund→debit, disabled→503.
 #endregion
 
 #region Design
 // Host maps Granted→200, Challenge/Rejected→402, Unavailable→503. Free routes never call this gate.
-// Mock facilitator only — no live chain (104-012 package exit).
+// Mock facilitator only — no live chain (104-012 package exit). SettlementFundingService uses an
+// empty principal store in most cases (credit still applies); tier-focused cases seed a Keyed agent.
 #endregion
 
 namespace MeteredCapabilityGate_;
@@ -19,17 +20,17 @@ public class EvaluateAsync
   internal static void Register() => RegisterTests<EvaluateAsync>();
 
   private const string ValidPayTo = "0x000000000000000000000000000000000000dEaD";
-  private static readonly PrincipalId Principal = PrincipalId.New();
+  private static readonly PrincipalId PrepaidPrincipalId = PrincipalId.New();
 
   public static async Task Prepaid_credit_debits_without_facilitator()
   {
     InMemoryCreditLedger ledger = new();
-    await ledger.CreditAsync(Principal, 1.00m, "seed-1");
+    await ledger.CreditAsync(PrepaidPrincipalId, 1.00m, "seed-1");
     MockFacilitator facilitator = new();
-    MeteredCapabilityGate gate = new(new PaymentGate(facilitator), ledger);
+    MeteredCapabilityGate gate = CreateGate(facilitator, ledger);
 
     MeteredCapabilityOutcome outcome = await gate.EvaluateAsync(
-      Principal,
+      PrepaidPrincipalId,
       ReadyOptions(),
       paymentSignatureHeader: null);
 
@@ -39,13 +40,13 @@ public class EvaluateAsync
     granted.PaymentResponseHeader.ShouldBeNull();
     facilitator.VerifyCalls.ShouldBe(0);
     facilitator.SettleCalls.ShouldBe(0);
-    (await ledger.GetBalanceAsync(Principal)).ShouldBe(0.90m);
+    (await ledger.GetBalanceAsync(PrepaidPrincipalId)).ShouldBe(0.90m);
   }
 
   public static async Task Unpaid_without_credit_returns_challenge()
   {
     InMemoryCreditLedger ledger = new();
-    MeteredCapabilityGate gate = new(new PaymentGate(new MockFacilitator()), ledger);
+    MeteredCapabilityGate gate = CreateGate(new MockFacilitator(), ledger);
 
     MeteredCapabilityOutcome outcome = await gate.EvaluateAsync(
       PrincipalId.New(),
@@ -72,7 +73,7 @@ public class EvaluateAsync
         Payer = ValidPayTo,
       },
     };
-    MeteredCapabilityGate gate = new(new PaymentGate(facilitator), ledger);
+    MeteredCapabilityGate gate = CreateGate(facilitator, ledger);
     string signature = PaymentChallengeBuilder.EncodeHeaderPayload(new { x402Version = 2, scheme = "exact" });
 
     MeteredCapabilityOutcome outcome = await gate.EvaluateAsync(
@@ -89,6 +90,44 @@ public class EvaluateAsync
     (await ledger.GetBalanceAsync(principal)).ShouldBe(0m);
   }
 
+  public static async Task Valid_payment_promotes_principal_to_funded_and_debit_keeps_tier()
+  {
+    InMemoryPrincipalStore store = new();
+    Principal agent = Principal.Create(PrincipalKind.Agent);
+    await store.AddPrincipalAsync(agent);
+    Credential credential = Credential.Create(
+      agent.Id,
+      CredentialType.AgentKey,
+      handle: Guid.NewGuid().ToByteArray(),
+      publicMaterial: Guid.NewGuid().ToByteArray());
+    await store.AddCredentialAsync(credential);
+    (await store.GetPrincipalAsync(agent.Id))!.TrustTier.ShouldBe(TrustTier.Keyed);
+
+    InMemoryCreditLedger ledger = new();
+    MockFacilitator facilitator = new()
+    {
+      VerifyResult = new FacilitatorVerifyResult { IsValid = true },
+      SettleResult = new FacilitatorSettleResult
+      {
+        Success = true,
+        Transaction = "0xmetered-fund-tier",
+        Network = "eip155:84532",
+        Payer = ValidPayTo,
+      },
+    };
+    MeteredCapabilityGate gate = CreateGate(facilitator, ledger, store);
+    string signature = PaymentChallengeBuilder.EncodeHeaderPayload(new { x402Version = 2, scheme = "exact" });
+
+    MeteredCapabilityOutcome outcome = await gate.EvaluateAsync(agent.Id, ReadyOptions(), signature);
+
+    outcome.ShouldBeOfType<MeteredCapabilityGranted>();
+    (await ledger.GetBalanceAsync(agent.Id)).ShouldBe(0m);
+    Principal? after = await store.GetPrincipalAsync(agent.Id);
+    after.ShouldNotBeNull();
+    after.TrustTier.ShouldBe(TrustTier.Funded);
+    after.IsFundedAndActive.ShouldBeTrue();
+  }
+
   public static async Task Invalid_payment_returns_rejected_without_ledger_change()
   {
     PrincipalId principal = PrincipalId.New();
@@ -97,7 +136,7 @@ public class EvaluateAsync
     {
       VerifyResult = new FacilitatorVerifyResult { IsValid = false, InvalidReason = "bad_sig" },
     };
-    MeteredCapabilityGate gate = new(new PaymentGate(facilitator), ledger);
+    MeteredCapabilityGate gate = CreateGate(facilitator, ledger);
     string signature = PaymentChallengeBuilder.EncodeHeaderPayload(new { x402Version = 2 });
 
     MeteredCapabilityOutcome outcome = await gate.EvaluateAsync(principal, ReadyOptions(), signature);
@@ -111,9 +150,7 @@ public class EvaluateAsync
 
   public static async Task Disabled_payment_without_credit_returns_unavailable_not_challenge()
   {
-    MeteredCapabilityGate gate = new(
-      new PaymentGate(new MockFacilitator()),
-      new InMemoryCreditLedger());
+    MeteredCapabilityGate gate = CreateGate(new MockFacilitator(), new InMemoryCreditLedger());
 
     MeteredCapabilityOutcome outcome = await gate.EvaluateAsync(
       PrincipalId.New(),
@@ -130,9 +167,7 @@ public class EvaluateAsync
     PrincipalId principal = PrincipalId.New();
     InMemoryCreditLedger ledger = new();
     await ledger.CreditAsync(principal, 0.25m, "seed-disabled");
-    MeteredCapabilityGate gate = new(
-      new PaymentGate(new MockFacilitator()),
-      ledger);
+    MeteredCapabilityGate gate = CreateGate(new MockFacilitator(), ledger);
 
     MeteredCapabilityOutcome outcome = await gate.EvaluateAsync(
       principal,
@@ -146,9 +181,7 @@ public class EvaluateAsync
 
   public static async Task Invalid_price_returns_unavailable_not_challenge()
   {
-    MeteredCapabilityGate gate = new(
-      new PaymentGate(new MockFacilitator()),
-      new InMemoryCreditLedger());
+    MeteredCapabilityGate gate = CreateGate(new MockFacilitator(), new InMemoryCreditLedger());
 
     MeteredCapabilityOutcome outcome = await gate.EvaluateAsync(
       PrincipalId.New(),
@@ -176,7 +209,7 @@ public class EvaluateAsync
         Payer = ValidPayTo,
       },
     };
-    MeteredCapabilityGate gate = new(new PaymentGate(facilitator), ledger);
+    MeteredCapabilityGate gate = CreateGate(facilitator, ledger);
     string signature = PaymentChallengeBuilder.EncodeHeaderPayload(new { x402Version = 2, scheme = "exact" });
 
     // First invoke: credit by receipt then debit → balance 0.
@@ -186,6 +219,15 @@ public class EvaluateAsync
     // Seed extra credit and re-apply same receipt id via ledger (simulates settle retry credit).
     await ledger.CreditAsync(principal, 0.10m, Tx);
     (await ledger.GetBalanceAsync(principal)).ShouldBe(0m);
+  }
+
+  private static MeteredCapabilityGate CreateGate(
+    IFacilitatorClient facilitator,
+    ICreditLedger ledger,
+    IPrincipalStore? principals = null)
+  {
+    SettlementFundingService funding = new(ledger, principals ?? new InMemoryPrincipalStore());
+    return new MeteredCapabilityGate(new PaymentGate(facilitator), ledger, funding);
   }
 
   private static PaymentOptions ReadyOptions() =>

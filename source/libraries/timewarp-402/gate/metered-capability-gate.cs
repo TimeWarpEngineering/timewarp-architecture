@@ -4,19 +4,24 @@
 
 #region Design
 // Distinct from voluntary tip (104-009): this gate always bills a principal for a capability —
-// payment-as-product, not a tip jar. Policy (locked product decision 8 + 104-010/011):
+// payment-as-product, not a tip jar. Policy (locked product decision 8 + 104-010/011/013):
 // 1. Parse options.Price → major units; fail → Unavailable misconfigured (503 never 402)
 // 2. If balance >= price → DebitAsync → Granted(funding=credit) — works even when payment is
-//    disabled (prepaid credit is already owned; free routes still never call this gate)
+//    disabled (prepaid credit is already owned; free routes still never call this gate). Debit
+//    does not demote TrustTier (Funded is "has settled", not "has balance" — see
+//    SettlementFundingService).
 // 3. Else PaymentGate.EvaluateAsync:
 //    a. Unavailable → Unavailable (503)
 //    b. Challenge / Rejected → pass through (402)
-//    c. Settled → CreditAsync(price, receiptId=transaction|synthetic) then DebitAsync(price)
+//    c. Settled → SettlementFundingService.ApplyAsync (credit + Funded promote) then DebitAsync
 //       → Granted(funding=payment, PAYMENT-RESPONSE header)
 // Credit-before-debit on settle keeps "ledger debit on every success" and reuses idempotent
 // receipt application so facilitator retries do not double-fund. Partial balances are not
 // combined with a partial payment in v1 — insufficient total balance goes fully through payment.
 // FREE ROUTES NEVER call this type (host routing isolation).
+//
+// Lifetime: depends on SettlementFundingService → IPrincipalStore (scoped under EF). Register
+// MeteredCapabilityGate as scoped on hosts that use EF principal stores.
 #endregion
 
 namespace TimeWarp.X402;
@@ -28,11 +33,16 @@ public sealed class MeteredCapabilityGate
 {
   private readonly PaymentGate PaymentGate;
   private readonly ICreditLedger Ledger;
+  private readonly SettlementFundingService SettlementFunding;
 
-  public MeteredCapabilityGate(PaymentGate paymentGate, ICreditLedger ledger)
+  public MeteredCapabilityGate(
+    PaymentGate paymentGate,
+    ICreditLedger ledger,
+    SettlementFundingService settlementFunding)
   {
     PaymentGate = paymentGate ?? throw new ArgumentNullException(nameof(paymentGate));
     Ledger = ledger ?? throw new ArgumentNullException(nameof(ledger));
+    SettlementFunding = settlementFunding ?? throw new ArgumentNullException(nameof(settlementFunding));
   }
 
   /// <summary>
@@ -112,8 +122,8 @@ public sealed class MeteredCapabilityGate
       ? $"settle:{Guid.NewGuid():N}"
       : settled.Result.Transaction;
 
-    await Ledger
-      .CreditAsync(principalId, price, receiptId, cancellationToken)
+    await SettlementFunding
+      .ApplyAsync(principalId, price, receiptId, cancellationToken)
       .ConfigureAwait(false);
 
     decimal after = await Ledger

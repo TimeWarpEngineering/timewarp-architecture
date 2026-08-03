@@ -207,10 +207,12 @@ public class Program : IAspNetProgram
     serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
     serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();
 
-    // TimeWarp.402 demos (104-009 tip, 104-011 metered): in-memory ledger + facilitator + gates.
-    // Free/discovery routes never resolve PaymentGate / MeteredCapabilityGate — only tip and
-    // metered handlers invoke them. Facilitator base prefers tip options, then metered, then
-    // public testnet facilitator.
+    // TimeWarp.402 demos (104-009 tip, 104-011 metered, 104-013 settle→Funded):
+    // in-memory ledger + facilitator + gates. Free/discovery routes never resolve PaymentGate /
+    // MeteredCapabilityGate / SettlementFundingService — only tip and metered handlers invoke them.
+    // Facilitator base prefers tip options, then metered, then public testnet facilitator.
+    // SettlementFundingService + MeteredCapabilityGate are scoped so they can resolve IPrincipalStore
+    // when postgres swaps the store to scoped EfPrincipalStore (captive-dependency safe).
     serviceCollection.AddSingleton<ICreditLedger, InMemoryCreditLedger>();
     serviceCollection.AddSingleton<IFacilitatorClient>(static serviceProvider =>
     {
@@ -225,7 +227,8 @@ public class Program : IAspNetProgram
       return new HttpFacilitatorClient(facilitatorBase);
     });
     serviceCollection.AddSingleton<PaymentGate>();
-    serviceCollection.AddSingleton<MeteredCapabilityGate>();
+    serviceCollection.AddScoped<SettlementFundingService>();
+    serviceCollection.AddScoped<MeteredCapabilityGate>();
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.

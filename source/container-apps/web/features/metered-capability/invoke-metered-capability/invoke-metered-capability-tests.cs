@@ -136,6 +136,9 @@ namespace TimeWarp.Architecture.Features.MeteredCapability
       var key = new IntegrationSoftwareAgentKey();
       (PrincipalId principalId, string accessToken) = await RegisterAndIssueToken(key, [AgentScopes.DemoInvoke]);
 
+      IPrincipalStore principals = Web.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
+      (await principals.GetPrincipalAsync(principalId))!.TrustTier.ShouldBe(TrustTier.Keyed);
+
       string signature = PaymentChallengeBuilder.EncodeHeaderPayload(new { x402Version = 2, scheme = "exact" });
       using HttpResponseMessage response = await GetMeteredWithBearer(accessToken, signature);
 
@@ -148,6 +151,11 @@ namespace TimeWarp.Architecture.Features.MeteredCapability
       parsed.BalanceAfter.ShouldBe(0m);
       ICreditLedger ledger = Web.WebApplicationHost.ServiceProvider.GetRequiredService<ICreditLedger>();
       (await ledger.GetBalanceAsync(principalId)).ShouldBe(0m);
+      // 104-013: settle → Funded; debit to zero does not demote tier.
+      Principal? funded = await principals.GetPrincipalAsync(principalId);
+      funded.ShouldNotBeNull();
+      funded.TrustTier.ShouldBe(TrustTier.Funded);
+      funded.IsFundedAndActive.ShouldBeTrue();
       Facilitator.VerifyCalls.ShouldBe(1);
       Facilitator.SettleCalls.ShouldBe(1);
     }

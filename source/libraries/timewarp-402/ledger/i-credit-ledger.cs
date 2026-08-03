@@ -10,6 +10,9 @@
 // Amounts are decimal major units of the account currency (typically USD for $ prices). Atomicity
 // of multi-step host workflows (settle then credit) is the host's responsibility until a unit-of-work
 // seam exists.
+//
+// Debit does NOT demote TrustTier (task 104-013): balance and tier are orthogonal. SettlementFunding
+// promotes on successful settle; empty balance after DebitAsync leaves Funded/Established intact.
 #endregion
 
 namespace TimeWarp.X402;

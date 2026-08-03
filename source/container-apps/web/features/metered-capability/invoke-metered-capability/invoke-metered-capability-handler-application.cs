@@ -9,6 +9,8 @@
 //   Unavailable → 503 SharedProblemDetails with payment error body fields in Extensions
 // IAgentCallerContext null is defense-in-depth (endpoint is [EndpointAuthorize] demo:invoke).
 // Free routes never reach this handler. Distinct from tip: always debits on success.
+// On PaymentSettled, MeteredCapabilityGate uses SettlementFundingService (credit + TrustTier.Funded);
+// debit never demotes tier (104-013).
 #endregion
 
 namespace TimeWarp.Architecture.Features.MeteredCapability.Application;
