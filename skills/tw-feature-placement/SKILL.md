@@ -281,11 +281,46 @@ requires `TimeWarp.Jaribu` ≥ 1.0.0-beta.14) — read one before writing a new 
   Never leave fixed-port hosts to process exit.
 - **Never share** ASP.NET hosts across classes via process-static / `Lazy` / assembly singletons
   (that was the Fixie mental model; TimeWarp.Fixie actually rebuilt the provider **per class**
-  anyway — see task 143). **C-share** / Jaribu run-scope session hooks are **not** the authoring
-  default (145-008 is data-gated only).
+  anyway — see task 143). Ad hoc process-static sharing is never the answer — use **C-share**
+  (below) when sharing is actually warranted.
 - **Documented exception (no dispose required):** Testcontainers postgres process-static
   `Lazy` in foundation/infra tests — Ryuk reaps containers at process exit; do **not** cite that
   as precedent for sharing Kestrel hosts.
+
+**C-share host lifetime (task 145-008 — Jaribu session-scoped fixtures, `TimeWarp.Jaribu` ≥
+1.0.0-beta.15):** C-create (above) is still the **default** for any test class — one owned host
+graph per class, disposed in `CleanUpOnce`. Reach for C-share only when a suite is genuinely
+**expensive AND multi-class closed-box** (e.g. a full `Aspire.Hosting.Testing`
+`DistributedApplication` boot shared by several test classes in the same suite — the SPA suite's
+`SpaSessionFixture` is the shipped exemplar, `tests/container-apps/web/web-spa-integration-tests/infrastructure/spa-session-fixture.cs`).
+Do not reach for it just because a fixture is mildly annoying to construct — C-create's per-class
+in-proc `HostGraphFactory` boots are already cheap; session sharing is for the closed-box tax.
+
+- **Base type:** `SessionHostFixture<TInner>` (`tests/common/timewarp-testing/session-host-fixture.cs`)
+  — a suite declares ONE sealed subclass whose `CreateAsync()` delegates to the EXACT SAME
+  factory function its C-create callers already use (no duplicated boot logic), so the
+  per-class and session-scoped shapes never drift apart.
+- **Explicit registration, once per suite:** call `RegisterSessionFixture<TFixture>()` from a
+  single dedicated `[ModuleInitializer]` (its own file, separate from each class's own
+  `RegisterTests<TClass>()` initializer — Jaribu's `Register` throws on double-registration).
+- **Consuming classes:** `SetupOnce` calls `await SessionFixture.GetAsync<TFixture>()` instead of
+  the per-class factory. `CleanUpOnce` must **not** dispose the fixture — the Jaribu session hook
+  (MTP `CloseTestSessionAsync`, or the standalone/session-of-one wrap) disposes it exactly once
+  when the outermost session ends; null the local static reference only.
+- **Anti-pattern warning:** never reach for a process-static `Lazy<T>` or a bare static field to
+  "share" a host across classes — that reintroduces the undisposed/refcounted bug class this
+  design exists to avoid. If a fixture needs sharing, it goes through `RegisterSessionFixture` /
+  `SessionFixture.GetAsync`, never ad hoc statics.
+- **Lazy + skip-aware:** a class with no `SetupOnce` (e.g. an all-`[Skip]` class) never calls
+  `GetAsync` and therefore never triggers the shared fixture's boot — preserve this when adding
+  or un-quarantining tests in a session-shared suite (see the SPA suite's quarantined
+  weather-forecast class).
+- **Suite-shaped vs co-located coverage:** this composes cleanly for suite-shaped `tests/`
+  projects (the whole assembly's module initializers always run together, so registration is
+  never partial). For co-located single-file runfiles that might want session sharing while
+  still working under bare `dotnet run <file>.cs`, the registering file and the consuming file(s)
+  would need to be the same file (or the type simply isn't shared when run alone) — no co-located
+  exemplar exists yet; treat this as an open follow-up if a co-located suite ever needs it.
 
 ```csharp
 #!/usr/bin/env -S dotnet --

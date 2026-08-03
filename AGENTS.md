@@ -34,9 +34,11 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 - `dev test` — every project under `tests/` (globbed, run one at a time — fixed ports); includes
   family `JARIBU_MULTI` aggregators that compile co-located `source/**/*-tests.cs` runfiles
 - one suite: `cd tests/<project> && dotnet test -c Release` (MTP — the csproj-path form of
-  `dotnet test` is unsupported on .NET 10). Single-test selection is `--list-tests` +
-  `-- --filter-uid <uid>` for now — human-usable name/tag selection is upstream
-  timewarp-jaribu#23 (see how-to-filter-tests-by-name.md).
+  `dotnet test` is unsupported on .NET 10). Selection: `-- --filter-class <substring>` /
+  `-- --filter-method <substring>` / `-- --filter-tag <tag>` (also honors `JARIBU_FILTER_TAG`;
+  CLI wins), or `--list-tests` + `-- --filter-uid <uid>` for a specific discovered node
+  (`TimeWarp.Jaribu.TestingPlatform` ≥ 1.0.0-beta.15, timewarp-jaribu#23; see
+  how-to-filter-tests-by-name.md / how-to-filter-tests-by-tags.md).
 - `dotnet run source/<family>/features/…/<name>-tests.cs` — one co-located Jaribu runfile
   standalone (local dev loop; CI uses family aggregators via `dev test`)
 - More commands: `dev --capabilities` (see the `dev-cli` skill)
@@ -78,6 +80,17 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   - **Host-level / topology** suites stay suite-shaped under `tests/` on **Jaribu MTP** (project-local
     `global.json` test.runner). Closed-box topology: `aspire-tests` (145-003). In-proc HostGraph:
     HostGraphFactory C-create (145-002).
+  - **Fixture lifetime — C-create is the default; C-share is the exception (145-008):** every
+    test class owns and disposes its own host graph (C-create, `HostGraphFactory` /
+    `SessionHostFixture<TInner>` subclass's `CreateAsync`) unless the suite is genuinely
+    **expensive AND multi-class closed-box** — then it may opt into a Jaribu session-scoped
+    fixture (`TimeWarp.Jaribu` ≥ 1.0.0-beta.15: `RegisterSessionFixture<T>` +
+    `SessionFixture.GetAsync<T>()`) via a `SessionHostFixture<TInner>`
+    (`tests/common/timewarp-testing`) subclass that delegates to the SAME per-class factory —
+    no duplicated boot logic. Exemplar: `web-spa-integration-tests`' `SpaSessionFixture`
+    (~109s → ~20s wall for its 6 previously-booting classes). Full rules and the anti-pattern
+    warning (never a process-static `Lazy`/bare static for sharing): skill
+    `tw-feature-placement` (C-share host lifetime).
   - **CI:** family **`JARIBU_MULTI` aggregators** under
     `tests/container-apps/<family>/<family>-jaribu-tests/` (web + api; Microsoft.Testing.Platform;
     not in `.slnx` — task 136). Each aggregator's project-local `global.json` must **mirror the
