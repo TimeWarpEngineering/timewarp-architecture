@@ -1,0 +1,67 @@
+# TimeWarp.Architecture (template host)
+
+> Agent-first discovery index for this template demo host. Auth is passkey /
+> agent-key first — not email/password. Paid power uses x402 (TimeWarp.402);
+> free and discovery routes never return HTTP 402.
+
+## Start here
+
+- [Authentication (auth.md)](/auth.md): Humans (passkeys), agents (public keys + scoped bearer tokens), payment posture, and what we deliberately do not do.
+- [robots.txt](/robots.txt): Agent-welcome crawl policy with Content Signals (`ai-train=yes, search=yes, ai-input=yes`).
+- [sitemap.xml](/sitemap.xml): Public discovery and demo entry points.
+
+## Human auth (browser)
+
+- Passkey registration / sign-in UI: [/Passkeys](/Passkeys), [/Login](/Login)
+- WebAuthn ceremony API (anonymous start/complete):
+  - `POST /api/identity/passkey/register/options`
+  - `POST /api/identity/passkey/register`
+  - `POST /api/identity/passkey/authenticate/options`
+  - `POST /api/identity/passkey/authenticate`
+- Session read: `GET /api/identity/session` (cookie after a completed passkey ceremony)
+
+There is **no** email/password registration form and **no** “create account with email” path.
+
+## Agent auth (no browser)
+
+- Register ECDSA P-256 public key (no human sponsor):
+  - `POST /api/identity/agent/register/options`
+  - `POST /api/identity/agent/register`
+- Issue short-lived scoped opaque bearer token:
+  - `POST /api/identity/agent/token/options`
+  - `POST /api/identity/agent/token`
+- Who am I: `GET /api/identity/agent/me` with `Authorization: Bearer <token>` (scope `identity:read`)
+
+### Onboarding (preferred)
+
+From a clone of this repo (not available to pure HTTP agents — use the API above):
+
+```text
+dotnet run tools/agent-identity-cli/agent.cs -- demo
+```
+
+Commands: `keygen`, `register`, `token`, `whoami`, `demo`. Default server: `https://localhost:63611`. Signing uses `AgentKeyProof.BuildSignedData` (TimeWarp.Identity). Manual openssl/curl sequence: kanban task **104-004** Results.
+
+## API surface
+
+- OpenAPI document: [/openapi/v1.json](/openapi/v1.json)
+- Scalar UI: [/scalar/v1](/scalar/v1)
+- Health: [/api/health](/api/health)
+
+## Payment (x402)
+
+- Library: **TimeWarp.402** (challenge / verify / settle; disabled or misconfigured payment → **503**, never 402 on free/discovery paths).
+- Host-wired tip jar and metered “pay for capability” demo endpoints are still landing (template waves). Do not invent payment URLs not listed here.
+- When paid routes appear, they will be linked from this file and from auth.md.
+
+## Content usage preferences
+
+`ai-train=yes, search=yes, ai-input=yes` — see [robots.txt](/robots.txt).
+
+## Planned agent surfaces (not yet shipped)
+
+- Markdown content negotiation for HTML pages (task 104-018)
+- MCP server card / Agent Skills index / A2A agent card stubs (task 104-019)
+- Discoverable x402 tip or meter path for commerce scanners (task 104-020)
+
+When those land, they will be linked from this index. Stubs are better than fiction: do not assume they exist until linked.

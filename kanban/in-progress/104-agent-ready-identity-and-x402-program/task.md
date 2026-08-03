@@ -112,7 +112,7 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 - [ ] 104-014 Agent E2E path
 
 ### Wave 4 — Template + agents
-- [ ] 104-017 Discovery files (may parallelize earlier — story is stable)
+- [x] 104-017 Discovery files (may parallelize earlier — story is stable)
 - [ ] 104-018 Markdown negotiation
 - [ ] 104-019 MCP / skills / A2A stubs
 - [ ] 104-020 x402 discoverable
@@ -162,3 +162,6 @@ listings), child `## Results` / `review/disposition.md` trails.
   Passwordless tenant key until it lands); 030 slotted pending the
   metered-endpoint host decision (api-server vs web-server)
 - 2026-08-04 overnight: continuous session; Waves 2–4; local commits; start 007
+- 2026-08-04 progress (local, unpushed): **007 ✅ 008 ✅ 010 ✅**; parallel
+  agents on **011** (metered demo) + **017** (discovery); next queue
+  009/012/016/030 then Wave 3
