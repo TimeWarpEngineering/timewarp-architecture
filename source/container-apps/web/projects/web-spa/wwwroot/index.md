@@ -48,8 +48,8 @@ paid paths when payment is enabled (see [/llms.txt](/llms.txt) Payment).
 ## Human demo UI (browser)
 
 - Home (this page as HTML): [/](/)
-- Passkeys: [/Passkeys](/Passkeys)
-- Login: [/Login](/Login)
+- Sign in (passkey-first CTA): [/Login](/Login)
+- Passkeys (technical ceremony demo): [/Passkeys](/Passkeys)
 
 ## Markdown access
 

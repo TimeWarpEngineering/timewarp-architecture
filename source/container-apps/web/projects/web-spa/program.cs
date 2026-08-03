@@ -118,7 +118,7 @@ public class Program
     // DI registration is required here. (Replaced the deprecated Blazored / unwired Morris path.)
 
     serviceCollection.AddScoped<ChatHubConnection>();
-    serviceCollection.AddScoped<PasswordlessService>();
+    serviceCollection.AddScoped<PasskeyCeremonyClient>();
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
 
@@ -169,10 +169,6 @@ public class Program
   {
     serviceCollection
       .AddFluentValidatedOptions<BlazorSettings, BlazorSettingsValidator>(configuration)
-      .ValidateOnStart();
-
-    serviceCollection
-      .AddFluentValidatedOptions<PasswordlessOptions, PasswordlessOptionsValidator>(configuration)
       .ValidateOnStart();
   }
 }

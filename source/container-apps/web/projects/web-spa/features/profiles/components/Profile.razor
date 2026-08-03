@@ -6,7 +6,8 @@
 @code {
   private async Task HandleSignIn()
   {
-    await NoSubRouteState.ChangeRoute(newRoute: "authentication/login");
+    // Passkey-first human CTA (task 104-016). Entra/MSAL remains a non-default path (104-021).
+    await NoSubRouteState.ChangeRoute(newRoute: LoginPage.GetPageUrl());
   }
   private void HandleSignOut()
   {

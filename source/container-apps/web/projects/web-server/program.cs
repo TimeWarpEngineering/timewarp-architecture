@@ -186,10 +186,6 @@ public class Program : IAspNetProgram
             string.Equals(context.User.Identity?.AuthenticationType, IdentitySessionDefaults.Scheme, StringComparison.Ordinal)
             || context.User.HasClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.CredentialManage))
       );
-    serviceCollection.AddPasswordlessSdk(options =>
-    {
-      options.ApiSecret = configuration["Passwordless:ApiSecret"] ?? throw new InvalidOperationException();
-    });
     ConfigureAuthentication(serviceCollection, configuration);
 
     CommonServerModule.ConfigureServices(serviceCollection, configuration);

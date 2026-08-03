@@ -41,7 +41,7 @@ routes respond **503**, not 402.
 | Complete authenticate | `POST` | `/api/identity/passkey/authenticate` |
 | Current session | `GET` | `/api/identity/session` |
 
-Demo UI: [/Passkeys](/Passkeys), [/Login](/Login).
+Product CTA: [/Login](/Login) (Continue with passkey). Technical ceremony demo: [/Passkeys](/Passkeys).
 
 Additional passkeys can be attached to an existing principal once signed in
 (`POST /api/identity/credentials/passkey` — session required).

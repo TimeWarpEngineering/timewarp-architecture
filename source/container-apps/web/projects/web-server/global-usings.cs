@@ -29,7 +29,6 @@ global using Oakton;
 global using Oakton.Environment;
 global using OneOf;
 global using OneOf.Types;
-global using Passwordless;
 global using Serilog.Core;
 global using Serilog.Debugging;
 global using System.IO;

@@ -35,9 +35,23 @@
       </ul>
     </Card>
 
+    <Card Title="Sign in">
+      <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+        <p>
+          Passkey first — no registration form. Continue with a platform authenticator,
+          password manager, or hardware key.
+        </p>
+        <div>
+          <NavLink href="/Login" class="twe-home-passkey-cta">
+            <FluentButton Appearance="ButtonAppearance.Primary">Continue with passkey</FluentButton>
+          </NavLink>
+        </div>
+      </FluentStack>
+    </Card>
+
     <Card Title="Try it">
       <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
-        <FluentButton Appearance="ButtonAppearance.Primary" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Outline" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
         <FluentButton Appearance="ButtonAppearance.Outline" OnClick=TwoSecondTaskButtonClick>Launch Two Second Task</FluentButton>
         <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=ModalButtonClick>Show Modal</FluentButton>
       </FluentStack>

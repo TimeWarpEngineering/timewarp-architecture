@@ -13,7 +13,7 @@
 
 ## Human auth (browser)
 
-- Passkey registration / sign-in UI: [/Passkeys](/Passkeys), [/Login](/Login)
+- Passkey sign-in CTA: [/Login](/Login) (Continue with passkey); technical demo: [/Passkeys](/Passkeys)
 - WebAuthn ceremony API (anonymous start/complete):
   - `POST /api/identity/passkey/register/options`
   - `POST /api/identity/passkey/register`

@@ -1,7 +1,6 @@
 namespace TimeWarp.Architecture.Testing;
 
 using Microsoft.Extensions.Http;
-using Passwordless;
 using TimeWarp.Architecture.Configuration;
 
 /// <summary>

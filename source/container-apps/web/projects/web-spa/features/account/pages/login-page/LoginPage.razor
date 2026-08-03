@@ -1,37 +1,56 @@
 @namespace TimeWarp.Architecture.Features.Account
 @inherits BaseComponent
-@inject IJSRuntime JSRuntime
 
 @code {
-  public static string Title => "Logout";
-  public static Icon? NavIcon => new Icons.Regular.Size20.ArrowEnter();
-
-  private async Task SignInWithPasskey()
-  {
-    var result = await JSRuntime.InvokeAsync<SignInResult>("passwordless.signinWithDiscoverable");
-    if (result.Error != null)
-    {
-      // Handle error
-    }
-    else
-    {
-      // Send result.Token to backend to verify and get the userId
-    }
-  }
-
-  private class SignInResult
-  {
-    public string? Token { get; set; }
-    public string? Error { get; set; }
-  }
+  public static string Title => "Sign in";
+  public static Icon? NavIcon => new Icons.Regular.Size20.PersonPasskey();
 }
 
-<TimeWarpPage Title="Login">
-  <Card Title="Sign in">
-    <FluentStack Orientation=Orientation.Vertical VerticalGap="12">
-      <FluentButton Appearance=ButtonAppearance.Primary OnClick=SignInWithPasskey>Sign in with a passkey</FluentButton>
-      <RegisterPasskey />
-    </FluentStack>
-  </Card>
-</TimeWarpPage>
+<PageTitle>Sign in</PageTitle>
 
+<TimeWarpPage Title="Sign in">
+  <div class="twe-stack">
+    <Card Title="Continue with a passkey">
+      <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+        <p>
+          No email, username, or profile form. A passkey is your account — create one once,
+          then continue with the same authenticator (platform, password manager, or hardware key).
+        </p>
+        <p>
+          Session:
+          @(IsAuthenticated is true
+            ? "signed in"
+            : IsAuthenticated is false
+              ? "not signed in"
+              : "checking…")
+        </p>
+        <div>
+          <FluentButton Appearance="ButtonAppearance.Primary"
+                        data-qa="ContinueWithPasskey"
+                        Disabled="IsBusy"
+                        OnClick="ContinueWithPasskey">
+            Continue with passkey
+          </FluentButton>
+        </div>
+        <div>
+          <FluentButton Appearance="ButtonAppearance.Outline"
+                        data-qa="CreatePasskey"
+                        Disabled="IsBusy"
+                        OnClick="CreatePasskey">
+            Create a passkey
+          </FluentButton>
+        </div>
+      </FluentStack>
+    </Card>
+
+    @if (!string.IsNullOrEmpty(StatusMessage))
+    {
+      <SimpleAlert Type="SimpleAlert.AlertType.Success" Title="Success">@StatusMessage</SimpleAlert>
+    }
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+      <SimpleAlert Type="SimpleAlert.AlertType.Danger" Title="Error">@ErrorMessage</SimpleAlert>
+    }
+  </div>
+</TimeWarpPage>
