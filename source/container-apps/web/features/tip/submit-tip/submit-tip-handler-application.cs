@@ -14,9 +14,11 @@
 //   TipOptions:Enabled=true (or TIP_ENABLED=true), TipOptions:PayTo / TIP_PAY_TO = your Base
 //   Sepolia receive address, Network eip155:84532, FacilitatorBase https://x402.org/facilitator.
 //   curl -si https://localhost:7000/api/tip → 402 + PAYMENT-REQUIRED when enabled unpaid.
-//   Free routes (/, /llms.txt, etc.) never 402 from this feature.
+//   curl -si https://localhost:7000/api → same (discovery alias, 104-020).
+//   Free routes (/, /llms.txt, /auth.md, /api/health, etc.) never 402 from this feature.
 //   Optional settle: fund a Sepolia wallet with USDC, present PAYMENT-SIGNATURE via an x402
 //   buyer (see timewarp-software tools/tip-buyer) against this host's /api/tip.
+//   Discovery: linked from /llms.txt and /auth.md for commerce scanners.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Tip.Application;

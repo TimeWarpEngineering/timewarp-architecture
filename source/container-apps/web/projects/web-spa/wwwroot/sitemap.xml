@@ -36,6 +36,11 @@
   <url>
     <loc>/api/health</loc>
   </url>
+  <!-- Paid tip action is not a content page; listed so scanners following the
+       sitemap can still discover the x402 path (canonical). Free docs: llms/auth. -->
+  <url>
+    <loc>/api/tip</loc>
+  </url>
   <url>
     <loc>/.well-known/mcp/server-card.json</loc>
   </url>

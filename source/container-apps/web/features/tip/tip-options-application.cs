@@ -9,8 +9,9 @@
 // PayTo is a public receive address only — never a merchant private key (tip-jar hard lesson).
 // Env overlay (TIP_ENABLED, TIP_PAY_TO, TIP_NETWORK, TIP_PRICE, TIP_FACILITATOR_URL, TIP_ASSET)
 // is applied in TipOptionsEnvironment so operators can match timewarp-software var names.
-// Resource defaults to /api/tip — the canonical tip action URL (discovery alias /api is optional
-// and left to 104-020).
+// Resource defaults to /api/tip — the canonical tip action URL. Discovery alias bare /api →
+// /api/tip is TipDiscoveryAlias (104-020) on web-server + exact ingress pin; challenge Resource
+// stays /api/tip.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Tip.Application;

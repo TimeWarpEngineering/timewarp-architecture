@@ -14,10 +14,11 @@
 // Web.Spa services are registered here too — prerendering runs SPA code on the server.
 // API surface is generated FastEndpoints from [ApiEndpoint] web-contracts (MVC BaseEndpoint
 // removed task 131 F-002). Pipeline order: UseMarkdownContentNegotiation (before UseRouting —
-// rewrites / → /index.md when Accept prefers text/markdown) → UseRouting → UseAuthentication →
-// UseAuthorization → UseAntiforgery (Blazor) → UseFastEndpoints → UseScalarApiReference
-// (MapOpenApi + Scalar UI; after FE so endpoint metadata is registered). Auth before FE; no FE
-// antiforgery for JSON APIs.
+// rewrites / → /index.md when Accept prefers text/markdown) → UseTipDiscoveryAlias (before
+// UseRouting — bare /api → /api/tip for x402 scanners, task 104-020) → UseRouting →
+// UseAuthentication → UseAuthorization → UseAntiforgery (Blazor) → UseFastEndpoints →
+// UseScalarApiReference (MapOpenApi + Scalar UI; after FE so endpoint metadata is registered).
+// Auth before FE; no FE antiforgery for JSON APIs.
 // IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
 // OpenAPI document: CommonServerModule.AddOpenApi (FastEndpoints.OpenApi, always-on Scalar on web).
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (identity/profile
@@ -32,6 +33,7 @@
 namespace TimeWarp.Architecture.Web.Server;
 
 using TimeWarp.Architecture.AgentDiscovery;
+using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Abstractions;
 using TimeWarp.Foundation.Common.Infrastructure;
 using Serilog;
@@ -353,6 +355,10 @@ public class Program : IAspNetProgram
     // sees /index.md (etc.) when Accept prefers text/markdown. Browsers omit text/markdown and
     // fall through to Blazor; MapStaticAssets serves the twin with Content-Type: text/markdown.
     webApplication.UseMarkdownContentNegotiation();
+    // x402 commerce scanners (task 104-020): bare /api → /api/tip before UseRouting so the tip
+    // FastEndpoint matches; challenge Resource stays /api/tip (TipOptions). Exact path only —
+    // /api/health and other /api/* routes are untouched. Free/discovery paths never rewrite.
+    webApplication.UseTipDiscoveryAlias();
     // Static assets (including the Blazor WASM framework files) are served exclusively by
     // MapStaticAssets in ConfigureEndpoints. Do not add UseBlazorFrameworkFiles or UseStaticFiles:
     // UseBlazorFrameworkFiles' MapWhen branch 404s the dynamic /_framework/resource-collection.*.js

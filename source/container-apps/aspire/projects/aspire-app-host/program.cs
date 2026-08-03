@@ -20,6 +20,9 @@
 // no edit here, and a contract that stops being hosted (ClientOnlyContract) drops out automatically — the drift that
 // shipped /api/identity and /api/Roles unreachable (104-003) is now impossible. TWA0017/TWA0018 fail the build on a
 // prefix that would shadow another server's route space or that cannot be collapsed to a top-level segment.
+// Task 104-020: exact /api and /api/ are hand-pinned to Web.Server for the tip discovery alias (web rewrites bare
+// /api → /api/tip). Bare `api` cannot be a generated prefix (TWA0018); only the exact paths are pinned so
+// /api/{**catch-all} still reaches Api.Server for non-web segments.
 // Historical note: /api/signin-token was retired as a hosted endpoint (task 110 review M1) and so is absent from the
 // generated set by construction, not by a hand-removed line.
 // Ingress:Port (https) / Ingress:HttpPort (http) pin the YARP host ports so external clients, E2E
@@ -175,6 +178,12 @@ internal class Program
       {
         yarpConfiguration.AddRoute($"/{apiPrefix}/{{**catch-all}}", webServerHttp).WithTransformUseOriginalHostHeader(true);
       }
+
+      // Tip discovery alias (104-020): exact bare /api → web so UseTipDiscoveryAlias can rewrite
+      // to /api/tip. Without this, /api hits the Api.Server catch-all above. Not generated
+      // (TWA0018 forbids bare `api` as a contracts prefix).
+      yarpConfiguration.AddRoute("/api", webServerHttp).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute("/api/", webServerHttp).WithTransformUseOriginalHostHeader(true);
 
 #endif
 #if grpc

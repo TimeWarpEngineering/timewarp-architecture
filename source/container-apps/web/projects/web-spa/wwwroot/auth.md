@@ -87,7 +87,7 @@ quarantined.
 |-------|---------|
 | `identity:read` | Call `/api/identity/agent/me` and similar identity reads |
 | `credential:manage` | List / add / revoke credentials on the caller's own principal |
-| `demo:invoke` | Reserved for metered demo capability (landing with payment waves) |
+| `demo:invoke` | Call `GET /api/demo/metered-capability` (credit or x402) |
 
 Unknown scopes are rejected with a machine-readable problem response.
 
@@ -115,15 +115,21 @@ scope `credential:manage`.
 
 - Package: **TimeWarp.402** (challenge, verify, settle).
 - **Free / discovery surfaces never 402** (this file, `/llms.txt`, OpenAPI, health,
-  identity register/token ceremonies, etc.).
+  identity register/token ceremonies, SPA pages, etc.).
 - Disabled or misconfigured payment configuration → **503** on paid routes only.
 - Paying is enough for an agent to buy service; a human sponsor is not required.
 - Trust tiers (Keyed → Funded, etc.) separate cheap identity from expensive power.
 
-Host-wired tip jar and metered “pay for capability” demo paths are product work
-in progress. When they ship, this document and [/llms.txt](/llms.txt) will list
-the exact URLs. Do not treat fictional `/api/tip` or meter paths as live until
-linked.
+### Live paid paths (web-server)
+
+| Path | Role | Auth | Unpaid (enabled) | Disabled |
+|------|------|------|------------------|----------|
+| **`GET\|POST /api/tip`** | Voluntary tip jar (canonical) | Anonymous | **402** + `PAYMENT-REQUIRED` | **503** |
+| **`GET\|POST /api`** | Discovery alias → tip | Anonymous | same as `/api/tip` | same |
+| **`GET /api/demo/metered-capability`** | Pay-for-capability demo | Bearer `demo:invoke` | **402** + challenge (or 200 if prepaid credit) | **503** |
+
+Challenge resource for tips is always **`/api/tip`** (even when called via the
+`/api` alias). See [/llms.txt](/llms.txt) Payment section for curl examples.
 
 ---
 

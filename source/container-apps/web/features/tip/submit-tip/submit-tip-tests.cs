@@ -8,19 +8,20 @@
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058
 #:property DefineConstants=$(DefineConstants);api
 
-// Co-located Jaribu integration tests for the voluntary x402 tip jar (task 104-009).
+// Co-located Jaribu integration tests for the voluntary x402 tip jar (tasks 104-009, 104-020).
 // Run standalone: dotnet run source/container-apps/web/features/tip/submit-tip/submit-tip-tests.cs
 
 #region Purpose
-// Real-host proof: disabled → 503 tips_disabled; enabled unpaid → 402; mock settle → 200 thank-you.
+// Real-host proof: disabled → 503 tips_disabled; enabled unpaid → 402; mock settle → 200 thank-you;
+// discovery alias /api → same 402; free/discovery routes never 402 while tip is enabled.
 #endregion
 
 #region Design
 // Host: web-server. configureWeb replaces IFacilitatorClient with an in-test mock so settle never
 // hits the network. TipOptions are PostConfigured per test scenario (enabled vs disabled).
-// Free routes are not exercised here — only /api/tip. Anonymous: no agent bearer. C-create
-// HostGraphFactory per class; isolated HttpClient per call.
+// Anonymous: no agent bearer. C-create HostGraphFactory per class; isolated HttpClient per call.
 // Distinct from metered (104-011): no ledger debit, no agent scope.
+// 104-020: alias + free-route regression share this host (tip enabled) so scanners/docs claims hold.
 #endregion
 
 //-:cnd:noEmit
@@ -106,6 +107,51 @@ namespace TimeWarp.Architecture.Features.Tip
 
       response.StatusCode.ShouldBe(HttpStatusCode.PaymentRequired);
       response.Headers.Contains(PaymentHeaders.PaymentRequired).ShouldBeTrue();
+    }
+
+    public static async Task PaymentRequired_402_Given_Discovery_Alias_Bare_Api()
+    {
+      Facilitator.Reset();
+      ForceTipEnabled(true);
+
+      using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+      using HttpResponseMessage response = await client.GetAsync("/api");
+
+      response.StatusCode.ShouldBe(HttpStatusCode.PaymentRequired);
+      response.Headers.Contains(PaymentHeaders.PaymentRequired).ShouldBeTrue();
+      string challenge = response.Headers.GetValues(PaymentHeaders.PaymentRequired).Single();
+      string? json = PaymentChallengeBuilder.TryDecodeHeaderPayload(challenge);
+      json.ShouldNotBeNull();
+      // Challenge still advertises the canonical resource, not the alias path.
+      json.ShouldContain("api/tip");
+      Facilitator.VerifyCalls.ShouldBe(0);
+    }
+
+    public static async Task Free_Discovery_Routes_Never_402_While_Tip_Enabled()
+    {
+      Facilitator.Reset();
+      ForceTipEnabled(true);
+
+      string[] freePaths =
+      [
+        "/",
+        "/llms.txt",
+        "/auth.md",
+        "/api/health",
+        "/openapi/v1.json",
+        "/index.md",
+      ];
+
+      using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+      foreach (string path in freePaths)
+      {
+        using HttpResponseMessage response = await client.GetAsync(path);
+        response.StatusCode.ShouldNotBe(
+          HttpStatusCode.PaymentRequired,
+          customMessage: $"{path} must not return 402 when tip is enabled");
+        response.Headers.Contains(PaymentHeaders.PaymentRequired).ShouldBeFalse(
+          customMessage: $"{path} must not carry PAYMENT-REQUIRED");
+      }
     }
 
     public static async Task ServiceUnavailable_503_Given_Tips_Disabled()
@@ -196,6 +242,32 @@ namespace TimeWarp.Architecture.Features.Tip
       }
 
       return await client.GetAsync(Query.RouteTemplate);
+    }
+  }
+
+  /// <summary>Unit tests for bare /api discovery alias path matching (no host).</summary>
+  [TestTag("Unit")]
+  public class TipDiscoveryAlias_Given_
+  {
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Register() => RegisterTests<TipDiscoveryAlias_Given_>();
+
+    public static Task Recognizes_Bare_Api_And_Trailing_Slash()
+    {
+      TipDiscoveryAlias.IsAliasPath(new Microsoft.AspNetCore.Http.PathString("/api")).ShouldBeTrue();
+      TipDiscoveryAlias.IsAliasPath(new Microsoft.AspNetCore.Http.PathString("/api/")).ShouldBeTrue();
+      TipDiscoveryAlias.IsAliasPath(new Microsoft.AspNetCore.Http.PathString("/API")).ShouldBeTrue();
+      return Task.CompletedTask;
+    }
+
+    public static Task Rejects_Subpaths_And_Tip_Canonical()
+    {
+      TipDiscoveryAlias.IsAliasPath(new Microsoft.AspNetCore.Http.PathString("/api/tip")).ShouldBeFalse();
+      TipDiscoveryAlias.IsAliasPath(new Microsoft.AspNetCore.Http.PathString("/api/health")).ShouldBeFalse();
+      TipDiscoveryAlias.IsAliasPath(new Microsoft.AspNetCore.Http.PathString("/api/identity/agent/me")).ShouldBeFalse();
+      TipDiscoveryAlias.IsAliasPath(new Microsoft.AspNetCore.Http.PathString("/llms.txt")).ShouldBeFalse();
+      TipDiscoveryAlias.IsAliasPath(new Microsoft.AspNetCore.Http.PathString("/")).ShouldBeFalse();
+      return Task.CompletedTask;
     }
   }
 

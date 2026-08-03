@@ -68,8 +68,35 @@ curl -sS https://<host>/.well-known/agent-card.json
 ## Payment (x402)
 
 - Library: **TimeWarp.402** (challenge / verify / settle; disabled or misconfigured payment → **503**, never 402 on free/discovery paths).
-- Host-wired tip jar and metered “pay for capability” demo endpoints are still landing (template waves). Do not invent payment URLs not listed here.
-- When paid routes appear, they will be linked from this file and from auth.md.
+- Free and discovery routes (this file, `/auth.md`, OpenAPI, health, identity ceremonies, SPA pages) **never** return HTTP 402.
+
+### Voluntary tip jar (commerce-scanner path)
+
+| Item | Value |
+|------|--------|
+| Canonical | `GET` or `POST` **`/api/tip`** |
+| Discovery alias | **`/api`** (and `/api/`) → same as `/api/tip` |
+| Unpaid (enabled) | **402** + `PAYMENT-REQUIRED` (x402 v2 base64 challenge; resource `/api/tip`) |
+| Disabled / misconfigured | **503** (never 402) |
+| Auth | None — wallet / x402 only (anonymous) |
+
+```bash
+curl -si https://<host>/api/tip | head -20
+# same challenge via API-root alias:
+curl -si https://<host>/api | head -20
+```
+
+### Metered capability demo (agent + pay)
+
+| Item | Value |
+|------|--------|
+| Path | `GET` **`/api/demo/metered-capability`** |
+| Auth | Bearer with scope **`demo:invoke`** (agent token ceremony first) |
+| No credit / unpaid | **402** + `PAYMENT-REQUIRED` when payment enabled |
+| Prepaid credit | **200** and ledger debit |
+| Disabled / misconfigured | **503** (never 402) |
+
+Tip is the primary **anonymous** x402 probe for commerce scanners. Metered proves pay-for-capability with agent identity.
 
 ## Content usage preferences
 
@@ -92,7 +119,6 @@ Browser requests (Accept: text/html) are unchanged — Blazor SPA hosting is not
 
 ## Planned agent surfaces (not yet shipped)
 
-- Discoverable x402 tip or meter path for commerce scanners (task 104-020)
 - Live streamable-HTTP MCP tools endpoint (card exists as stub until then)
 - Full A2A JSON-RPC task protocol + signed Agent Cards
 

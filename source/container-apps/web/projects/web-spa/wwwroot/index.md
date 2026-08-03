@@ -34,12 +34,16 @@ negotiation). Discovery index: [/llms.txt](/llms.txt). Auth story: [/auth.md](/a
 | OpenAPI | [/openapi/v1.json](/openapi/v1.json) |
 | Scalar UI | [/scalar/v1](/scalar/v1) |
 | Health | [/api/health](/api/health) |
+| x402 voluntary tip (canonical) | [/api/tip](/api/tip) |
+| x402 tip discovery alias | [/api](/api) |
+| Metered capability (agent + pay) | [/api/demo/metered-capability](/api/demo/metered-capability) |
 | MCP Server Card | [/.well-known/mcp/server-card.json](/.well-known/mcp/server-card.json) |
 | Agent Skills index | [/.well-known/agent-skills/index.json](/.well-known/agent-skills/index.json) |
 | A2A Agent Card | [/.well-known/agent-card.json](/.well-known/agent-card.json) |
 
 Auth is **passkey / agent-key first** — not email/password. Free and discovery
-routes never return HTTP 402.
+routes never return HTTP 402. Unpaid tip/meter may return **402** only on those
+paid paths when payment is enabled (see [/llms.txt](/llms.txt) Payment).
 
 ## Human demo UI (browser)
 

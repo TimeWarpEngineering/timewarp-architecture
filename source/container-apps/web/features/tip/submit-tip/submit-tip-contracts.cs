@@ -4,7 +4,8 @@
 
 #region Design
 // Host: **web-server** (same as metered demo 104-011) so one place teaches Payment-* headers and
-// PaymentGate mapping. Route is api/tip only — free/discovery routes never share this path.
+// PaymentGate mapping. Canonical route api/tip; bare /api is a discovery alias rewrite only
+// (TipDiscoveryAlias, 104-020). Free/discovery content routes never share this path.
 // [EndpointAllowAnonymous]: tips are wallet-native; no human session or agent bearer required
 // ("No human required if the agent pays" / voluntary gratuity for browsers and agents).
 // Distinct from metered capability: no ledger debit, no agent-scope policy, PaymentGate only.
