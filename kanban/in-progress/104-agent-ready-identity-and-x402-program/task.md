@@ -108,7 +108,7 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 - [x] 104-012 Payment tests (Wave 2 exit gate) — library 42/42 mocked facilitator
 
 ### Wave 3 — Compose
-- [ ] 104-013 Settle → Funded + credits
+- [x] 104-013 Settle → Funded + credits
 - [ ] 104-015 Rate limits (before advertising discovery paths publicly)
 - [ ] 104-014 Agent E2E path
 
