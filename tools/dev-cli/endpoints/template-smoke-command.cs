@@ -26,8 +26,10 @@
 // layer project's Compile glob by design), so without this pair a regression to the JARIBU_MULTI
 // cnd:noEmit escape would ship silently.
 // Task 136: tier 3 (Harness.AssertJaribuFamilyAggregatorsAsync) after tier 2 — bare
-// `dotnet test -c Release` from each generated family aggregator dir (web 5 / api 2). Aggregators
-// are also not in .slnx, so solution build is blind to multi-mode compile + MTP discovery.
+// `dotnet test -c Release` from each generated family aggregator dir; the count discovered per
+// family tracks however many co-located Jaribu runfiles exist there at generation time (do not
+// hardcode a tally here — it drifts as tests are added). Aggregators are also not in .slnx, so
+// solution build is blind to multi-mode compile + MTP discovery.
 #endregion
 
 namespace DevCli.Commands;

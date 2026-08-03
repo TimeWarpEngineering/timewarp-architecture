@@ -18,8 +18,10 @@
 // touches these files (they compile into no layer project by design), so without this pair the
 // gate would be silently blind to a regression here.
 // Task 136: AssertJaribuFamilyAggregatorsAsync (tier 3) bare `dotnet test -c Release` from each
-// family aggregator project dir in the generated app (web 5, api 2); serial for fixed port 7255.
-// Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
+// family aggregator project dir in the generated app; the discovered test count per family tracks
+// whatever co-located Jaribu runfiles exist there at generation time (not hardcoded here — it
+// drifts as tests are added); serial for fixed port 7255. Aggregators are not in .slnx, so the
+// solution build is also blind to multi-mode compile.
 #endregion
 
 namespace DevCli.Services;

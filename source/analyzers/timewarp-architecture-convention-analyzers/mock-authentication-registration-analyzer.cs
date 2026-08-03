@@ -7,9 +7,14 @@
 #region Design
 // Prefer analyzers over convention-by-memory: a casual AddScoped of MockAuthenticationStateProvider
 // at a Program call site would skip MockAuthenticationDefaults and activate mock auth without the
-// Development/Testing gate. Restrict type references used as generic type arguments of
-// AddScoped/AddSingleton/AddTransient/TryAdd* extension invocations to the containing type named
-// MockAuthenticationRegistration.
+// Development/Testing gate. Restrict references to the mock types, in any DI-registration shape, to
+// the containing type named MockAuthenticationRegistration:
+//   (a) generic type-argument form — AddScoped<TMock>() / AddScoped<IFace, TMock>()
+//   (b) non-generic typeof(...) form — AddScoped(typeof(IFace), typeof(TMock))
+//   (c) factory-delegate form — AddScoped<IFace>(_ => new TMock()) (object-creation anywhere in the
+//       lambda body, including target-typed `new()`)
+// Round-2 review (145-009) empirically proved (a)-only checking evaded via (b) and (c); both were
+// zero-diagnostic bypasses that still activated mock auth outside the gated registration site.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -94,15 +99,46 @@ public sealed class MockAuthenticationRegistrationAnalyzer : DiagnosticAnalyzer
       return;
     }
 
+    // (a) generic type-argument form: AddScoped<TMock>() / AddScoped<IFace, TMock>()
     foreach (TypeSyntax typeSyntax in CollectTypeArguments(invocation))
     {
       ITypeSymbol? type = context.SemanticModel.GetTypeInfo(typeSyntax, context.CancellationToken).Type;
-      string? name = type?.Name ?? (typeSyntax as IdentifierNameSyntax)?.Identifier.ValueText;
-      if (name is null || !MockTypeNames.Contains(name))
-        continue;
-
-      context.ReportDiagnostic(Diagnostic.Create(Rule, typeSyntax.GetLocation(), name));
+      ReportIfMockType(context, typeSyntax.GetLocation(), type, (typeSyntax as IdentifierNameSyntax)?.Identifier.ValueText);
     }
+
+    foreach (ArgumentSyntax argument in invocation.ArgumentList.Arguments)
+    {
+      // (b) non-generic typeof(...) form: AddScoped(typeof(IFace), typeof(TMock))
+      if (argument.Expression is TypeOfExpressionSyntax typeOfExpression)
+      {
+        ITypeSymbol? type = context.SemanticModel.GetTypeInfo(typeOfExpression.Type, context.CancellationToken).Type;
+        ReportIfMockType(context, typeOfExpression.Type.GetLocation(), type, (typeOfExpression.Type as IdentifierNameSyntax)?.Identifier.ValueText);
+      }
+
+      // (c) factory-delegate form: AddScoped<IFace>(_ => new TMock()) — inspect every object
+      // creation anywhere in the lambda body, not just its immediate return expression, so a
+      // helper-local or multi-statement body cannot hide the mock type from this check.
+      if (argument.Expression is AnonymousFunctionExpressionSyntax lambda)
+      {
+        foreach (BaseObjectCreationExpressionSyntax creation in lambda.DescendantNodes().OfType<BaseObjectCreationExpressionSyntax>())
+        {
+          ITypeSymbol? type = context.SemanticModel.GetTypeInfo(creation, context.CancellationToken).Type;
+          string? fallbackName = (creation as ObjectCreationExpressionSyntax)?.Type is IdentifierNameSyntax identifier
+            ? identifier.Identifier.ValueText
+            : null;
+          ReportIfMockType(context, creation.GetLocation(), type, fallbackName);
+        }
+      }
+    }
+  }
+
+  private static void ReportIfMockType(SyntaxNodeAnalysisContext context, Location location, ITypeSymbol? type, string? fallbackName)
+  {
+    string? name = type?.Name ?? fallbackName;
+    if (name is null || !MockTypeNames.Contains(name))
+      return;
+
+    context.ReportDiagnostic(Diagnostic.Create(Rule, location, name));
   }
 
   private static string? GetInvokedMethodName(InvocationExpressionSyntax invocation) =>

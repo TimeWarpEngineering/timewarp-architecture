@@ -9,8 +9,14 @@
 // Runtime replaces the former compile-time MOCK_AUTHENTICATION define: Development/Testing +
 // Authentication:UseMock enables mocks; Production never does (even if the flag is true). Absent
 // UseMock defaults false (fail-closed); appsettings.Development.json sets true so local template
-// UX matches the prior always-mock default. Web.Server prerender calls ConfigureServices with
-// ASPNETCORE_ENVIRONMENT from configuration so the same gate applies on the server host.
+// UX matches the prior always-mock default. <paramref name="environmentName"/> below must be the
+// REAL host environment, not something read out of IConfiguration (task 145-009 R2-1: an earlier
+// version of this comment claimed Web.Server's prerender call passed
+// "ASPNETCORE_ENVIRONMENT from configuration" and that "the same gate applies" — that was false:
+// IConfiguration content is attacker/config-provider-influenced and can diverge from the real
+// environment on a Production-booted host, which round-2 review proved dynamically. Web.Server now
+// resolves the true IHostEnvironment and threads its EnvironmentName through explicitly — see
+// Web.Server.Program.ConfigureServices' Design region and ResolveRealEnvironmentName.
 #endregion
 
 namespace TimeWarp.Architecture.Services;

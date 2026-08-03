@@ -20,6 +20,11 @@
 // OpenAPI document: CommonServerModule.AddOpenApi (FastEndpoints.OpenApi, always-on Scalar on web).
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (identity/profile
 // empty Queries already use EmptyRequestBinder at runtime).
+// Task 145-009 R2-1: ConfigureServices has an explicit-environment 3-arg overload (Main passes
+// builder.Environment.EnvironmentName) plus the IModule-required 2-arg overload, which resolves
+// the real environment via ResolveRealEnvironmentName instead of IConfiguration — see that
+// overload's own Design region for why (a Production-booted host must not activate mock auth from
+// config content alone).
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -59,7 +64,9 @@ public class Program : IAspNetProgram
 
       ConfigureHostApplicationBuilder(builder);
       ConfigureConfiguration(builder.Configuration);
-      ConfigureServices(builder.Services, builder.Configuration);
+      // Task 145-009 R2-1: pass the REAL host environment explicitly — never let the mock-auth
+      // gate re-derive it from IConfiguration (see ConfigureServices' 3-arg overload Design region).
+      ConfigureServices(builder.Services, builder.Configuration, builder.Environment.EnvironmentName);
 
       WebApplication webApplication = builder.Build();
 
@@ -93,7 +100,26 @@ public class Program : IAspNetProgram
     CommonServerModule.ConfigureConfiguration(configurationManager);
   }
 
-  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
+  /// <summary>
+  /// IModule-required overload (generic callers — e.g. WebApplicationHost&lt;TProgram&gt; test
+  /// harness — cannot pass an explicit environment name through the static-interface contract).
+  /// Resolves the REAL host environment from the not-yet-built <paramref name="serviceCollection"/>
+  /// (see <see cref="ResolveRealEnvironmentName"/>) rather than IConfiguration — never derived,
+  /// never spoofable by a later-added config source.
+  /// </summary>
+  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration) =>
+    ConfigureServices(serviceCollection, configuration, ResolveRealEnvironmentName(serviceCollection));
+
+  /// <summary>
+  /// Explicit-environment overload (task 145-009 R2-1 fix). <paramref name="environmentName"/> MUST
+  /// be the real <see cref="IHostEnvironment.EnvironmentName"/> — Main passes
+  /// <c>builder.Environment.EnvironmentName</c> directly. This is the sole gate input threaded into
+  /// <see cref="Web.Spa.Program.ConfigureServices(IServiceCollection, IConfiguration, string?)"/>'s
+  /// fail-closed mock-auth check; Web.Spa no longer offers a config-derived fallback (removed —
+  /// IConfiguration content alone must never be able to activate mock auth on a Production-booted
+  /// host, since providers loaded after host creation can set arbitrary key values).
+  /// </summary>
+  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration, string? environmentName)
   {
     serviceCollection.AddSerilog();
     serviceCollection.AddHttpClient();
@@ -200,7 +226,7 @@ public class Program : IAspNetProgram
         )
     );
 
-    Web.Spa.Program.ConfigureServices(serviceCollection, configuration);
+    Web.Spa.Program.ConfigureServices(serviceCollection, configuration, environmentName);
 
     serviceCollection
       .AddMediator
@@ -216,6 +242,24 @@ public class Program : IAspNetProgram
 
     CommonServerModule.AddOpenApi(serviceCollection, ApiVersion, ApiTitle);
   }
+
+  /// <summary>
+  /// Resolves the REAL ASP.NET Core host environment from a not-yet-built
+  /// <paramref name="serviceCollection"/> (task 145-009 R2-1). WebApplicationBuilder pre-registers a
+  /// singleton <see cref="IHostEnvironment"/> instance (builder.Environment) into
+  /// <c>builder.Services</c> at host-builder-creation time, BEFORE ConfigureServices runs and BEFORE
+  /// Build() — that instance is fixed then and is never mutated by configuration providers added
+  /// afterward, unlike <c>configuration["ASPNETCORE_ENVIRONMENT"]</c>/<c>["DOTNET_ENVIRONMENT"]</c>,
+  /// which any later config source (appsettings, CLI args, env vars processed differently, …) can
+  /// freely set. Only the IModule-required 2-arg <see cref="ConfigureServices(IServiceCollection, IConfiguration)"/>
+  /// overload needs this — direct callers (Main) pass builder.Environment.EnvironmentName explicitly.
+  /// Fail-closed: returns null (never mock-eligible — see MockAuthenticationDefaults.IsMockEnvironmentAllowed)
+  /// if the descriptor is unexpectedly absent.
+  /// </summary>
+  private static string? ResolveRealEnvironmentName(IServiceCollection serviceCollection) =>
+    (serviceCollection.LastOrDefault(static descriptor => descriptor.ServiceType == typeof(IHostEnvironment))
+      ?.ImplementationInstance as IHostEnvironment)?.EnvironmentName;
+
   private static void ConfigureAuthentication(IServiceCollection serviceCollection, IConfiguration configuration)
   {
     serviceCollection.AddMicrosoftIdentityWebAppAuthentication(configuration);

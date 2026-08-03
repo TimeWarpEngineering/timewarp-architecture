@@ -10,6 +10,16 @@
 // true. optional MOCK_WEB_API still compile-time for offline SPA API fakes. Template symbols
 // (api, grpc) trim optional services. API services use explicit factories so DI does not guess
 // constructors. Default culture is forced to ISO date patterns for deterministic rendering.
+//
+// Task 145-009 R2-1 fix: ConfigureServices takes environmentName as a REQUIRED explicit
+// parameter — there is deliberately no config-derived overload. An earlier 2-arg overload used to
+// fall back to configuration["ASPNETCORE_ENVIRONMENT"] ?? ["DOTNET_ENVIRONMENT"], which reads
+// IConfiguration content, NOT the real IHostEnvironment: on a genuinely Production-booted host
+// (real env var unset), any later-loaded config provider (appsettings, CLI args, …) setting either
+// key activated mock auth — proven dynamically in round-2 review. Every caller now passes the real
+// environment: this file's own Main passes builder.HostEnvironment.Environment (WASM host); Web.Server
+// resolves the true IHostEnvironment (never IConfiguration) and passes it in explicitly — see
+// Web.Server.Program's ConfigureServices Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa;
@@ -50,18 +60,12 @@ public class Program
 
   /// <summary>
   /// Compose SPA services. <paramref name="environmentName"/> drives the fail-closed mock-auth
-  /// gate (Development/Testing + Authentication:UseMock). When omitted (legacy 2-arg callers),
-  /// reads ASPNETCORE_ENVIRONMENT / DOTNET_ENVIRONMENT from configuration, defaulting to
-  /// Production (no mock).
+  /// gate (Development/Testing + Authentication:UseMock) and MUST be the caller's real
+  /// <see cref="IHostEnvironment.EnvironmentName"/> (or WebAssembly HostEnvironment.Environment) —
+  /// never a value read back out of <paramref name="configuration"/> (task 145-009 R2-1: a
+  /// config-derived environment can diverge from the real host environment and was a fail-open
+  /// bug). Unknown/absent (null/empty) is fail-closed — mock auth is never activated.
   /// </summary>
-  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration) =>
-    ConfigureServices
-    (
-      serviceCollection,
-      configuration,
-      configuration["ASPNETCORE_ENVIRONMENT"] ?? configuration["DOTNET_ENVIRONMENT"]
-    );
-
   public static void ConfigureServices
   (
     IServiceCollection serviceCollection,
