@@ -28,6 +28,7 @@
             "source/foundation/**",
             "source/libraries/timewarp-modules/**",
             "source/libraries/timewarp-identity/**",
+            "source/libraries/timewarp-402/**",
             "source/analyzers/**",
             "tests/foundation/**",
             "tests/libraries/timewarp-identity-tests/**",

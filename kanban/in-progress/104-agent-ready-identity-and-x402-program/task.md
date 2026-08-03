@@ -95,7 +95,7 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 - [x] 104-032 EF Core identity persistence behind postgres flag
 
 ### Wave 2 — 402
-- [ ] 104-007 Scaffold TimeWarp.402
+- [x] 104-007 Scaffold TimeWarp.402
 - [ ] 104-008 Challenge / verify / settle / 503 policy
 - [ ] 104-016 Passkey human demo (pulled forward from Wave 4 — deps 003/006 done;
       removes shipped Passwordless CDN script + tenant key from template, 131 F-010)

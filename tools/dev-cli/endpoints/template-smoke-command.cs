@@ -66,6 +66,8 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     // floor (>= the published version) collides with the 2.0.0-smoke pins → NU1603 under
     // -warnaserror.
     "source/libraries/timewarp-identity/timewarp-identity.csproj",
+    // TimeWarp.402 (task 104-007): same dual-mode exclude as identity; pack when apps reference it.
+    "source/libraries/timewarp-402/timewarp-402.csproj",
   ];
 
   // ExcludedFamilies drives flag-off assertions in the co-located-test tiers: for a family
@@ -90,6 +92,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     "source/foundation",
     "source/libraries/timewarp-modules",
     "source/libraries/timewarp-identity",
+    "source/libraries/timewarp-402",
     "source/analyzers",
     "tests/foundation",
     "tests/libraries/timewarp-identity-tests",
