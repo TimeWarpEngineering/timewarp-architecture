@@ -163,6 +163,7 @@ listings), child `## Results` / `review/disposition.md` trails.
   Passwordless tenant key until it lands); 030 slotted pending the
   metered-endpoint host decision (api-server vs web-server)
 - 2026-08-04 overnight: continuous session; Waves 2–4; local commits; start 007
-- 2026-08-04 progress (local, unpushed): **007 ✅ 008 ✅ 010 ✅ 011 ✅ 017 ✅
-  012 ✅ 009 ✅** (tip jar); **030 ✅**; **018 ✅**; **019 ✅** (MCP/skills/A2A
-  cards); remaining Wave 2: 016; Wave 4: 020; then Wave 3
+- 2026-08-04 overnight **complete (Waves 2–4)**: all Wave 2–4 children **done**
+  including program exit **022**; Wave 5 (023–025) held per authorization.
+  `./bin/dev build` **0/0**. **~35 commits local only** on `dev` (no push/PR).
+  Wake-up: `git log --oneline origin/dev..HEAD`, child Results under `kanban/done/104-*`
