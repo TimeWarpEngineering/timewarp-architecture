@@ -114,7 +114,7 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 
 ### Wave 4 — Template + agents
 - [x] 104-017 Discovery files (may parallelize earlier — story is stable)
-- [ ] 104-018 Markdown negotiation
+- [x] 104-018 Markdown negotiation — home twin `/index.md` + Accept rewrite on `/`; SPA untouched
 - [ ] 104-019 MCP / skills / A2A stubs
 - [ ] 104-020 x402 discoverable
 - [ ] 104-021 Flags / slices / Entra non-default + auth-slice consolidation addendum
