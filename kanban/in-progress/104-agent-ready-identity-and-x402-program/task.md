@@ -12,16 +12,17 @@ Supersedes archived epic tree 097–103 (ADR-first framing was wrong).
 ## Build order (do not reorder casually)
 
 ```
-Wave 1  Identity package          104-001 … 104-006
-Wave 2  TimeWarp.402 package      104-007 … 104-012
-Wave 3  Compose Identity + 402    104-013 … 104-015
-Wave 4  Template + agent surface  104-016 … 104-022
+Wave 1  Identity package          104-001 … 104-006 + 026–029, 031, 032  ✅ done
+Wave 2  TimeWarp.402 package      104-007 … 104-012 (+016 pulled forward, +030)
+Wave 3  Compose Identity + 402    104-013, 104-015, 104-014
+Wave 4  Template + agent surface  104-017 … 104-022
 Wave 5  Optional polish           104-023 … 104-025
 ```
 
-Within a wave, follow child numbers. Wave 2 can start scaffolding (007) once
-001–002 exist enough to know PrincipalId shape; settle→tier (013) needs both
-packages.
+Order within a wave: follow the checklist below (it encodes the 2026-08-03
+prioritization review), not raw child numbers. Settle→tier (013) needs both
+packages. Open decision: if the metered endpoint (011) lives on api-server,
+104-030 (agent bearer on api-server) must land before 011/014.
 
 ## Locked product decisions (from design sessions)
 
@@ -79,40 +80,49 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 
 ## Checklist
 
-### Wave 1 — Identity
-- [ ] 104-001 Scaffold TimeWarp.Identity
-- [ ] 104-002 Principal / Credential / TrustTier
-- [ ] 104-003 Passkey register + authenticate
-- [ ] 104-004 Agent keys + scoped tokens
-- [ ] 104-005 Multi-credential
-- [ ] 104-006 Identity tests
+### Wave 1 — Identity (complete)
+- [x] 104-001 Scaffold TimeWarp.Identity
+- [x] 104-002 Principal / Credential / TrustTier
+- [x] 104-003 Passkey register + authenticate
+- [x] 104-004 Agent keys + scoped tokens
+- [x] 104-005 Multi-credential
+- [x] 104-006 Identity tests
+- [x] 104-026 Apply 104-002 RFC ballot resolutions (archived — folded into 002)
+- [x] 104-027 TypedId source generator + identity id migration
+- [x] 104-028 Optimistic concurrency token on identity entities + store port
+- [x] 104-029 Agent identity demo CLI (keygen/register/token ceremony)
+- [x] 104-031 WebAuthn RP ID from request host against allowlist
+- [x] 104-032 EF Core identity persistence behind postgres flag
 
 ### Wave 2 — 402
 - [ ] 104-007 Scaffold TimeWarp.402
 - [ ] 104-008 Challenge / verify / settle / 503 policy
+- [ ] 104-016 Passkey human demo (pulled forward from Wave 4 — deps 003/006 done;
+      removes shipped Passwordless CDN script + tenant key from template, 131 F-010)
 - [ ] 104-009 Tip-jar port
 - [ ] 104-010 Credit ledger
+- [ ] 104-030 Agent bearer validation on api-server + string-enum wire verification
+      (slot here if the metered endpoint lives on api-server; else before 022)
 - [ ] 104-011 Metered demo
-- [ ] 104-012 Payment tests
+- [ ] 104-012 Payment tests (Wave 2 exit gate)
 
 ### Wave 3 — Compose
 - [ ] 104-013 Settle → Funded + credits
+- [ ] 104-015 Rate limits (before advertising discovery paths publicly)
 - [ ] 104-014 Agent E2E path
-- [ ] 104-015 Rate limits
 
 ### Wave 4 — Template + agents
-- [ ] 104-016 Passkey human demo
-- [ ] 104-017 Discovery files
+- [ ] 104-017 Discovery files (may parallelize earlier — story is stable)
 - [ ] 104-018 Markdown negotiation
 - [ ] 104-019 MCP / skills / A2A stubs
 - [ ] 104-020 x402 discoverable
-- [ ] 104-021 Flags / slices / Entra non-default
-- [ ] 104-022 E2E sunny paths
+- [ ] 104-021 Flags / slices / Entra non-default + auth-slice consolidation addendum
+- [ ] 104-022 E2E sunny paths (program exit criterion)
 
-### Wave 5 — Optional
+### Wave 5 — Optional (post-exit)
 - [ ] 104-023 Cloudflare operator notes
-- [ ] 104-024 Progressive profile
-- [ ] 104-025 humanUx link
+- [ ] 104-024 Progressive profile (hold until demanded)
+- [ ] 104-025 humanUx link (hold until demanded)
 
 ## Notes
 
@@ -129,3 +139,7 @@ Extract skills for consumers; optional human ADRs last. Do not invent either now
 - Created: 2026-07-16
 - Context: passkey/agent/x402 brainstorm + reject ADR/skill-first sequencing
 - Archived prior tree: 097–103
+- 2026-08-03: prioritization review — Wave 1 closed (incl. follow-ons 026–032);
+  checklist reconciled; 016 pulled into Wave 2 (deps done + template ships
+  Passwordless tenant key until it lands); 030 slotted pending the
+  metered-endpoint host decision (api-server vs web-server)
