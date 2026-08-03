@@ -100,7 +100,7 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 - [ ] 104-016 Passkey human demo (pulled forward from Wave 4 — deps 003/006 done;
       removes shipped Passwordless CDN script + tenant key from template, 131 F-010)
 - [ ] 104-009 Tip-jar port
-- [ ] 104-010 Credit ledger
+- [x] 104-010 Credit ledger
 - [ ] 104-030 Agent bearer validation on api-server + string-enum wire verification
       (slot here if the metered endpoint lives on api-server; else before 022)
 - [ ] 104-011 Metered demo

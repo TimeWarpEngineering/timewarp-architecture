@@ -5,6 +5,7 @@
 global using System.Text;
 global using System.Text.Json;
 global using Shouldly;
+global using TimeWarp.Identity;
 global using TimeWarp.Jaribu;
 global using TimeWarp.X402;
 global using static TimeWarp.Jaribu.TestRunner;

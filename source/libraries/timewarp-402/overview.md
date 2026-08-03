@@ -11,6 +11,7 @@ Namespaces do not track folders (everything is `TimeWarp.X402`); folders exist f
 | `protocol/` | Headers, accepts, challenge builder, payTo validation |
 | `facilitator/` | `IFacilitatorClient`, HTTP client, verify/settle models |
 | `gate/` | `PaymentGate` outcomes — host maps to HTTP without ASP.NET in this package |
+| `ledger/` | `ICreditLedger` + in-memory impl (PrincipalId-keyed credits, idempotent receipts) |
 
 ## Hard policy (free never 402)
 

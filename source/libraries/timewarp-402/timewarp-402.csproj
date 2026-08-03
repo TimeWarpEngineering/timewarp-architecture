@@ -10,4 +10,12 @@
          segment, so public surface lives in TimeWarp.X402 (AssemblyMarkerNamespace). -->
     <RootNamespace>TimeWarp.X402</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PrincipalId for credit ledger keys (task 104-010). Dual-mode: monorepo ProjectReference,
+         package-mode PackageReference when identity source is absent. -->
+    <ProjectReference Include="../timewarp-identity/timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
+  </ItemGroup>
 </Project>
+
