@@ -96,6 +96,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     "source/analyzers",
     "tests/foundation",
     "tests/libraries/timewarp-identity-tests",
+    "tests/libraries/timewarp-402-tests",
     "tests/analyzers",
   ];
 
