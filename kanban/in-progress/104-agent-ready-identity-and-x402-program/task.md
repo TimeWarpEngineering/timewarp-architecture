@@ -102,8 +102,8 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 - [x] 104-009 Tip-jar port — web-server GET|POST api/tip, PaymentGate, TIP_* env,
       7/7 host tests + library PaymentGate coverage
 - [x] 104-010 Credit ledger
-- [ ] 104-030 Agent bearer validation on api-server + string-enum wire verification
-      (slot here if the metered endpoint lives on api-server; else before 022)
+- [x] 104-030 Agent bearer validation on api-server + string-enum wire verification
+      (api-server capability sample GET api/agent/bearer/me; ceremonies stay on web)
 - [x] 104-011 Metered demo
 - [x] 104-012 Payment tests (Wave 2 exit gate) — library 42/42 mocked facilitator
 
@@ -164,4 +164,4 @@ listings), child `## Results` / `review/disposition.md` trails.
   metered-endpoint host decision (api-server vs web-server)
 - 2026-08-04 overnight: continuous session; Waves 2–4; local commits; start 007
 - 2026-08-04 progress (local, unpushed): **007 ✅ 008 ✅ 010 ✅ 011 ✅ 017 ✅
-  012 ✅** (package tests Wave 2 exit); remaining Wave 2: 009/016/030; then Wave 3
+  012 ✅ 009 ✅** (tip jar); **030 ✅**; remaining Wave 2: 016; then Wave 3
