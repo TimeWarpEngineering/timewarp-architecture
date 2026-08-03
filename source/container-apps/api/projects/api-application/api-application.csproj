@@ -10,6 +10,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- PrincipalId / agent caller port for api identity-host (task 104-030). Dual-mode. -->
+    <ProjectReference Include="..\..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
   </ItemGroup>
 
 </Project>

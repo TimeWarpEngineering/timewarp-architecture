@@ -12,8 +12,14 @@ global using OneOf;
 global using System.Net;
 global using System.Reflection;
 // Solution usings
+global using TimeWarp.Architecture.Abstractions;
+global using TimeWarp.Architecture.Configuration;
+global using TimeWarp.Architecture.Features.Identity;
+global using TimeWarp.Architecture.Infrastructure;
+global using TimeWarp.Architecture.Services;
 global using TimeWarp.Foundation.CorsPolicies;
 global using TimeWarp.Foundation.Types;
+global using TimeWarp.Identity;
 global using TimeWarp.Mediator;
 global using TimeWarp.Mediator.Pipeline;
 global using TimeWarp.Foundation;
