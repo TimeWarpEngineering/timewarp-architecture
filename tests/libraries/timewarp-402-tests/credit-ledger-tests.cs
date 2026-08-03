@@ -62,4 +62,33 @@ public class InMemoryCreditLedgerTests
     InMemoryCreditLedger ledger = new();
     (await ledger.GetBalanceAsync(PrincipalId.New())).ShouldBe(0m);
   }
+
+  public static async Task Credits_are_isolated_per_principal()
+  {
+    InMemoryCreditLedger ledger = new();
+    PrincipalId a = PrincipalId.New();
+    PrincipalId b = PrincipalId.New();
+
+    await ledger.CreditAsync(a, 3.00m, "a-1");
+    await ledger.CreditAsync(b, 1.00m, "b-1");
+    await ledger.DebitAsync(a, 0.50m);
+
+    (await ledger.GetBalanceAsync(a)).ShouldBe(2.50m);
+    (await ledger.GetBalanceAsync(b)).ShouldBe(1.00m);
+  }
+
+  public static async Task Rejects_non_positive_credit()
+  {
+    InMemoryCreditLedger ledger = new();
+    await Should.ThrowAsync<ArgumentOutOfRangeException>(
+      () => ledger.CreditAsync(PrincipalId.New(), 0m, "r0"));
+  }
+
+  public static async Task Rejects_non_positive_debit()
+  {
+    InMemoryCreditLedger ledger = new();
+    PrincipalId id = PrincipalId.New();
+    await ledger.CreditAsync(id, 1.00m, "r1");
+    await Should.ThrowAsync<ArgumentOutOfRangeException>(() => ledger.DebitAsync(id, -0.01m));
+  }
 }

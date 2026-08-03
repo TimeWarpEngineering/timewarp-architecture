@@ -7,6 +7,8 @@
 // paymentRequirements. Auth is optional via createAuthHeaders — CDP JWT production stays in the
 // host (or a future thin adapter); this type only applies whatever headers the factory returns.
 // No merchant keys. No default network traffic in unit tests — inject HttpMessageHandler.
+// Empty or non-JSON verify/settle bodies are fail-closed (null → facilitator_http_* / empty_*),
+// never throw into PaymentGate (104-012).
 #endregion
 
 namespace TimeWarp.X402;
@@ -88,8 +90,9 @@ public sealed class HttpFacilitatorClient : IFacilitatorClient, IDisposable
       .SendAsync(httpRequest, cancellationToken)
       .ConfigureAwait(false);
 
-    FacilitatorVerifyResult? body = await response.Content
-      .ReadFromJsonAsync<FacilitatorVerifyResult>(JsonOptions, cancellationToken)
+    FacilitatorVerifyResult? body = await TryReadJsonAsync<FacilitatorVerifyResult>(
+        response,
+        cancellationToken)
       .ConfigureAwait(false);
 
     if (body is not null)
@@ -125,8 +128,9 @@ public sealed class HttpFacilitatorClient : IFacilitatorClient, IDisposable
       .SendAsync(httpRequest, cancellationToken)
       .ConfigureAwait(false);
 
-    FacilitatorSettleResult? body = await response.Content
-      .ReadFromJsonAsync<FacilitatorSettleResult>(JsonOptions, cancellationToken)
+    FacilitatorSettleResult? body = await TryReadJsonAsync<FacilitatorSettleResult>(
+        response,
+        cancellationToken)
       .ConfigureAwait(false);
 
     if (body is not null)
@@ -144,6 +148,39 @@ public sealed class HttpFacilitatorClient : IFacilitatorClient, IDisposable
     }
 
     return new FacilitatorSettleResult { Success = false, ErrorReason = "empty_settle_response" };
+  }
+
+  /// <summary>
+  /// Reads JSON body when present; empty or non-JSON content returns null so callers can map
+  /// HTTP status (fail-closed) without throwing into PaymentGate.
+  /// </summary>
+  private static async Task<T?> TryReadJsonAsync<T>(
+    HttpResponseMessage response,
+    CancellationToken cancellationToken)
+    where T : class
+  {
+    if (response.Content is null)
+    {
+      return null;
+    }
+
+    // Empty bodies throw from ReadFromJsonAsync; treat as absent payload.
+    long? length = response.Content.Headers.ContentLength;
+    if (length is 0)
+    {
+      return null;
+    }
+
+    try
+    {
+      return await response.Content
+        .ReadFromJsonAsync<T>(JsonOptions, cancellationToken)
+        .ConfigureAwait(false);
+    }
+    catch (JsonException)
+    {
+      return null;
+    }
   }
 
   private async Task ApplyAuthAsync(

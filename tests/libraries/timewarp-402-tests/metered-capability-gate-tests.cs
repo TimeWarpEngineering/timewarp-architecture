@@ -1,11 +1,17 @@
 #region Purpose
-// MeteredCapabilityGate: credit debit, 402 challenge, settle→credit→debit, disabled→unavailable.
+// MeteredCapabilityGate: credit debit, 402 challenge/reject, settle→credit→debit, disabled→503.
+#endregion
+
+#region Design
+// Host maps Granted→200, Challenge/Rejected→402, Unavailable→503. Free routes never call this gate.
+// Mock facilitator only — no live chain (104-012 package exit).
 #endregion
 
 namespace MeteredCapabilityGate_;
 
 using TimeWarp.Identity;
 using TimeWarp.X402;
+using TimeWarp.X402.TestSupport;
 
 public class EvaluateAsync
 {
@@ -83,6 +89,26 @@ public class EvaluateAsync
     (await ledger.GetBalanceAsync(principal)).ShouldBe(0m);
   }
 
+  public static async Task Invalid_payment_returns_rejected_without_ledger_change()
+  {
+    PrincipalId principal = PrincipalId.New();
+    InMemoryCreditLedger ledger = new();
+    MockFacilitator facilitator = new()
+    {
+      VerifyResult = new FacilitatorVerifyResult { IsValid = false, InvalidReason = "bad_sig" },
+    };
+    MeteredCapabilityGate gate = new(new PaymentGate(facilitator), ledger);
+    string signature = PaymentChallengeBuilder.EncodeHeaderPayload(new { x402Version = 2 });
+
+    MeteredCapabilityOutcome outcome = await gate.EvaluateAsync(principal, ReadyOptions(), signature);
+
+    MeteredCapabilityRejected rejected = outcome.ShouldBeOfType<MeteredCapabilityRejected>();
+    rejected.Reason.ShouldBe("bad_sig");
+    rejected.PaymentRequiredHeader.ShouldNotBeNullOrWhiteSpace();
+    facilitator.SettleCalls.ShouldBe(0);
+    (await ledger.GetBalanceAsync(principal)).ShouldBe(0m);
+  }
+
   public static async Task Disabled_payment_without_credit_returns_unavailable_not_challenge()
   {
     MeteredCapabilityGate gate = new(
@@ -118,44 +144,50 @@ public class EvaluateAsync
     granted.BalanceAfterDebit.ShouldBe(0.15m);
   }
 
+  public static async Task Invalid_price_returns_unavailable_not_challenge()
+  {
+    MeteredCapabilityGate gate = new(
+      new PaymentGate(new MockFacilitator()),
+      new InMemoryCreditLedger());
+
+    MeteredCapabilityOutcome outcome = await gate.EvaluateAsync(
+      PrincipalId.New(),
+      ReadyOptions() with { Price = "not-a-price" },
+      paymentSignatureHeader: null);
+
+    MeteredCapabilityUnavailable unavailable = outcome.ShouldBeOfType<MeteredCapabilityUnavailable>();
+    unavailable.Status.ShouldBe(PaymentConfigStatus.Misconfigured);
+    unavailable.ErrorCode.ShouldBe(PaymentConfigEvaluator.ErrorMisconfigured);
+  }
+
+  public static async Task Settle_receipt_is_idempotent_on_retry()
+  {
+    PrincipalId principal = PrincipalId.New();
+    InMemoryCreditLedger ledger = new();
+    const string Tx = "0xmetered-idempotent-tx";
+    MockFacilitator facilitator = new()
+    {
+      VerifyResult = new FacilitatorVerifyResult { IsValid = true },
+      SettleResult = new FacilitatorSettleResult
+      {
+        Success = true,
+        Transaction = Tx,
+        Network = "eip155:84532",
+        Payer = ValidPayTo,
+      },
+    };
+    MeteredCapabilityGate gate = new(new PaymentGate(facilitator), ledger);
+    string signature = PaymentChallengeBuilder.EncodeHeaderPayload(new { x402Version = 2, scheme = "exact" });
+
+    // First invoke: credit by receipt then debit → balance 0.
+    (await gate.EvaluateAsync(principal, ReadyOptions(), signature))
+      .ShouldBeOfType<MeteredCapabilityGranted>();
+
+    // Seed extra credit and re-apply same receipt id via ledger (simulates settle retry credit).
+    await ledger.CreditAsync(principal, 0.10m, Tx);
+    (await ledger.GetBalanceAsync(principal)).ShouldBe(0m);
+  }
+
   private static PaymentOptions ReadyOptions() =>
     PaymentOptions.CreateTestnetDefaults(ValidPayTo, "/api/demo/metered-capability");
-}
-
-/// <summary>In-test facilitator (same shape as payment-gate-tests MockFacilitator).</summary>
-internal sealed class MockFacilitator : IFacilitatorClient
-{
-  public FacilitatorVerifyResult VerifyResult { get; init; } =
-    new() { IsValid = false, InvalidReason = "invalid_payload" };
-
-  public FacilitatorSettleResult SettleResult { get; init; } =
-    new() { Success = false, ErrorReason = "not_implemented", Network = "eip155:84532" };
-
-  public int VerifyCalls { get; private set; }
-  public int SettleCalls { get; private set; }
-
-  public Task<FacilitatorSupported> GetSupportedAsync(CancellationToken cancellationToken = default) =>
-    Task.FromResult(new FacilitatorSupported
-    {
-      Kinds =
-      [
-        new FacilitatorKind { X402Version = 2, Scheme = "exact", Network = "eip155:84532" },
-      ],
-    });
-
-  public Task<FacilitatorVerifyResult> VerifyAsync(
-    FacilitatorPaymentRequest request,
-    CancellationToken cancellationToken = default)
-  {
-    VerifyCalls++;
-    return Task.FromResult(VerifyResult);
-  }
-
-  public Task<FacilitatorSettleResult> SettleAsync(
-    FacilitatorPaymentRequest request,
-    CancellationToken cancellationToken = default)
-  {
-    SettleCalls++;
-    return Task.FromResult(SettleResult);
-  }
 }

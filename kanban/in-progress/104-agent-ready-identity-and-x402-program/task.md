@@ -104,7 +104,8 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 - [ ] 104-030 Agent bearer validation on api-server + string-enum wire verification
       (slot here if the metered endpoint lives on api-server; else before 022)
 - [x] 104-011 Metered demo
-- [ ] 104-012 Payment tests (Wave 2 exit gate)
+- [x] 104-012 Payment tests (Wave 2 exit gate) — library 42/42 mocked facilitator;
+      tip host residual on 009
 
 ### Wave 3 — Compose
 - [ ] 104-013 Settle → Funded + credits
@@ -162,6 +163,5 @@ listings), child `## Results` / `review/disposition.md` trails.
   Passwordless tenant key until it lands); 030 slotted pending the
   metered-endpoint host decision (api-server vs web-server)
 - 2026-08-04 overnight: continuous session; Waves 2–4; local commits; start 007
-- 2026-08-04 progress (local, unpushed): **007 ✅ 008 ✅ 010 ✅**; parallel
-  agents on **011** (metered demo) + **017** (discovery); next queue
-  009/012/016/030 then Wave 3
+- 2026-08-04 progress (local, unpushed): **007 ✅ 008 ✅ 010 ✅ 011 ✅ 017 ✅
+  012 ✅** (package tests Wave 2 exit); remaining Wave 2: 009/016/030; then Wave 3

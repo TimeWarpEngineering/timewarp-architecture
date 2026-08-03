@@ -41,6 +41,14 @@ public class Evaluate
     return Task.CompletedTask;
   }
 
+  public static Task Misconfigured_when_network_missing()
+  {
+    PaymentOptions options = ReadyOptions() with { Network = "  " };
+    PaymentConfigEvaluation result = PaymentConfigEvaluator.Evaluate(options);
+    result.Status.ShouldBe(PaymentConfigStatus.Misconfigured);
+    return Task.CompletedTask;
+  }
+
   public static Task Ready_for_valid_testnet_options()
   {
     PaymentConfigEvaluation result = PaymentConfigEvaluator.Evaluate(ReadyOptions());
