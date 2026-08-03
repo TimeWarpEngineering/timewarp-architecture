@@ -13,9 +13,11 @@
 // through RunOaktonCommands to expose environment checks as CLI commands.
 // Web.Spa services are registered here too — prerendering runs SPA code on the server.
 // API surface is generated FastEndpoints from [ApiEndpoint] web-contracts (MVC BaseEndpoint
-// removed task 131 F-002). Pipeline order: UseRouting → UseAuthentication → UseAuthorization → UseAntiforgery
-// (Blazor) → UseFastEndpoints → UseScalarApiReference (MapOpenApi + Scalar UI; after FE so
-// endpoint metadata is registered). Auth before FE; no FE antiforgery for JSON APIs.
+// removed task 131 F-002). Pipeline order: UseMarkdownContentNegotiation (before UseRouting —
+// rewrites / → /index.md when Accept prefers text/markdown) → UseRouting → UseAuthentication →
+// UseAuthorization → UseAntiforgery (Blazor) → UseFastEndpoints → UseScalarApiReference
+// (MapOpenApi + Scalar UI; after FE so endpoint metadata is registered). Auth before FE; no FE
+// antiforgery for JSON APIs.
 // IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
 // OpenAPI document: CommonServerModule.AddOpenApi (FastEndpoints.OpenApi, always-on Scalar on web).
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (identity/profile
@@ -29,6 +31,7 @@
 
 namespace TimeWarp.Architecture.Web.Server;
 
+using TimeWarp.Architecture.AgentDiscovery;
 using TimeWarp.Foundation.Abstractions;
 using TimeWarp.Foundation.Common.Infrastructure;
 using Serilog;
@@ -206,17 +209,21 @@ public class Program : IAspNetProgram
     serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
     serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();
 
-    // TimeWarp.402 metered demo (104-011): in-memory ledger + facilitator + gates.
-    // Free/discovery routes never resolve MeteredCapabilityGate — only InvokeMeteredCapability.
+    // TimeWarp.402 demos (104-009 tip, 104-011 metered): in-memory ledger + facilitator + gates.
+    // Free/discovery routes never resolve PaymentGate / MeteredCapabilityGate — only tip and
+    // metered handlers invoke them. Facilitator base prefers tip options, then metered, then
+    // public testnet facilitator.
     serviceCollection.AddSingleton<ICreditLedger, InMemoryCreditLedger>();
     serviceCollection.AddSingleton<IFacilitatorClient>(static serviceProvider =>
     {
-      MeteredCapabilityOptions options = serviceProvider
+      TipOptions tip = serviceProvider.GetRequiredService<IOptions<TipOptions>>().Value;
+      MeteredCapabilityOptions metered = serviceProvider
         .GetRequiredService<IOptions<MeteredCapabilityOptions>>()
         .Value;
-      string facilitatorBase = string.IsNullOrWhiteSpace(options.FacilitatorBase)
-        ? FacilitatorUrls.X402Org
-        : options.FacilitatorBase;
+      string facilitatorBase =
+        !string.IsNullOrWhiteSpace(tip.FacilitatorBase) ? tip.FacilitatorBase
+        : !string.IsNullOrWhiteSpace(metered.FacilitatorBase) ? metered.FacilitatorBase
+        : FacilitatorUrls.X402Org;
       return new HttpFacilitatorClient(facilitatorBase);
     });
     serviceCollection.AddSingleton<PaymentGate>();
@@ -342,6 +349,10 @@ public class Program : IAspNetProgram
     }
 
     webApplication.UseResponseCompression();
+    // Agent-ready markdown twins (task 104-018): must run before UseRouting so endpoint matching
+    // sees /index.md (etc.) when Accept prefers text/markdown. Browsers omit text/markdown and
+    // fall through to Blazor; MapStaticAssets serves the twin with Content-Type: text/markdown.
+    webApplication.UseMarkdownContentNegotiation();
     // Static assets (including the Blazor WASM framework files) are served exclusively by
     // MapStaticAssets in ConfigureEndpoints. Do not add UseBlazorFrameworkFiles or UseStaticFiles:
     // UseBlazorFrameworkFiles' MapWhen branch 404s the dynamic /_framework/resource-collection.*.js
@@ -423,6 +434,13 @@ public class Program : IAspNetProgram
     serviceCollection
       .AddFluentValidatedOptions<MeteredCapabilityOptions, MeteredCapabilityOptionsValidator>(configuration)
       .ValidateOnStart();
+
+    serviceCollection
+      .AddFluentValidatedOptions<TipOptions, TipOptionsValidator>(configuration)
+      .ValidateOnStart();
+
+    // TIP_* env overlay (timewarp-software parity) after section bind; strict TIP_ENABLED=="true".
+    serviceCollection.PostConfigure<TipOptions>(static options => TipEnvironment.ApplyFromEnvironment(options));
   }
 
   private static void ConfigureInfrastructure(IServiceCollection serviceCollection)

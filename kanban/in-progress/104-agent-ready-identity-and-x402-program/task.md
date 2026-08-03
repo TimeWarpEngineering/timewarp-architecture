@@ -99,13 +99,13 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 - [x] 104-008 Challenge / verify / settle / 503 policy
 - [ ] 104-016 Passkey human demo (pulled forward from Wave 4 — deps 003/006 done;
       removes shipped Passwordless CDN script + tenant key from template, 131 F-010)
-- [ ] 104-009 Tip-jar port
+- [x] 104-009 Tip-jar port — web-server GET|POST api/tip, PaymentGate, TIP_* env,
+      7/7 host tests + library PaymentGate coverage
 - [x] 104-010 Credit ledger
 - [ ] 104-030 Agent bearer validation on api-server + string-enum wire verification
       (slot here if the metered endpoint lives on api-server; else before 022)
 - [x] 104-011 Metered demo
-- [x] 104-012 Payment tests (Wave 2 exit gate) — library 42/42 mocked facilitator;
-      tip host residual on 009
+- [x] 104-012 Payment tests (Wave 2 exit gate) — library 42/42 mocked facilitator
 
 ### Wave 3 — Compose
 - [ ] 104-013 Settle → Funded + credits

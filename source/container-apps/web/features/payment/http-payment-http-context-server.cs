@@ -5,11 +5,11 @@
 #region Design
 // Scoped: ties to the request HttpContext from IHttpContextAccessor. Header names come from
 // TimeWarp.X402.PaymentHeaders so hosts stay aligned with the protocol constants.
+// Features substrate (not a product slice) — shared by tip and metered paid demos.
 #endregion
 
-namespace TimeWarp.Architecture.Features.MeteredCapability.Server;
+namespace TimeWarp.Architecture.Features;
 
-using TimeWarp.Architecture.Features.MeteredCapability.Application;
 using TimeWarp.X402;
 
 public sealed class HttpPaymentHttpContext : IPaymentHttpContext
