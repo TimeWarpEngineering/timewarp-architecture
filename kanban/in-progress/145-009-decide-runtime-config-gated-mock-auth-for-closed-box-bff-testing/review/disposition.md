@@ -26,3 +26,15 @@ middleware), and Production smoke surfaces are aligned with the task requirement
 Adversarial round 2 dynamically proved a critical fail-closed gap on the SPA composition path
 (config-derived environment gate) plus two proven TWA0021 evasions. Task REOPENED (parent
 epic follows). Disposition to be rewritten after the fix loop's adversarial re-verification.
+
+---
+
+## Final disposition — after round 3 (2026-08-03)
+
+**Outcome: clean.** The critical config-derived environment bypass is closed by construction
+(explicit environment threading; config path deleted; host-registered IHostEnvironment for
+the constrained overload), proven by the re-run adversarial repro failing closed and locked
+by composition-path regression tests. TWA0021 evasions closed with regressions. Verified
+twice (fix worktree + merged dev). Round-1's "clean" self-review stands invalidated as
+history — the composition-path trace and dynamic verification that round 2 performed are
+exactly what a security review of template auth surfaces must include.

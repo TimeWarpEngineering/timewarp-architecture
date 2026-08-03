@@ -82,3 +82,17 @@ Effort 1 **security-focused**, **clean** — `review/`
 
 - Fail-closed gates reviewed; header inert when mock off; Production cannot activate via config alone
 - Paths: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`
+
+## Results (final, round-3)
+
+Reopened after adversarial round-2 dynamically proved a CRITICAL fail-closed gap: web-server's
+SPA composition derived the mock-auth environment gate from IConfiguration keys, so config
+content alone could activate MockAuthenticationStateProvider (every visitor = SystemAdmin on
+server-rendered pages) in a Production-booted host. Fix 2eb5416d (merged): config-derived
+path deleted; explicit environment threading at every call site; IModule-constrained overload
+reads the host-builder-registered IHostEnvironment singleton (immune to later config);
+composition-path regression tests; TWA0021 extended to catch typeof()/factory-delegate
+evasions (analyzer suite 106/106); stale smoke comments mechanized. Acceptance: the round-2
+attack repro re-run fails closed. Gates green twice (fix worktree; orchestrator on merged
+dev): build 0/0, full dev test, smoke ×3 w/ fail-closed surface checks, audit 23/23.
+Review: 3 rounds (self → adversarial → fix verification), disposition clean.
