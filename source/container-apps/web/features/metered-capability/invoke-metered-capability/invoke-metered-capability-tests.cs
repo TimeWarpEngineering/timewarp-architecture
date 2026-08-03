@@ -12,7 +12,8 @@
 // Run standalone: dotnet run source/container-apps/web/features/metered-capability/invoke-metered-capability/invoke-metered-capability-tests.cs
 
 #region Purpose
-// Real-host proof: unpaid → 402 + PAYMENT-REQUIRED; prepaid credit → 200 + debit; mock settle → 200.
+// Real-host proof: unpaid → 402 + PAYMENT-REQUIRED; prepaid credit → 200 + debit; mock settle → 200;
+// continuous money-path E2E (104-014): register → token → 402 → pay → Funded → prepaid quota call.
 #endregion
 
 #region Design
@@ -22,6 +23,8 @@
 // ContentRoot appsettings.Development.json, which re-applies the base Enabled:false — hermetic
 // test hosts must force the paid surface on.) Free routes are not exercised here — only the
 // metered path. C-create HostGraphFactory per class; isolated HttpClient per call.
+// 104-014 Money_Path_E2E is one continuous method (not split cases) so CI owns the no-human agent
+// register→pay→call story; unit-style 402/prepaid/settle cases above remain for regression pin.
 #endregion
 
 //-:cnd:noEmit
@@ -175,6 +178,88 @@ namespace TimeWarp.Architecture.Features.MeteredCapability
       HttpResponseMessage response = await GetMeteredWithBearer(accessToken);
 
       response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    /// <summary>
+    /// Task 104-014 money path: register key → scoped token → unpaid 402 → mock pay → Funded →
+    /// prepaid quota debit on the same bearer. No Entra, no human sponsor.
+    /// </summary>
+    public static async Task Money_Path_E2E_Register_Then_402_Then_Pay_Then_Prepaid_Quota()
+    {
+      Facilitator.Reset();
+      Facilitator.VerifyResult = new FacilitatorVerifyResult { IsValid = true };
+      Facilitator.SettleResult = new FacilitatorSettleResult
+      {
+        Success = true,
+        Transaction = $"0xe2e-{Guid.NewGuid():N}",
+        Network = "eip155:84532",
+        Payer = "0x000000000000000000000000000000000000dEaD",
+      };
+
+      // 1–2. Agent registers a P-256 key and mints a bearer with demo:invoke + identity:read.
+      // No human sponsor; TrustTier starts Keyed after registration.
+      var key = new IntegrationSoftwareAgentKey();
+      (PrincipalId principalId, string accessToken) = await RegisterAndIssueToken(
+        key,
+        [AgentScopes.DemoInvoke, AgentScopes.IdentityRead]);
+
+      IPrincipalStore principals = Web.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
+      ICreditLedger ledger = Web.WebApplicationHost.ServiceProvider.GetRequiredService<ICreditLedger>();
+      Principal? beforePay = await principals.GetPrincipalAsync(principalId);
+      beforePay.ShouldNotBeNull();
+      beforePay.TrustTier.ShouldBe(TrustTier.Keyed);
+      (await ledger.GetBalanceAsync(principalId)).ShouldBe(0m);
+
+      // 3. First metered call without PAYMENT-SIGNATURE → 402 + PAYMENT-REQUIRED challenge.
+      using HttpResponseMessage unpaid = await GetMeteredWithBearer(accessToken);
+      unpaid.StatusCode.ShouldBe(HttpStatusCode.PaymentRequired);
+      unpaid.Headers.Contains(PaymentHeaders.PaymentRequired).ShouldBeTrue();
+      string challenge = unpaid.Headers.GetValues(PaymentHeaders.PaymentRequired).Single();
+      PaymentChallengeBuilder.TryDecodeHeaderPayload(challenge).ShouldNotBeNull();
+      Facilitator.VerifyCalls.ShouldBe(0);
+      Facilitator.SettleCalls.ShouldBe(0);
+
+      // 4. Same bearer + PAYMENT-SIGNATURE (mock facilitator verify+settle) → 200, funding=payment.
+      // SettlementFundingService credits the price then debit consumes it; principal promotes to Funded.
+      string signature = PaymentChallengeBuilder.EncodeHeaderPayload(
+        new { x402Version = 2, scheme = "exact", e2e = "104-014" });
+      using HttpResponseMessage paid = await GetMeteredWithBearer(accessToken, signature);
+      paid.StatusCode.ShouldBe(HttpStatusCode.OK);
+      paid.Headers.Contains(PaymentHeaders.PaymentResponse).ShouldBeTrue();
+      Response? paidBody = JsonSerializer.Deserialize<Response>(
+        await paid.Content.ReadAsStringAsync(),
+        ContractSerializationDefaults.Options);
+      paidBody.ShouldNotBeNull();
+      paidBody.FundingSource.ShouldBe(MeteredCapabilityGranted.FundingPayment);
+      paidBody.BalanceAfter.ShouldBe(0m);
+      Principal? afterPay = await principals.GetPrincipalAsync(principalId);
+      afterPay.ShouldNotBeNull();
+      afterPay.TrustTier.ShouldBe(TrustTier.Funded);
+      afterPay.IsFundedAndActive.ShouldBeTrue();
+      (await ledger.GetBalanceAsync(principalId)).ShouldBe(0m);
+      Facilitator.VerifyCalls.ShouldBe(1);
+      Facilitator.SettleCalls.ShouldBe(1);
+
+      // 5. "Quota" is server-side ledger balance (not a JWT claim). Seed residual credit, then call
+      // again with the SAME bearer and NO payment header — prepaid debit, no facilitator.
+      await ledger.CreditAsync(principalId, 0.25m, $"e2e-quota-{principalId.Value:N}");
+      Facilitator.Reset();
+      using HttpResponseMessage prepaid = await GetMeteredWithBearer(accessToken);
+      prepaid.StatusCode.ShouldBe(HttpStatusCode.OK);
+      Response? prepaidBody = JsonSerializer.Deserialize<Response>(
+        await prepaid.Content.ReadAsStringAsync(),
+        ContractSerializationDefaults.Options);
+      prepaidBody.ShouldNotBeNull();
+      prepaidBody.FundingSource.ShouldBe(MeteredCapabilityGranted.FundingCredit);
+      prepaidBody.BalanceAfter.ShouldBe(0.15m); // $0.25 − $0.10
+      (await ledger.GetBalanceAsync(principalId)).ShouldBe(0.15m);
+      Facilitator.VerifyCalls.ShouldBe(0);
+      Facilitator.SettleCalls.ShouldBe(0);
+
+      // Debit never demotes Funded (104-013).
+      Principal? stillFunded = await principals.GetPrincipalAsync(principalId);
+      stillFunded.ShouldNotBeNull();
+      stillFunded.TrustTier.ShouldBe(TrustTier.Funded);
     }
 
     private static void ReplaceFacilitator(IServiceCollection services, MockFacilitatorClient mock)
