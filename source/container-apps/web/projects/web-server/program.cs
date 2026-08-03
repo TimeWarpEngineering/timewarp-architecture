@@ -164,10 +164,10 @@ public class Program : IAspNetProgram
       // restriction is WHY roles endpoints get a clean 401 for an unauthenticated request. A bare
       // fail-closed [ApiEndpoint] with no marker at all (only reachable if TWA0013 is suppressed) has
       // no policy to restrict the scheme — it falls through to ASP.NET Core's DEFAULT authentication
-      // scheme, which here is the dormant AddMicrosoftIdentityWebAppAuthentication registration (see
-      // ConfigureAuthentication below), and that challenges with a redirect/500, not a clean 401. Deny
-      // still holds either way; the clean-401 property specifically belongs to an explicit
-      // scheme-restricted policy like this one, not to the bare fail-closed default.
+      // scheme (identity-session when UseEntra is false; Entra when UseEntra is true — task 104-021).
+      // Entra challenges with redirect/500; identity-session cookie events return 401/403. Deny still
+      // holds either way; the clean-401 property specifically belongs to an explicit scheme-restricted
+      // policy like this one, not to the bare fail-closed default.
       .AddPolicy
       (
         IdentitySessionDefaults.AuthenticatedPolicy,
@@ -302,13 +302,25 @@ public class Program : IAspNetProgram
 
   private static void ConfigureAuthentication(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    serviceCollection.AddMicrosoftIdentityWebAppAuthentication(configuration);
-    // serviceCollection.AddMicrosoftIdentityWebApiAuthentication(configuration);
+    // Task 104-021: Entra/MSAL is opt-in (Authentication:UseEntra). Default is first-party
+    // identity-session cookie as the authentication default scheme — no AzureAd required to boot.
+    bool useEntra = MockAuthenticationDefaults.IsEntraAuthActive(
+      configuration[MockAuthenticationDefaults.UseEntraKey]);
 
-    // A second AddAuthentication() call (no defaultScheme argument) adds this NAMED cookie scheme
-    // alongside whatever AddMicrosoftIdentityWebAppAuthentication registered as default — the
-    // dormant Entra registration is untouched (lock #10 / 104-021). See IdentitySessionDefaults.
-    serviceCollection.AddAuthentication()
+    AuthenticationBuilder authenticationBuilder;
+    if (useEntra)
+    {
+      // Entra owns the default scheme; identity-session is added as a named scheme via a second
+      // parameterless AddAuthentication() (same coexistence model as pre-021).
+      serviceCollection.AddMicrosoftIdentityWebAppAuthentication(configuration);
+      authenticationBuilder = serviceCollection.AddAuthentication();
+    }
+    else
+    {
+      authenticationBuilder = serviceCollection.AddAuthentication(IdentitySessionDefaults.Scheme);
+    }
+
+    authenticationBuilder
       .AddCookie(IdentitySessionDefaults.Scheme, options =>
       {
         options.Cookie.Name = IdentitySessionDefaults.CookieName;
@@ -330,11 +342,9 @@ public class Program : IAspNetProgram
           return Task.CompletedTask;
         };
       })
-      // Agent bearer-token scheme (task 104-004): a THIRD named scheme on the same chain, alongside
-      // the identity-session cookie scheme above — neither touches the other, nor the dormant Entra
-      // default (lock #10). AgentTokenAuthenticationHandler owns all authenticate/challenge/forbid
-      // behavior for this scheme; AuthenticationSchemeOptions carries no scheme-specific settings of
-      // its own (token lifetime lives in AgentTokenOptions, bound separately in ConfigureSettings).
+      // Agent bearer-token scheme (task 104-004): named scheme alongside identity-session.
+      // AgentTokenAuthenticationHandler owns authenticate/challenge/forbid for this scheme;
+      // token lifetime lives in AgentTokenOptions (ConfigureSettings).
       .AddScheme<AuthenticationSchemeOptions, AgentTokenAuthenticationHandler>(AgentTokenDefaults.Scheme, _ => { })
       // Closed-box mock principal (task 145-009): always registered; handler is fail-closed
       // (Development/Testing + Authentication:UseMock + header). Listed on AuthenticatedPolicy.

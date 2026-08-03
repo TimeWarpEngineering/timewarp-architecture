@@ -47,8 +47,9 @@ Additional passkeys can be attached to an existing principal once signed in
 (`POST /api/identity/credentials/passkey` — session required).
 
 **Not offered:** email register, password reset, magic-link-only accounts as the
-primary path. Microsoft Entra / MSAL may exist as a dormant non-default path and
-is not the agent- or human-priority story.
+primary path. Microsoft Entra / MSAL is **opt-in only** (`Authentication:UseEntra=true`
+plus `AzureAd` / `AzureAdB2C` settings) and is not the agent- or human-priority story.
+Default non-mock SPA auth projects the identity-session cookie via `GetCurrentSession`.
 
 ---
 

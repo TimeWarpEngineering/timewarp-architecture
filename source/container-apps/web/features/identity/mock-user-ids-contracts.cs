@@ -3,7 +3,13 @@
 // factories agree on the same sample identities.
 #endregion
 
-namespace TimeWarp.Architecture.Features.Authentication;
+#region Design
+// Lives under the identity umbrella (task 104-021) — not a product-auth "Authentication" slice.
+// Namespace is Features.Identity so mock SPA auth and GetCurrentUser mock factories share one home
+// with passkey/session contracts without inventing a fourth auth* peer folder (TWA0009 / placement).
+#endregion
+
+namespace TimeWarp.Architecture.Features.Identity;
 
 public static class MockUserIds
 {

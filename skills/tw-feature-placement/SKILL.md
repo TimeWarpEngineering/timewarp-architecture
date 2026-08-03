@@ -315,7 +315,7 @@ cross-slice coupling (TWA0009). This is the **Features substrate** tier, not a p
 
 | Litmus | Home |
 |--------|------|
-| Compile-time constants or shapes many product slices must share (role ids, module ids) | Bare `…Features` namespace; file still lives under a folder for humans (e.g. `features/authorization/role-ids-contracts.cs`, `features/admin/modules/module-ids-contracts.cs`) |
+| Compile-time constants or shapes many product slices must share (role ids, module ids) | Bare `…Features` namespace; file still lives under a folder for humans (e.g. `features/admin/roles/role-ids-contracts.cs`, `features/admin/modules/module-ids-contracts.cs`) |
 | Product operation / slice-owned logic | `…Features.<Id>` under `features/<slice>/` |
 
 Document the choice in the file's `#region Design` (existing examples do). Do **not** invent a

@@ -13,10 +13,13 @@
 // "passkeys not supported" style error via FormatError, same as PasskeysPage before this extract.
 // Cookie session is set by the server on complete; this client only reads IsAuthenticated via
 // GetCurrentSession. No profile fields are collected or required.
+// When SPA uses IdentitySessionAuthenticationStateProvider (default non-mock / non-Entra path),
+// successful complete notifies that provider so AuthorizeView re-reads session without a full reload.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
 
+using Microsoft.AspNetCore.Components.Authorization;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Foundation.Types;
 
@@ -24,11 +27,18 @@ public sealed class PasskeyCeremonyClient
 {
   private readonly IWebServerApiService ApiService;
   private readonly IJSRuntime JsRuntime;
+  private readonly AuthenticationStateProvider AuthenticationStateProvider;
 
-  public PasskeyCeremonyClient(IWebServerApiService apiService, IJSRuntime jsRuntime)
+  public PasskeyCeremonyClient
+  (
+    IWebServerApiService apiService,
+    IJSRuntime jsRuntime,
+    AuthenticationStateProvider authenticationStateProvider
+  )
   {
     ApiService = apiService;
     JsRuntime = jsRuntime;
+    AuthenticationStateProvider = authenticationStateProvider;
   }
 
   public async Task<OneOf<CompletePasskeyRegistration.Response, SharedProblemDetails>> RegisterAsync(
@@ -60,9 +70,13 @@ public sealed class PasskeyCeremonyClient
     OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> completeResult =
       await ApiService.GetResponse<CompletePasskeyRegistration.Response>(completeCommand, cancellationToken);
 
-    return completeResult.IsT0
-      ? completeResult.AsT0
-      : ToProblem(completeResult);
+    if (completeResult.IsT0)
+    {
+      NotifyIdentitySessionIfNeeded();
+      return completeResult.AsT0;
+    }
+
+    return ToProblem(completeResult);
   }
 
   public async Task<OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails>> AuthenticateAsync(
@@ -99,9 +113,13 @@ public sealed class PasskeyCeremonyClient
     OneOf<CompletePasskeyAuthentication.Response, FileResponse, SharedProblemDetails> completeResult =
       await ApiService.GetResponse<CompletePasskeyAuthentication.Response>(completeCommand, cancellationToken);
 
-    return completeResult.IsT0
-      ? completeResult.AsT0
-      : ToProblem(completeResult);
+    if (completeResult.IsT0)
+    {
+      NotifyIdentitySessionIfNeeded();
+      return completeResult.AsT0;
+    }
+
+    return ToProblem(completeResult);
   }
 
   public async Task<bool?> GetIsAuthenticatedAsync(CancellationToken cancellationToken)
@@ -114,6 +132,14 @@ public sealed class PasskeyCeremonyClient
 
   public static string FormatError(SharedProblemDetails problem) =>
     $"{problem.Title}: {problem.Detail}";
+
+  private void NotifyIdentitySessionIfNeeded()
+  {
+    if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
+    {
+      identitySession.NotifySessionChanged();
+    }
+  }
 
   private static SharedProblemDetails ToProblem<TResponse>(
     OneOf<TResponse, FileResponse, SharedProblemDetails> result)

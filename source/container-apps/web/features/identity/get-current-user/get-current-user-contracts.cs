@@ -1,21 +1,26 @@
 #region Purpose
-// Contract for fetching the signed-in user's module and role grants, with mock responses for backend-less demos.
+// Client-only contract for the signed-in user's module and role grants (SPA mock demos).
 #endregion
 
 #region Design
-// Modules and Roles are Guids drawn from ModuleIds/RoleIds so client menus and route guards key on stable ids
+// Not the identity "who am I" read — that is GetCurrentSession (cookie session / PrincipalId).
+// This shape is application authorization grants (modules + roles) for SPA menus and route guards.
+// Modules and Roles are Guids drawn from ModuleIds/RoleIds so client code keys on stable ids
 // instead of matching role-name strings.
-// The mock factory returns per-user responses keyed by MockUserIds (mocks/mock-user-ids.cs), letting the
-// SPA demonstrate role-driven UI without any auth backend; unknown users get full access because the
-// mock optimizes for demo friction, not security.
+// The mock factory returns per-user responses keyed by MockUserIds, letting the SPA demonstrate
+// role-driven UI without any grants backend; unknown users get full access because the mock
+// optimizes for demo friction, not security.
+// [ClientOnlyContract]: no server endpoint and no YARP ingress prefix (task 107/ingress tests).
+// Rehomed under Features.Identity (task 104-021) so web/features no longer carries a near-empty
+// authentication/ peer of identity/.
 #endregion
 
-namespace TimeWarp.Architecture.Features.Authentication;
+namespace TimeWarp.Architecture.Features.Identity;
 
 public static partial class GetCurrentUser
 {
   [ApiRoute(RouteTemplate: "api/GetCurrentUser", HttpVerb.Get)]
-  [ClientOnlyContract("Served by SPA mock mode; the template has no server-side auth slice.")]
+  [ClientOnlyContract("Served by SPA mock mode; no server grants endpoint in the template.")]
   public sealed partial class Query : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }

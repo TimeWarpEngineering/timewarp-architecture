@@ -3,12 +3,10 @@
 #endregion
 
 #region Design
-// Scheme is a NAMED authentication scheme, deliberately not registered as the default: the
-// container already carries a dormant Microsoft Entra (Azure AD B2C) registration
-// (AddMicrosoftIdentityWebAppAuthentication in Program.ConfigureAuthentication) that owns whatever
-// the default scheme currently is. Adding this as an additional named scheme via a second
-// AddAuthentication() call lets both coexist — CookieBrowserSessionService always signs in/reads by
-// this explicit scheme name, never relying on "the default."
+// Task 104-021: when Authentication:UseEntra is false (default), this scheme IS the authentication
+// defaultScheme. When UseEntra is true, Entra owns the default and this remains a named scheme
+// registered via a second AddAuthentication() — CookieBrowserSessionService always signs in/reads
+// by this explicit scheme name, never relying on "the default," so both postures work.
 // AuthenticatedPolicy (task 110): "any signed-in identity-session cookie" — scheme-restricted
 // (AddAuthenticationSchemes(Scheme)) + RequireAuthenticatedUser(), no further policy shape. This is
 // the policy the admin Roles CRUD contracts carry via [EndpointAuthorize(Policy="…")] (the contract

@@ -8,8 +8,8 @@
 // needed to interpret a claim. Values are contract data — changing one invalidates any
 // stored grant that references it. The ERP-flavored module list is sample domain content
 // demonstrating the pattern; template consumers replace it with their own modules.
-// Lives in the Features substrate (not a product slice) so Authentication and other product
-// slices can reference well-known module ids without cross-slice coupling (TWA0009).
+// Lives in the Features substrate (not a product slice) so Identity mock grants (GetCurrentUser)
+// and other product code can reference well-known module ids without cross-slice coupling (TWA0009).
 #endregion
 
 namespace TimeWarp.Architecture.Features;

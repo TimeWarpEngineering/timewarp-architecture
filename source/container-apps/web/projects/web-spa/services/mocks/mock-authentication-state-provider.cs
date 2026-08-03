@@ -5,7 +5,8 @@
 #region Design
 // Registered only via MockAuthenticationRegistration (Development/Testing + Authentication:UseMock).
 // Role claims carry RoleIds (GUID strings), not role names, because authorization policies match
-// on ids; the "oid" claim mirrors what Azure AD B2C issues so claim-lookup code works unchanged.
+// on ids; the "oid" claim mirrors historical Entra claim shapes so claim-lookup code still works
+// when UseEntra is later enabled. MockUserIds live under Features.Identity (task 104-021).
 #endregion
 
 namespace TimeWarp.Architecture.Services;
