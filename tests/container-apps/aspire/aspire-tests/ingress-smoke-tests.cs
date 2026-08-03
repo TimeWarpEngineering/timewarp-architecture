@@ -184,11 +184,8 @@ public class IngressSmoke_Given_
     // validation on GetRoles (same as in-proc roles-authorization tests).
     Guid principalId = Guid.NewGuid();
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
-    httpClient.DefaultRequestHeaders.Add
-    (
-      TimeWarp.Architecture.Configuration.MockAuthenticationDefaults.MockPrincipalIdHeader,
-      principalId.ToString()
-    );
+    // Header name SSOT: MockAuthenticationDefaults.MockPrincipalIdHeader (Web.Spa)
+    httpClient.DefaultRequestHeaders.Add("X-TimeWarp-Mock-Principal-Id", principalId.ToString());
 
     HttpResponseMessage response = await httpClient.GetAsync($"/api/Roles?UserId={principalId:D}");
 

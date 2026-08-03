@@ -23,7 +23,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Services;
 
 /// <summary>
 /// Named authentication scheme for the fail-closed mock principal header.
@@ -42,8 +42,11 @@ public sealed class MockIdentityPrincipalHandler
 
   protected override Task<AuthenticateResult> HandleAuthenticateAsync()
   {
-    if (!MockAuthenticationDefaults.IsMockAuthActive(environment.EnvironmentName, configuration))
+    if (!MockAuthenticationDefaults.IsMockAuthActive
+      (environment.EnvironmentName, configuration[MockAuthenticationDefaults.UseMockKey]))
+    {
       return Task.FromResult(AuthenticateResult.NoResult());
+    }
 
     if (!Request.Headers.TryGetValue(MockAuthenticationDefaults.MockPrincipalIdHeader, out Microsoft.Extensions.Primitives.StringValues values)
       || !Guid.TryParse(values.ToString(), out Guid principalGuid))

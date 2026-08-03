@@ -19,7 +19,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using TimeWarp.Architecture.Configuration;
 
 /// <summary>
 /// Sole allowed registration site for SPA mock authentication providers.
@@ -37,7 +36,7 @@ public static class MockAuthenticationRegistration
     string? environmentName
   )
   {
-    if (!MockAuthenticationDefaults.IsMockAuthActive(environmentName, configuration))
+    if (!MockAuthenticationDefaults.IsMockAuthActive(environmentName, configuration[MockAuthenticationDefaults.UseMockKey]))
       return false;
 
     serviceCollection.AddScoped<AuthenticationStateProvider, MockAuthenticationStateProvider>();

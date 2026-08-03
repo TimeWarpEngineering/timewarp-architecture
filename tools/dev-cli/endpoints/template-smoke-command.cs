@@ -478,10 +478,19 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
         "web-spa",
         "web-spa.csproj"
       );
-      if (File.Exists(spaCsproj)
-        && File.ReadAllText(spaCsproj).Contains("MOCK_AUTHENTICATION", StringComparison.Ordinal))
+      if (File.Exists(spaCsproj))
       {
-        failures.Add("web-spa.csproj still defines MOCK_AUTHENTICATION (should be runtime-gated only)");
+        string spaText = File.ReadAllText(spaCsproj);
+        // Only fail on an active DefineConstants entry — comments may still name the old symbol.
+        if (System.Text.RegularExpressions.Regex.IsMatch
+          (
+            spaText,
+            @"DefineConstants[^>]*MOCK_AUTHENTICATION",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase
+          ))
+        {
+          failures.Add("web-spa.csproj still defines MOCK_AUTHENTICATION (should be runtime-gated only)");
+        }
       }
 
       if (failures.Count > 0)
