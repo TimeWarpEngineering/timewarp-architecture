@@ -16,9 +16,11 @@
 // removed task 131 F-002). Pipeline order: UseMarkdownContentNegotiation (before UseRouting —
 // rewrites / → /index.md when Accept prefers text/markdown) → UseTipDiscoveryAlias (before
 // UseRouting — bare /api → /api/tip for x402 scanners, task 104-020) → UseRouting →
-// UseAuthentication → UseAuthorization → UseAntiforgery (Blazor) → UseFastEndpoints →
-// UseScalarApiReference (MapOpenApi + Scalar UI; after FE so endpoint metadata is registered).
-// Auth before FE; no FE antiforgery for JSON APIs.
+// UseRateLimiter (task 104-015: path-classified GlobalLimiter for principal-register +
+// payment-challenge; after routing so rewrites are settled; edge/Cloudflare is outer ring
+// only — 104-023) → UseAuthentication → UseAuthorization → UseAntiforgery (Blazor) →
+// UseFastEndpoints → UseScalarApiReference (MapOpenApi + Scalar UI; after FE so endpoint
+// metadata is registered). Auth before FE; no FE antiforgery for JSON APIs.
 // IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
 // OpenAPI document: CommonServerModule.AddOpenApi (FastEndpoints.OpenApi, always-on Scalar on web).
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (identity/profile
@@ -32,6 +34,7 @@
 
 namespace TimeWarp.Architecture.Web.Server;
 
+using TimeWarp.Architecture.Abuse;
 using TimeWarp.Architecture.AgentDiscovery;
 using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Abstractions;
@@ -230,6 +233,9 @@ public class Program : IAspNetProgram
     serviceCollection.AddScoped<SettlementFundingService>();
     serviceCollection.AddScoped<MeteredCapabilityGate>();
 
+    // Task 104-015: app-level rate limits on principal register + payment challenge (not edge).
+    AbuseRateLimitingModule.ConfigureServices(serviceCollection, configuration);
+
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
     serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Web.Server.IAssemblyMarker>();
@@ -365,6 +371,11 @@ public class Program : IAspNetProgram
     // caching headers.
     webApplication.UseRouting();
 
+    // Task 104-015: after UseRouting (rewrites settled); before FE so rejected requests never
+    // reach handlers / PaymentGate. Path-classified GlobalLimiter + structured 429 OnRejected.
+    // Edge volumetric limits stay outside the app (104-023).
+    webApplication.UseRateLimiter();
+
     // Identity session (task 104-003): named cookie scheme only — the dormant Entra registration's
     // own auth flow is untouched. Ceremony endpoints (register/authenticate) are anonymous by
     // design (they establish the session); GetCurrentSession reads whatever session exists, if any.
@@ -442,6 +453,10 @@ public class Program : IAspNetProgram
 
     serviceCollection
       .AddFluentValidatedOptions<TipOptions, TipOptionsValidator>(configuration)
+      .ValidateOnStart();
+
+    serviceCollection
+      .AddFluentValidatedOptions<AbuseRateLimitOptions, AbuseRateLimitOptionsValidator>(configuration)
       .ValidateOnStart();
 
     // TIP_* env overlay (timewarp-software parity) after section bind; strict TIP_ENABLED=="true".
