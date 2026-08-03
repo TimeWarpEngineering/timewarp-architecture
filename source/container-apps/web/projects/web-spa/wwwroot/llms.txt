@@ -7,6 +7,7 @@
 ## Start here
 
 - [Authentication (auth.md)](/auth.md): Humans (passkeys), agents (public keys + scoped bearer tokens), payment posture, and what we deliberately do not do.
+- [Home (index.md)](/index.md): Markdown twin of `/`. Also via `Accept: text/markdown` on `/`.
 - [robots.txt](/robots.txt): Agent-welcome crawl policy with Content Signals (`ai-train=yes, search=yes, ai-input=yes`).
 - [sitemap.xml](/sitemap.xml): Public discovery and demo entry points.
 
@@ -58,9 +59,23 @@ Commands: `keygen`, `register`, `token`, `whoami`, `demo`. Default server: `http
 
 `ai-train=yes, search=yes, ai-input=yes` — see [robots.txt](/robots.txt).
 
+## Markdown content negotiation
+
+Key HTML pages have static `.md` twins under the site root. Agents can:
+
+1. Fetch the twin URL directly (e.g. `/index.md`, `/auth.md`), or
+2. Request the HTML route with `Accept: text/markdown` (home `/` rewrites to `/index.md`).
+
+```bash
+curl -sS -H 'Accept: text/markdown' https://<host>/
+curl -sS https://<host>/index.md
+curl -sS https://<host>/auth.md
+```
+
+Browser requests (Accept: text/html) are unchanged — Blazor SPA hosting is not affected.
+
 ## Planned agent surfaces (not yet shipped)
 
-- Markdown content negotiation for HTML pages (task 104-018)
 - MCP server card / Agent Skills index / A2A agent card stubs (task 104-019)
 - Discoverable x402 tip or meter path for commerce scanners (task 104-020)
 
