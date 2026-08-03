@@ -134,6 +134,24 @@ durable design store — not this kanban after ships.
 ### After it works
 Extract skills for consumers; optional human ADRs last. Do not invent either now.
 
+## Overnight run (2026-08-04) — operator authorizations
+
+Human is offline; agent continues on **this session** (not a Rhai workflow of
+full `tw-orchestrate-task` — that skill needs sequential judgment, design-issue
+gates, and commits that a fan-out script does not replace).
+
+| Policy | Choice |
+|--------|--------|
+| Runner | Continuous session; `tw-orchestrate-task` per child id |
+| Ambiguity | Decide from **Locked product decisions** above + existing code patterns; record rationale in child Notes; only park on true external product blocks |
+| Git | **Local commits only** — no push, no PR until human wakes |
+| Scope | Waves **2–4** critical path + safe parallels; **hold Wave 5** (023–025) |
+| Parallels when deps allow | 016 (passkey demo), 017–019 (discovery), 030 (api-server bearer) — avoid same-file thrash with 402 path |
+| Critical path | 007 → 008 → (009 ∥ 010) → 011 → 012 (Wave 2 exit) → 013 → 015 → 014 → 022 |
+
+Wake-up: `git log --oneline origin/dev..HEAD`, `ganda kanban board` (or column
+listings), child `## Results` / `review/disposition.md` trails.
+
 ## Session
 
 - Created: 2026-07-16
@@ -143,3 +161,4 @@ Extract skills for consumers; optional human ADRs last. Do not invent either now
   checklist reconciled; 016 pulled into Wave 2 (deps done + template ships
   Passwordless tenant key until it lands); 030 slotted pending the
   metered-endpoint host decision (api-server vs web-server)
+- 2026-08-04 overnight: continuous session; Waves 2–4; local commits; start 007
