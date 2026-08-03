@@ -3,14 +3,13 @@
 #endregion
 
 #region Design
-// ConfigureServices is public static so integration tests build the same container as the app.
-// MOCK_AUTHENTICATION (all configs — task 131 F-009) and optional MOCK_WEB_API swap in offline
-// fakes so Debug and Release agree; the non-mock compile path is MSAL/AzureAdB2C until 104-021
-// makes Entra non-default explicitly. Template symbols (api, grpc) trim optional services.
-// API services are registered via explicit factories because they expose extra constructors for
-// testing and DI must not guess which one to use.
-// Default culture is forced to ISO date patterns so date rendering/parsing is deterministic
-// regardless of the browser locale.
+// ConfigureServices is public static so integration tests and Web.Server prerender compose the
+// same container as the app. Auth is runtime-config-gated (task 145-009): Development/Testing +
+// Authentication:UseMock → MockAuthenticationRegistration; otherwise MSAL/AzureAdB2C (104-021
+// keeps Entra non-default). Fail-closed: Production never activates mock even when the flag is
+// true. optional MOCK_WEB_API still compile-time for offline SPA API fakes. Template symbols
+// (api, grpc) trim optional services. API services use explicit factories so DI does not guess
+// constructors. Default culture is forced to ISO date patterns for deterministic rendering.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa;
@@ -25,7 +24,7 @@ public class Program
     SetIsoCulture();
     builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
 
-    ConfigureServices(builder.Services, builder.Configuration);
+    ConfigureServices(builder.Services, builder.Configuration, builder.HostEnvironment.Environment);
     builder.Services.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
 #if api
     builder.Services.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
@@ -49,24 +48,38 @@ public class Program
     CultureInfo.DefaultThreadCurrentUICulture = isoCulture;
   }
 
-  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
-  {
-
-//-:cnd:noEmit
-#if MOCK_AUTHENTICATION
-    serviceCollection.AddScoped<AuthenticationStateProvider, MockAuthenticationStateProvider>();
-    serviceCollection.AddScoped<IAccessTokenProvider, MockAccessTokenProvider>();
-#else
-    serviceCollection.AddMsalAuthentication
+  /// <summary>
+  /// Compose SPA services. <paramref name="environmentName"/> drives the fail-closed mock-auth
+  /// gate (Development/Testing + Authentication:UseMock). When omitted (legacy 2-arg callers),
+  /// reads ASPNETCORE_ENVIRONMENT / DOTNET_ENVIRONMENT from configuration, defaulting to
+  /// Production (no mock).
+  /// </summary>
+  public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration) =>
+    ConfigureServices
     (
-      options =>
-      {
-        configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-        options.ProviderOptions.LoginMode = "Redirect";
-      }
-    ).AddAccountClaimsPrincipalFactory<AccountClaimsPrincipalFactoryWithRoles>();
-#endif
-//+:cnd:noEmit
+      serviceCollection,
+      configuration,
+      configuration["ASPNETCORE_ENVIRONMENT"] ?? configuration["DOTNET_ENVIRONMENT"]
+    );
+
+  public static void ConfigureServices
+  (
+    IServiceCollection serviceCollection,
+    IConfiguration configuration,
+    string? environmentName
+  )
+  {
+    if (!MockAuthenticationRegistration.TryAddSpaMockAuthentication(serviceCollection, configuration, environmentName))
+    {
+      serviceCollection.AddMsalAuthentication
+      (
+        options =>
+        {
+          configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
+          options.ProviderOptions.LoginMode = "Redirect";
+        }
+      ).AddAccountClaimsPrincipalFactory<AccountClaimsPrincipalFactoryWithRoles>();
+    }
 
     // Add authorization services
     serviceCollection.AddAuthorizationCore(PolicyRegistration.AddPolicies);

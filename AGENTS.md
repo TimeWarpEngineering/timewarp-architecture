@@ -100,10 +100,14 @@ Branch naming, commits, and merge policy: **`tw-git`**.
 - **Test host lanes (Aspire vs in-proc):** two lanes, no wholesale Aspire migration —
   - **In-proc** (`WebApplicationHost` / timewarp-testing, fixed ports web=7000 api=7255 yarp=8443):
     DI substitution, mediator/pipeline, BFF mocks — **only place fixed ports live**; `dev test`
-    stays serialized for those projects.
+    stays serialized for those projects. Auth: `MockAccessTokenProvider` DI override and real
+    passkey-ceremony cookies remain first-class.
   - **Closed-box** (`Aspire.Hosting.Testing` / AppHost): topology, ingress, multi-resource, and
     process-isolation cases (e.g. FastEndpoints discovery pollution across AppDomain). No DI
-    mock/substitution across the process wall; dynamic Aspire ports.
+    mock/substitution across the process wall; dynamic Aspire ports. Auth: Development/Testing +
+    `Authentication:UseMock` enables fail-closed mock principal header
+    (`X-TimeWarp-Mock-Principal-Id`) for authenticated ingress→web BFF coverage (task 145-009);
+    Production never activates mock auth even when the flag is set.
 - Blazor form validation: **Blazilla** (explicit validator instance — supports `I*Details` binding)
 - **FluentUI v5 + plain CSS** design tokens (`wwwroot/css/tokens.css`); no Tailwind — do not
   reintroduce it (see `blazor-css-strategy` skill)
@@ -278,6 +282,7 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0018 | a web-contracts route cannot be collapsed to a top-level ingress prefix (bare `api` or a parameterized second segment like `api/{id}`) |
 | TWA0019 | a name in `IngressWebContractAssemblies` matches no referenced assembly (typo / renamed assembly) — otherwise the ingress list would silently generate empty |
 | TWA0020 | `[ApiEndpoint]` combined with `[ClientOnlyContract]` (outer or nested Query/Command) — generators skip ClientOnly; remove one of the markers |
+| TWA0021 | mock SPA auth providers (`MockAuthenticationStateProvider` / `MockAccessTokenProvider`) registered outside `MockAuthenticationRegistration` — bypasses the Development/Testing + `Authentication:UseMock` fail-closed gate (task 145-009) |
 
 **Generator diagnostics (TWE / SG)** live in
 `source/analyzers/timewarp-architecture-analyzers/diagnostics/diagnostic-descriptors.cs`

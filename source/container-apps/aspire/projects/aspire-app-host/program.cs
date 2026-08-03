@@ -67,6 +67,15 @@ internal class Program
     IResourceBuilder<ProjectResource> webServer = builder.AddProject<Projects.web_server>(WebServerProjectResourceName, options => options.LaunchProfileName = "Web.Server")
       .WithExternalHttpEndpoints();
 
+    // Task 145-009: ensure Authentication:UseMock reaches Web.Server under local/closed-box
+    // AppHost runs (DCP may not always surface appsettings.Development). Fail-closed: only when
+    // the AppHost environment itself is Development or Testing — Production AppHost never sets it.
+    if (string.Equals(builder.Environment.EnvironmentName, "Development", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(builder.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
+    {
+      webServer = webServer.WithEnvironment("Authentication__UseMock", "true");
+    }
+
     // Add references to other services if they exist
 #if api
     webServer = webServer.WithReference(apiServer);

@@ -275,6 +275,11 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
           if (!AssertGeneratedAppPackageMode(name, outputDir))
             return Task.FromResult(false);
 
+          // Task 145-009: Production appsettings must not enable mock auth; mock registration
+          // type must exist so fail-closed is a product surface, not a missing feature.
+          if (!AssertMockAuthFailClosedSurfaces(name, outputDir))
+            return Task.FromResult(false);
+
           // Tier 1 (cheap): the JARIBU_MULTI guard must survive dotnet-new generation verbatim —
           // check right after generate, before spending time on restore/build (task 135).
           if (!Harness.AssertCoLocatedTestFilesSurviveGeneration(outputDir, excludedFamilies))
@@ -411,6 +416,83 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       }
 
       Terminal.WriteLine("Generated-app package-mode check passed (no vendored trees / removed symbols / rewritten namespaces).");
+      return true;
+    }
+
+    /// <summary>
+    /// Task 145-009: Production cannot activate mock auth via config alone — Production
+    /// appsettings must not set Authentication:UseMock true, and the fail-closed registration
+    /// helper must still exist in the generated SPA tree.
+    /// </summary>
+    private bool AssertMockAuthFailClosedSurfaces(string appName, string outputDir)
+    {
+      List<string> failures = [];
+
+      string productionAppsettings = Path.Combine
+      (
+        outputDir,
+        "source",
+        "container-apps",
+        "web",
+        "projects",
+        "web-server",
+        "appsettings.Production.json"
+      );
+      if (File.Exists(productionAppsettings))
+      {
+        string text = File.ReadAllText(productionAppsettings);
+        // Coarse but sufficient: Production must not enable the mock flag.
+        if (System.Text.RegularExpressions.Regex.IsMatch
+          (
+            text,
+            @"""UseMock""\s*:\s*true",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase
+          ))
+        {
+          failures.Add("web-server appsettings.Production.json sets Authentication UseMock true");
+        }
+      }
+
+      string registration = Path.Combine
+      (
+        outputDir,
+        "source",
+        "container-apps",
+        "web",
+        "projects",
+        "web-spa",
+        "services",
+        "mocks",
+        "mock-authentication-registration.cs"
+      );
+      if (!File.Exists(registration))
+        failures.Add("generated SPA missing mock-authentication-registration.cs (fail-closed gate surface)");
+
+      string spaCsproj = Path.Combine
+      (
+        outputDir,
+        "source",
+        "container-apps",
+        "web",
+        "projects",
+        "web-spa",
+        "web-spa.csproj"
+      );
+      if (File.Exists(spaCsproj)
+        && File.ReadAllText(spaCsproj).Contains("MOCK_AUTHENTICATION", StringComparison.Ordinal))
+      {
+        failures.Add("web-spa.csproj still defines MOCK_AUTHENTICATION (should be runtime-gated only)");
+      }
+
+      if (failures.Count > 0)
+      {
+        Terminal.WriteErrorLine($"{appName}: mock-auth fail-closed smoke failed:".Red());
+        foreach (string failure in failures)
+          Terminal.WriteErrorLine($"  {failure}");
+        return false;
+      }
+
+      Terminal.WriteLine($"{appName}: mock-auth fail-closed surfaces OK.");
       return true;
     }
   }

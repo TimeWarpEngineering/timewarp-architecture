@@ -20,3 +20,4 @@ TWA0014 | Design | Warning | EndpointAuthPostureAnalyzer: contract's auth postur
 TWA0015 | Naming | Warning | FeatureFilenameGrammarAnalyzer: registered function segment pairs with the wrong layer
 TWA0016 | Naming | Warning | FeatureFilenameGrammarAnalyzer: unregistered or mis-spelled function segment used as archetype
 TWA0020 | Design | Warning | EndpointAuthPostureAnalyzer: [ApiEndpoint] combined with [ClientOnlyContract] (outer or nested)
+TWA0021 | Security | Warning | MockAuthenticationRegistrationAnalyzer: mock auth DI registration outside MockAuthenticationRegistration

@@ -129,7 +129,9 @@ public class Program : IAspNetProgram
       (
         IdentitySessionDefaults.AuthenticatedPolicy,
         policy => policy
-          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
+          // mock-identity-session (task 145-009): fail-closed header auth for closed-box BFF;
+          // handler returns NoResult when mock is off, so Production/normal Dev are unchanged.
+          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, MockIdentityPrincipalHandler.SchemeName)
           .RequireAuthenticatedUser()
       )
       // Task 104-005: the ONE policy that accepts either scheme — see CredentialManagementDefaults'
@@ -249,7 +251,10 @@ public class Program : IAspNetProgram
       // default (lock #10). AgentTokenAuthenticationHandler owns all authenticate/challenge/forbid
       // behavior for this scheme; AuthenticationSchemeOptions carries no scheme-specific settings of
       // its own (token lifetime lives in AgentTokenOptions, bound separately in ConfigureSettings).
-      .AddScheme<AuthenticationSchemeOptions, AgentTokenAuthenticationHandler>(AgentTokenDefaults.Scheme, _ => { });
+      .AddScheme<AuthenticationSchemeOptions, AgentTokenAuthenticationHandler>(AgentTokenDefaults.Scheme, _ => { })
+      // Closed-box mock principal (task 145-009): always registered; handler is fail-closed
+      // (Development/Testing + Authentication:UseMock + header). Listed on AuthenticatedPolicy.
+      .AddScheme<AuthenticationSchemeOptions, MockIdentityPrincipalHandler>(MockIdentityPrincipalHandler.SchemeName, _ => { });
   }
 
   public static void ConfigureMiddleware(WebApplication webApplication)
