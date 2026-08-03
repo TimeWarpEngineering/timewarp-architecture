@@ -118,7 +118,7 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 - [x] 104-019 MCP / skills / A2A stubs
 - [x] 104-020 x402 discoverable
 - [ ] 104-021 Flags / slices / Entra non-default + auth-slice consolidation addendum
-- [ ] 104-022 E2E sunny paths (program exit criterion)
+- [x] 104-022 E2E sunny paths (program exit criterion) — Program104Sunny suite 3/3
 
 ### Wave 5 — Optional (post-exit)
 - [ ] 104-023 Cloudflare operator notes
