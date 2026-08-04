@@ -58,7 +58,7 @@ file sealed class EfPrincipalRoleStoreFactory
       .UseNpgsql(connectionString)
       .Options;
     PostgresDbContext db = new(options);
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
     return new EfPrincipalRoleStore(db);
   }
 
@@ -92,7 +92,7 @@ file sealed class EfPrincipalRoleStoreFactory
       .UseNpgsql(connectionString)
       .Options;
     PostgresDbContext db = new(options);
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
     return db;
   }
 

@@ -28,4 +28,8 @@ internal class Constants
   // and cannot drift.
   public const string PostgresResourceName = "postgres";
   public const string PostgresDatabaseResourceName = "postgres-db";
+
+  // Task 147-007: Aspire AddEFMigrations resource name (not an AddProject — TWA0007 N/A; keep const
+  // alongside Postgres names so AppHost wiring cannot drift from docs/scripts).
+  public const string WebMigrationsResourceName = "web-migrations";
 }

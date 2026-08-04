@@ -68,8 +68,13 @@ Concrete shape:
   (e.g. Profile → schema/table `profiles`) via `ToTable` on one `PostgresDbContext`. A second
   DbContext per module is an earned exception when isolation or extraction demands it — not day
   one scaffolding.
-* **EnsureCreated for template zero-setup**; **`Database.Migrate` for grown apps** that need
-  schema evolution. Documented; not automated migration-only.
+* **EF migrations are the only schema path** (updated by kanban **147-007**). Committed
+  migrations live under `source/container-apps/web/platform/postgres/migrations/`.
+  **Runtime locus (D6):** Aspire AppHost `AddEFMigrations` on the web-server project resource
+  (`RunDatabaseUpdateOnStart` locally, `WaitForCompletion` so the app starts after apply,
+  `PublishAsMigrationScript` / `PublishAsMigrationBundle` for deploy artifacts). Never
+  EnsureCreated and never in-app startup schema invention. Tests against ephemeral DBs call
+  `Database.Migrate()` / `MigrateAsync()` directly.
 * **Actors optional.** EF remains the default aggregate host. Aggregates that earn
   single-writer / high-contention hosting (e.g. credit ledger) use **Orleans** (grain-per-entity-ID
   over direct EF — spike rejected `IPersistentState` as the primary path). **Akka.NET** is
@@ -94,13 +99,18 @@ Concrete shape:
 
 * One clear "add your aggregate" path from domain through EF to tests
 * Aggregate enforcement reusable across hosts and published Foundation packages
-* Template still runs with EnsureCreated + Aspire-wired Postgres; no forced migration ceremony
+* Template applies committed EF migrations via Aspire `AddEFMigrations` on every local run;
+  schema evolves by accreting migrations (147-007)
 * Identity persistence (104-032) has an unblocked seam and an explicit test pattern to dogfood
 * Actor and outbox complexity stay opt-in / deferred instead of polluting the default story
+* Deploy story: publish pipeline can emit migration SQL scripts and/or self-contained bundles
 
 ### Negative Consequences
 
-* EnsureCreated does not evolve schema — grown apps must adopt migrations deliberately
+* Dogfood / existing volumes created under EnsureCreated lack `__EFMigrationsHistory` — wipe
+  the Aspire Postgres volume once at cutover (one-time; after that data survives model changes)
+* `Aspire.Hosting.EntityFrameworkCore` is preview; cohabitation with AppHost SDK must stay
+  verified on package bumps
 * Single DbContext + table schemas is a soft module boundary until a second context is earned
 * Concurrent writers against non-`IAggregateRoot` store-CAS entities (Identity Principal/Credential)
   still depend on a manual `.IsConcurrencyToken()` call — a false sense of safety there is still
@@ -151,6 +161,7 @@ Concrete shape:
 * 114 axis decisions: `kanban/done/114-…/axis-decisions.md` (axis 3 outbox deferral → 113; axis 5
   state-store EF + optional actors; axis 5 addendum Orleans)
 * First product consumer: kanban 104-032 (EF `IPrincipalStore` behind postgres flag)
+* Schema execution locus: kanban **147-007** (EnsureCreated → Aspire `AddEFMigrations`)
 * How-to: [how-to-add-your-aggregate.md](../../../how-to-guides/how-to-add-your-aggregate.md)
 * Aggregate pattern (SSOT): `skills/tw-aggregate-pattern/SKILL.md`
 * Related: [ADR-0008](0008-feature-cohesive-folders-with-filename-grammar-layer-composition.md)

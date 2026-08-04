@@ -2,6 +2,17 @@
 
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <!-- Design-time: PrivateAssets + IncludeAssets (EF standard). Bare PrivateAssets alone
+         drops design-time MSBuild targets and breaks `dotnet ef` / Aspire RunDatabaseUpdateOnStart. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- efcore#27215: without Tools, EF can silently no-op migrations on some providers (Postgres tip on aspire.dev). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

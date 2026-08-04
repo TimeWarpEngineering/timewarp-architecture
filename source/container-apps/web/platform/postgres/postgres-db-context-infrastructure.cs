@@ -3,16 +3,18 @@
 #endregion
 
 #region Design
-// Postgres plumbing (module, health and environment checks, schema-creation hosted service) ships with
-// the postgres flag; the model is product-owned. Profile is the teaching IAggregateRoot — DbSet +
-// IEntityTypeConfiguration discovered via ApplyConfigurationsFromAssembly (feature files ending in
-// -infrastructure.cs compile into this assembly). Identity Principal/Credential are also mapped
-// here (schema "identity") as the first port-backed durable consumer (task 104-032); they are
-// NOT IAggregateRoot — store-CAS lives in EfPrincipalStore, not AggregateDbContext's Version hook.
+// Postgres plumbing (module, health and environment checks) ships with the postgres flag; the model
+// is product-owned. Schema is applied by AppHost AddEFMigrations (committed migrations under
+// platform/postgres/migrations/, task 147-007) — not by this host at startup.
+// Profile is the teaching IAggregateRoot — DbSet + IEntityTypeConfiguration discovered via
+// ApplyConfigurationsFromAssembly (feature files ending in -infrastructure.cs compile into this
+// assembly). Identity Principal/Credential are also mapped here (schema "identity") as the first
+// port-backed durable consumer (task 104-032); they are NOT IAggregateRoot — store-CAS lives in
+// EfPrincipalStore, not AggregateDbContext's Version hook.
 // PrincipalRoleAssignment (identity.principal_roles) is the durable IPrincipalRoleStore backend
 // (task 147-006).
-// Connection setup lives in PostgresDbModule.ConfigurePostgresDb, not OnConfiguring, so the
-// context stays configuration-agnostic.
+// Connection setup lives in PostgresDbModule, not OnConfiguring, so the context stays
+// configuration-agnostic.
 // Aggregate enforcement (DomainInvariantsGuard, EntityVersion.Next, child→root resolution,
 // Version PropertyAccessMode pin) lives in AggregateDbContext (TimeWarp.Foundation.Persistence) and
 // only applies to IAggregateRoot types — Principal/Credential intentionally skip it.

@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.4.3">
+<Project Sdk="Aspire.AppHost.Sdk/13.4.6">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -35,6 +35,8 @@
     <!--#endif -->
     <!--#if (postgres) -->
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <!-- Task 147-007: AppHost AddEFMigrations (RunDatabaseUpdateOnStart + publish artifacts). -->
+    <PackageReference Include="Aspire.Hosting.EntityFrameworkCore" />
     <!--#endif -->
     <!-- Direct pin (see Directory.Packages.props): lifts StreamJsonRpc's vulnerable transitive
          MessagePack when Aspire.Hosting.Yarp isn't in the graph to do it. -->
@@ -52,6 +54,7 @@
     <ProjectReference Include="../../../web/projects/web-server/web-server.csproj" />
     <!--#endif -->
   </ItemGroup>
+
 
   <ItemGroup>
     <!-- Compile-time reference (NOT an Aspire app resource): resource-name constants alias

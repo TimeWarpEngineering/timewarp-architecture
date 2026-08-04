@@ -41,3 +41,19 @@ Deleting a demo touches, at minimum:
    "exception → toast" button).
 
 Build after each step; stop when `dev build` reports 0 warnings / 0 errors.
+
+## Mapped demo entities and EF migrations
+
+If you remove a **mapped** demo entity (one that participates in `PostgresDbContext` /
+`IEntityTypeConfiguration` — e.g. the Profile teaching aggregate under
+`web/features/profile/`), schema is migration-owned (task 147-007):
+
+1. Delete the domain type, configuration, `DbSet`, and related product code.
+2. Add a new EF migration that drops the unused tables/schemas (see
+   [how-to-add-your-aggregate.md](how-to-add-your-aggregate.md) §8 for the exact
+   `dotnet ef migrations add` command), **or** edit the pending migration if it has not shipped
+   to any shared volume yet.
+3. Do **not** hand-edit only the live database — AppHost `AddEFMigrations` applies committed
+   migrations; an out-of-band drop will desync `__EFMigrationsHistory`.
+
+SPA-only demos (Counter, EventStream) have no EF mapping; the checklist above is sufficient.

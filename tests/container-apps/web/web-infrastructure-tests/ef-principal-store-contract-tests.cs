@@ -63,7 +63,7 @@ file sealed class EfPrincipalStoreFactory : IPrincipalStoreFactory
       .UseNpgsql(connectionString)
       .Options;
     PostgresDbContext db = new(options);
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
     return new EfPrincipalStore(db);
   }
 

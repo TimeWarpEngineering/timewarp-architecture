@@ -5,7 +5,7 @@
 #region Design
 // Task 147-006: host-owned join row, not on TimeWarp.Identity Principal. Composite key
 // (PrincipalId, RoleId); no navigation properties. Logical link to identity.principals (no FK)
-// so EnsureCreated and store replace-set stay simple; orphaned role rows if a principal is
+// so migrations and store replace-set stay simple; orphaned role rows if a principal is
 // deleted elsewhere are acceptable until a delete cascade story exists.
 // Features substrate namespace — same as IPrincipalRoleStore (Identity + Admin without TWA0009).
 #endregion

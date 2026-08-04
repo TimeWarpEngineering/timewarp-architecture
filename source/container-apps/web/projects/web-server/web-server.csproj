@@ -39,7 +39,13 @@
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
-    <PackageReference Include="Microsoft.CodeAnalysis" />
+    <!-- Task 147-007: AddEFMigrations uses web-server as the startup project for `dotnet ef
+         database update`. Design must be referenced here (not only web-infrastructure) or the
+         tool fails with "startup project doesn't reference Microsoft.EntityFrameworkCore.Design". -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Identity.Web" />
     <PackageReference Include="Oakton" />
     <PackageReference Include="Serilog.AspNetCore" />
@@ -48,6 +54,7 @@
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="Serilog.Sinks.File" />
   </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\foundation\foundation-server\foundation-server.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />

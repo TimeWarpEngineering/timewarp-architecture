@@ -66,7 +66,6 @@ global using TimeWarp.Foundation.Services;
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Modules;
 #if(postgres)
-global using TimeWarp.Architecture.HostedServices;
 global using TimeWarp.Architecture.Modules;
 #endif
 global using TimeWarp.Foundation;

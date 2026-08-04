@@ -1,5 +1,5 @@
 #region Purpose
-// Bundles every PostgreSQL registration (DbContext, health check, environment check, schema-creation service) behind one opt-in module.
+// Bundles every PostgreSQL registration (DbContext, health check, environment check) behind one opt-in module.
 #endregion
 
 #region Design
@@ -18,6 +18,9 @@
 // connection is present do we Replace the IPrincipalStore registration with scoped EfPrincipalStore
 // (task 104-032). Same dual-mode for IPrincipalRoleStore → EfPrincipalRoleStore (task 147-006).
 // Challenge/token stores stay in-memory either way.
+// Schema: AppHost AddEFMigrations applies committed migrations (platform/postgres/migrations/)
+// before web-server starts (task 147-007). This module never EnsureCreated / Migrate at startup.
+// Tests call Database.Migrate() against ephemeral DBs.
 // The connection string is read once and reused for both Configure<PostgresDbOptions> (the
 // environment check consumes IOptions<PostgresDbOptions>) and AddDbContext, so the two cannot drift.
 // Health check (liveness) and environment check (startup gate) intentionally share the same
@@ -73,7 +76,6 @@ public sealed partial class PostgresDbModule : IModule
     );
 
     ConfigureEnvironmentChecks(serviceCollection);
-    serviceCollection.AddHostedService<PostgresDbContextStartupHostedService>();
   }
 
   private static void ConfigureEnvironmentChecks(IServiceCollection serviceCollection)

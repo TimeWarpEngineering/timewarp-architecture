@@ -301,3 +301,13 @@ dotnet_diagnostic.TW0001.severity = warning
 dotnet_diagnostic.globalusingsanalyzer0001.filename = global-usings.cs
 dotnet_diagnostic.globalusingsanalyzer0002.enabled = true
 dotnet_diagnostic.globalusingsanalyzer0003.severity = warning
+
+# Task 147-007: EF Core scaffold output under platform/postgres/migrations/ — tooling-mandated
+# basenames (timestamp_Name.cs, *.Designer.cs, *ModelSnapshot.cs), not house kebab / Purpose regions.
+# generated_code=true skips TWA0004 (PurposeRegionAnalyzer uses GeneratedCodeAnalysisFlags.None).
+[source/container-apps/web/platform/postgres/migrations/**.cs]
+generated_code = true
+dotnet_diagnostic.TW0001.severity = none
+dotnet_diagnostic.TWA0004.severity = none
+dotnet_diagnostic.TWA0015.severity = none
+dotnet_diagnostic.TWA0016.severity = none

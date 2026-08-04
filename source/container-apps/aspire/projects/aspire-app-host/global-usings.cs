@@ -3,6 +3,9 @@
 #endregion
 
 global using Aspire.Customization.AppHost;
+#if(postgres)
+global using Aspire.Hosting.EntityFrameworkCore;
+#endif
 #if(yarp)
 global using Aspire.Hosting.Yarp;
 global using Aspire.Hosting.Yarp.Transforms;

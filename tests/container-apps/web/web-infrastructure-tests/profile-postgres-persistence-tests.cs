@@ -16,12 +16,12 @@ public class Round_Trip
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Round_Trip>();
 
-  public static async Task EnsureCreated_creates_profile_table_and_round_trips()
+  public static async Task Migrate_creates_profile_table_and_round_trips()
   {
     if (await SkipIfUnavailableAsync()) return;
 
     await using PostgresDbContext write = await CreateContextAsync();
-    await write.Database.EnsureCreatedAsync();
+    await write.Database.MigrateAsync();
 
     Profile profile = Profile.Create("Ada Lovelace", "en-US", "US", "dark");
     ProfileId id = profile.Id;
@@ -45,7 +45,7 @@ public class Round_Trip
     if (await SkipIfUnavailableAsync()) return;
 
     await using PostgresDbContext seed = await CreateContextAsync();
-    await seed.Database.EnsureCreatedAsync();
+    await seed.Database.MigrateAsync();
 
     Profile profile = Profile.Create("Grace Hopper", "en-US", "US", "light");
     ProfileId id = profile.Id;
@@ -72,7 +72,7 @@ public class Round_Trip
     if (await SkipIfUnavailableAsync()) return;
 
     await using PostgresDbContext db = await CreateContextAsync();
-    await db.Database.EnsureCreatedAsync();
+    await db.Database.MigrateAsync();
 
     Profile profile = Profile.Create("Katherine Johnson", "en-US", "US", "dark");
     ProfileId id = profile.Id;

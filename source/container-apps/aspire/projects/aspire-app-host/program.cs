@@ -11,6 +11,12 @@
 // Only Web.Server references Postgres; Api.Server intentionally does not — so Postgres is declared INSIDE the web
 // preprocessor block (the postgres directive nested within the web one), not gated on postgres alone: with web
 // excluded it would otherwise be an unreferenced orphan container in the postgres-without-web combination.
+// Schema evolution (task 147-007): committed EF migrations under platform/postgres/migrations/.
+// AppHost AddEFMigrations (RunDatabaseUpdateOnStart + WaitFor migrations healthy + publish
+// script/bundle) is the only runtime schema path under Aspire — web-server does not
+// Migrate/EnsureCreated at startup. Same-project WaitForCompletion breaks DCP service-producer
+// annotations under Aspire.Hosting.Testing after a successful ef-database-update; WaitFor uses the
+// health check registered by RunDatabaseUpdateOnStart (package README).
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
 // YARP literal /api routes owned by Web.Server beat the Api.Server catch-all by route precedence, not declaration order.
 // The Web.Server /api carve-outs are GENERATED, not hand-maintained (task 107): IngressRoutePrefixGenerator emits
@@ -111,6 +117,28 @@ internal class Program
 
     IResourceBuilder<PostgresDatabaseResource> postgresDb = postgres.AddDatabase(PostgresDatabaseResourceName);
     webServer = webServer.WithReference(postgresDb).WaitFor(postgresDb);
+
+    // Task 147-007: first-class EF migrations resource (aspire.dev AddEFMigrations).
+    // Migrations live in web-infrastructure (not an AppHost project resource — path form; typed
+    // Projects.* is only generated for Aspire project resources).
+    string webInfrastructureProject = Path.GetFullPath(
+      Path.Combine(builder.AppHostDirectory, "../../../web/projects/web-infrastructure/web-infrastructure.csproj"));
+    IResourceBuilder<EFMigrationResource> webMigrations = webServer
+      .AddEFMigrations(WebMigrationsResourceName, "TimeWarp.Architecture.Persistence.PostgresDbContext")
+      .WithMigrationsProject(webInfrastructureProject)
+      .WithMigrationOutputDirectory("../../platform/postgres/migrations")
+      .WithMigrationNamespace("TimeWarp.Architecture.Persistence.Migrations")
+      .WithReference(postgresDb)
+      .WaitFor(postgresDb)
+      .RunDatabaseUpdateOnStart()
+      .PublishAsMigrationScript()
+      .PublishAsMigrationBundle();
+    // Package README: RunDatabaseUpdateOnStart registers a health check so dependents can
+    // WaitFor the migration resource until Active. (aspire.dev sample also shows WaitForCompletion
+    // on the owning project — prefer WaitFor first: same-project WaitForCompletion under
+    // Aspire.Hosting.Testing left web-server with invalid DCP service-producer annotations after
+    // a successful ef-database-update.)
+    webServer = webServer.WaitFor(webMigrations);
 #endif
     // Self-reference for the web server
     webServer.WithReference(webServer);
