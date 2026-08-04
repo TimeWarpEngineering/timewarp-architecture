@@ -2,6 +2,7 @@
 @inherits BaseComponent
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
+@inject SpaSignOutService SpaSignOutService
 
 @code {
   private async Task HandleSignIn()
@@ -9,9 +10,11 @@
     // Passkey-first human CTA (task 104-016). Entra/MSAL remains a non-default path (104-021).
     await NoSubRouteState.ChangeRoute(newRoute: LoginPage.GetPageUrl());
   }
-  private void HandleSignOut()
+  private async Task HandleSignOut()
   {
-    NavigationManager.NavigateToLogout("authentication/logout");
+    // Task 104-034: mode-aware sign-out (identity-session / mock / Entra). Do not always
+    // NavigateToLogout — that requires IRemoteAuthenticationService (Entra only).
+    await SpaSignOutService.SignOutAsync();
   }
   private async Task HandleYourProfile()
   {

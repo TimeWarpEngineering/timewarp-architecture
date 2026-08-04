@@ -133,6 +133,7 @@ public class Program
 
     serviceCollection.AddScoped<ChatHubConnection>();
     serviceCollection.AddScoped<PasskeyCeremonyClient>();
+    serviceCollection.AddScoped<SpaSignOutService>();
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
 

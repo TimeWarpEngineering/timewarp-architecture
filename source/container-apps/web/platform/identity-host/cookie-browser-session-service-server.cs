@@ -62,4 +62,16 @@ public sealed class CookieBrowserSessionService : IBrowserSessionService
 
     return PrincipalId.From(guid);
   }
+
+  public async Task SignOutAsync(CancellationToken cancellationToken)
+  {
+    HttpContext? httpContext = HttpContextAccessor.HttpContext;
+    if (httpContext is null)
+    {
+      return;
+    }
+
+    // ASP.NET Core SignOutAsync has no CancellationToken overload (same API gap as SignInAsync).
+    await httpContext.SignOutAsync(IdentitySessionDefaults.Scheme);
+  }
 }
