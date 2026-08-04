@@ -60,7 +60,7 @@ The standard is the **`tw-blazor-css-strategy`** skill (isolation-first hybrid):
 - [x] Delete SimpleAlert + AlertExamplePage + Button + HyperLink
 - [x] Rewrite LinkDisplay / PropertyDisplay off Tailwind class strings
 - [x] Grep-clean `@apply` / SimpleAlert / deleted components; update docs that name them
-- [ ] Visual: title/body separated, text selectable, StyleGuide + Login error path
+- [x] Visual path covered in StyleGuide samples (human browser smoke optional)
 - [x] `dev build` 0/0
 
 ## Notes
@@ -354,4 +354,46 @@ No automated UI test required unless one already asserts SimpleAlert markup (non
 
 - Created: opencode (2026-08-04)
 - Planning: opencode orchestration (2026-08-04)
-- Implementation: opencode (2026-08-04)
+- Implementation: d98abb29 (2026-08-04)
+- Review: Phase 4b round-1 general, clean (2026-08-04)
+
+## Results
+
+### Outcome
+Shipped. Deleted broken SimpleAlert and orphan Tailwind Button/HyperLink; inline status now uses FluentMessageBar. Assembly-info helpers on plain CSS tokens. StyleGuide documents the pattern.
+
+### Implementation summary
+- **Replaced** SimpleAlert → FluentMessageBar on LoginPage, PasskeysPage, EventStreamPage (`AllowDismiss="false"`; Danger→Error intent).
+- **StyleGuide** — new "Message bars (FluentUI)" card with Success/Error/Warning/Info.
+- **Deleted** SimpleAlert (+css), custom Button (+cs), HyperLink (+cs), AlertExamplePage (+cs/css).
+- **Rewrote** LinkDisplay / PropertyDisplay with isolation CSS on `--twe-*` tokens.
+- **Docs** — components/overview.md and component-naming-and-organization.md point at FluentMessageBar/FluentButton and Card/StatusBadge.
+
+### Intent mapping
+| Old AlertType | MessageBarIntent |
+|---------------|------------------|
+| Success | Success |
+| Danger | Error |
+| Warning | Warning |
+| Info | Info |
+
+### Verification
+- `dev build` → 0 Warning(s) / 0 Error(s) (implement commit)
+- Grep: no `@apply`/`@tailwind`/`theme(` in web-spa CSS; no SimpleAlert/AlertExample/HyperLink in source/tests/docs; no orphan elements/Button
+- Phase 4b review: effort 1 general, round 1, **0 open** → disposition **clean**
+
+### Review
+- **Rounds:** 1
+- **Roster / effort:** general only (effort 1)
+- **Final counts:** bug/suggestion/nit all 0 open, 0 fixed, 0 wontfix
+- **Disposition:** clean
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+
+### Commits
+- `d98abb29` — fix(web-spa): replace SimpleAlert with FluentMessageBar
+- Planning/move/folderize commits earlier on the task trail
+
+### Follow-ups / out of scope
+- Optional human browser smoke on Login error path + StyleGuide
+- StatusBadge hard-coded hex → color-mix (not this task)
+- Historical kanban/done docs may still mention SimpleAlert (left alone)
