@@ -36,10 +36,81 @@ SPA only has “New Role” form; no principals admin UI.
 
 - Orchestrate 147-004: 2026-08-04
 - Plan: 019fcbd2-8712-73f2-bb04-fa343d3534ca
-- Implemented 2026-08-04: Phases A–E complete. Role store/resolver live in Features
-  substrate namespace (TWA0009: Identity GetCurrentSession + Admin both need them).
-  Build 0/0; roles-authorization 6/6; principals-authorization 5/5; List_principals
-  contract 2/2; Jaribu list/set principal contracts green.
+- Implemented: 019fcbd6-87a3-7aa0-b912-91a7a6df1660
+- Review round-1: 019fcbe6-354d-7dd2-88ee-a3b12f1965d7 → disposition accepted-exceptions
+
+## Results
+
+### Summary
+
+Passkey principals get **effective roles** (empty store → Member; bootstrap can union
+Administrator). Admin APIs require **Administrator**. SPA Admin nav: **Roles** list +
+**Principals** with inline multi-select role assignment.
+
+| Surface | Behavior |
+|---------|----------|
+| `IPrincipalRoleStore` + `EffectiveRolesResolver` | Features substrate (TWA0009-safe) |
+| `GetCurrentSession.RoleIds` | Feeds SPA `ClaimTypes.Role` |
+| `IClaimsTransformation` | Server RequireRole on admin endpoints |
+| `ListPrincipals` / `SetPrincipalRoles` | Admin-only APIs |
+| Bootstrap | `Authentication:BootstrapAdministratorPrincipalIds` |
+
+### Commits
+
+- `a0007945` feat(web): admin principals and roles with real policies
+- `b9612122` fix(web): re-fetch effective roles after principal role save
+
+### Build / tests
+
+| Gate | Result |
+|------|--------|
+| `./bin/dev build` | 0/0 |
+| RolesAuthorization | 6/6 |
+| PrincipalsAuthorization | 5/5 |
+| EffectiveRolesResolver Jaribu | 6/6 |
+| List/set principal contracts Jaribu | green |
+
+### Review
+
+- Effort 1, general, 1 round
+- Disposition: **accepted-exceptions** (M5 bootstrap all-env empty default wontfix)
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`
+- Fixed: M1 re-fetch after Set; M2 resolver tests; M3 page copy; M4 NotifySessionChanged; M6 checkbox
+
+### How to validate
+
+**Automated**
+```bash
+./bin/dev build
+# expect: 0 Warning(s) 0 Error(s)
+
+cd tests/container-apps/web/web-server-integration-tests && \
+  dotnet test -c Release -- --filter-class RolesAuthorization
+# expect: all passed (Member 403, Admin 200)
+
+cd tests/container-apps/web/web-server-integration-tests && \
+  dotnet test -c Release -- --filter-class PrincipalsAuthorization
+# expect: all passed
+
+dotnet run source/container-apps/web/features/admin/principals/effective-roles-resolver-tests.cs
+# expect: 6 passed
+```
+
+**Manual (passkey, UseMock false)**
+1. Sign in with passkey → **Expect:** no Admin nav (Member only).
+2. Note `principalId` from `GET api/identity/session` (network tab).
+3. Set `Authentication:BootstrapAdministratorPrincipalIds: ["<guid>"]` in web-server
+   appsettings.Development.json; restart web-server.
+4. Refresh SPA → **Expect:** Admin → Roles (4 product roles) + Principals (self).
+5. On Principals, assign Developer (+ keep Administrator) → Save → **Expect:** demos appear
+   after auth refresh (or hard reload).
+6. Second passkey user remains Member-only until an admin assigns roles.
+
+**Manual (mock UseMock true)**
+- **Expect:** Admin + Roles/Principals usable offline (mock has Administrator).
+
+**Not in scope:** EF principal-role tables; Operator marketplace policies (118);
+home/login chrome (147-005).
 
 ## Notes
 
