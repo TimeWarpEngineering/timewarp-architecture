@@ -50,6 +50,7 @@ in parallel.
 - [x] 147-002 RoleIds trim
 - [x] 147-003 remaining page policies
 - [x] 147-004 admin list screens
+- [ ] 147-006 EF principal role store (durable under postgres)
 - [ ] 147-005 first-run chrome
 
 ## Session
@@ -57,3 +58,4 @@ in parallel.
 - Created: 2026-08-04
 - 147-001 done: demos require Developer; admin Roles/New requires Administrator
 - 147-004 done: principal→role store, admin Roles/Principals lists, Administrator policies
+- 147-006 created: durable IPrincipalRoleStore via EF (before 147-005)
