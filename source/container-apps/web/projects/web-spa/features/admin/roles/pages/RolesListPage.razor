@@ -1,0 +1,48 @@
+@namespace TimeWarp.Architecture.Features.Admin.Roles
+@inherits BaseComponent
+
+@code {
+  public static Icon? NavIcon => new Icons.Regular.Size20.PeopleTeam();
+  public static string Title => "Roles";
+}
+
+<PageTitle>@Title</PageTitle>
+
+<TimeWarpPage Title="Roles">
+  <div class="twe-stack">
+    <p class="sg-subtitle">
+      Product roles available for principal assignment. Create custom demo roles via New Role.
+    </p>
+    <div>
+      <FluentButton Appearance="ButtonAppearance.Primary" Href="@RolePage.GetPageUrl()" data-qa="NewRole">
+        New Role
+      </FluentButton>
+    </div>
+    <Card Title="Roles">
+      @if (RoleState.Roles is null)
+      {
+        <p><em>Loading…</em></p>
+      }
+      else
+      {
+        <table class="twe-table" data-qa="RolesTable">
+          <thead>
+            <tr>
+              <TableHeader>Name</TableHeader>
+              <TableHeader>Description</TableHeader>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (GetRoles.RoleDto role in RoleState.Roles)
+            {
+              <tr>
+                <Cell>@role.Name</Cell>
+                <Cell>@role.Description</Cell>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </Card>
+  </div>
+</TimeWarpPage>

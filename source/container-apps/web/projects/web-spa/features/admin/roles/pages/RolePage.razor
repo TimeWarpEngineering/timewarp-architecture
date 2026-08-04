@@ -3,7 +3,7 @@
 @inherits BaseComponent
 
 @code {
-  public static Icon? NavIcon => new Icons.Regular.Size20.Person();
+  public static Icon? NavIcon => new Icons.Regular.Size20.PersonAdd();
   public static string Title => "New Role";
 }
 
@@ -12,8 +12,8 @@
 <TimeWarpPage Title="New Role">
   <div class="twe-stack">
     <p class="sg-subtitle">
-      Demo of the web-api-contracts binding pattern: this form binds to the
-      <code>IRoleDetails</code> interface and validates with the shared <code>RoleDetailsValidator</code>.
+      Create a custom role. The form binds to <code>IRoleDetails</code> and validates with the
+      shared <code>RoleDetailsValidator</code>. On save you return to the roles list.
     </p>
     <Card Title="Role">
       <RoleForm />

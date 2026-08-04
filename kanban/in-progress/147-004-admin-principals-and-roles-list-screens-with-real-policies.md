@@ -21,21 +21,25 @@ SPA only has “New Role” form; no principals admin UI.
 
 ## Checklist
 
-- [ ] AuthorizationPolicyNames substrate + SPA CanViewPrincipalsPage + RolePolicyGrants
-- [ ] IPrincipalRoleStore + InMemory + IEffectiveRolesResolver + bootstrap options
-- [ ] IPrincipalStore.ListPrincipalsAsync (port + InMemory + Ef + contract tests)
-- [ ] IClaimsTransformation for role claims on server
-- [ ] Server policies CanViewRolesPage / CanViewPrincipalsPage (RequireRole Administrator)
-- [ ] GetCurrentSession.Response.RoleIds + SPA IdentitySessionAuthenticationStateProvider
-- [ ] Tighten five role contracts to admin policy; update roles-authorization-tests
-- [ ] ListPrincipals + SetPrincipalRoles contracts/handlers/tests
-- [ ] SPA RolesListPage + PrincipalsPage + nav; RoleForm navigates to list
-- [ ] Build 0/0; targeted tests green; Design regions reconciled
+- [x] AuthorizationPolicyNames substrate + SPA CanViewPrincipalsPage + RolePolicyGrants
+- [x] IPrincipalRoleStore + InMemory + IEffectiveRolesResolver + bootstrap options
+- [x] IPrincipalStore.ListPrincipalsAsync (port + InMemory + Ef + contract tests)
+- [x] IClaimsTransformation for role claims on server
+- [x] Server policies CanViewRolesPage / CanViewPrincipalsPage (RequireRole Administrator)
+- [x] GetCurrentSession.Response.RoleIds + SPA IdentitySessionAuthenticationStateProvider
+- [x] Tighten five role contracts to admin policy; update roles-authorization-tests
+- [x] ListPrincipals + SetPrincipalRoles contracts/handlers/tests
+- [x] SPA RolesListPage + PrincipalsPage + nav; RoleForm navigates to list
+- [x] Build 0/0; targeted tests green; Design regions reconciled
 
 ## Session
 
 - Orchestrate 147-004: 2026-08-04
 - Plan: 019fcbd2-8712-73f2-bb04-fa343d3534ca
+- Implemented 2026-08-04: Phases A–E complete. Role store/resolver live in Features
+  substrate namespace (TWA0009: Identity GetCurrentSession + Admin both need them).
+  Build 0/0; roles-authorization 6/6; principals-authorization 5/5; List_principals
+  contract 2/2; Jaribu list/set principal contracts green.
 
 ## Notes
 

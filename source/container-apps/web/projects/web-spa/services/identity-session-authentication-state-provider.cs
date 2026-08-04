@@ -7,11 +7,10 @@
 // Task 104-021: when Authentication:UseMock is off and Authentication:UseEntra is off, the SPA
 // still needs an AuthenticationStateProvider for CascadingAuthenticationState / AuthorizeView.
 // This provider reads GET api/identity/session (cookie ambient auth) and projects PrincipalId
-// into claims plus default product role Member (task 147-002). Failures and unauthenticated
-// sessions yield an anonymous principal (no throw).
-// Role claims use RoleIds Guids as strings so RolePolicyGrants / RequireRole match.
-// Principal→role assignment store is 147-004; until then every passkey principal is Member only
-// (no Developer/Admin demos unless mock or future assignment).
+// plus Response.RoleIds into ClaimTypes.Role (task 147-004 D4) so RolePolicyGrants match real
+// passkey users — not only mock. Failures and unauthenticated sessions yield an anonymous
+// principal (no throw). Role claim values are RoleIds Guids as strings.
+// Empty RoleIds falls back to Member so a malformed/legacy payload still gets the product default.
 // NotifySessionChanged lets Login / passkey ceremony refresh Blazor auth state after cookie set.
 // AuthenticationType is a stable SPA-local string (not the server scheme name) — server cookie
 // auth remains on web-server; this only shapes client UI identity.
@@ -51,14 +50,22 @@ public sealed class IdentitySessionAuthenticationStateProvider : AuthenticationS
         && result.AsT0.IsAuthenticated
         && result.AsT0.PrincipalId is { } principalId)
       {
+        GetCurrentSession.Response session = result.AsT0;
         string principalIdValue = principalId.ToString();
         List<Claim> claims =
         [
           new(ClaimTypes.NameIdentifier, principalIdValue),
           new("timewarp:principal_id", principalIdValue),
-          // Default product role until principal-role store (147-004).
-          new(ClaimTypes.Role, RoleIds.Member.ToString()),
         ];
+
+        IEnumerable<Guid> roleIds = session.RoleIds is { Count: > 0 }
+          ? session.RoleIds
+          : [RoleIds.Member];
+        foreach (Guid roleId in roleIds)
+        {
+          claims.Add(new Claim(ClaimTypes.Role, roleId.ToString()));
+        }
+
         ClaimsIdentity identity = new(claims, AuthenticationType);
         return new AuthenticationState(new ClaimsPrincipal(identity));
       }

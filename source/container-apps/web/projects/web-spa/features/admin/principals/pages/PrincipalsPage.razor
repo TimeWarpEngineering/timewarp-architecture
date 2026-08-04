@@ -1,0 +1,83 @@
+@namespace TimeWarp.Architecture.Features.Admin.Principals
+@using TimeWarp.Architecture.Features
+@inherits BaseComponent
+
+@code {
+  public static Icon? NavIcon => new Icons.Regular.Size20.PersonAccounts();
+  public static string Title => "Principals";
+}
+
+<PageTitle>@Title</PageTitle>
+
+<TimeWarpPage Title="Principals">
+  <div class="twe-stack">
+    <p class="sg-subtitle">
+      Assign product roles to principals. Empty assignment resolves to Member; bootstrap config can
+      grant Administrator without a store write.
+    </p>
+    <Card Title="Principals">
+      @if (PrincipalState.Principals is null)
+      {
+        <p><em>Loading…</em></p>
+      }
+      else if (PrincipalState.Principals.Count == 0)
+      {
+        <p>No principals registered yet. Complete a passkey registration to create one.</p>
+      }
+      else
+      {
+        <table class="twe-table" data-qa="PrincipalsTable">
+          <thead>
+            <tr>
+              <TableHeader>Principal</TableHeader>
+              <TableHeader>Kind</TableHeader>
+              <TableHeader>Trust</TableHeader>
+              <TableHeader>Active</TableHeader>
+              <TableHeader>Roles</TableHeader>
+              <TableHeader></TableHeader>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (ListPrincipals.PrincipalSummaryDto row in PrincipalState.Principals)
+            {
+              Guid principalGuid = row.PrincipalId.Value;
+              <tr @key="principalGuid">
+                <Cell><code>@principalGuid</code></Cell>
+                <Cell>@row.Kind</Cell>
+                <Cell>@row.TrustTier</Cell>
+                <Cell>@(row.IsActive ? "yes" : "no")</Cell>
+                <Cell>
+                  <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
+                    @foreach (Guid roleId in RoleIds.All)
+                    {
+                      <FluentCheckbox
+                        Label="@RoleIds.GetRoleNameByGuid(roleId)"
+                        Checked="@PrincipalState.IsRoleSelected(principalGuid, roleId)"
+                        CheckedChanged="@(async (bool? value) => await OnRoleToggle(principalGuid, roleId))" />
+                    }
+                  </FluentStack>
+                </Cell>
+                <Cell>
+                  <FluentButton
+                    Appearance="ButtonAppearance.Primary"
+                    data-qa="SavePrincipalRoles"
+                    OnClick="@(async () => await OnSave(principalGuid))">
+                    Save
+                  </FluentButton>
+                </Cell>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </Card>
+  </div>
+</TimeWarpPage>
+
+@code {
+  private async Task OnRoleToggle(Guid principalId, Guid roleId) =>
+    await Mediator.Send(new PrincipalState.ToggleRoleActionSet.Action(principalId, roleId), CancellationToken);
+
+  private async Task OnSave(Guid principalId) =>
+    await Mediator.Send(new PrincipalState.SetPrincipalRolesActionSet.Action(principalId), CancellationToken);
+}

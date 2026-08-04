@@ -30,6 +30,7 @@ public static class AuthorizationConstants
     public const string CanViewDeveloperPage = nameof(CanViewDeveloperPage);
     public const string CanViewUserClaimsPage = nameof(CanViewUserClaimsPage);
     public const string CanViewRolesPage = nameof(CanViewRolesPage);
+    public const string CanViewPrincipalsPage = nameof(CanViewPrincipalsPage);
 
     // Navigation
     public const string CanViewDeveloperSidebarNavSection = nameof(CanViewDeveloperSidebarNavSection);

@@ -27,6 +27,7 @@ internal static class PagePolicyRegistration
       CanViewDeveloperPage,
       CanViewUserClaimsPage,
       CanViewRolesPage,
+      CanViewPrincipalsPage,
     };
     // Actual registration is centralized in PolicyRegistration → RolePolicyGrants.
   }

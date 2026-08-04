@@ -77,6 +77,18 @@ public sealed class EfPrincipalStore : IPrincipalStore
     return stored?.Snapshot(stored.Version);
   }
 
+  public async Task<IReadOnlyList<Principal>> ListPrincipalsAsync(CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+
+    List<Principal> rows = await Db.Principals.AsNoTracking()
+      .OrderBy(p => p.CreatedAt)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return rows.Select(p => p.Snapshot(p.Version)).ToArray();
+  }
+
   public async Task UpdatePrincipalAsync(Principal principal, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(principal);

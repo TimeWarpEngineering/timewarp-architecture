@@ -125,6 +125,19 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     return Task.CompletedTask;
   }
 
+  public Task<IReadOnlyList<Principal>> ListPrincipalsAsync(CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+
+    IReadOnlyList<Principal> list =
+      Principals.Values
+        .OrderBy(p => p.CreatedAt)
+        .Select(p => p.Snapshot(p.Version))
+        .ToArray();
+
+    return Task.FromResult(list);
+  }
+
   public Task AddCredentialAsync(Credential credential, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(credential);

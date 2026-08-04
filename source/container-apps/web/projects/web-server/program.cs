@@ -34,8 +34,11 @@
 
 namespace TimeWarp.Architecture.Web.Server;
 
+using Microsoft.AspNetCore.Authentication;
 using TimeWarp.Architecture.Abuse;
 using TimeWarp.Architecture.AgentDiscovery;
+using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Abstractions;
 using TimeWarp.Foundation.Common.Infrastructure;
@@ -188,6 +191,24 @@ public class Program : IAspNetProgram
           .RequireAssertion(context =>
             string.Equals(context.User.Identity?.AuthenticationType, IdentitySessionDefaults.Scheme, StringComparison.Ordinal)
             || context.User.HasClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.CredentialManage))
+      )
+      // Task 147-004: admin capability policies — identity-session (+ mock) + Administrator role.
+      // Policy name strings match AuthorizationPolicyNames / SPA AuthorizationConstants.
+      .AddPolicy
+      (
+        AuthorizationPolicyNames.CanViewRolesPage,
+        policy => policy
+          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, MockIdentityPrincipalHandler.SchemeName)
+          .RequireAuthenticatedUser()
+          .RequireRole(RoleIds.Administrator.ToString())
+      )
+      .AddPolicy
+      (
+        AuthorizationPolicyNames.CanViewPrincipalsPage,
+        policy => policy
+          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, MockIdentityPrincipalHandler.SchemeName)
+          .RequireAuthenticatedUser()
+          .RequireRole(RoleIds.Administrator.ToString())
       );
     ConfigureAuthentication(serviceCollection, configuration);
 
@@ -209,6 +230,12 @@ public class Program : IAspNetProgram
     serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
     serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
     serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();
+
+    // Task 147-004: effective roles + request claims for RequireRole on admin policies.
+    serviceCollection.Configure<BootstrapAdministratorOptions>(
+      configuration.GetSection("Authentication"));
+    serviceCollection.AddSingleton<IEffectiveRolesResolver, EffectiveRolesResolver>();
+    serviceCollection.AddScoped<IClaimsTransformation, PrincipalRoleClaimsTransformation>();
 
     // TimeWarp.402 demos (104-009 tip, 104-011 metered, 104-013 settle→Funded):
     // in-memory ledger + facilitator + gates. Free/discovery routes never resolve PaymentGate /

@@ -48,6 +48,6 @@
   private async Task HandleValidSubmit()
   {
     await Mediator.Send(CreateAction, CancellationToken);
-    NavigationManager.NavigateTo("/");
+    NavigationManager.NavigateTo(RolesListPage.GetPageUrl());
   }
 }

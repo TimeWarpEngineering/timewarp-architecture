@@ -46,6 +46,7 @@ public static class RolePolicyGrants
       [CanViewAdminSidebarNavSection] = [Administrator],
       [CanViewAdminPage] = [Administrator],
       [CanViewRolesPage] = [Administrator],
+      [CanViewPrincipalsPage] = [Administrator],
 
       // Developer / demos (147-001)
       [CanViewDeveloperSidebarNavSection] = [Developer],

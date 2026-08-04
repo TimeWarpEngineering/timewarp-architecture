@@ -8,14 +8,13 @@
 // The empty Response exists to keep the uniform OneOf<Response, SharedProblemDetails>
 // pipeline even though a delete has no payload — callers still get success/problem typing.
 // GetMockResponseFactory lets the SPA's MockWebApiService serve this endpoint offline.
-// [EndpointAuthorize] (task 110): see CreateRole's Design region for the full rationale — same
-// policy, same "no admin/role model yet" scope boundary.
+// [EndpointAuthorize] (task 147-004): Administrator capability via AuthorizationPolicyNames.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "identity-session-authenticated")] // matches IdentitySessionDefaults.AuthenticatedPolicy
+[EndpointAuthorize(Policy = AuthorizationPolicyNames.CanViewRolesPage)]
 public static partial class DeleteRole
 {
   [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Delete)]

@@ -13,7 +13,8 @@
   <AuthorizeView Policy=@Policies.CanViewAdminSidebarNavSection>
     <Authorized>
       <FluentNavCategory Title="Admin">
-        <TimeWarpNavLink TPage=RolePage />
+        <TimeWarpNavLink TPage=RolesListPage />
+        <TimeWarpNavLink TPage=PrincipalsPage />
       </FluentNavCategory>
     </Authorized>
   </AuthorizeView>

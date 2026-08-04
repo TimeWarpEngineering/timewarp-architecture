@@ -176,12 +176,12 @@ public class IngressSmoke_Given_
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  public static async Task RolesThroughIngress_Should_Ok_Given_MockPrincipalHeader()
+  public static async Task RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole()
   {
-    // Task 145-009: closed-box authenticated BFF — Development + Authentication:UseMock enables
-    // the mock-identity-session scheme. A real identity-session cookie is not required; the
-    // fail-closed gate is the product surface under test. UserId is required by AuthApiRequest
-    // validation on GetRoles (same as in-proc roles-authorization tests).
+    // Task 145-009 + 147-004: closed-box mock principal authenticates (identity-session-compatible
+    // scheme) but effective roles default to Member only — CanViewRolesPage requires Administrator,
+    // so the response is 403 (not 401/404). Proves ingress routes to Web.Server AND role policy runs.
+    // In-proc roles-authorization-tests cover the Administrator → 200 path via IPrincipalRoleStore.
     Guid principalId = Guid.NewGuid();
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
     // Header name SSOT: MockAuthenticationDefaults.MockPrincipalIdHeader (Web.Spa)
@@ -189,7 +189,7 @@ public class IngressSmoke_Given_
 
     HttpResponseMessage response = await httpClient.GetAsync($"/api/Roles?UserId={principalId:D}");
 
-    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
   }
 }
 

@@ -1,29 +1,13 @@
 #region Purpose
-// End-to-end proof that admin Roles endpoints require Administrator (task 147-004), not any
-// authenticated principal (task 110's identity-session-only posture is retired for Roles).
+// End-to-end proof that ListPrincipals / SetPrincipalRoles require Administrator (task 147-004).
 #endregion
 
 #region Design
-// Deliberately real HTTP with isolated HttpClients — never WebTestServerApplication.Send
-// (ScopedSender, in-process mediator). That is precisely the reason the pre-110 bug was invisible:
-// Roles_Endpoint_Tests.cs (RolesEndpoints_) uses .Send() throughout, which bypasses ASP.NET Core's
-// authentication/authorization middleware entirely (no HttpContext, no [EndpointAuthorize] policy
-// evaluation) — those tests stayed green whether the generated endpoint was AllowAnonymous() or
-// Policies("..."), so they could never have caught this class of bug and still can't. Only a real
-// HTTP round-trip through the actual ASP.NET Core pipeline exercises FastEndpoints' Policies(...)
-// enforcement.
-// The passkey-ceremony cookie mint here duplicates Passkey_Registration_Tests.cs's flow rather than
-// calling into it — small deliberate duplication (same rationale as
-// IntegrationSoftwareAuthenticator's own Design region: reaching across test files for ~15 lines
-// isn't worth the coupling). Each test builds its own isolated HttpClient (never the shared
-// WebTestServerApplication.HttpClient) for the SAME per-class-fixture-sharing reason documented in
-// Passkey_Registration_Tests.cs's Design region — an anonymous-request test and an
-// authenticated-request test must not leak cookies between them via an ambient jar.
-// Task 147-004: Member-only passkey session → 403; after IPrincipalRoleStore grants Administrator
-// → 200. Agent bearer still 401 on cookie-only admin routes (scheme isolation).
+// Mirrors roles-authorization-tests: real HTTP, isolated clients, passkey cookie mint, grant via
+// IPrincipalRoleStore, then assert 403 → 200. Agent bearer remains 401 (cookie-scheme policy).
 #endregion
 
-namespace RolesAuthorization_;
+namespace PrincipalsAuthorization_;
 
 using System.Buffers.Text;
 using System.Net;
@@ -33,14 +17,13 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
-using TimeWarp.Architecture.Features.Admin.Roles;
+using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;
 
 public class Returns_
 {
-
   private static HostGraph? Graph;
   private static WebTestServerApplication Web => Graph!.Web!;
 
@@ -65,23 +48,10 @@ public class Returns_
     }
   }
 
-  public static async Task Unauthorized_Given_Anonymous_Get()
+  public static async Task Unauthorized_Given_Anonymous_List()
   {
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
-
-    HttpResponseMessage response = await client.GetAsync("api/Roles");
-
-    response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-  }
-
-  public static async Task Unauthorized_Given_Anonymous_Post()
-  {
-    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
-    const string RequestJson = """{"userId":"11111111-1111-1111-1111-111111111111","name":"Auditor","description":"Read-only access."}""";
-
-    HttpResponseMessage response = await client.PostAsync
-      ("api/Roles", new StringContent(RequestJson, Encoding.UTF8, "application/json"));
-
+    HttpResponseMessage response = await client.GetAsync("api/admin/principals");
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
@@ -92,28 +62,13 @@ public class Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
-    var query = new GetRoles.Query { UserId = Guid.NewGuid() };
+    var query = new ListPrincipals.Query { UserId = Guid.NewGuid() };
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
   }
 
-  public static async Task Forbidden_Create_Given_Passkey_Member_Only_Session()
-  {
-    (string sessionCookie, _) = await MintIdentitySessionCookie();
-
-    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
-    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
-    const string RequestJson = """{"userId":"11111111-1111-1111-1111-111111111111","name":"Auditor","description":"Read-only access."}""";
-
-    HttpResponseMessage response = await client.PostAsync(
-      "api/Roles",
-      new StringContent(RequestJson, Encoding.UTF8, "application/json"));
-
-    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-  }
-
-  public static async Task Ok_With_Seeded_Roles_Given_Administrator_Via_Role_Store()
+  public static async Task Ok_List_Given_Administrator_Via_Role_Store()
   {
     (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
 
@@ -124,12 +79,42 @@ public class Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
-    var query = new GetRoles.Query { UserId = Guid.NewGuid() };
+    var query = new ListPrincipals.Query { UserId = Guid.NewGuid() };
     HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string json = await response.Content.ReadAsStringAsync();
-    json.ShouldContain(nameof(RoleIds.Administrator));
+    json.ShouldContain(principalId.ToString());
+  }
+
+  public static async Task Ok_SetRoles_Given_Administrator_Via_Role_Store()
+  {
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+
+    IPrincipalRoleStore roleStore =
+      Web.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+
+    string body = JsonSerializer.Serialize(
+      new
+      {
+        userId = Guid.NewGuid(),
+        roleIds = new[] { RoleIds.Member, RoleIds.Developer }
+      },
+      ContractSerializationDefaults.Options);
+
+    HttpResponseMessage response = await client.PutAsync(
+      $"api/admin/principals/{principalId}/roles",
+      new StringContent(body, Encoding.UTF8, "application/json"));
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+    IReadOnlyList<Guid> stored = await roleStore.GetRoleIdsAsync(principalId);
+    stored.ShouldContain(RoleIds.Developer);
+    stored.ShouldContain(RoleIds.Member);
   }
 
   public static async Task Unauthorized_Given_Agent_Bearer_Token_No_Cookie()
@@ -138,10 +123,8 @@ public class Returns_
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-    // Deliberately NO Cookie header — only the bearer token.
 
-    HttpResponseMessage response = await client.GetAsync("api/Roles");
-
+    HttpResponseMessage response = await client.GetAsync("api/admin/principals");
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
@@ -224,7 +207,6 @@ public class Returns_
       ?? throw new InvalidOperationException("GetCurrentSession deserialized to null.");
     session.IsAuthenticated.ShouldBeTrue();
     session.PrincipalId.ShouldNotBeNull();
-    session.RoleIds.ShouldContain(RoleIds.Member);
 
     return (cookieHeader, session.PrincipalId.Value);
   }
@@ -235,5 +217,4 @@ public class Returns_
     string challengeBase64Url = document.RootElement.GetProperty("challenge").GetString()!;
     return Base64Url.DecodeFromChars(challengeBase64Url);
   }
-
 }

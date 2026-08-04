@@ -8,14 +8,10 @@
 // registered via a second AddAuthentication() — CookieBrowserSessionService always signs in/reads
 // by this explicit scheme name, never relying on "the default," so both postures work.
 // AuthenticatedPolicy (task 110): "any signed-in identity-session cookie" — scheme-restricted
-// (AddAuthenticationSchemes(Scheme)) + RequireAuthenticatedUser(), no further policy shape. This is
-// the policy the admin Roles CRUD contracts carry via [EndpointAuthorize(Policy="…")] (the contract
-// uses the raw string literal — web-contracts cannot reference web-server's constant, the
-// dependency runs the other way — with a comment naming this constant as the source of truth).
-// Deliberately NOT an admin/role-based policy: no admin/role authorization model exists in the
-// template yet (recorded future work, task 110 scope boundary) — "any authenticated principal may
-// mutate demo roles" is a known, deliberate simplification for a template whose job is teaching the
-// protected-endpoint PATTERN, not shipping real admin authorization.
+// (AddAuthenticationSchemes(Scheme)) + RequireAuthenticatedUser(), no further policy shape. Used by
+// non-admin identity-session-gated surfaces. Admin Roles/Principals APIs (task 147-004) now use
+// AuthorizationPolicyNames.CanViewRolesPage / CanViewPrincipalsPage with RequireRole(Administrator)
+// instead of this any-authenticated policy.
 #endregion
 
 namespace TimeWarp.Architecture.Configuration;

@@ -8,14 +8,13 @@
 // body in one type. IRoleDetails lets the Validator compose the shared RoleDetailsValidator
 // so update enforces the same field rules as create. GetMockResponseFactory lets the SPA's
 // MockWebApiService serve this endpoint offline; the empty Response preserves OneOf typing.
-// [EndpointAuthorize] (task 110): see CreateRole's Design region for the full rationale — same
-// policy, same "no admin/role model yet" scope boundary.
+// [EndpointAuthorize] (task 147-004): Administrator capability via AuthorizationPolicyNames.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "identity-session-authenticated")] // matches IdentitySessionDefaults.AuthenticatedPolicy
+[EndpointAuthorize(Policy = AuthorizationPolicyNames.CanViewRolesPage)]
 public static partial class UpdateRole
 {
   [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Put)]

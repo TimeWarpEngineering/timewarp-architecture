@@ -15,9 +15,15 @@
 //     in-memory singletons deliberately — ceremony nonces and short-lived bearer grants are
 //     ephemeral (Redis later if multi-replica requires shared token state). No distributed store
 //     yet; a single web-server instance is the deployment assumption for those three.
+// Principal→role assignment (task 147-004 D1): IPrincipalRoleStore is web-app only (not
+// TimeWarp.Identity). Registered here as a process-lifetime singleton beside the other
+// zero-infra identity defaults so Program stays free of per-concern store lines. EF role tables
+// are out of scope for 147-004.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
+
+using TimeWarp.Architecture.Features;
 
 public class InMemoryIdentityStoresModule : IModule
 {
@@ -28,5 +34,8 @@ public class InMemoryIdentityStoresModule : IModule
     serviceCollection.AddSingleton<IWebAuthnChallengeStore, InMemoryWebAuthnChallengeStore>();
     serviceCollection.AddSingleton<IAgentKeyChallengeStore, InMemoryAgentKeyChallengeStore>();
     serviceCollection.AddSingleton<IAgentTokenStore, InMemoryAgentTokenStore>();
+
+    // Web-app principal→role assignments (in-memory until an EF backend lands).
+    serviceCollection.AddSingleton<IPrincipalRoleStore, InMemoryPrincipalRoleStore>();
   }
 }
