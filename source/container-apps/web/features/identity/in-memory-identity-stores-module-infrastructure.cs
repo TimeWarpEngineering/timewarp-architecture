@@ -36,7 +36,7 @@ public class InMemoryIdentityStoresModule : IModule
     serviceCollection.AddSingleton<IAgentKeyChallengeStore, InMemoryAgentKeyChallengeStore>();
     serviceCollection.AddSingleton<IAgentTokenStore, InMemoryAgentTokenStore>();
 
-    // Web-app principal→role assignments (in-memory until an EF backend lands).
+    // Web-app principal→role default; PostgresDbModule swaps to EfPrincipalRoleStore when connected.
     serviceCollection.AddSingleton<IPrincipalRoleStore, InMemoryPrincipalRoleStore>();
   }
 }

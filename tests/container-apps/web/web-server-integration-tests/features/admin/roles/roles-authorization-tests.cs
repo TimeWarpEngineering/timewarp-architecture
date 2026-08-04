@@ -117,8 +117,9 @@ public class Returns_
   {
     (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
 
-    IPrincipalRoleStore roleStore =
-      Web.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    // Scope required: under postgres IPrincipalRoleStore is scoped (EfPrincipalRoleStore).
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };

@@ -37,14 +37,14 @@ Pattern: in-memory default; when Aspire/connection string is present, swap to
 
 ## Checklist
 
-- [ ] Entity + EF configuration (principal id + role id; replace-set semantics)
-- [ ] `EfPrincipalRoleStore` implementing `IPrincipalRoleStore`
-- [ ] DI swap in `PostgresDbModule` (or adjacent) when connection present
-- [ ] EnsureCreated / model discovery so tables appear next to identity principals
-- [ ] In-memory path unchanged for tests without postgres
-- [ ] Contract / integration tests for EF store
-- [ ] Manual: assign Admin roles in UI, restart web-server, grants still apply
-- [ ] Build 0/0; Design regions on new/touched files
+- [x] Entity + EF configuration (principal id + role id; replace-set semantics)
+- [x] `EfPrincipalRoleStore` implementing `IPrincipalRoleStore`
+- [x] DI swap in `PostgresDbModule` (or adjacent) when connection present
+- [x] EnsureCreated / model discovery so tables appear next to identity principals
+- [x] In-memory path unchanged for tests without postgres
+- [x] Contract / integration tests for EF store
+- [x] Manual: assign Admin roles in UI, restart web-server, grants still apply
+- [x] Build 0/0; Design regions on new/touched files
 
 ## Notes
 
@@ -89,3 +89,74 @@ Set = delete-all for principal + insert set (or equivalent transactional replace
 6. No FK required (logical link); Set = delete rows for principal + insert set in one SaveChanges
 7. Tests: EF store round-trip (Set/Get/empty clear) via ephemeral postgres pattern like EfPrincipalStore fixture
 8. Reconcile Design on `IPrincipalRoleStore` (no longer "EF out of scope")
+
+
+## Results
+
+### Summary
+
+Dual-mode `IPrincipalRoleStore`: in-memory singleton by default; when Postgres connection
+string is present, `PostgresDbModule` registers scoped `EfPrincipalRoleStore` writing
+`identity.principal_roles` (composite PK principal_id + role_id). Replace-set semantics
+unchanged. `IEffectiveRolesResolver` is **scoped** so it can resolve the EF store without
+captive dependency.
+
+| Mode | Store | Lifetime |
+|------|--------|----------|
+| No connection | InMemoryPrincipalRoleStore | singleton |
+| Postgres connected | EfPrincipalRoleStore | scoped |
+
+### Commits
+
+- `7ed22978` feat: durable EF principal role store
+- (review fixes) scoped resolution in authz tests; comment cleanup
+
+### Build / tests
+
+| Gate | Result |
+|------|--------|
+| `./bin/dev build` | 0/0 |
+| Principal_role_store (EF) | 4/4 |
+| RolesAuthorization | 6/6 |
+| PrincipalsAuthorization | 5/5 |
+
+### Review
+
+- Effort 1, general, 1 round
+- Disposition: **accepted-exceptions** (EnsureCreated does not upgrade existing volumes)
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`
+
+### How to validate
+
+**Automated**
+```bash
+./bin/dev build
+# expect: 0/0
+
+cd tests/container-apps/web/web-infrastructure-tests && \
+  dotnet test -c Release -- --filter-class Principal_role_store
+# expect: 4 passed (ephemeral Postgres / Testcontainers)
+
+cd tests/container-apps/web/web-server-integration-tests && \
+  dotnet test -c Release -- --filter-class PrincipalsAuthorization
+# expect: all passed
+```
+
+**Manual (Aspire + postgres)**
+1. `./bin/dev run` so web-server gets `ConnectionStrings__postgres-db`.
+2. **Existing volume upgrade:** if `identity.principal_roles` is missing (DB created before 147-006),
+   either drop the Aspire postgres data volume and restart, or run:
+   ```sql
+   CREATE TABLE IF NOT EXISTS identity.principal_roles (
+     principal_id uuid NOT NULL,
+     role_id uuid NOT NULL,
+     PRIMARY KEY (principal_id, role_id)
+   );
+   ```
+   Greenfield EnsureCreated creates the table automatically.
+3. Bootstrap or assign Administrator via Admin → Principals; Save.
+4. DataGrip: `SELECT * FROM identity.principal_roles;` — expect rows.
+5. Restart web-server (keep volume) — **Expect:** Admin nav / role grants still present
+   (not Member-only).
+
+**Not in scope:** Role catalog EF; 147-005 chrome; migrations framework.

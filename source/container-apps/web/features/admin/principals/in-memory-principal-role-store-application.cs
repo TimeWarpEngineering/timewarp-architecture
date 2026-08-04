@@ -1,13 +1,14 @@
 #region Purpose
-// Thread-safe in-memory IPrincipalRoleStore for Development and tests (no EF yet).
+// Thread-safe in-memory IPrincipalRoleStore for zero-infra / skip-mode (default without Postgres).
 #endregion
 
 #region Design
 // Task 147-004: ConcurrentDictionary keyed by PrincipalId; Set replaces the full list (snapshot).
 // Missing key and empty list are both "no stored roles" — Get returns empty array so the
 // effective-roles resolver can apply the Member default. Singleton process lifetime matches
-// InMemoryPrincipalStore registration (zero-infra default). Features substrate namespace — see
-// IPrincipalRoleStore Design (shared by Identity + Admin without TWA0009).
+// InMemoryPrincipalStore registration (zero-infra default). PostgresDbModule swaps to scoped
+// EfPrincipalRoleStore when a connection string is present (task 147-006). Features substrate
+// namespace — see IPrincipalRoleStore Design (shared by Identity + Admin without TWA0009).
 #endregion
 
 namespace TimeWarp.Architecture.Features;

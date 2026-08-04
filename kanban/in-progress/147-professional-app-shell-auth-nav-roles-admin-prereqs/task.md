@@ -25,7 +25,7 @@ in parallel.
 | **147-002** | Trim RoleIds to product roles; role→policy map | done |
 | **147-003** | Enforce page policies on remaining product routes (Profile, Settings, …) | done |
 | **147-004** | Admin principals + roles list screens with real policies | done |
-| **147-006** | EF principal→role store behind postgres flag | to-do |
+| **147-006** | EF principal→role store behind postgres flag | done |
 | **147-005** | First-run home + login professional chrome | to-do |
 
 ## Target roles (product)
@@ -50,7 +50,7 @@ in parallel.
 - [x] 147-002 RoleIds trim
 - [x] 147-003 remaining page policies
 - [x] 147-004 admin list screens
-- [ ] 147-006 EF principal role store (durable under postgres)
+- [x] 147-006 EF principal role store (durable under postgres)
 - [ ] 147-005 first-run chrome
 
 ## Session
