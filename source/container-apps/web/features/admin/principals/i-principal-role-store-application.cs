@@ -6,7 +6,8 @@
 // Task 147-004 D1: roles live in the web app store, not on the Principal entity / TimeWarp.Identity.
 // Empty store for a principal is meaningful (D2): effective roles become {Member} via
 // IEffectiveRolesResolver — this store never invents defaults. SetRoleIds replaces the full set
-// (D10: empty list allowed). In-memory only for this task; EF tables are out of scope.
+// (D10: empty list allowed). Dual-mode (147-006): InMemoryPrincipalRoleStore singleton default;
+// EfPrincipalRoleStore scoped when Postgres connection is present (PostgresDbModule).
 // Features substrate namespace (not …Features.Admin.Principals): Identity (GetCurrentSession),
 // claims transformation, and Admin.Principals all need the port without TWA0009 cross-slice.
 #endregion

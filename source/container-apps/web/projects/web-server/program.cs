@@ -231,10 +231,12 @@ public class Program : IAspNetProgram
     serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
     serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();
 
-    // Task 147-004: effective roles + request claims for RequireRole on admin policies.
+    // Task 147-004 / 147-006: effective roles + request claims for RequireRole on admin policies.
+    // Resolver is scoped so it can resolve EfPrincipalRoleStore (scoped) under postgres without
+    // a captive dependency; with in-memory singleton store, scoped resolver is still valid.
     serviceCollection.Configure<BootstrapAdministratorOptions>(
       configuration.GetSection("Authentication"));
-    serviceCollection.AddSingleton<IEffectiveRolesResolver, EffectiveRolesResolver>();
+    serviceCollection.AddScoped<IEffectiveRolesResolver, EffectiveRolesResolver>();
     serviceCollection.AddScoped<IClaimsTransformation, PrincipalRoleClaimsTransformation>();
 
     // TimeWarp.402 demos (104-009 tip, 104-011 metered, 104-013 settle→Funded):

@@ -75,3 +75,17 @@ Set = delete-all for principal + insert set (or equivalent transactional replace
 ## Session
 
 - Created: 2026-08-04 — child of 147 after 147-004; before 147-005
+- Orchestrate 147-006: 2026-08-04
+
+## Notes (implementation plan)
+
+### Locked
+
+1. Entity `PrincipalRoleAssignment` (PrincipalId + RoleId), table `identity.principal_roles`, composite PK
+2. `EfPrincipalRoleStore` : `IPrincipalRoleStore` — scoped, uses `PostgresDbContext`
+3. `PostgresDbModule`: when connection present, `RemoveAll<IPrincipalRoleStore>()` + `AddScoped<…, EfPrincipalRoleStore>()`
+4. **Lifetime fix:** `IEffectiveRolesResolver` must be **scoped** (not singleton) so it can resolve scoped EF store (captive dependency otherwise)
+5. In-mem path: singleton `InMemoryPrincipalRoleStore` unchanged
+6. No FK required (logical link); Set = delete rows for principal + insert set in one SaveChanges
+7. Tests: EF store round-trip (Set/Get/empty clear) via ephemeral postgres pattern like EfPrincipalStore fixture
+8. Reconcile Design on `IPrincipalRoleStore` (no longer "EF out of scope")

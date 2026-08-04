@@ -7,7 +7,7 @@
 // IClaimsTransformation runs after authentication and projects effective roles so
 // RequireRole(Administrator Guid) on admin policies works for passkey sessions without
 // re-issuing cookies when assignment changes. Scoped lifetime: depends on scoped
-// IEffectiveRolesResolver path (resolver itself may be singleton + singleton role store).
+// IEffectiveRolesResolver path (resolver is scoped so it can resolve EfPrincipalRoleStore).
 // Only adds claims when PrincipalId claim is present; leaves agent bearer / anonymous alone.
 // Role claim values are Guid strings matching RoleIds so SPA and server RequireRole agree.
 #endregion

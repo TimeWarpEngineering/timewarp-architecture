@@ -16,7 +16,8 @@
 // startup failure. Under Aspire the string is always present, so the real registrations always run.
 // Skip-mode also keeps InMemoryIdentityStoresModule's singleton InMemoryPrincipalStore — only when a
 // connection is present do we Replace the IPrincipalStore registration with scoped EfPrincipalStore
-// (task 104-032). Challenge/token stores stay in-memory either way.
+// (task 104-032). Same dual-mode for IPrincipalRoleStore → EfPrincipalRoleStore (task 147-006).
+// Challenge/token stores stay in-memory either way.
 // The connection string is read once and reused for both Configure<PostgresDbOptions> (the
 // environment check consumes IOptions<PostgresDbOptions>) and AddDbContext, so the two cannot drift.
 // Health check (liveness) and environment check (startup gate) intentionally share the same
@@ -26,6 +27,9 @@
 namespace TimeWarp.Architecture.Modules;
 
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
+using TimeWarp.Architecture.Features.Identity.Infrastructure;
 using TimeWarp.Identity;
 
 public sealed partial class PostgresDbModule : IModule
@@ -51,9 +55,13 @@ public sealed partial class PostgresDbModule : IModule
       dbContextOptionsBuilder => dbContextOptionsBuilder.UseNpgsql(connectionString)
     );
 
-    // Durable principal store only when EF is actually registered (skip-mode keeps in-memory).
+    // Durable principal + principal→role stores only when EF is registered (skip-mode keeps in-memory).
     serviceCollection.RemoveAll<IPrincipalStore>();
     serviceCollection.AddScoped<IPrincipalStore, EfPrincipalStore>();
+
+    // Task 147-006: durable role grants (same connection gate as EfPrincipalStore).
+    serviceCollection.RemoveAll<IPrincipalRoleStore>();
+    serviceCollection.AddScoped<IPrincipalRoleStore, EfPrincipalRoleStore>();
 
     IHealthChecksBuilder healthChecksBuilder = serviceCollection.AddHealthChecks();
     healthChecksBuilder.AddDbContextCheck<PostgresDbContext>

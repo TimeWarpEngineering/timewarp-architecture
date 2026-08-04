@@ -9,6 +9,8 @@
 // -infrastructure.cs compile into this assembly). Identity Principal/Credential are also mapped
 // here (schema "identity") as the first port-backed durable consumer (task 104-032); they are
 // NOT IAggregateRoot — store-CAS lives in EfPrincipalStore, not AggregateDbContext's Version hook.
+// PrincipalRoleAssignment (identity.principal_roles) is the durable IPrincipalRoleStore backend
+// (task 147-006).
 // Connection setup lives in PostgresDbModule.ConfigurePostgresDb, not OnConfiguring, so the
 // context stays configuration-agnostic.
 // Aggregate enforcement (DomainInvariantsGuard, EntityVersion.Next, child→root resolution,
@@ -35,6 +37,7 @@
 
 namespace TimeWarp.Architecture.Persistence;
 
+using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Profiles.Domain;
 using TimeWarp.Foundation.Persistence;
 using TimeWarp.Identity;
@@ -46,6 +49,7 @@ public sealed partial class PostgresDbContext : AggregateDbContext
   public DbSet<Profile> Profiles => Set<Profile>();
   public DbSet<Principal> Principals => Set<Principal>();
   public DbSet<Credential> Credentials => Set<Credential>();
+  public DbSet<PrincipalRoleAssignment> PrincipalRoleAssignments => Set<PrincipalRoleAssignment>();
 
   protected override void OnConfigureConventions(ModelConfigurationBuilder configurationBuilder)
   {
