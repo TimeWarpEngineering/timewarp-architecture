@@ -84,3 +84,25 @@ dotnet run source/container-apps/web/platform/abuse/abuse-rate-limiting-tests.cs
 - Edge/Cloudflare rate limits (104-023)
 - PROXY-protocol true client IP behind shared ingress (112 notes)
 - Rate limits on authenticated credential-add paths
+
+### How to validate
+
+**Automated**
+```bash
+dotnet run source/container-apps/web/platform/abuse/abuse-rate-limiting-tests.cs
+# expect: 3/3 — register and payment-challenge policies emit structured 429 under low limits
+./bin/dev build
+# expect: 0/0
+```
+
+**Manual** (optional; Development has limits enabled)
+```bash
+./bin/dev run
+# Rapid-fire passkey register/options or GET /api/tip beyond default sliding window
+# expect: HTTP 429 application/problem+json with policy extension
+```
+
+**Depends on:** `AbuseRateLimitOptions` in web-server appsettings (Enabled true to enforce).
+
+**Not in scope:** Cloudflare edge (023).
+

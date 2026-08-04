@@ -63,3 +63,25 @@ clean, effort 1–2 — see `review/disposition.md`
 ### Next
 
 104-022 sunny-path tip in E2E; commerce scanners follow `/llms.txt` → `/api/tip`
+
+### How to validate
+
+**Automated**
+```bash
+dotnet run source/container-apps/web/features/tip/submit-tip/submit-tip-tests.cs
+# expect: alias /api → tip 402; free routes never 402
+```
+
+**Manual**
+```bash
+./bin/dev run
+curl -si https://localhost:7000/api/tip | head -25
+# expect: 402 + PAYMENT-REQUIRED when tip enabled
+curl -si https://localhost:7000/api | head -25
+# expect: same tip challenge (discovery alias)
+curl -si https://localhost:7000/llms.txt | head -5
+# expect: NOT 402
+rg -n 'api/tip|/api' source/container-apps/web/projects/web-spa/wwwroot/llms.txt source/container-apps/web/projects/web-spa/wwwroot/auth.md
+# expect: discoverable paths documented
+```
+

@@ -82,3 +82,22 @@ curl -sS -H 'Accept: text/html' https://<host>/
 
 - Effort 1–2 (static twins + thin middleware; SPA hosting unchanged)
 - Disposition: clean — see `review/disposition.md`
+
+### How to validate
+
+**Automated**
+```bash
+dotnet run source/container-apps/web/platform/agent-discovery/markdown-content-negotiation-tests.cs
+# expect: twin, Accept negotiate + Vary, HTML fallthrough, auth.md, browser-like Accept
+```
+
+**Manual**
+```bash
+./bin/dev run
+curl -sS -H 'Accept: text/markdown' https://localhost:7000/ | head -20
+# expect: markdown home content (index.md)
+curl -sS https://localhost:7000/index.md | head -20
+curl -sS -H 'Accept: text/html' https://localhost:7000/ | head -5
+# expect: SPA HTML, not forced markdown
+```
+

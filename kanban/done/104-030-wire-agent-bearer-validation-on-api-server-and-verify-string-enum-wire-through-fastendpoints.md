@@ -92,6 +92,29 @@ routes move or are dual-hosted).
 - `dotnet run …/get-agent-bearer-identity-tests.cs` — 4/4
 - `dotnet test tests/container-apps/api/api-jaribu-tests` — 9/9
 
+
+### How to validate
+
+**Automated**
+```bash
+dotnet run source/container-apps/api/features/agent-bearer-sample/get-agent-bearer-identity/get-agent-bearer-identity-tests.cs
+# or api-jaribu aggregator if present
+# expect: 200 + kind/trustTier string enums; 401 no/garbage token; 403 insufficient scope
+./bin/dev build
+# expect: 0/0
+```
+
+**Manual (api-server host; token must be issued against the same process store)**
+```bash
+# In tests, Issue via IAgentTokenStore on the api host — web-issued tokens do not share in-memory store
+curl -si -H "Authorization: Bearer <api-host-token>" https://localhost:7255/api/agent/bearer/me | head -30
+# expect: 200 JSON with "kind":"Agent" (or similar PascalCase string), not integer enums
+```
+
+**Docs:** `documentation/developer/how-to-guides/how-to-agent-identity-host-split-web-vs-api.md`
+
+**Not in scope:** moving web identity ceremony routes onto api-server.
+
 ## Session
 
 - Created: 2026-07-20 (capture deferred 104-004 + 108 FastEndpoints enum verification)

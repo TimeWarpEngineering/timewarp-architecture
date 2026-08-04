@@ -77,3 +77,21 @@ Related deeper/negative coverage remains in co-located `invoke-metered-capabilit
 - **Done.** Program 104 exit criterion green in CI via mock-facilitator HTTP suite.
 - Playwright browser e2e not required for exit; documented in suite Design region.
 - Epic checklist item 104-022 marked complete; Wave 4 remaining: 021 only (014 is Wave 3).
+
+### How to validate
+
+**Automated (program exit criterion)**
+```bash
+cd tests/container-apps/web/web-server-integration-tests
+dotnet test -c Release -- --filter-class Program104Sunny
+# or: -- --filter-tag Program104Sunny
+# expect: 3/3
+#   1) Human passkey onboard → principal + session
+#   2) Agent register + pay (mock) + metered 200 + Funded
+#   3) Voluntary tip mock settle
+```
+
+**Depends on:** in-proc web host; mock facilitator; no live chain; software authenticator (not Playwright).
+
+**Not in scope:** browser WebAuthn via Playwright virtual authenticator (documented deferral).
+

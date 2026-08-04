@@ -56,3 +56,21 @@ clean, effort 1
 ### Next
 
 104-011 metered demo; 104-009 tip jar; 104-013 settle→Funded
+
+### How to validate
+
+**Automated**
+```bash
+cd tests/libraries/timewarp-402-tests && dotnet test -c Release -- --filter-class InMemoryCreditLedger
+# or full suite:
+cd tests/libraries/timewarp-402-tests && dotnet test -c Release
+# expect: credit / idempotent receipt / debit / insufficient fail-closed tests green
+```
+
+**Expect**
+- `ICreditLedger` + `InMemoryCreditLedger` under `source/libraries/timewarp-402/ledger/`
+- Keys are `TimeWarp.Identity.PrincipalId` (package dual-mode ref to Identity)
+- Same receipt id twice does not double-credit
+
+**Not in scope:** EF durable ledger; host settle→credit wiring (013).
+

@@ -67,3 +67,23 @@ Served by existing `MapStaticAssets()` on web-server (SPA static web assets). Bu
 
 ### Review
 - Effort 1 (static docs only); disposition clean — see `review/disposition.md`
+
+### How to validate
+
+**Static discovery (with host running or static wwwroot)**
+```bash
+./bin/dev run
+# Or inspect files under source/container-apps/web/projects/web-spa/wwwroot/
+curl -sS https://localhost:7000/robots.txt | head -20
+curl -sS https://localhost:7000/llms.txt | head -30
+curl -sS https://localhost:7000/auth.md | head -40
+curl -sS https://localhost:7000/sitemap.xml | head -20
+```
+
+**Expect**
+- robots: agent-welcome Content Signals (not block-all AI bots)
+- auth.md: passkey / agent-key / x402 truth; no “register with email”
+- llms.txt links Login, tip, meter, agent CLI as appropriate
+
+**Automated:** `./bin/dev build` 0/0 (static assets in SPA).
+

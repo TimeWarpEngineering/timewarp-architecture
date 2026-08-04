@@ -127,3 +127,26 @@ Also:
 - Package-level removal of MSAL / Microsoft.Identity.Web from template output (smaller WASM)
   deferred — opt-in compile-time symbol would be a follow-on if package weight becomes a product
   concern.
+
+### How to validate
+
+**Automated**
+```bash
+./bin/dev build
+# expect: 0/0 without AzureAd required at boot
+# Happy-path integration filter used at close (identity session / mock gates)
+```
+
+**Config / UX**
+1. Default SPA (non-mock, `UseEntra` false): passkey identity-session — no MSAL login wall
+2. Unauthorized → `/Login` (passkey), not RemoteAuthenticatorView
+3. Set `Authentication:UseEntra` true only when intentionally testing Entra
+
+**Slice cleanup**
+```bash
+test ! -d source/container-apps/web/features/auth || echo 'auth vestige still present'
+# authentication/authorization product vestiges consolidated per Results (identity umbrella / admin roles)
+```
+
+**Not in scope:** dropping MSAL packages entirely; SPA folder rename glossary (132).
+

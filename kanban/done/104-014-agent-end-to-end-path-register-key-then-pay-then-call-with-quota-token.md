@@ -134,3 +134,22 @@ clean, effort 1 (no separate review round — thin composition of 011/013/029)
 ### Next
 
 104-022 program exit sunny paths (partially landed); Wave 4 remaining 021.
+
+### How to validate
+
+**Automated (money path)**
+```bash
+dotnet run source/container-apps/web/features/metered-capability/invoke-metered-capability/invoke-metered-capability-tests.cs -- --filter-method Money_Path
+# expect: register → unpaid 402 → mock pay → Funded → prepaid second call 200
+# CLI smoke (narrated):
+dotnet run tools/agent-identity-cli/agent.cs -- money-path --force
+```
+
+**Curl-level** (against a running web-server with mock facilitator in test host; live host needs TIP/metered config)
+1. Agent keygen + register + token (`tools/agent-identity-cli` or 104-004 Results)
+2. `GET /api/demo/metered-capability` with bearer → 402
+3. Retry with `PAYMENT-SIGNATURE` (mock settle in tests) → 200
+4. Seed credit / prepaid → second call 200 without payment header
+
+**Not in scope:** Entra; live chain settle without `--payment-signature`.
+

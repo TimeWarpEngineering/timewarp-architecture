@@ -92,3 +92,20 @@ CI must remain on mocks.
 
 Wave 2 remaining: 009 tip host, 016 passkey demo, 030 api bearer (if still needed).
 Wave 3: 013 settle→Funded, 015 rate limits, 014 agent E2E.
+
+### How to validate
+
+**Automated (Wave 2 package exit gate)**
+```bash
+cd tests/libraries/timewarp-402-tests && dotnet test -c Release
+# expect: full suite green (challenge/settle/ledger/tip-shaped/metered/http facilitator — mock only)
+./bin/dev build
+# expect: 0/0
+```
+
+**Expect**
+- No live chain required; mock facilitator only
+- 402/503/settled paths covered in library tests
+
+**Not in scope:** host free-route isolation demos (covered by tip/meter host tests).
+

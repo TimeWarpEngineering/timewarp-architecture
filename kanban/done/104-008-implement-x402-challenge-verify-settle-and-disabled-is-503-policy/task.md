@@ -84,3 +84,21 @@ map to 503 payloads only.
 ### Next
 
 104-009 tip-jar example; 104-010 credit ledger; 104-016 can parallel
+
+### How to validate
+
+**Automated**
+```bash
+cd tests/libraries/timewarp-402-tests && dotnet test -c Release
+# expect: all passed (includes config evaluator, PaymentGate challenge/settle, etc.)
+./bin/dev build
+# expect: 0/0
+```
+
+**Library smoke (no host)**
+- Disabled/misconfigured options → `PaymentUnavailable` (503 payload path), never a challenge
+- Ready + no signature → `PaymentChallenge` with Base64 `PAYMENT-REQUIRED`
+- Mock facilitator verify+settle → `PaymentSettled`
+
+**Not in scope:** ASP.NET tip/meter wiring (009/011); live facilitator.
+

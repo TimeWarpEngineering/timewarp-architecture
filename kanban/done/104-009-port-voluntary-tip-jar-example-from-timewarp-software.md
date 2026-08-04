@@ -70,3 +70,24 @@ clean, effort 1
 ### Next
 
 104-020 discoverable x402 path; 104-022 tip in E2E sunny paths
+
+### How to validate
+
+**Automated**
+```bash
+dotnet run source/container-apps/web/features/tip/submit-tip/submit-tip-tests.cs
+# expect: all tip host tests passed (402 unpaid, 503 disabled, mock settle, free-route never 402)
+```
+
+**Manual smoke** (Development enables tip + dead PayTo by default)
+```bash
+./bin/dev run
+# Web.Server fixed-port style (in-proc tests use 7000); Aspire may print a dynamic URL — use dashboard URL for web
+curl -si https://localhost:7000/api/tip | head -30
+# expect when tip enabled: HTTP 402 and header PAYMENT-REQUIRED
+curl -si https://localhost:7000/ | head -15
+# expect: NOT 402 (free content)
+```
+
+**Not in scope:** live chain settle (timewarp-software tip-buyer + funded wallet).
+

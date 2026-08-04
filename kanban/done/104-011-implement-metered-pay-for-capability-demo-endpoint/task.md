@@ -69,3 +69,25 @@ clean, effort 1
 ### Next
 
 104-012 payment package tests exit gate; 104-009 tip jar; 104-013 settle→Funded
+
+### How to validate
+
+**Automated**
+```bash
+# Co-located metered host tests (Jaribu runfile / aggregator)
+dotnet run source/container-apps/web/features/metered-capability/invoke-metered-capability/invoke-metered-capability-tests.cs
+# expect: unpaid 402, prepaid debit 200, mock settle 200, 401/403 as designed
+cd tests/libraries/timewarp-402-tests && dotnet test -c Release
+# expect: MeteredCapabilityGate cases green
+```
+
+**Manual smoke** (needs agent bearer with `demo:invoke`; Development enables metered)
+```bash
+./bin/dev run
+# Register agent key + token (see tools/agent-identity-cli demo), then:
+curl -si -H "Authorization: Bearer <token>" https://localhost:7000/api/demo/metered-capability | head -30
+# expect without credit/payment: 402 + PAYMENT-REQUIRED
+```
+
+**Not in scope:** live facilitator; api-server host (meter is web-server).
+

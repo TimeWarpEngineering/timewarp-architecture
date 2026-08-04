@@ -82,3 +82,21 @@ Served by existing `MapStaticAssets()` (SPA static web assets). SWA endpoints:
 
 - Effort 1 (static well-known JSON/md only)
 - Disposition: clean — see `review/disposition.md`
+
+### How to validate
+
+**Static cards**
+```bash
+./bin/dev run
+curl -sS https://localhost:7000/.well-known/mcp/server-card.json | head -40
+curl -sS https://localhost:7000/.well-known/agent-skills/index.json | head -40
+curl -sS https://localhost:7000/.well-known/agent-card.json | head -40
+curl -sS https://localhost:7000/llms.txt | rg -n 'well-known|MCP|A2A|skills'
+```
+
+**Expect**
+- Valid minimal JSON; MCP/A2A stubs honest (`status: stub` / no fake live tools)
+- Linked from llms.txt / index.md
+
+**Automated:** `./bin/dev build` 0/0.
+

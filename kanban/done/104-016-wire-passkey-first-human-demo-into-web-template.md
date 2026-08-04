@@ -73,6 +73,31 @@ When removing legacy Passwordless from the template path, explicitly cover:
 - Progressive profile stays **104-024**. Entra non-default path stays **104-021**.
 - Playwright e2e sunny path stays **104-022**.
 
+
+### How to validate
+
+**UI (primary)**
+1. `./bin/dev run` → open the web SPA home
+2. Click **Continue with passkey** → navigates to `/Login`
+3. On `/Login`: **Create a passkey** (platform authenticator / password manager) → session shows signed in
+4. **Continue with passkey** on a later visit → authenticates without email/username form
+5. Unauthorized redirect should land on `/Login` (not MSAL RemoteAuthenticatorView) when Entra is off
+
+**Automated**
+```bash
+# Passkey integration filter used at close (adjust project if needed)
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Passkey
+# expect: passkey ceremony suite green
+```
+
+**Negative**
+```bash
+rg -n 'passwordless|timewarp:public:' source/container-apps/web/projects/web-server/components/App.razor source/container-apps/web/projects/web-spa || true
+# expect: no Passwordless CDN script / tenant public key in template path
+```
+
+**Not in scope:** progressive profile (024); Playwright browser virtual authenticator (022 notes software authenticator path).
+
 ## Session
 
 - Created: 2026-07-16

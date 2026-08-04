@@ -103,3 +103,23 @@ protocol types (008+).
 ### Next
 
 104-008 challenge / verify / settle / disabled-is-503 policy
+
+### How to validate
+
+**Automated / build**
+```bash
+./bin/dev build
+# expect: 0 Warning(s), 0 Error(s); timewarp-402 in the build list
+dotnet pack source/libraries/timewarp-402/timewarp-402.csproj -c Release -o /tmp/tw402-pack
+ls /tmp/tw402-pack/TimeWarp.402.*.nupkg
+# expect: nupkg PackageId TimeWarp.402
+```
+
+**Expect**
+- Project at `source/libraries/timewarp-402/timewarp-402.csproj` with PackageId `TimeWarp.402`
+- C# namespace / marker: `TimeWarp.X402` (not invalid `TimeWarp.402`)
+- Solution entry under `/source/libraries/` in `timewarp-architecture.slnx`
+- Template exclude includes `source/libraries/timewarp-402/**`
+
+**Not in scope:** challenge/settle types (008+); host references.
+

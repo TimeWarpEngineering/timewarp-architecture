@@ -64,3 +64,20 @@ clean, effort 1
 ### Next
 
 104-015 rate limits; 104-014 agent E2E path
+
+### How to validate
+
+**Automated**
+```bash
+cd tests/libraries/timewarp-402-tests && dotnet test -c Release
+# expect: SettlementFundingService / Funded promotion cases green
+dotnet run source/container-apps/web/features/metered-capability/invoke-metered-capability/invoke-metered-capability-tests.cs
+# expect: settle path leaves TrustTier.Funded; debit does not demote
+```
+
+**Expect**
+- After mock settle on metered path: principal `TrustTier.Funded` and ledger credited (then debited for price)
+- Zero balance after debit still Funded (documented rule)
+
+**Not in scope:** tip jar tier promotion (tip has no principal).
+
