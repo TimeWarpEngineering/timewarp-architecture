@@ -78,18 +78,10 @@ public static partial class GetRoles
   {
     RoleDto[] items =
     [
-      new
-      (
-        roleId: RoleIds.Administrator,
-        name: nameof(RoleIds.Administrator),
-        description: "The Administrator role is for administrators. And has access to all modules."
-      ),
-      new
-      (
-        roleId: RoleIds.Accountant,
-        name: nameof(RoleIds.Accountant),
-        description: "The Accountant role is for accountants. And has access to the accounting module."
-      ),
+      new(RoleIds.Member, nameof(RoleIds.Member), "Default human principal after passkey login."),
+      new(RoleIds.Operator, nameof(RoleIds.Operator), "Marketplace and job oversight."),
+      new(RoleIds.Administrator, nameof(RoleIds.Administrator), "Tenant admin: principals, roles, settings."),
+      new(RoleIds.Developer, nameof(RoleIds.Developer), "Template dogfood: demos and diagnostics."),
     ];
 
     return _ => new Response(totalCount: items.Length, items);

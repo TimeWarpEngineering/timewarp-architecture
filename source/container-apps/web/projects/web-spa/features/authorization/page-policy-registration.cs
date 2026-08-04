@@ -1,26 +1,31 @@
 #region Purpose
-// Maps page-access policies to the roles that satisfy them.
+// Registers page-access policies from RolePolicyGrants (role composition SSOT).
 #endregion
 
 #region Design
-// One policy per routable page keeps the role-to-page mapping in a single registration site;
-// pages declare a policy name and never a role, so role restructuring touches only this file.
-// Registered separately from navigation policies because a page must stay guarded even when
-// its nav entry is hidden — direct URL access bypasses the sidebar.
+// One policy per routable surface; pages declare policy names only. Role→policy pairing is
+// RolePolicyGrants (task 147-002) so restructuring roles never reopens this file for RequireRole.
+// Page route guard and nav Policy on [Page] must use the same policy name.
 #endregion
 
 namespace TimeWarp.Architecture;
 
-using static Policies;
-using static RoleIds;
+using TimeWarp.Architecture.Features.Authorization;
+using static AuthorizationConstants.Policies;
 
 internal static class PagePolicyRegistration
 {
   public static void AddPolicies(AuthorizationOptions options)
   {
-    options.AddPolicy(CanViewAdminPage, policy => policy.RequireRole(Administrator.ToString()));
-    options.AddPolicy(CanViewDeveloperPage, policy => policy.RequireRole(Developer.ToString()));
-    options.AddPolicy(CanViewUserClaimsPage, policy => policy.RequireRole(Developer.ToString()));
-    options.AddPolicy(CanViewRolesPage, policy => policy.RequireRole(Administrator.ToString()));
+    // Registered via RolePolicyGrants.AddAllGrantedPolicies in PolicyRegistration —
+    // page-specific names documented here for discoverability.
+    _ = new[]
+    {
+      CanViewAdminPage,
+      CanViewDeveloperPage,
+      CanViewUserClaimsPage,
+      CanViewRolesPage,
+    };
+    // Actual registration is centralized in PolicyRegistration → RolePolicyGrants.
   }
 }

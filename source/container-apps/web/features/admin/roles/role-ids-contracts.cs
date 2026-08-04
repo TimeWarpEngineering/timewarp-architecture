@@ -1,57 +1,58 @@
 #region Purpose
-// Well-known role identifiers shared by client and server authorization checks.
+// Well-known product role identifiers shared by client and server authorization checks.
 #endregion
 
 #region Design
-// Roles are compile-time Guid constants rather than database lookups so both sides agree without a
-// round-trip; once issued, an id must never change.
-// The ERP-flavored role set is sample data for the template — replace with domain roles when instantiating.
-// GetRoleNameByGuid reflects over the public fields so display names can never drift from the id list.
-// Features substrate (bare …Features namespace, not Features.Authorization): Admin.Roles, Identity
-// mock grants, and SPA policies reference well-known ids without cross-slice coupling (TWA0009).
-// File path is admin/roles/ (task 104-021) — co-located with the role demo domain, not a fake
-// authorization/ product slice whose only file was this constant catalog.
+// Product role set (task 147-002): Member, Operator, Administrator, Developer.
+// Compile-time Guid constants so SPA and server agree without a round-trip; once issued, an id
+// must never change. ERP/accounting sample roles removed — they fought the product narrative.
+// GetRoleNameByGuid reflects over public Guid fields so display names cannot drift from the id list.
+// Features substrate (bare …Features namespace): Admin.Roles, Identity mocks, and SPA policies
+// reference well-known ids without TWA0009 cross-slice coupling.
+// Role → policy grants live in RolePolicyGrants (SPA) / documented here:
+//   Member        — default for every passkey principal; self-service only
+//   Operator      — marketplace ops (118); grants reserved until marketplace policies land
+//   Administrator — admin nav + role management
+//   Developer     — demos + diagnostics (147-001)
 #endregion
 
 namespace TimeWarp.Architecture.Features;
 
 public static class RoleIds
 {
-   public static readonly Guid Administrator = new Guid("834B9073-D5FF-40B3-938A-968C23FA76CC");
-   public static readonly Guid Accountant = new Guid("290A5645-4913-4845-BDC0-4C7B11EE5E83");
-   public static readonly Guid AccountsPayableClerk = new Guid("44EC68B4-86F9-4ED4-BE44-609C9345146F");
-   public static readonly Guid AccountsReceivableClerk = new Guid("0FA1340D-5324-4DDC-AB8A-9F6BB9AFC266");
-   public static readonly Guid Auditor = new Guid("9427FCB5-8559-485D-A401-4CC96AFAC2ED");
-   public static readonly Guid FinancialAnalyst = new Guid("AAD06C5D-0AD2-4D40-8E67-BFC0D4DB627E");
-   public static readonly Guid ChiefFinancialOfficer = new Guid("EC5AA183-C983-492F-BC62-88DEB0D0ADA0");
-   public static readonly Guid Controller = new Guid("68ECDAD3-C4C9-4E8C-A70A-500C5376627C");
-   public static readonly Guid PurchasingManager = new Guid("1398BD91-B01C-4BFB-AF0B-B143A61B90B4");
-   public static readonly Guid InventoryManager = new Guid("F5181CC9-0A72-4E49-A625-60625F935045");
-   public static readonly Guid PayrollManager = new Guid("D4F24977-6C32-4491-BBDE-75F559030DDF");
-   public static readonly Guid SalesManager = new Guid("9AC229C2-36A2-45F1-98A6-69B91AE87AC7");
-   public static readonly Guid ProjectManager = new Guid("6D5A0EA2-3F1A-4B0D-93E6-6380214F207A");
-   public static readonly Guid ComplianceOfficer = new Guid("2C677132-2FC7-4401-8A4D-97A26BAE49D3");
-   public static readonly Guid TaxSpecialist = new Guid("098C7CEC-FE2E-4B12-B699-0031418E47CB");
+  /// <summary>Default human principal after passkey login — self-service only.</summary>
+  public static readonly Guid Member = new("A1B2C3D4-E5F6-4789-A012-3456789ABCDE");
 
-   public static readonly Guid Developer = new Guid("80EE3E0C-A8B6-45D6-BA27-7DEE2691AA42");
+  /// <summary>Marketplace / job oversight human (agentic shop ops). Policies land with 118.</summary>
+  public static readonly Guid Operator = new("B2C3D4E5-F6A7-4890-B123-456789ABCDEF");
+
+  /// <summary>Tenant admin — principals, roles, system settings.</summary>
+  public static readonly Guid Administrator = new("834B9073-D5FF-40B3-938A-968C23FA76CC");
+
+  /// <summary>Template dogfood — demos, style guide, diagnostics. Not production end-users.</summary>
+  public static readonly Guid Developer = new("80EE3E0C-A8B6-45D6-BA27-7DEE2691AA42");
 
   public static string GetRoleNameByGuid(Guid roleId)
   {
-    // Retrieve all static public fields of the RoleIds class
     FieldInfo[] roleFields = typeof(RoleIds).GetFields(BindingFlags.Static | BindingFlags.Public);
 
     foreach (FieldInfo field in roleFields)
     {
-      // Ensure the field is of type Guid before proceeding
       if (field.FieldType != typeof(Guid)) continue;
 
-      var fieldValue = (Guid)(field.GetValue(null) ?? Guid.Empty);// Safe cast as we already checked the type
-
-      // Check if the current field's value matches the provided roleId
-      if (fieldValue == roleId) return field.Name;// Return the matching field's name
+      var fieldValue = (Guid)(field.GetValue(null) ?? Guid.Empty);
+      if (fieldValue == roleId) return field.Name;
     }
 
-    // Return a default value if no matching field was found
     return "Unknown Role";
   }
+
+  /// <summary>All product role ids (stable order for seed/list UIs).</summary>
+  public static IReadOnlyList<Guid> All { get; } =
+  [
+    Member,
+    Operator,
+    Administrator,
+    Developer,
+  ];
 }

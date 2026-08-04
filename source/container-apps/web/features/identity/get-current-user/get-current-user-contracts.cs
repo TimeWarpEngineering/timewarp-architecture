@@ -109,6 +109,7 @@ public static partial class GetCurrentUser
       modules: AllModules,
       roles:
       [
+        RoleIds.Member,
         RoleIds.Administrator,
         RoleIds.Developer
       ]
@@ -122,6 +123,7 @@ public static partial class GetCurrentUser
       modules: AllModules,
       roles:
       [
+        RoleIds.Member,
         RoleIds.Administrator,
         RoleIds.Developer
       ]
@@ -133,7 +135,7 @@ public static partial class GetCurrentUser
     return new Response
     (
       modules: AllModules,
-      roles: [RoleIds.Developer]
+      roles: [RoleIds.Member, RoleIds.Developer]
     );
   }
 }

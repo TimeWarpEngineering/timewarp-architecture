@@ -31,9 +31,9 @@ public partial class MockAuthenticationStateProvider : AuthenticationStateProvid
       new("oid", MockUserIds.SystemAdmin.ToString()),
       new(ClaimTypes.NameIdentifier, MockUserIds.SystemAdmin.ToString()),
       new(ClaimTypes.Name, "Mock User"),
+      new(ClaimTypes.Role, RoleIds.Member.ToString()),
       new(ClaimTypes.Role, RoleIds.Administrator.ToString()),
-      new(ClaimTypes.Role, RoleIds.Developer.ToString()),
-      new(ClaimTypes.Role, RoleIds.Accountant.ToString())
+      new(ClaimTypes.Role, RoleIds.Developer.ToString())
     };
 
     ClaimsIdentity identity = new(claims, "Mock authentication type");

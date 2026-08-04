@@ -46,7 +46,7 @@ in parallel.
 ## Checklist
 
 - [x] 147-001 demo nav gated
-- [ ] 147-002 RoleIds trim
+- [x] 147-002 RoleIds trim
 - [ ] 147-003 remaining page policies
 - [ ] 147-004 admin list screens
 - [ ] 147-005 first-run chrome

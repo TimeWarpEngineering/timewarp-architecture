@@ -3,33 +3,28 @@
 #endregion
 
 #region Design
-// An explicit always-true Anonymous policy lets every guarded surface declare a policy name
-// uniformly instead of special-casing "no policy required".
-// Delegates to per-concern registration classes (navigation, pages) so each list stays small
-// and a feature's policies are found by concern, not by scanning one large method.
+// Anonymous = always true. All role-gated policies register through RolePolicyGrants so
+// page/nav/developer extras cannot drift (task 147-002).
 #endregion
 
 namespace TimeWarp.Architecture;
+
+using TimeWarp.Architecture.Features.Authorization;
+using static AuthorizationConstants.Policies;
 
 internal static class PolicyRegistration
 {
   public static void AddPolicies(AuthorizationOptions options)
   {
-    // Add Anonymous policy that allows all requests
-    options.AddPolicy
-    (
-      Policies.Anonymous,
-      policy => policy.RequireAssertion(context => true)
-    );
+    options.AddPolicy(
+      Anonymous,
+      policy => policy.RequireAssertion(static _ => true));
 
-    NavigationPolicyRegistration.AddPolicies(options);
+    // Documented registration sites (no-op grant lists for grep discoverability).
     PagePolicyRegistration.AddPolicies(options);
+    NavigationPolicyRegistration.AddPolicies(options);
 
-    // Developer
-    options.AddPolicy
-    (
-      Policies.CanViewUserClaims,
-      policy => policy.RequireRole(RoleIds.Developer.ToString())
-    );
+    // SSOT: every role-gated SPA policy.
+    RolePolicyGrants.AddAllGrantedPolicies(options);
   }
 }
