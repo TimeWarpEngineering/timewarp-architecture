@@ -30,6 +30,21 @@ failed passkey registration), it renders two UX defects, both visible in the ren
   - `web-spa/features/event-stream/pages/EventStreamPage.razor` (line 14)
   - `web-spa/features/developer/pages/AlertExamplePage.razor` (all variants)
 
+## Goal — remove ALL Tailwind, plain CSS only
+
+**The repo standard is: no Tailwind anywhere, hand-written plain CSS on global design tokens.**
+The standard is the **`tw-blazor-css-strategy`** skill (isolation-first hybrid):
+
+- Component CSS lives in `*.razor.css` (Blazor isolation) with a native HTML root.
+- Colors/type/radius/status palette come from `var(--twe-*)` tokens in
+  `web-spa/wwwroot/css/tokens.css` — never hard-coded, never Tailwind scales.
+- `tokens.css` provides single hues, not Tailwind ramps: `--twe-positive`, `--twe-danger`,
+  `--twe-warning`, `--twe-info` (there is no `*-100`/`*-400`/`*-700`). Derive tints with
+  `color-mix()` where a lighter bg/border is needed.
+
+This task is the Tailwind-removal sweep for web-spa component CSS, anchored on the SimpleAlert
+bug that surfaced it.
+
 ## Root-cause leads
 
 - **Spacing:** `source/container-apps/web/projects/web-spa/components/elements/SimpleAlert.razor`
@@ -38,11 +53,10 @@ failed passkey registration), it renders two UX defects, both visible in the ren
   newline, so no whitespace is emitted. Needs an explicit separator (space/colon), a CSS
   `margin-inline-start` on `__content`, or a block layout for content.
 - **Dead CSS:** `SimpleAlert.razor.css` is written entirely with Tailwind `@apply` directives,
-  but the repo has **no Tailwind/PostCSS pipeline** (see `blazor-css-strategy` skill: FluentUI v5
-  + plain CSS tokens, Tailwind removed). Every rule in the file is invalid and silently dropped
-  by the browser — including the intended `block sm:inline` on `__content` and all the
-  color/padding/border styles. Rewrite the file in plain CSS (design tokens from
-  `wwwroot/css/tokens.css` where applicable).
+  but the repo has **no Tailwind/PostCSS pipeline** (per `tw-blazor-css-strategy`). Every rule
+  in the file is invalid and silently dropped by the browser — including the intended
+  `block sm:inline` on `__content` and all the color/padding/border styles. Rewrite in plain
+  CSS on `--twe-*` tokens per the skill.
 - **Pointer cursor / no selection:** investigate `cursor` / `user-select` on the `<fluent-label>`
   custom element (Fluent UI web-component shadow styles) and ancestors. Alert content should be
   selectable (`user-select: text`, `cursor: text` or `default`) — error text must be copyable.
@@ -51,18 +65,22 @@ failed passkey registration), it renders two UX defects, both visible in the ren
 
 - [ ] Title and content visually separated on all SimpleAlert variants and consumers
 - [ ] Alert text selectable with the mouse and copyable
-- [ ] `SimpleAlert.razor.css` rewritten in plain CSS (no `@apply`); variant colors/padding/borders
-      visually verified against AlertExamplePage (success/danger/warning/info/custom)
-- [ ] Check `AlertExamplePage.razor.css` and other component CSS files for the same dead-`@apply`
-      problem; fix or file follow-ups
+- [ ] `SimpleAlert.razor.css` rewritten in plain CSS on `--twe-*` tokens (no `@apply`); variant
+      colors/padding/borders visually verified on AlertExamplePage
+      (success/danger/warning/info/custom)
+- [ ] **Tailwind sweep:** grep all web-spa CSS (`*.razor.css`, `wwwroot/**/*.css`) for
+      `@apply` and Tailwind-only artifacts (`@tailwind`, `theme()`, `sm:`/`md:` variant
+      classes used as values, `bg-*-100`-style ramp references) and remove/rewrite every hit
+      in plain CSS — known suspect: `AlertExamplePage.razor.css`
 - [ ] `dev build` 0/0
 
 ## Notes
 
 - The example error message originates from
   `source/container-apps/web/features/identity/identity-problems-application.cs` (line 57).
-- `AlertExamplePage.razor.css` also uses Tailwind-style classes in selectors (`::deep`) — verify
-  whether it has the same dead-CSS issue.
+- Follow the `tw-blazor-css-strategy` skill for where CSS lives and how to scope it
+  (isolation default; `::part()` + custom properties for FluentUI shadow DOM; no `::deep`
+  dumping, no inline `style=` system).
 
 ## Session
 
