@@ -4,5 +4,6 @@
 
 namespace TimeWarp.Architecture.Features.ToDo;
 
-[Page("/todoitems")]
+[Page("/todoitems", Policy = Policies.CanViewDeveloperPage)]
+[Authorize(Policy = Policies.CanViewDeveloperPage)]
 partial class TodoItemsPage;

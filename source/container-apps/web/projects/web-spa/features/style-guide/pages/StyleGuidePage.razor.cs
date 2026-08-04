@@ -11,7 +11,8 @@
 
 namespace TimeWarp.Architecture.Features.StyleGuide;
 
-[Page("/StyleGuide")]
+[Page("/StyleGuide", Policy = Policies.CanViewDeveloperPage)]
+[Authorize(Policy = Policies.CanViewDeveloperPage)]
 [CrossSliceReference(typeof(CounterState), "Living style guide deliberately exercises the counter throw-exception pipeline.")]
 partial class StyleGuidePage
 {

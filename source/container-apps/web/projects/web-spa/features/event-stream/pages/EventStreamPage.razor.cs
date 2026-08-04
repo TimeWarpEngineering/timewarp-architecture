@@ -4,5 +4,6 @@
 
 namespace TimeWarp.Architecture.Features.EventStreams;
 
-[Page("/EventStream")]
+[Page("/EventStream", Policy = Policies.CanViewDeveloperPage)]
+[Authorize(Policy = Policies.CanViewDeveloperPage)]
 partial class EventStreamPage {}
