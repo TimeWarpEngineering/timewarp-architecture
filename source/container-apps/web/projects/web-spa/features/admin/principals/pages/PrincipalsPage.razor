@@ -12,8 +12,10 @@
 <TimeWarpPage Title="Principals">
   <div class="twe-stack">
     <p class="sg-subtitle">
-      Assign product roles to principals. Empty assignment resolves to Member; bootstrap config can
-      grant Administrator without a store write.
+      Assign product roles to principals. Empty assignment resolves to Member. Bootstrap config
+      (<code>Authentication:BootstrapAdministratorPrincipalIds</code>) can grant Administrator without
+      a store write (host restart after change). Clearing Administrator from the last admin locks you
+      out of Admin until bootstrap recovery.
     </p>
     <Card Title="Principals">
       @if (PrincipalState.Principals is null)
@@ -53,7 +55,7 @@
                       <FluentCheckbox
                         Label="@RoleIds.GetRoleNameByGuid(roleId)"
                         Checked="@PrincipalState.IsRoleSelected(principalGuid, roleId)"
-                        CheckedChanged="@(async (bool? value) => await OnRoleToggle(principalGuid, roleId))" />
+                        CheckedChanged="@(async (bool? value) => await OnRoleSelected(principalGuid, roleId, value == true))" />
                     }
                   </FluentStack>
                 </Cell>
@@ -75,8 +77,10 @@
 </TimeWarpPage>
 
 @code {
-  private async Task OnRoleToggle(Guid principalId, Guid roleId) =>
-    await Mediator.Send(new PrincipalState.ToggleRoleActionSet.Action(principalId, roleId), CancellationToken);
+  private async Task OnRoleSelected(Guid principalId, Guid roleId, bool selected) =>
+    await Mediator.Send(
+      new PrincipalState.SetRoleSelectedActionSet.Action(principalId, roleId, selected),
+      CancellationToken);
 
   private async Task OnSave(Guid principalId) =>
     await Mediator.Send(new PrincipalState.SetPrincipalRolesActionSet.Action(principalId), CancellationToken);

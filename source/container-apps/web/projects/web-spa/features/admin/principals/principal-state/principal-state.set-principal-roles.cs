@@ -2,24 +2,36 @@
 // SetPrincipalRoles action: persists draft role multi-select for one principal.
 #endregion
 
+#region Design
+// After a successful write, re-fetch ListPrincipals so drafts re-seed from *effective* roles
+// (empty store → Member; bootstrap unions Admin+Member). The Set response echoes *stored*
+// roles only — patching drafts from it desyncs virtual grants (review M1).
+// When the edited principal is the signed-in identity-session user, NotifySessionChanged so
+// AuthorizeView / nav pick up new ClaimTypes.Role without a full remount.
+#endregion
+
 namespace TimeWarp.Architecture.Features.Admin.Principals;
 
+using Microsoft.AspNetCore.Components.Authorization;
+using TimeWarp.Architecture.Services;
 using static SetPrincipalRoles;
 
 partial class PrincipalState
 {
-  public static class ToggleRoleActionSet
+  public static class SetRoleSelectedActionSet
   {
     [TrackAction]
     internal sealed class Action : IBaseAction
     {
       public Guid PrincipalId { get; }
       public Guid RoleId { get; }
+      public bool Selected { get; }
 
-      public Action(Guid principalId, Guid roleId)
+      public Action(Guid principalId, Guid roleId, bool selected)
       {
         PrincipalId = principalId;
         RoleId = roleId;
+        Selected = selected;
       }
     }
 
@@ -33,7 +45,11 @@ partial class PrincipalState
           PrincipalState.DraftRoleIds[action.PrincipalId] = set;
         }
 
-        if (!set.Add(action.RoleId))
+        if (action.Selected)
+        {
+          set.Add(action.RoleId);
+        }
+        else
         {
           set.Remove(action.RoleId);
         }
@@ -56,15 +72,23 @@ partial class PrincipalState
       }
     }
 
-    internal class Handler
-    (
-      IStore store,
-      IWebServerApiService webServerApiService,
-      ISender sender,
-      ILogger<Handler> logger
-    ) : DefaultApiHandler<Action, Command, Response>(store, webServerApiService, sender, logger)
+    internal class Handler : DefaultApiHandler<Action, Command, Response>
     {
+      private readonly ISender MediatorSender;
+      private readonly AuthenticationStateProvider AuthenticationStateProvider;
       private Guid ActivePrincipalId;
+
+      public Handler(
+        IStore store,
+        IWebServerApiService webServerApiService,
+        ISender sender,
+        ILogger<Handler> logger,
+        AuthenticationStateProvider authenticationStateProvider)
+        : base(store, webServerApiService, sender, logger)
+      {
+        MediatorSender = sender;
+        AuthenticationStateProvider = authenticationStateProvider;
+      }
 
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
       {
@@ -78,27 +102,23 @@ partial class PrincipalState
         });
       }
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        PrincipalState.DraftRoleIds[ActivePrincipalId] = response.RoleIds.ToHashSet();
-        if (PrincipalState.PrincipalsList is not null)
+        // Re-list so multi-select shows effective roles (virtual Member/bootstrap Admin), not stored-only echo.
+        await MediatorSender.Send(new FetchPrincipalsActionSet.Action(), cancellationToken);
+
+        if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
         {
-          int index = PrincipalState.PrincipalsList.FindIndex(
-            item => item.PrincipalId.Value == ActivePrincipalId);
-          if (index >= 0)
+          AuthenticationState authState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+          string? currentId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? authState.User.FindFirst("timewarp:principal_id")?.Value;
+          if (Guid.TryParse(currentId, out Guid currentPrincipal)
+            && currentPrincipal == ActivePrincipalId)
           {
-            ListPrincipals.PrincipalSummaryDto existing = PrincipalState.PrincipalsList[index];
-            PrincipalState.PrincipalsList[index] = new ListPrincipals.PrincipalSummaryDto(
-              existing.PrincipalId,
-              existing.Kind,
-              existing.TrustTier,
-              existing.IsActive,
-              existing.IsQuarantined,
-              [.. response.RoleIds]);
+            identitySession.NotifySessionChanged();
           }
         }
-
-        return Task.CompletedTask;
       }
     }
   }
