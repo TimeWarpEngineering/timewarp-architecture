@@ -1,15 +1,19 @@
 #region Purpose
-// Creates the PostgreSQL schema at host startup so the template runs against a fresh database.
+// Materializes / evolves PostgreSQL schema at host startup so the template matches the EF model.
 #endregion
 
 #region Design
-// Uses EnsureCreatedAsync rather than migrations: the template favors zero-setup first run over
-// schema evolution — switch to Database.Migrate when a generated project needs migrations.
+// Delegates to PostgresModelSchemaBootstrap: EnsureCreated for empty DBs, then create any missing
+// model tables on existing Aspire volumes (EnsureCreated alone is a no-op when tables already
+// exist — that made 147-006 principal_roles require hand DDL). Grown apps that need renames or
+// column rewrites still switch to Database.Migrate (ADR-0009).
 // Creates its own scope because IHostedService is a singleton while PostgresDbContext is scoped.
 // Registered by PostgresDbModule so the behavior ships only when the postgres feature is wired in.
 #endregion
 
 namespace TimeWarp.Architecture.HostedServices;
+
+using TimeWarp.Architecture.Persistence;
 
 public sealed partial class PostgresDbContextStartupHostedService : IHostedService
 {
@@ -48,7 +52,9 @@ public sealed partial class PostgresDbContextStartupHostedService : IHostedServi
     using IServiceScope scope = ServiceProvider.CreateScope();
 
     PostgresDbContext postgresDbContext = scope.ServiceProvider.GetRequiredService<PostgresDbContext>();
-    await postgresDbContext.Database.EnsureCreatedAsync(cancellationToken);
+    await PostgresModelSchemaBootstrap
+      .EnsureSchemaMatchesModelAsync(postgresDbContext, cancellationToken)
+      .ConfigureAwait(false);
   }
 
   public Task StopAsync(CancellationToken cancellationToken)

@@ -143,20 +143,11 @@ cd tests/container-apps/web/web-server-integration-tests && \
 ```
 
 **Manual (Aspire + postgres)**
-1. `./bin/dev run` so web-server gets `ConnectionStrings__postgres-db`.
-2. **Existing volume upgrade:** if `identity.principal_roles` is missing (DB created before 147-006),
-   either drop the Aspire postgres data volume and restart, or run:
-   ```sql
-   CREATE TABLE IF NOT EXISTS identity.principal_roles (
-     principal_id uuid NOT NULL,
-     role_id uuid NOT NULL,
-     PRIMARY KEY (principal_id, role_id)
-   );
-   ```
-   Greenfield EnsureCreated creates the table automatically.
+1. `./bin/dev run` so web-server starts with `ConnectionStrings__postgres-db`.
+2. On boot, `PostgresModelSchemaBootstrap` creates any missing model tables (including
+   `identity.principal_roles` on existing Aspire volumes — no hand DDL, no volume drop).
 3. Bootstrap or assign Administrator via Admin → Principals; Save.
 4. DataGrip: `SELECT * FROM identity.principal_roles;` — expect rows.
-5. Restart web-server (keep volume) — **Expect:** Admin nav / role grants still present
-   (not Member-only).
+5. Restart web-server (keep volume) — **Expect:** Admin nav / role grants still present.
 
-**Not in scope:** Role catalog EF; 147-005 chrome; migrations framework.
+**Not in scope:** Role catalog EF; 147-005 chrome; full `Database.Migrate` for renames/columns.

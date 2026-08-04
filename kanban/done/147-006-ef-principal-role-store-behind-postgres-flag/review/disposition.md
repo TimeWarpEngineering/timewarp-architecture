@@ -7,10 +7,10 @@
 
 ## Summary
 
-EF dual-mode principal→role store is correct. Fixed stale comments and scoped resolution in authz tests. One accepted exception: EnsureCreated will not alter existing Aspire volumes — operators drop volume or create `identity.principal_roles` once (documented in How to validate).
+EF dual-mode principal→role store is correct. Fixed stale comments and scoped resolution in authz tests. M1 (EnsureCreated no-op on existing volumes) was **fixed after disposition** via `PostgresModelSchemaBootstrap` — startup creates missing model tables automatically (template automation, no hand DDL).
 
 ## Exception log
 
 | ID | Severity | Rationale | Decided by |
 |----|----------|-----------|------------|
-| M1 | suggestion | EnsureCreated upgrade gap is host ops for existing volumes; migrations not in template yet | orchestrator |
+| M1 | suggestion | Fixed post-review: bootstrap creates missing tables on existing volumes | orchestrator (follow-up) |
