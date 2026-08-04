@@ -2,7 +2,6 @@
 @inherits BaseComponent
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
-@inject SpaSignOutService SpaSignOutService
 
 @code {
   private async Task HandleSignIn()
@@ -12,9 +11,8 @@
   }
   private async Task HandleSignOut()
   {
-    // Task 104-034: mode-aware sign-out (identity-session / mock / Entra). Do not always
-    // NavigateToLogout — that requires IRemoteAuthenticationService (Entra only).
-    await SpaSignOutService.SignOutAsync();
+    // UX actions go through TimeWarp.State — see ProfileState.SignOutActionSet.
+    await ProfileState.SignOut();
   }
   private async Task HandleYourProfile()
   {
