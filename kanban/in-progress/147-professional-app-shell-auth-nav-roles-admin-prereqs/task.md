@@ -47,7 +47,7 @@ in parallel.
 
 - [x] 147-001 demo nav gated
 - [x] 147-002 RoleIds trim
-- [ ] 147-003 remaining page policies
+- [x] 147-003 remaining page policies
 - [ ] 147-004 admin list screens
 - [ ] 147-005 first-run chrome
 

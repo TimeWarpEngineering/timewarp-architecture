@@ -4,5 +4,7 @@
 
 namespace TimeWarp.Architecture.Features.Account;
 
-[Page("/changePassword")]
+// Legacy placeholder (no password product). Still auth-gated so anonymous cannot open it.
+[Page("/changePassword", Policy = Policies.Authenticated)]
+[Authorize(Policy = Policies.Authenticated)]
 partial class ChangePasswordPage;

@@ -4,5 +4,6 @@
 
 namespace TimeWarp.Architecture.Features.Applications;
 
-[Page("/Settings")]
+[Page("/Settings", Policy = Policies.CanViewSettings)]
+[Authorize(Policy = Policies.CanViewSettings)]
 partial class SettingsPage;

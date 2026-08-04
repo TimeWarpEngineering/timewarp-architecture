@@ -7,8 +7,10 @@
 // principals; this map is the only place that pairs them. Page/nav registration must call
 // RolePolicyGrants.AddPolicy so role restructuring never edits scattered RequireRole lines.
 // Multiple roles per policy = OR (ASP.NET Core RequireRole params).
-// Operator has no SPA policies yet — reserved for marketplace (118 / 147 later).
-// Member is default on identity-session principals; it does not grant admin/dev nav.
+// Self-service policies grant all product roles (Member + Operator + Admin + Developer) so any
+// signed-in human can open Profile/Settings; admin/dev nav stay role-narrow.
+// Operator-only marketplace policies land with 118.
+// Policies.Authenticated is NOT here — it is RequireAuthenticatedUser in PolicyRegistration.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Authorization;
@@ -20,6 +22,15 @@ using static TimeWarp.Architecture.Features.RoleIds;
 /// <summary>Maps policy name → role Guids that satisfy it.</summary>
 public static class RolePolicyGrants
 {
+  /// <summary>Every product human role (default passkey Member through Admin/Developer).</summary>
+  public static IReadOnlyList<Guid> AllProductRoles { get; } =
+  [
+    Member,
+    Operator,
+    Administrator,
+    Developer,
+  ];
+
   /// <summary>
   /// Policy → roles that grant it. Add new SPA policies here and in
   /// <see cref="AuthorizationConstants.Policies"/>; never RequireRole inline elsewhere.
@@ -27,6 +38,10 @@ public static class RolePolicyGrants
   public static IReadOnlyDictionary<string, IReadOnlyList<Guid>> Grants { get; } =
     new Dictionary<string, IReadOnlyList<Guid>>(StringComparer.Ordinal)
     {
+      // Self-service (147-003)
+      [CanViewOwnProfile] = AllProductRoles,
+      [CanViewSettings] = AllProductRoles,
+
       // Admin
       [CanViewAdminSidebarNavSection] = [Administrator],
       [CanViewAdminPage] = [Administrator],

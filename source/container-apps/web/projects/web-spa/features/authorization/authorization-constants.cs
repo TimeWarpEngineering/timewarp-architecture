@@ -18,6 +18,13 @@ public static class AuthorizationConstants
     // General
     public const string Anonymous = nameof(Anonymous);
 
+    /// <summary>Any signed-in principal (identity-session, mock, or Entra). Not role-gated.</summary>
+    public const string Authenticated = nameof(Authenticated);
+
+    // Self-service (Member+ product roles via RolePolicyGrants)
+    public const string CanViewOwnProfile = nameof(CanViewOwnProfile);
+    public const string CanViewSettings = nameof(CanViewSettings);
+
     // Pages
     public const string CanViewAdminPage = nameof(CanViewAdminPage);
     public const string CanViewDeveloperPage = nameof(CanViewDeveloperPage);

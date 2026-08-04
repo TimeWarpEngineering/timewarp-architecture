@@ -21,6 +21,8 @@ internal static class PagePolicyRegistration
     // page-specific names documented here for discoverability.
     _ = new[]
     {
+      CanViewOwnProfile,
+      CanViewSettings,
       CanViewAdminPage,
       CanViewDeveloperPage,
       CanViewUserClaimsPage,

@@ -20,11 +20,16 @@ internal static class PolicyRegistration
       Anonymous,
       policy => policy.RequireAssertion(static _ => true));
 
+    // Any signed-in principal (Member claim or mock/Entra). Not role-mapped.
+    options.AddPolicy(
+      Authenticated,
+      policy => policy.RequireAuthenticatedUser());
+
     // Documented registration sites (no-op grant lists for grep discoverability).
     PagePolicyRegistration.AddPolicies(options);
     NavigationPolicyRegistration.AddPolicies(options);
 
-    // SSOT: every role-gated SPA policy.
+    // SSOT: every role-gated SPA policy (self-service + admin + developer).
     RolePolicyGrants.AddAllGrantedPolicies(options);
   }
 }

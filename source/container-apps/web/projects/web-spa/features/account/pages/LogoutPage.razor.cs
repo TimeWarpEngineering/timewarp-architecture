@@ -4,5 +4,6 @@
 
 namespace TimeWarp.Architecture.Features.Account;
 
+// Public confirmation landing after SignOut (principal may already be anonymous).
 [Page("/Logout")]
 partial class LogoutPage;

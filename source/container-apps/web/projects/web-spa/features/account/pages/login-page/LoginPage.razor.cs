@@ -21,6 +21,7 @@ using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Foundation.Types;
 
+// Public passkey entry. Anonymous — signed-in users may still open it to add credentials later.
 [Page("/Login")]
 partial class LoginPage
 {
