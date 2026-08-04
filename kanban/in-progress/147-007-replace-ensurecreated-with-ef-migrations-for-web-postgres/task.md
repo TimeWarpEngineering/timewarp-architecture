@@ -267,6 +267,140 @@ roles → restart (volume persists) → grants persist **without** wiping.
 - 147-006: `IPrincipalRoleStore` + `EfPrincipalRoleStore` + `identity.principal_roles` mapping
 - Interim bootstrap: removed by this task
 
+## Notes
+
+### Finalized plan (orchestration 2026-08-04)
+
+Planning session verified the long Implementation plan against the repo. Keep
+Description / Requirements / Decisions / phases A0–F above; this subsection is the
+**implementer SSOT for corrections, wiring sketch, exact commands, and gates**.
+
+#### Codebase findings — corrections vs original task wording
+
+| Topic | Correction |
+|-------|------------|
+| `dotnet-ef` local tool | **Still pin** in `.config/dotnet-tools.json` for agent/human scaffolding (`migrations add`). AppHost `RunDatabaseUpdateOnStart` may download/resolve `dotnet ef` on demand — local pin is not only for the AppHost path; document `dotnet tool restore` for clean machines and template consumers. |
+| Design package assets | Use EF-standard **both** `PrivateAssets="all"` **and** `IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"` on `Microsoft.EntityFrameworkCore.Design` in web-infrastructure — not bare `PrivateAssets` alone (design-time MSBuild targets need IncludeAssets). |
+| Dashboard add-migration defaults | Also wire **`WithMigrationOutputDirectory`** + **`WithMigrationNamespace`** on the EF migrations resource so Aspire dashboard / tooling defaults match D7 home (not only CLI `-o`). |
+| Optional DbContext FQN | If multi-context or API requires an explicit type name: `TimeWarp.Architecture.Persistence.PostgresDbContext` (namespace confirmed on `postgres-db-context-infrastructure.cs`). Prefer omit FQN when single-context is unambiguous. |
+| Design-time factory connection key | Factory may use **literal `"postgres-db"`** with a Design-region comment that it matches `Constants.PostgresDatabaseResourceName` / AppHost `postgres-db` — avoid pulling AppHost constants into web-infrastructure. Env/config: `ConnectionStrings:postgres-db` (Aspire injects `ConnectionStrings__postgres-db`). Dummy only for offline `migrations add`. |
+| `ganda repo audit` kebab | In addition to TW0001/TWA0004 `.editorconfig` carve-outs and membership-guard Exclude, **kebab-path-names allowlist** (or equivalent audit config) may need the migrations path — EF tooling names are not kebab. |
+| `HostedServices` namespace | `TimeWarp.Architecture.HostedServices` is still used by **grpc** (`protobuf-generation-hosted-service-server.cs`). Only drop **web-server** `global using TimeWarp.Architecture.HostedServices` if nothing else in web remains after deleting the two postgres hosted-service files. Do **not** remove the namespace concept repo-wide. |
+
+#### Ordered phases (A0–F) — key paths + final AppHost sketch
+
+**A0 — Spike (gates D6)**  
+- CPM: `Aspire.Hosting.EntityFrameworkCore` `13.4.6-preview.1.26319.6`; AppHost ref.  
+- Confirm cohabitation with `Aspire.AppHost.Sdk/13.4.3` (`aspire-app-host.csproj`); bump SDK to 13.4.6 if needed.  
+- Pin `dotnet-ef`; throwaway migration if needed; prove `dev run` → tables + `__EFMigrationsHistory`.  
+- Prove `aspire-tests` boots with migration resource + `WaitForCompletion`.  
+- **A0 failure → fallback:** startup `MigrateAsync` in web-server (document in Results); Requirements 2–8 unchanged; only Requirement 1 / D6 preferred path changes. See **A0 failure** below.
+
+**A — Tooling layout**  
+| Item | Path / action |
+|------|----------------|
+| CPM pins | `Directory.Packages.props`: Design, Tools, Aspire.Hosting.EntityFrameworkCore |
+| Design package | `source/container-apps/web/projects/web-infrastructure/web-infrastructure.csproj` — Design with PrivateAssets+IncludeAssets; Tools |
+| Local tool | `.config/dotnet-tools.json` — `dotnet-ef` |
+| Factory | `source/container-apps/web/platform/postgres/` (or infra-convention name) — `IDesignTimeDbContextFactory<PostgresDbContext>` |
+| Membership | `source/container-apps/web/msbuild/feature-membership.targets` — Exclude `platform/postgres/migrations/**` + Compile glob into web-infrastructure |
+| Analyzers | `.editorconfig` migrations section; `skills/tw-csharp` + `documentation/developer/standards/file-naming.md`; **ganda kebab allowlist** if audit flags path |
+| AppHost ref | `source/container-apps/aspire/projects/aspire-app-host/aspire-app-host.csproj` — compile-only `ProjectReference` to web-infrastructure (`IsAspireProjectResource="false"`) |
+
+**B — Initial migration**  
+- Scaffold into `source/container-apps/web/platform/postgres/migrations/` (command below).  
+- Review: schemas `identity`, `profiles`; principals, credentials, principal_roles, profiles; TypedIds; concurrency.  
+- Commit migration + snapshot.
+
+**C — Hosts**  
+- AppHost postgres region (same flag conditional as existing `AddPostgres` — TWA0010).  
+- Delete:  
+  - `source/container-apps/web/platform/postgres/postgres-db-context-startup-hosted-service-server.cs`  
+  - `source/container-apps/web/platform/postgres/postgres-model-schema-bootstrap-server.cs`  
+- Edit `postgres-db-module-server.cs`: drop hosted-service registration; regions.  
+- Optionally drop web-server HostedServices global using **only if unused**.  
+- Reconcile Design regions: profile entity config, principal-role-assignment, postgres-db-module.
+
+**Final AppHost wiring sketch** (postgres-conditional; resource name via local const next to `PostgresResourceName`):
+
+```csharp
+IResourceBuilder<...> webMigrations = webServer
+  .AddEFMigrations("web-migrations") // optional FQN: TimeWarp.Architecture.Persistence.PostgresDbContext
+  .WithMigrationsProject<Projects.web_infrastructure>()
+  .WithMigrationOutputDirectory("../web/platform/postgres/migrations") // relative path as resolved from AppHost / confirm at implement
+  .WithMigrationNamespace("TimeWarp.Architecture.Persistence.Migrations") // confirm EF default vs house namespace at scaffold
+  .WithReference(postgresDb)
+  .WaitFor(postgresDb)
+  .RunDatabaseUpdateOnStart()
+  .PublishAsMigrationScript()
+  .PublishAsMigrationBundle();
+webServer.WaitForCompletion(webMigrations);
+```
+
+Implementer: confirm exact `WithMigrationOutputDirectory` relative path and migration namespace against what `dotnet ef migrations add` emits; keep dashboard defaults and CLI `-o`/`--namespace` aligned.
+
+**D — Tests**  
+- `tests/container-apps/web/web-infrastructure-tests/ef-principal-store-contract-tests.cs`  
+- `…/ef-principal-role-store-tests.cs`  
+- `…/profile-postgres-persistence-tests.cs` (rename `EnsureCreated_…` method)  
+- Grep: zero `EnsureCreated` under `source/` and `tests/` (prose-only historical OK).  
+- `aspire-tests` green with migration resource.
+
+**E — Docs / scripts**  
+- ADR-0009; `how-to-add-your-aggregate.md`; `how-to-remove-demo-features.md`.  
+- `scripts/postgres/*`: rewrite or delete with pointer (no stale `Persistence\Migrations`).
+
+**F — Review / done**  
+- `review/` under this folder task; Results + How to validate; then `ganda kanban done`.
+
+#### Exact migrations add command
+
+From repo root (after `dotnet tool restore`):
+
+```bash
+dotnet ef migrations add InitialPostgresModel \
+  --project source/container-apps/web/projects/web-infrastructure/web-infrastructure.csproj \
+  --startup-project source/container-apps/web/projects/web-server/web-server.csproj \
+  --context PostgresDbContext \
+  --output-dir ../../platform/postgres/migrations \
+  --namespace TimeWarp.Architecture.Persistence.Migrations
+```
+
+Notes: `--output-dir` is relative to the project directory (web-infrastructure → `platform/postgres/migrations`). Adjust `--namespace` if house convention differs; keep consistent with `WithMigrationNamespace`. If startup-project is unnecessary once the design-time factory is solid, factory-only is fine — keep startup-project if EF still requires it.
+
+#### Acceptance criteria commands
+
+```bash
+./bin/dev build                    # 0/0
+./bin/dev template-smoke           # SmokeNoPostgres guards flag wiring
+
+# Empty postgres volume + dev run:
+#   dashboard: web-migrations → Finished; web-server WaitForCompletion then starts
+#   SQL: __EFMigrationsHistory + identity.* + profiles.* ; no hand DDL
+
+cd tests/container-apps/web/web-infrastructure-tests && \
+  dotnet test -c Release
+
+cd tests/container-apps/aspire/aspire-tests && \
+  dotnet test -c Release
+
+# Schema-change smoke: throwaway entity → migrations add → dev run → table → revert
+# Manual: assign roles → restart (volume persists) → grants persist without wipe
+```
+
+Also: `ganda repo audit` clean for migrations path (kebab allowlist / exclusions as needed).
+
+#### A0 failure → startup MigrateAsync fallback
+
+If preview `Aspire.Hosting.EntityFrameworkCore` fails cohabitation, `RunDatabaseUpdateOnStart`, or `aspire-tests` graph proof:
+
+1. Record failure reason in Results.  
+2. **Do not** keep EnsureCreated / schema bootstrap.  
+3. Fallback: web-server applies `Database.MigrateAsync` at startup (new thin hosted service or module hook — **not** resurrecting `PostgresModelSchemaBootstrap`).  
+4. Keep: migrations folder, design-time factory, Design/Tools pins, tests on `Migrate()`, docs (note fallback), one-time wipe.  
+5. Drop or skip: AppHost `AddEFMigrations` / publish-as-migration artifacts until package is viable.  
+6. D6 remains preferred; fallback is temporary and documented.
+
 ## Session
 
 - Created: 2026-08-04 — folder task for migrations; plan for multi-agent review
@@ -287,3 +421,4 @@ roles → restart (volume persists) → grants persist **without** wiping.
   (protos is outside the guarded trees — Exclude written fresh); D8 explicitly covers
   Designer.cs companions; A0 checks `Aspire.AppHost.Sdk/13.4.3` vs 13.4.6 package
   train; stale `scripts/postgres/*` reconcile/retire added.
+- Planning: orchestration session (2026-08-04) — plan verified against repo; no human clarifying questions.
