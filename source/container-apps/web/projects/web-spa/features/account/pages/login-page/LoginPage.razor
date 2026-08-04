@@ -45,12 +45,16 @@
 
     @if (!string.IsNullOrEmpty(StatusMessage))
     {
-      <SimpleAlert Type="SimpleAlert.AlertType.Success" Title="Success">@StatusMessage</SimpleAlert>
+      <FluentMessageBar Intent="MessageBarIntent.Success" Title="Success" AllowDismiss="false">
+        @StatusMessage
+      </FluentMessageBar>
     }
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
-      <SimpleAlert Type="SimpleAlert.AlertType.Danger" Title="Error">@ErrorMessage</SimpleAlert>
+      <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
+        @ErrorMessage
+      </FluentMessageBar>
     }
   </div>
 </TimeWarpPage>

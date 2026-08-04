@@ -18,9 +18,11 @@ Underscores in component names represent **hierarchical relationships** and are 
 **Pattern**: Single files  
 **Location**: `Elements/`, `Forms/`, etc.  
 **Examples**:
-- `Button.razor`
-- `HyperLink.razor`
+- `Card.razor`
+- `StatusBadge.razor`
 - `FormContainer.razor`
+
+**Inline status:** use FluentUI `FluentMessageBar` (not a custom alert). Buttons: `FluentButton`.
 
 #### **Tier 2: Complex Components** 
 **Pattern**: Flat structure with underscore hierarchy  

@@ -55,13 +55,13 @@ The standard is the **`tw-blazor-css-strategy`** skill (isolation-first hybrid):
 
 ## Checklist
 
-- [ ] Replace SimpleAlert on Login, Passkeys, EventStream with FluentMessageBar (correct Intent, AllowDismiss=false)
-- [ ] Add Message bars section to StyleGuide
-- [ ] Delete SimpleAlert + AlertExamplePage + Button + HyperLink
-- [ ] Rewrite LinkDisplay / PropertyDisplay off Tailwind class strings
-- [ ] Grep-clean `@apply` / SimpleAlert / deleted components; update docs that name them
+- [x] Replace SimpleAlert on Login, Passkeys, EventStream with FluentMessageBar (correct Intent, AllowDismiss=false)
+- [x] Add Message bars section to StyleGuide
+- [x] Delete SimpleAlert + AlertExamplePage + Button + HyperLink
+- [x] Rewrite LinkDisplay / PropertyDisplay off Tailwind class strings
+- [x] Grep-clean `@apply` / SimpleAlert / deleted components; update docs that name them
 - [ ] Visual: title/body separated, text selectable, StyleGuide + Login error path
-- [ ] `dev build` 0/0
+- [x] `dev build` 0/0
 
 ## Notes
 
@@ -354,3 +354,4 @@ No automated UI test required unless one already asserts SimpleAlert markup (non
 
 - Created: opencode (2026-08-04)
 - Planning: opencode orchestration (2026-08-04)
+- Implementation: opencode (2026-08-04)

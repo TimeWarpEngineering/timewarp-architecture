@@ -72,6 +72,24 @@
         </div>
       </Card>
 
+      <Card Title="Message bars (FluentUI)">
+        <p class="sg-subtitle">Inline page/panel status — prefer FluentMessageBar over custom alerts. Sticky status uses AllowDismiss=false.</p>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+          <FluentMessageBar Intent="MessageBarIntent.Success" Title="Success" AllowDismiss="false">
+            Operation completed successfully.
+          </FluentMessageBar>
+          <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
+            Something went wrong — you can select and copy this text.
+          </FluentMessageBar>
+          <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Warning" AllowDismiss="false">
+            Proceed with caution.
+          </FluentMessageBar>
+          <FluentMessageBar Intent="MessageBarIntent.Info" Title="Information" AllowDismiss="false">
+            Helpful context that does not require immediate action.
+          </FluentMessageBar>
+        </FluentStack>
+      </Card>
+
       <Card Title="Notifications (toasts)">
         <p class="sg-subtitle">Dispatched through the app's ToastNotificationState pipeline. The last button throws inside an action to exercise the exception → toast path.</p>
         <div class="sg-row">
