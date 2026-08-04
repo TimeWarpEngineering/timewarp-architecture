@@ -26,6 +26,7 @@ in parallel.
 | **147-003** | Enforce page policies on remaining product routes (Profile, Settings, …) | done |
 | **147-004** | Admin principals + roles list screens with real policies | done |
 | **147-006** | EF principal→role store behind postgres flag | done |
+| **147-007** | Replace EnsureCreated with EF migrations (web Postgres) | to-do |
 | **147-005** | First-run home + login professional chrome | to-do |
 
 ## Target roles (product)
