@@ -30,6 +30,9 @@
 // the real environment via ResolveRealEnvironmentName instead of IConfiguration — see that
 // overload's own Design region for why (a Production-booted host must not activate mock auth from
 // config content alone).
+// Task 154: identity-session cookie OnRedirectToLogin is dual-mode — HTML/page deep links 302 to
+// /Login?returnUrl=…; /api challenges stay 401. Classification SSOT:
+// IdentitySessionCookieChallenge (platform/identity-host). Forbid always 403 (never Login).
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -360,11 +363,22 @@ public class Program : IAspNetProgram
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromHours(24);
-        // Ceremony/session endpoints are JSON APIs, not browser-redirect flows — an unauthenticated
-        // or forbidden request must get a status code, not a 302 to a login page that does not exist.
+        // Dual-mode challenge (task 154): non-API HTML/page deep links 302 to /Login?returnUrl=…
+        // so the SPA and task-153 client flow can run; /api/… stays 401 (contract seam). Forbid
+        // is always 403 — authenticated-but-insufficient policy must not bounce to Login.
+        // Classification SSOT: IdentitySessionCookieChallenge.
         options.Events.OnRedirectToLogin = context =>
         {
-          context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+          if (IdentitySessionCookieChallenge.ShouldRedirectToLogin(context.Request))
+          {
+            context.Response.Redirect(
+              IdentitySessionCookieChallenge.BuildLoginRedirectTarget(context.Request));
+          }
+          else
+          {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+          }
+
           return Task.CompletedTask;
         };
         options.Events.OnRedirectToAccessDenied = context =>

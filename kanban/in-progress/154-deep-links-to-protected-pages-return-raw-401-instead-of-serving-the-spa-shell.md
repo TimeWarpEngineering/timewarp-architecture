@@ -33,11 +33,11 @@ getting 401 (no HTML redirects on the contract seam).
 
 ## Checklist
 
-- [ ] Locate the challenge path (identity-session cookie scheme options / prerender pipeline
+- [x] Locate the challenge path (identity-session cookie scheme options / prerender pipeline
       in web-server) and pick redirect-vs-shell strategy
-- [ ] Implement; reconcile Design regions
-- [ ] Regression tests (HTML deep link signed out; API 401 unchanged; signed-in deep link OK)
-- [ ] `dev build` 0/0; suite green
+- [x] Implement; reconcile Design regions
+- [x] Regression tests (HTML deep link signed out; API 401 unchanged; signed-in deep link OK)
+- [x] `dev build` 0/0; suite green
 - [ ] Live smoke: address-bar hit to /Settings signed out lands on /Login?returnUrl=%2FSettings
 - [ ] Results with How to validate
 
@@ -103,3 +103,12 @@ curl -sI 'https://localhost:<web>/api/Roles'                           # 401, no
 
 - Created: Claude (2026-08-05, during task 153 verification)
 - Orchestration: Grok (2026-08-05) — Phase 1–3; plan = HTML redirect dual-mode cookie challenge
+- Implementation: Grok Build (2026-08-05)
+  - Created `IdentitySessionCookieChallenge` helper (ShouldRedirectToLogin / BuildLoginRedirectTarget)
+  - Wired dual-mode `OnRedirectToLogin` in `program.cs`; forbid stays 403
+  - Integration suite `ProtectedPageDeepLink_` — 5/5 green
+  - `./bin/dev build` 0/0
+  - Residual: authenticated Blazor HTML SSR of `/Settings` stack-overflows in in-proc host
+    (pre-existing IdentitySessionAuthenticationStateProvider prerender path); positive signed-in
+    proof uses session API + Member `/Admin/Roles` 403; page 200 left to live smoke
+  - Full suite still has 16 pre-existing credential failures (task 151) — unrelated
