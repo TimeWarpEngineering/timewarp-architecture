@@ -29,10 +29,11 @@ namespace TimeWarp.Architecture.Features.Profiles
   using System.Threading.Tasks;
   using OneOf;
   using Shouldly;
+  using TimeWarp.Architecture.Abstractions;
   using TimeWarp.Architecture.Features.Profiles.Application;
   using TimeWarp.Architecture.Features.Profiles.Domain;
-  using TimeWarp.Foundation.Abstractions;
   using TimeWarp.Foundation.Types;
+  using TimeWarp.Identity;
   using TimeWarp.Jaribu;
   using static TimeWarp.Jaribu.TestRunner;
   using static TimeWarp.Architecture.Features.Profiles.GetProfile;
@@ -176,6 +177,8 @@ namespace TimeWarp.Architecture.Features.Profiles
       Profile? stored = await store.FindAsync(ProfileId.From(userId));
       stored.ShouldNotBeNull();
       stored.DisplayName.ShouldBe("Member");
+      // Task 150: the same principal Guid must always resolve to the store row keyed ProfileId.From(guid).
+      stored.Id.ShouldBe(ProfileId.From(userId));
     }
 
     public static async Task Authenticated_existing_profile_Should_ReturnStoredFields()
@@ -216,15 +219,20 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     private static ProfileHandler CreateHandler(Guid? userId, IProfileStore store)
     {
+      PrincipalId? principalId = userId is null ? null : PrincipalId.From(userId.Value);
       return new ProfileHandler(
-        new StubCurrentUserService(userId),
+        new StubCurrentPrincipalAccessor(principalId),
         store);
     }
 
-    private sealed class StubCurrentUserService : ICurrentUserService
+    private sealed class StubCurrentPrincipalAccessor : ICurrentPrincipalAccessor
     {
-      public StubCurrentUserService(Guid? userId) => UserId = userId;
-      public Guid? UserId { get; }
+      private readonly PrincipalId? PrincipalId;
+
+      public StubCurrentPrincipalAccessor(PrincipalId? principalId) => PrincipalId = principalId;
+
+      public Task<PrincipalId?> GetCurrentPrincipalIdAsync(CancellationToken cancellationToken) =>
+        Task.FromResult(PrincipalId);
     }
   }
 

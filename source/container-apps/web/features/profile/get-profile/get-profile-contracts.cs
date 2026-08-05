@@ -15,9 +15,9 @@
 // output shape changes.
 // [EndpointAllowAnonymous] (task 110 / 148 D3): the handler is deliberately dual-mode — an
 // anonymous caller gets the contract's mock response so the demo works with no sign-in, and an
-// authenticated caller (ICurrentUserService.UserId present) gets store-backed create-if-missing
-// profile data. Requiring auth at the endpoint would break the anonymous demo path. Page gate
-// remains Policies.CanViewOwnProfile.
+// authenticated caller (ICurrentPrincipalAccessor resolves a current principal — task 150) gets
+// store-backed create-if-missing profile data. Requiring auth at the endpoint would break the
+// anonymous demo path. Page gate remains Policies.CanViewOwnProfile.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;

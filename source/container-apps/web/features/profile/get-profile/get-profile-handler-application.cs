@@ -4,19 +4,28 @@
 
 #region Design
 // Task 148:
-//   - Anonymous (no UserId): contract mock so demo works without sign-in (D3).
-//   - Authenticated: IProfileStore Find; create-if-missing with ProfileId.From(UserId) and defaults
-//     Member / en-US / US / system / Notifications=false (D1). Concurrent create races throw on
-//     unique PK / TryAdd → re-find. Application never takes PostgresDbContext (D4).
+//   - Anonymous (no current principal): contract mock so demo works without sign-in (D3).
+//   - Authenticated: IProfileStore Find; create-if-missing with ProfileId.From(principal Guid) and
+//     defaults Member / en-US / US / system / Notifications=false (D1). Concurrent create races
+//     throw on unique PK / TryAdd → re-find. Application never takes PostgresDbContext (D4).
 //   - Response: Alias ← DisplayName; Language/Region/Theme/Notifications from aggregate.
 // Task 149: Avatar is local TimeWarp.Multiavatar (MultiavatarGenerator.Generate), seeded by
 // user id — no network, no HttpClient, no fallback SVG path. Not domain/EF.
+// Task 150: identity comes from ICurrentPrincipalAccessor, not ICurrentUserService. The
+// identity-session cookie principal carries only the timewarp:principal_id claim (see
+// cookie-browser-session-service-server.cs / identity-session-defaults-server.cs); foundation's
+// ICurrentUserService reads a "UserId" claim that no scheme ever emits, so this handler previously
+// always fell through to the anonymous mock for authenticated callers. ICurrentPrincipalAccessor
+// is the scheme-agnostic port that actually reads the claim identity-session issuance emits (see
+// i-current-principal-accessor-application.cs's Design region).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles.Application;
 
 using System.Text;
+using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Features.Profiles.Domain;
+using TimeWarp.Identity;
 using TimeWarp.Multiavatar;
 using static TimeWarp.Architecture.Features.Profiles.GetProfile;
 
@@ -29,14 +38,14 @@ public sealed class GetProfile
     private const string DefaultRegion = "US";
     private const string DefaultTheme = "system";
 
-    private readonly ICurrentUserService CurrentUserService;
+    private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IProfileStore ProfileStore;
 
     public Handler(
-      ICurrentUserService currentUserService,
+      ICurrentPrincipalAccessor currentPrincipalAccessor,
       IProfileStore profileStore)
     {
-      CurrentUserService = currentUserService;
+      CurrentPrincipalAccessor = currentPrincipalAccessor;
       ProfileStore = profileStore;
     }
 
@@ -44,13 +53,14 @@ public sealed class GetProfile
       Query request,
       CancellationToken cancellationToken)
     {
-      Guid? userId = CurrentUserService.UserId;
-      if (userId is null)
+      PrincipalId? principalId = await CurrentPrincipalAccessor.GetCurrentPrincipalIdAsync(cancellationToken).ConfigureAwait(false);
+      if (principalId is null)
       {
         return GetMockResponseFactory()(request);
       }
 
-      var profileId = ProfileId.From(userId.Value);
+      Guid userId = principalId.Value.Value;
+      var profileId = ProfileId.From(userId);
       Profile? profile = await ProfileStore.FindAsync(profileId, cancellationToken).ConfigureAwait(false);
 
       if (profile is null)
@@ -78,7 +88,7 @@ public sealed class GetProfile
         }
       }
 
-      string avatar = GetAvatarDataUri(userId.Value);
+      string avatar = GetAvatarDataUri(userId);
 
       return new Response(
         alias: profile.DisplayName,
