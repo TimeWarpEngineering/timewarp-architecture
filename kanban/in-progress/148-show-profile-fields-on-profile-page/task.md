@@ -56,12 +56,12 @@ that exist), loaded through the existing BFF/profile state path — not a hard-c
 
 ## Checklist
 
-- [ ] Inventory ProfileState vs domain fields vs GetProfile Response; decide field names on the wire
-- [ ] Expand GetProfile contract/handler (+ tests) for display fields
-- [ ] Load Profile from EF when authenticated + postgres (create/seed policy if missing row — document)
-- [ ] Profile page UI shows all required fields; remove "coming soon"
-- [ ] Fetch on page enter (or reuse state); empty/loading/error states honest
-- [ ] Build 0/0; relevant tests green
+- [x] Inventory ProfileState vs domain fields vs GetProfile Response; decide field names on the wire
+- [x] Expand GetProfile contract/handler (+ tests) for display fields
+- [x] Load Profile from EF when authenticated + postgres (create/seed policy if missing row — document)
+- [x] Profile page UI shows all required fields; remove "coming soon"
+- [x] Fetch on page enter (or reuse state); empty/loading/error states honest
+- [x] Build 0/0; relevant tests green
 
 
 ## Notes
@@ -90,3 +90,4 @@ that exist), loaded through the existing BFF/profile state path — not a hard-c
 
 - Created: 2026-08-05 — user request after migrations cutover; Profile page still stub
 - Planning: orchestration 2026-08-05 — plan locked D1–D10; no clarifying questions
+- Implement: 2026-08-05 — D1–D10 landed (IProfileStore dual-mode, create-if-missing, contract/state/page, tests). `./bin/dev build` 0/0; get-profile-tests 10/10; web-domain-tests 28/28. Not marked done / no PR.
