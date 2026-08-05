@@ -1,0 +1,76 @@
+# Show profile fields on Profile page
+
+## Description
+
+Replace the Profile SPA page stub (`Profile — coming soon.`) with a real read-only (or
+edit-ready) view of the signed-in user's profile fields.
+
+Today:
+
+- `web-spa/pages/ProfilePage.razor` is a single card: "Profile — coming soon."
+- Chrome avatar menu already calls `ProfileState.FetchProfileData()` and shows `Alias` + avatar.
+- Domain aggregate `Profile` has: **DisplayName**, **Language**, **Region**, **Theme**,
+  **Notifications** (+ `Version`) mapped under `profiles.profiles`.
+- `GetProfile` contract/handler only returns **Alias** + **Avatar** and does **not** load from
+  EF — authenticated path synthesizes alias and fetches multiavatar.com each request (TODOs in
+  handler).
+
+Goal: Profile page shows the profile information users care about (at least all domain fields
+that exist), loaded through the existing BFF/profile state path — not a hard-coded stub.
+
+## Requirements
+
+1. **UI:** Replace `ProfilePage.razor` stub with a layout that displays profile fields (FluentUI /
+   existing card patterns). Minimum fields to show when data is available:
+   - Display name (or Alias if that remains the chrome-facing name)
+   - Language, Region, Theme
+   - Notifications (on/off)
+   - Avatar (existing data URI / image)
+2. **Data:** Page loads via TimeWarp.State (`ProfileState` / `FetchProfileData` or dedicated
+   action). Do not call HttpClient from the page.
+3. **Contract/handler:** Expand `GetProfile` Response (and handler) as needed so the page can
+   show those fields. Prefer reading a real `Profile` from `PostgresDbContext` when postgres is
+   on and a row exists; document dual-mode if anonymous/mock paths stay.
+4. **Auth:** Profile page stays gated (`Policies.CanViewOwnProfile` / existing `[Page]` policy).
+   Align endpoint auth with real persistence (today `[EndpointAllowAnonymous]` is deliberate for
+   dual-mode demo — revisit when loading durable profiles for authenticated users only).
+5. **No "coming soon"** left on this page for the happy path.
+6. **Tests:** Co-located Jaribu or existing suite coverage for GetProfile happy path when
+   persistence is wired; SPA smoke optional if already covered elsewhere.
+
+## Non-goals
+
+- Full profile edit/save UX (unless trivial; prefer read display first)
+- Multi-tenant / multi-profile
+- Replacing multiavatar strategy end-to-end (may keep temporary avatar until persisted)
+
+## Context / anchors
+
+| Path | Role |
+|------|------|
+| `web-spa/pages/ProfilePage.razor` (+ `.razor.cs`) | Stub UI |
+| `web-spa/features/profiles/profile-state/*` | SPA state (Alias, Avatar today) |
+| `web/features/profile/get-profile/*` | Contract + handler (TODO: DB) |
+| `web/features/profile/profile-domain.cs` | Aggregate fields |
+| `profiles.profiles` | EF table (migrations path, 147-007) |
+
+## Checklist
+
+- [ ] Inventory ProfileState vs domain fields vs GetProfile Response; decide field names on the wire
+- [ ] Expand GetProfile contract/handler (+ tests) for display fields
+- [ ] Load Profile from EF when authenticated + postgres (create/seed policy if missing row — document)
+- [ ] Profile page UI shows all required fields; remove "coming soon"
+- [ ] Fetch on page enter (or reuse state); empty/loading/error states honest
+- [ ] Build 0/0; relevant tests green
+
+## Notes
+
+- **Logged-in after DB wipe:** identity-session cookie (and mock auth) live in the **browser**,
+  not Postgres. Ctrl-Shift-R reloads assets; it does **not** clear cookies. Sign out or clear
+  site data to force re-auth. Wiping the volume does not invalidate existing session cookies.
+- Parent/context: dogfood after 147-007 migrations; Profile is the teaching aggregate.
+- Related: handler TODOs in `get-profile-handler-application.cs` (persist avatar, read Profile).
+
+## Session
+
+- Created: 2026-08-05 — user request after migrations cutover; Profile page still stub
