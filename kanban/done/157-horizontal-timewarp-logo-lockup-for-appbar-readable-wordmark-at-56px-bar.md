@@ -39,3 +39,6 @@ wordmark at 48px in the 56px bar, no size flash.
 - 2026-08-05 claude: user rejected 34/48px stacked logo as unreadable, proposed 100px logo +
   taller bar; analysis showed stacked lockup geometry is the problem; user chose horizontal
   lockup option. Built asset, wired in, dev build 0/0.
+- 2026-08-05 claude: follow-up — crop windows were cut exactly at the measured bounding boxes,
+  clipping the sphere tops; regenerated with 2 viewBox-units padding on the icon window and
+  1 unit on the wordmark (viewBox now 0 0 268 64; img attrs 201x48).
