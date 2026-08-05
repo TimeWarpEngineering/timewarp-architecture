@@ -58,15 +58,15 @@ independent hardening gap worth fixing on its own merits.
       isolation and find the actual root cause (see candidates above) — pinned by Grok
       root-cause investigation (missing FE `AuthSchemes(...)` emission), confirmed by the fix
       below turning the test green
-- [ ] Confirm with maintainer which fail-closed behavior is wanted for the general DB-failure
-      mislabeling (403-as-no-roles vs. propagate-as-5xx) before implementing — **not in this
-      session's scope; deliberately left open**
+- [x] Confirm with maintainer which fail-closed behavior is wanted for the general DB-failure
+      mislabeling — maintainer decision 2026-08-05: **spun out to task 160** (dedicated
+      hardening task; decision + implementation live there)
 - [x] Implement the fix(es) — root cause of the failing test **only** (FE `AuthSchemes` emission
       for the closed-box mock scheme gap). The general `PrincipalRoleClaimsTransformation` /
       `EffectiveRolesResolver` / `EfPrincipalRoleStore` DB-failure hardening is **not**
       implemented — separate maintainer decision pending, per explicit instruction
-- [ ] Add a deterministic test (DI-substituted failing store, not a live-DB race) for the
-      general hardening — **not in this session's scope**
+- [x] Add a deterministic test (DI-substituted failing store, not a live-DB race) for the
+      general hardening — **moved to task 160** with the rest of the hardening scope
 - [x] Reconcile any `#region Design` blocks touched
 - [x] Results with How to validate
 
@@ -249,3 +249,7 @@ cd ../../web/web-server-integration-tests && dotnet test -c Release -- --filter-
 **Expect:** build 0/0; generator test passes; TWA0013/0014 tests 9/9; `aspire-tests` 7/7 (mock
 non-admin → 403, anonymous → 401); `web-spa-integration-tests` 15/15 + 1 skip; `api-server-integration-tests`
 1/1; `roles-authorization-tests` 6/6.
+- 2026-08-05 claude (orchestrator): maintainer split remaining scope — task 160 (fail-closed
+  DB-failure hardening, decision + implementation) and task 161 (research: should
+  credential-management contracts declare AuthenticationSchemes). This task closes on the fixed
+  and fully-green 401-vs-403 bug (commit 6442b605, aspire-tests 7/7).
