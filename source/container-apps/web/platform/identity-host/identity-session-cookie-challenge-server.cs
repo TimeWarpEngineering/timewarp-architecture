@@ -10,12 +10,14 @@
 //   | Request class | Unauthenticated challenge | Authenticated forbid        |
 //   | /api/…        | 401                       | 403                         |
 //   | Non-API       | 302 → /Login?returnUrl=…  | 403 (never Login — no loop) |
-// ShouldRedirectToLogin: hard-stop if path starts with /api (contract seam must not HTML-redirect);
-// else true for Sec-Fetch-Dest: document, Accept containing text/html, or non-api fallback (bare
-// curl without fetch metadata). BuildLoginRedirectTarget uses lowercase returnUrl (LoginPage
-// SupplyParameterFromQuery) and path+query only (PathBase+Path+QueryString — never absolute
-// origin; GetSafeReturnUrl open-redirect guard stays the client SSOT for post-sign-in). Forbid
-// always stays 403 in Program cookie events — insufficient policy is not "sign in again."
+// ShouldRedirectToLogin is path-only today: hard-stop if path starts with /api (contract seam
+// must not HTML-redirect); every other path redirects. Sec-Fetch-Dest / Accept are not consulted
+// because bare curl smoke and address-bar hits must both redirect; finer content negotiation is
+// reserved if a non-api surface ever needs 401 instead of Login. BuildLoginRedirectTarget uses
+// lowercase returnUrl (LoginPage SupplyParameterFromQuery) and path+query only
+// (PathBase+Path+QueryString — never absolute origin; GetSafeReturnUrl open-redirect guard stays
+// the client SSOT for post-sign-in). Forbid always stays 403 in Program cookie events —
+// insufficient policy is not "sign in again."
 #endregion
 
 namespace TimeWarp.Architecture.Configuration;
@@ -38,28 +40,9 @@ public static class IdentitySessionCookieChallenge
   {
     ArgumentNullException.ThrowIfNull(request);
 
-    // Hard stop: contract seam never HTML-redirects.
-    if (request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
-    {
-      return false;
-    }
-
-    // Browser document navigation (address bar, full page load).
-    string? secFetchDest = request.Headers["Sec-Fetch-Dest"];
-    if (string.Equals(secFetchDest, "document", StringComparison.OrdinalIgnoreCase))
-    {
-      return true;
-    }
-
-    // Explicit HTML negotiation (curl -H 'Accept: text/html', many browsers).
-    string accept = request.Headers.Accept.ToString();
-    if (accept.Contains("text/html", StringComparison.OrdinalIgnoreCase))
-    {
-      return true;
-    }
-
-    // Non-API fallback: bare curl / tools that send neither fetch metadata nor Accept.
-    return true;
+    // Path-only: contract seam never HTML-redirects; every other unauthenticated challenge
+    // goes to Login (address bar, Accept-less curl, document navigation).
+    return !request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
   }
 
   /// <summary>
