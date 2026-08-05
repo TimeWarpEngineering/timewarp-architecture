@@ -46,3 +46,11 @@ wordmark at 48px in the 56px bar, no size flash.
   (--layout-header-height defaults to 44px, appbar is 56px); set Height="56px" on the
   header FluentLayoutItem, mirroring the footer's Height="44px". Verified in the FluentUI
   assembly that the layout body height calc subtracts this var.
+- 2026-08-05 claude: FINAL PATTERN after user feedback (bar to 70px, no hard-coded heights):
+  FluentLayoutItem's Height parameter replaces the item's default
+  `height: var(--layout-header-height)` with a hard-coded inline height (confirmed by
+  decompiling FluentLayoutItem.AddWidthHeightStyles) — so header AND footer items carry NO
+  Height parameter, and `.twe-shell` overrides `--layout-header-height` (70px via
+  --twe-appbar-height) and `--layout-footer-height` (44px via --twe-footer-height) with
+  `!important` (FluentLayout writes its 44px/36px defaults inline on the root). Appbar is
+  height:100% of its slot. One CSS block is the single source for both chrome heights.
