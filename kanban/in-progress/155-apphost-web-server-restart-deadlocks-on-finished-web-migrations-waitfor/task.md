@@ -26,13 +26,16 @@ working both times.
 
 ## Checklist
 
-- [ ] Reproduce: `dev run`, dashboard → web-server → Restart; observe hang in console logs
-- [ ] Determine correct wait primitive (`WaitForCompletion(web-migrations)` is the likely fix —
-      Finished/exit-0 should satisfy it) or restart semantics in AppHost program
-- [ ] Implement in `aspire-app-host` program; reconcile Design regions
-- [ ] Validate: restart web-server from dashboard completes; first-boot ordering still holds
-      (fresh volume: migrations run before web-server serves)
-- [ ] Results with How to validate
+- [x] Reproduce: `dev run`, dashboard → web-server → Restart; observe hang in console logs
+      (observed twice during the originating incident)
+- [x] Determine correct wait primitive — outcome: NEITHER (`WaitForCompletion` reproducibly
+      breaks DCP service-producer under Aspire.Hosting.Testing; see Plan Amendment 1); wait
+      edge removed entirely per maintainer-approved hybrid design
+- [x] Implement in `aspire-app-host` program; reconcile Design regions
+- [x] Validate: restart web-server from dashboard completes (live-validated via Aspire MCP,
+      web-migrations in Finished state throughout); first-boot ordering relaxed BY DESIGN to
+      the accepted hybrid tradeoff (see Requirements note in Results)
+- [x] Results with How to validate
 
 ## Notes
 
@@ -180,6 +183,68 @@ going to fix, this specific pre-existing failure.
 green. Task 155 closes on that basis — the pre-existing `aspire-tests` failure is tracked
 separately by task 158, not by this task.
 
+## Results
+
+**Fix shipped (commits `cf4266b4` + `5f17c6a7`):** the web-server → web-migrations wait edge is
+removed from the AppHost entirely (hybrid design, maintainer-approved). `RunDatabaseUpdateOnStart`
+stays (idempotent first-boot schema self-heal); production continues to apply migrations from the
+published script/bundle artifacts; on-demand re-run surface is the `ef-database-update` dashboard
+command. Restart/rebuild of web-server cannot deadlock by construction. One Requirements note:
+the original "migration-before-serve ordering on FIRST start is preserved" requirement was
+consciously RELAXED by the maintainer to the hybrid tradeoff — on a truly fresh volume web-server
+may serve for a few seconds before the initial migration completes.
+
+Files: `aspire-app-host/program.cs` (edge removed; comment + Design region rewritten),
+`ingress-smoke-tests.cs` + `global-usings.cs` (SetupOnce terminal-state wait + Finished
+assertion), `how-to-add-your-aggregate.md` (two spots), ADR 0009 (amendment section).
+
+**Gates (all re-verified by orchestrator, not just implementer-reported):**
+- `dev build` 0/0.
+- aspire-tests 6/7 — the single failure (`RolesThroughIngress…MockPrincipal…` 401-vs-403) is
+  PRE-EXISTING on unmodified baseline (stash → identical failure → pop; implementer 3x + orchestrator
+  1x independent runs) and is tracked by task 158; zero regressions from this change.
+- web-spa-integration-tests 15/15 (+1 pre-existing task-058 quarantine skip); api-server 1/1.
+- **Live restart validation** (the bug itself): `dev run`, web-migrations in `Finished`,
+  executed `restart` on web-server via Aspire resource command → returned to Running/serving;
+  startup logs show waits only on postgres/postgres-db, zero web-migrations references.
+
+**Phase 4b review:** 1 round, effort 1 (general reviewer, sonnet). 2 findings (1 minor —
+terminal-state wait must assert Finished so a failed migration fails loud; 1 nit — stale CTS
+comment), both fixed in-round. Disposition: **clean** (`review/disposition.md`). The
+pre-existing aspire-tests failure is explicitly NOT a finding against this diff.
+
+**Decision trail:** two design stops, both resolved with the maintainer in-conversation (no
+ballot/debate needed): (1) WaitForCompletion premise falsified by DCP repro → hybrid approved;
+(2) deterministic test race found → test-side observational wait chosen over AppHost readiness
+gating (rejected as disproportionate + reopening /health exposure questions). Follow-ups spun
+out: task 158 (401-vs-403 pre-existing bug, root cause open), and `dev db-update` CLI wrapper
+noted as optional future scope (dashboard command suffices for now).
+
+### How to validate
+
+Smoke (the original bug):
+1. `dev run` (repo root; use `./bin/dev` if PATH resolves the wrong binary), open the dashboard.
+2. Confirm `web-migrations` shows state **Finished**.
+3. web-server → **Restart**.
+
+Expect: web-server returns to **Running** and serves (previously: permanent hang in
+`Waiting for resource 'web-migrations' to enter the 'Running' state.`). Console logs for
+web-server show waits only on postgres/postgres-db. Repeat with **Rebuild** if desired.
+
+Fresh-volume first boot (hybrid tradeoff, optional):
+1. Stop the AppHost; `docker volume rm` the `…-postgres-data` volume (or run with
+   `--Postgres:UseDataVolume=false`).
+2. `dev run`; watch `web-migrations` run → Finished; DB-backed pages (e.g. role admin) may
+   error for a few seconds before it finishes — expected; they work once Finished.
+
+Automated gates:
+- `cd tests/container-apps/aspire/aspire-tests && dotnet test -c Release` → 6/7 until task 158
+  lands (known pre-existing failure `RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole`).
+- `./bin/dev build` → 0/0.
+
+Depends on / not in scope: task 158 (pre-existing 401-vs-403, root cause open); optional
+`dev db-update` CLI wrapper.
+
 ## Session
 
 - Created: Claude (2026-08-05, during live incident diagnosis)
@@ -195,3 +260,6 @@ separately by task 158, not by this task.
   first-boot race (role-resolution DB query vs. migrations) via a 401-vs-403 mismatch; discussed
   options with maintainer (Steve); test-side terminal-state wait implemented; task 158 spun out
   for the 401-mislabeling bug itself.
+- 2026-08-05 claude (orchestrator): gates independently re-verified (build, baseline stash
+  check, suites); live restart validated via Aspire MCP against a running `dev run`; Phase 4b
+  review round 1 (2 findings fixed, disposition clean); Results written; marked done.
