@@ -63,14 +63,30 @@ that exist), loaded through the existing BFF/profile state path — not a hard-c
 - [ ] Fetch on page enter (or reuse state); empty/loading/error states honest
 - [ ] Build 0/0; relevant tests green
 
+
 ## Notes
 
-- **Logged-in after DB wipe:** identity-session cookie (and mock auth) live in the **browser**,
-  not Postgres. Ctrl-Shift-R reloads assets; it does **not** clear cookies. Sign out or clear
-  site data to force re-auth. Wiping the volume does not invalidate existing session cookies.
-- Parent/context: dogfood after 147-007 migrations; Profile is the teaching aggregate.
-- Related: handler TODOs in `get-profile-handler-application.cs` (persist avatar, read Profile).
+### Finalized plan (orchestration 2026-08-05)
+
+**Locked decisions**
+- **D1** Create-if-missing Profile on first authenticated GetProfile (`ProfileId = UserId`, defaults Member/en-US/US/system/false)
+- **D2** Wire keeps `Alias` ← domain `DisplayName`; add Language, Region, Theme, Notifications, Avatar
+- **D3** Keep `[EndpointAllowAnonymous]` dual-mode; page stays `CanViewOwnProfile`
+- **D4** `IProfileStore` dual-mode (in-memory + EF swap in PostgresDbModule) — no DbContext in application
+- **D5** `Profile.Create(ProfileId id, …)` for 1:1 user key
+- **D6** Avatar stays non-EF; multiavatar + resilient fallback
+- **D7–D8** ProfileState fields + page `OnInitializedAsync` + FluentUI read-only UI (no coming soon)
+- **D9–D10** Mock factory + get-profile-tests + domain/store coverage
+
+**Order:** Domain Create(id) → IProfileStore DI → expand contract → handler → ProfileState → ProfilePage → tests → dev build 0/0
+
+**STOP if:** ProfileId≠UserId required; forced application→infrastructure DbContext ref; force EndpointAuthorize without mock strategy; create-if-missing rejected with no seed; avatar must be durable this task.
+
+### Prior notes
+- **Logged-in after DB wipe:** identity-session cookie lives in browser, not Postgres.
+- Parent/context: dogfood after 147-007; Profile is teaching aggregate.
 
 ## Session
 
 - Created: 2026-08-05 — user request after migrations cutover; Profile page still stub
+- Planning: orchestration 2026-08-05 — plan locked D1–D10; no clarifying questions
