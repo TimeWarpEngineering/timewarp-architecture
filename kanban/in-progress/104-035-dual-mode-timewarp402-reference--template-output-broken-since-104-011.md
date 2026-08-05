@@ -28,6 +28,12 @@ CI never caught it because these commits went to dev without a PR.
 - [x] CPM pin `TimeWarp.402 = 2.0.0-beta.14` (= `<Version>`, task-124 policy; first nuget.org
       publish rides the next release — release pack list already includes the project)
 - [x] template-smoke `NuGet.config` packageSourceMapping: `TimeWarp.402` → smoke-local
+- [x] template-smoke pin-rewrite: `TimeWarp.402` added to `PlatformPinIncludeFragments`
+      (run 2 failed NU1603 — generated pin beta.14 vs feed 2.0.0-smoke)
+- [x] template-smoke harness: evict global-cache `<id>/2.0.0-smoke` entries after packing —
+      run 3 failed CS1061 `ListPrincipalsAsync` because the constant smoke version let NuGet's
+      global cache serve a Jul-29 TimeWarp.Identity pack; every local smoke since then silently
+      tested stale platform bits (CI unaffected, cold caches)
 - [x] `dev build` 0/0 + dev CLI self-install (smoke command changed)
 - [ ] `dev template-smoke` green (rerun in progress)
 

@@ -38,6 +38,12 @@ namespace TimeWarp.Architecture.Features.Profiles
   using static TimeWarp.Jaribu.TestRunner;
   using static TimeWarp.Architecture.Features.Profiles.GetProfile;
   using ProfileHandler = TimeWarp.Architecture.Features.Profiles.Application.GetProfile.Handler;
+  // Aggregator safety (task 164): under JARIBU_MULTI the compilation references the full host
+  // closure including Web.Spa, whose Profile.razor component is ALSO
+  // TimeWarp.Architecture.Features.Profiles.Profile — and namespace members beat usings, so an
+  // unqualified "Profile" flips to the component there (and aliasing the same name trips CS0576).
+  // DomainProfile pins the domain entity unambiguously in both compile modes.
+  using DomainProfile = TimeWarp.Architecture.Features.Profiles.Domain.Profile;
 
   [TestTag("Contracts")]
   public class GetProfileResponse_Given_
@@ -47,7 +53,7 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     public static Task ValidResponse_Should_RoundTripThroughJson()
     {
-      var response = new Response(
+      Response response = new Response(
         alias: "Ada",
         language: "en-US",
         region: "US",
@@ -99,19 +105,19 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     public static async Task Find_missing_Should_ReturnNull()
     {
-      var store = new InMemoryProfileStore();
-      Profile? found = await store.FindAsync(ProfileId.From(Guid.NewGuid()));
+      InMemoryProfileStore store = new InMemoryProfileStore();
+      DomainProfile? found = await store.FindAsync(ProfileId.From(Guid.NewGuid()));
       found.ShouldBeNull();
     }
 
     public static async Task Add_then_Find_Should_ReturnSameId()
     {
-      var store = new InMemoryProfileStore();
-      var id = ProfileId.From(Guid.Parse("11111111-2222-3333-4444-555555555555"));
-      Profile profile = Profile.Create(id, "Member", "en-US", "US", "system");
+      InMemoryProfileStore store = new InMemoryProfileStore();
+      ProfileId id = ProfileId.From(Guid.Parse("11111111-2222-3333-4444-555555555555"));
+      DomainProfile profile = DomainProfile.Create(id, "Member", "en-US", "US", "system");
 
       await store.AddAsync(profile);
-      Profile? found = await store.FindAsync(id);
+      DomainProfile? found = await store.FindAsync(id);
 
       found.ShouldNotBeNull();
       found.Id.ShouldBe(id);
@@ -120,12 +126,12 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     public static async Task Add_duplicate_Should_Throw()
     {
-      var store = new InMemoryProfileStore();
-      var id = ProfileId.From(Guid.NewGuid());
-      await store.AddAsync(Profile.Create(id, "A", "en-US", "US", "system"));
+      InMemoryProfileStore store = new InMemoryProfileStore();
+      ProfileId id = ProfileId.From(Guid.NewGuid());
+      await store.AddAsync(DomainProfile.Create(id, "A", "en-US", "US", "system"));
 
       await Should.ThrowAsync<InvalidOperationException>(async () =>
-        await store.AddAsync(Profile.Create(id, "B", "en-US", "US", "system")));
+        await store.AddAsync(DomainProfile.Create(id, "B", "en-US", "US", "system")));
     }
   }
 
@@ -137,8 +143,8 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     public static async Task Anonymous_Should_ReturnMock()
     {
-      var store = new InMemoryProfileStore();
-      var handler = CreateHandler(userId: null, store);
+      InMemoryProfileStore store = new InMemoryProfileStore();
+      ProfileHandler handler = CreateHandler(userId: null, store);
 
       OneOf<Response, SharedProblemDetails> result =
         await handler.Handle(new Query(), CancellationToken.None);
@@ -155,9 +161,9 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     public static async Task Authenticated_missing_profile_Should_CreateDefaults()
     {
-      var userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-      var store = new InMemoryProfileStore();
-      var handler = CreateHandler(userId, store);
+      Guid userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+      InMemoryProfileStore store = new InMemoryProfileStore();
+      ProfileHandler handler = CreateHandler(userId, store);
 
       OneOf<Response, SharedProblemDetails> result =
         await handler.Handle(new Query(), CancellationToken.None);
@@ -174,7 +180,7 @@ namespace TimeWarp.Architecture.Features.Profiles
       response.Avatar.ShouldNotBeNullOrEmpty();
       response.Avatar.ShouldStartWith("data:image/svg+xml;base64,");
 
-      Profile? stored = await store.FindAsync(ProfileId.From(userId));
+      DomainProfile? stored = await store.FindAsync(ProfileId.From(userId));
       stored.ShouldNotBeNull();
       stored.DisplayName.ShouldBe("Member");
       // Task 150: the same principal Guid must always resolve to the store row keyed ProfileId.From(guid).
@@ -183,14 +189,14 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     public static async Task Authenticated_existing_profile_Should_ReturnStoredFields()
     {
-      var userId = Guid.Parse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff");
-      var id = ProfileId.From(userId);
-      var store = new InMemoryProfileStore();
-      Profile seeded = Profile.Create(id, "Grace", "fr-FR", "FR", "dark");
+      Guid userId = Guid.Parse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff");
+      ProfileId id = ProfileId.From(userId);
+      InMemoryProfileStore store = new InMemoryProfileStore();
+      DomainProfile seeded = DomainProfile.Create(id, "Grace", "fr-FR", "FR", "dark");
       seeded.EnableNotifications();
       await store.AddAsync(seeded);
 
-      var handler = CreateHandler(userId, store);
+      ProfileHandler handler = CreateHandler(userId, store);
       Response response = (await handler.Handle(new Query(), CancellationToken.None))
         .Match(ok => ok, _ => throw new InvalidOperationException("Expected Response"));
 
@@ -203,9 +209,9 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     public static async Task Avatar_same_userId_Should_Be_Deterministic()
     {
-      var userId = Guid.Parse("cccccccc-dddd-eeee-ffff-000000000001");
-      var store = new InMemoryProfileStore();
-      var handler = CreateHandler(userId, store);
+      Guid userId = Guid.Parse("cccccccc-dddd-eeee-ffff-000000000001");
+      InMemoryProfileStore store = new InMemoryProfileStore();
+      ProfileHandler handler = CreateHandler(userId, store);
 
       Response first = (await handler.Handle(new Query(), CancellationToken.None))
         .Match(ok => ok, _ => throw new InvalidOperationException("Expected Response"));
