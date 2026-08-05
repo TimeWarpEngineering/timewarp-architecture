@@ -164,6 +164,7 @@ internal sealed class TemplateSmokeHarness
     "TimeWarp.Foundation.",
     "TimeWarp.Modules",
     "TimeWarp.Identity",
+    "TimeWarp.402",
   ];
 
   private static readonly string[] SourceNameLiteralScanExtensions =
@@ -565,8 +566,11 @@ internal sealed class TemplateSmokeHarness
   /// <summary>
   /// Per-family JARIBU_MULTI aggregator projects (task 136), plus (task 145-002 R2-3) the
   /// timewarp-testing-tests suite project, which needs BOTH web and api. Relative to the
-  /// generated app root. ExpectedSucceeded matches co-located counts (web create-role = 5 +
-  /// hello endpoint = 2 → 7; api weather = 5; timewarp-testing-tests HostGraphFactory smoke = 3).
+  /// generated app root. ExpectedSucceeded matches the CURRENT monorepo aggregator totals —
+  /// UPDATE THIS when adding/removing co-located *-tests.cs (verified drift 2026-08-05, task
+  /// 104-035: five task landings grew web 7→54 and api 5→9 without touching these, breaking
+  /// smoke on counts alone; a future improvement is deriving the expectation from a monorepo
+  /// aggregator run instead of this hand list — prefer-checks-over-memory).
   /// Serial — api binds :7255/:7000. RequiredFamilies lets a flag-off smoke entry assert the
   /// artifacts are ABSENT (task 136 review R2-1) whenever ANY required family is excluded: an
   /// aggregator orphaned by a family flag would break the generated app, so absence is the pass
@@ -575,8 +579,8 @@ internal sealed class TemplateSmokeHarness
   /// </summary>
   public static readonly (string[] RequiredFamilies, string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
   [
-    (["web"], "tests/container-apps/web/web-jaribu-tests", 7),
-    (["api"], "tests/container-apps/api/api-jaribu-tests", 5),
+    (["web"], "tests/container-apps/web/web-jaribu-tests", 54),
+    (["api"], "tests/container-apps/api/api-jaribu-tests", 9),
     (["web", "api"], "tests/common/timewarp-testing-tests", 3),
   ];
 
