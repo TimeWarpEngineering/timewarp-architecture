@@ -54,16 +54,21 @@ independent hardening gap worth fixing on its own merits.
 
 ## Checklist
 
-- [ ] Reproduce `RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole` in
-      isolation and find the actual root cause (see candidates above) — this is currently unknown
+- [x] Reproduce `RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole` in
+      isolation and find the actual root cause (see candidates above) — pinned by Grok
+      root-cause investigation (missing FE `AuthSchemes(...)` emission), confirmed by the fix
+      below turning the test green
 - [ ] Confirm with maintainer which fail-closed behavior is wanted for the general DB-failure
-      mislabeling (403-as-no-roles vs. propagate-as-5xx) before implementing
-- [ ] Implement the fix(es) — root cause of the failing test, and/or the general hardening,
-      depending on what the root-cause investigation finds
+      mislabeling (403-as-no-roles vs. propagate-as-5xx) before implementing — **not in this
+      session's scope; deliberately left open**
+- [x] Implement the fix(es) — root cause of the failing test **only** (FE `AuthSchemes` emission
+      for the closed-box mock scheme gap). The general `PrincipalRoleClaimsTransformation` /
+      `EffectiveRolesResolver` / `EfPrincipalRoleStore` DB-failure hardening is **not**
+      implemented — separate maintainer decision pending, per explicit instruction
 - [ ] Add a deterministic test (DI-substituted failing store, not a live-DB race) for the
-      general hardening
-- [ ] Reconcile any `#region Design` blocks touched
-- [ ] Results with How to validate
+      general hardening — **not in this session's scope**
+- [x] Reconcile any `#region Design` blocks touched
+- [x] Results with How to validate
 
 ## Notes
 
@@ -140,3 +145,107 @@ Independent of the closed-box mock bug: `IClaimsTransformation` → `PrincipalRo
   unmodified `dev`) showed the failure predates and is unrelated to task 155's changes; migration
   -race theory disproven, root cause reopened as unknown.
 - Root-cause investigation (Grok Build): session `5f915c56-81a8-4972-b943-15fd3c83aa97` (2026-08-05) — investigation only; findings under Notes.
+- Implementation: Claude (2026-08-05) — closed-box mock-scheme fix per maintainer-approved shape
+  (Notes "Proposed minimal fix" §1). `EndpointAuthorizeAttribute.AuthenticationSchemes` and the
+  generator's `AuthSchemes(...)` emission already existed on `dev` (task 110, commit `44fd802f`)
+  — unused by any contract. Added `AuthenticationSchemeNames` contracts-visible constants
+  (`source/container-apps/web/features/identity/authentication-scheme-names-contracts.cs`,
+  Features substrate, mirrors `AuthorizationPolicyNames`) and applied
+  `AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," +
+  AuthenticationSchemeNames.MockIdentitySession` to the 7 contracts gated by
+  `CanViewRolesPage`/`CanViewPrincipalsPage` (the two policies whose server `AddPolicy(...)` call
+  already lists `mock-identity-session`). Did **not** touch `credential-management` (dual
+  identity-session/agent-token policy, no mock, no proven failure) or the two agent-token-only
+  policies (`agent-scope:identity:read`, `agent-scope:demo:invoke`) — scoped narrowly to the
+  proven failure mode; flagged for maintainer follow-up if broader consistency is wanted.
+  Added a generator test (`Should_Emit_Both_AuthSchemes_And_Policies_When_Both_Set`) proving the
+  combined `Policy` + multi-scheme `AuthenticationSchemes` emission shape now used in contracts.
+  Gates: `./bin/dev build --clean` 0/0; `timewarp-architecture-sourcegenerator-tests` 22/22;
+  `timewarp-architecture-analyzers-tests` (TWA0013/0014) 9/9 unaffected;
+  `aspire-tests` 7/7 (`RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole`
+  now 403; `RolesThroughIngress_Should_ReachWebServerAndRequireAuth` still 401);
+  `web-spa-integration-tests` 15/15 + 1 skip (no regression); `api-server-integration-tests` 1/1;
+  in-proc `roles-authorization-tests` (`RolesAuthorization`) 6/6 (no regression). Did not touch
+  the fail-closed 5xx DB-failure hardening scope — left for a separate maintainer decision.
+
+## Results
+
+### Summary
+
+`RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole` now returns **403**
+(was 401) through the closed-box `aspire-tests` ingress path. Root cause (pinned by Grok's
+investigation, confirmed by this fix): the generated FastEndpoint for admin BFF contracts
+(`GetRoles` and siblings) emitted only `Policies("CanViewRolesPage")`, never `AuthSchemes(...)`,
+so the `mock-identity-session` authentication handler was never invoked for that route — the
+request stayed anonymous and the default cookie scheme challenged with 401 instead of the
+policy's role check running and denying with 403.
+
+Fix: the FastEndpoint generator already supported emitting `AuthSchemes(...)` from
+`[EndpointAuthorize(AuthenticationSchemes = "...")]` (task 110, present on `dev` before this
+session) — it was simply never used by any contract. This session added a contracts-visible
+`AuthenticationSchemeNames` constants class and applied `AuthenticationSchemes` to the 7 contracts
+gated by `CanViewRolesPage`/`CanViewPrincipalsPage`, mirroring exactly the scheme list already
+declared on those policies' server-side `AddAuthenticationSchemes(...)` call.
+
+### Production-safety mechanism (mock scheme is safe to list unconditionally)
+
+`mock-identity-session` is **always registered** — `MockIdentityPrincipalHandler` is added via an
+unconditional `.AddScheme<AuthenticationSchemeOptions, MockIdentityPrincipalHandler>(...)` call in
+`source/container-apps/web/projects/web-server/program.cs:396` (inside `ConfigureAuthentication`,
+which always runs). Listing the scheme name in `AuthSchemes(...)` therefore never throws
+`InvalidOperationException` for an unregistered scheme, in any environment.
+
+What makes Production safe is not conditional registration — it's a **fail-closed handler**:
+`MockIdentityPrincipalHandler.HandleAuthenticateAsync`
+(`source/container-apps/web/platform/identity-host/mock-identity-principal-handler-server.cs:44-50`)
+returns `AuthenticateResult.NoResult()` unless
+`MockAuthenticationDefaults.IsMockAuthActive(environment.EnvironmentName, configuration[...UseMockKey])`
+is true — i.e. unless the host is booted `Development`/`Testing` **and** `Authentication:UseMock`
+is set. A Production-booted host (or any host without the config flag) gets `NoResult()` from the
+handler every time, regardless of which endpoints list the scheme in `AuthSchemes(...)`. This is
+the same mechanism task 145-009 already relies on for `IdentitySessionDefaults.AuthenticatedPolicy`
+(`program.cs:184`, `AddAuthenticationSchemes(IdentitySessionDefaults.Scheme,
+MockIdentityPrincipalHandler.SchemeName)`) — this fix simply makes the FE-generated endpoint
+metadata consistent with policies that already listed the scheme.
+
+### What changed
+
+| Path | Change |
+|------|--------|
+| `source/container-apps/web/features/identity/authentication-scheme-names-contracts.cs` | New — `AuthenticationSchemeNames` (IdentitySession / MockIdentitySession / AgentToken) contracts-visible constants, Features substrate |
+| `source/container-apps/web/features/admin/roles/{create,get-role,get-roles,update-role,delete-role}/*-contracts.cs` | Added `AuthenticationSchemes = IdentitySession + "," + MockIdentitySession` to `[EndpointAuthorize(Policy = CanViewRolesPage)]`; reconciled Design regions |
+| `source/container-apps/web/features/admin/principals/{list-principals,set-principal-roles}/*-contracts.cs` | Same, for `CanViewPrincipalsPage` |
+| `tests/analyzers/timewarp-architecture-sourcegenerator-tests/fast-endpoint-source-generator-tests.cs` | New test `Should_Emit_Both_AuthSchemes_And_Policies_When_Both_Set` proving combined `Policy` + multi-scheme `AuthenticationSchemes` emission |
+
+No changes to `EndpointAuthorizeAttribute`, the generator, or TWA0013/0014 — all pre-existed and
+needed no modification (verified via their own passing test suites).
+
+### Out of scope (deliberately untouched)
+
+- `credential-management` policy contracts (`add-agent-key`, `add-passkey`, `get-credentials`,
+  `revoke-credential`) — dual identity-session/agent-token policy, does **not** declare
+  `mock-identity-session`, no proven failure. Left alone to keep this fix's blast radius to the
+  proven bug; flagged here in case the maintainer wants the same `AuthSchemes` consistency applied
+  there too (`identity-session,agent-token`, mirroring `CredentialManagementDefaults.Policy`'s own
+  scheme list).
+- `agent-scope:identity:read` / `agent-scope:demo:invoke` (agent-token-only policies) — explicitly
+  excluded per instruction; `AgentTokenDefaults`'s own Design region documents deliberate scheme
+  isolation.
+- The general `PrincipalRoleClaimsTransformation` DB-failure-as-401 hardening (this task's
+  original title) — separate maintainer decision pending, not implemented this session.
+
+### How to validate
+
+```bash
+./bin/dev build --clean
+cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c Release -- --filter-method Should_Emit_Both_AuthSchemes_And_Policies_When_Both_Set
+cd ../../../tests/analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Release -- --filter-class EndpointAuthPosture
+cd ../../container-apps/aspire/aspire-tests && dotnet test -c Release
+cd ../../web/web-spa-integration-tests && dotnet test -c Release
+cd ../../api/api-server-integration-tests && dotnet test -c Release
+cd ../../web/web-server-integration-tests && dotnet test -c Release -- --filter-class RolesAuthorization
+```
+
+**Expect:** build 0/0; generator test passes; TWA0013/0014 tests 9/9; `aspire-tests` 7/7 (mock
+non-admin → 403, anonymous → 401); `web-spa-integration-tests` 15/15 + 1 skip; `api-server-integration-tests`
+1/1; `roles-authorization-tests` 6/6.

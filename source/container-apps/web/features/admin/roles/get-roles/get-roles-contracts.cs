@@ -12,6 +12,13 @@
 // [EndpointAuthorize] (task 147-004): Administrator capability via AuthorizationPolicyNames —
 // shared string with SPA RolePolicyGrants / server RequireRole(Administrator). [AuthApiRequest]
 // on the Query remains a client-facing/mock-mode identity signal only.
+// AuthenticationSchemes (task 158): mirrors CanViewRolesPage's own AddAuthenticationSchemes
+// (identity-session + mock-identity-session) so the generated FastEndpoint's AuthSchemes(...)
+// actually invokes the mock handler under the closed-box ingress test — without this, the
+// generated endpoint carried Policies(...) only, AuthorizationMiddleware never ran the
+// mock-identity-session handler, and an unauthenticated-looking request fell through as 401
+// instead of the expected 403 for a non-admin mock principal. See AuthenticationSchemeNames'
+// Design region for the Production-safety argument (scheme always registered, handler fail-closed).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -20,7 +27,11 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 /// Get a list of roles for display only.
 /// </summary>
 [ApiEndpoint]
-[EndpointAuthorize(Policy = AuthorizationPolicyNames.CanViewRolesPage)]
+[EndpointAuthorize
+(
+  Policy = AuthorizationPolicyNames.CanViewRolesPage,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
+)]
 public static partial class GetRoles
 {
 

@@ -344,6 +344,47 @@ public class FastEndpointSourceGenerator_Authorization_Tests
     return Task.CompletedTask;
   }
 
+  // Task 158: Policy + multi-scheme AuthenticationSchemes together — the exact shape web-contracts
+  // now use (e.g. GetRoles: Policy = CanViewRolesPage, AuthenticationSchemes =
+  // "identity-session,mock-identity-session") so the generated FastEndpoint's AuthSchemes(...)
+  // actually invokes non-default authentication handlers (mock-identity-session) that the named
+  // policy alone did not reach.
+  private const string PolicyAndSchemesContract = """
+    using TimeWarp.Architecture;
+    using TimeWarp.Architecture.Attributes;
+
+    namespace Test.Features.Admin;
+
+    [ApiEndpoint]
+    [EndpointAuthorize(Policy = "CanViewRolesPage", AuthenticationSchemes = "identity-session,mock-identity-session")]
+    public static partial class GetRolesForTest
+    {
+        [ApiRoute("api/admin/roles", HttpVerb.Get)]
+        public sealed partial class Query { }
+
+        public sealed class Response { }
+    }
+    """;
+
+  public static Task Should_Emit_Both_AuthSchemes_And_Policies_When_Both_Set()
+  {
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly(PolicyAndSchemesContract);
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
+
+    string generatedCode = runResult.Results
+      .SelectMany(r => r.GeneratedSources)
+      .Single()
+      .SourceText.ToString();
+
+    generatedCode.ShouldContain("""AuthSchemes("identity-session", "mock-identity-session")""");
+    generatedCode.ShouldContain("""Policies("CanViewRolesPage")""");
+    generatedCode.ShouldNotContain("AllowAnonymous");
+    generatedCode.ShouldNotContain("RequireAuthorization");
+
+    return Task.CompletedTask;
+  }
+
   // Task 110: explicit anonymous opt-out.
   private const string ExplicitAnonymousContract = """
     using TimeWarp.Architecture;

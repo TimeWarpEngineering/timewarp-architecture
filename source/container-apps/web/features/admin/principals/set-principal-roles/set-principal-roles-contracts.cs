@@ -7,13 +7,19 @@
 // next effective = Member). Validator requires each RoleId ∈ RoleIds.All. Handler returns 404
 // when the principal is missing. [EndpointAuthorize] CanViewPrincipalsPage (Administrator).
 // PrincipalId comes from the route segment (source-generated on partial Command).
+// AuthenticationSchemes (task 158): mirrors CanViewPrincipalsPage's own AddAuthenticationSchemes
+// (identity-session + mock-identity-session) — see AuthenticationSchemeNames' Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
 
 /// <summary>Replace stored roles for a principal.</summary>
 [ApiEndpoint]
-[EndpointAuthorize(Policy = AuthorizationPolicyNames.CanViewPrincipalsPage)]
+[EndpointAuthorize
+(
+  Policy = AuthorizationPolicyNames.CanViewPrincipalsPage,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
+)]
 public static partial class SetPrincipalRoles
 {
   [ApiRoute("api/admin/principals/{PrincipalId:guid}/roles", HttpVerb.Put)]

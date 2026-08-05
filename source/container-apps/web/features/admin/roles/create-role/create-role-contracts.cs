@@ -11,12 +11,18 @@
 // [EndpointAuthorize] (task 147-004): Administrator capability via AuthorizationPolicyNames
 // (Features substrate — contracts can reference without web-server). [AuthApiRequest] on Command
 // remains a client-facing/mock-mode identity signal only; this attribute gates the server.
+// AuthenticationSchemes (task 158): mirrors CanViewRolesPage's own AddAuthenticationSchemes
+// (identity-session + mock-identity-session) — see AuthenticationSchemeNames' Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 [ApiEndpoint]
-[EndpointAuthorize(Policy = AuthorizationPolicyNames.CanViewRolesPage)]
+[EndpointAuthorize
+(
+  Policy = AuthorizationPolicyNames.CanViewRolesPage,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
+)]
 public static partial class CreateRole
 {
   [ApiRoute("api/Roles", HttpVerb.Post)]
