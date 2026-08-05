@@ -38,7 +38,7 @@
 @* V5 removed FluentPersona — compose FluentAvatar + label as the menu trigger.
    The trigger lives INSIDE FluentMenu via slot="trigger" so the web component wires
    the click-to-open itself (the external Trigger=<id> attribute did not render in rc.3). *@
-<FluentMenu>
+<FluentMenu Class="@($"{Id}-menu")">
   <div slot="@FluentSlot.Trigger" class="@($"{Id} profile-persona")">
     <FluentAvatar Image=@ProfileState.Avatar Name=@ProfileState.Alias Size="AvatarSize.Size32" />
     <FluentText>@ProfileState.Alias</FluentText>
@@ -64,6 +64,16 @@
       align-items: center;
       gap: 8px;
       cursor: pointer;
+    }}
+
+    /* Task 152: the fluent-menu shadow stylesheet anchors the slotted popup at
+       inset-inline-start: anchor(start) with only flip-block fallbacks, so a
+       far-right trigger always overflows the viewport. fluent-menu-list is
+       light DOM, and document styles outrank ::slotted() defaults — right-align
+       the popup to the trigger the same way the component does for [split]. */
+    fluent-menu.{Id}-menu > fluent-menu-list {{
+      inset-inline-start: auto;
+      inset-inline-end: anchor(end);
     }}
   ")
 </style>
