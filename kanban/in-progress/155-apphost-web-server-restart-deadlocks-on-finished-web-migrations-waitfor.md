@@ -94,8 +94,36 @@ Validation gates:
   fixture timeout pressure. If the DCP failure reproduces: revert to WaitFor + eventing hook
   fallback and file upstream dotnet/aspire.
 
+## Plan Amendment (Phase 4 design stop, 2026-08-05)
+
+The WaitForCompletion premise FAILED validation: with
+`webServer.WaitForCompletion(webMigrations)`, aspire-tests fails 6/7 under
+Aspire.Hosting.Testing with the historical 147-007 error, reproduced verbatim:
+`Could not create Endpoint object(s): Error = information about the port to expose the
+service is missing; service-producer annotation is invalid` (on web-server, immediately after
+the completion wait resolves). The plan's "147-007 concern is historical" claim was wrong —
+the regression is real on Aspire 13.4.6 with the same-project migration resource.
+
+**Maintainer decision (Steve): hybrid on-demand migrations.** Production never uses the
+AppHost auto-run path (pipeline artifacts apply migrations), so the wait edge existed only for
+dev first-boot. Resolution:
+- Keep `web-migrations` + `RunDatabaseUpdateOnStart` (first-boot OOBE self-heals the schema).
+- REMOVE the wait edge entirely (no WaitFor, no WaitForCompletion) — restart deadlock is
+  impossible by construction; the DCP testing bug becomes irrelevant.
+- Accepted tradeoff: on a truly fresh volume, web-server may serve for a few seconds before
+  the initial migration completes (DB-backed pages error briefly).
+- On-demand surface: `ef-database-update` dashboard command on web-migrations.
+- ADR 0009 amended; how-to-add-your-aggregate updated to match.
+- Follow-up scope (not this task): `dev db-update` CLI wrapper executing the resource command
+  against the running AppHost.
+- Considered and rejected: WaitFor + restart-triggered re-run eventing hook (extra
+  orchestration code for semantics prod doesn't have); env-conditional wait (test/run topology
+  divergence in a template repo).
+
 ## Session
 
 - Created: Claude (2026-08-05, during live incident diagnosis)
 - 2026-08-05 claude (orchestrator): Phase 2 plan complete (Plan agent, decompilation-backed);
   proceeding to implement.
+- 2026-08-05 claude (orchestrator): implementer reproduced 147-007 DCP failure and stopped
+  clean per plan; design stop escalated to maintainer; hybrid approved; implement resumed.
