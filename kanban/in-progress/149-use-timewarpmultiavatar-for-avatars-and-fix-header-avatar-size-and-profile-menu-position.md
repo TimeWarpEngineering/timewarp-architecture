@@ -69,3 +69,11 @@ Also fix two chrome issues visible in the app header:
 ## Session
 
 - Created: Claude (2026-08-05)
+- Planning: orchestration 2026-08-05 — plan locked D1–D10
+
+## Finalized plan (orchestration 2026-08-05)
+
+**Locked:** CPM TimeWarp.Multiavatar 1.0.0-beta.13 on web-application only; seed userId.ToString("D"); local Generate→data URI; remove HttpClient/fallback/logger; mock = precomputed data URI (seed GetProfile.Mock) no package on contracts; header Size32; menu CSS padding-inline-end on .twe-appbar__actions (Fluent v5 has no HorizontalAlignment); Profile page Size56 unchanged; tests determinism, drop network fallback test.
+
+**Order:** CPM+ref → handler → mock constant → tests → Size32 → appbar CSS → Design regions → dev build 0/0.
+
