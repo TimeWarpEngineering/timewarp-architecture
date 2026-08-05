@@ -77,6 +77,61 @@ independent hardening gap worth fixing on its own merits.
 - This is scoped independently of 155's AppHost/orchestration changes — no AppHost or migration
   wiring should need to change for this fix.
 
+### Root-cause investigation (Grok) — 2026-08-05
+
+**Pinned root cause:** mock-auth never authenticates on the closed-box GetRoles path because the **`mock-identity-session` scheme is never invoked** for that endpoint. The request is treated as anonymous and the cookie scheme challenges with **401**. This is **not** YARP dropping the header, **not** Production env gating mock off, and **not** `PrincipalRoleClaimsTransformation`/DB mislabeling for this specific failure.
+
+**Classification:** `mock-auth-never-authenticates` (scheme never runs) — not `header-dropped-at-YARP`, not `authenticated-but-401-from-role-path`.
+
+#### Evidence chain (falsifiable)
+
+1. **Repro confirmed:** `cd tests/container-apps/aspire/aspire-tests && dotnet test -c Release -- --filter-method Forbidden_Given_MockPrincipal` → Expected `403 Forbidden`, Actual `401 Unauthorized` (deterministic).
+2. **Env + UseMock are correct on the live web-server process** (rules out task-155 Production theory for this suite):
+   - AppHost config: `Authentication:UseMock = 'true'` (from test args).
+   - `/proc/<pid>/environ` for the DCP-launched web-server: `ASPNETCORE_ENVIRONMENT=Development`, `Authentication__UseMock=true`.
+   - Serilog boot line: `EnvironmentName: Development`.
+3. **YARP ruled out:** same 401 when calling **web-server directly** (`CreateHttpClient("web-server", "http"|"https")`) with the mock header — ingress is not required for the failure.
+4. **Session probe note:** `/api/identity/session` with mock header still shows `isAuthenticated:false` — expected for AllowAnonymous (only default scheme runs); not proof about Roles.
+5. **Handler never reached (decisive):** temporary instrumentation that throws `InvalidOperationException("MOCK_AUTH_HANDLER_REACHED_…")` at the top of `MockIdentityPrincipalHandler.HandleAuthenticateAsync` when path contains `Roles`:
+   - **Without** endpoint `AuthSchemes(...)`: anonymous Roles smoke still returns **401** and **passes** — throw never executes → **mock scheme not in the effective auth scheme list**.
+   - **With** temporary `[EndpointAuthorize(..., AuthenticationSchemes = "identity-session,mock-identity-session")]` so generator emits `AuthSchemes("identity-session", "mock-identity-session")`: anonymous Roles smoke **fails** (no longer clean 401) — mock handler **is** entered.
+6. **In-proc control:** `roles-authorization-tests` Member-only passkey cookie → **403** on GetRoles — proves `CanViewRolesPage` Forbid path works when a scheme actually authenticates. Closed-box only lacks a scheme that accepts the mock header under current FE emission.
+7. **Code shape today:**
+   - Generated `GetRolesEndpoint`: only `Policies("CanViewRolesPage");` — **no** `AuthSchemes(...)`.
+   - Server `AddPolicy(CanViewRolesPage)` does list `identity-session` + `mock-identity-session`, but FE also attaches `epPolicy:<EndpointType>` with bare `RequireAuthenticatedUser()` and no schemes; **without** FE-level `AuthSchemes`, mock is not exercised (empirically).
+   - Generator already supports schemes when `[EndpointAuthorize(AuthenticationSchemes=…)]` is set (`BuildAuthConfiguration`).
+
+#### Did this test ever pass?
+
+| Version | Expectation | Ever proven green? |
+|---------|-------------|-------------------|
+| `e084c1ba` (145-009) | `RolesThroughIngress_Should_Ok_Given_MockPrincipalHeader` → **200** | Task 145-009 Results claim aspire-tests **7/7** including that test. Same missing-`AuthSchemes` emission pattern existed then (`Policies("identity-session-authenticated")` only). That claim is **not independently re-verified here**; given current scheme evidence, treat as **untrusted / possibly never truly authenticated via mock**. Neither 145-009 nor 147-004 is on `master` yet. |
+| `a0007945` (147-004) | renamed to `…Forbidden…` → **403** | **No evidence of green on CI/dev.** Pre-existing failure on `dev`; not introduced by task 155. |
+
+Git archaeology highlights:
+- Mock scheme + OK test: `e084c1ba` (145-009).
+- Policy → Administrator + expect 403: `a0007945` (147-004).
+- AppHost UseMock opt-in only (test already passes `--Authentication:UseMock=true`): `55ee9384`.
+- Fail-closed real-env gate (R2-1): `2eb5416d` — **not** the closed-box failure mode here (env is Development).
+
+#### Proposed minimal fix (describe only — not implemented)
+
+1. **Make closed-box mock scheme actually run for admin API endpoints** by emitting FE `AuthSchemes` for the same schemes the server policies already declare:
+   - Preferred: set `[EndpointAuthorize(Policy = …, AuthenticationSchemes = "identity-session,mock-identity-session")]` on admin contracts that list mock on the server policy (GetRoles + siblings), **or**
+   - Better convention: generator/default for policies that include mock (or all identity-session BFF policies) always emit `AuthSchemes("identity-session", "mock-identity-session")` so FE `AuthorizeAttribute.AuthenticationSchemes` + `epPolicy` path cannot silently drop to default-scheme-only.
+2. **Re-prove:** aspire-tests Forbidden mock test → **403**; anonymous Roles → **401**; optional direct web-server header probe.
+3. **Do not** “fix” this 401 by relaxing role policy or by turning Production-safe mock on.
+
+#### Separate hardening decision input (DB failure → not 401)
+
+Independent of the closed-box mock bug: `IClaimsTransformation` → `PrincipalRoleClaimsTransformation` → `EfPrincipalRoleStore` can still throw after a **successful** auth. Prefer **propagate as 5xx** (failed authZ infrastructure) over **403-as-no-roles** (lies about authorization outcome; can mask outages). Implement only after maintainer call; cover with in-proc DI-failing `IPrincipalRoleStore`, not migration races.
+
+#### What was / was not modified this session
+
+- Investigation only: temporary local instrumentation was applied and **fully reverted**.
+- **Only intended durable edit:** this Notes/Session append on task 158.
+- No production code commits; working tree left without investigation residue on product files.
+
 ## Session
 
 - Created: Claude (2026-08-05), spun out of task 155 architecture discussion with maintainer
@@ -84,3 +139,4 @@ independent hardening gap worth fixing on its own merits.
 - 2026-08-05: corrected root-cause claim after baseline verification (stash + rerun on
   unmodified `dev`) showed the failure predates and is unrelated to task 155's changes; migration
   -race theory disproven, root cause reopened as unknown.
+- Root-cause investigation (Grok Build): session `5f915c56-81a8-4972-b943-15fd3c83aa97` (2026-08-05) — investigation only; findings under Notes.
