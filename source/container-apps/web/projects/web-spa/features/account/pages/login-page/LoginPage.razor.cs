@@ -13,6 +13,12 @@
 // removed under this task — only window.Spa.WebAuthn + identity contracts remain.
 // Mock mode: ceremony contracts have no GetMockResponseFactory, so the mock chain yields 501 and
 // we surface it through ErrorMessage (same as PasskeysPage).
+// Task 153 redirect flow: an already-authenticated visitor is redirected away immediately, and a
+// successful ceremony navigates to ?returnUrl (or home). returnUrl is honored only when local
+// (GetSafeReturnUrl — open-redirect guard) and never points back at /Login itself. Credential
+// management for signed-in users is a Settings/Security concern (104-024), NOT this page — the
+// old "signed-in users may open it to add credentials" note was wrong: CreatePasskey mints a NEW
+// Principal, so a signed-in user clicking it would create a second account, not add a credential.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Account;
@@ -21,14 +27,22 @@ using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Foundation.Types;
 
-// Public passkey entry. Anonymous — signed-in users may still open it to add credentials later.
+// Public passkey entry. Anonymous; authenticated visitors are redirected away (task 153).
 [Page("/Login")]
 partial class LoginPage
 {
   [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
+  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+  [SuppressMessage
+  (
+    "Design",
+    "CA1056:URI-like properties should not be strings",
+    Justification = "SupplyParameterFromQuery binds strings; the raw value is validated by GetSafeReturnUrl."
+  )]
+  [Parameter] [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
 
   private string? ErrorMessage;
-  private string? StatusMessage;
   private bool IsBusy;
   private bool? IsAuthenticated;
 
@@ -36,12 +50,37 @@ partial class LoginPage
   {
     await base.OnInitializedAsync();
     await RefreshSessionAsync();
+
+    if (IsAuthenticated is true)
+    {
+      NavigateOnward();
+    }
   }
+
+  /// <summary>
+  /// Collapses a requested return URL to a safe local destination: relative paths only
+  /// (no absolute/protocol-relative URLs — open-redirect guard) and never /Login itself
+  /// (redirect loop guard). Everything else falls back to home.
+  /// </summary>
+  internal static string GetSafeReturnUrl(string? returnUrl)
+  {
+    if (string.IsNullOrEmpty(returnUrl)
+      || !returnUrl.StartsWith('/')
+      || returnUrl.StartsWith("//", StringComparison.Ordinal)
+      || returnUrl.StartsWith("/\\", StringComparison.Ordinal))
+    {
+      return "/";
+    }
+
+    string path = returnUrl.Split('?', '#')[0].TrimEnd('/');
+    return path.Equals(GetPageUrl(), StringComparison.OrdinalIgnoreCase) ? "/" : returnUrl;
+  }
+
+  private void NavigateOnward() => NavigationManager.NavigateTo(GetSafeReturnUrl(ReturnUrl));
 
   private async Task ContinueWithPasskey()
   {
     ErrorMessage = null;
-    StatusMessage = null;
     IsBusy = true;
     try
     {
@@ -54,8 +93,7 @@ partial class LoginPage
         return;
       }
 
-      StatusMessage = $"Signed in. PrincipalId: {result.AsT0.PrincipalId}";
-      await RefreshSessionAsync();
+      NavigateOnward();
     }
     catch (JSException jsException)
     {
@@ -70,7 +108,6 @@ partial class LoginPage
   private async Task CreatePasskey()
   {
     ErrorMessage = null;
-    StatusMessage = null;
     IsBusy = true;
     try
     {
@@ -83,8 +120,7 @@ partial class LoginPage
         return;
       }
 
-      StatusMessage = $"Passkey created and signed in. PrincipalId: {result.AsT0.PrincipalId}";
-      await RefreshSessionAsync();
+      NavigateOnward();
     }
     catch (JSException jsException)
     {
