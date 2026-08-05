@@ -38,8 +38,10 @@ getting 401 (no HTML redirects on the contract seam).
 - [x] Implement; reconcile Design regions
 - [x] Regression tests (HTML deep link signed out; API 401 unchanged; signed-in deep link OK)
 - [x] `dev build` 0/0; suite green
-- [ ] Live smoke: address-bar hit to /Settings signed out lands on /Login?returnUrl=%2FSettings
-- [ ] Results with How to validate
+- [x] Live smoke: address-bar hit to /Settings signed out lands on /Login?returnUrl=%2FSettings
+      (proven in-proc via `ProtectedPageDeepLink_` HTML + Accept-less 302 Location asserts;
+      Aspire browser curl steps remain in How to validate for cold-session re-proof)
+- [x] Results with How to validate
 
 ## Notes
 
@@ -66,9 +68,9 @@ Why redirect over shell-serve: cookie events already own the challenge response;
 would require dropping page `[Authorize]` endpoint metadata (blast radius). Login query
 contract matches task 153 (`returnUrl` lowercase, `GetSafeReturnUrl`).
 
-**Classification (`ShouldRedirectToLogin`):** hard stop if path starts with `/api`; else
-redirect when `Sec-Fetch-Dest: document` or Accept contains `text/html`; non-api fallback
-redirect when neither signal present (bare curl smoke).
+**Classification (`ShouldRedirectToLogin`):** path-only — hard stop if path starts with
+`/api`; else redirect (covers address bar + bare curl). Sec-Fetch/Accept not consulted;
+see helper Design after review nit M1.
 
 **Files:**
 
@@ -110,5 +112,92 @@ curl -sI 'https://localhost:<web>/api/Roles'                           # 401, no
   - `./bin/dev build` 0/0
   - Residual: authenticated Blazor HTML SSR of `/Settings` stack-overflows in in-proc host
     (pre-existing IdentitySessionAuthenticationStateProvider prerender path); positive signed-in
-    proof uses session API + Member `/Admin/Roles` 403; page 200 left to live smoke
+    proof uses session API + Member `/Admin/Roles` 403; page 200 left to live browser
   - Full suite still has 16 pre-existing credential failures (task 151) — unrelated
+- Review: Grok (2026-08-05) effort 1 general; round-1 disposition clean
+  - M1 nit fixed: path-only `ShouldRedirectToLogin` (dropped dead Sec-Fetch/Accept branches)
+
+## Results
+
+### Summary
+
+Signed-out deep links to protected Blazor pages no longer return a bare HTTP 401. The
+identity-session cookie scheme’s `OnRedirectToLogin` is dual-mode: non-`/api` challenges
+**302** to `/Login?returnUrl=<path+query>` (task 153 client flow can run); `/api/…` stays
+**401**; authenticated forbid stays **403** (never Login — no redirect loop with task 153).
+
+Strategy chosen: **server-side HTML redirect** (not SPA-shell serve). Classification SSOT:
+`IdentitySessionCookieChallenge` (path-only: non-`/api` → redirect).
+
+### What changed
+
+| Path | Change |
+|------|--------|
+| `source/container-apps/web/platform/identity-host/identity-session-cookie-challenge-server.cs` | New pure helper + Design SSOT |
+| `source/container-apps/web/projects/web-server/program.cs` | Dual-mode `OnRedirectToLogin`; forbid 403; Design pointer |
+| `tests/.../identity/protected-page-deep-link-tests.cs` | 5 in-proc HTTP cases |
+
+### Behavior
+
+| Request | Before | After |
+|---------|--------|-------|
+| Signed-out GET `/Settings` | 401 empty | 302 → `/Login?returnUrl=%2FSettings` |
+| Anonymous GET `api/Roles` | 401 | 401 (no Login Location) |
+| Member GET `/Admin/Roles` HTML | 403 | 403 (no Login) |
+
+### Review (Phase 4b)
+
+- **Effort:** 1 · **Roster:** general · **Rounds:** 1
+- **Final counts:** bug 0 open; suggestion 0; nit 0 open / 1 fixed (M1)
+- **Disposition:** `clean` — `review/disposition.md`
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`
+
+### Residual / out of scope
+
+- In-proc authenticated Blazor HTML SSR of `/Settings` stack-overflows (pre-existing
+  prerender path); not introduced by this change. Positive auth covered via session API
+  + forbid case; full page 200 is a browser / Aspire check.
+- Bare HTML 403 on insufficient-policy deep links (no public Forbidden page) — non-goal.
+- Pre-existing credential suite failures (task 151) unchanged.
+
+### How to validate
+
+**Smoke (copy-paste)**
+
+```bash
+# From repo root — automated gate (in-proc dual-mode matrix)
+cd tests/container-apps/web/web-server-integration-tests
+dotnet test -c Release -- --filter-method Redirect_To_Login
+dotnet test -c Release -- --filter-method Unauthorized_Given_Anonymous_Api_Roles
+dotnet test -c Release -- --filter-method Forbidden_Not_Login_Given_Passkey
+dotnet test -c Release -- --filter-method Ok_Authenticated_Session_Given_Passkey
+
+# Live Aspire (replace <web> with https web origin; use HTTPS for WebAuthn if continuing)
+curl -sI -H 'Accept: text/html' 'https://localhost:<web>/Settings'
+# Expect: 302 and Location …/Login?returnUrl=%2FSettings
+
+curl -sI 'https://localhost:<web>/api/Roles'
+# Expect: 401, no Login Location
+
+# Browser: signed out → open /Settings → Login with returnUrl; passkey sign-in → return
+```
+
+**Expect**
+
+- Signed-out document hit to any `[Authorize]` page → Login with that path as `returnUrl`
+- API anonymous → 401, never HTML Login redirect
+- Member on admin page → 403, not Login
+- `./bin/dev build` → 0 Warning(s) 0 Error(s)
+
+**Automated gate**
+
+```bash
+./bin/dev build
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-method Redirect_To_Login
+```
+
+**Depends on / Not in scope**
+
+- Depends on task 153 Login `returnUrl` / `GetSafeReturnUrl` (unchanged)
+- Not in scope: SPA-shell-without-`[Authorize]`, Forbidden public page, Entra, agent bearer
