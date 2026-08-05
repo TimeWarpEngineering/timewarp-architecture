@@ -36,7 +36,9 @@ public class IngressSmoke_Given_
       (
         // Ephemeral postgres: test AppHosts must NOT share the deterministic data volume
         // (overlapping instances corrupt its WAL and hang WaitFor - see AppHost Design region).
-        ["--Postgres:UseDataVolume=false"]
+        // Authentication:UseMock=true is closed-box opt-in only (mock principal header smoke).
+        // Local dev run does NOT force mock — AppHost forwards this flag when set explicitly.
+        ["--Postgres:UseDataVolume=false", "--Authentication:UseMock=true"]
       );
 
     App = await appHost.BuildAsync();

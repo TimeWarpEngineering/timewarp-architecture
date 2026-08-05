@@ -76,11 +76,15 @@ internal class Program
     IResourceBuilder<ProjectResource> webServer = builder.AddProject<Projects.web_server>(WebServerProjectResourceName, options => options.LaunchProfileName = "Web.Server")
       .WithExternalHttpEndpoints();
 
-    // Task 145-009: ensure Authentication:UseMock reaches Web.Server under local/closed-box
-    // AppHost runs (DCP may not always surface appsettings.Development). Fail-closed: only when
-    // the AppHost environment itself is Development or Testing — Production AppHost never sets it.
-    if (string.Equals(builder.Environment.EnvironmentName, "Development", StringComparison.OrdinalIgnoreCase)
-      || string.Equals(builder.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
+    // Task 145-009 / dogfood: mock auth is OPT-IN only. Do not force Authentication:UseMock=true
+    // for every Development AppHost run — that overrode appsettings (false) and turned on SPA/BFF
+    // mock auth for local passkey dogfood. Forward the flag only when AppHost configuration
+    // explicitly sets Authentication:UseMock (e.g. aspire-tests: --Authentication:UseMock=true).
+    // Production never needs this injection; env vars still cannot enable mock outside
+    // Development/Testing (handler/registration fail-closed gates).
+    string? useMock = builder.Configuration["Authentication:UseMock"];
+    if (string.Equals(useMock, "true", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(useMock, "1", StringComparison.OrdinalIgnoreCase))
     {
       webServer = webServer.WithEnvironment("Authentication__UseMock", "true");
     }

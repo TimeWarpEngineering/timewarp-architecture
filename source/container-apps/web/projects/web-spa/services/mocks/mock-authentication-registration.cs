@@ -8,8 +8,10 @@
 #region Design
 // Runtime replaces the former compile-time MOCK_AUTHENTICATION define: Development/Testing +
 // Authentication:UseMock enables mocks; Production never does (even if the flag is true). Absent
-// UseMock defaults false (fail-closed); appsettings.Development.json sets true so local template
-// UX matches the prior always-mock default. <paramref name="environmentName"/> below must be the
+// UseMock defaults false (fail-closed). Appsettings keep UseMock false so local dogfood is
+// passkey-first; closed-box tests opt in via AppHost config (not forced for every Dev run).
+// <paramref name="environmentName"/> below must be the
+
 // REAL host environment, not something read out of IConfiguration (task 145-009 R2-1: an earlier
 // version of this comment claimed Web.Server's prerender call passed
 // "ASPNETCORE_ENVIRONMENT from configuration" and that "the same gate applies" — that was false:
