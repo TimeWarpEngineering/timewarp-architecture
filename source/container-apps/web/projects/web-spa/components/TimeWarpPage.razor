@@ -25,7 +25,9 @@
 <CascadingValue Value=@this>
   <FluentLayout Class=@($"{Id} twe-shell")>
 
-    <FluentLayoutItem Area="LayoutArea.Header">
+    @* Height must match .twe-appbar's 56px — FluentLayout's slot defaults to
+       --layout-header-height: 44px and the taller appbar overflows it. *@
+    <FluentLayoutItem Area="LayoutArea.Header" Height="56px">
       <header class="twe-appbar">
         <div class="twe-brand">
           @* Horizontal lockup (icon + wordmark side by side) built from the original

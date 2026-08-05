@@ -42,3 +42,7 @@ wordmark at 48px in the 56px bar, no size flash.
 - 2026-08-05 claude: follow-up — crop windows were cut exactly at the measured bounding boxes,
   clipping the sphere tops; regenerated with 2 viewBox-units padding on the icon window and
   1 unit on the wordmark (viewBox now 0 0 268 64; img attrs 201x48).
+- 2026-08-05 claude: follow-up — appbar overflowed the FluentLayout header slot
+  (--layout-header-height defaults to 44px, appbar is 56px); set Height="56px" on the
+  header FluentLayoutItem, mirroring the footer's Height="44px". Verified in the FluentUI
+  assembly that the layout body height calc subtracts this var.
