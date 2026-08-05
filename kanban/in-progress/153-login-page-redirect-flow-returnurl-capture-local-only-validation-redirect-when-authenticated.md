@@ -32,8 +32,10 @@ surface (progressive profile, task 104-024), never the login page.
 - [x] Unit tests for the sanitizer
       (`tests/container-apps/web/web-spa-integration-tests/features/account/login-return-url-tests.cs`)
 - [x] `dev build` 0/0; sanitizer tests green (4/4)
-- [ ] Live smoke: protected page bounce carries returnUrl; `/Login` renders signed-out
-- [ ] Results with How to validate
+- [x] Live smoke: full round-trip verified in Chromium against the running Aspire instance
+      (bounce with returnUrl → passkey registration via CDP virtual authenticator → landed on
+      /Settings; signed-in visit to /Login → bounced home)
+- [x] Results with How to validate
 
 ## Notes
 
@@ -43,7 +45,57 @@ surface (progressive profile, task 104-024), never the login page.
   the sanitizer tests; a full WebAuthn ceremony needs a virtual authenticator and is covered
   by the existing passkey e2e lane, not re-automated here.
 
+## Results
+
+**What changed (commit `06a5e7b8`):**
+- `LoginPage.razor.cs` — `?returnUrl` bound via `[SupplyParameterFromQuery]`; already-
+  authenticated visitors redirected on init; ceremony success navigates via `NavigateOnward()`;
+  `GetSafeReturnUrl` sanitizer (local paths only, `/Login` loop guard, everything else → `/`);
+  StatusMessage limbo state removed; Design region corrects the wrong "add credentials later"
+  note (CreatePasskey mints a NEW Principal — credential management is 104-024 Settings
+  territory). CA1056 suppressed with justification (query binding is string-typed).
+- `LoginPage.razor` — success message bar removed (navigation replaces it).
+- `RedirectToLogin.razor` — forwards the blocked page as escaped `?returnUrl`.
+- NEW `tests/container-apps/web/web-spa-integration-tests/features/account/login-return-url-tests.cs`
+  — 4 pure-function tests: local pass-through, missing → home, absolute/protocol-relative/
+  backslash/scheme rejection, `/Login` loop rejection (exact path only).
+
+**Gates:** `dev build` 0/0; sanitizer tests 4/4
+(`dotnet test -c Release -- --filter-class GetSafeReturnUrl`).
+
+**Live verification (Chromium via playwright-cli against the running Aspire instance,
+https origin, CDP virtual WebAuthn authenticator):**
+1. Signed out, client-side navigation to `/Settings` → landed on `/Login?returnUrl=%2FSettings`.
+2. "Create a passkey" ceremony completed → signed in → **navigated to `/Settings`**, page
+   rendered (policy satisfied).
+3. Signed in, navigated to `/Login` → immediately bounced to `/` (home).
+
+**Found during smoke (out of scope, pre-existing):** a DIRECT browser hit to a protected URL
+(e.g. typing `/Settings` signed out) returns a raw HTTP 401 from web-server instead of serving
+the SPA shell — the client router (and thus this redirect flow) never loads on deep links to
+protected pages. Client-side navigation is unaffected. Needs its own task.
+
+### How to validate
+
+**Smoke (UI):**
+1. `dev run`; open the web app root (https web-server URL from the Aspire dashboard).
+2. Signed out, click any protected nav destination or in-app link to `/Settings`.
+3. Expect: URL becomes `/Login?returnUrl=%2FSettings`, Sign in page shown.
+4. Complete a passkey sign-in (or registration). Expect: you land on `/Settings`, not `/Login`.
+5. While signed in, navigate in-app to `/Login`. Expect: immediate bounce to home.
+
+**Automated gates:**
+```bash
+dev build   # expect 0 warnings / 0 errors
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class GetSafeReturnUrl   # expect 4/4
+```
+
+**Not in scope:** deep-link 401 on direct protected-URL hits (pre-existing, filed separately);
+WebAuthn over plain http origins (RP selection accepts https only — dev smoke must use the
+https endpoint).
+
 ## Session
 
 - Created: Claude (2026-08-05)
 - Implementation: Claude (2026-08-05)
+- Live verification: Claude (2026-08-05), Chromium + CDP virtual authenticator
