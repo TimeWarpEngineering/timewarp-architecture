@@ -5,6 +5,7 @@
     <!-- WebAuthnOptions/WebAuthnOptionsValidator (configuration/) use IOptions<T>/AbstractValidator
          directly — explicit rather than relying on the transitive flow from web-contracts. -->
     <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="TimeWarp.Multiavatar" />
   </ItemGroup>
 
   <ItemGroup>

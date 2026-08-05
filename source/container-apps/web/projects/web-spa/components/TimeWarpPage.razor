@@ -101,7 +101,14 @@
       background: var(--twe-paper); border-bottom: 3px solid var(--twe-green);
     }
     .twe-shell .twe-appbar__search { flex: 0 1 520px; width: 520px; margin-inline: auto; }
-    .twe-shell .twe-appbar__actions { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+    .twe-shell .twe-appbar__actions {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      /* Task 149: breathing room so profile FluentMenu is not flush to the viewport edge. */
+      padding-inline-end: 8px;
+    }
     .twe-shell .search-end { white-space: nowrap; color: var(--twe-muted); font-size: var(--twe-text-helper); }
 
     .twe-shell .twe-brand { display: inline-flex; align-items: center; gap: 10px; padding: 0 6px; }

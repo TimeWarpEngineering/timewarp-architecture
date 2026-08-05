@@ -6,12 +6,12 @@
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
 
-// Co-located Jaribu tests for GetProfile (task 148 D10): contract round-trip, mock factory,
-// in-memory store, and handler create-if-missing with stub HTTP (avatar fallback).
+// Co-located Jaribu tests for GetProfile (tasks 148/149): contract round-trip, mock factory,
+// in-memory store, create-if-missing, and deterministic local Multiavatar.
 // Run standalone:  dotnet run source/container-apps/web/features/profile/get-profile/get-profile-tests.cs
 
 #region Purpose
-// Jaribu runfile: GetProfile contract + store + handler coverage (task 148).
+// Jaribu runfile: GetProfile contract + store + handler coverage (tasks 148/149).
 #endregion
 
 //-:cnd:noEmit
@@ -24,11 +24,9 @@ namespace TimeWarp.Architecture.Features.Profiles
 {
 
   using System;
-  using System.Net.Http;
   using System.Text.Json;
   using System.Threading;
   using System.Threading.Tasks;
-  using Microsoft.Extensions.Logging.Abstractions;
   using OneOf;
   using Shouldly;
   using TimeWarp.Architecture.Features.Profiles.Application;
@@ -139,9 +137,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     public static async Task Anonymous_Should_ReturnMock()
     {
       var store = new InMemoryProfileStore();
-      using var avatarHandler = new FailingAvatarHandler();
-      using var httpClient = new HttpClient(avatarHandler);
-      var handler = CreateHandler(userId: null, store, httpClient);
+      var handler = CreateHandler(userId: null, store);
 
       OneOf<Response, SharedProblemDetails> result =
         await handler.Handle(new Query(), CancellationToken.None);
@@ -152,15 +148,15 @@ namespace TimeWarp.Architecture.Features.Profiles
 
       response.Alias.ShouldBe("alias");
       response.Language.ShouldBe("en-US");
+      response.Avatar.ShouldStartWith("data:image/svg+xml;base64,");
+      response.Avatar.Length.ShouldBeGreaterThan(500);
     }
 
     public static async Task Authenticated_missing_profile_Should_CreateDefaults()
     {
       var userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
       var store = new InMemoryProfileStore();
-      using var avatarHandler = new FailingAvatarHandler();
-      using var httpClient = new HttpClient(avatarHandler);
-      var handler = CreateHandler(userId, store, httpClient);
+      var handler = CreateHandler(userId, store);
 
       OneOf<Response, SharedProblemDetails> result =
         await handler.Handle(new Query(), CancellationToken.None);
@@ -191,9 +187,7 @@ namespace TimeWarp.Architecture.Features.Profiles
       seeded.EnableNotifications();
       await store.AddAsync(seeded);
 
-      using var avatarHandler = new FailingAvatarHandler();
-      using var httpClient = new HttpClient(avatarHandler);
-      var handler = CreateHandler(userId, store, httpClient);
+      var handler = CreateHandler(userId, store);
       Response response = (await handler.Handle(new Query(), CancellationToken.None))
         .Match(ok => ok, _ => throw new InvalidOperationException("Expected Response"));
 
@@ -204,49 +198,33 @@ namespace TimeWarp.Architecture.Features.Profiles
       response.Notifications.ShouldBeTrue();
     }
 
-    public static async Task Avatar_network_failure_Should_UseFallback_not_throw()
+    public static async Task Avatar_same_userId_Should_Be_Deterministic()
     {
-      var userId = Guid.NewGuid();
+      var userId = Guid.Parse("cccccccc-dddd-eeee-ffff-000000000001");
       var store = new InMemoryProfileStore();
-      using var avatarHandler = new FailingAvatarHandler();
-      using var httpClient = new HttpClient(avatarHandler);
-      var handler = CreateHandler(userId, store, httpClient);
+      var handler = CreateHandler(userId, store);
 
-      Response response = (await handler.Handle(new Query(), CancellationToken.None))
+      Response first = (await handler.Handle(new Query(), CancellationToken.None))
+        .Match(ok => ok, _ => throw new InvalidOperationException("Expected Response"));
+      Response second = (await handler.Handle(new Query(), CancellationToken.None))
         .Match(ok => ok, _ => throw new InvalidOperationException("Expected Response"));
 
-      // Multiavatar failed → resilient SVG data URI (never throws).
-      response.Avatar.ShouldNotBeNullOrEmpty();
-      response.Avatar.ShouldStartWith("data:image/svg+xml;base64,");
+      first.Avatar.ShouldStartWith("data:image/svg+xml;base64,");
+      first.Avatar.ShouldBe(second.Avatar);
+      first.Avatar.Length.ShouldBeGreaterThan(200);
     }
 
-    private static ProfileHandler CreateHandler(
-      Guid? userId,
-      IProfileStore store,
-      HttpClient httpClient)
+    private static ProfileHandler CreateHandler(Guid? userId, IProfileStore store)
     {
       return new ProfileHandler(
         new StubCurrentUserService(userId),
-        store,
-        httpClient,
-        NullLogger<ProfileHandler>.Instance);
+        store);
     }
 
     private sealed class StubCurrentUserService : ICurrentUserService
     {
       public StubCurrentUserService(Guid? userId) => UserId = userId;
       public Guid? UserId { get; }
-    }
-
-    /// <summary>Always fails multiavatar so tests exercise the resilient fallback path.</summary>
-    private sealed class FailingAvatarHandler : HttpMessageHandler
-    {
-      protected override Task<HttpResponseMessage> SendAsync(
-        HttpRequestMessage request,
-        CancellationToken cancellationToken)
-      {
-        throw new HttpRequestException("multiavatar unreachable (test stub)");
-      }
     }
   }
 
