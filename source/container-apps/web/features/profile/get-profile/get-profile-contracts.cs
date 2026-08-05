@@ -1,25 +1,26 @@
 #region Purpose
-// Contract for fetching the signed-in user's display profile (alias and avatar), with a mock for backend-less demos.
+// Contract for fetching the signed-in user's display profile (alias, prefs, avatar), with a mock for backend-less demos.
 #endregion
 
 #region Design
 // The Query has no properties — identity comes from the auth context, which is why the route says Users/Current.
 // The empty Validator satisfies the convention that every request ships one, keeping source-gen and test
 // patterns uniform across contracts.
-// Guard clauses in the Response constructor make an empty profile unrepresentable; the mock avatar is a
-// data URI so the demo needs no static asset.
-// [EndpointAllowAnonymous] (task 110): the handler (get-profile-handler.cs) is deliberately
-// dual-mode — an anonymous caller gets the contract's mock response so the demo works with no
-// sign-in, and an authenticated caller (ICurrentUserService.UserId present) gets a
-// UserId-synthesized response instead; neither path persists a real profile yet. Requiring auth at
-// the endpoint would break the anonymous demo path the handler was written to support; real
-// profile persistence + auth is future work (104-016/104-024).
+// Guard clauses in the Response constructor make an empty profile unrepresentable; Avatar is a
+// non-empty string (data URI or placeholder) so the UI never receives a blank image source.
+// Wire names (task 148 D2): Alias maps from domain DisplayName (chrome-facing name stays Alias);
+// Language/Region/Theme/Notifications mirror the Profile aggregate; Avatar is not domain/EF.
+// [EndpointAllowAnonymous] (task 110 / 148 D3): the handler is deliberately dual-mode — an
+// anonymous caller gets the contract's mock response so the demo works with no sign-in, and an
+// authenticated caller (ICurrentUserService.UserId present) gets store-backed create-if-missing
+// profile data. Requiring auth at the endpoint would break the anonymous demo path. Page gate
+// remains Policies.CanViewOwnProfile.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
 
 [ApiEndpoint]
-[EndpointAllowAnonymous("Handler is deliberately dual-mode (anonymous demo response vs UserId-synthesized authenticated response); requiring auth would break the anonymous demo path. Real profile persistence + auth is 104-016/104-024.")]
+[EndpointAllowAnonymous("Handler is deliberately dual-mode (anonymous demo response vs store-backed authenticated response); requiring auth would break the anonymous demo path. Page stays CanViewOwnProfile (task 148 D3).")]
 public static partial class GetProfile
 {
   [ApiRoute(RouteTemplate: "api/Users/Current/Profile", HttpVerb.Get)]
@@ -30,22 +31,37 @@ public static partial class GetProfile
   public sealed class Response : BaseResponse
   {
     public string Alias { get; }
+    public string Language { get; }
+    public string Region { get; }
+    public string Theme { get; }
+    public bool Notifications { get; }
     public string Avatar { get; }
 
-    public Response(string alias, string avatar)
+    public Response(
+      string alias,
+      string language,
+      string region,
+      string theme,
+      bool notifications,
+      string avatar)
     {
       Alias = Guard.Against.NullOrEmpty(alias);
+      Language = Guard.Against.NullOrEmpty(language);
+      Region = Guard.Against.NullOrEmpty(region);
+      Theme = Guard.Against.NullOrEmpty(theme);
+      Notifications = notifications;
       Avatar = Guard.Against.NullOrEmpty(avatar);
     }
   }
 
   public static MockResponseFactory<Response> GetMockResponseFactory()
   {
-    return _ => new Response
-    (
+    return _ => new Response(
       alias: "alias",
-      avatar:
-      "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBKwErAAD/4QCSRXhpZgAATU0AKgAAAAgABQEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAAExAAIAAAAQAAAAWodpAAQAAAABAAAAagAAAAAAAAErAAAAAQAAASsAAAABcGFpbnQubmV0IDUuMC45AAACoAIABAAAAAEAAAPooAMABAAAAAEAAALuAAAAAAAA/+EIIGh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8APD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4NCjx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkltYWdlOjpFeGlmVG9vbCAxMi41NiI+DQogIDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+DQogICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIj4NCiAgICAgIDxkYzpjcmVhdG9yPg0KICAgICAgICA8cmRmOlNlcT4NCiAgICAgICAgICA8cmRmOmxpPlJhY2hhdGEgVGV5cGFyc2l0PC9yZGY6bGk+DQogICAgICAgIDwvcmRmOlNlcT4NCiAgICAgIDwvZGM6Y3JlYXRvcj4NCiAgICAgIDxkYzpkZXNjcmlwdGlvbj4NCiAgICAgICAgPHJkZjpBbHQ+DQogICAgICAgICAgPHJkZjpsaSB4bWw6bGFuZz0ieC1kZWZhdWx0Ij5CaWcgc21pbGUgZmFjZSBvZiB2ZXJ5IGhhcHB5IEFzaWFuIG1hbiB3aXRoIGV5ZWdsYXNzZXMuOyBTaHV0dGVyc3RvY2sgSUQgMTA4MjM4OTQzNjsgc2VhcmNoX2lkOiA1MDFiYjJiNC0xMDkwLTQ1ZDctYWJiOC0xYzkxMGQ5NDAwMzg7IGN1c3RvbWVyX2lkOiBiYmExNzc1YS1lZWJmLTRiNjEtOTIyNC1iNmY5YmZmZTFjNTg8L3JkZjpsaT4NCiAgICAgICAgPC9yZGY6QWx0Pg0KICAgICAgPC9kYzpkZXNjcmlwdGlvbj4NCiAgICAgIDxkYzp0aXRsZT4NCiAgICAgICAgPHJkZjpBbHQ+DQogICAgICAgICAgPHJkZjpsaSB4bWw6bGFuZz0ieC1kZWZhdWx0Ij4xMDgyMzg5NDM2PC9yZGY6bGk+DQogICAgICAgIDwvcmRmOkFsdD4NCiAgICAgIDwvZGM6dGl0bGU+DQogICAgPC9yZGY6RGVzY3JpcHRpb24+DQogICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6cGRmPSJodHRwOi8vbnMuYWRvYmUuY29tL3BkZi8xLjMvIj4NCiAgICAgIDxwZGY6Q3JlYXRpb25EYXRlPjIwMTgtMDUtMDM8L3BkZjpDcmVhdGlvbkRhdGU+DQogICAgPC9yZGY6RGVzY3JpcHRpb24+DQogICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6cGhvdG9zaG9wPSJodHRwOi8vbnMuYWRvYmUuY29tL3Bob3Rvc2hvcC8xLjAvIj4NCiAgICAgIDxwaG90b3Nob3A6Q3JlZGl0PlNodXR0ZXJzdG9jayAvIFJhY2hhdGEgVGV5cGFyc2l0PC9waG90b3Nob3A6Q3JlZGl0Pg0KICAgIDwvcmRmOkRlc2NyaXB0aW9uPg0KICAgIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnBsdXM9Imh0dHA6Ly9ucy51c2VwbHVzLm9yZy9sZGYveG1wLzEuMC8iPg0KICAgICAgPHBsdXM6TGljZW5zb3I+DQogICAgICAgIDxyZGY6U2VxPg0KICAgICAgICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0iUmVzb3VyY2UiPg0KICAgICAgICAgICAgPHBsdXM6TGljZW5zb3JOYW1lPlNodXR0ZXJzdG9jazwvcGx1czpMaWNlbnNvck5hbWU+DQogICAgICAgICAgICA8cGx1czpMaWNlbnNvclVSTD5odHRwczovL3d3dy5zaHV0dGVyc3RvY2suY29tL2ltYWdlLXBob3RvLzEwODIzODk0MzY/dXRtX3NvdXJjZT1pcHRjJmFtcDt1dG1fbWVkaXVtPWdvb2dsZWltYWdlcyZhbXA7dXRtX2NhbXBhaWduPWltYWdlPC9wbHVzOkxpY2Vuc29yVVJMPg0KICAgICAgICAgIDwvcmRmOmxpPg0KICAgICAgICA8L3JkZjpTZXE+DQogICAgICA8L3BsdXM6TGljZW5zb3I+DQogICAgPC9yZGY6RGVzY3JpcHRpb24+DQogICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wUmlnaHRzPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvcmlnaHRzLyI+DQogICAgICA8eG1wUmlnaHRzOldlYlN0YXRlbWVudD5odHRwczovL3d3dy5zaHV0dGVyc3RvY2suY29tL2xpY2Vuc2U/dXRtX3NvdXJjZT1pcHRjJmFtcDt1dG1fbWVkaXVtPWdvb2dsZWltYWdlcyZhbXA7dXRtX2NhbXBhaWduPXdlYnN0YXRlbWVudDwveG1wUmlnaHRzOldlYlN0YXRlbWVudD4NCiAgICA8L3JkZjpEZXNjcmlwdGlvbj4NCiAgPC9yZGY6UkRGPg0KPC94OnhtcG1ldGE+DQo8P3hwYWNrZXQgZW5kPSJyIj8+/+0DBFBob3Rvc2hvcCAzLjAAOEJJTQQEAAAAAALoHAFaAAMbJUccAgUACjEwODIzODk0MzYcAhkBcGFkdWx0LCBhc2lhLCBhc2lhbiwgYXR0cmFjdGl2ZSwgYmFja2dyb3VuZCwgYmVhcmQsIGJpZywgY2FyZWZyZWUsIGNhc3VhbCwgY2hlZXJmdWwsIGNoaW5lc2UsIGNvbmNlcHQsIGNvbmZpZGVudCwgZW1vdGlvbiwgZXhwcmVzc2lvbiwgZmFjZSwgZmFjaWFsLCBmdW4sIGZ1bm55LCBnb29kLCBncmV5LCBndXksIGhhbmRzb21lLCBoYXBwaW5lc3MsIGhhcHB5LCBodW1vciwgamFwYW5lc2UsIGpveSwgam95ZnVsLCBsYXVnaCwgbG9vaywgbG9va2luZywgbWFsZSwgbWFuLCBtb2RlbCwgb25lLCBwZW9wbGUsIHBlcnNvbiwgcG9ydHJhaXQsIHBvc2l0aXZlLCBzbWlsZSwgc3BhY2UsIHN0dWRpbywgc3VjY2Vzc2Z1bCwgdGhhaSwgd2hpdGUsIHlvdW5nHAJQABFSYWNoYXRhIFRleXBhcnNpdBwC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"
-    );
+      language: "en-US",
+      region: "US",
+      theme: "system",
+      notifications: false,
+      avatar: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjODg4Ii8+PC9zdmc+");
   }
 }
