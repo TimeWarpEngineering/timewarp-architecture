@@ -28,11 +28,9 @@
     <FluentLayoutItem Area="LayoutArea.Header">
       <header class="twe-appbar">
         <div class="twe-brand">
-          <img class="twe-brand__logo" src="images/timewarp-logo.svg" alt="TimeWarp Enterprises" />
-          <span class="twe-brand__text">
-            <span class="twe-brand__name">TimeWarp</span>
-            <span class="twe-brand__sub">Architecture</span>
-          </span>
+          @* Explicit width/height reserve the box before styles apply — the SVG is
+             intrinsically 1000x800 and would otherwise flash huge on first paint. *@
+          <img class="twe-brand__logo" src="images/timewarp-logo.svg" alt="TimeWarp Architecture" width="43" height="34" />
         </div>
         <div class="twe-appbar__search">
           <FluentTextInput Placeholder="Search" Width="100%">
@@ -111,11 +109,8 @@
     }
     .twe-shell .search-end { white-space: nowrap; color: var(--twe-muted); font-size: var(--twe-text-helper); }
 
-    .twe-shell .twe-brand { display: inline-flex; align-items: center; gap: 10px; padding: 0 6px; }
+    .twe-shell .twe-brand { display: inline-flex; align-items: center; padding: 0 6px; }
     .twe-shell .twe-brand__logo { height: 34px; width: auto; flex: none; display: block; }
-    .twe-shell .twe-brand__text { display: flex; flex-direction: column; line-height: 1.04; }
-    .twe-shell .twe-brand__name { font-weight: 800; font-size: 16px; letter-spacing: -0.02em; color: var(--twe-ink); }
-    .twe-shell .twe-brand__sub { font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--twe-muted); }
 
     .twe-shell .twe-nav { height: 100%; padding: 8px; background: var(--twe-paper-2); border-right: 1px solid var(--twe-rule); }
 
