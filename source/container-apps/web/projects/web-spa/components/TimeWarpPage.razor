@@ -108,6 +108,9 @@
       --twe-appbar-height: 70px; --layout-header-height: var(--twe-appbar-height) !important;
       --twe-footer-height: 44px; --layout-footer-height: var(--twe-footer-height) !important;
     }
+    /* Header slot: Fluent sets area=header background to --colorBrandBackground (theme
+       purple). White appbar + 8px Fluent padding ⇒ purple frame. Green accent on the
+       bottom edge of the bar. Footer mirrors with blue slot + green on top (task 162). */
     .twe-shell .twe-appbar {
       display: flex; align-items: center; gap: 12px;
       width: 100%; height: 100%; padding: 0 16px;
@@ -136,10 +139,16 @@
 
     .twe-shell .twe-aside { padding: 20px; border-left: 1px solid var(--twe-rule); height: 100%; }
 
+    /* Footer slot: Fluent defaults area=footer to neutral disabled background; override
+       to TimeWarp blue so it pairs with the purple header frame (logo blue). Green
+       accent on the top edge mirrors the header's bottom accent. */
+    .twe-shell .fluent-layout-item[area=footer] {
+      background-color: var(--twe-blue);
+    }
     .twe-shell .twe-footer {
       display: flex; align-items: center; gap: 12px; width: 100%;
       height: 100%; padding: 0 16px; box-sizing: border-box;
-      border-top: 1px solid var(--twe-rule); background: var(--twe-paper);
+      border-top: 3px solid var(--twe-green); background: var(--twe-paper);
       color: var(--twe-muted); font-size: var(--twe-text-helper);
     }
   ")
