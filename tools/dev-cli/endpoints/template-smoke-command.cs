@@ -189,7 +189,34 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
         }
       }
 
+      PurgeStaleSmokeCacheEntries();
       return true;
+    }
+
+    /// <summary>
+    /// The constant 2.0.0-smoke version defends against nuget.org shadowing but NOT against
+    /// previous smoke runs: once NuGet's global cache extracts a 2.0.0-smoke package, every
+    /// later restore reuses it, so local smoke silently tests stale platform bits (observed:
+    /// a week-old TimeWarp.Identity without ListPrincipalsAsync — task 104-035). Evict the
+    /// smoke-version cache folder for every id just packed so restore re-extracts this run's
+    /// bits. CI is unaffected (cold caches); this makes local runs equally trustworthy.
+    /// </summary>
+    private void PurgeStaleSmokeCacheEntries()
+    {
+      string globalPackages = Environment.GetEnvironmentVariable("NUGET_PACKAGES")
+        ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
+
+      string suffix = $".{SmokePackageVersion}.nupkg";
+      foreach (string nupkg in Directory.GetFiles(PackagesDir, $"*{suffix}"))
+      {
+        string packageId = Path.GetFileName(nupkg)[..^suffix.Length];
+        string cached = Path.Combine(globalPackages, packageId.ToLowerInvariant(), SmokePackageVersion);
+        if (Directory.Exists(cached))
+        {
+          Directory.Delete(cached, recursive: true);
+          Terminal.WriteLine($"  evicted stale cache: {packageId}/{SmokePackageVersion}");
+        }
+      }
     }
 
     private async Task<bool> PackTemplateAsync()
