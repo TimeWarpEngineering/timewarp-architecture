@@ -47,7 +47,8 @@ public class IngressSmoke_Given_
     await App.StartAsync();
 
     // Requests flow only once the backends AND the ingress are healthy; one 2-minute budget
-    // covers all three so a slow backend doesn't false-fail the ingress wait.
+    // covers all the gates below (three health waits, the web-migrations terminal-state wait,
+    // and the ingress-reachability poll) so a slow backend doesn't false-fail the ingress wait.
     using CancellationTokenSource cts = new(TimeSpan.FromMinutes(2));
     await App.ResourceNotifications.WaitForResourceHealthyAsync("web-server", cts.Token);
     await App.ResourceNotifications.WaitForResourceHealthyAsync("api-server", cts.Token);
@@ -64,11 +65,19 @@ public class IngressSmoke_Given_
     // This is a notification-service POLL from test code (WaitForResourceAsync against the
     // already-running graph), not a builder-graph WaitFor/WaitForCompletion annotation, so it
     // reproduces neither of the two bugs above.
-    await App.ResourceNotifications.WaitForResourceAsync
+    // TerminalStates includes FailedToStart/Exited, so assert the state reached is Finished —
+    // a failed migration should fail HERE with a clear message, not later as confusing
+    // schema/auth errors in the DB-backed facts (review 155 round-1 F1).
+    string migrationState = await App.ResourceNotifications.WaitForResourceAsync
     (
       "web-migrations",
       KnownResourceStates.TerminalStates,
       cts.Token
+    );
+    migrationState.ShouldBe
+    (
+      KnownResourceStates.Finished,
+      $"web-migrations ended in '{migrationState}', not Finished — schema is not applied."
     );
 
     // Healthy != reachable: the ingress reports Healthy when the YARP process starts, but the
