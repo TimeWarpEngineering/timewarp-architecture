@@ -38,3 +38,5 @@ the logo at 34px with no size flash during load.
 
 - 2026-08-05 claude: implemented (text removed, size attrs added), dev build 0/0, committed
   `4d3519ee`, marked done.
+- 2026-08-05 claude: follow-up — 34px logo unreadable standing alone; bumped to 48px
+  (attrs 60x48, same 1.25 aspect) to fill the 56px appbar.
