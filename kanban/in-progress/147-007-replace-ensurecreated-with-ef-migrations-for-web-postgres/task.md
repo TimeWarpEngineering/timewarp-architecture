@@ -401,6 +401,77 @@ If preview `Aspire.Hosting.EntityFrameworkCore` fails cohabitation, `RunDatabase
 5. Drop or skip: AppHost `AddEFMigrations` / publish-as-migration artifacts until package is viable.  
 6. D6 remains preferred; fallback is temporary and documented.
 
+## Results (close-out 2026-08-05/06)
+
+Implementation shipped 2026-08-04 in `4c714bf3` (migrations SSOT under
+`source/container-apps/web/platform/postgres/migrations/`, AppHost `AddEFMigrations` +
+`RunDatabaseUpdateOnStart` + publish script/bundle, EnsureCreated/schema-bootstrap deleted,
+design-time factory, dotnet-ef pinned, scripts + ADR-0009 + how-tos updated). Amended by task
+155 (`cf4266b4`): NO wait edge between web-server and web-migrations — WaitFor deadlocked
+dashboard restarts and WaitForCompletion reproducibly broke DCP service-producer endpoint
+creation under Aspire.Hosting.Testing; ADR-0009 amendment records both. Hybrid semantics:
+RunDatabaseUpdateOnStart is a dev first-boot convenience; production applies published
+script/bundle artifacts; on-demand re-run via the ef-database-update dashboard command or
+`dev db-update` (task 159).
+
+**Gates (all run at close-out):**
+- `./bin/dev build` 0/0.
+- `web-infrastructure-tests` 45/45 (EF store contract, role store, profile persistence).
+- `aspire-tests` 7/7 (closed-box AppHost graph incl. the migration resource).
+- **`dev template-smoke` full matrix SUCCEEDED** — this gate flushed out and forced fixes for
+  four latent defects before going green: TimeWarp.402 bare ProjectReference broke every
+  generated app since 104-011 (task 104-035); smoke harness stale-cache shadowing hid week-old
+  platform packs (104-035); get-profile runfile was aggregator-unsafe (task 164); and the
+  147-006/148 EF feature files were missing from the `(!postgres)` template excludes plus stale
+  aggregator counts (fixed here, `bfe57383`).
+- **Schema-change smoke:** canonical CLI `dotnet ef migrations add` (web-server startup project)
+  scaffolds into `platform/postgres/migrations/` with namespace
+  `TimeWarp.Architecture.Persistence.Migrations`; throwaway migration removed. CAVEAT: `dotnet
+  ef migrations remove` regenerates the model snapshot at EF's DEFAULT path
+  (`web-infrastructure/TimeWarp/Architecture/…`), creating a duplicate-snapshot build break —
+  delete the stray tree if you use remove; scaffold/apply paths are unaffected.
+- First-boot + restart runtime behavior validated live under task 155 (fresh AppHost boot ran
+  the migration to Finished; dashboard restart of web-server clean).
+
+**Phase 4b review:** 1 round, effort 1. Findings: 2 major doc-drift (module Design region
+still claimed pre-155 ordering; scripts/postgres wrong EF startup project with a false
+comment) + 1 nit (ADR pointer) — all fixed (`eb9648fe`). Disposition: **clean**
+(`review/disposition.md`).
+
+### How to validate
+
+**Automated**
+```bash
+./bin/dev build                                   # 0/0
+cd tests/container-apps/web/web-infrastructure-tests && dotnet test -c Release   # 45/45
+cd ../../aspire/aspire-tests && dotnet test -c Release                           # 7/7
+./bin/dev template-smoke                          # Template smoke SUCCEEDED (3-leg matrix)
+```
+
+**Manual smoke (fresh volume, migration-on-first-boot)**
+```bash
+# stop AppHost; docker volume rm <apphost>-postgres-data (or --Postgres:UseDataVolume=false)
+dev run
+# dashboard: web-migrations Waiting→Running→Finished; identity.* + profiles.* +
+# __EFMigrationsHistory exist; login/roles pages work once Finished
+```
+
+**Schema evolution loop**
+```bash
+dotnet tool restore
+dotnet ef migrations add <Name> \
+  --project source/container-apps/web/projects/web-infrastructure/web-infrastructure.csproj \
+  --startup-project source/container-apps/web/projects/web-server/web-server.csproj \
+  --context PostgresDbContext \
+  --output-dir ../../platform/postgres/migrations \
+  --namespace TimeWarp.Architecture.Persistence.Migrations
+# expect: files under platform/postgres/migrations/; apply via dev run auto-run,
+# ef-database-update dashboard command, or dev db-update
+```
+
+Depends on: docker (postgres container), aspire CLI for `dev db-update`.
+Not in scope: production pipeline execution of published script/bundle artifacts (deploy-time).
+
 ## Session
 
 - Created: 2026-08-04 — folder task for migrations; plan for multi-agent review
@@ -422,3 +493,6 @@ If preview `Aspire.Hosting.EntityFrameworkCore` fails cohabitation, `RunDatabase
   Designer.cs companions; A0 checks `Aspire.AppHost.Sdk/13.4.3` vs 13.4.6 package
   train; stale `scripts/postgres/*` reconcile/retire added.
 - Planning: orchestration session (2026-08-04) — plan verified against repo; no human clarifying questions.
+- 2026-08-05/06 claude (orchestrator): close-out — gates run (build, infra tests, aspire,
+  full template-smoke after fixing 104-035/164/excludes, schema-change smoke), Phase 4b review
+  round 1 clean (2 major doc-drift fixed eb9648fe), Results written, done.
