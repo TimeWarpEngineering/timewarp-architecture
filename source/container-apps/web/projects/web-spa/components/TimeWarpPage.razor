@@ -14,6 +14,11 @@
 *@
 
 @code {
+  // Single source for the appbar height: feeds the FluentLayoutItem Height parameter
+  // (which sizes the layout's header slot / --layout-header-height) AND the
+  // --twe-appbar-height CSS variable the appbar styles use. Change it here only.
+  private const int AppBarHeightPx = 70;
+
   [Parameter] public string? Title { get; set; }
   [Parameter] public RenderFragment? ChildContent { get; set; }
   [Parameter] public RenderFragment? Aside { get; set; }
@@ -25,9 +30,9 @@
 <CascadingValue Value=@this>
   <FluentLayout Class=@($"{Id} twe-shell")>
 
-    @* Height must match .twe-appbar's 56px — FluentLayout's slot defaults to
-       --layout-header-height: 44px and the taller appbar overflows it. *@
-    <FluentLayoutItem Area="LayoutArea.Header" Height="56px">
+    @* Sizes the FluentLayout header slot (--layout-header-height defaults to 44px
+       and a taller appbar overflows it). Same constant drives the appbar CSS. *@
+    <FluentLayoutItem Area="LayoutArea.Header" Height=@($"{AppBarHeightPx}px")>
       <header class="twe-appbar">
         <div class="twe-brand">
           @* Horizontal lockup (icon + wordmark side by side) built from the original
@@ -96,10 +101,11 @@
    class because they style FluentUI light-DOM children (fluent-nav, fluent-text-input)
    which CSS isolation can't reach. Verbatim string so CSS braces are literal. *@
 <style>
+  @(".twe-shell { --twe-appbar-height: " + AppBarHeightPx + "px; }")
   @(@"
     .twe-shell .twe-appbar {
       display: flex; align-items: center; gap: 12px;
-      width: 100%; height: 56px; padding: 0 16px;
+      width: 100%; height: var(--twe-appbar-height); padding: 0 16px;
       background: var(--twe-paper); border-bottom: 3px solid var(--twe-green);
     }
     .twe-shell .twe-appbar__search { flex: 0 1 520px; width: 520px; margin-inline: auto; }
