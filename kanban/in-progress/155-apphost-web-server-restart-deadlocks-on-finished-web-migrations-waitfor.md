@@ -120,6 +120,66 @@ dev first-boot. Resolution:
   orchestration code for semantics prod doesn't have); env-conditional wait (test/run topology
   divergence in a template repo).
 
+## Plan Amendment 2 (Phase 4 continued, 2026-08-05)
+
+Hybrid implementation (no wait edge) built and passed `dev build` 0/0, but the aspire-tests
+regression gate was 6/7: `RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole`
+consistently (3/3 runs) got `401 Unauthorized` instead of the expected `403 Forbidden`. Traced
+to `PrincipalRoleClaimsTransformation` → `EffectiveRolesResolver` → `EfPrincipalRoleStore`
+hitting Postgres before `RunDatabaseUpdateOnStart` finished — exactly the accepted first-boot
+race, but deterministic here because `aspire-tests` always boots an ephemeral Postgres
+(`--Postgres:UseDataVolume=false`), so migrations always have real work to do, unlike a real
+dev volume which is already-current after its first boot.
+
+**Maintainer decision (Steve), after options discussion:** confirmed this is DX-only (production
+never runs the AppHost auto-run path at all; a real dev volume only pays the race once, and it
+self-heals in seconds). Rejected building AppHost-level readiness gating (a stronger health
+check + `.WithHttpHealthCheck()` wiring + loosening the `/health` endpoint's
+`IsDevelopment()`-only guard) as disproportionate to a rare, self-healing, once-per-volume
+window, and as reopening a real security-posture question (unauthenticated `/health` exposure)
+for a benefit that doesn't justify it.
+
+**Fix implemented:** test-side only, in `tests/container-apps/aspire/aspire-tests/ingress-smoke-tests.cs`
+`SetupOnce` — wait for the `web-migrations` resource to reach a terminal state
+(`Aspire.Hosting.ApplicationModel.KnownResourceStates.TerminalStates`) via
+`ResourceNotificationService.WaitForResourceAsync` (a notification-service **poll** from test
+code against the already-running graph, not a builder-graph `WaitFor`/`WaitForCompletion`
+annotation) before firing DB-backed requests. Reproduces neither the restart-deadlock nor the
+DCP service-producer bug, since it never touches the AppHost's resource-graph wait wiring.
+Added `global using Aspire.Hosting.ApplicationModel;` to the test project for
+`KnownResourceStates`.
+
+**Follow-up spun out (not blocking this task):** task 158 — the 401-vs-403 mislabeling itself is
+a real, independent bug (any transient DB failure during role resolution, not just this race,
+would hit the same code path in production) and needs its own fix + deterministic test, agreed
+as separate scope.
+
+## Plan Amendment 3 (baseline verification, 2026-08-05)
+
+**Correction to Amendment 2's diagnosis.** Before treating the `RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole`
+failure as caused by this task, verified against the true baseline: `git stash push -u` (all of
+today's task-155 changes, including the test-side migration wait), `dev build` (0/0), ran
+`aspire-tests` 3× on the **unmodified original code** (`WaitFor(webMigrations)`, no test
+changes). **Same failure, 3/3 runs, identical symptom** (401 instead of 403). `git stash pop`
+restored the working tree to its task-155 state (verified clean restore, `dev build` 0/0 again).
+
+Conclusion: this test failure **predates task 155 and is not caused by its wait-edge change**.
+The original `WaitFor(webMigrations)` already guarantees migrations reach at least `Running`
+before web-server starts, and by the time any test method fires the migration is long finished
+either way — so this was never actually a migration-timing race, disproving Amendment 2's
+causal claim. Task 158 has been corrected to remove the now-disproven migration-race theory and
+reopen root cause as unknown (pre-existing bug, not task-155 scope). The test-side
+`WaitForResourceAsync` wait added to `ingress-smoke-tests.cs` in Amendment 2 is kept — it's
+harmless and correctly guards the *actual* (if narrow) migration-race window this task's design
+introduces for other DB-backed assertions in that suite — but it does not fix, and was never
+going to fix, this specific pre-existing failure.
+
+**This task's own gates are unaffected:** `dev build` 0/0 with task 155's changes in place;
+`aspire-tests` shows the same single pre-existing failure with or without task 155's changes
+(no regression introduced); `web-spa-integration-tests` and `api-server-integration-tests`
+green. Task 155 closes on that basis — the pre-existing `aspire-tests` failure is tracked
+separately by task 158, not by this task.
+
 ## Session
 
 - Created: Claude (2026-08-05, during live incident diagnosis)
@@ -127,3 +187,11 @@ dev first-boot. Resolution:
   proceeding to implement.
 - 2026-08-05 claude (orchestrator): implementer reproduced 147-007 DCP failure and stopped
   clean per plan; design stop escalated to maintainer; hybrid approved; implement resumed.
+- 2026-08-05 claude (orchestrator): hybrid implemented; aspire-tests showed a 401-vs-403
+  mismatch initially (mis-)attributed to a migration-race; baseline verification (stash/rerun on
+  unmodified code) disproved that — failure is pre-existing, unrelated to this task; task 158
+  corrected accordingly; task 155 gates re-confirmed clean on that basis.
+- 2026-08-05 claude (orchestrator): hybrid implemented; aspire-tests found a second, real
+  first-boot race (role-resolution DB query vs. migrations) via a 401-vs-403 mismatch; discussed
+  options with maintainer (Steve); test-side terminal-state wait implemented; task 158 spun out
+  for the 401-mislabeling bug itself.
