@@ -14,11 +14,6 @@
 *@
 
 @code {
-  // Single source for the appbar height: feeds the FluentLayoutItem Height parameter
-  // (which sizes the layout's header slot / --layout-header-height) AND the
-  // --twe-appbar-height CSS variable the appbar styles use. Change it here only.
-  private const int AppBarHeightPx = 70;
-
   [Parameter] public string? Title { get; set; }
   [Parameter] public RenderFragment? ChildContent { get; set; }
   [Parameter] public RenderFragment? Aside { get; set; }
@@ -30,9 +25,10 @@
 <CascadingValue Value=@this>
   <FluentLayout Class=@($"{Id} twe-shell")>
 
-    @* Sizes the FluentLayout header slot (--layout-header-height defaults to 44px
-       and a taller appbar overflows it). Same constant drives the appbar CSS. *@
-    <FluentLayoutItem Area="LayoutArea.Header" Height=@($"{AppBarHeightPx}px")>
+    @* No Height parameter here: with it, FluentLayoutItem swaps its default
+       height: var(--layout-header-height) for a hard-coded inline height. The slot
+       height comes from the --layout-header-height override in the styles below. *@
+    <FluentLayoutItem Area="LayoutArea.Header">
       <header class="twe-appbar">
         <div class="twe-brand">
           @* Horizontal lockup (icon + wordmark side by side) built from the original
@@ -101,11 +97,14 @@
    class because they style FluentUI light-DOM children (fluent-nav, fluent-text-input)
    which CSS isolation can't reach. Verbatim string so CSS braces are literal. *@
 <style>
-  @(".twe-shell { --twe-appbar-height: " + AppBarHeightPx + "px; }")
   @(@"
+    /* Appbar height single source. FluentLayout writes its 44px default for
+       --layout-header-height inline on the root element, so the override needs
+       !important to win; the header item and body-height calc both consume the var. */
+    .twe-shell { --twe-appbar-height: 70px; --layout-header-height: var(--twe-appbar-height) !important; }
     .twe-shell .twe-appbar {
       display: flex; align-items: center; gap: 12px;
-      width: 100%; height: var(--twe-appbar-height); padding: 0 16px;
+      width: 100%; height: 100%; padding: 0 16px;
       background: var(--twe-paper); border-bottom: 3px solid var(--twe-green);
     }
     .twe-shell .twe-appbar__search { flex: 0 1 520px; width: 520px; margin-inline: auto; }
