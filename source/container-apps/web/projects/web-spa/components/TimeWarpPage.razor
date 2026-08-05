@@ -28,9 +28,11 @@
     <FluentLayoutItem Area="LayoutArea.Header">
       <header class="twe-appbar">
         <div class="twe-brand">
-          @* Explicit width/height reserve the box before styles apply — the SVG is
-             intrinsically 1000x800 and would otherwise flash huge on first paint. *@
-          <img class="twe-brand__logo" src="images/timewarp-logo.svg" alt="TimeWarp Architecture" width="60" height="48" />
+          @* Horizontal lockup (icon + wordmark side by side) built from the original
+             stacked timewarp-logo.svg so the wordmark stays readable at bar height.
+             Explicit width/height reserve the box before styles apply (no first-paint
+             size flash). *@
+          <img class="twe-brand__logo" src="images/timewarp-horizontal.svg" alt="TimeWarp Architecture" width="210" height="48" />
         </div>
         <div class="twe-appbar__search">
           <FluentTextInput Placeholder="Search" Width="100%">
