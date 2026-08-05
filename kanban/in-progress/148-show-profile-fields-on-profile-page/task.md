@@ -90,4 +90,46 @@ that exist), loaded through the existing BFF/profile state path — not a hard-c
 
 - Created: 2026-08-05 — user request after migrations cutover; Profile page still stub
 - Planning: orchestration 2026-08-05 — plan locked D1–D10; no clarifying questions
-- Implement: 2026-08-05 — D1–D10 landed (IProfileStore dual-mode, create-if-missing, contract/state/page, tests). `./bin/dev build` 0/0; get-profile-tests 10/10; web-domain-tests 28/28. Not marked done / no PR.
+- Implement: 2026-08-05 — D1–D10 landed (IProfileStore dual-mode, create-if-missing, contract/state/page, tests). `./bin/dev build` 0/0; get-profile-tests 10/10; web-domain-tests 28/28.
+- Review: 2026-08-05 — effort 1 general, round 1, disposition clean (0 findings)
+
+## Results
+
+### What shipped
+- Dual-mode `IProfileStore` (in-memory default; EF when Postgres connection present)
+- `Profile.Create(ProfileId, …)` for 1:1 principal/user id
+- `GetProfile` Response: Alias, Language, Region, Theme, Notifications, Avatar
+- Handler: dual-mode anonymous mock vs authenticated store + create-if-missing + avatar fallback
+- `ProfileState` expanded; `ProfilePage` shows all fields (no "coming soon"); loads via FetchProfileData
+- Co-located `get-profile-tests.cs`; domain fixed-id Create tests
+
+### Commits
+- `dac592cf` dual-mode IProfileStore + Profile.Create fixed id
+- `c520cb25` GetProfile store-backed fields + create-if-missing + tests
+- `4116b7ff` Profile page UI + ProfileState
+- `9ae36bae` checklist update
+
+### Review
+- Effort 1, roster: general; rounds: 1
+- Counts: all open 0
+- Disposition: **clean** (`review/disposition.md`)
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+
+### How to validate
+
+**Smoke (UI)**
+1. `./bin/dev run` with postgres connected (migrations applied).
+2. Sign in (passkey or mock principal).
+3. Open Profile menu → Profile (or navigate `/Profile`).
+4. **Expect:** Display name **Member**, Language **en-US**, Region **US**, Theme **system**, Notifications **Off**, avatar image (multiavatar or fallback SVG).
+5. Refresh page: same values; `profiles.profiles` has a row with `Id` = principal/user Guid.
+
+**Automated**
+```bash
+./bin/dev build   # 0/0
+dotnet run source/container-apps/web/features/profile/get-profile/get-profile-tests.cs
+cd tests/container-apps/web/web-domain-tests && dotnet test -c Release
+```
+
+**Depends on:** 147-007 migrations path for EF tables.  
+**Not in scope:** edit/save profile, durable avatar storage, EndpointAuthorize-only GetProfile.
