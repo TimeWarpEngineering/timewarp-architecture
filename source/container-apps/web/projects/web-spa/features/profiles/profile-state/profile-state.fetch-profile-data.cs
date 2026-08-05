@@ -8,6 +8,7 @@
 // leaving failures to the common error pipeline.
 // [TrackAction] exposes in-flight status so the UI can render a loading indicator while
 // the fetch is pending.
+// Task 148 D7: maps Alias/Avatar plus Language/Region/Theme/Notifications from Response.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
@@ -41,6 +42,10 @@ partial class ProfileState
       {
         ProfileState.Alias = response.Alias;
         ProfileState.Avatar = response.Avatar;
+        ProfileState.Language = response.Language;
+        ProfileState.Region = response.Region;
+        ProfileState.Theme = response.Theme;
+        ProfileState.Notifications = response.Notifications;
         return Task.CompletedTask;
       }
     }

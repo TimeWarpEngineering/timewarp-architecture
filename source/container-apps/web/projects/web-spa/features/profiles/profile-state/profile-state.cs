@@ -1,12 +1,13 @@
 #region Purpose
-// State caching the signed-in user's display alias and avatar for the app chrome.
+// State caching the signed-in user's display profile for the app chrome and Profile page.
 #endregion
 
 #region Design
 // Avatar defaults to a FluentUI Person icon encoded as a data URI so the UI always has an
 // image to render — no network fetch and no broken-image flash before profile data loads.
 // A null Alias signals "no profile loaded"; population and reset happen only through the
-// Fetch/Clear action-set partials.
+// Fetch/Clear action-set partials. Task 148 D7: Language/Region/Theme/Notifications mirror
+// GetProfile.Response; Initialize clears them so sign-out does not leave stale prefs.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
@@ -16,10 +17,18 @@ public sealed partial class ProfileState: State<ProfileState>
 {
   public string? Alias { get; private set; }
   public string? Avatar { get; private set; }
+  public string? Language { get; private set; }
+  public string? Region { get; private set; }
+  public string? Theme { get; private set; }
+  public bool? Notifications { get; private set; }
 
   public override void Initialize()
   {
     Alias = null;
     Avatar = new Icons.Regular.Size48.Person().ToDataUri(size: "25px", color: "white");
+    Language = null;
+    Region = null;
+    Theme = null;
+    Notifications = null;
   }
 }
