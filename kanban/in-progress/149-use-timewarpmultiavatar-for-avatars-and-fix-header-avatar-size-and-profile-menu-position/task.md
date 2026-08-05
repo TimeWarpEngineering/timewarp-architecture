@@ -36,24 +36,24 @@ Also fix two chrome issues visible in the app header:
 
 ## Checklist
 
-- [ ] Add `TimeWarp.Multiavatar` to `Directory.Packages.props` (CPM) and reference it from the
+- [x] Add `TimeWarp.Multiavatar` to `Directory.Packages.props` (CPM) and reference it from the
       web application layer project
-- [ ] Replace `GetAvatarDataUriAsync` HTTP fetch with local `MultiavatarGenerator.Generate`,
+- [x] Replace `GetAvatarDataUriAsync` HTTP fetch with local `MultiavatarGenerator.Generate`,
       seeded by user id; remove the `HttpClient` ctor dependency, the resilience catch, the
       `BuildFallbackAvatarDataUri` helper, and the `LogMultiavatarFailed` logger message
       (generation is local — no failure mode to fall back from)
-- [ ] Update the mock factory avatar in `get-profile-contracts.cs` to a generated avatar
+- [x] Update the mock factory avatar in `get-profile-contracts.cs` to a generated avatar
       (fixed seed) — keep it a precomputed data-URI constant if the contracts project should
       not reference the package; document the choice in the Design region
-- [ ] Update `get-profile-tests.cs` expectations (fallback tests likely deleted; add a
+- [x] Update `get-profile-tests.cs` expectations (fallback tests likely deleted; add a
       determinism assertion: same user id → same avatar data URI)
-- [ ] Header: `FluentAvatar` size to `Size32` (or 28) in
+- [x] Header: `FluentAvatar` size to `Size32` (or 28) in
       `web-spa/features/profiles/components/Profile.razor`
-- [ ] Menu: fix FluentMenu popup alignment so it is not flush against the right viewport edge
-- [ ] Reconcile `#region Purpose` / `#region Design` in every touched file (D6 wording about
+- [x] Menu: fix FluentMenu popup alignment so it is not flush against the right viewport edge
+- [x] Reconcile `#region Purpose` / `#region Design` in every touched file (D6 wording about
       multiavatar network resilience is obsolete after this change)
-- [ ] `dev build` 0/0
-- [ ] Visual check via Aspire run: header avatar sized correctly, menu popup positioned with
+- [x] `dev build` 0/0
+- [x] Visual check via Aspire run: header avatar sized correctly, menu popup positioned with
       breathing room, avatar renders a real multiavatar image when signed in
 
 ## Notes
@@ -77,3 +77,39 @@ Also fix two chrome issues visible in the app header:
 
 **Order:** CPM+ref → handler → mock constant → tests → Size32 → appbar CSS → Design regions → dev build 0/0.
 
+## Results
+
+### What shipped
+- `TimeWarp.Multiavatar` 1.0.0-beta.13 CPM pin; referenced from web-application only
+- GetProfile handler: local `MultiavatarGenerator.Generate(userId.ToString("D"))` → data URI; no HttpClient, no multiavatar.com, no fallback SVG
+- Mock factory: precomputed Multiavatar data URI (seed `GetProfile.Mock`)
+- Header `FluentAvatar` Size32; `.twe-appbar__actions` `padding-inline-end: 8px`
+- get-profile-tests: determinism + mock avatar size; network fallback tests removed
+
+### Commits
+- `3645ed08` feat(web): Multiavatar + header chrome
+- Related: folderize + review artifacts
+
+### Review
+- Effort 1, general, round 1 — **clean** (0 findings)
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+
+### How to validate
+
+**Smoke (UI)**
+1. Restart `./bin/dev run` after pull/rebuild.
+2. Sign in with real passkey (UseMock false).
+3. Header avatar: ~32px multiavatar figure (not grey, not oversized).
+4. Open profile menu: popup has clear gap from right viewport edge.
+5. Profile page: larger avatar, same multiavatar image for that user.
+
+**Automated**
+```bash
+./bin/dev build   # 0/0
+dotnet run source/container-apps/web/features/profile/get-profile/get-profile-tests.cs
+# expect: 10/10
+rg -n 'api.multiavatar.com' source --glob '*.cs'   # expect empty
+```
+
+**Depends on:** 148 Profile feature.  
+**Not in scope:** task 150 (SPA authorized vs server anonymous principal).
