@@ -12,8 +12,10 @@
 #region Design
 // Closed-box Aspire.Hosting.Testing lane (epic 145 two-lane model): full AppHost graph, zero
 // DI mocks. SetupOnce starts DistributedApplication once per class; CleanUpOnce disposes.
-// Health-gate web→api→ingress then poll ingress reachability (DCP proxy race). Suite-shaped
-// under tests/ per hybrid topology policy — not co-located under features/.
+// Health-gate web→api→ingress, then wait for web-migrations to reach a terminal state (task
+// 155 — the AppHost carries no wait edge there, and this suite's ephemeral Postgres means
+// migrations always have real work to do), then poll ingress reachability (DCP proxy race).
+// Suite-shaped under tests/ per hybrid topology policy — not co-located under features/.
 #endregion
 
 namespace Aspire.Tests;
@@ -50,6 +52,24 @@ public class IngressSmoke_Given_
     await App.ResourceNotifications.WaitForResourceHealthyAsync("web-server", cts.Token);
     await App.ResourceNotifications.WaitForResourceHealthyAsync("api-server", cts.Token);
     await App.ResourceNotifications.WaitForResourceHealthyAsync("ingress", cts.Token);
+
+    // Task 155: the AppHost deliberately carries NO wait edge between web-server and
+    // web-migrations (a builder-graph WaitFor deadlocks dashboard restarts; WaitForCompletion
+    // breaks DCP service-producer endpoint creation for the same-project web-server resource —
+    // see AppHost program.cs Design region). That means web-server's own Healthy state above says
+    // nothing about migration progress. This suite always boots an EPHEMERAL Postgres
+    // (--Postgres:UseDataVolume=false), so RunDatabaseUpdateOnStart has real work to do on every
+    // run — unlike a real dev volume, which is already-current after the first boot — so without
+    // this wait, DB-backed requests below would race the migration deterministically, not rarely.
+    // This is a notification-service POLL from test code (WaitForResourceAsync against the
+    // already-running graph), not a builder-graph WaitFor/WaitForCompletion annotation, so it
+    // reproduces neither of the two bugs above.
+    await App.ResourceNotifications.WaitForResourceAsync
+    (
+      "web-migrations",
+      KnownResourceStates.TerminalStates,
+      cts.Token
+    );
 
     // Healthy != reachable: the ingress reports Healthy when the YARP process starts, but the
     // Aspire DCP proxy takes a moment more to wire through to the replica. Requests issued in that

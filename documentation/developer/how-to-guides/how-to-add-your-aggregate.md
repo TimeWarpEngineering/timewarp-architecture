@@ -204,7 +204,7 @@ Schema for `PostgresDbContext` is **migration-owned only** (ADR-0009 / task 147-
 
 | Path | Who runs it |
 |------|-------------|
-| **Local / Aspire** | AppHost `AddEFMigrations` + `RunDatabaseUpdateOnStart`; web-server `WaitFor` (migration resource healthy) |
+| **Local / Aspire** | AppHost `AddEFMigrations` + `RunDatabaseUpdateOnStart` (no wait edge on web-server — task 155); re-run on demand via the `ef-database-update` dashboard command |
 | **Publish / deploy** | `PublishAsMigrationScript` / `PublishAsMigrationBundle` artifacts under `efmigrations/` |
 | **Tests** | Ephemeral DBs call `Database.Migrate()` / `MigrateAsync()` (never `EnsureCreated`) |
 
@@ -228,8 +228,11 @@ dotnet ef migrations add <NameYourChange> \
   EF scaffold files).
 - Design-time factory: `postgres-db-context-design-time-factory-infrastructure.cs` resolves
   `ConnectionStrings:postgres-db` / env; uses a dummy connection only for offline scaffolding.
-- Then `dev run`: AppHost resource `web-migrations` applies pending migrations before
-  web-server starts (`WaitForCompletion`).
+- Then `dev run`: AppHost resource `web-migrations` applies pending migrations on AppHost start
+  (`RunDatabaseUpdateOnStart`, idempotent). There is no wait edge from web-server (task 155 —
+  both `WaitFor` and `WaitForCompletion` broke restart/testing behavior), so on a fresh volume
+  web-server can briefly start before the migration finishes; re-run on demand with the
+  `ef-database-update` dashboard command on the `web-migrations` resource if needed.
 - **Cutover wipe:** if a dogfood volume was created under the old EnsureCreated path (no
   `__EFMigrationsHistory`), drop the Aspire Postgres volume once, then restart.
 

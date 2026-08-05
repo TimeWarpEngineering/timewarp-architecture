@@ -11,12 +11,25 @@
 // Only Web.Server references Postgres; Api.Server intentionally does not — so Postgres is declared INSIDE the web
 // preprocessor block (the postgres directive nested within the web one), not gated on postgres alone: with web
 // excluded it would otherwise be an unreferenced orphan container in the postgres-without-web combination.
-// Schema evolution (task 147-007): committed EF migrations under platform/postgres/migrations/.
-// AppHost AddEFMigrations (RunDatabaseUpdateOnStart + WaitFor migrations healthy + publish
-// script/bundle) is the only runtime schema path under Aspire — web-server does not
-// Migrate/EnsureCreated at startup. Same-project WaitForCompletion breaks DCP service-producer
-// annotations under Aspire.Hosting.Testing after a successful ef-database-update; WaitFor uses the
-// health check registered by RunDatabaseUpdateOnStart (package README).
+// Schema evolution (task 147-007, amended task 155): committed EF migrations under
+// platform/postgres/migrations/. Migrations are explicit/on-demand in every environment: production
+// applies them from the published PublishAsMigrationScript/PublishAsMigrationBundle pipeline
+// artifacts (never AppHost auto-run); local/Aspire dev gets RunDatabaseUpdateOnStart as an
+// out-of-box convenience (idempotent — cheap no-op on an already-current schema) plus the
+// ef-database-update dashboard command on the web-migrations resource for an explicit re-run.
+// web-server does not Migrate/EnsureCreated at startup, and — as of task 155 — has NO wait edge on
+// web-migrations at all (no WaitFor, no WaitForCompletion). Both wait forms were tried and both
+// broke: WaitFor deadlocks any dashboard restart/rebuild of web-server after the first run because
+// run-mode DefaultWaitBehavior only continues past Running, a state the once-run migration resource
+// never re-enters (Finished is terminal, not Running); WaitForCompletion is satisfied by that same
+// terminal Finished snapshot (so restarts do resolve) but reproducibly breaks DCP service-producer
+// endpoint creation for the same-project web-server resource under Aspire.Hosting.Testing (verified
+// 2026-08-05, Aspire.Hosting.EntityFrameworkCore 13.4.6-preview.1.26319.6; exact error: "Could not
+// create Endpoint object(s): information about the port to expose the service is missing;
+// service-producer annotation is invalid"). Removing the wait edge accepts a brief first-boot
+// window on a truly fresh volume where web-server may serve before RunDatabaseUpdateOnStart
+// finishes (DB-backed pages error for a few seconds), in exchange for restart never deadlocking and
+// Aspire.Hosting.Testing suites staying green.
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
 // YARP literal /api routes owned by Web.Server beat the Api.Server catch-all by route precedence, not declaration order.
 // The Web.Server /api carve-outs are GENERATED, not hand-maintained (task 107): IngressRoutePrefixGenerator emits
@@ -127,7 +140,7 @@ internal class Program
     // Projects.* is only generated for Aspire project resources).
     string webInfrastructureProject = Path.GetFullPath(
       Path.Combine(builder.AppHostDirectory, "../../../web/projects/web-infrastructure/web-infrastructure.csproj"));
-    IResourceBuilder<EFMigrationResource> webMigrations = webServer
+    webServer
       .AddEFMigrations(WebMigrationsResourceName, "TimeWarp.Architecture.Persistence.PostgresDbContext")
       .WithMigrationsProject(webInfrastructureProject)
       .WithMigrationOutputDirectory("../../platform/postgres/migrations")
@@ -137,12 +150,13 @@ internal class Program
       .RunDatabaseUpdateOnStart()
       .PublishAsMigrationScript()
       .PublishAsMigrationBundle();
-    // Package README: RunDatabaseUpdateOnStart registers a health check so dependents can
-    // WaitFor the migration resource until Active. (aspire.dev sample also shows WaitForCompletion
-    // on the owning project — prefer WaitFor first: same-project WaitForCompletion under
-    // Aspire.Hosting.Testing left web-server with invalid DCP service-producer annotations after
-    // a successful ef-database-update.)
-    webServer = webServer.WaitFor(webMigrations);
+    // Task 155: no wait edge between web-server and web-migrations. Without a wait edge, a
+    // dashboard restart/rebuild of web-server can never deadlock on the migration resource's
+    // terminal Finished snapshot — the resource is simply irrelevant to web-server's start path
+    // after the first run. Accepted tradeoff: on a truly fresh volume there is a brief first-boot
+    // window where web-server may start serving before RunDatabaseUpdateOnStart finishes, so
+    // DB-backed pages can error for a few seconds until the migration completes. Re-run on demand
+    // via the ef-database-update dashboard command on the web-migrations resource.
 #endif
     // Self-reference for the web server
     webServer.WithReference(webServer);

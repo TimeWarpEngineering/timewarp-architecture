@@ -168,4 +168,23 @@ Concrete shape:
   (feature placement of `*-infrastructure.cs` configs), golden aggregate analyzers TWA0011/0012
   (AGENTS.md)
 
+## Amendment (2026-08-05, task 155)
+
+The runtime locus (D6) originally specified `WaitForCompletion` so web-server starts only after
+`web-migrations` applies. That wait edge is dropped. Both wait forms were tried against a
+dashboard restart of web-server and both broke: plain `WaitFor` deadlocks the restart because
+run-mode `DefaultWaitBehavior` only continues past `Running`, a state the once-run migration
+resource never re-enters; `WaitForCompletion` resolves the restart (it accepts the resource's
+terminal `Finished` snapshot) but reproducibly breaks DCP service-producer endpoint creation for
+the same-project `web-server` resource under `Aspire.Hosting.Testing`.
+
+Replaced by the hybrid: `RunDatabaseUpdateOnStart` stays (idempotent out-of-box convenience on
+local/Aspire runs) with **no wait edge** from web-server to `web-migrations`, plus the
+`ef-database-update` dashboard command on the `web-migrations` resource for an explicit on-demand
+re-run. Production is unaffected — it always applied migrations from the
+`PublishAsMigrationScript` / `PublishAsMigrationBundle` pipeline artifacts, never via the AppHost
+auto-run path. Accepted tradeoff: on a truly fresh volume, web-server can briefly start serving
+before `RunDatabaseUpdateOnStart` finishes, so DB-backed pages may error for a few seconds until
+the migration completes.
+
 <!-- markdownlint-disable-file MD013 -->
