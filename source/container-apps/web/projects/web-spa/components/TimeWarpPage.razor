@@ -74,7 +74,9 @@
       </FluentLayoutItem>
     }
 
-    <FluentLayoutItem Area="LayoutArea.Footer" Height="44px">
+    @* Like the header: no Height parameter, so the item keeps its default
+       height: var(--layout-footer-height); the variable is overridden below. *@
+    <FluentLayoutItem Area="LayoutArea.Footer">
       <footer class="twe-footer">
         <span class="twe-footer__mode">@CurrentRenderMode</span>
         <FluentSpacer />
@@ -98,10 +100,14 @@
    which CSS isolation can't reach. Verbatim string so CSS braces are literal. *@
 <style>
   @(@"
-    /* Appbar height single source. FluentLayout writes its 44px default for
-       --layout-header-height inline on the root element, so the override needs
-       !important to win; the header item and body-height calc both consume the var. */
-    .twe-shell { --twe-appbar-height: 70px; --layout-header-height: var(--twe-appbar-height) !important; }
+    /* Appbar/footer height single source. FluentLayout writes its defaults for
+       --layout-header-height / --layout-footer-height inline on the root element,
+       so the overrides need !important to win; the layout items and the
+       body-height calc all consume the vars. */
+    .twe-shell {
+      --twe-appbar-height: 70px; --layout-header-height: var(--twe-appbar-height) !important;
+      --twe-footer-height: 44px; --layout-footer-height: var(--twe-footer-height) !important;
+    }
     .twe-shell .twe-appbar {
       display: flex; align-items: center; gap: 12px;
       width: 100%; height: 100%; padding: 0 16px;
