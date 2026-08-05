@@ -26,8 +26,8 @@ in parallel.
 | **147-003** | Enforce page policies on remaining product routes (Profile, Settings, …) | done |
 | **147-004** | Admin principals + roles list screens with real policies | done |
 | **147-006** | EF principal→role store behind postgres flag | done |
-| **147-007** | Replace EnsureCreated with EF migrations (web Postgres) | to-do |
-| **147-005** | First-run home + login professional chrome | to-do |
+| **147-007** | Replace EnsureCreated with EF migrations (web Postgres) | done |
+| **147-005** | First-run home + login professional chrome | to-do (spec is an empty template — needs elaboration before work; note: appbar/footer chrome largely landed via 156/157/162) |
 
 ## Target roles (product)
 
@@ -52,7 +52,7 @@ in parallel.
 - [x] 147-003 remaining page policies
 - [x] 147-004 admin list screens
 - [x] 147-006 EF principal role store (durable under postgres)
-- [ ] 147-007 EF migrations replace EnsureCreated
+- [x] 147-007 EF migrations replace EnsureCreated
 - [ ] 147-005 first-run chrome
 
 ## Session
@@ -62,3 +62,7 @@ in parallel.
 - 147-004 done: principal→role store, admin Roles/Principals lists, Administrator policies
 - 147-006 done: durable IPrincipalRoleStore via EF
 - 147-007 created: EF migrations as schema SSOT (folder task for review)
+- 147-007 done (2026-08-06): migrations SSOT + AppHost AddEFMigrations; amended by 155
+  (no wait edge — hybrid on-demand); close-out gates flushed and fixed 104-035/164/template
+  excludes; full template-smoke matrix green. Only 147-005 remains — its spec is an empty
+  template and needs elaboration (header/footer chrome already landed via 156/157/162).
