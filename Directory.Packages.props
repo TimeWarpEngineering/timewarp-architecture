@@ -39,6 +39,10 @@
          repo/CI (UseIdentityPackages resolves to ProjectReference mode when identity source is
          present) and only matters for package-mode consumers (generated apps always package-mode). -->
     <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.14" />
+    <!-- TimeWarp.402: packed by the release run (workflow-command.cs) and template-smoke's local
+         feed; first nuget.org publish rides the next release. Same task-124 pin policy as
+         TimeWarp.Identity above — equals <Version>, bumps in the same commit (task 104-035). -->
+    <PackageVersion Include="TimeWarp.402" Version="2.0.0-beta.14" />
     <PackageVersion Include="TimeWarp.Multiavatar" Version="1.0.0-beta.13" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">

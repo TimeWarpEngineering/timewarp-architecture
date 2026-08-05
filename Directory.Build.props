@@ -19,6 +19,8 @@
     <UseAnalyzerPackages Condition="'$(UseAnalyzerPackages)' == ''">false</UseAnalyzerPackages>
     <UseIdentityPackages Condition="'$(UseIdentityPackages)' == '' and !Exists('$(MSBuildThisFileDirectory)source/libraries/timewarp-identity/timewarp-identity.csproj')">true</UseIdentityPackages>
     <UseIdentityPackages Condition="'$(UseIdentityPackages)' == ''">false</UseIdentityPackages>
+    <UseX402Packages Condition="'$(UseX402Packages)' == '' and !Exists('$(MSBuildThisFileDirectory)source/libraries/timewarp-402/timewarp-402.csproj')">true</UseX402Packages>
+    <UseX402Packages Condition="'$(UseX402Packages)' == ''">false</UseX402Packages>
   </PropertyGroup>
 
   <!-- MSBuild and NuGet behavior configuration -->

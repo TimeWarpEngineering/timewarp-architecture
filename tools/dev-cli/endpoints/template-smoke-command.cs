@@ -339,6 +339,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
               <package pattern="TimeWarp.Foundation.*" />
               <package pattern="TimeWarp.Modules" />
               <package pattern="TimeWarp.Identity" />
+              <package pattern="TimeWarp.402" />
             </packageSource>
             <packageSource key="nuget.org">
               <package pattern="*" />

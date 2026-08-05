@@ -21,8 +21,11 @@
     <ProjectReference Include="..\..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
     <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
 
-    <!-- MeteredCapabilityGate / ICreditLedger for pay-for-capability demo (task 104-011). -->
-    <ProjectReference Include="..\..\..\..\libraries\timewarp-402\timewarp-402.csproj" />
+    <!-- MeteredCapabilityGate / ICreditLedger for pay-for-capability demo (task 104-011).
+         Dual-mode via UseX402Packages (task 104-035): the source tree is excluded from template
+         output like identity, so generated apps restore the published TimeWarp.402 package. -->
+    <ProjectReference Include="..\..\..\..\libraries\timewarp-402\timewarp-402.csproj" Condition="'$(UseX402Packages)' != 'true'" />
+    <PackageReference Include="TimeWarp.402" Condition="'$(UseX402Packages)' == 'true'" />
 
   </ItemGroup>
 
