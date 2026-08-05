@@ -71,7 +71,8 @@ Concrete shape:
 * **EF migrations are the only schema path** (updated by kanban **147-007**). Committed
   migrations live under `source/container-apps/web/platform/postgres/migrations/`.
   **Runtime locus (D6):** Aspire AppHost `AddEFMigrations` on the web-server project resource
-  (`RunDatabaseUpdateOnStart` locally, `WaitForCompletion` so the app starts after apply,
+  (`RunDatabaseUpdateOnStart` locally, `WaitForCompletion` so the app starts after apply
+  — **superseded: no wait edge at all; see Amendment (2026-08-05, task 155) below**,
   `PublishAsMigrationScript` / `PublishAsMigrationBundle` for deploy artifacts). Never
   EnsureCreated and never in-app startup schema invention. Tests against ephemeral DBs call
   `Database.Migrate()` / `MigrateAsync()` directly.

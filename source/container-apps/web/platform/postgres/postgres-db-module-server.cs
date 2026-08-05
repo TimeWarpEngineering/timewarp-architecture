@@ -19,7 +19,10 @@
 // (task 104-032). Same dual-mode for IPrincipalRoleStore → EfPrincipalRoleStore (task 147-006)
 // and IProfileStore → EfProfileStore (task 148 D4). Challenge/token stores stay in-memory either way.
 // Schema: AppHost AddEFMigrations applies committed migrations (platform/postgres/migrations/)
-// before web-server starts (task 147-007). This module never EnsureCreated / Migrate at startup.
+// via RunDatabaseUpdateOnStart (task 147-007). There is NO wait edge between web-server and the
+// migration resource (task 155 — WaitFor deadlocked dashboard restarts, WaitForCompletion broke
+// DCP under Aspire.Hosting.Testing), so on a truly fresh volume web-server may briefly serve
+// before the initial migration completes. This module never EnsureCreated / Migrate at startup.
 // Tests call Database.Migrate() against ephemeral DBs.
 // The connection string is read once and reused for both Configure<PostgresDbOptions> (the
 // environment check consumes IOptions<PostgresDbOptions>) and AddDbContext, so the two cannot drift.

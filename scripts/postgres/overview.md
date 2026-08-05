@@ -55,7 +55,7 @@ dotnet tool restore
 
 dotnet ef migrations add <Name> \
   --project source/container-apps/web/projects/web-infrastructure/web-infrastructure.csproj \
-  --startup-project source/container-apps/web/projects/web-infrastructure/web-infrastructure.csproj \
+  --startup-project source/container-apps/web/projects/web-server/web-server.csproj \
   --context PostgresDbContext \
   --output-dir ../../platform/postgres/migrations \
   --namespace TimeWarp.Architecture.Persistence.Migrations
