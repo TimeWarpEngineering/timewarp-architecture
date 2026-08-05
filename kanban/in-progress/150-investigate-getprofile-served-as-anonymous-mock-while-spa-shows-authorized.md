@@ -51,6 +51,54 @@ mismatch — before it, mock auth likely made both client and server agree.
 - Mock-auth machinery reference: task 145-009 (fail-closed `Authentication:UseMock`,
   `X-TimeWarp-Mock-Principal-Id`, TWA0021).
 
+### Implementation plan (Phase 2, 2026-08-05)
+
+**Root cause — hypothesis (b), claim-type mismatch.** The identity-session cookie principal
+carries exactly one id claim, `timewarp:principal_id`
+(`platform/identity-host/cookie-browser-session-service-server.cs:39`,
+`identity-session-defaults-server.cs:23`). The sole `ICurrentUserService` implementation,
+foundation's `CurrentUserService`
+(`source/foundation/foundation-infrastructure/services/current-user-service.cs:21`), looks for a
+claim literally named `"UserId"` — which identity-session issuance never emits (it was designed
+for the non-default Entra token path). So `HttpContext.User` is authenticated but
+`CurrentUserService.UserId` is null → GetProfile returns the contract mock.
+
+Ruled out with evidence: (a) cookie IS sent (the SPA's Authorized state itself comes from
+`GET api/identity/session` over the same client/cookie); (c) SPA auth state is genuine
+(`UseMock=false` everywhere; real `IdentitySessionAuthenticationStateProvider` registered);
+client mock mode is off (`MOCK_WEB_API` define commented out in `web-spa.csproj`). The 145-009
+mock header path also emits `timewarp:principal_id`, never `"UserId"` — same mismatch.
+
+`55ee9384` **exposed** the bug, did not cause it: GetProfile's authenticated branch was never
+reachable end-to-end under passkey auth; task 148 tests stubbed `ICurrentUserService` directly.
+
+**Intended Dev auth posture:** plain `dev run` = passkey-first real auth, no mock on either
+side; mock auth is opt-in AppHost config (`--Authentication:UseMock=true`), fail-closed outside
+Development/Testing. The SPA rendering Authorized was CORRECT — fix belongs server-side.
+
+**Fix steps:**
+1. `get-profile-handler-application.cs`: replace `ICurrentUserService` with the existing
+   scheme-agnostic `ICurrentPrincipalAccessor`
+   (`platform/identity-host/i-current-principal-accessor-application.cs`; precedent:
+   `get-credentials-handler-application.cs`). Null principal → mock (D3 unchanged); otherwise
+   `ProfileId.From(principalId.Value.Value)` + existing create-if-missing flow. Reconcile
+   Purpose/Design regions.
+2. `get-profile-contracts.cs`: fix the Design-region sentence referencing
+   `ICurrentUserService.UserId`.
+3. `get-profile-tests.cs`: `StubCurrentUserService` → `StubCurrentPrincipalAccessor`; keep all
+   scenarios; add determinism assertion (same Guid → row keyed `ProfileId.From(guid)`).
+4. New regression test in `tests/container-apps/web/web-server-integration-tests/features/profile/`
+   `get-profile-session-tests.cs` (in-proc lane — the bug lives at the host seam; modeled on
+   `features/identity/passkey-authentication-tests.cs`): (i) passkey register + authenticate,
+   cookie-bearing GET of the GetProfile route asserts `Alias == "Member"` and `!= "alias"`;
+   (ii) anonymous request still gets the demo mock (`Alias == "alias"`, guards D3).
+5. NOT changed: foundation `CurrentUserService` (left registered; consumer-less in web — flag
+   optional cleanup follow-up), SPA auth registrations, AppHost config, endpoint auth posture.
+
+**Alternatives rejected:** claims transformation adding `"UserId"` (magic string, every scheme
+must remember it); teaching foundation about `timewarp:principal_id` (wrong dependency
+direction); making the SPA render NotAuthorized (SPA is right; would break passkey dogfood).
+
 ## Session
 
 - Created: Claude (2026-08-05)
