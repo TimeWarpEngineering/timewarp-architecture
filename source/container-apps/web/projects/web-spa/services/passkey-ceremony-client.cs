@@ -18,6 +18,9 @@
 // Task 165: AuthenticateAsync/RegisterAsync accept preferHybrid — when true, the JS bridge sets
 // WebAuthn hints to ["hybrid"] so Chrome prioritizes nearby-device / QR UI (server options already
 // include client-device+hybrid soft hints for the default path).
+// Task 166: AuthenticateConditionalAsync uses mediation:"conditional" so the browser autofill
+// dropdown (on an input with autocomplete=username webauthn) can list local passkeys and
+// "Passkeys from a Nearby Device" — that menu item is browser UI, not a site button.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -108,6 +111,50 @@ public sealed class PasskeyCeremonyClient
         startResult.AsT0.OptionsJson,
         preferHybrid);
 
+    return await CompleteAuthenticationAsync(assertionJson, cancellationToken);
+  }
+
+  /// <summary>
+  /// Conditional (autofill) authentication. Returns null when the browser aborted the pending
+  /// get (modal path / dispose) — not an error. Other failures surface as SharedProblemDetails.
+  /// </summary>
+  public async Task<OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails>?> AuthenticateConditionalAsync(
+    CancellationToken cancellationToken)
+  {
+    OneOf<StartPasskeyAuthentication.Response, FileResponse, SharedProblemDetails> startResult =
+      await ApiService.GetResponse<StartPasskeyAuthentication.Response>(
+        new StartPasskeyAuthentication.Command(),
+        cancellationToken);
+
+    if (!startResult.IsT0)
+    {
+      return ToProblem(startResult);
+    }
+
+    string? assertionJson =
+      await JsRuntime.InvokeAsync<string?>(
+        "Spa.WebAuthn.GetCredentialConditional",
+        cancellationToken,
+        startResult.AsT0.OptionsJson);
+
+    if (assertionJson is null)
+    {
+      return null;
+    }
+
+    return await CompleteAuthenticationAsync(assertionJson, cancellationToken);
+  }
+
+  public async Task<bool> IsConditionalMediationAvailableAsync(CancellationToken cancellationToken) =>
+    await JsRuntime.InvokeAsync<bool>("Spa.WebAuthn.IsConditionalMediationAvailable", cancellationToken);
+
+  public async Task AbortConditionalAsync(CancellationToken cancellationToken) =>
+    await JsRuntime.InvokeVoidAsync("Spa.WebAuthn.AbortConditional", cancellationToken);
+
+  private async Task<OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails>> CompleteAuthenticationAsync(
+    string assertionJson,
+    CancellationToken cancellationToken)
+  {
     using var document = JsonDocument.Parse(assertionJson);
     JsonElement root = document.RootElement;
 

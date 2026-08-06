@@ -5,8 +5,8 @@
 
 #region Design
 // Task 104-016 product CTA + 147-005 focused chrome. Account = accepted public key (locked
-// decision #1): primary action is discoverable passkey authentication (no email/username),
-// secondary is registration that mints Principal + session with no mandatory profile.
+// decision #1): primary action is discoverable passkey authentication (no email/username as
+// identity), secondary is registration that mints Principal + session with no mandatory profile.
 // Markup uses TimeWarpFocusedPage (logo + centered card) — not TimeWarpPage — so login is not
 // "a page in the product shell". Progressive profile is 104-024 and stays out of this page.
 // Ceremony plumbing lives in PasskeyCeremonyClient so the technical Passkeys demo and this page
@@ -19,10 +19,15 @@
 // management for signed-in users is a Settings/Security concern (104-024), NOT this page —
 // CreatePasskey mints a NEW Principal, so a signed-in user clicking it would create a second
 // account, not add a credential.
-// Hybrid/QR (147-005 + 165): server options omit authenticatorAttachment, use empty
-// allowCredentials, and emit hints [client-device, hybrid]. Primary button uses those soft
-// hints; "Passkeys from a nearby device" calls AuthenticateAsync(preferHybrid: true) so the
-// JS bridge sets hints: ["hybrid"] and Chrome shows a cross-device focused dialog.
+// Task 166 — conditional UI (the hanko/passkeys.io "Passkeys from a Nearby Device" path):
+// On interactive load we start navigator.credentials.get({ mediation: "conditional" }) once the
+// browser supports it. That request stays pending until the user focuses an input with
+// autocomplete="username webauthn" and picks a passkey OR "Passkeys from a Nearby Device" from
+// the browser autofill menu. The menu item is browser-owned — we only enable conditional get +
+// the autofill anchor. The field value is never sent as an identifier (discoverable credentials).
+// Modal "Sign in with a passkey" aborts conditional first (only one get at a time), then runs
+// the standard modal get. After modal cancel/fail we re-arm conditional when still on the page.
+// Task 165 hybrid hints remain on server options (client-device + hybrid soft preference).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Account;
@@ -33,7 +38,7 @@ using TimeWarp.Foundation.Types;
 
 // Public passkey entry. Anonymous; authenticated visitors are redirected away (task 153).
 [Page("/Login")]
-partial class LoginPage
+partial class LoginPage : IAsyncDisposable
 {
   [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
   [Inject] private NavigationManager NavigationManager { get; set; } = null!;
@@ -49,6 +54,9 @@ partial class LoginPage
   private string? ErrorMessage;
   private bool IsBusy;
   private bool? IsAuthenticated;
+  private bool ShowAutofillAnchor;
+  private CancellationTokenSource? ConditionalLoopCts;
+  private bool ConditionalLoopStarted;
 
   protected override async Task OnInitializedAsync()
   {
@@ -58,6 +66,40 @@ partial class LoginPage
     if (IsAuthenticated is true)
     {
       NavigateOnward();
+    }
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+
+    // Conditional get requires a live browser + interactive circuit (JS interop).
+    if (!firstRender || ConditionalLoopStarted || IsAuthenticated is true)
+    {
+      return;
+    }
+
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    ConditionalLoopStarted = true;
+
+    try
+    {
+      ShowAutofillAnchor = await Ceremony.IsConditionalMediationAvailableAsync(CancellationToken.None);
+    }
+    catch (JSException)
+    {
+      ShowAutofillAnchor = false;
+    }
+
+    if (ShowAutofillAnchor)
+    {
+      await InvokeAsync(StateHasChanged);
+      ConditionalLoopCts = new CancellationTokenSource();
+      _ = RunConditionalAuthenticationLoopAsync(ConditionalLoopCts.Token);
     }
   }
 
@@ -82,18 +124,35 @@ partial class LoginPage
 
   private void NavigateOnward() => NavigationManager.NavigateTo(GetSafeReturnUrl(ReturnUrl));
 
-  private Task ContinueWithPasskey() => AuthenticateAsync(preferHybrid: false);
+  private async Task ContinueWithPasskey()
+  {
+    // Modal path — abort pending conditional get so the browser can open a modal dialog.
+    try
+    {
+      await Ceremony.AbortConditionalAsync(CancellationToken.None);
+    }
+    catch (JSException)
+    {
+      /* ignore */
+    }
 
-  private Task ContinueWithPasskeyFromNearbyDevice() => AuthenticateAsync(preferHybrid: true);
+    await AuthenticateModalAsync();
 
-  private async Task AuthenticateAsync(bool preferHybrid)
+    // Re-arm autofill if we stayed on the page (error / cancel).
+    if (ShowAutofillAnchor && IsAuthenticated is not true && ConditionalLoopCts is { IsCancellationRequested: false })
+    {
+      _ = RunConditionalAuthenticationLoopAsync(ConditionalLoopCts.Token);
+    }
+  }
+
+  private async Task AuthenticateModalAsync()
   {
     ErrorMessage = null;
     IsBusy = true;
     try
     {
       OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails> result =
-        await Ceremony.AuthenticateAsync(CancellationToken.None, preferHybrid);
+        await Ceremony.AuthenticateAsync(CancellationToken.None, preferHybrid: false);
 
       if (result.IsT1)
       {
@@ -105,7 +164,10 @@ partial class LoginPage
     }
     catch (JSException jsException)
     {
-      ErrorMessage = $"The browser could not complete the passkey ceremony: {jsException.Message}";
+      // User cancel surfaces as NotAllowedError — keep message short and non-alarming.
+      ErrorMessage = jsException.Message.Contains("NotAllowed", StringComparison.OrdinalIgnoreCase)
+        ? null
+        : $"The browser could not complete the passkey ceremony: {jsException.Message}";
     }
     finally
     {
@@ -113,8 +175,68 @@ partial class LoginPage
     }
   }
 
+  private async Task RunConditionalAuthenticationLoopAsync(CancellationToken cancellationToken)
+  {
+    while (!cancellationToken.IsCancellationRequested)
+    {
+      try
+      {
+        OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails>? result =
+          await Ceremony.AuthenticateConditionalAsync(cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+          return;
+        }
+
+        // null = aborted for modal / dispose — stop loop; modal path restarts if needed.
+        if (result is null)
+        {
+          return;
+        }
+
+        if (result.Value.IsT1)
+        {
+          ErrorMessage = PasskeyCeremonyClient.FormatError(result.Value.AsT1);
+          await InvokeAsync(StateHasChanged);
+          // Challenge expired / server rejected — mint a fresh conditional start next iteration.
+          continue;
+        }
+
+        NavigateOnward();
+        return;
+      }
+      catch (JSException jsException) when (!cancellationToken.IsCancellationRequested)
+      {
+        // NotAllowedError: user dismissed autofill without selecting — re-arm with a new challenge.
+        if (jsException.Message.Contains("NotAllowed", StringComparison.OrdinalIgnoreCase)
+          || jsException.Message.Contains("AbortError", StringComparison.OrdinalIgnoreCase))
+        {
+          continue;
+        }
+
+        ErrorMessage = $"The browser could not complete the passkey ceremony: {jsException.Message}";
+        await InvokeAsync(StateHasChanged);
+        return;
+      }
+      catch (OperationCanceledException)
+      {
+        return;
+      }
+    }
+  }
+
   private async Task CreatePasskey()
   {
+    try
+    {
+      await Ceremony.AbortConditionalAsync(CancellationToken.None);
+    }
+    catch (JSException)
+    {
+      /* ignore */
+    }
+
     ErrorMessage = null;
     IsBusy = true;
     try
@@ -137,11 +259,36 @@ partial class LoginPage
     finally
     {
       IsBusy = false;
+      if (ShowAutofillAnchor && IsAuthenticated is not true && ConditionalLoopCts is { IsCancellationRequested: false })
+      {
+        _ = RunConditionalAuthenticationLoopAsync(ConditionalLoopCts.Token);
+      }
     }
   }
 
   private async Task RefreshSessionAsync()
   {
     IsAuthenticated = await Ceremony.GetIsAuthenticatedAsync(CancellationToken.None);
+  }
+
+  public async ValueTask DisposeAsync()
+  {
+    if (ConditionalLoopCts is not null)
+    {
+      await ConditionalLoopCts.CancelAsync();
+      ConditionalLoopCts.Dispose();
+      ConditionalLoopCts = null;
+    }
+
+    try
+    {
+      await Ceremony.AbortConditionalAsync(CancellationToken.None);
+    }
+    catch
+    {
+      /* page may already be gone */
+    }
+
+    GC.SuppressFinalize(this);
   }
 }

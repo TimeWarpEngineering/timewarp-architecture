@@ -63,8 +63,50 @@ function applyHybridPreference<T extends { hints?: string[] }>(options: T, prefe
   return { ...options, hints: ["hybrid"] };
 }
 
+function assertionToJson(credential: PublicKeyCredential): string {
+  const response = credential.response as AuthenticatorAssertionResponse;
+  return JSON.stringify({
+    credentialId: bufferToBase64Url(credential.rawId),
+    clientDataJson: bufferToBase64Url(response.clientDataJSON),
+    authenticatorData: bufferToBase64Url(response.authenticatorData),
+    signature: bufferToBase64Url(response.signature),
+    userHandle: response.userHandle ? bufferToBase64Url(response.userHandle) : null,
+  });
+}
+
+function toPublicKeyRequest(options: RequestOptionsJson): PublicKeyCredentialRequestOptions {
+  return {
+    ...options,
+    challenge: base64UrlToBuffer(options.challenge),
+  } as unknown as PublicKeyCredentialRequestOptions;
+}
+
+/** Active AbortController for a pending conditional get (autofill). */
+let conditionalAbort: AbortController | null = null;
+
 export const WebAuthn = {
   IsSupported: (): boolean => typeof window.PublicKeyCredential !== "undefined",
+
+  // Feature-detect conditional UI (passkey autofill). Prefer isConditionalMediationAvailable;
+  // fall back to getClientCapabilities when present.
+  IsConditionalMediationAvailable: async (): Promise<boolean> => {
+    try {
+      const pk = window.PublicKeyCredential as typeof PublicKeyCredential & {
+        isConditionalMediationAvailable?: () => Promise<boolean>;
+        getClientCapabilities?: () => Promise<Record<string, boolean>>;
+      };
+      if (typeof pk?.isConditionalMediationAvailable === "function") {
+        return await pk.isConditionalMediationAvailable();
+      }
+      if (typeof pk?.getClientCapabilities === "function") {
+        const caps = await pk.getClientCapabilities();
+        return caps.conditionalGet === true;
+      }
+    } catch {
+      /* ignore */
+    }
+    return false;
+  },
 
   // Returns a JSON string: { credentialId, clientDataJson, attestationObject } — matching
   // CompletePasskeyRegistration.Command's field names.
@@ -91,27 +133,58 @@ export const WebAuthn = {
     });
   },
 
-  // Returns a JSON string: { credentialId, clientDataJson, authenticatorData, signature,
-  // userHandle } — matching CompletePasskeyAuthentication.Command's field names. userHandle is
-  // null when the authenticator did not return one.
-  // preferHybrid: optional; when true, sets hints: ["hybrid"] for "Passkeys from a nearby device".
+  // Modal get. preferHybrid forces hybrid-first hints.
+  // Aborts any pending conditional get first so the modal request can run.
   GetCredential: async (optionsJson: string, preferHybrid: boolean = false): Promise<string> => {
+    if (conditionalAbort) {
+      conditionalAbort.abort();
+      conditionalAbort = null;
+    }
+
     const options: RequestOptionsJson = applyHybridPreference(JSON.parse(optionsJson), preferHybrid);
+    const credential = (await navigator.credentials.get({
+      publicKey: toPublicKeyRequest(options),
+    })) as PublicKeyCredential;
 
-    const publicKey = {
-      ...options,
-      challenge: base64UrlToBuffer(options.challenge),
-    } as unknown as PublicKeyCredentialRequestOptions;
+    return assertionToJson(credential);
+  },
 
-    const credential = (await navigator.credentials.get({ publicKey })) as PublicKeyCredential;
-    const response = credential.response as AuthenticatorAssertionResponse;
+  // Conditional UI (passkey form autofill) — does NOT show a modal. Stays pending until the user
+  // picks a passkey (or "Passkeys from a Nearby Device") from the autofill dropdown on an input
+  // with autocomplete="username webauthn". See web.dev passkey-form-autofill / task 166.
+  // Returns assertion JSON, or null if aborted (modal took over / page dispose).
+  GetCredentialConditional: async (optionsJson: string): Promise<string | null> => {
+    if (conditionalAbort) {
+      conditionalAbort.abort();
+    }
+    conditionalAbort = new AbortController();
+    const signal = conditionalAbort.signal;
 
-    return JSON.stringify({
-      credentialId: bufferToBase64Url(credential.rawId),
-      clientDataJson: bufferToBase64Url(response.clientDataJSON),
-      authenticatorData: bufferToBase64Url(response.authenticatorData),
-      signature: bufferToBase64Url(response.signature),
-      userHandle: response.userHandle ? bufferToBase64Url(response.userHandle) : null,
-    });
+    try {
+      const options: RequestOptionsJson = JSON.parse(optionsJson);
+      const credential = (await navigator.credentials.get({
+        publicKey: toPublicKeyRequest(options),
+        mediation: "conditional",
+        signal,
+      })) as PublicKeyCredential;
+
+      conditionalAbort = null;
+      return assertionToJson(credential);
+    } catch (error) {
+      conditionalAbort = null;
+      const name = error instanceof DOMException ? error.name : "";
+      // AbortError: modal path or dispose cancelled us — not a user-facing failure.
+      if (name === "AbortError") {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  AbortConditional: (): void => {
+    if (conditionalAbort) {
+      conditionalAbort.abort();
+      conditionalAbort = null;
+    }
   },
 };
