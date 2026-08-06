@@ -291,6 +291,11 @@ dotnet_code_quality.null_check_validation_methods = NotNull
 # CA1308: Normalize strings to uppercase
 dotnet_diagnostic.ca1308.severity = none
 
+# IDE0005: Using directive is unnecessary (default is suggestion / hidden in many hosts).
+# Warning + TreatWarningsAsErrors makes redundant usings (incl. those covered by global usings)
+# build-breaking so VS Code, Roslyn LS, and the agent path agree. Task 170.
+dotnet_diagnostic.IDE0005.severity = warning
+
 # TimeWarp.SourceGenerators — kebab-case .cs basenames (TW* package family, not Architecture TWA*).
 # Package defaults to disabled/info; warning + TreatWarningsAsErrors makes this build-breaking.
 # Multi-dot partials (application-state.close-modal.cs) require SourceGenerators ≥ 1.0.0-beta.9.
