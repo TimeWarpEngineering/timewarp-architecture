@@ -59,3 +59,10 @@ policy: **warning/error = we enforce** (TreatWarningsAsErrors), **silent/none = 
 
 - GlobalUsingsAnalyzer **loads** into `csc` (`/analyzer:.../GlobalUsingsAnalyzer.dll` confirmed).
 - IDE0005 on dead `global using` entries is intentional: unused globals still fail the build.
+
+### Self-install (dev CLI)
+
+- Failure: `tools/dev-cli/global-usings.cs` IDE0005 (`System.Diagnostics` and other unused BCL globals).
+- Fix: drop unused BCL globals only; keep `DevCli`, `DevCli.Services`, DI, Nuru/Amuru/Terminal.
+- Verified: `dotnet run tools/dev-cli/dev.cs -- self-install` → installed to `bin/`.
+
