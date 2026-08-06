@@ -15,6 +15,9 @@
 // GetCurrentSession. No profile fields are collected or required.
 // When SPA uses IdentitySessionAuthenticationStateProvider (default non-mock / non-Entra path),
 // successful complete notifies that provider so AuthorizeView re-reads session without a full reload.
+// Task 165: AuthenticateAsync/RegisterAsync accept preferHybrid — when true, the JS bridge sets
+// WebAuthn hints to ["hybrid"] so Chrome prioritizes nearby-device / QR UI (server options already
+// include client-device+hybrid soft hints for the default path).
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -42,7 +45,8 @@ public sealed class PasskeyCeremonyClient
   }
 
   public async Task<OneOf<CompletePasskeyRegistration.Response, SharedProblemDetails>> RegisterAsync(
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken,
+    bool preferHybrid = false)
   {
     OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> startResult =
       await ApiService.GetResponse<StartPasskeyRegistration.Response>(
@@ -55,7 +59,11 @@ public sealed class PasskeyCeremonyClient
     }
 
     string credentialJson =
-      await JsRuntime.InvokeAsync<string>("Spa.WebAuthn.CreateCredential", cancellationToken, startResult.AsT0.OptionsJson);
+      await JsRuntime.InvokeAsync<string>(
+        "Spa.WebAuthn.CreateCredential",
+        cancellationToken,
+        startResult.AsT0.OptionsJson,
+        preferHybrid);
 
     using var document = JsonDocument.Parse(credentialJson);
     JsonElement root = document.RootElement;
@@ -80,7 +88,8 @@ public sealed class PasskeyCeremonyClient
   }
 
   public async Task<OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails>> AuthenticateAsync(
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken,
+    bool preferHybrid = false)
   {
     OneOf<StartPasskeyAuthentication.Response, FileResponse, SharedProblemDetails> startResult =
       await ApiService.GetResponse<StartPasskeyAuthentication.Response>(
@@ -93,7 +102,11 @@ public sealed class PasskeyCeremonyClient
     }
 
     string assertionJson =
-      await JsRuntime.InvokeAsync<string>("Spa.WebAuthn.GetCredential", cancellationToken, startResult.AsT0.OptionsJson);
+      await JsRuntime.InvokeAsync<string>(
+        "Spa.WebAuthn.GetCredential",
+        cancellationToken,
+        startResult.AsT0.OptionsJson,
+        preferHybrid);
 
     using var document = JsonDocument.Parse(assertionJson);
     JsonElement root = document.RootElement;

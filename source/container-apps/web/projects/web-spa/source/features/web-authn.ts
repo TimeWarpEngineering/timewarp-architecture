@@ -41,6 +41,8 @@ interface CreationOptionsJson {
   authenticatorSelection?: { residentKey?: string; userVerification?: string };
   attestation?: string;
   timeout?: number;
+  /** WebAuthn Level 3 client hints: "client-device" | "hybrid" | "security-key" */
+  hints?: string[];
 }
 
 interface RequestOptionsJson {
@@ -49,6 +51,16 @@ interface RequestOptionsJson {
   allowCredentials: unknown[];
   userVerification?: string;
   timeout?: number;
+  /** WebAuthn Level 3 client hints: "client-device" | "hybrid" | "security-key" */
+  hints?: string[];
+}
+
+/** When preferHybrid, force hints to hybrid-only so Chrome prioritizes nearby-phone / QR UI. */
+function applyHybridPreference<T extends { hints?: string[] }>(options: T, preferHybrid: boolean): T {
+  if (!preferHybrid) {
+    return options;
+  }
+  return { ...options, hints: ["hybrid"] };
 }
 
 export const WebAuthn = {
@@ -56,8 +68,9 @@ export const WebAuthn = {
 
   // Returns a JSON string: { credentialId, clientDataJson, attestationObject } — matching
   // CompletePasskeyRegistration.Command's field names.
-  CreateCredential: async (optionsJson: string): Promise<string> => {
-    const options: CreationOptionsJson = JSON.parse(optionsJson);
+  // preferHybrid: optional; when true, sets hints: ["hybrid"] for cross-device focused UI.
+  CreateCredential: async (optionsJson: string, preferHybrid: boolean = false): Promise<string> => {
+    const options: CreationOptionsJson = applyHybridPreference(JSON.parse(optionsJson), preferHybrid);
 
     const publicKey = {
       ...options,
@@ -81,8 +94,9 @@ export const WebAuthn = {
   // Returns a JSON string: { credentialId, clientDataJson, authenticatorData, signature,
   // userHandle } — matching CompletePasskeyAuthentication.Command's field names. userHandle is
   // null when the authenticator did not return one.
-  GetCredential: async (optionsJson: string): Promise<string> => {
-    const options: RequestOptionsJson = JSON.parse(optionsJson);
+  // preferHybrid: optional; when true, sets hints: ["hybrid"] for "Passkeys from a nearby device".
+  GetCredential: async (optionsJson: string, preferHybrid: boolean = false): Promise<string> => {
+    const options: RequestOptionsJson = applyHybridPreference(JSON.parse(optionsJson), preferHybrid);
 
     const publicKey = {
       ...options,

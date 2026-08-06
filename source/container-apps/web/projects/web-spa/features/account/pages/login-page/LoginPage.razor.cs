@@ -19,8 +19,10 @@
 // management for signed-in users is a Settings/Security concern (104-024), NOT this page —
 // CreatePasskey mints a NEW Principal, so a signed-in user clicking it would create a second
 // account, not add a credential.
-// Hybrid/QR: registration omits authenticatorAttachment; auth uses empty allowCredentials —
-// browser-native hybrid dialog is not suppressed (147-005).
+// Hybrid/QR (147-005 + 165): server options omit authenticatorAttachment, use empty
+// allowCredentials, and emit hints [client-device, hybrid]. Primary button uses those soft
+// hints; "Passkeys from a nearby device" calls AuthenticateAsync(preferHybrid: true) so the
+// JS bridge sets hints: ["hybrid"] and Chrome shows a cross-device focused dialog.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Account;
@@ -80,14 +82,18 @@ partial class LoginPage
 
   private void NavigateOnward() => NavigationManager.NavigateTo(GetSafeReturnUrl(ReturnUrl));
 
-  private async Task ContinueWithPasskey()
+  private Task ContinueWithPasskey() => AuthenticateAsync(preferHybrid: false);
+
+  private Task ContinueWithPasskeyFromNearbyDevice() => AuthenticateAsync(preferHybrid: true);
+
+  private async Task AuthenticateAsync(bool preferHybrid)
   {
     ErrorMessage = null;
     IsBusy = true;
     try
     {
       OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails> result =
-        await Ceremony.AuthenticateAsync(CancellationToken.None);
+        await Ceremony.AuthenticateAsync(CancellationToken.None, preferHybrid);
 
       if (result.IsT1)
       {

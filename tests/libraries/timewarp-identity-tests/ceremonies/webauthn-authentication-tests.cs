@@ -191,3 +191,28 @@ public class Verify
     return Task.CompletedTask;
   }
 }
+
+public class BuildOptionsJson
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<BuildOptionsJson>();
+
+  private static readonly WebAuthnRelyingParty Rp = new("localhost", "Test RP", []);
+
+  public static Task Includes_hybrid_client_device_hints_and_empty_allowCredentials()
+  {
+    byte[] challenge = RandomNumberGenerator.GetBytes(32);
+    string json = WebAuthnAuthentication.BuildOptionsJson(Rp, challenge);
+
+    using JsonDocument doc = JsonDocument.Parse(json);
+    JsonElement root = doc.RootElement;
+
+    root.GetProperty("allowCredentials").GetArrayLength().ShouldBe(0);
+    root.TryGetProperty("authenticatorAttachment", out _).ShouldBeFalse();
+
+    string[] hints = root.GetProperty("hints").EnumerateArray().Select(e => e.GetString()!).ToArray();
+    hints.ShouldContain("client-device");
+    hints.ShouldContain("hybrid");
+    return Task.CompletedTask;
+  }
+}

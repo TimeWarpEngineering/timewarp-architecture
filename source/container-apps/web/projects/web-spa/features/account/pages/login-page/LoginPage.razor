@@ -19,6 +19,16 @@
           Sign in with a passkey
         </FluentButton>
 
+        @* Hybrid-first path (task 165): WebAuthn hints ["hybrid"] so the browser prioritizes
+           nearby-phone / QR (same option hanko/passkeys.io surfaces as "Passkeys from a Nearby
+           Device"). Still browser UI — we only request the focused dialog. *@
+        <FluentButton Appearance="ButtonAppearance.Outline"
+                      data-qa="ContinueWithPasskeyNearby"
+                      Disabled="IsBusy"
+                      OnClick="ContinueWithPasskeyFromNearbyDevice">
+          Passkeys from a nearby device
+        </FluentButton>
+
         <hr class="twe-login-divider" />
 
         <p class="twe-login-create">
