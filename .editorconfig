@@ -301,6 +301,10 @@ dotnet_diagnostic.IDE0005.severity = warning
 # Multi-dot partials (application-state.close-modal.cs) require SourceGenerators ≥ 1.0.0-beta.9.
 dotnet_diagnostic.TW0001.severity = warning
 
+# TW0002: "XML documentation should be moved to a markdown file" (XmlDocsToMarkdownAnalyzer).
+# Off — with AI-assisted docs, the XML→markdown migration nag is no longer helpful. Task 171.
+dotnet_diagnostic.TW0002.severity = none
+
 # Global Usings Analyzer
 
 dotnet_diagnostic.globalusingsanalyzer0001.filename = global-usings.cs
