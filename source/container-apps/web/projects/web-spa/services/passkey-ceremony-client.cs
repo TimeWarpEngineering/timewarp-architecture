@@ -148,9 +148,10 @@ public sealed class PasskeyCeremonyClient
     CancellationToken cancellationToken,
     bool includeRevoked = false)
   {
+    Guid userId = await ResolveAuthUserIdAsync();
     OneOf<GetCredentials.Response, FileResponse, SharedProblemDetails> result =
       await ApiService.GetResponse<GetCredentials.Response>(
-        new GetCredentials.Query { IncludeRevoked = includeRevoked },
+        new GetCredentials.Query { IncludeRevoked = includeRevoked, UserId = userId },
         cancellationToken);
 
     return result.IsT0 ? result.AsT0 : ToProblem(result);
@@ -161,9 +162,10 @@ public sealed class PasskeyCeremonyClient
     Guid credentialId,
     CancellationToken cancellationToken)
   {
+    Guid userId = await ResolveAuthUserIdAsync();
     OneOf<RevokeCredential.Response, FileResponse, SharedProblemDetails> result =
       await ApiService.GetResponse<RevokeCredential.Response>(
-        new RevokeCredential.Command { CredentialId = credentialId },
+        new RevokeCredential.Command { CredentialId = credentialId, UserId = userId },
         cancellationToken);
 
     return result.IsT0 ? result.AsT0 : ToProblem(result);
@@ -197,8 +199,10 @@ public sealed class PasskeyCeremonyClient
     using var document = JsonDocument.Parse(credentialJson);
     JsonElement root = document.RootElement;
 
+    Guid userId = await ResolveAuthUserIdAsync();
     AddPasskey.Command completeCommand = new()
     {
+      UserId = userId,
       CredentialId = root.GetProperty("credentialId").GetString()!,
       ClientDataJson = root.GetProperty("clientDataJson").GetString()!,
       AttestationObject = root.GetProperty("attestationObject").GetString()!,
@@ -209,6 +213,23 @@ public sealed class PasskeyCeremonyClient
       await ApiService.GetResponse<AddPasskey.Response>(completeCommand, cancellationToken);
 
     return completeResult.IsT0 ? completeResult.AsT0 : ToProblem(completeResult);
+  }
+
+  /// <summary>
+  /// IAuthApiRequest.UserId is required by client FluentValidation (AuthApiRequestValidator) as a
+  /// mock-mode signal — the server ignores it and uses the session principal. Prefer the signed-in
+  /// claim when available so mock auth stays coherent; otherwise a non-empty Guid for validation only.
+  /// </summary>
+  private async Task<Guid> ResolveAuthUserIdAsync()
+  {
+    try
+    {
+      return await AuthenticationStateProvider.GetUserIdAsync();
+    }
+    catch (InvalidOperationException)
+    {
+      return Guid.NewGuid();
+    }
   }
 
   public static string FormatError(SharedProblemDetails problem) =>
