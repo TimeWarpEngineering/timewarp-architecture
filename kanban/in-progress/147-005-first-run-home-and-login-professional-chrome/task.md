@@ -77,16 +77,16 @@ Reference: passkeys.io sign-in screen, adapted:
 
 ## Checklist
 
-- [ ] Focused-shell variant (empty layout pattern) for auth screens
-- [ ] LoginPage rebuilt per locked design (no email, no learn-more, redirect-if-authed)
-- [ ] Cross-device QR verified: browser hybrid dialog offers phone/QR for BOTH create and
-      sign-in ceremonies (fix ceremony options if suppressed)
-- [ ] Home: anonymous vs signed-in differentiation
-- [ ] "Try it" card relocated behind Developer gating
-- [ ] ChangePasswordPage deleted (after route/reference check)
-- [ ] Tests updated (web-spa integration; e2e if present); `dev build` 0/0
-- [ ] Design regions reconciled
-- [ ] Results with How to validate (screenshots encouraged)
+- [x] Focused-shell variant (empty layout pattern) for auth screens
+- [x] LoginPage rebuilt per locked design (no email, no learn-more, redirect-if-authed)
+- [x] Cross-device QR: code path verified hybrid-safe (no ceremony fix); **manual browser QR still maintainer smoke**
+- [x] Home: anonymous vs signed-in differentiation
+- [x] "Try it" card relocated behind Developer gating (TestPage)
+- [x] ChangePasswordPage deleted (after route/reference check)
+- [x] Tests: `web-spa-integration-tests` green; `dev build` 0/0; no Playwright login suite
+- [x] Design regions reconciled
+- [x] Phase 4b review disposition clean (`review/`)
+- [x] Results with How to validate
 
 ## Notes
 
@@ -142,6 +142,82 @@ optional Logout focused + options test → `dev build` + spa integration + manua
 
 **Open questions:** none — implement as locked.
 
+## Results
+
+First-run surfaces now read as product chrome: focused passkey login (no shell nav/footer),
+Home differentiated for anonymous vs signed-in, demo Try-it off Home behind Developer gate,
+password-era ChangePassword page removed.
+
+### What was implemented
+
+- **`TimeWarpFocusedPage`** — auth-adjacent shell (logo + centered column); Login + Logout wrap it.
+- **`LoginPage`** — locked card: Sign in with a passkey / Create account; `data-qa` preserved; no session debug.
+- **`HomePage`** — AuthorizeView strip (avatar/alias/Settings/Admin policy); CTA via button + `ChangeRoute` + `CrossSliceReference(LoginPage)`.
+- **`TestPage`** — Try-it demos relocated; TwoSecondTask via ActionSet generator (no hand-written wrapper — CS0111).
+- **Deleted** ChangePasswordPage (no product/test refs).
+
+### Files changed (primary)
+
+- `components/TimeWarpFocusedPage.razor` (+ `.razor.css`) — created
+- `features/account/pages/login-page/LoginPage.razor` (+ `.cs`)
+- `features/account/pages/LogoutPage.razor` (+ `.cs`)
+- `features/application/pages/HomePage.razor` (+ `.cs`)
+- `features/debugger/pages/TestPage.razor` (+ `.cs`)
+- `application-state.two-second-task.cs` — Design only
+- `ChangePasswordPage.*` — deleted
+
+### Key decisions / deviations
+
+- TwoSecondTask: generator owns public wrapper; plan's "uncomment" would CS0111.
+- Ceremony options: **no code change** (already hybrid-safe).
+- Review M1: Home CTA fixed to Profile-style navigation (not NavLink>button).
+
+### Review (Phase 4b)
+
+- Effort 1, roster: general; 2 rounds
+- Final: 0 open (1 suggestion fixed); disposition **clean**
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`
+
+### Test outcomes
+
+- `./bin/dev build` — 0/0
+- `web-spa-integration-tests` — 15 passed, 1 skipped (pre-existing weather quarantine), 0 failed
+- Playwright login suite — none in-tree
+
+### How to validate
+
+**Automated**
+
+```bash
+./bin/dev build
+# expect: 0 Warning(s), 0 Error(s)
+
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release
+# expect: all non-quarantined tests passed
+```
+
+**Smoke (UI)**
+
+```bash
+./bin/dev run
+```
+
+1. Signed out `/` → Welcome + Built with + Sign in CTA; **no** Try it card.
+2. Click CTA → `/Login` focused chrome (logo + card, **no** nav/search/footer).
+3. Buttons: "Sign in with a passkey" (`data-qa=ContinueWithPasskey`), "Create account" (`data-qa=CreatePasskey`); no email/password; no session debug line.
+4. Signed in `/` → avatar/alias strip + Settings; Admin only if Administrator.
+5. Visit `/Login` while signed in → redirect home (or safe returnUrl).
+6. Developer role: `/Debugger/Test` → Try it buttons work (footer spinner / modal).
+7. `/changePassword` → no page (not found).
+
+**Ceremony hybrid (manual — not automated this session)**
+
+1. Real browser, non-mock passkey path: Create account + Sign in.
+2. Expect browser hybrid dialog can offer phone/tablet/QR (platform-dependent UI).
+3. Code path: registration omits `authenticatorAttachment`; auth empty `allowCredentials`.
+
+**Not in scope:** Live screenshots attached here; Playwright login e2e (no suite yet).
+
 ## Session
 
 - Created: 2026-08-04 (empty placeholder).
@@ -149,4 +225,5 @@ optional Logout focused + options test → `dev build` + spa integration + manua
   home-page defaults recorded for veto-in-review.
 - 2026-08-06 refinement (Steve): drop the Learn-more link; REQUIRE the cross-device QR
   option (browser hybrid dialog) to be available in both ceremonies.
-- 2026-08-06 grok orchestrate: Phase 1–2 plan finalized (subagent 019fd53d-b410-7ed1-a82a-15fd8a03a461).
+- 2026-08-06 grok orchestrate: Phase 1–2 plan (019fd53d…); Phase 4 implement (019fd541…);
+  Phase 4b review (019fd546…); M1 fix + disposition clean; Results + done.

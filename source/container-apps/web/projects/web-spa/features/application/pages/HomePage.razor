@@ -35,9 +35,10 @@
               password manager, or hardware key.
             </p>
             <div>
-              <NavLink href=@LoginPage.GetPageUrl() class="twe-home-passkey-cta">
-                <FluentButton Appearance="ButtonAppearance.Primary">Sign in with a passkey</FluentButton>
-              </NavLink>
+              @* Single control — do not nest FluentButton inside NavLink (invalid HTML). *@
+              <FluentButton Appearance="ButtonAppearance.Primary" OnClick="GoToLoginAsync">
+                Sign in with a passkey
+              </FluentButton>
             </div>
           </FluentStack>
         </Card>
