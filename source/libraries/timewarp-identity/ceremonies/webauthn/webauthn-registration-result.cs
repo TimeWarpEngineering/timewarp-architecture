@@ -16,13 +16,20 @@ public sealed class WebAuthnRegistrationResult
 {
   private readonly byte[] CredentialIdField;
   private readonly byte[] CosePublicKeyField;
+  private readonly byte[]? AaguidField;
 
-  private WebAuthnRegistrationResult(bool isValid, WebAuthnFailureReason failureReason, byte[] credentialId, byte[] cosePublicKey)
+  private WebAuthnRegistrationResult(
+    bool isValid,
+    WebAuthnFailureReason failureReason,
+    byte[] credentialId,
+    byte[] cosePublicKey,
+    byte[]? aaguid)
   {
     IsValid = isValid;
     FailureReason = failureReason;
     CredentialIdField = credentialId;
     CosePublicKeyField = cosePublicKey;
+    AaguidField = aaguid;
   }
 
   public bool IsValid { get; }
@@ -32,11 +39,13 @@ public sealed class WebAuthnRegistrationResult
 #pragma warning disable CA1819 // Binary material is intentionally exposed as byte[] copies
   public byte[] CredentialId => CredentialIdField.ToArray();
   public byte[] CosePublicKey => CosePublicKeyField.ToArray();
+  /// <summary>16-byte authenticator AAGUID from attested credential data; empty when absent.</summary>
+  public byte[] Aaguid => AaguidField is null ? [] : AaguidField.ToArray();
 #pragma warning restore CA1819
 
-  internal static WebAuthnRegistrationResult Success(byte[] credentialId, byte[] cosePublicKey) =>
-    new(true, WebAuthnFailureReason.None, credentialId, cosePublicKey);
+  internal static WebAuthnRegistrationResult Success(byte[] credentialId, byte[] cosePublicKey, byte[]? aaguid) =>
+    new(true, WebAuthnFailureReason.None, credentialId, cosePublicKey, aaguid is null ? null : aaguid.ToArray());
 
   internal static WebAuthnRegistrationResult Failure(WebAuthnFailureReason reason) =>
-    new(false, reason, [], []);
+    new(false, reason, [], [], aaguid: null);
 }

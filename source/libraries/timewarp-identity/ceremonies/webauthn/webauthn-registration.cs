@@ -142,7 +142,9 @@ public static class WebAuthnRegistration
 
       // Import-validated only (proves the key material is well-formed for its curve/modulus) — no
       // attestation signature is checked; see the CENTRAL DECISION Design region above.
-      return WebAuthnRegistrationResult.Success(credentialId, authData.CosePublicKey);
+      // AAGUID is returned so hosts can map to provider display names (Proton Pass, 1Password, …)
+      // via PasskeyProviderNames — passkeys.io-style Settings labels (task 168).
+      return WebAuthnRegistrationResult.Success(credentialId, authData.CosePublicKey, authData.Aaguid);
     }
     finally
     {

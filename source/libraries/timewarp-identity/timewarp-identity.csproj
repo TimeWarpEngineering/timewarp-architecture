@@ -44,10 +44,17 @@
     <PackageReference Include="System.Formats.Cbor" />
   </ItemGroup>
 
+  <!-- Community AAGUID → provider display names (task 168). Names only; no icon SVGs. -->
+  <ItemGroup>
+    <EmbeddedResource Include="ceremonies/webauthn/passkey-provider-aaguids.json"
+                      LogicalName="TimeWarp.Identity.ceremonies.webauthn.passkey-provider-aaguids.json" />
+  </ItemGroup>
+
   <!-- Snapshot rehydration is internal (store-only). Host EF store (web-infrastructure) and its
        dual-fixture contract tests call Snapshot; library stays EF-free (task 104-032). -->
   <ItemGroup>
     <InternalsVisibleTo Include="web-infrastructure" />
     <InternalsVisibleTo Include="web-infrastructure-tests" />
+    <InternalsVisibleTo Include="timewarp-identity-tests" />
   </ItemGroup>
 </Project>
