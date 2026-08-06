@@ -1,11 +1,171 @@
 @namespace TimeWarp.Architecture.Features.Applications
 @inherits BaseComponent
+@using TimeWarp.Architecture.Features.Identity
+@using TimeWarp.Identity
 
-@code{
+@code {
   public static string Title => "Settings";
-  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+  public static Icon? NavIcon => new Icons.Regular.Size20.Settings();
 }
 
 <TimeWarpPage Title="Settings">
-  <Card>Settings — coming soon.</Card>
+  <div class="twe-stack twe-settings">
+
+    <section class="twe-settings__section">
+      <h2 class="twe-settings__heading">Passkeys</h2>
+
+      @if (IsLoading)
+      {
+        <p class="twe-settings__muted">Loading…</p>
+      }
+      else if (Passkeys.Count == 0)
+      {
+        <p class="twe-settings__muted">No passkeys on this account yet.</p>
+      }
+      else
+      {
+        <ul class="twe-settings__cred-list">
+          @foreach (GetCredentials.CredentialSummary credential in Passkeys)
+          {
+            bool expanded = ExpandedId == credential.Id.Value;
+            <li class="twe-settings__cred">
+              <button type="button"
+                      class="@(expanded ? "twe-settings__cred-toggle twe-settings__cred-toggle--open" : "twe-settings__cred-toggle")"
+                      @onclick="() => ToggleExpanded(credential.Id.Value)"
+                      disabled="@IsBusy">
+                <span class="twe-settings__cred-label">@DisplayLabel(credential)</span>
+                <span class="twe-settings__cred-chevron" aria-hidden="true">@(expanded ? "▾" : "▸")</span>
+              </button>
+
+              @if (expanded)
+              {
+                <div class="twe-settings__cred-body">
+                  <div class="twe-settings__field">
+                    <div class="twe-settings__field-title">Delete passkey</div>
+                    <p class="twe-settings__muted">Delete this passkey from your account.</p>
+                    <button type="button"
+                            class="twe-settings__link twe-settings__link--danger"
+                            disabled="@IsBusy"
+                            @onclick="() => ConfirmRevokeAsync(credential)">
+                      Delete
+                    </button>
+                  </div>
+
+                  <div class="twe-settings__field">
+                    <div class="twe-settings__field-title">Created at</div>
+                    <p class="twe-settings__value">@credential.CreatedAt.ToLocalTime().ToString("M/d/yyyy, h:mm:ss tt")</p>
+                  </div>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="twe-settings__actions">
+        <button type="button"
+                class="twe-settings__link"
+                data-qa="CreatePasskeyOnAccount"
+                disabled="@IsBusy"
+                @onclick="CreatePasskeyAsync">
+          Create a passkey
+        </button>
+      </div>
+    </section>
+
+    @if (!string.IsNullOrEmpty(StatusMessage))
+    {
+      <FluentMessageBar Intent="MessageBarIntent.Success" Title="Success" AllowDismiss="false">
+        @StatusMessage
+      </FluentMessageBar>
+    }
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+      <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
+        @ErrorMessage
+      </FluentMessageBar>
+    }
+
+  </div>
 </TimeWarpPage>
+
+<style>
+  @(@"
+    .twe-settings__heading {
+      margin: 0 0 12px;
+      font-size: var(--twe-text-section-title);
+      font-weight: 700;
+      color: var(--twe-ink);
+    }
+    .twe-settings__muted {
+      margin: 0;
+      color: var(--twe-muted);
+      font-size: var(--twe-text-body);
+    }
+    .twe-settings__value {
+      margin: 4px 0 0;
+      color: var(--twe-ink);
+      font-size: var(--twe-text-body);
+    }
+    .twe-settings__cred-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .twe-settings__cred-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      border: none;
+      border-radius: var(--twe-radius-sm);
+      background: var(--twe-paper-2);
+      color: var(--twe-ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+    }
+    .twe-settings__cred-toggle--open {
+      background: var(--twe-blue);
+      color: #fff;
+    }
+    .twe-settings__cred-chevron {
+      opacity: 0.85;
+    }
+    .twe-settings__cred-body {
+      padding: 12px 4px 8px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .twe-settings__field-title {
+      font-weight: 600;
+      color: var(--twe-ink);
+      font-size: var(--twe-text-body);
+    }
+    .twe-settings__link {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--twe-blue);
+      font: inherit;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .twe-settings__link:hover { text-decoration: underline; }
+    .twe-settings__link:disabled { opacity: 0.5; cursor: not-allowed; }
+    .twe-settings__link--danger { color: var(--twe-danger); }
+    .twe-settings__actions {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--twe-rule);
+    }
+  ")
+</style>
