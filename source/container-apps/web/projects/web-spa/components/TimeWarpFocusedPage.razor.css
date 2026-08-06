@@ -1,0 +1,31 @@
+/* TimeWarpFocusedPage — Tier-1-style isolation on a native root (skills/tw-blazor-css-strategy).
+   Tokens only. Full-viewport calm background; centered narrow column for auth cards. */
+.twe-focused {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px 16px;
+  box-sizing: border-box;
+  background: var(--twe-background);
+  color: var(--twe-ink);
+}
+
+.twe-focused__brand {
+  display: inline-flex;
+  align-items: center;
+}
+
+.twe-focused__logo {
+  height: 48px;
+  width: auto;
+  display: block;
+}
+
+.twe-focused__content {
+  width: 100%;
+  max-width: 420px;
+}

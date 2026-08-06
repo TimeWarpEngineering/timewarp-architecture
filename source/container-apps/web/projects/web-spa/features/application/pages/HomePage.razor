@@ -5,15 +5,6 @@
 {
   public static Icon? NavIcon => new Icons.Regular.Size20.Home();
   public static string Title => "Home";
-
-  private async Task FiveSecondTaskButtonClick() =>
-    await ApplicationState.FiveSecondTask(CancellationToken.None);
-
-  private async Task TwoSecondTaskButtonClick() =>
-    await ApplicationState.TwoSecondTask(CancellationToken.None);
-
-  private async Task ModalButtonClick() =>
-    await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
 }
 
 <TimeWarpPage Title=@ApplicationState.Name>
@@ -35,27 +26,38 @@
       </ul>
     </Card>
 
-    <Card Title="Sign in">
-      <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
-        <p>
-          Passkey first — no registration form. Continue with a platform authenticator,
-          password manager, or hardware key.
-        </p>
-        <div>
-          <NavLink href="/Login" class="twe-home-passkey-cta">
-            <FluentButton Appearance="ButtonAppearance.Primary">Continue with passkey</FluentButton>
-          </NavLink>
-        </div>
-      </FluentStack>
-    </Card>
-
-    <Card Title="Try it">
-      <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
-        <FluentButton Appearance="ButtonAppearance.Outline" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
-        <FluentButton Appearance="ButtonAppearance.Outline" OnClick=TwoSecondTaskButtonClick>Launch Two Second Task</FluentButton>
-        <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=ModalButtonClick>Show Modal</FluentButton>
-      </FluentStack>
-    </Card>
+    <AuthorizeView>
+      <NotAuthorized>
+        <Card Title="Sign in">
+          <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+            <p>
+              Passkey first — no registration form. Continue with a platform authenticator,
+              password manager, or hardware key.
+            </p>
+            <div>
+              <NavLink href=@LoginPage.GetPageUrl() class="twe-home-passkey-cta">
+                <FluentButton Appearance="ButtonAppearance.Primary">Sign in with a passkey</FluentButton>
+              </NavLink>
+            </div>
+          </FluentStack>
+        </Card>
+      </NotAuthorized>
+      <Authorized>
+        <Card Title="Signed in">
+          <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalAlignment="VerticalAlignment.Center" Wrap="true">
+            <FluentAvatar Image=@ProfileState.Avatar Name=@ProfileState.Alias Size="AvatarSize.Size32" />
+            <FluentText>@ProfileState.Alias</FluentText>
+            <FluentSpacer />
+            <NavLink href=@SettingsPage.GetPageUrl()>Settings</NavLink>
+            <AuthorizeView Policy=@Policies.CanViewAdminSidebarNavSection Context="adminAuth">
+              <Authorized Context="adminAuth">
+                <NavLink href=@RolesListPage.GetPageUrl()>Admin</NavLink>
+              </Authorized>
+            </AuthorizeView>
+          </FluentStack>
+        </Card>
+      </Authorized>
+    </AuthorizeView>
 
   </div>
 </TimeWarpPage>

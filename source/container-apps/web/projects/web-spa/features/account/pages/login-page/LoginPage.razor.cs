@@ -1,24 +1,26 @@
 #region Purpose
-// Code-behind for the template's passkey-first human sign-in page: Continue with passkey /
-// Create a passkey against the first-party WebAuthn identity-session cookie (no profile form).
+// Code-behind for the template's passkey-first human sign-in page: Sign in with a passkey /
+// Create account against the first-party WebAuthn identity-session cookie (no profile form).
 #endregion
 
 #region Design
-// Task 104-016 product CTA. Account = accepted public key (locked decision #1): primary action is
-// discoverable passkey authentication (no email/username), secondary is registration that mints
-// Principal + session with no mandatory profile. Progressive profile is 104-024 and stays out of
-// this page. Ceremony plumbing lives in PasskeyCeremonyClient so the technical Passkeys demo and
-// this page share one mapping of browser credential JSON → Complete* commands.
-// Legacy Passwordless.dev (CDN client, tenant key, PasswordlessService, RegisterPasskey.razor) is
-// removed under this task — only window.Spa.WebAuthn + identity contracts remain.
+// Task 104-016 product CTA + 147-005 focused chrome. Account = accepted public key (locked
+// decision #1): primary action is discoverable passkey authentication (no email/username),
+// secondary is registration that mints Principal + session with no mandatory profile.
+// Markup uses TimeWarpFocusedPage (logo + centered card) — not TimeWarpPage — so login is not
+// "a page in the product shell". Progressive profile is 104-024 and stays out of this page.
+// Ceremony plumbing lives in PasskeyCeremonyClient so the technical Passkeys demo and this page
+// share one mapping of browser credential JSON → Complete* commands.
 // Mock mode: ceremony contracts have no GetMockResponseFactory, so the mock chain yields 501 and
 // we surface it through ErrorMessage (same as PasskeysPage).
 // Task 153 redirect flow: an already-authenticated visitor is redirected away immediately, and a
 // successful ceremony navigates to ?returnUrl (or home). returnUrl is honored only when local
 // (GetSafeReturnUrl — open-redirect guard) and never points back at /Login itself. Credential
-// management for signed-in users is a Settings/Security concern (104-024), NOT this page — the
-// old "signed-in users may open it to add credentials" note was wrong: CreatePasskey mints a NEW
-// Principal, so a signed-in user clicking it would create a second account, not add a credential.
+// management for signed-in users is a Settings/Security concern (104-024), NOT this page —
+// CreatePasskey mints a NEW Principal, so a signed-in user clicking it would create a second
+// account, not add a credential.
+// Hybrid/QR: registration omits authenticatorAttachment; auth uses empty allowCredentials —
+// browser-native hybrid dialog is not suppressed (147-005).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Account;

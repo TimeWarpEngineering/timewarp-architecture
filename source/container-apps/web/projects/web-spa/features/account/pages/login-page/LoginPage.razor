@@ -8,41 +8,30 @@
 
 <PageTitle>Sign in</PageTitle>
 
-<TimeWarpPage Title="Sign in">
+<TimeWarpFocusedPage>
   <div class="twe-stack">
-    <Card Title="Continue with a passkey">
+    <Card Title="Sign in">
       <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
-        <p>
-          No email, username, or profile form. A passkey is your account — create one once,
-          then continue with the same authenticator (platform, password manager, or hardware key).
-        </p>
-        <p>
-          Session:
-          @(IsAuthenticated is true
-            ? "signed in"
-            : IsAuthenticated is false
-              ? "not signed in"
-              : "checking…")
-        </p>
-        <div>
-          <FluentButton Appearance="ButtonAppearance.Primary"
-                        data-qa="ContinueWithPasskey"
-                        Disabled="IsBusy"
-                        OnClick="ContinueWithPasskey">
-            Continue with passkey
-          </FluentButton>
-        </div>
-        <div>
+        <FluentButton Appearance="ButtonAppearance.Primary"
+                      data-qa="ContinueWithPasskey"
+                      Disabled="IsBusy"
+                      OnClick="ContinueWithPasskey">
+          Sign in with a passkey
+        </FluentButton>
+
+        <hr class="twe-login-divider" />
+
+        <p class="twe-login-create">
+          Don't have an account?
           <FluentButton Appearance="ButtonAppearance.Outline"
                         data-qa="CreatePasskey"
                         Disabled="IsBusy"
                         OnClick="CreatePasskey">
-            Create a passkey
+            Create account
           </FluentButton>
-        </div>
+        </p>
       </FluentStack>
     </Card>
-
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
@@ -51,4 +40,26 @@
       </FluentMessageBar>
     }
   </div>
-</TimeWarpPage>
+</TimeWarpFocusedPage>
+
+@* Divider / create-row styles: Exception B scope-handle is unnecessary — native elements only.
+   Isolation would not stamp Fluent children; these classes live on native p/hr. *@
+<style>
+  @(@"
+    .twe-login-divider {
+      border: 0;
+      border-top: 1px solid var(--twe-rule);
+      margin: 0;
+      width: 100%;
+    }
+    .twe-login-create {
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      color: var(--twe-ink-2);
+      font-size: var(--twe-text-body);
+    }
+  ")
+</style>
