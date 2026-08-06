@@ -13,9 +13,6 @@
 
 namespace TimeWarp.Architecture.Features.Applications;
 
-using TimeWarp.Architecture.Features.Identity;
-using static TimeWarp.Architecture.Features.Identity.GetCredentials;
-
 [Page("/Settings", Policy = Policies.CanViewSettings)]
 [Authorize(Policy = Policies.CanViewSettings)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
@@ -25,7 +22,7 @@ partial class SettingsPage
 
   private bool IsLoading => CredentialsState.Credentials is null;
   private bool IsBusy => ActionTrackingState.IsActive;
-  private IReadOnlyList<CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
+  private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
   private string? ErrorMessage => CredentialsState.CeremonyError;
   private string? StatusMessage => CredentialsState.StatusMessage;
 
@@ -53,7 +50,7 @@ partial class SettingsPage
   private void ToggleExpanded(Guid id) =>
     ExpandedId = ExpandedId == id ? null : id;
 
-  private static string DisplayLabel(CredentialSummary credential) =>
+  private static string DisplayLabel(GetCredentials.CredentialSummary credential) =>
     string.IsNullOrWhiteSpace(credential.Label) ? "Passkey" : credential.Label!;
 
   private async Task CreatePasskeyAsync()
@@ -69,7 +66,7 @@ partial class SettingsPage
     }
   }
 
-  private async Task ConfirmRevokeAsync(CredentialSummary credential)
+  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential)
   {
     await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
     SyncExpandedId();

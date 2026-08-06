@@ -67,7 +67,7 @@ public class Program
   /// <summary>
   /// Compose SPA services. <paramref name="environmentName"/> drives the fail-closed mock-auth
   /// gate (Development/Testing + Authentication:UseMock) and MUST be the caller's real
-  /// <see cref="IHostEnvironment.EnvironmentName"/> (or WebAssembly HostEnvironment.Environment) —
+  /// <see cref="IHostEnvironment"/> EnvironmentName (or WebAssembly HostEnvironment.Environment) —
   /// never a value read back out of <paramref name="configuration"/> (task 145-009 R2-1: a
   /// config-derived environment can diverge from the real host environment and was a fail-open
   /// bug). Unknown/absent (null/empty) is fail-closed — mock auth is never activated.

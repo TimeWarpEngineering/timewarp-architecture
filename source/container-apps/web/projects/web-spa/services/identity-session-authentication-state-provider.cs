@@ -17,11 +17,11 @@
 #endregion
 
 namespace TimeWarp.Architecture.Services;
+
 using Microsoft.AspNetCore.Components.Authorization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Foundation.Types;
-using TimeWarp.Identity;
 
 /// <summary>
 /// Projects the browser's identity-session cookie into Blazor <see cref="AuthenticationState"/>.

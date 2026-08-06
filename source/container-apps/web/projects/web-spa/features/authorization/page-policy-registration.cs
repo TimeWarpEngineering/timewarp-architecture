@@ -10,7 +10,6 @@
 
 namespace TimeWarp.Architecture;
 
-using TimeWarp.Architecture.Features.Authorization;
 using static AuthorizationConstants.Policies;
 
 internal static class PagePolicyRegistration

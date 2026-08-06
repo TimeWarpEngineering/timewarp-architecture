@@ -16,7 +16,7 @@ namespace TimeWarp.Foundation.Features;
 
 /// <summary>
 /// Declares that this type intentionally references types owned by the same product slice as
-/// <paramref name="targetType"/>. Suppresses TWA0009 only for edges into that target slice.
+/// <see cref="TargetType"/>. Suppresses TWA0009 only for edges into that target slice.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
 public sealed class CrossSliceReferenceAttribute : Attribute
@@ -24,6 +24,9 @@ public sealed class CrossSliceReferenceAttribute : Attribute
   public Type TargetType { get; }
   public string Reason { get; }
 
+  /// <summary>Creates a cross-slice opt-out for references into the slice that owns <paramref name="targetType"/>.</summary>
+  /// <param name="targetType">A type from the foreign product slice being deliberately referenced.</param>
+  /// <param name="reason">Why the coupling is intentional (non-empty).</param>
   public CrossSliceReferenceAttribute(Type targetType, string reason)
   {
     TargetType = Guard.Against.Null(targetType);

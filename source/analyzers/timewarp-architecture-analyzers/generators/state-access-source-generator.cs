@@ -6,8 +6,6 @@
 
 namespace TimeWarp.Architecture.Analyzers;
 
-using System.Collections.Generic;
-
 [Generator]
 public sealed class StateAccessSourceGenerator : IIncrementalGenerator
 {

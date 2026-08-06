@@ -14,8 +14,8 @@
 #endregion
 
 namespace TimeWarp.Architecture.Features.Authorization;
+
 using Microsoft.AspNetCore.Authorization;
-using TimeWarp.Architecture.Features;
 using static TimeWarp.Architecture.AuthorizationConstants.Policies;
 using static TimeWarp.Architecture.Features.RoleIds;
 

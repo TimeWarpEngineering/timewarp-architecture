@@ -9,7 +9,9 @@ build-breaking under TreatWarningsAsErrors.
 ## Checklist
 
 - [x] `.editorconfig`: `dotnet_diagnostic.IDE0005.severity = warning`
-- [ ] Build/cleanup: fix or accept fallout from TreatWarningsAsErrors on IDE0005
+- [x] `Directory.Build.props`: `GenerateDocumentationFile` + XML-doc NoWarn (Roslyn #41640)
+- [x] Clean IDE0005 on web-spa dependency chain; SettingsPage redundant usings removed
+- [ ] Full-repo `dotnet format style --diagnostics IDE0005` / `dev build` sweep (remaining projects)
 
 ## Session
 
@@ -18,9 +20,11 @@ build-breaking under TreatWarningsAsErrors.
 ## Results
 
 ### What changed
-- Root `.editorconfig` sets IDE0005 severity to warning (task 170).
+- IDE0005 severity = warning in root `.editorconfig`
+- Docs file enabled so IDE0005 runs on build; CS1591 and other pure XML-doc noise suppressed
+- Fixed redundant usings / related fallout on web-spa graph (SettingsPage, foundation-contracts, analyzers, contracts globals)
 
 ### How to validate
-- Open a file with a redundant `using` (e.g. namespace already in `global-usings.cs`).
-- Expect IDE0005 as **warning** in VS Code Problems (not suggestion-only).
-- `dotnet build` on a project with that file should fail under TreatWarningsAsErrors until the using is removed.
+- VS Code: redundant usings show as **warning** (IDE0005), not suggestion-only
+- `dotnet build source/container-apps/web/projects/web-spa/web-spa.csproj -c Debug` → 0/0
+- Expect full-solution build may still hit IDE0005 outside web-spa until remaining format sweep

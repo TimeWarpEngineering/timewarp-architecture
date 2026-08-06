@@ -17,6 +17,7 @@
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
+
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
@@ -24,7 +25,6 @@ using Microsoft.Extensions.Configuration;
 using TimeWarp.Architecture.Features.Authorization;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Services;
-using TimeWarp.Foundation.Types;
 
 partial class ProfileState
 {

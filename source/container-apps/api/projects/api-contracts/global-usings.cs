@@ -8,9 +8,7 @@ global using OneOf;
 global using System.Collections.Specialized;
 // Attributes: dual-mode MSBuild <Using> in api-contracts.csproj (task 115) — package mode keeps
 // the platform namespace; source mode uses $(RootNamespace).Attributes after sourceName rewrite.
-global using TimeWarp.Architecture.Features;
 global using TimeWarp.Foundation.Features;
 // Solution usings
 global using TimeWarp.Foundation.Types;
-global using TimeWarp.Identity;
 global using TimeWarp.Mediator;

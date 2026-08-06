@@ -15,9 +15,9 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
-using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using System.Text.Json;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Foundation.Types;
 
