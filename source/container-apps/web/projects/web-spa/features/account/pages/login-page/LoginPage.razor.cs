@@ -15,10 +15,10 @@
 // we surface it through ErrorMessage (same as PasskeysPage).
 // Task 153 redirect flow: an already-authenticated visitor is redirected away immediately, and a
 // successful ceremony navigates to ?returnUrl (or home). returnUrl is honored only when local
-// (GetSafeReturnUrl — open-redirect guard) and never points back at /Login itself. Credential
-// management for signed-in users is a Settings/Security concern (104-024), NOT this page —
-// CreatePasskey mints a NEW Principal, so a signed-in user clicking it would create a second
-// account, not add a credential.
+// (GetSafeReturnUrl — open-redirect guard) and never points back at /Login itself.
+// Create account mints a NEW Principal; after success (no returnUrl) navigate to /Settings so
+// the user lands on the passkey list (passkeys.io post-create UX, task 167). Sign-in still
+// uses returnUrl/home. Credential management is Settings, never this page.
 // Hybrid/nearby device: one "Sign in with a passkey" button opens the browser modal. Server
 // options include soft hints [client-device, hybrid] and empty allowCredentials (165) so the
 // dialog can offer local managers and nearby-device/QR (e.g. after canceling Proton Pass).
@@ -83,6 +83,16 @@ partial class LoginPage
 
   private void NavigateOnward() => NavigationManager.NavigateTo(GetSafeReturnUrl(ReturnUrl));
 
+  /// <summary>
+  /// After Create account: deep-link returnUrl if present, else /Settings (passkeys.io-style
+  /// post-create: see your new passkey listed). Literal path avoids TWA0009 cross-slice type refs.
+  /// </summary>
+  private void NavigateAfterCreateAccount()
+  {
+    string destination = GetSafeReturnUrl(ReturnUrl);
+    NavigationManager.NavigateTo(destination is "/" or "" ? "/Settings" : destination);
+  }
+
   private async Task ContinueWithPasskey()
   {
     ErrorMessage = null;
@@ -125,7 +135,7 @@ partial class LoginPage
         return;
       }
 
-      NavigateOnward();
+      NavigateAfterCreateAccount();
     }
     catch (JSException jsException)
     {
