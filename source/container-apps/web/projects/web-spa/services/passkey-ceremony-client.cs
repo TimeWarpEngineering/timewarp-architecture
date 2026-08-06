@@ -18,6 +18,8 @@
 // Task 165: AuthenticateAsync/RegisterAsync accept preferHybrid — when true, the JS bridge sets
 // WebAuthn hints to ["hybrid"] so Chrome prioritizes nearby-device / QR UI (server options already
 // include client-device+hybrid soft hints for the default path).
+// Task 169: credential management HTTP (GetCredentials / AddPasskey / RevokeCredential) lives on
+// CredentialsState ActionSets — not this client. Settings must not call ApiService via ceremony.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -143,94 +145,8 @@ public sealed class PasskeyCeremonyClient
     return sessionResult.IsT0 ? sessionResult.AsT0.IsAuthenticated : null;
   }
 
-  /// <summary>List the caller's credentials (passkeys + agent keys). Task 104-005 / Settings UI.</summary>
-  public async Task<OneOf<GetCredentials.Response, SharedProblemDetails>> ListCredentialsAsync(
-    CancellationToken cancellationToken,
-    bool includeRevoked = false)
-  {
-    Guid userId = await ResolveAuthUserIdAsync();
-    OneOf<GetCredentials.Response, FileResponse, SharedProblemDetails> result =
-      await ApiService.GetResponse<GetCredentials.Response>(
-        new GetCredentials.Query { IncludeRevoked = includeRevoked, UserId = userId },
-        cancellationToken);
-
-    return result.IsT0 ? result.AsT0 : ToProblem(result);
-  }
-
-  /// <summary>Soft-revoke one of the caller's credentials (cannot revoke the last active passkey).</summary>
-  public async Task<OneOf<RevokeCredential.Response, SharedProblemDetails>> RevokeCredentialAsync(
-    Guid credentialId,
-    CancellationToken cancellationToken)
-  {
-    Guid userId = await ResolveAuthUserIdAsync();
-    OneOf<RevokeCredential.Response, FileResponse, SharedProblemDetails> result =
-      await ApiService.GetResponse<RevokeCredential.Response>(
-        new RevokeCredential.Command { CredentialId = credentialId, UserId = userId },
-        cancellationToken);
-
-    return result.IsT0 ? result.AsT0 : ToProblem(result);
-  }
-
-  /// <summary>
-  /// Register an additional passkey on the authenticated principal (not a new account).
-  /// Uses anonymous Start options + authenticated AddPasskey complete (task 104-005).
-  /// </summary>
-  public async Task<OneOf<AddPasskey.Response, SharedProblemDetails>> AddPasskeyAsync(
-    CancellationToken cancellationToken,
-    string? label = null)
-  {
-    OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> startResult =
-      await ApiService.GetResponse<StartPasskeyRegistration.Response>(
-        new StartPasskeyRegistration.Command(),
-        cancellationToken);
-
-    if (!startResult.IsT0)
-    {
-      return ToProblem(startResult);
-    }
-
-    string credentialJson =
-      await JsRuntime.InvokeAsync<string>(
-        "Spa.WebAuthn.CreateCredential",
-        cancellationToken,
-        startResult.AsT0.OptionsJson,
-        false);
-
-    using var document = JsonDocument.Parse(credentialJson);
-    JsonElement root = document.RootElement;
-
-    Guid userId = await ResolveAuthUserIdAsync();
-    AddPasskey.Command completeCommand = new()
-    {
-      UserId = userId,
-      CredentialId = root.GetProperty("credentialId").GetString()!,
-      ClientDataJson = root.GetProperty("clientDataJson").GetString()!,
-      AttestationObject = root.GetProperty("attestationObject").GetString()!,
-      Label = label
-    };
-
-    OneOf<AddPasskey.Response, FileResponse, SharedProblemDetails> completeResult =
-      await ApiService.GetResponse<AddPasskey.Response>(completeCommand, cancellationToken);
-
-    return completeResult.IsT0 ? completeResult.AsT0 : ToProblem(completeResult);
-  }
-
-  /// <summary>
-  /// IAuthApiRequest.UserId is required by client FluentValidation (AuthApiRequestValidator) as a
-  /// mock-mode signal — the server ignores it and uses the session principal. Prefer the signed-in
-  /// claim when available so mock auth stays coherent; otherwise a non-empty Guid for validation only.
-  /// </summary>
-  private async Task<Guid> ResolveAuthUserIdAsync()
-  {
-    try
-    {
-      return await AuthenticationStateProvider.GetUserIdAsync();
-    }
-    catch (InvalidOperationException)
-    {
-      return Guid.NewGuid();
-    }
-  }
+  // Settings credential list/add/revoke HTTP lives on CredentialsState (task 169). This client
+  // is the WebAuthn ceremony helper for Login / Passkeys demo only.
 
   public static string FormatError(SharedProblemDetails problem) =>
     $"{problem.Title}: {problem.Detail}";

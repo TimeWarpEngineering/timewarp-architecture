@@ -36,6 +36,7 @@ partial class ProfileState
     // Opt-out must sit on the containing type of the reference (Handler), not outer ProfileState —
     // TWA0009 walks the innermost type declaration (see SliceIsolationAnalyzer.GetContainingType).
     [CrossSliceReference(typeof(AuthorizationState), "Sign-out resets role/module cache with profile chrome (same Initialize as ClearCurrentUser).")]
+    [CrossSliceReference(typeof(CredentialsState), "Sign-out clears credential list with profile chrome.")]
     internal sealed class Handler : BaseHandler<Action>
     {
       private readonly IWebServerApiService ApiService;
@@ -79,6 +80,7 @@ partial class ProfileState
 
         ProfileState.Initialize();
         Store.GetState<AuthorizationState>().Initialize();
+        Store.GetState<CredentialsState>().Initialize();
 
         if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
         {
