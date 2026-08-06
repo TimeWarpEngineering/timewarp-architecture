@@ -34,13 +34,16 @@ Reference: passkeys.io sign-in screen, adapted:
   - "Don't have an account?" line with **"Create account"** link/button (existing CreatePasskey
     ceremony; keep `data-qa="CreatePasskey"`). Wording is "Create account", not "Create a
     passkey" — the passkey IS the account, but first-run users think in accounts.
-  - Small "What is a passkey? **Learn more**" link.
-- **Learn more click** → disclosure (inline expander or FluentDialog — implementer's pick,
-  favor whichever reads calmer) containing explainer copy in the spirit of passkeys.io
-  (paraphrase, don't copy verbatim):
-  > A passkey is a way to sign in that works completely without passwords. Using your device's
-  > own security — Touch ID, Face ID, Windows Hello, or a hardware key — passkeys are more
-  > secure and easier to use than passwords and current 2FA methods.
+- **No Learn-more link** (maintainer 2026-08-06: not needed on our site — the passkeys.io
+  explainer/#How-to-use-a-passkey was reference material for us, not a feature to copy).
+- **Cross-device QR option MUST be available** (maintainer requirement): the browser-native
+  hybrid dialog ("use a phone or tablet" → QR code) is what passkeys.io shows — it is browser
+  UI, not site UI, and a site can only BREAK it. Verify the ceremony options do not suppress
+  it: creation must NOT pin `authenticatorSelection.authenticatorAttachment` to `"platform"`,
+  sign-in must not restrict transports in `allowCredentials` (discoverable-credential flow with
+  empty allowCredentials preferred). Inspect `passkey-ceremony-client.cs` + the server ceremony
+  options; fix if restricted. Acceptance includes SEEING the QR/phone option in a real browser
+  dialog for both create and sign-in.
 - **No email field, no username, no password** — anywhere on the screen.
 - Remove the debug "Session: signed in / not signed in" line entirely.
 - **Already-authenticated visitors to /Login are redirected Home** (no interstitial).
@@ -75,7 +78,9 @@ Reference: passkeys.io sign-in screen, adapted:
 ## Checklist
 
 - [ ] Focused-shell variant (empty layout pattern) for auth screens
-- [ ] LoginPage rebuilt per locked design (no email, Learn-more disclosure, redirect-if-authed)
+- [ ] LoginPage rebuilt per locked design (no email, no learn-more, redirect-if-authed)
+- [ ] Cross-device QR verified: browser hybrid dialog offers phone/QR for BOTH create and
+      sign-in ceremonies (fix ceremony options if suppressed)
 - [ ] Home: anonymous vs signed-in differentiation
 - [ ] "Try it" card relocated behind Developer gating
 - [ ] ChangePasswordPage deleted (after route/reference check)
@@ -96,3 +101,5 @@ Reference: passkeys.io sign-in screen, adapted:
 - Created: 2026-08-04 (empty placeholder).
 - 2026-08-06 claude + Steve: spec'd — login design locked to adapted passkeys.io pattern;
   home-page defaults recorded for veto-in-review.
+- 2026-08-06 refinement (Steve): drop the Learn-more link; REQUIRE the cross-device QR
+  option (browser hybrid dialog) to be available in both ceremonies.
