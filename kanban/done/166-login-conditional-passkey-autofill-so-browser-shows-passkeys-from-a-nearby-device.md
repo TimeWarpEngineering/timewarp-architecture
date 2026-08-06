@@ -58,3 +58,10 @@ screenshot UX. This task implements the real autofill path.
 ## Session
 
 - 2026-08-06 grok: implement conditional autofill after maintainer re-raised the screenshot.
+
+## Follow-up (2026-08-06)
+
+Maintainer rejected autofill text-field UX ("what do I put in the box?"). Login
+reverted to a single **Sign in with a passkey** modal button; nearby-device stays
+inside the browser dialog (cancel local manager → other options / phone). Server
+hybrid hints from 165 remain.

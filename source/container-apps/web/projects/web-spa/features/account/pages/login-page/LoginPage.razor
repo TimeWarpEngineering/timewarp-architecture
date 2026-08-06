@@ -12,29 +12,9 @@
   <div class="twe-stack">
     <Card Title="Sign in">
       <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
-        @* Conditional UI anchor (task 166 / web.dev passkey-form-autofill): focusing this input
-           opens the browser passkey autofill menu, which can include local passkeys and
-           "Passkeys from a Nearby Device". Value is never used as an account identifier —
-           discoverable credentials only. Required autocomplete tokens for the browser. *@
-        @if (ShowAutofillAnchor)
-        {
-          <div class="twe-login-autofill">
-            <label class="twe-login-autofill__label" for="twe-login-passkey-autofill">Passkey</label>
-            <input id="twe-login-passkey-autofill"
-                   class="twe-login-autofill__input"
-                   type="text"
-                   name="username"
-                   autocomplete="username webauthn"
-                   autofocus
-                   data-qa="PasskeyAutofill"
-                   disabled="@IsBusy"
-                   aria-describedby="twe-login-autofill-hint" />
-            <p id="twe-login-autofill-hint" class="twe-login-autofill__hint">
-              Tap or click the field to choose a passkey (including from a nearby device).
-            </p>
-          </div>
-        }
-
+        @* Single modal path: the browser passkey UI lists this-device managers (e.g. Proton Pass)
+           and nearby-device / QR after cancel or "other options" — no empty text box, no second
+           site button (task 166 autofill UX rejected; hybrid still allowed via server hints). *@
         <FluentButton Appearance="ButtonAppearance.Primary"
                       data-qa="ContinueWithPasskey"
                       Disabled="IsBusy"
@@ -65,7 +45,6 @@
   </div>
 </TimeWarpFocusedPage>
 
-@* Native autofill field styles (tokens only). *@
 <style>
   @(@"
     .twe-login-divider {
@@ -82,35 +61,6 @@
       gap: 8px;
       color: var(--twe-ink-2);
       font-size: var(--twe-text-body);
-    }
-    .twe-login-autofill {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      width: 100%;
-    }
-    .twe-login-autofill__label {
-      font-size: var(--twe-text-helper);
-      color: var(--twe-muted);
-    }
-    .twe-login-autofill__input {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 10px 12px;
-      border: 1px solid var(--twe-rule);
-      border-radius: var(--twe-radius-sm);
-      background: var(--twe-paper);
-      color: var(--twe-ink);
-      font: inherit;
-    }
-    .twe-login-autofill__input:focus {
-      outline: 2px solid var(--twe-purple);
-      outline-offset: 1px;
-    }
-    .twe-login-autofill__hint {
-      margin: 0;
-      font-size: var(--twe-text-helper);
-      color: var(--twe-muted);
     }
   ")
 </style>
