@@ -96,6 +96,52 @@ Reference: passkeys.io sign-in screen, adapted:
   removed), 149 (avatar/menu), 150 (GetProfile identity fix — signed-in strip can trust
   ProfileState).
 
+### Implementation plan (Phase 2, 2026-08-06)
+
+**Architecture**
+
+- Keep single empty `MainLayout` (`@Body` only). Do **not** fork layouts.
+- New sibling shell: `components/TimeWarpFocusedPage.razor` (+ `.razor.css`) —
+  `BaseComponent`, cascade, full-viewport calm bg, horizontal logo above centered
+  content column. No nav/search/footer. Login (and optionally Logout) wraps this;
+  product pages keep `TimeWarpPage`.
+
+**Login**
+
+- Rebuild card: "Sign in" → primary **Sign in with a passkey** (`data-qa=ContinueWithPasskey`)
+  → subtle divider → "Don't have an account?" + **Create account** (`data-qa=CreatePasskey`).
+- Drop session debug line; keep authed redirect (already present) + MessageBar errors.
+- Ceremony: **no product code fix** — registration omits `authenticatorAttachment`; auth uses
+  empty `allowCredentials`. Manual browser hybrid/QR still required for acceptance.
+
+**Home**
+
+- Welcome + Built-with stay.
+- `AuthorizeView`: NotAuthorized = passkey CTA → `LoginPage.GetPageUrl()`;
+  Authorized = strip with `ProfileState` avatar/alias + Settings + nested
+  `AuthorizeView Policy=CanViewAdminSidebarNavSection` → Admin (`RolesListPage`).
+- Remove Try-it from Home.
+
+**Try-it relocate**
+
+- Target: `features/debugger/pages/TestPage.razor` (`/Debugger/Test`, already Developer-gated).
+- Restore `ApplicationState.TwoSecondTask` public wrapper (currently commented; needed to compile).
+
+**Delete**
+
+- `ChangePasswordPage.razor` + `.cs` — only refs are the page files themselves (safe).
+
+**Tests**
+
+- Re-run `login-return-url-tests` (no API change expected).
+- Optional: identity unit test locking hybrid-safe options JSON.
+- No Playwright login suite in-tree.
+
+**Sequence:** focused shell → Login → Home → TestPage + TwoSecondTask → delete ChangePassword →
+optional Logout focused + options test → `dev build` + spa integration + manual.
+
+**Open questions:** none — implement as locked.
+
 ## Session
 
 - Created: 2026-08-04 (empty placeholder).
@@ -103,3 +149,4 @@ Reference: passkeys.io sign-in screen, adapted:
   home-page defaults recorded for veto-in-review.
 - 2026-08-06 refinement (Steve): drop the Learn-more link; REQUIRE the cross-device QR
   option (browser hybrid dialog) to be available in both ceremonies.
+- 2026-08-06 grok orchestrate: Phase 1–2 plan finalized (subagent 019fd53d-b410-7ed1-a82a-15fd8a03a461).
