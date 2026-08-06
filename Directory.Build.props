@@ -98,6 +98,8 @@
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+    <!-- Prefer project global-usings.cs over file-level usings (editorconfig GlobalUsingsAnalyzer000*). Task 172. -->
+    <PackageReference Include="GlobalUsingsAnalyzer" PrivateAssets="all" />
     <!-- TW0001 kebab-case .cs basenames (TimeWarp.SourceGenerators; multi-dot partials since beta.9).
          Severity: .editorconfig dotnet_diagnostic.TW0001 — default off in the package. -->
     <PackageReference Include="TimeWarp.SourceGenerators" PrivateAssets="all" />

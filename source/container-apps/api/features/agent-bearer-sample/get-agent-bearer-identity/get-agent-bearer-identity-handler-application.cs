@@ -12,7 +12,6 @@
 namespace TimeWarp.Architecture.Features.AgentBearerSamples.Application;
 
 using TimeWarp.Architecture.Abstractions;
-using TimeWarp.Architecture.Features.AgentBearerSamples;
 using TimeWarp.Foundation.Types;
 using TimeWarp.Identity;
 using static TimeWarp.Architecture.Features.AgentBearerSamples.GetAgentBearerIdentity;

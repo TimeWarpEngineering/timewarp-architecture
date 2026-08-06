@@ -171,6 +171,11 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.6.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.6.0" />
+    <!-- Move file-level usings into per-project global-usings.cs (BDSoftware; nuru/tui/flexbox pin). Task 172. -->
+    <PackageVersion Include="GlobalUsingsAnalyzer" Version="1.4.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageVersion>
   </ItemGroup>
   <!-- Versions for test projects pending migration to the root tree (task 053-050-019).
        Sourced from TimeWarp.Architecture/Directory.Packages.props; family-versioned

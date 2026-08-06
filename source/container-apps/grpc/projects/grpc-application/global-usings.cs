@@ -6,4 +6,4 @@ global using Grpc.Core;
 global using System.ServiceModel;
 
 // Solution usings
-global using TimeWarp.Mediator;
+

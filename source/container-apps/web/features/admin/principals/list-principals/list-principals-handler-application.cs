@@ -10,8 +10,6 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Principals.Application;
 
-using TimeWarp.Architecture.Features;
-using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Identity;
 using static TimeWarp.Architecture.Features.Admin.Principals.ListPrincipals;
 
