@@ -6,8 +6,8 @@ org 458-009 probe (NuGet has no policy-enumeration API; probe = dispatch mode th
 
 ## Checklist
 
-- [ ] probe input added
-- [ ] login step condition extended
-- [ ] probe-result step added
-- [ ] pipeline step skipped in probe mode
-- [ ] YAML valid
+- [x] probe input added
+- [x] login step condition extended
+- [x] probe-result step added
+- [x] pipeline step skipped in probe mode
+- [x] YAML valid

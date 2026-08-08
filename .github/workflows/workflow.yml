@@ -51,6 +51,14 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'merge = normal CI (default). probe = trusted-publishing check only (OIDC login, no build, no publish).'
+        type: choice
+        options:
+          - merge
+          - probe
+        default: merge
 
 jobs:
   detect-paths:
@@ -143,13 +151,18 @@ jobs:
         run: dotnet dev-certs https --trust || true
 
       - name: NuGet login (OIDC Trusted Publishing)
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
         id: nuget-login
         uses: nuget/login@v1
         with:
           user: TimeWarp.Enterprises
 
+      - name: Trusted publishing probe result
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
+        run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
+
       - name: Run CI Pipeline
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
         run: |
           # Make OpenSSL (the runner's HttpClient) honour the trusted dev cert (see Trust step above).
           export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
@@ -204,7 +217,7 @@ jobs:
     needs: [detect-paths]
     if: |
       always() && !cancelled() && (
-        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'workflow_dispatch' && inputs.mode != 'probe') ||
         (
           (github.event_name == 'push' || github.event_name == 'pull_request') &&
           needs.detect-paths.outputs.template == 'true'
