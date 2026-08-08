@@ -1,8 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <!-- Composed platform package IDs (task 115). Guarded: projects also import via Directory.Build.props. -->
-  <Import Project="$(MSBuildThisFileDirectory)msbuild/timewarp-platform-packages.props"
-          Condition="'$(_TwPlatformPackagesPropsImported)' != 'true'" />
+  <Import Project="$(MSBuildThisFileDirectory)msbuild/timewarp-platform-packages.props" Condition="'$(_TwPlatformPackagesPropsImported)' != 'true'" />
 
 
   <!-- Central Package Management - add your package versions here -->
@@ -10,8 +9,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup Label="TimeWarp Packages">
-    <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.71" />
-    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0-beta.71" />
+    <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.72" />
+    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0-beta.72" />
     <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="1.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Terminal" Version="1.0.0" />
@@ -100,7 +99,7 @@
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis" Version="5.6.0" />
+    
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
     <!-- Microsoft/MIT, BCL-adjacent (System.Formats.Cbor.dll ships in the ASP.NET Core shared
          framework too) — used by timewarp-identity's hand-rolled WebAuthn verifier (task 104-003)
