@@ -1,12 +1,11 @@
 name: CI/CD
 
-# Mirrors the TimeWarp.Nuru / TimeWarp.Amuru pattern: one job, one "Run CI Pipeline" step that
-# calls the C# `dev workflow` command. Mode is auto-detected from GITHUB_EVENT_NAME inside the
-# command (push/PR -> build+test; release/dispatch -> build+pack+push+template-publish-smoke,
-# no test gate). On a real publish (API key from OIDC), template-publish-smoke is required after
-# push — waits for nuget.org flatcontainer, generates the published template, restore+builds
-# against nuget.org only. Pack-only (no key) skips the gate. Publishing uses OIDC Trusted
-# Publishing (no stored API key) and only runs on a published release.
+# Single canonical workflow. Jobs:
+#   - ci: main build/test/publish pipeline (former sole workflow.yml job)
+#   - skill-lint: vally skill/eval lint (former skill-lint.yaml; PR + path filter)
+#   - template-smoke: pack → install → generate → build (former template-smoke.yml)
+# Path semantics from the former separate workflows are preserved via detect-paths
+# + job-level if conditions (not separate workflow files).
 
 on:
   push:
@@ -23,6 +22,12 @@ on:
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
       - 'Directory.Version.props'
+      - 'timewarp-architecture.slnx'
+      - '**/SKILL.md'
+      - '**/eval.yaml'
+      - '.vally.yaml'
+      - 'evals/**'
+      - 'skills/**'
   pull_request:
     branches:
       - master
@@ -37,12 +42,81 @@ on:
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
       - 'Directory.Version.props'
+      - 'timewarp-architecture.slnx'
+      - '**/SKILL.md'
+      - '**/eval.yaml'
+      - '.vally.yaml'
+      - 'evals/**'
+      - 'skills/**'
   release:
     types: [published]
   workflow_dispatch:
 
 jobs:
+  detect-paths:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      ci: ${{ steps.filter.outputs.ci }}
+      skill: ${{ steps.filter.outputs.skill }}
+      template: ${{ steps.filter.outputs.template }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify changed paths
+        id: filter
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.sha }}"
+          fi
+          if [ -z "${BASE}" ] || [ "${BASE}" = "0000000000000000000000000000000000000000" ]; then
+            # New branch / unknown base — run all path-gated jobs that apply.
+            echo "ci=true" >> "$GITHUB_OUTPUT"
+            echo "skill=true" >> "$GITHUB_OUTPUT"
+            echo "template=true" >> "$GITHUB_OUTPUT"
+            echo "No usable base SHA — enabling all path-gated jobs."
+            exit 0
+          fi
+          changed=$(git diff --name-only "$BASE" "$HEAD" || true)
+          echo "Changed files:"
+          echo "$changed"
+
+          ci=false
+          skill=false
+          template=false
+
+          if echo "$changed" | grep -Eq '^(source/|tests/|timewarp-templates/|\.template\.config/|tools/|msbuild/|\.github/workflows/|Directory\.Build\.props|Directory\.Packages\.props|Directory\.Version\.props)'; then
+            ci=true
+          fi
+
+          if echo "$changed" | grep -Eq '(^|/)SKILL\.md$|(^|/)eval\.yaml$|^\.vally\.yaml$|^evals/|^skills/|\.github/workflows/'; then
+            skill=true
+          fi
+
+          if echo "$changed" | grep -Eq '^(source/|tests/|timewarp-templates/|\.template\.config/|msbuild/|Directory\.Build\.props|Directory\.Packages\.props|timewarp-architecture\.slnx|tools/dev-cli/|\.github/workflows/)'; then
+            template=true
+          fi
+
+          echo "ci=$ci" >> "$GITHUB_OUTPUT"
+          echo "skill=$skill" >> "$GITHUB_OUTPUT"
+          echo "template=$template" >> "$GITHUB_OUTPUT"
+          echo "ci=$ci skill=$skill template=$template"
+
   ci:
+    needs: [detect-paths]
+    if: |
+      always() && !cancelled() && (
+        github.event_name == 'release' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-paths.outputs.ci == 'true'
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -92,3 +166,61 @@ jobs:
           name: Packages-${{ github.run_number }}
           path: artifacts/packages/*.nupkg
           if-no-files-found: ignore
+
+  skill-lint:
+    # Former skill-lint.yaml — PR only, skill/eval path filter via detect-paths.
+    needs: [detect-paths]
+    if: |
+      always() && !cancelled() &&
+      github.event_name == 'pull_request' &&
+      needs.detect-paths.outputs.skill == 'true'
+    name: Lint skill specs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install vally CLI
+        run: npm install -g @microsoft/vally-cli
+
+      - name: Lint all skills
+        run: vally lint skills
+
+      - name: Lint eval specs
+        run: |
+          for spec in skills/*/evals/eval.yaml; do
+            [ -f "$spec" ] || continue
+            echo "Linting $spec"
+            vally lint --eval-spec "$spec"
+          done
+
+  template-smoke:
+    # Former template-smoke.yml — push/PR path filter + workflow_dispatch.
+    needs: [detect-paths]
+    if: |
+      always() && !cancelled() && (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          (github.event_name == 'push' || github.event_name == 'pull_request') &&
+          needs.detect-paths.outputs.template == 'true'
+        )
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Template smoke (pack → install → generate → build)
+        run: dotnet run tools/dev-cli/dev.cs -- template-smoke
