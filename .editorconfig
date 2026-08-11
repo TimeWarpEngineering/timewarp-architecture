@@ -252,15 +252,16 @@ dotnet_naming_symbols.non_private_static_fields.required_modifiers = static
 
 dotnet_naming_style.non_private_static_field_style.capitalization = pascal_case
 
-# Constants are PascalCase
-dotnet_naming_rule.constants_should_be_pascal_case.severity = warning
-dotnet_naming_rule.constants_should_be_pascal_case.symbols = constants
-dotnet_naming_rule.constants_should_be_pascal_case.style = constant_style
+# Class-level const fields are PascalCase (same as other type members).
+# Local const uses the local-variables camelCase rule below — not a separate Pascal rule.
+dotnet_naming_rule.constant_fields_should_be_pascal_case.severity = warning
+dotnet_naming_rule.constant_fields_should_be_pascal_case.symbols = constant_fields
+dotnet_naming_rule.constant_fields_should_be_pascal_case.style = constant_field_style
 
-dotnet_naming_symbols.constants.applicable_kinds = field, local
-dotnet_naming_symbols.constants.required_modifiers = const
+dotnet_naming_symbols.constant_fields.applicable_kinds = field
+dotnet_naming_symbols.constant_fields.required_modifiers = const
 
-dotnet_naming_style.constant_style.capitalization = pascal_case
+dotnet_naming_style.constant_field_style.capitalization = pascal_case
 
 # Static fields are PascalCase
 dotnet_naming_rule.static_fields_should_be_pascal_case.severity = warning
@@ -272,7 +273,7 @@ dotnet_naming_symbols.static_fields.required_modifiers = static
 
 dotnet_naming_style.static_field_style.capitalization = pascal_case
 
-# local variables should be camelCase
+# Locals (including local const) are camelCase — method scope, not type members.
 dotnet_naming_rule.camel_case_for_local_variables.severity = warning
 dotnet_naming_rule.camel_case_for_local_variables.symbols = local_variables
 dotnet_naming_rule.camel_case_for_local_variables.style = local_variables_style
