@@ -18,7 +18,7 @@ public sealed partial class TrackEvent
   {
     public Task<OneOf<Response, SharedProblemDetails>> Handle
     (
-      Command trackEventRequest,
+      Command command,
       CancellationToken cancellationToken
     )
     {

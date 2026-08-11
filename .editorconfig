@@ -313,6 +313,9 @@ dotnet_diagnostic.RCS1228.severity = none
 dotnet_diagnostic.RCS1189.severity = none
 dotnet_diagnostic.RCS1181.severity = none
 dotnet_diagnostic.RCS1043.severity = none
+# RCS1168: param name differs from base (query/command vs request, ct vs cancellationToken, …).
+# House names are intentional (mediator query/command; FE/gRPC long names; BCL other/value). Task 172.
+dotnet_diagnostic.RCS1168.severity = none
 # RCS1263 invalid cref/param name — leave default (warning): phantom docs are bugs.
 
 # IDE0005: Using directive is unnecessary.
