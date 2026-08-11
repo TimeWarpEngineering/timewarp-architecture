@@ -1,5 +1,8 @@
+#region Purpose
+// Project-wide using directives so individual files omit repeated imports.
+#endregion
+
 global using AnyClone;
-global using FakeItEasy;
 global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +20,6 @@ global using TimeWarp.Architecture.Features.WeatherForecasts;
 #endif
 global using TimeWarp.Architecture.JsonSerializer.Tests;
 global using TimeWarp.Architecture.Services;
-global using TimeWarp.Foundation.Services;
 global using TimeWarp.Architecture.Testing;
 global using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 global using TimeWarp.Mediator;

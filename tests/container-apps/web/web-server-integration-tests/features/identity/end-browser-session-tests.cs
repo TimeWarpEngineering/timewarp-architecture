@@ -11,12 +11,10 @@ namespace EndBrowserSession_;
 
 using System.Buffers.Text;
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
-using TimeWarp.Identity;
 
 public class Ends_
 {

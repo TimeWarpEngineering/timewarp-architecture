@@ -19,7 +19,6 @@ namespace CredentialRevoke_;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;

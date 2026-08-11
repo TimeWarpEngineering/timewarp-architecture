@@ -38,7 +38,6 @@ namespace TimeWarp.Architecture.Features.Tip
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.DependencyInjection.Extensions;
   using Shouldly;
-  using TimeWarp.Architecture.Configuration;
   using TimeWarp.Architecture.Features.Tip.Application;
   using TimeWarp.Architecture.Testing;
   using TimeWarp.Foundation.Types;

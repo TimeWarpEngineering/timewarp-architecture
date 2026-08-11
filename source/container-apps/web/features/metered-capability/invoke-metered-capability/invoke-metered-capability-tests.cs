@@ -43,7 +43,6 @@ namespace TimeWarp.Architecture.Features.MeteredCapability
   using Microsoft.Extensions.DependencyInjection;
   using Microsoft.Extensions.DependencyInjection.Extensions;
   using Shouldly;
-  using TimeWarp.Architecture.Configuration;
   using TimeWarp.Architecture.Features.Identity;
   using TimeWarp.Architecture.Features.MeteredCapability.Application;
   using TimeWarp.Architecture.Testing;
