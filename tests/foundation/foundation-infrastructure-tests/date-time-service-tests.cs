@@ -37,10 +37,10 @@ public class NextUtcNow_Returns
     // Local Functions
     List<DateTime> GetDates(ManualResetEvent trigger)
     {
-      const int NumberOfDates = 100_000;
-      var result = new List<DateTime>(NumberOfDates);
+      const int numberOfDates = 100_000;
+      var result = new List<DateTime>(numberOfDates);
       trigger.WaitOne();
-      for (int i = 0; i < NumberOfDates; i++)
+      for (int i = 0; i < numberOfDates; i++)
       {
         result.Add(dateTimeService.NextUtcNow());
       }

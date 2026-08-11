@@ -72,7 +72,7 @@ public class Should_Enforce_Slice_Isolation
   public static async Task Given_CrossProduct_Reference_Flags()
   {
     const string betaPath = "beta-state.cs";
-    const string BetaSource =
+    const string betaSource =
       """
       namespace App.Features.Betas;
 
@@ -84,7 +84,7 @@ public class Should_Enforce_Slice_Isolation
 
     CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
       ("alpha-state.cs", AlphaSource),
-      (betaPath, BetaSource));
+      (betaPath, betaSource));
 
     // AlphaState type identifier and Poke member both resolve into the Alphas product slice.
     test.ExpectedDiagnostics.Add(Flag(betaPath, 5, 49, 59, "Betas", "AlphaState", "Alphas"));
@@ -95,7 +95,7 @@ public class Should_Enforce_Slice_Isolation
 
   public static async Task Given_SameProduct_Reference_IsClean()
   {
-    const string OtherAlphaSource =
+    const string otherAlphaSource =
       """
       namespace App.Features.Alphas;
 
@@ -107,12 +107,12 @@ public class Should_Enforce_Slice_Isolation
 
     await Test(
       ("alpha-state.cs", AlphaSource),
-      ("alpha-sibling.cs", OtherAlphaSource)).RunAsync();
+      ("alpha-sibling.cs", otherAlphaSource)).RunAsync();
   }
 
   public static async Task Given_StructuralSuffix_SameProduct_IsClean()
   {
-    const string PageSource =
+    const string pageSource =
       """
       namespace App.Features.Alphas.Pages;
 
@@ -124,12 +124,12 @@ public class Should_Enforce_Slice_Isolation
 
     await Test(
       ("alpha-state.cs", AlphaSource),
-      ("alpha-page.cs", PageSource)).RunAsync();
+      ("alpha-page.cs", pageSource)).RunAsync();
   }
 
   public static async Task Given_Outside_Reference_To_Product_IsClean()
   {
-    const string ShellSource =
+    const string shellSource =
       """
       namespace App.Components;
 
@@ -141,12 +141,12 @@ public class Should_Enforce_Slice_Isolation
 
     await Test(
       ("alpha-state.cs", AlphaSource),
-      ("nav-shell.cs", ShellSource)).RunAsync();
+      ("nav-shell.cs", shellSource)).RunAsync();
   }
 
   public static async Task Given_Product_To_Substrate_IsClean()
   {
-    const string BaseSource =
+    const string baseSource =
       """
       namespace App.Features;
 
@@ -156,7 +156,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    const string BetaSource =
+    const string betaSource =
       """
       namespace App.Features.Betas;
 
@@ -167,13 +167,13 @@ public class Should_Enforce_Slice_Isolation
       """;
 
     await Test(
-      ("base-state.cs", BaseSource),
-      ("beta-state.cs", BetaSource)).RunAsync();
+      ("base-state.cs", baseSource),
+      ("beta-state.cs", betaSource)).RunAsync();
   }
 
   public static async Task Given_Product_To_Platform_IsClean()
   {
-    const string PlatformSource =
+    const string platformSource =
       """
       namespace App.Features.Applications;
 
@@ -183,7 +183,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    const string BetaSource =
+    const string betaSource =
       """
       namespace App.Features.Betas;
 
@@ -194,14 +194,14 @@ public class Should_Enforce_Slice_Isolation
       """;
 
     await Test(
-      ("application-state.cs", PlatformSource),
-      ("beta-state.cs", BetaSource)).RunAsync();
+      ("application-state.cs", platformSource),
+      ("beta-state.cs", betaSource)).RunAsync();
   }
 
   public static async Task Given_Platform_To_Product_Flags()
   {
     const string platformPath = "application-shell.cs";
-    const string PlatformSource =
+    const string platformSource =
       """
       namespace App.Features.Applications;
 
@@ -213,7 +213,7 @@ public class Should_Enforce_Slice_Isolation
 
     CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
       ("alpha-state.cs", AlphaSource),
-      (platformPath, PlatformSource));
+      (platformPath, platformSource));
 
     test.ExpectedDiagnostics.Add(Flag(platformPath, 5, 44, 54, "Applications", "AlphaState", "Alphas"));
     test.ExpectedDiagnostics.Add(Flag(platformPath, 5, 55, 59, "Applications", "AlphaState", "Alphas"));
@@ -223,7 +223,7 @@ public class Should_Enforce_Slice_Isolation
 
   public static async Task Given_Platform_To_Product_OptOut_IsClean()
   {
-    const string PlatformSource =
+    const string platformSource =
       """
       namespace App.Features.Applications;
 
@@ -237,13 +237,13 @@ public class Should_Enforce_Slice_Isolation
     await Test(
       ("opt-out.cs", OptOutAttributeSource),
       ("alpha-state.cs", AlphaSource),
-      ("application-shell.cs", PlatformSource)).RunAsync();
+      ("application-shell.cs", platformSource)).RunAsync();
   }
 
   public static async Task Given_Substrate_To_Product_Flags()
   {
     const string substratePath = "base-handler.cs";
-    const string SubstrateSource =
+    const string substrateSource =
       """
       namespace App.Features;
 
@@ -255,7 +255,7 @@ public class Should_Enforce_Slice_Isolation
 
     CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
       ("alpha-state.cs", AlphaSource),
-      (substratePath, SubstrateSource));
+      (substratePath, substrateSource));
 
     test.ExpectedDiagnostics.Add(Flag(substratePath, 5, 44, 54, "Substrate", "AlphaState", "Alphas"));
     test.ExpectedDiagnostics.Add(Flag(substratePath, 5, 55, 59, "Substrate", "AlphaState", "Alphas"));
@@ -266,7 +266,7 @@ public class Should_Enforce_Slice_Isolation
   public static async Task Given_Nested_AdminRoles_Are_Distinct_From_AdminOther()
   {
     const string rolesPath = "roles.cs";
-    const string RolesSource =
+    const string rolesSource =
       """
       namespace App.Features.Admin.Roles;
 
@@ -277,7 +277,7 @@ public class Should_Enforce_Slice_Isolation
       """;
 
     const string otherPath = "other.cs";
-    const string OtherSource =
+    const string otherSource =
       """
       namespace App.Features.Admin.Other;
 
@@ -288,8 +288,8 @@ public class Should_Enforce_Slice_Isolation
       """;
 
     CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
-      (rolesPath, RolesSource),
-      (otherPath, OtherSource));
+      (rolesPath, rolesSource),
+      (otherPath, otherSource));
 
     test.ExpectedDiagnostics.Add(Flag(otherPath, 5, 49, 58, "Admin.Other", "RoleState", "Admin.Roles"));
     test.ExpectedDiagnostics.Add(Flag(otherPath, 5, 59, 63, "Admin.Other", "RoleState", "Admin.Roles"));
@@ -300,7 +300,7 @@ public class Should_Enforce_Slice_Isolation
   public static async Task Given_Metadata_Reference_IsClean()
   {
     // System.String is metadata — same-assembly filter skips it even from product code.
-    const string BetaSource =
+    const string betaSource =
       """
       namespace App.Features.Betas;
 
@@ -310,7 +310,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    await Test(("beta-state.cs", BetaSource)).RunAsync();
+    await Test(("beta-state.cs", betaSource)).RunAsync();
   }
 
   public static async Task Given_EdgeScoped_OptOut_Suppresses_Only_Listed_Slice()
@@ -326,7 +326,7 @@ public class Should_Enforce_Slice_Isolation
       """;
 
     const string betaPath = "beta-demo.cs";
-    const string BetaSource =
+    const string betaSource =
       """
       namespace App.Features.Betas;
 
@@ -342,7 +342,7 @@ public class Should_Enforce_Slice_Isolation
       ("opt-out.cs", OptOutAttributeSource),
       ("alpha-state.cs", AlphaSource),
       ("gamma-state.cs", gammaSource),
-      (betaPath, BetaSource));
+      (betaPath, betaSource));
 
     // Alpha opted out; Gamma still flags (two identifiers).
     test.ExpectedDiagnostics.Add(Flag(betaPath, 7, 49, 59, "Betas", "GammaState", "Gammas"));
@@ -353,7 +353,7 @@ public class Should_Enforce_Slice_Isolation
 
   public static async Task Given_Partial_OptOut_On_Other_Part_IsClean()
   {
-    const string PartA =
+    const string partA =
       """
       namespace App.Features.Betas;
 
@@ -363,7 +363,7 @@ public class Should_Enforce_Slice_Isolation
       }
       """;
 
-    const string PartB =
+    const string partB =
       """
       namespace App.Features.Betas;
 
@@ -376,14 +376,14 @@ public class Should_Enforce_Slice_Isolation
     await Test(
       ("opt-out.cs", OptOutAttributeSource),
       ("alpha-state.cs", AlphaSource),
-      ("beta-a.cs", PartA),
-      ("beta-b.cs", PartB)).RunAsync();
+      ("beta-a.cs", partA),
+      ("beta-b.cs", partB)).RunAsync();
   }
 
   public static async Task Given_Generic_Type_Argument_Flags()
   {
     const string betaPath = "beta-generic.cs";
-    const string BetaSource =
+    const string betaSource =
       """
       namespace App.Features.Betas;
 
@@ -397,7 +397,7 @@ public class Should_Enforce_Slice_Isolation
 
     CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = Test(
       ("alpha-state.cs", AlphaSource),
-      (betaPath, BetaSource));
+      (betaPath, betaSource));
 
     // AlphaState appears as a generic type argument (SimpleNameSyntax).
     test.ExpectedDiagnostics.Add(Flag(betaPath, 7, 48, 58, "Betas", "AlphaState", "Alphas"));
@@ -407,7 +407,7 @@ public class Should_Enforce_Slice_Isolation
 
   public static async Task Given_Missing_RootNamespace_NoOps()
   {
-    const string BetaSource =
+    const string betaSource =
       """
       namespace App.Features.Betas;
 
@@ -420,19 +420,19 @@ public class Should_Enforce_Slice_Isolation
     CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = new();
     // No AnalyzerConfigFiles → no RootNamespace → analyzer no-ops.
     test.TestState.Sources.Add(("alpha-state.cs", AlphaSource));
-    test.TestState.Sources.Add(("beta-state.cs", BetaSource));
+    test.TestState.Sources.Add(("beta-state.cs", betaSource));
     await test.RunAsync();
   }
 
   public static async Task Given_TimeWarpSliceRoot_Override_IsHonored()
   {
-    const string OverrideConfig =
+    const string overrideConfig =
       """
       is_global = true
       build_property.TimeWarpSliceRoot = App.Slices
       """;
 
-    const string Alpha =
+    const string alpha =
       """
       namespace App.Slices.Alphas;
 
@@ -443,7 +443,7 @@ public class Should_Enforce_Slice_Isolation
       """;
 
     const string betaPath = "beta.cs";
-    const string Beta =
+    const string beta =
       """
       namespace App.Slices.Betas;
 
@@ -454,9 +454,9 @@ public class Should_Enforce_Slice_Isolation
       """;
 
     CSharpAnalyzerTest<SliceIsolationAnalyzer, RoslynTestVerifier> test = new();
-    test.TestState.AnalyzerConfigFiles.Add(("/.globalconfig", OverrideConfig));
-    test.TestState.Sources.Add(("alpha.cs", Alpha));
-    test.TestState.Sources.Add((betaPath, Beta));
+    test.TestState.AnalyzerConfigFiles.Add(("/.globalconfig", overrideConfig));
+    test.TestState.Sources.Add(("alpha.cs", alpha));
+    test.TestState.Sources.Add((betaPath, beta));
     test.ExpectedDiagnostics.Add(Flag(betaPath, 5, 42, 52, "Betas", "AlphaState", "Alphas"));
     test.ExpectedDiagnostics.Add(Flag(betaPath, 5, 53, 57, "Betas", "AlphaState", "Alphas"));
     await test.RunAsync();

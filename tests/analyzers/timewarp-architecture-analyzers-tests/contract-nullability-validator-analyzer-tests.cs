@@ -55,7 +55,7 @@ public class Should_Flag_Contradictions
 
   public static async Task Given_NullableProperty_With_NotEmpty()
   {
-    const string Source =
+    const string source =
       """
       #nullable enable
       using FluentValidation;
@@ -74,12 +74,12 @@ public class Should_Flag_Contradictions
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_NullableProperty_With_NotNull()
   {
-    const string Source =
+    const string source =
       """
       #nullable enable
       using FluentValidation;
@@ -98,14 +98,14 @@ public class Should_Flag_Contradictions
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   // --- TWA0003: = string.Empty / = "" + presence rule -------------------------------------------
 
   public static async Task Given_EmptyStringDefault_With_NotEmpty()
   {
-    const string Source =
+    const string source =
       """
       #nullable enable
       using FluentValidation;
@@ -124,12 +124,12 @@ public class Should_Flag_Contradictions
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_EmptyStringLiteralDefault_With_NotEmpty()
   {
-    const string Source =
+    const string source =
       """
       #nullable enable
       using FluentValidation;
@@ -148,7 +148,7 @@ public class Should_Flag_Contradictions
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   // --- Negatives (must be clean) -----------------------------------------------------------------
@@ -156,7 +156,7 @@ public class Should_Flag_Contradictions
   public static async Task Given_NullableProperty_Without_Rule_IsClean()
   {
     // string? with no presence rule is a legitimate optional field.
-    const string Source =
+    const string source =
       """
       #nullable enable
       using FluentValidation;
@@ -175,13 +175,13 @@ public class Should_Flag_Contradictions
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_NonNullable_NullBang_With_NotEmpty_IsClean()
   {
     // The compliant shape: non-nullable + = null! + NotEmpty().
-    const string Source =
+    const string source =
       """
       #nullable enable
       using FluentValidation;
@@ -200,14 +200,14 @@ public class Should_Flag_Contradictions
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_WholeObjectRuleFor_IsClean()
   {
     // RuleFor(x => x) targets no specific property (the whole-object / SetValidator shape) — must
     // not flag, even with a nullable property present and a presence rule on the object.
-    const string Source =
+    const string source =
       """
       #nullable enable
       using FluentValidation;
@@ -226,13 +226,13 @@ public class Should_Flag_Contradictions
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_NonTrivialLambdaBody_IsClean()
   {
     // x => x.Name.Trim() is not a plain member access — conservatively skipped.
-    const string Source =
+    const string source =
       """
       #nullable enable
       using FluentValidation;
@@ -251,6 +251,6 @@ public class Should_Flag_Contradictions
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 }

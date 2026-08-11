@@ -70,7 +70,7 @@ public class Should_Enforce_Nested_Invariants
 
   public static async Task Given_AggregateRoot_With_Private_Invariants_IsClean()
   {
-    const string Source =
+    const string source =
       """
       using FluentValidation;
       using TimeWarp.Foundation.Entities;
@@ -89,12 +89,12 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_AggregateRoot_Without_Invariants_Flags()
   {
-    const string Source =
+    const string source =
       """
       using TimeWarp.Foundation.Entities;
 
@@ -107,12 +107,12 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_NonAggregateRoot_IsClean()
   {
-    const string Source =
+    const string source =
       """
       namespace Domain
       {
@@ -123,12 +123,12 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_AbstractAggregateRoot_IsClean()
   {
-    const string Source =
+    const string source =
       """
       using TimeWarp.Foundation.Entities;
 
@@ -141,12 +141,12 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_AggregateRoot_With_Public_Invariants_Flags()
   {
-    const string Source =
+    const string source =
       """
       using FluentValidation;
       using TimeWarp.Foundation.Entities;
@@ -165,7 +165,7 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   // --- M2: shape drift between analyzer and runtime guard --------------------------------------
@@ -174,7 +174,7 @@ public class Should_Enforce_Nested_Invariants
   {
     // Abstract nested validator satisfies the base-chain check but can never be instantiated by
     // DomainInvariantsGuard — must not satisfy TWA0011.
-    const string Source =
+    const string source =
       """
       using FluentValidation;
       using TimeWarp.Foundation.Entities;
@@ -192,7 +192,7 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_CtorParameterized_Nested_Validator_StillFlags_Missing()
@@ -200,7 +200,7 @@ public class Should_Enforce_Nested_Invariants
     // Only constructor takes a parameter — DomainInvariantsGuard's Activator.CreateInstance(...,
     // nonPublic: true) has no parameterless overload to call, so this can never be instantiated at
     // save time — must not satisfy TWA0011.
-    const string Source =
+    const string source =
       """
       using FluentValidation;
       using TimeWarp.Foundation.Entities;
@@ -221,14 +221,14 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_WrongNamespace_AbstractValidator_StillFlags_Missing()
   {
     // Simple-name match on "AbstractValidator" but NOT FluentValidation's — must not satisfy
     // TWA0011 (the guard would never find this via IValidator<T> either).
-    const string Source =
+    const string source =
       """
       using TimeWarp.Foundation.Entities;
 
@@ -247,14 +247,14 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   // --- M3: every non-private qualifying validator is flagged, not just the first ----------------
 
   public static async Task Given_Two_Public_Nested_Validators_Flags_Both()
   {
-    const string Source =
+    const string source =
       """
       using FluentValidation;
       using TimeWarp.Foundation.Entities;
@@ -278,7 +278,7 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   // --- M10: indirect IAggregateRoot, name-vs-shape, internal accessibility ----------------------
@@ -286,7 +286,7 @@ public class Should_Enforce_Nested_Invariants
   public static async Task Given_IAggregateRoot_Implemented_Via_BaseClass_Flags_Missing()
   {
     const string basePath = "aggregate-base.cs";
-    const string BaseSource =
+    const string baseSource =
       """
       using TimeWarp.Foundation.Entities;
 
@@ -299,7 +299,7 @@ public class Should_Enforce_Nested_Invariants
       """;
 
     const string derivedPath = "widget.cs";
-    const string DerivedSource =
+    const string derivedSource =
       """
       namespace Domain
       {
@@ -310,13 +310,13 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test((basePath, BaseSource), (derivedPath, DerivedSource)).RunAsync();
+    await Test((basePath, baseSource), (derivedPath, derivedSource)).RunAsync();
   }
 
   public static async Task Given_IAggregateRoot_Implemented_Via_Extended_Interface_Flags_Missing()
   {
     const string interfacePath = "i-widget-root.cs";
-    const string InterfaceSource =
+    const string interfaceSource =
       """
       using TimeWarp.Foundation.Entities;
 
@@ -329,7 +329,7 @@ public class Should_Enforce_Nested_Invariants
       """;
 
     const string typePath = "widget.cs";
-    const string TypeSource =
+    const string typeSource =
       """
       namespace Domain
       {
@@ -340,14 +340,14 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test((interfacePath, InterfaceSource), (typePath, TypeSource)).RunAsync();
+    await Test((interfacePath, interfaceSource), (typePath, typeSource)).RunAsync();
   }
 
   public static async Task Given_SameNamed_NonValidator_Nested_Type_StillFlags_Missing()
   {
     // A nested type literally named "Invariants" that does NOT derive AbstractValidator<Widget> —
     // pins the Design region's "matching by base-chain shape, not by name" claim.
-    const string Source =
+    const string source =
       """
       using TimeWarp.Foundation.Entities;
 
@@ -364,12 +364,12 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_Internal_Nested_Validator_Flags_TWA0012()
   {
-    const string Source =
+    const string source =
       """
       using FluentValidation;
       using TimeWarp.Foundation.Entities;
@@ -388,6 +388,6 @@ public class Should_Enforce_Nested_Invariants
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 }

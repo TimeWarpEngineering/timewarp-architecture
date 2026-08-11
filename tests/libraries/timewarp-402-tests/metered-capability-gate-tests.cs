@@ -197,14 +197,14 @@ public class EvaluateAsync
   {
     PrincipalId principal = PrincipalId.New();
     InMemoryCreditLedger ledger = new();
-    const string Tx = "0xmetered-idempotent-tx";
+    const string tx = "0xmetered-idempotent-tx";
     MockFacilitator facilitator = new()
     {
       VerifyResult = new FacilitatorVerifyResult { IsValid = true },
       SettleResult = new FacilitatorSettleResult
       {
         Success = true,
-        Transaction = Tx,
+        Transaction = tx,
         Network = "eip155:84532",
         Payer = ValidPayTo,
       },
@@ -217,7 +217,7 @@ public class EvaluateAsync
       .ShouldBeOfType<MeteredCapabilityGranted>();
 
     // Seed extra credit and re-apply same receipt id via ledger (simulates settle retry credit).
-    await ledger.CreditAsync(principal, 0.10m, Tx);
+    await ledger.CreditAsync(principal, 0.10m, tx);
     (await ledger.GetBalanceAsync(principal)).ShouldBe(0m);
   }
 

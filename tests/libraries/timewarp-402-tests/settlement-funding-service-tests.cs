@@ -59,10 +59,10 @@ public class ApplyAsync
     (InMemoryPrincipalStore store, Principal principal) = await SeedKeyedAgentAsync();
     InMemoryCreditLedger ledger = new();
     SettlementFundingService funding = new(ledger, store);
-    const string Receipt = "0xidempotent-settle";
+    const string receipt = "0xidempotent-settle";
 
-    SettlementFundingResult first = await funding.ApplyAsync(principal.Id, 0.25m, Receipt);
-    SettlementFundingResult second = await funding.ApplyAsync(principal.Id, 0.25m, Receipt);
+    SettlementFundingResult first = await funding.ApplyAsync(principal.Id, 0.25m, receipt);
+    SettlementFundingResult second = await funding.ApplyAsync(principal.Id, 0.25m, receipt);
 
     first.PromotedToFunded.ShouldBeTrue();
     first.BalanceAfterCredit.ShouldBe(0.25m);

@@ -52,7 +52,7 @@ public class Should_Restrict_Mock_Auth_Registration
 
   public static async Task Flag_AddScoped_Outside_Registration_Type()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Bad call site.
@@ -71,7 +71,7 @@ public class Should_Restrict_Mock_Auth_Registration
       public class MockAuthenticationStateProvider : AuthState { }
       """;
 
-    CSharpAnalyzerTest<MockAuthenticationRegistrationAnalyzer, RoslynTestVerifier> test = Test(Source);
+    CSharpAnalyzerTest<MockAuthenticationRegistrationAnalyzer, RoslynTestVerifier> test = Test(source);
     test.ExpectedDiagnostics.Add
     (
       DiagnosticResult.CompilerWarning("TWA0021")
@@ -85,7 +85,7 @@ public class Should_Restrict_Mock_Auth_Registration
   {
     // Round-2 review (145-009 R2-2), empirically proven: the generic-only checker reported zero
     // diagnostics for this shape even though it registers the same mock type.
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Bad call site (non-generic typeof(...) evasion).
@@ -105,7 +105,7 @@ public class Should_Restrict_Mock_Auth_Registration
       public class MockAuthenticationStateProvider : AuthState { }
       """;
 
-    CSharpAnalyzerTest<MockAuthenticationRegistrationAnalyzer, RoslynTestVerifier> test = Test(Source);
+    CSharpAnalyzerTest<MockAuthenticationRegistrationAnalyzer, RoslynTestVerifier> test = Test(source);
     test.ExpectedDiagnostics.Add
     (
       DiagnosticResult.CompilerWarning("TWA0021")
@@ -119,7 +119,7 @@ public class Should_Restrict_Mock_Auth_Registration
   {
     // Round-2 review (145-009 R2-2), empirically proven: a factory delegate that constructs the
     // mock type also reported zero diagnostics under the generic-only checker.
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Bad call site (factory-delegate evasion).
@@ -139,7 +139,7 @@ public class Should_Restrict_Mock_Auth_Registration
       public class MockAccessTokenProvider : IToken { }
       """;
 
-    CSharpAnalyzerTest<MockAuthenticationRegistrationAnalyzer, RoslynTestVerifier> test = Test(Source);
+    CSharpAnalyzerTest<MockAuthenticationRegistrationAnalyzer, RoslynTestVerifier> test = Test(source);
     test.ExpectedDiagnostics.Add
     (
       DiagnosticResult.CompilerWarning("TWA0021")
@@ -151,7 +151,7 @@ public class Should_Restrict_Mock_Auth_Registration
 
   public static async Task Allow_Registration_Inside_MockAuthenticationRegistration()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Sole allowed registration site.
@@ -173,7 +173,7 @@ public class Should_Restrict_Mock_Auth_Registration
       public class MockAccessTokenProvider : IToken { }
       """;
 
-    CSharpAnalyzerTest<MockAuthenticationRegistrationAnalyzer, RoslynTestVerifier> test = Test(Source);
+    CSharpAnalyzerTest<MockAuthenticationRegistrationAnalyzer, RoslynTestVerifier> test = Test(source);
     await test.RunAsync();
   }
 }

@@ -14,7 +14,7 @@ public partial class Program
 {
   private static void Main(string[] args)
   {
-    const string AllowAllCorsPolicy = "AllowAll";
+    const string allowAllCorsPolicy = "AllowAll";
 
     WebApplicationBuilder? webApplicationBuilder = WebApplication.CreateBuilder(args);
 
@@ -45,7 +45,7 @@ public partial class Program
       (
         o => o.AddPolicy
         (
-          AllowAllCorsPolicy, builder =>
+          allowAllCorsPolicy, builder =>
             builder
             .AllowAnyOrigin()
             .AllowAnyMethod()
@@ -63,7 +63,7 @@ public partial class Program
       webApplication.UseCors();
 
       //webApplication.MapGrpcService<GreeterService>().RequireCors("AllowAll").EnableGrpcWeb();
-      webApplication.MapGrpcService<SuperheroService>().RequireCors(AllowAllCorsPolicy);
+      webApplication.MapGrpcService<SuperheroService>().RequireCors(allowAllCorsPolicy);
       //webApplication.MapGrpcReflectionService();
       webApplication.MapCodeFirstGrpcReflectionService();
       webApplication.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");

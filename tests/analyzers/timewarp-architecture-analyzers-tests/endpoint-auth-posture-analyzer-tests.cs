@@ -77,7 +77,7 @@ public class Should_Enforce_Auth_Posture
 
   public static async Task Given_No_Marker_Flags_TWA0013()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -98,12 +98,12 @@ public class Should_Enforce_Auth_Posture
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_EndpointAuthorize_Only_IsClean()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -125,12 +125,12 @@ public class Should_Enforce_Auth_Posture
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_EndpointAllowAnonymous_Only_IsClean()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -152,12 +152,12 @@ public class Should_Enforce_Auth_Posture
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_Both_Markers_Flags_TWA0014()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -180,12 +180,12 @@ public class Should_Enforce_Auth_Posture
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_AllowAnonymous_With_Manual_IAuthApiRequest_Flags_TWA0014()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -210,7 +210,7 @@ public class Should_Enforce_Auth_Posture
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_AllowAnonymous_With_AuthApiRequest_Mixin_Attribute_Flags_TWA0014()
@@ -219,7 +219,7 @@ public class Should_Enforce_Auth_Posture
     // directly rather than the interface being hand-declared — ContractsMixinGenerator would expand
     // this into an IAuthApiRequest implementation too, but this test exercises the attribute-only
     // detection path independently (see the analyzer's Design region on why both checks exist).
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -242,12 +242,12 @@ public class Should_Enforce_Auth_Posture
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_Non_ApiEndpoint_Contract_IsClean()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -266,12 +266,12 @@ public class Should_Enforce_Auth_Posture
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_ApiEndpoint_With_ClientOnly_On_Outer_Flags_TWA0020()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -294,12 +294,12 @@ public class Should_Enforce_Auth_Posture
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_ApiEndpoint_With_ClientOnly_On_Nested_Flags_TWA0020()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -322,6 +322,6 @@ public class Should_Enforce_Auth_Posture
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 }
