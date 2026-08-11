@@ -308,6 +308,12 @@ dotnet_diagnostic.RCS1140.severity = none
 dotnet_diagnostic.RCS1141.severity = none
 dotnet_diagnostic.RCS1142.severity = none
 dotnet_diagnostic.RCS1228.severity = none
+# RCS1189: name on #endregion — conflicts with bare #endregion after Purpose/Design.
+# RCS1181: convert // to /// — fights Purpose regions / hollow-doc policy (task 177).
+# RCS1043: remove partial from single-part types — template keeps partial for generators.
+dotnet_diagnostic.RCS1189.severity = none
+dotnet_diagnostic.RCS1181.severity = none
+dotnet_diagnostic.RCS1043.severity = none
 # RCS1263 invalid cref/param name — leave default (warning): phantom docs are bugs.
 
 # IDE0005: Using directive is unnecessary.
