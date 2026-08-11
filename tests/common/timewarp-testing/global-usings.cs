@@ -1,4 +1,3 @@
-global using FakeItEasy;
 global using Shouldly;
 global using TimeWarp.Mediator;
 global using Microsoft.Extensions.DependencyInjection;
@@ -9,11 +8,6 @@ global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 global using Microsoft.AspNetCore.Hosting;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Configuration;
-global using Microsoft.Extensions.DependencyInjection.Extensions;
-global using Microsoft.Extensions.Logging;
-global using Microsoft.Extensions.Options;
-global using Microsoft.Extensions.ServiceDiscovery;
-global using Microsoft.JSInterop;
 global using System.Diagnostics.CodeAnalysis;
 global using System.Net;
 global using System.Net.Http;
@@ -21,16 +15,13 @@ global using System.Reflection;
 global using System.Text.Json;
 
 // Solution usings
-global using TimeWarp.Architecture.Features;
 global using TimeWarp.Foundation.Features;
 #if(web)
 global using TimeWarp.Architecture.Services;
 #endif
-global using TimeWarp.Foundation.Services;
 global using TimeWarp.Foundation.Types;
 
 #if(web)
-global using TimeWarp.Architecture.Web.Spa;
 #endif
 global using TimeWarp.Foundation;
 global using TimeWarp.Foundation.Configuration;

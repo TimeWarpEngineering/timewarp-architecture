@@ -6,5 +6,4 @@ global using Shouldly;
 global using TimeWarp.Foundation;
 global using TimeWarp.Foundation.Features;
 global using TimeWarp.Foundation.Types;
-global using TimeWarp.Jaribu;
 global using static TimeWarp.Jaribu.TestRunner;

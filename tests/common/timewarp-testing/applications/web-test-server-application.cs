@@ -1,7 +1,6 @@
 namespace TimeWarp.Architecture.Testing;
 
 using Microsoft.Extensions.Http;
-using TimeWarp.Architecture.Configuration;
 
 /// <summary>
 /// Used to launch the Web.Server application
