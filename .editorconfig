@@ -252,28 +252,26 @@ dotnet_naming_symbols.non_private_static_fields.required_modifiers = static
 
 dotnet_naming_style.non_private_static_field_style.capitalization = pascal_case
 
-# Class-level const fields are PascalCase (same as other type members).
-# Local const uses the local-variables camelCase rule below — not a separate Pascal rule.
+# Scope-based naming: method scope → camelCase; type members → PascalCase.
+# Field const needs its own symbol set: the engine keys const on "const", not "static",
+# so the static-fields rule does not cover const fields. Local const is just a local
+# (camelCase rule below) — no separate local-const rule.
 dotnet_naming_rule.constant_fields_should_be_pascal_case.severity = warning
 dotnet_naming_rule.constant_fields_should_be_pascal_case.symbols = constant_fields
-dotnet_naming_rule.constant_fields_should_be_pascal_case.style = constant_field_style
+dotnet_naming_rule.constant_fields_should_be_pascal_case.style = type_member_style
 
 dotnet_naming_symbols.constant_fields.applicable_kinds = field
 dotnet_naming_symbols.constant_fields.required_modifiers = const
 
-dotnet_naming_style.constant_field_style.capitalization = pascal_case
-
-# Static fields are PascalCase
 dotnet_naming_rule.static_fields_should_be_pascal_case.severity = warning
 dotnet_naming_rule.static_fields_should_be_pascal_case.symbols = static_fields
-dotnet_naming_rule.static_fields_should_be_pascal_case.style = static_field_style
+dotnet_naming_rule.static_fields_should_be_pascal_case.style = type_member_style
 
 dotnet_naming_symbols.static_fields.applicable_kinds = field
 dotnet_naming_symbols.static_fields.required_modifiers = static
 
-dotnet_naming_style.static_field_style.capitalization = pascal_case
+dotnet_naming_style.type_member_style.capitalization = pascal_case
 
-# Locals (including local const) are camelCase — method scope, not type members.
 dotnet_naming_rule.camel_case_for_local_variables.severity = warning
 dotnet_naming_rule.camel_case_for_local_variables.symbols = local_variables
 dotnet_naming_rule.camel_case_for_local_variables.style = local_variables_style
