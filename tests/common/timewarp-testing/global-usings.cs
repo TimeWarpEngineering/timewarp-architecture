@@ -1,3 +1,7 @@
+#region Purpose
+// Project-wide using directives so individual files omit repeated imports.
+#endregion
+
 global using Shouldly;
 global using TimeWarp.Mediator;
 global using Microsoft.Extensions.DependencyInjection;
