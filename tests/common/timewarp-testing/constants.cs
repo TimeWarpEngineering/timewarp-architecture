@@ -7,6 +7,4 @@ namespace TimeWarp.Architecture.Testing;
 /// <summary>
 /// Shared constants for test infrastructure. Add real values as needed.
 /// </summary>
-public static class Constants
-{
-}
+public static class Constants;

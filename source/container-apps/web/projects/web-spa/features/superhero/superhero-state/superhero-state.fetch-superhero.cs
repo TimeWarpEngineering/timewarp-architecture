@@ -17,7 +17,7 @@ partial class SuperheroState
 {
   public static class FetchSuperheroActionSet
   {
-    public sealed class Action : IBaseAction { }
+    public sealed class Action : IBaseAction;
 
     internal sealed class Handler : BaseHandler<Action>
     {

@@ -12,4 +12,4 @@ namespace TimeWarp.Architecture.Features.Debugger;
 
 [Page("/Debugger/Test", Policy = Policies.CanViewDeveloperPage)]
 [Authorize(Policy = Policies.CanViewDeveloperPage)]
-partial class TestPage {}
+partial class TestPage;

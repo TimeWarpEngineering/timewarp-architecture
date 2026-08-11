@@ -26,7 +26,7 @@ public static partial class TrackEvent
     public string EventName { get; set; } = null!;
   }
 
-  public class Response : BaseResponse {}
+  public class Response : BaseResponse;
 
   public class Validator : AbstractValidator<Command>
   {

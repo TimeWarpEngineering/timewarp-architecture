@@ -10,7 +10,4 @@
 
 namespace TimeWarp.Architecture.Features.ToDo;
 
-public class TodoState
-{
-  
-}
+public class TodoState;

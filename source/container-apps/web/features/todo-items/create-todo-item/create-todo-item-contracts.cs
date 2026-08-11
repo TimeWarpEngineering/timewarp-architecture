@@ -27,7 +27,7 @@ public sealed partial class CreateTodoItem
     public string Note { get; init; } = string.Empty;
 
   }
-  public class Response : BaseResponse { }
+  public class Response : BaseResponse;
 
   public class Validator : AbstractValidator<Command>
   {

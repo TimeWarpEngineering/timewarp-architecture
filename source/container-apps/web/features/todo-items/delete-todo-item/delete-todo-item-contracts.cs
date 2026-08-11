@@ -21,7 +21,7 @@ public sealed partial class DeleteTodoItem
     public string GetRoute() => $"{Route}";
   }
 
-  public class Response : BaseResponse { }
+  public class Response : BaseResponse;
 
   public sealed partial class Validator : AbstractValidator<Command>
   {

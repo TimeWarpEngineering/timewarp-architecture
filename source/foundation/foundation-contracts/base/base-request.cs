@@ -10,4 +10,4 @@ namespace TimeWarp.Foundation.Features;
 /// <remarks>
 /// Requests should be mutable reference types.
 /// </remarks>
-public abstract class BaseRequest : BaseMessage { }
+public abstract class BaseRequest : BaseMessage;
