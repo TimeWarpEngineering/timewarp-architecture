@@ -21,7 +21,6 @@ public interface IWebApiTestService
   /// </summary>
   /// <typeparam name="TResponse"></typeparam>
   /// <param name="apiRequest"></param>
-  /// <param name="request"></param>
   /// <param name="cancellationToken"></param>
   /// <returns></returns>
   ///
