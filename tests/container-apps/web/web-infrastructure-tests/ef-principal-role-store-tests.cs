@@ -184,8 +184,8 @@ public class Principal_role_store
     IPrincipalRoleStore read = new EfPrincipalRoleStore(db2);
 
     IReadOnlyList<Guid> roles = await read.GetRoleIdsAsync(id);
-    roles.OrderBy(r => r).ShouldBe(
-      new[] { RoleIds.Administrator, RoleIds.Developer }.OrderBy(r => r));
+    roles.Order().ShouldBe(
+      new[] { RoleIds.Administrator, RoleIds.Developer }.Order());
   }
 
   public static async Task Empty_set_clears_stored_roles()

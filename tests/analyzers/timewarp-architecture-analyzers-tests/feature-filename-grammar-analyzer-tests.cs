@@ -261,8 +261,8 @@ public class Should_Keep_Grammar_Registry_In_Sync
     // The registry itself is family-agnostic (Decision 2, task 129 stage 0) — checked once.
     // FeatureFilenameGrammar.Layers is routed ∪ unrouted (the analyzer accepts both as valid
     // archetypes; only routed layers get a layer-project Compile glob — checked below).
-    FeatureFilenameGrammar.Layers.OrderBy(static l => l)
-      .ShouldBe(layers.Concat(unroutedLayers).Distinct().OrderBy(static l => l));
+    FeatureFilenameGrammar.Layers.Order()
+      .ShouldBe(layers.Concat(unroutedLayers).Distinct().Order());
     FeatureFilenameGrammar.FunctionToLayer.Count.ShouldBe(functions.Count);
     foreach (KeyValuePair<string, string> pair in functions)
     {

@@ -101,7 +101,7 @@ public class FastEndpointSourceGenerator_Tests
     // EnableApiEndpointGeneration is not set (defaults to false).
     GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: false);
 
-    int generatedCount = runResult.Results.SelectMany(r => r.GeneratedSources).Count();
+    int generatedCount = runResult.Results.Sum(r => r.GeneratedSources.Length);
     generatedCount.ShouldBe(0);
 
     return Task.CompletedTask;
@@ -113,7 +113,7 @@ public class FastEndpointSourceGenerator_Tests
 
     GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
 
-    int generatedCount = runResult.Results.SelectMany(r => r.GeneratedSources).Count();
+    int generatedCount = runResult.Results.Sum(r => r.GeneratedSources.Length);
     generatedCount.ShouldBe(1);
 
     return Task.CompletedTask;

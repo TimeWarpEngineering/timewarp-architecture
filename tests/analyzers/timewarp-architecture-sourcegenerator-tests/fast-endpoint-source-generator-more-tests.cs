@@ -50,7 +50,7 @@ public class FastEndpointSourceGenerator_RouteConflicts_Tests
       message.ShouldContain("GetCurrentWeather");
     }
 
-    int generatedCount = runResult.Results.SelectMany(r => r.GeneratedSources).Count();
+    int generatedCount = runResult.Results.Sum(r => r.GeneratedSources.Length);
     generatedCount.ShouldBe(0, "no endpoint in a conflict group is generated");
 
     return Task.CompletedTask;
@@ -98,13 +98,13 @@ public class FastEndpointSourceGenerator_RouteConflicts_Tests
     driver = driver.RunGenerators(compilation);
     GeneratorDriverRunResult first = driver.GetRunResult();
     first.Results.SelectMany(r => r.Diagnostics).ShouldNotContain(d => d.Id == "TWE003");
-    first.Results.SelectMany(r => r.GeneratedSources).Count().ShouldBe(1);
+    first.Results.Sum(r => r.GeneratedSources.Length).ShouldBe(1);
 
     // Second run on the same driver (incremental path) — still one source, no phantom TWE003.
     driver = driver.RunGenerators(compilation);
     GeneratorDriverRunResult second = driver.GetRunResult();
     second.Results.SelectMany(r => r.Diagnostics).ShouldNotContain(d => d.Id == "TWE003");
-    second.Results.SelectMany(r => r.GeneratedSources).Count().ShouldBe(1);
+    second.Results.Sum(r => r.GeneratedSources.Length).ShouldBe(1);
 
     return Task.CompletedTask;
   }
@@ -199,7 +199,7 @@ public class FastEndpointSourceGenerator_ShapeAndVerb_Tests
 
     ImmutableArray<Diagnostic> diagnostics = runResult.Results.SelectMany(r => r.Diagnostics).ToImmutableArray();
     diagnostics.ShouldContain(d => d.Id == "TWE002" && d.Severity == DiagnosticSeverity.Error);
-    runResult.Results.SelectMany(r => r.GeneratedSources).Count().ShouldBe(0);
+    runResult.Results.Sum(r => r.GeneratedSources.Length).ShouldBe(0);
 
     return Task.CompletedTask;
   }
@@ -226,7 +226,7 @@ public class FastEndpointSourceGenerator_ShapeAndVerb_Tests
 
     ImmutableArray<Diagnostic> diagnostics = runResult.Results.SelectMany(r => r.Diagnostics).ToImmutableArray();
     diagnostics.ShouldContain(d => d.Id == "TWE007" && d.Severity == DiagnosticSeverity.Error);
-    runResult.Results.SelectMany(r => r.GeneratedSources).Count().ShouldBe(0);
+    runResult.Results.Sum(r => r.GeneratedSources.Length).ShouldBe(0);
     // Must not silently fall open to Get(...).
     string allSources = string.Join("\n", runResult.Results.SelectMany(r => r.GeneratedSources).Select(s => s.SourceText.ToString()));
     allSources.ShouldNotContain("""Get("api/items/trace")""");
@@ -255,7 +255,7 @@ public class FastEndpointSourceGenerator_ShapeAndVerb_Tests
     diagnostics.ShouldContain(d =>
       d.Id == "TWE007"
       && d.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Contains("missing ApiRoute"));
-    runResult.Results.SelectMany(r => r.GeneratedSources).Count().ShouldBe(0);
+    runResult.Results.Sum(r => r.GeneratedSources.Length).ShouldBe(0);
 
     return Task.CompletedTask;
   }
@@ -283,7 +283,7 @@ public class FastEndpointSourceGenerator_ShapeAndVerb_Tests
     diagnostics.ShouldContain(d =>
       d.Id == "TWE007"
       && d.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Contains("empty route"));
-    runResult.Results.SelectMany(r => r.GeneratedSources).Count().ShouldBe(0);
+    runResult.Results.Sum(r => r.GeneratedSources.Length).ShouldBe(0);
 
     return Task.CompletedTask;
   }
@@ -357,7 +357,7 @@ public class FastEndpointSourceGenerator_ShapeAndVerb_Tests
 
     GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
 
-    runResult.Results.SelectMany(r => r.GeneratedSources).Count().ShouldBe(0);
+    runResult.Results.Sum(r => r.GeneratedSources.Length).ShouldBe(0);
     // Generator skips silently; TWA0020 is the convention-analyzer surface.
     runResult.Results.SelectMany(r => r.Diagnostics)
       .ShouldNotContain(d => d.Id == "TWE002" || d.Id == "TWE003" || d.Id == "TWE007");
