@@ -66,3 +66,6 @@ policy: **warning/error = we enforce** (TreatWarningsAsErrors), **silent/none = 
 - Fix: drop unused BCL globals only; keep `DevCli`, `DevCli.Services`, DI, Nuru/Amuru/Terminal.
 - Verified: `dotnet run tools/dev-cli/dev.cs -- self-install` → installed to `bin/`.
 
+### XML docs (follow-up)
+
+- Full hollow/completeness RCS cluster silenced; decision to populate packages vs strip → **task 177**.

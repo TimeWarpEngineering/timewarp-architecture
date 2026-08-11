@@ -297,9 +297,18 @@ dotnet_code_quality.null_check_validation_methods = NotNull
 # CA1308: Normalize strings to uppercase
 dotnet_diagnostic.ca1308.severity = none
 
-# Roslynator XML-summary nags (RCS1138/1139) — same class as suppressed CS1591 docs noise.
+# XML documentation analyzers (Roslynator + compiler) — template policy (task 177).
+# Agents rely on #region Purpose/Design, not hollow /// shells. CS1591 already NoWarn'd.
+# Completeness (add empty shells) + hollow tags (remove empty) stay OFF until a deliberate
+# pass either populates package public surface OR strips dead ///. Keep RCS1263: docs must
+# match the signature when /// is present.
 dotnet_diagnostic.RCS1138.severity = none
 dotnet_diagnostic.RCS1139.severity = none
+dotnet_diagnostic.RCS1140.severity = none
+dotnet_diagnostic.RCS1141.severity = none
+dotnet_diagnostic.RCS1142.severity = none
+dotnet_diagnostic.RCS1228.severity = none
+# RCS1263 invalid cref/param name — leave default (warning): phantom docs are bugs.
 
 # IDE0005: Using directive is unnecessary.
 # Warning + TreatWarningsAsErrors; agents: Roslynk remove_unused_usings (apply_code_fix IDE0005 is unreliable). Task 170/172.
