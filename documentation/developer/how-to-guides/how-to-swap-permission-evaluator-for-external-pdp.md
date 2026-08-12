@@ -54,7 +54,7 @@ public interface IPermissionEvaluator
 - **Scheme-aware (default implementation):**
   - Human schemes (`identity-session`, `mock-identity-session`) → effective roles →
     `IRolePermissionStore`.
-  - `agent-token` → ambient scopes from `IAgentCallerContext` expanded by
+  - `agent-token` → ambient scopes from `IAgentPermissionScopeSource` expanded by
     `AgentScopePermissionSeed` only (no human role inheritance; principal id must match).
   A custom PDP must honor the same scheme split (or document a deliberate alternative).
 
@@ -146,7 +146,7 @@ touch Entra**, migrate SPA permission claims to the same evaluator-backed source
 
 - [ADR-0010](../conceptual/architectural-decision-records/approved/0010-permission-centric-authorization.md)
 - `PermissionIds`, `IPermissionEvaluator`, `PermissionEvaluator`, `AgentScopePermissionSeed`,
-  `IAgentCallerContext`
+  `IAgentPermissionScopeSource`
 - Agent scopes → permission bundles shipped under **182-006**
 - Lockout guards (last-admin / protected-core) remain application-layer, not PDP-specific
 

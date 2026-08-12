@@ -174,7 +174,8 @@ public class Program : IAspNetProgram
     // Task 182-002/003/006: permission-centric policies (policy name == PermissionIds). Admin,
     // credential, agent identity, and metered-demo contracts use PermissionIds; schemes stay on
     // [EndpointAuthorize(AuthenticationSchemes)]. Agent scope→permission expansion is in
-    // PermissionEvaluator (IAgentCallerContext). SPA uses AddPermissionClaimPolicies separately.
+    // PermissionEvaluator (IAgentPermissionScopeSource → IAgentCallerContext). SPA uses
+    // AddPermissionClaimPolicies separately.
     serviceCollection.AddAuthorization(options =>
       PermissionPolicyRegistration.AddPermissionPolicies(options));
     ConfigureAuthentication(serviceCollection, configuration);
@@ -195,6 +196,7 @@ public class Program : IAspNetProgram
     serviceCollection.AddHttpContextAccessor();
     serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
     serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
+    serviceCollection.AddScoped<IAgentPermissionScopeSource, AgentCallerPermissionScopeSource>();
     serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
     serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
     serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();

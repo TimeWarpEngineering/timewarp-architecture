@@ -52,7 +52,8 @@ external PDPs and resource checks without forcing ops cost on every template con
   self-service until marketplace policies.
 * **`IPermissionEvaluator`** — sole decision seam. Default `PermissionEvaluator` expands
   principal → effective roles → permissions for human session schemes; for **agent-token** expands
-  ambient scopes via `IAgentCallerContext` + `AgentScopePermissionSeed` only (never human roles;
+  ambient scopes via `IAgentPermissionScopeSource` (`IAgentCallerContext` adapter) +
+  `AgentScopePermissionSeed` only (never human roles;
   **182-006** shipped).
 * **Server enforcement** — `PermissionRequirement` + `PermissionRequirementHandler` call the evaluator
   only (never role or permission claim bags on the cookie principal). Scheme lists stay on

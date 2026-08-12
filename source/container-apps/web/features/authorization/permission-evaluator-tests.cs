@@ -24,7 +24,6 @@ namespace TimeWarp.Architecture.Features
   using System.Threading.Tasks;
   using Microsoft.Extensions.Options;
   using Shouldly;
-  using TimeWarp.Architecture.Abstractions;
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
   using static TimeWarp.Jaribu.TestRunner;
@@ -167,7 +166,7 @@ namespace TimeWarp.Architecture.Features
         principalRoles,
         new InMemoryRolePermissionStore(),
         bootstrap: [],
-        agentCaller: FakeAgentCallerContext.Empty);
+        agentScopes: FakeAgentPermissionScopeSource.Empty);
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
         id,
@@ -191,7 +190,7 @@ namespace TimeWarp.Architecture.Features
         principalRoles,
         new InMemoryRolePermissionStore(),
         bootstrap: [],
-        agentCaller: new FakeAgentCallerContext(new AgentCaller(id, [AgentScopes.IdentityRead])));
+        agentScopes: FakeAgentPermissionScopeSource.For(id, [AgentScopes.IdentityRead]));
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
         id,
@@ -213,8 +212,9 @@ namespace TimeWarp.Architecture.Features
         new InMemoryPrincipalRoleStore(),
         new InMemoryRolePermissionStore(),
         bootstrap: [],
-        agentCaller: new FakeAgentCallerContext(
-          new AgentCaller(id, [AgentScopes.IdentityRead, AgentScopes.DemoInvoke, AgentScopes.CredentialManage])));
+        agentScopes: FakeAgentPermissionScopeSource.For(
+          id,
+          [AgentScopes.IdentityRead, AgentScopes.DemoInvoke, AgentScopes.CredentialManage]));
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
         id,
@@ -235,8 +235,9 @@ namespace TimeWarp.Architecture.Features
         new InMemoryPrincipalRoleStore(),
         new InMemoryRolePermissionStore(),
         bootstrap: [],
-        agentCaller: new FakeAgentCallerContext(
-          new AgentCaller(id, ["not-a-real-scope", AgentScopes.DemoInvoke])));
+        agentScopes: FakeAgentPermissionScopeSource.For(
+          id,
+          ["not-a-real-scope", AgentScopes.DemoInvoke]));
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
         id,
@@ -253,8 +254,9 @@ namespace TimeWarp.Architecture.Features
         new InMemoryPrincipalRoleStore(),
         new InMemoryRolePermissionStore(),
         bootstrap: [],
-        agentCaller: new FakeAgentCallerContext(
-          new AgentCaller(ambient, [AgentScopes.IdentityRead])));
+        agentScopes: FakeAgentPermissionScopeSource.For(
+          ambient,
+          [AgentScopes.IdentityRead]));
 
       (await evaluator.GetPermissionsAsync(requested, AuthenticationSchemeNames.AgentToken))
         .ShouldBeEmpty();
@@ -270,8 +272,9 @@ namespace TimeWarp.Architecture.Features
         principalRoles,
         new InMemoryRolePermissionStore(),
         bootstrap: [],
-        agentCaller: new FakeAgentCallerContext(
-          new AgentCaller(id, [AgentScopes.IdentityRead, AgentScopes.CredentialManage, AgentScopes.DemoInvoke])));
+        agentScopes: FakeAgentPermissionScopeSource.For(
+          id,
+          [AgentScopes.IdentityRead, AgentScopes.CredentialManage, AgentScopes.DemoInvoke]));
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
         id,
@@ -444,22 +447,42 @@ namespace TimeWarp.Architecture.Features
       }
     }
 
-    private sealed class FakeAgentCallerContext : IAgentCallerContext
+    /// <summary>
+    /// Host-free fake for <see cref="IAgentPermissionScopeSource"/> (not IAgentCallerContext —
+    /// that type collides under JARIBU_MULTI web+api).
+    /// </summary>
+    private sealed class FakeAgentPermissionScopeSource : IAgentPermissionScopeSource
     {
-      public static FakeAgentCallerContext Empty { get; } = new(null);
+      public static FakeAgentPermissionScopeSource Empty { get; } = new(null, null);
 
-      private readonly AgentCaller? Caller;
+      private readonly PrincipalId? AmbientPrincipalId;
+      private readonly IReadOnlyList<string>? Scopes;
 
-      public FakeAgentCallerContext(AgentCaller? caller) => Caller = caller;
+      private FakeAgentPermissionScopeSource(PrincipalId? ambientPrincipalId, IReadOnlyList<string>? scopes)
+      {
+        AmbientPrincipalId = ambientPrincipalId;
+        Scopes = scopes;
+      }
 
-      public AgentCaller? GetCurrentCaller() => Caller;
+      public static FakeAgentPermissionScopeSource For(PrincipalId principalId, IReadOnlyList<string> scopes) =>
+        new(principalId, scopes);
+
+      public IReadOnlyList<string>? GetHeldScopesFor(PrincipalId principalId)
+      {
+        if (AmbientPrincipalId is null || Scopes is null || AmbientPrincipalId != principalId)
+        {
+          return null;
+        }
+
+        return Scopes;
+      }
     }
 
     private static PermissionEvaluator CreateEvaluator(
       IPrincipalRoleStore principalRoles,
       IRolePermissionStore rolePermissions,
       string[] bootstrap,
-      IAgentCallerContext? agentCaller = null)
+      IAgentPermissionScopeSource? agentScopes = null)
     {
       IOptions<BootstrapAdministratorOptions> options = Options.Create(
         new BootstrapAdministratorOptions
@@ -470,7 +493,7 @@ namespace TimeWarp.Architecture.Features
       return new PermissionEvaluator(
         resolver,
         rolePermissions,
-        agentCaller ?? FakeAgentCallerContext.Empty);
+        agentScopes ?? FakeAgentPermissionScopeSource.Empty);
     }
   }
 

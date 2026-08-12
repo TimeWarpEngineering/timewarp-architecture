@@ -6,19 +6,20 @@
 // Task 182-001/182-006: scheme-aware expansion.
 // Human schemes (identity-session, mock-identity-session): principal → effective roles →
 // IRolePermissionStore (IEffectiveRolesResolver shared with PrincipalRoleClaimsTransformation).
-// Agent-token: scopes only via IAgentCallerContext + AgentScopePermissionSeed — NEVER
+// Agent-token: scopes only via IAgentPermissionScopeSource + AgentScopePermissionSeed — NEVER
 // EffectiveRolesResolver or RolePermissionStore (no human role inheritance for agents).
-// Fail-closed: missing ambient caller or PrincipalId mismatch → empty. Agent path is pure
-// in-memory (no single-flight cache); human path keeps task-183 single-flight so concurrent
-// Blazor SSR policy checks do not race the scoped DbContext.
+// Fail-closed: missing ambient scopes (null) → empty. Agent path is pure in-memory (no
+// single-flight cache); human path keeps task-183 single-flight so concurrent Blazor SSR
+// policy checks do not race the scoped DbContext.
+// IAgentPermissionScopeSource (not IAgentCallerContext) so Features stays free of dual-host
+// Abstractions types that collide under JARIBU_MULTI (web + api both define IAgentCallerContext).
 // Output ordered by PermissionIds.All then any unknown grants (stable for session / tests).
-// Scoped DI: depends on scoped IEffectiveRolesResolver, IRolePermissionStore, IAgentCallerContext.
+// Scoped DI: IEffectiveRolesResolver, IRolePermissionStore, IAgentPermissionScopeSource.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
 
 using System.Collections.Concurrent;
-using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Identity;
 
 /// <summary>
@@ -28,20 +29,20 @@ public sealed class PermissionEvaluator : IPermissionEvaluator
 {
   private readonly IEffectiveRolesResolver EffectiveRolesResolver;
   private readonly IRolePermissionStore RolePermissionStore;
-  private readonly IAgentCallerContext AgentCallerContext;
+  private readonly IAgentPermissionScopeSource AgentPermissionScopeSource;
   private readonly ConcurrentDictionary<(Guid PrincipalId, string Scheme), Lazy<Task<IReadOnlyList<string>>>> ExpansionCache = new();
 
   public PermissionEvaluator(
     IEffectiveRolesResolver effectiveRolesResolver,
     IRolePermissionStore rolePermissionStore,
-    IAgentCallerContext agentCallerContext)
+    IAgentPermissionScopeSource agentPermissionScopeSource)
   {
     EffectiveRolesResolver = effectiveRolesResolver
       ?? throw new ArgumentNullException(nameof(effectiveRolesResolver));
     RolePermissionStore = rolePermissionStore
       ?? throw new ArgumentNullException(nameof(rolePermissionStore));
-    AgentCallerContext = agentCallerContext
-      ?? throw new ArgumentNullException(nameof(agentCallerContext));
+    AgentPermissionScopeSource = agentPermissionScopeSource
+      ?? throw new ArgumentNullException(nameof(agentPermissionScopeSource));
   }
 
   public async Task<bool> HasPermissionAsync(
@@ -89,13 +90,13 @@ public sealed class PermissionEvaluator : IPermissionEvaluator
 
   private IReadOnlyList<string> ExpandAgentPermissions(PrincipalId principalId)
   {
-    AgentCaller? caller = AgentCallerContext.GetCurrentCaller();
-    if (caller is null || caller.PrincipalId != principalId)
+    IReadOnlyList<string>? scopes = AgentPermissionScopeSource.GetHeldScopesFor(principalId);
+    if (scopes is null)
     {
       return Array.Empty<string>();
     }
 
-    return AgentScopePermissionSeed.Expand(caller.Scopes);
+    return AgentScopePermissionSeed.Expand(scopes);
   }
 
   private async Task<IReadOnlyList<string>> ExpandHumanPermissionsAsync(PrincipalId principalId)
