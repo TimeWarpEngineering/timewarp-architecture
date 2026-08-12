@@ -82,3 +82,13 @@ policy: **warning/error = we enforce** (TreatWarningsAsErrors), **silent/none = 
 
 - `.editorconfig`: `RCS1261`, `RCS1251`, `RCS1077`, `IDE1006` = **warning** (with TreatWarningsAsErrors).
 - IDE0005 already warning (task 170).
+
+### CI green-up (post style PR #298)
+
+Run `31560216427` (head `051c83c8`) failed on three independent clusters:
+
+1. **foundation-infrastructure-tests** (2): RCS1170 get-only `Name` broke EF ctor binding — restore `private set` + suppress (`dd70fe65`).
+2. **template-smoke** web-jaribu 34/54: `UntrustedRoot` — template-smoke job lacked `ci`'s `dotnet dev-certs https --trust` + `SSL_CERT_DIR` (`dd70fe65`).
+3. **web-server-integration** (16, task 151): (a) abuse principal-registration ~10/min exhausted mid-class → 429; disable in `WebTestServerApplication`, re-enable in abuse co-located tests; (b) CreateRole validation expected 400 but got 403 — needs Administrator grant after passkey mint (`b39d3d81`).
+
+Local verify: foundation 11/11; web-server-integration 116/0/1; abuse-rate-limiting 3/3.
