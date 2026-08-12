@@ -22,7 +22,7 @@
       </FluentButton>
     </div>
     <Card Title="Roles">
-      @if (RoleState.Roles is null)
+      @if (IsLoading)
       {
         <p><em>Loading…</em></p>
       }
@@ -38,7 +38,7 @@
             </tr>
           </thead>
           <tbody>
-            @foreach (GetRoles.RoleDto role in RoleState.Roles)
+            @foreach (GetRoles.RoleDto role in RoleState.Roles ?? [])
             {
               <tr @key="role.RoleId">
                 <Cell>@role.Name</Cell>

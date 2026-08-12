@@ -18,11 +18,11 @@
       is rejected (409 last-admin) so Admin cannot lock itself out.
     </p>
     <Card Title="Principals">
-      @if (PrincipalState.Principals is null)
+      @if (IsLoading)
       {
         <p><em>Loading…</em></p>
       }
-      else if (PrincipalState.Principals.Count == 0)
+      else if (PrincipalState.Principals is null || PrincipalState.Principals.Count == 0)
       {
         <p>No principals registered yet. Complete a passkey registration to create one.</p>
       }

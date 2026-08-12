@@ -3,8 +3,9 @@
 #endregion
 
 #region Design
-// Principals null = not loaded; empty = loaded with zero rows. DraftRoleIds tracks multi-select
-// edits per principal before Save → SetPrincipalRoles.
+// Principals null = no snapshot yet; empty = loaded with zero rows.
+// In-flight fetch is [TrackAction] on FetchPrincipals — pages use IsAnyActive, not null.
+// DraftRoleIds tracks multi-select edits per principal before Save → SetPrincipalRoles.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;

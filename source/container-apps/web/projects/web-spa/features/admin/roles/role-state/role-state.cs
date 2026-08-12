@@ -3,7 +3,8 @@
 #endregion
 
 #region Design
-// Roles null = not loaded (loading UI); empty array = loaded with zero rows.
+// Roles null = no snapshot yet; empty array = loaded with zero rows.
+// In-flight fetch is [TrackAction] on FetchRoles — pages use IsAnyActive, not null.
 // LastCreatedRoleId remains for create-round-trip demos after RoleForm submit.
 // DraftPermissionIds (task 182-004): multi-select edits per role before Save → SetRolePermissions;
 // seeded from GetRoles.RoleDto.PermissionIds on fetch (same pattern as PrincipalState drafts).
