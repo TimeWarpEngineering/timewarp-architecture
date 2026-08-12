@@ -49,17 +49,15 @@ internal static class TemplateSmokePaths
 /// <summary>
 /// Derives Architecture.* first-segment suffixes from timewarp-platform-packages.props SSOT.
 /// </summary>
-internal static class PlatformPackagePropsSsot
+internal static partial class PlatformPackagePropsSsot
 {
   /// <summary>
   /// Extracts the first identifier after <c>.Architecture.</c> from composed props values such as
   /// <c>$(_TwPlatformVendor).Architecture.Analyzers</c> or continuous
   /// <c>TimeWarp.Architecture.TypedIds.Ef</c>.
   /// </summary>
-  public static readonly System.Text.RegularExpressions.Regex ComposedArchitectureSuffix =
-    new(
-      @"(?:\$\(_TwPlatformVendor\)|TimeWarp)\.Architecture\.([A-Za-z_][A-Za-z0-9_]*)",
-      System.Text.RegularExpressions.RegexOptions.Compiled);
+  [GeneratedRegex(@"(?:\$\(_TwPlatformVendor\)|TimeWarp)\.Architecture\.([A-Za-z_][A-Za-z0-9_]*)")]
+  public static partial Regex ComposedArchitectureSuffix();
 
   /// <summary>
   /// Every derivation must include these first segments or the gate hard-fails (props drift).
@@ -106,7 +104,7 @@ internal static class PlatformPackagePropsSsot
         if (value.Length == 0)
           continue;
 
-        System.Text.RegularExpressions.Match match = ComposedArchitectureSuffix.Match(value);
+        System.Text.RegularExpressions.Match match = ComposedArchitectureSuffix().Match(value);
         if (match.Success)
           found.Add(match.Groups[1].Value);
       }
@@ -150,7 +148,7 @@ internal static class PlatformPackagePropsSsot
 /// <summary>
 /// Shared assert helpers + generate/restore/build skeleton for template smoke gates.
 /// </summary>
-internal sealed class TemplateSmokeHarness
+internal sealed partial class TemplateSmokeHarness
 {
   /// <summary>
   /// PackageVersion Include fragments treated as platform pins (rewrite / equality asserts).
@@ -164,6 +162,7 @@ internal sealed class TemplateSmokeHarness
     "TimeWarp.Foundation.",
     "TimeWarp.Modules",
     "TimeWarp.Identity",
+    "TimeWarp.402",
   ];
 
   private static readonly string[] SourceNameLiteralScanExtensions =
@@ -282,9 +281,7 @@ internal sealed class TemplateSmokeHarness
     pinCount = 0;
 
     System.Text.RegularExpressions.MatchCollection matches =
-      System.Text.RegularExpressions.Regex.Matches(
-        packagesPropsText,
-        "PackageVersion\\s+Include=\"([^\"]+)\"\\s+Version=\"([^\"]+)\"");
+      PackageVersionIncludeVersion().Matches(packagesPropsText);
 
     foreach (System.Text.RegularExpressions.Match match in matches)
     {
@@ -317,9 +314,8 @@ internal sealed class TemplateSmokeHarness
     string text = File.ReadAllText(packagesProps);
     string original = text;
 
-    text = System.Text.RegularExpressions.Regex.Replace(
+    text = PackageVersionIncludeAnyVersion().Replace(
       text,
-      "PackageVersion\\s+Include=\"([^\"]+)\"\\s+Version=\"[^\"]+\"",
       match =>
       {
         string include = match.Groups[1].Value;
@@ -565,8 +561,11 @@ internal sealed class TemplateSmokeHarness
   /// <summary>
   /// Per-family JARIBU_MULTI aggregator projects (task 136), plus (task 145-002 R2-3) the
   /// timewarp-testing-tests suite project, which needs BOTH web and api. Relative to the
-  /// generated app root. ExpectedSucceeded matches co-located counts (web create-role = 5 +
-  /// hello endpoint = 2 → 7; api weather = 5; timewarp-testing-tests HostGraphFactory smoke = 3).
+  /// generated app root. ExpectedSucceeded matches the CURRENT monorepo aggregator totals —
+  /// UPDATE THIS when adding/removing co-located *-tests.cs (verified drift 2026-08-05, task
+  /// 104-035: five task landings grew web 7→54 and api 5→9 without touching these, breaking
+  /// smoke on counts alone; a future improvement is deriving the expectation from a monorepo
+  /// aggregator run instead of this hand list — prefer-checks-over-memory).
   /// Serial — api binds :7255/:7000. RequiredFamilies lets a flag-off smoke entry assert the
   /// artifacts are ABSENT (task 136 review R2-1) whenever ANY required family is excluded: an
   /// aggregator orphaned by a family flag would break the generated app, so absence is the pass
@@ -575,8 +574,8 @@ internal sealed class TemplateSmokeHarness
   /// </summary>
   public static readonly (string[] RequiredFamilies, string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
   [
-    (["web"], "tests/container-apps/web/web-jaribu-tests", 7),
-    (["api"], "tests/container-apps/api/api-jaribu-tests", 5),
+    (["web"], "tests/container-apps/web/web-jaribu-tests", 54),
+    (["api"], "tests/container-apps/api/api-jaribu-tests", 9),
     (["web", "api"], "tests/common/timewarp-testing-tests", 3),
   ];
 
@@ -593,31 +592,33 @@ internal sealed class TemplateSmokeHarness
     "#endif",
   ];
 
-  private static readonly System.Text.RegularExpressions.Regex AnsiEscape =
-    new(@"\x1B\[[0-9;]*m", System.Text.RegularExpressions.RegexOptions.Compiled);
+  [GeneratedRegex(@"\x1B\[[0-9;]*m")]
+  private static partial Regex AnsiEscape();
 
-  private static readonly System.Text.RegularExpressions.Regex JaribuTotalLine =
-    new(@"Total:\s*(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+  [GeneratedRegex(@"Total:\s*(\d+)")]
+  private static partial Regex JaribuTotalLine();
 
-  private static readonly System.Text.RegularExpressions.Regex JaribuPassedLine =
-    new(@"Passed:\s*(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+  [GeneratedRegex(@"Passed:\s*(\d+)")]
+  private static partial Regex JaribuPassedLine();
 
   // MTP `dotnet test` summary (case-insensitive). Prefer multi-line host lines
   // (`total: N` / `succeeded: N` alone on a line) but also accept the compact form
   // `Test summary: total: N, failed: …, succeeded: N, …` (review M2).
-  private static readonly System.Text.RegularExpressions.Regex MtpTotalLine =
-    new(
-      @"(?:^\s*total:\s*(\d+)\s*$|Test summary:\s*total:\s*(\d+))",
-      System.Text.RegularExpressions.RegexOptions.Compiled
-        | System.Text.RegularExpressions.RegexOptions.Multiline
-        | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+  [GeneratedRegex(
+    @"(?:^\s*total:\s*(\d+)\s*$|Test summary:\s*total:\s*(\d+))",
+    RegexOptions.Multiline | RegexOptions.IgnoreCase)]
+  private static partial Regex MtpTotalLine();
 
-  private static readonly System.Text.RegularExpressions.Regex MtpSucceededLine =
-    new(
-      @"(?:^\s*succeeded:\s*(\d+)\s*$|Test summary:.*?succeeded:\s*(\d+))",
-      System.Text.RegularExpressions.RegexOptions.Compiled
-        | System.Text.RegularExpressions.RegexOptions.Multiline
-        | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+  [GeneratedRegex(
+    @"(?:^\s*succeeded:\s*(\d+)\s*$|Test summary:.*?succeeded:\s*(\d+))",
+    RegexOptions.Multiline | RegexOptions.IgnoreCase)]
+  private static partial Regex MtpSucceededLine();
+
+  [GeneratedRegex(@"PackageVersion\s+Include=""([^""]+)""\s+Version=""([^""]+)""")]
+  private static partial Regex PackageVersionIncludeVersion();
+
+  [GeneratedRegex(@"PackageVersion\s+Include=""([^""]+)""\s+Version=""[^""]+""")]
+  private static partial Regex PackageVersionIncludeAnyVersion();
 
   /// <summary>
   /// Tier 1 (cheap): asserts every co-located test file that shipped into the generated app
@@ -702,7 +703,7 @@ internal sealed class TemplateSmokeHarness
         .WithNoValidation()
         .CaptureAsync(ct);
 
-      string plain = AnsiEscape.Replace(result.Combined, "");
+      string plain = AnsiEscape().Replace(result.Combined, "");
       bool parsed = TryParseJaribuGrandTotal(plain, out int total, out int passed);
 
       if (!result.Success || !parsed || total == 0 || passed != total)
@@ -729,8 +730,8 @@ internal sealed class TemplateSmokeHarness
     total = 0;
     passed = 0;
 
-    System.Text.RegularExpressions.MatchCollection totalMatches = JaribuTotalLine.Matches(plainOutput);
-    System.Text.RegularExpressions.MatchCollection passedMatches = JaribuPassedLine.Matches(plainOutput);
+    System.Text.RegularExpressions.MatchCollection totalMatches = JaribuTotalLine().Matches(plainOutput);
+    System.Text.RegularExpressions.MatchCollection passedMatches = JaribuPassedLine().Matches(plainOutput);
     if (totalMatches.Count == 0 || passedMatches.Count == 0)
       return false;
 
@@ -795,7 +796,7 @@ internal sealed class TemplateSmokeHarness
         .WithNoValidation()
         .CaptureAsync(ct);
 
-      string plain = AnsiEscape.Replace(result.Combined, "");
+      string plain = AnsiEscape().Replace(result.Combined, "");
       bool parsed = TryParseMtpSummary(plain, out int total, out int succeeded);
 
       if (!result.Success || !parsed || total != expectedSucceeded || succeeded != expectedSucceeded)
@@ -822,8 +823,8 @@ internal sealed class TemplateSmokeHarness
     total = 0;
     succeeded = 0;
 
-    System.Text.RegularExpressions.MatchCollection totalMatches = MtpTotalLine.Matches(plainOutput);
-    System.Text.RegularExpressions.MatchCollection succeededMatches = MtpSucceededLine.Matches(plainOutput);
+    System.Text.RegularExpressions.MatchCollection totalMatches = MtpTotalLine().Matches(plainOutput);
+    System.Text.RegularExpressions.MatchCollection succeededMatches = MtpSucceededLine().Matches(plainOutput);
     if (totalMatches.Count == 0 || succeededMatches.Count == 0)
       return false;
 

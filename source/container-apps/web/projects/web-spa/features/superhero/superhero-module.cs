@@ -8,6 +8,7 @@ public class SuperheroModule
 {
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
+    _ = configuration; // Avoids "unused parameter" warning; the method is a placeholder
     serviceCollection.AddScoped<ServiceUriProvider>();
     serviceCollection.AddScoped<SuperheroGrpcServiceProvider>();
   }

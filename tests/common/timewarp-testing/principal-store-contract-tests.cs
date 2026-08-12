@@ -72,6 +72,39 @@ public abstract class Principals
     Principal principal = Principal.Create(PrincipalKind.Service);
     await Should.ThrowAsync<InvalidOperationException>(() => store.UpdatePrincipalAsync(principal));
   }
+
+  public async Task List_principals_returns_snapshots_ordered_by_created_at()
+  {
+    if (ShouldSkip()) return;
+    IPrincipalStore store = Factory.CreateStore();
+
+    Principal first = Principal.Create(PrincipalKind.Human);
+    await store.AddPrincipalAsync(first);
+    await Task.Delay(TimeSpan.FromMilliseconds(5));
+    Principal second = Principal.Create(PrincipalKind.Agent);
+    await store.AddPrincipalAsync(second);
+    await Task.Delay(TimeSpan.FromMilliseconds(5));
+    Principal third = Principal.Create(PrincipalKind.Service);
+    await store.AddPrincipalAsync(third);
+
+    IReadOnlyList<Principal> list = await store.ListPrincipalsAsync();
+
+    list.Count.ShouldBe(3);
+    list[0].Id.ShouldBe(first.Id);
+    list[1].Id.ShouldBe(second.Id);
+    list[2].Id.ShouldBe(third.Id);
+    ReferenceEquals(list[0], first).ShouldBeFalse();
+  }
+
+  public async Task List_principals_empty_store_returns_empty()
+  {
+    if (ShouldSkip()) return;
+    IPrincipalStore store = Factory.CreateStore();
+
+    IReadOnlyList<Principal> list = await store.ListPrincipalsAsync();
+
+    list.Count.ShouldBe(0);
+  }
 }
 
 public abstract class Credentials

@@ -21,7 +21,7 @@ public class SharedProblemDetails_Should
 
   public static Task SerializeAndDeserialize_Preserving_Extensions()
   {
-    string serverPayload =
+    const string serverPayload =
       """
       {
         "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",

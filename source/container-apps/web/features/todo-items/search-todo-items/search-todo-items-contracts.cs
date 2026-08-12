@@ -9,7 +9,4 @@
 
 namespace TimeWarp.Architecture.Features.TodoItems;
 
-public sealed partial class SearchTodoItems
-{
-
-}
+public sealed partial class SearchTodoItems;

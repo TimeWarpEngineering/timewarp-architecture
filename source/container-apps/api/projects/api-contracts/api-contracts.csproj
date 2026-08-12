@@ -18,6 +18,9 @@
                       Condition="'$(UseAnalyzerPackages)' != 'true'" />
     <PackageReference Include="$(TwArchitectureAttributesPackageId)"
                       Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <!-- PrincipalId / PrincipalKind / TrustTier on agent-bearer sample response (task 104-030). -->
+    <ProjectReference Include="..\..\..\..\libraries\timewarp-identity\timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
   </ItemGroup>
 
   <!-- Dual-mode global using for platform Attributes (task 115): package namespace stays fixed via

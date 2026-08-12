@@ -9,13 +9,12 @@
 // RequireClaim/HasClaim compare against; an enum would need a string<->enum mapping layer for zero
 // benefit at Wave-1 scale (three scopes).
 // IdentityRead is this task's own protected endpoint (GetAgentIdentity, policy
-// AgentTokenDefaults.IdentityReadPolicy) — a real, exercised scope. DemoInvoke is reserved: no
-// endpoint checks it yet (its consumer is 104-011), but it is declared here now so
-// CompleteAgentTokenIssuance can accept it as a known scope and Agent_Protected_Endpoint_Tests can
-// exercise a genuine 403 insufficient-scope case (a token minted with ONLY demo:invoke, presented
-// against the identity:read-gated endpoint) rather than a synthetic/unknown scope string. 104-013
-// gates demo:invoke USAGE by credit balance at call time, not by removing the scope from a token —
-// recorded here, revisitable if that policy changes.
+// AgentTokenDefaults.IdentityReadPolicy) — a real, exercised scope. DemoInvoke gates the metered
+// pay-for-capability demo (104-011, AgentTokenDefaults.DemoInvokePolicy); Agent_Protected_Endpoint_Tests
+// still uses a token minted with ONLY demo:invoke against the identity:read-gated endpoint for a
+// genuine 403 insufficient-scope case. 104-013 may further gate demo:invoke USAGE by credit balance /
+// Funded tier at call time, not by removing the scope from a token — recorded here, revisitable if
+// that policy changes.
 // CredentialManage (task 104-005): a DISTINCT write scope for the credential-management surface
 // (list/add/revoke credentials on the caller's own principal) — deliberately NOT gated behind
 // IdentityRead. IdentityRead is a read-only scope (GetAgentIdentity, a self-lookup); credential

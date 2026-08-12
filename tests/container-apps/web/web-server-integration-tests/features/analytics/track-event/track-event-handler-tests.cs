@@ -44,10 +44,7 @@ public class Handle_Returns
   private static void ValidateResult(OneOf<Response, SharedProblemDetails> result)
   {
     result.Switch(
-        response =>
-        {
-          response.ShouldNotBeNull();
-        },
+        response => response.ShouldNotBeNull(),
         problemDetails =>
         {
           // This should not happen in a successful case

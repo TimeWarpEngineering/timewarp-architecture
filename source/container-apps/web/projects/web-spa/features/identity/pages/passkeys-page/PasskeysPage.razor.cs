@@ -1,39 +1,30 @@
 #region Purpose
-// Code-behind for the /Passkeys demo page: registers and authenticates a WebAuthn passkey against
-// the identity-session cookie, calling the contract endpoints directly.
+// Code-behind for the /Passkeys technical demo page: register/authenticate via the shared
+// PasskeyCeremonyClient against the identity-session cookie.
 #endregion
 
 #region Design
-// Deliberately bypasses the TimeWarp.State action/store pipeline (ApiHandler/DefaultApiHandler):
-// this is a minimal demo of the raw ceremony (task 104-003's own scope — full CTA/login UX
-// integration is 104-016), so IWebServerApiService and IJSRuntime are injected directly, mirroring
-// the legacy RegisterPasskey.razor's direct-injection style rather than introducing an
-// action/state/reducer trio for a two-button demo page.
-// StartPasskeyRegistration/StartPasskeyAuthentication/CompletePasskeyRegistration/
-// CompletePasskeyAuthentication carry no GetMockResponseFactory (see their contracts' Design
-// regions), so under MOCK_WEB_API, MockWebApiService's built-in "no factory found" fallback runs
-// these through its real inner IApiService — which in a mock-first/no-BFF app is NullApiService,
-// producing a 501 SharedProblemDetails automatically. That IS this page's "passkeys not supported"
-// story: no special-case mock-detection code needed here, the existing fallback chain already
-// produces a sensible error through the same ErrorMessage path every other failure uses.
-// window.Spa.WebAuthn.CreateCredential/GetCredential (source/features/web-authn.ts) do the binary
-// ArrayBuffer<->base64url conversion in the browser; this code-behind only shuttles JSON strings
-// and maps field names onto the Complete* commands.
-// RP-ID credential scoping (task 104-031): the server selects the WebAuthn RP ID per request from
-// the request host (WebAuthnOptions.AllowedRpIds), so a passkey registered while visiting one host
-// (e.g. localhost) will NOT surface when authenticating from a different host (e.g. a *.timewarp.work
-// share) and vice versa — this is WebAuthn's per-RP-ID credential scoping, not a bug. Register and
-// authenticate on the SAME host.
+// Product human CTA lives on /Login (task 104-016). This page remains a discoverable technical
+// demo under Nav → Pages so operators can exercise the raw ceremony without the product copy.
+// Ceremony mapping is shared via PasskeyCeremonyClient — do not reintroduce Passwordless.dev or
+// direct passwordless.* JS interop here.
+// Mock mode: ceremony contracts have no GetMockResponseFactory; mock chain yields 501 and we
+// surface it through ErrorMessage.
+// RP-ID credential scoping (task 104-031): register and authenticate on the SAME host.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
-using System.Text.Json;
-using Microsoft.JSInterop;
+using TimeWarp.Architecture.Services;
+using TimeWarp.Foundation.Types;
 
-[Page("/Passkeys")]
+// Technical ceremony demo — product CTA is /Login. Nav + route gated to Developer (147-001).
+[Page("/Passkeys", Policy = Policies.CanViewDeveloperPage)]
+[Authorize(Policy = Policies.CanViewDeveloperPage)]
 partial class PasskeysPage
 {
+  [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
+
   private string? ErrorMessage;
   private string? StatusMessage;
   private bool IsBusy;
@@ -52,37 +43,16 @@ partial class PasskeysPage
     IsBusy = true;
     try
     {
-      OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> startResult =
-        await ApiService.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
+      OneOf<CompletePasskeyRegistration.Response, SharedProblemDetails> result =
+        await Ceremony.RegisterAsync(CancellationToken.None);
 
-      if (!startResult.IsT0)
+      if (result.IsT1)
       {
-        ErrorMessage = FormatError(startResult);
+        ErrorMessage = PasskeyCeremonyClient.FormatError(result.AsT1);
         return;
       }
 
-      string credentialJson = await JsRuntime.InvokeAsync<string>("Spa.WebAuthn.CreateCredential", startResult.AsT0.OptionsJson);
-
-      using var document = JsonDocument.Parse(credentialJson);
-      JsonElement root = document.RootElement;
-
-      CompletePasskeyRegistration.Command completeCommand = new()
-      {
-        CredentialId = root.GetProperty("credentialId").GetString()!,
-        ClientDataJson = root.GetProperty("clientDataJson").GetString()!,
-        AttestationObject = root.GetProperty("attestationObject").GetString()!
-      };
-
-      OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> completeResult =
-        await ApiService.GetResponse<CompletePasskeyRegistration.Response>(completeCommand, CancellationToken.None);
-
-      if (!completeResult.IsT0)
-      {
-        ErrorMessage = FormatError(completeResult);
-        return;
-      }
-
-      StatusMessage = $"Passkey registered. PrincipalId: {completeResult.AsT0.PrincipalId}";
+      StatusMessage = $"Passkey registered. PrincipalId: {result.AsT0.PrincipalId}";
       await RefreshSessionAsync();
     }
     catch (JSException jsException)
@@ -102,41 +72,16 @@ partial class PasskeysPage
     IsBusy = true;
     try
     {
-      OneOf<StartPasskeyAuthentication.Response, FileResponse, SharedProblemDetails> startResult =
-        await ApiService.GetResponse<StartPasskeyAuthentication.Response>(new StartPasskeyAuthentication.Command(), CancellationToken.None);
+      OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails> result =
+        await Ceremony.AuthenticateAsync(CancellationToken.None);
 
-      if (!startResult.IsT0)
+      if (result.IsT1)
       {
-        ErrorMessage = FormatError(startResult);
+        ErrorMessage = PasskeyCeremonyClient.FormatError(result.AsT1);
         return;
       }
 
-      string assertionJson = await JsRuntime.InvokeAsync<string>("Spa.WebAuthn.GetCredential", startResult.AsT0.OptionsJson);
-
-      using var document = JsonDocument.Parse(assertionJson);
-      JsonElement root = document.RootElement;
-
-      CompletePasskeyAuthentication.Command completeCommand = new()
-      {
-        CredentialId = root.GetProperty("credentialId").GetString()!,
-        ClientDataJson = root.GetProperty("clientDataJson").GetString()!,
-        AuthenticatorData = root.GetProperty("authenticatorData").GetString()!,
-        Signature = root.GetProperty("signature").GetString()!,
-        UserHandle = root.TryGetProperty("userHandle", out JsonElement userHandleElement) && userHandleElement.ValueKind == JsonValueKind.String
-          ? userHandleElement.GetString()
-          : null
-      };
-
-      OneOf<CompletePasskeyAuthentication.Response, FileResponse, SharedProblemDetails> completeResult =
-        await ApiService.GetResponse<CompletePasskeyAuthentication.Response>(completeCommand, CancellationToken.None);
-
-      if (!completeResult.IsT0)
-      {
-        ErrorMessage = FormatError(completeResult);
-        return;
-      }
-
-      StatusMessage = $"Authenticated. PrincipalId: {completeResult.AsT0.PrincipalId}";
+      StatusMessage = $"Authenticated. PrincipalId: {result.AsT0.PrincipalId}";
       await RefreshSessionAsync();
     }
     catch (JSException jsException)
@@ -151,15 +96,6 @@ partial class PasskeysPage
 
   private async Task RefreshSessionAsync()
   {
-    OneOf<GetCurrentSession.Response, FileResponse, SharedProblemDetails> sessionResult =
-      await ApiService.GetResponse<GetCurrentSession.Response>(new GetCurrentSession.Query(), CancellationToken.None);
-
-    IsAuthenticated = sessionResult.IsT0 && sessionResult.AsT0.IsAuthenticated;
+    IsAuthenticated = await Ceremony.GetIsAuthenticatedAsync(CancellationToken.None);
   }
-
-  private static string FormatError<TResponse>(OneOf<TResponse, FileResponse, SharedProblemDetails> result)
-    where TResponse : class =>
-    result.IsT2
-      ? $"{result.AsT2.Title}: {result.AsT2.Detail}"
-      : "An unexpected response was received.";
 }

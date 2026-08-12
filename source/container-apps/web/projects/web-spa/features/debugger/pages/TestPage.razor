@@ -2,10 +2,29 @@
 @inherits BaseComponent
 
 @code {
-    public static string Title => "Test";
-    public static Icon? NavIcon => new Icons.Regular.Size32.Airplane();
+  public static string Title => "Test";
+  public static Icon? NavIcon => new Icons.Regular.Size32.Airplane();
+
+  private async Task FiveSecondTaskButtonClick() =>
+    await ApplicationState.FiveSecondTask(CancellationToken.None);
+
+  private async Task TwoSecondTaskButtonClick() =>
+    await ApplicationState.TwoSecondTask(CancellationToken.None);
+
+  private async Task ModalButtonClick() =>
+    await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
 }
 
 <TimeWarpPage Title="Test">
-  <Card>A scratch page for ad-hoc testing.</Card>
+  <div class="twe-stack">
+    <Card>A scratch page for ad-hoc testing.</Card>
+
+    <Card Title="Try it">
+      <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
+        <FluentButton Appearance="ButtonAppearance.Outline" OnClick=FiveSecondTaskButtonClick>Launch Five Second Task</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Outline" OnClick=TwoSecondTaskButtonClick>Launch Two Second Task</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=ModalButtonClick>Show Modal</FluentButton>
+      </FluentStack>
+    </Card>
+  </div>
 </TimeWarpPage>

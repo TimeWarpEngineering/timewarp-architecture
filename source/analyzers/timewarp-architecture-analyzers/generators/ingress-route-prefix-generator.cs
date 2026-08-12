@@ -129,8 +129,7 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
       foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
       {
         bool isSource = options.SourceAssemblies.Count == 0
-          ? true
-          : options.SourceAssemblies.Contains(assembly.Name);
+          || options.SourceAssemblies.Contains(assembly.Name);
 
         bool isForeignContracts = !isSource
           && assembly.Name.Contains("contracts", StringComparison.OrdinalIgnoreCase);
@@ -142,7 +141,14 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
 
         foreach (HostedRoute route in EnumerateHostedRoutes(assembly))
         {
-          (isSource ? webRoutes : foreignRoutes).Add(route);
+          if (isSource)
+          {
+            webRoutes.Add(route);
+          }
+          else
+          {
+            foreignRoutes.Add(route);
+          }
         }
       }
 

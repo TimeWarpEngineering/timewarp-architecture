@@ -1,0 +1,8 @@
+.twe-ext-link {
+  font-size: var(--twe-text-helper);
+}
+
+.twe-ext-link a {
+  color: var(--twe-blue);
+  word-break: break-word;
+}

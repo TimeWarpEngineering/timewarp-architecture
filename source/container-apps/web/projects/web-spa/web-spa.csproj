@@ -16,9 +16,10 @@
          users never see it). Cost: larger ICU payload in the WASM download. -->
     <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
-    <!-- Auth mock is runtime-config-gated (task 145-009): Authentication:UseMock + Development/
-         Testing environment. No MOCK_AUTHENTICATION DefineConstants — both mock and MSAL code
-         paths compile always; fail-closed activation is in MockAuthenticationRegistration.
+    <!-- Auth is runtime-config-gated (tasks 145-009 + 104-021): Authentication:UseMock (dev mock),
+         Authentication:UseEntra (opt-in MSAL), else identity-session. No MOCK_AUTHENTICATION /
+         ENTRA DefineConstants — mock, MSAL, and identity-session code paths compile always;
+         activation is MockAuthenticationRegistration / UseEntra / IdentitySessionAuthenticationRegistration.
          Use Mock web API (optional offline SPA API fakes): -->
     <!-- <DefineConstants>$(DefineConstants);MOCK_WEB_API</DefineConstants> -->
   </PropertyGroup>

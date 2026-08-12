@@ -15,9 +15,21 @@
 // Scalar maps after UseFastEndpoints so endpoint metadata is available.
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (EmptyRequestBinder
 // already handles runtime binding; without the flag document generation throws).
+// Agent bearer (task 104-030): named agent-token scheme + scope policies (parity with web-server),
+// AgentBearerStoresModule for IAgentTokenStore/IPrincipalStore, pipeline
+// UseAuthentication → UseAuthorization → UseFastEndpoints. Ceremonies stay on web-server;
+// see how-to-agent-identity-host-split-web-vs-api.md.
 #endregion
 
 namespace TimeWarp.Architecture.Api.Server;
+
+using Microsoft.AspNetCore.Authentication;
+using TimeWarp.Architecture.Abstractions;
+using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Features.Identity;
+using TimeWarp.Architecture.Infrastructure;
+using TimeWarp.Architecture.Services;
+using TimeWarp.Identity;
 
 public class Program : IAspNetProgram
 {
@@ -54,6 +66,31 @@ public class Program : IAspNetProgram
 
     CorsPolicy.Any.Apply(serviceCollection);
 
+    AgentBearerStoresModule.ConfigureServices(serviceCollection, configuration);
+    serviceCollection.AddHttpContextAccessor();
+    serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
+
+    serviceCollection.AddAuthentication()
+      .AddScheme<AuthenticationSchemeOptions, AgentTokenAuthenticationHandler>(AgentTokenDefaults.Scheme, _ => { });
+
+    serviceCollection.AddAuthorizationBuilder()
+      .AddPolicy
+      (
+        AgentTokenDefaults.IdentityReadPolicy,
+        policy => policy
+          .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
+          .RequireAuthenticatedUser()
+          .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.IdentityRead)
+      )
+      .AddPolicy
+      (
+        AgentTokenDefaults.DemoInvokePolicy,
+        policy => policy
+          .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
+          .RequireAuthenticatedUser()
+          .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.DemoInvoke)
+      );
+
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
     serviceCollection.AddValidatorsFromAssemblyContaining<TimeWarp.Architecture.Api.Server.IAssemblyMarker>();
@@ -69,7 +106,6 @@ public class Program : IAspNetProgram
       };
     });
 
-    serviceCollection.AddAuthorization();
     CommonServerModule.AddOpenApi(serviceCollection, ApiVersion, ApiTitle);
     serviceCollection
       .AddMediator
@@ -90,6 +126,11 @@ public class Program : IAspNetProgram
   {
     CommonServerModule.ConfigureMiddleware(webApplication);
 
+    // Auth before FastEndpoints so [EndpointAuthorize] policies see an authenticated principal
+    // (same order as web-server: UseAuthentication → UseAuthorization → UseFastEndpoints).
+    webApplication.UseAuthentication();
+    webApplication.UseAuthorization();
+
     webApplication.UseFastEndpoints(config =>
     {
       config.Endpoints.RoutePrefix = null;
@@ -97,7 +138,6 @@ public class Program : IAspNetProgram
       // FE.OpenApi otherwise throws when generating /openapi/*.json for those endpoints.
       config.Endpoints.AllowEmptyRequestDtos = true;
     });
-    webApplication.UseAuthorization();
 
     if (webApplication.Environment.IsDevelopment())
     {
@@ -113,5 +153,8 @@ public class Program : IAspNetProgram
 
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
+    // Placeholder signature: settings wiring lands here when api-server gains options binding.
+    _ = serviceCollection;
+    _ = configuration;
   }
 }

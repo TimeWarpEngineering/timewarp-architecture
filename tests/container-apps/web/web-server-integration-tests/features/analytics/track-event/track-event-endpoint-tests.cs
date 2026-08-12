@@ -55,10 +55,7 @@ public class Returns_
   {
     result.Switch
     (
-      response =>
-      {
-        response.ShouldNotBeNull();
-      },
+      response => response.ShouldNotBeNull(),
       problemDetails =>
       {
         // This should not happen in a successful case

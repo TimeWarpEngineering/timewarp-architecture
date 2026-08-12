@@ -3,11 +3,13 @@
 #endregion
 
 #region Design
-// Private constructor + fail-closed static Create factory (identity style, see
+// Private constructor + fail-closed static Create factories (identity style, see
 // source/libraries/timewarp-identity/principals/principal.cs): DisplayName/Language/Region/Theme are
 // guard-clause-validated before the instance exists, so a Profile can never be constructed
-// half-initialized or with a blank required field. Named mutations (Rename/SetLanguage/SetRegion/
-// SetTheme/EnableNotifications/DisableNotifications) keep every state change intention-revealing —
+// half-initialized or with a blank required field. Create(string…) mints a new ProfileId;
+// Create(ProfileId, …) is the 1:1 principal key path (GetProfile create-if-missing, task 148) —
+// empty ProfileId is rejected. Named mutations (Rename/SetLanguage/SetRegion/SetTheme/
+// EnableNotifications/DisableNotifications) keep every state change intention-revealing —
 // there are no public setters.
 // MaxDisplayNameLength is the single source of truth for the length rule, enforced in BOTH places
 // that can produce a DisplayName (Create and Rename) as well as the nested Invariants validator —
@@ -56,6 +58,30 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
     EnsureDisplayNameLength(displayName);
 
     return new Profile(ProfileId.New(), displayName, language, region, theme);
+  }
+
+  /// <summary>
+  /// Create a profile with a fixed id (1:1 with the authenticated principal's UserId).
+  /// </summary>
+  public static Profile Create(
+    ProfileId id,
+    string displayName,
+    string language,
+    string region,
+    string theme)
+  {
+    if (id.IsEmpty)
+    {
+      throw new ArgumentException("ProfileId must be non-empty.", nameof(id));
+    }
+
+    ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+    ArgumentException.ThrowIfNullOrWhiteSpace(language);
+    ArgumentException.ThrowIfNullOrWhiteSpace(region);
+    ArgumentException.ThrowIfNullOrWhiteSpace(theme);
+    EnsureDisplayNameLength(displayName);
+
+    return new Profile(id, displayName, language, region, theme);
   }
 
   public void Rename(string displayName)

@@ -25,14 +25,17 @@
 <CascadingValue Value=@this>
   <FluentLayout Class=@($"{Id} twe-shell")>
 
+    @* No Height parameter here: with it, FluentLayoutItem swaps its default
+       height: var(--layout-header-height) for a hard-coded inline height. The slot
+       height comes from the --layout-header-height override in the styles below. *@
     <FluentLayoutItem Area="LayoutArea.Header">
       <header class="twe-appbar">
         <div class="twe-brand">
-          <img class="twe-brand__logo" src="images/timewarp-logo.svg" alt="TimeWarp Enterprises" />
-          <span class="twe-brand__text">
-            <span class="twe-brand__name">TimeWarp</span>
-            <span class="twe-brand__sub">Architecture</span>
-          </span>
+          @* Horizontal lockup (icon + wordmark side by side) built from the original
+             stacked timewarp-logo.svg so the wordmark stays readable at bar height.
+             Explicit width/height reserve the box before styles apply (no first-paint
+             size flash). *@
+          <img class="twe-brand__logo" src="images/timewarp-horizontal.svg" alt="TimeWarp Architecture" width="201" height="48" />
         </div>
         <div class="twe-appbar__search">
           <FluentTextInput Placeholder="Search" Width="100%">
@@ -71,7 +74,9 @@
       </FluentLayoutItem>
     }
 
-    <FluentLayoutItem Area="LayoutArea.Footer" Height="44px">
+    @* Like the header: no Height parameter, so the item keeps its default
+       height: var(--layout-footer-height); the variable is overridden below. *@
+    <FluentLayoutItem Area="LayoutArea.Footer">
       <footer class="twe-footer">
         <span class="twe-footer__mode">@CurrentRenderMode</span>
         <FluentSpacer />
@@ -95,20 +100,35 @@
    which CSS isolation can't reach. Verbatim string so CSS braces are literal. *@
 <style>
   @(@"
+    /* Appbar/footer height single source. FluentLayout writes its defaults for
+       --layout-header-height / --layout-footer-height inline on the root element,
+       so the overrides need !important to win; the layout items and the
+       body-height calc all consume the vars. */
+    .twe-shell {
+      --twe-appbar-height: 70px; --layout-header-height: var(--twe-appbar-height) !important;
+      --twe-footer-height: 44px; --layout-footer-height: var(--twe-footer-height) !important;
+    }
+    /* Header slot: Fluent sets area=header background to --colorBrandBackground (theme
+       purple). White appbar + 8px Fluent padding ⇒ purple frame. Green accent on the
+       bottom edge of the bar. Footer mirrors with blue slot + green on top (task 162). */
     .twe-shell .twe-appbar {
       display: flex; align-items: center; gap: 12px;
-      width: 100%; height: 56px; padding: 0 16px;
+      width: 100%; height: 100%; padding: 0 16px;
       background: var(--twe-paper); border-bottom: 3px solid var(--twe-green);
     }
     .twe-shell .twe-appbar__search { flex: 0 1 520px; width: 520px; margin-inline: auto; }
-    .twe-shell .twe-appbar__actions { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+    .twe-shell .twe-appbar__actions {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      /* Task 149: breathing room so profile FluentMenu is not flush to the viewport edge. */
+      padding-inline-end: 8px;
+    }
     .twe-shell .search-end { white-space: nowrap; color: var(--twe-muted); font-size: var(--twe-text-helper); }
 
-    .twe-shell .twe-brand { display: inline-flex; align-items: center; gap: 10px; padding: 0 6px; }
-    .twe-shell .twe-brand__logo { height: 34px; width: auto; flex: none; display: block; }
-    .twe-shell .twe-brand__text { display: flex; flex-direction: column; line-height: 1.04; }
-    .twe-shell .twe-brand__name { font-weight: 800; font-size: 16px; letter-spacing: -0.02em; color: var(--twe-ink); }
-    .twe-shell .twe-brand__sub { font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--twe-muted); }
+    .twe-shell .twe-brand { display: inline-flex; align-items: center; padding: 0 6px; }
+    .twe-shell .twe-brand__logo { height: 48px; width: auto; flex: none; display: block; }
 
     .twe-shell .twe-nav { height: 100%; padding: 8px; background: var(--twe-paper-2); border-right: 1px solid var(--twe-rule); }
 
@@ -119,10 +139,16 @@
 
     .twe-shell .twe-aside { padding: 20px; border-left: 1px solid var(--twe-rule); height: 100%; }
 
+    /* Footer slot: Fluent defaults area=footer to neutral disabled background; override
+       to TimeWarp blue so it pairs with the purple header frame (logo blue). Green
+       accent on the top edge mirrors the header's bottom accent. */
+    .twe-shell .fluent-layout-item[area=footer] {
+      background-color: var(--twe-blue);
+    }
     .twe-shell .twe-footer {
       display: flex; align-items: center; gap: 12px; width: 100%;
       height: 100%; padding: 0 16px; box-sizing: border-box;
-      border-top: 1px solid var(--twe-rule); background: var(--twe-paper);
+      border-top: 3px solid var(--twe-green); background: var(--twe-paper);
       color: var(--twe-muted); font-size: var(--twe-text-helper);
     }
   ")

@@ -95,7 +95,12 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>
 
   public TId Id { get; }
 
+  // private set is required: AggregateVersionConvention uses PropertyAccessMode.Property so EF
+  // (and AggregateDbContext via PropertyEntry.CurrentValue) can write Version by reflection.
+  // Get-only would break that contract; RCS1170 is intentionally suppressed here.
+#pragma warning disable RCS1170 // Use read-only auto-implemented property
   public long Version { get; private set; }
+#pragma warning restore RCS1170
 
   public bool Equals(Entity<TId>? other)
   {

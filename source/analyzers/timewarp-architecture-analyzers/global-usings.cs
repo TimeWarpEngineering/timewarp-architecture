@@ -10,5 +10,3 @@ global using Microsoft.CodeAnalysis.Text;
 global using System.Collections.Immutable;
 global using System.Linq;
 global using System.Text;
-global using TimeWarp.Architecture.Analyzers.Models;
-global using TimeWarp.Architecture.Attributes;

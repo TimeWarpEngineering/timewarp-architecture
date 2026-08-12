@@ -34,6 +34,12 @@ public class Principals : PrincipalStoreContract_.Principals
 
   public static new Task Update_missing_principal_fails() =>
     ((PrincipalStoreContract_.Principals)new Principals()).Update_missing_principal_fails();
+
+  public static new Task List_principals_returns_snapshots_ordered_by_created_at() =>
+    ((PrincipalStoreContract_.Principals)new Principals()).List_principals_returns_snapshots_ordered_by_created_at();
+
+  public static new Task List_principals_empty_store_returns_empty() =>
+    ((PrincipalStoreContract_.Principals)new Principals()).List_principals_empty_store_returns_empty();
 }
 
 public class Credentials : PrincipalStoreContract_.Credentials

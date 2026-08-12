@@ -128,6 +128,9 @@ public class Returns_
     public Task UpdatePrincipalAsync(Principal principal, CancellationToken cancellationToken = default) =>
       Inner.UpdatePrincipalAsync(principal, cancellationToken);
 
+    public Task<IReadOnlyList<Principal>> ListPrincipalsAsync(CancellationToken cancellationToken = default) =>
+      Inner.ListPrincipalsAsync(cancellationToken);
+
     public Task AddCredentialAsync(Credential credential, CancellationToken cancellationToken = default) =>
       Inner.AddCredentialAsync(credential, cancellationToken);
 

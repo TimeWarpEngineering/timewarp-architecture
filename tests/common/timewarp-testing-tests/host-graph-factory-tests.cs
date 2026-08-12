@@ -58,7 +58,6 @@ namespace TimeWarp.Architecture.Testing.HostGraphFactoryTests
   using OneOf;
   using Shouldly;
   using TimeWarp.Architecture.Services;
-  using TimeWarp.Foundation;
   using TimeWarp.Foundation.Types;
   using TimeWarp.Jaribu;
   using static TimeWarp.Jaribu.TestRunner;

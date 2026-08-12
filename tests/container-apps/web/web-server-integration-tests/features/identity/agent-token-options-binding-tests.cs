@@ -11,7 +11,6 @@ namespace AgentTokenOptionsBinding_;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using TimeWarp.Architecture.Configuration;
 
 public class Returns_
 {

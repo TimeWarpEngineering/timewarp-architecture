@@ -4,5 +4,6 @@
 
 namespace TimeWarp.Architecture.Features.Developer;
 
-[Page("/Developer/UserClaims")]
-partial class UserClaimsPage {}
+[Page("/Developer/UserClaims", Policy = Policies.CanViewUserClaimsPage)]
+[Authorize(Policy = Policies.CanViewUserClaimsPage)]
+partial class UserClaimsPage;

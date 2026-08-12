@@ -59,7 +59,7 @@ public class CreateRole_Response_Should
   public static Task Reject_EmptyGuid_During_Deserialization()
   {
     // The ctor Guard is the Response's invariant gate; deserialization must not bypass it.
-    string json = """{"roleId":"00000000-0000-0000-0000-000000000000"}""";
+    const string json = """{"roleId":"00000000-0000-0000-0000-000000000000"}""";
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<CreateRole.Response>(json, ContractSerialization.Options));
@@ -93,13 +93,13 @@ public class GetRole_Response_Should
 
   public static Task SerializeAndDeserialize_Via_Constructor()
   {
-    GetRole.Response response = new(RoleIds.Accountant, "Accountant", "Accounting module access.");
+    GetRole.Response response = new(RoleIds.Member, "Member", "Default passkey principal.");
 
     GetRole.Response parsed = ContractSerialization.RoundTrip(response);
 
-    parsed.RoleId.ShouldBe(RoleIds.Accountant);
-    parsed.Name.ShouldBe("Accountant");
-    parsed.Description.ShouldBe("Accounting module access.");
+    parsed.RoleId.ShouldBe(RoleIds.Member);
+    parsed.Name.ShouldBe("Member");
+    parsed.Description.ShouldBe("Default passkey principal.");
     return Task.CompletedTask;
   }
 }
@@ -113,19 +113,19 @@ public class GetRoles_Response_Should
   {
     GetRoles.RoleDto[] items =
     [
-      new(RoleIds.Administrator, "Administrator", "All modules."),
-      new(RoleIds.Accountant, "Accountant", "Accounting module.")
+      new(RoleIds.Administrator, "Administrator", "Tenant admin."),
+      new(RoleIds.Member, "Member", "Default passkey principal.")
     ];
-    GetRoles.Response response = new(totalCount: 7, items);
+    GetRoles.Response response = new(totalCount: 4, items);
 
     GetRoles.Response parsed = ContractSerialization.RoundTrip(response);
 
-    parsed.TotalCount.ShouldBe(7);
+    parsed.TotalCount.ShouldBe(4);
     parsed.Items.Length.ShouldBe(2);
     parsed.Items[0].RoleId.ShouldBe(RoleIds.Administrator);
     parsed.Items[0].Name.ShouldBe("Administrator");
-    parsed.Items[1].RoleId.ShouldBe(RoleIds.Accountant);
-    parsed.Items[1].Description.ShouldBe("Accounting module.");
+    parsed.Items[1].RoleId.ShouldBe(RoleIds.Member);
+    parsed.Items[1].Description.ShouldBe("Default passkey principal.");
     return Task.CompletedTask;
   }
 }

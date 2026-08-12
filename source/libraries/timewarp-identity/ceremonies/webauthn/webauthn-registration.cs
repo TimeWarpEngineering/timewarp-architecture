@@ -34,6 +34,8 @@
 // algorithms so the authenticator (not this server) picks; residentKey/userVerification "preferred"
 // favors discoverable credentials (sign-in without typing an identifier) without requiring a
 // platform authenticator; attestation is always "none" (see above).
+// hints: client-device then hybrid so create can offer phone/QR without authenticatorAttachment
+// "platform" (which would suppress hybrid — task 165 / 147-005).
 // Verify's check order is deliberate: parse clientDataJSON structurally first (type/challenge/
 // origin), THEN parse attestationObject/authenticatorData, THEN rpIdHash/flags, THEN the outer
 // credentialId parameter against authData's embedded credentialId, THEN import the COSE key. Every
@@ -72,6 +74,9 @@ public static class WebAuthnRegistration
         new { type = "public-key", alg = Rs256 }
       },
       authenticatorSelection = new { residentKey = "preferred", userVerification = "preferred" },
+      // Soft preference: this device first, then hybrid (nearby phone / QR). Do NOT set
+      // authenticatorAttachment — that would hard-exclude the other attachment class.
+      hints = new[] { "client-device", "hybrid" },
       attestation = "none",
       timeout = 60_000
     };
@@ -137,7 +142,9 @@ public static class WebAuthnRegistration
 
       // Import-validated only (proves the key material is well-formed for its curve/modulus) — no
       // attestation signature is checked; see the CENTRAL DECISION Design region above.
-      return WebAuthnRegistrationResult.Success(credentialId, authData.CosePublicKey);
+      // AAGUID is returned so hosts can map to provider display names (Proton Pass, 1Password, …)
+      // via PasskeyProviderNames — passkeys.io-style Settings labels (task 168).
+      return WebAuthnRegistrationResult.Success(credentialId, authData.CosePublicKey, authData.Aaguid);
     }
     finally
     {

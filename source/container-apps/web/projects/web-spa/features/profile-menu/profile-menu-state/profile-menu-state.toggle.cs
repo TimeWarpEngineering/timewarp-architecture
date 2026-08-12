@@ -15,7 +15,7 @@ partial class ProfileMenuState
 {
   public static class ToggleActionSet
   {
-    internal class Action : IBaseAction { }
+    internal class Action : IBaseAction;
 
     internal class Handler
     (

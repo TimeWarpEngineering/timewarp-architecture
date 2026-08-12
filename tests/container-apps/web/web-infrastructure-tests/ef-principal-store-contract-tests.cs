@@ -63,7 +63,7 @@ file sealed class EfPrincipalStoreFactory : IPrincipalStoreFactory
       .UseNpgsql(connectionString)
       .Options;
     PostgresDbContext db = new(options);
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
     return new EfPrincipalStore(db);
   }
 
@@ -163,6 +163,10 @@ public class Principals
   public static Task Duplicate_principal_id_fails() => new Suite().Duplicate_principal_id_fails();
   public static Task Update_persists_display_name_and_tier() => new Suite().Update_persists_display_name_and_tier();
   public static Task Update_missing_principal_fails() => new Suite().Update_missing_principal_fails();
+  public static Task List_principals_returns_snapshots_ordered_by_created_at() =>
+    new Suite().List_principals_returns_snapshots_ordered_by_created_at();
+  public static Task List_principals_empty_store_returns_empty() =>
+    new Suite().List_principals_empty_store_returns_empty();
 }
 
 public class Credentials

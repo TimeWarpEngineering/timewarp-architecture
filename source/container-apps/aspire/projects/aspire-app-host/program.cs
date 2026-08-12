@@ -11,6 +11,25 @@
 // Only Web.Server references Postgres; Api.Server intentionally does not — so Postgres is declared INSIDE the web
 // preprocessor block (the postgres directive nested within the web one), not gated on postgres alone: with web
 // excluded it would otherwise be an unreferenced orphan container in the postgres-without-web combination.
+// Schema evolution (task 147-007, amended task 155): committed EF migrations under
+// platform/postgres/migrations/. Migrations are explicit/on-demand in every environment: production
+// applies them from the published PublishAsMigrationScript/PublishAsMigrationBundle pipeline
+// artifacts (never AppHost auto-run); local/Aspire dev gets RunDatabaseUpdateOnStart as an
+// out-of-box convenience (idempotent — cheap no-op on an already-current schema) plus the
+// ef-database-update dashboard command on the web-migrations resource for an explicit re-run.
+// web-server does not Migrate/EnsureCreated at startup, and — as of task 155 — has NO wait edge on
+// web-migrations at all (no WaitFor, no WaitForCompletion). Both wait forms were tried and both
+// broke: WaitFor deadlocks any dashboard restart/rebuild of web-server after the first run because
+// run-mode DefaultWaitBehavior only continues past Running, a state the once-run migration resource
+// never re-enters (Finished is terminal, not Running); WaitForCompletion is satisfied by that same
+// terminal Finished snapshot (so restarts do resolve) but reproducibly breaks DCP service-producer
+// endpoint creation for the same-project web-server resource under Aspire.Hosting.Testing (verified
+// 2026-08-05, Aspire.Hosting.EntityFrameworkCore 13.4.6-preview.1.26319.6; exact error: "Could not
+// create Endpoint object(s): information about the port to expose the service is missing;
+// service-producer annotation is invalid"). Removing the wait edge accepts a brief first-boot
+// window on a truly fresh volume where web-server may serve before RunDatabaseUpdateOnStart
+// finishes (DB-backed pages error for a few seconds), in exchange for restart never deadlocking and
+// Aspire.Hosting.Testing suites staying green.
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
 // YARP literal /api routes owned by Web.Server beat the Api.Server catch-all by route precedence, not declaration order.
 // The Web.Server /api carve-outs are GENERATED, not hand-maintained (task 107): IngressRoutePrefixGenerator emits
@@ -20,6 +39,9 @@
 // no edit here, and a contract that stops being hosted (ClientOnlyContract) drops out automatically — the drift that
 // shipped /api/identity and /api/Roles unreachable (104-003) is now impossible. TWA0017/TWA0018 fail the build on a
 // prefix that would shadow another server's route space or that cannot be collapsed to a top-level segment.
+// Task 104-020: exact /api and /api/ are hand-pinned to Web.Server for the tip discovery alias (web rewrites bare
+// /api → /api/tip). Bare `api` cannot be a generated prefix (TWA0018); only the exact paths are pinned so
+// /api/{**catch-all} still reaches Api.Server for non-web segments.
 // Historical note: /api/signin-token was retired as a hosted endpoint (task 110 review M1) and so is absent from the
 // generated set by construction, not by a hand-removed line.
 // Ingress:Port (https) / Ingress:HttpPort (http) pin the YARP host ports so external clients, E2E
@@ -67,11 +89,15 @@ internal class Program
     IResourceBuilder<ProjectResource> webServer = builder.AddProject<Projects.web_server>(WebServerProjectResourceName, options => options.LaunchProfileName = "Web.Server")
       .WithExternalHttpEndpoints();
 
-    // Task 145-009: ensure Authentication:UseMock reaches Web.Server under local/closed-box
-    // AppHost runs (DCP may not always surface appsettings.Development). Fail-closed: only when
-    // the AppHost environment itself is Development or Testing — Production AppHost never sets it.
-    if (string.Equals(builder.Environment.EnvironmentName, "Development", StringComparison.OrdinalIgnoreCase)
-      || string.Equals(builder.Environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
+    // Task 145-009 / dogfood: mock auth is OPT-IN only. Do not force Authentication:UseMock=true
+    // for every Development AppHost run — that overrode appsettings (false) and turned on SPA/BFF
+    // mock auth for local passkey dogfood. Forward the flag only when AppHost configuration
+    // explicitly sets Authentication:UseMock (e.g. aspire-tests: --Authentication:UseMock=true).
+    // Production never needs this injection; env vars still cannot enable mock outside
+    // Development/Testing (handler/registration fail-closed gates).
+    string? useMock = builder.Configuration["Authentication:UseMock"];
+    if (string.Equals(useMock, "true", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(useMock, "1", StringComparison.OrdinalIgnoreCase))
     {
       webServer = webServer.WithEnvironment("Authentication__UseMock", "true");
     }
@@ -108,6 +134,29 @@ internal class Program
 
     IResourceBuilder<PostgresDatabaseResource> postgresDb = postgres.AddDatabase(PostgresDatabaseResourceName);
     webServer = webServer.WithReference(postgresDb).WaitFor(postgresDb);
+
+    // Task 147-007: first-class EF migrations resource (aspire.dev AddEFMigrations).
+    // Migrations live in web-infrastructure (not an AppHost project resource — path form; typed
+    // Projects.* is only generated for Aspire project resources).
+    string webInfrastructureProject = Path.GetFullPath(
+      Path.Combine(builder.AppHostDirectory, "../../../web/projects/web-infrastructure/web-infrastructure.csproj"));
+    webServer
+      .AddEFMigrations(WebMigrationsResourceName, "TimeWarp.Architecture.Persistence.PostgresDbContext")
+      .WithMigrationsProject(webInfrastructureProject)
+      .WithMigrationOutputDirectory("../../platform/postgres/migrations")
+      .WithMigrationNamespace("TimeWarp.Architecture.Persistence.Migrations")
+      .WithReference(postgresDb)
+      .WaitFor(postgresDb)
+      .RunDatabaseUpdateOnStart()
+      .PublishAsMigrationScript()
+      .PublishAsMigrationBundle();
+    // Task 155: no wait edge between web-server and web-migrations. Without a wait edge, a
+    // dashboard restart/rebuild of web-server can never deadlock on the migration resource's
+    // terminal Finished snapshot — the resource is simply irrelevant to web-server's start path
+    // after the first run. Accepted tradeoff: on a truly fresh volume there is a brief first-boot
+    // window where web-server may start serving before RunDatabaseUpdateOnStart finishes, so
+    // DB-backed pages can error for a few seconds until the migration completes. Re-run on demand
+    // via the ef-database-update dashboard command on the web-migrations resource.
 #endif
     // Self-reference for the web server
     webServer.WithReference(webServer);
@@ -175,6 +224,12 @@ internal class Program
       {
         yarpConfiguration.AddRoute($"/{apiPrefix}/{{**catch-all}}", webServerHttp).WithTransformUseOriginalHostHeader(true);
       }
+
+      // Tip discovery alias (104-020): exact bare /api → web so UseTipDiscoveryAlias can rewrite
+      // to /api/tip. Without this, /api hits the Api.Server catch-all above. Not generated
+      // (TWA0018 forbids bare `api` as a contracts prefix).
+      yarpConfiguration.AddRoute("/api", webServerHttp).WithTransformUseOriginalHostHeader(true);
+      yarpConfiguration.AddRoute("/api/", webServerHttp).WithTransformUseOriginalHostHeader(true);
 
 #endif
 #if grpc

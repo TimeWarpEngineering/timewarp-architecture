@@ -8,7 +8,8 @@
 // product infrastructure layer — not hand-registered next to PostgresDbContext.
 // Schema-per-slice on a single PostgresDbContext: table and PostgreSQL schema are both "profiles"
 // (parent 113 decision: one context, slice schemas via ToTable schema, until a second module needs
-// its own DbContext). EnsureCreated (startup hosted service) materializes this schema.
+// its own DbContext). Schema lands via EF migrations under platform/postgres/migrations/
+// (MigrateAsync at host startup, task 147-007).
 // TypedId: ProfileId stores as Guid via explicit conversion (Id is get-only; EF binds it through the
 // private constructor parameter). Host also calls ConfigureTypedIdConventions so other TypedIds in
 // the model convert the same way without per-property ceremony.

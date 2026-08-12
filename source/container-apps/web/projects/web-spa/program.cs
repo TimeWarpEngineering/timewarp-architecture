@@ -4,12 +4,15 @@
 
 #region Design
 // ConfigureServices is public static so integration tests and Web.Server prerender compose the
-// same container as the app. Auth is runtime-config-gated (task 145-009): Development/Testing +
-// Authentication:UseMock → MockAuthenticationRegistration; otherwise MSAL/AzureAdB2C (104-021
-// keeps Entra non-default). Fail-closed: Production never activates mock even when the flag is
-// true. optional MOCK_WEB_API still compile-time for offline SPA API fakes. Template symbols
-// (api, grpc) trim optional services. API services use explicit factories so DI does not guess
-// constructors. Default culture is forced to ISO date patterns for deterministic rendering.
+// same container as the app. Auth is runtime-config-gated (tasks 145-009 + 104-021):
+//   1. Development/Testing + Authentication:UseMock → MockAuthenticationRegistration
+//   2. else Authentication:UseEntra → MSAL / AzureAdB2C (opt-in enterprise path)
+//   3. else IdentitySessionAuthenticationRegistration (passkey cookie via GetCurrentSession)
+// Fail-closed: Production never activates mock even when UseMock is true. UseEntra defaults false
+// so the non-mock happy path does not require Entra. optional MOCK_WEB_API still compile-time for
+// offline SPA API fakes. Template symbols (api, grpc) trim optional services. API services use
+// explicit factories so DI does not guess constructors. Default culture is forced to ISO date
+// patterns for deterministic rendering.
 //
 // Task 145-009 R2-1 fix: ConfigureServices takes environmentName as a REQUIRED explicit
 // parameter — there is deliberately no config-derived overload. An earlier 2-arg overload used to
@@ -20,6 +23,9 @@
 // environment: this file's own Main passes builder.HostEnvironment.Environment (WASM host); Web.Server
 // resolves the true IHostEnvironment (never IConfiguration) and passes it in explicitly — see
 // Web.Server.Program's ConfigureServices Design region.
+//
+// No new template.json feature flag for identity/x402 (they ship with the template); Entra is a
+// runtime config switch, not a compile-time DefineConstants symbol (avoids TWA0008/0010 dual paths).
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa;
@@ -61,7 +67,7 @@ public class Program
   /// <summary>
   /// Compose SPA services. <paramref name="environmentName"/> drives the fail-closed mock-auth
   /// gate (Development/Testing + Authentication:UseMock) and MUST be the caller's real
-  /// <see cref="IHostEnvironment.EnvironmentName"/> (or WebAssembly HostEnvironment.Environment) —
+  /// <see cref="IHostEnvironment"/> EnvironmentName (or WebAssembly HostEnvironment.Environment) —
   /// never a value read back out of <paramref name="configuration"/> (task 145-009 R2-1: a
   /// config-derived environment can diverge from the real host environment and was a fail-open
   /// bug). Unknown/absent (null/empty) is fail-closed — mock auth is never activated.
@@ -75,14 +81,22 @@ public class Program
   {
     if (!MockAuthenticationRegistration.TryAddSpaMockAuthentication(serviceCollection, configuration, environmentName))
     {
-      serviceCollection.AddMsalAuthentication
-      (
-        options =>
-        {
-          configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-          options.ProviderOptions.LoginMode = "Redirect";
-        }
-      ).AddAccountClaimsPrincipalFactory<AccountClaimsPrincipalFactoryWithRoles>();
+      if (MockAuthenticationDefaults.IsEntraAuthActive(configuration[MockAuthenticationDefaults.UseEntraKey]))
+      {
+        serviceCollection.AddMsalAuthentication
+        (
+          options =>
+          {
+            configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
+            options.ProviderOptions.LoginMode = "Redirect";
+          }
+        ).AddAccountClaimsPrincipalFactory<AccountClaimsPrincipalFactoryWithRoles>();
+      }
+      else
+      {
+        // Default non-mock path: first-party passkey identity-session (no Entra).
+        IdentitySessionAuthenticationRegistration.AddSpaIdentitySessionAuthentication(serviceCollection);
+      }
     }
 
     // Add authorization services
@@ -97,11 +111,11 @@ public class Program
     (
       timeWarpStateOptions =>
       {
-        //-:cnd:noEmit
+//-:cnd:noEmit
 #if ReduxDevToolsEnabled
         timeWarpStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
 #endif
-        //+:cnd:noEmit
+//+:cnd:noEmit
 
         timeWarpStateOptions.Assemblies =
           new[]
@@ -118,7 +132,7 @@ public class Program
     // DI registration is required here. (Replaced the deprecated Blazored / unwired Morris path.)
 
     serviceCollection.AddScoped<ChatHubConnection>();
-    serviceCollection.AddScoped<PasswordlessService>();
+    serviceCollection.AddScoped<PasskeyCeremonyClient>();
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
 
@@ -169,10 +183,6 @@ public class Program
   {
     serviceCollection
       .AddFluentValidatedOptions<BlazorSettings, BlazorSettingsValidator>(configuration)
-      .ValidateOnStart();
-
-    serviceCollection
-      .AddFluentValidatedOptions<PasswordlessOptions, PasswordlessOptionsValidator>(configuration)
       .ValidateOnStart();
   }
 }

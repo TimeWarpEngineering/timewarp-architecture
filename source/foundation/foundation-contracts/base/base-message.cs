@@ -7,4 +7,4 @@ namespace TimeWarp.Foundation.Features;
 /// <summary>
 /// Utlimate Base Class for Requests and Responses
 /// </summary>
-public abstract class BaseMessage { }
+public abstract class BaseMessage;

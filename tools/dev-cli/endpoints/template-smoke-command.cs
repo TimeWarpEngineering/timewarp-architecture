@@ -35,7 +35,7 @@
 namespace DevCli.Commands;
 
 [NuruRoute("template-smoke", Description = "Pack/install template and smoke-build generated apps (defaults + --postgres false)")]
-internal sealed class TemplateSmokeCommand : ICommand<Unit>
+internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
 {
   private const string TemplateProject =
     "timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj";
@@ -66,6 +66,8 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     // floor (>= the published version) collides with the 2.0.0-smoke pins → NU1603 under
     // -warnaserror.
     "source/libraries/timewarp-identity/timewarp-identity.csproj",
+    // TimeWarp.402 (task 104-007): same dual-mode exclude as identity; pack when apps reference it.
+    "source/libraries/timewarp-402/timewarp-402.csproj",
   ];
 
   // ExcludedFamilies drives flag-off assertions in the co-located-test tiers: for a family
@@ -85,14 +87,22 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     "identityPackages",
   ];
 
+  [GeneratedRegex(@"""UseMock""\s*:\s*true", RegexOptions.IgnoreCase)]
+  private static partial Regex UseMockTrueInJson();
+
+  [GeneratedRegex(@"DefineConstants[^>]*MOCK_AUTHENTICATION", RegexOptions.IgnoreCase)]
+  private static partial Regex MockAuthenticationInDefineConstants();
+
   private static readonly string[] VendoredPlatformRelativeTrees =
   [
     "source/foundation",
     "source/libraries/timewarp-modules",
     "source/libraries/timewarp-identity",
+    "source/libraries/timewarp-402",
     "source/analyzers",
     "tests/foundation",
     "tests/libraries/timewarp-identity-tests",
+    "tests/libraries/timewarp-402-tests",
     "tests/analyzers",
   ];
 
@@ -185,7 +195,34 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
         }
       }
 
+      PurgeStaleSmokeCacheEntries();
       return true;
+    }
+
+    /// <summary>
+    /// The constant 2.0.0-smoke version defends against nuget.org shadowing but NOT against
+    /// previous smoke runs: once NuGet's global cache extracts a 2.0.0-smoke package, every
+    /// later restore reuses it, so local smoke silently tests stale platform bits (observed:
+    /// a week-old TimeWarp.Identity without ListPrincipalsAsync — task 104-035). Evict the
+    /// smoke-version cache folder for every id just packed so restore re-extracts this run's
+    /// bits. CI is unaffected (cold caches); this makes local runs equally trustworthy.
+    /// </summary>
+    private void PurgeStaleSmokeCacheEntries()
+    {
+      string globalPackages = Environment.GetEnvironmentVariable("NUGET_PACKAGES")
+        ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
+
+      string suffix = $".{SmokePackageVersion}.nupkg";
+      foreach (string nupkg in Directory.GetFiles(PackagesDir, $"*{suffix}"))
+      {
+        string packageId = Path.GetFileName(nupkg)[..^suffix.Length];
+        string cached = Path.Combine(globalPackages, packageId.ToLowerInvariant(), SmokePackageVersion);
+        if (Directory.Exists(cached))
+        {
+          Directory.Delete(cached, recursive: true);
+          Terminal.WriteLine($"  evicted stale cache: {packageId}/{SmokePackageVersion}");
+        }
+      }
     }
 
     private async Task<bool> PackTemplateAsync()
@@ -335,6 +372,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
               <package pattern="TimeWarp.Foundation.*" />
               <package pattern="TimeWarp.Modules" />
               <package pattern="TimeWarp.Identity" />
+              <package pattern="TimeWarp.402" />
             </packageSource>
             <packageSource key="nuget.org">
               <package pattern="*" />
@@ -444,12 +482,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       {
         string text = File.ReadAllText(productionAppsettings);
         // Coarse but sufficient: Production must not enable the mock flag.
-        if (System.Text.RegularExpressions.Regex.IsMatch
-          (
-            text,
-            @"""UseMock""\s*:\s*true",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase
-          ))
+        if (UseMockTrueInJson().IsMatch(text))
         {
           failures.Add("web-server appsettings.Production.json sets Authentication UseMock true");
         }
@@ -484,12 +517,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       {
         string spaText = File.ReadAllText(spaCsproj);
         // Only fail on an active DefineConstants entry — comments may still name the old symbol.
-        if (System.Text.RegularExpressions.Regex.IsMatch
-          (
-            spaText,
-            @"DefineConstants[^>]*MOCK_AUTHENTICATION",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase
-          ))
+        if (MockAuthenticationInDefineConstants().IsMatch(spaText))
         {
           failures.Add("web-spa.csproj still defines MOCK_AUTHENTICATION (should be runtime-gated only)");
         }

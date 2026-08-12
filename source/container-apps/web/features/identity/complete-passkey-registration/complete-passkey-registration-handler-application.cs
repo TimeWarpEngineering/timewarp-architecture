@@ -91,7 +91,14 @@ public sealed partial class CompletePasskeyRegistration
       var principal = Principal.Create(PrincipalKind.Human);
       await PrincipalStore.AddPrincipalAsync(principal, cancellationToken);
 
-      var credential = Credential.Create(principal.Id, CredentialType.Passkey, materials.CredentialId, materials.CosePublicKey);
+      // Label from AAGUID → provider map (task 168) so Settings shows "Proton Pass" / "1Password"
+      // like passkeys.io — not a free-form user name.
+      var credential = Credential.Create(
+        principal.Id,
+        CredentialType.Passkey,
+        materials.CredentialId,
+        materials.CosePublicKey,
+        materials.ProviderLabel);
       try
       {
         await PrincipalStore.AddCredentialAsync(credential, cancellationToken);

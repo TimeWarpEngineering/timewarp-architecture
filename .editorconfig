@@ -41,6 +41,11 @@ dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = false
 file_header_template = unset
 
+# Style severity policy (task 172): no "suggestion" noise.
+# - warning / error — we enforce (TreatWarningsAsErrors)
+# - silent / none — preference recorded or off; not agent/CI noise
+# Soft expression taste that is not a house gate stays silent until deliberately promoted.
+
 # this. and Me. preferences
 dotnet_style_qualification_for_event = false:silent
 dotnet_style_qualification_for_field = false:silent
@@ -48,8 +53,8 @@ dotnet_style_qualification_for_method = false:silent
 dotnet_style_qualification_for_property = false:silent
 
 # Language keywords vs BCL types preferences
-dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
-dotnet_style_predefined_type_for_member_access = true:suggestion
+dotnet_style_predefined_type_for_locals_parameters_members = true:warning
+dotnet_style_predefined_type_for_member_access = true:warning
 
 # Parentheses preferences
 dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:silent
@@ -60,35 +65,36 @@ dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:sil
 # Modifier preferences
 dotnet_style_require_accessibility_modifiers = for_non_interface_members:silent
 
-# Expression-level preferences
-csharp_style_deconstructed_variable_declaration = true:suggestion
-csharp_style_inlined_variable_declaration = true:suggestion
-csharp_style_throw_expression = true:suggestion
-dotnet_style_coalesce_expression = true:suggestion
-dotnet_style_collection_initializer = true:suggestion
-dotnet_style_explicit_tuple_names = true:suggestion
+# Expression-level preferences — silent until a dedicated format/fix pass promotes them
+csharp_style_deconstructed_variable_declaration = true:silent
+csharp_style_inlined_variable_declaration = true:silent
+csharp_style_throw_expression = true:silent
+dotnet_style_coalesce_expression = true:silent
+dotnet_style_collection_initializer = true:silent
+dotnet_style_explicit_tuple_names = true:silent
 dotnet_style_namespace_match_folder = false
-dotnet_style_null_propagation = true:suggestion
-dotnet_style_object_initializer = true:suggestion
+dotnet_style_null_propagation = true:silent
+dotnet_style_object_initializer = true:silent
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
-dotnet_style_prefer_auto_properties = true:suggestion
-dotnet_style_prefer_collection_expression = true:suggestion
+dotnet_style_prefer_auto_properties = true:silent
+dotnet_style_prefer_collection_expression = true:silent
 # dotnet_style_prefer_collection_expression = when_types_loosely_match # dotnet 9
-dotnet_style_prefer_compound_assignment = true:suggestion
+dotnet_style_prefer_compound_assignment = true:silent
 dotnet_style_prefer_conditional_expression_over_assignment = true:silent
 dotnet_style_prefer_conditional_expression_over_return = true:silent
 dotnet_style_prefer_foreach_explicit_cast_in_source = when_strongly_typed
-dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
-dotnet_style_prefer_inferred_tuple_names = true:suggestion
-dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
-dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
-dotnet_style_prefer_simplified_interpolation = true:suggestion
+dotnet_style_prefer_inferred_anonymous_type_member_names = true:silent
+dotnet_style_prefer_inferred_tuple_names = true:silent
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:silent
+dotnet_style_prefer_simplified_boolean_expressions = true:silent
+dotnet_style_prefer_simplified_interpolation = true:silent
 
 # Field preferences
-dotnet_style_readonly_field = true:suggestion
+dotnet_style_readonly_field = true:warning
 
-# Parameter preferences
-dotnet_code_quality_unused_parameters = all:suggestion
+# Parameter preferences — silent: module/registration signatures often keep unused
+# interface-shaped parameters (IDE0060 flood). Revisit when patterns use discards. Task 172.
+dotnet_code_quality_unused_parameters = all:silent
 
 # Suppression preferences
 dotnet_remove_unnecessary_suppression_exclusions = none
@@ -108,52 +114,52 @@ csharp_style_var_when_type_is_apparent = true:warning
 csharp_style_expression_bodied_accessors = when_on_single_line:warning
 csharp_style_expression_bodied_constructors = false:warning
 csharp_style_expression_bodied_indexers = when_on_single_line:warning
-csharp_style_expression_bodied_lambdas = true:suggestion
-csharp_style_expression_bodied_local_functions = false:suggestion
+csharp_style_expression_bodied_lambdas = true:silent
+csharp_style_expression_bodied_local_functions = false:silent
 csharp_style_expression_bodied_methods = false:none
 csharp_style_expression_bodied_operators = when_on_single_line:warning
 csharp_style_expression_bodied_properties = when_on_single_line:warning
 
 # Pattern Matching
-csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
-csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:silent
+csharp_style_pattern_matching_over_is_with_cast_check = true:silent
 csharp_style_prefer_extended_property_pattern = true
 csharp_style_prefer_not_pattern = true
 csharp_style_prefer_pattern_matching = true
 csharp_style_prefer_switch_expression = true
 
 # "Null" checking preferences
-csharp_style_conditional_delegate_call = true:suggestion
+csharp_style_conditional_delegate_call = true:silent
 
 # Modifier preferences
-csharp_prefer_static_local_function = true:suggestion
-csharp_preferred_modifier_order = public, private, protected, internal, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, volatile, async:suggestion
+csharp_prefer_static_local_function = true:silent
+csharp_preferred_modifier_order = public, private, protected, internal, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, volatile, async:silent
 csharp_style_prefer_readonly_struct = true
 csharp_style_prefer_readonly_struct_member = true
 
 # Code-block preferences
 csharp_prefer_braces = when_multiline:warning
-csharp_prefer_simple_using_statement = true:suggestion
+csharp_prefer_simple_using_statement = true:silent
 csharp_style_namespace_declarations = file_scoped:error
 csharp_style_prefer_method_group_conversion = true
-csharp_style_prefer_primary_constructors = false
+# Prefer classic constructors — primary constructors cause problems (partials, generators, DI/test doubles).
+csharp_style_prefer_primary_constructors = false:none
 csharp_style_prefer_top_level_statements = false
 
 # Expression-level preferences
-csharp_prefer_simple_default_expression = true
-csharp_prefer_simple_default_expression = true:suggestion
-csharp_style_deconstructed_variable_declaration = true
+csharp_prefer_simple_default_expression = true:silent
+csharp_style_deconstructed_variable_declaration = true:silent
 csharp_style_implicit_object_creation_when_type_is_apparent = true
-csharp_style_inlined_variable_declaration = true
-csharp_style_pattern_local_over_anonymous_function = true:suggestion
-csharp_style_prefer_index_operator = true:suggestion
+csharp_style_inlined_variable_declaration = true:silent
+csharp_style_pattern_local_over_anonymous_function = true:silent
+csharp_style_prefer_index_operator = true:silent
 csharp_style_prefer_local_over_anonymous_function = true
 csharp_style_prefer_null_check_over_type_check = true
-csharp_style_prefer_range_operator = true:suggestion
+csharp_style_prefer_range_operator = true:silent
 csharp_style_prefer_tuple_swap = true
 csharp_style_prefer_utf8_string_literals = true
-csharp_style_throw_expression = true
-csharp_style_unused_value_assignment_preference = discard_variable:suggestion
+csharp_style_throw_expression = true:silent
+csharp_style_unused_value_assignment_preference = discard_variable:silent
 csharp_style_unused_value_expression_statement_preference = discard_variable:silent
 
 # 'using' directive preferences
@@ -210,8 +216,9 @@ csharp_preserve_single_line_statements = true
 
 # Naming rules
 
+# Naming — house style; warning so builds catch drift (task 172).
 # Interfaces should begin with an I and be PascalCase
-dotnet_naming_rule.interface_should_be_begins_with_i.severity = suggestion
+dotnet_naming_rule.interface_should_be_begins_with_i.severity = warning
 dotnet_naming_rule.interface_should_be_begins_with_i.symbols = interface
 dotnet_naming_rule.interface_should_be_begins_with_i.style = interface_style
 
@@ -225,7 +232,7 @@ dotnet_naming_style.interface_style.word_separator =
 dotnet_naming_style.interface_style.capitalization = pascal_case
 
 # Types should be PascalCase
-dotnet_naming_rule.types_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.types_should_be_pascal_case.severity = warning
 dotnet_naming_rule.types_should_be_pascal_case.symbols = types
 dotnet_naming_rule.types_should_be_pascal_case.style = types_style
 
@@ -236,7 +243,7 @@ dotnet_naming_symbols.types.required_modifiers =
 dotnet_naming_style.types_style.capitalization = pascal_case
 
 # Non-private static fields are PascalCase
-dotnet_naming_rule.non_private_static_fields_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.non_private_static_fields_should_be_pascal_case.severity = warning
 dotnet_naming_rule.non_private_static_fields_should_be_pascal_case.symbols = non_private_static_fields
 dotnet_naming_rule.non_private_static_fields_should_be_pascal_case.style = non_private_static_field_style
 
@@ -246,28 +253,27 @@ dotnet_naming_symbols.non_private_static_fields.required_modifiers = static
 
 dotnet_naming_style.non_private_static_field_style.capitalization = pascal_case
 
-# Constants are PascalCase
-dotnet_naming_rule.constants_should_be_pascal_case.severity = suggestion
-dotnet_naming_rule.constants_should_be_pascal_case.symbols = constants
-dotnet_naming_rule.constants_should_be_pascal_case.style = constant_style
+# Scope-based naming: method scope → camelCase; type members → PascalCase.
+# Field const needs its own symbol set: the engine keys const on "const", not "static",
+# so the static-fields rule does not cover const fields. Local const is just a local
+# (camelCase rule below) — no separate local-const rule.
+dotnet_naming_rule.constant_fields_should_be_pascal_case.severity = warning
+dotnet_naming_rule.constant_fields_should_be_pascal_case.symbols = constant_fields
+dotnet_naming_rule.constant_fields_should_be_pascal_case.style = type_member_style
 
-dotnet_naming_symbols.constants.applicable_kinds = field, local
-dotnet_naming_symbols.constants.required_modifiers = const
+dotnet_naming_symbols.constant_fields.applicable_kinds = field
+dotnet_naming_symbols.constant_fields.required_modifiers = const
 
-dotnet_naming_style.constant_style.capitalization = pascal_case
-
-# Static fields are PascalCase 
-dotnet_naming_rule.static_fields_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.static_fields_should_be_pascal_case.severity = warning
 dotnet_naming_rule.static_fields_should_be_pascal_case.symbols = static_fields
-dotnet_naming_rule.static_fields_should_be_pascal_case.style = static_field_style
+dotnet_naming_rule.static_fields_should_be_pascal_case.style = type_member_style
 
 dotnet_naming_symbols.static_fields.applicable_kinds = field
 dotnet_naming_symbols.static_fields.required_modifiers = static
 
-dotnet_naming_style.static_field_style.capitalization = pascal_case
+dotnet_naming_style.type_member_style.capitalization = pascal_case
 
-# local variables should be camelCase
-dotnet_naming_rule.camel_case_for_local_variables.severity = suggestion
+dotnet_naming_rule.camel_case_for_local_variables.severity = warning
 dotnet_naming_rule.camel_case_for_local_variables.symbols = local_variables
 dotnet_naming_rule.camel_case_for_local_variables.style = local_variables_style
 
@@ -276,7 +282,7 @@ dotnet_naming_symbols.local_variables.applicable_kinds = local
 dotnet_naming_style.local_variables_style.capitalization = camel_case
 
 # Local functions are PascalCase
-dotnet_naming_rule.local_functions_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.local_functions_should_be_pascal_case.severity = warning
 dotnet_naming_rule.local_functions_should_be_pascal_case.symbols = local_functions
 dotnet_naming_rule.local_functions_should_be_pascal_case.style = local_function_style
 
@@ -285,19 +291,104 @@ dotnet_naming_symbols.local_functions.applicable_kinds = local_function
 dotnet_naming_style.local_function_style.capitalization = pascal_case
 
 
-#### Analyizer settings ####
+#### Analyzer settings ####
 dotnet_code_quality.null_check_validation_methods = NotNull
 
 # CA1308: Normalize strings to uppercase
 dotnet_diagnostic.ca1308.severity = none
+
+# XML documentation analyzers (Roslynator + compiler) — template policy (task 177).
+# Agents rely on #region Purpose/Design, not hollow /// shells. CS1591 already NoWarn'd.
+# Completeness (add empty shells) + hollow tags (remove empty) stay OFF until a deliberate
+# pass either populates package public surface OR strips dead ///. Keep RCS1263: docs must
+# match the signature when /// is present.
+dotnet_diagnostic.RCS1138.severity = none
+dotnet_diagnostic.RCS1139.severity = none
+dotnet_diagnostic.RCS1140.severity = none
+dotnet_diagnostic.RCS1141.severity = none
+dotnet_diagnostic.RCS1142.severity = none
+dotnet_diagnostic.RCS1228.severity = none
+# RCS1189: name on #endregion — conflicts with bare #endregion after Purpose/Design.
+# RCS1181: convert // to /// — fights Purpose regions / hollow-doc policy (task 177).
+# RCS1043: remove partial from single-part types — template keeps partial for generators.
+dotnet_diagnostic.RCS1189.severity = none
+dotnet_diagnostic.RCS1181.severity = none
+dotnet_diagnostic.RCS1043.severity = none
+# RCS1168: param name differs from base (query/command vs request, ct vs cancellationToken, …).
+# House names are intentional (mediator query/command; FE/gRPC long names; BCL other/value). Task 172.
+dotnet_diagnostic.RCS1168.severity = none
+# RCS1263 invalid cref/param name — leave default (warning): phantom docs are bugs.
+
+# House gates after clean-up pass (task 172): warning + TreatWarningsAsErrors so regressions fail the build.
+# Defaults are often Info/Hidden and would not trip CI without this.
+dotnet_diagnostic.RCS1261.severity = warning  # use await using for IAsyncDisposable
+dotnet_diagnostic.RCS1251.severity = warning  # empty type declaration: use ; not { }
+dotnet_diagnostic.RCS1077.severity = warning  # optimize LINQ method call (e.g. Count→Sum, OrderBy→Order)
+dotnet_diagnostic.IDE1006.severity = warning  # naming rule violation (pairs with naming_style rules above)
+
+# Residual Roslynk Info cluster → warning so IDE/Error List shows locations (task 172).
+# ~80 sites at promote time; TreatWarningsAsErrors makes them build-breaking until fixed or re-silenced.
+dotnet_diagnostic.RCS1021.severity = warning  # expression-bodied lambda
+dotnet_diagnostic.RCS1037.severity = warning  # remove trailing white-space
+dotnet_diagnostic.RCS1049.severity = warning  # simplify boolean comparison
+dotnet_diagnostic.RCS1085.severity = warning  # use auto-implemented property
+# RCS1093 file contains no code — off. Layer global-usings.cs often ship as Purpose-only
+# shells (// global using xyz;) until a project gains real imports; that is intentional.
+dotnet_diagnostic.RCS1093.severity = none
+dotnet_diagnostic.RCS1104.severity = warning  # simplify conditional expression
+dotnet_diagnostic.RCS1110.severity = warning  # declare type inside namespace
+dotnet_diagnostic.RCS1118.severity = warning  # mark local variable as const
+dotnet_diagnostic.RCS1146.severity = warning  # use conditional access
+dotnet_diagnostic.RCS1163.severity = warning  # unused parameter
+dotnet_diagnostic.RCS1170.severity = warning  # use read-only auto-implemented property
+dotnet_diagnostic.RCS1190.severity = warning  # join string expressions
+dotnet_diagnostic.RCS1206.severity = warning  # conditional access instead of conditional expression
+dotnet_diagnostic.RCS1213.severity = warning  # remove unused member declaration
+dotnet_diagnostic.RCS1214.severity = warning  # unnecessary interpolated string
+dotnet_diagnostic.RCS1221.severity = warning  # use pattern matching instead of as+null check
+dotnet_diagnostic.RCS1226.severity = warning  # add paragraph to documentation comment
+dotnet_diagnostic.RCS1235.severity = warning  # optimize Add call
+dotnet_diagnostic.RCS1239.severity = warning  # use for instead of while
+dotnet_diagnostic.RCS1246.severity = warning  # use element access
+dotnet_diagnostic.RCS1249.severity = warning  # unnecessary null-forgiving operator
+dotnet_diagnostic.RCS9004.severity = warning  # call Any instead of Count
+# CA1860 is the opposite of RCS9004 (prefer Count/Length over Any on collections with Count).
+# Promoted so the conflict is visible after RCS9004 clean-up; decide house winner next.
+dotnet_diagnostic.CA1860.severity = warning  # prefer Count/Length/IsEmpty over Enumerable.Any()
+dotnet_diagnostic.IDE0090.severity = warning  # 'new' expression can be simplified
+dotnet_diagnostic.IDE0340.severity = warning  # use unbound generic type
+dotnet_diagnostic.SYSLIB1045.severity = warning  # use GeneratedRegexAttribute
+
+# IDE0005: Using directive is unnecessary.
+# Warning + TreatWarningsAsErrors; agents: Roslynk remove_unused_usings (apply_code_fix IDE0005 is unreliable). Task 170/172.
+dotnet_diagnostic.IDE0005.severity = warning
+
+# IDE0290 pairs with csharp_style_prefer_primary_constructors = false:none above.
+dotnet_diagnostic.IDE0290.severity = none
 
 # TimeWarp.SourceGenerators — kebab-case .cs basenames (TW* package family, not Architecture TWA*).
 # Package defaults to disabled/info; warning + TreatWarningsAsErrors makes this build-breaking.
 # Multi-dot partials (application-state.close-modal.cs) require SourceGenerators ≥ 1.0.0-beta.9.
 dotnet_diagnostic.TW0001.severity = warning
 
-# Global Usings Analyzer
+# TW0002: "XML documentation should be moved to a markdown file" (XmlDocsToMarkdownAnalyzer).
+# Off — with AI-assisted docs, the XML→markdown migration nag is no longer helpful. Task 171.
+dotnet_diagnostic.TW0002.severity = none
 
+# GlobalUsingsAnalyzer (NuGet GlobalUsingsAnalyzer 1.4.0) — restore task 172 (orphaned in task 041).
+# Move file-level usings into project global-usings.cs; used across nuru/tui/flexbox.
+# Must sit under [*.cs] (package README). Agents: prefer GlobalUsingsAnalyzer code fix / move into globals;
+# remove_unused_usings only for truly unused imports.
 dotnet_diagnostic.globalusingsanalyzer0001.filename = global-usings.cs
 dotnet_diagnostic.globalusingsanalyzer0002.enabled = true
 dotnet_diagnostic.globalusingsanalyzer0003.severity = warning
+
+# Task 147-007: EF Core scaffold output under platform/postgres/migrations/ — tooling-mandated
+# basenames (timestamp_Name.cs, *.Designer.cs, *ModelSnapshot.cs), not house kebab / Purpose regions.
+# generated_code=true skips TWA0004 (PurposeRegionAnalyzer uses GeneratedCodeAnalysisFlags.None).
+[source/container-apps/web/platform/postgres/migrations/**.cs]
+generated_code = true
+dotnet_diagnostic.TW0001.severity = none
+dotnet_diagnostic.TWA0004.severity = none
+dotnet_diagnostic.TWA0015.severity = none
+dotnet_diagnostic.TWA0016.severity = none

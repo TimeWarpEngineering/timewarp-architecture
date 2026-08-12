@@ -33,3 +33,30 @@
 ## Implementation Notes (optional)
 
 [Include notes while task is in progress]
+
+## Results (required before done)
+
+[What was implemented, files changed, key decisions, test outcomes]
+
+### How to validate (required before done)
+
+> SSOT: `tw-agent-collaboration` (Results-before-done). Without this subsection, do not
+> mark the task done.
+
+**Smoke** — 1–5 copy-paste commands and/or UI steps:
+
+```bash
+# e.g. ./bin/dev run && curl -si …
+```
+
+**Expect** — concrete outcomes (status codes, headers, UI copy, pack id):
+
+- …
+
+**Automated gate** (when tests exist):
+
+```bash
+# e.g. cd tests/… && dotnet test -c Release -- --filter-class …
+```
+
+**Depends on** / **Not in scope** (when relevant): env flags, live chain, hardware, etc.

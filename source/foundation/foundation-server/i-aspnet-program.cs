@@ -3,4 +3,4 @@
 #endregion
 
 namespace TimeWarp.Foundation;
-public interface IAspNetProgram : IAspNetModule { }
+public interface IAspNetProgram : IAspNetModule;

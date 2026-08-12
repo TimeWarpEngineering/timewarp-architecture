@@ -22,11 +22,14 @@ public class Should_Flag_Template_Conditional_Tokens
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Should_Flag_Template_Conditional_Tokens>();
 
-  // Composed so the raw sequences never appear in this file (see Design).
+  // Composed so the raw directive sequences never appear in this file (see Design).
+  // RCS1190 wants join — that would embed live template-conditional tokens here.
+#pragma warning disable RCS1190 // Join string expressions
   private const string If = "#" + "if";
   private const string Endif = "#" + "endif";
   private const string DisableLine = "//" + "-:cnd:noEmit";
   private const string EnableLine = "//" + "+:cnd:noEmit";
+#pragma warning restore RCS1190
 
   private static CSharpAnalyzerTest<TemplateConditionalTokenAnalyzer, RoslynTestVerifier> Test(string[] lines, params DiagnosticResult[] expected)
   {
@@ -113,7 +116,7 @@ public class Should_Flag_Template_Conditional_Tokens
     [
       $"{If} SOME_SYMBOL",
       "public class C6 { }",
-      $"{Endif}",
+      Endif,
       "public class C7 { }",
     ];
 

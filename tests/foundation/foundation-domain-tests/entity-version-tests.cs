@@ -19,7 +19,7 @@ public class Next
 
   public static Task Never_returns_the_original_value()
   {
-    long original = 7;
+    const long original = 7;
     EntityVersion.Next(original).ShouldNotBe(original);
     return Task.CompletedTask;
   }

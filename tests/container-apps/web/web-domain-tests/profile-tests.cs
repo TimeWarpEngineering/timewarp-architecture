@@ -70,6 +70,28 @@ public class Create
     Should.Throw<ArgumentOutOfRangeException>(() => Profile.Create(tooLongName, "en-US", "US", "dark"));
     return Task.CompletedTask;
   }
+
+  public static Task Create_with_fixed_id_Should_use_that_id()
+  {
+    // Task 148 D5: 1:1 principal key path for GetProfile create-if-missing.
+    ProfileId fixedId = ProfileId.From(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
+    Profile profile = Profile.Create(fixedId, "Member", "en-US", "US", "system");
+
+    profile.Id.ShouldBe(fixedId);
+    profile.DisplayName.ShouldBe("Member");
+    profile.Language.ShouldBe("en-US");
+    profile.Region.ShouldBe("US");
+    profile.Theme.ShouldBe("system");
+    profile.Notifications.ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task Create_with_empty_id_Should_throw()
+  {
+    Should.Throw<ArgumentException>(() =>
+      Profile.Create(default, "Member", "en-US", "US", "system"));
+    return Task.CompletedTask;
+  }
 }
 
 public class Rename

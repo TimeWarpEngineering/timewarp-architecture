@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Template host sitemap. Loc paths are root-relative so the same file works
+  on any deployment origin (resolve against the host that served this file).
+  Operators may rewrite locs to absolute https://your-origin/... for strict
+  sitemap validators if desired.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>/</loc>
+  </url>
+  <url>
+    <loc>/index.md</loc>
+  </url>
+  <url>
+    <loc>/llms.txt</loc>
+  </url>
+  <url>
+    <loc>/auth.md</loc>
+  </url>
+  <url>
+    <loc>/robots.txt</loc>
+  </url>
+  <url>
+    <loc>/Login</loc>
+  </url>
+  <url>
+    <loc>/Passkeys</loc>
+  </url>
+  <url>
+    <loc>/openapi/v1.json</loc>
+  </url>
+  <url>
+    <loc>/scalar/v1</loc>
+  </url>
+  <url>
+    <loc>/api/health</loc>
+  </url>
+  <!-- Paid tip action is not a content page; listed so scanners following the
+       sitemap can still discover the x402 path (canonical). Free docs: llms/auth. -->
+  <url>
+    <loc>/api/tip</loc>
+  </url>
+  <url>
+    <loc>/.well-known/mcp/server-card.json</loc>
+  </url>
+  <url>
+    <loc>/.well-known/mcp.json</loc>
+  </url>
+  <url>
+    <loc>/.well-known/agent-skills/index.json</loc>
+  </url>
+  <url>
+    <loc>/.well-known/agent-card.json</loc>
+  </url>
+  <url>
+    <loc>/.well-known/agent.json</loc>
+  </url>
+</urlset>

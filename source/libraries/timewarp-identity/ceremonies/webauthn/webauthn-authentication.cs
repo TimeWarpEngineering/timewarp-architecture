@@ -9,6 +9,8 @@
 // lets the user pick from any resident credential scoped to this RP ID rather than the server
 // pre-listing candidate credential ids (which would require knowing the user's identity before
 // authentication starts — exactly what a discoverable flow avoids).
+// hints: client-device then hybrid (WebAuthn Level 3 / Chrome 128+) so the modal can offer
+// "Passkeys from a nearby device" / phone QR without pinning authenticatorAttachment (task 165).
 // Verify is the only place in this library that performs an actual cryptographic signature check:
 // ECDsa.VerifyData(authenticatorData ‖ SHA-256(clientDataJSON), signature, SHA256,
 // DSASignatureFormat.Rfc3279DerSequence) for ES256 (WebAuthn ECDSA signatures are DER-encoded), or
@@ -38,6 +40,9 @@ public static class WebAuthnAuthentication
       rpId = rp.Id,
       allowCredentials = Array.Empty<object>(),
       userVerification = "preferred",
+      // Soft preference order: this device first, then cross-device hybrid (QR / nearby phone).
+      // Hints are not policy — browsers may ignore them (e.g. Windows system UI).
+      hints = new[] { "client-device", "hybrid" },
       timeout = 60_000
     };
 

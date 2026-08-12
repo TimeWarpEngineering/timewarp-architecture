@@ -57,10 +57,7 @@ internal sealed class IntegrationSoftwareAuthenticator
     69, 253, 96, 188, 107, 95, 64, 43, 163, 13
   ];
 
-  // Per-instance random (see Design region) — not the unit fixture's fixed constant.
-  private readonly byte[] InstanceCredentialId = RandomNumberGenerator.GetBytes(16);
-
-  public byte[] CredentialId => InstanceCredentialId;
+  public byte[] CredentialId { get; } = RandomNumberGenerator.GetBytes(16);
 
   public byte[] CosePublicKey => BuildEc2CoseKey(Es256X, Es256Y);
 

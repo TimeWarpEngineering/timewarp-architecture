@@ -3,9 +3,32 @@
 
 @code {
   public static string Title => "Profile";
-  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+  public static Icon? NavIcon => new Icons.Regular.Size20.Person();
 }
 
 <TimeWarpPage Title="Profile">
-  <Card>Profile — coming soon.</Card>
+  <div class="twe-stack">
+    <Card Title="Your profile">
+      @if (ProfileState.Alias is null)
+      {
+        <p><em>Loading…</em></p>
+      }
+      else
+      {
+        <div class="twe-stack">
+          <FluentAvatar
+            Image=@ProfileState.Avatar
+            Name=@ProfileState.Alias
+            Size="AvatarSize.Size56" />
+          <PropertyDisplay PropertyName="Display name" Value=@ProfileState.Alias />
+          <PropertyDisplay PropertyName="Language" Value=@ProfileState.Language />
+          <PropertyDisplay PropertyName="Region" Value=@ProfileState.Region />
+          <PropertyDisplay PropertyName="Theme" Value=@ProfileState.Theme />
+          <PropertyDisplay
+            PropertyName="Notifications"
+            Value=@(ProfileState.Notifications == true ? "On" : "Off") />
+        </div>
+      }
+    </Card>
+  </div>
 </TimeWarpPage>

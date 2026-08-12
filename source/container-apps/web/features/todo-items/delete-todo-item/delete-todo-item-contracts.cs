@@ -18,10 +18,10 @@ public sealed partial class DeleteTodoItem
     public Guid TodoItemId { get; set; }
 
     public HttpVerb GetHttpVerb() => HttpVerb.Delete;
-    public string GetRoute() => $"{Route}";
+    public string GetRoute() => Route;
   }
 
-  public class Response : BaseResponse { }
+  public class Response : BaseResponse;
 
   public sealed partial class Validator : AbstractValidator<Command>
   {

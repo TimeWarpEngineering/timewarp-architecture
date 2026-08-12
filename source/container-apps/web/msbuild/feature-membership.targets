@@ -34,12 +34,15 @@
     <ItemGroup>
       <FeatureTreeFile Include="$(WebFeatureTreeRoot)/**/*.cs" />
       <FeatureTreeFile Include="$(WebPlatformTreeRoot)/**/*.cs"
-                      Condition="Exists('$(WebPlatformTreeRoot)')" />
+                      Condition="Exists('$(WebPlatformTreeRoot)')"
+                      Exclude="$(WebPlatformTreeRoot)/postgres/migrations/**" />
     </ItemGroup>
 
     <!--
       Match via generated FeatureFilenameLayerSuffixRegex (SSOT).
       Unmatched files have no registered -{layer} suffix and would compile nowhere.
+      platform/postgres/migrations/** is excluded above: EF tooling owns those basenames
+      (timestamped migration, Designer companion, ModelSnapshot) — not the layer-suffix grammar.
     -->
     <ItemGroup>
       <_MatchedFeatureFile Include="@(FeatureTreeFile)"
@@ -58,4 +61,15 @@
       Text="Feature/platform file(s) match NO registered layer suffix and would compile into no project: @(UnmatchedFeatureFile->'%(Filename)%(Extension)', ', '). Rename to '&lt;name&gt;[-&lt;function&gt;]-&lt;layer&gt;.cs' with layer one of: @(FeatureFilenameGrammarLayer->'-%(Identity)', ', '). Registry: feature-filename-grammar.json. Trees: features/ and platform/." />
 
   </Target>
+
+  <!--
+    Task 147-007: EF Core migrations live under platform/postgres/migrations/ (concern-cohesive)
+    with tooling-mandated basenames that do not end in -infrastructure.cs. The layer Compile globs
+    in feature-filename-grammar.g.props therefore miss them — pull them into web-infrastructure
+    explicitly. Designer + snapshot companions share the same folder.
+  -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'web-infrastructure' and Exists('$(WebPlatformTreeRoot)/postgres/migrations')">
+    <Compile Include="$(WebPlatformTreeRoot)/postgres/migrations/**/*.cs"
+             Link="platform\postgres\migrations\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

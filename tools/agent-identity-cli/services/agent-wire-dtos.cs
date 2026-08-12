@@ -54,3 +54,11 @@ internal sealed class WhoAmIResponse
   public TrustTier TrustTier { get; set; }
   public List<string> Scopes { get; set; } = [];
 }
+
+/// <summary>Wire body for GET /api/demo/metered-capability (104-011 / 104-014).</summary>
+internal sealed class MeteredCapabilityWireResponse
+{
+  public string Message { get; set; } = string.Empty;
+  public decimal BalanceAfter { get; set; }
+  public string FundingSource { get; set; } = string.Empty;
+}

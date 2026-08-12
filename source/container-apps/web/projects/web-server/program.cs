@@ -13,9 +13,14 @@
 // through RunOaktonCommands to expose environment checks as CLI commands.
 // Web.Spa services are registered here too — prerendering runs SPA code on the server.
 // API surface is generated FastEndpoints from [ApiEndpoint] web-contracts (MVC BaseEndpoint
-// removed task 131 F-002). Pipeline order: UseRouting → UseAuthentication → UseAuthorization → UseAntiforgery
-// (Blazor) → UseFastEndpoints → UseScalarApiReference (MapOpenApi + Scalar UI; after FE so
-// endpoint metadata is registered). Auth before FE; no FE antiforgery for JSON APIs.
+// removed task 131 F-002). Pipeline order: UseMarkdownContentNegotiation (before UseRouting —
+// rewrites / → /index.md when Accept prefers text/markdown) → UseTipDiscoveryAlias (before
+// UseRouting — bare /api → /api/tip for x402 scanners, task 104-020) → UseRouting →
+// UseRateLimiter (task 104-015: path-classified GlobalLimiter for principal-register +
+// payment-challenge; after routing so rewrites are settled; edge/Cloudflare is outer ring
+// only — 104-023) → UseAuthentication → UseAuthorization → UseAntiforgery (Blazor) →
+// UseFastEndpoints → UseScalarApiReference (MapOpenApi + Scalar UI; after FE so endpoint
+// metadata is registered). Auth before FE; no FE antiforgery for JSON APIs.
 // IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
 // OpenAPI document: CommonServerModule.AddOpenApi (FastEndpoints.OpenApi, always-on Scalar on web).
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (identity/profile
@@ -25,11 +30,20 @@
 // the real environment via ResolveRealEnvironmentName instead of IConfiguration — see that
 // overload's own Design region for why (a Production-booted host must not activate mock auth from
 // config content alone).
+// Task 154: identity-session cookie OnRedirectToLogin is dual-mode — HTML/page deep links 302 to
+// /Login?returnUrl=…; /api challenges stay 401. Classification SSOT:
+// IdentitySessionCookieChallenge (platform/identity-host). Forbid always 403 (never Login).
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
 
-using TimeWarp.Foundation.Abstractions;
+using Microsoft.AspNetCore.Authentication;
+using TimeWarp.Architecture.Abuse;
+using TimeWarp.Architecture.AgentDiscovery;
+using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Admin.Principals;
+using TimeWarp.Architecture.Features.Profiles.Infrastructure;
+using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Common.Infrastructure;
 using Serilog;
 
@@ -141,16 +155,25 @@ public class Program : IAspNetProgram
           .RequireAuthenticatedUser()
           .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.IdentityRead)
       )
+      // Task 104-011: metered pay-for-capability demo (AgentScopes.DemoInvoke).
+      .AddPolicy
+      (
+        AgentTokenDefaults.DemoInvokePolicy,
+        policy => policy
+          .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
+          .RequireAuthenticatedUser()
+          .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.DemoInvoke)
+      )
       // Task 110: any signed-in identity-session cookie — see IdentitySessionDefaults.AuthenticatedPolicy's
       // Design region for why this is deliberately not an admin/role-based policy.
       // Round-1 review M4 (nit): this explicit AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
       // restriction is WHY roles endpoints get a clean 401 for an unauthenticated request. A bare
       // fail-closed [ApiEndpoint] with no marker at all (only reachable if TWA0013 is suppressed) has
       // no policy to restrict the scheme — it falls through to ASP.NET Core's DEFAULT authentication
-      // scheme, which here is the dormant AddMicrosoftIdentityWebAppAuthentication registration (see
-      // ConfigureAuthentication below), and that challenges with a redirect/500, not a clean 401. Deny
-      // still holds either way; the clean-401 property specifically belongs to an explicit
-      // scheme-restricted policy like this one, not to the bare fail-closed default.
+      // scheme (identity-session when UseEntra is false; Entra when UseEntra is true — task 104-021).
+      // Entra challenges with redirect/500; identity-session cookie events return 401/403. Deny still
+      // holds either way; the clean-401 property specifically belongs to an explicit scheme-restricted
+      // policy like this one, not to the bare fail-closed default.
       .AddPolicy
       (
         IdentitySessionDefaults.AuthenticatedPolicy,
@@ -171,16 +194,31 @@ public class Program : IAspNetProgram
           .RequireAssertion(context =>
             string.Equals(context.User.Identity?.AuthenticationType, IdentitySessionDefaults.Scheme, StringComparison.Ordinal)
             || context.User.HasClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.CredentialManage))
+      )
+      // Task 147-004: admin capability policies — identity-session (+ mock) + Administrator role.
+      // Policy name strings match AuthorizationPolicyNames / SPA AuthorizationConstants.
+      .AddPolicy
+      (
+        AuthorizationPolicyNames.CanViewRolesPage,
+        policy => policy
+          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, MockIdentityPrincipalHandler.SchemeName)
+          .RequireAuthenticatedUser()
+          .RequireRole(RoleIds.Administrator.ToString())
+      )
+      .AddPolicy
+      (
+        AuthorizationPolicyNames.CanViewPrincipalsPage,
+        policy => policy
+          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, MockIdentityPrincipalHandler.SchemeName)
+          .RequireAuthenticatedUser()
+          .RequireRole(RoleIds.Administrator.ToString())
       );
-    serviceCollection.AddPasswordlessSdk(options =>
-    {
-      options.ApiSecret = configuration["Passwordless:ApiSecret"] ?? throw new InvalidOperationException();
-    });
     ConfigureAuthentication(serviceCollection, configuration);
 
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
     ConfigureSettings(serviceCollection, configuration);
     InMemoryIdentityStoresModule.ConfigureServices(serviceCollection, configuration);
+    InMemoryProfileStoresModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
 #if postgres
     PostgresDbModule.ConfigureServices(serviceCollection, configuration);
@@ -195,6 +233,41 @@ public class Program : IAspNetProgram
     serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
     serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
     serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
+    serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();
+
+    // Task 147-004 / 147-006: effective roles + request claims for RequireRole on admin policies.
+    // Resolver is scoped so it can resolve EfPrincipalRoleStore (scoped) under postgres without
+    // a captive dependency; with in-memory singleton store, scoped resolver is still valid.
+    serviceCollection.Configure<BootstrapAdministratorOptions>(
+      configuration.GetSection("Authentication"));
+    serviceCollection.AddScoped<IEffectiveRolesResolver, EffectiveRolesResolver>();
+    serviceCollection.AddScoped<IClaimsTransformation, PrincipalRoleClaimsTransformation>();
+
+    // TimeWarp.402 demos (104-009 tip, 104-011 metered, 104-013 settle→Funded):
+    // in-memory ledger + facilitator + gates. Free/discovery routes never resolve PaymentGate /
+    // MeteredCapabilityGate / SettlementFundingService — only tip and metered handlers invoke them.
+    // Facilitator base prefers tip options, then metered, then public testnet facilitator.
+    // SettlementFundingService + MeteredCapabilityGate are scoped so they can resolve IPrincipalStore
+    // when postgres swaps the store to scoped EfPrincipalStore (captive-dependency safe).
+    serviceCollection.AddSingleton<ICreditLedger, InMemoryCreditLedger>();
+    serviceCollection.AddSingleton<IFacilitatorClient>(static serviceProvider =>
+    {
+      TipOptions tip = serviceProvider.GetRequiredService<IOptions<TipOptions>>().Value;
+      MeteredCapabilityOptions metered = serviceProvider
+        .GetRequiredService<IOptions<MeteredCapabilityOptions>>()
+        .Value;
+      string facilitatorBase =
+        !string.IsNullOrWhiteSpace(tip.FacilitatorBase) ? tip.FacilitatorBase
+        : !string.IsNullOrWhiteSpace(metered.FacilitatorBase) ? metered.FacilitatorBase
+        : FacilitatorUrls.X402Org;
+      return new HttpFacilitatorClient(facilitatorBase);
+    });
+    serviceCollection.AddSingleton<PaymentGate>();
+    serviceCollection.AddScoped<SettlementFundingService>();
+    serviceCollection.AddScoped<MeteredCapabilityGate>();
+
+    // Task 104-015: app-level rate limits on principal register + payment challenge (not edge).
+    AbuseRateLimitingModule.ConfigureServices(serviceCollection, configuration);
 
     // AddValidatorsFromAssemblyContaining will register all public Validators as scoped but
     // will NOT register internals. This feature is utilized.
@@ -262,13 +335,25 @@ public class Program : IAspNetProgram
 
   private static void ConfigureAuthentication(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    serviceCollection.AddMicrosoftIdentityWebAppAuthentication(configuration);
-    // serviceCollection.AddMicrosoftIdentityWebApiAuthentication(configuration);
+    // Task 104-021: Entra/MSAL is opt-in (Authentication:UseEntra). Default is first-party
+    // identity-session cookie as the authentication default scheme — no AzureAd required to boot.
+    bool useEntra = MockAuthenticationDefaults.IsEntraAuthActive(
+      configuration[MockAuthenticationDefaults.UseEntraKey]);
 
-    // A second AddAuthentication() call (no defaultScheme argument) adds this NAMED cookie scheme
-    // alongside whatever AddMicrosoftIdentityWebAppAuthentication registered as default — the
-    // dormant Entra registration is untouched (lock #10 / 104-021). See IdentitySessionDefaults.
-    serviceCollection.AddAuthentication()
+    AuthenticationBuilder authenticationBuilder;
+    if (useEntra)
+    {
+      // Entra owns the default scheme; identity-session is added as a named scheme via a second
+      // parameterless AddAuthentication() (same coexistence model as pre-021).
+      serviceCollection.AddMicrosoftIdentityWebAppAuthentication(configuration);
+      authenticationBuilder = serviceCollection.AddAuthentication();
+    }
+    else
+    {
+      authenticationBuilder = serviceCollection.AddAuthentication(IdentitySessionDefaults.Scheme);
+    }
+
+    authenticationBuilder
       .AddCookie(IdentitySessionDefaults.Scheme, options =>
       {
         options.Cookie.Name = IdentitySessionDefaults.CookieName;
@@ -277,11 +362,22 @@ public class Program : IAspNetProgram
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromHours(24);
-        // Ceremony/session endpoints are JSON APIs, not browser-redirect flows — an unauthenticated
-        // or forbidden request must get a status code, not a 302 to a login page that does not exist.
+        // Dual-mode challenge (task 154): non-API HTML/page deep links 302 to /Login?returnUrl=…
+        // so the SPA and task-153 client flow can run; /api/… stays 401 (contract seam). Forbid
+        // is always 403 — authenticated-but-insufficient policy must not bounce to Login.
+        // Classification SSOT: IdentitySessionCookieChallenge.
         options.Events.OnRedirectToLogin = context =>
         {
-          context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+          if (IdentitySessionCookieChallenge.ShouldRedirectToLogin(context.Request))
+          {
+            context.Response.Redirect(
+              IdentitySessionCookieChallenge.BuildLoginRedirectTarget(context.Request));
+          }
+          else
+          {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+          }
+
           return Task.CompletedTask;
         };
         options.Events.OnRedirectToAccessDenied = context =>
@@ -290,11 +386,9 @@ public class Program : IAspNetProgram
           return Task.CompletedTask;
         };
       })
-      // Agent bearer-token scheme (task 104-004): a THIRD named scheme on the same chain, alongside
-      // the identity-session cookie scheme above — neither touches the other, nor the dormant Entra
-      // default (lock #10). AgentTokenAuthenticationHandler owns all authenticate/challenge/forbid
-      // behavior for this scheme; AuthenticationSchemeOptions carries no scheme-specific settings of
-      // its own (token lifetime lives in AgentTokenOptions, bound separately in ConfigureSettings).
+      // Agent bearer-token scheme (task 104-004): named scheme alongside identity-session.
+      // AgentTokenAuthenticationHandler owns authenticate/challenge/forbid for this scheme;
+      // token lifetime lives in AgentTokenOptions (ConfigureSettings).
       .AddScheme<AuthenticationSchemeOptions, AgentTokenAuthenticationHandler>(AgentTokenDefaults.Scheme, _ => { })
       // Closed-box mock principal (task 145-009): always registered; handler is fail-closed
       // (Development/Testing + Authentication:UseMock + header). Listed on AuthenticatedPolicy.
@@ -316,12 +410,25 @@ public class Program : IAspNetProgram
     }
 
     webApplication.UseResponseCompression();
+    // Agent-ready markdown twins (task 104-018): must run before UseRouting so endpoint matching
+    // sees /index.md (etc.) when Accept prefers text/markdown. Browsers omit text/markdown and
+    // fall through to Blazor; MapStaticAssets serves the twin with Content-Type: text/markdown.
+    webApplication.UseMarkdownContentNegotiation();
+    // x402 commerce scanners (task 104-020): bare /api → /api/tip before UseRouting so the tip
+    // FastEndpoint matches; challenge Resource stays /api/tip (TipOptions). Exact path only —
+    // /api/health and other /api/* routes are untouched. Free/discovery paths never rewrite.
+    webApplication.UseTipDiscoveryAlias();
     // Static assets (including the Blazor WASM framework files) are served exclusively by
     // MapStaticAssets in ConfigureEndpoints. Do not add UseBlazorFrameworkFiles or UseStaticFiles:
     // UseBlazorFrameworkFiles' MapWhen branch 404s the dynamic /_framework/resource-collection.*.js
     // endpoint required by WebAssembly interactivity, and UseStaticFiles bypasses the fingerprinted
     // caching headers.
     webApplication.UseRouting();
+
+    // Task 104-015: after UseRouting (rewrites settled); before FE so rejected requests never
+    // reach handlers / PaymentGate. Path-classified GlobalLimiter + structured 429 OnRejected.
+    // Edge volumetric limits stay outside the app (104-023).
+    webApplication.UseRateLimiter();
 
     // Identity session (task 104-003): named cookie scheme only — the dormant Entra registration's
     // own auth flow is untouched. Ceremony endpoints (register/authenticate) are anonymous by
@@ -393,6 +500,21 @@ public class Program : IAspNetProgram
     serviceCollection
       .AddFluentValidatedOptions<AgentTokenOptions, AgentTokenOptionsValidator>(configuration)
       .ValidateOnStart();
+
+    serviceCollection
+      .AddFluentValidatedOptions<MeteredCapabilityOptions, MeteredCapabilityOptionsValidator>(configuration)
+      .ValidateOnStart();
+
+    serviceCollection
+      .AddFluentValidatedOptions<TipOptions, TipOptionsValidator>(configuration)
+      .ValidateOnStart();
+
+    serviceCollection
+      .AddFluentValidatedOptions<AbuseRateLimitOptions, AbuseRateLimitOptionsValidator>(configuration)
+      .ValidateOnStart();
+
+    // TIP_* env overlay (timewarp-software parity) after section bind; strict TIP_ENABLED=="true".
+    serviceCollection.PostConfigure<TipOptions>(static options => TipEnvironment.ApplyFromEnvironment(options));
   }
 
   private static void ConfigureInfrastructure(IServiceCollection serviceCollection)

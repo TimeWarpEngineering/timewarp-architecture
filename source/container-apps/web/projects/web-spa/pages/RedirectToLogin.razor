@@ -1,10 +1,17 @@
 @namespace TimeWarp.Architecture.Features.Authentication
+@using TimeWarp.Architecture.Features.Account
 @inject NavigationManager NavigationManager
 
+@* Task 104-021: unauthorized UI goes to passkey Login, not MSAL RemoteAuthenticatorView.
+   Task 153: carry the blocked page along as ?returnUrl so a successful sign-in lands the
+   user back where they were headed. LoginPage validates it (local-only, never /Login). *@
 @code {
   protected override void OnInitialized()
   {
-    // NavigationManager.NavigateTo($"Account/Login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}", forceLoad: true);
-    NavigationManager.NavigateToLogin("authentication/login");
+    string returnUrl = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+    string target = returnUrl == "/"
+      ? LoginPage.GetPageUrl()
+      : $"{LoginPage.GetPageUrl()}?returnUrl={Uri.EscapeDataString(returnUrl)}";
+    NavigationManager.NavigateTo(target);
   }
 }

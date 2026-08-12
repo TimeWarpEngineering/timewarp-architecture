@@ -23,6 +23,7 @@ Multi-dot **partial** stems are valid when each segment is kebab:
 | ASP.NET host | `Properties/`, `launchSettings.json`, `appsettings.json`, `appsettings.<Environment>.json` |
 | Blazor host glue | `_Imports.razor` / `_imports.razor`, `App.razor` when the host template requires those names |
 | Roslyn | `AnalyzerReleases.Shipped.md`, `AnalyzerReleases.Unshipped.md` |
+| EF Core migrations | Files under `source/container-apps/web/platform/postgres/migrations/` keep EF-tooling names (`{timestamp}_{Name}.cs`, `*.Designer.cs`, `*ModelSnapshot.cs`). Do not kebab-rename them. Analyzers: `.editorconfig` carve-out (TW0001 / TWA0004 / TWA0015 / TWA0016). Cross-repo skill **`tw-csharp`** should list this row in its exception table when next synced. |
 
 ## Product extras
 

@@ -32,7 +32,8 @@
     <ReduxDevTools />
   }
   <TimeWarpJavaScriptInterop />
-  @* TODO <AuthenticationStateListener/> *@
+  @* Loads/clears ProfileState + AuthorizationState when AuthenticationState changes (sign-in/out). *@
+  <AuthenticationStateListener />
 </CascadingAuthenticationState>
 
 @code

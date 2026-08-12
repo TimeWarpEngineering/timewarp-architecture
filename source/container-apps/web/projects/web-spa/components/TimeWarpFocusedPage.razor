@@ -1,0 +1,43 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+@*
+  Auth-adjacent focused chrome (task 147-005). Sibling of TimeWarpPage — not a layout fork.
+*@
+
+@code {
+  #region Purpose
+  // Focused full-viewport shell for auth-adjacent screens (login, logout confirmation).
+  // Logo + centered content only — no nav, search, footer, or modals.
+  #endregion
+
+  #region Design
+  // Empty MainLayout stays empty (@Body only). Product pages keep TimeWarpPage (appbar/nav/footer).
+  // This is NOT a LayoutComponentBase and is NOT registered as a routed layout — it is a normal
+  // BaseComponent shell that pages wrap, so it gets TimeWarp.State Id + re-render lifecycle the
+  // same way TimeWarpPage does (skill tw-blazor-layout).
+  // Use TimeWarpFocusedPage when the surface should feel like a dedicated auth step, not "a page
+  // inside the product shell". Use TimeWarpPage for everything that needs navigation chrome.
+  // Cascades self so descendants can reach the shell if needed (parity with TimeWarpPage).
+  // CSS isolation-first (native root .twe-focused); tokens only — no hard-coded colors/sizes
+  // beyond the logo width/height reserve matching TimeWarpPage's horizontal lockup.
+  #endregion
+
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+}
+
+<CascadingValue Value=@this>
+  <div class="twe-focused">
+    <div class="twe-focused__brand">
+      @* Same horizontal lockup as TimeWarpPage appbar — explicit width/height reserve the box
+         before styles apply (no first-paint size flash). *@
+      <img class="twe-focused__logo"
+           src="images/timewarp-horizontal.svg"
+           alt="TimeWarp Architecture"
+           width="201"
+           height="48" />
+    </div>
+    <div class="twe-focused__content">
+      @ChildContent
+    </div>
+  </div>
+</CascadingValue>

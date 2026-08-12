@@ -21,7 +21,7 @@ public class ModuleRequirementHandler
 
   protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, ModuleRequirement requirement)
   {
-    bool hasModule = AuthorizationState.Modules != null && AuthorizationState.Modules.Contains(requirement.RequiredModule);
+    bool hasModule = AuthorizationState.Modules?.Contains(requirement.RequiredModule) == true;
 
     if (hasModule) context.Succeed(requirement);
 

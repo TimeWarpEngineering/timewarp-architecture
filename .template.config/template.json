@@ -28,9 +28,11 @@
             "source/foundation/**",
             "source/libraries/timewarp-modules/**",
             "source/libraries/timewarp-identity/**",
+            "source/libraries/timewarp-402/**",
             "source/analyzers/**",
             "tests/foundation/**",
             "tests/libraries/timewarp-identity-tests/**",
+            "tests/libraries/timewarp-402-tests/**",
             "tests/analyzers/**"
           ]
         },
@@ -78,6 +80,12 @@
           "exclude": [
             "source/container-apps/web/platform/postgres/**",
             "source/container-apps/web/features/identity/ef-principal-store-infrastructure.cs",
+            "source/container-apps/web/features/identity/principal-entity-type-configuration-infrastructure.cs",
+            "source/container-apps/web/features/identity/credential-entity-type-configuration-infrastructure.cs",
+            "source/container-apps/web/features/admin/principals/ef-principal-role-store-infrastructure.cs",
+            "source/container-apps/web/features/admin/principals/principal-role-assignment-entity-type-configuration-infrastructure.cs",
+            "source/container-apps/web/features/profile/ef-profile-store-infrastructure.cs",
+            "source/container-apps/web/features/profile/profile-entity-type-configuration-infrastructure.cs",
             "tests/container-apps/web/web-infrastructure-tests/**"
           ]
         }

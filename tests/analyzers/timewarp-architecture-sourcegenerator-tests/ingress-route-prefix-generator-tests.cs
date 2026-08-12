@@ -228,7 +228,7 @@ public class IngressRoutePrefixGenerator_Tests
     var options = new Dictionary<string, string> { ["IngressWebContractAssemblies"] = "web-contracts" };
     GeneratorDriverRunResult runResult = GeneratorTestHarness.RunIngress(new[] { web }, options);
 
-    runResult.Results.SelectMany(r => r.GeneratedSources).Count().ShouldBe(0);
+    runResult.Results.Sum(r => r.GeneratedSources.Length).ShouldBe(0);
 
     return Task.CompletedTask;
   }

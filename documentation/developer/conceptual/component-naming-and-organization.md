@@ -12,10 +12,13 @@ The `Components` folder contains non-business domain components. These component
 
 #### Elements
 
-The `Elements` folder contains atomic UI elements. These are basic building blocks used across the application. TimeWarp Architecture utilizes FluentUI components for the majority of its Elements. This folder will contain custom components that are not available in FluentUI or are specific to the application's design system. 
+The `Elements` folder contains atomic UI elements. These are basic building blocks used across the application. TimeWarp Architecture utilizes FluentUI components for the majority of its Elements. This folder will contain custom components that are not available in FluentUI or are specific to the application's design system (Tier-1 wrappers such as `Card` / `StatusBadge` with plain CSS on `--twe-*` tokens).
+
+**Inline status / buttons:** prefer FluentUI directly — `FluentMessageBar` for page/panel status, `FluentButton` for actions. Do not invent custom alert or button wrappers.
 
 **Examples:**
-- `SimpleAlert.razor`
+- `Card.razor`
+- `StatusBadge.razor`
 - `Avatar.razor`
 
 #### Base
@@ -184,7 +187,8 @@ Area components are containers that are not panes. They serve as organizational 
 Web.Spa/
 ├── Components/
 │   ├── Elements/
-│   │   ├── Button.razor
+│   │   ├── Card.razor
+│   │   ├── StatusBadge.razor
 │   │   ├── InputField.razor
 │   │   ├── LoadingSpinner.razor
 │   ├── Base/

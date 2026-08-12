@@ -1,7 +1,6 @@
 #region Purpose
-// End-to-end proof that task 110's fix is real, not just annotation: the generated Roles endpoints
-// (now carrying [EndpointAuthorize(Policy="identity-session-authenticated")]) actually reject an
-// unauthenticated caller and accept a real identity-session cookie.
+// End-to-end proof that admin Roles endpoints require Administrator (task 147-004), not any
+// authenticated principal (task 110's identity-session-only posture is retired for Roles).
 #endregion
 
 #region Design
@@ -20,13 +19,8 @@
 // WebTestServerApplication.HttpClient) for the SAME per-class-fixture-sharing reason documented in
 // Passkey_Registration_Tests.cs's Design region — an anonymous-request test and an
 // authenticated-request test must not leak cookies between them via an ambient jar.
-// Task 110 round-1 review (M3): Unauthorized_Given_Agent_Bearer_Token_No_Cookie pins the
-// scheme-isolation property this new consumer inherits from 104-004's policy design —
-// AddAuthenticationSchemes(identity-session) on the roles policy means a syntactically valid agent
-// bearer token cannot satisfy it (mirrors Agent_Protected_Endpoint_Tests.cs's
-// Unauthorized_Given_CookieSession_Only_No_Bearer, in the opposite direction). The agent-key
-// registration + token-issuance ceremony is duplicated from Agent_Protected_Endpoint_Tests.cs's
-// RegisterAndIssueToken for the same reason as the passkey-cookie duplication above.
+// Task 147-004: Member-only passkey session → 403; after IPrincipalRoleStore grants Administrator
+// → 200. Agent bearer still 401 on cookie-only admin routes (scheme isolation).
 #endregion
 
 namespace RolesAuthorization_;
@@ -36,6 +30,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Roles;
@@ -82,17 +77,50 @@ public class Returns_
   public static async Task Unauthorized_Given_Anonymous_Post()
   {
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
-    const string RequestJson = """{"userId":"11111111-1111-1111-1111-111111111111","name":"Auditor","description":"Read-only access."}""";
+    const string requestJson = """{"userId":"11111111-1111-1111-1111-111111111111","name":"Auditor","description":"Read-only access."}""";
 
     HttpResponseMessage response = await client.PostAsync
-      ("api/Roles", new StringContent(RequestJson, Encoding.UTF8, "application/json"));
+      ("api/Roles", new StringContent(requestJson, Encoding.UTF8, "application/json"));
 
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  public static async Task Ok_With_Seeded_Roles_Given_Passkey_Session_Cookie()
+  public static async Task Forbidden_Given_Passkey_Member_Only_Session()
   {
-    string sessionCookie = await MintIdentitySessionCookie();
+    (string sessionCookie, _) = await MintIdentitySessionCookie();
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+
+    var query = new GetRoles.Query { UserId = Guid.NewGuid() };
+    HttpResponseMessage response = await client.GetAsync(query.GetRouteWithQueryString());
+
+    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+  }
+
+  public static async Task Forbidden_Create_Given_Passkey_Member_Only_Session()
+  {
+    (string sessionCookie, _) = await MintIdentitySessionCookie();
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    const string requestJson = """{"userId":"11111111-1111-1111-1111-111111111111","name":"Auditor","description":"Read-only access."}""";
+
+    HttpResponseMessage response = await client.PostAsync(
+      "api/Roles",
+      new StringContent(requestJson, Encoding.UTF8, "application/json"));
+
+    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+  }
+
+  public static async Task Ok_With_Seeded_Roles_Given_Administrator_Via_Role_Store()
+  {
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+
+    // Scope required: under postgres IPrincipalRoleStore is scoped (EfPrincipalRoleStore).
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
@@ -158,7 +186,7 @@ public class Returns_
     return tokenResult.AsT0.AccessToken;
   }
 
-  private static async Task<string> MintIdentitySessionCookie()
+  private static async Task<(string Cookie, PrincipalId PrincipalId)> MintIdentitySessionCookie()
   {
     var authenticator = new IntegrationSoftwareAuthenticator();
     var testApiService = new TestApiService(Web.HttpClient, ContractSerializationDefaults.Options);
@@ -185,7 +213,21 @@ public class Returns_
       (value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
     sessionCookie.ShouldNotBeNull("Expected the passkey registration to issue an identity-session cookie.");
 
-    return sessionCookie.Split(';')[0];
+    string cookieHeader = sessionCookie.Split(';')[0];
+
+    using HttpClient sessionClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    sessionClient.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+    HttpResponseMessage sessionResponse = await sessionClient.GetAsync(GetCurrentSession.Query.RouteTemplate);
+    sessionResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string sessionJson = await sessionResponse.Content.ReadAsStringAsync();
+    GetCurrentSession.Response session =
+      JsonSerializer.Deserialize<GetCurrentSession.Response>(sessionJson, ContractSerializationDefaults.Options)
+      ?? throw new InvalidOperationException("GetCurrentSession deserialized to null.");
+    session.IsAuthenticated.ShouldBeTrue();
+    session.PrincipalId.ShouldNotBeNull();
+    session.RoleIds.ShouldContain(RoleIds.Member);
+
+    return (cookieHeader, session.PrincipalId.Value);
   }
 
   private static byte[] ReadChallenge(string optionsJson)

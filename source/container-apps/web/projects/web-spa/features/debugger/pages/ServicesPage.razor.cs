@@ -11,7 +11,8 @@
 
 namespace TimeWarp.Architecture.Features.Debugger;
 
-[Page("/Services")]
+[Page("/Services", Policy = Policies.CanViewDeveloperPage)]
+[Authorize(Policy = Policies.CanViewDeveloperPage)]
 partial class ServicesPage
 {
 

@@ -12,7 +12,7 @@ public class Should_Trigger_PartialClassDeclaration
 
   public static async Task Given_PrimaryFileWithoutFullSpecifiers()
   {
-    const string PrimaryFile =
+    const string primaryFile =
       """
       partial class ApplicationState
       {
@@ -20,7 +20,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    const string SecondaryFile =
+    const string secondaryFile =
       """
       partial class ApplicationState
       {
@@ -38,8 +38,8 @@ public class Should_Trigger_PartialClassDeclaration
       {
         Sources =
         {
-          ("ApplicationState.cs", PrimaryFile),
-          ("ApplicationState.Partial.cs", SecondaryFile)
+          ("ApplicationState.cs", primaryFile),
+          ("ApplicationState.Partial.cs", secondaryFile)
         }
       }
     };
@@ -51,7 +51,7 @@ public class Should_Trigger_PartialClassDeclaration
 
   public static async Task Given_SecondaryFileWithExcessiveSpecifiers()
   {
-    const string PrimaryFile =
+    const string primaryFile =
       """
       public partial class ApplicationState
       {
@@ -59,7 +59,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    const string SecondaryFile =
+    const string secondaryFile =
       """
       public partial class ApplicationState
       {
@@ -77,8 +77,8 @@ public class Should_Trigger_PartialClassDeclaration
       {
         Sources =
         {
-          ("ApplicationState.cs", PrimaryFile),
-          ("ApplicationState.CloseModal.cs", SecondaryFile)
+          ("ApplicationState.cs", primaryFile),
+          ("ApplicationState.CloseModal.cs", secondaryFile)
         }
       }
     };
@@ -90,7 +90,7 @@ public class Should_Trigger_PartialClassDeclaration
 
   public static async Task Given_IncorrectNamingConvention()
   {
-    const string PrimaryFile =
+    const string primaryFile =
       """
       public partial class ApplicationState
       {
@@ -98,7 +98,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    const string IncorrectSecondaryFile =
+    const string incorrectSecondaryFile =
       """
       partial class ApplicationState
       {
@@ -116,8 +116,8 @@ public class Should_Trigger_PartialClassDeclaration
       {
         Sources =
         {
-          ("ApplicationState.cs", PrimaryFile),
-          ("WrongFileName.cs", IncorrectSecondaryFile)
+          ("ApplicationState.cs", primaryFile),
+          ("WrongFileName.cs", incorrectSecondaryFile)
         }
       }
     };
@@ -129,7 +129,7 @@ public class Should_Trigger_PartialClassDeclaration
 
   public static async Task Given_CorrectImplementation()
   {
-    const string PrimaryFile =
+    const string primaryFile =
       """
       public partial class ApplicationState
       {
@@ -137,7 +137,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    const string SecondaryFile1 =
+    const string secondaryFile1 =
       """
       partial class ApplicationState
       {
@@ -145,7 +145,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    const string SecondaryFile2 =
+    const string secondaryFile2 =
       """
       partial class ApplicationState
       {
@@ -159,9 +159,9 @@ public class Should_Trigger_PartialClassDeclaration
       {
         Sources =
         {
-          ("ApplicationState.cs", PrimaryFile),
-          ("ApplicationState.CloseModal.cs", SecondaryFile1),
-          ("ApplicationState.ResetStore.cs", SecondaryFile2)
+          ("ApplicationState.cs", primaryFile),
+          ("ApplicationState.CloseModal.cs", secondaryFile1),
+          ("ApplicationState.ResetStore.cs", secondaryFile2)
         }
       }
     };
@@ -171,7 +171,7 @@ public class Should_Trigger_PartialClassDeclaration
 
   public static async Task Given_KebabCaseFileNaming()
   {
-    const string PrimaryFile =
+    const string primaryFile =
       """
       public partial class ApplicationState
       {
@@ -179,7 +179,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    const string SecondaryFile1 =
+    const string secondaryFile1 =
       """
       partial class ApplicationState
       {
@@ -187,7 +187,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    const string SecondaryFile2 =
+    const string secondaryFile2 =
       """
       partial class ApplicationState
       {
@@ -201,9 +201,9 @@ public class Should_Trigger_PartialClassDeclaration
       {
         Sources =
         {
-          ("application-state.cs", PrimaryFile),
-          ("application-state.close-modal.cs", SecondaryFile1),
-          ("application-state.reset-store.cs", SecondaryFile2)
+          ("application-state.cs", primaryFile),
+          ("application-state.close-modal.cs", secondaryFile1),
+          ("application-state.reset-store.cs", secondaryFile2)
         }
       }
     };
@@ -213,7 +213,7 @@ public class Should_Trigger_PartialClassDeclaration
 
   public static async Task Given_SecondaryFileWithClassInheritance()
   {
-    const string PrimaryFile =
+    const string primaryFile =
       """
       public abstract class BaseApplicationState
       {
@@ -225,7 +225,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    const string SecondaryFile =
+    const string secondaryFile =
       """
       partial class ApplicationState : BaseApplicationState
       {
@@ -243,8 +243,8 @@ public class Should_Trigger_PartialClassDeclaration
       {
         Sources =
         {
-          ("ApplicationState.cs", PrimaryFile),
-          ("ApplicationState.Extensions.cs", SecondaryFile)
+          ("ApplicationState.cs", primaryFile),
+          ("ApplicationState.Extensions.cs", secondaryFile)
         }
       }
     };
@@ -256,7 +256,7 @@ public class Should_Trigger_PartialClassDeclaration
 
   public static async Task Given_SecondaryFileWithInterfaceOnly()
   {
-    const string PrimaryFile =
+    const string primaryFile =
       """
       public interface IAnotherInterface
       {
@@ -268,7 +268,7 @@ public class Should_Trigger_PartialClassDeclaration
       }
       """;
 
-    const string SecondaryFile =
+    const string secondaryFile =
       """
       partial class ApplicationState : IAnotherInterface
       {
@@ -282,8 +282,8 @@ public class Should_Trigger_PartialClassDeclaration
       {
         Sources =
         {
-          ("ApplicationState.cs", PrimaryFile),
-          ("ApplicationState.Interfaces.cs", SecondaryFile)
+          ("ApplicationState.cs", primaryFile),
+          ("ApplicationState.Interfaces.cs", secondaryFile)
         }
       }
     };
@@ -293,7 +293,7 @@ public class Should_Trigger_PartialClassDeclaration
 
   public static async Task Given_SinglePartialDeclaration()
   {
-    const string SingleFile =
+    const string singleFile =
       """
       partial class ApplicationState
       {
@@ -307,7 +307,7 @@ public class Should_Trigger_PartialClassDeclaration
       {
         Sources =
         {
-          ("ApplicationState.cs", SingleFile)
+          ("ApplicationState.cs", singleFile)
         }
       }
     };

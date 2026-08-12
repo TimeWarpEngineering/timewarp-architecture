@@ -1,24 +1,26 @@
 #region Purpose
-// Maps sidebar-navigation visibility policies to the roles that satisfy them.
+// Documents sidebar navigation policies; grants live in RolePolicyGrants.
 #endregion
 
 #region Design
-// Policies are named per UI surface (a nav section) rather than per role, so markup checks a
-// stable policy name while the role composition can change here in one place.
-// Kept separate from page policies: hiding a nav entry is a distinct decision from blocking
-// the page route it links to, and the two may diverge.
+// Nav section visibility is separate from page route policy names, but both draw roles from
+// RolePolicyGrants (task 147-002). Hiding a nav entry does not replace page [Authorize].
 #endregion
 
 namespace TimeWarp.Architecture;
 
-using static Policies;
-using static RoleIds;
+using static AuthorizationConstants.Policies;
 
 internal static class NavigationPolicyRegistration
 {
   internal static void AddPolicies(AuthorizationOptions options)
   {
-    options.AddPolicy(CanViewDeveloperSidebarNavSection, policy => policy.RequireRole(Developer.ToString()));
-    options.AddPolicy(CanViewAdminSidebarNavSection, policy => policy.RequireRole(Administrator.ToString()));
+    _ = options; // Avoids "unused parameter" warning; the method is a placeholder for documentation and future use.
+    _ = new[]
+    {
+      CanViewDeveloperSidebarNavSection,
+      CanViewAdminSidebarNavSection,
+    };
+    // Actual registration is centralized in PolicyRegistration → RolePolicyGrants.
   }
 }

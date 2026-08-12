@@ -12,16 +12,17 @@ Supersedes archived epic tree 097–103 (ADR-first framing was wrong).
 ## Build order (do not reorder casually)
 
 ```
-Wave 1  Identity package          104-001 … 104-006
-Wave 2  TimeWarp.402 package      104-007 … 104-012
-Wave 3  Compose Identity + 402    104-013 … 104-015
-Wave 4  Template + agent surface  104-016 … 104-022
+Wave 1  Identity package          104-001 … 104-006 + 026–029, 031, 032  ✅ done
+Wave 2  TimeWarp.402 package      104-007 … 104-012 (+016 pulled forward, +030)
+Wave 3  Compose Identity + 402    104-013, 104-015, 104-014
+Wave 4  Template + agent surface  104-017 … 104-022
 Wave 5  Optional polish           104-023 … 104-025
 ```
 
-Within a wave, follow child numbers. Wave 2 can start scaffolding (007) once
-001–002 exist enough to know PrincipalId shape; settle→tier (013) needs both
-packages.
+Order within a wave: follow the checklist below (it encodes the 2026-08-03
+prioritization review), not raw child numbers. Settle→tier (013) needs both
+packages. Open decision: if the metered endpoint (011) lives on api-server,
+104-030 (agent bearer on api-server) must land before 011/014.
 
 ## Locked product decisions (from design sessions)
 
@@ -79,40 +80,50 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 
 ## Checklist
 
-### Wave 1 — Identity
-- [ ] 104-001 Scaffold TimeWarp.Identity
-- [ ] 104-002 Principal / Credential / TrustTier
-- [ ] 104-003 Passkey register + authenticate
-- [ ] 104-004 Agent keys + scoped tokens
-- [ ] 104-005 Multi-credential
-- [ ] 104-006 Identity tests
+### Wave 1 — Identity (complete)
+- [x] 104-001 Scaffold TimeWarp.Identity
+- [x] 104-002 Principal / Credential / TrustTier
+- [x] 104-003 Passkey register + authenticate
+- [x] 104-004 Agent keys + scoped tokens
+- [x] 104-005 Multi-credential
+- [x] 104-006 Identity tests
+- [x] 104-026 Apply 104-002 RFC ballot resolutions (archived — folded into 002)
+- [x] 104-027 TypedId source generator + identity id migration
+- [x] 104-028 Optimistic concurrency token on identity entities + store port
+- [x] 104-029 Agent identity demo CLI (keygen/register/token ceremony)
+- [x] 104-031 WebAuthn RP ID from request host against allowlist
+- [x] 104-032 EF Core identity persistence behind postgres flag
 
 ### Wave 2 — 402
-- [ ] 104-007 Scaffold TimeWarp.402
-- [ ] 104-008 Challenge / verify / settle / 503 policy
-- [ ] 104-009 Tip-jar port
-- [ ] 104-010 Credit ledger
-- [ ] 104-011 Metered demo
-- [ ] 104-012 Payment tests
+- [x] 104-007 Scaffold TimeWarp.402
+- [x] 104-008 Challenge / verify / settle / 503 policy
+- [x] 104-016 Passkey human demo (pulled forward from Wave 4 — deps 003/006 done;
+      removes shipped Passwordless CDN script + tenant key from template, 131 F-010)
+- [x] 104-009 Tip-jar port — web-server GET|POST api/tip, PaymentGate, TIP_* env,
+      7/7 host tests + library PaymentGate coverage
+- [x] 104-010 Credit ledger
+- [x] 104-030 Agent bearer validation on api-server + string-enum wire verification
+      (api-server capability sample GET api/agent/bearer/me; ceremonies stay on web)
+- [x] 104-011 Metered demo
+- [x] 104-012 Payment tests (Wave 2 exit gate) — library 42/42 mocked facilitator
 
 ### Wave 3 — Compose
-- [ ] 104-013 Settle → Funded + credits
-- [ ] 104-014 Agent E2E path
-- [ ] 104-015 Rate limits
+- [x] 104-013 Settle → Funded + credits
+- [x] 104-015 Rate limits (before advertising discovery paths publicly)
+- [x] 104-014 Agent E2E path
 
 ### Wave 4 — Template + agents
-- [ ] 104-016 Passkey human demo
-- [ ] 104-017 Discovery files
-- [ ] 104-018 Markdown negotiation
-- [ ] 104-019 MCP / skills / A2A stubs
-- [ ] 104-020 x402 discoverable
-- [ ] 104-021 Flags / slices / Entra non-default
-- [ ] 104-022 E2E sunny paths
+- [x] 104-017 Discovery files (may parallelize earlier — story is stable)
+- [x] 104-018 Markdown negotiation — home twin `/index.md` + Accept rewrite on `/`; SPA untouched
+- [x] 104-019 MCP / skills / A2A stubs
+- [x] 104-020 x402 discoverable
+- [x] 104-021 Flags / slices / Entra non-default + auth-slice consolidation addendum
+- [x] 104-022 E2E sunny paths (program exit criterion) — Program104Sunny suite 3/3
 
-### Wave 5 — Optional
+### Wave 5 — Optional (post-exit)
 - [ ] 104-023 Cloudflare operator notes
-- [ ] 104-024 Progressive profile
-- [ ] 104-025 humanUx link
+- [ ] 104-024 Progressive profile (hold until demanded)
+- [ ] 104-025 humanUx link (hold until demanded)
 
 ## Notes
 
@@ -124,8 +135,35 @@ durable design store — not this kanban after ships.
 ### After it works
 Extract skills for consumers; optional human ADRs last. Do not invent either now.
 
+## Overnight run (2026-08-04) — operator authorizations
+
+Human is offline; agent continues on **this session** (not a Rhai workflow of
+full `tw-orchestrate-task` — that skill needs sequential judgment, design-issue
+gates, and commits that a fan-out script does not replace).
+
+| Policy | Choice |
+|--------|--------|
+| Runner | Continuous session; `tw-orchestrate-task` per child id |
+| Ambiguity | Decide from **Locked product decisions** above + existing code patterns; record rationale in child Notes; only park on true external product blocks |
+| Git | **Local commits only** — no push, no PR until human wakes |
+| Scope | Waves **2–4** critical path + safe parallels; **hold Wave 5** (023–025) |
+| Parallels when deps allow | 016 (passkey demo), 017–019 (discovery), 030 (api-server bearer) — avoid same-file thrash with 402 path |
+| Critical path | 007 → 008 → (009 ∥ 010) → 011 → 012 (Wave 2 exit) → 013 → 015 → 014 → 022 |
+
+Wake-up: `git log --oneline origin/dev..HEAD`, `ganda kanban board` (or column
+listings), child `## Results` / `review/disposition.md` trails.
+
 ## Session
 
 - Created: 2026-07-16
 - Context: passkey/agent/x402 brainstorm + reject ADR/skill-first sequencing
 - Archived prior tree: 097–103
+- 2026-08-03: prioritization review — Wave 1 closed (incl. follow-ons 026–032);
+  checklist reconciled; 016 pulled into Wave 2 (deps done + template ships
+  Passwordless tenant key until it lands); 030 slotted pending the
+  metered-endpoint host decision (api-server vs web-server)
+- 2026-08-04 overnight: continuous session; Waves 2–4; local commits; start 007
+- 2026-08-04 overnight **complete (Waves 2–4)**: all Wave 2–4 children **done**
+  including program exit **022**; Wave 5 (023–025) held per authorization.
+  `./bin/dev build` **0/0**. **~35 commits local only** on `dev` (no push/PR).
+  Wake-up: `git log --oneline origin/dev..HEAD`, child Results under `kanban/done/104-*`

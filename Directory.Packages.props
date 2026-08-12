@@ -1,8 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <!-- Composed platform package IDs (task 115). Guarded: projects also import via Directory.Build.props. -->
-  <Import Project="$(MSBuildThisFileDirectory)msbuild/timewarp-platform-packages.props"
-          Condition="'$(_TwPlatformPackagesPropsImported)' != 'true'" />
+  <Import Project="$(MSBuildThisFileDirectory)msbuild/timewarp-platform-packages.props" Condition="'$(_TwPlatformPackagesPropsImported)' != 'true'" />
 
 
   <!-- Central Package Management - add your package versions here -->
@@ -10,8 +9,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup Label="TimeWarp Packages">
-    <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.71" />
-    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0-beta.71" />
+    <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.74" />
+    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0-beta.74" />
     <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="1.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Terminal" Version="1.0.0" />
@@ -39,6 +38,11 @@
          repo/CI (UseIdentityPackages resolves to ProjectReference mode when identity source is
          present) and only matters for package-mode consumers (generated apps always package-mode). -->
     <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.14" />
+    <!-- TimeWarp.402: packed by the release run (workflow-command.cs) and template-smoke's local
+         feed; first nuget.org publish rides the next release. Same task-124 pin policy as
+         TimeWarp.Identity above — equals <Version>, bumps in the same commit (task 104-035). -->
+    <PackageVersion Include="TimeWarp.402" Version="2.0.0-beta.14" />
+    <PackageVersion Include="TimeWarp.Multiavatar" Version="1.0.0-beta.13" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
@@ -54,7 +58,6 @@
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageVersion Include="libphonenumber-csharp" Version="9.0.35" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
-    <PackageVersion Include="Passwordless" Version="2.0.0" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.80.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.80.0" />
     <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.80.0" />
@@ -69,6 +72,8 @@
     <!-- Yarp / Reverse Proxy (used by Yarp gateway and Aspire.AppHost) -->
     <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.4.6" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.4.6" />
+    <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same train as stable 13.4.6 hosting pins. -->
+    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.4.6-preview.1.26319.6" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.8.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->
@@ -82,7 +87,9 @@
     <PackageVersion Include="MessagePack" Version="3.1.8" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Identity.Web" Version="4.14.2" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
@@ -92,7 +99,7 @@
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis" Version="5.6.0" />
+    
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
     <!-- Microsoft/MIT, BCL-adjacent (System.Formats.Cbor.dll ships in the ASP.NET Core shared
          framework too) — used by timewarp-identity's hand-rolled WebAuthn verifier (task 104-003)
@@ -163,6 +170,11 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.6.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.6.0" />
+    <!-- Move file-level usings into per-project global-usings.cs (BDSoftware; nuru/tui/flexbox pin). Task 172. -->
+    <PackageVersion Include="GlobalUsingsAnalyzer" Version="1.4.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageVersion>
   </ItemGroup>
   <!-- Versions for test projects pending migration to the root tree (task 053-050-019).
        Sourced from TimeWarp.Architecture/Directory.Packages.props; family-versioned

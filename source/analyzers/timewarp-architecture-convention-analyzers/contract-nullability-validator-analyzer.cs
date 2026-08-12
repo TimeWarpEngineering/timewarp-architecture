@@ -14,9 +14,11 @@
 namespace TimeWarp.Architecture.Analyzers;
 
 /// <summary>
+/// <para>
 /// Flags contradictions between a property's declared nullability and a FluentValidation
 /// presence rule (<c>NotEmpty()</c> / <c>NotNull()</c>) applied to it.
-///
+/// </para>
+/// <para>
 /// The rule is NOT "properties must be non-nullable" — <c>string?</c> is legitimate for a
 /// genuinely optional field. The defect is the *contradiction*:
 ///   TWA0002 (A) — the property is declared nullable (<c>string?</c>) yet a presence rule
@@ -24,11 +26,13 @@ namespace TimeWarp.Architecture.Analyzers;
 ///   TWA0003 (B) — the property is non-nullable but initialized with <c>= string.Empty</c> /
 ///                  <c>= ""</c>, a fabricated valid-looking default that hides an unset field
 ///                  from the presence rule. Use <c>= null!</c> or <c>required</c>.
-///
+/// </para>
+/// <para>
 /// Detection is direct: <c>RuleFor(x => x.Prop)...NotEmpty()/NotNull()</c> inside an
 /// <c>AbstractValidator&lt;T&gt;</c>, checked against <c>T.Prop</c>. Whole-object rules
 /// (<c>RuleFor(x => x)</c>, e.g. <c>SetValidator</c> composition) and non-trivial lambda bodies
 /// (<c>x => x.Prop.Trim()</c>) are intentionally skipped to avoid false positives.
+/// </para>
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ContractNullabilityValidatorAnalyzer : DiagnosticAnalyzer
@@ -111,7 +115,7 @@ public class ContractNullabilityValidatorAnalyzer : DiagnosticAnalyzer
     // Resolve the property on T and its declaration.
     string propertyName = memberAccess.Name.Identifier.ValueText;
     IPropertySymbol? property = validatedType.GetMembers(propertyName).OfType<IPropertySymbol>().FirstOrDefault();
-    if (property is null || !property.Type.IsReferenceType)
+    if (property?.Type.IsReferenceType != true)
       return;
 
     if (property.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is not PropertyDeclarationSyntax propertyDeclaration)

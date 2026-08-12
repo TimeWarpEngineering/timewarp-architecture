@@ -1,37 +1,66 @@
 @namespace TimeWarp.Architecture.Features.Account
 @inherits BaseComponent
-@inject IJSRuntime JSRuntime
 
 @code {
-  public static string Title => "Logout";
-  public static Icon? NavIcon => new Icons.Regular.Size20.ArrowEnter();
-
-  private async Task SignInWithPasskey()
-  {
-    var result = await JSRuntime.InvokeAsync<SignInResult>("passwordless.signinWithDiscoverable");
-    if (result.Error != null)
-    {
-      // Handle error
-    }
-    else
-    {
-      // Send result.Token to backend to verify and get the userId
-    }
-  }
-
-  private class SignInResult
-  {
-    public string? Token { get; set; }
-    public string? Error { get; set; }
-  }
+  public static string Title => "Sign in";
+  public static Icon? NavIcon => new Icons.Regular.Size20.PersonPasskey();
 }
 
-<TimeWarpPage Title="Login">
-  <Card Title="Sign in">
-    <FluentStack Orientation=Orientation.Vertical VerticalGap="12">
-      <FluentButton Appearance=ButtonAppearance.Primary OnClick=SignInWithPasskey>Sign in with a passkey</FluentButton>
-      <RegisterPasskey />
-    </FluentStack>
-  </Card>
-</TimeWarpPage>
+<PageTitle>Sign in</PageTitle>
 
+<TimeWarpFocusedPage>
+  <div class="twe-stack">
+    <Card Title="Sign in">
+      <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+        @* Single modal path: the browser passkey UI lists this-device managers (e.g. Proton Pass)
+           and nearby-device / QR after cancel or "other options" — no empty text box, no second
+           site button (task 166 autofill UX rejected; hybrid still allowed via server hints). *@
+        <FluentButton Appearance="ButtonAppearance.Primary"
+                      data-qa="ContinueWithPasskey"
+                      Disabled="IsBusy"
+                      OnClick="ContinueWithPasskey">
+          Sign in with a passkey
+        </FluentButton>
+
+        <hr class="twe-login-divider" />
+
+        <p class="twe-login-create">
+          Don't have an account?
+          <FluentButton Appearance="ButtonAppearance.Outline"
+                        data-qa="CreatePasskey"
+                        Disabled="IsBusy"
+                        OnClick="CreatePasskey">
+            Create account
+          </FluentButton>
+        </p>
+      </FluentStack>
+    </Card>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+      <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
+        @ErrorMessage
+      </FluentMessageBar>
+    }
+  </div>
+</TimeWarpFocusedPage>
+
+<style>
+  @(@"
+    .twe-login-divider {
+      border: 0;
+      border-top: 1px solid var(--twe-rule);
+      margin: 0;
+      width: 100%;
+    }
+    .twe-login-create {
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      color: var(--twe-ink-2);
+      font-size: var(--twe-text-body);
+    }
+  ")
+</style>

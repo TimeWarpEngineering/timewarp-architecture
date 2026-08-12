@@ -6,5 +6,7 @@
   <PropertyGroup Label="AssemblyMarkerNamespace">
     <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'timewarp-identity'">TimeWarp.Identity</AssemblyMarkerNamespace>
     <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'timewarp-modules'">TimeWarp.Modules</AssemblyMarkerNamespace>
+    <!-- PackageId TimeWarp.402; C# cannot use a leading-digit namespace segment (task 104-007). -->
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'timewarp-402'">TimeWarp.X402</AssemblyMarkerNamespace>
   </PropertyGroup>
 </Project>

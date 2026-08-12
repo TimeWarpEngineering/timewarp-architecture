@@ -85,7 +85,9 @@ public sealed partial class AddPasskey
 
       PasskeyRegistrationCeremony.Materials materials = ceremonyResult.AsT0;
 
-      var credential = Credential.Create(callerId.Value, CredentialType.Passkey, materials.CredentialId, materials.CosePublicKey, command.Label);
+      // Prefer caller-supplied Label; else AAGUID provider name (task 168).
+      string? label = string.IsNullOrWhiteSpace(command.Label) ? materials.ProviderLabel : command.Label;
+      var credential = Credential.Create(callerId.Value, CredentialType.Passkey, materials.CredentialId, materials.CosePublicKey, label);
       try
       {
         await PrincipalStore.AddCredentialAsync(credential, cancellationToken);

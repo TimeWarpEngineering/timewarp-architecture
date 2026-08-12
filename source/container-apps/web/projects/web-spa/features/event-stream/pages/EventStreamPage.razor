@@ -11,7 +11,9 @@
 
 <TimeWarpPage Title="Event Stream">
   <div class="twe-stack">
-    <SimpleAlert Title="Event Stream">EventStream is an example of middleware. It adds each action to a list.</SimpleAlert>
+    <FluentMessageBar Intent="MessageBarIntent.Info" Title="Event Stream" AllowDismiss="false">
+      EventStream is an example of middleware. It adds each action to a list.
+    </FluentMessageBar>
     <Card><EventStream /></Card>
   </div>
 </TimeWarpPage>

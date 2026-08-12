@@ -27,7 +27,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class TemplateConditionalTokenAnalyzer : DiagnosticAnalyzer
+public partial class TemplateConditionalTokenAnalyzer : DiagnosticAnalyzer
 {
   public const string DiagnosticId = "TWA0008";
 
@@ -36,8 +36,10 @@ public class TemplateConditionalTokenAnalyzer : DiagnosticAnalyzer
   private const string DisableMarker = "-:cnd:noEmit"; // full form: "//" + DisableMarker
   private const string EnableMarker = "+:cnd:noEmit";
 
-  private static readonly Regex TokenPattern =
-    new(Hash + @"\s*(if|elif|else|endif)\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+  // Pattern keeps # and "if" non-adjacent (#\s*(if|…)) so the template engine does not see a live directive.
+  // GeneratedRegex (SYSLIB1045) — source-generated; CultureInvariant matches the prior Compiled instance.
+  [GeneratedRegex(@"#\s*(if|elif|else|endif)\b", RegexOptions.CultureInvariant)]
+  private static partial Regex TokenPattern();
 
   private static readonly DiagnosticDescriptor Rule =
     new
@@ -108,7 +110,7 @@ public class TemplateConditionalTokenAnalyzer : DiagnosticAnalyzer
 
   private static void ReportMatches(SyntaxTreeAnalysisContext context, string text, int offset, List<TextSpan> exemptSpans)
   {
-    foreach (Match match in TokenPattern.Matches(text))
+    foreach (Match match in TokenPattern().Matches(text))
     {
       var matchSpan = new TextSpan(offset + match.Index, match.Length);
       if (exemptSpans.Any(exempt => exempt.Contains(matchSpan.Start)))

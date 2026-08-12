@@ -70,7 +70,7 @@ public class AspireResourceNameAnalyzer : DiagnosticAnalyzer
     var invocation = (InvocationExpressionSyntax)context.Node;
 
     if (MethodName(invocation.Expression) != "AddProject") return;
-    if (invocation.ArgumentList.Arguments.Count == 0) return;
+    if (!invocation.ArgumentList.Arguments.Any()) return;
 
     ExpressionSyntax nameArgument = invocation.ArgumentList.Arguments[0].Expression;
     Optional<object?> constantValue = context.SemanticModel.GetConstantValue(nameArgument, context.CancellationToken);

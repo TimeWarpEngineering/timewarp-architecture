@@ -43,14 +43,19 @@ internal static class PasskeyRegistrationCeremony
   /// </summary>
   internal sealed class Materials
   {
-    public Materials(byte[] credentialId, byte[] cosePublicKey)
+    public Materials(byte[] credentialId, byte[] cosePublicKey, byte[]? aaguid, string? providerLabel)
     {
       CredentialId = credentialId;
       CosePublicKey = cosePublicKey;
+      Aaguid = aaguid;
+      ProviderLabel = providerLabel;
     }
 
     public byte[] CredentialId { get; }
     public byte[] CosePublicKey { get; }
+    public byte[]? Aaguid { get; }
+    /// <summary>Resolved passkey provider name (e.g. Proton Pass), or null when unknown.</summary>
+    public string? ProviderLabel { get; }
   }
 
   public static async Task<OneOf<Materials, SharedProblemDetails>> TryCompleteAsync
@@ -92,6 +97,12 @@ internal static class PasskeyRegistrationCeremony
       return IdentityProblems.CredentialAlreadyRegistered("passkey");
     }
 
-    return new Materials(verifyResult.CredentialId, verifyResult.CosePublicKey);
+    byte[] aaguid = verifyResult.Aaguid;
+    string? providerLabel = PasskeyProviderNames.TryResolve(aaguid);
+    return new Materials(
+      verifyResult.CredentialId,
+      verifyResult.CosePublicKey,
+      aaguid.Length == 0 ? null : aaguid,
+      providerLabel);
   }
 }

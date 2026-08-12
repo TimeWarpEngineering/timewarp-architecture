@@ -1,10 +1,16 @@
+#region Purpose
+// Project-wide using directives so individual files omit repeated imports.
+#endregion
+
 global using AnyClone;
-global using FakeItEasy;
 global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.DependencyInjection.Extensions;
+// Options / Services used by weather + mock API surfaces excluded when api is off.
+#if(api)
 global using Microsoft.Extensions.Options;
+#endif
 global using Microsoft.FluentUI.AspNetCore.Components;
 global using Shouldly;
 global using System.Text.Json;
@@ -16,8 +22,9 @@ global using TimeWarp.Architecture.Features.EventStreams;
 global using TimeWarp.Architecture.Features.WeatherForecasts;
 #endif
 global using TimeWarp.Architecture.JsonSerializer.Tests;
+#if(api)
 global using TimeWarp.Architecture.Services;
-global using TimeWarp.Foundation.Services;
+#endif
 global using TimeWarp.Architecture.Testing;
 global using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 global using TimeWarp.Mediator;

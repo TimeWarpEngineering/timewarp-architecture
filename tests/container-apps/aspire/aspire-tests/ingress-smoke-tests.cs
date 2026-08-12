@@ -12,8 +12,10 @@
 #region Design
 // Closed-box Aspire.Hosting.Testing lane (epic 145 two-lane model): full AppHost graph, zero
 // DI mocks. SetupOnce starts DistributedApplication once per class; CleanUpOnce disposes.
-// Health-gate web→api→ingress then poll ingress reachability (DCP proxy race). Suite-shaped
-// under tests/ per hybrid topology policy — not co-located under features/.
+// Health-gate web→api→ingress, then wait for web-migrations to reach a terminal state (task
+// 155 — the AppHost carries no wait edge there, and this suite's ephemeral Postgres means
+// migrations always have real work to do), then poll ingress reachability (DCP proxy race).
+// Suite-shaped under tests/ per hybrid topology policy — not co-located under features/.
 #endregion
 
 namespace Aspire.Tests;
@@ -36,18 +38,47 @@ public class IngressSmoke_Given_
       (
         // Ephemeral postgres: test AppHosts must NOT share the deterministic data volume
         // (overlapping instances corrupt its WAL and hang WaitFor - see AppHost Design region).
-        ["--Postgres:UseDataVolume=false"]
+        // Authentication:UseMock=true is closed-box opt-in only (mock principal header smoke).
+        // Local dev run does NOT force mock — AppHost forwards this flag when set explicitly.
+        ["--Postgres:UseDataVolume=false", "--Authentication:UseMock=true"]
       );
 
     App = await appHost.BuildAsync();
     await App.StartAsync();
 
     // Requests flow only once the backends AND the ingress are healthy; one 2-minute budget
-    // covers all three so a slow backend doesn't false-fail the ingress wait.
+    // covers all the gates below (three health waits, the web-migrations terminal-state wait,
+    // and the ingress-reachability poll) so a slow backend doesn't false-fail the ingress wait.
     using CancellationTokenSource cts = new(TimeSpan.FromMinutes(2));
     await App.ResourceNotifications.WaitForResourceHealthyAsync("web-server", cts.Token);
     await App.ResourceNotifications.WaitForResourceHealthyAsync("api-server", cts.Token);
     await App.ResourceNotifications.WaitForResourceHealthyAsync("ingress", cts.Token);
+
+    // Task 155: the AppHost deliberately carries NO wait edge between web-server and
+    // web-migrations (a builder-graph WaitFor deadlocks dashboard restarts; WaitForCompletion
+    // breaks DCP service-producer endpoint creation for the same-project web-server resource —
+    // see AppHost program.cs Design region). That means web-server's own Healthy state above says
+    // nothing about migration progress. This suite always boots an EPHEMERAL Postgres
+    // (--Postgres:UseDataVolume=false), so RunDatabaseUpdateOnStart has real work to do on every
+    // run — unlike a real dev volume, which is already-current after the first boot — so without
+    // this wait, DB-backed requests below would race the migration deterministically, not rarely.
+    // This is a notification-service POLL from test code (WaitForResourceAsync against the
+    // already-running graph), not a builder-graph WaitFor/WaitForCompletion annotation, so it
+    // reproduces neither of the two bugs above.
+    // TerminalStates includes FailedToStart/Exited, so assert the state reached is Finished —
+    // a failed migration should fail HERE with a clear message, not later as confusing
+    // schema/auth errors in the DB-backed facts (review 155 round-1 F1).
+    string migrationState = await App.ResourceNotifications.WaitForResourceAsync
+    (
+      "web-migrations",
+      KnownResourceStates.TerminalStates,
+      cts.Token
+    );
+    migrationState.ShouldBe
+    (
+      KnownResourceStates.Finished,
+      $"web-migrations ended in '{migrationState}', not Finished — schema is not applied."
+    );
 
     // Healthy != reachable: the ingress reports Healthy when the YARP process starts, but the
     // Aspire DCP proxy takes a moment more to wire through to the replica. Requests issued in that
@@ -176,12 +207,12 @@ public class IngressSmoke_Given_
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  public static async Task RolesThroughIngress_Should_Ok_Given_MockPrincipalHeader()
+  public static async Task RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole()
   {
-    // Task 145-009: closed-box authenticated BFF — Development + Authentication:UseMock enables
-    // the mock-identity-session scheme. A real identity-session cookie is not required; the
-    // fail-closed gate is the product surface under test. UserId is required by AuthApiRequest
-    // validation on GetRoles (same as in-proc roles-authorization tests).
+    // Task 145-009 + 147-004: closed-box mock principal authenticates (identity-session-compatible
+    // scheme) but effective roles default to Member only — CanViewRolesPage requires Administrator,
+    // so the response is 403 (not 401/404). Proves ingress routes to Web.Server AND role policy runs.
+    // In-proc roles-authorization-tests cover the Administrator → 200 path via IPrincipalRoleStore.
     Guid principalId = Guid.NewGuid();
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
     // Header name SSOT: MockAuthenticationDefaults.MockPrincipalIdHeader (Web.Spa)
@@ -189,7 +220,7 @@ public class IngressSmoke_Given_
 
     HttpResponseMessage response = await httpClient.GetAsync($"/api/Roles?UserId={principalId:D}");
 
-    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
   }
 }
 

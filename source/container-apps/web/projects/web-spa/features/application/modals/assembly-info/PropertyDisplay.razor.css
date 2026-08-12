@@ -1,0 +1,13 @@
+.twe-prop {
+  font-size: var(--twe-text-helper);
+  color: var(--twe-muted);
+}
+
+.twe-prop__name {
+  font-weight: 600;
+  color: var(--twe-ink-2);
+}
+
+.twe-prop__value {
+  font-weight: 400;
+}

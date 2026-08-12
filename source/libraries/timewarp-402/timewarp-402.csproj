@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Version + shared metadata inherited from source/Directory.Build.props (single repo version). -->
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>TimeWarp.402</PackageId>
+    <Title>TimeWarp.402</Title>
+    <Description>Internet-native x402 payment (challenge, verify, settle, credits) for TimeWarp applications.</Description>
+    <PackageTags>timewarp;x402;payment;agents;credits</PackageTags>
+    <!-- PackageId is TimeWarp.402 (locked product name). C# namespaces cannot use a leading-digit
+         segment, so public surface lives in TimeWarp.X402 (AssemblyMarkerNamespace). -->
+    <RootNamespace>TimeWarp.X402</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PrincipalId for credit ledger keys (task 104-010). Dual-mode: monorepo ProjectReference,
+         package-mode PackageReference when identity source is absent. -->
+    <ProjectReference Include="../timewarp-identity/timewarp-identity.csproj" Condition="'$(UseIdentityPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Identity" Condition="'$(UseIdentityPackages)' == 'true'" />
+  </ItemGroup>
+</Project>
+

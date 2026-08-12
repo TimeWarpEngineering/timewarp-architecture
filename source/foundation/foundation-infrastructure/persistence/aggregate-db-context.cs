@@ -53,7 +53,7 @@ using TimeWarp.Foundation.Entities;
 
 public abstract class AggregateDbContext : DbContext
 {
-  internal const string VersionPropertyName = nameof(Entity<Guid>.Version);
+  internal const string VersionPropertyName = nameof(Entity<>.Version);
 
   protected AggregateDbContext(DbContextOptions options) : base(options) { }
 

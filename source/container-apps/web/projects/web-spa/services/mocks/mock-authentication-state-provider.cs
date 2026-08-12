@@ -5,7 +5,8 @@
 #region Design
 // Registered only via MockAuthenticationRegistration (Development/Testing + Authentication:UseMock).
 // Role claims carry RoleIds (GUID strings), not role names, because authorization policies match
-// on ids; the "oid" claim mirrors what Azure AD B2C issues so claim-lookup code works unchanged.
+// on ids; the "oid" claim mirrors historical Entra claim shapes so claim-lookup code still works
+// when UseEntra is later enabled. MockUserIds live under Features.Identity (task 104-021).
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -30,9 +31,9 @@ public partial class MockAuthenticationStateProvider : AuthenticationStateProvid
       new("oid", MockUserIds.SystemAdmin.ToString()),
       new(ClaimTypes.NameIdentifier, MockUserIds.SystemAdmin.ToString()),
       new(ClaimTypes.Name, "Mock User"),
+      new(ClaimTypes.Role, RoleIds.Member.ToString()),
       new(ClaimTypes.Role, RoleIds.Administrator.ToString()),
-      new(ClaimTypes.Role, RoleIds.Developer.ToString()),
-      new(ClaimTypes.Role, RoleIds.Accountant.ToString())
+      new(ClaimTypes.Role, RoleIds.Developer.ToString())
     };
 
     ClaimsIdentity identity = new(claims, "Mock authentication type");

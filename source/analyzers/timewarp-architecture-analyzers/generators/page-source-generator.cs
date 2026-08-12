@@ -22,12 +22,13 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 [Generator]
-public sealed class PageSourceGenerator : IIncrementalGenerator
+public sealed partial class PageSourceGenerator : IIncrementalGenerator
 {
   private const string AttributeName = "Page";
 
   // {name:type}? — page route tokens carry real C# type names (Guid, int, …), used directly.
-  private static readonly Regex RouteParam = new(@"\{(\w+)\s*:?(\w+)\}?", RegexOptions.Compiled);
+  [GeneratedRegex(@"\{(\w+)\s*:?(\w+)\}?")]
+  private static partial Regex RouteParam();
 
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
@@ -40,7 +41,7 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
       spc.AddSource("PageAttribute.g.cs", SourceText.From(BuildAttribute(ns), Encoding.UTF8)));
 
     IncrementalValuesProvider<PageModel> pages = context.SyntaxProvider.CreateSyntaxProvider(
-      predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Count > 0,
+      predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Any(),
       transform: static (ctx, _) => GetPage((ClassDeclarationSyntax)ctx.Node))
       .Where(static p => p is not null)
       .Select(static (p, _) => p!.Value);
@@ -164,7 +165,7 @@ public sealed class PageSourceGenerator : IIncrementalGenerator
 
     foreach (string segment in route.Split('/'))
     {
-      Match m = RouteParam.Match(segment);
+      Match m = RouteParam().Match(segment);
       if (!m.Success)
       {
         urlSegments.Add(segment);

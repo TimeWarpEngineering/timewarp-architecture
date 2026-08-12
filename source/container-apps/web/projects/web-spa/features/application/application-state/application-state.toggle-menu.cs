@@ -13,7 +13,7 @@ partial class ApplicationState
 {
   public static class ToggleMenu
   {
-    internal class Action : IBaseAction { }
+    internal class Action : IBaseAction;
 
     internal class Handler
     (

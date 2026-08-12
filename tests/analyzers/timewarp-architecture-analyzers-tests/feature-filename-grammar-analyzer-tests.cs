@@ -68,9 +68,9 @@ public class Should_Enforce_Feature_Filename_Grammar
 
   public static async Task Given_Handler_On_Contracts_Flags_TWA0015_ProjectRelativePath()
   {
-    const string Path = "../features/hello/hello-handler-contracts.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
-    analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-contracts.cs", "handler", "application"));
+    const string path = "../features/hello/hello-handler-contracts.cs";
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(path);
+    analyzerTest.ExpectedDiagnostics.Add(Twa0015(path, "hello-handler-contracts.cs", "handler", "application"));
     await analyzerTest.RunAsync();
   }
 
@@ -78,9 +78,9 @@ public class Should_Enforce_Feature_Filename_Grammar
   {
     // Spike pitfall: FilePath often arrives as project-relative WITH `..` traversal through
     // the layer project directory (e.g. web-server/../features/...). Must still flag.
-    const string Path = "web-server/../features/hello/hello-handler-contracts.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
-    analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-contracts.cs", "handler", "application"));
+    const string path = "web-server/../features/hello/hello-handler-contracts.cs";
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(path);
+    analyzerTest.ExpectedDiagnostics.Add(Twa0015(path, "hello-handler-contracts.cs", "handler", "application"));
     await analyzerTest.RunAsync();
   }
 
@@ -91,11 +91,11 @@ public class Should_Enforce_Feature_Filename_Grammar
 
   public static async Task Given_Endpoint_On_Application_Flags_TWA0015()
   {
-    const string Path = "../features/hello/hello-endpoint-application.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
+    const string path = "../features/hello/hello-endpoint-application.cs";
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(path);
     analyzerTest.ExpectedDiagnostics.Add
     (
-      Twa0015(Path, "hello-endpoint-application.cs", "endpoint", "server")
+      Twa0015(path, "hello-endpoint-application.cs", "endpoint", "server")
     );
     await analyzerTest.RunAsync();
   }
@@ -114,9 +114,9 @@ public class Should_Enforce_Feature_Filename_Grammar
 
   public static async Task Given_Wrong_Case_Function_Flags_TWA0016()
   {
-    const string Path = "../features/hello/hello-Handler-application.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
-    analyzerTest.ExpectedDiagnostics.Add(Twa0016(Path, "hello-Handler-application.cs", "Handler"));
+    const string path = "../features/hello/hello-Handler-application.cs";
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(path);
+    analyzerTest.ExpectedDiagnostics.Add(Twa0016(path, "hello-Handler-application.cs", "Handler"));
     await analyzerTest.RunAsync();
   }
 
@@ -155,22 +155,22 @@ public class Should_Enforce_Feature_Filename_Grammar
 
   public static async Task Given_Absolute_Cohesive_Path_Flags_TWA0015()
   {
-    const string Path =
+    const string path =
       "/home/dev/source/container-apps/web/features/hello/hello-handler-contracts.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
-    analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-contracts.cs", "handler", "application"));
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(path);
+    analyzerTest.ExpectedDiagnostics.Add(Twa0015(path, "hello-handler-contracts.cs", "handler", "application"));
     await analyzerTest.RunAsync();
   }
 
   public static async Task Given_Absolute_Api_Family_Cohesive_Path_Flags_TWA0015()
   {
     // Family-generic scoping (task 129): api/features/ is a cohesive tree too, not just web's.
-    const string Path =
+    const string path =
       "/home/dev/source/container-apps/api/features/weather-forecast/weather-forecast-handler-contracts.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(path);
     analyzerTest.ExpectedDiagnostics.Add
     (
-      Twa0015(Path, "weather-forecast-handler-contracts.cs", "handler", "application")
+      Twa0015(path, "weather-forecast-handler-contracts.cs", "handler", "application")
     );
     await analyzerTest.RunAsync();
   }
@@ -194,17 +194,17 @@ public class Should_Enforce_Feature_Filename_Grammar
 
   public static async Task Given_Handler_On_Tests_Flags_TWA0015()
   {
-    const string Path = "../features/hello/hello-handler-tests.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
-    analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-handler-tests.cs", "handler", "application"));
+    const string path = "../features/hello/hello-handler-tests.cs";
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(path);
+    analyzerTest.ExpectedDiagnostics.Add(Twa0015(path, "hello-handler-tests.cs", "handler", "application"));
     await analyzerTest.RunAsync();
   }
 
   public static async Task Given_Endpoint_On_Tests_Flags_TWA0015()
   {
-    const string Path = "../features/hello/hello-endpoint-tests.cs";
-    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(Path);
-    analyzerTest.ExpectedDiagnostics.Add(Twa0015(Path, "hello-endpoint-tests.cs", "endpoint", "server"));
+    const string path = "../features/hello/hello-endpoint-tests.cs";
+    CSharpAnalyzerTest<FeatureFilenameGrammarAnalyzer, RoslynTestVerifier> analyzerTest = Test(path);
+    analyzerTest.ExpectedDiagnostics.Add(Twa0015(path, "hello-endpoint-tests.cs", "endpoint", "server"));
     await analyzerTest.RunAsync();
   }
 }
@@ -261,8 +261,8 @@ public class Should_Keep_Grammar_Registry_In_Sync
     // The registry itself is family-agnostic (Decision 2, task 129 stage 0) — checked once.
     // FeatureFilenameGrammar.Layers is routed ∪ unrouted (the analyzer accepts both as valid
     // archetypes; only routed layers get a layer-project Compile glob — checked below).
-    FeatureFilenameGrammar.Layers.OrderBy(static l => l)
-      .ShouldBe(layers.Concat(unroutedLayers).Distinct().OrderBy(static l => l));
+    FeatureFilenameGrammar.Layers.Order()
+      .ShouldBe(layers.Concat(unroutedLayers).Distinct().Order());
     FeatureFilenameGrammar.FunctionToLayer.Count.ShouldBe(functions.Count);
     foreach (KeyValuePair<string, string> pair in functions)
     {

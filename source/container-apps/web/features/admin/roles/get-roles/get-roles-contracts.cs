@@ -9,11 +9,16 @@
 // one query string. RoleDto is a flat read model separate from IRoleDetails because list
 // rows are display-only, and Response derives from ListResponse to carry TotalCount for
 // paging. GetMockResponseFactory serves the SPA's MockWebApiService offline.
-// [EndpointAuthorize] (task 110): [AuthApiRequest] on the Query is a client-facing/mock-mode
-// identity signal only — TWA0014 would flag pairing it with [EndpointAllowAnonymous] as a
-// contradiction, so this attribute is what actually gates the generated endpoint. See CreateRole's
-// Design region for the policy/scope-boundary rationale (same policy, same "no admin/role model
-// yet" boundary).
+// [EndpointAuthorize] (task 147-004): Administrator capability via AuthorizationPolicyNames —
+// shared string with SPA RolePolicyGrants / server RequireRole(Administrator). [AuthApiRequest]
+// on the Query remains a client-facing/mock-mode identity signal only.
+// AuthenticationSchemes (task 158): mirrors CanViewRolesPage's own AddAuthenticationSchemes
+// (identity-session + mock-identity-session) so the generated FastEndpoint's AuthSchemes(...)
+// actually invokes the mock handler under the closed-box ingress test — without this, the
+// generated endpoint carried Policies(...) only, AuthorizationMiddleware never ran the
+// mock-identity-session handler, and an unauthenticated-looking request fell through as 401
+// instead of the expected 403 for a non-admin mock principal. See AuthenticationSchemeNames'
+// Design region for the Production-safety argument (scheme always registered, handler fail-closed).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -22,7 +27,11 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 /// Get a list of roles for display only.
 /// </summary>
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "identity-session-authenticated")] // matches IdentitySessionDefaults.AuthenticatedPolicy
+[EndpointAuthorize
+(
+  Policy = AuthorizationPolicyNames.CanViewRolesPage,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
+)]
 public static partial class GetRoles
 {
 
@@ -78,18 +87,10 @@ public static partial class GetRoles
   {
     RoleDto[] items =
     [
-      new
-      (
-        roleId: RoleIds.Administrator,
-        name: nameof(RoleIds.Administrator),
-        description: "The Administrator role is for administrators. And has access to all modules."
-      ),
-      new
-      (
-        roleId: RoleIds.Accountant,
-        name: nameof(RoleIds.Accountant),
-        description: "The Accountant role is for accountants. And has access to the accounting module."
-      ),
+      new(RoleIds.Member, nameof(RoleIds.Member), "Default human principal after passkey login."),
+      new(RoleIds.Operator, nameof(RoleIds.Operator), "Marketplace and job oversight."),
+      new(RoleIds.Administrator, nameof(RoleIds.Administrator), "Tenant admin: principals, roles, settings."),
+      new(RoleIds.Developer, nameof(RoleIds.Developer), "Template dogfood: demos and diagnostics."),
     ];
 
     return _ => new Response(totalCount: items.Length, items);

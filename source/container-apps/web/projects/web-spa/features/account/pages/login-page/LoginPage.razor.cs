@@ -1,8 +1,154 @@
 #region Purpose
-// Code-behind for the login page (passkey sign-in demo lives in the .razor @code block): [Page] drives source-generated routing and navigation plumbing.
+// Code-behind for the template's passkey-first human sign-in page: Sign in with a passkey /
+// Create account against the first-party WebAuthn identity-session cookie (no profile form).
+#endregion
+
+#region Design
+// Task 104-016 product CTA + 147-005 focused chrome. Account = accepted public key (locked
+// decision #1): primary action is discoverable passkey authentication (no email/username),
+// secondary is registration that mints Principal + session with no mandatory profile.
+// Markup uses TimeWarpFocusedPage (logo + centered card) — not TimeWarpPage — so login is not
+// "a page in the product shell". Progressive profile is 104-024 and stays out of this page.
+// Ceremony plumbing lives in PasskeyCeremonyClient so the technical Passkeys demo and this page
+// share one mapping of browser credential JSON → Complete* commands.
+// Mock mode: ceremony contracts have no GetMockResponseFactory, so the mock chain yields 501 and
+// we surface it through ErrorMessage (same as PasskeysPage).
+// Task 153 redirect flow: an already-authenticated visitor is redirected away immediately, and a
+// successful ceremony navigates to ?returnUrl (or home). returnUrl is honored only when local
+// (GetSafeReturnUrl — open-redirect guard) and never points back at /Login itself.
+// Create account mints a NEW Principal; after success (no returnUrl) navigate to /Settings so
+// the user lands on the passkey list (passkeys.io post-create UX, task 167). Sign-in still
+// uses returnUrl/home. Credential management is Settings, never this page.
+// Hybrid/nearby device: one "Sign in with a passkey" button opens the browser modal. Server
+// options include soft hints [client-device, hybrid] and empty allowCredentials (165) so the
+// dialog can offer local managers and nearby-device/QR (e.g. after canceling Proton Pass).
+// Conditional autofill + empty text field (166) was rejected — no field to type into.
+// No second site button for nearby; the browser owns that path inside the same ceremony.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Account;
 
+using TimeWarp.Architecture.Features.Identity;
+using TimeWarp.Architecture.Services;
+using TimeWarp.Foundation.Types;
+
+// Public passkey entry. Anonymous; authenticated visitors are redirected away (task 153).
 [Page("/Login")]
-partial class LoginPage;
+partial class LoginPage
+{
+  [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
+  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+  [SuppressMessage
+  (
+    "Design",
+    "CA1056:URI-like properties should not be strings",
+    Justification = "SupplyParameterFromQuery binds strings; the raw value is validated by GetSafeReturnUrl."
+  )]
+  [Parameter] [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
+
+  private string? ErrorMessage;
+  private bool IsBusy;
+  private bool? IsAuthenticated;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+    await RefreshSessionAsync();
+
+    if (IsAuthenticated is true)
+    {
+      NavigateOnward();
+    }
+  }
+
+  /// <summary>
+  /// Collapses a requested return URL to a safe local destination: relative paths only
+  /// (no absolute/protocol-relative URLs — open-redirect guard) and never /Login itself
+  /// (redirect loop guard). Everything else falls back to home.
+  /// </summary>
+  internal static string GetSafeReturnUrl(string? returnUrl)
+  {
+    if (string.IsNullOrEmpty(returnUrl)
+      || !returnUrl.StartsWith('/')
+      || returnUrl.StartsWith("//", StringComparison.Ordinal)
+      || returnUrl.StartsWith("/\\", StringComparison.Ordinal))
+    {
+      return "/";
+    }
+
+    string path = returnUrl.Split('?', '#')[0].TrimEnd('/');
+    return path.Equals(GetPageUrl(), StringComparison.OrdinalIgnoreCase) ? "/" : returnUrl;
+  }
+
+  private void NavigateOnward() => NavigationManager.NavigateTo(GetSafeReturnUrl(ReturnUrl));
+
+  /// <summary>
+  /// After Create account: deep-link returnUrl if present, else /Settings (passkeys.io-style
+  /// post-create: see your new passkey listed). Literal path avoids TWA0009 cross-slice type refs.
+  /// </summary>
+  private void NavigateAfterCreateAccount()
+  {
+    string destination = GetSafeReturnUrl(ReturnUrl);
+    NavigationManager.NavigateTo(destination is "/" or "" ? "/Settings" : destination);
+  }
+
+  private async Task ContinueWithPasskey()
+  {
+    ErrorMessage = null;
+    IsBusy = true;
+    try
+    {
+      OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails> result =
+        await Ceremony.AuthenticateAsync(CancellationToken.None);
+
+      if (result.IsT1)
+      {
+        ErrorMessage = PasskeyCeremonyClient.FormatError(result.AsT1);
+        return;
+      }
+
+      NavigateOnward();
+    }
+    catch (JSException jsException)
+    {
+      ErrorMessage = $"The browser could not complete the passkey ceremony: {jsException.Message}";
+    }
+    finally
+    {
+      IsBusy = false;
+    }
+  }
+
+  private async Task CreatePasskey()
+  {
+    ErrorMessage = null;
+    IsBusy = true;
+    try
+    {
+      OneOf<CompletePasskeyRegistration.Response, SharedProblemDetails> result =
+        await Ceremony.RegisterAsync(CancellationToken.None);
+
+      if (result.IsT1)
+      {
+        ErrorMessage = PasskeyCeremonyClient.FormatError(result.AsT1);
+        return;
+      }
+
+      NavigateAfterCreateAccount();
+    }
+    catch (JSException jsException)
+    {
+      ErrorMessage = $"The browser could not complete the passkey ceremony: {jsException.Message}";
+    }
+    finally
+    {
+      IsBusy = false;
+    }
+  }
+
+  private async Task RefreshSessionAsync()
+  {
+    IsAuthenticated = await Ceremony.GetIsAuthenticatedAsync(CancellationToken.None);
+  }
+}

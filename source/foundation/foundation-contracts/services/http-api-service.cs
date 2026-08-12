@@ -33,6 +33,7 @@ public sealed class HttpApiService : IApiService
   private readonly JsonSerializerOptions JsonSerializerOptions;
   private readonly Func<CancellationToken, Task<string?>>? AcquireBearerTokenAsync;
 
+  /// <summary>Constructs an HTTP-backed <see cref="IApiService"/> for the contract seam.</summary>
   /// <param name="httpClient">Client used for all requests (caller owns lifetime).</param>
   /// <param name="jsonSerializerOptions">Contract-seam serializer options.</param>
   /// <param name="acquireBearerTokenAsync">

@@ -4,7 +4,8 @@
 
 namespace TimeWarp.Architecture.Features.Counters;
 
-[Page("/Counter")]
+[Page("/Counter", Policy = Policies.CanViewDeveloperPage)]
+[Authorize(Policy = Policies.CanViewDeveloperPage)]
 partial class CounterPage
 {
   private async Task ButtonClick() =>

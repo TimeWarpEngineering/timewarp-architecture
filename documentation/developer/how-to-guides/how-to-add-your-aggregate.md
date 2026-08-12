@@ -147,7 +147,7 @@ surface as `DbUpdateConcurrencyException` (map to a product conflict type at the
 | Domain unit | Create/guards/mutations | `tests/…/web-domain-tests/` (see `profile-tests.cs`) |
 | Model mapping | Schema, TypedId, `IsConcurrencyToken` | `web-infrastructure-tests` model tests (no live DB) |
 | Aggregate SaveChanges hook | Version bump, child→root, missing Version | `foundation-infrastructure-tests` (`AggregateDbContext` harness) |
-| Postgres integration | EnsureCreated, round-trip, concurrent update | `web-infrastructure-tests` style (Testcontainers or connection string; soft-skip when unavailable) |
+| Postgres integration | `Database.Migrate`, round-trip, concurrent update | `web-infrastructure-tests` style (Testcontainers or connection string; soft-skip when unavailable) |
 
 Live Postgres tests should use an **ephemeral** database (Testcontainers without a shared data
 volume, or a dedicated connection string). Do not reuse AppHost `WithDataVolume` state across
@@ -198,17 +198,45 @@ Orleans is optional and not wired as the template default. **Akka.NET** is reser
 device-fleet / supervision-and-streams shape (task 118), not generic entity hosting. See ADR-0009
 and the 113-002 spike notes.
 
-## 8. EnsureCreated vs Migrate
+## 8. Schema evolution (EF migrations)
 
-| Mode | Use |
-|------|-----|
-| **`Database.EnsureCreated`** | Template default (`PostgresDbContextStartupHostedService`). Fresh DB, zero migration ceremony, great for demos and early development |
-| **`Database.Migrate`** | Grown apps that need schema evolution, team deploys, or non-destructive updates |
+Schema for `PostgresDbContext` is **migration-owned only** (ADR-0009 / task 147-007):
 
-`EnsureCreated` does **not** apply migrations and will not upgrade an existing model. When you
-outgrow it: add EF migrations for the host model, switch the startup path (or ops pipeline) to
-`Migrate`, and treat production schema as migration-owned. Schema-per-slice table placement
-stays the same either way.
+| Path | Who runs it |
+|------|-------------|
+| **Local / Aspire** | AppHost `AddEFMigrations` + `RunDatabaseUpdateOnStart` (no wait edge on web-server — task 155); re-run on demand via the `ef-database-update` dashboard command |
+| **Publish / deploy** | `PublishAsMigrationScript` / `PublishAsMigrationBundle` artifacts under `efmigrations/` |
+| **Tests** | Ephemeral DBs call `Database.Migrate()` / `MigrateAsync()` (never `EnsureCreated`) |
+
+### Change model → add migration → run
+
+After editing the model or an `IEntityTypeConfiguration`:
+
+```bash
+# From repo root (once per machine / after clone):
+dotnet tool restore
+
+dotnet ef migrations add <NameYourChange> \
+  --project source/container-apps/web/projects/web-infrastructure/web-infrastructure.csproj \
+  --startup-project source/container-apps/web/projects/web-server/web-server.csproj \
+  --context PostgresDbContext \
+  --output-dir ../../platform/postgres/migrations \
+  --namespace TimeWarp.Architecture.Persistence.Migrations
+```
+
+- Migrations home: `source/container-apps/web/platform/postgres/migrations/` (do not kebab-rename
+  EF scaffold files).
+- Design-time factory: `postgres-db-context-design-time-factory-infrastructure.cs` resolves
+  `ConnectionStrings:postgres-db` / env; uses a dummy connection only for offline scaffolding.
+- Then `dev run`: AppHost resource `web-migrations` applies pending migrations on AppHost start
+  (`RunDatabaseUpdateOnStart`, idempotent). There is no wait edge from web-server (task 155 —
+  both `WaitFor` and `WaitForCompletion` broke restart/testing behavior), so on a fresh volume
+  web-server can briefly start before the migration finishes; re-run on demand with the
+  `ef-database-update` dashboard command on the `web-migrations` resource if needed.
+- **Cutover wipe:** if a dogfood volume was created under the old EnsureCreated path (no
+  `__EFMigrationsHistory`), drop the Aspire Postgres volume once, then restart.
+
+Schema-per-slice table placement (`ToTable` schema) stays the same.
 
 ## Checklist (copy into the PR)
 

@@ -69,6 +69,11 @@ public interface IPrincipalStore
   Task<Principal?> GetPrincipalAsync(PrincipalId id, CancellationToken cancellationToken = default);
   Task UpdatePrincipalAsync(Principal principal, CancellationToken cancellationToken = default);
 
+  /// <summary>
+  /// All principals as snapshots, ordered by <see cref="Principal.CreatedAt"/> ascending.
+  /// </summary>
+  Task<IReadOnlyList<Principal>> ListPrincipalsAsync(CancellationToken cancellationToken = default);
+
   Task AddCredentialAsync(Credential credential, CancellationToken cancellationToken = default);
   Task<Credential?> GetCredentialAsync(CredentialId credentialId, CancellationToken cancellationToken = default);
   Task<Credential?> FindCredentialByHandleAsync(CredentialType type, byte[] handle, CancellationToken cancellationToken = default);

@@ -1,71 +1,111 @@
 #region Purpose
-// Server-side handler for the GetProfile query.
+// Server-side handler for the GetProfile query: dual-mode anonymous mock vs store-backed profile.
 #endregion
 
 #region Design
-// No profile persistence exists; anonymous callers get the contract's mock response so the
-// demo works without sign-in, and authenticated callers get synthesized data keyed on UserId.
-// The avatar is fetched server-side from multiavatar.com and embedded as a base64 data URI so
-// the browser never contacts the third party and user IDs are not leaked to it; the TODOs
-// record the plan to fetch once at registration and persist instead.
+// Task 148:
+//   - Anonymous (no current principal): contract mock so demo works without sign-in (D3).
+//   - Authenticated: IProfileStore Find; create-if-missing with ProfileId.From(principal Guid) and
+//     defaults Member / en-US / US / system / Notifications=false (D1). Concurrent create races
+//     throw on unique PK / TryAdd → re-find. Application never takes PostgresDbContext (D4).
+//   - Response: Alias ← DisplayName; Language/Region/Theme/Notifications from aggregate.
+// Task 149: Avatar is local TimeWarp.Multiavatar (MultiavatarGenerator.Generate), seeded by
+// user id — no network, no HttpClient, no fallback SVG path. Not domain/EF.
+// Task 150: identity comes from ICurrentPrincipalAccessor, not ICurrentUserService. The
+// identity-session cookie principal carries only the timewarp:principal_id claim (see
+// cookie-browser-session-service-server.cs / identity-session-defaults-server.cs); foundation's
+// ICurrentUserService reads a "UserId" claim that no scheme ever emits, so this handler previously
+// always fell through to the anonymous mock for authenticated callers. ICurrentPrincipalAccessor
+// is the scheme-agnostic port that actually reads the claim identity-session issuance emits (see
+// i-current-principal-accessor-application.cs's Design region).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles.Application;
-//<SolutionName>.<ContainerName>.Features.<FeatureName>.<Layer>
-//<SolutionName>.Features.<FeatureName>.<Layer>
+
+using System.Text;
+using TimeWarp.Architecture.Abstractions;
+using TimeWarp.Architecture.Features.Profiles.Domain;
+using TimeWarp.Identity;
+using TimeWarp.Multiavatar;
 using static TimeWarp.Architecture.Features.Profiles.GetProfile;
 
-public class GetProfile
+public sealed class GetProfile
 {
-  // TODO: Finish implementation
-  public class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
+  public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
-    private readonly ICurrentUserService CurrentUserService;
-    private readonly HttpClient HttpClient;
-    private readonly ILogger<Handler> Logger;
-    public Handler
-    (
-      ICurrentUserService currentUserService,
-      HttpClient httpClient,
-      ILogger<Handler> logger
-    )
+    private const string DefaultDisplayName = "Member";
+    private const string DefaultLanguage = "en-US";
+    private const string DefaultRegion = "US";
+    private const string DefaultTheme = "system";
+
+    private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
+    private readonly IProfileStore ProfileStore;
+
+    public Handler(
+      ICurrentPrincipalAccessor currentPrincipalAccessor,
+      IProfileStore profileStore)
     {
-      CurrentUserService = currentUserService;
-      HttpClient = httpClient;
-      Logger = logger;
+      CurrentPrincipalAccessor = currentPrincipalAccessor;
+      ProfileStore = profileStore;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Query request, CancellationToken cancellationToken)
+    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+      Query request,
+      CancellationToken cancellationToken)
     {
-      MockResponseFactory<Response> mockResponseFactory = GetMockResponseFactory();
-      Response response = mockResponseFactory(request);
-      // https://github.com/kesac/Syllabore
+      PrincipalId? principalId = await CurrentPrincipalAccessor.GetCurrentPrincipalIdAsync(cancellationToken).ConfigureAwait(false);
+      if (principalId is null)
+      {
+        return GetMockResponseFactory()(request);
+      }
 
-      Guid? userId = CurrentUserService.UserId;
-      if (userId is null) return response;
-      // TODO: Read the Profile from the DB/Repository/Service
-      // The ProfileId will be the UserId.
+      Guid userId = principalId.Value.Value;
+      var profileId = ProfileId.From(userId);
+      Profile? profile = await ProfileStore.FindAsync(profileId, cancellationToken).ConfigureAwait(false);
 
-      response =
-        new Response
-        (
-          alias: "Use Syllabore",
-          avatar: await GetAvatarDataUri(userId.Value)
-        )
-      ;
+      if (profile is null)
+      {
+        profile = Profile.Create(
+          profileId,
+          DefaultDisplayName,
+          DefaultLanguage,
+          DefaultRegion,
+          DefaultTheme);
 
-      return response;
+        try
+        {
+          await ProfileStore.AddAsync(profile, cancellationToken).ConfigureAwait(false);
+        }
+        catch (InvalidOperationException)
+        {
+          // Concurrent create won the race (unique PK / TryAdd) — re-find the winner's row.
+          profile = await ProfileStore.FindAsync(profileId, cancellationToken).ConfigureAwait(false);
+          if (profile is null)
+          {
+            throw new InvalidOperationException(
+              $"Profile '{profileId}' create raced but re-find returned null.");
+          }
+        }
+      }
+
+      string avatar = GetAvatarDataUri(userId);
+
+      return new Response(
+        alias: profile.DisplayName,
+        language: profile.Language,
+        region: profile.Region,
+        theme: profile.Theme,
+        notifications: profile.Notifications,
+        avatar: avatar);
     }
 
-    // TODO: This will be moved to where we register a user and stored in the DB
-    // By storing in the DB our frontend won't be calling out to mulitavatar.com and leaking infomration.
-    // Only the backend will do it once and then store it.
-    private async Task<string> GetAvatarDataUri(Guid userId)
+    /// <summary>
+    /// Deterministic Multiavatar SVG data URI for the user id (task 149). Local generation only.
+    /// </summary>
+    internal static string GetAvatarDataUri(Guid userId)
     {
-      // string avatarUrl = "https://api.multiavatar.com/d8f42d42-f2f8-4332-af82-8ff357f61aa5.svg";
-      string avatarUrl = $"https://api.multiavatar.com/{userId}.svg";
-      byte[] imageBytes = await HttpClient.GetByteArrayAsync(avatarUrl);
-      string base64 = Convert.ToBase64String(imageBytes);
+      string svg = MultiavatarGenerator.Generate(userId.ToString("D"));
+      string base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(svg));
       return $"data:image/svg+xml;base64,{base64}";
     }
   }

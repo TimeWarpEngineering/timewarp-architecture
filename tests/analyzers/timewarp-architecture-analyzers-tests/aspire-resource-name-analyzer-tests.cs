@@ -41,7 +41,7 @@ public class Should_Enforce_Aspire_Resource_Names
 
   public static async Task Given_Name_Matching_ServiceNames_IsClean()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test app host.
@@ -56,13 +56,13 @@ public class Should_Enforce_Aspire_Resource_Names
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_Aliased_Constant_IsClean()
   {
     // The AppHost pattern: local constants aliasing ServiceNames evaluate to allowed values.
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test app host.
@@ -78,12 +78,12 @@ public class Should_Enforce_Aspire_Resource_Names
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_Unknown_Name_Flags_TWA0007()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test app host.
@@ -97,12 +97,12 @@ public class Should_Enforce_Aspire_Resource_Names
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_NonConstant_Name_IsSkipped()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test app host.
@@ -116,12 +116,12 @@ public class Should_Enforce_Aspire_Resource_Names
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_No_ServiceNames_Type_IsSilent()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test app host without ServiceNames in scope.
@@ -144,7 +144,7 @@ public class Should_Enforce_Aspire_Resource_Names
 
     var test = new CSharpAnalyzerTest<AspireResourceNameAnalyzer, RoslynTestVerifier>
     {
-      TestState = { Sources = { ("AppHost.cs", Source) } }
+      TestState = { Sources = { ("AppHost.cs", source) } }
     };
 
     await test.RunAsync();

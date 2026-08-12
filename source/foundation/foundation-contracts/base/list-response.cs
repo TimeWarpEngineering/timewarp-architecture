@@ -63,7 +63,7 @@ public abstract class ListResponse<T>
     /// </summary>
     private class EmptyListResponse<_> : ListResponse<_>
     {
-        public static readonly EmptyListResponse<_> Instance = new EmptyListResponse<_>();
+        public static readonly EmptyListResponse<_> Instance = new();
         private EmptyListResponse() : base(0, Array.Empty<_>()) { }
     }
 }

@@ -56,7 +56,7 @@ public class Should_Enforce_Endpoint_Coverage
 
   public static async Task Given_Covered_Contract_IsClean()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -83,12 +83,12 @@ public class Should_Enforce_Endpoint_Coverage
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_Uncovered_Contract_Flags_TWA0006()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -122,7 +122,7 @@ public class Should_Enforce_Endpoint_Coverage
       }
       """;
 
-    CSharpAnalyzerTest<EndpointCoverageAnalyzer, RoslynTestVerifier> test = Test(Source);
+    CSharpAnalyzerTest<EndpointCoverageAnalyzer, RoslynTestVerifier> test = Test(source);
     test.ExpectedDiagnostics.Add(
       new DiagnosticResult(EndpointCoverageAnalyzer.MissingEndpointId, DiagnosticSeverity.Warning)
         .WithArguments("App.Contracts.OrphanedContract.Command", "api/Orphans", "Delete"));
@@ -132,7 +132,7 @@ public class Should_Enforce_Endpoint_Coverage
 
   public static async Task Given_ClientOnlyContract_OptOut_IsClean()
   {
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -176,14 +176,14 @@ public class Should_Enforce_Endpoint_Coverage
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 
   public static async Task Given_Compilation_Without_Endpoints_IsClean()
   {
     // A contracts-only (or SPA) compilation declares routed contracts but no endpoints — the
     // server-project gate must keep the diagnostic silent.
-    const string Source =
+    const string source =
       """
       #region Purpose
       // Test feature.
@@ -202,6 +202,6 @@ public class Should_Enforce_Endpoint_Coverage
       }
       """;
 
-    await Test(Source).RunAsync();
+    await Test(source).RunAsync();
   }
 }

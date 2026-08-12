@@ -18,9 +18,9 @@ public class SaveChanges_Hook
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<SaveChanges_Hook>();
 
-  public static Task Root_only_modify_increments_version()
+  public static async Task Root_only_modify_increments_version()
   {
-    using HarnessDbContext db = CreateDb();
+    await using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
     db.Roots.Add(root);
     db.SaveChanges();
@@ -30,12 +30,11 @@ public class SaveChanges_Hook
     db.SaveChanges();
 
     root.Version.ShouldBe(1);
-    return Task.CompletedTask;
   }
 
-  public static Task Child_only_mutation_marks_root_modified_and_increments_version()
+  public static async Task Child_only_mutation_marks_root_modified_and_increments_version()
   {
-    using HarnessDbContext db = CreateDb();
+    await using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
     root.AddLine("first");
     db.Roots.Add(root);
@@ -52,12 +51,11 @@ public class SaveChanges_Hook
 
     root.Version.ShouldBe(1);
     root.Lines.Single().Text.ShouldBe("first-rewritten");
-    return Task.CompletedTask;
   }
 
-  public static Task Adding_owned_child_after_initial_save_increments_root_version()
+  public static async Task Adding_owned_child_after_initial_save_increments_root_version()
   {
-    using HarnessDbContext db = CreateDb();
+    await using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
     db.Roots.Add(root);
     db.SaveChanges();
@@ -71,12 +69,11 @@ public class SaveChanges_Hook
 
     root.Version.ShouldBe(1);
     root.Lines.Single().Text.ShouldBe("second");
-    return Task.CompletedTask;
   }
 
-  public static Task Deleting_owned_child_increments_root_version()
+  public static async Task Deleting_owned_child_increments_root_version()
   {
-    using HarnessDbContext db = CreateDb();
+    await using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
     root.AddLine("first");
     db.Roots.Add(root);
@@ -91,12 +88,11 @@ public class SaveChanges_Hook
     db.SaveChanges();
 
     root.Version.ShouldBe(1);
-    return Task.CompletedTask;
   }
 
-  public static Task Child_only_mutation_runs_root_invariants()
+  public static async Task Child_only_mutation_runs_root_invariants()
   {
-    using HarnessDbContext db = CreateDb();
+    await using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
     root.AddLine("first");
     db.Roots.Add(root);
@@ -107,24 +103,22 @@ public class SaveChanges_Hook
 
     Should.Throw<DomainInvariantViolationException>(() => db.SaveChanges());
     root.Version.ShouldBe(versionBefore);
-    return Task.CompletedTask;
   }
 
-  public static Task Added_root_does_not_increment_version()
+  public static async Task Added_root_does_not_increment_version()
   {
-    using HarnessDbContext db = CreateDb();
+    await using HarnessDbContext db = CreateDb();
     TestRoot root = new(Guid.NewGuid(), "alpha");
     db.Roots.Add(root);
 
     db.SaveChanges();
 
     root.Version.ShouldBe(0);
-    return Task.CompletedTask;
   }
 
-  public static Task Missing_version_on_modified_root_fails_closed()
+  public static async Task Missing_version_on_modified_root_fails_closed()
   {
-    using VersionlessDbContext db = CreateVersionlessDb();
+    await using VersionlessDbContext db = CreateVersionlessDb();
     RootWithoutVersion root = new() { Id = Guid.NewGuid(), Name = "alpha" };
     db.Roots.Add(root);
     db.SaveChanges();
@@ -134,8 +128,7 @@ public class SaveChanges_Hook
 
     InvalidOperationException ex = Should.Throw<InvalidOperationException>(() => db.SaveChanges());
     ex.Message.ShouldContain(nameof(IAggregateRoot));
-    ex.Message.ShouldContain(nameof(Entity<Guid>.Version));
-    return Task.CompletedTask;
+    ex.Message.ShouldContain(nameof(Entity<>.Version));
   }
 
   public static async Task Save_changes_async_increments_version_on_root_modify()
@@ -178,7 +171,7 @@ internal sealed class TestRoot : Entity<Guid>, IAggregateRoot
 
   public string Name { get; private set; }
 
-  public List<TestLine> Lines { get; private set; } = [];
+  public List<TestLine> Lines { get; } = [];
 
   public void Rename(string name) => Name = name;
 
@@ -286,22 +279,21 @@ public class ConcurrencyConvention
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<ConcurrencyConvention>();
 
-  public static Task Root_without_explicit_mapping_gets_concurrency_token_and_access_mode()
+  public static async Task Root_without_explicit_mapping_gets_concurrency_token_and_access_mode()
   {
-    using PlainRootDbContext db = CreatePlainRootDb();
+    await using PlainRootDbContext db = CreatePlainRootDb();
 
     IEntityType entityType = db.Model.FindEntityType(typeof(PlainRoot))
       .ShouldNotBeNull("PlainRoot must be on the model even without an explicit mapping");
 
-    IProperty version = entityType.FindProperty(nameof(Entity<Guid>.Version)).ShouldNotBeNull();
+    IProperty version = entityType.FindProperty(nameof(Entity<>.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
-    return Task.CompletedTask;
   }
 
-  public static Task Config_only_root_without_dbset_gets_concurrency_token_and_access_mode()
+  public static async Task Config_only_root_without_dbset_gets_concurrency_token_and_access_mode()
   {
-    using ConfigOnlyDbContext db = CreateConfigOnlyDb();
+    await using ConfigOnlyDbContext db = CreateConfigOnlyDb();
 
     // ConfigOnlyRoot has no DbSet<> property — it is only discovered via ApplyConfiguration,
     // called AFTER base.OnModelCreating. This is exactly the ordering gap the old
@@ -309,10 +301,9 @@ public class ConcurrencyConvention
     IEntityType entityType = db.Model.FindEntityType(typeof(ConfigOnlyRoot))
       .ShouldNotBeNull("ConfigOnlyRoot must be on the model via ApplyConfiguration alone");
 
-    IProperty version = entityType.FindProperty(nameof(Entity<Guid>.Version)).ShouldNotBeNull();
+    IProperty version = entityType.FindProperty(nameof(Entity<>.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
-    return Task.CompletedTask;
   }
 
   private static PlainRootDbContext CreatePlainRootDb()
@@ -340,7 +331,10 @@ internal sealed class PlainRoot : Entity<Guid>, IAggregateRoot
     Name = name;
   }
 
+  // private set required for EF constructor binding of 'name' → Name (RCS1170 false positive).
+#pragma warning disable RCS1170
   public string Name { get; private set; }
+#pragma warning restore RCS1170
 
   private sealed class Invariants : AbstractValidator<PlainRoot>
   {
@@ -377,7 +371,10 @@ internal sealed class ConfigOnlyRoot : Entity<Guid>, IAggregateRoot
     Name = name;
   }
 
+  // private set required for EF constructor binding of 'name' → Name (RCS1170 false positive).
+#pragma warning disable RCS1170
   public string Name { get; private set; }
+#pragma warning restore RCS1170
 
   private sealed class Invariants : AbstractValidator<ConfigOnlyRoot>
   {

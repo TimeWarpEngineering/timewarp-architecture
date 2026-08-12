@@ -99,7 +99,7 @@ public class MockWebApiService : IWebServerApiService
 
     if (validator == null) return;
     // Create a method info for the Validate method
-    MethodInfo? validateMethod = validatorType.GetMethod(nameof(IValidator<object>.Validate), [requestType]);
+    MethodInfo? validateMethod = validatorType.GetMethod(nameof(IValidator<>.Validate), [requestType]);
 
     if (validateMethod == null) return;
     // Invoke the Validate method
