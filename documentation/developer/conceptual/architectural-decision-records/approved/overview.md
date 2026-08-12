@@ -14,6 +14,7 @@ Accepted decisions that shape the TimeWarp Architecture template.
 | [0007](0007-http-endpoints-are-generated-fastendpoints-from-contracts-on-both-servers.md) | HTTP endpoints are generated FastEndpoints from contracts on both servers |
 | [0008](0008-feature-cohesive-folders-with-filename-grammar-layer-composition.md) | Feature-cohesive folders with filename-grammar layer composition |
 | [0009](0009-postgres-ef-golden-persistence-path.md) | Postgres + EF Core as the golden persistence path |
+| [0010](0010-permission-centric-authorization.md) | Permission-centric authorization (capabilities, role bundles, evaluator seam) |
 
 For new ADRs, start from [adr-template.md](../adr-template.md). Parent index:
 [architectural-decision-records/overview.md](../overview.md).

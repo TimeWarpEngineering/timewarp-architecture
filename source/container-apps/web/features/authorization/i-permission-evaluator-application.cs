@@ -11,6 +11,8 @@
 // 182-006 maps scopes to permission bundles. Cookie stays PrincipalId-only (147-004 D8) —
 // expansion is per-request, never baked into the identity-session cookie.
 // Features substrate so Identity + Admin + server handlers share one port without TWA0009.
+// Docs: ADR-0010 (accepted) + how-to-swap-permission-evaluator-for-external-pdp.md
+// (consumer PDP swap; no AppHost OpenFGA by default).
 #endregion
 
 namespace TimeWarp.Architecture.Features;

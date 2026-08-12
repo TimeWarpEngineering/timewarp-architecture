@@ -10,6 +10,11 @@ Task-oriented guides for working in a TimeWarp Architecture solution.
   ([ADR-0009](../conceptual/architectural-decision-records/approved/0009-postgres-ef-golden-persistence-path.md))
 - [How to remove demo features](how-to-remove-demo-features.md)
 
+## Authorization
+
+- [How to swap the permission evaluator for an external PDP](how-to-swap-permission-evaluator-for-external-pdp.md)
+  ([ADR-0010](../conceptual/architectural-decision-records/approved/0010-permission-centric-authorization.md))
+
 ## Local tooling
 
 - [How to trust the ASP.NET dev certificate under WSL](how-to-trust-aspnet-dev-certificate-when-using-wsl.md)

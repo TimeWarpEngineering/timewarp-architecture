@@ -135,7 +135,7 @@ Reviewers must address at least:
 - [x] Grok review round 2 (`review/round-2/grok.md`)
 - [x] Disposition **ACCEPTED** (`disposition.md`)
 - [x] Child tasks created (`182-001` … `182-006`)
-- [ ] ADR drafted/accepted (**182-005**; draft with **182-001**)
+- [x] ADR drafted/accepted (**182-005**; draft with **182-001** → approved/0010)
 
 ### Implementation (children)
 
@@ -143,7 +143,7 @@ Reviewers must address at least:
 - [x] **182-002** Server enforcement swap (`1c5687cd`)
 - [x] **182-003** SPA swap + dead-code delete (`098398a1`)
 - [x] **182-004** Roles UI + last-admin + protected-core (`c60bb21f`)
-- [ ] **182-005** ADR + seam docs (draft exists: proposed/0010-…)
+- [x] **182-005** ADR + seam docs (approved/0010 + how-to-swap-permission-evaluator-for-external-pdp)
 - [ ] **182-006** Agent scope → permission bundles
 
 ## Notes
