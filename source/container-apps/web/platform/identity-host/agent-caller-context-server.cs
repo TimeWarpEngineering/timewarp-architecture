@@ -7,12 +7,11 @@
 // Scoped (per-request IHttpContextAccessor), matching CookieBrowserSessionService's lifetime.
 // AuthenticationType is checked defensively (not merely IsAuthenticated) even though structural
 // scheme isolation already guarantees this: get-agent-identity-endpoint.cs's
-// [Authorize(Policy = AgentTokenDefaults.IdentityReadPolicy)] restricts the policy's
-// AuthenticationSchemes to ONLY "agent-token", so ASP.NET Core's authorization middleware never even
-// asks the cookie scheme to authenticate for this endpoint, and reassigns HttpContext.User to the
-// agent-token scheme's principal on success — the AuthenticationType check costs one property read
-// and protects against a future endpoint reusing this context without the same scheme-restricted
-// policy.
+// Agent-only contracts restrict AuthenticationSchemes to agent-token (e.g. GetAgentIdentity), so
+// ASP.NET Core's authorization middleware never asks the cookie scheme to authenticate for those
+// endpoints and reassigns HttpContext.User to the agent-token principal on success — the
+// AuthenticationType check costs one property read and protects against a future endpoint reusing
+// this context without the same scheme restriction. Also used by PermissionEvaluator (182-006).
 #endregion
 
 namespace TimeWarp.Architecture.Services;

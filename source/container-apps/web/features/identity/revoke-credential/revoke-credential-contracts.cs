@@ -20,14 +20,18 @@
 // states shape and auth posture.
 // Response is empty (matches DeleteRole/UpdateRole) — success is the status code; no payload to
 // return for a revoke.
-// [EndpointAuthorize] (task 110/104-005): DeleteRole posture — see GetCredentials' Design region for
-// the same policy/IAuthApiRequest rationale.
+// [EndpointAuthorize] (task 182-006): PermissionIds.CredentialManageSelf dual scheme — see
+// GetCredentials' Design region for the same policy/IAuthApiRequest rationale.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "credential-management")] // matches CredentialManagementDefaults.Policy
+[EndpointAuthorize
+(
+  Policy = PermissionIds.CredentialManageSelf,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.AgentToken
+)]
 public static partial class RevokeCredential
 {
   [ApiRoute("api/identity/credentials/{CredentialId:guid}/revoke", HttpVerb.Post)]

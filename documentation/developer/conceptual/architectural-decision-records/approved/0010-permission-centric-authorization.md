@@ -51,10 +51,12 @@ external PDPs and resource checks without forcing ops cost on every template con
   admin.* + self-service; Member → self-service; Developer → developer.* + self-service; Operator →
   self-service until marketplace policies.
 * **`IPermissionEvaluator`** — sole decision seam. Default `PermissionEvaluator` expands
-  principal → effective roles → permissions. Scheme-aware: human session schemes expand; agent-token
-  empty until scope→permission bundles (**182-006**, still open).
+  principal → effective roles → permissions for human session schemes; for **agent-token** expands
+  ambient scopes via `IAgentCallerContext` + `AgentScopePermissionSeed` only (never human roles;
+  **182-006** shipped).
 * **Server enforcement** — `PermissionRequirement` + `PermissionRequirementHandler` call the evaluator
-  only (never role or permission claim bags on the cookie principal).
+  only (never role or permission claim bags on the cookie principal). Scheme lists stay on
+  `[EndpointAuthorize(AuthenticationSchemes)]`.
 * **SPA** — `GetCurrentSession` expands permissions via the evaluator under `identity-session`;
   `IdentitySessionAuthenticationStateProvider` projects them as `PermissionIds.ClaimType` claims for
   `RequireClaim` policies. Cookie remains PrincipalId-only (147-004 D8).
@@ -65,7 +67,8 @@ external PDPs and resource checks without forcing ops cost on every template con
   required in AppHost. See
   [How to swap the permission evaluator for an external PDP](../../../how-to-guides/how-to-swap-permission-evaluator-for-external-pdp.md).
 * **Retired as enforcement SSOT** — `RolePolicyGrants`, dual `CanView*` constant classes,
-  `ModuleRequirement` / ERP `ModuleIds` as product gates.
+  `ModuleRequirement` / ERP `ModuleIds` as product gates; claim-based `agent-scope:*` and
+  `credential-management` assertion policies on web-server (replaced by `PermissionIds` + evaluator).
 
 ### Entra branch (when next touched)
 
@@ -75,10 +78,6 @@ identity-session SSOT. **Whenever the Entra branch is next touched, migrate SPA 
 the same source as the default path:** server-expanded permissions from `IPermissionEvaluator`
 (today: `GetCurrentSession.Permissions` via `IdentitySessionAuthenticationStateProvider`). Do not grow
 a second permission map for Entra. This ADR does **not** implement that migration.
-
-### Still open (out of this ADR’s delivery)
-
-* **182-006** — map agent scopes to permission bundles on the evaluator (scheme-aware).
 
 ### Positive Consequences
 
@@ -126,10 +125,10 @@ a second permission map for Entra. This ADR does **not** implement that migratio
   [how-to-swap-permission-evaluator-for-external-pdp.md](../../../how-to-guides/how-to-swap-permission-evaluator-for-external-pdp.md)
 * Disposition: `kanban/in-progress/182-permission-centric-authorization-architecture-capability-policies-role-bundles-resource-checks/disposition.md`
 * Code: `PermissionIds`, `IPermissionEvaluator`, `PermissionEvaluator`,
-  `PermissionRequirementHandler`, registration in `web-server/program.cs`
-  (`AddScoped<IPermissionEvaluator, PermissionEvaluator>()`)
+  `AgentScopePermissionSeed`, `PermissionRequirementHandler`, registration in
+  `web-server/program.cs` (`AddScoped<IPermissionEvaluator, PermissionEvaluator>()`)
 * Children: **182-001** model · **182-002** server · **182-003** SPA · **182-004** Roles UI ·
-  **182-005** this ADR + seam docs · **182-006** agent scopes
+  **182-005** this ADR + seam docs · **182-006** agent scopes (shipped)
 * Related: [ADR-0009](0009-postgres-ef-golden-persistence-path.md) (Postgres EF golden path —
   `role_permissions` co-located in identity schema)
 

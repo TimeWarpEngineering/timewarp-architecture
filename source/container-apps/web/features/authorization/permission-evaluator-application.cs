@@ -1,46 +1,47 @@
 #region Purpose
-// Default in-process IPermissionEvaluator: principal → effective roles → role permissions.
+// Default in-process IPermissionEvaluator: human roles or agent scopes → permissions.
 #endregion
 
 #region Design
-// Task 182-001: expands only for identity-session and mock-identity-session
-// (AuthenticationSchemeNames). agent-token and unknown/null schemes return empty — agents must
-// not inherit human role expansion (182-006 will map agent scopes to permission bundles).
-// Uses IEffectiveRolesResolver (Member default + bootstrap union) so first-admin and empty-store
-// semantics stay single-source with PrincipalRoleClaimsTransformation and
-// PermissionRequirementHandler / GetCurrentSession (182-003).
+// Task 182-001/182-006: scheme-aware expansion.
+// Human schemes (identity-session, mock-identity-session): principal → effective roles →
+// IRolePermissionStore (IEffectiveRolesResolver shared with PrincipalRoleClaimsTransformation).
+// Agent-token: scopes only via IAgentCallerContext + AgentScopePermissionSeed — NEVER
+// EffectiveRolesResolver or RolePermissionStore (no human role inheritance for agents).
+// Fail-closed: missing ambient caller or PrincipalId mismatch → empty. Agent path is pure
+// in-memory (no single-flight cache); human path keeps task-183 single-flight so concurrent
+// Blazor SSR policy checks do not race the scoped DbContext.
 // Output ordered by PermissionIds.All then any unknown grants (stable for session / tests).
-// Scoped DI: depends on scoped IEffectiveRolesResolver (and scoped EfRolePermissionStore under
-// postgres). No memoization beyond scoped lifetime — rebundle takes effect next request.
-// Task 183: WITHIN the scope, expansion is single-flighted per (principal, scheme). Blazor SSR
-// of an authorized page evaluates several policies concurrently (AuthorizeRouteView + nav
-// AuthorizeViews) in ONE request scope; without single-flight those raced concurrent queries on
-// the same scoped PostgresDbContext ("A second operation was started on this context") and every
-// authenticated page 500'd under postgres. Concurrent callers now await one sequential DB chain.
-// The shared expansion runs with CancellationToken.None so one caller's cancellation cannot
-// poison the cached task for the others; callers still observe their own token at entry.
+// Scoped DI: depends on scoped IEffectiveRolesResolver, IRolePermissionStore, IAgentCallerContext.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
 
 using System.Collections.Concurrent;
+using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Identity;
 
-/// <summary>In-process permission expansion via roles + <see cref="IRolePermissionStore"/>.</summary>
+/// <summary>
+/// In-process permission expansion via roles (humans) or agent scopes (agent-token).
+/// </summary>
 public sealed class PermissionEvaluator : IPermissionEvaluator
 {
   private readonly IEffectiveRolesResolver EffectiveRolesResolver;
   private readonly IRolePermissionStore RolePermissionStore;
+  private readonly IAgentCallerContext AgentCallerContext;
   private readonly ConcurrentDictionary<(Guid PrincipalId, string Scheme), Lazy<Task<IReadOnlyList<string>>>> ExpansionCache = new();
 
   public PermissionEvaluator(
     IEffectiveRolesResolver effectiveRolesResolver,
-    IRolePermissionStore rolePermissionStore)
+    IRolePermissionStore rolePermissionStore,
+    IAgentCallerContext agentCallerContext)
   {
     EffectiveRolesResolver = effectiveRolesResolver
       ?? throw new ArgumentNullException(nameof(effectiveRolesResolver));
     RolePermissionStore = rolePermissionStore
       ?? throw new ArgumentNullException(nameof(rolePermissionStore));
+    AgentCallerContext = agentCallerContext
+      ?? throw new ArgumentNullException(nameof(agentCallerContext));
   }
 
   public async Task<bool> HasPermissionAsync(
@@ -67,6 +68,11 @@ public sealed class PermissionEvaluator : IPermissionEvaluator
   {
     cancellationToken.ThrowIfCancellationRequested();
 
+    if (IsAgentTokenScheme(authenticationScheme))
+    {
+      return ExpandAgentPermissions(principalId);
+    }
+
     if (!IsHumanSessionScheme(authenticationScheme))
     {
       return Array.Empty<string>();
@@ -75,13 +81,24 @@ public sealed class PermissionEvaluator : IPermissionEvaluator
     Lazy<Task<IReadOnlyList<string>>> expansion = ExpansionCache.GetOrAdd(
       (principalId.Value, authenticationScheme!),
       _ => new Lazy<Task<IReadOnlyList<string>>>(
-        () => ExpandPermissionsAsync(principalId),
+        () => ExpandHumanPermissionsAsync(principalId),
         LazyThreadSafetyMode.ExecutionAndPublication));
 
     return await expansion.Value.ConfigureAwait(false);
   }
 
-  private async Task<IReadOnlyList<string>> ExpandPermissionsAsync(PrincipalId principalId)
+  private IReadOnlyList<string> ExpandAgentPermissions(PrincipalId principalId)
+  {
+    AgentCaller? caller = AgentCallerContext.GetCurrentCaller();
+    if (caller is null || caller.PrincipalId != principalId)
+    {
+      return Array.Empty<string>();
+    }
+
+    return AgentScopePermissionSeed.Expand(caller.Scopes);
+  }
+
+  private async Task<IReadOnlyList<string>> ExpandHumanPermissionsAsync(PrincipalId principalId)
   {
     IReadOnlyList<Guid> roleIds = await EffectiveRolesResolver
       .GetEffectiveRoleIdsAsync(principalId, CancellationToken.None)
@@ -125,4 +142,7 @@ public sealed class PermissionEvaluator : IPermissionEvaluator
   private static bool IsHumanSessionScheme(string? authenticationScheme) =>
     authenticationScheme is AuthenticationSchemeNames.IdentitySession
       or AuthenticationSchemeNames.MockIdentitySession;
+
+  private static bool IsAgentTokenScheme(string? authenticationScheme) =>
+    authenticationScheme is AuthenticationSchemeNames.AgentToken;
 }

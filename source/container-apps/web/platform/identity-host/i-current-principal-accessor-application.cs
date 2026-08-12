@@ -5,11 +5,11 @@
 #endregion
 
 #region Design
-// Task 104-005: the credential-management surface (list/add/revoke) accepts either the
-// identity-session cookie OR an agent bearer token carrying credential:manage — see
-// CredentialManagementDefaults' Design region for the policy shape. Handlers on that surface must
-// resolve "whose credentials" from whichever scheme actually authenticated the request, without
-// branching on cookie-vs-bearer themselves.
+// Task 104-005 / 182-006: the credential surface (list/add/revoke) accepts either the
+// identity-session cookie OR an agent bearer token (PermissionIds.CredentialManageSelf + dual
+// AuthenticationSchemes on contracts; agents need scope credential:manage expanded by the
+// evaluator). Handlers resolve "whose credentials" from whichever scheme authenticated the
+// request, without branching on cookie-vs-bearer themselves.
 // Why not reuse IBrowserSessionService.GetCurrentPrincipalIdAsync or IAgentCallerContext.
 // GetCurrentCaller: both are deliberately SINGLE-scheme ports (the former calls
 // HttpContext.AuthenticateAsync against the identity-session scheme by name; the latter checks

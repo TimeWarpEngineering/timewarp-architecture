@@ -22,17 +22,20 @@
 // IsActive is the wire-friendly derived flag (!IsRevoked) rather than re-deriving "active" from
 // RevokedAt on the client — same "derive server-side, ship the answer" reasoning as other read
 // contracts in this feature.
-// [EndpointAuthorize] (task 110/104-005): DeleteRole posture — [AuthApiRequest] on the Query is the
-// client-facing mock-mode signal; this attribute is what actually gates the generated endpoint.
-// Policy is a raw string literal because web-contracts cannot reference web-server's
-// CredentialManagementDefaults constant (the dependency runs the other way); the comment names the
-// real constant as the source of truth.
+// [EndpointAuthorize] (task 182-006): PermissionIds.CredentialManageSelf via IPermissionEvaluator.
+// Dual schemes (identity-session + agent-token): humans get the grant from SelfServicePermissions;
+// agents need scope credential:manage → AgentScopePermissionSeed. [AuthApiRequest] on the Query
+// remains client/mock identity signal only.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "credential-management")] // matches CredentialManagementDefaults.Policy
+[EndpointAuthorize
+(
+  Policy = PermissionIds.CredentialManageSelf,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.AgentToken
+)]
 public static partial class GetCredentials
 {
   [ApiRoute("api/identity/credentials", HttpVerb.Get)]

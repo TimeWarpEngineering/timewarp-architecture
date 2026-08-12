@@ -6,10 +6,10 @@
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
 
-// Co-located Jaribu tests for PermissionEvaluator + InMemoryRolePermissionStore seed (182-001).
+// Co-located Jaribu tests for PermissionEvaluator + AgentScopePermissionSeed (182-001 / 182-006).
 
 #region Purpose
-// Host-free coverage of role→permission expansion, scheme gates, and admin read/manage split seed.
+// Host-free coverage of role→permission and agent scope→permission expansion, scheme gates, seed invariants.
 #endregion
 
 //-:cnd:noEmit
@@ -24,6 +24,7 @@ namespace TimeWarp.Architecture.Features
   using System.Threading.Tasks;
   using Microsoft.Extensions.Options;
   using Shouldly;
+  using TimeWarp.Architecture.Abstractions;
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
   using static TimeWarp.Jaribu.TestRunner;
@@ -50,6 +51,7 @@ namespace TimeWarp.Architecture.Features
       [
         PermissionIds.ProfileRead,
         PermissionIds.SettingsRead,
+        PermissionIds.CredentialManageSelf,
       ]);
       (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.IdentitySession, PermissionIds.ProfileRead))
         .ShouldBeTrue();
@@ -79,6 +81,7 @@ namespace TimeWarp.Architecture.Features
       permissions.ShouldContain(PermissionIds.AdminPrincipalsManage);
       permissions.ShouldContain(PermissionIds.ProfileRead);
       permissions.ShouldContain(PermissionIds.SettingsRead);
+      permissions.ShouldContain(PermissionIds.CredentialManageSelf);
       permissions.ShouldNotContain(PermissionIds.DeveloperAccess);
     }
 
@@ -101,6 +104,7 @@ namespace TimeWarp.Architecture.Features
       [
         PermissionIds.ProfileRead,
         PermissionIds.SettingsRead,
+        PermissionIds.CredentialManageSelf,
       ]);
       foreach (string adminPermission in RolePermissionSeed.AdminPermissions)
       {
@@ -131,6 +135,7 @@ namespace TimeWarp.Architecture.Features
           PermissionIds.AdminPrincipalsRead,
           PermissionIds.ProfileRead,
           PermissionIds.SettingsRead,
+          PermissionIds.CredentialManageSelf,
         ]);
 
       InMemoryPrincipalRoleStore principalRoles = new();
@@ -152,7 +157,7 @@ namespace TimeWarp.Architecture.Features
       permissions.ShouldNotContain(PermissionIds.AdminPrincipalsManage);
     }
 
-    public static async Task AgentTokenScheme_Should_YieldEmptyPermissions()
+    public static async Task AgentToken_WithoutAmbientCaller_Should_YieldEmptyEvenWithAdminRoles()
     {
       InMemoryPrincipalRoleStore principalRoles = new();
       PrincipalId id = PrincipalId.New();
@@ -161,7 +166,8 @@ namespace TimeWarp.Architecture.Features
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
         new InMemoryRolePermissionStore(),
-        bootstrap: []);
+        bootstrap: [],
+        agentCaller: FakeAgentCallerContext.Empty);
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
         id,
@@ -173,6 +179,115 @@ namespace TimeWarp.Architecture.Features
           AuthenticationSchemeNames.AgentToken,
           PermissionIds.AdminAccess))
         .ShouldBeFalse();
+    }
+
+    public static async Task AgentToken_WithScopes_Should_GrantMappedOnly()
+    {
+      PrincipalId id = PrincipalId.New();
+      InMemoryPrincipalRoleStore principalRoles = new();
+      await principalRoles.SetRoleIdsAsync(id, [RoleIds.Administrator]);
+
+      PermissionEvaluator evaluator = CreateEvaluator(
+        principalRoles,
+        new InMemoryRolePermissionStore(),
+        bootstrap: [],
+        agentCaller: new FakeAgentCallerContext(new AgentCaller(id, [AgentScopes.IdentityRead])));
+
+      IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
+        id,
+        AuthenticationSchemeNames.AgentToken);
+
+      permissions.ShouldBe([PermissionIds.IdentityRead]);
+      (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.AgentToken, PermissionIds.IdentityRead))
+        .ShouldBeTrue();
+      (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.AgentToken, PermissionIds.AdminAccess))
+        .ShouldBeFalse();
+      (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.AgentToken, PermissionIds.CredentialManageSelf))
+        .ShouldBeFalse();
+    }
+
+    public static async Task AgentToken_MultipleScopes_Should_UnionPermissions()
+    {
+      PrincipalId id = PrincipalId.New();
+      PermissionEvaluator evaluator = CreateEvaluator(
+        new InMemoryPrincipalRoleStore(),
+        new InMemoryRolePermissionStore(),
+        bootstrap: [],
+        agentCaller: new FakeAgentCallerContext(
+          new AgentCaller(id, [AgentScopes.IdentityRead, AgentScopes.DemoInvoke, AgentScopes.CredentialManage])));
+
+      IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
+        id,
+        AuthenticationSchemeNames.AgentToken);
+
+      permissions.ShouldBe(
+      [
+        PermissionIds.IdentityRead,
+        PermissionIds.CredentialManageSelf,
+        PermissionIds.DemoInvoke,
+      ]);
+    }
+
+    public static async Task AgentToken_UnknownScope_Should_BeIgnored()
+    {
+      PrincipalId id = PrincipalId.New();
+      PermissionEvaluator evaluator = CreateEvaluator(
+        new InMemoryPrincipalRoleStore(),
+        new InMemoryRolePermissionStore(),
+        bootstrap: [],
+        agentCaller: new FakeAgentCallerContext(
+          new AgentCaller(id, ["not-a-real-scope", AgentScopes.DemoInvoke])));
+
+      IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
+        id,
+        AuthenticationSchemeNames.AgentToken);
+
+      permissions.ShouldBe([PermissionIds.DemoInvoke]);
+    }
+
+    public static async Task AgentToken_PrincipalMismatch_Should_YieldEmpty()
+    {
+      PrincipalId requested = PrincipalId.New();
+      PrincipalId ambient = PrincipalId.New();
+      PermissionEvaluator evaluator = CreateEvaluator(
+        new InMemoryPrincipalRoleStore(),
+        new InMemoryRolePermissionStore(),
+        bootstrap: [],
+        agentCaller: new FakeAgentCallerContext(
+          new AgentCaller(ambient, [AgentScopes.IdentityRead])));
+
+      (await evaluator.GetPermissionsAsync(requested, AuthenticationSchemeNames.AgentToken))
+        .ShouldBeEmpty();
+    }
+
+    public static async Task AgentToken_NeverGrantsAdmin_EvenWithAdminRolesInStore()
+    {
+      PrincipalId id = PrincipalId.New();
+      InMemoryPrincipalRoleStore principalRoles = new();
+      await principalRoles.SetRoleIdsAsync(id, [RoleIds.Administrator]);
+
+      PermissionEvaluator evaluator = CreateEvaluator(
+        principalRoles,
+        new InMemoryRolePermissionStore(),
+        bootstrap: [],
+        agentCaller: new FakeAgentCallerContext(
+          new AgentCaller(id, [AgentScopes.IdentityRead, AgentScopes.CredentialManage, AgentScopes.DemoInvoke])));
+
+      IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
+        id,
+        AuthenticationSchemeNames.AgentToken);
+
+      foreach (string adminPermission in RolePermissionSeed.AdminPermissions)
+      {
+        permissions.ShouldNotContain(adminPermission);
+      }
+
+      permissions.ShouldBe(
+      [
+        PermissionIds.IdentityRead,
+        PermissionIds.CredentialManageSelf,
+        PermissionIds.DemoInvoke,
+      ]);
     }
 
     public static async Task NullOrUnknownScheme_Should_YieldEmptyPermissions()
@@ -205,6 +320,7 @@ namespace TimeWarp.Architecture.Features
       permissions.ShouldContain(PermissionIds.AdminAccess);
       permissions.ShouldContain(PermissionIds.AdminRolesManage);
       permissions.ShouldContain(PermissionIds.ProfileRead);
+      permissions.ShouldContain(PermissionIds.CredentialManageSelf);
     }
 
     public static async Task Developer_Should_ExpandDeveloperSet()
@@ -228,6 +344,7 @@ namespace TimeWarp.Architecture.Features
         PermissionIds.DeveloperClaimsRead,
         PermissionIds.ProfileRead,
         PermissionIds.SettingsRead,
+        PermissionIds.CredentialManageSelf,
       ]);
       permissions.ShouldNotContain(PermissionIds.AdminAccess);
     }
@@ -236,6 +353,20 @@ namespace TimeWarp.Architecture.Features
     {
       await Task.CompletedTask;
       PermissionPolicyRegistration.AllPermissionPolicyNames.ShouldBe(PermissionIds.All);
+    }
+
+    public static async Task AgentScopeSeed_Should_NotIntersectAdminPermissions()
+    {
+      await Task.CompletedTask;
+      HashSet<string> admin = new(RolePermissionSeed.AdminPermissions, StringComparer.Ordinal);
+      foreach ((string scope, IReadOnlyList<string> permissions) in AgentScopePermissionSeed.DefaultGrants)
+      {
+        foreach (string permissionId in permissions)
+        {
+          admin.Contains(permissionId).ShouldBeFalse(
+            $"Agent scope '{scope}' must not grant admin permission '{permissionId}'.");
+        }
+      }
     }
 
     public static async Task ConcurrentChecks_Should_SingleFlightStoreExpansion()
@@ -313,10 +444,22 @@ namespace TimeWarp.Architecture.Features
       }
     }
 
+    private sealed class FakeAgentCallerContext : IAgentCallerContext
+    {
+      public static FakeAgentCallerContext Empty { get; } = new(null);
+
+      private readonly AgentCaller? Caller;
+
+      public FakeAgentCallerContext(AgentCaller? caller) => Caller = caller;
+
+      public AgentCaller? GetCurrentCaller() => Caller;
+    }
+
     private static PermissionEvaluator CreateEvaluator(
       IPrincipalRoleStore principalRoles,
       IRolePermissionStore rolePermissions,
-      string[] bootstrap)
+      string[] bootstrap,
+      IAgentCallerContext? agentCaller = null)
     {
       IOptions<BootstrapAdministratorOptions> options = Options.Create(
         new BootstrapAdministratorOptions
@@ -324,7 +467,10 @@ namespace TimeWarp.Architecture.Features
           BootstrapAdministratorPrincipalIds = bootstrap
         });
       EffectiveRolesResolver resolver = new(principalRoles, options);
-      return new PermissionEvaluator(resolver, rolePermissions);
+      return new PermissionEvaluator(
+        resolver,
+        rolePermissions,
+        agentCaller ?? FakeAgentCallerContext.Empty);
     }
   }
 

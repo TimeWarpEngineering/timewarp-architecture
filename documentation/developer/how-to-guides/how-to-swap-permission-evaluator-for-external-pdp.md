@@ -51,9 +51,12 @@ public interface IPermissionEvaluator
 - **Server:** `PermissionRequirementHandler` → `HasPermissionAsync` only.
 - **SPA session:** `GetCurrentSession` → `GetPermissionsAsync` under `identity-session`; claims
   projected for WASM `RequireClaim` policies.
-- **Scheme-aware:** human schemes (`identity-session`, `mock-identity-session`) must participate;
-  do **not** grant human role expansion under `agent-token` unless you implement agent scope→permission
-  mapping (template child **182-006**).
+- **Scheme-aware (default implementation):**
+  - Human schemes (`identity-session`, `mock-identity-session`) → effective roles →
+    `IRolePermissionStore`.
+  - `agent-token` → ambient scopes from `IAgentCallerContext` expanded by
+    `AgentScopePermissionSeed` only (no human role inheritance; principal id must match).
+  A custom PDP must honor the same scheme split (or document a deliberate alternative).
 
 ## Where the default is registered
 
@@ -90,8 +93,8 @@ serviceCollection.AddScoped<IAuthorizationHandler, PermissionRequirementHandler>
    (single SSOT for server and SPA). Prefer stable catalog order where you know ids.
 3. Prefer **scoped** lifetime (per-request context; avoid captive `DbContext` / `HttpClient` mistakes).
 4. Fail **closed** on PDP errors in **your** adapter (deny / empty). The default in-process
-   `PermissionEvaluator` expands roles or returns empty for non-human schemes; it does not
-   catch store exceptions and map them to deny—treat that as your adapter’s responsibility.
+   `PermissionEvaluator` expands human roles or agent scopes (or returns empty for unknown schemes);
+   it does not catch store exceptions and map them to deny—treat that as your adapter’s responsibility.
 5. Keep the identity-session **cookie PrincipalId-only** — do not bake grants into the cookie
    (rebundle / PDP changes take effect next request).
 
@@ -142,8 +145,9 @@ touch Entra**, migrate SPA permission claims to the same evaluator-backed source
 ## Related
 
 - [ADR-0010](../conceptual/architectural-decision-records/approved/0010-permission-centric-authorization.md)
-- `PermissionIds`, `IPermissionEvaluator`, `PermissionEvaluator`
-- Agent scopes → permission bundles: kanban **182-006**
+- `PermissionIds`, `IPermissionEvaluator`, `PermissionEvaluator`, `AgentScopePermissionSeed`,
+  `IAgentCallerContext`
+- Agent scopes → permission bundles shipped under **182-006**
 - Lockout guards (last-admin / protected-core) remain application-layer, not PDP-specific
 
 <!-- markdownlint-disable-file MD013 -->

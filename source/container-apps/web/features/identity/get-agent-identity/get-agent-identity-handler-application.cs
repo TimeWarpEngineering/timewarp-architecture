@@ -7,7 +7,7 @@
 // A pure read — no IPrincipalStore Update* call at all, so no concurrency note applies (matches
 // GetCurrentSession.Handler's posture).
 // IAgentCallerContext.GetCurrentCaller returning null is treated as a 401 here purely as
-// defense-in-depth: the endpoint carries [Authorize(Policy = AgentTokenDefaults.IdentityReadPolicy)]
+// defense-in-depth: the endpoint carries [EndpointAuthorize(Policy = PermissionIds.IdentityRead)]
 // (web-server), so an unauthenticated/insufficiently-scoped request should never reach this handler
 // at all — but the handler does not trust the endpoint attribute alone to be the only thing standing
 // between an unauthenticated caller and a Response.

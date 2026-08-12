@@ -152,23 +152,6 @@ public class Program : IAspNetProgram
 
     serviceCollection.AddCascadingAuthenticationState();
     serviceCollection.AddAuthorizationBuilder()
-      .AddPolicy
-      (
-        AgentTokenDefaults.IdentityReadPolicy,
-        policy => policy
-          .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
-          .RequireAuthenticatedUser()
-          .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.IdentityRead)
-      )
-      // Task 104-011: metered pay-for-capability demo (AgentScopes.DemoInvoke).
-      .AddPolicy
-      (
-        AgentTokenDefaults.DemoInvokePolicy,
-        policy => policy
-          .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
-          .RequireAuthenticatedUser()
-          .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.DemoInvoke)
-      )
       // Task 110: any signed-in identity-session cookie — see IdentitySessionDefaults.AuthenticatedPolicy's
       // Design region for why this is deliberately not an admin/role-based policy.
       // Round-1 review M4 (nit): this explicit AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
@@ -187,22 +170,11 @@ public class Program : IAspNetProgram
           // handler returns NoResult when mock is off, so Production/normal Dev are unchanged.
           .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, MockIdentityPrincipalHandler.SchemeName)
           .RequireAuthenticatedUser()
-      )
-      // Task 104-005: the ONE policy that accepts either scheme — see CredentialManagementDefaults'
-      // Design region for the full either-scheme + assertion + scope rationale.
-      .AddPolicy
-      (
-        CredentialManagementDefaults.Policy,
-        policy => policy
-          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, AgentTokenDefaults.Scheme)
-          .RequireAuthenticatedUser()
-          .RequireAssertion(context =>
-            string.Equals(context.User.Identity?.AuthenticationType, IdentitySessionDefaults.Scheme, StringComparison.Ordinal)
-            || context.User.HasClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.CredentialManage))
       );
-    // Task 182-002/003: permission-centric policies (policy name == PermissionIds). Admin
-    // contracts use admin.roles.read/manage and admin.principals.read/manage; schemes stay on
-    // [EndpointAuthorize(AuthenticationSchemes)]. SPA uses AddPermissionClaimPolicies separately.
+    // Task 182-002/003/006: permission-centric policies (policy name == PermissionIds). Admin,
+    // credential, agent identity, and metered-demo contracts use PermissionIds; schemes stay on
+    // [EndpointAuthorize(AuthenticationSchemes)]. Agent scope→permission expansion is in
+    // PermissionEvaluator (IAgentCallerContext). SPA uses AddPermissionClaimPolicies separately.
     serviceCollection.AddAuthorization(options =>
       PermissionPolicyRegistration.AddPermissionPolicies(options));
     ConfigureAuthentication(serviceCollection, configuration);

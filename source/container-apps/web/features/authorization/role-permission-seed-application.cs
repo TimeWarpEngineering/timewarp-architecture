@@ -10,6 +10,8 @@
 //   Member        — self-service only (default effective role when store empty)
 //   Developer     — developer.* + self-service (demos / diagnostics)
 //   Operator      — self-service only until marketplace policies (118); Operator-only grants reserved
+// Self-service includes credential.manage.self (182-006) so human sessions may list/add/revoke
+// own credentials via PermissionIds (replaces the old credential-management assertion policy).
 // InMemoryRolePermissionStore copies this on construction; EF migration InsertData mirrors it
 // for postgres volumes. Admin UI (182-004) mutates grants via SetRolePermissions with
 // protected-core on Administrator (AdminPermissions cannot be stripped).
@@ -26,6 +28,7 @@ public static class RolePermissionSeed
   [
     PermissionIds.ProfileRead,
     PermissionIds.SettingsRead,
+    PermissionIds.CredentialManageSelf,
   ];
 
   /// <summary>All admin.* permissions (Administrator seed; protected-core target in 182-004).</summary>

@@ -10,7 +10,7 @@
 // to the caller by construction, not by a runtime ownership check (contrast RevokeCredential.Handler,
 // where an ownership check IS needed because the target is chosen by CredentialId, not implied by the
 // caller).
-// Null caller -> 401 is defense-in-depth: [EndpointAuthorize(Policy="credential-management")]
+// Null caller -> 401 is defense-in-depth: [EndpointAuthorize(Policy=CredentialManageSelf)]
 // already requires an authenticated principal to reach this handler at all (same posture as
 // IAgentCallerContext's Design region).
 // Secret-material omission (load-bearing, security): CredentialSummary's constructor only ever

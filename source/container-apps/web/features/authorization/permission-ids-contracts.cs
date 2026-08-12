@@ -13,6 +13,9 @@
 // server enforcement never reads permission claims; it always routes through IPermissionEvaluator.
 // Policy registration: AddPermissionPolicies (server requirement) + AddPermissionClaimPolicies
 // (SPA RequireClaim). This registry is the only SSOT for permission strings.
+// Agent-facing ids (182-006): identity.read, credential.manage.self, demo.invoke map from
+// AgentScopes via AgentScopePermissionSeed; humans receive credential.manage.self in
+// SelfServicePermissions (dual-scheme credential surface).
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -35,6 +38,12 @@ public static class PermissionIds
   public const string DeveloperClaimsRead = "developer.claims.read";
   public const string ProfileRead = "profile.read";
   public const string SettingsRead = "settings.read";
+  /// <summary>Agent/human self-lookup of principal identity (maps from agent scope identity:read).</summary>
+  public const string IdentityRead = "identity.read";
+  /// <summary>Manage own credentials (list/add/revoke); maps from agent scope credential:manage.</summary>
+  public const string CredentialManageSelf = "credential.manage.self";
+  /// <summary>Invoke metered demo capability (maps from agent scope demo:invoke).</summary>
+  public const string DemoInvoke = "demo.invoke";
 
   /// <summary>All product permission ids (stable catalog order).</summary>
   public static IReadOnlyList<string> All { get; } =
@@ -48,5 +57,8 @@ public static class PermissionIds
     DeveloperClaimsRead,
     ProfileRead,
     SettingsRead,
+    IdentityRead,
+    CredentialManageSelf,
+    DemoInvoke,
   ];
 }
