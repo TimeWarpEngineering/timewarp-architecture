@@ -1,5 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <!-- Dogfood postgres flag for TWA0010 and global-usings gate. Generated apps with postgres off drop those usings at template time. -->
+    <DefineConstants>$(DefineConstants);postgres</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <!-- Design-time: PrivateAssets + IncludeAssets (EF standard). Bare PrivateAssets alone
