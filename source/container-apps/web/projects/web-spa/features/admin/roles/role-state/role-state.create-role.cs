@@ -3,10 +3,12 @@
 #endregion
 
 #region Design
-// DefaultApiHandler supplies the send/validation/error plumbing; this file only maps
-// Action to Command and reacts to success.
-// LastCreatedRoleId is recorded on success so a page can confirm the create round-trip
-// (see role-state.cs).
+// Action ctor takes CreateRole.Command so the generator emits RoleState.CreateRole(Command).
+// RoleForm binds IRoleDetails (the Command) and submits via that method — COPIC
+// EducationHistorySearchForm, not Mediator.Send of a page-owned Action.
+// UserId is IAuthApiRequest mock-mode only; stamp it here so the form never sees it
+// (same as FetchRoles GetRequest).
+// LastCreatedRoleId is recorded on success so a page can confirm the create round-trip.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -20,9 +22,12 @@ partial class RoleState
     [TrackAction]
     internal sealed class Action : IBaseAction
     {
-      // The form binds directly to this Command (via IRoleDetails) and dispatches this same
-      // instance on submit — so the user's edits reach the handler.
-      public Command Command { get; } = new();
+      public Command Command { get; }
+
+      public Action(Command command)
+      {
+        Command = command;
+      }
     }
 
     internal class Handler
@@ -34,7 +39,12 @@ partial class RoleState
     ) : DefaultApiHandler<Action, Command, Response>(store, webServerApiService, sender, logger)
     {
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken) =>
-        Task.FromResult<Command?>(action.Command);
+        Task.FromResult<Command?>(new Command
+        {
+          UserId = Guid.NewGuid(),
+          Name = action.Command.Name,
+          Description = action.Command.Description
+        });
 
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
