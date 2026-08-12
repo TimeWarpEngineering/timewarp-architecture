@@ -49,8 +49,8 @@
                     {
                       <FluentCheckbox
                         Label="@permissionId"
-                        Checked="@RoleState.IsPermissionSelected(role.RoleId, permissionId)"
-                        CheckedChanged="@(async (bool? value) => await OnPermissionSelected(role.RoleId, permissionId, value == true))" />
+                        Value="@RoleState.IsPermissionSelected(role.RoleId, permissionId)"
+                        ValueChanged="@(async (bool value) => await OnPermissionSelected(role.RoleId, permissionId, value))" />
                     }
                   </FluentStack>
                 </Cell>

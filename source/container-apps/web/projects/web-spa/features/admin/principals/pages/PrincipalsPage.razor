@@ -54,8 +54,8 @@
                     {
                       <FluentCheckbox
                         Label="@RoleIds.GetRoleNameByGuid(roleId)"
-                        Checked="@PrincipalState.IsRoleSelected(principalGuid, roleId)"
-                        CheckedChanged="@(async (bool? value) => await OnRoleSelected(principalGuid, roleId, value == true))" />
+                        Value="@PrincipalState.IsRoleSelected(principalGuid, roleId)"
+                        ValueChanged="@(async (bool value) => await OnRoleSelected(principalGuid, roleId, value))" />
                     }
                   </FluentStack>
                 </Cell>
