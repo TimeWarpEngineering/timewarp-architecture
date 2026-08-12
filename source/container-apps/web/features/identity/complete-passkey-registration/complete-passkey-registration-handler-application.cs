@@ -12,11 +12,8 @@
 //   Principal.Create → AddPrincipalAsync → Credential.Create → AddCredentialAsync (try/catch race)
 //   → TryClaimFirstAdministratorAsync (empty deployment: first human passkey becomes admin)
 //   → BrowserSessionService.IssueAsync.
-// First admin: product rule — when no stored Administrator exists yet, this create claims
-// Administrator+Member via IPrincipalRoleStore. Atomic at the store (in-mem lock / EF Serializable).
-// No kill-switch: empty DB is not protected value; redeploy if a stray first create happened.
-// Later passkey creates stay default effective Member. Agent-key registration does NOT claim.
-// BootstrapAdministratorPrincipalIds remains break-glass only.
+// First admin: empty store → this Create account claims Administrator+Member (atomic). Later
+// creates stay Member. Greenfield only — wipe DB to re-bootstrap. Agent keys do not claim.
 // FindCredentialByHandleAsync (in the ceremony) runs BEFORE Principal.Create/AddPrincipalAsync, so
 // the sequential duplicate-handle case never leaves an orphan Principal: it 409s before either Add
 // call. Residual race: two concurrent ceremonies for the SAME credential handle (distinct challenges,
