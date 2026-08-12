@@ -28,16 +28,16 @@
 
     <AuthorizeView>
       <NotAuthorized>
-        <Card Title="Sign in">
+        @* Entry only — passkey ceremony lives solely on LoginPage (/Login). Do not clone that CTA here. *@
+        <Card Title="Account">
           <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
             <p>
-              Passkey first — no registration form. Continue with a platform authenticator,
-              password manager, or hardware key.
+              Passkey-first identity — sign in or create an account on the next screen.
             </p>
             <div>
               @* Single control — do not nest FluentButton inside NavLink (invalid HTML). *@
               <FluentButton Appearance="ButtonAppearance.Primary" OnClick="GoToLoginAsync">
-                Sign in with a passkey
+                Sign in
               </FluentButton>
             </div>
           </FluentStack>

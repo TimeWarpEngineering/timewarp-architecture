@@ -4,11 +4,13 @@
 
 #region Design
 // Public marketing / first-run entry (147-005). Anonymous by design for the route itself;
-// AuthorizeView differentiates anonymous (passkey CTA → LoginPage) vs signed-in strip
+// AuthorizeView differentiates anonymous (soft Sign in → LoginPage) vs signed-in strip
 // (ProfileState avatar/alias + Settings + Admin when CanViewAdminSidebarNavSection).
 // Demo "Try it" actions live on Developer-gated TestPage — Home carries no demo residue.
-// Sign-in CTA: FluentButton + NoSubRouteState.ChangeRoute (Profile pattern) — never nest a
-// button inside NavLink (invalid HTML).
+// Ceremony ownership: only LoginPage runs passkey sign-in / create account. Home never
+// clones that chrome (no "Sign in with a passkey" button that only redirects) — a single
+// "Sign in" CTA navigates to /Login. FluentButton + NoSubRouteState.ChangeRoute (Profile
+// pattern) — never nest a button inside NavLink (invalid HTML).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
