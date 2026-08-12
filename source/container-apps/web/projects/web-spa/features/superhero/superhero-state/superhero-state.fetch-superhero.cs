@@ -9,6 +9,7 @@
 // creation is async and render-mode dependent; the client cannot be constructor-injected.
 // The list is cleared and refilled in place (not replaced) so the read-only projection in the
 // main partial keeps pointing at the same backing list.
+// [TrackAction] is the loading signal — Superheros is never null (empty list until fetch).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Superheros;
@@ -17,6 +18,7 @@ partial class SuperheroState
 {
   public static class FetchSuperheroActionSet
   {
+    [TrackAction]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler : BaseHandler<Action>

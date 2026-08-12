@@ -8,7 +8,7 @@
 
 <TimeWarpPage Title="Superheros">
   <Card>
-    @if (SuperheroState.Superheros == null)
+    @if (IsLoading)
     {
       <p><em>Loading...</em></p>
     }

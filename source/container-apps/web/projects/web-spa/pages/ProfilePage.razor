@@ -9,7 +9,7 @@
 <TimeWarpPage Title="Profile">
   <div class="twe-stack">
     <Card Title="Your profile">
-      @if (ProfileState.Alias is null)
+      @if (IsLoading)
       {
         <p><em>Loading…</em></p>
       }

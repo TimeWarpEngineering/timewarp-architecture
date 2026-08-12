@@ -5,7 +5,8 @@
 #region Design
 // Avatar defaults to a FluentUI Person icon encoded as a data URI so the UI always has an
 // image to render — no network fetch and no broken-image flash before profile data loads.
-// A null Alias signals "no profile loaded"; population and reset happen only through the
+// A null Alias is the field value (or no snapshot yet), not loading UI — in-flight fetch
+// is [TrackAction] on FetchProfileData. Population and reset happen only through the
 // Fetch/Clear action-set partials. Task 148 D7: Language/Region/Theme/Notifications mirror
 // GetProfile.Response; Initialize clears them so sign-out does not leave stale prefs.
 #endregion
