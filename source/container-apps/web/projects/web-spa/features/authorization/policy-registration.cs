@@ -3,13 +3,19 @@
 #endregion
 
 #region Design
-// Anonymous = always true. All role-gated policies register through RolePolicyGrants so
-// page/nav/developer extras cannot drift (task 147-002).
+// Anonymous = always true; Authenticated = any signed-in principal (not permission-mapped).
+// Permission-backed page/nav policies (task 182-003): policy name == PermissionIds.
+// Pure WASM SPA: AddPermissionClaimPolicies (RequireClaim from session-projected claims —
+// no evaluator in the browser). Web.Server composes this same ConfigureServices for
+// prerender AFTER AddPermissionPolicies — overwriting would replace PermissionRequirement
+// with RequireClaim and break server admin APIs (evaluator path). Skip claim policies when
+// a permission id is already registered (server PermissionRequirement wins; prerender
+// AuthorizeView then uses the evaluator against the cookie principal, which is correct).
 #endregion
 
 namespace TimeWarp.Architecture;
 
-using TimeWarp.Architecture.Features.Authorization;
+using TimeWarp.Architecture.Features;
 using static AuthorizationConstants.Policies;
 
 internal static class PolicyRegistration
@@ -20,16 +26,16 @@ internal static class PolicyRegistration
       Anonymous,
       policy => policy.RequireAssertion(static _ => true));
 
-    // Any signed-in principal (Member claim or mock/Entra). Not role-mapped.
+    // Any signed-in principal (identity-session, mock, or Entra). Not permission-mapped.
     options.AddPolicy(
       Authenticated,
       policy => policy.RequireAuthenticatedUser());
 
-    // Documented registration sites (no-op grant lists for grep discoverability).
-    PagePolicyRegistration.AddPolicies(options);
-    NavigationPolicyRegistration.AddPolicies(options);
-
-    // SSOT: every role-gated SPA policy (self-service + admin + developer).
-    RolePolicyGrants.AddAllGrantedPolicies(options);
+    // Pure WASM: register claim policies. Hosted under web-server (prerender): keep server's
+    // PermissionRequirement policies — do not overwrite with RequireClaim.
+    if (options.GetPolicy(PermissionIds.AdminAccess) is null)
+    {
+      PermissionPolicyRegistration.AddPermissionClaimPolicies(options);
+    }
   }
 }

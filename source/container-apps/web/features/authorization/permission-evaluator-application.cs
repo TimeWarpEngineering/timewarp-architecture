@@ -7,8 +7,8 @@
 // (AuthenticationSchemeNames). agent-token and unknown/null schemes return empty — agents must
 // not inherit human role expansion (182-006 will map agent scopes to permission bundles).
 // Uses IEffectiveRolesResolver (Member default + bootstrap union) so first-admin and empty-store
-// semantics stay single-source with PrincipalRoleClaimsTransformation (SPA RolePolicyGrants until
-// 182-003) and PermissionRequirementHandler.
+// semantics stay single-source with PrincipalRoleClaimsTransformation and
+// PermissionRequirementHandler / GetCurrentSession (182-003).
 // Output ordered by PermissionIds.All then any unknown grants (stable for session / tests).
 // Scoped DI: depends on scoped IEffectiveRolesResolver (and scoped EfRolePermissionStore under
 // postgres). No memoization beyond scoped lifetime — rebundle takes effect next request.

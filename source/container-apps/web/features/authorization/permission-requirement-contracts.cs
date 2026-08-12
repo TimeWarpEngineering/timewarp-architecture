@@ -5,9 +5,9 @@
 #region Design
 // Task 182-002: policy name == PermissionIds string == PermissionRequirement.PermissionId (1:1).
 // Handler (server) is the only place that decides success — always via IPermissionEvaluator,
-// never by inspecting role claims. Lives in contracts so PermissionPolicyRegistration can
-// construct requirements without a server reference; SPA reuses the same requirement type in
-// 182-003 with a session-backed handler.
+// never by inspecting role/permission claims. Lives in contracts so PermissionPolicyRegistration
+// can construct requirements without a server reference. SPA (182-003) does NOT use this type —
+// WASM registers RequireClaim policies via AddPermissionClaimPolicies instead.
 #endregion
 
 namespace TimeWarp.Architecture.Features;

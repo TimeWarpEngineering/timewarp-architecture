@@ -7,9 +7,12 @@
 // permission claim bags. PrincipalId comes from IdentitySessionDefaults.PrincipalIdClaimType
 // (timewarp:principal_id); AuthenticationType is the scheme passed to the evaluator so
 // agent-token stays empty until 182-006. Never calls context.Fail — unmet requirement stays
-// unresolved so another handler could still succeed (same pattern as ModuleRequirementHandler).
+// unresolved so another handler could still succeed (ASP.NET multi-handler composition).
 // Filename avoids registered function segment "-handler-" (TWA0015 pairs it with -application);
 // type remains PermissionRequirementHandler. Scoped DI: depends on scoped IPermissionEvaluator.
+// Note (182-003): Web.Spa.Program.ConfigureServices is composed into web-server for prerender —
+// SPA PolicyRegistration must not overwrite these PermissionRequirement policies with
+// RequireClaim (see SPA policy-registration.cs Design).
 #endregion
 
 namespace TimeWarp.Architecture.Features;

@@ -13,8 +13,8 @@
 
 namespace TimeWarp.Architecture.Features.Applications;
 
-[Page("/Settings", Policy = Policies.CanViewSettings)]
-[Authorize(Policy = Policies.CanViewSettings)]
+[Page("/Settings", Policy = PermissionIds.SettingsRead)]
+[Authorize(Policy = PermissionIds.SettingsRead)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
 partial class SettingsPage
 {

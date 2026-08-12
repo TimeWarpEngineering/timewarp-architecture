@@ -4,6 +4,6 @@
 
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-[Page("/WeatherForecasts", Policy = Policies.CanViewDeveloperPage)]
-[Authorize(Policy = Policies.CanViewDeveloperPage)]
+[Page("/WeatherForecasts", Policy = PermissionIds.DeveloperAccess)]
+[Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class WeatherForecastsPage;

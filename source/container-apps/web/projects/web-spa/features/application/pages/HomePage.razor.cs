@@ -5,7 +5,7 @@
 #region Design
 // Public marketing / first-run entry (147-005). Anonymous by design for the route itself;
 // AuthorizeView differentiates anonymous (soft Sign in → LoginPage) vs signed-in strip
-// (ProfileState avatar/alias + Settings + Admin when CanViewAdminSidebarNavSection).
+// (ProfileState avatar/alias + Settings + Admin when PermissionIds.AdminAccess).
 // Demo "Try it" actions live on Developer-gated TestPage — Home carries no demo residue.
 // Ceremony ownership: only LoginPage runs passkey sign-in / create account. Home never
 // clones that chrome (no "Sign in with a passkey" button that only redirects) — a single

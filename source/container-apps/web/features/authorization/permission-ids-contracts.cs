@@ -9,9 +9,10 @@
 // RoleIds. Features substrate (bare …Features) so Admin/Identity/SPA can reference without
 // TWA0009. Admin read/manage split is intentional teaching surface (roles.read ≠ roles.manage).
 // All is the ordered catalog for seed UIs, SPA projection, and evaluator output stability.
-// Policy registration (PermissionPolicyRegistration.AddPermissionPolicies) and
-// PermissionRequirementHandler (server) land in 182-002; this registry is the only SSOT for
-// permission strings.
+// ClaimType is the SPA claim type projected from GetCurrentSession.Permissions (182-003) —
+// server enforcement never reads permission claims; it always routes through IPermissionEvaluator.
+// Policy registration: AddPermissionPolicies (server requirement) + AddPermissionClaimPolicies
+// (SPA RequireClaim). This registry is the only SSOT for permission strings.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -19,6 +20,12 @@ namespace TimeWarp.Architecture.Features;
 /// <summary>Stable permission (capability) identifiers for authorization policies.</summary>
 public static class PermissionIds
 {
+  /// <summary>
+  /// Claim type for SPA-projected permission grants (from session response). Not used by
+  /// server <see cref="PermissionRequirementHandler"/> (evaluator only).
+  /// </summary>
+  public const string ClaimType = "permission";
+
   public const string AdminAccess = "admin.access";
   public const string AdminRolesRead = "admin.roles.read";
   public const string AdminRolesManage = "admin.roles.manage";

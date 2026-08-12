@@ -4,6 +4,6 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
-[Page("/Admin/Roles/New", Policy = Policies.CanViewRolesPage)]
-[Authorize(Policy = Policies.CanViewRolesPage)]
+[Page("/Admin/Roles/New", Policy = PermissionIds.AdminRolesManage)]
+[Authorize(Policy = PermissionIds.AdminRolesManage)]
 partial class RolePage;

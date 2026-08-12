@@ -4,8 +4,8 @@
 
 namespace TimeWarp.Architecture.Features.Superheros;
 
-[Page("/Superheros", Policy = Policies.CanViewDeveloperPage)]
-[Authorize(Policy = Policies.CanViewDeveloperPage)]
+[Page("/Superheros", Policy = PermissionIds.DeveloperAccess)]
+[Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class SuperheroPage
 {
   protected override async Task OnInitializedAsync() => await SuperheroState.FetchSuperhero();

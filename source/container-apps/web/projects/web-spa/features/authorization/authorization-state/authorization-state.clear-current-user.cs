@@ -1,5 +1,5 @@
 #region Purpose
-// AuthorizationState action that discards the user's module and role grants.
+// AuthorizationState action that discards the user's role and permission grants.
 #endregion
 
 #region Design

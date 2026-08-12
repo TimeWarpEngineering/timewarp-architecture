@@ -196,9 +196,9 @@ public class Program : IAspNetProgram
             string.Equals(context.User.Identity?.AuthenticationType, IdentitySessionDefaults.Scheme, StringComparison.Ordinal)
             || context.User.HasClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.CredentialManage))
       );
-    // Task 182-002: permission-centric policies (policy name == PermissionIds). Admin contracts
-    // use admin.roles.read/manage and admin.principals.read/manage; schemes stay on
-    // [EndpointAuthorize(AuthenticationSchemes)]. SPA still RolePolicyGrants until 182-003.
+    // Task 182-002/003: permission-centric policies (policy name == PermissionIds). Admin
+    // contracts use admin.roles.read/manage and admin.principals.read/manage; schemes stay on
+    // [EndpointAuthorize(AuthenticationSchemes)]. SPA uses AddPermissionClaimPolicies separately.
     serviceCollection.AddAuthorization(options =>
       PermissionPolicyRegistration.AddPermissionPolicies(options));
     ConfigureAuthentication(serviceCollection, configuration);
@@ -223,11 +223,12 @@ public class Program : IAspNetProgram
     serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
     serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();
 
-    // Task 147-004 / 147-006: effective roles + request claims (SPA RolePolicyGrants still uses
-    // roles until 182-003; PrincipalRoleClaimsTransformation stays). Resolver is scoped so it can
-    // resolve EfPrincipalRoleStore under postgres without a captive dependency.
+    // Task 147-004 / 147-006: effective roles + request claims (PrincipalRoleClaimsTransformation
+    // still projects roles for diagnostics). Resolver is scoped so it can resolve
+    // EfPrincipalRoleStore under postgres without a captive dependency.
     // Task 182-002: PermissionRequirementHandler is the server enforcement path — always via
-    // IPermissionEvaluator (scheme-aware expansion of roles→permissions).
+    // IPermissionEvaluator (scheme-aware expansion of roles→permissions). SPA projects
+    // GetCurrentSession.Permissions as claims (182-003).
     serviceCollection.Configure<BootstrapAdministratorOptions>(
       configuration.GetSection("Authentication"));
     serviceCollection.AddScoped<IEffectiveRolesResolver, EffectiveRolesResolver>();

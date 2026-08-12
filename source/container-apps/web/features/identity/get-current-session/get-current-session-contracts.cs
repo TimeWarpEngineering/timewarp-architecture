@@ -14,8 +14,11 @@
 // disagreeing pair can never be constructed (and therefore never serialized), not merely one the
 // handler happens to avoid producing.
 // RoleIds (task 147-004 D4): effective product role Guids for the session principal so the SPA
-// IdentitySessionAuthenticationStateProvider can emit ClaimTypes.Role without hardcoding Member.
-// Unauthenticated responses carry an empty list (not null) so clients never null-check the array.
+// can emit ClaimTypes.Role for diagnostics/display (UserClaims). Unauthenticated → empty list.
+// Permissions (task 182-003): expanded permission ids from IPermissionEvaluator under the
+// identity-session scheme — SPA IdentitySessionAuthenticationStateProvider projects each as a
+// PermissionIds.ClaimType claim so AuthorizeView / [Authorize] policies use RequireClaim (WASM
+// has no evaluator). Unauthenticated → empty list (not null).
 // [EndpointAllowAnonymous] (task 110): reads whatever ambient session exists, if any — this IS the
 // read of unauthenticated-or-authenticated state (IsAuthenticated=false is a valid, expected
 // response), not a protected resource that requires a session to reach.
@@ -40,7 +43,17 @@ public static partial class GetCurrentSession
     /// <summary>Effective product role Guids (empty when unauthenticated).</summary>
     public List<Guid> RoleIds { get; }
 
-    public Response(bool isAuthenticated, PrincipalId? principalId, List<Guid>? roleIds = null)
+    /// <summary>
+    /// Expanded permission ids for the session principal (empty when unauthenticated).
+    /// SPA projects these as <see cref="PermissionIds.ClaimType"/> claims.
+    /// </summary>
+    public List<string> Permissions { get; }
+
+    public Response(
+      bool isAuthenticated,
+      PrincipalId? principalId,
+      List<Guid>? roleIds = null,
+      List<string>? permissions = null)
     {
       if (isAuthenticated != (principalId is not null))
       {
@@ -54,6 +67,7 @@ public static partial class GetCurrentSession
       IsAuthenticated = isAuthenticated;
       PrincipalId = principalId;
       RoleIds = roleIds ?? [];
+      Permissions = permissions ?? [];
     }
   }
 }

@@ -4,9 +4,10 @@
 
 #region Design
 // Registered only via MockAuthenticationRegistration (Development/Testing + Authentication:UseMock).
-// Role claims carry RoleIds (GUID strings), not role names, because authorization policies match
-// on ids; the "oid" claim mirrors historical Entra claim shapes so claim-lookup code still works
-// when UseEntra is later enabled. MockUserIds live under Features.Identity (task 104-021).
+// Role claims carry RoleIds (GUID strings) for diagnostics/UserClaims display; permission claims
+// (PermissionIds.ClaimType) feed SPA AddPermissionClaimPolicies (task 182-003). Catalog All is
+// projected so mock SystemAdmin exercises every gated surface offline. The "oid" claim mirrors
+// historical Entra claim shapes. MockUserIds live under Features.Identity (task 104-021).
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -16,7 +17,7 @@ namespace TimeWarp.Architecture.Services;
 /// </summary>
 /// <remarks>
 /// Use this provider in development builds when live authentication services such as Azure AD B2C are unavailable or impractical.
-/// It returns a predictable principal with administrator, developer, and accountant roles so protected UI paths can be exercised offline.
+/// It returns a predictable principal with administrator/developer roles and the full permission catalog so protected UI paths can be exercised offline.
 /// </remarks>
 public partial class MockAuthenticationStateProvider : AuthenticationStateProvider
 {
@@ -26,15 +27,20 @@ public partial class MockAuthenticationStateProvider : AuthenticationStateProvid
   /// <returns>An authentication state containing a claims principal with predefined development claims.</returns>
   public override Task<AuthenticationState> GetAuthenticationStateAsync()
   {
-    List<Claim> claims = new()
-    {
+    List<Claim> claims =
+    [
       new("oid", MockUserIds.SystemAdmin.ToString()),
       new(ClaimTypes.NameIdentifier, MockUserIds.SystemAdmin.ToString()),
       new(ClaimTypes.Name, "Mock User"),
       new(ClaimTypes.Role, RoleIds.Member.ToString()),
       new(ClaimTypes.Role, RoleIds.Administrator.ToString()),
-      new(ClaimTypes.Role, RoleIds.Developer.ToString())
-    };
+      new(ClaimTypes.Role, RoleIds.Developer.ToString()),
+    ];
+
+    foreach (string permissionId in PermissionIds.All)
+    {
+      claims.Add(new Claim(PermissionIds.ClaimType, permissionId));
+    }
 
     ClaimsIdentity identity = new(claims, "Mock authentication type");
     ClaimsPrincipal user = new(identity);

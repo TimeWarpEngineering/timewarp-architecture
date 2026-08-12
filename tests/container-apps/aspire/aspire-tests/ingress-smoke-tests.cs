@@ -210,7 +210,7 @@ public class IngressSmoke_Given_
   public static async Task RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole()
   {
     // Task 145-009 + 147-004: closed-box mock principal authenticates (identity-session-compatible
-    // scheme) but effective roles default to Member only — CanViewRolesPage requires Administrator,
+    // scheme) but effective roles default to Member only — PermissionIds admin policies requires Administrator,
     // so the response is 403 (not 401/404). Proves ingress routes to Web.Server AND role policy runs.
     // In-proc roles-authorization-tests cover the Administrator → 200 path via IPrincipalRoleStore.
     Guid principalId = Guid.NewGuid();

@@ -11,7 +11,7 @@
 // paging. GetMockResponseFactory serves the SPA's MockWebApiService offline.
 // [EndpointAuthorize] (task 182-002): admin.roles.read via PermissionIds — read half of the
 // roles split (manage is Create/Update/Delete). Server PermissionRequirementHandler evaluates
-// via IPermissionEvaluator; SPA still uses RolePolicyGrants/CanViewRolesPage until 182-003.
+// via IPermissionEvaluator; SPA pages use PermissionIds.AdminRolesRead (182-003 claim policies).
 // [AuthApiRequest] on the Query remains a client-facing/mock-mode identity signal only.
 // AuthenticationSchemes (task 158): identity-session + mock-identity-session so the generated
 // FastEndpoint's AuthSchemes(...) invokes the mock handler under closed-box ingress tests —

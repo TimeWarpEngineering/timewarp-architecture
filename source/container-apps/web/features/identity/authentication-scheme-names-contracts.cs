@@ -6,7 +6,7 @@
 // Task 158: contracts assemblies cannot reference server-layer scheme constants
 // (IdentitySessionDefaults.Scheme / MockIdentityPrincipalHandler.SchemeName /
 // AgentTokenDefaults.Scheme live in the web-server / identity-host layer). Features substrate
-// (bare …Features namespace, same pattern as AuthorizationPolicyNames / RoleIds / ModuleIds) so
+// (bare …Features namespace, same pattern as RoleIds / PermissionIds) so
 // both the Admin.Roles/Admin.Principals slice and the Identity slice can reference one shared
 // constant without TWA0009 cross-slice coupling.
 // Literal string values MUST stay in lockstep with the server-side scheme constants they mirror —

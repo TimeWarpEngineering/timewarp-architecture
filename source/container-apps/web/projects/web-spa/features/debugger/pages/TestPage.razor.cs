@@ -5,11 +5,11 @@
 #region Design
 // Task 147-005: "Try it" (tracked task buttons + assembly-info modal) moved here from Home so
 // the professional first-run surface carries no demo residue. Still gated by
-// CanViewDeveloperPage (147-001 developer nav philosophy).
+// PermissionIds.DeveloperAccess (147-001 developer nav philosophy / 182-003).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Debugger;
 
-[Page("/Debugger/Test", Policy = Policies.CanViewDeveloperPage)]
-[Authorize(Policy = Policies.CanViewDeveloperPage)]
+[Page("/Debugger/Test", Policy = PermissionIds.DeveloperAccess)]
+[Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class TestPage;

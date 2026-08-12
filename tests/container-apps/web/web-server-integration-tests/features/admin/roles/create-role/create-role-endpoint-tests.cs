@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// CreateRole carries [EndpointAuthorize(Policy=CanViewRolesPage)] (task 147-004) — Administrator,
+// CreateRole carries [EndpointAuthorize(Policy=PermissionIds.AdminRolesManage)] (task 182-002) — Administrator,
 // not any authenticated principal (task 110's identity-session-only posture is retired). An
 // anonymous real-HTTP call 401s before FluentValidation ever runs; a Member-only passkey session
 // 403s. ValidationError_Given_Empty_Name/UserId use ConfirmEndpointValidationError, which IS real
@@ -126,7 +126,7 @@ public class Returns_
       await Web.GetResponse<CompletePasskeyRegistration.Response>(registerCommand, CancellationToken.None);
     result.IsT0.ShouldBeTrue("Passkey registration setup for an authenticated Roles test should succeed.");
 
-    // Task 147-004: CanViewRolesPage requires Administrator. Fresh passkey principals are Member-only
+    // Task 182-002: admin.roles.manage requires that permission (Administrator seed). Fresh passkey principals are Member-only
     // (roles-authorization-tests proves Member → 403). Roles resolve at request time from the store
     // (not baked into the cookie), so grant after registration and the ambient-jar session is enough.
     PrincipalId principalId = result.AsT0.PrincipalId;

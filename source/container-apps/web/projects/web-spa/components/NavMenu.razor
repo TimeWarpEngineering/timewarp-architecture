@@ -3,14 +3,14 @@
   Primary navigation for the app shell (rendered in TimeWarpPage's Navigation area).
   Uses FluentUI v5 FluentNav. Page links go through TimeWarpNavLink<TPage>.
 
-  Demo / developer tooling is nav-gated to Developer (task 147-001). Admin section
-  requires Administrator. Product entry points: Home, Settings; Login is profile-menu.
+  Demo / developer tooling is nav-gated by developer.access (task 147-001 / 182-003).
+  Admin section requires admin.access. Product entry points: Home, Settings; Login is profile-menu.
 *@
 <FluentNav Class="twe-nav">
   <TimeWarpNavLink TPage=HomePage />
   <TimeWarpNavLink TPage=SettingsPage />
 
-  <AuthorizeView Policy=@Policies.CanViewAdminSidebarNavSection>
+  <AuthorizeView Policy=@PermissionIds.AdminAccess>
     <Authorized>
       <FluentNavCategory Title="Admin">
         <TimeWarpNavLink TPage=RolesListPage />
@@ -19,7 +19,7 @@
     </Authorized>
   </AuthorizeView>
 
-  <AuthorizeView Policy=@Policies.CanViewDeveloperSidebarNavSection>
+  <AuthorizeView Policy=@PermissionIds.DeveloperAccess>
     <Authorized>
       <FluentNavCategory Title="Demos">
         <TimeWarpNavLink TPage=CounterPage />

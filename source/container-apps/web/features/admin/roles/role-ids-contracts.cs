@@ -9,11 +9,11 @@
 // GetRoleNameByGuid reflects over public Guid fields so display names cannot drift from the id list.
 // Features substrate (bare …Features namespace): Admin.Roles, Identity mocks, and SPA policies
 // reference well-known ids without TWA0009 cross-slice coupling.
-// Role → policy grants live in RolePolicyGrants (SPA) / documented here:
+// Role → permission grants live in RolePermissionSeed (task 182); roles are composition only:
 //   Member        — default for every passkey principal; self-service only
 //   Operator      — marketplace ops (118); grants reserved until marketplace policies land
-//   Administrator — admin nav + role management
-//   Developer     — demos + diagnostics (147-001)
+//   Administrator — admin.* + self-service
+//   Developer     — developer.* + self-service (demos / diagnostics, 147-001)
 #endregion
 
 namespace TimeWarp.Architecture.Features;

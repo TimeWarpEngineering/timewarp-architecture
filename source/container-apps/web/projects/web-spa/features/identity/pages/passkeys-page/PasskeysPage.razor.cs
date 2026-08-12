@@ -19,8 +19,8 @@ using TimeWarp.Architecture.Services;
 using TimeWarp.Foundation.Types;
 
 // Technical ceremony demo — product CTA is /Login. Nav + route gated to Developer (147-001).
-[Page("/Passkeys", Policy = Policies.CanViewDeveloperPage)]
-[Authorize(Policy = Policies.CanViewDeveloperPage)]
+[Page("/Passkeys", Policy = PermissionIds.DeveloperAccess)]
+[Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class PasskeysPage
 {
   [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;

@@ -14,8 +14,8 @@ namespace TimeWarp.Architecture.Features.Chat;
 
 using static ChatState;
 
-[Page("/Chat", Policy = Policies.CanViewDeveloperPage)]
-[Authorize(Policy = Policies.CanViewDeveloperPage)]
+[Page("/Chat", Policy = PermissionIds.DeveloperAccess)]
+[Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class ChatPage
 {
   private string User { get; set; } = string.Empty;

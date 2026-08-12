@@ -1,15 +1,14 @@
 #region Purpose
-// Client-only contract for the signed-in user's module and role grants (SPA mock demos).
+// Client-only contract for the signed-in user's role and permission grants (SPA mock / Entra demos).
 #endregion
 
 #region Design
-// Not the identity "who am I" read — that is GetCurrentSession (cookie session / PrincipalId).
-// This shape is application authorization grants (modules + roles) for SPA menus and route guards.
-// Modules and Roles are Guids drawn from ModuleIds/RoleIds so client code keys on stable ids
-// instead of matching role-name strings.
-// The mock factory returns per-user responses keyed by MockUserIds, letting the SPA demonstrate
-// role-driven UI without any grants backend; unknown users get full access because the mock
-// optimizes for demo friction, not security.
+// Not the identity "who am I" read — that is GetCurrentSession (cookie session / PrincipalId +
+// server-expanded Permissions). This shape is application grants for SPA mock demos and the
+// Entra AccountClaimsPrincipalFactoryWithRoles path (projects Role + permission claims).
+// Roles are Guids from RoleIds; Permissions are PermissionIds strings (task 182-003 — Modules /
+// ModuleIds deleted). The mock factory returns per-user responses keyed by MockUserIds; unknown
+// users get full access because the mock optimizes for demo friction, not security.
 // [ClientOnlyContract]: no server endpoint and no YARP ingress prefix (task 107/ingress tests).
 // Rehomed under Features.Identity (task 104-021) so web/features no longer carries a near-empty
 // authentication/ peer of identity/.
@@ -38,45 +37,25 @@ public static partial class GetCurrentUser
   {
     public Response
     (
-      List<Guid> modules,
-      List<Guid> roles
+      List<Guid> roles,
+      List<string> permissions
     )
     {
-      Modules = modules;
       Roles = roles;
+      Permissions = permissions;
     }
-    /// <summary>
-    /// List of Module Ids the current user has access to.
-    /// </summary>
-    /// <remarks> Should be from the ModuleIds</remarks>
-    public List<Guid> Modules { get; init; }
 
     /// <summary>
-    /// List of Roles to which the current user belongs
+    /// Roles to which the current user belongs (from <see cref="RoleIds"/>).
     /// </summary>
-    /// <remarks>Should be from RoleIds</remarks>
     public List<Guid> Roles { get; init; }
-  }
 
-  private static readonly List<Guid> AllModules =
-  [
-    ModuleIds.GeneralLedger,
-    ModuleIds.AccountsPayable,
-    ModuleIds.AccountsReceivable,
-    ModuleIds.CashManagement,
-    ModuleIds.AssetManagement,
-    ModuleIds.InventoryManagement,
-    ModuleIds.Purchasing,
-    ModuleIds.SalesAndRevenueManagement,
-    ModuleIds.ExpenseManagement,
-    ModuleIds.BudgetingAndForecasting,
-    ModuleIds.TaxManagement,
-    ModuleIds.FinancialReportingAndAnalysis,
-    ModuleIds.AuditTrailsAndCompliance,
-    ModuleIds.MultiCurrencyAndGlobalOperations,
-    ModuleIds.Payroll,
-    ModuleIds.UserAccessManagement
-  ];
+    /// <summary>
+    /// Permission ids the current user holds (from <see cref="PermissionIds"/>).
+    /// SPA projects these as <see cref="PermissionIds.ClaimType"/> claims.
+    /// </summary>
+    public List<string> Permissions { get; init; }
+  }
 
   public static MockResponseFactory<Response> GetMockResponseFactory()
   {
@@ -102,17 +81,18 @@ public static partial class GetCurrentUser
 
     return response;
   }
+
   private static Response CreateMockResponseForUnknown()
   {
     return new Response
     (
-      modules: AllModules,
       roles:
       [
         RoleIds.Member,
         RoleIds.Administrator,
         RoleIds.Developer
-      ]
+      ],
+      permissions: [.. PermissionIds.All]
     );
   }
 
@@ -120,13 +100,13 @@ public static partial class GetCurrentUser
   {
     return new Response
     (
-      modules: AllModules,
       roles:
       [
         RoleIds.Member,
         RoleIds.Administrator,
         RoleIds.Developer
-      ]
+      ],
+      permissions: [.. PermissionIds.All]
     );
   }
 
@@ -134,8 +114,15 @@ public static partial class GetCurrentUser
   {
     return new Response
     (
-      modules: AllModules,
-      roles: [RoleIds.Member, RoleIds.Developer]
+      roles: [RoleIds.Member, RoleIds.Developer],
+      permissions:
+      [
+        PermissionIds.DeveloperAccess,
+        PermissionIds.DeveloperClaimsRead,
+        PermissionIds.ProfileRead,
+        PermissionIds.SettingsRead,
+      ]
     );
   }
 }
+

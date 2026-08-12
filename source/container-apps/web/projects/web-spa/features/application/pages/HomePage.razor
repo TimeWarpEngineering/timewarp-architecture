@@ -50,7 +50,7 @@
             <FluentText>@ProfileState.Alias</FluentText>
             <FluentSpacer />
             <NavLink href=@SettingsPage.GetPageUrl()>Settings</NavLink>
-            <AuthorizeView Policy=@Policies.CanViewAdminSidebarNavSection Context="adminAuth">
+            <AuthorizeView Policy=@PermissionIds.AdminAccess Context="adminAuth">
               <Authorized Context="adminAuth">
                 <NavLink href=@RolesListPage.GetPageUrl()>Admin</NavLink>
               </Authorized>
