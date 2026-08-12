@@ -8,11 +8,11 @@
 // RoleDetailsValidator, so create and update forms enforce identical rules.
 // GetMockResponseFactory lets the SPA's MockWebApiService serve this endpoint with no
 // backend running; the response echoes a well-known RoleIds constant for determinism.
-// [EndpointAuthorize] (task 147-004): Administrator capability via AuthorizationPolicyNames
-// (Features substrate — contracts can reference without web-server). [AuthApiRequest] on Command
-// remains a client-facing/mock-mode identity signal only; this attribute gates the server.
-// AuthenticationSchemes (task 158): mirrors CanViewRolesPage's own AddAuthenticationSchemes
-// (identity-session + mock-identity-session) — see AuthenticationSchemeNames' Design region.
+// [EndpointAuthorize] (task 182-002): admin.roles.manage (PermissionIds) — write half of the
+// roles split; list/get use admin.roles.read. [AuthApiRequest] on Command remains a
+// client-facing/mock-mode identity signal only; this attribute gates the server.
+// AuthenticationSchemes (task 158): identity-session + mock-identity-session — see
+// AuthenticationSchemeNames' Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -20,7 +20,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 [ApiEndpoint]
 [EndpointAuthorize
 (
-  Policy = AuthorizationPolicyNames.CanViewRolesPage,
+  Policy = PermissionIds.AdminRolesManage,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
 public static partial class CreateRole

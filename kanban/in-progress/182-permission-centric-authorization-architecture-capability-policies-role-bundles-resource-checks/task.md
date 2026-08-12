@@ -140,7 +140,7 @@ Reviewers must address at least:
 ### Implementation (children)
 
 - [x] **182-001** Model: registry, role-permission store, seed, evaluator
-- [ ] **182-002** Server enforcement swap
+- [x] **182-002** Server enforcement swap
 - [ ] **182-003** SPA swap + dead-code delete
 - [ ] **182-004** Roles UI + last-admin + protected-core
 - [ ] **182-005** ADR + seam docs
@@ -196,3 +196,4 @@ Reviewers must address at least:
 - 2026-08-12 (Grok): round-2 **confirms** Accept with amendments (no blocking contests);
   disposition **ACCEPTED**; children **182-001…006** created. Implement starting at 182-001.
 - 2026-08-12 (orchestrate): Phase 1–3 epic state; implemented **182-001** (3e829e7d); disposition clean; next **182-002**.
+- 2026-08-12: **182-002** server enforcement swap green — PermissionRequirement + policies + admin contracts read/manage; next **182-003** SPA swap.

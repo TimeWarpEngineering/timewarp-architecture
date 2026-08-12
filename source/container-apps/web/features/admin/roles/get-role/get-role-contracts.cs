@@ -8,9 +8,9 @@
 // FluentValidation rule for it. Response implements IRoleDetails so the edit form binds the
 // same shape it submits via UpdateRole. GetMockResponseFactory lets the SPA's
 // MockWebApiService serve this endpoint offline with deterministic RoleIds data.
-// [EndpointAuthorize] (task 147-004): Administrator capability via AuthorizationPolicyNames.
-// AuthenticationSchemes (task 158): mirrors CanViewRolesPage's own AddAuthenticationSchemes
-// (identity-session + mock-identity-session) — see AuthenticationSchemeNames' Design region.
+// [EndpointAuthorize] (task 182-002): admin.roles.read (PermissionIds); manage is separate.
+// AuthenticationSchemes (task 158): identity-session + mock-identity-session — see
+// AuthenticationSchemeNames' Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -21,7 +21,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 [ApiEndpoint]
 [EndpointAuthorize
 (
-  Policy = AuthorizationPolicyNames.CanViewRolesPage,
+  Policy = PermissionIds.AdminRolesRead,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
 public static partial class GetRole

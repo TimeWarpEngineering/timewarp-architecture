@@ -9,8 +9,8 @@
 // by this explicit scheme name, never relying on "the default," so both postures work.
 // AuthenticatedPolicy (task 110): "any signed-in identity-session cookie" — scheme-restricted
 // (AddAuthenticationSchemes(Scheme)) + RequireAuthenticatedUser(), no further policy shape. Used by
-// non-admin identity-session-gated surfaces. Admin Roles/Principals APIs (task 147-004) now use
-// AuthorizationPolicyNames.CanViewRolesPage / CanViewPrincipalsPage with RequireRole(Administrator)
+// non-admin identity-session-gated surfaces. Admin Roles/Principals APIs (task 182-002) use
+// PermissionIds policies (admin.roles.* / admin.principals.*) via PermissionRequirementHandler
 // instead of this any-authenticated policy.
 #endregion
 

@@ -9,8 +9,9 @@
 // RoleIds. Features substrate (bare …Features) so Admin/Identity/SPA can reference without
 // TWA0009. Admin read/manage split is intentional teaching surface (roles.read ≠ roles.manage).
 // All is the ordered catalog for seed UIs, SPA projection, and evaluator output stability.
-// Full policy registration (PermissionRequirement handler) lands in 182-002; this registry is
-// the only SSOT for permission strings starting now.
+// Policy registration (PermissionPolicyRegistration.AddPermissionPolicies) and
+// PermissionRequirementHandler (server) land in 182-002; this registry is the only SSOT for
+// permission strings.
 #endregion
 
 namespace TimeWarp.Architecture.Features;

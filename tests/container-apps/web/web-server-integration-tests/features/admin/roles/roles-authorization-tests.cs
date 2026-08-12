@@ -1,5 +1,5 @@
 #region Purpose
-// End-to-end proof that admin Roles endpoints require Administrator (task 147-004), not any
+// End-to-end proof that admin Roles endpoints require permissions (task 182-002), not any
 // authenticated principal (task 110's identity-session-only posture is retired for Roles).
 #endregion
 
@@ -19,8 +19,9 @@
 // WebTestServerApplication.HttpClient) for the SAME per-class-fixture-sharing reason documented in
 // Passkey_Registration_Tests.cs's Design region — an anonymous-request test and an
 // authenticated-request test must not leak cookies between them via an ambient jar.
-// Task 147-004: Member-only passkey session → 403; after IPrincipalRoleStore grants Administrator
-// → 200. Agent bearer still 401 on cookie-only admin routes (scheme isolation).
+// Task 182-002: Member-only → 403; Administrator seed permissions → Get 200; Administrator with
+// admin.roles.read only (manage stripped via IRolePermissionStore) → Create 403. Agent bearer
+// still 401 on cookie-only admin routes (scheme isolation).
 #endregion
 
 namespace RolesAuthorization_;
@@ -87,7 +88,9 @@ public class Returns_
 
   public static async Task Forbidden_Given_Passkey_Member_Only_Session()
   {
-    (string sessionCookie, _) = await MintIdentitySessionCookie();
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+    // Task 180: first human passkey claims Administrator — force Member-only for this case.
+    await ForceMemberOnlyAsync(principalId);
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
@@ -100,7 +103,8 @@ public class Returns_
 
   public static async Task Forbidden_Create_Given_Passkey_Member_Only_Session()
   {
-    (string sessionCookie, _) = await MintIdentitySessionCookie();
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+    await ForceMemberOnlyAsync(principalId);
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
@@ -131,6 +135,51 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string json = await response.Content.ReadAsStringAsync();
     json.ShouldContain(nameof(RoleIds.Administrator));
+  }
+
+  public static async Task Forbidden_Create_Given_Administrator_With_Roles_Read_Only()
+  {
+    // Proves admin.roles.read ≠ admin.roles.manage: hold Administrator role but strip manage
+    // from the role's permission set for this process (restore seed grants in finally).
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+
+    IReadOnlyList<string> originalAdminPermissions =
+      await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Administrator);
+    try
+    {
+      await permissionStore.SetPermissionIdsForRoleAsync(
+        RoleIds.Administrator,
+        [
+          PermissionIds.AdminAccess,
+          PermissionIds.AdminRolesRead,
+          PermissionIds.AdminPrincipalsRead,
+          PermissionIds.ProfileRead,
+          PermissionIds.SettingsRead,
+        ]);
+
+      using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+      client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+
+      var query = new GetRoles.Query { UserId = Guid.NewGuid() };
+      HttpResponseMessage getResponse = await client.GetAsync(query.GetRouteWithQueryString());
+      getResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+      const string requestJson =
+        """{"userId":"11111111-1111-1111-1111-111111111111","name":"ReadOnlyDenied","description":"Must not create without manage."}""";
+      HttpResponseMessage createResponse = await client.PostAsync(
+        "api/Roles",
+        new StringContent(requestJson, Encoding.UTF8, "application/json"));
+      createResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+    finally
+    {
+      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Administrator, originalAdminPermissions);
+    }
   }
 
   public static async Task Unauthorized_Given_Agent_Bearer_Token_No_Cookie()
@@ -184,6 +233,13 @@ public class Returns_
     tokenResult.IsT0.ShouldBeTrue("Token issuance setup should succeed.");
 
     return tokenResult.AsT0.AccessToken;
+  }
+
+  private static async Task ForceMemberOnlyAsync(PrincipalId principalId)
+  {
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member]);
   }
 
   private static async Task<(string Cookie, PrincipalId PrincipalId)> MintIdentitySessionCookie()

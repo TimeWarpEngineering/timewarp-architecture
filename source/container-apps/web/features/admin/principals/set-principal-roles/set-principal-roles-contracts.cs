@@ -5,10 +5,11 @@
 #region Design
 // Task 147-004: PUT api/admin/principals/{PrincipalId}/roles — full replace (D10 empty allowed →
 // next effective = Member). Validator requires each RoleId ∈ RoleIds.All. Handler returns 404
-// when the principal is missing. [EndpointAuthorize] CanViewPrincipalsPage (Administrator).
+// when the principal is missing. [EndpointAuthorize] (task 182-002): admin.principals.manage
+// (PermissionIds); ListPrincipals uses admin.principals.read.
 // PrincipalId comes from the route segment (source-generated on partial Command).
-// AuthenticationSchemes (task 158): mirrors CanViewPrincipalsPage's own AddAuthenticationSchemes
-// (identity-session + mock-identity-session) — see AuthenticationSchemeNames' Design region.
+// AuthenticationSchemes (task 158): identity-session + mock-identity-session — see
+// AuthenticationSchemeNames' Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
@@ -17,7 +18,7 @@ namespace TimeWarp.Architecture.Features.Admin.Principals;
 [ApiEndpoint]
 [EndpointAuthorize
 (
-  Policy = AuthorizationPolicyNames.CanViewPrincipalsPage,
+  Policy = PermissionIds.AdminPrincipalsManage,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
 public static partial class SetPrincipalRoles
