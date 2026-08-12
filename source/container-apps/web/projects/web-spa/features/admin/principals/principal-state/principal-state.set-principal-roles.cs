@@ -7,7 +7,9 @@
 // (empty store → Member; bootstrap unions Admin+Member). The Set response echoes *stored*
 // roles only — patching drafts from it desyncs virtual grants (review M1).
 // When the edited principal is the signed-in identity-session user, NotifySessionChanged so
-// AuthorizeView / nav pick up new ClaimTypes.Role without a full remount.
+// AuthorizeView / nav re-run developer.access (WASM: re-project GetCurrentSession permission
+// claims; Server circuit: PermissionRequirement re-expands — evaluator must not stick a
+// circuit-lifetime cache, task 189).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;

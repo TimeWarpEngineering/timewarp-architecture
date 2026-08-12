@@ -400,6 +400,29 @@ namespace TimeWarp.Architecture.Features
         "All concurrent checks for one principal must share a single expansion.");
     }
 
+    public static async Task AfterRoleGrantChange_Should_ReExpand()
+    {
+      InMemoryPrincipalRoleStore principalRoles = new();
+      PrincipalId id = PrincipalId.New();
+      await principalRoles.SetRoleIdsAsync(id, [RoleIds.Member]);
+
+      PermissionEvaluator evaluator = CreateEvaluator(
+        principalRoles,
+        new InMemoryRolePermissionStore(),
+        bootstrap: []);
+
+      (await evaluator.HasPermissionAsync(
+          id, AuthenticationSchemeNames.IdentitySession, PermissionIds.DeveloperAccess))
+        .ShouldBeFalse();
+
+      await principalRoles.SetRoleIdsAsync(id, [RoleIds.Member, RoleIds.Developer]);
+
+      (await evaluator.HasPermissionAsync(
+          id, AuthenticationSchemeNames.IdentitySession, PermissionIds.DeveloperAccess))
+        .ShouldBeTrue(
+          "Completed expansions must not stick on the scoped evaluator (circuit-lifetime cache hides nav after SetPrincipalRoles).");
+    }
+
     private sealed class CountingRolePermissionStore : IRolePermissionStore
     {
       private readonly InMemoryRolePermissionStore Inner;

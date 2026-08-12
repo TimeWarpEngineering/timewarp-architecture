@@ -9,8 +9,10 @@
 // Agent-token: scopes only via IAgentPermissionScopeSource + AgentScopePermissionSeed — NEVER
 // EffectiveRolesResolver or RolePermissionStore (no human role inheritance for agents).
 // Fail-closed: missing ambient scopes (null) → empty. Agent path is pure in-memory (no
-// single-flight cache); human path keeps task-183 single-flight so concurrent Blazor SSR
-// policy checks do not race the scoped DbContext.
+// single-flight cache); human path keeps task-183 in-flight single-flight so concurrent
+// Blazor SSR policy checks do not race the scoped DbContext. Completed expansions are
+// evicted: the evaluator is scoped to a Blazor Server circuit, and a sticky cache would
+// keep pre-Save grants (Developer nav stays hidden until refresh).
 // IAgentPermissionScopeSource (not IAgentCallerContext) so Features stays free of dual-host
 // Abstractions types that collide under JARIBU_MULTI (web + api both define IAgentCallerContext).
 // Output ordered by PermissionIds.All then any unknown grants (stable for session / tests).
@@ -79,13 +81,23 @@ public sealed class PermissionEvaluator : IPermissionEvaluator
       return Array.Empty<string>();
     }
 
+    (Guid PrincipalId, string Scheme) key = (principalId.Value, authenticationScheme!);
     Lazy<Task<IReadOnlyList<string>>> expansion = ExpansionCache.GetOrAdd(
-      (principalId.Value, authenticationScheme!),
+      key,
       _ => new Lazy<Task<IReadOnlyList<string>>>(
         () => ExpandHumanPermissionsAsync(principalId),
         LazyThreadSafetyMode.ExecutionAndPublication));
 
-    return await expansion.Value.ConfigureAwait(false);
+    try
+    {
+      return await expansion.Value.ConfigureAwait(false);
+    }
+    finally
+    {
+      // Evict only this flight so a later GetOrAdd after a grant change re-expands.
+      ExpansionCache.TryRemove(
+        new KeyValuePair<(Guid PrincipalId, string Scheme), Lazy<Task<IReadOnlyList<string>>>>(key, expansion));
+    }
   }
 
   private IReadOnlyList<string> ExpandAgentPermissions(PrincipalId principalId)
