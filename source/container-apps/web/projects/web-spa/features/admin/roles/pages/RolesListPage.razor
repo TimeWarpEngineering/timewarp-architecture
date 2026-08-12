@@ -73,10 +73,8 @@
 
 @code {
   private async Task OnPermissionSelected(Guid roleId, string permissionId, bool selected) =>
-    await Mediator.Send(
-      new RoleState.SetPermissionSelectedActionSet.Action(roleId, permissionId, selected),
-      CancellationToken);
+    await RoleState.SetPermissionSelected(roleId, permissionId, selected);
 
   private async Task OnSave(Guid roleId) =>
-    await Mediator.Send(new RoleState.SetRolePermissionsActionSet.Action(roleId), CancellationToken);
+    await RoleState.SetRolePermissions(roleId);
 }

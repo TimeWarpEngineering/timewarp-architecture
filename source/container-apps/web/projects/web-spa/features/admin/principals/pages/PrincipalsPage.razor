@@ -78,10 +78,8 @@
 
 @code {
   private async Task OnRoleSelected(Guid principalId, Guid roleId, bool selected) =>
-    await Mediator.Send(
-      new PrincipalState.SetRoleSelectedActionSet.Action(principalId, roleId, selected),
-      CancellationToken);
+    await PrincipalState.SetRoleSelected(principalId, roleId, selected);
 
   private async Task OnSave(Guid principalId) =>
-    await Mediator.Send(new PrincipalState.SetPrincipalRolesActionSet.Action(principalId), CancellationToken);
+    await PrincipalState.SetPrincipalRoles(principalId);
 }
