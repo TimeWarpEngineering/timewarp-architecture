@@ -33,12 +33,16 @@
 // Task 154: identity-session cookie OnRedirectToLogin is dual-mode — HTML/page deep links 302 to
 // /Login?returnUrl=…; /api challenges stay 401. Classification SSOT:
 // IdentitySessionCookieChallenge (platform/identity-host). Forbid always 403 (never Login).
+// Task 183: after Web.Spa.Program.ConfigureServices, re-register AuthenticationStateProvider as
+// HostedIdentitySessionAuthenticationStateProvider so prerender uses HttpContext.User (cookie)
+// instead of anonymous session loopback — see that type's Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 using TimeWarp.Architecture.Abuse;
 using TimeWarp.Architecture.AgentDiscovery;
 using TimeWarp.Architecture.Features;
@@ -293,6 +297,15 @@ public class Program : IAspNetProgram
     );
 
     Web.Spa.Program.ConfigureServices(serviceCollection, configuration, environmentName);
+
+    // Task 183: last registration wins — prefer cookie principal during hosted prerender.
+    // Only when SPA registered IdentitySessionAuthenticationStateProvider (not mock / Entra).
+    if (serviceCollection.Any(static d =>
+          d.ServiceType == typeof(AuthenticationStateProvider)
+          && d.ImplementationType == typeof(IdentitySessionAuthenticationStateProvider)))
+    {
+      serviceCollection.AddScoped<AuthenticationStateProvider, HostedIdentitySessionAuthenticationStateProvider>();
+    }
 
     serviceCollection
       .AddMediator

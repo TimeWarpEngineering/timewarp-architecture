@@ -6,6 +6,8 @@
 // Task 104-021: when mock is off and Entra is off, register IdentitySessionAuthenticationStateProvider
 // + NoOpAccessTokenProvider so CascadingAuthenticationState and BaseApiService resolve without MSAL.
 // Caller decides the branch; this type only mutates the collection when invoked.
+// Task 183: web-server re-registers HostedIdentitySessionAuthenticationStateProvider after composing
+// SPA services so prerender uses HttpContext.User (see web-server Program.ConfigureServices).
 #endregion
 
 namespace TimeWarp.Architecture.Services;
