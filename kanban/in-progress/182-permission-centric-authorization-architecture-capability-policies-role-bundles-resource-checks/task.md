@@ -142,7 +142,7 @@ Reviewers must address at least:
 - [x] **182-001** Model: registry, role-permission store, seed, evaluator (`3e829e7d`)
 - [x] **182-002** Server enforcement swap (`1c5687cd`)
 - [x] **182-003** SPA swap + dead-code delete (`098398a1`)
-- [ ] **182-004** Roles UI + last-admin + protected-core
+- [x] **182-004** Roles UI + last-admin + protected-core (`c60bb21f`)
 - [ ] **182-005** ADR + seam docs (draft exists: proposed/0010-…)
 - [ ] **182-006** Agent scope → permission bundles
 
@@ -198,6 +198,7 @@ Reviewers must address at least:
 - 2026-08-12 (orchestrate): Phase 1–3 epic state; implemented **182-001** (3e829e7d); disposition clean; next **182-002**.
 - 2026-08-12: **182-002** server enforcement swap green — PermissionRequirement + policies + admin contracts read/manage; next **182-003** SPA swap.
 - 2026-08-12 (orchestrate `/tw-orchestrate-task 182`): **Phase 1 A–C complete** (001–003 done). Enforcement is permission-centric on server + SPA; RolePolicyGrants/ModuleRequirement gone. Remaining: **182-004** (Roles UI + lockout), **182-005** (ADR accept), **182-006** (agent scopes). Parent 182 stays in-progress until children complete.
+- 2026-08-12 (orchestrate `/tw-orchestrate-task 182-004`): **done** — SetRolePermissions + RolesList membership UI + last-admin/protected-core 409 guards (`c60bb21f`). Next **182-005** / **182-006**.
 ### Current hotspots (after 182-003)
 
 | Area | Status |
