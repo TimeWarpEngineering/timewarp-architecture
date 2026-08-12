@@ -13,7 +13,7 @@ This bump is the release PR for shipping current master, including the first nug
 
 - [x] Bump `<Version>` in `source/Directory.Build.props` and `timewarp-templates/Directory.Build.props`
 - [x] Bump all platform CPM pins in `Directory.Packages.props` to the same version (task 124)
-- [ ] `dev check-version` reports source ahead of latest published/tag
+- [x] `dev check-version` reports source ahead of latest published/tag
 - [ ] PR green; merge to master
 - [ ] Master CI green; cut with `dev release` from clean synced master
 
