@@ -27,6 +27,9 @@
 // Concurrency note (104-028): this handler makes zero Update* calls — no sign-count persisted
 // (Credential has no such field; see authenticator-data.cs), so nothing here needs to write back to
 // the store at all.
+// First admin (empty deploy): TryClaimFirstAdministratorAsync before IssueAsync so a principal
+// created before the claim path (or any sign-in when no Administrator exists yet) can claim on
+// Sign in, not only Create account. No-op when an admin already exists.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -38,6 +41,7 @@ public sealed partial class CompletePasskeyAuthentication
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
     private readonly IPrincipalStore PrincipalStore;
+    private readonly IPrincipalRoleStore PrincipalRoleStore;
     private readonly IWebAuthnChallengeStore ChallengeStore;
     private readonly IBrowserSessionService BrowserSessionService;
     private readonly IRequestHostAccessor RequestHostAccessor;
@@ -46,6 +50,7 @@ public sealed partial class CompletePasskeyAuthentication
     public Handler
     (
       IPrincipalStore principalStore,
+      IPrincipalRoleStore principalRoleStore,
       IWebAuthnChallengeStore challengeStore,
       IBrowserSessionService browserSessionService,
       IRequestHostAccessor requestHostAccessor,
@@ -53,6 +58,7 @@ public sealed partial class CompletePasskeyAuthentication
     )
     {
       PrincipalStore = principalStore;
+      PrincipalRoleStore = principalRoleStore;
       ChallengeStore = challengeStore;
       BrowserSessionService = browserSessionService;
       RequestHostAccessor = requestHostAccessor;
@@ -111,6 +117,10 @@ public sealed partial class CompletePasskeyAuthentication
       {
         return IdentityProblems.Quarantined();
       }
+
+      // Empty deployment: first successful human ceremony claims Administrator (also covers
+      // principals that predate registration-time claim).
+      _ = await PrincipalRoleStore.TryClaimFirstAdministratorAsync(principal.Id, cancellationToken);
 
       await BrowserSessionService.IssueAsync(principal.Id, principal.DisplayName, cancellationToken);
 
