@@ -35,7 +35,7 @@
 namespace DevCli.Commands;
 
 [NuruRoute("template-smoke", Description = "Pack/install template and smoke-build generated apps (defaults + --postgres false)")]
-internal sealed class TemplateSmokeCommand : ICommand<Unit>
+internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
 {
   private const string TemplateProject =
     "timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj";
@@ -86,6 +86,12 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
     "analyzerPackages",
     "identityPackages",
   ];
+
+  [GeneratedRegex(@"""UseMock""\s*:\s*true", RegexOptions.IgnoreCase)]
+  private static partial Regex UseMockTrueInJson();
+
+  [GeneratedRegex(@"DefineConstants[^>]*MOCK_AUTHENTICATION", RegexOptions.IgnoreCase)]
+  private static partial Regex MockAuthenticationInDefineConstants();
 
   private static readonly string[] VendoredPlatformRelativeTrees =
   [
@@ -476,12 +482,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       {
         string text = File.ReadAllText(productionAppsettings);
         // Coarse but sufficient: Production must not enable the mock flag.
-        if (System.Text.RegularExpressions.Regex.IsMatch
-          (
-            text,
-            @"""UseMock""\s*:\s*true",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase
-          ))
+        if (UseMockTrueInJson().IsMatch(text))
         {
           failures.Add("web-server appsettings.Production.json sets Authentication UseMock true");
         }
@@ -516,12 +517,7 @@ internal sealed class TemplateSmokeCommand : ICommand<Unit>
       {
         string spaText = File.ReadAllText(spaCsproj);
         // Only fail on an active DefineConstants entry — comments may still name the old symbol.
-        if (System.Text.RegularExpressions.Regex.IsMatch
-          (
-            spaText,
-            @"DefineConstants[^>]*MOCK_AUTHENTICATION",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase
-          ))
+        if (MockAuthenticationInDefineConstants().IsMatch(spaText))
         {
           failures.Add("web-spa.csproj still defines MOCK_AUTHENTICATION (should be runtime-gated only)");
         }

@@ -97,7 +97,7 @@ public sealed partial class CompleteAgentTokenIssuance
       }
 
       Credential? credential = await PrincipalStore.FindCredentialByHandleAsync(CredentialType.AgentKey, keyId, cancellationToken);
-      if (credential is null || credential.IsRevoked)
+      if (credential?.IsRevoked != false)
       {
         return IdentityProblems.IssuanceFailed();
       }

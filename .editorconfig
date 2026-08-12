@@ -142,7 +142,8 @@ csharp_prefer_braces = when_multiline:warning
 csharp_prefer_simple_using_statement = true:silent
 csharp_style_namespace_declarations = file_scoped:error
 csharp_style_prefer_method_group_conversion = true
-csharp_style_prefer_primary_constructors = false
+# Prefer classic constructors — primary constructors cause problems (partials, generators, DI/test doubles).
+csharp_style_prefer_primary_constructors = false:none
 csharp_style_prefer_top_level_statements = false
 
 # Expression-level preferences
@@ -318,9 +319,52 @@ dotnet_diagnostic.RCS1043.severity = none
 dotnet_diagnostic.RCS1168.severity = none
 # RCS1263 invalid cref/param name — leave default (warning): phantom docs are bugs.
 
+# House gates after clean-up pass (task 172): warning + TreatWarningsAsErrors so regressions fail the build.
+# Defaults are often Info/Hidden and would not trip CI without this.
+dotnet_diagnostic.RCS1261.severity = warning  # use await using for IAsyncDisposable
+dotnet_diagnostic.RCS1251.severity = warning  # empty type declaration: use ; not { }
+dotnet_diagnostic.RCS1077.severity = warning  # optimize LINQ method call (e.g. Count→Sum, OrderBy→Order)
+dotnet_diagnostic.IDE1006.severity = warning  # naming rule violation (pairs with naming_style rules above)
+
+# Residual Roslynk Info cluster → warning so IDE/Error List shows locations (task 172).
+# ~80 sites at promote time; TreatWarningsAsErrors makes them build-breaking until fixed or re-silenced.
+dotnet_diagnostic.RCS1021.severity = warning  # expression-bodied lambda
+dotnet_diagnostic.RCS1037.severity = warning  # remove trailing white-space
+dotnet_diagnostic.RCS1049.severity = warning  # simplify boolean comparison
+dotnet_diagnostic.RCS1085.severity = warning  # use auto-implemented property
+# RCS1093 file contains no code — off. Layer global-usings.cs often ship as Purpose-only
+# shells (// global using xyz;) until a project gains real imports; that is intentional.
+dotnet_diagnostic.RCS1093.severity = none
+dotnet_diagnostic.RCS1104.severity = warning  # simplify conditional expression
+dotnet_diagnostic.RCS1110.severity = warning  # declare type inside namespace
+dotnet_diagnostic.RCS1118.severity = warning  # mark local variable as const
+dotnet_diagnostic.RCS1146.severity = warning  # use conditional access
+dotnet_diagnostic.RCS1163.severity = warning  # unused parameter
+dotnet_diagnostic.RCS1170.severity = warning  # use read-only auto-implemented property
+dotnet_diagnostic.RCS1190.severity = warning  # join string expressions
+dotnet_diagnostic.RCS1206.severity = warning  # conditional access instead of conditional expression
+dotnet_diagnostic.RCS1213.severity = warning  # remove unused member declaration
+dotnet_diagnostic.RCS1214.severity = warning  # unnecessary interpolated string
+dotnet_diagnostic.RCS1221.severity = warning  # use pattern matching instead of as+null check
+dotnet_diagnostic.RCS1226.severity = warning  # add paragraph to documentation comment
+dotnet_diagnostic.RCS1235.severity = warning  # optimize Add call
+dotnet_diagnostic.RCS1239.severity = warning  # use for instead of while
+dotnet_diagnostic.RCS1246.severity = warning  # use element access
+dotnet_diagnostic.RCS1249.severity = warning  # unnecessary null-forgiving operator
+dotnet_diagnostic.RCS9004.severity = warning  # call Any instead of Count
+# CA1860 is the opposite of RCS9004 (prefer Count/Length over Any on collections with Count).
+# Promoted so the conflict is visible after RCS9004 clean-up; decide house winner next.
+dotnet_diagnostic.CA1860.severity = warning  # prefer Count/Length/IsEmpty over Enumerable.Any()
+dotnet_diagnostic.IDE0090.severity = warning  # 'new' expression can be simplified
+dotnet_diagnostic.IDE0340.severity = warning  # use unbound generic type
+dotnet_diagnostic.SYSLIB1045.severity = warning  # use GeneratedRegexAttribute
+
 # IDE0005: Using directive is unnecessary.
 # Warning + TreatWarningsAsErrors; agents: Roslynk remove_unused_usings (apply_code_fix IDE0005 is unreliable). Task 170/172.
 dotnet_diagnostic.IDE0005.severity = warning
+
+# IDE0290 pairs with csharp_style_prefer_primary_constructors = false:none above.
+dotnet_diagnostic.IDE0290.severity = none
 
 # TimeWarp.SourceGenerators — kebab-case .cs basenames (TW* package family, not Architecture TWA*).
 # Package defaults to disabled/info; warning + TreatWarningsAsErrors makes this build-breaking.

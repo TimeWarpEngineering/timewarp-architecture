@@ -12,9 +12,9 @@ public class Map
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Map>();
 
-  public static Task Profile_with_schema_typed_id_and_concurrency_token()
+  public static async Task Profile_with_schema_typed_id_and_concurrency_token()
   {
-    using PostgresDbContext db = CreateModelOnlyContext();
+    await using PostgresDbContext db = CreateModelOnlyContext();
 
     IEntityType entityType = db.Model.FindEntityType(typeof(Profile))
       .ShouldNotBeNull("Profile must be on the PostgresDbContext model");
@@ -29,14 +29,12 @@ public class Map
     IProperty version = entityType.FindProperty(nameof(Profile.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
-    return Task.CompletedTask;
   }
 
-  public static Task Exposes_profiles_dbset()
+  public static async Task Exposes_profiles_dbset()
   {
-    using PostgresDbContext db = CreateModelOnlyContext();
+    await using PostgresDbContext db = CreateModelOnlyContext();
     db.Profiles.ShouldNotBeNull();
-    return Task.CompletedTask;
   }
 
   private static PostgresDbContext CreateModelOnlyContext()

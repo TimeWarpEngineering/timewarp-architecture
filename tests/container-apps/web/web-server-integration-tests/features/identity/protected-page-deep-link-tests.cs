@@ -138,7 +138,7 @@ public class Returns_
 
     // Exact shape from IdentitySessionCookieChallenge.BuildLoginRedirectTarget.
     string expected =
-      $"{IdentitySessionCookieChallenge.LoginPath}"
+      IdentitySessionCookieChallenge.LoginPath
       + $"?{IdentitySessionCookieChallenge.ReturnUrlQueryParameter}"
       + $"={Uri.EscapeDataString(expectedReturnUrl)}";
     location.ShouldBe(expected);

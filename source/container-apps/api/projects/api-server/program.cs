@@ -153,5 +153,8 @@ public class Program : IAspNetProgram
 
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
+    // Placeholder signature: settings wiring lands here when api-server gains options binding.
+    _ = serviceCollection;
+    _ = configuration;
   }
 }

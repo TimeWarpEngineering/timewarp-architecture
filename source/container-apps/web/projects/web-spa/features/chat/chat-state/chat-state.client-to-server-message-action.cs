@@ -36,7 +36,7 @@ partial class ChatState
       {
         ChatHubConnection = chatHubConnection;
       }
-      private ChatHubConnection ChatHubConnection { get; set; }
+      private ChatHubConnection ChatHubConnection { get; }
 
       public override async Task Handle(Action action, CancellationToken cancellationToken)
       {

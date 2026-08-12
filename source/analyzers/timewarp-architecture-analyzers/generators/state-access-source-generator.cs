@@ -24,7 +24,7 @@ public sealed class StateAccessSourceGenerator : IIncrementalGenerator
       spc.AddSource("StateAccessAttribute.g.cs", SourceText.From(BuildAttribute(ns), Encoding.UTF8)));
 
     IncrementalValuesProvider<State> states = context.SyntaxProvider.CreateSyntaxProvider(
-      predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Count > 0,
+      predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Any(),
       transform: static (ctx, ct) => GetState(ctx, ct))
       .Where(static s => s is not null)
       .Select(static (s, _) => s!.Value);

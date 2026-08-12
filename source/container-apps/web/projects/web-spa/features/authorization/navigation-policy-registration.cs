@@ -15,6 +15,7 @@ internal static class NavigationPolicyRegistration
 {
   internal static void AddPolicies(AuthorizationOptions options)
   {
+    _ = options; // Avoids "unused parameter" warning; the method is a placeholder for documentation and future use.
     _ = new[]
     {
       CanViewDeveloperSidebarNavSection,

@@ -19,7 +19,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 [Generator]
-public sealed class ContractsMixinGenerator : IIncrementalGenerator
+public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
 {
   private const string RouteName = "ApiRoute";
   private const string AuthName = "AuthApiRequest";
@@ -27,7 +27,8 @@ public sealed class ContractsMixinGenerator : IIncrementalGenerator
   private const string Verb = "global::TimeWarp.Foundation.Features.HttpVerb";
   private const string Nvc = "global::System.Collections.Specialized.NameValueCollection";
 
-  private static readonly Regex RouteParam = new(@"\{(\w+)\s*:?(\w+(\(\d+\))?)\}?", RegexOptions.Compiled);
+  [GeneratedRegex(@"\{(\w+)\s*:?(\w+(\(\d+\))?)\}?")]
+  private static partial Regex RouteParam();
 
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
@@ -41,7 +42,7 @@ public sealed class ContractsMixinGenerator : IIncrementalGenerator
       spc.AddSource("ContractsMixinAttributes.g.cs", SourceText.From(BuildAttributes(ns), Encoding.UTF8)));
 
     IncrementalValuesProvider<Target> targets = context.SyntaxProvider.CreateSyntaxProvider(
-      predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Count > 0,
+      predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Any(),
       transform: static (ctx, _) => GetTarget((ClassDeclarationSyntax)ctx.Node))
       .Where(static t => t is not null)
       .Select(static (t, _) => t!.Value);
@@ -144,7 +145,7 @@ public sealed class ContractsMixinGenerator : IIncrementalGenerator
 
     foreach (string segment in route.Split('/'))
     {
-      Match m = RouteParam.Match(segment);
+      Match m = RouteParam().Match(segment);
       if (!m.Success)
       {
         urlSegments.Add(segment);

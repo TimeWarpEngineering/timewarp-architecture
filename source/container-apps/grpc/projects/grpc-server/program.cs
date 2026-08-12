@@ -10,6 +10,8 @@
 // Code-first reflection service is mapped so grpcurl and similar tooling can discover the contract.
 #endregion
 
+namespace TimeWarp.Architecture.Grpc.Server;
+
 public partial class Program
 {
   private static void Main(string[] args)

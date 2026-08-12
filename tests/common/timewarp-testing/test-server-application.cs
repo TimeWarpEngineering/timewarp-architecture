@@ -31,7 +31,7 @@ public abstract class TestServerApplication<TProgram> : IAsyncDisposable, IWebAp
 
     HttpClient = new HttpClient(handler)
     {
-      BaseAddress = new Uri(WebApplicationHost.Urls.First())
+      BaseAddress = new Uri(WebApplicationHost.Urls[0])
     };
 
     WebApiTestService = CreateWebApiTestService(webApplicationHost);

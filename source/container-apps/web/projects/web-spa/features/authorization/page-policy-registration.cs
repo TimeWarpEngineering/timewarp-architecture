@@ -16,6 +16,7 @@ internal static class PagePolicyRegistration
 {
   public static void AddPolicies(AuthorizationOptions options)
   {
+    _ = options; // Avoids "unused parameter" warning; the method is a placeholder for documentation and future use.
     // Registered via RolePolicyGrants.AddAllGrantedPolicies in PolicyRegistration —
     // page-specific names documented here for discoverability.
     _ = new[]

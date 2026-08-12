@@ -69,7 +69,7 @@ public sealed class AgentTokenAuthenticationHandler : AuthenticationHandler<Auth
     }
 
     Principal? principal = await PrincipalStore.GetPrincipalAsync(grant.PrincipalId, Context.RequestAborted);
-    if (principal is null || !principal.IsActive)
+    if (principal?.IsActive != true)
     {
       // Quarantine at validation time is a silent Fail -> 401 — see this class's Design region.
       return AuthenticateResult.Fail("Principal not found or inactive.");

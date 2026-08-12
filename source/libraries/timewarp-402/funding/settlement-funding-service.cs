@@ -126,8 +126,7 @@ public sealed class SettlementFundingService
         Principal? after = await Principals
           .GetPrincipalAsync(principalId, cancellationToken)
           .ConfigureAwait(false);
-        if (after is not null &&
-            after.TrustTier is TrustTier.Funded or TrustTier.Established)
+        if (after?.TrustTier is TrustTier.Funded or TrustTier.Established)
         {
           return false;
         }

@@ -42,8 +42,7 @@ public sealed class PrincipalRoleClaimsTransformation : IClaimsTransformation
       .GetEffectiveRoleIdsAsync(principalId)
       .ConfigureAwait(false);
 
-    var identity = principal.Identity as ClaimsIdentity;
-    if (identity is null)
+    if (principal.Identity is not ClaimsIdentity identity)
     {
       return principal;
     }

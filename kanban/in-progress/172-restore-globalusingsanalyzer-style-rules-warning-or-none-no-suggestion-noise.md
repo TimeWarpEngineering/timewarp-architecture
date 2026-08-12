@@ -19,6 +19,8 @@ policy: **warning/error = we enforce** (TreatWarningsAsErrors), **silent/none = 
 - [x] Silence RCS1138/RCS1139 XML-summary nags (same class as CS1591 docs noise)
 - [x] Agent note: IDE0005 → Roslynk `remove_unused_usings` (not unreliable `apply_code_fix(IDE0005)`)
 - [x] Sample project builds: api-application, web-spa, web-application green after cleanup
+- [x] Promote fixed style IDs to **warning** (RCS1261, RCS1251, RCS1077, IDE1006) so TreatWarningsAsErrors fails regressions
+- [x] RCS1261: `using` → `await using` for IAsyncDisposable DbContexts in aggregate/identity/profile model tests (methods made `async Task`)
 - [ ] Residual: full-repo IDE0005 / GlobalUsingsAnalyzer backlog (web-server etc.) — follow-up sweep
 - [ ] Confirm whether GlobalUsingsAnalyzer0003 fires with `csharp_using_directive_placement = inside_namespace`
 
@@ -69,3 +71,14 @@ policy: **warning/error = we enforce** (TreatWarningsAsErrors), **silent/none = 
 ### XML docs (follow-up)
 
 - Full hollow/completeness RCS cluster silenced; decision to populate packages vs strip → **task 177**.
+
+### RCS1261 (async dispose)
+
+- Sites: `aggregate-db-context-tests.cs` (10), `identity-model-mapping-tests.cs` (3), `profile-model-mapping-tests.cs` (2).
+- Change: local `using DbContext` → `await using`; methods `public static Task` + `return Task.CompletedTask` → `public static async Task`.
+- Verified: Roslynk diagnostics show **0× RCS1261**; foundation-infrastructure-tests 11/11; web-infrastructure Map filter 5/5.
+
+### Promote fixed IDs to warning
+
+- `.editorconfig`: `RCS1261`, `RCS1251`, `RCS1077`, `IDE1006` = **warning** (with TreatWarningsAsErrors).
+- IDE0005 already warning (task 170).

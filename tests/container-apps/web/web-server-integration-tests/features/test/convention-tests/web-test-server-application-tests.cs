@@ -5,7 +5,6 @@ public class Should
 {
 
   private static HostGraph? Graph;
-  private static WebTestServerApplication Web => Graph!.Web!;
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Should>();

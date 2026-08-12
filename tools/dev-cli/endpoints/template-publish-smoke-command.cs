@@ -213,7 +213,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         """;
 
       string stale = good.Replace(expected, "2.0.0-beta.1", StringComparison.Ordinal);
-      string noPlatformPins =
+      const string noPlatformPins =
         """
         <Project>
           <ItemGroup>
@@ -459,7 +459,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
     private void WriteNugetOrgOnlyConfig(string outputDir)
     {
       string configPath = Path.Combine(outputDir, "NuGet.config");
-      string xml =
+      const string xml =
         """
         <?xml version="1.0" encoding="utf-8"?>
         <configuration>

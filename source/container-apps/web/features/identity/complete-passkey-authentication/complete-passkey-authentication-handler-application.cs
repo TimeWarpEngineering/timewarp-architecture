@@ -87,7 +87,7 @@ public sealed partial class CompletePasskeyAuthentication
       }
 
       Credential? credential = await PrincipalStore.FindCredentialByHandleAsync(CredentialType.Passkey, credentialIdBytes, cancellationToken);
-      if (credential is null || credential.IsRevoked)
+      if (credential?.IsRevoked != false)
       {
         return IdentityProblems.AuthenticationFailed();
       }

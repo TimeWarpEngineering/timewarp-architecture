@@ -33,7 +33,6 @@ public class AccountClaimsPrincipalFactoryWithRoles : AccountClaimsPrincipalFact
     if (claimsPrincipal.Identity is not { IsAuthenticated: true }) return claimsPrincipal;
 
     var identity = (ClaimsIdentity)claimsPrincipal.Identity;
-    if (identity.IsAuthenticated is false) return claimsPrincipal;
 
     await AuthorizationState.FetchCurrentUser();
     if (AuthorizationState.Roles == null) return claimsPrincipal;

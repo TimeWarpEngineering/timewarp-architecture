@@ -40,13 +40,11 @@ public class SuperheroService : ISuperheroService
     string name = "";
     name += consonants[random.Next(consonants.Length)].ToUpper();
     name += vowels[random.Next(vowels.Length)];
-    int b = 2; //b tells how many times a new letter has been added. It's 2 right now because the first two letters are already in the name.
-    while (b < length)
+    // b starts at 2: the first consonant+vowel pair is already in the name.
+    for (int b = 2; b < length; b += 2)
     {
       name += consonants[random.Next(consonants.Length)];
-      b++;
       name += vowels[random.Next(vowels.Length)];
-      b++;
     }
 
     return name;

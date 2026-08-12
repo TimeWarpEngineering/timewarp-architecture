@@ -95,7 +95,7 @@ internal sealed record EndpointEmitModel(
     AttributeData? apiRouteAttribute = requestClass.GetAttributes()
       .FirstOrDefault(static attr => attr.AttributeClass?.Name == HostedRouteDiscovery.ApiRouteAttributeSimpleName);
 
-    if (apiRouteAttribute is not null && apiRouteAttribute.ConstructorArguments.Length >= 2)
+    if (apiRouteAttribute?.ConstructorArguments.Length >= 2)
     {
       route = apiRouteAttribute.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
       if (string.IsNullOrWhiteSpace(route))

@@ -14,9 +14,9 @@ public class Map
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Map>();
 
-  public static Task Principal_with_schema_typed_id_and_concurrency_token()
+  public static async Task Principal_with_schema_typed_id_and_concurrency_token()
   {
-    using PostgresDbContext db = CreateModelOnlyContext();
+    await using PostgresDbContext db = CreateModelOnlyContext();
 
     IEntityType entityType = db.Model.FindEntityType(typeof(Principal))
       .ShouldNotBeNull("Principal must be on the PostgresDbContext model");
@@ -31,12 +31,11 @@ public class Map
     IProperty version = entityType.FindProperty(nameof(Principal.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
-    return Task.CompletedTask;
   }
 
-  public static Task Credential_with_bytea_field_access_unique_handle_and_concurrency_token()
+  public static async Task Credential_with_bytea_field_access_unique_handle_and_concurrency_token()
   {
-    using PostgresDbContext db = CreateModelOnlyContext();
+    await using PostgresDbContext db = CreateModelOnlyContext();
 
     IEntityType entityType = db.Model.FindEntityType(typeof(Credential))
       .ShouldNotBeNull("Credential must be on the PostgresDbContext model");
@@ -65,15 +64,13 @@ public class Map
         && index.Properties[0].Name == nameof(Credential.Type)
         && index.Properties[1].Name == nameof(Credential.Handle));
     uniqueHandle.ShouldNotBeNull("Unique index on (Type, Handle) is required for handle uniqueness");
-    return Task.CompletedTask;
   }
 
-  public static Task Exposes_principals_and_credentials_dbsets()
+  public static async Task Exposes_principals_and_credentials_dbsets()
   {
-    using PostgresDbContext db = CreateModelOnlyContext();
+    await using PostgresDbContext db = CreateModelOnlyContext();
     db.Principals.ShouldNotBeNull();
     db.Credentials.ShouldNotBeNull();
-    return Task.CompletedTask;
   }
 
   private static PostgresDbContext CreateModelOnlyContext()
