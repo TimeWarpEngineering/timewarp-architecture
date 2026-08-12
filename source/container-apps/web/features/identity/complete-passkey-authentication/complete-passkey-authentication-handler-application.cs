@@ -112,10 +112,6 @@ public sealed partial class CompletePasskeyAuthentication
         return IdentityProblems.Quarantined();
       }
 
-      // Empty deployment: first successful human ceremony claims Administrator (also covers
-      // principals that predate registration-time claim).
-      _ = await PrincipalRoleStore.TryClaimFirstAdministratorAsync(principal.Id, cancellationToken);
-
       await BrowserSessionService.IssueAsync(principal.Id, principal.DisplayName, cancellationToken);
 
       return new Response(principal.Id);
