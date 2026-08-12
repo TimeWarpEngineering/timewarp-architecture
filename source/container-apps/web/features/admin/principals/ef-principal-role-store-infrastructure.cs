@@ -7,6 +7,8 @@
 // Semantics match InMemoryPrincipalRoleStore:
 //   - Get: empty list when no rows (effective Member applied by resolver, not this store)
 //   - Set: replace-set (delete all for principal, insert Distinct role ids); empty clears
+//   - TryClaimFirstAdministrator: Serializable transaction — Any Administrator row? no → write
+//     Administrator+Member for this principal. Concurrent claims: one wins, others see the row.
 // Scoped lifetime: depends on scoped PostgresDbContext. InMemoryIdentityStoresModule still
 // registers singleton InMemoryPrincipalRoleStore; PostgresDbModule replaces when connected.
 // Reads AsNoTracking. Set uses a single SaveChanges after remove+add.
@@ -15,6 +17,7 @@
 namespace TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Persistence;
 using TimeWarp.Identity;
@@ -74,5 +77,33 @@ public sealed class EfPrincipalRoleStore : IPrincipalRoleStore
     }
 
     await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+  }
+
+  public async Task<bool> TryClaimFirstAdministratorAsync(
+    PrincipalId principalId,
+    CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+
+    await using IDbContextTransaction transaction = await Db.Database
+      .BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken)
+      .ConfigureAwait(false);
+
+    bool administratorExists = await Db.Set<PrincipalRoleAssignment>()
+      .AsNoTracking()
+      .AnyAsync(row => row.RoleId == RoleIds.Administrator, cancellationToken)
+      .ConfigureAwait(false);
+
+    if (administratorExists)
+    {
+      await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+      return false;
+    }
+
+    await SetRoleIdsAsync(principalId, [RoleIds.Administrator, RoleIds.Member], cancellationToken)
+      .ConfigureAwait(false);
+
+    await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    return true;
   }
 }

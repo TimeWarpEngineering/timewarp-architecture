@@ -9,7 +9,7 @@
 // Co-located Jaribu tests for EffectiveRolesResolver SSOT algorithm (147-004).
 
 #region Purpose
-// Host-free coverage of empty→Member, exact stored set, bootstrap union, invalid bootstrap ignore, ordering.
+// Host-free coverage of EffectiveRolesResolver + InMemoryPrincipalRoleStore first-admin claim.
 #endregion
 
 //-:cnd:noEmit
@@ -119,6 +119,42 @@ namespace TimeWarp.Architecture.Features
           BootstrapAdministratorPrincipalIds = bootstrap
         });
       return new EffectiveRolesResolver(store, options);
+    }
+  }
+
+  [TestTag("Application")]
+  public class InMemoryPrincipalRoleStore_FirstAdministrator_Given_
+  {
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Register() => RegisterTests<InMemoryPrincipalRoleStore_FirstAdministrator_Given_>();
+
+    public static async Task EmptyStore_FirstClaim_Should_AssignAdministratorAndMember()
+    {
+      InMemoryPrincipalRoleStore store = new();
+      PrincipalId first = PrincipalId.New();
+
+      bool claimed = await store.TryClaimFirstAdministratorAsync(first);
+
+      claimed.ShouldBeTrue();
+      IReadOnlyList<Guid> roles = await store.GetRoleIdsAsync(first);
+      roles.ShouldBe([RoleIds.Administrator, RoleIds.Member], ignoreOrder: true);
+    }
+
+    public static async Task SecondClaim_Should_NotBecomeAdministrator()
+    {
+      InMemoryPrincipalRoleStore store = new();
+      PrincipalId first = PrincipalId.New();
+      PrincipalId second = PrincipalId.New();
+
+      (await store.TryClaimFirstAdministratorAsync(first)).ShouldBeTrue();
+      (await store.TryClaimFirstAdministratorAsync(second)).ShouldBeFalse();
+
+      (await store.GetRoleIdsAsync(second)).ShouldBeEmpty();
+      EffectiveRolesResolver resolver = new(
+        store,
+        Options.Create(new BootstrapAdministratorOptions()));
+      IReadOnlyList<Guid> secondEffective = await resolver.GetEffectiveRoleIdsAsync(second);
+      secondEffective.ShouldBe([RoleIds.Member]);
     }
   }
 }

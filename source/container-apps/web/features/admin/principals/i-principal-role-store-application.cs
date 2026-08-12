@@ -8,8 +8,12 @@
 // IEffectiveRolesResolver — this store never invents defaults. SetRoleIds replaces the full set
 // (D10: empty list allowed). Dual-mode (147-006): InMemoryPrincipalRoleStore singleton default;
 // EfPrincipalRoleStore scoped when Postgres connection is present (PostgresDbModule).
-// Features substrate namespace (not …Features.Admin.Principals): Identity (GetCurrentSession),
-// claims transformation, and Admin.Principals all need the port without TWA0009 cross-slice.
+// First-administrator claim (product): TryClaimFirstAdministratorAsync is the atomic "empty
+// deployment → first human passkey create is Administrator" path. No kill-switch config — an
+// empty DB is not an asset to protect; redeploy if a stray first create happened. Bootstrap
+// PrincipalIds remain break-glass only. Features substrate namespace (not …Features.Admin.Principals):
+// Identity (GetCurrentSession), claims transformation, and Admin.Principals all need the port
+// without TWA0009 cross-slice.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -26,5 +30,15 @@ public interface IPrincipalRoleStore
   Task SetRoleIdsAsync(
     PrincipalId principalId,
     IReadOnlyList<Guid> roleIds,
+    CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// If no stored principal yet holds <see cref="RoleIds.Administrator"/>, assigns
+  /// Administrator + Member to <paramref name="principalId"/> and returns true.
+  /// Otherwise leaves the store unchanged and returns false.
+  /// Implementations serialize the check+write so concurrent first creates do not all win.
+  /// </summary>
+  Task<bool> TryClaimFirstAdministratorAsync(
+    PrincipalId principalId,
     CancellationToken cancellationToken = default);
 }
