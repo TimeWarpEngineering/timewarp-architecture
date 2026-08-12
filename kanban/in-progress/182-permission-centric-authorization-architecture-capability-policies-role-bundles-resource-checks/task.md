@@ -131,19 +131,20 @@ Reviewers must address at least:
 ### Spec / review (this folder)
 
 - [x] Folder task created; research brief written
-- [x] Claude review round (artifacts under `review/round-1/claude.md`)
-- [ ] Grok review round 2 (`review/round-2/grok.md`)
-- [ ] Disposition finalized (`disposition.md` — created, pending round 2)
-- [ ] Child tasks created for accepted phases (`--parent 182`)
-- [ ] ADR drafted/accepted (Phase 4 or with Phase 1 per disposition)
+- [x] Claude review round (`review/round-1/claude.md`)
+- [x] Grok review round 2 (`review/round-2/grok.md`)
+- [x] Disposition **ACCEPTED** (`disposition.md`)
+- [x] Child tasks created (`182-001` … `182-006`)
+- [ ] ADR drafted/accepted (**182-005**; draft with **182-001**)
 
-### Implementation (children—track on children, mirror high level here)
+### Implementation (children)
 
-- [ ] Phase 1: registry + evaluator + replace RequireRole/RolePolicyGrants enforcement
-- [ ] Phase 2: Roles UI permission membership + optional catalog
-- [ ] Phase 3: resource-based exemplar(s)
-- [ ] Phase 4: seam docs + cleanup ModuleIds/RolePolicyGrants debt
-- [ ] Phase 5: optional external PDP (only if disposition keeps it)
+- [ ] **182-001** Model: registry, role-permission store, seed, evaluator
+- [ ] **182-002** Server enforcement swap
+- [ ] **182-003** SPA swap + dead-code delete
+- [ ] **182-004** Roles UI + last-admin + protected-core
+- [ ] **182-005** ADR + seam docs
+- [ ] **182-006** Agent scope → permission bundles
 
 ## Notes
 
@@ -191,8 +192,6 @@ Reviewers must address at least:
   Key sweep findings: no role-permission storage exists (RoleStore is an in-memory stub);
   ModuleRequirement verified dead (handler never registered); each admin policy maintained in
   three hand-written copies; no last-admin protection; SPA authz untested.
-- 2026-08-12 (user): hold final disposition — Grok does a round-2 pass first
-  (`review/round-2/grok.md`), reviewing the same inputs plus Claude's round-1.
-  `disposition.md` created in PENDING state listing what round 2 must confirm/contest.
-- Next: Grok round-2 review → finalize `disposition.md` → children via
-  `ganda kanban create "…" --parent 182`.
+- 2026-08-12 (user): hold final disposition — Grok round-2 first.
+- 2026-08-12 (Grok): round-2 **confirms** Accept with amendments (no blocking contests);
+  disposition **ACCEPTED**; children **182-001…006** created. Implement starting at 182-001.
