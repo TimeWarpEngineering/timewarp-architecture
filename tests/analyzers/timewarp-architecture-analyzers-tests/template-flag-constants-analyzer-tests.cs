@@ -23,8 +23,11 @@ public class Should_Require_Constants_For_Template_Flags
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Should_Require_Constants_For_Template_Flags>();
 
+  // Composed so raw directive tokens never appear in this template file (TWA0008 discipline).
+#pragma warning disable RCS1190 // Join string expressions
   private const string If = "#" + "if";
   private const string Endif = "#" + "endif";
+#pragma warning restore RCS1190
 
   private const string FakeTemplateJson =
     """

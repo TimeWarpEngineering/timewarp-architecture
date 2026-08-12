@@ -98,7 +98,7 @@ public class VersionTests
 
   public static Task Has_no_public_setter()
   {
-    PropertyInfo? property = typeof(Widget).GetProperty(nameof(Entity<Guid>.Version));
+    PropertyInfo? property = typeof(Widget).GetProperty(nameof(Entity<>.Version));
     property.ShouldNotBeNull();
     (property!.SetMethod?.IsPublic ?? false).ShouldBeFalse();
     return Task.CompletedTask;
@@ -140,7 +140,7 @@ public class IdTests
 
   public static Task Has_no_public_setter()
   {
-    PropertyInfo? property = typeof(Widget).GetProperty(nameof(Entity<Guid>.Id));
+    PropertyInfo? property = typeof(Widget).GetProperty(nameof(Entity<>.Id));
     property.ShouldNotBeNull();
     (property!.SetMethod?.IsPublic ?? false).ShouldBeFalse();
     return Task.CompletedTask;

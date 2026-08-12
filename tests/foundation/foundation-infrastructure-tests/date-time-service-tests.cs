@@ -14,8 +14,7 @@ public class NextUtcNow_Returns
     var trigger = new ManualResetEvent(false);
     Task<List<DateTime>>[] tasks =
       Enumerable.Range(1, 10)
-      .Select(x => Task.Run(() => GetDates(trigger)))
-      .ToArray();
+      .Select(_ => Task.Run(() => GetDates(trigger)))      .ToArray();
 
     Thread.Sleep(1000);
     trigger.Set();

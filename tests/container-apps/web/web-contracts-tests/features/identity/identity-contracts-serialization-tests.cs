@@ -70,7 +70,7 @@ public class CompletePasskeyRegistration_Response_Should
   {
     // PrincipalId's own [TypedId] JsonConverter fail-closes on an empty guid before the Response
     // ctor's Guard even runs — either seam rejecting it is the contract that matters here.
-    string json = """{"principalId":"00000000-0000-0000-0000-000000000000"}""";
+    const string json = """{"principalId":"00000000-0000-0000-0000-000000000000"}""";
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<CompletePasskeyRegistration.Response>(json, ContractSerialization.Options));
@@ -207,7 +207,7 @@ public class CompleteAgentKeyRegistration_Response_Should
 
   public static Task Reject_EmptyPrincipalId_During_Deserialization()
   {
-    string json = """{"principalId":"00000000-0000-0000-0000-000000000000","keyId":"a1b2c3"}""";
+    const string json = """{"principalId":"00000000-0000-0000-0000-000000000000","keyId":"a1b2c3"}""";
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<CompleteAgentKeyRegistration.Response>(json, ContractSerialization.Options));
@@ -311,7 +311,7 @@ public class GetAgentIdentity_Response_Should
 
   public static Task Reject_Unknown_Kind_String()
   {
-    string json =
+    const string json =
       """{"principalId":"019f6a8b-0000-7000-8000-000000000001","kind":"NotAKind","trustTier":"Keyed","scopes":[]}""";
 
     Should.Throw<JsonException>(() =>
@@ -321,7 +321,7 @@ public class GetAgentIdentity_Response_Should
 
   public static Task Reject_Integer_Kind()
   {
-    string json =
+    const string json =
       """{"principalId":"019f6a8b-0000-7000-8000-000000000001","kind":2,"trustTier":"Keyed","scopes":[]}""";
 
     Should.Throw<JsonException>(() =>
@@ -333,7 +333,7 @@ public class GetAgentIdentity_Response_Should
   {
     // JsonStringEnumConverter deserializes case-insensitively; wire emission is still PascalCase
     // ("Agent"). Fail-closed targets integers and unknown names, not case variants.
-    string json =
+    const string json =
       """{"principalId":"019f6a8b-0000-7000-8000-000000000001","kind":"agent","trustTier":"Keyed","scopes":[]}""";
 
     GetAgentIdentity.Response? parsed =
@@ -522,7 +522,7 @@ public class AddPasskey_Response_Should
 
   public static Task Reject_EmptyCredentialId_During_Deserialization()
   {
-    string json = """{"credentialId":"00000000-0000-0000-0000-000000000000"}""";
+    const string json = """{"credentialId":"00000000-0000-0000-0000-000000000000"}""";
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<AddPasskey.Response>(json, ContractSerialization.Options));
@@ -590,7 +590,7 @@ public class AddAgentKey_Response_Should
 
   public static Task Reject_EmptyCredentialId_During_Deserialization()
   {
-    string json = """{"credentialId":"00000000-0000-0000-0000-000000000000","keyId":"a1b2c3"}""";
+    const string json = """{"credentialId":"00000000-0000-0000-0000-000000000000","keyId":"a1b2c3"}""";
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<AddAgentKey.Response>(json, ContractSerialization.Options));

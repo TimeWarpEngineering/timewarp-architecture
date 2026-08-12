@@ -13,7 +13,7 @@ namespace TimeWarp.Foundation.CorsPolicies;
 public partial class CorsPolicy
 {
   /// <summary>
-  /// 
+  /// Permissive CORS policy (any origin/method/header) for development and same-trust boundaries.
   /// </summary>
   /// <example>
   /// `CorsPolicy.Any.Apply(serviceCollection);`

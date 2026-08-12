@@ -128,7 +128,7 @@ public class SaveChanges_Hook
 
     InvalidOperationException ex = Should.Throw<InvalidOperationException>(() => db.SaveChanges());
     ex.Message.ShouldContain(nameof(IAggregateRoot));
-    ex.Message.ShouldContain(nameof(Entity<Guid>.Version));
+    ex.Message.ShouldContain(nameof(Entity<>.Version));
   }
 
   public static async Task Save_changes_async_increments_version_on_root_modify()
@@ -171,7 +171,7 @@ internal sealed class TestRoot : Entity<Guid>, IAggregateRoot
 
   public string Name { get; private set; }
 
-  public List<TestLine> Lines { get; private set; } = [];
+  public List<TestLine> Lines { get; } = [];
 
   public void Rename(string name) => Name = name;
 
@@ -286,7 +286,7 @@ public class ConcurrencyConvention
     IEntityType entityType = db.Model.FindEntityType(typeof(PlainRoot))
       .ShouldNotBeNull("PlainRoot must be on the model even without an explicit mapping");
 
-    IProperty version = entityType.FindProperty(nameof(Entity<Guid>.Version)).ShouldNotBeNull();
+    IProperty version = entityType.FindProperty(nameof(Entity<>.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
   }
@@ -301,7 +301,7 @@ public class ConcurrencyConvention
     IEntityType entityType = db.Model.FindEntityType(typeof(ConfigOnlyRoot))
       .ShouldNotBeNull("ConfigOnlyRoot must be on the model via ApplyConfiguration alone");
 
-    IProperty version = entityType.FindProperty(nameof(Entity<Guid>.Version)).ShouldNotBeNull();
+    IProperty version = entityType.FindProperty(nameof(Entity<>.Version)).ShouldNotBeNull();
     version.IsConcurrencyToken.ShouldBeTrue();
     version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
   }
@@ -331,7 +331,7 @@ internal sealed class PlainRoot : Entity<Guid>, IAggregateRoot
     Name = name;
   }
 
-  public string Name { get; private set; }
+  public string Name { get; }
 
   private sealed class Invariants : AbstractValidator<PlainRoot>
   {
@@ -368,7 +368,7 @@ internal sealed class ConfigOnlyRoot : Entity<Guid>, IAggregateRoot
     Name = name;
   }
 
-  public string Name { get; private set; }
+  public string Name { get; }
 
   private sealed class Invariants : AbstractValidator<ConfigOnlyRoot>
   {

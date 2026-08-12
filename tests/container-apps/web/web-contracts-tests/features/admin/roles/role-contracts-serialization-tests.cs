@@ -59,7 +59,7 @@ public class CreateRole_Response_Should
   public static Task Reject_EmptyGuid_During_Deserialization()
   {
     // The ctor Guard is the Response's invariant gate; deserialization must not bypass it.
-    string json = """{"roleId":"00000000-0000-0000-0000-000000000000"}""";
+    const string json = """{"roleId":"00000000-0000-0000-0000-000000000000"}""";
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<CreateRole.Response>(json, ContractSerialization.Options));

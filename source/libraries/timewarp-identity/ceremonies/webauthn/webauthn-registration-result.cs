@@ -44,7 +44,7 @@ public sealed class WebAuthnRegistrationResult
 #pragma warning restore CA1819
 
   internal static WebAuthnRegistrationResult Success(byte[] credentialId, byte[] cosePublicKey, byte[]? aaguid) =>
-    new(true, WebAuthnFailureReason.None, credentialId, cosePublicKey, aaguid is null ? null : aaguid.ToArray());
+    new(true, WebAuthnFailureReason.None, credentialId, cosePublicKey, aaguid?.ToArray());
 
   internal static WebAuthnRegistrationResult Failure(WebAuthnFailureReason reason) =>
     new(false, reason, [], [], aaguid: null);

@@ -55,7 +55,10 @@ public class CommonServerModule : IAspNetModule
   {
     ValidatorOptions.Global.DisplayNameResolver =
       (type, memberInfo, lambdaExpression) =>
-        type != null && memberInfo != null ? $"{type.Name}:{memberInfo.Name}" : null;
+      {
+        _ = lambdaExpression;
+        return type != null && memberInfo != null ? $"{type.Name}:{memberInfo.Name}" : null;
+      };
 
     // Contract-seam serialization (camelCase properties + PascalCase string enums). Without this,
     // the server would emit default STJ integers while the SPA/CLI/tests use ContractSerializationDefaults.

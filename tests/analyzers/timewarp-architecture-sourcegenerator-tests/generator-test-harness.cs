@@ -6,8 +6,8 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 
 /// <summary>
-/// Shared harness for exercising the <see cref="FastEndpointSourceGenerator"/>.
-///
+/// <para>Shared harness for exercising the <see cref="FastEndpointSourceGenerator"/>.</para>
+/// <para>
 /// The generator scans <c>compilation.SourceModule.ReferencedAssemblySymbols</c> for types carrying
 /// <c>[ApiEndpoint]</c> (cross-assembly by design — see task 007: attributes live in contracts, the
 /// endpoint is generated in the server). So the contract MUST be compiled into a referenced assembly,
@@ -15,6 +15,7 @@ using Microsoft.CodeAnalysis.CSharp;
 /// hard-requires in the compilation: <c>FastEndpoints.IEndpoint</c> and
 /// <c>TimeWarp.Foundation.Features.BaseFastEndpoint`2</c>, plus <c>ApiRouteAttribute</c>/
 /// <c>HttpVerb</c>/<c>OpenApiTags</c>.
+/// </para>
 /// </summary>
 internal static class GeneratorTestHarness
 {
