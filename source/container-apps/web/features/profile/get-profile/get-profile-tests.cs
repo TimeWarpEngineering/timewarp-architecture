@@ -88,7 +88,7 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     public static Task EmptyAliasJson_Should_ThrowDuringDeserialization()
     {
-      string json =
+      const string json =
         """{"alias":"","language":"en-US","region":"US","theme":"system","notifications":false,"avatar":"x"}""";
 
       Should.Throw<Exception>(() =>
