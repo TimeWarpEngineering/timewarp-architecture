@@ -29,4 +29,7 @@ global using TimeWarp.Foundation.Types;
 #endif
 global using TimeWarp.Foundation;
 global using TimeWarp.Foundation.Configuration;
+// ServiceUriHelper only used by api-test-server-application (excluded when api is off).
+#if(api)
 global using TimeWarp.Foundation.Extensions;
+#endif
