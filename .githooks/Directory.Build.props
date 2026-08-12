@@ -1,0 +1,13 @@
+<Project>
+  <!-- Shebang git hooks are single-file apps with no project global-usings.cs. Repo-root
+       TreatWarningsAsErrors + GlobalUsingsAnalyzer (task 172) turn a file-level using into a
+       scary "build failed" on every commit/merge even though the hook exits 0. Disable style
+       analyzers for this tree only; hooks stay tiny FQ-call scripts. -->
+  <PropertyGroup>
+    <RunAnalyzers>false</RunAnalyzers>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <AnalysisLevel>none</AnalysisLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>
