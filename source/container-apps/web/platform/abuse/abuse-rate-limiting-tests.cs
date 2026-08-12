@@ -14,11 +14,14 @@
 #endregion
 
 #region Design
-// HostGraphFactory C-create with PostConfigure AbuseRateLimitOptions (PermitLimit=2) so the suite
-// proves rejection without waiting a production minute. Default production limits stay high enough
-// not to trip other co-located suites that share localhost. Structured body is application/problem+json
-// matching SharedProblemDetails (status/title/detail/policy extension). Edge rate limits are out of
-// scope (104-023). Isolated HttpClient per flood call sequence.
+// HostGraphFactory C-create with PostConfigure AbuseRateLimitOptions (Enabled=true, PermitLimit=2)
+// so the suite proves rejection without waiting a production minute. WebTestServerApplication
+// disables AbuseRateLimitOptions by default (task 151: agent-key / credential integration classes
+// mint more principal-registration ceremonies per HostGraph than the production-ish 10/min window).
+// This suite must re-enable and tighten via configureWeb — PostConfigure order after the test-host
+// callback so Enabled=true wins. Structured body is application/problem+json matching
+// SharedProblemDetails (status/title/detail/policy extension). Edge rate limits are out of scope
+// (104-023). Isolated HttpClient per flood call sequence.
 #endregion
 
 //-:cnd:noEmit
@@ -113,6 +116,8 @@ namespace TimeWarp.Architecture.Abuse
 
     private static void TightenLimits(IServiceCollection services)
     {
+      // Re-enable: WebTestServerApplication turns AbuseRateLimitOptions off for integration hosts
+      // (task 151). This suite is the 429 proof — tight windows, Enabled must stay true.
       services.PostConfigure<AbuseRateLimitOptions>(options =>
       {
         options.Enabled = true;

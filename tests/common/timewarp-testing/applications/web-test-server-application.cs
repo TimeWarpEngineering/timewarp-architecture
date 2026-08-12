@@ -1,6 +1,7 @@
 namespace TimeWarp.Architecture.Testing;
 
 using Microsoft.Extensions.Http;
+using TimeWarp.Architecture.Abuse;
 
 /// <summary>
 /// Used to launch the Web.Server application
@@ -61,6 +62,13 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
     );
 
     serviceCollection.AddSingleton<IAccessTokenProvider, MockAccessTokenProvider>();
+
+    // Principal-registration abuse windows (task 104-015) are production-ish (~10/min/IP). Agent-key
+    // and credential integration classes mint far more ceremonies than that per HostGraph lifetime,
+    // so mid-suite requests became 429 (T0→T2 / TooManyRequests) — task 151. Integration hosts
+    // disable the limiter by default; abuse-rate-limiting-tests.cs re-enables with tight limits via
+    // HostGraphFactory configureWeb (PostConfigure after this callback, so it wins).
+    serviceCollection.PostConfigure<AbuseRateLimitOptions>(options => options.Enabled = false);
   }
 
   protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Web.Server.Program> webApplicationHost) =>
