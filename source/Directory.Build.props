@@ -11,7 +11,7 @@
     <!-- Single repo-wide package version. Lives here (not root) so it matches the TimeWarp convention
          and `dev check-version`, which read source/Directory.Build.props. Keep in sync with the
          timewarp-templates tree's <Version> — both publish at this version. -->
-    <Version>2.0.0-beta.14</Version>
+    <Version>2.0.0-beta.15</Version>
     <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-architecture</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
