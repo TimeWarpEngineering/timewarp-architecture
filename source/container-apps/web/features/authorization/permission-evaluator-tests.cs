@@ -238,6 +238,81 @@ namespace TimeWarp.Architecture.Features
       PermissionPolicyRegistration.AllPermissionPolicyNames.ShouldBe(PermissionIds.All);
     }
 
+    public static async Task ConcurrentChecks_Should_SingleFlightStoreExpansion()
+    {
+      // Task 183: Blazor SSR evaluates several policies concurrently in one request scope; the
+      // scoped evaluator must share ONE sequential store expansion or concurrent queries race the
+      // scoped PostgresDbContext ("A second operation was started on this context" → page 500).
+      InMemoryPrincipalRoleStore principalRoles = new();
+      PrincipalId id = PrincipalId.New();
+      await principalRoles.SetRoleIdsAsync(id, [RoleIds.Administrator]);
+
+      CountingRolePermissionStore countingStore = new(new InMemoryRolePermissionStore());
+      PermissionEvaluator evaluator = CreateEvaluator(principalRoles, countingStore, bootstrap: []);
+
+      Task<bool>[] checks =
+      [
+        evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminRolesRead),
+        evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminAccess),
+        evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.IdentitySession, PermissionIds.SettingsRead),
+        evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.IdentitySession, PermissionIds.ProfileRead),
+      ];
+      bool[] results = await Task.WhenAll(checks);
+
+      results.ShouldAllBe(static granted => granted);
+      countingStore.MaxConcurrentGets.ShouldBe(1,
+        "Concurrent permission checks must not overlap store queries (scoped DbContext is single-flight only).");
+      countingStore.TotalGets.ShouldBe(1,
+        "All concurrent checks for one principal must share a single expansion.");
+    }
+
+    private sealed class CountingRolePermissionStore : IRolePermissionStore
+    {
+      private readonly InMemoryRolePermissionStore Inner;
+      private int InFlight;
+
+      public CountingRolePermissionStore(InMemoryRolePermissionStore inner) => Inner = inner;
+
+      public int TotalGets;
+      public int MaxConcurrentGets;
+
+      public async Task<IReadOnlyList<string>> GetPermissionIdsForRoleAsync(
+        Guid roleId,
+        CancellationToken cancellationToken = default)
+      {
+        Interlocked.Increment(ref TotalGets);
+        int concurrent = Interlocked.Increment(ref InFlight);
+        InterlockedExtensions.Max(ref MaxConcurrentGets, concurrent);
+        try
+        {
+          await Task.Delay(25, cancellationToken); // widen the race window
+          return await Inner.GetPermissionIdsForRoleAsync(roleId, cancellationToken);
+        }
+        finally
+        {
+          Interlocked.Decrement(ref InFlight);
+        }
+      }
+
+      public Task SetPermissionIdsForRoleAsync(
+        Guid roleId,
+        IReadOnlyList<string> permissionIds,
+        CancellationToken cancellationToken = default) =>
+        Inner.SetPermissionIdsForRoleAsync(roleId, permissionIds, cancellationToken);
+    }
+
+    private static class InterlockedExtensions
+    {
+      public static void Max(ref int location, int value)
+      {
+        int current;
+        while ((current = Volatile.Read(ref location)) < value
+          && Interlocked.CompareExchange(ref location, value, current) != current)
+        {
+        }
+      }
+    }
+
     private static PermissionEvaluator CreateEvaluator(
       IPrincipalRoleStore principalRoles,
       IRolePermissionStore rolePermissions,
