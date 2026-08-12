@@ -235,5 +235,13 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # Generated-app Jaribu aggregators hit HTTPS with the ASP.NET dev certificate (same as the
+      # main `ci` job). Trust it and put the trust dir on SSL_CERT_DIR so OpenSSL/HttpClient does
+      # not fail with UntrustedRoot on Linux runners. See https://aka.ms/dev-certs-trust.
+      - name: Trust HTTPS dev certificate
+        run: dotnet dev-certs https --trust || true
+
       - name: Template smoke (pack → install → generate → build)
-        run: dotnet run tools/dev-cli/dev.cs -- template-smoke
+        run: |
+          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
+          dotnet run tools/dev-cli/dev.cs -- template-smoke

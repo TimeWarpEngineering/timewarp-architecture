@@ -331,7 +331,10 @@ internal sealed class PlainRoot : Entity<Guid>, IAggregateRoot
     Name = name;
   }
 
-  public string Name { get; }
+  // private set required for EF constructor binding of 'name' → Name (RCS1170 false positive).
+#pragma warning disable RCS1170
+  public string Name { get; private set; }
+#pragma warning restore RCS1170
 
   private sealed class Invariants : AbstractValidator<PlainRoot>
   {
@@ -368,7 +371,10 @@ internal sealed class ConfigOnlyRoot : Entity<Guid>, IAggregateRoot
     Name = name;
   }
 
-  public string Name { get; }
+  // private set required for EF constructor binding of 'name' → Name (RCS1170 false positive).
+#pragma warning disable RCS1170
+  public string Name { get; private set; }
+#pragma warning restore RCS1170
 
   private sealed class Invariants : AbstractValidator<ConfigOnlyRoot>
   {
