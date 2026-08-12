@@ -17,12 +17,46 @@ Stand up the permission model and grant expansion with **zero user-visible enfor
 
 ## Checklist
 
-- [ ] Registry + single registration helper skeleton (may not yet replace both constant classes until C)
-- [ ] Role-permission store + seed
-- [ ] IPermissionEvaluator + tests
-- [ ] ADR draft started under documentation or task folder
-- [ ] `dev build` 0/0; Results + How to validate
+- [x] Registry + single registration helper skeleton (may not yet replace both constant classes until C)
+- [x] Role-permission store + seed
+- [x] IPermissionEvaluator + tests
+- [x] ADR draft started under documentation or task folder
+- [x] `dev build` 0/0; Results + How to validate
 
 ## Notes
 
 Disposition: `kanban/in-progress/182-…/disposition.md`. Round-2: `review/round-2/grok.md`.
+
+## Session
+
+- 2026-08-12: Implementation — registry, dual-mode role→permission store, seed, evaluator, migration, ADR draft, Jaribu tests. No enforcement swap.
+
+## Results
+
+### Summary
+
+Permission model is live with **zero user-visible enforcement change**:
+
+- `PermissionIds` registry (dotted strings) + `PermissionPolicyRegistration.AllPermissionPolicyNames` skeleton
+- `IRolePermissionStore` dual-mode: `InMemoryRolePermissionStore` (seeded singleton) / `EfRolePermissionStore` (scoped when Postgres connected)
+- `RolePermissionSeed.DefaultGrants` for Administrator / Member / Developer / Operator
+- `IPermissionEvaluator` / `PermissionEvaluator` — scheme-aware expansion via `IEffectiveRolesResolver` + grant store
+- EF: `identity.role_permissions` + migration seed data
+- ADR draft: `documentation/.../proposed/0010-permission-centric-authorization.md`
+- RequireRole / RolePolicyGrants / `[EndpointAuthorize]` / ModuleIds untouched
+
+### How to validate
+
+```bash
+# Full solution (0 warnings / 0 errors)
+./bin/dev build
+
+# Co-located Jaribu (standalone)
+dotnet run source/container-apps/web/features/authorization/permission-evaluator-tests.cs
+
+# Family aggregator (MTP)
+cd tests/container-apps/web/web-jaribu-tests && \
+  dotnet test -c Release -- --filter-class PermissionEvaluator
+```
+
+Expect: 11 tests pass (9 evaluator + 2 store); build 0/0. Confirm program.cs still registers RequireRole policies and no PermissionRequirement handler yet.

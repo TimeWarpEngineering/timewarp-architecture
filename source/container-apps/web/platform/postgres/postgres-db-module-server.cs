@@ -16,8 +16,9 @@
 // startup failure. Under Aspire the string is always present, so the real registrations always run.
 // Skip-mode also keeps InMemoryIdentityStoresModule's singleton InMemoryPrincipalStore — only when a
 // connection is present do we Replace the IPrincipalStore registration with scoped EfPrincipalStore
-// (task 104-032). Same dual-mode for IPrincipalRoleStore → EfPrincipalRoleStore (task 147-006)
-// and IProfileStore → EfProfileStore (task 148 D4). Challenge/token stores stay in-memory either way.
+// (task 104-032). Same dual-mode for IPrincipalRoleStore → EfPrincipalRoleStore (task 147-006),
+// IRolePermissionStore → EfRolePermissionStore (task 182-001), and IProfileStore → EfProfileStore
+// (task 148 D4). Challenge/token stores stay in-memory either way.
 // Schema: AppHost AddEFMigrations applies committed migrations (platform/postgres/migrations/)
 // via RunDatabaseUpdateOnStart (task 147-007). There is NO wait edge between web-server and the
 // migration resource (task 155 — WaitFor deadlocked dashboard restarts, WaitForCompletion broke
@@ -35,6 +36,7 @@ namespace TimeWarp.Architecture.Modules;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
+using TimeWarp.Architecture.Features.Authorization.Infrastructure;
 using TimeWarp.Architecture.Features.Identity.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Application;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
@@ -68,9 +70,13 @@ public sealed partial class PostgresDbModule : IModule
     serviceCollection.RemoveAll<IPrincipalStore>();
     serviceCollection.AddScoped<IPrincipalStore, EfPrincipalStore>();
 
-    // Task 147-006: durable role grants (same connection gate as EfPrincipalStore).
+    // Task 147-006: durable principal→role grants (same connection gate as EfPrincipalStore).
     serviceCollection.RemoveAll<IPrincipalRoleStore>();
     serviceCollection.AddScoped<IPrincipalRoleStore, EfPrincipalRoleStore>();
+
+    // Task 182-001: durable role→permission grants (same connection gate).
+    serviceCollection.RemoveAll<IRolePermissionStore>();
+    serviceCollection.AddScoped<IRolePermissionStore, EfRolePermissionStore>();
 
     // Task 148 D4: durable Profile (same connection gate).
     serviceCollection.RemoveAll<IProfileStore>();

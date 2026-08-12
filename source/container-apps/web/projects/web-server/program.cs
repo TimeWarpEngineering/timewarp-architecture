@@ -238,9 +238,12 @@ public class Program : IAspNetProgram
     // Task 147-004 / 147-006: effective roles + request claims for RequireRole on admin policies.
     // Resolver is scoped so it can resolve EfPrincipalRoleStore (scoped) under postgres without
     // a captive dependency; with in-memory singleton store, scoped resolver is still valid.
+    // Task 182-001: IPermissionEvaluator expands roles→permissions (no enforcement swap yet —
+    // RequireRole / RolePolicyGrants still gate surfaces; PermissionRequirement lands in 182-002).
     serviceCollection.Configure<BootstrapAdministratorOptions>(
       configuration.GetSection("Authentication"));
     serviceCollection.AddScoped<IEffectiveRolesResolver, EffectiveRolesResolver>();
+    serviceCollection.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
     serviceCollection.AddScoped<IClaimsTransformation, PrincipalRoleClaimsTransformation>();
 
     // TimeWarp.402 demos (104-009 tip, 104-011 metered, 104-013 settle→Funded):
