@@ -131,7 +131,7 @@ Reviewers must address at least:
 ### Spec / review (this folder)
 
 - [x] Folder task created; research brief written
-- [ ] Claude review round (artifacts under `review/`)
+- [x] Claude review round (artifacts under `review/round-1/claude.md`)
 - [ ] Disposition written (`disposition.md`)
 - [ ] Child tasks created for accepted phases (`--parent 182`)
 - [ ] ADR drafted/accepted (Phase 4 or with Phase 1 per disposition)
@@ -180,4 +180,15 @@ Reviewers must address at least:
 
 - Created: Grok (2026-08-12) after deep research on template authz; user accepted permission-centric target and requested folder task + write-up for Claude review.
 - Research: `research/decision-brief.md` in this folder.
-- Next: Claude review → disposition → child tasks.
+- 2026-08-12 (Claude): moved to in-progress; full code sweep of every hotspot; round-1 review
+  written (`review/round-1/claude.md`). Verdict: **Accept with amendments** — 6 blocking
+  (Phase 1 three-way split; single registry+registration helper replacing both constants
+  classes; IPermissionEvaluator as sole decision seam; ModuleRequirement/ModuleIds deleted in
+  Phase 1; lockout guards ship with Phase 2 UI; admin read/manage split), 7 non-blocking.
+  All §7 questions answered (dotted-string ids; 1:1 policy names; per-request evaluation;
+  substrate placement; delete modules; scopes as agent permission bundles).
+  Key sweep findings: no role-permission storage exists (RoleStore is an in-memory stub);
+  ModuleRequirement verified dead (handler never registered); each admin policy maintained in
+  three hand-written copies; no last-admin protection; SPA authz untested.
+- Next: user reads review → disposition (`disposition.md`, fold-in on this task) → children via
+  `ganda kanban create "…" --parent 182`.
