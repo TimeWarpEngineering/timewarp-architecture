@@ -144,7 +144,7 @@ Reviewers must address at least:
 - [x] **182-003** SPA swap + dead-code delete (`098398a1`)
 - [x] **182-004** Roles UI + last-admin + protected-core (`c60bb21f`)
 - [x] **182-005** ADR + seam docs (approved/0010 + how-to-swap-permission-evaluator-for-external-pdp)
-- [ ] **182-006** Agent scope → permission bundles
+- [x] **182-006** Agent scope → permission bundles
 
 ## Notes
 
@@ -199,6 +199,33 @@ Reviewers must address at least:
 - 2026-08-12: **182-002** server enforcement swap green — PermissionRequirement + policies + admin contracts read/manage; next **182-003** SPA swap.
 - 2026-08-12 (orchestrate `/tw-orchestrate-task 182`): **Phase 1 A–C complete** (001–003 done). Enforcement is permission-centric on server + SPA; RolePolicyGrants/ModuleRequirement gone. Remaining: **182-004** (Roles UI + lockout), **182-005** (ADR accept), **182-006** (agent scopes). Parent 182 stays in-progress until children complete.
 - 2026-08-12 (orchestrate `/tw-orchestrate-task 182-004`): **done** — SetRolePermissions + RolesList membership UI + last-admin/protected-core 409 guards (`c60bb21f`). Next **182-005** / **182-006**.
+- 2026-08-12 (orchestrate `/tw-orchestrate-task 182-005`): **done** — ADR-0010 accepted + how-to PDP swap (`f8063589`).
+- 2026-08-12 (orchestrate `/tw-orchestrate-task 182-006`): **done** — agent scopes → permissions (`032a9ccc`). **All children complete → parent Results + done.**
+
+## Results
+
+### Summary
+
+Permission-centric authorization is the template SSOT:
+
+1. **Permissions** (`PermissionIds`) name all enforcement points.
+2. **Roles** are mutable bundles (`IRolePermissionStore` + Roles UI).
+3. **`IPermissionEvaluator`** is the sole decision seam (humans: roles; agents: scopes).
+4. **ADR-0010** accepted; optional external PDP documented (no AppHost OpenFGA).
+5. **Agents** map `identity:read` / `credential:manage` / `demo:invoke` → permissions; never `admin.*`.
+
+Children: 182-001…006 all **done**. Crash fix **183** landed independently for prerender SSR.
+
+### How to validate
+
+```bash
+dev build   # 0/0
+dotnet run source/container-apps/web/features/authorization/permission-evaluator-tests.cs  # 18/18
+# ADR
+test -f documentation/developer/conceptual/architectural-decision-records/approved/0010-permission-centric-authorization.md
+# Live: passkey admin → /Admin/Roles; agent bearer without admin scheme → 401 on /api/Roles
+```
+
 ### Current hotspots (after 182-003)
 
 | Area | Status |
