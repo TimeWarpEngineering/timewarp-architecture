@@ -132,7 +132,8 @@ Reviewers must address at least:
 
 - [x] Folder task created; research brief written
 - [x] Claude review round (artifacts under `review/round-1/claude.md`)
-- [ ] Disposition written (`disposition.md`)
+- [ ] Grok review round 2 (`review/round-2/grok.md`)
+- [ ] Disposition finalized (`disposition.md` — created, pending round 2)
 - [ ] Child tasks created for accepted phases (`--parent 182`)
 - [ ] ADR drafted/accepted (Phase 4 or with Phase 1 per disposition)
 
@@ -190,5 +191,8 @@ Reviewers must address at least:
   Key sweep findings: no role-permission storage exists (RoleStore is an in-memory stub);
   ModuleRequirement verified dead (handler never registered); each admin policy maintained in
   three hand-written copies; no last-admin protection; SPA authz untested.
-- Next: user reads review → disposition (`disposition.md`, fold-in on this task) → children via
+- 2026-08-12 (user): hold final disposition — Grok does a round-2 pass first
+  (`review/round-2/grok.md`), reviewing the same inputs plus Claude's round-1.
+  `disposition.md` created in PENDING state listing what round 2 must confirm/contest.
+- Next: Grok round-2 review → finalize `disposition.md` → children via
   `ganda kanban create "…" --parent 182`.
