@@ -8,10 +8,13 @@
 // partial Query; GetRouteWithQueryString then merges the two generated parameter sets into
 // one query string. RoleDto is a flat read model separate from IRoleDetails because list
 // rows are display-only, and Response derives from ListResponse to carry TotalCount for
-// paging. GetMockResponseFactory serves the SPA's MockWebApiService offline.
+// paging. PermissionIds on RoleDto (task 182-004) feed the Roles list membership matrix —
+// fine for the small product role catalog (RoleIds.All + demo creates).
+// GetMockResponseFactory serves the SPA's MockWebApiService offline.
 // [EndpointAuthorize] (task 182-002): admin.roles.read via PermissionIds — read half of the
-// roles split (manage is Create/Update/Delete). Server PermissionRequirementHandler evaluates
-// via IPermissionEvaluator; SPA pages use PermissionIds.AdminRolesRead (182-003 claim policies).
+// roles split (manage is Create/Update/Delete/SetRolePermissions). Server
+// PermissionRequirementHandler evaluates via IPermissionEvaluator; SPA pages use
+// PermissionIds.AdminRolesRead (182-003 claim policies).
 // [AuthApiRequest] on the Query remains a client-facing/mock-mode identity signal only.
 // AuthenticationSchemes (task 158): identity-session + mock-identity-session so the generated
 // FastEndpoint's AuthSchemes(...) invokes the mock handler under closed-box ingress tests —
@@ -68,16 +71,21 @@ public static partial class GetRoles
     public string Name { get; }
     public string Description { get; }
 
+    /// <summary>Stored permission ids for this role (empty when none granted).</summary>
+    public List<string> PermissionIds { get; }
+
     public RoleDto
     (
       Guid roleId,
       string name,
-      string description
+      string description,
+      List<string>? permissionIds = null
     )
     {
       RoleId = Guard.Against.NullOrEmpty(roleId);
       Name = Guard.Against.NullOrEmpty(name);
       Description = Guard.Against.NullOrEmpty(description);
+      PermissionIds = permissionIds ?? [];
     }
   }
 
@@ -85,10 +93,39 @@ public static partial class GetRoles
   {
     RoleDto[] items =
     [
-      new(RoleIds.Member, nameof(RoleIds.Member), "Default human principal after passkey login."),
-      new(RoleIds.Operator, nameof(RoleIds.Operator), "Marketplace and job oversight."),
-      new(RoleIds.Administrator, nameof(RoleIds.Administrator), "Tenant admin: principals, roles, settings."),
-      new(RoleIds.Developer, nameof(RoleIds.Developer), "Template dogfood: demos and diagnostics."),
+      new(
+        RoleIds.Member,
+        nameof(RoleIds.Member),
+        "Default human principal after passkey login.",
+        [PermissionIds.ProfileRead, PermissionIds.SettingsRead]),
+      new(
+        RoleIds.Operator,
+        nameof(RoleIds.Operator),
+        "Marketplace and job oversight.",
+        [PermissionIds.ProfileRead, PermissionIds.SettingsRead]),
+      new(
+        RoleIds.Administrator,
+        nameof(RoleIds.Administrator),
+        "Tenant admin: principals, roles, settings.",
+        [
+          PermissionIds.AdminAccess,
+          PermissionIds.AdminRolesRead,
+          PermissionIds.AdminRolesManage,
+          PermissionIds.AdminPrincipalsRead,
+          PermissionIds.AdminPrincipalsManage,
+          PermissionIds.ProfileRead,
+          PermissionIds.SettingsRead,
+        ]),
+      new(
+        RoleIds.Developer,
+        nameof(RoleIds.Developer),
+        "Template dogfood: demos and diagnostics.",
+        [
+          PermissionIds.DeveloperAccess,
+          PermissionIds.DeveloperClaimsRead,
+          PermissionIds.ProfileRead,
+          PermissionIds.SettingsRead,
+        ]),
     ];
 
     return _ => new Response(totalCount: items.Length, items);

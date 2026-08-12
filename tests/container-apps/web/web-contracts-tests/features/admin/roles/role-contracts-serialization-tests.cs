@@ -93,13 +93,18 @@ public class GetRole_Response_Should
 
   public static Task SerializeAndDeserialize_Via_Constructor()
   {
-    GetRole.Response response = new(RoleIds.Member, "Member", "Default passkey principal.");
+    GetRole.Response response = new(
+      RoleIds.Member,
+      "Member",
+      "Default passkey principal.",
+      [PermissionIds.ProfileRead, PermissionIds.SettingsRead]);
 
     GetRole.Response parsed = ContractSerialization.RoundTrip(response);
 
     parsed.RoleId.ShouldBe(RoleIds.Member);
     parsed.Name.ShouldBe("Member");
     parsed.Description.ShouldBe("Default passkey principal.");
+    parsed.PermissionIds.ShouldBe([PermissionIds.ProfileRead, PermissionIds.SettingsRead]);
     return Task.CompletedTask;
   }
 }
@@ -113,8 +118,12 @@ public class GetRoles_Response_Should
   {
     GetRoles.RoleDto[] items =
     [
-      new(RoleIds.Administrator, "Administrator", "Tenant admin."),
-      new(RoleIds.Member, "Member", "Default passkey principal.")
+      new(
+        RoleIds.Administrator,
+        "Administrator",
+        "Tenant admin.",
+        [PermissionIds.AdminAccess, PermissionIds.AdminRolesManage]),
+      new(RoleIds.Member, "Member", "Default passkey principal.", [PermissionIds.ProfileRead])
     ];
     GetRoles.Response response = new(totalCount: 4, items);
 
@@ -124,8 +133,50 @@ public class GetRoles_Response_Should
     parsed.Items.Length.ShouldBe(2);
     parsed.Items[0].RoleId.ShouldBe(RoleIds.Administrator);
     parsed.Items[0].Name.ShouldBe("Administrator");
+    parsed.Items[0].PermissionIds.ShouldBe([PermissionIds.AdminAccess, PermissionIds.AdminRolesManage]);
     parsed.Items[1].RoleId.ShouldBe(RoleIds.Member);
     parsed.Items[1].Description.ShouldBe("Default passkey principal.");
+    parsed.Items[1].PermissionIds.ShouldBe([PermissionIds.ProfileRead]);
+    return Task.CompletedTask;
+  }
+}
+
+public class SetRolePermissions_Command_Should
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<SetRolePermissions_Command_Should>();
+
+  public static Task SerializeAndDeserialize_Including_Generated_RouteProperty()
+  {
+    Guid roleId = RoleIds.Developer;
+    SetRolePermissions.Command command = new()
+    {
+      RoleId = roleId,
+      UserId = Guid.NewGuid(),
+      PermissionIds = [PermissionIds.DeveloperAccess, PermissionIds.ProfileRead]
+    };
+
+    SetRolePermissions.Command parsed = ContractSerialization.RoundTrip(command);
+
+    parsed.RoleId.ShouldBe(roleId);
+    parsed.UserId.ShouldBe(command.UserId);
+    parsed.PermissionIds.ShouldBe(command.PermissionIds);
+    return Task.CompletedTask;
+  }
+}
+
+public class SetRolePermissions_Response_Should
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<SetRolePermissions_Response_Should>();
+
+  public static Task SerializeAndDeserialize()
+  {
+    SetRolePermissions.Response response = new([PermissionIds.AdminAccess, PermissionIds.AdminRolesRead]);
+
+    SetRolePermissions.Response parsed = ContractSerialization.RoundTrip(response);
+
+    parsed.PermissionIds.ShouldBe([PermissionIds.AdminAccess, PermissionIds.AdminRolesRead]);
     return Task.CompletedTask;
   }
 }

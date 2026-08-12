@@ -11,7 +11,8 @@
 //   Developer     — developer.* + self-service (demos / diagnostics)
 //   Operator      — self-service only until marketplace policies (118); Operator-only grants reserved
 // InMemoryRolePermissionStore copies this on construction; EF migration InsertData mirrors it
-// for postgres volumes. Admin UI (182-004) will mutate grants per role after lockout guards land.
+// for postgres volumes. Admin UI (182-004) mutates grants via SetRolePermissions with
+// protected-core on Administrator (AdminPermissions cannot be stripped).
 // Features substrate — same consumers as RoleIds / IRolePermissionStore without TWA0009.
 #endregion
 

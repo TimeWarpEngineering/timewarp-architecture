@@ -97,7 +97,12 @@ public class Returns_
 
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
-    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+    IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
+
+    // Peer admin so demoting the caller is allowed (last-admin guard, task 182-004).
+    Principal secondAdmin = Principal.Create(PrincipalKind.Human);
+    await principalStore.AddPrincipalAsync(secondAdmin);
+    await EnsureOnlyAdminsAsync(roleStore, principalStore, principalId, secondAdmin.Id);
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
@@ -119,6 +124,73 @@ public class Returns_
     IReadOnlyList<Guid> stored = await roleStore.GetRoleIdsAsync(principalId);
     stored.ShouldContain(RoleIds.Developer);
     stored.ShouldContain(RoleIds.Member);
+  }
+
+  public static async Task Conflict_SetRoles_When_Demoting_Last_Administrator()
+  {
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
+    // Sole admin among all host-graph principals (prior tests leave leftover admins).
+    await EnsureOnlyAdminsAsync(roleStore, principalStore, principalId);
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+
+    // No second admin: stripping Administrator must 409 (last-admin).
+    string body = JsonSerializer.Serialize(
+      new
+      {
+        userId = Guid.NewGuid(),
+        roleIds = new[] { RoleIds.Member, RoleIds.Developer }
+      },
+      ContractSerializationDefaults.Options);
+
+    HttpResponseMessage response = await client.PutAsync(
+      $"api/admin/principals/{principalId}/roles",
+      new StringContent(body, Encoding.UTF8, "application/json"));
+
+    response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    string json = await response.Content.ReadAsStringAsync();
+    json.ShouldContain("Last administrator");
+
+    // Store unchanged.
+    IReadOnlyList<Guid> stored = await roleStore.GetRoleIdsAsync(principalId);
+    stored.ShouldContain(RoleIds.Administrator);
+  }
+
+  public static async Task Ok_SetRoles_Demote_One_Admin_When_Two_Exist()
+  {
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
+
+    Principal peerAdmin = Principal.Create(PrincipalKind.Human);
+    await principalStore.AddPrincipalAsync(peerAdmin);
+    await EnsureOnlyAdminsAsync(roleStore, principalStore, principalId, peerAdmin.Id);
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+
+    string body = JsonSerializer.Serialize(
+      new
+      {
+        userId = Guid.NewGuid(),
+        roleIds = new[] { RoleIds.Member }
+      },
+      ContractSerializationDefaults.Options);
+
+    HttpResponseMessage response = await client.PutAsync(
+      $"api/admin/principals/{principalId}/roles",
+      new StringContent(body, Encoding.UTF8, "application/json"));
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    IReadOnlyList<Guid> stored = await roleStore.GetRoleIdsAsync(principalId);
+    stored.ShouldBe([RoleIds.Member]);
   }
 
   public static async Task Forbidden_SetRoles_Given_Administrator_With_Principals_Read_Only()
@@ -226,6 +298,30 @@ public class Returns_
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member]);
+  }
+
+  /// <summary>
+  /// Host-graph isolation: demote every principal to Member except the listed admins.
+  /// Needed because SetupOnce reuses one process and Mint leaves leftover Administrators.
+  /// </summary>
+  private static async Task EnsureOnlyAdminsAsync(
+    IPrincipalRoleStore roleStore,
+    IPrincipalStore principalStore,
+    params PrincipalId[] adminPrincipalIds)
+  {
+    HashSet<PrincipalId> admins = [.. adminPrincipalIds];
+    IReadOnlyList<Principal> principals = await principalStore.ListPrincipalsAsync();
+    foreach (Principal principal in principals)
+    {
+      if (admins.Contains(principal.Id))
+      {
+        await roleStore.SetRoleIdsAsync(principal.Id, [RoleIds.Member, RoleIds.Administrator]);
+      }
+      else
+      {
+        await roleStore.SetRoleIdsAsync(principal.Id, [RoleIds.Member]);
+      }
+    }
   }
 
   private static async Task<(string Cookie, PrincipalId PrincipalId)> MintIdentitySessionCookie()

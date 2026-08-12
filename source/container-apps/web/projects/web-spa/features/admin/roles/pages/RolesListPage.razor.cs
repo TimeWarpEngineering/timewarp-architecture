@@ -1,10 +1,12 @@
 #region Purpose
-// Admin roles list page: table of GetRoles plus navigation to New Role.
+// Admin roles list page: GetRoles table with permission membership multi-select + New Role.
 #endregion
 
 #region Design
-// Task 147-004: primary Admin/Roles surface; RolePage (/Admin/Roles/New) is secondary from here.
-// Policy PermissionIds.AdminRolesRead matches server GetRoles/GetRole (manage is separate).
+// Task 147-004 / 182-004: primary Admin/Roles surface; RolePage (/Admin/Roles/New) is secondary.
+// Policy PermissionIds.AdminRolesRead matches server GetRoles/GetRole; SetRolePermissions is
+// admin.roles.manage (server 403 if the signed-in principal only has read). Inline checkboxes
+// edit DraftPermissionIds; Save posts SetRolePermissions (protected-core enforced server-side).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
