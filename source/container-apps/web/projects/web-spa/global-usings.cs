@@ -40,7 +40,10 @@ global using ProtoBuf.Grpc.Client;
 global using System;
 global using System.Diagnostics.CodeAnalysis;
 global using System.Globalization;
+// HttpStatusCode for mock-api-service (api-flag surface); without api the mock is excluded → IDE0005.
+#if(api)
 global using System.Net;
+#endif
 global using System.Net.Http;
 global using System.Net.Http.Json;
 global using System.Reflection;
