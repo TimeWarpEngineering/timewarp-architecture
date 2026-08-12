@@ -88,8 +88,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
     public static Task EmptyGuidJson_Should_ThrowDuringDeserialization()
     {
       // The ctor Guard is the Response's invariant gate; deserialization must not bypass it.
-      string json = """{"roleId":"00000000-0000-0000-0000-000000000000"}""";
-
+      const string json = """{"roleId":"00000000-0000-0000-0000-000000000000"}""";
       Should.Throw<Exception>(() =>
         JsonSerializer.Deserialize<CreateRole.Response>(json, ContractSerializationDefaults.Options));
       return Task.CompletedTask;
