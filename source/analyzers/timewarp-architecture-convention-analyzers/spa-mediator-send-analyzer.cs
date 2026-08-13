@@ -19,7 +19,8 @@
 // assemblies flow transitively into the server compilation and the rule would misfire there.
 //
 // Both Invocation AND MethodReference operations are analyzed: a method-group conversion
-// (`Func<IRequest, Task> dispatch = Mediator.Send;`) produces no Invocation at the reference site,
+// (`Func<IRequest, CancellationToken, Task> dispatch = Mediator.Send;` — the token parameter is not
+// optional in a method-group conversion, CS0123) produces no Invocation at the reference site,
 // and is the one realistic way to rebuild the deleted BaseComponent.Send wrapper. Extension
 // methods named Send on ISender would still slip through — their ContainingType is the static
 // host, not ISender — but TimeWarp.Mediator 13.0.0 declares none, so that gap stays theoretical.
@@ -92,7 +93,7 @@ public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
 
       // Method-group conversions never produce an Invocation at the reference site, so without
       // this the deleted BaseComponent.Send wrapper could be rebuilt as
-      // `Func<IRequest, Task> dispatch = Mediator.Send;` and dispatch through it unflagged.
+      // `Func<IRequest, CancellationToken, Task> dispatch = Mediator.Send;` and dispatch unflagged.
       startContext.RegisterOperationAction
       (
         operationContext => AnalyzeMethodReference(operationContext, senderInterface),

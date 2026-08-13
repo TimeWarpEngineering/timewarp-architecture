@@ -9,10 +9,15 @@
 // IStore) so the log entry itself flows through the normal state pipeline; TWA0022 bans the
 // direct Sender.Send this once used. AddEventActionSet.Action is explicitly skipped or the
 // behavior would recurse forever.
-// Teardown semantics: the generated method dispatches on the state's own CancellationToken, which
-// is cancelled permanently once the state is disposed — unlike the CancellationToken.None this
-// previously passed. So the trace dispatch is caught and swallowed: a diagnostic trace entry lost
-// during teardown must never fail (or mask the result of) the action it was tracing.
+// Teardown semantics: the generated method reads the state's own CancellationToken on every call,
+// where this previously passed CancellationToken.None. State<TState>.Dispose cancels AND THEN
+// disposes the CancellationTokenSource, so after disposal the token cannot be read at all —
+// reading CancellationTokenSource.Token throws ObjectDisposedException. That, not a cancellation,
+// is what a post-disposal trace dispatch actually raises: nothing on this path observes the token
+// (the AddEvent handler ignores its parameter), so a merely cancelled token throws nothing.
+// The guard therefore catches ObjectDisposedException, and keeps OperationCanceledException as
+// forward cover should a future handler start observing the token. Either way a diagnostic trace
+// entry lost during teardown must never fail (or mask the result of) the action it was tracing.
 // Constrained to IAction so non-state mediator requests are not traced.
 #endregion
 
@@ -70,7 +75,7 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
       {
         await Store.GetState<EventStreamState>().AddEvent(message);
       }
-      catch (OperationCanceledException)
+      catch (Exception exception) when (exception is OperationCanceledException or ObjectDisposedException)
       {
         // State disposed mid-flight: losing a trace entry is acceptable, failing the traced
         // action is not.

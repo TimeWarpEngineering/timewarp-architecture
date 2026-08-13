@@ -356,6 +356,33 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
     await test.RunAsync();
   }
 
+  public static async Task Given_Nameof_Mediator_Send_Does_Not_Flag()
+  {
+    // Neighbour of the MethodReference registration: nameof takes a method group but dispatches
+    // nothing. The downside is asymmetric here — warnings are errors repo-wide, so a false
+    // positive would break the build on an expression with no runtime behaviour at all.
+    const string source =
+      """
+      #region Purpose
+      // SPA code naming the method without calling it.
+      #endregion
+      using TimeWarp.Mediator;
+
+      public class ClientService
+      {
+        private readonly IMediator Mediator = default!;
+
+        public void Go()
+        {
+          _ = nameof(Mediator.Send);
+        }
+      }
+      """;
+
+    CSharpAnalyzerTest<SpaMediatorSendAnalyzer, RoslynTestVerifier> test = Test(source);
+    await test.RunAsync();
+  }
+
   public static async Task Given_Method_Group_Reference_To_Send_Flags()
   {
     // A method-group conversion produces no Invocation at the reference site, so an
