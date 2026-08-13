@@ -16,7 +16,12 @@ on foundation-server. Do not suppress NU1903.
 - [x] Restore `web-infrastructure-tests` locally — no NU1903
 - [x] Push SSH.NET lift; `ci` green
 - [x] Bump template-smoke web-jaribu expected count 92→93 (task 189 added AfterRoleGrantChange_Should_ReExpand)
-- [ ] Push count bump and confirm `template-smoke` green
+- [x] Push count bump and confirm `template-smoke` green
+
+## Results
+
+PR #301 CI/CD [31709159233](https://github.com/TimeWarpEngineering/timewarp-architecture/actions/runs/31709159233) success on `6ad90638`:
+detect-paths, ci (5m50s), template-smoke (4m41s), Lint skill specs. `mergeable: MERGEABLE`, `CLEAN`.
 
 ## Notes
 
