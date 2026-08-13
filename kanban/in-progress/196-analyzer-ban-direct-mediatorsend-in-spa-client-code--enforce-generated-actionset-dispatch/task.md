@@ -56,14 +56,14 @@ the wrapper.
 
 ## Checklist
 
-- [ ] Decide rule scope (components only vs all SPA client code) and escape-hatch posture; record in Design
-- [ ] Reserve next TWA ID and register descriptor in diagnostic-descriptors SSOT
-- [ ] Implement analyzer (flag mediator `Send` invocations; exempt generated code)
-- [ ] Analyzer tests: violation in component, violation via wrapper, generated-code exemption, non-client exemption per scope decision
-- [ ] Fix `StyleGuidePage.razor.cs` to use generated `CounterState.ThrowException(...)`
-- [ ] Delete `BaseComponent.Send` wrapper and reconcile base-component Design region
-- [ ] Update AGENTS.md TWA table + relevant skill docs with the new diagnostic
-- [ ] `dev build` 0/0
+- [x] Decide rule scope (components only vs all SPA client code) and escape-hatch posture; record in Design
+- [x] Reserve next TWA ID and register descriptor in diagnostic-descriptors SSOT
+- [x] Implement analyzer (flag mediator `Send` invocations; exempt generated code)
+- [x] Analyzer tests: violation in component, violation via wrapper, generated-code exemption, non-client exemption per scope decision
+- [x] Fix `StyleGuidePage.razor.cs` to use generated `CounterState.ThrowException(...)`
+- [x] Delete `BaseComponent.Send` wrapper and reconcile base-component Design region
+- [x] Update AGENTS.md TWA table + relevant skill docs with the new diagnostic
+- [x] `dev build` 0/0
 
 ## Notes
 
@@ -94,3 +94,18 @@ Full implementation plan: `notes/implementation-plan.md`. Settled decisions:
   principal/role/credentials handlers, event-stream behavior — all replaceable; several need
   `<Name>ActionSet` renames + explicit Action constructors (the generator ignores primary
   constructors) to trigger generation.
+
+### Implementation notes (2026-08-14)
+
+- **A SEVENTH call site existed** that the plan's grep missed:
+  `application-state.five-second-task.cs` held a hand-written `FiveSecondTask` dispatcher that
+  predated the generator (its sibling `two-second-task.cs` documented it as such). Found by
+  running the analyzer, not by grep. Fixed the same way: its `Action` became a plain sealed class
+  (matching `TwoSecondTaskActionSet`) so the generator emits the wrapper, and the hand-written one
+  was deleted.
+- **`FetchCredentials` takes a leading `bool includeRevoked = false`**, so its two call sites pass
+  the token as `externalCancellationToken:` by name rather than positionally.
+- Both generated-code divergences are pinned by mutation check, not just asserted: flipping the
+  analyzer to `GeneratedCodeAnalysisFlags.None` fails exactly `Given_Razor_Generated_Tree_Flags`,
+  and disabling the generated-path exemption fails exactly
+  `Given_Generated_ActionSet_Dispatcher_Does_Not_Flag`.
