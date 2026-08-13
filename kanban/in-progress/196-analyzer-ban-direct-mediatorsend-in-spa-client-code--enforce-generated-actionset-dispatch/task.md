@@ -71,3 +71,26 @@ the wrapper.
   cannot help because visibility of the inherited `Mediator` member is not ours to restrict.
 - COPIC sweep details (call-site list with file:line) are in the session that created this task;
   key conclusions captured above.
+
+### Plan (2026-08-14)
+
+Full implementation plan: `notes/implementation-plan.md`. Settled decisions:
+
+- **Scope decided: all SPA client code, strict — handlers/behaviors included, no carve-outs.**
+  Sites 3–5 below sit in `IRequestHandler` implementations yet are one-line replaceable;
+  `DefaultApiHandler.HandleError` already uses a generated ActionSet method.
+- **Diagnostic: TWA0022** (`Design`/Warning) in `timewarp-architecture-convention-analyzers`,
+  new file `spa-mediator-send-analyzer.cs`.
+- **Client-code gating:** `build_property.UsingMicrosoftNETSdkBlazorWebAssembly` (SDK-set,
+  zero opt-in) via `CompilerVisibleProperty`; reference-detection rejected (web-server
+  references web-spa for prerendering → would misfire).
+- **Generated-code handling diverges from sibling analyzers:** must use
+  `GeneratedCodeAnalysisFlags.Analyze|ReportDiagnostics` with a path-based exemption —
+  razor-generated `*_razor.g.cs` trees (user `@code`) ARE analyzed; other `.g.cs`
+  (incl. TimeWarp.State `*ActionSet_Method.g.cs`, which carries no GeneratedCodeAttribute)
+  are exempt.
+- **Spec corrections:** the StyleGuidePage violation lives in `StyleGuidePage.razor:37`
+  (not the `.razor.cs`); there are SIX call sites in web-spa (not one) — style-guide, chat hub,
+  principal/role/credentials handlers, event-stream behavior — all replaceable; several need
+  `<Name>ActionSet` renames + explicit Action constructors (the generator ignores primary
+  constructors) to trigger generation.
