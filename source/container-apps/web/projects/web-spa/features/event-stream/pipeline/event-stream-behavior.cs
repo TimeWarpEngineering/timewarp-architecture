@@ -9,6 +9,10 @@
 // IStore) so the log entry itself flows through the normal state pipeline; TWA0022 bans the
 // direct Sender.Send this once used. AddEventActionSet.Action is explicitly skipped or the
 // behavior would recurse forever.
+// Teardown semantics: the generated method dispatches on the state's own CancellationToken, which
+// is cancelled permanently once the state is disposed — unlike the CancellationToken.None this
+// previously passed. So the trace dispatch is caught and swallowed: a diagnostic trace entry lost
+// during teardown must never fail (or mask the result of) the action it was tracing.
 // Constrained to IAction so non-state mediator requests are not traced.
 #endregion
 
@@ -60,18 +64,18 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
   {
     if (request is not AddEventActionSet.Action) //Skip to avoid recursion
     {
-      string message;
-      string requestTypeName = request.GetType().Name;
-      if (request is BaseRequest)
-      {
-        message = $"{tag}:{requestTypeName}";
-      }
-      else
-      {
-        message = $"{tag}:{requestTypeName}";
-      }
+      string message = $"{tag}:{request.GetType().Name}";
 
-      await Store.GetState<EventStreamState>().AddEvent(message);
+      try
+      {
+        await Store.GetState<EventStreamState>().AddEvent(message);
+      }
+      catch (OperationCanceledException)
+      {
+        // State disposed mid-flight: losing a trace entry is acceptable, failing the traced
+        // action is not.
+        Logger.LogDebug("Event stream trace '{Message}' dropped — state disposed.", message);
+      }
     }
   }
 }

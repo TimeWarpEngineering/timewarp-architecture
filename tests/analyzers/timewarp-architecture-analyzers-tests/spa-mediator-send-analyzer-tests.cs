@@ -355,4 +355,101 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
     CSharpAnalyzerTest<SpaMediatorSendAnalyzer, RoslynTestVerifier> test = Test(source);
     await test.RunAsync();
   }
+
+  public static async Task Given_Method_Group_Reference_To_Send_Flags()
+  {
+    // A method-group conversion produces no Invocation at the reference site, so an
+    // Invocation-only rule would let the deleted BaseComponent.Send wrapper be rebuilt verbatim.
+    const string source =
+      """
+      #region Purpose
+      // SPA code rebuilding the deleted Send wrapper via a method group.
+      #endregion
+      using System;
+      using System.Threading;
+      using System.Threading.Tasks;
+      using TimeWarp.Mediator;
+
+      public class Ping : IRequest { }
+
+      public class ClientService
+      {
+        private readonly IMediator Mediator = default!;
+
+        public void Go()
+        {
+          Func<Ping, CancellationToken, Task> dispatch = Mediator.Send;
+          dispatch(new Ping(), default);
+        }
+      }
+      """;
+
+    CSharpAnalyzerTest<SpaMediatorSendAnalyzer, RoslynTestVerifier> test = Test(source);
+    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 17, 52, 65, "IMediator"));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Conditional_Access_Send_Flags()
+  {
+    // Null-conditional dispatch derives the receiver name through a different operation shape
+    // (a conditional-access instance reference rather than a plain member reference).
+    const string source =
+      """
+      #region Purpose
+      // SPA code dispatching through a null-conditional receiver.
+      #endregion
+      using System.Threading.Tasks;
+      using TimeWarp.Mediator;
+
+      public class Ping : IRequest { }
+
+      public class ClientService
+      {
+        private readonly IMediator? Mediator;
+
+        public void Go()
+        {
+          Mediator?.Send(new Ping());
+        }
+      }
+      """;
+
+    CSharpAnalyzerTest<SpaMediatorSendAnalyzer, RoslynTestVerifier> test = Test(source);
+    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 15, 14, 31, "IMediator"));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Dispatch_Through_Public_State_Sender_Flags()
+  {
+    // The most reachable bypass left standing: TimeWarp.State exposes Sender on IState, so any
+    // holder of IStore can reach a mediator without ever naming one.
+    const string source =
+      """
+      #region Purpose
+      // SPA code reaching the mediator through IState.Sender.
+      #endregion
+      using System.Threading.Tasks;
+      using TimeWarp.Mediator;
+
+      public class Ping : IRequest { }
+
+      public interface IState { ISender Sender { get; } }
+      public interface IStore { TState GetState<TState>() where TState : IState; }
+      public class ChatState : IState { public ISender Sender => default!; }
+
+      public class ClientService
+      {
+        private readonly IStore Store = default!;
+
+        public async Task Go()
+        {
+          await Store.GetState<ChatState>().Sender.Send(new Ping());
+        }
+      }
+      """;
+
+    CSharpAnalyzerTest<SpaMediatorSendAnalyzer, RoslynTestVerifier> test = Test(source);
+    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 19, 11, 62, "ISender"));
+    await test.RunAsync();
+  }
 }

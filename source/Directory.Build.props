@@ -30,7 +30,7 @@
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
-  <!-- Repo-wide convention analyzers (TWA0002–0022 only — no source generators). Project ref in
+  <!-- Repo-wide convention analyzers (TWA0002–0016, TWA0020–0022 only — no source generators). Project ref in
        monorepo; platform Analyzers package in generated apps (UseAnalyzerPackages). Package ID is
        composed (task 115) so template sourceName cannot rewrite it. -->
   <ItemGroup Condition="'$(UseAnalyzerPackages)' != 'true' and '$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">

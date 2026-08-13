@@ -18,6 +18,12 @@
 // Reference detection was rejected: web-server references web-spa for prerendering, so WASM
 // assemblies flow transitively into the server compilation and the rule would misfire there.
 //
+// Both Invocation AND MethodReference operations are analyzed: a method-group conversion
+// (`Func<IRequest, Task> dispatch = Mediator.Send;`) produces no Invocation at the reference site,
+// and is the one realistic way to rebuild the deleted BaseComponent.Send wrapper. Extension
+// methods named Send on ISender would still slip through — their ContainingType is the static
+// host, not ISender — but TimeWarp.Mediator 13.0.0 declares none, so that gap stays theoretical.
+//
 // Generated-code handling is the one divergence from every sibling TWA analyzer, which use
 // GeneratedCodeAnalysisFlags.None. User-authored `@code` blocks compile into `*_razor.g.cs` trees
 // that Roslyn's path heuristic classifies as generated, so `.None` would blind the rule to exactly
@@ -27,6 +33,10 @@
 // load-bearing rather than belt-and-braces for the TimeWarp.State dispatchers themselves: their
 // emitted `*ActionSet_Method.g.cs` bodies call Sender.Send and carry NO GeneratedCodeAttribute.
 // The attribute check is kept as a secondary net for generators that do mark their output.
+// The suffix list cuts both ways and is deliberately biased toward silence: a hand-authored file
+// merely named `*.g.cs` is exempted without comment, while a generator emitting an unmarked file
+// under some other hint name would be false-positived. Both are preferable to the alternative —
+// a false positive on generated code cannot be suppressed from source the user controls.
 //
 // No escape-hatch attribute in v1 — `#pragma warning disable TWA0022` remains the standard Roslyn
 // valve if a legitimate case ever appears.
@@ -79,6 +89,15 @@ public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
         operationContext => AnalyzeInvocation(operationContext, senderInterface),
         OperationKind.Invocation
       );
+
+      // Method-group conversions never produce an Invocation at the reference site, so without
+      // this the deleted BaseComponent.Send wrapper could be rebuilt as
+      // `Func<IRequest, Task> dispatch = Mediator.Send;` and dispatch through it unflagged.
+      startContext.RegisterOperationAction
+      (
+        operationContext => AnalyzeMethodReference(operationContext, senderInterface),
+        OperationKind.MethodReference
+      );
     });
   }
 
@@ -103,6 +122,22 @@ public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
       ?? method.ContainingType.Name;
 
     context.ReportDiagnostic(Diagnostic.Create(Rule, invocation.Syntax.GetLocation(), receiverName));
+  }
+
+  private static void AnalyzeMethodReference(OperationAnalysisContext context, INamedTypeSymbol senderInterface)
+  {
+    var reference = (IMethodReferenceOperation)context.Operation;
+    IMethodSymbol method = reference.Method;
+
+    if (!string.Equals(method.Name, SendMethodName, StringComparison.Ordinal)) return;
+    if (!IsSenderType(method.ContainingType, senderInterface)) return;
+    if (IsExemptGeneratedCode(context)) return;
+
+    string receiverName =
+      reference.Instance?.Type?.Name
+      ?? method.ContainingType.Name;
+
+    context.ReportDiagnostic(Diagnostic.Create(Rule, reference.Syntax.GetLocation(), receiverName));
   }
 
   private static bool IsSenderType(INamedTypeSymbol? containingType, INamedTypeSymbol senderInterface)

@@ -9,6 +9,14 @@
 // (via IStore) rather than a raw ISender.Send — TWA0022 bans direct mediator Send in SPA client
 // code, and the generated method wires the CancellationToken and is awaited, so an inbound
 // message is no longer fire-and-forget.
+// Teardown semantics: the generated method dispatches on the state's own CancellationToken, which
+// is cancelled permanently once the state is disposed — unlike the CancellationToken.None the raw
+// send used. A message arriving after teardown therefore faults inside SignalR's handler instead
+// of being silently dropped; that is left unguarded deliberately (unlike the event-stream trace),
+// because a dropped chat message is real data loss and should surface in the hub's own logging.
+// The handler is typed as an explicit Func<..., Task> local: HubConnection.On has both
+// Func<T, Task> and Action<T> overloads, and letting overload resolution pick is how an inbound
+// dispatch silently reverts to async-void.
 // Hub method names bind via nameof to the shared SendMessage/ReceiveMessage contracts, so
 // client and server cannot drift silently.
 // The hub URL derives from NavigationManager.BaseUri, letting the same code work behind the
@@ -31,12 +39,11 @@ public sealed class ChatHubConnection : IDisposable
     .WithUrl(chatHubUrl)
     .Build();
 
-    HubConnection.On<ReceiveMessage.Command>
-    (
-      nameof(ReceiveMessage),
+    Func<ReceiveMessage.Command, Task> onReceiveMessage =
       async (command) =>
-        await Store.GetState<ChatState>().ServerToClientMessage(command)
-    );
+        await Store.GetState<ChatState>().ServerToClientMessage(command);
+
+    HubConnection.On(nameof(ReceiveMessage), onReceiveMessage);
   }
 
   public async Task ConnectAsync()

@@ -3,7 +3,7 @@
     <PackageId>$(TwArchitectureAnalyzersPackageId)</PackageId>
     <Title>$(TwArchitectureAnalyzersPackageId)</Title>
 
-    <Description>Roslyn convention analyzers for TimeWarp Architecture (TWA0002–0022). Analyzer-only package; safe to reference from every project including contracts.</Description>
+    <Description>Roslyn convention analyzers for TimeWarp Architecture (TWA0002–0016, TWA0020–0022). Analyzer-only package; safe to reference from every project including contracts.</Description>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
     <!-- Convention-enforcement DiagnosticAnalyzers only (no source generators), so this assembly is

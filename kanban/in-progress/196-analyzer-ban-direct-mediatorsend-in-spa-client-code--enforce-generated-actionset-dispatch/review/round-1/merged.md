@@ -7,12 +7,12 @@
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
 | bug | 0 | 0 | 0 |
-| suggestion | 4 | 0 | 1 |
-| nit | 3 | 0 | 0 |
+| suggestion | 0 | 4 | 1 |
+| nit | 0 | 3 | 0 |
 
 ## Issues
 
-### M1 — Severity: suggestion — Status: open
+### M1 — Severity: suggestion — Status: fixed
 - File: AGENTS.md:214 (also source/Directory.Build.props:33, timewarp-architecture-convention-analyzers.csproj:6)
 - Description: Range update overshot — three places claim the convention package carries
   "TWA0002–0022", but TWA0017/0018/0019 live in the Generators package. Precision regression
@@ -21,7 +21,7 @@
 - Source: general
 - Disposition notes: fix this round.
 
-### M2 — Severity: suggestion — Status: open
+### M2 — Severity: suggestion — Status: fixed
 - File: spa-mediator-send-analyzer.cs:77-81
 - Description: `OperationKind.Invocation` misses method-group conversions
   (`Func<...> dispatch = Mediator.Send;` then `dispatch(...)`) — the one realistic way to rebuild
@@ -32,7 +32,7 @@
 - Source: general
 - Disposition notes: fix this round (register MethodReference + test + Design note).
 
-### M3 — Severity: suggestion — Status: open
+### M3 — Severity: suggestion — Status: fixed
 - File: event-stream-behavior.cs:74 (also chat-hub-connection.cs:38)
 - Description: Sites that previously dispatched with `CancellationToken.None` now use the state's
   token, which is cancelled permanently on state disposal — teardown-only widening of the failure
@@ -52,7 +52,7 @@
 - Disposition notes: deferred to follow-up **task 197** (out of this diff's blast radius; the
   fields predate this change and TWA0022 already blocks any use of them). Decider: orchestrator.
 
-### M5 — Severity: suggestion — Status: open
+### M5 — Severity: suggestion — Status: fixed
 - File: spa-mediator-send-analyzer-tests.cs:357
 - Description: Two cheap uncovered cases: conditional access `Mediator?.Send(...)` (different
   receiver-name derivation path) and dispatch through public `IState.Sender`
@@ -61,7 +61,7 @@
 - Source: general
 - Disposition notes: fix this round.
 
-### M6 — Severity: nit — Status: open
+### M6 — Severity: nit — Status: fixed
 - File: chat-hub-connection.cs:34-39
 - Description: Await-ness of the inbound handler rests on fragile overload resolution between
   `On<T1>(string, Func<T1, Task>)` and `On<T1>(string, Action<T1>)`; a later edit could silently
@@ -70,7 +70,7 @@
 - Source: general
 - Disposition notes: fix this round.
 
-### M7 — Severity: nit — Status: open
+### M7 — Severity: nit — Status: fixed
 - File: event-stream-behavior.cs:65-72
 - Description: `if (request is BaseRequest)` / `else` branches assign identical strings
   (pre-existing, adjacent to this diff's edits).
@@ -78,7 +78,7 @@
 - Source: general
 - Disposition notes: fix this round.
 
-### M8 — Severity: nit — Status: open
+### M8 — Severity: nit — Status: fixed
 - File: spa-mediator-send-analyzer.cs:141-144
 - Description: Suffix-list exemption trade-off undocumented: user-authored `*.g.cs` is silently
   exempt; a generator with a non-`.g.cs` hint name and no `[GeneratedCode]` would be
