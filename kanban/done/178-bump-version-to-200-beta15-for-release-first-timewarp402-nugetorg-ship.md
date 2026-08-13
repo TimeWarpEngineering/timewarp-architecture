@@ -21,3 +21,10 @@ This bump is the release PR for shipping current master, including the first nug
 
 - Created after PR #298 merge: beta.14 tag at `a0f092d4`; master at `09c4f7d8`; check-version
   warned partial publish Missing TimeWarp.402 (new package, not a failed beta.14 push).
+
+## Results
+
+- Cut `v2.0.0-beta.15` at `eeccdf48` via `dev release` (2026-08-12).
+- Guard: required workflow_dispatch CI at HEAD first (githooks-only #300 had no path-gated CI).
+- Release workflow https://github.com/TimeWarpEngineering/timewarp-architecture/actions/runs/31564169949 **success**.
+- nuget.org flatcontainer 200 for TimeWarp.402 (first publish), Identity, Modules, Analyzers, template, Foundation.*, etc.
