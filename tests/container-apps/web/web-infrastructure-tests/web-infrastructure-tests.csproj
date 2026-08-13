@@ -16,6 +16,8 @@
     <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Testcontainers.PostgreSql" />
+    <!-- Lift transitive SSH.NET 2025.1.0 → 2026.0.0 (NU1903 / GHSA-q939-rpr3-3284). -->
+    <PackageReference Include="SSH.NET" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-infrastructure\web-infrastructure.csproj" />
