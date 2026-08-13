@@ -5,7 +5,11 @@
 #region Design
 // Template demo, not product behavior: [TrackAction] surfaces the in-flight action via
 // TimeWarp.State action tracking so UI can render busy indicators while it runs.
-// The public wrapper links an optional caller token with the state's own CancellationToken
+// Public ApplicationState.FiveSecondTask(...) is emitted by TimeWarp.State's ActionSet method
+// source generator — the hand-written wrapper that predated the generator was removed with
+// TWA0022 (task 196), since it dispatched via a raw Sender.Send. Action is a plain sealed class
+// (not a record) to match TwoSecondTaskActionSet, the shape the generator emits from.
+// The generated wrapper links an optional caller token with the state's own CancellationToken
 // so either the caller or component disposal can cancel the delay.
 #endregion
 
@@ -16,7 +20,7 @@ partial class ApplicationState
   public static class FiveSecondTaskActionSet
   {
     [TrackAction]
-    internal sealed record Action : IAction;
+    internal sealed class Action : IAction;
 
     internal sealed class Handler : ActionHandler<Action>
     {
@@ -29,18 +33,5 @@ partial class ApplicationState
         Console.WriteLine("Five second task complete");
       }
     }
-  }
-
-  public async Task FiveSecondTask(CancellationToken? externalCancellationToken = null)
-  {
-    using CancellationTokenSource? linkedCts = externalCancellationToken.HasValue
-      ? CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken.Value, CancellationToken)
-      : null;
-
-    await Sender.Send
-    (
-      new FiveSecondTaskActionSet.Action(),
-      linkedCts?.Token ?? CancellationToken
-    );
   }
 }

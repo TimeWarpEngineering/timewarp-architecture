@@ -47,10 +47,14 @@
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       IsAspireProjectResource="false" />
     <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
+    <!-- TWA0022 gates on the Blazor WASM SDK's own property; no test project uses that SDK, so
+         pipeline-driving test code is naturally out of scope. -->
+    <CompilerVisibleProperty Include="UsingMicrosoftNETSdkBlazorWebAssembly" />
   </ItemGroup>
   <ItemGroup Condition="'$(UseAnalyzerPackages)' == 'true'">
     <PackageReference Include="$(TwArchitectureAnalyzersPackageId)" PrivateAssets="all" />
     <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
+    <CompilerVisibleProperty Include="UsingMicrosoftNETSdkBlazorWebAssembly" />
   </ItemGroup>
 
   <!-- template.json feeds TWA0010 (see source/Directory.Build.props). -->

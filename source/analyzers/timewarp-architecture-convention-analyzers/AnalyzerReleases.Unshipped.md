@@ -21,3 +21,4 @@ TWA0015 | Naming | Warning | FeatureFilenameGrammarAnalyzer: registered function
 TWA0016 | Naming | Warning | FeatureFilenameGrammarAnalyzer: unregistered or mis-spelled function segment used as archetype
 TWA0020 | Design | Warning | EndpointAuthPostureAnalyzer: [ApiEndpoint] combined with [ClientOnlyContract] (outer or nested)
 TWA0021 | Security | Warning | MockAuthenticationRegistrationAnalyzer: mock auth DI registration outside MockAuthenticationRegistration
+TWA0022 | Design | Warning | SpaMediatorSendAnalyzer: direct mediator Send in SPA client code instead of a generated ActionSet method
