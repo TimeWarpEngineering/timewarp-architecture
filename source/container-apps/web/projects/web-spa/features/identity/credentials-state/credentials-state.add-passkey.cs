@@ -45,21 +45,18 @@ partial class CredentialsState
       private readonly IWebServerApiService ApiService;
       private readonly IJSRuntime JsRuntime;
       private readonly AuthenticationStateProvider AuthenticationStateProvider;
-      private readonly ISender Sender;
 
       public Handler
       (
         IStore store,
         IWebServerApiService apiService,
         IJSRuntime jsRuntime,
-        AuthenticationStateProvider authenticationStateProvider,
-        ISender sender
+        AuthenticationStateProvider authenticationStateProvider
       ) : base(store)
       {
         ApiService = apiService;
         JsRuntime = jsRuntime;
         AuthenticationStateProvider = authenticationStateProvider;
-        Sender = sender;
       }
 
       public override async Task Handle(Action action, CancellationToken cancellationToken)
@@ -111,7 +108,7 @@ partial class CredentialsState
 
           CredentialsState.LastAddedCredentialId = completeResult.AsT0.CredentialId.Value;
           CredentialsState.StatusMessage = "Passkey created.";
-          await Sender.Send(new FetchCredentialsActionSet.Action(), cancellationToken);
+          await CredentialsState.FetchCredentials(externalCancellationToken: cancellationToken);
         }
         catch (JSException jsException)
         {

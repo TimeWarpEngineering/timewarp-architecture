@@ -6,21 +6,26 @@
 // Exists so demos and tests can observe how unhandled handler exceptions propagate
 // through the TimeWarp.State pipeline and surface in the UI; never dispatch it from
 // production flows.
+// Named ...ActionSet with an explicit Action constructor so the TimeWarp.State
+// ActionSetMethodSourceGenerator emits `CounterState.ThrowException(message)` — the generator
+// reads ConstructorDeclarationSyntax only, so a primary constructor yields no usable dispatcher.
+// Callers must use that generated method: TWA0022 bans direct mediator Send in SPA client code.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Counters;
 
 partial class CounterState
 {
-  // CA1711: Suppressed because 'ThrowException' is the name of an action container
-  // in our Flux-style state management (not an actual Exception type).
-  // Renaming it to avoid the suffix produces worse names (e.g. ThrowExceptionAction.Action).
-  #pragma warning disable CA1711
-  public static class ThrowException
+  public static class ThrowExceptionActionSet
   {
-    public class Action(string Message) : IBaseAction
+    public class Action : IBaseAction
     {
-      public string Message { get; init; } = Message;
+      public string Message { get; }
+
+      public Action(string message)
+      {
+        Message = message;
+      }
     }
 
     internal class Handler
@@ -38,5 +43,4 @@ partial class CounterState
         throw new Exception(action.Message);
     }
   }
-  #pragma warning restore CA1711
 }

@@ -70,8 +70,6 @@ partial class RoleState
 
     internal class Handler : DefaultApiHandler<Action, Command, Response>
     {
-      private readonly ISender MediatorSender;
-
       public Handler(
         IStore store,
         IWebServerApiService webServerApiService,
@@ -79,7 +77,6 @@ partial class RoleState
         ILogger<Handler> logger)
         : base(store, webServerApiService, sender, logger)
       {
-        MediatorSender = sender;
       }
 
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
@@ -96,7 +93,7 @@ partial class RoleState
       protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         // Re-list so drafts match stored grants (and any server-side normalization).
-        await MediatorSender.Send(new FetchRolesActionSet.Action(), cancellationToken);
+        await RoleState.FetchRoles(cancellationToken);
       }
     }
   }

@@ -76,7 +76,6 @@ partial class PrincipalState
 
     internal class Handler : DefaultApiHandler<Action, Command, Response>
     {
-      private readonly ISender MediatorSender;
       private readonly AuthenticationStateProvider AuthenticationStateProvider;
       private Guid ActivePrincipalId;
 
@@ -88,7 +87,6 @@ partial class PrincipalState
         AuthenticationStateProvider authenticationStateProvider)
         : base(store, webServerApiService, sender, logger)
       {
-        MediatorSender = sender;
         AuthenticationStateProvider = authenticationStateProvider;
       }
 
@@ -107,7 +105,7 @@ partial class PrincipalState
       protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         // Re-list so multi-select shows effective roles (virtual Member/bootstrap Admin), not stored-only echo.
-        await MediatorSender.Send(new FetchPrincipalsActionSet.Action(), cancellationToken);
+        await PrincipalState.FetchPrincipals(cancellationToken);
 
         if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
         {

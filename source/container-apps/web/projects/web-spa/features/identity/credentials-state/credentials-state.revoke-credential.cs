@@ -30,7 +30,6 @@ partial class CredentialsState
     internal sealed class Handler : DefaultApiHandler<Action, Command, Response>
     {
       private readonly AuthenticationStateProvider AuthenticationStateProvider;
-      private readonly ISender Sender;
 
       public Handler
       (
@@ -42,7 +41,6 @@ partial class CredentialsState
       ) : base(store, webServerApiService, sender, logger, authenticationStateProvider: authenticationStateProvider)
       {
         AuthenticationStateProvider = authenticationStateProvider;
-        Sender = sender;
       }
 
       protected override async Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
@@ -55,7 +53,7 @@ partial class CredentialsState
       {
         CredentialsState.StatusMessage = "Passkey deleted.";
         CredentialsState.CeremonyError = null;
-        await Sender.Send(new FetchCredentialsActionSet.Action(), cancellationToken);
+        await CredentialsState.FetchCredentials(externalCancellationToken: cancellationToken);
       }
 
       private async Task<Guid> ResolveUserIdAsync()

@@ -33,12 +33,9 @@
 
   // Exercises the auto-toast-on-error path end-to-end: a handler throws ->
   // StateTransactionBehavior publishes ExceptionNotification -> ExceptionNotificationHandler shows a toast.
+  // Dispatched through the generated ActionSet method (TWA0022 bans direct mediator Send here).
   private async Task TriggerException() =>
-    await Mediator.Send
-    (
-      new CounterState.ThrowException.Action(Message: "Demo exception dispatched from the Style Guide."),
-      CancellationToken
-    );
+    await CounterState.ThrowException("Demo exception dispatched from the Style Guide.", CancellationToken);
 }
 
 <TimeWarpPage Title="Style Guide">

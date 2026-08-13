@@ -7,8 +7,9 @@
 // debugging out of the box; a production app would swap to the plain base (see remarks).
 // The class is split into partials by concern (auth, css, state accessors) so each aspect can
 // be read and maintained in isolation; this file carries only cross-cutting members.
-// Send is obsoleted to steer components toward ActionSet methods, which wire cancellation
-// tokens automatically.
+// No Send wrapper: components dispatch through the generated ActionSet methods, which wire
+// cancellation tokens automatically. TWA0022 enforces that — a wrapper could not, because the
+// inherited protected Mediator member stays reachable regardless.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -25,7 +26,4 @@ namespace TimeWarp.Architecture.Features;
 public abstract partial class BaseComponent : TimeWarpStateDevComponent, IAttributeComponent
 {
     protected bool IsAnyActive(params Type[] actions) => ActionTrackingState.IsAnyActive(actions);
-
-    [Obsolete(message:"Prefer using ActionSet methods so the cancellation tokens are automatically used. Also more concise")]
-    protected async Task Send(IRequest request) => await Mediator.Send(request);
 }

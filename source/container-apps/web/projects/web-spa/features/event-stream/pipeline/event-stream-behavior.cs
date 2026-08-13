@@ -5,8 +5,10 @@
 #region Design
 // Gives an in-app, ordered trace of action dispatch (rendered by the EventStream component)
 // without requiring Redux DevTools to be attached.
-// Writes via Sender.Send(AddEvent.Action) so the log entry itself flows through the normal
-// state pipeline; AddEvent.Action is explicitly skipped or the behavior would recurse forever.
+// Writes via the generated EventStreamState.AddEvent(message) ActionSet method (resolved off
+// IStore) so the log entry itself flows through the normal state pipeline; TWA0022 bans the
+// direct Sender.Send this once used. AddEventActionSet.Action is explicitly skipped or the
+// behavior would recurse forever.
 // Constrained to IAction so non-state mediator requests are not traced.
 #endregion
 
@@ -20,22 +22,22 @@ using Guard=Ardalis.GuardClauses.Guard;
 /// </summary>
 /// <typeparam name="TRequest"></typeparam>
 /// <typeparam name="TResponse"></typeparam>
-/// <remarks>To avoid infinite recursion don't add AddEvent to the event stream</remarks>
+/// <remarks>To avoid infinite recursion don't add AddEventActionSet to the event stream</remarks>
 public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
   where TRequest : notnull, IAction
 {
   private readonly ILogger Logger;
-  private readonly ISender Sender;
+  private readonly IStore Store;
   public Guid Guid { get; } = Guid.NewGuid();
 
   public EventStreamBehavior
   (
     ILogger<EventStreamBehavior<TRequest, TResponse>> logger,
-    ISender sender
+    IStore store
   )
   {
     Logger = logger;
-    Sender = sender;
+    Store = store;
     Logger.LogDebug($"{GetType().Name}: Constructor");
   }
 
@@ -56,7 +58,7 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
 
   private async Task AddEventToStream(TRequest request, string tag)
   {
-    if (request is not AddEvent.Action) //Skip to avoid recursion
+    if (request is not AddEventActionSet.Action) //Skip to avoid recursion
     {
       string message;
       string requestTypeName = request.GetType().Name;
@@ -69,8 +71,7 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
         message = $"{tag}:{requestTypeName}";
       }
 
-      var addEventAction = new AddEvent.Action(){ Message = message};
-      await Sender.Send(addEventAction);
+      await Store.GetState<EventStreamState>().AddEvent(message);
     }
   }
 }

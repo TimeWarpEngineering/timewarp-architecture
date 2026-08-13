@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// EventList is private and normally mutable only via the AddEvent handler; tests need
+// EventList is private and normally mutable only via the AddEventActionSet handler; tests need
 // arbitrary starting states without dispatching actions, so this bypass exists but is
 // gated by ThrowIfNotTestAssembly to keep production code on the action pipeline.
 #endregion

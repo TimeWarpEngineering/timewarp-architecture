@@ -56,7 +56,7 @@ public class Should
     scope.Store.GetState<CounterState>().Initialize(count: 22);
     Guid preActionGuid = scope.Store.GetState<CounterState>().Guid;
 
-    ThrowException.Action action = new(Message: "Test Rollback of State");
+    ThrowExceptionActionSet.Action action = new(message: "Test Rollback of State");
 
     await scope.Send(action);
 
