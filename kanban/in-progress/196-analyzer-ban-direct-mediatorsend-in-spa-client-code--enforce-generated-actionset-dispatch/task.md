@@ -109,3 +109,75 @@ Full implementation plan: `notes/implementation-plan.md`. Settled decisions:
   analyzer to `GeneratedCodeAnalysisFlags.None` fails exactly `Given_Razor_Generated_Tree_Flags`,
   and disabling the generated-path exemption fails exactly
   `Given_Generated_ActionSet_Dispatcher_Does_Not_Flag`.
+
+## Results
+
+### What changed
+
+- **New analyzer TWA0022** (`source/analyzers/timewarp-architecture-convention-analyzers/spa-mediator-send-analyzer.cs`):
+  bans direct `Send` on TimeWarp.Mediator `ISender`/`IMediator` (invocations AND method-group
+  references) in SPA client code. Gated on `build_property.UsingMicrosoftNETSdkBlazorWebAssembly`
+  (SDK-set, zero opt-in; wired via `CompilerVisibleProperty` in source/ + tests/
+  `Directory.Build.props`). Diverges from sibling analyzers: razor-generated `*_razor.g.cs`
+  trees ARE analyzed (user `@code`); other `.g.cs` trees (incl. TimeWarp.State
+  `*ActionSet_Method.g.cs`, which carries no `GeneratedCodeAttribute`) are exempt.
+- **Seven web-spa call sites converted** to generated ActionSet dispatch (style-guide page, chat
+  hub, principal/role/credentials handlers, event-stream behavior, five-second-task hand-written
+  dispatcher deleted), with `<Name>ActionSet` renames + explicit Action constructors where
+  generation needed enabling. `BaseComponent.Send` wrapper deleted.
+- **Event-stream trace guard**: trace dispatch wrapped in
+  `catch (... is OperationCanceledException or ObjectDisposedException)` — a lost trace entry
+  never fails the traced action, including dispatch against a disposed state.
+- **Tests**: `tests/analyzers/timewarp-architecture-analyzers-tests/spa-mediator-send-analyzer-tests.cs`
+  (component/non-component/all-overloads violations, method-group reference, conditional access,
+  `IState.Sender` dispatch, razor-tree flagging, ActionSet-dispatcher exemption, non-SPA
+  exemption, nameof negative, unrelated-Send negative). Divergences pinned by mutation checks.
+- **Docs**: AGENTS.md TWA0022 row; package-range corrected to `TWA0002–0016, TWA0020–0022`;
+  `AnalyzerReleases.Unshipped.md` row; Design regions reconciled on every touched file.
+
+### Commits
+
+`c0e7a0c6` (call-site conversions) → `20e95046` (analyzer) → `aa1d6b88` (tests) → `32b68eda`
+(docs) → `43aa5f1a` (round-1 review fixes) → `a4dca616` (round-2 review fixes). Review/kanban
+artifacts in `84ef1fd5`, `c3a328bb`, and the disposition commit.
+
+### Review (Phase 4b)
+
+3 rounds, effort 1 (single general reviewer; builder = twa0022-builder, reviewer =
+twa0022-reviewer, orchestrator = this session). Final counts: bug 0/0/0, suggestion 0 open /
+5 fixed / 1 wontfix, nit 0 open / 5 fixed. Disposition: **accepted-exceptions** — M4 (dead
+`ISender` plumbing in base API handlers) deferred to **task 197**; recorded decision: M10's
+teardown guard ships untested with reviewer concurrence, optional deterministic test captured
+as **task 198**. Paths: `review/review-framework.md`, `review/round-{1,2,3}/`,
+`review/round-2/merged.md` (final ledger), `review/disposition.md`.
+
+### How to validate
+
+**Smoke (enforcement is live):**
+
+```bash
+# 1. Introduce a violation in any web-spa file, e.g. StyleGuidePage.razor's TriggerException:
+#      await Mediator.Send(new CounterState.ThrowExceptionActionSet.Action("x"), CancellationToken);
+./bin/dev build   # from repo root
+# 2. Revert the change.
+git checkout -- source/container-apps/web/projects/web-spa/features/style-guide/pages/StyleGuidePage.razor
+```
+
+**Expect:** step 1 FAILS with `error TWA0022` at the `.razor` line (observed:
+`StyleGuidePage.razor(38,11): error TWA0022: Direct 'IMediator.Send' call in SPA client code; …`);
+after revert, `./bin/dev build` returns 0 warnings / 0 errors. Server projects (web-server
+references web-spa for prerendering) build clean — the rule fires only in the WASM compilation.
+
+**Automated gates (all verified passing at close):**
+
+```bash
+./bin/dev build                                                        # 0/0
+cd tests/analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Release   # 118/118
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release      # 15 pass / 1 pre-existing skip (task-058)
+./bin/dev test                                                         # full sweep green
+./bin/dev template-smoke                                               # SUCCEEDED (93/93 web-jaribu)
+```
+
+**Depends on / not in scope:** template-smoke required a `./bin/dev self-install` first (stale
+AOT binary expected the pre-6ad90638 test count — environment issue, not this change). Dead
+`ISender` plumbing removal → task 197; disposed-state guard test → task 198.
