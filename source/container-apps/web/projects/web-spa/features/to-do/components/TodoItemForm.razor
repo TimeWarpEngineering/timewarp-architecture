@@ -2,12 +2,12 @@
 @using TimeWarp.Architecture.Features.TodoItems
 @inherits BaseComponent
 
+@code {
+  private UpdateTodoItem.Command UpdateTodoItemCommand { get; set; } = new();
+}
+
 <EditForm Model=@UpdateTodoItemCommand>
   @* Skeleton form — no fields/validator yet. See the Admin/Roles RoleForm for the
      I*Details binding + shared-validation pattern (Blazilla <FluentValidator/>). *@
   <ValidationSummary/>
 </EditForm>
-
-@code {
-  private UpdateTodoItem.Command UpdateTodoItemCommand { get; set; } = new();
-}

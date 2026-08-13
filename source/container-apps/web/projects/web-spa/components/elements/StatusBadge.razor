@@ -3,10 +3,6 @@
   Design-system status pill (Tier-1 leaf, native root). Styled by .twe-badge in
   wwwroot/css/components.css using the --twe-* tokens.
 *@
-<span class="twe-badge twe-badge--@Modifier @Class">
-  <span class="twe-badge__dot"></span>
-  @(Label ?? Status.ToString())
-</span>
 
 @code {
   [Parameter] public BadgeStatus Status { get; set; } = BadgeStatus.Active;
@@ -22,3 +18,8 @@
     _ => "active",
   };
 }
+
+<span class="twe-badge twe-badge--@Modifier @Class">
+  <span class="twe-badge__dot"></span>
+  @(Label ?? Status.ToString())
+</span>

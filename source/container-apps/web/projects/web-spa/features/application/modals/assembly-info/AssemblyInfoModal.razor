@@ -1,6 +1,18 @@
 @namespace TimeWarp.Architecture.Components
 @inherits BaseComponent
 
+@code
+{
+  public const string ModalId = nameof(AssemblyInfoModal);
+  private AssemblyInfo? AssemblyInfo;
+
+  protected Task Activate()
+  {
+    AssemblyInfo = typeof(Program).Assembly.GetAssemblyInfo();
+    return Task.CompletedTask;
+  }
+}
+
 <ModalContainer ModalId=@ModalId OnActivate=Activate>
   <MainContent>
     <h3 id="modal-title" style="margin:0 0 12px;font-weight:600;font-size:var(--twe-text-section-title);">@AssemblyInfo?.Title</h3>
@@ -35,15 +47,3 @@
     }
   </MainContent>
 </ModalContainer>
-
-@code
-{
-  public const string ModalId = nameof(AssemblyInfoModal);
-  private AssemblyInfo? AssemblyInfo;
-
-  protected Task Activate()
-  {
-    AssemblyInfo = typeof(Program).Assembly.GetAssemblyInfo();
-    return Task.CompletedTask;
-  }
-}

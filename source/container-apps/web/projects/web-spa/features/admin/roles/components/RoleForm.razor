@@ -12,6 +12,19 @@
   UserId is stamped in the handler GetRequest, not here.
 *@
 
+@code {
+  private static readonly RoleDetailsValidator RoleValidator = new();
+
+  private CreateRole.Command Command { get; } = new();
+  private IRoleDetails RoleDetails => Command;
+
+  private async Task HandleValidSubmit()
+  {
+    await RoleState.CreateRole(Command);
+    NavigationManager.NavigateTo(RolesListPage.GetPageUrl());
+  }
+}
+
 <EditForm Model=@RoleDetails OnValidSubmit=HandleValidSubmit FormName="RoleForm" novalidate>
   <FluentValidator Validator="@RoleValidator" />
   <FluentStack Orientation=Orientation.Vertical VerticalGap="16">
@@ -30,16 +43,3 @@
 
   </FluentStack>
 </EditForm>
-
-@code {
-  private static readonly RoleDetailsValidator RoleValidator = new();
-
-  private CreateRole.Command Command { get; } = new();
-  private IRoleDetails RoleDetails => Command;
-
-  private async Task HandleValidSubmit()
-  {
-    await RoleState.CreateRole(Command);
-    NavigationManager.NavigateTo(RolesListPage.GetPageUrl());
-  }
-}

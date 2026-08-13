@@ -1,10 +1,5 @@
 @namespace TimeWarp.Architecture.Components
 
-@if (!string.IsNullOrWhiteSpace(Url))
-{
-  <div class="@CssClass"><a href="@Url">@DisplayText</a></div>
-}
-
 @code {
   [Parameter]
   public string? Url { get; set; }
@@ -14,4 +9,9 @@
 
   [Parameter]
   public string CssClass { get; set; } = "twe-ext-link";
+}
+
+@if (!string.IsNullOrWhiteSpace(Url))
+{
+  <div class="@CssClass"><a href="@Url">@DisplayText</a></div>
 }

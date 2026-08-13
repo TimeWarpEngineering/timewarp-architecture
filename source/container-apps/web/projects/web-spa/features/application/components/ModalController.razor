@@ -1,9 +1,5 @@
 @namespace TimeWarp.Architecture.Components
 
-<CascadingValue Value="this">
-    @ModalContainers
-</CascadingValue>
-
 @code {
     private string? PreviousActiveModalId;
     private readonly Dictionary<string, ModalContainer> ChildModals = new();
@@ -30,3 +26,7 @@
         await base.OnParametersSetAsync().ConfigureAwait(false);
     }
 }
+
+<CascadingValue Value="this">
+    @ModalContainers
+</CascadingValue>

@@ -2,11 +2,6 @@
 
 @* V5: FluentComponentBase requires a LibraryConfiguration ctor arg, so a Fluent component
    can no longer be subclassed with a parameterless ctor. Compose FluentNavItem instead. *@
-<AuthorizeView Policy=@Policy>
-  <Authorized>
-    <FluentNavItem Href=@Href IconRest=@Icon Match=NavLinkMatch.All>@ChildContent</FluentNavItem>
-  </Authorized>
-</AuthorizeView>
 
 @code {
   [Parameter, EditorRequired] public string Policy { get; set; } = default!;
@@ -20,3 +15,9 @@
     if (Policy is null) throw new ArgumentNullException(nameof(Policy));
   }
 }
+
+<AuthorizeView Policy=@Policy>
+  <Authorized>
+    <FluentNavItem Href=@Href IconRest=@Icon Match=NavLinkMatch.All>@ChildContent</FluentNavItem>
+  </Authorized>
+</AuthorizeView>

@@ -9,10 +9,6 @@
    root and stack-overflowed web-server (exit 134) when AuthorizeRouteView hit NotAuthorized.
    Navigate only once interactive; static HTML keeps a plain link fallback. *@
 
-<p>
-  <a href="@Target">Sign in to continue</a>
-</p>
-
 @code {
   private string Target { get; set; } = LoginPage.GetPageUrl();
 
@@ -32,3 +28,7 @@
     }
   }
 }
+
+<p>
+  <a href="@Target">Sign in to continue</a>
+</p>

@@ -5,6 +5,12 @@
 @code {
   public static Icon? NavIcon => new Icons.Regular.Size20.PeopleTeam();
   public static string Title => "Roles";
+
+  private async Task OnPermissionSelected(Guid roleId, string permissionId, bool selected) =>
+    await RoleState.SetPermissionSelected(roleId, permissionId, selected);
+
+  private async Task OnSave(Guid roleId) =>
+    await RoleState.SetRolePermissions(roleId);
 }
 
 <PageTitle>@Title</PageTitle>
@@ -70,11 +76,3 @@
     </Card>
   </div>
 </TimeWarpPage>
-
-@code {
-  private async Task OnPermissionSelected(Guid roleId, string permissionId, bool selected) =>
-    await RoleState.SetPermissionSelected(roleId, permissionId, selected);
-
-  private async Task OnSave(Guid roleId) =>
-    await RoleState.SetRolePermissions(roleId);
-}

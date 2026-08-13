@@ -5,6 +5,12 @@
 @code {
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonAccounts();
   public static string Title => "Principals";
+
+  private async Task OnRoleSelected(Guid principalId, Guid roleId, bool selected) =>
+    await PrincipalState.SetRoleSelected(principalId, roleId, selected);
+
+  private async Task OnSave(Guid principalId) =>
+    await PrincipalState.SetPrincipalRoles(principalId);
 }
 
 <PageTitle>@Title</PageTitle>
@@ -75,11 +81,3 @@
     </Card>
   </div>
 </TimeWarpPage>
-
-@code {
-  private async Task OnRoleSelected(Guid principalId, Guid roleId, bool selected) =>
-    await PrincipalState.SetRoleSelected(principalId, roleId, selected);
-
-  private async Task OnSave(Guid principalId) =>
-    await PrincipalState.SetPrincipalRoles(principalId);
-}

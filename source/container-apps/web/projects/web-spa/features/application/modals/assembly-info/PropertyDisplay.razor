@@ -1,13 +1,5 @@
 @namespace TimeWarp.Architecture.Components
 
-@if (!string.IsNullOrWhiteSpace(Value))
-{
-  <div class="@CssClass">
-    <span class="twe-prop__name">@PropertyName:</span>
-    <span class="twe-prop__value">@Value</span>
-  </div>
-}
-
 @code {
   [Parameter]
   public string PropertyName { get; set; } = string.Empty;
@@ -17,4 +9,12 @@
 
   [Parameter]
   public string CssClass { get; set; } = "twe-prop";
+}
+
+@if (!string.IsNullOrWhiteSpace(Value))
+{
+  <div class="@CssClass">
+    <span class="twe-prop__name">@PropertyName:</span>
+    <span class="twe-prop__value">@Value</span>
+  </div>
 }

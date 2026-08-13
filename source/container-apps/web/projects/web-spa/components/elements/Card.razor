@@ -3,6 +3,13 @@
   Design-system content card (Tier-1 leaf, native root). Styled by .twe-card in
   wwwroot/css/components.css using the --twe-* tokens. See skills/blazor-css-strategy.
 *@
+
+@code {
+  [Parameter] public string? Title { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+}
+
 <section class="twe-card @Class">
   @if (!string.IsNullOrWhiteSpace(Title))
   {
@@ -12,9 +19,3 @@
     @ChildContent
   </div>
 </section>
-
-@code {
-  [Parameter] public string? Title { get; set; }
-  [Parameter] public string? Class { get; set; }
-  [Parameter] public RenderFragment? ChildContent { get; set; }
-}

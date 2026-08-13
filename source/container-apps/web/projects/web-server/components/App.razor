@@ -1,6 +1,21 @@
 @namespace TimeWarp.Architecture.Components
 @using Microsoft.AspNetCore.Components.Web
 
+@code
+{
+  [Inject] private IOptions<BlazorSettings> BlazorSettingsAccessor { get; set; } = null!;
+
+  private BlazorSettings BlazorSettings => BlazorSettingsAccessor.Value;
+
+  private IComponentRenderMode RenderMode => BlazorSettings.RenderMode switch
+  {
+    Configuration.RenderMode.InteractiveServer => new InteractiveServerRenderMode(BlazorSettings.Prerender),
+    Configuration.RenderMode.InteractiveWebAssembly => new InteractiveWebAssemblyRenderMode(BlazorSettings.Prerender),
+    Configuration.RenderMode.InteractiveAuto => new InteractiveAutoRenderMode(BlazorSettings.Prerender),
+    _ => throw new InvalidOperationException($"Unsupported render mode: {BlazorSettingsAccessor.Value.RenderMode}")
+  };
+}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,18 +56,3 @@
 <script src="_framework/blazor.web.js"></script>
 </body>
 </html>
-
-@code
-{
-  [Inject] private IOptions<BlazorSettings> BlazorSettingsAccessor { get; set; } = null!;
-
-  private BlazorSettings BlazorSettings => BlazorSettingsAccessor.Value;
-
-  private IComponentRenderMode RenderMode => BlazorSettings.RenderMode switch
-  {
-    Configuration.RenderMode.InteractiveServer => new InteractiveServerRenderMode(BlazorSettings.Prerender),
-    Configuration.RenderMode.InteractiveWebAssembly => new InteractiveWebAssemblyRenderMode(BlazorSettings.Prerender),
-    Configuration.RenderMode.InteractiveAuto => new InteractiveAutoRenderMode(BlazorSettings.Prerender),
-    _ => throw new InvalidOperationException($"Unsupported render mode: {BlazorSettingsAccessor.Value.RenderMode}")
-  };
-}

@@ -1,28 +1,4 @@
 @namespace TimeWarp.Architecture.Features.Developer.Components
-<AuthorizeView>
-  <Authorized>
-    <p>@AuthMessage</p>
-    <h4>
-      Claims from the ID token
-    </h4>
-    @if (Claims.Any())
-    {
-      <ul>
-        @foreach (Claim claim in Claims)
-        {
-          <li><b>@claim.Type</b>: @claim.Value</li>
-        }
-      </ul>
-    }
-    else
-    {
-      <h3>_authMessage</h3>
-    }
-  </Authorized>
-  <NotAuthorized>
-    Sign-in to see user details.
-  </NotAuthorized>
-</AuthorizeView>
 
 @code
 {
@@ -71,3 +47,28 @@
     }
   }
 }
+
+<AuthorizeView>
+  <Authorized>
+    <p>@AuthMessage</p>
+    <h4>
+      Claims from the ID token
+    </h4>
+    @if (Claims.Any())
+    {
+      <ul>
+        @foreach (Claim claim in Claims)
+        {
+          <li><b>@claim.Type</b>: @claim.Value</li>
+        }
+      </ul>
+    }
+    else
+    {
+      <h3>_authMessage</h3>
+    }
+  </Authorized>
+  <NotAuthorized>
+    Sign-in to see user details.
+  </NotAuthorized>
+</AuthorizeView>
