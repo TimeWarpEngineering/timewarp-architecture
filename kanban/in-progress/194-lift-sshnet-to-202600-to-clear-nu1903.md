@@ -14,12 +14,15 @@ on foundation-server. Do not suppress NU1903.
 - [x] Add CPM pin `SSH.NET` 2026.0.0
 - [x] Direct `PackageReference` on `web-infrastructure-tests` (only Testcontainers consumer)
 - [x] Restore `web-infrastructure-tests` locally — no NU1903
-- [ ] Push and confirm PR #301 `ci` + `template-smoke` green
+- [x] Push SSH.NET lift; `ci` green
+- [x] Bump template-smoke web-jaribu expected count 92→93 (task 189 added AfterRoleGrantChange_Should_ReExpand)
+- [ ] Push count bump and confirm `template-smoke` green
 
 ## Notes
 
 - Advisory published after the last green #301 run (b039d4a9). Not caused by the razor/@code work.
 - Testcontainers 4.13.0 is still latest; no upstream bump available.
+- After the lift, SmokeDefault restored/built 0/0 and tests passed; smoke failed only on the 92 vs 93 count.
 
 ## Session
 
