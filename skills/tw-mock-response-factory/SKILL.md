@@ -1,10 +1,7 @@
 ---
 name: tw-mock-response-factory
-description: >
-  Add GetMockResponseFactory to API contracts and register factories in the SPA mock API service.
-when-to-use: >
-  GetMockResponseFactory, MockResponseFactory, MockCopicApiService, MockWebApiService,
-  MockFactories, mock mode, IMockResponseFactory, SPA development without backend
+description: Add GetMockResponseFactory to API contracts and register factories in the SPA mock API service.
+when-to-use: GetMockResponseFactory, MockResponseFactory, MockCopicApiService, MockWebApiService, MockFactories, mock mode, IMockResponseFactory, SPA development without backend
 ---
 
 # Mock Response Factory

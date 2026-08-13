@@ -1,16 +1,7 @@
 ---
 name: tw-aggregate-pattern
-description: >-
-  **TIMEWARP SKILL** — the golden aggregate-root pattern: typed id, `Entity<TId>` base,
-  fail-closed `Create`, named mutations with no public setters, a private nested `Invariants`
-  validator, and save-time enforcement via `DomainInvariantsGuard`/`AggregateDbContext`. Invoke
-  before adding or reviewing an `IAggregateRoot`, or when TWA0011/TWA0012 fire.
-  WHEN: "add an aggregate", "IAggregateRoot", "aggregate root", "TWA0011", "TWA0012",
-  "Invariants validator", "typed id".
-when-to-use: >
-  aggregate root, IAggregateRoot, Entity<TId>, typed id, TypedId, Invariants validator,
-  DomainInvariantsGuard, AggregateDbContext, TWA0011, TWA0012, fail-closed construction,
-  named mutation, concurrency token, Version
+description: "**TIMEWARP SKILL** — the golden aggregate-root pattern: typed id, `Entity<TId>` base, fail-closed `Create`, named mutations with no public setters, a private nested `Invariants` validator, and save-time enforcement via `DomainInvariantsGuard`/`AggregateDbContext`. Invoke before adding or reviewing an `IAggregateRoot`, or when TWA0011/TWA0012 fire. WHEN: add an aggregate, IAggregateRoot, aggregate root, TWA0011, TWA0012, Invariants validator, typed id."
+when-to-use: aggregate root, IAggregateRoot, Entity<TId>, typed id, TypedId, Invariants validator, DomainInvariantsGuard, AggregateDbContext, TWA0011, TWA0012, fail-closed construction, named mutation, concurrency token, Version
 ---
 
 # Aggregate pattern (TWA0011/0012)

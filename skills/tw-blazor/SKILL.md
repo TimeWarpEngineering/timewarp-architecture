@@ -1,9 +1,6 @@
 ---
 name: tw-blazor
-description: >-
-  Razor file authoring — one @code at the top, markup, optional <style> last.
-  Use when creating or editing .razor files, @code blocks, or in-file <style>
-  tags. CSS placement: tw-blazor-css-strategy. App shell: tw-blazor-layout.
+description: Razor file authoring — one @code at the top, markup, optional <style> last. Use when creating or editing .razor files, @code blocks, or in-file <style> tags. CSS placement: tw-blazor-css-strategy. App shell: tw-blazor-layout.
 ---
 
 # `.razor` file order

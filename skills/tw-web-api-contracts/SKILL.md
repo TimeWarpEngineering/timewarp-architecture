@@ -1,14 +1,7 @@
 ---
 name: tw-web-api-contracts
-description: >-
-  **TIMEWARP SKILL** — endpoint-centric Web.Contracts API contracts (Command, Query, ApiRoute,
-  I*Details, Validator, serialization tests). Invoke before scaffolding or fixing contracts.
-  WHEN: "Add a CreateTodoItem command contract", "Scaffold a GetRole query with ApiRoute and
-  IRoleDetails for the edit form", "Add a serialization round-trip test for my Command".
-when-to-use: >
-  Web.Contracts, web-contracts, command contract, query contract, ApiRoute, ApiEndpoint,
-  EndpointAuthorize, EndpointAllowAnonymous, I*Details, EditForm binding, Validator,
-  serialization round-trip, BFF, AuthApiRequest, FastEndpoint generation
+description: "**TIMEWARP SKILL** — endpoint-centric Web.Contracts API contracts (Command, Query, ApiRoute, I*Details, Validator, serialization tests). Invoke before scaffolding or fixing contracts. WHEN: Add a CreateTodoItem command contract, Scaffold a GetRole query with ApiRoute and IRoleDetails for the edit form, Add a serialization round-trip test for my Command."
+when-to-use: Web.Contracts, web-contracts, command contract, query contract, ApiRoute, ApiEndpoint, EndpointAuthorize, EndpointAllowAnonymous, I*Details, EditForm binding, Validator, serialization round-trip, BFF, AuthApiRequest, FastEndpoint generation
 ---
 
 # Web API Contracts
