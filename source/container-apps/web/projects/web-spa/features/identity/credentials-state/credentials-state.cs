@@ -5,7 +5,8 @@
 #region Design
 // TimeWarp.State rule: every SPA → backend HTTP call goes through an ActionSet (COPIC / ProfileState).
 // Credentials are product data from GetCredentials / AddPasskey / RevokeCredential — never page-local
-// List<> fields. Null Passkeys = not loaded yet (loading UI); empty list = loaded with zero passkeys.
+// List<> fields. Null Credentials = no snapshot; empty list = loaded with zero passkeys.
+// In-flight fetch is [TrackAction] on FetchCredentials — Settings uses IsAnyActive, not null.
 // ActivePasskeys is the Settings filter (passkey + IsActive); full list stays available for follow-ups.
 // StatusMessage / CeremonyError are user-facing strings for create/revoke UX; API transport failures
 // still go through DefaultApiHandler → ToastNotificationState (shared pipeline).

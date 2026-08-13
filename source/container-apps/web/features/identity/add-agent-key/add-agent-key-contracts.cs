@@ -9,8 +9,8 @@
 // size caps — see that contract's Design region for the byte-size rationale). The key difference is
 // authentication and audience: CompleteAgentKeyRegistration is anonymous and mints a brand-new
 // Principal (no sponsor required, by design); this command is authenticated ([EndpointAuthorize],
-// credential-management policy — an agent token needs the credential:manage scope, see
-// CredentialManagementDefaults' Design region) and attaches to the CALLER's EXISTING principal — the
+// PermissionIds.CredentialManageSelf — an agent token needs the credential:manage scope expanded
+// via AgentScopePermissionSeed) and attaches to the CALLER's EXISTING principal — the
 // handler sources the principal id from ICurrentPrincipalAccessor and never calls Principal.Create.
 // UserId is a client/mock-mode identity signal only (see GetCredentials' Design region) — the server
 // never trusts it.
@@ -21,13 +21,18 @@
 // bytes, same as CompleteAgentKeyRegistration's Response) — the agent needs KeyId to later request a
 // bearer token for this specific key via CompleteAgentTokenIssuance, exactly as it would for its
 // first key.
-// [EndpointAuthorize] (task 110/104-005): DeleteRole posture — see GetCredentials' Design region.
+// [EndpointAuthorize] (task 182-006): PermissionIds.CredentialManageSelf dual scheme — see
+// GetCredentials' Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "credential-management")] // matches CredentialManagementDefaults.Policy
+[EndpointAuthorize
+(
+  Policy = PermissionIds.CredentialManageSelf,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.AgentToken
+)]
 public static partial class AddAgentKey
 {
   [ApiRoute("api/identity/credentials/agent-key", HttpVerb.Post)]

@@ -33,11 +33,16 @@
 // Task 154: identity-session cookie OnRedirectToLogin is dual-mode — HTML/page deep links 302 to
 // /Login?returnUrl=…; /api challenges stay 401. Classification SSOT:
 // IdentitySessionCookieChallenge (platform/identity-host). Forbid always 403 (never Login).
+// Task 183: after Web.Spa.Program.ConfigureServices, re-register AuthenticationStateProvider as
+// HostedIdentitySessionAuthenticationStateProvider so prerender uses HttpContext.User (cookie)
+// instead of anonymous session loopback — see that type's Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
 
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 using TimeWarp.Architecture.Abuse;
 using TimeWarp.Architecture.AgentDiscovery;
 using TimeWarp.Architecture.Features;
@@ -147,23 +152,6 @@ public class Program : IAspNetProgram
 
     serviceCollection.AddCascadingAuthenticationState();
     serviceCollection.AddAuthorizationBuilder()
-      .AddPolicy
-      (
-        AgentTokenDefaults.IdentityReadPolicy,
-        policy => policy
-          .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
-          .RequireAuthenticatedUser()
-          .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.IdentityRead)
-      )
-      // Task 104-011: metered pay-for-capability demo (AgentScopes.DemoInvoke).
-      .AddPolicy
-      (
-        AgentTokenDefaults.DemoInvokePolicy,
-        policy => policy
-          .AddAuthenticationSchemes(AgentTokenDefaults.Scheme)
-          .RequireAuthenticatedUser()
-          .RequireClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.DemoInvoke)
-      )
       // Task 110: any signed-in identity-session cookie — see IdentitySessionDefaults.AuthenticatedPolicy's
       // Design region for why this is deliberately not an admin/role-based policy.
       // Round-1 review M4 (nit): this explicit AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
@@ -182,37 +170,14 @@ public class Program : IAspNetProgram
           // handler returns NoResult when mock is off, so Production/normal Dev are unchanged.
           .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, MockIdentityPrincipalHandler.SchemeName)
           .RequireAuthenticatedUser()
-      )
-      // Task 104-005: the ONE policy that accepts either scheme — see CredentialManagementDefaults'
-      // Design region for the full either-scheme + assertion + scope rationale.
-      .AddPolicy
-      (
-        CredentialManagementDefaults.Policy,
-        policy => policy
-          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, AgentTokenDefaults.Scheme)
-          .RequireAuthenticatedUser()
-          .RequireAssertion(context =>
-            string.Equals(context.User.Identity?.AuthenticationType, IdentitySessionDefaults.Scheme, StringComparison.Ordinal)
-            || context.User.HasClaim(AgentTokenDefaults.ScopeClaimType, AgentScopes.CredentialManage))
-      )
-      // Task 147-004: admin capability policies — identity-session (+ mock) + Administrator role.
-      // Policy name strings match AuthorizationPolicyNames / SPA AuthorizationConstants.
-      .AddPolicy
-      (
-        AuthorizationPolicyNames.CanViewRolesPage,
-        policy => policy
-          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, MockIdentityPrincipalHandler.SchemeName)
-          .RequireAuthenticatedUser()
-          .RequireRole(RoleIds.Administrator.ToString())
-      )
-      .AddPolicy
-      (
-        AuthorizationPolicyNames.CanViewPrincipalsPage,
-        policy => policy
-          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, MockIdentityPrincipalHandler.SchemeName)
-          .RequireAuthenticatedUser()
-          .RequireRole(RoleIds.Administrator.ToString())
       );
+    // Task 182-002/003/006: permission-centric policies (policy name == PermissionIds). Admin,
+    // credential, agent identity, and metered-demo contracts use PermissionIds; schemes stay on
+    // [EndpointAuthorize(AuthenticationSchemes)]. Agent scope→permission expansion is in
+    // PermissionEvaluator (IAgentPermissionScopeSource → IAgentCallerContext). SPA uses
+    // AddPermissionClaimPolicies separately.
+    serviceCollection.AddAuthorization(options =>
+      PermissionPolicyRegistration.AddPermissionPolicies(options));
     ConfigureAuthentication(serviceCollection, configuration);
 
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
@@ -231,16 +196,22 @@ public class Program : IAspNetProgram
     serviceCollection.AddHttpContextAccessor();
     serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
     serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
+    serviceCollection.AddScoped<IAgentPermissionScopeSource, AgentCallerPermissionScopeSource>();
     serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
     serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
     serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();
 
-    // Task 147-004 / 147-006: effective roles + request claims for RequireRole on admin policies.
-    // Resolver is scoped so it can resolve EfPrincipalRoleStore (scoped) under postgres without
-    // a captive dependency; with in-memory singleton store, scoped resolver is still valid.
+    // Task 147-004 / 147-006: effective roles + request claims (PrincipalRoleClaimsTransformation
+    // still projects roles for diagnostics). Resolver is scoped so it can resolve
+    // EfPrincipalRoleStore under postgres without a captive dependency.
+    // Task 182-002: PermissionRequirementHandler is the server enforcement path — always via
+    // IPermissionEvaluator (scheme-aware expansion of roles→permissions). SPA projects
+    // GetCurrentSession.Permissions as claims (182-003).
     serviceCollection.Configure<BootstrapAdministratorOptions>(
       configuration.GetSection("Authentication"));
     serviceCollection.AddScoped<IEffectiveRolesResolver, EffectiveRolesResolver>();
+    serviceCollection.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
+    serviceCollection.AddScoped<IAuthorizationHandler, PermissionRequirementHandler>();
     serviceCollection.AddScoped<IClaimsTransformation, PrincipalRoleClaimsTransformation>();
 
     // TimeWarp.402 demos (104-009 tip, 104-011 metered, 104-013 settle→Funded):
@@ -300,6 +271,15 @@ public class Program : IAspNetProgram
     );
 
     Web.Spa.Program.ConfigureServices(serviceCollection, configuration, environmentName);
+
+    // Task 183: last registration wins — prefer cookie principal during hosted prerender.
+    // Only when SPA registered IdentitySessionAuthenticationStateProvider (not mock / Entra).
+    if (serviceCollection.Any(static d =>
+          d.ServiceType == typeof(AuthenticationStateProvider)
+          && d.ImplementationType == typeof(IdentitySessionAuthenticationStateProvider)))
+    {
+      serviceCollection.AddScoped<AuthenticationStateProvider, HostedIdentitySessionAuthenticationStateProvider>();
+    }
 
     serviceCollection
       .AddMediator

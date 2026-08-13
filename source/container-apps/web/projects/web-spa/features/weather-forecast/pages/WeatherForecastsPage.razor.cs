@@ -1,9 +1,13 @@
 #region Purpose
-// Code-behind for the weather forecasts page: declares the route; the fetch-on-init logic lives in the .razor @code block.
+// Registers the WeatherForecasts route and authorize policy; markup and behavior live in WeatherForecastsPage.razor.
+#endregion
+
+#region Design
+// Loading is FetchWeatherForecasts [TrackAction] (COPIC IsAnyActive), not WeatherForecasts is null.
 #endregion
 
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-[Page("/WeatherForecasts", Policy = Policies.CanViewDeveloperPage)]
-[Authorize(Policy = Policies.CanViewDeveloperPage)]
+[Page("/WeatherForecasts", Policy = PermissionIds.DeveloperAccess)]
+[Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class WeatherForecastsPage;

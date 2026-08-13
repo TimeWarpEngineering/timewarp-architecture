@@ -7,8 +7,10 @@
 // Missing key and empty list are both "no stored roles" — Get returns empty array so the
 // effective-roles resolver can apply the Member default. Singleton process lifetime matches
 // InMemoryPrincipalStore registration (zero-infra default). PostgresDbModule swaps to scoped
-// EfPrincipalRoleStore when a connection string is present (task 147-006). Features substrate
-// namespace — see IPrincipalRoleStore Design (shared by Identity + Admin without TWA0009).
+// EfPrincipalRoleStore when a connection string is present (task 147-006).
+// First-admin claim: Gate lock serializes TryClaimFirstAdministratorAsync so concurrent passkey
+// creates cannot all observe "no Administrator" and all write. Features substrate namespace —
+// see IPrincipalRoleStore Design (shared by Identity + Admin without TWA0009).
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -20,6 +22,7 @@ using TimeWarp.Identity;
 public sealed class InMemoryPrincipalRoleStore : IPrincipalRoleStore
 {
   private readonly ConcurrentDictionary<PrincipalId, Guid[]> Assignments = new();
+  private readonly object FirstAdminGate = new();
 
   public Task<IReadOnlyList<Guid>> GetRoleIdsAsync(
     PrincipalId principalId,
@@ -53,5 +56,26 @@ public sealed class InMemoryPrincipalRoleStore : IPrincipalRoleStore
     }
 
     return Task.CompletedTask;
+  }
+
+  public Task<bool> TryClaimFirstAdministratorAsync(
+    PrincipalId principalId,
+    CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+
+    lock (FirstAdminGate)
+    {
+      foreach (Guid[] roles in Assignments.Values)
+      {
+        if (roles.Contains(RoleIds.Administrator))
+        {
+          return Task.FromResult(false);
+        }
+      }
+
+      Assignments[principalId] = [RoleIds.Administrator, RoleIds.Member];
+      return Task.FromResult(true);
+    }
   }
 }

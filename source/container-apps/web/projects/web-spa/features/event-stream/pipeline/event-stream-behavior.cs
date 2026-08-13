@@ -5,8 +5,19 @@
 #region Design
 // Gives an in-app, ordered trace of action dispatch (rendered by the EventStream component)
 // without requiring Redux DevTools to be attached.
-// Writes via Sender.Send(AddEvent.Action) so the log entry itself flows through the normal
-// state pipeline; AddEvent.Action is explicitly skipped or the behavior would recurse forever.
+// Writes via the generated EventStreamState.AddEvent(message) ActionSet method (resolved off
+// IStore) so the log entry itself flows through the normal state pipeline; TWA0022 bans the
+// direct Sender.Send this once used. AddEventActionSet.Action is explicitly skipped or the
+// behavior would recurse forever.
+// Teardown semantics: the generated method reads the state's own CancellationToken on every call,
+// where this previously passed CancellationToken.None. State<TState>.Dispose cancels AND THEN
+// disposes the CancellationTokenSource, so after disposal the token cannot be read at all —
+// reading CancellationTokenSource.Token throws ObjectDisposedException. That, not a cancellation,
+// is what a post-disposal trace dispatch actually raises: nothing on this path observes the token
+// (the AddEvent handler ignores its parameter), so a merely cancelled token throws nothing.
+// The guard therefore catches ObjectDisposedException, and keeps OperationCanceledException as
+// forward cover should a future handler start observing the token. Either way a diagnostic trace
+// entry lost during teardown must never fail (or mask the result of) the action it was tracing.
 // Constrained to IAction so non-state mediator requests are not traced.
 #endregion
 
@@ -20,22 +31,22 @@ using Guard=Ardalis.GuardClauses.Guard;
 /// </summary>
 /// <typeparam name="TRequest"></typeparam>
 /// <typeparam name="TResponse"></typeparam>
-/// <remarks>To avoid infinite recursion don't add AddEvent to the event stream</remarks>
+/// <remarks>To avoid infinite recursion don't add AddEventActionSet to the event stream</remarks>
 public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
   where TRequest : notnull, IAction
 {
   private readonly ILogger Logger;
-  private readonly ISender Sender;
+  private readonly IStore Store;
   public Guid Guid { get; } = Guid.NewGuid();
 
   public EventStreamBehavior
   (
     ILogger<EventStreamBehavior<TRequest, TResponse>> logger,
-    ISender sender
+    IStore store
   )
   {
     Logger = logger;
-    Sender = sender;
+    Store = store;
     Logger.LogDebug($"{GetType().Name}: Constructor");
   }
 
@@ -56,21 +67,20 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
 
   private async Task AddEventToStream(TRequest request, string tag)
   {
-    if (request is not AddEvent.Action) //Skip to avoid recursion
+    if (request is not AddEventActionSet.Action) //Skip to avoid recursion
     {
-      string message;
-      string requestTypeName = request.GetType().Name;
-      if (request is BaseRequest)
-      {
-        message = $"{tag}:{requestTypeName}";
-      }
-      else
-      {
-        message = $"{tag}:{requestTypeName}";
-      }
+      string message = $"{tag}:{request.GetType().Name}";
 
-      var addEventAction = new AddEvent.Action(){ Message = message};
-      await Sender.Send(addEventAction);
+      try
+      {
+        await Store.GetState<EventStreamState>().AddEvent(message);
+      }
+      catch (Exception exception) when (exception is OperationCanceledException or ObjectDisposedException)
+      {
+        // State disposed mid-flight: losing a trace entry is acceptable, failing the traced
+        // action is not.
+        Logger.LogDebug("Event stream trace '{Message}' dropped — state disposed.", message);
+      }
     }
   }
 }

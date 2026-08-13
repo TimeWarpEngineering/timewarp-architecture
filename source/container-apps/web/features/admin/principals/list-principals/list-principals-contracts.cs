@@ -4,11 +4,11 @@
 
 #region Design
 // Task 147-004: admin Principals list (D9) — flat PrincipalSummaryDto rows, no detail page.
-// RoleIds on each row are *effective* roles (IEffectiveRolesResolver), not raw store rows, so the
-// multi-select UI shows what RequireRole will see. [EndpointAuthorize] uses CanViewPrincipalsPage
-// (Administrator). GetMockResponseFactory serves SPA MockWebApiService offline.
-// AuthenticationSchemes (task 158): mirrors CanViewPrincipalsPage's own AddAuthenticationSchemes
-// (identity-session + mock-identity-session) — see AuthenticationSchemeNames' Design region.
+// RoleIds on each row are *effective* roles (IEffectiveRolesResolver), not raw store rows.
+// [EndpointAuthorize] (task 182-002): admin.principals.read (PermissionIds); SetPrincipalRoles
+// uses admin.principals.manage. GetMockResponseFactory serves SPA MockWebApiService offline.
+// AuthenticationSchemes (task 158): identity-session + mock-identity-session — see
+// AuthenticationSchemeNames' Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
@@ -19,7 +19,7 @@ using TimeWarp.Identity;
 [ApiEndpoint]
 [EndpointAuthorize
 (
-  Policy = AuthorizationPolicyNames.CanViewPrincipalsPage,
+  Policy = PermissionIds.AdminPrincipalsRead,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
 public static partial class ListPrincipals

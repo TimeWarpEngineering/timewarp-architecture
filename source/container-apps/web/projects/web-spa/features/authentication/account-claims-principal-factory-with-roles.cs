@@ -1,18 +1,18 @@
 #region Purpose
-// Enriches the OIDC ClaimsPrincipal with application role claims fetched from the Web API at sign-in.
+// Enriches the OIDC ClaimsPrincipal with application role and permission claims at Entra sign-in.
 #endregion
 
 #region Design
-// The identity provider's token carries no application roles; they live in the app's own
-// backend, so they are pulled via AuthorizationState.FetchCurrentUser and added as
-// ClaimTypes.Role claims (role Guids as strings) that role-based policies match against.
-// Fetching inside the claims factory guarantees role claims exist before any authorization
-// policy evaluates.
+// The identity provider's token carries no application roles/permissions; they live in the app's
+// own backend (GetCurrentUser mock in the template), so they are pulled via
+// AuthorizationState.FetchCurrentUser and added as ClaimTypes.Role + PermissionIds.ClaimType
+// claims that SPA AddPermissionClaimPolicies match (task 182-003). Fetching inside the claims
+// factory guarantees grants exist before any authorization policy evaluates.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Authentication;
 
-[CrossSliceReference(typeof(AuthorizationState), "Identity pipeline: claims factory enriches the signed-in principal with role claims from AuthorizationState — authentication/authorization are deliberately coupled.")]
+[CrossSliceReference(typeof(AuthorizationState), "Identity pipeline: claims factory enriches the signed-in principal with role/permission claims from AuthorizationState — authentication/authorization are deliberately coupled.")]
 public class AccountClaimsPrincipalFactoryWithRoles : AccountClaimsPrincipalFactory<RemoteUserAccount>
 {
   private readonly IStore Store1;
@@ -35,11 +35,20 @@ public class AccountClaimsPrincipalFactoryWithRoles : AccountClaimsPrincipalFact
     var identity = (ClaimsIdentity)claimsPrincipal.Identity;
 
     await AuthorizationState.FetchCurrentUser();
-    if (AuthorizationState.Roles == null) return claimsPrincipal;
-
-    foreach (Guid role in AuthorizationState.Roles)
+    if (AuthorizationState.Roles is { } roles)
     {
-      identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
+      foreach (Guid role in roles)
+      {
+        identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
+      }
+    }
+
+    if (AuthorizationState.Permissions is { } permissions)
+    {
+      foreach (string permissionId in permissions)
+      {
+        identity.AddClaim(new Claim(PermissionIds.ClaimType, permissionId));
+      }
     }
 
     return claimsPrincipal;

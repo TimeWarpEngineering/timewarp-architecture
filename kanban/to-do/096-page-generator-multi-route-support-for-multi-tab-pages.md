@@ -29,7 +29,7 @@ Same pattern: `DashboardPage` (`[Page("/dashboard")]` + `[Route("/")]`),
 - [ ] Design multi-route API (stacked `[Page]` vs `[Page(routes: ...)]`)
 - [ ] Implement generator emission for N routes
 - [ ] Tests in architecture generators package
-- [ ] Document in page-mixin / INavigablePage guidance
+- [ ] Document in page-attribute / INavigablePage guidance
 
 ## Notes
 

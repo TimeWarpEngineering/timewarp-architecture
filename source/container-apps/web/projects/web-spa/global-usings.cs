@@ -2,6 +2,8 @@
 // Project-wide using directives so individual files omit repeated imports.
 #endregion
 
+#pragma warning disable IDE0005 // Global usings are consumed across .cs and .razor; per-line unused is a false positive after razor/@code splits.
+
 global using Ardalis.GuardClauses;
 global using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons;
 global using TimeWarp.State;

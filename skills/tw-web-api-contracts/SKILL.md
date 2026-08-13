@@ -48,11 +48,11 @@ namespace root, folder casing, test project layout, and mock-service registratio
 
 ## The contract attributes (source-generated)
 
-Two layers of attributes. Route/mixin attributes are emitted into the consumer's root namespace by
+Two layers of attributes. Route/request attributes are emitted into the consumer's root namespace by
 the bundled contracts generator (class **must be `partial`**). Server-generation attributes live
 in `TimeWarp.Architecture.Attributes` and mark which contracts become hosted FastEndpoints.
 
-### Route / request mixins (on nested `Query`/`Command`)
+### Route / request attributes (on nested `Query`/`Command`)
 
 | Attribute | Generates | Use when |
 |-----------|-----------|----------|
@@ -77,7 +77,7 @@ hand-written MVC `BaseEndpoint` shims in the template. Opt in per operation:
 
 Picking anonymous when the contract shouldn't be is caught too: **TWA0014** flags a contract that
 carries both markers, or `[EndpointAllowAnonymous]` alongside a nested `Query`/`Command` that
-declares `IAuthApiRequest` (manually or via the `[AuthApiRequest]` mixin) — see the auth-forms
+declares `IAuthApiRequest` (manually or via `[AuthApiRequest]`) — see the auth-forms
 section below for why that combination is a contradiction, not just a style nit.
 
 ```csharp
@@ -181,7 +181,7 @@ contradict each other.
 | Absent | `[EndpointAllowAnonymous(reason)]` | Genuinely public / pre-auth route; no identity involved |
 | **Present** | **`[EndpointAllowAnonymous(reason)]`** | **Forbidden — TWA0014.** A contract that carries a user identity but declares its endpoint unauthenticated is self-contradictory. Fix by adding `[EndpointAuthorize]` or dropping `IAuthApiRequest`. |
 
-`IAuthApiRequest` is detected by either shape the mixin generator produces — the interface
+`IAuthApiRequest` is detected by either shape the contracts generator produces — the interface
 implementation or the `[AuthApiRequest]` attribute itself — so the forbidden row is caught
 regardless of which of the two forms below produced it.
 

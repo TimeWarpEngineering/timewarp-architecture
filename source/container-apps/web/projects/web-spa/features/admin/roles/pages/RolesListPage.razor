@@ -1,9 +1,21 @@
 @namespace TimeWarp.Architecture.Features.Admin.Roles
+@using TimeWarp.Architecture.Features
 @inherits BaseComponent
 
 @code {
   public static Icon? NavIcon => new Icons.Regular.Size20.PeopleTeam();
   public static string Title => "Roles";
+
+  private bool IsLoading =>
+    IsAnyActive(typeof(RoleState.FetchRolesActionSet.Action));
+
+  private async Task OnPermissionSelected(Guid roleId, string permissionId, bool selected) =>
+    await RoleState.SetPermissionSelected(roleId, permissionId, selected);
+
+  private async Task OnSave(Guid roleId) =>
+    await RoleState.SetRolePermissions(roleId);
+
+  protected override async Task OnInitializedAsync() => await RoleState.FetchRoles();
 }
 
 <PageTitle>@Title</PageTitle>
@@ -11,7 +23,9 @@
 <TimeWarpPage Title="Roles">
   <div class="twe-stack">
     <p class="sg-subtitle">
-      Product roles available for principal assignment. Create custom demo roles via New Role.
+      Product roles as permission bundles. Edit membership with the checkboxes; Administrator
+      core admin permissions cannot be stripped (protected-core). Create custom demo roles via
+      New Role (empty permissions until you assign them here).
     </p>
     <div>
       <FluentButton Appearance="ButtonAppearance.Primary" Href="@RolePage.GetPageUrl()" data-qa="NewRole">
@@ -19,7 +33,7 @@
       </FluentButton>
     </div>
     <Card Title="Roles">
-      @if (RoleState.Roles is null)
+      @if (IsLoading)
       {
         <p><em>Loading…</em></p>
       }
@@ -30,14 +44,35 @@
             <tr>
               <TableHeader>Name</TableHeader>
               <TableHeader>Description</TableHeader>
+              <TableHeader>Permissions</TableHeader>
+              <TableHeader></TableHeader>
             </tr>
           </thead>
           <tbody>
-            @foreach (GetRoles.RoleDto role in RoleState.Roles)
+            @foreach (GetRoles.RoleDto role in RoleState.Roles ?? [])
             {
-              <tr>
+              <tr @key="role.RoleId">
                 <Cell>@role.Name</Cell>
                 <Cell>@role.Description</Cell>
+                <Cell>
+                  <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
+                    @foreach (string permissionId in PermissionIds.All)
+                    {
+                      <FluentCheckbox
+                        Label="@permissionId"
+                        Value="@RoleState.IsPermissionSelected(role.RoleId, permissionId)"
+                        ValueChanged="@(async (bool value) => await OnPermissionSelected(role.RoleId, permissionId, value))" />
+                    }
+                  </FluentStack>
+                </Cell>
+                <Cell>
+                  <FluentButton
+                    Appearance="ButtonAppearance.Primary"
+                    data-qa="SaveRolePermissions"
+                    OnClick="@(async () => await OnSave(role.RoleId))">
+                    Save
+                  </FluentButton>
+                </Cell>
               </tr>
             }
           </tbody>

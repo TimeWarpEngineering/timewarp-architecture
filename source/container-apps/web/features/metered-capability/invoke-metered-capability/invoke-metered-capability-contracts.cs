@@ -6,17 +6,21 @@
 // Host choice (104-011): **web-server** — agent bearer (AgentTokenDefaults) already exists here;
 // api-server agent bearer is 104-030 and would block this demo if we waited. Route is under
 // api/demo/... so free/discovery routes never share this path or payment middleware.
-// [EndpointAuthorize] policy agent-scope:demo:invoke (= AgentTokenDefaults.DemoInvokePolicy /
-// AgentScopes.DemoInvoke). Payment is NOT authorization: scope proves the agent may attempt the
-// capability; MeteredCapabilityGate bills credit or returns 402/503. Distinct from voluntary tip
-// (104-009): every success debits the ledger. No GetMockResponseFactory — payment headers and
-// principal identity are ambient, not mockable from SPA factories.
+// [EndpointAuthorize] PermissionIds.DemoInvoke under agent-token only (182-006) — evaluator expands
+// scope demo:invoke via AgentScopePermissionSeed. Payment is NOT authorization: permission proves
+// the agent may attempt the capability; MeteredCapabilityGate bills credit or returns 402/503.
+// Distinct from voluntary tip (104-009): every success debits the ledger. No GetMockResponseFactory
+// — payment headers and principal identity are ambient, not mockable from SPA factories.
 #endregion
 
 namespace TimeWarp.Architecture.Features.MeteredCapability;
 
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "agent-scope:demo:invoke")] // matches AgentTokenDefaults.DemoInvokePolicy
+[EndpointAuthorize
+(
+  Policy = PermissionIds.DemoInvoke,
+  AuthenticationSchemes = AuthenticationSchemeNames.AgentToken
+)]
 public static partial class InvokeMeteredCapability
 {
   [ApiRoute("api/demo/metered-capability", HttpVerb.Get)]

@@ -11,19 +11,24 @@
 // Administrator so Member proves forbid ≠ Login). Cases mirror the dual-mode matrix in
 // IdentitySessionCookieChallenge Design: HTML Accept + Accept-less fallback redirect; api/Roles
 // anonymous 401; Member session cookie authenticated; Member /Admin/Roles 403.
-// Residual: full authenticated Blazor HTML SSR of /Settings stack-overflows in this in-proc host
-// (IdentitySessionAuthenticationStateProvider + AuthenticationStateListener prerender path) —
-// process dies before status is readable. Page 200 is left to live smoke; challenge/forbid and
-// API 401 are covered here without that SSR path.
+// Task 183 resolved the old residual (authenticated HTML SSR stack overflow): hosted prerender
+// now prefers HttpContext.User (HostedIdentitySessionAuthenticationStateProvider) and
+// RedirectToLogin no longer navigates during static SSR. The Ok_Page_* cases below are the
+// regression tripwire — pre-183 they killed the process (exit 134) instead of returning 200.
+// They also assert the body is the real page, not RedirectToLogin's static sign-in fallback,
+// so a silently-anonymous prerender state fails the test rather than passing on status alone.
 #endregion
 
 namespace ProtectedPageDeepLink_;
 
 using System.Net;
 using System.Net.Http.Headers;
+using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
+using TimeWarp.Identity;
 
 public class Returns_
 {
@@ -115,6 +120,56 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     response.Headers.Location.ShouldBeNull(
       "Authenticated forbid must stay 403 — never redirect to Login (task 154 / task 153 loop guard).");
+  }
+
+  public static async Task Ok_Page_Given_Passkey_Member_Settings_Html()
+  {
+    // Task 183 regression tripwire: pre-fix this stack-overflowed the process (exit 134) —
+    // hosted prerender saw an anonymous principal and RedirectToLogin navigated during static SSR.
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Member]);
+
+    HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string html = await response.Content.ReadAsStringAsync();
+    html.ShouldContain("Passkeys");
+    html.ShouldNotContain("Sign in to continue",
+      customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
+  }
+
+  public static async Task Ok_Page_Given_Passkey_Administrator_Admin_Roles_Html()
+  {
+    // The original task 183 crash page: signed-in admin GET /Admin/Roles killed web-server.
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+
+    HttpResponseMessage response = await GetPageHtml("/Admin/Roles", sessionCookie);
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string html = await response.Content.ReadAsStringAsync();
+    html.ShouldContain("data-qa=\"NewRole\"");
+    html.ShouldNotContain("Sign in to continue",
+      customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
+  }
+
+  private static async Task<HttpResponseMessage> GetPageHtml(string path, string sessionCookie)
+  {
+    using HttpClient client = CreateNoRedirectClient();
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    using HttpRequestMessage request = new(HttpMethod.Get, path);
+    request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+    return await client.SendAsync(request);
+  }
+
+  private static async Task SetRolesAsync(PrincipalId principalId, Guid[] roleIds)
+  {
+    // Scope required: under postgres IPrincipalRoleStore is scoped (EfPrincipalRoleStore).
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    await roleStore.SetRoleIdsAsync(principalId, roleIds);
   }
 
   private static HttpClient CreateNoRedirectClient()

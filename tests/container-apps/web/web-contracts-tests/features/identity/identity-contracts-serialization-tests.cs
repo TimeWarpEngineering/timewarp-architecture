@@ -24,6 +24,7 @@
 // ReSharper disable InconsistentNaming
 namespace IdentityContracts_;
 
+using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Contracts.Tests;
 using TimeWarp.Identity;
@@ -128,12 +129,18 @@ public class GetCurrentSession_Response_Should
 
   public static Task SerializeAndDeserialize_Authenticated()
   {
-    GetCurrentSession.Response response = new(isAuthenticated: true, PrincipalId.New());
+    GetCurrentSession.Response response = new(
+      isAuthenticated: true,
+      PrincipalId.New(),
+      roleIds: [RoleIds.Administrator],
+      permissions: [PermissionIds.AdminAccess, PermissionIds.ProfileRead]);
 
     GetCurrentSession.Response parsed = ContractSerialization.RoundTrip(response);
 
     parsed.IsAuthenticated.ShouldBeTrue();
     parsed.PrincipalId.ShouldBe(response.PrincipalId);
+    parsed.RoleIds.ShouldBe(response.RoleIds);
+    parsed.Permissions.ShouldBe(response.Permissions);
     return Task.CompletedTask;
   }
 
@@ -145,6 +152,8 @@ public class GetCurrentSession_Response_Should
 
     parsed.IsAuthenticated.ShouldBeFalse();
     parsed.PrincipalId.ShouldBeNull();
+    parsed.RoleIds.ShouldBeEmpty();
+    parsed.Permissions.ShouldBeEmpty();
     return Task.CompletedTask;
   }
 }

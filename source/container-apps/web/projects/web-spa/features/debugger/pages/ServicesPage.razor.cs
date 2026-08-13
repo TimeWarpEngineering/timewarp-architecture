@@ -1,5 +1,5 @@
 #region Purpose
-// Debug page listing the mediator pipeline registrations resolved from DI.
+// Registers the Services route and authorize policy; markup and behavior live in ServicesPage.razor.
 #endregion
 
 #region Design
@@ -11,20 +11,6 @@
 
 namespace TimeWarp.Architecture.Features.Debugger;
 
-[Page("/Services", Policy = Policies.CanViewDeveloperPage)]
-[Authorize(Policy = Policies.CanViewDeveloperPage)]
-partial class ServicesPage
-{
-
-  [Inject]
-  private IServiceCollection ServiceCollection { get; set; } = null!;
-
-  private List<ServiceDescriptor> PipelineBehaviors => FilterServices(typeof(IPipelineBehavior<,>));
-  private List<ServiceDescriptor> RequestPreProcessors => FilterServices(typeof(IRequestPreProcessor<>));
-  private List<ServiceDescriptor> RequestPostProcessors => FilterServices(typeof(IRequestPostProcessor<,>));
-  private List<ServiceDescriptor> StreamPipelineBehaviors => FilterServices(typeof(IStreamPipelineBehavior<,>));
-
-  private List<ServiceDescriptor> FilterServices(Type serviceType) =>
-    ServiceCollection.Where
-      (s => s.ServiceType == serviceType || s.ServiceType.GetInterfaces().Contains(serviceType)).ToList();
-}
+[Page("/Services", Policy = PermissionIds.DeveloperAccess)]
+[Authorize(Policy = PermissionIds.DeveloperAccess)]
+partial class ServicesPage;

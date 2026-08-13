@@ -4,6 +4,8 @@
 
 #region Design
 // DefaultApiHandler pattern (WeatherForecasts): only Query mapping + success mutation live here.
+// Seeds DraftPermissionIds from each RoleDto.PermissionIds so the membership matrix matches
+// the server (task 182-004).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -31,6 +33,9 @@ partial class RoleState
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         RoleState.RolesList = [.. response.Items];
+        RoleState.DraftPermissionIds = response.Items.ToDictionary(
+          static dto => dto.RoleId,
+          static dto => new HashSet<string>(dto.PermissionIds ?? [], StringComparer.Ordinal));
         return Task.CompletedTask;
       }
     }

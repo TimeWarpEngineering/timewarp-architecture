@@ -3,12 +3,27 @@
 @inject NavigationManager NavigationManager
 
 @*
-  Demonstrates the web-api-contracts pattern:
-  - EditForm binds to the IRoleDetails INTERFACE (the CreateRole.Command *is* the model — no view model).
-  - Blazilla's <FluentValidator> runs the SHARED RoleDetailsValidator (AbstractValidator<IRoleDetails>)
-    passed explicitly, so only the user-editable Name/Description are validated (no auth/UserId noise).
-    (Morris resolves validators by runtime type and can't target the interface; hence Blazilla.)
+  Purpose: create-role form — bind IRoleDetails, dispatch RoleState.CreateRole.
+
+  Design: web-api-contracts — EditForm binds the IRoleDetails interface; CreateRole.Command
+  is the model (no view model). Blazilla FluentValidator takes the shared
+  RoleDetailsValidator so only Name/Description are validated (no UserId noise).
+  COPIC UX — Action ctor takes Command; submit is RoleState.CreateRole(Command).
+  UserId is stamped in the handler GetRequest, not here.
 *@
+
+@code {
+  private static readonly RoleDetailsValidator RoleValidator = new();
+
+  private CreateRole.Command Command { get; } = new();
+  private IRoleDetails RoleDetails => Command;
+
+  private async Task HandleValidSubmit()
+  {
+    await RoleState.CreateRole(Command);
+    NavigationManager.NavigateTo(RolesListPage.GetPageUrl());
+  }
+}
 
 <EditForm Model=@RoleDetails OnValidSubmit=HandleValidSubmit FormName="RoleForm" novalidate>
   <FluentValidator Validator="@RoleValidator" />
@@ -28,26 +43,3 @@
 
   </FluentStack>
 </EditForm>
-
-@code {
-  // Shared, endpoint-agnostic validation for the IRoleDetails shape — one instance is enough.
-  private static readonly RoleDetailsValidator RoleValidator = new();
-
-  private RoleState.CreateRoleActionSet.Action CreateAction { get; set; } = default!;
-  private IRoleDetails RoleDetails { get; set; } = default!;
-
-  protected override void OnInitialized()
-  {
-    CreateAction = new RoleState.CreateRoleActionSet.Action();
-    // The BFF normally stamps the current user's id; set it here so the Command-level auth rule
-    // passes when the action is dispatched. The form itself only edits the IRoleDetails fields.
-    CreateAction.Command.UserId = Guid.NewGuid();
-    RoleDetails = CreateAction.Command;
-  }
-
-  private async Task HandleValidSubmit()
-  {
-    await Mediator.Send(CreateAction, CancellationToken);
-    NavigationManager.NavigateTo(RolesListPage.GetPageUrl());
-  }
-}

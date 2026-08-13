@@ -12,6 +12,11 @@ description: "Razor file authoring — one @code at the top, markup, optional <s
 
 Never two `@code` blocks. Never `@code` after markup. Never `<style>` above markup.
 
+Hand-written members live in `@code`. A `.razor.cs` exists only for attributes the C# source
+generators and class-level analyzers must see (`[Page]`, `[Authorize]`, `[CrossSliceReference]`).
+`PageSourceGenerator` does not run on `.razor` files. Do not put `[Page]` in `@code` or use
+`@page` on a page that already has `[Page]`.
+
 ```razor
 @namespace TimeWarp.Architecture.Features.Example
 @inherits BaseComponent

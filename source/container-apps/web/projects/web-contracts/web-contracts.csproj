@@ -17,6 +17,7 @@
     <PackageReference Include="FluentValidation"/>
     <PackageReference Include="OneOf"/>
     <PackageReference Include="TimeWarp.Mediator"/>
+    <PackageReference Include="Microsoft.AspNetCore.Authorization"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"/>

@@ -17,13 +17,13 @@
 // anonymous caller gets the contract's mock response so the demo works with no sign-in, and an
 // authenticated caller (ICurrentPrincipalAccessor resolves a current principal — task 150) gets
 // store-backed create-if-missing profile data. Requiring auth at the endpoint would break the
-// anonymous demo path. Page gate remains Policies.CanViewOwnProfile.
+// anonymous demo path. Page gate remains PermissionIds.ProfileRead.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
 
 [ApiEndpoint]
-[EndpointAllowAnonymous("Handler is deliberately dual-mode (anonymous demo response vs store-backed authenticated response); requiring auth would break the anonymous demo path. Page stays CanViewOwnProfile (task 148 D3).")]
+[EndpointAllowAnonymous("Handler is deliberately dual-mode (anonymous demo response vs store-backed authenticated response); requiring auth would break the anonymous demo path. Page stays PermissionIds.ProfileRead (task 148 D3 / 182-003).")]
 public static partial class GetProfile
 {
   [ApiRoute(RouteTemplate: "api/Users/Current/Profile", HttpVerb.Get)]

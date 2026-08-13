@@ -26,13 +26,18 @@
 // a 409, it just is not prevented client-side with a nicer UX). Follow-up, not blocking.
 // Response returns the new CredentialId so the client can immediately show/select it (e.g. to give it
 // a label in the UI) without an extra GetCredentials round-trip.
-// [EndpointAuthorize] (task 110/104-005): DeleteRole posture — see GetCredentials' Design region.
+// [EndpointAuthorize] (task 182-006): PermissionIds.CredentialManageSelf dual scheme — see
+// GetCredentials' Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "credential-management")] // matches CredentialManagementDefaults.Policy
+[EndpointAuthorize
+(
+  Policy = PermissionIds.CredentialManageSelf,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.AgentToken
+)]
 public static partial class AddPasskey
 {
   [ApiRoute("api/identity/credentials/passkey", HttpVerb.Post)]

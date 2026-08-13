@@ -6,8 +6,8 @@
 // Counterpart to FiveSecondTaskActionSet so the template can demonstrate multiple tracked
 // actions running concurrently; [TrackAction] gives each its own busy indicator.
 // Public ApplicationState.TwoSecondTask(...) is emitted by TimeWarp.State's ActionSet method
-// source generator (do not hand-write a wrapper here — it collides with the generated member).
-// FiveSecondTask keeps a hand-written twin that predates the generator; this set relies on gen.
+// source generator (do not hand-write a wrapper here — it collides with the generated member,
+// and a hand-written one dispatches via a raw Sender.Send, which TWA0022 bans).
 // Surface: Developer-gated TestPage "Try it" card (relocated from Home in 147-005).
 #endregion
 

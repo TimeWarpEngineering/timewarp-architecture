@@ -1,4 +1,25 @@
 @namespace TimeWarp.Architecture.Components
+
+@code
+{
+#if ReduxDevToolsEnabled
+  private static bool ReduxDevToolsEnabled => true;
+  [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; } = default!;
+#else
+  private static bool ReduxDevToolsEnabled => false;
+#endif
+
+  [Inject] private JsonRequestHandler JsonRequestHandler { get; set; } = default!;
+
+  protected override async Task OnAfterRenderAsync(bool aFirstRender)
+  {
+#if ReduxDevToolsEnabled
+    await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
+#endif
+    await JsonRequestHandler.InitAsync().ConfigureAwait(false);
+  }
+}
+
 <CascadingAuthenticationState>
   <Router
     AppAssembly=@typeof(IAssemblyMarker).Assembly
@@ -35,23 +56,3 @@
   @* Loads/clears ProfileState + AuthorizationState when AuthenticationState changes (sign-in/out). *@
   <AuthenticationStateListener />
 </CascadingAuthenticationState>
-
-@code
-{
-#if ReduxDevToolsEnabled
-  private static bool ReduxDevToolsEnabled => true;
-  [Inject] private ReduxDevToolsInterop ReduxDevToolsInterop { get; set; } = default!;
-#else
-  private static bool ReduxDevToolsEnabled => false;
-#endif
-
-  [Inject] private JsonRequestHandler JsonRequestHandler { get; set; } = default!;
-
-  protected override async Task OnAfterRenderAsync(bool aFirstRender)
-  {
-#if ReduxDevToolsEnabled
-    await ReduxDevToolsInterop.InitAsync().ConfigureAwait(false);
-#endif
-    await JsonRequestHandler.InitAsync().ConfigureAwait(false);
-  }
-}

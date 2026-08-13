@@ -1,0 +1,34 @@
+# Lift SSH.NET to 2026.0.0 to clear NU1903
+
+## Description
+
+`Testcontainers.PostgreSql` 4.13.0 pulls SSH.NET 2025.1.0. GitHub advisory
+GHSA-q939-rpr3-3284 (SCP recursive download path traversal) is now in the
+NuGet audit database, so restore treats NU1903 as an error and fails
+`web-infrastructure-tests` (and template-smoke SmokeDefault). Lift the
+transitive package to patched 2026.0.0 — same pattern as Microsoft.OpenApi
+on foundation-server. Do not suppress NU1903.
+
+## Checklist
+
+- [x] Add CPM pin `SSH.NET` 2026.0.0
+- [x] Direct `PackageReference` on `web-infrastructure-tests` (only Testcontainers consumer)
+- [x] Restore `web-infrastructure-tests` locally — no NU1903
+- [x] Push SSH.NET lift; `ci` green
+- [x] Bump template-smoke web-jaribu expected count 92→93 (task 189 added AfterRoleGrantChange_Should_ReExpand)
+- [x] Push count bump and confirm `template-smoke` green
+
+## Results
+
+PR #301 CI/CD [31709159233](https://github.com/TimeWarpEngineering/timewarp-architecture/actions/runs/31709159233) success on `6ad90638`:
+detect-paths, ci (5m50s), template-smoke (4m41s), Lint skill specs. `mergeable: MERGEABLE`, `CLEAN`.
+
+## Notes
+
+- Advisory published after the last green #301 run (b039d4a9). Not caused by the razor/@code work.
+- Testcontainers 4.13.0 is still latest; no upstream bump available.
+- After the lift, SmokeDefault restored/built 0/0 and tests passed; smoke failed only on the 92 vs 93 count.
+
+## Session
+
+- Implementation: grok 2026-08-13 (PR #301 CI unblock)

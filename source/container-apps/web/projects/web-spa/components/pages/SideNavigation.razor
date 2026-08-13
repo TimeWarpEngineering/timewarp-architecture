@@ -1,6 +1,10 @@
 @namespace TimeWarp.Architecture.Components
 @inherits BaseComponent
 
+@code {
+  [Parameter] public RenderFragment? SideNavigationContent { get; set; }
+}
+
 <If Condition=@(SideNavigationContent != null)>
   <div data-qa=@nameof(SideNavigation)>
     @SideNavigationContent

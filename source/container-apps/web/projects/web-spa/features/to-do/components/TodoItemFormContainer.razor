@@ -1,6 +1,12 @@
 @namespace TimeWarp.Architecture.Features.ToDo
 @inherits BaseComponent
 
+@code {
+  [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+  private void Back() => NavigationManager.NavigateTo("/");
+}
+
 <FormContainer>
   <TitleContent>Todo Item</TitleContent>
   <TitleButtonContent>
@@ -13,9 +19,3 @@
     <FluentButton Appearance=ButtonAppearance.Primary>Save</FluentButton>
   </ActionContent>
 </FormContainer>
-
-@code {
-  [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-
-  private void Back() => NavigationManager.NavigateTo("/");
-}

@@ -20,6 +20,9 @@
 // zero-infra identity defaults so Program stays free of per-concern store lines. When a Postgres
 // connection is present, PostgresDbModule replaces this with scoped EfPrincipalRoleStore
 // (task 147-006) — same dual-mode pattern as IPrincipalStore.
+// Role→permission grants (task 182-001): IRolePermissionStore defaults to singleton
+// InMemoryRolePermissionStore (seeded from RolePermissionSeed). PostgresDbModule swaps to scoped
+// EfRolePermissionStore when connected — same dual-mode gate as principal-role store.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
@@ -38,5 +41,8 @@ public class InMemoryIdentityStoresModule : IModule
 
     // Web-app principal→role default; PostgresDbModule swaps to EfPrincipalRoleStore when connected.
     serviceCollection.AddSingleton<IPrincipalRoleStore, InMemoryPrincipalRoleStore>();
+
+    // Web-app role→permission default (seeded); PostgresDbModule swaps to EfRolePermissionStore when connected.
+    serviceCollection.AddSingleton<IRolePermissionStore, InMemoryRolePermissionStore>();
   }
 }

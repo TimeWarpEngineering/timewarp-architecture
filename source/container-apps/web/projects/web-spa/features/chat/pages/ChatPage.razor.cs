@@ -1,5 +1,5 @@
 #region Purpose
-// Code-behind for the chat demo page: hub lifecycle, outbound dispatch, transcript binding.
+// Registers the Chat route and authorize policy; markup and behavior live in ChatPage.razor.
 #endregion
 
 #region Design
@@ -12,52 +12,6 @@
 
 namespace TimeWarp.Architecture.Features.Chat;
 
-using static ChatState;
-
-[Page("/Chat", Policy = Policies.CanViewDeveloperPage)]
-[Authorize(Policy = Policies.CanViewDeveloperPage)]
-partial class ChatPage
-{
-  private string User { get; set; } = string.Empty;
-  private string Message { get; set; } = string.Empty;
-  private IEnumerable<ChatMessage> ChatMessages => ChatState.ChatMessages ?? Enumerable.Empty<ChatMessage>();
-
-  [Inject] private ChatHubConnection ChatHubConnection { get; set; } = default!;
-
-  protected override async Task OnInitializedAsync()
-  {
-    await ChatHubConnection.ConnectAsync();
-  }
-
-  private async Task SendMessage()
-  {
-    if (!string.IsNullOrEmpty(User) && !string.IsNullOrEmpty(Message) && ChatHubConnection.IsConnected)
-    {
-      await ChatState.SendMessageToServer
-      (
-        new SendMessage.Command
-        {
-          User = User,
-          Message = Message
-        }
-      );
-
-      Message = string.Empty;
-    }
-  }
-
-  private async Task HandleKeyDown(KeyboardEventArgs e)
-  {
-    if (e.Key == "Enter")
-    {
-      await SendMessage();
-    }
-  }
-
-  public override void Dispose()
-  {
-    base.Dispose();
-    GC.SuppressFinalize(this);
-    ChatHubConnection.Dispose();
-  }
-}
+[Page("/Chat", Policy = PermissionIds.DeveloperAccess)]
+[Authorize(Policy = PermissionIds.DeveloperAccess)]
+partial class ChatPage;

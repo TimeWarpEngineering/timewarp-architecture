@@ -6,18 +6,26 @@
 #region Design
 // Task 104-021: when Authentication:UseMock is off and Authentication:UseEntra is off, the SPA
 // still needs an AuthenticationStateProvider for CascadingAuthenticationState / AuthorizeView.
-// This provider reads GET api/identity/session (cookie ambient auth) and projects PrincipalId
-// plus Response.RoleIds into ClaimTypes.Role (task 147-004 D4) so RolePolicyGrants match real
-// passkey users — not only mock. Failures and unauthenticated sessions yield an anonymous
-// principal (no throw). Role claim values are RoleIds Guids as strings.
+// Reads GET api/identity/session (cookie ambient auth) and projects:
+//   - PrincipalId → NameIdentifier + timewarp:principal_id
+//   - Response.RoleIds → ClaimTypes.Role (diagnostics / UserClaims display; task 147-004 D4)
+//   - Response.Permissions → PermissionIds.ClaimType claims (task 182-003) so SPA policies
+//     registered via AddPermissionClaimPolicies can AuthorizeView without an evaluator in WASM
+// Failures and unauthenticated sessions yield an anonymous principal (no throw).
 // Empty RoleIds falls back to Member so a malformed/legacy payload still gets the product default.
 // NotifySessionChanged lets Login / passkey ceremony refresh Blazor auth state after cookie set.
-// AuthenticationType is a stable SPA-local string (not the server scheme name) — server cookie
-// auth remains on web-server; this only shapes client UI identity.
+// AuthenticationType matches AuthenticationSchemeNames.IdentitySession so hosted
+// PermissionRequirementHandler can pass the scheme into IPermissionEvaluator when this principal
+// is used (WASM claim policies do not need the scheme).
+//
+// Task 183: not sealed — web-server registers HostedIdentitySessionAuthenticationStateProvider
+// which prefers HttpContext.User during prerender (SPA HttpClient loopback cannot forward the
+// identity-session cookie). Pure WASM still uses this type via IdentitySessionAuthenticationRegistration.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
 
+using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
@@ -26,7 +34,7 @@ using TimeWarp.Foundation.Types;
 /// <summary>
 /// Projects the browser's identity-session cookie into Blazor <see cref="AuthenticationState"/>.
 /// </summary>
-public sealed class IdentitySessionAuthenticationStateProvider : AuthenticationStateProvider
+public class IdentitySessionAuthenticationStateProvider : AuthenticationStateProvider
 {
   private const string AuthenticationType = "identity-session";
 
@@ -64,6 +72,11 @@ public sealed class IdentitySessionAuthenticationStateProvider : AuthenticationS
         foreach (Guid roleId in roleIds)
         {
           claims.Add(new Claim(ClaimTypes.Role, roleId.ToString()));
+        }
+
+        foreach (string permissionId in session.Permissions)
+        {
+          claims.Add(new Claim(PermissionIds.ClaimType, permissionId));
         }
 
         ClaimsIdentity identity = new(claims, AuthenticationType);

@@ -4,8 +4,8 @@
 
 #region Design
 // Private list with a read-only projection enforces that only action handlers mutate state.
-// Null vs empty is meaningful: Initialize nulls the list so UI can distinguish "not loaded"
-// (render a loading indicator) from "loaded with zero rows".
+// Null vs empty: no snapshot vs loaded with zero rows. In-flight fetch is [TrackAction]
+// on FetchWeatherForecasts — the page uses IsAnyActive, not null.
 // TWeatherForecast is the GetWeatherForecasts wire DTO (via using static) — the state stores
 // the contract type directly instead of a mapped model to keep the template lean.
 #endregion

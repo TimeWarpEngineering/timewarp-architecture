@@ -5,6 +5,17 @@
 @code {
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonAccounts();
   public static string Title => "Principals";
+
+  private bool IsLoading =>
+    IsAnyActive(typeof(PrincipalState.FetchPrincipalsActionSet.Action));
+
+  private async Task OnRoleSelected(Guid principalId, Guid roleId, bool selected) =>
+    await PrincipalState.SetRoleSelected(principalId, roleId, selected);
+
+  private async Task OnSave(Guid principalId) =>
+    await PrincipalState.SetPrincipalRoles(principalId);
+
+  protected override async Task OnInitializedAsync() => await PrincipalState.FetchPrincipals();
 }
 
 <PageTitle>@Title</PageTitle>
@@ -14,15 +25,15 @@
     <p class="sg-subtitle">
       Assign product roles to principals. Empty assignment resolves to Member. Bootstrap config
       (<code>Authentication:BootstrapAdministratorPrincipalIds</code>) can grant Administrator without
-      a store write (host restart after change). Clearing Administrator from the last admin locks you
-      out of Admin until bootstrap recovery.
+      a store write (host restart after change). Removing the last principal who can manage principals
+      is rejected (409 last-admin) so Admin cannot lock itself out.
     </p>
     <Card Title="Principals">
-      @if (PrincipalState.Principals is null)
+      @if (IsLoading)
       {
         <p><em>Loading…</em></p>
       }
-      else if (PrincipalState.Principals.Count == 0)
+      else if (PrincipalState.Principals is null || PrincipalState.Principals.Count == 0)
       {
         <p>No principals registered yet. Complete a passkey registration to create one.</p>
       }
@@ -54,8 +65,8 @@
                     {
                       <FluentCheckbox
                         Label="@RoleIds.GetRoleNameByGuid(roleId)"
-                        Checked="@PrincipalState.IsRoleSelected(principalGuid, roleId)"
-                        CheckedChanged="@(async (bool? value) => await OnRoleSelected(principalGuid, roleId, value == true))" />
+                        Value="@PrincipalState.IsRoleSelected(principalGuid, roleId)"
+                        ValueChanged="@(async (bool value) => await OnRoleSelected(principalGuid, roleId, value))" />
                     }
                   </FluentStack>
                 </Cell>
@@ -75,13 +86,3 @@
     </Card>
   </div>
 </TimeWarpPage>
-
-@code {
-  private async Task OnRoleSelected(Guid principalId, Guid roleId, bool selected) =>
-    await Mediator.Send(
-      new PrincipalState.SetRoleSelectedActionSet.Action(principalId, roleId, selected),
-      CancellationToken);
-
-  private async Task OnSave(Guid principalId) =>
-    await Mediator.Send(new PrincipalState.SetPrincipalRolesActionSet.Action(principalId), CancellationToken);
-}

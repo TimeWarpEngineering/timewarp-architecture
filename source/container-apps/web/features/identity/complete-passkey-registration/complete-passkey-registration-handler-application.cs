@@ -10,7 +10,10 @@
 // Ceremony preamble (decode → consume → verify → handle-exists) lives in PasskeyRegistrationCeremony;
 // ordering / replay-safety rationale is owned there. This handler's post-verify path:
 //   Principal.Create → AddPrincipalAsync → Credential.Create → AddCredentialAsync (try/catch race)
+//   → TryClaimFirstAdministratorAsync (empty deployment: first human passkey becomes admin)
 //   → BrowserSessionService.IssueAsync.
+// First admin: empty store → this Create account claims Administrator+Member (atomic). Later
+// creates stay Member. Greenfield only — wipe DB to re-bootstrap. Agent keys do not claim.
 // FindCredentialByHandleAsync (in the ceremony) runs BEFORE Principal.Create/AddPrincipalAsync, so
 // the sequential duplicate-handle case never leaves an orphan Principal: it 409s before either Add
 // call. Residual race: two concurrent ceremonies for the SAME credential handle (distinct challenges,
@@ -38,6 +41,7 @@ public sealed partial class CompletePasskeyRegistration
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
     private readonly IPrincipalStore PrincipalStore;
+    private readonly IPrincipalRoleStore PrincipalRoleStore;
     private readonly IWebAuthnChallengeStore ChallengeStore;
     private readonly IBrowserSessionService BrowserSessionService;
     private readonly IRequestHostAccessor RequestHostAccessor;
@@ -46,6 +50,7 @@ public sealed partial class CompletePasskeyRegistration
     public Handler
     (
       IPrincipalStore principalStore,
+      IPrincipalRoleStore principalRoleStore,
       IWebAuthnChallengeStore challengeStore,
       IBrowserSessionService browserSessionService,
       IRequestHostAccessor requestHostAccessor,
@@ -53,6 +58,7 @@ public sealed partial class CompletePasskeyRegistration
     )
     {
       PrincipalStore = principalStore;
+      PrincipalRoleStore = principalRoleStore;
       ChallengeStore = challengeStore;
       BrowserSessionService = browserSessionService;
       RequestHostAccessor = requestHostAccessor;
@@ -110,6 +116,10 @@ public sealed partial class CompletePasskeyRegistration
         // report the same 409 the sequential check-then-act path returns.
         return IdentityProblems.CredentialAlreadyRegistered("passkey");
       }
+
+      // Empty deployment: first successful human passkey create claims Administrator.
+      // Claims transform on the next request (and IssueAsync session) sees store-backed roles.
+      _ = await PrincipalRoleStore.TryClaimFirstAdministratorAsync(principal.Id, cancellationToken);
 
       await BrowserSessionService.IssueAsync(principal.Id, displayName: null, cancellationToken);
 

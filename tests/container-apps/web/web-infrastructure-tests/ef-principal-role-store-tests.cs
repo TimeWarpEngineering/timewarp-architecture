@@ -202,6 +202,29 @@ public class Principal_role_store
     roles.ShouldBeEmpty();
   }
 
+  public static async Task TryClaimFirstAdministrator_first_wins_second_stays_unassigned()
+  {
+    if (!EfPrincipalRoleStoreFactory.IsAvailable) return;
+
+    await using PostgresDbContext db = EfPrincipalRoleStoreFactory.CreateDbContext();
+    IPrincipalRoleStore firstStore = new EfPrincipalRoleStore(db);
+    PrincipalId first = PrincipalId.New();
+    PrincipalId second = PrincipalId.New();
+
+    (await firstStore.TryClaimFirstAdministratorAsync(first)).ShouldBeTrue();
+
+    string cs = db.Database.GetConnectionString()!;
+    await using PostgresDbContext db2 = new(
+      new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(cs).Options);
+    IPrincipalRoleStore secondStore = new EfPrincipalRoleStore(db2);
+
+    (await secondStore.TryClaimFirstAdministratorAsync(second)).ShouldBeFalse();
+    (await secondStore.GetRoleIdsAsync(second)).ShouldBeEmpty();
+    IReadOnlyList<Guid> firstRoles = await secondStore.GetRoleIdsAsync(first);
+    firstRoles.Order().ShouldBe(
+      new[] { RoleIds.Administrator, RoleIds.Member }.Order());
+  }
+
   public static async Task Missing_principal_returns_empty()
   {
     if (!EfPrincipalRoleStoreFactory.IsAvailable) return;

@@ -4,7 +4,7 @@
 
 #region Design
 // Side-effect-only handler: it does not touch ChatMessages. The message enters the
-// transcript only when the server broadcasts it back via ServerToClientMessage, so
+// transcript only when the server broadcasts it back via ServerToClientMessageActionSet, so
 // the sender and all other clients share one render path.
 // Wraps the SendMessage.Command hub contract so the UI dispatches a state action
 // instead of talking to ChatHubConnection directly.

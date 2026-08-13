@@ -4,14 +4,31 @@
 
 @* Task 104-021: unauthorized UI goes to passkey Login, not MSAL RemoteAuthenticatorView.
    Task 153: carry the blocked page along as ?returnUrl so a successful sign-in lands the
-   user back where they were headed. LoginPage validates it (local-only, never /Login). *@
+   user back where they were headed. LoginPage validates it (local-only, never /Login).
+   Task 183: never NavigationManager.NavigateTo during static SSR — that nested the interactive
+   root and stack-overflowed web-server (exit 134) when AuthorizeRouteView hit NotAuthorized.
+   Navigate only once interactive; static HTML keeps a plain link fallback. *@
+
 @code {
+  private string Target { get; set; } = LoginPage.GetPageUrl();
+
   protected override void OnInitialized()
   {
     string returnUrl = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-    string target = returnUrl == "/"
+    Target = returnUrl is "/" or ""
       ? LoginPage.GetPageUrl()
       : $"{LoginPage.GetPageUrl()}?returnUrl={Uri.EscapeDataString(returnUrl)}";
-    NavigationManager.NavigateTo(target);
+  }
+
+  protected override void OnAfterRender(bool firstRender)
+  {
+    if (firstRender && RendererInfo.IsInteractive)
+    {
+      NavigationManager.NavigateTo(Target, forceLoad: true);
+    }
   }
 }
+
+<p>
+  <a href="@Target">Sign in to continue</a>
+</p>

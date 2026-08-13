@@ -1,6 +1,18 @@
 @namespace TimeWarp.Architecture.Components
 @inherits ParentComponent
 
+@code {
+  // TODO use TimeWarp Source Gen and attributes once Chandu gets them finished
+  //[TwParentComponent]
+  //[TwAttributeComponent]
+
+  private readonly string BaseClasses = ""; // TODO Add Bootstrap classes
+
+  private BlazorComponentUtilities.CssBuilder CssBuilder =>
+    new BlazorComponentUtilities.CssBuilder(BaseClasses)
+    .AddClassFromAttributes(Attributes);
+}
+
 <NavLink class=@CssBuilder @attributes=Attributes>
   @ChildContent
 </NavLink>

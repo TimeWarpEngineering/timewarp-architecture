@@ -5,6 +5,9 @@
 {
   public static Icon? NavIcon => new Icons.Regular.Size20.Home();
   public static string Title => "Home";
+
+  private async Task GoToLoginAsync() =>
+    await NoSubRouteState.ChangeRoute(newRoute: LoginPage.GetPageUrl());
 }
 
 <TimeWarpPage Title=@ApplicationState.Name>
@@ -28,16 +31,16 @@
 
     <AuthorizeView>
       <NotAuthorized>
-        <Card Title="Sign in">
+        @* Entry only — passkey ceremony lives solely on LoginPage (/Login). Do not clone that CTA here. *@
+        <Card Title="Account">
           <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
             <p>
-              Passkey first — no registration form. Continue with a platform authenticator,
-              password manager, or hardware key.
+              Passkey-first identity — sign in or create an account on the next screen.
             </p>
             <div>
               @* Single control — do not nest FluentButton inside NavLink (invalid HTML). *@
               <FluentButton Appearance="ButtonAppearance.Primary" OnClick="GoToLoginAsync">
-                Sign in with a passkey
+                Sign in
               </FluentButton>
             </div>
           </FluentStack>
@@ -50,7 +53,7 @@
             <FluentText>@ProfileState.Alias</FluentText>
             <FluentSpacer />
             <NavLink href=@SettingsPage.GetPageUrl()>Settings</NavLink>
-            <AuthorizeView Policy=@Policies.CanViewAdminSidebarNavSection Context="adminAuth">
+            <AuthorizeView Policy=@PermissionIds.AdminAccess Context="adminAuth">
               <Authorized Context="adminAuth">
                 <NavLink href=@RolesListPage.GetPageUrl()>Admin</NavLink>
               </Authorized>

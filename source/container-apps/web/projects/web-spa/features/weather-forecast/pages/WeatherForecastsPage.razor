@@ -1,20 +1,27 @@
 @namespace TimeWarp.Architecture.Features.WeatherForecasts
 @inherits BaseComponent
+
 @code
 {
-  [Parameter] [SupplyParameterFromQuery] public int? Days { get; set; }
-
   public static string Title => "Weather";
   public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+
+  [Parameter]
+  [SupplyParameterFromQuery]
+  public int? Days { get; set; }
+
+  private bool IsLoading =>
+    IsAnyActive(typeof(WeatherForecastsState.FetchWeatherForecastsActionSet.Action));
 
   protected override async Task OnInitializedAsync() =>
     await WeatherForecastsState.FetchWeatherForecasts(Days);
 }
+
 <TimeWarpPage Title="Weather Forecasts">
   <Card>
     <p>This component demonstrates fetching data from the server.</p>
 
-    @if (@WeatherForecastsState.WeatherForecasts == null)
+    @if (IsLoading)
     {
       <p><em>Loading...</em></p>
     }
@@ -30,7 +37,7 @@
           </tr>
         </thead>
         <tbody>
-          @foreach (var forecast in @WeatherForecastsState.WeatherForecasts)
+          @foreach (var forecast in WeatherForecastsState.WeatherForecasts ?? [])
           {
             <tr>
               <Cell>@forecast.Date.ToShortDateString()</Cell>

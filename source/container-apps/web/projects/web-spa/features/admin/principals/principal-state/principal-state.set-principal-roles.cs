@@ -7,7 +7,9 @@
 // (empty store → Member; bootstrap unions Admin+Member). The Set response echoes *stored*
 // roles only — patching drafts from it desyncs virtual grants (review M1).
 // When the edited principal is the signed-in identity-session user, NotifySessionChanged so
-// AuthorizeView / nav pick up new ClaimTypes.Role without a full remount.
+// AuthorizeView / nav re-run developer.access (WASM: re-project GetCurrentSession permission
+// claims; Server circuit: PermissionRequirement re-expands — evaluator must not stick a
+// circuit-lifetime cache, task 189).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
@@ -74,7 +76,6 @@ partial class PrincipalState
 
     internal class Handler : DefaultApiHandler<Action, Command, Response>
     {
-      private readonly ISender MediatorSender;
       private readonly AuthenticationStateProvider AuthenticationStateProvider;
       private Guid ActivePrincipalId;
 
@@ -86,7 +87,6 @@ partial class PrincipalState
         AuthenticationStateProvider authenticationStateProvider)
         : base(store, webServerApiService, sender, logger)
       {
-        MediatorSender = sender;
         AuthenticationStateProvider = authenticationStateProvider;
       }
 
@@ -105,7 +105,7 @@ partial class PrincipalState
       protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         // Re-list so multi-select shows effective roles (virtual Member/bootstrap Admin), not stored-only echo.
-        await MediatorSender.Send(new FetchPrincipalsActionSet.Action(), cancellationToken);
+        await PrincipalState.FetchPrincipals(cancellationToken);
 
         if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
         {

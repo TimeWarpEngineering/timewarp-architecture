@@ -8,17 +8,18 @@
 // partial Query; GetRouteWithQueryString then merges the two generated parameter sets into
 // one query string. RoleDto is a flat read model separate from IRoleDetails because list
 // rows are display-only, and Response derives from ListResponse to carry TotalCount for
-// paging. GetMockResponseFactory serves the SPA's MockWebApiService offline.
-// [EndpointAuthorize] (task 147-004): Administrator capability via AuthorizationPolicyNames —
-// shared string with SPA RolePolicyGrants / server RequireRole(Administrator). [AuthApiRequest]
-// on the Query remains a client-facing/mock-mode identity signal only.
-// AuthenticationSchemes (task 158): mirrors CanViewRolesPage's own AddAuthenticationSchemes
-// (identity-session + mock-identity-session) so the generated FastEndpoint's AuthSchemes(...)
-// actually invokes the mock handler under the closed-box ingress test — without this, the
-// generated endpoint carried Policies(...) only, AuthorizationMiddleware never ran the
-// mock-identity-session handler, and an unauthenticated-looking request fell through as 401
-// instead of the expected 403 for a non-admin mock principal. See AuthenticationSchemeNames'
-// Design region for the Production-safety argument (scheme always registered, handler fail-closed).
+// paging. PermissionIds on RoleDto (task 182-004) feed the Roles list membership matrix —
+// fine for the small product role catalog (RoleIds.All + demo creates).
+// GetMockResponseFactory serves the SPA's MockWebApiService offline.
+// [EndpointAuthorize] (task 182-002): admin.roles.read via PermissionIds — read half of the
+// roles split (manage is Create/Update/Delete/SetRolePermissions). Server
+// PermissionRequirementHandler evaluates via IPermissionEvaluator; SPA pages use
+// PermissionIds.AdminRolesRead (182-003 claim policies).
+// [AuthApiRequest] on the Query remains a client-facing/mock-mode identity signal only.
+// AuthenticationSchemes (task 158): identity-session + mock-identity-session so the generated
+// FastEndpoint's AuthSchemes(...) invokes the mock handler under closed-box ingress tests —
+// without this, Policies(...) alone never runs mock-identity-session and non-admin mock
+// principals fall through as 401 instead of 403. See AuthenticationSchemeNames' Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -29,7 +30,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 [ApiEndpoint]
 [EndpointAuthorize
 (
-  Policy = AuthorizationPolicyNames.CanViewRolesPage,
+  Policy = PermissionIds.AdminRolesRead,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
 public static partial class GetRoles
@@ -70,16 +71,21 @@ public static partial class GetRoles
     public string Name { get; }
     public string Description { get; }
 
+    /// <summary>Stored permission ids for this role (empty when none granted).</summary>
+    public List<string> PermissionIds { get; }
+
     public RoleDto
     (
       Guid roleId,
       string name,
-      string description
+      string description,
+      List<string>? permissionIds = null
     )
     {
       RoleId = Guard.Against.NullOrEmpty(roleId);
       Name = Guard.Against.NullOrEmpty(name);
       Description = Guard.Against.NullOrEmpty(description);
+      PermissionIds = permissionIds ?? [];
     }
   }
 
@@ -87,10 +93,39 @@ public static partial class GetRoles
   {
     RoleDto[] items =
     [
-      new(RoleIds.Member, nameof(RoleIds.Member), "Default human principal after passkey login."),
-      new(RoleIds.Operator, nameof(RoleIds.Operator), "Marketplace and job oversight."),
-      new(RoleIds.Administrator, nameof(RoleIds.Administrator), "Tenant admin: principals, roles, settings."),
-      new(RoleIds.Developer, nameof(RoleIds.Developer), "Template dogfood: demos and diagnostics."),
+      new(
+        RoleIds.Member,
+        nameof(RoleIds.Member),
+        "Default human principal after passkey login.",
+        [PermissionIds.ProfileRead, PermissionIds.SettingsRead]),
+      new(
+        RoleIds.Operator,
+        nameof(RoleIds.Operator),
+        "Marketplace and job oversight.",
+        [PermissionIds.ProfileRead, PermissionIds.SettingsRead]),
+      new(
+        RoleIds.Administrator,
+        nameof(RoleIds.Administrator),
+        "Tenant admin: principals, roles, settings.",
+        [
+          PermissionIds.AdminAccess,
+          PermissionIds.AdminRolesRead,
+          PermissionIds.AdminRolesManage,
+          PermissionIds.AdminPrincipalsRead,
+          PermissionIds.AdminPrincipalsManage,
+          PermissionIds.ProfileRead,
+          PermissionIds.SettingsRead,
+        ]),
+      new(
+        RoleIds.Developer,
+        nameof(RoleIds.Developer),
+        "Template dogfood: demos and diagnostics.",
+        [
+          PermissionIds.DeveloperAccess,
+          PermissionIds.DeveloperClaimsRead,
+          PermissionIds.ProfileRead,
+          PermissionIds.SettingsRead,
+        ]),
     ];
 
     return _ => new Response(totalCount: items.Length, items);

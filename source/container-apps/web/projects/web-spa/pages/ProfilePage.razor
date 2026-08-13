@@ -4,12 +4,25 @@
 @code {
   public static string Title => "Profile";
   public static Icon? NavIcon => new Icons.Regular.Size20.Person();
+
+  private bool IsLoading =>
+    IsAnyActive(typeof(ProfileState.FetchProfileDataActionSet.Action));
+
+  protected override async Task OnInitializedAsync()
+  {
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    await ProfileState.FetchProfileData();
+  }
 }
 
 <TimeWarpPage Title="Profile">
   <div class="twe-stack">
     <Card Title="Your profile">
-      @if (ProfileState.Alias is null)
+      @if (IsLoading)
       {
         <p><em>Loading…</em></p>
       }

@@ -69,6 +69,20 @@ namespace TimeWarp.Architecture.Persistence.Migrations
                     b.ToTable("profiles", "profiles");
                 });
 
+            modelBuilder.Entity("TimeWarp.Architecture.Features.RolePermissionGrant", b =>
+                {
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PermissionId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("RoleId", "PermissionId");
+
+                    b.ToTable("role_permissions", "identity");
+                });
+
             modelBuilder.Entity("TimeWarp.Identity.Credential", b =>
                 {
                     b.Property<Guid>("Id")

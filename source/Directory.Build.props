@@ -11,7 +11,7 @@
     <!-- Single repo-wide package version. Lives here (not root) so it matches the TimeWarp convention
          and `dev check-version`, which read source/Directory.Build.props. Keep in sync with the
          timewarp-templates tree's <Version> — both publish at this version. -->
-    <Version>2.0.0-beta.15</Version>
+    <Version>2.0.0-beta.16</Version>
     <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-architecture</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -30,7 +30,7 @@
     <None Include="$(RepositoryRoot)assets/logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
-  <!-- Repo-wide convention analyzers (TWA0002–0016 only — no source generators). Project ref in
+  <!-- Repo-wide convention analyzers (TWA0002–0016, TWA0020–0022 only — no source generators). Project ref in
        monorepo; platform Analyzers package in generated apps (UseAnalyzerPackages). Package ID is
        composed (task 115) so template sourceName cannot rewrite it. -->
   <ItemGroup Condition="'$(UseAnalyzerPackages)' != 'true' and '$(MSBuildProjectName)' != 'timewarp-architecture-convention-analyzers'">
@@ -40,10 +40,13 @@
     <!-- TWA0009 reads build_property.TimeWarpSliceRoot for an optional SliceRoot override.
          Custom properties are not analyzer-visible unless listed (RootNamespace is SDK-visible). -->
     <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
+    <!-- TWA0022 gates on the Blazor WASM SDK's own property to identify SPA client compilations. -->
+    <CompilerVisibleProperty Include="UsingMicrosoftNETSdkBlazorWebAssembly" />
   </ItemGroup>
   <ItemGroup Condition="'$(UseAnalyzerPackages)' == 'true'">
     <PackageReference Include="$(TwArchitectureAnalyzersPackageId)" PrivateAssets="all" />
     <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
+    <CompilerVisibleProperty Include="UsingMicrosoftNETSdkBlazorWebAssembly" />
   </ItemGroup>
 
   <!-- template.json feeds TWA0010 (template-flag directives must have matching DefineConstants).

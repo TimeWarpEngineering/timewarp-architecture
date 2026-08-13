@@ -8,10 +8,9 @@
 // The empty Response exists to keep the uniform OneOf<Response, SharedProblemDetails>
 // pipeline even though a delete has no payload — callers still get success/problem typing.
 // GetMockResponseFactory lets the SPA's MockWebApiService serve this endpoint offline.
-// [EndpointAuthorize] (task 147-004): Administrator capability via AuthorizationPolicyNames.
-// AuthenticationSchemes (task 158): mirrors CanViewRolesPage's own AddAuthenticationSchemes
-// (identity-session + mock-identity-session) so the generated FastEndpoint's AuthSchemes(...)
-// actually invokes the mock handler under the closed-box test harness — see
+// [EndpointAuthorize] (task 182-002): admin.roles.manage (PermissionIds); read is GetRoles/GetRole.
+// AuthenticationSchemes (task 158): identity-session + mock-identity-session so the generated
+// FastEndpoint's AuthSchemes(...) invokes the mock handler under closed-box tests — see
 // AuthenticationSchemeNames' Design region for why.
 #endregion
 
@@ -20,7 +19,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 [ApiEndpoint]
 [EndpointAuthorize
 (
-  Policy = AuthorizationPolicyNames.CanViewRolesPage,
+  Policy = PermissionIds.AdminRolesManage,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
 public static partial class DeleteRole

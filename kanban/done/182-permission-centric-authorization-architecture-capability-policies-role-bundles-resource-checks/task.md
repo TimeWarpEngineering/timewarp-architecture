@@ -1,0 +1,237 @@
+# Permission-centric authorization architecture (capability policies, role bundles, resource checks)
+
+## Description
+
+Replace the template’s **role-identity enforcement** (`RequireRole` / `RolePolicyGrants` as the long-term SSOT) with a **permission-centric** authorization architecture suitable for a greenfield product template—not COPIC parity, not “what is common,” not shortcuts.
+
+**Problem today**
+
+- Enforcement couples product surfaces to **role Guids** (`RoleIds.Administrator`, SPA `RolePolicyGrants` → `RequireRole`).
+- Roles cannot be rebundled without code changes; new surfaces edit a static map.
+- Server (`web-server/program.cs`) and SPA composition can drift.
+- No first-class **resource-level** path (instance checks).
+- COPIC-shaped leftovers exist (`ModuleRequirement`, `ModuleIds`, `AuthorizationState.Modules`) but **do not** gate Admin; ERP sample modules are the wrong product vocabulary.
+- Admin UI has Roles + Principals but no clear **authorization composition** story (roles as permission bundles).
+
+**Target (end state)**
+
+```text
+Enforcement: policy name = capability/permission (code SSOT registry)
+     ↓
+Decision:    IPermissionEvaluator / PermissionRequirementHandler
+             (optional resource for instance decisions)
+     ↓
+Grants:      principal → role(s) → permissions
+             (+ later: direct grants, ReBAC relations)
+```
+
+- **Permissions** = atomic capabilities (stable ids in a compile-time registry).
+- **Roles** = mutable **bundles of permissions** (admin-editable data).
+- **Policies** = ASP.NET names aligned 1:1 (or documented fixed conjunction) with permissions.
+- **Resource-based** checks when the decision needs an instance.
+- **Agents**: scopes map into the same permission vocabulary where possible.
+- **External PDP** (OpenFGA / Cedar / SpiceDB): optional behind a port—not a day-one hard dependency.
+- Greenfield bootstrap: first human passkey Create account still assigns **Administrator role** (which seeds all `admin.*` permissions)—no RequireRole hardwire on endpoints.
+
+**Out of scope for this epic’s core**
+
+- Making OpenFGA/SpiceDB/Cedar **required** in every generated app.
+- Migrating historical principals on existing DBs (use `dev db reset`).
+- COPIC product UI clone (Security Roles + Modules ERP catalog).
+
+**In scope**
+
+- Architecture ADR + permission registry + evaluator + replace admin/self-service/developer gates that currently use RequireRole maps.
+- Role→permission seed data; Principals still assign roles; Roles UI grows to edit permission membership (phase).
+- Seam for external evaluator; docs for consumers.
+- Child tasks for phased implementation after review disposition.
+
+## Requirements
+
+### Architectural invariants (non-negotiable)
+
+1. **Enforcement points never name product roles.** `[Page]`, `[EndpointAuthorize]`, and agent policies name **permissions** (capabilities), not `RoleIds.*`.
+2. **Single decision path.** SPA and server both evaluate via the same permission semantics (expanded grants), not dual ad-hoc maps.
+3. **Roles are composition only.** Assigning Administrator means “has the Administrator permission set,” not “policy X requires Administrator string.”
+4. **Resource-level is first-class when needed.** Use `IAuthorizationService.AuthorizeAsync(user, resource, policy)` / resource requirements—not bigger roles.
+5. **Server is authoritative.** SPA AuthorizeView is UX; API handlers must deny.
+6. **Template default is in-process PDP.** External engines are optional swap-ins.
+7. **Greenfield-only recovery.** Empty grant store + first Create account / `dev db reset`—no sign-in backfill paths.
+
+### Functional requirements (phased—see Checklist + children after review)
+
+**Phase 1 — Model**
+
+- Permission registry (compile-time SSOT; Guid or string ids—disposition picks).
+- Seed: product roles → default permission sets (Administrator includes all `admin.*`, Member self-service, Developer demos).
+- `IPermissionEvaluator` + `PermissionRequirement` / handler registered SPA + server.
+- Replace Admin + self-service + developer **SPA** `RolePolicyGrants` entries and **server** `RequireRole(Administrator)` admin policies with permission policies.
+- First-admin continues to assign Administrator **role** (permissions ride the seed).
+- Tests: expand logic; admin allow/deny; Member cannot hit admin APIs.
+
+**Phase 2 — Admin UX**
+
+- Roles UI: edit which permissions a role includes (matrix or multi-select from registry).
+- Optional read-only Permissions catalog page (generated from registry).
+- Principals remain “assign roles” (direct grants deferred unless review says otherwise).
+
+**Phase 3 — Resource checks**
+
+- At least one resource policy exemplars (e.g. last-admin protection; own-credential revoke already session-bound—document pattern).
+- Handler tests with resource argument.
+
+**Phase 4 — Seam + docs**
+
+- Document evaluator port; how a consumer plugs OpenFGA/Cedar without rewriting endpoints.
+- ADR under `documentation/developer/conceptual/architectural-decision-records/`.
+- Retire/stop growing `RolePolicyGrants` as long-term SSOT; replace or hollow out.
+- Align or replace ERP `ModuleIds` with permission registry vocabulary (disposition: delete sample ERP modules vs keep behind demo flag).
+
+**Phase 5 — Optional (separate children, not blocking)**
+
+- Template flag or package docs for OpenFGA/Cedar hosting.
+- ReBAC relation store when a product domain needs sharing graphs.
+
+### Review deliverables (before implementation waves)
+
+Under this folder:
+
+| Artifact | Purpose |
+|----------|---------|
+| `research/decision-brief.md` | Deep-research synthesis (models, stack ranking, target architecture) |
+| `review/` | Claude (and other) review rounds—disposition before Phase 1 code |
+| `disposition.md` | Post-review: accepted / amend / reject per section; id format; open questions closed |
+
+Reviewers must address at least:
+
+1. Permission id format: stable Guid (like RoleIds) vs dotted string vs both.
+2. Policy name = permission id 1:1, or keep `CanView*` aliases mapped once?
+3. Expand permissions into claims at session issue vs evaluate from store every check.
+4. Server handler location (platform vs features substrate) and TWA0009.
+5. Whether ModuleRequirement is deleted, adapted, or left for demos only.
+6. Scope of Phase 1 vs split children.
+7. Agent scope ↔ permission mapping approach.
+
+### Constraints
+
+- No temporal estimates in task text (AGENTS.md).
+- Kanban children via `ganda kanban create --parent 182` only after disposition.
+- Slice isolation TWA0009; feature placement skill for new files.
+- Jaribu + Shouldly for new tests; co-located or suite per existing rules.
+- Do not reintroduce Fixie/xUnit.
+
+### Done criteria (epic)
+
+- Disposition accepted and committed.
+- Phase 1–4 children created (or explicitly deferred in disposition with reason).
+- When implementation completes: Admin/product surfaces enforce **permissions**; roles only compose; ADR published; How to validate on each child Results.
+
+## Checklist
+
+### Spec / review (this folder)
+
+- [x] Folder task created; research brief written
+- [x] Claude review round (`review/round-1/claude.md`)
+- [x] Grok review round 2 (`review/round-2/grok.md`)
+- [x] Disposition **ACCEPTED** (`disposition.md`)
+- [x] Child tasks created (`182-001` … `182-006`)
+- [x] ADR drafted/accepted (**182-005**; draft with **182-001** → approved/0010)
+
+### Implementation (children)
+
+- [x] **182-001** Model: registry, role-permission store, seed, evaluator (`3e829e7d`)
+- [x] **182-002** Server enforcement swap (`1c5687cd`)
+- [x] **182-003** SPA swap + dead-code delete (`098398a1`)
+- [x] **182-004** Roles UI + last-admin + protected-core (`c60bb21f`)
+- [x] **182-005** ADR + seam docs (approved/0010 + how-to-swap-permission-evaluator-for-external-pdp)
+- [x] **182-006** Agent scope → permission bundles
+
+## Notes
+
+### Related tasks
+
+| Task | Relation |
+|------|----------|
+| **180** | First human passkey claims Administrator **role** — remains valid; endpoints stop requiring role by name |
+| **147-*** | Admin roles/principals UI — becomes composition UI under this model |
+| **132** | Auth/authentication/authorization **folder naming** — coordinate vocabulary with this epic (permissions vs modules) |
+| **118** | Marketplace / host planes — permissions must not assume web-only forever |
+| **161** | Credential management auth schemes research — orthogonal schemes; scopes map to permissions |
+
+### Current hotspots (implementation map)
+
+| Area | Today |
+|------|--------|
+| SPA grants | `web-spa/features/authorization/role-policy-grants.cs` |
+| SPA modules (unused for Admin) | `custom-requirements/module-requirement*.cs`, `authorization-state` |
+| Server admin policies | `web-server/program.cs` `RequireRole(Administrator)` |
+| Role ids | `features/admin/roles/role-ids-contracts.cs` |
+| Module ids (ERP sample) | `features/admin/modules/module-ids-contracts.cs` |
+| Effective roles | `IEffectiveRolesResolver` / claims transform |
+| First admin | `TryClaimFirstAdministratorAsync` + registration handler |
+| DB wipe | `dev db reset --yes` |
+
+### Explicit non-goals
+
+- COPIC Security Roles + Modules UI parity.
+- Shipping OpenFGA in AppHost by default.
+- RequireRole sprinkled as “good enough.”
+- Sign-in claim backfill for pre-permission principals.
+
+## Session
+
+- Created: Grok (2026-08-12) after deep research on template authz; user accepted permission-centric target and requested folder task + write-up for Claude review.
+- Research: `research/decision-brief.md` in this folder.
+- 2026-08-12 (Claude): moved to in-progress; full code sweep of every hotspot; round-1 review
+  written (`review/round-1/claude.md`). Verdict: **Accept with amendments** — 6 blocking
+  (Phase 1 three-way split; single registry+registration helper replacing both constants
+  classes; IPermissionEvaluator as sole decision seam; ModuleRequirement/ModuleIds deleted in
+  Phase 1; lockout guards ship with Phase 2 UI; admin read/manage split), 7 non-blocking.
+  All §7 questions answered (dotted-string ids; 1:1 policy names; per-request evaluation;
+  substrate placement; delete modules; scopes as agent permission bundles).
+  Key sweep findings: no role-permission storage exists (RoleStore is an in-memory stub);
+  ModuleRequirement verified dead (handler never registered); each admin policy maintained in
+  three hand-written copies; no last-admin protection; SPA authz untested.
+- 2026-08-12 (user): hold final disposition — Grok round-2 first.
+- 2026-08-12 (Grok): round-2 **confirms** Accept with amendments (no blocking contests);
+  disposition **ACCEPTED**; children **182-001…006** created. Implement starting at 182-001.
+- 2026-08-12 (orchestrate): Phase 1–3 epic state; implemented **182-001** (3e829e7d); disposition clean; next **182-002**.
+- 2026-08-12: **182-002** server enforcement swap green — PermissionRequirement + policies + admin contracts read/manage; next **182-003** SPA swap.
+- 2026-08-12 (orchestrate `/tw-orchestrate-task 182`): **Phase 1 A–C complete** (001–003 done). Enforcement is permission-centric on server + SPA; RolePolicyGrants/ModuleRequirement gone. Remaining: **182-004** (Roles UI + lockout), **182-005** (ADR accept), **182-006** (agent scopes). Parent 182 stays in-progress until children complete.
+- 2026-08-12 (orchestrate `/tw-orchestrate-task 182-004`): **done** — SetRolePermissions + RolesList membership UI + last-admin/protected-core 409 guards (`c60bb21f`). Next **182-005** / **182-006**.
+- 2026-08-12 (orchestrate `/tw-orchestrate-task 182-005`): **done** — ADR-0010 accepted + how-to PDP swap (`f8063589`).
+- 2026-08-12 (orchestrate `/tw-orchestrate-task 182-006`): **done** — agent scopes → permissions (`032a9ccc`). **All children complete → parent Results + done.**
+
+## Results
+
+### Summary
+
+Permission-centric authorization is the template SSOT:
+
+1. **Permissions** (`PermissionIds`) name all enforcement points.
+2. **Roles** are mutable bundles (`IRolePermissionStore` + Roles UI).
+3. **`IPermissionEvaluator`** is the sole decision seam (humans: roles; agents: scopes).
+4. **ADR-0010** accepted; optional external PDP documented (no AppHost OpenFGA).
+5. **Agents** map `identity:read` / `credential:manage` / `demo:invoke` → permissions; never `admin.*`.
+
+Children: 182-001…006 all **done**. Crash fix **183** landed independently for prerender SSR.
+
+### How to validate
+
+```bash
+dev build   # 0/0
+dotnet run source/container-apps/web/features/authorization/permission-evaluator-tests.cs  # 18/18
+# ADR
+test -f documentation/developer/conceptual/architectural-decision-records/approved/0010-permission-centric-authorization.md
+# Live: passkey admin → /Admin/Roles; agent bearer without admin scheme → 401 on /api/Roles
+```
+
+### Current hotspots (after 182-003)
+
+| Area | Status |
+|------|--------|
+| PermissionIds + evaluator | Live |
+| Server admin APIs | PermissionRequirement |
+| SPA pages/nav | RequireClaim(permission) from session |
+| RolePolicyGrants / ModuleIds | **Deleted** |
+| Roles UI permission edit + lockout | **182-004** |

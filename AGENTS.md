@@ -211,7 +211,7 @@ unconditionally excluded from template output). This monorepo dogfoods all three
 | PackageId | Contents |
 |-----------|----------|
 | `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
-| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016) — safe repo-wide |
+| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016, TWA0020–0022) — safe repo-wide |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001, TWA0017/0018 (ingress route generation) — attach only where gens should run |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
 | `TimeWarp.Identity` | Principal identity (passkeys / agent keys); published since 2.0.0-beta.6 |
@@ -283,6 +283,7 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0019 | a name in `IngressWebContractAssemblies` matches no referenced assembly (typo / renamed assembly) — otherwise the ingress list would silently generate empty |
 | TWA0020 | `[ApiEndpoint]` combined with `[ClientOnlyContract]` (outer or nested Query/Command) — generators skip ClientOnly; remove one of the markers |
 | TWA0021 | mock SPA auth providers (`MockAuthenticationStateProvider` / `MockAccessTokenProvider`) registered outside `MockAuthenticationRegistration` — bypasses the Development/Testing + `Authentication:UseMock` fail-closed gate (task 145-009) |
+| TWA0022 | direct `Send` on the mediator (`ISender`/`IMediator`, incl. the inherited `Mediator` member) anywhere in SPA client code — dispatch through the TimeWarp.State generated `<Name>ActionSet` method, which wires the `CancellationToken`. Gated on the Blazor WASM SDK's `UsingMicrosoftNETSdkBlazorWebAssembly`; razor-generated trees ARE analyzed, other `.g.cs` trees exempt (task 196) |
 
 **Generator diagnostics (TWE / SG)** live in
 `source/analyzers/timewarp-architecture-analyzers/diagnostics/diagnostic-descriptors.cs`

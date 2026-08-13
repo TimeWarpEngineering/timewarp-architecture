@@ -99,9 +99,8 @@ public class Program
       }
     }
 
-    // Add authorization services
+    // SPA permission claim policies (PermissionIds) + Anonymous/Authenticated.
     serviceCollection.AddAuthorizationCore(PolicyRegistration.AddPolicies);
-    // Register the custom requirements handlers
     serviceCollection.AddFluentUIComponents();
     serviceCollection.AddBlazoredSessionStorage();
     serviceCollection.AddBlazoredLocalStorage();

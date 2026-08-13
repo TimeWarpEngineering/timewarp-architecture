@@ -2,13 +2,13 @@
 
 @inherits BaseComponent
 
+@code
+{
+  protected async Task ButtonClick() => await CounterState.IncrementCounter(5);
+}
+
 <div data-qa="@TestId" @attributes=Attributes >
   <p>Current count: @CounterState.Count</p>
 
   <FluentButton Appearance=ButtonAppearance.Primary OnClick=ButtonClick>Click me</FluentButton>
 </div>
-
-@code
-{
-  protected async Task ButtonClick() => await CounterState.IncrementCounter(5);
-}

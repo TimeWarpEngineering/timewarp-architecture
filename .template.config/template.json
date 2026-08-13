@@ -86,6 +86,8 @@
             "source/container-apps/web/features/admin/principals/principal-role-assignment-entity-type-configuration-infrastructure.cs",
             "source/container-apps/web/features/profile/ef-profile-store-infrastructure.cs",
             "source/container-apps/web/features/profile/profile-entity-type-configuration-infrastructure.cs",
+            "source/container-apps/web/features/authorization/ef-role-permission-store-infrastructure.cs",
+            "source/container-apps/web/features/authorization/role-permission-grant-entity-type-configuration-infrastructure.cs",
             "tests/container-apps/web/web-infrastructure-tests/**"
           ]
         }

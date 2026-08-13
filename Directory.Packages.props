@@ -20,28 +20,28 @@
          itself uses project refs). Per task-124 policy, these pins equal the release <Version> and
          bump in the same commit as it — packages and template publish together in one release run,
          so pins always reference versions that exist by the time a generated app restores. -->
-    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.15" />
-    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.15" />
-    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.15" />
-    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.15" />
-    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.15" />
-    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.15" />
+    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.16" />
     <!-- Analyzer/generator packages (task 092). Package IDs composed via properties so template
          sourceName cannot rewrite them (task 115). Per task-124 policy, these pins equal the
          release <Version> and bump in the same commit as it. -->
-    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.15" />
-    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.15" />
-    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.15" />
+    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.16" />
+    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.16" />
+    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.16" />
     <!-- TimeWarp.Identity has been published since 2.0.0-beta.6 (task 124). Per task-124 policy,
          this pin equals the release <Version> and bumps in the same commit as it, same as the
          TimeWarp.Foundation.* and analyzer/generator pins above. This pin is inert for this
          repo/CI (UseIdentityPackages resolves to ProjectReference mode when identity source is
          present) and only matters for package-mode consumers (generated apps always package-mode). -->
-    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.15" />
+    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.16" />
     <!-- TimeWarp.402: packed by the release run (workflow-command.cs) and template-smoke's local
          feed; first nuget.org publish rides the next release. Same task-124 pin policy as
          TimeWarp.Identity above — equals <Version>, bumps in the same commit (task 104-035). -->
-    <PackageVersion Include="TimeWarp.402" Version="2.0.0-beta.15" />
+    <PackageVersion Include="TimeWarp.402" Version="2.0.0-beta.16" />
     <PackageVersion Include="TimeWarp.Multiavatar" Version="1.0.0-beta.13" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
@@ -85,6 +85,7 @@
          real AppHost + an HTTP round-trip through api-server) passed 7/7 against MessagePack 3.1.8,
          verifying the DCP/StreamJsonRpc communication path tolerates the v3 major. -->
     <PackageVersion Include="MessagePack" Version="3.1.8" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="10.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10" />
@@ -94,6 +95,10 @@
     <PackageVersion Include="Microsoft.Identity.Web" Version="4.14.2" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.13.0" />
+    <!-- Testcontainers 4.13.0 pulls SSH.NET 2025.1.0 (NU1903 / GHSA-q939-rpr3-3284
+         SCP recursive-download path traversal). Patched 2026.0.0. Direct pin on
+         web-infrastructure-tests lifts the graph; Testcontainers is still latest. -->
+    <PackageVersion Include="SSH.NET" Version="2026.0.0" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />

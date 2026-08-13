@@ -4,11 +4,16 @@
 @code {
   public static string Title => "Superhero";
   public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+
+  private bool IsLoading =>
+    IsAnyActive(typeof(SuperheroState.FetchSuperheroActionSet.Action));
+
+  protected override async Task OnInitializedAsync() => await SuperheroState.FetchSuperhero();
 }
 
 <TimeWarpPage Title="Superheros">
   <Card>
-    @if (SuperheroState.Superheros == null)
+    @if (IsLoading)
     {
       <p><em>Loading...</em></p>
     }
