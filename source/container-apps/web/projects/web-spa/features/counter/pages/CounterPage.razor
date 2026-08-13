@@ -1,6 +1,7 @@
 @namespace TimeWarp.Architecture.Features.Counters
 @inherits BaseComponent
 @inject IJSRuntime JsRuntime
+
 @code {
   public static string Title => "Counter";
   public static Icon? NavIcon => new Icons.Regular.Size20.Question();
@@ -9,6 +10,11 @@
   {
     await JsRuntime.InvokeVoidAsync("Spa.Counter.DispatchIncrementCountAction");
   }
+
+  private async Task ButtonClick() =>
+    await NoSubRouteState.ChangeRoute(newRoute: HomePage.GetPageUrl(), CancellationToken.None);
+
+  private async Task ResetButtonClick() => await ApplicationState.ResetStore();
 }
 
 <PageTitle>Counter Page</PageTitle>

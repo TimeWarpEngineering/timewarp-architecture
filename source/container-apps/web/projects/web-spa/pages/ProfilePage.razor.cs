@@ -1,5 +1,5 @@
 #region Purpose
-// Code-behind for the Profile page: route gate + load profile fields on enter.
+// Registers the Profile route and authorize policy; markup and behavior live in ProfilePage.razor.
 #endregion
 
 #region Design
@@ -13,18 +13,4 @@ namespace TimeWarp.Architecture.Features.Profiles;
 
 [Page("/Profile", Policy = PermissionIds.ProfileRead)]
 [Authorize(Policy = PermissionIds.ProfileRead)]
-partial class ProfilePage
-{
-  private bool IsLoading =>
-    IsAnyActive(typeof(ProfileState.FetchProfileDataActionSet.Action));
-
-  protected override async Task OnInitializedAsync()
-  {
-    if (!RendererInfo.IsInteractive)
-    {
-      return;
-    }
-
-    await ProfileState.FetchProfileData();
-  }
-}
+partial class ProfilePage;

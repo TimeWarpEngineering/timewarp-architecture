@@ -1,5 +1,5 @@
 #region Purpose
-// Admin roles list page: GetRoles table with permission membership multi-select + New Role.
+// Registers the Admin/Roles route and authorize policy; markup and behavior live in RolesListPage.razor.
 #endregion
 
 #region Design
@@ -14,10 +14,4 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 
 [Page("/Admin/Roles", Policy = PermissionIds.AdminRolesRead)]
 [Authorize(Policy = PermissionIds.AdminRolesRead)]
-partial class RolesListPage
-{
-  private bool IsLoading =>
-    IsAnyActive(typeof(RoleState.FetchRolesActionSet.Action));
-
-  protected override async Task OnInitializedAsync() => await RoleState.FetchRoles();
-}
+partial class RolesListPage;

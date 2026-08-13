@@ -5,6 +5,9 @@
 {
   public static Icon? NavIcon => new Icons.Regular.Size20.Home();
   public static string Title => "Home";
+
+  private async Task GoToLoginAsync() =>
+    await NoSubRouteState.ChangeRoute(newRoute: LoginPage.GetPageUrl());
 }
 
 <TimeWarpPage Title=@ApplicationState.Name>

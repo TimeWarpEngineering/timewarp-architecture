@@ -1,5 +1,5 @@
 #region Purpose
-// Admin principals page: list principals with inline multi-select role assignment.
+// Registers the Admin/Principals route and authorize policy; markup and behavior live in PrincipalsPage.razor.
 #endregion
 
 #region Design
@@ -11,10 +11,4 @@ namespace TimeWarp.Architecture.Features.Admin.Principals;
 
 [Page("/Admin/Principals", Policy = PermissionIds.AdminPrincipalsRead)]
 [Authorize(Policy = PermissionIds.AdminPrincipalsRead)]
-partial class PrincipalsPage
-{
-  private bool IsLoading =>
-    IsAnyActive(typeof(PrincipalState.FetchPrincipalsActionSet.Action));
-
-  protected override async Task OnInitializedAsync() => await PrincipalState.FetchPrincipals();
-}
+partial class PrincipalsPage;

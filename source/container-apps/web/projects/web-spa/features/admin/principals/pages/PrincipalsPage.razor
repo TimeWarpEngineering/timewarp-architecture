@@ -6,11 +6,16 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonAccounts();
   public static string Title => "Principals";
 
+  private bool IsLoading =>
+    IsAnyActive(typeof(PrincipalState.FetchPrincipalsActionSet.Action));
+
   private async Task OnRoleSelected(Guid principalId, Guid roleId, bool selected) =>
     await PrincipalState.SetRoleSelected(principalId, roleId, selected);
 
   private async Task OnSave(Guid principalId) =>
     await PrincipalState.SetPrincipalRoles(principalId);
+
+  protected override async Task OnInitializedAsync() => await PrincipalState.FetchPrincipals();
 }
 
 <PageTitle>@Title</PageTitle>

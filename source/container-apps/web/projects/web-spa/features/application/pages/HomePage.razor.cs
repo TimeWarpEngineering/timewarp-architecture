@@ -1,5 +1,5 @@
 #region Purpose
-// Registers the root route for the app's landing page; markup lives in HomePage.razor.
+// Registers the root route and CrossSliceReference for LoginPage; markup and behavior live in HomePage.razor.
 #endregion
 
 #region Design
@@ -18,8 +18,4 @@ namespace TimeWarp.Architecture.Features.Applications;
 // Public marketing / first-run entry. Anonymous by design.
 [Page("/")]
 [CrossSliceReference(typeof(LoginPage), "First-run home CTA navigates to Account login (focused passkey chrome).")]
-partial class HomePage
-{
-  private async Task GoToLoginAsync() =>
-    await NoSubRouteState.ChangeRoute(newRoute: LoginPage.GetPageUrl());
-}
+partial class HomePage;

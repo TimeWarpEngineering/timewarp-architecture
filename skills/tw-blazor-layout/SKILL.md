@@ -67,8 +67,9 @@ Concrete instance of the pattern in this repo:
   footer/`ModalController`, and `<CascadingValue Value=@this>`s itself. Parameters: `Title`,
   `ChildContent`, `Aside`.
 - **Pages:** `@inherits BaseComponent`, wrap content in `<TimeWarpPage Title="…">…</TimeWarpPage>`;
-  routing comes from `[Page("/route")]` in the `.razor.cs` (the Moxy `mixins/Page.mixin`). The shell
-  is named `TimeWarpPage` (not `Page`) precisely because `[Page]` is the routing concept.
+  routing comes from `[Page("/route")]` on the `.razor.cs` partial (`PageSourceGenerator` emits
+  `[Route]`, `GetPageUrl`, and route parameters). The shell is named `TimeWarpPage` (not `Page`)
+  precisely because `[Page]` is the routing concept.
 - **Styling of the shell:** see the `tw-blazor-css-strategy` skill — this skill is the *structure*, that
   one is the *styling* (Tier-2 scope-handle `.twe-shell`).
 - **Slice boundary:** chrome/shell lives **outside** SliceRoot (e.g. `…Components`); product

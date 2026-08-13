@@ -1,5 +1,5 @@
 #region Purpose
-// Settings — signed-in passkey management (list / create / revoke) via CredentialsState.
+// Registers the Settings route, authorize policy, and CrossSliceReference; markup and behavior live in SettingsPage.razor.
 #endregion
 
 #region Design
@@ -17,78 +17,4 @@ namespace TimeWarp.Architecture.Features.Applications;
 [Page("/Settings", Policy = PermissionIds.SettingsRead)]
 [Authorize(Policy = PermissionIds.SettingsRead)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
-partial class SettingsPage
-{
-  private Guid? ExpandedId;
-
-  private bool IsLoading =>
-    IsAnyActive(typeof(CredentialsState.FetchCredentialsActionSet.Action));
-  private bool IsBusy => ActionTrackingState.IsActive;
-  private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
-  private string? ErrorMessage => CredentialsState.CeremonyError;
-  private string? StatusMessage => CredentialsState.StatusMessage;
-
-  protected override async Task OnInitializedAsync()
-  {
-    await base.OnInitializedAsync();
-    if (RendererInfo.IsInteractive)
-    {
-      await NoSubCredentialsState.FetchCredentials();
-      SyncExpandedId();
-    }
-  }
-
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    await base.OnAfterRenderAsync(firstRender);
-    if (firstRender && RendererInfo.IsInteractive && CredentialsState.Credentials is null)
-    {
-      await NoSubCredentialsState.FetchCredentials();
-      SyncExpandedId();
-      await InvokeAsync(StateHasChanged);
-    }
-  }
-
-  private void ToggleExpanded(Guid id) =>
-    ExpandedId = ExpandedId == id ? null : id;
-
-  private static string DisplayLabel(GetCredentials.CredentialSummary credential) =>
-    string.IsNullOrWhiteSpace(credential.Label) ? "Passkey" : credential.Label!;
-
-  private async Task CreatePasskeyAsync()
-  {
-    await NoSubCredentialsState.AddPasskey();
-    if (CredentialsState.LastAddedCredentialId is Guid added)
-    {
-      ExpandedId = added;
-    }
-    else
-    {
-      SyncExpandedId();
-    }
-  }
-
-  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential)
-  {
-    await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
-    SyncExpandedId();
-  }
-
-  private void SyncExpandedId()
-  {
-    if (Passkeys.Count == 0)
-    {
-      ExpandedId = null;
-      return;
-    }
-
-    if (ExpandedId is Guid id && Passkeys.All(c => c.Id.Value != id))
-    {
-      ExpandedId = Passkeys[0].Id.Value;
-    }
-    else if (ExpandedId is null)
-    {
-      ExpandedId = Passkeys[0].Id.Value;
-    }
-  }
-}
+partial class SettingsPage;
