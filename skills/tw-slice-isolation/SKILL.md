@@ -1,16 +1,7 @@
 ---
 name: tw-slice-isolation
-description: >-
-  **TIMEWARP SKILL** — product slice placement and TWA0009 isolation (SliceRoot,
-  namespaces, platform Applications, Components/contracts sharing,
-  CrossSliceReference opt-out). Invoke before scaffolding a new feature/slice/page
-  or when fixing TWA0009 / cross-slice references.
-  WHEN: "Add a new clients feature page", "Where does this state live?",
-  "TWA0009 slice references another product slice", "CrossSliceReference",
-  "new product area under features/", greenfield slice scaffolding.
-when-to-use: >
-  slice, slice isolation, TWA0009, CrossSliceReference, SliceRoot, TimeWarpSliceRoot,
-  product feature folder, features/, Applications platform, cross-slice, where page/state live
+description: "**TIMEWARP SKILL** — product slice placement and TWA0009 isolation (SliceRoot, namespaces, platform Applications, Components/contracts sharing, CrossSliceReference opt-out). Invoke before scaffolding a new feature/slice/page or when fixing TWA0009 / cross-slice references. WHEN: Add a new clients feature page, Where does this state live?, TWA0009 slice references another product slice, CrossSliceReference, new product area under features/, greenfield slice scaffolding."
+when-to-use: slice, slice isolation, TWA0009, CrossSliceReference, SliceRoot, TimeWarpSliceRoot, product feature folder, features/, Applications platform, cross-slice, where page/state live
 ---
 
 # Slice isolation (TWA0009)

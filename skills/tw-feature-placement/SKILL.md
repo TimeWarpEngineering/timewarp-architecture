@@ -1,24 +1,7 @@
 ---
 name: tw-feature-placement
-description: >-
-  **TIMEWARP SKILL** — feature-cohesive folder placement, per-use-case folders, and the
-  filename grammar `<name>[-<function>]-<layer>.cs` for product code under `<family>/features/`
-  and platform clusters under `<family>/platform/` (family-generic: web, api, grpc all share this
-  machinery — worked examples below use web): which layer a file belongs to, what to name it
-  and which folder it goes in, the registry that backs TWA0015/TWA0016, and the membership-guard
-  build errors. Invoke before creating, moving, or renaming a file under a feature slice or
-  platform cluster, or when a TWA0015/TWA0016/membership-guard error appears.
-  WHEN: "Where does this handler file go?", "What do I name this contract file?",
-  "Should this file get its own folder?", "TWA0015", "TWA0016",
-  "feature file matches no registered layer suffix", "platform/postgres",
-  "add a function segment to the registry", "split a module into its own assembly".
-when-to-use: >
-  feature filename grammar, feature-cohesive folder, web/features, web/platform, api/features,
-  grpc/features, platform cluster, filename grammar, use-case folder, per-use-case folder,
-  commands folder, queries folder, TWA0015, TWA0016, feature-filename-grammar.json,
-  membership guard, feature-membership.targets, escape hatch filename, function segment,
-  layer suffix, registry edit rebuild, per-module assembly split, shared tree vs artifact folder,
-  deletion litmus test, where does this file go, seam interface placement
+description: "**TIMEWARP SKILL** — feature-cohesive folder placement, per-use-case folders, and the filename grammar `<name>[-<function>]-<layer>.cs` for product code under `<family>/features/` and platform clusters under `<family>/platform/` (family-generic: web, api, grpc all share this machinery — worked examples below use web): which layer a file belongs to, what to name it and which folder it goes in, the registry that backs TWA0015/TWA0016, and the membership-guard build errors. Invoke before creating, moving, or renaming a file under a feature slice or platform cluster, or when a TWA0015/TWA0016/membership-guard error appears. WHEN: Where does this handler file go?, What do I name this contract file?, Should this file get its own folder?, TWA0015, TWA0016, feature file matches no registered layer suffix, platform/postgres, add a function segment to the registry, split a module into its own assembly."
+when-to-use: feature filename grammar, feature-cohesive folder, web/features, web/platform, api/features, grpc/features, platform cluster, filename grammar, use-case folder, per-use-case folder, commands folder, queries folder, TWA0015, TWA0016, feature-filename-grammar.json, membership guard, feature-membership.targets, escape hatch filename, function segment, layer suffix, registry edit rebuild, per-module assembly split, shared tree vs artifact folder, deletion litmus test, where does this file go, seam interface placement
 ---
 
 # Feature placement and filename grammar
