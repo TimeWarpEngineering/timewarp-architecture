@@ -37,7 +37,7 @@ take Architecture analyzers. Not Ganda. Not flow.
 
 ## Checklist
 
-- [ ] Confirm diagnostic id (TWA0023) and `isEnabledByDefault: false` (or Info)
+- [x] Confirm diagnostic id (TWA0023) and `isEnabledByDefault: false` (or Info)
 - [ ] Analyzer + exception attribute (reason required)
 - [ ] AnalyzerReleases.Unshipped.md row
 - [ ] Tests: match, mismatch, interface strip, two-instance qualifier, primitive skip, opt-out
@@ -81,7 +81,135 @@ HttpClient CatalogClient;
 Casing is already editorconfig: class-scope PascalCase, method-scope camelCase, no underscore.
 This analyzer is stem identity, not casing.
 
+### Implementation plan (Phase 2)
+
+TWA0023 is unused (only the kanban brief). Next free convention ID. Convention analyzers declare
+their own `DiagnosticDescriptor` (not `diagnostics/diagnostic-descriptors.cs`). Already wired
+repo-wide; default-off is what keeps the template silent.
+
+**Diagnostic**
+
+| Knob | Value |
+|------|--------|
+| ID | TWA0023 |
+| Category | `Naming` |
+| DefaultSeverity | Warning |
+| `isEnabledByDefault` | `false` |
+| This repo editorconfig / Directory.Build | do **not** add `dotnet_diagnostic.TWA0023.severity` |
+| Consumer opt-in | `dotnet_diagnostic.TWA0023.severity = warning` |
+| Package | `TimeWarp.Architecture.Analyzers` |
+
+Info-by-default still nags IDEs. Default-off matches “do not enable until a cleanup wave.”
+
+RS2008: Unshipped.md row; Severity cell likely `Disabled` when default-off. Bump package-range
+comments `TWA0002–0016, TWA0020–0022` → `TWA0002–0016, TWA0020–0023` (AGENTS.md package table,
+`source/Directory.Build.props`, convention-analyzers csproj Description). Do not fold TWA0017–0019
+(Generators) into that range.
+
+**Match algorithm**
+
+1. Declared type; unwrap `Nullable<T>` / nullable annotations.
+2. Skip set → return.
+3. Stem = `type.OriginalDefinition.Name` (no arity: `ILogger<T>` → `ILogger`).
+4. Interface + `I` + uppercase → strip `I`. Empty after strip → skip.
+5. Identifier **ends with** the stem (`OrdinalIgnoreCase`). Exact match is equal-length suffix.
+   `CatalogHttpClient` ✓; `CatalogClient` ✗; `Discovery` ✗ vs `OriginHomeDiscovery`.
+6. Casing is not this rule (`HttpClient` field / `httpClient` local both pass).
+
+**Do not auto-detect vendor-prefix clipping.** `TimeWarpTerminal` → `Terminal` is attribute-only.
+
+**In:** fields, properties (not indexers), parameters (methods/ctors/primary ctors/lambdas),
+locals, `out var`, deconstruction, `is` designations, foreach, catch. Locals via syntax
+(`VariableDeclaratorSyntax` / `SingleVariableDesignationSyntax` / `ForEachStatementSyntax` /
+`CatchDeclarationSyntax`) — `RegisterSymbolAction` does not support `SymbolKind.Local`.
+
+**Out:** method/type names, events, extension `this`, setter `value`, discards, implicit/compiler-
+generated, overrides + explicit interface members and their parameters (name not free), indexers,
+anonymous-type members, `TypeKind.Error`, type parameters, pointers, function pointers, `dynamic`.
+Record positional params: analyze the parameter; skip the synthesized property.
+
+Catch + lambda parameters **are in** (noise is why the rule ships off). Razor `@code` **out of v1**
+(`GeneratedCodeAnalysisFlags.None`, like TWA0009/TWA0021, not TWA0022).
+
+**Skip set**
+
+- `SpecialType` primitives + `string`/`object` + arrays.
+- Do **not** skip `DateTime`, `Guid`, `TimeSpan`, `CancellationToken`, enums, `ILogger<T>`,
+  `IHttpClientFactory` (`factory` fails; `httpClientFactory` is the rule working).
+- Untyped boxes by `OriginalDefinition` metadata name: `List`1`, `Dictionary`2`, `HashSet`1`,
+  `Queue`1`, `Stack`1`, `IEnumerable`1`, `ICollection`1`, `IList`1`, `IReadOnlyList`1`,
+  `IReadOnlyCollection`1`, `IDictionary`2`, `IReadOnlyDictionary`2`, `IQueryable`1`,
+  Immutable/Concurrent variants, Span/Memory, `Task`/`Task`1`/`ValueTask`/`ValueTask`1`,
+  `Action`/`Func` all arities, tuples, non-generic `IEnumerable`/`IList`/`IDictionary`.
+- Hard-coded `ImmutableHashSet` in Design; not editorconfig-configurable in v1.
+
+**Diagnostic**
+
+```
+title: "Identifier does not use the type stem"
+messageFormat: "Identifier '{0}' must end with type stem '{1}' (the type name already names the role; qualify with a prefix if there are two of this type)"
+```
+
+Location: identifier token.
+
+**Exception hatch** — `TimeWarp.Architecture.Attributes`, simple-name match (no ProjectReference
+from convention-analyzers):
+
+```csharp
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter,
+  AllowMultiple = false, Inherited = false)]
+public sealed class TypeStemIdentifierAttribute : Attribute
+{
+  public string Reason { get; }
+  public TypeStemIdentifierAttribute(string reason) => Reason = reason;
+}
+```
+
+Empty/whitespace reason still flags TWA0023 (no second id). Locals/foreach have no
+`AttributeTargets.Local` — hatch is `#pragma` / editorconfig. Do not wire Attributes repo-wide.
+
+**Files to add**
+
+- `source/analyzers/timewarp-architecture-convention-analyzers/type-stem-identifier-analyzer.cs`
+- `source/analyzers/timewarp-architecture-attributes/type-stem-identifier-attribute.cs`
+- `tests/analyzers/timewarp-architecture-analyzers-tests/type-stem-identifier-analyzer-tests.cs`
+
+**Files to edit**
+
+- `AnalyzerReleases.Unshipped.md` (TWA0023 row)
+- convention-analyzers + attributes csproj Descriptions
+- `source/Directory.Build.props` comment range only
+- `AGENTS.md` TWA table row + package-table range
+
+**Do not edit:** `.editorconfig`, `diagnostics/diagnostic-descriptors.cs`, flow `tw-csharp`,
+Ganda, TW0001, product cleanup.
+
+**Tests** (Microsoft.CodeAnalysis.Testing + Jaribu `RegisterTests<>`, copy TWA0022 harness).
+Enable via globalconfig `dotnet_diagnostic.TWA0023.severity = warning`. Descriptor assertion
+(`IsEnabledByDefault == false`) is the load-bearing default-off proof. Stub the attribute in
+test source (TWA0009 pattern). Matrix: exact match, mismatch, I-strip, qualifier-head, primitives,
+boxes, opt-out + empty reason, foreach, discard, arrays, override skip, pragma.
+
+**AGENTS.md row** — pointer only, do not paste tw-csharp examples:
+
+`TWA0023 | type-stem identifiers: named type that already names the role **is** the identifier
+(strip leading I on interfaces; two of the same type qualify with the type as head). **Default
+off** — enable with editorconfig. Opt-out: [TypeStemIdentifier(reason)]. Rule prose: flow skill
+tw-csharp.`
+
+**Out of scope:** enabling in this repo, code fix, vendor-prefix heuristic, configurable skip
+lists, razor `@code`, shipping in TW* SourceGenerators, Foundation, second diagnostic for empty
+reason.
+
+**Order:** attribute → analyzer + Unshipped.md → tests → AGENTS.md → `dev build` 0/0 (must stay
+0/0 **because the rule is off**).
+
+**Resolved (not blockers):** default-off not Info; no vendor-prefix auto-detect; Attributes
+package + simple-name match; catch/lambda in; razor out; Task/Func skipped, ILogger not; locals
+pragma-only; overrides skipped.
+
 ## Session
 
 - Created: 2996566 (2026-08-20)
 - Briefed from flow Grok session after merging timewarp-flow PR 111
+- Orchestrator: grok session (2026-08-20) — claimed, in-progress, plan finalized
