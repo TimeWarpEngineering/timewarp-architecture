@@ -38,13 +38,13 @@ take Architecture analyzers. Not Ganda. Not flow.
 ## Checklist
 
 - [x] Confirm diagnostic id (TWA0023) and `isEnabledByDefault: false` (or Info)
-- [ ] Analyzer + exception attribute (reason required)
-- [ ] AnalyzerReleases.Unshipped.md row
-- [ ] Tests: match, mismatch, interface strip, two-instance qualifier, primitive skip, opt-out
-- [ ] AGENTS.md TWA table pointer to `tw-csharp` for the prose rule
-- [ ] Do **not** turn the diagnostic to warning/error in this repo's Directory.Build / editorconfig
+- [x] Analyzer + exception attribute (reason required)
+- [x] AnalyzerReleases.Unshipped.md row
+- [x] Tests: match, mismatch, interface strip, two-instance qualifier, primitive skip, opt-out
+- [x] AGENTS.md TWA table pointer to `tw-csharp` for the prose rule
+- [x] Do **not** turn the diagnostic to warning/error in this repo's Directory.Build / editorconfig
       as part of this task
-- [ ] `dev build` 0/0; analyzer tests pass
+- [x] `dev build` 0/0; analyzer tests pass
 
 ## Notes
 
@@ -213,3 +213,4 @@ pragma-only; overrides skipped.
 - Created: 2996566 (2026-08-20)
 - Briefed from flow Grok session after merging timewarp-flow PR 111
 - Orchestrator: grok session (2026-08-20) — claimed, in-progress, plan finalized
+- Implementer: TWA0023 analyzer + `[TypeStemIdentifier]` + tests; default-off; `dev build` 0/0. Not committed.

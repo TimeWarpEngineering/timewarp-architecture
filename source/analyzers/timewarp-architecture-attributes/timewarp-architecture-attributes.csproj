@@ -3,7 +3,7 @@
     <PackageId>$(TwArchitectureAttributesPackageId)</PackageId>
     <Title>$(TwArchitectureAttributesPackageId)</Title>
 
-    <Description>Runtime marker attributes for TimeWarp Architecture generators (e.g. [ApiEndpoint]). Public library — not a private dependency of the Generators package.</Description>
+    <Description>Runtime marker attributes for TimeWarp Architecture generators (e.g. [ApiEndpoint]) and convention opt-outs ([TypeStemIdentifier]). Public library — not a private dependency of the Generators package.</Description>
     <PackageTags>timewarp;architecture;attributes</PackageTags>
   </PropertyGroup>
 </Project>
