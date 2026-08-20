@@ -213,5 +213,88 @@ pragma-only; overrides skipped.
 - Created: 2996566 (2026-08-20)
 - Briefed from flow Grok session after merging timewarp-flow PR 111
 - Orchestrator: grok session (2026-08-20) — claimed, in-progress, plan finalized
-- Phase 4b: effort 1 general review; round-1 M1 (do-not-skip test coverage) fixed; re-review in `review/round-2/`
-- Implementer: TWA0023 analyzer + `[TypeStemIdentifier]` + tests; default-off; `dev build` 0/0. Not committed.
+- Phase 4b: effort 1 general review; round-1 M1 (do-not-skip test coverage) fixed; round-2 clean; disposition `clean`
+- Implementer: TWA0023 analyzer + `[TypeStemIdentifier]` + tests; default-off
+
+## Results
+
+### What was implemented
+
+TWA0023 type-stem identifier convention analyzer in `TimeWarp.Architecture.Analyzers`, **default off**.
+
+- Identifier of a named type must **end with** the type stem (`OrdinalIgnoreCase`). Interfaces drop a leading `I` when `I` + uppercase. Qualifiers keep the type as the head (`CatalogHttpClient`).
+- **In:** fields, properties (not indexers), parameters, locals, foreach, catch, lambdas.
+- **Out:** methods/types/events, extension `this`, setter `value`, discards, implicit/compiler-generated, overrides + explicit interface members and their parameters, indexers, anonymous-type members, enum members, error/type-parameter/pointer/function-pointer/dynamic, record synthesized positional properties.
+- Skip set: SpecialType primitives + arrays + untyped boxes (`List`/`Dictionary`/`IEnumerable`/`Task`/`Action`/`Func`/tuples/…). **Not** skipped: `DateTime`, `Guid`, `TimeSpan`, `CancellationToken`, enum *types*, `ILogger<T>`, `IHttpClientFactory`.
+- Opt-out: `[TypeStemIdentifier(reason)]` in Architecture.Attributes, simple-name match, non-empty reason required. Empty/whitespace still flags. Locals/foreach hatch is `#pragma` / editorconfig.
+- Consumer opt-in: `dotnet_diagnostic.TWA0023.severity = warning`. **Not** enabled in this repo’s `.editorconfig` or Directory.Build.
+
+### Files changed
+
+**Added**
+- `source/analyzers/timewarp-architecture-convention-analyzers/type-stem-identifier-analyzer.cs`
+- `source/analyzers/timewarp-architecture-attributes/type-stem-identifier-attribute.cs`
+- `tests/analyzers/timewarp-architecture-analyzers-tests/type-stem-identifier-analyzer-tests.cs`
+
+**Edited**
+- `source/analyzers/timewarp-architecture-convention-analyzers/AnalyzerReleases.Unshipped.md` (TWA0023, Severity `Disabled`)
+- convention-analyzers + attributes csproj Descriptions
+- `source/Directory.Build.props` (comment range only)
+- `AGENTS.md` (TWA table row + package-table range)
+
+### Key decisions / deviations
+
+- Default-off (`isEnabledByDefault: false`), not Info.
+- No vendor-prefix auto-detect; `TimeWarpTerminal` → `Terminal` is attribute-only.
+- Roslyn 5.6.0 has no `ILocalSymbol.IsDiscard` — skip identifier `_` and `IParameterSymbol.IsDiscard`.
+- Enum members skipped (named values, not a role of the enum type).
+- `var` on casts only (IDE0007 / TreatWarningsAsErrors; siblings do this).
+
+### Test outcomes
+
+- Analyzer tests **27/27 passed**: `cd tests/analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Release -- --filter-class Type_Stem`
+- Descriptor: `TWA0023`, `IsEnabledByDefault == false`, `DefaultSeverity == Warning`
+- `dev build` 0/0 (rule did not light up — default-off proof)
+
+### Phase 4b review
+
+- **Effort:** 1 (general only)
+- **Rounds:** 2
+- **Roster:** general
+- **Paths:** `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`
+- **Final counts:** bug 0; suggestion 1 fixed (M1 do-not-skip true-positives); nit 0; open 0
+- **Disposition:** `clean`
+
+### How to validate
+
+**Automated**
+
+```bash
+cd tests/analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Release -- --filter-class Type_Stem
+# expect: 27 passed, 0 failed
+```
+
+If TWA0023 is missing from discovery, rebuild convention-analyzers:
+
+```bash
+dotnet build source/analyzers/timewarp-architecture-convention-analyzers --no-incremental -c Release
+```
+
+**Smoke (rule stays silent in this repo)**
+
+```bash
+dev build
+# expect: 0 Warning(s) 0 Error(s) — TWA0023 must not appear
+```
+
+**Expect (opt-in elsewhere, not this repo)**
+
+A consumer enables with:
+
+```
+dotnet_diagnostic.TWA0023.severity = warning
+```
+
+Then `HttpClient CatalogClient` warns TWA0023 (stem `HttpClient`); `HttpClient CatalogHttpClient` and `IFileSystem FileSystem` are clean. `[TypeStemIdentifier("reason")]` suppresses a mismatch; empty reason does not.
+
+**Not in scope:** enabling TWA0023 in this template repo; product-code rename cleanup; a code fix.
