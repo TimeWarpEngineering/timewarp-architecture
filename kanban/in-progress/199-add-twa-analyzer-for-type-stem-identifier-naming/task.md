@@ -213,4 +213,5 @@ pragma-only; overrides skipped.
 - Created: 2996566 (2026-08-20)
 - Briefed from flow Grok session after merging timewarp-flow PR 111
 - Orchestrator: grok session (2026-08-20) — claimed, in-progress, plan finalized
+- Phase 4b: effort 1 general review; round-1 M1 (do-not-skip test coverage) fixed; re-review in `review/round-2/`
 - Implementer: TWA0023 analyzer + `[TypeStemIdentifier]` + tests; default-off; `dev build` 0/0. Not committed.
