@@ -571,4 +571,63 @@ public class Should_Enforce_Type_Stem_Identifiers
     test.ExpectedDiagnostics.Add(Flag("Feature.cs", 9, 38, 45, "factory", "HttpClientFactory"));
     await test.RunAsync();
   }
+
+  public static async Task Given_Named_Role_Types_Are_Not_Skipped()
+  {
+    const string source =
+      """
+      #region Purpose
+      // True positives: these types name the role and are not in the skip set.
+      #endregion
+      using System;
+      using System.Net;
+      using System.Threading;
+
+      namespace Microsoft.Extensions.Logging
+      {
+        public interface ILogger<TCategoryName> { }
+      }
+
+      public class Widget { }
+
+      public class Sample
+      {
+        public void Use(
+          Microsoft.Extensions.Logging.ILogger<Widget> log,
+          DateTime dt,
+          Guid id,
+          TimeSpan ts,
+          CancellationToken ct,
+          HttpStatusCode code)
+        { }
+      }
+      """;
+
+    CSharpAnalyzerTest<TypeStemIdentifierAnalyzer, RoslynTestVerifier> test = Test(source);
+    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 18, 50, 53, "log", "Logger"));
+    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 19, 14, 16, "dt", "DateTime"));
+    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 20, 10, 12, "id", "Guid"));
+    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 21, 14, 16, "ts", "TimeSpan"));
+    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 22, 23, 25, "ct", "CancellationToken"));
+    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 23, 20, 24, "code", "HttpStatusCode"));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Enum_Members_Are_Skipped()
+  {
+    const string source =
+      """
+      #region Purpose
+      // Enum members are named values, not a role of the enum type.
+      #endregion
+
+      public enum Color
+      {
+        Red,
+        Blue
+      }
+      """;
+
+    await Test(source).RunAsync();
+  }
 }
