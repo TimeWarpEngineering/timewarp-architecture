@@ -35,10 +35,9 @@ partial class CredentialsState
       (
         IStore store,
         IWebServerApiService webServerApiService,
-        ISender sender,
         ILogger<Handler> logger,
         AuthenticationStateProvider authenticationStateProvider
-      ) : base(store, webServerApiService, sender, logger, authenticationStateProvider: authenticationStateProvider)
+      ) : base(store, webServerApiService, logger, authenticationStateProvider: authenticationStateProvider)
       {
         AuthenticationStateProvider = authenticationStateProvider;
       }
