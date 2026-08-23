@@ -6,8 +6,9 @@
 // Counterpart to DefaultApiHandler: TResponse is pinned to Stream and HandleSuccess
 // throws by design because file endpoints deliver through the FileResponse branch,
 // which derived handlers must implement.
-// Errors surface as toast notifications via ToastNotificationState.AddProblemDetails;
-// the base does NOT hold/use ISender (TWA0022 defence in depth).
+// Errors surface as toast notifications via ToastNotificationState.AddProblemDetails —
+// the base does not hold or use ISender (TWA0022 / task 196; dead plumbing removed in
+// task 197).
 #endregion
 
 namespace TimeWarp.Architecture;
