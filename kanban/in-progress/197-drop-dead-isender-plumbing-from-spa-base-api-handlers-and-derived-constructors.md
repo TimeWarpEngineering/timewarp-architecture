@@ -27,7 +27,16 @@ deferred as out of that diff's blast radius.
 
 - TWA0022 does not flag the dead fields (no `Send` invocation) — this is pure debt removal.
 
+### Plan
+
+1. Drop `Sender` field + `ISender sender` ctor param from `DefaultApiHandler` and `FileResponseApiHandler`; update Design regions to note errors go only via `ToastNotificationState` (no mediator on the base).
+2. Update all 10 derived `DefaultApiHandler` ctors to stop threading `ISender` (no `FileResponseApiHandler` subclasses; no explicit DI call sites; no test constructors).
+3. `dev build` 0/0; run web-spa related test suites.
+4. Folderize for Phase 4b review → disposition → Results → done → PR.
+
+Files (12): both bases + weather-forecasts fetch, authorization fetch-current-user, profile fetch, role fetch/create/set-permissions, principal fetch/set-roles, credentials fetch/revoke.
+
 ## Session
 
-- Implementer launch: host=headless profile=implementer-grok provider=profile-default worktree=/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-197-drop-dead-isender-plumbing-from-spa-base-api-handl (2026-08-23 UTC)
-- Implementer launch: host=headless profile=implementer-grok provider=profile-default worktree=/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-197-drop-dead-isender-plumbing-from-spa-base-api-handl (2026-08-23 UTC)
+- Implementer: grok headless profile=implementer-grok worktree=task-197-… (2026-08-23 UTC)
+- Phase 1: moved to in-progress; exploration confirmed Sender unread on both bases, 10 derived, 0 FileResponse subclasses.
