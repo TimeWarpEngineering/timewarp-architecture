@@ -4,7 +4,8 @@
 
 #region Design
 // Closes ApiHandler's OneOf branches for the common case: errors surface as toast
-// notifications via ToastNotificationState, so feature handlers implement only
+// notifications via ToastNotificationState.AddProblemDetails only; the base does NOT
+// hold/use ISender (TWA0022 defence in depth). Feature handlers implement only
 // GetRequest and HandleSuccess.
 // HandleFileResponse throws by design — JSON endpoints never return files; derive
 // from FileResponseApiHandler for downloads instead.
@@ -17,19 +18,15 @@ internal abstract class DefaultApiHandler<TAction, TRequest, TResponse> : ApiHan
   where TRequest : IApiRequest
   where TResponse : class
 {
-  private readonly ISender Sender;
-
   protected DefaultApiHandler
   (
     IStore store,
     IApiService apiService,
-    ISender sender,
     ILogger<DefaultApiHandler<TAction, TRequest, TResponse>> logger,
     IValidator<TRequest>? validator = null,
     AuthenticationStateProvider? authenticationStateProvider = null
   ) : base(store, apiService, logger, validator, authenticationStateProvider)
   {
-    Sender = sender;
   }
 
   protected override Task HandleFileResponse(FileResponse fileResponse, CancellationToken cancellationToken)

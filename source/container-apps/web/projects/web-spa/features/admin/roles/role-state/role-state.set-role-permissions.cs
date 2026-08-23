@@ -73,9 +73,8 @@ partial class RoleState
       public Handler(
         IStore store,
         IWebServerApiService webServerApiService,
-        ISender sender,
         ILogger<Handler> logger)
-        : base(store, webServerApiService, sender, logger)
+        : base(store, webServerApiService, logger)
       {
       }
 

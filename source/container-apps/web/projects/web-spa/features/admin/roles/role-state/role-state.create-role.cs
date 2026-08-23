@@ -34,9 +34,8 @@ partial class RoleState
     (
       IStore store,
       IWebServerApiService webServerApiService,
-      ISender sender,
       ILogger<Handler> logger
-    ) : DefaultApiHandler<Action, Command, Response>(store, webServerApiService, sender, logger)
+    ) : DefaultApiHandler<Action, Command, Response>(store, webServerApiService, logger)
     {
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken) =>
         Task.FromResult<Command?>(new Command

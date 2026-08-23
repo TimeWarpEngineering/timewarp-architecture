@@ -28,9 +28,8 @@ partial class AuthorizationState
       (
         IStore store,
         IWebServerApiService webServerApiService,
-        ISender sender,
         ILogger<Handler> logger
-      ) : base(store, webServerApiService, sender, logger) {}
+      ) : base(store, webServerApiService, logger) {}
 
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {

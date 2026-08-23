@@ -6,8 +6,8 @@
 // Counterpart to DefaultApiHandler: TResponse is pinned to Stream and HandleSuccess
 // throws by design because file endpoints deliver through the FileResponse branch,
 // which derived handlers must implement.
-// Errors surface as toast notifications so download failures are user-visible
-// without per-feature error plumbing.
+// Errors surface as toast notifications via ToastNotificationState.AddProblemDetails;
+// the base does NOT hold/use ISender (TWA0022 defence in depth).
 #endregion
 
 namespace TimeWarp.Architecture;
@@ -16,19 +16,15 @@ internal abstract class FileResponseApiHandler<TAction, TRequest> : ApiHandler<T
   where TAction : IBaseAction
   where TRequest : IApiRequest
 {
-  private readonly ISender Sender;
-
   protected FileResponseApiHandler
   (
     IStore store,
     IApiService apiService,
-    ISender sender,
     ILogger<FileResponseApiHandler<TAction, TRequest>> logger,
     IValidator<TRequest>? validator = null,
     AuthenticationStateProvider? authenticationStateProvider = null
   ) : base(store, apiService, logger, validator, authenticationStateProvider)
   {
-    Sender = sender;
   }
 
   protected override Task HandleSuccess(Stream response, CancellationToken cancellationToken) => throw new NotImplementedException();

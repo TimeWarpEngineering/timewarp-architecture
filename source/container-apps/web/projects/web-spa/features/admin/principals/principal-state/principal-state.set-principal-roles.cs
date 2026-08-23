@@ -82,10 +82,9 @@ partial class PrincipalState
       public Handler(
         IStore store,
         IWebServerApiService webServerApiService,
-        ISender sender,
         ILogger<Handler> logger,
         AuthenticationStateProvider authenticationStateProvider)
-        : base(store, webServerApiService, sender, logger)
+        : base(store, webServerApiService, logger)
       {
         AuthenticationStateProvider = authenticationStateProvider;
       }
