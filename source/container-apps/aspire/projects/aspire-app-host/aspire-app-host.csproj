@@ -1,9 +1,14 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.4.6">
+<Project Sdk="Aspire.AppHost.Sdk/13.5.2">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
+    <!-- Aspire 13.5 ASPIRE010: default AspireUseCliBundle is false (NuGet-restored DCP/dashboard).
+         Template hosts launch via `dotnet run` / Aspire.Hosting.Testing, not the Aspire CLI bundle.
+         Keep NuGet orchestration; suppress the opt-in-or-silence warning. -->
+    <AspireUseCliBundle>false</AspireUseCliBundle>
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
     <UserSecretsId>a3d4de92-958f-4e04-b927-9d7605bee60e</UserSecretsId>
     <DefineConstants>$(DefineConstants);api;web;grpc;yarp;postgres</DefineConstants>
   </PropertyGroup>

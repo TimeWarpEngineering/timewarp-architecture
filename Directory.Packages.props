@@ -56,24 +56,24 @@
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-    <PackageVersion Include="libphonenumber-csharp" Version="9.0.36" />
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.37" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.83.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.83.0" />
     <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.83.0" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.83.0" />
     <PackageVersion Include="Grpc.Net.Client.Web" Version="2.83.0" />
-    <PackageVersion Include="protobuf-net.Grpc" Version="1.2.5" />
-    <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
-    <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.2.2" />
-    <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
+    <PackageVersion Include="protobuf-net.Grpc" Version="1.3.14" />
+    <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.3.14" />
+    <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.3.14" />
+    <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.3.14" />
     <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
     <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
     <!-- Yarp / Reverse Proxy (used by Yarp gateway and Aspire.AppHost) -->
-    <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.4.6" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.4.6" />
-    <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same train as stable 13.4.6 hosting pins. -->
-    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.4.6-preview.1.26319.6" />
+    <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.5.2" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.5.2" />
+    <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same train as stable 13.5.2 hosting pins. -->
+    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.5.2-preview.1.26421.6" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.9.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->
@@ -94,10 +94,10 @@
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Identity.Web" Version="4.14.2" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.13.0" />
-    <!-- Testcontainers 4.13.0 pulls SSH.NET 2025.1.0 (NU1903 / GHSA-q939-rpr3-3284
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.14.0" />
+    <!-- Testcontainers 4.13.0 pulled SSH.NET 2025.1.0 (NU1903 / GHSA-q939-rpr3-3284
          SCP recursive-download path traversal). Patched 2026.0.0. Direct pin on
-         web-infrastructure-tests lifts the graph; Testcontainers is still latest. -->
+         web-infrastructure-tests lifts the graph; Testcontainers 4.14.0 is latest. -->
     <PackageVersion Include="SSH.NET" Version="2026.0.0" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
@@ -112,22 +112,20 @@
          library (no FrameworkReference to the shared framework), so it needs the explicit package. -->
     <PackageVersion Include="System.Formats.Cbor" Version="10.0.11" />
     <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
-    <PackageVersion Include="FastEndpoints" Version="8.2.0" />
-    <PackageVersion Include="FastEndpoints.OpenApi" Version="8.2.0" />
+    <PackageVersion Include="FastEndpoints" Version="8.3.0" />
+    <PackageVersion Include="FastEndpoints.OpenApi" Version="8.3.0" />
     <!-- FastEndpoints.OpenApi / Microsoft.AspNetCore.OpenApi 10.0.x transitively pull
          Microsoft.OpenApi 2.0.0 (NU1903 / GHSA-v5pm-xwqc-g5wc circular-schema stack overflow).
-         Patched 2.x floor: 2.7.5+; this repo pins 2.12.0 (task 195, same major). Direct pin on
+         Patched 2.x floor: 2.7.5+; this repo pins 2.12.2 (task 201, same major). Direct pin on
          foundation-server lifts the graph without jumping to 3.x.
-         Verified task 144: bumping to 3.x restores fine (both nuspecs declare a floor-only
-         dependency, no upper bound) but fails the build — Microsoft.AspNetCore.OpenApi 10.0.x's
-         own XmlCommentGenerator emits code assigning IOpenApiMediaType.Example, which OpenApi 3.x
-         made read-only (CS0200 in
-         artifacts/generated/foundation-server/.../OpenApiXmlCommentSupport.generated.cs).
-         AspNetCore.OpenApi 10.0.x is therefore not compatible with OpenApi 3.x; deferred until a
-         .NET version ships an AspNetCore.OpenApi built against the OpenApi 3.x object model. -->
-    <PackageVersion Include="Microsoft.OpenApi" Version="2.12.0" />
+         Re-attempted task 201: Microsoft.OpenApi 3.10.2 fails restore — Microsoft.AspNetCore.OpenApi
+         10.0.11 now declares Microsoft.OpenApi (>= 2.7.5 && < 3.0.0), so NU1608 is a warning-as-error
+         (TreatWarningsAsErrors). There is no product usage to patch; the upper bound is in
+         AspNetCore.OpenApi's own nuspec. Stay on 2.12.2 until a .NET version ships an
+         AspNetCore.OpenApi built against the OpenApi 3.x object model (.NET 11). -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.19" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.17.1" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.11" />
@@ -139,11 +137,10 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.11" />
     <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.0-rc.5-26219.1" />
     <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.4" />
-    <!-- Re-attempted task 195 (SDK 10.0.400): 7.0.0 still MSB4057 — CheckFileSystemCaseSensitive
-         is gone from the v7 rewrite (native tsc-go; TypeScriptCompileBlocked=true, empty
-         CompileTypeScriptDependsOn). web-spa.csproj PrepareForBuildDependsOn still hooks the
-         classic target chain. Keep 6.0.3 until that pipeline is ported; see web-spa.csproj. -->
-    <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="6.0.3" />
+    <!-- Task 201: take 7.0.1 (native tsc-go). web-spa.csproj runs SetTscExecutable +
+         RunTscCompile before ResolveProjectStaticWebAssets; classic CheckFileSystemCaseSensitive
+         is gone (MSB4057 if those v6 target names stay in PrepareForBuildDependsOn). -->
+    <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="7.0.1" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.2.0" />
     <PackageVersion Include="Blazilla" Version="2.4.1" />
     <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.1" />
@@ -155,11 +152,11 @@
   <ItemGroup Label="Aspire Packages">
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.9.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.9.0" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.17.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.17.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.17.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
   </ItemGroup>
   
   <ItemGroup Label="Code Analyzers">
@@ -167,13 +164,13 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageVersion>
-    <PackageVersion Include="Roslynator.Analyzers" Version="4.16.0" />
-    <PackageVersion Include="Roslynator.CodeAnalysis.Analyzers" Version="4.16.0" />
-    <PackageVersion Include="Roslynator.Formatting.Analyzers" Version="4.16.0" />
+    <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />
+    <PackageVersion Include="Roslynator.CodeAnalysis.Analyzers" Version="5.0.0" />
+    <PackageVersion Include="Roslynator.Formatting.Analyzers" Version="5.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.400" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.6.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.6.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.9.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
     <!-- Move file-level usings into per-project global-usings.cs (BDSoftware; nuru/tui/flexbox pin). Task 172. -->
     <PackageVersion Include="GlobalUsingsAnalyzer" Version="1.4.0">
       <PrivateAssets>all</PrivateAssets>
@@ -184,13 +181,13 @@
        Sourced from TimeWarp.Architecture/Directory.Packages.props; family-versioned
        packages (ASP.NET Core, Aspire) aligned with the pins above. -->
   <ItemGroup Label="Test Packages">
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.6" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.5.2" />
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
     <PackageVersion Include="FakeItEasy" Version="9.0.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.11" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.6.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.9.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.15" />
     <PackageVersion Include="TimeWarp.Jaribu.TestingPlatform" Version="1.0.0-beta.15" />
