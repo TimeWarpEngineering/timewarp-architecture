@@ -7,7 +7,7 @@
 // Wire format decision (task 104-004): ECDSA P-256 (ES256) only, wire = SPKI DER — not COSE (agent
 // SDKs speak openssl/Python/Node/Go/WebCrypto, none of which emit CBOR natively; SPKI DER is each
 // of those runtimes' native public-key export format) and not Ed25519 (not in the .NET 10 BCL —
-// verified against Microsoft.NETCore.App.Ref 10.0.10, only composite ML-DSA identifiers exist;
+// verified against Microsoft.NETCore.App.Ref 10.0.11, only composite ML-DSA identifiers exist;
 // supporting it would need NSec/BouncyCastle, forbidden by the same posture that rejected
 // Fido2NetLib in 104-003). Revisit trigger: if Ed25519 lands in a future BCL, or a consumer
 // genuinely needs it, add it as a second accepted algorithm here — the public TryParse/keyId
