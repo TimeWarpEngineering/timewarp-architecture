@@ -5,7 +5,7 @@
 
 #region Design
 // Opaque, store-backed tokens — NOT JWT (task 104-004 §2). JwtBearer is not in the ASP.NET Core
-// shared framework (verified vs Microsoft.AspNetCore.App.Ref 10.0.10; only BearerToken ships
+// shared framework (verified vs Microsoft.AspNetCore.App.Ref 10.0.11; only BearerToken ships
 // in-box), and a JWT would cost a package plus signing-key management for zero Wave-1 benefit (one
 // validating host, no third-party audience).
 // Scope correction (round-1 finding M2): THIS PORT knows ONLY expiry and the grant it stored at

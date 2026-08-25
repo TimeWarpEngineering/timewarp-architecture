@@ -7,7 +7,7 @@
   <ItemGroup>
     <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FastEndpoints.OpenApi" />
-    <!-- Lift transitive Microsoft.OpenApi 2.0.0 → 2.7.5 (NU1903 / GHSA-v5pm-xwqc-g5wc). -->
+    <!-- Lift transitive Microsoft.OpenApi 2.0.0 → 2.12.0 (NU1903 / GHSA-v5pm-xwqc-g5wc). -->
     <PackageReference Include="Microsoft.OpenApi" />
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="OneOf" />
