@@ -110,36 +110,29 @@
   </ItemGroup>
 
   <!-- TypeScript (source/**/*.ts -> wwwroot/js via tsconfig outDir) is compiled by
-       Microsoft.TypeScript.MSBuild — node/npm NOT required. Type-checking uses ambient
-       declarations under source/types (tsconfig typeRoots). The npm lint/format toolchain
-       was removed (059-006).
+       Microsoft.TypeScript.MSBuild 7.0.1 (native tsc-go) — node/npm NOT required.
+       Type-checking uses ambient declarations under source/types (tsconfig typeRoots).
+       The npm lint/format toolchain was removed (059-006).
 
-       Design (task 116): SWA globs wwwroot/** into Content at evaluation.
+       Design (task 116 + 201): SWA globs wwwroot/** into Content at evaluation.
        ResolveProjectStaticWebAssets runs BeforeTargets=AssignTargetPaths (before Compile).
-       Rebuild = Clean;Build in one invocation: TypeScriptDeleteCompilerOutput deletes
-       wwwroot/js, but Content still lists those paths → DefineStaticWebAssets throws
-       "No file exists for the asset". Fix: run the TypeScript pipeline during PrepareForBuild
-       (ASP.NET guidance — microsoft/TypeScript#60538, dotnet/sdk#52301) so files exist before
-       SWA discovery; de-dupe Content before GetTypeScriptOutputForPublishing re-adds
-       GeneratedJavascript. Do not commit wwwroot/js (gitignored). Local workaround can drop
-       when SDK ships Microsoft.NET.Sdk.StaticWebAssets.TypeScript.targets (tracked for .NET 11). -->
-  <PropertyGroup>
-    <PrepareForBuildDependsOn>
-      CheckFileSystemCaseSensitive;
-      FindConfigFiles;
-      TypeScriptDeleteOutputFromOtherConfigs;
-      CompileTypeScript;
-      CompileTypeScriptWithTSConfig;
-      GetTypeScriptOutputForPublishing;
-      $(PrepareForBuildDependsOn)
-    </PrepareForBuildDependsOn>
-  </PropertyGroup>
-
-  <Target Name="RemoveDuplicateTypeScriptOutputs"
-          BeforeTargets="GetTypeScriptOutputForPublishing">
-    <ItemGroup>
-      <Content Remove="@(GeneratedJavascript)" />
-    </ItemGroup>
+       Rebuild = Clean;Build in one invocation: CleanTypeScriptOutputs deletes wwwroot/js
+       (via obj/*/tsc-emitted.txt), but Content still lists those paths →
+       DefineStaticWebAssets throws "No file exists for the asset". Fix: run the v7
+       SetTscExecutable + RunTscCompile targets before SWA discovery so files exist.
+       v7 dropped the classic CheckFileSystemCaseSensitive / CompileTypeScript /
+       GetTypeScriptOutputForPublishing chain (MSB4057 on 7.0.0/7.0.1 if those names stay
+       in PrepareForBuildDependsOn). v7 does not re-add GeneratedJavascript, so the
+       RemoveDuplicateTypeScriptOutputs de-dupe is gone. Do not commit wwwroot/js
+       (gitignored). Local workaround can drop when SDK ships
+       Microsoft.NET.Sdk.StaticWebAssets.TypeScript.targets (tracked for .NET 11).
+       TypeScriptCompileBlocked after the early run skips the same targets on CoreCompile. -->
+  <Target Name="CompileTypeScriptBeforeStaticWebAssets"
+          BeforeTargets="ResolveProjectStaticWebAssets"
+          DependsOnTargets="SetTscExecutable;RunTscCompile">
+    <PropertyGroup>
+      <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+    </PropertyGroup>
   </Target>
 
   <ItemGroup>
