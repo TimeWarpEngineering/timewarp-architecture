@@ -128,6 +128,9 @@ Progressive profile and agent–human / humanUx handoff were **not** 104 kernel.
 Moved to independent to-do **205** (need more domain before placement).
 Archived children: **104-024**, **104-025**.
 
+- [ ] Epic Results + ### How to validate (program already shipped; cite 022 Program104Sunny)
+- [ ] `ganda kanban done 104`; kanban-only PR; STOP (do not merge)
+
 ## Notes
 
 ### When code exists
@@ -172,3 +175,26 @@ listings), child `## Results` / `review/disposition.md` trails.
   Wake-up: `git log --oneline origin/dev..HEAD`, child Results under `kanban/done/104-*`
 - 2026-08-26: **104-023** done (Cloudflare operator notes). **104-024** / **104-025**
   pulled off this epic into to-do **205** (higher-level; wait for more domain).
+- 2026-08-26: Cockpit close — human asked to mark epic **done**. Remaining is
+  board hygiene only.
+
+### Board close (2026-08-26)
+
+Program is shipped (Waves 1–4 + 023). **205** is independent to-do — do **not**
+implement it. Do **not** change product code.
+
+Write `## Results` including `### How to validate`:
+
+- What shipped: Identity + TimeWarp.402 + compose + template/agent surface + 023 docs
+- Deferred: **205** (profile + humanUx)
+- Smoke: `ganda kanban path 104` under `kanban/done/`; no 104 in in-progress
+- Automated: Program104Sunny from **104-022**:
+
+```bash
+cd tests/container-apps/web/web-server-integration-tests
+dotnet test -c Release -- --filter-class Program104Sunny
+# expect: 3/3 passed
+```
+
+Then `ganda kanban done 104` (folder kitchen), commit, `tw-pr` / `gh pr create`
+`--head` `--base master`. STOP. Do not merge. Do not close **205**.
