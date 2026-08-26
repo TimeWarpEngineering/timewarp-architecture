@@ -126,10 +126,10 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 
 Progressive profile and agent–human / humanUx handoff were **not** 104 kernel.
 Moved to independent to-do **205** (need more domain before placement).
-Archived children: **104-024**, **104-025**.
+Former Wave 5 children **104-024** / **104-025** are superseded stubs in `kanban/done/` (product on **205**). **104-026** is done process residue (fold-in on **104-002**).
 
-- [ ] Epic Results + ### How to validate (program already shipped; cite 022 Program104Sunny)
-- [ ] `ganda kanban done 104`; kanban-only PR; STOP (do not merge)
+- [x] Epic Results + ### How to validate (program already shipped; cite 022 Program104Sunny)
+- [x] `ganda kanban done 104`; kanban-only PR; STOP (do not merge)
 
 ## Notes
 
@@ -198,3 +198,70 @@ dotnet test -c Release -- --filter-class Program104Sunny
 
 Then `ganda kanban done 104` (folder kitchen), commit, `tw-pr` / `gh pr create`
 `--head` `--base master`. STOP. Do not merge. Do not close **205**.
+- Implementer launch: host=headless profile=implementer-grok provider=profile-default worktree=/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-104-agent-ready-identity-and-x402-program (2026-08-26 UTC)
+- Implementer: grok headless board close — Results + `ganda kanban done 104` + kanban-only PR (2026-08-26)
+
+## Results
+
+Program 104 shipped. Waves 1–4 plus Wave 5 **104-023** are on origin/master via child PRs. Progressive profile and agent–human / humanUx handoff stay on independent to-do **205** — not closed here, not implemented here.
+
+This close is **board hygiene only**. No Identity, TimeWarp.402, template, or other product files change in this PR. `ganda kanban done 104` moves the folder kitchen from `kanban/in-progress/` to `kanban/done/` so origin-home matches the shipped program.
+
+### What shipped (already on origin/master)
+
+| Wave | Scope | Children |
+|------|--------|----------|
+| 1 | TimeWarp.Identity — principals (Human/Agent/Service), passkeys, agent keys + scoped tokens, multi-credential, TypedId, concurrency, WebAuthn RP ID allowlist, EF persistence | 104-001 … 104-006, 026–029, 031, 032 |
+| 2 | TimeWarp.402 — challenge/verify/settle, 503-not-402, tip jar, credit ledger, metered demo, api-server agent bearer, payment tests | 104-007 … 104-012, 016, 030 |
+| 3 | Compose — settle → Funded + credits, rate limits, agent E2E | 104-013, 015, 014 |
+| 4 | Template + agent surface — discovery, markdown negotiation, MCP/skills/A2A stubs, x402 discoverable, flags/Entra non-default, Program104Sunny | 104-017 … 104-022 |
+| 5 | Cloudflare operator notes | 104-023 |
+
+**Deferred (not this epic):** **205** — progressive profile + agent–human / humanUx handoff. Former children **104-024** / **104-025** are superseded stubs in `kanban/done/` (product stays on **205**). **104-026** is done process residue (RFC fold-in landed on **104-002**). They cannot stay archived: parent-done treats archived as open (ganda 187).
+
+**Files changed (this PR):** 104 kitchen move + Results; 104-024/025/026 archived→done with Results; 205 pointer that those stubs are done. No product code.
+
+**Decisions (locked, already in child Design regions):** passkey/key first; humans and agents are both principals; no human required if the agent pays; free/discovery routes never HTTP 402 (disabled payment is 503); sessions for browsers, short-lived scoped tokens for agents; hybrid PrincipalId + attached keys; trust tiers (Keyed / Funded / Established / Quarantined); Entra/MSAL non-default.
+
+**Test outcomes:** program exit criterion **104-022** Program104Sunny **3/3** (human passkey onboard, agent register+pay+call, voluntary tip). Child payment library tests 42/42 mocked facilitator (**104-012**).
+
+### How to validate
+
+**Smoke** (kitchen move)
+
+```bash
+test ! -d kanban/in-progress/104-agent-ready-identity-and-x402-program && echo no-in-progress-104
+# Expect: no-in-progress-104
+
+test -f kanban/done/104-agent-ready-identity-and-x402-program/task.md && echo ok-104
+# Expect: ok-104
+
+ganda kanban path 104
+# Expect: …/kanban/done/104-agent-ready-identity-and-x402-program/task.md
+
+git diff origin/master...HEAD --stat
+# Expect: only kanban/ paths (104 column move + Results)
+```
+
+**Expect** (kitchen)
+
+- `ganda kanban path 104` is under `kanban/done/`. No 104 kitchen in `kanban/in-progress/`.
+- Task 104 stays id **104** with Results and this How to validate.
+- **205** remains in `kanban/to-do/` (`205-progressive-profile-and-agent-human-handoff-after-more-domain-exists.md`). Do not close it.
+- **104-024**, **104-025**, **104-026** are under `kanban/done/` (not archived).
+- This PR is kanban-only; no product code in the diff. STOP; do not merge from this worktree.
+
+**Automated** (program exit — **104-022**, already on origin/master)
+
+```bash
+cd tests/container-apps/web/web-server-integration-tests
+dotnet test -c Release -- --filter-class Program104Sunny
+# Expect: 3/3 passed
+#   1) Human passkey onboard → principal + session
+#   2) Agent register + pay (mock) + metered 200 + Funded
+#   3) Voluntary tip mock settle
+```
+
+**Depends on:** in-proc web host; mock facilitator; no live chain; software authenticator (not Playwright).
+
+**Not in scope:** live facilitator settle (funded wallet); browser WebAuthn hardware / Playwright virtual authenticator; task **205** profile/humanUx; Cloudflare live edge config (023 is operator notes only).
