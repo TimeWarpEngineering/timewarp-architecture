@@ -17,8 +17,8 @@ Folded from:
 
 | Old child | Topic |
 |-----------|--------|
-| **104-024** (archived) | Optional progressive profile after the principal exists |
-| **104-025** (archived) | Optional Agent ↔ Human link and portable humanUx handoff payload |
+| **104-024** (done — superseded stub) | Optional progressive profile after the principal exists |
+| **104-025** (done — superseded stub) | Optional Agent ↔ Human link and portable humanUx handoff payload |
 
 ## Requirements
 
