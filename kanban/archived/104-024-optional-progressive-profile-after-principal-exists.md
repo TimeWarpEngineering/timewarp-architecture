@@ -24,6 +24,10 @@ Update display name/email/etc. after principal exists. Never required for passke
 
 Optional Wave 5.
 
+**2026-08-26:** Pulled off epic **104**. Work continues as independent to-do **205**
+(progressive profile + agent-human handoff after more domain exists). Archived so
+104 no longer owns this higher-level product.
+
 ### Depends on
 
 104-002
