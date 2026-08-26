@@ -34,7 +34,7 @@ Do not implement on origin-home. Stay in this claim worktree.
 - [x] 179 home Sign-in moved to `kanban/done/` (id unchanged)
 - [x] Githooks silence re-id via `ganda kanban reserve` into `kanban/done/`
 - [x] Results + How to validate on both shipped kitchens + this task
-- [ ] This kitchen in `done/`; PR; STOP
+- [x] This kitchen in `done/`; PR; STOP
 
 ## Session
 
@@ -42,6 +42,7 @@ Do not implement on origin-home. Stay in this claim worktree.
 - Cockpit: Grok 01a0275a — duplicate 179 on `reposet show live`
 - Implementer launch: host=herdr profile=implementer-grok provider=grok worktree=/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-202-re-id-duplicate-architecture-179-kitchen-and-move workspace=w0 pane=w0:p1 agent=task202 (2026-08-26 UTC)
 - Implementation: reserved **203**; `git mv` 179 home Sign-in → `kanban/done/`; renamed githooks 179 → `kanban/done/203-silence-…` (2026-08-26)
+- Board: `ganda kanban done 202` (claim + worktree remain for PR)
 
 ## Notes
 
