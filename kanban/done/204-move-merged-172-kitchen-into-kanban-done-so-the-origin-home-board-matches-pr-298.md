@@ -25,13 +25,14 @@ Do not re-id 172. Do not implement 177. Do not touch other in-progress kitchens.
 ## Checklist
 
 - [x] Move 172 kitchen to `kanban/done/`
-- [ ] This kitchen in `done/`; PR; STOP
+- [x] This kitchen in `done/`; PR; STOP
 
 ## Session
 
 - Created: 1429125 (2026-08-26)
 - Cockpit: Grok 01a0275a — Live still showed 172 in-progress after PR 298 merged
 - Implementation: `git mv` 172 `kanban/in-progress/` → `kanban/done/` (body unchanged; follow-up items left unchecked) (2026-08-26)
+- Board: `ganda kanban done 204` (claim + worktree remain for PR)
 
 ## Notes
 
