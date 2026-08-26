@@ -59,6 +59,7 @@ Policy already on `origin/master` (`98627e31` / `02781238`):
 - `source/container-apps/api/projects/api-server/global-usings.cs`
 - `source/container-apps/web/projects/web-server/global-usings.cs`
 - Policy files already on master: `.editorconfig`, `Directory.Build.props`
+- Pre-PR `dev check-version`: `<Version>` + platform CPM pins `2.0.0-beta.16` → `2.0.0-beta.17` (`source/Directory.Build.props`, `timewarp-templates/Directory.Build.props`, `Directory.Packages.props`)
 
 ### Key decisions
 - Trust `dotnet build` over Roslynk/`dotnet format` IDE0005 on `global using` when the workspace compilation is incomplete: removing `TimeWarp.Foundation.Behaviors` from api-server failed with CS0246 on `FluentValidationBehavior<,>`.
