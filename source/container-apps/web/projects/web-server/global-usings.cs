@@ -45,7 +45,6 @@ global using TimeWarp.Identity;
 global using TimeWarp.Architecture.Services;
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Foundation;
-global using TimeWarp.Foundation.Features;
 
 // Postgres-only: EF registrations, health-check types, Aspire connection-string constants,
 // and IModule for PostgresDbModule (other modules import TimeWarp.Modules file-locally).
