@@ -16,7 +16,7 @@ Wave 1  Identity package          104-001 … 104-006 + 026–029, 031, 032  ✅
 Wave 2  TimeWarp.402 package      104-007 … 104-012 (+016 pulled forward, +030)
 Wave 3  Compose Identity + 402    104-013, 104-015, 104-014
 Wave 4  Template + agent surface  104-017 … 104-022
-Wave 5  Optional polish           104-023 … 104-025
+Wave 5  Optional polish           104-023 (Cloudflare docs)
 ```
 
 Order within a wave: follow the checklist below (it encodes the 2026-08-03
@@ -27,7 +27,8 @@ packages. Open decision: if the metered endpoint (011) lives on api-server,
 ## Locked product decisions (from design sessions)
 
 1. **Passkey / key first, profile later.** Account = accepted public key, not a
-   registration form. Progressive profile is optional and later (024).
+   registration form. Progressive profile is optional and later (task **205**,
+   pulled off this epic).
 2. **Humans and agents are both principals.** Kind: Human | Agent | Service.
 3. **No human required if the agent pays.** Wallet/x402 is enough to buy service.
 4. **Payment is in the template story**, not a bolt-on. Package name:
@@ -121,9 +122,11 @@ or earned trust. Rate-limit register + 402 challenge endpoints (015).
 - [x] 104-022 E2E sunny paths (program exit criterion) — Program104Sunny suite 3/3
 
 ### Wave 5 — Optional (post-exit)
-- [ ] 104-023 Cloudflare operator notes
-- [ ] 104-024 Progressive profile (hold until demanded)
-- [ ] 104-025 humanUx link (hold until demanded)
+- [x] 104-023 Cloudflare operator notes
+
+Progressive profile and agent–human / humanUx handoff were **not** 104 kernel.
+Moved to independent to-do **205** (need more domain before placement).
+Archived children: **104-024**, **104-025**.
 
 ## Notes
 
@@ -167,3 +170,5 @@ listings), child `## Results` / `review/disposition.md` trails.
   including program exit **022**; Wave 5 (023–025) held per authorization.
   `./bin/dev build` **0/0**. **~35 commits local only** on `dev` (no push/PR).
   Wake-up: `git log --oneline origin/dev..HEAD`, child Results under `kanban/done/104-*`
+- 2026-08-26: **104-023** done (Cloudflare operator notes). **104-024** / **104-025**
+  pulled off this epic into to-do **205** (higher-level; wait for more domain).
