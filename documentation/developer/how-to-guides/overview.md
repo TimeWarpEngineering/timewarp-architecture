@@ -23,6 +23,10 @@ Task-oriented guides for working in a TimeWarp Architecture solution.
 - [How to run Oakton commands](how-to-run-oakton-commands.md)
 - [How to get all contents in a directory recursively](how-to-get-all-contents-in-directory-recursively.md)
 
+## Ops / edge
+
+- [How to configure Cloudflare as the agent-welcome outer ring](how-to-configure-cloudflare-edge-for-agent-welcome.md) — WAF/rate limits aligned with 104-015; do not block all AI bots; edge ≠ Identity/402
+
 ## Contracts and testing
 
 - [Web API contracts](web-api-contracts/overview.md)
