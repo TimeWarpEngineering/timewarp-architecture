@@ -13,4 +13,3 @@ global using TimeWarp.Foundation.CorsPolicies;
 global using TimeWarp.Mediator;
 global using TimeWarp.Foundation;
 global using TimeWarp.Foundation.Behaviors;
-global using TimeWarp.Foundation.Features;
