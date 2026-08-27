@@ -17,9 +17,11 @@ export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 DOTNET_ROOT="${DOTNET_ROOT:-/usr/share/dotnet}"
 ASPIRE_TOOL_PATH="${ASPIRE_TOOL_PATH:-/usr/local/share/dotnet-tools}"
 
+APT_DPKG_OPTS=(-o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold)
+
 install_base_packages() {
   apt-get update
-  apt-get install -y --no-install-recommends \
+  apt-get "${APT_DPKG_OPTS[@]}" install -y --no-install-recommends \
     ca-certificates \
     curl \
     git \
@@ -77,7 +79,7 @@ install_docker() {
     > /etc/apt/sources.list.d/docker.list
 
   apt-get update
-  apt-get install -y --no-install-recommends \
+  apt-get "${APT_DPKG_OPTS[@]}" install -y --no-install-recommends \
     docker-ce \
     docker-ce-cli \
     containerd.io \
@@ -117,6 +119,7 @@ install_aspire_cli() {
   else
     "${DOTNET_ROOT}/dotnet" tool install Aspire.Cli --tool-path "${ASPIRE_TOOL_PATH}"
   fi
+  chmod -R a+rX "${ASPIRE_TOOL_PATH}"
   ln -sfn "${ASPIRE_TOOL_PATH}/aspire" /usr/local/bin/aspire
 }
 
