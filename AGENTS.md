@@ -354,3 +354,19 @@ Do not create perpetual/never-closing tasks. See the `tw-kanban` skill.
 `documentation/` (developer + conceptual guides, ADRs) — in-repo markdown is the documentation
 of record; generated apps receive the tree in their template output. No published docs site
 (re-evaluate a public presence when the repo gains an outward-facing audience).
+
+## Cursor Cloud specific instructions
+
+This repo ships a git-owned Cloud Agent environment under `.cursor/` (see
+`.cursor/readme.md` for reuse on other TimeWarp repos).
+
+- Image toolchain: Ubuntu 24.04, .NET 10 matching `global.json`, git, sudo,
+  Docker-in-Docker (`fuse-overlayfs` / `iptables-legacy`), Aspire CLI.
+- `install` restores the solution and self-installs `bin/dev`. It must terminate.
+  Do not start `dev run` or `dockerd` from `install`.
+- `start` brings up the Docker daemon so Aspire / container-backed tests can run.
+- Build and test with this repo's pipeline: `dev build` (or
+  `dotnet run tools/dev-cli/dev.cs -- build`). Warnings are errors; 0/0 is the
+  only acceptable compile result.
+- Secrets, egress allowlists, and dashboard snapshots stay in the Cursor
+  dashboard. They are not a substitute for committing `.cursor/`.
