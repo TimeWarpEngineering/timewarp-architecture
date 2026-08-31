@@ -102,6 +102,7 @@ is the flip the operator saw as "it is working now."
   moved in-progress, dispatch `ganda task work`
 - Implementation: Grok implement oracle (2026-08-31) — host Content re-glob + MSBuild
   assertion + on-demand web-authn import; solution Release 0/0; gate tests green
+- Review: Grok review oracle (2026-08-31) — effort 1 general, 2 rounds, disposition clean
 
 ## Results
 
@@ -141,3 +142,29 @@ lists Web.Spa. `dotnet build timewarp-architecture.slnx -c Release` is 0/0.
 - `HostBuild_Given_` passes (manifest gate).
 - `Import_Given_` passes: identifiers are `import` + `CreateCredential`/`GetCredential`, specifier is `./js/features/web-authn.js`, and the two C# call sites do not contain `Spa.WebAuthn`.
 - Login passkey buttons invoke `web-authn.js` via module import; they do not resolve `window.Spa.WebAuthn`.
+
+### Review disposition
+
+**Outcome:** clean
+**Rounds:** 2
+**Effort:** 1 (general only)
+**Roster:** general
+
+Final counts (round 2):
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 1 | 0 |
+
+Round 1 raised **M1** (nit): `WebAuthnJsModule` Design claimed Blazor import-map remapping, but `App.razor` has no `<ImportMap />`. Fixed on this task id — Design now cites `<base href="/" />` plus MapStaticAssets dual endpoints. Round 2 confirmed M1 fixed; no new findings. No sibling apply-review task.
+
+Paths:
+
+- `review/review-framework.md`
+- `review/round-1/general.md`
+- `review/round-1/merged.md`
+- `review/round-2/general.md`
+- `review/round-2/merged.md`
+- `review/disposition.md`
