@@ -98,3 +98,10 @@ is the flip the operator saw as "it is working now."
   ingress); first HTML capture lacked the Spa initializer; post-recycle HTML included
   `js/web.spa.hpseta122u.lib.module.js` and `window.Spa.WebAuthn.CreateCredential` was a
   function.
+- Cockpit: Grok launch (2026-08-31) — leftover worktree claimed, FF to origin/master,
+  moved in-progress, dispatch `ganda task work`
+
+Stay in this claim worktree. Fast-forwarded onto current origin/master (was 36 behind).
+Implement the checklist. Prefer on-demand `IJSRuntime` import of `web-authn.js` so
+passkey does not need `window.Spa`. Automated gate is required; `dev build` 0/0 is not
+enough. Results + How to validate, `ganda kanban done 200`, PR, STOP. Do not merge.
