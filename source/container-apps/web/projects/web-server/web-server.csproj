@@ -81,10 +81,50 @@
     <InternalsVisibleTo Include="web-server-integration-tests" />
   </ItemGroup>
 
+  <!-- Task 200: Fast Up-to-date Check must not skip web-server when web-spa's gitignored
+       JS initializer appears or changes. Fingerprinted names still share this unfingerprinted
+       emit path. Missing file is a no-op for the check. -->
+  <ItemGroup>
+    <UpToDateCheckInput Include="..\web-spa\wwwroot\js\web.spa.lib.module.js" />
+  </ItemGroup>
+
   <ItemGroup>
     <Compile Include="..\..\..\aspire\projects\aspire-app-host\constants.cs">
       <Link>Configuration\Constants.cs</Link>
     </Compile>
   </ItemGroup>
+
+  <!-- Task 200: a missed Web.Spa JS initializer is a failed host build, not a /Login surprise.
+       GenerateJSModuleManifestBuildStaticWebAssets has no Inputs/Outputs (incrementalism is
+       inside the task), so this AfterTargets always runs. Item compare uses Count() + a
+       boolean property — the template engine strips empty-string item Conditions (task 115). -->
+  <Target Name="AssertWebSpaJsInitializerInHostManifest"
+          AfterTargets="GenerateJSModuleManifestBuildStaticWebAssets">
+    <ItemGroup>
+      <_WebSpaJsInitializerModule Include="@(_ExistingBuildJSModules)"
+        Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(RelativePath)', '(?i)web\.spa.*\.lib\.module\.js'))" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_HasWebSpaJsInitializer>false</_HasWebSpaJsInitializer>
+      <_HasWebSpaJsInitializer Condition="@(_WebSpaJsInitializerModule->Count()) > 0">true</_HasWebSpaJsInitializer>
+      <_JsModuleBuildManifestPath Condition="'$(_JSModuleBuildManifestPath)' == ''">$(IntermediateOutputPath)jsmodules\jsmodules.build.manifest.json</_JsModuleBuildManifestPath>
+    </PropertyGroup>
+    <Error Condition="'$(_HasWebSpaJsInitializer)' != 'true'"
+           Text="web-server JS initializer list omitted Web.Spa (web.spa*.lib.module.js). A missed Spa module is a failed build, not a runtime surprise on /Login (task 200). Manifest: $(_JsModuleBuildManifestPath). Modules: @(_ExistingBuildJSModules->'%(RelativePath)', ', '). Rebuild web-spa so TypeScript emit exists before SWA discovery (task 116), then rebuild this host." />
+  </Target>
+
+  <Target Name="AssertWebSpaJsInitializerInHostPublishManifest"
+          AfterTargets="GenerateJSModuleManifestPublishStaticWebAssets">
+    <ItemGroup>
+      <_WebSpaJsPublishInitializerModule Include="@(_ExistingPublishJSModules)"
+        Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(RelativePath)', '(?i)web\.spa.*\.lib\.module\.js'))" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_HasWebSpaJsPublishInitializer>false</_HasWebSpaJsPublishInitializer>
+      <_HasWebSpaJsPublishInitializer Condition="@(_WebSpaJsPublishInitializerModule->Count()) > 0">true</_HasWebSpaJsPublishInitializer>
+    </PropertyGroup>
+    <Error Condition="'$(_HasWebSpaJsPublishInitializer)' != 'true'"
+           Text="web-server publish JS initializer list omitted Web.Spa (web.spa*.lib.module.js). A missed Spa module is a failed publish, not a runtime surprise on /Login (task 200). Modules: @(_ExistingPublishJSModules->'%(RelativePath)', ', ')." />
+  </Target>
 
 </Project>

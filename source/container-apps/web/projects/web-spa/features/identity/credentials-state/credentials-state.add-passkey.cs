@@ -5,7 +5,7 @@
 #region Design
 // Multi-step ceremony cannot be a single DefaultApiHandler request:
 //   1. HTTP StartPasskeyRegistration (anonymous options mint — same as product Login create path)
-//   2. browser Spa.WebAuthn.CreateCredential
+//   2. browser WebAuthnJsModule.CreateCredentialAsync (import of web-authn.js, not window.Spa)
 //   3. HTTP AddPasskey (authenticated attach)
 // Both HTTP legs go through IWebServerApiService inside this ActionSet (not the page, not a
 // ceremony client GetResponse for Settings). JSException → CeremonyError on state; API failures
@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using System.Text.Json;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Services;
 using TimeWarp.Foundation.Types;
 
 partial class CredentialsState
@@ -78,11 +79,11 @@ partial class CredentialsState
           }
 
           string credentialJson =
-            await JsRuntime.InvokeAsync<string>(
-              "Spa.WebAuthn.CreateCredential",
-              cancellationToken,
+            await WebAuthnJsModule.CreateCredentialAsync(
+              JsRuntime,
               startResult.AsT0.OptionsJson,
-              false);
+              preferHybrid: false,
+              cancellationToken);
 
           using var document = JsonDocument.Parse(credentialJson);
           JsonElement root = document.RootElement;

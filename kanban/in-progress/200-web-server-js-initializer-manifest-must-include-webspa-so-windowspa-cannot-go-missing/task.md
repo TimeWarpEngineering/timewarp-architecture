@@ -73,11 +73,11 @@ is the flip the operator saw as "it is working now."
 
 ## Checklist
 
-- [ ] Host build always tags/emits Web.Spa in web-server's JS initializer list (incremental + Rebuild + Aspire start)
-- [ ] Automated gate: fail if `web-server.modules.json` / jsmodules manifest omits `web.spa*.lib.module.js`
-- [ ] Passkey ceremony does not depend on `window.Spa` (on-demand import of `web-authn.js`) — or prove the host gate makes that impossible and document why the global remains
-- [ ] `dev build` 0/0; tests for the gate green
-- [ ] Design regions on touched files reconciled (`web.spa.lib.module.ts`, `passkey-ceremony-client.cs`, web-spa csproj if the host coupling is declared there)
+- [x] Host build always tags/emits Web.Spa in web-server's JS initializer list (incremental + Rebuild + Aspire start)
+- [x] Automated gate: fail if `web-server.modules.json` / jsmodules manifest omits `web.spa*.lib.module.js`
+- [x] Passkey ceremony does not depend on `window.Spa` (on-demand import of `web-authn.js`) — or prove the host gate makes that impossible and document why the global remains
+- [x] `dev build` 0/0; tests for the gate green
+- [x] Design regions on touched files reconciled (`web.spa.lib.module.ts`, `passkey-ceremony-client.cs`, web-spa csproj if the host coupling is declared there)
 
 ## Notes
 
@@ -100,8 +100,44 @@ is the flip the operator saw as "it is working now."
   function.
 - Cockpit: Grok launch (2026-08-31) — leftover worktree claimed, FF to origin/master,
   moved in-progress, dispatch `ganda task work`
+- Implementation: Grok implement oracle (2026-08-31) — host Content re-glob + MSBuild
+  assertion + on-demand web-authn import; solution Release 0/0; gate tests green
 
-Stay in this claim worktree. Fast-forwarded onto current origin/master (was 36 behind).
-Implement the checklist. Prefer on-demand `IJSRuntime` import of `web-authn.js` so
-passkey does not need `window.Spa`. Automated gate is required; `dev build` 0/0 is not
-enough. Results + How to validate, `ganda kanban done 200`, PR, STOP. Do not merge.
+## Results
+
+The `/Login` `'Spa' was undefined` failure had two layers. Passkey C# no longer
+walks `window.Spa`: `PasskeyCeremonyClient` and Settings add-passkey call
+`WebAuthnJsModule`, which `import()`s `./js/features/web-authn.js` and invokes the
+named `CreateCredential` / `GetCredential` exports. Counter JS interop
+(`Spa.Counter.*`) still needs the initializer.
+
+The host list is no longer an incrementally skippable side effect of evaluation-time
+`wwwroot/**` Content. After TypeScript emit (task 116), web-spa re-globs
+`wwwroot/js/**` into Content so the same build's SWA discovery tags
+`web.spa.lib.module.js`. web-server fails the build (and publish) if
+`_ExistingBuildJSModules` / `_ExistingPublishJSModules` omit `web.spa*.lib.module.js`,
+and Fast Up-to-date Check watches the emit path. A Jaribu test reads the generated
+`jsmodules.build.manifest.json` after build.
+
+Verified: Release web-server build writes
+`js/web.spa.foa7bin14p.lib.module.js` into the host manifest. Deleting gitignored
+`wwwroot/js` and incrementally rebuilding web-server re-emits TypeScript and still
+lists Web.Spa. `dotnet build timewarp-architecture.slnx -c Release` is 0/0.
+
+### How to validate
+
+**Smoke**
+
+1. `dotnet build source/container-apps/web/projects/web-server/web-server.csproj -c Release`
+2. `cat source/container-apps/web/projects/web-server/obj/Release/net10.0/jsmodules/jsmodules.build.manifest.json`
+3. `cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class HostBuild_Given_`
+4. `cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class Import_Given_`
+5. Optional product check: open `/Login` and use Sign in with a passkey / Create account — must not throw `'Spa' was undefined` even if Counter JS interop is the only remaining `window.Spa` consumer.
+
+**Expect**
+
+- Host build succeeds (0/0). Omitting Web.Spa from the initializer list is a failed build, not a running host.
+- Manifest JSON contains `js/web.spa*.lib.module.js` (fingerprinted name ok).
+- `HostBuild_Given_` passes (manifest gate).
+- `Import_Given_` passes: identifiers are `import` + `CreateCredential`/`GetCredential`, specifier is `./js/features/web-authn.js`, and the two C# call sites do not contain `Spa.WebAuthn`.
+- Login passkey buttons invoke `web-authn.js` via module import; they do not resolve `window.Spa.WebAuthn`.

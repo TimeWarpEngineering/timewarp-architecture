@@ -98,6 +98,10 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="web-spa-integration-tests"/>
+    <!-- AssemblyName of web-spa-integration-tests is web-spa-integration-Tests (capital T) so
+         TimeWarp.State's Initialize() assembly-name guard passes. InternalsVisibleTo is the
+         assembly name, not the csproj name. -->
+    <InternalsVisibleTo Include="web-spa-integration-Tests"/>
     <InternalsVisibleTo Include="web-server-integration-tests"/>
     <InternalsVisibleTo Include="api-server-integration-tests"/>
     <InternalsVisibleTo Include="timewarp-testing"/>
@@ -114,12 +118,18 @@
        Type-checking uses ambient declarations under source/types (tsconfig typeRoots).
        The npm lint/format toolchain was removed (059-006).
 
-       Design (task 116 + 201): SWA globs wwwroot/** into Content at evaluation.
-       ResolveProjectStaticWebAssets runs BeforeTargets=AssignTargetPaths (before Compile).
+       Design (task 116 + 201 + 200): SWA globs wwwroot/** into Content at evaluation.
+       ResolveProjectStaticWebAssets runs BeforeTargets=AssignTargetPaths (before Compile)
+       and feeds @(Content) to DefineStaticWebAssets (RelativePathPattern=wwwroot/**).
        Rebuild = Clean;Build in one invocation: CleanTypeScriptOutputs deletes wwwroot/js
        (via obj/*/tsc-emitted.txt), but Content still lists those paths →
        DefineStaticWebAssets throws "No file exists for the asset". Fix: run the v7
        SetTscExecutable + RunTscCompile targets before SWA discovery so files exist.
+       wwwroot/js is gitignored: evaluation-time Content still misses files that RunTscCompile
+       just emitted in the same build, so the host JS initializer list can omit Web.Spa
+       (task 200 /Login 'Spa' was undefined). Re-glob emit into Content here, after tsc and
+       before ResolveProjectStaticWebAssets. Exclude="@(Content)" avoids duplicate identities
+       when the files already existed at evaluation.
        v7 dropped the classic CheckFileSystemCaseSensitive / CompileTypeScript /
        GetTypeScriptOutputForPublishing chain (MSB4057 on 7.0.0/7.0.1 if those names stay
        in PrepareForBuildDependsOn). v7 does not re-add GeneratedJavascript, so the
@@ -133,6 +143,10 @@
     <PropertyGroup>
       <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     </PropertyGroup>
+    <ItemGroup>
+      <_TscEmittedJs Include="wwwroot\js\**\*" />
+      <Content Include="@(_TscEmittedJs)" Exclude="@(Content)" />
+    </ItemGroup>
   </Target>
 
   <ItemGroup>
