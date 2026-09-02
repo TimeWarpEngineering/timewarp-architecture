@@ -10,6 +10,8 @@
   RoleState.SetPermissionSelected / SetRolePermissions — no new store. Protected-core
   Administrator admin.* grants are disabled when selected; last-admin lockout is
   SetPrincipalRoles (server), not this editor. Groups come from PermissionIds.GroupsByPrefix.
+  Trail back to Roles is TimeWarpPage TwBreadcrumb (task 207) — no per-page Back button.
+  Document title comes from TimeWarpPage Title via TwPageTitle.
 *@
 
 @code {
@@ -36,8 +38,6 @@
   private async Task OnSave() => await RoleState.SetRolePermissions(RoleId);
 }
 
-<PageTitle>@(Role?.Name ?? Title)</PageTitle>
-
 <TimeWarpPage Title="@(Role?.Name ?? Title)">
   <div class="twe-stack">
     <p class="sg-subtitle">
@@ -45,11 +45,6 @@
       (<code>admin.*</code>, <code>developer.*</code>, …). Administrator core admin
       permissions cannot be stripped (protected-core); the server also rejects that write (409).
     </p>
-    <div>
-      <FluentButton Appearance="ButtonAppearance.Outline" Href="@RolesListPage.GetPageUrl()" data-qa="BackToRoles">
-        Back to roles
-      </FluentButton>
-    </div>
     <Card Title="@(Role?.Name ?? "Role")">
       @if (IsLoading)
       {

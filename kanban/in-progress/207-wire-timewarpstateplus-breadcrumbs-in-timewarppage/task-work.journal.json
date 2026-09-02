@@ -1,0 +1,56 @@
+[
+  {
+    "nodeId": "claim",
+    "kind": "Compute",
+    "resultKind": "host-state",
+    "enumName": null,
+    "hostState": {
+      "taskId": "207",
+      "repo": "timewarp-architecture",
+      "noReview": false,
+      "kitchenContent": "# Wire TimeWarp.State.Plus breadcrumbs in TimeWarpPage\n\n## Description\n\nRole detail\u0027s \u0022Back to roles\u0022 does nothing. It is a v5 \u0060FluentButton\u0060 with \u0060Href\u0060 \u2014 Fluent UI\nBlazor 5 \u0060FluentButton\u0060 has **no \u0060Href\u0060** (only \u0060OnClick\u0060). The unmatched attribute is splat onto\n\u0060\u003Cfluent-button href=\u0022\u2026\u0022\u003E\u0060, which does not navigate. **New Role** on the list is the same dead\npattern.\n\nDo **not** keep a per-page Back button. Navigation trail belongs in the shell, the way COPIC\nputs crumbs in \u0060MainContentArea\u0060 from \u0060RouteState\u0060 \u2014 but consume **TimeWarp.State.Plus**\n(\u0060TwBreadcrumb\u0060 \u002B \u0060TwPageTitle\u0060), not COPIC\u0027s v4 \u0060FluentBreadcrumb\u0060.\n\nThis template already references Plus \u006012.0.0-beta.1\u0060 and has \u0060RouteState\u0060 / \u0060NoSubRouteState\u0060\non \u0060BaseComponent\u0060. Pages use raw \u0060\u003CPageTitle\u003E\u0060, so the route stack is not fed. \u0060TimeWarpPage\u0060\nis an \u0060\u003Ch1\u003E\u0060 only.\n\n**Do not add Bootstrap** to this template.\n\n## Requirements\n\n- Put the trail in **\u0060TimeWarpPage\u0060** (once), under the page title. Not on \u0060RoleDetailPage\u0060.\n- Feed \u0060RouteState\u0060 via **\u0060TwPageTitle\u0060** (or equivalent \u0060PushRouteInfo\u0060 from the shell). Pages\n  that set a title should go through that so crumbs get \u0060PageTitle\u0060 text.\n- Render **\u0060\u003CTwBreadcrumb /\u003E\u0060** from Plus. Do **not** vendor-copy COPIC. Do **not** add\n  \u0060bootstrap.min.css\u0060 or Bootstrap classes as a styling system.\n- Plus \u0060TwBreadcrumb\u0060 currently emits Bootstrap class names (\u0060breadcrumb\u0060, \u0060breadcrumb-item\u0060,\n  \u0060text-muted\u0060) with **no** CSS of its own (timewarp-state **081**). Until Plus ships isolated\n  CSS, a thin isolated wrapper on \u0060TimeWarpPage\u0060 may style the trail so it is readable. Do not\n  load Bootstrap. Do not restyle the whole app as Bootstrap.\n- Remove the \u0022Back to roles\u0022 \u0060FluentButton\u0060 from \u0060RoleDetailPage\u0060.\n- **New Role**: \u0060FluentAnchorButton\u0060 (v5 link-button with real \u0060Href\u0060) to \u0060RolePage.GetPageUrl()\u0060,\n  not \u0060FluentButton Href\u0060.\n- Other \u0060FluentButton Href\u0060 in this SPA (if any) follow the same rule: \u0060FluentAnchorButton\u0060 or\n  \u0060OnClick\u0060 \u002B \u0060ChangeRoute\u0060.\n- Auth/403/404: do not pollute the trail if COPIC\u0027s \u0060ShowInBreadcrumbs=false\u0060 pattern is needed;\n  only if those pages currently would push junk.\n\n## Checklist\n\n- [ ] \u0060TimeWarpPage\u0060 renders \u0060TwBreadcrumb\u0060 (and title via \u0060TwPageTitle\u0060 / \u0060PushRouteInfo\u0060)\n- [ ] Role list \u2192 detail \u2192 crumb back to Roles works\n- [ ] \u0022Back to roles\u0022 control removed\n- [ ] New Role navigates (\u0060FluentAnchorButton\u0060)\n- [ ] No Bootstrap CSS added to the template\n- [ ] Jaribu / existing roles tests updated if they assert \u0060data-qa=\u0022BackToRoles\u0022\u0060\n\n## Session\n\n- Created: ganda session 304250 (2026-09-02)\n- Cockpit: grok \u006001a03d38-9611-7620-aae5-848e15dafa94\u0060 (timewarp-flow)\n\n## Notes\n\nLibrary follow-up (do not implement in this repo): timewarp-state **081** \u2014\n\u0060TwBreadcrumb\u0060 must not require Bootstrap CSS. After that ships, bump Plus here if needed and\ndrop any temporary wrapper CSS.\n\nWorking patterns already in this SPA:\n\n- List \u2192 detail: \u0060\u003Ca href=\u0022@RoleDetailPage.GetPageUrl(role.RoleId)\u0022\u003E\u0060\n- Button then go: \u0060NoSubRouteState.ChangeRoute(...)\u0060 (Home, Profile, Counter)\n- Sidebar: \u0060TimeWarpNavLink\u0060 \u2192 \u0060FluentNavItem Href\u0060\n\nv5 link-that-looks-like-a-button: \u0060FluentAnchorButton\u0060 (\u0060Href\u0060 is a real parameter).\n",
+      "worktreePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-207-wire-timewarpstateplus-breadcrumbs-in-timewarppage",
+      "originHomePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/master",
+      "branchName": "task/207-wire-timewarpstateplus-breadcrumbs-in-timewarppage",
+      "error": null,
+      "task": {
+        "id": "207",
+        "title": "wire-timewarpstateplus-breadcrumbs-in-timewarppage",
+        "filePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-207-wire-timewarpstateplus-breadcrumbs-in-timewarppage/kanban/to-do/207-wire-timewarpstateplus-breadcrumbs-in-timewarppage",
+        "relativePath": "to-do/207-wire-timewarpstateplus-breadcrumbs-in-timewarppage",
+        "contentFilePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-207-wire-timewarpstateplus-breadcrumbs-in-timewarppage/kanban/to-do/207-wire-timewarpstateplus-breadcrumbs-in-timewarppage/task.md",
+        "column": "to-do",
+        "isFolder": true
+      }
+    },
+    "setState": null,
+    "nestPath": ""
+  },
+  {
+    "nodeId": "folderize",
+    "kind": "Compute",
+    "resultKind": "host-state",
+    "enumName": null,
+    "hostState": {
+      "taskId": "207",
+      "repo": "timewarp-architecture",
+      "noReview": false,
+      "kitchenContent": "# Wire TimeWarp.State.Plus breadcrumbs in TimeWarpPage\n\n## Description\n\nRole detail\u0027s \u0022Back to roles\u0022 does nothing. It is a v5 \u0060FluentButton\u0060 with \u0060Href\u0060 \u2014 Fluent UI\nBlazor 5 \u0060FluentButton\u0060 has **no \u0060Href\u0060** (only \u0060OnClick\u0060). The unmatched attribute is splat onto\n\u0060\u003Cfluent-button href=\u0022\u2026\u0022\u003E\u0060, which does not navigate. **New Role** on the list is the same dead\npattern.\n\nDo **not** keep a per-page Back button. Navigation trail belongs in the shell, the way COPIC\nputs crumbs in \u0060MainContentArea\u0060 from \u0060RouteState\u0060 \u2014 but consume **TimeWarp.State.Plus**\n(\u0060TwBreadcrumb\u0060 \u002B \u0060TwPageTitle\u0060), not COPIC\u0027s v4 \u0060FluentBreadcrumb\u0060.\n\nThis template already references Plus \u006012.0.0-beta.1\u0060 and has \u0060RouteState\u0060 / \u0060NoSubRouteState\u0060\non \u0060BaseComponent\u0060. Pages use raw \u0060\u003CPageTitle\u003E\u0060, so the route stack is not fed. \u0060TimeWarpPage\u0060\nis an \u0060\u003Ch1\u003E\u0060 only.\n\n**Do not add Bootstrap** to this template.\n\n## Requirements\n\n- Put the trail in **\u0060TimeWarpPage\u0060** (once), under the page title. Not on \u0060RoleDetailPage\u0060.\n- Feed \u0060RouteState\u0060 via **\u0060TwPageTitle\u0060** (or equivalent \u0060PushRouteInfo\u0060 from the shell). Pages\n  that set a title should go through that so crumbs get \u0060PageTitle\u0060 text.\n- Render **\u0060\u003CTwBreadcrumb /\u003E\u0060** from Plus. Do **not** vendor-copy COPIC. Do **not** add\n  \u0060bootstrap.min.css\u0060 or Bootstrap classes as a styling system.\n- Plus \u0060TwBreadcrumb\u0060 currently emits Bootstrap class names (\u0060breadcrumb\u0060, \u0060breadcrumb-item\u0060,\n  \u0060text-muted\u0060) with **no** CSS of its own (timewarp-state **081**). Until Plus ships isolated\n  CSS, a thin isolated wrapper on \u0060TimeWarpPage\u0060 may style the trail so it is readable. Do not\n  load Bootstrap. Do not restyle the whole app as Bootstrap.\n- Remove the \u0022Back to roles\u0022 \u0060FluentButton\u0060 from \u0060RoleDetailPage\u0060.\n- **New Role**: \u0060FluentAnchorButton\u0060 (v5 link-button with real \u0060Href\u0060) to \u0060RolePage.GetPageUrl()\u0060,\n  not \u0060FluentButton Href\u0060.\n- Other \u0060FluentButton Href\u0060 in this SPA (if any) follow the same rule: \u0060FluentAnchorButton\u0060 or\n  \u0060OnClick\u0060 \u002B \u0060ChangeRoute\u0060.\n- Auth/403/404: do not pollute the trail if COPIC\u0027s \u0060ShowInBreadcrumbs=false\u0060 pattern is needed;\n  only if those pages currently would push junk.\n\n## Checklist\n\n- [ ] \u0060TimeWarpPage\u0060 renders \u0060TwBreadcrumb\u0060 (and title via \u0060TwPageTitle\u0060 / \u0060PushRouteInfo\u0060)\n- [ ] Role list \u2192 detail \u2192 crumb back to Roles works\n- [ ] \u0022Back to roles\u0022 control removed\n- [ ] New Role navigates (\u0060FluentAnchorButton\u0060)\n- [ ] No Bootstrap CSS added to the template\n- [ ] Jaribu / existing roles tests updated if they assert \u0060data-qa=\u0022BackToRoles\u0022\u0060\n\n## Session\n\n- Created: ganda session 304250 (2026-09-02)\n- Cockpit: grok \u006001a03d38-9611-7620-aae5-848e15dafa94\u0060 (timewarp-flow)\n\n## Notes\n\nLibrary follow-up (do not implement in this repo): timewarp-state **081** \u2014\n\u0060TwBreadcrumb\u0060 must not require Bootstrap CSS. After that ships, bump Plus here if needed and\ndrop any temporary wrapper CSS.\n\nWorking patterns already in this SPA:\n\n- List \u2192 detail: \u0060\u003Ca href=\u0022@RoleDetailPage.GetPageUrl(role.RoleId)\u0022\u003E\u0060\n- Button then go: \u0060NoSubRouteState.ChangeRoute(...)\u0060 (Home, Profile, Counter)\n- Sidebar: \u0060TimeWarpNavLink\u0060 \u2192 \u0060FluentNavItem Href\u0060\n\nv5 link-that-looks-like-a-button: \u0060FluentAnchorButton\u0060 (\u0060Href\u0060 is a real parameter).\n",
+      "worktreePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-207-wire-timewarpstateplus-breadcrumbs-in-timewarppage",
+      "originHomePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/master",
+      "branchName": "task/207-wire-timewarpstateplus-breadcrumbs-in-timewarppage",
+      "error": null,
+      "task": {
+        "id": "207",
+        "title": "wire-timewarpstateplus-breadcrumbs-in-timewarppage",
+        "filePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-207-wire-timewarpstateplus-breadcrumbs-in-timewarppage/kanban/to-do/207-wire-timewarpstateplus-breadcrumbs-in-timewarppage",
+        "relativePath": "to-do/207-wire-timewarpstateplus-breadcrumbs-in-timewarppage",
+        "contentFilePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-207-wire-timewarpstateplus-breadcrumbs-in-timewarppage/kanban/to-do/207-wire-timewarpstateplus-breadcrumbs-in-timewarppage/task.md",
+        "column": "to-do",
+        "isFolder": true
+      }
+    },
+    "setState": null,
+    "nestPath": ""
+  }
+]
