@@ -464,3 +464,11 @@ GeneratedCode/
 # vally eval output (local runs; CI uploads as workflow artifacts)
 results/
 vally-results/
+
+# Task-work resume journal beside kitchens (local; not product)
+task-work.journal.json
+stacked-task-set.journal.json
+planning.journal.json
+rfc.journal.json
+debate.journal.json
+advisor.journal.json
