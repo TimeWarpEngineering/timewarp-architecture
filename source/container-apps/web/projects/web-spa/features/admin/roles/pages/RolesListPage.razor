@@ -7,7 +7,9 @@
 
   Design: Task 206 — list is a list. Membership editing lives on RoleDetailPage
   (/Admin/Roles/{RoleId}). Summary chips are PermissionIds.PrefixesOf on stored grants, not drafts.
-  New Role stays RolePage (/Admin/Roles/New). Save does not live on every row.
+  New Role stays RolePage (/Admin/Roles/New) via FluentAnchorButton (v5 Href is real;
+  FluentButton Href is unmatched and does not navigate). Save does not live on every row.
+  Document title comes from TimeWarpPage Title via TwPageTitle.
 *@
 
 @code {
@@ -20,8 +22,6 @@
   protected override async Task OnInitializedAsync() => await RoleState.FetchRoles();
 }
 
-<PageTitle>@Title</PageTitle>
-
 <TimeWarpPage Title="Roles">
   <div class="twe-stack">
     <p class="sg-subtitle">
@@ -30,9 +30,9 @@
       (empty permissions until you assign them on the role page).
     </p>
     <div>
-      <FluentButton Appearance="ButtonAppearance.Primary" Href="@RolePage.GetPageUrl()" data-qa="NewRole">
+      <FluentAnchorButton Appearance="ButtonAppearance.Primary" Href="@RolePage.GetPageUrl()" data-qa="NewRole">
         New Role
-      </FluentButton>
+      </FluentAnchorButton>
     </div>
     <Card Title="Roles">
       @if (IsLoading)

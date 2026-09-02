@@ -3,23 +3,40 @@
 @using TimeWarp.Architecture.Features.Profiles
 @using TimeWarp.Features.Theme
 @*
-  The single app-shell page component (replaces the old multi-splitter TimeWarpPage,
-  SitePage, SidebarPage, StackedPage). Pages wrap their content in it:
-
+  Purpose: Single app-shell page component. Pages wrap content in
       <TimeWarpPage Title="Settings"> ...content... </TimeWarpPage>
 
-  Built on FluentUI v5 FluentLayout. MainLayout stays empty (just FluentProviders);
-  this component owns the chrome so it gets the TimeWarp.State render-trigger / Id /
+  Design: Built on FluentUI v5 FluentLayout. MainLayout stays empty (FluentProviders only);
+  this component owns the chrome so it gets TimeWarp.State render-trigger / Id /
   per-navigation lifecycle that a LayoutComponentBase can't.
+  Navigation trail is here (TwBreadcrumb under the h1), not per-page Back buttons.
+  TwPageTitle sets document.title and, with PushRouteInfo on after-render, feeds RouteState
+  so crumbs use the Title text. TwPageTitle only pushes on its first render; this shell
+  also PushRouteInfo when interactive so async titles (role name after FetchRoles) update
+  the current stack entry. PushRouteInfo reads document.title via JS — skip it during
+  prerender (RendererInfo.IsInteractive). ShowInBreadcrumbs=false still sets PageTitle
+  but does not push (403/404/auth must not pollute the trail). TwBreadcrumb emits
+  Bootstrap class names with no CSS of its own (timewarp-state 081); a thin wrapper
+  under .twe-shell styles that contract with tokens. Do not load Bootstrap.
 *@
 
 @code {
   [Parameter] public string? Title { get; set; }
   [Parameter] public RenderFragment? ChildContent { get; set; }
   [Parameter] public RenderFragment? Aside { get; set; }
+  [Parameter] public bool ShowInBreadcrumbs { get; set; } = true;
 
   private string? ActiveModalId => ApplicationState.ActiveModalId;
   private async Task ShowAssemblyInfoModalAsync() => await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+    if (ShowInBreadcrumbs && RendererInfo.IsInteractive)
+    {
+      await NoSubRouteState.PushRouteInfo();
+    }
+  }
 }
 
 <CascadingValue Value=@this>
@@ -59,7 +76,21 @@
       <div class="twe-page">
         @if (!string.IsNullOrWhiteSpace(Title))
         {
+          @if (ShowInBreadcrumbs)
+          {
+            <TwPageTitle>@Title</TwPageTitle>
+          }
+          else
+          {
+            <PageTitle>@Title</PageTitle>
+          }
           <h1 class="twe-page__title">@Title</h1>
+        }
+        @if (ShowInBreadcrumbs)
+        {
+          <div class="twe-page__crumbs">
+            <TwBreadcrumb MaxLinks="4" />
+          </div>
         }
         <div class="twe-page__body">
           @ChildContent
@@ -133,8 +164,25 @@
     .twe-shell .twe-nav { height: 100%; padding: 8px; background: var(--twe-paper-2); border-right: 1px solid var(--twe-rule); }
 
     .twe-shell .twe-page { padding: 20px 28px 28px; }
-    .twe-shell .twe-page__title { margin: 0 0 16px; font-size: var(--twe-text-page-title); font-weight: 700; letter-spacing: -0.015em; color: var(--twe-ink); }
+    .twe-shell .twe-page__title { margin: 0 0 8px; font-size: var(--twe-text-page-title); font-weight: 700; letter-spacing: -0.015em; color: var(--twe-ink); }
     .twe-shell .twe-page__title:focus { outline: none; }
+    /* Plus TwBreadcrumb (timewarp-state 081) ships Bootstrap class names and no CSS.
+       Style that contract from this shell wrapper only — do not load bootstrap.min.css. */
+    .twe-shell .twe-page__crumbs { margin: 0 0 16px; }
+    .twe-shell .twe-page__crumbs .breadcrumb {
+      display: flex; flex-wrap: wrap; align-items: center;
+      list-style: none; margin: 0; padding: 0;
+      font-size: var(--twe-text-helper); color: var(--twe-muted);
+    }
+    .twe-shell .twe-page__crumbs .breadcrumb:empty { display: none; }
+    .twe-shell .twe-page__crumbs .breadcrumb-item { display: inline-flex; align-items: center; }
+    .twe-shell .twe-page__crumbs .breadcrumb-item + .breadcrumb-item::before {
+      content: ""/""; padding: 0 8px; color: var(--twe-muted);
+    }
+    .twe-shell .twe-page__crumbs .breadcrumb-item a { color: var(--twe-blue); text-decoration: none; }
+    .twe-shell .twe-page__crumbs .breadcrumb-item a:hover { text-decoration: underline; color: var(--twe-blue-deep); }
+    .twe-shell .twe-page__crumbs .breadcrumb-item.active { color: var(--twe-ink-2); }
+    .twe-shell .twe-page__crumbs .text-muted { color: var(--twe-muted); }
     .twe-shell .twe-page__body { color: var(--twe-ink); }
 
     .twe-shell .twe-aside { padding: 20px; border-left: 1px solid var(--twe-rule); height: 100%; }

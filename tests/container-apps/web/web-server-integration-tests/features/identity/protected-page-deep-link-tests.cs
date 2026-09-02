@@ -151,6 +151,8 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
     html.ShouldContain("data-qa=\"NewRole\"");
+    html.ShouldContain("aria-label=\"breadcrumb\"");
+    html.ShouldNotContain("data-qa=\"BackToRoles\"");
     html.ShouldNotContain("Sign in to continue",
       customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
   }
