@@ -39,11 +39,11 @@ grouped tree on the **detail** page is the durable shape.
 
 ## Checklist
 
-- [ ] List page: summary only (name, description, count/chips); New Role stays
-- [ ] Role detail/edit: grouped permission editor (prefix parents)
-- [ ] Protected-core + last-admin lockout still hold (server + honest UI disable)
-- [ ] Design regions on touched razor/state files
-- [ ] `dev build` 0/0; lockout/auth tests green
+- [x] List page: summary only (name, description, count/chips); New Role stays
+- [x] Role detail/edit: grouped permission editor (prefix parents)
+- [x] Protected-core + last-admin lockout still hold (server + honest UI disable)
+- [x] Design regions on touched razor/state files
+- [x] `dev build` 0/0; lockout/auth tests green
 
 ## Notes
 
@@ -59,7 +59,69 @@ grouped tree on the **detail** page is the durable shape.
 - Created: 73480 (2026-09-02)
 - Cockpit: Grok — operator: `/Admin/Roles` checkbox soup will not scale
 - Cockpit: Grok launch (2026-09-02) — claim, in-progress, `ganda task work`
+- Implementer: Grok (2026-09-02) — list summary + grouped RoleDetailPage; protected-core UI lock
 
-Stay in this claim worktree. Implement the checklist (list summary + grouped editor on
-role detail). Preserve 182 protected-core / last-admin lockout. Results + How to validate,
-`ganda kanban done 206`, PR, STOP. Do not merge.
+## Results
+
+List is a list again. `/Admin/Roles` shows name (link), description, grant count, and prefix chips (`admin.*`, `developer.*`, …). Per-permission checkboxes and per-row Save are gone.
+
+Membership editing lives on **`RoleDetailPage`** at `/Admin/Roles/{RoleId:Guid}`: `PermissionIds.GroupsByPrefix` parent checkboxes (tri-state) plus atom ids. COPIC is unchanged — `RoleState.SetPermissionSelected` / `SetRolePermissions`. `RolePage` (`/Admin/Roles/New`) stays create-only; after a successful create, `RoleForm` navigates to the new role’s detail page.
+
+Protected-core: selected `admin.*` grants on Administrator are disabled in the editor (`PermissionIds.IsProtectedCoreLocked`). Missing cores stay togglable so a damaged bundle can be repaired. Server `SetRolePermissions` still 409s a strip. Last-admin remains `SetPrincipalRoles` (unchanged).
+
+Packs were not added — prefix groups cover the current catalog.
+
+**Files**
+
+- `source/container-apps/web/features/authorization/permission-ids-contracts.cs` — `Prefix`, `GroupsByPrefix`, `PrefixesOf`, protected-core helpers
+- `source/container-apps/web/features/authorization/permission-ids-tests.cs` — host-free grouping + lock tests
+- `source/container-apps/web/projects/web-spa/features/admin/roles/pages/RolesListPage.razor` (+ `.css`, `.razor.cs`)
+- `source/container-apps/web/projects/web-spa/features/admin/roles/pages/RoleDetailPage.razor` (+ `.css`, `.razor.cs`)
+- `source/container-apps/web/projects/web-spa/features/admin/roles/components/RolePermissionEditor.razor` (+ `.css`)
+- `RoleForm.razor`, `RolePage.razor(.cs)`, `role-state*.cs`, GetRole/GetRoles Design regions
+
+**Tests (this session)**
+
+- `dotnet run source/container-apps/web/features/authorization/permission-ids-tests.cs` — 8 passed
+- `dotnet run source/container-apps/web/features/admin/roles/set-role-permissions/set-role-permissions-tests.cs` — 12 passed (protected-core + last-admin unit)
+- `cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class SetRolePermissionsLockout` — 3 passed
+- same suite `--filter-class RolesAuthorization` — 7 passed
+- same suite `--filter-class PrincipalsAuthorization` — 8 passed (includes last-admin)
+- same suite `--filter-class ProtectedPage` — 7 passed (`/Admin/Roles` prerender still 200 for admin)
+- `dotnet run tools/dev-cli/dev.cs -- build` — 0 warning / 0 error
+
+Live Aspire/browser click-through was not run (no orchestrator up in this worktree). Closest UI proof: SPA Release/Debug compile, list markup has zero `FluentCheckbox`, detail editor is the only membership surface.
+
+### How to validate
+
+**Automated**
+
+```bash
+dotnet run source/container-apps/web/features/authorization/permission-ids-tests.cs
+# expect: 8 passed (every All id in exactly one prefix group; Administrator + selected admin.* locks)
+
+dotnet run source/container-apps/web/features/admin/roles/set-role-permissions/set-role-permissions-tests.cs
+# expect: 12 passed, including ProtectedCoreConflict 409 and LastAdministratorConflict 409
+
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class SetRolePermissionsLockout
+# expect: 3 passed — stripping admin.roles.manage from Administrator is HTTP 409; Member write is 200
+
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class PrincipalsAuthorization
+# expect: last-admin demotion 409 still holds
+
+dotnet run tools/dev-cli/dev.cs -- build
+# expect: Build succeeded. 0 Warning(s) 0 Error(s)
+```
+
+**Manual smoke**
+
+1. `dotnet run tools/dev-cli/dev.cs -- run` (or `./bin/dev run` if installed). Sign in as an Administrator.
+2. Open `/Admin/Roles`.
+3. **Expect:** table columns Name / Description / Permissions; Permissions is a count plus chips like `admin.*` — no checkboxes, no Save on the row. **New Role** still present.
+4. Click **Administrator**. **Expect:** `/Admin/Roles/{administrator-guid}` with grouped checkboxes (`admin.*` parent + atoms). The selected `admin.*` atoms and the `admin.*` parent are disabled. `profile.read` / `settings.read` stay enabled.
+5. Click **Member**, grant `developer.access`, Save. **Expect:** success; returning to the list shows a `developer.*` chip on Member.
+6. (API) PUT Administrator permissions without `admin.roles.manage`. **Expect:** 409 problem+json title `Protected core permissions`.
+
+**Depends on:** identity-session (passkey) or Development mock auth for the SPA; integration tests mint a passkey cookie themselves.
+
+**Not in scope:** permission packs, Principals-page role checkboxes, OpenFGA/Cedar, renaming permission ids, Playwright e2e.

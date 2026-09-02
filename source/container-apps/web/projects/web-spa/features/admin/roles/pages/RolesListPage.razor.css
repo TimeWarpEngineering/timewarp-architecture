@@ -1,0 +1,12 @@
+/* Roles list summary chips — native wrapper so isolation can reach count text. */
+.twe-permission-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.twe-permission-count {
+  color: var(--twe-muted);
+  font-size: var(--twe-text-helper);
+}

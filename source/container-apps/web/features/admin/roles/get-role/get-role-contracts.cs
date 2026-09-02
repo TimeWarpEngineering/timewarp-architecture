@@ -6,8 +6,8 @@
 // RoleId is not declared on the Query: the {RoleId:guid} segment in [ApiRoute] makes the
 // source generator emit it on the partial, and the min(1) route constraint replaces a
 // FluentValidation rule for it. Response implements IRoleDetails so the edit form binds the
-// same shape it submits via UpdateRole. PermissionIds (task 182-004) is the role's stored
-// permission membership from IRolePermissionStore — display/edit of the bundle, not IRoleDetails.
+// same shape it submits via UpdateRole. PermissionIds (task 182-004 / 206) is the role's stored
+// permission membership from IRolePermissionStore — RoleDetailPage edits the bundle, not IRoleDetails.
 // GetMockResponseFactory lets the SPA's MockWebApiService serve this endpoint offline with
 // deterministic RoleIds data.
 // [EndpointAuthorize] (task 182-002): admin.roles.read (PermissionIds); manage is separate.

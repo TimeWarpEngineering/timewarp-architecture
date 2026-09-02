@@ -1,0 +1,98 @@
+@namespace TimeWarp.Architecture.Features.Admin.Roles
+@using TimeWarp.Architecture.Features
+@inherits BaseComponent
+
+@*
+  Purpose: Grouped permission membership editor — prefix parent (tri-state) + atom checkboxes.
+
+  Design: Task 206. Catalog is PermissionIds.GroupsByPrefix (derived from All, not a second
+  SSOT). Toggles dispatch RoleState.SetPermissionSelected; parent click selects/clears every
+  unlocked child. Protected-core (Administrator + admin.*, currently selected) is disabled so
+  the SPA cannot uncheck a grant the server would 409. Missing cores stay enabled so a damaged
+  bundle can be repaired. CanManage=false disables the whole tree (read policy viewers).
+*@
+
+@code {
+  [Parameter, EditorRequired]
+  public Guid RoleId { get; set; }
+
+  [Parameter]
+  public bool CanManage { get; set; }
+
+  private IReadOnlyCollection<string> Selected => RoleState.GetDraftPermissionIds(RoleId);
+
+  private bool IsPermissionDisabled(string permissionId) =>
+    !CanManage
+    || PermissionIds.IsProtectedCoreLocked(
+      RoleId,
+      permissionId,
+      RoleState.IsPermissionSelected(RoleId, permissionId));
+
+  private bool IsGroupDisabled(PermissionIds.PermissionGroup group)
+  {
+    if (!CanManage)
+    {
+      return true;
+    }
+
+    foreach (string permissionId in group.PermissionIds)
+    {
+      if (!IsPermissionDisabled(permissionId))
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private async Task OnPermissionSelected(string permissionId, bool selected)
+  {
+    if (PermissionIds.IsProtectedCoreLocked(RoleId, permissionId, RoleState.IsPermissionSelected(RoleId, permissionId))
+      && !selected)
+    {
+      return;
+    }
+
+    await RoleState.SetPermissionSelected(RoleId, permissionId, selected);
+  }
+
+  private async Task OnGroupCheckStateChanged(PermissionIds.PermissionGroup group, bool? checkState)
+  {
+    bool selected = checkState == true;
+    foreach (string permissionId in group.PermissionIds)
+    {
+      if (IsPermissionDisabled(permissionId))
+      {
+        continue;
+      }
+
+      await RoleState.SetPermissionSelected(RoleId, permissionId, selected);
+    }
+  }
+}
+
+<div class="twe-permission-editor" data-qa="RolePermissionEditor">
+  @foreach (PermissionIds.PermissionGroup group in PermissionIds.GroupsByPrefix)
+  {
+    <div class="twe-permission-group" @key="group.Prefix" data-qa="@($"PermissionGroup-{group.Prefix}")">
+      <FluentCheckbox
+        ThreeState="true"
+        Label="@($"{group.Prefix}.*")"
+        CheckState="@group.CheckStateFor(Selected)"
+        CheckStateChanged="@(async (bool? value) => await OnGroupCheckStateChanged(group, value))"
+        Disabled="@IsGroupDisabled(group)" />
+      <div class="twe-permission-group__children">
+        @foreach (string permissionId in group.PermissionIds)
+        {
+          <FluentCheckbox
+            Label="@permissionId"
+            Value="@RoleState.IsPermissionSelected(RoleId, permissionId)"
+            ValueChanged="@(async (bool value) => await OnPermissionSelected(permissionId, value))"
+            Disabled="@IsPermissionDisabled(permissionId)"
+            data-qa="@($"Permission-{permissionId}")" />
+        }
+      </div>
+    </div>
+  }
+</div>

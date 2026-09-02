@@ -4,8 +4,8 @@
 
 #region Design
 // DefaultApiHandler pattern (WeatherForecasts): only Query mapping + success mutation live here.
-// Seeds DraftPermissionIds from each RoleDto.PermissionIds so the membership matrix matches
-// the server (task 182-004).
+// Seeds DraftPermissionIds from each RoleDto.PermissionIds so the detail editor matches
+// the server (task 182-004 / 206).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;

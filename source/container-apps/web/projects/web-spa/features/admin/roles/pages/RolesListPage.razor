@@ -2,18 +2,20 @@
 @using TimeWarp.Architecture.Features
 @inherits BaseComponent
 
+@*
+  Purpose: Admin roles list — name, description, grant count and prefix chips; no per-permission widgets.
+
+  Design: Task 206 — list is a list. Membership editing lives on RoleDetailPage
+  (/Admin/Roles/{RoleId}). Summary chips are PermissionIds.PrefixesOf on stored grants, not drafts.
+  New Role stays RolePage (/Admin/Roles/New). Save does not live on every row.
+*@
+
 @code {
   public static Icon? NavIcon => new Icons.Regular.Size20.PeopleTeam();
   public static string Title => "Roles";
 
   private bool IsLoading =>
     IsAnyActive(typeof(RoleState.FetchRolesActionSet.Action));
-
-  private async Task OnPermissionSelected(Guid roleId, string permissionId, bool selected) =>
-    await RoleState.SetPermissionSelected(roleId, permissionId, selected);
-
-  private async Task OnSave(Guid roleId) =>
-    await RoleState.SetRolePermissions(roleId);
 
   protected override async Task OnInitializedAsync() => await RoleState.FetchRoles();
 }
@@ -23,9 +25,9 @@
 <TimeWarpPage Title="Roles">
   <div class="twe-stack">
     <p class="sg-subtitle">
-      Product roles as permission bundles. Edit membership with the checkboxes; Administrator
-      core admin permissions cannot be stripped (protected-core). Create custom demo roles via
-      New Role (empty permissions until you assign them here).
+      Product roles as permission bundles. Open a role to edit membership. Administrator core
+      admin permissions cannot be stripped (protected-core). Create custom roles via New Role
+      (empty permissions until you assign them on the role page).
     </p>
     <div>
       <FluentButton Appearance="ButtonAppearance.Primary" Href="@RolePage.GetPageUrl()" data-qa="NewRole">
@@ -45,33 +47,28 @@
               <TableHeader>Name</TableHeader>
               <TableHeader>Description</TableHeader>
               <TableHeader>Permissions</TableHeader>
-              <TableHeader></TableHeader>
             </tr>
           </thead>
           <tbody>
             @foreach (GetRoles.RoleDto role in RoleState.Roles ?? [])
             {
+              int grantCount = role.PermissionIds.Count;
+              IReadOnlyList<string> prefixes = PermissionIds.PrefixesOf(role.PermissionIds);
               <tr @key="role.RoleId">
-                <Cell>@role.Name</Cell>
+                <Cell>
+                  <a href="@RoleDetailPage.GetPageUrl(role.RoleId)" data-qa="RoleDetail">@role.Name</a>
+                </Cell>
                 <Cell>@role.Description</Cell>
                 <Cell>
-                  <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
-                    @foreach (string permissionId in PermissionIds.All)
+                  <div class="twe-permission-summary">
+                    <span class="twe-permission-count" data-qa="PermissionCount">
+                      @grantCount @(grantCount == 1 ? "permission" : "permissions")
+                    </span>
+                    @foreach (string prefix in prefixes)
                     {
-                      <FluentCheckbox
-                        Label="@permissionId"
-                        Value="@RoleState.IsPermissionSelected(role.RoleId, permissionId)"
-                        ValueChanged="@(async (bool value) => await OnPermissionSelected(role.RoleId, permissionId, value))" />
+                      <StatusBadge Status="BadgeStatus.Info" Label="@($"{prefix}.*")" />
                     }
-                  </FluentStack>
-                </Cell>
-                <Cell>
-                  <FluentButton
-                    Appearance="ButtonAppearance.Primary"
-                    data-qa="SaveRolePermissions"
-                    OnClick="@(async () => await OnSave(role.RoleId))">
-                    Save
-                  </FluentButton>
+                  </div>
                 </Cell>
               </tr>
             }

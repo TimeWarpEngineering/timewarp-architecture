@@ -1,0 +1,79 @@
+@namespace TimeWarp.Architecture.Features.Admin.Roles
+@using TimeWarp.Architecture.Features
+@inherits BaseComponent
+
+@*
+  Purpose: Role detail/edit — grouped permission membership editor for one role.
+
+  Design: Task 206. Route /Admin/Roles/{RoleId} (read policy so viewers can see the bundle).
+  Checkboxes and Save require admin.roles.manage (CheckAuthorization). COPIC stays
+  RoleState.SetPermissionSelected / SetRolePermissions — no new store. Protected-core
+  Administrator admin.* grants are disabled when selected; last-admin lockout is
+  SetPrincipalRoles (server), not this editor. Groups come from PermissionIds.GroupsByPrefix.
+*@
+
+@code {
+  public static Icon? NavIcon => new Icons.Regular.Size20.Person();
+  public static string Title => "Role";
+
+  private bool CanManage { get; set; }
+
+  private bool IsLoading =>
+    IsAnyActive(typeof(RoleState.FetchRolesActionSet.Action));
+
+  private bool IsSaving =>
+    IsAnyActive(typeof(RoleState.SetRolePermissionsActionSet.Action));
+
+  private GetRoles.RoleDto? Role =>
+    RoleState.Roles?.FirstOrDefault(role => role.RoleId == RoleId);
+
+  protected override async Task OnInitializedAsync()
+  {
+    CanManage = await CheckAuthorization(PermissionIds.AdminRolesManage);
+    await RoleState.FetchRoles();
+  }
+
+  private async Task OnSave() => await RoleState.SetRolePermissions(RoleId);
+}
+
+<PageTitle>@(Role?.Name ?? Title)</PageTitle>
+
+<TimeWarpPage Title="@(Role?.Name ?? Title)">
+  <div class="twe-stack">
+    <p class="sg-subtitle">
+      Edit permission membership for this role. Grants are grouped by prefix
+      (<code>admin.*</code>, <code>developer.*</code>, …). Administrator core admin
+      permissions cannot be stripped (protected-core); the server also rejects that write (409).
+    </p>
+    <div>
+      <FluentButton Appearance="ButtonAppearance.Outline" Href="@RolesListPage.GetPageUrl()" data-qa="BackToRoles">
+        Back to roles
+      </FluentButton>
+    </div>
+    <Card Title="@(Role?.Name ?? "Role")">
+      @if (IsLoading)
+      {
+        <p><em>Loading…</em></p>
+      }
+      else if (Role is null)
+      {
+        <p data-qa="RoleNotFound">Role not found.</p>
+      }
+      else
+      {
+        <p class="twe-role-description">@Role.Description</p>
+        <RolePermissionEditor RoleId="RoleId" CanManage="CanManage" />
+        @if (CanManage)
+        {
+          <FluentButton
+            Appearance="ButtonAppearance.Primary"
+            data-qa="SaveRolePermissions"
+            Disabled="IsSaving"
+            OnClick="OnSave">
+            Save
+          </FluentButton>
+        }
+      }
+    </Card>
+  </div>
+</TimeWarpPage>

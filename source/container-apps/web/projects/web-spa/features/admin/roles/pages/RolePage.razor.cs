@@ -1,5 +1,10 @@
 #region Purpose
-// Code-behind for the admin New Role page, which demos contract-interface form binding (IRoleDetails): [Page] drives source-generated routing.
+// Code-behind for the admin New Role page (name + description). Membership is RoleDetailPage.
+#endregion
+
+#region Design
+// Task 206: this route stays create-only. Permission membership is RoleDetailPage
+// (/Admin/Roles/{RoleId}); RoleForm navigates there after a successful create.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;

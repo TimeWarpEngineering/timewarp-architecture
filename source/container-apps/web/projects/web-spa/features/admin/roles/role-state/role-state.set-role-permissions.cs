@@ -3,9 +3,10 @@
 #endregion
 
 #region Design
-// Task 182-004: mirrors PrincipalState.SetPrincipalRoles — draft toggles are pure state;
-// Save posts SetRolePermissions then re-fetches GetRoles so drafts re-seed from stored grants
-// (and protected-core / validation errors surface via DefaultApiHandler problem handling).
+// Task 182-004 / 206: mirrors PrincipalState.SetPrincipalRoles — draft toggles are pure state
+// (RoleDetailPage grouped editor); Save posts SetRolePermissions then re-fetches GetRoles so
+// drafts re-seed from stored grants (and protected-core / validation errors surface via
+// DefaultApiHandler problem handling).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
