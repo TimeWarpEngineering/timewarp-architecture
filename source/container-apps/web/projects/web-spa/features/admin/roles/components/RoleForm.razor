@@ -10,6 +10,10 @@
   RoleDetailsValidator so only Name/Description are validated (no UserId noise).
   COPIC UX — Action ctor takes Command; submit is RoleState.CreateRole(Command).
   UserId is stamped in the handler GetRequest, not here.
+  After create, navigate to RoleDetailPage so membership can be assigned (task 206).
+  LastCreatedRoleId is only written on HandleSuccess and is sticky across attempts, so
+  compare to the pre-dispatch value: navigate only when it changed. A failed create
+  (DefaultApiHandler toasts, does not throw) stays on this form.
 *@
 
 @code {
@@ -20,8 +24,12 @@
 
   private async Task HandleValidSubmit()
   {
+    Guid? previousCreatedRoleId = RoleState.LastCreatedRoleId;
     await RoleState.CreateRole(Command);
-    NavigationManager.NavigateTo(RolesListPage.GetPageUrl());
+    if (RoleState.LastCreatedRoleId is Guid roleId && roleId != previousCreatedRoleId)
+    {
+      NavigationManager.NavigateTo(RoleDetailPage.GetPageUrl(roleId));
+    }
   }
 }
 

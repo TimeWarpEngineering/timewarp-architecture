@@ -3,10 +3,10 @@
 #endregion
 
 #region Design
-// Task 147-004 / 182-004: primary Admin/Roles surface; RolePage (/Admin/Roles/New) is secondary.
+// Task 206: primary Admin/Roles surface is a summary list (name, description, count/chips).
+// RoleDetailPage (/Admin/Roles/{RoleId}) owns membership; RolePage (/Admin/Roles/New) is create.
 // Policy PermissionIds.AdminRolesRead matches server GetRoles/GetRole; SetRolePermissions is
-// admin.roles.manage (server 403 if the signed-in principal only has read). Inline checkboxes
-// edit DraftPermissionIds; Save posts SetRolePermissions (protected-core enforced server-side).
+// admin.roles.manage (detail Save 403 if the signed-in principal only has read).
 // Loading is FetchRoles [TrackAction] (COPIC IsAnyActive), not Roles is null.
 #endregion
 

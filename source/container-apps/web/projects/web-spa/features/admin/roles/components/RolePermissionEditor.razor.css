@@ -1,0 +1,26 @@
+/* Grouped permission editor — native root so isolation reaches group layout. */
+.twe-permission-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.twe-permission-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--twe-rule);
+}
+
+.twe-permission-group:last-child {
+  border-bottom: none;
+}
+
+.twe-permission-group__children {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 28px;
+}

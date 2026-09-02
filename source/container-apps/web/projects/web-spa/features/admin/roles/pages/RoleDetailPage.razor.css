@@ -1,0 +1,5 @@
+/* Role detail description under the card title. */
+.twe-role-description {
+  color: var(--twe-ink-2);
+  margin: 0 0 16px;
+}

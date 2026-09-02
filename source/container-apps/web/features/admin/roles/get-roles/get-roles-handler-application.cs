@@ -4,8 +4,8 @@
 
 #region Design
 // Reads the shared in-memory stub (role-store.cs); ordering by name keeps the list stable for
-// UI and tests. PermissionIds per row come from IRolePermissionStore (task 182-004 membership
-// matrix on RolesListPage). TotalCount equals the full store size — the demo does not implement
+// UI and tests. PermissionIds per row come from IRolePermissionStore (task 182-004 / 206 list
+// summary + RoleDetailPage drafts). TotalCount equals the full store size — the demo does not implement
 // the contract's OpenData paging parameters; a real repository-backed handler would.
 #endregion
 

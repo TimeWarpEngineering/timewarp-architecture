@@ -5,9 +5,11 @@
 #region Design
 // Roles null = no snapshot yet; empty array = loaded with zero rows.
 // In-flight fetch is [TrackAction] on FetchRoles — pages use IsAnyActive, not null.
-// LastCreatedRoleId remains for create-round-trip demos after RoleForm submit.
-// DraftPermissionIds (task 182-004): multi-select edits per role before Save → SetRolePermissions;
-// seeded from GetRoles.RoleDto.PermissionIds on fetch (same pattern as PrincipalState drafts).
+// LastCreatedRoleId remains for create-round-trip demos after RoleForm submit (navigates to
+// RoleDetailPage when set).
+// DraftPermissionIds (task 182-004 / 206): multi-select edits on RoleDetailPage before Save →
+// SetRolePermissions; seeded from GetRoles.RoleDto.PermissionIds on fetch (same pattern as
+// PrincipalState drafts). The list page is summary-only and does not mutate drafts.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;

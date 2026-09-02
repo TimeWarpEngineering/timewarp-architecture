@@ -8,7 +8,8 @@
 // Co-located Jaribu: SetRolePermissions contracts + protected-core guard (182-004).
 
 #region Purpose
-// Host-free round-trip/validation for SetRolePermissions plus ProtectedCoreConflict unit coverage.
+// Host-free round-trip/validation for SetRolePermissions plus ProtectedCoreConflict unit coverage
+// and the task-206 pin that AdminPermissions matches every admin.* catalog id.
 #endregion
 
 //-:cnd:noEmit
@@ -168,6 +169,21 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
         []);
 
       problem.ShouldBeNull();
+      return Task.CompletedTask;
+    }
+
+    public static Task AdminPermissions_Should_Match_Every_Admin_Prefix_Id()
+    {
+      List<string> adminPrefixIds = [];
+      foreach (string permissionId in PermissionIds.All)
+      {
+        if (PermissionIds.Prefix(permissionId) == "admin")
+        {
+          adminPrefixIds.Add(permissionId);
+        }
+      }
+
+      RolePermissionSeed.AdminPermissions.ShouldBe(adminPrefixIds);
       return Task.CompletedTask;
     }
   }

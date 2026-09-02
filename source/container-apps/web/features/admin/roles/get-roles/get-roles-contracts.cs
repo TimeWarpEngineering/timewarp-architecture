@@ -8,8 +8,8 @@
 // partial Query; GetRouteWithQueryString then merges the two generated parameter sets into
 // one query string. RoleDto is a flat read model separate from IRoleDetails because list
 // rows are display-only, and Response derives from ListResponse to carry TotalCount for
-// paging. PermissionIds on RoleDto (task 182-004) feed the Roles list membership matrix —
-// fine for the small product role catalog (RoleIds.All + demo creates).
+// paging. PermissionIds on RoleDto (task 182-004 / 206) feed list summary chips and
+// RoleDetailPage drafts — fine for the small product role catalog (RoleIds.All + demo creates).
 // GetMockResponseFactory serves the SPA's MockWebApiService offline.
 // [EndpointAuthorize] (task 182-002): admin.roles.read via PermissionIds — read half of the
 // roles split (manage is Create/Update/Delete/SetRolePermissions). Server
