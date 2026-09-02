@@ -58,3 +58,8 @@ grouped tree on the **detail** page is the durable shape.
 
 - Created: 73480 (2026-09-02)
 - Cockpit: Grok — operator: `/Admin/Roles` checkbox soup will not scale
+- Cockpit: Grok launch (2026-09-02) — claim, in-progress, `ganda task work`
+
+Stay in this claim worktree. Implement the checklist (list summary + grouped editor on
+role detail). Preserve 182 protected-core / last-admin lockout. Results + How to validate,
+`ganda kanban done 206`, PR, STOP. Do not merge.
