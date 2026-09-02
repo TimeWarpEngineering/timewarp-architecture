@@ -55,7 +55,7 @@ See [detection.md](references/detection.md) for detailed fingerprinting.
 | Wait for resource ready | `aspire wait <resource>` | `curl` / HTTP polling loops |
 | Code changed in a resource | Prefer resource commands, runtime watch/HMR, dashboard actions, or IDE-managed debugging | `dotnet build` against locked files |
 | Task complete | `aspire stop` | Leave processes running |
-| Check resource status | `aspire describe` / `aspire ps` | Manual process inspection |
+| Check resource status | `aspire describe` (resources) / `aspire ps` (running AppHosts) | Manual process inspection |
 | Working in git worktree | `aspire start --isolated` | `aspire start` without isolation |
 | Running from AI agent | Add `--non-interactive` to all commands | Assuming interactive terminal |
 | Editing unfamiliar API | `aspire docs search <topic>` then `aspire docs api search <query>` for API reference | Guessing API shape |
@@ -82,8 +82,8 @@ See [safety-guardrails.md](references/safety-guardrails.md) for detailed rules a
 | Start app (human) | `aspire run` (foreground, dashboard) |
 | Stop app | `aspire stop` |
 | Wait for resource | `aspire wait <resource>` |
-| Check status | `aspire ps` or `aspire describe` |
-| Show hidden resources (proxies, helpers, migrations) | `aspire ps --include-hidden` / `aspire describe --include-hidden` |
+| Check status | `aspire ps` (running AppHosts) or `aspire describe` (resources) |
+| Show hidden resources (proxies, helpers, migrations) | `aspire describe --include-hidden` / `aspire resource <name> --include-hidden` (13.5 removed `aspire ps --include-hidden`; `ps` now lists AppHosts only) |
 | Resource operation | `aspire resource <resource-name> <command>` such as `stop`, `start`, or `rebuild` when exposed |
 | Create new project | `aspire new aspire-starter` |
 | Add Aspire to existing | `aspire init` (then hand off to `aspireify` skill for wiring) |
