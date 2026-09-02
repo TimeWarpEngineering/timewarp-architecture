@@ -60,12 +60,15 @@ grouped tree on the **detail** page is the durable shape.
 - Cockpit: Grok — operator: `/Admin/Roles` checkbox soup will not scale
 - Cockpit: Grok launch (2026-09-02) — claim, in-progress, `ganda task work`
 - Implementer: Grok (2026-09-02) — list summary + grouped RoleDetailPage; protected-core UI lock
+- Review oracle: Grok (2026-09-02) — effort 1 general; `review/` under this folder
+- Review round 1: general — M1 bug + M2/M3 suggestions; fixed on this id
+- Review round 2: general — M1–M3 re-verified fixed; disposition clean
 
 ## Results
 
 List is a list again. `/Admin/Roles` shows name (link), description, grant count, and prefix chips (`admin.*`, `developer.*`, …). Per-permission checkboxes and per-row Save are gone.
 
-Membership editing lives on **`RoleDetailPage`** at `/Admin/Roles/{RoleId:Guid}`: `PermissionIds.GroupsByPrefix` parent checkboxes (tri-state) plus atom ids. COPIC is unchanged — `RoleState.SetPermissionSelected` / `SetRolePermissions`. `RolePage` (`/Admin/Roles/New`) stays create-only; after a successful create, `RoleForm` navigates to the new role’s detail page.
+Membership editing lives on **`RoleDetailPage`** at `/Admin/Roles/{RoleId:Guid}`: `PermissionIds.GroupsByPrefix` parent checkboxes (tri-state) plus atom ids. COPIC is unchanged — `RoleState.SetPermissionSelected` / `SetRolePermissions`. `RolePage` (`/Admin/Roles/New`) stays create-only; after a successful create, `RoleForm` navigates to the new role’s detail page (only when `LastCreatedRoleId` changes; a failed create stays on New Role).
 
 Protected-core: selected `admin.*` grants on Administrator are disabled in the editor (`PermissionIds.IsProtectedCoreLocked`). Missing cores stay togglable so a damaged bundle can be repaired. Server `SetRolePermissions` still 409s a strip. Last-admin remains `SetPrincipalRoles` (unchanged).
 
@@ -83,7 +86,7 @@ Packs were not added — prefix groups cover the current catalog.
 **Tests (this session)**
 
 - `dotnet run source/container-apps/web/features/authorization/permission-ids-tests.cs` — 8 passed
-- `dotnet run source/container-apps/web/features/admin/roles/set-role-permissions/set-role-permissions-tests.cs` — 12 passed (protected-core + last-admin unit)
+- `dotnet run source/container-apps/web/features/admin/roles/set-role-permissions/set-role-permissions-tests.cs` — 13 passed (protected-core + last-admin unit + admin.* vs AdminPermissions pin)
 - `cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class SetRolePermissionsLockout` — 3 passed
 - same suite `--filter-class RolesAuthorization` — 7 passed
 - same suite `--filter-class PrincipalsAuthorization` — 8 passed (includes last-admin)
@@ -101,7 +104,8 @@ dotnet run source/container-apps/web/features/authorization/permission-ids-tests
 # expect: 8 passed (every All id in exactly one prefix group; Administrator + selected admin.* locks)
 
 dotnet run source/container-apps/web/features/admin/roles/set-role-permissions/set-role-permissions-tests.cs
-# expect: 12 passed, including ProtectedCoreConflict 409 and LastAdministratorConflict 409
+# expect: 13 passed, including ProtectedCoreConflict 409, LastAdministratorConflict 409,
+# and AdminPermissions matching every admin.* catalog id
 
 cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class SetRolePermissionsLockout
 # expect: 3 passed — stripping admin.roles.manage from Administrator is HTTP 409; Member write is 200
@@ -121,7 +125,24 @@ dotnet run tools/dev-cli/dev.cs -- build
 4. Click **Administrator**. **Expect:** `/Admin/Roles/{administrator-guid}` with grouped checkboxes (`admin.*` parent + atoms). The selected `admin.*` atoms and the `admin.*` parent are disabled. `profile.read` / `settings.read` stay enabled.
 5. Click **Member**, grant `developer.access`, Save. **Expect:** success; returning to the list shows a `developer.*` chip on Member.
 6. (API) PUT Administrator permissions without `admin.roles.manage`. **Expect:** 409 problem+json title `Protected core permissions`.
+7. Create a role successfully, then submit New Role with a name that the API rejects (or force a problem+json). **Expect:** stay on `/Admin/Roles/New` (toast); do not jump to the previously created role.
 
 **Depends on:** identity-session (passkey) or Development mock auth for the SPA; integration tests mint a passkey cookie themselves.
 
 **Not in scope:** permission packs, Principals-page role checkboxes, OpenFGA/Cedar, renaming permission ids, Playwright e2e.
+
+### Review disposition
+
+**Outcome:** clean (0 open). **Effort:** 1 (general only). **Rounds:** 2.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 1 | 0 |
+| suggestion | 0 | 2 | 0 |
+| nit | 0 | 0 | 0 |
+
+- M1 (bug, fixed): `RoleForm` no longer treats a sticky `LastCreatedRoleId` as success after a toasted create failure.
+- M2 (suggestion, fixed): parent `FluentCheckbox` uses `ShowIndeterminate=false` and `ThreeStateOrderUncheckToIntermediate=true` so mixed→select-all, checked→clear.
+- M3 (suggestion, fixed): application test pins `RolePermissionSeed.AdminPermissions` to every `admin.*` id in `PermissionIds.All`.
+
+**Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
