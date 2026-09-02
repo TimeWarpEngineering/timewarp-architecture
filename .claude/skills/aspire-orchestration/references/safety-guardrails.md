@@ -195,7 +195,7 @@ Text output is formatted for humans and may change between versions. JSON output
 
 ```bash
 # ✅ Machine-readable resource list
-aspire ps --format Json
+aspire describe --format Json
 
 # ✅ Get specific resource details
 aspire describe apiservice --format Json
@@ -210,11 +210,11 @@ aspire describe --format Json | jq '.resources[] | select(.state == "Running")'
 |-------|-----------|
 | `aspire start --format json` may emit human-readable text before JSON ([#15843](https://github.com/microsoft/aspire/issues/15843)) | Strip non-JSON lines before parsing |
 | `aspire stop` does NOT support `--format json` yet | Use exit code for success/failure |
-| `aspire ps --format Json` returns `name` and `displayName` fields | Use `displayName` for `aspire wait` — the `name` field may be rejected ([#15842](https://github.com/microsoft/aspire/issues/15842)) |
+| `aspire describe --format Json` returns `name` and `displayName` fields (13.5: `aspire ps` lists AppHosts, not resources) | Use `displayName` for `aspire wait` — the `name` field may be rejected ([#15842](https://github.com/microsoft/aspire/issues/15842)) |
 
 ### Hidden Resources and `--include-hidden`
 
-`aspire ps`, `aspire describe`, and other CLI commands **filter out resources marked as
+`aspire describe`, `aspire resource`, and other CLI commands **filter out resources marked as
 hidden in the AppHost** (proxies, helper containers, migration jobs, etc.).
 This filtering is correct for normal workflows — agents and humans see only the resources they
 care about, not the implementation scaffolding.
@@ -226,15 +226,14 @@ Use `--include-hidden` when:
 | Debugging a proxy or sidecar | Proxies are hidden by default; you need their state to diagnose connectivity |
 | Investigating helper containers | Helper containers (e.g. wait-for-it shims, init containers) are hidden |
 | Tracking down migration jobs | Migration / seed jobs are typically hidden once they finish |
-| Expected resources are missing from `aspire ps` | The resource may exist but be marked hidden — confirm with `--include-hidden` before assuming the AppHost is wrong |
+| Expected resources are missing from `aspire describe` | The resource may exist but be marked hidden — confirm with `--include-hidden` before assuming the AppHost is wrong |
 | Parsing for completeness in agent automation | A full-graph view requires explicit opt-in |
 
 ```bash
 # ✅ Normal flow — filtered (correct for most tasks)
-aspire ps --format Json
+aspire describe --format Json
 
 # ✅ Debugging / completeness — include hidden resources
-aspire ps --include-hidden --format Json
 aspire describe --include-hidden --format Json
 ```
 

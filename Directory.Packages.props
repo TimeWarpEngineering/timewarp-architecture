@@ -70,10 +70,10 @@
     <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
     <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
     <!-- Yarp / Reverse Proxy (used by Yarp gateway and Aspire.AppHost) -->
-    <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.5.2" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.5.2" />
-    <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same train as stable 13.5.2 hosting pins. -->
-    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.5.2-preview.1.26421.6" />
+    <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.5.3" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.5.3" />
+    <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same train as stable 13.5.3 hosting pins. -->
+    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.5.3-preview.1.26425.3" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.9.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->
@@ -181,7 +181,7 @@
        Sourced from TimeWarp.Architecture/Directory.Packages.props; family-versioned
        packages (ASP.NET Core, Aspire) aligned with the pins above. -->
   <ItemGroup Label="Test Packages">
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.5.2" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.5.3" />
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
     <PackageVersion Include="FakeItEasy" Version="9.0.1" />

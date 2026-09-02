@@ -64,7 +64,7 @@ The Aspire CLI communicates with the running AppHost through a **backchannel soc
 | `aspire otel logs --dashboard-url` | Query a standalone or deployed dashboard | `aspire otel logs --dashboard-url "https://localhost:18888/login?t=TOKEN"` |
 | `aspire describe` | Resource state, endpoints, health (filtered) | `aspire describe --format Json` |
 | `aspire describe --include-hidden` | Include hidden resources (proxies, helpers, migrations) | `aspire describe --include-hidden --format Json` |
-| `aspire ps --include-hidden --format Json` | Resource list including hidden resources | `aspire ps --include-hidden --format Json` |
+| `aspire describe --include-hidden --format Json` | Resource list including hidden resources (13.5: `--include-hidden` is on `describe` / `resource`, not `ps`) | `aspire describe --include-hidden --format Json` |
 | `aspire export` | Export portable telemetry bundle | `aspire export` |
 | `aspire dashboard run` | Run the Aspire Dashboard standalone (foreground/blocking) | `aspire dashboard run` |
 
@@ -76,7 +76,7 @@ aspire describe --format Json
 
 # ✅ When an expected resource is missing, retry with --include-hidden
 #    Hidden-by-default resources (proxies, helper containers, migrations)
-aspire ps --include-hidden --format Json
+aspire describe --include-hidden --format Json
 
 # ✅ Get endpoints from describe, not guessing ports
 ENDPOINT=$(aspire describe apiservice --format Json | jq -r '.endpoints[0].url')
@@ -190,7 +190,7 @@ No additional configuration is needed — Aspire wires the connection string dur
 |-------|---------|-----------|
 | TS AppHost DNS failure ([#15782](https://github.com/microsoft/aspire/issues/15782)) | `aspire otel` returns "No such host" for `*.dev.localhost` | Use `--dashboard-url localhost:PORT` directly |
 | `--isolated` mode telemetry ([#16107](https://github.com/microsoft/aspire/issues/16107)) | OTEL port not randomized in isolated mode | Avoid `--isolated` if telemetry is needed |
-| Resource missing from `aspire ps` / `aspire describe` | Hidden-by-default resources such as proxies, helpers, or migrations | Re-run with `--include-hidden` |
+| Resource missing from `aspire describe` | Hidden-by-default resources such as proxies, helpers, or migrations | Re-run with `--include-hidden` |
 
 > **Resolved in 13.3**: The standalone-dashboard workaround for [#16236](https://github.com/microsoft/aspire/issues/16236) is obsolete — `aspire dashboard run` ships in-box (see Standalone Dashboard section above).
 
@@ -204,6 +204,6 @@ No additional configuration is needed — Aspire wires the connection string dur
 | "Show me the logs" | `aspire logs <resource>` | `az containerapp logs show` / `kubectl logs <pod>` / `docker logs` |
 | "Show me distributed traces" | `aspire otel traces` | App Insights → Transaction Search |
 | "Why is this resource unhealthy?" | `aspire describe` + `aspire logs` | AppLens / azure-diagnostics / `kubectl describe pod` |
-| "What metrics are available?" | Aspire Dashboard (auto-launched or `aspire dashboard run`) | Azure Monitor / App Insights / Container Insights |
+| "What metrics are available?" | Aspire Dashboard (opened by `aspire run` / `dev run`, or standalone via `aspire dashboard run`; 13.5 removed the VS Code auto-launch) | Azure Monitor / App Insights / Container Insights |
 | "Export telemetry for analysis" | `aspire export` | App Insights export / KQL query |
 | "Browser console / network logs" | Dashboard (with `WithBrowserLogs()` enabled) — N/A in production |

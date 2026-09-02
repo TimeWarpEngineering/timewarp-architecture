@@ -1,7 +1,7 @@
 ---
 name: aspire
 description: >-
-  **WORKFLOW SKILL** - Top-level router for Aspire 13.4 distributed apps. Detects the
+  **WORKFLOW SKILL** - Top-level router for Aspire 13.5 distributed apps. Detects the
   AppHost, enforces safety guardrails, and routes to the right sub-skill.
   USE FOR: Aspire AppHost detected, aspire CLI, distributed app, cloud-native .NET,
   aspire start, aspire stop, aspire resource, aspire deploy, aspire destroy, aspire publish,
@@ -109,7 +109,7 @@ AppHost code — defers to `aspireify` for wiring.
 Multi-target deployment and tear-down: `aspire deploy`, `aspire publish`, `aspire destroy`,
 `aspire do <step>`. Targets: Azure Container Apps, App Service, AKS, Kubernetes (Helm),
 Docker Compose. Owns current deployment surfaces (Front Door, NSP, AKS hosting, Foundry
-`AddPromptAgent`, JS `PublishAs*`, `--pipeline-log-level`) and 13.4 API naming.
+`AddPromptAgent`, JS `PublishAs*`, `--pipeline-log-level`) and 13.5 API naming (13.5: `aspire ps` lists AppHosts only, `--include-hidden` lives on `describe` / `resource`; hosting command contexts expose `Services`, not `ServiceProvider`).
 
 ### aspire-monitoring
 Observability: `aspire logs`, `aspire otel`, `aspire describe`, `aspire export`,
