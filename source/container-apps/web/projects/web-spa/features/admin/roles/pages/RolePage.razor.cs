@@ -4,7 +4,7 @@
 
 #region Design
 // Task 206: this route stays create-only. Permission membership is RoleDetailPage
-// (/Admin/Roles/{RoleId}); RoleForm navigates there after a successful create.
+// (/Admin/Roles/{RoleId}); RoleForm navigates there only when LastCreatedRoleId changes.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;

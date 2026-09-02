@@ -7,9 +7,12 @@
 
   Design: Task 206. Catalog is PermissionIds.GroupsByPrefix (derived from All, not a second
   SSOT). Toggles dispatch RoleState.SetPermissionSelected; parent click selects/clears every
-  unlocked child. Protected-core (Administrator + admin.*, currently selected) is disabled so
-  the SPA cannot uncheck a grant the server would 409. Missing cores stay enabled so a damaged
-  bundle can be repaired. CanManage=false disables the whole tree (read policy viewers).
+  unlocked child. Parent FluentCheckbox is ThreeState for mixed display (CheckStateFor) with
+  ShowIndeterminate=false and ThreeStateOrderUncheckToIntermediate=true so clicks are
+  mixed→checked, checked→unchecked, unchecked→checked (FluentUI v5). Protected-core
+  (Administrator + selected admin.*) is disabled so the SPA cannot uncheck a grant the
+  server would 409. Missing cores stay enabled so a damaged bundle can be repaired.
+  CanManage=false disables the whole tree (read policy viewers).
 *@
 
 @code {
@@ -78,6 +81,8 @@
     <div class="twe-permission-group" @key="group.Prefix" data-qa="@($"PermissionGroup-{group.Prefix}")">
       <FluentCheckbox
         ThreeState="true"
+        ShowIndeterminate="false"
+        ThreeStateOrderUncheckToIntermediate="true"
         Label="@($"{group.Prefix}.*")"
         CheckState="@group.CheckStateFor(Selected)"
         CheckStateChanged="@(async (bool? value) => await OnGroupCheckStateChanged(group, value))"

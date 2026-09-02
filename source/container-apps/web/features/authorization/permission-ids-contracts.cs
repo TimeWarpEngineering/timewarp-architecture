@@ -18,8 +18,9 @@
 // SelfServicePermissions (dual-scheme credential surface).
 // GroupsByPrefix / Prefix (task 206): derived from All's first dotted segment — not a second
 // catalog. SPA list chips and the role-detail parent checkboxes consume this. Protected-core
-// UI lock is Administrator + prefix "admin", matching RolePermissionSeed.AdminPermissions
-// (Administrator seed is all admin.*). Server still enforces ProtectedCoreConflict.
+// UI lock is Administrator + prefix "admin". That set must equal RolePermissionSeed.AdminPermissions
+// (pinned in set-role-permissions-tests); contracts cannot reference the application seed.
+// Server still enforces ProtectedCoreConflict.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
