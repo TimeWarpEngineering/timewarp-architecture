@@ -7,10 +7,12 @@
 // options → browser credential → complete → session flow. Centralising it here keeps the
 // ceremony payload mapping (JSON field names ↔ Complete* command shapes) and error formatting
 // in one place rather than duplicating across razor code-behinds.
-// Injects IWebServerApiService (real BFF or mock fallback) and IJSRuntime → window.Spa.WebAuthn
-// (source/features/web-authn.ts). Mock mode has no GetMockResponseFactory on ceremony contracts,
-// so MockWebApiService falls through to a 501 SharedProblemDetails — callers surface that as a
-// "passkeys not supported" style error via FormatError, same as PasskeysPage before this extract.
+// Injects IWebServerApiService (real BFF or mock fallback) and IJSRuntime. Task 200: passkey
+// browser calls go through WebAuthnJsModule (IJSRuntime import of ./js/features/web-authn.js
+// named exports) so Login does not require window.Spa. Mock mode has no GetMockResponseFactory
+// on ceremony contracts, so MockWebApiService falls through to a 501 SharedProblemDetails —
+// callers surface that as a "passkeys not supported" style error via FormatError, same as
+// PasskeysPage before this extract.
 // Cookie session is set by the server on complete; this client only reads IsAuthenticated via
 // GetCurrentSession. No profile fields are collected or required.
 // When SPA uses IdentitySessionAuthenticationStateProvider (default non-mock / non-Entra path),
@@ -61,11 +63,11 @@ public sealed class PasskeyCeremonyClient
     }
 
     string credentialJson =
-      await JsRuntime.InvokeAsync<string>(
-        "Spa.WebAuthn.CreateCredential",
-        cancellationToken,
+      await WebAuthnJsModule.CreateCredentialAsync(
+        JsRuntime,
         startResult.AsT0.OptionsJson,
-        preferHybrid);
+        preferHybrid,
+        cancellationToken);
 
     using var document = JsonDocument.Parse(credentialJson);
     JsonElement root = document.RootElement;
@@ -104,11 +106,11 @@ public sealed class PasskeyCeremonyClient
     }
 
     string assertionJson =
-      await JsRuntime.InvokeAsync<string>(
-        "Spa.WebAuthn.GetCredential",
-        cancellationToken,
+      await WebAuthnJsModule.GetCredentialAsync(
+        JsRuntime,
         startResult.AsT0.OptionsJson,
-        preferHybrid);
+        preferHybrid,
+        cancellationToken);
 
     using var document = JsonDocument.Parse(assertionJson);
     JsonElement root = document.RootElement;
