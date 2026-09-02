@@ -195,7 +195,7 @@ Text output is formatted for humans and may change between versions. JSON output
 
 ```bash
 # ✅ Machine-readable resource list
-aspire ps --format Json
+aspire describe --format Json
 
 # ✅ Get specific resource details
 aspire describe apiservice --format Json
@@ -210,7 +210,7 @@ aspire describe --format Json | jq '.resources[] | select(.state == "Running")'
 |-------|-----------|
 | `aspire start --format json` may emit human-readable text before JSON ([#15843](https://github.com/microsoft/aspire/issues/15843)) | Strip non-JSON lines before parsing |
 | `aspire stop` does NOT support `--format json` yet | Use exit code for success/failure |
-| `aspire ps --format Json` returns `name` and `displayName` fields | Use `displayName` for `aspire wait` — the `name` field may be rejected ([#15842](https://github.com/microsoft/aspire/issues/15842)) |
+| `aspire describe --format Json` returns `name` and `displayName` fields (13.5: `aspire ps` lists AppHosts, not resources) | Use `displayName` for `aspire wait` — the `name` field may be rejected ([#15842](https://github.com/microsoft/aspire/issues/15842)) |
 
 ### Hidden Resources and `--include-hidden`
 
@@ -231,10 +231,9 @@ Use `--include-hidden` when:
 
 ```bash
 # ✅ Normal flow — filtered (correct for most tasks)
-aspire ps --format Json
+aspire describe --format Json
 
 # ✅ Debugging / completeness — include hidden resources
-aspire describe --include-hidden --format Json
 aspire describe --include-hidden --format Json
 ```
 

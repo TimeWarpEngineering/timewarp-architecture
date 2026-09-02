@@ -105,11 +105,11 @@ See [safety-guardrails.md](references/safety-guardrails.md) for detailed rules a
 |---------|-------|--------|
 | **File lock errors during build (`MSB3491`, `CS2012`)** | **Aspire is running and holds locks on `bin/`, `obj/`, and assemblies.** | **Run `aspire stop` first**, then rebuild or `aspire start`. Do NOT conclude the project has a permanent build failure. |
 | "Port already in use" | Previous instance running | `aspire stop`, then `aspire start` |
-| Resource not found | App not started or name wrong | `aspire ps` to check |
+| Resource not found | App not started or name wrong | `aspire ps` (is the AppHost running?) then `aspire describe` (is the resource name right?) |
 | Build errors in resource | Code error, not Aspire issue | Fix code, then use resource commands/watch/HMR/debug workflow or rerun `aspire start` if AppHost code changed |
 | Environment issues | Missing SDK or tools | `aspire doctor` to diagnose |
 | JSON parse failure from `aspire start` | Mixed human/JSON output ([#15843](https://github.com/microsoft/aspire/issues/15843)) | Strip non-JSON lines before parsing |
-| `aspire wait` rejects name | Use `displayName` not `name` ([#15842](https://github.com/microsoft/aspire/issues/15842)) | Use `displayName` from `aspire ps --format Json` |
+| `aspire wait` rejects name | Use `displayName` not `name` ([#15842](https://github.com/microsoft/aspire/issues/15842)) | Use `displayName` from `aspire describe --format Json` |
 | `aspire ps` hangs | AppHost on breakpoint ([#15576](https://github.com/microsoft/aspire/issues/15576)) | Use timeout, check AppHost process |
 | `aspire agent init` fails | Non-interactive terminal ([#16264](https://github.com/microsoft/aspire/issues/16264)) | Run from standard terminal |
 | Docker daemon unavailable | Container-backed resources fail to start | Start Docker Desktop, then `aspire start` |

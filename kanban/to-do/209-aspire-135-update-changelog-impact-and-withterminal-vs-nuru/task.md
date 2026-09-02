@@ -111,6 +111,7 @@ Grep org worktrees for `Aspire.AppHost.Sdk` / `Aspire.Hosting` and list any othe
   (run to refresh vendored skills) also wrote a PostToolUse telemetry hook into
   `~/.claude/settings.json`, which was removed again, and refreshed `~/.agents/skills`.
 - Nuru follow-up: timewarp-nuru task **467** (Spike Aspire 13.5 WithTerminal for the Nuru REPL), registered via kanban-only PR timewarp-nuru#230 (`ganda kanban publish` blocked by that repo's PR-required ruleset).
+- Review oracle: claude (Fable 5.1) under `ganda task work 209` review node; general reviewer sub-agent claude sonnet (2026-09-02). Artifacts under `review/`.
 
 ## Notes
 
@@ -222,3 +223,20 @@ diff -r .claude/skills .agents/skills && echo identical
 - The `aspire ps --include-hidden` grep returns nothing; both skill trees are identical.
 - Optional with an AppHost running from this worktree (`dev run`): `dev db status` succeeds
   (`aspire resource web-migrations ef-database-status …`).
+
+### Gates (re-run by the review oracle, 2026-09-02, this worktree)
+
+| Gate | Result |
+|---|---|
+| `dev build` (Release, full solution) | `0 Warning(s)  0 Error(s)` |
+| `tests/container-apps/aspire/aspire-tests` `dotnet test -c Release` | `Passed! total: 7 failed: 0` (closed-box AppHost boots on 13.5.3) |
+| `diff -r .claude/skills .agents/skills` | identical |
+| `dev check-version` precondition | `<Version>` 2.0.0-beta.17 > latest tag v2.0.0-beta.16; no bump needed for this PR |
+
+### Review disposition
+
+- **Rounds:** 2 · **Effort:** 1 · **Roster:** general (claude sonnet) + review-oracle verification pass
+- **Final counts:** bug 0 open / 1 fixed · suggestion 0 open / 2 fixed · nit 0 open / 1 fixed · wontfix 0
+- **Disposition:** `clean` — no exceptions, no escalations
+- **Fixed on this id:** M1 duplicated line + stale normal-flow `aspire ps` in `safety-guardrails.md`; M2 five remaining `aspire ps` resource-list statements in `aspire-orchestration` (SKILL.md, `resource-management.md`, `safety-guardrails.md`) repointed at `aspire describe`; M3 gate evidence recorded above; M4 redundant `.memsearch/memory/` `.gitignore` rule dropped (master already ignores `.memsearch/`)
+- **Paths:** `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`

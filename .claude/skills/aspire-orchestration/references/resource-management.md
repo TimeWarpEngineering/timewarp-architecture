@@ -12,7 +12,7 @@ aspire wait <resource> --status up --timeout 60
 - Use `aspire wait` before a dependent action when readiness is the blocker.
 - Add `--status` and `--timeout` for explicit readiness conditions.
 - Treat readiness as resource-scoped — a missing ready signal is not a reason to restart the whole AppHost.
-- Use `displayName` from `aspire ps --format Json`, not `name` ([#15842](https://github.com/microsoft/aspire/issues/15842)).
+- Use `displayName` from `aspire describe --format Json`, not `name` ([#15842](https://github.com/microsoft/aspire/issues/15842)).
 
 ## Fix Or Operate On One Resource Without Bouncing The Whole App
 
