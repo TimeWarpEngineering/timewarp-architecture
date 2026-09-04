@@ -1,12 +1,18 @@
 # Review framework — task 160
 
 **Date:** 2026-09-04
-**Host task:** kanban/in-progress/160-role-resolution-db-failure-must-not-surface-as-401-fail-closed-hardening/
-**Diff scope:** branch `task/160-role-resolution-db-failure-must-not-surface-as-401` vs `origin/master` (commit `67339a62` — product files only; exclude kanban kitchen)
+**Host task:** kanban/done/160-role-resolution-db-failure-must-not-surface-as-401-fail-closed-hardening/
+**Diff scope:** branch `task/160-role-resolution-db-failure-must-not-surface-as-401` vs `origin/master` (product commit `67339a62`; later commits are kanban-only). Product files only; exclude kitchen.
 **Plan / brief:** Fail-closed hardening so a role-store read failure for an authenticated principal returns HTTP 503, never 401 (Challenge) and never 403 (empty-roles). Wrap `IPrincipalRoleStore.GetRoleIdsAsync` failures as `RoleResolutionFailedException` in `EffectiveRolesResolver`; do not catch in `IClaimsTransformation`; map the typed exception in `RoleResolutionFailureMiddleware` registered after DeveloperExceptionPage (inner) and before `UseAuthentication`. Deterministic in-proc test with a DI-substituted throwing store.
 **Effort:** 1 (general only)
 **Reviewer roster:** general
-**Session IDs:** Grok review oracle 2026-09-04 (task-work review node)
+**Session IDs:**
+- Round 1: Grok review oracle 2026-09-04 (prior task-work review node; frozen under `round-1/`)
+- Round 2: Grok review oracle 2026-09-04 (this task-work review node; independent re-review after implementer re-verify)
+
+## Round 2 note
+
+Round 1 is immutable. Product code did not change after round 1 (implementer re-verify was kanban-only). Round 2 independently re-verifies the same product diff and surrounding call sites; do not rubber-stamp round 1.
 
 ## Ground rules
 

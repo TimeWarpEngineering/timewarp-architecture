@@ -37,7 +37,7 @@ presented as "not authenticated" (401). It should fail closed with an honest sta
       → chosen status, not 401)
 - [x] Reconcile Design regions
 - [x] Results with How to validate
-- [x] Implementation review (effort 1, general) — disposition clean
+- [x] Implementation review (effort 1, general) — disposition clean (round 1 + round 2)
 
 ## Notes
 
@@ -72,6 +72,8 @@ presented as "not authenticated" (401). It should fail closed with an honest sta
 - Review: Grok (2026-09-04) — effort 1 general, round 1, disposition clean.
 - Implementer (re-verify): Grok (2026-09-04) — remaining product work none; re-ran
   host-free 10/10, RoleResolutionFailure 2/2, RolesAuthorization 7/7.
+- Review (round 2): Grok (2026-09-04) — effort 1 general, independent re-review after
+  implementer re-verify; 0 issues; disposition remains clean.
 
 ## Results
 
@@ -159,7 +161,7 @@ fixed mock-scheme 401 vs 403 there).
 ### Review disposition
 
 - **Outcome:** clean
-- **Rounds:** 1
+- **Rounds:** 2
 - **Effort / roster:** 1 (general only)
 - **Final counts:** bug 0 / suggestion 0 / nit 0 (all open/fixed/wontfix zero)
 - **Wontfix / escalations:** none
@@ -167,4 +169,6 @@ fixed mock-scheme 401 vs 403 there).
   - `review/review-framework.md`
   - `review/round-1/general.md`
   - `review/round-1/merged.md`
+  - `review/round-2/general.md`
+  - `review/round-2/merged.md`
   - `review/disposition.md`
