@@ -36,6 +36,7 @@ string literals and the server-side policy-name constants.
 - [x] Docs: note the new check in AGENTS.md's TWA table and the web-api-contracts skill if the
       convention changes
 - [x] dev build 0/0; full dev test
+- [x] Implementation review disposition (effort 1, same id; no sibling apply-review task)
 
 ## Notes
 
@@ -59,6 +60,7 @@ PermissionIds path.
 ## Session
 
 - Implementer: Grok session 01a06cce-8be4-7e93-945e-cbe0ce915e8a (2026-09-04)
+- Review oracle: Grok session 01a06ce7-0a33-7f50-936f-ac978090feb1 (2026-09-04)
 
 ## Results
 
@@ -94,12 +96,30 @@ CORS `AddPolicy` is ignored. ClientOnly / missing Policy / contracts-only compil
 - `source/analyzers/timewarp-architecture-attributes/endpoint-authorize-attribute.cs` (Design)
 - `source/Directory.Build.props` (package-range comment)
 - `tests/analyzers/timewarp-architecture-analyzers-tests/endpoint-authorize-policy-agreement-analyzer-tests.cs` (new; 12 tests)
-- `AGENTS.md` TWA table + package range
+- `AGENTS.md` TWA table + package range (review M1: stack-paragraph verb)
 - `skills/tw-web-api-contracts/SKILL.md`
 - `documentation/developer/reference/api-endpoint-source-generator.md`
 
 **Test outcomes:** `./bin/dev build` 0/0. Analyzer suite 157 passed (includes 12 TWA0024).
 `./bin/dev test` passed (pre-existing skips: `RunForever`, quarantined SPA weather fetch).
+Round-1 re-verify: `Should_Enforce_Policy_Agreement` 12/12; web-server and api-server Release 0/0.
+
+### Review disposition
+
+**Outcome:** clean. **Rounds:** 2. **Effort:** 1 (general only). **Final open count:** 0.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 1 | 0 |
+
+M1 (nit): AGENTS.md stack paragraph was missing a verb (`TWA0024 that a named Policy is
+registered`). Fixed on this id to `TWA0024 enforces that a named Policy is registered`. No
+product-code findings. No wontfix / escalations.
+
+Paths: `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+`review/round-2/{general,merged}.md`, `review/disposition.md`.
 
 ### How to validate
 
