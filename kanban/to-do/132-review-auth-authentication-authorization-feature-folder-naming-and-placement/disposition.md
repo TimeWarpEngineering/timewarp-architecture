@@ -1,6 +1,6 @@
 # Disposition — task 132 (auth / authentication / authorization naming)
 
-**Status: recorded for review.** Naming review only. No product-code moves on this id.
+**Status: accepted** (implementation review clean, 2026-09-04). Naming review only. No product-code moves on this id.
 
 The original brief described three near-empty `web/features/{auth,authentication,authorization}` peers. That snapshot is stale. **104-016 / 104-021 / 182** already collapsed the server-side collision. What remains is a glossary, a host-family map for **118**, and one accepted SPA rename.
 
@@ -27,10 +27,11 @@ See `inventory.md` for the file/namespace map this answers.
 | Concern | Folder (human home) | Namespace | Host family |
 |---------|---------------------|-----------|-------------|
 | Identity (prove who) | `web/features/identity/` | `Features.Identity` (+ `.Application` / `.Infrastructure` layers) | **web** (human plane). Agent *ceremonies* stay web (human approves). Agent *API consumption* already has an api-server sample; marketplace endpoints target **api**. |
-| Identity scheme-name catalog | `web/features/identity/authentication-scheme-names-contracts.cs` | `Features` (substrate) | web + api contracts |
-| Identity host wiring | `web/platform/identity-host/` | Non-Features (`Abstractions` / `Services` / `Configuration`) | web (and api when it grows its own host cluster — do not copy into `api/features/auth`) |
+| Identity scheme-name catalog | `web/features/identity/authentication-scheme-names-contracts.cs` | `Features` (substrate) | **web today.** Api does not reference this type yet (sample uses string / `AgentTokenDefaults` literals). Dual-host should reuse this catalog, not a third scheme-name copy. |
+| Identity host wiring (web) | `web/platform/identity-host/` | Non-Features (`Abstractions` / `Services` / `Configuration`) | **web** — cookie/session + mock principal + agent-token defaults |
+| Identity host wiring (api) | `api/platform/identity-host/` | Mixed: `Configuration` / `Abstractions` / `Services` / `Infrastructure`; handler is `Features.Identity` | **Already present** (not future). Bearer validation + duplicated `AgentTokenDefaults`. Token claim-type strings (`Scheme`, `ScopeClaimType`, principal-id claim) must stay aligned with web; policy-name constants already differ (`agent-scope:*` vs web `PermissionIds` / historical `identity.read`). Do not invent `api/features/auth*` or a third defaults class. |
 | Authorization engine + permission catalog | `web/features/authorization/` | **`Features` substrate** (folder is the concern; types are shared). EF store: `Features.Authorization.Infrastructure` | **web now.** Dual-host the *evaluator + catalog* onto api when marketplace policies exist — **reuse these types**, do not invent `api/features/authorization` as a second engine. |
-| Role catalog constants | `web/features/admin/roles/role-ids-contracts.cs` | `Features` (substrate) | shared |
+| Role catalog constants | `web/features/admin/roles/role-ids-contracts.cs` | `Features` (substrate) | **web today.** Api does not reference `RoleIds`. Dual-host should reuse this catalog, not duplicate it. |
 | Admin catalog CRUD | `web/features/admin/{roles,principals}/` | `Features.Admin.Roles` / `Features.Admin.Principals` | **web** human plane |
 | SPA identity UI (passkeys) | `web-spa/features/identity/` | `Features.Identity` | spa |
 | SPA authorization (policies + Entra/mock grants cache) | `web-spa/features/authorization/` | `Features.Authorization` (constants: `TimeWarp.Architecture`) | spa |
@@ -100,9 +101,10 @@ Task 118: **web = human plane** (passkey/session), **api = agent plane** (bearer
 | Agent token *issuance* | **web today.** Marketplace agent traffic consumes tokens on **api**. Do not silently move issuance in 132. 118 may dual-host or keep issuance on web and validation on both. |
 | `GetAgentIdentity` (`api/identity/agent/me`) | **web today.** Api already has `GetAgentBearerIdentity` sample (`api/agent/bearer/me`) — teaching, not a dual identity slice. Marketplace should extend **api** agent routes, not copy web identity. |
 | `GetCurrentUser` | **web-SPA mock/Entra only** — never api |
-| Permission catalog + `IPermissionEvaluator` | **web now; dual-host onto api** when marketplace endpoints need policies. Same `PermissionIds` strings. Web-only port `IAgentPermissionScopeSource` exists specifically to avoid dual-host type collision — api will need its own host adapter, not a second engine. |
+| Permission catalog + `IPermissionEvaluator` | **web now; dual-host onto api** when marketplace endpoints need policies. Same `PermissionIds` strings. Web-only port `IAgentPermissionScopeSource` exists specifically to avoid dual-host type collision — api will need its own host adapter, not a second engine. Api does **not** reference `PermissionIds` today. |
 | Admin roles/principals CRUD | **web-only** (human admin UX) |
-| `RoleIds` / `PermissionIds` / `AuthenticationSchemeNames` | **shared contracts** — both families reference, neither “owns” a duplicate catalog |
+| `RoleIds` / `PermissionIds` / `AuthenticationSchemeNames` | **Web Features substrate today.** Api does not reference these types (sample + `AgentTokenDefaults` literals only). Dual-host should **reuse** the catalogs rather than duplicate them. Neither family should grow a second catalog. |
+| `api/platform/identity-host/` | **Already live** — agent-token scheme, handler parity, caller context, bearer-store module (validation only). Keep it as the api host cluster. Do not copy into `api/features/auth*`. Token claim-type strings must stay aligned; policy-name constants already differ. Catalog reuse / evaluator on api is **118**, not 132. |
 | Template-demo scaffolding | Identity + x402 ship with the template (104-021: no extra flags). 118’s `real-domain` flag gates *marketplace nouns*, not a new auth stack. |
 
 ---
@@ -117,7 +119,8 @@ Task 118: **web = human plane** (passkey/session), **api = agent plane** (bearer
 | Make authorization engine `Features.Authorization` (TWA0009-isolated product slice) | **Reject** | 182: substrate so Admin/Identity consume the evaluator. Folder name is enough. |
 | Move `features/authorization/` to `platform/` | **Reject** | Product meaning (permission catalog + grants) survives if a deployable is deleted — Features tree, not host bootstrap. |
 | Rename `GetCurrentUser` → `GetCurrentUserGrants` | **Defer** | Design region is honest; rename is mock/Entra/test churn with no behavior change. |
-| Dual-host evaluator / agent-token validation onto api-server | **Defer to 118** | No marketplace endpoints yet. Recorded here so 118 does not start `api/features/auth`. |
+| Dual-host evaluator / agent-token validation onto api-server | **Defer to 118** | Validation host cluster already exists (`api/platform/identity-host/`). Remaining work is catalog reuse (`PermissionIds` / `AuthenticationSchemeNames`) + evaluator, not a new auth tree. Recorded so 118 does not start `api/features/auth` or a third `AgentTokenDefaults`. |
+| Unify duplicated `AgentTokenDefaults` (web vs api platform copies) | **Defer to 118** | 104-030: separate deployables. Token claim-type strings (`Scheme`, `ScopeClaimType`, principal-id claim) must stay aligned. Policy-name constants already differ (web historical `identity.read` / `demo.invoke` vs api `agent-scope:*`). Not a 132 rename; do not treat the classes as identical. |
 | Fold SPA `authentication/` + `account/` login UX into `identity/` | **Do now (follow-on child)** | Last remaining three-sibling collision. Mechanical; keep `/authentication/{action}` (MSAL convention) and `/Login` `/Logout` routes. |
 | Fold SPA `authorization/` into identity | **Reject** | Real concern; matches server `authorization/` folder. |
 | Bulk-rename on this task id mixed with behavior | **Reject** | Brief: decision + small follow-on. |

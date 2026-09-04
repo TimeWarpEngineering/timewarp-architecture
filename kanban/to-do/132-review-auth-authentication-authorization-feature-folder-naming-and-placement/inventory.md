@@ -174,7 +174,19 @@ Default identity-session (non-Entra) lives under `web-spa/services/`, namespace 
 
 | Path | Namespace | Role |
 |------|-----------|------|
-| `api/features/agent-bearer-sample/get-agent-bearer-identity/` | `Features.AgentBearerSamples` | Teaching sample on **api-server**: `api/agent/bearer/me`, `[EndpointAuthorize]` agent-token. Design region: **not** a dual of web `GET api/identity/agent/me`. Ceremonies stay on web. |
+| `api/features/agent-bearer-sample/get-agent-bearer-identity/` | `Features.AgentBearerSamples` | Teaching sample on **api-server**: `api/agent/bearer/me`, `[EndpointAuthorize]` agent-token (string / `AgentTokenDefaults` literals, not `AuthenticationSchemeNames` / `PermissionIds`). Design region: **not** a dual of web `GET api/identity/agent/me`. Ceremonies stay on web. |
+
+### `api/platform/identity-host/` — already present (not a future cluster)
+
+Live bearer-validation host cluster. Api does **not** reference web's Features substrate catalogs (`RoleIds`, `PermissionIds`, `AuthenticationSchemeNames`) — only a comment on the sample mentions `AuthenticationSchemeNames`. `AgentTokenDefaults` is a **duplicated host class** (separate deployables, 104-030). Token-carried strings must stay aligned (`Scheme`, `ScopeClaimType`, principal-id claim value). Policy-name constants already differ: web `identity.read` / `demo.invoke` (historical aliases; prefer `PermissionIds`); api `agent-scope:identity:read` / `agent-scope:demo:invoke`. Do not add a third copy or an `api/features/auth*` tree. Do not tell 118 the two classes are already identical.
+
+| File | Namespace | Live? |
+|------|-----------|-------|
+| `agent-token-defaults-server.cs` | `Configuration` | Yes — duplicated host defaults. Align token claim-type strings with web; policy names already differ (see above) |
+| `agent-token-authentication-handler-server.cs` | `Features.Identity` (platform file, identity-slice namespace) | Yes — parity with `web/features/identity/agent-token-authentication-scheme-server.cs` |
+| `i-agent-caller-context-application.cs` | `Abstractions` | Yes — api-family port (cannot reference web's copy; CS0433 / deployable split) |
+| `agent-caller-context-server.cs` | `Services` | Yes |
+| `agent-bearer-stores-module-infrastructure.cs` | `Infrastructure` | Yes — `IPrincipalStore` + `IAgentTokenStore` for **validation only**; ceremonies stay on web |
 
 ---
 

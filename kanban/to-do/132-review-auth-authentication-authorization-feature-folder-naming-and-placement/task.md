@@ -84,8 +84,9 @@ This task is a **naming + placement review with a disposition**, not a bulk move
 
 - Created: 2026-07-28 — scaffolding from folder inventory + 118 host split note
 - Implementer: Grok session (2026-09-04) — inventory + disposition against current overnight tree
-- Review: _pending_ (host review node)
-- Disposition: recorded in `disposition.md` (this folder)
+- Review: Grok (2026-09-04) — effort 1 general; rounds 1–3; host review oracle
+- Naming disposition: folder `disposition.md`
+- Review disposition: `review/disposition.md` — **clean** (0 open)
 
 ## Results
 
@@ -93,25 +94,36 @@ Disposition recorded under this folder. No product-code moves on this id (brief:
 
 ### What landed
 
-- `inventory.md` — file/namespace map for remaining auth-adjacent trees (web features, SPA twins, identity-host, api agent-bearer sample). Original `features/auth/` and `features/authentication/` are **absent**; `authorization/` is the 182 permission engine; `RoleIds` is substrate under `admin/roles/`; `GetCurrentUser` is identity `[ClientOnlyContract]`.
+- `inventory.md` — file/namespace map for remaining auth-adjacent trees (web features, SPA twins, web + api identity-host, api agent-bearer sample). Original `features/auth/` and `features/authentication/` are **absent**; `authorization/` is the 182 permission engine; `RoleIds` is substrate under `admin/roles/`; `GetCurrentUser` is identity `[ClientOnlyContract]`.
 - `disposition.md` — answers to the six questions; glossary; taxonomy table; reject/defer/do-now.
 - Child **132-001** — mechanical SPA fold of `authentication/` + `account/` login UX into `identity/`.
+- Review kitchen under `review/` (framework, three rounds, merged ledgers, disposition).
 
 ### Key decisions
 
 - Two product concerns: **Identity** (prove who) and **Authorization** (what you may do). Bare **Auth** is forbidden. **Admin** is catalog CRUD, not a synonym.
 - Authorization engine stays Features **substrate** in folder `authorization/` (182 / TWA0009). Do not isolate as `Features.Authorization`.
 - `GetCurrentUser` is mock/Entra grants projection, not who-am-I (`GetCurrentSession`). Keep under identity; do not re-host; defer rename.
-- 118: do not invent `api/features/auth*`. Reuse identity + authorization; dual-host the evaluator when marketplace policies exist.
+- 118: do not invent `api/features/auth*`. `api/platform/identity-host/` is **already live** (bearer validation). Web owns `RoleIds` / `PermissionIds` / `AuthenticationSchemeNames` today; api does not reference them. Dual-host should reuse those catalogs + evaluator. Duplicated `AgentTokenDefaults`: keep token claim-type strings aligned; policy-name constants already differ (not byte-identical).
+
+### Implementation review
+
+- **Rounds:** 3 (effort 1, roster: general)
+- **Final counts:** bug 2 fixed / 0 open / 0 wontfix; suggestion 0; nit 0
+- **Disposition:** `clean` (`review/disposition.md`)
+- **M1:** 118 map overstated catalog sharing and treated api identity-host as future — fixed in inventory §9 + taxonomy/Q6
+- **M2:** “byte-identical” `AgentTokenDefaults` overstated — fixed; token claim types vs divergent policy names
+- **Paths:** `review/review-framework.md`, `review/round-3/merged.md`, `review/disposition.md`
 
 ### Files changed
 
 - `kanban/to-do/132-review-auth-authentication-authorization-feature-folder-naming-and-placement/{task,inventory,disposition}.md`
+- `kanban/to-do/132-review-auth-authentication-authorization-feature-folder-naming-and-placement/review/**`
 - Child kitchen **132-001** (separate task branch)
 
 ### Test outcomes
 
-No product code changed on this id. Inventory paths verified in-tree (`test ! -d features/auth`, `test ! -d features/authentication`).
+No product code changed on this id. Inventory paths verified in-tree (`test ! -d features/auth`, `test ! -d features/authentication`). Review re-verified `api/platform/identity-host/` and web vs api `AgentTokenDefaults` divergence.
 
 ### How to validate
 
@@ -123,6 +135,7 @@ test ! -d source/container-apps/web/features/auth
 test ! -d source/container-apps/web/features/authentication
 test -d source/container-apps/web/features/identity
 test -d source/container-apps/web/features/authorization
+test -d source/container-apps/api/platform/identity-host
 test -f source/container-apps/web/features/admin/roles/role-ids-contracts.cs
 test -f source/container-apps/web/features/identity/get-current-user/get-current-user-contracts.cs
 test -d source/container-apps/web/projects/web-spa/features/authentication
@@ -131,16 +144,21 @@ rg -n "namespace TimeWarp.Architecture.Features" \
   source/container-apps/web/features/admin/roles/role-ids-contracts.cs \
   source/container-apps/web/features/authorization/permission-ids-contracts.cs \
   source/container-apps/web/features/identity/get-current-user/get-current-user-contracts.cs
+rg -n "byte-identical" \
+  kanban/to-do/132-review-auth-authentication-authorization-feature-folder-naming-and-placement/inventory.md \
+  kanban/to-do/132-review-auth-authentication-authorization-feature-folder-naming-and-placement/disposition.md
+# expect: no matches
 ```
 
 **Expect**
 
 - First two `test ! -d` commands succeed (no `auth/` or `authentication/` under `web/features/`).
-- Identity, authorization, `role-ids-contracts.cs`, `get-current-user-contracts.cs` exist.
+- Identity, authorization, api identity-host, `role-ids-contracts.cs`, `get-current-user-contracts.cs` exist.
 - SPA `authentication/` and `account/` still exist (fold is **132-001**, not this id).
 - `role-ids-contracts.cs` and `permission-ids-contracts.cs` are `namespace TimeWarp.Architecture.Features;` (substrate).
 - `get-current-user-contracts.cs` is `namespace TimeWarp.Architecture.Features.Identity;` and carries `[ClientOnlyContract]`.
-- `disposition.md` in this folder answers questions 1–6 and contains the reject/defer/do-now table plus 118 host map.
+- Folder `disposition.md` answers questions 1–6 and contains the reject/defer/do-now table plus 118 host map (`api/platform/identity-host/` already live; catalogs web-owned today).
+- `review/disposition.md` outcome is **clean**; last merged counts are 0 open.
 - Child **132-001** is on origin-home inbox (`kanban/to-do/132-001-fold-spa-authentication-and-account-login-ux-into-identity/task.md`; from origin-home: `ganda kanban show 132-001`) with parent 132 and depends-on 132. This overnight worktree will not list it until master is merged.
 
 **Automated gate**
