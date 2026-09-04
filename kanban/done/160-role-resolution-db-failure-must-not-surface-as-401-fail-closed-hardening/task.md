@@ -37,7 +37,7 @@ presented as "not authenticated" (401). It should fail closed with an honest sta
       → chosen status, not 401)
 - [x] Reconcile Design regions
 - [x] Results with How to validate
-- [x] Implementation review (effort 1, general) — disposition clean (round 1 + round 2)
+- [x] Implementation review (effort 1, general) — disposition clean (rounds 1–3)
 - [x] CI blocker: bump SmokeDefault `web-jaribu-tests` expected count 102 → 104; PR #321 green
 
 ## Notes
@@ -85,6 +85,8 @@ presented as "not authenticated" (401). It should fail closed with an honest sta
   implementer re-verify; 0 issues; disposition remains clean.
 - Implementer (CI blocker): Grok (2026-09-04) — confirmed 104 bump on origin, restored
   `.gitignore`, dropped unpushed overnight merge, host-free 10/10, PR #321 CI green.
+- Review (round 3): Grok (2026-09-04) — effort 1 general, independent re-review after
+  CI blocker resolution (`b4d82514`); 0 issues; disposition remains clean.
 
 ## Results
 
@@ -192,7 +194,7 @@ branch `.gitignore` (task 208).
 ### Review disposition
 
 - **Outcome:** clean
-- **Rounds:** 2
+- **Rounds:** 3
 - **Effort / roster:** 1 (general only)
 - **Final counts:** bug 0 / suggestion 0 / nit 0 (all open/fixed/wontfix zero)
 - **Wontfix / escalations:** none
@@ -202,4 +204,6 @@ branch `.gitignore` (task 208).
   - `review/round-1/merged.md`
   - `review/round-2/general.md`
   - `review/round-2/merged.md`
+  - `review/round-3/general.md`
+  - `review/round-3/merged.md`
   - `review/disposition.md`
