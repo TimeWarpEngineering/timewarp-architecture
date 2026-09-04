@@ -6,6 +6,8 @@
 // Schema-per-slice on the single PostgresDbContext: table and PostgreSQL schema are both
 // "agent_links". Version IsConcurrencyToken is supplied by AggregateVersionConvention.
 // PrincipalId conversions are explicit exemplars (same as PrincipalEntityTypeConfiguration).
+// Pair uniqueness is a filtered unique index on Pending/Approved only — Denied rows may
+// repeat so the same agent+human pair can be requested again after denial.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
@@ -39,6 +41,8 @@ public sealed class AgentHumanLinkEntityTypeConfiguration : IEntityTypeConfigura
     builder.Property(link => link.Version)
       .UsePropertyAccessMode(PropertyAccessMode.Property);
 
-    builder.HasIndex(link => new { link.AgentPrincipalId, link.HumanPrincipalId });
+    builder.HasIndex(link => new { link.AgentPrincipalId, link.HumanPrincipalId })
+      .IsUnique()
+      .HasFilter($"\"Status\" IN ({(int)AgentHumanLinkStatus.Pending}, {(int)AgentHumanLinkStatus.Approved})");
   }
 }

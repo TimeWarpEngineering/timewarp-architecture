@@ -5,6 +5,8 @@
 #region Design
 // Mirrors EfProfileStore dual-mode — host-owned, application stays free of PostgresDbContext.
 // Find is AsNoTracking; Update loads a tracked row and copies Approve/Deny state.
+// Add maps filtered-unique index violations (23505) to InvalidOperationException so a racing
+// RequestAgentHumanLink can return 409 AlreadyLinked instead of 500.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
@@ -54,7 +56,17 @@ public sealed class EfAgentHumanLinkStore : IAgentHumanLinkStore
     ArgumentNullException.ThrowIfNull(link);
     cancellationToken.ThrowIfCancellationRequested();
     Db.AgentHumanLinks.Add(link);
-    await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    try
+    {
+      await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+    catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+    {
+      Db.Entry(link).State = EntityState.Detached;
+      throw new InvalidOperationException(
+        $"An open AgentHumanLink already exists for agent '{link.AgentPrincipalId}' and human '{link.HumanPrincipalId}'.",
+        exception);
+    }
   }
 
   public async Task UpdateAsync(AgentHumanLink link, CancellationToken cancellationToken = default)
@@ -93,5 +105,24 @@ public sealed class EfAgentHumanLinkStore : IAgentHumanLinkStore
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
     return matches;
+  }
+
+  private static bool IsUniqueViolation(DbUpdateException exception)
+  {
+    // Npgsql: 23505 unique_violation. String-based so this file does not hard-depend on Npgsql types.
+    Exception? current = exception;
+    while (current is not null)
+    {
+      string text = current.GetType().FullName + " " + current.Message;
+      if (text.Contains("23505", StringComparison.Ordinal)
+          || text.Contains("unique", StringComparison.OrdinalIgnoreCase))
+      {
+        return true;
+      }
+
+      current = current.InnerException;
+    }
+
+    return false;
   }
 }

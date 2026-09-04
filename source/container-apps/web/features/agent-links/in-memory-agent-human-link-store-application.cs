@@ -5,6 +5,8 @@
 #region Design
 // ConcurrentDictionary keyed by AgentHumanLinkId; process-lifetime singleton matches
 // InMemoryProfileStore. PostgresDbModule swaps to scoped EfAgentHumanLinkStore when connected.
+// AddAsync takes Lock so at most one Pending/Approved row exists per agent+human pair
+// (Denied rows may repeat after Deny+Update).
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentLinks.Application;
@@ -17,6 +19,7 @@ using TimeWarp.Identity;
 public sealed class InMemoryAgentHumanLinkStore : IAgentHumanLinkStore
 {
   private readonly ConcurrentDictionary<AgentHumanLinkId, AgentHumanLink> Links = new();
+  private readonly Lock Lock = new();
 
   public Task<AgentHumanLink?> FindAsync(AgentHumanLinkId id, CancellationToken cancellationToken = default)
   {
@@ -42,9 +45,22 @@ public sealed class InMemoryAgentHumanLinkStore : IAgentHumanLinkStore
   {
     ArgumentNullException.ThrowIfNull(link);
     cancellationToken.ThrowIfCancellationRequested();
-    if (!Links.TryAdd(link.Id, link))
+    lock (Lock)
     {
-      throw new InvalidOperationException($"AgentHumanLink '{link.Id}' already exists.");
+      bool openExists = Links.Values.Any(existing =>
+        existing.AgentPrincipalId == link.AgentPrincipalId
+        && existing.HumanPrincipalId == link.HumanPrincipalId
+        && existing.Status is AgentHumanLinkStatus.Pending or AgentHumanLinkStatus.Approved);
+      if (openExists)
+      {
+        throw new InvalidOperationException(
+          $"An open AgentHumanLink already exists for agent '{link.AgentPrincipalId}' and human '{link.HumanPrincipalId}'.");
+      }
+
+      if (!Links.TryAdd(link.Id, link))
+      {
+        throw new InvalidOperationException($"AgentHumanLink '{link.Id}' already exists.");
+      }
     }
 
     return Task.CompletedTask;
@@ -54,12 +70,16 @@ public sealed class InMemoryAgentHumanLinkStore : IAgentHumanLinkStore
   {
     ArgumentNullException.ThrowIfNull(link);
     cancellationToken.ThrowIfCancellationRequested();
-    if (!Links.ContainsKey(link.Id))
+    lock (Lock)
     {
-      throw new InvalidOperationException($"AgentHumanLink '{link.Id}' does not exist.");
+      if (!Links.ContainsKey(link.Id))
+      {
+        throw new InvalidOperationException($"AgentHumanLink '{link.Id}' does not exist.");
+      }
+
+      Links[link.Id] = link;
     }
 
-    Links[link.Id] = link;
     return Task.CompletedTask;
   }
 

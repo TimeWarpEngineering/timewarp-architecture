@@ -4,8 +4,10 @@
 
 #region Design
 // Caller must be PrincipalKind.Agent; target must exist and be Human. An open (Pending/Approved)
-// pair is 409 so a denied link can be requested again. IPrincipalStore is identity kernel (other
-// assembly — free under TWA0009).
+// pair is 409 so a denied link can be requested again. FindOpen then Add is still racy under
+// concurrency — AddAsync unique-violation InvalidOperationException maps to AlreadyLinked (409)
+// so a race does not surface as 500. IPrincipalStore is identity kernel (other assembly — free
+// under TWA0009).
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentLinks.Application;
@@ -63,7 +65,15 @@ public sealed class RequestAgentHumanLink
       }
 
       var link = AgentHumanLink.Create(callerId.Value.Value, humanId.Value);
-      await LinkStore.AddAsync(link, cancellationToken).ConfigureAwait(false);
+      try
+      {
+        await LinkStore.AddAsync(link, cancellationToken).ConfigureAwait(false);
+      }
+      catch (InvalidOperationException)
+      {
+        return AgentLinkProblems.AlreadyLinked();
+      }
+
       return new Response(link.Id.Value, link.Status.ToString());
     }
   }

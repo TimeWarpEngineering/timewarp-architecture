@@ -26,6 +26,7 @@ namespace TimeWarp.Architecture.Features.AgentLinks
   using System.Text.Json;
   using System.Threading;
   using System.Threading.Tasks;
+  using FluentValidation.Results;
   using OneOf;
   using Shouldly;
   using TimeWarp.Architecture.Abstractions;
@@ -72,6 +73,14 @@ namespace TimeWarp.Architecture.Features.AgentLinks
       parsed.Human.DisplayName.ShouldBe("Ada");
       parsed.Actions.Count.ShouldBe(1);
       json.ShouldContain("timewarp.humanUx/v1");
+      return Task.CompletedTask;
+    }
+
+    public static Task Empty_HumanPrincipalId_Should_FailValidation()
+    {
+      RequestAgentHumanLink.Command command = new() { HumanPrincipalId = Guid.Empty };
+      ValidationResult result = new RequestAgentHumanLink.Validator().Validate(command);
+      result.IsValid.ShouldBeFalse();
       return Task.CompletedTask;
     }
   }
@@ -130,6 +139,27 @@ namespace TimeWarp.Architecture.Features.AgentLinks
 
       AgentHumanLink? open = await store.FindOpenAsync(agent, human);
       open.ShouldBeNull();
+    }
+
+    public static async Task Add_SecondOpenPair_Should_Throw_And_SucceedAfterDeny()
+    {
+      InMemoryAgentHumanLinkStore store = new();
+      PrincipalId agent = PrincipalId.New();
+      PrincipalId human = PrincipalId.New();
+      AgentHumanLink first = AgentHumanLink.Create(agent.Value, human.Value);
+      await store.AddAsync(first);
+
+      AgentHumanLink duplicate = AgentHumanLink.Create(agent.Value, human.Value);
+      await Should.ThrowAsync<InvalidOperationException>(async () => await store.AddAsync(duplicate));
+
+      first.Deny();
+      await store.UpdateAsync(first);
+
+      AgentHumanLink retry = AgentHumanLink.Create(agent.Value, human.Value);
+      await store.AddAsync(retry);
+      AgentHumanLink? open = await store.FindOpenAsync(agent, human);
+      open.ShouldNotBeNull();
+      open.Id.ShouldBe(retry.Id);
     }
   }
 

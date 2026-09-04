@@ -48,7 +48,9 @@ namespace TimeWarp.Architecture.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AgentPrincipalId", "HumanPrincipalId");
+                    b.HasIndex("AgentPrincipalId", "HumanPrincipalId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" IN (1, 2)");
 
                     b.ToTable("agent_links", "agent_links");
                 });

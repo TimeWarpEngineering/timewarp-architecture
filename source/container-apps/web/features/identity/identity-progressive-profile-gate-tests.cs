@@ -42,25 +42,25 @@ namespace TimeWarp.Architecture.Task205
 
     public static Task PasskeyRegistration_Should_Not_Depend_On_ProfileStore()
     {
-      AssertHandlerDoesNotTake(
-        typeof(CompletePasskeyRegistration.Handler),
-        typeof(IProfileStore));
+      Type handler = typeof(CompletePasskeyRegistration.Handler);
+      AssertHandlerDoesNotTake(handler, typeof(IProfileStore));
+      AssertHandlerDoesNotTake(handler, typeof(IAgentHumanLinkStore));
       return Task.CompletedTask;
     }
 
     public static Task AgentKeyRegistration_Should_Not_Depend_On_ProfileStore()
     {
-      AssertHandlerDoesNotTake(
-        typeof(CompleteAgentKeyRegistration.Handler),
-        typeof(IProfileStore));
+      Type handler = typeof(CompleteAgentKeyRegistration.Handler);
+      AssertHandlerDoesNotTake(handler, typeof(IProfileStore));
+      AssertHandlerDoesNotTake(handler, typeof(IAgentHumanLinkStore));
       return Task.CompletedTask;
     }
 
     public static Task TokenIssuance_Should_Not_Depend_On_ProfileStore()
     {
-      AssertHandlerDoesNotTake(
-        typeof(CompleteAgentTokenIssuance.Handler),
-        typeof(IProfileStore));
+      Type handler = typeof(CompleteAgentTokenIssuance.Handler);
+      AssertHandlerDoesNotTake(handler, typeof(IProfileStore));
+      AssertHandlerDoesNotTake(handler, typeof(IAgentHumanLinkStore));
       return Task.CompletedTask;
     }
 

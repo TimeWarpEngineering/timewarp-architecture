@@ -53,7 +53,9 @@ namespace TimeWarp.Architecture.Persistence.Migrations
                 name: "IX_agent_links_AgentPrincipalId_HumanPrincipalId",
                 schema: "agent_links",
                 table: "agent_links",
-                columns: new[] { "AgentPrincipalId", "HumanPrincipalId" });
+                columns: new[] { "AgentPrincipalId", "HumanPrincipalId" },
+                unique: true,
+                filter: "\"Status\" IN (1, 2)");
 
             // Task 205: SelfServicePermissions gains profile.write and agent-link.manage.self.
             InsertSelfService(migrationBuilder, AdministratorRoleId);
