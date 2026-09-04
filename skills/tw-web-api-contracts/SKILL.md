@@ -95,6 +95,16 @@ public static partial class GetAgentIdentity
 }
 ```
 
+**Policy names (task 111 / TWA0024):** `[EndpointAuthorize] Policy` must equal a policy the
+hosting server actually registers. Web product policies are `PermissionIds.*` const references
+(registered by `AddPermissionPolicies`; policy name == permission id). Named non-permission
+policies (api-server `AgentTokenDefaults.IdentityReadPolicy`, web
+`IdentitySessionDefaults.AuthenticatedPolicy`) are constant-evaluated `AddPolicy` first
+arguments. Contracts cannot reference server-layer constants, so agreement is a **server-build**
+check — a drifted literal 403s at runtime; **TWA0024** flags it at compile time.
+Prefer a contracts-visible const (`PermissionIds`, or a family-local const the server
+`AddPolicy` also uses) over a comment-coordinated string literal.
+
 **Scheme lists (task 161):** hosted `[EndpointAuthorize]` must set `AuthenticationSchemes` using
 `AuthenticationSchemeNames` (web) or the matching server scheme string (api). PermissionIds
 policies registered via `AddPermissionPolicies` have **no** `AddAuthenticationSchemes`; ASP.NET
@@ -369,6 +379,8 @@ error. See the `tw-mock-response-factory` skill.
 - [ ] `public static partial class` with nested `Query`/`Command`, `Response`, `Validator`
 - [ ] `[ApiEndpoint]` on hosted operations; exactly one of `[EndpointAuthorize]` /
       `[EndpointAllowAnonymous(reason)]`, always (TWA0013/TWA0014 enforce this)
+- [ ] Hosted `[EndpointAuthorize] Policy` is a registered server policy (`PermissionIds.*` or an
+      `AddPolicy` name) — TWA0024 flags drift at the server build
 - [ ] Hosted `[EndpointAuthorize]` sets `AuthenticationSchemes` (task 161 — permission policies
       have no scheme list; `Policies(...)` alone authenticates only the host default scheme)
 - [ ] `[ApiRoute]` with correct verb and route constraints (`{Id:guid}`, `{Id:min(1)}`, …)
@@ -400,6 +412,7 @@ error. See the `tw-mock-response-factory` skill.
 | Hand-written MVC `BaseEndpoint` shim for a hosted contract | Annotate `[ApiEndpoint]` (+ `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]`); generation is the template convention |
 | `[ApiEndpoint]` with no auth marker, assuming the generator defaults to anonymous | It doesn't (task 110, fail-closed) — no marker emits nothing, so FastEndpoints' own default (auth required) applies; TWA0013 also catches it at build time |
 | `[EndpointAuthorize(Policy=…)]` without `AuthenticationSchemes` | Non-default schemes never run against PermissionIds policies (task 161). Set `AuthenticationSchemes` from `AuthenticationSchemeNames`. |
+| `[EndpointAuthorize(Policy = "…")]` literal that does not match a server `AddPolicy` / `PermissionIds` name | TWA0024 at the server build (task 111). Use `PermissionIds.*` on web; keep api literals byte-identical to `AgentTokenDefaults` policy constants |
 | Treating `IAuthApiRequest` as if it secures the route | It's a client/mock-mode identity signal only — `[EndpointAuthorize]` is the sole server-auth marker; TWA0014 flags pairing `IAuthApiRequest` with `[EndpointAllowAnonymous]` |
 | Re-validating in the handler or enabling FE FluentValidation | Validation is `FluentValidationBehavior` on the mediator only |
 | `required init` Response with invariants | `Guid.Empty` slips through — ctor + `Guard` |
