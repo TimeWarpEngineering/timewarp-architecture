@@ -30,6 +30,11 @@ on:
       - 'evals/**'
       - 'skills/**'
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
     branches:
       - master
       - feature/overnight
