@@ -44,6 +44,7 @@ non-mock endpoints?
 - [x] Written recommendation with options; maintainer decision recorded
 - [x] Results (research task: findings + decision are the deliverable; follow-up implement task
       only if the decision requires code)
+- [x] Implementation review disposition (effort 1, same id; no sibling apply-review task)
 
 ## Notes
 
@@ -62,6 +63,7 @@ non-mock endpoints?
 - Created: Claude (2026-08-05), spun out of task 158 per maintainer direction (answer unknown —
   research first, don't assume).
 - Implementer: Grok (2026-09-04) — mechanism test, coverage audit, hybrid litmus, fold-in.
+- Review oracle: Grok (2026-09-04) — effort 1 general; round 1 + round 2 (M1 coverage-label fix).
 
 ## Results
 
@@ -106,8 +108,9 @@ api has no default scheme).
 
 ### Coverage audit
 
-In-proc HostGraph (`web-server-integration-tests`) **does** exercise agent-token through
-credential-management:
+In-proc HostGraph **does** exercise agent-token through credential-management
+(`web-server-integration-tests`; InvokeMeteredCapability anonymous 401 is the co-located
+`invoke-metered-capability-tests.cs` `Unauthorized_Given_No_Bearer`, not that suite):
 
 | Endpoint | cookie | bearer | anonymous | wrong scheme |
 |----------|--------|--------|-----------|--------------|
@@ -172,6 +175,23 @@ now declares `AuthenticationSchemes = "agent-token"`.
 | ADR-0010, `how-to-agent-identity-host-split-web-vs-api.md`, generator markdown | Litmus documented |
 
 No TWA analyzer in this task.
+
+### Review disposition
+
+**Outcome:** clean. **Rounds:** 2. **Effort:** 1 (general only). **Final open count:** 0.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 1 | 0 |
+
+M1 (nit): coverage-audit heading attributed InvokeMeteredCapability anonymous 401 to
+`web-server-integration-tests`; that case is co-located `Unauthorized_Given_No_Bearer`. Fixed
+on this id (coverage intro wording). No product-code findings. No wontfix / escalations.
+
+Paths: `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+`review/round-2/{general,merged}.md`, `review/disposition.md`.
 
 ### Test outcomes
 
