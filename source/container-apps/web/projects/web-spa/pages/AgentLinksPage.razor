@@ -1,0 +1,60 @@
+@namespace TimeWarp.Architecture.Features.AgentLinks
+@inherits BaseComponent
+
+@code {
+  public static string Title => "Agent links";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Link();
+
+  private bool IsLoading =>
+    IsAnyActive(typeof(AgentLinksState.FetchActionSet.Action));
+  private bool IsBusy => ActionTrackingState.IsActive;
+
+  protected override async Task OnInitializedAsync()
+  {
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    await AgentLinksState.Fetch();
+  }
+
+  private async Task ApproveAsync(Guid linkId) =>
+    await AgentLinksState.Approve(linkId);
+
+  private async Task DenyAsync(Guid linkId) =>
+    await AgentLinksState.Deny(linkId);
+}
+
+<TimeWarpPage Title="Agent links">
+  <div class="twe-stack">
+    <Card Title="Optional agent ↔ human links">
+      <p>Agents can request a link to you. Paid service does not require a linked human.</p>
+      @if (IsLoading)
+      {
+        <p><em>Loading…</em></p>
+      }
+      else if (AgentLinksState.Items.Count == 0)
+      {
+        <p>No agent links yet.</p>
+      }
+      else
+      {
+        <ul class="twe-stack">
+          @foreach (ListAgentHumanLinks.LinkSummary item in AgentLinksState.Items)
+          {
+            <li>
+              <div>Agent @item.AgentPrincipalId</div>
+              <div>Status: @item.Status</div>
+              @if (item.Status == "Pending")
+              {
+                <FluentButton Disabled=@IsBusy Appearance=ButtonAppearance.Primary data-qa="ApproveAgentLink" OnClick="@(() => ApproveAsync(item.LinkId))">Approve</FluentButton>
+                <FluentButton Disabled=@IsBusy data-qa="DenyAgentLink" OnClick="@(() => DenyAsync(item.LinkId))">Deny</FluentButton>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </Card>
+  </div>
+</TimeWarpPage>

@@ -575,7 +575,7 @@ internal sealed partial class TemplateSmokeHarness
   public static readonly (string[] RequiredFamilies, string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
   [
     // Count must match MTP total for the multi-mode web co-located suite (bump when runfiles land).
-    (["web"], "tests/container-apps/web/web-jaribu-tests", 104),
+    (["web"], "tests/container-apps/web/web-jaribu-tests", 127),
     (["api"], "tests/container-apps/api/api-jaribu-tests", 9),
     (["web", "api"], "tests/common/timewarp-testing-tests", 3),
   ];

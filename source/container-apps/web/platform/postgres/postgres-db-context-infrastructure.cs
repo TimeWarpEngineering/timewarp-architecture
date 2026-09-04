@@ -8,7 +8,8 @@
 // platform/postgres/migrations/, task 147-007) — not by this host at startup.
 // Profile is the teaching IAggregateRoot — DbSet + IEntityTypeConfiguration discovered via
 // ApplyConfigurationsFromAssembly (feature files ending in -infrastructure.cs compile into this
-// assembly). Identity Principal/Credential are also mapped here (schema "identity") as the first
+// assembly). AgentHumanLink is the optional agent↔human product aggregate (schema "agent_links").
+// Identity Principal/Credential are also mapped here (schema "identity") as the first
 // port-backed durable consumer (task 104-032); they are NOT IAggregateRoot — store-CAS lives in
 // EfPrincipalStore, not AggregateDbContext's Version hook.
 // PrincipalRoleAssignment (identity.principal_roles) is the durable IPrincipalRoleStore backend
@@ -41,6 +42,7 @@
 namespace TimeWarp.Architecture.Persistence;
 
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.AgentLinks.Domain;
 using TimeWarp.Architecture.Features.Profiles.Domain;
 using TimeWarp.Foundation.Persistence;
 using TimeWarp.Identity;
@@ -50,6 +52,7 @@ public sealed partial class PostgresDbContext : AggregateDbContext
   public PostgresDbContext(DbContextOptions<PostgresDbContext> options) : base(options) { }
 
   public DbSet<Profile> Profiles => Set<Profile>();
+  public DbSet<AgentHumanLink> AgentHumanLinks => Set<AgentHumanLink>();
   public DbSet<Principal> Principals => Set<Principal>();
   public DbSet<Credential> Credentials => Set<Credential>();
   public DbSet<PrincipalRoleAssignment> PrincipalRoleAssignments => Set<PrincipalRoleAssignment>();

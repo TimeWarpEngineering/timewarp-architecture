@@ -38,6 +38,8 @@ using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
 using TimeWarp.Architecture.Features.Authorization.Infrastructure;
 using TimeWarp.Architecture.Features.Identity.Infrastructure;
+using TimeWarp.Architecture.Features.AgentLinks.Application;
+using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Application;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Identity;
@@ -81,6 +83,9 @@ public sealed partial class PostgresDbModule : IModule
     // Task 148 D4: durable Profile (same connection gate).
     serviceCollection.RemoveAll<IProfileStore>();
     serviceCollection.AddScoped<IProfileStore, EfProfileStore>();
+
+    serviceCollection.RemoveAll<IAgentHumanLinkStore>();
+    serviceCollection.AddScoped<IAgentHumanLinkStore, EfAgentHumanLinkStore>();
 
     IHealthChecksBuilder healthChecksBuilder = serviceCollection.AddHealthChecks();
     healthChecksBuilder.AddDbContextCheck<PostgresDbContext>

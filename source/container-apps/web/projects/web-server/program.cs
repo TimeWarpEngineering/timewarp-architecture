@@ -49,6 +49,7 @@ using TimeWarp.Architecture.Abuse;
 using TimeWarp.Architecture.AgentDiscovery;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals;
+using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Common.Infrastructure;
@@ -186,6 +187,7 @@ public class Program : IAspNetProgram
     ConfigureSettings(serviceCollection, configuration);
     InMemoryIdentityStoresModule.ConfigureServices(serviceCollection, configuration);
     InMemoryProfileStoresModule.ConfigureServices(serviceCollection, configuration);
+    InMemoryAgentHumanLinkStoresModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
 #if postgres
     PostgresDbModule.ConfigureServices(serviceCollection, configuration);
