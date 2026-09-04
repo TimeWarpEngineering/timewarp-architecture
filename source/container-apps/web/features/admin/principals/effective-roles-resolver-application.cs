@@ -7,6 +7,9 @@
 // first resolve (lazy) from BootstrapAdministratorOptions string[]; invalid Guids are ignored
 // so a typo does not crash the host — ValidateOnStart is intentionally not used so empty
 // Development config stays valid. Ordering follows RoleIds.All so UI and claims stay stable.
+// Task 160: IPrincipalRoleStore.GetRoleIdsAsync failures wrap as RoleResolutionFailedException
+// (never empty-roles). Cancellation is not wrapped. RoleResolutionFailedException is rethrown
+// as-is so a store that already throws the typed failure is not double-wrapped.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -30,12 +33,24 @@ public sealed class EffectiveRolesResolver : IEffectiveRolesResolver
     BootstrapPrincipalIds = new Lazy<HashSet<PrincipalId>>(ParseBootstrapIds);
   }
 
+  /// <inheritdoc />
   public async Task<IReadOnlyList<Guid>> GetEffectiveRoleIdsAsync(
     PrincipalId principalId,
     CancellationToken cancellationToken = default)
   {
-    IReadOnlyList<Guid> stored = await RoleStore.GetRoleIdsAsync(principalId, cancellationToken)
-      .ConfigureAwait(false);
+    IReadOnlyList<Guid> stored;
+    try
+    {
+      stored = await RoleStore.GetRoleIdsAsync(principalId, cancellationToken)
+        .ConfigureAwait(false);
+    }
+    catch (Exception exception) when (exception is not OperationCanceledException
+      and not RoleResolutionFailedException)
+    {
+      throw new RoleResolutionFailedException(
+        "Failed to resolve effective roles from the principal role store.",
+        exception);
+    }
 
     HashSet<Guid> effective = stored.Count == 0
       ? [RoleIds.Member]
