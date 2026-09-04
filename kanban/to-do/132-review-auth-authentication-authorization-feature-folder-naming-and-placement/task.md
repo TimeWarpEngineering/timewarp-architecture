@@ -67,29 +67,88 @@ This task is a **naming + placement review with a disposition**, not a bulk move
 
 ## Checklist
 
-- [ ] Inventory `web/features/{auth,authentication,authorization}` + SPA twins + touchpoints from `identity/`
-- [ ] Answer the six questions in `disposition.md`
-- [ ] Propose final folder/namespace names (and what not to call things)
-- [ ] Call out web vs api placement for each surviving concern (118)
-- [ ] Create follow-on implement tasks only for accepted renames/moves
-- [ ] Commit artifacts; mark done when disposition is accepted (implementation may live in children)
+- [x] Inventory `web/features/{auth,authentication,authorization}` + SPA twins + touchpoints from `identity/`
+- [x] Answer the six questions in `disposition.md`
+- [x] Propose final folder/namespace names (and what not to call things)
+- [x] Call out web vs api placement for each surviving concern (118)
+- [x] Create follow-on implement tasks only for accepted renames/moves
+- [x] Commit artifacts; mark done when disposition is accepted (implementation may live in children)
 
 ## Notes
 
-- Related: **118** (real-domain showcase / host-role mapping web human vs api agent); **104-016 / 104-021** (retire Passwordless / template flag placement); **identity** slice is the modern authN path.
-- SPA page `Authentication.razor` / `RedirectToLogin.razor` still under `Features.Authentication` — any rename must include SPA + contracts + tests in one coherent plan.
-- Suggested glossary starting point (for review to accept or reject, **not** decided):
-  - **Identity** — principal, credentials, ceremonies (prove who)
-  - **Session / current-user** — signed-in projection used by UI (may not need its own top-level name)
-  - **Authorization** — policies, modules, roles, route guards
-  - Avoid bare **Auth** as a peer of Authentication and Authorization
+- Related: **118** (real-domain showcase / host-role mapping web human vs api agent); **104-016 / 104-021** (retire Passwordless / template flag placement); **182** (permission engine under `authorization/`); **identity** slice is the modern authN path.
+- Original brief’s three `web/features/` peers are already gone or transformed (104-016/021, 182). Remaining collision is SPA `authentication/` + `account/` + `identity/`.
+- Follow-on **132-001**: fold SPA authentication and account login UX into identity (keep `/authentication/{action}`, `/Login`, `/Logout`).
 
 ## Session
 
 - Created: 2026-07-28 — scaffolding from folder inventory + 118 host split note
-- Review: _pending_
-- Disposition: _pending_
+- Implementer: Grok session (2026-09-04) — inventory + disposition against current overnight tree
+- Review: _pending_ (host review node)
+- Disposition: recorded in `disposition.md` (this folder)
 
 ## Results
 
-_Fill after disposition is accepted._
+Disposition recorded under this folder. No product-code moves on this id (brief: decision + small follow-on).
+
+### What landed
+
+- `inventory.md` — file/namespace map for remaining auth-adjacent trees (web features, SPA twins, identity-host, api agent-bearer sample). Original `features/auth/` and `features/authentication/` are **absent**; `authorization/` is the 182 permission engine; `RoleIds` is substrate under `admin/roles/`; `GetCurrentUser` is identity `[ClientOnlyContract]`.
+- `disposition.md` — answers to the six questions; glossary; taxonomy table; reject/defer/do-now.
+- Child **132-001** — mechanical SPA fold of `authentication/` + `account/` login UX into `identity/`.
+
+### Key decisions
+
+- Two product concerns: **Identity** (prove who) and **Authorization** (what you may do). Bare **Auth** is forbidden. **Admin** is catalog CRUD, not a synonym.
+- Authorization engine stays Features **substrate** in folder `authorization/` (182 / TWA0009). Do not isolate as `Features.Authorization`.
+- `GetCurrentUser` is mock/Entra grants projection, not who-am-I (`GetCurrentSession`). Keep under identity; do not re-host; defer rename.
+- 118: do not invent `api/features/auth*`. Reuse identity + authorization; dual-host the evaluator when marketplace policies exist.
+
+### Files changed
+
+- `kanban/to-do/132-review-auth-authentication-authorization-feature-folder-naming-and-placement/{task,inventory,disposition}.md`
+- Child kitchen **132-001** (separate task branch)
+
+### Test outcomes
+
+No product code changed on this id. Inventory paths verified in-tree (`test ! -d features/auth`, `test ! -d features/authentication`).
+
+### How to validate
+
+**Smoke**
+
+```bash
+# from repo root (this worktree)
+test ! -d source/container-apps/web/features/auth
+test ! -d source/container-apps/web/features/authentication
+test -d source/container-apps/web/features/identity
+test -d source/container-apps/web/features/authorization
+test -f source/container-apps/web/features/admin/roles/role-ids-contracts.cs
+test -f source/container-apps/web/features/identity/get-current-user/get-current-user-contracts.cs
+test -d source/container-apps/web/projects/web-spa/features/authentication
+test -d source/container-apps/web/projects/web-spa/features/account
+rg -n "namespace TimeWarp.Architecture.Features" \
+  source/container-apps/web/features/admin/roles/role-ids-contracts.cs \
+  source/container-apps/web/features/authorization/permission-ids-contracts.cs \
+  source/container-apps/web/features/identity/get-current-user/get-current-user-contracts.cs
+```
+
+**Expect**
+
+- First two `test ! -d` commands succeed (no `auth/` or `authentication/` under `web/features/`).
+- Identity, authorization, `role-ids-contracts.cs`, `get-current-user-contracts.cs` exist.
+- SPA `authentication/` and `account/` still exist (fold is **132-001**, not this id).
+- `role-ids-contracts.cs` and `permission-ids-contracts.cs` are `namespace TimeWarp.Architecture.Features;` (substrate).
+- `get-current-user-contracts.cs` is `namespace TimeWarp.Architecture.Features.Identity;` and carries `[ClientOnlyContract]`.
+- `disposition.md` in this folder answers questions 1–6 and contains the reject/defer/do-now table plus 118 host map.
+- Child **132-001** is on origin-home inbox (`kanban/to-do/132-001-fold-spa-authentication-and-account-login-ux-into-identity/task.md`; from origin-home: `ganda kanban show 132-001`) with parent 132 and depends-on 132. This overnight worktree will not list it until master is merged.
+
+**Automated gate**
+
+None on this id (docs/kanban only). Product-code gate is **132-001** after the fold (`./bin/dev build` 0/0 + SPA login return-url tests).
+
+**Not in scope**
+
+- SPA folder moves, GetCurrentUser rename, dual-hosting authorization onto api-server (118).
+- `ganda kanban done` / PR create (host nodes).
+
