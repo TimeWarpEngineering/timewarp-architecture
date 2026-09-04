@@ -9,7 +9,8 @@
 // Co-located Jaribu tests for EffectiveRolesResolver SSOT algorithm (147-004).
 
 #region Purpose
-// Host-free coverage of EffectiveRolesResolver + InMemoryPrincipalRoleStore first-admin claim.
+// Host-free coverage of EffectiveRolesResolver + InMemoryPrincipalRoleStore first-admin claim
+// and fail-closed wrapping of role-store read failures (task 160).
 #endregion
 
 //-:cnd:noEmit
@@ -109,6 +110,32 @@ namespace TimeWarp.Architecture.Features
       roles.ShouldBe(RoleIds.All);
     }
 
+    public static async Task StoreReadFailure_Should_ThrowRoleResolutionFailedException()
+    {
+      EffectiveRolesResolver resolver = CreateResolver(
+        store: new ThrowingGetPrincipalRoleStore(),
+        bootstrap: []);
+      PrincipalId id = PrincipalId.New();
+
+      RoleResolutionFailedException exception = await Should.ThrowAsync<RoleResolutionFailedException>(
+        () => resolver.GetEffectiveRoleIdsAsync(id));
+
+      exception.InnerException.ShouldBeOfType<InvalidOperationException>();
+      exception.InnerException!.Message.ShouldBe(ThrowingGetPrincipalRoleStore.FailureMessage);
+    }
+
+    public static async Task Cancellation_Should_NotWrapAsRoleResolutionFailed()
+    {
+      EffectiveRolesResolver resolver = CreateResolver(
+        store: new CancelledGetPrincipalRoleStore(),
+        bootstrap: []);
+      using CancellationTokenSource cancellationTokenSource = new();
+      cancellationTokenSource.Cancel();
+
+      await Should.ThrowAsync<OperationCanceledException>(
+        () => resolver.GetEffectiveRoleIdsAsync(PrincipalId.New(), cancellationTokenSource.Token));
+    }
+
     private static EffectiveRolesResolver CreateResolver(
       IPrincipalRoleStore store,
       string[] bootstrap)
@@ -119,6 +146,49 @@ namespace TimeWarp.Architecture.Features
           BootstrapAdministratorPrincipalIds = bootstrap
         });
       return new EffectiveRolesResolver(store, options);
+    }
+
+    private sealed class ThrowingGetPrincipalRoleStore : IPrincipalRoleStore
+    {
+      public const string FailureMessage = "simulated role-store failure";
+
+      public Task<IReadOnlyList<Guid>> GetRoleIdsAsync(
+        PrincipalId principalId,
+        CancellationToken cancellationToken = default) =>
+        throw new InvalidOperationException(FailureMessage);
+
+      public Task SetRoleIdsAsync(
+        PrincipalId principalId,
+        IReadOnlyList<Guid> roleIds,
+        CancellationToken cancellationToken = default) =>
+        Task.CompletedTask;
+
+      public Task<bool> TryClaimFirstAdministratorAsync(
+        PrincipalId principalId,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(false);
+    }
+
+    private sealed class CancelledGetPrincipalRoleStore : IPrincipalRoleStore
+    {
+      public Task<IReadOnlyList<Guid>> GetRoleIdsAsync(
+        PrincipalId principalId,
+        CancellationToken cancellationToken = default)
+      {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult<IReadOnlyList<Guid>>([]);
+      }
+
+      public Task SetRoleIdsAsync(
+        PrincipalId principalId,
+        IReadOnlyList<Guid> roleIds,
+        CancellationToken cancellationToken = default) =>
+        Task.CompletedTask;
+
+      public Task<bool> TryClaimFirstAdministratorAsync(
+        PrincipalId principalId,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(false);
     }
   }
 

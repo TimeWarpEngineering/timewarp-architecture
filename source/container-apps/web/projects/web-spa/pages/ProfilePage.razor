@@ -1,12 +1,25 @@
 @namespace TimeWarp.Architecture.Features.Profiles
 @inherits BaseComponent
 
+@*
+  Purpose: signed-in user's progressive profile — display plus optional update after the principal exists.
+
+  Design: fetch and save go through ProfileState (TWA0022). EditForm binds IProfileDetails
+  (UpdateProfile.Command) with ProfileDetailsValidator (Blazilla). Email is optional.
+*@
+
 @code {
   public static string Title => "Profile";
   public static Icon? NavIcon => new Icons.Regular.Size20.Person();
 
+  private static readonly ProfileDetailsValidator ProfileValidator = new();
+
+  private UpdateProfile.Command Command { get; } = new();
+  private IProfileDetails Details => Command;
+
   private bool IsLoading =>
     IsAnyActive(typeof(ProfileState.FetchProfileDataActionSet.Action));
+  private bool IsBusy => ActionTrackingState.IsActive;
 
   protected override async Task OnInitializedAsync()
   {
@@ -16,6 +29,23 @@
     }
 
     await ProfileState.FetchProfileData();
+    SyncCommandFromState();
+  }
+
+  private void SyncCommandFromState()
+  {
+    Command.Alias = ProfileState.Alias ?? "";
+    Command.Email = ProfileState.Email;
+    Command.Language = ProfileState.Language ?? "en-US";
+    Command.Region = ProfileState.Region ?? "US";
+    Command.Theme = ProfileState.Theme ?? "system";
+    Command.Notifications = ProfileState.Notifications == true;
+  }
+
+  private async Task HandleValidSubmit()
+  {
+    await ProfileState.UpdateProfile(Command);
+    SyncCommandFromState();
   }
 }
 
@@ -33,15 +63,36 @@
             Image=@ProfileState.Avatar
             Name=@ProfileState.Alias
             Size="AvatarSize.Size56" />
-          <PropertyDisplay PropertyName="Display name" Value=@ProfileState.Alias />
-          <PropertyDisplay PropertyName="Language" Value=@ProfileState.Language />
-          <PropertyDisplay PropertyName="Region" Value=@ProfileState.Region />
-          <PropertyDisplay PropertyName="Theme" Value=@ProfileState.Theme />
-          <PropertyDisplay
-            PropertyName="Notifications"
-            Value=@(ProfileState.Notifications == true ? "On" : "Off") />
+          <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="ProfileForm" novalidate>
+            <FluentValidator Validator="@ProfileValidator" />
+            <FluentStack Orientation=Orientation.Vertical VerticalGap="16">
+              <div>
+                <FluentTextInput @bind-Value=Details.Alias Label="Display name" Name="Alias" data-qa="ProfileAlias" style="width:100%" />
+                <ValidationMessage For="@(() => Details.Alias)" />
+              </div>
+              <div>
+                <FluentTextInput @bind-Value=Details.Email Label="Email (optional)" Name="Email" data-qa="ProfileEmail" style="width:100%" />
+                <ValidationMessage For="@(() => Details.Email)" />
+              </div>
+              <div>
+                <FluentTextInput @bind-Value=Details.Language Label="Language" Name="Language" data-qa="ProfileLanguage" style="width:100%" />
+                <ValidationMessage For="@(() => Details.Language)" />
+              </div>
+              <div>
+                <FluentTextInput @bind-Value=Details.Region Label="Region" Name="Region" data-qa="ProfileRegion" style="width:100%" />
+                <ValidationMessage For="@(() => Details.Region)" />
+              </div>
+              <div>
+                <FluentTextInput @bind-Value=Details.Theme Label="Theme" Name="Theme" data-qa="ProfileTheme" style="width:100%" />
+                <ValidationMessage For="@(() => Details.Theme)" />
+              </div>
+              <FluentCheckbox @bind-Value=Details.Notifications Label="Notifications" />
+              <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary Disabled=@IsBusy data-qa="ProfileSave">Save</FluentButton>
+            </FluentStack>
+          </EditForm>
         </div>
       }
     </Card>
   </div>
 </TimeWarpPage>
+

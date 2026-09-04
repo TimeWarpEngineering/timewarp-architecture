@@ -3,8 +3,10 @@
 #endregion
 
 #region Design
-// Hybrid model: PrincipalId is server-minted; credentials attach separately (1:N). Profile/email/password are not required
-// and may land later as optional progressive profile. Agent principals need no linked human.
+// Hybrid model: PrincipalId is server-minted; credentials attach separately (1:N). Optional
+// display name lives here; product progressive profile (email, prefs, update API) lives in
+// template Features.Profiles — never a register/session/token gate. Agent principals need no
+// linked human; optional Agent ↔ Human links live in template Features.AgentLinks.
 //
 // Trust (RFC D1 C refined):
 // - Progression is TrustTier (Provisional → Keyed → Funded → Established). Birth = Provisional, not Keyed.

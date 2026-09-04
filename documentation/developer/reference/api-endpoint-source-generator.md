@@ -58,7 +58,7 @@ public static partial class GetWeatherForecasts
 
 ```csharp
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "agent-scope:identity:read")]
+[EndpointAuthorize(Policy = PermissionIds.IdentityRead, AuthenticationSchemes = AuthenticationSchemeNames.AgentToken)]
 public static partial class GetAgentIdentity
 {
     [ApiRoute("api/identity/agent/me", HttpVerb.Get)]
@@ -170,6 +170,7 @@ The generator extracts OpenAPI documentation from:
 | SG002 | `EnableApiEndpointGeneration` is true but FastEndpoints / `BaseFastEndpoint` are missing |
 | TWA0013/0014 | Auth-posture missing or contradictory (convention analyzer) |
 | TWA0020 | `[ApiEndpoint]` + `[ClientOnlyContract]` contradiction (convention analyzer) |
+| TWA0024 | hosted `[EndpointAuthorize] Policy` is not registered by this server (convention analyzer) |
 
 Contract-shape rules for the outer class (`static`/`partial`, Query/Command present) are enforced
 alongside TWA0006 (coverage for every routed contract; TWA0005 MVC verb-mismatch retired
@@ -195,6 +196,8 @@ public static partial class PublicEndpoint { /* … */ }
 `IAuthApiRequest` on the nested `Query`/`Command` is a client/mock-mode identity signal only —
 it does not secure the server and must not be paired with `[EndpointAllowAnonymous]` (TWA0014).
 Do not combine `[ApiEndpoint]` with `[ClientOnlyContract]` (TWA0020).
+A named `Policy` must equal a policy this server registers (`AddPolicy` or `PermissionIds` via
+`AddPermissionPolicies`); **TWA0024** flags comment-coordinated drift.
 
 ## Validation (not in the generator)
 
