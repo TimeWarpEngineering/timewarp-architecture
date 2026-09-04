@@ -54,6 +54,7 @@ Soft predecessors (not `## Depends on` merge-wait): 104-002 (principal model), 1
 104-016 (human passkey demo). Those are already merged.
 
 - Overnight 2026-09-04: first implementer judged the existing **Profiles** slice enough to hang this on, started product, then **hit max-turns** with **uncommitted** work. Resume walk continued that tree (tests + EF migration + Results).
+- Review kitchen: `kanban/in-progress/205-progressive-profile-and-agent-human-handoff-after-more-domain-exists/review/` (framework, round-1, round-2, disposition).
 
 ## Session
 
@@ -61,6 +62,9 @@ Soft predecessors (not `## Depends on` merge-wait): 104-002 (principal model), 1
 - Cockpit: Grok — pulled 104-024 / 104-025 off epic 104 into this independent to-do
 - Overnight: Grok implementer max-turns (uncommitted); resume on this same claim worktree
 - Implementer: Grok (2026-09-04) — finished product, tests, EF migration, Results
+- Review oracle: Grok 4.6 (2026-09-04) — effort 1, rounds 1–2, disposition accepted-exceptions
+- Round-1 general: Grok 4.5 (2026-09-04)
+- Round-2 general: Grok 4.5 (2026-09-04)
 
 ## Results
 
@@ -99,20 +103,37 @@ Continued the uncommitted overnight tree. Placement is now decided and documente
 - AgentLinks slice (contracts/handlers/store/EF) + SPA state/page
 - EF migration `20260904134226_AddProfileEmailAndAgentHumanLinks` (Email column, `agent_links` table, self-service grant rows)
 - Placement guide: `documentation/developer/how-to-guides/how-to-progressive-profile-and-agent-human-link.md`
-- Template smoke web aggregator expected count 104 → 125
+- Template smoke web aggregator expected count 104 → 125 (implement) → **127** (review-fix tests)
 
 **Tests**
 - `update-profile-tests.cs` — 8 passed
-- `agent-human-link-tests.cs` — 9 passed (incl. humanUx JSON round-trip)
+- `agent-human-link-tests.cs` — 11 passed (incl. humanUx JSON round-trip, validation rejection, open-pair uniqueness)
 - `identity-progressive-profile-gate-tests.cs` — 4 passed
 - `permission-evaluator-tests.cs` — 19 passed
 - `get-profile-tests.cs` — 10 passed
 - `permission-ids-tests.cs` — 8 passed
-- `cd tests/container-apps/web/web-jaribu-tests && dotnet test -c Release` — 125 passed
+- `cd tests/container-apps/web/web-jaribu-tests && dotnet test -c Release` — 125 passed at implement; review-fix runfiles +2 (template-smoke expected **127**)
 - `cd tests/container-apps/web/web-infrastructure-tests && dotnet test -c Release -- --filter-class Profile_Model_Mapping` — 4 passed
 - `dotnet run tools/dev-cli/dev.cs -- build` — 0 Warning(s), 0 Error(s)
 
 Browser click-through of `/Profile` and `/AgentLinks` was not run in this session (no AppHost). SPA compiles in the 0/0 build; handler/contract tests cover the APIs.
+
+### Review disposition
+
+**Outcome: accepted-exceptions.** Effort 1 (general only). Rounds: 2. Final open count: 0.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 2 | 0 |
+| suggestion | 0 | 1 | 0 |
+| nit | 0 | 0 | 1 |
+
+- **M1 (bug, fixed):** filtered unique index on Pending/Approved agent–human pairs; EF/in-memory `AddAsync` reject a second open row; request handler maps the race to 409.
+- **M2 (bug, fixed):** `RequestAgentHumanLink` empty-`HumanPrincipalId` validation rejection test.
+- **M3 (suggestion, fixed):** identity gate tests also pin `IAgentHumanLinkStore` off passkey/agent-key/token handlers.
+- **M4 (nit, wontfix):** no `GetMockResponseFactory` on RequestAgentHumanLink — factories are SPA-mock opt-in; this endpoint is agent-token-only. Decided by review oracle.
+
+Paths: `kanban/in-progress/205-progressive-profile-and-agent-human-handoff-after-more-domain-exists/review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -123,13 +144,13 @@ dotnet run source/container-apps/web/features/profile/update-profile/update-prof
 # expect: Total: 8, Passed: 8
 
 dotnet run source/container-apps/web/features/agent-links/agent-human-link-tests.cs
-# expect: Total: 9, Passed: 9; humanUx JSON contains timewarp.humanUx/v1
+# expect: Total: 11, Passed: 11; humanUx JSON contains timewarp.humanUx/v1
 
 dotnet run source/container-apps/web/features/identity/identity-progressive-profile-gate-tests.cs
 # expect: Total: 4, Passed: 4 (passkey/agent-key/token/metered handlers do not take IProfileStore or IAgentHumanLinkStore)
 
 cd tests/container-apps/web/web-jaribu-tests && dotnet test -c Release
-# expect: succeeded: 125
+# expect: succeeded: 127
 ```
 
 **Smoke**
