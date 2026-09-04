@@ -15,6 +15,9 @@
 // NEITHER this attribute nor [EndpointAllowAnonymous]; TWA0014 flags both present together, or this
 // attribute's absence while [EndpointAllowAnonymous] contradicts an IAuthApiRequest-declaring
 // nested Query/Command.
+// AuthenticationSchemes (task 161): emit FE AuthSchemes(...). Required on hosted contracts whose
+// named policy has no AddAuthenticationSchemes (PermissionIds via AddPermissionPolicies) — otherwise
+// PolicyEvaluator authenticates only the host default scheme and non-default handlers never run.
 // Lives in TimeWarp.Architecture.Attributes so contract assemblies can annotate without a Roslyn dep.
 #endregion
 

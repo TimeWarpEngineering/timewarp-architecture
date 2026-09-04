@@ -74,7 +74,7 @@ The generator reads two mutually-exclusive markers on the outer `[ApiEndpoint]` 
 
 | Marker | Effect |
 |--------|--------|
-| `[EndpointAuthorize(Policy=…, Roles=…, AuthenticationSchemes=…)]` | Emits `Policies(...)` / `Roles(...)` / `AuthSchemes(...)` |
+| `[EndpointAuthorize(Policy=…, Roles=…, AuthenticationSchemes=…)]` | Emits `Policies(...)` / `Roles(...)` / `AuthSchemes(...)`. Hosted contracts must set `AuthenticationSchemes` (task 161): permission policies have no `AddAuthenticationSchemes`, so `Policies(...)` alone authenticates only the host default scheme. |
 | `[EndpointAllowAnonymous("reason")]` | Emits `AllowAnonymous()` |
 | *(neither)* | Emits **nothing** — FastEndpoints requires authentication by default |
 
