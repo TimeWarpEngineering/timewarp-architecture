@@ -37,6 +37,7 @@ presented as "not authenticated" (401). It should fail closed with an honest sta
       → chosen status, not 401)
 - [x] Reconcile Design regions
 - [x] Results with How to validate
+- [x] Implementation review (effort 1, general) — disposition clean
 
 ## Notes
 
@@ -68,6 +69,7 @@ presented as "not authenticated" (401). It should fail closed with an honest sta
 
 - Created: Claude (2026-08-05), spun out of task 158 per maintainer direction.
 - Implementer: Grok (2026-09-04) — 503 fail-closed hardening + in-proc DI fake test.
+- Review: Grok (2026-09-04) — effort 1 general, round 1, disposition clean.
 
 ## Results
 
@@ -151,3 +153,16 @@ project for that reason. Mock/passkey ceremony helpers mint the cookie; the fake
 
 **Not in scope:** racing a live Postgres outage; closed-box Aspire ingress (task 158 already
 fixed mock-scheme 401 vs 403 there).
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 1
+- **Effort / roster:** 1 (general only)
+- **Final counts:** bug 0 / suggestion 0 / nit 0 (all open/fixed/wontfix zero)
+- **Wontfix / escalations:** none
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
