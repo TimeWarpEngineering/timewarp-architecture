@@ -41,6 +41,12 @@ presented as "not authenticated" (401). It should fail closed with an honest sta
 
 ## Notes
 
+- **CI BLOCKER (cockpit 2026-09-04):** PR #321 `template-smoke` is red. Product 503 path is
+  fine. SmokeDefault `web-jaribu-tests` is **104/104** vs expected **102**.
+  Bump `tools/dev-cli/services/template-smoke-harness.cs` line 578 from 102 to 104, push the
+  same branch, wait for green. Do **not** re-litigate the 503 design. Restore any stray
+  `.gitignore` dirt (do not add `*.journal.json` / `.memsearch/memory/` here — 208 already
+  covers routine journals).
 - Origin: task 158 (root-cause investigation and full evidence chain live there; see its
   "Root-cause investigation (Grok)" Notes section and Results).
 - Behavior context: today an exception inside `IClaimsTransformation` propagates through the
