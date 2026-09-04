@@ -12,13 +12,17 @@
 // Literal string values MUST stay in lockstep with the server-side scheme constants they mirror —
 // each member documents its server-side counterpart; there is no compile-time link (the two
 // projects don't reference each other), so a rename on either side needs the matching edit here.
-// Root cause (task 158): the generated FastEndpoint's Configure() emitted only Policies(...), never
-// AuthSchemes(...); AuthorizationMiddleware then never invoked the mock-identity-session (or, for
-// dual-scheme policies, non-default) authentication handler for that route, so an otherwise-valid
-// mock/bearer principal was never attached and the request fell through as anonymous (401 instead
-// of 403). Fix: emit AuthSchemes(...) from [EndpointAuthorize(AuthenticationSchemes = ...)] using
-// this class's constants, mirroring exactly the scheme list already declared on the matching
-// server-side AddPolicy(...).AddAuthenticationSchemes(...) call (web-server/program.cs).
+// Scheme SSOT (task 161 / ADR-0010): PermissionIds policies registered via AddPermissionPolicies
+// carry PermissionRequirement only — no AddAuthenticationSchemes. ASP.NET Core 10's
+// PolicyEvaluator.AuthenticateAsync is a no-op when the combined policy's scheme list is empty
+// (only UseAuthentication's default scheme ran: identity-session). Non-default schemes
+// (mock-identity-session, agent-token) run only when they appear on the combined policy, which
+// FastEndpoints fills from AuthSchemes(...) (copied onto IAuthorizeData) and/or from a named
+// policy's own AddAuthenticationSchemes (copied by Combine). Product permission policies have
+// the latter empty, so hosted [EndpointAuthorize] MUST set AuthenticationSchemes. Do not put
+// scheme lists back on permission policies (dual SSOT). IdentitySessionDefaults.AuthenticatedPolicy
+// and api-server agent-scope policies still list schemes at policy level; declaring them on the
+// contract as well is belt-and-suspenders against a future policy-registration change.
 // mock-identity-session is always safe to list here: the scheme is unconditionally registered
 // (program.cs .AddScheme<AuthenticationSchemeOptions, MockIdentityPrincipalHandler>(...)) so
 // listing it never throws InvalidOperationException for an unregistered scheme; the HANDLER itself

@@ -58,7 +58,7 @@ public static partial class GetWeatherForecasts
 
 ```csharp
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "agent-scope:identity:read")]
+[EndpointAuthorize(Policy = PermissionIds.IdentityRead, AuthenticationSchemes = AuthenticationSchemeNames.AgentToken)]
 public static partial class GetAgentIdentity
 {
     [ApiRoute("api/identity/agent/me", HttpVerb.Get)]

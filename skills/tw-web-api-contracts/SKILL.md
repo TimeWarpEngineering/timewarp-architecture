@@ -71,7 +71,7 @@ hand-written MVC `BaseEndpoint` shims in the template. Opt in per operation:
 | Attribute | Effect | Use when |
 |-----------|--------|----------|
 | `[ApiEndpoint]` | Generator emits `BaseFastEndpoint<Op.Query\|Command, Response>` for this operation | Every contract hosted on a server with `EnableApiEndpointGeneration` |
-| `[EndpointAuthorize(Policy=…)]` | Generator emits `Policies("…")` / `Roles(…)` / `AuthSchemes(…)` | Protected routes (policy, roles, and/or schemes) |
+| `[EndpointAuthorize(Policy=…, AuthenticationSchemes=…)]` | Generator emits `Policies("…")` / `Roles(…)` / `AuthSchemes(…)` | Protected routes. **Always set `AuthenticationSchemes`** on hosted contracts — see scheme lists below |
 | `[EndpointAllowAnonymous(reason)]` | Generator emits `AllowAnonymous()` | Genuinely public / pre-auth ceremony endpoints — `reason` is a required, honest, per-contract string |
 | *(no marker)* | **Fail-closed (task 110):** generator emits nothing, so FastEndpoints' own default (auth required) applies | Never — every `[ApiEndpoint]` contract must carry exactly one of the two markers above; **TWA0013** flags the omission at build time |
 
@@ -82,7 +82,11 @@ section below for why that combination is a contradiction, not just a style nit.
 
 ```csharp
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "agent-scope:identity:read")]
+[EndpointAuthorize
+(
+  Policy = PermissionIds.IdentityRead,
+  AuthenticationSchemes = AuthenticationSchemeNames.AgentToken
+)]
 public static partial class GetAgentIdentity
 {
   [ApiRoute("api/identity/agent/me", HttpVerb.Get)]
@@ -90,6 +94,21 @@ public static partial class GetAgentIdentity
   // …
 }
 ```
+
+**Scheme lists (task 161):** hosted `[EndpointAuthorize]` must set `AuthenticationSchemes` using
+`AuthenticationSchemeNames` (web) or the matching server scheme string (api). PermissionIds
+policies registered via `AddPermissionPolicies` have **no** `AddAuthenticationSchemes`; ASP.NET
+Core 10's `PolicyEvaluator` then authenticates only the host default scheme (`identity-session`
+on web). `agent-token` and `mock-identity-session` never run unless the generated FastEndpoint
+emits `AuthSchemes(...)`. Named-policy scheme lists still Combine when present (api-server
+agent-scope policies) — still declare them on the contract so a policy-registration change
+cannot drop them. Do **not** put scheme lists back on permission policies (ADR-0010).
+
+| Surface | `AuthenticationSchemes` |
+|---------|-------------------------|
+| Admin BFF (closed-box mock) | `IdentitySession + "," + MockIdentitySession` |
+| Credential management (human or agent) | `IdentitySession + "," + AgentToken` |
+| Agent-token-only | `AgentToken` |
 
 **Validation stays on the mediator** (`FluentValidationBehavior`). Do not re-validate in handlers
 and do not wire FastEndpoints' own FluentValidation integration (`IncludeAbstractValidators =
@@ -214,9 +233,10 @@ Read → `get-*/get-*-contracts.cs` · Write → `create-*|update-*|delete-*/…
 ### 2. Scaffold the partial class
 
 - `[ApiEndpoint]` on the outer operation class when a server host should generate the FastEndpoint
-- Exactly one of `[EndpointAuthorize(Policy=…)]` (protected) or `[EndpointAllowAnonymous(reason)]`
-  (genuinely public) — required on every `[ApiEndpoint]` contract; **TWA0013** flags the omission,
-  **TWA0014** flags picking both, or anonymous alongside `IAuthApiRequest`
+- Exactly one of `[EndpointAuthorize(Policy=…, AuthenticationSchemes=…)]` (protected; **always
+  declare schemes** — task 161) or `[EndpointAllowAnonymous(reason)]` (genuinely public) —
+  required on every `[ApiEndpoint]` contract; **TWA0013** flags the omission, **TWA0014** flags
+  picking both, or anonymous alongside `IAuthApiRequest`
 - `[ApiRoute("api/...", HttpVerb.*)]` on nested `Query`/`Command`
 - Implement `IApiRequest` (or `IAuthApiRequest` — see auth forms above; add
   `IQueryStringRouteProvider` when query-string filters apply)
@@ -349,6 +369,8 @@ error. See the `tw-mock-response-factory` skill.
 - [ ] `public static partial class` with nested `Query`/`Command`, `Response`, `Validator`
 - [ ] `[ApiEndpoint]` on hosted operations; exactly one of `[EndpointAuthorize]` /
       `[EndpointAllowAnonymous(reason)]`, always (TWA0013/TWA0014 enforce this)
+- [ ] Hosted `[EndpointAuthorize]` sets `AuthenticationSchemes` (task 161 — permission policies
+      have no scheme list; `Policies(...)` alone authenticates only the host default scheme)
 - [ ] `[ApiRoute]` with correct verb and route constraints (`{Id:guid}`, `{Id:min(1)}`, …)
 - [ ] `IRequest<OneOf<Response, SharedProblemDetails>>` (TimeWarp.Mediator)
 - [ ] Folder plural + repo's casing; namespace plural
@@ -377,6 +399,7 @@ error. See the `tw-mock-response-factory` skill.
 | Hand-declared route params | Trust `[ApiRoute]` source generation |
 | Hand-written MVC `BaseEndpoint` shim for a hosted contract | Annotate `[ApiEndpoint]` (+ `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]`); generation is the template convention |
 | `[ApiEndpoint]` with no auth marker, assuming the generator defaults to anonymous | It doesn't (task 110, fail-closed) — no marker emits nothing, so FastEndpoints' own default (auth required) applies; TWA0013 also catches it at build time |
+| `[EndpointAuthorize(Policy=…)]` without `AuthenticationSchemes` | Non-default schemes never run against PermissionIds policies (task 161). Set `AuthenticationSchemes` from `AuthenticationSchemeNames`. |
 | Treating `IAuthApiRequest` as if it secures the route | It's a client/mock-mode identity signal only — `[EndpointAuthorize]` is the sole server-auth marker; TWA0014 flags pairing `IAuthApiRequest` with `[EndpointAllowAnonymous]` |
 | Re-validating in the handler or enabling FE FluentValidation | Validation is `FluentValidationBehavior` on the mediator only |
 | `required init` Response with invariants | `Guid.Empty` slips through — ctor + `Guard` |
