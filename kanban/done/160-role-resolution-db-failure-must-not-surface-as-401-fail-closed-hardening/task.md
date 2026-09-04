@@ -70,6 +70,8 @@ presented as "not authenticated" (401). It should fail closed with an honest sta
 - Created: Claude (2026-08-05), spun out of task 158 per maintainer direction.
 - Implementer: Grok (2026-09-04) — 503 fail-closed hardening + in-proc DI fake test.
 - Review: Grok (2026-09-04) — effort 1 general, round 1, disposition clean.
+- Implementer (re-verify): Grok (2026-09-04) — remaining product work none; re-ran
+  host-free 10/10, RoleResolutionFailure 2/2, RolesAuthorization 7/7.
 
 ## Results
 
