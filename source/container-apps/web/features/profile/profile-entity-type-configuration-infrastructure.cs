@@ -48,6 +48,9 @@ public sealed class ProfileEntityTypeConfiguration : IEntityTypeConfiguration<Pr
       .HasMaxLength(Profile.MaxDisplayNameLength)
       .IsRequired();
 
+    builder.Property(profile => profile.Email)
+      .HasMaxLength(Profile.MaxEmailLength);
+
     builder.Property(profile => profile.Language).IsRequired();
     builder.Property(profile => profile.Region).IsRequired();
     builder.Property(profile => profile.Theme).IsRequired();

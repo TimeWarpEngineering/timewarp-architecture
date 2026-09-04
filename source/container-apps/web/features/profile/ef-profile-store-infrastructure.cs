@@ -7,6 +7,7 @@
 // PostgresDbContext. Semantics match InMemoryProfileStore:
 //   - Find: AsNoTracking row or null
 //   - Add: insert; unique PK (23505) → InvalidOperationException so create-if-missing re-finds
+//   - Update: load tracked row, copy named-mutation state, SaveChanges (aggregate Version bump)
 // Scoped lifetime: depends on scoped PostgresDbContext. InMemoryProfileStoresModule registers
 // singleton InMemoryProfileStore; PostgresDbModule replaces when connected.
 // Profile is IAggregateRoot — AggregateDbContext owns Version + DomainInvariantsGuard on SaveChanges.
@@ -60,6 +61,36 @@ public sealed class EfProfileStore : IProfileStore
       Db.Entry(profile).State = EntityState.Detached;
       throw new InvalidOperationException($"Profile '{profile.Id}' already exists.", exception);
     }
+  }
+
+  public async Task UpdateAsync(Profile profile, CancellationToken cancellationToken = default)
+  {
+    ArgumentNullException.ThrowIfNull(profile);
+    cancellationToken.ThrowIfCancellationRequested();
+
+    Profile? stored = await Db.Profiles
+      .FirstOrDefaultAsync(row => row.Id == profile.Id, cancellationToken)
+      .ConfigureAwait(false);
+    if (stored is null)
+    {
+      throw new InvalidOperationException($"Profile '{profile.Id}' does not exist.");
+    }
+
+    stored.Rename(profile.DisplayName);
+    stored.SetEmail(profile.Email);
+    stored.SetLanguage(profile.Language);
+    stored.SetRegion(profile.Region);
+    stored.SetTheme(profile.Theme);
+    if (profile.Notifications)
+    {
+      stored.EnableNotifications();
+    }
+    else
+    {
+      stored.DisableNotifications();
+    }
+
+    await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
   }
 
   private static bool IsUniqueViolation(DbUpdateException exception)

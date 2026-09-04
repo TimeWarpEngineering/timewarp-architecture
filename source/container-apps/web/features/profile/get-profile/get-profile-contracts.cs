@@ -8,8 +8,10 @@
 // patterns uniform across contracts.
 // Guard clauses in the Response constructor make an empty profile unrepresentable; Avatar is a
 // non-empty string (data URI) so the UI never receives a blank image source.
-// Wire names (task 148 D2): Alias maps from domain DisplayName (chrome-facing name stays Alias);
-// Language/Region/Theme/Notifications mirror the Profile aggregate; Avatar is not domain/EF.
+// Wire names (task 148 D2 / 205): Alias maps from domain DisplayName (chrome-facing name stays Alias);
+// Email is optional progressive profile; Language/Region/Theme/Notifications mirror the Profile
+// aggregate; Avatar is not domain/EF. Response implements IProfileDetails so the Profile page form
+// binds the same shape UpdateProfile submits.
 // Mock Avatar (task 149): precomputed Multiavatar data URI for seed "GetProfile.Mock" so
 // web-contracts does not reference TimeWarp.Multiavatar; regenerate offline if the package
 // output shape changes.
@@ -31,17 +33,19 @@ public static partial class GetProfile
 
   public sealed class Validator : AbstractValidator<Query>;
 
-  public sealed class Response : BaseResponse
+  public sealed class Response : BaseResponse, IProfileDetails
   {
-    public string Alias { get; }
-    public string Language { get; }
-    public string Region { get; }
-    public string Theme { get; }
-    public bool Notifications { get; }
+    public string Alias { get; set; }
+    public string? Email { get; set; }
+    public string Language { get; set; }
+    public string Region { get; set; }
+    public string Theme { get; set; }
+    public bool Notifications { get; set; }
     public string Avatar { get; }
 
     public Response(
       string alias,
+      string? email,
       string language,
       string region,
       string theme,
@@ -49,6 +53,7 @@ public static partial class GetProfile
       string avatar)
     {
       Alias = Guard.Against.NullOrEmpty(alias);
+      Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
       Language = Guard.Against.NullOrEmpty(language);
       Region = Guard.Against.NullOrEmpty(region);
       Theme = Guard.Against.NullOrEmpty(theme);
@@ -61,6 +66,7 @@ public static partial class GetProfile
   {
     return _ => new Response(
       alias: "alias",
+      email: null,
       language: "en-US",
       region: "US",
       theme: "system",

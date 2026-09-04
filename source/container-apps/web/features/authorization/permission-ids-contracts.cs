@@ -42,7 +42,11 @@ public static class PermissionIds
   public const string DeveloperAccess = "developer.access";
   public const string DeveloperClaimsRead = "developer.claims.read";
   public const string ProfileRead = "profile.read";
+  /// <summary>Update own progressive profile (display name, email, prefs). Never a register/session gate.</summary>
+  public const string ProfileWrite = "profile.write";
   public const string SettingsRead = "settings.read";
+  /// <summary>Request/approve/list own agent↔human links and fetch humanUx (task 205).</summary>
+  public const string AgentLinkManageSelf = "agent-link.manage.self";
   /// <summary>Agent/human self-lookup of principal identity (maps from agent scope identity:read).</summary>
   public const string IdentityRead = "identity.read";
   /// <summary>Manage own credentials (list/add/revoke); maps from agent scope credential:manage.</summary>
@@ -61,7 +65,9 @@ public static class PermissionIds
     DeveloperAccess,
     DeveloperClaimsRead,
     ProfileRead,
+    ProfileWrite,
     SettingsRead,
+    AgentLinkManageSelf,
     IdentityRead,
     CredentialManageSelf,
     DemoInvoke,
