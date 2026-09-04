@@ -38,15 +38,18 @@ presented as "not authenticated" (401). It should fail closed with an honest sta
 - [x] Reconcile Design regions
 - [x] Results with How to validate
 - [x] Implementation review (effort 1, general) — disposition clean (round 1 + round 2)
+- [x] CI blocker: bump SmokeDefault `web-jaribu-tests` expected count 102 → 104; PR #321 green
 
 ## Notes
 
-- **CI BLOCKER (cockpit 2026-09-04):** PR #321 `template-smoke` is red. Product 503 path is
-  fine. SmokeDefault `web-jaribu-tests` is **104/104** vs expected **102**.
-  Bump `tools/dev-cli/services/template-smoke-harness.cs` line 578 from 102 to 104, push the
-  same branch, wait for green. Do **not** re-litigate the 503 design. Restore any stray
-  `.gitignore` dirt (do not add `*.journal.json` / `.memsearch/memory/` here — 208 already
-  covers routine journals).
+- **CI BLOCKER resolved (implementer 2026-09-04):** PR #321 `template-smoke` was red because
+  SmokeDefault `web-jaribu-tests` reported **104/104** vs harness expected **102**. Bump is
+  commit `b4d82514` (`tools/dev-cli/services/template-smoke-harness.cs` line 578 → 104).
+  Did **not** re-litigate the 503 design. Restored uncommitted `.gitignore` dirt
+  (`*.journal.json` / `.memsearch/memory/` belong on task 208, not this branch). Dropped
+  unpushed local merge of `origin/feature/overnight` (workflow trigger edits) so this PR
+  stays on master-only CI. Green: Actions run `33864521962` on SHA `01925db0` —
+  `detect-paths`, `ci`, `template-smoke` SUCCESS.
 - Origin: task 158 (root-cause investigation and full evidence chain live there; see its
   "Root-cause investigation (Grok)" Notes section and Results).
 - Behavior context: today an exception inside `IClaimsTransformation` propagates through the
@@ -80,6 +83,8 @@ presented as "not authenticated" (401). It should fail closed with an honest sta
   host-free 10/10, RoleResolutionFailure 2/2, RolesAuthorization 7/7.
 - Review (round 2): Grok (2026-09-04) — effort 1 general, independent re-review after
   implementer re-verify; 0 issues; disposition remains clean.
+- Implementer (CI blocker): Grok (2026-09-04) — confirmed 104 bump on origin, restored
+  `.gitignore`, dropped unpushed overnight merge, host-free 10/10, PR #321 CI green.
 
 ## Results
 
@@ -110,6 +115,7 @@ status.
 | `source/container-apps/web/projects/web-server/program.cs` | Register middleware before `UseAuthentication` |
 | `source/container-apps/web/features/admin/principals/effective-roles-resolver-tests.cs` | Host-free wrap + cancellation tests |
 | `tests/container-apps/web/web-server-integration-tests/features/admin/principals/role-resolution-failure-tests.cs` | In-proc DI-substituted failing store → 503, anonymous still 401 |
+| `tools/dev-cli/services/template-smoke-harness.cs` | SmokeDefault `web-jaribu-tests` expected count 102 → 104 (the two wrap/cancellation tests) |
 
 ### Key decisions
 
@@ -119,14 +125,20 @@ status.
   fake) fails the same way.
 - **Do not catch in `IClaimsTransformation`.** Returning the principal without roles is 403;
   returning an unauthenticated principal is 401.
+- **Smoke expected count is a hand list.** Adding two host-free tests to the co-located
+  web runfile grew the generated-app aggregator from 102 to 104; bump the harness in the
+  same PR or `template-smoke` fails on counts alone.
 
 ### Test outcomes
 
 - Host-free `effective-roles-resolver-tests.cs`: **10/10** (8 resolver including wrap +
-  cancellation, 2 first-admin).
+  cancellation, 2 first-admin). Re-ran this session: 10/10.
 - In-proc `RoleResolutionFailure`: **2/2** — anonymous GetRoles still 401; passkey cookie +
-  throwing `IPrincipalRoleStore.GetRoleIdsAsync` → **503**, not 401/403.
+  throwing `IPrincipalRoleStore.GetRoleIdsAsync` → **503**, not 401/403. Re-ran this
+  session: 2/2.
 - Regression `RolesAuthorization`: **7/7**.
+- PR #321 CI (SHA `01925db0`, Actions `33864521962`): `detect-paths`, `ci`,
+  `template-smoke` **SUCCESS**. SmokeDefault `web-jaribu-tests` 104/104.
 
 ### How to validate
 
@@ -157,12 +169,25 @@ dotnet test -c Release -- --filter-class RolesAuthorization
 # expect: 7 passed (no regression on Member 403 / Admin 200)
 ```
 
+**CI / template-smoke**
+
+```bash
+gh pr checks 321
+# expect: detect-paths, ci, template-smoke SUCCESS
+# harness: tools/dev-cli/services/template-smoke-harness.cs JaribuFamilyAggregators
+#          web-jaribu-tests ExpectedSucceeded == 104
+```
+
+**Expect:** PR #321 checks green. SmokeDefault generated-app `web-jaribu-tests` is 104 passed
+of 104 expected. Do not restore expected count to 102.
+
 **Depends on:** in-proc `HostGraphFactory` (fixed port web=7000). `dev test` serializes this
 project for that reason. Mock/passkey ceremony helpers mint the cookie; the fake store's
 `TryClaimFirstAdministratorAsync` is a no-op so registration can complete before Get throws.
 
 **Not in scope:** racing a live Postgres outage; closed-box Aspire ingress (task 158 already
-fixed mock-scheme 401 vs 403 there).
+fixed mock-scheme 401 vs 403 there). Adding `*.journal.json` / `.memsearch/memory/` to this
+branch `.gitignore` (task 208).
 
 ### Review disposition
 
