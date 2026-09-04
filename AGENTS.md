@@ -67,8 +67,8 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   contracts** (`[ApiEndpoint]` + `[ApiRoute]`; every hosted contract carries exactly one of
   `[EndpointAuthorize]` (policies) or `[EndpointAllowAnonymous(reason)]` — the generator is
   fail-closed, so a contract with neither marker emits no auth config at all rather than defaulting
-  to anonymous; TWA0013/TWA0014 enforce the pairing at build time; TWA0024 that a named Policy is
-  registered by the hosting server). No hand-written `BaseEndpoint`
+  to anonymous; TWA0013/TWA0014 enforce the pairing at build time; TWA0024 enforces that a named
+  Policy is registered by the hosting server). No hand-written `BaseEndpoint`
   shims in the template. Validation stays on the mediator's `FluentValidationBehavior` — do not
   adopt FastEndpoints' validator integration.
 - Tests — **single-framework Jaribu** (zero Fixie and zero xUnit; epic 145 / decision task 143 §6;
