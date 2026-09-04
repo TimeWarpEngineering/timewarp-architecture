@@ -67,7 +67,8 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   contracts** (`[ApiEndpoint]` + `[ApiRoute]`; every hosted contract carries exactly one of
   `[EndpointAuthorize]` (policies) or `[EndpointAllowAnonymous(reason)]` — the generator is
   fail-closed, so a contract with neither marker emits no auth config at all rather than defaulting
-  to anonymous; TWA0013/TWA0014 enforce the pairing at build time). No hand-written `BaseEndpoint`
+  to anonymous; TWA0013/TWA0014 enforce the pairing at build time; TWA0024 that a named Policy is
+  registered by the hosting server). No hand-written `BaseEndpoint`
   shims in the template. Validation stays on the mediator's `FluentValidationBehavior` — do not
   adopt FastEndpoints' validator integration.
 - Tests — **single-framework Jaribu** (zero Fixie and zero xUnit; epic 145 / decision task 143 §6;
@@ -211,7 +212,7 @@ unconditionally excluded from template output). This monorepo dogfoods all three
 | PackageId | Contents |
 |-----------|----------|
 | `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
-| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016, TWA0020–0023) — safe repo-wide |
+| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016, TWA0020–0024) — safe repo-wide |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001, TWA0017/0018 (ingress route generation) — attach only where gens should run |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
 | `TimeWarp.Identity` | Principal identity (passkeys / agent keys); published since 2.0.0-beta.6 |
@@ -285,6 +286,7 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0021 | mock SPA auth providers (`MockAuthenticationStateProvider` / `MockAccessTokenProvider`) registered outside `MockAuthenticationRegistration` — bypasses the Development/Testing + `Authentication:UseMock` fail-closed gate (task 145-009) |
 | TWA0022 | direct `Send` on the mediator (`ISender`/`IMediator`, incl. the inherited `Mediator` member) anywhere in SPA client code — dispatch through the TimeWarp.State generated `<Name>ActionSet` method, which wires the `CancellationToken`. Gated on the Blazor WASM SDK's `UsingMicrosoftNETSdkBlazorWebAssembly`; razor-generated trees ARE analyzed, other `.g.cs` trees exempt (task 196) |
 | TWA0023 | type-stem identifiers: named type that already names the role **is** the identifier (strip leading `I` on interfaces; two of the same type qualify with the type as head). **Default off** — enable with `dotnet_diagnostic.TWA0023.severity = warning`. Opt-out: `[TypeStemIdentifier(reason)]`. Rule prose: flow skill `tw-csharp`. |
+| TWA0024 | hosted `[EndpointAuthorize] Policy` must equal a policy this server registers (`AuthorizationOptions`/`AuthorizationBuilder.AddPolicy`, or `PermissionIds` when `AddPermissionPolicies` is called). Contracts cannot reference server-layer constants; the server compilation is the agreement check (task 111) |
 
 **Generator diagnostics (TWE / SG)** live in
 `source/analyzers/timewarp-architecture-analyzers/diagnostics/diagnostic-descriptors.cs`

@@ -86,11 +86,7 @@ public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
     // Pairing = shared first name segment (web-server <-> web-contracts): a server may reference
     // another server's contracts as a client (web-server references api-contracts for the SPA)
     // and must not vouch for those.
-    string sourcePrefix = FirstSegment(context.Compilation.Assembly.Name);
-    IEnumerable<IAssemblySymbol> contractAssemblies = context.Compilation.SourceModule.ReferencedAssemblySymbols
-      .Where(a => a.Name.Contains("contracts", System.StringComparison.OrdinalIgnoreCase)
-        && string.Equals(FirstSegment(a.Name), sourcePrefix, System.StringComparison.OrdinalIgnoreCase))
-      .Concat(new[] { (IAssemblySymbol)context.Compilation.Assembly });
+    IEnumerable<IAssemblySymbol> contractAssemblies = HostedRouteDiscovery.GetPairedContractAssemblies(context.Compilation);
 
     foreach (IAssemblySymbol assembly in contractAssemblies)
     {
@@ -108,12 +104,5 @@ public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
         }
       }
     }
-  }
-
-  // "web-server" -> "web"; "Web.Contracts" -> "Web".
-  private static string FirstSegment(string assemblyName)
-  {
-    int cut = assemblyName.IndexOfAny(['-', '.']);
-    return cut < 0 ? assemblyName : assemblyName.Substring(0, cut);
   }
 }
