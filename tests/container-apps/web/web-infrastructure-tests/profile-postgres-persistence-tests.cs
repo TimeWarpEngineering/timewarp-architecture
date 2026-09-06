@@ -24,6 +24,7 @@ public class Round_Trip
     await write.Database.MigrateAsync();
 
     Profile profile = Profile.Create("Ada Lovelace", "en-US", "US", "dark");
+    profile.SetEmail("ada@example.com");
     ProfileId id = profile.Id;
     write.Profiles.Add(profile);
     await write.SaveChangesAsync();
@@ -33,6 +34,7 @@ public class Round_Trip
     Profile reloaded = await read.Profiles.SingleAsync(p => p.Id == id);
 
     reloaded.DisplayName.ShouldBe("Ada Lovelace");
+    reloaded.Email.ShouldBe("ada@example.com");
     reloaded.Language.ShouldBe("en-US");
     reloaded.Region.ShouldBe("US");
     reloaded.Theme.ShouldBe("dark");

@@ -54,8 +54,8 @@ Both hosts apply `ContractSerializationDefaults` via `CommonServerModule` →
 
 ## Adding a protected agent route on api-server
 
-1. Contract with `[ApiEndpoint]` + `[EndpointAuthorize(Policy = "agent-scope:…")]`.
-2. Register the matching policy on api-server (already: `identity:read`, `demo:invoke`).
+1. Contract with `[ApiEndpoint]` + `[EndpointAuthorize(Policy = "…", AuthenticationSchemes = "agent-token")]`.
+2. Register the matching policy on api-server (already: `identity:read`, `demo:invoke`, each with `AddAuthenticationSchemes(agent-token)`). The contract still lists the scheme (task 161) so a policy-registration change cannot drop it.
 3. Ensure the process can resolve `IAgentTokenStore` / `IPrincipalStore` for the principals that
    will call it (shared store in multi-host deploys).
 

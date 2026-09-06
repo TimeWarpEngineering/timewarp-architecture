@@ -57,7 +57,12 @@ external PDPs and resource checks without forcing ops cost on every template con
   **182-006** shipped).
 * **Server enforcement** — `PermissionRequirement` + `PermissionRequirementHandler` call the evaluator
   only (never role or permission claim bags on the cookie principal). Scheme lists stay on
-  `[EndpointAuthorize(AuthenticationSchemes)]`.
+  `[EndpointAuthorize(AuthenticationSchemes)]` (task 161): permission policies register
+  `PermissionRequirement` only, so FastEndpoints `Policies(...)` alone authenticates the host
+  default scheme. Non-default schemes (`agent-token`, `mock-identity-session`) run only when the
+  contract lists them. Named-policy `AddAuthenticationSchemes` still works via Combine when a
+  policy actually lists schemes (api-server agent-scope policies); do not put scheme lists back
+  on permission policies.
 * **SPA** — `GetCurrentSession` expands permissions via the evaluator under `identity-session`;
   `IdentitySessionAuthenticationStateProvider` projects them as `PermissionIds.ClaimType` claims for
   `RequireClaim` policies. Cookie remains PrincipalId-only (147-004 D8).

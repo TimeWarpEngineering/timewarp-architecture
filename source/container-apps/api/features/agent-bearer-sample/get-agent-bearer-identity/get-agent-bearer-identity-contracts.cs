@@ -12,6 +12,11 @@
 // Route deliberately under api/agent/bearer/* so host-split docs can list web vs api surfaces
 // without path collision.
 // No GetMockResponseFactory — SPA mock mode does not exercise this api-server sample.
+// AuthenticationSchemes = agent-token (task 161): api-server's IdentityReadPolicy already lists
+// that scheme via AddAuthenticationSchemes, which Combine copies onto the FastEndpoints
+// Policies-only path, so this declaration is redundant with the policy today. It is still set
+// so a future policy-registration change cannot silently drop the only non-default scheme
+// (web permission policies already have no scheme list — see AuthenticationSchemeNames).
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentBearerSamples;
@@ -19,7 +24,11 @@ namespace TimeWarp.Architecture.Features.AgentBearerSamples;
 using TimeWarp.Identity;
 
 [ApiEndpoint]
-[EndpointAuthorize(Policy = "agent-scope:identity:read")] // matches AgentTokenDefaults.IdentityReadPolicy
+[EndpointAuthorize
+(
+  Policy = "agent-scope:identity:read", // matches AgentTokenDefaults.IdentityReadPolicy
+  AuthenticationSchemes = "agent-token" // matches AgentTokenDefaults.Scheme — task 161
+)]
 public static partial class GetAgentBearerIdentity
 {
   [ApiRoute("api/agent/bearer/me", HttpVerb.Get)]

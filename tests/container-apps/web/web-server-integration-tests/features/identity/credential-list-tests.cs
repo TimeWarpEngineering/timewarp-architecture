@@ -7,7 +7,7 @@
 #region Design
 // Deliberately real HTTP with isolated HttpClients — same rationale as Roles_Authorization_Tests.cs's
 // Design region (only a real round-trip through the ASP.NET Core pipeline exercises
-// [EndpointAuthorize(Policy="credential-management")]'s either-scheme RequireAssertion). Ceremony
+// [EndpointAuthorize(Policy=credential.manage.self, AuthenticationSchemes=identity-session,agent-token)]). Ceremony
 // setup goes through CredentialCeremonyHelpers (see that file's Design region for why this task's
 // setup is shared rather than duplicated per file).
 // The no-secret-material assertion is two layers (round-1 review M4): a STRUCTURAL check

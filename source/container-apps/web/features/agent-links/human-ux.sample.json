@@ -1,0 +1,28 @@
+{
+  "spec": "timewarp.humanUx/v1",
+  "kind": "handoff",
+  "title": "Linked human",
+  "summary": "Present this to your operator. Paid service does not require a linked human — this payload is optional chrome for agents that have one.",
+  "link": {
+    "id": "11111111-2222-3333-4444-555555555555",
+    "status": "Approved",
+    "agentPrincipalId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    "humanPrincipalId": "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+  },
+  "human": {
+    "displayName": "Ada",
+    "email": "ada@example.com"
+  },
+  "actions": [
+    {
+      "id": "open-profile",
+      "label": "Open profile",
+      "href": "/Profile"
+    },
+    {
+      "id": "open-links",
+      "label": "Manage agent links",
+      "href": "/AgentLinks"
+    }
+  ]
+}

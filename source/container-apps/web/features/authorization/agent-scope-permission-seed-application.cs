@@ -9,6 +9,9 @@
 // Expand unions known scopes, ignores unknown, orders by PermissionIds.All for stable session/
 // test output. Invariant (pinned by tests): map values ∩ RolePermissionSeed.AdminPermissions is
 // empty so no agent token can hold admin.* via scope seed alone.
+// identity:read also expands AgentLinkManageSelf (task 205): requesting/listing a human link and
+// fetching humanUx is the agent's identity graph, not credential material. A dedicated
+// human-link:manage AgentScope is deferred until a caller needs identity:read without linking.
 // Features substrate — same consumers as PermissionIds / PermissionEvaluator without TWA0009.
 #endregion
 
@@ -29,6 +32,7 @@ public static class AgentScopePermissionSeed
       [AgentScopes.IdentityRead] =
       [
         PermissionIds.IdentityRead,
+        PermissionIds.AgentLinkManageSelf,
       ],
       [AgentScopes.CredentialManage] =
       [

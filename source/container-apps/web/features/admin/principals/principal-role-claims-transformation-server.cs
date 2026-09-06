@@ -13,6 +13,10 @@
 // authorize via scopes → AgentScopePermissionSeed, never product roles. Anonymous / unknown
 // schemes are left alone.
 // Role claim values are Guid strings matching RoleIds so SPA and server RequireRole agree.
+// Task 160: do not catch RoleResolutionFailedException (or any store failure) here. Swallowing
+// as no role claims would present an authenticated principal with no grants (403). The throw
+// must leave AuthenticateAsync so RoleResolutionFailureMiddleware can map it to 503 — never
+// Challenge 401 (PolicyEvaluator: failed authenticate → Challenge) and never empty-roles 403.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;

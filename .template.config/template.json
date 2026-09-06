@@ -88,6 +88,8 @@
             "source/container-apps/web/features/profile/profile-entity-type-configuration-infrastructure.cs",
             "source/container-apps/web/features/authorization/ef-role-permission-store-infrastructure.cs",
             "source/container-apps/web/features/authorization/role-permission-grant-entity-type-configuration-infrastructure.cs",
+            "source/container-apps/web/features/agent-links/ef-agent-human-link-store-infrastructure.cs",
+            "source/container-apps/web/features/agent-links/agent-human-link-entity-type-configuration-infrastructure.cs",
             "tests/container-apps/web/web-infrastructure-tests/**"
           ]
         }

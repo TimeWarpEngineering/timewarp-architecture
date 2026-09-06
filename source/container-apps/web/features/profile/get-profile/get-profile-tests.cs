@@ -55,6 +55,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     {
       Response response = new Response(
         alias: "Ada",
+        email: "ada@example.com",
         language: "en-US",
         region: "US",
         theme: "system",
@@ -66,6 +67,7 @@ namespace TimeWarp.Architecture.Features.Profiles
 
       parsed.ShouldNotBeNull();
       parsed.Alias.ShouldBe("Ada");
+      parsed.Email.ShouldBe("ada@example.com");
       parsed.Language.ShouldBe("en-US");
       parsed.Region.ShouldBe("US");
       parsed.Theme.ShouldBe("system");
@@ -78,6 +80,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     {
       Response response = GetMockResponseFactory()(new Query());
       response.Alias.ShouldBe("alias");
+      response.Email.ShouldBeNull();
       response.Language.ShouldBe("en-US");
       response.Region.ShouldBe("US");
       response.Theme.ShouldBe("system");
@@ -89,7 +92,7 @@ namespace TimeWarp.Architecture.Features.Profiles
     public static Task EmptyAliasJson_Should_ThrowDuringDeserialization()
     {
       const string json =
-        """{"alias":"","language":"en-US","region":"US","theme":"system","notifications":false,"avatar":"x"}""";
+        """{"alias":"","email":null,"language":"en-US","region":"US","theme":"system","notifications":false,"avatar":"x"}""";
 
       Should.Throw<Exception>(() =>
         JsonSerializer.Deserialize<Response>(json, ContractSerializationDefaults.Options));
@@ -173,6 +176,7 @@ namespace TimeWarp.Architecture.Features.Profiles
         _ => throw new InvalidOperationException("Expected Response"));
 
       response.Alias.ShouldBe("Member");
+      response.Email.ShouldBeNull();
       response.Language.ShouldBe("en-US");
       response.Region.ShouldBe("US");
       response.Theme.ShouldBe("system");
@@ -193,6 +197,7 @@ namespace TimeWarp.Architecture.Features.Profiles
       ProfileId id = ProfileId.From(userId);
       InMemoryProfileStore store = new InMemoryProfileStore();
       DomainProfile seeded = DomainProfile.Create(id, "Grace", "fr-FR", "FR", "dark");
+      seeded.SetEmail("grace@example.com");
       seeded.EnableNotifications();
       await store.AddAsync(seeded);
 
@@ -201,6 +206,7 @@ namespace TimeWarp.Architecture.Features.Profiles
         .Match(ok => ok, _ => throw new InvalidOperationException("Expected Response"));
 
       response.Alias.ShouldBe("Grace");
+      response.Email.ShouldBe("grace@example.com");
       response.Language.ShouldBe("fr-FR");
       response.Region.ShouldBe("FR");
       response.Theme.ShouldBe("dark");

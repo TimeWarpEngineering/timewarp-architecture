@@ -17,14 +17,15 @@
 // single-scheme endpoints, but neither can serve a policy that accepts either scheme without the
 // caller trying one, catching the miss, and trying the other. This port instead reads
 // HttpContext.User directly.
-// Round-1 review (M1, security-confirmed no risk): for a policy built with
-// AddAuthenticationSchemes(schemeA, schemeB), ASP.NET Core's authorization middleware authenticates
-// against EVERY listed scheme that the request carries credentials for, and MERGES every
-// successfully-authenticated identity onto HttpContext.User (one ClaimsIdentity per scheme that
-// succeeded) — it does not pick a single "winning" scheme and discard the rest. In the ordinary
-// case exactly one scheme succeeds (a browser presents the identity-session cookie; an agent
-// presents a bearer token; essentially never both), so HttpContext.User carries exactly one
-// identity and FindFirstValue's result is unambiguous. If a caller presents BOTH a valid cookie AND
+// Round-1 review (M1, security-confirmed no risk): when the combined authorization policy lists
+// schemeA and schemeB (from the named policy's AddAuthenticationSchemes and/or FastEndpoints
+// AuthSchemes from [EndpointAuthorize(AuthenticationSchemes)]), ASP.NET Core's authorization
+// middleware authenticates against EVERY listed scheme that the request carries credentials for,
+// and MERGES every successfully-authenticated identity onto HttpContext.User (one ClaimsIdentity
+// per scheme that succeeded) — it does not pick a single "winning" scheme and discard the rest.
+// In the ordinary case exactly one scheme succeeds (a browser presents the identity-session cookie;
+// an agent presents a bearer token; essentially never both), so HttpContext.User carries exactly
+// one identity and FindFirstValue's result is unambiguous. If a caller presents BOTH a valid cookie AND
 // a valid bearer token on the same request, both succeed and both identities are merged;
 // FindFirstValue then returns the principal-id claim from whichever identity happens first in
 // merge order, not a deliberately resolved "the real caller." This is deliberately NOT hardened

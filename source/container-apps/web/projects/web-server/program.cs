@@ -18,9 +18,11 @@
 // UseRouting — bare /api → /api/tip for x402 scanners, task 104-020) → UseRouting →
 // UseRateLimiter (task 104-015: path-classified GlobalLimiter for principal-register +
 // payment-challenge; after routing so rewrites are settled; edge/Cloudflare is outer ring
-// only — 104-023) → UseAuthentication → UseAuthorization → UseAntiforgery (Blazor) →
-// UseFastEndpoints → UseScalarApiReference (MapOpenApi + Scalar UI; after FE so endpoint
-// metadata is registered). Auth before FE; no FE antiforgery for JSON APIs.
+// only — 104-023) → RoleResolutionFailureMiddleware (task 160: inner of DeveloperExceptionPage,
+// before UseAuthentication, maps RoleResolutionFailedException to 503) → UseAuthentication →
+// UseAuthorization → UseAntiforgery (Blazor) → UseFastEndpoints → UseScalarApiReference
+// (MapOpenApi + Scalar UI; after FE so endpoint metadata is registered). Auth before FE; no FE
+// antiforgery for JSON APIs.
 // IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
 // OpenAPI document: CommonServerModule.AddOpenApi (FastEndpoints.OpenApi, always-on Scalar on web).
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (identity/profile
@@ -47,6 +49,7 @@ using TimeWarp.Architecture.Abuse;
 using TimeWarp.Architecture.AgentDiscovery;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals;
+using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Common.Infrastructure;
@@ -184,6 +187,7 @@ public class Program : IAspNetProgram
     ConfigureSettings(serviceCollection, configuration);
     InMemoryIdentityStoresModule.ConfigureServices(serviceCollection, configuration);
     InMemoryProfileStoresModule.ConfigureServices(serviceCollection, configuration);
+    InMemoryAgentHumanLinkStoresModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
 #if postgres
     PostgresDbModule.ConfigureServices(serviceCollection, configuration);
@@ -409,6 +413,11 @@ public class Program : IAspNetProgram
     // reach handlers / PaymentGate. Path-classified GlobalLimiter + structured 429 OnRejected.
     // Edge volumetric limits stay outside the app (104-023).
     webApplication.UseRateLimiter();
+
+    // Task 160: inner of UseDeveloperExceptionPage (registered above in Development) so a
+    // RoleResolutionFailedException from IClaimsTransformation becomes 503, not the Dev page's
+    // 500 and not cookie Challenge 401. Production has no Dev page; this is the mapper.
+    webApplication.UseMiddleware<RoleResolutionFailureMiddleware>();
 
     // Identity session (task 104-003): named cookie scheme only — the dormant Entra registration's
     // own auth flow is untouched. Ceremony endpoints (register/authenticate) are anonymous by

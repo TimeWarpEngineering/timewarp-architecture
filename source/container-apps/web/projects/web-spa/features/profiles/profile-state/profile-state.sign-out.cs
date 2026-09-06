@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.Extensions.Configuration;
+using TimeWarp.Architecture.Features.AgentLinks;
 using TimeWarp.Architecture.Features.Authorization;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Services;
@@ -37,6 +38,7 @@ partial class ProfileState
     // TWA0009 walks the innermost type declaration (see SliceIsolationAnalyzer.GetContainingType).
     [CrossSliceReference(typeof(AuthorizationState), "Sign-out resets role/permission cache with profile chrome (same Initialize as ClearCurrentUser).")]
     [CrossSliceReference(typeof(CredentialsState), "Sign-out clears credential list with profile chrome.")]
+    [CrossSliceReference(typeof(AgentLinksState), "Sign-out clears agent-human links with profile chrome.")]
     internal sealed class Handler : BaseHandler<Action>
     {
       private readonly IWebServerApiService ApiService;
@@ -81,6 +83,7 @@ partial class ProfileState
         ProfileState.Initialize();
         Store.GetState<AuthorizationState>().Initialize();
         Store.GetState<CredentialsState>().Initialize();
+        Store.GetState<AgentLinksState>().Initialize();
 
         if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
         {

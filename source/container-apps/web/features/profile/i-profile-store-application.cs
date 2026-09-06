@@ -6,7 +6,7 @@
 // Task 148 D4: dual-mode store behind IProfileStore so application stays free of EF.
 //   - InMemoryProfileStore singleton is the zero-infra default (InMemoryProfileStoresModule).
 //   - EfProfileStore scoped replaces it when PostgresDbModule sees a connection string.
-// Find/Add only for this task (GetProfile create-if-missing); mutations come later with edit UX.
+// Find/Add for GetProfile create-if-missing; Update for UpdateProfile (task 205).
 // ProfileId is 1:1 with the authenticated UserId (Profile.Create(ProfileId, …)).
 #endregion
 
@@ -25,4 +25,10 @@ public interface IProfileStore
   /// already exists (callers that race create-if-missing re-find after this).
   /// </summary>
   Task AddAsync(Profile profile, CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// Persists mutations already applied on <paramref name="profile"/>. Throws
+  /// <see cref="InvalidOperationException"/> when the id is unknown.
+  /// </summary>
+  Task UpdateAsync(Profile profile, CancellationToken cancellationToken = default);
 }

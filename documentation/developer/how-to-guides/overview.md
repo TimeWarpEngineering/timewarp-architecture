@@ -8,6 +8,7 @@ Task-oriented guides for working in a TimeWarp Architecture solution.
 - [How to upgrade to analyzer NuGet packages](how-to-upgrade-to-analyzer-packages.md)
 - [How to add your aggregate](how-to-add-your-aggregate.md) — domain → EF mapping → SaveChanges → tests
   ([ADR-0009](../conceptual/architectural-decision-records/approved/0009-postgres-ef-golden-persistence-path.md))
+- [How to place progressive profile and agent–human links](how-to-progressive-profile-and-agent-human-link.md) — Identity vs Features.Profiles vs Features.AgentLinks (task 205)
 - [How to remove demo features](how-to-remove-demo-features.md)
 
 ## Authorization

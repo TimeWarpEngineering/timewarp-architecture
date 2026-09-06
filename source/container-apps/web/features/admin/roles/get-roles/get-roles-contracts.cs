@@ -16,10 +16,11 @@
 // PermissionRequirementHandler evaluates via IPermissionEvaluator; SPA pages use
 // PermissionIds.AdminRolesRead (182-003 claim policies).
 // [AuthApiRequest] on the Query remains a client-facing/mock-mode identity signal only.
-// AuthenticationSchemes (task 158): identity-session + mock-identity-session so the generated
-// FastEndpoint's AuthSchemes(...) invokes the mock handler under closed-box ingress tests —
-// without this, Policies(...) alone never runs mock-identity-session and non-admin mock
-// principals fall through as 401 instead of 403. See AuthenticationSchemeNames' Design region.
+// AuthenticationSchemes (task 158 / 161): identity-session + mock-identity-session so the
+// generated FastEndpoint's AuthSchemes(...) invokes the mock handler under closed-box ingress
+// tests. PermissionIds policies have no AddAuthenticationSchemes; Policies(...) alone would
+// authenticate only the default identity-session scheme and non-admin mock principals would
+// fall through as 401 instead of 403. See AuthenticationSchemeNames' Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;

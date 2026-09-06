@@ -49,7 +49,9 @@ namespace TimeWarp.Architecture.Features
       permissions.ShouldBe(
       [
         PermissionIds.ProfileRead,
+        PermissionIds.ProfileWrite,
         PermissionIds.SettingsRead,
+        PermissionIds.AgentLinkManageSelf,
         PermissionIds.CredentialManageSelf,
       ]);
       (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.IdentitySession, PermissionIds.ProfileRead))
@@ -102,7 +104,9 @@ namespace TimeWarp.Architecture.Features
       permissions.ShouldBe(
       [
         PermissionIds.ProfileRead,
+        PermissionIds.ProfileWrite,
         PermissionIds.SettingsRead,
+        PermissionIds.AgentLinkManageSelf,
         PermissionIds.CredentialManageSelf,
       ]);
       foreach (string adminPermission in RolePermissionSeed.AdminPermissions)
@@ -196,7 +200,11 @@ namespace TimeWarp.Architecture.Features
         id,
         AuthenticationSchemeNames.AgentToken);
 
-      permissions.ShouldBe([PermissionIds.IdentityRead]);
+      permissions.ShouldBe(
+      [
+        PermissionIds.AgentLinkManageSelf,
+        PermissionIds.IdentityRead,
+      ]);
       (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.AgentToken, PermissionIds.IdentityRead))
         .ShouldBeTrue();
       (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.AgentToken, PermissionIds.AdminAccess))
@@ -222,6 +230,7 @@ namespace TimeWarp.Architecture.Features
 
       permissions.ShouldBe(
       [
+        PermissionIds.AgentLinkManageSelf,
         PermissionIds.IdentityRead,
         PermissionIds.CredentialManageSelf,
         PermissionIds.DemoInvoke,
@@ -287,6 +296,7 @@ namespace TimeWarp.Architecture.Features
 
       permissions.ShouldBe(
       [
+        PermissionIds.AgentLinkManageSelf,
         PermissionIds.IdentityRead,
         PermissionIds.CredentialManageSelf,
         PermissionIds.DemoInvoke,
@@ -346,7 +356,9 @@ namespace TimeWarp.Architecture.Features
         PermissionIds.DeveloperAccess,
         PermissionIds.DeveloperClaimsRead,
         PermissionIds.ProfileRead,
+        PermissionIds.ProfileWrite,
         PermissionIds.SettingsRead,
+        PermissionIds.AgentLinkManageSelf,
         PermissionIds.CredentialManageSelf,
       ]);
       permissions.ShouldNotContain(PermissionIds.AdminAccess);

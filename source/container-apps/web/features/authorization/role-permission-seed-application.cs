@@ -27,8 +27,10 @@ public static class RolePermissionSeed
   public static IReadOnlyList<string> SelfServicePermissions { get; } =
   [
     PermissionIds.ProfileRead,
+    PermissionIds.ProfileWrite,
     PermissionIds.SettingsRead,
     PermissionIds.CredentialManageSelf,
+    PermissionIds.AgentLinkManageSelf,
   ];
 
   /// <summary>All admin.* permissions (Administrator seed; protected-core target in 182-004).</summary>

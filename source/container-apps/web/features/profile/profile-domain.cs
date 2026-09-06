@@ -1,5 +1,5 @@
 #region Purpose
-// Domain aggregate for a user's personalization settings (display name, language, region, theme, notifications).
+// Domain aggregate for a user's personalization settings (display name, optional email, language, region, theme, notifications).
 #endregion
 
 #region Design
@@ -8,20 +8,19 @@
 // guard-clause-validated before the instance exists, so a Profile can never be constructed
 // half-initialized or with a blank required field. Create(string…) mints a new ProfileId;
 // Create(ProfileId, …) is the 1:1 principal key path (GetProfile create-if-missing, task 148) —
-// empty ProfileId is rejected. Named mutations (Rename/SetLanguage/SetRegion/SetTheme/
+// empty ProfileId is rejected. Named mutations (Rename/SetEmail/SetLanguage/SetRegion/SetTheme/
 // EnableNotifications/DisableNotifications) keep every state change intention-revealing —
 // there are no public setters.
-// MaxDisplayNameLength is the single source of truth for the length rule, enforced in BOTH places
-// that can produce a DisplayName (Create and Rename) as well as the nested Invariants validator —
-// deliberately not validator-only, so the const cannot drift into "guard clauses say one thing, the
-// validator says another" inside the exemplar itself (the agreement-by-memory failure mode this
-// repo organizes against). Future contract validators should reference Profile.MaxDisplayNameLength
-// instead of duplicating the literal (relates to TWA0002/TWA0003 nullability-vs-presence agreement
-// on the contract side).
-// The nested private Invariants validator is still the save-time half of the pattern —
+// Email is optional progressive profile (task 205): passkey/agent-key register, session, and token
+// never require it. Null or whitespace clears the field; a present value is trimmed, length-capped,
+// and format-checked. It does not live on TimeWarp.Identity.Principal — identity stays credentials
+// and trust; product chrome hangs here.
+// MaxDisplayNameLength / MaxEmailLength are the length-rule SSOT, enforced in Create/Rename/SetEmail
+// and the nested Invariants validator so the consts cannot drift inside the exemplar. Contract
+// validators duplicate the literals (contracts must not reference domain).
+// The nested private Invariants validator is the save-time half of the pattern —
 // DomainInvariantsGuard discovers and runs it from the SaveChanges hook before persistence
-// (TWA0011/TWA0012 enforce the shape at build time) — so an invalid DisplayName can never be
-// persisted even if some future code path bypasses Create/Rename. Private nesting keeps it out of
+// (TWA0011/TWA0012 enforce the shape at build time). Private nesting keeps it out of
 // AddValidatorsFromAssemblyContaining auto-registration; the class being sealed already satisfies
 // CA1852 so no pragma is needed.
 #endregion
@@ -33,6 +32,7 @@ using FluentValidation;
 public sealed class Profile : Entity<ProfileId>, IAggregateRoot
 {
   public const int MaxDisplayNameLength = 100;
+  public const int MaxEmailLength = 254;
 
   private Profile(ProfileId id, string displayName, string language, string region, string theme)
     : base(id)
@@ -44,6 +44,7 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
   }
 
   public string DisplayName { get; private set; }
+  public string? Email { get; private set; }
   public string Language { get; private set; }
   public string Region { get; private set; }
   public string Theme { get; private set; }
@@ -91,6 +92,24 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
     DisplayName = displayName;
   }
 
+  public void SetEmail(string? email)
+  {
+    if (string.IsNullOrWhiteSpace(email))
+    {
+      Email = null;
+      return;
+    }
+
+    string trimmed = email.Trim();
+    ArgumentOutOfRangeException.ThrowIfGreaterThan(trimmed.Length, MaxEmailLength, nameof(email));
+    if (!trimmed.Contains('@', StringComparison.Ordinal) || trimmed.StartsWith('@') || trimmed.EndsWith('@'))
+    {
+      throw new ArgumentException("Email must be a valid address.", nameof(email));
+    }
+
+    Email = trimmed;
+  }
+
   public void SetLanguage(string language)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(language);
@@ -121,9 +140,18 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
     public Invariants()
     {
       RuleFor(profile => profile.DisplayName).NotEmpty().MaximumLength(MaxDisplayNameLength);
+      RuleFor(profile => profile.Email)
+        .MaximumLength(MaxEmailLength)
+        .Must(BePlausibleEmail)
+        .When(profile => profile.Email is not null);
       RuleFor(profile => profile.Language).NotEmpty();
       RuleFor(profile => profile.Region).NotEmpty();
       RuleFor(profile => profile.Theme).NotEmpty();
     }
+
+    private static bool BePlausibleEmail(string? email) =>
+      email?.Contains('@', StringComparison.Ordinal) == true
+      && !email.StartsWith('@')
+      && !email.EndsWith('@');
   }
 }

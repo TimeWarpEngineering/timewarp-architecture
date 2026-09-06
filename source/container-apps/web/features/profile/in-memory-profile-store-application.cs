@@ -38,4 +38,18 @@ public sealed class InMemoryProfileStore : IProfileStore
 
     return Task.CompletedTask;
   }
+
+  public Task UpdateAsync(Profile profile, CancellationToken cancellationToken = default)
+  {
+    ArgumentNullException.ThrowIfNull(profile);
+    cancellationToken.ThrowIfCancellationRequested();
+
+    if (!Profiles.ContainsKey(profile.Id))
+    {
+      throw new InvalidOperationException($"Profile '{profile.Id}' does not exist.");
+    }
+
+    Profiles[profile.Id] = profile;
+    return Task.CompletedTask;
+  }
 }

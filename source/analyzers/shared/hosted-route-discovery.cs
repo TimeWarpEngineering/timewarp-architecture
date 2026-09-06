@@ -1,6 +1,6 @@
 #region Purpose
 // Shared symbol-walk helpers for discovering hosted [ApiEndpoint]/[ApiRoute] operations across
-// generators (FastEndpoint, ingress) and convention analyzers (endpoint coverage).
+// generators (FastEndpoint, ingress) and convention analyzers (endpoint coverage, policy agreement).
 #endregion
 
 #region Design
@@ -13,6 +13,8 @@
 // TryGetHostedOperation is the generation/ingress gate: [ApiEndpoint] + nested Query|Command +
 // [ApiRoute] + !ClientOnly. TryGetRoutedRequest is the coverage gate: any type carrying [ApiRoute]
 // (typically nested Query/Command), with ClientOnly checked on self and containing type.
+// GetPairedContractAssemblies is the TWA0006/TWA0024 family pairing (web-server ↔ web-contracts):
+// a server referencing another family's contracts as a client must not vouch for them.
 // GetAllNamespaces / GetAllTypes replace the triplicated private copies that previously drifted.
 #endregion
 
@@ -193,6 +195,27 @@ internal static class HostedRouteDiscovery
   /// </summary>
   public static string? ConvertHttpVerbToMethodName(string httpVerb)
     => IsAllowedHttpVerbName(httpVerb) ? httpVerb : null;
+
+  /// <summary>
+  /// This compilation plus referenced *contracts* assemblies that share the server's first name
+  /// segment (web-server ↔ web-contracts). A server referencing another family's contracts as a
+  /// client must not vouch for them.
+  /// </summary>
+  public static IEnumerable<IAssemblySymbol> GetPairedContractAssemblies(Compilation compilation)
+  {
+    string sourcePrefix = FirstSegment(compilation.Assembly.Name);
+    return compilation.SourceModule.ReferencedAssemblySymbols
+      .Where(assembly => assembly.Name.Contains("contracts", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(FirstSegment(assembly.Name), sourcePrefix, StringComparison.OrdinalIgnoreCase))
+      .Concat([(IAssemblySymbol)compilation.Assembly]);
+  }
+
+  /// <summary>"web-server" → "web"; "Web.Contracts" → "Web".</summary>
+  private static string FirstSegment(string assemblyName)
+  {
+    int cut = assemblyName.IndexOfAny(['-', '.']);
+    return cut < 0 ? assemblyName : assemblyName[..cut];
+  }
 
   private static IEnumerable<INamedTypeSymbol> AllNested(INamedTypeSymbol type)
   {
