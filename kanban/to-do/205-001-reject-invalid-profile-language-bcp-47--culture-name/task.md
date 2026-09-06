@@ -2,44 +2,68 @@
 
 ## Description
 
-Human demo of task **205** `/Profile`: **Language** accepts `en-US asdfasdf` and Save succeeds.
+Human demo of task **205** `/Profile`: **Language** is a free-text `FluentTextInput` and accepts
+`en-US asdfasdf`. **Region** is the same class of hole (`US asdf` would save).
 
-`ProfileDetailsValidator` only has `NotEmpty()` on Language (same for Region and Theme). Domain
-`Profile.SetLanguage` is `ThrowIfNullOrWhiteSpace` only. Shared FluentValidation on `IProfileDetails`
-is what the Blazor `EditForm` (`FluentValidator`) and the PUT `UpdateProfile` mediator both run —
-fix the shared validator so the form and the API reject the same junk.
+These are **closed catalogs**, not free strings. The control must be a **dropdown** (Fluent UI
+Blazor v5 `FluentSelect`), not a text box plus a regex.
+
+`ProfileDetailsValidator` only has `NotEmpty()` on Language / Region / Theme. Domain
+`SetLanguage` / `SetRegion` / `SetTheme` are `ThrowIfNullOrWhiteSpace` only. Shared
+FluentValidation on `IProfileDetails` is what the Blazor `EditForm` and PUT `UpdateProfile`
+both run — keep that agreement, but the **UX is a select from the same catalog**.
 
 ## Requirements
 
-- **Language** must be a real culture name (BCP-47 / `CultureInfo`), not a substring that happens
-  to start with `en-US`. `en-US asdfasdf` is invalid. `en-US` and other installed/predefined
-  cultures stay valid.
-- Prefer `CultureInfo.TryGetCultureInfo` (or predefined-only `GetCultureInfo`) over a hand-rolled
-  regex. Spaces and trailing junk must fail.
-- Keep the rule on **`ProfileDetailsValidator`** (`profile-details-contracts.cs`) so SPA EditForm
-  and `UpdateProfile.Validator` stay in agreement. Tighten domain `SetLanguage` / `Invariants` to
-  match so a store write cannot bypass the contract.
-- Add a failing-then-passing test: UpdateProfile (or ProfileDetailsValidator via existing
-  co-located tests) rejects `en-US asdfasdf` and still accepts `en-US`.
-- **Also look at Region and Theme** (same `NotEmpty()`-only hole). Theme defaults are
-  `system` / likely `light`/`dark` — if they are an allow-list, enforce it. Region should not
-  accept `US asdf` either. Do not expand into a locale picker UI on this task.
+### Language — ISO / BCP-47 dropdown
+
+- **Not** a text input. `FluentSelect` bound to `IProfileDetails.Language`.
+- Options are a **curated closed set** of BCP-47 tags the template actually supports
+  (e.g. `en-US`, `en-GB`, `fr-FR`, …). Do **not** dump every `CultureInfo.GetCultures()`
+  entry (hundreds of rows is not a demo).
+- Stored value stays the tag (`en-US`), label is human (`English (United States)`).
+- `en-US asdfasdf` cannot be entered. API still rejects any Language not in the catalog
+  (typed PUT / mock).
+
+### Region — ISO 3166-1 dropdown
+
+- Same treatment as Language. **Not** a text input.
+- Closed set of ISO 3166-1 alpha-2 codes (e.g. `US`, `GB`, `FR`). Stored code, labeled name.
+- Default remains `US`. `US asdf` cannot be entered; API rejects unknown codes.
+
+### Theme — allow-list dropdown
+
+- Same hole: `NotEmpty()` only. Closed set: `system`, `light`, `dark` (defaults already
+  `system`). Dropdown, not free text.
+
+### Shared catalog + validator
+
+- Catalog lives where contracts can see it (not the domain assembly). Validator
+  `Must` be in that set. Domain `SetLanguage` / `SetRegion` / `SetTheme` / `Invariants`
+  match so a store write cannot bypass.
+- ProfilePage: replace the three `FluentTextInput`s. Alias and Email stay text.
+- Tests: reject `en-US asdfasdf` and `US asdf`; accept current defaults `en-US` / `US` /
+  `system`.
 
 ## Checklist
 
-- [ ] Language: reject `en-US asdfasdf`; accept `en-US`
-- [ ] Shared `ProfileDetailsValidator` + domain invariants / `SetLanguage`
-- [ ] Region / Theme: close the same hole if it is the same class of bug
+- [ ] Language: FluentSelect from curated BCP-47 catalog
+- [ ] Region: FluentSelect from ISO 3166-1 alpha-2 catalog
+- [ ] Theme: FluentSelect `system` / `light` / `dark`
+- [ ] Shared `ProfileDetailsValidator` + domain invariants / setters
 - [ ] Co-located tests
-- [ ] Results + How to validate (form Save on `/Profile` plus automated filter)
+- [ ] Results + How to validate (form cannot type junk; Save still works for `en-US` / `US`)
 
 ## Notes
 
 - Origin: cockpit demo of 205 after master merge of PR #327.
-- Files: `profile-details-contracts.cs`, `profile-domain.cs`, `update-profile-tests.cs` /
-  `get-profile-tests.cs`, ProfilePage already binds `ProfileDetailsValidator`.
+- Maintainer (2026-09-06): Language and Region are fixed ISO sets — **dropdowns**, not
+  validated text boxes. Earlier brief said “do not expand into a locale picker”; that is
+  superseded.
+- Files: `profile-details-contracts.cs`, `profile-domain.cs`, `ProfilePage.razor`,
+  `update-profile-tests.cs`. Fluent UI v5 `FluentSelect` (two type params).
 
 ## Session
 
 - Created: 2837694 (2026-09-06)
-- Cockpit: Grok — demo finding on `/Profile` Language
+- Cockpit: Grok — demo finding on `/Profile` Language; dropdown requirement
