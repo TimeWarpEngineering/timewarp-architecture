@@ -47,12 +47,12 @@ both run — keep that agreement, but the **UX is a select from the same catalog
 
 ## Checklist
 
-- [ ] Language: FluentSelect from curated BCP-47 catalog
-- [ ] Region: FluentSelect from ISO 3166-1 alpha-2 catalog
-- [ ] Theme: FluentSelect `system` / `light` / `dark`
-- [ ] Shared `ProfileDetailsValidator` + domain invariants / setters
-- [ ] Co-located tests
-- [ ] Results + How to validate (form cannot type junk; Save still works for `en-US` / `US`)
+- [x] Language: FluentSelect from curated BCP-47 catalog
+- [x] Region: FluentSelect from ISO 3166-1 alpha-2 catalog
+- [x] Theme: FluentSelect `system` / `light` / `dark`
+- [x] Shared `ProfileDetailsValidator` + domain invariants / setters
+- [x] Co-located tests
+- [x] Results + How to validate (form cannot type junk; Save still works for `en-US` / `US`)
 
 ## Notes
 
@@ -63,7 +63,41 @@ both run — keep that agreement, but the **UX is a select from the same catalog
 - Files: `profile-details-contracts.cs`, `profile-domain.cs`, `ProfilePage.razor`,
   `update-profile-tests.cs`. Fluent UI v5 `FluentSelect` (two type params).
 
+## Results
+
+Language, Region, and Theme are closed catalogs. `ProfilePage` binds Fluent UI v5
+`FluentSelect<ProfileCatalog.Entry, string>` to `ProfileCatalog` (contracts).
+`ProfileDetailsValidator` `Must` membership so EditForm and PUT `UpdateProfile` agree.
+Domain `Create` / `SetLanguage` / `SetRegion` / `SetTheme` / `Invariants` duplicate the
+code sets (domain cannot reference contracts) so a store write cannot bypass.
+
+Junk such as `en-US asdfasdf`, `US asdf`, and `neon` is rejected. Defaults `en-US` /
+`US` / `system` (and every catalog entry) are accepted. Alias and Email stay text inputs.
+
+Did not exercise `/Profile` in a live browser this session (Aspire host not started).
+Form behavior is covered by the catalog + FluentSelect binding plus validator tests.
+
+### How to validate
+
+**Smoke**
+
+```bash
+dotnet run source/container-apps/web/features/profile/update-profile/update-profile-tests.cs -- --filter-method TrailingJunk
+cd tests/container-apps/web/web-domain-tests && dotnet test -c Release -- --filter-method trailing_junk
+dotnet run tools/dev-cli/dev.cs -- run
+```
+
+Then sign in, open `/Profile`, open the Language / Region / Theme dropdowns, pick
+`English (United States)` / `United States` / `System`, Save.
+
+**Expect**
+
+- Trailing-junk tests fail validation / throw `ArgumentException`; catalog-default tests pass.
+- Language, Region, and Theme are dropdowns, not text boxes — `en-US asdfasdf` cannot be typed.
+- Save with `en-US` / `US` / `system` succeeds and the page still shows those values.
+
 ## Session
 
 - Created: 2837694 (2026-09-06)
 - Cockpit: Grok — demo finding on `/Profile` Language; dropdown requirement
+- Implementation: Grok implementer — catalogs + FluentSelect + validator/domain + tests

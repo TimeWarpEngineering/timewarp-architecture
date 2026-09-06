@@ -18,6 +18,9 @@
 // MaxDisplayNameLength / MaxEmailLength are the length-rule SSOT, enforced in Create/Rename/SetEmail
 // and the nested Invariants validator so the consts cannot drift inside the exemplar. Contract
 // validators duplicate the literals (contracts must not reference domain).
+// Language/Region/Theme are closed catalogs. Codes here must match ProfileCatalog in
+// profile-details-contracts.cs (contracts cannot reference this assembly). Create, named
+// setters, and Invariants all consult the same HashSets so a store write cannot bypass the form.
 // The nested private Invariants validator is the save-time half of the pattern —
 // DomainInvariantsGuard discovers and runs it from the SaveChanges hook before persistence
 // (TWA0011/TWA0012 enforce the shape at build time). Private nesting keeps it out of
@@ -33,6 +36,63 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
 {
   public const int MaxDisplayNameLength = 100;
   public const int MaxEmailLength = 254;
+
+  private static readonly HashSet<string> AllowedLanguages =
+  [
+    "en-US",
+    "en-GB",
+    "fr-FR",
+    "de-DE",
+    "es-ES",
+    "it-IT",
+    "pt-BR",
+    "ja-JP",
+    "zh-CN",
+    "ko-KR",
+    "nl-NL",
+    "sv-SE",
+    "ar-SA",
+    "hi-IN",
+    "pl-PL"
+  ];
+
+  private static readonly HashSet<string> AllowedRegions =
+  [
+    "US",
+    "GB",
+    "FR",
+    "DE",
+    "ES",
+    "IT",
+    "PT",
+    "BR",
+    "JP",
+    "CN",
+    "KR",
+    "NL",
+    "SE",
+    "SA",
+    "IN",
+    "PL",
+    "CA",
+    "AU",
+    "MX",
+    "NZ",
+    "IE",
+    "AT",
+    "CH",
+    "BE",
+    "DK",
+    "NO",
+    "FI"
+  ];
+
+  private static readonly HashSet<string> AllowedThemes =
+  [
+    "system",
+    "light",
+    "dark"
+  ];
 
   private Profile(ProfileId id, string displayName, string language, string region, string theme)
     : base(id)
@@ -53,10 +113,10 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
   public static Profile Create(string displayName, string language, string region, string theme)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
-    ArgumentException.ThrowIfNullOrWhiteSpace(language);
-    ArgumentException.ThrowIfNullOrWhiteSpace(region);
-    ArgumentException.ThrowIfNullOrWhiteSpace(theme);
     EnsureDisplayNameLength(displayName);
+    EnsureLanguage(language);
+    EnsureRegion(region);
+    EnsureTheme(theme);
 
     return new Profile(ProfileId.New(), displayName, language, region, theme);
   }
@@ -77,10 +137,10 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
     }
 
     ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
-    ArgumentException.ThrowIfNullOrWhiteSpace(language);
-    ArgumentException.ThrowIfNullOrWhiteSpace(region);
-    ArgumentException.ThrowIfNullOrWhiteSpace(theme);
     EnsureDisplayNameLength(displayName);
+    EnsureLanguage(language);
+    EnsureRegion(region);
+    EnsureTheme(theme);
 
     return new Profile(id, displayName, language, region, theme);
   }
@@ -112,19 +172,19 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
 
   public void SetLanguage(string language)
   {
-    ArgumentException.ThrowIfNullOrWhiteSpace(language);
+    EnsureLanguage(language);
     Language = language;
   }
 
   public void SetRegion(string region)
   {
-    ArgumentException.ThrowIfNullOrWhiteSpace(region);
+    EnsureRegion(region);
     Region = region;
   }
 
   public void SetTheme(string theme)
   {
-    ArgumentException.ThrowIfNullOrWhiteSpace(theme);
+    EnsureTheme(theme);
     Theme = theme;
   }
 
@@ -135,6 +195,33 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
   private static void EnsureDisplayNameLength(string displayName) =>
     ArgumentOutOfRangeException.ThrowIfGreaterThan(displayName.Length, MaxDisplayNameLength, nameof(displayName));
 
+  private static void EnsureLanguage(string language)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(language);
+    if (!AllowedLanguages.Contains(language))
+    {
+      throw new ArgumentException("Language must be a supported culture name (for example en-US).", nameof(language));
+    }
+  }
+
+  private static void EnsureRegion(string region)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(region);
+    if (!AllowedRegions.Contains(region))
+    {
+      throw new ArgumentException("Region must be a supported ISO 3166-1 country code (for example US).", nameof(region));
+    }
+  }
+
+  private static void EnsureTheme(string theme)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(theme);
+    if (!AllowedThemes.Contains(theme))
+    {
+      throw new ArgumentException("Theme must be system, light, or dark.", nameof(theme));
+    }
+  }
+
   private sealed class Invariants : AbstractValidator<Profile>
   {
     public Invariants()
@@ -144,9 +231,9 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
         .MaximumLength(MaxEmailLength)
         .Must(BePlausibleEmail)
         .When(profile => profile.Email is not null);
-      RuleFor(profile => profile.Language).NotEmpty();
-      RuleFor(profile => profile.Region).NotEmpty();
-      RuleFor(profile => profile.Theme).NotEmpty();
+      RuleFor(profile => profile.Language).NotEmpty().Must(AllowedLanguages.Contains);
+      RuleFor(profile => profile.Region).NotEmpty().Must(AllowedRegions.Contains);
+      RuleFor(profile => profile.Theme).NotEmpty().Must(AllowedThemes.Contains);
     }
 
     private static bool BePlausibleEmail(string? email) =>

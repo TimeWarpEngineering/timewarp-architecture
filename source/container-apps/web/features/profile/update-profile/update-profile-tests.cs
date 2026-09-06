@@ -118,6 +118,89 @@ namespace TimeWarp.Architecture.Features.Profiles
       result.IsValid.ShouldBeTrue();
       return Task.CompletedTask;
     }
+
+    public static Task LanguageWithTrailingJunk_Should_FailValidation()
+    {
+      Command command = new()
+      {
+        Alias = "Ada",
+        Language = "en-US asdfasdf",
+        Region = "US",
+        Theme = "system"
+      };
+
+      ValidationResult result = new Validator().Validate(command);
+      result.IsValid.ShouldBeFalse();
+      result.Errors.ShouldContain(error => error.PropertyName == nameof(Command.Language));
+      return Task.CompletedTask;
+    }
+
+    public static Task RegionWithTrailingJunk_Should_FailValidation()
+    {
+      Command command = new()
+      {
+        Alias = "Ada",
+        Language = "en-US",
+        Region = "US asdf",
+        Theme = "system"
+      };
+
+      ValidationResult result = new Validator().Validate(command);
+      result.IsValid.ShouldBeFalse();
+      result.Errors.ShouldContain(error => error.PropertyName == nameof(Command.Region));
+      return Task.CompletedTask;
+    }
+
+    public static Task UnknownTheme_Should_FailValidation()
+    {
+      Command command = new()
+      {
+        Alias = "Ada",
+        Language = "en-US",
+        Region = "US",
+        Theme = "neon"
+      };
+
+      ValidationResult result = new Validator().Validate(command);
+      result.IsValid.ShouldBeFalse();
+      result.Errors.ShouldContain(error => error.PropertyName == nameof(Command.Theme));
+      return Task.CompletedTask;
+    }
+
+    public static Task CatalogDefaults_Should_PassValidation()
+    {
+      Command command = new()
+      {
+        Alias = "Ada",
+        Language = "en-US",
+        Region = "US",
+        Theme = "system"
+      };
+
+      ValidationResult result = new Validator().Validate(command);
+      result.IsValid.ShouldBeTrue();
+      return Task.CompletedTask;
+    }
+
+    public static Task CatalogEntries_Should_BeAcceptedByDomain()
+    {
+      foreach (ProfileCatalog.Entry entry in ProfileCatalog.Languages)
+      {
+        DomainProfile.Create("Ada", entry.Code, "US", "system").Language.ShouldBe(entry.Code);
+      }
+
+      foreach (ProfileCatalog.Entry entry in ProfileCatalog.Regions)
+      {
+        DomainProfile.Create("Ada", "en-US", entry.Code, "system").Region.ShouldBe(entry.Code);
+      }
+
+      foreach (ProfileCatalog.Entry entry in ProfileCatalog.Themes)
+      {
+        DomainProfile.Create("Ada", "en-US", "US", entry.Code).Theme.ShouldBe(entry.Code);
+      }
+
+      return Task.CompletedTask;
+    }
   }
 
   [TestTag("Handler")]
