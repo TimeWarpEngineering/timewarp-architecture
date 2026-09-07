@@ -1,5 +1,5 @@
 #region Purpose
-// Shared editable progressive-profile shape, closed Language/Region/Theme catalogs, and validation.
+// Shared editable progressive-profile shape, ISO Language/Region catalogs, Theme set, and validation.
 #endregion
 
 #region Design
@@ -9,14 +9,20 @@
 // / MaxEmailLength — contracts must not reference the domain assembly. Email is optional
 // (progressive; never a register/session gate). Alias stays required so chrome always has a name
 // (GetProfile create-if-missing defaults to "Member").
-// Language, Region, and Theme are closed catalogs (not free text): the SPA binds FluentSelect to
-// ProfileCatalog and ProfileDetailsValidator.Must membership so typed PUT cannot sneak junk the
-// form cannot type. Domain duplicates the code sets (it cannot reference contracts) so a store
-// write cannot bypass. Catalogs are curated demo subsets — not CultureInfo.GetCultures() and not
-// every ISO 3166-1 row.
+// Language and Region are BCL ISO catalogs, not handwritten lists: dropdowns bind ProfileCatalog
+// (specific cultures + distinct ISO 3166-1 alpha-2 from those cultures). Validators use
+// CultureInfo.GetCultureInfo(name, predefinedOnly: true) for language and membership in the
+// GetCultures-derived region set (new RegionInfo(alpha2) rejects a few catalog codes such as
+// EH/DG/EA/IC). Domain repeats those BCL checks; it cannot reference this assembly. Theme stays
+// the closed system/light/dark set.
+// Recognizing a stored locale is not applying UI translations. Profile.Language is a preference;
+// missing resources fall back to English (web-spa SetIsoCulture stays en-US). Language and Region
+// are independent (th-TH + US is valid). Junk such as "en-US asdfasdf" still fails the BCL checks.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
+
+using System.Globalization;
 
 public interface IProfileDetails
 {
@@ -32,55 +38,12 @@ public static class ProfileCatalog
 {
   public sealed record Entry(string Code, string Label);
 
-  public static readonly IReadOnlyList<Entry> Languages =
-  [
-    new("en-US", "English (United States)"),
-    new("en-GB", "English (United Kingdom)"),
-    new("fr-FR", "French (France)"),
-    new("de-DE", "German (Germany)"),
-    new("es-ES", "Spanish (Spain)"),
-    new("it-IT", "Italian (Italy)"),
-    new("pt-BR", "Portuguese (Brazil)"),
-    new("ja-JP", "Japanese (Japan)"),
-    new("zh-CN", "Chinese (Simplified, China)"),
-    new("ko-KR", "Korean (Korea)"),
-    new("nl-NL", "Dutch (Netherlands)"),
-    new("sv-SE", "Swedish (Sweden)"),
-    new("ar-SA", "Arabic (Saudi Arabia)"),
-    new("hi-IN", "Hindi (India)"),
-    new("pl-PL", "Polish (Poland)")
-  ];
+  public static readonly IReadOnlyList<Entry> Languages = BuildLanguages();
 
-  public static readonly IReadOnlyList<Entry> Regions =
-  [
-    new("US", "United States"),
-    new("GB", "United Kingdom"),
-    new("FR", "France"),
-    new("DE", "Germany"),
-    new("ES", "Spain"),
-    new("IT", "Italy"),
-    new("PT", "Portugal"),
-    new("BR", "Brazil"),
-    new("JP", "Japan"),
-    new("CN", "China"),
-    new("KR", "Korea"),
-    new("NL", "Netherlands"),
-    new("SE", "Sweden"),
-    new("SA", "Saudi Arabia"),
-    new("IN", "India"),
-    new("PL", "Poland"),
-    new("CA", "Canada"),
-    new("AU", "Australia"),
-    new("MX", "Mexico"),
-    new("NZ", "New Zealand"),
-    new("IE", "Ireland"),
-    new("AT", "Austria"),
-    new("CH", "Switzerland"),
-    new("BE", "Belgium"),
-    new("DK", "Denmark"),
-    new("NO", "Norway"),
-    new("FI", "Finland")
-  ];
+  public static readonly IReadOnlyList<Entry> Regions = BuildRegions();
+
+  private static readonly HashSet<string> RegionCodes =
+    new(Regions.Select(entry => entry.Code), StringComparer.OrdinalIgnoreCase);
 
   public static readonly IReadOnlyList<Entry> Themes =
   [
@@ -89,14 +52,74 @@ public static class ProfileCatalog
     new("dark", "Dark")
   ];
 
-  public static bool IsLanguage(string? value) =>
-    Languages.Any(entry => entry.Code == value);
+  public static bool IsLanguage(string? value)
+  {
+    if (string.IsNullOrWhiteSpace(value))
+    {
+      return false;
+    }
+
+    try
+    {
+      var culture = CultureInfo.GetCultureInfo(value, predefinedOnly: true);
+      return !culture.IsNeutralCulture && !string.IsNullOrEmpty(culture.Name);
+    }
+    catch (CultureNotFoundException)
+    {
+      return false;
+    }
+  }
 
   public static bool IsRegion(string? value) =>
-    Regions.Any(entry => entry.Code == value);
+    value is { Length: 2 } && RegionCodes.Contains(value);
 
   public static bool IsTheme(string? value) =>
     Themes.Any(entry => entry.Code == value);
+
+  private static IReadOnlyList<Entry> BuildLanguages()
+  {
+    return
+    [
+      .. CultureInfo.GetCultures(CultureTypes.SpecificCultures)
+        .Where(culture => !string.IsNullOrEmpty(culture.Name) && !culture.IsNeutralCulture)
+        .Select(culture => new Entry(culture.Name, culture.EnglishName))
+        .DistinctBy(entry => entry.Code, StringComparer.OrdinalIgnoreCase)
+        .OrderBy(entry => entry.Label, StringComparer.OrdinalIgnoreCase)
+        .ThenBy(entry => entry.Code, StringComparer.OrdinalIgnoreCase)
+    ];
+  }
+
+  private static IReadOnlyList<Entry> BuildRegions()
+  {
+    Dictionary<string, Entry> byCode = new(StringComparer.OrdinalIgnoreCase);
+    foreach (CultureInfo culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures))
+    {
+      RegionInfo regionInfo;
+      try
+      {
+        regionInfo = new RegionInfo(culture.Name);
+      }
+      catch (ArgumentException)
+      {
+        continue;
+      }
+
+      string code = regionInfo.TwoLetterISORegionName;
+      if (code.Length != 2)
+      {
+        continue;
+      }
+
+      byCode.TryAdd(code, new Entry(code, regionInfo.EnglishName));
+    }
+
+    return
+    [
+      .. byCode.Values
+        .OrderBy(entry => entry.Label, StringComparer.OrdinalIgnoreCase)
+        .ThenBy(entry => entry.Code, StringComparer.OrdinalIgnoreCase)
+    ];
+  }
 }
 
 public sealed class ProfileDetailsValidator : AbstractValidator<IProfileDetails>
@@ -114,11 +137,11 @@ public sealed class ProfileDetailsValidator : AbstractValidator<IProfileDetails>
     RuleFor(details => details.Language)
       .NotEmpty()
       .Must(ProfileCatalog.IsLanguage)
-      .WithMessage("Language must be a supported culture (for example en-US).");
+      .WithMessage("Language must be a valid specific culture name (for example en-US).");
     RuleFor(details => details.Region)
       .NotEmpty()
       .Must(ProfileCatalog.IsRegion)
-      .WithMessage("Region must be a supported ISO 3166-1 country code (for example US).");
+      .WithMessage("Region must be a valid ISO 3166-1 alpha-2 code (for example US).");
     RuleFor(details => details.Theme)
       .NotEmpty()
       .Must(ProfileCatalog.IsTheme)

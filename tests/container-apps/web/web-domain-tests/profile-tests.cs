@@ -50,6 +50,17 @@ public class Create
     return Task.CompletedTask;
   }
 
+  public static Task Accepts_thai_language_and_independent_region()
+  {
+    Profile thaiLanguage = Profile.Create("Ada", "th-TH", "US", "dark");
+    thaiLanguage.Language.ShouldBe("th-TH");
+    thaiLanguage.Region.ShouldBe("US");
+
+    Profile thaiRegion = Profile.Create("Ada", "en-US", "TH", "dark");
+    thaiRegion.Region.ShouldBe("TH");
+    return Task.CompletedTask;
+  }
+
   public static Task Rejects_whitespace_region()
   {
     Should.Throw<ArgumentException>(() => Profile.Create("Ada", "en-US", "   ", "dark"));
@@ -167,6 +178,14 @@ public class SetLanguage
     Should.Throw<ArgumentException>(() => profile.SetLanguage("en-US asdfasdf"));
     return Task.CompletedTask;
   }
+
+  public static Task Accepts_thai()
+  {
+    Profile profile = Profile.Create("Ada", "en-US", "US", "dark");
+    profile.SetLanguage("th-TH");
+    profile.Language.ShouldBe("th-TH");
+    return Task.CompletedTask;
+  }
 }
 
 public class SetRegion
@@ -193,6 +212,14 @@ public class SetRegion
   {
     Profile profile = Profile.Create("Ada", "en-US", "US", "dark");
     Should.Throw<ArgumentException>(() => profile.SetRegion("US asdf"));
+    return Task.CompletedTask;
+  }
+
+  public static Task Accepts_thai()
+  {
+    Profile profile = Profile.Create("Ada", "en-US", "US", "dark");
+    profile.SetRegion("TH");
+    profile.Region.ShouldBe("TH");
     return Task.CompletedTask;
   }
 }

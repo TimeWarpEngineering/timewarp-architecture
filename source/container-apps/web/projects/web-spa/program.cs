@@ -12,7 +12,9 @@
 // so the non-mock happy path does not require Entra. optional MOCK_WEB_API still compile-time for
 // offline SPA API fakes. Template symbols (api, grpc) trim optional services. API services use
 // explicit factories so DI does not guess constructors. Default culture is forced to ISO date
-// patterns for deterministic rendering.
+// patterns for deterministic rendering. SetIsoCulture hardcodes en-US: Profile.Language is a
+// stored preference only (task 205-002). Missing UI resources fall back to English until a
+// later i18n task ships translations and wires DefaultThreadCurrentUICulture.
 //
 // Task 145-009 R2-1 fix: ConfigureServices takes environmentName as a REQUIRED explicit
 // parameter — there is deliberately no config-derived overload. An earlier 2-arg overload used to
@@ -51,6 +53,8 @@ public class Program
 
   private static void SetIsoCulture()
   {
+    // English UI fallback: do not read Profile.Language here. Stored locale recognition is
+    // independent of applied UI culture until i18n resources exist for that tag.
     var isoCulture =
       new CultureInfo("en-US")
       {

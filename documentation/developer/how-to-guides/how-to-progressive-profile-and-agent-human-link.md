@@ -23,10 +23,21 @@ Locked 104 decisions that this placement preserves:
 
 ## Progressive profile
 
-- **GET** `api/Users/Current/Profile` — create-if-missing defaults (`Member`, `en-US`, …).
+- **GET** `api/Users/Current/Profile` — create-if-missing defaults (`Member`, `en-US`, `US`, `system`).
 - **PUT** `api/Users/Current/Profile` — `UpdateProfile` (`profile.write`, human session).
 - Email is optional. Alias stays required so chrome always has a name.
-- SPA: `/Profile` binds `IProfileDetails` (same shape as Get/Update).
+- SPA: `/Profile` binds `IProfileDetails` (same shape as Get/Update). Language and Region
+  dropdowns are the full BCL ISO catalogs (specific cultures + ISO 3166-1 alpha-2); Theme
+  stays `system` / `light` / `dark`.
+
+### Recognize vs apply (locale)
+
+Storing a locale is not translating the UI. `Profile.Language` / `Profile.Region` accept any
+valid specific culture and ISO 3166-1 alpha-2 code (`th-TH` / `TH` included). The SPA does
+**not** switch `DefaultThreadCurrentUICulture` from that preference — `web-spa` `SetIsoCulture()`
+keeps English (`en-US`) until a later i18n task ships resources for the stored tag. Missing
+translations therefore stay English. Language and Region are independent (`th-TH` + `US` is
+valid). Junk such as `en-US asdfasdf` or `US asdf` is still rejected.
 
 ## Agent–human link + humanUx
 

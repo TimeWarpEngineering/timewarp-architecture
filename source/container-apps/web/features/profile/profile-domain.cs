@@ -18,9 +18,13 @@
 // MaxDisplayNameLength / MaxEmailLength are the length-rule SSOT, enforced in Create/Rename/SetEmail
 // and the nested Invariants validator so the consts cannot drift inside the exemplar. Contract
 // validators duplicate the literals (contracts must not reference domain).
-// Language/Region/Theme are closed catalogs. Codes here must match ProfileCatalog in
-// profile-details-contracts.cs (contracts cannot reference this assembly). Create, named
-// setters, and Invariants all consult the same HashSets so a store write cannot bypass the form.
+// Language and Region use BCL checks (CultureInfo.GetCultureInfo(name, predefinedOnly: true)
+// for specific cultures; ISO 3166-1 alpha-2 from those cultures' RegionInfo), not a
+// handwritten list. Domain cannot reference the contracts assembly, so this is the same
+// check ProfileCatalog.IsLanguage / IsRegion uses, not a duplicated string table. Theme stays
+// the closed system/light/dark set. Create, named setters, and Invariants all consult these
+// helpers so a store write cannot bypass the form. Stored Language is a preference only; UI
+// culture application is a later i18n task.
 // The nested private Invariants validator is the save-time half of the pattern —
 // DomainInvariantsGuard discovers and runs it from the SaveChanges hook before persistence
 // (TWA0011/TWA0012 enforce the shape at build time). Private nesting keeps it out of
@@ -30,6 +34,7 @@
 
 namespace TimeWarp.Architecture.Features.Profiles.Domain;
 
+using System.Globalization;
 using FluentValidation;
 
 public sealed class Profile : Entity<ProfileId>, IAggregateRoot
@@ -37,55 +42,7 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
   public const int MaxDisplayNameLength = 100;
   public const int MaxEmailLength = 254;
 
-  private static readonly HashSet<string> AllowedLanguages =
-  [
-    "en-US",
-    "en-GB",
-    "fr-FR",
-    "de-DE",
-    "es-ES",
-    "it-IT",
-    "pt-BR",
-    "ja-JP",
-    "zh-CN",
-    "ko-KR",
-    "nl-NL",
-    "sv-SE",
-    "ar-SA",
-    "hi-IN",
-    "pl-PL"
-  ];
-
-  private static readonly HashSet<string> AllowedRegions =
-  [
-    "US",
-    "GB",
-    "FR",
-    "DE",
-    "ES",
-    "IT",
-    "PT",
-    "BR",
-    "JP",
-    "CN",
-    "KR",
-    "NL",
-    "SE",
-    "SA",
-    "IN",
-    "PL",
-    "CA",
-    "AU",
-    "MX",
-    "NZ",
-    "IE",
-    "AT",
-    "CH",
-    "BE",
-    "DK",
-    "NO",
-    "FI"
-  ];
+  private static readonly HashSet<string> AllowedRegions = BuildIso3166Alpha2();
 
   private static readonly HashSet<string> AllowedThemes =
   [
@@ -198,19 +155,56 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
   private static void EnsureLanguage(string language)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(language);
-    if (!AllowedLanguages.Contains(language))
+    if (!IsSpecificCulture(language))
     {
-      throw new ArgumentException("Language must be a supported culture name (for example en-US).", nameof(language));
+      throw new ArgumentException("Language must be a valid specific culture name (for example en-US).", nameof(language));
     }
   }
 
   private static void EnsureRegion(string region)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(region);
-    if (!AllowedRegions.Contains(region))
+    if (!IsIso3166Alpha2(region))
     {
-      throw new ArgumentException("Region must be a supported ISO 3166-1 country code (for example US).", nameof(region));
+      throw new ArgumentException("Region must be a valid ISO 3166-1 alpha-2 code (for example US).", nameof(region));
     }
+  }
+
+  private static bool IsSpecificCulture(string language)
+  {
+    try
+    {
+      var culture = CultureInfo.GetCultureInfo(language, predefinedOnly: true);
+      return !culture.IsNeutralCulture && !string.IsNullOrEmpty(culture.Name);
+    }
+    catch (CultureNotFoundException)
+    {
+      return false;
+    }
+  }
+
+  private static bool IsIso3166Alpha2(string region) =>
+    region.Length == 2 && AllowedRegions.Contains(region);
+
+  private static HashSet<string> BuildIso3166Alpha2()
+  {
+    HashSet<string> codes = new(StringComparer.OrdinalIgnoreCase);
+    foreach (CultureInfo culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures))
+    {
+      try
+      {
+        var regionInfo = new RegionInfo(culture.Name);
+        if (regionInfo.TwoLetterISORegionName.Length == 2)
+        {
+          codes.Add(regionInfo.TwoLetterISORegionName);
+        }
+      }
+      catch (ArgumentException)
+      {
+      }
+    }
+
+    return codes;
   }
 
   private static void EnsureTheme(string theme)
@@ -231,8 +225,8 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
         .MaximumLength(MaxEmailLength)
         .Must(BePlausibleEmail)
         .When(profile => profile.Email is not null);
-      RuleFor(profile => profile.Language).NotEmpty().Must(AllowedLanguages.Contains);
-      RuleFor(profile => profile.Region).NotEmpty().Must(AllowedRegions.Contains);
+      RuleFor(profile => profile.Language).NotEmpty().Must(IsSpecificCulture);
+      RuleFor(profile => profile.Region).NotEmpty().Must(IsIso3166Alpha2);
       RuleFor(profile => profile.Theme).NotEmpty().Must(AllowedThemes.Contains);
     }
 
