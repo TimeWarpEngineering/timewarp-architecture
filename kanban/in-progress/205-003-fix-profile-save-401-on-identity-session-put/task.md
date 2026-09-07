@@ -91,6 +91,7 @@ That is the string on Save. `DefaultApiHandler.HandleError` toasts `AddProblemDe
 - [x] Anonymous PUT 401; empty 401/403 toasted as Unauthorized/Forbidden, not Unhandled Error
 - [x] HTTP cookie integration test + any HttpApiService mapping tests
 - [x] Results + How to validate (include live `/Profile` Save after sign-in)
+- [x] Implementation review disposition (`review/`)
 
 ## Notes
 
@@ -110,6 +111,7 @@ That is the string on Save. `DefaultApiHandler.HandleError` toasts `AddProblemDe
 - Created: 3527185 (2026-09-07)
 - Cockpit: Grok `01a03d38-9611-7620-aae5-848e15dafa94` — `/Profile` Save 401; dispatch implementer
 - Implementer: Grok session `01a079ad-0377-7e21-899c-5e6ad32b1bab` (2026-09-07)
+- Review: Grok session `01a079be-a8fe-7fb3-850d-72380e467e32` (2026-09-07); round-1 general `01a079c1-a9f7-7c80-ac8f-a2569f1bfc01`
 
 ## Results
 
@@ -204,3 +206,15 @@ cd tests/foundation/foundation-contracts-tests && dotnet test -c Release -- --fi
 **Depends on:** passkey cookie (not mock). Live `/Profile` Save needs Aspire restarted onto this branch.
 
 **Not in scope:** live WebAuthn hardware in this implementer session; recycling the diagnosis Aspire process.
+
+### Review
+
+| Field | Value |
+|-------|--------|
+| Effort / roster | 1 · general only |
+| Rounds | 1 |
+| Final counts | open 0 · fixed 0 · wontfix 0 (all severities) |
+| Disposition | **clean** |
+| Paths | `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md` |
+
+Round 1 raised no issues. Cookie forwarding on server loopback, WASM SameOrigin credentials, honest 401/403 mapping, unsigned-in Save → Login, and HTTP cookie PUT coverage hold. No exceptions.
