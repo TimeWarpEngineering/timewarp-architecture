@@ -6,10 +6,13 @@
 
   Design: fetch and save go through ProfileState (TWA0022). EditForm binds IProfileDetails
   (UpdateProfile.Command) with ProfileDetailsValidator (Blazilla). Email is optional.
-  Language and Region are searchable FluentCombobox bound to the BCL ISO ProfileCatalog
-  (specific cultures + alpha-2 regions). Theme stays a 3-way FluentSelect. Combobox has no
-  free-form option, so junk like "en-US asdfasdf" cannot be submitted as a typed value; the
-  same BCL checks back the PUT validator. Stored Language is not applied as UI culture.
+  Language and Region are searchable FluentCombobox bound to ProfileCatalog.LanguageCodes /
+  RegionCodes (string tags, same order as Languages/Regions). Theme stays a 3-way FluentSelect
+  on Entry rows. Combobox has no free-form option, so junk like "en-US asdfasdf" cannot be
+  submitted as a typed value; the same BCL checks back the PUT validator. Stored Language is
+  not applied as UI culture. Fluent UI Blazor v5 Combobox Initialize writes closed text from
+  Value is TOption then GetOptionText — so Language/Region use TOption == TValue == string with
+  OptionText → LabelFor. Theme FluentSelect already shows labels without that combobox path.
 *@
 
 @code {
@@ -79,10 +82,9 @@
                 <ValidationMessage For="@(() => Details.Email)" />
               </div>
               <div>
-                <FluentCombobox TOption="ProfileCatalog.Entry" TValue="string"
-                  Items="@ProfileCatalog.Languages"
-                  OptionValue="@(static entry => entry?.Code)"
-                  OptionText="@(static entry => entry?.Label ?? string.Empty)"
+                <FluentCombobox TOption="string" TValue="string"
+                  Items="@ProfileCatalog.LanguageCodes"
+                  OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Languages, code))"
                   @bind-Value="Details.Language"
                   Label="Language"
                   Name="Language"
@@ -93,10 +95,9 @@
                 <ValidationMessage For="@(() => Details.Language)" />
               </div>
               <div>
-                <FluentCombobox TOption="ProfileCatalog.Entry" TValue="string"
-                  Items="@ProfileCatalog.Regions"
-                  OptionValue="@(static entry => entry?.Code)"
-                  OptionText="@(static entry => entry?.Label ?? string.Empty)"
+                <FluentCombobox TOption="string" TValue="string"
+                  Items="@ProfileCatalog.RegionCodes"
+                  OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Regions, code))"
                   @bind-Value="Details.Region"
                   Label="Region"
                   Name="Region"
@@ -127,4 +128,3 @@
     </Card>
   </div>
 </TimeWarpPage>
-

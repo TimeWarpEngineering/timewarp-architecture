@@ -9,15 +9,18 @@
 // / MaxEmailLength — contracts must not reference the domain assembly. Email is optional
 // (progressive; never a register/session gate). Alias stays required so chrome always has a name
 // (GetProfile create-if-missing defaults to "Member").
-// Language and Region are BCL ISO catalogs, not handwritten lists: dropdowns bind ProfileCatalog
-// (specific cultures + distinct ISO 3166-1 alpha-2 from those cultures). Validators use
-// CultureInfo.GetCultureInfo(name, predefinedOnly: true) for language and membership in the
-// GetCultures-derived region set (new RegionInfo(alpha2) rejects a few catalog codes such as
-// EH/DG/EA/IC). Domain repeats those BCL checks; it cannot reference this assembly. Theme stays
-// the closed system/light/dark set.
-// Recognizing a stored locale is not applying UI translations. Profile.Language is a preference;
-// missing resources fall back to English (web-spa SetIsoCulture stays en-US). Language and Region
-// are independent (th-TH + US is valid). Junk such as "en-US asdfasdf" still fails the BCL checks.
+// Language and Region are BCL ISO catalogs, not handwritten lists: Languages/Regions hold Entry
+// rows (specific cultures + distinct ISO 3166-1 alpha-2); LanguageCodes/RegionCodes cache the
+// same-order code lists for Combobox Items. Validators use CultureInfo.GetCultureInfo(name,
+// predefinedOnly: true) for language and membership in the GetCultures-derived region set
+// (new RegionInfo(alpha2) rejects a few catalog codes such as EH/DG/EA/IC). Domain repeats those
+// BCL checks; it cannot reference this assembly. Theme stays the closed system/light/dark set.
+// Fluent Combobox closed text comes from OnAfterRenderAsync: Value is TOption then GetOptionText,
+// so Language/Region bind TOption == TValue == string (ISO tag) with OptionText → LabelFor.
+// Matching/LabelFor remain for catalog lookup (tests and LabelFor OptionText). Recognizing a
+// stored locale is not applying UI translations. Profile.Language is a preference; missing
+// resources fall back to English (web-spa SetIsoCulture stays en-US). Language and Region are
+// independent (th-TH + US is valid). Junk such as "en-US asdfasdf" still fails the BCL checks.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
@@ -42,8 +45,14 @@ public static class ProfileCatalog
 
   public static readonly IReadOnlyList<Entry> Regions = BuildRegions();
 
-  private static readonly HashSet<string> RegionCodes =
-    new(Regions.Select(entry => entry.Code), StringComparer.OrdinalIgnoreCase);
+  public static readonly IReadOnlyList<string> LanguageCodes =
+    Languages.Select(entry => entry.Code).ToArray();
+
+  public static readonly IReadOnlyList<string> RegionCodes =
+    Regions.Select(entry => entry.Code).ToArray();
+
+  private static readonly HashSet<string> RegionCodeSet =
+    new(RegionCodes, StringComparer.OrdinalIgnoreCase);
 
   public static readonly IReadOnlyList<Entry> Themes =
   [
@@ -71,10 +80,28 @@ public static class ProfileCatalog
   }
 
   public static bool IsRegion(string? value) =>
-    value is { Length: 2 } && RegionCodes.Contains(value);
+    value is { Length: 2 } && RegionCodeSet.Contains(value);
 
   public static bool IsTheme(string? value) =>
     Themes.Any(entry => entry.Code == value);
+
+  public static IReadOnlyList<Entry> Matching(IReadOnlyList<Entry> catalog, string? code)
+  {
+    if (string.IsNullOrWhiteSpace(code))
+    {
+      return [];
+    }
+
+    Entry? match = catalog.FirstOrDefault(entry =>
+      string.Equals(entry.Code, code, StringComparison.OrdinalIgnoreCase));
+    return match is null ? [] : [match];
+  }
+
+  public static string LabelFor(IReadOnlyList<Entry> catalog, string? code)
+  {
+    IReadOnlyList<Entry> match = Matching(catalog, code);
+    return match.Count == 0 ? code ?? string.Empty : match[0].Label;
+  }
 
   private static IReadOnlyList<Entry> BuildLanguages()
   {
