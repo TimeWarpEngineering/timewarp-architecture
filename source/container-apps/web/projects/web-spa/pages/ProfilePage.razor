@@ -6,6 +6,8 @@
 
   Design: fetch and save go through ProfileState (TWA0022). EditForm binds IProfileDetails
   (UpdateProfile.Command) with ProfileDetailsValidator (Blazilla). Email is optional.
+  Language/Region/Theme are FluentSelect bound to ProfileCatalog so junk like
+  "en-US asdfasdf" cannot be typed; the same catalog backs the PUT validator.
 *@
 
 @code {
@@ -75,15 +77,39 @@
                 <ValidationMessage For="@(() => Details.Email)" />
               </div>
               <div>
-                <FluentTextInput @bind-Value=Details.Language Label="Language" Name="Language" data-qa="ProfileLanguage" style="width:100%" />
+                <FluentSelect TOption="ProfileCatalog.Entry" TValue="string"
+                  Items="@ProfileCatalog.Languages"
+                  OptionValue="@(static entry => entry?.Code)"
+                  OptionText="@(static entry => entry?.Label ?? string.Empty)"
+                  @bind-Value="Details.Language"
+                  Label="Language"
+                  Name="Language"
+                  Width="100%"
+                  data-qa="ProfileLanguage" />
                 <ValidationMessage For="@(() => Details.Language)" />
               </div>
               <div>
-                <FluentTextInput @bind-Value=Details.Region Label="Region" Name="Region" data-qa="ProfileRegion" style="width:100%" />
+                <FluentSelect TOption="ProfileCatalog.Entry" TValue="string"
+                  Items="@ProfileCatalog.Regions"
+                  OptionValue="@(static entry => entry?.Code)"
+                  OptionText="@(static entry => entry?.Label ?? string.Empty)"
+                  @bind-Value="Details.Region"
+                  Label="Region"
+                  Name="Region"
+                  Width="100%"
+                  data-qa="ProfileRegion" />
                 <ValidationMessage For="@(() => Details.Region)" />
               </div>
               <div>
-                <FluentTextInput @bind-Value=Details.Theme Label="Theme" Name="Theme" data-qa="ProfileTheme" style="width:100%" />
+                <FluentSelect TOption="ProfileCatalog.Entry" TValue="string"
+                  Items="@ProfileCatalog.Themes"
+                  OptionValue="@(static entry => entry?.Code)"
+                  OptionText="@(static entry => entry?.Label ?? string.Empty)"
+                  @bind-Value="Details.Theme"
+                  Label="Theme"
+                  Name="Theme"
+                  Width="100%"
+                  data-qa="ProfileTheme" />
                 <ValidationMessage For="@(() => Details.Theme)" />
               </div>
               <FluentCheckbox @bind-Value=Details.Notifications Label="Notifications" />

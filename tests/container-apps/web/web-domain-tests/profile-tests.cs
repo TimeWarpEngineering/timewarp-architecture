@@ -44,15 +44,33 @@ public class Create
     return Task.CompletedTask;
   }
 
+  public static Task Rejects_language_with_trailing_junk()
+  {
+    Should.Throw<ArgumentException>(() => Profile.Create("Ada", "en-US asdfasdf", "US", "dark"));
+    return Task.CompletedTask;
+  }
+
   public static Task Rejects_whitespace_region()
   {
     Should.Throw<ArgumentException>(() => Profile.Create("Ada", "en-US", "   ", "dark"));
     return Task.CompletedTask;
   }
 
+  public static Task Rejects_region_with_trailing_junk()
+  {
+    Should.Throw<ArgumentException>(() => Profile.Create("Ada", "en-US", "US asdf", "dark"));
+    return Task.CompletedTask;
+  }
+
   public static Task Rejects_whitespace_theme()
   {
     Should.Throw<ArgumentException>(() => Profile.Create("Ada", "en-US", "US", "   "));
+    return Task.CompletedTask;
+  }
+
+  public static Task Rejects_unknown_theme()
+  {
+    Should.Throw<ArgumentException>(() => Profile.Create("Ada", "en-US", "US", "neon"));
     return Task.CompletedTask;
   }
 
@@ -142,6 +160,13 @@ public class SetLanguage
     Should.Throw<ArgumentException>(() => profile.SetLanguage("   "));
     return Task.CompletedTask;
   }
+
+  public static Task Rejects_language_with_trailing_junk()
+  {
+    Profile profile = Profile.Create("Ada", "en-US", "US", "dark");
+    Should.Throw<ArgumentException>(() => profile.SetLanguage("en-US asdfasdf"));
+    return Task.CompletedTask;
+  }
 }
 
 public class SetRegion
@@ -163,6 +188,13 @@ public class SetRegion
     Should.Throw<ArgumentException>(() => profile.SetRegion("   "));
     return Task.CompletedTask;
   }
+
+  public static Task Rejects_region_with_trailing_junk()
+  {
+    Profile profile = Profile.Create("Ada", "en-US", "US", "dark");
+    Should.Throw<ArgumentException>(() => profile.SetRegion("US asdf"));
+    return Task.CompletedTask;
+  }
 }
 
 public class SetTheme
@@ -182,6 +214,13 @@ public class SetTheme
   {
     Profile profile = Profile.Create("Ada", "en-US", "US", "dark");
     Should.Throw<ArgumentException>(() => profile.SetTheme("   "));
+    return Task.CompletedTask;
+  }
+
+  public static Task Rejects_unknown_theme()
+  {
+    Profile profile = Profile.Create("Ada", "en-US", "US", "dark");
+    Should.Throw<ArgumentException>(() => profile.SetTheme("neon"));
     return Task.CompletedTask;
   }
 }
