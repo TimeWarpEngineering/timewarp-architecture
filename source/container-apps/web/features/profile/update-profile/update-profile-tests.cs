@@ -188,6 +188,42 @@ namespace TimeWarp.Architecture.Features.Profiles
       return Task.CompletedTask;
     }
 
+    public static Task ThaiLanguageAndIndependentRegion_Should_PassValidation()
+    {
+      ProfileCatalog.Languages.ShouldContain(entry => entry.Code == "th-TH");
+      ProfileCatalog.Regions.ShouldContain(entry => entry.Code == "TH");
+      ProfileCatalog.Languages.Count.ShouldBeGreaterThan(15);
+      ProfileCatalog.Regions.Count.ShouldBeGreaterThan(27);
+
+      ValidationResult thaiLanguage = new Validator().Validate(new Command
+      {
+        Alias = "Ada",
+        Language = "th-TH",
+        Region = "US",
+        Theme = "system"
+      });
+      thaiLanguage.IsValid.ShouldBeTrue();
+
+      ValidationResult thaiRegion = new Validator().Validate(new Command
+      {
+        Alias = "Ada",
+        Language = "en-US",
+        Region = "TH",
+        Theme = "system"
+      });
+      thaiRegion.IsValid.ShouldBeTrue();
+
+      ValidationResult both = new Validator().Validate(new Command
+      {
+        Alias = "Ada",
+        Language = "th-TH",
+        Region = "TH",
+        Theme = "system"
+      });
+      both.IsValid.ShouldBeTrue();
+      return Task.CompletedTask;
+    }
+
     public static Task CatalogEntries_Should_BeAcceptedByDomain()
     {
       foreach (ProfileCatalog.Entry entry in ProfileCatalog.Languages)
@@ -264,6 +300,26 @@ namespace TimeWarp.Architecture.Features.Profiles
       stored.DisplayName.ShouldBe("Ada");
       stored.Email.ShouldBe("ada@example.com");
       stored.Theme.ShouldBe("dark");
+    }
+
+    public static async Task Authenticated_thai_language_and_region_Should_Persist()
+    {
+      Guid userId = Guid.Parse("dddddddd-eeee-ffff-0000-111111111111");
+      InMemoryProfileStore store = new();
+      UpdateHandler handler = CreateHandler(userId, store);
+
+      Command command = ValidCommand();
+      command.Language = "th-TH";
+      command.Region = "TH";
+
+      OneOf<Response, SharedProblemDetails> result =
+        await handler.Handle(command, CancellationToken.None);
+
+      result.IsT0.ShouldBeTrue();
+      DomainProfile? stored = await store.FindAsync(ProfileId.From(userId));
+      stored.ShouldNotBeNull();
+      stored.Language.ShouldBe("th-TH");
+      stored.Region.ShouldBe("TH");
     }
 
     public static async Task Clearing_email_Should_SetNull()

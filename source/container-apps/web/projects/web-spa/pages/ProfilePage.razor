@@ -6,8 +6,10 @@
 
   Design: fetch and save go through ProfileState (TWA0022). EditForm binds IProfileDetails
   (UpdateProfile.Command) with ProfileDetailsValidator (Blazilla). Email is optional.
-  Language/Region/Theme are FluentSelect bound to ProfileCatalog so junk like
-  "en-US asdfasdf" cannot be typed; the same catalog backs the PUT validator.
+  Language and Region are searchable FluentCombobox bound to the BCL ISO ProfileCatalog
+  (specific cultures + alpha-2 regions). Theme stays a 3-way FluentSelect. Combobox has no
+  free-form option, so junk like "en-US asdfasdf" cannot be submitted as a typed value; the
+  same BCL checks back the PUT validator. Stored Language is not applied as UI culture.
 *@
 
 @code {
@@ -77,26 +79,30 @@
                 <ValidationMessage For="@(() => Details.Email)" />
               </div>
               <div>
-                <FluentSelect TOption="ProfileCatalog.Entry" TValue="string"
+                <FluentCombobox TOption="ProfileCatalog.Entry" TValue="string"
                   Items="@ProfileCatalog.Languages"
                   OptionValue="@(static entry => entry?.Code)"
                   OptionText="@(static entry => entry?.Label ?? string.Empty)"
                   @bind-Value="Details.Language"
                   Label="Language"
                   Name="Language"
+                  Placeholder="Search languages"
                   Width="100%"
+                  Height="20rem"
                   data-qa="ProfileLanguage" />
                 <ValidationMessage For="@(() => Details.Language)" />
               </div>
               <div>
-                <FluentSelect TOption="ProfileCatalog.Entry" TValue="string"
+                <FluentCombobox TOption="ProfileCatalog.Entry" TValue="string"
                   Items="@ProfileCatalog.Regions"
                   OptionValue="@(static entry => entry?.Code)"
                   OptionText="@(static entry => entry?.Label ?? string.Empty)"
                   @bind-Value="Details.Region"
                   Label="Region"
                   Name="Region"
+                  Placeholder="Search regions"
                   Width="100%"
+                  Height="20rem"
                   data-qa="ProfileRegion" />
                 <ValidationMessage For="@(() => Details.Region)" />
               </div>
