@@ -97,27 +97,40 @@ Possible fixes (implementer picks the smallest that actually shows the label):
 - Created: 3977825 (2026-09-07)
 - Cockpit: Grok `01a03d38-9611-7620-aae5-848e15dafa94` — Combobox shows Search instead of selection
 - Implementer: Grok `01a07b4e-33d8-7942-a0e1-7336d7900dd2` (2026-09-07)
+- Review oracle: Grok `01a07b57-c908-7731-8abd-42e8083e5e89` (2026-09-07) — effort 1, rounds 2, disposition clean
 
 ## Results
 
-Fluent UI Blazor v5 `FluentCombobox` (`FluentSelect.Initialize` / `FluentCombobox.GetSelectedSingleOption`) does **not** write `OptionText` into the closed input from `@bind-Value` when `TOption` (`ProfileCatalog.Entry`) ≠ `TValue` (`string`). The closed field stayed on Placeholder (`Search languages` / `Search regions`) even though the matching option was selected in the list.
+Fluent UI Blazor v5 `FluentCombobox` (`FluentSelect.Initialize`) writes closed-input text only when `Value is TOption`, then `GetOptionText`; otherwise `""` (Placeholder). Combobox JS then sets `_control.value` for `type==="combobox"`. Theme `FluentSelect` (dropdown) does not use that path.
 
-**Fix:** keep searchable Combobox + `@bind-Value` (stored ISO tag). Also `@bind-SelectedItems` to the matching catalog row so first-render `Select.Initialize` and later `Select.UpdateValue` write the catalog **label**. `FreeOption` stays unset. Theme stays `FluentSelect`. `SetIsoCulture` stays `en-US`. Mock auth was not turned on.
+**Fix:** Language/Region stay searchable Combobox with `@bind-Value` on the stored ISO tag. `TOption == TValue == string`, `Items` = `ProfileCatalog.LanguageCodes` / `RegionCodes`, `OptionText` → `LabelFor` so Initialize receives `English (United States)` / `United States`. `@bind-SelectedItems` was the first attempt and does **not** feed Initialize (single-select `GetOptionSelected` also ignores SelectedItems). `FreeOption` stays unset. Theme stays `FluentSelect`. `SetIsoCulture` stays `en-US`. Mock auth was not turned on.
 
-The SPA test host cannot assert Fluent JS closed-input text (`Select.Initialize`). Catalog label resolution is covered by a co-located Jaribu test. Live `/Profile` steps below are the closed-field proof.
+The SPA test host cannot assert Fluent JS closed-input text. Catalog lookup is covered by a co-located Jaribu test. Live `/Profile` steps below are the closed-field proof.
 
 ### Files
 
-- `source/container-apps/web/projects/web-spa/pages/ProfilePage.razor` — `@bind-SelectedItems` for Language/Region; sync from state after fetch/save
-- `source/container-apps/web/features/profile/profile-details-contracts.cs` — `ProfileCatalog.Matching` / `LabelFor`
+- `source/container-apps/web/projects/web-spa/pages/ProfilePage.razor` — string Combobox + LabelFor OptionText; Theme Select unchanged
+- `source/container-apps/web/features/profile/profile-details-contracts.cs` — `LanguageCodes` / `RegionCodes`, `Matching` / `LabelFor`
 - `source/container-apps/web/features/profile/update-profile/update-profile-tests.cs` — `MatchingCatalogCode_Should_ReturnCatalogLabel`
 - `tools/dev-cli/services/template-smoke-harness.cs` — web-jaribu expected succeeded `134` → `135`
 
 ### Tests
 
-- `dotnet run source/container-apps/web/features/profile/update-profile/update-profile-tests.cs` — **16 passed** (new matching test included)
-- `dotnet run tools/dev-cli/dev.cs -- build` — **0/0**
-- Live closed-field UX: not exercised in this session. `https://arch.timewarp.work/Profile` still redirects to `/Login` (unsigned-in). Ingress `https://localhost:63610` is the **master** Aspire (`dcp`), not this task branch. Restart Aspire onto `task/205-004-show-selected-language-and-region-on-profile-combo` and sign in with a passkey to prove the closed labels.
+- `dotnet run source/container-apps/web/features/profile/update-profile/update-profile-tests.cs` — **16 passed** (matching test included)
+- `dotnet build source/container-apps/web/projects/web-spa/web-spa.csproj -c Release` — **0/0** (post-review fix)
+- `dotnet run tools/dev-cli/dev.cs -- build` — **0/0** (implement session; not re-run after review fix)
+- Live closed-field UX: not exercised. Ingress `https://localhost:63610` is **master** Aspire (`dcp`), not this task branch. Restart Aspire onto `task/205-004-show-selected-language-and-region-on-profile-combo` and sign in with a passkey to prove closed labels.
+
+### Review disposition
+
+- **Outcome:** clean (0 open)
+- **Effort / roster:** 1 — general only
+- **Rounds:** 2
+- **Counts (final, round 2):** bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0/0/0
+- **M1 (bug, fixed):** SelectedItems did not fix closed labels; string TOption/TValue + LabelFor does
+- **M2 (suggestion, fixed):** catalog test kept as lookup coverage, not closed-input proof
+- **Paths:** `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`
+- **Wontfix / escalations:** none
 
 ### How to validate
 
