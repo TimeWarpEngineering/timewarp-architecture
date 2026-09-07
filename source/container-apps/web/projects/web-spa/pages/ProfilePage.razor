@@ -6,13 +6,13 @@
 
   Design: fetch and save go through ProfileState (TWA0022). EditForm binds IProfileDetails
   (UpdateProfile.Command) with ProfileDetailsValidator (Blazilla). Email is optional.
-  Language and Region are searchable FluentCombobox bound to the BCL ISO ProfileCatalog
-  (specific cultures + alpha-2 regions). Theme stays a 3-way FluentSelect. Combobox has no
-  free-form option, so junk like "en-US asdfasdf" cannot be submitted as a typed value; the
-  same BCL checks back the PUT validator. Stored Language is not applied as UI culture.
-  Fluent UI Blazor v5 Combobox does not write OptionText into the closed input from @bind-Value
-  when TOption (Entry) != TValue (string); @bind-SelectedItems supplies the matching catalog
-  row so Initialize/UpdateValue show the label instead of Placeholder.
+  Language and Region are searchable FluentCombobox bound to ProfileCatalog.LanguageCodes /
+  RegionCodes (string tags, same order as Languages/Regions). Theme stays a 3-way FluentSelect
+  on Entry rows. Combobox has no free-form option, so junk like "en-US asdfasdf" cannot be
+  submitted as a typed value; the same BCL checks back the PUT validator. Stored Language is
+  not applied as UI culture. Fluent UI Blazor v5 Combobox Initialize writes closed text from
+  Value is TOption then GetOptionText — so Language/Region use TOption == TValue == string with
+  OptionText → LabelFor. Theme FluentSelect already shows labels without that combobox path.
 *@
 
 @code {
@@ -23,8 +23,6 @@
 
   private UpdateProfile.Command Command { get; } = new();
   private IProfileDetails Details => Command;
-  private IEnumerable<ProfileCatalog.Entry> SelectedLanguageItems { get; set; } = [];
-  private IEnumerable<ProfileCatalog.Entry> SelectedRegionItems { get; set; } = [];
 
   private bool IsLoading =>
     IsAnyActive(typeof(ProfileState.FetchProfileDataActionSet.Action));
@@ -49,8 +47,6 @@
     Command.Region = ProfileState.Region ?? "US";
     Command.Theme = ProfileState.Theme ?? "system";
     Command.Notifications = ProfileState.Notifications == true;
-    SelectedLanguageItems = ProfileCatalog.Matching(ProfileCatalog.Languages, Command.Language);
-    SelectedRegionItems = ProfileCatalog.Matching(ProfileCatalog.Regions, Command.Region);
   }
 
   private async Task HandleValidSubmit()
@@ -86,12 +82,10 @@
                 <ValidationMessage For="@(() => Details.Email)" />
               </div>
               <div>
-                <FluentCombobox TOption="ProfileCatalog.Entry" TValue="string"
-                  Items="@ProfileCatalog.Languages"
-                  OptionValue="@(static entry => entry?.Code)"
-                  OptionText="@(static entry => entry?.Label ?? string.Empty)"
+                <FluentCombobox TOption="string" TValue="string"
+                  Items="@ProfileCatalog.LanguageCodes"
+                  OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Languages, code))"
                   @bind-Value="Details.Language"
-                  @bind-SelectedItems="SelectedLanguageItems"
                   Label="Language"
                   Name="Language"
                   Placeholder="Search languages"
@@ -101,12 +95,10 @@
                 <ValidationMessage For="@(() => Details.Language)" />
               </div>
               <div>
-                <FluentCombobox TOption="ProfileCatalog.Entry" TValue="string"
-                  Items="@ProfileCatalog.Regions"
-                  OptionValue="@(static entry => entry?.Code)"
-                  OptionText="@(static entry => entry?.Label ?? string.Empty)"
+                <FluentCombobox TOption="string" TValue="string"
+                  Items="@ProfileCatalog.RegionCodes"
+                  OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Regions, code))"
                   @bind-Value="Details.Region"
-                  @bind-SelectedItems="SelectedRegionItems"
                   Label="Region"
                   Name="Region"
                   Placeholder="Search regions"
@@ -136,4 +128,3 @@
     </Card>
   </div>
 </TimeWarpPage>
-

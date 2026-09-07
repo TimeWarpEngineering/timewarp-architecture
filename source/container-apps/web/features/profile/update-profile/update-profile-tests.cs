@@ -228,6 +228,11 @@ namespace TimeWarp.Architecture.Features.Profiles
 
     public static Task MatchingCatalogCode_Should_ReturnCatalogLabel()
     {
+      ProfileCatalog.LanguageCodes.ShouldContain("en-US");
+      ProfileCatalog.LanguageCodes.ShouldContain("th-TH");
+      ProfileCatalog.RegionCodes.ShouldContain("US");
+      ProfileCatalog.RegionCodes.ShouldContain("TH");
+
       ProfileCatalog.LabelFor(ProfileCatalog.Languages, "en-US").ShouldBe("English (United States)");
       ProfileCatalog.LabelFor(ProfileCatalog.Languages, "th-TH").ShouldBe("Thai (Thailand)");
       ProfileCatalog.LabelFor(ProfileCatalog.Regions, "US").ShouldBe("United States");
