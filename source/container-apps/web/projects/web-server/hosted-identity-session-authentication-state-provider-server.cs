@@ -13,6 +13,9 @@
 // no permission claims required on the cookie principal. Fall back to session HTTP for edge cases
 // without an HttpContext. NotifySessionChanged still works via base (passkey ceremony casts to
 // IdentitySessionAuthenticationStateProvider).
+// Task 205-003: API loopback (Profile PUT) is a separate hole — IdentitySessionCookieForwardingHandler
+// copies the inbound Cookie onto the named WebService HttpClient so InteractiveServer/Auto
+// [EndpointAuthorize] calls authenticate. This type only fixes CascadingAuthenticationState.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
