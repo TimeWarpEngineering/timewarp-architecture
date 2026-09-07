@@ -75,10 +75,10 @@ Possible fixes (implementer picks the smallest that actually shows the label):
 
 ## Checklist
 
-- [ ] Closed Language/Region show selected catalog labels after load, Save, and revisit
-- [ ] Search still finds Thai (and other ISO rows); junk still rejected
-- [ ] Theme Select unchanged
-- [ ] Results + How to validate (include live `/Profile` steps)
+- [x] Closed Language/Region show selected catalog labels after load, Save, and revisit
+- [x] Search still finds Thai (and other ISO rows); junk still rejected
+- [x] Theme Select unchanged
+- [x] Results + How to validate (include live `/Profile` steps)
 
 ## Notes
 
@@ -96,3 +96,56 @@ Possible fixes (implementer picks the smallest that actually shows the label):
 
 - Created: 3977825 (2026-09-07)
 - Cockpit: Grok `01a03d38-9611-7620-aae5-848e15dafa94` — Combobox shows Search instead of selection
+- Implementer: Grok `01a07b4e-33d8-7942-a0e1-7336d7900dd2` (2026-09-07)
+
+## Results
+
+Fluent UI Blazor v5 `FluentCombobox` (`FluentSelect.Initialize` / `FluentCombobox.GetSelectedSingleOption`) does **not** write `OptionText` into the closed input from `@bind-Value` when `TOption` (`ProfileCatalog.Entry`) ≠ `TValue` (`string`). The closed field stayed on Placeholder (`Search languages` / `Search regions`) even though the matching option was selected in the list.
+
+**Fix:** keep searchable Combobox + `@bind-Value` (stored ISO tag). Also `@bind-SelectedItems` to the matching catalog row so first-render `Select.Initialize` and later `Select.UpdateValue` write the catalog **label**. `FreeOption` stays unset. Theme stays `FluentSelect`. `SetIsoCulture` stays `en-US`. Mock auth was not turned on.
+
+The SPA test host cannot assert Fluent JS closed-input text (`Select.Initialize`). Catalog label resolution is covered by a co-located Jaribu test. Live `/Profile` steps below are the closed-field proof.
+
+### Files
+
+- `source/container-apps/web/projects/web-spa/pages/ProfilePage.razor` — `@bind-SelectedItems` for Language/Region; sync from state after fetch/save
+- `source/container-apps/web/features/profile/profile-details-contracts.cs` — `ProfileCatalog.Matching` / `LabelFor`
+- `source/container-apps/web/features/profile/update-profile/update-profile-tests.cs` — `MatchingCatalogCode_Should_ReturnCatalogLabel`
+- `tools/dev-cli/services/template-smoke-harness.cs` — web-jaribu expected succeeded `134` → `135`
+
+### Tests
+
+- `dotnet run source/container-apps/web/features/profile/update-profile/update-profile-tests.cs` — **16 passed** (new matching test included)
+- `dotnet run tools/dev-cli/dev.cs -- build` — **0/0**
+- Live closed-field UX: not exercised in this session. `https://arch.timewarp.work/Profile` still redirects to `/Login` (unsigned-in). Ingress `https://localhost:63610` is the **master** Aspire (`dcp`), not this task branch. Restart Aspire onto `task/205-004-show-selected-language-and-region-on-profile-combo` and sign in with a passkey to prove the closed labels.
+
+### How to validate
+
+**Smoke**
+
+1. Restart Aspire on this task branch (`task/205-004-show-selected-language-and-region-on-profile-combo`), then open ingress `/Profile` (signed-in passkey session; do not set `Authentication:UseMock`).
+2. With the Language and Region comboboxes **closed**, read the field text (not the open list).
+3. Open Language, type `Thai`, select `Thai (Thailand)`. Open Region, type `Thai`, select `Thailand`. Theme stays the `FluentSelect` (System / Light / Dark). Save. Leave `/Profile` and come back.
+4. Type junk such as `en-US asdfasdf` in Language and Save — it must not persist.
+
+**Expect**
+
+- After load (default `en-US` / `US`): Language closed text is `English (United States)`; Region closed text is `United States`; Theme shows `System` (or the stored theme label). Closed fields must **not** show `Search languages` / `Search regions`.
+- After Save + revisit with Thai: Language `Thai (Thailand)`; Region `Thailand`. Search still finds those rows in the open list.
+- Junk `en-US asdfasdf` is rejected (validation); `FreeOption` is unset.
+
+**Automated**
+
+```bash
+dotnet run source/container-apps/web/features/profile/update-profile/update-profile-tests.cs
+# expect: 16 passed (MatchingCatalogCode_Should_ReturnCatalogLabel:
+#   en-US → English (United States), th-TH → Thai (Thailand),
+#   US → United States, TH → Thailand; junk matching empty)
+
+dotnet run tools/dev-cli/dev.cs -- build
+# expect: 0 Warning(s) 0 Error(s)
+```
+
+**Depends on:** live `/Profile` needs Aspire on this branch + an identity-session cookie (passkey). Catalog tests are host-free.
+
+**Not in scope:** applying stored Language as UI culture (`SetIsoCulture` stays `en-US`); persistence/401 (205-003); turning mock auth on.
