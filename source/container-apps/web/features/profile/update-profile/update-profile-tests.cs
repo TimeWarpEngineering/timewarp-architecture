@@ -131,7 +131,7 @@ namespace TimeWarp.Architecture.Features.Profiles
 
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
-      result.Errors.ShouldContain(error => error.PropertyName == nameof(Command.Language));
+      result.Errors.ShouldContain(error => RejectsField(error, nameof(Command.Language)));
       return Task.CompletedTask;
     }
 
@@ -147,7 +147,7 @@ namespace TimeWarp.Architecture.Features.Profiles
 
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
-      result.Errors.ShouldContain(error => error.PropertyName == nameof(Command.Region));
+      result.Errors.ShouldContain(error => RejectsField(error, nameof(Command.Region)));
       return Task.CompletedTask;
     }
 
@@ -163,9 +163,15 @@ namespace TimeWarp.Architecture.Features.Profiles
 
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
-      result.Errors.ShouldContain(error => error.PropertyName == nameof(Command.Theme));
+      result.Errors.ShouldContain(error => RejectsField(error, nameof(Command.Theme)));
       return Task.CompletedTask;
     }
+
+    // Aggregator host tests mutate ValidatorOptions.Global so PropertyName is JSON camelCase
+    // (`language`); standalone runfiles keep PascalCase (`Language`).
+    static bool RejectsField(ValidationFailure error, string fieldName) =>
+      string.Equals(error.PropertyName, fieldName, StringComparison.OrdinalIgnoreCase)
+      || (error.ErrorMessage?.Contains(fieldName, StringComparison.Ordinal) ?? false);
 
     public static Task CatalogDefaults_Should_PassValidation()
     {

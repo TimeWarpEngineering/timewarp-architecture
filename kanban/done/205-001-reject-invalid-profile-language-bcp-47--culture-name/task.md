@@ -115,3 +115,4 @@ Round 1 raised no issues. Catalog and domain code sets match; FluentSelect compi
 - Cockpit: Grok — demo finding on `/Profile` Language; dropdown requirement
 - Implementation: Grok implementer — catalogs + FluentSelect + validator/domain + tests
 - Review: Grok review oracle — effort 1 general, disposition `clean` (2026-09-06)
+- CI (PR #328): web-jaribu aggregator reported PropertyName `language`/`region`/`theme` (JSON camelCase after host tests mutate ValidatorOptions.Global); standalone stays PascalCase. Assertions accept either, plus ErrorMessage; template-smoke web-jaribu expected 127→132.
