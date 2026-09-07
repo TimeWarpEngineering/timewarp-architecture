@@ -10,6 +10,9 @@
   (specific cultures + alpha-2 regions). Theme stays a 3-way FluentSelect. Combobox has no
   free-form option, so junk like "en-US asdfasdf" cannot be submitted as a typed value; the
   same BCL checks back the PUT validator. Stored Language is not applied as UI culture.
+  Fluent UI Blazor v5 Combobox does not write OptionText into the closed input from @bind-Value
+  when TOption (Entry) != TValue (string); @bind-SelectedItems supplies the matching catalog
+  row so Initialize/UpdateValue show the label instead of Placeholder.
 *@
 
 @code {
@@ -20,6 +23,8 @@
 
   private UpdateProfile.Command Command { get; } = new();
   private IProfileDetails Details => Command;
+  private IEnumerable<ProfileCatalog.Entry> SelectedLanguageItems { get; set; } = [];
+  private IEnumerable<ProfileCatalog.Entry> SelectedRegionItems { get; set; } = [];
 
   private bool IsLoading =>
     IsAnyActive(typeof(ProfileState.FetchProfileDataActionSet.Action));
@@ -44,6 +49,8 @@
     Command.Region = ProfileState.Region ?? "US";
     Command.Theme = ProfileState.Theme ?? "system";
     Command.Notifications = ProfileState.Notifications == true;
+    SelectedLanguageItems = ProfileCatalog.Matching(ProfileCatalog.Languages, Command.Language);
+    SelectedRegionItems = ProfileCatalog.Matching(ProfileCatalog.Regions, Command.Region);
   }
 
   private async Task HandleValidSubmit()
@@ -84,6 +91,7 @@
                   OptionValue="@(static entry => entry?.Code)"
                   OptionText="@(static entry => entry?.Label ?? string.Empty)"
                   @bind-Value="Details.Language"
+                  @bind-SelectedItems="SelectedLanguageItems"
                   Label="Language"
                   Name="Language"
                   Placeholder="Search languages"
@@ -98,6 +106,7 @@
                   OptionValue="@(static entry => entry?.Code)"
                   OptionText="@(static entry => entry?.Label ?? string.Empty)"
                   @bind-Value="Details.Region"
+                  @bind-SelectedItems="SelectedRegionItems"
                   Label="Region"
                   Name="Region"
                   Placeholder="Search regions"

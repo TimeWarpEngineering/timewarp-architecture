@@ -14,7 +14,8 @@
 // CultureInfo.GetCultureInfo(name, predefinedOnly: true) for language and membership in the
 // GetCultures-derived region set (new RegionInfo(alpha2) rejects a few catalog codes such as
 // EH/DG/EA/IC). Domain repeats those BCL checks; it cannot reference this assembly. Theme stays
-// the closed system/light/dark set.
+// the closed system/light/dark set. Matching/LabelFor resolve a stored tag to the catalog row
+// the Profile combobox binds as SelectedItems (v5 closed input is not Value when TOption != TValue).
 // Recognizing a stored locale is not applying UI translations. Profile.Language is a preference;
 // missing resources fall back to English (web-spa SetIsoCulture stays en-US). Language and Region
 // are independent (th-TH + US is valid). Junk such as "en-US asdfasdf" still fails the BCL checks.
@@ -75,6 +76,24 @@ public static class ProfileCatalog
 
   public static bool IsTheme(string? value) =>
     Themes.Any(entry => entry.Code == value);
+
+  public static IReadOnlyList<Entry> Matching(IReadOnlyList<Entry> catalog, string? code)
+  {
+    if (string.IsNullOrWhiteSpace(code))
+    {
+      return [];
+    }
+
+    Entry? match = catalog.FirstOrDefault(entry =>
+      string.Equals(entry.Code, code, StringComparison.OrdinalIgnoreCase));
+    return match is null ? [] : [match];
+  }
+
+  public static string LabelFor(IReadOnlyList<Entry> catalog, string? code)
+  {
+    IReadOnlyList<Entry> match = Matching(catalog, code);
+    return match.Count == 0 ? code ?? string.Empty : match[0].Label;
+  }
 
   private static IReadOnlyList<Entry> BuildLanguages()
   {

@@ -24,6 +24,8 @@ namespace TimeWarp.Architecture.Features.Profiles
 {
 
   using System;
+  using System.Collections.Generic;
+  using System.Linq;
   using System.Text.Json;
   using System.Threading;
   using System.Threading.Tasks;
@@ -221,6 +223,27 @@ namespace TimeWarp.Architecture.Features.Profiles
         Theme = "system"
       });
       both.IsValid.ShouldBeTrue();
+      return Task.CompletedTask;
+    }
+
+    public static Task MatchingCatalogCode_Should_ReturnCatalogLabel()
+    {
+      ProfileCatalog.LabelFor(ProfileCatalog.Languages, "en-US").ShouldBe("English (United States)");
+      ProfileCatalog.LabelFor(ProfileCatalog.Languages, "th-TH").ShouldBe("Thai (Thailand)");
+      ProfileCatalog.LabelFor(ProfileCatalog.Regions, "US").ShouldBe("United States");
+      ProfileCatalog.LabelFor(ProfileCatalog.Regions, "TH").ShouldBe("Thailand");
+
+      IReadOnlyList<ProfileCatalog.Entry> language = ProfileCatalog.Matching(ProfileCatalog.Languages, "en-US");
+      language.Count.ShouldBe(1);
+      language[0].ShouldBe(ProfileCatalog.Languages.Single(entry => entry.Code == "en-US"));
+
+      IReadOnlyList<ProfileCatalog.Entry> region = ProfileCatalog.Matching(ProfileCatalog.Regions, "TH");
+      region.Count.ShouldBe(1);
+      region[0].Label.ShouldBe("Thailand");
+
+      ProfileCatalog.Matching(ProfileCatalog.Languages, "en-US asdfasdf").ShouldBeEmpty();
+      ProfileCatalog.LabelFor(ProfileCatalog.Languages, "en-US asdfasdf").ShouldBe("en-US asdfasdf");
+      ProfileCatalog.Matching(ProfileCatalog.Languages, "").ShouldBeEmpty();
       return Task.CompletedTask;
     }
 
