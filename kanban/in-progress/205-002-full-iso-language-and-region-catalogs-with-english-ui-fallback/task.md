@@ -84,6 +84,7 @@ chrome, not the identity kernel.
 - Created: 3443420 (2026-09-07)
 - Cockpit: Grok — maintainer: full ISO recognize-all, English UI until i18n exists
 - Implementer: Grok session 01a07977-cc23-74f0-bc39-7439055da552 (2026-09-07)
+- Review: Grok review oracle session 01a07984-a157-7fe3-a4c1-6535a378f47b — effort 1 general, disposition `clean` (2026-09-07)
 
 ## Results
 
@@ -165,3 +166,15 @@ cd tests/container-apps/web/web-jaribu-tests && dotnet test -c Release
 ```
 
 **Not in scope:** live Aspire `/Profile` click-through; Thai UI translations.
+
+### Review
+
+| Field | Value |
+|-------|--------|
+| Effort / roster | 1 · general only |
+| Rounds | 1 |
+| Final counts | open 0 · fixed 0 · wontfix 0 (all severities) |
+| Disposition | **clean** |
+| Paths | `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md` |
+
+Round 1 raised no issues. BCL Language/Region catalogs agree with domain checks; FluentCombobox `FreeOption` is unset (free-form opt-in); `SetIsoCulture` stays `en-US`; Thai and junk coverage plus smoke count 134 hold. No exceptions.
