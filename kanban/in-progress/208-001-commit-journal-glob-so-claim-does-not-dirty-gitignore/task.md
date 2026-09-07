@@ -45,6 +45,7 @@ existing `.memsearch/` line — do not rewrite the rest of `.gitignore`):
 - [x] Six 262 basenames and `.memsearch/` stay
 - [x] `git ls-files '*.journal.json'` empty; no journal blobs in the PR
 - [x] Results + How to validate
+- [x] Implementation review disposition (clean, round 1, effort 1)
 
 ## Notes
 
@@ -58,6 +59,8 @@ existing `.memsearch/` line — do not rewrite the rest of `.gitignore`):
 - Created: 192270 (2026-09-07)
 - Cockpit: Grok — `/tw-merge` 205-004 GC refuse; commit the claim pickup
 - Implementer: Grok session `01a07cd1-1c85-7613-9424-eb32c533b285` (2026-09-08)
+- Review oracle: Grok session `01a07cd4-3f8d-7bc2-bdc4-973ef5d20b87` (2026-09-08)
+- Review general: Grok subagent `01a07cd5-6fc3-7483-8e39-0393f5856982` (2026-09-08)
 
 ## Results
 
@@ -72,7 +75,8 @@ Committed the Ganda 268 claim-pickup blocks that were already appended on this w
 ### Files changed
 
 - `.gitignore` — 7 lines appended (`b48a3d64`)
-- `kanban/in-progress/208-001-…/task.md` — column move + Results
+- `kanban/in-progress/208-001-…/task.md` — column move + Results + review disposition
+- `kanban/in-progress/208-001-…/review/` — framework, round-1 general/merged, clean disposition
 
 ### Key decisions / deviations
 
@@ -107,3 +111,15 @@ ganda repo audit --fix --checks routine-journals-gitignore,memsearch-memory-giti
 - Both `git ls-files` commands print nothing.
 - Named checks `routine-journals-gitignore` and `memsearch-memory-gitignore` PASS. Other full-audit FAILs are out of scope.
 - After merge to `origin/master`, a fresh `ganda kanban claim 208-001` (or any later claim) must not dirty `.gitignore`.
+
+### Review disposition
+
+- **Outcome:** clean (0 open; no issues raised; no exceptions)
+- **Rounds:** 1
+- **Effort / roster:** 1 — general only
+- **Final counts:** bug 0 / suggestion 0 / nit 0 (all statuses empty)
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
