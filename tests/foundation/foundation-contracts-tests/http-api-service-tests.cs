@@ -167,6 +167,36 @@ public class HttpApiService_GetResponse
     problem.Title.ShouldBe("Unhandled Error");
   }
 
+  public static async Task Synthesizes_unauthorized_when_401_body_is_empty()
+  {
+    RecordingHandler handler = new(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+    HttpApiService service = CreateService(handler);
+
+    OneOf<SampleDto, FileResponse, SharedProblemDetails> result =
+      await service.GetResponse<SampleDto>(new GetRequest(), CancellationToken.None);
+
+    result.IsT2.ShouldBeTrue();
+    SharedProblemDetails problem = result.AsT2;
+    problem.Status.ShouldBe(401);
+    problem.Title.ShouldBe("Unauthorized");
+    problem.Detail.ShouldBe("Authentication is required.");
+  }
+
+  public static async Task Synthesizes_forbidden_when_403_body_is_empty()
+  {
+    RecordingHandler handler = new(new HttpResponseMessage(HttpStatusCode.Forbidden));
+    HttpApiService service = CreateService(handler);
+
+    OneOf<SampleDto, FileResponse, SharedProblemDetails> result =
+      await service.GetResponse<SampleDto>(new GetRequest(), CancellationToken.None);
+
+    result.IsT2.ShouldBeTrue();
+    SharedProblemDetails problem = result.AsT2;
+    problem.Status.ShouldBe(403);
+    problem.Title.ShouldBe("Forbidden");
+    problem.Detail.ShouldBe("You do not have permission to perform this action.");
+  }
+
   public static async Task Maps_cancellation_to_499_problem()
   {
     RecordingHandler handler = new((_, ct) =>

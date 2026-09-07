@@ -25,6 +25,8 @@
 // environment: this file's own Main passes builder.HostEnvironment.Environment (WASM host); Web.Server
 // resolves the true IHostEnvironment (never IConfiguration) and passes it in explicitly — see
 // Web.Server.Program's ConfigureServices Design region.
+// Task 205-003: WASM named HttpClients attach BrowserRequestCredentialsHandler (fetch
+// credentials SameOrigin) so the identity-session cookie rides on PUT/GET to the SPA origin.
 //
 // No new template.json feature flag for identity/x402 (they ship with the template); Entra is a
 // runtime config switch, not a compile-time DefineConstants symbol (avoids TWA0008/0010 dual paths).
@@ -43,9 +45,12 @@ public class Program
     builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
 
     ConfigureServices(builder.Services, builder.Configuration, builder.HostEnvironment.Environment);
-    builder.Services.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
+    builder.Services.AddTransient<BrowserRequestCredentialsHandler>();
+    builder.Services.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
+      .AddHttpMessageHandler<BrowserRequestCredentialsHandler>();
 #if api
-    builder.Services.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
+    builder.Services.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
+      .AddHttpMessageHandler<BrowserRequestCredentialsHandler>();
 #endif
 
     await builder.Build().RunAsync();

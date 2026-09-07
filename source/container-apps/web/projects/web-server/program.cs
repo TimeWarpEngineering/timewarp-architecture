@@ -38,6 +38,9 @@
 // Task 183: after Web.Spa.Program.ConfigureServices, re-register AuthenticationStateProvider as
 // HostedIdentitySessionAuthenticationStateProvider so prerender uses HttpContext.User (cookie)
 // instead of anonymous session loopback — see that type's Design region.
+// Task 205-003: named WebService HttpClient loopback attaches
+// IdentitySessionCookieForwardingHandler so InteractiveServer/Auto API calls (Profile PUT)
+// present the inbound identity-session cookie instead of challenging 401.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -145,7 +148,9 @@ public class Program : IAspNetProgram
   {
     serviceCollection.AddSerilog();
     serviceCollection.AddHttpClient();
-    serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.WebServiceName));
+    serviceCollection.AddTransient<IdentitySessionCookieForwardingHandler>();
+    serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.WebServiceName))
+      .AddHttpMessageHandler<IdentitySessionCookieForwardingHandler>();
     serviceCollection.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.ApiServiceName));
 
     serviceCollection

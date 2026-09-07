@@ -16,7 +16,9 @@
 // Stream TResponse becomes FileResponse without EnsureSuccessStatusCode (already on the
 // success branch). Problem-body deserialization catches only JsonException/
 // InvalidOperationException so unexpected failures surface rather than becoming a synthetic
-// problem.
+// problem. Empty or non-JSON error bodies synthesize SharedProblemDetails from the status:
+// 401 Unauthorized, 403 Forbidden, otherwise Unhandled Error (cookie challenges return
+// empty 401/403; mapping them as Unhandled Error made Profile Save look like a crash).
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -159,13 +161,34 @@ public sealed class HttpApiService : IApiService
     catch (Exception exception) when (exception is JsonException or InvalidOperationException)
     {
       // Body was not RFC 7807 JSON — synthesize a problem from the status code.
-      return new SharedProblemDetails
+      return SynthesizeProblemFromStatus(httpResponseMessage.StatusCode);
+    }
+  }
+
+  private static SharedProblemDetails SynthesizeProblemFromStatus(HttpStatusCode statusCode)
+  {
+    int status = (int)statusCode;
+    return statusCode switch
+    {
+      HttpStatusCode.Unauthorized => new SharedProblemDetails
+      {
+        Title = "Unauthorized",
+        Status = status,
+        Detail = "Authentication is required."
+      },
+      HttpStatusCode.Forbidden => new SharedProblemDetails
+      {
+        Title = "Forbidden",
+        Status = status,
+        Detail = "You do not have permission to perform this action."
+      },
+      _ => new SharedProblemDetails
       {
         Title = "Unhandled Error",
-        Status = (int)httpResponseMessage.StatusCode,
+        Status = status,
         Detail = "An unhandled error occurred while processing the request."
-      };
-    }
+      }
+    };
   }
 
   private static string PrepareRoute(IApiRequest apiRequest) =>
