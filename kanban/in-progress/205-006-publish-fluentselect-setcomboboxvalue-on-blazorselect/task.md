@@ -73,6 +73,7 @@ After `import()` of the overlay module (and after it runs):
 - Created: 560353 (2026-09-08)
 - Cockpit: Grok — Profile WASM SetComboBoxValue Select undefined
 - Implementer: Grok session 01a07f09-be19-7571-9a8c-2e8f329eb623 (2026-09-08)
+- Review oracle: Grok `01a07f10-dcd3-7671-bbaa-ed7e32c1ca3a` (2026-09-08) — effort 1, round 1, disposition clean
 
 ## Results
 
@@ -90,6 +91,16 @@ The 205-005 overlay imported as 200 but only published `Microsoft.FluentUI.Blazo
 - `dotnet run tools/dev-cli/dev.cs -- build`: 0/0.
 - Node and Chromium `import()` of the overlay: `typeof Microsoft.FluentUI.Blazor.Select.SetComboBoxValue === 'function'` (also `ClearValue`, `Components.Select.Initialize`).
 - Running Aspire on this machine is still **origin-home/master** (`:63611` overlay body has no `SetComboBoxValue`). Live `/Profile` yellow-bar proof needs Aspire **from this branch**.
+
+### Review disposition
+
+- **Outcome:** clean (0 open)
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1
+- **Counts (final, round 1):** bug 0/0/0; suggestion 0/0/0; nit 0/0/0 (open/fixed/wontfix)
+- **Paths:** `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`
+- **Wontfix / escalations:** none
+- Review re-ran overlay tests (3/3) and node `import()`: `typeof Microsoft.FluentUI.Blazor.Select.SetComboBoxValue === 'function'` (also `ClearValue`, `Components.Select.Initialize` / `ClearValue`). Overlay `SetComboBoxValue` matches rc.4 nupkg JS. rc.5 C# still uses `InvokeFluentVoidAsync` on `Components.Select.Initialize`; the live yellow-bar identifier is the rc.4 module path this overlay now publishes.
 
 ### How to validate
 
