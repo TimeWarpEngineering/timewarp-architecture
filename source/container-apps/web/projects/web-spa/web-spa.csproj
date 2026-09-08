@@ -149,6 +149,42 @@
     </ItemGroup>
   </Target>
 
+  <!-- Task 205-005: Fluent UI 5.0.0-rc.5-26219.1 C# still import()s
+       _content/Microsoft.FluentUI.AspNetCore.Components/Components/List/FluentSelect.razor.js
+       (WASM hydrate on /Profile) but the nupkg does not pack that file. Overlay a module at
+       that exact MapStaticAssets path. Remove when a Fluent UI package packs the JS again.
+       Do not add UseStaticFiles (web-server Program forbids it). -->
+  <Target Name="AddFluentSelectJsOverlayStaticWebAsset"
+          AfterTargets="ResolveProjectStaticWebAssets">
+    <ItemGroup>
+      <_FluentSelectJsOverlayCandidate Include="$(MSBuildThisFileDirectory)fluent-ui-overlays\fluent-select.js">
+        <RelativePath>_content/Microsoft.FluentUI.AspNetCore.Components/Components/List/FluentSelect.razor.js</RelativePath>
+        <TargetPath>_content/Microsoft.FluentUI.AspNetCore.Components/Components/List/FluentSelect.razor.js</TargetPath>
+      </_FluentSelectJsOverlayCandidate>
+    </ItemGroup>
+    <DefineStaticWebAssets
+      CandidateAssets="@(_FluentSelectJsOverlayCandidate)"
+      FingerprintCandidates="true"
+      RelativePathPattern="**"
+      SourceType="Discovered"
+      SourceId="$(PackageId)"
+      ContentRoot="$(MSBuildThisFileDirectory)fluent-ui-overlays\"
+      BasePath="/">
+      <Output TaskParameter="Assets" ItemName="_FluentSelectJsOverlayAsset" />
+    </DefineStaticWebAssets>
+    <ItemGroup>
+      <_FluentSelectJsOverlayAsset>
+        <RelativePath>_content/Microsoft.FluentUI.AspNetCore.Components/Components/List/FluentSelect.razor.js</RelativePath>
+      </_FluentSelectJsOverlayAsset>
+      <StaticWebAsset Include="@(_FluentSelectJsOverlayAsset)" />
+    </ItemGroup>
+    <DefineStaticWebAssetEndpoints
+      CandidateAssets="@(_FluentSelectJsOverlayAsset)"
+      ContentTypeMappings="@(StaticWebAssetContentTypeMapping)">
+      <Output TaskParameter="Endpoints" ItemName="StaticWebAssetEndpoint" />
+    </DefineStaticWebAssetEndpoints>
+  </Target>
+
   <ItemGroup>
     <_ContentIncludedByDefault Remove="features\profile-menu\components\ProfileDropDown.razor" />
     <_ContentIncludedByDefault Remove="features\profile-menu\components\ProfileMenuNavLink.razor" />
