@@ -36,6 +36,7 @@ This is naming + namespace only. Do not change Entra vs passkey vs mock behavior
 - [x] Namespace + global usings + tests
 - [x] Confirm `/authentication/{action}`, `/Login`, `/Logout` unchanged
 - [x] `dev build` 0/0; SPA integration filter for login return-url
+- [x] Implementation review (`review/` effort 1 general); disposition **clean**
 
 ## Notes
 
@@ -45,6 +46,7 @@ Disposition and inventory: `kanban/…/132-review-auth-authentication-authorizat
 
 - Created: 3992340 (2026-09-04)
 - Implementer: grok session 01a07f99-f513-7810-89c0-c532ce507843 (2026-09-08)
+- Review oracle: grok session 01a07fa2-542c-7343-9250-95311498d308 (2026-09-08) — effort 1 general, `review/`
 
 ## Results
 
@@ -119,3 +121,11 @@ cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release 
 ```
 
 **Not in scope:** live WebAuthn ceremony, Entra MSAL sign-in, `GetCurrentUser` rename, server identity contracts.
+
+**Review**
+
+- Effort / roster: 1, general only
+- Rounds: 1
+- Counts (final): bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix)
+- Disposition: **clean** (no issues raised)
+- Paths: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`
