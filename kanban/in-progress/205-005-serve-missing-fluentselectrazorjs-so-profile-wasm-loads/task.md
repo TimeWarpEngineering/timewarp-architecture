@@ -81,6 +81,7 @@ that restores the file.
 - Created: 440982 (2026-09-08)
 - Cockpit: Grok — Profile WASM 404 FluentSelect.razor.js
 - Implementer: Grok session 01a07eb6-abb1-7851-8acd-133554bcbeaf (2026-09-08)
+- Review oracle: Grok `01a07ecb-e410-7190-8016-b49719b72366` (2026-09-08) — effort 1, round 1, disposition clean
 
 ## Results
 
@@ -97,6 +98,16 @@ Fluent UI `5.0.0-rc.5-26219.1` still calls `Microsoft.FluentUI.Blazor.Components
 - `dotnet test -c Release -- --filter-class FluentSelectJsOverlay` in `tests/container-apps/web/web-server-integration-tests`: 3/3 passed.
 - `dotnet run tools/dev-cli/dev.cs -- build`: 0/0.
 - Live Aspire on this machine is still **master** (`:63611` / `arch.timewarp.work` still 404 for the missing nupkg file). Restart Aspire **from this branch** for `/Profile` WASM.
+
+### Review disposition
+
+- **Outcome:** clean (0 open)
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1
+- **Counts (final, round 1):** bug 0/0/0; suggestion 0/0/0; nit 0/0/0 (open/fixed/wontfix)
+- **Paths:** `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`
+- **Wontfix / escalations:** none
+- Review re-ran the overlay tests (3/3) and confirmed web-server Release SWA endpoints list the unfingerprinted `_content/…/FluentSelect.razor.js` route as `text/javascript`. rc.5 C# uses `InvokeFluentVoidAsync` (globals already published by `lib.module.js`) rather than `import()` of the collocated file; the overlay still meets the GET-200 requirement.
 
 ### How to validate
 
