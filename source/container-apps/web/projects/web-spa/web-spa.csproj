@@ -149,11 +149,14 @@
     </ItemGroup>
   </Target>
 
-  <!-- Task 205-005: Fluent UI 5.0.0-rc.5-26219.1 C# still import()s
+  <!-- Task 205-005/205-006: Fluent UI 5.0.0-rc.5-26219.1 C# still import()s
        _content/Microsoft.FluentUI.AspNetCore.Components/Components/List/FluentSelect.razor.js
        (WASM hydrate on /Profile) but the nupkg does not pack that file. Overlay a module at
-       that exact MapStaticAssets path. Remove when a Fluent UI package packs the JS again.
-       Do not add UseStaticFiles (web-server Program forbids it). -->
+       that exact MapStaticAssets path. The overlay publishes both identifier trees:
+       Microsoft.FluentUI.Blazor.Select.SetComboBoxValue (live WASM / rc.4) and
+       Microsoft.FluentUI.Blazor.Components.Select.Initialize (rc.5). Remove when a
+       Fluent UI package packs the JS and these identifiers. Do not add UseStaticFiles
+       (web-server Program forbids it). -->
   <Target Name="AddFluentSelectJsOverlayStaticWebAsset"
           AfterTargets="ResolveProjectStaticWebAssets">
     <ItemGroup>

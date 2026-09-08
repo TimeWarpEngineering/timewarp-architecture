@@ -1,12 +1,14 @@
 #region Purpose
-// Task 205-005: FluentSelect.razor.js must 200 at the _content path WASM import()s on /Profile.
+// Task 205-006: FluentSelect overlay must publish the live WASM identifier SetComboBoxValue.
 #endregion
 
 #region Design
 // Microsoft.FluentUI.AspNetCore.Components 5.0.0-rc.5-26219.1 does not pack
 // Components/List/FluentSelect.razor.js; WASM still import()s that URL. Overlay lives in
 // web-spa/fluent-ui-overlays and is mapped onto the package _content path via MapStaticAssets.
-// Host-free checks: overlay source exports Initialize/ClearValue; web-server SWA endpoints
+// Live WASM (rc.4 C# path) invokes Microsoft.FluentUI.Blazor.Select.SetComboBoxValue on the
+// imported module; rc.5 C# also calls Components.Select.Initialize. Both trees must be in
+// overlay source and the in-proc GET body. Host-free checks: identifiers + SWA endpoints
 // list that path after a host build. HTTP check: in-proc web host GET 200 + JS body.
 #endregion
 
@@ -21,7 +23,7 @@ public class OverlaySource_Given_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<OverlaySource_Given_>();
 
-  public static Task File_Should_ExportRc5SelectIdentifiers()
+  public static Task File_Should_ExportLiveSelectIdentifiers()
   {
     string overlayPath = Path.Combine(
       FindRepoRoot(),
@@ -36,6 +38,9 @@ public class OverlaySource_Given_
 
     string body = File.ReadAllText(overlayPath);
     body.ShouldContain("export var Microsoft");
+    body.ShouldContain("Microsoft.FluentUI.Blazor.Select");
+    body.ShouldContain("SetComboBoxValue");
+    body.ShouldContain("function SetComboBoxValue");
     body.ShouldContain("Microsoft.FluentUI.Blazor.Components.Select");
     body.ShouldContain("Select.Initialize");
     body.ShouldContain("Select.ClearValue");
@@ -143,6 +148,8 @@ public class Serve_Given_
     body.Length.ShouldBeGreaterThan(0);
     body.TrimStart().ShouldNotStartWith("<");
     body.ShouldContain("export var Microsoft");
+    body.ShouldContain("Microsoft.FluentUI.Blazor.Select");
+    body.ShouldContain("SetComboBoxValue");
     body.ShouldContain("Select.Initialize");
     body.ShouldContain("Select.ClearValue");
   }
