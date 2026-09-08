@@ -25,7 +25,7 @@
 // No second site button for nearby; the browser owns that path inside the same ceremony.
 #endregion
 
-namespace TimeWarp.Architecture.Features.Account;
+namespace TimeWarp.Architecture.Features.Identity;
 
 // Public passkey entry. Anonymous; authenticated visitors are redirected away (task 153).
 [Page("/Login")]

@@ -17,5 +17,5 @@ namespace TimeWarp.Architecture.Features.Applications;
 
 // Public marketing / first-run entry. Anonymous by design.
 [Page("/")]
-[CrossSliceReference(typeof(LoginPage), "First-run home CTA navigates to Account login (focused passkey chrome).")]
+[CrossSliceReference(typeof(LoginPage), "First-run home CTA navigates to Identity login (focused passkey chrome).")]
 partial class HomePage;
