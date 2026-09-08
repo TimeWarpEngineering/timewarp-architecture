@@ -1,14 +1,11 @@
 // Purpose: collocated FluentSelect module at the URL WASM import()s.
-// Design: Microsoft.FluentUI.AspNetCore.Components 5.0.0-rc.5-26219.1 C# still
-// import()s Components/List/FluentSelect.razor.js and calls
-// Microsoft.FluentUI.Blazor.Components.Select.Initialize / ClearValue, but the
-// nupkg does not pack that file (Fluent UI #5074 moved the source into
-// Core.Scripts / lib.module.js and deleted the collocated .razor.ts). This
-// overlay restores the module MapStaticAssets serves at that exact _content
-// path. Body matches rc.5 FluentSelect.ts (combobox _control text + a11y).
-// Also publish on globalThis so IJSRuntime.InvokeVoidAsync finds the same
-// identifiers. Remove when a Fluent UI package packs this JS again. Do not
-// vendor the rest of the nupkg.
+// Design: Live WASM JSInterop looks up Microsoft.FluentUI.Blazor.Select.SetComboBoxValue
+// (rc.4 identifier, no Components) on the imported module. rc.5 C# also calls
+// Microsoft.FluentUI.Blazor.Components.Select.Initialize / ClearValue via
+// InvokeFluentVoidAsync. Publish both identifier trees. SetComboBoxValue is the
+// rc.4 combobox _control.value write (205-004 closed-label UX). Remove when a
+// Fluent UI package packs this JS and these identifiers. Do not vendor the rest
+// of the nupkg.
 
 export var Microsoft;
 (function (Microsoft) {
@@ -16,6 +13,25 @@ export var Microsoft;
   (function (FluentUI) {
     var Blazor;
     (function (Blazor) {
+      var Select;
+      (function (Select) {
+        function ClearValue(id) {
+          const element = document.getElementById(id);
+          if (element) {
+            element.value = null;
+          }
+        }
+        Select.ClearValue = ClearValue;
+
+        function SetComboBoxValue(id, value) {
+          const element = document.getElementById(id);
+          if (element && element.tagName === 'FLUENT-DROPDOWN' && element._control) {
+            element._control.value = value;
+          }
+        }
+        Select.SetComboBoxValue = SetComboBoxValue;
+      })(Select = Blazor.Select || (Blazor.Select = {}));
+
       var Components;
       (function (Components) {
         var Select;
@@ -73,6 +89,7 @@ export var Microsoft;
   root.Microsoft = root.Microsoft || {};
   root.Microsoft.FluentUI = root.Microsoft.FluentUI || {};
   root.Microsoft.FluentUI.Blazor = root.Microsoft.FluentUI.Blazor || {};
+  root.Microsoft.FluentUI.Blazor.Select = Microsoft.FluentUI.Blazor.Select;
   root.Microsoft.FluentUI.Blazor.Components = root.Microsoft.FluentUI.Blazor.Components || {};
   root.Microsoft.FluentUI.Blazor.Components.Select = Microsoft.FluentUI.Blazor.Components.Select;
 })(globalThis);
