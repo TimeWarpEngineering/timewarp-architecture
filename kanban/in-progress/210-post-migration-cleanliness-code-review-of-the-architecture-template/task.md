@@ -23,17 +23,36 @@ Scope is the whole tree at the task branch base (origin/master `54c07cbc`), not 
 
 - [x] Create task via `ganda kanban create`, move to in-progress
 - [x] Baseline: `ganda repo audit` (kebab fail on `205-001` done folder; bin/dev + memsearch/peacock warnings)
-- [ ] Baseline: `dev build` 0/0
-- [ ] Write `review/review-framework.md`
-- [ ] Round 1: specialist reviewers write `review/round-1/<reviewer>.md`
-- [ ] Merge into `review/round-1/merged.md` with stable M# ids
-- [ ] Record Results + fix-dispatch recommendation on this task
+- [x] Baseline: `dev build` 0/0; `dev test` pass; `dev template-smoke` pass; `dev check-version` safe (beta.17 vs beta.16)
+- [x] Write `review/review-framework.md`
+- [x] Round 1: six specialist reviewers wrote `review/round-1/<reviewer>.md`
+- [x] Merge into `review/round-1/merged.md` with stable M# ids (M1–M41)
+- [x] Record Results + fix-dispatch recommendation on this task
+- [ ] Human decision: ship-scope of `documentation/` (M2) and features-vs-platform reclassification (M8)
+- [ ] Dispatch fix bundles as child tasks 210-00N (see merged.md table)
 - [ ] Disposition (`review/disposition.md`) once fix loop / wontfix decisions are made
 
 ## Session
 
 - Created: 2418574 (2026-09-09)
 - Review round 1: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-09)
+
+## Results (round 1)
+
+- Rounds run: 1. Roster: leftovers, layout-grammar, tests, build-msbuild-template, docs-skills,
+  code-quality (effort 6, one general-purpose subagent each) + orchestrator spot-verification.
+- Gates: `dev build` 0/0, `dev test` pass, `dev template-smoke` pass, `dev check-version` safe;
+  `ganda repo audit` blocking FAIL on one kebab path (M1).
+- Final counts (open / fixed / wontfix): bug 15 / 0 / 0 · suggestion 17 / 0 / 0 · nit 9 / 0 / 0.
+- Migrations verified clean: no Fixie/xUnit/FluentAssertions/Tailwind/npm residue; no
+  `Features.Authentication`/`Features.Account` remnants; all runfiles aggregated; CPM, template.json,
+  preprocessor regions, diagnostic-ID tables and product Design regions all consistent.
+- Dominant themes: stale `documentation/` and `kanban/overview.md` (pre-migration content, and a
+  ship-scope contradiction in AGENTS.md — M2), namespace discipline at the features/platform
+  boundary (M3–M8), missing endpoint tests (M12, M13), unjustified suppressions (M32, M33).
+- Disposition: pending fix loop (no `review/disposition.md` yet).
+- Paths: `review/review-framework.md`, `review/round-1/merged.md` (live ledger),
+  `review/round-1/{leftovers,layout-grammar,tests,build-msbuild-template,docs-skills,code-quality}.md`.
 
 ## Notes
 
