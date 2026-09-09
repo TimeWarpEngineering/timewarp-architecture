@@ -7,7 +7,8 @@ using TimeWarp.Foundation.Contracts.Generators;
 
 // Verifies the Roslyn generator that replaced the foundation-contracts Moxy mixins (task 053-001)
 // reproduces the Moxy output semantics: marker attributes in the consumer RootNamespace, route
-// members with the correct type mapping, and the two interface mixins.
+// members with the correct type mapping, and the two interface mixins. Task 053-003: bare
+// `{Name}` tokens keep the full identifier (colon is required before a constraint).
 public class ContractsMixinGenerator_Tests
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -30,11 +31,11 @@ public class ContractsMixinGenerator_Tests
     }
     """;
 
-  private static string RunAndConcat(string rootNamespace)
+  private static string Run(string source, string rootNamespace = "TimeWarp.Architecture")
   {
     var compilation = CSharpCompilation.Create(
       "Test.Contracts",
-      new[] { CSharpSyntaxTree.ParseText(Source) },
+      new[] { CSharpSyntaxTree.ParseText(source) },
       new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
       new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
@@ -49,6 +50,18 @@ public class ContractsMixinGenerator_Tests
       Environment.NewLine,
       result.Results.SelectMany(r => r.GeneratedSources).Select(s => s.SourceText.ToString()));
   }
+
+  private static string RunAndConcat(string rootNamespace) => Run(Source, rootNamespace);
+
+  private static string RouteContract(string template) => $$"""
+    namespace Test.Features.Ccc;
+
+    public static partial class ValidateExport
+    {
+        [ApiRoute("{{template}}", HttpVerb.Post)]
+        public sealed partial class Command { }
+    }
+    """;
 
   public static Task Should_Emit_Marker_Attributes_In_RootNamespace()
   {
@@ -84,6 +97,53 @@ public class ContractsMixinGenerator_Tests
     generated.ShouldContain(": global::TimeWarp.Foundation.Features.IOpenDataQueryParameters");
     generated.ShouldContain("public int? Top { get; set; }");
     generated.ShouldContain("public bool ReturnTotalCount { get; set; }");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Keep_Bare_Param_Names_That_End_With_Type_Like_Letters()
+  {
+    string[] paramNames = ["LocationId", "Date", "ClientId", "StaffId", "UserId"];
+    foreach (string paramName in paramNames)
+    {
+      string generated = Run(RouteContract($"api/items/{{{paramName}}}"));
+
+      generated.ShouldContain($"public string {paramName} {{ get; set; }}");
+      generated.ShouldContain($"public string GetRoute(string {paramName})");
+      generated.ShouldContain($"public const string RouteTemplate = \"api/items/{{{paramName}}}\";");
+      generated.ShouldNotContain("public e Dat");
+      generated.ShouldNotContain("public d LocationI");
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Keep_Explicit_Constraints_On_Type_Like_Names()
+  {
+    string generated = Run(RouteContract("api/ccc/locations/{LocationId:guid}/exports/{Date:datetime}/clients/{ClientId:string}"));
+
+    generated.ShouldContain("public Guid LocationId { get; set; }");
+    generated.ShouldContain("public DateTime Date { get; set; }");
+    generated.ShouldContain("public string ClientId { get; set; }");
+    generated.ShouldContain("public string GetRoute(Guid LocationId, DateTime Date, string ClientId)");
+    generated.ShouldContain("""public const string RouteTemplate = "api/ccc/locations/{LocationId:guid}/exports/{Date:datetime}/clients/{ClientId}";""");
+    generated.ShouldContain("""public string GetRoute(Guid LocationId, DateTime Date, string ClientId) => global::System.FormattableString.Invariant($"api/ccc/locations/{LocationId}/exports/{Date:yyyy-MM-dd}/clients/{ClientId}");""");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Parse_Mixed_Bare_And_Constrained_Params()
+  {
+    // Crunchit 033-003 repro plus sibling *Id names in one template.
+    string generated = Run(RouteContract("api/ccc/locations/{LocationId}/exports/{Date}/validate/{ClientId:guid}/{StaffId}/{UserId:string}"));
+
+    generated.ShouldContain("public string LocationId { get; set; }");
+    generated.ShouldContain("public string Date { get; set; }");
+    generated.ShouldContain("public Guid ClientId { get; set; }");
+    generated.ShouldContain("public string StaffId { get; set; }");
+    generated.ShouldContain("public string UserId { get; set; }");
+    generated.ShouldContain("public string GetRoute(string LocationId, string Date, Guid ClientId, string StaffId, string UserId)");
+    generated.ShouldContain("""public const string RouteTemplate = "api/ccc/locations/{LocationId}/exports/{Date}/validate/{ClientId:guid}/{StaffId}/{UserId}";""");
+    generated.ShouldNotContain("public d LocationI");
+    generated.ShouldNotContain("public e Dat");
     return Task.CompletedTask;
   }
 }

@@ -63,6 +63,24 @@ in `TimeWarp.Architecture.Attributes` and mark which contracts become hosted Fas
 The FastEndpoint generator matches `ApiRouteAttribute` by simple name, so the attribute works from
 any root namespace.
 
+#### `[ApiRoute]` parameter constraint grammar
+
+Tokens are `{Name}` or `{Name:constraint}`. A type/constraint starts **only** after a colon —
+bare names such as `{Date}`, `{LocationId}`, `{ClientId}`, `{StaffId}`, and `{UserId}` keep the
+full identifier and default to `string` (task 053-003). `{Name:string}` remains valid.
+
+| Constraint token | Generated C# type |
+|------------------|-------------------|
+| *(omitted)* / `string` / `alpha` / `required` / `minlength(n)` / `maxlength(n)` / `length(n)` / `range…` / `regex…` | `string` |
+| `guid` | `Guid` |
+| `datetime` | `DateTime` (`GetRoute` formats `yyyy-MM-dd`) |
+| `min(n)` / `max(n)` | `int` |
+| any other token (`int`, `long`, `bool`, …) | the token as written |
+
+Constraint arguments are the parenthesized-digits form only (`{RoleId:min(1)}`). Multiple
+constraints, comma-separated args, catch-alls, and `{name=default}` are not parsed. `:string` is
+stripped from the emitted `RouteTemplate`; other tokens are kept (`{RoleId:guid}`).
+
 ### FastEndpoint generation (on the outer operation class)
 
 Both **web-server** and **api-server** host endpoints **generated from contracts** — there are no
@@ -409,6 +427,7 @@ error. See the `tw-mock-response-factory` skill.
 | Entity-centric shared DTO per endpoint | Endpoint-centric types; share only validation interfaces or read-only display interfaces |
 | `sealed record` request/response | Classes + `partial` + source generation |
 | Hand-declared route params | Trust `[ApiRoute]` source generation |
+| `{Date}` / `{LocationId}` generating mangled types (`Dat`/`e`, `LocationI`/`d`) | Fixed in `TimeWarp.Foundation.Contracts` 2.0.0-beta.17 (task 053-003). Colon is required for constraints; bare `{Name}` is `string`. `{Name:string}` remains valid. |
 | Hand-written MVC `BaseEndpoint` shim for a hosted contract | Annotate `[ApiEndpoint]` (+ `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]`); generation is the template convention |
 | `[ApiEndpoint]` with no auth marker, assuming the generator defaults to anonymous | It doesn't (task 110, fail-closed) — no marker emits nothing, so FastEndpoints' own default (auth required) applies; TWA0013 also catches it at build time |
 | `[EndpointAuthorize(Policy=…)]` without `AuthenticationSchemes` | Non-default schemes never run against PermissionIds policies (task 161). Set `AuthenticationSchemes` from `AuthenticationSchemeNames`. |
