@@ -117,6 +117,24 @@ what connects the contract to both the HTTP client and the server's FastEndpoint
 Do **not** hand-declare route parameters — they are generated from the route template. Do declare
 any `I*Details` data properties — interface members are not generated.
 
+##### Route parameter constraint grammar
+
+`[ApiRoute]` tokens are `{Name}` or `{Name:constraint}`. A type/constraint starts **only** after a
+colon — names that end in type-like letters (`Date`, `LocationId`, `ClientId`, `StaffId`,
+`UserId`) keep the full identifier. Bare `{Name}` defaults to `string`. `{Name:string}` remains
+valid.
+
+| Constraint token | Generated C# type |
+|------------------|-------------------|
+| *(omitted)* / `string` / `alpha` / `required` / `minlength(n)` / `maxlength(n)` / `length(n)` / `range…` / `regex…` | `string` |
+| `guid` | `Guid` |
+| `datetime` | `DateTime` (`GetRoute` formats `yyyy-MM-dd`) |
+| `min(n)` / `max(n)` | `int` |
+| any other token (`int`, `long`, `bool`, …) | the token as written |
+
+Constraint arguments are the parenthesized-digits form only (`{RoleId:min(1)}`). Multiple
+constraints, comma-separated args, catch-alls, and `{name=default}` are not parsed.
+
 Supporting request shapes:
 
 - **`IApiRequest` / `IAuthApiRequest`** (foundation interfaces): the base request markers. The

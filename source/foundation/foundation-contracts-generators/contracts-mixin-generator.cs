@@ -8,6 +8,20 @@
 // the TimeWarp.Foundation.Contracts package, so it flows to consumers via PackageReference.
 #endregion
 
+#region Design
+// Route tokens are `{Name}` or `{Name:constraint}`. The colon is the only delimiter that starts a
+// type/constraint token (task 053-003). An optional colon (`:?`) plus a required second `\w+` stole
+// the last letter of identifiers that look like types (`{Date}` → Dat + e, `{LocationId}` → LocationI + d).
+// Recognized constraint tokens and the C# type they emit:
+//   guid → Guid; datetime → DateTime (GetRoute formats yyyy-MM-dd);
+//   string / alpha / required / minlength* / maxlength* / length* / range* / regex* → string;
+//   min* / max* (that did not match minlength/maxlength) → int;
+//   any other token is used as the C# type as-is (int, long, bool, …);
+//   omitted constraint → string.
+// Constraint args are the parenthesized-digits form only (`min(1)`, `minlength(3)`). Multiple
+// constraints, comma args, catch-alls, and `{name=default}` are not parsed.
+#endregion
+
 namespace TimeWarp.Foundation.Contracts.Generators;
 
 using System.Collections.Generic;
@@ -27,7 +41,8 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
   private const string Verb = "global::TimeWarp.Foundation.Features.HttpVerb";
   private const string Nvc = "global::System.Collections.Specialized.NameValueCollection";
 
-  [GeneratedRegex(@"\{(\w+)\s*:?(\w+(\(\d+\))?)\}?")]
+  // Colon is required before a constraint so `{Date}` / `{LocationId}` keep their full identifier.
+  [GeneratedRegex(@"\{(\w+)(?:\s*:\s*(\w+(?:\(\d+\))?))?\}")]
   private static partial Regex RouteParam();
 
   public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -154,17 +169,10 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
       }
 
       string paramName = m.Groups[1].Value;
-      string constraint = m.Groups[2].Value;
+      string constraint = m.Groups[2].Success ? m.Groups[2].Value : "string";
       string lower = constraint.ToLowerInvariant();
       string format = lower == "datetime" ? ":yyyy-MM-dd" : string.Empty;
-
-      string csType =
-        lower == "guid" ? "Guid" :
-        lower == "datetime" ? "DateTime" :
-        lower == "alpha" || lower == "required" || lower.StartsWith("minlength", System.StringComparison.Ordinal) || lower.StartsWith("maxlength", System.StringComparison.Ordinal)
-          || lower.StartsWith("range", System.StringComparison.Ordinal) || lower.StartsWith("regex", System.StringComparison.Ordinal) || lower.StartsWith("length", System.StringComparison.Ordinal) ? "string" :
-        lower.StartsWith("min", System.StringComparison.Ordinal) || lower.StartsWith("max", System.StringComparison.Ordinal) ? "int" :
-        constraint;
+      string csType = MapConstraintToClrType(constraint);
 
       formatParts.Add("{" + paramName + format + "}");
       parameters.Add((csType, paramName));
@@ -244,6 +252,32 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
   }
 
   private static string Indent(int level) => new(' ', level * 2);
+
+  private static string MapConstraintToClrType(string constraint)
+  {
+    if (string.IsNullOrEmpty(constraint))
+      return "string";
+
+    string lower = constraint.ToLowerInvariant();
+    if (lower == "guid")
+      return "Guid";
+    if (lower == "datetime")
+      return "DateTime";
+    if (lower is "string" or "alpha" or "required"
+      || lower.StartsWith("minlength", System.StringComparison.Ordinal)
+      || lower.StartsWith("maxlength", System.StringComparison.Ordinal)
+      || lower.StartsWith("length", System.StringComparison.Ordinal)
+      || lower.StartsWith("range", System.StringComparison.Ordinal)
+      || lower.StartsWith("regex", System.StringComparison.Ordinal))
+    {
+      return "string";
+    }
+
+    if (lower.StartsWith("min", System.StringComparison.Ordinal) || lower.StartsWith("max", System.StringComparison.Ordinal))
+      return "int";
+
+    return constraint;
+  }
 
   // RootNamespace can default to a hyphenated project name (e.g. "foundation-contracts"), which is
   // not a valid namespace. Replace any char that isn't a letter/digit/'.'/'_' with '_'.
