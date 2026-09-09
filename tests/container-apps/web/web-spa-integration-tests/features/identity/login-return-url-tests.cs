@@ -11,7 +11,7 @@
 
 namespace LoginPage_;
 
-using TimeWarp.Architecture.Features.Account;
+using TimeWarp.Architecture.Features.Identity;
 
 [TestTag("Unit")]
 public class GetSafeReturnUrl_Should

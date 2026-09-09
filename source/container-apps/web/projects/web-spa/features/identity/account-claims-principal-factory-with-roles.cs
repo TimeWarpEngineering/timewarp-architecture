@@ -10,9 +10,9 @@
 // factory guarantees grants exist before any authorization policy evaluates.
 #endregion
 
-namespace TimeWarp.Architecture.Features.Authentication;
+namespace TimeWarp.Architecture.Features.Identity;
 
-[CrossSliceReference(typeof(AuthorizationState), "Identity pipeline: claims factory enriches the signed-in principal with role/permission claims from AuthorizationState — authentication/authorization are deliberately coupled.")]
+[CrossSliceReference(typeof(AuthorizationState), "Identity pipeline: claims factory enriches the signed-in principal with role/permission claims from AuthorizationState — identity/authorization are deliberately coupled.")]
 public class AccountClaimsPrincipalFactoryWithRoles : AccountClaimsPrincipalFactory<RemoteUserAccount>
 {
   private readonly IStore Store1;

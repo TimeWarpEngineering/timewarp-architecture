@@ -7,7 +7,7 @@
 // so logout confirmation matches login — not a page inside the product shell.
 #endregion
 
-namespace TimeWarp.Architecture.Features.Account;
+namespace TimeWarp.Architecture.Features.Identity;
 
 // Public confirmation landing after SignOut (principal may already be anonymous).
 [Page("/Logout")]
