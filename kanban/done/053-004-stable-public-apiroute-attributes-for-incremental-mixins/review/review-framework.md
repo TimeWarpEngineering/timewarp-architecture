@@ -10,6 +10,8 @@
 
 Round 2 (2026-09-11): re-verify M1/M2 against the post-fix uncommitted delta (FastEndpoint + ingress foreign-attribute tests; ingress Design region). Round 1 files are frozen.
 
+Round 3 (2026-09-11): host re-walk of the review oracle after implement=Done. Scope is the full branch vs `origin/master` through `d2f33a9c`, plus the post-disposition product delta (`skills/tw-web-api-contracts/evals/eval.yaml` hyphenated grader name). Carry M1/M2 as `fixed`. Do not clobber rounds 1–2. Session: review oracle Grok `01a08eea-52e7-71a3-93e1-a255e912ed33`.
+
 ## Ground rules
 
 - Reviewers are read-only on product code; they write only under `review/round-N/`

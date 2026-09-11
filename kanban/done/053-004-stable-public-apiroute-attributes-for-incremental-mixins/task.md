@@ -55,6 +55,7 @@ Do **not** fix the `{LocationId}` parser here — that is **053-003**.
 - Implementer: Grok session `01a08eb0-1178-74e1-b52b-610bbffa131c` (2026-09-11)
 - Review oracle: Grok session `01a08ed1-1284-71d2-aa1c-8e9a336ca9f5` (2026-09-11)
 - Implementer (skill-lint grader name): Grok session `01a08ee5-3c87-7e20-930c-cf7581295227` (2026-09-11)
+- Review oracle (round 3): Grok session `01a08eea-52e7-71a3-93e1-a255e912ed33` (2026-09-11)
 
 ## Notes
 
@@ -153,15 +154,19 @@ build cover dual-mode compile. Route `{LocationId}` parser is 053-003 (already l
 
 ### Review disposition
 
-- **Rounds:** 2 · **Effort:** 1 · **Roster:** general
+- **Rounds:** 3 · **Effort:** 1 · **Roster:** general
 - **Counts (final):** bug 0 / suggestion 1 fixed / nit 1 fixed (open=0, wontfix=0)
 - **Disposition:** `clean` — M1 added FastEndpoint + ingress tests that a foreign
   `Other.Lib.ApiRouteAttribute` is ignored (TWE007 `missing ApiRoute`; no `api/collided`
   prefix). M2 updated the ingress Design region to FQN match. Round 2 re-verified both.
+  Round 3 re-verified M1/M2 on HEAD through `d2f33a9c` and reviewed the post-disposition
+  `eval.yaml` grader hyphen (`invokes-web-api-contracts`); no new findings.
 - **Paths:**
   - `review/review-framework.md`
   - `review/round-1/general.md`
   - `review/round-1/merged.md`
   - `review/round-2/general.md`
   - `review/round-2/merged.md`
+  - `review/round-3/general.md`
+  - `review/round-3/merged.md`
   - `review/disposition.md`
