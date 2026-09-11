@@ -45,12 +45,14 @@ Do **not** fix the `{LocationId}` parser here — that is **053-003**.
 - [x] FastEndpoint/ingress match FQN
 - [x] Template / dual-mode RootNamespace still works
 - [x] Results + How to validate
+- [x] Implementation review disposition (`review/`)
 
 ## Session
 
 - Created: 2416398 (2026-09-09)
 - Cockpit: timewarp-flow Grok `01a03d38-9611-7620-aae5-848e15dafa94`
 - Implementer: Grok session `01a08eb0-1178-74e1-b52b-610bbffa131c` (2026-09-11)
+- Review oracle: Grok session `01a08ed1-1284-71d2-aa1c-8e9a336ca9f5` (2026-09-11)
 
 ## Notes
 
@@ -75,14 +77,17 @@ contracts already `global using TimeWarp.Foundation.Features`. Generator tests p
 members. A foreign `Other.Lib.ApiRouteAttribute` is ignored.
 
 **Files:** `contracts-mixin-generator.cs`, `hosted-route-discovery.cs`,
-`endpoint-metadata.cs`, `endpoint-auth-posture-analyzer.cs`, generator + analyzer tests,
-`skills/tw-web-api-contracts/SKILL.md`, how-to, release notes (2.0.0-beta.17).
+`endpoint-metadata.cs`, `endpoint-auth-posture-analyzer.cs`, generator + analyzer tests
+(including FastEndpoint/ingress FQN foreign-attribute cases),
+`ingress-route-prefix-generator.cs` Design region, `skills/tw-web-api-contracts/SKILL.md`,
+how-to, release notes (2.0.0-beta.17).
 
 **Not in scope (unchanged):** route parser (053-003), SyntaxProvider tightening (053-005),
 emitting fewer members (053-006), FastEndpoint referenced-assembly walk (006-001).
 
-**Tests:** `ContractsMixinGenerator_Tests` 9 passed; sourcegenerator suite 66 passed;
-analyzer suite 157 passed; `dotnet run tools/dev-cli/dev.cs -- build` 0/0.
+**Tests:** `ContractsMixinGenerator_Tests` 9 passed; sourcegenerator suite 68 passed
+(66 plus two FQN foreign-attribute cases); analyzer suite 157 passed;
+`dotnet run tools/dev-cli/dev.cs -- build` 0/0.
 
 ### How to validate
 
@@ -91,11 +96,12 @@ analyzer suite 157 passed; `dotnet run tools/dev-cli/dev.cs -- build` 0/0.
 ```bash
 cd tests/analyzers/timewarp-architecture-sourcegenerator-tests
 dotnet test -c Release -- --filter-class ContractsMixinGenerator
+dotnet test -c Release -- --filter-method Should_Ignore_Foreign_ApiRouteAttribute_Same_Simple_Name
 ```
 
 **Expect**
 
-- 9 passed (0 failed), including:
+- Mixin class: 9 passed (0 failed), including:
   - `Should_Emit_Public_Marker_Attributes_In_Foundation_Namespace` — generated source
     contains `namespace TimeWarp.Foundation.Features;` and `public sealed class ApiRouteAttribute`
   - `Should_Ignore_Consumer_RootNamespace_For_Attribute_Emit` — `RootNamespace=SmokeDefault`
@@ -104,12 +110,14 @@ dotnet test -c Release -- --filter-class ContractsMixinGenerator
     `Other.Lib.ApiRouteAttribute`
   - `Should_Generate_Route_Members_With_Type_Mapping` / `Should_Generate_Interface_Mixins` —
     `GetRoute`, `UserId`, `Top` / `ReturnTotalCount` still emitted
+- Foreign-attribute method filter: 2 passed — FastEndpoint reports TWE007 `missing ApiRoute`
+  and emits nothing; ingress does not emit `api/collided` (empty `All`)
 
 **Automated gate**
 
 ```bash
 cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c Release
-# expect: 66 passed
+# expect: 68 passed (66 plus two FQN foreign-attribute cases)
 
 cd tests/analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Release
 # expect: 157 passed
@@ -121,3 +129,18 @@ dotnet run tools/dev-cli/dev.cs -- build
 **Not in scope:** `dev template-smoke` (full generated-app pack/install) is not required to
 prove attribute FQN; the `SmokeDefault` RootNamespace generator test plus 0/0 solution
 build cover dual-mode compile. Route `{LocationId}` parser is 053-003 (already landed).
+
+### Review disposition
+
+- **Rounds:** 2 · **Effort:** 1 · **Roster:** general
+- **Counts (final):** bug 0 / suggestion 1 fixed / nit 1 fixed (open=0, wontfix=0)
+- **Disposition:** `clean` — M1 added FastEndpoint + ingress tests that a foreign
+  `Other.Lib.ApiRouteAttribute` is ignored (TWE007 `missing ApiRoute`; no `api/collided`
+  prefix). M2 updated the ingress Design region to FQN match. Round 2 re-verified both.
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/round-2/general.md`
+  - `review/round-2/merged.md`
+  - `review/disposition.md`
