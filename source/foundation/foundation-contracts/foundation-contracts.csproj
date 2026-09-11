@@ -14,10 +14,10 @@
     <PackageReference Include="OneOf" />
   </ItemGroup>
 
-  <!-- The contracts mixins are now a Roslyn source generator (task 053-001). foundation-contracts
-       only DEFINES the mixins (it doesn't apply them), so we build the generator (for ordering) but
-       do NOT run it here; we BUNDLE its dll into this package as an analyzer asset (same pattern as
-       timewarp-nuru) so consumers of the package get the generator automatically via PackageReference. -->
+  <!-- The contracts generator (task 053) ships as an analyzer asset of this package. foundation-contracts
+       only DEFINES the markers (it doesn't apply them), so we build the generator (for ordering) but
+       do NOT run it here; we BUNDLE its dll as an analyzer asset (same pattern as timewarp-nuru) so
+       consumers of the package get the generator automatically via PackageReference. -->
   <ItemGroup>
     <ProjectReference Include="..\foundation-contracts-generators\foundation-contracts-generators.csproj"
                       ReferenceOutputAssembly="false" PrivateAssets="all" />

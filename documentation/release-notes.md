@@ -17,3 +17,7 @@ title: TimeWarp.Architecture Release Notes
   public types in `TimeWarp.Foundation.Features` (post-initialization output), not internal types
   in the consumer RootNamespace. FastEndpoint and ingress matching uses that FQN. Contracts that
   already `global using TimeWarp.Foundation.Features` need no source change.
+- **Change (task 053-007):** the bundled contracts generator type is `ContractsGenerator`
+  (`contracts-generator.cs`). Hint `ContractsGeneratorAttributes.g.cs`. Attribute names
+  `[ApiRoute]` / `[AuthApiRequest]` / `[OpenDataQueryParameters]` are unchanged. Crunchit and
+  other consumers that copy the generator type should use `ContractsGenerator`.

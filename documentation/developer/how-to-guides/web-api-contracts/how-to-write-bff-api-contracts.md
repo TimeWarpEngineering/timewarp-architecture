@@ -64,7 +64,7 @@ This organization helps in logically grouping vertical slices of functionality a
 
 #### Public Static Partial Class
 
-The `public static partial class` use of the `partial` keyword supports mixin patterns, allowing for extendable code generation without modifying the original class. This separation of generated and custom code promotes a clean and maintainable codebase. The class names follow CRUD operation prefixes. This provides instant clarity on the API's purpose, enabling developers to quickly identify and understand the contract's functionality.
+The `public static partial class` use of the `partial` keyword lets the contracts generator emit members onto the type without modifying the authored class. This separation of generated and custom code promotes a clean and maintainable codebase. The class names follow CRUD operation prefixes. This provides instant clarity on the API's purpose, enabling developers to quickly identify and understand the contract's functionality.
 
 This naming strategy aligns with RESTful design principles, making it easier for new developers to understand the API's functions intuitively.
 

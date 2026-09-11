@@ -82,11 +82,14 @@ Every cell is from real files (citations follow). "✅ matches skill" / "⚠️ 
 > naming, no source-gen mechanism marker** (the `[ObservableProperty]`/`[JsonSerializable]` norm).
 > The paragraphs below are kept as the pre-rename record; the skill rewrite (081) teaches the new
 > names.
+>
+> **053-007:** generator type is `ContractsGenerator` (`contracts-generator.cs`), not
+> `ContractsMixinGenerator`. File paths in this snapshot were updated to the current name.
 
 The `[RouteMixin("api/…", HttpVerb.X)]` attribute in the matrix is **not** Morris.Moxy anymore.
 Moxy was fully removed (task 053): no `.mixin` files, no `Morris.Moxy` package refs. The attribute is
 now emitted by a plain Roslyn `IIncrementalGenerator`:
-`source/foundation/foundation-contracts-generators/contracts-mixin-generator.cs`, which generates
+`source/foundation/foundation-contracts-generators/contracts-generator.cs`, which generates
 `internal sealed class RouteMixinAttribute` (+ `IAuthApiRequestMixinAttribute`,
 `IOpenDataQueryParametersMixinAttribute`) into the consumer's `RootNamespace`.
 
@@ -139,7 +142,7 @@ had missed; all were re-verified against the repos before inclusion here.
 | `GetMockResponseFactory()` on contract | 7/24 (6 wired in the SPA dict) | 4/65 |
 | SPA mock wiring | `MockWebApiService` dict → contract-local factories | `MockCopicApiService` → **45 `*MockFactory.cs` classes** in `Web.Spa/Services/MockFactories/` |
 | `*Contracts.Tests` project | **none** | **`Web.Contracts.Tests`** — 23 `*_Tests.cs`, `WebContractsTestingConvention` |
-| Mixin infra | Roslyn `ContractsMixinGenerator` (foundation pkg) | **Morris.Moxy** `.mixin` files |
+| Mixin infra | Roslyn `ContractsGenerator` (foundation pkg) | **Morris.Moxy** `.mixin` files |
 | `IAuthApiRequest` | yes (admin roles) | none |
 | Path casing / TFM | kebab `features/` / net10.0 | Pascal `Features/` / net8.0 |
 
@@ -156,7 +159,7 @@ had missed; all were re-verified against the repos before inclusion here.
 3. **Auth has two *non-equivalent* forms** (GLM, verified). `[IAuthApiRequestMixin]`
    (`get-roles.cs:13`, attribute) **vs** manual `IAuthApiRequest` + hand-declared `UserId`
    (`get-role.cs:13`). They are **not interchangeable**: the attribute form also synthesizes a
-   `private GetAuthQueryParameters()` (`contracts-mixin-generator.cs:193`) for query-string
+   `private GetAuthQueryParameters()` (`contracts-generator.cs:193`) for query-string
    composition — so the attribute form pairs with list queries (`IQueryStringRouteProvider`), the
    manual form with POST / GET-by-id. The skill must document both *and* the trigger, not pick one.
 4. **Copic test folders are pluralized** (`Tests/.../SecurityRoles/`) while its source is singular
@@ -547,4 +550,4 @@ ceremony, under-risks the published-package rename, and universalizes a one-repo
 **Decision 6 (IAuthApiRequest):** **DISSENT** — copic derives the user server-side (a valid competing design; promoting silently declares it wrong); TWA is itself split attribute-vs-manual; and `[IAuthApiRequestMixin]` is renamed by 053-002. **Document as *available* (both forms + trigger); hold "canonical" until post-rename.**
 **Decision 7 (nullability):** **keep+fix**, but **split the rule** — `= string.Empty`+`NotEmpty` is *forbidden* (real silent bug; TWA `create-todo-item.cs:11`); `string?`+`NotEmpty` is only *discouraged* (functional, just disarms the compiler). Not equal sins.
 **Decision 8 (053-002 sequencing):** **DISSENT (third option)** — the match is a *hardcoded* string in `endpoint-metadata.cs:31` **and** the attribute ships in a published package, so "rename first" gates all cleanup behind a downstream-template-breaking release. Instead: **rewrite the skill against the target name `[Route]` + a migration note, clean contracts against the current `[RouteMixin]`, run 053-002 whenever it's ready.** The double-edit is ~30s; the gate is weeks.
-**Cross-cutting / missed:** Decisions 6 & 8 are **coupled** (both hinge on the pre-rename attribute name) and both prior ballots flattened that. Also: the two auth forms are non-equivalent (attribute synthesizes `private GetAuthQueryParameters()`, `contracts-mixin-generator.cs:193`); FA licensing; `"MediatR"` sits in the *Detection* table (`SKILL.md:36`) so it breaks recognition, not just naming.
+**Cross-cutting / missed:** Decisions 6 & 8 are **coupled** (both hinge on the pre-rename attribute name) and both prior ballots flattened that. Also: the two auth forms are non-equivalent (attribute synthesizes `private GetAuthQueryParameters()`, `contracts-generator.cs:193`); FA licensing; `"MediatR"` sits in the *Detection* table (`SKILL.md:36`) so it breaks recognition, not just naming.
