@@ -46,7 +46,7 @@ Do **not** fix the `{LocationId}` parser here — that is **053-003**.
 - [x] Template / dual-mode RootNamespace still works
 - [x] Results + How to validate
 - [x] Implementation review disposition (`review/`)
-- [ ] CI green on PR #337 (skill eval grader name)
+- [x] CI skill-lint: hyphenate eval grader name (PR #337)
 
 ## Session
 
@@ -54,6 +54,7 @@ Do **not** fix the `{LocationId}` parser here — that is **053-003**.
 - Cockpit: timewarp-flow Grok `01a03d38-9611-7620-aae5-848e15dafa94`
 - Implementer: Grok session `01a08eb0-1178-74e1-b52b-610bbffa131c` (2026-09-11)
 - Review oracle: Grok session `01a08ed1-1284-71d2-aa1c-8e9a336ca9f5` (2026-09-11)
+- Implementer (skill-lint grader name): Grok session `01a08ee5-3c87-7e20-930c-cf7581295227` (2026-09-11)
 
 ## Notes
 
@@ -61,15 +62,10 @@ Do **not** fix the `{LocationId}` parser here — that is **053-003**.
 - Why today: attributes are generated `internal` in consumer RootNamespace
   so FastEndpoint matches `ApiRouteAttribute` by simple name (Moxy leftover).
 - Sibling: **053-003** (parser — land before crunchit copies mixins).
-- **CI red (do not merge):** PR #337
-  https://github.com/TimeWarpEngineering/timewarp-architecture/pull/337
-  job Lint skill specs (`103155212457`). `vally lint --eval-spec
-  skills/tw-web-api-contracts/evals/eval.yaml` fails:
-  `invalid-grader-name` `invokes_web_api_contracts` — must be
-  `invokes-web-api-contracts` (lowercase, hyphens). SKILL.md in this PR
-  triggered the skill-lint path; the underscore name is also on master.
-  Fix the grader name on this same id (same PR). Do not open a sibling.
-  `ci` and `template-smoke` were still pending when merge was refused.
+- PR #337 skill-lint (`103155212457`) failed `invalid-grader-name`
+  `invokes_web_api_contracts`. Renamed to `invokes-web-api-contracts`
+  in `skills/tw-web-api-contracts/evals/eval.yaml` on this same id.
+  Local `vally lint skills` and `vally lint --eval-spec` exit 0.
 
 ## Results
 
@@ -86,24 +82,32 @@ contracts already `global using TimeWarp.Foundation.Features`. Generator tests p
 `RootNamespace=SmokeDefault`. Existing mixins still emit `GetRoute` / `UserId` / OData
 members. A foreign `Other.Lib.ApiRouteAttribute` is ignored.
 
+PR #337 skill-lint failed because `skills/tw-web-api-contracts/evals/eval.yaml` used
+grader name `invokes_web_api_contracts`. Vally requires lowercase hyphens. Renamed to
+`invokes-web-api-contracts` on this id. Local `vally lint skills` 8/8; eval-spec lint
+exits 0 (scoring-defaults-applied warning only).
+
 **Files:** `contracts-mixin-generator.cs`, `hosted-route-discovery.cs`,
 `endpoint-metadata.cs`, `endpoint-auth-posture-analyzer.cs`, generator + analyzer tests
 (including FastEndpoint/ingress FQN foreign-attribute cases),
 `ingress-route-prefix-generator.cs` Design region, `skills/tw-web-api-contracts/SKILL.md`,
-how-to, release notes (2.0.0-beta.17).
+`skills/tw-web-api-contracts/evals/eval.yaml`, how-to, release notes (2.0.0-beta.17).
 
 **Not in scope (unchanged):** route parser (053-003), SyntaxProvider tightening (053-005),
 emitting fewer members (053-006), FastEndpoint referenced-assembly walk (006-001).
 
 **Tests:** `ContractsMixinGenerator_Tests` 9 passed; sourcegenerator suite 68 passed
 (66 plus two FQN foreign-attribute cases); analyzer suite 157 passed;
-`dotnet run tools/dev-cli/dev.cs -- build` 0/0.
+`dotnet run tools/dev-cli/dev.cs -- build` 0/0; `vally lint skills` 8 passed.
 
 ### How to validate
 
 **Smoke**
 
 ```bash
+vally lint skills
+vally lint --eval-spec skills/tw-web-api-contracts/evals/eval.yaml
+
 cd tests/analyzers/timewarp-architecture-sourcegenerator-tests
 dotnet test -c Release -- --filter-class ContractsMixinGenerator
 dotnet test -c Release -- --filter-method Should_Ignore_Foreign_ApiRouteAttribute_Same_Simple_Name
@@ -111,6 +115,9 @@ dotnet test -c Release -- --filter-method Should_Ignore_Foreign_ApiRouteAttribut
 
 **Expect**
 
+- `vally lint skills`: 8 skill(s) linted, 8 passed (exit 0)
+- `vally lint --eval-spec …/eval.yaml`: exit 0; no `invalid-grader-name`;
+  optional warning `scoring-defaults-applied` is OK
 - Mixin class: 9 passed (0 failed), including:
   - `Should_Emit_Public_Marker_Attributes_In_Foundation_Namespace` — generated source
     contains `namespace TimeWarp.Foundation.Features;` and `public sealed class ApiRouteAttribute`
@@ -126,6 +133,10 @@ dotnet test -c Release -- --filter-method Should_Ignore_Foreign_ApiRouteAttribut
 **Automated gate**
 
 ```bash
+vally lint skills
+vally lint --eval-spec skills/tw-web-api-contracts/evals/eval.yaml
+# expect: exit 0 (8 skills passed; no invalid-grader-name)
+
 cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c Release
 # expect: 68 passed (66 plus two FQN foreign-attribute cases)
 
