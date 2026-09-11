@@ -46,6 +46,7 @@ Do **not** fix the `{LocationId}` parser here — that is **053-003**.
 - [x] Template / dual-mode RootNamespace still works
 - [x] Results + How to validate
 - [x] Implementation review disposition (`review/`)
+- [ ] CI green on PR #337 (skill eval grader name)
 
 ## Session
 
@@ -60,6 +61,15 @@ Do **not** fix the `{LocationId}` parser here — that is **053-003**.
 - Why today: attributes are generated `internal` in consumer RootNamespace
   so FastEndpoint matches `ApiRouteAttribute` by simple name (Moxy leftover).
 - Sibling: **053-003** (parser — land before crunchit copies mixins).
+- **CI red (do not merge):** PR #337
+  https://github.com/TimeWarpEngineering/timewarp-architecture/pull/337
+  job Lint skill specs (`103155212457`). `vally lint --eval-spec
+  skills/tw-web-api-contracts/evals/eval.yaml` fails:
+  `invalid-grader-name` `invokes_web_api_contracts` — must be
+  `invokes-web-api-contracts` (lowercase, hyphens). SKILL.md in this PR
+  triggered the skill-lint path; the underscore name is also on master.
+  Fix the grader name on this same id (same PR). Do not open a sibling.
+  `ci` and `template-smoke` were still pending when merge was refused.
 
 ## Results
 
