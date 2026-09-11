@@ -11,7 +11,9 @@ using TimeWarp.Foundation.Contracts.Generators;
 // mapping plus the two interface mixins. Task 053-003: bare `{Name}` tokens keep the full
 // identifier (colon is required before a constraint). Task 053-005: partial-class predicate,
 // equatable Target, one hint per type; AllowMultiple same-kind attributes keep the first
-// successful Part only so the merged file compiles.
+// successful Part only so the merged file compiles. Task 053-006: static GetRoute returns
+// RouteTemplate; parameterized GetRoute() forwards to GetRoute(...); GetAuthQueryParameters only
+// on query-string contracts; generated Guid/DateTime members use global::.
 public class ContractsMixinGenerator_Tests
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -153,11 +155,12 @@ public class ContractsMixinGenerator_Tests
   {
     string generated = RunAndConcat("TimeWarp.Architecture");
 
-    // min(1) maps to int; both GetRoute overloads + the property are emitted.
+    // min(1) maps to int; parameterized GetRoute plus a forwarding parameterless overload.
     generated.ShouldContain("""public const string RouteTemplate = "api/Roles/{RoleId:min(1)}";""");
     generated.ShouldContain("GetHttpVerb() => global::TimeWarp.Foundation.Features.HttpVerb.Get;");
     generated.ShouldContain("""public string GetRoute(int RoleId) => global::System.FormattableString.Invariant($"api/Roles/{RoleId}");""");
-    generated.ShouldContain("""public string GetRoute() => global::System.FormattableString.Invariant($"api/Roles/{RoleId}");""");
+    generated.ShouldContain("public string GetRoute() => GetRoute(RoleId);");
+    generated.ShouldNotContain("""public string GetRoute() => global::System.FormattableString.Invariant($"api/Roles/{RoleId}");""");
     generated.ShouldContain("public int RoleId { get; set; }");
     return Task.CompletedTask;
   }
@@ -168,6 +171,7 @@ public class ContractsMixinGenerator_Tests
 
     generated.ShouldContain("global::TimeWarp.Foundation.Features.IAuthApiRequest");
     generated.ShouldContain("public global::System.Guid UserId { get; set; }");
+    generated.ShouldContain("GetAuthQueryParameters()");
     generated.ShouldContain("global::TimeWarp.Foundation.Features.IOpenDataQueryParameters");
     generated.ShouldContain("public int? Top { get; set; }");
     generated.ShouldContain("public bool ReturnTotalCount { get; set; }");
@@ -188,7 +192,7 @@ public class ContractsMixinGenerator_Tests
 
     string generated = Run(source);
 
-    generated.ShouldContain("public Guid ItemId { get; set; }");
+    generated.ShouldContain("public global::System.Guid ItemId { get; set; }");
     generated.ShouldContain("""public const string RouteTemplate = "api/items/{ItemId:guid}";""");
     return Task.CompletedTask;
   }
@@ -240,12 +244,13 @@ public class ContractsMixinGenerator_Tests
   {
     string generated = Run(RouteContract("api/ccc/locations/{LocationId:guid}/exports/{Date:datetime}/clients/{ClientId:string}"));
 
-    generated.ShouldContain("public Guid LocationId { get; set; }");
-    generated.ShouldContain("public DateTime Date { get; set; }");
+    generated.ShouldContain("public global::System.Guid LocationId { get; set; }");
+    generated.ShouldContain("public global::System.DateTime Date { get; set; }");
     generated.ShouldContain("public string ClientId { get; set; }");
-    generated.ShouldContain("public string GetRoute(Guid LocationId, DateTime Date, string ClientId)");
+    generated.ShouldContain("public string GetRoute(global::System.Guid LocationId, global::System.DateTime Date, string ClientId)");
+    generated.ShouldContain("public string GetRoute() => GetRoute(LocationId, Date, ClientId);");
     generated.ShouldContain("""public const string RouteTemplate = "api/ccc/locations/{LocationId:guid}/exports/{Date:datetime}/clients/{ClientId}";""");
-    generated.ShouldContain("""public string GetRoute(Guid LocationId, DateTime Date, string ClientId) => global::System.FormattableString.Invariant($"api/ccc/locations/{LocationId}/exports/{Date:yyyy-MM-dd}/clients/{ClientId}");""");
+    generated.ShouldContain("""public string GetRoute(global::System.Guid LocationId, global::System.DateTime Date, string ClientId) => global::System.FormattableString.Invariant($"api/ccc/locations/{LocationId}/exports/{Date:yyyy-MM-dd}/clients/{ClientId}");""");
     return Task.CompletedTask;
   }
 
@@ -256,10 +261,11 @@ public class ContractsMixinGenerator_Tests
 
     generated.ShouldContain("public string LocationId { get; set; }");
     generated.ShouldContain("public string Date { get; set; }");
-    generated.ShouldContain("public Guid ClientId { get; set; }");
+    generated.ShouldContain("public global::System.Guid ClientId { get; set; }");
     generated.ShouldContain("public string StaffId { get; set; }");
     generated.ShouldContain("public string UserId { get; set; }");
-    generated.ShouldContain("public string GetRoute(string LocationId, string Date, Guid ClientId, string StaffId, string UserId)");
+    generated.ShouldContain("public string GetRoute(string LocationId, string Date, global::System.Guid ClientId, string StaffId, string UserId)");
+    generated.ShouldContain("public string GetRoute() => GetRoute(LocationId, Date, ClientId, StaffId, UserId);");
     generated.ShouldContain("""public const string RouteTemplate = "api/ccc/locations/{LocationId}/exports/{Date}/validate/{ClientId:guid}/{StaffId}/{UserId}";""");
     generated.ShouldNotContain("public d LocationI");
     generated.ShouldNotContain("public e Dat");
@@ -284,6 +290,7 @@ public class ContractsMixinGenerator_Tests
       .SourceText.ToString();
     getRoles.ShouldContain("IAuthApiRequest");
     getRoles.ShouldContain("IOpenDataQueryParameters");
+    getRoles.ShouldContain("GetAuthQueryParameters()");
     return Task.CompletedTask;
   }
 
@@ -404,6 +411,94 @@ public class ContractsMixinGenerator_Tests
     driver = driver.RunGenerators(compilation);
 
     OutputReasons(driver.GetRunResult()).ShouldNotContain(IncrementalStepRunReason.Modified);
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_Static_GetRoute_As_RouteTemplate_Return()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles;
+
+      public static partial class GetRoles
+      {
+          [ApiRoute("api/Roles", HttpVerb.Get)]
+          public sealed partial class Query { }
+      }
+
+      public static partial class CreateRole
+      {
+          [ApiRoute("api/Roles", HttpVerb.Post)]
+          public sealed partial class Command { }
+      }
+      """;
+
+    string generated = Run(source);
+
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    generated.ShouldContain("public string GetRoute() => RouteTemplate;");
+    generated.ShouldNotContain("FormattableString.Invariant");
+    generated.ShouldNotContain("public string GetRoute(int");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_GetAuthQueryParameters_Only_For_Query_String_Contracts()
+  {
+    const string authOnly = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles;
+
+      public static partial class CreateRole
+      {
+          [AuthApiRequest]
+          public sealed partial class Command { }
+      }
+      """;
+
+    const string authAndOpenData = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles;
+
+      public static partial class GetRoles
+      {
+          [OpenDataQueryParameters]
+          [AuthApiRequest]
+          public sealed partial class Query { }
+      }
+      """;
+
+    const string authAndQueryString = """
+      using TimeWarp.Foundation.Features;
+
+      namespace TimeWarp.Foundation.Features
+      {
+          public interface IQueryStringRouteProvider { string GetRouteWithQueryString(); }
+      }
+
+      namespace Test.Features.Admin.Principals;
+
+      public static partial class ListPrincipals
+      {
+          [AuthApiRequest]
+          public sealed partial class Query : IQueryStringRouteProvider { }
+      }
+      """;
+
+    string authOnlyGenerated = Run(authOnly);
+    authOnlyGenerated.ShouldContain("public global::System.Guid UserId { get; set; }");
+    authOnlyGenerated.ShouldContain("global::TimeWarp.Foundation.Features.IAuthApiRequest");
+    authOnlyGenerated.ShouldNotContain("GetAuthQueryParameters");
+
+    string openDataGenerated = Run(authAndOpenData);
+    openDataGenerated.ShouldContain("GetAuthQueryParameters()");
+    openDataGenerated.ShouldContain("GetOpenDataQueryParameters()");
+
+    string queryStringGenerated = Run(authAndQueryString);
+    queryStringGenerated.ShouldContain("GetAuthQueryParameters()");
+    queryStringGenerated.ShouldNotContain("GetOpenDataQueryParameters()");
     return Task.CompletedTask;
   }
 }

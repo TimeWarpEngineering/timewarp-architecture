@@ -112,7 +112,7 @@ what connects the contract to both the HTTP client and the server's FastEndpoint
 | Attribute | Generates | Use when |
 |-----------|-----------|----------|
 | `[ApiRoute("api/…", HttpVerb.X)]` | `RouteTemplate` const, `GetRoute()`, `GetHttpVerb()`, and a typed property per route parameter (`{UserId:guid}` → `Guid UserId`) | Every contract request |
-| `[AuthApiRequest]` | `Guid UserId { get; set; }` + private `GetAuthQueryParameters()` | Query-string queries that carry user identity |
+| `[AuthApiRequest]` | `Guid UserId { get; set; }`; private `GetAuthQueryParameters()` only when the same type is `IQueryStringRouteProvider` or also has `[OpenDataQueryParameters]` | Query-string queries that carry user identity |
 | `[OpenDataQueryParameters]` | `Top`/`Skip`/`Filter`/`OrderBy`/`ReturnTotalCount` + private `GetOpenDataQueryParameters()` | Pageable/sortable list queries |
 
 Do **not** hand-declare route parameters — they are generated from the route template. Do declare

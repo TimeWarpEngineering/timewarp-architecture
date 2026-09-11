@@ -58,7 +58,7 @@ become hosted FastEndpoints.
 | Attribute | Generates | Use when |
 |-----------|-----------|----------|
 | `[ApiRoute("api/…", HttpVerb.X)]` | `RouteTemplate` const, `GetRoute()`, `GetHttpVerb()`, and a typed property per route parameter (`{RoleId:guid}` → `Guid RoleId`) | Every contract request |
-| `[AuthApiRequest]` | `Guid UserId { get; set; }` + private `GetAuthQueryParameters()` for query-string composition | List/GET queries that carry user identity in the query string |
+| `[AuthApiRequest]` | `Guid UserId { get; set; }`; private `GetAuthQueryParameters()` only when the same type is `IQueryStringRouteProvider` or also has `[OpenDataQueryParameters]` | List/GET queries that carry user identity in the query string |
 | `[OpenDataQueryParameters]` | `Top`/`Skip`/`Filter`/`OrderBy`/`ReturnTotalCount` + private `GetOpenDataQueryParameters()` | Pageable/sortable list queries |
 
 The FastEndpoint generator matches `TimeWarp.Foundation.Features.ApiRouteAttribute` by fully
@@ -242,7 +242,7 @@ no server exists to derive identity — can tailor responses per user. Two forms
 
 | Form | Shape | Use when |
 |------|-------|----------|
-| **Attribute** `[AuthApiRequest]` | Generates `UserId` **and** `GetAuthQueryParameters()` | Query-string queries (`IQueryStringRouteProvider` — lists, filters) that must append `UserId` to the URL |
+| **Attribute** `[AuthApiRequest]` | Generates `UserId`; also `GetAuthQueryParameters()` when the same type is `IQueryStringRouteProvider` or also has `[OpenDataQueryParameters]` | Query-string queries (`IQueryStringRouteProvider` — lists, filters) that must append `UserId` to the URL |
 | **Manual** `: IAuthApiRequest` + declared `Guid UserId { get; set; }` | You write the property | POST bodies and GET-by-id routes — no query-string composition needed |
 
 Both pair with `RuleFor(x => x).SetValidator(new AuthApiRequestValidator())`.

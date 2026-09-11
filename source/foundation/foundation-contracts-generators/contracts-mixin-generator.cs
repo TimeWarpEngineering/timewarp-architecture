@@ -17,12 +17,18 @@
 // equatable record struct Target (ImmutableArray parts) so trivia-only re-transforms do not re-emit,
 // and one `{fqn}.g.cs` per type avoids AllowMultiple hint-name collisions. Extra same-kind
 // attributes on one type are ignored after the first successful Part (first-wins) so that merged
-// file stays compilable; multi-route member APIs are out of scope here (053-006).
+// file stays compilable; multi-route member APIs are out of scope.
+// Static templates emit `GetRoute() => RouteTemplate` (no interpolation). Parameterized templates
+// emit `GetRoute(...)` plus a parameterless `GetRoute()` that forwards to it so the format string
+// is not duplicated. `[AuthApiRequest]` always emits `UserId`; `GetAuthQueryParameters` only when
+// the same type is `IQueryStringRouteProvider` or also has `[OpenDataQueryParameters]` (list
+// queries compose it; POST / GET-by-id keep the manual `IAuthApiRequest` form). Generated member
+// types use `global::System.Guid` / `global::System.DateTime`.
 // Route tokens are `{Name}` or `{Name:constraint}`. The colon is the only delimiter that starts a
 // type/constraint token (task 053-003). An optional colon (`:?`) plus a required second `\w+` stole
 // the last letter of identifiers that look like types (`{Date}` → Dat + e, `{LocationId}` → LocationI + d).
 // Recognized constraint tokens and the C# type they emit:
-//   guid → Guid; datetime → DateTime (GetRoute formats yyyy-MM-dd);
+//   guid → global::System.Guid; datetime → global::System.DateTime (GetRoute formats yyyy-MM-dd);
 //   string / alpha / required / minlength* / maxlength* / length* / range* / regex* → string;
 //   min* / max* (that did not match minlength/maxlength) → int;
 //   any other token is used as the C# type as-is (int, long, bool, …);
@@ -167,11 +173,30 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
 
   private static Target OrderParts(Target target)
   {
-    if (target.Parts.Length <= 1)
-      return target;
+    ImmutableArray<Part> parts = WithAuthQueryHelperWhenOpenData(target.Parts);
+    if (parts.Length <= 1)
+      return target with { Parts = parts };
 
-    ImmutableArray<Part> ordered = [.. target.Parts.OrderBy(static p => KindOrder(p.Kind))];
+    ImmutableArray<Part> ordered = [.. parts.OrderBy(static p => KindOrder(p.Kind))];
     return target with { Parts = ordered };
+  }
+
+  private static ImmutableArray<Part> WithAuthQueryHelperWhenOpenData(ImmutableArray<Part> parts)
+  {
+    bool hasOpenData = false;
+    bool hasAuth = false;
+    foreach (Part part in parts)
+    {
+      if (part.Kind == OpenDataName)
+        hasOpenData = true;
+      else if (part.Kind == AuthName)
+        hasAuth = true;
+    }
+
+    if (!hasOpenData || !hasAuth)
+      return parts;
+
+    return [.. parts.Select(static p => p.Kind == AuthName ? p with { Body = AuthBody(includeQueryHelper: true) } : p)];
   }
 
   private static int KindOrder(string kind) => kind switch
@@ -193,7 +218,7 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
       Part? part = kind switch
       {
         RouteName => BuildRoute(attr),
-        AuthName => new Part(AuthName, "global::TimeWarp.Foundation.Features.IAuthApiRequest", AuthBody()),
+        AuthName => new Part(AuthName, "global::TimeWarp.Foundation.Features.IAuthApiRequest", AuthBody(WantsAuthQueryHelper(context))),
         OpenDataName => new Part(OpenDataName, "global::TimeWarp.Foundation.Features.IOpenDataQueryParameters", OpenDataBody()),
         _ => null
       };
@@ -270,10 +295,15 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
     if (parameters.Count > 0)
     {
       string sig = string.Join(", ", parameters.Select(static p => p.Type + " " + p.Name));
+      string args = string.Join(", ", parameters.Select(static p => p.Name));
       sb.Append("    public string GetRoute(").Append(sig).Append(") => global::System.FormattableString.Invariant($\"").Append(formatString).Append("\");\n");
+      sb.Append("    public string GetRoute() => GetRoute(").Append(args).Append(");\n");
+    }
+    else
+    {
+      sb.Append("    public string GetRoute() => RouteTemplate;\n");
     }
 
-    sb.Append("    public string GetRoute() => global::System.FormattableString.Invariant($\"").Append(formatString).Append("\");\n");
     foreach ((string type, string name) in parameters)
       sb.Append("    public ").Append(type).Append(' ').Append(name).Append(" { get; set; }\n");
 
@@ -293,13 +323,74 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
     return verbArgument.Value?.ToString();
   }
 
-  private static string AuthBody() =>
-    "    public global::System.Guid UserId { get; set; }\n" +
-    "    private " + Nvc + " GetAuthQueryParameters() =>\n" +
-    "      new " + Nvc + "\n" +
-    "      {\n" +
-    "        { nameof(UserId), UserId.ToString() }\n" +
-    "      };\n";
+  private static bool WantsAuthQueryHelper(GeneratorAttributeSyntaxContext context)
+  {
+    if (HasQueryStringRouteProvider(context))
+      return true;
+
+    if (context.TargetSymbol is not INamedTypeSymbol symbol)
+      return false;
+
+    foreach (AttributeData attributeData in symbol.GetAttributes())
+    {
+      INamedTypeSymbol? attributeClass = attributeData.AttributeClass;
+      if (attributeClass is null)
+      {
+        continue;
+      }
+
+      if (attributeClass.ContainingNamespace?.ToDisplayString() == AttributeNamespace
+        && attributeClass.Name == "OpenDataQueryParametersAttribute")
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static bool HasQueryStringRouteProvider(GeneratorAttributeSyntaxContext context)
+  {
+    if (context.TargetSymbol is INamedTypeSymbol symbol)
+    {
+      foreach (INamedTypeSymbol iface in symbol.AllInterfaces)
+      {
+        if (iface.Name == "IQueryStringRouteProvider")
+          return true;
+      }
+    }
+
+    if (context.TargetNode is ClassDeclarationSyntax { BaseList: { } baseList })
+    {
+      foreach (BaseTypeSyntax baseType in baseList.Types)
+      {
+        if (baseType.Type.ToString() is string typeName
+          && typeName.EndsWith("IQueryStringRouteProvider", StringComparison.Ordinal))
+        {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static string AuthBody(bool includeQueryHelper)
+  {
+    StringBuilder sb = new();
+    sb.Append("    public global::System.Guid UserId { get; set; }").Append('\n');
+    if (!includeQueryHelper)
+    {
+      return sb.ToString();
+    }
+
+    sb.Append("    private ").Append(Nvc).Append(" GetAuthQueryParameters() =>").Append('\n');
+    sb.Append("      new ").Append(Nvc).Append('\n');
+    sb.Append("      {").Append('\n');
+    sb.Append("        { nameof(UserId), UserId.ToString() }").Append('\n');
+    sb.Append("      };").Append('\n');
+    return sb.ToString();
+  }
 
   private static string OpenDataBody() =>
     "    public int? Top { get; set; }\n" +
@@ -364,9 +455,9 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
 
     string lower = constraint.ToLowerInvariant();
     if (lower == "guid")
-      return "Guid";
+      return "global::System.Guid";
     if (lower == "datetime")
-      return "DateTime";
+      return "global::System.DateTime";
     if (lower is "string" or "alpha" or "required"
       || lower.StartsWith("minlength", System.StringComparison.Ordinal)
       || lower.StartsWith("maxlength", System.StringComparison.Ordinal)
