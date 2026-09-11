@@ -43,18 +43,22 @@ Shrink emission. Do not change route parsing (**053-003**).
 - [x] `global::` types in generated members
 - [x] Roles list + create still generate correctly
 - [x] Results + How to validate
+- [x] Review disposition (clean, 1 round)
 
 ## Session
 
 - Created: 2417840 (2026-09-09)
 - Cockpit: timewarp-flow Grok `01a03d38-9611-7620-aae5-848e15dafa94`
 - Implementer: Grok session `01a09097-530c-7930-9ae2-e4969eb17d93` (2026-09-11)
+- Review oracle: Grok session `01a090a1-3a9b-7040-8fb5-72582626315e` (2026-09-11)
 
 ## Notes
 
 - File: `source/foundation/foundation-contracts-generators/contracts-mixin-generator.cs`
 - Skill: `[AuthApiRequest]` vs manual `IAuthApiRequest` are two forms;
   do not collapse them.
+- Review kitchen: `review/review-framework.md`, `review/round-1/`,
+  `review/disposition.md`.
 
 ## Results
 
@@ -147,3 +151,14 @@ dotnet build source/container-apps/api/projects/api-contracts/api-contracts.cspr
 
 **Not in scope:** route parser (053-003), public FQN attributes (053-004),
 SyntaxProvider incrementality (053-005), `dev template-smoke`.
+
+**Review disposition:** clean (0 open). Effort 1, general only. 1 round.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 0 | 0 |
+
+- No findings. Static `GetRoute() => RouteTemplate`, parameterized forwarder, auth helper gated to query-string contracts, and `global::` Guid/DateTime match the brief. Hosted GetRoles / ListPrincipals / GetCredentials keep the helper; CreateRole and GetRole stay on the manual form.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. No wontfix; no escalation.
