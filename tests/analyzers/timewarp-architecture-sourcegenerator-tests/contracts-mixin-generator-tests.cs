@@ -10,7 +10,8 @@ using TimeWarp.Foundation.Contracts.Generators;
 // with ForAttributeWithMetadataName, and still generates route members with the correct type
 // mapping plus the two interface mixins. Task 053-003: bare `{Name}` tokens keep the full
 // identifier (colon is required before a constraint). Task 053-005: partial-class predicate,
-// equatable Target, one hint per type.
+// equatable Target, one hint per type; AllowMultiple same-kind attributes keep the first
+// successful Part only so the merged file compiles.
 public class ContractsMixinGenerator_Tests
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -95,6 +96,19 @@ public class ContractsMixinGenerator_Tests
       .SelectMany(static step => step.Outputs)
       .Select(static output => output.Reason)
   ];
+
+  private static void AssertGeneratedCompilesWithoutErrors(string source)
+  {
+    CSharpCompilation compilation = CreateCompilation(source);
+    GeneratorDriver driver = CreateDriver();
+    _ = driver.RunGeneratorsAndUpdateCompilation(compilation, out Compilation updated, out _);
+    ImmutableArray<Diagnostic> errors =
+    [
+      .. updated.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error)
+    ];
+    errors.ShouldBeEmpty(
+      string.Join(Environment.NewLine, errors.Select(static d => d.ToString())));
+  }
 
   private static string RunAndConcat(string rootNamespace) => Run(Source, rootNamespace);
 
@@ -295,8 +309,11 @@ public class ContractsMixinGenerator_Tests
       .SelectMany(static r => r.GeneratedSources)
       .Single(static s => s.HintName == "Test.Features.Ccc.Dual.Command.g.cs")
       .SourceText.ToString();
-    text.ShouldContain("api/a/{Id}");
-    text.ShouldContain("api/b/{Id}");
+    text.ShouldContain("""public const string RouteTemplate = "api/a/{Id}";""");
+    text.ShouldContain("GetHttpVerb() => global::TimeWarp.Foundation.Features.HttpVerb.Get;");
+    text.ShouldNotContain("api/b/{Id}");
+    text.ShouldNotContain("HttpVerb.Post");
+    AssertGeneratedCompilesWithoutErrors(source);
     return Task.CompletedTask;
   }
 

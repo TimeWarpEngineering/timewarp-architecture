@@ -15,7 +15,9 @@
 // Discovery is one ForAttributeWithMetadataName per metadata name; the predicate requires a partial
 // class (records/structs are skipped). The three pipelines are collected and merged into an
 // equatable record struct Target (ImmutableArray parts) so trivia-only re-transforms do not re-emit,
-// and one `{fqn}.g.cs` per type avoids AllowMultiple hint-name collisions.
+// and one `{fqn}.g.cs` per type avoids AllowMultiple hint-name collisions. Extra same-kind
+// attributes on one type are ignored after the first successful Part (first-wins) so that merged
+// file stays compilable; multi-route member APIs are out of scope here (053-006).
 // Route tokens are `{Name}` or `{Name:constraint}`. The colon is the only delimiter that starts a
 // type/constraint token (task 053-003). An optional colon (`:?`) plus a required second `\w+` stole
 // the last letter of identifiers that look like types (`{Date}` → Dat + e, `{LocationId}` → LocationI + d).
@@ -196,7 +198,10 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
         _ => null
       };
       if (part is not null)
+      {
         parts.Add(part.Value);
+        break;
+      }
     }
 
     if (parts.Count == 0)
