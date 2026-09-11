@@ -208,6 +208,45 @@ public class IngressRoutePrefixGenerator_Tests
     return Task.CompletedTask;
   }
 
+  // FQN match only: Other.Lib.ApiRouteAttribute shares the simple name but must not be discovered
+  // by HostedRouteDiscovery.IsApiRouteAttribute (task 053-004). Fully qualify — harness has
+  // global using TimeWarp.Foundation.Features.
+  private const string ApiEndpointWithForeignApiRoute = """
+    using TimeWarp.Architecture.Attributes;
+
+    namespace Other.Lib
+    {
+        internal sealed class ApiRouteAttribute : System.Attribute
+        {
+            public ApiRouteAttribute(string route, int verb) { }
+        }
+    }
+
+    namespace Test.Web.Features
+    {
+        [ApiEndpoint]
+        public static partial class CollidedThing
+        {
+            [Other.Lib.ApiRoute("api/collided", 1)]
+            public sealed partial class Query { }
+            public sealed class Response { }
+        }
+    }
+    """;
+
+  public static Task Should_Ignore_Foreign_ApiRouteAttribute_Same_Simple_Name()
+  {
+    MetadataReference web = GeneratorTestHarness.CompileContractAssembly(ApiEndpointWithForeignApiRoute, "web-contracts");
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.RunIngress(new[] { web }, EnabledForWebContracts());
+
+    string generated = GeneratedSource(runResult);
+    generated.ShouldNotContain("api/collided");
+    generated.ShouldContain("ImmutableArray<string>.Empty");
+
+    return Task.CompletedTask;
+  }
+
   public static Task Should_Skip_Non_Api_Routes()
   {
     MetadataReference web = GeneratorTestHarness.CompileContractAssembly(WebContracts, "web-contracts");
