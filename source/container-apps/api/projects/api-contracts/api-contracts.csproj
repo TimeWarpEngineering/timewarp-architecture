@@ -36,8 +36,8 @@
 
 
   <ItemGroup>
-    <!-- foundation-contracts mixins are now a bundled source generator (task 053-001): analyzer ref
-         in repo mode; flows from the TimeWarp.Foundation.Contracts package in package mode. -->
+    <!-- foundation-contracts generator (task 053): analyzer ref in repo mode; flows from the
+         TimeWarp.Foundation.Contracts package in package mode. -->
     <ProjectReference Include="..\..\..\..\foundation\foundation-contracts-generators\foundation-contracts-generators.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false"
                       Condition="'$(UseFoundationPackages)' != 'true'" />

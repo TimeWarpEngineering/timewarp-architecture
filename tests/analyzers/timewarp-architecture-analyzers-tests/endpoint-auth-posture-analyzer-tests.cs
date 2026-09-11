@@ -18,7 +18,7 @@ public class Should_Enforce_Auth_Posture
   // Minimal stub surface. IAuthApiRequest is matched by simple name; AuthApiRequestAttribute and
   // ApiRouteAttribute are matched by FQN in TimeWarp.Foundation.Features (task 053-004).
   // ClientOnlyContractAttribute stays simple-name. The stubs stand in for BOTH the manual
-  // interface form and the [AuthApiRequest] mixin-generator-expanded form.
+  // interface form and the [AuthApiRequest] generator-expanded form.
   private const string Stubs =
     """
     #region Purpose
@@ -208,10 +208,10 @@ public class Should_Enforce_Auth_Posture
     await Test(source).RunAsync();
   }
 
-  public static async Task Given_AllowAnonymous_With_AuthApiRequest_Mixin_Attribute_Flags_TWA0014()
+  public static async Task Given_AllowAnonymous_With_AuthApiRequest_Attribute_Flags_TWA0014()
   {
-    // Simulates the [AuthApiRequest] mixin form (get-roles.cs's shape): the attribute is applied
-    // directly rather than the interface being hand-declared — ContractsMixinGenerator would expand
+    // Simulates the [AuthApiRequest] attribute form (get-roles.cs's shape): the attribute is applied
+    // directly rather than the interface being hand-declared — ContractsGenerator would expand
     // this into an IAuthApiRequest implementation too, but this test exercises the attribute-only
     // detection path independently (see the analyzer's Design region on why both checks exist).
     const string source =

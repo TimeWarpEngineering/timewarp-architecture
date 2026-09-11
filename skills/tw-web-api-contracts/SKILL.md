@@ -62,7 +62,7 @@ become hosted FastEndpoints.
 | `[OpenDataQueryParameters]` | `Top`/`Skip`/`Filter`/`OrderBy`/`ReturnTotalCount` + private `GetOpenDataQueryParameters()` | Pageable/sortable list queries |
 
 The FastEndpoint generator matches `TimeWarp.Foundation.Features.ApiRouteAttribute` by fully
-qualified metadata name. The mixin generator emits that public type via post-initialization
+qualified metadata name. The contracts generator emits that public type via post-initialization
 output, so it does not follow the generated app's RootNamespace (task 115 sourceName rewrite
 leaves `TimeWarp.Foundation.*` intact; contracts already `global using TimeWarp.Foundation.Features`).
 

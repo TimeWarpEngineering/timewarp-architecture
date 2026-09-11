@@ -6,7 +6,7 @@
 #region Design
 // Linked into BOTH TimeWarp.Architecture.Generators and TimeWarp.Architecture.Analyzers via
 // <Compile Include Link=…> — no ProjectReference between those packages (F-004 / task 131-001).
-// [ApiRoute] is matched by FQN (TimeWarp.Foundation.Features.ApiRouteAttribute): the mixin
+// [ApiRoute] is matched by FQN (TimeWarp.Foundation.Features.ApiRouteAttribute): the contracts
 // generator emits that public type via post-init (task 053-004), so a simple-name match would
 // collide with any other ApiRouteAttribute and ForAttributeWithMetadataName would be unusable.
 // Compare namespace+name strings, not GetTypeByMetadataName + SymbolEqualityComparer — each

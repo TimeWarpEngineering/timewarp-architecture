@@ -3,6 +3,10 @@
 **Date:** 2026-07-01  
 **Scope:** `skills/tw-web-api-contracts/`, `documentation/developer/how-to-guides/web-api-contracts/`, this template repo (`timewarp-architecture/dev`), and production reference repo (`copic/main`).
 
+> **Name updates (053-002 / 053-007):** current attributes are `[ApiRoute]` / `[AuthApiRequest]` /
+> `[OpenDataQueryParameters]`; generator type is `ContractsGenerator` (`contracts-generator.cs`).
+> Historical `[RouteMixin]` / `ContractsGenerator` wording below is a snapshot.
+
 ---
 
 ## Executive summary
@@ -11,7 +15,7 @@ The **skill is the most complete and actionable source** for scaffolding contrac
 
 **Folder naming is inconsistent across all four sources.** The skill says singular folders + plural namespaces; official docs say plural folders + plural namespaces; both repos use mixed conventions in practice. **Only namespace pluralization is consistently applied.**
 
-**Copic is the canonical example corpus** for tier-2/3 patterns (SecurityRole CRUD, filterable queries, `Web.Contracts.Tests`), but it carries significant legacy debt (`string?` + `NotEmpty()`, separate SPA mock-factory classes, Morris.Moxy mixins). **The template repo is the target architecture** (Roslyn `ContractsMixinGenerator`, `GetMockResponseFactory()` on contracts, `IAuthApiRequest`) but is thinner (24 contract files, no `*Contracts.Tests`, some anti-pattern samples in todo-items).
+**Copic is the canonical example corpus** for tier-2/3 patterns (SecurityRole CRUD, filterable queries, `Web.Contracts.Tests`), but it carries significant legacy debt (`string?` + `NotEmpty()`, separate SPA mock-factory classes, Morris.Moxy mixins). **The template repo is the target architecture** (Roslyn `ContractsGenerator`, `GetMockResponseFactory()` on contracts, `IAuthApiRequest`) but is thinner (24 contract files, no `*Contracts.Tests`, some anti-pattern samples in todo-items).
 
 The skill should be treated as the **agent workflow authority**, with docs updated to match and explicit **repo-era detection** (Moxy vs generator, mock-factory placement, test project presence).
 
@@ -36,7 +40,7 @@ The skill should be treated as the **agent workflow authority**, with docs updat
 | `GetMockResponseFactory()` on contract | 7 / 24 (29%) | 4 / 65 (6%) |
 | SPA mock wiring | `MockWebApiService` dictionary → contract factories | `MockCopicApiService` → 47 `*MockFactory.cs` classes in `Web.Spa/Services/MockFactories/` |
 | `Web.Contracts.Tests` project | **None** | **Yes** — 23 `*_Tests.cs` with `SerializeAndDeserialize` |
-| Mixin infrastructure | Roslyn `ContractsMixinGenerator` in `TimeWarp.Foundation.Contracts` | Morris.Moxy — `Common.Contracts/Mixins/*.mixin` |
+| Contracts generator | Roslyn `ContractsGenerator` in `TimeWarp.Foundation.Contracts` | Morris.Moxy — `Common.Contracts/Mixins/*.mixin` |
 | `IAuthApiRequest` usage | Yes (admin roles) | **None** |
 | Path casing | Lowercase `features/` | PascalCase `Features/` |
 | .NET version | net10.0 | net8.0 |
@@ -174,7 +178,7 @@ Skill examples use mutable `ApplicationId { get; set; }` with non-nullable `Name
 
 ### Template (current target)
 
-`ContractsMixinGenerator` (ships in `TimeWarp.Foundation.Contracts`) replaces three Moxy mixins:
+`ContractsGenerator` (ships in `TimeWarp.Foundation.Contracts`) replaces three Moxy mixins:
 
 | Attribute | Emits |
 |-----------|-------|
@@ -339,7 +343,7 @@ Solid; typo `IReadonlyList<t>`; missing Blazor binding motivation.
 1. **Extend HowToWrite** with RouteMixin, OneOf, IApiRequest, query-string provider, mock factories, contract tests.
 2. **Fix** nullability doc syntax error and closing paragraph.
 3. **Reconcile folder naming** — document namespace invariant + folder follows local convention.
-4. **Add RouteMixin reference** replacing stale Moxy `GetUri()` docs; point to `ContractsMixinGenerator`.
+4. **Add RouteMixin reference** replacing stale Moxy `GetUri()` docs; point to `ContractsGenerator`.
 5. **Cross-link** to `skills/tw-web-api-contracts/` for agent-assisted development.
 
 ### For template repo (`dev`)
@@ -352,13 +356,13 @@ Solid; typo `IReadonlyList<t>`; missing Blazor binding motivation.
 
 1. Migrate Admin `string?` + `NotEmpty()` to `string` + `null!` incrementally.
 2. Consolidate SPA `*MockFactory` classes toward contract-local `GetMockResponseFactory()` when touching endpoints.
-3. Plan Moxy → `ContractsMixinGenerator` migration (net10 / foundation package alignment).
+3. Plan Moxy → `ContractsGenerator` migration (net10 / foundation package alignment).
 
 ---
 
 ## Conclusion
 
-The **web-api-contracts skill is the right abstraction** for agents: it encodes workflow, guardrails, and anti-patterns that official docs omit. **Copic provides volume and test patterns**; **the template provides infrastructure direction** (Roslyn mixins, auth requests, contract-local mocks).
+The **web-api-contracts skill is the right abstraction** for agents: it encodes workflow, guardrails, and anti-patterns that official docs omit. **Copic provides volume and test patterns**; **the template provides infrastructure direction** (Roslyn contracts generator, auth requests, contract-local mocks).
 
 The highest-risk agent failures today are:
 
@@ -366,7 +370,7 @@ The highest-risk agent failures today are:
 2. Using **wrong discovery globs** on the template repo  
 3. Assuming **singular folders** or **contract-local mock factories** without reading the target repo first  
 
-Unifying folder documentation, documenting mixin generation, and adding repo-era detection to the skill would close most of the gap between documentation, skill, and production reality.
+Unifying folder documentation, documenting contracts generation, and adding repo-era detection to the skill would close most of the gap between documentation, skill, and production reality.
 
 ---
 
@@ -379,7 +383,7 @@ Read [`contract-conventions-rfc.md`](contract-conventions-rfc.md). It sharpens t
 | Original claim | RFC refinement |
 |----------------|----------------|
 | Skill is "most complete source" | More precise: skill is **"copic, cleaned up in the author's head"** — normative ideal, not a mirror of copic or TWA |
-| "Copic uses Morris.Moxy" | True for copic; **TWA has no Moxy** — `[RouteMixin]` is Roslyn `ContractsMixinGenerator` only. Do not tell agents to "detect Moxy vs generator" in TWA |
+| "Copic uses Morris.Moxy" | True for copic; **TWA has no Moxy** — `[RouteMixin]` is Roslyn `ContractsGenerator` only. Do not tell agents to "detect Moxy vs generator" in TWA |
 | Folder rule: "discover local convention" | RFC argues TWA is **consistently plural + kebab**; skill's singular-folder story is unsupported here. For TWA specifically, prescribe plural — reserve discover-first only for cross-repo portability |
 | Contract tests: "conditional if project exists" | RFC Decision 3 leans **create `web-contracts-tests`** — I now agree that's the right TWA end-state, not permanent conditional wording |
 | Mock factory "required for every contract" | RFC correctly flags this as **overstated** — both repos treat mocks as optional with SPA dict fallback. Skill should say "add when endpoint is used in mock mode" |

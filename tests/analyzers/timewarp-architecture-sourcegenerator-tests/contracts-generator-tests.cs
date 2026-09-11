@@ -5,19 +5,19 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 using TimeWarp.Foundation.Contracts.Generators;
 
-// Verifies the Roslyn generator that replaced the foundation-contracts Moxy mixins (task 053-001)
-// emits public marker attributes in TimeWarp.Foundation.Features (task 053-004), discovers them
-// with ForAttributeWithMetadataName, and still generates route members with the correct type
-// mapping plus the two interface mixins. Task 053-003: bare `{Name}` tokens keep the full
-// identifier (colon is required before a constraint). Task 053-005: partial-class predicate,
-// equatable Target, one hint per type; AllowMultiple same-kind attributes keep the first
-// successful Part only so the merged file compiles. Task 053-006: static GetRoute returns
-// RouteTemplate; parameterized GetRoute() forwards to GetRoute(...); GetAuthQueryParameters only
-// on query-string contracts; generated Guid/DateTime members use global::.
-public class ContractsMixinGenerator_Tests
+// Verifies the contracts generator emits public marker attributes in TimeWarp.Foundation.Features
+// (task 053-004), discovers them with ForAttributeWithMetadataName, and still generates route
+// members with the correct type mapping plus the two interface implementations. Task 053-003:
+// bare `{Name}` tokens keep the full identifier (colon is required before a constraint).
+// Task 053-005: partial-class predicate, equatable Target, one hint per type; AllowMultiple
+// same-kind attributes keep the first successful Part only so the merged file compiles.
+// Task 053-006: static GetRoute returns RouteTemplate; parameterized GetRoute() forwards to
+// GetRoute(...); GetAuthQueryParameters only on query-string contracts; generated Guid/DateTime
+// members use global::.
+public class ContractsGenerator_Tests
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
-  internal static void Register() => RegisterTests<ContractsMixinGenerator_Tests>();
+  internal static void Register() => RegisterTests<ContractsGenerator_Tests>();
 
   private const string HttpVerbStub = """
     namespace TimeWarp.Foundation.Features
@@ -61,7 +61,7 @@ public class ContractsMixinGenerator_Tests
   {
     Dictionary<string, string> options = new() { ["build_property.RootNamespace"] = rootNamespace };
     return CSharpGeneratorDriver.Create(
-      generators: ImmutableArray.Create(new ContractsMixinGenerator().AsSourceGenerator()),
+      generators: ImmutableArray.Create(new ContractsGenerator().AsSourceGenerator()),
       optionsProvider: new TestAnalyzerConfigOptionsProvider(options),
       driverOptions: trackSteps
         ? new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: true)
@@ -82,12 +82,12 @@ public class ContractsMixinGenerator_Tests
       result.Results.SelectMany(static r => r.GeneratedSources).Select(static s => s.SourceText.ToString()));
   }
 
-  private static ImmutableArray<string> MixinHintNames(GeneratorDriverRunResult result) =>
+  private static ImmutableArray<string> HintNames(GeneratorDriverRunResult result) =>
   [
     .. result.Results
       .SelectMany(static r => r.GeneratedSources)
       .Select(static s => s.HintName)
-      .Where(static name => name != "ContractsMixinAttributes.g.cs")
+      .Where(static name => name != "ContractsGeneratorAttributes.g.cs")
   ];
 
   private static ImmutableArray<IncrementalStepRunReason> OutputReasons(GeneratorDriverRunResult result) =>
@@ -165,7 +165,7 @@ public class ContractsMixinGenerator_Tests
     return Task.CompletedTask;
   }
 
-  public static Task Should_Generate_Interface_Mixins()
+  public static Task Should_Generate_Interface_Members()
   {
     string generated = RunAndConcat("TimeWarp.Architecture");
 
@@ -275,14 +275,14 @@ public class ContractsMixinGenerator_Tests
   public static Task Should_Emit_One_Hint_Per_Type()
   {
     GeneratorDriverRunResult result = RunResult(Source);
-    ImmutableArray<string> mixinHints = MixinHintNames(result);
+    ImmutableArray<string> hintNames = HintNames(result);
 
-    mixinHints.Length.ShouldBe(2);
-    mixinHints.ShouldContain("Test.Features.Admin.Roles.GetRole.Query.g.cs");
-    mixinHints.ShouldContain("Test.Features.Admin.Roles.GetRoles.Query.g.cs");
-    mixinHints.Any(static name => name.Contains(".ApiRoute.", StringComparison.Ordinal)).ShouldBeFalse();
-    mixinHints.Any(static name => name.Contains(".AuthApiRequest.", StringComparison.Ordinal)).ShouldBeFalse();
-    mixinHints.Any(static name => name.Contains(".OpenDataQueryParameters.", StringComparison.Ordinal)).ShouldBeFalse();
+    hintNames.Length.ShouldBe(2);
+    hintNames.ShouldContain("Test.Features.Admin.Roles.GetRole.Query.g.cs");
+    hintNames.ShouldContain("Test.Features.Admin.Roles.GetRoles.Query.g.cs");
+    hintNames.Any(static name => name.Contains(".ApiRoute.", StringComparison.Ordinal)).ShouldBeFalse();
+    hintNames.Any(static name => name.Contains(".AuthApiRequest.", StringComparison.Ordinal)).ShouldBeFalse();
+    hintNames.Any(static name => name.Contains(".OpenDataQueryParameters.", StringComparison.Ordinal)).ShouldBeFalse();
 
     string getRoles = result.Results
       .SelectMany(static r => r.GeneratedSources)
@@ -310,7 +310,7 @@ public class ContractsMixinGenerator_Tests
       """;
 
     GeneratorDriverRunResult result = RunResult(source);
-    MixinHintNames(result).ShouldBe(["Test.Features.Ccc.Dual.Command.g.cs"]);
+    HintNames(result).ShouldBe(["Test.Features.Ccc.Dual.Command.g.cs"]);
 
     string text = result.Results
       .SelectMany(static r => r.GeneratedSources)
@@ -392,11 +392,11 @@ public class ContractsMixinGenerator_Tests
     driver = driver.RunGenerators(compilation);
 
     OutputReasons(driver.GetRunResult()).ShouldNotContain(IncrementalStepRunReason.Modified);
-    MixinHintNames(driver.GetRunResult()).Length.ShouldBe(2);
+    HintNames(driver.GetRunResult()).Length.ShouldBe(2);
     return Task.CompletedTask;
   }
 
-  public static Task Should_Not_Modify_Output_When_Only_Trivia_Changes_On_A_Mixin_Class()
+  public static Task Should_Not_Modify_Output_When_Only_Trivia_Changes_On_An_Attributed_Class()
   {
     CSharpCompilation compilation = CreateCompilation(Source);
     GeneratorDriver driver = CreateDriver(trackSteps: true);

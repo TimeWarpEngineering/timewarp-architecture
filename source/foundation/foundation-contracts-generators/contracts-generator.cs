@@ -1,9 +1,7 @@
 #region Purpose
-// Roslyn replacement for the three foundation-contracts Moxy mixins (task 053-001), renamed from
-// [RouteMixin]/[IAuthApiRequestMixin]/[IOpenDataQueryParametersMixin] in task 053-002:
-//   [ApiRoute(route, HttpVerb)]  [AuthApiRequest]  [OpenDataQueryParameters]
-// Emits the marker attributes as public types in TimeWarp.Foundation.Features (same namespace as
-// IAuthApiRequest / HttpVerb) via RegisterPostInitializationOutput, then discovers applications with
+// Emits [ApiRoute]/[AuthApiRequest]/[OpenDataQueryParameters] members on partial contract types.
+// Marker attributes are public types in TimeWarp.Foundation.Features (same namespace as
+// IAuthApiRequest / HttpVerb) via RegisterPostInitializationOutput, then discovered with
 // ForAttributeWithMetadataName. FastEndpoint/ingress match the same FQN — not per-consumer
 // RootNamespace internals, and not simple-name string match.
 #endregion
@@ -50,7 +48,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 [Generator]
-public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
+public sealed partial class ContractsGenerator : IIncrementalGenerator
 {
   internal const string AttributeNamespace = "TimeWarp.Foundation.Features";
   internal const string ApiRouteAttributeMetadataName = AttributeNamespace + ".ApiRouteAttribute";
@@ -70,13 +68,13 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     context.RegisterPostInitializationOutput(static ctx =>
-      ctx.AddSource("ContractsMixinAttributes.g.cs", SourceText.From(BuildAttributes(), Encoding.UTF8)));
+      ctx.AddSource("ContractsGeneratorAttributes.g.cs", SourceText.From(BuildAttributes(), Encoding.UTF8)));
 
-    IncrementalValuesProvider<Target> routes = CreateMixinProvider(
+    IncrementalValuesProvider<Target> routes = CreateAttributeProvider(
       context, ApiRouteAttributeMetadataName, static (ctx, _) => Transform(ctx, RouteName));
-    IncrementalValuesProvider<Target> auths = CreateMixinProvider(
+    IncrementalValuesProvider<Target> auths = CreateAttributeProvider(
       context, AuthApiRequestAttributeMetadataName, static (ctx, _) => Transform(ctx, AuthName));
-    IncrementalValuesProvider<Target> openData = CreateMixinProvider(
+    IncrementalValuesProvider<Target> openData = CreateAttributeProvider(
       context, OpenDataQueryParametersAttributeMetadataName, static (ctx, _) => Transform(ctx, OpenDataName));
 
     IncrementalValuesProvider<Target> merged = routes.Collect()
@@ -88,7 +86,7 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
       spc.AddSource($"{t.HintBase}.g.cs", SourceText.From(Wrap(t), Encoding.UTF8)));
   }
 
-  private static IncrementalValuesProvider<Target> CreateMixinProvider(
+  private static IncrementalValuesProvider<Target> CreateAttributeProvider(
     IncrementalGeneratorInitializationContext context,
     string metadataName,
     Func<GeneratorAttributeSyntaxContext, CancellationToken, Target?> transform)
