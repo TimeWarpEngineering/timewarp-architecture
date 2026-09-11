@@ -9,10 +9,13 @@
 #endregion
 
 #region Design
-// Attributes are public in a stable foundation namespace so (1) ForAttributeWithMetadataName can
-// key on a metadata name that does not vary with the generated app's RootNamespace (task 115
-// sourceName rewrite leaves TimeWarp.Foundation.* intact; contracts already global-using that
-// namespace), and (2) a foreign type also named ApiRouteAttribute cannot collide.
+// Attributes are public in TimeWarp.Foundation.Features so ForAttributeWithMetadataName can key a
+// metadata name that does not vary with the generated app's RootNamespace (task 115 sourceName
+// rewrite leaves TimeWarp.Foundation.* intact) and a foreign ApiRouteAttribute cannot collide.
+// Discovery is one ForAttributeWithMetadataName per metadata name; the predicate requires a partial
+// class (records/structs are skipped). The three pipelines are collected and merged into an
+// equatable record struct Target (ImmutableArray parts) so trivia-only re-transforms do not re-emit,
+// and one `{fqn}.g.cs` per type avoids AllowMultiple hint-name collisions.
 // Route tokens are `{Name}` or `{Name:constraint}`. The colon is the only delimiter that starts a
 // type/constraint token (task 053-003). An optional colon (`:?`) plus a required second `\w+` stole
 // the last letter of identifiers that look like types (`{Date}` → Dat + e, `{LocationId}` → LocationI + d).
@@ -29,10 +32,12 @@
 namespace TimeWarp.Foundation.Contracts.Generators;
 
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
@@ -59,56 +64,128 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
     context.RegisterPostInitializationOutput(static ctx =>
       ctx.AddSource("ContractsMixinAttributes.g.cs", SourceText.From(BuildAttributes(), Encoding.UTF8)));
 
-    RegisterMixin(context, ApiRouteAttributeMetadataName, static (ctx, _) => Transform(ctx, RouteName));
-    RegisterMixin(context, AuthApiRequestAttributeMetadataName, static (ctx, _) => Transform(ctx, AuthName));
-    RegisterMixin(context, OpenDataQueryParametersAttributeMetadataName, static (ctx, _) => Transform(ctx, OpenDataName));
+    IncrementalValuesProvider<Target> routes = CreateMixinProvider(
+      context, ApiRouteAttributeMetadataName, static (ctx, _) => Transform(ctx, RouteName));
+    IncrementalValuesProvider<Target> auths = CreateMixinProvider(
+      context, AuthApiRequestAttributeMetadataName, static (ctx, _) => Transform(ctx, AuthName));
+    IncrementalValuesProvider<Target> openData = CreateMixinProvider(
+      context, OpenDataQueryParametersAttributeMetadataName, static (ctx, _) => Transform(ctx, OpenDataName));
+
+    IncrementalValuesProvider<Target> merged = routes.Collect()
+      .Combine(auths.Collect())
+      .Combine(openData.Collect())
+      .SelectMany(static (tuple, _) => MergeTargets(tuple.Left.Left, tuple.Left.Right, tuple.Right));
+
+    context.RegisterSourceOutput(merged, static (spc, t) =>
+      spc.AddSource($"{t.HintBase}.g.cs", SourceText.From(Wrap(t), Encoding.UTF8)));
   }
 
-  private static void RegisterMixin(
+  private static IncrementalValuesProvider<Target> CreateMixinProvider(
     IncrementalGeneratorInitializationContext context,
     string metadataName,
     Func<GeneratorAttributeSyntaxContext, CancellationToken, Target?> transform)
   {
-    IncrementalValuesProvider<Target> targets = context.SyntaxProvider
+    return context.SyntaxProvider
       .ForAttributeWithMetadataName(
         metadataName,
-        predicate: static (node, _) => node is ClassDeclarationSyntax,
+        predicate: static (node, _) => IsPartialClass(node),
         transform: transform)
       .Where(static t => t is not null)
       .Select(static (t, _) => t!.Value);
+  }
 
-    context.RegisterSourceOutput(targets, static (spc, t) =>
+  private static bool IsPartialClass(SyntaxNode node) =>
+    node is ClassDeclarationSyntax classDeclaration
+    && classDeclaration.Modifiers.Any(SyntaxKind.PartialKeyword);
+
+  private readonly record struct Part(string Kind, string? BaseType, string Body);
+
+  // Equatable so RegisterSourceOutput skips when parts/identity are unchanged (IReadOnlyList used
+  // reference equality and re-emitted on every transform). ImmutableArray.Equals is also by
+  // backing-array reference, so this type SequenceEquals the arrays. Containers are outer -> inner,
+  // excluding the target class.
+  private readonly record struct Target(
+    string Namespace,
+    ImmutableArray<string> Containers,
+    string ClassName,
+    string HintBase,
+    ImmutableArray<Part> Parts)
+  {
+    public bool Equals(Target other) =>
+      Namespace == other.Namespace
+      && ClassName == other.ClassName
+      && HintBase == other.HintBase
+      && Containers.SequenceEqual(other.Containers)
+      && Parts.SequenceEqual(other.Parts);
+
+    public override int GetHashCode()
     {
-      foreach (Part part in t.Parts)
-        spc.AddSource($"{t.HintBase}.{part.Kind}.g.cs", SourceText.From(Wrap(t, part), Encoding.UTF8));
-    });
+      HashCode hashCode = new();
+      hashCode.Add(Namespace);
+      hashCode.Add(ClassName);
+      hashCode.Add(HintBase);
+      foreach (string container in Containers)
+        hashCode.Add(container);
+      foreach (Part part in Parts)
+        hashCode.Add(part);
+      return hashCode.ToHashCode();
+    }
   }
 
-  private readonly struct Part
+  private static ImmutableArray<Target> MergeTargets(
+    ImmutableArray<Target> routes,
+    ImmutableArray<Target> auths,
+    ImmutableArray<Target> openData)
   {
-    public Part(string kind, string? baseType, string body) { Kind = kind; BaseType = baseType; Body = body; }
-    public string Kind { get; }
-    public string? BaseType { get; }
-    public string Body { get; }
+    Dictionary<string, Target> byHint = new(StringComparer.Ordinal);
+    AppendTargets(byHint, routes);
+    AppendTargets(byHint, auths);
+    AppendTargets(byHint, openData);
+
+    ImmutableArray<Target>.Builder builder = ImmutableArray.CreateBuilder<Target>(byHint.Count);
+    foreach (Target target in byHint.Values.OrderBy(static t => t.HintBase, StringComparer.Ordinal))
+      builder.Add(OrderParts(target));
+    return builder.ToImmutable();
   }
 
-  private readonly struct Target
+  private static void AppendTargets(Dictionary<string, Target> byHint, ImmutableArray<Target> targets)
   {
-    public Target(string ns, IReadOnlyList<string> containers, string className, string hintBase, IReadOnlyList<Part> parts)
-    { Namespace = ns; Containers = containers; ClassName = className; HintBase = hintBase; Parts = parts; }
-    public string Namespace { get; }
-    public IReadOnlyList<string> Containers { get; }   // outer -> inner, excluding the target class
-    public string ClassName { get; }
-    public string HintBase { get; }
-    public IReadOnlyList<Part> Parts { get; }
+    foreach (Target target in targets)
+    {
+      if (byHint.TryGetValue(target.HintBase, out Target existing))
+      {
+        byHint[target.HintBase] = existing with { Parts = existing.Parts.AddRange(target.Parts) };
+      }
+      else
+      {
+        byHint[target.HintBase] = target;
+      }
+    }
   }
+
+  private static Target OrderParts(Target target)
+  {
+    if (target.Parts.Length <= 1)
+      return target;
+
+    ImmutableArray<Part> ordered = [.. target.Parts.OrderBy(static p => KindOrder(p.Kind))];
+    return target with { Parts = ordered };
+  }
+
+  private static int KindOrder(string kind) => kind switch
+  {
+    RouteName => 0,
+    AuthName => 1,
+    OpenDataName => 2,
+    _ => 3
+  };
 
   private static Target? Transform(GeneratorAttributeSyntaxContext context, string kind)
   {
     if (context.TargetSymbol is not INamedTypeSymbol symbol)
       return null;
 
-    var parts = new List<Part>();
+    ImmutableArray<Part>.Builder parts = ImmutableArray.CreateBuilder<Part>();
     foreach (AttributeData attr in context.Attributes)
     {
       Part? part = kind switch
@@ -125,22 +202,23 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
     if (parts.Count == 0)
       return null;
 
-    return ToTarget(symbol, parts);
+    return ToTarget(symbol, parts.ToImmutable());
   }
 
-  private static Target? ToTarget(INamedTypeSymbol symbol, List<Part> parts)
+  private static Target? ToTarget(INamedTypeSymbol symbol, ImmutableArray<Part> parts)
   {
     if (symbol.ContainingNamespace is not { IsGlobalNamespace: false } containingNamespace)
       return null;
 
     string ns = containingNamespace.ToDisplayString();
-    var containers = new List<string>();
+    List<string> containers = [];
     for (INamedTypeSymbol? container = symbol.ContainingType; container is not null; container = container.ContainingType)
       containers.Insert(0, container.Name);
 
     string className = symbol.Name;
-    string hint = ns + "." + string.Join(".", containers.Concat(new[] { className }));
-    return new Target(ns, containers, className, hint, parts);
+    ImmutableArray<string> containerArray = [.. containers];
+    string hint = ns + "." + string.Join(".", containerArray.Add(className));
+    return new Target(ns, containerArray, className, hint, parts);
   }
 
   private static Part? BuildRoute(AttributeData attr)
@@ -234,9 +312,9 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
     "        { nameof(ReturnTotalCount), ReturnTotalCount.ToString() }\n" +
     "      };\n";
 
-  private static string Wrap(Target t, Part part)
+  private static string Wrap(Target t)
   {
-    var sb = new StringBuilder();
+    StringBuilder sb = new();
     sb.Append("// <auto-generated/>\n#nullable enable\n");
     sb.Append("namespace ").Append(t.Namespace).Append(";\n\n");
 
@@ -249,12 +327,21 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
     }
 
     sb.Append(Indent(indent)).Append("partial class ").Append(t.ClassName);
-    if (part.BaseType is not null) sb.Append(" : ").Append(part.BaseType);
+    List<string> baseTypes = [];
+    foreach (Part part in t.Parts)
+    {
+      if (part.BaseType is not null && !baseTypes.Contains(part.BaseType, StringComparer.Ordinal))
+        baseTypes.Add(part.BaseType);
+    }
+
+    if (baseTypes.Count > 0)
+      sb.Append(" : ").Append(string.Join(", ", baseTypes));
     sb.Append('\n').Append(Indent(indent)).Append("{\n");
-    sb.Append(part.Body);
+    foreach (Part part in t.Parts)
+      sb.Append(part.Body);
     sb.Append(Indent(indent)).Append("}\n");
 
-    for (int i = t.Containers.Count - 1; i >= 0; i--)
+    for (int i = t.Containers.Length - 1; i >= 0; i--)
     {
       indent--;
       sb.Append(Indent(indent)).Append("}\n");

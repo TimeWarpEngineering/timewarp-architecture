@@ -9,7 +9,8 @@ using TimeWarp.Foundation.Contracts.Generators;
 // emits public marker attributes in TimeWarp.Foundation.Features (task 053-004), discovers them
 // with ForAttributeWithMetadataName, and still generates route members with the correct type
 // mapping plus the two interface mixins. Task 053-003: bare `{Name}` tokens keep the full
-// identifier (colon is required before a constraint).
+// identifier (colon is required before a constraint). Task 053-005: partial-class predicate,
+// equatable Target, one hint per type.
 public class ContractsMixinGenerator_Tests
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -41,29 +42,59 @@ public class ContractsMixinGenerator_Tests
     }
     """;
 
-  private static string Run(string source, string rootNamespace = "TimeWarp.Architecture")
+  private static CSharpCompilation CreateCompilation(string source)
   {
-    var compilation = CSharpCompilation.Create(
+    return CSharpCompilation.Create(
       "Test.Contracts",
-      new[]
-      {
+      [
         CSharpSyntaxTree.ParseText(HttpVerbStub),
         CSharpSyntaxTree.ParseText(source)
-      },
-      new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
+      ],
+      [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)],
       new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+  }
 
-    var options = new Dictionary<string, string> { ["build_property.RootNamespace"] = rootNamespace };
-
-    GeneratorDriver driver = CSharpGeneratorDriver.Create(
+  private static GeneratorDriver CreateDriver(string rootNamespace = "TimeWarp.Architecture", bool trackSteps = false)
+  {
+    Dictionary<string, string> options = new() { ["build_property.RootNamespace"] = rootNamespace };
+    return CSharpGeneratorDriver.Create(
       generators: ImmutableArray.Create(new ContractsMixinGenerator().AsSourceGenerator()),
-      optionsProvider: new TestAnalyzerConfigOptionsProvider(options));
+      optionsProvider: new TestAnalyzerConfigOptionsProvider(options),
+      driverOptions: trackSteps
+        ? new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: true)
+        : default);
+  }
 
-    GeneratorDriverRunResult result = driver.RunGenerators(compilation).GetRunResult();
+  private static GeneratorDriverRunResult RunResult(string source, string rootNamespace = "TimeWarp.Architecture")
+  {
+    GeneratorDriver driver = CreateDriver(rootNamespace);
+    return driver.RunGenerators(CreateCompilation(source)).GetRunResult();
+  }
+
+  private static string Run(string source, string rootNamespace = "TimeWarp.Architecture")
+  {
+    GeneratorDriverRunResult result = RunResult(source, rootNamespace);
     return string.Join(
       Environment.NewLine,
-      result.Results.SelectMany(r => r.GeneratedSources).Select(s => s.SourceText.ToString()));
+      result.Results.SelectMany(static r => r.GeneratedSources).Select(static s => s.SourceText.ToString()));
   }
+
+  private static ImmutableArray<string> MixinHintNames(GeneratorDriverRunResult result) =>
+  [
+    .. result.Results
+      .SelectMany(static r => r.GeneratedSources)
+      .Select(static s => s.HintName)
+      .Where(static name => name != "ContractsMixinAttributes.g.cs")
+  ];
+
+  private static ImmutableArray<IncrementalStepRunReason> OutputReasons(GeneratorDriverRunResult result) =>
+  [
+    .. result.Results
+      .SelectMany(static r => r.TrackedOutputSteps)
+      .SelectMany(static pair => pair.Value)
+      .SelectMany(static step => step.Outputs)
+      .Select(static output => output.Reason)
+  ];
 
   private static string RunAndConcat(string rootNamespace) => Run(Source, rootNamespace);
 
@@ -121,9 +152,9 @@ public class ContractsMixinGenerator_Tests
   {
     string generated = RunAndConcat("TimeWarp.Architecture");
 
-    generated.ShouldContain(": global::TimeWarp.Foundation.Features.IAuthApiRequest");
+    generated.ShouldContain("global::TimeWarp.Foundation.Features.IAuthApiRequest");
     generated.ShouldContain("public global::System.Guid UserId { get; set; }");
-    generated.ShouldContain(": global::TimeWarp.Foundation.Features.IOpenDataQueryParameters");
+    generated.ShouldContain("global::TimeWarp.Foundation.Features.IOpenDataQueryParameters");
     generated.ShouldContain("public int? Top { get; set; }");
     generated.ShouldContain("public bool ReturnTotalCount { get; set; }");
     return Task.CompletedTask;
@@ -218,6 +249,144 @@ public class ContractsMixinGenerator_Tests
     generated.ShouldContain("""public const string RouteTemplate = "api/ccc/locations/{LocationId}/exports/{Date}/validate/{ClientId:guid}/{StaffId}/{UserId}";""");
     generated.ShouldNotContain("public d LocationI");
     generated.ShouldNotContain("public e Dat");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_One_Hint_Per_Type()
+  {
+    GeneratorDriverRunResult result = RunResult(Source);
+    ImmutableArray<string> mixinHints = MixinHintNames(result);
+
+    mixinHints.Length.ShouldBe(2);
+    mixinHints.ShouldContain("Test.Features.Admin.Roles.GetRole.Query.g.cs");
+    mixinHints.ShouldContain("Test.Features.Admin.Roles.GetRoles.Query.g.cs");
+    mixinHints.Any(static name => name.Contains(".ApiRoute.", StringComparison.Ordinal)).ShouldBeFalse();
+    mixinHints.Any(static name => name.Contains(".AuthApiRequest.", StringComparison.Ordinal)).ShouldBeFalse();
+    mixinHints.Any(static name => name.Contains(".OpenDataQueryParameters.", StringComparison.Ordinal)).ShouldBeFalse();
+
+    string getRoles = result.Results
+      .SelectMany(static r => r.GeneratedSources)
+      .Single(static s => s.HintName == "Test.Features.Admin.Roles.GetRoles.Query.g.cs")
+      .SourceText.ToString();
+    getRoles.ShouldContain("IAuthApiRequest");
+    getRoles.ShouldContain("IOpenDataQueryParameters");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_One_Hint_When_AllowMultiple_ApiRoute()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Ccc;
+
+      public static partial class Dual
+      {
+          [ApiRoute("api/a/{Id}", HttpVerb.Get)]
+          [ApiRoute("api/b/{Id}", HttpVerb.Post)]
+          public sealed partial class Command { }
+      }
+      """;
+
+    GeneratorDriverRunResult result = RunResult(source);
+    MixinHintNames(result).ShouldBe(["Test.Features.Ccc.Dual.Command.g.cs"]);
+
+    string text = result.Results
+      .SelectMany(static r => r.GeneratedSources)
+      .Single(static s => s.HintName == "Test.Features.Ccc.Dual.Command.g.cs")
+      .SourceText.ToString();
+    text.ShouldContain("api/a/{Id}");
+    text.ShouldContain("api/b/{Id}");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Skip_Non_Partial_Class()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Ccc;
+
+      public static class GetItem
+      {
+          [ApiRoute("api/items/{ItemId}", HttpVerb.Get)]
+          public sealed class Query { }
+      }
+      """;
+
+    string generated = Run(source);
+    generated.ShouldNotContain("GetRoute");
+    generated.ShouldNotContain("public string ItemId");
+    generated.ShouldContain("public sealed class ApiRouteAttribute");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Skip_Records_And_Structs()
+  {
+    string[] sources =
+    [
+      """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Ccc;
+
+      [ApiRoute("api/items/{ItemId}", HttpVerb.Get)]
+      public sealed partial record Query;
+      """,
+      """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Ccc;
+
+      [ApiRoute("api/items/{ItemId}", HttpVerb.Get)]
+      public partial struct Query { }
+      """
+    ];
+
+    foreach (string source in sources)
+    {
+      string generated = Run(source);
+      generated.ShouldNotContain("GetRoute");
+      generated.ShouldNotContain("public string ItemId");
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Not_Modify_Output_When_Unrelated_Attributed_Class_Is_Added()
+  {
+    CSharpCompilation compilation = CreateCompilation(Source);
+    GeneratorDriver driver = CreateDriver(trackSteps: true);
+    driver = driver.RunGenerators(compilation);
+
+    compilation = compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText("""
+      namespace Unrelated;
+
+      [System.Obsolete]
+      public sealed class Other { }
+      """));
+    driver = driver.RunGenerators(compilation);
+
+    OutputReasons(driver.GetRunResult()).ShouldNotContain(IncrementalStepRunReason.Modified);
+    MixinHintNames(driver.GetRunResult()).Length.ShouldBe(2);
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Not_Modify_Output_When_Only_Trivia_Changes_On_A_Mixin_Class()
+  {
+    CSharpCompilation compilation = CreateCompilation(Source);
+    GeneratorDriver driver = CreateDriver(trackSteps: true);
+    driver = driver.RunGenerators(compilation);
+
+    SyntaxTree sourceTree = compilation.SyntaxTrees.Single(static tree => tree.ToString().Contains("GetRole", StringComparison.Ordinal));
+    string trivia = sourceTree.ToString().Replace(
+      "public sealed partial class Query { }",
+      "public sealed partial class Query { /* trivia */ }",
+      StringComparison.Ordinal);
+    compilation = compilation.ReplaceSyntaxTree(sourceTree, CSharpSyntaxTree.ParseText(trivia));
+    driver = driver.RunGenerators(compilation);
+
+    OutputReasons(driver.GetRunResult()).ShouldNotContain(IncrementalStepRunReason.Modified);
     return Task.CompletedTask;
   }
 }
