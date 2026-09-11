@@ -260,6 +260,47 @@ public class FastEndpointSourceGenerator_ShapeAndVerb_Tests
     return Task.CompletedTask;
   }
 
+  // FQN match only: Other.Lib.ApiRouteAttribute shares the simple name but must not satisfy
+  // HostedRouteDiscovery.IsApiRouteAttribute (task 053-004). Fully qualify the attribute
+  // application — the harness has global using TimeWarp.Foundation.Features.
+  public static Task Should_Ignore_Foreign_ApiRouteAttribute_Same_Simple_Name()
+  {
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly("""
+      using TimeWarp.Architecture.Attributes;
+
+      namespace Other.Lib
+      {
+          internal sealed class ApiRouteAttribute : System.Attribute
+          {
+              public ApiRouteAttribute(string route, int verb) { }
+          }
+      }
+
+      namespace Test.Features.Broken
+      {
+          [ApiEndpoint]
+          public static partial class ForeignApiRoute
+          {
+              [Other.Lib.ApiRoute("api/collided", 1)]
+              public sealed partial class Query { public string? Id { get; set; } }
+              public sealed class Response { }
+          }
+      }
+      """);
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
+
+    ImmutableArray<Diagnostic> diagnostics = runResult.Results.SelectMany(r => r.Diagnostics).ToImmutableArray();
+    diagnostics.ShouldContain(d =>
+      d.Id == "TWE007"
+      && d.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Contains("missing ApiRoute"));
+    runResult.Results.Sum(r => r.GeneratedSources.Length).ShouldBe(0);
+    string allSources = string.Join("\n", runResult.Results.SelectMany(r => r.GeneratedSources).Select(s => s.SourceText.ToString()));
+    allSources.ShouldNotContain("api/collided");
+
+    return Task.CompletedTask;
+  }
+
   public static Task Should_Report_TWE007_When_Route_Template_Empty()
   {
     MetadataReference contract = GeneratorTestHarness.CompileContractAssembly("""

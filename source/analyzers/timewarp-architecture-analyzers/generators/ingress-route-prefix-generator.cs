@@ -10,8 +10,10 @@
 // Scans referenced-assembly symbols (not the current compilation's syntax): the contracts live in
 // web-contracts, a separate project from the AppHost/yarp that host the ingress. Discovery uses
 // HostedRouteDiscovery.TryGetHostedOperation (linked shared source, F-004) — outer [ApiEndpoint] +
-// nested Query/Command [ApiRoute], simple-name attribute matching, ClientOnly on outer OR nested
-// excluded (those never reach the server, so they must not gain an ingress route).
+// nested Query/Command [ApiRoute] matched by FQN TimeWarp.Foundation.Features.ApiRouteAttribute via
+// HostedRouteDiscovery.IsApiRouteAttribute (task 053-004); ClientOnly stays simple-name. ClientOnly
+// on outer OR nested is excluded (those never reach the server, so they must not gain an ingress
+// route).
 // IngressWebContractAssemblies (semicolon/comma list) names the assemblies whose routes belong to
 // Web.Server (web-contracts). Empty = scan every referenced assembly (kept only for parity with the
 // FastEndpoint generator; the ingress hosts always name web-contracts explicitly).

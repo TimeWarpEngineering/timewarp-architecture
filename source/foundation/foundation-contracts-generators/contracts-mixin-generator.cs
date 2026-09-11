@@ -2,13 +2,17 @@
 // Roslyn replacement for the three foundation-contracts Moxy mixins (task 053-001), renamed from
 // [RouteMixin]/[IAuthApiRequestMixin]/[IOpenDataQueryParametersMixin] in task 053-002:
 //   [ApiRoute(route, HttpVerb)]  [AuthApiRequest]  [OpenDataQueryParameters]
-// Emits the marker attributes into the consumer's RootNamespace (the FastEndpoint generator
-// matches ApiRouteAttribute by simple name, so the namespace may vary per generated app) and
-// generates the partial-class members that Moxy used to template. Ships as an analyzer asset in
-// the TimeWarp.Foundation.Contracts package, so it flows to consumers via PackageReference.
+// Emits the marker attributes as public types in TimeWarp.Foundation.Features (same namespace as
+// IAuthApiRequest / HttpVerb) via RegisterPostInitializationOutput, then discovers applications with
+// ForAttributeWithMetadataName. FastEndpoint/ingress match the same FQN — not per-consumer
+// RootNamespace internals, and not simple-name string match.
 #endregion
 
 #region Design
+// Attributes are public in a stable foundation namespace so (1) ForAttributeWithMetadataName can
+// key on a metadata name that does not vary with the generated app's RootNamespace (task 115
+// sourceName rewrite leaves TimeWarp.Foundation.* intact; contracts already global-using that
+// namespace), and (2) a foreign type also named ApiRouteAttribute cannot collide.
 // Route tokens are `{Name}` or `{Name:constraint}`. The colon is the only delimiter that starts a
 // type/constraint token (task 053-003). An optional colon (`:?`) plus a required second `\w+` stole
 // the last letter of identifiers that look like types (`{Date}` → Dat + e, `{LocationId}` → LocationI + d).
@@ -35,6 +39,11 @@ using Microsoft.CodeAnalysis.Text;
 [Generator]
 public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
 {
+  internal const string AttributeNamespace = "TimeWarp.Foundation.Features";
+  internal const string ApiRouteAttributeMetadataName = AttributeNamespace + ".ApiRouteAttribute";
+  internal const string AuthApiRequestAttributeMetadataName = AttributeNamespace + ".AuthApiRequestAttribute";
+  internal const string OpenDataQueryParametersAttributeMetadataName = AttributeNamespace + ".OpenDataQueryParametersAttribute";
+
   private const string RouteName = "ApiRoute";
   private const string AuthName = "AuthApiRequest";
   private const string OpenDataName = "OpenDataQueryParameters";
@@ -47,18 +56,24 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
 
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
-    // Marker attributes go into the consumer's RootNamespace (Moxy parity).
-    IncrementalValueProvider<string> rootNamespace = context.AnalyzerConfigOptionsProvider.Select(
-      static (p, _) => SanitizeNamespace(p.GlobalOptions.TryGetValue("build_property.RootNamespace", out string? ns) && !string.IsNullOrWhiteSpace(ns)
-        ? ns!
-        : "GeneratedMixins"));
+    context.RegisterPostInitializationOutput(static ctx =>
+      ctx.AddSource("ContractsMixinAttributes.g.cs", SourceText.From(BuildAttributes(), Encoding.UTF8)));
 
-    context.RegisterSourceOutput(rootNamespace, static (spc, ns) =>
-      spc.AddSource("ContractsMixinAttributes.g.cs", SourceText.From(BuildAttributes(ns), Encoding.UTF8)));
+    RegisterMixin(context, ApiRouteAttributeMetadataName, static (ctx, _) => Transform(ctx, RouteName));
+    RegisterMixin(context, AuthApiRequestAttributeMetadataName, static (ctx, _) => Transform(ctx, AuthName));
+    RegisterMixin(context, OpenDataQueryParametersAttributeMetadataName, static (ctx, _) => Transform(ctx, OpenDataName));
+  }
 
-    IncrementalValuesProvider<Target> targets = context.SyntaxProvider.CreateSyntaxProvider(
-      predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Any(),
-      transform: static (ctx, _) => GetTarget((ClassDeclarationSyntax)ctx.Node))
+  private static void RegisterMixin(
+    IncrementalGeneratorInitializationContext context,
+    string metadataName,
+    Func<GeneratorAttributeSyntaxContext, CancellationToken, Target?> transform)
+  {
+    IncrementalValuesProvider<Target> targets = context.SyntaxProvider
+      .ForAttributeWithMetadataName(
+        metadataName,
+        predicate: static (node, _) => node is ClassDeclarationSyntax,
+        transform: transform)
       .Where(static t => t is not null)
       .Select(static (t, _) => t!.Value);
 
@@ -88,71 +103,55 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
     public IReadOnlyList<Part> Parts { get; }
   }
 
-  private static Target? GetTarget(ClassDeclarationSyntax cls)
+  private static Target? Transform(GeneratorAttributeSyntaxContext context, string kind)
   {
+    if (context.TargetSymbol is not INamedTypeSymbol symbol)
+      return null;
+
     var parts = new List<Part>();
-    foreach (AttributeSyntax attr in cls.AttributeLists.SelectMany(static l => l.Attributes))
+    foreach (AttributeData attr in context.Attributes)
     {
-      string name = StripAttribute(attr.Name.ToString());
-      switch (name)
+      Part? part = kind switch
       {
-        case RouteName:
-          Part? route = BuildRoute(attr);
-          if (route is not null) parts.Add(route.Value);
-          break;
-        case AuthName:
-          parts.Add(new Part(AuthName, "global::TimeWarp.Foundation.Features.IAuthApiRequest", AuthBody()));
-          break;
-        case OpenDataName:
-          parts.Add(new Part(OpenDataName, "global::TimeWarp.Foundation.Features.IOpenDataQueryParameters", OpenDataBody()));
-          break;
-      }
+        RouteName => BuildRoute(attr),
+        AuthName => new Part(AuthName, "global::TimeWarp.Foundation.Features.IAuthApiRequest", AuthBody()),
+        OpenDataName => new Part(OpenDataName, "global::TimeWarp.Foundation.Features.IOpenDataQueryParameters", OpenDataBody()),
+        _ => null
+      };
+      if (part is not null)
+        parts.Add(part.Value);
     }
 
-    if (parts.Count == 0) return null;
+    if (parts.Count == 0)
+      return null;
 
-    // Namespace + containing type chain (outer -> inner), from syntax.
-    string? ns = null;
-    var containers = new List<string>();
-    for (SyntaxNode? p = cls.Parent; p is not null; p = p.Parent)
-    {
-      switch (p)
-      {
-        case TypeDeclarationSyntax t:
-          containers.Insert(0, t.Identifier.Text);
-          break;
-        case BaseNamespaceDeclarationSyntax n:
-          ns = n.Name.ToString();
-          break;
-      }
-    }
-
-    if (ns is null) return null;
-
-    string hint = ns + "." + string.Join(".", containers.Concat(new[] { cls.Identifier.Text }));
-    return new Target(ns, containers, cls.Identifier.Text, hint, parts);
+    return ToTarget(symbol, parts);
   }
 
-  private static Part? BuildRoute(AttributeSyntax attr)
+  private static Target? ToTarget(INamedTypeSymbol symbol, List<Part> parts)
   {
-    if (attr.ArgumentList is null) return null;
+    if (symbol.ContainingNamespace is not { IsGlobalNamespace: false } containingNamespace)
+      return null;
 
-    string? route = null;
-    string? verb = null;
-    foreach (AttributeArgumentSyntax arg in attr.ArgumentList.Arguments)
-    {
-      switch (arg.Expression)
-      {
-        case LiteralExpressionSyntax lit when lit.Token.Value is string s:
-          route = s;
-          break;
-        case MemberAccessExpressionSyntax member:
-          verb = member.Name.Identifier.Text;   // HttpVerb.Get -> Get
-          break;
-      }
-    }
+    string ns = containingNamespace.ToDisplayString();
+    var containers = new List<string>();
+    for (INamedTypeSymbol? container = symbol.ContainingType; container is not null; container = container.ContainingType)
+      containers.Insert(0, container.Name);
 
-    if (route is null || verb is null) return null;
+    string className = symbol.Name;
+    string hint = ns + "." + string.Join(".", containers.Concat(new[] { className }));
+    return new Target(ns, containers, className, hint, parts);
+  }
+
+  private static Part? BuildRoute(AttributeData attr)
+  {
+    if (attr.ConstructorArguments.Length < 2)
+      return null;
+
+    string? route = attr.ConstructorArguments[0].Value as string;
+    string? verb = ResolveVerbName(attr.ConstructorArguments[1]);
+    if (route is null || verb is null)
+      return null;
 
     var urlSegments = new List<string>();
     var formatParts = new List<string>();
@@ -196,6 +195,19 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
       sb.Append("    public ").Append(type).Append(' ').Append(name).Append(" { get; set; }\n");
 
     return new Part(RouteName, null, sb.ToString());
+  }
+
+  private static string? ResolveVerbName(TypedConstant verbArgument)
+  {
+    if (verbArgument.Type is INamedTypeSymbol { TypeKind: TypeKind.Enum } enumType)
+    {
+      IFieldSymbol? field = enumType.GetMembers().OfType<IFieldSymbol>()
+        .FirstOrDefault(f => f.HasConstantValue && Equals(f.ConstantValue, verbArgument.Value));
+      if (field is not null)
+        return field.Name;
+    }
+
+    return verbArgument.Value?.ToString();
   }
 
   private static string AuthBody() =>
@@ -279,40 +291,24 @@ public sealed partial class ContractsMixinGenerator : IIncrementalGenerator
     return constraint;
   }
 
-  // RootNamespace can default to a hyphenated project name (e.g. "foundation-contracts"), which is
-  // not a valid namespace. Replace any char that isn't a letter/digit/'.'/'_' with '_'.
-  private static string SanitizeNamespace(string ns)
-  {
-    var sb = new StringBuilder(ns.Length);
-    foreach (char c in ns)
-      sb.Append(char.IsLetterOrDigit(c) || c == '.' || c == '_' ? c : '_');
-    return sb.ToString();
-  }
-
-  private static string StripAttribute(string name)
-  {
-    int dot = name.LastIndexOf('.');
-    if (dot >= 0) name = name.Substring(dot + 1);
-    return name.EndsWith("Attribute", System.StringComparison.Ordinal) ? name.Substring(0, name.Length - "Attribute".Length) : name;
-  }
-
-  private static string BuildAttributes(string ns)
+  private static string BuildAttributes()
   {
     const string usage = "[System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = true)]";
     var sb = new StringBuilder();
     sb.Append("// <auto-generated/>\n");
-    sb.Append("namespace ").Append(ns).Append("\n{\n");
-    sb.Append("    ").Append(usage).Append('\n');
-    sb.Append("    internal sealed class ApiRouteAttribute : System.Attribute\n    {\n");
-    sb.Append("        public string RouteTemplate { get; }\n");
-    sb.Append("        public ").Append(Verb).Append(" HttpVerb { get; }\n");
-    sb.Append("        public ApiRouteAttribute(string RouteTemplate, ").Append(Verb).Append(" HttpVerb)\n");
-    sb.Append("        {\n            this.RouteTemplate = RouteTemplate;\n            this.HttpVerb = HttpVerb;\n        }\n    }\n\n");
-    sb.Append("    ").Append(usage).Append('\n');
-    sb.Append("    internal sealed class AuthApiRequestAttribute : System.Attribute { }\n\n");
-    sb.Append("    ").Append(usage).Append('\n');
-    sb.Append("    internal sealed class OpenDataQueryParametersAttribute : System.Attribute { }\n");
-    sb.Append("}\n");
+    sb.Append("#nullable enable\n");
+    sb.Append("namespace ").Append(AttributeNamespace).Append(";\n\n");
+    sb.Append(usage).Append('\n');
+    sb.Append("public sealed class ApiRouteAttribute : System.Attribute\n{\n");
+    sb.Append("  public string RouteTemplate { get; }\n");
+    sb.Append("  public ").Append(Verb).Append(" HttpVerb { get; }\n");
+    sb.Append("  public ApiRouteAttribute(string RouteTemplate, ").Append(Verb).Append(" HttpVerb)\n");
+    sb.Append("  {\n    this.RouteTemplate = RouteTemplate;\n    this.HttpVerb = HttpVerb;\n  }\n");
+    sb.Append("}\n\n");
+    sb.Append(usage).Append('\n');
+    sb.Append("public sealed class AuthApiRequestAttribute : System.Attribute { }\n\n");
+    sb.Append(usage).Append('\n');
+    sb.Append("public sealed class OpenDataQueryParametersAttribute : System.Attribute { }\n");
     return sb.ToString();
   }
 }

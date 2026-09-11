@@ -18,7 +18,8 @@
 //       author must resolve the contradiction, not rely on that tiebreak.
 //   (b) [EndpointAllowAnonymous] present while the nested Query/Command declares
 //       IAuthApiRequest — either the manual interface form (: IAuthApiRequest, detected via
-//       AllInterfaces by SIMPLE NAME) or the [AuthApiRequest] mixin attribute form. A contract
+//       AllInterfaces by SIMPLE NAME) or the [AuthApiRequest] mixin attribute form (FQN
+//       TimeWarp.Foundation.Features.AuthApiRequestAttribute). A contract
 //       whose Query/Command says "I carry an authenticated user's identity" but whose endpoint
 //       says "anyone may call this anonymously" is the contradiction task 110 surfaces —
 //       IAuthApiRequest is a CLIENT/mock-mode identity signal only and does not secure the server.
@@ -160,7 +161,7 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
   {
     bool implementsInterface = requestType.AllInterfaces.Any(static i => i.Name == "IAuthApiRequest");
     bool hasMixinAttribute = requestType.GetAttributes()
-      .Any(static a => a.AttributeClass?.Name == "AuthApiRequestAttribute");
+      .Any(static a => HostedRouteDiscovery.IsAuthApiRequestAttribute(a));
 
     return implementsInterface || hasMixinAttribute;
   }

@@ -18,7 +18,7 @@ stimuli:
       signal: trigger
     graders:
       - type: skill-invocation
-        name: invokes_web_api_contracts
+        name: invokes-web-api-contracts
         config:
           required:
             - web-api-contracts

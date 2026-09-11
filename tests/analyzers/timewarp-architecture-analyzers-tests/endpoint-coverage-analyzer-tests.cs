@@ -16,8 +16,8 @@ public class Should_Enforce_Endpoint_Coverage
   internal static void Register() => RegisterTests<Should_Enforce_Endpoint_Coverage>();
 
   // Minimal foundation surface so the test compilation resolves the shapes the analyzer
-  // matches by metadata name (BaseFastEndpoint`2) and simple name (ApiRouteAttribute,
-  // ClientOnlyContractAttribute).
+  // matches by metadata name (BaseFastEndpoint`2) and FQN (ApiRouteAttribute in
+  // TimeWarp.Foundation.Features) plus simple name (ClientOnlyContractAttribute).
   private const string Stubs =
     """
     #region Purpose
@@ -31,12 +31,9 @@ public class Should_Enforce_Endpoint_Coverage
       {
         public ClientOnlyContractAttribute(string reason) { }
       }
-    }
-    namespace TimeWarp.Architecture
-    {
-      internal sealed class ApiRouteAttribute : System.Attribute
+      public sealed class ApiRouteAttribute : System.Attribute
       {
-        public ApiRouteAttribute(string routeTemplate, TimeWarp.Foundation.Features.HttpVerb httpVerb) { }
+        public ApiRouteAttribute(string routeTemplate, HttpVerb httpVerb) { }
       }
     }
     """;
@@ -63,7 +60,6 @@ public class Should_Enforce_Endpoint_Coverage
       #endregion
       namespace App.Contracts
       {
-        using TimeWarp.Architecture;
         using TimeWarp.Foundation.Features;
 
         public static class GetWidget
@@ -95,7 +91,6 @@ public class Should_Enforce_Endpoint_Coverage
       #endregion
       namespace App.Contracts
       {
-        using TimeWarp.Architecture;
         using TimeWarp.Foundation.Features;
 
         public static class GetWidget
@@ -139,7 +134,6 @@ public class Should_Enforce_Endpoint_Coverage
       #endregion
       namespace App.Contracts
       {
-        using TimeWarp.Architecture;
         using TimeWarp.Foundation.Features;
 
         public static class GetWidget
@@ -190,7 +184,6 @@ public class Should_Enforce_Endpoint_Coverage
       #endregion
       namespace App.Contracts
       {
-        using TimeWarp.Architecture;
         using TimeWarp.Foundation.Features;
 
         public static class GetWidget

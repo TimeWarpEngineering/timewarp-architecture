@@ -13,8 +13,8 @@ using Microsoft.CodeAnalysis.CSharp;
 /// endpoint is generated in the server). So the contract MUST be compiled into a referenced assembly,
 /// not handed to the generator as source. The harness also supplies the stub types the generator now
 /// hard-requires in the compilation: <c>FastEndpoints.IEndpoint</c> and
-/// <c>TimeWarp.Foundation.Features.BaseFastEndpoint`2</c>, plus <c>ApiRouteAttribute</c>/
-/// <c>HttpVerb</c>/<c>OpenApiTags</c>.
+/// <c>TimeWarp.Foundation.Features.BaseFastEndpoint`2</c>, plus FQN-matched
+/// <c>TimeWarp.Foundation.Features.ApiRouteAttribute</c> / <c>HttpVerb</c> / <c>OpenApiTags</c>.
 /// </para>
 /// </summary>
 internal static class GeneratorTestHarness
@@ -23,15 +23,11 @@ internal static class GeneratorTestHarness
   // the attributes assembly. Note: the generator matches OpenApiTags by simple name "OpenApiTags",
   // so the attribute type must be named exactly that (no "Attribute" suffix).
   public const string SupportStubs = """
+    global using TimeWarp.Foundation.Features;
+
     namespace TimeWarp.Architecture
     {
         public enum HttpVerb { Get, Post, Put, Delete, Patch, Head, Options, Trace }
-
-        [System.AttributeUsage(System.AttributeTargets.Class)]
-        public sealed class ApiRouteAttribute : System.Attribute
-        {
-            public ApiRouteAttribute(string route, HttpVerb httpVerb) { }
-        }
 
         // Simple-name matched by the ingress generator (ClientOnlyContractAttribute) — namespace is
         // irrelevant to that match, so a stub here stands in for the foundation-contracts attribute.
@@ -40,6 +36,16 @@ internal static class GeneratorTestHarness
         {
             public ClientOnlyContractAttribute(string reason) { }
         }
+    }
+    namespace TimeWarp.Foundation.Features
+    {
+        [System.AttributeUsage(System.AttributeTargets.Class)]
+        public sealed class ApiRouteAttribute : System.Attribute
+        {
+            public ApiRouteAttribute(string route, TimeWarp.Architecture.HttpVerb httpVerb) { }
+        }
+
+        public abstract class BaseFastEndpoint<TRequest, TResponse> : FastEndpoints.IEndpoint { }
     }
     namespace TimeWarp.Architecture.Attributes
     {
@@ -52,10 +58,6 @@ internal static class GeneratorTestHarness
     namespace FastEndpoints
     {
         public interface IEndpoint { }
-    }
-    namespace TimeWarp.Foundation.Features
-    {
-        public abstract class BaseFastEndpoint<TRequest, TResponse> : FastEndpoints.IEndpoint { }
     }
     """;
 

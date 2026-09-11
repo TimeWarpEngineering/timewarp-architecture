@@ -15,12 +15,10 @@ public class Should_Enforce_Auth_Posture
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Should_Enforce_Auth_Posture>();
 
-  // Minimal stub surface — matched by the analyzer via simple name, same convention as
-  // EndpointCoverageAnalyzer's stubs. IAuthApiRequest/AuthApiRequestAttribute stand in for BOTH the
-  // manual interface form and the [AuthApiRequest] mixin-generator-expanded form: the analyzer only
-  // cares about the simple names "IAuthApiRequest"/"AuthApiRequestAttribute" being present, exactly
-  // like the real ContractsMixinGenerator-expanded attribute/interface would be by the time this
-  // analyzer runs on a real compilation.
+  // Minimal stub surface. IAuthApiRequest is matched by simple name; AuthApiRequestAttribute and
+  // ApiRouteAttribute are matched by FQN in TimeWarp.Foundation.Features (task 053-004).
+  // ClientOnlyContractAttribute stays simple-name. The stubs stand in for BOTH the manual
+  // interface form and the [AuthApiRequest] mixin-generator-expanded form.
   private const string Stubs =
     """
     #region Purpose
@@ -31,15 +29,12 @@ public class Should_Enforce_Auth_Posture
       public enum HttpVerb { Get, Post, Delete, Put, Patch, Head, Options }
       public interface IApiRequest { }
       public interface IAuthApiRequest : IApiRequest { }
-    }
-    namespace TimeWarp.Architecture
-    {
-      internal sealed class ApiRouteAttribute : System.Attribute
+      public sealed class ApiRouteAttribute : System.Attribute
       {
-        public ApiRouteAttribute(string routeTemplate, TimeWarp.Foundation.Features.HttpVerb httpVerb) { }
+        public ApiRouteAttribute(string routeTemplate, HttpVerb httpVerb) { }
       }
-      internal sealed class AuthApiRequestAttribute : System.Attribute { }
-      internal sealed class ClientOnlyContractAttribute : System.Attribute
+      public sealed class AuthApiRequestAttribute : System.Attribute { }
+      public sealed class ClientOnlyContractAttribute : System.Attribute
       {
         public ClientOnlyContractAttribute(string reason) { }
       }
