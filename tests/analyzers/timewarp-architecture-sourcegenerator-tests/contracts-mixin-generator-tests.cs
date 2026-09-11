@@ -6,15 +6,25 @@ using Microsoft.CodeAnalysis.CSharp;
 using TimeWarp.Foundation.Contracts.Generators;
 
 // Verifies the Roslyn generator that replaced the foundation-contracts Moxy mixins (task 053-001)
-// reproduces the Moxy output semantics: marker attributes in the consumer RootNamespace, route
-// members with the correct type mapping, and the two interface mixins. Task 053-003: bare
-// `{Name}` tokens keep the full identifier (colon is required before a constraint).
+// emits public marker attributes in TimeWarp.Foundation.Features (task 053-004), discovers them
+// with ForAttributeWithMetadataName, and still generates route members with the correct type
+// mapping plus the two interface mixins. Task 053-003: bare `{Name}` tokens keep the full
+// identifier (colon is required before a constraint).
 public class ContractsMixinGenerator_Tests
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<ContractsMixinGenerator_Tests>();
 
+  private const string HttpVerbStub = """
+    namespace TimeWarp.Foundation.Features
+    {
+        public enum HttpVerb { Get, Post, Put, Delete, Patch, Head, Options }
+    }
+    """;
+
   private const string Source = """
+    using TimeWarp.Foundation.Features;
+
     namespace Test.Features.Admin.Roles;
 
     public static partial class GetRole
@@ -35,7 +45,11 @@ public class ContractsMixinGenerator_Tests
   {
     var compilation = CSharpCompilation.Create(
       "Test.Contracts",
-      new[] { CSharpSyntaxTree.ParseText(source) },
+      new[]
+      {
+        CSharpSyntaxTree.ParseText(HttpVerbStub),
+        CSharpSyntaxTree.ParseText(source)
+      },
       new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
       new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
@@ -54,6 +68,8 @@ public class ContractsMixinGenerator_Tests
   private static string RunAndConcat(string rootNamespace) => Run(Source, rootNamespace);
 
   private static string RouteContract(string template) => $$"""
+    using TimeWarp.Foundation.Features;
+
     namespace Test.Features.Ccc;
 
     public static partial class ValidateExport
@@ -63,15 +79,28 @@ public class ContractsMixinGenerator_Tests
     }
     """;
 
-  public static Task Should_Emit_Marker_Attributes_In_RootNamespace()
+  public static Task Should_Emit_Public_Marker_Attributes_In_Foundation_Namespace()
   {
     string generated = RunAndConcat("TimeWarp.Architecture");
 
-    generated.ShouldContain("namespace TimeWarp.Architecture");
-    generated.ShouldContain("internal sealed class ApiRouteAttribute : System.Attribute");
+    generated.ShouldContain("namespace TimeWarp.Foundation.Features;");
+    generated.ShouldContain("public sealed class ApiRouteAttribute : System.Attribute");
     generated.ShouldContain("public ApiRouteAttribute(string RouteTemplate, global::TimeWarp.Foundation.Features.HttpVerb HttpVerb)");
-    generated.ShouldContain("internal sealed class AuthApiRequestAttribute : System.Attribute");
-    generated.ShouldContain("internal sealed class OpenDataQueryParametersAttribute : System.Attribute");
+    generated.ShouldContain("public sealed class AuthApiRequestAttribute : System.Attribute");
+    generated.ShouldContain("public sealed class OpenDataQueryParametersAttribute : System.Attribute");
+    generated.ShouldNotContain("internal sealed class ApiRouteAttribute");
+    generated.ShouldNotContain("namespace TimeWarp.Architecture");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Ignore_Consumer_RootNamespace_For_Attribute_Emit()
+  {
+    string generated = RunAndConcat("SmokeDefault");
+
+    generated.ShouldContain("namespace TimeWarp.Foundation.Features;");
+    generated.ShouldContain("public sealed class ApiRouteAttribute : System.Attribute");
+    generated.ShouldNotContain("namespace SmokeDefault");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles/{RoleId:min(1)}";""");
     return Task.CompletedTask;
   }
 
@@ -97,6 +126,51 @@ public class ContractsMixinGenerator_Tests
     generated.ShouldContain(": global::TimeWarp.Foundation.Features.IOpenDataQueryParameters");
     generated.ShouldContain("public int? Top { get; set; }");
     generated.ShouldContain("public bool ReturnTotalCount { get; set; }");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Discover_Fully_Qualified_Attribute_Application()
+  {
+    const string source = """
+      namespace Test.Features.Ccc;
+
+      public static partial class GetItem
+      {
+          [TimeWarp.Foundation.Features.ApiRoute("api/items/{ItemId:guid}", TimeWarp.Foundation.Features.HttpVerb.Get)]
+          public sealed partial class Query { }
+      }
+      """;
+
+    string generated = Run(source);
+
+    generated.ShouldContain("public Guid ItemId { get; set; }");
+    generated.ShouldContain("""public const string RouteTemplate = "api/items/{ItemId:guid}";""");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Ignore_Same_Simple_Name_In_Another_Namespace()
+  {
+    const string source = """
+      namespace Other.Lib
+      {
+          internal sealed class ApiRouteAttribute : System.Attribute
+          {
+              public ApiRouteAttribute(string route, int verb) { }
+          }
+      }
+
+      namespace Test.Features.Ccc
+      {
+          [Other.Lib.ApiRoute("api/collided/{ItemId}", 1)]
+          public sealed partial class Query { }
+      }
+      """;
+
+    string generated = Run(source);
+
+    generated.ShouldNotContain("public string ItemId { get; set; }");
+    generated.ShouldNotContain("GetRoute");
+    generated.ShouldContain("public sealed class ApiRouteAttribute : System.Attribute");
     return Task.CompletedTask;
   }
 

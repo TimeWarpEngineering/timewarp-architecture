@@ -13,3 +13,7 @@ title: TimeWarp.Architecture Release Notes
   `string`. `{Name:string}` remains valid. Consumers on Foundation.Contracts 2.0.0-beta.5 through
   2.0.0-beta.16 should upgrade to 2.0.0-beta.17 (or later) and can drop the `{Name:string}`
   workaround on string route params.
+- **Change (task 053-004):** `[ApiRoute]` / `[AuthApiRequest]` / `[OpenDataQueryParameters]` are
+  public types in `TimeWarp.Foundation.Features` (post-initialization output), not internal types
+  in the consumer RootNamespace. FastEndpoint and ingress matching uses that FQN. Contracts that
+  already `global using TimeWarp.Foundation.Features` need no source change.

@@ -93,7 +93,7 @@ internal sealed record EndpointEmitModel(
     string unresolvedVerbDisplay = string.Empty;
 
     AttributeData? apiRouteAttribute = requestClass.GetAttributes()
-      .FirstOrDefault(static attr => attr.AttributeClass?.Name == HostedRouteDiscovery.ApiRouteAttributeSimpleName);
+      .FirstOrDefault(static attr => HostedRouteDiscovery.IsApiRouteAttribute(attr));
 
     if (apiRouteAttribute?.ConstructorArguments.Length >= 2)
     {

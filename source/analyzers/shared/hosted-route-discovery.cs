@@ -6,8 +6,12 @@
 #region Design
 // Linked into BOTH TimeWarp.Architecture.Generators and TimeWarp.Architecture.Analyzers via
 // <Compile Include Link=…> — no ProjectReference between those packages (F-004 / task 131-001).
-// Simple-name attribute matching: attributes are emitted into each consumer's RootNamespace, so a
-// full metadata-name match would pin one root and break generated apps.
+// [ApiRoute] is matched by FQN (TimeWarp.Foundation.Features.ApiRouteAttribute): the mixin
+// generator emits that public type via post-init (task 053-004), so a simple-name match would
+// collide with any other ApiRouteAttribute and ForAttributeWithMetadataName would be unusable.
+// Compare namespace+name strings, not GetTypeByMetadataName + SymbolEqualityComparer — each
+// contracts assembly has its own generated copy of the attribute type.
+// ClientOnly stays simple-name (handwritten in foundation-contracts; not this task).
 // ClientOnly = outer operation OR nested Query/Command: either placement means "not hosted" for
 // generators/ingress and for TWA0006 coverage opt-out.
 // TryGetHostedOperation is the generation/ingress gate: [ApiEndpoint] + nested Query|Command +
@@ -26,8 +30,26 @@ internal static class HostedRouteDiscovery
 {
   public const string ApiEndpointAttributeFullName = "TimeWarp.Architecture.Attributes.ApiEndpointAttribute";
   public const string ApiEndpointAttributeSimpleName = "ApiEndpointAttribute";
-  public const string ApiRouteAttributeSimpleName = "ApiRouteAttribute";
+  public const string ApiRouteAttributeFullName = "TimeWarp.Foundation.Features.ApiRouteAttribute";
+  public const string AuthApiRequestAttributeFullName = "TimeWarp.Foundation.Features.AuthApiRequestAttribute";
   public const string ClientOnlyContractAttributeSimpleName = "ClientOnlyContractAttribute";
+
+  public static bool IsApiRouteAttribute(AttributeData attr)
+    => HasMetadataName(attr.AttributeClass, ApiRouteAttributeFullName);
+
+  public static bool IsAuthApiRequestAttribute(AttributeData attr)
+    => HasMetadataName(attr.AttributeClass, AuthApiRequestAttributeFullName);
+
+  public static bool HasMetadataName(INamedTypeSymbol? type, string fullName)
+  {
+    if (type is null)
+      return false;
+
+    if (type.ContainingNamespace is not { IsGlobalNamespace: false } containingNamespace)
+      return type.Name == fullName;
+
+    return containingNamespace.ToDisplayString() + "." + type.Name == fullName;
+  }
 
   public static IEnumerable<INamespaceSymbol> GetAllNamespaces(INamespaceSymbol root)
   {
@@ -102,7 +124,7 @@ internal static class HostedRouteDiscovery
     }
 
     AttributeData? apiRoute = requestClass.GetAttributes()
-      .FirstOrDefault(static attr => attr.AttributeClass?.Name == ApiRouteAttributeSimpleName);
+      .FirstOrDefault(static attr => IsApiRouteAttribute(attr));
     if (apiRoute is null || apiRoute.ConstructorArguments.Length < 2)
     {
       return false;
@@ -133,7 +155,7 @@ internal static class HostedRouteDiscovery
     info = default;
 
     AttributeData? apiRoute = type.GetAttributes()
-      .FirstOrDefault(static attr => attr.AttributeClass?.Name == ApiRouteAttributeSimpleName);
+      .FirstOrDefault(static attr => IsApiRouteAttribute(attr));
     if (apiRoute is null || apiRoute.ConstructorArguments.Length < 2)
     {
       return false;

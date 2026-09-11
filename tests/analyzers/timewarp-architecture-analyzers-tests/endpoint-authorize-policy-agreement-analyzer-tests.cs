@@ -27,12 +27,9 @@ public class Should_Enforce_Policy_Agreement
       {
         public ClientOnlyContractAttribute(string reason) { }
       }
-    }
-    namespace TimeWarp.Architecture
-    {
-      internal sealed class ApiRouteAttribute : System.Attribute
+      public sealed class ApiRouteAttribute : System.Attribute
       {
-        public ApiRouteAttribute(string routeTemplate, TimeWarp.Foundation.Features.HttpVerb httpVerb) { }
+        public ApiRouteAttribute(string routeTemplate, HttpVerb httpVerb) { }
       }
     }
     namespace TimeWarp.Architecture.Attributes

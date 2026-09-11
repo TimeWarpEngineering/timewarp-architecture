@@ -105,7 +105,8 @@ Within the main class, several nested classes define the structure of the API co
 #### Route Attributes and Source Generation
 
 The request class must be `partial`: a bundled Roslyn source generator (shipped with
-`TimeWarp.Foundation.Contracts`) expands three attributes into contract members. This layer is
+`TimeWarp.Foundation.Contracts`) expands three attributes into contract members. The attributes
+are public types in `TimeWarp.Foundation.Features` (not the consumer RootNamespace). This layer is
 what connects the contract to both the HTTP client and the server's FastEndpoint generation.
 
 | Attribute | Generates | Use when |

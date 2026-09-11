@@ -48,9 +48,10 @@ namespace root, folder casing, test project layout, and mock-service registratio
 
 ## The contract attributes (source-generated)
 
-Two layers of attributes. Route/request attributes are emitted into the consumer's root namespace by
-the bundled contracts generator (class **must be `partial`**). Server-generation attributes live
-in `TimeWarp.Architecture.Attributes` and mark which contracts become hosted FastEndpoints.
+Two layers of attributes. Route/request attributes are emitted as public types in
+`TimeWarp.Foundation.Features` by the bundled contracts generator (class **must be `partial`**).
+Server-generation attributes live in `TimeWarp.Architecture.Attributes` and mark which contracts
+become hosted FastEndpoints.
 
 ### Route / request attributes (on nested `Query`/`Command`)
 
@@ -60,8 +61,10 @@ in `TimeWarp.Architecture.Attributes` and mark which contracts become hosted Fas
 | `[AuthApiRequest]` | `Guid UserId { get; set; }` + private `GetAuthQueryParameters()` for query-string composition | List/GET queries that carry user identity in the query string |
 | `[OpenDataQueryParameters]` | `Top`/`Skip`/`Filter`/`OrderBy`/`ReturnTotalCount` + private `GetOpenDataQueryParameters()` | Pageable/sortable list queries |
 
-The FastEndpoint generator matches `ApiRouteAttribute` by simple name, so the attribute works from
-any root namespace.
+The FastEndpoint generator matches `TimeWarp.Foundation.Features.ApiRouteAttribute` by fully
+qualified metadata name. The mixin generator emits that public type via post-initialization
+output, so it does not follow the generated app's RootNamespace (task 115 sourceName rewrite
+leaves `TimeWarp.Foundation.*` intact; contracts already `global using TimeWarp.Foundation.Features`).
 
 #### `[ApiRoute]` parameter constraint grammar
 
