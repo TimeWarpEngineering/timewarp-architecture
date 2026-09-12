@@ -20,6 +20,15 @@
 // GetPairedContractAssemblies is the TWA0006/TWA0024 family pairing (web-server ↔ web-contracts):
 // a server referencing another family's contracts as a client must not vouch for them.
 // GetAllNamespaces / GetAllTypes replace the triplicated private copies that previously drifted.
+// Host generators (FastEndpoint, ingress, mock-registry) walk only assemblies stamped with
+// [assembly: ApiEndpointsEmbedded] (TypedId's TypedIdsEmbedded filter). MSBuild hands the
+// compiler the transitive reference closure; without the marker every framework namespace tree
+// would be walked on each host compilation. The public attribute lives in the attributes package
+// (contracts already reference it); attaching Generators to contracts would also run TWA0001.
+// The FastEndpoint generator still stamps an internal copy when it runs on a compilation that
+// declares [ApiEndpoint] (test harness). Match is simple name either way.
+// Convention analyzers keep GetPairedContractAssemblies (name-prefix pairing) — do not fold
+// that into the marker filter.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -30,6 +39,7 @@ internal static class HostedRouteDiscovery
 {
   public const string ApiEndpointAttributeFullName = "TimeWarp.Architecture.Attributes.ApiEndpointAttribute";
   public const string ApiEndpointAttributeSimpleName = "ApiEndpointAttribute";
+  public const string ApiEndpointsEmbeddedAttributeSimpleName = "ApiEndpointsEmbeddedAttribute";
   public const string ApiRouteAttributeFullName = "TimeWarp.Foundation.Features.ApiRouteAttribute";
   public const string AuthApiRequestAttributeFullName = "TimeWarp.Foundation.Features.AuthApiRequestAttribute";
   public const string ClientOnlyContractAttributeSimpleName = "ClientOnlyContractAttribute";
@@ -217,6 +227,39 @@ internal static class HostedRouteDiscovery
   /// </summary>
   public static string? ConvertHttpVerbToMethodName(string httpVerb)
     => IsAllowedHttpVerbName(httpVerb) ? httpVerb : null;
+
+  /// <summary>
+  /// True when the assembly was stamped <c>[assembly: ApiEndpointsEmbedded]</c>. Match is simple
+  /// name so each contracts compilation's internal generated copy is equivalent (TypedId pattern).
+  /// </summary>
+  public static bool HasApiEndpointsEmbedded(IAssemblySymbol assembly)
+    => assembly.GetAttributes().Any(static attr =>
+      attr.AttributeClass?.Name == ApiEndpointsEmbeddedAttributeSimpleName);
+
+  /// <summary>
+  /// Referenced assemblies that host <c>[ApiEndpoint]</c> contracts. Host generators must walk
+  /// only this set — not the full MSBuild reference closure.
+  /// </summary>
+  public static IEnumerable<IAssemblySymbol> GetMarkedReferencedAssemblies(Compilation compilation)
+    => compilation.SourceModule.ReferencedAssemblySymbols.Where(HasApiEndpointsEmbedded);
+
+  /// <summary>
+  /// True when this compilation declares at least one <c>[ApiEndpoint]</c> type (current assembly
+  /// only). Used to stamp <c>[assembly: ApiEndpointsEmbedded]</c> on contracts compilations.
+  /// </summary>
+  public static bool CompilationDeclaresApiEndpoint(Compilation compilation)
+  {
+    foreach (INamedTypeSymbol type in GetAllTypes(compilation.Assembly.GlobalNamespace))
+    {
+      if (type.GetAttributes().Any(static attr =>
+        attr.AttributeClass?.Name == ApiEndpointAttributeSimpleName))
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   /// <summary>
   /// This compilation plus referenced *contracts* assemblies that share the server's first name

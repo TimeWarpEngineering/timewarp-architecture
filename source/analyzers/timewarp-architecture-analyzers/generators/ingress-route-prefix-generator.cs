@@ -15,8 +15,9 @@
 // on outer OR nested is excluded (those never reach the server, so they must not gain an ingress
 // route).
 // IngressWebContractAssemblies (semicolon/comma list) names the assemblies whose routes belong to
-// Web.Server (web-contracts). Empty = scan every referenced assembly (kept only for parity with the
-// FastEndpoint generator; the ingress hosts always name web-contracts explicitly).
+// Web.Server (web-contracts). Empty = every *marked* referenced assembly (parity with the
+// FastEndpoint allow-list being required on servers; ingress hosts always name web-contracts).
+// Discovery walks only [assembly: ApiEndpointsEmbedded] refs (shared HostedRouteDiscovery filter).
 //
 // GLOBAL NAMESPACE (deliberate, task 115 lesson): the dotnet-new sourceName rewrite renames the
 // template's root namespace per generated app but CANNOT reach generator output — a hardcoded
@@ -40,9 +41,10 @@
 //             web route's first segment collides with an IngressReservedPathPrefixes entry (grpc).
 //   TWA0018 — a route cannot be collapsed to a top-level prefix (bare `api`, or a parameterized
 //             second segment like `api/{id}`) — the ingress cannot own an ambiguous prefix.
-//   TWA0019 — a name in IngressWebContractAssemblies matches no referenced assembly (typo,
-//             AssemblyName override, template rename): the silent-empty trap this task exists to
-//             kill — every carve-out would vanish with no signal. Reported per missing name.
+//   TWA0019 — a name in IngressWebContractAssemblies matches no *marked* referenced assembly
+//             (typo, AssemblyName override, template rename, or missing [assembly: ApiEndpointsEmbedded]):
+//             the silent-empty trap this task exists to kill — every carve-out would vanish with no
+//             signal. Reported per missing name.
 // Location.None: the offending symbol lives in a referenced assembly with no syntax location here.
 // Catches all exceptions (CA1031): a throwing generator would break the whole compilation.
 #endregion
@@ -79,8 +81,8 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
   private static readonly DiagnosticDescriptor MissingContractsAssemblyDescriptor = new
   (
     "TWA0019",
-    "Configured ingress contracts assembly not found",
-    "Configured ingress contracts assembly '{0}' was not found among the compilation's referenced assemblies — no Web.Server ingress routes will be generated from it; check IngressWebContractAssemblies for a typo, or a renamed/stale assembly name",
+    "Configured ingress contracts assembly not found among marked references",
+    "Configured ingress contracts assembly '{0}' was not found among marked referenced assemblies ([assembly: ApiEndpointsEmbedded]) — no Web.Server ingress routes will be generated from it; check IngressWebContractAssemblies for a typo, a renamed/stale assembly name, or a missing marker",
     "Design",
     DiagnosticSeverity.Warning,
     isEnabledByDefault: true
@@ -106,18 +108,20 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
 
     try
     {
-      // TWA0019: a configured contracts-assembly name that matches no reference is a silent-empty
-      // trap — every ingress carve-out would vanish with no signal (typo, AssemblyName override, or
-      // a template rename). Report per missing name; generation still emits an (empty) All.
+      // TWA0019: a configured contracts-assembly name that matches no *marked* reference is a
+      // silent-empty trap — every ingress carve-out would vanish with no signal (typo, AssemblyName
+      // override, template rename, or missing [assembly: ApiEndpointsEmbedded]). Align with
+      // discovery (GetMarkedReferencedAssemblies) and FastEndpoint TWE008. Report per missing name;
+      // generation still emits an (empty) All.
       if (options.SourceAssemblies.Count > 0)
       {
-        var referencedNames = compilation.SourceModule.ReferencedAssemblySymbols
-          .Select(referenced => referenced.Name)
+        var markedNames = HostedRouteDiscovery.GetMarkedReferencedAssemblies(compilation)
+          .Select(static assembly => assembly.Name)
           .ToImmutableHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (string configured in options.SourceAssemblies)
         {
-          if (!referencedNames.Contains(configured))
+          if (!markedNames.Contains(configured))
           {
             spc.ReportDiagnostic(Diagnostic.Create(MissingContractsAssemblyDescriptor, Location.None, configured));
           }
@@ -128,18 +132,10 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
       List<HostedRoute> webRoutes = new();
       List<HostedRoute> foreignRoutes = new();
 
-      foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+      foreach (IAssemblySymbol assembly in HostedRouteDiscovery.GetMarkedReferencedAssemblies(compilation))
       {
         bool isSource = options.SourceAssemblies.Count == 0
           || options.SourceAssemblies.Contains(assembly.Name);
-
-        bool isForeignContracts = !isSource
-          && assembly.Name.Contains("contracts", StringComparison.OrdinalIgnoreCase);
-
-        if (!isSource && !isForeignContracts)
-        {
-          continue;
-        }
 
         foreach (HostedRoute route in EnumerateHostedRoutes(assembly))
         {

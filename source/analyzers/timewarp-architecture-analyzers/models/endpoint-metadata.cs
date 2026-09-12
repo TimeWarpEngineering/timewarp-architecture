@@ -24,10 +24,9 @@
 // contract-author error — the generator picks a deterministic winner).
 // F-005: no CustomEndpointType — emission always uses BaseFastEndpoint.
 // Record shape supports Collect() + in-batch route-conflict detection without static
-// cross-compilation state (F-003). Honest caveat: ImmutableArray<T>'s IEquatable is reference
-// equality of the backing array (not element-wise), so two models with identical Tags content
-// but distinct arrays compare unequal — acceptable here because conflict detection keys on
-// Route/HttpVerb and does not require Tags content-equality across independently built arrays.
+// cross-compilation state (F-003). Equals/GetHashCode SequenceEqual Tags: ImmutableArray<T>'s
+// IEquatable is reference equality of the backing array, which would rebuild every
+// *Endpoint.g.cs on unrelated host edits even when tag content is unchanged.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Models;
@@ -53,6 +52,62 @@ internal sealed record EndpointEmitModel(
   bool VerbUnresolved,
   string UnresolvedVerbDisplay)
 {
+  public bool Equals(EndpointEmitModel? other)
+  {
+    if (other is null)
+    {
+      return false;
+    }
+
+    if (ReferenceEquals(this, other))
+    {
+      return true;
+    }
+
+    return Namespace == other.Namespace
+      && ClassName == other.ClassName
+      && Route == other.Route
+      && HttpVerb == other.HttpVerb
+      && RequestTypeName == other.RequestTypeName
+      && Summary == other.Summary
+      && Description == other.Description
+      && Tags.SequenceEqual(other.Tags, StringComparer.Ordinal)
+      && AuthorizationPolicy == other.AuthorizationPolicy
+      && AuthenticationSchemes == other.AuthenticationSchemes
+      && Roles == other.Roles
+      && AllowAnonymous == other.AllowAnonymous
+      && IsEmptyRequest == other.IsEmptyRequest
+      && MissingQueryOrCommand == other.MissingQueryOrCommand
+      && VerbUnresolved == other.VerbUnresolved
+      && UnresolvedVerbDisplay == other.UnresolvedVerbDisplay;
+  }
+
+  public override int GetHashCode()
+  {
+    HashCode hashCode = new();
+    hashCode.Add(Namespace);
+    hashCode.Add(ClassName);
+    hashCode.Add(Route);
+    hashCode.Add(HttpVerb);
+    hashCode.Add(RequestTypeName);
+    hashCode.Add(Summary);
+    hashCode.Add(Description);
+    foreach (string tag in Tags)
+    {
+      hashCode.Add(tag, StringComparer.Ordinal);
+    }
+
+    hashCode.Add(AuthorizationPolicy);
+    hashCode.Add(AuthenticationSchemes);
+    hashCode.Add(Roles);
+    hashCode.Add(AllowAnonymous);
+    hashCode.Add(IsEmptyRequest);
+    hashCode.Add(MissingQueryOrCommand);
+    hashCode.Add(VerbUnresolved);
+    hashCode.Add(UnresolvedVerbDisplay);
+    return hashCode.ToHashCode();
+  }
+
   /// <summary>
   /// Builds an emit model from an [ApiEndpoint] outer type. ClientOnly contracts should be
   /// filtered by the caller via <see cref="HostedRouteDiscovery"/> before calling this.

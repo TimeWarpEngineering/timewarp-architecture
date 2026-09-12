@@ -9,8 +9,12 @@
 // TWE001 / TWE004 were never reported and are deleted (IDs reserved — do not reuse without a
 // deliberate new meaning). TWE002 (missing Query/Command) and TWE007 (unknown verb) are wired in
 // FastEndpointSourceGenerator; TWE003 is per-compilation route conflict (all parties, no emit).
-// TWA* convention IDs live in the convention-analyzers package, not here.
-// Severity: generation-contract violations (TWE002/003/007, TWE005/006) are Errors so a broken
+// TWE008 is the FastEndpoint fail-closed allow-list (TWA0019-style): EnableApiEndpointGeneration
+// requires ApiEndpointContractAssemblies AssemblyName values that match marked referenced
+// assemblies — empty/typo/unmarked must not silently emit nothing.
+// TWA* convention IDs live in the convention-analyzers package, not here (ingress TWA0017–0019
+// are the historical exception, declared on IngressRoutePrefixGenerator).
+// Severity: generation-contract violations (TWE002/003/007/008, TWE005/006) are Errors so a broken
 // endpoint/page/id fails the build; SG* are Warnings (resilience / missing deps / log).
 #endregion
 
@@ -62,6 +66,15 @@ internal static class DiagnosticDescriptors
     DiagnosticSeverity.Error,
     isEnabledByDefault: true,
     description: "Fail-closed: missing/empty ApiRoute or unknown verb never defaults to Get or silent skip.");
+
+  public static readonly DiagnosticDescriptor ApiEndpointContractAssembliesInvalid = new(
+    id: "TWE008",
+    title: "ApiEndpointContractAssemblies is missing or does not match a marked contracts assembly",
+    messageFormat: "EnableApiEndpointGeneration requires ApiEndpointContractAssemblies as an allow-list of AssemblyName values: {0}",
+    category: "ApiEndpoint",
+    DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Fail-closed: an empty, mistyped, or unmarked allow-list must not silently emit no endpoints. Use the AssemblyName (web-contracts, api-contracts), not the namespace.");
 
   // ── SG: generator logs / resilience ──────────────────────────────────────
 

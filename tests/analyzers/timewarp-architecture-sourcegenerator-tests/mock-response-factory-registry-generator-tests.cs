@@ -68,8 +68,8 @@ public class MockResponseFactoryRegistryGenerator_Tests
 
   private static string RunGenerator(string contractSource, string consumerSource)
   {
-    // The generator scans REFERENCED *contracts* assemblies, so compile the contract separately
-    // (assembly name "Test.Contracts" satisfies the name filter) and reference it.
+    // The generator scans referenced assemblies stamped [assembly: ApiEndpointsEmbedded], so
+    // compile the contract separately with MarkerStubs and reference it (assembly name is incidental).
     Microsoft.CodeAnalysis.MetadataReference contractReference = CompileContracts(contractSource);
 
     var compilation = CSharpCompilation.Create(
@@ -90,11 +90,26 @@ public class MockResponseFactoryRegistryGenerator_Tests
     return string.Join("\n", result.GeneratedTrees.Select(tree => tree.ToString()));
   }
 
+  private const string MarkerStubs = """
+    [assembly: TimeWarp.Architecture.ApiEndpointsEmbedded]
+    namespace TimeWarp.Architecture
+    {
+      [System.AttributeUsage(System.AttributeTargets.Assembly, Inherited = false)]
+      internal sealed class ApiEndpointsEmbeddedAttribute : System.Attribute
+      {
+      }
+    }
+    """;
+
   private static Microsoft.CodeAnalysis.MetadataReference CompileContracts(string source)
   {
     var compilation = CSharpCompilation.Create(
       "Test.Contracts",
-      syntaxTrees: [CSharpSyntaxTree.ParseText(source)],
+      syntaxTrees:
+      [
+        CSharpSyntaxTree.ParseText(source),
+        CSharpSyntaxTree.ParseText(MarkerStubs),
+      ],
       references: [Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(typeof(object).Assembly.Location)],
       new CSharpCompilationOptions(Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary));
 
