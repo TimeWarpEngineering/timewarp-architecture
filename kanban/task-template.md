@@ -7,7 +7,7 @@
 [Provide a brief description of the task, outlining its purpose and goals]
 
 ## Parent (optional)
-<Reference to parent item like 001_user-registration>
+<Parent task id, e.g. 210>
 
 ## Requirements (optional)
 
