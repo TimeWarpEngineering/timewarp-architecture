@@ -1,7 +1,7 @@
 #region Purpose
-// Roslyn replacement for the web-spa StateAccessMixin Moxy mixin (task 053); attribute renamed to
-// [StateAccess] in task 053-002. For each state class so marked, generates strongly-typed accessors into the shared
+// For each [StateAccess] state class, generates strongly-typed accessors into the shared
 // BaseComponent and BaseHandler<TAction> partials so components/handlers can read state by type.
+// Origin: web-spa StateAccess Moxy template (task 053); attribute renamed in task 053-002.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -14,11 +14,12 @@ public sealed class StateAccessSourceGenerator : IIncrementalGenerator
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     // The marker attribute and the BaseComponent/BaseHandler partials live in the consumer's
-    // RootNamespace (and RootNamespace.Features) — matching the Moxy mixin after sourceName substitution.
+    // RootNamespace (and RootNamespace.Features) — same placement as the former Moxy template after
+    // sourceName substitution.
     IncrementalValueProvider<string> rootNamespace = context.AnalyzerConfigOptionsProvider.Select(
       static (p, _) => Sanitize(p.GlobalOptions.TryGetValue("build_property.RootNamespace", out string? ns) && !string.IsNullOrWhiteSpace(ns)
         ? ns!
-        : "GeneratedMixins"));
+        : "Generated"));
 
     context.RegisterSourceOutput(rootNamespace, static (spc, ns) =>
       spc.AddSource("StateAccessAttribute.g.cs", SourceText.From(BuildAttribute(ns), Encoding.UTF8)));

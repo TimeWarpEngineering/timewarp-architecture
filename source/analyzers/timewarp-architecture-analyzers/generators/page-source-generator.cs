@@ -1,7 +1,7 @@
 #region Purpose
-// Roslyn replacement for the web-spa Page Moxy mixin (task 053). For a Blazor page class marked
-// [Page("/route"[, Policy = Policies.X])] generates [Route], INavigableComponent/IStaticRoute,
-// GetPageUrl(...), Policy accessor, and [Parameter] props for route tokens.
+// For a Blazor page class marked [Page("/route"[, Policy = Policies.X])] generates [Route],
+// INavigableComponent/IStaticRoute, GetPageUrl(...), Policy accessor, and [Parameter] props for
+// route tokens. Origin: web-spa Page Moxy template, replaced in task 053.
 #endregion
 
 #region Design
@@ -35,7 +35,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     IncrementalValueProvider<string> rootNamespace = context.AnalyzerConfigOptionsProvider.Select(
       static (p, _) => Sanitize(p.GlobalOptions.TryGetValue("build_property.RootNamespace", out string? ns) && !string.IsNullOrWhiteSpace(ns)
         ? ns!
-        : "GeneratedMixins"));
+        : "Generated"));
 
     context.RegisterSourceOutput(rootNamespace, static (spc, ns) =>
       spc.AddSource("PageAttribute.g.cs", SourceText.From(BuildAttribute(ns), Encoding.UTF8)));

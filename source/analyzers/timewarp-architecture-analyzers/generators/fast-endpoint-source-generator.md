@@ -86,7 +86,7 @@ means "requires auth," and going anonymous requires the explicit, reasoned
 that state is a contract-author error — `TWA0013`/`TWA0014` (in
 `timewarp-architecture-convention-analyzers`) enforce that every `[ApiEndpoint]` contract states
 exactly one posture, and flag a contract carrying `[EndpointAllowAnonymous]` while its nested
-`Query`/`Command` implements `IAuthApiRequest` (interface or `[AuthApiRequest]` mixin) as a
+`Query`/`Command` implements `IAuthApiRequest` (interface or `[AuthApiRequest]` attribute) as a
 contradiction.
 
 ## Implementation Details
