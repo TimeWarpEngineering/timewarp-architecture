@@ -7,7 +7,7 @@
 // token as the source of truth, while the explicit property lets the MockAPI produce
 // user-specific responses without any real authentication in play.
 // The validator targets the interface, so one NotEmpty rule covers every auth request; concrete
-// request validators Include it via mixins instead of restating it.
+// request validators Include this validator instead of restating the rule.
 #endregion
 
 namespace TimeWarp.Foundation.Features;

@@ -4,7 +4,7 @@
 
 #region Design
 // Extension on IApiRequest (receiver discarded) so request contracts get this without a base
-// class — contracts multiply-inherit behavior only through interfaces and mixins.
+// class — contracts share this behavior through the interface extension rather than a base class.
 // Values are split on ',' then re-joined so multi-value parameters serialize once per key
 // ("key=a,b") rather than repeating the key; empty values are dropped entirely to keep
 // generated routes canonical and cache-friendly.

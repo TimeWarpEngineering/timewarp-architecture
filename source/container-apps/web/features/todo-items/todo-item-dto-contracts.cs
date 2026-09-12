@@ -1,19 +1,19 @@
 #region Purpose
-// Entity-centric DTO for todo items, kept as a reference point for the mixin-based contract-generation idea.
+// Entity-centric DTO for todo items, kept as a reference against the adopted endpoint-centric contract shape.
 #endregion
 
 #region Design
-// The endpoint-centric pattern (dedicated Request/Response per endpoint) supersedes this entity-shaped
-// DTO — see the TODO above the class.
-// The commented attribute list sketches how mixins could generate CRUD contracts from one DTO; that
-// approach was not adopted.
+// Endpoint-centric contracts (dedicated Request/Response per endpoint) supersede this entity-shaped
+// DTO — see the TODO on the class.
+// The commented attribute list sketches generating CRUD contracts from one DTO; that approach was
+// not adopted. Do not revive DTO-driven contract generation.
 // Joe is a scratch type exercising primary-constructor + init-property syntax, not part of the contract surface.
 #endregion
 
 namespace TimeWarp.Architecture.Features.TodoItems;
 
-// TODO: Revist the Mixins now that we have established better patterns
-// We will use Endpoint centric APIs not Entity Centric so this DTO will go away.
+// TODO: This entity-centric DTO is leftover. Endpoint-centric APIs (dedicated Request/Response
+// per endpoint) are the adopted pattern, so this type should go away.
 // [CreateCommand, UpdateCommand, DeleteCommand, GetQuery, GetListQuery]
 public class TodoItemDto
 {
