@@ -43,6 +43,7 @@
     <Project Path="source/container-apps/web/projects/web-application/web-application.csproj" />
     <Project Path="source/container-apps/web/projects/web-infrastructure/web-infrastructure.csproj" />
     <Project Path="source/container-apps/web/projects/web-server/web-server.csproj" />
+    <Project Path="source/container-apps/web/projects/web-spa/web-spa.csproj" />
     <!--#endif -->
     <Project Path="source/container-apps/aspire/projects/aspire-service-defaults/aspire-service-defaults.csproj" />
     <Project Path="source/container-apps/aspire/projects/aspire-app-host/aspire-app-host.csproj" />
@@ -77,4 +78,9 @@
     <!--#endif -->
     <Project Path="tests/container-apps/aspire/aspire-tests/aspire-tests.csproj" />
   </Folder>
+  <!--#if (false) -->
+  <Folder Name="/tests/tools/">
+    <Project Path="tests/tools/agent-identity-cli-tests/agent-identity-cli-tests.csproj" />
+  </Folder>
+  <!--#endif -->
 </Solution>
