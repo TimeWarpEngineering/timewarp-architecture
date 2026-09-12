@@ -1,3 +1,7 @@
+#region Purpose
+// ISender that wraps each Send in a fresh IServiceScope so tests isolate handler lifetimes.
+#endregion
+
 namespace TimeWarp.Architecture.Testing;
 
 /// <summary>

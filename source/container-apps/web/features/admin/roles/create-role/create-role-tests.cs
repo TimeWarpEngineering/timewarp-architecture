@@ -27,7 +27,7 @@ return await TimeWarp.Jaribu.TestRunner.RunAllTests();
 // statements above cannot be followed by a file-scoped namespace — hence IDE0161 is in the same
 // NoWarn list). Both are structural to the multi-mode runfile template, not a style lapse —
 // matches the suppression already carried by the tests/ tree's Jaribu precedent
-// (tests/foundation/foundation-domain-jaribu-tests/Directory.Build.props), expressed here as the
+// (tests/Directory.Build.props), expressed here as the
 // standardized runfile preamble directive (task 135) since this file lives in a product folder
 // alongside real slice code, not under tests/.
 namespace TimeWarp.Architecture.Features.Admin.Roles
