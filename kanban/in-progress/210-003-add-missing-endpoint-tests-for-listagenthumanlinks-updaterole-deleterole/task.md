@@ -59,6 +59,7 @@ validation-rejection tests for every API endpoint; these three are missing cover
 - [x] M15: `TimeWarp.Architecture.Task205` renamed to a behavior-based namespace
 - [x] `dotnet run` on each new/changed runfile individually
 - [x] `dev test`
+- [x] Implementation review (effort 1, general): round-1 merged, disposition clean
 
 ## Notes
 
@@ -71,11 +72,14 @@ validation-rejection tests for every API endpoint; these three are missing cover
 - M13: Shouldly assertions (task requirement) rather than FluentValidation.TestHelper used by
   the integration-tree `create-role-validator-tests.cs`. Pattern matches co-located
   `create-role-tests.cs` validator class.
+- Implementation review kitchen: `review/` (framework, round-1 general+merged, disposition clean).
 
 ## Session
 
 - Created: 223624 (2026-09-12)
 - Implementer: grok session 01a095bd-2fcc-71c3-bd6a-149cdd9c41b0 (2026-09-12)
+- Review oracle: grok session 01a095d4-c00f-7f40-b905-488395c2afb4 (2026-09-12)
+- Reviewer (general, round 1): grok session 01a095d6-8555-7320-b6bb-30148a460e96 (2026-09-12)
 
 ## Results
 
@@ -147,3 +151,15 @@ without either soft-skip; CI (`CI` or `GITHUB_ACTIONS`) fails closed.
 **Not in scope:** HTTP-host coverage of `GET api/agent-links` (handler-level with
 `ICurrentPrincipalAccessor` stub covers the dual human/agent paths). Template-smoke tier 3
 count bump is for a generated-app run, not this session.
+
+### Review disposition
+
+- **Rounds:** 1
+- **Effort / roster:** 1 (general only)
+- **Counts (final):** bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open / fixed / wontfix)
+- **Disposition:** **clean** — no issues raised; 0 open
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
