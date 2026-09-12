@@ -10,28 +10,27 @@
 
 namespace PrincipalStoreContract_.Ef;
 
-using Docker.DotNet;
 using Npgsql;
-using Testcontainers.PostgreSql;
 using TimeWarp.Architecture.Persistence;
+using TimeWarp.Architecture.Testing;
 using TimeWarp.Identity;
 
 file sealed class EfPrincipalStoreFactory : IPrincipalStoreFactory
 {
-  private static readonly Lazy<Task<PostgresAvailability>> Availability =
-    new(ResolveAvailabilityAsync, LazyThreadSafetyMode.ExecutionAndPublication);
+  private static readonly Lazy<Task<PostgresTestAvailability>> Availability =
+    new(() => PostgresTestAvailability.ResolveAsync("timewarp_identity_store_tests"), LazyThreadSafetyMode.ExecutionAndPublication);
 
   public static bool IsAvailable
   {
     get
     {
-      PostgresAvailability availability = Availability.Value.GetAwaiter().GetResult();
+      PostgresTestAvailability availability = Availability.Value.GetAwaiter().GetResult();
       if (availability.AdminConnectionString is not null)
       {
         return true;
       }
 
-      if (IsCiEnvironment())
+      if (PostgresTestAvailability.IsCiEnvironment())
       {
         throw new InvalidOperationException(
           "EfPrincipalStore contract tests require a connection string or Docker under CI. " +
@@ -45,7 +44,7 @@ file sealed class EfPrincipalStoreFactory : IPrincipalStoreFactory
 
   public IPrincipalStore CreateStore()
   {
-    PostgresAvailability availability = Availability.Value.GetAwaiter().GetResult();
+    PostgresTestAvailability availability = Availability.Value.GetAwaiter().GetResult();
     if (availability.AdminConnectionString is null)
     {
       throw new InvalidOperationException(
@@ -86,58 +85,6 @@ file sealed class EfPrincipalStoreFactory : IPrincipalStoreFactory
 #pragma warning restore CA2100
     command.ExecuteNonQuery();
   }
-
-  private static bool IsCiEnvironment() =>
-    !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI"))
-    || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
-
-  private static async Task<PostgresAvailability> ResolveAvailabilityAsync()
-  {
-    string? fromEnv = Environment.GetEnvironmentVariable("PostgresDbOptions__ConnectionString")
-      ?? Environment.GetEnvironmentVariable("ConnectionStrings__postgres-db");
-
-    if (!string.IsNullOrWhiteSpace(fromEnv))
-    {
-      var builder = new NpgsqlConnectionStringBuilder(fromEnv) { Database = "postgres" };
-      return new PostgresAvailability(builder.ConnectionString, Container: null, SkipReason: null);
-    }
-
-    try
-    {
-      PostgreSqlContainer container = new PostgreSqlBuilder("postgres:16-alpine")
-        .WithDatabase("timewarp_identity_store_tests")
-        .WithUsername("timewarp")
-        .WithPassword("timewarp")
-        .Build();
-
-      await container.StartAsync();
-      var builder = new NpgsqlConnectionStringBuilder(container.GetConnectionString())
-      {
-        Database = "postgres"
-      };
-      return new PostgresAvailability(builder.ConnectionString, container, SkipReason: null);
-    }
-    catch (Exception exception) when (
-      exception is DockerApiException
-        or DockerContainerNotFoundException
-        or HttpRequestException
-        or TimeoutException
-        or IOException)
-    {
-      string skipReason =
-        "No Postgres connection available (set PostgresDbOptions__ConnectionString or " +
-        "ConnectionStrings__postgres-db, or enable Docker for Testcontainers). " +
-        exception.Message;
-      return new PostgresAvailability(AdminConnectionString: null, Container: null, skipReason);
-    }
-  }
-
-  private sealed record PostgresAvailability
-  (
-    string? AdminConnectionString,
-    PostgreSqlContainer? Container,
-    string? SkipReason
-  );
 }
 
 file static class EfFixture

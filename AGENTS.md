@@ -41,7 +41,7 @@ Run from the repo root (the `dev` CLI resolves the root via git):
   how-to-filter-tests-by-name.md / how-to-filter-tests-by-tags.md).
 - `dotnet run source/<family>/features/…/<name>-tests.cs` — one co-located Jaribu runfile
   standalone (local dev loop; CI uses family aggregators via `dev test`)
-- More commands: `dev --capabilities` (see the `dev-cli` skill)
+- More commands: `dev --capabilities` (see the `tw-dev-cli` skill)
 
 ## Before opening a PR
 
@@ -111,7 +111,7 @@ Branch naming, commits, and merge policy: **`tw-git`**.
     Production never activates mock auth even when the flag is set.
 - Blazor form validation: **Blazilla** (explicit validator instance — supports `I*Details` binding)
 - **FluentUI v5 + plain CSS** design tokens (`wwwroot/css/tokens.css`); no Tailwind — do not
-  reintroduce it (see `blazor-css-strategy` skill)
+  reintroduce it (see `tw-blazor-css-strategy` skill)
 - .NET Aspire orchestration; EF Core (postgres behind its flag)
 
 ## Layout (kebab-case paths everywhere; namespaces PascalCase)
@@ -149,7 +149,7 @@ source/
                      # (SPA features stay conventional under web-spa/features — not rehomed)
       msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
     api/             # same axis-1 shape as web (features/ + platform/ + msbuild/);
-                     # features/weather-forecast/ (demo slice); platform/ tree absent (no content yet)
+                     # features/weather-forecast/ (demo slice); platform/identity-host/ (agent token auth)
       projects/      # api-contracts/ api-application/ api-domain/
                      # api-infrastructure/ api-server/
     grpc/            # same axis-1 shape as web (features/ + platform/ + msbuild/);
@@ -190,7 +190,7 @@ its own `<family>/msbuild/feature-membership.targets`, imported once via
 under pure incremental builds). Namespaces do **not** track folders — product slices use
 `…Features.<Id>` (TWA0009 — namespace-based, already universal across families); platform
 clusters keep non-Features namespaces. Full rule, litmus test, and decision table:
-**`feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
+**`tw-feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
 
 **Registered-unrouted layer (`tests`, task 135):** the JSON registry's `"unroutedLayers"` key
 (currently `["tests"]`) registers a layer suffix that TWA0015/0016 and the membership guard
@@ -223,7 +223,7 @@ unconditionally excluded from template output). This monorepo dogfoods all three
 
 MSBuild dual-mode (auto-detects missing source trees; switches defined in ROOT
 Directory.Build.props so the tests tree gets them too): `UseFoundationPackages` /
-`UseAnalyzerPackages` / `UseIdentityPackages`. CPM `PackageVersion` pins for platform packages
+`UseAnalyzerPackages` / `UseIdentityPackages` / `UseX402Packages`. CPM `PackageVersion` pins for platform packages
 **equal the release `<Version>`** and bump in the same commit as it (task 124 policy — packages
 and template publish together in one release run, so pins always reference versions that exist
 by the time any generated app restores; the old lag-behind-published policy shipped a template
@@ -251,7 +251,7 @@ source → `$(RootNamespace).Attributes`). Regression gate: `dev template-smoke`
   generator emits the HTTP shim's auth config (fail-closed: no marker means no auth config emitted,
   not anonymous). `IAuthApiRequest` is a client/mock-mode identity signal only — it never secures
   the server; `[EndpointAuthorize]` is the sole server-auth marker (TWA0014 enforces the pairing).
-  Full spec: **`web-api-contracts` skill** — invoke it before touching contracts.
+  Full spec: **`tw-web-api-contracts` skill** — invoke it before touching contracts.
 - **Prefer analyzers/source generators over convention-by-memory**: when two things must agree,
   generate one from the other or add a build-time check. Existing generators: contract attributes,
   FastEndpoints, `[Page]`, `[StateAccess]`, the SPA mock-factory registry.
@@ -314,7 +314,7 @@ Retired / reserved generator IDs (do not reuse without deliberate new meaning): 
 
 **Slice isolation (TWA0009):** product code under SliceRoot must not reach other product
 slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:
-skill **`slice-isolation`** (`skills/tw-slice-isolation/SKILL.md`).
+skill **`tw-slice-isolation`** (`skills/tw-slice-isolation/SKILL.md`).
 
 **Aggregate pattern (TWA0011/0012):** typed id, `Entity<TId>` base, fail-closed `Create`, named
 mutations, private nested `Invariants`, save-time enforcement via `AggregateDbContext`. Pattern
@@ -333,7 +333,7 @@ the code, not decoration:
 - **When you read an unanswered question in `#region Open Questions` that you can answer,**
   answer it (or implement the answer and remove the pair).
 
-Formats and lifecycle: the `agent-context-regions` skill.
+Formats and lifecycle: the `tw-agent-context-regions` skill.
 
 ## Definition of Done
 

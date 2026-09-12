@@ -22,7 +22,6 @@ on:
       - '.github/workflows/**'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
-      - 'Directory.Version.props'
       - 'timewarp-architecture.slnx'
       - '**/SKILL.md'
       - '**/eval.yaml'
@@ -48,7 +47,6 @@ on:
       - '.github/workflows/**'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
-      - 'Directory.Version.props'
       - 'timewarp-architecture.slnx'
       - '**/SKILL.md'
       - '**/eval.yaml'
@@ -107,7 +105,7 @@ jobs:
           skill=false
           template=false
 
-          if echo "$changed" | grep -Eq '^(source/|tests/|timewarp-templates/|\.template\.config/|tools/|msbuild/|\.github/workflows/|Directory\.Build\.props|Directory\.Packages\.props|Directory\.Version\.props)'; then
+          if echo "$changed" | grep -Eq '^(source/|tests/|timewarp-templates/|\.template\.config/|tools/|msbuild/|\.github/workflows/|Directory\.Build\.props|Directory\.Packages\.props)'; then
             ci=true
           fi
 
