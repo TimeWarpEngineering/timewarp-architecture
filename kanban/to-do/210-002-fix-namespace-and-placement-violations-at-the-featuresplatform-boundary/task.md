@@ -5,22 +5,43 @@
 Namespace and placement findings from the 210 round-1 code review of the architecture
 template
 (`kanban/in-progress/210-post-migration-cleanliness-code-review-of-the-architecture-template/review/round-1/merged.md`,
-findings M3–M10). One human decision (M8) gates the M3–M7 moves; do not start those moves
-until M8 is decided.
+findings M3–M10). M8 is decided (see Requirements): split — engine and payment port to `platform/`, permission ids
+stay substrate.
 
 ## Requirements
 
-### Decision (human, M8)
+### Decision (M8) — decided, split
 
-Steve decides whether `source/container-apps/web/features/authorization/` (18 files) and
-`source/container-apps/web/features/payment/` (2 files) move to
-`source/container-apps/web/platform/authorization/` and
-`source/container-apps/web/platform/payment/`, or stay under `features/` with a written
-Design-region reason. Every file in both folders uses the bare Features-substrate namespace;
-neither has a single slice-scoped file. Structurally they match the `tw-feature-placement`
-skill's own worked example of a platform cluster (a seam interface beside its implementation,
-shared by several slices). **M4's move target depends on this decision.** Do not start the
-M3–M7 moves until M8 is decided; record the decision under Notes below before touching code.
+**Decided by Steve, 2026-09-12: split by the `tw-feature-placement` litmus.** No rule was violated;
+both folders legally use the Features-substrate exception, but the skill defines that tier as
+"compile-time constants or shapes many product slices must share (role ids, module ids)", and
+`authorization/` is an 18-file runtime subsystem while `payment/` is a port + HttpContext adapter
+(the same shape as `ICurrentPrincipalAccessor` in `platform/identity-host/`).
+
+- **Engine → platform.** Move to `source/container-apps/web/platform/authorization/` with a
+  non-Features platform namespace: `permission-evaluator-application.cs`,
+  `i-permission-evaluator-application.cs`, `i-role-permission-store-application.cs`,
+  `in-memory-role-permission-store-application.cs`, `ef-role-permission-store-infrastructure.cs`,
+  `role-permission-grant-infrastructure.cs`,
+  `role-permission-grant-entity-type-configuration-infrastructure.cs`,
+  `role-permission-seed-application.cs`, `agent-scope-permission-seed-application.cs`,
+  `admin-lockout-guards-application.cs`, `i-agent-permission-scope-source-application.cs`,
+  `permission-requirement-authorization-server.cs`, `permission-policy-registration-contracts.cs`,
+  and the co-located `permission-evaluator-tests.cs` / `permission-claim-policies-tests.cs`.
+  M4's file (`agent-caller-permission-scope-source-server.cs`) lands here too, beside its
+  interface.
+- **Ids stay substrate.** `permission-ids-contracts.cs`, `permission-requirement-contracts.cs`
+  and `permission-ids-tests.cs` are product data (which permissions exist) and fit the substrate
+  definition as written; they stay under `features/authorization/` in the bare `…Features`
+  namespace. If that leaves `features/authorization/` holding only ids, consider renaming the
+  folder to match the sibling substrate homes (`features/admin/roles/role-ids-contracts.cs`
+  pattern) — implementer's call, record it in Notes.
+- **Payment → platform.** Move `i-payment-http-context-application.cs` and
+  `http-payment-http-context-server.cs` to `source/container-apps/web/platform/payment/` with
+  a platform namespace.
+- Reconcile every moved file's Design region (they currently say "Features substrate (not a
+  product slice)"); update `tw-feature-placement` if it lists any of these as substrate
+  examples; TWA0009 treats platform as one-way free, so slice consumers need no opt-out.
 
 ### M3
 
@@ -93,10 +114,10 @@ M3–M7 moves until M8 is decided; record the decision under Notes below before 
 
 ## Checklist
 
-- [ ] M8 decided and recorded under Notes (moved to platform/, or kept under features/ with
-      a Design-region reason)
+- [x] M8 decided (split; see Requirements → Decision)
+- [ ] M8: authorization engine + payment port moved to `platform/`, ids left as substrate, Design regions reconciled
 - [ ] M3: `agent-token-authentication-handler-server.cs` namespace fixed
-- [ ] M4: `agent-caller-permission-scope-source-server.cs` moved/renamed per M8's outcome
+- [ ] M4: `agent-caller-permission-scope-source-server.cs` moved to `platform/authorization/` with platform namespace
 - [ ] M5: `delete-todo-item-contracts.cs` / `todo-item-dto-contracts.cs` fixed
 - [ ] M6: `hosted-identity-session-authentication-state-provider-server.cs` moved to
       `web/platform/identity-host/`
@@ -109,6 +130,9 @@ M3–M7 moves until M8 is decided; record the decision under Notes below before 
 - [ ] `dev template-smoke`
 
 ## Notes
+
+- M8 decision recorded 2026-09-12 (Steve, cockpit session
+  https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED): split engine/platform vs ids/substrate.
 
 - Parent: 210 (round-1 ledger:
   `kanban/in-progress/210-post-migration-cleanliness-code-review-of-the-architecture-template/review/round-1/merged.md`).
