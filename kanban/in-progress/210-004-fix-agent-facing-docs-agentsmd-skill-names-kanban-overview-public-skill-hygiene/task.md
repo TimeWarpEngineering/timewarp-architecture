@@ -68,6 +68,9 @@ these files directly.
 - [x] M26: `MockCopicApiService` removed from `tw-mock-response-factory/SKILL.md`
 - [x] M29: exclusion marker added under `skills/tw-web-api-contracts/analysis/`
 - [x] `ganda repo audit`
+- [x] Implementation review (effort 1, `review/` kitchen)
+- [x] Round-1 M1: parent 210 counts table recounted from headings
+- [x] Round-2 re-review; disposition **clean**
 
 ## Notes
 
@@ -76,16 +79,20 @@ these files directly.
   On completion, update the M-ids' Status in that ledger to fixed/wontfix on the same PR.
 - Also removed the `. scripts\get-next-task-number.ps1` source from `scripts/profile.ps1` so
   deleting the script does not leave a broken profile.
+- Implementation review kitchen: `review/review-framework.md`, `review/round-1/`,
+  `review/round-2/`, `review/disposition.md` (outcome **clean**).
 
 ## Session
 
 - Created: 224866 (2026-09-12)
 - Implementer: grok session 264983 (2026-09-12)
+- Review oracle: grok session 01a095c2-903c-7453-aca1-a480efd3484e (2026-09-12)
 
 ## Results
 
 Fixed agent-facing docs from 210 round-1 findings M18, M19, M26, M29. Parent ledger statuses
-updated to **fixed** (counts: bug 11 open / 4 fixed; nit 8 open / 1 fixed).
+updated to **fixed** (heading recount: bug 14 open / 4 fixed; suggestion 15 open; nit 7 open /
+1 fixed).
 
 ### What was implemented
 
@@ -113,14 +120,29 @@ updated to **fixed** (counts: bug 11 open / 4 fixed; nit 8 open / 1 fixed).
 - `scripts/profile.ps1`
 - `skills/tw-mock-response-factory/SKILL.md`
 - `skills/tw-web-api-contracts/analysis/readme.md` (added)
-- `kanban/in-progress/210-post-migration-cleanliness-code-review-of-the-architecture-template/review/round-1/merged.md` (M18, M19, M26, M29 Status → fixed; counts)
+- `kanban/in-progress/210-post-migration-cleanliness-code-review-of-the-architecture-template/review/round-1/merged.md` (M18, M19, M26, M29 Status → fixed; counts recounted from headings)
 - `kanban/in-progress/210-004-…/task.md` (this file)
+- `kanban/in-progress/210-004-…/review/` (framework, round-1, round-2, disposition)
 
 ### Key decisions / deviations
 
 - `kanban/overview.md` is a pointer plus the existing API/client DoR/DoD checklists (those
   are product-specific and not encoded in AGENTS.md).
 - Extra `profile.ps1` source removal: required so the deleted script is not still dotted-in.
+- Parent 210 counts table was updated by heading recount (not a delta from the previous
+  table, which already lagged headings).
+
+### Review disposition
+
+- **Outcome:** `clean` (0 open; no wontfix)
+- **Effort / roster:** 1 — `general` only
+- **Rounds:** 2
+- **Final counts:** bug 0 open / 1 fixed; suggestion 0; nit 0
+- Round-1 merge raised **M1** (parent 210 counts table vs headings). Fixed on this id;
+  round-2 re-verified **fixed**, no new findings.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`,
+  `review/disposition.md`
 
 ### Test outcomes
 
@@ -142,6 +164,8 @@ rg -n 'Backlog|ToDo|InProgress|B001_|001_user-registration|get-next-task-number'
 test ! -f scripts/get-next-task-number.ps1 && echo 'script gone'
 rg -n 'MockCopicApiService' skills/tw-mock-response-factory/SKILL.md
 cat skills/tw-web-api-contracts/analysis/readme.md
+rg -n '^\| (bug|suggestion|nit) \|' kanban/in-progress/210-post-migration-cleanliness-code-review-of-the-architecture-template/review/round-1/merged.md
+rg -n 'Outcome' kanban/in-progress/210-004-fix-agent-facing-docs-agentsmd-skill-names-kanban-overview-public-skill-hygiene/review/disposition.md
 ganda repo audit
 ```
 
@@ -155,6 +179,8 @@ ganda repo audit
 - `scripts/get-next-task-number.ps1` does not exist.
 - `MockCopicApiService` is absent from the mock-factory skill.
 - Analysis `readme.md` states exclusion from publication (`skills-are-public-no-history`).
+- Parent 210 counts table is `| bug | 14 | 4 | 0 |`, `| suggestion | 15 | 0 | 0 |`,
+  `| nit | 7 | 1 | 0 |`. Disposition file says **Outcome:** clean.
 - `ganda repo audit` **passes** (25 pass). Two pre-existing advisory warnings remain:
   `memsearch-scaffold` (`.githooks/pre-commit`/`pre-push`) and `vscode-window-icon`
   (`peacock.color`). Fresh worktrees need
