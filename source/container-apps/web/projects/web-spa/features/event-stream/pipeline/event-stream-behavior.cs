@@ -37,7 +37,6 @@ public class EventStreamBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
 {
   private readonly ILogger Logger;
   private readonly IStore Store;
-  public Guid Guid { get; } = Guid.NewGuid();
 
   public EventStreamBehavior
   (

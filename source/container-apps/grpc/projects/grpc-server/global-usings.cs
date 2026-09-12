@@ -9,3 +9,4 @@ global using ProtoBuf.Grpc.Server;
 // Solution usings
 global using TimeWarp.Architecture.Features.Superheros;
 global using TimeWarp.Architecture.GrpcServer;
+global using TimeWarp.Foundation.CorsPolicies;

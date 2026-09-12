@@ -5,7 +5,32 @@
   <PropertyGroup>
     <RootNamespace>TimeWarp.Architecture</RootNamespace>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
-    <NoWarn>$(NoWarn);CA1002;CA1024;CA1031;CA1032;CA1034;CA1040;CA1052;CA1062;CA1303;CA1304;CA1305;CA1311;CA1515;CA1715;CA1720;CA1725;CA1819;CA1823;CA1852;CA1861;CA2007;CA2016;CA2201;CA2211;CA2227;CA2234;CA2252;CA5394;RCS1102;RCS1194;RS0030</NoWarn>
+    <!-- Curated allowlist (task 210-006/M32): ids that still fire on current container-apps code.
+         Dropped as unused vs the pre-audit list: CA1715, CA1720, CA1823, CA1852, CA1861, CA2211, CA2252. -->
+    <NoWarn>$(NoWarn);CA1002</NoWarn>   <!-- Contract DTOs expose List<T> for JSON serialization -->
+    <NoWarn>$(NoWarn);CA1024</NoWarn>   <!-- GetRoute/GetMockResponseFactory look like properties to CA1024 -->
+    <NoWarn>$(NoWarn);CA1031</NoWarn>   <!-- Catch-all Exception on host/auth/chat boundaries where the cause is logged and remapped -->
+    <NoWarn>$(NoWarn);CA1032</NoWarn>   <!-- Domain exceptions omit the full standard constructor set -->
+    <NoWarn>$(NoWarn);CA1034</NoWarn>   <!-- Nested public types — feature contract classes (Command/Query/Response) -->
+    <NoWarn>$(NoWarn);CA1040</NoWarn>   <!-- Marker interfaces (IBaseAction) -->
+    <NoWarn>$(NoWarn);CA1052</NoWarn>   <!-- Static-holder modules (feature Module types, LinkHelper) that are not made static -->
+    <NoWarn>$(NoWarn);CA1062</NoWarn>   <!-- Handlers receive mediator/framework-supplied non-null args -->
+    <NoWarn>$(NoWarn);CA1303</NoWarn>   <!-- Literal strings in demo/task actions are not localized -->
+    <NoWarn>$(NoWarn);CA1304</NoWarn>   <!-- Culture-aware string APIs in gRPC demo services (with CA1311) -->
+    <NoWarn>$(NoWarn);CA1305</NoWarn>   <!-- IFormatProvider on generated/route formatting -->
+    <NoWarn>$(NoWarn);CA1311</NoWarn>   <!-- Same culture group as CA1304 -->
+    <NoWarn>$(NoWarn);CA1515</NoWarn>   <!-- Public types in the SPA/host — template surface, not a single-file app -->
+    <NoWarn>$(NoWarn);CA1725</NoWarn>   <!-- Parameter names on gRPC service overrides of generated/base members -->
+    <NoWarn>$(NoWarn);CA1819</NoWarn>   <!-- Options/DTO properties return arrays for binding -->
+    <NoWarn>$(NoWarn);CA2007</NoWarn>   <!-- ConfigureAwait — ASP.NET and Blazor WASM; no sync-context contract -->
+    <NoWarn>$(NoWarn);CA2016</NoWarn>   <!-- CancellationToken forwarding on pipeline Invoke calls -->
+    <NoWarn>$(NoWarn);CA2201</NoWarn>   <!-- Demo ThrowException action raises reserved exception types on purpose -->
+    <NoWarn>$(NoWarn);CA2227</NoWarn>   <!-- Mutable collection properties required for request deserialization -->
+    <NoWarn>$(NoWarn);CA2234</NoWarn>   <!-- Service URI helpers take string addresses from config/host -->
+    <NoWarn>$(NoWarn);CA5394</NoWarn>   <!-- Demo SuperheroService uses Random for sample data, not security -->
+    <NoWarn>$(NoWarn);RCS1102</NoWarn>  <!-- Roslynator 'make class static' — same holders as CA1052 -->
+    <NoWarn>$(NoWarn);RCS1194</NoWarn>  <!-- Exception constructors — same group as CA1032 -->
+    <NoWarn>$(NoWarn);RS0030</NoWarn>   <!-- Banned-API analyzer on demo Task.Delay literals used as documentation -->
   </PropertyGroup>
 
   <!-- IAssemblyMarker lives in layer namespaces (Web.Server, Api.Contracts, …), not RootNamespace

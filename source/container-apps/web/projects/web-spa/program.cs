@@ -36,7 +36,7 @@ namespace TimeWarp.Architecture.Web.Spa;
 
 using System.Globalization;
 
-public class Program
+public static class Program
 {
   public static async Task Main(string[] args)
   {
@@ -53,7 +53,8 @@ public class Program
       .AddHttpMessageHandler<BrowserRequestCredentialsHandler>();
 #endif
 
-    await builder.Build().RunAsync();
+    await using WebAssemblyHost host = builder.Build();
+    await host.RunAsync();
   }
 
   private static void SetIsoCulture()
