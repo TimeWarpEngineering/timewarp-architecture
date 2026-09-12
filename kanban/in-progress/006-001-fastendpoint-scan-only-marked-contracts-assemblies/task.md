@@ -48,12 +48,14 @@ endpoints.
 - [x] Wrong/missing `ApiEndpointContractAssemblies` fails closed
 - [x] Docs match AssemblyName
 - [x] Results + How to validate
+- [x] Implementation review disposition (clean)
 
 ## Session
 
 - Created: 2418679 (2026-09-09)
 - Cockpit: timewarp-flow Grok `01a03d38-9611-7620-aae5-848e15dafa94`
 - Implementer: Grok session `01a09476-7d7f-74c0-b0d5-d7ed52639824` (2026-09-12)
+- Review oracle: Grok session `01a0948a-fd36-7f60-9452-18d38f9c349a` (2026-09-12)
 
 ## Notes
 
@@ -111,10 +113,13 @@ generation is enabled; empty, mistyped, or unmarked names report **TWE008**
   generator's internal test-harness copy are equivalent (TypedId pattern).
 - TWE008 is Error (generation contract), not Warning like ingress TWA0019:
   a missing FastEndpoint allow-list ships zero endpoints.
+- Review M1: TWA0019 now matches **marked** referenced names (same hole TWE008
+  closes for FastEndpoint), so a configured-but-unmarked ingress assembly is
+  not a silent-empty.
 
 ### Test outcomes
 
-- `cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c Release` — **83 passed**, 0 failed.
+- `cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c Release` — **84 passed**, 0 failed.
 - `web-server` Release build contains `CreateRoleEndpoint` / `GetAgentIdentityEndpoint`, not `GetWeatherForecastsEndpoint`.
 - `api-server` Release build contains `GetWeatherForecastsEndpoint`, not `CreateRoleEndpoint`.
 - `web-contracts.dll` / `api-contracts.dll` contain `ApiEndpointsEmbedded`.
@@ -125,8 +130,9 @@ generation is enabled; empty, mistyped, or unmarked names report **TWE008**
 
 ```bash
 cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c Release
-# expect: all passed (83), including FastEndpointSourceGenerator_ContractAssemblies_Tests
+# expect: all passed (84), including FastEndpointSourceGenerator_ContractAssemblies_Tests
 #   (TWE008 empty/typo/unmarked; allow-list; marker stamp)
+#   and IngressRoutePrefixGenerator_Tests unmarked TWA0019
 ```
 
 **Smoke**
@@ -155,3 +161,11 @@ print('api weather', 'GetWeatherForecastsEndpoint' in api)
 - Empty `ApiEndpointContractAssemblies` with `EnableApiEndpointGeneration=true` is TWE008, no `*Endpoint.g.cs`.
 
 **Not in scope:** mixin SyntaxProvider, route parser, fail-closed auth (task 110).
+
+### Review
+
+- **Effort / roster:** 1 (general only)
+- **Rounds:** 2 (`review/round-1/`, `review/round-2/`)
+- **Final counts:** bug 0/0/0 open/fixed/wontfix; suggestion 0/1/0; nit 0/1/0
+- **Disposition:** `clean` (M1 suggestion + M2 nit fixed on this id; round 2 raised no new issues)
+- **Paths:** `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`
