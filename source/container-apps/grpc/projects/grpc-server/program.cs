@@ -5,8 +5,8 @@
 #region Design
 // Code-first gRPC (AddCodeFirstGrpc, protobuf-net.Grpc) chosen over proto-first so contracts live in a shared
 // assembly; the stock AddGrpc/GreeterService lines remain commented as the proto-first alternative.
-// UseGrpcWeb(DefaultEnabled) plus permissive CORS exposing the Grpc-* headers are required for browser callers —
-// tighten the CORS policy per deployment.
+// UseGrpcWeb(DefaultEnabled) plus CorsPolicy.Any with the Grpc-* headers exposed are required for browser
+// callers — tighten the CORS policy per deployment.
 // Code-first reflection service is mapped so grpcurl and similar tooling can discover the contract.
 #endregion
 
@@ -16,8 +16,6 @@ public partial class Program
 {
   private static void Main(string[] args)
   {
-    const string allowAllCorsPolicy = "AllowAll";
-
     WebApplicationBuilder? webApplicationBuilder = WebApplication.CreateBuilder(args);
 
     webApplicationBuilder.AddServiceDefaults();
@@ -43,16 +41,13 @@ public partial class Program
       serviceCollection.AddCodeFirstGrpc();
       serviceCollection.AddCodeFirstGrpcReflection();
 
-      serviceCollection.AddCors
+      CorsPolicy.Any.Apply
       (
-        o => o.AddPolicy
-        (
-          allowAllCorsPolicy, builder =>
-            builder
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding"))
+        serviceCollection,
+        "Grpc-Status",
+        "Grpc-Message",
+        "Grpc-Encoding",
+        "Grpc-Accept-Encoding"
       );
 
       //serviceCollection.AddHostedService<ProtobufGenerationHostedService>();
@@ -62,10 +57,10 @@ public partial class Program
     {
       webApplication.UseRouting();
       webApplication.UseGrpcWeb(new GrpcWebOptions() { DefaultEnabled = true });
-      webApplication.UseCors();
+      webApplication.UseCors(CorsPolicy.Any.Name);
 
       //webApplication.MapGrpcService<GreeterService>().RequireCors("AllowAll").EnableGrpcWeb();
-      webApplication.MapGrpcService<SuperheroService>().RequireCors(allowAllCorsPolicy);
+      webApplication.MapGrpcService<SuperheroService>().RequireCors(CorsPolicy.Any.Name);
       //webApplication.MapGrpcReflectionService();
       webApplication.MapCodeFirstGrpcReflectionService();
       webApplication.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");

@@ -5,8 +5,9 @@
 #region Design
 // Toggling during Opening/Closing is deliberately a no-op so rapid clicks cannot corrupt
 // an in-flight transition; the throwing default surfaces any enum value added without a
-// matching transition. Routing toggles through the transitional states is blocked on the
-// inline TODO (transitions and NotifyLossOfInterest).
+// matching transition. Closed↔Open is the live path; Opening/Closing and
+// NotifyLossOfInterest are tracked as task 211
+// (kanban/to-do/211-profile-menu-transitions-and-notifylossofinterest/task.md).
 #endregion
 
 namespace TimeWarp.Architecture.Features.ProfileMenus;
@@ -26,7 +27,7 @@ partial class ProfileMenuState
       {
         ProfileMenuState.MenuState = ProfileMenuState.MenuState switch
         {
-          // TODO: Transitions and NotifyLossOfInterest not working
+          // Opening/Closing + NotifyLossOfInterest: task 211
           // MenuStates.Closed => MenuStates.Opening,
           // MenuStates.Open => MenuStates.Closing,
           MenuStates.Closed => MenuStates.Open,

@@ -36,6 +36,21 @@ public partial class CorsPolicy : Enumeration
   /// <param name="serviceCollection"></param>
   public virtual void Apply(IServiceCollection serviceCollection)
   {
+    Apply(serviceCollection, exposedHeaders: []);
+  }
+
+  /// <summary>
+  /// Apply the particular Cors Policy, exposing additional response headers to the browser.
+  /// </summary>
+  /// <remarks>
+  /// gRPC-Web callers need the Grpc-* status headers exposed; pass them here instead of
+  /// re-declaring a duplicate AllowAnyOrigin policy at the host.
+  /// Override in the instances of CorsPolicy.
+  /// </remarks>
+  /// <param name="serviceCollection"></param>
+  /// <param name="exposedHeaders">Header names added via <c>WithExposedHeaders</c>. Empty leaves the policy unchanged.</param>
+  public virtual void Apply(IServiceCollection serviceCollection, params string[] exposedHeaders)
+  {
     throw new InvalidOperationException();
   }
 }

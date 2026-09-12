@@ -25,8 +25,8 @@ features/platform boundary**, and **suppression hygiene**.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 8 | 10 | 0 |
-| suggestion | 6 | 9 | 0 |
+| bug | 7 | 11 | 0 |
+| suggestion | 2 | 13 | 0 |
 | nit | 1 | 7 | 0 |
 
 ## Issues
@@ -244,12 +244,12 @@ features/platform boundary**, and **suppression hygiene**.
 
 ### E. Code quality, suppressions, dead code
 
-### M30 — Severity: bug — Status: open
+### M30 — Severity: bug — Status: fixed
 - File: `tools/dev-cli/endpoints/verify-samples-command.cs:20-26`
 - Description: Prints "Samples verified successfully!" around a bare TODO; nothing is verified, exit code 0.
 - Suggestion: Implement, or make it an honest stub (error line + non-zero exit) — or delete the endpoint if `samples/` stays empty.
 - Source: code-quality
-- Disposition notes:
+- Disposition notes: Implemented on 210-006. Empty `samples/` (`.gitkeep` only) reports "nothing to verify" and exits 0; missing `samples/` or a failed `dotnet build` of a sample is non-zero.
 
 ### M31 — Severity: suggestion — Status: fixed
 - File: `source/container-apps/web/projects/web-spa/pipeline/my-behavior.cs`; `source/container-apps/web/projects/web-spa/global-suppressions.cs:10`
@@ -258,26 +258,26 @@ features/platform boundary**, and **suppression hygiene**.
 - Source: code-quality
 - Disposition notes: Deleted `my-behavior.cs` and its CA1720 suppression. Live `ActiveActionBehavior` / `EventStreamBehavior` remain.
 
-### M32 — Severity: suggestion — Status: open
+### M32 — Severity: suggestion — Status: fixed
 - File: `source/container-apps/Directory.Build.props:8`; `source/foundation/Directory.Build.props:4-7`; `source/container-apps/grpc/projects/grpc-server/grpc-server.csproj:5`; `source/container-apps/web/projects/web-server/web-server.csproj:23`
 - Description: A 30-id uncommented `<NoWarn>` on container-apps, a 20-id foundation `<NoWarn>` justified only as "existed in original code" (ships in published `TimeWarp.Foundation.*`), and two uncommented per-project NoWarns. `tests/Directory.Build.props` is the exemplar (every id justified).
 - Suggestion: Audit each id against current code; keep only what is needed, one-line reason per id or group, in the tests/ style.
 - Source: code-quality
-- Disposition notes:
+- Disposition notes: Audited on 210-006 by stripping extras and rebuilding. Each remaining id has a one-line reason. Dropped unused ids (container-apps: CA1715, CA1720, CA1823, CA1852, CA1861, CA2211, CA2252; foundation: CS1591, CA1002, CA1303, CA1715, CA1720, CA2201, RS0030). web-server's redundant 1591 removed; grpc-server kept only CA1051/CA1848/CA1849 (dropped CA1050 and 1591).
 
-### M33 — Severity: suggestion — Status: open
+### M33 — Severity: suggestion — Status: fixed
 - File: `source/container-apps/web/projects/web-spa/global-suppressions.cs:11-13`
 - Description: Three `SuppressMessage` entries with `Justification = "<Pending>"` (CA1052 on Program, CA2000 on Program.Main, CA1720 on EventStreamBehavior.Guid).
 - Suggestion: Write real justifications or fix the underlying warnings and delete.
 - Source: code-quality
-- Disposition notes:
+- Disposition notes: Fixed on 210-006. `Program` is now `static`; `Main` uses `await using WebAssemblyHost`; unused `EventStreamBehavior.Guid` deleted. `global-suppressions.cs` removed (no remaining entries).
 
-### M34 — Severity: suggestion — Status: open
+### M34 — Severity: suggestion — Status: fixed
 - File: `source/container-apps/grpc/projects/grpc-server/program.cs:46-56`
 - Description: Hand-rolled CORS duplicating `CorsPolicy.AnyPolicy` solely to add gRPC exposed headers.
 - Suggestion: Extend the foundation policy (overload accepting exposed headers) and consume it like web/api do.
 - Source: code-quality
-- Disposition notes:
+- Disposition notes: Fixed on 210-006. `CorsPolicy.Apply` has a `params string[] exposedHeaders` overload; `AnyPolicy` applies `WithExposedHeaders` when non-empty. grpc-server calls `CorsPolicy.Any.Apply(serviceCollection, "Grpc-Status", …)` and `UseCors`/`RequireCors(CorsPolicy.Any.Name)`.
 
 ### M35 — Severity: suggestion — Status: fixed
 - File: `source/container-apps/web/projects/web-spa/features/developer/components/user-claims-base.cs:5`
@@ -286,12 +286,12 @@ features/platform boundary**, and **suppression hygiene**.
 - Source: code-quality
 - Disposition notes: Deleted. Nothing inherited it; `UserClaims.razor` already owns the live claims display.
 
-### M36 — Severity: suggestion — Status: open
+### M36 — Severity: suggestion — Status: fixed
 - File: `source/container-apps/web/projects/web-spa/features/profile-menu/profile-menu-state/profile-menu-state.toggle.cs:29`
 - Description: "Transitions and NotifyLossOfInterest not working" — a known missing UX behavior tracked only by an inline TODO.
 - Suggestion: Open a kanban task and point the Design region at it, or fix it.
 - Source: code-quality
-- Disposition notes:
+- Disposition notes: Tracked as task 211 (`kanban/to-do/211-profile-menu-transitions-and-notifylossofinterest/task.md`). Toggle Design region points at it; inline TODO removed. Live header menu is FluentMenu in `Profile.razor`.
 
 ### M37 — Severity: nit — Status: fixed
 - File: `source/container-apps/web/projects/web-spa/components/pages/SideNavigationLink.razor:5,9`
