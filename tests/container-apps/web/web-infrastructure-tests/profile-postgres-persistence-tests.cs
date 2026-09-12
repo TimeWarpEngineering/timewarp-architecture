@@ -1,7 +1,6 @@
 namespace Profile_Postgres_Persistence_;
 
-using Docker.DotNet;
-using Testcontainers.PostgreSql;
+using TimeWarp.Architecture.Testing;
 
 /// <summary>
 /// Live Postgres round-trips for the Profile teaching aggregate. Prefers an explicit connection
@@ -10,8 +9,8 @@ using Testcontainers.PostgreSql;
 /// </summary>
 public class Round_Trip
 {
-  private static readonly Lazy<Task<PostgresAvailability>> Availability =
-    new(ResolveAvailabilityAsync, LazyThreadSafetyMode.ExecutionAndPublication);
+  private static readonly Lazy<Task<PostgresTestAvailability>> Availability =
+    new(() => PostgresTestAvailability.ResolveAsync("timewarp_profile_tests"), LazyThreadSafetyMode.ExecutionAndPublication);
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Round_Trip>();
@@ -94,7 +93,7 @@ public class Round_Trip
 
   private static async Task<bool> SkipIfUnavailableAsync()
   {
-    PostgresAvailability availability = await Availability.Value;
+    PostgresTestAvailability availability = await Availability.Value;
     if (availability.ConnectionString is not null)
     {
       return false;
@@ -102,7 +101,7 @@ public class Round_Trip
 
     // CI must exercise real Postgres concurrency — soft-skip would green a broken Docker host.
     // Interactive local agents without Docker still soft-skip (model-mapping tests always run).
-    if (IsCiEnvironment())
+    if (PostgresTestAvailability.IsCiEnvironment())
     {
       throw new InvalidOperationException(
         "Profile Postgres live tests require a connection string or Docker under CI. " +
@@ -115,62 +114,12 @@ public class Round_Trip
     return true;
   }
 
-  private static bool IsCiEnvironment() =>
-    !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI"))
-    || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
-
   private static async Task<PostgresDbContext> CreateContextAsync()
   {
-    PostgresAvailability availability = await Availability.Value;
+    PostgresTestAvailability availability = await Availability.Value;
     DbContextOptions<PostgresDbContext> options = new DbContextOptionsBuilder<PostgresDbContext>()
       .UseNpgsql(availability.ConnectionString)
       .Options;
     return new PostgresDbContext(options);
   }
-
-  private static async Task<PostgresAvailability> ResolveAvailabilityAsync()
-  {
-    string? fromEnv = Environment.GetEnvironmentVariable("PostgresDbOptions__ConnectionString")
-      ?? Environment.GetEnvironmentVariable("ConnectionStrings__postgres-db");
-
-    if (!string.IsNullOrWhiteSpace(fromEnv))
-    {
-      return new PostgresAvailability(fromEnv, Container: null, SkipReason: null);
-    }
-
-    try
-    {
-      PostgreSqlContainer container = new PostgreSqlBuilder("postgres:16-alpine")
-        .WithDatabase("timewarp_profile_tests")
-        .WithUsername("timewarp")
-        .WithPassword("timewarp")
-        .Build();
-
-      await container.StartAsync();
-      // Container lifetime is process-scoped; Testcontainers Ryuk reaps it after the test host exits.
-      return new PostgresAvailability(container.GetConnectionString(), container, SkipReason: null);
-    }
-    catch (Exception exception) when (
-      exception is DockerApiException
-        or DockerContainerNotFoundException
-        or HttpRequestException
-        or TimeoutException
-        or IOException)
-    {
-      // Narrow filter: InvalidOperationException / NotSupportedException from Testcontainers
-      // misconfiguration must surface, not look like "no Docker".
-      string skipReason =
-        "No Postgres connection available (set PostgresDbOptions__ConnectionString or " +
-        "ConnectionStrings__postgres-db, or enable Docker for Testcontainers). " +
-        exception.Message;
-      return new PostgresAvailability(ConnectionString: null, Container: null, skipReason);
-    }
-  }
-
-  private sealed record PostgresAvailability
-  (
-    string? ConnectionString,
-    PostgreSqlContainer? Container,
-    string? SkipReason
-  );
 }

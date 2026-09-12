@@ -3,30 +3,29 @@
 
 namespace PrincipalRoleStore_.Ef;
 
-using Docker.DotNet;
 using Npgsql;
-using Testcontainers.PostgreSql;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
 using TimeWarp.Architecture.Persistence;
+using TimeWarp.Architecture.Testing;
 using TimeWarp.Identity;
 
 file sealed class EfPrincipalRoleStoreFactory
 {
-  private static readonly Lazy<Task<PostgresAvailability>> Availability =
-    new(ResolveAvailabilityAsync, LazyThreadSafetyMode.ExecutionAndPublication);
+  private static readonly Lazy<Task<PostgresTestAvailability>> Availability =
+    new(() => PostgresTestAvailability.ResolveAsync("timewarp_role_store_tests"), LazyThreadSafetyMode.ExecutionAndPublication);
 
   public static bool IsAvailable
   {
     get
     {
-      PostgresAvailability availability = Availability.Value.GetAwaiter().GetResult();
+      PostgresTestAvailability availability = Availability.Value.GetAwaiter().GetResult();
       if (availability.AdminConnectionString is not null)
       {
         return true;
       }
 
-      if (IsCiEnvironment())
+      if (PostgresTestAvailability.IsCiEnvironment())
       {
         throw new InvalidOperationException(
           "EfPrincipalRoleStore tests require a connection string or Docker under CI. " +
@@ -40,7 +39,7 @@ file sealed class EfPrincipalRoleStoreFactory
 
   public static IPrincipalRoleStore CreateStore()
   {
-    PostgresAvailability availability = Availability.Value.GetAwaiter().GetResult();
+    PostgresTestAvailability availability = Availability.Value.GetAwaiter().GetResult();
     if (availability.AdminConnectionString is null)
     {
       throw new InvalidOperationException(
@@ -75,7 +74,7 @@ file sealed class EfPrincipalRoleStoreFactory
 
   public static PostgresDbContext CreateDbContext()
   {
-    PostgresAvailability availability = Availability.Value.GetAwaiter().GetResult();
+    PostgresTestAvailability availability = Availability.Value.GetAwaiter().GetResult();
     if (availability.AdminConnectionString is null)
     {
       throw new InvalidOperationException(availability.SkipReason ?? "no connection");
@@ -113,53 +112,6 @@ file sealed class EfPrincipalRoleStoreFactory
 #pragma warning restore CA2100
     command.ExecuteNonQuery();
   }
-
-  private static bool IsCiEnvironment() =>
-    !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI"))
-    || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
-
-  private static async Task<PostgresAvailability> ResolveAvailabilityAsync()
-  {
-    string? fromEnv = Environment.GetEnvironmentVariable("PostgresDbOptions__ConnectionString")
-      ?? Environment.GetEnvironmentVariable("ConnectionStrings__postgres-db");
-
-    if (!string.IsNullOrWhiteSpace(fromEnv))
-    {
-      var builder = new NpgsqlConnectionStringBuilder(fromEnv) { Database = "postgres" };
-      return new PostgresAvailability(builder.ConnectionString, SkipReason: null);
-    }
-
-    try
-    {
-      PostgreSqlContainer container = new PostgreSqlBuilder("postgres:16-alpine")
-        .WithDatabase("timewarp_role_store_tests")
-        .WithUsername("timewarp")
-        .WithPassword("timewarp")
-        .Build();
-
-      await container.StartAsync();
-      var builder = new NpgsqlConnectionStringBuilder(container.GetConnectionString())
-      {
-        Database = "postgres"
-      };
-      return new PostgresAvailability(builder.ConnectionString, SkipReason: null);
-    }
-    catch (Exception exception) when (
-      exception is DockerApiException
-        or DockerContainerNotFoundException
-        or HttpRequestException
-        or TimeoutException
-        or IOException)
-    {
-      string skipReason =
-        "No Postgres connection available (set PostgresDbOptions__ConnectionString or " +
-        "ConnectionStrings__postgres-db, or enable Docker for Testcontainers). " +
-        exception.Message;
-      return new PostgresAvailability(AdminConnectionString: null, skipReason);
-    }
-  }
-
-  private sealed record PostgresAvailability(string? AdminConnectionString, string? SkipReason);
 }
 
 public class Principal_role_store

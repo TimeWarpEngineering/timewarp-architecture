@@ -25,8 +25,8 @@ features/platform boundary**, and **suppression hygiene**.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 13 | 5 | 0 |
-| suggestion | 12 | 3 | 0 |
+| bug | 11 | 7 | 0 |
+| suggestion | 10 | 5 | 0 |
 | nit | 2 | 6 | 0 |
 
 ## Issues
@@ -114,33 +114,33 @@ features/platform boundary**, and **suppression hygiene**.
 - Source: tests, leftovers
 - Disposition notes: Deleted the folder on 210-001. Sibling `foundation-domain-tests` remains the live Jaribu suite.
 
-### M12 — Severity: bug — Status: open
+### M12 — Severity: bug — Status: fixed
 - File: `source/container-apps/web/features/agent-links/list-agent-human-links/list-agent-human-links-contracts.cs`
 - Description: Hosted `[ApiEndpoint]` (`GET api/agent-links`) with a handler and zero test coverage anywhere (only SPA client state references it). Definition of Done requires happy-path AND validation-rejection tests for every API endpoint.
 - Suggestion: Extend `agent-human-link-tests.cs` (or add a co-located runfile) covering both the human-session and agent-token paths its Design region describes.
 - Source: tests
-- Disposition notes:
+- Disposition notes: Co-located `list-agent-human-links-tests.cs` covers empty-query validation, unauthenticated 401, and listing as human vs agent (IDOR: unrelated principal sees nothing). Validator has no field rules, so rejection is the unauthenticated handler path.
 
-### M13 — Severity: bug — Status: open
+### M13 — Severity: bug — Status: fixed
 - File: `source/container-apps/web/features/admin/roles/update-role/update-role-contracts.cs:34-41`; `…/delete-role/delete-role-contracts.cs:37-42`
 - Description: Both validators carry real rules (RoleId NotEmpty, RoleDetailsValidator) but have no rejection tests; only happy-path coverage exists in `roles-endpoint-tests.cs`. `CreateRole` has a dedicated validator test — these two do not.
 - Suggestion: Add `update-role-validator-tests.cs` and `delete-role-validator-tests.cs` following the `create-role-validator-tests.cs` pattern.
 - Source: tests
-- Disposition notes:
+- Disposition notes: Co-located Jaribu runfiles with Shouldly (not FluentValidation.TestHelper) matching `create-role-tests.cs` validator coverage: empty RoleId/Name/Description/UserId for update; empty RoleId/UserId for delete.
 
-### M14 — Severity: suggestion — Status: open
+### M14 — Severity: suggestion — Status: fixed
 - File: `tests/container-apps/web/web-infrastructure-tests/{ef-principal-role-store-tests,ef-principal-store-contract-tests,profile-postgres-persistence-tests}.cs`
 - Description: Three copy-pasted `PostgresAvailability` / `ResolveAvailabilityAsync` / `IsCiEnvironment` helpers with minor shape drift.
 - Suggestion: Extract one shared helper into `tests/common/timewarp-testing` (or a shared file in the suite).
 - Source: tests
-- Disposition notes:
+- Disposition notes: `PostgresTestAvailability` in `tests/common/timewarp-testing/postgres-test-availability.cs`. All three call sites use it. `ConnectionString` is as-is; `AdminConnectionString` rewrites Database=postgres.
 
-### M15 — Severity: suggestion — Status: open
+### M15 — Severity: suggestion — Status: fixed
 - File: `source/container-apps/web/features/identity/identity-progressive-profile-gate-tests.cs:22,84`
 - Description: Namespace `TimeWarp.Architecture.Task205` is named after a kanban task; it ships in the product tree and means nothing outside this repo's history.
 - Suggestion: Rename to a behavior-based namespace (e.g. `…Features.Identity.ProgressiveProfileGate`).
 - Source: tests
-- Disposition notes:
+- Disposition notes: Renamed to `TimeWarp.Architecture.Features.Identity.ProgressiveProfileGate`.
 
 ### M16 — Severity: suggestion — Status: fixed
 - File: `timewarp-architecture.slnx`; `tests/tools/agent-identity-cli-tests/agent-identity-cli-tests.csproj`; `source/container-apps/web/projects/web-spa/web-spa.csproj`
