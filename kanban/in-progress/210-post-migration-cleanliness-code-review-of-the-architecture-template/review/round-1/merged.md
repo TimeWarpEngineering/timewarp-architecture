@@ -25,8 +25,8 @@ features/platform boundary**, and **suppression hygiene**.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 13 | 5 | 0 |
-| suggestion | 12 | 3 | 0 |
+| bug | 11 | 7 | 0 |
+| suggestion | 10 | 5 | 0 |
 | nit | 2 | 6 | 0 |
 
 ## Issues
