@@ -180,6 +180,32 @@ Living examples:
 - [ ] Any remaining edge has `[CrossSliceReference(typeof(T), "reason")]`
 - [ ] No silent coupling or unexplained suppressions
 
+## Removing a demo slice
+
+Counter and EventStream ship in every generated app. They are teaching material, **not**
+template flags — remove them by deleting code.
+
+A slice is an independently removable vertical unit. Identity is the namespace under
+`{RootNamespace}.Features` (e.g. `…Features.Counters`), not the folder path. The compiler
+is the checklist: delete the slice folder, then fix every compile error until `dev build`
+is 0/0.
+
+Deleting a SPA demo touches, at minimum:
+
+1. The slice folder (`web-spa/features/counter/`, `web-spa/features/event-stream/`).
+2. `components/NavMenu.razor` — its nav link.
+3. `global-usings.cs` / `_Imports.razor` — its namespace usings.
+4. Tests under `tests/container-apps/web/web-spa-integration-tests/` plus shared pipeline
+   tests that exercise its state (e.g. `CloneStateBehavior` uses `CounterState`).
+5. Cross-slice opt-outs that targeted it — e.g. Style Guide's
+   `[CrossSliceReference(typeof(CounterState), …)]`.
+
+SPA-only demos have no EF mapping. If you remove a **mapped** entity (one that participates
+in `PostgresDbContext` / `IEntityTypeConfiguration`), delete the domain type, configuration,
+and `DbSet`, then add an EF migration that drops the unused tables. Do not hand-edit only
+the live database — AppHost `AddEFMigrations` applies committed migrations. See
+`tw-aggregate-pattern` (schema evolution).
+
 ## Related skills and pointers
 
 - `tw-feature-placement` — filename grammar and layer membership once you know which slice a
@@ -189,6 +215,5 @@ Living examples:
 - `tw-blazor-css-strategy` — shell/component styling only
 - `tw-agent-context-regions` — Purpose/Design on new files (TWA0004)
 - **AGENTS.md** — TWA diagnostic table (row TWA0009)
-- **how-to-remove-demo-features.md** — delete Counter/EventStream demo slices
 - **Analyzer (source of truth):** `source/analyzers/timewarp-architecture-convention-analyzers/slice-isolation-analyzer.cs`
 - **Opt-out attribute:** `source/foundation/foundation-contracts/base/cross-slice-reference-attribute.cs`

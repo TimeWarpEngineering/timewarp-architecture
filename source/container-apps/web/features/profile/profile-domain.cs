@@ -11,10 +11,11 @@
 // empty ProfileId is rejected. Named mutations (Rename/SetEmail/SetLanguage/SetRegion/SetTheme/
 // EnableNotifications/DisableNotifications) keep every state change intention-revealing —
 // there are no public setters.
-// Email is optional progressive profile (task 205): passkey/agent-key register, session, and token
+// Email is optional progressive profile: passkey/agent-key register, session, and token
 // never require it. Null or whitespace clears the field; a present value is trimmed, length-capped,
 // and format-checked. It does not live on TimeWarp.Identity.Principal — identity stays credentials
-// and trust; product chrome hangs here.
+// and trust; product chrome hangs here. Agent↔human links are a separate Features.AgentLinks
+// slice; metered capability does not require a human link.
 // MaxDisplayNameLength / MaxEmailLength are the length-rule SSOT, enforced in Create/Rename/SetEmail
 // and the nested Invariants validator so the consts cannot drift inside the exemplar. Contract
 // validators duplicate the literals (contracts must not reference domain).

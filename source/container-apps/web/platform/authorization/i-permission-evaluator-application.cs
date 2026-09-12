@@ -3,19 +3,21 @@
 #endregion
 
 #region Design
-// Task 182-001 / disposition: IPermissionEvaluator is the only authorization decision port.
-// Handlers (182-002 PermissionRequirement) and GetCurrentSession (182-003) must route through
-// this interface so an external PDP (OpenFGA/Cedar) can replace the default in-process
-// expansion without rewriting enforcement. Scheme-aware: human session schemes expand
-// principal → effective roles → role permissions; agent-token expands ambient scopes via
-// IAgentCallerContext + AgentScopePermissionSeed (182-006) — never human role membership.
-// Cookie stays PrincipalId-only (147-004 D8) — expansion is per-request, never baked into the
-// identity-session cookie.
-// Platform cluster (web/platform/authorization, TimeWarp.Architecture.Authorization) —
-// product slices consume it freely (TWA0009 platform is one-way free). PermissionIds stay
-// Features substrate.
-// Docs: ADR-0010 (accepted) + how-to-swap-permission-evaluator-for-external-pdp.md
-// (consumer PDP swap; no AppHost OpenFGA by default).
+// IPermissionEvaluator is the only authorization decision port. Surfaces enforce permissions
+// (PermissionIds strings as policy names) — never product role Guids. Roles remain editable
+// bundles in IRolePermissionStore. PermissionRequirementHandler and GetCurrentSession must
+// route through this interface so an external PDP (OpenFGA/Cedar/SpiceDB) can replace the
+// default in-process expansion without rewriting contracts, pages, or SPA AuthorizeView names.
+// Scheme-aware: human session schemes expand principal → effective roles → role permissions;
+// agent-token expands ambient scopes via IAgentCallerContext + AgentScopePermissionSeed —
+// never human role membership. Cookie stays PrincipalId-only — expansion is per-request.
+// Swap: register a different IPermissionEvaluator in DI (Replace if the default already ran);
+// leave PermissionIds, PermissionRequirementHandler, AddPermissionPolicies, and SPA claim
+// projection. Adapter must fail closed on PDP errors, stay scoped, and honor the scheme split.
+// Do not add an external PDP to AppHost as a required template dependency. Entra SPA claims
+// must use this same evaluator-backed source when that branch is touched — no second map.
+// Platform cluster (web/platform/authorization) — product slices consume it freely (TWA0009).
+// PermissionIds stay Features substrate.
 #endregion
 
 namespace TimeWarp.Architecture.Authorization;

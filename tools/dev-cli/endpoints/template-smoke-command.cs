@@ -314,6 +314,9 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
           if (!AssertGeneratedAppPackageMode(name, outputDir))
             return Task.FromResult(false);
 
+          if (!Harness.AssertSkillsShipped(outputDir))
+            return Task.FromResult(false);
+
           // Task 145-009: Production appsettings must not enable mock auth; mock registration
           // type must exist so fail-closed is a product surface, not a missing feature.
           if (!AssertMockAuthFailClosedSurfaces(name, outputDir))

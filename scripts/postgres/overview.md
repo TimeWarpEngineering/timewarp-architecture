@@ -48,7 +48,7 @@ Volumes created before task 147-007 have no `__EFMigrationsHistory`. One-time:
 
 Or set `Postgres:UseDataVolume=false` once for an ephemeral container, then re-enable.
 
-## Canonical CLI (also in how-to-add-your-aggregate.md §8)
+## Canonical CLI (also in tw-aggregate-pattern Schema evolution)
 
 ```bash
 dotnet tool restore

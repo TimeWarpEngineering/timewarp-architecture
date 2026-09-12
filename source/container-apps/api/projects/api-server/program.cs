@@ -18,7 +18,7 @@
 // Agent bearer (task 104-030): named agent-token scheme + scope policies (parity with web-server),
 // AgentBearerStoresModule for IAgentTokenStore/IPrincipalStore, pipeline
 // UseAuthentication → UseAuthorization → UseFastEndpoints. Ceremonies stay on web-server;
-// see how-to-agent-identity-host-split-web-vs-api.md.
+// see Design region on agent-bearer-stores-module-infrastructure.cs.
 #endregion
 
 namespace TimeWarp.Architecture.Api.Server;

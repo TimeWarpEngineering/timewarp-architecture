@@ -23,7 +23,8 @@ model choice, and available context/tokens are unknown to the estimator and chan
   packaging tree. Changes here ship to every generated app.
 - Feature flags (`api`, `grpc`, `web`, `yarp`, `postgres`) are template preprocessor switches —
   keep `<!--#if (flag)-->` / `#if flag` regions intact when editing near them. Demo features
-  (counter, event-stream) ship unconditionally; see how-to-remove-demo-features.md.
+  (counter, event-stream) ship unconditionally; removing them is **`tw-slice-isolation`**
+  (Removing a demo slice).
 
 ## Build / run / test
 
@@ -37,8 +38,8 @@ Run from the repo root (the `dev` CLI resolves the root via git):
   `dotnet test` is unsupported on .NET 10). Selection: `-- --filter-class <substring>` /
   `-- --filter-method <substring>` / `-- --filter-tag <tag>` (also honors `JARIBU_FILTER_TAG`;
   CLI wins), or `--list-tests` + `-- --filter-uid <uid>` for a specific discovered node
-  (`TimeWarp.Jaribu.TestingPlatform` ≥ 1.0.0-beta.15, timewarp-jaribu#23; see
-  how-to-filter-tests-by-name.md / how-to-filter-tests-by-tags.md).
+  (`TimeWarp.Jaribu.TestingPlatform` ≥ 1.0.0-beta.15, timewarp-jaribu#23; name/tag
+  selection: cross-repo **`tw-jaribu`**).
 - `dotnet run source/<family>/features/…/<name>-tests.cs` — one co-located Jaribu runfile
   standalone (local dev loop; CI uses family aggregators via `dev test`)
 - More commands: `dev --capabilities` (see the `tw-dev-cli` skill)
@@ -117,9 +118,8 @@ Branch naming, commits, and merge policy: **`tw-git`**.
 ## Layout (kebab-case paths everywhere; namespaces PascalCase)
 
 **File naming:** kebab-case for files and folders (map `user-service.cs` → `UserService`). Full
-agent rules and exception table: **`tw-csharp`** (File and directory naming). Human SSOT sketch:
-`documentation/developer/standards/file-naming.md`. Axis-1 product grammar
-(`name[-function]-layer.cs`): **`tw-feature-placement`**.
+agent rules and exception table: **`tw-csharp`** (File and directory naming). Axis-1 product
+grammar (`name[-function]-layer.cs`): **`tw-feature-placement`**.
 
 **Do not kebab-force:** `.razor` / paired `.razor.cs` / `.razor.css` (Blazor type-matching names);
 MSBuild well-known props/targets; ASP.NET `Properties/`, `launchSettings.json`,
@@ -227,9 +227,10 @@ Directory.Build.props so the tests tree gets them too): `UseFoundationPackages` 
 **equal the release `<Version>`** and bump in the same commit as it (task 124 policy — packages
 and template publish together in one release run, so pins always reference versions that exist
 by the time any generated app restores; the old lag-behind-published policy shipped a template
-whose pins predated its own release). Upgrade path for apps that still vendored
-`source/analyzers/**`: see
-`documentation/developer/how-to-guides/how-to-upgrade-to-analyzer-packages.md`.
+whose pins predated its own release). Greenfield generated apps are package-mode only — do not
+vendor `source/analyzers/**`. Analyzers are repo-wide; Generators attach only on projects that
+should run generators; never leave both a ProjectReference and a PackageReference for the same
+consumer. Keep `CompilerVisibleProperty` `TimeWarpSliceRoot` (TWA0009).
 
 **sourceName-safe platform package IDs:** template `sourceName` is `TimeWarp.Architecture`, so a
 literal `TimeWarp.Architecture.Analyzers` in csproj/CPM would rewrite to `AppName.Analyzers` on
@@ -358,6 +359,15 @@ Do not create perpetual/never-closing tasks. See the `tw-kanban` skill.
 
 ## Documentation
 
-`documentation/` (developer + conceptual guides, ADRs) — in-repo markdown is the documentation
-of record; generated apps receive the tree in their template output. No published docs site
-(re-evaluate a public presence when the repo gains an outward-facing audience).
+Purpose/Design regions (TWA0004 + the reconcile-on-edit rule) plus skills are the
+documentation of record. `documentation/` does not exist. The eight repo skills under
+`skills/` ship in generated apps (pinned to the analyzers they ship beside;
+`skills/*/analysis/` does not ship). The timewarp.software copy is discovery/always-latest;
+both come from the same release commit.
+
+ADRs are not shipped as pages. A still-true rule lives in the skill that owns it or in the
+Design region of the code/analyzer that enforces it.
+
+Cross-repo flow skills used from this repo (not packed here): **`tw-csharp`** (file naming),
+**`tw-git`** (branch/merge), **`tw-kanban`**, **`tw-jaribu`**, **`tw-dev-cli`**,
+**`tw-agent-context-regions`**.

@@ -1,10 +1,13 @@
 <Project>
   <!--
-    Assembly marker generation (task 126-007).
+    Assembly marker generation.
 
-    Every C# product/platform assembly gets a generated IAssemblyMarker in
+    Every C# product/platform assembly gets a generated public interface IAssemblyMarker in
     $(AssemblyMarkerNamespace) (not RootNamespace alone — container-apps share
     RootNamespace=TimeWarp.Architecture while markers live in layer sub-namespaces).
+    An interface (not a sealed class) works as a generic type argument
+    (AddValidatorsFromAssemblyContaining<IAssemblyMarker>) and cannot be instantiated.
+    Do not hand-author assembly-marker.cs.
 
     Maps live in source/{container-apps,foundation,analyzers,libraries}/Directory.Build.props.
     Opt out: TwGenerateAssemblyMarker=false.
