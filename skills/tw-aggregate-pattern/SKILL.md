@@ -8,7 +8,7 @@ when-to-use: aggregate root, IAggregateRoot, Entity<TId>, typed id, TypedId, Inv
 
 An aggregate is a domain entity that is the consistency boundary for a set of invariants.
 Every aggregate root in this repository follows the same golden pattern. This skill is the
-pattern SSOT; `how-to-add-your-aggregate.md` is the human end-to-end walkthrough that defers to it.
+pattern SSOT, including the persistence walkthrough (EF mapping → host registration → SaveChanges → tests).
 
 ## Detection — when to invoke
 
@@ -67,10 +67,114 @@ table/schema `profiles`, TypedId key conversion) is applied by `PostgresDbContex
 is supplied for free by the `AggregateDbContext` `Version` convention — an aggregate's own
 mapping does not declare it.
 
+## Persistence golden path (Postgres + EF)
+
+The template's default durable path is **Postgres-only state-store EF**. No SQL Server dual
+story, no event sourcing as the default, no in-app `EnsureCreated`. Hosts inherit
+`AggregateDbContext` so SaveChanges enforcement is not sealed inside one product context.
+Npgsql stays host-only.
+
+- **Schema-per-slice** on a single `PostgresDbContext` (`ToTable("orders", "orders")`). A second
+  DbContext per module is an earned exception.
+- **EF migrations are the only schema path.** Committed migrations live under
+  `source/container-apps/web/platform/postgres/migrations/`. Never invent schema at startup.
+- **Local / Aspire:** AppHost `AddEFMigrations` + `RunDatabaseUpdateOnStart` with **no wait
+  edge** from web-server to the migration resource (both `WaitFor` and `WaitForCompletion`
+  break restart or testing). On a fresh volume the app can briefly serve before migrate
+  finishes; re-run on demand with the `ef-database-update` dashboard command.
+- **Publish / deploy:** `PublishAsMigrationScript` / `PublishAsMigrationBundle`.
+- **Tests:** ephemeral DBs call `Database.Migrate()` / `MigrateAsync()`. Do not reuse AppHost
+  `WithDataVolume` state across runs.
+- **Actors / outbox** are earned exceptions (Orleans grain-per-entity-ID over the same EF
+  store for high-contention single-writer ids), not the default.
+
+## Add an aggregate — walkthrough
+
+Prerequisites: the `postgres` template flag is on (default).
+
+### 1. Domain
+
+Place `<name>-domain.cs` and `<name>-id-domain.cs` under `web/features/<slice>/`. Follow
+**The golden pattern** above. Application code never writes `Version` — it is store-owned.
+
+### 2. Infrastructure mapping
+
+Add `<name>-entity-type-configuration-infrastructure.cs` in the same slice:
+
+| Concern | What to do |
+|---------|------------|
+| Table + schema | `ToTable("orders", "orders")` — schema-per-slice on the single host context |
+| Key | `HasKey(e => e.Id)` |
+| TypedId | `HasConversion(id => id.Value, v => OrderId.From(v))` |
+| Concurrency | nothing — `AggregateDbContext` configures `Version` for every `IAggregateRoot` |
+
+Do **not** call `.IsConcurrencyToken()` yourself on an aggregate mapping.
+
+### 3. Host registration
+
+On `PostgresDbContext`: add `public DbSet<Order> Orders => Set<Order>();`, keep
+`base.OnModelCreating` and `ApplyConfigurationsFromAssembly`. Override
+`OnConfigureConventions` (not sealed `ConfigureConventions`) for TypedId conventions.
+Feature `*-infrastructure.cs` files compile into web-infrastructure — do not hand-register
+each `IEntityTypeConfiguration`.
+
+### 4. Application
+
+Load → named mutation → `SaveChangesAsync`. Do **not** call `DomainInvariantsGuard`
+yourself. Invalid state fails closed before SQL. Concurrent writers surface as
+`DbUpdateConcurrencyException`.
+
+### 5. Tests
+
+| Layer | What |
+|-------|------|
+| Domain unit | Create/guards/mutations (`profile-tests.cs`) |
+| Model mapping | Schema, TypedId, concurrency token (no live DB) |
+| SaveChanges hook | Version bump, child→root (`foundation-infrastructure-tests`) |
+| Postgres integration | `Database.Migrate`, round-trip, concurrent update on an ephemeral DB |
+
+### 6. Store port vs direct DbContext
+
+| Use | When |
+|-----|------|
+| Direct `PostgresDbContext` / `DbSet<T>` | Product aggregate owned by this host; Profile teaching path |
+| Port (`IPrincipalStore`, …) | Multi-backend seam; in-memory + EF must share snapshot-on-get and CAS semantics |
+
+Identity Principal/Credential are **not** `IAggregateRoot`. The store owns optimistic
+concurrency (`EntityVersion.Next` + `ConcurrencyConflictException`). Host mapping still
+sets `.IsConcurrencyToken()` as a DB race belt, but `AggregateDbContext` does not
+auto-increment `Version` for those types — that avoids a double-bump.
+
+### 7. Schema evolution
+
+After editing the model or an `IEntityTypeConfiguration`:
+
+```bash
+dotnet tool restore
+dotnet ef migrations add <NameYourChange> \
+  --project source/container-apps/web/projects/web-infrastructure/web-infrastructure.csproj \
+  --startup-project source/container-apps/web/projects/web-server/web-server.csproj \
+  --context PostgresDbContext \
+  --output-dir ../../platform/postgres/migrations \
+  --namespace TimeWarp.Architecture.Persistence.Migrations
+```
+
+Do not kebab-rename EF scaffold files. Removing a mapped entity requires a migration that
+drops the unused tables — never an out-of-band DROP against `__EFMigrationsHistory`.
+
+### Checklist
+
+- [ ] TypedId + `Entity<TId>` + `IAggregateRoot` + private `Invariants`
+- [ ] `IEntityTypeConfiguration` with schema and TypedId conversion (no `.IsConcurrencyToken()`)
+- [ ] `DbSet<>` + configurations discovered from assembly
+- [ ] Handler path: load → mutate → `SaveChangesAsync`
+- [ ] Domain unit tests + mapping and/or Postgres tests
+- [ ] Purpose/Design regions honest (TWA0004)
+
 ## Related skills and pointers
 
 - `tw-feature-placement` — filename grammar and layer membership (`<name>[-<function>]-<layer>.cs`,
   the `domain` layer, registry)
 - `tw-slice-isolation` — which slice an aggregate belongs to before placement
-- `how-to-add-your-aggregate.md` — human end-to-end walkthrough (domain → EF mapping → host
-  registration → application use → tests)
+- `AggregateDbContext` Design region — SaveChanges invariants, Version convention, child→root
+  resolution (`source/foundation/foundation-infrastructure/persistence/aggregate-db-context.cs`)

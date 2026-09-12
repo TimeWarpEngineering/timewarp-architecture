@@ -407,6 +407,9 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
           if (!Harness.AssertPlatformPinsEqualVersion(outputDir, Version))
             return false;
 
+          if (!Harness.AssertSkillsShipped(outputDir))
+            return false;
+
           WriteNugetOrgOnlyConfig(outputDir);
 
           if (!await GitInitAsync(outputDir))

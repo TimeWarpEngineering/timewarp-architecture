@@ -14,6 +14,14 @@ when-to-use: feature filename grammar, feature-cohesive folder, web/features, we
 > registry (yarp excepted — single-project family, no concern trees). Worked examples below use
 > web; substitute `api/`/`grpc/` for the family root and the same rules apply.
 
+**Why folder is not project:** feature cohesion on disk (one folder tells the whole story)
+and compiler-enforced layer direction are both required. Conventional .NET layouts force a
+choice because they assume folder = project. Dropping that assumption — layer projects
+include files by filename-grammar globs — delivers both. Assembly splits later are a glob
+change, not a file move. SPA stays conventional (`web-spa/features/**`) because the Razor
+SDK asset/codegen pipeline does not warrant cross-folder globbing. Registry edits require a
+full rebuild (analyzer DLLs can go stale under incremental builds).
+
 The litmus test for the fuzzy middle:
 
 > **If this deployable were deleted, would the file still mean something?** Yes → shared tree

@@ -3,12 +3,15 @@
 #endregion
 
 #region Design
-// Narrower than web's InMemoryIdentityStoresModule: api-server does NOT host passkey/agent-key
-// ceremonies or challenge stores — only bearer VALIDATION against the same IAgentTokenStore port
-// (no parallel opaque-token stack). In-memory singletons match web's single-instance posture;
-// a shared distributed store is required before a token minted on web-server can validate here
-// (see documentation/developer/how-to-guides/how-to-agent-identity-host-split-web-vs-api.md).
-// Ceremony issuance remains web-server-only (104-004 / 104-030 scope).
+// Agent identity is split by capability, not duplicated as two full identity systems.
+// Ceremonies that mint principals, credentials, and tokens stay on web-server (passkey,
+// agent-key register, token issuance, GET api/identity/agent/me). api-server hosts the same
+// VALIDATION stack (scheme agent-token, claims timewarp:scope / timewarp:principal_id,
+// IAgentTokenStore + IPrincipalStore) so agents can call protected product routes here.
+// In-memory singletons are per-process: a token minted on web-server is not visible here.
+// Dual-host / multi-instance production needs a shared store behind the same ports — the
+// authentication handler shape does not change. Integration tests seed principal + Issue
+// on this host. String enums go through ContractSerializationDefaults on both hosts.
 #endregion
 
 namespace TimeWarp.Architecture.Infrastructure;

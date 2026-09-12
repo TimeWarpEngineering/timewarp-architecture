@@ -40,12 +40,12 @@ features/platform boundary**, and **suppression hygiene**.
 - Source: orchestrator
 - Disposition notes: fixed on this branch via `ganda repo audit --fix --checks kebab-path-names` (folder renamed; audit passes with 2 advisory warnings).
 
-### M2 — Severity: bug — Status: open
+### M2 — Severity: bug — Status: fixed
 - File: `AGENTS.md:178-179` (Documentation section) vs `timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj:26-42`
 - Description: AGENTS.md states "generated apps receive the tree in their template output" for `documentation/`, but the packaging csproj's `Content Include` list is `source/**`, `tests/**`, `msbuild/**`, `.template.config/**`, and named root files only. `documentation/`, `skills/`, `AGENTS.md`/`CLAUDE.md`, and `tools/dev-cli` are not packed, so a generated app receives none of them. One of the two is wrong: either the docs are meant to ship (pack them, and then every stale page in section D is a shipped defect) or the claim is stale (fix AGENTS.md and decide whether the dev CLI / docs story for generated apps is "bring your own"). This is a template-coherence decision, not a mechanical fix.
 - Suggestion: Decide ship-scope explicitly (recommend: pack `documentation/` after section D is cleaned, and state in AGENTS.md what does and does not ship); record the decision in an ADR or the Documentation section.
 - Source: orchestrator
-- Disposition notes:
+- Disposition notes: Fixed on 210-005. Decision: `documentation/` is retired; Purpose/Design regions plus skills are the documentation of record. `skills/**` (except `skills/*/analysis/`) is packed; AGENTS.md Documentation section rewritten.
 
 ### B. Layout, grammar, namespaces
 
@@ -172,47 +172,47 @@ features/platform boundary**, and **suppression hygiene**.
 - Source: docs-skills
 - Disposition notes: Fixed on 210-004. `kanban/overview.md` now points at AGENTS.md Task management + `tw-kanban`; task-template parent example uses a numeric id; `scripts/get-next-task-number.ps1` deleted (overview + `profile.ps1` source removed).
 
-### M20 — Severity: bug — Status: open
+### M20 — Severity: bug — Status: fixed
 - File: `documentation/developer/how-to-guides/testing/how-to-add-lifecycles-to-tests.md:7`
 - Description: Links to a non-existent PascalCase-era path (`Tests/TimeWarp.Architecture.Testing/ConventionTests/LifecycleExamples.cs`) and teaches `Setup`/`Cleanup` method names; current Jaribu convention is `SetupOnce`/`CleanUpOnce`.
 - Suggestion: Rewrite against `SetupOnce`/`CleanUpOnce` with a real exemplar, or delete in favor of the `tw-jaribu` / `tw-feature-placement` runfile references.
 - Source: leftovers, docs-skills
-- Disposition notes:
+- Disposition notes: Fixed on 210-005. Page deleted; Jaribu lifecycle lives in `tw-jaribu` / `tw-feature-placement` (SetupOnce/CleanUpOnce).
 
-### M21 — Severity: bug — Status: open
+### M21 — Severity: bug — Status: fixed
 - File: `documentation/developer/conceptual/architectural-decision-records/project-structure-and-conventions/` (whole orphaned subfolder); `…/architectural-decision-records/proposed/xxx.md`
 - Description: Documents the opposite of the approved architecture (one PascalCase file per class, plain `ProblemDetails`, `<Container>.<Feature>.<Entity>` namespaces) with no inbound links. `proposed/xxx.md` duplicates the same stale convention under a placeholder filename.
 - Suggestion: Delete both (superseded by ADR-0008 + `tw-web-api-contracts`), or move under a clearly marked `rejected/` with a one-line superseded-by note.
 - Source: docs-skills
-- Disposition notes:
+- Disposition notes: Fixed on 210-005. Orphaned subfolder and proposed/xxx.md deleted with `documentation/`.
 
-### M22 — Severity: bug — Status: open
+### M22 — Severity: bug — Status: fixed
 - File: `documentation/developer/conceptual/features/application/is-processing.md`
 - Description: Orphaned page citing Windows-backslash `\Source\Client\…` paths and an `ApplicationState.cs` that does not exist anywhere.
 - Suggestion: Delete, or rewrite against the current web-spa layout and TimeWarp.State if `IsProcessing` is still a live concept.
 - Source: docs-skills
-- Disposition notes:
+- Disposition notes: Fixed on 210-005. Orphaned page deleted; no live `IsProcessing` class to fold.
 
-### M23 — Severity: bug — Status: open
+### M23 — Severity: bug — Status: fixed
 - File: `documentation/developer/conceptual/component-naming-and-organization.md:~150-255`
 - Description: Example tree uses PascalCase folders (`Components/`, `Editors/`, `Pages/`, `Features/`), a non-existent `editors/` folder, and a two-layout example (`AltLayout.razor`) contradicting the single-shell pattern in `tw-blazor-layout`.
 - Suggestion: Rewrite the tree in kebab folders (Razor filenames stay PascalCase) and replace the two-layout example with the shell pattern, cross-referencing `tw-blazor-layout`.
 - Source: docs-skills
-- Disposition notes:
+- Disposition notes: Fixed on 210-005. Page deleted; single-shell pattern remains `tw-blazor-layout`.
 
-### M24 — Severity: bug — Status: open
+### M24 — Severity: bug — Status: fixed
 - File: `documentation/developer/conceptual/architectural-decision-records/overview.md`
 - Description: Top-level ADR index is unedited MADR boilerplate linking only the tool's `examples/`; none of approved 0001–0010 are linked.
 - Suggestion: Replace with a real index linking `approved/overview.md` and `proposed/`.
 - Source: docs-skills
-- Disposition notes:
+- Disposition notes: Fixed on 210-005. Unedited MADR overview deleted with the ADR tree; rules folded into skills/Design regions.
 
-### M25 — Severity: bug — Status: open
+### M25 — Severity: bug — Status: fixed
 - File: `documentation/developer/conceptual/architectural-decision-records/approved/0003-endpoint-centric-api-with-interface-based-validation.md:64`; `documentation/developer/reference/dotnet-conventions.md:4`
 - Description: Broken relative link (`../api-design.md` should be `../../api-design.md`); "Target net9.0" while the repo targets net10.0.
 - Suggestion: Fix the link; update to net10.0.
 - Source: docs-skills
-- Disposition notes:
+- Disposition notes: Fixed on 210-005. Both pages deleted with `documentation/`; net10 and contracts rules live in AGENTS.md / `tw-web-api-contracts`.
 
 ### M26 — Severity: bug — Status: fixed
 - File: `skills/tw-mock-response-factory/SKILL.md:4`
@@ -221,19 +221,19 @@ features/platform boundary**, and **suppression hygiene**.
 - Source: docs-skills
 - Disposition notes: Fixed on 210-004. `MockCopicApiService` removed from `when-to-use`; `MockWebApiService` remains.
 
-### M27 — Severity: suggestion — Status: open
+### M27 — Severity: suggestion — Status: fixed
 - File: `documentation/overview.md`; `documentation/roadmap.md`; `documentation/developer/overview.md`; `documentation/developer/tutorials/overview.md`; `documentation/developer/conceptual/testing/overview.md`; `documentation/developer/conceptual/features/overview.md`; `…/architectural-decision-records/proposed/overview.md`; `…/conceptual/testing/end-to-end-testing.md`; `…/how-to-guides/testing/how-to-write-endpoint-test.md`; `…/proposed/xxxx-powershell-coding-standards.md`
 - Description: `documentation/overview.md` is unedited boilerplate ("TODO: Give a short introduction", `https://todo/your-docs`, dotnet-core 3.0 link, non-existent `CONTRIBUTING.md`). Nine further pages are empty or one-line stubs; `xxxx-powershell-coding-standards.md` is a placeholder-named non-ADR fragment.
 - Suggestion: One pass: write real content where the slot earns it, delete the rest; `proposed/` must not be a permanent parking lot.
 - Source: docs-skills
-- Disposition notes:
+- Disposition notes: Fixed on 210-005. All listed stubs deleted with `documentation/`.
 
-### M28 — Severity: suggestion — Status: open
+### M28 — Severity: suggestion — Status: fixed
 - File: `runfiles/overview.md`; `readme.md:1,4`
 - Description: `runfiles/overview.md` cites a `build.cs` that does not exist (directory holds only the overview). `readme.md` badges: `dotnet-6.0`, and a workflow badge pointing at `blazor-state/…/release-build.yml`, which does not exist for this repo.
 - Suggestion: Reword the runfiles page (or delete until populated); point badges at this repo's `workflow.yml` and current .NET, or drop them.
 - Source: docs-skills
-- Disposition notes:
+- Disposition notes: Fixed on 210-005. `runfiles/overview.md` deleted (directory was unpopulated). `readme.md` badges point at this repo's `workflow.yml` and `dotnet-10.0`.
 
 ### M29 — Severity: nit — Status: fixed
 - File: `skills/tw-web-api-contracts/analysis/{composer-skill-analysis,glm52-review}.md`

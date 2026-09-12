@@ -22,6 +22,8 @@
 // whatever co-located Jaribu runfiles exist there at generation time (not hardcoded here — it
 // drifts as tests are added); serial for fixed port 7255. Aggregators are not in .slnx, so the
 // solution build is also blind to multi-mode compile.
+// AssertSkillsShipped: generated apps must contain the eight skills/*/SKILL.md files and must
+// not contain skills/*/analysis (pack exclude).
 #endregion
 
 namespace DevCli.Services;
@@ -669,6 +671,55 @@ internal sealed partial class TemplateSmokeHarness
 
     if (ok)
       Terminal.WriteLine("Co-located Jaribu JARIBU_MULTI guard survived generation (tier 1).");
+
+    return ok;
+  }
+
+  /// <summary>
+  /// Generated apps must receive repo skills (packaged from skills/**) and must not receive
+  /// skills/*/analysis (excluded from the template pack).
+  /// </summary>
+  public bool AssertSkillsShipped(string outputDir)
+  {
+    string skillsDir = Path.Combine(outputDir, "skills");
+    if (!Directory.Exists(skillsDir))
+    {
+      Terminal.WriteErrorLine("Generated app is missing skills/ — template pack did not include skills/**.".Red());
+      return false;
+    }
+
+    string[] requiredSkillFiles =
+    [
+      "tw-aggregate-pattern/SKILL.md",
+      "tw-blazor-css-strategy/SKILL.md",
+      "tw-blazor-layout/SKILL.md",
+      "tw-blazor/SKILL.md",
+      "tw-feature-placement/SKILL.md",
+      "tw-mock-response-factory/SKILL.md",
+      "tw-slice-isolation/SKILL.md",
+      "tw-web-api-contracts/SKILL.md",
+    ];
+
+    bool ok = true;
+    foreach (string relative in requiredSkillFiles)
+    {
+      string path = Path.Combine(skillsDir, relative.Replace('/', Path.DirectorySeparatorChar));
+      if (!File.Exists(path))
+      {
+        Terminal.WriteErrorLine($"Generated app is missing skills/{relative}.".Red());
+        ok = false;
+      }
+    }
+
+    string analysisDir = Path.Combine(skillsDir, "tw-web-api-contracts", "analysis");
+    if (Directory.Exists(analysisDir))
+    {
+      Terminal.WriteErrorLine("Generated app contains skills/tw-web-api-contracts/analysis — analysis/ must not ship.".Red());
+      ok = false;
+    }
+
+    if (ok)
+      Terminal.WriteLine("Generated app contains skills/ (eight SKILL.md files; analysis/ excluded).");
 
     return ok;
   }

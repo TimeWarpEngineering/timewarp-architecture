@@ -15,6 +15,21 @@ is composed into per-endpoint validators.
 This pattern appears across TimeWarp-based solutions. Project names vary (`web-contracts`,
 `Web.Contracts`, `Api.Contracts`, …) but the contract shape is the same.
 
+**Why endpoint-centric, not entity-centric:** each operation owns its request/response types
+so endpoints do not couple through a shared entity DTO (over-fetch, under-fetch, and
+cross-endpoint breakage). Share structure and validation through `I*Details` interfaces
+composed into per-endpoint validators — that is what lets Blazor bind `EditForm` to one
+shape without a parallel view model.
+
+**Why generate FastEndpoints on both hosts:** both web-server and api-server host endpoints
+generated from contracts. Route, verb, and auth live on the contract (`[ApiRoute]`,
+`[ApiEndpoint]`, exactly one of `[EndpointAuthorize]` / `[EndpointAllowAnonymous(reason)]`).
+There are no hand-written MVC `BaseEndpoint` shims. Validation stays on the mediator's
+`FluentValidationBehavior`; do not wire FastEndpoints' own validator integration. Hosts set
+`EnableApiEndpointGeneration` and an `ApiEndpointContractAssemblies` AssemblyName allow-list
+(`web-contracts`, `api-contracts`) so transitively referenced contract assemblies do not
+emit foreign endpoints (TWE008).
+
 ## Detection — find the pattern in the current repo
 
 Activate when **any** signal matches:

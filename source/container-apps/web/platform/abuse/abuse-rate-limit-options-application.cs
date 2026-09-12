@@ -7,17 +7,18 @@
 // Lives under platform/abuse (not a product Features.* slice): host abuse posture shared by identity
 // registration and 402 challenge endpoints (task 104-015).
 //
-// EDGE VS APP (checklist / 104-023 later):
-//   - Edge (Cloudflare WAF / rate limits) is the outer volumetric ring — DDoS, crude IP floods,
-//     bot classes. Documented separately (task 104-023); not a substitute for app Identity/402 law.
+// EDGE VS APP:
+//   - Edge (Cloudflare WAF / rate limits) is the outer volumetric ring — DDoS, crude IP floods.
+//     Not a substitute for app Identity/402 law. Do not default-block all AI bots: agent-welcome
+//     scoring depends on real discovery surfaces (robots.txt Content Signals, markdown twins,
+//     auth.md, x402). Restore visitor IP behind Cloudflare if partitioning by client IP.
 //   - App (this options + ASP.NET RateLimiter middleware) protects origin from mass register and
 //     unpaid 402 challenge floods that already passed edge or hit the origin directly (local,
 //     private path, misconfigured edge). Cheap rejection (structured 429) before ceremony work or
-//     PaymentGate evaluation.
+//     PaymentGate evaluation. Sybil defense stays in-app even if the CDN is perfect.
 //   - Partition is per remote IP (Connection.RemoteIpAddress). True client IP behind shared ingress
-//     requires PROXY protocol / trusted forwarded headers (task 112 notes) — until then all clients
-//     behind one hop share a partition. That is accepted for v1: still bounds origin melt; edge
-//     handles multi-IP volumetric abuse.
+//     requires PROXY protocol / trusted forwarded headers — until then all clients behind one hop
+//     share a partition. That is accepted for v1: still bounds origin melt; edge handles multi-IP.
 //
 // Defaults are teachable production-ish sliding windows (common auth/API practice), not load-test
 // ceilings. Operators raise/lower via config; tests PostConfigure tight limits to prove 429.
