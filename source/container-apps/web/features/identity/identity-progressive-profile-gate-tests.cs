@@ -19,7 +19,7 @@ return await TimeWarp.Jaribu.TestRunner.RunAllTests();
 #endif
 //+:cnd:noEmit
 
-namespace TimeWarp.Architecture.Task205
+namespace TimeWarp.Architecture.Features.Identity.ProgressiveProfileGate
 {
 
   using System;
@@ -81,4 +81,4 @@ namespace TimeWarp.Architecture.Task205
     }
   }
 
-} // namespace TimeWarp.Architecture.Task205
+} // namespace TimeWarp.Architecture.Features.Identity.ProgressiveProfileGate
