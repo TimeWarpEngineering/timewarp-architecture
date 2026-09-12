@@ -22,7 +22,7 @@ Scope is the whole tree at the task branch base (origin/master `54c07cbc`), not 
 ## Checklist
 
 - [x] Create task via `ganda kanban create`, move to in-progress
-- [x] Baseline: `ganda repo audit` (kebab fail on `205-001` done folder; bin/dev + memsearch/peacock warnings)
+- [x] Baseline: `ganda repo audit` — kebab fail on `205-001` done folder fixed on this branch (M1); memsearch/peacock advisory warnings remain
 - [x] Baseline: `dev build` 0/0; `dev test` pass; `dev template-smoke` pass; `dev check-version` safe (beta.17 vs beta.16)
 - [x] Write `review/review-framework.md`
 - [x] Round 1: six specialist reviewers wrote `review/round-1/<reviewer>.md`
@@ -43,7 +43,7 @@ Scope is the whole tree at the task branch base (origin/master `54c07cbc`), not 
   code-quality (effort 6, one general-purpose subagent each) + orchestrator spot-verification.
 - Gates: `dev build` 0/0, `dev test` pass, `dev template-smoke` pass, `dev check-version` safe;
   `ganda repo audit` blocking FAIL on one kebab path (M1).
-- Final counts (open / fixed / wontfix): bug 15 / 0 / 0 · suggestion 17 / 0 / 0 · nit 9 / 0 / 0.
+- Final counts (open / fixed / wontfix): bug 14 / 1 / 0 · suggestion 17 / 0 / 0 · nit 9 / 0 / 0.
 - Migrations verified clean: no Fixie/xUnit/FluentAssertions/Tailwind/npm residue; no
   `Features.Authentication`/`Features.Account` remnants; all runfiles aggregated; CPM, template.json,
   preprocessor regions, diagnostic-ID tables and product Design regions all consistent.

@@ -25,7 +25,7 @@ features/platform boundary**, and **suppression hygiene**.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 15 | 0 | 0 |
+| bug | 14 | 1 | 0 |
 | suggestion | 17 | 0 | 0 |
 | nit | 9 | 0 | 0 |
 
@@ -33,12 +33,12 @@ features/platform boundary**, and **suppression hygiene**.
 
 ### A. Gates and repo hygiene
 
-### M1 — Severity: bug — Status: open
+### M1 — Severity: bug — Status: fixed
 - File: `kanban/done/205-001-reject-invalid-profile-language-bcp-47--culture-name/`
 - Description: Double hyphen in the folder name fails `ganda repo audit` `kebab-path-names`, which is a blocking pre-PR gate for every task in this repo.
 - Suggestion: `ganda repo audit --fix --checks kebab-path-names` (rename to `…bcp-47-culture-name`), commit.
 - Source: orchestrator
-- Disposition notes:
+- Disposition notes: fixed on this branch via `ganda repo audit --fix --checks kebab-path-names` (folder renamed; audit passes with 2 advisory warnings).
 
 ### M2 — Severity: bug — Status: open
 - File: `AGENTS.md:178-179` (Documentation section) vs `timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj:26-42`
@@ -344,7 +344,7 @@ features/platform boundary**, and **suppression hygiene**.
 
 | Bundle | Findings | Nature |
 |--------|----------|--------|
-| 210-001 audit + dead files + stale TODOs | M1, M11, M31, M35, M37, M38, M39, M40, M41 | mechanical deletes/renames, one commit |
+| 210-001 dead files + stale TODOs | M11, M31, M35, M37, M38, M39, M40, M41 | mechanical deletes/renames, one commit |
 | 210-002 namespace and placement at the features/platform boundary | M3, M4, M5, M6, M7, M8, M9, M10 | needs one placement decision (M8) before the moves |
 | 210-003 missing endpoint tests | M12, M13, M14, M15 | new Jaribu tests + one helper extraction |
 | 210-004 AGENTS.md + kanban docs + skills | M18, M19, M26, M29 | agent-facing docs; highest leverage |
