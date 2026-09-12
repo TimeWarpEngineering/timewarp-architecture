@@ -20,6 +20,7 @@ Postgres is not the bug. Do not reset or re-seed the DB.
 - [x] Keep RP ID selection allowlist-only (`localhost` + `arch.timewarp.work`); no X-Forwarded-Host
 - [x] Log WebAuthn verify failure reason on authenticate 400
 - [x] Tests for Host forwarding + rpId/origin mismatch
+- [x] Implementation review round 1 (effort 1, general) — disposition clean
 - [ ] Manual smoke: Sign in with Proton Pass on `https://arch.timewarp.work` from a cold InteractiveAuto load (Server first), then again after WASM switch — both 200
 
 ## Session
@@ -27,6 +28,7 @@ Postgres is not the bug. Do not reset or re-seed the DB.
 - Created: 504061 (2026-09-12)
 - Cockpit: grok 01a0964a-adbd-7ad1-8c1e-db8d962e1e45 (2026-09-12)
 - Implementer: grok session 01a0965f-0717-7082-aabf-de4f4356ea3c (2026-09-12)
+- Review oracle: grok session 01a0966a-d4db-7961-a6fb-9e4fdc1eb9d9 (2026-09-12)
 
 ## Notes
 
@@ -60,6 +62,13 @@ Related code (do not drive-by refactor):
 
 Not in scope: new users, DB seed, changing AllowedRpIds, forcing Login to WASM-only as the only fix (WASM-only is a band-aid; loopback Host is the hole).
 
+Implementation review (effort 1, general only) lives under `review/`:
+
+- `review/review-framework.md`
+- `review/round-1/general.md`
+- `review/round-1/merged.md`
+- `review/disposition.md`
+
 ## Results
 
 InteractiveServer/Auto named `WebService` loopback now forwards the circuit request Host (port stripped via `HostString.Host`) so passkey RP-ID selection matches the YARP-preserved browser host. Authenticate 400 still returns the generic "Authentication failed" body; `WebAuthnAssertionResult.FailureReason` and selected RP ID are logged at Information.
@@ -87,6 +96,13 @@ InteractiveServer/Auto named `WebService` loopback now forwards the circuit requ
 - `PasskeyHostSelection`: 4 passed (second host + unlisted + X-Forwarded-Host ignored)
 
 Live Proton Pass smoke on `https://arch.timewarp.work` was not run here (needs the running Aspire volume + authenticator). Checklist item left open.
+
+**Review** (effort 1, general only; 1 round)
+
+- Roster: general (`review/round-1/general.md`)
+- Final counts: bug 0 / suggestion 0 / nit 0 (all statuses 0)
+- Disposition: **clean** (`review/disposition.md`) — no findings, no fix loop, no wontfix
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`
 
 ### How to validate
 
