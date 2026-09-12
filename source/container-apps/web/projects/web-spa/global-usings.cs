@@ -66,6 +66,7 @@ global using TimeWarp.Architecture.Components;
 global using ParentComponent = TimeWarp.Components.ParentComponent;
 global using IAttributeComponent = TimeWarp.Components.IAttributeComponent;
 global using TimeWarp.Architecture.Configuration;
+global using TimeWarp.Architecture.Authorization;
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.Authorization;

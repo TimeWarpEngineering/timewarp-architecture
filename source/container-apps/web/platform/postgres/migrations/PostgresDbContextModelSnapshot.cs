@@ -106,7 +106,7 @@ namespace TimeWarp.Architecture.Persistence.Migrations
                     b.ToTable("profiles", "profiles");
                 });
 
-            modelBuilder.Entity("TimeWarp.Architecture.Features.RolePermissionGrant", b =>
+            modelBuilder.Entity("TimeWarp.Architecture.Authorization.RolePermissionGrant", b =>
                 {
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uuid");

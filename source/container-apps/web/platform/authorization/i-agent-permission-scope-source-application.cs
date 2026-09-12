@@ -6,14 +6,14 @@
 // Task 182-006 smoke fix: PermissionEvaluator must not depend on IAgentCallerContext in Features
 // tests compiled under JARIBU_MULTI (web-jaribu-tests + timewarp-testing references both
 // web-application and api-application, each defining IAgentCallerContext / AgentCaller in
-// TimeWarp.Architecture.Abstractions → CS0433). This interface lives only in the web Features
-// substrate (compiled into web-application only). Host adapter
+// TimeWarp.Architecture.Abstractions → CS0433). This interface lives only in the web
+// platform/authorization cluster (compiled into web-application only). Host adapter
 // AgentCallerPermissionScopeSource maps IAgentCallerContext → this port. Host-free tests
 // implement fakes without referencing the dual-host types.
 // Null return = no ambient agent caller or PrincipalId mismatch (fail-closed for evaluator).
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
 
 using TimeWarp.Identity;
 

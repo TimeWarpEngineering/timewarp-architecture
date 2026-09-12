@@ -147,6 +147,18 @@ public class Should_Enforce_Feature_Filename_Grammar
       .RunAsync();
   }
 
+  public static async Task Given_Platform_Handler_Server_IsSilent()
+  {
+    // TWA0015/0016 are features-tree-only. platform/ *-handler-server.cs would false-positive
+    // (handler → application) on ASP.NET AuthenticationHandler files. Membership guard still
+    // requires a layer suffix on platform/.
+    await Test("../platform/identity-host/agent-token-authentication-handler-server.cs").RunAsync();
+    await Test("/repo/source/container-apps/web/platform/authorization/permission-requirement-authorization-server.cs")
+      .RunAsync();
+    await Test("/repo/source/container-apps/api/platform/identity-host/agent-token-authentication-handler-server.cs")
+      .RunAsync();
+  }
+
   public static async Task Given_Outside_Features_Tree_IsSilent()
   {
     await Test("services/cookie-browser-session-service.cs").RunAsync();

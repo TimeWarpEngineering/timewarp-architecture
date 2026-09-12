@@ -11,10 +11,12 @@
 // [EndpointAuthorize(AuthenticationSchemes)] for FastEndpoints (task 158); SPA has no scheme
 // restriction on policies. Contracts layer holds both helpers so web-server and web-spa share
 // one call site; Microsoft.AspNetCore.Authorization is the only host package contracts needs.
-// Features substrate namespace (same family as PermissionIds).
+// Platform cluster: registration is host wiring; PermissionIds stay Features substrate.
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
+
+using TimeWarp.Architecture.Features;
 
 using Microsoft.AspNetCore.Authorization;
 

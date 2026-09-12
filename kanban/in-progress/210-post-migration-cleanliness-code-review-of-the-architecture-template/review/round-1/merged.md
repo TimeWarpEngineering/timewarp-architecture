@@ -25,9 +25,9 @@ features/platform boundary**, and **suppression hygiene**.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 11 | 7 | 0 |
-| suggestion | 10 | 5 | 0 |
-| nit | 2 | 6 | 0 |
+| bug | 8 | 10 | 0 |
+| suggestion | 6 | 9 | 0 |
+| nit | 1 | 7 | 0 |
 
 ## Issues
 
@@ -49,61 +49,61 @@ features/platform boundary**, and **suppression hygiene**.
 
 ### B. Layout, grammar, namespaces
 
-### M3 — Severity: bug — Status: open
+### M3 — Severity: bug — Status: fixed
 - File: `source/container-apps/api/platform/identity-host/agent-token-authentication-handler-server.cs:16`
 - Description: Platform-cluster file declares the product-slice namespace `TimeWarp.Architecture.Features.Identity`. AGENTS.md: "platform clusters keep non-Features namespaces". Its web sibling in `web/platform/identity-host/` correctly uses `…Web.Server`.
 - Suggestion: Rename namespace to a platform namespace (e.g. `TimeWarp.Architecture.Api.Server`) or move to an `api/features/identity/` slice if it is really product code.
 - Source: layout-grammar
-- Disposition notes:
+- Disposition notes: fixed on 210-002. Namespace is `TimeWarp.Architecture.Api.Server` (same as api-server program.cs). Not product-slice code.
 
-### M4 — Severity: bug — Status: open
+### M4 — Severity: bug — Status: fixed
 - File: `source/container-apps/web/platform/identity-host/agent-caller-permission-scope-source-server.cs:11`
 - Description: Platform-cluster file declares the bare Features-substrate namespace `TimeWarp.Architecture.Features`; the substrate tier is documented as features-tree-only and this is the sole `platform/**` file using any Features namespace.
 - Suggestion: Move into `web/features/authorization/` beside its consumer `IAgentPermissionScopeSource`, or give it a platform namespace. Decide together with M9.
 - Source: layout-grammar
-- Disposition notes:
+- Disposition notes: fixed on 210-002 with M8. File moved to `web/platform/authorization/` as `TimeWarp.Architecture.Authorization`.
 
-### M5 — Severity: bug — Status: open
+### M5 — Severity: bug — Status: fixed
 - File: `source/container-apps/web/features/todo-items/delete-todo-item/delete-todo-item-contracts.cs:11`; `source/container-apps/web/features/todo-items/todo-item-dto-contracts.cs:15`
 - Description: Only file in the slice with a `.Commands` sub-namespace (message-kind grouping, the documented anti-pattern); hand-rolled `GetHttpVerb/GetRoute` instead of `[ApiRoute]`; no `[ClientOnlyContract]` although no server endpoint or handler exists (its siblings `create-todo-item`/`update-todo-item` carry the marker). Sibling DTO file carries a redundant, typo'd `TODO: Revist the Mixins` already answered by its own Design region.
 - Suggestion: Drop `.Commands`; either adopt `[ApiRoute]` + `[ClientOnlyContract(reason)]` like its siblings or state in Design why it stays hand-rolled; delete the DTO TODO line.
 - Source: layout-grammar, code-quality
-- Disposition notes:
+- Disposition notes: fixed on 210-002. Dropped `.Commands`; `[ApiRoute]` + `[ClientOnlyContract]` like create/update; DTO TODO line deleted.
 
-### M6 — Severity: suggestion — Status: open
+### M6 — Severity: suggestion — Status: fixed
 - File: `source/container-apps/web/projects/web-server/hosted-identity-session-authentication-state-provider-server.cs`
 - Description: Real identity/prerender concern sitting at the artifact-folder root; fails the "would it still mean something if the deployable were deleted" litmus. Its named sibling `identity-session-cookie-forwarding-server.cs` lives in `web/platform/identity-host/`.
 - Suggestion: Move to `web/platform/identity-host/` (filename already grammar-conformant).
 - Source: layout-grammar
-- Disposition notes:
+- Disposition notes: fixed on 210-002. Moved to `web/platform/identity-host/` (namespace already `Web.Server`).
 
-### M7 — Severity: suggestion — Status: open
+### M7 — Severity: suggestion — Status: fixed
 - File: `source/container-apps/web/projects/web-spa/pages/{AgentLinksPage,ProfilePage,SettingsPage}.razor(.cs)`
 - Description: Six files in a project-root `pages/` folder whose own namespaces are `Features.AgentLinks`, `Features.Profiles`, `Features.Applications`; those feature folders already exist and identity/application already keep pages under `features/<slice>/pages/`.
 - Suggestion: Move each into its feature's `pages/` folder and delete the root `pages/` folder.
 - Source: layout-grammar
-- Disposition notes:
+- Disposition notes: fixed on 210-002. AgentLinks → `features/agent-links/pages/`, Profile → `features/profiles/pages/`, Settings → `features/application/pages/`; root `pages/` deleted.
 
-### M8 — Severity: suggestion — Status: open
+### M8 — Severity: suggestion — Status: fixed
 - File: `source/container-apps/web/features/authorization/**` (18 files), `source/container-apps/web/features/payment/**` (2 files)
 - Description: Every file in both folders uses the bare Features-substrate namespace; neither has a single slice-scoped file. Structurally they match the skill's own worked example of a platform cluster (seam interface beside implementation, shared by several slices).
 - Suggestion: Deliberate call, not a mechanical rename: reclassify as `platform/authorization/` and `platform/payment/` or document why they remain under `features/`. Resolve together with M4.
 - Source: layout-grammar
-- Disposition notes:
+- Disposition notes: fixed on 210-002 (Steve 2026-09-12 split). Engine + payment port → `platform/authorization` / `platform/payment` with non-Features namespaces. Permission ids stay `features/authorization/` substrate.
 
-### M9 — Severity: suggestion — Status: open
+### M9 — Severity: suggestion — Status: fixed
 - File: `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar-analyzer.cs:170-220`
 - Description: TWA0015/0016 only match `/{family}/features/` paths; `platform/` is never function-pair-checked (the membership guard still enforces layer suffixes there). AGENTS.md and the skill describe the full grammar as covering both trees. Scoping is probably deliberate (avoids false positives on ASP.NET `AuthenticationHandler`-named files) but is undocumented.
 - Suggestion: Record the features-only scope in the analyzer Design region and the skill, or extend to `platform/` with an allowance for `*-handler-server.cs` when the type derives from `AuthenticationHandler`.
 - Source: layout-grammar
-- Disposition notes:
+- Disposition notes: fixed on 210-002. Documented features-tree-only pairing (AuthenticationHandler `*-handler-server.cs` would false-positive). Membership guard still covers platform/. Analyzer test `Given_Platform_Handler_Server_IsSilent`.
 
-### M10 — Severity: nit — Status: open
+### M10 — Severity: nit — Status: fixed
 - File: `AGENTS.md` kebab exception table
 - Description: `SKILL.md` and `AnalyzerReleases.{Shipped,Unshipped}.md` are tooling-mandated uppercase basenames not listed in the exception table.
 - Suggestion: Add both to the table.
 - Source: layout-grammar
-- Disposition notes:
+- Disposition notes: fixed on 210-002. `SKILL.md` and `AnalyzerReleases.{Shipped,Unshipped}.md` added to AGENTS.md kebab exceptions (and file-naming.md for SKILL.md).
 
 ### C. Tests
 

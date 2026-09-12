@@ -8,6 +8,7 @@ global using Microsoft.Extensions.Configuration;
 global using OneOf;
 global using Shouldly;
 // Solution usings
+global using TimeWarp.Architecture.Authorization;
 global using TimeWarp.Architecture.Features.Identity.Application;
 global using TimeWarp.Architecture.Testing;
 global using TimeWarp.Foundation.Types;

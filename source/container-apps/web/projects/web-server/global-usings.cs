@@ -29,6 +29,8 @@ global using System.Threading.Tasks;
 // Solution usings
 global using TimeWarp.Foundation.Behaviors;
 global using TimeWarp.Architecture.Abstractions;
+global using TimeWarp.Architecture.Authorization;
+global using TimeWarp.Architecture.Payment;
 global using TimeWarp.Architecture.Components;
 global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Foundation.Configuration;

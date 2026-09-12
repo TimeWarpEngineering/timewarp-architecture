@@ -28,6 +28,10 @@
 // `../features/` (layer glob), absolute `…/web/features/…`, and collapsed
 // `features/` ONLY when the original path traversed `../features/` — bare project-local
 // `features/` (SPA) must stay silent even for grammar-shaped names.
+// TWA0015/0016 pairing is features-tree-only. platform/ is not function-pair-checked:
+// ASP.NET AuthenticationHandler files (`*-handler-server.cs`) would false-positive
+// (registered function `handler` requires `-application`). Membership guard still
+// requires a registered layer suffix on platform/. Documented, not accidental.
 // Registry edit ⇒ full rebuild (analyzer DLLs can go stale under incremental builds).
 #endregion
 

@@ -5,11 +5,11 @@
 #region Design
 // Task 182-001: host-owned join row, mirror of PrincipalRoleAssignment. Composite key
 // (RoleId, PermissionId); no navigation properties. Logical link only — RoleIds are compile-time
-// Guids, not a roles table row. Features substrate namespace (same as IRolePermissionStore) so
+// Guids, not a roles table row. Platform cluster (same as IRolePermissionStore) so
 // Identity + Admin + evaluator stay free of TWA0009.
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
 
 /// <summary>One stored permission grant for a product role (EF row for role_permissions).</summary>
 public sealed class RolePermissionGrant

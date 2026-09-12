@@ -11,12 +11,14 @@
 // IAgentCallerContext + AgentScopePermissionSeed (182-006) — never human role membership.
 // Cookie stays PrincipalId-only (147-004 D8) — expansion is per-request, never baked into the
 // identity-session cookie.
-// Features substrate so Identity + Admin + server handlers share one port without TWA0009.
+// Platform cluster (web/platform/authorization, TimeWarp.Architecture.Authorization) —
+// product slices consume it freely (TWA0009 platform is one-way free). PermissionIds stay
+// Features substrate.
 // Docs: ADR-0010 (accepted) + how-to-swap-permission-evaluator-for-external-pdp.md
 // (consumer PDP swap; no AppHost OpenFGA by default).
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
 
 using TimeWarp.Identity;
 

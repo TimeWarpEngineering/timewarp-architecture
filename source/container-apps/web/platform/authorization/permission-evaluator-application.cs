@@ -13,13 +13,15 @@
 // Blazor SSR policy checks do not race the scoped DbContext. Completed expansions are
 // evicted: the evaluator is scoped to a Blazor Server circuit, and a sticky cache would
 // keep pre-Save grants (Developer nav stays hidden until refresh).
-// IAgentPermissionScopeSource (not IAgentCallerContext) so Features stays free of dual-host
-// Abstractions types that collide under JARIBU_MULTI (web + api both define IAgentCallerContext).
+// IAgentPermissionScopeSource (not IAgentCallerContext) so JARIBU_MULTI stays free of dual-host
+// Abstractions types that collide (web + api both define IAgentCallerContext).
 // Output ordered by PermissionIds.All then any unknown grants (stable for session / tests).
 // Scoped DI: IEffectiveRolesResolver, IRolePermissionStore, IAgentPermissionScopeSource.
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
+
+using TimeWarp.Architecture.Features;
 
 using System.Collections.Concurrent;
 using TimeWarp.Identity;

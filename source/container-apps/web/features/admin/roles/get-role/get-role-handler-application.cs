@@ -11,7 +11,6 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
 
-using TimeWarp.Architecture.Features;
 using static TimeWarp.Architecture.Features.Admin.Roles.GetRole;
 
 public sealed partial class GetRole

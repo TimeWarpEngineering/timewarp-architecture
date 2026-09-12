@@ -123,7 +123,9 @@ agent rules and exception table: **`tw-csharp`** (File and directory naming). Hu
 
 **Do not kebab-force:** `.razor` / paired `.razor.cs` / `.razor.css` (Blazor type-matching names);
 MSBuild well-known props/targets; ASP.NET `Properties/`, `launchSettings.json`,
-`appsettings.<Environment>.json`; `_Imports.razor` / `App.razor` where the host requires them.
+`appsettings.<Environment>.json`; `_Imports.razor` / `App.razor` where the host requires them;
+`SKILL.md` (agent-skill mandated basename); `AnalyzerReleases.Shipped.md` /
+`AnalyzerReleases.Unshipped.md` (Roslyn release-tracking mandated basenames).
 
 **`.cs` enforcement:** `TimeWarp.SourceGenerators` diagnostic **`TW0001`** (`TW*` package family —
 not Architecture `TWA*`). Package is referenced repo-wide from root `Directory.Build.props`;
@@ -166,9 +168,11 @@ its own definition (csproj, global-usings) and entry-point bootstrap (program.cs
 host-config exemplars). Litmus test for the fuzzy middle: if the deployable were deleted, would
 the file still mean something? Yes → a shared tree; no → bootstrap, stays with the artifact.
 
-**Features substrate:** cross-slice compile-time constants (e.g. `ModuleIds`, `RoleIds`) may use
-the bare `…Features` namespace (no slice Id) so product slices can share ids without TWA0009
-cross-slice references. Document the choice in the file's Design region. Full litmus:
+**Features substrate:** cross-slice compile-time constants (e.g. `ModuleIds`, `RoleIds`,
+`PermissionIds`) may use the bare `…Features` namespace (no slice Id) so product slices can
+share ids without TWA0009 cross-slice references. Runtime engines and host ports those ids
+feed (permission evaluator, payment HttpContext adapter) live under `platform/` with
+non-Features namespaces. Document the choice in the file's Design region. Full litmus:
 `skills/tw-feature-placement` (**Features substrate**).
 
 **Axis-1 filename grammar (family-generic — web, api, grpc):** files under `<family>/features/`
@@ -277,8 +281,8 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0011/0012 | an `IAggregateRoot` must declare a nested `Invariants : AbstractValidator<T>`, and it must be `private` (kept out of `AddValidatorsFromAssemblyContaining`) |
 | TWA0013 | an `[ApiEndpoint]` contract must carry `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]` — the generator is fail-closed and emits no auth config for neither |
 | TWA0014 | an `[ApiEndpoint]` contract's auth posture must not be contradictory: not both markers, and not `[EndpointAllowAnonymous]` paired with a nested `Query`/`Command` that declares `IAuthApiRequest` |
-| TWA0015 | feature filename: registered function segment pairs with the wrong layer (see feature-filename-grammar.json); also fires on a routed function paired with the registered-unrouted `tests` layer (e.g. `create-role-handler-tests.cs`) |
-| TWA0016 | feature filename: unregistered or mis-spelled function segment used as archetype (escape hatch `<name>-<layer>.cs` stays valid, including `<name>-tests.cs`) |
+| TWA0015 | feature filename: registered function segment pairs with the wrong layer (see feature-filename-grammar.json); also fires on a routed function paired with the registered-unrouted `tests` layer (e.g. `create-role-handler-tests.cs`). Features-tree-only — `platform/` is not function-pair-checked (membership guard still requires a layer suffix there) |
+| TWA0016 | feature filename: unregistered or mis-spelled function segment used as archetype (escape hatch `<name>-<layer>.cs` stays valid, including `<name>-tests.cs`). Same features-tree-only scope as TWA0015 |
 | TWA0017 | a generated ingress web prefix (`WebServerApiRoutePrefixes`) shadows another server's route space — it equals/parents a hosted route in another contracts assembly, or collides with an `IngressReservedPathPrefixes` entry (grpc) |
 | TWA0018 | a web-contracts route cannot be collapsed to a top-level ingress prefix (bare `api` or a parameterized second segment like `api/{id}`) |
 | TWA0019 | a name in `IngressWebContractAssemblies` matches no marked referenced assembly (typo / renamed assembly / missing `[assembly: ApiEndpointsEmbedded]`) — otherwise the ingress list would silently generate empty |

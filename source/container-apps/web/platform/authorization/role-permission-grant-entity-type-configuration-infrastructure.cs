@@ -9,12 +9,10 @@
 // ApplyConfigurationsFromAssembly on PostgresDbContext.
 #endregion
 
-namespace TimeWarp.Architecture.Features.Authorization.Infrastructure;
+namespace TimeWarp.Architecture.Authorization;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TimeWarp.Architecture.Features;
-
 public sealed class RolePermissionGrantEntityTypeConfiguration
   : IEntityTypeConfiguration<RolePermissionGrant>
 {

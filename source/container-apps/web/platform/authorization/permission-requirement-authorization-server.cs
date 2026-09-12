@@ -16,7 +16,9 @@
 // RequireClaim (see SPA policy-registration.cs Design).
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
+
+using TimeWarp.Architecture.Features;
 
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
