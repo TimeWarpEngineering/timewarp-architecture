@@ -41,9 +41,10 @@
 //             web route's first segment collides with an IngressReservedPathPrefixes entry (grpc).
 //   TWA0018 — a route cannot be collapsed to a top-level prefix (bare `api`, or a parameterized
 //             second segment like `api/{id}`) — the ingress cannot own an ambiguous prefix.
-//   TWA0019 — a name in IngressWebContractAssemblies matches no referenced assembly (typo,
-//             AssemblyName override, template rename): the silent-empty trap this task exists to
-//             kill — every carve-out would vanish with no signal. Reported per missing name.
+//   TWA0019 — a name in IngressWebContractAssemblies matches no *marked* referenced assembly
+//             (typo, AssemblyName override, template rename, or missing [assembly: ApiEndpointsEmbedded]):
+//             the silent-empty trap this task exists to kill — every carve-out would vanish with no
+//             signal. Reported per missing name.
 // Location.None: the offending symbol lives in a referenced assembly with no syntax location here.
 // Catches all exceptions (CA1031): a throwing generator would break the whole compilation.
 #endregion
@@ -80,8 +81,8 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
   private static readonly DiagnosticDescriptor MissingContractsAssemblyDescriptor = new
   (
     "TWA0019",
-    "Configured ingress contracts assembly not found",
-    "Configured ingress contracts assembly '{0}' was not found among the compilation's referenced assemblies — no Web.Server ingress routes will be generated from it; check IngressWebContractAssemblies for a typo, or a renamed/stale assembly name",
+    "Configured ingress contracts assembly not found among marked references",
+    "Configured ingress contracts assembly '{0}' was not found among marked referenced assemblies ([assembly: ApiEndpointsEmbedded]) — no Web.Server ingress routes will be generated from it; check IngressWebContractAssemblies for a typo, a renamed/stale assembly name, or a missing marker",
     "Design",
     DiagnosticSeverity.Warning,
     isEnabledByDefault: true
@@ -107,18 +108,20 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
 
     try
     {
-      // TWA0019: a configured contracts-assembly name that matches no reference is a silent-empty
-      // trap — every ingress carve-out would vanish with no signal (typo, AssemblyName override, or
-      // a template rename). Report per missing name; generation still emits an (empty) All.
+      // TWA0019: a configured contracts-assembly name that matches no *marked* reference is a
+      // silent-empty trap — every ingress carve-out would vanish with no signal (typo, AssemblyName
+      // override, template rename, or missing [assembly: ApiEndpointsEmbedded]). Align with
+      // discovery (GetMarkedReferencedAssemblies) and FastEndpoint TWE008. Report per missing name;
+      // generation still emits an (empty) All.
       if (options.SourceAssemblies.Count > 0)
       {
-        var referencedNames = compilation.SourceModule.ReferencedAssemblySymbols
-          .Select(referenced => referenced.Name)
+        var markedNames = HostedRouteDiscovery.GetMarkedReferencedAssemblies(compilation)
+          .Select(static assembly => assembly.Name)
           .ToImmutableHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (string configured in options.SourceAssemblies)
         {
-          if (!referencedNames.Contains(configured))
+          if (!markedNames.Contains(configured))
           {
             spc.ReportDiagnostic(Diagnostic.Create(MissingContractsAssemblyDescriptor, Location.None, configured));
           }

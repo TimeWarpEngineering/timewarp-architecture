@@ -68,8 +68,8 @@ public class MockResponseFactoryRegistryGenerator_Tests
 
   private static string RunGenerator(string contractSource, string consumerSource)
   {
-    // The generator scans REFERENCED *contracts* assemblies, so compile the contract separately
-    // (assembly name "Test.Contracts" satisfies the name filter) and reference it.
+    // The generator scans referenced assemblies stamped [assembly: ApiEndpointsEmbedded], so
+    // compile the contract separately with MarkerStubs and reference it (assembly name is incidental).
     Microsoft.CodeAnalysis.MetadataReference contractReference = CompileContracts(contractSource);
 
     var compilation = CSharpCompilation.Create(

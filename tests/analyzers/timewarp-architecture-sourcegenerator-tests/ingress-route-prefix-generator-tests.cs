@@ -298,12 +298,37 @@ public class IngressRoutePrefixGenerator_Tests
     // emits (empty).
     MetadataReference web = GeneratorTestHarness.CompileContractAssembly(WebContracts, "web-contracts");
 
-    var options = new Dictionary<string, string>
+    Dictionary<string, string> options = new()
     {
       ["EnableIngressRouteGeneration"] = "true",
       ["IngressWebContractAssemblies"] = "web-contractz",
     };
     GeneratorDriverRunResult runResult = GeneratorTestHarness.RunIngress(new[] { web }, options);
+
+    runResult.Diagnostics.ShouldContain(d => d.Id == "TWA0019");
+    string generated = GeneratedSource(runResult);
+    generated.ShouldContain("public static class WebServerApiRoutePrefixes");
+    generated.ShouldContain("ImmutableArray<string>.Empty");
+
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Report_TWA0019_When_Configured_Assembly_Is_Unmarked()
+  {
+    // web-contracts is referenced and listed, but lacks [assembly: ApiEndpointsEmbedded] — discovery
+    // skips it, so All would silently empty without TWA0019. Marker absence must fire the same
+    // diagnostic as a typo.
+    MetadataReference unmarked = GeneratorTestHarness.CompileContractAssembly(
+      WebContracts,
+      "web-contracts",
+      stampMarker: false);
+
+    Dictionary<string, string> options = new()
+    {
+      ["EnableIngressRouteGeneration"] = "true",
+      ["IngressWebContractAssemblies"] = "web-contracts",
+    };
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.RunIngress(new[] { unmarked }, options);
 
     runResult.Diagnostics.ShouldContain(d => d.Id == "TWA0019");
     string generated = GeneratedSource(runResult);

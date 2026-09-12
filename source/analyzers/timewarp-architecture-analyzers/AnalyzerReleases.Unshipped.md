@@ -8,7 +8,7 @@ Rule ID | Category | Severity | Notes
 TWA0001 | Design | Warning | PartialClassDeclarationAnalyzer, [Documentation](https://github.com/TimeWarpEngineering/timewarp-architecture/blob/main/Documentation/Analyzers/TWA0001.md)
 TWA0017 | Design | Warning | IngressRoutePrefixGenerator: a generated web ingress prefix shadows another server's route space (foreign contracts route or reserved prefix)
 TWA0018 | Design | Warning | IngressRoutePrefixGenerator: a web-contracts route cannot be collapsed to a top-level ingress prefix (bare 'api' or parameterized second segment)
-TWA0019 | Design | Warning | IngressRoutePrefixGenerator: a name in IngressWebContractAssemblies matches no referenced assembly (silent-empty ingress generation)
+TWA0019 | Design | Warning | IngressRoutePrefixGenerator: a name in IngressWebContractAssemblies matches no marked referenced assembly (typo / renamed / missing [assembly: ApiEndpointsEmbedded]; silent-empty ingress generation)
 TWE002 | ApiEndpoint | Error | Missing Query/Command class on [ApiEndpoint] contract
 TWE003 | ApiEndpoint | Error | Route+verb conflict across [ApiEndpoint] contracts (all parties; none generated)
 TWE005 | Page | Error | [Page] Policy must be a const field reference (not string literal or nameof)
