@@ -79,17 +79,20 @@ small edits with no design decisions required. One PR.
 - [x] `dev build` 0/0
 - [x] `ganda repo audit`
 - [x] `dev test`
+- [x] Implementation review (effort 1, general): round 1 + round 2, disposition clean
 
 ## Notes
 
 - Parent: 210 (round-1 ledger:
   `kanban/in-progress/210-post-migration-cleanliness-code-review-of-the-architecture-template/review/round-1/merged.md`).
   On completion, update the M-ids' Status in that ledger to fixed/wontfix on the same PR.
+- Review kitchen: `kanban/in-progress/210-001-delete-dead-files-and-stale-todos-left-by-the-migrations/review/` (framework, round-1, round-2, disposition). Effort 1, roster `general`. Disposition **clean**.
 
 ## Session
 
 - Created: 220514 (2026-09-12)
 - Implementer: grok session 01a095bd-1f54-7142-aebe-9c1aaeb49ccd (2026-09-12)
+- Review oracle: grok session 01a095cc-5427-7533-9567-6457da74d12a (2026-09-12)
 
 ## Results
 
@@ -166,3 +169,17 @@ ganda repo audit
 ```
 
 **Not in scope:** folding `ICurrentUserService.UserId` onto TypedId; 210-006/M32 `<NoWarn>` audit.
+
+### Review disposition
+
+**Outcome:** clean. **Rounds:** 2. **Effort:** 1 (general only). **Final open count:** 0.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 1 | 0 |
+
+Round 1 raised M1 (nit): `create-role-tests.cs` still cited deleted `tests/foundation/foundation-domain-jaribu-tests/Directory.Build.props`. Fixed on this task by retargeting to `tests/Directory.Build.props`. Round 2 re-verified M1 and found no new issues.
+
+**Paths:** `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/disposition.md`.
