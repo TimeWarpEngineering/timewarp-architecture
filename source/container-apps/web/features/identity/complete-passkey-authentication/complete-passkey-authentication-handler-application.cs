@@ -15,7 +15,10 @@
 // 131-002: passkey-auth not shared with a second handler).
 // No-enumeration-oracle posture: an unknown CredentialId and a revoked one both return the SAME
 // generic 400 "Authentication failed" — an attacker probing the endpoint cannot distinguish
-// "this credential was never registered" from "this credential exists but is revoked." A
+// "this credential was never registered" from "this credential exists but is revoked." Verify
+// failures stay that same generic 400 in the response; FailureReason is logged at Information so
+// OriginMismatch / RpIdHashMismatch (InteractiveServer loopback Host vs browser origin) is
+// visible in server logs without becoming an enumeration oracle. A
 // quarantined account (IsActive false) is the one deliberate exception: it returns 403, a distinct
 // signal — but ONLY once WebAuthnAuthentication.Verify has succeeded. The IsActive check runs
 // AFTER Verify, not before: a round-1 security review caught an earlier version of this handler
@@ -31,17 +34,27 @@
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
 
+using Microsoft.Extensions.Logging;
 using static TimeWarp.Architecture.Features.Identity.CompletePasskeyAuthentication;
 
 public sealed partial class CompletePasskeyAuthentication
 {
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
+    private static readonly Action<ILogger, WebAuthnFailureReason, string, Exception?> LogVerificationFailed =
+      LoggerMessage.Define<WebAuthnFailureReason, string>
+      (
+        LogLevel.Information,
+        new EventId(1, nameof(LogVerificationFailed)),
+        "Passkey authentication verification failed: {FailureReason} (rpId {RelyingPartyId})"
+      );
+
     private readonly IPrincipalStore PrincipalStore;
     private readonly IWebAuthnChallengeStore ChallengeStore;
     private readonly IBrowserSessionService BrowserSessionService;
     private readonly IRequestHostAccessor RequestHostAccessor;
     private readonly IOptions<WebAuthnOptions> Options;
+    private readonly ILogger<Handler> Logger;
 
     public Handler
     (
@@ -49,7 +62,8 @@ public sealed partial class CompletePasskeyAuthentication
       IWebAuthnChallengeStore challengeStore,
       IBrowserSessionService browserSessionService,
       IRequestHostAccessor requestHostAccessor,
-      IOptions<WebAuthnOptions> options
+      IOptions<WebAuthnOptions> options,
+      ILogger<Handler> logger
     )
     {
       PrincipalStore = principalStore;
@@ -57,6 +71,7 @@ public sealed partial class CompletePasskeyAuthentication
       BrowserSessionService = browserSessionService;
       RequestHostAccessor = requestHostAccessor;
       Options = options;
+      Logger = logger;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
@@ -103,6 +118,7 @@ public sealed partial class CompletePasskeyAuthentication
 
       if (!verifyResult.IsValid)
       {
+        LogVerificationFailed(Logger, verifyResult.FailureReason, relyingParty.Id, null);
         return IdentityProblems.AuthenticationFailed();
       }
 

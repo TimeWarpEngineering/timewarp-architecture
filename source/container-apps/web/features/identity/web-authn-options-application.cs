@@ -28,6 +28,9 @@
 // deriving the RP ID from an arbitrary attacker-controlled Host would let a forged Host mint
 // credentials for an arbitrary RP ID). The allowlist is the whole security boundary here: a forged
 // Host can only ever SELECT among already-approved RP IDs, never expand them.
+// X-Forwarded-Host is never consulted (HttpRequestHostAccessor reads Request.Host only). Interactive
+// Server loopback Host is copied from the circuit request by IdentitySessionCookieForwardingHandler,
+// not taken from a client-supplied forwarded header.
 // MEMBERSHIP ORACLE (round-1 security S2, accepted): the precise fail-closed claim is that the
 // selected/requested host is never REFLECTED in the response body (the 400 Detail is a fixed string),
 // NOT that there is no enumeration whatsoever — the 200-vs-400 status on the anonymous Start endpoints

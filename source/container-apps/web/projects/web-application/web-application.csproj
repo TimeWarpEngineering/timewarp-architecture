@@ -5,6 +5,8 @@
     <!-- WebAuthnOptions/WebAuthnOptionsValidator (configuration/) use IOptions<T>/AbstractValidator
          directly — explicit rather than relying on the transitive flow from web-contracts. -->
     <PackageReference Include="Microsoft.Extensions.Options" />
+    <!-- CompletePasskeyAuthentication.Handler logs WebAuthn FailureReason on verify 400. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="TimeWarp.Multiavatar" />
   </ItemGroup>
 

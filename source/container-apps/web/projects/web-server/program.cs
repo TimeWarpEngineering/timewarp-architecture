@@ -41,6 +41,8 @@
 // Task 205-003: named WebService HttpClient loopback attaches
 // IdentitySessionCookieForwardingHandler so InteractiveServer/Auto API calls (Profile PUT)
 // present the inbound identity-session cookie instead of challenging 401.
+// Task 212: that handler also forwards the circuit Host (port stripped) so passkey RP-ID
+// selection sees the YARP-preserved browser host, not the loopback URI host.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;

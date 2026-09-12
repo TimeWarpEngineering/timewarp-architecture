@@ -121,6 +121,48 @@ public class Verify
     return Task.CompletedTask;
   }
 
+  public static Task Public_host_assertion_fails_when_selected_rp_is_localhost()
+  {
+    // InteractiveServer loopback Host is localhost while the authenticator assertion is bound
+    // to the public share host (task 212). Empty Origins → origin host must equal selected RP ID.
+    const string publicRpId = "arch.timewarp.work";
+    const string publicOrigin = "https://arch.timewarp.work";
+    WebAuthnRelyingParty loopbackRp = new("localhost", "Test RP", []);
+
+    var authenticator = new SoftwareAuthenticator();
+    byte[] challenge = RandomNumberGenerator.GetBytes(32);
+    byte[] clientDataJson = SoftwareAuthenticator.BuildClientDataJson("webauthn.get", challenge, publicOrigin);
+    byte[] authenticatorData = authenticator.BuildAuthenticatorData(publicRpId);
+    byte[] signature = authenticator.Sign(authenticatorData, clientDataJson);
+
+    WebAuthnAssertionResult result =
+      WebAuthnAuthentication.Verify(loopbackRp, challenge, authenticator.CosePublicKey, clientDataJson, authenticatorData, signature);
+
+    result.IsValid.ShouldBeFalse();
+    result.FailureReason.ShouldBe(WebAuthnFailureReason.OriginMismatch);
+    return Task.CompletedTask;
+  }
+
+  public static Task Public_host_assertion_succeeds_when_selected_rp_matches()
+  {
+    const string publicRpId = "arch.timewarp.work";
+    const string publicOrigin = "https://arch.timewarp.work";
+    WebAuthnRelyingParty publicRp = new(publicRpId, "Test RP", []);
+
+    var authenticator = new SoftwareAuthenticator();
+    byte[] challenge = RandomNumberGenerator.GetBytes(32);
+    byte[] clientDataJson = SoftwareAuthenticator.BuildClientDataJson("webauthn.get", challenge, publicOrigin);
+    byte[] authenticatorData = authenticator.BuildAuthenticatorData(publicRpId);
+    byte[] signature = authenticator.Sign(authenticatorData, clientDataJson);
+
+    WebAuthnAssertionResult result =
+      WebAuthnAuthentication.Verify(publicRp, challenge, authenticator.CosePublicKey, clientDataJson, authenticatorData, signature);
+
+    result.IsValid.ShouldBeTrue();
+    result.FailureReason.ShouldBe(WebAuthnFailureReason.None);
+    return Task.CompletedTask;
+  }
+
   public static Task UserPresence_clear_is_rejected()
   {
     var authenticator = new SoftwareAuthenticator();
