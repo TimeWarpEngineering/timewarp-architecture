@@ -10,7 +10,7 @@
 // sessions; see CompleteAgentKeyRegistration.Handler's Design region), so there is nothing here that
 // requires the real-HTTP-vs-ScopedSender distinction those suites needed.
 // WebTestServerApplication (and its in-memory IPrincipalStore singleton) is shared across every test
-// method in this class (Fixie per-class fixture sharing — see IntegrationSoftwareAgentKey's Design
+// method in this class (one SetupOnce host per class — see IntegrationSoftwareAgentKey's Design
 // region) — each test that registers a key uses ITS OWN IntegrationSoftwareAgentKey instance, so
 // KeyIds never collide across test methods.
 #endregion

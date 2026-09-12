@@ -12,7 +12,7 @@
 // suites use precisely because those handlers need no HttpContext.
 // CORRECTED (round-1 finding M6): WebTestServerApplication — and its HttpClient, and that
 // HttpClient's cookie container — is constructed ONCE and shared across every test method in this
-// class (Fixie's per-class fixture sharing; the sibling integration-software-authenticator.cs Design
+// class (one SetupOnce host per class; the sibling integration-software-authenticator.cs Design
 // region documents the same observation, and it is precisely WHY that fixture's CredentialId had to
 // become per-instance-random rather than a fixed constant — a fresh-per-method host could never have
 // collided). Consequently the shared HttpClient's ambient cookie jar can carry a session cookie from

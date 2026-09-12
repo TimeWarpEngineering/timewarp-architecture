@@ -28,11 +28,14 @@ Scope is the whole tree at the task branch base (origin/master `54c07cbc`), not 
 - [x] Round 1: six specialist reviewers wrote `review/round-1/<reviewer>.md`
 - [x] Merge into `review/round-1/merged.md` with stable M# ids (M1–M41)
 - [x] Record Results + fix-dispatch recommendation on this task
-- [ ] Human decision: ship-scope of `documentation/` (M2) and features-vs-platform reclassification (M8)
-- [ ] Dispatch fix bundles as child tasks 210-00N (see merged.md table)
-- [ ] Disposition (`review/disposition.md`) once fix loop / wontfix decisions are made
+- [x] Human decision: ship-scope of `documentation/` (M2) and features-vs-platform reclassification (M8) — 2026-09-12
+- [x] Dispatch fix bundles as child tasks 210-001 … 210-006; all six merged (PRs 344–349)
+- [x] M17 fixed on closeout (four Design regions)
+- [x] Disposition (`review/disposition.md`): clean, 0 open, 0 wontfix
 
 ## Session
+
+- Closeout: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-12)
 
 - Created: 2418574 (2026-09-09)
 - Review round 1: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-09)
@@ -50,7 +53,7 @@ Scope is the whole tree at the task branch base (origin/master `54c07cbc`), not 
 - Dominant themes: stale `documentation/` and `kanban/overview.md` (pre-migration content, and a
   ship-scope contradiction in AGENTS.md — M2), namespace discipline at the features/platform
   boundary (M3–M8), missing endpoint tests (M12, M13), unjustified suppressions (M32, M33).
-- Disposition: pending fix loop (no `review/disposition.md` yet).
+- Disposition (2026-09-12): **clean** — 41/41 fixed across the review PR (#343), six child PRs (#344–#349), and this closeout (M17). `review/disposition.md`.
 - Paths: `review/review-framework.md`, `review/round-1/merged.md` (live ledger),
   `review/round-1/{leftovers,layout-grammar,tests,build-msbuild-template,docs-skills,code-quality}.md`.
 

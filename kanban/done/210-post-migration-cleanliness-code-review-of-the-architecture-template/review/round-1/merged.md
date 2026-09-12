@@ -27,7 +27,7 @@ features/platform boundary**, and **suppression hygiene**.
 |----------|------|-------|---------|
 | bug | 0 | 18 | 0 |
 | suggestion | 0 | 15 | 0 |
-| nit | 1 | 7 | 0 |
+| nit | 0 | 8 | 0 |
 
 ## Issues
 
@@ -149,12 +149,12 @@ features/platform boundary**, and **suppression hygiene**.
 - Source: build-msbuild-template, tests
 - Disposition notes: Added `web-spa` under the `(web)` block. Added `/tests/tools/` with `agent-identity-cli-tests`, gated by `#if (false)` so generated apps do not list a project `template.json` excludes.
 
-### M17 — Severity: nit — Status: open
+### M17 — Severity: nit — Status: fixed
 - File: `tests/container-apps/web/web-server-integration-tests/features/identity/{agent-registration-tests.cs:9-13, agent-protected-endpoint-tests.cs:12, passkey-registration-tests.cs:15, infrastructure/integration-software-agent-key.cs:16}`
 - Description: Design regions label current per-class shared-state behavior as "Fixie per-class fixture sharing" as if Fixie were still the active framework. Behavior described is correct Jaribu C-create.
 - Suggestion: Reword to describe the pattern generically; keep the historical note past-tense.
 - Source: tests
-- Disposition notes:
+- Disposition notes: fixed on task 210 closeout — four Design regions now say \"one SetupOnce host per class\" instead of naming Fixie.
 
 ### D. Documentation, skills, AGENTS.md
 
