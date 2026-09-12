@@ -2,9 +2,23 @@
   <!-- Import parent Directory.Build.props -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- Suppress CA warnings that existed in original Common.Contracts/Common.Domain code -->
+  <!-- Curated allowlist (task 210-006/M32): ids that still fire on current foundation code.
+       Dropped as unused vs the pre-audit list: CS1591 (already repo-root 1591), CA1002,
+       CA1303, CA1715, CA1720, CA2201, RS0030. -->
   <PropertyGroup>
-    <NoWarn>$(NoWarn);CS1591;CA1002;CA1034;CA1036;CA1040;CA1062;CA1303;CA1304;CA1311;CA1715;CA1720;CA1725;CA1819;CA1852;CA1861;CA2007;CA2016;CA2201;CA2227;RS0030</NoWarn>
+    <NoWarn>$(NoWarn);CA1034</NoWarn>   <!-- Nested public policy types (CorsPolicy.AnyPolicy) — Enumeration members -->
+    <NoWarn>$(NoWarn);CA1036</NoWarn>   <!-- Enumeration comparable: not the full IComparable operator/overload set -->
+    <NoWarn>$(NoWarn);CA1040</NoWarn>   <!-- Marker interfaces (IAggregateRoot, IBaseMessage, IBaseRequest) -->
+    <NoWarn>$(NoWarn);CA1062</NoWarn>   <!-- Public pipeline/API methods receive framework-supplied non-null args -->
+    <NoWarn>$(NoWarn);CA1304</NoWarn>   <!-- Culture-aware string APIs in shared library code (with CA1311) -->
+    <NoWarn>$(NoWarn);CA1311</NoWarn>   <!-- Same culture group as CA1304 -->
+    <NoWarn>$(NoWarn);CA1725</NoWarn>   <!-- Parameter names on Enumeration overrides of object/IComparable members -->
+    <NoWarn>$(NoWarn);CA1819</NoWarn>   <!-- ListResponse and similar DTOs return arrays for serialization shape -->
+    <NoWarn>$(NoWarn);CA1852</NoWarn>   <!-- Unsealed internal helpers (EmptyListResponse) — not worth sealing churn in the published package -->
+    <NoWarn>$(NoWarn);CA1861</NoWarn>   <!-- Constant array args (ExamplePolicy origin list) — micro-perf, template exemplar -->
+    <NoWarn>$(NoWarn);CA2007</NoWarn>   <!-- ConfigureAwait — package is consumed from ASP.NET and WASM; no sync-context contract -->
+    <NoWarn>$(NoWarn);CA2016</NoWarn>   <!-- CancellationToken forwarding on mediator pipeline Invoke calls -->
+    <NoWarn>$(NoWarn);CA2227</NoWarn>   <!-- Mutable collection properties required for request/response deserialization -->
   </PropertyGroup>
 
   <!-- Make the foundation projects packable (TimeWarp.Foundation.*, task 051). Version + shared
