@@ -16,7 +16,9 @@
 // at all — a pre-existing routing gap unrelated to 104-031 — so passkey host-preservation there is
 // moot; see that project's appsettings.Development.json.) No UseForwardedHeaders and no spoofable
 // X-Forwarded-Host is consumed; a forged Host can at most select among the already-approved
-// AllowedRpIds, never expand them.
+// AllowedRpIds, never expand them. InteractiveServer/Auto named-HttpClient loopback is not a
+// forwarded-header problem: IdentitySessionCookieForwardingHandler copies the circuit request's
+// Host (port stripped) onto that loopback so this accessor still reads the browser host.
 // Null-safe: no HttpContext (e.g. resolved outside a request) returns null rather than throwing,
 // which the selection treats as a fail-closed "host not allowed" — same posture as
 // HttpCurrentPrincipalAccessor's null return for no authenticated caller.

@@ -1,5 +1,5 @@
 #region Purpose
-// Copies inbound Cookie and mock-principal headers onto server HttpClient loopback.
+// Copies inbound Cookie, mock-principal, and Host onto server HttpClient loopback.
 #endregion
 
 #region Design
@@ -9,6 +9,11 @@
 // IHttpContextAccessor is AsyncLocal-safe on a pooled DelegatingHandler. Copies Cookie as
 // sent and X-TimeWarp-Mock-Principal-Id so mock-identity-session still authenticates when
 // that header is in play. Does not invent cookies — missing inbound Cookie stays anonymous.
+// Task 212: also copies the circuit/page Host (port stripped via HostString.Host) so
+// HttpRequestHostAccessor / WebAuthn RP-ID selection sees the YARP-preserved browser host
+// rather than the loopback URI host (localhost). Does not read X-Forwarded-Host — a spoofable
+// client header; Host is taken from HttpContext.Request.Host of the circuit request, same
+// source as Cookie. Does not overwrite Host when the outgoing request already set it.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -18,7 +23,7 @@ using Microsoft.Extensions.Primitives;
 using TimeWarp.Architecture.Services;
 
 /// <summary>
-/// Forwards the browser identity-session cookie (and mock principal header) on server loopback.
+/// Forwards the browser identity-session cookie, mock principal header, and Host on server loopback.
 /// </summary>
 public sealed class IdentitySessionCookieForwardingHandler : DelegatingHandler
 {
@@ -39,6 +44,7 @@ public sealed class IdentitySessionCookieForwardingHandler : DelegatingHandler
     {
       CopyHeader(httpContext, request, "Cookie");
       CopyHeader(httpContext, request, MockAuthenticationDefaults.MockPrincipalIdHeader);
+      CopyHost(httpContext, request);
     }
 
     return base.SendAsync(request, cancellationToken);
@@ -58,5 +64,21 @@ public sealed class IdentitySessionCookieForwardingHandler : DelegatingHandler
     }
 
     request.Headers.TryAddWithoutValidation(headerName, values.ToArray());
+  }
+
+  private static void CopyHost(HttpContext httpContext, HttpRequestMessage request)
+  {
+    if (!string.IsNullOrEmpty(request.Headers.Host))
+    {
+      return;
+    }
+
+    string? host = httpContext.Request.Host.Host;
+    if (string.IsNullOrEmpty(host))
+    {
+      return;
+    }
+
+    request.Headers.Host = host;
   }
 }

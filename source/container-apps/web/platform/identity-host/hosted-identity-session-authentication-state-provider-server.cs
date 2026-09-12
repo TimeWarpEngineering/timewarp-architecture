@@ -15,7 +15,8 @@
 // IdentitySessionAuthenticationStateProvider).
 // Task 205-003: API loopback (Profile PUT) is a separate hole — IdentitySessionCookieForwardingHandler
 // copies the inbound Cookie onto the named WebService HttpClient so InteractiveServer/Auto
-// [EndpointAuthorize] calls authenticate. This type only fixes CascadingAuthenticationState.
+// [EndpointAuthorize] calls authenticate. Task 212: the same handler copies Host so passkey
+// RP-ID selection matches the browser origin. This type only fixes CascadingAuthenticationState.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
