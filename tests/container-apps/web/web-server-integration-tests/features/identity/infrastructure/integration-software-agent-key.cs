@@ -13,7 +13,7 @@
 // KeyId is per-instance random from day one here (NOT a fixed constant) — 104-003's round-1 review
 // (finding M6) caught the passkey integration fixture using a fixed CredentialId and colliding
 // across test methods within the same class, because WebTestServerApplication (and its in-memory
-// IPrincipalStore singleton) is constructed once and SHARED across every test method in a Fixie test
+// IPrincipalStore singleton) is constructed once in SetupOnce and SHARED across every test method in the
 // class, not fresh per method. Applying that lesson from day one: each `new IntegrationSoftwareAgentKey()`
 // generates its own P-256 keypair at construction time, so two different test methods registering
 // "a" key can never collide on KeyId (SHA-256 of the public key) the way a fixed key would.

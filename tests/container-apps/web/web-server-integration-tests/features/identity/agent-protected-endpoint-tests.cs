@@ -9,7 +9,7 @@
 // shared ambient cookie jar/headers — same isolation posture as the round-1 fix in
 // Passkey_Registration_Tests.cs/Passkey_Authentication_Tests.cs, applied from day one here) so
 // Authorization/Cookie headers set by one test can never leak into another sharing this class's
-// fixture (Fixie per-class WebTestServerApplication sharing).
+// fixture (one SetupOnce WebTestServerApplication per class).
 #endregion
 
 namespace AgentProtectedEndpoint_;
