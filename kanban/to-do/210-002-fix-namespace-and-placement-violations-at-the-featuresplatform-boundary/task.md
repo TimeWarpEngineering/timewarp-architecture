@@ -128,6 +128,7 @@ both folders legally use the Features-substrate exception, but the skill defines
       incremental builds)
 - [x] `dev test`
 - [x] `dev template-smoke`
+- [x] Implementation review (effort 1, general): 2 rounds, disposition clean
 
 ## Notes
 
@@ -151,10 +152,16 @@ both folders legally use the Features-substrate exception, but the skill defines
   (AuthenticationHandler `*-handler-server.cs` would false-positive). Membership guard
   still requires layer suffixes on both trees.
 
+- Review kitchen: `review/` under this folder (framework, round-1, round-2, disposition).
+  Disposition **clean** — see Results → Review disposition.
+
 ## Session
 
 - Created: 222278 (2026-09-12)
 - Implementer: grok session 01a095bd-66cd-75c3-91e6-0daf89bc14bc (2026-09-12)
+- Review oracle: grok session 01a095dd-3879-7d10-b70c-cd2e1c38c7b7 (2026-09-12)
+- Review general round 1: grok subagent 01a095df-4308-7b71-aa7b-79882ec2cbab (2026-09-12)
+- Review general round 2: grok subagent 01a095e3-851a-7713-9943-13328d9af4ac (2026-09-12)
 
 ## Results
 
@@ -188,12 +195,14 @@ Primary trees: `web/platform/authorization/`, `web/platform/payment/`,
 `web/features/authorization/` (ids only), `web/platform/identity-host/`,
 `web-spa/features/{agent-links,profiles,application}/pages/`, api identity-host,
 todo-item contracts, analyzer + tests, AGENTS.md, `tw-feature-placement`,
-`.template.config/template.json`, parent 210 round-1 ledger.
+`.template.config/template.json`, parent 210 round-1 ledger,
+`PostgresDbContextModelSnapshot.cs` (review M1 snapshot FQN).
 
 ### Key decisions
 
 - Keep `features/authorization/` as the human folder for the permission-id catalog (see Notes).
 - Document TWA0015/0016 features-only scope rather than extend pairing to `platform/`.
+- Review M1: retarget living snapshot CLR name only; do not rewrite historical Designers.
 
 ### Test outcomes
 
@@ -222,6 +231,8 @@ rg -n '^namespace TimeWarp.Architecture.Authorization;' \
   source/container-apps/web/platform/authorization/i-permission-evaluator-application.cs
 rg -n 'namespace TimeWarp.Architecture.Features.TodoItems;' \
   source/container-apps/web/features/todo-items/delete-todo-item/delete-todo-item-contracts.cs
+rg -n 'Authorization.RolePermissionGrant' \
+  source/container-apps/web/platform/postgres/migrations/PostgresDbContextModelSnapshot.cs
 ```
 
 **Expect**
@@ -234,6 +245,7 @@ rg -n 'namespace TimeWarp.Architecture.Features.TodoItems;' \
 - Payment port is under `platform/payment/`.
 - Api agent-token handler namespace is `TimeWarp.Architecture.Api.Server`.
 - DeleteTodoItem is `Features.TodoItems` (not `.Commands`) and uses `[ApiRoute]`.
+- Living EF snapshot names `TimeWarp.Architecture.Authorization.RolePermissionGrant`.
 
 **Automated gate**
 
@@ -250,3 +262,12 @@ dotnet run tools/dev-cli/dev.cs -- template-smoke
 
 **Not in scope:** live PDP swap (OpenFGA); browser click-through of the rehomed SPA pages
 (namespaces and `[Page]` routes unchanged).
+
+### Review disposition
+
+- **Disposition:** clean
+- **Effort / roster:** 1, general only
+- **Rounds:** 2
+- **Final counts:** bug 0/0/0 open/fixed/wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0/0/0
+- **M1 (suggestion, fixed):** living `PostgresDbContextModelSnapshot` entity name retargeted from `TimeWarp.Architecture.Features.RolePermissionGrant` to `TimeWarp.Architecture.Authorization.RolePermissionGrant`. Historical `*.Designer.cs` left unchanged.
+- **Paths:** `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/disposition.md`
