@@ -12,10 +12,12 @@
 // identity:read also expands AgentLinkManageSelf (task 205): requesting/listing a human link and
 // fetching humanUx is the agent's identity graph, not credential material. A dedicated
 // human-link:manage AgentScope is deferred until a caller needs identity:read without linking.
-// Features substrate — same consumers as PermissionIds / PermissionEvaluator without TWA0009.
+// Platform cluster — same consumers as PermissionIds / PermissionEvaluator without TWA0009.
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
+
+using TimeWarp.Architecture.Features;
 
 using TimeWarp.Identity;
 

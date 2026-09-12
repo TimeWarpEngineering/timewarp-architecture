@@ -23,6 +23,7 @@ Multi-dot **partial** stems are valid when each segment is kebab:
 | ASP.NET host | `Properties/`, `launchSettings.json`, `appsettings.json`, `appsettings.<Environment>.json` |
 | Blazor host glue | `_Imports.razor` / `_imports.razor`, `App.razor` when the host template requires those names |
 | Roslyn | `AnalyzerReleases.Shipped.md`, `AnalyzerReleases.Unshipped.md` |
+| Agent skills | `SKILL.md` (tooling-mandated basename under `skills/<name>/`) |
 | EF Core migrations | Files under `source/container-apps/web/platform/postgres/migrations/` keep EF-tooling names (`{timestamp}_{Name}.cs`, `*.Designer.cs`, `*ModelSnapshot.cs`). Do not kebab-rename them. Analyzers: `.editorconfig` carve-out (TW0001 / TWA0004 / TWA0015 / TWA0016). Cross-repo skill **`tw-csharp`** should list this row in its exception table when next synced. |
 
 ## Product extras
@@ -30,10 +31,11 @@ Multi-dot **partial** stems are valid when each segment is kebab:
 - Feature cohesive grammar (`name[-function]-layer.cs`, TWA0015/0016): skill **`tw-feature-placement`**.
 - Slice isolation: skill **`tw-slice-isolation`**.
 - Co-located Jaribu runfiles under `source/<family>/features/`/`platform/` use the SAME grammar,
-  ending `-tests.cs` (a registered-**unrouted** layer — matched and validated by TWA0015/0016
-  and the membership guard exactly like a routed layer, but claiming no layer project's build;
+  ending `-tests.cs` (a registered-**unrouted** layer). The membership guard matches both trees;
+  TWA0015/0016 pairing is **features-tree-only** (platform `*-handler-server.cs` would false-positive
+  on ASP.NET AuthenticationHandler types). A `-tests.cs` file claims no layer project's build;
   enforcement only fires when the file itself is compiled, e.g. standalone `dotnet run` — NOT the
-  `dev build` solution gate, which never touches it). Runfile preamble convention (`PublishAot=false`,
+  `dev build` solution gate, which never touches it. Runfile preamble convention (`PublishAot=false`,
   the `cnd:noEmit`-escaped `JARIBU_MULTI` switch): skill **`tw-feature-placement`** (Co-located
   Jaribu runfile preamble section, including **C-create** host lifetime); reference
   implementations `create-role-tests.cs`, `get-weather-forecasts-tests.cs`. Jaribu itself
@@ -47,6 +49,6 @@ Multi-dot **partial** stems are valid when each segment is kebab:
 | Agent skill **`tw-csharp`** | Conventions + exceptions (all TimeWarp repos) |
 | **`TW0001`** (`TimeWarp.SourceGenerators` ≥ beta.10) | `.cs` basenames (repo-wide PackageReference + `.editorconfig` warning); skips `obj/`/`bin/` |
 | Ganda **`kebab-path-names`** (task 188, shipped) | Folders + non-`.cs` basenames via `ganda repo audit` |
-| Architecture **TWA0015/0016** | Axis-1 feature/platform grammar only |
+| Architecture **TWA0015/0016** | Axis-1 **features-tree** function/layer pairing only (`platform/` is membership-guard layer suffixes, not TWA0015/0016) |
 
 Decision history (flow repo): ADR-0013 adopt kebab-case file naming.

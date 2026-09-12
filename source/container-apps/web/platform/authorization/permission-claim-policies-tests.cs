@@ -20,8 +20,10 @@ return await TimeWarp.Jaribu.TestRunner.RunAllTests();
 #endif
 //+:cnd:noEmit
 
-namespace TimeWarp.Architecture.Features
+namespace TimeWarp.Architecture.Authorization
 {
+
+  using TimeWarp.Architecture.Features;
 
   using System.Security.Claims;
   using System.Threading.Tasks;

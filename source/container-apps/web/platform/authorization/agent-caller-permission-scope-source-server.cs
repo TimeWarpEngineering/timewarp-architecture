@@ -3,12 +3,12 @@
 #endregion
 
 #region Design
-// Task 182-006: keeps PermissionEvaluator free of IAgentCallerContext so Features tests avoid
+// Task 182-006: keeps PermissionEvaluator free of IAgentCallerContext so evaluator tests avoid
 // CS0433 under web-jaribu multi-mode (api + web both define IAgentCallerContext). Scoped;
 // same request as AgentCallerContext / PermissionEvaluator.
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
 
 using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Identity;

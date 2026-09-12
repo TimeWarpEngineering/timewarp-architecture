@@ -7,6 +7,8 @@ global using Microsoft.Extensions.Options;
 global using OneOf;
 global using OneOf.Types;
 global using TimeWarp.Architecture.Abstractions;
+global using TimeWarp.Architecture.Authorization;
+global using TimeWarp.Architecture.Payment;
 // Solution usings
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Identity;

@@ -22,7 +22,7 @@ The litmus test for the fuzzy middle:
 | Home | Use for | Namespace | Examples |
 |------|---------|-----------|----------|
 | `web/features/<slice>/` | Product concerns: an operation gets its own `<slice>/<use-case>/` folder; a file serving more than one operation (shared contract, store) stays at slice root | `…Features.<Id>` (TWA0009) | `admin/roles/create-role/`, `chat/chat-hub-server.cs` |
-| `web/platform/<cluster>/` | Platform concerns: a host/platform cluster split across layers — including a seam interface living beside the implementation it seams with, not sorted into a separate layer folder | Non-Features (e.g. Configuration, Services) | `platform/postgres/`, `platform/identity-host/i-current-principal-accessor-application.cs` + `http-current-principal-accessor-server.cs` |
+| `web/platform/<cluster>/` | Platform concerns: a host/platform cluster split across layers — including a seam interface living beside the implementation it seams with, not sorted into a separate layer folder | Non-Features (e.g. Configuration, Services, Authorization, Payment) | `platform/postgres/`, `platform/identity-host/i-current-principal-accessor-application.cs` + `http-current-principal-accessor-server.cs`, `platform/authorization/` (evaluator + stores), `platform/payment/` (HttpContext port) |
 | `web/projects/<artifact>/` | Artifact (csproj home) under the family `projects/` group — definition (csproj, global-usings) and entry-point bootstrap only; content that would mean nothing if you imagine the deployable gone. Occupants: `web-contracts/`, `web-application/`, `web-domain/`, `web-infrastructure/`, `web-server/`, `web-spa/` | Host assembly defaults | `program.cs`, `sample-options.cs` (binding/validation exemplar, not a real concern) |
 | `web/msbuild/` | Build machinery for the web family (filename-grammar props, membership targets) | n/a | `feature-membership.targets` |
 
@@ -282,13 +282,17 @@ time, so this guard's only failure mode in practice is a missing or misspelled l
 Both diagnostics report the file name, the offending segment, and the full list of registered
 pairs/functions so the fix doesn't require opening the registry to look it up.
 
-**Path-matching caution:** these diagnostics only fire on the cohesive tree
-(`web/features/…`), never on `web-spa/features/…` (SPA exception below) or on generated
-scaffolding. Roslyn can report a glob-included file's path as project-relative with `..`
-segments (e.g. `web-server/../features/hello/hello-handler-application.cs`); anything that
-scopes analysis to the cohesive tree must normalize such paths rather than matching a bare
-project-directory substring, or it risks silently treating the entire cohesive tree — or the
-entire SPA tree — as in or out of scope incorrectly.
+**Path-matching caution:** these diagnostics only fire on the cohesive **features** tree
+(`web/features/…`, `api/features/…`, `grpc/features/…`), never on `web-spa/features/…` (SPA
+exception below), never on `platform/` (deliberate: ASP.NET `AuthenticationHandler` files
+named `*-handler-server.cs` would false-positive because registered function `handler`
+requires `-application`), and never on generated scaffolding. The membership guard still
+enforces registered layer suffixes on **both** `features/` and `platform/`. Roslyn can report
+a glob-included file's path as project-relative with `..` segments (e.g.
+`web-server/../features/hello/hello-handler-application.cs`); anything that scopes analysis
+to the cohesive tree must normalize such paths rather than matching a bare project-directory
+substring, or it risks silently treating the entire cohesive tree — or the entire SPA tree —
+as in or out of scope incorrectly.
 
 ## Features substrate (cross-slice constants)
 
@@ -298,7 +302,8 @@ cross-slice coupling (TWA0009). This is the **Features substrate** tier, not a p
 
 | Litmus | Home |
 |--------|------|
-| Compile-time constants or shapes many product slices must share (role ids, module ids) | Bare `…Features` namespace; file still lives under a folder for humans (e.g. `features/admin/roles/role-ids-contracts.cs`, `features/admin/modules/module-ids-contracts.cs`) |
+| Compile-time constants or shapes many product slices must share (role ids, module ids, permission ids) | Bare `…Features` namespace; file still lives under a folder for humans (e.g. `features/admin/roles/role-ids-contracts.cs`, `features/admin/modules/module-ids-contracts.cs`, `features/authorization/permission-ids-contracts.cs`) |
+| Runtime engine / host port many slices consume (permission evaluator, payment HttpContext adapter) | `platform/<cluster>/` with a non-Features namespace — TWA0009 platform is one-way free |
 | Product operation / slice-owned logic | `…Features.<Id>` under `features/<slice>/` |
 
 Document the choice in the file's `#region Design` (existing examples do). Do **not** invent a

@@ -11,9 +11,10 @@
 // Callers of IAgentTokenStore.Validate MUST re-read the principal for liveness (IAgentTokenStore
 // Design region) — this handler does that after a successful Validate, same as web.
 // Instance TokenWasPresented is safe: ASP.NET Core resolves a fresh handler per request.
+// Namespace is TimeWarp.Architecture.Api.Server (platform cluster, not Features.Identity).
 #endregion
 
-namespace TimeWarp.Architecture.Features.Identity;
+namespace TimeWarp.Architecture.Api.Server;
 
 using System.Net.Http.Headers;
 using System.Security.Claims;

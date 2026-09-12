@@ -41,6 +41,7 @@
 
 namespace TimeWarp.Architecture.Persistence;
 
+using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.AgentLinks.Domain;
 using TimeWarp.Architecture.Features.Profiles.Domain;

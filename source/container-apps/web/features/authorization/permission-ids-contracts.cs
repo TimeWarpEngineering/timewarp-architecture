@@ -30,7 +30,7 @@ public static class PermissionIds
 {
   /// <summary>
   /// Claim type for SPA-projected permission grants (from session response). Not used by
-  /// server <see cref="PermissionRequirementHandler"/> (evaluator only).
+  /// server <see cref="TimeWarp.Architecture.Authorization.PermissionRequirementHandler"/> (evaluator only).
   /// </summary>
   public const string ClaimType = "permission";
 

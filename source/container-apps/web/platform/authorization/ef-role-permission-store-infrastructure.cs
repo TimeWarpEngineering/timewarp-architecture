@@ -12,10 +12,9 @@
 // Reads AsNoTracking. Set uses a single SaveChanges after remove+add.
 #endregion
 
-namespace TimeWarp.Architecture.Features.Authorization.Infrastructure;
+namespace TimeWarp.Architecture.Authorization;
 
 using Microsoft.EntityFrameworkCore;
-using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Persistence;
 
 /// <summary>Postgres-backed role → permission grant store.</summary>

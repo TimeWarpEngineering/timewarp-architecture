@@ -7,11 +7,11 @@
 // so greenfield / skip-mode matches EF migration seed. Set replaces the full list (snapshot);
 // empty list removes the key. Missing key → empty Get (same as principal-role store). Singleton
 // process lifetime matches InMemoryPrincipalRoleStore; PostgresDbModule swaps to scoped
-// EfRolePermissionStore when a connection string is present. Features substrate namespace —
+// EfRolePermissionStore when a connection string is present. Platform cluster —
 // see IRolePermissionStore Design.
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
 
 using System.Collections.Concurrent;
 

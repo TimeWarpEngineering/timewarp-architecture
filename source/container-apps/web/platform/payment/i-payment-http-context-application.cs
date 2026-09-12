@@ -8,11 +8,11 @@
 // Server implementation (HttpPaymentHttpContext) uses IHttpContextAccessor; the application layer
 // stays free of ASP.NET types. Free routes never use this port.
 //
-// Lives in the Features substrate (not a product slice) so MeteredCapability and Tip can share the
-// port without TWA0009 cross-slice references (task 104-009 / 104-011).
+// Lives in platform/payment (TimeWarp.Architecture.Payment), not a product slice, so
+// MeteredCapability and Tip share the port without TWA0009 (task 104-009 / 104-011).
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Payment;
 
 /// <summary>Ambient payment header I/O for the current HTTP request/response.</summary>
 public interface IPaymentHttpContext

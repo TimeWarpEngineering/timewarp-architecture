@@ -115,19 +115,19 @@ both folders legally use the Features-substrate exception, but the skill defines
 ## Checklist
 
 - [x] M8 decided (split; see Requirements → Decision)
-- [ ] M8: authorization engine + payment port moved to `platform/`, ids left as substrate, Design regions reconciled
-- [ ] M3: `agent-token-authentication-handler-server.cs` namespace fixed
-- [ ] M4: `agent-caller-permission-scope-source-server.cs` moved to `platform/authorization/` with platform namespace
-- [ ] M5: `delete-todo-item-contracts.cs` / `todo-item-dto-contracts.cs` fixed
-- [ ] M6: `hosted-identity-session-authentication-state-provider-server.cs` moved to
+- [x] M8: authorization engine + payment port moved to `platform/`, ids left as substrate, Design regions reconciled
+- [x] M3: `agent-token-authentication-handler-server.cs` namespace fixed
+- [x] M4: `agent-caller-permission-scope-source-server.cs` moved to `platform/authorization/` with platform namespace
+- [x] M5: `delete-todo-item-contracts.cs` / `todo-item-dto-contracts.cs` fixed
+- [x] M6: `hosted-identity-session-authentication-state-provider-server.cs` moved to
       `web/platform/identity-host/`
-- [ ] M7: the six `pages/` files moved into their feature folders; root `pages/` deleted
-- [ ] M9: TWA0015/0016 features-only scope documented, or extended to `platform/`
-- [ ] M10: `SKILL.md` / `AnalyzerReleases.*.md` added to the kebab exception table
-- [ ] `dev build` 0/0 (full rebuild — analyzer/generator changes can go stale under
+- [x] M7: the six `pages/` files moved into their feature folders; root `pages/` deleted
+- [x] M9: TWA0015/0016 features-only scope documented, or extended to `platform/`
+- [x] M10: `SKILL.md` / `AnalyzerReleases.*.md` added to the kebab exception table
+- [x] `dev build` 0/0 (full rebuild — analyzer/generator changes can go stale under
       incremental builds)
-- [ ] `dev test`
-- [ ] `dev template-smoke`
+- [x] `dev test`
+- [x] `dev template-smoke`
 
 ## Notes
 
@@ -136,8 +136,117 @@ both folders legally use the Features-substrate exception, but the skill defines
 
 - Parent: 210 (round-1 ledger:
   `kanban/in-progress/210-post-migration-cleanliness-code-review-of-the-architecture-template/review/round-1/merged.md`).
-  On completion, update the M-ids' Status in that ledger to fixed/wontfix on the same PR.
+  M3–M10 Status set to fixed on that ledger (same PR).
+
+- Ids folder: kept `features/authorization/` (three files: `permission-ids-contracts.cs`,
+  `permission-requirement-contracts.cs`, `permission-ids-tests.cs`). Not folded into
+  `features/admin/roles/` — permission ids are a cross-slice catalog, not role-slice-owned.
+  Sibling `role-ids-contracts.cs` lives in roles because those Guids *are* the roles slice.
+
+- Namespaces: engine `TimeWarp.Architecture.Authorization`; payment
+  `TimeWarp.Architecture.Payment`; M3 `TimeWarp.Architecture.Api.Server`. Cluster-named,
+  matching `Abuse` / `AgentDiscovery`.
+
+- M9: documented features-only TWA0015/0016 pairing rather than extending to `platform/`
+  (AuthenticationHandler `*-handler-server.cs` would false-positive). Membership guard
+  still requires layer suffixes on both trees.
 
 ## Session
 
 - Created: 222278 (2026-09-12)
+- Implementer: grok session 01a095bd-66cd-75c3-91e6-0daf89bc14bc (2026-09-12)
+
+## Results
+
+M3–M10 placement/namespace findings from the 210 round-1 review. Engine and payment port
+moved to `platform/` with non-Features namespaces; permission ids stay Features substrate;
+SPA pages rehomed; TWA0015/0016 features-only scope documented; kebab exceptions listed.
+
+### What was implemented
+
+- **M8 / M4.** Authorization runtime (evaluator, stores, seeds, policy registration, handler,
+  agent-scope adapter) → `web/platform/authorization/` namespace
+  `TimeWarp.Architecture.Authorization`. Payment HttpContext port →
+  `web/platform/payment/` namespace `TimeWarp.Architecture.Payment`. Design regions
+  rewritten (no longer claim Features substrate). `tw-feature-placement` substrate vs
+  platform litmus updated. How-to PDP swap path updated. Template `(!postgres)` exclude
+  list retargeted at the new EF store paths.
+- **M3.** `agent-token-authentication-handler-server.cs` → `TimeWarp.Architecture.Api.Server`.
+- **M5.** `DeleteTodoItem` dropped `.Commands`; `[ApiRoute]` + `[ClientOnlyContract]` like
+  create/update. DTO TODO line deleted.
+- **M6.** Hosted identity-session auth-state provider → `web/platform/identity-host/`.
+- **M7.** AgentLinks / Profile / Settings pages into their feature `pages/` folders;
+  root `web-spa/pages/` deleted.
+- **M9.** Analyzer Design region + skill + AGENTS.md TWA table + analyzer test
+  `Given_Platform_Handler_Server_IsSilent`.
+- **M10.** `SKILL.md` and `AnalyzerReleases.{Shipped,Unshipped}.md` on the AGENTS.md kebab
+  exception list; `SKILL.md` also on `file-naming.md`.
+
+### Files changed
+
+Primary trees: `web/platform/authorization/`, `web/platform/payment/`,
+`web/features/authorization/` (ids only), `web/platform/identity-host/`,
+`web-spa/features/{agent-links,profiles,application}/pages/`, api identity-host,
+todo-item contracts, analyzer + tests, AGENTS.md, `tw-feature-placement`,
+`.template.config/template.json`, parent 210 round-1 ledger.
+
+### Key decisions
+
+- Keep `features/authorization/` as the human folder for the permission-id catalog (see Notes).
+- Document TWA0015/0016 features-only scope rather than extend pairing to `platform/`.
+
+### Test outcomes
+
+- `dotnet run tools/dev-cli/dev.cs -- build --clean` then `build`: 0 warnings / 0 errors
+- `dotnet run tools/dev-cli/dev.cs -- test`: pass (web-jaribu-tests 135/135 including moved
+  permission-evaluator/claim-policies runfiles; analyzer tests 158/158 including platform-silent)
+- `dotnet run tools/dev-cli/dev.cs -- template-smoke`: SUCCEEDED (SmokeDefault, SmokeNoPostgres,
+  SmokeNoApi)
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd /path/to/timewarp-architecture   # this task worktree or a fresh claim
+dotnet run tools/dev-cli/dev.cs -- build --clean
+# Expect: "Build completed successfully!" and 0 Warning(s) / 0 Error(s)
+
+test ! -d source/container-apps/web/projects/web-spa/pages
+test -f source/container-apps/web/platform/authorization/i-permission-evaluator-application.cs
+test -f source/container-apps/web/features/authorization/permission-ids-contracts.cs
+test -f source/container-apps/web/platform/payment/i-payment-http-context-application.cs
+rg -n '^namespace TimeWarp.Architecture.Api.Server;' \
+  source/container-apps/api/platform/identity-host/agent-token-authentication-handler-server.cs
+rg -n '^namespace TimeWarp.Architecture.Authorization;' \
+  source/container-apps/web/platform/authorization/i-permission-evaluator-application.cs
+rg -n 'namespace TimeWarp.Architecture.Features.TodoItems;' \
+  source/container-apps/web/features/todo-items/delete-todo-item/delete-todo-item-contracts.cs
+```
+
+**Expect**
+
+- `web-spa/pages/` is gone.
+- Evaluator lives under `platform/authorization/` with namespace
+  `TimeWarp.Architecture.Authorization`.
+- `permission-ids-contracts.cs` remains under `features/authorization/` in
+  `TimeWarp.Architecture.Features`.
+- Payment port is under `platform/payment/`.
+- Api agent-token handler namespace is `TimeWarp.Architecture.Api.Server`.
+- DeleteTodoItem is `Features.TodoItems` (not `.Commands`) and uses `[ApiRoute]`.
+
+**Automated gate**
+
+```bash
+dotnet run tools/dev-cli/dev.cs -- test
+# Expect: "Tests completed successfully!"
+
+dotnet run source/container-apps/web/platform/authorization/permission-evaluator-tests.cs
+# Expect: all tests passed (host-free evaluator + seed coverage)
+
+dotnet run tools/dev-cli/dev.cs -- template-smoke
+# Expect: "Template smoke SUCCEEDED" including SmokeNoPostgres
+```
+
+**Not in scope:** live PDP swap (OpenFGA); browser click-through of the rehomed SPA pages
+(namespaces and `[Page]` routes unchanged).

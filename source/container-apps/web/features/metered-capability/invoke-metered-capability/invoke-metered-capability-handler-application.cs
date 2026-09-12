@@ -17,7 +17,6 @@ namespace TimeWarp.Architecture.Features.MeteredCapability.Application;
 
 using Microsoft.Extensions.Options;
 using TimeWarp.Architecture.Abstractions;
-using TimeWarp.Architecture.Features;
 using TimeWarp.X402;
 using static TimeWarp.Architecture.Features.MeteredCapability.InvokeMeteredCapability;
 

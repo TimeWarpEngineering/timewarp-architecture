@@ -6,12 +6,12 @@
 // Task 182-001: dual-mode mirror of IPrincipalRoleStore — InMemoryRolePermissionStore singleton
 // default (seeded from RolePermissionSeed); EfRolePermissionStore scoped when Postgres is connected
 // (PostgresDbModule). Get returns empty when a role has no rows (not an error). Set replaces the
-// full permission set for a role (empty clears). Features substrate namespace so evaluator,
-// Identity, and Admin can resolve grants without TWA0009. Protected-core / last-admin guards
+// full permission set for a role (empty clears). Platform cluster so evaluator, Identity,
+// and Admin can resolve grants without TWA0009. Protected-core / last-admin guards
 // live in SetRolePermissions / SetPrincipalRoles handlers (182-004) — this port stays a dumb store.
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
 
 /// <summary>Durable assignment of permission ids to a product role (web-app concern).</summary>
 public interface IRolePermissionStore

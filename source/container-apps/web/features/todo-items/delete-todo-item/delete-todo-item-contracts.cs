@@ -3,23 +3,18 @@
 #endregion
 
 #region Design
-// Implements GetHttpVerb/GetRoute by hand instead of [ApiRoute], documenting the manual IApiRequest
-// alternative to source generation.
-// GetRoute returns the template with the {TodoItemId} token unexpanded — substitution is left to the sender.
+// [ApiRoute] drives source generation of the route members (hence partial); TodoItemId comes
+// from the {TodoItemId:guid} route segment. [ClientOnlyContract] matches create/update: the
+// todo-items server slice awaits the feature's finish-vs-delete decision.
 #endregion
 
-namespace TimeWarp.Architecture.Features.TodoItems.Commands;
+namespace TimeWarp.Architecture.Features.TodoItems;
 
 public sealed partial class DeleteTodoItem
 {
-  public sealed class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
-  {
-    public const string Route = "TodoItems/{TodoItemId}";
-    public Guid TodoItemId { get; set; }
-
-    public HttpVerb GetHttpVerb() => HttpVerb.Delete;
-    public string GetRoute() => Route;
-  }
+  [ApiRoute("api/TodoItems/{TodoItemId:guid}", HttpVerb.Delete)]
+  [ClientOnlyContract("Todo items are a client demo; the server slice awaits the feature's finish-vs-delete decision.")]
+  public sealed partial class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest;
 
   public class Response : BaseResponse;
 

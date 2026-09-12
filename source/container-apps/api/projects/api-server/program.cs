@@ -26,7 +26,6 @@ namespace TimeWarp.Architecture.Api.Server;
 using Microsoft.AspNetCore.Authentication;
 using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Configuration;
-using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Infrastructure;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Identity;

@@ -4,16 +4,13 @@
 
 #region Design
 // Endpoint-centric contracts (dedicated Request/Response per endpoint) supersede this entity-shaped
-// DTO — see the TODO on the class.
-// The commented attribute list sketches generating CRUD contracts from one DTO; that approach was
-// not adopted. Do not revive DTO-driven contract generation.
+// DTO. The commented attribute list sketches generating CRUD contracts from one DTO; that approach
+// was not adopted. Do not revive DTO-driven contract generation.
 // Joe is a scratch type exercising primary-constructor + init-property syntax, not part of the contract surface.
 #endregion
 
 namespace TimeWarp.Architecture.Features.TodoItems;
 
-// TODO: This entity-centric DTO is leftover. Endpoint-centric APIs (dedicated Request/Response
-// per endpoint) are the adopted pattern, so this type should go away.
 // [CreateCommand, UpdateCommand, DeleteCommand, GetQuery, GetListQuery]
 public class TodoItemDto
 {

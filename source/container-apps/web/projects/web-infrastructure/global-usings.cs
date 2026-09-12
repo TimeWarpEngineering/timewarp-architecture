@@ -14,5 +14,6 @@ global using Microsoft.EntityFrameworkCore.Metadata.Builders;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 // Solution usings
+global using TimeWarp.Architecture.Authorization;
 global using TimeWarp.Identity;
 global using TimeWarp.Modules;

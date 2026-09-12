@@ -12,10 +12,12 @@
 // gate) so admin UI writes evaluate the same membership the evaluator would for human sessions.
 // SimulateEffectiveRoles mirrors EffectiveRolesResolver (empty store → Member; bootstrap union)
 // so proposed SetPrincipalRoles outcomes match post-write resolution without mutating the store.
-// Features substrate — Admin.Roles and Admin.Principals both need it without TWA0009.
+// Platform cluster so Admin.Roles and Admin.Principals share it without TWA0009.
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
+
+using TimeWarp.Architecture.Features;
 
 using TimeWarp.Identity;
 

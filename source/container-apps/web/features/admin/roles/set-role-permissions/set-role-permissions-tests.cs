@@ -26,6 +26,7 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
   using System.Threading.Tasks;
   using FluentValidation.Results;
   using Shouldly;
+  using TimeWarp.Architecture.Authorization;
   using TimeWarp.Architecture.Features;
   using TimeWarp.Foundation.Types;
   using TimeWarp.Identity;

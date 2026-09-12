@@ -24,7 +24,6 @@
 namespace TimeWarp.Architecture.Features.Tip.Application;
 
 using Microsoft.Extensions.Options;
-using TimeWarp.Architecture.Features;
 using TimeWarp.X402;
 using static TimeWarp.Architecture.Features.Tip.SubmitTip;
 

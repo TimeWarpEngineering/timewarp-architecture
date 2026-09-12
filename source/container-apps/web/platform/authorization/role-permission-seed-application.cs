@@ -15,10 +15,12 @@
 // InMemoryRolePermissionStore copies this on construction; EF migration InsertData mirrors it
 // for postgres volumes. Admin UI (182-004) mutates grants via SetRolePermissions with
 // protected-core on Administrator (AdminPermissions cannot be stripped).
-// Features substrate — same consumers as RoleIds / IRolePermissionStore without TWA0009.
+// Platform cluster — same consumers as RoleIds / IRolePermissionStore without TWA0009.
 #endregion
 
-namespace TimeWarp.Architecture.Features;
+namespace TimeWarp.Architecture.Authorization;
+
+using TimeWarp.Architecture.Features;
 
 /// <summary>Compile-time default grants: product role Guid → permission id strings.</summary>
 public static class RolePermissionSeed

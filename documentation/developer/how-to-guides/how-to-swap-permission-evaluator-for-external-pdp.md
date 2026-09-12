@@ -29,7 +29,7 @@ Leave these alone so contracts, generators, and SPA policies keep working:
 ## The seam
 
 ```text
-source/container-apps/web/features/authorization/i-permission-evaluator-application.cs
+source/container-apps/web/platform/authorization/i-permission-evaluator-application.cs
 ```
 
 ```csharp
