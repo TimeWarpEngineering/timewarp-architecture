@@ -74,9 +74,9 @@ public class FastEndpointSourceGenerator_RouteConflicts_Tests
       }
       """);
 
-    var compilation = CSharpCompilation.Create(
+    CSharpCompilation compilation = CSharpCompilation.Create(
       "Test.Server",
-      syntaxTrees: Array.Empty<SyntaxTree>(),
+      syntaxTrees: [CSharpSyntaxTree.ParseText(GeneratorTestHarness.HostSupportStubs)],
       references: new[]
       {
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
@@ -86,9 +86,10 @@ public class FastEndpointSourceGenerator_RouteConflicts_Tests
       new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
     var generator = new FastEndpointSourceGenerator();
-    var options = new Dictionary<string, string>
+    Dictionary<string, string> options = new()
     {
       ["build_property.EnableApiEndpointGeneration"] = "true",
+      ["build_property.ApiEndpointContractAssemblies"] = "Test.Contracts",
     };
 
     GeneratorDriver driver = CSharpGeneratorDriver.Create(

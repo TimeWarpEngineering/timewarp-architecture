@@ -13,14 +13,19 @@ Generation is **off by default**. Server projects enable it:
 <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
 ```
 
-Optional filter when the host transitively references other contract assemblies (web-server
-case — it must not emit api-contracts endpoints):
+**Required** allow-list of **AssemblyName** values (not the namespace). Hosts that transitively
+reference other contract assemblies must not emit foreign endpoints; an empty, mistyped, or
+unmarked name is **TWE008** (fail-closed — no silent empty generation):
 
 ```xml
-<ApiEndpointContractAssemblies>TimeWarp.Architecture.Web.Contracts</ApiEndpointContractAssemblies>
+<ApiEndpointContractAssemblies>web-contracts</ApiEndpointContractAssemblies>
 ```
 
-Empty/unset scans all referenced assemblies (api-server default).
+api-server sets `api-contracts`. The value is the project's AssemblyName (the csproj file stem
+unless `<AssemblyName>` is overridden) — not `TimeWarp.Architecture.Web.Contracts`.
+
+Contracts assemblies that host `[ApiEndpoint]` apply `[assembly: ApiEndpointsEmbedded]` (attribute
+in TimeWarp.Architecture.Attributes). Host generators walk **only marked** referenced assemblies.
 
 ## Usage
 
@@ -166,6 +171,7 @@ The generator extracts OpenAPI documentation from:
 | TWE002 | `[ApiEndpoint]` missing nested `Query`/`Command` — no emission |
 | TWE003 | Same route + verb claimed by multiple contracts — all parties; none generated |
 | TWE007 | Unknown / unresolvable `HttpVerb` — fail-closed; no emission |
+| TWE008 | `ApiEndpointContractAssemblies` empty, mistyped AssemblyName, or unmarked contracts assembly — fail-closed; no emission |
 | SG001 | Source generator log (warning) |
 | SG002 | `EnableApiEndpointGeneration` is true but FastEndpoints / `BaseFastEndpoint` are missing |
 | TWA0013/0014 | Auth-posture missing or contradictory (convention analyzer) |

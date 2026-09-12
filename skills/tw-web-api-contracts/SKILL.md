@@ -145,9 +145,11 @@ cannot drop them. Do **not** put scheme lists back on permission policies (ADR-0
 and do not wire FastEndpoints' own FluentValidation integration (`IncludeAbstractValidators =
 false`). Handlers implement business logic only; the generated endpoint is pure HTTP plumbing.
 
-Server projects set `<EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>`. Web-server
-also sets `ApiEndpointContractAssemblies` so only web-contracts contribute endpoints (it
-transitively references other contract assemblies).
+Server projects set `<EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>` and
+**must** set `ApiEndpointContractAssemblies` to the hosted contracts **AssemblyName**
+(`web-contracts` on web-server, `api-contracts` on api-server — not the namespace). Empty,
+mistyped, or unmarked names are **TWE008**. Hosted contracts assemblies apply
+`[assembly: ApiEndpointsEmbedded]`; host generators walk only marked refs.
 
 ### HTTP verbs
 

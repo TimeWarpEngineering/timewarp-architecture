@@ -90,19 +90,23 @@ exactly one posture, and flag a contract carrying `[EndpointAllowAnonymous]` whi
 contradiction.
 
 ## Implementation Details
-1. Uses SelectMany with recursive namespace traversal to find classes in referenced assemblies
-2. Validates class structure and attributes
-3. Generates endpoint code with proper configuration
-4. Outputs files to the Generated folder in the including project
-5. Provides clear compiler diagnostics for validation errors
+1. Hosted contracts assemblies apply `[assembly: ApiEndpointsEmbedded]` (attributes package)
+2. Hosts walk only marked referenced assemblies, then the `ApiEndpointContractAssemblies` allow-list
+3. Uses SelectMany with recursive namespace traversal on that filtered set
+4. Validates class structure and attributes
+5. Generates endpoint code with proper configuration
+6. Equatable options + content-equal emit models so `.Collect()` does not rebuild on unrelated host edits
 
 ## Project Configuration
-- Source generator is referenced as an analyzer in the project that needs endpoint generation
-- Generated files are output to the Generated folder
+- Source generator is referenced as an analyzer on the **server** (`EnableApiEndpointGeneration`).
+  Contracts stamp the marker via the attributes package — do not attach Generators to contracts
+  (that package also ships TWA0001).
+- `ApiEndpointContractAssemblies` is the AssemblyName allow-list (`web-contracts`, `api-contracts`)
 - Cross-assembly type resolution is handled automatically
 
 ## Error Handling
 
 Authoritative diagnostics: TWE002 (missing Query/Command), TWE003 (route+verb conflict),
-TWE007 (unresolvable route/HttpVerb), SG002 (missing FastEndpoints). See
+TWE007 (unresolvable route/HttpVerb), TWE008 (allow-list empty/mistyped/unmarked), SG002
+(missing FastEndpoints). See
 `documentation/developer/reference/api-endpoint-source-generator.md` and AGENTS.md.

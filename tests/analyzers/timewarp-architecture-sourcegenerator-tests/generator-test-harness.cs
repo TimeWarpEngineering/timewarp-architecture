@@ -45,7 +45,6 @@ internal static class GeneratorTestHarness
             public ApiRouteAttribute(string route, TimeWarp.Architecture.HttpVerb httpVerb) { }
         }
 
-        public abstract class BaseFastEndpoint<TRequest, TResponse> : FastEndpoints.IEndpoint { }
     }
     namespace TimeWarp.Architecture.Attributes
     {
@@ -54,6 +53,16 @@ internal static class GeneratorTestHarness
         {
             public OpenApiTags(params string[] tags) { }
         }
+    }
+    """;
+
+  // FastEndpoints types belong on the HOST compilation only. Putting them in every contract
+  // assembly makes GetTypeByMetadataName return null (duplicate metadata names → SG002) as
+  // soon as two contracts are referenced.
+  public const string HostSupportStubs = """
+    namespace TimeWarp.Foundation.Features
+    {
+        public abstract class BaseFastEndpoint<TRequest, TResponse> : FastEndpoints.IEndpoint { }
     }
     namespace FastEndpoints
     {
@@ -72,16 +81,24 @@ internal static class GeneratorTestHarness
   /// <summary>
   /// Compiles the given contract source (plus the shared stubs) into a referenceable assembly,
   /// carrying XML documentation so the generator can read summary/remarks cross-assembly.
+  /// Runs <see cref="FastEndpointSourceGenerator"/> so <c>[assembly: ApiEndpointsEmbedded]</c>
+  /// is stamped when the source declares <c>[ApiEndpoint]</c>.
   /// </summary>
   public static MetadataReference CompileContractAssembly(string contractSource)
     => CompileContractAssembly(contractSource, "Test.Contracts");
 
   /// <summary>
-  /// Compiles a contract assembly under an explicit name — the ingress generator filters referenced
-  /// assemblies by name (IngressWebContractAssemblies) and by a "contracts" substring, so tests must
-  /// control the assembly name (e.g. "web-contracts", "api-contracts").
+  /// Compiles a contract assembly under an explicit name — host generators filter referenced
+  /// assemblies by AssemblyName (ApiEndpointContractAssemblies / IngressWebContractAssemblies).
   /// </summary>
   public static MetadataReference CompileContractAssembly(string contractSource, string assemblyName)
+    => CompileContractAssembly(contractSource, assemblyName, stampMarker: true);
+
+  /// <summary>
+  /// Compiles a contract assembly. Pass <paramref name="stampMarker"/> false to omit
+  /// <c>[assembly: ApiEndpointsEmbedded]</c> (unmarked-ref tests).
+  /// </summary>
+  public static MetadataReference CompileContractAssembly(string contractSource, string assemblyName, bool stampMarker)
   {
     CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithDocumentationMode(DocumentationMode.Parse);
 
@@ -95,9 +112,18 @@ internal static class GeneratorTestHarness
       FrameworkReferences,
       new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-    using var peStream = new MemoryStream();
-    using var xmlStream = new MemoryStream();
-    Microsoft.CodeAnalysis.Emit.EmitResult emitResult = compilation.Emit(peStream, xmlDocumentationStream: xmlStream);
+    Compilation emitCompilation = compilation;
+    if (stampMarker)
+    {
+      GeneratorDriver markerDriver = CSharpGeneratorDriver.Create(
+        ImmutableArray.Create(new FastEndpointSourceGenerator().AsSourceGenerator()));
+      markerDriver = markerDriver.RunGeneratorsAndUpdateCompilation(compilation, out Compilation updated, out _);
+      emitCompilation = updated;
+    }
+
+    using MemoryStream peStream = new();
+    using MemoryStream xmlStream = new();
+    Microsoft.CodeAnalysis.Emit.EmitResult emitResult = emitCompilation.Emit(peStream, xmlDocumentationStream: xmlStream);
 
     if (!emitResult.Success)
     {
@@ -116,30 +142,47 @@ internal static class GeneratorTestHarness
 
   /// <summary>
   /// Runs the FastEndpoint generator against a compilation that references the contract assembly.
+  /// When enabled, <c>ApiEndpointContractAssemblies</c> defaults to <c>Test.Contracts</c>.
   /// </summary>
   public static GeneratorDriverRunResult Run(MetadataReference contractReference, bool enabled)
+    => Run([contractReference], enabled, enabled ? "Test.Contracts" : null);
+
+  /// <summary>
+  /// Runs the FastEndpoint generator against a host compilation that references the supplied
+  /// contract assemblies. <paramref name="contractAssemblies"/> is the
+  /// <c>ApiEndpointContractAssemblies</c> allow-list (null/empty when enabled reports TWE008).
+  /// </summary>
+  public static GeneratorDriverRunResult Run(
+    IEnumerable<MetadataReference> contractReferences,
+    bool enabled,
+    string? contractAssemblies)
   {
-    var compilation = CSharpCompilation.Create(
+    List<MetadataReference> references =
+    [
+      MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+      MetadataReference.CreateFromFile(typeof(ApiEndpointAttribute).Assembly.Location),
+    ];
+    references.AddRange(contractReferences);
+
+    CSharpCompilation compilation = CSharpCompilation.Create(
       "Test.Server",
-      syntaxTrees: Array.Empty<SyntaxTree>(),
-      references: new[]
-      {
-        MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-        MetadataReference.CreateFromFile(typeof(ApiEndpointAttribute).Assembly.Location),
-        contractReference,
-      },
+      syntaxTrees: [CSharpSyntaxTree.ParseText(HostSupportStubs)],
+      references: references,
       new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-    var generator = new FastEndpointSourceGenerator();
-
-    var options = new Dictionary<string, string>();
+    Dictionary<string, string> options = new();
     if (enabled)
     {
       options["build_property.EnableApiEndpointGeneration"] = "true";
     }
 
+    if (!string.IsNullOrWhiteSpace(contractAssemblies))
+    {
+      options["build_property.ApiEndpointContractAssemblies"] = contractAssemblies;
+    }
+
     GeneratorDriver driver = CSharpGeneratorDriver.Create(
-      generators: ImmutableArray.Create(generator.AsSourceGenerator()),
+      generators: ImmutableArray.Create(new FastEndpointSourceGenerator().AsSourceGenerator()),
       optionsProvider: new TestAnalyzerConfigOptionsProvider(options));
 
     return driver.RunGenerators(compilation).GetRunResult();

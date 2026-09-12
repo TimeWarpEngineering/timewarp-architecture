@@ -5,8 +5,10 @@
 #region Design
 // Removes the hand-maintained Dictionary<Type, Delegate> registration step (a contract could
 // define a factory that was never registered — agreement by memory). The registry is derived:
-// any referenced *contracts* assembly type with a public static parameterless
-// GetMockResponseFactory() and a nested Query/Command gets an entry keyed by that request type.
+// any type on a marked hosted-contracts assembly (or this compilation) with a public static
+// parameterless GetMockResponseFactory() and a nested Query/Command gets an entry keyed by that
+// request type. Assembly filter is HostedRouteDiscovery.GetMarkedReferencedAssemblies — the same
+// [assembly: ApiEndpointsEmbedded] participate rule FastEndpoint and ingress use.
 // Emission is gated on the compilation declaring a MockWebApiService class (the SPA), so server
 // projects that also reference contracts get nothing. The per-feature "use the real API while
 // developing" affordance moves from commenting dictionary lines to the hand-written
@@ -37,13 +39,12 @@ public sealed class MockResponseFactoryRegistryGenerator : IIncrementalGenerator
 
     var entries = new List<(string RequestType, string Shell)>();
 
-    IEnumerable<IAssemblySymbol> assemblies = compilation.SourceModule.ReferencedAssemblySymbols
-      .Where(static a => a.Name.Contains("contracts", System.StringComparison.OrdinalIgnoreCase))
+    IEnumerable<IAssemblySymbol> assemblies = HostedRouteDiscovery.GetMarkedReferencedAssemblies(compilation)
       .Concat(new[] { (IAssemblySymbol)compilation.Assembly });
 
     foreach (IAssemblySymbol assembly in assemblies)
     {
-      foreach (INamedTypeSymbol type in GetAllTypes(assembly.GlobalNamespace))
+      foreach (INamedTypeSymbol type in HostedRouteDiscovery.GetAllTypes(assembly.GlobalNamespace))
       {
         bool hasFactory = type.GetMembers(FactoryMethodName).OfType<IMethodSymbol>()
           .Any(static m => m is { IsStatic: true, Parameters.Length: 0, DeclaredAccessibility: Accessibility.Public });
@@ -76,21 +77,5 @@ public sealed class MockResponseFactoryRegistryGenerator : IIncrementalGenerator
     sb.Append("    };\n}\n");
 
     context.AddSource("GeneratedMockResponseFactories.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
-  }
-
-  private static IEnumerable<INamedTypeSymbol> GetAllTypes(INamespaceSymbol root)
-  {
-    foreach (INamespaceOrTypeSymbol member in root.GetMembers())
-    {
-      switch (member)
-      {
-        case INamespaceSymbol ns:
-          foreach (INamedTypeSymbol nested in GetAllTypes(ns)) yield return nested;
-          break;
-        case INamedTypeSymbol type:
-          yield return type;
-          break;
-      }
-    }
   }
 }

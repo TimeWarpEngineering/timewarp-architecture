@@ -50,9 +50,10 @@ Concrete shape:
 * **No hand-written `BaseEndpoint` shims** in the template after cutover.
 * **Validation** remains `FluentValidationBehavior` on TimeWarp.Mediator; FastEndpoints'
   `IncludeAbstractValidators` stays false; handlers do not re-validate.
-* Hosts set `EnableApiEndpointGeneration`; web-server filters with
-  `ApiEndpointContractAssemblies` so transitively referenced contract assemblies do not emit
-  foreign endpoints.
+* Hosts set `EnableApiEndpointGeneration` and require `ApiEndpointContractAssemblies` as an
+  AssemblyName allow-list (`web-contracts`, `api-contracts`) so transitively referenced contract
+  assemblies do not emit foreign endpoints (TWE008 if the list is empty, mistyped, or unmarked).
+  Hosted contracts apply `[assembly: ApiEndpointsEmbedded]`; hosts walk only marked refs.
 
 ### Positive Consequences
 

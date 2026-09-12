@@ -90,11 +90,26 @@ public class MockResponseFactoryRegistryGenerator_Tests
     return string.Join("\n", result.GeneratedTrees.Select(tree => tree.ToString()));
   }
 
+  private const string MarkerStubs = """
+    [assembly: TimeWarp.Architecture.ApiEndpointsEmbedded]
+    namespace TimeWarp.Architecture
+    {
+      [System.AttributeUsage(System.AttributeTargets.Assembly, Inherited = false)]
+      internal sealed class ApiEndpointsEmbeddedAttribute : System.Attribute
+      {
+      }
+    }
+    """;
+
   private static Microsoft.CodeAnalysis.MetadataReference CompileContracts(string source)
   {
     var compilation = CSharpCompilation.Create(
       "Test.Contracts",
-      syntaxTrees: [CSharpSyntaxTree.ParseText(source)],
+      syntaxTrees:
+      [
+        CSharpSyntaxTree.ParseText(source),
+        CSharpSyntaxTree.ParseText(MarkerStubs),
+      ],
       references: [Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(typeof(object).Assembly.Location)],
       new CSharpCompilationOptions(Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary));
 

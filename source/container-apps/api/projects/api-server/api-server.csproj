@@ -10,10 +10,12 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..\..\..</DockerfileContext>
     <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
+    <ApiEndpointContractAssemblies>api-contracts</ApiEndpointContractAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
     <CompilerVisibleProperty Include="EnableApiEndpointGeneration" />
+    <CompilerVisibleProperty Include="ApiEndpointContractAssemblies" />
   </ItemGroup>
 
   <ItemGroup Label="Core">

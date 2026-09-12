@@ -15,8 +15,9 @@
 // on outer OR nested is excluded (those never reach the server, so they must not gain an ingress
 // route).
 // IngressWebContractAssemblies (semicolon/comma list) names the assemblies whose routes belong to
-// Web.Server (web-contracts). Empty = scan every referenced assembly (kept only for parity with the
-// FastEndpoint generator; the ingress hosts always name web-contracts explicitly).
+// Web.Server (web-contracts). Empty = every *marked* referenced assembly (parity with the
+// FastEndpoint allow-list being required on servers; ingress hosts always name web-contracts).
+// Discovery walks only [assembly: ApiEndpointsEmbedded] refs (shared HostedRouteDiscovery filter).
 //
 // GLOBAL NAMESPACE (deliberate, task 115 lesson): the dotnet-new sourceName rewrite renames the
 // template's root namespace per generated app but CANNOT reach generator output — a hardcoded
@@ -128,18 +129,10 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
       List<HostedRoute> webRoutes = new();
       List<HostedRoute> foreignRoutes = new();
 
-      foreach (IAssemblySymbol assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+      foreach (IAssemblySymbol assembly in HostedRouteDiscovery.GetMarkedReferencedAssemblies(compilation))
       {
         bool isSource = options.SourceAssemblies.Count == 0
           || options.SourceAssemblies.Contains(assembly.Name);
-
-        bool isForeignContracts = !isSource
-          && assembly.Name.Contains("contracts", StringComparison.OrdinalIgnoreCase);
-
-        if (!isSource && !isForeignContracts)
-        {
-          continue;
-        }
 
         foreach (HostedRoute route in EnumerateHostedRoutes(assembly))
         {
