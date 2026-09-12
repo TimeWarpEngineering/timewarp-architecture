@@ -88,6 +88,10 @@ Design region, then delete the page" rather than a page-by-page rewrite.
 - [x] `runfiles/overview.md` fixed or deleted
 - [x] `dev template-smoke` passes and a generated app contains `skills/`
 - [x] `ganda repo audit`
+- [x] Implementation review (effort 1, general) under `review/`
+- [x] Round-1 findings M1–M4, M6, M7 fixed on this id; M5 wontfix
+- [x] Round-2 re-review: 0 open
+- [x] Disposition: accepted-exceptions (`review/disposition.md`)
 
 ## Notes
 
@@ -100,12 +104,27 @@ Design region, then delete the page" rather than a page-by-page rewrite.
 
 - Created: 226105 (2026-09-12)
 - Implementer: grok-4.6 (2026-09-12)
+- Review oracle: grok-4.6 (2026-09-12); general reviewer grok-4.5 rounds 1–2
 
 ## Results
 
 Retired `documentation/` (76 markdown files + 4 companions). Surviving rules folded into
 repo skills or Design regions per `inventory.md`. Generated apps receive `skills/` (not
 `skills/*/analysis/`). Purpose/Design regions plus skills are the documentation of record.
+
+### Review disposition
+
+- Rounds: 2. Roster: general. Effort: 1.
+- Final counts (open / fixed / wontfix): bug 0 / 3 / 0 · suggestion 0 / 2 / 1 · nit 0 / 1 / 0.
+- Disposition: **accepted-exceptions** (`review/disposition.md`). M5 wontfix: local
+  `.editorconfig` `[ganda.audit] directory-structure.severity = warning` keeps audit
+  non-blocking; dropping `documentation/` from ganda `RequiredDirectories` is a ganda-repo
+  change.
+- Round-1 fixes on this id: retarget leftover how-to/ADR citations (M1–M3, M6), enumerate
+  any `skills/*/analysis` in template-smoke (M4), inventory count 4 (M7).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`,
+  `review/disposition.md`.
 
 ### What was implemented
 
@@ -129,6 +148,9 @@ repo skills or Design regions per `inventory.md`. Generated apps receive `skills
 - Round-1 ledger M2, M20–M25, M27, M28 marked fixed on this branch
 - `.editorconfig` `[ganda.audit] directory-structure.severity = warning` so retiring
   `documentation/` is not a blocking audit error (ganda `RequiredDirectories` still lists it)
+- Review loop: retarget leftover how-to/ADR citations (api-server Program Design region,
+  postgres scripts, `tw-web-api-contracts`, two EF mapping Design regions); enumerate any
+  `skills/*/analysis` in `AssertSkillsShipped`; inventory unique-destination count 4
 
 ### Files changed (high level)
 
@@ -142,6 +164,9 @@ repo skills or Design regions per `inventory.md`. Generated apps receive `skills
 - `tools/dev-cli` template-smoke / publish-smoke + harness
 - `kanban/in-progress/210-…/review/round-1/merged.md`
 - Deleted `documentation/**`, `runfiles/overview.md`, `timewarp-templates/run-doc-server.ps1`
+- Review artifacts under this task `review/`
+- Review fixes: `program.cs`, `scripts/postgres/*`, `template-smoke-harness.cs`, two
+  entity-type-configuration Design regions, `tw-web-api-contracts/SKILL.md`, `inventory.md`
 
 ### Key decisions
 

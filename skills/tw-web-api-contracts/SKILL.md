@@ -148,7 +148,7 @@ Core 10's `PolicyEvaluator` then authenticates only the host default scheme (`id
 on web). `agent-token` and `mock-identity-session` never run unless the generated FastEndpoint
 emits `AuthSchemes(...)`. Named-policy scheme lists still Combine when present (api-server
 agent-scope policies) — still declare them on the contract so a policy-registration change
-cannot drop them. Do **not** put scheme lists back on permission policies (ADR-0010).
+cannot drop them. Do **not** put scheme lists back on permission policies (see `IPermissionEvaluator` Design region in `source/container-apps/web/platform/authorization/i-permission-evaluator-application.cs`).
 
 | Surface | `AuthenticationSchemes` |
 |---------|-------------------------|

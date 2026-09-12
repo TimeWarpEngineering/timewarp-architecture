@@ -104,6 +104,6 @@ skill or code and delete with the tree.
 ## Counts
 
 - 76 markdown files inventoried
-- fold-into-skill: 5 unique destinations (`tw-web-api-contracts`, `tw-feature-placement`, `tw-aggregate-pattern`, `tw-slice-isolation`) covering 7 files (0003, 0007, 0008, 0009, how-to-add-your-aggregate, how-to-remove-demo-features, api-endpoint-source-generator)
+- fold-into-skill: 4 unique destinations (`tw-web-api-contracts`, `tw-feature-placement`, `tw-aggregate-pattern`, `tw-slice-isolation`) covering 7 files (0003, 0007, 0008, 0009, how-to-add-your-aggregate, how-to-remove-demo-features, api-endpoint-source-generator)
 - fold-into-Design-region: 6 files (0002, 0010, agent-identity split, cloudflare edge, progressive profile, PDP swap)
 - delete: remaining 63 markdown files (stubs, boilerplate, superseded, no enforcing skill/code, or already covered)

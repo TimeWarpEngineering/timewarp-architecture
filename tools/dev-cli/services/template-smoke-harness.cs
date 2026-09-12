@@ -23,7 +23,7 @@
 // drifts as tests are added); serial for fixed port 7255. Aggregators are not in .slnx, so the
 // solution build is also blind to multi-mode compile.
 // AssertSkillsShipped: generated apps must contain the eight skills/*/SKILL.md files and must
-// not contain skills/*/analysis (pack exclude).
+// not contain any analysis/ directory under skills/ (pack exclude).
 #endregion
 
 namespace DevCli.Services;
@@ -677,7 +677,7 @@ internal sealed partial class TemplateSmokeHarness
 
   /// <summary>
   /// Generated apps must receive repo skills (packaged from skills/**) and must not receive
-  /// skills/*/analysis (excluded from the template pack).
+  /// any analysis/ directory under skills/ (excluded from the template pack).
   /// </summary>
   public bool AssertSkillsShipped(string outputDir)
   {
@@ -711,10 +711,10 @@ internal sealed partial class TemplateSmokeHarness
       }
     }
 
-    string analysisDir = Path.Combine(skillsDir, "tw-web-api-contracts", "analysis");
-    if (Directory.Exists(analysisDir))
+    foreach (string analysisDir in Directory.EnumerateDirectories(skillsDir, "analysis", SearchOption.AllDirectories))
     {
-      Terminal.WriteErrorLine("Generated app contains skills/tw-web-api-contracts/analysis — analysis/ must not ship.".Red());
+      string relativeAnalysis = Path.GetRelativePath(skillsDir, analysisDir).Replace('\\', '/');
+      Terminal.WriteErrorLine($"Generated app contains skills/{relativeAnalysis} — analysis/ must not ship.".Red());
       ok = false;
     }
 

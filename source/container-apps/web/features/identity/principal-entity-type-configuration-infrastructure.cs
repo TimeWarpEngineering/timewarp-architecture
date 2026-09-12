@@ -7,7 +7,7 @@
 // aggregate like Profile. Mapping lives under features/identity/*-infrastructure.cs so
 // web-infrastructure globs it; the library stays EF-free (task 104-032).
 // Schema "identity" / table "principals" — schema-per-slice on the single PostgresDbContext
-// (ADR-0009). Version uses .IsConcurrencyToken() as the DB race belt beside the store's own
+// (tw-aggregate-pattern). Version uses .IsConcurrencyToken() as the DB race belt beside the store's own
 // EntityVersion.Next CAS; AggregateDbContext does not auto-bump Version because Principal is not
 // IAggregateRoot (store-CAS authority — soft-gate 104-032).
 // PropertyAccessMode.Property on Version so PropertyEntry OriginalValue/CurrentValue writes
