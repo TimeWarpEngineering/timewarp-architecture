@@ -1,7 +1,8 @@
 #region Purpose
 // End-to-end tests for per-request WebAuthn RP-ID selection (task 104-031): the same running host
-// serves passkeys under a second allowlisted host, rejects an unlisted host, and ignores a spoofed
-// X-Forwarded-Host — the RP ID is chosen from the real request Host against WebAuthnOptions.AllowedRpIds.
+// serves passkeys under a second allowlisted host, rejects an unlisted host, and ignores spoofed
+// X-Forwarded-Host / client-supplied X-TimeWarp-Circuit-Host on non-loopback Host — the RP ID is
+// chosen from the real request Host against WebAuthnOptions.AllowedRpIds.
 #endregion
 
 #region Design
@@ -14,10 +15,11 @@
 // webauthn-second.test means authenticatorData hashes "webauthn-second.test" and clientDataJSON's
 // origin is https://webauthn-second.test — the empty-AllowedOrigins fallback then accepts it because
 // its host equals the selected RP ID.
-// X-Forwarded-Host is asserted to have NO effect: selection reads X-TimeWarp-Circuit-Host when
-// present, else HttpContext.Request.Host (the ingress preserves the ORIGINAL Host; no
-// UseForwardedHeaders consumes a spoofable forwarded header), so a forged X-Forwarded-Host can
-// never move selection off the real Host — see the AppHost's Design region.
+// X-Forwarded-Host is asserted to have NO effect: selection reads HttpContext.Request.Host (the
+// ingress preserves the ORIGINAL Host; no UseForwardedHeaders consumes a spoofable forwarded
+// header), so a forged X-Forwarded-Host can never move selection off the real Host — see the
+// AppHost's Design region. A client-supplied X-TimeWarp-Circuit-Host is ignored unless Host is
+// loopback (the trusted InteractiveServer HTTPS hop); on the public path Request.Host wins.
 #endregion
 
 namespace PasskeyHostSelection_;
@@ -27,6 +29,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using TimeWarp.Architecture.Features.Identity;
+using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 
 public class Returns_
@@ -138,6 +141,30 @@ public class Returns_
     rpId.ShouldBe("localhost");
   }
 
+  public static async Task Selection_Stays_On_Request_Host_Given_Spoofed_CircuitHost_On_NonLoopback()
+  {
+    // Real Host is an allowlisted public host; a client-supplied circuit-host header must NOT win
+    // because Request.Host is not loopback.
+    HttpResponseMessage response = await Post
+    (
+      StartPasskeyRegistration.Command.RouteTemplate,
+      new StartPasskeyRegistration.Command(),
+      host: SecondHost,
+      circuitHost: "localhost"
+    );
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+    StartPasskeyRegistration.Response? startResponse =
+      JsonSerializer.Deserialize<StartPasskeyRegistration.Response>(await response.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
+    startResponse.ShouldNotBeNull();
+
+    using JsonDocument optionsDocument = JsonDocument.Parse(startResponse.OptionsJson);
+    string rpId = optionsDocument.RootElement.GetProperty("rp").GetProperty("id").GetString()!;
+
+    rpId.ShouldBe(SecondHost);
+  }
+
   private static async Task<byte[]> StartCeremony<TCommand>(string routeTemplate, TCommand command, string host)
     where TCommand : class
   {
@@ -149,7 +176,14 @@ public class Returns_
     return ReadChallenge(optionsJson);
   }
 
-  private static async Task<HttpResponseMessage> Post<TCommand>(string routeTemplate, TCommand command, string host, string? forwardedHost = null)
+  private static async Task<HttpResponseMessage> Post<TCommand>
+  (
+    string routeTemplate,
+    TCommand command,
+    string host,
+    string? forwardedHost = null,
+    string? circuitHost = null
+  )
   {
     string json = JsonSerializer.Serialize(command, ContractSerializationDefaults.Options);
 
@@ -176,6 +210,11 @@ public class Returns_
     if (forwardedHost is not null)
     {
       request.Headers.Add("X-Forwarded-Host", forwardedHost);
+    }
+
+    if (circuitHost is not null)
+    {
+      request.Headers.Add(MockAuthenticationDefaults.CircuitHostHeader, circuitHost);
     }
 
     return await client.SendAsync(request);

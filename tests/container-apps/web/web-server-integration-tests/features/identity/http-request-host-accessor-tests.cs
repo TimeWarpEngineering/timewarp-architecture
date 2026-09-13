@@ -1,6 +1,6 @@
 #region Purpose
-// Host-free coverage that HttpRequestHostAccessor prefers X-TimeWarp-Circuit-Host when present
-// and falls back to Request.Host when that internal header is absent.
+// Host-free coverage that HttpRequestHostAccessor honors X-TimeWarp-Circuit-Host only when
+// Request.Host is loopback, falls back to Request.Host otherwise, and ignores X-Forwarded-Host.
 #endregion
 
 namespace HttpRequestHostAccessor_;
@@ -56,6 +56,32 @@ public class GetRequestHost_Should
     DefaultHttpContext httpContext = new();
     httpContext.Request.Host = new HostString("arch.timewarp.work");
     httpContext.Request.Headers["X-Forwarded-Host"] = "evil.test";
+
+    HttpRequestHostAccessor accessor = new(new HttpContextAccessor { HttpContext = httpContext });
+
+    accessor.GetRequestHost().ShouldBe("arch.timewarp.work");
+
+    return Task.CompletedTask;
+  }
+
+  public static Task Ignore_Circuit_Host_Header_When_Request_Host_Is_Not_Loopback()
+  {
+    DefaultHttpContext httpContext = new();
+    httpContext.Request.Host = new HostString("arch.timewarp.work");
+    httpContext.Request.Headers[MockAuthenticationDefaults.CircuitHostHeader] = "evil.test";
+
+    HttpRequestHostAccessor accessor = new(new HttpContextAccessor { HttpContext = httpContext });
+
+    accessor.GetRequestHost().ShouldBe("arch.timewarp.work");
+
+    return Task.CompletedTask;
+  }
+
+  public static Task Return_Circuit_Host_Header_When_Request_Host_Is_Loopback_Ip()
+  {
+    DefaultHttpContext httpContext = new();
+    httpContext.Request.Host = new HostString("127.0.0.1");
+    httpContext.Request.Headers[MockAuthenticationDefaults.CircuitHostHeader] = "arch.timewarp.work";
 
     HttpRequestHostAccessor accessor = new(new HttpContextAccessor { HttpContext = httpContext });
 

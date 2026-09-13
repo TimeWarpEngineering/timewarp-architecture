@@ -12,7 +12,8 @@
 // Callers pass raw config strings so this type has no IConfiguration dependency.
 // X-TimeWarp-Circuit-Host is set only by IdentitySessionCookieForwardingHandler from the circuit
 // request Host (port stripped). Same trust as the mock principal header: never copied from a
-// client-supplied X-Forwarded-Host. HttpRequestHostAccessor prefers it over Request.Host.
+// client-supplied X-Forwarded-Host. HttpRequestHostAccessor honors it only when Request.Host is
+// loopback; on the public path a client-supplied copy is ignored.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -45,6 +46,7 @@ public static class MockAuthenticationDefaults
   /// Internal header set only by IdentitySessionCookieForwardingHandler so HTTPS loopback
   /// can carry the circuit/page host for WebAuthn RP-ID selection without rewriting HTTP Host
   /// (which HttpClient uses for TLS SNI / certificate name validation against localhost).
+  /// HttpRequestHostAccessor honors it only when Request.Host is loopback.
   /// Never read a client-supplied X-Forwarded-Host in its place.
   /// </summary>
   public const string CircuitHostHeader = "X-TimeWarp-Circuit-Host";
