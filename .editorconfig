@@ -394,6 +394,5 @@ dotnet_diagnostic.TWA0015.severity = none
 dotnet_diagnostic.TWA0016.severity = none
 
 [ganda.audit]
-# documentation/ retired (210-005). Ganda RequiredDirectories still lists it.
-# Warning keeps tests/, skills/, and kanban/ visible without blocking this repo.
-directory-structure.severity = warning
+# documentation/ retired (210-005); regions + skills are the record (see AGENTS.md §Documentation).
+directory-structure.exclude = documentation
