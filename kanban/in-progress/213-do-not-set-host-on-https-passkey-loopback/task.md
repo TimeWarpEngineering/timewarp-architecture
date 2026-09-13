@@ -32,6 +32,7 @@ Keep the 212 *goal* (RP ID = browser host on Server loopback). Stop achieving it
 - [x] Stop setting HTTP Host on HTTPS WebService loopback
 - [x] Internal circuit-host header + accessor fallback
 - [x] Rewrite 212 Host-header tests; add accessor tests
+- [x] Implementation review (effort 1) — disposition clean
 - [ ] Manual smoke: cold InteractiveAuto (Server) sign-in on `https://arch.timewarp.work` with Proton Pass — no SSL crash, 200 session
 
 ## Session
@@ -39,6 +40,7 @@ Keep the 212 *goal* (RP ID = browser host on Server loopback). Stop achieving it
 - Created: 1067753 (2026-09-13)
 - Cockpit: grok 01a0964a-adbd-7ad1-8c1e-db8d962e1e45 (2026-09-13)
 - Implementer: grok session 01a09895-d637-74e0-bb0f-38ace9f41bff (2026-09-13)
+- Review oracle: grok session 01a098a1-9f6b-7d72-a42a-bb4aa75567ab (2026-09-13)
 
 ## Notes
 
@@ -52,34 +54,51 @@ Related:
 - `tests/container-apps/web/web-server-integration-tests/features/identity/identity-session-cookie-forwarding-tests.cs`
 - `tests/container-apps/web/web-server-integration-tests/features/identity/http-request-host-accessor-tests.cs`
 
+Implementation review (effort 1, general only) lives under `review/`:
+
+- `review/review-framework.md`
+- `review/round-1/general.md`
+- `review/round-1/merged.md`
+- `review/round-2/general.md`
+- `review/round-2/merged.md`
+- `review/disposition.md`
+
 ## Results
 
-HTTPS InteractiveServer/Auto `WebService` loopback no longer rewrites HTTP `Host` to the public hostname. The circuit/page host is copied onto `X-TimeWarp-Circuit-Host` (port already stripped). `HttpRequestHostAccessor.GetRequestHost()` prefers that internal header when present and non-empty, else `Request.Host.Host` (YARP public path unchanged). TLS still validates `localhost` against the ASP.NET dev cert. Allowlist / `WebAuthnRelyingPartySelection` unchanged. No `UseForwardedHeaders`, no SSL-validation bypass, no HTTP loopback. The task-212 Information log `Passkey authentication verification failed: {FailureReason} (rpId {RelyingPartyId})` is unchanged.
+HTTPS InteractiveServer/Auto `WebService` loopback no longer rewrites HTTP `Host` to the public hostname. The circuit/page host is copied onto `X-TimeWarp-Circuit-Host` (port already stripped). `HttpRequestHostAccessor.GetRequestHost()` honors that header only when `Request.Host` is loopback; otherwise `Request.Host.Host` wins (a client-supplied copy on the public YARP path is ignored). TLS still validates `localhost` against the ASP.NET dev cert. Allowlist / `WebAuthnRelyingPartySelection` unchanged. No `UseForwardedHeaders`, no SSL-validation bypass, no HTTP loopback. The task-212 Information log `Passkey authentication verification failed: {FailureReason} (rpId {RelyingPartyId})` is unchanged.
 
 **Files changed**
 
 - `source/container-apps/web/projects/web-spa/services/mocks/mock-authentication-defaults.cs` — `CircuitHostHeader = "X-TimeWarp-Circuit-Host"`
 - `source/container-apps/web/platform/identity-host/identity-session-cookie-forwarding-server.cs` — `CopyCircuitHost` sets the internal header; does not set `Headers.Host`
-- `source/container-apps/web/platform/identity-host/http-request-host-accessor-server.cs` — prefer internal header, else `Request.Host.Host`
-- `source/container-apps/web/platform/identity-host/i-request-host-accessor-application.cs` — Design: two-source host read
-- `source/container-apps/web/features/identity/web-authn-options-application.cs` — Design: no Host rewrite on HTTPS loopback
-- `source/container-apps/web/projects/web-server/program.cs` — Design: internal header, not HTTP Host
+- `source/container-apps/web/platform/identity-host/http-request-host-accessor-server.cs` — honor internal header only on loopback Host, else `Request.Host.Host`
+- `source/container-apps/web/platform/identity-host/i-request-host-accessor-application.cs` — Design: two-source host read; loopback gate
+- `source/container-apps/web/features/identity/web-authn-options-application.cs` — Design: no Host rewrite on HTTPS loopback; header ignored on public path
+- `source/container-apps/web/projects/web-server/program.cs` — Design: internal header, not HTTP Host; loopback-only honor
 - `tests/container-apps/web/web-server-integration-tests/features/identity/identity-session-cookie-forwarding-tests.cs` — 212 Host-copy assertions rewritten
-- `tests/container-apps/web/web-server-integration-tests/features/identity/http-request-host-accessor-tests.cs` — accessor present/absent/empty/X-Forwarded-Host/null
-- `tests/container-apps/web/web-server-integration-tests/features/identity/passkey-host-selection-tests.cs` — Design only
+- `tests/container-apps/web/web-server-integration-tests/features/identity/http-request-host-accessor-tests.cs` — loopback honor, non-loopback ignore, empty/absent/X-Forwarded-Host/null
+- `tests/container-apps/web/web-server-integration-tests/features/identity/passkey-host-selection-tests.cs` — circuit-host spoof on non-loopback Host ignored
 
 **Key decisions**
 
 - Internal header lives next to `X-TimeWarp-Mock-Principal-Id` (`MockAuthenticationDefaults.CircuitHostHeader`). Set only from `HttpContext.Request.Host.Host` of the circuit request — never from `X-Forwarded-Host`.
 - If the outgoing request already has `X-TimeWarp-Circuit-Host`, it is not overwritten. `Headers.Host` is never written by this handler.
+- Review M1: `HttpRequestHostAccessor` honors `X-TimeWarp-Circuit-Host` only when `Request.Host.Host` is loopback (`localhost` or `IPAddress.IsLoopback`). A client-supplied copy on the public path is ignored.
 
 **Test outcomes**
 
 - `IdentitySessionCookieForwarding_` — 6 passed
-- `HttpRequestHostAccessor_` — 5 passed
-- `PasskeyHostSelection_` — 4 passed
+- `HttpRequestHostAccessor_` — 7 passed (loopback honor, non-loopback ignore, loopback IP)
+- `PasskeyHostSelection_` — 5 passed (includes spoofed circuit-host on non-loopback Host)
 - `Public_host_assertion*` (timewarp-identity) — 2 passed (OriginMismatch when selected RP is localhost vs public origin; success when they match)
 - `web-server` Release build — 0/0
+
+**Review** (effort 1, general only; 2 rounds)
+
+- Roster: general (`review/round-1/general.md`, `review/round-2/general.md`)
+- Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0; nit 0
+- Disposition: **clean** (`review/disposition.md`) — M1 fixed on this task (`cd1f5b56`); no wontfix; no escalation
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`
 
 ### How to validate
 
@@ -90,10 +109,10 @@ cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Relea
 # expect: 6 passed — circuit host on X-TimeWarp-Circuit-Host, Headers.Host unset/empty
 
 cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class HttpRequestHostAccessor
-# expect: 5 passed — internal header wins; Request.Host when absent; X-Forwarded-Host ignored
+# expect: 7 passed — header wins on loopback Host; Request.Host on public Host even if header set; X-Forwarded-Host ignored
 
 cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class PasskeyHostSelection
-# expect: 4 passed — public Host path + X-Forwarded-Host still ignored
+# expect: 5 passed — public Host path + X-Forwarded-Host ignored + circuit-host spoof ignored on non-loopback Host
 
 cd tests/libraries/timewarp-identity-tests && dotnet test -c Release -- --filter-method Public_host_assertion
 # expect: 2 passed — Verify fails when selected RP is localhost vs arch.timewarp.work origin; succeeds when they match
