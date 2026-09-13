@@ -30,6 +30,7 @@ for everything except the one deliberately retired directory.
 - [x] `.editorconfig` swapped; comment updated
 - [x] `ganda repo audit` passes with the exclusion note on `directory-structure`
 - [x] Mention in 210-005's disposition exception log that the wontfix is now resolved (one line under its `review/disposition.md` Escalations, or in this task's Results if that file is frozen)
+- [x] Implementation review (effort 1) — disposition clean
 
 ## Depends on
 
@@ -41,10 +42,18 @@ for everything except the one deliberately retired directory.
 - Decision (Steve, 2026-09-13): `documentation/` stays required by default across TimeWarp
   repos; exemption is per-repo and per-directory via `.editorconfig`.
 
+Implementation review (effort 1, general only) lives under `review/`:
+
+- `review/review-framework.md`
+- `review/round-1/general.md`
+- `review/round-1/merged.md`
+- `review/disposition.md`
+
 ## Session
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-13)
 - Implementer: grok-4.6 session 01a099d7-02c0-78d2-8d6c-c0d4971bdc91 (2026-09-13)
+- Review oracle: grok-4.6 session 01a099e0-9d9f-74a1-8a2c-4e387affb2d9 (2026-09-13)
 
 ## Results
 
@@ -66,6 +75,13 @@ Swapped the repo-wide `directory-structure` warning for a per-directory exclude 
 
 - No product code changes.
 - Fresh worktrees do not carry `bin/dev` (gitignored `[Bb]in/`). Restore it (copy from the origin-home worktree or `self-install`) before treating `bin-dev` / `dev-cli-capabilities` as green.
+
+**Review** (effort 1, general only; 1 round)
+
+- Roster: general (`review/round-1/general.md`)
+- Final counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0
+- Disposition: **clean** (`review/disposition.md`) — no findings; no wontfix; no escalation
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`
 
 ### How to validate
 
