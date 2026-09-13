@@ -10,6 +10,9 @@
 // Entra (Authentication:UseEntra): opt-in only — default happy path is mock (dev) or first-party
 // identity-session / passkey (non-mock). MSAL and AzureAd* appsettings are dormant unless true.
 // Callers pass raw config strings so this type has no IConfiguration dependency.
+// X-TimeWarp-Circuit-Host is set only by IdentitySessionCookieForwardingHandler from the circuit
+// request Host (port stripped). Same trust as the mock principal header: never copied from a
+// client-supplied X-Forwarded-Host. HttpRequestHostAccessor prefers it over Request.Host.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -37,6 +40,14 @@ public static class MockAuthenticationDefaults
   /// for closed-box HTTP tests without a passkey ceremony.
   /// </summary>
   public const string MockPrincipalIdHeader = "X-TimeWarp-Mock-Principal-Id";
+
+  /// <summary>
+  /// Internal header set only by IdentitySessionCookieForwardingHandler so HTTPS loopback
+  /// can carry the circuit/page host for WebAuthn RP-ID selection without rewriting HTTP Host
+  /// (which HttpClient uses for TLS SNI / certificate name validation against localhost).
+  /// Never read a client-supplied X-Forwarded-Host in its place.
+  /// </summary>
+  public const string CircuitHostHeader = "X-TimeWarp-Circuit-Host";
 
   /// <summary>
   /// Returns true only for environments that may activate mock authentication.

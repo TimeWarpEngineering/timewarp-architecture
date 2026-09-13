@@ -9,7 +9,9 @@
 // which deliberately has NO ASP.NET Core reference — the same layering constraint that gave rise to
 // ICurrentPrincipalAccessor (impl in web-server via IHttpContextAccessor). This port is that same
 // pattern: a scheme-agnostic host read that web-application declares and web-server implements
-// (HttpRequestHostAccessor) off HttpContext.Request.Host.Host.
+// (HttpRequestHostAccessor). The server implementation prefers X-TimeWarp-Circuit-Host when the
+// InteractiveServer loopback handler set it, else Request.Host.Host. Callers still receive a bare
+// host string (no port); they never see which source was used.
 // Returns the HOST ONLY (no port): an RP ID is a bare domain, and WebAuthnRelyingPartySelection
 // matches it against AllowedRpIds entries which are validated as bare DNS names. Returns null (never
 // throws) when there is no active HTTP request or no Host — callers treat null as "host not allowed"

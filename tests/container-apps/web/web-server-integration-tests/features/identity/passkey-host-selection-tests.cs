@@ -14,10 +14,10 @@
 // webauthn-second.test means authenticatorData hashes "webauthn-second.test" and clientDataJSON's
 // origin is https://webauthn-second.test — the empty-AllowedOrigins fallback then accepts it because
 // its host equals the selected RP ID.
-// X-Forwarded-Host is asserted to have NO effect: selection reads HttpContext.Request.Host only (the
-// ingress preserves the ORIGINAL Host; no UseForwardedHeaders consumes a spoofable forwarded header),
-// so a forged X-Forwarded-Host can never move selection off the real Host — see the AppHost's Design
-// region.
+// X-Forwarded-Host is asserted to have NO effect: selection reads X-TimeWarp-Circuit-Host when
+// present, else HttpContext.Request.Host (the ingress preserves the ORIGINAL Host; no
+// UseForwardedHeaders consumes a spoofable forwarded header), so a forged X-Forwarded-Host can
+// never move selection off the real Host — see the AppHost's Design region.
 #endregion
 
 namespace PasskeyHostSelection_;

@@ -1,6 +1,7 @@
 #region Purpose
-// IRequestHostAccessor implementation: reads the current request's host (port stripped) off
-// HttpContext.Request.Host so the identity handlers can select a WebAuthn RP ID per request.
+// IRequestHostAccessor implementation: reads the circuit host (internal header) or, when that
+// is absent, the current request's host (port stripped) so identity handlers can select a
+// WebAuthn RP ID per request.
 #endregion
 
 #region Design
@@ -18,7 +19,10 @@
 // X-Forwarded-Host is consumed; a forged Host can at most select among the already-approved
 // AllowedRpIds, never expand them. InteractiveServer/Auto named-HttpClient loopback is not a
 // forwarded-header problem: IdentitySessionCookieForwardingHandler copies the circuit request's
-// Host (port stripped) onto that loopback so this accessor still reads the browser host.
+// host (port stripped) onto X-TimeWarp-Circuit-Host. This accessor prefers that internal header
+// when present so HTTPS loopback TLS still validates localhost against the ASP.NET dev cert.
+// HTTP Host is left unset on that hop. The public YARP path has no internal header and still
+// reads Request.Host.Host.
 // Null-safe: no HttpContext (e.g. resolved outside a request) returns null rather than throwing,
 // which the selection treats as a fail-closed "host not allowed" — same posture as
 // HttpCurrentPrincipalAccessor's null return for no authenticated caller.
@@ -39,7 +43,19 @@ public sealed class HttpRequestHostAccessor : IRequestHostAccessor
 
   public string? GetRequestHost()
   {
-    string? host = HttpContextAccessor.HttpContext?.Request.Host.Host;
+    HttpContext? httpContext = HttpContextAccessor.HttpContext;
+    if (httpContext is null)
+    {
+      return null;
+    }
+
+    string circuitHost = httpContext.Request.Headers[MockAuthenticationDefaults.CircuitHostHeader].ToString();
+    if (!string.IsNullOrEmpty(circuitHost))
+    {
+      return circuitHost;
+    }
+
+    string? host = httpContext.Request.Host.Host;
     return string.IsNullOrEmpty(host) ? null : host;
   }
 }
