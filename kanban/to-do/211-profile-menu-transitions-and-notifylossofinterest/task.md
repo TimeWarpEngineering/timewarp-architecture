@@ -17,7 +17,9 @@ uses FluentUI `FluentMenu` (click-to-open, light-DOM popup, outside-dismiss are
 the web component's job). Nothing in the SPA reads `ProfileMenuState`. There
 are no tests for it.
 
-Pick one:
+**Decided (Steve, 2026-09-13): option 1 — delete.** FluentMenu in `Profile.razor` is the product menu; the hand-rolled state is a pre-FluentUI leftover. Do not wire option 2.
+
+Options considered:
 
 1. **Delete** the unused `features/profile-menu/` state if FluentMenu remains
    the product menu (likely). Confirm no generated ActionSet consumers, no
@@ -33,7 +35,9 @@ Files:
 
 ## Checklist
 
-- [ ] Either delete unused `ProfileMenuState` or wire transitions + loss-of-interest
+- [ ] Delete `source/container-apps/web/projects/web-spa/features/profile-menu/` (state, ActionSets, any `.razor`/`.css` in the folder)
+- [ ] Confirm no remaining references: generated ActionSet consumers, `_Imports.razor`, Redux DevTools registrations, tests, skills
+- [ ] Reconcile any Design region that pointed at task 211 or `ProfileMenuState`
 - [ ] Live Profile FluentMenu still opens/closes and stays in the viewport
 - [ ] `dev build` 0/0
 - [ ] `dev test`
@@ -45,5 +49,7 @@ Files:
   `kanban/in-progress/210-post-migration-cleanliness-code-review-of-the-architecture-template/review/round-1/merged.md`.
 
 ## Session
+
+- Decision recorded: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-13)
 
 - Created: 397564 (2026-09-12)
