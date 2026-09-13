@@ -187,10 +187,4 @@
       <Output TaskParameter="Endpoints" ItemName="StaticWebAssetEndpoint" />
     </DefineStaticWebAssetEndpoints>
   </Target>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="features\profile-menu\components\ProfileDropDown.razor" />
-    <_ContentIncludedByDefault Remove="features\profile-menu\components\ProfileMenuNavLink.razor" />
-    <_ContentIncludedByDefault Remove="features\profile-menu\components\ProfileMenuPanel.razor" />
-  </ItemGroup>
 </Project>
