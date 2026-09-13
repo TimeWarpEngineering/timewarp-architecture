@@ -17,4 +17,4 @@ Round 1 (effort 1, general) raised 7 findings against the documentation-tree ret
 
 ## Escalations
 
-- None.
+- Task 214 resolved M5: `directory-structure.severity = warning` replaced with `directory-structure.exclude = documentation` (ganda 278 / PR #157).
