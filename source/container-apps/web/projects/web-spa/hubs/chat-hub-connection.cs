@@ -14,8 +14,9 @@
 // the CancellationTokenSource, so after disposal the token cannot be read at all — reading
 // CancellationTokenSource.Token throws ObjectDisposedException. A message arriving after teardown
 // therefore faults inside SignalR's handler instead of being silently dropped; that is left
-// unguarded deliberately (unlike the event-stream trace), because a dropped chat message is real
-// data loss and should surface in the hub's own logging.
+// unguarded deliberately (unlike TrackEvent telemetry POST — TrackEventBehavior swallows
+// OCE/ODE so a lost telemetry POST never fails the traced action), because a dropped chat
+// message is real data loss and should surface in the hub's own logging.
 // The handler is typed as an explicit Func<..., Task> local: HubConnection.On has both
 // Func<T, Task> and Action<T> overloads, and letting overload resolution pick is how an inbound
 // dispatch silently reverts to async-void.

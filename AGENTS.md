@@ -23,7 +23,7 @@ model choice, and available context/tokens are unknown to the estimator and chan
   packaging tree. Changes here ship to every generated app.
 - Feature flags (`api`, `grpc`, `web`, `yarp`, `postgres`) are template preprocessor switches —
   keep `<!--#if (flag)-->` / `#if flag` regions intact when editing near them. Demo features
-  (counter, event-stream) ship unconditionally; removing them is **`tw-slice-isolation`**
+  (counter, analytics) ship unconditionally; removing them is **`tw-slice-isolation`**
   (Removing a demo slice).
 
 ## Build / run / test

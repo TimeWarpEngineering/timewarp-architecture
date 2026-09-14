@@ -6,15 +6,15 @@
 // The client is intentionally dumb: event name + correlation id only — no payload, no vendor SDK.
 // The server decides the sink. Actions opt in via [TrackEvent] rather than tracking every action
 // by default. A pipeline behavior (not a post-action notification) is used so the template keeps
-// a client IPipelineBehavior exemplar after event-stream is retired.
+// a client IPipelineBehavior exemplar.
 // After await next() succeeds, typeof(TRequest) is checked for [TrackEvent]; dispatch goes
 // through the generated AnalyticsState.TrackEvent(...) method off IStore (TWA0022 bans direct
 // Mediator.Send). Nested Action types all have Name "Action", so the wire EventName is
 // FullName. TrackEventActionSet.Action is skipped to avoid recursion.
-// Teardown semantics match EventStreamBehavior: State<TState>.Dispose cancels then disposes
-// the CancellationTokenSource, so a post-disposal generated dispatch raises
-// ObjectDisposedException (not a mere cancellation). OperationCanceledException is kept as
-// forward cover. Losing a telemetry POST during teardown must never fail the traced action.
+// Teardown: State<TState>.Dispose cancels then disposes the CancellationTokenSource, so a
+// post-disposal generated dispatch raises ObjectDisposedException (not a mere cancellation).
+// OperationCanceledException is kept as forward cover. Losing a telemetry POST during
+// teardown must never fail the traced action.
 // Constrained to IAction so non-state mediator requests are not inspected.
 #endregion
 

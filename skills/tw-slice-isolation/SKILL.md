@@ -182,8 +182,8 @@ Living examples:
 
 ## Removing a demo slice
 
-Counter and EventStream ship in every generated app. They are teaching material, **not**
-template flags — remove them by deleting code.
+Counter and the analytics client slice ship in every generated app. They are teaching
+material, **not** template flags — remove them by deleting code.
 
 A slice is an independently removable vertical unit. Identity is the namespace under
 `{RootNamespace}.Features` (e.g. `…Features.Counters`), not the folder path. The compiler
@@ -192,7 +192,7 @@ is 0/0.
 
 Deleting a SPA demo touches, at minimum:
 
-1. The slice folder (`web-spa/features/counter/`, `web-spa/features/event-stream/`).
+1. The slice folder (`web-spa/features/counter/`, `web-spa/features/analytics/`).
 2. `components/NavMenu.razor` — its nav link.
 3. `global-usings.cs` / `_Imports.razor` — its namespace usings.
 4. Tests under `tests/container-apps/web/web-spa-integration-tests/` plus shared pipeline
