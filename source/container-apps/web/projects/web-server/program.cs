@@ -9,8 +9,11 @@
 // call is gated by the postgres template feature flag via a preprocessor directive, so a template
 // consumer without that flag compiles the call out entirely. When the flag is present the module
 // itself still no-ops at runtime if no connection string is configured (see PostgresDbModule).
-// Serilog bootstrap logger wraps host build so startup crashes are still captured; the app runs
-// through RunOaktonCommands to expose environment checks as CLI commands.
+// Logging is the host ILogger plus AddOpenTelemetry from AddServiceDefaults (same story as
+// api-server). Do not bootstrap Serilog: UseSerilog replaces host providers and drops the OTLP
+// logging exporter, so structured logs never reach the Aspire dashboard. Startup crash capture is
+// a try/catch around host build/run — ILogger after Build, Console.Error before any logger exists.
+// The app runs through RunOaktonCommands to expose environment checks as CLI commands.
 // Web.Spa services are registered here too — prerendering runs SPA code on the server.
 // API surface is generated FastEndpoints from [ApiEndpoint] web-contracts (MVC BaseEndpoint
 // removed task 131 F-002). Pipeline order: UseMarkdownContentNegotiation (before UseRouting —
@@ -60,36 +63,20 @@ using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Common.Infrastructure;
-using Serilog;
 
-public class Program : IAspNetProgram
+public partial class Program : IAspNetProgram
 {
   const string ApiVersion = "v1";
   const string ApiTitle = $"TimeWarp.Architecture Web.Server API {ApiVersion}";
 
   public static async Task<int> Main(string[] argumentArray)
   {
-    SelfLog.Enable(Console.Error);
     Thread.CurrentThread.Name = nameof(Main);
 
-    Log.Logger = new LoggerConfiguration()
-      .WriteTo.Console()
-      .CreateBootstrapLogger();
-
-    using ILoggerFactory loggerFactory = new LoggerFactory();
-    loggerFactory.AddSerilog(Log.Logger);
-
-    ILogger<Program> logger = loggerFactory.CreateLogger<Program>();
-
+    ILogger<Program>? logger = null;
     try
     {
-      Log.Information("Starting web host");
       WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
-      builder.Host.UseSerilog((context, services, configuration) =>
-        configuration
-          .ReadFrom.Configuration(context.Configuration)
-          .ReadFrom.Services(services)
-          .Enrich.FromLogContext());
 
       ConfigureHostApplicationBuilder(builder);
       ConfigureConfiguration(builder.Configuration);
@@ -98,10 +85,12 @@ public class Program : IAspNetProgram
       ConfigureServices(builder.Services, builder.Configuration, builder.Environment.EnvironmentName);
 
       WebApplication webApplication = builder.Build();
+      logger = webApplication.Services.GetRequiredService<ILogger<Program>>();
 
       webApplication.MapDefaultEndpoints();
 
-      Log.Information($"EnvironmentName: {webApplication.Environment.EnvironmentName}");
+      LogStartingWebHost(logger);
+      LogEnvironmentName(logger, webApplication.Environment.EnvironmentName);
 
       ConfigureMiddleware(webApplication);
       ConfigureEndpoints(webApplication);
@@ -110,12 +99,16 @@ public class Program : IAspNetProgram
     }
     catch (Exception exception)
     {
-      Log.Fatal(exception, messageTemplate: "Host terminated unexpectedly");
+      if (logger is not null)
+      {
+        LogHostTerminatedUnexpectedly(logger, exception);
+      }
+      else
+      {
+        await Console.Error.WriteLineAsync($"Host terminated unexpectedly{Environment.NewLine}{exception}").ConfigureAwait(false);
+      }
+
       return 1;
-    }
-    finally
-    {
-      await Log.CloseAndFlushAsync().ConfigureAwait(false);
     }
   }
 
@@ -150,7 +143,6 @@ public class Program : IAspNetProgram
   /// </summary>
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration, string? environmentName)
   {
-    serviceCollection.AddSerilog();
     serviceCollection.AddHttpClient();
     serviceCollection.AddTransient<IdentitySessionCookieForwardingHandler>();
     serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.WebServiceName))
@@ -531,4 +523,13 @@ public class Program : IAspNetProgram
       SampleEnvironmentCheck.Description, sampleEnvironmentCheck => sampleEnvironmentCheck.Check()
     );
   }
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "Starting web host")]
+  private static partial void LogStartingWebHost(ILogger logger);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "EnvironmentName: {EnvironmentName}")]
+  private static partial void LogEnvironmentName(ILogger logger, string environmentName);
+
+  [LoggerMessage(Level = LogLevel.Critical, Message = "Host terminated unexpectedly")]
+  private static partial void LogHostTerminatedUnexpectedly(ILogger logger, Exception exception);
 }
