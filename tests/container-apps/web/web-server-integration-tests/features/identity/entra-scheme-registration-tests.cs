@@ -7,10 +7,12 @@
 // IModule 2-arg overload) and inspects the resulting IServiceCollection / a built provider —
 // no live tenant. UseEntra synonym must register entra AND keep identity-session as default.
 // AddMicrosoftIdentityWebAppAuthentication is gone; OpenIdConnectHandler is the named scheme.
+// Multi-tenant TenantId=organizations must install EntraIssuerValidator on the named scheme.
 #endregion
 
 namespace EntraSchemeRegistration_;
 
+using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
@@ -19,8 +21,11 @@ using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Services;
+using TimeWarp.Identity;
 using WebServerProgram = TimeWarp.Architecture.Web.Server.Program;
 
 public class ConfigureAuthentication_Given_
@@ -132,5 +137,56 @@ public class ConfigureAuthentication_Given_
     authenticationOptions.DefaultScheme.ShouldBe(
       IdentitySessionDefaults.Scheme,
       "UseEntra synonym must never restore Entra as DefaultScheme.");
+  }
+
+  public static async Task Organizations_Tenant_Should_Install_Entra_Issuer_Validator()
+  {
+    Guid tenantId = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+    string expectedIssuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(tenantId));
+    WebApplicationBuilder builder = CreateBuilder(Environments.Development);
+    builder.Configuration.AddInMemoryCollection
+    (
+      new Dictionary<string, string?>
+      {
+        [MockAuthenticationDefaults.EntraEnabledKey] = "true",
+        ["Authentication:Entra:Instance"] = "https://login.microsoftonline.com/",
+        ["Authentication:Entra:TenantId"] = "organizations",
+        ["Authentication:Entra:ClientId"] = Guid.NewGuid().ToString("D"),
+        ["Authentication:Entra:CallbackPath"] = "/signin-oidc",
+        ["Authentication:Entra:TrustedTenants:0"] = tenantId.ToString("D"),
+        ["Authentication:Entra:AllowBootstrap"] = "true"
+      }
+    );
+
+    WebServerProgram.ConfigureServices(builder.Services, builder.Configuration);
+
+    await using ServiceProvider provider = builder.Services.BuildServiceProvider(validateScopes: false);
+    OpenIdConnectOptions openIdConnectOptions =
+      provider.GetRequiredService<IOptionsMonitor<OpenIdConnectOptions>>().Get(EntraLinkDefaults.Scheme);
+    openIdConnectOptions.TokenValidationParameters.IssuerValidator.ShouldNotBeNull(
+      "organizations authority must install EntraIssuerValidator so concrete tid issuers are accepted.");
+
+    JsonWebToken matchingToken = CreateUnsignedJsonWebToken(expectedIssuer, tenantId);
+    string accepted = openIdConnectOptions.TokenValidationParameters.IssuerValidator!(
+      expectedIssuer,
+      matchingToken,
+      openIdConnectOptions.TokenValidationParameters);
+    accepted.ShouldBe(expectedIssuer);
+
+    const string wrongIssuer = "https://login.microsoftonline.com/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/v2.0";
+    Should.Throw<SecurityTokenInvalidIssuerException>
+    (
+      () => openIdConnectOptions.TokenValidationParameters.IssuerValidator!(
+        wrongIssuer,
+        matchingToken,
+        openIdConnectOptions.TokenValidationParameters)
+    );
+  }
+
+  private static JsonWebToken CreateUnsignedJsonWebToken(string issuer, Guid tenantId)
+  {
+    string header = Base64UrlEncoder.Encode("""{"alg":"none","typ":"JWT"}""");
+    string payload = Base64UrlEncoder.Encode($"{{\"iss\":\"{issuer}\",\"tid\":\"{tenantId:D}\"}}");
+    return new JsonWebToken($"{header}.{payload}.");
   }
 }

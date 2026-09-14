@@ -8,6 +8,9 @@
 // OnTicketReceived always HandleResponse(), then EntraTicketHttp (attach/bootstrap/sync-hit +
 // SignIn identity-session + redirect). prompt=select_account on both Options.Prompt and the
 // redirect-to-IdP event. MapInboundClaims=false so tid/oid/iss keep JWT names.
+// IssuerValidator is always EntraIssuerValidator (organizations/common/consumers metadata issuer is
+// a {tenantid} placeholder; single-tenant GUID authorities use the same tid pin). ValidateIssuer
+// stays true — do not disable it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -46,6 +49,7 @@ public static class EntraAuthenticationRegistration
         options.Scope.Add("profile");
         options.Prompt = "select_account";
         options.SignInScheme = IdentitySessionDefaults.Scheme;
+        options.TokenValidationParameters.IssuerValidator = EntraIssuerValidator.Validate;
         options.Events.OnRedirectToIdentityProvider = context =>
         {
           context.ProtocolMessage.Prompt = "select_account";

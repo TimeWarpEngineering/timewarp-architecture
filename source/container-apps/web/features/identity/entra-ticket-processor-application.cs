@@ -11,6 +11,10 @@
 // Bootstrap Create is gated by AllowBootstrap AND tid ∈ TrustedTenants. TrustedTenants also
 // gates sync-hit so an untrusted tenant never issues a session. First human bootstrap claims
 // Administrator the same way CompletePasskeyRegistration does.
+// Concurrent first-login for the same tid:oid can miss both finds, create two principals, and
+// lose on unique (Type, Handle) at AddCredentialAsync. On that InvalidOperationException, re-Find
+// by handle; an active winner is treated as sync-hit (return that PrincipalId). IPrincipalStore
+// has no delete-principal — the losing AddPrincipalAsync row is abandoned.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -196,6 +200,28 @@ public sealed class EntraTicketProcessor
     }
     catch (InvalidOperationException)
     {
+      Credential? winner = await PrincipalStore.FindCredentialByHandleAsync(
+        CredentialType.EntraAccount,
+        handle,
+        cancellationToken);
+      if (winner is { IsRevoked: false })
+      {
+        Principal? winnerPrincipal = await PrincipalStore.GetPrincipalAsync(
+          winner.PrincipalId,
+          cancellationToken);
+        if (winnerPrincipal is null)
+        {
+          return IdentityProblems.AuthenticationFailed();
+        }
+
+        if (!winnerPrincipal.IsActive)
+        {
+          return IdentityProblems.Quarantined();
+        }
+
+        return winner.PrincipalId;
+      }
+
       return IdentityProblems.CredentialAlreadyRegistered("Entra account");
     }
 
