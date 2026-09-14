@@ -48,6 +48,7 @@ SDK; emit events + a counter metric, not spans.
 - [x] `dev build` 0/0
 - [x] `dev test`
 - [x] Manual dashboard check performed and recorded in Results
+- [x] Implementation review (effort 1) — disposition clean
 
 ## Notes
 
@@ -59,10 +60,18 @@ SDK; emit events + a counter metric, not spans.
   pipeline-behavior exemplar plus a real server sink.
 - Cockpit session: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED
 
+Implementation review (effort 1, general only) lives under `review/`:
+
+- `review/review-framework.md`
+- `review/round-1/general.md`
+- `review/round-1/merged.md`
+- `review/disposition.md`
+
 ## Session
 
 - Created: 2541946 (2026-09-14)
 - Implementer: grok 01a09df2-6b17-7100-bf13-8aab2940e16c (2026-09-14)
+- Review oracle: grok-4.6 session 01a09e04-767d-7e63-a523-d78eac731913 (2026-09-14)
 
 ## Results
 
@@ -115,6 +124,13 @@ merged, so the demo does not POST from the SPA yet. The HTTP sink is proven by t
 and handler tests (real host `Web.Send` plus unit `FakeLogger` / `MetricCollector`). Aspire
 dashboard UI was not opened in this session (no AppHost left running). Use the smoke below
 once 215 is live, or POST the command directly.
+
+**Review** (effort 1, general only; 1 round)
+
+- Roster: general (`review/round-1/general.md`)
+- Final counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0
+- Disposition: **clean** (`review/disposition.md`) — no findings; no wontfix; no escalation
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`
 
 ### How to validate
 
