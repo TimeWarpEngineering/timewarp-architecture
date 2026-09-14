@@ -20,7 +20,9 @@
 //   - IWebAuthnChallengeStore / IAgentKeyChallengeStore → ephemeral by design (in-memory).
 // Credential lookup by CredentialId (RFC D3), not raw Guid. Type and Handle are immutable after Create — UpdateCredential
 // persists revoke/label (and similar) changes for the same Id only; no handle reindex contract.
-// FindCredentialByHandle may return revoked credentials (callers check IsRevoked).
+// FindCredentialByHandle may return revoked credentials (callers check IsRevoked). No extra lookup
+// for EntraAccount: join is FindCredentialByHandleAsync(EntraAccount, EntraAccountHandle.Encode(tid, oid)).
+// Restore is Credential.Restore() then UpdateCredentialAsync — this port has no Restore method.
 // Clocks (D5, closed 104-006): TimeProvider is not part of this durable port — entity CreatedAt/
 // RevokedAt stay wall-clock; ceremony challenge/token stores (not this port) already accept optional
 // TimeProvider. Full domain-entity TimeProvider is not required for the Wave 1 gate.

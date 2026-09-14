@@ -35,7 +35,7 @@
 // concurrent write to corrupt from a reader's perspective.
 //
 // Type/Handle immutable (D7): UpdateCredentialAsync replaces by CredentialId only; differing type/handle throws rather
-// than reindexing. Update purpose: revoke (and future label) persistence. Check order inside
+// than reindexing. Update purpose: revoke / restore (and future label) persistence. Check order inside
 // UpdateCredentialAsync is deliberate: existence, THEN version (staleness dominates — a caller
 // holding a stale-but-otherwise-valid credential should learn it is stale before learning about an
 // unrelated type/handle mismatch, since staleness is the more common, expected-to-be-retried case),

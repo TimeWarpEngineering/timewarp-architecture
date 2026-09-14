@@ -116,6 +116,34 @@ public class Create
     a.ShouldNotBe(b);
     return Task.CompletedTask;
   }
+
+  public static Task Entra_account_type_is_three()
+  {
+    ((int)CredentialType.None).ShouldBe(0);
+    ((int)CredentialType.Passkey).ShouldBe(1);
+    ((int)CredentialType.AgentKey).ShouldBe(2);
+    ((int)CredentialType.EntraAccount).ShouldBe(3);
+    return Task.CompletedTask;
+  }
+
+  public static Task Accepts_entra_account_with_issuer_material()
+  {
+    PrincipalId principalId = PrincipalId.New();
+    Guid tenantId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    Guid objectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    byte[] handle = EntraAccountHandle.Encode(tenantId, objectId);
+    byte[] material = EntraIssuerMaterial.FromTenantId(tenantId);
+
+    Credential credential = Credential.Create(principalId, CredentialType.EntraAccount, handle, material);
+
+    credential.Type.ShouldBe(CredentialType.EntraAccount);
+    credential.Handle.ShouldBe(handle);
+    credential.PublicMaterial.ShouldBe(material);
+    credential.IsRevoked.ShouldBeFalse();
+    Encoding.UTF8.GetString(credential.PublicMaterial)
+      .ShouldBe("https://login.microsoftonline.com/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/v2.0");
+    return Task.CompletedTask;
+  }
 }
 
 public class Revoke
@@ -142,6 +170,76 @@ public class Revoke
     Credential credential = Credential.Create(PrincipalId.New(), CredentialType.AgentKey, [1], [2]);
     credential.Revoke();
     Should.Throw<InvalidOperationException>(credential.Revoke);
+    return Task.CompletedTask;
+  }
+}
+
+public class Restore
+{
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Restore>();
+
+  public static Task Clears_revoked_at()
+  {
+    Credential credential = Credential.Create(PrincipalId.New(), CredentialType.Passkey, [1], [2]);
+    credential.Revoke();
+
+    credential.Restore();
+
+    credential.IsRevoked.ShouldBeFalse();
+    credential.RevokedAt.ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task Throws_if_not_revoked()
+  {
+    Credential credential = Credential.Create(PrincipalId.New(), CredentialType.EntraAccount, [1], [2]);
+    Should.Throw<InvalidOperationException>(credential.Restore);
+    return Task.CompletedTask;
+  }
+
+  public static Task Second_restore_throws()
+  {
+    Credential credential = Credential.Create(PrincipalId.New(), CredentialType.AgentKey, [1], [2]);
+    credential.Revoke();
+    credential.Restore();
+    Should.Throw<InvalidOperationException>(credential.Restore);
+    return Task.CompletedTask;
+  }
+
+  public static Task Revoke_after_restore_succeeds()
+  {
+    Credential credential = Credential.Create(PrincipalId.New(), CredentialType.Passkey, [1], [2]);
+    credential.Revoke();
+    credential.Restore();
+
+    credential.Revoke();
+
+    credential.IsRevoked.ShouldBeTrue();
+    credential.RevokedAt.ShouldNotBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task Leaves_identity_fields_unchanged()
+  {
+    PrincipalId principalId = PrincipalId.New();
+    byte[] handle = [9, 8, 7];
+    byte[] material = [1, 2, 3];
+    Credential credential = Credential.Create(principalId, CredentialType.EntraAccount, handle, material, "entra");
+    CredentialId id = credential.Id;
+    DateTimeOffset createdAt = credential.CreatedAt;
+    credential.Revoke();
+
+    credential.Restore();
+
+    credential.Id.ShouldBe(id);
+    credential.PrincipalId.ShouldBe(principalId);
+    credential.Type.ShouldBe(CredentialType.EntraAccount);
+    credential.Handle.ShouldBe(handle);
+    credential.PublicMaterial.ShouldBe(material);
+    credential.Label.ShouldBe("entra");
+    credential.CreatedAt.ShouldBe(createdAt);
     return Task.CompletedTask;
   }
 }
