@@ -60,6 +60,7 @@ DevTools) is redundant. Decision (Steve, 2026-09-14): delete it as an immediate 
 - [x] `dev build` 0/0
 - [x] `dev test`
 - [x] `dev template-smoke`
+- [x] Implementation review: round 1 general, disposition `clean`
 
 ## Depends on
 
@@ -76,11 +77,15 @@ DevTools) is redundant. Decision (Steve, 2026-09-14): delete it as an immediate 
   exists only to test event-stream's teardown guard; its rationale is void once the guard's host
   is deleted.
 - Cockpit session: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED
+- Review kitchen: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`
 
 ## Session
 
 - Created: 2544819 (2026-09-14)
 - Implementer: grok session 01a09f3f-6cb8-7c41-8188-a92ab3ba377b (2026-09-14)
+- Review oracle: grok session 01a09f53-ca92-7db3-a28b-f0d2aa402747 (2026-09-14)
+- Reviewer (round 1 general): grok subagent 01a09f55-2dea-7ec2-96a5-e71ba8b57dcc (2026-09-14)
 
 ## Results
 
@@ -129,6 +134,12 @@ without a product→product `[CrossSliceReference]`. `AnalyticsState` /
 - `./bin/dev template-smoke` — Template smoke SUCCEEDED (web-jaribu 148/148 in
   generated Smoke and SmokeNoApi apps)
 
+**Review disposition:** `clean`. Effort 1, roster `general`, 1 round, 0 open.
+Counts (final): bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix).
+No wontfix, no escalations. Paths:
+`review/review-framework.md`, `review/round-1/general.md`,
+`review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke**
@@ -164,4 +175,4 @@ dotnet test -c Release -- --filter-class TrackEventBehavior_
 ```
 
 **Not in scope:** live Aspire dashboard / SPA click-through of `/EventStream`
-(route deleted). Reviewer spawn is the later host review node.
+(route deleted).
