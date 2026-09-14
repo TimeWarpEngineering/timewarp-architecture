@@ -46,6 +46,7 @@ ignores provider log levels, community-only advice).
 - [x] CPM pins removed (repo-wide grep for Serilog empty)
 - [x] Dashboard structured logs for web-server show `Request finished` and `Analytics event …`
 - [x] `dev build` 0/0 · `dev test` · `dev template-smoke`
+- [x] Implementation review (effort 1, general) — disposition **clean**
 
 ## Notes
 
@@ -61,6 +62,7 @@ ignores provider log levels, community-only advice).
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-14)
 - Implementer: grok session 01a09f4e-8a91-74c3-9773-709013f710d2 (2026-09-14)
+- Review: grok session 01a09f63-6560-7fb0-9269-494c763c729b (2026-09-14)
 
 ## Results
 
@@ -130,3 +132,10 @@ dotnet run tools/dev-cli/dev.cs -- template-smoke  # expect: Template smoke SUCC
 **Depends on:** Aspire CLI, Docker (postgres), isolated AppHost so it does not collide with another local AppHost.
 
 **Not in scope:** restoring the `Logs/log.txt` Serilog file sink; bridging Serilog via `Serilog.Sinks.OpenTelemetry` or `writeToProviders: true`.
+
+**Review disposition**
+
+- Rounds: 1. Effort 1, roster: general.
+- Final counts: bug 0 / suggestion 0 / nit 0 (all open=0, fixed=0, wontfix=0).
+- Outcome: **clean** (no findings raised).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
