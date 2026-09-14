@@ -1,5 +1,7 @@
 # Deterministic test for event-stream trace guard against disposed-state dispatch
 
+event-stream retired by 217; guard no longer exists
+
 ## Description
 
 Task 196 (round-2 finding M10) widened the event-stream trace guard in
