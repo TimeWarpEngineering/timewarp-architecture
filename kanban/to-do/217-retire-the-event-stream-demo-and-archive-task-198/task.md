@@ -34,7 +34,17 @@ DevTools) is redundant. Decision (Steve, 2026-09-14): delete it as an immediate 
   `skills/`, and `AGENTS.md`.
 - `dev build` 0/0, `dev test`, `dev template-smoke`.
 
+- Move `[TrackEvent]` (`web-spa/features/analytics/track-event-attribute.cs`) from the
+  `Features.Analytics` slice namespace to the SPA Features-substrate tier (bare
+  `TimeWarp.Architecture.Features`, same tier as `RoleIds`/`ModuleIds`; see `tw-feature-placement`
+  "Features substrate") so any slice can tag an action without a `[CrossSliceReference]` opt-out.
+  Then drop the `[CrossSliceReference(typeof(AnalyticsState), …)]` added to
+  `counter-state.increment-counter.cs` by 215 and reconcile both Design regions. Keep
+  `AnalyticsState`/`TrackEventBehavior` in `Features.Analytics`. (Raised in 215's review.)
+
 ## Checklist
+
+- [ ] `[TrackEvent]` moved to the substrate namespace; counter's CrossSliceReference removed; Design regions reconciled
 
 - [ ] `web-spa/features/event-stream/**` deleted
 - [ ] `event-stream-state-clone-tests.cs` deleted
@@ -57,6 +67,8 @@ DevTools) is redundant. Decision (Steve, 2026-09-14): delete it as an immediate 
 - 215
 
 ## Notes
+
+- 215 (PR #356) and 216 (PR #355) merged 2026-09-14; this task is unblocked.
 
 - 215 must land first: the client TrackEvent pipeline behavior is the replacement exemplar.
 
