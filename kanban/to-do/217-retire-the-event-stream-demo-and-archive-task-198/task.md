@@ -54,9 +54,11 @@ DevTools) is redundant. Decision (Steve, 2026-09-14): delete it as an immediate 
 
 ## Depends on
 
-- 215 (client TrackEvent pipeline behavior must land first — it is the replacement exemplar)
+- 215
 
 ## Notes
+
+- 215 must land first: the client TrackEvent pipeline behavior is the replacement exemplar.
 
 - Origin: task 210 review discussion plus session discussion 2026-09-14. Task 198
   (`kanban/to-do/198-deterministic-test-for-event-stream-trace-guard-against-disposed-state-dispatch.md`)
