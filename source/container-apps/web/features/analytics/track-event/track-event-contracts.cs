@@ -7,8 +7,11 @@
 // wire path so client and server cannot drift. Route string is the historical path without an
 // `api/` prefix (Analytics/TrackEvent) — preserve exactly; do not "normalize" it.
 // Response is an empty BaseResponse: the caller only needs success/problem typing for a
-// fire-and-forget write. No MockResponseFactory, so in SPA mock mode this request falls through
-// MockWebApiService to the real API service.
+// fire-and-forget write. GetMockResponseFactory keeps SPA mock-mode from falling through
+// MockWebApiService to the real API.
+// EventName is required; CorrelationId is optional so older callers and pre-session POSTs stay
+// valid. The client is intentionally dumb (name + correlation id only — no payload, no vendor
+// SDK); the server decides the sink.
 // [EndpointAllowAnonymous] (task 110): analytics ingestion — the payload carries only an event
 // name, no PII, and pre-auth telemetry (page views before sign-in, etc.) is exactly the traffic
 // this endpoint exists to capture; requiring auth would drop it.
@@ -24,6 +27,7 @@ public static partial class TrackEvent
   public sealed partial class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
   {
     public string EventName { get; set; } = null!;
+    public Guid? CorrelationId { get; set; }
   }
 
   public class Response : BaseResponse;
@@ -36,4 +40,7 @@ public static partial class TrackEvent
         .NotEmpty();
     }
   }
+
+  public static MockResponseFactory<Response> GetMockResponseFactory() =>
+    static _ => new Response();
 }

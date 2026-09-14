@@ -72,6 +72,7 @@ global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.Authorization;
 global using TimeWarp.Architecture.Features.Identity;
 global using TimeWarp.Architecture.Features.Chat;
+global using TimeWarp.Architecture.Features.Analytics;
 global using TimeWarp.Architecture.Features.EventStreams;
 global using TimeWarp.Architecture.Features.Profiles;
 global using TimeWarp.Architecture.Features.AgentLinks;
