@@ -19,7 +19,6 @@ global using Oakton;
 global using Oakton.Environment;
 global using OneOf;
 global using OneOf.Types;
-global using Serilog.Debugging;
 global using System.IO;
 global using System.Net.Mime;
 global using System.Reflection;

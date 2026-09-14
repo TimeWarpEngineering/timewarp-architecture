@@ -101,12 +101,7 @@
          SCP recursive-download path traversal). Patched 2026.0.0. Direct pin on
          web-infrastructure-tests lifts the graph; Testcontainers 4.14.0 is latest. -->
     <PackageVersion Include="SSH.NET" Version="2026.0.0" />
-    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
-    <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
-    <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
-    <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
-    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    
+
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.11" />
     <!-- Microsoft/MIT, BCL-adjacent (System.Formats.Cbor.dll ships in the ASP.NET Core shared
          framework too) — used by timewarp-identity's hand-rolled WebAuthn verifier (task 104-003)
