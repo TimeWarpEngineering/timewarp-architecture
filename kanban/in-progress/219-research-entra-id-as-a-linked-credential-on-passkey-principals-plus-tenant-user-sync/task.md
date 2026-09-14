@@ -136,24 +136,24 @@ None (new program thread; follows 104 identity program).
 
 ## Checklist
 
-- [ ] Read program locks in `kanban/done/104-agent-ready-identity-and-x402-program/task.md`
+- [x] Read program locks in `kanban/done/104-agent-ready-identity-and-x402-program/task.md`
       and 104-005, 104-021, 104-024 task bodies
-- [ ] Read Bill's mockup `crunchit/documentation/design/crunchit-portal.html` (Staff page,
-      Settings M365 card, sign-in) and crunchit task 008
-- [ ] Verify Microsoft.Identity.Web 4.x link-not-sign-in pattern against a current sample
-- [ ] Prototype spike (throwaway, not merged): named Entra scheme challenge from an
-      identity-session action, capture `tid`/`oid`, attach `Credential`
-- [ ] Prototype spike: Graph `/users/delta` with `$select` and `$filter` for `jobTitle`,
-      app-only auth via certificate, deltaLink round trip
-- [ ] Write `rfc/rfc.md`; run rfc-ballot on the three contested forks (2, 5, 7)
-- [ ] Create child implementation tasks (architecture + crunchit) from the RFC
-- [ ] Results and How to validate
+- [x] Read Bill's mockup `crunchit/documentation/design/crunchit-portal.html` (Staff page
+      M365 card — not Settings — sign-in) and crunchit task 008
+- [x] Verify Microsoft.Identity.Web 4.x named-scheme + OnTicketReceived/HandleResponse against
+      current docs (live tenant not available in this worktree)
+- [x] Spike findings recorded in `rfc/rfc.md` §2 (named scheme, Graph delta `$filter` is
+      object-id only — jobTitle is client-side; no live Graph round-trip)
+- [x] Write `rfc/rfc.md`; rfc-ballot on forks 2, 5, 7 (A/A/A′ tally)
+- [x] Create child implementation tasks (architecture 219-001..003; crunchit 008-001..004)
+- [x] Results and How to validate
 
 ## Session
 
 - Created: 3376783 (2026-09-14)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Reclaimed: 3397652 (2026-09-14) to lock fork 1 and dispatch
+- RFC oracle (Grok 4.6): claim 3399841 / session 3423200-era (2026-09-14) — ballot + fold-in
 
 ## Notes
 
@@ -173,17 +173,67 @@ None (new program thread; follows 104 identity program).
   - Revoke user access: https://learn.microsoft.com/en-us/entra/identity/users/users-revoke-access
   - Entra passkeys: https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-passkeys-fido2
 - Packages (nuget.org, 2026-09): Microsoft.Identity.Web 4.14.2 (already in
-  `Directory.Packages.props`), Microsoft.Graph 5.25.0 + Azure.Identity,
-  Microsoft.AspNetCore.Authentication.OpenIdConnect ships in the .NET 10 shared framework.
-  ADAL and Azure AD Graph are retired; do not use.
-- Unverified items from research: exact `OnTicketReceived` + `HandleResponse()` link idiom
-  (community pattern, confirm against a current Identity.Web sample), MSAL.NET current
-  version, Identity.Web 3.x → 4.x breaking changes.
+  `Directory.Packages.props`). Graph SDK for **new** product work is **6.x** (6.6.0), not
+  the kitchen’s stale 5.25.0. `Microsoft.AspNetCore.Authentication.OpenIdConnect` ships in
+  the .NET 10 shared framework. ADAL and Azure AD Graph are retired; do not use.
+- RFC workspace: `rfc/rfc.md` plus sidecar ballots. Decisions resolved 2026-09-14 (A′/A′/A′).
+- Children: architecture **219-001**, **219-002**, **219-003**; crunchit **008** rewritten,
+  **008-001**…**008-004**.
 
 ## Results
 
-_Pending._
+Research RFC balloted and folded in on **this task id** (no sibling apply-* task).
+
+**Ballot (forks 2, 5, 7):** general-purpose-A A/A/A; general-purpose-B A/A/A; adversarial-C
+A′/A′/A′. Maintainer accepted refined agreement:
+
+| # | Topic | Resolution |
+|---|-------|------------|
+| 1 | bootstrap-capable | **Locked** (Steve 2026-09-14) — not reopened |
+| 2 | credential shape | **A′** `EntraAccount` + type-dependent PublicMaterial + `Restore()` |
+| 5 | sync | **A′** Graph `/users/delta` only cursor; Title filter client-side; Title-cleared deprovision |
+| 7 | job placement | **A′** web-server v1 as ops/directory; extraction triggers in 008-002 |
+| 3,4,6,8,9,10 | prose | Entra is Keyed; no step-up; product Staff HR; invite token not password; system revoke not HTTP last-active; named `entra` scheme, identity-session always default |
+
+**Files on this task:** `rfc/rfc.md`, `rfc/general-purpose-a-ballot.md`,
+`rfc/general-purpose-b-ballot.md`, `rfc/adversarial-c-ballot.md`.
+
+**Fold-in:** decisions in RFC §7.1 + these Results. Library/template **code** is children
+219-001 (domain), 219-002 (named scheme), 219-003 (soft-prompt). Crunchit 008 rewritten;
+008-001 infra, 008-002 delta worker, 008-003 Staff PrincipalId, 008-004 replace mock auth.
+
+**Spikes:** docs-verified only (no live tenant/app-only cert in this worktree). Graph user
+delta **cannot** `$filter` on `jobTitle`. `AddMicrosoftIdentityWebAppAuthentication` must
+not be used (steals DefaultScheme).
+
+**Deviations:** mockup “Settings M365 card” is actually on the Staff page; mockup invite
+“set password” is a fossil.
 
 ### How to validate
 
-_Pending (research task: validated by the RFC being balloted and child tasks created)._
+**Smoke**
+
+```bash
+# architecture 219 kitchen
+test -f kanban/in-progress/219-research-entra-id-as-a-linked-credential-on-passkey-principals-plus-tenant-user-sync/rfc/rfc.md
+rg -n "Refined agreement" kanban/in-progress/219-research-entra-id-as-a-linked-credential-on-passkey-principals-plus-tenant-user-sync/rfc/rfc.md
+ganda kanban path 219-001
+ganda kanban path 219-002
+ganda kanban path 219-003
+```
+
+**Expect**
+
+- RFC status is Resolved; tally rows for D2/D5/D7 are A′.
+- 219-001/002/003 exist under `kanban/to-do/` on architecture origin-home.
+- Crunchit: `ganda kanban path 008` (from crunchit repo) shows the rewritten plan;
+  008-001…008-004 exist in crunchit `kanban/to-do/`.
+
+**Automated gate**
+
+None for this research id (no product code). Implementation tests live on the children.
+
+**Not in scope**
+
+Live Entra login, live Graph delta against `crunchitfs.com`, merging this RFC as library
+Design regions (those land on 219-001).
