@@ -6,8 +6,8 @@
 // Uses the DefaultApiHandler pipeline; returning a null Query from GetRequest is the cache
 // short-circuit — no HTTP call while AuthorizationState's cache key is still valid.
 // The cache key is updated only in HandleSuccess so failed fetches never extend validity.
-// Invoked from AccountClaimsPrincipalFactoryWithRoles at Entra sign-in so permission claims
-// exist before authorization policies evaluate (task 182-003). Identity-session path uses
+// Invoked from the mock SPA path so permission claims exist before authorization policies
+// evaluate (task 182-003). Identity-session (including Entra BFF tickets, RFC 219 D10) uses
 // GetCurrentSession instead and does not need this action.
 #endregion
 

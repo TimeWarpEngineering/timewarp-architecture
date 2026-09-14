@@ -1,5 +1,7 @@
 @namespace TimeWarp.Architecture.Features.Identity
 @inherits BaseComponent
+@using Microsoft.Extensions.Configuration
+@using TimeWarp.Architecture.Services
 
 @code {
   public static string Title => "Sign in";
@@ -7,6 +9,7 @@
 
   [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
   [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+  [Inject] private IConfiguration Configuration { get; set; } = null!;
 
   [SuppressMessage
   (
@@ -19,11 +22,15 @@
   private string? ErrorMessage;
   private bool IsBusy;
   private bool? IsAuthenticated;
+  private bool ShowMicrosoft365;
 
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
     await RefreshSessionAsync();
+    ShowMicrosoft365 = MockAuthenticationDefaults.IsEntraEnabled(
+      Configuration[MockAuthenticationDefaults.EntraEnabledKey],
+      Configuration[MockAuthenticationDefaults.UseEntraKey]);
 
     if (IsAuthenticated is true)
     {
@@ -120,6 +127,13 @@
   {
     IsAuthenticated = await Ceremony.GetIsAuthenticatedAsync(CancellationToken.None);
   }
+
+  private void ContinueWithMicrosoft365()
+  {
+    NavigationManager.NavigateTo(
+      ChallengeEntra.GetRoute("bootstrap", GetSafeReturnUrl(ReturnUrl)),
+      forceLoad: true);
+  }
 }
 
 <PageTitle>Sign in</PageTitle>
@@ -137,6 +151,16 @@
                       OnClick="ContinueWithPasskey">
           Sign in with a passkey
         </FluentButton>
+
+        @if (ShowMicrosoft365)
+        {
+          <FluentButton Appearance="ButtonAppearance.Outline"
+                        data-qa="ContinueWithMicrosoft365"
+                        Disabled="IsBusy"
+                        OnClick="ContinueWithMicrosoft365">
+            Continue with Microsoft 365
+          </FluentButton>
+        }
 
         <hr class="twe-login-divider" />
 

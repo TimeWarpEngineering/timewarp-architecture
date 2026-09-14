@@ -7,7 +7,8 @@
 // Credentials are product data from GetCredentials / AddPasskey / RevokeCredential — never page-local
 // List<> fields. Null Credentials = no snapshot; empty list = loaded with zero passkeys.
 // In-flight fetch is [TrackAction] on FetchCredentials — Settings uses IsAnyActive, not null.
-// ActivePasskeys is the Settings filter (passkey + IsActive); full list stays available for follow-ups.
+// ActivePasskeys is the Settings filter (passkey + IsActive); ActiveEntraAccounts is the Microsoft 365
+// filter. Full list stays available for follow-ups.
 // StatusMessage / CeremonyError are user-facing strings for create/revoke UX; API transport failures
 // still go through DefaultApiHandler → ToastNotificationState (shared pipeline).
 // Task 169.
@@ -32,6 +33,14 @@ public sealed partial class CredentialsState : State<CredentialsState>
       ? []
       : [.. CredentialsList
           .Where(c => c.Type == CredentialType.Passkey && c.IsActive)
+          .OrderByDescending(c => c.CreatedAt)];
+
+  /// <summary>Active EntraAccount credentials — Settings Microsoft 365 section.</summary>
+  public IReadOnlyList<CredentialSummary> ActiveEntraAccounts =>
+    CredentialsList is null
+      ? []
+      : [.. CredentialsList
+          .Where(c => c.Type == CredentialType.EntraAccount && c.IsActive)
           .OrderByDescending(c => c.CreatedAt)];
 
   public Guid? LastAddedCredentialId { get; private set; }

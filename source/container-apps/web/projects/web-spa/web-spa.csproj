@@ -16,10 +16,10 @@
          users never see it). Cost: larger ICU payload in the WASM download. -->
     <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
-    <!-- Auth is runtime-config-gated (tasks 145-009 + 104-021): Authentication:UseMock (dev mock),
-         Authentication:UseEntra (opt-in MSAL), else identity-session. No MOCK_AUTHENTICATION /
-         ENTRA DefineConstants — mock, MSAL, and identity-session code paths compile always;
-         activation is MockAuthenticationRegistration / UseEntra / IdentitySessionAuthenticationRegistration.
+    <!-- Auth is runtime-config-gated (tasks 145-009 + RFC 219 D10): Authentication:UseMock (dev mock),
+         else identity-session. Named Entra is a BFF challenge (Authentication:Entra:Enabled), not WASM
+         MSAL. No MOCK_AUTHENTICATION / ENTRA DefineConstants — mock and identity-session compile always;
+         activation is MockAuthenticationRegistration / IdentitySessionAuthenticationRegistration.
          Use Mock web API (optional offline SPA API fakes): -->
     <!-- <DefineConstants>$(DefineConstants);MOCK_WEB_API</DefineConstants> -->
   </PropertyGroup>
@@ -60,7 +60,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all"/>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client"/>
-    <PackageReference Include="Microsoft.Authentication.WebAssembly.Msal" />
+
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components"/>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons"/>

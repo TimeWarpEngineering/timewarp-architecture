@@ -4,8 +4,9 @@
 #endregion
 
 #region Design
-// Task 104-021: when Authentication:UseMock is off and Authentication:UseEntra is off, the SPA
-// still needs an AuthenticationStateProvider for CascadingAuthenticationState / AuthorizeView.
+// RFC 219 D10: when Authentication:UseMock is off, the SPA always uses identity-session
+// (Entra is a BFF named-scheme challenge, not a WASM MSAL session). Still needs an
+// AuthenticationStateProvider for CascadingAuthenticationState / AuthorizeView.
 // Reads GET api/identity/session (cookie ambient auth) and projects:
 //   - PrincipalId → NameIdentifier + timewarp:principal_id
 //   - Response.RoleIds → ClaimTypes.Role (diagnostics / UserClaims display; task 147-004 D4)

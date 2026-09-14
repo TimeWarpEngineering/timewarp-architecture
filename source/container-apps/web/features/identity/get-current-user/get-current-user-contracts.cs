@@ -5,7 +5,8 @@
 #region Design
 // Not the identity "who am I" read — that is GetCurrentSession (cookie session / PrincipalId +
 // server-expanded Permissions). This shape is application grants for SPA mock demos and the
-// Entra AccountClaimsPrincipalFactoryWithRoles path (projects Role + permission claims).
+// SPA mock path (projects Role + permission claims). Entra sessions use identity-session +
+// GetCurrentSession (RFC 219 D10); there is no WASM MSAL claims factory.
 // Roles are Guids from RoleIds; Permissions are PermissionIds strings (task 182-003 — Modules /
 // ModuleIds deleted). The mock factory returns per-user responses keyed by MockUserIds; unknown
 // users get full access because the mock optimizes for demo friction, not security.
