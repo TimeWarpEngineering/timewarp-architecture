@@ -10,6 +10,7 @@
 // Credentials is null remains the fetch-once guard (no snapshot yet). API failures toast via
 // DefaultApiHandler; browser ceremony failures surface as CredentialsState.CeremonyError.
 // Backend surface remains 104-005 (GetCredentials, AddPasskey, RevokeCredential).
+// RFC 219 D10: "Link Microsoft 365" is a full navigation to the BFF challenge (mode=link).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -17,4 +18,5 @@ namespace TimeWarp.Architecture.Features.Applications;
 [Page("/Settings", Policy = PermissionIds.SettingsRead)]
 [Authorize(Policy = PermissionIds.SettingsRead)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
+[CrossSliceReference(typeof(ChallengeEntra), "Settings link CTA navigates to the Identity BFF Entra challenge; no WASM MSAL.")]
 partial class SettingsPage;

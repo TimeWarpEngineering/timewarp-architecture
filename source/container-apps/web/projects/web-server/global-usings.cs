@@ -14,7 +14,6 @@ global using Microsoft.AspNetCore.SignalR;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Options;
-global using Microsoft.Identity.Web;
 global using Oakton;
 global using Oakton.Environment;
 global using OneOf;

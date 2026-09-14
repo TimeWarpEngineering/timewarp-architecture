@@ -10,12 +10,13 @@
 // credential kind, VerificationFailed title prefix + reason). Unique single-consumer problems
 // (AuthenticationFailed, IssuanceFailed, revoke set, GetAgentIdentity Unauthorized) live here too
 // so every identity handler returns problems from one place.
-// internal static: slice-local; not a public API surface for other product slices (TWA0009).
+// public static so web-server identity endpoints (same Identity slice, different assembly) can
+// write the same problems. Not a surface for other product slices (TWA0009 still applies).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
 
-internal static class IdentityProblems
+public static class IdentityProblems
 {
   public static SharedProblemDetails Unauthenticated() => new()
   {
@@ -127,5 +128,40 @@ internal static class IdentityProblems
     Title = "Too much contention",
     Status = 409,
     Detail = "The credential could not be revoked due to concurrent updates. Try again."
+  };
+
+  public static SharedProblemDetails InvalidEntraToken() => new()
+  {
+    Title = "Invalid Entra token",
+    Status = 400,
+    Detail = "The Entra ID token is missing required tid, oid, or iss claims, or iss does not match the tenant."
+  };
+
+  public static SharedProblemDetails UntrustedTenant() => new()
+  {
+    Title = "Untrusted tenant",
+    Status = 403,
+    Detail = "This Microsoft Entra tenant is not trusted for sign-in."
+  };
+
+  public static SharedProblemDetails BootstrapNotAllowed() => new()
+  {
+    Title = "Bootstrap not allowed",
+    Status = 403,
+    Detail = "No existing account is linked to this Microsoft 365 identity, and bootstrap is disabled."
+  };
+
+  public static SharedProblemDetails EntraCredentialRevoked() => new()
+  {
+    Title = "Entra credential revoked",
+    Status = 403,
+    Detail = "This Microsoft 365 identity is no longer active."
+  };
+
+  public static SharedProblemDetails InvalidEntraMode() => new()
+  {
+    Title = "Invalid Entra challenge mode",
+    Status = 400,
+    Detail = "mode must be link or bootstrap."
   };
 }

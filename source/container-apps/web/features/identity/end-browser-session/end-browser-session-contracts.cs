@@ -3,9 +3,8 @@
 #endregion
 
 #region Design
-// Task 104-034: SPA default path is identity-session, not Entra. Sign-out must clear the server
-// cookie via this endpoint rather than RemoteAuthenticatorView (which requires unregistered
-// IRemoteAuthenticationService when UseEntra is false).
+// Task 104-034 / RFC 219 D10: SPA session is identity-session, not WASM MSAL. Sign-out clears the
+// server cookie via this endpoint rather than RemoteAuthenticatorView.
 // POST + /end (not DELETE): idempotent "end session" verb; empty body. AllowAnonymous so a
 // double-click or already-expired cookie still returns success — never 401 on logout.
 // Does not demote TrustTier or revoke credentials — only the ambient browser session.

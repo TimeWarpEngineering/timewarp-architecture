@@ -48,4 +48,7 @@ public static class AuthenticationSchemeNames
 
   /// <summary>Matches <c>AgentTokenDefaults.Scheme</c> (bearer token).</summary>
   public const string AgentToken = "agent-token";
+
+  /// <summary>Matches <c>EntraLinkDefaults.Scheme</c> (named OIDC challenge; never DefaultScheme).</summary>
+  public const string Entra = "entra";
 }

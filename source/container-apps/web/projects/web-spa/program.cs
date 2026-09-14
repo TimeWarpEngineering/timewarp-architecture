@@ -4,12 +4,11 @@
 
 #region Design
 // ConfigureServices is public static so integration tests and Web.Server prerender compose the
-// same container as the app. Auth is runtime-config-gated (tasks 145-009 + 104-021):
+// same container as the app. Auth is runtime-config-gated (tasks 145-009 + RFC 219 D10):
 //   1. Development/Testing + Authentication:UseMock → MockAuthenticationRegistration
-//   2. else Authentication:UseEntra → MSAL / AzureAdB2C (opt-in enterprise path)
-//   3. else IdentitySessionAuthenticationRegistration (passkey cookie via GetCurrentSession)
-// Fail-closed: Production never activates mock even when UseMock is true. UseEntra defaults false
-// so the non-mock happy path does not require Entra. optional MOCK_WEB_API still compile-time for
+//   2. else IdentitySessionAuthenticationRegistration (passkey cookie via GetCurrentSession)
+// Named Entra is a BFF challenge, not a WASM MSAL session. Fail-closed: Production never activates
+// mock even when UseMock is true. optional MOCK_WEB_API still compile-time for
 // offline SPA API fakes. Template symbols (api, grpc) trim optional services. API services use
 // explicit factories so DI does not guess constructors. Default culture is forced to ISO date
 // patterns for deterministic rendering. SetIsoCulture hardcodes en-US: Profile.Language is a
@@ -91,22 +90,9 @@ public static class Program
   {
     if (!MockAuthenticationRegistration.TryAddSpaMockAuthentication(serviceCollection, configuration, environmentName))
     {
-      if (MockAuthenticationDefaults.IsEntraAuthActive(configuration[MockAuthenticationDefaults.UseEntraKey]))
-      {
-        serviceCollection.AddMsalAuthentication
-        (
-          options =>
-          {
-            configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-            options.ProviderOptions.LoginMode = "Redirect";
-          }
-        ).AddAccountClaimsPrincipalFactory<AccountClaimsPrincipalFactoryWithRoles>();
-      }
-      else
-      {
-        // Default non-mock path: first-party passkey identity-session (no Entra).
-        IdentitySessionAuthenticationRegistration.AddSpaIdentitySessionAuthentication(serviceCollection);
-      }
+      // Non-mock path is always identity-session. Entra is a BFF named-scheme challenge
+      // (RFC 219 D10); WASM MSAL is not the session.
+      IdentitySessionAuthenticationRegistration.AddSpaIdentitySessionAuthentication(serviceCollection);
     }
 
     // SPA permission claim policies (PermissionIds) + Anonymous/Authenticated.

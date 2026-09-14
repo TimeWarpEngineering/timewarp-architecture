@@ -1,7 +1,7 @@
 @namespace TimeWarp.Architecture.Features.Identity
 @inject NavigationManager NavigationManager
 
-@* Task 104-021: unauthorized UI goes to passkey Login, not MSAL RemoteAuthenticatorView.
+@* RFC 219 D10: unauthorized UI goes to passkey Login, not MSAL RemoteAuthenticatorView.
    Task 153: carry the blocked page along as ?returnUrl so a successful sign-in lands the
    user back where they were headed. LoginPage validates it (local-only, never /Login).
    Task 183: never NavigationManager.NavigateTo during static SSR — that nested the interactive

@@ -162,10 +162,9 @@ public partial class Program : IAspNetProgram
       // restriction is WHY roles endpoints get a clean 401 for an unauthenticated request. A bare
       // fail-closed [ApiEndpoint] with no marker at all (only reachable if TWA0013 is suppressed) has
       // no policy to restrict the scheme — it falls through to ASP.NET Core's DEFAULT authentication
-      // scheme (identity-session when UseEntra is false; Entra when UseEntra is true — task 104-021).
-      // Entra challenges with redirect/500; identity-session cookie events return 401/403. Deny still
-      // holds either way; the clean-401 property specifically belongs to an explicit scheme-restricted
-      // policy like this one, not to the bare fail-closed default.
+      // scheme (always identity-session; RFC 219 D10 retired the 104-021 Entra-as-default branch).
+      // identity-session cookie events return 401/403. The clean-401 property specifically belongs
+      // to an explicit scheme-restricted policy like this one, not to the bare fail-closed default.
       .AddPolicy
       (
         IdentitySessionDefaults.AuthenticatedPolicy,
@@ -320,23 +319,32 @@ public partial class Program : IAspNetProgram
 
   private static void ConfigureAuthentication(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    // Task 104-021: Entra/MSAL is opt-in (Authentication:UseEntra). Default is first-party
-    // identity-session cookie as the authentication default scheme — no AzureAd required to boot.
-    bool useEntra = MockAuthenticationDefaults.IsEntraAuthActive(
+    // RFC 219 D10: identity-session is always DefaultScheme. Entra is a named OIDC scheme when
+    // Authentication:Entra:Enabled (or obsolete UseEntra synonym) is true — never
+    // AddMicrosoftIdentityWebAppAuthentication (that helper steals DefaultScheme).
+    bool entraEnabled = MockAuthenticationDefaults.IsEntraEnabled(
+      configuration[MockAuthenticationDefaults.EntraEnabledKey],
+      configuration[MockAuthenticationDefaults.UseEntraKey]);
+    bool usedObsoleteUseEntra = MockAuthenticationDefaults.UsedObsoleteUseEntraKey(
+      configuration[MockAuthenticationDefaults.EntraEnabledKey],
       configuration[MockAuthenticationDefaults.UseEntraKey]);
 
-    AuthenticationBuilder authenticationBuilder;
-    if (useEntra)
+    serviceCollection.AddOptions<EntraAuthenticationOptions>()
+      .Bind(configuration.GetSection(EntraAuthenticationOptions.SectionKey))
+      .Validate
+      (
+        static options => new EntraAuthenticationOptionsValidator().Validate(options).IsValid,
+        "Authentication:Entra is invalid."
+      )
+      .ValidateOnStart();
+    serviceCollection.PostConfigure<EntraAuthenticationOptions>(options =>
     {
-      // Entra owns the default scheme; identity-session is added as a named scheme via a second
-      // parameterless AddAuthentication() (same coexistence model as pre-021).
-      serviceCollection.AddMicrosoftIdentityWebAppAuthentication(configuration);
-      authenticationBuilder = serviceCollection.AddAuthentication();
-    }
-    else
-    {
-      authenticationBuilder = serviceCollection.AddAuthentication(IdentitySessionDefaults.Scheme);
-    }
+      options.Enabled = entraEnabled;
+      options.UsedObsoleteUseEntraKey = usedObsoleteUseEntra;
+    });
+    serviceCollection.AddSingleton<IPostConfigureOptions<EntraAuthenticationOptions>, EntraObsoleteKeyPostConfigure>();
+
+    AuthenticationBuilder authenticationBuilder = serviceCollection.AddAuthentication(IdentitySessionDefaults.Scheme);
 
     authenticationBuilder
       .AddCookie(IdentitySessionDefaults.Scheme, options =>
@@ -378,6 +386,12 @@ public partial class Program : IAspNetProgram
       // Closed-box mock principal (task 145-009): always registered; handler is fail-closed
       // (Development/Testing + Authentication:UseMock + header). Listed on AuthenticatedPolicy.
       .AddScheme<AuthenticationSchemeOptions, MockIdentityPrincipalHandler>(MockIdentityPrincipalHandler.SchemeName, _ => { });
+
+    if (entraEnabled)
+    {
+      serviceCollection.AddScoped<EntraTicketProcessor>();
+      EntraAuthenticationRegistration.AddNamedEntraScheme(authenticationBuilder, configuration);
+    }
   }
 
   public static void ConfigureMiddleware(WebApplication webApplication)
@@ -420,9 +434,10 @@ public partial class Program : IAspNetProgram
     // 500 and not cookie Challenge 401. Production has no Dev page; this is the mapper.
     webApplication.UseMiddleware<RoleResolutionFailureMiddleware>();
 
-    // Identity session (task 104-003): named cookie scheme only — the dormant Entra registration's
-    // own auth flow is untouched. Ceremony endpoints (register/authenticate) are anonymous by
-    // design (they establish the session); GetCurrentSession reads whatever session exists, if any.
+    // Identity session (task 104-003 / RFC 219 D10): default cookie scheme. Named entra OIDC is a
+    // challenge-only scheme and never DefaultScheme. Ceremony endpoints (register/authenticate) are
+    // anonymous by design (they establish the session); GetCurrentSession reads whatever session
+    // exists, if any.
     webApplication.UseAuthentication();
     webApplication.UseAuthorization();
 

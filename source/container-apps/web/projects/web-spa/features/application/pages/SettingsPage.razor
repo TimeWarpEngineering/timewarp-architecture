@@ -1,24 +1,34 @@
 @namespace TimeWarp.Architecture.Features.Applications
 @inherits BaseComponent
+@using Microsoft.Extensions.Configuration
 @using TimeWarp.Architecture.Features.Identity
+@using TimeWarp.Architecture.Services
 @using TimeWarp.Identity
 
 @code {
   public static string Title => "Settings";
   public static Icon? NavIcon => new Icons.Regular.Size20.Settings();
 
+  [Inject] private IConfiguration Configuration { get; set; } = null!;
+  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
   private Guid? ExpandedId;
+  private bool ShowMicrosoft365;
 
   private bool IsLoading =>
     IsAnyActive(typeof(CredentialsState.FetchCredentialsActionSet.Action));
   private bool IsBusy => ActionTrackingState.IsActive;
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
+  private IReadOnlyList<GetCredentials.CredentialSummary> EntraAccounts => CredentialsState.ActiveEntraAccounts;
   private string? ErrorMessage => CredentialsState.CeremonyError;
   private string? StatusMessage => CredentialsState.StatusMessage;
 
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
+    ShowMicrosoft365 = MockAuthenticationDefaults.IsEntraEnabled(
+      Configuration[MockAuthenticationDefaults.EntraEnabledKey],
+      Configuration[MockAuthenticationDefaults.UseEntraKey]);
     if (RendererInfo.IsInteractive)
     {
       await NoSubCredentialsState.FetchCredentials();
@@ -61,6 +71,16 @@
     await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
     SyncExpandedId();
   }
+
+  private void LinkMicrosoft365()
+  {
+    NavigationManager.NavigateTo(
+      ChallengeEntra.GetRoute("link", "/Settings"),
+      forceLoad: true);
+  }
+
+  private static string DisplayEntraLabel(GetCredentials.CredentialSummary credential) =>
+    string.IsNullOrWhiteSpace(credential.Label) ? "Microsoft 365" : credential.Label!;
 
   private void SyncExpandedId()
   {
@@ -145,6 +165,54 @@
         </button>
       </div>
     </section>
+
+    @if (ShowMicrosoft365)
+    {
+      <section class="twe-settings__section">
+        <h2 class="twe-settings__heading">Microsoft 365</h2>
+
+        @if (IsLoading)
+        {
+          <p class="twe-settings__muted">Loading…</p>
+        }
+        else if (EntraAccounts.Count == 0)
+        {
+          <p class="twe-settings__muted">No Microsoft 365 account linked.</p>
+        }
+        else
+        {
+          <ul class="twe-settings__cred-list">
+            @foreach (GetCredentials.CredentialSummary credential in EntraAccounts)
+            {
+              <li class="twe-settings__cred">
+                <div class="twe-settings__cred-body">
+                  <div class="twe-settings__field">
+                    <div class="twe-settings__field-title">@DisplayEntraLabel(credential)</div>
+                    <p class="twe-settings__value">@credential.CreatedAt.ToLocalTime().ToString("M/d/yyyy, h:mm:ss tt")</p>
+                    <button type="button"
+                            class="twe-settings__link twe-settings__link--danger"
+                            disabled="@IsBusy"
+                            @onclick="() => ConfirmRevokeAsync(credential)">
+                      Unlink
+                    </button>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="twe-settings__actions">
+          <button type="button"
+                  class="twe-settings__link"
+                  data-qa="LinkMicrosoft365"
+                  disabled="@IsBusy"
+                  @onclick="LinkMicrosoft365">
+            Link Microsoft 365
+          </button>
+        </div>
+      </section>
+    }
 
     @if (!string.IsNullOrEmpty(StatusMessage))
     {

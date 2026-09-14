@@ -5,8 +5,8 @@
 #region Design
 // Grants are RoleIds Guids + PermissionIds strings (task 182-003 deleted Modules /
 // ModuleRequirement). The identity-session path projects permissions from GetCurrentSession
-// into claims without this cache; Entra AccountClaimsPrincipalFactoryWithRoles still fetches
-// via GetCurrentUser and stores Roles + Permissions here for claim projection.
+// into claims without this cache. Mock demos still fetch via GetCurrentUser and store Roles +
+// Permissions here. Entra is a BFF named-scheme challenge (RFC 219 D10), not a WASM MSAL factory.
 // Cacheable (BaseCacheableState, 30s default) so repeated fetches do not thrash.
 // Mutable lists stay private so nested action handlers are the only writers; consumers get
 // read-only views.

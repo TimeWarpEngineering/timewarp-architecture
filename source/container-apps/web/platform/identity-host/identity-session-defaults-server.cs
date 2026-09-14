@@ -3,10 +3,10 @@
 #endregion
 
 #region Design
-// Task 104-021: when Authentication:UseEntra is false (default), this scheme IS the authentication
-// defaultScheme. When UseEntra is true, Entra owns the default and this remains a named scheme
-// registered via a second AddAuthentication() — CookieBrowserSessionService always signs in/reads
-// by this explicit scheme name, never relying on "the default," so both postures work.
+// RFC 219 D10: this scheme is always DefaultScheme. Entra is a named OIDC scheme ("entra") and
+// never owns the default (the 104-021 UseEntra branch that called
+// AddMicrosoftIdentityWebAppAuthentication is deleted). CookieBrowserSessionService always signs
+// in/reads by this explicit scheme name, never relying on "the default."
 // AuthenticatedPolicy (task 110): "any signed-in identity-session cookie" — scheme-restricted
 // (AddAuthenticationSchemes(Scheme)) + RequireAuthenticatedUser(), no further policy shape. Used by
 // non-admin identity-session-gated surfaces. Admin Roles/Principals APIs (task 182-002) use
