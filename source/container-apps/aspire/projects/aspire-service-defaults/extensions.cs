@@ -8,6 +8,9 @@
 // Kept in the Microsoft.Extensions.Hosting namespace, as upstream does, so callers need no extra using.
 // OTLP export activates only when Aspire injects OTEL_EXPORTER_OTLP_ENDPOINT; alternative exporters
 // (Prometheus, Azure Monitor) stay as commented opt-ins requiring extra packages.
+// AddMeter(AnalyticsMeters.MeterName) is the one deliberate deviation: this project must register
+// the analytics meter for OTLP export without referencing a web feature. The name constant lives
+// in TimeWarp.Foundation.Configuration (same home as ServiceNames).
 #endregion
 
 namespace Microsoft.Extensions.Hosting;
@@ -47,7 +50,8 @@ public static class Extensions
             {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    .AddMeter(TimeWarp.Foundation.Configuration.AnalyticsMeters.MeterName);
             })
             .WithTracing(tracing =>
             {

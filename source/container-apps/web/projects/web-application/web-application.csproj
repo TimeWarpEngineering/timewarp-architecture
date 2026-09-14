@@ -5,8 +5,11 @@
     <!-- WebAuthnOptions/WebAuthnOptionsValidator (configuration/) use IOptions<T>/AbstractValidator
          directly — explicit rather than relying on the transitive flow from web-contracts. -->
     <PackageReference Include="Microsoft.Extensions.Options" />
-    <!-- CompletePasskeyAuthentication.Handler logs WebAuthn FailureReason on verify 400. -->
+    <!-- CompletePasskeyAuthentication.Handler logs WebAuthn FailureReason on verify 400.
+         TrackEvent.Handler uses [TagName] on LoggerMessage (Telemetry.Abstractions)
+         for OTel event.name / correlation.id. -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions" />
     <PackageReference Include="TimeWarp.Multiavatar" />
   </ItemGroup>
 
