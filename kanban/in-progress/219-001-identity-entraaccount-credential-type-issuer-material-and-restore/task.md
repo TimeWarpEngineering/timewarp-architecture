@@ -28,6 +28,7 @@ Do **not** add Graph, OIDC, or template ceremony here (those are 219-002).
 - [x] Purpose/Design on `credential.cs` / `credential-type.cs`
 - [x] `Credential.Restore()` + store round-trip tests
 - [x] `dev build` 0/0 and identity unit tests green
+- [x] Implementation review (effort 1, general) — disposition **clean**
 
 ## Notes
 
@@ -37,6 +38,8 @@ Join key is `tid:oid`, never email/UPN/`sub`. Library stays Graph-free and EF-fr
 
 No Graph, OIDC, or template ceremony (219-002). Store port unchanged: Restore is `Credential.Restore()` then `UpdateCredentialAsync`. `TryDecode` rejects non-canonical (uppercase / non-D) encodings so unique `(Type, Handle)` cannot split one account across casings.
 
+Review (2026-09-14): effort 1, roster `general`, 1 round, disposition **clean** (0 open). Kitchen: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Depends on
 
 (none — first architecture child)
@@ -45,6 +48,8 @@ No Graph, OIDC, or template ceremony (219-002). Store port unchanged: Restore is
 
 - Created: 3423200 (2026-09-14)
 - Implementer: grok session 01a0a02e-9556-7e40-8a69-35284dfed141 (2026-09-14)
+- Review oracle: grok session 01a0a037-48fd-7190-9f39-8fea7589d855 (2026-09-14)
+- Reviewer (general, round 1): grok session 01a0a038-ce46-7380-a110-8516afbabdc0 (2026-09-14)
 
 ## Results
 
@@ -81,6 +86,12 @@ Fold-in of RFC 219 Decision 2 A′ into `TimeWarp.Identity`.
 **Test outcomes**
 - `dotnet run tools/dev-cli/dev.cs -- build`: 0 Warning(s), 0 Error(s)
 - `cd tests/libraries/timewarp-identity-tests && dotnet test -c Release`: 195 passed, 0 failed, 0 skipped (includes existing passkey/agent tests)
+
+**Review**
+- Rounds: 1 · Effort: 1 · Roster: general
+- Counts (final): bug 0/0/0 open/fixed/wontfix; suggestion 0/0/0; nit 0/0/0
+- Disposition: **clean** (no issues raised; no exceptions)
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
 
 ### How to validate
 
