@@ -6,6 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\foundation\foundation-contracts\foundation-contracts.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Contracts" Condition="'$(UseFoundationPackages)' == 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" />
