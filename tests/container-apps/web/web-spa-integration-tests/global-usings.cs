@@ -15,6 +15,7 @@ global using Microsoft.FluentUI.AspNetCore.Components;
 global using Shouldly;
 global using System.Text.Json;
 // Solution usings
+global using TimeWarp.Architecture.Features.Analytics;
 global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.Counters;
 global using TimeWarp.Architecture.Features.EventStreams;
@@ -27,6 +28,7 @@ global using TimeWarp.Architecture.Services;
 #endif
 global using TimeWarp.Architecture.Testing;
 global using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
+global using OneOf;
 global using TimeWarp.Mediator;
 global using TimeWarp.State;
 global using TimeWarp.Jaribu;

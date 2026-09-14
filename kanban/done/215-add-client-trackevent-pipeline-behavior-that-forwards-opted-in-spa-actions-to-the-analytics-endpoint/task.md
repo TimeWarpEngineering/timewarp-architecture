@@ -58,19 +58,20 @@ pipeline-behavior exemplar, replacing `event-stream` (retired in a follow-up tas
 
 ## Checklist
 
-- [ ] `[TrackEvent]` attribute added
-- [ ] `AnalyticsState` + `TrackEvent` ActionSet added
-- [ ] `TrackEventBehavior<,>` added and registered in `program.cs`
-- [ ] `IncrementCounterActionSet.Action` tagged `[TrackEvent]`, Design region updated
-- [ ] `MockResponseFactory` for `TrackEvent.Response` added
-- [ ] Purpose/Design regions on all new files
-- [ ] Tests: tagged-action POST, untagged-action no-POST, API-failure-does-not-block, state
+- [x] `[TrackEvent]` attribute added
+- [x] `AnalyticsState` + `TrackEvent` ActionSet added
+- [x] `TrackEventBehavior<,>` added and registered in `program.cs`
+- [x] `IncrementCounterActionSet.Action` tagged `[TrackEvent]`, Design region updated
+- [x] `MockResponseFactory` for `TrackEvent.Response` added
+- [x] Purpose/Design regions on all new files
+- [x] Tests: tagged-action POST, untagged-action no-POST, API-failure-does-not-block, state
       clone, contract round-trip (if changed)
-- [ ] `dev build` 0/0
-- [ ] `dev test`
-- [ ] `dev template-smoke`
-- [ ] Checked whether `skills/tw-slice-isolation/SKILL.md` lists pipeline behaviors — update
+- [x] `dev build` 0/0
+- [x] `dev test`
+- [x] `dev template-smoke`
+- [x] Checked whether `skills/tw-slice-isolation/SKILL.md` lists pipeline behaviors — update
       only if it does (expected: no)
+- [x] Implementation review (effort 1, general) — disposition `clean`
 
 ## Notes
 
@@ -88,3 +89,78 @@ pipeline-behavior exemplar, replacing `event-stream` (retired in a follow-up tas
 ## Session
 
 - Created: 2538042 (2026-09-14)
+- Implementer: grok session 01a09def-2b52-7c11-a9e3-9b5d3bb55aa8 (2026-09-14)
+- Review oracle: grok session 01a09e10-1006-7870-83f9-63b7048257c2 (2026-09-14)
+
+## Results
+
+SPA analytics client is wired as the template's pipeline-behavior exemplar. Opted-in actions
+(`[TrackEvent]`) POST `TrackEvent.Command { EventName, CorrelationId }` after they succeed;
+failures log at Debug and never fail the traced action. `event-stream` is untouched.
+
+**Files**
+
+- `source/container-apps/web/projects/web-spa/features/analytics/` — `[TrackEvent]` attribute,
+  `AnalyticsState` + `TrackEventActionSet`, `TrackEventBehavior<,>`
+- `source/container-apps/web/projects/web-spa/program.cs` — behavior registration
+- `source/container-apps/web/projects/web-spa/features/counter/counter-state/counter-state.increment-counter.cs` —
+  tagged + Design + `[CrossSliceReference]` (Counters → Analytics demo edge)
+- `source/container-apps/web/features/analytics/track-event/track-event-contracts.cs` — optional
+  `CorrelationId`, `GetMockResponseFactory()`
+- `tests/container-apps/web/web-spa-integration-tests/features/analytics/` — C-create host +
+  tagged/untagged/failure/clone facts
+- `tests/container-apps/web/web-contracts-tests/features/analytics/` — Command round-trip
+
+**Decisions**
+
+- No existing SPA `CorrelationId`; per-app-load `Guid` on `AnalyticsState`.
+- `EventName` is `Type.FullName` (nested Action types all have `Name == "Action"`).
+- Handler does not use `DefaultApiHandler` (that path toasts). HTTP exceptions and
+  problem-details arms are swallowed at Debug.
+- `skills/tw-slice-isolation/SKILL.md` does not list pipeline behaviors — not updated.
+
+**Test outcomes**
+
+- `dotnet run tools/dev-cli/dev.cs -- build` — 0/0
+- `dotnet run tools/dev-cli/dev.cs -- test` — passed (web-spa-integration-tests 22 succeeded / 1
+  skipped weather quarantine; web-contracts-tests 42 succeeded)
+- `dotnet run tools/dev-cli/dev.cs -- template-smoke` — succeeded (including SmokeNoApi after
+  fully qualifying `IWebServerApiService` in the analytics test host)
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd tests/container-apps/web/web-spa-integration-tests
+dotnet test -c Release -- --filter-class TrackEventBehavior_
+dotnet test -c Release -- --filter-class AnalyticsState_
+cd ../web-contracts-tests
+dotnet test -c Release -- --filter-class TrackEvent
+```
+
+**Expect**
+
+- `TrackEventBehavior_`: 3 passed — tagged IncrementCounter POSTs once with
+  `EventName == typeof(IncrementCounterActionSet.Action).FullName` and the state's
+  `CorrelationId`; untagged `ToggleMenu.Action` POSTs nothing; `HttpRequestException` from the
+  API still leaves Counter `Count` incremented.
+- `AnalyticsState_`: 1 passed — clone copies `CorrelationId`, new `Guid`.
+- `TrackEvent`: 2 passed — Command round-trips with and without `CorrelationId`.
+
+**Automated gate**
+
+```bash
+dotnet run tools/dev-cli/dev.cs -- build   # expect: 0 Warning(s) 0 Error(s)
+dotnet run tools/dev-cli/dev.cs -- test    # expect: Tests completed successfully!
+dotnet run tools/dev-cli/dev.cs -- template-smoke  # expect: Template smoke SUCCEEDED
+```
+
+**Not in scope:** live OpenTelemetry sink (follow-up 216); retiring `event-stream` (follow-up 217).
+
+**Review disposition**
+
+- Rounds: 1. Effort 1, roster: general.
+- Final counts: bug 0 / suggestion 0 / nit 0 (all open=0, fixed=0, wontfix=0).
+- Outcome: **clean** (no findings raised).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

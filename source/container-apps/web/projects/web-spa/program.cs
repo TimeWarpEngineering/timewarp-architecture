@@ -144,6 +144,7 @@ public static class Program
     serviceCollection.AddScoped<PasskeyCeremonyClient>();
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
     serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(EventStreamBehavior<,>));
+    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(TrackEventBehavior<,>));
 
     // We are using a factory here to explicitly determine which constructor to use for DI.
     serviceCollection.AddScoped<IWebServerApiService>
