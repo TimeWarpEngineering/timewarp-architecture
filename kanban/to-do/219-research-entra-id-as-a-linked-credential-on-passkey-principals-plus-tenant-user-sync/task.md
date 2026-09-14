@@ -83,12 +83,18 @@ None (new program thread; follows 104 identity program).
 
 ## Design forks the RFC must resolve
 
-1. **Extension-only vs bootstrap-capable.** Is Entra linking only available to an already
-   authenticated passkey principal, or does a first Entra sign-in find-or-create a principal
-   by `tid:oid`? Bill's mockup and crunchit task 008 assume "Continue with Microsoft 365"
-   bootstraps; program lock #1 says passkey first. Candidate: Entra bootstrap allowed only
-   for a **pre-provisioned (synced) principal**, and the session is not "fully onboarded"
-   until a passkey is registered in that same session.
+1. **Extension-only vs bootstrap-capable. LOCKED 2026-09-14 by Steve: bootstrap-capable.**
+   "Continue with Microsoft 365" may create the account. Entra is a first-class credential;
+   a passkey is a soft prompt afterward (098-006 recovery-soft-prompt shape), never a gate.
+   Rationale: we never hold a passkey anyway (public key only); an Entra token satisfies
+   "account = accepted credential" the same way; it is the only path testable in the
+   template with no pre-synced accounts; Entra disable locking the person out of our app
+   is desired for staff tools. Guardrails (non-negotiable): only explicitly configured
+   trusted tenants may bootstrap; never auto-link by email to an existing principal; link
+   key is `tid:oid`. crunchit: first sign-in links to the pre-synced principal by `tid:oid`,
+   and an account that sync filtered out (no Title) is refused. Template (no sync): first
+   sign-in from a trusted tenant creates the principal. The RFC does not re-open this fork;
+   it designs the mechanics.
 2. **Credential shape.** New `CredentialType.EntraAccount` (or generic `ExternalIdentity`
    with provider in metadata)? `Handle` = UTF-8 `"{tid}:{oid}"` keeps the `(Type, Handle)`
    unique index and `FindCredentialByHandleAsync` working. `PublicMaterial` is documented as
@@ -119,7 +125,7 @@ None (new program thread; follows 104 identity program).
 
 ## Deliverables
 
-- `rfc/rfc.md` in this task folder (use `tw-rfc-ballot` for forks 1, 2, 5, 7; the rest can
+- `rfc/rfc.md` in this task folder (fork 1 is locked; use `tw-rfc-ballot` for forks 2, 5, 7; the rest can
   be resolved in prose) with a decision per fork and the rationale.
 - A proposed `TimeWarp.Identity` public surface delta (types, store port methods, ceremony
   endpoints) and a sequence diagram for link, bootstrap, sync, and revoke.
@@ -139,7 +145,7 @@ None (new program thread; follows 104 identity program).
       identity-session action, capture `tid`/`oid`, attach `Credential`
 - [ ] Prototype spike: Graph `/users/delta` with `$select` and `$filter` for `jobTitle`,
       app-only auth via certificate, deltaLink round trip
-- [ ] Write `rfc/rfc.md`; run rfc-ballot on the four contested forks
+- [ ] Write `rfc/rfc.md`; run rfc-ballot on the three contested forks (2, 5, 7)
 - [ ] Create child implementation tasks (architecture + crunchit) from the RFC
 - [ ] Results and How to validate
 
@@ -147,6 +153,7 @@ None (new program thread; follows 104 identity program).
 
 - Created: 3376783 (2026-09-14)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
+- Reclaimed: 3397652 (2026-09-14) to lock fork 1 and dispatch
 
 ## Notes
 
