@@ -1,14 +1,19 @@
 #region Purpose
-// Authentication material bound to a principal: passkey or agent key with handle, public material, and revoke lifecycle.
+// Authentication material bound to a principal: passkey, agent key, or Entra account, with type-dependent verification material and revoke/restore lifecycle.
 #endregion
 
 #region Design
 // Multi-credential by model: many Credential rows per PrincipalId (list/revoke APIs come later). Handle is the lookup key
-// (credential id / key id); PublicMaterial is verification material (COSE/public key). Create copies inputs; getters return
-// fresh copies so callers cannot mutate stored material (D8: keep byte[] copy-on-get for Wave 1).
+// (credential id / key id / Entra tid:oid). PublicMaterial is type-dependent verification material: COSE/SPKI public key
+// for Passkey/AgentKey; UTF-8 issuer URI (EntraIssuerMaterial) for EntraAccount only. Hosts must never feed EntraAccount
+// rows into WebAuthnAuthentication.Verify or AgentKeyProof.Verify — those APIs consume cryptographic public keys, not
+// issuer URIs. Create copies inputs; getters return fresh copies so callers cannot mutate stored material
+// (D8: keep byte[] copy-on-get for Wave 1).
 // Empty PrincipalId rejected at Create. CredentialType.None rejected. Id is CredentialId (RFC D3), not raw Guid.
-// Type and Handle are immutable after Create — store Update replaces by Id only (revoke / label persistence); no handle migration.
-// Revoke is one-shot. Clocks (D5, closed 104-006): CreatedAt/RevokedAt remain wall-clock
+// Type and Handle are immutable after Create — store Update replaces by Id only (revoke / restore / label persistence); no handle migration.
+// Revoke is one-shot (throws if already revoked). Restore is the one-shot inverse (throws if not revoked) so Graph
+// re-enable can reuse the same (Type, Handle) row; unique (Type, Handle) plus Find-returns-revoked makes re-insert of
+// the same tid:oid impossible. Clocks (D5, closed 104-006): CreatedAt/RevokedAt remain wall-clock
 // DateTimeOffset with fuzzy tests; ceremony challenge/token stores already take optional
 // TimeProvider. Full TimeProvider on domain entities is not required for the Wave 1 gate.
 //
@@ -28,7 +33,7 @@
 // exists to prevent.
 //
 // IAggregateRoot: deliberately NOT implemented here, for the same reason as Principal — see
-// principal.cs's Design region. Identity's own guard clauses (Create, Revoke) are the invariant
+// principal.cs's Design region. Identity's own guard clauses (Create, Revoke, Restore) are the invariant
 // enforcement; aligning with the nested-Invariants/IAggregateRoot pattern is a later task.
 #endregion
 
@@ -134,6 +139,21 @@ public sealed class Credential : Entity<CredentialId>
     }
 
     RevokedAt = DateTimeOffset.UtcNow;
+  }
+
+  /// <summary>
+  /// One-shot inverse of <see cref="Revoke"/>: clears <see cref="RevokedAt"/> so the same
+  /// (Type, Handle) row can be reused. Throws if the credential is not revoked.
+  /// </summary>
+  /// <exception cref="InvalidOperationException">The credential is not revoked.</exception>
+  public void Restore()
+  {
+    if (RevokedAt is null)
+    {
+      throw new InvalidOperationException("Credential is not revoked.");
+    }
+
+    RevokedAt = null;
   }
 
   private static string? NormalizeLabel(string? label)

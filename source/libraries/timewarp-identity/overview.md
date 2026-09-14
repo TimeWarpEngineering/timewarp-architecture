@@ -6,7 +6,7 @@ cohesion. The placement rules:
 | Folder | Holds | Rule |
 |--------|-------|------|
 | `principals/` | Principal aggregate + its typed id and enums | Domain entity per folder |
-| `credentials/` | Credential aggregate + its typed id and enum | Domain entity per folder |
+| `credentials/` | Credential aggregate + typed id, enum, Entra handle/issuer helpers | Domain entity per folder |
 | `persistence/` | `IPrincipalStore`, in-memory impl, `ConcurrencyConflictException` | The **durable domain-data seam** — what a database will hold; the port hosts swap for EF/Postgres |
 | `ceremonies/webauthn/` | Passkey verifier + its challenge store | Feature cohesion: everything the ceremony needs, including its **ephemeral** protocol state |
 | `ceremonies/agent-key/` | Agent-key proof + its challenge store | Same rule |

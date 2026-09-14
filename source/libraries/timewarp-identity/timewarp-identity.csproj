@@ -4,8 +4,8 @@
     <IsPackable>true</IsPackable>
     <PackageId>TimeWarp.Identity</PackageId>
     <Title>TimeWarp.Identity</Title>
-    <Description>Principal identity (passkeys, agent keys, sessions/tokens, trust tiers) for TimeWarp applications.</Description>
-    <PackageTags>timewarp;identity;webauthn;passkey;agents</PackageTags>
+    <Description>Principal identity (passkeys, agent keys, Entra-linked credentials, sessions/tokens, trust tiers) for TimeWarp applications.</Description>
+    <PackageTags>timewarp;identity;webauthn;passkey;agents;entra</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
