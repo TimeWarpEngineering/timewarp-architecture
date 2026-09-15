@@ -10,7 +10,7 @@
 // Run standalone:  dotnet run source/container-apps/web/features/settings/get-site-settings/get-site-settings-tests.cs
 
 #region Purpose
-// Jaribu runfile: GetSiteSettings round-trip, mock factory, get-or-create defaults.
+// Jaribu runfile: GetSiteSettings round-trip, mock factory, empty-store not-initialized.
 #endregion
 
 //-:cnd:noEmit
@@ -79,16 +79,16 @@ namespace TimeWarp.Architecture.Features.Settings
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<GetSiteSettingsHandler_Given_>();
 
-    public static async Task Empty_Store_Should_Create_Defaults()
+    public static async Task Empty_Store_Should_Return_Not_Initialized_Without_Insert()
     {
       InMemorySiteSettingsStore store = new();
       GetHandler handler = new(store);
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(new Query(), default);
-      result.IsT0.ShouldBeTrue();
-      result.AsT0.EntraSignInEnabled.ShouldBeFalse();
-      result.AsT0.Version.ShouldBe(0);
+      result.IsT1.ShouldBeTrue();
+      result.AsT1.Status.ShouldBe(503);
+      result.AsT1.Title.ShouldBe("Site settings not initialized");
       SiteSettings? stored = await store.GetAsync();
-      stored.ShouldNotBeNull();
+      stored.ShouldBeNull();
     }
   }
 }

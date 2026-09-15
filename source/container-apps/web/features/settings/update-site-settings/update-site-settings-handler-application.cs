@@ -3,9 +3,10 @@
 #endregion
 
 #region Design
-// Get-or-create factory defaults (same helper as GetSiteSettings), compare Command.Version to
-// stored Version, 409 on mismatch. On match, ReplacePolicy then UpdateAsync. Concurrent Update
-// throws ConcurrencyConflictException → same 409. Does not reference Identity.Application (TWA0009).
+// GetAsync only — does not insert when empty (NotInitialized 503). Seed is SiteSettingsSeeder's
+// job. Compare Command.Version to stored Version, 409 on mismatch. On match, ReplacePolicy then
+// UpdateAsync. Concurrent Update throws ConcurrencyConflictException → same 409. Does not
+// reference Identity.Application (TWA0009).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings.Application;
@@ -28,9 +29,13 @@ public sealed class UpdateSiteSettings
       Command command,
       CancellationToken cancellationToken)
     {
-      SiteSettings settings = await GetSiteSettings.GetOrCreateDefaultsAsync(
-        SiteSettingsStore,
-        cancellationToken).ConfigureAwait(false);
+      SiteSettings? settings = await SiteSettingsStore.GetAsync(cancellationToken)
+        .ConfigureAwait(false);
+      if (settings is null)
+      {
+        return SiteSettingsProblems.NotInitialized();
+      }
+
       if (command.Version != settings.Version)
       {
         return SiteSettingsProblems.ConcurrencyConflict();

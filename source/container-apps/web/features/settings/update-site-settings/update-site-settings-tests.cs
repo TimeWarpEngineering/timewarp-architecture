@@ -10,7 +10,7 @@
 // Run standalone:  dotnet run source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs
 
 #region Purpose
-// Jaribu runfile: UpdateSiteSettings validator GUIDs, 409 on stale version, successful update.
+// Jaribu runfile: UpdateSiteSettings validator GUIDs, empty-store 503, 409, successful update.
 #endregion
 
 //-:cnd:noEmit
@@ -76,6 +76,28 @@ namespace TimeWarp.Architecture.Features.Settings
   {
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<UpdateSiteSettingsHandler_Given_>();
+
+    public static async Task Empty_Store_Should_Return_Not_Initialized_Without_Insert()
+    {
+      InMemorySiteSettingsStore store = new();
+      UpdateHandler handler = new(store);
+      OneOf<Response, SharedProblemDetails> result = await handler.Handle(
+        new Command
+        {
+          EntraSignInEnabled = true,
+          EntraAllowBootstrap = true,
+          EntraTrustedTenants = [],
+          PasskeyPromptMode = PasskeyPromptMode.Required,
+          Version = 0
+        },
+        default);
+
+      result.IsT1.ShouldBeTrue();
+      result.AsT1.Status.ShouldBe(503);
+      result.AsT1.Title.ShouldBe("Site settings not initialized");
+      SiteSettings? stored = await store.GetAsync();
+      stored.ShouldBeNull();
+    }
 
     public static async Task Stale_Version_Should_409()
     {

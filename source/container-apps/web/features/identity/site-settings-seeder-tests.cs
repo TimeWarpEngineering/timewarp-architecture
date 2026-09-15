@@ -11,7 +11,7 @@
 // Run standalone:  dotnet run source/container-apps/web/features/identity/site-settings-seeder-tests.cs
 
 #region Purpose
-// Jaribu runfile: seed-once from configuration; second call does not overwrite.
+// Jaribu runfile: seed-once from configuration; empty Get does not block config seed.
 #endregion
 
 //-:cnd:noEmit
@@ -50,6 +50,20 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       seeded.EntraAllowBootstrap.ShouldBeTrue();
       seeded.IsTrustedTenant(Tenant).ShouldBeTrue();
       seeded.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Soft);
+    }
+
+    public static async Task Empty_Get_Without_Insert_Should_Still_Allow_Config_Seed()
+    {
+      InMemorySiteSettingsStore store = new();
+      // Pretend GetSiteSettings ran against an empty store (no insert).
+      SiteSettings? afterPretendGet = await store.GetAsync();
+      afterPretendGet.ShouldBeNull();
+
+      SiteSettingsSeeder seeder = Create(store, enabled: true, allowBootstrap: true, Tenant);
+      SiteSettings seeded = await seeder.GetOrSeedAsync();
+      seeded.EntraSignInEnabled.ShouldBeTrue();
+      seeded.EntraAllowBootstrap.ShouldBeTrue();
+      seeded.IsTrustedTenant(Tenant).ShouldBeTrue();
     }
 
     public static async Task Second_Call_Should_Not_Overwrite()

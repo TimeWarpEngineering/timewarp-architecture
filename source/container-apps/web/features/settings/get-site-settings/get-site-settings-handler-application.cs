@@ -1,12 +1,12 @@
 #region Purpose
-// Server-side handler for GetSiteSettings: return the singleton snapshot, creating factory defaults if empty.
+// Server-side handler for GetSiteSettings: return the singleton snapshot, or 503 if not seeded.
 #endregion
 
 #region Design
 // Application takes ISiteSettingsStore, not PostgresDbContext and not Identity.Application types
-// (TWA0009). First-run copy from Authentication:Entra lives in SiteSettingsSeedHostedService.
-// If this handler races the seed, factory defaults (all false, Soft) are inserted; the seeder
-// Add then no-ops on the existing row. Tenant ids serialize as D-format GUID strings.
+// (TWA0009). Does not insert when empty — only SiteSettingsSeeder writes the first row (from
+// Authentication:Entra at boot via SiteSettingsSeedHostedService.StartingAsync). Empty store
+// returns NotInitialized (503). Tenant ids serialize as D-format GUID strings.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings.Application;
@@ -30,37 +30,14 @@ public sealed class GetSiteSettings
       CancellationToken cancellationToken)
     {
       _ = request;
-      SiteSettings settings = await GetOrCreateDefaultsAsync(SiteSettingsStore, cancellationToken)
+      SiteSettings? settings = await SiteSettingsStore.GetAsync(cancellationToken)
         .ConfigureAwait(false);
-      return ToResponse(settings);
-    }
-  }
-
-  internal static async Task<SiteSettings> GetOrCreateDefaultsAsync(
-    ISiteSettingsStore store,
-    CancellationToken cancellationToken)
-  {
-    SiteSettings? settings = await store.GetAsync(cancellationToken).ConfigureAwait(false);
-    if (settings is not null)
-    {
-      return settings;
-    }
-
-    var created = SiteSettings.Create();
-    try
-    {
-      await store.AddAsync(created, cancellationToken).ConfigureAwait(false);
-      return created;
-    }
-    catch (InvalidOperationException)
-    {
-      SiteSettings? winner = await store.GetAsync(cancellationToken).ConfigureAwait(false);
-      if (winner is null)
+      if (settings is null)
       {
-        throw new InvalidOperationException("Site settings create raced but re-get returned null.");
+        return SiteSettingsProblems.NotInitialized();
       }
 
-      return winner;
+      return ToResponse(settings);
     }
   }
 
