@@ -47,9 +47,45 @@ Additional passkeys can be attached to an existing principal once signed in
 (`POST /api/identity/credentials/passkey` — session required).
 
 **Not offered:** email register, password reset, magic-link-only accounts as the
-primary path. Microsoft Entra / MSAL is **opt-in only** (`Authentication:UseEntra=true`
-plus `AzureAd` / `AzureAdB2C` settings) and is not the agent- or human-priority story.
-Default non-mock SPA auth projects the identity-session cookie via `GetCurrentSession`.
+primary path. Microsoft Entra is **opt-in only** (`Authentication:Entra:Enabled=true`)
+and is not the agent- or human-priority story. The SPA “Continue with Microsoft 365”
+button is a BFF `Challenge("entra")` — no WASM MSAL session. Default non-mock SPA
+auth projects the identity-session cookie via `GetCurrentSession`.
+
+### Entra (opt-in named scheme)
+
+Register **all three** redirect URIs on the Entra app registration for a given
+environment, then set `Authentication:Entra:PublicOrigin` to the origin the
+browser actually uses:
+
+| Path | Redirect URI | `PublicOrigin` |
+|------|----------------|----------------|
+| Direct Web.Server | `https://localhost:63611/signin-oidc` | unset (request-derived) |
+| Aspire YARP ingress | `https://localhost:63610/signin-oidc` | `https://localhost:63610` |
+| Shared hostname (Caddy → YARP) | `https://<public-host>/signin-oidc` | `https://<public-host>` |
+
+Any proxied deployment — including crunchit on Azure Container Apps — **must**
+set `PublicOrigin`. Web.Server is reached over **http** behind YARP/ACA and
+does not consume `X-Forwarded-*` (passkey RP-ID must not trust spoofable
+forwarded headers). Unset `PublicOrigin` would send Entra `http://…/signin-oidc`
+and write OIDC correlation cookies without `Secure`.
+
+User-secrets example (Web.Server project):
+
+```bash
+dotnet user-secrets set "Authentication:Entra:Enabled" "true" --project source/container-apps/web/projects/web-server
+dotnet user-secrets set "Authentication:Entra:Instance" "https://login.microsoftonline.com/" --project source/container-apps/web/projects/web-server
+dotnet user-secrets set "Authentication:Entra:TenantId" "organizations" --project source/container-apps/web/projects/web-server
+dotnet user-secrets set "Authentication:Entra:ClientId" "<app-id>" --project source/container-apps/web/projects/web-server
+dotnet user-secrets set "Authentication:Entra:ClientSecret" "<secret>" --project source/container-apps/web/projects/web-server
+dotnet user-secrets set "Authentication:Entra:CallbackPath" "/signin-oidc" --project source/container-apps/web/projects/web-server
+dotnet user-secrets set "Authentication:Entra:AllowBootstrap" "true" --project source/container-apps/web/projects/web-server
+dotnet user-secrets set "Authentication:Entra:TrustedTenants:0" "<tenant-id>" --project source/container-apps/web/projects/web-server
+dotnet user-secrets set "Authentication:Entra:PublicOrigin" "https://arch.timewarp.work" --project source/container-apps/web/projects/web-server
+```
+
+`Ingress:PublicUrl` (AppHost) is dashboard display only — do not treat it as a
+substitute for `PublicOrigin`.
 
 ---
 

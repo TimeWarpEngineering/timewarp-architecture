@@ -11,9 +11,20 @@
 // IssuerValidator is always EntraIssuerValidator (organizations/common/consumers metadata issuer is
 // a {tenantid} placeholder; single-tenant GUID authorities use the same tid pin). ValidateIssuer
 // stays true — do not disable it.
+// YARP and ACA terminate TLS and forward to Web.Server over http without UseForwardedHeaders
+// (104-031). OpenIdConnectHandler would then emit an http redirect_uri and SameSite=None cookies
+// without Secure. PublicOrigin (when set) overrides ProtocolMessage.RedirectUri on challenge and
+// on authorization-code redemption so Entra sees the browser origin; CorrelationCookie and
+// NonceCookie SecurePolicy is Always because every supported Entra path is https at the browser.
+// AuthenticationProperties.RedirectUri stays the local return path — LocalReturnUrl.Sanitize, not
+// PublicOrigin.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 public static class EntraAuthenticationRegistration
 {
@@ -50,9 +61,17 @@ public static class EntraAuthenticationRegistration
         options.Prompt = "select_account";
         options.SignInScheme = IdentitySessionDefaults.Scheme;
         options.TokenValidationParameters.IssuerValidator = EntraIssuerValidator.Validate;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Events.OnRedirectToIdentityProvider = context =>
         {
           context.ProtocolMessage.Prompt = "select_account";
+          ApplyPublicRedirectUri(context.HttpContext, context.ProtocolMessage);
+          return Task.CompletedTask;
+        };
+        options.Events.OnAuthorizationCodeReceived = context =>
+        {
+          ApplyPublicRedirectUri(context.HttpContext, context.TokenEndpointRequest);
           return Task.CompletedTask;
         };
         options.Events.OnTicketReceived = async context =>
@@ -66,5 +85,20 @@ public static class EntraAuthenticationRegistration
         };
       }
     );
+  }
+
+  private static void ApplyPublicRedirectUri(HttpContext httpContext, OpenIdConnectMessage? message)
+  {
+    if (message is null)
+    {
+      return;
+    }
+
+    EntraAuthenticationOptions entraOptions = httpContext.RequestServices
+      .GetRequiredService<IOptions<EntraAuthenticationOptions>>().Value;
+    if (entraOptions.TryGetPublicRedirectUri(out string? redirectUri))
+    {
+      message.RedirectUri = redirectUri;
+    }
   }
 }
