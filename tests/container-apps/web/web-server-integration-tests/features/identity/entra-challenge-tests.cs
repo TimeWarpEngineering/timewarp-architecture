@@ -246,6 +246,25 @@ public class Challenge_Given_
     }
   }
 
+  public static async Task Bootstrap_With_Public_Origin_Should_Redirect_To_Local_Return_Url()
+  {
+    App.ShouldNotBeNull();
+    EntraAuthenticationOptions options = App.Services.GetRequiredService<IOptions<EntraAuthenticationOptions>>().Value;
+    string? previous = options.PublicOrigin;
+    options.PublicOrigin = "https://arch.timewarp.work";
+    try
+    {
+      HttpResponseMessage response = await SendChallengeAsync("bootstrap", TrustedTenantId, Guid.NewGuid());
+      response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+      response.Headers.Location.ShouldNotBeNull();
+      response.Headers.Location!.ToString().ShouldBe("/");
+    }
+    finally
+    {
+      options.PublicOrigin = previous;
+    }
+  }
+
   public static async Task Invalid_Mode_Should_400()
   {
     HttpResponseMessage response = await SendChallengeAsync("signin", TrustedTenantId, Guid.NewGuid());
