@@ -11,6 +11,8 @@
 // clones that chrome (no "Sign in with a passkey" button that only redirects) — a single
 // "Sign in" CTA navigates to /Login. FluentButton + NoSubRouteState.ChangeRoute (Profile
 // pattern) — never nest a button inside NavLink (invalid HTML).
+// RFC 219 D8: Entra-without-passkey soft prompt is composed by TimeWarpPage (AddPasskeyPrompt),
+// not this page. Home stays anonymous; the banner is not a route gate.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

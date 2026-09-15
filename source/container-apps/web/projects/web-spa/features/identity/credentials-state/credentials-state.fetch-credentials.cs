@@ -6,7 +6,8 @@
 // DefaultApiHandler owns transport + toast-on-error. UserId is client FluentValidation / mock
 // signal only (server uses session principal). Prefer signed-in claim; Guid.NewGuid() fallback
 // matches RoleState when claim resolution fails (AuthApiRequestValidator needs non-empty UserId).
-// Task 169.
+// AuthenticationStateListener fetches on sign-in so RFC 219 D8 AddPasskeyPrompt has a snapshot
+// without visiting Settings. Task 169 + 219-003.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

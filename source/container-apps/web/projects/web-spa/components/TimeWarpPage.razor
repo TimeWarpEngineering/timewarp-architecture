@@ -18,6 +18,9 @@
   but does not push (403/404/auth must not pollute the trail). TwBreadcrumb emits
   Bootstrap class names with no CSS of its own (timewarp-state 081); a thin wrapper
   under .twe-shell styles that contract with tokens. Do not load Bootstrap.
+  RFC 219 D8: AddPasskeyPrompt sits above ChildContent so post-login Home and Profile (and
+  every other TimeWarpPage) can show the Entra add-passkey banner. Login uses
+  TimeWarpFocusedPage and never hosts this prompt. Dismissing the banner is not a gate.
 *@
 
 @code {
@@ -93,6 +96,7 @@
           </div>
         }
         <div class="twe-page__body">
+          <AddPasskeyPrompt />
           @ChildContent
         </div>
       </div>

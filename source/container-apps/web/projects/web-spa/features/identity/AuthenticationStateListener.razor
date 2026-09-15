@@ -1,5 +1,6 @@
 @namespace TimeWarp.Architecture.Features.Identity
 @inherits BaseComponent
+@inject ISessionStorageService SessionStorage
 
 @code {
   protected override bool ShouldRender()
@@ -26,13 +27,25 @@
     if (user.Identity?.IsAuthenticated == true)
     {
       await NoSubProfileState.FetchProfileData();
+      await NoSubCredentialsState.FetchCredentials();
     }
     else
     {
       await NoSubProfileState.ClearProfileData();
       await NoSubAuthorizationState.ClearCurrentUser();
       await NoSubCredentialsState.ClearCredentials();
+      await ClearPasskeySoftPromptLaterAsync();
     }
+  }
+
+  private async Task ClearPasskeySoftPromptLaterAsync()
+  {
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    await SessionStorage.RemoveItemAsync(PasskeySoftPrompt.LaterStorageKey);
   }
 
   public override void Dispose()
