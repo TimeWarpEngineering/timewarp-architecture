@@ -227,3 +227,14 @@ bounded retry (1s backoff, up to 30 attempts) on that specific undefined-table e
 same first-boot race the rest of the postgres path already tolerates; the in-memory path is
 unaffected since it never throws that error. Verified locally: `aspire-tests` (7/7, all
 `*ThroughIngress*` cases) green against real Postgres via Docker.
+
+CI run 34983768899: `ci` job and `SmokeDefault` passed, but `SmokeNoPostgres` failed to build
+(CS0234/CS0246) because `ef-site-settings-store-infrastructure.cs` and
+`site-settings-entity-type-configuration-infrastructure.cs` were still emitted into the
+no-postgres generated app. Added both to the `(!postgres)` exclude list in
+`.template.config/template.json`, alongside the other `ef-*-store-infrastructure.cs` /
+`*-entity-type-configuration-infrastructure.cs` pairs. `InMemoryIdentityStoresModule` already
+registers `ISiteSettingsStore -> InMemorySiteSettingsStore` unconditionally, so the no-postgres
+app still boots. Verified locally: `dev build` (0/0) and a full local `dev template-smoke` run —
+`SmokeDefault`, `SmokeNoPostgres`, `SmokeNoApi` all built 0 errors, ending "Template smoke
+SUCCEEDED"; `ganda repo audit` unchanged (2 pre-existing advisory warnings).
