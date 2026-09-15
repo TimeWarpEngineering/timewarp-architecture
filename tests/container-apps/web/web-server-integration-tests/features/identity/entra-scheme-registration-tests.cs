@@ -16,6 +16,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -108,6 +109,15 @@ public class ConfigureAuthentication_Given_
     entra!.HandlerType.ShouldBe(typeof(OpenIdConnectHandler));
     AuthenticationScheme? identitySession = await schemes.GetSchemeAsync(IdentitySessionDefaults.Scheme);
     identitySession.ShouldNotBeNull();
+
+    OpenIdConnectOptions openIdConnectOptions =
+      provider.GetRequiredService<IOptionsMonitor<OpenIdConnectOptions>>().Get(EntraLinkDefaults.Scheme);
+    openIdConnectOptions.CorrelationCookie.SecurePolicy.ShouldBe(
+      CookieSecurePolicy.Always,
+      "Browser-facing Entra paths are always https; SameSite=None correlation cookies need Secure behind http YARP.");
+    openIdConnectOptions.NonceCookie.SecurePolicy.ShouldBe(
+      CookieSecurePolicy.Always,
+      "Browser-facing Entra paths are always https; SameSite=None nonce cookies need Secure behind http YARP.");
   }
 
   public static async Task Obsolete_UseEntra_Should_Enable_Named_Scheme_Not_Default()

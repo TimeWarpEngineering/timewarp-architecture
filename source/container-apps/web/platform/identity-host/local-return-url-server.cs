@@ -6,6 +6,9 @@
 // Mirrors LoginPage.GetSafeReturnUrl (open-redirect + login-loop guards) on the server so the OIDC
 // ticket completion redirect cannot be pointed at an absolute URL. Also refuses the challenge path
 // itself so a crafted returnUrl cannot bounce the browser through Challenge again.
+// AuthenticationProperties.RedirectUri is the local return path from the challenge query (e.g.
+// /Profile). PublicOrigin overrides only the OIDC redirect_uri, so Sanitize still accepts that
+// local path after callback when the public origin differs from the internal http origin.
 #endregion
 
 namespace TimeWarp.Architecture.Configuration;

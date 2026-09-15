@@ -52,6 +52,10 @@
 // Ingress:PublicUrl (unset by default; personal value belongs in user secrets, never committed —
 // this repo dogfoods as the template) adds a "public" display URL on the ingress resource so the
 // dashboard links to the externally shared hostname (e.g. https://arch.timewarp.work).
+// Authentication:Entra:PublicOrigin is Web.Server config and is not copied from Ingress:PublicUrl.
+// The dashboard display URL and the OIDC callback origin can differ (https://localhost:63610 vs
+// the shared hostname); auto-copying would break one of those paths. Set PublicOrigin explicitly
+// on Web.Server for any proxied Entra deployment.
 // Original-Host forwarding (task 104-031): the Web.Server routes chain
 // WithTransformUseOriginalHostHeader(true) so the client's original Host header reaches Web.Server
 // instead of being rewritten to the destination host — Web.Server's per-request WebAuthn RP-ID
