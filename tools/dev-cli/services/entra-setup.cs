@@ -6,6 +6,8 @@
 // Kept free of Amuru/Terminal so tests/tools/dev-cli-tests can Compile-include this file.
 // Redirect-URI union is case-insensitive and preserves first-seen order (existing, then desired).
 // Client secrets are never formatted into an invocation string; MaskSecret is the only display form.
+// Mint only on --new-secret or a successful list with no ClientSecret; a failed list aborts
+// (never fail-open mint — that would --append an Azure password that may never be stored).
 // az JSON is parsed with JsonDocument (AOT-safe; no reflection serializer).
 #endregion
 
@@ -157,6 +159,28 @@ internal static class EntraSetup
   {
     return secrets.TryGetValue(ClientSecretKey, out string? value)
       && !string.IsNullOrWhiteSpace(value);
+  }
+
+  internal static bool TryDecideMintClientSecret(
+    bool newSecret,
+    bool listSucceeded,
+    bool hasExistingClientSecret,
+    out bool mint)
+  {
+    if (newSecret)
+    {
+      mint = true;
+      return true;
+    }
+
+    if (!listSucceeded)
+    {
+      mint = false;
+      return false;
+    }
+
+    mint = !hasExistingClientSecret;
+    return true;
   }
 
   internal static bool TryReadAccount(string json, out string tenantId, out string user)

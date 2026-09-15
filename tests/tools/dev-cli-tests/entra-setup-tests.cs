@@ -167,3 +167,53 @@ public class CredentialDisplayName_Given_
     return Task.CompletedTask;
   }
 }
+
+public class TryDecideMintClientSecret_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<TryDecideMintClientSecret_Given_>();
+
+  public static Task NewSecret_Should_MintEvenWhenListFailed()
+  {
+    EntraSetup.TryDecideMintClientSecret(
+      newSecret: true,
+      listSucceeded: false,
+      hasExistingClientSecret: true,
+      out bool mint).ShouldBeTrue();
+    mint.ShouldBeTrue();
+    return Task.CompletedTask;
+  }
+
+  public static Task ListFailedWithoutNewSecret_Should_AbortWithoutMint()
+  {
+    EntraSetup.TryDecideMintClientSecret(
+      newSecret: false,
+      listSucceeded: false,
+      hasExistingClientSecret: false,
+      out bool mint).ShouldBeFalse();
+    mint.ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task ListSucceededWithoutSecret_Should_Mint()
+  {
+    EntraSetup.TryDecideMintClientSecret(
+      newSecret: false,
+      listSucceeded: true,
+      hasExistingClientSecret: false,
+      out bool mint).ShouldBeTrue();
+    mint.ShouldBeTrue();
+    return Task.CompletedTask;
+  }
+
+  public static Task ListSucceededWithSecret_Should_Skip()
+  {
+    EntraSetup.TryDecideMintClientSecret(
+      newSecret: false,
+      listSucceeded: true,
+      hasExistingClientSecret: true,
+      out bool mint).ShouldBeTrue();
+    mint.ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+}

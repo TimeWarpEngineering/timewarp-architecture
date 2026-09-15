@@ -4,9 +4,10 @@
 
 #region Design
 // Non-interactive. Idempotent by display name: reuse the app, union redirect URIs, ensure the
-// service principal, mint a client secret only on first write or --new-secret. The password is
-// captured in memory and handed to `dotnet user-secrets set`; it is never printed or placed on a
-// logged command line. --dry-run prints every az / user-secrets invocation and executes none.
+// service principal, mint a client secret only on first write or --new-secret. A failed
+// user-secrets list aborts (does not fail-open mint). The password is captured in memory and
+// handed to `dotnet user-secrets set`; it is never printed or placed on a logged command line.
+// --dry-run prints every az / user-secrets invocation and executes none.
 // Handler stores Command/Ct as fields so private methods are zero-parameter.
 #endregion
 
@@ -365,14 +366,18 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
       if (!mint && !Cli.IsDryRun)
       {
         CommandOutput listOutput = await Cli.ListUserSecretsAsync().ConfigureAwait(false);
-        if (listOutput.Success)
+        Dictionary<string, string> secrets = listOutput.Success
+          ? EntraSetup.ParseUserSecretsList(listOutput.Stdout)
+          : [];
+        if (!EntraSetup.TryDecideMintClientSecret(
+          Command.NewSecret,
+          listOutput.Success,
+          EntraSetup.HasClientSecret(secrets),
+          out mint))
         {
-          Dictionary<string, string> secrets = EntraSetup.ParseUserSecretsList(listOutput.Stdout);
-          mint = !EntraSetup.HasClientSecret(secrets);
-        }
-        else
-        {
-          mint = true;
+          Cli.WriteFailure(listOutput, "Failed to list Web.Server user secrets; not minting a client secret.");
+          Environment.ExitCode = 1;
+          return false;
         }
       }
 
