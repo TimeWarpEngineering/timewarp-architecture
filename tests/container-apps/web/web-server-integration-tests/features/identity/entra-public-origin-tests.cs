@@ -28,6 +28,7 @@ using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Architecture.Services;
+using TimeWarp.Identity;
 
 public class Challenge_Given_
 {
@@ -62,6 +63,8 @@ public class Challenge_Given_
     );
 
     builder.Services.AddHttpContextAccessor();
+    builder.Services.AddSingleton<ISiteSettingsStore, InMemorySiteSettingsStore>();
+    builder.Services.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     builder.Services.AddOptions<EntraAuthenticationOptions>()
       .Bind(builder.Configuration.GetSection(EntraAuthenticationOptions.SectionKey));
     builder.Services.PostConfigure<EntraAuthenticationOptions>(options => options.Enabled = true);
@@ -102,6 +105,13 @@ public class Challenge_Given_
     });
 
     await App.StartAsync();
+    ISiteSettingsStore siteSettingsStore = App.Services.GetRequiredService<ISiteSettingsStore>();
+    await siteSettingsStore.AddAsync(
+      SiteSettings.Create(
+        entraSignInEnabled: true,
+        entraAllowBootstrap: true,
+        entraTrustedTenants: [tenantId],
+        passkeyPromptMode: PasskeyPromptMode.Soft));
     TestServer testServer = App.GetTestServer();
     Client = new HttpClient(testServer.CreateHandler())
     {

@@ -1,20 +1,24 @@
 @namespace TimeWarp.Architecture.Features.Identity
 @inherits BaseComponent
 @inject ISessionStorageService SessionStorage
+@using TimeWarp.Identity
 
 @*
   Purpose: RFC 219 D8 dismissible "Add a passkey" banner after an Entra-issued identity-session.
 
   Design: Shown when GetCredentials has an active EntraAccount and no active Passkey. CTA
   dispatches existing CredentialsState.AddPasskey (StartPasskeyRegistration + AddPasskey).
-  Later dismisses for the SPA session and optionally persists in sessionStorage so a refresh
-  of the same tab does not nag. Never a route/session gate — TimeWarpPage composes this
-  above page content; dismissing only hides the banner.
+  Soft: Later dismisses for the SPA session and optionally persists in sessionStorage.
+  Required (site settings PasskeyPromptMode): Later is hidden; TimeWarpPage hides page body
+  until a passkey exists. Never a route policy — this is UX plus a chrome gate.
 *@
 
 @code {
   private bool IsAddingPasskey =>
     IsAnyActive(typeof(CredentialsState.AddPasskeyActionSet.Action));
+  private bool IsRequired => SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required;
+  private bool ShouldShow =>
+    PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: IsRequired ? false : CredentialsState.PasskeySoftPromptDismissed);
 
   protected override async Task OnInitializedAsync()
   {
@@ -23,7 +27,8 @@
       return;
     }
 
-    if (await SessionStorage.ContainKeyAsync(PasskeySoftPrompt.LaterStorageKey)
+    if (!IsRequired
+      && await SessionStorage.ContainKeyAsync(PasskeySoftPrompt.LaterStorageKey)
       && await SessionStorage.GetItemAsync<bool>(PasskeySoftPrompt.LaterStorageKey))
     {
       await NoSubCredentialsState.DismissPasskeySoftPrompt();
@@ -46,15 +51,22 @@
   }
 }
 
-@if (CredentialsState.ShouldShowPasskeySoftPrompt)
+@if (ShouldShow)
 {
   <div class="twe-passkey-prompt" data-qa="AddPasskeySoftPrompt">
-    <FluentMessageBar Intent="MessageBarIntent.Info"
+    <FluentMessageBar Intent="@(IsRequired ? MessageBarIntent.Warning : MessageBarIntent.Info)"
                       Title="Add a passkey"
                       AllowDismiss="false"
                       Layout="MessageBarLayout.MultiLine">
       <ChildContent>
-        You signed in with Microsoft 365. Add a passkey for this site so you can sign in without Entra next time.
+        @if (IsRequired)
+        {
+          <text>You signed in with Microsoft 365. Add a passkey to continue using this app.</text>
+        }
+        else
+        {
+          <text>You signed in with Microsoft 365. Add a passkey for this site so you can sign in without Entra next time.</text>
+        }
       </ChildContent>
       <ActionsTemplate>
         <FluentButton Appearance="ButtonAppearance.Primary"
@@ -63,10 +75,13 @@
                       OnClick="AddPasskeyAsync">
           Add a passkey
         </FluentButton>
-        <FluentButton data-qa="AddPasskeySoftPromptLater"
-                      OnClick="DismissAsync">
-          Later
-        </FluentButton>
+        @if (!IsRequired)
+        {
+          <FluentButton data-qa="AddPasskeySoftPromptLater"
+                        OnClick="DismissAsync">
+            Later
+          </FluentButton>
+        }
       </ActionsTemplate>
     </FluentMessageBar>
   </div>

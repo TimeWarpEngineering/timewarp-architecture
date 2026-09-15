@@ -45,6 +45,8 @@ public static class PermissionIds
   /// <summary>Update own progressive profile (display name, email, prefs). Never a register/session gate.</summary>
   public const string ProfileWrite = "profile.write";
   public const string SettingsRead = "settings.read";
+  /// <summary>Update the site-settings singleton (Entra policy, passkey prompt). Administrator only.</summary>
+  public const string SettingsWrite = "settings.write";
   /// <summary>Request/approve/list own agent↔human links and fetch humanUx (task 205).</summary>
   public const string AgentLinkManageSelf = "agent-link.manage.self";
   /// <summary>Agent/human self-lookup of principal identity (maps from agent scope identity:read).</summary>
@@ -67,6 +69,7 @@ public static class PermissionIds
     ProfileRead,
     ProfileWrite,
     SettingsRead,
+    SettingsWrite,
     AgentLinkManageSelf,
     IdentityRead,
     CredentialManageSelf,

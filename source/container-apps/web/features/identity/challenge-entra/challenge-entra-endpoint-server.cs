@@ -6,7 +6,9 @@
 // Generated [ApiEndpoint] handlers always serialize a mediator JSON body; Challenge writes a 302
 // (or the fake handler completes the ticket). AllowAnonymous at the HTTP metadata so bootstrap
 // works; link authenticates identity-session explicitly and 401s without bouncing to /Login.
-// Disabled Entra is 404 so the route does not advertise a scheme that is not registered.
+// Scheme not registered (configuration Enabled false) is 404 so the route does not advertise a
+// scheme that is not registered. Runtime policy (IEntraSignInPolicy / site settings) refuses new
+// challenges with 403 Sign-in disabled when EntraSignInEnabled is false — existing sessions stay.
 // prompt=select_account is on OpenIdConnectOptions; the test fake handler ignores it.
 // FastEndpoints auto-sends 204 unless Send.* or MarkResponseStart runs — Challenge/Redirect write
 // headers without HasStarted on TestServer, so we mark after ChallengeAsync.
@@ -15,6 +17,7 @@
 namespace TimeWarp.Architecture.Features.Identity;
 
 using System.Security.Claims;
+using TimeWarp.Architecture.Features.Identity.Application;
 
 public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
 {
@@ -31,6 +34,20 @@ public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
     if (!entra.Enabled)
     {
       await Send.NotFoundAsync(cancellation: cancellationToken);
+      return;
+    }
+
+    IEntraSignInPolicy policy = HttpContext.RequestServices.GetRequiredService<IEntraSignInPolicy>();
+    EntraSignInDecision decision = await policy.EvaluateAsync(
+      EntraSignInMode.Challenge,
+      tenantId: null,
+      cancellationToken);
+    if (!decision.Allowed)
+    {
+      await EntraTicketHttp.WriteProblemAsync(
+        HttpContext,
+        decision.Problem ?? IdentityProblems.SignInDisabled(),
+        cancellationToken);
       return;
     }
 

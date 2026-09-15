@@ -6,7 +6,7 @@
 // Task 182-001: product roles (RoleIds) are mutable bundles of PermissionIds. This map is the
 // template seed that keeps server + SPA permission expansion observably equivalent to the
 // pre-182 role-gated surface (Administrator → admin.*, Developer → developer.*, all → self-service).
-//   Administrator — all admin.* + self-service (first Create claims this role)
+//   Administrator — all admin.* + settings.write + self-service (first Create claims this role)
 //   Member        — self-service only (default effective role when store empty)
 //   Developer     — developer.* + self-service (demos / diagnostics)
 //   Operator      — self-service only until marketplace policies (118); Operator-only grants reserved
@@ -62,6 +62,7 @@ public static class RolePermissionSeed
       [RoleIds.Administrator] =
       [
         .. AdminPermissions,
+        PermissionIds.SettingsWrite,
         .. SelfServicePermissions,
       ],
       [RoleIds.Member] =

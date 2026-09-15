@@ -28,12 +28,14 @@
     {
       await NoSubProfileState.FetchProfileData();
       await NoSubCredentialsState.FetchCredentials();
+      await NoSubSiteSettingsState.FetchSiteSettings();
     }
     else
     {
       await NoSubProfileState.ClearProfileData();
       await NoSubAuthorizationState.ClearCurrentUser();
       await NoSubCredentialsState.ClearCredentials();
+      await NoSubSiteSettingsState.ClearSiteSettings();
       await ClearPasskeySoftPromptLaterAsync();
     }
   }

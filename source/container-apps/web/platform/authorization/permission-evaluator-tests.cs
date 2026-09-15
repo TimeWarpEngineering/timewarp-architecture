@@ -84,6 +84,7 @@ namespace TimeWarp.Architecture.Authorization
       permissions.ShouldContain(PermissionIds.AdminPrincipalsManage);
       permissions.ShouldContain(PermissionIds.ProfileRead);
       permissions.ShouldContain(PermissionIds.SettingsRead);
+      permissions.ShouldContain(PermissionIds.SettingsWrite);
       permissions.ShouldContain(PermissionIds.CredentialManageSelf);
       permissions.ShouldNotContain(PermissionIds.DeveloperAccess);
     }

@@ -186,6 +186,10 @@ public partial class Program : IAspNetProgram
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
     ConfigureSettings(serviceCollection, configuration);
     InMemoryIdentityStoresModule.ConfigureServices(serviceCollection, configuration);
+    // Scoped: ISiteSettingsStore is scoped under postgres (EfSiteSettingsStore).
+    serviceCollection.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
+    serviceCollection.AddScoped<SiteSettingsSeeder>();
+    serviceCollection.AddHostedService<SiteSettingsSeedHostedService>();
     InMemoryProfileStoresModule.ConfigureServices(serviceCollection, configuration);
     InMemoryAgentHumanLinkStoresModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);

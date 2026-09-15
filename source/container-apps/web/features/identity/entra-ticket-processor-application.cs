@@ -8,9 +8,10 @@
 // enough — no passkey re-assert). Duplicate handle is 409 with no foreign-id oracle (104-005).
 // Sync-hit is Find-by-handle of an active EntraAccount. Revoked rows are non-hits and cannot be
 // re-inserted (unique Type+Handle) — 403, not Restore (Graph Restore is a later product path).
-// Bootstrap Create is gated by AllowBootstrap AND tid ∈ TrustedTenants. TrustedTenants also
-// gates sync-hit so an untrusted tenant never issues a session. First human bootstrap claims
-// Administrator the same way CompletePasskeyRegistration does.
+// Bootstrap Create is gated by IEntraSignInPolicy (site settings AllowBootstrap AND
+// tid ∈ TrustedTenants). TrustedTenants also gates sync-hit so an untrusted tenant never
+// issues a session. Policy replaces EntraAuthenticationOptions for those two fields.
+// First human bootstrap claims Administrator the same way CompletePasskeyRegistration does.
 // Concurrent first-login for the same tid:oid can miss both finds, create two principals, and
 // lose on unique (Type, Handle) at AddCredentialAsync. On that InvalidOperationException, re-Find
 // by handle; an active winner is treated as sync-hit (return that PrincipalId). IPrincipalStore
@@ -29,18 +30,18 @@ public sealed class EntraTicketProcessor
 
   private readonly IPrincipalStore PrincipalStore;
   private readonly IPrincipalRoleStore PrincipalRoleStore;
-  private readonly IOptions<EntraAuthenticationOptions> Options;
+  private readonly IEntraSignInPolicy EntraSignInPolicy;
 
   public EntraTicketProcessor
   (
     IPrincipalStore principalStore,
     IPrincipalRoleStore principalRoleStore,
-    IOptions<EntraAuthenticationOptions> options
+    IEntraSignInPolicy entraSignInPolicy
   )
   {
     PrincipalStore = principalStore;
     PrincipalRoleStore = principalRoleStore;
-    Options = options;
+    EntraSignInPolicy = entraSignInPolicy;
   }
 
   public async Task<OneOf<PrincipalId, SharedProblemDetails>> ProcessAsync
@@ -75,20 +76,6 @@ public sealed class EntraTicketProcessor
     }
 
     return await ProcessBootstrapAsync(existing, handle, material, claims, cancellationToken);
-  }
-
-  public static bool IsTrustedTenant(Guid tenantId, EntraAuthenticationOptions options)
-  {
-    ArgumentNullException.ThrowIfNull(options);
-    foreach (string entry in options.TrustedTenants)
-    {
-      if (Guid.TryParse(entry, out Guid trusted) && trusted == tenantId)
-      {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private static bool IssuerMatchesTenant(EntraIdTokenClaims claims)
@@ -148,14 +135,17 @@ public sealed class EntraTicketProcessor
     CancellationToken cancellationToken
   )
   {
-    EntraAuthenticationOptions options = Options.Value;
-    if (!IsTrustedTenant(claims.TenantId, options))
-    {
-      return IdentityProblems.UntrustedTenant();
-    }
-
     if (existing is { IsRevoked: false })
     {
+      EntraSignInDecision syncHit = await EntraSignInPolicy.EvaluateAsync(
+        EntraSignInMode.SyncHit,
+        claims.TenantId,
+        cancellationToken);
+      if (!syncHit.Allowed)
+      {
+        return syncHit.Problem ?? IdentityProblems.UntrustedTenant();
+      }
+
       Principal? principal = await PrincipalStore.GetPrincipalAsync(existing.PrincipalId, cancellationToken);
       if (principal is null)
       {
@@ -172,12 +162,25 @@ public sealed class EntraTicketProcessor
 
     if (existing is { IsRevoked: true })
     {
+      EntraSignInDecision revokedTenant = await EntraSignInPolicy.EvaluateAsync(
+        EntraSignInMode.SyncHit,
+        claims.TenantId,
+        cancellationToken);
+      if (!revokedTenant.Allowed)
+      {
+        return revokedTenant.Problem ?? IdentityProblems.UntrustedTenant();
+      }
+
       return IdentityProblems.EntraCredentialRevoked();
     }
 
-    if (!options.AllowBootstrap)
+    EntraSignInDecision createDecision = await EntraSignInPolicy.EvaluateAsync(
+      EntraSignInMode.BootstrapCreate,
+      claims.TenantId,
+      cancellationToken);
+    if (!createDecision.Allowed)
     {
-      return IdentityProblems.BootstrapNotAllowed();
+      return createDecision.Problem ?? IdentityProblems.BootstrapNotAllowed();
     }
 
     var created = Principal.Create(PrincipalKind.Human);
