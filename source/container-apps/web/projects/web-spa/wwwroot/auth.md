@@ -67,8 +67,8 @@ browser actually uses:
 Any proxied deployment — including crunchit on Azure Container Apps — **must**
 set `PublicOrigin`. Web.Server is reached over **http** behind YARP/ACA and
 does not consume `X-Forwarded-*` (passkey RP-ID must not trust spoofable
-forwarded headers). Unset `PublicOrigin` would send Entra `http://…/signin-oidc`
-and write OIDC correlation cookies without `Secure`.
+forwarded headers). Unset `PublicOrigin` would send Entra `http://…/signin-oidc`.
+The named `entra` scheme always writes Secure correlation/nonce cookies.
 
 User-secrets example (Web.Server project):
 

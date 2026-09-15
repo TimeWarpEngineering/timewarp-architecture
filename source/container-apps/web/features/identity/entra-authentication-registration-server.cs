@@ -12,10 +12,10 @@
 // a {tenantid} placeholder; single-tenant GUID authorities use the same tid pin). ValidateIssuer
 // stays true — do not disable it.
 // YARP and ACA terminate TLS and forward to Web.Server over http without UseForwardedHeaders
-// (104-031). OpenIdConnectHandler would then emit an http redirect_uri and SameSite=None cookies
-// without Secure. PublicOrigin (when set) overrides ProtocolMessage.RedirectUri on challenge and
-// on authorization-code redemption so Entra sees the browser origin; CorrelationCookie and
-// NonceCookie SecurePolicy is Always because every supported Entra path is https at the browser.
+// (104-031). OpenIdConnectHandler would then emit an http redirect_uri. Pin CorrelationCookie
+// and NonceCookie SecurePolicy.Always so SameSite=None cookies stay Secure behind http (do not
+// rely on framework defaults). PublicOrigin (when set) overrides ProtocolMessage.RedirectUri on
+// challenge and on authorization-code redemption so Entra sees the browser origin.
 // AuthenticationProperties.RedirectUri stays the local return path — LocalReturnUrl.Sanitize, not
 // PublicOrigin.
 #endregion
