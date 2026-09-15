@@ -214,3 +214,16 @@ dev run
 **Depends on:** `dev run` for the SPA smoke; Postgres only for the EF store test.
 
 **Not in scope:** live Microsoft 365 login against a real tenant (needs `dev entra setup` + Azure).
+
+### CI fix (post-review)
+
+CI run 34981521704 on PR #365 failed two ways: (A) `template-smoke-harness.cs`'s
+`JaribuFamilyAggregators` still expected 148 for `web-jaribu-tests`; the aggregator now totals
+170 (confirmed with a local `dotnet test -c Release` run), so the expectation was bumped 148 → 170.
+(B) `SiteSettingsSeedHostedService.StartingAsync` (runs before Kestrel accepts requests) could hit
+Npgsql 42P01 ("relation identity.site_settings does not exist") because the AppHost has no wait
+edge between web-server and web-migrations by design (task 155). Fixed by giving the seed a
+bounded retry (1s backoff, up to 30 attempts) on that specific undefined-table error, matching the
+same first-boot race the rest of the postgres path already tolerates; the in-memory path is
+unaffected since it never throws that error. Verified locally: `aspire-tests` (7/7, all
+`*ThroughIngress*` cases) green against real Postgres via Docker.
