@@ -1,0 +1,73 @@
+@namespace TimeWarp.Architecture.Features.Identity
+@inherits BaseComponent
+@inject ISessionStorageService SessionStorage
+
+@*
+  Purpose: RFC 219 D8 dismissible "Add a passkey" banner after an Entra-issued identity-session.
+
+  Design: Shown when GetCredentials has an active EntraAccount and no active Passkey. CTA
+  dispatches existing CredentialsState.AddPasskey (StartPasskeyRegistration + AddPasskey).
+  Later dismisses for the SPA session and optionally persists in sessionStorage so a refresh
+  of the same tab does not nag. Never a route/session gate — TimeWarpPage composes this
+  above page content; dismissing only hides the banner.
+*@
+
+@code {
+  private bool IsAddingPasskey =>
+    IsAnyActive(typeof(CredentialsState.AddPasskeyActionSet.Action));
+
+  protected override async Task OnInitializedAsync()
+  {
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    if (await SessionStorage.ContainKeyAsync(PasskeySoftPrompt.LaterStorageKey)
+      && await SessionStorage.GetItemAsync<bool>(PasskeySoftPrompt.LaterStorageKey))
+    {
+      await NoSubCredentialsState.DismissPasskeySoftPrompt();
+    }
+  }
+
+  private async Task AddPasskeyAsync()
+  {
+    await NoSubCredentialsState.AddPasskey();
+  }
+
+  private async Task DismissAsync()
+  {
+    if (RendererInfo.IsInteractive)
+    {
+      await SessionStorage.SetItemAsync(PasskeySoftPrompt.LaterStorageKey, true);
+    }
+
+    await NoSubCredentialsState.DismissPasskeySoftPrompt();
+  }
+}
+
+@if (CredentialsState.ShouldShowPasskeySoftPrompt)
+{
+  <div class="twe-passkey-prompt" data-qa="AddPasskeySoftPrompt">
+    <FluentMessageBar Intent="MessageBarIntent.Info"
+                      Title="Add a passkey"
+                      AllowDismiss="false"
+                      Layout="MessageBarLayout.MultiLine">
+      <ChildContent>
+        You signed in with Microsoft 365. Add a passkey for this site so you can sign in without Entra next time.
+      </ChildContent>
+      <ActionsTemplate>
+        <FluentButton Appearance="ButtonAppearance.Primary"
+                      data-qa="AddPasskeySoftPromptCta"
+                      Disabled="@IsAddingPasskey"
+                      OnClick="AddPasskeyAsync">
+          Add a passkey
+        </FluentButton>
+        <FluentButton data-qa="AddPasskeySoftPromptLater"
+                      OnClick="DismissAsync">
+          Later
+        </FluentButton>
+      </ActionsTemplate>
+    </FluentMessageBar>
+  </div>
+}

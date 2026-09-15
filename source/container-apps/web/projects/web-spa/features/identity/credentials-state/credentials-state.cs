@@ -1,5 +1,5 @@
 #region Purpose
-// SPA state for the signed-in principal's credentials (passkeys + agent keys) — Settings list UI.
+// SPA state for the signed-in principal's credentials (passkeys + Entra + agent keys) — Settings list and D8 soft prompt.
 #endregion
 
 #region Design
@@ -11,7 +11,9 @@
 // filter. Full list stays available for follow-ups.
 // StatusMessage / CeremonyError are user-facing strings for create/revoke UX; API transport failures
 // still go through DefaultApiHandler → ToastNotificationState (shared pipeline).
-// Task 169.
+// RFC 219 D8: ShouldShowPasskeySoftPrompt is the Type-list predicate (Entra without Passkey),
+// not a TrustTier. PasskeySoftPromptDismissed is session UX only — never a route gate.
+// Task 169 + 219-003.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -49,11 +51,22 @@ public sealed partial class CredentialsState : State<CredentialsState>
 
   public string? CeremonyError { get; private set; }
 
+  /// <summary>True after the user dismisses the Entra add-passkey banner this SPA session.</summary>
+  public bool PasskeySoftPromptDismissed { get; private set; }
+
+  /// <summary>
+  /// True when GetCredentials shows an active EntraAccount and no active Passkey, and the
+  /// banner has not been dismissed. Never used as a route or session gate.
+  /// </summary>
+  public bool ShouldShowPasskeySoftPrompt =>
+    PasskeySoftPrompt.ShouldShow(Credentials, PasskeySoftPromptDismissed);
+
   public override void Initialize()
   {
     CredentialsList = null;
     LastAddedCredentialId = null;
     StatusMessage = null;
     CeremonyError = null;
+    PasskeySoftPromptDismissed = false;
   }
 }
