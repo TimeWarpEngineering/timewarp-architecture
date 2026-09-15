@@ -47,9 +47,28 @@ Additional passkeys can be attached to an existing principal once signed in
 (`POST /api/identity/credentials/passkey` — session required).
 
 **Not offered:** email register, password reset, magic-link-only accounts as the
-primary path. Microsoft Entra / MSAL is **opt-in only** (`Authentication:UseEntra=true`
-plus `AzureAd` / `AzureAdB2C` settings) and is not the agent- or human-priority story.
-Default non-mock SPA auth projects the identity-session cookie via `GetCurrentSession`.
+primary path. Microsoft Entra is **opt-in only** (`Authentication:Entra:Enabled=true`)
+and is not the agent- or human-priority story. When enabled it is a named OIDC scheme
+(`entra`); identity-session stays DefaultScheme. Default non-mock SPA auth projects the
+identity-session cookie via `GetCurrentSession`.
+
+### Local Entra setup
+
+From a repo checkout, with Azure CLI logged in (`az login`):
+
+```bash
+dev entra setup
+# optional: --name "TimeWarp Architecture Dev" --public-origin https://arch.timewarp.work
+#           --redirect-uri https://extra.example/signin-oidc --new-secret --dry-run
+dev entra status
+dev entra disable   # sets Authentication:Entra:Enabled=false; does not change Azure
+```
+
+`dev entra setup` finds or creates the app registration, unions redirect URIs
+(`https://localhost:63611/signin-oidc`, `https://localhost:63610/signin-oidc`, plus
+`--public-origin` when given), ensures a service principal, mints a client secret only
+on first write or `--new-secret`, and writes Web.Server user secrets. The secret is
+never printed. Then `dev run`, browse the app, and click **Continue with Microsoft 365**.
 
 ---
 

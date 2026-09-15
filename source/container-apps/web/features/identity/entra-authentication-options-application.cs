@@ -9,6 +9,8 @@
 // synonym never selects Entra as DefaultScheme. AllowBootstrap gates Principal.Create only;
 // sync-hit of an active EntraAccount still issues a session when the tenant is trusted.
 // TrustedTenants are GUID strings; empty list means no tenant may bootstrap or sync-hit.
+// Local machine values are written by `dev entra setup` into Web.Server user secrets, never
+// appsettings. PublicOrigin is inert until 219-004 binds it; setup still writes the key.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;

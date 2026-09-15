@@ -81,6 +81,7 @@
   <!--#if (false) -->
   <Folder Name="/tests/tools/">
     <Project Path="tests/tools/agent-identity-cli-tests/agent-identity-cli-tests.csproj" />
+    <Project Path="tests/tools/dev-cli-tests/dev-cli-tests.csproj" />
   </Folder>
   <!--#endif -->
 </Solution>
