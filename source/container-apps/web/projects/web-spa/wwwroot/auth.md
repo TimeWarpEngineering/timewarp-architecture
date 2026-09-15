@@ -53,6 +53,21 @@ and is not the agent- or human-priority story. When enabled it is a named OIDC s
 button is a BFF `Challenge(“entra”)` — no WASM MSAL session. Default non-mock SPA
 auth projects the identity-session cookie via `GetCurrentSession`.
 
+### Configured vs enabled
+
+**Configured** (deploy-time, secret-bearing) stays in `Authentication:Entra:*`:
+client id, secret, authority tenant, `PublicOrigin`, and `Enabled` as the
+**scheme-registration gate**. `dev entra setup` still writes those user secrets.
+
+**Enabled for users** is runtime admin policy on the site-settings singleton
+(`/Settings` → Authentication). First boot copies `Enabled`, `AllowBootstrap`, and
+`TrustedTenants` into settings once; after that the Settings page is the source of
+truth for those three. Disabling sign-in at runtime refuses **new** challenges
+(403 `Sign-in disabled`); existing Entra credentials and sessions stay.
+
+`Authentication:Entra:Enabled=true` with settings `EntraSignInEnabled=false` (or
+the reverse) logs a warning at boot so the two are never silently confused.
+
 ### Local Entra setup
 
 From a repo checkout, with Azure CLI logged in (`az login`):
@@ -69,7 +84,9 @@ dev entra disable   # sets Authentication:Entra:Enabled=false; does not change A
 (`https://localhost:63611/signin-oidc`, `https://localhost:63610/signin-oidc`, plus
 `--public-origin` when given), ensures a service principal, mints a client secret only
 on first write or `--new-secret`, and writes Web.Server user secrets. The secret is
-never printed. Then `dev run`, browse the app, and click **Continue with Microsoft 365**.
+never printed. First run seeds those values into site settings; after that use the
+Settings page Authentication section to offer or hide Microsoft 365 sign-in. Then
+`dev run`, browse the app, and click **Continue with Microsoft 365** when offered.
 
 ### Manual Entra configuration (redirect URIs and PublicOrigin)
 

@@ -190,6 +190,33 @@ namespace TimeWarp.Architecture.Persistence.Migrations
 
                     b.ToTable("principals", "identity");
                 });
+
+            modelBuilder.Entity("TimeWarp.Identity.SiteSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("EntraAllowBootstrap")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EntraSignInEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("EntraTrustedTenants")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("PasskeyPromptMode")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("site_settings", "identity");
+                });
 #pragma warning restore 612, 618
         }
     }

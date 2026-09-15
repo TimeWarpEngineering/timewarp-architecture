@@ -164,4 +164,11 @@ public static class IdentityProblems
     Status = 400,
     Detail = "mode must be link or bootstrap."
   };
+
+  public static SharedProblemDetails SignInDisabled() => new()
+  {
+    Title = "Sign-in disabled",
+    Status = 403,
+    Detail = "Microsoft 365 sign-in is not offered."
+  };
 }

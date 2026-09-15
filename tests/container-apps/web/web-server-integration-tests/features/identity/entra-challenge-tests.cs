@@ -66,6 +66,8 @@ public class Challenge_Given_
     builder.Services.AddLogging();
     builder.Services.AddSingleton<IPrincipalStore, InMemoryPrincipalStore>();
     builder.Services.AddSingleton<IPrincipalRoleStore, InMemoryPrincipalRoleStore>();
+    builder.Services.AddSingleton<ISiteSettingsStore, InMemorySiteSettingsStore>();
+    builder.Services.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     builder.Services.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
     builder.Services.AddScoped<EntraTicketProcessor>();
     builder.Services.Configure<EntraAuthenticationOptions>(options =>
@@ -121,6 +123,13 @@ public class Challenge_Given_
     await App.StartAsync();
     Client = App.GetTestClient();
     Store = App.Services.GetRequiredService<IPrincipalStore>();
+    ISiteSettingsStore siteSettingsStore = App.Services.GetRequiredService<ISiteSettingsStore>();
+    await siteSettingsStore.AddAsync(
+      SiteSettings.Create(
+        entraSignInEnabled: true,
+        entraAllowBootstrap: true,
+        entraTrustedTenants: [TrustedTenantId],
+        passkeyPromptMode: PasskeyPromptMode.Soft));
   }
 
   public static async Task CleanUpOnce()
@@ -230,9 +239,12 @@ public class Challenge_Given_
   public static async Task Bootstrap_When_Not_Allowed_Should_403()
   {
     App.ShouldNotBeNull();
-    EntraAuthenticationOptions options = App.Services.GetRequiredService<IOptions<EntraAuthenticationOptions>>().Value;
-    bool previous = options.AllowBootstrap;
-    options.AllowBootstrap = false;
+    ISiteSettingsStore siteSettingsStore = App.Services.GetRequiredService<ISiteSettingsStore>();
+    SiteSettings? current = await siteSettingsStore.GetAsync();
+    current.ShouldNotBeNull();
+    bool previous = current!.EntraAllowBootstrap;
+    current.ReplacePolicy(current.EntraSignInEnabled, false, current.EntraTrustedTenants, current.PasskeyPromptMode);
+    await siteSettingsStore.UpdateAsync(current);
     try
     {
       HttpResponseMessage response = await SendChallengeAsync("bootstrap", TrustedTenantId, Guid.NewGuid());
@@ -242,7 +254,35 @@ public class Challenge_Given_
     }
     finally
     {
-      options.AllowBootstrap = previous;
+      SiteSettings? restore = await siteSettingsStore.GetAsync();
+      restore.ShouldNotBeNull();
+      restore!.ReplacePolicy(restore.EntraSignInEnabled, previous, restore.EntraTrustedTenants, restore.PasskeyPromptMode);
+      await siteSettingsStore.UpdateAsync(restore);
+    }
+  }
+
+  public static async Task Challenge_When_Sign_In_Disabled_Should_403()
+  {
+    App.ShouldNotBeNull();
+    ISiteSettingsStore siteSettingsStore = App.Services.GetRequiredService<ISiteSettingsStore>();
+    SiteSettings? current = await siteSettingsStore.GetAsync();
+    current.ShouldNotBeNull();
+    bool previous = current!.EntraSignInEnabled;
+    current.ReplacePolicy(false, current.EntraAllowBootstrap, current.EntraTrustedTenants, current.PasskeyPromptMode);
+    await siteSettingsStore.UpdateAsync(current);
+    try
+    {
+      HttpResponseMessage response = await SendChallengeAsync("bootstrap", TrustedTenantId, Guid.NewGuid());
+      response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      SharedProblemDetails problem = await ReadProblemAsync(response);
+      problem.Title.ShouldBe("Sign-in disabled");
+    }
+    finally
+    {
+      SiteSettings? restore = await siteSettingsStore.GetAsync();
+      restore.ShouldNotBeNull();
+      restore!.ReplacePolicy(previous, restore.EntraAllowBootstrap, restore.EntraTrustedTenants, restore.PasskeyPromptMode);
+      await siteSettingsStore.UpdateAsync(restore);
     }
   }
 

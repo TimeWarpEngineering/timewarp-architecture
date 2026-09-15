@@ -23,6 +23,8 @@
 // Role→permission grants (task 182-001): IRolePermissionStore defaults to singleton
 // InMemoryRolePermissionStore (seeded from RolePermissionSeed). PostgresDbModule swaps to scoped
 // EfRolePermissionStore when connected — same dual-mode gate as principal-role store.
+// Site settings (task 219-006): ISiteSettingsStore defaults to singleton InMemorySiteSettingsStore.
+// PostgresDbModule swaps to scoped EfSiteSettingsStore when connected.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
@@ -35,6 +37,7 @@ public class InMemoryIdentityStoresModule : IModule
   {
     // Default durable-port backend; PostgresDbModule swaps to EfPrincipalStore when connected.
     serviceCollection.AddSingleton<IPrincipalStore, InMemoryPrincipalStore>();
+    serviceCollection.AddSingleton<ISiteSettingsStore, InMemorySiteSettingsStore>();
     serviceCollection.AddSingleton<IWebAuthnChallengeStore, InMemoryWebAuthnChallengeStore>();
     serviceCollection.AddSingleton<IAgentKeyChallengeStore, InMemoryAgentKeyChallengeStore>();
     serviceCollection.AddSingleton<IAgentTokenStore, InMemoryAgentTokenStore>();

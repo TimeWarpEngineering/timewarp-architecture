@@ -42,6 +42,7 @@ using TimeWarp.Architecture.Features.AgentLinks.Application;
 using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Application;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
+using TimeWarp.Architecture.Features.Settings.Infrastructure;
 using TimeWarp.Identity;
 
 public sealed partial class PostgresDbModule : IModule
@@ -86,6 +87,10 @@ public sealed partial class PostgresDbModule : IModule
 
     serviceCollection.RemoveAll<IAgentHumanLinkStore>();
     serviceCollection.AddScoped<IAgentHumanLinkStore, EfAgentHumanLinkStore>();
+
+    // Task 219-006: durable site settings (same connection gate).
+    serviceCollection.RemoveAll<ISiteSettingsStore>();
+    serviceCollection.AddScoped<ISiteSettingsStore, EfSiteSettingsStore>();
 
     IHealthChecksBuilder healthChecksBuilder = serviceCollection.AddHealthChecks();
     healthChecksBuilder.AddDbContextCheck<PostgresDbContext>

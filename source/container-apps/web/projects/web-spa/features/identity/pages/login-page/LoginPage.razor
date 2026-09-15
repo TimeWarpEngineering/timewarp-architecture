@@ -9,7 +9,7 @@
 
   [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
   [Inject] private NavigationManager NavigationManager { get; set; } = null!;
-  [Inject] private IConfiguration Configuration { get; set; } = null!;
+  [Inject] private IWebServerApiService WebServerApiService { get; set; } = null!;
 
   [SuppressMessage
   (
@@ -28,9 +28,7 @@
   {
     await base.OnInitializedAsync();
     await RefreshSessionAsync();
-    ShowMicrosoft365 = MockAuthenticationDefaults.IsEntraEnabled(
-      Configuration[MockAuthenticationDefaults.EntraEnabledKey],
-      Configuration[MockAuthenticationDefaults.UseEntraKey]);
+    ShowMicrosoft365 = await LoadEntraOfferedAsync();
 
     if (IsAuthenticated is true)
     {
@@ -126,6 +124,23 @@
   private async Task RefreshSessionAsync()
   {
     IsAuthenticated = await Ceremony.GetIsAuthenticatedAsync(CancellationToken.None);
+  }
+
+  private async Task<bool> LoadEntraOfferedAsync()
+  {
+    try
+    {
+      OneOf<GetEntraSignInOffered.Response, FileResponse, SharedProblemDetails> result =
+        await WebServerApiService.GetResponse<GetEntraSignInOffered.Response>(
+          new GetEntraSignInOffered.Query(),
+          CancellationToken.None);
+      return result.TryPickT0(out GetEntraSignInOffered.Response response, out _)
+        && response.Offered;
+    }
+    catch (Exception)
+    {
+      return false;
+    }
   }
 
   private void ContinueWithMicrosoft365()

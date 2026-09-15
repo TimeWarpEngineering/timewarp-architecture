@@ -2,6 +2,7 @@
 @inherits BaseComponent
 @using TimeWarp.Architecture.Features.Profiles
 @using TimeWarp.Features.Theme
+@using TimeWarp.Identity
 @*
   Purpose: Single app-shell page component. Pages wrap content in
       <TimeWarpPage Title="Settings"> ...content... </TimeWarpPage>
@@ -18,9 +19,10 @@
   but does not push (403/404/auth must not pollute the trail). TwBreadcrumb emits
   Bootstrap class names with no CSS of its own (timewarp-state 081); a thin wrapper
   under .twe-shell styles that contract with tokens. Do not load Bootstrap.
-  RFC 219 D8: AddPasskeyPrompt sits above ChildContent so post-login Home and Profile (and
-  every other TimeWarpPage) can show the Entra add-passkey banner. Login uses
-  TimeWarpFocusedPage and never hosts this prompt. Dismissing the banner is not a gate.
+  RFC 219 D8 / 219-006: AddPasskeyPrompt sits above ChildContent so post-login Home and
+  Profile (and every other TimeWarpPage) can show the Entra add-passkey banner. Required
+  mode hides ChildContent until a passkey exists. Login uses TimeWarpFocusedPage and never
+  hosts this prompt. Soft dismiss is not a gate.
 *@
 
 @code {
@@ -97,7 +99,11 @@
         }
         <div class="twe-page__body">
           <AddPasskeyPrompt />
-          @ChildContent
+          @if (!(SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required
+            && PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: false)))
+          {
+            @ChildContent
+          }
         </div>
       </div>
     </FluentLayoutItem>

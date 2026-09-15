@@ -6,9 +6,9 @@
 // Task 104-016 product CTA + 147-005 focused chrome. Account = accepted public key (locked
 // decision #1): primary action is discoverable passkey authentication (no email/username),
 // secondary is registration that mints Principal + session with no mandatory profile.
-// RFC 219 D10: optional "Continue with Microsoft 365" is a full navigation to the BFF
-// challenge (mode=bootstrap) when Authentication:Entra:Enabled; passkey stays the primary CTA
-// (lock #10). No WASM MSAL as the session.
+// RFC 219 D10 / 219-006: optional "Continue with Microsoft 365" is a full navigation to the BFF
+// challenge (mode=bootstrap) when GetEntraSignInOffered.Offered is true (scheme registered AND
+// site settings EntraSignInEnabled). Passkey stays the primary CTA (lock #10). No WASM MSAL.
 // Markup uses TimeWarpFocusedPage (logo + centered card) — not TimeWarpPage — so login is not
 // "a page in the product shell". Progressive profile is 104-024 and stays out of this page.
 // Ceremony plumbing lives in PasskeyCeremonyClient so the technical Passkeys demo and this page

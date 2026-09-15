@@ -14,7 +14,8 @@
 // EfPrincipalStore, not AggregateDbContext's Version hook.
 // PrincipalRoleAssignment (identity.principal_roles) is the durable IPrincipalRoleStore backend
 // (task 147-006). RolePermissionGrant (identity.role_permissions) is the durable
-// IRolePermissionStore backend (task 182-001).
+// IRolePermissionStore backend (task 182-001). SiteSettings (identity.site_settings) is the
+// durable ISiteSettingsStore backend (task 219-006) — singleton row, store-CAS, not IAggregateRoot.
 // Connection setup lives in PostgresDbModule, not OnConfiguring, so the context stays
 // configuration-agnostic.
 // Aggregate enforcement (DomainInvariantsGuard, EntityVersion.Next, child→root resolution,
@@ -58,6 +59,7 @@ public sealed partial class PostgresDbContext : AggregateDbContext
   public DbSet<Credential> Credentials => Set<Credential>();
   public DbSet<PrincipalRoleAssignment> PrincipalRoleAssignments => Set<PrincipalRoleAssignment>();
   public DbSet<RolePermissionGrant> RolePermissionGrants => Set<RolePermissionGrant>();
+  public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
 
   protected override void OnConfigureConventions(ModelConfigurationBuilder configurationBuilder)
   {

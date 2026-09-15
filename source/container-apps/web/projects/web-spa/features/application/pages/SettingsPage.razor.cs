@@ -19,4 +19,5 @@ namespace TimeWarp.Architecture.Features.Applications;
 [Authorize(Policy = PermissionIds.SettingsRead)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
 [CrossSliceReference(typeof(ChallengeEntra), "Settings link CTA navigates to the Identity BFF Entra challenge; no WASM MSAL.")]
+[CrossSliceReference(typeof(SiteSettingsState), "Settings Authentication section edits the Settings slice site-settings singleton.")]
 partial class SettingsPage;

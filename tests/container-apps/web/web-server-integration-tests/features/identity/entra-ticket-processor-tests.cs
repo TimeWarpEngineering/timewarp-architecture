@@ -11,7 +11,6 @@
 namespace EntraTicketProcessor_;
 
 using System.Text;
-using Microsoft.Extensions.Options;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Foundation.Types;
@@ -36,16 +35,17 @@ public class Bootstrap_Given_
       "Microsoft 365");
 
     RacePrincipalStore principalStore = new(winnerPrincipal, winnerCredential);
+    InMemorySiteSettingsStore settingsStore = new();
+    await settingsStore.AddAsync(
+      SiteSettings.Create(
+        entraSignInEnabled: true,
+        entraAllowBootstrap: true,
+        entraTrustedTenants: [TrustedTenantId],
+        passkeyPromptMode: PasskeyPromptMode.Soft));
     EntraTicketProcessor processor = new(
       principalStore,
       new NoOpPrincipalRoleStore(),
-      Options.Create(
-        new EntraAuthenticationOptions
-        {
-          Enabled = true,
-          AllowBootstrap = true,
-          TrustedTenants = [TrustedTenantId.ToString("D")]
-        }));
+      new SiteSettingsEntraSignInPolicy(settingsStore));
 
     string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
     EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, "Race Loser");

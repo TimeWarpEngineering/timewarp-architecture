@@ -16,4 +16,5 @@ namespace TimeWarp.Architecture.Features.Identity;
 
 [CrossSliceReference(typeof(ProfileState), "Identity pipeline: on sign-in load the profile for the principal.")]
 [CrossSliceReference(typeof(AuthorizationState), "Identity pipeline: on sign-out clear authorization/current-user cache with profile.")]
+[CrossSliceReference(typeof(SiteSettingsState), "Identity pipeline: on sign-in load site settings so Required passkey mode is known without visiting Settings.")]
 partial class AuthenticationStateListener;
