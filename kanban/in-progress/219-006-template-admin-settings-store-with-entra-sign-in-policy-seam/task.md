@@ -98,6 +98,7 @@ products (crunchit 008-004) inherit the seam instead of inventing one.
 - Created: 99473 (2026-09-15)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: grok (2026-09-15)
+- Review oracle: grok session 01a0a562-c060-7110-bb10-a0ec9995d2b5 (2026-09-15)
 
 ## Notes
 
@@ -135,6 +136,7 @@ principals, never inside them).
 - `SettingsWrite` is Administrator seed only (not `admin.*` protected-core).
 - Anonymous `GET api/identity/entra/offered` returns `{ offered }` only.
 - Passkey prompt `Required` hides `TimeWarpPage` body until a passkey exists.
+- Review M1: Settings Get/Update do not insert on an empty store (503 `Site settings not initialized`); only `SiteSettingsSeeder` writes the first row, in `StartingAsync` before Kestrel accepts requests.
 
 **Tests (this session)**
 - In-memory store: 5 passed
@@ -144,6 +146,13 @@ principals, never inside them).
 - Site settings endpoints: 6 passed (401/403/409/200 + anonymous offered boolean)
 - `dev build` 0/0
 - `ganda repo audit` passes (2 pre-existing advisory warnings: memsearch hooks, vscode peacock)
+- Review M1 runfiles: get-site-settings 3 passed; update-site-settings 5 passed; seeder 3 passed
+
+**Review**
+- Rounds: 2 · Effort: 1 · Roster: general
+- Counts (final): bug 0 open / 1 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 / 0 / 0
+- Disposition: **clean** (M1 fixed on this task id; no exceptions)
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`
 
 **Not in this commit:** live Entra ID round-trip; `dev entra setup` still writes configuration
 only (first-run seed copies into settings).
@@ -161,6 +170,15 @@ cd tests/libraries/timewarp-identity-tests && dotnet test -c Release -- --filter
 
 cd tests/container-apps/web/web-infrastructure-tests && dotnet test -c Release -- --filter-class SiteSettings
 # expect: 1 passed (or skip when Postgres is unavailable locally; CI requires it)
+
+dotnet run source/container-apps/web/features/settings/get-site-settings/get-site-settings-tests.cs
+# expect: 3 passed — empty store GET is 503 and does not insert
+
+dotnet run source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs
+# expect: 5 passed — empty store PUT is 503 and does not insert; 409 on stale Version
+
+dotnet run source/container-apps/web/features/identity/site-settings-seeder-tests.cs
+# expect: 3 passed — empty Get then seeder still copies Authentication:Entra
 
 dotnet run source/container-apps/web/features/identity/entra-sign-in-policy-tests.cs
 # expect: 7 passed (disabled → 403 Sign-in disabled; bootstrap; untrusted; allowed)
