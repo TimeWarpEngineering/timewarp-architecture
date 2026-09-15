@@ -6,9 +6,9 @@ Bump version and platform pins from 2.0.0-beta.17 to 2.0.0-beta.18 to release th
 
 ## Checklist
 
-- [ ] Bump `<Version>` and all `PackageVersion` pins to 2.0.0-beta.18 in source/Directory.Build.props, timewarp-templates/Directory.Build.props, and Directory.Packages.props
-- [ ] Run `dev build` clean and `dev check-version` reports source newer than NuGet
-- [ ] Open PR
+- [x] Bump `<Version>` and all `PackageVersion` pins to 2.0.0-beta.18 in source/Directory.Build.props, timewarp-templates/Directory.Build.props, and Directory.Packages.props
+- [x] Run `dev build` clean and `dev check-version` reports source newer than NuGet
+- [x] Open PR
 
 ## Session
 
@@ -16,6 +16,11 @@ Bump version and platform pins from 2.0.0-beta.17 to 2.0.0-beta.18 to release th
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 
 ## Results
+
+- PR: https://github.com/TimeWarpEngineering/timewarp-architecture/pull/366
+- `check-version`: source 2.0.0-beta.18 > NuGet 2.0.0-beta.17 — "Version in source is new".
+- `dev build`: 0 Warning(s), 0 Error(s).
+- `ganda repo audit`: passes with the 2 pre-existing advisory warnings only (memsearch-scaffold, vscode-window-icon).
 
 ### How to validate
 
