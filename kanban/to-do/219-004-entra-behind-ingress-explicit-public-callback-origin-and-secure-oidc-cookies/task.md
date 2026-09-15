@@ -62,12 +62,16 @@ already works; every proxied path is broken today.
 - [x] `dev build` 0/0; `dotnet test -- --filter-class Entra` green
 - [x] Results and How to validate (include a manual live check behind
       `https://localhost:63610` if a tenant is available; otherwise state not exercised)
+- [x] Implementation review disposition (effort 1, 2 rounds, clean)
 
 ## Session
 
 - Created: 59889 (2026-09-15)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: grok session 01a0a4e6-9218-7011-899d-00119d0396f8 (2026-09-15)
+- Review oracle: grok session 01a0a4f1-e56d-7471-b0e1-fb58eb45d657 (2026-09-15)
+- General reviewer (round 1): grok session 01a0a4f4-43f1-7ec2-9373-d01399b7f0f6 (2026-09-15)
+- General reviewer (round 2): grok session 01a0a4fc-ae9c-7920-8d7d-fc8d17f650bc (2026-09-15)
 
 ## Notes
 
@@ -80,6 +84,7 @@ already works; every proxied path is broken today.
   `challenge-entra/`, `source/container-apps/web/platform/identity-host/local-return-url-server.cs`,
   tests `tests/container-apps/web/web-server-integration-tests/features/identity/entra-*.cs`.
 - Do not "fix" this with `UseForwardedHeaders`; that reverses a deliberate security decision.
+- Implementation review (effort 1, `general`, 2 rounds): disposition **clean**. Trail under `review/` (`review-framework.md`, `round-1/`, `round-2/`, `disposition.md`). Round 1 M1 (auth.md cookie claim) and M2 (Design SecurePolicy wording) fixed on this id.
 
 ## Results
 
@@ -119,6 +124,8 @@ unchanged.
   explicitly on Web.Server for any proxied Entra deployment (crunchit ACA included).
 - Did **not** add `UseForwardedHeaders`.
 - Direct http launch remains an unsupported Entra path.
+- Review M1: `auth.md` splits unset-PublicOrigin http `redirect_uri` from the named scheme's always-Secure cookies.
+- Review M2: Design pins `SecurePolicy.Always` without implying net10 omits Secure.
 
 **Test outcomes**
 - `dotnet run tools/dev-cli/dev.cs -- build`: 0 Warning(s), 0 Error(s)
@@ -179,3 +186,9 @@ without "Correlation failed".
 
 **Not in scope:** live Entra tenant / app registration in CI (not exercised this session). Do not
 enable `UseForwardedHeaders` to "fix" scheme.
+
+**Review**
+- Rounds: 2 · Effort: 1 · Roster: general
+- Counts (final): bug 0 open / 0 fixed / 0 wontfix; suggestion 0 / 1 / 0; nit 0 / 1 / 0
+- Disposition: **clean** (M1 and M2 fixed on this task id; no exceptions)
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`
