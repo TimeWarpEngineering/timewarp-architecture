@@ -21,10 +21,13 @@ Fold-in of architecture RFC 219 **D8** (098-006 shape). After an Entra-issued id
 - [x] Soft-prompt UI wired to existing add-passkey ceremony
 - [x] Not a route/session gate
 - [x] Tests for shown/hidden/dismissed
+- [x] Implementation review disposition (effort 1, round 1, clean)
 
 ## Notes
 
 RFC: `rfc/rfc.md` §4 D8, §7.1. Fork 1: passkey is a prompt afterward, never a gate.
+
+Implementation review (effort 1, `general`, round 1): disposition **clean**. Trail under `review/` (`review-framework.md`, `round-1/`, `disposition.md`).
 
 ## Depends on
 
@@ -78,7 +81,16 @@ With Entra enabled (`Authentication:Entra:Enabled=true`) and a trusted tenant, s
 
 **Not in scope:** live Entra tenant or hardware WebAuthn in CI; crunchit auth-child reuse.
 
+**Review**
+
+- Effort 1; roster: `general`; rounds: 1
+- Final counts: bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix)
+- Disposition: **clean** (no issues raised; no wontfix; no escalation)
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+
 ## Session
 
 - Created: 3425584 (2026-09-14)
 - Implementer: grok session 01a0a351-717d-7011-ba51-a459f249ea9a (2026-09-15)
+- Review oracle: grok session 01a0a361-b864-7282-8b40-1de5e59f768a (2026-09-15)
+- General reviewer (round 1): grok session 01a0a364-3754-7742-9398-20e07617c514 (2026-09-15)
