@@ -59,12 +59,16 @@ validation.
 - [x] Docs: identity guide section "Local Entra setup" pointing at `dev entra setup`
 - [x] `dev build` 0/0; `ganda repo audit` clean
 - [x] Results and How to validate (dry-run transcript + a real run summary with masked secret)
+- [x] Implementation review disposition (effort 1, 2 rounds, clean)
 
 ## Session
 
 - Created: 84930 (2026-09-15)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: grok task-work implement oracle (2026-09-15)
+- Review oracle: grok session 01a0a507-2450-71d3-8e75-6504cd495eaa (2026-09-15)
+- General reviewer (round 1): grok session 01a0a509-7b03-75e2-9620-987f6e1ab270 (2026-09-15)
+- General reviewer (round 2): grok session 01a0a512-1293-7d20-bf00-2c5cbe703118 (2026-09-15)
 
 ## Notes
 
@@ -79,6 +83,7 @@ validation.
   TrustedTenants, AllowBootstrap; `PublicOrigin` arrives with 219-004).
 - Existing process-execution examples: `tools/dev-cli/endpoints/db-app-host.cs`, `run-command.cs`.
 - Do not store the secret anywhere except `dotnet user-secrets`; no appsettings edits.
+- Implementation review (effort 1, `general`, 2 rounds): disposition **clean**. Trail under `review/` (`review-framework.md`, `round-1/`, `round-2/`, `disposition.md`). M1 (fail-open mint on list failure) fixed on this id.
 
 ## Results
 
@@ -100,7 +105,7 @@ validation.
 **Files**
 - `tools/dev-cli/endpoints/entra-group.cs`, `entra-setup-command.cs`, `entra-status-command.cs`, `entra-disable-command.cs`
 - `tools/dev-cli/services/entra-setup.cs` (pure union/mask/JSON helpers), `entra-cli.cs` (Amuru `Shell.Builder` runner)
-- `tests/tools/dev-cli-tests/` (Jaribu compile-include of the helpers; 11 passed)
+- `tests/tools/dev-cli-tests/` (Jaribu compile-include of the helpers; 15 passed after review M1)
 - `source/container-apps/web/projects/web-spa/wwwroot/auth.md` — **Local Entra setup**
 - `Directory.Packages.props` — dropped unused `Microsoft.Identity.Web` / `Microsoft.Authentication.WebAssembly.Msal` CPM pins (219-002 leftover; blocking `cpm-consistency`)
 
@@ -109,13 +114,20 @@ validation.
 - Status looks up the app by user-secrets `ClientId` first, then default display name
 - `PublicOrigin` is written when `--public-origin` is given even if 219-004 has not merged the option yet
 - `--dry-run` prints both create and merge/SP-create branches with `<appId>` placeholders because it does not call Azure
+- Review M1: a failed `dotnet user-secrets list` aborts setup without `az ad app credential reset` (never fail-open mint)
 
 **Test outcomes**
 - `dotnet run tools/dev-cli/dev.cs -- build`: 0 Warning(s), 0 Error(s)
-- `cd tests/tools/dev-cli-tests && dotnet test -c Release`: 11 passed, 0 failed
+- `cd tests/tools/dev-cli-tests && dotnet test -c Release`: 15 passed, 0 failed (review round 2)
 - `ganda repo audit`: blocking checks pass (region-annotations, kebab-path-names, cpm-consistency, dev-cli-capabilities). Advisory warnings only: memsearch-scaffold, vscode-window-icon (pre-existing)
 - `./bin/dev --capabilities` lists `entra setup`, `entra status`, `entra disable` (re-self-install after this change)
 - Live `az` (tenant `30f3971f-…`, user `steven.cramer@crunchitfs.com`): created app `f6d55605-aed5-4b5e-8b54-6260de4b323a`, minted `dev-20260915` (masked), second setup reused the app and left the secret unchanged, disable set Enabled=false, third setup re-enabled without minting
+
+**Review**
+- Rounds: 2 · Effort: 1 · Roster: general
+- Counts (final): bug 0 open / 1 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 / 0 / 0
+- Disposition: **clean** (M1 fixed on this task id; no exceptions)
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`
 
 ### How to validate
 
@@ -161,7 +173,7 @@ dotnet run tools/dev-cli/dev.cs -- build
 # expect: Build succeeded. 0 Warning(s) 0 Error(s)
 
 cd tests/tools/dev-cli-tests && dotnet test -c Release
-# expect: 11 passed, 0 failed
+# expect: 15 passed, 0 failed
 
 ganda repo audit
 # expect: blocking checks pass (region-annotations, kebab-path-names, cpm-consistency, dev-cli-capabilities)
