@@ -82,21 +82,22 @@ products (crunchit 008-004) inherit the seam instead of inventing one.
 
 ## Checklist
 
-- [ ] `SiteSettings` aggregate + `ISiteSettingsStore` (in-memory + EF) + seed-once
-- [ ] `IEntraSignInPolicy` + default impl; challenge endpoint and ticket processor use it
-- [ ] `GetSiteSettings` / `UpdateSiteSettings` contracts, handlers, `SettingsWrite` permission
-- [ ] Anonymous "Entra sign-in offered" read for the login page; login button hidden when off
-- [ ] Settings page "Authentication" section (toggle, bootstrap, tenants, passkey prompt mode)
-- [ ] Tests listed above green; `dotnet test -- --filter-class Entra` still green
-- [ ] `dev build` 0/0; `ganda repo audit` clean; TWA0009 slice placement respected
-      (`tw-slice-isolation`: settings is its own slice or under identity — decide and document)
-- [ ] Docs + Design regions
-- [ ] Results and How to validate
+- [x] `SiteSettings` aggregate + `ISiteSettingsStore` (in-memory + EF) + seed-once
+- [x] `IEntraSignInPolicy` + default impl; challenge endpoint and ticket processor use it
+- [x] `GetSiteSettings` / `UpdateSiteSettings` contracts, handlers, `SettingsWrite` permission
+- [x] Anonymous "Entra sign-in offered" read for the login page; login button hidden when off
+- [x] Settings page "Authentication" section (toggle, bootstrap, tenants, passkey prompt mode)
+- [x] Tests listed above green; `dotnet test -- --filter-class Entra` still green
+- [x] `dev build` 0/0; `ganda repo audit` clean; TWA0009 slice placement respected
+      (`tw-slice-isolation`: settings is its own slice — documented)
+- [x] Docs + Design regions
+- [x] Results and How to validate
 
 ## Session
 
 - Created: 99473 (2026-09-15)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
+- Implementer: grok (2026-09-15)
 
 ## Notes
 
@@ -115,8 +116,83 @@ products (crunchit 008-004) inherit the seam instead of inventing one.
 
 ## Results
 
-_Pending._
+Site settings is a singleton aggregate (`Entity<SiteSettingsId>` with well-known `SingletonId`)
+plus `ISiteSettingsStore` (in-memory default, EF behind postgres). First-run seed copies
+`Authentication:Entra:Enabled` / `AllowBootstrap` / `TrustedTenants` once; after that
+`IEntraSignInPolicy` reads the store, not those three options. Configuration `Enabled` remains
+the scheme-registration gate only; boot logs when the two disagree.
+
+**Slice placement:** own product slice `Features.Settings` under `web/features/settings/`
+(SPA state under `web-spa/features/settings/`). Identity policy reads `ISiteSettingsStore` from
+`TimeWarp.Identity` (other assembly, TWA0009-free). Settings page is Applications chrome with
+`[CrossSliceReference]` to `SiteSettingsState`. Table is `identity.site_settings` (alongside
+principals, never inside them).
+
+**Key decisions**
+- `IEntraSignInPolicy.EvaluateAsync(mode, tenantId?)` is the only method — products (crunchit
+  008-004) replace it in DI without touching the named `entra` scheme.
+- Challenge is the only mode that returns 403 `Sign-in disabled`; existing sessions stay.
+- `SettingsWrite` is Administrator seed only (not `admin.*` protected-core).
+- Anonymous `GET api/identity/entra/offered` returns `{ offered }` only.
+- Passkey prompt `Required` hides `TimeWarpPage` body until a passkey exists.
+
+**Tests (this session)**
+- In-memory store: 5 passed
+- EF store: 1 passed (ephemeral Postgres)
+- Policy / seeder / offered / Get / Update runfiles: all passed
+- `cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Entra` — 36 passed
+- Site settings endpoints: 6 passed (401/403/409/200 + anonymous offered boolean)
+- `dev build` 0/0
+- `ganda repo audit` passes (2 pre-existing advisory warnings: memsearch hooks, vscode peacock)
+
+**Not in this commit:** live Entra ID round-trip; `dev entra setup` still writes configuration
+only (first-run seed copies into settings).
 
 ### How to validate
 
-_Pending._
+**Automated**
+```bash
+# from repo root
+dev build
+# expect: 0 Warning(s), 0 Error(s)
+
+cd tests/libraries/timewarp-identity-tests && dotnet test -c Release -- --filter-class SiteSettings
+# expect: 5 passed
+
+cd tests/container-apps/web/web-infrastructure-tests && dotnet test -c Release -- --filter-class SiteSettings
+# expect: 1 passed (or skip when Postgres is unavailable locally; CI requires it)
+
+dotnet run source/container-apps/web/features/identity/entra-sign-in-policy-tests.cs
+# expect: 7 passed (disabled → 403 Sign-in disabled; bootstrap; untrusted; allowed)
+
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Entra
+# expect: 36 passed
+
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class SiteSettings
+# expect: 6 passed — anonymous GET api/settings 401; GET api/identity/entra/offered 200
+# with JSON containing offered and not tenant/bootstrap; Member PUT 403; stale Version 409
+```
+
+**Smoke**
+```bash
+dev run
+# 1. Open /Login as anonymous. GET https://localhost:7000/api/identity/entra/offered
+#    expect: 200 {"offered":false} (template default) and no "Continue with Microsoft 365".
+# 2. Sign in as bootstrap Administrator. Open /Settings.
+#    expect: Authentication section with Entra toggle, allow bootstrap, trusted tenants,
+#    passkey prompt. Save with SettingsWrite.
+# 3. With scheme registered (dev entra setup) and EntraSignInEnabled true, /Login shows
+#    Continue with Microsoft 365. Toggle it off and save; /Login hides the button.
+#    New challenge GET /api/identity/entra/challenge?mode=bootstrap → 403 Sign-in disabled.
+#    Existing Entra-linked session still works.
+```
+
+**Expect**
+- `GET api/settings` without a session → 401
+- `PUT api/settings` as Member → 403
+- `PUT api/settings` with a Version that does not match the stored row → 409 `Concurrency conflict`
+- Offered JSON is a single boolean; no tenant list
+
+**Depends on:** `dev run` for the SPA smoke; Postgres only for the EF store test.
+
+**Not in scope:** live Microsoft 365 login against a real tenant (needs `dev entra setup` + Azure).
