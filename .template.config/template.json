@@ -25,6 +25,7 @@
             "artifacts/**",
             "tools/agent-identity-cli/**",
             "tests/tools/agent-identity-cli-tests/**",
+            "tests/tools/dev-cli-tests/**",
             "source/foundation/**",
             "source/libraries/timewarp-modules/**",
             "source/libraries/timewarp-identity/**",

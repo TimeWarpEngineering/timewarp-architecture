@@ -48,11 +48,30 @@ Additional passkeys can be attached to an existing principal once signed in
 
 **Not offered:** email register, password reset, magic-link-only accounts as the
 primary path. Microsoft Entra is **opt-in only** (`Authentication:Entra:Enabled=true`)
-and is not the agent- or human-priority story. The SPA “Continue with Microsoft 365”
-button is a BFF `Challenge("entra")` — no WASM MSAL session. Default non-mock SPA
+and is not the agent- or human-priority story. When enabled it is a named OIDC scheme
+(`entra`); identity-session stays DefaultScheme. The SPA “Continue with Microsoft 365”
+button is a BFF `Challenge(“entra”)` — no WASM MSAL session. Default non-mock SPA
 auth projects the identity-session cookie via `GetCurrentSession`.
 
-### Entra (opt-in named scheme)
+### Local Entra setup
+
+From a repo checkout, with Azure CLI logged in (`az login`):
+
+```bash
+dev entra setup
+# optional: --name “TimeWarp Architecture Dev” --public-origin https://arch.timewarp.work
+#           --redirect-uri https://extra.example/signin-oidc --new-secret --dry-run
+dev entra status
+dev entra disable   # sets Authentication:Entra:Enabled=false; does not change Azure
+```
+
+`dev entra setup` finds or creates the app registration, unions redirect URIs
+(`https://localhost:63611/signin-oidc`, `https://localhost:63610/signin-oidc`, plus
+`--public-origin` when given), ensures a service principal, mints a client secret only
+on first write or `--new-secret`, and writes Web.Server user secrets. The secret is
+never printed. Then `dev run`, browse the app, and click **Continue with Microsoft 365**.
+
+### Manual Entra configuration (redirect URIs and PublicOrigin)
 
 Register **all three** redirect URIs on the Entra app registration for a given
 environment, then set `Authentication:Entra:PublicOrigin` to the origin the
@@ -73,15 +92,15 @@ The named `entra` scheme always writes Secure correlation/nonce cookies.
 User-secrets example (Web.Server project):
 
 ```bash
-dotnet user-secrets set "Authentication:Entra:Enabled" "true" --project source/container-apps/web/projects/web-server
-dotnet user-secrets set "Authentication:Entra:Instance" "https://login.microsoftonline.com/" --project source/container-apps/web/projects/web-server
-dotnet user-secrets set "Authentication:Entra:TenantId" "organizations" --project source/container-apps/web/projects/web-server
-dotnet user-secrets set "Authentication:Entra:ClientId" "<app-id>" --project source/container-apps/web/projects/web-server
-dotnet user-secrets set "Authentication:Entra:ClientSecret" "<secret>" --project source/container-apps/web/projects/web-server
-dotnet user-secrets set "Authentication:Entra:CallbackPath" "/signin-oidc" --project source/container-apps/web/projects/web-server
-dotnet user-secrets set "Authentication:Entra:AllowBootstrap" "true" --project source/container-apps/web/projects/web-server
-dotnet user-secrets set "Authentication:Entra:TrustedTenants:0" "<tenant-id>" --project source/container-apps/web/projects/web-server
-dotnet user-secrets set "Authentication:Entra:PublicOrigin" "https://arch.timewarp.work" --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:Enabled” “true” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:Instance” “https://login.microsoftonline.com/” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:TenantId” “organizations” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:ClientId” “<app-id>” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:ClientSecret” “<secret>” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:CallbackPath” “/signin-oidc” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:AllowBootstrap” “true” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:TrustedTenants:0” “<tenant-id>” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:PublicOrigin” “https://arch.timewarp.work” --project source/container-apps/web/projects/web-server
 ```
 
 `Ingress:PublicUrl` (AppHost) is dashboard display only — do not treat it as a

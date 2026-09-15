@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Compile-include of entra-setup.cs (pure helpers). Monorepo-only: template.json excludes
+         this tree. The slnx tests/tools folder is gated by a template false condition so generated
+         apps do not list a project the template strips. -->
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <NoWarn>$(NoWarn);CA1707;CA1849;IDE0021;IDE0058</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\..\tools\dev-cli\services\entra-setup.cs" Link="services\entra-setup.cs" />
+  </ItemGroup>
+</Project>
