@@ -9,6 +9,8 @@
 // Mint only on --new-secret or a successful list with no ClientSecret; a failed list aborts
 // (never fail-open mint — that would --append an Azure password that may never be stored).
 // az JSON is parsed with JsonDocument (AOT-safe; no reflection serializer).
+// TenantDisplayNameKey / TenantDomainKey are the SSOT strings for informational user-secrets
+// written by setup and shown by status (see EntraTenants for formatting/selection).
 #endregion
 
 namespace DevCli.Services;
@@ -28,6 +30,8 @@ internal static class EntraSetup
 
   internal const string EnabledKey = "Authentication:Entra:Enabled";
   internal const string TenantIdKey = "Authentication:Entra:TenantId";
+  internal const string TenantDisplayNameKey = "Authentication:Entra:TenantDisplayName";
+  internal const string TenantDomainKey = "Authentication:Entra:TenantDomain";
   internal const string ClientIdKey = "Authentication:Entra:ClientId";
   internal const string ClientSecretKey = "Authentication:Entra:ClientSecret";
   internal const string TrustedTenants0Key = "Authentication:Entra:TrustedTenants:0";
