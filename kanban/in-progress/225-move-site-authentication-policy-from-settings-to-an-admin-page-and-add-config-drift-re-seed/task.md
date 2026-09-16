@@ -71,12 +71,15 @@ Two corrections to 219-006 after the first live look (Steve, 2026-09-16, screens
 - [x] `dotnet test -- --filter-class Entra` and `SiteSettings` green; `dev build` 0/0; `ganda repo audit` clean
 - [x] Results and How to validate (include the screenshot-equivalent steps: sign in as admin,
       open Admin → Authentication, see drift banner, click add, bootstrap with the new tenant)
+- [x] Implementation review (effort 1, general): disposition **clean**
 
 ## Session
 
 - Created: cockpit (2026-09-16)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: Grok session (2026-09-16)
+- Review oracle: grok session 01a0a874-0185-7d43-a864-54f056fcd78c (2026-09-16)
+- Review general (round 1): grok session 01a0a875-a1b8-7403-af3a-9a4b95755d9c (2026-09-16)
 
 ## Notes
 
@@ -159,3 +162,16 @@ ganda repo audit
 ```
 
 **Not in scope:** live WebAuthn ceremony against a real authenticator; production honoring of `ReseedSiteSettings`.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 1
+- **Effort / roster:** 1, general only
+- **Final counts:** bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix)
+- **Wontfix / escalations:** none
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
