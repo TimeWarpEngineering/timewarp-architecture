@@ -34,17 +34,16 @@ generators and class-level analyzers must see (`[Page]`, `[Authorize]`, `[CrossS
 </style>
 ```
 
-# Form vs inline action
+# Actions, navigation, and forms
 
-A page or component that **edits a model and persists it** uses `EditForm` + `FluentButton` submit:
+Actions are `FluentButton` with a style-guide appearance (Primary / Outline / Subtle /
+Transparent; danger via `--twe-danger`). Navigation is `FluentAnchor` / `TimeWarpNavLink`.
+Persisting a model is `EditForm` + `FluentButton` submit (RoleForm). Never raw `<button>` or
+page-local button/link classes; reuse `components/elements` and existing feature components
+before writing markup.
 
-- `Type=ButtonType.Submit`
-- `Appearance=ButtonAppearance.Primary` for the main action
-- `Appearance=ButtonAppearance.Default` for Cancel (FluentUI v5; Neutral in v4)
-- `data-qa` hook on Save; disable while busy
+Reference appearances: `source/container-apps/web/projects/web-spa/features/style-guide/pages/StyleGuidePage.razor`
+(Primary, Outline, Subtle, Transparent, and Outline + `Class="twe-button-danger"`).
 
-Link-styled buttons (`<button class="twe-settings__link">`) are for **inline row actions only**
-(delete / unlink / add on a list item). They are not form submits.
-
-Reference: `source/container-apps/web/projects/web-spa/features/admin/roles/components/RoleForm.razor`
+Form submit reference: `source/container-apps/web/projects/web-spa/features/admin/roles/components/RoleForm.razor`
 (`EditForm` + `OnValidSubmit` + `FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary data-qa="RoleSave"`).

@@ -10,6 +10,8 @@
 // Mock mode: ceremony contracts have no GetMockResponseFactory; mock chain yields 501 and we
 // surface it through ErrorMessage.
 // RP-ID credential scoping (task 104-031): register and authenticate on the SAME host.
+// Task 233: the credential list is the shared CredentialList (same as Settings). This page
+// is still the Developer ceremony playground — not a product Settings replacement.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

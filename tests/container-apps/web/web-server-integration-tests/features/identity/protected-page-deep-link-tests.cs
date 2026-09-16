@@ -139,6 +139,8 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
     html.ShouldContain("Passkeys");
+    html.ShouldContain("data-qa=\"CreatePasskey\"");
+    html.ShouldContain("data-qa=\"AddExistingPasskey\"");
     html.ShouldNotContain("Sign in to continue",
       customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
     html.ShouldNotContain("data-qa=\"AuthenticationSettings\"");
@@ -205,8 +207,8 @@ public class Returns_
     html.ShouldContain(accountLabel);
     html.ShouldContain(">Microsoft 365<");
     html.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
-    html.ShouldContain("data-qa=\"UnlinkMicrosoft365\"");
-    html.ShouldNotContain("data-qa=\"UnlinkMicrosoft365\" disabled");
+    html.ShouldContain("data-qa=\"Unlink\"");
+    FindTagContaining(html, "data-qa=\"Unlink\"").ShouldNotContain("disabled");
     html.ShouldNotContain("data-qa=\"UnlinkMicrosoft365Hint\"");
   }
 
@@ -226,8 +228,8 @@ public class Returns_
     html.ShouldContain("data-qa=\"Microsoft365Settings\"");
     html.ShouldContain(accountLabel);
     html.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
-    html.ShouldContain("data-qa=\"UnlinkMicrosoft365\"");
-    html.ShouldContain("disabled");
+    html.ShouldContain("data-qa=\"Unlink\"");
+    FindTagContaining(html, "data-qa=\"Unlink\"").ShouldContain("disabled");
     html.ShouldContain("data-qa=\"UnlinkMicrosoft365Hint\"");
     html.ShouldContain("Add a passkey first");
   }
@@ -285,6 +287,52 @@ public class Returns_
     html.ShouldNotContain("data-qa=\"BackToRoles\"");
     html.ShouldNotContain("Sign in to continue",
       customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
+  }
+
+  private static string FindTagContaining(string html, string marker)
+  {
+    int searchFrom = 0;
+    while (searchFrom < html.Length)
+    {
+      int start = IndexOfOpeningTag(html, searchFrom);
+      if (start < 0)
+      {
+        break;
+      }
+
+      int end = html.IndexOf('>', start);
+      if (end < 0)
+      {
+        break;
+      }
+
+      string tag = html[start..(end + 1)];
+      if (tag.Contains(marker, StringComparison.Ordinal))
+      {
+        return tag;
+      }
+
+      searchFrom = end + 1;
+    }
+
+    throw new ShouldAssertException($"Expected an opening button tag containing {marker}.");
+  }
+
+  private static int IndexOfOpeningTag(string html, int startIndex)
+  {
+    int fluentButton = html.IndexOf("<fluent-button", startIndex, StringComparison.OrdinalIgnoreCase);
+    int button = html.IndexOf("<button", startIndex, StringComparison.OrdinalIgnoreCase);
+    if (fluentButton < 0)
+    {
+      return button;
+    }
+
+    if (button < 0)
+    {
+      return fluentButton;
+    }
+
+    return Math.Min(fluentButton, button);
   }
 
   private static async Task<HttpResponseMessage> GetPageHtml(string path, string sessionCookie)
