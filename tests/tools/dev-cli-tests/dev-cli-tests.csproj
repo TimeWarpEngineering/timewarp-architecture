@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Compile-include of entra-setup.cs / entra-tenants.cs (pure helpers). Monorepo-only:
+    <!-- Compile-include of entra-setup.cs / entra-tenants.cs / jaribu-aggregator-summary-gate.cs
+         (pure helpers). Monorepo-only:
          template.json excludes this tree. The slnx tests/tools folder is gated by a template
          false condition so generated apps do not list a project the template strips. -->
     <IsPackable>false</IsPackable>
@@ -15,5 +16,6 @@
   <ItemGroup>
     <Compile Include="..\..\..\tools\dev-cli\services\entra-setup.cs" Link="services\entra-setup.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\entra-tenants.cs" Link="services\entra-tenants.cs" />
+    <Compile Include="..\..\..\tools\dev-cli\services\jaribu-aggregator-summary-gate.cs" Link="services\jaribu-aggregator-summary-gate.cs" />
   </ItemGroup>
 </Project>

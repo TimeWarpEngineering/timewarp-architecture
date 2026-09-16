@@ -17,11 +17,12 @@
 // template-safety escape (cnd:noEmit) for generated apps — the ordinary solution build never
 // touches these files (they compile into no layer project by design), so without this pair the
 // gate would be silently blind to a regression here.
-// Task 136: AssertJaribuFamilyAggregatorsAsync (tier 3) bare `dotnet test -c Release` from each
-// family aggregator project dir in the generated app; the discovered test count per family tracks
-// whatever co-located Jaribu runfiles exist there at generation time (not hardcoded here — it
-// drifts as tests are added); serial for fixed port 7255. Aggregators are not in .slnx, so the
-// solution build is also blind to multi-mode compile.
+// Task 136 / 226: AssertJaribuFamilyAggregatorsAsync (tier 3) bare `dotnet test -c Release`
+// from each family aggregator project dir. Gate is exit 0, failed == 0, succeeded at or
+// above MinimumSucceeded (a floor — raise deliberately, never bump just because tests were
+// added), and total == succeeded + skipped. Unparsable MTP summary fails. Succeeded above
+// 2× the floor logs a warning so the floor stays meaningful. Serial for fixed port 7255.
+// Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
 // AssertSkillsShipped: generated apps must contain the eight skills/*/SKILL.md files and must
 // not contain any analysis/ directory under skills/ (pack exclude).
 #endregion
@@ -563,20 +564,17 @@ internal sealed partial class TemplateSmokeHarness
   /// <summary>
   /// Per-family JARIBU_MULTI aggregator projects (task 136), plus (task 145-002 R2-3) the
   /// timewarp-testing-tests suite project, which needs BOTH web and api. Relative to the
-  /// generated app root. ExpectedSucceeded matches the CURRENT monorepo aggregator totals —
-  /// UPDATE THIS when adding/removing co-located *-tests.cs (verified drift 2026-08-05, task
-  /// 104-035: five task landings grew web 7→54 and api 5→9 without touching these, breaking
-  /// smoke on counts alone; a future improvement is deriving the expectation from a monorepo
-  /// aggregator run instead of this hand list — prefer-checks-over-memory).
-  /// Serial — api binds :7255/:7000. RequiredFamilies lets a flag-off smoke entry assert the
-  /// artifacts are ABSENT (task 136 review R2-1) whenever ANY required family is excluded: an
-  /// aggregator orphaned by a family flag would break the generated app, so absence is the pass
-  /// condition. Also (task 145-002 R2-1) the acid test that the ContentRootPath fix holds for a
-  /// MULTI-hosted-server consumer in a GENERATED app, not just this monorepo.
+  /// generated app root. MinimumSucceeded is a floor; raise deliberately, never needs bumping
+  /// when tests are added. Serial — api binds :7255/:7000. RequiredFamilies lets a flag-off
+  /// smoke entry assert the artifacts are ABSENT (task 136 review R2-1) whenever ANY required
+  /// family is excluded: an aggregator orphaned by a family flag would break the generated app,
+  /// so absence is the pass condition. Also (task 145-002 R2-1) the acid test that the
+  /// ContentRootPath fix holds for a MULTI-hosted-server consumer in a GENERATED app, not just
+  /// this monorepo.
   /// </summary>
-  public static readonly (string[] RequiredFamilies, string RelativeProjectDir, int ExpectedSucceeded)[] JaribuFamilyAggregators =
+  public static readonly (string[] RequiredFamilies, string RelativeProjectDir, int MinimumSucceeded)[] JaribuFamilyAggregators =
   [
-    // Count must match MTP total for the multi-mode web co-located suite (bump when runfiles land).
+    // Floor; raise deliberately, never needs bumping when tests are added.
     (["web"], "tests/container-apps/web/web-jaribu-tests", 180),
     (["api"], "tests/container-apps/api/api-jaribu-tests", 9),
     (["web", "api"], "tests/common/timewarp-testing-tests", 3),
@@ -604,18 +602,8 @@ internal sealed partial class TemplateSmokeHarness
   [GeneratedRegex(@"Passed:\s*(\d+)")]
   private static partial Regex JaribuPassedLine();
 
-  // MTP `dotnet test` summary (case-insensitive). Prefer multi-line host lines
-  // (`total: N` / `succeeded: N` alone on a line) but also accept the compact form
-  // `Test summary: total: N, failed: …, succeeded: N, …` (review M2).
-  [GeneratedRegex(
-    @"(?:^\s*total:\s*(\d+)\s*$|Test summary:\s*total:\s*(\d+))",
-    RegexOptions.Multiline | RegexOptions.IgnoreCase)]
-  private static partial Regex MtpTotalLine();
-
-  [GeneratedRegex(
-    @"(?:^\s*succeeded:\s*(\d+)\s*$|Test summary:.*?succeeded:\s*(\d+))",
-    RegexOptions.Multiline | RegexOptions.IgnoreCase)]
-  private static partial Regex MtpSucceededLine();
+  // MTP total:/succeeded:/failed:/skipped: regexes live on JaribuAggregatorSummaryGate
+  // (compile-included by tests). These Total:/Passed: lines are Jaribu TerminalSink (tier 2).
 
   [GeneratedRegex(@"PackageVersion\s+Include=""([^""]+)""\s+Version=""([^""]+)""")]
   private static partial Regex PackageVersionIncludeVersion();
@@ -794,9 +782,11 @@ internal sealed partial class TemplateSmokeHarness
 
   /// <summary>
   /// Tier 3 (task 136): assert each family JARIBU_MULTI aggregator exists in the generated app
-  /// and that bare <c>dotnet test -c Release</c> from that project directory reports the expected
-  /// succeeded count. Aggregators are not in .slnx (solution build never compiles them); this is
-  /// the multi-mode / MTP regression gate. Serial — api aggregator uses fixed port 7255.
+  /// and that bare <c>dotnet test -c Release</c> from that project directory exits 0, reports
+  /// zero failures, a succeeded count at or above the MinimumSucceeded floor, and
+  /// total == succeeded + skipped. Aggregators are not in .slnx (solution build never compiles
+  /// them); this is the multi-mode / MTP regression gate. Serial — api aggregator uses fixed
+  /// port 7255.
   /// </summary>
   public async Task<bool> AssertJaribuFamilyAggregatorsAsync(
     string outputDir,
@@ -805,7 +795,7 @@ internal sealed partial class TemplateSmokeHarness
   {
     bool ok = true;
 
-    foreach ((string[] requiredFamilies, string relativeProjectDir, int expectedSucceeded) in JaribuFamilyAggregators)
+    foreach ((string[] requiredFamilies, string relativeProjectDir, int minimumSucceeded) in JaribuFamilyAggregators)
     {
       string projectDir = Path.Combine(outputDir, relativeProjectDir.Replace('/', Path.DirectorySeparatorChar));
       string csprojName = Path.GetFileName(relativeProjectDir) + ".csproj";
@@ -840,7 +830,7 @@ internal sealed partial class TemplateSmokeHarness
       }
 
       Terminal.WriteLine(
-        $"Running generated Jaribu aggregator (MTP bare dotnet test): {relativeProjectDir} (expect {expectedSucceeded} succeeded)...");
+        $"Running generated Jaribu aggregator (MTP bare dotnet test): {relativeProjectDir} (floor {minimumSucceeded} succeeded)...");
 
       CommandOutput result = await Shell.Builder("dotnet")
         .WithArguments("test", "-c", "Release")
@@ -849,51 +839,42 @@ internal sealed partial class TemplateSmokeHarness
         .CaptureAsync(ct);
 
       string plain = AnsiEscape().Replace(result.Combined, "");
-      bool parsed = TryParseMtpSummary(plain, out int total, out int succeeded);
+      bool parsed = JaribuAggregatorSummaryGate.TryParseMtpSummary(plain, out MtpSummary mtpSummary);
+      AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
+        parsed ? mtpSummary : null,
+        minimumSucceeded);
 
-      if (!result.Success || !parsed || total != expectedSucceeded || succeeded != expectedSucceeded)
+      if (!result.Success)
       {
         Terminal.WriteErrorLine(
-          $"{relativeProjectDir}: aggregator did not report {expectedSucceeded}/{expectedSucceeded} (exit {result.ExitCode}; parsed total={total}, succeeded={succeeded}).".Red());
+          $"{relativeProjectDir}: aggregator did not exit 0 (exit {result.ExitCode}).".Red());
         Terminal.WriteErrorLine(result.Combined);
         ok = false;
         continue;
       }
 
-      Terminal.WriteLine($"{relativeProjectDir}: {succeeded}/{total} succeeded via MTP.".Green());
+      if (!aggregatorSummaryDecision.Passed)
+      {
+        string parsedBits = parsed
+          ? $"parsed total={mtpSummary.Total}, succeeded={mtpSummary.Succeeded}, failed={mtpSummary.Failed}, skipped={mtpSummary.Skipped}"
+          : "unparsable summary";
+        Terminal.WriteErrorLine(
+          $"{relativeProjectDir}: {aggregatorSummaryDecision.Message} (exit {result.ExitCode}; {parsedBits}).".Red());
+        Terminal.WriteErrorLine(result.Combined);
+        ok = false;
+        continue;
+      }
+
+      Terminal.WriteLine(
+        $"{relativeProjectDir}: MTP summary total={mtpSummary.Total} succeeded={mtpSummary.Succeeded} skipped={mtpSummary.Skipped} (floor {minimumSucceeded}).");
+      Terminal.WriteLine($"{relativeProjectDir}: {mtpSummary.Succeeded}/{mtpSummary.Total} succeeded via MTP.".Green());
+      if (aggregatorSummaryDecision.AggregatorSummaryVerdict == AggregatorSummaryVerdict.WarnStaleFloor)
+      {
+        Terminal.WriteLine($"{relativeProjectDir}: {aggregatorSummaryDecision.Message}".Yellow());
+      }
     }
 
     return ok;
-  }
-
-  /// <summary>
-  /// Parses Microsoft.Testing.Platform <c>dotnet test</c> summary (multi-line host lines or
-  /// compact <c>Test summary: total: N, … succeeded: N</c>). Uses the last match of each.
-  /// </summary>
-  private static bool TryParseMtpSummary(string plainOutput, out int total, out int succeeded)
-  {
-    total = 0;
-    succeeded = 0;
-
-    System.Text.RegularExpressions.MatchCollection totalMatches = MtpTotalLine().Matches(plainOutput);
-    System.Text.RegularExpressions.MatchCollection succeededMatches = MtpSucceededLine().Matches(plainOutput);
-    if (totalMatches.Count == 0 || succeededMatches.Count == 0)
-      return false;
-
-    total = ParseFirstCapturingGroup(totalMatches[^1]);
-    succeeded = ParseFirstCapturingGroup(succeededMatches[^1]);
-    return true;
-  }
-
-  private static int ParseFirstCapturingGroup(System.Text.RegularExpressions.Match match)
-  {
-    for (int i = 1; i < match.Groups.Count; i++)
-    {
-      if (match.Groups[i].Success)
-        return int.Parse(match.Groups[i].Value, System.Globalization.CultureInfo.InvariantCulture);
-    }
-
-    throw new InvalidOperationException("MTP summary regex matched without a capturing group.");
   }
 
   /// <summary>
