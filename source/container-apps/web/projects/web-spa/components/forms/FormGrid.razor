@@ -1,0 +1,17 @@
+@namespace TimeWarp.Architecture.Components
+@*
+  Purpose: 12-column grid for form fields. Default a field takes the full row.
+
+  Design: Tier-1 leaf with a native root. FormField.Span (1–12) is the column
+  span; the field, not the grid, sets grid-column so isolation can style the
+  item. Collapses to one column under 640px (FormField also forces full span).
+*@
+
+@code {
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public string? Class { get; set; }
+}
+
+<div class="twe-form-grid @Class">
+  @ChildContent
+</div>

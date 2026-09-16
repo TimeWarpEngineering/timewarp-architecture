@@ -12,6 +12,11 @@
   SiteSettingsState.UpdateSiteSettings(Command). Tenant line and Enabled/AllowBootstrap
   drift banner stay outside the form (read-only / host config, not bindable policy).
   Save is FluentButton submit Primary (RoleForm pattern), disabled while busy.
+  Layout is FormSection / FormGrid / FormField / FormActions. Passkey prompt is
+  FluentSelect (no native select, no page-local CSS). Tenant line and drift banner
+  stay outside the EditForm. FormActions sits after FormSection (hairline above
+  Save), matching Profile / RoleForm. No Cancel — draft reload is SyncDraftFromState
+  after a successful save; there is no cheap unused reset on the command.
 *@
 
 @code {
@@ -26,6 +31,17 @@
   private bool DraftLoaded;
 
   private bool IsBusy => ActionTrackingState.IsActive;
+
+  private static readonly PasskeyPromptMode[] PasskeyPromptModes =
+  [
+    PasskeyPromptMode.Soft,
+    PasskeyPromptMode.Required
+  ];
+
+  private static string PasskeyPromptLabel(PasskeyPromptMode mode) =>
+    mode == PasskeyPromptMode.Soft
+      ? "Soft (dismissible banner)"
+      : "Required (block app until a passkey is added)";
 
   protected override async Task OnInitializedAsync()
   {
@@ -73,104 +89,71 @@
 }
 
 <TimeWarpPage Title="Authentication">
-  <div class="twe-stack twe-settings">
-    <section class="twe-settings__section" data-qa="AuthenticationSettings">
-      <h2 class="twe-settings__heading">Microsoft 365 sign-in policy</h2>
-      <p class="twe-settings__muted">
-        Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it.
-      </p>
-      <p class="twe-settings__value" data-qa="ConfigurationTenant">
-        App registration tenant: @SiteSettingsState.ConfigurationTenantLabel
-      </p>
+  <p data-qa="ConfigurationTenant">
+    App registration tenant: @SiteSettingsState.ConfigurationTenantLabel
+  </p>
 
-      @if (SiteSettingsState.HasSnapshot
-        && (SiteSettingsState.ConfigurationEnabledDiffers || SiteSettingsState.ConfigurationAllowBootstrapDiffers))
-      {
-        <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Configuration drift" AllowDismiss="false">
-          <span data-qa="ConfigurationPolicyDrift">
-            Saved policy differs from Authentication:Entra Enabled or AllowBootstrap. Edit here or run `dev entra reseed`.
-          </span>
-        </FluentMessageBar>
-      }
+  @if (SiteSettingsState.HasSnapshot
+    && (SiteSettingsState.ConfigurationEnabledDiffers || SiteSettingsState.ConfigurationAllowBootstrapDiffers))
+  {
+    <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Configuration drift" AllowDismiss="false">
+      <span data-qa="ConfigurationPolicyDrift">
+        Saved policy differs from Authentication:Entra Enabled or AllowBootstrap. Edit here or run `dev entra reseed`.
+      </span>
+    </FluentMessageBar>
+  }
 
-      @if (DraftLoaded)
-      {
-        <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="AuthenticationForm" novalidate>
-          <FluentValidator Validator="@SiteSettingsValidator" />
-          <FluentStack Orientation=Orientation.Vertical VerticalGap="16">
-
+  @if (DraftLoaded)
+  {
+    <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="AuthenticationForm" novalidate>
+      <FluentValidator Validator="@SiteSettingsValidator" />
+      <FormSection Title="Microsoft 365 sign-in policy"
+                   Description="Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it."
+                   data-qa="AuthenticationSettings">
+        <FormGrid>
+          <FormField Label="Offer Microsoft 365 sign-in">
             <FluentCheckbox @bind-Value=Details.EntraSignInEnabled
-                            Label="Offer Microsoft 365 sign-in"
+                            AriaLabel="Offer Microsoft 365 sign-in"
                             Disabled=@IsBusy />
-
+          </FormField>
+          <FormField Label="Allow first-time Microsoft 365 bootstrap">
             <FluentCheckbox @bind-Value=Details.EntraAllowBootstrap
-                            Label="Allow first-time Microsoft 365 bootstrap"
+                            AriaLabel="Allow first-time Microsoft 365 bootstrap"
                             Disabled=@IsBusy />
+          </FormField>
+          <FormField Label="Passkey prompt">
+            <FluentSelect TOption="PasskeyPromptMode" TValue="PasskeyPromptMode"
+                          Items="@PasskeyPromptModes"
+                          OptionText="@PasskeyPromptLabel"
+                          @bind-Value="Details.PasskeyPromptMode"
+                          AriaLabel="Passkey prompt"
+                          Width="100%"
+                          Disabled=@IsBusy />
+            <ValidationMessage For="@(() => Details.PasskeyPromptMode)" />
+          </FormField>
+        </FormGrid>
 
-            <div>
-              <div class="twe-settings__field-title">Passkey prompt</div>
-              <select class="twe-settings__select"
-                      disabled="@IsBusy"
-                      @bind="Details.PasskeyPromptMode">
-                <option value="@PasskeyPromptMode.Soft">Soft (dismissible banner)</option>
-                <option value="@PasskeyPromptMode.Required">Required (block app until a passkey is added)</option>
-              </select>
-              <ValidationMessage For="@(() => Details.PasskeyPromptMode)" />
-            </div>
-
-            @if (!string.IsNullOrEmpty(SiteSettingsState.SaveError))
-            {
-              <FluentMessageBar Intent="MessageBarIntent.Error" Title="Could not save" AllowDismiss="false">
-                @SiteSettingsState.SaveError
-              </FluentMessageBar>
-            }
-
-            <FluentButton Type=ButtonType.Submit
-                          Appearance=ButtonAppearance.Primary
-                          Disabled=@IsBusy
-                          data-qa="AuthenticationSave">
-              Save authentication settings
-            </FluentButton>
-
-          </FluentStack>
-        </EditForm>
-      }
-    </section>
-  </div>
+        @if (!string.IsNullOrEmpty(SiteSettingsState.SaveError))
+        {
+          <FluentMessageBar Intent="MessageBarIntent.Error" Title="Could not save" AllowDismiss="false">
+            @SiteSettingsState.SaveError
+          </FluentMessageBar>
+        }
+      </FormSection>
+      <FormActions>
+        <FluentButton Type=ButtonType.Submit
+                      Appearance=ButtonAppearance.Primary
+                      Disabled=@IsBusy
+                      data-qa="AuthenticationSave">
+          Save authentication settings
+        </FluentButton>
+      </FormActions>
+    </EditForm>
+  }
+  else
+  {
+    <FormSection Title="Microsoft 365 sign-in policy"
+                 Description="Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it."
+                 data-qa="AuthenticationSettings" />
+  }
 </TimeWarpPage>
-
-<style>
-  @(@"
-    .twe-settings__heading {
-      margin: 0 0 12px;
-      font-size: var(--twe-text-section-title);
-      font-weight: 700;
-      color: var(--twe-ink);
-    }
-    .twe-settings__muted {
-      margin: 0 0 12px;
-      color: var(--twe-muted);
-      font-size: var(--twe-text-body);
-    }
-    .twe-settings__value {
-      margin: 4px 0 12px;
-      color: var(--twe-ink);
-      font-size: var(--twe-text-body);
-    }
-    .twe-settings__field-title {
-      font-weight: 600;
-      color: var(--twe-ink);
-      font-size: var(--twe-text-body);
-    }
-    .twe-settings__select {
-      width: 100%;
-      margin-top: 8px;
-      padding: 8px 10px;
-      border: 1px solid var(--twe-rule);
-      border-radius: var(--twe-radius-sm);
-      background: var(--twe-paper-2);
-      color: var(--twe-ink);
-      font: inherit;
-    }
-  ")
-</style>

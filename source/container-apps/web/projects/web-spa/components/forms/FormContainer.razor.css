@@ -1,0 +1,20 @@
+/* FormContainer — Tier-1 leaf, CSS isolation. Tokens from tokens.css. */
+.twe-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--twe-space-6);
+}
+
+.twe-form-container__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--twe-space-3);
+}
+
+.twe-form-container__title {
+  margin: 0;
+  font-size: var(--twe-text-section-title);
+  font-weight: 600;
+  color: var(--twe-ink);
+}

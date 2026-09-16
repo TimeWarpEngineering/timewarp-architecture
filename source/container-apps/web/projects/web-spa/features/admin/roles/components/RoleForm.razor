@@ -14,6 +14,8 @@
   LastCreatedRoleId is only written on HandleSuccess and is sticky across attempts, so
   compare to the pre-dispatch value: navigate only when it changed. A failed create
   (DefaultApiHandler toasts, does not throw) stays on this form.
+  Layout is FormSection / FormGrid / FormField / FormActions (full-width controls,
+  right-aligned Save). No Cancel — there is no cheap draft reset on CreateRole.Command.
 *@
 
 @code {
@@ -35,19 +37,19 @@
 
 <EditForm Model=@RoleDetails OnValidSubmit=HandleValidSubmit FormName="RoleForm" novalidate>
   <FluentValidator Validator="@RoleValidator" />
-  <FluentStack Orientation=Orientation.Vertical VerticalGap="16">
-
-    <div>
-      <FluentTextInput @bind-Value=RoleDetails.Name Label="Name" Name="Name" data-qa="RoleName" style="width:100%" />
-      <ValidationMessage For="@(() => RoleDetails.Name)" />
-    </div>
-
-    <div>
-      <FluentTextInput @bind-Value=RoleDetails.Description Label="Description" Name="Description" data-qa="RoleDescription" style="width:100%" />
-      <ValidationMessage For="@(() => RoleDetails.Description)" />
-    </div>
-
+  <FormSection Title="Role" Description="Name and description for the new role.">
+    <FormGrid>
+      <FormField Label="Name">
+        <FluentTextInput @bind-Value=RoleDetails.Name Name="Name" AriaLabel="Name" data-qa="RoleName" Width="100%" />
+        <ValidationMessage For="@(() => RoleDetails.Name)" />
+      </FormField>
+      <FormField Label="Description">
+        <FluentTextInput @bind-Value=RoleDetails.Description Name="Description" AriaLabel="Description" data-qa="RoleDescription" Width="100%" />
+        <ValidationMessage For="@(() => RoleDetails.Description)" />
+      </FormField>
+    </FormGrid>
+  </FormSection>
+  <FormActions>
     <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary data-qa="RoleSave">Save</FluentButton>
-
-  </FluentStack>
+  </FormActions>
 </EditForm>

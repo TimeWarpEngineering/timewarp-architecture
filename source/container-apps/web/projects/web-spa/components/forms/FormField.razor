@@ -1,0 +1,58 @@
+@namespace TimeWarp.Architecture.Components
+@*
+  Purpose: label above control, optional hint below, full-width wrapper for Fluent fields.
+
+  Design: Tier-1 leaf with a native root. Span (1–12) is the FormGrid column span;
+  default 12 (full row). Pair short fields only when they genuinely share a row
+  (City / State / ZIP). Isolated CSS cannot target Fluent light-DOM hosts (Wall A),
+  so host stretch lives in Exception B `<style>` on `.twe-form-field__control`
+  (fluent-text-input, fluent-dropdown, fluent-select, fluent-combobox,
+  fluent-textarea, fluent-field). Avatar and checkbox hosts are left to intrinsic
+  size. Pages still pass Width="100%" on text/select/combobox controls.
+*@
+
+@code {
+  [Parameter] public string? Label { get; set; }
+  [Parameter] public string? Hint { get; set; }
+  [Parameter] public int Span { get; set; } = 12;
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private int ResolvedSpan => Span < 1 ? 1 : Span > 12 ? 12 : Span;
+}
+
+<div class="twe-form-field twe-form-field--span-@ResolvedSpan @Class" @attributes="AdditionalAttributes">
+  @if (!string.IsNullOrWhiteSpace(Label))
+  {
+    <div class="twe-form-field__label">@Label</div>
+  }
+  <div class="twe-form-field__control">
+    @ChildContent
+  </div>
+  @if (!string.IsNullOrWhiteSpace(Hint))
+  {
+    <p class="twe-form-field__hint">@Hint</p>
+  }
+</div>
+
+@* Exception B: isolated `.twe-form-field__control > *` is rewritten to require
+   [b-xxxxx] on the child, which Fluent hosts never get. This unscoped rule is
+   anchored on the namespaced wrapper so it reaches light-DOM hosts. *@
+<style>
+  @(@"
+    .twe-form-field__control > fluent-text-input,
+    .twe-form-field__control > fluent-dropdown,
+    .twe-form-field__control > fluent-select,
+    .twe-form-field__control > fluent-combobox,
+    .twe-form-field__control > fluent-textarea,
+    .twe-form-field__control > fluent-text-area,
+    .twe-form-field__control > fluent-field {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+  ")
+</style>
