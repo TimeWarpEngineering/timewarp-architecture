@@ -74,12 +74,14 @@ no page-local CSS.
 - [x] tw-blazor forms rule
 - [x] Tests green; `dev build` 0/0; `ganda repo audit` clean
 - [x] Results and How to validate (before/after screenshot steps for `/Profile`)
+- [x] Implementation review: round 1 findings fixed; round 2 clean; disposition clean
 
 ## Session
 
 - Created: cockpit (2026-09-17)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: Grok (2026-09-17) — task-234 worktree
+- Review oracle: Grok (2026-09-17) — tw-implementation-review effort 1, rounds 1–2
 
 ## Notes
 
@@ -128,11 +130,26 @@ for genuine pairs; one column under 640px.
 
 **Tests:** `dev build` 0/0. `ganda repo audit` passes (2 pre-existing advisory warnings:
 memsearch-scaffold, vscode-window-icon). FormField HtmlRenderer test: hint +
-`twe-form-field--span-12` + CSS `width: 100%`. SPA unit tag 25/25. Prerender
+`twe-form-field--span-12` + Exception B Fluent host selectors. SPA unit tag 25/25. Prerender
 `Ok_Page_Given_Passkey_Administrator_{Admin_Authentication,Admin_Roles}_Html` 2/2.
 
 **Not in this session:** live `/Profile` screenshot (AppHost was not running; starting
 Aspire would lock the just-built outputs). Follow How to validate for the before/after look.
+
+**Review (effort 1, general only; 2 rounds)**
+
+- Roster: general. Round 1 raised M1 (bug, FormField isolation vs Fluent host width),
+  M2 (bug, FormActions + FormContainer double `--twe-space-6`), M3 (suggestion,
+  Authentication FormActions inside FormSection). All fixed on this task id.
+  Round 2 re-verified M1–M3; 0 new findings.
+- Final counts: bug 0 open / 2 fixed / 0 wontfix; suggestion 0 / 1 / 0; nit 0 / 0 / 0.
+- **Disposition:** clean (0 open).
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
+
+Review follow-up: Exception B `<style>` on `FormField` stretches Fluent field hosts
+(v5 wrap is `fluent-field`); FormActions has no `margin-top`; Authentication
+FormActions sits after FormSection with tenant/drift outside EditForm.
 
 ### How to validate
 
