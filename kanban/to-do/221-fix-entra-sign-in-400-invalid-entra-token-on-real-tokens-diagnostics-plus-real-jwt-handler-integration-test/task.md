@@ -80,12 +80,15 @@ tester's machine (confirm with a version/commit stamp in the log).
 - [x] Root cause found and fixed, or explicitly recorded as not reproduced with the test in place
 - [x] `dotnet test -- --filter-class Entra` green; `dev build` 0/0; `ganda repo audit` clean
 - [x] Results and How to validate (include the exact log line to look for on the next live attempt)
+- [x] Implementation review disposition (clean, round 1 general)
 
 ## Session
 
 - Created: 711075 (2026-09-16)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: Grok 4.6 session 01a0a790-a9d0-7bd3-a11b-1b4dd11b9a35 (2026-09-16)
+- Review oracle: Grok 4.6 session 01a0a7a3-58b6-7202-b7ab-7bb30d15542c (2026-09-16)
+- Review general (round 1): Grok session 01a0a7a5-e6ed-7a13-b145-4509db992e40 (2026-09-16)
 
 ## Notes
 
@@ -184,3 +187,15 @@ the failing check in `detail` and in the Warning `Reason`.
 
 **Not in scope:** live token / claim values in the kitchen; `dev entra setup --tenant` display-name
 follow-up; RP-ID / Host / `UseForwardedHeaders`.
+
+### Review disposition
+
+- **Outcome:** clean (0 open; no issues raised; no exceptions)
+- **Rounds:** 1
+- **Effort / roster:** 1 — general only
+- **Final counts:** bug 0 / suggestion 0 / nit 0 (all statuses empty)
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
