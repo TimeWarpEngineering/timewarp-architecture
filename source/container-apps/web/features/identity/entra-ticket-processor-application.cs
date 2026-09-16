@@ -16,11 +16,14 @@
 // lose on unique (Type, Handle) at AddCredentialAsync. On that InvalidOperationException, re-Find
 // by handle; an active winner is treated as sync-hit (return that PrincipalId). IPrincipalStore
 // has no delete-principal — the losing AddPrincipalAsync row is abandoned.
+// Issuer mismatch logs Warning with expected vs token issuer URIs (not secrets) and returns a
+// 400 whose detail names that check.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
 
 using System.Text;
+using Microsoft.Extensions.Logging;
 using TimeWarp.Architecture.Features;
 
 public sealed class EntraTicketProcessor
@@ -28,20 +31,31 @@ public sealed class EntraTicketProcessor
   public const string ModeLink = "link";
   public const string ModeBootstrap = "bootstrap";
 
+  private static readonly Action<ILogger, string, string, Exception?> LogIssuerMismatch =
+    LoggerMessage.Define<string, string>
+    (
+      LogLevel.Warning,
+      new EventId(1, nameof(LogIssuerMismatch)),
+      "Entra ticket issuer does not match tenant. ExpectedIssuer={ExpectedIssuer} TokenIssuer={TokenIssuer}"
+    );
+
   private readonly IPrincipalStore PrincipalStore;
   private readonly IPrincipalRoleStore PrincipalRoleStore;
   private readonly IEntraSignInPolicy EntraSignInPolicy;
+  private readonly ILogger<EntraTicketProcessor> Logger;
 
   public EntraTicketProcessor
   (
     IPrincipalStore principalStore,
     IPrincipalRoleStore principalRoleStore,
-    IEntraSignInPolicy entraSignInPolicy
+    IEntraSignInPolicy entraSignInPolicy,
+    ILogger<EntraTicketProcessor> logger
   )
   {
     PrincipalStore = principalStore;
     PrincipalRoleStore = principalRoleStore;
     EntraSignInPolicy = entraSignInPolicy;
+    Logger = logger;
   }
 
   public async Task<OneOf<PrincipalId, SharedProblemDetails>> ProcessAsync
@@ -52,9 +66,10 @@ public sealed class EntraTicketProcessor
     CancellationToken cancellationToken
   )
   {
-    if (!IssuerMatchesTenant(claims))
+    if (!IssuerMatchesTenant(claims, out string expectedIssuer))
     {
-      return IdentityProblems.InvalidEntraToken();
+      LogIssuerMismatch(Logger, expectedIssuer, claims.Issuer, null);
+      return IdentityProblems.InvalidEntraTokenIssuerMismatch();
     }
 
     bool isLink = string.Equals(mode, ModeLink, StringComparison.OrdinalIgnoreCase);
@@ -78,10 +93,10 @@ public sealed class EntraTicketProcessor
     return await ProcessBootstrapAsync(existing, handle, material, claims, cancellationToken);
   }
 
-  private static bool IssuerMatchesTenant(EntraIdTokenClaims claims)
+  private static bool IssuerMatchesTenant(EntraIdTokenClaims claims, out string expectedIssuer)
   {
-    string expected = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(claims.TenantId));
-    return string.Equals(claims.Issuer, expected, StringComparison.Ordinal);
+    expectedIssuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(claims.TenantId));
+    return string.Equals(claims.Issuer, expectedIssuer, StringComparison.Ordinal);
   }
 
   private async Task<OneOf<PrincipalId, SharedProblemDetails>> ProcessLinkAsync

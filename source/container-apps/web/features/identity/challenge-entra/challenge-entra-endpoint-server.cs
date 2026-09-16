@@ -60,10 +60,12 @@ public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
       return;
     }
 
+    string returnUrl = LocalReturnUrl.Sanitize(HttpContext.Request.Query["returnUrl"].ToString());
     AuthenticationProperties properties = new()
     {
-      RedirectUri = LocalReturnUrl.Sanitize(HttpContext.Request.Query["returnUrl"].ToString())
+      RedirectUri = returnUrl
     };
+    properties.Items[EntraLinkDefaults.ReturnUrlItemKey] = returnUrl;
     properties.Items[EntraLinkDefaults.ModeItemKey] = isLink
       ? EntraTicketProcessor.ModeLink
       : EntraTicketProcessor.ModeBootstrap;
