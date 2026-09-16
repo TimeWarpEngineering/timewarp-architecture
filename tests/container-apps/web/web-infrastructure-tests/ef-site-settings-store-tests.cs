@@ -94,25 +94,23 @@ public class Round_Trip
     }
 
     ISiteSettingsStore store = EfSiteSettingsStoreFactory.CreateStore();
-    Guid tenant = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
     await store.AddAsync(
-      SiteSettings.Create(true, true, [tenant], PasskeyPromptMode.Soft));
+      SiteSettings.Create(true, true, PasskeyPromptMode.Soft));
 
     SiteSettings? found = await store.GetAsync();
     found.ShouldNotBeNull();
     found!.EntraSignInEnabled.ShouldBeTrue();
-    found.IsTrustedTenant(tenant).ShouldBeTrue();
     found.Version.ShouldBe(0);
 
     SiteSettings? a = await store.GetAsync();
     SiteSettings? b = await store.GetAsync();
-    a!.ReplacePolicy(false, false, [], PasskeyPromptMode.Required);
+    a!.ReplacePolicy(false, false, PasskeyPromptMode.Required);
     await store.UpdateAsync(a);
     SiteSettings? after = await store.GetAsync();
     after!.Version.ShouldBe(EntityVersion.Next(0));
     after.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
 
-    b!.ReplacePolicy(true, true, [tenant], PasskeyPromptMode.Soft);
+    b!.ReplacePolicy(true, true, PasskeyPromptMode.Soft);
     await Should.ThrowAsync<ConcurrencyConflictException>(() => store.UpdateAsync(b));
   }
 }

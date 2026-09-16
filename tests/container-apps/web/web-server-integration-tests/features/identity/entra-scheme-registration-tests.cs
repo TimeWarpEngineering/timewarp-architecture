@@ -90,7 +90,6 @@ public class ConfigureAuthentication_Given_
         ["Authentication:Entra:TenantId"] = tenantId.ToString("D"),
         ["Authentication:Entra:ClientId"] = Guid.NewGuid().ToString("D"),
         ["Authentication:Entra:CallbackPath"] = "/signin-oidc",
-        ["Authentication:Entra:TrustedTenants:0"] = tenantId.ToString("D"),
         ["Authentication:Entra:AllowBootstrap"] = "true"
       }
     );
@@ -161,8 +160,7 @@ public class ConfigureAuthentication_Given_
         ["Authentication:Entra:Instance"] = "https://login.microsoftonline.com/",
         ["Authentication:Entra:TenantId"] = tenantId.ToString("D"),
         ["Authentication:Entra:ClientId"] = Guid.NewGuid().ToString("D"),
-        ["Authentication:Entra:CallbackPath"] = "/signin-oidc",
-        ["Authentication:Entra:TrustedTenants:0"] = tenantId.ToString("D")
+        ["Authentication:Entra:CallbackPath"] = "/signin-oidc"
       }
     );
 
@@ -192,7 +190,6 @@ public class ConfigureAuthentication_Given_
         ["Authentication:Entra:TenantId"] = "organizations",
         ["Authentication:Entra:ClientId"] = Guid.NewGuid().ToString("D"),
         ["Authentication:Entra:CallbackPath"] = "/signin-oidc",
-        ["Authentication:Entra:TrustedTenants:0"] = tenantId.ToString("D"),
         ["Authentication:Entra:AllowBootstrap"] = "true"
       }
     );

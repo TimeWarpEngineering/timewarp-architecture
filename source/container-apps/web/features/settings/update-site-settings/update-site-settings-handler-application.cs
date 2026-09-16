@@ -44,7 +44,6 @@ public sealed class UpdateSiteSettings
       settings.ReplacePolicy(
         command.EntraSignInEnabled,
         command.EntraAllowBootstrap,
-        ParseTenants(command.EntraTrustedTenants),
         command.PasskeyPromptMode);
 
       try
@@ -65,18 +64,6 @@ public sealed class UpdateSiteSettings
     new(
       entraSignInEnabled: settings.EntraSignInEnabled,
       entraAllowBootstrap: settings.EntraAllowBootstrap,
-      entraTrustedTenants: [.. settings.EntraTrustedTenants.Select(static tenantId => tenantId.ToString("D"))],
       passkeyPromptMode: settings.PasskeyPromptMode,
       version: settings.Version);
-
-  private static List<Guid> ParseTenants(IReadOnlyList<string> tenants)
-  {
-    List<Guid> parsed = [];
-    foreach (string entry in tenants)
-    {
-      parsed.Add(Guid.Parse(entry));
-    }
-
-    return parsed;
-  }
 }

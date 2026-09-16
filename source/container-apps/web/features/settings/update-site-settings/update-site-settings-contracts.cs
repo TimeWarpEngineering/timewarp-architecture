@@ -5,8 +5,9 @@
 #region Design
 // SettingsWrite — granted to the bootstrap Administrator role, not self-service. Version is the
 // concurrency token from GetSiteSettings; mismatch is 409. Validator composes
-// SiteSettingsDetailsValidator (GUID tenants). PUT of the same ISiteSettingsDetails shape the
-// Get response implements so the Settings form binds once.
+// SiteSettingsDetailsValidator. PUT of the same ISiteSettingsDetails shape the Get response
+// implements so the Settings form binds once. Task 227 dropped trusted tenants from this
+// command; trust is Authentication:Entra:TenantId.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -26,7 +27,6 @@ public static partial class UpdateSiteSettings
   {
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }
-    public List<string> EntraTrustedTenants { get; set; } = null!;
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public long Version { get; set; }
   }
@@ -44,20 +44,17 @@ public static partial class UpdateSiteSettings
   {
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }
-    public List<string> EntraTrustedTenants { get; set; }
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public long Version { get; }
 
     public Response(
       bool entraSignInEnabled,
       bool entraAllowBootstrap,
-      List<string> entraTrustedTenants,
       PasskeyPromptMode passkeyPromptMode,
       long version)
     {
       EntraSignInEnabled = entraSignInEnabled;
       EntraAllowBootstrap = entraAllowBootstrap;
-      EntraTrustedTenants = entraTrustedTenants ?? [];
       PasskeyPromptMode = passkeyPromptMode;
       Version = version;
     }
@@ -68,7 +65,6 @@ public static partial class UpdateSiteSettings
     return _ => new Response(
       entraSignInEnabled: false,
       entraAllowBootstrap: false,
-      entraTrustedTenants: [],
       passkeyPromptMode: PasskeyPromptMode.Soft,
       version: 1);
   }

@@ -99,6 +99,24 @@ public class Validate_Should
     return Task.CompletedTask;
   }
 
+  public static Task Reject_Obsolete_TrustedTenants_Key()
+  {
+    IConfiguration configuration = new ConfigurationBuilder()
+      .AddInMemoryCollection(
+        new Dictionary<string, string?>
+        {
+          ["Authentication:Entra:TrustedTenants:0"] = "30f3971f-4719-4f20-9b6f-88916e0b95bd"
+        })
+      .Build();
+
+    FluentValidation.Results.ValidationResult result =
+      new EntraAuthenticationOptionsValidator(configuration).Validate(EnabledOptions());
+    result.IsValid.ShouldBeFalse();
+    result.Errors.ShouldContain(error =>
+      error.ErrorMessage == EntraAuthenticationOptionsValidator.TrustedTenantsRemovedMessage);
+    return Task.CompletedTask;
+  }
+
   private static EntraAuthenticationOptions EnabledOptions() =>
     new()
     {

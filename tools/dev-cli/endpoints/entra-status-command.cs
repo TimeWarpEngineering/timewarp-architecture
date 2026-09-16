@@ -84,7 +84,6 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
         EntraSetup.TenantDomainKey,
         EntraSetup.ClientIdKey,
         EntraSetup.ClientSecretKey,
-        EntraSetup.TrustedTenants0Key,
         EntraSetup.AllowBootstrapKey,
         EntraSetup.PublicOriginKey,
         EntraSetup.ReseedSiteSettingsKey
@@ -103,6 +102,24 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
           }
         }
       );
+
+      WarnObsoleteTrustedTenants();
+    }
+
+    private void WarnObsoleteTrustedTenants()
+    {
+      bool present = Secrets.Keys.Any(static key =>
+        key.StartsWith("Authentication:Entra:TrustedTenants", StringComparison.OrdinalIgnoreCase));
+      if (!present)
+      {
+        return;
+      }
+
+      Terminal.WriteLine("");
+      Terminal.WriteErrorLine(
+        "Obsolete Authentication:Entra:TrustedTenants is set. Task 227 removed the allowlist; trust is TenantId.".Yellow());
+      Terminal.WriteLine(
+        $"dotnet user-secrets remove \"{EntraSetup.ObsoleteTrustedTenants0Key}\" --project {EntraSetup.WebServerProject}");
     }
 
     private string SecretDisplay(string key)

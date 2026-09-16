@@ -1,6 +1,5 @@
 @namespace TimeWarp.Architecture.Features.Applications
 @inherits BaseComponent
-@using Microsoft.Extensions.Configuration
 @using TimeWarp.Architecture.Features.Identity
 @using TimeWarp.Architecture.Services
 
@@ -8,8 +7,8 @@
   public static string Title => "Settings";
   public static Icon? NavIcon => new Icons.Regular.Size20.Settings();
 
-  [Inject] private IConfiguration Configuration { get; set; } = null!;
   [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+  [Inject] private IWebServerApiService WebServerApiService { get; set; } = null!;
 
   private Guid? ExpandedId;
   private bool ShowMicrosoft365;
@@ -25,9 +24,7 @@
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
-    ShowMicrosoft365 = MockAuthenticationDefaults.IsEntraEnabled(
-      Configuration[MockAuthenticationDefaults.EntraEnabledKey],
-      Configuration[MockAuthenticationDefaults.UseEntraKey]);
+    ShowMicrosoft365 = await LoadEntraOfferedAsync();
     if (RendererInfo.IsInteractive)
     {
       await NoSubCredentialsState.FetchCredentials();
@@ -75,6 +72,23 @@
   {
     await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
     SyncExpandedId();
+  }
+
+  private async Task<bool> LoadEntraOfferedAsync()
+  {
+    try
+    {
+      OneOf<GetEntraSignInOffered.Response, FileResponse, SharedProblemDetails> result =
+        await WebServerApiService.GetResponse<GetEntraSignInOffered.Response>(
+          new GetEntraSignInOffered.Query(),
+          CancellationToken.None);
+      return result.TryPickT0(out GetEntraSignInOffered.Response response, out _)
+        && response.Offered;
+    }
+    catch (Exception)
+    {
+      return false;
+    }
   }
 
   private void LinkMicrosoft365()
@@ -173,7 +187,7 @@
 
     @if (ShowMicrosoft365)
     {
-      <section class="twe-settings__section">
+      <section class="twe-settings__section" data-qa="Microsoft365Settings">
         <h2 class="twe-settings__heading">Microsoft 365</h2>
 
         @if (IsLoading)
@@ -207,18 +221,15 @@
           </ul>
         }
 
-        @if (SiteSettingsState.EntraSignInEnabled is true)
-        {
-          <div class="twe-settings__actions">
-            <button type="button"
-                    class="twe-settings__link"
-                    data-qa="LinkMicrosoft365"
-                    disabled="@IsBusy"
-                    @onclick="LinkMicrosoft365">
-              Link Microsoft 365
-            </button>
-          </div>
-        }
+        <div class="twe-settings__actions">
+          <button type="button"
+                  class="twe-settings__link"
+                  data-qa="LinkMicrosoft365"
+                  disabled="@IsBusy"
+                  @onclick="LinkMicrosoft365">
+            Link Microsoft 365
+          </button>
+        </div>
       </section>
     }
 

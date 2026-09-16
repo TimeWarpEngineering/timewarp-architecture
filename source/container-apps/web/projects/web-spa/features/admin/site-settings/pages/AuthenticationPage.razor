@@ -9,7 +9,6 @@
 
   private bool DraftEntraSignInEnabled;
   private bool DraftEntraAllowBootstrap;
-  private string DraftTrustedTenantsText = "";
   private PasskeyPromptMode DraftPasskeyPromptMode = PasskeyPromptMode.Soft;
   private bool DraftLoaded;
 
@@ -45,51 +44,18 @@
 
     DraftEntraSignInEnabled = SiteSettingsState.EntraSignInEnabled is true;
     DraftEntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true;
-    DraftTrustedTenantsText = string.Join(Environment.NewLine, SiteSettingsState.EntraTrustedTenants);
     DraftPasskeyPromptMode = SiteSettingsState.PasskeyPromptMode;
     DraftLoaded = true;
   }
 
   private async Task SaveAuthenticationAsync()
   {
-    List<string> tenants = [];
-    foreach (string line in DraftTrustedTenantsText.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-    {
-      tenants.Add(line);
-    }
-
     await NoSubSiteSettingsState.UpdateSiteSettings(
       new UpdateSiteSettings.Command
       {
         EntraSignInEnabled = DraftEntraSignInEnabled,
         EntraAllowBootstrap = DraftEntraAllowBootstrap,
-        EntraTrustedTenants = tenants,
         PasskeyPromptMode = DraftPasskeyPromptMode,
-        Version = SiteSettingsState.Version
-      });
-    if (string.IsNullOrEmpty(SiteSettingsState.SaveError))
-    {
-      SyncDraftFromState();
-    }
-  }
-
-  private async Task AddConfigurationTenantAsync()
-  {
-    if (string.IsNullOrWhiteSpace(SiteSettingsState.ConfigurationTenantId))
-    {
-      return;
-    }
-
-    List<string> tenants = SiteSettingsConfigurationDrift.WithConfigurationTenant(
-      SiteSettingsState.EntraTrustedTenants,
-      SiteSettingsState.ConfigurationTenantId);
-    await NoSubSiteSettingsState.UpdateSiteSettings(
-      new UpdateSiteSettings.Command
-      {
-        EntraSignInEnabled = SiteSettingsState.EntraSignInEnabled is true,
-        EntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true,
-        EntraTrustedTenants = tenants,
-        PasskeyPromptMode = SiteSettingsState.PasskeyPromptMode,
         Version = SiteSettingsState.Version
       });
     if (string.IsNullOrEmpty(SiteSettingsState.SaveError))
@@ -102,30 +68,22 @@
 <TimeWarpPage Title="Authentication">
   <div class="twe-stack twe-settings">
     <section class="twe-settings__section" data-qa="AuthenticationSettings">
-      <h2 class="twe-settings__heading">Authentication</h2>
+      <h2 class="twe-settings__heading">Microsoft 365 sign-in policy</h2>
       <p class="twe-settings__muted">
         Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it.
       </p>
       <p class="twe-settings__value" data-qa="ConfigurationTenant">
-        Configuration tenant: @SiteSettingsState.ConfigurationTenantLabel
+        App registration tenant: @SiteSettingsState.ConfigurationTenantLabel
       </p>
 
-      @if (SiteSettingsState.HasSnapshot && SiteSettingsState.ConfigurationTenantIsUntrusted)
+      @if (SiteSettingsState.HasSnapshot
+        && (SiteSettingsState.ConfigurationEnabledDiffers || SiteSettingsState.ConfigurationAllowBootstrapDiffers))
       {
         <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Configuration drift" AllowDismiss="false">
-          <span data-qa="ConfigurationTenantDrift">
-            Configuration tenant @SiteSettingsState.ConfigurationTenantLabel is not in the trusted tenants list.
+          <span data-qa="ConfigurationPolicyDrift">
+            Saved policy differs from Authentication:Entra Enabled or AllowBootstrap. Edit here or run `dev entra reseed`.
           </span>
         </FluentMessageBar>
-        <div class="twe-settings__actions">
-          <button type="button"
-                  class="twe-settings__link"
-                  data-qa="AddConfigurationTenant"
-                  disabled="@IsBusy"
-                  @onclick="AddConfigurationTenantAsync">
-            Add configuration tenant
-          </button>
-        </div>
       }
 
       @if (DraftLoaded)
@@ -146,15 +104,6 @@
                    @bind="DraftEntraAllowBootstrap" />
             Allow first-time Microsoft 365 bootstrap
           </label>
-        </div>
-
-        <div class="twe-settings__field">
-          <div class="twe-settings__field-title">Trusted tenants</div>
-          <p class="twe-settings__muted">One tenant GUID per line. Empty refuses bootstrap and sync-hit.</p>
-          <textarea class="twe-settings__textarea"
-                    rows="4"
-                    disabled="@IsBusy"
-                    @bind="DraftTrustedTenantsText"></textarea>
         </div>
 
         <div class="twe-settings__field">
@@ -230,7 +179,6 @@
       padding-top: 12px;
       border-top: 1px solid var(--twe-rule);
     }
-    .twe-settings__textarea,
     .twe-settings__select {
       width: 100%;
       margin-top: 8px;

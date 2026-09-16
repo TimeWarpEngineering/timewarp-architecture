@@ -4,7 +4,7 @@
 
 #region Design
 // Anonymous on purpose — the login page has no session. Response is Offered only; do not
-// leak trusted tenants, AllowBootstrap, or PasskeyPromptMode. Offered is scheme registered
+// leak TenantId, AllowBootstrap, or PasskeyPromptMode. Offered is scheme registered
 // (configuration Enabled) AND site settings EntraSignInEnabled so the button never 404s and
 // never shows when administrators disabled sign-in at runtime.
 #endregion

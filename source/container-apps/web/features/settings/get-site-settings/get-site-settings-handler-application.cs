@@ -6,9 +6,9 @@
 // Application takes ISiteSettingsStore, not PostgresDbContext. Does not insert when empty —
 // only SiteSettingsSeeder writes the first row (from Authentication:Entra at boot via
 // SiteSettingsSeedHostedService.StartingAsync). Empty store returns NotInitialized (503).
-// Tenant ids serialize as D-format GUID strings. Configuration* fields come from bound
-// EntraAuthenticationOptions (Identity slice) so Admin/Authentication can show drift without
-// a second endpoint — CrossSliceReference on Handler.
+// Configuration* fields come from bound EntraAuthenticationOptions (Identity slice) so
+// Admin/Authentication can show the app-registration tenant without a second endpoint —
+// CrossSliceReference on Handler.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings.Application;
@@ -22,7 +22,7 @@ public sealed class GetSiteSettings
 {
   [CrossSliceReference(
     typeof(EntraAuthenticationOptions),
-    "Projects bound Authentication:Entra tenant and enablement onto GetSiteSettings so Admin/Authentication can show config drift without a second endpoint.")]
+    "Projects bound Authentication:Entra tenant and enablement onto GetSiteSettings so Admin/Authentication can show the app-registration tenant without a second endpoint.")]
   public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
     private readonly ISiteSettingsStore SiteSettingsStore;
@@ -61,7 +61,6 @@ public sealed class GetSiteSettings
       return new(
         entraSignInEnabled: settings.EntraSignInEnabled,
         entraAllowBootstrap: settings.EntraAllowBootstrap,
-        entraTrustedTenants: [.. settings.EntraTrustedTenants.Select(static tenant => tenant.ToString("D"))],
         passkeyPromptMode: settings.PasskeyPromptMode,
         version: settings.Version,
         configurationTenantId: tenantId,

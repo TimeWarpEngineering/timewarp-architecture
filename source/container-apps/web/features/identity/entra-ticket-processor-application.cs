@@ -9,8 +9,10 @@
 // Sync-hit is Find-by-handle of an active EntraAccount. Revoked rows are non-hits and cannot be
 // re-inserted (unique Type+Handle) — 403, not Restore (Graph Restore is a later product path).
 // Bootstrap Create is gated by IEntraSignInPolicy (site settings AllowBootstrap AND
-// tid ∈ TrustedTenants). TrustedTenants also gates sync-hit so an untrusted tenant never
-// issues a session. Policy replaces EntraAuthenticationOptions for those two fields.
+// tid GUID-equals Authentication:Entra:TenantId). The same pin gates sync-hit and link so
+// an untrusted tenant never issues a session or attaches a credential. organizations /
+// common authority is not a GUID, so those tickets refuse Untrusted tenant (403).
+// EntraIssuerValidator still requires iss to match the token's own tid.
 // First human bootstrap claims Administrator the same way CompletePasskeyRegistration does.
 // Concurrent first-login for the same tid:oid can miss both finds, create two principals, and
 // lose on unique (Type, Handle) at AddCredentialAsync. On that InvalidOperationException, re-Find
@@ -87,7 +89,7 @@ public sealed class EntraTicketProcessor
 
     if (isLink)
     {
-      return await ProcessLinkAsync(existing, handle, material, linkCallerPrincipalId, cancellationToken);
+      return await ProcessLinkAsync(existing, handle, material, claims, linkCallerPrincipalId, cancellationToken);
     }
 
     return await ProcessBootstrapAsync(existing, handle, material, claims, cancellationToken);
@@ -104,6 +106,7 @@ public sealed class EntraTicketProcessor
     Credential? existing,
     byte[] handle,
     byte[] material,
+    EntraIdTokenClaims claims,
     PrincipalId? linkCallerPrincipalId,
     CancellationToken cancellationToken
   )
@@ -111,6 +114,15 @@ public sealed class EntraTicketProcessor
     if (linkCallerPrincipalId is null)
     {
       return IdentityProblems.Unauthenticated();
+    }
+
+    EntraSignInDecision linkDecision = await EntraSignInPolicy.EvaluateAsync(
+      EntraSignInMode.Link,
+      claims.TenantId,
+      cancellationToken);
+    if (!linkDecision.Allowed)
+    {
+      return linkDecision.Problem ?? IdentityProblems.UntrustedTenant();
     }
 
     if (existing is not null)

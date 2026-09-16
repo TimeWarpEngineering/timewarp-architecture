@@ -333,13 +333,9 @@ public partial class Program : IAspNetProgram
       configuration[MockAuthenticationDefaults.EntraEnabledKey],
       configuration[MockAuthenticationDefaults.UseEntraKey]);
 
+    serviceCollection.AddSingleton<IValidateOptions<EntraAuthenticationOptions>, EntraAuthenticationOptionsStartupValidator>();
     serviceCollection.AddOptions<EntraAuthenticationOptions>()
       .Bind(configuration.GetSection(EntraAuthenticationOptions.SectionKey))
-      .Validate
-      (
-        static options => new EntraAuthenticationOptionsValidator().Validate(options).IsValid,
-        "Authentication:Entra is invalid."
-      )
       .ValidateOnStart();
     serviceCollection.PostConfigure<EntraAuthenticationOptions>(options =>
     {

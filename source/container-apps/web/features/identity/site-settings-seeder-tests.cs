@@ -7,11 +7,11 @@
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
 
-// Host-free SiteSettingsSeeder coverage (task 219-006 / 225).
+// Host-free SiteSettingsSeeder coverage (task 219-006 / 225 / 227).
 // Run standalone:  dotnet run source/container-apps/web/features/identity/site-settings-seeder-tests.cs
 
 #region Purpose
-// Jaribu runfile: seed-once from configuration; drift warnings; Development-only reseed.
+// Jaribu runfile: seed-once from configuration; Enabled/AllowBootstrap drift warnings; Development-only reseed.
 #endregion
 
 //-:cnd:noEmit
@@ -39,7 +39,6 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
   public class SiteSettingsSeeder_Given_
   {
     private static readonly Guid Tenant = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
-    private static readonly Guid OtherTenant = Guid.Parse("a16bcaef-ea01-44ad-be12-249a17658692");
 
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<SiteSettingsSeeder_Given_>();
@@ -51,7 +50,6 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       SiteSettings seeded = await seeder.GetOrSeedAsync();
       seeded.EntraSignInEnabled.ShouldBeTrue();
       seeded.EntraAllowBootstrap.ShouldBeTrue();
-      seeded.IsTrustedTenant(Tenant).ShouldBeTrue();
       seeded.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Soft);
     }
 
@@ -65,7 +63,6 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       SiteSettings seeded = await seeder.GetOrSeedAsync();
       seeded.EntraSignInEnabled.ShouldBeTrue();
       seeded.EntraAllowBootstrap.ShouldBeTrue();
-      seeded.IsTrustedTenant(Tenant).ShouldBeTrue();
     }
 
     public static async Task Second_Call_Should_Not_Overwrite()
@@ -73,7 +70,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       InMemorySiteSettingsStore store = new();
       SiteSettingsSeeder seeder = Create(store, enabled: true, allowBootstrap: true, Tenant);
       SiteSettings first = await seeder.GetOrSeedAsync();
-      first.ReplacePolicy(false, false, [], PasskeyPromptMode.Required);
+      first.ReplacePolicy(false, false, PasskeyPromptMode.Required);
       await store.UpdateAsync(first);
 
       SiteSettings second = await seeder.GetOrSeedAsync();
@@ -82,7 +79,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       second.Version.ShouldBe(1);
     }
 
-    public static async Task Config_Tenant_Missing_From_Trusted_List_Should_Warn()
+    public static async Task Enabled_Mismatch_Should_Warn()
     {
       InMemorySiteSettingsStore store = new();
       SiteSettingsSeeder first = Create(store, enabled: true, allowBootstrap: true, Tenant);
@@ -91,14 +88,14 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       CapturingLogger logger = new();
       SiteSettingsSeeder drifted = Create(
         store,
-        enabled: true,
+        enabled: false,
         allowBootstrap: true,
-        OtherTenant,
+        Tenant,
         logger: logger);
       await drifted.GetOrSeedAsync();
 
       logger.Messages.ShouldContain(message =>
-        message.Contains(OtherTenant.ToString("D"), StringComparison.Ordinal)
+        message.Contains("EntraSignInEnabled", StringComparison.Ordinal)
         && message.Contains("/Admin/Authentication", StringComparison.Ordinal)
         && message.Contains("dev entra reseed", StringComparison.Ordinal));
       logger.Levels.ShouldContain(LogLevel.Warning);
@@ -109,7 +106,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       InMemorySiteSettingsStore store = new();
       SiteSettingsSeeder first = Create(store, enabled: true, allowBootstrap: true, Tenant);
       SiteSettings seeded = await first.GetOrSeedAsync();
-      seeded.ReplacePolicy(false, false, [], PasskeyPromptMode.Required);
+      seeded.ReplacePolicy(false, false, PasskeyPromptMode.Required);
       await store.UpdateAsync(seeded);
 
       CapturingLogger logger = new();
@@ -117,15 +114,13 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
         store,
         enabled: true,
         allowBootstrap: true,
-        OtherTenant,
+        Tenant,
         reseedSiteSettings: true,
         logger: logger);
       SiteSettings after = await reseed.GetOrSeedAsync(isDevelopment: true);
 
       after.EntraSignInEnabled.ShouldBeTrue();
       after.EntraAllowBootstrap.ShouldBeTrue();
-      after.IsTrustedTenant(OtherTenant).ShouldBeTrue();
-      after.IsTrustedTenant(Tenant).ShouldBeFalse();
       after.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
       logger.Messages.ShouldContain(message =>
         message.Contains("Overwrote EntraSignInEnabled", StringComparison.Ordinal));
@@ -136,7 +131,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       InMemorySiteSettingsStore store = new();
       SiteSettingsSeeder first = Create(store, enabled: true, allowBootstrap: true, Tenant);
       SiteSettings seeded = await first.GetOrSeedAsync();
-      seeded.ReplacePolicy(false, false, [], PasskeyPromptMode.Required);
+      seeded.ReplacePolicy(false, false, PasskeyPromptMode.Required);
       await store.UpdateAsync(seeded);
 
       CapturingLogger logger = new();
@@ -144,14 +139,13 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
         store,
         enabled: true,
         allowBootstrap: true,
-        OtherTenant,
+        Tenant,
         reseedSiteSettings: true,
         logger: logger);
       SiteSettings after = await reseed.GetOrSeedAsync(isDevelopment: false);
 
       after.EntraSignInEnabled.ShouldBeFalse();
       after.EntraAllowBootstrap.ShouldBeFalse();
-      after.IsTrustedTenant(Tenant).ShouldBeFalse();
       after.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
       logger.Messages.ShouldContain(message =>
         message.Contains("honoured only in Development", StringComparison.Ordinal));
@@ -171,7 +165,6 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
           Enabled = enabled,
           AllowBootstrap = allowBootstrap,
           TenantId = tenant.ToString("D"),
-          TrustedTenants = [tenant.ToString("D")],
           ReseedSiteSettings = reseedSiteSettings
         });
       return new SiteSettingsSeeder(

@@ -46,7 +46,6 @@ partial class SiteSettingsState
       {
         SiteSettingsState.EntraSignInEnabled = response.EntraSignInEnabled;
         SiteSettingsState.EntraAllowBootstrap = response.EntraAllowBootstrap;
-        SiteSettingsState.EntraTrustedTenants = [.. response.EntraTrustedTenants];
         SiteSettingsState.PasskeyPromptMode = response.PasskeyPromptMode;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.SaveError = null;

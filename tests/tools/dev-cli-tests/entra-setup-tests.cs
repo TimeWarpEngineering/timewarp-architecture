@@ -87,6 +87,7 @@ public class ReseedSiteSettingsKey_Should_
   public static Task Be_The_Authentication_Entra_Flag()
   {
     EntraSetup.ReseedSiteSettingsKey.ShouldBe("Authentication:Entra:ReseedSiteSettings");
+    EntraSetup.ObsoleteTrustedTenants0Key.ShouldBe("Authentication:Entra:TrustedTenants:0");
     return Task.CompletedTask;
   }
 }

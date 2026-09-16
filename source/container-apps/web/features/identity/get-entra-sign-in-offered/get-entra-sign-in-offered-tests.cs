@@ -84,7 +84,7 @@ namespace TimeWarp.Architecture.Features.Identity
     private static async Task<OfferedHandler> HandlerAsync(bool schemeEnabled, bool settingsEnabled)
     {
       InMemorySiteSettingsStore store = new();
-      await store.AddAsync(SiteSettings.Create(settingsEnabled, false, [], PasskeyPromptMode.Soft));
+      await store.AddAsync(SiteSettings.Create(settingsEnabled, false, PasskeyPromptMode.Soft));
       IOptions<EntraAuthenticationOptions> options = Options.Create(
         new EntraAuthenticationOptions { Enabled = schemeEnabled });
       return new OfferedHandler(options, store);

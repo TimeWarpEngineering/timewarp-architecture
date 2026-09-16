@@ -20,5 +20,6 @@ namespace TimeWarp.Architecture.Features.Applications;
 [Authorize(Policy = PermissionIds.SettingsRead)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
 [CrossSliceReference(typeof(ChallengeEntra), "Settings link CTA navigates to the Identity BFF Entra challenge; no WASM MSAL.")]
-[CrossSliceReference(typeof(SiteSettingsState), "Settings reads EntraSignInEnabled to show Link Microsoft 365; policy editing lives on Admin/Authentication.")]
+[CrossSliceReference(typeof(SiteSettingsState), "Settings reads site settings for passkey prompt; Microsoft 365 section is gated on GetEntraSignInOffered.")]
+[CrossSliceReference(typeof(GetEntraSignInOffered), "Settings shows the Microsoft 365 section when the server offers sign-in, same flag as Login.")]
 partial class SettingsPage;

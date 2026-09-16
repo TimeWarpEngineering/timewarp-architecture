@@ -6,11 +6,11 @@
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
 
-// Co-located Jaribu: UpdateSiteSettings contract + handler concurrency (task 219-006).
+// Co-located Jaribu: UpdateSiteSettings contract + handler concurrency (task 219-006 / 227).
 // Run standalone:  dotnet run source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs
 
 #region Purpose
-// Jaribu runfile: UpdateSiteSettings validator GUIDs, empty-store 503, 409, successful update.
+// Jaribu runfile: UpdateSiteSettings validator, empty-store 503, 409, successful update.
 #endregion
 
 //-:cnd:noEmit
@@ -22,7 +22,6 @@ return await TimeWarp.Jaribu.TestRunner.RunAllTests();
 namespace TimeWarp.Architecture.Features.Settings
 {
 
-  using System;
   using System.Threading.Tasks;
   using FluentValidation.Results;
   using OneOf;
@@ -40,12 +39,11 @@ namespace TimeWarp.Architecture.Features.Settings
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<UpdateSiteSettingsCommand_Given_>();
 
-    public static Task Invalid_Tenant_Should_Fail_Validation()
+    public static Task Undefined_Passkey_Mode_Should_Fail_Validation()
     {
       Command command = new()
       {
-        EntraTrustedTenants = ["not-a-guid"],
-        PasskeyPromptMode = PasskeyPromptMode.Soft,
+        PasskeyPromptMode = (PasskeyPromptMode)99,
         Version = 0
       };
 
@@ -54,13 +52,12 @@ namespace TimeWarp.Architecture.Features.Settings
       return Task.CompletedTask;
     }
 
-    public static Task Guid_Tenants_Should_Pass_Validation()
+    public static Task Defined_Passkey_Mode_Should_Pass_Validation()
     {
       Command command = new()
       {
         EntraSignInEnabled = true,
         EntraAllowBootstrap = true,
-        EntraTrustedTenants = ["30f3971f-4719-4f20-9b6f-88916e0b95bd"],
         PasskeyPromptMode = PasskeyPromptMode.Required,
         Version = 0
       };
@@ -86,7 +83,6 @@ namespace TimeWarp.Architecture.Features.Settings
         {
           EntraSignInEnabled = true,
           EntraAllowBootstrap = true,
-          EntraTrustedTenants = [],
           PasskeyPromptMode = PasskeyPromptMode.Required,
           Version = 0
         },
@@ -104,7 +100,7 @@ namespace TimeWarp.Architecture.Features.Settings
       InMemorySiteSettingsStore store = new();
       await store.AddAsync(SiteSettings.Create());
       SiteSettings? current = await store.GetAsync();
-      current!.ReplacePolicy(true, false, [], PasskeyPromptMode.Soft);
+      current!.ReplacePolicy(true, false, PasskeyPromptMode.Soft);
       await store.UpdateAsync(current);
 
       UpdateHandler handler = new(store);
@@ -113,7 +109,6 @@ namespace TimeWarp.Architecture.Features.Settings
         {
           EntraSignInEnabled = false,
           EntraAllowBootstrap = true,
-          EntraTrustedTenants = [],
           PasskeyPromptMode = PasskeyPromptMode.Required,
           Version = 0
         },
@@ -130,14 +125,12 @@ namespace TimeWarp.Architecture.Features.Settings
     {
       InMemorySiteSettingsStore store = new();
       await store.AddAsync(SiteSettings.Create());
-      Guid tenant = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
       UpdateHandler handler = new(store);
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(
         new Command
         {
           EntraSignInEnabled = true,
           EntraAllowBootstrap = true,
-          EntraTrustedTenants = [tenant.ToString("D")],
           PasskeyPromptMode = PasskeyPromptMode.Required,
           Version = 0
         },
@@ -145,8 +138,8 @@ namespace TimeWarp.Architecture.Features.Settings
 
       result.IsT0.ShouldBeTrue();
       result.AsT0.EntraSignInEnabled.ShouldBeTrue();
+      result.AsT0.EntraAllowBootstrap.ShouldBeTrue();
       result.AsT0.Version.ShouldBe(1);
-      result.AsT0.EntraTrustedTenants.ShouldBe([tenant.ToString("D")]);
     }
   }
 }

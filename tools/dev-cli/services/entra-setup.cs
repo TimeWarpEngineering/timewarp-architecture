@@ -34,7 +34,7 @@ internal static class EntraSetup
   internal const string TenantDomainKey = "Authentication:Entra:TenantDomain";
   internal const string ClientIdKey = "Authentication:Entra:ClientId";
   internal const string ClientSecretKey = "Authentication:Entra:ClientSecret";
-  internal const string TrustedTenants0Key = "Authentication:Entra:TrustedTenants:0";
+  internal const string ObsoleteTrustedTenants0Key = "Authentication:Entra:TrustedTenants:0";
   internal const string AllowBootstrapKey = "Authentication:Entra:AllowBootstrap";
   internal const string PublicOriginKey = "Authentication:Entra:PublicOrigin";
   internal const string ReseedSiteSettingsKey = "Authentication:Entra:ReseedSiteSettings";
