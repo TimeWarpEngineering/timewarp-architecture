@@ -74,17 +74,21 @@ tester's machine (confirm with a version/commit stamp in the log).
 
 ## Checklist
 
-- [ ] `TryRead` reason + Warning logs (types only) + problem detail names the failing check
-- [ ] Boot log stamps informational version for the `entra` scheme
-- [ ] Real-JWT round-trip integration test with stub authority (signed RSA id_token, PKCE, nonce)
-- [ ] Root cause found and fixed, or explicitly recorded as not reproduced with the test in place
-- [ ] `dotnet test -- --filter-class Entra` green; `dev build` 0/0; `ganda repo audit` clean
-- [ ] Results and How to validate (include the exact log line to look for on the next live attempt)
+- [x] `TryRead` reason + Warning logs (types only) + problem detail names the failing check
+- [x] Boot log stamps informational version for the `entra` scheme
+- [x] Real-JWT round-trip integration test with stub authority (signed RSA id_token, PKCE, nonce)
+- [x] Root cause found and fixed, or explicitly recorded as not reproduced with the test in place
+- [x] `dotnet test -- --filter-class Entra` green; `dev build` 0/0; `ganda repo audit` clean
+- [x] Results and How to validate (include the exact log line to look for on the next live attempt)
+- [x] Implementation review disposition (clean, round 1 general)
 
 ## Session
 
 - Created: 711075 (2026-09-16)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
+- Implementer: Grok 4.6 session 01a0a790-a9d0-7bd3-a11b-1b4dd11b9a35 (2026-09-16)
+- Review oracle: Grok 4.6 session 01a0a7a3-58b6-7202-b7ab-7bb30d15542c (2026-09-16)
+- Review general (round 1): Grok session 01a0a7a5-e6ed-7a13-b145-4509db992e40 (2026-09-16)
 
 ## Notes
 
@@ -99,8 +103,99 @@ tester's machine (confirm with a version/commit stamp in the log).
 
 ## Results
 
-_Pending._
+Root cause: `OpenIdConnectOptions` defaults `ClaimActions.DeleteClaim("iss")`. After `OnTokenValidated`,
+the handler runs those ClaimActions against empty JSON `{}`, which **strips `iss` from the id_token
+identity**. `EntraIdTokenClaims.TryRead` then returned false (`MissingIssuer`) and
+`EntraTicketHttp` wrote the generic 400. The 36 fake-handler tests never hit this because they
+build a `ClaimsPrincipal` with `iss` and skip `OpenIdConnectHandler`. The new real-JWT round-trip
+reproduced `{"title":"Invalid Entra token","status":400,"detail":"The Entra ID token is missing the iss claim."}`
+before the fix; it now 302s with an identity-session cookie.
+
+Fix (named `entra` scheme only):
+
+- `options.ClaimActions.Remove("iss")` so the id_token issuer stays on the principal.
+- `OnTokenValidated` copies `SecurityToken.Issuer` onto the identity when `iss` is still missing.
+- Local return path is stashed on `AuthenticationProperties.Items` (`entra.return_url`) because the
+  real handler overwrites `Properties.RedirectUri` with the protocol `redirect_uri` (would land on `/`).
+
+Diagnostics (ship regardless):
+
+- `EntraIdTokenClaims.TryRead` reports `MissingTenantId` / `UnparsableTenantId` / `MissingObjectId` /
+  `UnparsableObjectId` / `MissingIssuer`.
+- `EntraTicketHttp` logs one Warning (types only, never values / never the id_token).
+- `EntraTicketProcessor` logs issuer mismatch with expected vs token issuer URIs.
+- 400 `detail` names the failing check (e.g. "missing the oid claim", "missing the iss claim").
+- Boot: `EntraSchemeRegistrationLogHostedService` logs informational version at `StartingAsync`.
+
+Unchanged: `identity-session` DefaultScheme, `MapInboundClaims=false`, no `UseForwardedHeaders`,
+no RP-ID / Host handling.
+
+Live `@crunchitfs.com` sign-in was not run in this session (no tester id_token). The stub test is
+the regression guard; the next live attempt should confirm the boot stamp and a 302 instead of 400.
+
+**Files:** `entra-id-token-claim-read-failure-application.cs` (new),
+`entra-id-token-claims-application.cs`, `identity-problems-application.cs`,
+`entra-ticket-http-server.cs`, `entra-ticket-processor-application.cs`,
+`entra-authentication-registration-server.cs`,
+`entra-scheme-registration-log-hosted-service-server.cs` (new),
+`entra-link-defaults-server.cs`, `challenge-entra-endpoint-server.cs`;
+tests `entra-oidc-handler-round-trip-tests.cs` (new), `entra-id-token-claims-tests.cs` (new),
+`entra-challenge-tests.cs`, `entra-ticket-processor-tests.cs`, `entra-scheme-registration-tests.cs`.
+
+**Tests:** `cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Entra` → 48 passed. `./bin/dev build` → 0/0. `ganda repo audit` → pass (2 pre-existing advisory warnings: memsearch-scaffold, vscode-window-icon).
 
 ### How to validate
 
-_Pending._
+**Automated**
+
+```bash
+cd tests/container-apps/web/web-server-integration-tests
+dotnet test -c Release -- --filter-class Entra
+# Expect: 48 passed, including Signed_Id_Token_Through_Real_Handler_Should_Issue_Identity_Session
+./bin/dev build
+# Expect: 0 Warning(s), 0 Error(s)
+```
+
+**Smoke (next live Microsoft 365 attempt)**
+
+1. `./bin/dev run` with the CrunchIt Entra secrets (`Authentication:Entra` enabled, trusted tenant,
+   `AllowBootstrap=true`, `PublicOrigin=https://arch.timewarp.work`).
+2. On boot, look for this Information line (stale build if the informational version does not match
+   this branch):
+
+```text
+Registered named OpenID Connect scheme entra (informational version {InformationalVersion}).
+```
+
+3. Sign in with Continue with Microsoft 365 (`@crunchitfs.com`). Expect 302 from `/signin-oidc` and
+   an `identity-session` cookie — not 400 Invalid Entra token.
+4. If 400 still appears, read the Warning (claim **types** only — no values, no id_token):
+
+```text
+Entra ticket claim read failed. Reason={Reason} Scheme=entra ClaimTypes={ClaimTypes} PrincipalNull={PrincipalNull} AuthenticationType={AuthenticationType}
+```
+
+`Reason` is one of `MissingTenantId`, `UnparsableTenantId`, `MissingObjectId`, `UnparsableObjectId`,
+`MissingIssuer`, or `MissingPrincipal`. Issuer mismatch (if TryRead succeeded) is:
+
+```text
+Entra ticket issuer does not match tenant. ExpectedIssuer={ExpectedIssuer} TokenIssuer={TokenIssuer}
+```
+
+**Expect:** after this fix, live callback should not 400 for missing `iss`. A remaining 400 names
+the failing check in `detail` and in the Warning `Reason`.
+
+**Not in scope:** live token / claim values in the kitchen; `dev entra setup --tenant` display-name
+follow-up; RP-ID / Host / `UseForwardedHeaders`.
+
+### Review disposition
+
+- **Outcome:** clean (0 open; no issues raised; no exceptions)
+- **Rounds:** 1
+- **Effort / roster:** 1 — general only
+- **Final counts:** bug 0 / suggestion 0 / nit 0 (all statuses empty)
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`

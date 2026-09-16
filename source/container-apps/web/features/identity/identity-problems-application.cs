@@ -130,11 +130,36 @@ public static class IdentityProblems
     Detail = "The credential could not be revoked due to concurrent updates. Try again."
   };
 
-  public static SharedProblemDetails InvalidEntraToken() => new()
+  public static SharedProblemDetails InvalidEntraToken(EntraIdTokenClaimReadFailure failure) =>
+    failure switch
+    {
+      EntraIdTokenClaimReadFailure.MissingTenantId =>
+        CreateInvalidEntraToken("The Entra ID token is missing the tid claim."),
+      EntraIdTokenClaimReadFailure.UnparsableTenantId =>
+        CreateInvalidEntraToken("The Entra ID token tid claim is unparsable."),
+      EntraIdTokenClaimReadFailure.MissingObjectId =>
+        CreateInvalidEntraToken("The Entra ID token is missing the oid claim."),
+      EntraIdTokenClaimReadFailure.UnparsableObjectId =>
+        CreateInvalidEntraToken("The Entra ID token oid claim is unparsable."),
+      EntraIdTokenClaimReadFailure.MissingIssuer =>
+        CreateInvalidEntraToken("The Entra ID token is missing the iss claim."),
+      EntraIdTokenClaimReadFailure.None =>
+        throw new ArgumentOutOfRangeException(nameof(failure), failure, "A successful read has no invalid-token problem."),
+      _ =>
+        throw new ArgumentOutOfRangeException(nameof(failure), failure, "Unknown Entra claim-read failure.")
+    };
+
+  public static SharedProblemDetails InvalidEntraTokenMissingPrincipal() =>
+    CreateInvalidEntraToken("The Entra ID token principal is missing.");
+
+  public static SharedProblemDetails InvalidEntraTokenIssuerMismatch() =>
+    CreateInvalidEntraToken("The Entra ID token issuer does not match the tenant.");
+
+  private static SharedProblemDetails CreateInvalidEntraToken(string detail) => new()
   {
     Title = "Invalid Entra token",
     Status = 400,
-    Detail = "The Entra ID token is missing required tid, oid, or iss claims, or iss does not match the tenant."
+    Detail = detail
   };
 
   public static SharedProblemDetails UntrustedTenant() => new()

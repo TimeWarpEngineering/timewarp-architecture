@@ -12,6 +12,7 @@
 
 namespace EntraSchemeRegistration_;
 
+using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -21,10 +22,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Identity;
 using WebServerProgram = TimeWarp.Architecture.Web.Server.Program;
@@ -118,6 +122,31 @@ public class ConfigureAuthentication_Given_
     openIdConnectOptions.NonceCookie.SecurePolicy.ShouldBe(
       CookieSecurePolicy.Always,
       "Browser-facing Entra paths are always https; SameSite=None nonce cookies need Secure behind http YARP.");
+    openIdConnectOptions.ClaimActions.ShouldNotContain(
+      action => action.ClaimType == "iss",
+      "Default OpenIdConnect DeleteClaim(iss) must be removed so TryRead sees the id_token issuer.");
+
+    builder.Services.ShouldContain(
+      descriptor => descriptor.ImplementationType == typeof(EntraSchemeRegistrationLogHostedService),
+      "Enabled Entra must register the boot log that stamps informational version.");
+  }
+
+  public static async Task Entra_Scheme_Boot_Log_Should_Stamp_Informational_Version()
+  {
+    FakeLogger<EntraSchemeRegistrationLogHostedService> logger = new();
+    EntraSchemeRegistrationLogHostedService hostedService = new(logger);
+
+    await hostedService.StartingAsync(CancellationToken.None);
+
+    string informationalVersion =
+      typeof(EntraAuthenticationRegistration).Assembly
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+        ?.InformationalVersion
+      ?? "unknown";
+    FakeLogRecord record = logger.Collector.LatestRecord;
+    record.Level.ShouldBe(LogLevel.Information);
+    record.Message.ShouldBe(
+      $"Registered named OpenID Connect scheme entra (informational version {informationalVersion}).");
   }
 
   public static async Task Obsolete_UseEntra_Should_Enable_Named_Scheme_Not_Default()

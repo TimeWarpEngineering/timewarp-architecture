@@ -7,6 +7,9 @@
 // (never let OIDC sign in as the ambient user), then IssueAsync(identity-session) and redirect.
 // Problem responses use the contract-seam serializer so SPA/tests see the same camelCase shape.
 // MarkResponseStart after Redirect/WriteAsJson so FastEndpoints does not replace the status with 204.
+// TryRead / null-principal failures log one Warning (reason, scheme, claim types only, principal
+// null, identity authentication type) and name the failing check in the 400 detail — never values
+// or the id_token.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -14,6 +17,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity.Application;
@@ -21,6 +25,14 @@ using TimeWarp.Foundation.Types;
 
 public static class EntraTicketHttp
 {
+  private static readonly Action<ILogger, string, string, string, bool, string, Exception?> LogTicketClaimReadFailed =
+    LoggerMessage.Define<string, string, string, bool, string>
+    (
+      LogLevel.Warning,
+      new EventId(1, nameof(LogTicketClaimReadFailed)),
+      "Entra ticket claim read failed. Reason={Reason} Scheme={Scheme} ClaimTypes={ClaimTypes} PrincipalNull={PrincipalNull} AuthenticationType={AuthenticationType}"
+    );
+
   public static async Task HandleTicketAsync
   (
     HttpContext httpContext,
@@ -42,11 +54,21 @@ public static class EntraTicketHttp
     PrincipalId? caller = Guid.TryParse(callerText, out Guid callerGuid) && callerGuid != Guid.Empty
       ? PrincipalId.From(callerGuid)
       : null;
-    string returnUrl = LocalReturnUrl.Sanitize(ticketProperties.RedirectUri);
+    string returnUrl = ticketProperties.Items.TryGetValue(EntraLinkDefaults.ReturnUrlItemKey, out string? storedReturn)
+      ? LocalReturnUrl.Sanitize(storedReturn)
+      : LocalReturnUrl.Sanitize(ticketProperties.RedirectUri);
 
-    if (entraPrincipal is null || !EntraIdTokenClaims.TryRead(entraPrincipal, out EntraIdTokenClaims claims))
+    if (entraPrincipal is null)
     {
-      await WriteProblemAsync(httpContext, IdentityProblems.InvalidEntraToken(), cancellationToken);
+      LogClaimReadFailure(httpContext, entraPrincipal, "MissingPrincipal");
+      await WriteProblemAsync(httpContext, IdentityProblems.InvalidEntraTokenMissingPrincipal(), cancellationToken);
+      return;
+    }
+
+    if (!EntraIdTokenClaims.TryRead(entraPrincipal, out EntraIdTokenClaims claims, out EntraIdTokenClaimReadFailure failure))
+    {
+      LogClaimReadFailure(httpContext, entraPrincipal, failure.ToString());
+      await WriteProblemAsync(httpContext, IdentityProblems.InvalidEntraToken(failure), cancellationToken);
       return;
     }
 
@@ -80,5 +102,34 @@ public static class EntraTicketHttp
     httpContext.Response.ContentType = "application/problem+json";
     await httpContext.Response.WriteAsJsonAsync(problem, ContractSerializationDefaults.Options, cancellationToken);
     httpContext.MarkResponseStart();
+  }
+
+  private static void LogClaimReadFailure
+  (
+    HttpContext httpContext,
+    ClaimsPrincipal? entraPrincipal,
+    string reason
+  )
+  {
+    ILogger logger = httpContext.RequestServices
+      .GetRequiredService<ILoggerFactory>()
+      .CreateLogger(typeof(EntraTicketHttp).FullName!);
+    string claimTypes = entraPrincipal is null
+      ? ""
+      : string.Join(
+        ',',
+        entraPrincipal.Claims
+          .Select(claim => claim.Type)
+          .Distinct(StringComparer.Ordinal)
+          .OrderBy(type => type, StringComparer.Ordinal));
+    string authenticationType = entraPrincipal?.Identity?.AuthenticationType ?? "";
+    LogTicketClaimReadFailed(
+      logger,
+      reason,
+      EntraLinkDefaults.Scheme,
+      claimTypes,
+      entraPrincipal is null,
+      authenticationType,
+      null);
   }
 }
