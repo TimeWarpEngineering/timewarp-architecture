@@ -104,6 +104,10 @@ Decisions locked in the cockpit discussion:
 - Created: cockpit (2026-09-16)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: Grok 4.6 session 01a0aa88-000a-7040-8602-50e8888f9c83 (2026-09-16)
+- Review oracle: Grok 4.6 session 01a0aaa1-ad94-7c02-a5b8-221bcb93ca2f (2026-09-16)
+- Review general round 1: Grok session 01a0aaa3-bdc5-72a0-ac43-4dd754d4b4cf (2026-09-16)
+- Review general round 2: Grok session 01a0aab4-5926-7271-aba5-8483d910279b (2026-09-16)
+- Review general round 3: Grok session 01a0aab8-a523-7d13-9bbb-50282b9cba99 (2026-09-16)
 
 ## Notes
 
@@ -143,9 +147,11 @@ still 409s a second handle.
 real authentication. 229 card rules apply after merge. Same-handle link of an already-owned Entra
 is 409 `Already on this account` (task 230), not 229's idempotent success.
 
-**Tests:** Entra filter 68/68; AddExisting 6/6; Passkey 23/23; Merge/MergeInto/ReparentTo library
-tests green. `dotnet run tools/dev-cli/dev.cs -- build` 0/0. `ganda repo audit` passes (2 advisory
-warnings: memsearch hooks, vscode peacock — pre-existing). `dev template-smoke` SUCCEEDED.
+**Tests:** Entra filter 69/69 (includes revoked-handle link 403); AddExisting 6/6; Passkey 23/23;
+Merge library tests green; Credentials contract 13/13 in-memory and EF (includes
+`Update_rejects_PrincipalId_reparent`). `dotnet run tools/dev-cli/dev.cs -- build` 0/0.
+`ganda repo audit` passes (2 advisory warnings: memsearch hooks, vscode peacock — pre-existing).
+`dev template-smoke` SUCCEEDED.
 
 ### How to validate
 
@@ -154,7 +160,7 @@ warnings: memsearch hooks, vscode peacock — pre-existing). `dev template-smoke
 ```bash
 cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Entra
 # expect: all passed (unknown-handle 302 to /Login/Microsoft365/Choose, create mints principal+session,
-#         link foreign handle merges, already-on-this-account 409)
+#         link foreign handle merges, revoked foreign handle 403 without merge, already-on-this-account 409)
 
 cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class AddExisting
 # expect: merge moves credentials and retires source; passkey login on moved credential is the
@@ -187,3 +193,21 @@ dotnet run tools/dev-cli/dev.cs -- build
 steps 2–3. Isolated tests use the stub authority / software authenticator.
 
 **Not in scope:** live hardware WebAuthn, admin-forced merge, un-merge, multi-tenant.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 3
+- **Effort / roster:** 1, general only
+- **Final counts:** bug 0/3/0, suggestion 0/2/0, nit 0/0/0 (open/fixed/wontfix)
+- **Fixes on this id:** M1 revoked Entra link no longer merges; M2 choose-create notifies identity-session; M3 UpdateCredentialAsync rejects PrincipalId re-parent; M4 OnValidatePrincipal signs out stale cookie; M5 Jaribu wrappers for the re-parent contract test
+- **Wontfix / escalations:** none
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/round-2/general.md`
+  - `review/round-2/merged.md`
+  - `review/round-3/general.md`
+  - `review/round-3/merged.md`
+  - `review/disposition.md`
