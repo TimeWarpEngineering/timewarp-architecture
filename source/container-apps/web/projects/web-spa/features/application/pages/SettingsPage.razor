@@ -18,6 +18,8 @@
   private bool IsBusy => ActionTrackingState.IsActive;
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
   private IReadOnlyList<GetCredentials.CredentialSummary> EntraAccounts => CredentialsState.ActiveEntraAccounts;
+  private bool CanLinkMicrosoft365 => ShowMicrosoft365 && EntraAccounts.Count == 0;
+  private bool CanUnlink => CredentialsState.ActiveCredentialCount > 1;
   private string? ErrorMessage => CredentialsState.CeremonyError;
   private string? StatusMessage => CredentialsState.StatusMessage;
 
@@ -25,9 +27,9 @@
   {
     await base.OnInitializedAsync();
     ShowMicrosoft365 = await LoadEntraOfferedAsync();
+    await NoSubCredentialsState.FetchCredentials();
     if (RendererInfo.IsInteractive)
     {
-      await NoSubCredentialsState.FetchCredentials();
       await NoSubSiteSettingsState.FetchSiteSettings();
       SyncExpandedId();
     }
@@ -206,14 +208,20 @@
               <li class="twe-settings__cred">
                 <div class="twe-settings__cred-body">
                   <div class="twe-settings__field">
-                    <div class="twe-settings__field-title">@DisplayEntraLabel(credential)</div>
+                    <div class="twe-settings__field-title" data-qa="Microsoft365AccountLabel">@DisplayEntraLabel(credential)</div>
+                    <p class="twe-settings__muted">Microsoft 365</p>
                     <p class="twe-settings__value">@credential.CreatedAt.ToLocalTime().ToString("M/d/yyyy, h:mm:ss tt")</p>
                     <button type="button"
                             class="twe-settings__link twe-settings__link--danger"
-                            disabled="@IsBusy"
+                            data-qa="UnlinkMicrosoft365"
+                            disabled="@(!CanUnlink || IsBusy)"
                             @onclick="() => ConfirmRevokeAsync(credential)">
                       Unlink
                     </button>
+                    @if (!CanUnlink)
+                    {
+                      <p class="twe-settings__muted" data-qa="UnlinkMicrosoft365Hint">Add a passkey first</p>
+                    }
                   </div>
                 </div>
               </li>
@@ -221,15 +229,18 @@
           </ul>
         }
 
-        <div class="twe-settings__actions">
-          <button type="button"
-                  class="twe-settings__link"
-                  data-qa="LinkMicrosoft365"
-                  disabled="@IsBusy"
-                  @onclick="LinkMicrosoft365">
-            Link Microsoft 365
-          </button>
-        </div>
+        @if (CanLinkMicrosoft365)
+        {
+          <div class="twe-settings__actions">
+            <button type="button"
+                    class="twe-settings__link"
+                    data-qa="LinkMicrosoft365"
+                    disabled="@IsBusy"
+                    @onclick="LinkMicrosoft365">
+              Link Microsoft 365
+            </button>
+          </div>
+        }
       </section>
     }
 

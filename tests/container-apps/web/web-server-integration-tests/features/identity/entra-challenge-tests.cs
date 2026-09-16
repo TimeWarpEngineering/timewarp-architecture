@@ -39,6 +39,8 @@ internal static class FakeEntraHeaders
   public const string ObjectId = "X-Test-Entra-Oid";
   public const string Issuer = "X-Test-Entra-Iss";
   public const string OmitObjectId = "X-Test-Entra-Omit-Oid";
+  public const string PreferredUsername = "X-Test-Entra-Preferred-Username";
+  public const string Name = "X-Test-Entra-Name";
 }
 
 public class Challenge_Given_
@@ -198,12 +200,19 @@ public class Challenge_Given_
 
   public static async Task Bootstrap_Trusted_Tenant_Should_Issue_Identity_Session()
   {
-    HttpResponseMessage response = await SendChallengeAsync("bootstrap", TrustedTenantId, Guid.NewGuid());
+    Store.ShouldNotBeNull();
+    Guid objectId = Guid.NewGuid();
+    HttpResponseMessage response = await SendChallengeAsync("bootstrap", TrustedTenantId, objectId);
     response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
     response.Headers.Location.ShouldNotBeNull();
     response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? setCookieValues).ShouldBeTrue();
     setCookieValues.ShouldNotBeNull();
     setCookieValues.ShouldContain(value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
+    Credential? found = await Store.FindCredentialByHandleAsync(
+      CredentialType.EntraAccount,
+      EntraAccountHandle.Encode(TrustedTenantId, objectId));
+    found.ShouldNotBeNull();
+    found!.Label.ShouldBe("Test User");
   }
 
   public static async Task Bootstrap_Sync_Hit_Should_Reuse_Existing_Principal()
@@ -247,6 +256,50 @@ public class Challenge_Given_
     found.ShouldNotBeNull();
     found!.PrincipalId.ShouldBe(caller.Id);
     found.IsRevoked.ShouldBeFalse();
+    found.Label.ShouldBe("Test User");
+  }
+
+  public static async Task Link_Should_Set_Label_From_Preferred_Username()
+  {
+    Store.ShouldNotBeNull();
+    Guid objectId = Guid.NewGuid();
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    await Store.AddPrincipalAsync(caller);
+    string cookie = await SignInAsync(caller.Id);
+
+    HttpResponseMessage response = await SendChallengeAsync(
+      "link",
+      TrustedTenantId,
+      objectId,
+      cookie,
+      preferredUsername: "Steven.Cramer@TimeWarp.Enterprises");
+    response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+    Credential? found = await Store.FindCredentialByHandleAsync(
+      CredentialType.EntraAccount,
+      EntraAccountHandle.Encode(TrustedTenantId, objectId));
+    found.ShouldNotBeNull();
+    found!.Label.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
+  }
+
+  public static async Task Link_Second_Active_Entra_Should_409()
+  {
+    Store.ShouldNotBeNull();
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    await Store.AddPrincipalAsync(caller);
+    Guid firstObjectId = Guid.NewGuid();
+    await Store.AddCredentialAsync(
+      Credential.Create(
+        caller.Id,
+        CredentialType.EntraAccount,
+        EntraAccountHandle.Encode(TrustedTenantId, firstObjectId),
+        EntraIssuerMaterial.FromTenantId(TrustedTenantId),
+        "Steven.Cramer@TimeWarp.Enterprises"));
+    string cookie = await SignInAsync(caller.Id);
+
+    HttpResponseMessage response = await SendChallengeAsync("link", TrustedTenantId, Guid.NewGuid(), cookie);
+    response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    SharedProblemDetails problem = await ReadProblemAsync(response);
+    problem.Title.ShouldBe("Microsoft 365 already linked");
   }
 
   public static async Task Bootstrap_When_Not_Allowed_Should_403()
@@ -363,7 +416,9 @@ public class Challenge_Given_
     string mode,
     Guid tenantId,
     Guid objectId,
-    string? cookie = null
+    string? cookie = null,
+    string? preferredUsername = null,
+    string? name = null
   )
   {
     Client.ShouldNotBeNull();
@@ -375,6 +430,16 @@ public class Challenge_Given_
     if (!string.IsNullOrEmpty(cookie))
     {
       request.Headers.TryAddWithoutValidation("Cookie", cookie);
+    }
+
+    if (!string.IsNullOrEmpty(preferredUsername))
+    {
+      request.Headers.TryAddWithoutValidation(FakeEntraHeaders.PreferredUsername, preferredUsername);
+    }
+
+    if (!string.IsNullOrEmpty(name))
+    {
+      request.Headers.TryAddWithoutValidation(FakeEntraHeaders.Name, name);
     }
 
     return await Client.SendAsync(request);
@@ -432,7 +497,13 @@ internal sealed class FakeEntraHandler : AuthenticationHandler<AuthenticationSch
     }
 
     identity.AddClaim(new Claim("iss", issuer));
-    identity.AddClaim(new Claim("name", "Test User"));
+    string name = Request.Headers[FakeEntraHeaders.Name].ToString();
+    identity.AddClaim(new Claim("name", string.IsNullOrWhiteSpace(name) ? "Test User" : name));
+    string preferredUsername = Request.Headers[FakeEntraHeaders.PreferredUsername].ToString();
+    if (!string.IsNullOrWhiteSpace(preferredUsername))
+    {
+      identity.AddClaim(new Claim("preferred_username", preferredUsername));
+    }
 
     await EntraTicketHttp.HandleTicketAsync(
       Context,

@@ -12,6 +12,9 @@
 // Backend surface remains 104-005 (GetCredentials, AddPasskey, RevokeCredential).
 // RFC 219 D10: "Link Microsoft 365" is a full navigation to the BFF challenge (mode=link).
 // Task 225: site Entra policy moved to Admin/Authentication; this page keeps passkeys + link.
+// Task 229: hide Link when an active EntraAccount exists; disable Unlink when it is the last
+// active credential (hint: Add a passkey first); card title is Credential.Label, subtitle is
+// "Microsoft 365". FetchCredentials runs during prerender so first HTML matches those rules.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
