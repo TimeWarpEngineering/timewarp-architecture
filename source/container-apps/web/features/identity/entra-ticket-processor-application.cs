@@ -6,17 +6,18 @@
 // RFC 219 fork 1 + D4 + D10. HTTP Challenge/OnTicketReceived stay in the server adapter; this type
 // is the store-side decision. Link requires the caller's PrincipalId (D4: identity-session is
 // enough — no passkey re-assert). Duplicate handle is 409 with no foreign-id oracle (104-005).
-// Sync-hit is Find-by-handle of an active EntraAccount. Revoked rows are non-hits and cannot be
-// re-inserted (unique Type+Handle) — 403, not Restore (Graph Restore is a later product path).
+// Sync-hit is Find-by-handle of an active EntraAccount. Revoked rows are non-hits for sync and for
+// link-merge (403 EntraCredentialRevoked, not Restore; unique Type+Handle still blocks re-insert).
 // Bootstrap Create is gated by IEntraSignInPolicy (site settings AllowBootstrap AND
 // tid GUID-equals Authentication:Entra:TenantId). Unknown-handle bootstrap does NOT mint a
 // principal immediately: ProcessAsync returns EntraChoiceRequired so the HTTP adapter parks
 // claims and the SPA choose page decides create vs already-have. CompleteBootstrapCreateAsync
 // is the original mint (Principal.Create + EntraAccount + first-admin). AttachEntraToPrincipalAsync
 // is link semantics for the already-have path.
-// Link: when the handle is owned by another active unmerged principal B, MergePrincipalAsync(B, A)
-// instead of 409 — the Entra sign-in is proof of B. 409 remains for already-on-this-account
-// and for merged/quarantined owners. Sync-hit and AllowBootstrap-off are unchanged.
+// Link: when the handle is owned by another active (non-revoked) unmerged principal B,
+// MergePrincipalAsync(B, A) instead of 409 — the Entra sign-in is proof of B. Revoked foreign
+// rows refuse with 403 (do not merge). 409 remains for already-on-this-account and for
+// merged/quarantined owners. Sync-hit and AllowBootstrap-off are unchanged.
 // Concurrent first-login for the same tid:oid can miss both finds, create two principals, and
 // lose on unique (Type, Handle) at AddCredentialAsync. On that InvalidOperationException, re-Find
 // by handle; an active winner is treated as sync-hit (return that PrincipalId). IPrincipalStore
@@ -135,7 +136,12 @@ public sealed class EntraTicketProcessor
     }
 
     PrincipalId caller = linkCallerPrincipalId.Value;
-    if (existing is not null)
+    if (existing is { IsRevoked: true })
+    {
+      return IdentityProblems.EntraCredentialRevoked();
+    }
+
+    if (existing is { IsRevoked: false })
     {
       return await CompleteLinkWhenHandleOwnedAsync(existing, caller, cancellationToken);
     }

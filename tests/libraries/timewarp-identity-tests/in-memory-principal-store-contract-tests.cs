@@ -82,6 +82,9 @@ public class Credentials : PrincipalStoreContract_.Credentials
   public static new Task Update_missing_credential_fails() =>
     ((PrincipalStoreContract_.Credentials)new Credentials()).Update_missing_credential_fails();
 
+  public static new Task Update_rejects_PrincipalId_reparent() =>
+    ((PrincipalStoreContract_.Credentials)new Credentials()).Update_rejects_PrincipalId_reparent();
+
   public static new Task Lists_in_ascending_CreatedAt_order() =>
     ((PrincipalStoreContract_.Credentials)new Credentials()).Lists_in_ascending_CreatedAt_order();
 }

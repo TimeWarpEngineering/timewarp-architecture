@@ -11,8 +11,9 @@
 // (D8: keep byte[] copy-on-get for Wave 1).
 // Empty PrincipalId rejected at Create. CredentialType.None rejected. Id is CredentialId (RFC D3), not raw Guid.
 // Type and Handle are immutable after Create — store Update replaces by Id only (revoke / restore / label persistence); no handle migration.
-// PrincipalId is the one identity field that may change: ReparentTo moves the row to another
-// principal (merge). Type/Handle stay put so the authenticator's credential id still looks up.
+// ReparentTo mutates in-memory PrincipalId for MergePrincipalAsync's own snapshot/replace path;
+// UpdateCredentialAsync rejects PrincipalId changes (re-parent only via MergePrincipalAsync).
+// Type/Handle stay put so the authenticator's credential id still looks up.
 // Revoke is one-shot (throws if already revoked). Restore is the one-shot inverse (throws if not revoked) so Graph
 // re-enable can reuse the same (Type, Handle) row; unique (Type, Handle) plus Find-returns-revoked makes re-insert of
 // the same tid:oid impossible. Clocks (D5, closed 104-006): CreatedAt/RevokedAt remain wall-clock

@@ -48,6 +48,9 @@
 // Host — HTTPS loopback TLS must still validate localhost) so passkey RP-ID selection sees the
 // YARP-preserved browser host, not the loopback URI host. HttpRequestHostAccessor honors that
 // header only when Request.Host is loopback; the public path ignores a client-supplied copy.
+// Task 230: identity-session OnValidatePrincipal rejects bad PrincipalId claims and inactive/
+// merged principals, then SignOutAsync(IdentitySessionDefaults.Scheme) so the stale cookie is
+// cleared once instead of re-validated on every request.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -389,6 +392,7 @@ public partial class Program : IAspNetProgram
           if (!Guid.TryParse(claimValue, out Guid guid) || guid == Guid.Empty)
           {
             context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync(IdentitySessionDefaults.Scheme);
             return;
           }
 
@@ -398,6 +402,7 @@ public partial class Program : IAspNetProgram
           if (principal?.IsActive != true)
           {
             context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync(IdentitySessionDefaults.Scheme);
           }
         };
       })

@@ -73,6 +73,11 @@
         return;
       }
 
+      if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
+      {
+        identitySession.NotifySessionChanged();
+      }
+
       NavigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(response.Destination));
     }
     finally

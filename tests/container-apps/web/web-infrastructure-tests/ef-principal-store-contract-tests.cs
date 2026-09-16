@@ -144,6 +144,7 @@ public class Credentials
   public static Task List_excludes_revoked_by_default() => new Suite().List_excludes_revoked_by_default();
   public static Task Get_credential_by_id() => new Suite().Get_credential_by_id();
   public static Task Update_missing_credential_fails() => new Suite().Update_missing_credential_fails();
+  public static Task Update_rejects_PrincipalId_reparent() => new Suite().Update_rejects_PrincipalId_reparent();
   public static Task Lists_in_ascending_CreatedAt_order() => new Suite().Lists_in_ascending_CreatedAt_order();
 }
 

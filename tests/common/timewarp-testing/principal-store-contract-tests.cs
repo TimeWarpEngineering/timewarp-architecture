@@ -285,6 +285,29 @@ public abstract class Credentials
     await Should.ThrowAsync<InvalidOperationException>(() => store.UpdateCredentialAsync(credential));
   }
 
+  public async Task Update_rejects_PrincipalId_reparent()
+  {
+    if (ShouldSkip()) return;
+
+    IPrincipalStore store = Factory.CreateStore();
+    Principal source = Principal.Create(PrincipalKind.Human);
+    Principal target = Principal.Create(PrincipalKind.Human);
+    await store.AddPrincipalAsync(source);
+    await store.AddPrincipalAsync(target);
+
+    Credential credential = Credential.Create(source.Id, CredentialType.Passkey, [9], [9]);
+    await store.AddCredentialAsync(credential);
+    Credential? loaded = await store.GetCredentialAsync(credential.Id);
+    loaded.ShouldNotBeNull();
+    loaded.ReparentTo(target.Id);
+
+    await Should.ThrowAsync<InvalidOperationException>(() => store.UpdateCredentialAsync(loaded));
+
+    Credential? stored = await store.GetCredentialAsync(credential.Id);
+    stored.ShouldNotBeNull();
+    stored.PrincipalId.ShouldBe(source.Id);
+  }
+
   public async Task Lists_in_ascending_CreatedAt_order()
   {
 

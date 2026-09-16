@@ -168,6 +168,46 @@ public class Bootstrap_Given_
     retired.MergedIntoPrincipalId.ShouldBe(caller.Id);
   }
 
+  public static async Task Link_Foreign_Revoked_Handle_Should_Refuse_Without_Merge()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    Principal owner = Principal.Create(PrincipalKind.Human);
+    owner.SetDisplayName("Owner");
+    await principalStore.AddPrincipalAsync(owner);
+    Guid objectId = Guid.NewGuid();
+    Credential entraCredential = Credential.Create(
+      owner.Id,
+      CredentialType.EntraAccount,
+      EntraAccountHandle.Encode(TrustedTenantId, objectId),
+      EntraIssuerMaterial.FromTenantId(TrustedTenantId),
+      "Microsoft 365");
+    await principalStore.AddCredentialAsync(entraCredential);
+    Credential? stored = await principalStore.GetCredentialAsync(entraCredential.Id);
+    stored.ShouldNotBeNull();
+    stored.Revoke();
+    await principalStore.UpdateCredentialAsync(stored);
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    caller.SetDisplayName("Caller");
+    await principalStore.AddPrincipalAsync(caller);
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, "Owner");
+
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeLink,
+      caller.Id,
+      CancellationToken.None);
+
+    result.IsT2.ShouldBeTrue();
+    result.AsT2.Status.ShouldBe(403);
+    result.AsT2.Title.ShouldBe("Entra credential revoked");
+    Principal? ownerAfter = await principalStore.GetPrincipalAsync(owner.Id);
+    ownerAfter.ShouldNotBeNull();
+    ownerAfter.IsActive.ShouldBeTrue();
+    ownerAfter.MergedIntoPrincipalId.ShouldBeNull();
+  }
+
   public static async Task CompleteBootstrapCreate_Should_Mint_Principal()
   {
     InMemoryPrincipalStore store = new();

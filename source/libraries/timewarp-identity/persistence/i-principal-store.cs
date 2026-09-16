@@ -18,8 +18,9 @@
 //   - IAgentTokenStore (~15 min bearer grants) → deliberately ephemeral (in-memory); Redis later
 //     if multi-replica requires shared token state.
 //   - IWebAuthnChallengeStore / IAgentKeyChallengeStore → ephemeral by design (in-memory).
-// Credential lookup by CredentialId (RFC D3), not raw Guid. Type and Handle are immutable after Create — UpdateCredential
-// persists revoke/label (and similar) changes for the same Id only; no handle reindex contract.
+// Credential lookup by CredentialId (RFC D3), not raw Guid. Type, Handle, and PrincipalId are
+// immutable on UpdateCredential — persists revoke/label (and similar) for the same Id only; no
+// handle reindex and no re-parent via Update (re-parent only via MergePrincipalAsync).
 // FindCredentialByHandle may return revoked credentials (callers check IsRevoked). No extra lookup
 // for EntraAccount: join is FindCredentialByHandleAsync(EntraAccount, EntraAccountHandle.Encode(tid, oid)).
 // Restore is Credential.Restore() then UpdateCredentialAsync — this port has no Restore method.

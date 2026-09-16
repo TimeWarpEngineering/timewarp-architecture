@@ -34,19 +34,18 @@
 // and every value handed out is a snapshot the caller owns exclusively, so there is nothing for a
 // concurrent write to corrupt from a reader's perspective.
 //
-// Type/Handle immutable (D7): UpdateCredentialAsync replaces by CredentialId only; differing type/handle throws rather
-// than reindexing. Update purpose: revoke / restore (and future label) persistence. Check order inside
+// Type/Handle/PrincipalId immutable on Update (D7): UpdateCredentialAsync replaces by CredentialId
+// only; differing type/handle/PrincipalId throws. Re-parent is MergePrincipalAsync only. Update
+// purpose: revoke / restore (and future label) persistence. Check order inside
 // UpdateCredentialAsync is deliberate: existence, THEN version (staleness dominates — a caller
 // holding a stale-but-otherwise-valid credential should learn it is stale before learning about an
-// unrelated type/handle mismatch, since staleness is the more common, expected-to-be-retried case),
-// THEN the type/handle immutability check.
-// Both the type/handle-immutability branch in UpdateCredentialAsync and the Credentials.TryAdd-fails
-// rollback branch in AddCredentialAsync are defensive, not currently reachable via the public API:
-// Credential.Type/Handle have no mutators and CredentialId is minted only inside Create, so no
-// caller can present a same-Id-different-handle credential to Update, and a duplicate CredentialId
-// on Add implies a duplicate handle too (short of a Guid v7 collision), which the HandleIndex.TryAdd
-// check above always catches first. Both branches stay as guards against future internal bugs, not
-// as documentation of caller-observable behavior — no test exercises either without reflection.
+// unrelated type/handle/PrincipalId mismatch, since staleness is the more common,
+// expected-to-be-retried case), THEN the type/handle/PrincipalId immutability check.
+// Type/Handle immutability and Credentials.TryAdd-fails rollback are defensive (no public Type/Handle
+// mutators; CredentialId minted only in Create) — no Type/Handle Update test without reflection.
+// PrincipalId CAN change via ReparentTo, so that Update guard is caller-observable and contract-
+// tested; re-parent only via MergePrincipalAsync. A duplicate CredentialId on Add implies a
+// duplicate handle too (short of a Guid v7 collision), which HandleIndex.TryAdd catches first.
 // FindCredentialByHandle returns the stored row even if revoked — callers check IsRevoked.
 // MergePrincipalAsync runs under WriteLock: re-parent active credentials, raise target trust,
 // copy DisplayName only when target's is empty, then source.MergeInto. Revoked credentials stay
@@ -238,10 +237,13 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
       // Type and Handle are immutable — Update is for revoke (and similar) persistence by Id only (RFC D7).
       var existingKey = HandleKey.From(existing.Type, existing.Handle);
       var incomingKey = HandleKey.From(credential.Type, credential.Handle);
-      if (!existingKey.Equals(incomingKey))
+      if (!existingKey.Equals(incomingKey)
+          || existing.PrincipalId != credential.PrincipalId)
       {
         throw new InvalidOperationException(
-          "Credential Type and Handle are immutable; UpdateCredentialAsync cannot change them.");
+          existing.PrincipalId != credential.PrincipalId
+            ? "PrincipalId is immutable on Update; re-parent only via MergePrincipalAsync."
+            : "Credential Type and Handle are immutable; UpdateCredentialAsync cannot change them.");
       }
 
       Credentials[credential.Id] = credential.Snapshot(EntityVersion.Next(existing.Version));

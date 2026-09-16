@@ -4,7 +4,9 @@
 
 #region Design
 // Anonymous focused chrome (same as Login). Parked Entra claims are server-side; this page
-// only peeks validity and posts create vs already-have. Already-have reuses StartPasskeyAuthentication
+// only peeks validity and posts create vs already-have. Create notifies
+// IdentitySessionAuthenticationStateProvider after CompleteEntraBootstrapCreate (same as already-have
+// via PasskeyCeremonyClient) before NavigateTo. Already-have reuses StartPasskeyAuthentication
 // then CompleteEntraBootstrapExisting so the Entra attach and session happen together.
 #endregion
 
