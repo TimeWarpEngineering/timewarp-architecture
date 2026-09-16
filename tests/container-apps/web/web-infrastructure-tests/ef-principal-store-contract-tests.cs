@@ -144,6 +144,7 @@ public class Credentials
   public static Task List_excludes_revoked_by_default() => new Suite().List_excludes_revoked_by_default();
   public static Task Get_credential_by_id() => new Suite().Get_credential_by_id();
   public static Task Update_missing_credential_fails() => new Suite().Update_missing_credential_fails();
+  public static Task Update_rejects_PrincipalId_reparent() => new Suite().Update_rejects_PrincipalId_reparent();
   public static Task Lists_in_ascending_CreatedAt_order() => new Suite().Lists_in_ascending_CreatedAt_order();
 }
 
@@ -291,4 +292,27 @@ public class CallerInstanceNotAdvanced
     new Suite().Version_unchanged_on_callers_instance_after_successful_update();
   public static Task Second_update_with_same_instance_throws() =>
     new Suite().Second_update_with_same_instance_throws();
+}
+
+public class Merge
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Merge>();
+
+  private sealed class Suite : PrincipalStoreContract_.Merge
+  {
+    protected override IPrincipalStoreFactory Factory => EfFixture.Factory;
+    protected override bool ShouldSkip() => EfFixture.ShouldSkip();
+  }
+
+  public static Task Moves_active_credentials_and_retires_source() =>
+    new Suite().Moves_active_credentials_and_retires_source();
+  public static Task Target_trust_is_max_and_empty_display_name_is_copied() =>
+    new Suite().Target_trust_is_max_and_empty_display_name_is_copied();
+  public static Task Second_merge_of_same_source_fails() =>
+    new Suite().Second_merge_of_same_source_fails();
+  public static Task Stale_source_update_after_merge_conflicts() =>
+    new Suite().Stale_source_update_after_merge_conflicts();
+  public static Task Same_id_is_rejected() =>
+    new Suite().Same_id_is_rejected();
 }

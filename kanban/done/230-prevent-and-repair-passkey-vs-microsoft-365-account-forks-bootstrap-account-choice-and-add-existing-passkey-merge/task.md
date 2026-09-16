@@ -88,21 +88,26 @@ Decisions locked in the cockpit discussion:
 
 ## Checklist
 
-- [ ] A: parked claims + `/Login/Microsoft365/Choose` + create / already-have flows + tests
-- [ ] B: `ReparentTo` / `MergeInto` / `MergePrincipalAsync` (in-memory + EF + migration) + tests
-- [ ] B: add-existing-passkey ceremony + Settings CTA + tests
-- [ ] B: link-mode merge (mirror case) replaces the cross-principal 409 + tests
-- [ ] Docs: `auth.md` (choose page, add existing passkey, merge semantics), library `overview.md`,
+- [x] A: parked claims + `/Login/Microsoft365/Choose` + create / already-have flows + tests
+- [x] B: `ReparentTo` / `MergeInto` / `MergePrincipalAsync` (in-memory + EF + migration) + tests
+- [x] B: add-existing-passkey ceremony + Settings CTA + tests
+- [x] B: link-mode merge (mirror case) replaces the cross-principal 409 + tests
+- [x] Docs: `auth.md` (choose page, add existing passkey, merge semantics), library `overview.md`,
       Design regions
-- [ ] `dotnet test -- --filter-class Entra` / passkey suites green; `dev build` 0/0;
+- [x] `dotnet test -- --filter-class Entra` / passkey suites green; `dev build` 0/0;
       `ganda repo audit` clean; `dev template-smoke` passes
-- [ ] Results and How to validate (manual: passkey account → M365 bootstrap → choose "already have"
+- [x] Results and How to validate (manual: passkey account → M365 bootstrap → choose "already have"
       → one principal; fork on purpose → Add existing passkey → merged)
 
 ## Session
 
 - Created: cockpit (2026-09-16)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
+- Implementer: Grok 4.6 session 01a0aa88-000a-7040-8602-50e8888f9c83 (2026-09-16)
+- Review oracle: Grok 4.6 session 01a0aaa1-ad94-7c02-a5b8-221bcb93ca2f (2026-09-16)
+- Review general round 1: Grok session 01a0aaa3-bdc5-72a0-ac43-4dd754d4b4cf (2026-09-16)
+- Review general round 2: Grok session 01a0aab4-5926-7271-aba5-8483d910279b (2026-09-16)
+- Review general round 3: Grok session 01a0aab8-a523-7d13-9bbb-50282b9cba99 (2026-09-16)
 
 ## Notes
 
@@ -119,8 +124,90 @@ Decisions locked in the cockpit discussion:
 
 ## Results
 
-_Pending._
+Unknown-handle Microsoft 365 bootstrap no longer mints a principal. Validated claims are parked
+(10 min, single-use, HttpOnly `.Tw.EntraChoice`) and the visitor is redirected to
+`/Login/Microsoft365/Choose`: **Create a new account** runs the original bootstrap mint;
+**I already have an account** asserts a passkey and attaches the parked EntraAccount onto that
+principal. Sync-hit and `AllowBootstrap` off are unchanged.
+
+Repair: Settings **Add an existing passkey** issues a Merge-scoped WebAuthn assertion; on success
+`MergePrincipalAsync` re-parents active credentials and retires the source. Link Microsoft 365
+merges when the handle is owned by another active unmerged principal (Entra sign-in is the proof).
+409 remains for already-on-this-account; 403 for merged/quarantined sources; 229 one-Entra-per-principal
+still 409s a second handle.
+
+**Files (product):** `Credential.ReparentTo`, `Principal.MergeInto` / `MergedIntoPrincipalId`,
+`IPrincipalStore.MergePrincipalAsync` (in-memory + EF, migration
+`20260916200000_AddPrincipalMergedIntoPrincipalId`), parked-claims store + choose contracts
+(`get-entra-bootstrap-choice`, `complete-entra-bootstrap-create`, `complete-entra-bootstrap-existing`),
+`start-add-existing-passkey` / `complete-add-existing-passkey`, Settings CTA, `ChooseMicrosoft365Page`,
+`auth.md`, library `overview.md`.
+
+**Decisions:** keep bootstrap (choice step only). Passkey lookup stays handle-only. Merge proof is a
+real authentication. 229 card rules apply after merge. Same-handle link of an already-owned Entra
+is 409 `Already on this account` (task 230), not 229's idempotent success.
+
+**Tests:** Entra filter 69/69 (includes revoked-handle link 403); AddExisting 6/6; Passkey 23/23;
+Merge library tests green; Credentials contract 13/13 in-memory and EF (includes
+`Update_rejects_PrincipalId_reparent`). `dotnet run tools/dev-cli/dev.cs -- build` 0/0.
+`ganda repo audit` passes (2 advisory warnings: memsearch hooks, vscode peacock — pre-existing).
+`dev template-smoke` SUCCEEDED.
 
 ### How to validate
 
-_Pending._
+**Automated**
+
+```bash
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Entra
+# expect: all passed (unknown-handle 302 to /Login/Microsoft365/Choose, create mints principal+session,
+#         link foreign handle merges, revoked foreign handle 403 without merge, already-on-this-account 409)
+
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class AddExisting
+# expect: merge moves credentials and retires source; passkey login on moved credential is the
+#         target principal; stale source cookie is unauthenticated; 409 already on this account;
+#         403 quarantined/merged source; choose-existing attaches Entra to the passkey principal
+
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Passkey
+# expect: all passed
+
+cd tests/libraries/timewarp-identity-tests && dotnet test -c Release -- --filter-class Merge
+# expect: all passed (re-parent active creds, trust max, concurrency conflict)
+
+dotnet run tools/dev-cli/dev.cs -- build
+# expect: Build completed successfully, 0 Warning(s) 0 Error(s)
+```
+
+**Manual smoke**
+
+1. Create a passkey account on `/Login` (principal A). Sign out.
+2. Click **Continue with Microsoft 365** with a tenant user that is not yet linked.
+   - Expect: redirect to `/Login/Microsoft365/Choose`, no second principal yet.
+3. Click **I already have an account** and assert A's passkey.
+   - Expect: signed in as A; Settings shows that Microsoft 365 under the same account.
+4. (Fork repair) If two principals already exist, sign in as B, Settings → **Add an existing passkey**,
+   assert A's passkey.
+   - Expect: success bar `Merged account: N credential(s) moved`; A's passkey listed on B;
+     signing in with that passkey authenticates as B.
+
+**Depends on:** Entra enabled (`dev entra setup` + Admin Authentication AllowBootstrap on) for
+steps 2–3. Isolated tests use the stub authority / software authenticator.
+
+**Not in scope:** live hardware WebAuthn, admin-forced merge, un-merge, multi-tenant.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 3
+- **Effort / roster:** 1, general only
+- **Final counts:** bug 0/3/0, suggestion 0/2/0, nit 0/0/0 (open/fixed/wontfix)
+- **Fixes on this id:** M1 revoked Entra link no longer merges; M2 choose-create notifies identity-session; M3 UpdateCredentialAsync rejects PrincipalId re-parent; M4 OnValidatePrincipal signs out stale cookie; M5 Jaribu wrappers for the re-parent contract test
+- **Wontfix / escalations:** none
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/round-2/general.md`
+  - `review/round-2/merged.md`
+  - `review/round-3/general.md`
+  - `review/round-3/merged.md`
+  - `review/disposition.md`

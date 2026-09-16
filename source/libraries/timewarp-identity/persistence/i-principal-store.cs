@@ -18,8 +18,9 @@
 //   - IAgentTokenStore (~15 min bearer grants) → deliberately ephemeral (in-memory); Redis later
 //     if multi-replica requires shared token state.
 //   - IWebAuthnChallengeStore / IAgentKeyChallengeStore → ephemeral by design (in-memory).
-// Credential lookup by CredentialId (RFC D3), not raw Guid. Type and Handle are immutable after Create — UpdateCredential
-// persists revoke/label (and similar) changes for the same Id only; no handle reindex contract.
+// Credential lookup by CredentialId (RFC D3), not raw Guid. Type, Handle, and PrincipalId are
+// immutable on UpdateCredential — persists revoke/label (and similar) for the same Id only; no
+// handle reindex and no re-parent via Update (re-parent only via MergePrincipalAsync).
 // FindCredentialByHandle may return revoked credentials (callers check IsRevoked). No extra lookup
 // for EntraAccount: join is FindCredentialByHandleAsync(EntraAccount, EntraAccountHandle.Encode(tid, oid)).
 // Restore is Credential.Restore() then UpdateCredentialAsync — this port has no Restore method.
@@ -54,6 +55,14 @@
 //     snapshot conflicts on their next Update* instead of silently overwriting the tier change.
 //   - Conflict policy (retry vs reload vs fail the request) stays with callers — that half of the
 //     original D6 lean (defer callsite policy) was correct and is unchanged by this task.
+//   - MergePrincipalAsync(source, target): re-parents all active credentials of source onto
+//     target (revoked rows stay on source), raises target trust to max(source, target), keeps
+//     target DisplayName unless empty (then copies source), then source.MergeInto(target).
+//     Implementations persist every touched row with a version bump; EF does this in one
+//     transaction. Missing ids throw InvalidOperationException; already-merged source, inactive
+//     target, or source==target throw InvalidOperationException / ArgumentException. Concurrent
+//     writers of source/target/credentials throw ConcurrencyConflictException and leave state
+//     untouched (same CAS as Update*).
 //   - Exception delivery is NOT specified to be synchronous: Add*/Update* may throw before
 //     returning a Task (the in-memory implementation does — its bodies run to completion
 //     synchronously) or may surface the same condition as a faulted Task (an EF-backed
@@ -81,4 +90,10 @@ public interface IPrincipalStore
   Task<Credential?> FindCredentialByHandleAsync(CredentialType type, byte[] handle, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<Credential>> ListCredentialsAsync(PrincipalId principalId, bool includeRevoked = false, CancellationToken cancellationToken = default);
   Task UpdateCredentialAsync(Credential credential, CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// Re-parents active credentials from <paramref name="sourceId"/> onto <paramref name="targetId"/>
+  /// and retires the source principal. See this port's Design region.
+  /// </summary>
+  Task MergePrincipalAsync(PrincipalId sourceId, PrincipalId targetId, CancellationToken cancellationToken = default);
 }

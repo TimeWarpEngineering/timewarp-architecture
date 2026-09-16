@@ -179,6 +179,9 @@ namespace TimeWarp.Architecture.Persistence.Migrations
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("MergedIntoPrincipalId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("TrustTier")
                         .HasColumnType("integer");
 

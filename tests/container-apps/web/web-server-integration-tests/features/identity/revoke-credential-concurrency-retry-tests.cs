@@ -155,5 +155,11 @@ public class Returns_
 
       await Inner.UpdateCredentialAsync(credential, cancellationToken);
     }
+
+    public Task MergePrincipalAsync(
+      PrincipalId sourceId,
+      PrincipalId targetId,
+      CancellationToken cancellationToken = default) =>
+      Inner.MergePrincipalAsync(sourceId, targetId, cancellationToken);
   }
 }

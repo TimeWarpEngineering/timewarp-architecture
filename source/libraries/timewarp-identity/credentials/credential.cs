@@ -11,6 +11,9 @@
 // (D8: keep byte[] copy-on-get for Wave 1).
 // Empty PrincipalId rejected at Create. CredentialType.None rejected. Id is CredentialId (RFC D3), not raw Guid.
 // Type and Handle are immutable after Create — store Update replaces by Id only (revoke / restore / label persistence); no handle migration.
+// ReparentTo mutates in-memory PrincipalId for MergePrincipalAsync's own snapshot/replace path;
+// UpdateCredentialAsync rejects PrincipalId changes (re-parent only via MergePrincipalAsync).
+// Type/Handle stay put so the authenticator's credential id still looks up.
 // Revoke is one-shot (throws if already revoked). Restore is the one-shot inverse (throws if not revoked) so Graph
 // re-enable can reuse the same (Type, Handle) row; unique (Type, Handle) plus Find-returns-revoked makes re-insert of
 // the same tid:oid impossible. Clocks (D5, closed 104-006): CreatedAt/RevokedAt remain wall-clock
@@ -65,7 +68,7 @@ public sealed class Credential : Entity<CredentialId>
     Label = label;
   }
 
-  public PrincipalId PrincipalId { get; }
+  public PrincipalId PrincipalId { get; private set; }
   public CredentialType Type { get; }
 
 #pragma warning disable CA1819 // Binary material is intentionally exposed as byte[] copies
@@ -154,6 +157,26 @@ public sealed class Credential : Entity<CredentialId>
     }
 
     RevokedAt = null;
+  }
+
+  /// <summary>
+  /// Moves this credential onto <paramref name="target"/>. Type and Handle stay immutable.
+  /// </summary>
+  /// <exception cref="ArgumentException"><paramref name="target"/> is empty.</exception>
+  /// <exception cref="InvalidOperationException">The credential is already on <paramref name="target"/>.</exception>
+  public void ReparentTo(PrincipalId target)
+  {
+    if (target.IsEmpty)
+    {
+      throw new ArgumentException("Target PrincipalId cannot be empty.", nameof(target));
+    }
+
+    if (target == PrincipalId)
+    {
+      throw new InvalidOperationException("Credential is already on this principal.");
+    }
+
+    PrincipalId = target;
   }
 
   private static string? NormalizeLabel(string? label)

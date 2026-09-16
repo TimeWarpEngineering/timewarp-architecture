@@ -15,6 +15,8 @@
 // Task 229: hide Link when an active EntraAccount exists; disable Unlink when it is the last
 // active credential (hint: Add a passkey first); card title is Credential.Label, subtitle is
 // "Microsoft 365". FetchCredentials runs during prerender so first HTML matches those rules.
+// Task 230: "Add an existing passkey" next to Create runs the merge ceremony
+// (CredentialsState.AddExistingPasskey). 229 card rules apply to the merged credential set.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

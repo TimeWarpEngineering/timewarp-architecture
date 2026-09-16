@@ -48,16 +48,22 @@
 // Host — HTTPS loopback TLS must still validate localhost) so passkey RP-ID selection sees the
 // YARP-preserved browser host, not the loopback URI host. HttpRequestHostAccessor honors that
 // header only when Request.Host is loopback; the public path ignores a client-supplied copy.
+// Task 230: identity-session OnValidatePrincipal rejects bad PrincipalId claims and inactive/
+// merged principals, then SignOutAsync(IdentitySessionDefaults.Scheme) so the stale cookie is
+// cleared once instead of re-validated on every request.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
 
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using TimeWarp.Architecture.Abuse;
 using TimeWarp.Architecture.AgentDiscovery;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Identity;
+using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
@@ -203,6 +209,7 @@ public partial class Program : IAspNetProgram
 
     serviceCollection.AddHttpContextAccessor();
     serviceCollection.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
+    serviceCollection.AddScoped<IEntraChoiceTicketAccessor, HttpEntraChoiceTicketAccessor>();
     serviceCollection.AddScoped<IAgentCallerContext, AgentCallerContext>();
     serviceCollection.AddScoped<IAgentPermissionScopeSource, AgentCallerPermissionScopeSource>();
     serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
@@ -378,6 +385,26 @@ public partial class Program : IAspNetProgram
           context.Response.StatusCode = StatusCodes.Status403Forbidden;
           return Task.CompletedTask;
         };
+        options.Events.OnValidatePrincipal = async context =>
+        {
+          IPrincipalStore principalStore = context.HttpContext.RequestServices.GetRequiredService<IPrincipalStore>();
+          string? claimValue = context.Principal?.FindFirstValue(IdentitySessionDefaults.PrincipalIdClaimType);
+          if (!Guid.TryParse(claimValue, out Guid guid) || guid == Guid.Empty)
+          {
+            context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync(IdentitySessionDefaults.Scheme);
+            return;
+          }
+
+          Principal? principal = await principalStore.GetPrincipalAsync(
+            PrincipalId.From(guid),
+            context.HttpContext.RequestAborted);
+          if (principal?.IsActive != true)
+          {
+            context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync(IdentitySessionDefaults.Scheme);
+          }
+        };
       })
       // Agent bearer-token scheme (task 104-004): named scheme alongside identity-session.
       // AgentTokenAuthenticationHandler owns authenticate/challenge/forbid for this scheme;
@@ -387,9 +414,9 @@ public partial class Program : IAspNetProgram
       // (Development/Testing + Authentication:UseMock + header). Listed on AuthenticatedPolicy.
       .AddScheme<AuthenticationSchemeOptions, MockIdentityPrincipalHandler>(MockIdentityPrincipalHandler.SchemeName, _ => { });
 
+    serviceCollection.AddScoped<EntraTicketProcessor>();
     if (entraEnabled)
     {
-      serviceCollection.AddScoped<EntraTicketProcessor>();
       EntraAuthenticationRegistration.AddNamedEntraScheme(authenticationBuilder, configuration);
     }
   }

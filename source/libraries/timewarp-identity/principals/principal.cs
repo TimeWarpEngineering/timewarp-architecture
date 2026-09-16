@@ -15,6 +15,9 @@
 // - RecordCredentialAttached: first credential always promotes Provisional → Keyed (even if quarantined);
 //   risk is orthogonal — ops use IsActive / IsFundedAndActive. Store calls this on add.
 // - Named predicates (IsFundedAndActive, IsActive) so handlers never write tier >= Funded.
+// - MergeInto retires the source: MergedIntoPrincipalId is set, IsActive is false (orthogonal to
+//   quarantine). Stores persist this via UpdatePrincipalAsync / MergePrincipalAsync. Un-merge is
+//   out of scope.
 // - Rich PrincipalStatus taxonomy deferred until 008/013 write real gates.
 //
 // Clocks (D5, closed 104-006): Wave 1 ceremony-critical clocks (challenge/token stores) use optional
@@ -49,6 +52,7 @@ public sealed class Principal : Entity<PrincipalId>
     bool isQuarantined,
     DateTimeOffset createdAt,
     string? displayName,
+    PrincipalId? mergedIntoPrincipalId,
     long version)
     : base(id, version)
   {
@@ -57,6 +61,7 @@ public sealed class Principal : Entity<PrincipalId>
     IsQuarantined = isQuarantined;
     CreatedAt = createdAt;
     DisplayName = displayName;
+    MergedIntoPrincipalId = mergedIntoPrincipalId;
   }
 
   public PrincipalKind Kind { get; }
@@ -64,13 +69,14 @@ public sealed class Principal : Entity<PrincipalId>
   public bool IsQuarantined { get; private set; }
   public DateTimeOffset CreatedAt { get; }
   public string? DisplayName { get; private set; }
+  public PrincipalId? MergedIntoPrincipalId { get; private set; }
 
-  /// <summary>True when not quarantined — operational activity may proceed subject to tier gates.</summary>
-  public bool IsActive => !IsQuarantined;
+  /// <summary>True when not quarantined and not merged into another principal.</summary>
+  public bool IsActive => !IsQuarantined && MergedIntoPrincipalId is null;
 
   /// <summary>True when funded-or-higher progression and not quarantined (never use ordinal tier comparisons).</summary>
   public bool IsFundedAndActive =>
-    !IsQuarantined && TrustTier is TrustTier.Funded or TrustTier.Established;
+    IsActive && TrustTier is TrustTier.Funded or TrustTier.Established;
 
   public static Principal Create(PrincipalKind kind)
   {
@@ -86,6 +92,7 @@ public sealed class Principal : Entity<PrincipalId>
       isQuarantined: false,
       DateTimeOffset.UtcNow,
       displayName: null,
+      mergedIntoPrincipalId: null,
       version: 0);
   }
 
@@ -95,7 +102,7 @@ public sealed class Principal : Entity<PrincipalId>
   /// Create's guards (i.e. an existing Principal instance), never with caller-supplied raw fields.
   /// </summary>
   internal Principal Snapshot(long version) =>
-    new(Id, Kind, TrustTier, IsQuarantined, CreatedAt, DisplayName, version);
+    new(Id, Kind, TrustTier, IsQuarantined, CreatedAt, DisplayName, MergedIntoPrincipalId, version);
 
   public void SetDisplayName(string? displayName)
   {
@@ -153,5 +160,48 @@ public sealed class Principal : Entity<PrincipalId>
   public void ClearQuarantine()
   {
     IsQuarantined = false;
+  }
+
+  /// <summary>
+  /// Retires this principal into <paramref name="target"/>: <see cref="MergedIntoPrincipalId"/> is
+  /// set and <see cref="IsActive"/> becomes false. Does not move credentials — stores do that.
+  /// </summary>
+  /// <exception cref="ArgumentException"><paramref name="target"/> is empty or this principal.</exception>
+  /// <exception cref="InvalidOperationException">This principal is already merged.</exception>
+  public void MergeInto(PrincipalId target)
+  {
+    if (target.IsEmpty)
+    {
+      throw new ArgumentException("Target PrincipalId cannot be empty.", nameof(target));
+    }
+
+    if (target == Id)
+    {
+      throw new ArgumentException("A principal cannot merge into itself.", nameof(target));
+    }
+
+    if (MergedIntoPrincipalId is not null)
+    {
+      throw new InvalidOperationException("Principal is already merged.");
+    }
+
+    MergedIntoPrincipalId = target;
+  }
+
+  /// <summary>
+  /// Merge helper: sets this principal's trust to <paramref name="other"/> when
+  /// <paramref name="other"/> is strictly higher. Does not check quarantine (merge is not Promote).
+  /// </summary>
+  public void ApplyTrustAtLeast(TrustTier other)
+  {
+    if (!Enum.IsDefined(other) || other == TrustTier.None)
+    {
+      return;
+    }
+
+    if ((int)other > (int)TrustTier)
+    {
+      TrustTier = other;
+    }
   }
 }

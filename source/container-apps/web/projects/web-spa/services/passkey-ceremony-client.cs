@@ -139,6 +139,54 @@ public sealed class PasskeyCeremonyClient
     return ToProblem(completeResult);
   }
 
+  public async Task<OneOf<CompleteEntraBootstrapExisting.Response, SharedProblemDetails>> CompleteEntraChoiceExistingAsync(
+    CancellationToken cancellationToken,
+    bool preferHybrid = false)
+  {
+    OneOf<StartPasskeyAuthentication.Response, FileResponse, SharedProblemDetails> startResult =
+      await ApiService.GetResponse<StartPasskeyAuthentication.Response>(
+        new StartPasskeyAuthentication.Command(),
+        cancellationToken);
+
+    if (!startResult.IsT0)
+    {
+      return ToProblem(startResult);
+    }
+
+    string assertionJson =
+      await WebAuthnJsModule.GetCredentialAsync(
+        JsRuntime,
+        startResult.AsT0.OptionsJson,
+        preferHybrid,
+        cancellationToken);
+
+    using var document = JsonDocument.Parse(assertionJson);
+    JsonElement root = document.RootElement;
+
+    CompleteEntraBootstrapExisting.Command completeCommand = new()
+    {
+      CredentialId = root.GetProperty("credentialId").GetString()!,
+      ClientDataJson = root.GetProperty("clientDataJson").GetString()!,
+      AuthenticatorData = root.GetProperty("authenticatorData").GetString()!,
+      Signature = root.GetProperty("signature").GetString()!,
+      UserHandle = root.TryGetProperty("userHandle", out JsonElement userHandleElement)
+        && userHandleElement.ValueKind == JsonValueKind.String
+          ? userHandleElement.GetString()
+          : null
+    };
+
+    OneOf<CompleteEntraBootstrapExisting.Response, FileResponse, SharedProblemDetails> completeResult =
+      await ApiService.GetResponse<CompleteEntraBootstrapExisting.Response>(completeCommand, cancellationToken);
+
+    if (completeResult.IsT0)
+    {
+      NotifyIdentitySessionIfNeeded();
+      return completeResult.AsT0;
+    }
+
+    return ToProblem(completeResult);
+  }
+
   public async Task<bool?> GetIsAuthenticatedAsync(CancellationToken cancellationToken)
   {
     OneOf<GetCurrentSession.Response, FileResponse, SharedProblemDetails> sessionResult =

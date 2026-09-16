@@ -70,6 +70,12 @@
     }
   }
 
+  private async Task AddExistingPasskeyAsync()
+  {
+    await NoSubCredentialsState.AddExistingPasskey();
+    SyncExpandedId();
+  }
+
   private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential)
   {
     await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
@@ -183,6 +189,13 @@
                 disabled="@IsBusy"
                 @onclick="CreatePasskeyAsync">
           Create a passkey
+        </button>
+        <button type="button"
+                class="twe-settings__link"
+                data-qa="AddExistingPasskey"
+                disabled="@IsBusy"
+                @onclick="AddExistingPasskeyAsync">
+          Add an existing passkey
         </button>
       </div>
     </section>
@@ -340,6 +353,9 @@
       margin-top: 16px;
       padding-top: 12px;
       border-top: 1px solid var(--twe-rule);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
     }
   ")
 </style>

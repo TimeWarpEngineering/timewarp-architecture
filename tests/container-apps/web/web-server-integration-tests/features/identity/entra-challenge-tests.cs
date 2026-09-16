@@ -5,8 +5,9 @@
 #region Design
 // Isolated TestServer (not the full web-server HostGraph) with FakeEntraHandler standing in for
 // OpenIdConnect. Challenge immediately completes the ticket via EntraTicketHttp using tid/oid/iss
-// from test headers. Covers: link requires identity-session; untrusted tid 403; duplicate handle
-// 409; bootstrap of a trusted tenant issues identity-session.
+// from test headers. Unknown-handle bootstrap parks claims and 302s to /Login/Microsoft365/Choose
+// (no principal). Create is exercised via the real CompleteEntraBootstrapCreate handler mapped on
+// this host. Link of a foreign active handle merges; already-on-this-account is 409.
 #endregion
 
 namespace EntraChallenge_;
@@ -29,6 +30,7 @@ using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.Identity.Application;
+using TimeWarp.Architecture.Features.Identity.Infrastructure;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Foundation.Types;
 using TimeWarp.Identity;
@@ -73,6 +75,9 @@ public class Challenge_Given_
     builder.Services.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     builder.Services.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
     builder.Services.AddScoped<EntraTicketProcessor>();
+    builder.Services.AddSingleton<IParkedEntraClaimsStore, InMemoryParkedEntraClaimsStore>();
+    builder.Services.AddScoped<IEntraChoiceTicketAccessor, HttpEntraChoiceTicketAccessor>();
+    builder.Services.AddScoped<TimeWarp.Architecture.Features.Identity.Application.CompleteEntraBootstrapCreate.Handler>();
     builder.Services.Configure<EntraAuthenticationOptions>(options =>
     {
       options.Enabled = true;
@@ -120,6 +125,29 @@ public class Challenge_Given_
       {
         await sessions.IssueAsync(PrincipalId.From(principalId), "test", CancellationToken.None);
         return Results.NoContent();
+      }
+    );
+    App.MapPost
+    (
+      "/api/identity/entra/choice/create",
+      async (TimeWarp.Architecture.Features.Identity.Application.CompleteEntraBootstrapCreate.Handler handler, HttpContext httpContext) =>
+      {
+        OneOf<TimeWarp.Architecture.Features.Identity.CompleteEntraBootstrapCreate.Response, SharedProblemDetails> result =
+          await handler.Handle(new TimeWarp.Architecture.Features.Identity.CompleteEntraBootstrapCreate.Command(), httpContext.RequestAborted);
+        if (result.IsT1)
+        {
+          httpContext.Response.StatusCode = result.AsT1.Status ?? StatusCodes.Status400BadRequest;
+          await httpContext.Response.WriteAsJsonAsync(
+            result.AsT1,
+            ContractSerializationDefaults.Options,
+            httpContext.RequestAborted);
+          return;
+        }
+
+        await httpContext.Response.WriteAsJsonAsync(
+          result.AsT0,
+          ContractSerializationDefaults.Options,
+          httpContext.RequestAborted);
       }
     );
 
@@ -173,11 +201,12 @@ public class Challenge_Given_
     problem.Title.ShouldBe("Untrusted tenant");
   }
 
-  public static async Task Link_Duplicate_Handle_Should_409()
+  public static async Task Link_Foreign_Active_Handle_Should_Merge()
   {
     Store.ShouldNotBeNull();
     Guid objectId = Guid.NewGuid();
     Principal owner = Principal.Create(PrincipalKind.Human);
+    owner.SetDisplayName("Owner");
     await Store.AddPrincipalAsync(owner);
     Credential entra = Credential.Create(
       owner.Id,
@@ -188,31 +217,86 @@ public class Challenge_Given_
     await Store.AddCredentialAsync(entra);
 
     Principal caller = Principal.Create(PrincipalKind.Human);
+    caller.SetDisplayName("Caller");
     await Store.AddPrincipalAsync(caller);
+    string cookie = await SignInAsync(caller.Id);
+
+    HttpResponseMessage response = await SendChallengeAsync("link", TrustedTenantId, objectId, cookie);
+    response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+    Credential? found = await Store.FindCredentialByHandleAsync(
+      CredentialType.EntraAccount,
+      EntraAccountHandle.Encode(TrustedTenantId, objectId));
+    found.ShouldNotBeNull();
+    found!.PrincipalId.ShouldBe(caller.Id);
+    Principal? retired = await Store.GetPrincipalAsync(owner.Id);
+    retired.ShouldNotBeNull();
+    retired.IsActive.ShouldBeFalse();
+    retired.MergedIntoPrincipalId.ShouldBe(caller.Id);
+  }
+
+  public static async Task Link_Already_On_This_Account_Should_409()
+  {
+    Store.ShouldNotBeNull();
+    Guid objectId = Guid.NewGuid();
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    await Store.AddPrincipalAsync(caller);
+    await Store.AddCredentialAsync(
+      Credential.Create(
+        caller.Id,
+        CredentialType.EntraAccount,
+        EntraAccountHandle.Encode(TrustedTenantId, objectId),
+        EntraIssuerMaterial.FromTenantId(TrustedTenantId),
+        "Microsoft 365"));
     string cookie = await SignInAsync(caller.Id);
 
     HttpResponseMessage response = await SendChallengeAsync("link", TrustedTenantId, objectId, cookie);
     response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     SharedProblemDetails problem = await ReadProblemAsync(response);
-    problem.Title.ShouldBe("Credential already registered");
-    (problem.Detail ?? "").ShouldNotContain(owner.Id.Value.ToString());
+    problem.Title.ShouldBe("Already on this account");
   }
 
-  public static async Task Bootstrap_Trusted_Tenant_Should_Issue_Identity_Session()
+  public static async Task Bootstrap_Unknown_Handle_Should_Redirect_To_Choose_Without_Creating_Principal()
   {
     Store.ShouldNotBeNull();
-    Guid objectId = Guid.NewGuid();
-    HttpResponseMessage response = await SendChallengeAsync("bootstrap", TrustedTenantId, objectId);
+    int principalCount = (await Store.ListPrincipalsAsync()).Count;
+    HttpResponseMessage response = await SendChallengeAsync("bootstrap", TrustedTenantId, Guid.NewGuid());
     response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
     response.Headers.Location.ShouldNotBeNull();
+    response.Headers.Location!.ToString().ShouldStartWith(EntraChoiceCookie.ChoosePath);
+    (await Store.ListPrincipalsAsync()).Count.ShouldBe(principalCount);
     response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? setCookieValues).ShouldBeTrue();
     setCookieValues.ShouldNotBeNull();
-    setCookieValues.ShouldContain(value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
+    setCookieValues.ShouldContain(value => value.Contains(EntraChoiceCookie.CookieName, StringComparison.Ordinal));
+    setCookieValues.ShouldNotContain(value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal)
+      && !value.Contains("expires=", StringComparison.OrdinalIgnoreCase));
+  }
+
+  public static async Task Bootstrap_Choose_Create_Should_Mint_Principal_Credential_And_Session()
+  {
+    Store.ShouldNotBeNull();
+    Client.ShouldNotBeNull();
+    int principalCount = (await Store.ListPrincipalsAsync()).Count;
+    Guid objectId = Guid.NewGuid();
+    HttpResponseMessage choose = await SendChallengeAsync("bootstrap", TrustedTenantId, objectId);
+    choose.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+    choose.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? setCookieValues).ShouldBeTrue();
+    string choiceCookie = setCookieValues!
+      .First(value => value.Contains(EntraChoiceCookie.CookieName, StringComparison.Ordinal))
+      .Split(';', 2)[0];
+
+    using HttpRequestMessage createRequest = new(HttpMethod.Post, "/api/identity/entra/choice/create");
+    createRequest.Headers.TryAddWithoutValidation("Cookie", choiceCookie);
+    createRequest.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+    HttpResponseMessage create = await Client.SendAsync(createRequest);
+    create.StatusCode.ShouldBe(HttpStatusCode.OK);
+    (await Store.ListPrincipalsAsync()).Count.ShouldBe(principalCount + 1);
     Credential? found = await Store.FindCredentialByHandleAsync(
       CredentialType.EntraAccount,
       EntraAccountHandle.Encode(TrustedTenantId, objectId));
     found.ShouldNotBeNull();
-    found!.Label.ShouldBe("Test User");
+    found!.IsRevoked.ShouldBeFalse();
+    create.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? sessionCookies).ShouldBeTrue();
+    sessionCookies.ShouldContain(value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
   }
 
   public static async Task Bootstrap_Sync_Hit_Should_Reuse_Existing_Principal()
@@ -363,7 +447,8 @@ public class Challenge_Given_
       HttpResponseMessage response = await SendChallengeAsync("bootstrap", TrustedTenantId, Guid.NewGuid());
       response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
       response.Headers.Location.ShouldNotBeNull();
-      response.Headers.Location!.ToString().ShouldBe("/");
+      response.Headers.Location.ShouldNotBeNull();
+      response.Headers.Location!.ToString().ShouldStartWith(EntraChoiceCookie.ChoosePath);
     }
     finally
     {

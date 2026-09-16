@@ -54,10 +54,8 @@ public class Bootstrap_Given_
     string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
     EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, "Race Loser");
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+    OneOf<PrincipalId, SharedProblemDetails> result = await processor.CompleteBootstrapCreateAsync(
       claims,
-      EntraTicketProcessor.ModeBootstrap,
-      linkCallerPrincipalId: null,
       CancellationToken.None);
 
     result.IsT0.ShouldBeTrue("Losing AddCredentialAsync race must sync-hit the winner, not return 409.");
@@ -86,15 +84,15 @@ public class Bootstrap_Given_
     const string tokenIssuer = "https://login.microsoftonline.com/wrong/v2.0";
     EntraIdTokenClaims claims = new(TrustedTenantId, Guid.NewGuid(), tokenIssuer, "Mismatch");
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
       claims,
       EntraTicketProcessor.ModeBootstrap,
       linkCallerPrincipalId: null,
       CancellationToken.None);
 
-    result.IsT1.ShouldBeTrue();
-    result.AsT1.Title.ShouldBe("Invalid Entra token");
-    result.AsT1.Detail.ShouldBe("The Entra ID token issuer does not match the tenant.");
+    result.IsT2.ShouldBeTrue();
+    result.AsT2.Title.ShouldBe("Invalid Entra token");
+    result.AsT2.Detail.ShouldBe("The Entra ID token issuer does not match the tenant.");
     FakeLogRecord record = logger.Collector.LatestRecord;
     record.Level.ShouldBe(LogLevel.Warning);
     record.Message.ShouldContain(expectedIssuer);
@@ -109,15 +107,122 @@ public class Bootstrap_Given_
     string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(foreignTenant));
     EntraIdTokenClaims claims = new(foreignTenant, Guid.NewGuid(), issuer, "Foreign");
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeBootstrap,
+      linkCallerPrincipalId: null,
+      CancellationToken.None);
+
+    result.IsT2.ShouldBeTrue();
+    result.AsT2.Title.ShouldBe("Untrusted tenant");
+    result.AsT2.Status.ShouldBe(403);
+  }
+
+  public static async Task Unknown_Handle_With_Bootstrap_Allowed_Should_Require_Choice()
+  {
+    EntraTicketProcessor processor = await ProcessorAsync();
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(TrustedTenantId, Guid.NewGuid(), issuer, "Chooser");
+
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
       claims,
       EntraTicketProcessor.ModeBootstrap,
       linkCallerPrincipalId: null,
       CancellationToken.None);
 
     result.IsT1.ShouldBeTrue();
-    result.AsT1.Title.ShouldBe("Untrusted tenant");
-    result.AsT1.Status.ShouldBe(403);
+  }
+
+  public static async Task Link_Foreign_Active_Handle_Should_Merge()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    Principal owner = Principal.Create(PrincipalKind.Human);
+    owner.SetDisplayName("Owner");
+    await principalStore.AddPrincipalAsync(owner);
+    Guid objectId = Guid.NewGuid();
+    await principalStore.AddCredentialAsync(
+      Credential.Create(
+        owner.Id,
+        CredentialType.EntraAccount,
+        EntraAccountHandle.Encode(TrustedTenantId, objectId),
+        EntraIssuerMaterial.FromTenantId(TrustedTenantId),
+        "Microsoft 365"));
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    caller.SetDisplayName("Caller");
+    await principalStore.AddPrincipalAsync(caller);
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, "Owner");
+
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeLink,
+      caller.Id,
+      CancellationToken.None);
+
+    result.IsT0.ShouldBeTrue();
+    result.AsT0.ShouldBe(caller.Id);
+    Principal? retired = await principalStore.GetPrincipalAsync(owner.Id);
+    retired.ShouldNotBeNull();
+    retired.IsActive.ShouldBeFalse();
+    retired.MergedIntoPrincipalId.ShouldBe(caller.Id);
+  }
+
+  public static async Task Link_Foreign_Revoked_Handle_Should_Refuse_Without_Merge()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    Principal owner = Principal.Create(PrincipalKind.Human);
+    owner.SetDisplayName("Owner");
+    await principalStore.AddPrincipalAsync(owner);
+    Guid objectId = Guid.NewGuid();
+    Credential entraCredential = Credential.Create(
+      owner.Id,
+      CredentialType.EntraAccount,
+      EntraAccountHandle.Encode(TrustedTenantId, objectId),
+      EntraIssuerMaterial.FromTenantId(TrustedTenantId),
+      "Microsoft 365");
+    await principalStore.AddCredentialAsync(entraCredential);
+    Credential? stored = await principalStore.GetCredentialAsync(entraCredential.Id);
+    stored.ShouldNotBeNull();
+    stored.Revoke();
+    await principalStore.UpdateCredentialAsync(stored);
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    caller.SetDisplayName("Caller");
+    await principalStore.AddPrincipalAsync(caller);
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, "Owner");
+
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeLink,
+      caller.Id,
+      CancellationToken.None);
+
+    result.IsT2.ShouldBeTrue();
+    result.AsT2.Status.ShouldBe(403);
+    result.AsT2.Title.ShouldBe("Entra credential revoked");
+    Principal? ownerAfter = await principalStore.GetPrincipalAsync(owner.Id);
+    ownerAfter.ShouldNotBeNull();
+    ownerAfter.IsActive.ShouldBeTrue();
+    ownerAfter.MergedIntoPrincipalId.ShouldBeNull();
+  }
+
+  public static async Task CompleteBootstrapCreate_Should_Mint_Principal()
+  {
+    InMemoryPrincipalStore store = new();
+    EntraTicketProcessor processor = await ProcessorAsync(store);
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(TrustedTenantId, Guid.NewGuid(), issuer, "New Human");
+
+    OneOf<PrincipalId, SharedProblemDetails> result =
+      await processor.CompleteBootstrapCreateAsync(claims, CancellationToken.None);
+
+    result.IsT0.ShouldBeTrue();
+    Principal? created = await store.GetPrincipalAsync(result.AsT0);
+    created.ShouldNotBeNull();
+    created.DisplayName.ShouldBe("New Human");
+    created.IsActive.ShouldBeTrue();
   }
 
   public static async Task Foreign_Tid_On_Link_Should_Refuse()
@@ -130,15 +235,15 @@ public class Bootstrap_Given_
     string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(foreignTenant));
     EntraIdTokenClaims claims = new(foreignTenant, Guid.NewGuid(), issuer, "Foreign");
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
       claims,
       EntraTicketProcessor.ModeLink,
       caller.Id,
       CancellationToken.None);
 
-    result.IsT1.ShouldBeTrue();
-    result.AsT1.Title.ShouldBe("Untrusted tenant");
-    result.AsT1.Status.ShouldBe(403);
+    result.IsT2.ShouldBeTrue();
+    result.AsT2.Title.ShouldBe("Untrusted tenant");
+    result.AsT2.Status.ShouldBe(403);
   }
 
   private static IOptions<EntraAuthenticationOptions> ConfiguredTenant() =>
@@ -157,11 +262,8 @@ public class Bootstrap_Given_
       "Steven Cramer",
       "Steven.Cramer@TimeWarp.Enterprises");
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
-      claims,
-      EntraTicketProcessor.ModeBootstrap,
-      linkCallerPrincipalId: null,
-      CancellationToken.None);
+    OneOf<PrincipalId, SharedProblemDetails> result =
+      await processor.CompleteBootstrapCreateAsync(claims, CancellationToken.None);
 
     result.IsT0.ShouldBeTrue();
     Credential? stored = await principalStore.FindCredentialByHandleAsync(
@@ -179,11 +281,8 @@ public class Bootstrap_Given_
     string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
     EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, "Steven Cramer");
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
-      claims,
-      EntraTicketProcessor.ModeBootstrap,
-      linkCallerPrincipalId: null,
-      CancellationToken.None);
+    OneOf<PrincipalId, SharedProblemDetails> result =
+      await processor.CompleteBootstrapCreateAsync(claims, CancellationToken.None);
 
     result.IsT0.ShouldBeTrue();
     Credential? stored = await principalStore.FindCredentialByHandleAsync(
@@ -215,15 +314,15 @@ public class Bootstrap_Given_
       "Other User",
       "other@TimeWarp.Enterprises");
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
       claims,
       EntraTicketProcessor.ModeLink,
       caller.Id,
       CancellationToken.None);
 
-    result.IsT1.ShouldBeTrue();
-    result.AsT1.Title.ShouldBe("Microsoft 365 already linked");
-    result.AsT1.Status.ShouldBe(409);
+    result.IsT2.ShouldBeTrue();
+    result.AsT2.Title.ShouldBe("Microsoft 365 already linked");
+    result.AsT2.Status.ShouldBe(409);
     IReadOnlyList<Credential> credentials = await principalStore.ListCredentialsAsync(caller.Id);
     credentials.Count(c => c.Type == CredentialType.EntraAccount && !c.IsRevoked).ShouldBe(1);
   }
@@ -243,7 +342,7 @@ public class Bootstrap_Given_
       "Steven Cramer",
       "Steven.Cramer@TimeWarp.Enterprises");
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
       claims,
       EntraTicketProcessor.ModeLink,
       caller.Id,
@@ -257,7 +356,7 @@ public class Bootstrap_Given_
     stored!.Label.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
   }
 
-  public static async Task Link_Same_Handle_Again_Should_Be_Idempotent()
+  public static async Task Link_Same_Handle_Again_Should_409_Already_On_This_Account()
   {
     InMemoryPrincipalStore principalStore = new();
     Principal caller = Principal.Create(PrincipalKind.Human);
@@ -274,14 +373,15 @@ public class Bootstrap_Given_
     string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
     EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, "Steven Cramer");
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
       claims,
       EntraTicketProcessor.ModeLink,
       caller.Id,
       CancellationToken.None);
 
-    result.IsT0.ShouldBeTrue();
-    result.AsT0.ShouldBe(caller.Id);
+    result.IsT2.ShouldBeTrue();
+    result.AsT2.Title.ShouldBe("Already on this account");
+    result.AsT2.Status.ShouldBe(409);
   }
 
   public static async Task Bootstrap_Should_Fall_Back_Label_When_Claims_Have_No_Name()
@@ -292,11 +392,8 @@ public class Bootstrap_Given_
     string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
     EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, DisplayName: null);
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
-      claims,
-      EntraTicketProcessor.ModeBootstrap,
-      linkCallerPrincipalId: null,
-      CancellationToken.None);
+    OneOf<PrincipalId, SharedProblemDetails> result =
+      await processor.CompleteBootstrapCreateAsync(claims, CancellationToken.None);
 
     result.IsT0.ShouldBeTrue();
     Credential? stored = await principalStore.FindCredentialByHandleAsync(
@@ -411,6 +508,12 @@ public class Bootstrap_Given_
       Task.FromResult<IReadOnlyList<Credential>>([]);
 
     public Task UpdateCredentialAsync(Credential credential, CancellationToken cancellationToken = default) =>
+      Task.CompletedTask;
+
+    public Task MergePrincipalAsync(
+      PrincipalId sourceId,
+      PrincipalId targetId,
+      CancellationToken cancellationToken = default) =>
       Task.CompletedTask;
   }
 }
