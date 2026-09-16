@@ -44,12 +44,15 @@ suite has exactly N tests".
 - [x] `dev template-smoke` passes locally (SmokeDefault / SmokeNoPostgres / SmokeNoApi)
 - [x] `dev build` 0/0; `ganda repo audit` clean
 - [x] Results and How to validate
+- [x] Implementation review disposition (clean)
 
 ## Session
 
 - Created: cockpit (2026-09-16)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: grok (2026-09-16)
+- Review oracle: grok session 01a0a8b6-0fd6-7fd2-956f-674f4e6b5496 (2026-09-16)
+- Reviewer (round 1 general): grok session 01a0a8b7-6b9d-7950-aeff-f03429c8648d (2026-09-16)
 
 ## Notes
 
@@ -116,3 +119,16 @@ cd tests/tools/dev-cli-tests && dotnet test -c Release -- --filter-class Decide_
 ```
 
 **Not in scope:** raising the floors; deriving them from a monorepo aggregator run.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 1
+- **Effort / roster:** 1, general only
+- **Final counts:** bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix)
+- **Wontfix / escalations:** none
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
