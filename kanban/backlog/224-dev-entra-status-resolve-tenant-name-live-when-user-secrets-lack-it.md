@@ -56,3 +56,7 @@ _Pending._
 ### How to validate
 
 _Pending._
+
+## Disposition
+
+- 2026-09-16: shelved to backlog by decision (Steve). `dev entra setup` now persists the tenant name, so the secrets-only status path only misses on hand-set or env-set secrets. Not worth an extra Graph call per status run. Revisit only if that case shows up.
