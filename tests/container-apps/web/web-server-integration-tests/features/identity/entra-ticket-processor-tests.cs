@@ -11,6 +11,9 @@
 namespace EntraTicketProcessor_;
 
 using System.Text;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging.Testing;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Foundation.Types;
@@ -45,7 +48,8 @@ public class Bootstrap_Given_
     EntraTicketProcessor processor = new(
       principalStore,
       new NoOpPrincipalRoleStore(),
-      new SiteSettingsEntraSignInPolicy(settingsStore));
+      new SiteSettingsEntraSignInPolicy(settingsStore),
+      NullLogger<EntraTicketProcessor>.Instance);
 
     string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
     EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, "Race Loser");
@@ -61,6 +65,42 @@ public class Bootstrap_Given_
     principalStore.FindCredentialCalls.ShouldBe(2);
     principalStore.AddPrincipalCalls.ShouldBe(1);
     principalStore.AddCredentialCalls.ShouldBe(1);
+  }
+
+  public static async Task Issuer_Mismatch_Should_400_And_Log_Expected_Vs_Token_Issuer()
+  {
+    FakeLogger<EntraTicketProcessor> logger = new();
+    InMemorySiteSettingsStore settingsStore = new();
+    await settingsStore.AddAsync(
+      SiteSettings.Create(
+        entraSignInEnabled: true,
+        entraAllowBootstrap: true,
+        entraTrustedTenants: [TrustedTenantId],
+        passkeyPromptMode: PasskeyPromptMode.Soft));
+    EntraTicketProcessor processor = new(
+      new InMemoryPrincipalStore(),
+      new NoOpPrincipalRoleStore(),
+      new SiteSettingsEntraSignInPolicy(settingsStore),
+      logger);
+
+    string expectedIssuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    const string tokenIssuer = "https://login.microsoftonline.com/wrong/v2.0";
+    EntraIdTokenClaims claims = new(TrustedTenantId, Guid.NewGuid(), tokenIssuer, "Mismatch");
+
+    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeBootstrap,
+      linkCallerPrincipalId: null,
+      CancellationToken.None);
+
+    result.IsT1.ShouldBeTrue();
+    result.AsT1.Title.ShouldBe("Invalid Entra token");
+    result.AsT1.Detail.ShouldBe("The Entra ID token issuer does not match the tenant.");
+    FakeLogRecord record = logger.Collector.LatestRecord;
+    record.Level.ShouldBe(LogLevel.Warning);
+    record.Message.ShouldContain(expectedIssuer);
+    record.Message.ShouldContain(tokenIssuer);
+    record.Message.ShouldNotContain(claims.ObjectId.ToString("D"));
   }
 
   private sealed class NoOpPrincipalRoleStore : IPrincipalRoleStore

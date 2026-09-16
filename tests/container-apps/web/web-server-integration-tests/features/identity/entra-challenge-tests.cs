@@ -38,6 +38,7 @@ internal static class FakeEntraHeaders
   public const string TenantId = "X-Test-Entra-Tid";
   public const string ObjectId = "X-Test-Entra-Oid";
   public const string Issuer = "X-Test-Entra-Iss";
+  public const string OmitObjectId = "X-Test-Entra-Omit-Oid";
 }
 
 public class Challenge_Given_
@@ -326,6 +327,23 @@ public class Challenge_Given_
     response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     SharedProblemDetails problem = await ReadProblemAsync(response);
     problem.Title.ShouldBe("Invalid Entra token");
+    problem.Detail.ShouldBe("The Entra ID token issuer does not match the tenant.");
+  }
+
+  public static async Task Missing_Oid_Should_400_Naming_The_Failing_Check()
+  {
+    Client.ShouldNotBeNull();
+    using HttpRequestMessage request = new(
+      HttpMethod.Get,
+      "/api/identity/entra/challenge?mode=bootstrap&returnUrl=%2F");
+    request.Headers.TryAddWithoutValidation(TenantIdHeader, TrustedTenantId.ToString("D"));
+    request.Headers.TryAddWithoutValidation(FakeEntraHeaders.OmitObjectId, "1");
+    HttpResponseMessage response = await Client.SendAsync(request);
+    response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    SharedProblemDetails problem = await ReadProblemAsync(response);
+    problem.Title.ShouldBe("Invalid Entra token");
+    problem.Detail.ShouldBe("The Entra ID token is missing the oid claim.");
+    (problem.Detail ?? "").ShouldNotContain(TrustedTenantId.ToString("D"));
   }
 
   private static async Task<HttpResponseMessage> SendChallengeAsync
@@ -396,7 +414,11 @@ internal sealed class FakeEntraHandler : AuthenticationHandler<AuthenticationSch
 
     ClaimsIdentity identity = new(EntraLinkDefaults.Scheme);
     identity.AddClaim(new Claim("tid", tenantId.ToString("D")));
-    identity.AddClaim(new Claim("oid", objectId.ToString("D")));
+    if (!string.Equals(Request.Headers[FakeEntraHeaders.OmitObjectId], "1", StringComparison.Ordinal))
+    {
+      identity.AddClaim(new Claim("oid", objectId.ToString("D")));
+    }
+
     identity.AddClaim(new Claim("iss", issuer));
     identity.AddClaim(new Claim("name", "Test User"));
 

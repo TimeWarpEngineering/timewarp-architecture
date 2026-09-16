@@ -18,13 +18,21 @@
 // challenge and on authorization-code redemption so Entra sees the browser origin.
 // AuthenticationProperties.RedirectUri stays the local return path — LocalReturnUrl.Sanitize, not
 // PublicOrigin.
+// EntraSchemeRegistrationLogHostedService logs informational version at StartingAsync so a stale
+// build is visible on boot.
+// OpenIdConnectOptions defaults ClaimActions.DeleteClaim("iss") and then runs ClaimActions on
+// an empty JSON payload after TokenValidated, which strips iss from the id_token identity.
+// Remove that delete so TryRead sees iss. OnTokenValidated also copies SecurityToken.Issuer
+// when the JWT identity omitted iss (JsonWebToken first-class Issuer property).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 
 public static class EntraAuthenticationRegistration
 {
@@ -33,6 +41,7 @@ public static class EntraAuthenticationRegistration
     ArgumentNullException.ThrowIfNull(authenticationBuilder);
     ArgumentNullException.ThrowIfNull(configuration);
 
+    authenticationBuilder.Services.AddHostedService<EntraSchemeRegistrationLogHostedService>();
     authenticationBuilder.AddOpenIdConnect
     (
       EntraLinkDefaults.Scheme,
@@ -55,6 +64,7 @@ public static class EntraAuthenticationRegistration
         options.SaveTokens = false;
         options.GetClaimsFromUserInfoEndpoint = false;
         options.MapInboundClaims = false;
+        options.ClaimActions.Remove("iss");
         options.Scope.Clear();
         options.Scope.Add("openid");
         options.Scope.Add("profile");
@@ -74,6 +84,11 @@ public static class EntraAuthenticationRegistration
           ApplyPublicRedirectUri(context.HttpContext, context.TokenEndpointRequest);
           return Task.CompletedTask;
         };
+        options.Events.OnTokenValidated = context =>
+        {
+          CopyIssuerClaimIfMissing(context.Principal, context.SecurityToken);
+          return Task.CompletedTask;
+        };
         options.Events.OnTicketReceived = async context =>
         {
           context.HandleResponse();
@@ -85,6 +100,32 @@ public static class EntraAuthenticationRegistration
         };
       }
     );
+  }
+
+  private static void CopyIssuerClaimIfMissing(ClaimsPrincipal? principal, SecurityToken? securityToken)
+  {
+    if (principal is null || securityToken is null)
+    {
+      return;
+    }
+
+    if (principal.FindFirst("iss") is not null)
+    {
+      return;
+    }
+
+    string? issuer = securityToken.Issuer;
+    if (string.IsNullOrWhiteSpace(issuer))
+    {
+      return;
+    }
+
+    if (principal.Identity is not ClaimsIdentity claimsIdentity)
+    {
+      return;
+    }
+
+    claimsIdentity.AddClaim(new Claim("iss", issuer));
   }
 
   private static void ApplyPublicRedirectUri(HttpContext httpContext, OpenIdConnectMessage? message)
