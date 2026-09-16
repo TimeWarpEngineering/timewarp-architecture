@@ -4,8 +4,9 @@
 
 #region Design
 // Compile-included by tests/tools/dev-cli-tests — no Amuru/Terminal. Tenant lines prefer
-// display name + default domain over bare GUIDs. SelectTenant matches id/domain/name and
-// refuses ambiguous omitted choice (non-interactive CLI). AppLookupNames suffixes the default
+// display name + default domain over bare GUIDs; domain-only resolved tenants still print
+// the domain. SelectTenant matches id/domain/name and refuses ambiguous omitted choice
+// (non-interactive CLI). AppLookupNames suffixes the default
 // display name with the tenant domain and keeps the bare legacy name for reuse. Graph and
 // access-token JSON use JsonDocument (AOT-safe). Secret key strings live on EntraSetup.
 #endregion
@@ -37,17 +38,24 @@ internal static class EntraTenants
 {
   internal static string FormatTenantLine(EntraTenant tenant)
   {
-    if (!tenant.NameResolved || string.IsNullOrWhiteSpace(tenant.DisplayName))
+    bool hasName = !string.IsNullOrWhiteSpace(tenant.DisplayName);
+    bool hasDomain = !string.IsNullOrWhiteSpace(tenant.DefaultDomain);
+    if (!tenant.NameResolved || (!hasName && !hasDomain))
     {
       return $"{tenant.TenantId} (name unavailable)";
     }
 
-    if (!string.IsNullOrWhiteSpace(tenant.DefaultDomain))
+    if (hasName && hasDomain)
     {
       return $"{tenant.DisplayName} ({tenant.DefaultDomain}) — {tenant.TenantId}";
     }
 
-    return $"{tenant.DisplayName} — {tenant.TenantId}";
+    if (hasName)
+    {
+      return $"{tenant.DisplayName} — {tenant.TenantId}";
+    }
+
+    return $"{tenant.DefaultDomain} — {tenant.TenantId}";
   }
 
   internal static string AzLoginTenantHint(string tenantId) =>

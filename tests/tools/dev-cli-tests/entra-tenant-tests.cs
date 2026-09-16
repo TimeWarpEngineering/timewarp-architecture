@@ -29,6 +29,18 @@ public class FormatTenantLine_Given_
       .ShouldBe("74ca6706-93ef-4a23-b05a-e9ab17b7f86f (name unavailable)");
     return Task.CompletedTask;
   }
+
+  public static Task DomainOnlyResolved_Should_IncludeDomainAndId()
+  {
+    EntraTenant tenant = new(
+      "74ca6706-93ef-4a23-b05a-e9ab17b7f86f",
+      null,
+      "gkenastongmail932.onmicrosoft.com",
+      NameResolved: true);
+    EntraTenants.FormatTenantLine(tenant)
+      .ShouldBe("gkenastongmail932.onmicrosoft.com — 74ca6706-93ef-4a23-b05a-e9ab17b7f86f");
+    return Task.CompletedTask;
+  }
 }
 
 public class TryReadOrganization_Given_
@@ -180,6 +192,27 @@ public class SelectTenant_Given_
   {
     TenantSelection selection = EntraTenants.SelectTenant([CrunchIt, Other], "missing.example");
     selection.Status.ShouldBe(TenantSelectionStatus.NotFound);
+    selection.Candidates.Count.ShouldBe(2);
+    return Task.CompletedTask;
+  }
+
+  public static Task ProvidedDisplayNameMatchesTwo_Should_BeAmbiguous()
+  {
+    EntraTenant firstDefault = new(
+      "74ca6706-93ef-4a23-b05a-e9ab17b7f86f",
+      "Default Directory",
+      "one.onmicrosoft.com",
+      NameResolved: true);
+    EntraTenant secondDefault = new(
+      "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "Default Directory",
+      "two.onmicrosoft.com",
+      NameResolved: true);
+    TenantSelection selection = EntraTenants.SelectTenant(
+      [CrunchIt, firstDefault, secondDefault],
+      "Default Directory");
+    selection.Status.ShouldBe(TenantSelectionStatus.Ambiguous);
+    selection.Selected.ShouldBeNull();
     selection.Candidates.Count.ShouldBe(2);
     return Task.CompletedTask;
   }

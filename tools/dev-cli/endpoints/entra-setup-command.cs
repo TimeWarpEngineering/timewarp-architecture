@@ -5,6 +5,8 @@
 #region Design
 // Non-interactive. Enumerates visible tenants (account list + tenant list + signed-in), resolves
 // Graph names read-only under --dry-run, and requires --tenant when more than one is visible.
+// A provided --tenant that matches more than one candidate (e.g. two Default Directory orgs)
+// prints "matched more than one tenant", not the omitted-flag required message.
 // Mutations (app create/update, sp, credential reset, user-secrets set) still skip on dry-run.
 // Idempotent by display name: prefer domain-suffixed default, reuse bare legacy name if present.
 // Mint a client secret only on first write or --new-secret. A failed user-secrets list aborts
@@ -158,8 +160,17 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
           return false;
 
         case TenantSelectionStatus.Ambiguous:
-          Terminal.WriteErrorLine(
-            "--tenant is required when more than one tenant is visible (dev CLI is non-interactive).".Red());
+          if (string.IsNullOrWhiteSpace(Command.Tenant))
+          {
+            Terminal.WriteErrorLine(
+              "--tenant is required when more than one tenant is visible (dev CLI is non-interactive).".Red());
+          }
+          else
+          {
+            Terminal.WriteErrorLine(
+              $"--tenant '{Command.Tenant.Trim()}' matched more than one tenant.".Red());
+          }
+
           EntraTenantDiscovery.PrintCandidateTable(Terminal, selection.Candidates);
           Terminal.WriteLine("Hint: `dev entra setup --tenant <id|domain|name>`");
           Environment.ExitCode = 1;
