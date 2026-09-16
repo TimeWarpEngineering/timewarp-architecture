@@ -1,5 +1,5 @@
 /* FormField — Tier-1 leaf, CSS isolation. Tokens from tokens.css.
-   Native ancestor (.twe-form-field__control) reaches Fluent light-DOM hosts. */
+   Wrapper width applies here. Fluent host stretch is Exception B in FormField.razor. */
 .twe-form-field {
   display: flex;
   flex-direction: column;
@@ -19,14 +19,6 @@
   display: block;
   width: 100%;
   min-width: 0;
-}
-
-.twe-form-field__control > * {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
 }
 
 .twe-form-field__hint {

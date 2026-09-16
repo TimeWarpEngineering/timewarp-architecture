@@ -3,8 +3,10 @@
   Purpose: right-aligned form action row (Cancel Subtle + Submit Primary).
 
   Design: Tier-1 leaf with a native root. justify-content:flex-end and
-  gap: var(--twe-space-3). Callers supply FluentButton children; this
-  component does not invent appearances. FormContainer routes ActionContent here.
+  gap: var(--twe-space-3). No margin-top — FormContainer column gap and
+  FormSection padding-bottom own the offset before actions. Callers supply
+  FluentButton children; this component does not invent appearances.
+  FormContainer routes ActionContent here.
 *@
 
 @code {

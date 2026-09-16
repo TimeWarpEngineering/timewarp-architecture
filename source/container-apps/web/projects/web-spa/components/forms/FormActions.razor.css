@@ -5,5 +5,4 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--twe-space-3);
-  margin-top: var(--twe-space-6);
 }

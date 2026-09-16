@@ -1,10 +1,12 @@
 #region Purpose
-// Render FormField and assert the control wrapper is full width and the hint appears.
+// Render FormField and assert the hint, default span, and full-width host contract.
 #endregion
 
 #region Design
-// HtmlRenderer is enough — FormField is a Tier-1 leaf with no DI. CSS isolation is not
-// applied by HtmlRenderer, so the full-width contract is also asserted from FormField.razor.css.
+// HtmlRenderer is enough — FormField is a Tier-1 leaf with no DI. Isolated
+// FormField.razor.css cannot target Fluent hosts (Wall A); host stretch is
+// Exception B in FormField.razor. The test asserts that unscoped rule and the
+// wrapper width on FormField.razor.css, not a child `> *` isolation selector.
 #endregion
 
 namespace FormFieldRender_;
@@ -27,6 +29,12 @@ public class FormField_Should_
     css.ShouldContain(".twe-form-field__control");
     css.ShouldContain("width: 100%");
     css.ShouldContain(".twe-form-field__hint");
+    css.ShouldNotContain(".twe-form-field__control > *");
+
+    string razor = ReadFormFieldRazor();
+    razor.ShouldContain(".twe-form-field__control > fluent-text-input");
+    razor.ShouldContain(".twe-form-field__control > fluent-dropdown");
+    razor.ShouldContain("width: 100%");
 
     await using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
     await using HtmlRenderer renderer = new(services, NullLoggerFactory.Instance);
@@ -54,9 +62,15 @@ public class FormField_Should_
     html.ShouldContain("twe-form-field__control");
     html.ShouldContain("twe-form-field--span-12");
     html.ShouldContain("data-qa=\"FormFieldControl\"");
+    html.ShouldContain("fluent-text-input");
+    html.ShouldContain("fluent-dropdown");
   }
 
-  private static string ReadFormFieldCss()
+  private static string ReadFormFieldCss() => ReadFormFieldSource("FormField.razor.css");
+
+  private static string ReadFormFieldRazor() => ReadFormFieldSource("FormField.razor");
+
+  private static string ReadFormFieldSource(string fileName)
   {
     string repoRoot = FindRepoRoot();
     string path = Path.Combine(
@@ -68,7 +82,7 @@ public class FormField_Should_
       "web-spa",
       "components",
       "forms",
-      "FormField.razor.css");
+      fileName);
     File.Exists(path).ShouldBeTrue(path);
     return File.ReadAllText(path);
   }

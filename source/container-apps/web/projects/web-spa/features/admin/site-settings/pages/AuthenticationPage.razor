@@ -14,8 +14,9 @@
   Save is FluentButton submit Primary (RoleForm pattern), disabled while busy.
   Layout is FormSection / FormGrid / FormField / FormActions. Passkey prompt is
   FluentSelect (no native select, no page-local CSS). Tenant line and drift banner
-  stay outside the EditForm. No Cancel — draft reload is SyncDraftFromState after
-  a successful save; there is no cheap unused reset on the command.
+  stay outside the EditForm. FormActions sits after FormSection (hairline above
+  Save), matching Profile / RoleForm. No Cancel — draft reload is SyncDraftFromState
+  after a successful save; there is no cheap unused reset on the command.
 *@
 
 @code {
@@ -88,27 +89,27 @@
 }
 
 <TimeWarpPage Title="Authentication">
-  <FormSection Title="Microsoft 365 sign-in policy"
-               Description="Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it."
-               data-qa="AuthenticationSettings">
-    <p data-qa="ConfigurationTenant">
-      App registration tenant: @SiteSettingsState.ConfigurationTenantLabel
-    </p>
+  <p data-qa="ConfigurationTenant">
+    App registration tenant: @SiteSettingsState.ConfigurationTenantLabel
+  </p>
 
-    @if (SiteSettingsState.HasSnapshot
-      && (SiteSettingsState.ConfigurationEnabledDiffers || SiteSettingsState.ConfigurationAllowBootstrapDiffers))
-    {
-      <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Configuration drift" AllowDismiss="false">
-        <span data-qa="ConfigurationPolicyDrift">
-          Saved policy differs from Authentication:Entra Enabled or AllowBootstrap. Edit here or run `dev entra reseed`.
-        </span>
-      </FluentMessageBar>
-    }
+  @if (SiteSettingsState.HasSnapshot
+    && (SiteSettingsState.ConfigurationEnabledDiffers || SiteSettingsState.ConfigurationAllowBootstrapDiffers))
+  {
+    <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Configuration drift" AllowDismiss="false">
+      <span data-qa="ConfigurationPolicyDrift">
+        Saved policy differs from Authentication:Entra Enabled or AllowBootstrap. Edit here or run `dev entra reseed`.
+      </span>
+    </FluentMessageBar>
+  }
 
-    @if (DraftLoaded)
-    {
-      <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="AuthenticationForm" novalidate>
-        <FluentValidator Validator="@SiteSettingsValidator" />
+  @if (DraftLoaded)
+  {
+    <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="AuthenticationForm" novalidate>
+      <FluentValidator Validator="@SiteSettingsValidator" />
+      <FormSection Title="Microsoft 365 sign-in policy"
+                   Description="Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it."
+                   data-qa="AuthenticationSettings">
         <FormGrid>
           <FormField Label="Offer Microsoft 365 sign-in">
             <FluentCheckbox @bind-Value=Details.EntraSignInEnabled
@@ -138,16 +139,21 @@
             @SiteSettingsState.SaveError
           </FluentMessageBar>
         }
-
-        <FormActions>
-          <FluentButton Type=ButtonType.Submit
-                        Appearance=ButtonAppearance.Primary
-                        Disabled=@IsBusy
-                        data-qa="AuthenticationSave">
-            Save authentication settings
-          </FluentButton>
-        </FormActions>
-      </EditForm>
-    }
-  </FormSection>
+      </FormSection>
+      <FormActions>
+        <FluentButton Type=ButtonType.Submit
+                      Appearance=ButtonAppearance.Primary
+                      Disabled=@IsBusy
+                      data-qa="AuthenticationSave">
+          Save authentication settings
+        </FluentButton>
+      </FormActions>
+    </EditForm>
+  }
+  else
+  {
+    <FormSection Title="Microsoft 365 sign-in policy"
+                 Description="Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it."
+                 data-qa="AuthenticationSettings" />
+  }
 </TimeWarpPage>
