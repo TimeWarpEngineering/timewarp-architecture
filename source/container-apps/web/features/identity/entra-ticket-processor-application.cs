@@ -20,6 +20,12 @@
 // has no delete-principal — the losing AddPrincipalAsync row is abandoned.
 // Issuer mismatch logs Warning with expected vs token issuer URIs (not secrets) and returns a
 // 400 whose detail names that check.
+// One active EntraAccount per principal (task 229): link of a second handle is 409 Microsoft 365
+// already linked before AddCredentialAsync. Switch is Unlink then Link. Concurrent links of two
+// different handles can both pass the list-then-insert check (same TOCTOU class as last-credential
+// revoke); unique (Type, Handle) does not serialize two distinct oids.
+// Credential.Label is EntraIdTokenClaims.CredentialLabel (preferred_username, else name, else
+// "Microsoft 365") on both bootstrap and link Create. Principal.SetDisplayName stays the name claim.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -135,12 +141,21 @@ public sealed class EntraTicketProcessor
       return IdentityProblems.CredentialAlreadyRegistered("Entra account");
     }
 
+    IReadOnlyList<Credential> callerCredentials = await PrincipalStore.ListCredentialsAsync(
+      linkCallerPrincipalId.Value,
+      includeRevoked: false,
+      cancellationToken);
+    if (callerCredentials.Any(c => c.Type == CredentialType.EntraAccount))
+    {
+      return IdentityProblems.Microsoft365AlreadyLinked();
+    }
+
     var credential = Credential.Create(
       linkCallerPrincipalId.Value,
       CredentialType.EntraAccount,
       handle,
       material,
-      "Microsoft 365");
+      claims.CredentialLabel);
     try
     {
       await PrincipalStore.AddCredentialAsync(credential, cancellationToken);
@@ -223,7 +238,7 @@ public sealed class EntraTicketProcessor
       CredentialType.EntraAccount,
       handle,
       material,
-      "Microsoft 365");
+      claims.CredentialLabel);
     try
     {
       await PrincipalStore.AddCredentialAsync(entraCredential, cancellationToken);

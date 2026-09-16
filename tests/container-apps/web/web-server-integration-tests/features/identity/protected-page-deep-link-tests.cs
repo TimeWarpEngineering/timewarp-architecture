@@ -17,6 +17,9 @@
 // regression tripwire — pre-183 they killed the process (exit 134) instead of returning 200.
 // They also assert the body is the real page, not RedirectToLogin's static sign-in fallback,
 // so a silently-anonymous prerender state fails the test rather than passing on status alone.
+// Task 229: Settings prerender fetches credentials so Link is hidden when an EntraAccount is
+// linked, Unlink is disabled (with hint) when it is the last active credential, and Unlink is
+// enabled when a passkey remains.
 #endregion
 
 namespace ProtectedPageDeepLink_;
@@ -185,6 +188,50 @@ public class Returns_
     }
   }
 
+  public static async Task Settings_Linked_Entra_With_Passkey_Should_Hide_Link_And_Enable_Unlink()
+  {
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Member]);
+    const string accountLabel = "Steven.Cramer@TimeWarp.Enterprises";
+    await using IAsyncDisposable offered = await EnableMicrosoft365OfferedAsync();
+    await AddEntraAccountAsync(principalId, accountLabel);
+
+    HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string html = await response.Content.ReadAsStringAsync();
+    html.ShouldContain("data-qa=\"Microsoft365Settings\"");
+    html.ShouldContain("data-qa=\"Microsoft365AccountLabel\"");
+    html.ShouldContain(accountLabel);
+    html.ShouldContain(">Microsoft 365<");
+    html.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
+    html.ShouldContain("data-qa=\"UnlinkMicrosoft365\"");
+    html.ShouldNotContain("data-qa=\"UnlinkMicrosoft365\" disabled");
+    html.ShouldNotContain("data-qa=\"UnlinkMicrosoft365Hint\"");
+  }
+
+  public static async Task Settings_Entra_Only_Should_Disable_Unlink_With_Hint()
+  {
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Member]);
+    const string accountLabel = "Steven.Cramer@TimeWarp.Enterprises";
+    await using IAsyncDisposable offered = await EnableMicrosoft365OfferedAsync();
+    await AddEntraAccountAsync(principalId, accountLabel);
+    await RevokePasskeysAsync(principalId);
+
+    HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string html = await response.Content.ReadAsStringAsync();
+    html.ShouldContain("data-qa=\"Microsoft365Settings\"");
+    html.ShouldContain(accountLabel);
+    html.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
+    html.ShouldContain("data-qa=\"UnlinkMicrosoft365\"");
+    html.ShouldContain("disabled");
+    html.ShouldContain("data-qa=\"UnlinkMicrosoft365Hint\"");
+    html.ShouldContain("Add a passkey first");
+  }
+
   public static async Task Forbidden_Not_Login_Given_Passkey_Member_Admin_Authentication_Html()
   {
     (PrincipalId principalId, string sessionCookie) =
@@ -254,6 +301,89 @@ public class Returns_
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, roleIds);
+  }
+
+  private static async Task AddEntraAccountAsync(PrincipalId principalId, string label)
+  {
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
+    Guid tenantId = Guid.NewGuid();
+    await principalStore.AddCredentialAsync(
+      Credential.Create(
+        principalId,
+        CredentialType.EntraAccount,
+        EntraAccountHandle.Encode(tenantId, Guid.NewGuid()),
+        EntraIssuerMaterial.FromTenantId(tenantId),
+        label));
+  }
+
+  private static async Task RevokePasskeysAsync(PrincipalId principalId)
+  {
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
+    IReadOnlyList<Credential> credentials = await principalStore.ListCredentialsAsync(principalId);
+    foreach (Credential credential in credentials.Where(c => c.Type == CredentialType.Passkey && !c.IsRevoked))
+    {
+      credential.Revoke();
+      await principalStore.UpdateCredentialAsync(credential);
+    }
+  }
+
+  private static async Task<IAsyncDisposable> EnableMicrosoft365OfferedAsync()
+  {
+    AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    EntraAuthenticationOptions options =
+      scope.ServiceProvider.GetRequiredService<IOptions<EntraAuthenticationOptions>>().Value;
+    ISiteSettingsStore store = scope.ServiceProvider.GetRequiredService<ISiteSettingsStore>();
+    SiteSettings? settings = await store.GetAsync();
+    settings.ShouldNotBeNull();
+    bool previousEnabled = options.Enabled;
+    bool previousSignIn = settings!.EntraSignInEnabled;
+    bool previousBootstrap = settings.EntraAllowBootstrap;
+    PasskeyPromptMode previousMode = settings.PasskeyPromptMode;
+    options.Enabled = true;
+    settings.ReplacePolicy(true, previousBootstrap, previousMode);
+    await store.UpdateAsync(settings);
+    return new RestoreMicrosoft365Offered(scope, options, store, previousEnabled, previousSignIn, previousBootstrap, previousMode);
+  }
+
+  private sealed class RestoreMicrosoft365Offered : IAsyncDisposable
+  {
+    private readonly AsyncServiceScope Scope;
+    private readonly EntraAuthenticationOptions Options;
+    private readonly ISiteSettingsStore Store;
+    private readonly bool PreviousEnabled;
+    private readonly bool PreviousSignIn;
+    private readonly bool PreviousBootstrap;
+    private readonly PasskeyPromptMode PreviousMode;
+
+    public RestoreMicrosoft365Offered(
+      AsyncServiceScope scope,
+      EntraAuthenticationOptions options,
+      ISiteSettingsStore store,
+      bool previousEnabled,
+      bool previousSignIn,
+      bool previousBootstrap,
+      PasskeyPromptMode previousMode)
+    {
+      Scope = scope;
+      Options = options;
+      Store = store;
+      PreviousEnabled = previousEnabled;
+      PreviousSignIn = previousSignIn;
+      PreviousBootstrap = previousBootstrap;
+      PreviousMode = previousMode;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+      Options.Enabled = PreviousEnabled;
+      SiteSettings? restore = await Store.GetAsync();
+      restore.ShouldNotBeNull();
+      restore!.ReplacePolicy(PreviousSignIn, PreviousBootstrap, PreviousMode);
+      await Store.UpdateAsync(restore);
+      await Scope.DisposeAsync();
+    }
   }
 
   private static HttpClient CreateNoRedirectClient()

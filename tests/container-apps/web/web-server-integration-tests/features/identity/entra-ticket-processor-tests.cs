@@ -144,6 +144,168 @@ public class Bootstrap_Given_
   private static IOptions<EntraAuthenticationOptions> ConfiguredTenant() =>
     Options.Create(new EntraAuthenticationOptions { TenantId = TrustedTenantId.ToString("D") });
 
+  public static async Task Bootstrap_Should_Set_Label_From_Preferred_Username()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    Guid objectId = Guid.NewGuid();
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(
+      TrustedTenantId,
+      objectId,
+      issuer,
+      "Steven Cramer",
+      "Steven.Cramer@TimeWarp.Enterprises");
+
+    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeBootstrap,
+      linkCallerPrincipalId: null,
+      CancellationToken.None);
+
+    result.IsT0.ShouldBeTrue();
+    Credential? stored = await principalStore.FindCredentialByHandleAsync(
+      CredentialType.EntraAccount,
+      EntraAccountHandle.Encode(TrustedTenantId, objectId));
+    stored.ShouldNotBeNull();
+    stored!.Label.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
+  }
+
+  public static async Task Bootstrap_Should_Set_Label_From_Name_When_Preferred_Username_Missing()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    Guid objectId = Guid.NewGuid();
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, "Steven Cramer");
+
+    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeBootstrap,
+      linkCallerPrincipalId: null,
+      CancellationToken.None);
+
+    result.IsT0.ShouldBeTrue();
+    Credential? stored = await principalStore.FindCredentialByHandleAsync(
+      CredentialType.EntraAccount,
+      EntraAccountHandle.Encode(TrustedTenantId, objectId));
+    stored.ShouldNotBeNull();
+    stored!.Label.ShouldBe("Steven Cramer");
+  }
+
+  public static async Task Link_Second_Active_Entra_Should_409_Already_Linked()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    await principalStore.AddPrincipalAsync(caller);
+    Guid firstObjectId = Guid.NewGuid();
+    await principalStore.AddCredentialAsync(
+      Credential.Create(
+        caller.Id,
+        CredentialType.EntraAccount,
+        EntraAccountHandle.Encode(TrustedTenantId, firstObjectId),
+        EntraIssuerMaterial.FromTenantId(TrustedTenantId),
+        "Steven.Cramer@TimeWarp.Enterprises"));
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(
+      TrustedTenantId,
+      Guid.NewGuid(),
+      issuer,
+      "Other User",
+      "other@TimeWarp.Enterprises");
+
+    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeLink,
+      caller.Id,
+      CancellationToken.None);
+
+    result.IsT1.ShouldBeTrue();
+    result.AsT1.Title.ShouldBe("Microsoft 365 already linked");
+    result.AsT1.Status.ShouldBe(409);
+    IReadOnlyList<Credential> credentials = await principalStore.ListCredentialsAsync(caller.Id);
+    credentials.Count(c => c.Type == CredentialType.EntraAccount && !c.IsRevoked).ShouldBe(1);
+  }
+
+  public static async Task Link_Should_Set_Label_From_Preferred_Username()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    await principalStore.AddPrincipalAsync(caller);
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    Guid objectId = Guid.NewGuid();
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(
+      TrustedTenantId,
+      objectId,
+      issuer,
+      "Steven Cramer",
+      "Steven.Cramer@TimeWarp.Enterprises");
+
+    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeLink,
+      caller.Id,
+      CancellationToken.None);
+
+    result.IsT0.ShouldBeTrue();
+    Credential? stored = await principalStore.FindCredentialByHandleAsync(
+      CredentialType.EntraAccount,
+      EntraAccountHandle.Encode(TrustedTenantId, objectId));
+    stored.ShouldNotBeNull();
+    stored!.Label.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
+  }
+
+  public static async Task Link_Same_Handle_Again_Should_Be_Idempotent()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    await principalStore.AddPrincipalAsync(caller);
+    Guid objectId = Guid.NewGuid();
+    await principalStore.AddCredentialAsync(
+      Credential.Create(
+        caller.Id,
+        CredentialType.EntraAccount,
+        EntraAccountHandle.Encode(TrustedTenantId, objectId),
+        EntraIssuerMaterial.FromTenantId(TrustedTenantId),
+        "Steven.Cramer@TimeWarp.Enterprises"));
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, "Steven Cramer");
+
+    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeLink,
+      caller.Id,
+      CancellationToken.None);
+
+    result.IsT0.ShouldBeTrue();
+    result.AsT0.ShouldBe(caller.Id);
+  }
+
+  public static async Task Bootstrap_Should_Fall_Back_Label_When_Claims_Have_No_Name()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    Guid objectId = Guid.NewGuid();
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+    EntraIdTokenClaims claims = new(TrustedTenantId, objectId, issuer, DisplayName: null);
+
+    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeBootstrap,
+      linkCallerPrincipalId: null,
+      CancellationToken.None);
+
+    result.IsT0.ShouldBeTrue();
+    Credential? stored = await principalStore.FindCredentialByHandleAsync(
+      CredentialType.EntraAccount,
+      EntraAccountHandle.Encode(TrustedTenantId, objectId));
+    stored.ShouldNotBeNull();
+    stored!.Label.ShouldBe(EntraIdTokenClaims.FallbackCredentialLabel);
+  }
+
   private static async Task<EntraTicketProcessor> ProcessorAsync(IPrincipalStore? principalStore = null)
   {
     InMemorySiteSettingsStore settingsStore = new();

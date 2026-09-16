@@ -7,7 +7,8 @@
 // parent 131 F-006). Title/Status/Detail strings are copied VERBATIM from the prior per-handler
 // factories — no wording "improvements." Parameterized only where intentional variants already
 // existed (MalformedPayload field list, ChallengeInvalid ceremony label, CredentialAlreadyRegistered
-// credential kind, VerificationFailed title prefix + reason). Unique single-consumer problems
+// credential kind, Microsoft365AlreadyLinked one-Entra-per-principal, VerificationFailed title prefix
+// + reason). Unique single-consumer problems
 // (AuthenticationFailed, IssuanceFailed, revoke set, GetAgentIdentity Unauthorized) live here too
 // so every identity handler returns problems from one place.
 // public static so web-server identity endpoints (same Identity slice, different assembly) can
@@ -51,6 +52,13 @@ public static class IdentityProblems
     Title = "Credential already registered",
     Status = 409,
     Detail = $"This {kind} is already registered to an account."
+  };
+
+  public static SharedProblemDetails Microsoft365AlreadyLinked() => new()
+  {
+    Title = "Microsoft 365 already linked",
+    Status = 409,
+    Detail = "This account already has a Microsoft 365 identity linked. Unlink it first to switch."
   };
 
   public static SharedProblemDetails PasskeyRegistrationVerificationFailed(WebAuthnFailureReason reason) => new()

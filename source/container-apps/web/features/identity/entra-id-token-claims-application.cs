@@ -1,5 +1,5 @@
 #region Purpose
-// Reads tid/oid/iss (and optional display name) from an Entra ID token ClaimsPrincipal.
+// Reads tid/oid/iss plus optional name and preferred_username from an Entra ID token ClaimsPrincipal.
 #endregion
 
 #region Design
@@ -8,19 +8,48 @@
 // if a host re-enables inbound mapping. Issuer pin is checked later against EntraIssuerMaterial.
 // TryRead reports the first failing check (missing vs unparsable tid/oid, missing iss) so the
 // HTTP adapter can log types-only diagnostics and name the check in the 400 detail.
+// PreferredUsername is the preferred_username claim (UPN/email); DisplayName is the name claim.
+// CredentialLabel prefers PreferredUsername, then DisplayName, then "Microsoft 365" — stored as
+// Credential.Label only (no tokens).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
 
 using System.Security.Claims;
 
-public readonly record struct EntraIdTokenClaims(Guid TenantId, Guid ObjectId, string Issuer, string? DisplayName)
+public readonly record struct EntraIdTokenClaims(
+  Guid TenantId,
+  Guid ObjectId,
+  string Issuer,
+  string? DisplayName,
+  string? PreferredUsername = null)
 {
   private const string TenantIdClaim = "tid";
   private const string ObjectIdClaim = "oid";
   private const string IssuerClaim = "iss";
   private const string TenantIdSchemaClaim = "http://schemas.microsoft.com/identity/claims/tenantid";
   private const string ObjectIdSchemaClaim = "http://schemas.microsoft.com/identity/claims/objectidentifier";
+  private const string NameClaim = "name";
+  private const string PreferredUsernameClaim = "preferred_username";
+  public const string FallbackCredentialLabel = "Microsoft 365";
+
+  public string CredentialLabel
+  {
+    get
+    {
+      if (!string.IsNullOrWhiteSpace(PreferredUsername))
+      {
+        return PreferredUsername.Trim();
+      }
+
+      if (!string.IsNullOrWhiteSpace(DisplayName))
+      {
+        return DisplayName.Trim();
+      }
+
+      return FallbackCredentialLabel;
+    }
+  }
 
   public static bool TryRead
   (
@@ -66,8 +95,9 @@ public readonly record struct EntraIdTokenClaims(Guid TenantId, Guid ObjectId, s
       return false;
     }
 
-    string? displayName = FirstClaim(principal, "name") ?? FirstClaim(principal, "preferred_username");
-    claims = new EntraIdTokenClaims(tenantId, objectId, issuer.Trim(), displayName);
+    string? displayName = FirstClaim(principal, NameClaim);
+    string? preferredUsername = FirstClaim(principal, PreferredUsernameClaim);
+    claims = new EntraIdTokenClaims(tenantId, objectId, issuer.Trim(), displayName, preferredUsername);
     return true;
   }
 
