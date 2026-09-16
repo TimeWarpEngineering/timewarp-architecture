@@ -1,0 +1,36 @@
+/* FormSection — Tier-1 leaf, CSS isolation. Tokens from tokens.css. */
+.twe-form-section {
+  padding-bottom: var(--twe-space-12);
+  margin-bottom: var(--twe-space-12);
+  border-bottom: 1px solid var(--twe-rule);
+}
+
+.twe-form-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.twe-form-section__title {
+  margin: 0;
+  font-size: var(--twe-text-section-title);
+  font-weight: 600;
+  color: var(--twe-ink);
+}
+
+.twe-form-section__description {
+  margin: var(--twe-space-2) 0 0;
+  font-size: var(--twe-text-body);
+  color: var(--twe-muted);
+}
+
+.twe-form-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--twe-space-6);
+  margin-top: var(--twe-space-6);
+  min-width: 0;
+}
+
+.twe-form-section__body > * {
+  min-width: 0;
+  width: 100%;
+}

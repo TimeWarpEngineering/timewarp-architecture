@@ -1,4 +1,11 @@
 @namespace TimeWarp.Architecture.Components
+@*
+  Purpose: card-wrapped form shell with title row, main content, and FormActions.
+
+  Design: folds onto the shared form primitives — ActionContent renders inside
+  FormActions (right-aligned, --twe-space-3). Header uses the same section-title
+  token as FormSection. No inline styles (CSP). TodoItemFormContainer is the caller.
+*@
 
 @code {
   [Parameter] public RenderFragment? MainContent { get; set; }
@@ -8,12 +15,12 @@
 }
 
 <Card>
-  <div class="twe-stack">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-      <h2 style="margin:0;font-size:var(--twe-text-section-title);font-weight:600;">@TitleContent</h2>
+  <div class="twe-form-container">
+    <div class="twe-form-container__header">
+      <h2 class="twe-form-container__title">@TitleContent</h2>
       @TitleButtonContent
     </div>
-    <div>@MainContent</div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;">@ActionContent</div>
+    <div class="twe-form-container__main">@MainContent</div>
+    <FormActions>@ActionContent</FormActions>
   </div>
 </Card>

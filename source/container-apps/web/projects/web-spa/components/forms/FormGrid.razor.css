@@ -1,0 +1,14 @@
+/* FormGrid — Tier-1 leaf, CSS isolation. Tokens from tokens.css. */
+.twe-form-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--twe-space-3);
+  row-gap: var(--twe-space-6);
+  width: 100%;
+}
+
+@media (max-width: 639px) {
+  .twe-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

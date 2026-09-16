@@ -1,0 +1,34 @@
+@namespace TimeWarp.Architecture.Components
+@*
+  Purpose: stacked form section — heading, one-line description, then fields.
+
+  Design: Tier-1 leaf with a native <section> root so CSS isolation applies.
+  Hairline uses --twe-rule (closest token to a 1px border). Title uses
+  --twe-text-section-title at weight 600. ChildContent is typically a FormGrid.
+  Unmatched attributes (data-qa) splat onto the section.
+*@
+
+@code {
+  [Parameter] public string? Title { get; set; }
+  [Parameter] public string? Description { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+}
+
+<section class="twe-form-section @Class" @attributes="AdditionalAttributes">
+  @if (!string.IsNullOrWhiteSpace(Title))
+  {
+    <h2 class="twe-form-section__title">@Title</h2>
+  }
+  @if (!string.IsNullOrWhiteSpace(Description))
+  {
+    <p class="twe-form-section__description">@Description</p>
+  }
+  @if (ChildContent is not null)
+  {
+    <div class="twe-form-section__body">
+      @ChildContent
+    </div>
+  }
+</section>

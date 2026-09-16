@@ -9,6 +9,8 @@
 // Nav sits in the Admin category (admin.access). SiteSettingsState is the Settings slice.
 // Task 231: policy fields bind ISiteSettingsDetails via EditForm + FluentButton submit
 // (RoleForm pattern). Tenant line and drift banner stay outside the form.
+// Task 234: FormSection / FormGrid / FormField / FormActions; FluentSelect for
+// PasskeyPromptMode; no page-local twe-settings CSS.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.SiteSettings;

@@ -1,0 +1,9 @@
+/* FormActions — Tier-1 leaf, CSS isolation. Tokens from tokens.css. */
+.twe-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--twe-space-3);
+  margin-top: var(--twe-space-6);
+}

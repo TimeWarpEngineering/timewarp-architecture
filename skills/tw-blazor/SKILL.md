@@ -47,3 +47,14 @@ Reference appearances: `source/container-apps/web/projects/web-spa/features/styl
 
 Form submit reference: `source/container-apps/web/projects/web-spa/features/admin/roles/components/RoleForm.razor`
 (`EditForm` + `OnValidSubmit` + `FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary data-qa="RoleSave"`).
+
+# Forms
+
+Forms use `FormSection` / `FormField` / `FormGrid` / `FormActions` from `components/forms`.
+Controls are full width by default (a field takes the whole row unless `FormField.Span` pairs
+short fields such as City / State / ZIP). Spacing via the `--twe-space-*` tokens
+(`--twe-space-2` label→control, `--twe-space-6` field row gap, `--twe-space-12` section gap,
+`--twe-space-3` action gap). No page-local margins.
+
+Reference: `source/container-apps/web/projects/web-spa/features/style-guide/pages/StyleGuidePage.razor`
+(Forms card). Applied on ProfilePage, RoleForm, and AuthenticationPage.

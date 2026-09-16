@@ -59,4 +59,14 @@
   --twe-text-body: 14px;
   --twe-text-helper: 12px;
   --twe-text-eyebrow: 11px;
+
+  /* Spacing — form rhythm (FormSection / FormField / FormGrid / FormActions).
+     Map from the Tailwind UI stacked form (rhythm only; we do not use Tailwind):
+     mt-2 (8px) → --twe-space-2; gap-y-8 (32px) → --twe-space-6 at 24px
+     (Fluent recommends 24px between fields; 24 is the pick); pb-12 / space-y-12
+     (48px) → --twe-space-12; action gap → --twe-space-3. */
+  --twe-space-2: 8px;
+  --twe-space-3: 12px;
+  --twe-space-6: 24px;
+  --twe-space-12: 48px;
 }

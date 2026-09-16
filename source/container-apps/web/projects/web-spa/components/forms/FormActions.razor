@@ -1,0 +1,17 @@
+@namespace TimeWarp.Architecture.Components
+@*
+  Purpose: right-aligned form action row (Cancel Subtle + Submit Primary).
+
+  Design: Tier-1 leaf with a native root. justify-content:flex-end and
+  gap: var(--twe-space-3). Callers supply FluentButton children; this
+  component does not invent appearances. FormContainer routes ActionContent here.
+*@
+
+@code {
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public string? Class { get; set; }
+}
+
+<div class="twe-form-actions @Class">
+  @ChildContent
+</div>

@@ -1,0 +1,55 @@
+/* FormField — Tier-1 leaf, CSS isolation. Tokens from tokens.css.
+   Native ancestor (.twe-form-field__control) reaches Fluent light-DOM hosts. */
+.twe-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--twe-space-2);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.twe-form-field__label {
+  font-size: var(--twe-text-body);
+  font-weight: 600;
+  color: var(--twe-ink);
+}
+
+.twe-form-field__control {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.twe-form-field__control > * {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.twe-form-field__hint {
+  margin: 0;
+  font-size: var(--twe-text-helper);
+  color: var(--twe-muted);
+}
+
+.twe-form-field--span-1 { grid-column: span 1; }
+.twe-form-field--span-2 { grid-column: span 2; }
+.twe-form-field--span-3 { grid-column: span 3; }
+.twe-form-field--span-4 { grid-column: span 4; }
+.twe-form-field--span-5 { grid-column: span 5; }
+.twe-form-field--span-6 { grid-column: span 6; }
+.twe-form-field--span-7 { grid-column: span 7; }
+.twe-form-field--span-8 { grid-column: span 8; }
+.twe-form-field--span-9 { grid-column: span 9; }
+.twe-form-field--span-10 { grid-column: span 10; }
+.twe-form-field--span-11 { grid-column: span 11; }
+.twe-form-field--span-12 { grid-column: span 12; }
+
+@media (max-width: 639px) {
+  .twe-form-field {
+    grid-column: 1 / -1;
+  }
+}

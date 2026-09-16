@@ -13,6 +13,8 @@
   not applied as UI culture. Fluent UI Blazor v5 Combobox Initialize writes closed text from
   Value is TOption then GetOptionText — so Language/Region use TOption == TValue == string with
   OptionText → LabelFor. Theme FluentSelect already shows labels without that combobox path.
+  Layout is FormSection / FormGrid / FormField / FormActions (full-width controls). Cancel
+  reloads the draft from ProfileState (SyncCommandFromState) — no extra action-set.
 *@
 
 @code {
@@ -54,77 +56,89 @@
     await ProfileState.UpdateProfile(Command);
     SyncCommandFromState();
   }
+
+  private void HandleCancel() => SyncCommandFromState();
 }
 
 <TimeWarpPage Title="Profile">
-  <div class="twe-stack">
-    <Card Title="Your profile">
-      @if (IsLoading)
-      {
-        <p><em>Loading…</em></p>
-      }
-      else
-      {
-        <div class="twe-stack">
-          <FluentAvatar
-            Image=@ProfileState.Avatar
-            Name=@ProfileState.Alias
-            Size="AvatarSize.Size56" />
-          <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="ProfileForm" novalidate>
-            <FluentValidator Validator="@ProfileValidator" />
-            <FluentStack Orientation=Orientation.Vertical VerticalGap="16">
-              <div>
-                <FluentTextInput @bind-Value=Details.Alias Label="Display name" Name="Alias" data-qa="ProfileAlias" style="width:100%" />
-                <ValidationMessage For="@(() => Details.Alias)" />
-              </div>
-              <div>
-                <FluentTextInput @bind-Value=Details.Email Label="Email (optional)" Name="Email" data-qa="ProfileEmail" style="width:100%" />
-                <ValidationMessage For="@(() => Details.Email)" />
-              </div>
-              <div>
-                <FluentCombobox TOption="string" TValue="string"
-                  Items="@ProfileCatalog.LanguageCodes"
-                  OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Languages, code))"
-                  @bind-Value="Details.Language"
-                  Label="Language"
-                  Name="Language"
-                  Placeholder="Search languages"
-                  Width="100%"
-                  Height="20rem"
-                  data-qa="ProfileLanguage" />
-                <ValidationMessage For="@(() => Details.Language)" />
-              </div>
-              <div>
-                <FluentCombobox TOption="string" TValue="string"
-                  Items="@ProfileCatalog.RegionCodes"
-                  OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Regions, code))"
-                  @bind-Value="Details.Region"
-                  Label="Region"
-                  Name="Region"
-                  Placeholder="Search regions"
-                  Width="100%"
-                  Height="20rem"
-                  data-qa="ProfileRegion" />
-                <ValidationMessage For="@(() => Details.Region)" />
-              </div>
-              <div>
-                <FluentSelect TOption="ProfileCatalog.Entry" TValue="string"
-                  Items="@ProfileCatalog.Themes"
-                  OptionValue="@(static entry => entry?.Code)"
-                  OptionText="@(static entry => entry?.Label ?? string.Empty)"
-                  @bind-Value="Details.Theme"
-                  Label="Theme"
-                  Name="Theme"
-                  Width="100%"
-                  data-qa="ProfileTheme" />
-                <ValidationMessage For="@(() => Details.Theme)" />
-              </div>
-              <FluentCheckbox @bind-Value=Details.Notifications Label="Notifications" />
-              <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary Disabled=@IsBusy data-qa="ProfileSave">Save</FluentButton>
-            </FluentStack>
-          </EditForm>
-        </div>
-      }
-    </Card>
-  </div>
+  @if (IsLoading)
+  {
+    <p><em>Loading…</em></p>
+  }
+  else
+  {
+    <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="ProfileForm" novalidate>
+      <FluentValidator Validator="@ProfileValidator" />
+
+      <FormSection Title="Profile" Description="How you appear on this account.">
+        <FormGrid>
+          <FormField>
+            <FluentAvatar
+              Image=@ProfileState.Avatar
+              Name=@ProfileState.Alias
+              Size="AvatarSize.Size56" />
+          </FormField>
+          <FormField Label="Display name">
+            <FluentTextInput @bind-Value=Details.Alias Name="Alias" AriaLabel="Display name" data-qa="ProfileAlias" Width="100%" />
+            <ValidationMessage For="@(() => Details.Alias)" />
+          </FormField>
+          <FormField Label="Email (optional)">
+            <FluentTextInput @bind-Value=Details.Email Name="Email" AriaLabel="Email (optional)" data-qa="ProfileEmail" Width="100%" />
+            <ValidationMessage For="@(() => Details.Email)" />
+          </FormField>
+        </FormGrid>
+      </FormSection>
+
+      <FormSection Title="Preferences" Description="Language, region, theme, and notifications.">
+        <FormGrid>
+          <FormField Label="Language">
+            <FluentCombobox TOption="string" TValue="string"
+              Items="@ProfileCatalog.LanguageCodes"
+              OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Languages, code))"
+              @bind-Value="Details.Language"
+              Name="Language"
+              AriaLabel="Language"
+              Placeholder="Search languages"
+              Width="100%"
+              Height="20rem"
+              data-qa="ProfileLanguage" />
+            <ValidationMessage For="@(() => Details.Language)" />
+          </FormField>
+          <FormField Label="Region">
+            <FluentCombobox TOption="string" TValue="string"
+              Items="@ProfileCatalog.RegionCodes"
+              OptionText="@(static code => ProfileCatalog.LabelFor(ProfileCatalog.Regions, code))"
+              @bind-Value="Details.Region"
+              Name="Region"
+              AriaLabel="Region"
+              Placeholder="Search regions"
+              Width="100%"
+              Height="20rem"
+              data-qa="ProfileRegion" />
+            <ValidationMessage For="@(() => Details.Region)" />
+          </FormField>
+          <FormField Label="Theme">
+            <FluentSelect TOption="ProfileCatalog.Entry" TValue="string"
+              Items="@ProfileCatalog.Themes"
+              OptionValue="@(static entry => entry?.Code)"
+              OptionText="@(static entry => entry?.Label ?? string.Empty)"
+              @bind-Value="Details.Theme"
+              Name="Theme"
+              AriaLabel="Theme"
+              Width="100%"
+              data-qa="ProfileTheme" />
+            <ValidationMessage For="@(() => Details.Theme)" />
+          </FormField>
+          <FormField Label="Notifications">
+            <FluentCheckbox @bind-Value=Details.Notifications AriaLabel="Notifications" />
+          </FormField>
+        </FormGrid>
+      </FormSection>
+
+      <FormActions>
+        <FluentButton Type=ButtonType.Button Appearance=ButtonAppearance.Subtle Disabled=@IsBusy OnClick=HandleCancel data-qa="ProfileCancel">Cancel</FluentButton>
+        <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary Disabled=@IsBusy data-qa="ProfileSave">Save</FluentButton>
+      </FormActions>
+    </EditForm>
+  }
 </TimeWarpPage>
