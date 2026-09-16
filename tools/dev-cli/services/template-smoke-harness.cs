@@ -17,11 +17,10 @@
 // template-safety escape (cnd:noEmit) for generated apps — the ordinary solution build never
 // touches these files (they compile into no layer project by design), so without this pair the
 // gate would be silently blind to a regression here.
-// Task 136 / 226: AssertJaribuFamilyAggregatorsAsync (tier 3) bare `dotnet test -c Release`
-// from each family aggregator project dir. Gate is exit 0, failed == 0, succeeded at or
-// above MinimumSucceeded (a floor — raise deliberately, never bump just because tests were
-// added), and total == succeeded + skipped. Unparsable MTP summary fails. Succeeded above
-// 2× the floor logs a warning so the floor stays meaningful. Serial for fixed port 7255.
+// Task 136 / 226 / 228: AssertJaribuFamilyAggregatorsAsync (tier 3) bare `dotnet test -c Release`
+// from each family aggregator project dir. Gate is exit 0, failed == 0, total > 0, and
+// total == succeeded + skipped. Unparsable MTP summary fails (silent zero-discovery).
+// Serial for fixed port 7255.
 // Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
 // AssertSkillsShipped: generated apps must contain the eight skills/*/SKILL.md files and must
 // not contain any analysis/ directory under skills/ (pack exclude).
@@ -564,20 +563,18 @@ internal sealed partial class TemplateSmokeHarness
   /// <summary>
   /// Per-family JARIBU_MULTI aggregator projects (task 136), plus (task 145-002 R2-3) the
   /// timewarp-testing-tests suite project, which needs BOTH web and api. Relative to the
-  /// generated app root. MinimumSucceeded is a floor; raise deliberately, never needs bumping
-  /// when tests are added. Serial — api binds :7255/:7000. RequiredFamilies lets a flag-off
+  /// generated app root. Serial — api binds :7255/:7000. RequiredFamilies lets a flag-off
   /// smoke entry assert the artifacts are ABSENT (task 136 review R2-1) whenever ANY required
   /// family is excluded: an aggregator orphaned by a family flag would break the generated app,
   /// so absence is the pass condition. Also (task 145-002 R2-1) the acid test that the
   /// ContentRootPath fix holds for a MULTI-hosted-server consumer in a GENERATED app, not just
   /// this monorepo.
   /// </summary>
-  public static readonly (string[] RequiredFamilies, string RelativeProjectDir, int MinimumSucceeded)[] JaribuFamilyAggregators =
+  public static readonly (string[] RequiredFamilies, string RelativeProjectDir)[] JaribuFamilyAggregators =
   [
-    // Floor; raise deliberately, never needs bumping when tests are added.
-    (["web"], "tests/container-apps/web/web-jaribu-tests", 177),
-    (["api"], "tests/container-apps/api/api-jaribu-tests", 9),
-    (["web", "api"], "tests/common/timewarp-testing-tests", 3),
+    (["web"], "tests/container-apps/web/web-jaribu-tests"),
+    (["api"], "tests/container-apps/api/api-jaribu-tests"),
+    (["web", "api"], "tests/common/timewarp-testing-tests"),
   ];
 
   // The exact guarded lines a template-safe co-located runfile preamble must contain, verbatim,
@@ -783,10 +780,9 @@ internal sealed partial class TemplateSmokeHarness
   /// <summary>
   /// Tier 3 (task 136): assert each family JARIBU_MULTI aggregator exists in the generated app
   /// and that bare <c>dotnet test -c Release</c> from that project directory exits 0, reports
-  /// zero failures, a succeeded count at or above the MinimumSucceeded floor, and
-  /// total == succeeded + skipped. Aggregators are not in .slnx (solution build never compiles
-  /// them); this is the multi-mode / MTP regression gate. Serial — api aggregator uses fixed
-  /// port 7255.
+  /// zero failures, a nonzero total, and total == succeeded + skipped. Aggregators are not in
+  /// .slnx (solution build never compiles them); this is the multi-mode / MTP regression gate.
+  /// Serial — api aggregator uses fixed port 7255.
   /// </summary>
   public async Task<bool> AssertJaribuFamilyAggregatorsAsync(
     string outputDir,
@@ -795,7 +791,7 @@ internal sealed partial class TemplateSmokeHarness
   {
     bool ok = true;
 
-    foreach ((string[] requiredFamilies, string relativeProjectDir, int minimumSucceeded) in JaribuFamilyAggregators)
+    foreach ((string[] requiredFamilies, string relativeProjectDir) in JaribuFamilyAggregators)
     {
       string projectDir = Path.Combine(outputDir, relativeProjectDir.Replace('/', Path.DirectorySeparatorChar));
       string csprojName = Path.GetFileName(relativeProjectDir) + ".csproj";
@@ -830,7 +826,7 @@ internal sealed partial class TemplateSmokeHarness
       }
 
       Terminal.WriteLine(
-        $"Running generated Jaribu aggregator (MTP bare dotnet test): {relativeProjectDir} (floor {minimumSucceeded} succeeded)...");
+        $"Running generated Jaribu aggregator (MTP bare dotnet test): {relativeProjectDir}...");
 
       CommandOutput result = await Shell.Builder("dotnet")
         .WithArguments("test", "-c", "Release")
@@ -841,8 +837,7 @@ internal sealed partial class TemplateSmokeHarness
       string plain = AnsiEscape().Replace(result.Combined, "");
       bool parsed = JaribuAggregatorSummaryGate.TryParseMtpSummary(plain, out MtpSummary mtpSummary);
       AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
-        parsed ? mtpSummary : null,
-        minimumSucceeded);
+        parsed ? mtpSummary : null);
 
       if (!result.Success)
       {
@@ -866,12 +861,8 @@ internal sealed partial class TemplateSmokeHarness
       }
 
       Terminal.WriteLine(
-        $"{relativeProjectDir}: MTP summary total={mtpSummary.Total} succeeded={mtpSummary.Succeeded} skipped={mtpSummary.Skipped} (floor {minimumSucceeded}).");
+        $"{relativeProjectDir}: MTP summary total={mtpSummary.Total} succeeded={mtpSummary.Succeeded} skipped={mtpSummary.Skipped}.");
       Terminal.WriteLine($"{relativeProjectDir}: {mtpSummary.Succeeded}/{mtpSummary.Total} succeeded via MTP.".Green());
-      if (aggregatorSummaryDecision.AggregatorSummaryVerdict == AggregatorSummaryVerdict.WarnStaleFloor)
-      {
-        Terminal.WriteLine($"{relativeProjectDir}: {aggregatorSummaryDecision.Message}".Yellow());
-      }
     }
 
     return ok;

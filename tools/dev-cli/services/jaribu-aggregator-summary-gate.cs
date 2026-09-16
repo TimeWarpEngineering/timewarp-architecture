@@ -1,16 +1,15 @@
 #region Purpose
-// Pure MTP aggregator-summary parse and pass/fail/warn decision for template-smoke tier 3.
+// Pure MTP aggregator-summary parse and pass/fail decision for template-smoke tier 3.
 #endregion
 
 #region Design
 // Kept free of Amuru/Terminal so tests/tools/dev-cli-tests can Compile-include this file.
-// Gate is "the generated aggregator's suite ran and nothing failed", not an exact test count:
-// exit 0 is a harness precondition; failed == 0 (failed: line required); succeeded at or above
-// a floor; total == succeeded + skipped (skipped: missing means 0). Unparsable summary fails
-// so a silent zero-discovery cannot pass. Succeeded above 2× the floor is a warning only —
-// raise MinimumSucceeded deliberately so the floor stays a meaningful discovery floor.
-// MTP host lines are lowercase (total:/succeeded:/failed:/skipped:); regexes are IgnoreCase
-// and also accept the compact `Test summary: total: N, failed: …` form.
+// Gate is "the generated aggregator's suite ran and discovered tests, and nothing failed":
+// exit 0 is a harness precondition; failed == 0 (failed: line required); total > 0;
+// total == succeeded + skipped (skipped: missing means 0). Unparsable summary fails
+// so a silent zero-discovery cannot pass. No per-family floor — a count nobody wants
+// to maintain (task 228). MTP host lines are lowercase (total:/succeeded:/failed:/skipped:);
+// regexes are IgnoreCase and also accept the compact `Test summary: total: N, failed: …` form.
 #endregion
 
 namespace DevCli.Services;
@@ -23,10 +22,9 @@ internal readonly record struct MtpSummary(int Total, int Succeeded, int Failed,
 internal enum AggregatorSummaryVerdict
 {
   Pass,
-  WarnStaleFloor,
   FailUnparsable,
   FailHasFailures,
-  FailBelowFloor,
+  FailZeroTotal,
   FailTotalMismatch,
 }
 
@@ -34,8 +32,7 @@ internal readonly record struct AggregatorSummaryDecision(
   AggregatorSummaryVerdict AggregatorSummaryVerdict,
   string Message)
 {
-  internal bool Passed =>
-    AggregatorSummaryVerdict is AggregatorSummaryVerdict.Pass or AggregatorSummaryVerdict.WarnStaleFloor;
+  internal bool Passed => AggregatorSummaryVerdict is AggregatorSummaryVerdict.Pass;
 }
 
 internal static partial class JaribuAggregatorSummaryGate
@@ -92,10 +89,10 @@ internal static partial class JaribuAggregatorSummaryGate
 
   /// <summary>
   /// Decides whether a parsed MTP aggregator summary (or a failed parse) satisfies the
-  /// zero-failure floor gate. Does not consider process exit code — that is a harness
-  /// precondition.
+  /// zero-failure, at-least-one-test gate. Does not consider process exit code — that is a
+  /// harness precondition.
   /// </summary>
-  internal static AggregatorSummaryDecision Decide(MtpSummary? mtpSummary, int minimumSucceeded)
+  internal static AggregatorSummaryDecision Decide(MtpSummary? mtpSummary)
   {
     if (mtpSummary is not { } summary)
     {
@@ -111,11 +108,11 @@ internal static partial class JaribuAggregatorSummaryGate
         $"aggregator reported failed={summary.Failed}");
     }
 
-    if (summary.Succeeded < minimumSucceeded)
+    if (summary.Total == 0)
     {
       return new AggregatorSummaryDecision(
-        AggregatorSummaryVerdict.FailBelowFloor,
-        $"succeeded {summary.Succeeded} is below floor {minimumSucceeded}");
+        AggregatorSummaryVerdict.FailZeroTotal,
+        "aggregator reported total=0 (silent zero-discovery)");
     }
 
     if (summary.Total != summary.Succeeded + summary.Skipped)
@@ -123,13 +120,6 @@ internal static partial class JaribuAggregatorSummaryGate
       return new AggregatorSummaryDecision(
         AggregatorSummaryVerdict.FailTotalMismatch,
         $"total {summary.Total} != succeeded {summary.Succeeded} + skipped {summary.Skipped}");
-    }
-
-    if (summary.Succeeded > 2 * minimumSucceeded)
-    {
-      return new AggregatorSummaryDecision(
-        AggregatorSummaryVerdict.WarnStaleFloor,
-        $"succeeded {summary.Succeeded} is more than 2× floor {minimumSucceeded}; raise MinimumSucceeded so the floor stays meaningful");
     }
 
     return new AggregatorSummaryDecision(AggregatorSummaryVerdict.Pass, string.Empty);

@@ -103,12 +103,10 @@ namespace Your.Slice.Namespace
   generated aggregators via MTP.
 - New runfiles that introduce additional `#:project` dependencies must extend the matching
   family aggregator's `ProjectReference` list (`web-jaribu-tests` / `api-jaribu-tests`).
-- `TemplateSmokeHarness.JaribuFamilyAggregators` `MinimumSucceeded` is a **floor** (web 177 /
-  api 9 / common 3). Tier 3 asserts `failed == 0`, `succeeded >= floor`, and
-  `total == succeeded + skipped` — do **not** bump the floor just because tests were added.
-  Raise it deliberately when a discovery regression would otherwise still clear the old floor
-  (or when smoke warns that succeeded exceeded 2× the floor). New family aggregators still
-  need a `MinimumSucceeded` entry.
+- `dev template-smoke` tier 3 runs each family aggregator via MTP and asserts exit 0,
+  `failed == 0`, `total > 0`, and `total == succeeded + skipped`. That guards silent
+  zero-discovery (co-located files excluded by template config). New family aggregators
+  still need a `JaribuFamilyAggregators` entry (`RequiredFamilies` + `RelativeProjectDir`).
 - `#region Purpose` is never suppressed (TWA0004) — write the real one-line reason, not a
   placeholder.
 
