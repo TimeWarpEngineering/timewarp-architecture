@@ -86,7 +86,8 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
         EntraSetup.ClientSecretKey,
         EntraSetup.TrustedTenants0Key,
         EntraSetup.AllowBootstrapKey,
-        EntraSetup.PublicOriginKey
+        EntraSetup.PublicOriginKey,
+        EntraSetup.ReseedSiteSettingsKey
       ];
 
       Terminal.WriteLine("User secrets (Authentication:Entra)");

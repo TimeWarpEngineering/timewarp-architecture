@@ -3,26 +3,37 @@
 #endregion
 
 #region Design
-// Application takes ISiteSettingsStore, not PostgresDbContext and not Identity.Application types
-// (TWA0009). Does not insert when empty — only SiteSettingsSeeder writes the first row (from
-// Authentication:Entra at boot via SiteSettingsSeedHostedService.StartingAsync). Empty store
-// returns NotInitialized (503). Tenant ids serialize as D-format GUID strings.
+// Application takes ISiteSettingsStore, not PostgresDbContext. Does not insert when empty —
+// only SiteSettingsSeeder writes the first row (from Authentication:Entra at boot via
+// SiteSettingsSeedHostedService.StartingAsync). Empty store returns NotInitialized (503).
+// Tenant ids serialize as D-format GUID strings. Configuration* fields come from bound
+// EntraAuthenticationOptions (Identity slice) so Admin/Authentication can show drift without
+// a second endpoint — CrossSliceReference on Handler.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings.Application;
 
+using TimeWarp.Architecture.Features.Identity.Application;
+using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
 using static TimeWarp.Architecture.Features.Settings.GetSiteSettings;
 
 public sealed class GetSiteSettings
 {
+  [CrossSliceReference(
+    typeof(EntraAuthenticationOptions),
+    "Projects bound Authentication:Entra tenant and enablement onto GetSiteSettings so Admin/Authentication can show config drift without a second endpoint.")]
   public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
     private readonly ISiteSettingsStore SiteSettingsStore;
+    private readonly IOptions<EntraAuthenticationOptions> Options;
 
-    public Handler(ISiteSettingsStore siteSettingsStore)
+    public Handler(
+      ISiteSettingsStore siteSettingsStore,
+      IOptions<EntraAuthenticationOptions> options)
     {
       SiteSettingsStore = siteSettingsStore;
+      Options = options;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(
@@ -37,15 +48,27 @@ public sealed class GetSiteSettings
         return SiteSettingsProblems.NotInitialized();
       }
 
-      return ToResponse(settings);
+      return ToResponse(settings, Options.Value);
+    }
+
+    private static Response ToResponse(SiteSettings settings, EntraAuthenticationOptions configured)
+    {
+      string? tenantId = string.IsNullOrWhiteSpace(configured.TenantId) ? null : configured.TenantId.Trim();
+      string? displayName = string.IsNullOrWhiteSpace(configured.TenantDisplayName)
+        ? null
+        : configured.TenantDisplayName.Trim();
+      string? domain = string.IsNullOrWhiteSpace(configured.TenantDomain) ? null : configured.TenantDomain.Trim();
+      return new(
+        entraSignInEnabled: settings.EntraSignInEnabled,
+        entraAllowBootstrap: settings.EntraAllowBootstrap,
+        entraTrustedTenants: [.. settings.EntraTrustedTenants.Select(static tenant => tenant.ToString("D"))],
+        passkeyPromptMode: settings.PasskeyPromptMode,
+        version: settings.Version,
+        configurationTenantId: tenantId,
+        configurationTenantDisplayName: displayName,
+        configurationTenantDomain: domain,
+        configurationEnabled: configured.Enabled,
+        configurationAllowBootstrap: configured.AllowBootstrap);
     }
   }
-
-  internal static Response ToResponse(SiteSettings settings) =>
-    new(
-      entraSignInEnabled: settings.EntraSignInEnabled,
-      entraAllowBootstrap: settings.EntraAllowBootstrap,
-      entraTrustedTenants: [.. settings.EntraTrustedTenants.Select(static tenantId => tenantId.ToString("D"))],
-      passkeyPromptMode: settings.PasskeyPromptMode,
-      version: settings.Version);
 }

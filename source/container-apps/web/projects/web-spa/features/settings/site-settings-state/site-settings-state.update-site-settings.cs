@@ -1,5 +1,5 @@
 #region Purpose
-// UpdateSiteSettings: persists the Authentication section via UpdateSiteSettings and refreshes state.
+// UpdateSiteSettings: persists site authentication policy via UpdateSiteSettings and refreshes state.
 #endregion
 
 #region Design

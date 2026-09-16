@@ -1,5 +1,5 @@
 #region Purpose
-// Authenticated read of the site-settings singleton for the Settings Authentication section.
+// Authenticated read of the site-settings singleton plus the bound Authentication:Entra snapshot.
 #endregion
 
 #region Design
@@ -7,8 +7,10 @@
 // anonymously — the login page uses GetEntraSignInOffered (boolean only). Version is the
 // optimistic-concurrency token the editor must round-trip on UpdateSiteSettings.
 // Slice: Features.Settings (own product slice). Store lives in TimeWarp.Identity so Identity
-// policy can read it without TWA0009. SPA SettingsPage is Applications chrome and calls this
-// contract (other assembly, free).
+// policy can read it without TWA0009. SPA SettingsPage (Link Microsoft 365 / passkey prompt)
+// and Admin/Authentication (policy editor + config-drift banner) both call this contract
+// (other assembly, free). Configuration* fields are the bound Entra section, not persisted
+// policy — they are not on ISiteSettingsDetails and are not sent on Update.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -35,19 +37,34 @@ public static partial class GetSiteSettings
     public List<string> EntraTrustedTenants { get; set; }
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public long Version { get; }
+    public string? ConfigurationTenantId { get; }
+    public string? ConfigurationTenantDisplayName { get; }
+    public string? ConfigurationTenantDomain { get; }
+    public bool ConfigurationEnabled { get; }
+    public bool ConfigurationAllowBootstrap { get; }
 
     public Response(
       bool entraSignInEnabled,
       bool entraAllowBootstrap,
       List<string> entraTrustedTenants,
       PasskeyPromptMode passkeyPromptMode,
-      long version)
+      long version,
+      string? configurationTenantId = null,
+      string? configurationTenantDisplayName = null,
+      string? configurationTenantDomain = null,
+      bool configurationEnabled = false,
+      bool configurationAllowBootstrap = false)
     {
       EntraSignInEnabled = entraSignInEnabled;
       EntraAllowBootstrap = entraAllowBootstrap;
       EntraTrustedTenants = entraTrustedTenants ?? [];
       PasskeyPromptMode = passkeyPromptMode;
       Version = version;
+      ConfigurationTenantId = configurationTenantId;
+      ConfigurationTenantDisplayName = configurationTenantDisplayName;
+      ConfigurationTenantDomain = configurationTenantDomain;
+      ConfigurationEnabled = configurationEnabled;
+      ConfigurationAllowBootstrap = configurationAllowBootstrap;
     }
   }
 

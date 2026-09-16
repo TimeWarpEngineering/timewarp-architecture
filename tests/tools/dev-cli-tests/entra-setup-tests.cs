@@ -79,6 +79,18 @@ public class MaskSecret_Given_
   }
 }
 
+public class ReseedSiteSettingsKey_Should_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<ReseedSiteSettingsKey_Should_>();
+
+  public static Task Be_The_Authentication_Entra_Flag()
+  {
+    EntraSetup.ReseedSiteSettingsKey.ShouldBe("Authentication:Entra:ReseedSiteSettings");
+    return Task.CompletedTask;
+  }
+}
+
 public class ParseUserSecretsList_Given_
 {
   [System.Runtime.CompilerServices.ModuleInitializer]

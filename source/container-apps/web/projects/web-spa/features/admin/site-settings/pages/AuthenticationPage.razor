@@ -1,0 +1,245 @@
+@namespace TimeWarp.Architecture.Features.Admin.SiteSettings
+@inherits BaseComponent
+@using TimeWarp.Architecture.Features.Settings
+@using TimeWarp.Identity
+
+@code {
+  public static string Title => "Authentication";
+  public static Icon? NavIcon => new Icons.Regular.Size20.ShieldLock();
+
+  private bool DraftEntraSignInEnabled;
+  private bool DraftEntraAllowBootstrap;
+  private string DraftTrustedTenantsText = "";
+  private PasskeyPromptMode DraftPasskeyPromptMode = PasskeyPromptMode.Soft;
+  private bool DraftLoaded;
+
+  private bool IsBusy => ActionTrackingState.IsActive;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+    if (RendererInfo.IsInteractive)
+    {
+      await NoSubSiteSettingsState.FetchSiteSettings();
+      SyncDraftFromState();
+    }
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+    if (firstRender && RendererInfo.IsInteractive && !SiteSettingsState.HasSnapshot)
+    {
+      await NoSubSiteSettingsState.FetchSiteSettings();
+      SyncDraftFromState();
+      await InvokeAsync(StateHasChanged);
+    }
+  }
+
+  private void SyncDraftFromState()
+  {
+    if (!SiteSettingsState.HasSnapshot)
+    {
+      return;
+    }
+
+    DraftEntraSignInEnabled = SiteSettingsState.EntraSignInEnabled is true;
+    DraftEntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true;
+    DraftTrustedTenantsText = string.Join(Environment.NewLine, SiteSettingsState.EntraTrustedTenants);
+    DraftPasskeyPromptMode = SiteSettingsState.PasskeyPromptMode;
+    DraftLoaded = true;
+  }
+
+  private async Task SaveAuthenticationAsync()
+  {
+    List<string> tenants = [];
+    foreach (string line in DraftTrustedTenantsText.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+      tenants.Add(line);
+    }
+
+    await NoSubSiteSettingsState.UpdateSiteSettings(
+      new UpdateSiteSettings.Command
+      {
+        EntraSignInEnabled = DraftEntraSignInEnabled,
+        EntraAllowBootstrap = DraftEntraAllowBootstrap,
+        EntraTrustedTenants = tenants,
+        PasskeyPromptMode = DraftPasskeyPromptMode,
+        Version = SiteSettingsState.Version
+      });
+    if (string.IsNullOrEmpty(SiteSettingsState.SaveError))
+    {
+      SyncDraftFromState();
+    }
+  }
+
+  private async Task AddConfigurationTenantAsync()
+  {
+    if (string.IsNullOrWhiteSpace(SiteSettingsState.ConfigurationTenantId))
+    {
+      return;
+    }
+
+    List<string> tenants = SiteSettingsConfigurationDrift.WithConfigurationTenant(
+      SiteSettingsState.EntraTrustedTenants,
+      SiteSettingsState.ConfigurationTenantId);
+    await NoSubSiteSettingsState.UpdateSiteSettings(
+      new UpdateSiteSettings.Command
+      {
+        EntraSignInEnabled = SiteSettingsState.EntraSignInEnabled is true,
+        EntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true,
+        EntraTrustedTenants = tenants,
+        PasskeyPromptMode = SiteSettingsState.PasskeyPromptMode,
+        Version = SiteSettingsState.Version
+      });
+    if (string.IsNullOrEmpty(SiteSettingsState.SaveError))
+    {
+      SyncDraftFromState();
+    }
+  }
+}
+
+<TimeWarpPage Title="Authentication">
+  <div class="twe-stack twe-settings">
+    <section class="twe-settings__section" data-qa="AuthenticationSettings">
+      <h2 class="twe-settings__heading">Authentication</h2>
+      <p class="twe-settings__muted">
+        Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it.
+      </p>
+      <p class="twe-settings__value" data-qa="ConfigurationTenant">
+        Configuration tenant: @SiteSettingsState.ConfigurationTenantLabel
+      </p>
+
+      @if (SiteSettingsState.HasSnapshot && SiteSettingsState.ConfigurationTenantIsUntrusted)
+      {
+        <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Configuration drift" AllowDismiss="false">
+          <span data-qa="ConfigurationTenantDrift">
+            Configuration tenant @SiteSettingsState.ConfigurationTenantLabel is not in the trusted tenants list.
+          </span>
+        </FluentMessageBar>
+        <div class="twe-settings__actions">
+          <button type="button"
+                  class="twe-settings__link"
+                  data-qa="AddConfigurationTenant"
+                  disabled="@IsBusy"
+                  @onclick="AddConfigurationTenantAsync">
+            Add configuration tenant
+          </button>
+        </div>
+      }
+
+      @if (DraftLoaded)
+      {
+        <div class="twe-settings__field">
+          <label class="twe-settings__field-title">
+            <input type="checkbox"
+                   disabled="@IsBusy"
+                   @bind="DraftEntraSignInEnabled" />
+            Offer Microsoft 365 sign-in
+          </label>
+        </div>
+
+        <div class="twe-settings__field">
+          <label class="twe-settings__field-title">
+            <input type="checkbox"
+                   disabled="@IsBusy"
+                   @bind="DraftEntraAllowBootstrap" />
+            Allow first-time Microsoft 365 bootstrap
+          </label>
+        </div>
+
+        <div class="twe-settings__field">
+          <div class="twe-settings__field-title">Trusted tenants</div>
+          <p class="twe-settings__muted">One tenant GUID per line. Empty refuses bootstrap and sync-hit.</p>
+          <textarea class="twe-settings__textarea"
+                    rows="4"
+                    disabled="@IsBusy"
+                    @bind="DraftTrustedTenantsText"></textarea>
+        </div>
+
+        <div class="twe-settings__field">
+          <div class="twe-settings__field-title">Passkey prompt</div>
+          <select class="twe-settings__select"
+                  disabled="@IsBusy"
+                  @bind="DraftPasskeyPromptMode">
+            <option value="@PasskeyPromptMode.Soft">Soft (dismissible banner)</option>
+            <option value="@PasskeyPromptMode.Required">Required (block app until a passkey is added)</option>
+          </select>
+        </div>
+
+        @if (!string.IsNullOrEmpty(SiteSettingsState.SaveError))
+        {
+          <FluentMessageBar Intent="MessageBarIntent.Error" Title="Could not save" AllowDismiss="false">
+            @SiteSettingsState.SaveError
+          </FluentMessageBar>
+        }
+
+        <div class="twe-settings__actions">
+          <button type="button"
+                  class="twe-settings__link"
+                  data-qa="SaveAuthenticationSettings"
+                  disabled="@IsBusy"
+                  @onclick="SaveAuthenticationAsync">
+            Save authentication settings
+          </button>
+        </div>
+      }
+    </section>
+  </div>
+</TimeWarpPage>
+
+<style>
+  @(@"
+    .twe-settings__heading {
+      margin: 0 0 12px;
+      font-size: var(--twe-text-section-title);
+      font-weight: 700;
+      color: var(--twe-ink);
+    }
+    .twe-settings__muted {
+      margin: 0 0 12px;
+      color: var(--twe-muted);
+      font-size: var(--twe-text-body);
+    }
+    .twe-settings__value {
+      margin: 4px 0 12px;
+      color: var(--twe-ink);
+      font-size: var(--twe-text-body);
+    }
+    .twe-settings__field {
+      margin-top: 12px;
+    }
+    .twe-settings__field-title {
+      font-weight: 600;
+      color: var(--twe-ink);
+      font-size: var(--twe-text-body);
+    }
+    .twe-settings__link {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--twe-blue);
+      font: inherit;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .twe-settings__link:hover { text-decoration: underline; }
+    .twe-settings__link:disabled { opacity: 0.5; cursor: not-allowed; }
+    .twe-settings__actions {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--twe-rule);
+    }
+    .twe-settings__textarea,
+    .twe-settings__select {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--twe-rule);
+      border-radius: var(--twe-radius-sm);
+      background: var(--twe-paper-2);
+      color: var(--twe-ink);
+      font: inherit;
+    }
+  ")
+</style>

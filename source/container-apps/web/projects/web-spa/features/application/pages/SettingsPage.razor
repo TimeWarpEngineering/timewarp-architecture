@@ -3,7 +3,6 @@
 @using Microsoft.Extensions.Configuration
 @using TimeWarp.Architecture.Features.Identity
 @using TimeWarp.Architecture.Services
-@using TimeWarp.Identity
 
 @code {
   public static string Title => "Settings";
@@ -14,12 +13,6 @@
 
   private Guid? ExpandedId;
   private bool ShowMicrosoft365;
-  private bool DraftEntraSignInEnabled;
-  private bool DraftEntraAllowBootstrap;
-  private string DraftTrustedTenantsText = "";
-  private PasskeyPromptMode DraftPasskeyPromptMode = PasskeyPromptMode.Soft;
-  private bool DraftLoaded;
-  private bool CanWriteSettings;
 
   private bool IsLoading =>
     IsAnyActive(typeof(CredentialsState.FetchCredentialsActionSet.Action));
@@ -32,8 +25,6 @@
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
-    AuthenticationState authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-    CanWriteSettings = authenticationState.User.HasClaim(PermissionIds.ClaimType, PermissionIds.SettingsWrite);
     ShowMicrosoft365 = MockAuthenticationDefaults.IsEntraEnabled(
       Configuration[MockAuthenticationDefaults.EntraEnabledKey],
       Configuration[MockAuthenticationDefaults.UseEntraKey]);
@@ -41,7 +32,6 @@
     {
       await NoSubCredentialsState.FetchCredentials();
       await NoSubSiteSettingsState.FetchSiteSettings();
-      SyncDraftFromState();
       SyncExpandedId();
     }
   }
@@ -57,7 +47,6 @@
         await NoSubSiteSettingsState.FetchSiteSettings();
       }
 
-      SyncDraftFromState();
       SyncExpandedId();
       await InvokeAsync(StateHasChanged);
     }
@@ -97,43 +86,6 @@
 
   private static string DisplayEntraLabel(GetCredentials.CredentialSummary credential) =>
     string.IsNullOrWhiteSpace(credential.Label) ? "Microsoft 365" : credential.Label!;
-
-  private void SyncDraftFromState()
-  {
-    if (!SiteSettingsState.HasSnapshot)
-    {
-      return;
-    }
-
-    DraftEntraSignInEnabled = SiteSettingsState.EntraSignInEnabled is true;
-    DraftEntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true;
-    DraftTrustedTenantsText = string.Join(Environment.NewLine, SiteSettingsState.EntraTrustedTenants);
-    DraftPasskeyPromptMode = SiteSettingsState.PasskeyPromptMode;
-    DraftLoaded = true;
-  }
-
-  private async Task SaveAuthenticationAsync()
-  {
-    List<string> tenants = [];
-    foreach (string line in DraftTrustedTenantsText.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-    {
-      tenants.Add(line);
-    }
-
-    await NoSubSiteSettingsState.UpdateSiteSettings(
-      new UpdateSiteSettings.Command
-      {
-        EntraSignInEnabled = DraftEntraSignInEnabled,
-        EntraAllowBootstrap = DraftEntraAllowBootstrap,
-        EntraTrustedTenants = tenants,
-        PasskeyPromptMode = DraftPasskeyPromptMode,
-        Version = SiteSettingsState.Version
-      });
-    if (string.IsNullOrEmpty(SiteSettingsState.SaveError))
-    {
-      SyncDraftFromState();
-    }
-  }
 
   private void SyncExpandedId()
   {
@@ -270,73 +222,6 @@
       </section>
     }
 
-    @if (DraftLoaded)
-    {
-      <section class="twe-settings__section" data-qa="AuthenticationSettings">
-        <h2 class="twe-settings__heading">Authentication</h2>
-        <p class="twe-settings__muted">
-          Configuration still registers the Microsoft 365 scheme. These settings decide whether users may use it.
-        </p>
-
-        <div class="twe-settings__field">
-          <label class="twe-settings__field-title">
-            <input type="checkbox"
-                   disabled="@(!CanWriteSettings || IsBusy)"
-                   @bind="DraftEntraSignInEnabled" />
-            Offer Microsoft 365 sign-in
-          </label>
-        </div>
-
-        <div class="twe-settings__field">
-          <label class="twe-settings__field-title">
-            <input type="checkbox"
-                   disabled="@(!CanWriteSettings || IsBusy)"
-                   @bind="DraftEntraAllowBootstrap" />
-            Allow first-time Microsoft 365 bootstrap
-          </label>
-        </div>
-
-        <div class="twe-settings__field">
-          <div class="twe-settings__field-title">Trusted tenants</div>
-          <p class="twe-settings__muted">One tenant GUID per line. Empty refuses bootstrap and sync-hit.</p>
-          <textarea class="twe-settings__textarea"
-                    rows="4"
-                    disabled="@(!CanWriteSettings || IsBusy)"
-                    @bind="DraftTrustedTenantsText"></textarea>
-        </div>
-
-        <div class="twe-settings__field">
-          <div class="twe-settings__field-title">Passkey prompt</div>
-          <select class="twe-settings__select"
-                  disabled="@(!CanWriteSettings || IsBusy)"
-                  @bind="DraftPasskeyPromptMode">
-            <option value="@PasskeyPromptMode.Soft">Soft (dismissible banner)</option>
-            <option value="@PasskeyPromptMode.Required">Required (block app until a passkey is added)</option>
-          </select>
-        </div>
-
-        @if (!string.IsNullOrEmpty(SiteSettingsState.SaveError))
-        {
-          <FluentMessageBar Intent="MessageBarIntent.Error" Title="Could not save" AllowDismiss="false">
-            @SiteSettingsState.SaveError
-          </FluentMessageBar>
-        }
-
-        @if (CanWriteSettings)
-        {
-          <div class="twe-settings__actions">
-            <button type="button"
-                    class="twe-settings__link"
-                    data-qa="SaveAuthenticationSettings"
-                    disabled="@IsBusy"
-                    @onclick="SaveAuthenticationAsync">
-              Save authentication settings
-            </button>
-          </div>
-        }
-      </section>
-    }
-
     @if (!string.IsNullOrEmpty(StatusMessage))
     {
       <FluentMessageBar Intent="MessageBarIntent.Success" Title="Success" AllowDismiss="false">
@@ -433,17 +318,6 @@
       margin-top: 16px;
       padding-top: 12px;
       border-top: 1px solid var(--twe-rule);
-    }
-    .twe-settings__textarea,
-    .twe-settings__select {
-      width: 100%;
-      margin-top: 8px;
-      padding: 8px 10px;
-      border: 1px solid var(--twe-rule);
-      border-radius: var(--twe-radius-sm);
-      background: var(--twe-paper-2);
-      color: var(--twe-ink);
-      font: inherit;
     }
   ")
 </style>

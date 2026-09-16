@@ -11,6 +11,7 @@
 // DefaultApiHandler; browser ceremony failures surface as CredentialsState.CeremonyError.
 // Backend surface remains 104-005 (GetCredentials, AddPasskey, RevokeCredential).
 // RFC 219 D10: "Link Microsoft 365" is a full navigation to the BFF challenge (mode=link).
+// Task 225: site Entra policy moved to Admin/Authentication; this page keeps passkeys + link.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -19,5 +20,5 @@ namespace TimeWarp.Architecture.Features.Applications;
 [Authorize(Policy = PermissionIds.SettingsRead)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
 [CrossSliceReference(typeof(ChallengeEntra), "Settings link CTA navigates to the Identity BFF Entra challenge; no WASM MSAL.")]
-[CrossSliceReference(typeof(SiteSettingsState), "Settings Authentication section edits the Settings slice site-settings singleton.")]
+[CrossSliceReference(typeof(SiteSettingsState), "Settings reads EntraSignInEnabled to show Link Microsoft 365; policy editing lives on Admin/Authentication.")]
 partial class SettingsPage;
