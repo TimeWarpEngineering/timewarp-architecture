@@ -142,7 +142,7 @@ public class Returns_
     html.ShouldNotContain("Sign in to continue",
       customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
     html.ShouldNotContain("data-qa=\"AuthenticationSettings\"");
-    html.ShouldNotContain("data-qa=\"SaveAuthenticationSettings\"");
+    html.ShouldNotContain("data-qa=\"AuthenticationSave\"");
     html.ShouldNotContain("data-qa=\"Microsoft365Settings\"");
     html.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
   }
@@ -264,6 +264,7 @@ public class Returns_
     html.ShouldContain("data-qa=\"ConfigurationTenant\"");
     html.ShouldContain("Microsoft 365 sign-in policy");
     html.ShouldNotContain("data-qa=\"AddConfigurationTenant\"");
+    html.ShouldNotContain("data-qa=\"SaveAuthenticationSettings\"");
     html.ShouldNotContain("Sign in to continue",
       customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
   }

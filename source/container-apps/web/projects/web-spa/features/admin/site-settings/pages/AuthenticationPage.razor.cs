@@ -7,6 +7,8 @@
 // Policy = settings.write (same as UpdateSiteSettings). settings.read stays self-service for
 // /Settings and GetSiteSettings. Not moved into admin.* — see PermissionIds Design (task 225).
 // Nav sits in the Admin category (admin.access). SiteSettingsState is the Settings slice.
+// Task 231: policy fields bind ISiteSettingsDetails via EditForm + FluentButton submit
+// (RoleForm pattern). Tenant line and drift banner stay outside the form.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.SiteSettings;

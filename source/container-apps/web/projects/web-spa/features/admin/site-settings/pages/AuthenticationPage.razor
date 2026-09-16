@@ -3,13 +3,26 @@
 @using TimeWarp.Architecture.Features.Settings
 @using TimeWarp.Identity
 
+@*
+  Purpose: Admin authentication policy editor — Entra offer/bootstrap, passkey prompt, concurrency version.
+
+  Design: web-api-contracts — EditForm binds ISiteSettingsDetails; UpdateSiteSettings.Command
+  is the model (no view model). Version is the concurrency token, not a typed field.
+  Blazilla FluentValidator takes SiteSettingsDetailsValidator. Submit is
+  SiteSettingsState.UpdateSiteSettings(Command). Tenant line and Enabled/AllowBootstrap
+  drift banner stay outside the form (read-only / host config, not bindable policy).
+  Save is FluentButton submit Primary (RoleForm pattern), disabled while busy.
+*@
+
 @code {
   public static string Title => "Authentication";
   public static Icon? NavIcon => new Icons.Regular.Size20.ShieldLock();
 
-  private bool DraftEntraSignInEnabled;
-  private bool DraftEntraAllowBootstrap;
-  private PasskeyPromptMode DraftPasskeyPromptMode = PasskeyPromptMode.Soft;
+  private static readonly SiteSettingsDetailsValidator SiteSettingsValidator = new();
+
+  private UpdateSiteSettings.Command Command { get; } = new();
+  private ISiteSettingsDetails Details => Command;
+
   private bool DraftLoaded;
 
   private bool IsBusy => ActionTrackingState.IsActive;
@@ -42,22 +55,16 @@
       return;
     }
 
-    DraftEntraSignInEnabled = SiteSettingsState.EntraSignInEnabled is true;
-    DraftEntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true;
-    DraftPasskeyPromptMode = SiteSettingsState.PasskeyPromptMode;
+    Command.EntraSignInEnabled = SiteSettingsState.EntraSignInEnabled is true;
+    Command.EntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true;
+    Command.PasskeyPromptMode = SiteSettingsState.PasskeyPromptMode;
+    Command.Version = SiteSettingsState.Version;
     DraftLoaded = true;
   }
 
-  private async Task SaveAuthenticationAsync()
+  private async Task HandleValidSubmit()
   {
-    await NoSubSiteSettingsState.UpdateSiteSettings(
-      new UpdateSiteSettings.Command
-      {
-        EntraSignInEnabled = DraftEntraSignInEnabled,
-        EntraAllowBootstrap = DraftEntraAllowBootstrap,
-        PasskeyPromptMode = DraftPasskeyPromptMode,
-        Version = SiteSettingsState.Version
-      });
+    await NoSubSiteSettingsState.UpdateSiteSettings(Command);
     if (string.IsNullOrEmpty(SiteSettingsState.SaveError))
     {
       SyncDraftFromState();
@@ -88,50 +95,45 @@
 
       @if (DraftLoaded)
       {
-        <div class="twe-settings__field">
-          <label class="twe-settings__field-title">
-            <input type="checkbox"
-                   disabled="@IsBusy"
-                   @bind="DraftEntraSignInEnabled" />
-            Offer Microsoft 365 sign-in
-          </label>
-        </div>
+        <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="AuthenticationForm" novalidate>
+          <FluentValidator Validator="@SiteSettingsValidator" />
+          <FluentStack Orientation=Orientation.Vertical VerticalGap="16">
 
-        <div class="twe-settings__field">
-          <label class="twe-settings__field-title">
-            <input type="checkbox"
-                   disabled="@IsBusy"
-                   @bind="DraftEntraAllowBootstrap" />
-            Allow first-time Microsoft 365 bootstrap
-          </label>
-        </div>
+            <FluentCheckbox @bind-Value=Details.EntraSignInEnabled
+                            Label="Offer Microsoft 365 sign-in"
+                            Disabled=@IsBusy />
 
-        <div class="twe-settings__field">
-          <div class="twe-settings__field-title">Passkey prompt</div>
-          <select class="twe-settings__select"
-                  disabled="@IsBusy"
-                  @bind="DraftPasskeyPromptMode">
-            <option value="@PasskeyPromptMode.Soft">Soft (dismissible banner)</option>
-            <option value="@PasskeyPromptMode.Required">Required (block app until a passkey is added)</option>
-          </select>
-        </div>
+            <FluentCheckbox @bind-Value=Details.EntraAllowBootstrap
+                            Label="Allow first-time Microsoft 365 bootstrap"
+                            Disabled=@IsBusy />
 
-        @if (!string.IsNullOrEmpty(SiteSettingsState.SaveError))
-        {
-          <FluentMessageBar Intent="MessageBarIntent.Error" Title="Could not save" AllowDismiss="false">
-            @SiteSettingsState.SaveError
-          </FluentMessageBar>
-        }
+            <div>
+              <div class="twe-settings__field-title">Passkey prompt</div>
+              <select class="twe-settings__select"
+                      disabled="@IsBusy"
+                      @bind="Details.PasskeyPromptMode">
+                <option value="@PasskeyPromptMode.Soft">Soft (dismissible banner)</option>
+                <option value="@PasskeyPromptMode.Required">Required (block app until a passkey is added)</option>
+              </select>
+              <ValidationMessage For="@(() => Details.PasskeyPromptMode)" />
+            </div>
 
-        <div class="twe-settings__actions">
-          <button type="button"
-                  class="twe-settings__link"
-                  data-qa="SaveAuthenticationSettings"
-                  disabled="@IsBusy"
-                  @onclick="SaveAuthenticationAsync">
-            Save authentication settings
-          </button>
-        </div>
+            @if (!string.IsNullOrEmpty(SiteSettingsState.SaveError))
+            {
+              <FluentMessageBar Intent="MessageBarIntent.Error" Title="Could not save" AllowDismiss="false">
+                @SiteSettingsState.SaveError
+              </FluentMessageBar>
+            }
+
+            <FluentButton Type=ButtonType.Submit
+                          Appearance=ButtonAppearance.Primary
+                          Disabled=@IsBusy
+                          data-qa="AuthenticationSave">
+              Save authentication settings
+            </FluentButton>
+
+          </FluentStack>
+        </EditForm>
       }
     </section>
   </div>
@@ -155,29 +157,10 @@
       color: var(--twe-ink);
       font-size: var(--twe-text-body);
     }
-    .twe-settings__field {
-      margin-top: 12px;
-    }
     .twe-settings__field-title {
       font-weight: 600;
       color: var(--twe-ink);
       font-size: var(--twe-text-body);
-    }
-    .twe-settings__link {
-      background: none;
-      border: none;
-      padding: 0;
-      color: var(--twe-blue);
-      font: inherit;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .twe-settings__link:hover { text-decoration: underline; }
-    .twe-settings__link:disabled { opacity: 0.5; cursor: not-allowed; }
-    .twe-settings__actions {
-      margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px solid var(--twe-rule);
     }
     .twe-settings__select {
       width: 100%;
