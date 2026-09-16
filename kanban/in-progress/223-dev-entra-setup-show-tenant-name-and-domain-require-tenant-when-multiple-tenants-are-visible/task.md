@@ -62,12 +62,16 @@ Conventions as in 219-005: Amuru `Shell.Builder("az")` / `CaptureAsync` only, ex
 - [x] Jaribu tests for the pure helpers; `dev build` 0/0; `ganda repo audit` clean
 - [x] auth.md updated
 - [x] Results and How to validate (dry-run transcript showing the tenant table and refusal)
+- [x] Implementation review disposition (clean, 2 rounds, general)
 
 ## Session
 
 - Created: cockpit (2026-09-16)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementation: Grok 4.6 (2026-09-16)
+- Review oracle: Grok 4.6 session 01a0a822-ccfd-7d42-8eae-66f8c27df85a (2026-09-16)
+- Review general (round 1): Grok session 01a0a825-1ff5-77b2-a0b2-dafd01a9dbbd (2026-09-16)
+- Review general (round 2): Grok session 01a0a82b-b948-7281-9377-aef14bec1827 (2026-09-16)
 
 ## Notes
 
@@ -93,6 +97,8 @@ Conventions as in 219-005: Amuru `Shell.Builder("az")` / `CaptureAsync` only, ex
 - Default app name `TimeWarp Architecture Dev ({domain})`; find-or-create matches suffixed then bare legacy name.
 - Setup summary ends with the guest-user sign-in line. Warns when `--public-origin` is set but no final redirect URI starts with it.
 - Read-only az (account/list/graph) still runs under `--dry-run` so the refusal table is real; mutations stay dry-run. Client secret and Bearer tokens are never printed.
+- Review round 1 M1: setup Ambiguous now prints `matched more than one tenant` when `--tenant` was provided (same as status), not the omitted-flag required message.
+- Review round 1 M2: domain-only resolved tenants print `{domain} — {guid}` instead of `{guid} (name unavailable)`.
 
 **Files**
 
@@ -112,7 +118,7 @@ Conventions as in 219-005: Amuru `Shell.Builder("az")` / `CaptureAsync` only, ex
 
 **Tests / gates**
 
-- `cd tests/tools/dev-cli-tests && dotnet test -c Release` — 40 passed, 0 failed
+- `cd tests/tools/dev-cli-tests && dotnet test -c Release` — 42 passed, 0 failed (after review fixes)
 - `dotnet run tools/dev-cli/dev.cs -- build` — 0 Warning(s), 0 Error(s)
 - `ganda repo audit` — blocking checks pass; two pre-existing advisory warnings (`memsearch-scaffold` githooks, `vscode-window-icon` peacock.color)
 
@@ -151,7 +157,7 @@ dotnet run tools/dev-cli/dev.cs -- entra setup --dry-run --tenant 74ca6706-93ef-
 
 ```bash
 cd tests/tools/dev-cli-tests && dotnet test -c Release
-# expect: 40 passed
+# expect: 42 passed
 dotnet run tools/dev-cli/dev.cs -- build
 # expect: 0 Warning(s) 0 Error(s)
 ```
@@ -159,3 +165,17 @@ dotnet run tools/dev-cli/dev.cs -- build
 **Depends on:** `az` on PATH and `az login` for the smoke dry-runs (discovery is live read-only). Tests do not call `az`.
 
 **Not in scope:** live `dev entra setup` without `--dry-run` (creates/updates the app registration and writes user secrets).
+
+### Review disposition
+
+- **Outcome:** clean (0 open; M1 bug and M2 suggestion fixed on this task id; no exceptions)
+- **Rounds:** 2
+- **Effort / roster:** 1 — general only
+- **Final counts:** bug 0 open / 1 fixed; suggestion 0 open / 1 fixed; nit 0
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/round-2/general.md`
+  - `review/round-2/merged.md`
+  - `review/disposition.md`
