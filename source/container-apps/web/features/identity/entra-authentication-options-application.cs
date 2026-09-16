@@ -17,6 +17,8 @@
 // X-Forwarded-* (task 104-031).
 // TenantDisplayName / TenantDomain are informational (boot/status display from `dev entra setup`);
 // they are not used for OIDC authority and stay optional with no validator rules.
+// ReseedSiteSettings (task 225) is a Development-only boot overwrite of the three persisted Entra
+// policy fields; SiteSettingsSeeder ignores it unless the host passes isDevelopment.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -37,6 +39,12 @@ public sealed class EntraAuthenticationOptions
   public string CallbackPath { get; set; } = "/signin-oidc";
   public List<string> TrustedTenants { get; set; } = [];
   public bool AllowBootstrap { get; set; }
+
+  /// <summary>
+  /// When true in Development, <see cref="SiteSettingsSeeder"/> overwrites the three Entra policy
+  /// fields from this section at boot. Ignored outside Development. Default false.
+  /// </summary>
+  public bool ReseedSiteSettings { get; set; }
 
   /// <summary>
   /// Browser-facing origin for the OIDC <c>redirect_uri</c> when Web.Server is behind a proxy.

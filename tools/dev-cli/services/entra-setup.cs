@@ -37,6 +37,7 @@ internal static class EntraSetup
   internal const string TrustedTenants0Key = "Authentication:Entra:TrustedTenants:0";
   internal const string AllowBootstrapKey = "Authentication:Entra:AllowBootstrap";
   internal const string PublicOriginKey = "Authentication:Entra:PublicOrigin";
+  internal const string ReseedSiteSettingsKey = "Authentication:Entra:ReseedSiteSettings";
 
   internal static IReadOnlyList<string> BuildDesiredRedirectUris(
     string? publicOrigin,

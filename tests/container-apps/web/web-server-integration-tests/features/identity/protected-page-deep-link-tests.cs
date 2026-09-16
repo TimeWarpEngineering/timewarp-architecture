@@ -137,6 +137,42 @@ public class Returns_
     html.ShouldContain("Passkeys");
     html.ShouldNotContain("Sign in to continue",
       customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
+    html.ShouldNotContain("data-qa=\"AuthenticationSettings\"");
+    html.ShouldNotContain("data-qa=\"SaveAuthenticationSettings\"");
+  }
+
+  public static async Task Forbidden_Not_Login_Given_Passkey_Member_Admin_Authentication_Html()
+  {
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Member]);
+
+    using HttpClient client = CreateNoRedirectClient();
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    using HttpRequestMessage request = new(HttpMethod.Get, "/Admin/Authentication");
+    request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+
+    HttpResponseMessage response = await client.SendAsync(request);
+
+    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    response.Headers.Location.ShouldBeNull(
+      "Authenticated forbid must stay 403 — never redirect to Login (task 154 / task 153 loop guard).");
+  }
+
+  public static async Task Ok_Page_Given_Passkey_Administrator_Admin_Authentication_Html()
+  {
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+
+    HttpResponseMessage response = await GetPageHtml("/Admin/Authentication", sessionCookie);
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string html = await response.Content.ReadAsStringAsync();
+    html.ShouldContain("data-qa=\"AuthenticationSettings\"");
+    html.ShouldContain("data-qa=\"ConfigurationTenant\"");
+    html.ShouldNotContain("Sign in to continue",
+      customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
   }
 
   public static async Task Ok_Page_Given_Passkey_Administrator_Admin_Roles_Html()

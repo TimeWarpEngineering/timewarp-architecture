@@ -44,6 +44,11 @@ partial class SiteSettingsState
         SiteSettingsState.PasskeyPromptMode = response.PasskeyPromptMode;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.SaveError = null;
+        SiteSettingsState.ConfigurationTenantId = response.ConfigurationTenantId;
+        SiteSettingsState.ConfigurationTenantDisplayName = response.ConfigurationTenantDisplayName;
+        SiteSettingsState.ConfigurationTenantDomain = response.ConfigurationTenantDomain;
+        SiteSettingsState.ConfigurationEnabled = response.ConfigurationEnabled;
+        SiteSettingsState.ConfigurationAllowBootstrap = response.ConfigurationAllowBootstrap;
         return Task.CompletedTask;
       }
     }

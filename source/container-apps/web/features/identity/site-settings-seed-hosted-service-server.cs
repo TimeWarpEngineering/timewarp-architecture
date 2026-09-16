@@ -1,5 +1,5 @@
 #region Purpose
-// Boot-time site-settings seed and configured-vs-enabled mismatch log.
+// Boot-time site-settings seed, drift warnings, and Development-only ReseedSiteSettings.
 #endregion
 
 #region Design
@@ -49,12 +49,14 @@ public sealed class SiteSettingsSeedHostedService : IHostedLifecycleService
   {
     using IServiceScope scope = ServiceScopeFactory.CreateScope();
     SiteSettingsSeeder seeder = scope.ServiceProvider.GetRequiredService<SiteSettingsSeeder>();
+    IHostEnvironment hostEnvironment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+    bool isDevelopment = hostEnvironment.IsDevelopment();
 
     for (int attempt = 1; attempt <= MaxAttempts; attempt++)
     {
       try
       {
-        _ = await seeder.GetOrSeedAsync(cancellationToken).ConfigureAwait(false);
+        _ = await seeder.GetOrSeedAsync(isDevelopment, cancellationToken).ConfigureAwait(false);
         return;
       }
       catch (Exception exception) when (attempt < MaxAttempts && IsUndefinedTable(exception))
