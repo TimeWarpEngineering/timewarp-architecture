@@ -6,22 +6,20 @@ public class Decide_Given_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Decide_Given_>();
 
-  public static Task FloorExact_Should_PassWithoutWarning()
+  public static Task OneSucceeded_Should_Pass()
   {
     AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
-      new MtpSummary(Total: 180, Succeeded: 180, Failed: 0, Skipped: 0),
-      minimumSucceeded: 180);
+      new MtpSummary(Total: 1, Succeeded: 1, Failed: 0, Skipped: 0));
 
     aggregatorSummaryDecision.Passed.ShouldBeTrue();
     aggregatorSummaryDecision.AggregatorSummaryVerdict.ShouldBe(AggregatorSummaryVerdict.Pass);
     return Task.CompletedTask;
   }
 
-  public static Task AboveFloor_Should_PassWithoutWarning()
+  public static Task LargeTotals_Should_Pass()
   {
     AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
-      new MtpSummary(Total: 181, Succeeded: 181, Failed: 0, Skipped: 0),
-      minimumSucceeded: 180);
+      new MtpSummary(Total: 361, Succeeded: 361, Failed: 0, Skipped: 0));
 
     aggregatorSummaryDecision.Passed.ShouldBeTrue();
     aggregatorSummaryDecision.AggregatorSummaryVerdict.ShouldBe(AggregatorSummaryVerdict.Pass);
@@ -31,8 +29,7 @@ public class Decide_Given_
   public static Task AnyFailed_Should_Fail()
   {
     AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
-      new MtpSummary(Total: 180, Succeeded: 179, Failed: 1, Skipped: 0),
-      minimumSucceeded: 180);
+      new MtpSummary(Total: 180, Succeeded: 179, Failed: 1, Skipped: 0));
 
     aggregatorSummaryDecision.Passed.ShouldBeFalse();
     aggregatorSummaryDecision.AggregatorSummaryVerdict.ShouldBe(AggregatorSummaryVerdict.FailHasFailures);
@@ -42,64 +39,37 @@ public class Decide_Given_
   public static Task UnparsableSummary_Should_Fail()
   {
     AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
-      mtpSummary: null,
-      minimumSucceeded: 180);
+      mtpSummary: null);
 
     aggregatorSummaryDecision.Passed.ShouldBeFalse();
     aggregatorSummaryDecision.AggregatorSummaryVerdict.ShouldBe(AggregatorSummaryVerdict.FailUnparsable);
     return Task.CompletedTask;
   }
 
-  public static Task MoreThanTwiceFloor_Should_PassWithStaleFloorWarning()
+  public static Task ZeroTotal_Should_Fail()
   {
     AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
-      new MtpSummary(Total: 361, Succeeded: 361, Failed: 0, Skipped: 0),
-      minimumSucceeded: 180);
+      new MtpSummary(Total: 0, Succeeded: 0, Failed: 0, Skipped: 0));
 
-    aggregatorSummaryDecision.Passed.ShouldBeTrue();
-    aggregatorSummaryDecision.AggregatorSummaryVerdict.ShouldBe(AggregatorSummaryVerdict.WarnStaleFloor);
-    aggregatorSummaryDecision.Message.ShouldContain("2×");
-    return Task.CompletedTask;
-  }
-
-  public static Task TwiceFloorExactly_Should_PassWithoutWarning()
-  {
-    AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
-      new MtpSummary(Total: 360, Succeeded: 360, Failed: 0, Skipped: 0),
-      minimumSucceeded: 180);
-
-    aggregatorSummaryDecision.Passed.ShouldBeTrue();
-    aggregatorSummaryDecision.AggregatorSummaryVerdict.ShouldBe(AggregatorSummaryVerdict.Pass);
+    aggregatorSummaryDecision.Passed.ShouldBeFalse();
+    aggregatorSummaryDecision.AggregatorSummaryVerdict.ShouldBe(AggregatorSummaryVerdict.FailZeroTotal);
     return Task.CompletedTask;
   }
 
   public static Task TotalNotSucceededPlusSkipped_Should_Fail()
   {
     AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
-      new MtpSummary(Total: 181, Succeeded: 180, Failed: 0, Skipped: 0),
-      minimumSucceeded: 180);
+      new MtpSummary(Total: 181, Succeeded: 180, Failed: 0, Skipped: 0));
 
     aggregatorSummaryDecision.Passed.ShouldBeFalse();
     aggregatorSummaryDecision.AggregatorSummaryVerdict.ShouldBe(AggregatorSummaryVerdict.FailTotalMismatch);
     return Task.CompletedTask;
   }
 
-  public static Task BelowFloor_Should_Fail()
-  {
-    AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
-      new MtpSummary(Total: 179, Succeeded: 179, Failed: 0, Skipped: 0),
-      minimumSucceeded: 180);
-
-    aggregatorSummaryDecision.Passed.ShouldBeFalse();
-    aggregatorSummaryDecision.AggregatorSummaryVerdict.ShouldBe(AggregatorSummaryVerdict.FailBelowFloor);
-    return Task.CompletedTask;
-  }
-
   public static Task SkippedBalanced_Should_Pass()
   {
     AggregatorSummaryDecision aggregatorSummaryDecision = JaribuAggregatorSummaryGate.Decide(
-      new MtpSummary(Total: 182, Succeeded: 180, Failed: 0, Skipped: 2),
-      minimumSucceeded: 180);
+      new MtpSummary(Total: 182, Succeeded: 180, Failed: 0, Skipped: 2));
 
     aggregatorSummaryDecision.Passed.ShouldBeTrue();
     aggregatorSummaryDecision.AggregatorSummaryVerdict.ShouldBe(AggregatorSummaryVerdict.Pass);
