@@ -202,3 +202,26 @@ public class CallerInstanceNotAdvanced : PrincipalStoreContract_.CallerInstanceN
   public static new Task Second_update_with_same_instance_throws() =>
     ((PrincipalStoreContract_.CallerInstanceNotAdvanced)new CallerInstanceNotAdvanced()).Second_update_with_same_instance_throws();
 }
+
+public class Merge : PrincipalStoreContract_.Merge
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Merge>();
+
+  protected override IPrincipalStoreFactory Factory => Fixture.Factory;
+
+  public static new Task Moves_active_credentials_and_retires_source() =>
+    ((PrincipalStoreContract_.Merge)new Merge()).Moves_active_credentials_and_retires_source();
+
+  public static new Task Target_trust_is_max_and_empty_display_name_is_copied() =>
+    ((PrincipalStoreContract_.Merge)new Merge()).Target_trust_is_max_and_empty_display_name_is_copied();
+
+  public static new Task Second_merge_of_same_source_fails() =>
+    ((PrincipalStoreContract_.Merge)new Merge()).Second_merge_of_same_source_fails();
+
+  public static new Task Stale_source_update_after_merge_conflicts() =>
+    ((PrincipalStoreContract_.Merge)new Merge()).Stale_source_update_after_merge_conflicts();
+
+  public static new Task Same_id_is_rejected() =>
+    ((PrincipalStoreContract_.Merge)new Merge()).Same_id_is_rejected();
+}

@@ -237,3 +237,65 @@ public class QuarantineLifecycle
     return Task.CompletedTask;
   }
 }
+
+public class MergeInto
+{
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<MergeInto>();
+
+  public static Task Sets_merged_into_and_is_not_active()
+  {
+    Principal source = Principal.Create(PrincipalKind.Human);
+    Principal target = Principal.Create(PrincipalKind.Human);
+    source.MergeInto(target.Id);
+
+    source.MergedIntoPrincipalId.ShouldBe(target.Id);
+    source.IsActive.ShouldBeFalse();
+    source.IsQuarantined.ShouldBeFalse();
+    source.IsFundedAndActive.ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task Rejects_empty_target()
+  {
+    Principal source = Principal.Create(PrincipalKind.Human);
+    Should.Throw<ArgumentException>(() => source.MergeInto(default));
+    return Task.CompletedTask;
+  }
+
+  public static Task Rejects_self()
+  {
+    Principal source = Principal.Create(PrincipalKind.Human);
+    Should.Throw<ArgumentException>(() => source.MergeInto(source.Id));
+    return Task.CompletedTask;
+  }
+
+  public static Task Rejects_second_merge()
+  {
+    Principal source = Principal.Create(PrincipalKind.Human);
+    Principal first = Principal.Create(PrincipalKind.Human);
+    Principal second = Principal.Create(PrincipalKind.Human);
+    source.MergeInto(first.Id);
+    Should.Throw<InvalidOperationException>(() => source.MergeInto(second.Id));
+    return Task.CompletedTask;
+  }
+
+  public static Task ApplyTrustAtLeast_promotes_when_higher()
+  {
+    Principal target = Principal.Create(PrincipalKind.Human);
+    target.RecordCredentialAttached();
+    target.ApplyTrustAtLeast(TrustTier.Established);
+    target.TrustTier.ShouldBe(TrustTier.Established);
+    return Task.CompletedTask;
+  }
+
+  public static Task ApplyTrustAtLeast_is_no_op_when_not_higher()
+  {
+    Principal target = Principal.Create(PrincipalKind.Human);
+    target.Promote(TrustTier.Funded);
+    target.ApplyTrustAtLeast(TrustTier.Keyed);
+    target.TrustTier.ShouldBe(TrustTier.Funded);
+    return Task.CompletedTask;
+  }
+}

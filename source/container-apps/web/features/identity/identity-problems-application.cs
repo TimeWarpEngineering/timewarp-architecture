@@ -204,4 +204,25 @@ public static class IdentityProblems
     Status = 403,
     Detail = "Microsoft 365 sign-in is not offered."
   };
+
+  public static SharedProblemDetails AlreadyOnThisAccount(string kind) => new()
+  {
+    Title = "Already on this account",
+    Status = 409,
+    Detail = $"This {kind} is already on this account."
+  };
+
+  public static SharedProblemDetails AccountNotMergeable() => new()
+  {
+    Title = "Account cannot be merged",
+    Status = 403,
+    Detail = "This account is merged or currently restricted."
+  };
+
+  public static SharedProblemDetails EntraChoiceExpired() => new()
+  {
+    Title = "Microsoft 365 session expired",
+    Status = 400,
+    Detail = "Session expired, sign in with Microsoft 365 again."
+  };
 }

@@ -1,5 +1,5 @@
 #region Purpose
-// Completes an Entra ID ticket: validate tid/oid/iss, then link, sync-hit, or bootstrap.
+// Completes an Entra ID ticket: validate tid/oid/iss, then link, sync-hit, or bootstrap choice.
 #endregion
 
 #region Design
@@ -9,11 +9,14 @@
 // Sync-hit is Find-by-handle of an active EntraAccount. Revoked rows are non-hits and cannot be
 // re-inserted (unique Type+Handle) — 403, not Restore (Graph Restore is a later product path).
 // Bootstrap Create is gated by IEntraSignInPolicy (site settings AllowBootstrap AND
-// tid GUID-equals Authentication:Entra:TenantId). The same pin gates sync-hit and link so
-// an untrusted tenant never issues a session or attaches a credential. organizations /
-// common authority is not a GUID, so those tickets refuse Untrusted tenant (403).
-// EntraIssuerValidator still requires iss to match the token's own tid.
-// First human bootstrap claims Administrator the same way CompletePasskeyRegistration does.
+// tid GUID-equals Authentication:Entra:TenantId). Unknown-handle bootstrap does NOT mint a
+// principal immediately: ProcessAsync returns EntraChoiceRequired so the HTTP adapter parks
+// claims and the SPA choose page decides create vs already-have. CompleteBootstrapCreateAsync
+// is the original mint (Principal.Create + EntraAccount + first-admin). AttachEntraToPrincipalAsync
+// is link semantics for the already-have path.
+// Link: when the handle is owned by another active unmerged principal B, MergePrincipalAsync(B, A)
+// instead of 409 — the Entra sign-in is proof of B. 409 remains for already-on-this-account
+// and for merged/quarantined owners. Sync-hit and AllowBootstrap-off are unchanged.
 // Concurrent first-login for the same tid:oid can miss both finds, create two principals, and
 // lose on unique (Type, Handle) at AddCredentialAsync. On that InvalidOperationException, re-Find
 // by handle; an active winner is treated as sync-hit (return that PrincipalId). IPrincipalStore
@@ -66,7 +69,7 @@ public sealed class EntraTicketProcessor
     Logger = logger;
   }
 
-  public async Task<OneOf<PrincipalId, SharedProblemDetails>> ProcessAsync
+  public async Task<OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails>> ProcessAsync
   (
     EntraIdTokenClaims claims,
     string mode,
@@ -98,7 +101,7 @@ public sealed class EntraTicketProcessor
       return await ProcessLinkAsync(existing, handle, material, claims, linkCallerPrincipalId, cancellationToken);
     }
 
-    return await ProcessBootstrapAsync(existing, handle, material, claims, cancellationToken);
+    return await ProcessBootstrapAsync(existing, claims, cancellationToken);
   }
 
   private static bool IssuerMatchesTenant(EntraIdTokenClaims claims, out string expectedIssuer)
@@ -107,7 +110,7 @@ public sealed class EntraTicketProcessor
     return string.Equals(claims.Issuer, expectedIssuer, StringComparison.Ordinal);
   }
 
-  private async Task<OneOf<PrincipalId, SharedProblemDetails>> ProcessLinkAsync
+  private async Task<OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails>> ProcessLinkAsync
   (
     Credential? existing,
     byte[] handle,
@@ -131,48 +134,78 @@ public sealed class EntraTicketProcessor
       return linkDecision.Problem ?? IdentityProblems.UntrustedTenant();
     }
 
+    PrincipalId caller = linkCallerPrincipalId.Value;
     if (existing is not null)
     {
-      if (existing.PrincipalId == linkCallerPrincipalId.Value && !existing.IsRevoked)
-      {
-        return linkCallerPrincipalId.Value;
-      }
+      return await CompleteLinkWhenHandleOwnedAsync(existing, caller, cancellationToken);
+    }
 
+    OneOf<PrincipalId, SharedProblemDetails> alreadyLinked = await RefuseIfCallerAlreadyHasEntraAsync(
+      caller,
+      cancellationToken);
+    if (alreadyLinked.IsT1)
+    {
+      return alreadyLinked.AsT1;
+    }
+
+    OneOf<PrincipalId, SharedProblemDetails> attached =
+      await AttachEntraToPrincipalAsync(handle, material, claims.CredentialLabel, caller, cancellationToken);
+    if (attached.IsT1)
+    {
+      return attached.AsT1;
+    }
+
+    return attached.AsT0;
+  }
+
+  private async Task<OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails>> CompleteLinkWhenHandleOwnedAsync(
+    Credential existing,
+    PrincipalId caller,
+    CancellationToken cancellationToken)
+  {
+    if (existing.PrincipalId == caller)
+    {
+      return IdentityProblems.AlreadyOnThisAccount("Microsoft 365 account");
+    }
+
+    Principal? owner = await PrincipalStore.GetPrincipalAsync(existing.PrincipalId, cancellationToken);
+    if (owner is null)
+    {
+      return IdentityProblems.AuthenticationFailed();
+    }
+
+    if (!owner.IsActive || owner.MergedIntoPrincipalId is not null)
+    {
       return IdentityProblems.CredentialAlreadyRegistered("Entra account");
     }
 
-    IReadOnlyList<Credential> callerCredentials = await PrincipalStore.ListCredentialsAsync(
-      linkCallerPrincipalId.Value,
-      includeRevoked: false,
+    OneOf<PrincipalId, SharedProblemDetails> alreadyLinked = await RefuseIfCallerAlreadyHasEntraAsync(
+      caller,
       cancellationToken);
-    if (callerCredentials.Any(c => c.Type == CredentialType.EntraAccount))
+    if (alreadyLinked.IsT1)
     {
-      return IdentityProblems.Microsoft365AlreadyLinked();
+      return alreadyLinked.AsT1;
     }
 
-    var credential = Credential.Create(
-      linkCallerPrincipalId.Value,
-      CredentialType.EntraAccount,
-      handle,
-      material,
-      claims.CredentialLabel);
     try
     {
-      await PrincipalStore.AddCredentialAsync(credential, cancellationToken);
+      await PrincipalStore.MergePrincipalAsync(existing.PrincipalId, caller, cancellationToken);
     }
     catch (InvalidOperationException)
     {
-      return IdentityProblems.CredentialAlreadyRegistered("Entra account");
+      return IdentityProblems.AccountNotMergeable();
+    }
+    catch (ConcurrencyConflictException)
+    {
+      return IdentityProblems.TooMuchContention();
     }
 
-    return linkCallerPrincipalId.Value;
+    return caller;
   }
 
-  private async Task<OneOf<PrincipalId, SharedProblemDetails>> ProcessBootstrapAsync
+  private async Task<OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails>> ProcessBootstrapAsync
   (
     Credential? existing,
-    byte[] handle,
-    byte[] material,
     EntraIdTokenClaims claims,
     CancellationToken cancellationToken
   )
@@ -225,6 +258,55 @@ public sealed class EntraTicketProcessor
       return createDecision.Problem ?? IdentityProblems.BootstrapNotAllowed();
     }
 
+    return new EntraChoiceRequired();
+  }
+
+  public async Task<OneOf<PrincipalId, SharedProblemDetails>> CompleteBootstrapCreateAsync(
+    EntraIdTokenClaims claims,
+    CancellationToken cancellationToken)
+  {
+    if (!IssuerMatchesTenant(claims, out string expectedIssuer))
+    {
+      LogIssuerMismatch(Logger, expectedIssuer, claims.Issuer, null);
+      return IdentityProblems.InvalidEntraTokenIssuerMismatch();
+    }
+
+    EntraSignInDecision createDecision = await EntraSignInPolicy.EvaluateAsync(
+      EntraSignInMode.BootstrapCreate,
+      claims.TenantId,
+      cancellationToken);
+    if (!createDecision.Allowed)
+    {
+      return createDecision.Problem ?? IdentityProblems.BootstrapNotAllowed();
+    }
+
+    byte[] handle = EntraAccountHandle.Encode(claims.TenantId, claims.ObjectId);
+    byte[] material = EntraIssuerMaterial.FromTenantId(claims.TenantId);
+    Credential? existing = await PrincipalStore.FindCredentialByHandleAsync(
+      CredentialType.EntraAccount,
+      handle,
+      cancellationToken);
+    if (existing is { IsRevoked: false })
+    {
+      Principal? existingPrincipal = await PrincipalStore.GetPrincipalAsync(existing.PrincipalId, cancellationToken);
+      if (existingPrincipal is null)
+      {
+        return IdentityProblems.AuthenticationFailed();
+      }
+
+      if (!existingPrincipal.IsActive)
+      {
+        return IdentityProblems.Quarantined();
+      }
+
+      return existing.PrincipalId;
+    }
+
+    if (existing is { IsRevoked: true })
+    {
+      return IdentityProblems.EntraCredentialRevoked();
+    }
+
     var created = Principal.Create(PrincipalKind.Human);
     if (!string.IsNullOrWhiteSpace(claims.DisplayName))
     {
@@ -272,5 +354,89 @@ public sealed class EntraTicketProcessor
 
     _ = await PrincipalRoleStore.TryClaimFirstAdministratorAsync(created.Id, cancellationToken);
     return created.Id;
+  }
+
+  public async Task<OneOf<PrincipalId, SharedProblemDetails>> AttachEntraToPrincipalAsync(
+    EntraIdTokenClaims claims,
+    PrincipalId principalId,
+    CancellationToken cancellationToken)
+  {
+    if (!IssuerMatchesTenant(claims, out string expectedIssuer))
+    {
+      LogIssuerMismatch(Logger, expectedIssuer, claims.Issuer, null);
+      return IdentityProblems.InvalidEntraTokenIssuerMismatch();
+    }
+
+    byte[] handle = EntraAccountHandle.Encode(claims.TenantId, claims.ObjectId);
+    byte[] material = EntraIssuerMaterial.FromTenantId(claims.TenantId);
+    Credential? existing = await PrincipalStore.FindCredentialByHandleAsync(
+      CredentialType.EntraAccount,
+      handle,
+      cancellationToken);
+    if (existing is not null)
+    {
+      if (existing.PrincipalId == principalId && !existing.IsRevoked)
+      {
+        return IdentityProblems.AlreadyOnThisAccount("Microsoft 365 account");
+      }
+
+      return IdentityProblems.CredentialAlreadyRegistered("Entra account");
+    }
+
+    OneOf<PrincipalId, SharedProblemDetails> alreadyLinked = await RefuseIfCallerAlreadyHasEntraAsync(
+      principalId,
+      cancellationToken);
+    if (alreadyLinked.IsT1)
+    {
+      return alreadyLinked;
+    }
+
+    return await AttachEntraToPrincipalAsync(
+      handle,
+      material,
+      claims.CredentialLabel,
+      principalId,
+      cancellationToken);
+  }
+
+  private async Task<OneOf<PrincipalId, SharedProblemDetails>> RefuseIfCallerAlreadyHasEntraAsync(
+    PrincipalId principalId,
+    CancellationToken cancellationToken)
+  {
+    IReadOnlyList<Credential> callerCredentials = await PrincipalStore.ListCredentialsAsync(
+      principalId,
+      includeRevoked: false,
+      cancellationToken);
+    if (callerCredentials.Any(credential => credential.Type == CredentialType.EntraAccount))
+    {
+      return IdentityProblems.Microsoft365AlreadyLinked();
+    }
+
+    return principalId;
+  }
+
+  private async Task<OneOf<PrincipalId, SharedProblemDetails>> AttachEntraToPrincipalAsync(
+    byte[] handle,
+    byte[] material,
+    string label,
+    PrincipalId principalId,
+    CancellationToken cancellationToken)
+  {
+    var credential = Credential.Create(
+      principalId,
+      CredentialType.EntraAccount,
+      handle,
+      material,
+      label);
+    try
+    {
+      await PrincipalStore.AddCredentialAsync(credential, cancellationToken);
+    }
+    catch (InvalidOperationException)
+    {
+      return IdentityProblems.CredentialAlreadyRegistered("Entra account");
+    }
+
+    return principalId;
   }
 }

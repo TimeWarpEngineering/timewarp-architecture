@@ -243,3 +243,46 @@ public class Restore
     return Task.CompletedTask;
   }
 }
+
+public class ReparentTo
+{
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<ReparentTo>();
+
+  public static Task Changes_principal_id_and_keeps_type_handle()
+  {
+    PrincipalId original = PrincipalId.New();
+    PrincipalId target = PrincipalId.New();
+    byte[] handle = [1, 2, 3];
+    byte[] material = [4, 5, 6];
+    Credential credential = Credential.Create(original, CredentialType.Passkey, handle, material, "laptop");
+    CredentialId id = credential.Id;
+
+    credential.ReparentTo(target);
+
+    credential.Id.ShouldBe(id);
+    credential.PrincipalId.ShouldBe(target);
+    credential.Type.ShouldBe(CredentialType.Passkey);
+    credential.Handle.ShouldBe(handle);
+    credential.PublicMaterial.ShouldBe(material);
+    credential.Label.ShouldBe("laptop");
+    credential.IsRevoked.ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task Rejects_empty_target()
+  {
+    Credential credential = Credential.Create(PrincipalId.New(), CredentialType.Passkey, [1], [2]);
+    Should.Throw<ArgumentException>(() => credential.ReparentTo(default));
+    return Task.CompletedTask;
+  }
+
+  public static Task Rejects_same_principal()
+  {
+    PrincipalId principalId = PrincipalId.New();
+    Credential credential = Credential.Create(principalId, CredentialType.Passkey, [1], [2]);
+    Should.Throw<InvalidOperationException>(() => credential.ReparentTo(principalId));
+    return Task.CompletedTask;
+  }
+}

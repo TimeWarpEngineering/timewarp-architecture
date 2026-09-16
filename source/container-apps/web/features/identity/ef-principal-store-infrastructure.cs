@@ -12,6 +12,7 @@
 //   - AddCredential: Handle uniqueness; first credential Provisional→Keyed with conditional
 //     principal Version bump only when the tier actually changes
 //   - Type/Handle immutable on UpdateCredential
+//   - MergePrincipalAsync: one SaveChanges for re-parented credentials + both principals
 //   - List ordered by CreatedAt ascending
 // Version authority is store-CAS, not AggregateDbContext: Principal/Credential are deliberately
 // NOT IAggregateRoot, so SaveChanges will not auto-increment Version or run DomainInvariantsGuard.
@@ -274,6 +275,117 @@ public sealed class EfPrincipalStore : IPrincipalStore
     Credential next = credential.Snapshot(EntityVersion.Next(storedVersion));
     Db.Entry(existing).State = EntityState.Detached;
     await PersistReplacementAsync(Db.Credentials, next, storedVersion, cancellationToken).ConfigureAwait(false);
+  }
+
+  public async Task MergePrincipalAsync(
+    PrincipalId sourceId,
+    PrincipalId targetId,
+    CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    if (sourceId.IsEmpty)
+    {
+      throw new ArgumentException("Source PrincipalId cannot be empty.", nameof(sourceId));
+    }
+
+    if (targetId.IsEmpty)
+    {
+      throw new ArgumentException("Target PrincipalId cannot be empty.", nameof(targetId));
+    }
+
+    if (sourceId == targetId)
+    {
+      throw new ArgumentException("Source and target principals must differ.", nameof(targetId));
+    }
+
+    Principal? storedSource = await Db.Principals
+      .FirstOrDefaultAsync(principal => principal.Id == sourceId, cancellationToken)
+      .ConfigureAwait(false);
+    if (storedSource is null)
+    {
+      throw new InvalidOperationException($"Principal '{sourceId}' does not exist.");
+    }
+
+    Principal? storedTarget = await Db.Principals
+      .FirstOrDefaultAsync(principal => principal.Id == targetId, cancellationToken)
+      .ConfigureAwait(false);
+    if (storedTarget is null)
+    {
+      Db.Entry(storedSource).State = EntityState.Detached;
+      throw new InvalidOperationException($"Principal '{targetId}' does not exist.");
+    }
+
+    Principal source = storedSource.Snapshot(storedSource.Version);
+    Principal target = storedTarget.Snapshot(storedTarget.Version);
+    if (source.MergedIntoPrincipalId is not null)
+    {
+      Db.Entry(storedSource).State = EntityState.Detached;
+      Db.Entry(storedTarget).State = EntityState.Detached;
+      throw new InvalidOperationException($"Principal '{sourceId}' is already merged.");
+    }
+
+    if (!target.IsActive)
+    {
+      Db.Entry(storedSource).State = EntityState.Detached;
+      Db.Entry(storedTarget).State = EntityState.Detached;
+      throw new InvalidOperationException($"Target principal '{targetId}' is not active.");
+    }
+
+    List<Credential> storedCredentials = await Db.Credentials
+      .Where(credential => credential.PrincipalId == sourceId && credential.RevokedAt == null)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    List<(Credential Next, long OriginalVersion)> credentialReplacements = [];
+    foreach (Credential storedCredential in storedCredentials)
+    {
+      Credential moving = storedCredential.Snapshot(storedCredential.Version);
+      moving.ReparentTo(targetId);
+      credentialReplacements.Add((moving.Snapshot(EntityVersion.Next(storedCredential.Version)), storedCredential.Version));
+    }
+
+    if (string.IsNullOrWhiteSpace(target.DisplayName) && !string.IsNullOrWhiteSpace(source.DisplayName))
+    {
+      target.SetDisplayName(source.DisplayName);
+    }
+
+    target.ApplyTrustAtLeast(source.TrustTier);
+    source.MergeInto(targetId);
+
+    long sourceStoredVersion = storedSource.Version;
+    long targetStoredVersion = storedTarget.Version;
+    Principal nextSource = source.Snapshot(EntityVersion.Next(sourceStoredVersion));
+    Principal nextTarget = target.Snapshot(EntityVersion.Next(targetStoredVersion));
+
+    Db.Entry(storedSource).State = EntityState.Detached;
+    Db.Entry(storedTarget).State = EntityState.Detached;
+    foreach (Credential storedCredential in storedCredentials)
+    {
+      Db.Entry(storedCredential).State = EntityState.Detached;
+    }
+
+    AttachAsModified(Db.Principals, nextSource, sourceStoredVersion);
+    AttachAsModified(Db.Principals, nextTarget, targetStoredVersion);
+    foreach ((Credential next, long originalVersion) in credentialReplacements)
+    {
+      AttachAsModified(Db.Credentials, next, originalVersion);
+    }
+
+    try
+    {
+      await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+    catch (DbUpdateConcurrencyException exception)
+    {
+      DetachIfTracked(nextSource);
+      DetachIfTracked(nextTarget);
+      foreach ((Credential next, long _) in credentialReplacements)
+      {
+        DetachIfTracked(next);
+      }
+
+      throw TranslateConcurrency(exception, typeof(Principal), sourceId.ToString(), sourceStoredVersion);
+    }
   }
 
   private async Task PersistReplacementAsync<TEntity>(

@@ -54,6 +54,14 @@
 //     snapshot conflicts on their next Update* instead of silently overwriting the tier change.
 //   - Conflict policy (retry vs reload vs fail the request) stays with callers — that half of the
 //     original D6 lean (defer callsite policy) was correct and is unchanged by this task.
+//   - MergePrincipalAsync(source, target): re-parents all active credentials of source onto
+//     target (revoked rows stay on source), raises target trust to max(source, target), keeps
+//     target DisplayName unless empty (then copies source), then source.MergeInto(target).
+//     Implementations persist every touched row with a version bump; EF does this in one
+//     transaction. Missing ids throw InvalidOperationException; already-merged source, inactive
+//     target, or source==target throw InvalidOperationException / ArgumentException. Concurrent
+//     writers of source/target/credentials throw ConcurrencyConflictException and leave state
+//     untouched (same CAS as Update*).
 //   - Exception delivery is NOT specified to be synchronous: Add*/Update* may throw before
 //     returning a Task (the in-memory implementation does — its bodies run to completion
 //     synchronously) or may surface the same condition as a faulted Task (an EF-backed
@@ -81,4 +89,10 @@ public interface IPrincipalStore
   Task<Credential?> FindCredentialByHandleAsync(CredentialType type, byte[] handle, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<Credential>> ListCredentialsAsync(PrincipalId principalId, bool includeRevoked = false, CancellationToken cancellationToken = default);
   Task UpdateCredentialAsync(Credential credential, CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// Re-parents active credentials from <paramref name="sourceId"/> onto <paramref name="targetId"/>
+  /// and retires the source principal. See this port's Design region.
+  /// </summary>
+  Task MergePrincipalAsync(PrincipalId sourceId, PrincipalId targetId, CancellationToken cancellationToken = default);
 }

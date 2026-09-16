@@ -4,8 +4,9 @@
 
 #region Design
 // TimeWarp.State rule: every SPA → backend HTTP call goes through an ActionSet (COPIC / ProfileState).
-// Credentials are product data from GetCredentials / AddPasskey / RevokeCredential — never page-local
-// List<> fields. Null Credentials = no snapshot; empty list = loaded with zero passkeys.
+// Credentials are product data from GetCredentials / AddPasskey / AddExistingPasskey /
+// RevokeCredential — never page-local List<> fields. Null Credentials = no snapshot; empty list
+// = loaded with zero passkeys.
 // In-flight fetch is [TrackAction] on FetchCredentials — Settings uses IsAnyActive, not null.
 // ActivePasskeys is the Settings filter (passkey + IsActive); ActiveEntraAccounts is the Microsoft 365
 // filter. Full list stays available for follow-ups.

@@ -37,6 +37,7 @@ using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.Identity.Application;
+using TimeWarp.Architecture.Features.Identity.Infrastructure;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Identity;
 
@@ -90,6 +91,8 @@ public class Callback_Given_
     builder.Services.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     builder.Services.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
     builder.Services.AddScoped<EntraTicketProcessor>();
+    builder.Services.AddSingleton<IParkedEntraClaimsStore, InMemoryParkedEntraClaimsStore>();
+    builder.Services.AddScoped<IEntraChoiceTicketAccessor, HttpEntraChoiceTicketAccessor>();
     builder.Services.AddOptions<EntraAuthenticationOptions>()
       .Bind(builder.Configuration.GetSection(EntraAuthenticationOptions.SectionKey));
     builder.Services.PostConfigure<EntraAuthenticationOptions>(options => options.Enabled = true);
@@ -202,13 +205,13 @@ public class Callback_Given_
     string body = await callback.Content.ReadAsStringAsync();
     callback.StatusCode.ShouldBe(
       HttpStatusCode.Redirect,
-      $"Expected identity-session redirect after real OIDC ticket. Body: {body}");
+      $"Expected choose-page redirect after real OIDC ticket. Body: {body}");
     callback.Headers.Location.ShouldNotBeNull();
-    callback.Headers.Location!.ToString().ShouldBe("/Profile");
+    callback.Headers.Location!.ToString().ShouldStartWith(EntraChoiceCookie.ChoosePath);
     callback.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? setCookieValues).ShouldBeTrue();
     setCookieValues.ShouldNotBeNull();
     setCookieValues.ShouldContain(
-      value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
+      value => value.Contains(EntraChoiceCookie.CookieName, StringComparison.Ordinal));
   }
 
   private static string CookieHeaderFrom(HttpResponseMessage response)

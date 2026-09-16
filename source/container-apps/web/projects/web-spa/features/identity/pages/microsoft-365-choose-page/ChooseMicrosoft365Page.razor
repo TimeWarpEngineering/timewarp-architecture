@@ -1,0 +1,163 @@
+@namespace TimeWarp.Architecture.Features.Identity
+@inherits BaseComponent
+@using TimeWarp.Architecture.Services
+
+@code {
+  public static string Title => "Microsoft 365 account";
+  public static Icon? NavIcon => new Icons.Regular.Size20.PersonPasskey();
+
+  [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
+  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+  [Inject] private IWebServerApiService WebServerApiService { get; set; } = null!;
+
+  [SuppressMessage
+  (
+    "Design",
+    "CA1056:URI-like properties should not be strings",
+    Justification = "SupplyParameterFromQuery binds strings; the raw value is validated by LoginPage.GetSafeReturnUrl."
+  )]
+  [Parameter] [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
+
+  private string? ErrorMessage;
+  private bool IsBusy;
+  private bool? IsValid;
+  private string Destination = "/";
+
+  protected override async Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+    await LoadChoiceAsync();
+  }
+
+  private async Task LoadChoiceAsync()
+  {
+    try
+    {
+      OneOf<GetEntraBootstrapChoice.Response, FileResponse, SharedProblemDetails> result =
+        await WebServerApiService.GetResponse<GetEntraBootstrapChoice.Response>(
+          new GetEntraBootstrapChoice.Query(),
+          CancellationToken.None);
+      if (result.TryPickT0(out GetEntraBootstrapChoice.Response response, out _))
+      {
+        IsValid = response.Valid;
+        Destination = LoginPage.GetSafeReturnUrl(string.IsNullOrEmpty(response.Destination) ? ReturnUrl : response.Destination);
+        return;
+      }
+    }
+    catch (Exception)
+    {
+      // Fall through to expired.
+    }
+
+    IsValid = false;
+  }
+
+  private async Task CreateNewAccount()
+  {
+    ErrorMessage = null;
+    IsBusy = true;
+    try
+    {
+      OneOf<CompleteEntraBootstrapCreate.Response, FileResponse, SharedProblemDetails> result =
+        await WebServerApiService.GetResponse<CompleteEntraBootstrapCreate.Response>(
+          new CompleteEntraBootstrapCreate.Command(),
+          CancellationToken.None);
+      if (!result.TryPickT0(out CompleteEntraBootstrapCreate.Response response, out OneOf<FileResponse, SharedProblemDetails> rest))
+      {
+        ErrorMessage = rest.IsT1 ? PasskeyCeremonyClient.FormatError(rest.AsT1) : "Could not create the account.";
+        if (ErrorMessage.Contains("expired", StringComparison.OrdinalIgnoreCase))
+        {
+          IsValid = false;
+        }
+
+        return;
+      }
+
+      NavigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(response.Destination));
+    }
+    finally
+    {
+      IsBusy = false;
+    }
+  }
+
+  private async Task AlreadyHaveAccount()
+  {
+    ErrorMessage = null;
+    IsBusy = true;
+    try
+    {
+      OneOf<CompleteEntraBootstrapExisting.Response, SharedProblemDetails> result =
+        await Ceremony.CompleteEntraChoiceExistingAsync(CancellationToken.None);
+      if (result.IsT1)
+      {
+        ErrorMessage = PasskeyCeremonyClient.FormatError(result.AsT1);
+        if (ErrorMessage.Contains("expired", StringComparison.OrdinalIgnoreCase))
+        {
+          IsValid = false;
+        }
+
+        return;
+      }
+
+      NavigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(result.AsT0.Destination));
+    }
+    catch (JSException jsException)
+    {
+      ErrorMessage = $"The browser could not complete the passkey ceremony: {jsException.Message}";
+    }
+    finally
+    {
+      IsBusy = false;
+    }
+  }
+}
+
+<PageTitle>Microsoft 365 account</PageTitle>
+
+<TimeWarpFocusedPage>
+  <div class="twe-stack">
+    <Card Title="Microsoft 365">
+      @if (IsValid is null)
+      {
+        <p>Checking sign-in…</p>
+      }
+      else if (IsValid is false)
+      {
+        <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Session expired" AllowDismiss="false">
+          Session expired, sign in with Microsoft 365 again.
+        </FluentMessageBar>
+        <FluentButton Appearance="ButtonAppearance.Primary"
+                      data-qa="SignInWithMicrosoft365Again"
+                      OnClick="@(() => NavigationManager.NavigateTo(LoginPage.GetPageUrl()))">
+          Sign in with Microsoft 365 again
+        </FluentButton>
+      }
+      else
+      {
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+          <p>This Microsoft 365 account is not linked yet. Create a new account, or prove you already have one with a passkey.</p>
+          <FluentButton Appearance="ButtonAppearance.Primary"
+                        data-qa="CreateNewAccount"
+                        Disabled="IsBusy"
+                        OnClick="CreateNewAccount">
+            Create a new account
+          </FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Outline"
+                        data-qa="AlreadyHaveAccount"
+                        Disabled="IsBusy"
+                        OnClick="AlreadyHaveAccount">
+            I already have an account
+          </FluentButton>
+        </FluentStack>
+      }
+    </Card>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+      <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
+        @ErrorMessage
+      </FluentMessageBar>
+    }
+  </div>
+</TimeWarpFocusedPage>

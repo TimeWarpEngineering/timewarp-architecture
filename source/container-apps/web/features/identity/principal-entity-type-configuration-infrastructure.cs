@@ -43,6 +43,13 @@ public sealed class PrincipalEntityTypeConfiguration : IEntityTypeConfiguration<
     builder.Property(principal => principal.CreatedAt).IsRequired();
     builder.Property(principal => principal.DisplayName);
 
+    builder.Property(principal => principal.MergedIntoPrincipalId)
+      .HasConversion
+      (
+        id => id.HasValue ? id.Value.Value : (Guid?)null,
+        value => value.HasValue ? PrincipalId.From(value.Value) : null
+      );
+
     builder.Property(principal => principal.Version)
       .IsConcurrencyToken()
       .UsePropertyAccessMode(PropertyAccessMode.Property);

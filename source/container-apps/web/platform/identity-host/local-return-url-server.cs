@@ -5,7 +5,8 @@
 #region Design
 // Mirrors LoginPage.GetSafeReturnUrl (open-redirect + login-loop guards) on the server so the OIDC
 // ticket completion redirect cannot be pointed at an absolute URL. Also refuses the challenge path
-// itself so a crafted returnUrl cannot bounce the browser through Challenge again.
+// and /Login/Microsoft365/Choose so a crafted returnUrl cannot bounce the browser through Challenge
+// or land the post-choice redirect back on the choose page.
 // AuthenticationProperties.RedirectUri is the local return path from the challenge query (e.g.
 // /Profile). PublicOrigin overrides only the OIDC redirect_uri, so Sanitize still accepts that
 // local path after callback when the public origin differs from the internal http origin.
@@ -14,6 +15,7 @@
 namespace TimeWarp.Architecture.Configuration;
 
 using System.Diagnostics.CodeAnalysis;
+using TimeWarp.Architecture.Features.Identity.Application;
 
 public static class LocalReturnUrl
 {
@@ -33,6 +35,7 @@ public static class LocalReturnUrl
 
     string path = returnUrl.Split('?', '#')[0].TrimEnd('/');
     if (path.Equals(IdentitySessionCookieChallenge.LoginPath, StringComparison.OrdinalIgnoreCase)
+      || path.Equals(EntraChoiceCookie.ChoosePath, StringComparison.OrdinalIgnoreCase)
       || path.Equals(ChallengeEntra.Path, StringComparison.OrdinalIgnoreCase))
     {
       return "/";

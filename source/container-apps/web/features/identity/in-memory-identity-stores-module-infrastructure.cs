@@ -11,10 +11,11 @@
 //   - IPrincipalStore defaults here to singleton InMemoryPrincipalStore (zero-infra / skip-mode).
 //     When PostgresDbModule sees a connection string it replaces this registration with scoped
 //     EfPrincipalStore so principals/credentials survive restarts.
-//   - IWebAuthnChallengeStore / IAgentKeyChallengeStore / IAgentTokenStore stay process-lifetime
-//     in-memory singletons deliberately — ceremony nonces and short-lived bearer grants are
-//     ephemeral (Redis later if multi-replica requires shared token state). No distributed store
-//     yet; a single web-server instance is the deployment assumption for those three.
+//   - IWebAuthnChallengeStore / IAgentKeyChallengeStore / IAgentTokenStore /
+//     IParkedEntraClaimsStore stay process-lifetime in-memory singletons deliberately —
+//     ceremony nonces, short-lived bearer grants, and parked bootstrap claims are ephemeral
+//     (Redis later if multi-replica requires shared token state). No distributed store
+//     yet; a single web-server instance is the deployment assumption for those.
 // Principal→role assignment (task 147-004 D1): IPrincipalRoleStore is web-app only (not
 // TimeWarp.Identity). Registered here as a process-lifetime singleton beside the other
 // zero-infra identity defaults so Program stays free of per-concern store lines. When a Postgres
@@ -30,6 +31,7 @@
 namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
 
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Identity.Application;
 
 public class InMemoryIdentityStoresModule : IModule
 {
@@ -39,6 +41,7 @@ public class InMemoryIdentityStoresModule : IModule
     serviceCollection.AddSingleton<IPrincipalStore, InMemoryPrincipalStore>();
     serviceCollection.AddSingleton<ISiteSettingsStore, InMemorySiteSettingsStore>();
     serviceCollection.AddSingleton<IWebAuthnChallengeStore, InMemoryWebAuthnChallengeStore>();
+    serviceCollection.AddSingleton<IParkedEntraClaimsStore, InMemoryParkedEntraClaimsStore>();
     serviceCollection.AddSingleton<IAgentKeyChallengeStore, InMemoryAgentKeyChallengeStore>();
     serviceCollection.AddSingleton<IAgentTokenStore, InMemoryAgentTokenStore>();
 

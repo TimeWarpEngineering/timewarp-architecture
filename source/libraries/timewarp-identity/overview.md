@@ -20,6 +20,16 @@ protocol state that will never be EF entities — a distributed deployment would
 cache (Redis), not tables — so their stores live beside the ceremonies/tokens they serve rather
 than in `persistence/`.
 
+## Principal merge
+
+`IPrincipalStore.MergePrincipalAsync(source, target)` re-parents every **active** credential
+from source onto target (revoked rows stay on source for audit), raises target trust to
+`max(source, target)`, copies `DisplayName` only when target's is empty, then
+`Principal.MergeInto(target)` — `MergedIntoPrincipalId` is set and `IsActive` is false.
+`Credential.ReparentTo` changes `PrincipalId` only; Type and Handle stay immutable so the
+authenticator's credential id still looks up. Un-merge is out of scope. A merged principal
+cannot sign in; passkey login on a moved credential authenticates as the surviving principal.
+
 ## Configured vs enabled
 
 **Configured** (deploy-time, secret-bearing) stays in host `Authentication:Entra:*`: client id,

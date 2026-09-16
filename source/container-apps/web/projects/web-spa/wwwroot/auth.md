@@ -44,7 +44,15 @@ routes respond **503**, not 402.
 Product CTA: [/Login](/Login) (Continue with passkey). Technical ceremony demo: [/Passkeys](/Passkeys).
 
 Additional passkeys can be attached to an existing principal once signed in
-(`POST /api/identity/credentials/passkey` — session required).
+(`POST /api/identity/credentials/passkey` — session required). Settings also offers
+**Add an existing passkey** (`POST /api/identity/credentials/passkey/existing/options`
+then `POST /api/identity/credentials/passkey/existing`): assert a passkey that belongs
+to another **active** principal, re-parent that credential, and merge the other
+principal into the current one. Proof is the assertion itself. A passkey already on
+this account is **409**; a merged or quarantined source is **403**. After merge the
+source cannot sign in; a stale identity-session cookie for it is rejected. Signing in
+with the moved passkey authenticates as the surviving principal (lookup is by
+credential handle, not authenticator user handle).
 
 **Not offered:** email register, password reset, magic-link-only accounts as the
 primary path. Microsoft Entra is **opt-in only** (`Authentication:Entra:Enabled=true`)
@@ -52,6 +60,26 @@ and is not the agent- or human-priority story. When enabled it is a named OIDC s
 (`entra`); identity-session stays DefaultScheme. The SPA “Continue with Microsoft 365”
 button is a BFF `Challenge(“entra”)` — no WASM MSAL session. Default non-mock SPA
 auth projects the identity-session cookie via `GetCurrentSession`.
+
+### Microsoft 365 bootstrap choice
+
+When Entra is enabled and site settings `AllowBootstrap` is on, an **unknown**
+Microsoft 365 handle does **not** mint a principal on the OIDC ticket. The server
+parks the validated claims (10-minute, single-use, HttpOnly cookie) and redirects to
+[/Login/Microsoft365/Choose](/Login/Microsoft365/Choose):
+
+| Choice | What happens |
+|--------|----------------|
+| **Create a new account** | `POST /api/identity/entra/choice/create` — original bootstrap (principal + EntraAccount + session) |
+| **I already have an account** | Passkey assertion, then `POST /api/identity/entra/choice/existing` — attach the parked EntraAccount onto that principal (link semantics; **409** if the handle is owned elsewhere) |
+
+Parked claims expire; the page shows “Session expired, sign in with Microsoft 365 again.”
+Sync-hit (handle already owned) and `AllowBootstrap` off are unchanged — the choose
+page is never reached. **Link Microsoft 365** from Settings, when the handle is owned
+by another active unmerged principal, **merges** that principal into the caller
+instead of 409 (the Entra sign-in is the proof). 409 remains for already-on-this-account
+and for merged/quarantined owners; a second Entra handle on a principal that already
+has one is 409 “Microsoft 365 already linked.”
 
 ### Configured vs enabled
 

@@ -4,7 +4,8 @@
 
 #region Design
 // Shared by OpenIdConnect OnTicketReceived and the test fake handler so both paths HandleResponse
-// (never let OIDC sign in as the ambient user), then IssueAsync(identity-session) and redirect.
+// (never let OIDC sign in as the ambient user), then IssueAsync(identity-session) and redirect —
+// except unknown-handle bootstrap, which parks claims and 302s to /Login/Microsoft365/Choose.
 // Problem responses use the contract-seam serializer so SPA/tests see the same camelCase shape.
 // MarkResponseStart after Redirect/WriteAsJson so FastEndpoints does not replace the status with 204.
 // TryRead / null-principal failures log one Warning (reason, scheme, claim types only, principal
@@ -72,14 +73,41 @@ public static class EntraTicketHttp
       return;
     }
 
-    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> result = await processor.ProcessAsync(
       claims,
       mode,
       caller,
       cancellationToken);
+    if (result.IsT2)
+    {
+      await WriteProblemAsync(httpContext, result.AsT2, cancellationToken);
+      return;
+    }
+
     if (result.IsT1)
     {
-      await WriteProblemAsync(httpContext, result.AsT1, cancellationToken);
+      IParkedEntraClaimsStore parkedStore = httpContext.RequestServices.GetRequiredService<IParkedEntraClaimsStore>();
+      string parkId = parkedStore.Park(new ParkedEntraClaims(claims, returnUrl));
+      httpContext.Response.Cookies.Append(
+        EntraChoiceCookie.CookieName,
+        parkId,
+        new CookieOptions
+        {
+          HttpOnly = true,
+          Secure = true,
+          SameSite = SameSiteMode.Lax,
+          IsEssential = true,
+          MaxAge = EntraChoiceCookie.Lifetime,
+          Path = "/"
+        });
+      string chooseUrl = EntraChoiceCookie.ChoosePath;
+      if (!string.IsNullOrEmpty(returnUrl) && returnUrl != "/")
+      {
+        chooseUrl += $"?returnUrl={Uri.EscapeDataString(returnUrl)}";
+      }
+
+      httpContext.Response.Redirect(chooseUrl);
+      httpContext.MarkResponseStart();
       return;
     }
 

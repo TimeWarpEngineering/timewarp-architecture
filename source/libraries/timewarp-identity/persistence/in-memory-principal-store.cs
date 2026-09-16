@@ -48,6 +48,10 @@
 // check above always catches first. Both branches stay as guards against future internal bugs, not
 // as documentation of caller-observable behavior — no test exercises either without reflection.
 // FindCredentialByHandle returns the stored row even if revoked — callers check IsRevoked.
+// MergePrincipalAsync runs under WriteLock: re-parent active credentials, raise target trust,
+// copy DisplayName only when target's is empty, then source.MergeInto. Revoked credentials stay
+// on the source. Each touched row is replaced with Snapshot(Next) so a stale Update* after merge
+// conflicts.
 //
 // First credential: after successful AddCredentialAsync, the store constructs a NEW principal
 // snapshot at EntityVersion.Next(stored.Version) and calls RecordCredentialAttached on THAT
@@ -241,6 +245,78 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
       }
 
       Credentials[credential.Id] = credential.Snapshot(EntityVersion.Next(existing.Version));
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public Task MergePrincipalAsync(
+    PrincipalId sourceId,
+    PrincipalId targetId,
+    CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    if (sourceId.IsEmpty)
+    {
+      throw new ArgumentException("Source PrincipalId cannot be empty.", nameof(sourceId));
+    }
+
+    if (targetId.IsEmpty)
+    {
+      throw new ArgumentException("Target PrincipalId cannot be empty.", nameof(targetId));
+    }
+
+    if (sourceId == targetId)
+    {
+      throw new ArgumentException("Source and target principals must differ.", nameof(targetId));
+    }
+
+    lock (WriteLock)
+    {
+      if (!Principals.TryGetValue(sourceId, out Principal? storedSource))
+      {
+        throw new InvalidOperationException($"Principal '{sourceId}' does not exist.");
+      }
+
+      if (!Principals.TryGetValue(targetId, out Principal? storedTarget))
+      {
+        throw new InvalidOperationException($"Principal '{targetId}' does not exist.");
+      }
+
+      Principal source = storedSource.Snapshot(storedSource.Version);
+      Principal target = storedTarget.Snapshot(storedTarget.Version);
+      if (source.MergedIntoPrincipalId is not null)
+      {
+        throw new InvalidOperationException($"Principal '{sourceId}' is already merged.");
+      }
+
+      if (!target.IsActive)
+      {
+        throw new InvalidOperationException($"Target principal '{targetId}' is not active.");
+      }
+
+      Credential[] activeSourceCredentials =
+        Credentials.Values
+          .Where(credential => credential.PrincipalId.Equals(sourceId) && !credential.IsRevoked)
+          .ToArray();
+
+      foreach (Credential storedCredential in activeSourceCredentials)
+      {
+        Credential moving = storedCredential.Snapshot(storedCredential.Version);
+        moving.ReparentTo(targetId);
+        Credentials[moving.Id] = moving.Snapshot(EntityVersion.Next(storedCredential.Version));
+      }
+
+      if (string.IsNullOrWhiteSpace(target.DisplayName) && !string.IsNullOrWhiteSpace(source.DisplayName))
+      {
+        target.SetDisplayName(source.DisplayName);
+      }
+
+      target.ApplyTrustAtLeast(source.TrustTier);
+      source.MergeInto(targetId);
+
+      Principals[sourceId] = source.Snapshot(EntityVersion.Next(storedSource.Version));
+      Principals[targetId] = target.Snapshot(EntityVersion.Next(storedTarget.Version));
     }
 
     return Task.CompletedTask;
