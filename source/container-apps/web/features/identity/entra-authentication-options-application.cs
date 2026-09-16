@@ -15,6 +15,8 @@
 // (direct https://localhost:63611). Do not default from Ingress:PublicUrl — that is a dashboard
 // display URL and can differ from the origin in use (63610 vs shared host). Do not consume
 // X-Forwarded-* (task 104-031).
+// TenantDisplayName / TenantDomain are informational (boot/status display from `dev entra setup`);
+// they are not used for OIDC authority and stay optional with no validator rules.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -28,6 +30,8 @@ public sealed class EntraAuthenticationOptions
   public bool Enabled { get; set; }
   public string Instance { get; set; } = "https://login.microsoftonline.com/";
   public string TenantId { get; set; } = null!;
+  public string? TenantDisplayName { get; set; }
+  public string? TenantDomain { get; set; }
   public string ClientId { get; set; } = null!;
   public string? ClientSecret { get; set; }
   public string CallbackPath { get; set; } = "/signin-oidc";

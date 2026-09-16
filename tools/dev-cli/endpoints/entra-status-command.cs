@@ -4,8 +4,11 @@
 
 #region Design
 // Reads Web.Server user secrets first so a missing az login still shows local config. App
-// lookup prefers Authentication:Entra:ClientId; falls back to the default display name.
-// Handler stores Command/Ct as fields so private methods are zero-parameter.
+// lookup prefers Authentication:Entra:ClientId; falls back to domain-suffixed then bare
+// default display names. --tenant enumerates visible tenants for an explicit match (refuse
+// on not-found/ambiguous); omitting --tenant reports the tenant from user secrets and does
+// not refuse when multiple Azure tenants are visible. Handler stores Command/Ct as fields so
+// private methods are zero-parameter.
 #endregion
 
 namespace DevCli.Commands;
@@ -13,9 +16,14 @@ namespace DevCli.Commands;
 [NuruRoute("status", Description = "Show Entra user secrets (masked) and the app registration redirect URIs")]
 internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
 {
+  [Option("tenant", Description = "Tenant id, default domain, or display name (match against visible Azure tenants)")]
+  public string? Tenant { get; set; }
+
   internal sealed class Handler : ICommandHandler<EntraStatusCommand, Unit>
   {
     private readonly ITerminal Terminal;
+    private EntraStatusCommand Command = null!;
+    private CancellationToken Ct;
     private EntraCli Cli = null!;
     private Dictionary<string, string> Secrets = new(StringComparer.OrdinalIgnoreCase);
 
@@ -26,13 +34,16 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
 
     public async ValueTask<Unit> Handle(EntraStatusCommand command, CancellationToken ct)
     {
+      Command = command;
+      Ct = ct;
+
       if (!EntraCli.TryFindRepoRoot(Terminal, out string repoRoot))
       {
         Environment.ExitCode = 1;
         return Value;
       }
 
-      Cli = new EntraCli(Terminal, repoRoot, dryRun: false, ct);
+      Cli = new EntraCli(Terminal, repoRoot, dryRun: false, Ct);
 
       if (!await ReadSecretsAsync())
       {
@@ -40,6 +51,11 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       }
 
       PrintSecrets();
+      if (!await PrintTenantLineAsync())
+      {
+        return Value;
+      }
+
       await PrintAppRegistrationAsync().ConfigureAwait(false);
       return Value;
     }
@@ -64,6 +80,8 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       [
         EntraSetup.EnabledKey,
         EntraSetup.TenantIdKey,
+        EntraSetup.TenantDisplayNameKey,
+        EntraSetup.TenantDomainKey,
         EntraSetup.ClientIdKey,
         EntraSetup.ClientSecretKey,
         EntraSetup.TrustedTenants0Key,
@@ -96,6 +114,74 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       return key == EntraSetup.ClientSecretKey ? EntraSetup.MaskSecret(value) : value;
     }
 
+    private async Task<bool> PrintTenantLineAsync()
+    {
+      Terminal.WriteLine("");
+      if (!string.IsNullOrWhiteSpace(Command.Tenant))
+      {
+        if (!EntraCli.AzIsOnPath())
+        {
+          Terminal.WriteErrorLine("az is not on PATH; cannot resolve --tenant.".Red());
+          Environment.ExitCode = 1;
+          return false;
+        }
+
+        (bool accountOk, string signedInTenantId, _) =
+          await EntraTenantDiscovery.TryReadSignedInAccountAsync(Cli, Terminal).ConfigureAwait(false);
+        if (!accountOk)
+        {
+          Environment.ExitCode = 1;
+          return false;
+        }
+
+        EntraTenantDiscovery discovery = new(Terminal, Cli, signedInTenantId, verboseWarnings: false);
+        IReadOnlyList<EntraTenant> tenants = await discovery.EnumerateAsync().ConfigureAwait(false);
+        TenantSelection selection = EntraTenants.SelectTenant(tenants, Command.Tenant);
+        if (selection.Status is TenantSelectionStatus.NotFound or TenantSelectionStatus.Ambiguous
+          or TenantSelectionStatus.NoneVisible)
+        {
+          if (selection.Status == TenantSelectionStatus.NoneVisible)
+          {
+            Terminal.WriteErrorLine($"No tenants visible. {EntraCli.AzLoginHint}".Red());
+          }
+          else if (selection.Status == TenantSelectionStatus.NotFound)
+          {
+            Terminal.WriteErrorLine(
+              $"--tenant '{Command.Tenant.Trim()}' matched no visible tenant.".Red());
+          }
+          else
+          {
+            Terminal.WriteErrorLine(
+              $"--tenant '{Command.Tenant.Trim()}' matched more than one tenant.".Red());
+          }
+
+          EntraTenantDiscovery.PrintCandidateTable(Terminal, selection.Candidates);
+          Environment.ExitCode = 1;
+          return false;
+        }
+
+        Terminal.WriteLine($"Tenant: {EntraTenants.FormatTenantLine(selection.Selected!)}");
+        return true;
+      }
+
+      if (!Secrets.TryGetValue(EntraSetup.TenantIdKey, out string? tenantId)
+        || string.IsNullOrWhiteSpace(tenantId))
+      {
+        return true;
+      }
+
+      Secrets.TryGetValue(EntraSetup.TenantDisplayNameKey, out string? displayName);
+      Secrets.TryGetValue(EntraSetup.TenantDomainKey, out string? domain);
+      bool resolved = !string.IsNullOrWhiteSpace(displayName) || !string.IsNullOrWhiteSpace(domain);
+      EntraTenant fromSecrets = new(
+        tenantId.Trim(),
+        string.IsNullOrWhiteSpace(displayName) ? null : displayName,
+        string.IsNullOrWhiteSpace(domain) ? null : domain,
+        resolved);
+      Terminal.WriteLine($"Tenant: {EntraTenants.FormatTenantLine(fromSecrets)}");
+      return true;
+    }
+
     private async Task PrintAppRegistrationAsync()
     {
       Terminal.WriteLine("");
@@ -118,7 +204,7 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
 
       if (appId is null)
       {
-        Terminal.WriteLine("App registration: not found (no ClientId in user secrets and no app named TimeWarp Architecture Dev).");
+        Terminal.WriteLine("App registration: not found (no ClientId in user secrets and no matching TimeWarp Architecture Dev app).");
         return;
       }
 
@@ -168,6 +254,8 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
 
     private async Task<string?> FindAppIdByDisplayNameAsync()
     {
+      Secrets.TryGetValue(EntraSetup.TenantDomainKey, out string? domain);
+      IReadOnlyList<string> lookupNames = EntraTenants.AppLookupNames(explicitName: null, domain);
       string[] arguments =
       [
         "ad",
@@ -187,13 +275,29 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
         return null;
       }
 
-      if (!EntraSetup.TryFindExactAppIds(output.Stdout, EntraSetup.DefaultDisplayName, out IReadOnlyList<string> appIds)
-        || appIds.Count == 0)
+      string preferredName = lookupNames[0];
+      if (!EntraSetup.TryFindExactAppIds(output.Stdout, preferredName, out IReadOnlyList<string> preferredIds))
       {
         return null;
       }
 
-      return appIds[0];
+      IReadOnlyList<string> legacyIds = [];
+      if (lookupNames.Count > 1)
+      {
+        if (!EntraSetup.TryFindExactAppIds(output.Stdout, lookupNames[1], out legacyIds))
+        {
+          return null;
+        }
+      }
+
+      EntraTenants.ResolveExistingApp(preferredIds, legacyIds, out string? appId, out bool ambiguous);
+      if (ambiguous)
+      {
+        Terminal.WriteLine($"App registration: multiple matches for '{preferredName}'.");
+        return null;
+      }
+
+      return appId;
     }
   }
 }

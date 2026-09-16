@@ -3,12 +3,15 @@
 #endregion
 
 #region Design
-// Non-interactive. Idempotent by display name: reuse the app, union redirect URIs, ensure the
-// service principal, mint a client secret only on first write or --new-secret. A failed
-// user-secrets list aborts (does not fail-open mint). The password is captured in memory and
-// handed to `dotnet user-secrets set`; it is never printed or placed on a logged command line.
-// --dry-run prints every az / user-secrets invocation and executes none.
-// Handler stores Command/Ct as fields so private methods are zero-parameter.
+// Non-interactive. Enumerates visible tenants (account list + tenant list + signed-in), resolves
+// Graph names read-only under --dry-run, and requires --tenant when more than one is visible.
+// A provided --tenant that matches more than one candidate (e.g. two Default Directory orgs)
+// prints "matched more than one tenant", not the omitted-flag required message.
+// Mutations (app create/update, sp, credential reset, user-secrets set) still skip on dry-run.
+// Idempotent by display name: prefer domain-suffixed default, reuse bare legacy name if present.
+// Mint a client secret only on first write or --new-secret. A failed user-secrets list aborts
+// (does not fail-open mint). The password and Graph tokens are never printed. Handler stores
+// Command/Ct as fields so private methods are zero-parameter.
 #endregion
 
 namespace DevCli.Commands;
@@ -16,11 +19,15 @@ namespace DevCli.Commands;
 [NuruRoute("setup", Description = "Find-or-create the Entra app registration and write Web.Server user secrets")]
 [NuruRouteExample("entra setup", Description = "Create or reuse TimeWarp Architecture Dev and write user secrets")]
 [NuruRouteExample("entra setup --dry-run", Description = "Print az and user-secrets invocations without running them")]
+[NuruRouteExample("entra setup --tenant crunchitfs.com", Description = "Select the tenant by default domain when more than one is visible")]
 [NuruRouteExample("entra setup --public-origin https://arch.timewarp.work --new-secret")]
 internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
 {
-  [Option("name", Description = "App registration display name (default: TimeWarp Architecture Dev)")]
+  [Option("name", Description = "App registration display name (default: TimeWarp Architecture Dev, suffixed with tenant domain when known)")]
   public string? Name { get; set; }
+
+  [Option("tenant", Description = "Tenant id, default domain, or display name (required when more than one tenant is visible)")]
+  public string? Tenant { get; set; }
 
   [Option("public-origin", Description = "Public HTTPS origin; adds {origin}/signin-oidc to redirect URIs and user secrets")]
   public string? PublicOrigin { get; set; }
@@ -43,7 +50,11 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
     private string DisplayName = EntraSetup.DefaultDisplayName;
     private IReadOnlyList<string> DesiredRedirectUris = [];
     private string TenantId = "";
+    private string? TenantDisplayName;
+    private string? TenantDomain;
+    private EntraTenant SelectedTenant = null!;
     private string SignedInUser = "";
+    private string SignedInTenantId = "";
     private string AppId = "";
     private string? MintedSecret;
     private bool CreatedApp;
@@ -60,10 +71,6 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
     {
       Command = command;
       Ct = ct;
-
-      DisplayName = string.IsNullOrWhiteSpace(Command.Name)
-        ? EntraSetup.DefaultDisplayName
-        : Command.Name.Trim();
       DesiredRedirectUris = EntraSetup.BuildDesiredRedirectUris(Command.PublicOrigin, Command.RedirectUri);
 
       if (!EntraCli.TryFindRepoRoot(Terminal, out string repoRoot))
@@ -79,10 +86,14 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
         return Value;
       }
 
-      if (!await ReadAccountAsync())
+      if (!await SelectAndValidateTenantAsync())
       {
         return Value;
       }
+
+      DisplayName = string.IsNullOrWhiteSpace(Command.Name)
+        ? EntraTenants.DefaultAppDisplayName(TenantDomain)
+        : Command.Name.Trim();
 
       if (!await FindOrCreateAppAsync())
       {
@@ -125,53 +136,101 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
       return false;
     }
 
-    private async Task<bool> ReadAccountAsync()
+    private async Task<bool> SelectAndValidateTenantAsync()
     {
-      string[] arguments =
-      [
-        "account",
-        "show",
-        "--query",
-        "{tenantId:tenantId, user:user.name}",
-        "-o",
-        "json"
-      ];
-      CommandOutput output = await Cli.CaptureAzAsync(arguments).ConfigureAwait(false);
-      if (Cli.IsDryRun)
+      (bool accountOk, string signedInTenantId, string signedInUser) =
+        await EntraTenantDiscovery.TryReadSignedInAccountAsync(Cli, Terminal).ConfigureAwait(false);
+      if (!accountOk)
       {
-        TenantId = "<tenantId>";
-        SignedInUser = "<user>";
-        return true;
-      }
-
-      if (!output.Success)
-      {
-        Cli.WriteFailure(output, EntraCli.AzLoginHint);
         Environment.ExitCode = 1;
         return false;
       }
 
-      if (!EntraSetup.TryReadAccount(output.Stdout, out TenantId, out SignedInUser))
+      SignedInTenantId = signedInTenantId;
+      SignedInUser = signedInUser;
+
+      EntraTenantDiscovery discovery = new(Terminal, Cli, SignedInTenantId, verboseWarnings: true);
+      IReadOnlyList<EntraTenant> tenants = await discovery.EnumerateAsync().ConfigureAwait(false);
+      TenantSelection selection = EntraTenants.SelectTenant(tenants, Command.Tenant);
+      switch (selection.Status)
       {
-        Terminal.WriteErrorLine("Could not parse tenant id from `az account show`.".Red());
+        case TenantSelectionStatus.NoneVisible:
+          Terminal.WriteErrorLine($"No tenants visible. {EntraCli.AzLoginHint}".Red());
+          Environment.ExitCode = 1;
+          return false;
+
+        case TenantSelectionStatus.Ambiguous:
+          if (string.IsNullOrWhiteSpace(Command.Tenant))
+          {
+            Terminal.WriteErrorLine(
+              "--tenant is required when more than one tenant is visible (dev CLI is non-interactive).".Red());
+          }
+          else
+          {
+            Terminal.WriteErrorLine(
+              $"--tenant '{Command.Tenant.Trim()}' matched more than one tenant.".Red());
+          }
+
+          EntraTenantDiscovery.PrintCandidateTable(Terminal, selection.Candidates);
+          Terminal.WriteLine("Hint: `dev entra setup --tenant <id|domain|name>`");
+          Environment.ExitCode = 1;
+          return false;
+
+        case TenantSelectionStatus.NotFound:
+          Terminal.WriteErrorLine(
+            $"--tenant '{Command.Tenant!.Trim()}' matched no visible tenant.".Red());
+          EntraTenantDiscovery.PrintCandidateTable(Terminal, selection.Candidates);
+          Terminal.WriteLine("Hint: `dev entra setup --tenant <id|domain|name>`");
+          Environment.ExitCode = 1;
+          return false;
+
+        case TenantSelectionStatus.Selected:
+          SelectedTenant = selection.Selected!;
+          break;
+
+        default:
+          Terminal.WriteErrorLine("Unexpected tenant selection status.".Red());
+          Environment.ExitCode = 1;
+          return false;
+      }
+
+      if (!EntraTenants.TenantIdsEqual(SelectedTenant.TenantId, SignedInTenantId))
+      {
+        EntraTenant signedIn = tenants.FirstOrDefault(tenant =>
+            EntraTenants.TenantIdsEqual(tenant.TenantId, SignedInTenantId))
+          ?? new EntraTenant(SignedInTenantId, null, null, NameResolved: false);
+        Terminal.WriteErrorLine(
+          $"az is signed into {EntraTenants.FormatTenantLine(signedIn)} but --tenant selected {EntraTenants.FormatTenantLine(SelectedTenant)}.".Red());
+        Terminal.WriteLine(EntraTenants.AzLoginTenantHint(SelectedTenant.TenantId));
         Environment.ExitCode = 1;
         return false;
       }
 
-      Terminal.WriteLine($"Tenant: {TenantId}");
+      TenantId = SelectedTenant.TenantId;
+      TenantDisplayName = SelectedTenant.DisplayName;
+      TenantDomain = SelectedTenant.DefaultDomain;
+
+      Terminal.WriteLine($"Tenant: {EntraTenants.FormatTenantLine(SelectedTenant)}");
       Terminal.WriteLine($"Signed in as: {(string.IsNullOrWhiteSpace(SignedInUser) ? "(unknown)" : SignedInUser)}");
       return true;
     }
 
     private async Task<bool> FindOrCreateAppAsync()
     {
+      IReadOnlyList<string> lookupNames = EntraTenants.AppLookupNames(Command.Name, TenantDomain);
+      string listDisplayName = string.IsNullOrWhiteSpace(Command.Name)
+        ? EntraSetup.DefaultDisplayName
+        : Command.Name.Trim();
+      string preferredName = lookupNames[0];
+      string? legacyName = lookupNames.Count > 1 ? lookupNames[1] : null;
+
       string[] listArguments =
       [
         "ad",
         "app",
         "list",
         "--display-name",
-        DisplayName,
+        listDisplayName,
         "--query",
         "[].{appId:appId,displayName:displayName}",
         "-o",
@@ -209,25 +268,41 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
         return false;
       }
 
-      if (!EntraSetup.TryFindExactAppIds(listOutput.Stdout, DisplayName, out IReadOnlyList<string> appIds))
+      if (!EntraSetup.TryFindExactAppIds(listOutput.Stdout, preferredName, out IReadOnlyList<string> preferredIds))
       {
         Terminal.WriteErrorLine("Could not parse `az ad app list` JSON.".Red());
         Environment.ExitCode = 1;
         return false;
       }
 
-      if (appIds.Count > 1)
+      IReadOnlyList<string> legacyIds = [];
+      if (legacyName is not null)
+      {
+        if (!EntraSetup.TryFindExactAppIds(listOutput.Stdout, legacyName, out legacyIds))
+        {
+          Terminal.WriteErrorLine("Could not parse `az ad app list` JSON.".Red());
+          Environment.ExitCode = 1;
+          return false;
+        }
+      }
+
+      EntraTenants.ResolveExistingApp(preferredIds, legacyIds, out string? existingAppId, out bool ambiguous);
+      if (ambiguous)
       {
         Terminal.WriteErrorLine(
-          $"Multiple app registrations named '{DisplayName}'. Rename extras or pass --name.".Red());
+          $"Multiple app registrations named '{preferredName}'. Rename extras or pass --name.".Red());
         Environment.ExitCode = 1;
         return false;
       }
 
-      if (appIds.Count == 1)
+      if (existingAppId is not null)
       {
-        AppId = appIds[0];
-        Terminal.WriteLine($"Reusing app registration {AppId} ({DisplayName}).");
+        AppId = existingAppId;
+        string reusedName = preferredIds.Count == 1
+          ? preferredName
+          : legacyName ?? preferredName;
+        Terminal.WriteLine($"Reusing app registration {AppId} ({reusedName}).");
+        DisplayName = reusedName;
         return true;
       }
 
@@ -448,6 +523,16 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
         (EntraSetup.AllowBootstrapKey, "true", false)
       ];
 
+      if (!string.IsNullOrWhiteSpace(TenantDisplayName))
+      {
+        pairs.Add((EntraSetup.TenantDisplayNameKey, TenantDisplayName, false));
+      }
+
+      if (!string.IsNullOrWhiteSpace(TenantDomain))
+      {
+        pairs.Add((EntraSetup.TenantDomainKey, TenantDomain, false));
+      }
+
       if (MintedSecret is not null)
       {
         pairs.Add((EntraSetup.ClientSecretKey, MintedSecret, true));
@@ -493,7 +578,7 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
       (
         table => table
           .AddColumns("Field", "Value")
-          .AddRow("Tenant", TenantId)
+          .AddRow("Tenant", EntraTenants.FormatTenantLine(SelectedTenant))
           .AddRow("Signed in as", string.IsNullOrWhiteSpace(SignedInUser) ? "(unknown)" : SignedInUser)
           .AddRow("Display name", DisplayName)
           .AddRow("App id", AppId)
@@ -504,6 +589,14 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
           .AddRow("Secrets written", written)
           .AddRow("Client secret", secretStatus)
       );
+
+      Terminal.WriteLine("");
+      Terminal.WriteLine(EntraTenants.SignInAudienceSummary(TenantDomain));
+      if (EntraTenants.PublicOriginMissingFromRedirectUris(Command.PublicOrigin, DesiredRedirectUris))
+      {
+        Terminal.WriteLine(
+          $"Warning: --public-origin '{Command.PublicOrigin!.Trim()}' was given but no redirect URI starts with it.".Yellow());
+      }
 
       Terminal.WriteLine("");
       Terminal.WriteLine("Next: `dev run`, browse the app, click \"Continue with Microsoft 365\".".Green());

@@ -3,10 +3,11 @@
 #endregion
 
 #region Design
-// Amuru Shell.Builder only — never System.Diagnostics.Process. Dry-run prints the invocation
-// and returns a successful empty output without executing. Secret-bearing captures (credential
-// reset stdout, user-secrets set of ClientSecret) never print stdout or the live argument list.
-// az on PATH is PathResolver, not a thrown process start.
+// Amuru Shell.Builder only — never System.Diagnostics.Process. Mutation captures skip execution
+// on dry-run and print the invocation. Read-only / token captures always execute so tenant
+// discovery works under --dry-run; token stdout and Authorization headers are never printed
+// (Bearer values masked as ******** when an invocation line is shown). az on PATH is
+// PathResolver, not a thrown process start.
 #endregion
 
 namespace DevCli.Services;
@@ -14,6 +15,9 @@ namespace DevCli.Services;
 internal sealed class EntraCli
 {
   internal const string AzLoginHint = "az login is required. Run `az login` then retry.";
+  internal const string GraphOrganizationUrl =
+    "https://graph.microsoft.com/v1.0/organization?$select=id,displayName,verifiedDomains";
+  internal const string GraphResource = "https://graph.microsoft.com";
 
   private readonly ITerminal Terminal;
   private readonly string RepoRoot;
@@ -48,18 +52,36 @@ internal sealed class EntraCli
   internal string WebServerProjectPath => Path.Combine(RepoRoot, EntraSetup.WebServerProject);
 
   internal Task<CommandOutput> CaptureAzAsync(IReadOnlyList<string> arguments) =>
-    CaptureAsync("az", arguments, maskArguments: false);
+    CaptureAsync("az", arguments, skipOnDryRun: true, maskArguments: false, maskAuthorizationHeader: false);
 
   internal Task<CommandOutput> CaptureAzSecretAsync(IReadOnlyList<string> arguments) =>
-    CaptureAsync("az", arguments, maskArguments: false);
+    CaptureAsync("az", arguments, skipOnDryRun: true, maskArguments: false, maskAuthorizationHeader: false);
+
+  /// <summary>
+  /// Always executes (including under --dry-run). Prints a dry-run invocation line when dry-run.
+  /// </summary>
+  internal Task<CommandOutput> CaptureAzReadOnlyAsync(IReadOnlyList<string> arguments) =>
+    CaptureAsync("az", arguments, skipOnDryRun: false, maskArguments: false, maskAuthorizationHeader: false);
+
+  /// <summary>
+  /// Always executes Graph/az rest calls that may carry a Bearer header. Masks the header in dry-run lines.
+  /// </summary>
+  internal Task<CommandOutput> CaptureAzReadOnlyMaskedAsync(IReadOnlyList<string> arguments) =>
+    CaptureAsync("az", arguments, skipOnDryRun: false, maskArguments: false, maskAuthorizationHeader: true);
+
+  /// <summary>
+  /// Always executes get-access-token. Never prints stdout (the token). Dry-run still prints the invocation.
+  /// </summary>
+  internal Task<CommandOutput> CaptureAzTokenAsync(IReadOnlyList<string> arguments) =>
+    CaptureAsync("az", arguments, skipOnDryRun: false, maskArguments: false, maskAuthorizationHeader: false, printStdoutNever: true);
 
   internal Task<CommandOutput> CaptureDotNetAsync(IReadOnlyList<string> arguments) =>
-    CaptureAsync("dotnet", arguments, maskArguments: false);
+    CaptureAsync("dotnet", arguments, skipOnDryRun: true, maskArguments: false, maskAuthorizationHeader: false);
 
   internal Task<CommandOutput> SetUserSecretAsync(string key, string value, bool maskValue)
   {
     string[] arguments = ["user-secrets", "set", key, value, "--project", WebServerProjectPath];
-    return CaptureAsync("dotnet", arguments, maskArguments: maskValue);
+    return CaptureAsync("dotnet", arguments, skipOnDryRun: true, maskArguments: maskValue, maskAuthorizationHeader: false);
   }
 
   internal async Task<CommandOutput> ListUserSecretsAsync()
@@ -80,16 +102,27 @@ internal sealed class EntraCli
   private async Task<CommandOutput> CaptureAsync(
     string executable,
     IReadOnlyList<string> arguments,
-    bool maskArguments)
+    bool skipOnDryRun,
+    bool maskArguments,
+    bool maskAuthorizationHeader,
+    bool printStdoutNever = false)
   {
     if (IsDryRun)
     {
-      IReadOnlyList<string> printed = maskArguments ? MaskedArguments(arguments) : arguments;
-      Terminal.WriteLine($"dry-run: {EntraSetup.FormatInvocation(executable, printed)}");
-      return CommandOutput.Empty();
+      IReadOnlyList<string> printed = maskArguments
+        ? MaskedArguments(arguments)
+        : maskAuthorizationHeader
+          ? MaskAuthorizationHeaders(arguments)
+          : arguments;
+      string suffix = printStdoutNever ? " (stdout not printed)" : "";
+      Terminal.WriteLine($"dry-run: {EntraSetup.FormatInvocation(executable, printed)}{suffix}");
+      if (skipOnDryRun)
+      {
+        return CommandOutput.Empty();
+      }
     }
 
-    // Never stream stdout: credential-reset password lives there when CaptureAzSecretAsync is used.
+    // Never stream stdout: credential-reset password and access tokens live there.
     return await Shell.Builder(executable)
       .WithArguments([.. arguments])
       .WithWorkingDirectory(RepoRoot)
@@ -108,6 +141,22 @@ internal sealed class EntraCli
 
     string[] masked = [.. arguments];
     masked[3] = EntraSetup.MaskedSecret;
+    return masked;
+  }
+
+  private static string[] MaskAuthorizationHeaders(IReadOnlyList<string> arguments)
+  {
+    string[] masked = [.. arguments];
+    for (int index = 0; index < masked.Length; index++)
+    {
+      string argument = masked[index];
+      const string bearerPrefix = "Authorization=Bearer ";
+      if (argument.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
+      {
+        masked[index] = bearerPrefix + EntraSetup.MaskedSecret;
+      }
+    }
+
     return masked;
   }
 }
