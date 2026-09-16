@@ -76,6 +76,7 @@ Decisions from the live review on 2026-09-16 (Steve):
 - [x] `dotnet test -- --filter-class Entra` and `SiteSettings` green; `dev build` 0/0;
       `ganda repo audit` clean; `dev template-smoke` passes (floor gate, no count bump needed)
 - [x] Results and How to validate
+- [x] Implementation review disposition (clean)
 
 ## Session
 
@@ -83,6 +84,8 @@ Decisions from the live review on 2026-09-16 (Steve):
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: Grok 4.6 (2026-09-16)
 - Resume: Grok 4.6 (2026-09-16) — drop padded tests, set web smoke floor to 177, commit
+- Review oracle: grok session 01a0aa03-4bbd-7d21-aa21-400c840ccc7a (2026-09-16)
+- Reviewer (round 1 general): grok session 01a0aa04-ced5-72d1-99fd-7588ae6b7516 (2026-09-16)
 
 ## Notes
 
@@ -160,6 +163,19 @@ cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release 
 **Depends on:** Development host for the UI smoke; postgres for the drop-column migration on a live database (`dev db update`). Stale AOT `./bin/dev` still asserts floor 180 — use `dotnet run tools/dev-cli/dev.cs -- template-smoke` or self-install first.
 
 **Not in scope:** live Entra round-trip against a real tenant; breadcrumb trail.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 1
+- **Effort / roster:** 1, general only
+- **Final counts:** bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix)
+- **Wontfix / escalations:** none
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
 
 ## Implementation Notes
 
