@@ -79,7 +79,6 @@ public class Callback_Given_
         ["Authentication:Entra:ClientId"] = ClientId,
         ["Authentication:Entra:ClientSecret"] = ClientSecret,
         ["Authentication:Entra:CallbackPath"] = "/signin-oidc",
-        ["Authentication:Entra:TrustedTenants:0"] = TrustedTenantId.ToString("D"),
         ["Authentication:Entra:AllowBootstrap"] = "true"
       }
     );
@@ -146,7 +145,6 @@ public class Callback_Given_
       SiteSettings.Create(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        entraTrustedTenants: [TrustedTenantId],
         passkeyPromptMode: PasskeyPromptMode.Soft));
     TestServer testServer = App.GetTestServer();
     Client = new HttpClient(testServer.CreateHandler())

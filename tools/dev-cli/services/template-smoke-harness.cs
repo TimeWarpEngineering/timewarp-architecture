@@ -575,7 +575,7 @@ internal sealed partial class TemplateSmokeHarness
   public static readonly (string[] RequiredFamilies, string RelativeProjectDir, int MinimumSucceeded)[] JaribuFamilyAggregators =
   [
     // Floor; raise deliberately, never needs bumping when tests are added.
-    (["web"], "tests/container-apps/web/web-jaribu-tests", 180),
+    (["web"], "tests/container-apps/web/web-jaribu-tests", 177),
     (["api"], "tests/container-apps/api/api-jaribu-tests", 9),
     (["web", "api"], "tests/common/timewarp-testing-tests", 3),
   ];

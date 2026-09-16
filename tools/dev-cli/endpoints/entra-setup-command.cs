@@ -519,7 +519,6 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
         (EntraSetup.EnabledKey, "true", false),
         (EntraSetup.TenantIdKey, TenantId, false),
         (EntraSetup.ClientIdKey, AppId, false),
-        (EntraSetup.TrustedTenants0Key, TenantId, false),
         (EntraSetup.AllowBootstrapKey, "true", false)
       ];
 

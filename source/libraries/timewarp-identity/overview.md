@@ -27,8 +27,11 @@ secret, authority tenant, `PublicOrigin`, and `Enabled` as the **scheme-registra
 `dev entra setup` still writes those user secrets.
 
 **Enabled for users** is runtime admin policy on the `SiteSettings` singleton (`ISiteSettingsStore`).
-First boot copies `Enabled`, `AllowBootstrap`, and `TrustedTenants` into settings once; after that
-the Settings page is the source of truth for those three. Disabling sign-in at runtime refuses
+First boot copies `Enabled` and `AllowBootstrap` into settings once; after that
+`/Admin/Authentication` is the source of truth for those two. Trust is the configured
+`Authentication:Entra:TenantId` (token `tid` must GUID-equal that tenant).
+`organizations` / `common` authority is not supported for bootstrap or link — those
+tickets are refused with 403 `Untrusted tenant`. Disabling sign-in at runtime refuses
 **new** challenges (403 `Sign-in disabled`); existing Entra credentials and sessions stay.
 
 `IEntraSignInPolicy` is the application seam products replace in DI (crunchit 008-004) without

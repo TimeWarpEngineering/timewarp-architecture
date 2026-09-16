@@ -7,7 +7,7 @@
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
 
-// Co-located Jaribu: GetSiteSettings contract + handler (task 219-006).
+// Co-located Jaribu: GetSiteSettings contract + handler (task 219-006 / 227).
 // Run standalone:  dotnet run source/container-apps/web/features/settings/get-site-settings/get-site-settings-tests.cs
 
 #region Purpose
@@ -45,12 +45,10 @@ namespace TimeWarp.Architecture.Features.Settings
 
     public static Task ValidResponse_Should_RoundTripThroughJson()
     {
-      Guid tenant = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
       Guid configured = Guid.Parse("a16bcaef-ea01-44ad-be12-249a17658692");
       Response response = new(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        entraTrustedTenants: [tenant.ToString("D")],
         passkeyPromptMode: PasskeyPromptMode.Required,
         version: 3,
         configurationTenantId: configured.ToString("D"),
@@ -65,7 +63,6 @@ namespace TimeWarp.Architecture.Features.Settings
       parsed.ShouldNotBeNull();
       parsed.EntraSignInEnabled.ShouldBeTrue();
       parsed.EntraAllowBootstrap.ShouldBeTrue();
-      parsed.EntraTrustedTenants.ShouldBe([tenant.ToString("D")]);
       parsed.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
       parsed.Version.ShouldBe(3);
       parsed.ConfigurationTenantId.ShouldBe(configured.ToString("D"));
@@ -75,6 +72,7 @@ namespace TimeWarp.Architecture.Features.Settings
       parsed.ConfigurationAllowBootstrap.ShouldBeFalse();
       json.ShouldContain("passkeyPromptMode");
       json.ShouldContain("configurationTenantId");
+      json.ShouldNotContain("entraTrustedTenants");
       return Task.CompletedTask;
     }
 
@@ -82,7 +80,6 @@ namespace TimeWarp.Architecture.Features.Settings
     {
       Response response = GetMockResponseFactory()(new Query());
       response.EntraSignInEnabled.ShouldBeFalse();
-      response.EntraTrustedTenants.ShouldBeEmpty();
       response.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Soft);
       return Task.CompletedTask;
     }
@@ -108,10 +105,9 @@ namespace TimeWarp.Architecture.Features.Settings
 
     public static async Task Snapshot_Should_Include_Configuration_Tenant()
     {
-      Guid persisted = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
       Guid configured = Guid.Parse("a16bcaef-ea01-44ad-be12-249a17658692");
       InMemorySiteSettingsStore store = new();
-      await store.AddAsync(SiteSettings.Create(true, true, [persisted], PasskeyPromptMode.Soft));
+      await store.AddAsync(SiteSettings.Create(true, true, PasskeyPromptMode.Soft));
       GetHandler handler = CreateHandler(
         store,
         new EntraAuthenticationOptions
@@ -124,7 +120,7 @@ namespace TimeWarp.Architecture.Features.Settings
         });
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(new Query(), default);
       result.IsT0.ShouldBeTrue();
-      result.AsT0.EntraTrustedTenants.ShouldBe([persisted.ToString("D")]);
+      result.AsT0.EntraSignInEnabled.ShouldBeTrue();
       result.AsT0.ConfigurationTenantId.ShouldBe(configured.ToString("D"));
       result.AsT0.ConfigurationTenantDisplayName.ShouldBe("TimeWarp Enterprises LLC");
       result.AsT0.ConfigurationTenantDomain.ShouldBe("timewarp.engineering");
@@ -138,4 +134,3 @@ namespace TimeWarp.Architecture.Features.Settings
       new(store, Options.Create(options ?? new EntraAuthenticationOptions()));
   }
 }
-

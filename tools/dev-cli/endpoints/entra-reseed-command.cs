@@ -4,8 +4,8 @@
 
 #region Design
 // Does not mutate Azure or drop the database. Sets ReseedSiteSettings=true so the next
-// Development boot of Web.Server overwrites EntraSignInEnabled, EntraAllowBootstrap, and
-// EntraTrustedTenants from configuration (PasskeyPromptMode is kept). The seeder ignores the
+// Development boot of Web.Server overwrites EntraSignInEnabled and EntraAllowBootstrap
+// from configuration (PasskeyPromptMode is kept). The seeder ignores the
 // flag outside Development. --clear writes false after a successful reseed so later boots keep
 // admin edits. Prints `dev db reset --yes` as the blunt fallback that drops principals and
 // passkeys. Handler stores Command/Ct as fields so private methods are zero-parameter.
@@ -60,7 +60,7 @@ internal sealed class EntraReseedCommand : EntraGroup, ICommand<Unit>
       }
       else
       {
-        Terminal.WriteLine("The next Development boot of Web.Server will overwrite EntraSignInEnabled, EntraAllowBootstrap, and EntraTrustedTenants from configuration (PasskeyPromptMode is left unchanged).");
+        Terminal.WriteLine("The next Development boot of Web.Server will overwrite EntraSignInEnabled and EntraAllowBootstrap from configuration (PasskeyPromptMode is left unchanged).");
         Terminal.WriteLine("The flag is ignored outside Development.");
         Terminal.WriteLine("After confirming the reseed, run `dev entra reseed --clear` so later boots keep admin edits.");
       }

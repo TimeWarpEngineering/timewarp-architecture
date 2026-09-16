@@ -75,7 +75,7 @@ public class Challenge_Given_
     {
       options.Enabled = true;
       options.AllowBootstrap = true;
-      options.TrustedTenants = [TrustedTenantId.ToString("D")];
+      options.TenantId = TrustedTenantId.ToString("D");
     });
 
     builder.Services
@@ -129,7 +129,6 @@ public class Challenge_Given_
       SiteSettings.Create(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        entraTrustedTenants: [TrustedTenantId],
         passkeyPromptMode: PasskeyPromptMode.Soft));
   }
 
@@ -154,6 +153,19 @@ public class Challenge_Given_
   public static async Task Bootstrap_Untrusted_Tenant_Should_403()
   {
     HttpResponseMessage response = await SendChallengeAsync("bootstrap", UntrustedTenantId, Guid.NewGuid());
+    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    SharedProblemDetails problem = await ReadProblemAsync(response);
+    problem.Title.ShouldBe("Untrusted tenant");
+  }
+
+  public static async Task Link_Untrusted_Tenant_Should_403()
+  {
+    Store.ShouldNotBeNull();
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    await Store.AddPrincipalAsync(caller);
+    string cookie = await SignInAsync(caller.Id);
+
+    HttpResponseMessage response = await SendChallengeAsync("link", UntrustedTenantId, Guid.NewGuid(), cookie);
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     SharedProblemDetails problem = await ReadProblemAsync(response);
     problem.Title.ShouldBe("Untrusted tenant");
@@ -244,7 +256,7 @@ public class Challenge_Given_
     SiteSettings? current = await siteSettingsStore.GetAsync();
     current.ShouldNotBeNull();
     bool previous = current!.EntraAllowBootstrap;
-    current.ReplacePolicy(current.EntraSignInEnabled, false, current.EntraTrustedTenants, current.PasskeyPromptMode);
+    current.ReplacePolicy(current.EntraSignInEnabled, false, current.PasskeyPromptMode);
     await siteSettingsStore.UpdateAsync(current);
     try
     {
@@ -257,7 +269,7 @@ public class Challenge_Given_
     {
       SiteSettings? restore = await siteSettingsStore.GetAsync();
       restore.ShouldNotBeNull();
-      restore!.ReplacePolicy(restore.EntraSignInEnabled, previous, restore.EntraTrustedTenants, restore.PasskeyPromptMode);
+      restore!.ReplacePolicy(restore.EntraSignInEnabled, previous, restore.PasskeyPromptMode);
       await siteSettingsStore.UpdateAsync(restore);
     }
   }
@@ -269,7 +281,7 @@ public class Challenge_Given_
     SiteSettings? current = await siteSettingsStore.GetAsync();
     current.ShouldNotBeNull();
     bool previous = current!.EntraSignInEnabled;
-    current.ReplacePolicy(false, current.EntraAllowBootstrap, current.EntraTrustedTenants, current.PasskeyPromptMode);
+    current.ReplacePolicy(false, current.EntraAllowBootstrap, current.PasskeyPromptMode);
     await siteSettingsStore.UpdateAsync(current);
     try
     {
@@ -282,7 +294,7 @@ public class Challenge_Given_
     {
       SiteSettings? restore = await siteSettingsStore.GetAsync();
       restore.ShouldNotBeNull();
-      restore!.ReplacePolicy(previous, restore.EntraAllowBootstrap, restore.EntraTrustedTenants, restore.PasskeyPromptMode);
+      restore!.ReplacePolicy(previous, restore.EntraAllowBootstrap, restore.PasskeyPromptMode);
       await siteSettingsStore.UpdateAsync(restore);
     }
   }

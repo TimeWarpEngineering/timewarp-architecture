@@ -8,9 +8,9 @@
 // optimistic-concurrency token the editor must round-trip on UpdateSiteSettings.
 // Slice: Features.Settings (own product slice). Store lives in TimeWarp.Identity so Identity
 // policy can read it without TWA0009. SPA SettingsPage (Link Microsoft 365 / passkey prompt)
-// and Admin/Authentication (policy editor + config-drift banner) both call this contract
-// (other assembly, free). Configuration* fields are the bound Entra section, not persisted
-// policy — they are not on ISiteSettingsDetails and are not sent on Update.
+// and Admin/Authentication (policy editor + app-registration tenant line) both call this
+// contract (other assembly, free). Configuration* fields are the bound Entra section, not
+// persisted policy — they are not on ISiteSettingsDetails and are not sent on Update.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -34,7 +34,6 @@ public static partial class GetSiteSettings
   {
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }
-    public List<string> EntraTrustedTenants { get; set; }
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public long Version { get; }
     public string? ConfigurationTenantId { get; }
@@ -46,7 +45,6 @@ public static partial class GetSiteSettings
     public Response(
       bool entraSignInEnabled,
       bool entraAllowBootstrap,
-      List<string> entraTrustedTenants,
       PasskeyPromptMode passkeyPromptMode,
       long version,
       string? configurationTenantId = null,
@@ -57,7 +55,6 @@ public static partial class GetSiteSettings
     {
       EntraSignInEnabled = entraSignInEnabled;
       EntraAllowBootstrap = entraAllowBootstrap;
-      EntraTrustedTenants = entraTrustedTenants ?? [];
       PasskeyPromptMode = passkeyPromptMode;
       Version = version;
       ConfigurationTenantId = configurationTenantId;
@@ -73,7 +70,6 @@ public static partial class GetSiteSettings
     return _ => new Response(
       entraSignInEnabled: false,
       entraAllowBootstrap: false,
-      entraTrustedTenants: [],
       passkeyPromptMode: PasskeyPromptMode.Soft,
       version: 0);
   }

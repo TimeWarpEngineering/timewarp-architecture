@@ -1,5 +1,5 @@
 #region Purpose
-// Singleton site-settings aggregate: runtime admin policy (Entra offered/bootstrap/tenants, passkey prompt).
+// Singleton site-settings aggregate: runtime admin policy (Entra offered/bootstrap, passkey prompt).
 #endregion
 
 #region Design
@@ -10,11 +10,10 @@
 // not AggregateDbContext. IAggregateRoot is deliberately not implemented (same rationale as
 // Principal). Entity<SiteSettingsId> with a well-known Singleton id rather than a dedicated
 // singleton type so the store port stays Get/Add/Update like principals.
-// Defaults: EntraSignInEnabled false, EntraAllowBootstrap false, empty trusted tenants (refuse
-// bootstrap), PasskeyPromptMode Soft. Empty tenants means no tenant may sync-hit or bootstrap.
-// Trusted tenant ids are distinct, non-empty Guids; ReplacePolicy copies the list so callers
-// cannot mutate store-resident storage. Snapshot is store-only rehydration (internal).
-// Do not fold PublicOrigin / client id / secret / authority tenant into this type.
+// Defaults: EntraSignInEnabled false, EntraAllowBootstrap false, PasskeyPromptMode Soft.
+// Task 227: trust is Authentication:Entra:TenantId (token tid GUID-equals the configured tenant).
+// This aggregate does not store a tenant allowlist. Do not fold PublicOrigin / client id /
+// secret / authority tenant into this type.
 #endregion
 
 namespace TimeWarp.Identity;
@@ -31,26 +30,22 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     SiteSettingsId id,
     bool entraSignInEnabled,
     bool entraAllowBootstrap,
-    IReadOnlyList<Guid> entraTrustedTenants,
     PasskeyPromptMode passkeyPromptMode,
     long version)
     : base(id, version)
   {
     EntraSignInEnabled = entraSignInEnabled;
     EntraAllowBootstrap = entraAllowBootstrap;
-    EntraTrustedTenants = entraTrustedTenants;
     PasskeyPromptMode = passkeyPromptMode;
   }
 
   public bool EntraSignInEnabled { get; private set; }
   public bool EntraAllowBootstrap { get; private set; }
-  public IReadOnlyList<Guid> EntraTrustedTenants { get; private set; }
   public PasskeyPromptMode PasskeyPromptMode { get; private set; }
 
   public static SiteSettings Create(
     bool entraSignInEnabled = false,
     bool entraAllowBootstrap = false,
-    IReadOnlyList<Guid>? entraTrustedTenants = null,
     PasskeyPromptMode passkeyPromptMode = PasskeyPromptMode.Soft)
   {
     EnsurePasskeyPromptMode(passkeyPromptMode);
@@ -58,7 +53,6 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       SingletonId,
       entraSignInEnabled,
       entraAllowBootstrap,
-      NormalizeTenants(entraTrustedTenants),
       passkeyPromptMode,
       version: 0);
   }
@@ -71,39 +65,18 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       Id,
       EntraSignInEnabled,
       EntraAllowBootstrap,
-      NormalizeTenants(EntraTrustedTenants),
       PasskeyPromptMode,
       version);
 
   public void ReplacePolicy(
     bool entraSignInEnabled,
     bool entraAllowBootstrap,
-    IReadOnlyList<Guid> entraTrustedTenants,
     PasskeyPromptMode passkeyPromptMode)
   {
     EnsurePasskeyPromptMode(passkeyPromptMode);
     EntraSignInEnabled = entraSignInEnabled;
     EntraAllowBootstrap = entraAllowBootstrap;
-    EntraTrustedTenants = NormalizeTenants(entraTrustedTenants);
     PasskeyPromptMode = passkeyPromptMode;
-  }
-
-  public bool IsTrustedTenant(Guid tenantId)
-  {
-    if (tenantId == Guid.Empty)
-    {
-      return false;
-    }
-
-    foreach (Guid trusted in EntraTrustedTenants)
-    {
-      if (trusted == tenantId)
-      {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private static void EnsurePasskeyPromptMode(PasskeyPromptMode passkeyPromptMode)
@@ -115,30 +88,5 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
         passkeyPromptMode,
         "PasskeyPromptMode must be Soft or Required.");
     }
-  }
-
-  private static List<Guid> NormalizeTenants(IReadOnlyList<Guid>? tenants)
-  {
-    if (tenants is null || tenants.Count == 0)
-    {
-      return [];
-    }
-
-    HashSet<Guid> seen = [];
-    List<Guid> copy = [];
-    foreach (Guid tenantId in tenants)
-    {
-      if (tenantId == Guid.Empty)
-      {
-        throw new ArgumentException("Trusted tenant ids must be non-empty GUIDs.", nameof(tenants));
-      }
-
-      if (seen.Add(tenantId))
-      {
-        copy.Add(tenantId);
-      }
-    }
-
-    return copy;
   }
 }

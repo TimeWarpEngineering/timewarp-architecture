@@ -1,5 +1,5 @@
 #region Purpose
-// Bound Authentication:Entra section: named-scheme enablement, OIDC authority, public callback origin, trusted tenants, bootstrap gate.
+// Bound Authentication:Entra section: named-scheme enablement, OIDC authority, public callback origin, bootstrap gate.
 #endregion
 
 #region Design
@@ -7,9 +7,10 @@
 // is explicit in Program — do not rely on AddFluentValidatedOptions' type-name default.
 // Enabled is also set from the obsolete Authentication:UseEntra synonym at registration; that
 // synonym never selects Entra as DefaultScheme. Enabled remains the scheme-registration gate
-// only (task 219-006). AllowBootstrap and TrustedTenants seed site settings once, then
-// IEntraSignInPolicy / ISiteSettingsStore own runtime allow. Ticket processor does not read
-// these two fields from options.
+// only (task 219-006). AllowBootstrap seeds site settings once, then IEntraSignInPolicy /
+// ISiteSettingsStore own runtime allow. Ticket processor does not read AllowBootstrap from
+// options. Trust is TenantId: token tid must GUID-equal this value. Task 227 removed the
+// TrustedTenants allowlist; the validator rejects that key if it is still present.
 // PublicOrigin is the browser-facing origin when Web.Server sits behind a proxy that forwards
 // over http (YARP http://_http.web-server, ACA ingress). Unset keeps request-derived redirect_uri
 // (direct https://localhost:63611). Do not default from Ingress:PublicUrl — that is a dashboard
@@ -17,8 +18,8 @@
 // X-Forwarded-* (task 104-031).
 // TenantDisplayName / TenantDomain are informational (boot/status display from `dev entra setup`);
 // they are not used for OIDC authority and stay optional with no validator rules.
-// ReseedSiteSettings (task 225) is a Development-only boot overwrite of the three persisted Entra
-// policy fields; SiteSettingsSeeder ignores it unless the host passes isDevelopment.
+// ReseedSiteSettings (task 225) is a Development-only boot overwrite of Enabled / AllowBootstrap;
+// SiteSettingsSeeder ignores it unless the host passes isDevelopment.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -37,12 +38,11 @@ public sealed class EntraAuthenticationOptions
   public string ClientId { get; set; } = null!;
   public string? ClientSecret { get; set; }
   public string CallbackPath { get; set; } = "/signin-oidc";
-  public List<string> TrustedTenants { get; set; } = [];
   public bool AllowBootstrap { get; set; }
 
   /// <summary>
-  /// When true in Development, <see cref="SiteSettingsSeeder"/> overwrites the three Entra policy
-  /// fields from this section at boot. Ignored outside Development. Default false.
+  /// When true in Development, <see cref="SiteSettingsSeeder"/> overwrites EntraSignInEnabled
+  /// and EntraAllowBootstrap from this section at boot. Ignored outside Development. Default false.
   /// </summary>
   public bool ReseedSiteSettings { get; set; }
 

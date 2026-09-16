@@ -6,7 +6,7 @@
 // Task 219-006 copies IPrincipalStore: snapshot-on-get, store-owned Version CAS, ConcurrencyConflictException
 // on mismatch. Schema lives alongside identity (table identity.site_settings), never in principals.
 // GetAsync returns null when the store is empty — seed is a host concern (first-run copy from
-// Authentication:Entra:Enabled / AllowBootstrap / TrustedTenants), not this port. AddAsync is the
+// Authentication:Entra:Enabled / AllowBootstrap), not this port. AddAsync is the
 // empty-store insert (throws if the singleton already exists). UpdateAsync is the admin write path
 // the task names: compare incoming Version to stored; mismatch throws and leaves stored state
 // untouched; match persists Snapshot(EntityVersion.Next). The caller's in-hand instance is not

@@ -57,7 +57,6 @@ public class Challenge_Given_
         ["Authentication:Entra:TenantId"] = tenantId.ToString("D"),
         ["Authentication:Entra:ClientId"] = Guid.NewGuid().ToString("D"),
         ["Authentication:Entra:CallbackPath"] = "/signin-oidc",
-        ["Authentication:Entra:TrustedTenants:0"] = tenantId.ToString("D"),
         ["Authentication:Entra:AllowBootstrap"] = "true"
       }
     );
@@ -110,7 +109,6 @@ public class Challenge_Given_
       SiteSettings.Create(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        entraTrustedTenants: [tenantId],
         passkeyPromptMode: PasskeyPromptMode.Soft));
     TestServer testServer = App.GetTestServer();
     Client = new HttpClient(testServer.CreateHandler())

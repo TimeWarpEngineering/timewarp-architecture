@@ -21,11 +21,9 @@ public class InMemory_Given_
   public static async Task Add_Then_Get_Should_RoundTrip()
   {
     InMemorySiteSettingsStore store = new();
-    Guid tenant = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
     SiteSettings created = SiteSettings.Create(
       entraSignInEnabled: true,
       entraAllowBootstrap: true,
-      entraTrustedTenants: [tenant],
       passkeyPromptMode: PasskeyPromptMode.Required);
 
     await store.AddAsync(created);
@@ -34,7 +32,6 @@ public class InMemory_Given_
     found.ShouldNotBeNull();
     found!.EntraSignInEnabled.ShouldBeTrue();
     found.EntraAllowBootstrap.ShouldBeTrue();
-    found.EntraTrustedTenants.ShouldBe([tenant]);
     found.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
     found.Version.ShouldBe(0);
     ReferenceEquals(found, created).ShouldBeFalse();
@@ -53,7 +50,7 @@ public class InMemory_Given_
     await store.AddAsync(SiteSettings.Create());
     SiteSettings? current = await store.GetAsync();
     current.ShouldNotBeNull();
-    current!.ReplacePolicy(true, false, [], PasskeyPromptMode.Soft);
+    current!.ReplacePolicy(true, false, PasskeyPromptMode.Soft);
     await store.UpdateAsync(current);
 
     SiteSettings? after = await store.GetAsync();
@@ -70,10 +67,10 @@ public class InMemory_Given_
     SiteSettings? b = await store.GetAsync();
     a.ShouldNotBeNull();
     b.ShouldNotBeNull();
-    a!.ReplacePolicy(true, false, [], PasskeyPromptMode.Soft);
+    a!.ReplacePolicy(true, false, PasskeyPromptMode.Soft);
     await store.UpdateAsync(a);
 
-    b!.ReplacePolicy(false, true, [], PasskeyPromptMode.Required);
+    b!.ReplacePolicy(false, true, PasskeyPromptMode.Required);
     ConcurrencyConflictException exception =
       await Should.ThrowAsync<ConcurrencyConflictException>(() => store.UpdateAsync(b));
     exception.ExpectedVersion.ShouldBe(0);

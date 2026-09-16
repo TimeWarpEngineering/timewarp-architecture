@@ -14,6 +14,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging.Testing;
+using Microsoft.Extensions.Options;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Foundation.Types;
@@ -43,12 +44,11 @@ public class Bootstrap_Given_
       SiteSettings.Create(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        entraTrustedTenants: [TrustedTenantId],
         passkeyPromptMode: PasskeyPromptMode.Soft));
     EntraTicketProcessor processor = new(
       principalStore,
       new NoOpPrincipalRoleStore(),
-      new SiteSettingsEntraSignInPolicy(settingsStore),
+      new SiteSettingsEntraSignInPolicy(settingsStore, ConfiguredTenant()),
       NullLogger<EntraTicketProcessor>.Instance);
 
     string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
@@ -75,12 +75,11 @@ public class Bootstrap_Given_
       SiteSettings.Create(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        entraTrustedTenants: [TrustedTenantId],
         passkeyPromptMode: PasskeyPromptMode.Soft));
     EntraTicketProcessor processor = new(
       new InMemoryPrincipalStore(),
       new NoOpPrincipalRoleStore(),
-      new SiteSettingsEntraSignInPolicy(settingsStore),
+      new SiteSettingsEntraSignInPolicy(settingsStore, ConfiguredTenant()),
       logger);
 
     string expectedIssuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
@@ -101,6 +100,63 @@ public class Bootstrap_Given_
     record.Message.ShouldContain(expectedIssuer);
     record.Message.ShouldContain(tokenIssuer);
     record.Message.ShouldNotContain(claims.ObjectId.ToString("D"));
+  }
+
+  public static async Task Foreign_Tid_On_Bootstrap_Should_Refuse()
+  {
+    EntraTicketProcessor processor = await ProcessorAsync();
+    Guid foreignTenant = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(foreignTenant));
+    EntraIdTokenClaims claims = new(foreignTenant, Guid.NewGuid(), issuer, "Foreign");
+
+    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeBootstrap,
+      linkCallerPrincipalId: null,
+      CancellationToken.None);
+
+    result.IsT1.ShouldBeTrue();
+    result.AsT1.Title.ShouldBe("Untrusted tenant");
+    result.AsT1.Status.ShouldBe(403);
+  }
+
+  public static async Task Foreign_Tid_On_Link_Should_Refuse()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    Principal caller = Principal.Create(PrincipalKind.Human);
+    await principalStore.AddPrincipalAsync(caller);
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    Guid foreignTenant = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(foreignTenant));
+    EntraIdTokenClaims claims = new(foreignTenant, Guid.NewGuid(), issuer, "Foreign");
+
+    OneOf<PrincipalId, SharedProblemDetails> result = await processor.ProcessAsync(
+      claims,
+      EntraTicketProcessor.ModeLink,
+      caller.Id,
+      CancellationToken.None);
+
+    result.IsT1.ShouldBeTrue();
+    result.AsT1.Title.ShouldBe("Untrusted tenant");
+    result.AsT1.Status.ShouldBe(403);
+  }
+
+  private static IOptions<EntraAuthenticationOptions> ConfiguredTenant() =>
+    Options.Create(new EntraAuthenticationOptions { TenantId = TrustedTenantId.ToString("D") });
+
+  private static async Task<EntraTicketProcessor> ProcessorAsync(IPrincipalStore? principalStore = null)
+  {
+    InMemorySiteSettingsStore settingsStore = new();
+    await settingsStore.AddAsync(
+      SiteSettings.Create(
+        entraSignInEnabled: true,
+        entraAllowBootstrap: true,
+        passkeyPromptMode: PasskeyPromptMode.Soft));
+    return new EntraTicketProcessor(
+      principalStore ?? new InMemoryPrincipalStore(),
+      new NoOpPrincipalRoleStore(),
+      new SiteSettingsEntraSignInPolicy(settingsStore, ConfiguredTenant()),
+      NullLogger<EntraTicketProcessor>.Instance);
   }
 
   private sealed class NoOpPrincipalRoleStore : IPrincipalRoleStore

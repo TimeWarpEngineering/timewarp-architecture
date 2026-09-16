@@ -60,10 +60,12 @@ client id, secret, authority tenant, `PublicOrigin`, and `Enabled` as the
 **scheme-registration gate**. `dev entra setup` still writes those user secrets.
 
 **Enabled for users** is runtime admin policy on the site-settings singleton
-(`/Settings` → Authentication). First boot copies `Enabled`, `AllowBootstrap`, and
-`TrustedTenants` into settings once; after that the Settings page is the source of
-truth for those three. Disabling sign-in at runtime refuses **new** challenges
-(403 `Sign-in disabled`); existing Entra credentials and sessions stay.
+(`/Admin/Authentication`). First boot copies `Enabled` and `AllowBootstrap`
+into settings once; after that the admin page is the source of truth for those
+two. Trust is `Authentication:Entra:TenantId`: the token `tid` must GUID-equal
+that tenant. `organizations` / `common` authority is not supported for bootstrap
+or link (403 `Untrusted tenant`). Disabling sign-in at runtime refuses **new**
+challenges (403 `Sign-in disabled`); existing Entra credentials and sessions stay.
 
 `Authentication:Entra:Enabled=true` with settings `EntraSignInEnabled=false` (or
 the reverse) logs a warning at boot so the two are never silently confused.
@@ -86,8 +88,8 @@ dev entra disable   # sets Authentication:Entra:Enabled=false; does not change A
 (`https://localhost:63611/signin-oidc`, `https://localhost:63610/signin-oidc`, plus
 `--public-origin` when given), ensures a service principal, mints a client secret only
 on first write or `--new-secret`, and writes Web.Server user secrets. The secret is
-never printed. First run seeds those values into site settings; after that use the
-Settings page Authentication section to offer or hide Microsoft 365 sign-in. Then
+never printed. First run seeds Enabled / AllowBootstrap into site settings; after that use
+`/Admin/Authentication` to offer or hide Microsoft 365 sign-in. Then
 `dev run`, browse the app, and click **Continue with Microsoft 365** when offered.
 
 Pass `--tenant <id|domain|name>` to select which organisation the registration belongs
@@ -121,12 +123,11 @@ User-secrets example (Web.Server project):
 ```bash
 dotnet user-secrets set “Authentication:Entra:Enabled” “true” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:Instance” “https://login.microsoftonline.com/” --project source/container-apps/web/projects/web-server
-dotnet user-secrets set “Authentication:Entra:TenantId” “organizations” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “Authentication:Entra:TenantId” “<tenant-id>” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:ClientId” “<app-id>” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:ClientSecret” “<secret>” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:CallbackPath” “/signin-oidc” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:AllowBootstrap” “true” --project source/container-apps/web/projects/web-server
-dotnet user-secrets set “Authentication:Entra:TrustedTenants:0” “<tenant-id>” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:PublicOrigin” “https://arch.timewarp.work” --project source/container-apps/web/projects/web-server
 ```
 

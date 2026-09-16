@@ -3,11 +3,11 @@
 #endregion
 
 #region Design
-// I*Details so the Settings Authentication section binds one shape. Tenant ids are GUID strings
-// for the editor (textarea / list). Version is not on this interface — it is the concurrency
-// token on Command/Response, not a form field the user types. PasskeyPromptMode uses the
-// TimeWarp.Identity enum (JsonStringEnumConverter). Validator: tenants must parse as non-empty
-// GUIDs; PasskeyPromptMode must be defined.
+// I*Details so the Settings Authentication section binds one shape. Version is not on this
+// interface — it is the concurrency token on Command/Response, not a form field the user types.
+// PasskeyPromptMode uses the TimeWarp.Identity enum (JsonStringEnumConverter). Validator:
+// PasskeyPromptMode must be defined. Task 227 dropped trusted-tenant GUIDs from this shape;
+// trust is Authentication:Entra:TenantId.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -18,7 +18,6 @@ public interface ISiteSettingsDetails
 {
   bool EntraSignInEnabled { get; set; }
   bool EntraAllowBootstrap { get; set; }
-  List<string> EntraTrustedTenants { get; set; }
   PasskeyPromptMode PasskeyPromptMode { get; set; }
 }
 
@@ -26,14 +25,7 @@ public sealed class SiteSettingsDetailsValidator : AbstractValidator<ISiteSettin
 {
   public SiteSettingsDetailsValidator()
   {
-    RuleForEach(details => details.EntraTrustedTenants)
-      .Must(BeNonEmptyGuid)
-      .WithMessage("Each trusted tenant id must be a GUID.");
-
     RuleFor(details => details.PasskeyPromptMode)
       .IsInEnum();
   }
-
-  private static bool BeNonEmptyGuid(string? value) =>
-    Guid.TryParse(value, out Guid tenantId) && tenantId != Guid.Empty;
 }

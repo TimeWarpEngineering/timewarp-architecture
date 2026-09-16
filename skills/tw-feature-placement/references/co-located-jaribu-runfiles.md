@@ -103,7 +103,7 @@ namespace Your.Slice.Namespace
   generated aggregators via MTP.
 - New runfiles that introduce additional `#:project` dependencies must extend the matching
   family aggregator's `ProjectReference` list (`web-jaribu-tests` / `api-jaribu-tests`).
-- `TemplateSmokeHarness.JaribuFamilyAggregators` `MinimumSucceeded` is a **floor** (web 180 /
+- `TemplateSmokeHarness.JaribuFamilyAggregators` `MinimumSucceeded` is a **floor** (web 177 /
   api 9 / common 3). Tier 3 asserts `failed == 0`, `succeeded >= floor`, and
   `total == succeeded + skipped` — do **not** bump the floor just because tests were added.
   Raise it deliberately when a discovery regression would otherwise still clear the old floor

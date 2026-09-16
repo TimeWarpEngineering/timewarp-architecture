@@ -91,7 +91,7 @@ public class Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     const string body =
-      """{"entraSignInEnabled":false,"entraAllowBootstrap":false,"entraTrustedTenants":[],"passkeyPromptMode":"Soft","version":0}""";
+      """{"entraSignInEnabled":false,"entraAllowBootstrap":false,"passkeyPromptMode":"Soft","version":0}""";
     HttpResponseMessage response = await client.PutAsync(
       "api/settings",
       new StringContent(body, Encoding.UTF8, "application/json"));
@@ -118,7 +118,6 @@ public class Returns_
       {
         entraSignInEnabled = current.EntraSignInEnabled,
         entraAllowBootstrap = current.EntraAllowBootstrap,
-        entraTrustedTenants = current.EntraTrustedTenants,
         passkeyPromptMode = current.PasskeyPromptMode.ToString(),
         version = current.Version + 100
       },
@@ -147,13 +146,11 @@ public class Returns_
         ContractSerializationDefaults.Options)
       ?? throw new InvalidOperationException("GetSiteSettings deserialized to null.");
 
-    const string tenant = "30f3971f-4719-4f20-9b6f-88916e0b95bd";
     string body = JsonSerializer.Serialize(
       new
       {
         entraSignInEnabled = true,
         entraAllowBootstrap = true,
-        entraTrustedTenants = new[] { tenant },
         passkeyPromptMode = "Required",
         version = current.Version
       },
@@ -170,7 +167,6 @@ public class Returns_
       ?? throw new InvalidOperationException("UpdateSiteSettings deserialized to null.");
     updated.EntraSignInEnabled.ShouldBeTrue();
     updated.EntraAllowBootstrap.ShouldBeTrue();
-    updated.EntraTrustedTenants.ShouldBe([tenant]);
     updated.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
     updated.Version.ShouldBe(current.Version + 1);
   }

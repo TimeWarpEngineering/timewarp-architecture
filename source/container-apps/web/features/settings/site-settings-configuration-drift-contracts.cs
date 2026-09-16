@@ -1,13 +1,13 @@
 #region Purpose
-// Host-free helpers: configuration-tenant drift against persisted trusted tenants, and add-tenant list merge.
+// Host-free helpers: app-registration tenant label for Admin/Authentication.
 #endregion
 
 #region Design
-// Task 225: site settings own Entra policy after first-run seed. Configuration:Entra:TenantId can
-// drift (re-run `dev entra setup` against a different tenant). Compare by Guid, not string
-// casing. Non-GUID TenantId values (appsettings placeholder "organizations") are not drift —
-// there is no tenant to add. WithConfigurationTenant appends D-format and de-dupes. Shared by
-// the seeder (log text), Get/SPA state, and the Admin Authentication add-tenant action.
+// Task 225 / 227: site settings own Entra offered/bootstrap after first-run seed. Trust is
+// Authentication:Entra:TenantId, not a persisted allowlist, so there is no tenant-drift
+// comparison and no add-tenant merge. FormatTenantLabel is the read-only "App registration
+// tenant" line: `{DisplayName} ({Domain}) — {GUID}` when name and domain are known, otherwise
+// the bare GUID (or the raw TenantId string when it is not a GUID).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -28,78 +28,34 @@ public static class SiteSettingsConfigurationDrift
     return Guid.TryParse(value.Trim(), out tenantId) && tenantId != Guid.Empty;
   }
 
-  public static bool IsConfigurationTenantUntrusted(
-    string? configurationTenantId,
-    IEnumerable<string> trustedTenants)
-  {
-    ArgumentNullException.ThrowIfNull(trustedTenants);
-    if (!TryParseTenantId(configurationTenantId, out Guid configured))
-    {
-      return false;
-    }
-
-    foreach (string entry in trustedTenants)
-    {
-      if (TryParseTenantId(entry, out Guid trusted) && trusted == configured)
-      {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   public static string FormatTenantLabel(string? displayName, string? domain, string? tenantId)
   {
+    string? guidText = TryParseTenantId(tenantId, out Guid parsed) ? parsed.ToString("D") : null;
     string? name = NullIfWhiteSpace(displayName);
     string? tenantDomain = NullIfWhiteSpace(domain);
-    if (name is not null && tenantDomain is not null)
+
+    if (name is not null && tenantDomain is not null && guidText is not null)
     {
-      return $"{name} ({tenantDomain})";
+      return $"{name} ({tenantDomain}) — {guidText}";
     }
 
-    if (name is not null)
+    if (name is not null && guidText is not null)
     {
-      return name;
+      return $"{name} — {guidText}";
     }
 
-    if (tenantDomain is not null)
+    if (tenantDomain is not null && guidText is not null)
     {
-      return tenantDomain;
+      return $"{tenantDomain} — {guidText}";
     }
 
-    if (TryParseTenantId(tenantId, out Guid parsed))
+    if (guidText is not null)
     {
-      return parsed.ToString("D");
+      return guidText;
     }
 
     string? raw = NullIfWhiteSpace(tenantId);
     return raw ?? "(not set)";
-  }
-
-  public static List<string> WithConfigurationTenant(
-    IReadOnlyList<string> trustedTenants,
-    string configurationTenantId)
-  {
-    ArgumentNullException.ThrowIfNull(trustedTenants);
-    ArgumentException.ThrowIfNullOrWhiteSpace(configurationTenantId);
-
-    List<string> result = [];
-    HashSet<Guid> seen = [];
-    foreach (string entry in trustedTenants)
-    {
-      if (TryParseTenantId(entry, out Guid trusted) && seen.Add(trusted))
-      {
-        result.Add(trusted.ToString("D"));
-      }
-    }
-
-    if (TryParseTenantId(configurationTenantId, out Guid configured) && seen.Add(configured))
-    {
-      result.Add(configured.ToString("D"));
-    }
-
-    return result;
   }
 
   private static string? NullIfWhiteSpace(string? value) =>

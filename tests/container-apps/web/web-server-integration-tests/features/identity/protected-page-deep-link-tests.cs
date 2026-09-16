@@ -24,6 +24,7 @@ namespace ProtectedPageDeepLink_;
 using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
@@ -139,6 +140,49 @@ public class Returns_
       customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
     html.ShouldNotContain("data-qa=\"AuthenticationSettings\"");
     html.ShouldNotContain("data-qa=\"SaveAuthenticationSettings\"");
+    html.ShouldNotContain("data-qa=\"Microsoft365Settings\"");
+    html.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
+  }
+
+  public static async Task Settings_Microsoft365_Section_Should_Follow_Server_Offered_Flag()
+  {
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+
+    HttpResponseMessage hidden = await GetPageHtml("/Settings", sessionCookie);
+    string hiddenHtml = await hidden.Content.ReadAsStringAsync();
+    hiddenHtml.ShouldNotContain("data-qa=\"Microsoft365Settings\"");
+    hiddenHtml.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
+
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    EntraAuthenticationOptions options =
+      scope.ServiceProvider.GetRequiredService<IOptions<EntraAuthenticationOptions>>().Value;
+    ISiteSettingsStore store = scope.ServiceProvider.GetRequiredService<ISiteSettingsStore>();
+    SiteSettings? settings = await store.GetAsync();
+    settings.ShouldNotBeNull();
+    bool previousEnabled = options.Enabled;
+    bool previousSignIn = settings!.EntraSignInEnabled;
+    bool previousBootstrap = settings.EntraAllowBootstrap;
+    PasskeyPromptMode previousMode = settings.PasskeyPromptMode;
+    options.Enabled = true;
+    settings.ReplacePolicy(true, previousBootstrap, previousMode);
+    await store.UpdateAsync(settings);
+    try
+    {
+      HttpResponseMessage shown = await GetPageHtml("/Settings", sessionCookie);
+      string shownHtml = await shown.Content.ReadAsStringAsync();
+      shownHtml.ShouldContain("data-qa=\"Microsoft365Settings\"");
+      shownHtml.ShouldContain("data-qa=\"LinkMicrosoft365\"");
+    }
+    finally
+    {
+      options.Enabled = previousEnabled;
+      SiteSettings? restore = await store.GetAsync();
+      restore.ShouldNotBeNull();
+      restore!.ReplacePolicy(previousSignIn, previousBootstrap, previousMode);
+      await store.UpdateAsync(restore);
+    }
   }
 
   public static async Task Forbidden_Not_Login_Given_Passkey_Member_Admin_Authentication_Html()
@@ -171,6 +215,8 @@ public class Returns_
     string html = await response.Content.ReadAsStringAsync();
     html.ShouldContain("data-qa=\"AuthenticationSettings\"");
     html.ShouldContain("data-qa=\"ConfigurationTenant\"");
+    html.ShouldContain("Microsoft 365 sign-in policy");
+    html.ShouldNotContain("data-qa=\"AddConfigurationTenant\"");
     html.ShouldNotContain("Sign in to continue",
       customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
   }
