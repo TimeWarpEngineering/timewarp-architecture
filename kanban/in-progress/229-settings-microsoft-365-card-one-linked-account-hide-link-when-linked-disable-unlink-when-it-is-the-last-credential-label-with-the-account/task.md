@@ -44,12 +44,15 @@ CTA underneath, with no passkeys on the account. Three rules:
 - [x] `dev build` 0/0; `ganda repo audit` clean
 - [x] Results and How to validate (screenshot-equivalent steps: bootstrap → Settings shows account
       label, no Link CTA, Unlink disabled; add passkey → Unlink enabled)
+- [x] Implementation review: effort 1 general, round 1, disposition clean
 
 ## Session
 
 - Created: cockpit (2026-09-16)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: Grok task-work 229 (2026-09-16)
+- Review oracle: grok session 01a0aa68-6f0f-77c1-9538-7770f499edf1 (2026-09-16)
+- Review round 1 general: grok session 01a0aa6b-c811-7b50-a12d-4f28217b3463 (2026-09-16)
 
 ## Notes
 
@@ -60,6 +63,7 @@ CTA underneath, with no passkeys on the account. Three rules:
   `ActiveEntraAccounts`), `revoke-credential-handler-application.cs` (last-active 409 backstop).
 - Prior: 104-005 (last-active revoke rule), 219-002 (link/bootstrap), 227 (single tenant).
 - Multi-tenant (one account per tenant) is out of scope until a multi-tenant registration exists.
+- Review kitchen: `review/review-framework.md`, `review/round-1/`, `review/disposition.md`.
 
 ## Results
 
@@ -132,3 +136,16 @@ ganda repo audit
 **Depends on:** `./bin/dev run` plus a configured Entra tenant for the live UI smoke. Automated gates do not need a live tenant (FakeEntraHandler / store-seeded credentials).
 
 **Not in scope:** multi-tenant (one account per tenant); storing tokens; changing passkey Delete last-credential UX (server 409 remains the backstop there).
+
+### Review disposition
+
+- **Outcome:** clean
+- **Rounds:** 1
+- **Effort / roster:** 1, general only
+- **Final counts:** bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix)
+- **Wontfix / escalations:** none
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
