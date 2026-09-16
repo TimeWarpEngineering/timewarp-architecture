@@ -121,6 +121,10 @@ Site authentication policy is an Admin concern. `/Settings` keeps passkeys and L
 - SPA `AuthenticationPage` 2/2; HTML deep-link Authentication 4/4 (Member 403 after pinning Member; Admin 200)
 - `ganda repo audit` — pass (2 pre-existing advisory warnings: memsearch-scaffold, vscode-window-icon)
 
+### CI fix (post-review)
+
+Template smoke aggregator count bumped 170 → 180 (10 co-located tests added by this task).
+
 ### How to validate
 
 **Depends on:** local Aspire (`dev run`), a passkey Administrator, and Entra user secrets from `dev entra setup`. Postgres volume already seeded with an older trusted tenant.
