@@ -50,12 +50,14 @@ Current state (2026-09-16):
 - [x] `dev template-smoke` passes (generated AppHost uses the new SDK)
 - [x] `ganda repo audit` clean (2 pre-existing advisories); CI workflow aligned; docs updated
 - [x] Results and How to validate (include `aspire --version` and the pin table after)
+- [x] Implementation review: round 1 general, disposition clean
 
 ## Session
 
 - Created: cockpit (2026-09-16)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementation: Grok (2026-09-16) on claimed worktree `task-232-update-aspire-to-the-latest-135x-across-sdk-hostin`
+- Review oracle: Grok (2026-09-16) effort 1, roster general (Grok 4.5 sub-agent `01a0ab06-f5ee-7c31-9b39-4cd892222458`)
 
 ## Notes
 
@@ -70,6 +72,7 @@ Current state (2026-09-16):
   `aspire-app-host/program.cs`, `aspire-service-defaults/*`, `tools/dev-cli/endpoints/{run-command,db-app-host}.cs`,
   `aspire.config.json`, `.github/workflows/*.yml`.
 - Prior: 155 (wait edges removed), 118 (plane split), 104-031 (original Host forwarding), 107 (YARP route generation).
+- Review kitchen: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Results
 
@@ -171,3 +174,12 @@ ganda repo audit
 ```
 
 **Not in scope:** adding `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL` (unused); opting the AppHost into the CLI bundle; bumping `Microsoft.Extensions.Diagnostics.Testing` (still 10.9.0).
+
+### Review disposition
+
+- **Rounds:** 1
+- **Effort / roster:** 1, `general` only (Grok 4.5 sub-agent)
+- **Disposition:** `clean` (no issues raised; 0 open)
+- **Final counts:** bug 0 / suggestion 0 / nit 0 (all statuses 0)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- Orchestrator re-verified leftover 13.5.3 (none in product files), breaking-change greps, ingress pins 63610/63620, wait-edges, CI (no pinned Aspire CLI), and `AspireUseCliBundle=false`. No fix loop; no wontfix; no escalation.
