@@ -1,19 +1,22 @@
 @namespace TimeWarp.Architecture.Components
 @*
-  Design-system content card (Tier-1 leaf, native root). Styled by .twe-card in
-  wwwroot/css/components.css using the --twe-* tokens. See skills/blazor-css-strategy.
+  Design-system content card (Tier-1 leaf, native root). Styled by Card.razor.css
+  using the --twe-* tokens. Unmatched attributes (data-qa) splat onto the section.
+  See skills/blazor-css-strategy.
 *@
 
 @code {
   [Parameter] public string? Title { get; set; }
+  [Parameter] public string? TitleDataQa { get; set; }
   [Parameter] public string? Class { get; set; }
   [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 }
 
-<section class="twe-card @Class">
+<section class="twe-card @Class" @attributes="AdditionalAttributes">
   @if (!string.IsNullOrWhiteSpace(Title))
   {
-    <h2 class="twe-card__title">@Title</h2>
+    <h2 class="twe-card__title" data-qa="@TitleDataQa">@Title</h2>
   }
   <div class="twe-card__body">
     @ChildContent

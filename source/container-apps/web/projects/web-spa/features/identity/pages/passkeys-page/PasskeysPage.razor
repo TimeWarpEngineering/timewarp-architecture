@@ -12,10 +12,16 @@
   private bool IsBusy;
   private bool? IsAuthenticated;
 
+  private bool IsListLoading =>
+    IsAnyActive(typeof(CredentialsState.FetchCredentialsActionSet.Action));
+  private bool IsListBusy => ActionTrackingState.IsActive;
+  private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
+
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
     await RefreshSessionAsync();
+    await NoSubCredentialsState.FetchCredentials();
   }
 
   private async Task RegisterPasskey()
@@ -36,6 +42,7 @@
 
       StatusMessage = $"Passkey registered. PrincipalId: {result.AsT0.PrincipalId}";
       await RefreshSessionAsync();
+      await NoSubCredentialsState.FetchCredentials();
     }
     catch (JSException jsException)
     {
@@ -80,6 +87,9 @@
   {
     IsAuthenticated = await Ceremony.GetIsAuthenticatedAsync(CancellationToken.None);
   }
+
+  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential) =>
+    await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
 }
 
 <TimeWarpPage Title="Passkeys">
@@ -104,6 +114,17 @@
           </FluentButton>
         </div>
       </FluentStack>
+    </Card>
+
+    <Card Title="Passkeys on this account">
+      <CredentialList Credentials="Passkeys"
+                      IsLoading="IsListLoading"
+                      IsBusy="IsListBusy"
+                      EmptyMessage="No passkeys on this account yet."
+                      FallbackLabel="Passkey"
+                      DeleteLabel="Delete"
+                      DeleteDataQa="DeletePasskey"
+                      OnDelete="ConfirmRevokeAsync" />
     </Card>
 
     @if (!string.IsNullOrEmpty(StatusMessage))

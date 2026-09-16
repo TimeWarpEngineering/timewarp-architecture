@@ -66,3 +66,16 @@ button { font-family: inherit; }
 .twe-table { width: 100%; border-collapse: collapse; font-size: var(--twe-text-body); }
 .twe-table th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--twe-rule); color: var(--twe-muted); font-weight: 600; }
 .twe-table td { padding: 8px 12px; border-bottom: 1px solid var(--twe-rule); color: var(--twe-ink); }
+
+/* Exception A — FluentButton shadow DOM. Destructive Outline appearance for row actions.
+   Style guide is the reference; CredentialList and Settings reuse this class. */
+fluent-button.twe-button-danger {
+  --colorNeutralForeground1: var(--twe-danger);
+  --colorNeutralForeground2: var(--twe-danger);
+  --colorNeutralForeground1Hover: var(--twe-danger);
+  --colorNeutralForeground1Pressed: var(--twe-danger);
+  --colorNeutralStroke1: var(--twe-danger);
+  --colorNeutralStroke1Hover: var(--twe-danger);
+  --colorNeutralStroke1Pressed: var(--twe-danger);
+  --colorNeutralStroke1Selected: var(--twe-danger);
+}

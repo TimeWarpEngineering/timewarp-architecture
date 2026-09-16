@@ -10,7 +10,6 @@
   [Inject] private NavigationManager NavigationManager { get; set; } = null!;
   [Inject] private IWebServerApiService WebServerApiService { get; set; } = null!;
 
-  private Guid? ExpandedId;
   private bool ShowMicrosoft365;
 
   private bool IsLoading =>
@@ -22,6 +21,8 @@
   private bool CanUnlink => CredentialsState.ActiveCredentialCount > 1;
   private string? ErrorMessage => CredentialsState.CeremonyError;
   private string? StatusMessage => CredentialsState.StatusMessage;
+  private string Microsoft365CardTitle =>
+    EntraAccounts.Count == 1 ? DisplayEntraLabel(EntraAccounts[0]) : "Microsoft 365";
 
   protected override async Task OnInitializedAsync()
   {
@@ -31,7 +32,6 @@
     if (RendererInfo.IsInteractive)
     {
       await NoSubSiteSettingsState.FetchSiteSettings();
-      SyncExpandedId();
     }
   }
 
@@ -46,41 +46,21 @@
         await NoSubSiteSettingsState.FetchSiteSettings();
       }
 
-      SyncExpandedId();
       await InvokeAsync(StateHasChanged);
     }
   }
 
-  private void ToggleExpanded(Guid id) =>
-    ExpandedId = ExpandedId == id ? null : id;
+  private static string DisplayEntraLabel(GetCredentials.CredentialSummary credential) =>
+    string.IsNullOrWhiteSpace(credential.Label) ? "Microsoft 365" : credential.Label!;
 
-  private static string DisplayLabel(GetCredentials.CredentialSummary credential) =>
-    string.IsNullOrWhiteSpace(credential.Label) ? "Passkey" : credential.Label!;
-
-  private async Task CreatePasskeyAsync()
-  {
+  private async Task CreatePasskeyAsync() =>
     await NoSubCredentialsState.AddPasskey();
-    if (CredentialsState.LastAddedCredentialId is Guid added)
-    {
-      ExpandedId = added;
-    }
-    else
-    {
-      SyncExpandedId();
-    }
-  }
 
-  private async Task AddExistingPasskeyAsync()
-  {
+  private async Task AddExistingPasskeyAsync() =>
     await NoSubCredentialsState.AddExistingPasskey();
-    SyncExpandedId();
-  }
 
-  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential)
-  {
+  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential) =>
     await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
-    SyncExpandedId();
-  }
 
   private async Task<bool> LoadEntraOfferedAsync()
   {
@@ -105,156 +85,68 @@
       ChallengeEntra.GetRoute("link", "/Settings"),
       forceLoad: true);
   }
-
-  private static string DisplayEntraLabel(GetCredentials.CredentialSummary credential) =>
-    string.IsNullOrWhiteSpace(credential.Label) ? "Microsoft 365" : credential.Label!;
-
-  private void SyncExpandedId()
-  {
-    if (Passkeys.Count == 0)
-    {
-      ExpandedId = null;
-      return;
-    }
-
-    if (ExpandedId is Guid id && Passkeys.All(c => c.Id.Value != id))
-    {
-      ExpandedId = Passkeys[0].Id.Value;
-    }
-    else if (ExpandedId is null)
-    {
-      ExpandedId = Passkeys[0].Id.Value;
-    }
-  }
 }
 
 <TimeWarpPage Title="Settings">
-  <div class="twe-stack twe-settings">
+  <div class="twe-stack">
 
-    <section class="twe-settings__section">
-      <h2 class="twe-settings__heading">Passkeys</h2>
-
-      @if (IsLoading)
-      {
-        <p class="twe-settings__muted">Loading…</p>
-      }
-      else if (Passkeys.Count == 0)
-      {
-        <p class="twe-settings__muted">No passkeys on this account yet.</p>
-      }
-      else
-      {
-        <ul class="twe-settings__cred-list">
-          @foreach (GetCredentials.CredentialSummary credential in Passkeys)
-          {
-            bool expanded = ExpandedId == credential.Id.Value;
-            <li class="twe-settings__cred">
-              <button type="button"
-                      class="@(expanded ? "twe-settings__cred-toggle twe-settings__cred-toggle--open" : "twe-settings__cred-toggle")"
-                      @onclick="() => ToggleExpanded(credential.Id.Value)"
-                      disabled="@IsBusy">
-                <span class="twe-settings__cred-label">@DisplayLabel(credential)</span>
-                <span class="twe-settings__cred-chevron" aria-hidden="true">@(expanded ? "▾" : "▸")</span>
-              </button>
-
-              @if (expanded)
-              {
-                <div class="twe-settings__cred-body">
-                  <div class="twe-settings__field">
-                    <div class="twe-settings__field-title">Delete passkey</div>
-                    <p class="twe-settings__muted">Delete this passkey from your account.</p>
-                    <button type="button"
-                            class="twe-settings__link twe-settings__link--danger"
-                            disabled="@IsBusy"
-                            @onclick="() => ConfirmRevokeAsync(credential)">
-                      Delete
-                    </button>
-                  </div>
-
-                  <div class="twe-settings__field">
-                    <div class="twe-settings__field-title">Created at</div>
-                    <p class="twe-settings__value">@credential.CreatedAt.ToLocalTime().ToString("M/d/yyyy, h:mm:ss tt")</p>
-                  </div>
-                </div>
-              }
-            </li>
-          }
-        </ul>
-      }
-
-      <div class="twe-settings__actions">
-        <button type="button"
-                class="twe-settings__link"
-                data-qa="CreatePasskeyOnAccount"
-                disabled="@IsBusy"
-                @onclick="CreatePasskeyAsync">
-          Create a passkey
-        </button>
-        <button type="button"
-                class="twe-settings__link"
-                data-qa="AddExistingPasskey"
-                disabled="@IsBusy"
-                @onclick="AddExistingPasskeyAsync">
-          Add an existing passkey
-        </button>
-      </div>
-    </section>
+    <Card Title="Passkeys">
+      <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+        <CredentialList Credentials="Passkeys"
+                        IsLoading="IsLoading"
+                        IsBusy="IsBusy"
+                        EmptyMessage="No passkeys on this account yet."
+                        FallbackLabel="Passkey"
+                        DeleteLabel="Delete"
+                        DeleteDataQa="DeletePasskey"
+                        OnDelete="ConfirmRevokeAsync" />
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" Wrap="true">
+          <FluentButton Appearance="ButtonAppearance.Primary"
+                        data-qa="CreatePasskey"
+                        Disabled="@IsBusy"
+                        OnClick="CreatePasskeyAsync">
+            Create a passkey
+          </FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Outline"
+                        data-qa="AddExistingPasskey"
+                        Disabled="@IsBusy"
+                        OnClick="AddExistingPasskeyAsync">
+            Add an existing passkey
+          </FluentButton>
+        </FluentStack>
+      </FluentStack>
+    </Card>
 
     @if (ShowMicrosoft365)
     {
-      <section class="twe-settings__section" data-qa="Microsoft365Settings">
-        <h2 class="twe-settings__heading">Microsoft 365</h2>
-
-        @if (IsLoading)
-        {
-          <p class="twe-settings__muted">Loading…</p>
-        }
-        else if (EntraAccounts.Count == 0)
-        {
-          <p class="twe-settings__muted">No Microsoft 365 account linked.</p>
-        }
-        else
-        {
-          <ul class="twe-settings__cred-list">
-            @foreach (GetCredentials.CredentialSummary credential in EntraAccounts)
-            {
-              <li class="twe-settings__cred">
-                <div class="twe-settings__cred-body">
-                  <div class="twe-settings__field">
-                    <div class="twe-settings__field-title" data-qa="Microsoft365AccountLabel">@DisplayEntraLabel(credential)</div>
-                    <p class="twe-settings__muted">Microsoft 365</p>
-                    <p class="twe-settings__value">@credential.CreatedAt.ToLocalTime().ToString("M/d/yyyy, h:mm:ss tt")</p>
-                    <button type="button"
-                            class="twe-settings__link twe-settings__link--danger"
-                            data-qa="UnlinkMicrosoft365"
-                            disabled="@(!CanUnlink || IsBusy)"
-                            @onclick="() => ConfirmRevokeAsync(credential)">
-                      Unlink
-                    </button>
-                    @if (!CanUnlink)
-                    {
-                      <p class="twe-settings__muted" data-qa="UnlinkMicrosoft365Hint">Add a passkey first</p>
-                    }
-                  </div>
-                </div>
-              </li>
-            }
-          </ul>
-        }
-
-        @if (CanLinkMicrosoft365)
-        {
-          <div class="twe-settings__actions">
-            <button type="button"
-                    class="twe-settings__link"
-                    data-qa="LinkMicrosoft365"
-                    disabled="@IsBusy"
-                    @onclick="LinkMicrosoft365">
+      <Card Title="@Microsoft365CardTitle"
+            TitleDataQa="@(EntraAccounts.Count == 1 ? "Microsoft365AccountLabel" : null)"
+            data-qa="Microsoft365Settings">
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+          <CredentialList Credentials="EntraAccounts"
+                          IsLoading="IsLoading"
+                          IsBusy="IsBusy"
+                          EmptyMessage="No Microsoft 365 account linked."
+                          FallbackLabel="Microsoft 365"
+                          Subtitle="Microsoft 365"
+                          TitleDataQa="Microsoft365AccountLabel"
+                          DeleteLabel="Unlink"
+                          DeleteDataQa="Unlink"
+                          DeleteDisabled="@(!CanUnlink)"
+                          DeleteDisabledHint="Add a passkey first"
+                          DeleteDisabledHintDataQa="UnlinkMicrosoft365Hint"
+                          OnDelete="ConfirmRevokeAsync" />
+          @if (CanLinkMicrosoft365)
+          {
+            <FluentButton Appearance="ButtonAppearance.Primary"
+                          data-qa="LinkMicrosoft365"
+                          Disabled="@IsBusy"
+                          OnClick="LinkMicrosoft365">
               Link Microsoft 365
-            </button>
-          </div>
-        }
-      </section>
+            </FluentButton>
+          }
+        </FluentStack>
+      </Card>
     }
 
     @if (!string.IsNullOrEmpty(StatusMessage))
@@ -273,89 +165,3 @@
 
   </div>
 </TimeWarpPage>
-
-<style>
-  @(@"
-    .twe-settings__section + .twe-settings__section {
-      margin-top: 24px;
-    }
-    .twe-settings__heading {
-      margin: 0 0 12px;
-      font-size: var(--twe-text-section-title);
-      font-weight: 700;
-      color: var(--twe-ink);
-    }
-    .twe-settings__muted {
-      margin: 0;
-      color: var(--twe-muted);
-      font-size: var(--twe-text-body);
-    }
-    .twe-settings__value {
-      margin: 4px 0 0;
-      color: var(--twe-ink);
-      font-size: var(--twe-text-body);
-    }
-    .twe-settings__cred-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .twe-settings__cred-toggle {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 14px;
-      border: none;
-      border-radius: var(--twe-radius-sm);
-      background: var(--twe-paper-2);
-      color: var(--twe-ink);
-      font: inherit;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: left;
-    }
-    .twe-settings__cred-toggle--open {
-      background: var(--twe-blue);
-      color: #fff;
-    }
-    .twe-settings__cred-chevron {
-      opacity: 0.85;
-    }
-    .twe-settings__cred-body {
-      padding: 12px 4px 8px 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .twe-settings__field-title {
-      font-weight: 600;
-      color: var(--twe-ink);
-      font-size: var(--twe-text-body);
-    }
-    .twe-settings__link {
-      background: none;
-      border: none;
-      padding: 0;
-      color: var(--twe-blue);
-      font: inherit;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .twe-settings__link:hover { text-decoration: underline; }
-    .twe-settings__link:disabled { opacity: 0.5; cursor: not-allowed; }
-    .twe-settings__link--danger { color: var(--twe-danger); }
-    .twe-settings__actions {
-      margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px solid var(--twe-rule);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-  ")
-</style>

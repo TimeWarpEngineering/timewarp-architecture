@@ -66,11 +66,13 @@
       </Card>
 
       <Card Title="Buttons (FluentUI, themed)">
+        <p class="sg-subtitle">Actions use these appearances. Destructive row actions are Outline plus the danger class (token --twe-danger) — never a page-local button class.</p>
         <div class="sg-row">
           <FluentButton Appearance="ButtonAppearance.Primary">Primary</FluentButton>
           <FluentButton Appearance="ButtonAppearance.Outline">Outline</FluentButton>
           <FluentButton Appearance="ButtonAppearance.Subtle">Subtle</FluentButton>
           <FluentButton Appearance="ButtonAppearance.Transparent">Transparent</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Outline" Class="twe-button-danger" data-qa="DangerOutline">Danger</FluentButton>
         </div>
       </Card>
 
