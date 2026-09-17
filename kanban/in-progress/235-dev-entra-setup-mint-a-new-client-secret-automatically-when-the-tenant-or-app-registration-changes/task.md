@@ -43,12 +43,14 @@ be replaced.
 - [x] auth.md updated
 - [x] `dev build` 0/0; `ganda repo audit` clean; `cd tests/tools/dev-cli-tests && dotnet test -c Release` green
 - [x] Results and How to validate (dry-run transcript for the changed-app case)
+- [x] Implementation review (effort 1, general); disposition clean
 
 ## Session
 
 - Created: cockpit (2026-09-17)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: Grok 4.6 (2026-09-17)
+- Review oracle: Grok 4.6 (2026-09-17); round-1 general: Grok 4.5 sub-agent
 
 ## Notes
 
@@ -58,6 +60,8 @@ be replaced.
   `source/container-apps/web/projects/web-spa/wwwroot/auth.md`.
 - Prior: 219-005 (dev entra), 223 (tenant name / `--tenant`), 227 (single tenant).
 - Secrets: never printed, never on a logged command line — keep the 219-005 rules.
+- Review kitchen (effort 1, general, 1 round, disposition clean): `review/review-framework.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Results
 
@@ -89,6 +93,13 @@ rotation flag. The secret is never printed.
 - `dotnet run tools/dev-cli/dev.cs -- build` — 0 Warning(s) 0 Error(s)
 - `cd tests/tools/dev-cli-tests && dotnet test -c Release` — 60 passed, 0 failed
 - `ganda repo audit` — blocking checks pass (2 advisory warnings: memsearch-scaffold, vscode-window-icon)
+
+**Review (effort 1, general only; 1 round)**
+
+- Roster: `general` (Grok 4.5 sub-agent). Round 1 raised no findings. Orchestrator re-verified the decision helper, setup/status wiring, dry-run keep-vs-mint paths, fail-closed list, secret non-disclosure, `auth.md`, and `dotnet test` 60/60.
+- Final counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 / 0 / 0.
+- **Disposition:** clean (0 open).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
