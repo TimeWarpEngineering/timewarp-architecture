@@ -1,11 +1,13 @@
-# Migrate to TimeWarp.State 13 line and TimeWarp.Mediator 14 generated dispatch; adopt analyzer TW0002
+# Migrate to TimeWarp.State 13 line and TimeWarp.Mediator 14 generated dispatch; adopt analyzer TWS0002
 
 ## Description
 
-Queued behind two upstream releases (do not start until both exist on nuget.org):
+**Version correction (2026-09-17):** the TimeWarp.State release is **12.0.0-beta.3** (12.0.0 never had a stable release, so the beta line carries the breaks; there is no 13 line). Wherever this brief says "13 line" or "13.0.0-beta.x", read **12.0.0-beta.3**. Both upstream releases now exist on nuget.org: TimeWarp.State / .Plus / .Policies 12.0.0-beta.3 and TimeWarp.Mediator 14.0.0-beta.1 — this task is unblocked.
+
+Queued behind two upstream releases (both now published):
 
 1. **timewarp-state** next release from master — carries task 080 (Mediator 14 beta, breaking
-   public API) and task 087 (analyzer **TW0002**: a handler never sends an action, may publish a
+   public API) and task 087 (analyzer **TWS0002**: a handler never sends an action, may publish a
    notification). Task 080 recorded "TimeWarp.State needs a major bump before release", so expect
    **13.0.0-beta.x**, not 12.0.0-beta.3.
 2. **timewarp-mediator 14.0.0-beta.1** (already on nuget.org; "not a drop-in for 13.0.0").
@@ -16,13 +18,13 @@ state, web-server and api-server request handlers, and `TimeWarp.Foundation.Cont
 `FluentValidationBehavior`), so this is a monorepo-wide migration, not a SPA-only bump.
 
 Decision (Steve, 2026-09-17): a State is a boundary; handlers publish notifications and never
-send actions. TW0002 makes that declarative; this task is where architecture adopts it and gets
+send actions. TWS0002 makes that declarative; this task is where architecture adopts it and gets
 the errors "when we upgrade".
 
 ## Requirements
 
 ### A. Package bumps (one train)
-- `TimeWarp.State`, `TimeWarp.State.Plus` (and `.Policies` if referenced) → the released 13 line.
+- `TimeWarp.State`, `TimeWarp.State.Plus` (and `.Policies` if referenced) → **12.0.0-beta.3**.
 - `TimeWarp.Mediator` 13.0.0 → `TimeWarp.Mediator.Contracts` + `.Generators` + `.Analyzers`
   14.0.0-beta.1 per the mediator readme (`Generators` on every host: web-server, api-server,
   web-spa, grpc-server if it uses Mediator; `Contracts` on libraries such as Foundation.*).
@@ -51,16 +53,16 @@ the errors "when we upgrade".
 - `[assembly: MediatorAssembly]` where the host generator must link handlers from a library
   assembly (Foundation.Contracts behaviors; web-contracts if handlers live there).
 
-### C. Adopt TW0002
-- Build with TW0002 on. Expected hits: `DefaultApiHandler.HandleError → ToastNotificationState.AddProblemDetails`
+### C. Adopt TWS0002
+- Build with TWS0002 on. Expected hits: `DefaultApiHandler.HandleError → ToastNotificationState.AddProblemDetails`
   and `FileResponseApiHandler` (cross-state), `ApplicationState.ResetStore → RouteState.ChangeRoute`.
   Convert the toast pattern to a **notification** (`ProblemDetailsNotification` published from the
   base; `ToastNotificationState` gets an `INotificationHandler` that adds the toast). ResetStore:
   sequence the route change from the caller (Counter page already does after 236). Do not use
   the `[AllowActionSend]` escape hatch except with a written reason in Results.
-- Retire the 236 source-scan guard `handler-nested-dispatch-guard-tests.cs` in favour of TW0002
+- Retire the 236 source-scan guard `handler-nested-dispatch-guard-tests.cs` in favour of TWS0002
   (keep the loading-literal and raw-button guards).
-- Promote TW0002 to **error** in `.editorconfig` for this repo once clean.
+- Promote TWS0002 to **error** in `.editorconfig` for this repo once clean.
 
 ### D. Gates
 - `dev build` 0/0 across all planes; `dev test`; SPA + prerender suites; Aspire ingress tests;
@@ -70,15 +72,15 @@ the errors "when we upgrade".
 
 ## Depends on
 
-- timewarp-state release containing tasks 080 + 087 (external; check `dotnet package search TimeWarp.State --prerelease`).
+- timewarp-state 12.0.0-beta.3 (published 2026-09-17; contains tasks 080 + 087). Satisfied.
 
 ## Checklist
 
 - [ ] A: State 13 line + Mediator 14 packages on one train; Foundation pins aligned
 - [ ] B: generated mediator registration on every host; behaviors compile-time; public actions; marker/handler renames
-- [ ] C: TW0002 clean (toast → notification; reset-store sequenced); 236 scan guard retired; TW0002 error in editorconfig
+- [ ] C: TWS0002 clean (toast → notification; reset-store sequenced); 236 scan guard retired; TWS0002 error in editorconfig
 - [ ] D: all gates incl. template-smoke; docs
-- [ ] Results and How to validate (list every TW0002 hit and its resolution)
+- [ ] Results and How to validate (list every TWS0002 hit and its resolution)
 
 ## Session
 
@@ -88,7 +90,7 @@ the errors "when we upgrade".
 ## Notes
 
 - Upstream references: timewarp-state `kanban/done/080-001-packages-and-addgeneratedmediator-from-origindev/task.md`
-  (Results section is the consumer migration list), timewarp-state task 087 (TW0002 spec),
+  (Results section is the consumer migration list), timewarp-state task 087 (TWS0002 spec),
   timewarp-mediator `readme.md` L36-50 and `documentation/generated-vs-legacy.md`,
   `documentation/m1-generated-mediator.md`, `m2-named-pipelines.md`.
 - Architecture inventory (2026-09-17): `AddMediator(` 0 hits; `IBaseAction` in 41 files;
@@ -96,7 +98,7 @@ the errors "when we upgrade".
   validation, web-server validation, web-spa track-event); actions are `internal sealed`.
 - Size: large, multi-plane. Expect the implementer to hit the turn budget; re-dispatch resumes.
   Consider splitting into 237-001 (packages + Mediator 14 hosts/behaviors), 237-002 (public
-  actions + State renames), 237-003 (TW0002 adoption + guard retirement + template) if the
+  actions + State renames), 237-003 (TWS0002 adoption + guard retirement + template) if the
   first pass shows the split is cleaner — decide in the planning step, not mid-implementation.
 
 ## Results
