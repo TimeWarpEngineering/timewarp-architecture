@@ -5,9 +5,8 @@
 #region Design
 // Task 182-004 / 206: mirrors PrincipalState.SetPrincipalRoles — draft toggles are pure state
 // (RoleDetailPage grouped editor); Save posts SetRolePermissions. HandleSuccess does not
-// fetch; RoleDetailPage sequences SetRolePermissions then FetchRoles so drafts re-seed from
-// stored grants (and protected-core / validation errors surface via DefaultApiHandler
-// problem handling).
+// fetch; LastSetRolePermissionsSucceeded is set false in GetRequest and true in HandleSuccess
+// so RoleDetailPage sequences FetchRoles only after a successful write (failed 409 keeps drafts).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -82,6 +81,7 @@ partial class RoleState
 
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
       {
+        RoleState.LastSetRolePermissionsSucceeded = false;
         IReadOnlyCollection<string> draft = RoleState.GetDraftPermissionIds(action.RoleId);
         return Task.FromResult<Command?>(new Command
         {
@@ -95,6 +95,7 @@ partial class RoleState
       {
         _ = response;
         _ = cancellationToken;
+        RoleState.LastSetRolePermissionsSucceeded = true;
         return Task.CompletedTask;
       }
     }

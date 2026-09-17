@@ -1,11 +1,12 @@
 #region Purpose
-// Fail if a Handler under web-spa/features/**/*-state/*.cs awaits another *State action.
+// Fail if a Handler under web-spa/features/**/*-state/*.cs dispatches another action.
 #endregion
 
 #region Design
 // Task 236: handlers never chain actions; pages sequence. A source scan is cheaper than a
-// host and matches the raw-button guard. Allow-list is empty. Pattern is
-// `await [A-Za-z]+State.` inside a class named Handler.
+// host and matches the raw-button guard. Allow-list is empty. Patterns inside a class named
+// Handler: `await [A-Za-z]+State.` and `Sender.Send` (TWA0022 already bans raw Send in SPA
+// client code; this scan keeps *-state Handlers honest if a Send sneaks in).
 #endregion
 
 namespace HandlerNestedDispatchGuard_;
@@ -54,7 +55,7 @@ public class StateHandlers_Should_
     }
 
     offenders.ShouldBeEmpty(
-      "Handlers must not dispatch another action (await XState.Y). Pages sequence. Offenders: "
+      "Handlers must not dispatch another action (await XState.Y or Sender.Send). Pages sequence. Offenders: "
       + string.Join("; ", offenders));
     return Task.CompletedTask;
   }
@@ -84,6 +85,11 @@ public class StateHandlers_Should_
 
       string body = source[(openBrace + 1)..closeBrace];
       foreach (string hit in FindAwaitStateDispatches(body))
+      {
+        yield return hit;
+      }
+
+      foreach (string hit in FindSenderSends(body))
       {
         yield return hit;
       }
@@ -123,6 +129,22 @@ public class StateHandlers_Should_
       }
 
       searchFrom = awaitIndex + 1;
+    }
+  }
+
+  private static IEnumerable<string> FindSenderSends(string body)
+  {
+    int searchFrom = 0;
+    while (true)
+    {
+      int sendIndex = body.IndexOf("Sender.Send", searchFrom, StringComparison.Ordinal);
+      if (sendIndex < 0)
+      {
+        yield break;
+      }
+
+      yield return "Sender.Send";
+      searchFrom = sendIndex + "Sender.Send".Length;
     }
   }
 

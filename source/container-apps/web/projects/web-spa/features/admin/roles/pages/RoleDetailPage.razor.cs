@@ -8,7 +8,8 @@
 // (honest disable in markup). RoleId is generated onto the partial from the route token.
 // Protected-core UI lock uses PermissionIds.IsProtectedCoreLocked; server SetRolePermissions
 // still 409s a strip. Last-admin is SetPrincipalRoles, not this page.
-// Save sequences SetRolePermissions then FetchRoles (handlers do not chain a fetch).
+// Save sequences SetRolePermissions then FetchRoles only when
+// LastSetRolePermissionsSucceeded (handlers do not chain a fetch; failed 409 keeps drafts).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;

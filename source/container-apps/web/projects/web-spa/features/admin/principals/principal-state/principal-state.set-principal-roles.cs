@@ -5,8 +5,9 @@
 #region Design
 // HandleSuccess does not fetch. The Set response echoes *stored* roles only — patching
 // drafts from it desyncs virtual grants (empty store → Member; bootstrap unions
-// Admin+Member; review M1). PrincipalsPage sequences SetPrincipalRoles then FetchPrincipals
-// so the list re-seeds from ListPrincipals effective roles. NotifySessionChanged is not an
+// Admin+Member; review M1). LastSetPrincipalRolesSucceeded is set false in GetRequest and
+// true in HandleSuccess so PrincipalsPage sequences FetchPrincipals only after a successful
+// write (failed 409 must not re-seed drafts). NotifySessionChanged is not an
 // action dispatch (calls the auth state provider directly) and stays here so AuthorizeView /
 // nav re-run developer.access when the edited principal is the signed-in identity-session
 // user (WASM: re-project GetCurrentSession permission claims; Server circuit:
@@ -94,6 +95,7 @@ partial class PrincipalState
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
       {
         ActivePrincipalId = action.PrincipalId;
+        PrincipalState.LastSetPrincipalRolesSucceeded = false;
         IReadOnlyCollection<Guid> draft = PrincipalState.GetDraftRoleIds(action.PrincipalId);
         return Task.FromResult<Command?>(new Command
         {
@@ -106,6 +108,7 @@ partial class PrincipalState
       protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         _ = response;
+        PrincipalState.LastSetPrincipalRolesSucceeded = true;
         if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
         {
           AuthenticationState authState =

@@ -54,12 +54,22 @@
   private async Task CreatePasskeyAsync()
   {
     await NoSubCredentialsState.AddPasskey();
-    await NoSubCredentialsState.FetchCredentials();
+    await FetchCredentialsIfCeremonySucceeded();
   }
 
   private async Task AddExistingPasskeyAsync()
   {
     await NoSubCredentialsState.AddExistingPasskey();
+    await FetchCredentialsIfCeremonySucceeded();
+  }
+
+  private async Task FetchCredentialsIfCeremonySucceeded()
+  {
+    if (CredentialsState.CeremonyError is not null)
+    {
+      return;
+    }
+
     await NoSubCredentialsState.FetchCredentials();
   }
 

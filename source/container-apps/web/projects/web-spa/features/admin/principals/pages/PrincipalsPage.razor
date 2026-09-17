@@ -12,6 +12,11 @@
   private async Task OnSave(Guid principalId)
   {
     await PrincipalState.SetPrincipalRoles(principalId);
+    if (!PrincipalState.LastSetPrincipalRolesSucceeded)
+    {
+      return;
+    }
+
     await PrincipalState.FetchPrincipals();
   }
 

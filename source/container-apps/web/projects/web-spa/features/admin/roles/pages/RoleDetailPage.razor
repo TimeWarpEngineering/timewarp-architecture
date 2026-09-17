@@ -35,6 +35,11 @@
   private async Task OnSave()
   {
     await RoleState.SetRolePermissions(RoleId);
+    if (!RoleState.LastSetRolePermissionsSucceeded)
+    {
+      return;
+    }
+
     await RoleState.FetchRoles();
   }
 }

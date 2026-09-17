@@ -8,9 +8,10 @@
 //   2. browser WebAuthnJsModule.CreateCredentialAsync (import of web-authn.js, not window.Spa)
 //   3. HTTP AddPasskey (authenticated attach)
 // Both HTTP legs go through IWebServerApiService inside this ActionSet (not the page, not a
-// ceremony client GetResponse for Settings). JSException → CeremonyError on state; API failures
-// → SharedProblemDetails toast via ToastNotificationState (same as DefaultApiHandler).
-// Success: LastAddedCredentialId + status. Callers sequence FetchCredentials. Task 169.
+// ceremony client GetResponse for Settings). JSException and API Fail set CeremonyError on
+// state (no toast from this handler — pages sequence). Success: LastAddedCredentialId + status.
+// Callers sequence FetchCredentials only when CeremonyError is still null so Fetch cannot
+// wipe the error. Task 169.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

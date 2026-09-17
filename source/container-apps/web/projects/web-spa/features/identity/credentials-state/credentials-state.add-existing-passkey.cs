@@ -5,7 +5,8 @@
 #region Design
 // Same three-step ceremony as AddPasskey, but start/complete are merge-scoped
 // (StartAddExistingPasskey / CompleteAddExistingPasskey). Success sets StatusMessage
-// to "Merged account: N credential(s) moved". Callers sequence FetchCredentials.
+// to "Merged account: N credential(s) moved". Callers sequence FetchCredentials only
+// when CeremonyError is still null.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
