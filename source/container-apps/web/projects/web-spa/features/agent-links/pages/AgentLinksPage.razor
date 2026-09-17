@@ -5,8 +5,6 @@
   public static string Title => "Agent links";
   public static Icon? NavIcon => new Icons.Regular.Size20.Link();
 
-  private bool IsLoading =>
-    IsAnyActive(typeof(AgentLinksState.FetchActionSet.Action));
   private bool IsBusy => ActionTrackingState.IsActive;
 
   protected override async Task OnInitializedAsync()
@@ -28,13 +26,9 @@
 
 <TimeWarpPage Title="Agent links">
   <div class="twe-stack">
-    <Card Title="Optional agent ↔ human links">
+    <Section Title="Optional agent ↔ human links" LoadingActionType="typeof(AgentLinksState.FetchActionSet.Action)">
       <p>Agents can request a link to you. Paid service does not require a linked human.</p>
-      @if (IsLoading)
-      {
-        <p><em>Loading…</em></p>
-      }
-      else if (AgentLinksState.Items.Count == 0)
+      @if (AgentLinksState.Items.Count == 0)
       {
         <p>No agent links yet.</p>
       }
@@ -55,6 +49,6 @@
           }
         </ul>
       }
-    </Card>
+    </Section>
   </div>
 </TimeWarpPage>

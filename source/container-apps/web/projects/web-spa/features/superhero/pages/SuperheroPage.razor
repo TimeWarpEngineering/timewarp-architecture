@@ -5,20 +5,11 @@
   public static string Title => "Superhero";
   public static Icon? NavIcon => new Icons.Regular.Size20.Question();
 
-  private bool IsLoading =>
-    IsAnyActive(typeof(SuperheroState.FetchSuperheroActionSet.Action));
-
   protected override async Task OnInitializedAsync() => await SuperheroState.FetchSuperhero();
 }
 
 <TimeWarpPage Title="Superheros">
-  <Card>
-    @if (IsLoading)
-    {
-      <p><em>Loading...</em></p>
-    }
-    else
-    {
+  <Section Title="Superheros" LoadingActionType="typeof(SuperheroState.FetchSuperheroActionSet.Action)">
       <table class="twe-table" data-qa="SuperheroTable">
         <thead>
           <tr>
@@ -42,6 +33,5 @@
           }
         </tbody>
       </table>
-    }
-  </Card>
+  </Section>
 </TimeWarpPage>

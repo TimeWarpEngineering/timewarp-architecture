@@ -38,6 +38,7 @@
   private async Task AddPasskeyAsync()
   {
     await NoSubCredentialsState.AddPasskey();
+    await NoSubCredentialsState.FetchCredentials();
   }
 
   private async Task DismissAsync()

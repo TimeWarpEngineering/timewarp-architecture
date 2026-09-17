@@ -4,9 +4,10 @@
 
 #region Design
 // Task 182-004 / 206: mirrors PrincipalState.SetPrincipalRoles — draft toggles are pure state
-// (RoleDetailPage grouped editor); Save posts SetRolePermissions then re-fetches GetRoles so
-// drafts re-seed from stored grants (and protected-core / validation errors surface via
-// DefaultApiHandler problem handling).
+// (RoleDetailPage grouped editor); Save posts SetRolePermissions. HandleSuccess does not
+// fetch; RoleDetailPage sequences SetRolePermissions then FetchRoles so drafts re-seed from
+// stored grants (and protected-core / validation errors surface via DefaultApiHandler
+// problem handling).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -90,10 +91,11 @@ partial class RoleState
         });
       }
 
-      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        // Re-list so drafts match stored grants (and any server-side normalization).
-        await RoleState.FetchRoles(cancellationToken);
+        _ = response;
+        _ = cancellationToken;
+        return Task.CompletedTask;
       }
     }
   }

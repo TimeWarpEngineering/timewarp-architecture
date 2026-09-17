@@ -12,8 +12,6 @@
 
   private bool ShowMicrosoft365;
 
-  private bool IsLoading =>
-    IsAnyActive(typeof(CredentialsState.FetchCredentialsActionSet.Action));
   private bool IsBusy => ActionTrackingState.IsActive;
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
   private IReadOnlyList<GetCredentials.CredentialSummary> EntraAccounts => CredentialsState.ActiveEntraAccounts;
@@ -53,14 +51,23 @@
   private static string DisplayEntraLabel(GetCredentials.CredentialSummary credential) =>
     string.IsNullOrWhiteSpace(credential.Label) ? "Microsoft 365" : credential.Label!;
 
-  private async Task CreatePasskeyAsync() =>
+  private async Task CreatePasskeyAsync()
+  {
     await NoSubCredentialsState.AddPasskey();
+    await NoSubCredentialsState.FetchCredentials();
+  }
 
-  private async Task AddExistingPasskeyAsync() =>
+  private async Task AddExistingPasskeyAsync()
+  {
     await NoSubCredentialsState.AddExistingPasskey();
+    await NoSubCredentialsState.FetchCredentials();
+  }
 
-  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential) =>
+  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential)
+  {
     await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
+    await NoSubCredentialsState.FetchCredentials();
+  }
 
   private async Task<bool> LoadEntraOfferedAsync()
   {
@@ -90,10 +97,9 @@
 <TimeWarpPage Title="Settings">
   <div class="twe-stack">
 
-    <Card Title="Passkeys">
+    <Section Title="Passkeys" LoadingActionType="typeof(CredentialsState.FetchCredentialsActionSet.Action)">
       <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
         <CredentialList Credentials="Passkeys"
-                        IsLoading="IsLoading"
                         IsBusy="IsBusy"
                         EmptyMessage="No passkeys on this account yet."
                         FallbackLabel="Passkey"
@@ -115,16 +121,16 @@
           </FluentButton>
         </FluentStack>
       </FluentStack>
-    </Card>
+    </Section>
 
     @if (ShowMicrosoft365)
     {
-      <Card Title="@Microsoft365CardTitle"
+      <Section Title="@Microsoft365CardTitle"
             TitleDataQa="@(EntraAccounts.Count == 1 ? "Microsoft365AccountLabel" : null)"
+            LoadingActionType="typeof(CredentialsState.FetchCredentialsActionSet.Action)"
             data-qa="Microsoft365Settings">
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
           <CredentialList Credentials="EntraAccounts"
-                          IsLoading="IsLoading"
                           IsBusy="IsBusy"
                           EmptyMessage="No Microsoft 365 account linked."
                           FallbackLabel="Microsoft 365"
@@ -146,7 +152,7 @@
             </FluentButton>
           }
         </FluentStack>
-      </Card>
+      </Section>
     }
 
     @if (!string.IsNullOrEmpty(StatusMessage))

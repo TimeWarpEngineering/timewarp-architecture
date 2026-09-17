@@ -1,0 +1,18 @@
+/* Section — native root so isolation applies; Card owns chrome (skills/tw-blazor-css-strategy). */
+.twe-section {
+  width: 100%;
+}
+
+.twe-section__description,
+.twe-section__tip {
+  margin: 0 0 var(--twe-space-3);
+  color: var(--twe-muted);
+  font-size: var(--twe-text-body);
+  line-height: 1.55;
+}
+
+.twe-section__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--twe-space-6) 0;
+}

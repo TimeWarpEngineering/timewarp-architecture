@@ -5,8 +5,9 @@
 #region Design
 // Task 167 product Settings UI; task 169 rehomes data through TimeWarp.State (COPIC rule):
 // every backend HTTP call is a CredentialsState ActionSet — never page-local List<> + ceremony
-// client GetResponse. Loading = IsAnyActive(FetchCredentials); IsBusy = any tracked
-// credentials action. Credentials is null remains the fetch-once guard (no snapshot yet).
+// client GetResponse. Loading is Section + FetchCredentials; IsBusy = any tracked
+// credentials action. Create/merge/revoke sequence FetchCredentials after the mutation.
+// Credentials is null remains the fetch-once guard (no snapshot yet).
 // API failures toast via DefaultApiHandler; browser ceremony failures surface as
 // CredentialsState.CeremonyError. Backend surface remains 104-005 (GetCredentials, AddPasskey,
 // RevokeCredential).
@@ -17,7 +18,7 @@
 // "Microsoft 365". FetchCredentials runs during prerender so first HTML matches those rules.
 // Task 230: "Add an existing passkey" next to Create runs the merge ceremony
 // (CredentialsState.AddExistingPasskey). 229 card rules apply to the merged credential set.
-// Task 233: markup is Card + CredentialList + FluentButton (Primary / Outline / danger Outline).
+// Task 233: markup is Section + CredentialList + FluentButton (Primary / Outline / danger Outline).
 // No page-local twe-settings vocabulary; no raw <button>.
 #endregion
 

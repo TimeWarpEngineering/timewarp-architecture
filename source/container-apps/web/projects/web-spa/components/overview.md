@@ -22,6 +22,7 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `StatusBadge.razor`
 - `FormContainer.razor` (Card shell; `ActionContent` renders in `FormActions`)
 - `FormSection.razor` / `FormGrid.razor` / `FormField.razor` / `FormActions.razor` — stacked form layout (full-width controls, `--twe-space-*` tokens)
+- `Section.razor` (composites) — Card + `FluentSpinner` while `ActionTrackingState.IsAnyActive(LoadingActionType)`
 
 **Inline status:** use FluentUI `FluentMessageBar` (not a custom alert). Buttons: `FluentButton`.
 

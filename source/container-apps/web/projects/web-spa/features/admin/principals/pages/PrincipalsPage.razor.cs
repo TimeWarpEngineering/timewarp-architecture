@@ -4,7 +4,8 @@
 
 #region Design
 // Task 147-004 D9 / 182-003: list + inline roles, no detail route. Policy = admin.principals.read.
-// Loading is FetchPrincipals [TrackAction] (COPIC IsAnyActive), not Principals is null.
+// Loading is Section + FetchPrincipals [TrackAction] (COPIC IsAnyActive), not Principals is null.
+// Save sequences SetPrincipalRoles then FetchPrincipals (handlers do not chain a fetch).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;

@@ -4,8 +4,8 @@
 
 #region Design
 // Same three-step ceremony as AddPasskey, but start/complete are merge-scoped
-// (StartAddExistingPasskey / CompleteAddExistingPasskey). Success refreshes credentials and
-// sets StatusMessage to "Merged account: N credential(s) moved".
+// (StartAddExistingPasskey / CompleteAddExistingPasskey). Success sets StatusMessage
+// to "Merged account: N credential(s) moved". Callers sequence FetchCredentials.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -53,7 +53,7 @@ partial class CredentialsState
 
           if (!startResult.IsT0)
           {
-            await FailAsync(ToProblem(startResult), cancellationToken);
+            Fail(ToProblem(startResult));
             return;
           }
 
@@ -84,7 +84,7 @@ partial class CredentialsState
 
           if (!completeResult.IsT0)
           {
-            await FailAsync(ToProblem(completeResult), cancellationToken);
+            Fail(ToProblem(completeResult));
             return;
           }
 
@@ -93,7 +93,6 @@ partial class CredentialsState
             moved == 1
               ? "Merged account: 1 credential moved"
               : $"Merged account: {moved} credential(s) moved";
-          await CredentialsState.FetchCredentials(externalCancellationToken: cancellationToken);
         }
         catch (JSException jsException)
         {
@@ -102,10 +101,9 @@ partial class CredentialsState
         }
       }
 
-      private async Task FailAsync(SharedProblemDetails problem, CancellationToken cancellationToken)
+      private void Fail(SharedProblemDetails problem)
       {
         CredentialsState.CeremonyError = $"{problem.Title}: {problem.Detail}";
-        await ToastNotificationState.AddProblemDetails(problem, cancellationToken);
       }
 
       private static SharedProblemDetails ToProblem<TResponse>(

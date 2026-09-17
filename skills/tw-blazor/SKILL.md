@@ -34,6 +34,19 @@ generators and class-level analyzers must see (`[Page]`, `[Authorize]`, `[CrossS
 </style>
 ```
 
+# Action handlers and loading
+
+1. A handler does one thing. It never sends/dispatches another action (no `await XState.Y()`
+   inside `Handle` / `HandleSuccess` / `HandleError`). Pages and components sequence actions.
+2. Loading UI comes from the shared `Section` component
+   (`web-spa/components/composites/Section.razor`, port of COPIC `CopicSection`) driven by
+   `ActionTrackingState.IsAnyActive(LoadingActionType)`; no hand-written loading markup.
+   Grids may bind `FluentDataGrid Loading=IsLoading` to `IsAnyActive(FetchX)` instead.
+
+Reference: `source/container-apps/web/projects/web-spa/features/style-guide/pages/StyleGuidePage.razor`
+(Section card). Applied on PrincipalsPage, RolesListPage, RoleDetailPage, and the other
+former `Loading…` pages.
+
 # Actions, navigation, and forms
 
 Actions are `FluentButton` with a style-guide appearance (Primary / Outline / Subtle /

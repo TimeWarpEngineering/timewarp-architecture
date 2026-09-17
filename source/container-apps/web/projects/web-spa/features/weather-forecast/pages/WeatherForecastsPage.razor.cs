@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Loading is FetchWeatherForecasts [TrackAction] (COPIC IsAnyActive), not WeatherForecasts is null.
+// Loading is Section + FetchWeatherForecasts [TrackAction] (COPIC IsAnyActive), not WeatherForecasts is null.
 #endregion
 
 namespace TimeWarp.Architecture.Features.WeatherForecasts;

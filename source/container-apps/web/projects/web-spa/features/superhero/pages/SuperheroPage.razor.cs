@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Loading is FetchSuperhero [TrackAction]. Superheros is never null (empty list), so a
+// Loading is Section + FetchSuperhero [TrackAction]. Superheros is never null (empty list), so a
 // null check cannot be a loading signal.
 #endregion
 
