@@ -5,9 +5,9 @@
 #region Design
 // Amuru Shell.Builder only — never System.Diagnostics.Process. Mutation captures skip execution
 // on dry-run and print the invocation. Read-only / token captures always execute so tenant
-// discovery works under --dry-run; token stdout and Authorization headers are never printed
-// (Bearer values masked as ******** when an invocation line is shown). az on PATH is
-// PathResolver, not a thrown process start.
+// discovery and user-secrets list work under --dry-run; token stdout and Authorization headers
+// are never printed (Bearer values masked as ******** when an invocation line is shown). az on
+// PATH is PathResolver, not a thrown process start.
 #endregion
 
 namespace DevCli.Services;
@@ -84,10 +84,19 @@ internal sealed class EntraCli
     return CaptureAsync("dotnet", arguments, skipOnDryRun: true, maskArguments: maskValue, maskAuthorizationHeader: false);
   }
 
-  internal async Task<CommandOutput> ListUserSecretsAsync()
+  /// <summary>
+  /// Always executes (including under --dry-run). Listing is read-only; the mint decision
+  /// compares stored ClientId/TenantId against the target app.
+  /// </summary>
+  internal Task<CommandOutput> ListUserSecretsAsync()
   {
     string[] arguments = ["user-secrets", "list", "--project", WebServerProjectPath];
-    return await CaptureDotNetAsync(arguments).ConfigureAwait(false);
+    return CaptureAsync(
+      "dotnet",
+      arguments,
+      skipOnDryRun: false,
+      maskArguments: false,
+      maskAuthorizationHeader: false);
   }
 
   internal void WriteFailure(CommandOutput output, string message)

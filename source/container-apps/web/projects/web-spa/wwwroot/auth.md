@@ -114,9 +114,12 @@ dev entra disable   # sets Authentication:Entra:Enabled=false; does not change A
 
 `dev entra setup` finds or creates the app registration, unions redirect URIs
 (`https://localhost:63611/signin-oidc`, `https://localhost:63610/signin-oidc`, plus
-`--public-origin` when given), ensures a service principal, mints a client secret only
-on first write or `--new-secret`, and writes Web.Server user secrets. The secret is
-never printed. First run seeds Enabled / AllowBootstrap into site settings; after that use
+`--public-origin` when given), ensures a service principal, mints a client secret on
+first write, when the stored tenant or app registration differs from the one setup is
+writing, or with `--new-secret`, and writes Web.Server user secrets. Switching tenants
+(or otherwise changing `ClientId` / `TenantId`) re-mints automatically; `--new-secret`
+is only for rotating a secret on the same app. The secret is never printed. First run
+seeds Enabled / AllowBootstrap into site settings; after that use
 `/Admin/Authentication` to offer or hide Microsoft 365 sign-in. Then
 `dev run`, browse the app, and click **Continue with Microsoft 365** when offered.
 

@@ -4,11 +4,12 @@
 
 #region Design
 // Reads Web.Server user secrets first so a missing az login still shows local config. App
-// lookup prefers Authentication:Entra:ClientId; falls back to domain-suffixed then bare
-// default display names. --tenant enumerates visible tenants for an explicit match (refuse
-// on not-found/ambiguous); omitting --tenant reports the tenant from user secrets and does
-// not refuse when multiple Azure tenants are visible. Handler stores Command/Ct as fields so
-// private methods are zero-parameter.
+// lookup prefers Authentication:Entra:ClientId for az show; also looks up by domain-suffixed
+// then bare default display names and warns when that id differs from stored ClientId.
+// --tenant enumerates visible tenants for an explicit match (refuse on not-found/ambiguous);
+// omitting --tenant reports the tenant from user secrets and does not refuse when multiple
+// Azure tenants are visible. Handler stores Command/Ct as fields so private methods are
+// zero-parameter.
 #endregion
 
 namespace DevCli.Commands;
@@ -209,17 +210,15 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
         return;
       }
 
-      string? clientId = Secrets.TryGetValue(EntraSetup.ClientIdKey, out string? id)
+      string? storedClientId = Secrets.TryGetValue(EntraSetup.ClientIdKey, out string? id)
         && !string.IsNullOrWhiteSpace(id)
-        ? id
+        ? id.Trim()
         : null;
 
-      string? appId = clientId;
-      if (appId is null)
-      {
-        appId = await FindAppIdByDisplayNameAsync().ConfigureAwait(false);
-      }
+      string? foundByName = await FindAppIdByDisplayNameAsync(announceFailures: storedClientId is null)
+        .ConfigureAwait(false);
 
+      string? appId = storedClientId ?? foundByName;
       if (appId is null)
       {
         Terminal.WriteLine("App registration: not found (no ClientId in user secrets and no matching TimeWarp Architecture Dev app).");
@@ -247,12 +246,14 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
           Terminal.WriteErrorLine(output.Stderr);
         }
 
+        WarnIfStoredClientIdDiffers(storedClientId, foundByName);
         return;
       }
 
       if (!EntraSetup.TryReadAppShow(output.Stdout, out string shownAppId, out string displayName, out IReadOnlyList<string> redirectUris))
       {
         Terminal.WriteLine($"App registration: {appId} (could not parse az output)");
+        WarnIfStoredClientIdDiffers(storedClientId, foundByName);
         return;
       }
 
@@ -260,6 +261,7 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       if (redirectUris.Count == 0)
       {
         Terminal.WriteLine("Redirect URIs: (none)");
+        WarnIfStoredClientIdDiffers(storedClientId, foundByName);
         return;
       }
 
@@ -268,9 +270,22 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       {
         Terminal.WriteLine($"  {uri}");
       }
+
+      WarnIfStoredClientIdDiffers(storedClientId, foundByName);
     }
 
-    private async Task<string?> FindAppIdByDisplayNameAsync()
+    private void WarnIfStoredClientIdDiffers(string? storedClientId, string? foundByName)
+    {
+      if (!EntraSetup.StoredClientIdDiffersFromFoundApp(storedClientId, foundByName))
+      {
+        return;
+      }
+
+      Terminal.WriteLine("");
+      Terminal.WriteLine(EntraSetup.FormatClientIdMismatchWarning(storedClientId!, foundByName!).Yellow());
+    }
+
+    private async Task<string?> FindAppIdByDisplayNameAsync(bool announceFailures)
     {
       Secrets.TryGetValue(EntraSetup.TenantDomainKey, out string? domain);
       IReadOnlyList<string> lookupNames = EntraTenants.AppLookupNames(explicitName: null, domain);
@@ -289,7 +304,11 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       CommandOutput output = await Cli.CaptureAzAsync(arguments).ConfigureAwait(false);
       if (!output.Success)
       {
-        Terminal.WriteLine($"App registration: Azure lookup failed. {EntraCli.AzLoginHint}");
+        if (announceFailures)
+        {
+          Terminal.WriteLine($"App registration: Azure lookup failed. {EntraCli.AzLoginHint}");
+        }
+
         return null;
       }
 
@@ -311,7 +330,11 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       EntraTenants.ResolveExistingApp(preferredIds, legacyIds, out string? appId, out bool ambiguous);
       if (ambiguous)
       {
-        Terminal.WriteLine($"App registration: multiple matches for '{preferredName}'.");
+        if (announceFailures)
+        {
+          Terminal.WriteLine($"App registration: multiple matches for '{preferredName}'.");
+        }
+
         return null;
       }
 
