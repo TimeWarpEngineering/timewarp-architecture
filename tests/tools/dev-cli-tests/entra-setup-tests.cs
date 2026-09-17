@@ -183,6 +183,11 @@ public class CredentialDisplayName_Given_
 
 public class TryDecideMintClientSecret_Given_
 {
+  private const string ClientA = "11111111-1111-1111-1111-111111111111";
+  private const string ClientB = "22222222-2222-2222-2222-222222222222";
+  private const string TenantA = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+  private const string TenantB = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<TryDecideMintClientSecret_Given_>();
 
@@ -192,8 +197,14 @@ public class TryDecideMintClientSecret_Given_
       newSecret: true,
       listSucceeded: false,
       hasExistingClientSecret: true,
-      out bool mint).ShouldBeTrue();
+      existingClientId: ClientA,
+      existingTenantId: TenantA,
+      targetClientId: ClientA,
+      targetTenantId: TenantA,
+      out bool mint,
+      out bool appRegistrationChanged).ShouldBeTrue();
     mint.ShouldBeTrue();
+    appRegistrationChanged.ShouldBeFalse();
     return Task.CompletedTask;
   }
 
@@ -203,8 +214,14 @@ public class TryDecideMintClientSecret_Given_
       newSecret: false,
       listSucceeded: false,
       hasExistingClientSecret: false,
-      out bool mint).ShouldBeFalse();
+      existingClientId: null,
+      existingTenantId: null,
+      targetClientId: ClientA,
+      targetTenantId: TenantA,
+      out bool mint,
+      out bool appRegistrationChanged).ShouldBeFalse();
     mint.ShouldBeFalse();
+    appRegistrationChanged.ShouldBeFalse();
     return Task.CompletedTask;
   }
 
@@ -214,19 +231,148 @@ public class TryDecideMintClientSecret_Given_
       newSecret: false,
       listSucceeded: true,
       hasExistingClientSecret: false,
-      out bool mint).ShouldBeTrue();
+      existingClientId: null,
+      existingTenantId: null,
+      targetClientId: ClientA,
+      targetTenantId: TenantA,
+      out bool mint,
+      out bool appRegistrationChanged).ShouldBeTrue();
     mint.ShouldBeTrue();
+    appRegistrationChanged.ShouldBeFalse();
     return Task.CompletedTask;
   }
 
-  public static Task ListSucceededWithSecret_Should_Skip()
+  public static Task ListSucceededWithSecretSameApp_Should_Skip()
   {
     EntraSetup.TryDecideMintClientSecret(
       newSecret: false,
       listSucceeded: true,
       hasExistingClientSecret: true,
-      out bool mint).ShouldBeTrue();
+      existingClientId: ClientA,
+      existingTenantId: TenantA,
+      targetClientId: ClientA,
+      targetTenantId: TenantA,
+      out bool mint,
+      out bool appRegistrationChanged).ShouldBeTrue();
     mint.ShouldBeFalse();
+    appRegistrationChanged.ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task SameAppDifferentCasing_Should_Skip()
+  {
+    EntraSetup.TryDecideMintClientSecret(
+      newSecret: false,
+      listSucceeded: true,
+      hasExistingClientSecret: true,
+      existingClientId: ClientA.ToUpperInvariant(),
+      existingTenantId: $"{{{TenantA}}}",
+      targetClientId: ClientA,
+      targetTenantId: TenantA,
+      out bool mint,
+      out bool appRegistrationChanged).ShouldBeTrue();
+    mint.ShouldBeFalse();
+    appRegistrationChanged.ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task ChangedApp_Should_Mint()
+  {
+    EntraSetup.TryDecideMintClientSecret(
+      newSecret: false,
+      listSucceeded: true,
+      hasExistingClientSecret: true,
+      existingClientId: ClientA,
+      existingTenantId: TenantA,
+      targetClientId: ClientB,
+      targetTenantId: TenantA,
+      out bool mint,
+      out bool appRegistrationChanged).ShouldBeTrue();
+    mint.ShouldBeTrue();
+    appRegistrationChanged.ShouldBeTrue();
+    return Task.CompletedTask;
+  }
+
+  public static Task ChangedTenant_Should_Mint()
+  {
+    EntraSetup.TryDecideMintClientSecret(
+      newSecret: false,
+      listSucceeded: true,
+      hasExistingClientSecret: true,
+      existingClientId: ClientA,
+      existingTenantId: TenantA,
+      targetClientId: ClientA,
+      targetTenantId: TenantB,
+      out bool mint,
+      out bool appRegistrationChanged).ShouldBeTrue();
+    mint.ShouldBeTrue();
+    appRegistrationChanged.ShouldBeTrue();
+    return Task.CompletedTask;
+  }
+}
+
+public class MintClientSecretMessages_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<MintClientSecretMessages_Given_>();
+
+  public static Task ChangedApp_DryRunTranscript_Should_NameTheReasonAndMaskTheSecret()
+  {
+    const string oldClient = "11111111-1111-1111-1111-111111111111";
+    string changed = EntraSetup.FormatAppRegistrationChangedMessage(oldClient, "CrunchIt, LLC");
+    changed.ShouldBe(
+      "App registration changed (was `11111111-1111-1111-1111-111111111111` in `CrunchIt, LLC`); minting a new client secret.");
+    changed.ShouldNotContain("password");
+
+    string decision = EntraSetup.FormatMintDryRunDecision(
+      mint: true,
+      newSecret: false,
+      appRegistrationChanged: true);
+    decision.ShouldBe("dry-run: minting a client secret (app registration changed).");
+
+    string invocation = EntraSetup.FormatInvocation(
+      "az",
+      [
+        "ad",
+        "app",
+        "credential",
+        "reset",
+        "--id",
+        oldClient,
+        "--append",
+        "--display-name",
+        "dev-20260917",
+        "--years",
+        "1",
+        "--query",
+        "password",
+        "-o",
+        "tsv"
+      ]);
+    invocation.ShouldBe(
+      "az ad app credential reset --id 11111111-1111-1111-1111-111111111111 --append --display-name dev-20260917 --years 1 --query password -o tsv");
+    invocation.ShouldNotContain(EntraSetup.MaskedSecret);
+
+    EntraSetup.FormatClientSecretSummary(minted: true, appRegistrationChanged: true)
+      .ShouldBe("******** (minted: app registration changed)");
+    EntraSetup.FormatMintDryRunDecision(mint: false, newSecret: false, appRegistrationChanged: false)
+      .ShouldBe("dry-run: keeping the existing client secret.");
+    return Task.CompletedTask;
+  }
+
+  public static Task StoredClientIdMismatch_Should_PointAtSetup()
+  {
+    const string stored = "11111111-1111-1111-1111-111111111111";
+    const string found = "22222222-2222-2222-2222-222222222222";
+    EntraSetup.StoredClientIdDiffersFromFoundApp(stored, found).ShouldBeTrue();
+    EntraSetup.StoredClientIdDiffersFromFoundApp(stored, stored.ToUpperInvariant()).ShouldBeFalse();
+    EntraSetup.StoredClientIdDiffersFromFoundApp(stored, null).ShouldBeFalse();
+    EntraSetup.FormatClientIdMismatchWarning(stored, found)
+      .ShouldContain("dev entra setup");
+    EntraSetup.FormatClientIdMismatchWarning(stored, found)
+      .ShouldContain(stored);
+    EntraSetup.FormatClientIdMismatchWarning(stored, found)
+      .ShouldContain(found);
     return Task.CompletedTask;
   }
 }

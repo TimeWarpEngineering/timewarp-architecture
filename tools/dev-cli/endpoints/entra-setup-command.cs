@@ -9,7 +9,8 @@
 // prints "matched more than one tenant", not the omitted-flag required message.
 // Mutations (app create/update, sp, credential reset, user-secrets set) still skip on dry-run.
 // Idempotent by display name: prefer domain-suffixed default, reuse bare legacy name if present.
-// Mint a client secret only on first write or --new-secret. A failed user-secrets list aborts
+// Mint a client secret on first write, --new-secret, or when stored ClientId/TenantId differs
+// from the target app (GUID-equal, case-insensitive). A failed user-secrets list aborts
 // (does not fail-open mint). The password and Graph tokens are never printed. Handler stores
 // Command/Ct as fields so private methods are zero-parameter.
 #endregion
@@ -35,7 +36,7 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
   [Option("redirect-uri", Description = "Additional redirect URI (repeatable)")]
   public string[] RedirectUri { get; set; } = [];
 
-  [Option("new-secret", Description = "Mint a new client secret even if one is already in user secrets")]
+  [Option("new-secret", Description = "Rotate the client secret on the same app (tenant/app changes re-mint without this flag)")]
   public bool NewSecret { get; set; }
 
   [Option("dry-run", Description = "Print az and user-secrets invocations without running them")]
@@ -57,6 +58,7 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
     private string SignedInTenantId = "";
     private string AppId = "";
     private string? MintedSecret;
+    private bool MintedBecauseAppChanged;
     private bool CreatedApp;
     private bool MergedRedirectUris;
     private bool CreatedServicePrincipal;
@@ -236,7 +238,7 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
         "-o",
         "json"
       ];
-      CommandOutput listOutput = await Cli.CaptureAzAsync(listArguments).ConfigureAwait(false);
+      CommandOutput listOutput = await Cli.CaptureAzReadOnlyAsync(listArguments).ConfigureAwait(false);
       List<string> createArguments =
       [
         "ad",
@@ -253,14 +255,6 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
         "-o",
         "tsv"
       ];
-      if (Cli.IsDryRun)
-      {
-        AppId = "<appId>";
-        Terminal.WriteLine("dry-run: create the app when the display name is absent; otherwise reuse it.");
-        await Cli.CaptureAzAsync(createArguments).ConfigureAwait(false);
-        return true;
-      }
-
       if (!listOutput.Success)
       {
         Cli.WriteFailure(listOutput, "Failed to list Entra app registrations.");
@@ -303,6 +297,14 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
           : legacyName ?? preferredName;
         Terminal.WriteLine($"Reusing app registration {AppId} ({reusedName}).");
         DisplayName = reusedName;
+        return true;
+      }
+
+      if (Cli.IsDryRun)
+      {
+        AppId = "<appId>";
+        Terminal.WriteLine("dry-run: would create the app registration.");
+        await Cli.CaptureAzAsync(createArguments).ConfigureAwait(false);
         return true;
       }
 
@@ -437,32 +439,55 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
 
     private async Task<bool> MaybeMintSecretAsync()
     {
-      bool mint = Command.NewSecret;
-      if (!mint && !Cli.IsDryRun)
+      Dictionary<string, string> secrets = [];
+      bool listSucceeded = true;
+      CommandOutput? listOutput = null;
+      if (!Command.NewSecret)
       {
-        CommandOutput listOutput = await Cli.ListUserSecretsAsync().ConfigureAwait(false);
-        Dictionary<string, string> secrets = listOutput.Success
-          ? EntraSetup.ParseUserSecretsList(listOutput.Stdout)
-          : [];
-        if (!EntraSetup.TryDecideMintClientSecret(
-          Command.NewSecret,
-          listOutput.Success,
-          EntraSetup.HasClientSecret(secrets),
-          out mint))
-        {
-          Cli.WriteFailure(listOutput, "Failed to list Web.Server user secrets; not minting a client secret.");
-          Environment.ExitCode = 1;
-          return false;
-        }
+        listOutput = await Cli.ListUserSecretsAsync().ConfigureAwait(false);
+        listSucceeded = listOutput.Success;
+        secrets = listSucceeded ? EntraSetup.ParseUserSecretsList(listOutput.Stdout) : [];
+      }
+
+      secrets.TryGetValue(EntraSetup.ClientIdKey, out string? existingClientId);
+      secrets.TryGetValue(EntraSetup.TenantIdKey, out string? existingTenantId);
+      secrets.TryGetValue(EntraSetup.TenantDisplayNameKey, out string? existingTenantDisplayName);
+
+      if (!EntraSetup.TryDecideMintClientSecret(
+        Command.NewSecret,
+        listSucceeded,
+        EntraSetup.HasClientSecret(secrets),
+        existingClientId,
+        existingTenantId,
+        AppId,
+        TenantId,
+        out bool mint,
+        out bool appRegistrationChanged))
+      {
+        Cli.WriteFailure(
+          listOutput ?? CommandOutput.Empty(),
+          "Failed to list Web.Server user secrets; not minting a client secret.");
+        Environment.ExitCode = 1;
+        return false;
+      }
+
+      MintedBecauseAppChanged = appRegistrationChanged;
+      if (appRegistrationChanged)
+      {
+        string oldTenantLabel = !string.IsNullOrWhiteSpace(existingTenantDisplayName)
+          ? existingTenantDisplayName
+          : existingTenantId ?? "";
+        Terminal.WriteLine(
+          EntraSetup.FormatAppRegistrationChangedMessage(existingClientId, oldTenantLabel));
       }
 
       if (Cli.IsDryRun)
       {
         Terminal.WriteLine(
-          "dry-run: mint a client secret when --new-secret is set or Authentication:Entra:ClientSecret is absent.");
+          EntraSetup.FormatMintDryRunDecision(mint, Command.NewSecret, appRegistrationChanged));
       }
 
-      if (!mint && !Cli.IsDryRun)
+      if (!mint)
       {
         return true;
       }
@@ -565,9 +590,9 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
         Terminal.WriteLine("Dry-run: no Azure or user-secrets changes.");
       }
 
-      string secretStatus = MintedSecret is null
-        ? "(unchanged)"
-        : EntraSetup.MaskedSecret + " (minted this run)";
+      string secretStatus = EntraSetup.FormatClientSecretSummary(
+        MintedSecret is not null,
+        MintedBecauseAppChanged);
       string written = WrittenSecretKeys.Count == 0
         ? "(none)"
         : string.Join(", ", WrittenSecretKeys);
