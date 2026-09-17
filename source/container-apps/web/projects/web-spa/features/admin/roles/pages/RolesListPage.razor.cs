@@ -7,7 +7,7 @@
 // RoleDetailPage (/Admin/Roles/{RoleId}) owns membership; RolePage (/Admin/Roles/New) is create.
 // Policy PermissionIds.AdminRolesRead matches server GetRoles/GetRole; SetRolePermissions is
 // admin.roles.manage (detail Save 403 if the signed-in principal only has read).
-// Loading is FetchRoles [TrackAction] (COPIC IsAnyActive), not Roles is null.
+// Loading is Section + FetchRoles [TrackAction] (COPIC IsAnyActive), not Roles is null.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;

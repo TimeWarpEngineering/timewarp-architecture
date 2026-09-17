@@ -3,9 +3,9 @@
 #endregion
 
 #region Design
-// Redirects to "/" after Store.Reset because the page being viewed may depend on state that
-// was just re-initialized; landing on home guarantees a valid render after the wipe.
-// Template demo of full-store reset, wired to the Counter page reset button.
+// Wipes the store only. The Counter page sequences ResetStore then ChangeRoute to home
+// because the page being viewed may depend on state that was just re-initialized; landing
+// on home guarantees a valid render after the wipe. Template demo of full-store reset.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -19,10 +19,12 @@ partial class ApplicationState
     internal class Handler : BaseHandler<Action>
     {
       public Handler(IStore store) : base(store) {}
-      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      public override Task Handle(Action action, CancellationToken cancellationToken)
       {
+        _ = action;
+        _ = cancellationToken;
         Store.Reset();
-        await RouteState.ChangeRoute(newRoute: "/", cancellationToken);
+        return Task.CompletedTask;
       }
     }
   }

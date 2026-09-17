@@ -20,9 +20,6 @@
 
   private bool CanManage { get; set; }
 
-  private bool IsLoading =>
-    IsAnyActive(typeof(RoleState.FetchRolesActionSet.Action));
-
   private bool IsSaving =>
     IsAnyActive(typeof(RoleState.SetRolePermissionsActionSet.Action));
 
@@ -35,7 +32,16 @@
     await RoleState.FetchRoles();
   }
 
-  private async Task OnSave() => await RoleState.SetRolePermissions(RoleId);
+  private async Task OnSave()
+  {
+    await RoleState.SetRolePermissions(RoleId);
+    if (!RoleState.LastSetRolePermissionsSucceeded)
+    {
+      return;
+    }
+
+    await RoleState.FetchRoles();
+  }
 }
 
 <TimeWarpPage Title="@(Role?.Name ?? Title)">
@@ -45,12 +51,8 @@
       (<code>admin.*</code>, <code>developer.*</code>, …). Administrator core admin
       permissions cannot be stripped (protected-core); the server also rejects that write (409).
     </p>
-    <Card Title="@(Role?.Name ?? "Role")">
-      @if (IsLoading)
-      {
-        <p><em>Loading…</em></p>
-      }
-      else if (Role is null)
+    <Section Title="@(Role?.Name ?? "Role")" LoadingActionType="typeof(RoleState.FetchRolesActionSet.Action)">
+      @if (Role is null)
       {
         <p data-qa="RoleNotFound">Role not found.</p>
       }
@@ -69,6 +71,6 @@
           </FluentButton>
         }
       }
-    </Card>
+    </Section>
   </div>
 </TimeWarpPage>

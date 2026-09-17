@@ -1,0 +1,107 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+
+@*
+  Purpose: Shared section card — title, optional description/tip, loading ring, child content.
+
+  Design: Port of COPIC CopicSection. Compose Card for chrome; do not duplicate border/title
+  styles. Loading is ActionTrackingState.IsAnyActive(LoadingActionType) → FluentSpinner
+  (Fluent UI v5 rename of ProgressRing).
+  Policy, when set, hides the section via AuthorizeView (same as COPIC). No Policy means the
+  section is visible (AuthorizeView with a null policy would require an authenticated user).
+  Handlers never chain actions; this component is how pages show in-flight work.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Title { get; set; } = null!;
+  [Parameter] public string? Description { get; set; }
+  [Parameter] public string? Tip { get; set; }
+  [Parameter] public RenderFragment<string>? HeaderContent { get; set; }
+  [Parameter] public Type? LoadingActionType { get; set; }
+  [Parameter] public string? Policy { get; set; }
+  [Parameter] public string? TitleDataQa { get; set; }
+  [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = null!;
+
+  private bool IsLoading =>
+    LoadingActionType is not null && ActionTrackingState.IsAnyActive(LoadingActionType);
+
+  private string? CardTitle => HeaderContent is null ? Title : null;
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+    Guard.Against.NullOrWhiteSpace(Title);
+    if (LoadingActionType is not null && !typeof(IBaseAction).IsAssignableFrom(LoadingActionType))
+    {
+      throw new InvalidOperationException($"{LoadingActionType} does not implement {nameof(IBaseAction)}.");
+    }
+  }
+}
+
+<div class="twe-section" @attributes="Attributes">
+  @if (string.IsNullOrWhiteSpace(Policy))
+  {
+    <Card Title="@CardTitle" TitleDataQa="@TitleDataQa">
+      @if (IsLoading)
+      {
+        <div class="twe-section__loading">
+          <FluentSpinner />
+        </div>
+      }
+      else
+      {
+        @if (HeaderContent is not null)
+        {
+          @HeaderContent(Title)
+        }
+        @if (!string.IsNullOrWhiteSpace(Description))
+        {
+          <p class="twe-section__description">@Description</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Tip))
+        {
+          <p class="twe-section__tip">@Tip</p>
+        }
+        @ChildContent
+      }
+    </Card>
+  }
+  else
+  {
+    <AuthorizeView Policy="@Policy">
+      <Authorizing>
+        <Card Title="@Title" TitleDataQa="@TitleDataQa">
+          <div class="twe-section__loading">
+            <FluentSpinner />
+          </div>
+        </Card>
+      </Authorizing>
+      <Authorized>
+        <Card Title="@CardTitle" TitleDataQa="@TitleDataQa">
+          @if (IsLoading)
+          {
+            <div class="twe-section__loading">
+              <FluentSpinner />
+            </div>
+          }
+          else
+          {
+            @if (HeaderContent is not null)
+            {
+              @HeaderContent(Title)
+            }
+            @if (!string.IsNullOrWhiteSpace(Description))
+            {
+              <p class="twe-section__description">@Description</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(Tip))
+            {
+              <p class="twe-section__tip">@Tip</p>
+            }
+            @ChildContent
+          }
+        </Card>
+      </Authorized>
+    </AuthorizeView>
+  }
+</div>

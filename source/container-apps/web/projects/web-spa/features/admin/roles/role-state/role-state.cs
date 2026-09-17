@@ -10,6 +10,7 @@
 // DraftPermissionIds (task 182-004 / 206): multi-select edits on RoleDetailPage before Save →
 // SetRolePermissions; seeded from GetRoles.RoleDto.PermissionIds on fetch (same pattern as
 // PrincipalState drafts). The list page is summary-only and does not mutate drafts.
+// LastSetRolePermissionsSucceeded is the page-side Fetch gate (failed 409 must not re-seed).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -27,11 +28,14 @@ public sealed partial class RoleState : State<RoleState>
   // Id of the most recently created role (demo: lets a page confirm the create round-trip).
   public Guid? LastCreatedRoleId { get; private set; }
 
+  public bool LastSetRolePermissionsSucceeded { get; private set; }
+
   public override void Initialize()
   {
     RolesList = null;
     LastCreatedRoleId = null;
     DraftPermissionIds = new();
+    LastSetRolePermissionsSucceeded = false;
   }
 
   public IReadOnlyCollection<string> GetDraftPermissionIds(Guid roleId) =>

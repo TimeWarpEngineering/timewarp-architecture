@@ -16,9 +16,6 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.PeopleTeam();
   public static string Title => "Roles";
 
-  private bool IsLoading =>
-    IsAnyActive(typeof(RoleState.FetchRolesActionSet.Action));
-
   protected override async Task OnInitializedAsync() => await RoleState.FetchRoles();
 }
 
@@ -34,14 +31,8 @@
         New Role
       </FluentAnchorButton>
     </div>
-    <Card Title="Roles">
-      @if (IsLoading)
-      {
-        <p><em>Loading…</em></p>
-      }
-      else
-      {
-        <table class="twe-table" data-qa="RolesTable">
+    <Section Title="Roles" LoadingActionType="typeof(RoleState.FetchRolesActionSet.Action)">
+      <table class="twe-table" data-qa="RolesTable">
           <thead>
             <tr>
               <TableHeader>Name</TableHeader>
@@ -74,7 +65,6 @@
             }
           </tbody>
         </table>
-      }
-    </Card>
+    </Section>
   </div>
 </TimeWarpPage>

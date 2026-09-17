@@ -3,13 +3,16 @@
 #endregion
 
 #region Design
-// After a successful write, re-fetch ListPrincipals so drafts re-seed from *effective* roles
-// (empty store → Member; bootstrap unions Admin+Member). The Set response echoes *stored*
-// roles only — patching drafts from it desyncs virtual grants (review M1).
-// When the edited principal is the signed-in identity-session user, NotifySessionChanged so
-// AuthorizeView / nav re-run developer.access (WASM: re-project GetCurrentSession permission
-// claims; Server circuit: PermissionRequirement re-expands — evaluator must not stick a
-// circuit-lifetime cache, task 189).
+// HandleSuccess does not fetch. The Set response echoes *stored* roles only — patching
+// drafts from it desyncs virtual grants (empty store → Member; bootstrap unions
+// Admin+Member; review M1). LastSetPrincipalRolesSucceeded is set false in GetRequest and
+// true in HandleSuccess so PrincipalsPage sequences FetchPrincipals only after a successful
+// write (failed 409 must not re-seed drafts). NotifySessionChanged is not an
+// action dispatch (calls the auth state provider directly) and stays here so AuthorizeView /
+// nav re-run developer.access when the edited principal is the signed-in identity-session
+// user (WASM: re-project GetCurrentSession permission claims; Server circuit:
+// PermissionRequirement re-expands — evaluator must not stick a circuit-lifetime cache,
+// task 189).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
@@ -92,6 +95,7 @@ partial class PrincipalState
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
       {
         ActivePrincipalId = action.PrincipalId;
+        PrincipalState.LastSetPrincipalRolesSucceeded = false;
         IReadOnlyCollection<Guid> draft = PrincipalState.GetDraftRoleIds(action.PrincipalId);
         return Task.FromResult<Command?>(new Command
         {
@@ -103,9 +107,8 @@ partial class PrincipalState
 
       protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
-        // Re-list so multi-select shows effective roles (virtual Member/bootstrap Admin), not stored-only echo.
-        await PrincipalState.FetchPrincipals(cancellationToken);
-
+        _ = response;
+        PrincipalState.LastSetPrincipalRolesSucceeded = true;
         if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
         {
           AuthenticationState authState =

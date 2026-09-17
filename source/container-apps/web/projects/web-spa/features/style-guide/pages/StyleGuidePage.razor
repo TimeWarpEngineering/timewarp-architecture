@@ -92,6 +92,12 @@
         </FormActions>
       </Card>
 
+      <Section Title="Section"
+               Description="Loading UI is FluentSpinner while the bound action is active; loaded content is the child. Pages sequence actions; handlers never chain a fetch."
+               LoadingActionType="typeof(CounterState.IncrementCounterActionSet.Action)">
+        <p>Loaded section content. Bind <code>LoadingActionType</code> to the in-flight action (for example FetchPrincipals).</p>
+      </Section>
+
       <Card Title="Buttons (FluentUI, themed)">
         <p class="sg-subtitle">Actions use these appearances. Destructive row actions are Outline plus the danger class (token --twe-danger) — never a page-local button class.</p>
         <div class="sg-row">

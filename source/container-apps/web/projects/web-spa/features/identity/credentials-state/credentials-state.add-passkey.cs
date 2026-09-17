@@ -8,9 +8,10 @@
 //   2. browser WebAuthnJsModule.CreateCredentialAsync (import of web-authn.js, not window.Spa)
 //   3. HTTP AddPasskey (authenticated attach)
 // Both HTTP legs go through IWebServerApiService inside this ActionSet (not the page, not a
-// ceremony client GetResponse for Settings). JSException → CeremonyError on state; API failures
-// → SharedProblemDetails toast via ToastNotificationState (same as DefaultApiHandler).
-// Success: LastAddedCredentialId + re-fetch list. Task 169.
+// ceremony client GetResponse for Settings). JSException and API Fail set CeremonyError on
+// state (no toast from this handler — pages sequence). Success: LastAddedCredentialId + status.
+// Callers sequence FetchCredentials only when CeremonyError is still null so Fetch cannot
+// wipe the error. Task 169.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -74,7 +75,7 @@ partial class CredentialsState
 
           if (!startResult.IsT0)
           {
-            await FailAsync(ToProblem(startResult), cancellationToken);
+            Fail(ToProblem(startResult));
             return;
           }
 
@@ -103,13 +104,12 @@ partial class CredentialsState
 
           if (!completeResult.IsT0)
           {
-            await FailAsync(ToProblem(completeResult), cancellationToken);
+            Fail(ToProblem(completeResult));
             return;
           }
 
           CredentialsState.LastAddedCredentialId = completeResult.AsT0.CredentialId.Value;
           CredentialsState.StatusMessage = "Passkey created.";
-          await CredentialsState.FetchCredentials(externalCancellationToken: cancellationToken);
         }
         catch (JSException jsException)
         {
@@ -118,10 +118,9 @@ partial class CredentialsState
         }
       }
 
-      private async Task FailAsync(SharedProblemDetails problem, CancellationToken cancellationToken)
+      private void Fail(SharedProblemDetails problem)
       {
         CredentialsState.CeremonyError = $"{problem.Title}: {problem.Detail}";
-        await ToastNotificationState.AddProblemDetails(problem, cancellationToken);
       }
 
       private async Task<Guid> ResolveUserIdAsync()

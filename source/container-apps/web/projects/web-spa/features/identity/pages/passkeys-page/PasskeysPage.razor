@@ -12,8 +12,6 @@
   private bool IsBusy;
   private bool? IsAuthenticated;
 
-  private bool IsListLoading =>
-    IsAnyActive(typeof(CredentialsState.FetchCredentialsActionSet.Action));
   private bool IsListBusy => ActionTrackingState.IsActive;
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
 
@@ -88,8 +86,11 @@
     IsAuthenticated = await Ceremony.GetIsAuthenticatedAsync(CancellationToken.None);
   }
 
-  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential) =>
+  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential)
+  {
     await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
+    await NoSubCredentialsState.FetchCredentials();
+  }
 }
 
 <TimeWarpPage Title="Passkeys">
@@ -116,16 +117,15 @@
       </FluentStack>
     </Card>
 
-    <Card Title="Passkeys on this account">
+    <Section Title="Passkeys on this account" LoadingActionType="typeof(CredentialsState.FetchCredentialsActionSet.Action)">
       <CredentialList Credentials="Passkeys"
-                      IsLoading="IsListLoading"
                       IsBusy="IsListBusy"
                       EmptyMessage="No passkeys on this account yet."
                       FallbackLabel="Passkey"
                       DeleteLabel="Delete"
                       DeleteDataQa="DeletePasskey"
                       OnDelete="ConfirmRevokeAsync" />
-    </Card>
+    </Section>
 
     @if (!string.IsNullOrEmpty(StatusMessage))
     {

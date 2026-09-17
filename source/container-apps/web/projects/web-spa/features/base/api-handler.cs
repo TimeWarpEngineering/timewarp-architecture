@@ -3,13 +3,18 @@
 #endregion
 
 #region Design
-// A per-state semaphore (from IStore) serializes handlers targeting the same state; the guard
-// tolerates disposal by RemoveState mid-flight, hence the swallowed ObjectDisposedException.
-// Authentication is opt-in via the nullable AuthenticationStateProvider: when supplied, actions
-// from anonymous users are silently dropped rather than surfacing a 401 round-trip.
-// GetRequest returning null is the sanctioned "skip this action" signal for derived handlers.
-// Cancellation maps to a synthetic 499 SharedProblemDetails so HandleError stays the single
-// failure path; validation failures throw instead, since they indicate a client-side coding bug.
+// A per-state semaphore (from IStore) serializes the request + network phase only
+// (GetRequest → ValidateRequestAsync → ApiService.GetResponse). HandleApiResponseAsync
+// (HandleSuccess / HandleError / HandleFileResponse) runs after release so an accidental
+// nested dispatch on the same state waits instead of deadlocking. Handlers still must not
+// dispatch another action (pages sequence); the narrowed lock makes a miss slow, not fatal.
+// The guard tolerates disposal by RemoveState mid-flight, hence the swallowed
+// ObjectDisposedException. Authentication is opt-in via the nullable
+// AuthenticationStateProvider: when supplied, actions from anonymous users are silently
+// dropped rather than surfacing a 401 round-trip. GetRequest returning null is the
+// sanctioned "skip this action" signal for derived handlers. Cancellation maps to a
+// synthetic 499 SharedProblemDetails so HandleError stays the single failure path;
+// validation failures throw instead, since they indicate a client-side coding bug.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -46,38 +51,39 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
 
     Type currentType = typeof(TAction).GetEnclosingStateType();
 
-    using SemaphoreGuard semaphoreGuard = await AcquireSemaphoreAsync(currentType, cancellationToken);
-    if (!semaphoreGuard.Acquired) return;
-
+    OneOf<TResponse, FileResponse, SharedProblemDetails>? apiResponse = null;
     try
     {
+      using SemaphoreGuard semaphoreGuard = await AcquireSemaphoreAsync(currentType, cancellationToken);
+      if (!semaphoreGuard.Acquired) return;
+
       TRequest? request = await GetRequest(action, cancellationToken);
       if (request is null) return;// Skip the action
 
       await ValidateRequestAsync(request);
 
-      OneOf<TResponse, FileResponse, SharedProblemDetails> apiResponse =
-        await ApiService.GetResponse<TResponse>(request, cancellationToken);
-
-      await HandleApiResponseAsync(apiResponse, cancellationToken);
+      apiResponse = await ApiService.GetResponse<TResponse>(request, cancellationToken);
     }
     catch (OperationCanceledException)
     {
       // Create SharedProblemDetails for cancellation and return it
-      SharedProblemDetails sharedProblemDetails = new()
+      apiResponse = new SharedProblemDetails
       {
         Title = "Operation Cancelled",
         Status = 499,// 499 is the code for "Client Closed Request"
         Detail = "The request was cancelled."
       };
-
-      await HandleApiResponseAsync(sharedProblemDetails, cancellationToken);
     }
     catch (Exception ex)
     {
       // Log any unexpected exceptions
       Logger.LogError(ex, "Unexpected error occurred while handling {ActionType}", typeof(TAction).Name);
       throw;
+    }
+
+    if (apiResponse is { } response)
+    {
+      await HandleApiResponseAsync(response, cancellationToken);
     }
   }
 

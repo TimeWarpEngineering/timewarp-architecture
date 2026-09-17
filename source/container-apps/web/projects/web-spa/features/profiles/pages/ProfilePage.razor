@@ -26,8 +26,6 @@
   private UpdateProfile.Command Command { get; } = new();
   private IProfileDetails Details => Command;
 
-  private bool IsLoading =>
-    IsAnyActive(typeof(ProfileState.FetchProfileDataActionSet.Action));
   private bool IsBusy => ActionTrackingState.IsActive;
 
   protected override async Task OnInitializedAsync()
@@ -61,12 +59,7 @@
 }
 
 <TimeWarpPage Title="Profile">
-  @if (IsLoading)
-  {
-    <p><em>Loading…</em></p>
-  }
-  else
-  {
+  <Section Title="Profile" LoadingActionType="typeof(ProfileState.FetchProfileDataActionSet.Action)">
     <EditForm Model=@Details OnValidSubmit=HandleValidSubmit FormName="ProfileForm" novalidate>
       <FluentValidator Validator="@ProfileValidator" />
 
@@ -140,5 +133,5 @@
         <FluentButton Type=ButtonType.Submit Appearance=ButtonAppearance.Primary Disabled=@IsBusy data-qa="ProfileSave">Save</FluentButton>
       </FormActions>
     </EditForm>
-  }
+  </Section>
 </TimeWarpPage>
