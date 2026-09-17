@@ -77,12 +77,16 @@ HeaderContent, ChildContent → `FluentProgressRing` while active). Architecture
 - [x] B: `Section` component; nine loading blocks replaced; style guide; skill rules
 - [x] B: loading-literal guard test
 - [x] Gates green; Results and How to validate (manual: change a principal's roles → Save → list refreshes)
+- [x] Implementation review: 2 rounds, disposition clean (M1–M3 fixed)
 
 ## Session
 
 - Created: cockpit (2026-09-17)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: Grok 4.6 (2026-09-17)
+- Review oracle: grok session 01a0ad15-e50b-7c71-9c36-3dbbc391b5fc (2026-09-17)
+- Reviewer general round 1: grok session 01a0ad17-e5d4-7412-97cd-3f27436942a1 (2026-09-17)
+- Reviewer general round 2: grok session 01a0ad22-9a1e-7463-8744-4c3110d1564e (2026-09-17)
 
 ## Notes
 
@@ -151,6 +155,22 @@ ganda repo audit
 **Depends on:** `dotnet test` must be run from the suite directory (MTP). Settings prerender boots the web-server test host.
 
 **Not in scope:** live WebAuthn ceremony; `DefaultApiHandler` toast-on-error still dispatches `ToastNotificationState` (not a `*-state` Handler).
+
+### Review
+
+**Disposition:** clean (0 open). Effort 1, roster `general`, 2 rounds.
+
+**Final counts** (round 2):
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 1 | 0 |
+| suggestion | 0 | 2 | 0 |
+| nit | 0 | 0 | 0 |
+
+Round 1 raised M1 (bug: Fetch after failed AddPasskey/AddExistingPasskey cleared CeremonyError), M2 (suggestion: Save Fetch re-seeded drafts on 409), M3 (suggestion: guard missed Sender.Send). All fixed on this task id; round 2 re-verified and raised nothing new.
+
+**Paths:** `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Implementation Notes
 
