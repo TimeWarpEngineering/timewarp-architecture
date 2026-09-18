@@ -1,0 +1,237 @@
+{
+  "contract": {
+    "opt_in": "New CatalogAction (or CatalogTool) attribute on the Action nested type. Not [TrackAction]. Not [TrackEvent].",
+    "fields": ["name", "description", "inputSchema", "execute", "visibility"],
+    "description_ssot": "Purpose region first sentence, or a small CatalogDescription attribute. Not Jev. Not hollow XML (architecture 177).",
+    "input_schema_source": "Action ctor parameters (ActionSet generator already reads these). Do not ask Jev to invent JSON Schema.",
+    "execute": "Generated ActionSet method: State.Method(args). Same method for Ctrl-K and WebMCP.",
+    "visibility": "human | agent | both. Permissions stay in code (AuthorizeView / policy ids).",
+    "not_catalog": ["[TrackAction] busy spinner", "Fetch* page-load", "Clear* sign-out internals", "inbound hub actions", "Debug", "template FiveSecondTask / TwoSecondTask", "ThrowException"]
+  },
+  "repo_split": {
+    "timewarp_state": "Catalog attribute + harvest Purpose/attribute into catalog metadata + source-gen of name/description/inputSchema next to ActionSet Method.g.cs",
+    "timewarp_architecture": "Ctrl-K overlay + hotkey on TimeWarpPage; navigator.modelContext.registerTool from the same catalog; later fill 104-019 tools[]"
+  },
+  "items": [
+    {
+      "name": "Theme.Update",
+      "description": "Switch the SPA theme between Dark and Light.",
+      "state": "ThemeState",
+      "action_set": "UpdateActionSet",
+      "execute": "ThemeState.Update(Theme newTheme)",
+      "input_schema": { "type": "object", "properties": { "newTheme": { "type": "string", "enum": ["Dark", "Light"] } }, "required": ["newTheme"] },
+      "visibility": "both",
+      "permissions": [],
+      "source": "timewarp-state-plus/features/theme/theme-state/theme-state.update.cs"
+    },
+    {
+      "name": "Profile.SignOut",
+      "description": "Sign the current user out of the SPA session (profile menu).",
+      "state": "ProfileState",
+      "action_set": "SignOutActionSet",
+      "execute": "ProfileState.SignOut()",
+      "input_schema": { "type": "object", "properties": {} },
+      "visibility": "both",
+      "permissions": [],
+      "source": "web-spa/features/profiles/profile-state/profile-state.sign-out.cs"
+    },
+    {
+      "name": "Credentials.AddPasskey",
+      "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+      "state": "CredentialsState",
+      "action_set": "AddPasskeyActionSet",
+      "execute": "CredentialsState.AddPasskey()",
+      "input_schema": { "type": "object", "properties": {} },
+      "visibility": "both",
+      "permissions": [],
+      "source": "web-spa/features/identity/credentials-state/credentials-state.add-passkey.cs"
+    },
+    {
+      "name": "Credentials.AddExistingPasskey",
+      "description": "Assert a passkey from another principal and merge that account into this one.",
+      "state": "CredentialsState",
+      "action_set": "AddExistingPasskeyActionSet",
+      "execute": "CredentialsState.AddExistingPasskey()",
+      "input_schema": { "type": "object", "properties": {} },
+      "visibility": "both",
+      "permissions": [],
+      "source": "web-spa/features/identity/credentials-state/credentials-state.add-existing-passkey.cs"
+    },
+    {
+      "name": "Credentials.RevokeCredential",
+      "description": "Soft-revoke one of the caller's credentials (passkey, Entra, or agent key).",
+      "state": "CredentialsState",
+      "action_set": "RevokeCredentialActionSet",
+      "execute": "CredentialsState.RevokeCredential(Guid credentialId)",
+      "input_schema": { "type": "object", "properties": { "credentialId": { "type": "string", "format": "uuid" } }, "required": ["credentialId"] },
+      "visibility": "both",
+      "permissions": [],
+      "source": "web-spa/features/identity/credentials-state/credentials-state.revoke-credential.cs"
+    },
+    {
+      "name": "Credentials.DismissPasskeySoftPrompt",
+      "description": "Hide the Entra-session add-passkey banner for this SPA session.",
+      "state": "CredentialsState",
+      "action_set": "DismissPasskeySoftPromptActionSet",
+      "execute": "CredentialsState.DismissPasskeySoftPrompt()",
+      "input_schema": { "type": "object", "properties": {} },
+      "visibility": "human",
+      "permissions": [],
+      "source": "web-spa/features/identity/credentials-state/credentials-state.dismiss-passkey-soft-prompt.cs"
+    },
+    {
+      "name": "Profile.UpdateProfile",
+      "description": "Persist progressive profile fields (alias, avatar) via UpdateProfile.",
+      "state": "ProfileState",
+      "action_set": "UpdateProfileActionSet",
+      "execute": "ProfileState.UpdateProfile(Command command)",
+      "input_schema": { "type": "object", "properties": { "command": { "type": "object" } }, "required": ["command"] },
+      "visibility": "both",
+      "permissions": [],
+      "source": "web-spa/features/profiles/profile-state/profile-state.update-profile.cs"
+    },
+    {
+      "name": "Role.CreateRole",
+      "description": "Create a new authorization role via the Web API.",
+      "state": "RoleState",
+      "action_set": "CreateRoleActionSet",
+      "execute": "RoleState.CreateRole(Command command)",
+      "input_schema": { "type": "object", "properties": { "command": { "type": "object" } }, "required": ["command"] },
+      "visibility": "both",
+      "permissions": ["admin.access"],
+      "source": "web-spa/features/admin/roles/role-state/role-state.create-role.cs"
+    },
+    {
+      "name": "Role.SetRolePermissions",
+      "description": "Persist draft permission multi-select for one role.",
+      "state": "RoleState",
+      "action_set": "SetRolePermissionsActionSet",
+      "execute": "RoleState.SetRolePermissions(Guid roleId)",
+      "input_schema": { "type": "object", "properties": { "roleId": { "type": "string", "format": "uuid" } }, "required": ["roleId"] },
+      "visibility": "both",
+      "permissions": ["admin.access"],
+      "source": "web-spa/features/admin/roles/role-state/role-state.set-role-permissions.cs"
+    },
+    {
+      "name": "Principal.SetPrincipalRoles",
+      "description": "Persist draft role multi-select for one principal.",
+      "state": "PrincipalState",
+      "action_set": "SetPrincipalRolesActionSet",
+      "execute": "PrincipalState.SetPrincipalRoles(Guid principalId)",
+      "input_schema": { "type": "object", "properties": { "principalId": { "type": "string", "format": "uuid" } }, "required": ["principalId"] },
+      "visibility": "both",
+      "permissions": ["admin.access"],
+      "source": "web-spa/features/admin/principals/principal-state/principal-state.set-principal-roles.cs"
+    },
+    {
+      "name": "AgentLinks.Approve",
+      "description": "Approve a pending agent-human link, then refresh the list.",
+      "state": "AgentLinksState",
+      "action_set": "ApproveActionSet",
+      "execute": "AgentLinksState.Approve(Guid linkId)",
+      "input_schema": { "type": "object", "properties": { "linkId": { "type": "string", "format": "uuid" } }, "required": ["linkId"] },
+      "visibility": "both",
+      "permissions": [],
+      "source": "web-spa/features/agent-links/agent-links-state/agent-links-state.approve.cs"
+    },
+    {
+      "name": "AgentLinks.Deny",
+      "description": "Deny a pending agent-human link, then update the cached row.",
+      "state": "AgentLinksState",
+      "action_set": "DenyActionSet",
+      "execute": "AgentLinksState.Deny(Guid linkId)",
+      "input_schema": { "type": "object", "properties": { "linkId": { "type": "string", "format": "uuid" } }, "required": ["linkId"] },
+      "visibility": "both",
+      "permissions": [],
+      "source": "web-spa/features/agent-links/agent-links-state/agent-links-state.deny.cs"
+    },
+    {
+      "name": "Counter.IncrementCounter",
+      "description": "Add an amount to the demo counter (amount may be negative).",
+      "state": "CounterState",
+      "action_set": "IncrementCounterActionSet",
+      "execute": "CounterState.IncrementCounter(int amount)",
+      "input_schema": { "type": "object", "properties": { "amount": { "type": "integer" } }, "required": ["amount"] },
+      "visibility": "human",
+      "permissions": ["developer.access"],
+      "source": "web-spa/features/counter/counter-state/counter-state.increment-counter.cs"
+    },
+    {
+      "name": "Weather.FetchWeatherForecasts",
+      "description": "Load weather forecasts from the API into SPA state.",
+      "state": "WeatherForecastsState",
+      "action_set": "FetchWeatherForecastsActionSet",
+      "execute": "WeatherForecastsState.FetchWeatherForecasts(int? days)",
+      "input_schema": { "type": "object", "properties": { "days": { "type": "integer" } } },
+      "visibility": "human",
+      "permissions": ["developer.access"],
+      "source": "web-spa/features/weather-forecast/weather-forecasts-state/weather-forecasts-state.fetch-weather-forecasts.cs"
+    },
+    {
+      "name": "Chat.SendMessageToServer",
+      "description": "Push an outbound chat message to the server over the SignalR hub.",
+      "state": "ChatState",
+      "action_set": "SendMessageToServerActionSet",
+      "execute": "ChatState.SendMessageToServer(SendMessage.Command command)",
+      "input_schema": { "type": "object", "properties": { "command": { "type": "object" } }, "required": ["command"] },
+      "visibility": "human",
+      "permissions": ["developer.access"],
+      "source": "web-spa/features/chat/chat-state/chat-state.client-to-server-message-action.cs"
+    },
+    {
+      "name": "Superhero.FetchSuperhero",
+      "description": "Load sample heroes into state over the gRPC transport path.",
+      "state": "SuperheroState",
+      "action_set": "FetchSuperheroActionSet",
+      "execute": "SuperheroState.FetchSuperhero()",
+      "input_schema": { "type": "object", "properties": {} },
+      "visibility": "human",
+      "permissions": ["developer.access"],
+      "source": "web-spa/features/superhero/superhero-state/superhero-state.fetch-superhero.cs"
+    },
+    {
+      "name": "Application.SetActiveModal",
+      "description": "Open the modal with the given id (for example assembly info).",
+      "state": "ApplicationState",
+      "action_set": "SetActiveModalActionSet",
+      "execute": "ApplicationState.SetActiveModal(string modalId)",
+      "input_schema": { "type": "object", "properties": { "modalId": { "type": "string" } }, "required": ["modalId"] },
+      "visibility": "human",
+      "permissions": [],
+      "source": "web-spa/features/application/application-state/application-state.set-active-modal.cs"
+    },
+    {
+      "name": "Application.CloseModal",
+      "description": "Dismiss whichever modal is active.",
+      "state": "ApplicationState",
+      "action_set": "CloseModalActionSet",
+      "execute": "ApplicationState.CloseModal()",
+      "input_schema": { "type": "object", "properties": {} },
+      "visibility": "human",
+      "permissions": [],
+      "source": "web-spa/features/application/application-state/application-state.close-modal.cs"
+    },
+    {
+      "name": "Application.ResetStore",
+      "description": "Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+      "state": "ApplicationState",
+      "action_set": "ResetStoreActionSet",
+      "execute": "ApplicationState.ResetStore()",
+      "input_schema": { "type": "object", "properties": {} },
+      "visibility": "human",
+      "permissions": ["developer.access"],
+      "source": "web-spa/features/application/application-state/application-state.reset-store.cs"
+    },
+    {
+      "name": "SiteSettings.UpdateSiteSettings",
+      "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+      "state": "SiteSettingsState",
+      "action_set": "UpdateSiteSettingsActionSet",
+      "execute": "SiteSettingsState.UpdateSiteSettings(Command command)",
+      "input_schema": { "type": "object", "properties": { "command": { "type": "object" } }, "required": ["command"] },
+      "visibility": "both",
+      "permissions": ["admin.access"],
+      "source": "web-spa/features/settings/site-settings-state/site-settings-state.update-site-settings.cs"
+    }
+  ]
+}

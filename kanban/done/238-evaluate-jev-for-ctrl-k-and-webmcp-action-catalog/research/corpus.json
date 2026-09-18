@@ -1,0 +1,248 @@
+{
+  "protocol": "Hand-labeled web-spa phrases against the opt-in catalog. labeled_arm is none when the user is browsing, asking, or navigating rather than running a command. Deterministic C# shortlist first; Jev Choice + is-command Noul second (skill-suggestion shape).",
+  "gate_noul_threshold": 0.3,
+  "fits_noul_threshold": 0.3,
+  "choice_confidence_show_list": 0.5,
+  "shortlist_size": 8,
+  "none_option": "none_of_the_above",
+  "items": [
+    {
+      "id": "dark-theme",
+      "phrase": "dark theme",
+      "labeled_arm": "Theme.Update",
+      "intent": "command",
+      "notes": "Shell already has a Dark theme button; palette should rank Theme.Update."
+    },
+    {
+      "id": "switch-dark-mode",
+      "phrase": "switch to dark mode",
+      "labeled_arm": "Theme.Update",
+      "intent": "command",
+      "notes": "Paraphrase of dark theme."
+    },
+    {
+      "id": "light-theme",
+      "phrase": "light theme",
+      "labeled_arm": "Theme.Update",
+      "intent": "command",
+      "notes": "Same ActionSet, Light argument."
+    },
+    {
+      "id": "sign-out",
+      "phrase": "sign out",
+      "labeled_arm": "Profile.SignOut",
+      "intent": "command",
+      "notes": "Profile menu command."
+    },
+    {
+      "id": "log-out",
+      "phrase": "log out",
+      "labeled_arm": "Profile.SignOut",
+      "intent": "command",
+      "notes": "Synonym; must not rank ResetStore."
+    },
+    {
+      "id": "add-a-passkey",
+      "phrase": "add a passkey",
+      "labeled_arm": "Credentials.AddPasskey",
+      "intent": "command",
+      "notes": "Kitchen example phrase."
+    },
+    {
+      "id": "create-a-passkey",
+      "phrase": "create a passkey",
+      "labeled_arm": "Credentials.AddPasskey",
+      "intent": "command",
+      "notes": "Settings copy: Create a passkey."
+    },
+    {
+      "id": "add-existing-passkey",
+      "phrase": "add existing passkey",
+      "labeled_arm": "Credentials.AddExistingPasskey",
+      "intent": "command",
+      "notes": "Must not collapse into AddPasskey."
+    },
+    {
+      "id": "revoke-passkey",
+      "phrase": "revoke this passkey",
+      "labeled_arm": "Credentials.RevokeCredential",
+      "intent": "command",
+      "notes": "Needs credentialId at execute time; ranker only picks the ActionSet."
+    },
+    {
+      "id": "dismiss-passkey-prompt",
+      "phrase": "dismiss passkey prompt",
+      "labeled_arm": "Credentials.DismissPasskeySoftPrompt",
+      "intent": "command",
+      "notes": "RFC 219 D8 banner, not AddPasskey."
+    },
+    {
+      "id": "update-profile",
+      "phrase": "update my profile",
+      "labeled_arm": "Profile.UpdateProfile",
+      "intent": "command",
+      "notes": "Must not rank SignOut."
+    },
+    {
+      "id": "create-a-role",
+      "phrase": "create a role",
+      "labeled_arm": "Role.CreateRole",
+      "intent": "command",
+      "notes": "Admin command, not navigation to the roles list."
+    },
+    {
+      "id": "set-role-permissions",
+      "phrase": "set role permissions",
+      "labeled_arm": "Role.SetRolePermissions",
+      "intent": "command",
+      "notes": "Admin draft persist."
+    },
+    {
+      "id": "assign-principal-roles",
+      "phrase": "assign roles to principal",
+      "labeled_arm": "Principal.SetPrincipalRoles",
+      "intent": "command",
+      "notes": "Principals page, not Role.CreateRole."
+    },
+    {
+      "id": "approve-agent-link",
+      "phrase": "approve agent link",
+      "labeled_arm": "AgentLinks.Approve",
+      "intent": "command",
+      "notes": "Must not rank Deny."
+    },
+    {
+      "id": "deny-agent-link",
+      "phrase": "deny agent link",
+      "labeled_arm": "AgentLinks.Deny",
+      "intent": "command",
+      "notes": "Must not rank Approve."
+    },
+    {
+      "id": "increment-counter",
+      "phrase": "increment counter",
+      "labeled_arm": "Counter.IncrementCounter",
+      "intent": "command",
+      "notes": "Demo ActionSet."
+    },
+    {
+      "id": "add-five-counter",
+      "phrase": "add 5 to the counter",
+      "labeled_arm": "Counter.IncrementCounter",
+      "intent": "command",
+      "notes": "Amount is execute-time; ranker still IncrementCounter."
+    },
+    {
+      "id": "fetch-weather",
+      "phrase": "fetch weather",
+      "labeled_arm": "Weather.FetchWeatherForecasts",
+      "intent": "command",
+      "notes": "Explicit fetch, not 'open the weather page'."
+    },
+    {
+      "id": "send-chat",
+      "phrase": "send a chat message",
+      "labeled_arm": "Chat.SendMessageToServer",
+      "intent": "command",
+      "notes": "Outbound hub only; inbound ServerToClient is not in the catalog."
+    },
+    {
+      "id": "fetch-superhero",
+      "phrase": "fetch superhero",
+      "labeled_arm": "Superhero.FetchSuperhero",
+      "intent": "command",
+      "notes": "gRPC demo."
+    },
+    {
+      "id": "show-assembly-info",
+      "phrase": "show assembly info",
+      "labeled_arm": "Application.SetActiveModal",
+      "intent": "command",
+      "notes": "Footer Version button today; execute still needs modalId."
+    },
+    {
+      "id": "close-modal",
+      "phrase": "close modal",
+      "labeled_arm": "Application.CloseModal",
+      "intent": "command",
+      "notes": "Dismiss active modal."
+    },
+    {
+      "id": "reset-store",
+      "phrase": "reset the store",
+      "labeled_arm": "Application.ResetStore",
+      "intent": "command",
+      "notes": "Destructive; should not win on 'sign out'."
+    },
+    {
+      "id": "update-site-settings",
+      "phrase": "update site settings",
+      "labeled_arm": "SiteSettings.UpdateSiteSettings",
+      "intent": "command",
+      "notes": "Admin authentication policy, not the Settings page."
+    },
+    {
+      "id": "roles",
+      "phrase": "roles",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "notes": "Kitchen example. Admin Roles list is navigation, not CreateRole. Catalog has no GoToRoles ActionSet."
+    },
+    {
+      "id": "just-looking",
+      "phrase": "just looking",
+      "labeled_arm": "none",
+      "intent": "browse",
+      "notes": "Kitchen negative. Noul must not treat this as a command."
+    },
+    {
+      "id": "what-is-a-passkey",
+      "phrase": "what is a passkey",
+      "labeled_arm": "none",
+      "intent": "question",
+      "notes": "Help, not AddPasskey."
+    },
+    {
+      "id": "how-add-passkey",
+      "phrase": "how do I add a passkey",
+      "labeled_arm": "none",
+      "intent": "question",
+      "notes": "Instruction request, not execute AddPasskey. Noul gate."
+    },
+    {
+      "id": "settings",
+      "phrase": "settings",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "notes": "NavMenu SettingsPage, not UpdateSiteSettings."
+    },
+    {
+      "id": "weather-page",
+      "phrase": "weather page",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "notes": "Open the page; do not auto-dispatch FetchWeatherForecasts."
+    },
+    {
+      "id": "hello",
+      "phrase": "hello",
+      "labeled_arm": "none",
+      "intent": "browse",
+      "notes": "Empty greeting."
+    },
+    {
+      "id": "github",
+      "phrase": "github",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "notes": "External FluentNavItem, not an ActionSet."
+    },
+    {
+      "id": "explain-dark-theme",
+      "phrase": "explain dark theme",
+      "labeled_arm": "none",
+      "intent": "question",
+      "notes": "Must not auto-dispatch Theme.Update. Noul gate vs 'dark theme'."
+    }
+  ]
+}
