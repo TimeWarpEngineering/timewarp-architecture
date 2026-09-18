@@ -1,0 +1,3117 @@
+{
+  "mode": "dry-run",
+  "item_count": 34,
+  "command_count": 25,
+  "negative_count": 9,
+  "catalog_count": 20,
+  "shortlist_size": 8,
+  "choice_max": 255,
+  "gate_noul_threshold": 0.3,
+  "fits_noul_threshold": 0.3,
+  "choice_confidence_show_list": 0.5,
+  "shortlist_hit": 25,
+  "shortlist_top1": 25,
+  "shortlist_miss": 0,
+  "deterministic_preview_auto_dispatch": 23,
+  "deterministic_preview_show_shortlist": 8,
+  "deterministic_preview_none": 3,
+  "deterministic_preview_miss": 0,
+  "note": "deterministic_preview is C# shortlist only, not Jev. Live Jev Choice \u002B Noul is --live.",
+  "rows": [
+    {
+      "id": "dark-theme",
+      "phrase": "dark theme",
+      "labeled_arm": "Theme.Update",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Theme.Update",
+          "description": "Switch the SPA theme between Dark and Light.",
+          "score": 11
+        }
+      ]
+    },
+    {
+      "id": "switch-dark-mode",
+      "phrase": "switch to dark mode",
+      "labeled_arm": "Theme.Update",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Theme.Update",
+          "description": "Switch the SPA theme between Dark and Light.",
+          "score": 4
+        }
+      ]
+    },
+    {
+      "id": "light-theme",
+      "phrase": "light theme",
+      "labeled_arm": "Theme.Update",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Theme.Update",
+          "description": "Switch the SPA theme between Dark and Light.",
+          "score": 11
+        }
+      ]
+    },
+    {
+      "id": "sign-out",
+      "phrase": "sign out",
+      "labeled_arm": "Profile.SignOut",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Profile.SignOut",
+          "description": "Sign the current user out of the SPA session (profile menu).",
+          "score": 18
+        },
+        {
+          "name": "Chat.SendMessageToServer",
+          "description": "Push an outbound chat message to the server over the SignalR hub.",
+          "score": 4
+        },
+        {
+          "name": "Application.ResetStore",
+          "description": "Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+          "score": 2
+        },
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "log-out",
+      "phrase": "log out",
+      "labeled_arm": "Profile.SignOut",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Profile.SignOut",
+          "description": "Sign the current user out of the SPA session (profile menu).",
+          "score": 8
+        },
+        {
+          "name": "Application.ResetStore",
+          "description": "Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+          "score": 2
+        },
+        {
+          "name": "Chat.SendMessageToServer",
+          "description": "Push an outbound chat message to the server over the SignalR hub.",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "add-a-passkey",
+      "phrase": "add a passkey",
+      "labeled_arm": "Credentials.AddPasskey",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "show-shortlist",
+      "shortlist": [
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 16
+        },
+        {
+          "name": "Credentials.AddExistingPasskey",
+          "description": "Assert a passkey from another principal and merge that account into this one.",
+          "score": 15
+        },
+        {
+          "name": "Credentials.DismissPasskeySoftPrompt",
+          "description": "Hide the Entra-session add-passkey banner for this SPA session.",
+          "score": 8
+        },
+        {
+          "name": "Counter.IncrementCounter",
+          "description": "Add an amount to the demo counter (amount may be negative).",
+          "score": 2
+        },
+        {
+          "name": "Credentials.RevokeCredential",
+          "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+          "score": 2
+        },
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "create-a-passkey",
+      "phrase": "create a passkey",
+      "labeled_arm": "Credentials.AddPasskey",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 20
+        },
+        {
+          "name": "Role.CreateRole",
+          "description": "Create a new authorization role via the Web API.",
+          "score": 8
+        },
+        {
+          "name": "Credentials.AddExistingPasskey",
+          "description": "Assert a passkey from another principal and merge that account into this one.",
+          "score": 7
+        },
+        {
+          "name": "Credentials.DismissPasskeySoftPrompt",
+          "description": "Hide the Entra-session add-passkey banner for this SPA session.",
+          "score": 6
+        },
+        {
+          "name": "Credentials.RevokeCredential",
+          "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+          "score": 2
+        },
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "add-existing-passkey",
+      "phrase": "add existing passkey",
+      "labeled_arm": "Credentials.AddExistingPasskey",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Credentials.AddExistingPasskey",
+          "description": "Assert a passkey from another principal and merge that account into this one.",
+          "score": 23
+        },
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 16
+        },
+        {
+          "name": "Credentials.DismissPasskeySoftPrompt",
+          "description": "Hide the Entra-session add-passkey banner for this SPA session.",
+          "score": 8
+        },
+        {
+          "name": "Counter.IncrementCounter",
+          "description": "Add an amount to the demo counter (amount may be negative).",
+          "score": 2
+        },
+        {
+          "name": "Credentials.RevokeCredential",
+          "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+          "score": 2
+        },
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "revoke-passkey",
+      "phrase": "revoke this passkey",
+      "labeled_arm": "Credentials.RevokeCredential",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "show-shortlist",
+      "shortlist": [
+        {
+          "name": "Credentials.RevokeCredential",
+          "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+          "score": 10
+        },
+        {
+          "name": "Credentials.AddExistingPasskey",
+          "description": "Assert a passkey from another principal and merge that account into this one.",
+          "score": 9
+        },
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 8
+        },
+        {
+          "name": "Credentials.DismissPasskeySoftPrompt",
+          "description": "Hide the Entra-session add-passkey banner for this SPA session.",
+          "score": 8
+        },
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "dismiss-passkey-prompt",
+      "phrase": "dismiss passkey prompt",
+      "labeled_arm": "Credentials.DismissPasskeySoftPrompt",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Credentials.DismissPasskeySoftPrompt",
+          "description": "Hide the Entra-session add-passkey banner for this SPA session.",
+          "score": 22
+        },
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 8
+        },
+        {
+          "name": "Credentials.AddExistingPasskey",
+          "description": "Assert a passkey from another principal and merge that account into this one.",
+          "score": 7
+        },
+        {
+          "name": "Application.CloseModal",
+          "description": "Dismiss whichever modal is active.",
+          "score": 2
+        },
+        {
+          "name": "Credentials.RevokeCredential",
+          "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+          "score": 2
+        },
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "update-profile",
+      "phrase": "update my profile",
+      "labeled_arm": "Profile.UpdateProfile",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Profile.UpdateProfile",
+          "description": "Persist progressive profile fields (alias, avatar) via UpdateProfile.",
+          "score": 21
+        },
+        {
+          "name": "Profile.SignOut",
+          "description": "Sign the current user out of the SPA session (profile menu).",
+          "score": 9
+        },
+        {
+          "name": "Theme.Update",
+          "description": "Switch the SPA theme between Dark and Light.",
+          "score": 7
+        },
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 5
+        },
+        {
+          "name": "AgentLinks.Deny",
+          "description": "Deny a pending agent-human link, then update the cached row.",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "create-a-role",
+      "phrase": "create a role",
+      "labeled_arm": "Role.CreateRole",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Role.CreateRole",
+          "description": "Create a new authorization role via the Web API.",
+          "score": 21
+        },
+        {
+          "name": "Role.SetRolePermissions",
+          "description": "Persist draft permission multi-select for one role.",
+          "score": 10
+        },
+        {
+          "name": "Principal.SetPrincipalRoles",
+          "description": "Persist draft role multi-select for one principal.",
+          "score": 6
+        },
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "set-role-permissions",
+      "phrase": "set role permissions",
+      "labeled_arm": "Role.SetRolePermissions",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Role.SetRolePermissions",
+          "description": "Persist draft permission multi-select for one role.",
+          "score": 26
+        },
+        {
+          "name": "Principal.SetPrincipalRoles",
+          "description": "Persist draft role multi-select for one principal.",
+          "score": 11
+        },
+        {
+          "name": "Role.CreateRole",
+          "description": "Create a new authorization role via the Web API.",
+          "score": 11
+        },
+        {
+          "name": "Application.SetActiveModal",
+          "description": "Open the modal with the given id (for example assembly info).",
+          "score": 5
+        },
+        {
+          "name": "Application.ResetStore",
+          "description": "Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+          "score": 4
+        },
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 4
+        },
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "assign-principal-roles",
+      "phrase": "assign roles to principal",
+      "labeled_arm": "Principal.SetPrincipalRoles",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Principal.SetPrincipalRoles",
+          "description": "Persist draft role multi-select for one principal.",
+          "score": 18
+        },
+        {
+          "name": "Credentials.AddExistingPasskey",
+          "description": "Assert a passkey from another principal and merge that account into this one.",
+          "score": 2
+        },
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "approve-agent-link",
+      "phrase": "approve agent link",
+      "labeled_arm": "AgentLinks.Approve",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "AgentLinks.Approve",
+          "description": "Approve a pending agent-human link, then refresh the list.",
+          "score": 24
+        },
+        {
+          "name": "AgentLinks.Deny",
+          "description": "Deny a pending agent-human link, then update the cached row.",
+          "score": 15
+        },
+        {
+          "name": "Credentials.RevokeCredential",
+          "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "deny-agent-link",
+      "phrase": "deny agent link",
+      "labeled_arm": "AgentLinks.Deny",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "AgentLinks.Deny",
+          "description": "Deny a pending agent-human link, then update the cached row.",
+          "score": 24
+        },
+        {
+          "name": "AgentLinks.Approve",
+          "description": "Approve a pending agent-human link, then refresh the list.",
+          "score": 15
+        },
+        {
+          "name": "Credentials.RevokeCredential",
+          "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "increment-counter",
+      "phrase": "increment counter",
+      "labeled_arm": "Counter.IncrementCounter",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Counter.IncrementCounter",
+          "description": "Add an amount to the demo counter (amount may be negative).",
+          "score": 19
+        }
+      ]
+    },
+    {
+      "id": "add-five-counter",
+      "phrase": "add 5 to the counter",
+      "labeled_arm": "Counter.IncrementCounter",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Counter.IncrementCounter",
+          "description": "Add an amount to the demo counter (amount may be negative).",
+          "score": 15
+        },
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 8
+        },
+        {
+          "name": "Credentials.AddExistingPasskey",
+          "description": "Assert a passkey from another principal and merge that account into this one.",
+          "score": 7
+        },
+        {
+          "name": "Theme.Update",
+          "description": "Switch the SPA theme between Dark and Light.",
+          "score": 6
+        },
+        {
+          "name": "Weather.FetchWeatherForecasts",
+          "description": "Load weather forecasts from the API into SPA state.",
+          "score": 6
+        },
+        {
+          "name": "Credentials.DismissPasskeySoftPrompt",
+          "description": "Hide the Entra-session add-passkey banner for this SPA session.",
+          "score": 4
+        },
+        {
+          "name": "AgentLinks.Approve",
+          "description": "Approve a pending agent-human link, then refresh the list.",
+          "score": 2
+        },
+        {
+          "name": "AgentLinks.Deny",
+          "description": "Deny a pending agent-human link, then update the cached row.",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "fetch-weather",
+      "phrase": "fetch weather",
+      "labeled_arm": "Weather.FetchWeatherForecasts",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Weather.FetchWeatherForecasts",
+          "description": "Load weather forecasts from the API into SPA state.",
+          "score": 18
+        },
+        {
+          "name": "Superhero.FetchSuperhero",
+          "description": "Load sample heroes into state over the gRPC transport path.",
+          "score": 6
+        }
+      ]
+    },
+    {
+      "id": "send-chat",
+      "phrase": "send a chat message",
+      "labeled_arm": "Chat.SendMessageToServer",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Chat.SendMessageToServer",
+          "description": "Push an outbound chat message to the server over the SignalR hub.",
+          "score": 23
+        }
+      ]
+    },
+    {
+      "id": "fetch-superhero",
+      "phrase": "fetch superhero",
+      "labeled_arm": "Superhero.FetchSuperhero",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Superhero.FetchSuperhero",
+          "description": "Load sample heroes into state over the gRPC transport path.",
+          "score": 17
+        },
+        {
+          "name": "Weather.FetchWeatherForecasts",
+          "description": "Load weather forecasts from the API into SPA state.",
+          "score": 5
+        }
+      ]
+    },
+    {
+      "id": "show-assembly-info",
+      "phrase": "show assembly info",
+      "labeled_arm": "Application.SetActiveModal",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Application.SetActiveModal",
+          "description": "Open the modal with the given id (for example assembly info).",
+          "score": 4
+        }
+      ]
+    },
+    {
+      "id": "close-modal",
+      "phrase": "close modal",
+      "labeled_arm": "Application.CloseModal",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Application.CloseModal",
+          "description": "Dismiss whichever modal is active.",
+          "score": 16
+        },
+        {
+          "name": "Application.SetActiveModal",
+          "description": "Open the modal with the given id (for example assembly info).",
+          "score": 7
+        }
+      ]
+    },
+    {
+      "id": "reset-store",
+      "phrase": "reset the store",
+      "labeled_arm": "Application.ResetStore",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "Application.ResetStore",
+          "description": "Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+          "score": 18
+        },
+        {
+          "name": "Theme.Update",
+          "description": "Switch the SPA theme between Dark and Light.",
+          "score": 6
+        },
+        {
+          "name": "Weather.FetchWeatherForecasts",
+          "description": "Load weather forecasts from the API into SPA state.",
+          "score": 6
+        },
+        {
+          "name": "AgentLinks.Approve",
+          "description": "Approve a pending agent-human link, then refresh the list.",
+          "score": 2
+        },
+        {
+          "name": "AgentLinks.Deny",
+          "description": "Deny a pending agent-human link, then update the cached row.",
+          "score": 2
+        },
+        {
+          "name": "Application.SetActiveModal",
+          "description": "Open the modal with the given id (for example assembly info).",
+          "score": 2
+        },
+        {
+          "name": "Chat.SendMessageToServer",
+          "description": "Push an outbound chat message to the server over the SignalR hub.",
+          "score": 2
+        },
+        {
+          "name": "Counter.IncrementCounter",
+          "description": "Add an amount to the demo counter (amount may be negative).",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "update-site-settings",
+      "phrase": "update site settings",
+      "labeled_arm": "SiteSettings.UpdateSiteSettings",
+      "intent": "command",
+      "shortlist_hit": true,
+      "shortlist_top1": true,
+      "deterministic_preview": "auto-dispatch",
+      "shortlist": [
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 29
+        },
+        {
+          "name": "Profile.UpdateProfile",
+          "description": "Persist progressive profile fields (alias, avatar) via UpdateProfile.",
+          "score": 8
+        },
+        {
+          "name": "Theme.Update",
+          "description": "Switch the SPA theme between Dark and Light.",
+          "score": 7
+        },
+        {
+          "name": "AgentLinks.Deny",
+          "description": "Deny a pending agent-human link, then update the cached row.",
+          "score": 2
+        },
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "roles",
+      "phrase": "roles",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "shortlist_hit": false,
+      "shortlist_top1": false,
+      "deterministic_preview": "show-shortlist",
+      "shortlist": [
+        {
+          "name": "Principal.SetPrincipalRoles",
+          "description": "Persist draft role multi-select for one principal.",
+          "score": 15
+        }
+      ]
+    },
+    {
+      "id": "just-looking",
+      "phrase": "just looking",
+      "labeled_arm": "none",
+      "intent": "browse",
+      "shortlist_hit": false,
+      "shortlist_top1": false,
+      "deterministic_preview": "none",
+      "shortlist": []
+    },
+    {
+      "id": "what-is-a-passkey",
+      "phrase": "what is a passkey",
+      "labeled_arm": "none",
+      "intent": "question",
+      "shortlist_hit": false,
+      "shortlist_top1": false,
+      "deterministic_preview": "show-shortlist",
+      "shortlist": [
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 8
+        },
+        {
+          "name": "Credentials.AddExistingPasskey",
+          "description": "Assert a passkey from another principal and merge that account into this one.",
+          "score": 7
+        },
+        {
+          "name": "Credentials.DismissPasskeySoftPrompt",
+          "description": "Hide the Entra-session add-passkey banner for this SPA session.",
+          "score": 6
+        },
+        {
+          "name": "Credentials.RevokeCredential",
+          "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+          "score": 2
+        },
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "how-add-passkey",
+      "phrase": "how do I add a passkey",
+      "labeled_arm": "none",
+      "intent": "question",
+      "shortlist_hit": false,
+      "shortlist_top1": false,
+      "deterministic_preview": "show-shortlist",
+      "shortlist": [
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 16
+        },
+        {
+          "name": "Credentials.AddExistingPasskey",
+          "description": "Assert a passkey from another principal and merge that account into this one.",
+          "score": 15
+        },
+        {
+          "name": "Credentials.DismissPasskeySoftPrompt",
+          "description": "Hide the Entra-session add-passkey banner for this SPA session.",
+          "score": 8
+        },
+        {
+          "name": "Counter.IncrementCounter",
+          "description": "Add an amount to the demo counter (amount may be negative).",
+          "score": 2
+        },
+        {
+          "name": "Credentials.RevokeCredential",
+          "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+          "score": 2
+        },
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 2
+        }
+      ]
+    },
+    {
+      "id": "settings",
+      "phrase": "settings",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "shortlist_hit": false,
+      "shortlist_top1": false,
+      "deterministic_preview": "show-shortlist",
+      "shortlist": [
+        {
+          "name": "SiteSettings.UpdateSiteSettings",
+          "description": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+          "score": 18
+        },
+        {
+          "name": "Credentials.AddPasskey",
+          "description": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+          "score": 12
+        }
+      ]
+    },
+    {
+      "id": "weather-page",
+      "phrase": "weather page",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "shortlist_hit": false,
+      "shortlist_top1": false,
+      "deterministic_preview": "show-shortlist",
+      "shortlist": [
+        {
+          "name": "Weather.FetchWeatherForecasts",
+          "description": "Load weather forecasts from the API into SPA state.",
+          "score": 10
+        }
+      ]
+    },
+    {
+      "id": "hello",
+      "phrase": "hello",
+      "labeled_arm": "none",
+      "intent": "browse",
+      "shortlist_hit": false,
+      "shortlist_top1": false,
+      "deterministic_preview": "none",
+      "shortlist": []
+    },
+    {
+      "id": "github",
+      "phrase": "github",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "shortlist_hit": false,
+      "shortlist_top1": false,
+      "deterministic_preview": "none",
+      "shortlist": []
+    },
+    {
+      "id": "explain-dark-theme",
+      "phrase": "explain dark theme",
+      "labeled_arm": "none",
+      "intent": "question",
+      "shortlist_hit": false,
+      "shortlist_top1": false,
+      "deterministic_preview": "show-shortlist",
+      "shortlist": [
+        {
+          "name": "Theme.Update",
+          "description": "Switch the SPA theme between Dark and Light.",
+          "score": 11
+        }
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "id": "dark-theme",
+      "phrase": "dark theme",
+      "labeled_arm": "Theme.Update",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "dark theme",
+          "shortlist": [
+            {
+              "name": "Theme.Update",
+              "description": "Switch the SPA theme between Dark and Light."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Theme.Update": "Switch the SPA theme between Dark and Light.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Theme.Update": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Theme.Update\u0027 do the specific thing this phrase asks for? It is described as: Switch the SPA theme between Dark and Light.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "switch-dark-mode",
+      "phrase": "switch to dark mode",
+      "labeled_arm": "Theme.Update",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "switch to dark mode",
+          "shortlist": [
+            {
+              "name": "Theme.Update",
+              "description": "Switch the SPA theme between Dark and Light."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Theme.Update": "Switch the SPA theme between Dark and Light.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Theme.Update": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Theme.Update\u0027 do the specific thing this phrase asks for? It is described as: Switch the SPA theme between Dark and Light.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "light-theme",
+      "phrase": "light theme",
+      "labeled_arm": "Theme.Update",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "light theme",
+          "shortlist": [
+            {
+              "name": "Theme.Update",
+              "description": "Switch the SPA theme between Dark and Light."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Theme.Update": "Switch the SPA theme between Dark and Light.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Theme.Update": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Theme.Update\u0027 do the specific thing this phrase asks for? It is described as: Switch the SPA theme between Dark and Light.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "sign-out",
+      "phrase": "sign out",
+      "labeled_arm": "Profile.SignOut",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "sign out",
+          "shortlist": [
+            {
+              "name": "Profile.SignOut",
+              "description": "Sign the current user out of the SPA session (profile menu)."
+            },
+            {
+              "name": "Chat.SendMessageToServer",
+              "description": "Push an outbound chat message to the server over the SignalR hub."
+            },
+            {
+              "name": "Application.ResetStore",
+              "description": "Wipe the entire TimeWarp.State store. Callers sequence any route change."
+            },
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Profile.SignOut": "Sign the current user out of the SPA session (profile menu).",
+              "Chat.SendMessageToServer": "Push an outbound chat message to the server over the SignalR hub.",
+              "Application.ResetStore": "Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Profile.SignOut": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Profile.SignOut\u0027 do the specific thing this phrase asks for? It is described as: Sign the current user out of the SPA session (profile menu).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Chat.SendMessageToServer": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Chat.SendMessageToServer\u0027 do the specific thing this phrase asks for? It is described as: Push an outbound chat message to the server over the SignalR hub.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Application.ResetStore": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Application.ResetStore\u0027 do the specific thing this phrase asks for? It is described as: Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "log-out",
+      "phrase": "log out",
+      "labeled_arm": "Profile.SignOut",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "log out",
+          "shortlist": [
+            {
+              "name": "Profile.SignOut",
+              "description": "Sign the current user out of the SPA session (profile menu)."
+            },
+            {
+              "name": "Application.ResetStore",
+              "description": "Wipe the entire TimeWarp.State store. Callers sequence any route change."
+            },
+            {
+              "name": "Chat.SendMessageToServer",
+              "description": "Push an outbound chat message to the server over the SignalR hub."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Profile.SignOut": "Sign the current user out of the SPA session (profile menu).",
+              "Application.ResetStore": "Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+              "Chat.SendMessageToServer": "Push an outbound chat message to the server over the SignalR hub.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Profile.SignOut": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Profile.SignOut\u0027 do the specific thing this phrase asks for? It is described as: Sign the current user out of the SPA session (profile menu).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Application.ResetStore": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Application.ResetStore\u0027 do the specific thing this phrase asks for? It is described as: Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Chat.SendMessageToServer": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Chat.SendMessageToServer\u0027 do the specific thing this phrase asks for? It is described as: Push an outbound chat message to the server over the SignalR hub.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "add-a-passkey",
+      "phrase": "add a passkey",
+      "labeled_arm": "Credentials.AddPasskey",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "add a passkey",
+          "shortlist": [
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            },
+            {
+              "name": "Credentials.AddExistingPasskey",
+              "description": "Assert a passkey from another principal and merge that account into this one."
+            },
+            {
+              "name": "Credentials.DismissPasskeySoftPrompt",
+              "description": "Hide the Entra-session add-passkey banner for this SPA session."
+            },
+            {
+              "name": "Counter.IncrementCounter",
+              "description": "Add an amount to the demo counter (amount may be negative)."
+            },
+            {
+              "name": "Credentials.RevokeCredential",
+              "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key)."
+            },
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "Credentials.AddExistingPasskey": "Assert a passkey from another principal and merge that account into this one.",
+              "Credentials.DismissPasskeySoftPrompt": "Hide the Entra-session add-passkey banner for this SPA session.",
+              "Counter.IncrementCounter": "Add an amount to the demo counter (amount may be negative).",
+              "Credentials.RevokeCredential": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Credentials.AddPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddPasskey\u0027 do the specific thing this phrase asks for? It is described as: Attach another passkey to the signed-in principal (Settings Create a passkey).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddExistingPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddExistingPasskey\u0027 do the specific thing this phrase asks for? It is described as: Assert a passkey from another principal and merge that account into this one.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.DismissPasskeySoftPrompt": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.DismissPasskeySoftPrompt\u0027 do the specific thing this phrase asks for? It is described as: Hide the Entra-session add-passkey banner for this SPA session.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create-a-passkey",
+      "phrase": "create a passkey",
+      "labeled_arm": "Credentials.AddPasskey",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "create a passkey",
+          "shortlist": [
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            },
+            {
+              "name": "Role.CreateRole",
+              "description": "Create a new authorization role via the Web API."
+            },
+            {
+              "name": "Credentials.AddExistingPasskey",
+              "description": "Assert a passkey from another principal and merge that account into this one."
+            },
+            {
+              "name": "Credentials.DismissPasskeySoftPrompt",
+              "description": "Hide the Entra-session add-passkey banner for this SPA session."
+            },
+            {
+              "name": "Credentials.RevokeCredential",
+              "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key)."
+            },
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "Role.CreateRole": "Create a new authorization role via the Web API.",
+              "Credentials.AddExistingPasskey": "Assert a passkey from another principal and merge that account into this one.",
+              "Credentials.DismissPasskeySoftPrompt": "Hide the Entra-session add-passkey banner for this SPA session.",
+              "Credentials.RevokeCredential": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Credentials.AddPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddPasskey\u0027 do the specific thing this phrase asks for? It is described as: Attach another passkey to the signed-in principal (Settings Create a passkey).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Role.CreateRole": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Role.CreateRole\u0027 do the specific thing this phrase asks for? It is described as: Create a new authorization role via the Web API.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddExistingPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddExistingPasskey\u0027 do the specific thing this phrase asks for? It is described as: Assert a passkey from another principal and merge that account into this one.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "add-existing-passkey",
+      "phrase": "add existing passkey",
+      "labeled_arm": "Credentials.AddExistingPasskey",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "add existing passkey",
+          "shortlist": [
+            {
+              "name": "Credentials.AddExistingPasskey",
+              "description": "Assert a passkey from another principal and merge that account into this one."
+            },
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            },
+            {
+              "name": "Credentials.DismissPasskeySoftPrompt",
+              "description": "Hide the Entra-session add-passkey banner for this SPA session."
+            },
+            {
+              "name": "Counter.IncrementCounter",
+              "description": "Add an amount to the demo counter (amount may be negative)."
+            },
+            {
+              "name": "Credentials.RevokeCredential",
+              "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key)."
+            },
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Credentials.AddExistingPasskey": "Assert a passkey from another principal and merge that account into this one.",
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "Credentials.DismissPasskeySoftPrompt": "Hide the Entra-session add-passkey banner for this SPA session.",
+              "Counter.IncrementCounter": "Add an amount to the demo counter (amount may be negative).",
+              "Credentials.RevokeCredential": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Credentials.AddExistingPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddExistingPasskey\u0027 do the specific thing this phrase asks for? It is described as: Assert a passkey from another principal and merge that account into this one.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddPasskey\u0027 do the specific thing this phrase asks for? It is described as: Attach another passkey to the signed-in principal (Settings Create a passkey).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.DismissPasskeySoftPrompt": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.DismissPasskeySoftPrompt\u0027 do the specific thing this phrase asks for? It is described as: Hide the Entra-session add-passkey banner for this SPA session.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "revoke-passkey",
+      "phrase": "revoke this passkey",
+      "labeled_arm": "Credentials.RevokeCredential",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "revoke this passkey",
+          "shortlist": [
+            {
+              "name": "Credentials.RevokeCredential",
+              "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key)."
+            },
+            {
+              "name": "Credentials.AddExistingPasskey",
+              "description": "Assert a passkey from another principal and merge that account into this one."
+            },
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            },
+            {
+              "name": "Credentials.DismissPasskeySoftPrompt",
+              "description": "Hide the Entra-session add-passkey banner for this SPA session."
+            },
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Credentials.RevokeCredential": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+              "Credentials.AddExistingPasskey": "Assert a passkey from another principal and merge that account into this one.",
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "Credentials.DismissPasskeySoftPrompt": "Hide the Entra-session add-passkey banner for this SPA session.",
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Credentials.RevokeCredential": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.RevokeCredential\u0027 do the specific thing this phrase asks for? It is described as: Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddExistingPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddExistingPasskey\u0027 do the specific thing this phrase asks for? It is described as: Assert a passkey from another principal and merge that account into this one.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddPasskey\u0027 do the specific thing this phrase asks for? It is described as: Attach another passkey to the signed-in principal (Settings Create a passkey).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "dismiss-passkey-prompt",
+      "phrase": "dismiss passkey prompt",
+      "labeled_arm": "Credentials.DismissPasskeySoftPrompt",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "dismiss passkey prompt",
+          "shortlist": [
+            {
+              "name": "Credentials.DismissPasskeySoftPrompt",
+              "description": "Hide the Entra-session add-passkey banner for this SPA session."
+            },
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            },
+            {
+              "name": "Credentials.AddExistingPasskey",
+              "description": "Assert a passkey from another principal and merge that account into this one."
+            },
+            {
+              "name": "Application.CloseModal",
+              "description": "Dismiss whichever modal is active."
+            },
+            {
+              "name": "Credentials.RevokeCredential",
+              "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key)."
+            },
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Credentials.DismissPasskeySoftPrompt": "Hide the Entra-session add-passkey banner for this SPA session.",
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "Credentials.AddExistingPasskey": "Assert a passkey from another principal and merge that account into this one.",
+              "Application.CloseModal": "Dismiss whichever modal is active.",
+              "Credentials.RevokeCredential": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Credentials.DismissPasskeySoftPrompt": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.DismissPasskeySoftPrompt\u0027 do the specific thing this phrase asks for? It is described as: Hide the Entra-session add-passkey banner for this SPA session.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddPasskey\u0027 do the specific thing this phrase asks for? It is described as: Attach another passkey to the signed-in principal (Settings Create a passkey).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddExistingPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddExistingPasskey\u0027 do the specific thing this phrase asks for? It is described as: Assert a passkey from another principal and merge that account into this one.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update-profile",
+      "phrase": "update my profile",
+      "labeled_arm": "Profile.UpdateProfile",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "update my profile",
+          "shortlist": [
+            {
+              "name": "Profile.UpdateProfile",
+              "description": "Persist progressive profile fields (alias, avatar) via UpdateProfile."
+            },
+            {
+              "name": "Profile.SignOut",
+              "description": "Sign the current user out of the SPA session (profile menu)."
+            },
+            {
+              "name": "Theme.Update",
+              "description": "Switch the SPA theme between Dark and Light."
+            },
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            },
+            {
+              "name": "AgentLinks.Deny",
+              "description": "Deny a pending agent-human link, then update the cached row."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Profile.UpdateProfile": "Persist progressive profile fields (alias, avatar) via UpdateProfile.",
+              "Profile.SignOut": "Sign the current user out of the SPA session (profile menu).",
+              "Theme.Update": "Switch the SPA theme between Dark and Light.",
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "AgentLinks.Deny": "Deny a pending agent-human link, then update the cached row.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Profile.UpdateProfile": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Profile.UpdateProfile\u0027 do the specific thing this phrase asks for? It is described as: Persist progressive profile fields (alias, avatar) via UpdateProfile.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Profile.SignOut": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Profile.SignOut\u0027 do the specific thing this phrase asks for? It is described as: Sign the current user out of the SPA session (profile menu).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Theme.Update": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Theme.Update\u0027 do the specific thing this phrase asks for? It is described as: Switch the SPA theme between Dark and Light.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "create-a-role",
+      "phrase": "create a role",
+      "labeled_arm": "Role.CreateRole",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "create a role",
+          "shortlist": [
+            {
+              "name": "Role.CreateRole",
+              "description": "Create a new authorization role via the Web API."
+            },
+            {
+              "name": "Role.SetRolePermissions",
+              "description": "Persist draft permission multi-select for one role."
+            },
+            {
+              "name": "Principal.SetPrincipalRoles",
+              "description": "Persist draft role multi-select for one principal."
+            },
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Role.CreateRole": "Create a new authorization role via the Web API.",
+              "Role.SetRolePermissions": "Persist draft permission multi-select for one role.",
+              "Principal.SetPrincipalRoles": "Persist draft role multi-select for one principal.",
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Role.CreateRole": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Role.CreateRole\u0027 do the specific thing this phrase asks for? It is described as: Create a new authorization role via the Web API.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Role.SetRolePermissions": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Role.SetRolePermissions\u0027 do the specific thing this phrase asks for? It is described as: Persist draft permission multi-select for one role.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Principal.SetPrincipalRoles": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Principal.SetPrincipalRoles\u0027 do the specific thing this phrase asks for? It is described as: Persist draft role multi-select for one principal.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "set-role-permissions",
+      "phrase": "set role permissions",
+      "labeled_arm": "Role.SetRolePermissions",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "set role permissions",
+          "shortlist": [
+            {
+              "name": "Role.SetRolePermissions",
+              "description": "Persist draft permission multi-select for one role."
+            },
+            {
+              "name": "Principal.SetPrincipalRoles",
+              "description": "Persist draft role multi-select for one principal."
+            },
+            {
+              "name": "Role.CreateRole",
+              "description": "Create a new authorization role via the Web API."
+            },
+            {
+              "name": "Application.SetActiveModal",
+              "description": "Open the modal with the given id (for example assembly info)."
+            },
+            {
+              "name": "Application.ResetStore",
+              "description": "Wipe the entire TimeWarp.State store. Callers sequence any route change."
+            },
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            },
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Role.SetRolePermissions": "Persist draft permission multi-select for one role.",
+              "Principal.SetPrincipalRoles": "Persist draft role multi-select for one principal.",
+              "Role.CreateRole": "Create a new authorization role via the Web API.",
+              "Application.SetActiveModal": "Open the modal with the given id (for example assembly info).",
+              "Application.ResetStore": "Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Role.SetRolePermissions": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Role.SetRolePermissions\u0027 do the specific thing this phrase asks for? It is described as: Persist draft permission multi-select for one role.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Principal.SetPrincipalRoles": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Principal.SetPrincipalRoles\u0027 do the specific thing this phrase asks for? It is described as: Persist draft role multi-select for one principal.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Role.CreateRole": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Role.CreateRole\u0027 do the specific thing this phrase asks for? It is described as: Create a new authorization role via the Web API.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "assign-principal-roles",
+      "phrase": "assign roles to principal",
+      "labeled_arm": "Principal.SetPrincipalRoles",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "assign roles to principal",
+          "shortlist": [
+            {
+              "name": "Principal.SetPrincipalRoles",
+              "description": "Persist draft role multi-select for one principal."
+            },
+            {
+              "name": "Credentials.AddExistingPasskey",
+              "description": "Assert a passkey from another principal and merge that account into this one."
+            },
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Principal.SetPrincipalRoles": "Persist draft role multi-select for one principal.",
+              "Credentials.AddExistingPasskey": "Assert a passkey from another principal and merge that account into this one.",
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Principal.SetPrincipalRoles": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Principal.SetPrincipalRoles\u0027 do the specific thing this phrase asks for? It is described as: Persist draft role multi-select for one principal.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddExistingPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddExistingPasskey\u0027 do the specific thing this phrase asks for? It is described as: Assert a passkey from another principal and merge that account into this one.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddPasskey\u0027 do the specific thing this phrase asks for? It is described as: Attach another passkey to the signed-in principal (Settings Create a passkey).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "approve-agent-link",
+      "phrase": "approve agent link",
+      "labeled_arm": "AgentLinks.Approve",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "approve agent link",
+          "shortlist": [
+            {
+              "name": "AgentLinks.Approve",
+              "description": "Approve a pending agent-human link, then refresh the list."
+            },
+            {
+              "name": "AgentLinks.Deny",
+              "description": "Deny a pending agent-human link, then update the cached row."
+            },
+            {
+              "name": "Credentials.RevokeCredential",
+              "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "AgentLinks.Approve": "Approve a pending agent-human link, then refresh the list.",
+              "AgentLinks.Deny": "Deny a pending agent-human link, then update the cached row.",
+              "Credentials.RevokeCredential": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::AgentLinks.Approve": {
+            "type": "noul",
+            "instructions": "Does the command \u0027AgentLinks.Approve\u0027 do the specific thing this phrase asks for? It is described as: Approve a pending agent-human link, then refresh the list.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::AgentLinks.Deny": {
+            "type": "noul",
+            "instructions": "Does the command \u0027AgentLinks.Deny\u0027 do the specific thing this phrase asks for? It is described as: Deny a pending agent-human link, then update the cached row.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.RevokeCredential": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.RevokeCredential\u0027 do the specific thing this phrase asks for? It is described as: Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "deny-agent-link",
+      "phrase": "deny agent link",
+      "labeled_arm": "AgentLinks.Deny",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "deny agent link",
+          "shortlist": [
+            {
+              "name": "AgentLinks.Deny",
+              "description": "Deny a pending agent-human link, then update the cached row."
+            },
+            {
+              "name": "AgentLinks.Approve",
+              "description": "Approve a pending agent-human link, then refresh the list."
+            },
+            {
+              "name": "Credentials.RevokeCredential",
+              "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "AgentLinks.Deny": "Deny a pending agent-human link, then update the cached row.",
+              "AgentLinks.Approve": "Approve a pending agent-human link, then refresh the list.",
+              "Credentials.RevokeCredential": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::AgentLinks.Deny": {
+            "type": "noul",
+            "instructions": "Does the command \u0027AgentLinks.Deny\u0027 do the specific thing this phrase asks for? It is described as: Deny a pending agent-human link, then update the cached row.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::AgentLinks.Approve": {
+            "type": "noul",
+            "instructions": "Does the command \u0027AgentLinks.Approve\u0027 do the specific thing this phrase asks for? It is described as: Approve a pending agent-human link, then refresh the list.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.RevokeCredential": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.RevokeCredential\u0027 do the specific thing this phrase asks for? It is described as: Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "increment-counter",
+      "phrase": "increment counter",
+      "labeled_arm": "Counter.IncrementCounter",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "increment counter",
+          "shortlist": [
+            {
+              "name": "Counter.IncrementCounter",
+              "description": "Add an amount to the demo counter (amount may be negative)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Counter.IncrementCounter": "Add an amount to the demo counter (amount may be negative).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Counter.IncrementCounter": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Counter.IncrementCounter\u0027 do the specific thing this phrase asks for? It is described as: Add an amount to the demo counter (amount may be negative).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "add-five-counter",
+      "phrase": "add 5 to the counter",
+      "labeled_arm": "Counter.IncrementCounter",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "add 5 to the counter",
+          "shortlist": [
+            {
+              "name": "Counter.IncrementCounter",
+              "description": "Add an amount to the demo counter (amount may be negative)."
+            },
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            },
+            {
+              "name": "Credentials.AddExistingPasskey",
+              "description": "Assert a passkey from another principal and merge that account into this one."
+            },
+            {
+              "name": "Theme.Update",
+              "description": "Switch the SPA theme between Dark and Light."
+            },
+            {
+              "name": "Weather.FetchWeatherForecasts",
+              "description": "Load weather forecasts from the API into SPA state."
+            },
+            {
+              "name": "Credentials.DismissPasskeySoftPrompt",
+              "description": "Hide the Entra-session add-passkey banner for this SPA session."
+            },
+            {
+              "name": "AgentLinks.Approve",
+              "description": "Approve a pending agent-human link, then refresh the list."
+            },
+            {
+              "name": "AgentLinks.Deny",
+              "description": "Deny a pending agent-human link, then update the cached row."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Counter.IncrementCounter": "Add an amount to the demo counter (amount may be negative).",
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "Credentials.AddExistingPasskey": "Assert a passkey from another principal and merge that account into this one.",
+              "Theme.Update": "Switch the SPA theme between Dark and Light.",
+              "Weather.FetchWeatherForecasts": "Load weather forecasts from the API into SPA state.",
+              "Credentials.DismissPasskeySoftPrompt": "Hide the Entra-session add-passkey banner for this SPA session.",
+              "AgentLinks.Approve": "Approve a pending agent-human link, then refresh the list.",
+              "AgentLinks.Deny": "Deny a pending agent-human link, then update the cached row.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Counter.IncrementCounter": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Counter.IncrementCounter\u0027 do the specific thing this phrase asks for? It is described as: Add an amount to the demo counter (amount may be negative).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddPasskey\u0027 do the specific thing this phrase asks for? It is described as: Attach another passkey to the signed-in principal (Settings Create a passkey).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddExistingPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddExistingPasskey\u0027 do the specific thing this phrase asks for? It is described as: Assert a passkey from another principal and merge that account into this one.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch-weather",
+      "phrase": "fetch weather",
+      "labeled_arm": "Weather.FetchWeatherForecasts",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "fetch weather",
+          "shortlist": [
+            {
+              "name": "Weather.FetchWeatherForecasts",
+              "description": "Load weather forecasts from the API into SPA state."
+            },
+            {
+              "name": "Superhero.FetchSuperhero",
+              "description": "Load sample heroes into state over the gRPC transport path."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Weather.FetchWeatherForecasts": "Load weather forecasts from the API into SPA state.",
+              "Superhero.FetchSuperhero": "Load sample heroes into state over the gRPC transport path.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Weather.FetchWeatherForecasts": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Weather.FetchWeatherForecasts\u0027 do the specific thing this phrase asks for? It is described as: Load weather forecasts from the API into SPA state.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Superhero.FetchSuperhero": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Superhero.FetchSuperhero\u0027 do the specific thing this phrase asks for? It is described as: Load sample heroes into state over the gRPC transport path.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "send-chat",
+      "phrase": "send a chat message",
+      "labeled_arm": "Chat.SendMessageToServer",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "send a chat message",
+          "shortlist": [
+            {
+              "name": "Chat.SendMessageToServer",
+              "description": "Push an outbound chat message to the server over the SignalR hub."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Chat.SendMessageToServer": "Push an outbound chat message to the server over the SignalR hub.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Chat.SendMessageToServer": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Chat.SendMessageToServer\u0027 do the specific thing this phrase asks for? It is described as: Push an outbound chat message to the server over the SignalR hub.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fetch-superhero",
+      "phrase": "fetch superhero",
+      "labeled_arm": "Superhero.FetchSuperhero",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "fetch superhero",
+          "shortlist": [
+            {
+              "name": "Superhero.FetchSuperhero",
+              "description": "Load sample heroes into state over the gRPC transport path."
+            },
+            {
+              "name": "Weather.FetchWeatherForecasts",
+              "description": "Load weather forecasts from the API into SPA state."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Superhero.FetchSuperhero": "Load sample heroes into state over the gRPC transport path.",
+              "Weather.FetchWeatherForecasts": "Load weather forecasts from the API into SPA state.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Superhero.FetchSuperhero": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Superhero.FetchSuperhero\u0027 do the specific thing this phrase asks for? It is described as: Load sample heroes into state over the gRPC transport path.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Weather.FetchWeatherForecasts": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Weather.FetchWeatherForecasts\u0027 do the specific thing this phrase asks for? It is described as: Load weather forecasts from the API into SPA state.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "show-assembly-info",
+      "phrase": "show assembly info",
+      "labeled_arm": "Application.SetActiveModal",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "show assembly info",
+          "shortlist": [
+            {
+              "name": "Application.SetActiveModal",
+              "description": "Open the modal with the given id (for example assembly info)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Application.SetActiveModal": "Open the modal with the given id (for example assembly info).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Application.SetActiveModal": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Application.SetActiveModal\u0027 do the specific thing this phrase asks for? It is described as: Open the modal with the given id (for example assembly info).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "close-modal",
+      "phrase": "close modal",
+      "labeled_arm": "Application.CloseModal",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "close modal",
+          "shortlist": [
+            {
+              "name": "Application.CloseModal",
+              "description": "Dismiss whichever modal is active."
+            },
+            {
+              "name": "Application.SetActiveModal",
+              "description": "Open the modal with the given id (for example assembly info)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Application.CloseModal": "Dismiss whichever modal is active.",
+              "Application.SetActiveModal": "Open the modal with the given id (for example assembly info).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Application.CloseModal": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Application.CloseModal\u0027 do the specific thing this phrase asks for? It is described as: Dismiss whichever modal is active.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Application.SetActiveModal": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Application.SetActiveModal\u0027 do the specific thing this phrase asks for? It is described as: Open the modal with the given id (for example assembly info).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "reset-store",
+      "phrase": "reset the store",
+      "labeled_arm": "Application.ResetStore",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "reset the store",
+          "shortlist": [
+            {
+              "name": "Application.ResetStore",
+              "description": "Wipe the entire TimeWarp.State store. Callers sequence any route change."
+            },
+            {
+              "name": "Theme.Update",
+              "description": "Switch the SPA theme between Dark and Light."
+            },
+            {
+              "name": "Weather.FetchWeatherForecasts",
+              "description": "Load weather forecasts from the API into SPA state."
+            },
+            {
+              "name": "AgentLinks.Approve",
+              "description": "Approve a pending agent-human link, then refresh the list."
+            },
+            {
+              "name": "AgentLinks.Deny",
+              "description": "Deny a pending agent-human link, then update the cached row."
+            },
+            {
+              "name": "Application.SetActiveModal",
+              "description": "Open the modal with the given id (for example assembly info)."
+            },
+            {
+              "name": "Chat.SendMessageToServer",
+              "description": "Push an outbound chat message to the server over the SignalR hub."
+            },
+            {
+              "name": "Counter.IncrementCounter",
+              "description": "Add an amount to the demo counter (amount may be negative)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Application.ResetStore": "Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+              "Theme.Update": "Switch the SPA theme between Dark and Light.",
+              "Weather.FetchWeatherForecasts": "Load weather forecasts from the API into SPA state.",
+              "AgentLinks.Approve": "Approve a pending agent-human link, then refresh the list.",
+              "AgentLinks.Deny": "Deny a pending agent-human link, then update the cached row.",
+              "Application.SetActiveModal": "Open the modal with the given id (for example assembly info).",
+              "Chat.SendMessageToServer": "Push an outbound chat message to the server over the SignalR hub.",
+              "Counter.IncrementCounter": "Add an amount to the demo counter (amount may be negative).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Application.ResetStore": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Application.ResetStore\u0027 do the specific thing this phrase asks for? It is described as: Wipe the entire TimeWarp.State store. Callers sequence any route change.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Theme.Update": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Theme.Update\u0027 do the specific thing this phrase asks for? It is described as: Switch the SPA theme between Dark and Light.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Weather.FetchWeatherForecasts": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Weather.FetchWeatherForecasts\u0027 do the specific thing this phrase asks for? It is described as: Load weather forecasts from the API into SPA state.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "update-site-settings",
+      "phrase": "update site settings",
+      "labeled_arm": "SiteSettings.UpdateSiteSettings",
+      "intent": "command",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "update site settings",
+          "shortlist": [
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            },
+            {
+              "name": "Profile.UpdateProfile",
+              "description": "Persist progressive profile fields (alias, avatar) via UpdateProfile."
+            },
+            {
+              "name": "Theme.Update",
+              "description": "Switch the SPA theme between Dark and Light."
+            },
+            {
+              "name": "AgentLinks.Deny",
+              "description": "Deny a pending agent-human link, then update the cached row."
+            },
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "Profile.UpdateProfile": "Persist progressive profile fields (alias, avatar) via UpdateProfile.",
+              "Theme.Update": "Switch the SPA theme between Dark and Light.",
+              "AgentLinks.Deny": "Deny a pending agent-human link, then update the cached row.",
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::SiteSettings.UpdateSiteSettings": {
+            "type": "noul",
+            "instructions": "Does the command \u0027SiteSettings.UpdateSiteSettings\u0027 do the specific thing this phrase asks for? It is described as: Persist site authentication policy (Entra, required passkey) and refresh state.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Profile.UpdateProfile": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Profile.UpdateProfile\u0027 do the specific thing this phrase asks for? It is described as: Persist progressive profile fields (alias, avatar) via UpdateProfile.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Theme.Update": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Theme.Update\u0027 do the specific thing this phrase asks for? It is described as: Switch the SPA theme between Dark and Light.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "roles",
+      "phrase": "roles",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "roles",
+          "shortlist": [
+            {
+              "name": "Principal.SetPrincipalRoles",
+              "description": "Persist draft role multi-select for one principal."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Principal.SetPrincipalRoles": "Persist draft role multi-select for one principal.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Principal.SetPrincipalRoles": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Principal.SetPrincipalRoles\u0027 do the specific thing this phrase asks for? It is described as: Persist draft role multi-select for one principal.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "just-looking",
+      "phrase": "just looking",
+      "labeled_arm": "none",
+      "intent": "browse",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "just looking",
+          "shortlist": []
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command.",
+              "no_catalog_match": "Nothing in the opt-in catalog matches; do not invent a command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "what-is-a-passkey",
+      "phrase": "what is a passkey",
+      "labeled_arm": "none",
+      "intent": "question",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "what is a passkey",
+          "shortlist": [
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            },
+            {
+              "name": "Credentials.AddExistingPasskey",
+              "description": "Assert a passkey from another principal and merge that account into this one."
+            },
+            {
+              "name": "Credentials.DismissPasskeySoftPrompt",
+              "description": "Hide the Entra-session add-passkey banner for this SPA session."
+            },
+            {
+              "name": "Credentials.RevokeCredential",
+              "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key)."
+            },
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "Credentials.AddExistingPasskey": "Assert a passkey from another principal and merge that account into this one.",
+              "Credentials.DismissPasskeySoftPrompt": "Hide the Entra-session add-passkey banner for this SPA session.",
+              "Credentials.RevokeCredential": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Credentials.AddPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddPasskey\u0027 do the specific thing this phrase asks for? It is described as: Attach another passkey to the signed-in principal (Settings Create a passkey).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddExistingPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddExistingPasskey\u0027 do the specific thing this phrase asks for? It is described as: Assert a passkey from another principal and merge that account into this one.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.DismissPasskeySoftPrompt": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.DismissPasskeySoftPrompt\u0027 do the specific thing this phrase asks for? It is described as: Hide the Entra-session add-passkey banner for this SPA session.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "how-add-passkey",
+      "phrase": "how do I add a passkey",
+      "labeled_arm": "none",
+      "intent": "question",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "how do I add a passkey",
+          "shortlist": [
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            },
+            {
+              "name": "Credentials.AddExistingPasskey",
+              "description": "Assert a passkey from another principal and merge that account into this one."
+            },
+            {
+              "name": "Credentials.DismissPasskeySoftPrompt",
+              "description": "Hide the Entra-session add-passkey banner for this SPA session."
+            },
+            {
+              "name": "Counter.IncrementCounter",
+              "description": "Add an amount to the demo counter (amount may be negative)."
+            },
+            {
+              "name": "Credentials.RevokeCredential",
+              "description": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key)."
+            },
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "Credentials.AddExistingPasskey": "Assert a passkey from another principal and merge that account into this one.",
+              "Credentials.DismissPasskeySoftPrompt": "Hide the Entra-session add-passkey banner for this SPA session.",
+              "Counter.IncrementCounter": "Add an amount to the demo counter (amount may be negative).",
+              "Credentials.RevokeCredential": "Soft-revoke one of the caller\u0027s credentials (passkey, Entra, or agent key).",
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Credentials.AddPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddPasskey\u0027 do the specific thing this phrase asks for? It is described as: Attach another passkey to the signed-in principal (Settings Create a passkey).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddExistingPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddExistingPasskey\u0027 do the specific thing this phrase asks for? It is described as: Assert a passkey from another principal and merge that account into this one.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.DismissPasskeySoftPrompt": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.DismissPasskeySoftPrompt\u0027 do the specific thing this phrase asks for? It is described as: Hide the Entra-session add-passkey banner for this SPA session.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "settings",
+      "phrase": "settings",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "settings",
+          "shortlist": [
+            {
+              "name": "SiteSettings.UpdateSiteSettings",
+              "description": "Persist site authentication policy (Entra, required passkey) and refresh state."
+            },
+            {
+              "name": "Credentials.AddPasskey",
+              "description": "Attach another passkey to the signed-in principal (Settings Create a passkey)."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "SiteSettings.UpdateSiteSettings": "Persist site authentication policy (Entra, required passkey) and refresh state.",
+              "Credentials.AddPasskey": "Attach another passkey to the signed-in principal (Settings Create a passkey).",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::SiteSettings.UpdateSiteSettings": {
+            "type": "noul",
+            "instructions": "Does the command \u0027SiteSettings.UpdateSiteSettings\u0027 do the specific thing this phrase asks for? It is described as: Persist site authentication policy (Entra, required passkey) and refresh state.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          },
+          "fits::Credentials.AddPasskey": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Credentials.AddPasskey\u0027 do the specific thing this phrase asks for? It is described as: Attach another passkey to the signed-in principal (Settings Create a passkey).",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "weather-page",
+      "phrase": "weather page",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "weather page",
+          "shortlist": [
+            {
+              "name": "Weather.FetchWeatherForecasts",
+              "description": "Load weather forecasts from the API into SPA state."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Weather.FetchWeatherForecasts": "Load weather forecasts from the API into SPA state.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Weather.FetchWeatherForecasts": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Weather.FetchWeatherForecasts\u0027 do the specific thing this phrase asks for? It is described as: Load weather forecasts from the API into SPA state.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "hello",
+      "phrase": "hello",
+      "labeled_arm": "none",
+      "intent": "browse",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "hello",
+          "shortlist": []
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command.",
+              "no_catalog_match": "Nothing in the opt-in catalog matches; do not invent a command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "github",
+      "phrase": "github",
+      "labeled_arm": "none",
+      "intent": "navigate",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "github",
+          "shortlist": []
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command.",
+              "no_catalog_match": "Nothing in the opt-in catalog matches; do not invent a command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "explain-dark-theme",
+      "phrase": "explain dark theme",
+      "labeled_arm": "none",
+      "intent": "question",
+      "request": {
+        "model": "jev-latest",
+        "state": {
+          "phrase": "explain dark theme",
+          "shortlist": [
+            {
+              "name": "Theme.Update",
+              "description": "Switch the SPA theme between Dark and Light."
+            }
+          ]
+        },
+        "questions": {
+          "which": {
+            "type": "choice",
+            "instructions": "Which catalog command, if any, should run for this phrase? Pick none_of_the_above when the user is only looking, asking, or navigating.",
+            "criteria": {
+              "Theme.Update": "Switch the SPA theme between Dark and Light.",
+              "none_of_the_above": "The user is browsing, asking a question, navigating to a page, or does not want to run a catalog command."
+            }
+          },
+          "is_command": {
+            "type": "noul",
+            "instructions": "Does the user want to run a command in the app right now, rather than browse, ask a question, or open a page?",
+            "criteria": {
+              "true": "An imperative request to change theme, sign out, add a passkey, create a role, increment a counter, or similar.",
+              "false": "Looking around, asking what something is, or wanting to go to a page without running an ActionSet."
+            }
+          },
+          "fits::Theme.Update": {
+            "type": "noul",
+            "instructions": "Does the command \u0027Theme.Update\u0027 do the specific thing this phrase asks for? It is described as: Switch the SPA theme between Dark and Light.",
+            "criteria": {
+              "true": "This command is the action the user wants executed.",
+              "false": "This command is unrelated, a near-miss, or the user is not asking to run a command."
+            }
+          }
+        }
+      }
+    }
+  ]
+}

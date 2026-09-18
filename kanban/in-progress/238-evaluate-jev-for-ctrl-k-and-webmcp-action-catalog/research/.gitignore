@@ -1,0 +1,4 @@
+# Live Jev responses (latency, tokens, probabilities, cost).
+# TypeSafe MCA §2.3(f) forbids publishing benchmarks of the service.
+live-results.json
+live-results.md
