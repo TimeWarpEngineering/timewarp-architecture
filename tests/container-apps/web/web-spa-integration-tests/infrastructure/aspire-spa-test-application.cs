@@ -1,15 +1,16 @@
 #region Purpose
-// SPA ServiceCollection host for integration tests: TimeWarp.State + mediator wired to the
-// Aspire ingress HttpClient (closed-box), with headless fakes (IJSRuntime, IAccessTokenProvider)
-// and toast-handler removal so ExceptionNotification does not need FluentToastProvider.
+// SPA ServiceCollection host for integration tests: TimeWarp.State + generated mediator wired to
+// the Aspire ingress HttpClient (closed-box), with headless fakes (IJSRuntime, IAccessTokenProvider).
+// Toast handlers swallow FluentServiceProviderException when FluentToastProvider is absent.
 #endregion
 
 #region Design
 // Not Aspire-constrained beyond the base URL: composition mirrors production SPA registration
 // selectively (AddTimeWarpState + ApiServerApiService) rather than Web.Spa.Program wholesale,
-// so service-discovery conflicts stay out of the test host. ExceptionNotification removal was
-// previously on the deleted SpaTestApplication path; kept here so rollback / headless tests
-// match that semantics (task 145-006).
+// so service-discovery conflicts stay out of the test host. Generated Publisher_ClientPipeline
+// resolves ExceptionNotificationHandler by concrete type, so RemoveAll on the interface is a
+// no-op; handlers swallow FluentServiceProviderException for headless hosts. Error-path state
+// tests still exercise rollback via StateTransactionBehavior.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
