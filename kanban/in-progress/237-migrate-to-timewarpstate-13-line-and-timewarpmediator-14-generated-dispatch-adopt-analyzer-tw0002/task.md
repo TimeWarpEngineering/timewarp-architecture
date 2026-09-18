@@ -81,12 +81,14 @@ the errors "when we upgrade".
 - [x] C: TWS0002 clean (toast → notification; reset-store sequenced); 236 scan guard retired; TWS0002 error in editorconfig
 - [x] D: `dev build` 0/0; `dev test` green; SPA + prerender + Aspire ingress; `ganda repo audit` clean (2 advisory); docs (no product `AddMediator` mentions); `dev template-smoke` SUCCEEDED (SmokeDefault + SmokeNoApi)
 - [x] Results and How to validate (list every TWS0002 hit and its resolution)
+- [x] Implementation review disposition (clean; M1 nit fixed on this id)
 
 ## Session
 
 - Created: cockpit (2026-09-17)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementer: Grok 4.6 ganda task-work (2026-09-18)
+- Review oracle: Grok 4.6 ganda task-work (2026-09-18); effort 1, roster `general`, 2 rounds
 
 ## Notes
 
@@ -201,4 +203,20 @@ ganda repo audit         # blocking checks pass (2 advisory allowed)
 ```
 
 **Not in scope:** live browser Redux DevTools (Debug-only component); `[PersistentState]` (none in this template).
+
+### Review
+
+**Disposition:** clean (0 open). Effort 1, roster `general`, 2 rounds.
+
+**Final counts** (round 2):
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 1 | 0 |
+
+Round 1 raised M1 (nit: `AspireSpaTestApplication` Purpose/Design still claimed toast-handler removal after generated Publisher made `RemoveAll` a no-op). Fixed on this task id (Purpose/Design now describe the FluentServiceProviderException swallow). Round 2 re-verified M1 and raised nothing new.
+
+**Paths:** `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
