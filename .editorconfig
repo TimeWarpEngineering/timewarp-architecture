@@ -375,6 +375,10 @@ dotnet_diagnostic.TW0001.severity = warning
 # Off — with AI-assisted docs, the XML→markdown migration nag is no longer helpful. Task 171.
 dotnet_diagnostic.TW0002.severity = none
 
+# TWS0002: TimeWarp.State HandlerMustNotSendAction (distinct from TW0002). Error once the
+# toast path publishes ProblemDetailsNotification and ResetStore is sequenced from callers.
+dotnet_diagnostic.TWS0002.severity = error
+
 # GlobalUsingsAnalyzer (NuGet GlobalUsingsAnalyzer 1.4.0) — restore task 172 (orphaned in task 041).
 # Move file-level usings into project global-usings.cs; used across nuru/tui/flexbox.
 # Must sit under [*.cs] (package README). Agents: prefer GlobalUsingsAnalyzer code fix / move into globals;

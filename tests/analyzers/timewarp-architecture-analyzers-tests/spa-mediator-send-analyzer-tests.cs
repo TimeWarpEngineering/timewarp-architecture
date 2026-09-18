@@ -27,9 +27,10 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
     build_property.UsingMicrosoftNETSdkBlazorWebAssembly = true
     """;
 
-  // Mirrors TimeWarp.Mediator 13.0.0: ISender declares exactly three Send overloads plus
-  // CreateStream; IMediator adds nothing over ISender + IPublisher. CreateStream's real return
-  // type is IAsyncEnumerable<T>, simplified here — the analyzer keys on the method name only.
+  // Mirrors TimeWarp.Mediator 14.0.0-beta.1: ISender declares three Send overloads plus
+  // CreateStream; ISender<TScope> : ISender; IMediator adds nothing over ISender + IPublisher.
+  // CreateStream's real return type is IAsyncEnumerable<T>, simplified here — the analyzer keys
+  // on the method name only.
   private const string MediatorStubs =
     """
     #region Purpose
@@ -57,6 +58,8 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
         Task<object> Send(object request, CancellationToken cancellationToken = default);
         object CreateStream<TResponse>(IStreamRequest<TResponse> request, CancellationToken cancellationToken = default);
       }
+
+      public interface ISender<TScope> : ISender { }
 
       public interface IMediator : ISender, IPublisher { }
 

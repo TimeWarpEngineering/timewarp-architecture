@@ -13,10 +13,10 @@ using static UpdateSiteSettings;
 
 partial class SiteSettingsState
 {
-  internal static class UpdateSiteSettingsActionSet
+  public static class UpdateSiteSettingsActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Action(Command command)
       {
@@ -32,8 +32,9 @@ partial class SiteSettingsState
       (
         IStore store,
         IWebServerApiService webServerApiService,
-        ILogger<Handler> logger
-      ) : base(store, webServerApiService, logger)
+        ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher
+      ) : base(store, webServerApiService, logger, publisher)
       {
       }
 

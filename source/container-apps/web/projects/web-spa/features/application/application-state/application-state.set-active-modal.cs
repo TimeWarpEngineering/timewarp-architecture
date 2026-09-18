@@ -15,7 +15,7 @@ partial class ApplicationState
 {
   public static class SetActiveModalActionSet
   {
-    internal class Action : IBaseAction
+    public class Action : IBaseAction
     {
       public string ModalId { get; }
       public Action(string modalId)
@@ -29,10 +29,10 @@ partial class ApplicationState
       IStore store
     ) : BaseHandler<Action>(store)
     {
-      public override Task Handle(Action action, CancellationToken cancellationToken)
+      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         ApplicationState.ActiveModalId = action.ModalId;
-        return Task.CompletedTask;
+        return default;
       }
     }
   }

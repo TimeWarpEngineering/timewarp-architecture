@@ -28,6 +28,7 @@
     <NoWarn>$(NoWarn);CA2201</NoWarn>   <!-- Reserved/general exception types — tests deliberately throw/assert on them -->
     <NoWarn>$(NoWarn);CA1859</NoWarn>   <!-- Use concrete types for perf — irrelevant in tests -->
     <NoWarn>$(NoWarn);CA1861</NoWarn>   <!-- Constant array args — micro-perf, irrelevant in tests -->
+    <NoWarn>$(NoWarn);CA1034</NoWarn>   <!-- Nested public types — ActionSet/Action in SPA probe states -->
     <NoWarn>$(NoWarn);CA2234</NoWarn>   <!-- Pass Uri instead of string — test helpers -->
     <NoWarn>$(NoWarn);CA2214</NoWarn>   <!-- Virtual call in ctor — intentional in test base classes -->
     <NoWarn>$(NoWarn);IDE0007</NoWarn>  <!-- Use 'var' — style preference -->

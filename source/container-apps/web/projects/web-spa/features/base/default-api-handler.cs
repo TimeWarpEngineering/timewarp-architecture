@@ -3,9 +3,8 @@
 #endregion
 
 #region Design
-// Closes ApiHandler's OneOf branches for the common case: errors surface as toast
-// notifications via ToastNotificationState.AddProblemDetails — the base does not hold
-// or use ISender (TWA0022 / task 196; dead plumbing removed in task 197). Feature
+// Closes ApiHandler's OneOf branches for the common case: errors publish
+// ProblemDetailsNotification (TWS0002 — handlers never send actions). Feature
 // handlers implement only GetRequest and HandleSuccess.
 // HandleFileResponse throws by design — JSON endpoints never return files; derive
 // from FileResponseApiHandler for downloads instead.
@@ -23,9 +22,10 @@ internal abstract class DefaultApiHandler<TAction, TRequest, TResponse> : ApiHan
     IStore store,
     IApiService apiService,
     ILogger<DefaultApiHandler<TAction, TRequest, TResponse>> logger,
+    IPublisher<ClientPipeline> publisher,
     IValidator<TRequest>? validator = null,
     AuthenticationStateProvider? authenticationStateProvider = null
-  ) : base(store, apiService, logger, validator, authenticationStateProvider)
+  ) : base(store, apiService, logger, publisher, validator, authenticationStateProvider)
   {
   }
 
@@ -34,8 +34,6 @@ internal abstract class DefaultApiHandler<TAction, TRequest, TResponse> : ApiHan
     throw new NotImplementedException();
   }
 
-  protected override async Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken)
-  {
-    await ToastNotificationState.AddProblemDetails(problemDetails, cancellationToken);
-  }
+  protected override Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken) =>
+    Publisher.Publish(new ProblemDetailsNotification(problemDetails), cancellationToken);
 }

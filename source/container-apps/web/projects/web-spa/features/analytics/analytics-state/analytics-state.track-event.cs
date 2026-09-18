@@ -21,7 +21,7 @@ partial class AnalyticsState
 {
   public static class TrackEventActionSet
   {
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public string EventName { get; }
 
@@ -38,7 +38,7 @@ partial class AnalyticsState
       ILogger<Handler> logger
     ) : BaseHandler<Action>(store)
     {
-      public override async Task Handle
+      public override async ValueTask Handle
       (
         Action action,
         CancellationToken cancellationToken

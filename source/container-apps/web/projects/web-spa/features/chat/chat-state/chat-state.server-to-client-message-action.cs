@@ -35,12 +35,12 @@ partial class ChatState
     {
       public Handler(IStore store) : base(store) {}
 
-      public override Task Handle(Action action, CancellationToken cancellationToken)
+      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         ChatState.ChatMessageList ??= [];
         ChatMessage chatMessage = new(action.Command.Message, action.Command.User);
         ChatState.ChatMessageList.Add(chatMessage);
-        return Task.CompletedTask;
+        return default;
       }
     }
   }

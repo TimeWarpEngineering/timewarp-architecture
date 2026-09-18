@@ -12,6 +12,10 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions" />
     <PackageReference Include="TimeWarp.Multiavatar" />
+    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="all" />
+    <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
 
   <ItemGroup>

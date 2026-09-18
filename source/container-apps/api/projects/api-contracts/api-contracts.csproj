@@ -6,7 +6,8 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
-    <PackageReference Include="TimeWarp.Mediator" />
+    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="OneOf" />
   </ItemGroup>

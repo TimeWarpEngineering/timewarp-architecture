@@ -13,7 +13,7 @@ partial class ApplicationState
 {
   public static class ToggleMenu
   {
-    internal class Action : IBaseAction;
+    public class Action : IBaseAction;
 
     internal class Handler
     (
@@ -21,10 +21,10 @@ partial class ApplicationState
     ) : BaseHandler<Action>(store)
     {
 
-      public override Task Handle(Action action, CancellationToken cancellationToken)
+      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         ApplicationState.IsMenuExpanded = !ApplicationState.IsMenuExpanded;
-        return Task.CompletedTask;
+        return default;
       }
     }
   }

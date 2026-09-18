@@ -27,6 +27,7 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
   private readonly AuthenticationStateProvider? AuthenticationStateProvider;
   private readonly IApiService ApiService;
   private readonly ILogger<ApiHandler<TAction, TRequest, TResponse>> Logger;
+  protected readonly IPublisher<ClientPipeline> Publisher;
   private readonly IValidator<TRequest>? Validator;
   private bool RequiresAuthentication => AuthenticationStateProvider is not null;
 
@@ -35,6 +36,7 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
     IStore store,
     IApiService apiService,
     ILogger<ApiHandler<TAction, TRequest, TResponse>> logger,
+    IPublisher<ClientPipeline> publisher,
     IValidator<TRequest>? validator = null,
     AuthenticationStateProvider? authenticationStateProvider = null
   ) : base(store)
@@ -42,10 +44,11 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
     AuthenticationStateProvider = authenticationStateProvider;
     ApiService = apiService;
     Logger = logger;
+    Publisher = publisher;
     Validator = validator;
   }
 
-  public sealed override async Task Handle(TAction action, CancellationToken cancellationToken)
+  public sealed override async ValueTask Handle(TAction action, CancellationToken cancellationToken)
   {
     if (RequiresAuthentication && !await IsUserAuthenticatedAsync()) return;
 

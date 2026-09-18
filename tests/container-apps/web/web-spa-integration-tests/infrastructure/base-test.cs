@@ -73,7 +73,7 @@ public sealed class SpaTestScope : IDisposable
   private SpaTestScope(IServiceScope serviceScope)
   {
     ServiceScope = serviceScope;
-    Sender = ServiceScope.ServiceProvider.GetRequiredService<ISender>();
+    Sender = ServiceScope.ServiceProvider.GetRequiredService<ISender<ClientPipeline>>();
     Store = ServiceScope.ServiceProvider.GetRequiredService<IStore>();
   }
 

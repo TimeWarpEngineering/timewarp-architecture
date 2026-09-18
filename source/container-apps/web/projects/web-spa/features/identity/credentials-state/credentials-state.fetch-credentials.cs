@@ -17,10 +17,10 @@ using static GetCredentials;
 
 partial class CredentialsState
 {
-  internal static class FetchCredentialsActionSet
+  public static class FetchCredentialsActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Action(bool includeRevoked = false)
       {
@@ -39,8 +39,9 @@ partial class CredentialsState
         IStore store,
         IWebServerApiService webServerApiService,
         ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher,
         AuthenticationStateProvider authenticationStateProvider
-      ) : base(store, webServerApiService, logger, authenticationStateProvider: authenticationStateProvider)
+      ) : base(store, webServerApiService, logger, publisher, authenticationStateProvider: authenticationStateProvider)
       {
         AuthenticationStateProvider = authenticationStateProvider;
       }

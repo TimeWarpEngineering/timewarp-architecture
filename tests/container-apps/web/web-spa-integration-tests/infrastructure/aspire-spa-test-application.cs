@@ -54,6 +54,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
     services.AddFluentUIComponents();
 
     // Add only the core services needed for testing (avoid service discovery conflicts)
+    services.AddWebSpaGeneratedMediator();
     services.AddTimeWarpState
     (
       options =>
@@ -92,11 +93,10 @@ public class AspireSpaTestApplication : ISpaTestApplication
     IJSRuntime fakeJsRuntime = A.Fake<IJSRuntime>();
     services.AddScoped(_ => fakeJsRuntime);
 
-    // The ExceptionNotificationHandler shows a FluentUI toast (INotificationService), which needs a
-    // rendered <FluentToastProvider> component not present in headless tests — it throws
-    // FluentServiceProviderException. Toasts are a UI concern, so drop that handler here (mirrors
-    // the IJSRuntime fake above); error-path state tests still exercise rollback via
-    // StateTransactionBehavior.
-    services.RemoveAll<TimeWarp.Mediator.INotificationHandler<TimeWarp.Features.StateTransactions.ExceptionNotification>>();
+    // Generated Publisher_ClientPipeline GetRequiredService's the concrete
+    // ExceptionNotificationHandler (not INotificationHandler<>), so RemoveAll on the
+    // interface is a no-op. The handler swallows FluentServiceProviderException when
+    // FluentToastProvider is absent (headless). Error-path state tests still exercise
+    // rollback via StateTransactionBehavior.
   }
 }

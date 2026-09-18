@@ -1,5 +1,5 @@
 #region Purpose
-// ApplicationState action that wipes the entire store and returns to the home route.
+// ApplicationState action that wipes the entire store. Callers sequence any route change.
 #endregion
 
 #region Design
@@ -14,17 +14,17 @@ partial class ApplicationState
 {
   public static class ResetStoreActionSet
   {
-    internal class Action : IBaseAction;
+    public class Action : IBaseAction;
 
     internal class Handler : BaseHandler<Action>
     {
       public Handler(IStore store) : base(store) {}
-      public override Task Handle(Action action, CancellationToken cancellationToken)
+      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         _ = action;
         _ = cancellationToken;
         Store.Reset();
-        return Task.CompletedTask;
+        return default;
       }
     }
   }

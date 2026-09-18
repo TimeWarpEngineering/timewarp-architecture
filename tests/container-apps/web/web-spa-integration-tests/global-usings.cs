@@ -6,7 +6,6 @@ global using AnyClone;
 global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
-global using Microsoft.Extensions.DependencyInjection.Extensions;
 // Options / Services used by weather + mock API surfaces excluded when api is off.
 #if(api)
 global using Microsoft.Extensions.Options;
@@ -15,7 +14,6 @@ global using Microsoft.FluentUI.AspNetCore.Components;
 global using Shouldly;
 global using System.Text.Json;
 // Solution usings
-global using TimeWarp.Architecture.Features.Analytics;
 global using TimeWarp.Architecture.Features.Applications;
 global using TimeWarp.Architecture.Features.Counters;
 #if(api)

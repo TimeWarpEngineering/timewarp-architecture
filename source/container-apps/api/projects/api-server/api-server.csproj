@@ -22,6 +22,9 @@
     <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Oakton" />
+    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="all" />
+    <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

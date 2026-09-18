@@ -13,10 +13,10 @@ using static GetSiteSettings;
 
 partial class SiteSettingsState
 {
-  internal static class FetchSiteSettingsActionSet
+  public static class FetchSiteSettingsActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction;
+    public sealed class Action : IBaseAction;
 
     internal sealed class Handler : DefaultApiHandler<Action, Query, Response>
     {
@@ -25,9 +25,10 @@ partial class SiteSettingsState
         IStore store,
         IWebServerApiService webServerApiService,
         ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher,
         IValidator<Query>? validator = null,
         AuthenticationStateProvider? authenticationStateProvider = null
-      ) : base(store, webServerApiService, logger, validator, authenticationStateProvider)
+      ) : base(store, webServerApiService, logger, publisher, validator, authenticationStateProvider)
       {
       }
 

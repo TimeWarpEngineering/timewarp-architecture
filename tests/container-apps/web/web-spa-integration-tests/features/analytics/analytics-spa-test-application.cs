@@ -5,10 +5,9 @@
 
 #region Design
 // C-create (AGENTS.md fixture-lifetime default): these facts substitute IWebServerApiService,
-// which the closed-box AspireSpaTestApplication cannot do. TrackEventBehavior is registered
-// here the same way program.cs registers it; ExceptionNotification is dropped so headless
-// dispatch does not need FluentToastProvider. Recording is a singleton so SpaTestScope sees
-// the same instance the TrackEvent handler resolves.
+// which the closed-box AspireSpaTestApplication cannot do. TrackEventBehavior is compile-time
+// on ClientPipeline. Recording is a singleton so SpaTestScope sees the same instance the
+// TrackEvent handler resolves. Headless toasts swallow FluentServiceProviderException.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Features.Analytics;
@@ -26,6 +25,7 @@ internal sealed class AnalyticsSpaTestApplication : ISpaTestApplication, IDispos
     ServiceCollection services = new();
 
     services.AddLogging();
+    services.AddWebSpaGeneratedMediator();
     services.AddTimeWarpState
     (
       options =>
@@ -40,12 +40,13 @@ internal sealed class AnalyticsSpaTestApplication : ISpaTestApplication, IDispos
     // Fully qualified: TimeWarp.Architecture.Services is a global using only when the api
     // template flag is on; IWebServerApiService is the BFF client and exists without api.
     services.AddSingleton<TimeWarp.Architecture.Services.IWebServerApiService>(Recording);
-    services.AddScoped(typeof(IPipelineBehavior<,>), typeof(TrackEventBehavior<,>));
 
     IJSRuntime fakeJsRuntime = FakeItEasy.A.Fake<IJSRuntime>();
     services.AddScoped(_ => fakeJsRuntime);
 
-    services.RemoveAll<INotificationHandler<TimeWarp.Features.StateTransactions.ExceptionNotification>>();
+    // Generated Publisher_ClientPipeline resolves ExceptionNotificationHandler by concrete
+    // type. The handler swallows FluentServiceProviderException when FluentToastProvider is
+    // absent (headless).
 
     ServiceProvider = services.BuildServiceProvider();
   }

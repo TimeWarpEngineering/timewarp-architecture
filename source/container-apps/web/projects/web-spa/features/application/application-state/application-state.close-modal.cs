@@ -16,17 +16,17 @@ partial class ApplicationState
   public static class CloseModalActionSet
   {
 
-    internal class Action() : IBaseAction;
+    public class Action() : IBaseAction;
 
     internal class Handler
     (
       IStore store
     ) : BaseHandler<Action>(store)
     {
-      public override Task Handle(Action action, CancellationToken cancellationToken)
+      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         ApplicationState.ActiveModalId = null;
-        return Task.CompletedTask;
+        return default;
       }
     }
   }

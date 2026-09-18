@@ -13,7 +13,7 @@
 namespace TimeWarp.Architecture.Features.Analytics;
 
 [StateAccess]
-internal sealed partial class AnalyticsState : State<AnalyticsState>
+public sealed partial class AnalyticsState : State<AnalyticsState>
 {
   public Guid CorrelationId { get; private set; }
 

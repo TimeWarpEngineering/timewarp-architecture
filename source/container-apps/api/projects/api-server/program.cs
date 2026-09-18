@@ -106,19 +106,7 @@ public class Program : IAspNetProgram
     });
 
     CommonServerModule.AddOpenApi(serviceCollection, ApiVersion, ApiTitle);
-    serviceCollection
-      .AddMediator
-      (
-        mediatorServiceConfiguration =>
-          mediatorServiceConfiguration
-            .RegisterServicesFromAssemblies
-            (
-              typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).GetTypeInfo().Assembly,
-              typeof(TimeWarp.Architecture.Api.Application.IAssemblyMarker).GetTypeInfo().Assembly
-            )
-      );
-    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(GenericPipelineBehavior<,>));
-    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(FluentValidationBehavior<,>));
+    serviceCollection.AddGeneratedMediator();
   }
 
   public static void ConfigureMiddleware(WebApplication webApplication)

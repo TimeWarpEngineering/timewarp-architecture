@@ -38,7 +38,7 @@ partial class ChatState
       }
       private ChatHubConnection ChatHubConnection { get; }
 
-      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         await ChatHubConnection.SendMessageAsync(action.SendMessageCommand);
       }

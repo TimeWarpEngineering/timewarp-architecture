@@ -6,16 +6,16 @@ namespace TimeWarp.Architecture.Features.Settings;
 
 partial class SiteSettingsState
 {
-  internal static class ClearSiteSettingsActionSet
+  public static class ClearSiteSettingsActionSet
   {
-    internal sealed class Action : IBaseAction;
+    public sealed class Action : IBaseAction;
 
     internal sealed class Handler(IStore store) : BaseHandler<Action>(store)
     {
-      public override Task Handle(Action action, CancellationToken cancellationToken)
+      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         SiteSettingsState.Initialize();
-        return Task.CompletedTask;
+        return default;
       }
     }
   }

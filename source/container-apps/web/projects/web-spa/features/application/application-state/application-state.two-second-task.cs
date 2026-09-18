@@ -18,12 +18,12 @@ partial class ApplicationState
   public static class TwoSecondTaskActionSet
   {
     [TrackAction]
-    internal sealed class Action : IAction;
+    public sealed class Action : IAction;
 
-    internal sealed class Handler : ActionHandler<Action>
+    internal sealed class Handler : StateActionHandler<Action>
     {
       public Handler(IStore store) : base(store) {}
-      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         Console.WriteLine("Start two Second Task");
         await Task.Delay(millisecondsDelay: 2000, cancellationToken: cancellationToken);

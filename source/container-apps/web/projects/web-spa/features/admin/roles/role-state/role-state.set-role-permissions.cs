@@ -18,7 +18,7 @@ partial class RoleState
   public static class SetPermissionSelectedActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Guid RoleId { get; }
       public string PermissionId { get; }
@@ -34,7 +34,7 @@ partial class RoleState
 
     internal class Handler(IStore store) : BaseHandler<Action>(store)
     {
-      public override Task Handle(Action action, CancellationToken cancellationToken)
+      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         if (!RoleState.DraftPermissionIds.TryGetValue(action.RoleId, out HashSet<string>? set))
         {
@@ -51,7 +51,7 @@ partial class RoleState
           set.Remove(action.PermissionId);
         }
 
-        return Task.CompletedTask;
+        return default;
       }
     }
   }
@@ -59,7 +59,7 @@ partial class RoleState
   public static class SetRolePermissionsActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Guid RoleId { get; }
 
@@ -74,8 +74,9 @@ partial class RoleState
       public Handler(
         IStore store,
         IWebServerApiService webServerApiService,
-        ILogger<Handler> logger)
-        : base(store, webServerApiService, logger)
+        ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher)
+        : base(store, webServerApiService, logger, publisher)
       {
       }
 

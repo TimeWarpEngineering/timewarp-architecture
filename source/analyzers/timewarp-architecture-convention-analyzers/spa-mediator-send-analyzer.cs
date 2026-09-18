@@ -23,7 +23,7 @@
 // optional in a method-group conversion, CS0123) produces no Invocation at the reference site,
 // and is the one realistic way to rebuild the deleted BaseComponent.Send wrapper. Extension
 // methods named Send on ISender would still slip through — their ContainingType is the static
-// host, not ISender — but TimeWarp.Mediator 13.0.0 declares none, so that gap stays theoretical.
+// host, not ISender. TimeWarp.Mediator 14 also has ISender<TScope> (: ISender).
 //
 // Generated-code handling is the one divergence from every sibling TWA analyzer, which use
 // GeneratedCodeAnalysisFlags.None. User-authored `@code` blocks compile into `*_razor.g.cs` trees
@@ -54,6 +54,7 @@ public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
 
   private const string BlazorWasmSdkProperty = "build_property.UsingMicrosoftNETSdkBlazorWebAssembly";
   private const string SenderInterfaceFullName = "TimeWarp.Mediator.ISender";
+  private const string ScopedSenderInterfaceFullName = "TimeWarp.Mediator.ISender`1";
   private const string SendMethodName = "Send";
   private const string GeneratedCodeAttributeFullName = "System.CodeDom.Compiler.GeneratedCodeAttribute";
 
@@ -83,11 +84,13 @@ public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
 
       INamedTypeSymbol? senderInterface =
         startContext.Compilation.GetTypeByMetadataName(SenderInterfaceFullName);
-      if (senderInterface is null) return;
+      INamedTypeSymbol? scopedSenderInterface =
+        startContext.Compilation.GetTypeByMetadataName(ScopedSenderInterfaceFullName);
+      if (senderInterface is null && scopedSenderInterface is null) return;
 
       startContext.RegisterOperationAction
       (
-        operationContext => AnalyzeInvocation(operationContext, senderInterface),
+        operationContext => AnalyzeInvocation(operationContext, senderInterface, scopedSenderInterface),
         OperationKind.Invocation
       );
 
@@ -96,7 +99,7 @@ public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
       // `Func<IRequest, CancellationToken, Task> dispatch = Mediator.Send;` and dispatch unflagged.
       startContext.RegisterOperationAction
       (
-        operationContext => AnalyzeMethodReference(operationContext, senderInterface),
+        operationContext => AnalyzeMethodReference(operationContext, senderInterface, scopedSenderInterface),
         OperationKind.MethodReference
       );
     });
@@ -107,13 +110,18 @@ public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
       .TryGetValue(BlazorWasmSdkProperty, out string? value)
     && string.Equals(value?.Trim(), "true", StringComparison.OrdinalIgnoreCase);
 
-  private static void AnalyzeInvocation(OperationAnalysisContext context, INamedTypeSymbol senderInterface)
+  private static void AnalyzeInvocation
+  (
+    OperationAnalysisContext context,
+    INamedTypeSymbol? senderInterface,
+    INamedTypeSymbol? scopedSenderInterface
+  )
   {
     var invocation = (IInvocationOperation)context.Operation;
     IMethodSymbol method = invocation.TargetMethod;
 
     if (!string.Equals(method.Name, SendMethodName, StringComparison.Ordinal)) return;
-    if (!IsSenderType(method.ContainingType, senderInterface)) return;
+    if (!IsSenderType(method.ContainingType, senderInterface, scopedSenderInterface)) return;
     if (IsExemptGeneratedCode(context)) return;
 
     // Report the receiver's declared type so the message names what the author actually wrote
@@ -125,13 +133,18 @@ public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
     context.ReportDiagnostic(Diagnostic.Create(Rule, invocation.Syntax.GetLocation(), receiverName));
   }
 
-  private static void AnalyzeMethodReference(OperationAnalysisContext context, INamedTypeSymbol senderInterface)
+  private static void AnalyzeMethodReference
+  (
+    OperationAnalysisContext context,
+    INamedTypeSymbol? senderInterface,
+    INamedTypeSymbol? scopedSenderInterface
+  )
   {
     var reference = (IMethodReferenceOperation)context.Operation;
     IMethodSymbol method = reference.Method;
 
     if (!string.Equals(method.Name, SendMethodName, StringComparison.Ordinal)) return;
-    if (!IsSenderType(method.ContainingType, senderInterface)) return;
+    if (!IsSenderType(method.ContainingType, senderInterface, scopedSenderInterface)) return;
     if (IsExemptGeneratedCode(context)) return;
 
     string receiverName =
@@ -141,17 +154,38 @@ public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
     context.ReportDiagnostic(Diagnostic.Create(Rule, reference.Syntax.GetLocation(), receiverName));
   }
 
-  private static bool IsSenderType(INamedTypeSymbol? containingType, INamedTypeSymbol senderInterface)
+  private static bool IsSenderType
+  (
+    INamedTypeSymbol? containingType,
+    INamedTypeSymbol? senderInterface,
+    INamedTypeSymbol? scopedSenderInterface
+  )
   {
     if (containingType is null) return false;
 
-    if (SymbolEqualityComparer.Default.Equals(containingType.OriginalDefinition, senderInterface))
+    if (MatchesSender(containingType.OriginalDefinition, senderInterface, scopedSenderInterface))
       return true;
 
-    // Covers IMediator (: ISender) and any concrete implementation, e.g. the Mediator class or a
-    // state's Sender property type.
+    // Covers IMediator (: ISender), ISender<TScope>, and concrete implementations.
     return containingType.AllInterfaces
-      .Any(i => SymbolEqualityComparer.Default.Equals(i.OriginalDefinition, senderInterface));
+      .Any(i => MatchesSender(i.OriginalDefinition, senderInterface, scopedSenderInterface));
+  }
+
+  private static bool MatchesSender
+  (
+    INamedTypeSymbol type,
+    INamedTypeSymbol? senderInterface,
+    INamedTypeSymbol? scopedSenderInterface
+  )
+  {
+    if (senderInterface is not null
+      && SymbolEqualityComparer.Default.Equals(type, senderInterface))
+    {
+      return true;
+    }
+
+    return scopedSenderInterface is not null
+      && SymbolEqualityComparer.Default.Equals(type, scopedSenderInterface);
   }
 
   private static bool IsExemptGeneratedCode(OperationAnalysisContext context)

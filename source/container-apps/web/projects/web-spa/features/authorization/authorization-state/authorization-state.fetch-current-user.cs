@@ -16,10 +16,10 @@ using static GetCurrentUser;
 
 partial class AuthorizationState
 {
-  internal static class FetchCurrentUserActionSet
+  public static class FetchCurrentUserActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction;
+    public sealed class Action : IBaseAction;
 
     internal sealed class Handler : DefaultApiHandler<Action, Query, Response>
     {
@@ -28,8 +28,9 @@ partial class AuthorizationState
       (
         IStore store,
         IWebServerApiService webServerApiService,
-        ILogger<Handler> logger
-      ) : base(store, webServerApiService, logger) {}
+        ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher
+      ) : base(store, webServerApiService, logger, publisher) {}
 
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {

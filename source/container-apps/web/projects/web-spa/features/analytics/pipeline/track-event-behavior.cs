@@ -13,8 +13,8 @@
 // FullName. TrackEventActionSet.Action is skipped to avoid recursion.
 // Teardown: State<TState>.Dispose cancels then disposes the CancellationTokenSource, so a
 // post-disposal generated dispatch raises ObjectDisposedException (not a mere cancellation).
-// OperationCanceledException is kept as forward cover. Losing a telemetry POST during
-// teardown must never fail the traced action.
+// Headless hosts may lack IWebServerApiService; any telemetry failure must not fail the
+// traced action (StateTransactionBehavior would otherwise roll it back).
 // Constrained to IAction so non-state mediator requests are not inspected.
 #endregion
 
@@ -78,9 +78,9 @@ public class TrackEventBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
     {
       await Store.GetState<AnalyticsState>().TrackEvent(eventName);
     }
-    catch (Exception exception) when (exception is OperationCanceledException or ObjectDisposedException)
+    catch (Exception exception)
     {
-      Logger.LogDebug("TrackEvent '{EventName}' dropped — state disposed.", eventName);
+      Logger.LogDebug(exception, "TrackEvent '{EventName}' dropped.", eventName);
     }
   }
 }
