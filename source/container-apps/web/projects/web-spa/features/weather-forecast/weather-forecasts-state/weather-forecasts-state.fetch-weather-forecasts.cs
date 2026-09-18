@@ -17,7 +17,7 @@ partial class WeatherForecastsState
   public static class FetchWeatherForecastsActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public int? Days { get; }
       public Action(int? days)
@@ -30,8 +30,9 @@ partial class WeatherForecastsState
     (
       IStore store,
       IApiServerApiService apiServerApiService,
-      ILogger<Handler> logger
-    ) : DefaultApiHandler<Action,Query,Response>(store, apiServerApiService, logger)
+      ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher
+    ) : DefaultApiHandler<Action,Query,Response>(store, apiServerApiService, logger, publisher)
     {
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {

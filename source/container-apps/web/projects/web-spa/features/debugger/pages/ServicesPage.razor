@@ -9,8 +9,6 @@
   private IServiceCollection ServiceCollection { get; set; } = null!;
 
   private List<ServiceDescriptor> PipelineBehaviors => FilterServices(typeof(IPipelineBehavior<,>));
-  private List<ServiceDescriptor> RequestPreProcessors => FilterServices(typeof(IRequestPreProcessor<>));
-  private List<ServiceDescriptor> RequestPostProcessors => FilterServices(typeof(IRequestPostProcessor<,>));
   private List<ServiceDescriptor> StreamPipelineBehaviors => FilterServices(typeof(IStreamPipelineBehavior<,>));
 
   private List<ServiceDescriptor> FilterServices(Type serviceType) =>
@@ -21,8 +19,6 @@
 <TimeWarpPage Title="Middleware Services">
   <Card>
     <ServiceList Title="IPipelineBehavior" Services=PipelineBehaviors />
-    <ServiceList Title="IRequestPreProcessor" Services=RequestPreProcessors />
-    <ServiceList Title="IRequestPostProcessor" Services=RequestPostProcessors />
     <ServiceList Title="IStreamPipelineBehavior" Services=StreamPipelineBehaviors />
   </Card>
 </TimeWarpPage>

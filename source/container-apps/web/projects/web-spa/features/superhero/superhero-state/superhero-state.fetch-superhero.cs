@@ -32,7 +32,7 @@ partial class SuperheroState
       {
         SuperheroGrpcServiceProvider = superheroGrpcServiceProvider;
       }
-      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         SuperheroState.SuperheroList.Clear();
         var getSuperheroRequest = new SuperheroRequest { NumberOfHeros = 5 };

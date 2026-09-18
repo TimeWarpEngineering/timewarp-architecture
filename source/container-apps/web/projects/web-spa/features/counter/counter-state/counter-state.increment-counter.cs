@@ -35,14 +35,14 @@ partial class CounterState
     ) : BaseHandler<Action>(store)
     {
 
-      public override Task Handle
+      public override ValueTask Handle
       (
         Action action,
         CancellationToken cancellationToken
       )
       {
         CounterState.Count += action.Amount;
-        return Task.CompletedTask;
+        return default;
       }
     }
   }

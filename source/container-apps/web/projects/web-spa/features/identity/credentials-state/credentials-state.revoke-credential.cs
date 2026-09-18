@@ -15,10 +15,10 @@ using static RevokeCredential;
 
 partial class CredentialsState
 {
-  internal static class RevokeCredentialActionSet
+  public static class RevokeCredentialActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Action(Guid credentialId)
       {
@@ -37,8 +37,9 @@ partial class CredentialsState
         IStore store,
         IWebServerApiService webServerApiService,
         ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher,
         AuthenticationStateProvider authenticationStateProvider
-      ) : base(store, webServerApiService, logger, authenticationStateProvider: authenticationStateProvider)
+      ) : base(store, webServerApiService, logger, publisher, authenticationStateProvider: authenticationStateProvider)
       {
         AuthenticationStateProvider = authenticationStateProvider;
       }

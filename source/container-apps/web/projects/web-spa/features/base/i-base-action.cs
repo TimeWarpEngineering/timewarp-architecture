@@ -1,5 +1,5 @@
 #region Purpose
-// Unifies TimeWarp.Mediator's IBaseRequest with TimeWarp.State's IAction so state actions can travel through the mediator pipeline.
+// Unifies Foundation IBaseRequest with TimeWarp.Mediator.IAction so state actions travel through the generated mediator pipeline.
 #endregion
 
 namespace TimeWarp.Architecture.Features;

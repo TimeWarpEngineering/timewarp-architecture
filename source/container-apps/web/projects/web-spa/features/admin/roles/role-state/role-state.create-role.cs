@@ -17,10 +17,10 @@ using static CreateRole;
 
 partial class RoleState
 {
-  internal static class CreateRoleActionSet
+  public static class CreateRoleActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Command Command { get; }
 
@@ -34,8 +34,9 @@ partial class RoleState
     (
       IStore store,
       IWebServerApiService webServerApiService,
-      ILogger<Handler> logger
-    ) : DefaultApiHandler<Action, Command, Response>(store, webServerApiService, logger)
+      ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher
+    ) : DefaultApiHandler<Action, Command, Response>(store, webServerApiService, logger, publisher)
     {
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken) =>
         Task.FromResult<Command?>(new Command

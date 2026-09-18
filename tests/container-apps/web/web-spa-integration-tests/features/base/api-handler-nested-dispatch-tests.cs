@@ -20,6 +20,7 @@ using TimeWarp.Foundation;
 using TimeWarp.Foundation.Features;
 using TimeWarp.Foundation.Types;
 using TimeWarp.Mediator;
+using TimeWarp.State;
 
 [TestTag("Unit")]
 public class ApiHandler_Should_
@@ -33,7 +34,7 @@ public class ApiHandler_Should_
     using NestedDispatchSpaTestApplication app = new();
     using IServiceScope scope = app.ServiceProvider.CreateScope();
     IStore store = scope.ServiceProvider.GetRequiredService<IStore>();
-    ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+    ISender<ClientPipeline> sender = scope.ServiceProvider.GetRequiredService<ISender<ClientPipeline>>();
 
     store.GetState<NestedDispatchProbeState>().Initialize();
 
@@ -66,17 +67,19 @@ public sealed partial class NestedDispatchProbeState : State<NestedDispatchProbe
   {
     internal sealed class Action : IBaseAction;
 
+    [AllowActionSend("Probe proves ApiHandler releases the per-state semaphore before HandleSuccess; product handlers must not nest.")]
     internal sealed class Handler : ApiHandler<Action, NestedDispatchProbeRequest, NestedDispatchProbeResponse>
     {
-      private readonly ISender Sender;
+      private readonly ISender<ClientPipeline> Sender;
 
       public Handler
       (
         IStore store,
         IApiService apiService,
         ILogger<Handler> logger,
-        ISender sender
-      ) : base(store, apiService, logger)
+        IPublisher<ClientPipeline> publisher,
+        ISender<ClientPipeline> sender
+      ) : base(store, apiService, logger, publisher)
       {
         Sender = sender;
       }
@@ -121,8 +124,9 @@ public sealed partial class NestedDispatchProbeState : State<NestedDispatchProbe
       (
         IStore store,
         IApiService apiService,
-        ILogger<Handler> logger
-      ) : base(store, apiService, logger)
+        ILogger<Handler> logger,
+        IPublisher<ClientPipeline> publisher
+      ) : base(store, apiService, logger, publisher)
       {
       }
 
@@ -202,7 +206,12 @@ internal sealed class NestedDispatchSpaTestApplication : IDisposable
         ];
       });
     services.AddSingleton<IApiService>(Api);
-    services.RemoveAll<INotificationHandler<TimeWarp.Features.StateTransactions.ExceptionNotification>>();
+    services.AddSingleton<IPublisher<ClientPipeline>, NoOpPublisher>();
+    services.AddScoped<NestedDispatchProbeState.UpdateActionSet.Handler>();
+    services.AddScoped<NestedDispatchProbeState.FetchActionSet.Handler>();
+    services.AddScoped<ISender<ClientPipeline>, ProbeSender>();
+    // Generated Publisher_ClientPipeline resolves ExceptionNotificationHandler by concrete
+    // type. This probe does not publish ExceptionNotification.
     ServiceProvider = services.BuildServiceProvider();
   }
 
@@ -213,4 +222,55 @@ internal sealed class NestedDispatchSpaTestApplication : IDisposable
       disposable.Dispose();
     }
   }
+}
+
+internal sealed class NoOpPublisher : IPublisher<ClientPipeline>
+{
+  public Task Publish(object notification, CancellationToken cancellationToken = default) =>
+    Task.CompletedTask;
+
+  public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
+    where TNotification : INotification =>
+    Task.CompletedTask;
+}
+
+internal sealed class ProbeSender(IServiceProvider ServiceProvider) : ISender<ClientPipeline>
+{
+  public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
+    where TRequest : IRequest
+  {
+    if (request is NestedDispatchProbeState.UpdateActionSet.Action update)
+    {
+      return ServiceProvider
+        .GetRequiredService<NestedDispatchProbeState.UpdateActionSet.Handler>()
+        .Handle(update, cancellationToken)
+        .AsTask();
+    }
+
+    if (request is NestedDispatchProbeState.FetchActionSet.Action fetch)
+    {
+      return ServiceProvider
+        .GetRequiredService<NestedDispatchProbeState.FetchActionSet.Handler>()
+        .Handle(fetch, cancellationToken)
+        .AsTask();
+    }
+
+    throw new InvalidOperationException($"Unexpected request type {typeof(TRequest).FullName}.");
+  }
+
+  public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) =>
+    throw new NotSupportedException();
+
+  public Task<object?> Send(object request, CancellationToken cancellationToken = default) =>
+    throw new NotSupportedException();
+
+  public IAsyncEnumerable<TResponse> CreateStream<TResponse>(
+    IStreamRequest<TResponse> request,
+    CancellationToken cancellationToken = default) =>
+    throw new NotSupportedException();
+
+  public IAsyncEnumerable<object?> CreateStream(
+    object request,
+    CancellationToken cancellationToken = default) =>
+    throw new NotSupportedException();
 }

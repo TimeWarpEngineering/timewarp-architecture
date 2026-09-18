@@ -15,7 +15,7 @@ namespace TimeWarp.Architecture.Features;
 /// Base Handler that makes it easy to access state
 /// </summary>
 /// <typeparam name="TAction"></typeparam>
-internal abstract partial class BaseHandler<TAction> : ActionHandler<TAction>
+internal abstract partial class BaseHandler<TAction> : StateActionHandler<TAction>
   where TAction : IAction
 {
   /// <summary>

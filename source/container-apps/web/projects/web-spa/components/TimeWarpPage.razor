@@ -119,7 +119,7 @@
        height: var(--layout-footer-height); the variable is overridden below. *@
     <FluentLayoutItem Area="LayoutArea.Footer">
       <footer class="twe-footer">
-        <span class="twe-footer__mode">@CurrentRenderMode</span>
+        <span class="twe-footer__mode">@RendererInfo.Name</span>
         <FluentSpacer />
         <FluentSpinner Visible=@ActionTrackingState.IsActive Size="SpinnerSize.Tiny" />
         <FluentSpacer />

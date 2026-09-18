@@ -14,7 +14,7 @@ global using FluentValidation.Results;
 global using Grpc.Net.Client.Web;
 global using Grpc.Net.Client;
 global using TimeWarp.Mediator;
-global using TimeWarp.Mediator.Pipeline;
+
 global using Microsoft.AspNetCore.Authorization;
 global using Microsoft.AspNetCore.Components.Forms;
 global using Microsoft.AspNetCore.Components.Web;
@@ -79,6 +79,7 @@ global using TimeWarp.Architecture.Features.Profiles;
 global using TimeWarp.Architecture.Features.AgentLinks;
 global using TimeWarp.Architecture.Hubs;
 global using TimeWarp.Architecture.Pipeline.NotificationPostProcessor;
+global using TimeWarp.Architecture.Pipeline.NotificationPreProcessor;
 global using TimeWarp.Architecture.Services;
 global using TimeWarp.Features.ActionTracking;
 global using TimeWarp.Features.StateTransactions;

@@ -102,15 +102,21 @@ public static class Program
     serviceCollection.AddBlazoredLocalStorage();
 
     ConfigureSettings(serviceCollection, configuration);
+    // AddTimeWarpState no longer registers a mediator. State 12.0.0-beta.3 scopes store
+    // handlers to ClientPipeline; this host owns the generator call.
+    serviceCollection.AddWebSpaGeneratedMediator();
     serviceCollection.AddTimeWarpState
     (
       timeWarpStateOptions =>
       {
-//-:cnd:noEmit
-#if ReduxDevToolsEnabled
+        // Always register. TimeWarp.State's generated mediator links CommitHandler, which
+        // requires ReduxDevToolsInterop / IReduxDevToolsStore / ReduxDevToolsOptions.
+        // Development ValidateOnBuild (in-proc test hosts and `dotnet run` Development)
+        // fails without them. The <ReduxDevTools/> component and InitAsync stay
+        // ReduxDevToolsEnabled (Debug) so Release prerender does not render the
+        // component; without InitAsync, Interop.IsEnabled stays false and dispatch is a
+        // no-op.
         timeWarpStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
-#endif
-//+:cnd:noEmit
 
         timeWarpStateOptions.Assemblies =
           new[]
@@ -122,14 +128,16 @@ public static class Program
       }
     );
 
+    // Plus [assembly: MediatorAssembly] links LoadPersistentStateRequestHandler and
+    // StateInitializedNotificationHandler, which require IPersistenceService.
+    serviceCollection.AddScoped<TimeWarp.Features.Persistence.IPersistenceService, TimeWarp.Features.Persistence.PersistenceService>();
+
     // Form validation uses Blazilla (FluentValidation for EditForm). Components pass an explicit
     // validator instance (e.g. <FluentValidator Validator="new RoleDetailsValidator()"/>), so no
     // DI registration is required here. (Replaced the deprecated Blazored / unwired Morris path.)
 
     serviceCollection.AddScoped<ChatHubConnection>();
     serviceCollection.AddScoped<PasskeyCeremonyClient>();
-    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(ActiveActionBehavior<,>));
-    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(TrackEventBehavior<,>));
 
     // We are using a factory here to explicitly determine which constructor to use for DI.
     serviceCollection.AddScoped<IWebServerApiService>

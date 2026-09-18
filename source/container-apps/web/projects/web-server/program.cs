@@ -296,17 +296,9 @@ public partial class Program : IAspNetProgram
       serviceCollection.AddScoped<AuthenticationStateProvider, HostedIdentitySessionAuthenticationStateProvider>();
     }
 
-    serviceCollection
-      .AddMediator
-      (
-        mediatorServiceConfiguration =>
-          mediatorServiceConfiguration.RegisterServicesFromAssemblies
-          (
-            typeof(TimeWarp.Architecture.Web.Server.IAssemblyMarker).GetTypeInfo().Assembly,
-            typeof(TimeWarp.Architecture.Web.Application.IAssemblyMarker).GetTypeInfo().Assembly
-          )
-      );
-    serviceCollection.AddScoped(typeof(IPipelineBehavior<,>), typeof(FluentValidationBehavior<,>));
+    // Unique wrapper: web-server references Web.Spa, whose generated AddGeneratedMediator
+    // would CS0121 with a second generator in this compilation (Mediator issue 63).
+    serviceCollection.AddWebApplicationGeneratedMediator();
 
     CommonServerModule.AddOpenApi(serviceCollection, ApiVersion, ApiTitle);
   }

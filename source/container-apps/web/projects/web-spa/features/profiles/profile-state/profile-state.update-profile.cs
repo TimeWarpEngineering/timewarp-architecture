@@ -18,10 +18,10 @@ using static UpdateProfile;
 
 partial class ProfileState
 {
-  internal static class UpdateProfileActionSet
+  public static class UpdateProfileActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Command Command { get; }
 
@@ -36,8 +36,9 @@ partial class ProfileState
       IStore store,
       IWebServerApiService webServerApiService,
       ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher,
       NavigationManager navigationManager
-    ) : DefaultApiHandler<Action, Command, Response>(store, webServerApiService, logger)
+    ) : DefaultApiHandler<Action, Command, Response>(store, webServerApiService, logger, publisher)
     {
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken) =>
         Task.FromResult<Command?>(action.Command);

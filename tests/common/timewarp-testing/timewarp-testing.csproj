@@ -11,7 +11,8 @@
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-    <PackageReference Include="TimeWarp.Mediator" />
+    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Testcontainers.PostgreSql" />
     <!-- Lift transitive SSH.NET 2025.1.0 → 2026.0.0 (NU1903 / GHSA-q939-rpr3-3284). -->
     <PackageReference Include="SSH.NET" />

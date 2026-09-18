@@ -21,7 +21,7 @@ internal abstract class AuthenticatedHandler<TAction> : BaseHandler<TAction>
     AuthenticationStateProvider = authenticationStateProvider;
   }
 
-  public sealed override async Task Handle(TAction action, CancellationToken cancellationToken)
+  public sealed override async ValueTask Handle(TAction action, CancellationToken cancellationToken)
   {
     if (await IsUserAuthenticatedAsync())
     {

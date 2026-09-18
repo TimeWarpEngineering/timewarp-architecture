@@ -26,7 +26,7 @@ partial class PrincipalState
   public static class SetRoleSelectedActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Guid PrincipalId { get; }
       public Guid RoleId { get; }
@@ -42,7 +42,7 @@ partial class PrincipalState
 
     internal class Handler(IStore store) : BaseHandler<Action>(store)
     {
-      public override Task Handle(Action action, CancellationToken cancellationToken)
+      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         if (!PrincipalState.DraftRoleIds.TryGetValue(action.PrincipalId, out HashSet<Guid>? set))
         {
@@ -59,7 +59,7 @@ partial class PrincipalState
           set.Remove(action.RoleId);
         }
 
-        return Task.CompletedTask;
+        return default;
       }
     }
   }
@@ -67,7 +67,7 @@ partial class PrincipalState
   public static class SetPrincipalRolesActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Guid PrincipalId { get; }
 
@@ -86,8 +86,9 @@ partial class PrincipalState
         IStore store,
         IWebServerApiService webServerApiService,
         ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher,
         AuthenticationStateProvider authenticationStateProvider)
-        : base(store, webServerApiService, logger)
+        : base(store, webServerApiService, logger, publisher)
       {
         AuthenticationStateProvider = authenticationStateProvider;
       }

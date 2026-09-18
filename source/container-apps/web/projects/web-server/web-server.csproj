@@ -35,7 +35,7 @@
   <ItemGroup Label="Core">
     <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
-    <PackageReference Include="TimeWarp.Mediator" />
+    <PackageReference Include="TimeWarp.Mediator.Contracts" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />

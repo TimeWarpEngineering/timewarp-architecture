@@ -19,10 +19,10 @@ using TimeWarp.Foundation.Types;
 
 partial class CredentialsState
 {
-  internal static class AddExistingPasskeyActionSet
+  public static class AddExistingPasskeyActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction;
+    public sealed class Action : IBaseAction;
 
     internal sealed class Handler : BaseHandler<Action>
     {
@@ -40,7 +40,7 @@ partial class CredentialsState
         JsRuntime = jsRuntime;
       }
 
-      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         CredentialsState.CeremonyError = null;
         CredentialsState.StatusMessage = null;

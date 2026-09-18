@@ -20,28 +20,28 @@
          itself uses project refs). Per task-124 policy, these pins equal the release <Version> and
          bump in the same commit as it — packages and template publish together in one release run,
          so pins always reference versions that exist by the time a generated app restores. -->
-    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.19" />
-    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.19" />
-    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.19" />
-    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.19" />
-    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.19" />
-    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.19" />
+    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.20" />
+    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.20" />
+    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.20" />
+    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.20" />
+    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.20" />
+    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.20" />
     <!-- Analyzer/generator packages (task 092). Package IDs composed via properties so template
          sourceName cannot rewrite them (task 115). Per task-124 policy, these pins equal the
          release <Version> and bump in the same commit as it. -->
-    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.19" />
-    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.19" />
-    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.19" />
+    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.20" />
+    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.20" />
+    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.20" />
     <!-- TimeWarp.Identity has been published since 2.0.0-beta.6 (task 124). Per task-124 policy,
          this pin equals the release <Version> and bumps in the same commit as it, same as the
          TimeWarp.Foundation.* and analyzer/generator pins above. This pin is inert for this
          repo/CI (UseIdentityPackages resolves to ProjectReference mode when identity source is
          present) and only matters for package-mode consumers (generated apps always package-mode). -->
-    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.19" />
+    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.20" />
     <!-- TimeWarp.402: packed by the release run (workflow-command.cs) and template-smoke's local
          feed; first nuget.org publish rides the next release. Same task-124 pin policy as
          TimeWarp.Identity above — equals <Version>, bumps in the same commit (task 104-035). -->
-    <PackageVersion Include="TimeWarp.402" Version="2.0.0-beta.19" />
+    <PackageVersion Include="TimeWarp.402" Version="2.0.0-beta.20" />
     <PackageVersion Include="TimeWarp.Multiavatar" Version="1.0.0-beta.13" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
@@ -108,7 +108,9 @@
          to parse attestationObject/authenticatorData COSE keys. timewarp-identity is a plain
          library (no FrameworkReference to the shared framework), so it needs the explicit package. -->
     <PackageVersion Include="System.Formats.Cbor" Version="10.0.11" />
-    <PackageVersion Include="TimeWarp.Mediator" Version="13.0.0" />
+    <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.1" />
+    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.1" />
+    <PackageVersion Include="TimeWarp.Mediator.Analyzers" Version="14.0.0-beta.1" />
     <PackageVersion Include="FastEndpoints" Version="8.3.0" />
     <PackageVersion Include="FastEndpoints.OpenApi" Version="8.3.0" />
     <!-- FastEndpoints.OpenApi / Microsoft.AspNetCore.OpenApi 10.0.x transitively pull
@@ -139,8 +141,8 @@
     <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="7.0.1" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.2.0" />
     <PackageVersion Include="Blazilla" Version="2.4.1" />
-    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.1" />
-    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.1" />
+    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.3" />
+    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.3" />
     <PackageVersion Include="timewarp-heroicons" Version="2.2.0" />
     <PackageVersion Include="timewarp-simple-icons" Version="16.27.1" />
   </ItemGroup>

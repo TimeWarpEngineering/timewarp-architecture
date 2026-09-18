@@ -3,38 +3,44 @@
 #endregion
 
 #region Design
-// Bridges the mediator pre-processor stage to pub/sub notifications so cross-cutting observers
-// (event stream, dev tooling, diagnostics) can react to any action without each handler opting in.
-// Constrained to IAction: plain mediator requests bypass this hook, keeping the fan-out limited to
-// state actions where such observation is meaningful.
+// Bridges the mediator pipeline to pub/sub so observers can react to any action without each
+// handler opting in. Constrained to IAction. IPipelineBehavior (not IRequestPreProcessor) so
+// the generated mediator can weave it via [assembly: MediatorBehavior]. Parameter must be
+// named next. Public because generated closed types reference this type by name.
 #endregion
 
 namespace TimeWarp.Architecture.Pipeline.NotificationPreProcessor;
 
-internal class PrePipelineNotificationRequestPreProcessor<TRequest> : IRequestPreProcessor<TRequest> where TRequest : IAction
+public class PrePipelineNotificationRequestPreProcessor<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+  where TRequest : notnull, IAction
 {
   private readonly ILogger Logger;
-
-  private readonly IPublisher Publisher;
+  private readonly IPublisher<ClientPipeline> Publisher;
 
   public PrePipelineNotificationRequestPreProcessor
   (
-    ILogger<PrePipelineNotificationRequestPreProcessor<TRequest>> logger,
-    IPublisher publisher
+    ILogger<PrePipelineNotificationRequestPreProcessor<TRequest, TResponse>> logger,
+    IPublisher<ClientPipeline> publisher
   )
   {
     Logger = logger;
     Publisher = publisher;
   }
 
-  public Task Process(TRequest request, CancellationToken cancellationToken)
+  public async Task<TResponse> Handle
+  (
+    TRequest request,
+    RequestHandlerDelegate<TResponse> next,
+    CancellationToken cancellationToken
+  )
   {
-    var notification = new PrePipelineNotification<TRequest>
+    var notification = new PrePipelineNotification
     {
       Request = request,
     };
 
     Logger.LogDebug("PrePipelineNotificationRequestPreProcessor");
-    return Publisher.Publish(notification, cancellationToken);
+    await Publisher.Publish(notification, cancellationToken);
+    return await next(cancellationToken);
   }
 }

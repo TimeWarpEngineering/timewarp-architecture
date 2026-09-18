@@ -20,12 +20,11 @@ global using OneOf;
 global using OneOf.Types;
 global using System.IO;
 global using System.Net.Mime;
-global using System.Reflection;
 global using System.Threading;
 global using System.Threading.Tasks;
 
 // Solution usings
-global using TimeWarp.Foundation.Behaviors;
+global using TimeWarp.Architecture.Web.Application;
 global using TimeWarp.Architecture.Abstractions;
 global using TimeWarp.Architecture.Authorization;
 global using TimeWarp.Architecture.Payment;

@@ -17,10 +17,10 @@ using static GetProfile;
 
 partial class ProfileState
 {
-  internal static class FetchProfileDataActionSet
+  public static class FetchProfileDataActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction;
+    public sealed class Action : IBaseAction;
 
     internal sealed class Handler : DefaultApiHandler<Action, Query, Response>
     {
@@ -29,9 +29,10 @@ partial class ProfileState
         IStore store,
         IWebServerApiService webServerApiService,
         ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher,
         IValidator<Query>? validator = null,
         AuthenticationStateProvider? authenticationStateProvider = null
-      ) : base(store, webServerApiService, logger, validator, authenticationStateProvider) {}
+      ) : base(store, webServerApiService, logger, publisher, validator, authenticationStateProvider) {}
 
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {

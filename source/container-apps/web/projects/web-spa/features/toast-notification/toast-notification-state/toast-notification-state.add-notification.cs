@@ -15,7 +15,7 @@ partial class ToastNotificationState
 {
 
   // Named ...ActionSet so the TimeWarp.State ActionSetMethodSourceGenerator emits a strongly-typed
-  // dispatcher: `ToastNotificationState.AddNotification(intent, title)` — matching AddProblemDetailsActionSet.
+  // dispatcher: `ToastNotificationState.AddNotification(intent, title)`.
   public static class AddNotificationActionSet
   {
     public sealed class Action : IBaseAction
@@ -41,7 +41,7 @@ partial class ToastNotificationState
     ) : BaseHandler<Action>(store)
     {
 
-      public override async Task Handle
+      public override async ValueTask Handle
       (
         Action action,
         CancellationToken cancellationToken

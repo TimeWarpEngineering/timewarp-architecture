@@ -25,10 +25,10 @@ using TimeWarp.Foundation.Types;
 
 partial class CredentialsState
 {
-  internal static class AddPasskeyActionSet
+  public static class AddPasskeyActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Action()
       {
@@ -61,7 +61,7 @@ partial class CredentialsState
         AuthenticationStateProvider = authenticationStateProvider;
       }
 
-      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         CredentialsState.CeremonyError = null;
         CredentialsState.StatusMessage = null;

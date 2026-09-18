@@ -12,10 +12,10 @@ using static DenyAgentHumanLink;
 
 partial class AgentLinksState
 {
-  internal static class DenyActionSet
+  public static class DenyActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction
+    public sealed class Action : IBaseAction
     {
       public Guid LinkId { get; }
 
@@ -30,8 +30,9 @@ partial class AgentLinksState
       public Handler(
         IStore store,
         IWebServerApiService webServerApiService,
-        ILogger<Handler> logger)
-        : base(store, webServerApiService, logger)
+        ILogger<Handler> logger,
+      IPublisher<ClientPipeline> publisher)
+        : base(store, webServerApiService, logger, publisher)
       {
       }
 

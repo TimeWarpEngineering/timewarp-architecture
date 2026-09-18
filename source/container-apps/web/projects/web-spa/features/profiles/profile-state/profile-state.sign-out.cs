@@ -27,10 +27,10 @@ using TimeWarp.Architecture.Services;
 
 partial class ProfileState
 {
-  internal static class SignOutActionSet
+  public static class SignOutActionSet
   {
     [TrackAction]
-    internal sealed class Action : IBaseAction;
+    public sealed class Action : IBaseAction;
 
     // Opt-out must sit on the containing type of the reference (Handler), not outer ProfileState —
     // TWA0009 walks the innermost type declaration (see SliceIsolationAnalyzer.GetContainingType).
@@ -55,7 +55,7 @@ partial class ProfileState
         NavigationManager = navigationManager;
       }
 
-      public override async Task Handle(Action action, CancellationToken cancellationToken)
+      public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         try
         {

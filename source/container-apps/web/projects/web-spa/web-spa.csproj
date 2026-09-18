@@ -70,8 +70,14 @@
     </PackageReference>
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
     <PackageReference Include="Blazilla"/>
-    <PackageReference Include="TimeWarp.State" />
+    <!-- contentFiles is only the package tsconfig.json (tsc 6 options). TypeScript.MSBuild 7
+         compiles every Content tsconfig; do not ship that file into generated apps.
+         Static web assets stay (they are not contentFiles). Avoid percent-delimited template
+         tokens in this csproj — they are stripped by dotnet new. -->
+    <PackageReference Include="TimeWarp.State" ExcludeAssets="contentFiles" />
     <PackageReference Include="TimeWarp.State.Plus"/>
+    <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="all" />
+    <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Timewarp.OptionsValidation"/>
     <PackageReference Include="protobuf-net.Grpc"/>
     <PackageReference Include="timewarp-heroicons"/>
