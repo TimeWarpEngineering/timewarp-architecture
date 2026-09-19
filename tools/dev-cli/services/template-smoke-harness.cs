@@ -24,6 +24,8 @@
 // Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
 // AssertSkillsShipped: generated apps must contain the eight skills/*/SKILL.md files and must
 // not contain any analysis/ directory under skills/ (pack exclude).
+// Task 240: AssertInitializerImportGraphResolves (partial in template-smoke-initializer-assets.cs)
+// after the generated solution build — host-free `_content` → NuGet staticwebassets file check.
 #endregion
 
 namespace DevCli.Services;

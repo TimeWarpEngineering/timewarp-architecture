@@ -1,6 +1,6 @@
-declare module "/_content/TimeWarp.State/js/TimeWarpState.*" {
+declare module "/_content/TimeWarp.State/js/timewarp-state.*" {
   import { DotNetReference } from "./dot-net-reference.js";
-  import { ReduxDevTools } from "/_content/TimeWarp.State/js/ReduxDevTools.*";
+  import { ReduxDevTools } from "/_content/TimeWarp.State/js/redux-dev-tools.*";
 
   export declare class TimeWarpState {
     jsonRequestHandler: DotNetReference;

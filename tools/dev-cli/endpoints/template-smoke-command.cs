@@ -30,6 +30,8 @@
 // family tracks however many co-located Jaribu runfiles exist there at generation time (do not
 // hardcode a tally here — it drifts as tests are added). Aggregators are also not in .slnx, so
 // solution build is blind to multi-mode compile + MTP discovery.
+// Task 240: after the generated solution build, AssertInitializerImportGraphResolves walks
+// web.spa.lib.module.js static `_content` imports against the NuGet cache (no server).
 #endregion
 
 namespace DevCli.Commands;
@@ -338,12 +340,18 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
       if (!buildOk)
         return false;
 
+      if (outputDirForTier2 is null)
+        return false;
+
+      // Task 240: generated SPA initializer `_content` specifiers must exist in the NuGet cache
+      // (State.Plus kebab-case rename). Host-free; the HTTP graph smoke lives in web-server tests.
+      if (!Harness.AssertInitializerImportGraphResolves(outputDirForTier2))
+        return false;
+
       // Tier 2 (authoritative): `dotnet run` each generated co-located test standalone and
       // confirm it actually passes end to end post-generation (task 135). Runs after the solution
       // build succeeds — the co-located files compile into no layer project, so the solution
       // build itself is structurally blind to them; this is the only step that runs them standalone.
-      if (outputDirForTier2 is null)
-        return false;
 
       if (!await Harness.AssertCoLocatedTestFilesRunAsync(outputDirForTier2, excludedFamilies, Ct))
         return false;

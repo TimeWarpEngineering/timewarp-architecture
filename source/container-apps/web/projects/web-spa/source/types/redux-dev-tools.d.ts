@@ -1,4 +1,4 @@
-declare module "/_content/TimeWarp.State/js/ReduxDevTools.*" {
+declare module "/_content/TimeWarp.State/js/redux-dev-tools.*" {
   import { TimeWarpState } from './time-warp-state.js';
   type Config = any;
   type ConnectResponse = any;

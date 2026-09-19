@@ -1,7 +1,7 @@
 // Counter.ts — demonstrates dispatching a TimeWarp.State action from JavaScript.
 // Exposed as window.Spa.Counter; called by features/counter/pages/CounterPage.razor.
 // Plain object (not a class) so Blazor's string-identifier JS interop can traverse the path.
-import { timeWarpState } from "/_content/TimeWarp.State/js/TimeWarpState.js";
+import { timeWarpState } from "/_content/TimeWarp.State/js/timewarp-state.js";
 
 export const Counter = {
   DispatchIncrementCountAction: () => {

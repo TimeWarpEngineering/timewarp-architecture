@@ -12,7 +12,7 @@ public static class JavaScriptInteropConstants
   /// <summary>
   /// The name of the JavaScript function to download a file from a stream.
   /// This constant must match the function name defined in your JavaScript file.
-  /// JavaScript file location: wwwroot/js/downloadFile.js
+  /// JavaScript file location: _content/TimeWarp.State.Plus/js/download-file.js
   /// </summary>
   public const string DownloadFileFromStreamFunction = "downloadFileFromStream";
 }
