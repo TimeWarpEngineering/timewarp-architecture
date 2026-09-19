@@ -10,16 +10,18 @@
 // clean tree still tags this initializer; web-server fails the build if the host list omits it.
 // Passkey C# does not use window.Spa (on-demand import of web-authn.js). Counter still does
 // (Spa.Counter.*), so a missed initializer remains a failed build rather than a silent skip.
+// Task 240: static `_content` specifiers must match the kebab-case files shipped by
+// TimeWarp.State / TimeWarp.State.Plus 12.0.0-beta.3 (a PascalCase miss 404s the whole module).
 // https://learn.microsoft.com/aspnet/core/blazor/fundamentals/startup
 // #endregion
 
 import { Spa } from "./spa.js";
-import { log, LogAction } from "/_content/TimeWarp.State/js/Logger.js";
+import { log, LogAction } from "/_content/TimeWarp.State/js/logger.js";
 import {
   TimeWarpStateName,
   InitializeJavaScriptInteropName,
-} from "/_content/TimeWarp.State/js/Constants.js";
-import "/_content/TimeWarp.State.Plus/js/downloadFile.js";
+} from "/_content/TimeWarp.State/js/constants.js";
+import "/_content/TimeWarp.State.Plus/js/download-file.js";
 
 // At this point Blazor is not yet initialized; attach the items you want on window here.
 function initializeEnvironment() {

@@ -1,5 +1,5 @@
 import type { Spa } from "../spa.js";
-import type { TimeWarpState } from "/_content/TimeWarp.State/js/TimeWarpState.js";
+import type { TimeWarpState } from "/_content/TimeWarp.State/js/timewarp-state.js";
 interface BlazorMethodReference {
   invokeMethodAsync: (methodName: string, ...args: unknown[]) => Promise<void>;
 }

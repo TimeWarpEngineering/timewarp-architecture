@@ -1,4 +1,4 @@
-declare module "/_content/TimeWarp.State/js/Logger.*" {
+declare module "/_content/TimeWarp.State/js/logger.*" {
   export declare interface LogStyles {
     info: string;
     success: string;
