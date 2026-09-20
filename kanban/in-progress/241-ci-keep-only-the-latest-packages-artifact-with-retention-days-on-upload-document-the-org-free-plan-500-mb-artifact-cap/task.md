@@ -34,6 +34,7 @@ run at the tagged commit (HEAD at cut time). Break-glass resume regenerates it w
 - [x] releasing guide + tw-release note on the cap and the rerun remedy
 - [ ] PR run artifact `expires_at` verified ≈ created_at + 3 days
 - [x] `ganda repo audit` — no new failures vs origin/master (pre-existing Errors remain)
+- [x] implementation review disposition `clean` (effort 1, 2 rounds; M1 fixed on this id)
 
 ## Session
 
@@ -41,6 +42,7 @@ run at the tagged commit (HEAD at cut time). Break-glass resume regenerates it w
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementation: grok task-work implementer (2026-09-20)
 - Implementer re-entry (ganda task-work): grok (2026-09-20) — remaining product: correct the releasing-guide pack path; refresh Results
+- Review oracle: grok session 01a0bcda-bdce-71a2-b8b6-97cbb3e814e1 (2026-09-20) — effort 1, general; M1 fixed on this id; disposition clean
 
 ## Notes
 
@@ -56,6 +58,21 @@ run at the tagged commit (HEAD at cut time). Break-glass resume regenerates it w
 - `AGENTS.md` Documentation section names that maintainer guide and lists **`tw-release`** among cross-repo skills. `.template.config/template.json` excludes `documentation/**` so a clone-based `dotnet new` does not ship it (the nupkg already packs only source/tests/msbuild/skills/root files).
 - `ganda repo audit` (this worktree): kebab-path-names and workflow-file pass. Failures vs origin/master: same `runfile-executable` (26), `runfile-shebang` (done-kanban research runfile), `memsearch-scaffold`, `vscode-window-icon`, plus this worktree missing `bin/dev` (master worktree has it). Not auto-fixed: out of this task's scope.
 - `expires_at` cannot be confirmed until a CI run actually uploads a `Packages-*` artifact (host `open-pr`). PR/merge may no-op the upload (`if-no-files-found: ignore`). Then query the API as in How to validate.
+- Review fix (`33b35648`): expired-artifact subsection now states this repo packs on `release:published` (cut >3 days after merge is fine here; a merge CI rerun still would not produce `Packages-*`) and scopes `gh run rerun <ci-run-id>` to the org-wide **`tw-release`** locate-run path.
+
+### Review disposition
+
+- **Rounds:** 2 · **Effort:** 1 · **Roster:** general
+- **Counts (final):** bug 0 open / 0 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0 / 0 / 0
+- **Disposition:** `clean` — M1 fixed on this task id; no wontfix; no escalation
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/round-2/general.md`
+  - `review/round-2/merged.md`
+  - `review/disposition.md`
+- **Wontfix / escalations:** none. Fix loop stayed on this task id (no sibling apply-review task).
 
 ### How to validate
 
@@ -79,5 +96,5 @@ gh api repos/TimeWarpEngineering/timewarp-architecture/actions/artifacts \
 **Expect**
 
 - Exactly one `upload-artifact` step; `retention-days: 3`; name still `Packages-${{ github.run_number }}`.
-- `documentation/developer/guides/releasing.md` states the 500 MB Free-plan cap, 3-day retention, and `gh run rerun <ci-run-id>` as the remedy when cutting more than 3 days after merge.
+- `documentation/developer/guides/releasing.md` states the 500 MB Free-plan cap, 3-day retention, that this repo packs on `release:published` (cut >3 days after merge is fine here), and `gh run rerun <ci-run-id>` as the org-wide locate-run expired-artifact remedy.
 - If a `Packages-*` row exists for that run: `expires_at` ≈ `created_at` + 3 days (GitHub may round to the hour). If the upload no-ops because no nupkgs were packed, there is no row; the same `retention-days: 3` applies on the next release-mode pack that does upload.
