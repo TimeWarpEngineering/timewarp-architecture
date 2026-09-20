@@ -40,6 +40,7 @@ run at the tagged commit (HEAD at cut time). Break-glass resume regenerates it w
 - Created: cockpit (2026-09-20)
 - Claude Code cockpit session: https://claude.ai/code/session_01KPZXyAmA6Vk99W1yUQUn1N
 - Implementation: grok task-work implementer (2026-09-20)
+- Implementer re-entry (ganda task-work): grok (2026-09-20) — remaining product: correct the releasing-guide pack path; refresh Results
 
 ## Notes
 
@@ -50,19 +51,25 @@ run at the tagged commit (HEAD at cut time). Break-glass resume regenerates it w
 
 ## Results
 
-- `.github/workflows/workflow.yml` "Upload Artifacts" (`Packages-${{ github.run_number }}`) now sets `retention-days: 3`. Naming is unchanged. This workflow has no other `upload-artifact` steps; the YAML comment records `retention-days: 1` for any future diagnostic upload.
-- Added maintainer guide `documentation/developer/guides/releasing.md`: Free-plan 500 MB org cap, 3-day Packages retention, and `gh run rerun <ci-run-id>` as the expired/missing-artifact remedy (cross-link to **`tw-release`**, which does not live in this repo).
-- `AGENTS.md` Documentation section now names that maintainer guide and lists **`tw-release`** among cross-repo skills. `.template.config/template.json` excludes `documentation/**` so a clone-based `dotnet new` does not ship it (the nupkg already packs only source/tests/msbuild/skills/root files).
-- `ganda repo audit`: kebab-path-names and workflow-file pass. Failures match origin/master (`runfile-executable` 26 files, `runfile-shebang` on a done-kanban research runfile, `memsearch-scaffold`, `vscode-window-icon`) plus this worktree missing `bin/dev`. Not auto-fixed: those files are out of this task's scope.
-- `expires_at` cannot be confirmed until the PR CI run uploads a `Packages-*` artifact (host `open-pr`). Then query the API as in How to validate.
+- `.github/workflows/workflow.yml` "Upload Artifacts" (`Packages-${{ github.run_number }}`) sets `retention-days: 3`. Naming is unchanged. This workflow has no other `upload-artifact` steps; the YAML comment records `retention-days: 1` for any future diagnostic upload.
+- Maintainer guide `documentation/developer/guides/releasing.md`: Free-plan 500 MB org cap, 3-day Packages retention, and `gh run rerun <ci-run-id>` as the expired/missing-artifact remedy (cross-link to **`tw-release`**, which does not live in this repo). The guide states that PR/merge `dev workflow` is clean → build → test (no pack); a `Packages-*` blob is created only when `artifacts/packages/*.nupkg` exists (release-mode pack).
+- `AGENTS.md` Documentation section names that maintainer guide and lists **`tw-release`** among cross-repo skills. `.template.config/template.json` excludes `documentation/**` so a clone-based `dotnet new` does not ship it (the nupkg already packs only source/tests/msbuild/skills/root files).
+- `ganda repo audit` (this worktree): kebab-path-names and workflow-file pass. Failures vs origin/master: same `runfile-executable` (26), `runfile-shebang` (done-kanban research runfile), `memsearch-scaffold`, `vscode-window-icon`, plus this worktree missing `bin/dev` (master worktree has it). Not auto-fixed: out of this task's scope.
+- `expires_at` cannot be confirmed until a CI run actually uploads a `Packages-*` artifact (host `open-pr`). PR/merge may no-op the upload (`if-no-files-found: ignore`). Then query the API as in How to validate.
 
 ### How to validate
 
 **Smoke**
 
-1. `rg -n "retention-days|upload-artifact" .github/workflows/workflow.yml` — exactly one upload step, `retention-days: 3`, name still `Packages-${{ github.run_number }}`.
-2. `ganda repo audit` — no new failures vs origin/master.
-3. After the PR CI `ci` job completes:
+1. From the task worktree:
+
+```bash
+rg -n "retention-days|upload-artifact|Packages-" .github/workflows/workflow.yml
+```
+
+2. `ganda repo audit` — no new failures vs origin/master besides this worktree missing `bin/dev`.
+
+3. After host `open-pr`, when the PR `ci` job finishes:
 
 ```bash
 gh api repos/TimeWarpEngineering/timewarp-architecture/actions/artifacts \
@@ -71,5 +78,6 @@ gh api repos/TimeWarpEngineering/timewarp-architecture/actions/artifacts \
 
 **Expect**
 
-- The PR run's `Packages-*` row has `expires_at` ≈ `created_at` + 3 days (GitHub may round to the hour).
+- Exactly one `upload-artifact` step; `retention-days: 3`; name still `Packages-${{ github.run_number }}`.
 - `documentation/developer/guides/releasing.md` states the 500 MB Free-plan cap, 3-day retention, and `gh run rerun <ci-run-id>` as the remedy when cutting more than 3 days after merge.
+- If a `Packages-*` row exists for that run: `expires_at` ≈ `created_at` + 3 days (GitHub may round to the hour). If the upload no-ops because no nupkgs were packed, there is no row; the same `retention-days: 3` applies on the next release-mode pack that does upload.

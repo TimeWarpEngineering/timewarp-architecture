@@ -19,16 +19,19 @@ source version newer than the latest GitHub release tag before a cut.
 ## Normal flow
 
 1. Merge the version-bump PR. Master `push` runs `.github/workflows/workflow.yml`
-   (`dev workflow`: clean → build → test). The template project's
-   `GeneratePackageOnBuild` writes `.nupkg` files to `artifacts/packages/`.
+   (`dev workflow`: clean → build → test). That path does **not** pack. The
+   `Upload Artifacts` step uses `if-no-files-found: ignore`, so a `Packages-*`
+   blob is created only when `artifacts/packages/*.nupkg` already exists.
 2. From a **clean, synced master** worktree: `dev release --dry-run`, then
    `dev release`. That tags `v{Version}` and creates the GitHub Release.
 3. The `release:published` event runs the same workflow in release mode
-   (`dev workflow` with the OIDC NuGet API key): clean → build → pack → push →
-   template-publish-smoke. This repo currently **rebuilds and packs** on the
-   release run rather than downloading the merge artifact. The merge-run
-   `Packages-*` upload is still required for quota-aware CI and for the
-   org-wide promotion path documented in **`tw-release`**.
+   (`dev workflow` with the OIDC NuGet API key): clean → build → **pack** →
+   push → template-publish-smoke. Pack writes `.nupkg` files to
+   `artifacts/packages/`; the upload step then stores them as
+   `Packages-${{ github.run_number }}`. This repo **rebuilds and packs** on
+   the release run rather than downloading a merge artifact. The org-wide
+   promotion path (locate-run → download-artifact) is documented in
+   **`tw-release`**.
 
 Break-glass and trusted-publishing probe: **`tw-release`**.
 
@@ -42,9 +45,9 @@ from this repo and sibling repos have already exhausted that cap
 
 This workflow's `Upload Artifacts` step (`actions/upload-artifact@v4`, name
 `Packages-${{ github.run_number }}` — **do not rename**; locate-run matches
-that prefix) sets `retention-days: 3`. Three days is the org minimum of 1
-plus a weekend between merge and cut. Any future diagnostic upload (smoke
-logs, test results) must use `retention-days: 1`.
+that prefix) sets `retention-days: 3` (org minimum is 1; 3 leaves a weekend
+between merge and cut). Any future diagnostic upload (smoke logs, test
+results) must use `retention-days: 1`.
 
 ### Expired or missing `Packages-*` artifact
 

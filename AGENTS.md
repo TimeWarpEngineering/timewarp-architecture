@@ -366,7 +366,7 @@ does not ship). The timewarp.software copy is discovery/always-latest; both come
 from the same release commit.
 
 `documentation/` is **maintainer-only** and is not packed into the template
-(generated apps still have no `documentation/` tree). It currently holds
+(generated apps have no `documentation/` tree). It holds
 `documentation/developer/guides/releasing.md` (artifact retention, Free-plan
 cap, `dev release` cut). Operator sequence is the cross-repo **`tw-release`**
 skill.
