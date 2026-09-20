@@ -16,6 +16,7 @@ the http cluster). Also covers the Development cluster https→http change made 
 - [x] Test host that boots standalone yarp + web-server with test config
 - [x] Facts: generated prefix routes reach Web.Server (200/401-not-404); foreign-Host ok
 - [x] Runs in dev test (respect fixed-port discipline)
+- [x] Implementation review disposition (clean, 0 open)
 
 ## Notes
 
@@ -27,6 +28,7 @@ In-proc lane (not Aspire): `HostGraphFactory.CreateWebYarpAsync` boots Web then 
 
 - Implementer: grok session 01a0bfca-5613-7d82-8ab4-1b60bb37b3ed (2026-09-21)
 - Implementer: grok session 01a0bfda-b26b-7b90-a2bc-c638a95e568e (2026-09-21)
+- Review: grok session 01a0bfe0-ebd8-7193-8446-0b19b43317fe (2026-09-21)
 
 ## Results
 
@@ -55,6 +57,18 @@ Standalone YARP generated-route runtime smoke is in-proc, not AppHost.
 - `cd tests/container-apps/yarp/yarp-integration-tests && dotnet test -c Release` — 4 passed, 0 failed, 0 skipped (re-verified this session)
 - `dotnet build tests/common/timewarp-testing/timewarp-testing.csproj -c Release` — 0/0
 - `cd tests/common/timewarp-testing-tests && dotnet test -c Release` — 3 passed (Web+Api factory still boots with :7001; re-verified this session)
+
+### Review disposition
+
+- **Rounds:** 1 · **Effort:** 1 · **Roster:** general
+- **Counts (final):** bug 0 open / 0 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 / 0 / 0
+- **Disposition:** `clean` — no issues raised; no wontfix; no escalation
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
+- **Wontfix / escalations:** none. Disposition stayed on this task id (no sibling apply-review task).
 
 ### How to validate
 
