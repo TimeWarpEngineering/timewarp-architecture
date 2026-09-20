@@ -67,7 +67,8 @@
             "source/container-apps/web/**",
             "tests/common/timewarp-testing/applications/web-test-server-application.cs",
             "tests/common/timewarp-testing-tests/**",
-            "tests/container-apps/web/**"
+            "tests/container-apps/web/**",
+            "tests/container-apps/yarp/**"
           ]
         },
         {
@@ -75,7 +76,8 @@
           "exclude": [
             "source/container-apps/yarp/**",
             "tests/common/timewarp-testing/applications/yarp-test-server-application.cs",
-            "tests/container-apps/web/web-spa-integration-tests/pipeline/clone-state-behavior-tests.cs"
+            "tests/container-apps/web/web-spa-integration-tests/pipeline/clone-state-behavior-tests.cs",
+            "tests/container-apps/yarp/**"
           ]
         },
         {

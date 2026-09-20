@@ -100,7 +100,7 @@ Branch naming, commits, and merge policy: **`tw-git`**.
     local dev loop.
   - Playwright e2e is unaffected.
 - **Test host lanes (Aspire vs in-proc):** two lanes, no wholesale Aspire migration —
-  - **In-proc** (`WebApplicationHost` / timewarp-testing, fixed ports web=7000 api=7255 yarp=8443):
+  - **In-proc** (`WebApplicationHost` / timewarp-testing, fixed ports web=7000 web-http=7001 api=7255 yarp=8443):
     DI substitution, mediator/pipeline, BFF mocks — **only place fixed ports live**; `dev test`
     stays serialized for those projects. Auth: `MockAccessTokenProvider` DI override and real
     passkey-ceremony cookies remain first-class.

@@ -10,7 +10,11 @@ using TimeWarp.Architecture.Abuse;
 public class WebTestServerApplication : TestServerApplication<Web.Server.Program>
 {
   internal const string WebHostUrl = "https://localhost:7000";
+  // In-proc YARP Development cluster forwards Web.Server over http (task 107 https→http;
+  // task 120 standalone smoke). HTTPS stays on 7000 so existing clients are unchanged.
+  internal const string WebHttpUrl = "http://localhost:7001";
   internal const int WebPort = 7000;
+  internal const int WebHttpPort = 7001;
   private const string ApiHostUrl = "https://localhost:7255";
 
   /// <param name="configureServices">
@@ -24,7 +28,8 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
       (
         urls:
         [
-          WebHostUrl
+          WebHostUrl,
+          WebHttpUrl
         ],
         webApplicationOptions:
         new WebApplicationOptions
