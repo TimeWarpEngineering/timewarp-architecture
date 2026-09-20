@@ -26,6 +26,7 @@ In-proc lane (not Aspire): `HostGraphFactory.CreateWebYarpAsync` boots Web then 
 ## Session
 
 - Implementer: grok session 01a0bfca-5613-7d82-8ab4-1b60bb37b3ed (2026-09-21)
+- Implementer: grok session 01a0bfda-b26b-7b90-a2bc-c638a95e568e (2026-09-21)
 
 ## Results
 
@@ -51,9 +52,9 @@ Standalone YARP generated-route runtime smoke is in-proc, not AppHost.
 - Destination rewrite via `IProxyConfigFilter` rather than a consumer `appsettings.json`, so the http hop is SSOT with `WebHttpUrl`.
 
 **Tests**
-- `cd tests/container-apps/yarp/yarp-integration-tests && dotnet test -c Release` — 4 passed
+- `cd tests/container-apps/yarp/yarp-integration-tests && dotnet test -c Release` — 4 passed, 0 failed, 0 skipped (re-verified this session)
 - `dotnet build tests/common/timewarp-testing/timewarp-testing.csproj -c Release` — 0/0
-- `cd tests/common/timewarp-testing-tests && dotnet test -c Release` — 3 passed (Web+Api factory still boots with :7001)
+- `cd tests/common/timewarp-testing-tests && dotnet test -c Release` — 3 passed (Web+Api factory still boots with :7001; re-verified this session)
 
 ### How to validate
 
