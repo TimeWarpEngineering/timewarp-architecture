@@ -184,6 +184,12 @@ jobs:
           name: Packages-${{ github.run_number }}
           path: artifacts/packages/*.nupkg
           if-no-files-found: ignore
+          # Org Free-plan cap is 500 MB shared Actions storage. 3 days covers a
+          # weekend between merge and `dev release`. A cut after expiry needs
+          # `gh run rerun <ci-run-id>` first (tw-release expired-artifact remedy).
+          # Any future diagnostic upload (smoke logs, test results) must set
+          # retention-days: 1. Do not rename Packages-*; locate-run depends on it.
+          retention-days: 3
 
   skill-lint:
     # Former skill-lint.yaml — PR only, skill/eval path filter via detect-paths.

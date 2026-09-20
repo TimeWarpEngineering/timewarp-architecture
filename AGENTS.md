@@ -360,14 +360,20 @@ Do not create perpetual/never-closing tasks. See the `tw-kanban` skill.
 ## Documentation
 
 Purpose/Design regions (TWA0004 + the reconcile-on-edit rule) plus skills are the
-documentation of record. `documentation/` does not exist. The eight repo skills under
-`skills/` ship in generated apps (pinned to the analyzers they ship beside;
-`skills/*/analysis/` does not ship). The timewarp.software copy is discovery/always-latest;
-both come from the same release commit.
+documentation of record for generated apps. The eight repo skills under `skills/`
+ship in those apps (pinned to the analyzers they ship beside; `skills/*/analysis/`
+does not ship). The timewarp.software copy is discovery/always-latest; both come
+from the same release commit.
+
+`documentation/` is **maintainer-only** and is not packed into the template
+(generated apps still have no `documentation/` tree). It currently holds
+`documentation/developer/guides/releasing.md` (artifact retention, Free-plan
+cap, `dev release` cut). Operator sequence is the cross-repo **`tw-release`**
+skill.
 
 ADRs are not shipped as pages. A still-true rule lives in the skill that owns it or in the
 Design region of the code/analyzer that enforces it.
 
 Cross-repo flow skills used from this repo (not packed here): **`tw-csharp`** (file naming),
 **`tw-git`** (branch/merge), **`tw-kanban`**, **`tw-jaribu`**, **`tw-dev-cli`**,
-**`tw-agent-context-regions`**.
+**`tw-agent-context-regions`**, **`tw-release`**.
