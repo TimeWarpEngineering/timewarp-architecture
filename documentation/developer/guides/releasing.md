@@ -51,13 +51,20 @@ results) must use `retention-days: 1`.
 
 ### Expired or missing `Packages-*` artifact
 
-A release cut more than 3 days after the merge will not find a live
-`Packages-*` blob for that commit. Regenerating it is the existing
-**`tw-release`** pipeline refusal remedy:
+**This repo's** cut does not download a merge `Packages-*`: `release:published`
+packs fresh, so cutting more than 3 days after merge is fine here. Rerunning a
+**merge** CI run in this repo still would not produce `Packages-*` — PR/merge
+is clean → build → test only, and the upload step uses `if-no-files-found:
+ignore`.
+
+The org-wide **`tw-release`** locate-run → download-artifact promotion path
+(sibling repos, or if this repo later promotes instead of rebuilding) does need
+a live `Packages-*`. When that path refuses because the blob expired or is
+missing, regenerate it with the existing pipeline refusal remedy:
 
 ```bash
 gh run rerun <ci-run-id>
 ```
 
-Rerun executes the same commit, then re-run the release workflow. Do not
-pack by hand at cut time to "replace" the missing artifact.
+Rerun executes the same commit, then re-run the release workflow. Do not pack
+by hand at cut time to "replace" a missing artifact.
