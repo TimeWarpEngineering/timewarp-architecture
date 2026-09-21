@@ -150,7 +150,12 @@ auto-increment `Version` for those types — that avoids a double-bump.
 After editing the model or an `IEntityTypeConfiguration`:
 
 ```bash
-dotnet tool restore
+dev db add-migration <NameYourChange>
+```
+
+That wraps `dotnet tool restore` plus:
+
+```bash
 dotnet ef migrations add <NameYourChange> \
   --project source/container-apps/web/projects/web-infrastructure/web-infrastructure.csproj \
   --startup-project source/container-apps/web/projects/web-server/web-server.csproj \

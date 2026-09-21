@@ -14,6 +14,8 @@
     <PackageReference Include="Shouldly" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\..\tools\dev-cli\services\db-ef.cs" Link="services\db-ef.cs" />
+    <Compile Include="..\..\..\tools\dev-cli\services\template-nupkg.cs" Link="services\template-nupkg.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\entra-setup.cs" Link="services\entra-setup.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\entra-tenants.cs" Link="services\entra-tenants.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\jaribu-aggregator-summary-gate.cs" Link="services\jaribu-aggregator-summary-gate.cs" />
