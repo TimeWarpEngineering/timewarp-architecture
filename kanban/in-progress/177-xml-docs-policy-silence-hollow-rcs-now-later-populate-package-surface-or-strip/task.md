@@ -95,6 +95,7 @@ surface (CS1591 gated on IsPackable); template/app code uses Purpose/Design regi
 - **Later:** this task — A (populate package XML) or B (strip). Default lean: **A for packages, no force on template demo code.**
 
 - Implementer: grok session (2026-09-21) — Path A packages + Path B template/app + CS1591 gate
+- Review oracle: grok session (2026-09-21) — effort 1 general; disposition clean (M1 nit fixed on this id)
 
 ## Notes
 
@@ -163,3 +164,14 @@ dotnet run --file tools/dev-cli/dev.cs -- template-smoke
 ```
 
 **Not in scope:** enabling RCS1141/1228; adding XML to template demo/app code; quality nits on existing real summaries that already satisfied CS1591.
+
+**Review disposition:** `clean` (0 open). Effort 1, roster `general`, 2 rounds.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 1 | 0 |
+
+- M1 (nit, fixed): stacked second `<summary>` on `ContractNullabilityValidatorAnalyzer`; deleted the one-liner, kept the multi-paragraph SSOT.
+- Paths: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`.
