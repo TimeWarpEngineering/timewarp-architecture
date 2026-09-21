@@ -69,6 +69,7 @@ dirs) — porting is the moment to fix those, not patch them in place.
 ## Session
 
 - Implementer: grok (2026-09-21)
+- Review: grok 01a0c229-02a2-75d2-a91b-3a1c31d377f6 (2026-09-21), effort 1 general; round-2 re-review after M1 fix
 
 ## Results
 
@@ -110,12 +111,26 @@ Already gone before this pass: `get-next-task-number.ps1`, `RunDocServer.ps1`,
 
 ### Test outcomes
 - `./bin/dev build` — 0 Warning(s), 0 Error(s)
-- `cd tests/tools/dev-cli-tests && dotnet test -c Release` — 66 passed
+- `cd tests/tools/dev-cli-tests && dotnet test -c Release` — 68 passed (66 + 2 nupkg-selection facts after M1)
 - `dotnet run tools/dev-cli/dev.cs -- self-install` — installed `./bin/dev`
 - `./bin/dev db add-migration AddOrders --dry-run` — kebab-path `dotnet ef` line, exit 0
 - `./bin/dev db add-migration bad-name` — identifier error, exit 1
 - `./bin/dev template-install --dry-run` — pack path under `artifacts/template-install/`, exit 0
 - `find . -name '*.ps1' -not -path './.git/*'` — 0 files
+
+### Review disposition
+
+- **Rounds:** 2 · **Effort:** 1 · **Roster:** general
+- **Counts (final):** bug 0 open / 1 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 / 0 / 0
+- **Disposition:** `clean` — M1 (`template-install` leftover nupkg + lexicographic sort) fixed on this task id; round 2 re-verified; no wontfix; no escalation
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/round-2/general.md`
+  - `review/round-2/merged.md`
+  - `review/disposition.md`
+- **Wontfix / escalations:** none. Disposition stayed on this task id (no sibling apply-review task).
 
 ### How to validate
 
@@ -139,7 +154,7 @@ find . -name '*.ps1' -not -path './.git/*' | wc -l
 # expect: 0 Warning(s), 0 Error(s)
 
 cd tests/tools/dev-cli-tests && dotnet test -c Release
-# expect: 66 passed (or current total, failed 0)
+# expect: 68 passed (or current total, failed 0)
 ```
 
 **Not in scope:** actually scaffolding a migration (dirties `platform/postgres/migrations/`);
