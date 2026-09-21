@@ -11,6 +11,9 @@ namespace TimeWarp.Identity;
 
 // TypedId attribute namespace: dual-mode MSBuild <Using> in timewarp-identity.csproj (task 115).
 
+/// <summary>
+/// Stable typed identity for a credential — distinct from <see cref="PrincipalId"/> so Guids cannot be mixed.
+/// </summary>
 [TypedId]
 public readonly partial record struct CredentialId;
 

@@ -60,6 +60,7 @@ public sealed record PaymentOptions
   /// <summary>MIME type of the successful response body (informational for buyers).</summary>
   public string MimeType { get; init; } = "application/json";
 
+  /// <summary>Builds enabled testnet options pointed at the public x402.org facilitator.</summary>
   public static PaymentOptions CreateTestnetDefaults(
     string payTo,
     string resource,

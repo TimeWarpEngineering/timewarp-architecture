@@ -31,12 +31,18 @@ namespace TimeWarp.Identity;
 
 using System.Collections.Concurrent;
 
+/// <summary>
+/// Process-local <see cref="IAgentTokenStore"/> that stores SHA-256(token) hashes, never raw bearer values.
+/// </summary>
 public sealed class InMemoryAgentTokenStore : IAgentTokenStore
 {
   private readonly ConcurrentDictionary<string, Entry> Tokens = new(StringComparer.Ordinal);
   private readonly TimeProvider TimeProvider;
   private readonly int MaxEntries;
 
+  /// <summary>
+  /// Creates a store with optional clock and capacity bound (evicts soonest-expiring when full).
+  /// </summary>
   public InMemoryAgentTokenStore(TimeProvider? timeProvider = null, int maxEntries = 100_000)
   {
     ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maxEntries, 0);
@@ -45,6 +51,7 @@ public sealed class InMemoryAgentTokenStore : IAgentTokenStore
     MaxEntries = maxEntries;
   }
 
+  /// <inheritdoc />
   public string Issue(PrincipalId principalId, IReadOnlyCollection<string> scopes, TimeSpan lifetime)
   {
     ArgumentNullException.ThrowIfNull(scopes);
@@ -65,6 +72,7 @@ public sealed class InMemoryAgentTokenStore : IAgentTokenStore
     return token;
   }
 
+  /// <inheritdoc />
   public AgentTokenGrant? Validate(string token)
   {
     if (string.IsNullOrEmpty(token))

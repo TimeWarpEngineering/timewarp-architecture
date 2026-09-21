@@ -18,8 +18,14 @@ namespace TimeWarp.Foundation.Features;
 [AttributeUsage(AttributeTargets.Class)]
 public sealed class ClientOnlyContractAttribute : Attribute
 {
+  /// <summary>
+  /// Why this routed contract intentionally has no server endpoint.
+  /// </summary>
   public string Reason { get; }
 
+  /// <summary>
+  /// Marks the contract as client-only with a required explanation.
+  /// </summary>
   public ClientOnlyContractAttribute(string reason)
   {
     Reason = reason;

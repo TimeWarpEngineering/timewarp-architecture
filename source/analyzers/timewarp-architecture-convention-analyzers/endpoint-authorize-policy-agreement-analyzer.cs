@@ -26,9 +26,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
+/// <summary>Roslyn analyzer for TWA0024: a hosted [EndpointAuthorize] Policy must be registered by this server.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class EndpointAuthorizePolicyAgreementAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0024.</summary>
   public const string DiagnosticId = "TWA0024";
 
   private const string Category = "Design";
@@ -49,9 +51,11 @@ public class EndpointAuthorizePolicyAgreementAnalyzer : DiagnosticAnalyzer
       customTags: WellKnownDiagnosticTags.CompilationEnd
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
     ImmutableArray.Create(UnregisteredPolicy);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0024.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

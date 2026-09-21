@@ -11,6 +11,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Canonical UTF-8 EntraAccount join key <c>{tid}:{oid}</c> (lowercase GUID D-format) — never email, UPN, or sub.
+/// </summary>
 public static class EntraAccountHandle
 {
   private const int GuidDLength = 36;

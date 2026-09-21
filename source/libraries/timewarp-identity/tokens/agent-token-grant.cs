@@ -13,4 +13,16 @@
 
 namespace TimeWarp.Identity;
 
-public sealed record AgentTokenGrant(PrincipalId PrincipalId, IReadOnlyList<string> Scopes, DateTimeOffset ExpiresAt);
+/// <summary>
+/// Claims from a validated opaque agent access token: subject, scopes, and absolute expiry.
+/// </summary>
+/// <param name="PrincipalId">Principal the token authorizes.</param>
+/// <param name="Scopes">Scope strings minted with the token.</param>
+/// <param name="ExpiresAt">UTC instant after which <see cref="IAgentTokenStore.Validate"/> returns null.</param>
+public sealed record AgentTokenGrant(
+  /// <summary>Principal the token authorizes.</summary>
+  PrincipalId PrincipalId,
+  /// <summary>Scope strings minted with the token.</summary>
+  IReadOnlyList<string> Scopes,
+  /// <summary>UTC instant after which validation fails uniformly.</summary>
+  DateTimeOffset ExpiresAt);

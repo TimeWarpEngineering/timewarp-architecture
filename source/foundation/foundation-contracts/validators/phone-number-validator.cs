@@ -13,12 +13,21 @@
 
 namespace TimeWarp.Foundation.Validators;
 
+/// <summary>
+/// FluentValidation property validator for E.164 phone numbers via libphonenumber.
+/// </summary>
 public class PhoneNumberValidator<T> : PropertyValidator<T, string?>
 {
   private readonly PhoneNumberUtil PhoneNumberUtil = PhoneNumberUtil.GetInstance();
 
+  /// <summary>
+  /// Validator name reported in FluentValidation metadata.
+  /// </summary>
   public override string Name => "PhoneNumberValidator";
 
+  /// <summary>
+  /// True when <paramref name="value"/> parses as a valid international phone number.
+  /// </summary>
   public override bool IsValid(ValidationContext<T> context, string? value)
   {
     if (string.IsNullOrWhiteSpace(value)) return false;
@@ -34,6 +43,9 @@ public class PhoneNumberValidator<T> : PropertyValidator<T, string?>
     }
   }
 
+  /// <summary>
+  /// Default failure message template for invalid phone numbers.
+  /// </summary>
   protected override string GetDefaultMessageTemplate(string errorCode) =>
     "{PropertyName} is not a valid phone number.";
 }

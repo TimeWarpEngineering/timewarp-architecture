@@ -53,10 +53,16 @@ using FluentValidation;
 using FluentValidation.Results;
 using TimeWarp.Foundation.Application.Exceptions;
 
+/// <summary>
+/// Fail-closed runtime guard that validates changed aggregates against their nested <c>Invariants</c> validators.
+/// </summary>
 public static class DomainInvariantsGuard
 {
   private static readonly ConcurrentDictionary<Type, IValidator?> ValidatorCache = new();
 
+  /// <summary>
+  /// Validates each aggregate; throws when any lacks a nested validator or fails its invariants.
+  /// </summary>
   public static void EnsureValid(IEnumerable<object> aggregates)
   {
     ArgumentNullException.ThrowIfNull(aggregates);
@@ -67,6 +73,9 @@ public static class DomainInvariantsGuard
     }
   }
 
+  /// <summary>
+  /// Validates one aggregate against its nested <c>Invariants</c> validator.
+  /// </summary>
   public static void EnsureValid(object aggregate)
   {
     ArgumentNullException.ThrowIfNull(aggregate);

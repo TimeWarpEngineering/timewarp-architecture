@@ -15,20 +15,29 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Optimistic-concurrency conflict: the caller's entity version does not match the stored row.
+/// </summary>
 public sealed class ConcurrencyConflictException : Exception
 {
+  /// <summary>Initializes a new instance of the exception.</summary>
   public ConcurrencyConflictException()
   {
   }
 
+  /// <summary>Initializes a new instance of the exception.</summary>
   public ConcurrencyConflictException(string message) : base(message)
   {
   }
 
+  /// <summary>Initializes a new instance of the exception.</summary>
   public ConcurrencyConflictException(string message, Exception innerException) : base(message, innerException)
   {
   }
 
+  /// <summary>
+  /// Builds the store conflict signal with entity identity and expected-vs-actual versions.
+  /// </summary>
   public ConcurrencyConflictException(Type entityType, string entityId, long expectedVersion, long actualVersion)
     : base(BuildMessage(entityType, entityId, expectedVersion, actualVersion))
   {
@@ -38,12 +47,16 @@ public sealed class ConcurrencyConflictException : Exception
     ActualVersion = actualVersion;
   }
 
+  /// <summary>CLR type of the conflicting aggregate, when raised by a store.</summary>
   public Type? EntityType { get; }
 
+  /// <summary>String form of the conflicting entity id, when raised by a store.</summary>
   public string? EntityId { get; }
 
+  /// <summary>Version on the caller's in-hand snapshot.</summary>
   public long ExpectedVersion { get; }
 
+  /// <summary>Version on the stored row for that id.</summary>
   public long ActualVersion { get; }
 
   private static string BuildMessage(Type entityType, string entityId, long expectedVersion, long actualVersion) =>

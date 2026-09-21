@@ -37,7 +37,9 @@ namespace TimeWarp.Architecture.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ContractNullabilityValidatorAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0002 (nullable property with a presence rule).</summary>
   public const string NullableWithPresenceRuleId = "TWA0002";
+  /// <summary>Diagnostic identifier TWA0003 (non-nullable property with empty-default and a presence rule).</summary>
   public const string EmptyDefaultWithPresenceRuleId = "TWA0003";
 
   private const string Category = "Design";
@@ -66,9 +68,11 @@ public class ContractNullabilityValidatorAnalyzer : DiagnosticAnalyzer
       description: "Initializing a required property with = string.Empty / = \"\" lets an omitted value slip past the presence rule as a valid-looking empty. Use = null! (or required) so an unset value is caught."
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
     ImmutableArray.Create(NullableWithPresenceRule, EmptyDefaultWithPresenceRule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0002 and TWA0003.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

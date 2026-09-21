@@ -22,6 +22,7 @@ public sealed record PaymentUnavailable(
   string ErrorCode,
   string Message) : PaymentGateOutcome
 {
+  /// <summary>Builds the HTTP 503 JSON body for a disabled or misconfigured payment surface.</summary>
   public PaymentErrorPayload ToErrorPayload() => new()
   {
     Error = ErrorCode,

@@ -15,6 +15,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// One-time agent-key challenge issuance and consumption — fail closed with a uniform false on every miss.
+/// </summary>
 public interface IAgentKeyChallengeStore
 {
   /// <summary>Mints a new 32-byte random challenge recorded for the given ceremony type.</summary>

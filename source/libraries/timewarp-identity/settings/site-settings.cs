@@ -18,6 +18,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Singleton runtime admin policy for Entra offer/bootstrap and the post-Entra passkey prompt.
+/// </summary>
 public sealed class SiteSettings : Entity<SiteSettingsId>
 {
   /// <summary>
@@ -39,10 +42,18 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     PasskeyPromptMode = passkeyPromptMode;
   }
 
+  /// <summary>Whether Entra sign-in is offered at runtime (separate from configured client secrets).</summary>
   public bool EntraSignInEnabled { get; private set; }
+
+  /// <summary>Whether first-time Entra users may bootstrap a new principal.</summary>
   public bool EntraAllowBootstrap { get; private set; }
+
+  /// <summary>Soft versus required post-Entra passkey prompt policy.</summary>
   public PasskeyPromptMode PasskeyPromptMode { get; private set; }
 
+  /// <summary>
+  /// Creates the singleton row at version 0 with the given policy (defaults: Entra off, Soft prompt).
+  /// </summary>
   public static SiteSettings Create(
     bool entraSignInEnabled = false,
     bool entraAllowBootstrap = false,
@@ -68,6 +79,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       PasskeyPromptMode,
       version);
 
+  /// <summary>Replaces the whole runtime policy surface in one mutation.</summary>
   public void ReplacePolicy(
     bool entraSignInEnabled,
     bool entraAllowBootstrap,

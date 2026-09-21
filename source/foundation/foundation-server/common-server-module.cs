@@ -25,6 +25,9 @@
 
 namespace TimeWarp.Foundation;
 
+/// <summary>
+/// Shared ASP.NET server module: contract JSON defaults, optional debug config, OpenAPI/Scalar helpers.
+/// </summary>
 public class CommonServerModule : IAspNetModule
 {
   /// <summary>
@@ -33,6 +36,9 @@ public class CommonServerModule : IAspNetModule
   /// </summary>
   public static void ConfigureConfiguration(ConfigurationManager configurationManager) { }
 
+  /// <summary>
+  /// Maps Development-only <c>/api/debug-config</c> that dumps configuration (may include secrets).
+  /// </summary>
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
     IConfigurationRoot configurationRoot = webApplication!.Configuration as IConfigurationRoot ?? throw new InvalidOperationException();
@@ -50,7 +56,13 @@ public class CommonServerModule : IAspNetModule
       );
     }
   }
+  /// <summary>
+  /// No shared middleware; hosts add their own pipeline.
+  /// </summary>
   public static void ConfigureMiddleware(WebApplication webApplication) { }
+  /// <summary>
+  /// Applies FluentValidation display names and <see cref="ContractSerializationDefaults"/> to HTTP JSON.
+  /// </summary>
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
     ValidatorOptions.Global.DisplayNameResolver =

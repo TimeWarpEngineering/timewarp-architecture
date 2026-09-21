@@ -75,6 +75,9 @@ namespace TimeWarp.Identity;
 
 using System.Collections.Concurrent;
 
+/// <summary>
+/// Process-local <see cref="IPrincipalStore"/> for tests and hosts before EF is wired.
+/// </summary>
 public sealed class InMemoryPrincipalStore : IPrincipalStore
 {
   private readonly ConcurrentDictionary<PrincipalId, Principal> Principals = new();
@@ -82,6 +85,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
   private readonly ConcurrentDictionary<HandleKey, CredentialId> HandleIndex = new();
   private readonly Lock WriteLock = new();
 
+  /// <inheritdoc />
   public Task AddPrincipalAsync(Principal principal, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(principal);
@@ -98,6 +102,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     return Task.CompletedTask;
   }
 
+  /// <inheritdoc />
   public Task<Principal?> GetPrincipalAsync(PrincipalId id, CancellationToken cancellationToken = default)
   {
     cancellationToken.ThrowIfCancellationRequested();
@@ -105,6 +110,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     return Task.FromResult(stored?.Snapshot(stored.Version));
   }
 
+  /// <inheritdoc />
   public Task UpdatePrincipalAsync(Principal principal, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(principal);
@@ -128,6 +134,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     return Task.CompletedTask;
   }
 
+  /// <inheritdoc />
   public Task<IReadOnlyList<Principal>> ListPrincipalsAsync(CancellationToken cancellationToken = default)
   {
     cancellationToken.ThrowIfCancellationRequested();
@@ -141,6 +148,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     return Task.FromResult(list);
   }
 
+  /// <inheritdoc />
   public Task AddCredentialAsync(Credential credential, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(credential);
@@ -178,6 +186,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     return Task.CompletedTask;
   }
 
+  /// <inheritdoc />
   public Task<Credential?> GetCredentialAsync(CredentialId credentialId, CancellationToken cancellationToken = default)
   {
     cancellationToken.ThrowIfCancellationRequested();
@@ -185,6 +194,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     return Task.FromResult(stored?.Snapshot(stored.Version));
   }
 
+  /// <inheritdoc />
   public Task<Credential?> FindCredentialByHandleAsync(CredentialType type, byte[] handle, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(handle);
@@ -200,6 +210,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     return Task.FromResult(stored?.Snapshot(stored.Version));
   }
 
+  /// <inheritdoc />
   public Task<IReadOnlyList<Credential>> ListCredentialsAsync(
     PrincipalId principalId,
     bool includeRevoked = false,
@@ -217,6 +228,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     return Task.FromResult(list);
   }
 
+  /// <inheritdoc />
   public Task UpdateCredentialAsync(Credential credential, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(credential);
@@ -252,6 +264,7 @@ public sealed class InMemoryPrincipalStore : IPrincipalStore
     return Task.CompletedTask;
   }
 
+  /// <inheritdoc />
   public Task MergePrincipalAsync(
     PrincipalId sourceId,
     PrincipalId targetId,

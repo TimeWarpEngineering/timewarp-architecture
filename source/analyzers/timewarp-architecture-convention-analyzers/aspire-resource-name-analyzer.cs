@@ -19,9 +19,11 @@ namespace TimeWarp.Architecture.Analyzers;
 
 using System.Collections.Generic;
 
+/// <summary>Roslyn analyzer for TWA0007: Aspire AddProject resource names must be ServiceNames constant values.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class AspireResourceNameAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0007.</summary>
   public const string DiagnosticId = "TWA0007";
 
   private const string ServiceNamesMetadataName = "TimeWarp.Foundation.Configuration.ServiceNames";
@@ -38,8 +40,10 @@ public class AspireResourceNameAnalyzer : DiagnosticAnalyzer
       description: "AppHost AddProject resource names must equal the ServiceNames constants the applications use to resolve service URIs."
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0007.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

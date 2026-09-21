@@ -24,8 +24,14 @@ public partial class CorsPolicy
   /// </example>
   public class AnyPolicy : CorsPolicy
   {
+    /// <summary>
+    /// Creates the permissive <c>Any</c> CORS policy member.
+    /// </summary>
     public AnyPolicy() : base(value: 0, name: "Any") { }
 
+    /// <summary>
+    /// Registers an allow-any-origin/method/header CORS policy, optionally exposing response headers.
+    /// </summary>
     public override void Apply(IServiceCollection serviceCollection, params string[] exposedHeaders)
     {
       serviceCollection.AddCors

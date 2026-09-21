@@ -298,10 +298,11 @@ dotnet_code_quality.null_check_validation_methods = NotNull
 dotnet_diagnostic.ca1308.severity = none
 
 # XML documentation analyzers (Roslynator + compiler) — template policy (task 177).
-# Agents rely on #region Purpose/Design, not hollow /// shells. CS1591 already NoWarn'd.
-# Completeness (add empty shells) + hollow tags (remove empty) stay OFF until a deliberate
-# pass either populates package public surface OR strips dead ///. Keep RCS1263: docs must
-# match the signature when /// is present.
+# Packable public surface carries real /// summaries (CS1591 warning when IsPackable=true).
+# Template/app/tests use #region Purpose/Design only; CS1591 stays NoWarn there.
+# Completeness (RCS1141 add empty shells) + hollow cleanup (RCS1228) stay OFF — they fight
+# and produce empty <param></param>. Keep RCS1263: docs must match the signature when ///
+# is present.
 dotnet_diagnostic.RCS1138.severity = none
 dotnet_diagnostic.RCS1139.severity = none
 dotnet_diagnostic.RCS1140.severity = none

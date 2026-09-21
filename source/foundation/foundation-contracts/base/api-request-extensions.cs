@@ -13,6 +13,9 @@
 
 namespace TimeWarp.Foundation.Features;
 
+/// <summary>
+/// Query-string helpers shared by <see cref="IApiRequest"/> route builders.
+/// </summary>
 public static class ApiRequestExtensions
 {
   /// <summary>

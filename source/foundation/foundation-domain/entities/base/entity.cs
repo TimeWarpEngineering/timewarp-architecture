@@ -82,10 +82,16 @@ namespace TimeWarp.Foundation.Entities;
 public abstract class Entity<TId> : IEquatable<Entity<TId>>
   where TId : struct, IEquatable<TId>
 {
+  /// <summary>
+  /// Creates an entity with the given identity and version 0 (new aggregate / EF-mapped construction).
+  /// </summary>
   protected Entity(TId id) : this(id, 0)
   {
   }
 
+  /// <summary>
+  /// Creates an entity with an explicit store-owned concurrency version for non-EF rehydration.
+  /// </summary>
   protected Entity(TId id, long version)
   {
     ArgumentOutOfRangeException.ThrowIfNegative(version);
@@ -93,15 +99,24 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>
     Version = version;
   }
 
+  /// <summary>
+  /// Typed identity of this entity; never reassigned after construction.
+  /// </summary>
   public TId Id { get; }
 
   // private set is required: AggregateVersionConvention uses PropertyAccessMode.Property so EF
   // (and AggregateDbContext via PropertyEntry.CurrentValue) can write Version by reflection.
   // Get-only would break that contract; RCS1170 is intentionally suppressed here.
 #pragma warning disable RCS1170 // Use read-only auto-implemented property
+  /// <summary>
+  /// Store-owned optimistic-concurrency token; written by <c>AggregateDbContext</c>, not application code.
+  /// </summary>
   public long Version { get; private set; }
 #pragma warning restore RCS1170
 
+  /// <summary>
+  /// Identity equality: same exact runtime type and <see cref="Id"/>.
+  /// </summary>
   public bool Equals(Entity<TId>? other)
   {
     if (other is null) return false;
@@ -109,12 +124,24 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>
     return GetType() == other.GetType() && Id.Equals(other.Id);
   }
 
+  /// <summary>
+  /// Identity equality against any object; non-<see cref="Entity{TId}"/> values are unequal.
+  /// </summary>
   public override bool Equals(object? obj) => Equals(obj as Entity<TId>);
 
+  /// <summary>
+  /// Hash code from exact runtime type and <see cref="Id"/>.
+  /// </summary>
   public override int GetHashCode() => HashCode.Combine(GetType(), Id);
 
+  /// <summary>
+  /// Identity equality operator; two null references are equal.
+  /// </summary>
   public static bool operator ==(Entity<TId>? left, Entity<TId>? right) =>
     left is null ? right is null : left.Equals(right);
 
+  /// <summary>
+  /// Negation of the identity equality operator.
+  /// </summary>
   public static bool operator !=(Entity<TId>? left, Entity<TId>? right) => !(left == right);
 }

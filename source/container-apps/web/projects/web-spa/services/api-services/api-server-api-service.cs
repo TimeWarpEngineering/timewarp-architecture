@@ -28,9 +28,6 @@ public sealed class ApiServerApiService : BaseApiService, IApiServerApiService
   /// <summary>
   /// Used for testing purposes
   /// </summary>
-  /// <param name="httpClient"></param>
-  /// <param name="accessTokenProvider"></param>
-  /// <param name="jsonSerializerOptions"></param>
   public ApiServerApiService
   (
     HttpClient httpClient,

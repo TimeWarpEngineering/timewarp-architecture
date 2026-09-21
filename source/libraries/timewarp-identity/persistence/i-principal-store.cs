@@ -74,10 +74,20 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Durable persistence port for principals and credentials — snapshot-on-get with store-owned version CAS.
+/// </summary>
 public interface IPrincipalStore
 {
+  /// <summary>Inserts a principal snapshot; throws when the id already exists.</summary>
   Task AddPrincipalAsync(Principal principal, CancellationToken cancellationToken = default);
+
+  /// <summary>Returns a caller-owned principal snapshot, or null when missing.</summary>
   Task<Principal?> GetPrincipalAsync(PrincipalId id, CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// Persists a principal snapshot when versions match; throws <see cref="ConcurrencyConflictException"/> on mismatch.
+  /// </summary>
   Task UpdatePrincipalAsync(Principal principal, CancellationToken cancellationToken = default);
 
   /// <summary>
@@ -85,10 +95,27 @@ public interface IPrincipalStore
   /// </summary>
   Task<IReadOnlyList<Principal>> ListPrincipalsAsync(CancellationToken cancellationToken = default);
 
+  /// <summary>
+  /// Inserts a credential snapshot; may promote the owning principal Provisional → Keyed on first attach.
+  /// </summary>
   Task AddCredentialAsync(Credential credential, CancellationToken cancellationToken = default);
+
+  /// <summary>Returns a caller-owned credential snapshot, or null when missing.</summary>
   Task<Credential?> GetCredentialAsync(CredentialId credentialId, CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// Looks up by immutable (type, handle), including revoked rows — callers check <see cref="Credential.IsRevoked"/>.
+  /// </summary>
   Task<Credential?> FindCredentialByHandleAsync(CredentialType type, byte[] handle, CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// Lists credentials for a principal as snapshots, optionally including revoked rows.
+  /// </summary>
   Task<IReadOnlyList<Credential>> ListCredentialsAsync(PrincipalId principalId, bool includeRevoked = false, CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// Persists revoke/restore (and similar) by id when versions match; type, handle, and principal id stay immutable here.
+  /// </summary>
   Task UpdateCredentialAsync(Credential credential, CancellationToken cancellationToken = default);
 
   /// <summary>

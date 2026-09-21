@@ -33,7 +33,6 @@ public partial class CorsPolicy : Enumeration
   /// Apply the particular Cors Policy
   /// </summary>
   /// <remarks>Override in the instances of CorsPolicy</remarks>
-  /// <param name="serviceCollection"></param>
   public virtual void Apply(IServiceCollection serviceCollection)
   {
     Apply(serviceCollection, exposedHeaders: []);
@@ -47,7 +46,6 @@ public partial class CorsPolicy : Enumeration
   /// re-declaring a duplicate AllowAnyOrigin policy at the host.
   /// Override in the instances of CorsPolicy.
   /// </remarks>
-  /// <param name="serviceCollection"></param>
   /// <param name="exposedHeaders">Header names added via <c>WithExposedHeaders</c>. Empty leaves the policy unchanged.</param>
   public virtual void Apply(IServiceCollection serviceCollection, params string[] exposedHeaders)
   {

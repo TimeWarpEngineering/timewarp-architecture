@@ -26,10 +26,16 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Builds <c>navigator.credentials.get</c> options and verifies a completed WebAuthn assertion.
+/// </summary>
 public static class WebAuthnAuthentication
 {
   private const string GetCeremonyType = "webauthn.get";
 
+  /// <summary>
+  /// Serializes discoverable-credential authentication options for the browser (empty allowCredentials).
+  /// </summary>
   public static string BuildOptionsJson(WebAuthnRelyingParty rp, byte[] challenge)
   {
     ArgumentNullException.ThrowIfNull(rp);
@@ -49,6 +55,9 @@ public static class WebAuthnAuthentication
     return JsonSerializer.Serialize(options);
   }
 
+  /// <summary>
+  /// Verifies client data, RP binding, user presence, and the assertion signature against the stored COSE key.
+  /// </summary>
   public static WebAuthnAssertionResult Verify(WebAuthnRelyingParty rp, byte[] expectedChallenge, byte[] storedCosePublicKey, byte[] clientDataJson, byte[] authenticatorData, byte[] signature)
   {
     ArgumentNullException.ThrowIfNull(rp);

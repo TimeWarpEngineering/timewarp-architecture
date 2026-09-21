@@ -12,11 +12,20 @@
 
 namespace TimeWarp.Foundation.Extensions;
 
+/// <summary>
+/// Resolves sibling-service base URIs from Aspire <c>services__*</c> environment variables.
+/// </summary>
 public static class ServiceUriHelper
 {
+  /// <summary>
+  /// HTTP base URI for an Aspire resource, or null when the discovery variable is absent.
+  /// </summary>
   public static Uri? GetServiceHttpUri(string resourceName, int index = 0) =>
     GetServiceUri(resourceName,endpointName: "http", index);
 
+  /// <summary>
+  /// HTTPS base URI for an Aspire resource, or null when the discovery variable is absent.
+  /// </summary>
   public static Uri? GetServiceHttpsUri(string resourceName, int index = 0) =>
     GetServiceUri(resourceName, endpointName: "https", index);
 

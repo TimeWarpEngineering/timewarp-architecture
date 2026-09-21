@@ -22,32 +22,53 @@
 
 namespace TimeWarp.Foundation.Application.Exceptions;
 
+/// <summary>
+/// Raised when <see cref="TimeWarp.Foundation.Application.Services.DomainInvariantsGuard"/> cannot find or construct a nested <c>Invariants</c> validator.
+/// </summary>
 public sealed class MissingInvariantsValidatorException : Exception
 {
+  /// <summary>
+  /// Creates an empty missing-validator exception for framework scaffolding.
+  /// </summary>
   public MissingInvariantsValidatorException()
   {
   }
 
+  /// <summary>
+  /// Creates a missing-validator exception with a custom message.
+  /// </summary>
   public MissingInvariantsValidatorException(string message) : base(message)
   {
   }
 
+  /// <summary>
+  /// Creates a missing-validator exception with a custom message and inner exception.
+  /// </summary>
   public MissingInvariantsValidatorException(string message, Exception innerException) : base(message, innerException)
   {
   }
 
+  /// <summary>
+  /// Creates a missing-validator exception for an aggregate with no discoverable nested validator.
+  /// </summary>
   public MissingInvariantsValidatorException(Type aggregateType)
     : base(BuildMessage(aggregateType))
   {
     AggregateType = aggregateType;
   }
 
+  /// <summary>
+  /// Creates a missing-validator exception when a nested validator exists but cannot be constructed.
+  /// </summary>
   public MissingInvariantsValidatorException(Type aggregateType, Exception innerException)
     : base(BuildConstructionFailureMessage(aggregateType, innerException), innerException)
   {
     AggregateType = aggregateType;
   }
 
+  /// <summary>
+  /// Runtime type that lacked a usable nested <c>Invariants</c> validator, when known.
+  /// </summary>
   public Type? AggregateType { get; }
 
   private static string BuildMessage(Type aggregateType) =>

@@ -21,7 +21,13 @@ namespace TimeWarp.Foundation.Features;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
 public sealed class CrossSliceReferenceAttribute : Attribute
 {
+  /// <summary>
+  /// A type from the foreign product slice being deliberately referenced.
+  /// </summary>
   public Type TargetType { get; }
+  /// <summary>
+  /// Why the cross-slice coupling is intentional.
+  /// </summary>
   public string Reason { get; }
 
   /// <summary>Creates a cross-slice opt-out for references into the slice that owns <paramref name="targetType"/>.</summary>

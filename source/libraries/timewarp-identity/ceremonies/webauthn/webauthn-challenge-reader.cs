@@ -13,8 +13,14 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Extracts the challenge from clientDataJSON so handlers can consume it before full ceremony verify.
+/// </summary>
 public static class WebAuthnChallengeReader
 {
+  /// <summary>
+  /// Decodes the base64url challenge embedded in clientDataJSON, or returns false when malformed.
+  /// </summary>
   public static bool TryReadChallenge(byte[] clientDataJson, out byte[] challenge)
   {
     if (ClientData.TryParse(clientDataJson, out ClientData? clientData) && clientData is not null

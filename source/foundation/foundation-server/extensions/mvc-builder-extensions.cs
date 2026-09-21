@@ -13,9 +13,15 @@
 // https://github.com/aspnet/Mvc/issues/6749
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// Idempotent MVC application-part helpers for composable server modules.
+/// </summary>
 public static class MvcBuilderExtensions
 {
 
+  /// <summary>
+  /// Adds <paramref name="assembly"/> as an application part only when it is not already registered.
+  /// </summary>
   public static IMvcBuilder TryAddApplicationPart(this IMvcBuilder mvcBuilder, Assembly assembly)
   {
     mvcBuilder.ConfigureApplicationPartManager

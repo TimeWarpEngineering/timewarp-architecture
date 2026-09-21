@@ -12,5 +12,8 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Typed identity for the singleton site-settings aggregate — kept out of principal/credential Guid space.
+/// </summary>
 [TypedId]
 public readonly partial record struct SiteSettingsId;

@@ -8,7 +8,13 @@
 
 namespace TimeWarp.Foundation.Abstractions;
 
+/// <summary>
+/// Exposes the authenticated caller's identity to application code without HttpContext coupling.
+/// </summary>
 public interface ICurrentUserService
 {
+  /// <summary>
+  /// Authenticated user id when present; null for anonymous requests.
+  /// </summary>
   Guid? UserId { get; }
 }

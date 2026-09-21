@@ -46,9 +46,6 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
   /// <summary>
   /// Construct a WebApplication
   /// </summary>
-  /// <param name="urls"></param>
-  /// <param name="webApplicationOptions"></param>
-  /// <param name="configureServicesDelegate"></param>
   public WebApplicationHost
   (
     string[] urls,

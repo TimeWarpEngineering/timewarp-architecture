@@ -51,6 +51,7 @@
 
 namespace TimeWarp.Architecture.Analyzers;
 
+/// <summary>Source generator that emits WebServerApiRoutePrefixes from hosted web-contracts [ApiRoute] templates.</summary>
 [Generator]
 public class IngressRoutePrefixGenerator : IIncrementalGenerator
 {
@@ -88,6 +89,7 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
     isEnabledByDefault: true
   );
 
+  /// <summary>Registers incremental generator steps for ingress route-prefix emission.</summary>
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     IncrementalValueProvider<GenerationOptions> options = context.AnalyzerConfigOptionsProvider.Select(

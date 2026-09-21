@@ -57,6 +57,7 @@ public sealed class HttpFacilitatorClient : IFacilitatorClient, IDisposable
     }
   }
 
+  /// <summary>Lists schemes and networks this facilitator can verify and settle.</summary>
   public async Task<FacilitatorSupported> GetSupportedAsync(CancellationToken cancellationToken = default)
   {
     using HttpRequestMessage request = new(HttpMethod.Get, "supported");
@@ -74,6 +75,7 @@ public sealed class HttpFacilitatorClient : IFacilitatorClient, IDisposable
     return body ?? new FacilitatorSupported();
   }
 
+  /// <summary>Validates a payment payload against requirements without settling on-chain.</summary>
   public async Task<FacilitatorVerifyResult> VerifyAsync(
     FacilitatorPaymentRequest request,
     CancellationToken cancellationToken = default)
@@ -112,6 +114,7 @@ public sealed class HttpFacilitatorClient : IFacilitatorClient, IDisposable
     return new FacilitatorVerifyResult { IsValid = false, InvalidReason = "empty_verify_response" };
   }
 
+  /// <summary>Settles a verified payment on-chain or via the facilitator equivalent.</summary>
   public async Task<FacilitatorSettleResult> SettleAsync(
     FacilitatorPaymentRequest request,
     CancellationToken cancellationToken = default)
@@ -201,6 +204,7 @@ public sealed class HttpFacilitatorClient : IFacilitatorClient, IDisposable
     }
   }
 
+  /// <summary>Releases the underlying HTTP client if this instance owns it.</summary>
   public void Dispose()
   {
     if (OwnsHttp)

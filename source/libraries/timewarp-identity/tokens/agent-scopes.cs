@@ -32,13 +32,23 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Canonical agent access-token scope strings and membership checking for caller-supplied lists.
+/// </summary>
 public static class AgentScopes
 {
+  /// <summary>Read-only self-identity lookup (for example GetAgentIdentity).</summary>
   public const string IdentityRead = "identity:read";
+
+  /// <summary>Invoke the metered pay-for-capability demo endpoint.</summary>
   public const string DemoInvoke = "demo:invoke";
+
+  /// <summary>List, add, and revoke credentials on the caller's own principal (write scope).</summary>
   public const string CredentialManage = "credential:manage";
 
+  /// <summary>Every known scope string this library recognizes.</summary>
   public static IReadOnlyList<string> All { get; } = [IdentityRead, DemoInvoke, CredentialManage];
 
+  /// <summary>True when <paramref name="scope"/> is one of <see cref="All"/> (ordinal).</summary>
   public static bool IsKnown(string scope) => All.Contains(scope, StringComparer.Ordinal);
 }

@@ -42,6 +42,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Authentication material bound to a principal — passkey, agent key, or Entra account — with revoke/restore lifecycle.
+/// </summary>
 public sealed class Credential : Entity<CredentialId>
 {
   private readonly byte[] HandleField;
@@ -68,19 +71,35 @@ public sealed class Credential : Entity<CredentialId>
     Label = label;
   }
 
+  /// <summary>Owning principal; mutable only via <see cref="ReparentTo"/> during merge.</summary>
   public PrincipalId PrincipalId { get; private set; }
+
+  /// <summary>Immutable credential kind set at create time.</summary>
   public CredentialType Type { get; }
 
 #pragma warning disable CA1819 // Binary material is intentionally exposed as byte[] copies
+  /// <summary>Lookup key bytes (credential id / key id / tid:oid); defensive copy.</summary>
   public byte[] Handle => HandleField.ToArray();
+
+  /// <summary>Type-dependent verification material (COSE/SPKI or Entra issuer URI); defensive copy.</summary>
   public byte[] PublicMaterial => PublicMaterialField.ToArray();
 #pragma warning restore CA1819
 
+  /// <summary>UTC create stamp minted by <see cref="Create"/>.</summary>
   public DateTimeOffset CreatedAt { get; }
+
+  /// <summary>UTC revoke stamp when revoked; null while active.</summary>
   public DateTimeOffset? RevokedAt { get; private set; }
+
+  /// <summary>Optional human label; null when unset or whitespace-only at create.</summary>
   public string? Label { get; }
+
+  /// <summary>True when <see cref="RevokedAt"/> is set.</summary>
   public bool IsRevoked => RevokedAt is not null;
 
+  /// <summary>
+  /// Mints a new credential at version 0 with defensive copies of handle and public material.
+  /// </summary>
   public static Credential Create(
     PrincipalId principalId,
     CredentialType type,
@@ -134,6 +153,7 @@ public sealed class Credential : Entity<CredentialId>
   internal Credential Snapshot(long version) =>
     new(Id, PrincipalId, Type, HandleField.ToArray(), PublicMaterialField.ToArray(), CreatedAt, RevokedAt, Label, version);
 
+  /// <summary>One-shot revoke: sets <see cref="RevokedAt"/>; throws if already revoked.</summary>
   public void Revoke()
   {
     if (RevokedAt is not null)

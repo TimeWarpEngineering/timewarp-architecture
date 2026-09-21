@@ -16,6 +16,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// One-time WebAuthn challenge issuance and consumption — fail closed with a uniform false on every miss.
+/// </summary>
 public interface IWebAuthnChallengeStore
 {
   /// <summary>Mints a new 32-byte random challenge recorded for the given ceremony type.</summary>

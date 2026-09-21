@@ -13,6 +13,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Outcome of <see cref="AgentKeyProof.Verify"/> — possession proved, or a typed failure reason.
+/// </summary>
 public sealed class AgentKeyProofResult
 {
   private AgentKeyProofResult(bool isValid, AgentKeyFailureReason failureReason)
@@ -21,8 +24,10 @@ public sealed class AgentKeyProofResult
     FailureReason = failureReason;
   }
 
+  /// <summary>True when the signature proved possession of the claimed P-256 key.</summary>
   public bool IsValid { get; }
 
+  /// <summary><see cref="AgentKeyFailureReason.None"/> on success; otherwise the reject cause.</summary>
   public AgentKeyFailureReason FailureReason { get; }
 
   internal static AgentKeyProofResult Success() => new(true, AgentKeyFailureReason.None);

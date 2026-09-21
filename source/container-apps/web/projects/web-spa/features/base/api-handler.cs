@@ -177,9 +177,6 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
   /// Get the request object to send to the API
   /// If null is returned, the action will be skipped
   /// </summary>
-  /// <param name="action"></param>
-  /// <param name="cancellationToken"></param>
-  /// <returns></returns>
   protected abstract Task<TRequest?> GetRequest(TAction action, CancellationToken cancellationToken);
   protected abstract Task HandleSuccess(TResponse response, CancellationToken cancellationToken);
   protected abstract Task HandleFileResponse(FileResponse fileResponse, CancellationToken cancellationToken);

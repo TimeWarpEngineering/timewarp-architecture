@@ -12,10 +12,20 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Kind of authentication material bound to a principal (passkey, agent key, or Entra account).
+/// </summary>
 public enum CredentialType
 {
+  /// <summary>Uninitialized value; rejected by <see cref="Credential.Create"/>.</summary>
   None = 0,
+
+  /// <summary>WebAuthn passkey; handle is credential id, public material is COSE key bytes.</summary>
   Passkey = 1,
+
+  /// <summary>Agent ECDSA P-256 key; handle is server-computed key id, public material is SPKI DER.</summary>
   AgentKey = 2,
+
+  /// <summary>Linked Entra (tid, oid); handle is <c>{tid}:{oid}</c>, public material is issuer URI bytes.</summary>
   EntraAccount = 3,
 }

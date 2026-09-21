@@ -27,8 +27,10 @@ namespace TimeWarp.Architecture.Attributes;
   Inherited = false)]
 public sealed class TypeStemIdentifierAttribute : Attribute
 {
+  /// <summary>Why the identifier does not end with its type stem. Whitespace does not opt out of TWA0023.</summary>
   public string Reason { get; }
 
+  /// <summary>Opts this member out of TWA0023 when <paramref name="reason"/> is non-empty.</summary>
   public TypeStemIdentifierAttribute(string reason)
   {
     Reason = reason;

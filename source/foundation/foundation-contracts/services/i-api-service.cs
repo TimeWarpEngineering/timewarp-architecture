@@ -17,14 +17,13 @@
 
 namespace TimeWarp.Foundation;
 
+/// <summary>
+/// Client abstraction every API handler uses to execute an <see cref="IApiRequest"/>.
+/// </summary>
 public interface IApiService
 {
   /// <summary>
-  /// Get the response for the given request
+  /// Sends <paramref name="request"/> and returns <typeparamref name="TResponse"/>, a <see cref="FileResponse"/> download, or <see cref="SharedProblemDetails"/>.
   /// </summary>
-  /// <typeparam name="TResponse"></typeparam>
-  /// <param name="request"></param>
-  /// <param name="cancellationToken"></param>
-  /// <returns></returns>
   Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>(IApiRequest request, CancellationToken cancellationToken) where TResponse : class;
 }

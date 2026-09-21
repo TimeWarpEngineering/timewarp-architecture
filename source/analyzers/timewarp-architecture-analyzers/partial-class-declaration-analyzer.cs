@@ -14,9 +14,11 @@
 
 namespace TimeWarp.Architecture.Analyzers;
 
+/// <summary>Roslyn analyzer for TWA0001: multi-file partial classes must follow the primary/secondary declaration shape.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0001.</summary>
   public const string DiagnosticId = "TWA0001";
 
   private static readonly LocalizableString Title = "Incorrect partial class declaration";
@@ -37,8 +39,10 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
       helpLinkUri: "https://github.com/TimeWarpEngineering/timewarp-architecture/blob/main/Documentation/Analyzers/TWA0001.md"
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0001.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

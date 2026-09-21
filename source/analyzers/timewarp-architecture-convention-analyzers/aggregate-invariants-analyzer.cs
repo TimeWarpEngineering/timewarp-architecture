@@ -51,10 +51,13 @@
 
 namespace TimeWarp.Architecture.Analyzers;
 
+/// <summary>Roslyn analyzer for TWA0011/TWA0012: IAggregateRoot types must declare a private nested Invariants validator.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class AggregateInvariantsAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0011 (missing nested Invariants).</summary>
   public const string MissingInvariantsId = "TWA0011";
+  /// <summary>Diagnostic identifier TWA0012 (Invariants must be private).</summary>
   public const string NonPrivateInvariantsId = "TWA0012";
 
   private const string Category = "Design";
@@ -86,9 +89,11 @@ public class AggregateInvariantsAnalyzer : DiagnosticAnalyzer
       description: "Invariants validators stay privately nested so contract-validator auto-registration does not also register them as request validators."
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
     ImmutableArray.Create(MissingInvariants, NonPrivateInvariants);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0011 and TWA0012.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

@@ -20,6 +20,9 @@ public sealed class InMemoryCreditLedger : ICreditLedger
   private readonly ConcurrentDictionary<string, byte> AppliedReceipts = new(StringComparer.Ordinal);
   private readonly ConcurrentDictionary<PrincipalId, object> Locks = new();
 
+  /// <summary>
+  /// Credits <paramref name="amount"/> when <paramref name="receiptId"/> is new; replays return the current balance.
+  /// </summary>
   public Task<decimal> CreditAsync(
     PrincipalId principalId,
     decimal amount,
@@ -51,6 +54,9 @@ public sealed class InMemoryCreditLedger : ICreditLedger
     }
   }
 
+  /// <summary>
+  /// Debits <paramref name="amount"/> when balance is sufficient; otherwise throws <see cref="InsufficientCreditException"/>.
+  /// </summary>
   public Task<decimal> DebitAsync(
     PrincipalId principalId,
     decimal amount,
@@ -84,6 +90,7 @@ public sealed class InMemoryCreditLedger : ICreditLedger
     }
   }
 
+  /// <summary>Returns the principal's current balance, or zero when never credited.</summary>
   public Task<decimal> GetBalanceAsync(
     PrincipalId principalId,
     CancellationToken cancellationToken = default)

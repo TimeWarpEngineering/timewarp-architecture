@@ -12,10 +12,25 @@
 
 namespace TimeWarp.Foundation.Configuration;
 
+/// <summary>
+/// Shared OpenTelemetry meter, instrument, and tag names for analytics events.
+/// </summary>
 public static class AnalyticsMeters
 {
+  /// <summary>
+  /// Meter name registered by Aspire ServiceDefaults and used by the analytics handler.
+  /// </summary>
   public const string MeterName = "TimeWarp.Architecture.Analytics";
+  /// <summary>
+  /// Counter / histogram instrument name for analytics events.
+  /// </summary>
   public const string EventsInstrumentName = "analytics.events";
+  /// <summary>
+  /// Tag key for the analytics event name.
+  /// </summary>
   public const string EventNameTag = "event.name";
+  /// <summary>
+  /// Tag key for the request correlation id.
+  /// </summary>
   public const string CorrelationIdTag = "correlation.id";
 }

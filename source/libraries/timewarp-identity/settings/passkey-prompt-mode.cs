@@ -11,8 +11,14 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Post-Entra passkey prompt policy: dismissible soft banner versus blocking required registration.
+/// </summary>
 public enum PasskeyPromptMode
 {
+  /// <summary>Dismissible prompt; the user may continue without registering a passkey.</summary>
   Soft = 0,
+
+  /// <summary>Blocks app use after an Entra-issued session until a passkey is registered.</summary>
   Required = 1
 }

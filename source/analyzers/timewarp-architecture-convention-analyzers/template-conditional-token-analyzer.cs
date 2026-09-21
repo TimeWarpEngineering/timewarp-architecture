@@ -26,9 +26,11 @@ namespace TimeWarp.Architecture.Analyzers;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
+/// <summary>Roslyn analyzer for TWA0008: template-conditional tokens must not appear in comments or string literals.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public partial class TemplateConditionalTokenAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0008.</summary>
   public const string DiagnosticId = "TWA0008";
 
   // Composed so the raw token sequences never appear in this file (see Design).
@@ -59,8 +61,10 @@ public partial class TemplateConditionalTokenAnalyzer : DiagnosticAnalyzer
         "disable conditional processing for the region with the cnd:noEmit comment-marker pair."
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0008.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

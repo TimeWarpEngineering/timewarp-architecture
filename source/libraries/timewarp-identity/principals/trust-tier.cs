@@ -21,11 +21,23 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Progressive authorization posture for a principal — identity is cheap; power is paid or earned.
+/// </summary>
 public enum TrustTier
 {
+  /// <summary>Uninitialized value; fails closed and is not a progression tier.</summary>
   None = 0,
+
+  /// <summary>Birth floor before any credential is attached.</summary>
   Provisional = 1,
+
+  /// <summary>At least one credential is attached.</summary>
   Keyed = 2,
+
+  /// <summary>Has completed a paid/settled path at least once.</summary>
   Funded = 3,
+
+  /// <summary>Higher reputation tier above Funded.</summary>
   Established = 4,
 }

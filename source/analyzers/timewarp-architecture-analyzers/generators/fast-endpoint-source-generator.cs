@@ -46,6 +46,7 @@ namespace TimeWarp.Architecture.Analyzers;
 using System.Collections.Generic;
 using TimeWarp.Architecture.Analyzers.Models;
 
+/// <summary>Source generator that emits FastEndpoint HTTP shims for [ApiEndpoint] contracts.</summary>
 [Generator]
 public class FastEndpointSourceGenerator : IIncrementalGenerator
 {
@@ -71,6 +72,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
     [assembly: TimeWarp.Architecture.ApiEndpointsEmbedded]
     """;
 
+  /// <summary>Registers incremental generator steps for FastEndpoint emission.</summary>
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     IncrementalValueProvider<bool> stampMarker =

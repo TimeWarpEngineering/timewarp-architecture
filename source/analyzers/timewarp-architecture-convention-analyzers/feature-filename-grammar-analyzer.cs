@@ -37,10 +37,13 @@
 
 namespace TimeWarp.Architecture.Analyzers;
 
+/// <summary>Roslyn analyzer for TWA0015/TWA0016: feature filename function segments must match the registered grammar.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0015 (function/layer pairing mismatch).</summary>
   public const string PairingMismatchId = "TWA0015";
+  /// <summary>Diagnostic identifier TWA0016 (unregistered function segment).</summary>
   public const string UnregisteredFunctionId = "TWA0016";
 
   private const string Category = "Naming";
@@ -89,9 +92,11 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
       description: "Function segments are a closed set from feature-filename-grammar.json (longest-first match). Escape-hatch files omit the function segment entirely."
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
     ImmutableArray.Create(PairingMismatchRule, UnregisteredFunctionRule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0015 and TWA0016.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

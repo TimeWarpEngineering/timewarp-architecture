@@ -11,9 +11,15 @@
 
 namespace TimeWarp.Foundation.Features;
 
+/// <summary>
+/// FastEndpoints binder for propertyless request DTOs that would otherwise fail default binding.
+/// </summary>
 public sealed class EmptyRequestBinder<TRequest> : IRequestBinder<TRequest>
   where TRequest : class, new()
 {
+  /// <summary>
+  /// Returns a new <typeparamref name="TRequest"/> without reading the HTTP body.
+  /// </summary>
   public ValueTask<TRequest> BindAsync(BinderContext context, CancellationToken cancellation)
     => ValueTask.FromResult(new TRequest());
 }

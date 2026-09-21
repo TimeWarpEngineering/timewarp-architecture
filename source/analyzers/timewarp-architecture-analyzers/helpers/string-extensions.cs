@@ -11,8 +11,10 @@ namespace TimeWarp.Architecture.Analyzers;
 
 using System.Globalization;
 
+/// <summary>Case-convention conversions shared by the analyzers and generators.</summary>
 public static class StringExtensions
 {
+  /// <summary>Converts a PascalCase identifier to the repo kebab-case file-name convention.</summary>
   public static string ToKebabCase(this string value)
   {
     if (string.IsNullOrEmpty(value))
@@ -21,6 +23,7 @@ public static class StringExtensions
     return string.Concat(value.Select((x, i) => i > 0 && char.IsUpper(x) ? "-" + char.ToLowerInvariant(x).ToString(CultureInfo.InvariantCulture) : x.ToString(CultureInfo.InvariantCulture)));
   }
 
+  /// <summary>Lowercases the first character of the string.</summary>
   public static string ToCamelCase(this string str)
   {
     if (!string.IsNullOrEmpty(str) && str.Length > 1)

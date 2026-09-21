@@ -12,7 +12,13 @@
 
 namespace TimeWarp.Foundation.Entities;
 
+/// <summary>
+/// Pure increment helper for <see cref="Entity{TId}.Version"/> used by store SaveChanges hooks.
+/// </summary>
 public static class EntityVersion
 {
+  /// <summary>
+  /// Returns the next concurrency-token value after <paramref name="originalVersion"/>.
+  /// </summary>
   public static long Next(long originalVersion) => originalVersion + 1;
 }

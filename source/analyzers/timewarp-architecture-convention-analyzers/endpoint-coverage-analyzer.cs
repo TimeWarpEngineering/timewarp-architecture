@@ -23,12 +23,14 @@ namespace TimeWarp.Architecture.Analyzers;
 
 using System.Collections.Generic;
 
+/// <summary>Roslyn analyzer for TWA0006: every routed contract in a server project is served or explicitly opted out.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
 {
   /// <summary>Retired with MVC BaseEndpoint (task 131 F-002). Do not reuse this ID.</summary>
   public const string VerbMismatchId = "TWA0005";
 
+  /// <summary>Diagnostic identifier TWA0006.</summary>
   public const string MissingEndpointId = "TWA0006";
 
   private const string Category = "Design";
@@ -46,9 +48,11 @@ public class EndpointCoverageAnalyzer : DiagnosticAnalyzer
       customTags: WellKnownDiagnosticTags.CompilationEnd
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
     ImmutableArray.Create(MissingEndpoint);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0006.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

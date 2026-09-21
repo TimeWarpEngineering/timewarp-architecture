@@ -35,6 +35,7 @@ public sealed class MeteredCapabilityGate
   private readonly ICreditLedger Ledger;
   private readonly SettlementFundingService SettlementFunding;
 
+  /// <summary>Creates a metered gate that debits prepaid credit or falls through to x402 payment.</summary>
   public MeteredCapabilityGate(
     PaymentGate paymentGate,
     ICreditLedger ledger,

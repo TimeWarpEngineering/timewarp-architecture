@@ -3,4 +3,8 @@
 #endregion
 
 namespace TimeWarp.Foundation;
+
+/// <summary>
+/// Composition-root ASP.NET module for a host Program, as opposed to feature modules it composes.
+/// </summary>
 public interface IAspNetProgram : IAspNetModule;
