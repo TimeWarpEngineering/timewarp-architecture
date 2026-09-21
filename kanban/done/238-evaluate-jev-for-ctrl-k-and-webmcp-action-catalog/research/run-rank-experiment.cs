@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #:property ImplicitUsings=enable
 #:property Nullable=enable
 #:property LangVersion=latest

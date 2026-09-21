@@ -130,8 +130,9 @@ MSBuild well-known props/targets; ASP.NET `Properties/`, `launchSettings.json`,
 **`.cs` enforcement:** `TimeWarp.SourceGenerators` diagnostic **`TW0001`** (`TW*` package family —
 not Architecture `TWA*`). Package is referenced repo-wide from root `Directory.Build.props`;
 `.editorconfig` sets `dotnet_diagnostic.TW0001.severity = warning` (build-breaking via
-TreatWarningsAsErrors). Requires SourceGenerators **≥ 1.0.0-beta.10** (multi-dot partials + skip
-`obj/`/`bin/` generated trees). Non-`.cs` / folder basenames: **`ganda repo audit`**
+TreatWarningsAsErrors). Requires SourceGenerators **≥ 1.0.0-beta.11** (TW0007 kebab
+`global-usings.cs`; multi-dot partials + skip `obj/`/`bin/` generated trees since beta.10).
+Non-`.cs` / folder basenames: **`ganda repo audit`**
 **`kebab-path-names`** (Ganda task **188**, shipped).
 
 ```

@@ -190,7 +190,7 @@
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.15" />
     <PackageVersion Include="TimeWarp.Jaribu.TestingPlatform" Version="1.0.0-beta.15" />
-    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.10" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.11" />
   </ItemGroup>
 </Project>
 

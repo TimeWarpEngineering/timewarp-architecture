@@ -4,9 +4,16 @@
 #:property NoWarn=CA2007
 #:property RunAnalyzers=false
 
-// Unified dispatcher: memsearch (best-effort) + ganda repo attest.
-// Exit 0 always — cannot undo an already-completed merge.
+// Unified dispatcher for branch checkouts only ($3 == 1).
+// Exit 0 always.
 using TimeWarp.Amuru;
+
+// git post-checkout <previous> <new> <branch_flag>
+// branch_flag is 1 for branch checkout, 0 for file checkout.
+if (args.Length < 3 || args[2] != "1")
+{
+  return 0;
+}
 
 string? root = Git.FindRoot();
 if (root is null)
