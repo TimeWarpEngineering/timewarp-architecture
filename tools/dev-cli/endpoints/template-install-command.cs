@@ -7,6 +7,7 @@
 // (not the template source folder). Uninstall of a missing identity is ignored. Nupkg selection
 // requires TimeWarp.Architecture.{version}.nupkg whose version segment starts with a digit so
 // TimeWarp.Architecture.Analyzers.*.nupkg cannot win. --dry-run prints pack + install paths.
+// Wipes the pack directory before pack so a leftover older nupkg cannot win after a version bump.
 // Complements template-smoke (isolated 2.0.0-smoke packs) — this writes the user's template cache.
 #endregion
 
@@ -71,6 +72,11 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
         return Value;
       }
 
+      if (Directory.Exists(PackagesDir))
+      {
+        Directory.Delete(PackagesDir, recursive: true);
+      }
+
       Directory.CreateDirectory(PackagesDir);
 
       Terminal.WriteLine($"Packing template → {PackagesDir}...");
@@ -88,7 +94,7 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
         return Value;
       }
 
-      string? nupkg = FindArchitectureTemplateNupkg(PackagesDir);
+      string? nupkg = TemplateNupkg.FindArchitectureTemplateNupkg(PackagesDir);
       if (nupkg is null)
       {
         Terminal.WriteErrorLine($"No {TemplatePackageId}.{{version}}.nupkg found in {PackagesDir}.".Red());
@@ -121,20 +127,6 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
 
       Terminal.WriteLine($"Installed {Path.GetFileName(nupkg)} for `dotnet new timewarp-architecture`.".Green());
       return Value;
-    }
-
-    internal static string? FindArchitectureTemplateNupkg(string directory)
-    {
-      if (!Directory.Exists(directory))
-      {
-        return null;
-      }
-
-      return Directory
-        .GetFiles(directory, $"{TemplatePackageId}.*.nupkg")
-        .Where(path => TemplateNupkg.IsArchitectureTemplateNupkgFileName(Path.GetFileName(path)))
-        .OrderByDescending(path => path, StringComparer.Ordinal)
-        .FirstOrDefault();
     }
   }
 }
