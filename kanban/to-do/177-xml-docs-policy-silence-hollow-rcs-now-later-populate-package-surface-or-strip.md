@@ -29,15 +29,56 @@ we enforce **substance** (summary text + accurate param names), not shell genera
 **Conclusion:** for day-to-day agent work in this template, Purpose/skills win. XML is optional
 product surface for **package consumers**, not the agent context layer.
 
+## Decision (2026-09-21)
+
+Path **A for published packages, B for template/app code**, plus a build gate so it does not decay.
+
+The task's "docs don't help agents" conclusion holds only inside this monorepo. Generated apps are
+package-mode only: an agent working there sees `TimeWarp.Foundation.*` / `TimeWarp.Identity` /
+Attributes only as metadata plus the shipped `.xml`. There the XML doc IS the platform context
+layer. The nupkgs already ship `.xml` files, so today consumers get IntelliSense for roughly half
+the surface (foundation: 56 public types in 54 files, 31 files with zero `///`; attributes: 4 of 6
+files undocumented) and nothing for the rest.
+
+## Requirements
+
+**A — populate the packable surface** (every project with `IsPackable=true` / `PackageId`:
+`source/foundation/**`, `source/libraries/timewarp-identity`, `timewarp-modules`, `timewarp-402`,
+`source/analyzers/timewarp-architecture-attributes`, and the two analyzer packages' public types):
+- Real `<summary>` on every **public** type and public member. Substance, not shells: say what it
+  is for and when to use it; name the contract (fail-closed, one-way, etc.) when there is one.
+  `<param>` / `<returns>` / `<typeparam>` only when they add information beyond the name.
+- Purpose/Design regions stay the SSOT for *why*; the XML summary is the *what* for a consumer
+  who cannot see the region. Do not duplicate a Design region into XML — link intent in one line.
+- Fill or delete the existing hollow `<param name="x"></param>` shells in foundation (7).
+
+**B — strip hollow shells from template/app code** (`source/container-apps/**`, `tools/**`,
+`tests/**`): delete empty `<param>`/`<returns>` elements (13 today: web-spa api-service,
+api-handler, counter-state.debug, tests). Leave real summaries alone. Do not add docs here.
+
+**Gate** — CS1591 (missing XML comment on public member) as **warning** only where
+`'$(IsPackable)' == 'true'`; everywhere else it stays in NoWarn. Put the switch in root
+`Directory.Build.props` next to the existing NoWarn line (task 170 comment) so both modes are
+visible in one place. Warnings are errors, so a new public package API without a summary fails
+`dev build`. Do **not** re-enable RCS1141/1228 (shell generators).
+
+**Docs** — one-liner in AGENTS.md (Documentation section): packages carry real XML on public
+surface (CS1591 gated on IsPackable); template/app code uses Purpose/Design regions only.
+
 ## Checklist
 
 - [x] Explicitly silence RCS1138–1142, RCS1228 (completeness + hollow) — editorconfig
 - [x] Leave RCS1263 as warning (invalid doc refs when `///` exists)
-- [x] CS1591 remains NoWarn (GenerateDocumentationFile is for IDE0005 enablement, not public-doc gate)
-- [ ] Decide Path **A** (populate package surface) vs **B** (strip)
-- [ ] If A: inventory public package APIs missing real summaries; populate; optional warning only on package projects
-- [ ] If B: strip empty/orphaned `///` from template tree; do not re-enable completeness RCS
-- [ ] Document choice in AGENTS.md or developer standards one-liner
+- [x] CS1591 remains NoWarn for non-package projects
+- [x] Decide Path **A** (packages) + **B** (template/app) — see Decision
+- [ ] CS1591 warning gated on `IsPackable` in root `Directory.Build.props`; verify a package
+      project with an undocumented public member fails `dev build`, and a container-app one does not
+- [ ] A: every public type/member in packable projects has a real summary; foundation hollow
+      shells filled or removed
+- [ ] B: hollow `<param>`/`<returns>` shells removed from container-apps / tools / tests
+- [ ] `dev build` 0/0; `dev template-smoke` (packages ship into generated apps)
+- [ ] AGENTS.md one-liner
+- [ ] Reconcile the `.editorconfig` comment block (lines ~299–320) with the final policy
 
 ## Related
 
